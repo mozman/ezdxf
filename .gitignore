@@ -6,7 +6,7 @@
 DXFResearch
 build
 dist
-ezdxf.egg-info/*
+src/ezdxf.egg-info/*
 docs/build/*
 examples/**/*.dxf
 experiments/**/*.dxf
