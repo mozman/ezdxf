@@ -248,7 +248,7 @@ class DXFGraphic(DXFEntity):
         auditor.check_for_valid_layer_name(self)
         auditor.check_if_linetype_exists(self)
         auditor.check_for_valid_color_index(self)
-        auditor.check_pointer_target_exists(self, zero_pointer_valid=False)
+        auditor.check_pointer_target_exist(self, zero_pointer_valid=False)
 
 
 @register_entity

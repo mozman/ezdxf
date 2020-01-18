@@ -55,14 +55,16 @@ class Auditor:
     def print_report(self, errors: List[ErrorEntry] = None, stream: TextIO = None) -> None:
         def entity_str(count, code, entity):
             if entity is not None:
-                return "{:4d}. Issue [{}] in {} #{}".format(count, code, entity.dxftype(), entity.dxf.handle)
+                handle = entity.dxf.handle
+                type_ = entity.dxftype()
+                return f"{count:4d}. Issue [{code}] in {type_} #{handle}"
             else:
-                return "{:4d}. Issue [{}]".format(count, code)
+                return f"{count:4d}. Issue [{code}]"
 
         if errors is None:
             errors = self.errors
         else:
-            errors = list(errors)  # generator?
+            errors = list(errors)
 
         if stream is None:
             stream = sys.stdout
@@ -70,7 +72,7 @@ class Auditor:
         if len(errors) == 0:
             stream.write('No issues found.\n\n')
         else:
-            stream.write('{} issues found.\n\n'.format(len(errors)))
+            stream.write(f'{len(errors)} issues found.\n\n')
             for count, error in enumerate(errors):
                 stream.write(entity_str(count + 1, error.code, error.entity) + '\n')
                 stream.write('   ' + error.message + '\n\n')
@@ -78,7 +80,7 @@ class Auditor:
     @staticmethod
     def filter_zero_pointers(errors: Iterable[ErrorEntry]) -> Iterable[ErrorEntry]:
         for error in errors:
-            if error.code == Error.POINTER_TARGET_NOT_EXISTS and error.data.value == '0':
+            if error.code == Error.POINTER_TARGET_NOT_EXISTS and error.data == '0':
                 continue
             yield error
 
@@ -101,7 +103,7 @@ class Auditor:
             if name not in root_dict:
                 self.add_error(
                     code=Error.MISSING_REQUIRED_ROOT_DICT_ENTRY,
-                    message='Missing root dict entry: {}'.format(name),
+                    message=f'Missing root dict entry: {name}',
                     dxf_entity=root_dict,
                 )
 
@@ -133,7 +135,7 @@ class Auditor:
         if linetype not in self.doc.linetypes:
             self.add_error(
                 code=Error.UNDEFINED_LINETYPE,
-                message='Undefined linetype: {}'.format(linetype),
+                message=f'Undefined linetype: {linetype}',
                 dxf_entity=entity,
             )
 
@@ -147,7 +149,7 @@ class Auditor:
         if style not in self.doc.styles:
             self.add_error(
                 code=Error.UNDEFINED_TEXT_STYLE,
-                message='Undefined dimstyle: {}'.format(style),
+                message=f'Undefined text style: {style}',
                 dxf_entity=entity,
             )
 
@@ -161,7 +163,7 @@ class Auditor:
         if dimstyle not in self.doc.dimstyles:
             self.add_error(
                 code=Error.UNDEFINED_DIMENSION_STYLE,
-                message='Undefined dimstyle: {}'.format(dimstyle),
+                message=f'Undefined dimstyle: {dimstyle}',
                 dxf_entity=entity,
             )
 
@@ -177,12 +179,14 @@ class Auditor:
                 return
             self.add_error(
                 code=Error.INVALID_LAYER_NAME,
-                message='Invalid layer name: {}'.format(name),
+                message=f'Invalid layer name: {name}',
                 dxf_entity=entity,
             )
 
     def check_for_valid_color_index(self, entity: 'DXFEntity') -> None:
-        if not entity.is_supported_dxf_attrib('color'):
+        # check if exist, because getting none existing attributes doesn't rise an exception instead returns the
+        # default value.
+        if not entity.dxf.hasattr('color'):
             return
         color = entity.dxf.color
         # 0 == BYBLOCK
@@ -191,41 +195,28 @@ class Auditor:
         if color < 0 or color > 257:
             self.add_error(
                 code=Error.INVALID_COLOR_INDEX,
-                message='Invalid color index: {}'.format(color),
+                message=f'Invalid color index: {color}',
                 dxf_entity=entity,
             )
 
-    def check_for_existing_owner(self, entity: 'DXFEntity') -> None:
-        if not entity.is_supported_dxf_attrib('owner'):
+    def check_owner_exist(self, entity: 'DXFEntity') -> None:
+        if not entity.dxf.hasattr('owner'):
             return
         owner_handle = entity.dxf.owner
         if owner_handle not in self.doc.entitydb:
             self.add_error(
                 code=Error.INVALID_OWNER_HANDLE,
-                message='Invalid owner handle: #{}'.format(owner_handle),
+                message=f'Invalid owner handle: #{owner_handle}',
                 dxf_entity=entity,
             )
 
-    def check_pointer_target_exists(self, entity: 'DXFEntity', zero_pointer_valid: bool = False) -> None:
+    def check_pointer_target_exist(self, entity: 'DXFEntity', zero_pointer_valid: bool = False) -> None:
         assert isinstance(entity, DXFEntity)
-        db = self.doc.entitydb
-        for handle in entity.check_pointers():
-            if handle not in db:
-                if handle == '0' and zero_pointer_valid:  # default unset pointer
-                    continue
-                if handle in self.undefined_targets:  # for every undefined pointer add just one error message
-                    continue
-                self.add_error(
-                    code=Error.POINTER_TARGET_NOT_EXISTS,
-                    message='Pointer target does not exist: (#{})'.format(handle),
-                    dxf_entity=entity,
-                    data=handle,
-                )
-                self.undefined_targets.add(handle)
+        self.check_handles_exist(entity, entity.check_pointers(), zero_pointer_valid)
 
-    def check_handles_exists(self, entity: 'DXFEntity',
-                             handles: Iterable[str],
-                             zero_pointer_valid: bool = False) -> None:
+    def check_handles_exist(self, entity: 'DXFEntity',
+                            handles: Iterable[str],
+                            zero_pointer_valid: bool = False) -> None:
         db = self.doc.entitydb
         for handle in handles:
             if handle not in db:
@@ -235,8 +226,8 @@ class Auditor:
                     continue
                 self.add_error(
                     code=Error.POINTER_TARGET_NOT_EXISTS,
-                    message='handle target does not exist: (#{})'.format(handle),
+                    message=f'Handle target does not exist: (#{handle})',
                     dxf_entity=entity,
-                    data=DXFTag(-1, handle),  # DXFTag is expected
+                    data=handle,
                 )
                 self.undefined_targets.add(handle)

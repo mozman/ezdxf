@@ -163,14 +163,6 @@ def entity_matcher(query: str) -> Callable[['DXFEntity'], bool]:
     return matcher
 
 
-def build_entity_name_matcher_old(names: Sequence[str]) -> Callable[['DXFEntity'], bool]:
-    entity_names = frozenset(names)
-    if names[0] == '*':
-        return lambda e: True
-    else:
-        return lambda e: e.dxftype() in entity_names
-
-
 def build_entity_name_matcher(names: Sequence[str]) -> Callable[['DXFEntity'], bool]:
     def match(e: 'DXFEntity') -> bool:
         return _match(e.dxftype())

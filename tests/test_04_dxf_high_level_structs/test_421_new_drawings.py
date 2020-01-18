@@ -1,5 +1,6 @@
 # Copyright (C) 2011-2019, Manfred Moitzi
 # License: MIT License
+import pytest
 import ezdxf
 
 new = ezdxf.new
@@ -38,3 +39,18 @@ def test_new_AC1027():
 def test_new_AC1032():
     doc = new('R2018')
     assert 'AC1032' == doc.dxfversion
+
+
+def test_invalid_dxf_version():
+    with pytest.raises(ezdxf.const.DXFVersionError):
+        new('R13')
+    with pytest.raises(ezdxf.const.DXFVersionError):
+        new('R14')
+    with pytest.raises(ezdxf.const.DXFVersionError):
+        new('XYZ')
+    with pytest.raises(ezdxf.const.DXFVersionError):
+        new('AC1012')
+    with pytest.raises(ezdxf.const.DXFVersionError):
+        new('AC1013')
+    with pytest.raises(ezdxf.const.DXFVersionError):
+        new('AC1014')

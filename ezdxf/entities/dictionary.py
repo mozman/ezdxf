@@ -268,7 +268,7 @@ class Dictionary(DXFObject):
         return dxf_dict
 
     def audit(self, auditor: 'Auditor') -> None:
-        auditor.check_handles_exists(self, handles=self._data.values())
+        auditor.check_handles_exist(self, handles=self._data.values())
 
     def destroy(self) -> None:
         if self.is_hard_owner:

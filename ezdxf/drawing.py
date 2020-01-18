@@ -104,10 +104,6 @@ class Drawing:
         doc._setup()
         return doc
 
-    def _get_encoding(self):
-        codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
-        return toencoding(codepage)
-
     def _setup(self):
         self.header = HeaderSection.new()
         self.classes = ClassesSection(self)
@@ -331,7 +327,6 @@ class Drawing:
 
         if self.dxfversion in (DXF13, DXF14):
             # upgrade to DXF R2000
-            # todo: more?
             self.dxfversion = DXF2000
 
         self.rootdict = self.objects.rootdict
@@ -371,12 +366,12 @@ class Drawing:
         """
         # DXF R12, R2000, R2004 - ASCII encoding
         # DXF R2007 and newer - UTF-8 encoding
+        # in ASCII mode, unknown characters will be escaped as \U+nnnn unicode characters.
 
         if encoding is None:
             enc = self.output_encoding
         else:  # override default encoding, for applications that handles encoding different than AutoCAD
             enc = encoding
-        # in ASCII mode, unknown characters will be escaped as \U+nnnn unicode characters.
 
         with io.open(self.filename, mode='wt', encoding=enc, errors='dxfreplace') as fp:
             self.write(fp)
@@ -454,7 +449,7 @@ class Drawing:
 
     @property
     def acad_release(self) -> str:
-        """ The AutoCAD release number string like ``'R12'`` or ``'R2000'`` for actual DXF version of this drawing. """
+        """ Returns the AutoCAD release number like ``'R12'`` or ``'R2000'``. """
         return acad_release.get(self.dxfversion, "unknown")
 
     @property

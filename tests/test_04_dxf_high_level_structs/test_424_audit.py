@@ -22,27 +22,27 @@ def entity(dxf):
 
 def test_target_pointer_not_exists(entity, auditor):
     entity.dxf.owner = 'FFFF'
-    auditor.check_pointer_target_exists(entity)
+    auditor.check_pointer_target_exist(entity)
     assert len(auditor) == 1
     assert auditor.errors[0].code == Error.POINTER_TARGET_NOT_EXISTS
 
 
 def test_target_pointer_zero_valid(entity, auditor):
     entity.dxf.owner = '0'
-    auditor.check_pointer_target_exists(entity, zero_pointer_valid=True)
+    auditor.check_pointer_target_exist(entity, zero_pointer_valid=True)
     assert len(auditor) == 0, '0 should be a valid target pointer'
 
 
 def test_target_pointer_zero_invalid(entity, auditor):
     entity.dxf.owner = '0'
-    auditor.check_pointer_target_exists(entity, zero_pointer_valid=False)
+    auditor.check_pointer_target_exist(entity, zero_pointer_valid=False)
     assert len(auditor) == 1, '0 should be a valid target pointer'
     assert auditor.errors[0].code == Error.POINTER_TARGET_NOT_EXISTS
 
 
 def test_target_pointer_ignore_codes(entity, auditor):
     entity.dxf.owner = '0'
-    auditor.check_pointer_target_exists(entity, zero_pointer_valid=True)
+    auditor.check_pointer_target_exist(entity, zero_pointer_valid=True)
     assert len(auditor) == 0, '0 should be a valid target pointer'
 
 
@@ -68,7 +68,7 @@ def test_for_valid_layer_name(entity, auditor):
 
 def test_for_existing_owner(entity, auditor):
     entity.dxf.owner = 'FFFFFF'
-    auditor.check_for_existing_owner(entity)
+    auditor.check_owner_exist(entity)
     assert len(auditor) == 1
     assert auditor.errors[0].code == Error.INVALID_OWNER_HANDLE
 
