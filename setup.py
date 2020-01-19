@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Created: 10.03.2011
-# Copyright (c) 2011-2019 Manfred Moitzi
+# Copyright (c) 2011-2020 Manfred Moitzi
 # License: MIT License
 import os
 from setuptools import setup, find_packages
@@ -9,7 +9,6 @@ from setuptools import setup, find_packages
 
 def get_version():
     v = {}
-    # do not import ezdxf, because required packages may not be installed yet
     for line in open('./src/ezdxf/version.py').readlines():
         if line.strip().startswith('__version__'):
             exec(line, v)

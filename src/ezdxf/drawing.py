@@ -192,7 +192,7 @@ class Drawing:
 
     @property
     def output_encoding(self):
-        """ Returns required output encoding for saving to filesystem. """
+        """ Returns required output encoding for writing document to a text streams. """
         return 'utf-8' if self.dxfversion >= DXF2007 else self.encoding
 
     def _validate_dxf_version(self, version: str) -> str:
@@ -343,12 +343,13 @@ class Drawing:
 
     def saveas(self, filename: str, encoding: str = None) -> None:
         """
-        Write drawing to file-system by setting the :attr:`~ezdxf.drawing.Drawing.filename`
-        attribute to `filename`. For argument `encoding` see: :meth:`~ezdxf.drawing.Drawing.save`.
+        Set :class:`Drawing` attribute :attr:`filename` to `filename` and write drawing to the file system.
+        Override file encoding by argument `encoding`, handle with care, but this option allows you to create
+        DXF files for applications that handles file encoding different than AutoCAD.
 
         Args:
             filename: file name as string
-            encoding: override file encoding
+            encoding: override default encoding as Python encoding string like ``'utf-8'``
 
         """
         self.filename = filename
@@ -356,7 +357,7 @@ class Drawing:
 
     def save(self, encoding: str = None) -> None:
         """
-        Write drawing to file-system by using the :attr:`~ezdxf.drawing.Drawing.filename` attribute as filename.
+        Write drawing to file-system by using the :attr:`filename` attribute as filename.
         Override file encoding by argument `encoding`, handle with care, but this option allows you to create
         DXF files for applications that handles file encoding different than AutoCAD.
 
@@ -379,8 +380,9 @@ class Drawing:
     def write(self, stream: TextIO) -> None:
         """
         Write drawing to a text stream. For DXF R2004 (AC1018) and prior open stream with drawing
-        :attr:`~ezdxf.drawing.Drawing.encoding` and :code:`mode='wt'`. For DXF R2007 (AC1021) and later use
-        :code:`encoding='utf-8'`.
+        :attr:`encoding` and :code:`mode='wt'`. For DXF R2007 (AC1021) and later use
+        :code:`encoding='utf-8'`, or better use the later added :class:`Drawing` property :attr:`output_encoding`
+        which returns the correct encoding automatically.
 
         Args:
             stream: output text stream
