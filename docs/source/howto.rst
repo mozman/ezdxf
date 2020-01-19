@@ -34,6 +34,8 @@ and decimal degrees for angles (in most cases).
 
 Sets drawing units:
 
+$MEASUREMENT controls whether the current drawing uses imperial or metric hatch pattern and linetype files:
+
 .. code-block:: python
 
 
@@ -44,7 +46,22 @@ Sets drawing units:
 1   Metric
 === ===============
 
-Set Units format for angles:
+$LUNITS sets the linear units format for creating objects:
+
+.. code-block:: python
+
+
+    doc.header['$LUNITS'] = 2
+
+=== ===============
+1   Scientific
+2   Decimal (default)
+3   Engineering
+4   Architectural
+5   Fractional
+=== ===============
+
+$AUNITS set units format for angles:
 
 .. code-block:: python
 
@@ -57,7 +74,7 @@ Set Units format for angles:
 3   Radians
 === ===============
 
-Set default drawing units for AutoCAD DesignCenter blocks:
+$INSUNITS set default drawing units for AutoCAD DesignCenter blocks:
 
 .. code-block:: python
 
