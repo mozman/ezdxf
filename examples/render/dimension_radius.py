@@ -73,8 +73,8 @@ def radius_default_outside(dxfversion='R2000', delta=10):
         # Default DimStyle EZ_RADIUS: 1 drawing unit == 1m; scale 1: 100; length_factor=100 -> measurement in cm
         # closed filled arrow, size 0.25
         # DIMSTYLE settings:
-        # dimtmove = 1: use leader, is the best setting for text outside to preserves appearance of DIMENSION entity,
-        # if editing DIMENSION afterwards in BricsCAD (AutoCAD)
+        # dimtmove = 1: use leader, is the best setting for text outside to preserve appearance of DIMENSION entity,
+        # if editing afterwards in BricsCAD (AutoCAD)
 
         # center: specifies the center of the circle
         # radius: specifies the radius of the circle
@@ -108,8 +108,8 @@ def radius_default_inside(dxfversion='R2000', delta=10, dimtmove=0):
     # Default DimStyle EZ_RADIUS_INSIDE: 1 drawing unit == 1m; scale 1: 100; length_factor=100 -> measurement in cm
     # closed filled arrow, size 0.25
     # DIMSTYLE settings:
-    # dimtmove = 0: keep dim line with text, is the best setting for text inside to preserves appearance of
-    # DIMENSION entity, if editing DIMENSION afterwards in BricsCAD (AutoCAD)
+    # dimtmove = 0: keep dim line with text, is the best setting for text inside to preserve appearance of
+    # DIMENSION entity, if editing afterwards in BricsCAD (AutoCAD)
     # dimtix = 1:   force text inside
     # dimatfit = 0: force text inside, required by BricsCAD (AutoCAD)
     # dimtad = 0: center text vertical, BricsCAD (AutoCAD) always creates vertical centered text,

@@ -55,8 +55,8 @@ Default Text Locations Outside
 ``'EZ_RADIUS'`` default settings for to place text outside:
 
 =========== ==============================================================================================
-tmove       ``1`` to keep dim line with text, this is the best setting for text inside
-            to preserves appearance of the DIMENSION entity, if editing DIMENSION afterwards in BricsCAD
+tmove       ``1`` to keep dim line with text, this is the best setting for text outside
+            to preserve appearance of the DIMENSION entity, if editing afterwards in BricsCAD
             or AutoCAD.
 dimtad      ``1`` to place text vertical above the dimension line
 =========== ==============================================================================================
@@ -68,6 +68,8 @@ dimtad      ``1`` to place text vertical above the dimension line
                              )
     dim.render()  # required, but not shown in the following examples
 
+.. image:: gfx/dim_radial_outside.png
+
 To force text outside horizontal set :attr:`~ezdxf.entities.DimStyle.dxf.dimtoh` to ``1``:
 
 .. code-block:: python
@@ -76,6 +78,7 @@ To force text outside horizontal set :attr:`~ezdxf.entities.DimStyle.dxf.dimtoh`
                              dimstyle='EZ_RADIUS',
                              override={'dimtoh': 1}
                              )
+.. image:: gfx/dim_radial_outside_horiz.png
 
 Default Text Locations Inside
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -88,7 +91,7 @@ measurement text in cm, and a closed filled arrow with size 0.25 is used.
 
 =========== ==============================================================================================
 tmove       ``0`` to keep dim line with text, this is the best setting for text inside
-            to preserves appearance of the DIMENSION entity, if editing DIMENSION afterwards in BricsCAD
+            to preserve appearance of the DIMENSION entity, if editing afterwards in BricsCAD
             or AutoCAD.
 dimtix      ``1`` to force text inside
 dimatfit    ``0`` to force text inside, required by BricsCAD and AutoCAD
@@ -102,6 +105,8 @@ dimtad      ``0`` to center text vertical, BricsCAD and AutoCAD always create ve
     dim = msp.add_radius_dim(center=(0, 0), radius=3, angle=45,
                              dimstyle='EZ_RADIUS_INSIDE'
                              )
+
+.. image:: gfx/dim_radial_inside.png
 
 To force text inside horizontal set :attr:`~ezdxf.entities.DimStyle.dxf.dimtih` to ``1``:
 
