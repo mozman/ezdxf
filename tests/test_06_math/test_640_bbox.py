@@ -46,6 +46,14 @@ class TestBoundingBox:
         assert bbox.extmin == (-15, -16, -17)
         assert bbox.extmax == (15, 16, 17)
 
+    def test_size(self):
+        bbox = BoundingBox([(-2, -2, -2), (8, 8, 8)])
+        assert bbox.size == (10, 10, 10)
+
+    def test_center(self):
+        bbox = BoundingBox([(-1, -1, -1), (9, 9, 9)])
+        assert bbox.center == (4, 4, 4)
+
 
 class TestBoundingBox2d:
     def test_init(self):
@@ -82,3 +90,11 @@ class TestBoundingBox2d:
         bbox.extend([(-15, -16)])
         assert bbox.extmin == (-15, -16)
         assert bbox.extmax == (15, 16)
+
+    def test_size(self):
+        bbox = BoundingBox2d([(-2, -2), (8, 8)])
+        assert bbox.size == (10, 10)
+
+    def test_center(self):
+        bbox = BoundingBox2d([(-1, -1), (9, 9)])
+        assert bbox.center == (4, 4)

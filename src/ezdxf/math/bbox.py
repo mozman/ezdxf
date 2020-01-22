@@ -15,6 +15,7 @@ class BoundingBox:
         vertices: iterable of ``(x, y, z)`` tuples or :class:`Vector` objects
 
     """
+
     def __init__(self, vertices: Iterable['Vertex']):
         self.extmin, self.extmax = extends(vertices)
 
@@ -35,6 +36,16 @@ class BoundingBox:
         v = [self.extmin, self.extmax]
         v.extend(vertices)
         self.extmin, self.extmax = extends(v)
+
+    @property
+    def size(self) -> Vector:
+        """ Returns size of bounding box. """
+        return self.extmax - self.extmin
+
+    @property
+    def center(self) -> Vector:
+        """ Returns center of bounding box. """
+        return self.extmin.lerp(self.extmax)
 
 
 def extends(vertices: Iterable['Vertex']) -> Tuple[Vector, Vector]:
@@ -90,6 +101,16 @@ class BoundingBox2d:
         v = [self.extmin, self.extmax]
         v.extend(vertices)
         self.extmin, self.extmax = extends(v)
+
+    @property
+    def size(self) -> Vec2:
+        """ Returns size of bounding box. """
+        return self.extmax - self.extmin
+
+    @property
+    def center(self) -> Vec2:
+        """ Returns center of bounding box. """
+        return self.extmin.lerp(self.extmax)
 
 
 def extends2d(vertices: Iterable['Vertex']) -> Tuple[Vec2, Vec2]:

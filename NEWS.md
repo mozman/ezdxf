@@ -24,7 +24,8 @@ Version 0.11a2 - dev
 - NEW: load DXF comments from file (`ezdxf.comments.from_file`) or stream (`ezdxf.comments.from_stream`)
 - NEW: user defined point format support for 2d POLYLINE entities: 
   `add_polyline2d([(1, 2 .5), (3, 4, 0)], format='xyb')` 
-- NEW: `Polyline.append_formatted_points()` with user defined point format support 
+- NEW: `Polyline.append_formatted_points()` with user defined point format support
+- NEW: `size` and `center` properties for bounding box classes
 - BUGFIX: fixed base point calculation of aligned dimensions
 - BUGFIX: fixed length extension line support
 - BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`
