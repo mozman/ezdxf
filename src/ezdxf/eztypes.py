@@ -1,5 +1,5 @@
 # Created: 11.12.2018
-# Copyright (c) 2018, Manfred Moitzi
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 """
 ezdxf typing collection
@@ -97,18 +97,18 @@ if TYPE_CHECKING:
     from ezdxf.entities.hatch import Hatch
     from ezdxf.entities.image import Image, ImageDef, ImageDefReactor, RasterVariables
     from ezdxf.entities.underlay import PdfUnderlay, DwfUnderlay, DgnUnderlay, Underlay
-    from ezdxf.entities.underlay import PdfDefinition, DwfDefinition, DgnDefinition, UnderlayDef
+    from ezdxf.entities.underlay import PdfDefinition, DwfDefinition, DgnDefinition, UnderlayDefinition
     from ezdxf.entities.acis import Body, Region, Solid3d
     from ezdxf.entities.acis import Surface, ExtrudedSurface, LoftedSurface, RevolvedSurface, SweptSurface
     from ezdxf.entities.sun import Sun
     from ezdxf.entities.geodata import GeoData
     from ezdxf.entities.light import Light
     from ezdxf.entities.leader import Leader
-    from ezdxf.render.dimension import BaseDimensionRenderer
+    from ezdxf.render.dim_base import BaseDimensionRenderer
 
     # other
     from ezdxf.audit import Auditor
-    from ezdxf.lldxf.tags import DXFInfo
+    from ezdxf.lldxf.validator import DXFInfo
 
     # Type compositions
     Vertex = Union[Sequence[float], Vector, Vec2]
@@ -122,5 +122,4 @@ if TYPE_CHECKING:
 
     # Type Unions
     GenericLayoutType = Union[Layout, BlockLayout]
-    SectionType = Union[
-        HeaderSection, TablesSection, BlocksSection, ClassesSection, ObjectsSection, EntitySection, UnsupportedSection]
+    SectionType = Union[HeaderSection, TablesSection, BlocksSection, ClassesSection, ObjectsSection, EntitySection]

@@ -47,7 +47,9 @@ measurement text in cm, and a closed filled arrow with size 0.25 is used.
 
 .. seealso::
 
-    Look at source file `standards.py`_ to see how to create your own DIMSTYLES.
+    - Graphical reference of many DIMVARS and some advanced information: :ref:`dimstyle_table_internals`
+    - Source code file `standards.py`_ shows how to create your own DIMSTYLES.
+    - `dimension_radius.py`_ for radius dimension examples.
 
 Default Text Locations Outside
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -171,4 +173,5 @@ Measurement Text Formatting and Styling
 See Linear Dimension Tutorial: :ref:`tut_measurement_text_formatting_and_styling`
 
 
+.. _dimension_radius.py:  https://github.com/mozman/ezdxf/blob/master/examples/render/dimension_radius.py
 .. _standards.py: https://github.com/mozman/ezdxf/blob/master/src/ezdxf/tools/standards.py

@@ -11,7 +11,7 @@ from ezdxf.math import Vector
 from ezdxf.math import bspline_control_frame, bspline_control_frame_approx
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
-from ezdxf.render.dimension import multi_point_linear_dimension
+from ezdxf.render.dim_linear import multi_point_linear_dimension
 
 logger = logging.getLogger('ezdxf')
 

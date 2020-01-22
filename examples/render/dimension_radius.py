@@ -2,24 +2,11 @@
 # Created: 10.11.2018
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, cast
-import sys
+from typing import TYPE_CHECKING
 import pathlib
-import random
 import ezdxf
-from ezdxf.math import Vector, UCS
+from ezdxf.math import Vector
 import logging
-
-if TYPE_CHECKING:
-    from ezdxf.eztypes import DimStyle, DimStyleOverride, Drawing
-
-# ========================================
-# IMPORTANT:
-# this script uses f-strings (Python 3.6)
-# ========================================
-if sys.version_info < (3, 6):
-    print("This script requires Python 3.6 (f-strings)")
-    sys.exit()
 
 # ========================================
 # Setup logging

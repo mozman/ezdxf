@@ -31,7 +31,9 @@ and tolerances and therefore they are not supported (displayed) in DXF R12 files
 
 .. seealso::
 
-    Graphical reference of many DIMVARS and some advanced information: :ref:`dimstyle_table_internals`
+    - Graphical reference of many DIMVARS and some advanced information: :ref:`dimstyle_table_internals`
+    - Source code file `standards.py`_ shows how to create your own DIMSTYLES.
+    - `dimension_linear.py`_ for linear dimension examples.
 
 Horizontal Dimension
 --------------------
@@ -682,3 +684,4 @@ Alternative units are not supported.
 
 
 .. _dimension_linear.py:  https://github.com/mozman/ezdxf/blob/master/examples/render/dimension_linear.py
+.. _standards.py: https://github.com/mozman/ezdxf/blob/master/src/ezdxf/tools/standards.py

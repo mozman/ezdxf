@@ -107,7 +107,7 @@ def setup_dimstyles(doc: 'Drawing', domain: str = 'all') -> None:
         ez_radius.set_arrows(blk=ARROWS.closed_blank)
         ez_radius.dxf.dimasz = 0.25  # set arrow size
         ez_radius.dxf.dimtofl = 0  # force dimension line if text outside
-        ez_radius.dxf.dimcen = 0.25  # size of center mark, 0=disable, >0=draw mark, <0=draw lines
+        ez_radius.dxf.dimcen = 0  # size of center mark, 0=disable, >0=draw mark, <0=draw lines
         # dimtmove: use leader, is the best setting for text outside to preserves appearance of DIMENSION entity,
         # if editing DIMENSION afterwards in BricsCAD (AutoCAD)
         ez_radius.dxf.dimtmove = 1

@@ -8,7 +8,7 @@ from ezdxf.math import Vector
 from ezdxf.entities.dimension import Dimension, linear_measurement
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.render.dimension import format_text, DXFValueError
+from ezdxf.render.dim_base import format_text, DXFValueError
 
 TEST_CLASS = Dimension
 TEST_TYPE = 'DIMENSION'
