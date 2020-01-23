@@ -65,7 +65,7 @@ dimtad      ``1`` to place text vertical above the dimension line
 
 .. code-block:: python
 
-    dim = msp.add_radius_dim(center=(0, 0), radius=3, angle=45,
+    dim = msp.add_radius_dim(center=(0, 0), radius=2.5, angle=45,
                              dimstyle='EZ_RADIUS'
                              )
     dim.render()  # required, but not shown in the following examples
@@ -76,7 +76,7 @@ To force text outside horizontal set :attr:`~ezdxf.entities.DimStyle.dxf.dimtoh`
 
 .. code-block:: python
 
-    dim = msp.add_radius_dim(center=(0, 0), radius=3, angle=45,
+    dim = msp.add_radius_dim(center=(0, 0), radius=2.5, angle=45,
                              dimstyle='EZ_RADIUS',
                              override={'dimtoh': 1}
                              )
@@ -104,20 +104,25 @@ dimtad      ``0`` to center text vertical, BricsCAD and AutoCAD always create ve
 
 .. code-block:: python
 
-    dim = msp.add_radius_dim(center=(0, 0), radius=3, angle=45,
+    dim = msp.add_radius_dim(center=(0, 0), radius=2.5, angle=45,
                              dimstyle='EZ_RADIUS_INSIDE'
                              )
 
-.. image:: gfx/dim_radial_inside.png
+.. image:: gfx/dim_radial_inside_0.png
+
+.. image:: gfx/dim_radial_inside_1.png
 
 To force text inside horizontal set :attr:`~ezdxf.entities.DimStyle.dxf.dimtih` to ``1``:
 
 .. code-block:: python
 
-    dim = msp.add_radius_dim(center=(0, 0), radius=3, angle=45,
+    dim = msp.add_radius_dim(center=(0, 0), radius=2.5, angle=45,
                              dimstyle='EZ_RADIUS_INSIDE',
                              override={'dimtih': 1}
                              )
+
+.. image:: gfx/dim_radial_inside_horiz.png
+
 
 User Defined Text Locations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -131,36 +136,45 @@ User defined location outside of the circle:
 
 .. code-block:: python
 
-    dim = msp.add_radius_dim(center=(0, 0), radius=3, location=(7, 7),
+    dim = msp.add_radius_dim(center=(0, 0), radius=2.5, location=(4, 4),
                              dimstyle='EZ_RADIUS'
                              )
+
+.. image:: gfx/dim_radial_user_outside.png
 
 User defined location outside of the circle and forced horizontal text:
 
 .. code-block:: python
 
-    dim = msp.add_radius_dim(center=(0, 0), radius=3, location=(7, 7),
+    dim = msp.add_radius_dim(center=(0, 0), radius=2.5, location=(4, 4),
                              dimstyle='EZ_RADIUS',
                              override={'dimtoh': 1}
                              )
+
+.. image:: gfx/dim_radial_user_outside_horiz.png
 
 User defined location inside of the circle:
 
 .. code-block:: python
 
-    dim = msp.add_radius_dim(center=(0, 0), radius=3, location=(1.5, 1.5),
+    dim = msp.add_radius_dim(center=(0, 0), radius=2.5, location=(1, 1),
                              dimstyle='EZ_RADIUS'
                              )
+
+.. image:: gfx/dim_radial_user_inside_0.png
+
+.. image:: gfx/dim_radial_user_inside_2.png
 
 User defined location inside of the circle and forced horizontal text:
 
 .. code-block:: python
 
-    dim = msp.add_radius_dim(center=(0, 0), radius=3, location=(1.5, 1.5),
+    dim = msp.add_radius_dim(center=(0, 0), radius=2.5, location=(1, 1),
                              dimstyle='EZ_RADIUS',
                              override={'dimtih': 1},
                              )
 
+.. image:: gfx/dim_radial_user_inside_horiz.png
 
 Overriding Measurement Text
 ---------------------------
