@@ -196,7 +196,7 @@ class RadiusDimension(BaseDimensionRenderer):
             if self.outside_text_force_dimline:
                 self.add_radial_dim_line(self.point_on_circle)
             else:
-                self.add_center_mark()
+                add_center_mark(self)
             if self.text_outside_horizontal:
                 self.add_horiz_ext_line_default(arrow_connection_point)
             else:
@@ -205,7 +205,7 @@ class RadiusDimension(BaseDimensionRenderer):
             if self.text_movement_rule == 1:
                 # move text, add leader -> dimline from text to point on circle
                 self.add_radial_dim_line_from_text(self.center.lerp(self.point_on_circle), arrow_connection_point)
-                self.add_center_mark()
+                add_center_mark(self)
             else:
                 # dimline from center to point on circle
                 self.add_radial_dim_line(arrow_connection_point)
@@ -225,7 +225,7 @@ class RadiusDimension(BaseDimensionRenderer):
             if self.outside_text_force_dimline:
                 self.add_radial_dim_line(self.point_on_circle)
             else:
-                self.add_center_mark()
+                add_center_mark(self)
             if self.text_outside_horizontal:
                 self.add_horiz_ext_line_user(arrow_connection_point)
             else:
@@ -240,7 +240,7 @@ class RadiusDimension(BaseDimensionRenderer):
                 else:
                     # move text, add leader -> dimline from text to point on circle
                     self.add_radial_dim_line_from_text(self.user_location, arrow_connection_point)
-                    self.add_center_mark()
+                    add_center_mark(self)
 
         self.text_outside = preserve_outside
 
@@ -333,22 +333,6 @@ class RadiusDimension(BaseDimensionRenderer):
         }
         self.add_text(dim_text, pos=Vector(pos), rotation=rotation, dxfattribs=attribs)
 
-    def add_center_mark(self):
-        mark_size = self.dim_style.get('dimcen', 0)
-        if mark_size == 0:
-            return
-        center = self.center
-        if mark_size > 0:  # draw mark
-            mark_x_vec = Vec2((mark_size, 0))
-            mark_y_vec = Vec2((0, mark_size))
-        else:  # draw line
-            mark_size = -mark_size + self.measurement
-            mark_x_vec = Vec2((mark_size, 0))
-            mark_y_vec = Vec2((0, mark_size))
-
-        self.add_line(center - mark_x_vec, center + mark_x_vec)
-        self.add_line(center - mark_y_vec, center + mark_y_vec)
-
     def transform_ucs_to_wcs(self) -> None:
         """
         Transforms dimension definition points into WCS or if required into OCS.
@@ -366,3 +350,45 @@ class RadiusDimension(BaseDimensionRenderer):
         from_ucs('text_midpoint', self.ocs)
 
 
+def add_center_mark(dim):
+    """ Add center mark/lines to radius and diameter dimensions.
+
+    Args:
+        dim: RadiusDimension or DiameterDimension renderer
+    """
+    dim_type = dim.dimension.dimtype
+    if dim_type == 4:  # Radius Dimension
+        radius = dim.measurement
+    elif dim_type == 3:  # Diameter Dimension
+        radius = dim.measurement / 2.
+    else:
+        raise TypeError(f'Invalid dimension type: {dim_type}')
+
+    mark_size = dim.dim_style.get('dimcen', 0)
+    if mark_size == 0:
+        return
+
+    center_lines = False
+    if mark_size < 0:
+        mark_size = abs(mark_size)
+        center_lines = True
+    center = Vec2(dim.center)
+
+    # draw center mark
+    mark_x_vec = Vec2((mark_size, 0))
+    mark_y_vec = Vec2((0, mark_size))
+    dim.add_line(center - mark_x_vec, center + mark_x_vec)
+    dim.add_line(center - mark_y_vec, center + mark_y_vec)
+
+    if center_lines:
+        size = mark_size + radius
+        if size < 2 * mark_size:
+            return  # not enough space for center lines
+        start_x_vec = mark_x_vec * 2
+        start_y_vec = mark_y_vec * 2
+        end_x_vec = Vec2((size, 0))
+        end_y_vec = Vec2((0, size))
+        dim.add_line(center + start_x_vec, center + end_x_vec)
+        dim.add_line(center - start_x_vec, center - end_x_vec)
+        dim.add_line(center + start_y_vec, center + end_y_vec)
+        dim.add_line(center - start_y_vec, center - end_y_vec)

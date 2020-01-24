@@ -176,6 +176,27 @@ User defined location inside of the circle and forced horizontal text:
 
 .. image:: gfx/dim_radial_user_inside_horiz.png
 
+Center Mark/Lines
+-----------------
+
+Center mark/lines are controlled by  :attr:`~ezdxf.entities.DimStyle.dxf.dimcen`, default value is ``0``
+for predefined dimstyles ``'EZ_RADIUS'`` and ``'EZ_RADIUS_INSIDE'`` :
+
+=== =====
+0   Center mark is off
+>0  Create center mark of given size
+<0  Create center lines
+=== =====
+
+.. code-block:: Python
+
+    dim = msp.add_radius_dim(center=(0, 0), radius=2.5, angle=45,
+                             dimstyle='EZ_RADIUS',
+                             override={'dimcen': 0.25},
+                             )
+
+.. image:: gfx/dim_center_mark.png
+
 Overriding Measurement Text
 ---------------------------
 

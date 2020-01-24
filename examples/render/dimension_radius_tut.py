@@ -76,7 +76,7 @@ def radius_default_outside():
     doc = ezdxf.new(DXFVERSION, setup=True)
     add_3x_dim(doc.modelspace(), [0, DELTA, 2 * DELTA])
     set_main_view(doc, center=(DELTA, 0), height=10, icon=0)
-    doc.saveas(OUTDIR / f'tut_dim_radius_default_outside.dxf')
+    doc.saveas(OUTDIR / 'tut_dim_radius_default_outside.dxf')
 
 
 def radius_default_outside_horizontal():
@@ -85,7 +85,7 @@ def radius_default_outside_horizontal():
     style.dxf.dimtoh = 1
     add_3x_dim(doc.modelspace(), [0, DELTA, 2 * DELTA])
     set_main_view(doc, center=(DELTA, 0), height=10, icon=0)
-    doc.saveas(OUTDIR / f'tut_dim_radius_default_outside_horizontal.dxf')
+    doc.saveas(OUTDIR / 'tut_dim_radius_default_outside_horizontal.dxf')
 
 
 def radius_default_inside(dimtmove=0):
@@ -111,7 +111,7 @@ def radius_user_defined_outside(delta=DELTA):
     doc = ezdxf.new(DXFVERSION, setup=True)
     add_3x_dim_user(doc.modelspace(), [0, delta, 2 * delta], distance=RADIUS + 1.5)
     set_main_view(doc, center=(delta, 0), height=10, icon=0)
-    doc.saveas(OUTDIR / f'tut_dim_radius_user_defined_outside.dxf')
+    doc.saveas(OUTDIR / 'tut_dim_radius_user_defined_outside.dxf')
 
 
 def radius_user_defined_outside_horizontal(delta=DELTA):
@@ -120,7 +120,7 @@ def radius_user_defined_outside_horizontal(delta=DELTA):
     style.dxf.dimtoh = 1
     add_3x_dim_user(doc.modelspace(), [0, delta, 2 * delta], distance=RADIUS + 1.5)
     set_main_view(doc, center=(delta, 0), height=10, icon=0)
-    doc.saveas(OUTDIR / f'tut_dim_radius_user_defined_outside_horizontal.dxf')
+    doc.saveas(OUTDIR / 'tut_dim_radius_user_defined_outside_horizontal.dxf')
 
 
 def radius_user_defined_inside(delta=DELTA, dimtmove=0):
@@ -138,7 +138,17 @@ def radius_user_defined_inside_horizontal(delta=DELTA):
     style.dxf.dimtih = 1
     add_3x_dim_user(doc.modelspace(), [0, delta, 2 * delta], distance=RADIUS - 1.5)
     set_main_view(doc, center=(delta, 0), height=10, icon=0)
-    doc.saveas(OUTDIR / f'tut_dim_radius_user_defined_inside_horizontal.dxf')
+    doc.saveas(OUTDIR / 'tut_dim_radius_user_defined_inside_horizontal.dxf')
+
+
+def center_mark():
+    doc = ezdxf.new(DXFVERSION, setup=True)
+    msp = doc.modelspace()
+    add_dim(msp, 0, 0, override={'dimcen': 0}, dimstyle='EZ_RADIUS')
+    add_dim(msp, DELTA, 0, override={'dimcen': 0.25}, dimstyle='EZ_RADIUS')
+    add_dim(msp, DELTA * 2, 0, override={'dimcen': -0.25}, dimstyle='EZ_RADIUS')
+    set_main_view(doc, center=(DELTA, 0), height=10, icon=0)
+    doc.saveas(OUTDIR / 'tut_dim_radius_center_mark.dxf')
 
 
 if __name__ == '__main__':
@@ -153,3 +163,4 @@ if __name__ == '__main__':
     radius_user_defined_inside(dimtmove=0)  # dimline from text, also for 1
     radius_user_defined_inside(dimtmove=2)  # dimline from center
     radius_user_defined_inside_horizontal()
+    center_mark()
