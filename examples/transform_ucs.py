@@ -18,8 +18,17 @@ def add_circle(msp, ucs):
     circle.transform_to_wcs(ucs)
 
 
+def add_text(msp, ucs):
+    text = msp.add_text('TEXT', dxfattribs={
+        'color': 4,
+        'style': 'OpenSansCondensed-Light',
+        'height': .2,
+    }).set_align('MIDDLE_CENTER')
+    text.transform_to_wcs(ucs)
+
+
 def main(filename):
-    doc = ezdxf.new('R2010')
+    doc = ezdxf.new('R2010', setup=True)
     msp = doc.modelspace()
 
     ucs = UCS()
@@ -30,6 +39,7 @@ def main(filename):
             ucs.moveto((ix * DX, iy * DY, 0))
             ucs.render_axis(msp, length=1)
             add_circle(msp, ucs)
+            add_text(msp, ucs)
             ucs = ucs.rotate_local_z(angle)
         ucs = UCS().rotate_local_x(ix*angle)
 

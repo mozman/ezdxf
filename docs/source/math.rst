@@ -131,6 +131,10 @@ UCS Class
 
     .. automethod:: moveto(location: Vertex) -> UCS
 
+    .. automethod:: transform_ocs_entity_vertices(extrusion: Vector, vertices: Iterable[Vector]) -> List[Vector]
+
+    .. automethod:: transform_ocs_entity_angles(extrusion: Vector, angles: Iterable[float]) -> List[float]
+
     .. automethod:: from_x_axis_and_point_in_xy
 
     .. automethod:: from_x_axis_and_point_in_xz

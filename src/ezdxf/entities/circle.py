@@ -3,7 +3,7 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 
-from ezdxf.math import Vector, UCS, OCS
+from ezdxf.math import Vector, UCS, OCS, Z_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -65,24 +65,15 @@ class Circle(DXFGraphic):
             yield ocs.to_wcs(v)
 
     def transform_to_wcs(self, ucs: 'UCS') -> None:
-        """ Transform CIRCLE from local :class:`ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        Work with local UCS coordinates and transform them later into WCS coordinates.
+        """ Transform CIRCLE from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
 
         """
-        # Requirement: current coordinates are located in the given UCS
-        if self.dxf.hasattr('extrusion'):
-            # Transform center from existing OCS to WCS, in this situation the UCS is the WCS.
-            center = self.ocs().to_wcs(self.dxf.center)
-        else:
-            center = self.dxf.center
-        # Transform UCS coordinates to the real WCS
-        wcs_center = ucs.to_wcs(center)
-        if ucs.uz.isclose((0, 0, 1)):
-            self.dxf.center = wcs_center
-        else:
-            self.dxf.center = OCS(ucs.uz).from_wcs(wcs_center)
-            self.dxf.extrusion = ucs.uz
+        ocs_vertices = ucs.transform_ocs_entity_vertices(
+            extrusion=self.dxf.get('extrusion', Z_AXIS),
+            vertices=[self.dxf.center],
+        )
+        self.dxf.center = ocs_vertices[0]
+        self.dxf.extrusion = ucs.uz
 

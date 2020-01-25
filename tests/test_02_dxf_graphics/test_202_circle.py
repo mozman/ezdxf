@@ -130,14 +130,3 @@ def test_write_dxf(txt, ver):
     circle.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
 
-
-def test_transform_to_wcs():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'color': '7',
-        'center': (1, 1, 1),
-        'radius': 2.5,
-    })
-    ucs = UCS(origin=(1, 1, 1))
-    entity.transform_to_wcs(ucs)
-    assert entity.dxf.center == (2, 2, 2)
-    assert entity.has_dxf_attrib('extrusion') is False

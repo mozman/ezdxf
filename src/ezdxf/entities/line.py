@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
-from ezdxf.math import Vector
+from ezdxf.math import Vector, UCS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -50,3 +50,13 @@ class Line(DXFGraphic):
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['start', 'end', 'thickness', 'extrusion'])
         # xdata and embedded objects export will be done by parent class
+
+    def transform_to_wcs(self, ucs: UCS) -> None:
+        """ Transform LINE entity from local :class:`~ezdxf.math.UCS` coordinates to
+        :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        self.dxf.start = ucs.to_wcs(self.dxf.start)
+        self.dxf.end = ucs.to_wcs(self.dxf.end)

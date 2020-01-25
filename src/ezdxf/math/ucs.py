@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Sequence, Iterable
+from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, List
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 from .matrix44 import Matrix44
 
@@ -337,6 +337,64 @@ class UCS:
         """
         self.origin = Vector(location)
         return self
+
+    def transform_ocs_entity_vertices(self, extrusion: Vector, vertices: Iterable[Vector]) -> List[Vector]:
+        """
+        Transforms OCS entity vertices to WCS vertices, takes existing OCS into account.
+
+        Args:
+            extrusion: extrusion vector of existing OCS
+            vertices: iterable of entity UCS vertices to transform to WCS
+
+        Returns:
+            List of WCS vertices as :class:`Vector` objects
+
+        """
+        # Requirement: current coordinates are located in the given UCS
+        if Z_AXIS.isclose(extrusion):  # ignore OCS
+            ucs_vertices = vertices
+        else:
+            # Transform center from existing OCS to WCS, in this situation the UCS is the WCS.
+            ocs = OCS(extrusion)
+            ucs_vertices = (ocs.to_wcs(v) for v in vertices)
+
+        # Transform UCS coordinates to WCS
+        wcs_vertices = (self.to_wcs(v) for v in ucs_vertices)
+        # set OCS coordinates
+        ocs = OCS(self.uz)
+        return [ocs.from_wcs(v) for v in wcs_vertices]
+
+    def transform_ocs_entity_angles(self, extrusion: Vector, angles: Iterable[float]) -> List[float]:
+        """
+        Transforms OCS rotation angles to WCS rotation angles, takes existing OCS into account.
+
+        Args:
+            extrusion: extrusion vector of existing OCS
+            angles: iterable of entity UCS angles to transform into WCS angles, angles in degrees
+
+        Returns:
+            List of WCS angles, angles in degrees.
+
+        """
+        # Requirement: current coordinates are located in the given UCS
+        if Z_AXIS.isclose(extrusion):  # ignore OCS
+            ucs_vector = (Vector.from_deg_angle(a) for a in angles)
+        else:
+            # Transform center from existing OCS to WCS, in this situation the UCS is the WCS.
+            ocs = OCS(extrusion)
+            # OCS origin == UCS origin
+            ocs_vector = (Vector.from_deg_angle(a) for a in angles)
+            ucs_vector = (ocs.to_wcs(v) for v in ocs_vector)
+
+        # Transform UCS coordinates to WCS
+        wcs = self.to_wcs
+        origin = wcs((0, 0, 0))
+        wcs_vector = (wcs(v) - origin for v in ucs_vector)
+
+        # set OCS coordinates
+        ocs = OCS(self.uz)
+        # OCS origin == WCS origin
+        return [ocs.from_wcs(v).angle_deg for v in wcs_vector]
 
     @property
     def is_cartesian(self) -> bool:

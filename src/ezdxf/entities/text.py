@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Tuple, Union
-from ezdxf.math import Vector
+from ezdxf.math import Vector, OCS, UCS, Z_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, DXFValueError
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
@@ -188,3 +188,25 @@ class Text(DXFGraphic):
         if halign > 2:
             valign = 0
         return const.TEXT_ALIGNMENT_BY_FLAGS.get((halign, valign), 'LEFT')
+
+    def transform_to_wcs(self, ucs: UCS) -> None:
+        """ Transform TEXT entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        ucs_insert = self.dxf.insert
+        extrusion = self.dxf.get('extrusion', Z_AXIS)
+        ocs_vertices = ucs.transform_ocs_entity_vertices(
+            extrusion=extrusion,
+            vertices=[ucs_insert, self.get_dxf_attrib('align_point', ucs_insert)],
+        )
+        ocs_rotations = ucs.transform_ocs_entity_angles(
+            extrusion=extrusion,
+            angles=[self.get_dxf_attrib('rotation', 0)],
+        )
+        # set OCS coordinates
+        self.dxf.insert = ocs_vertices[0]
+        self.dxf.align_point = ocs_vertices[1]
+        self.dxf.rotation = ocs_rotations[0]
+        self.dxf.extrusion = ucs.uz

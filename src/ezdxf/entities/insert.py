@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List
-from ezdxf.math import Vector
+from ezdxf.math import Vector, OCS, UCS, Z_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError
 from .dxfentity import base_class, SubclassProcessor
@@ -290,3 +290,20 @@ class Insert(DXFGraphic):
         for attrib in self.attribs:
             db.delete_entity(attrib)
         self.attribs = []
+
+    def transform_to_wcs(self, ucs: UCS) -> None:
+        """ Transform INSERT entity and attached ATTRIB entities from local :class:`~ezdxf.math.UCS` coordinates to
+        :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        extrusion = self.dxf.get('extrusion', Z_AXIS)
+        ocs_vertices = ucs.transform_ocs_entity_vertices(extrusion=extrusion, vertices=[self.dxf.insert])
+        ocs_angles = ucs.transform_ocs_entity_angles(extrusion=extrusion, angles=[self.get_dxf_attrib('rotation', 0)])
+        self.dxf.insert = ocs_vertices[0]
+        self.dxf.rotation = ocs_angles[0]
+        self.dxf.extrusion = ucs.uz
+
+        for attrib in self.attribs:
+            attrib.transform_to_wcs(ucs)

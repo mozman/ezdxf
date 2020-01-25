@@ -129,7 +129,7 @@ def test_rotate_local_x():
     assert ucs.ux == (1, 0, 0)  # WCS x-axis
     assert ucs.uy == (0, 1, 0)  # WCS y-axis
     assert ucs.uz == (0, 0, 1)  # WCS z-axis
-    ucs = ucs.rotate_local_x(pi/2)
+    ucs = ucs.rotate_local_x(pi / 2)
     assert ucs.ux.isclose((1, 0, 0))  # WCS x-axis
     assert ucs.uy.isclose((0, 0, 1))  # WCS z-axis
     assert ucs.uz.isclose((0, -1, 0))  # WCS -y-axis
@@ -140,7 +140,7 @@ def test_rotate_local_y():
     assert ucs.ux == (1, 0, 0)  # WCS x-axis
     assert ucs.uy == (0, 1, 0)  # WCS y-axis
     assert ucs.uz == (0, 0, 1)  # WCS z-axis
-    ucs = ucs.rotate_local_y(pi/2)
+    ucs = ucs.rotate_local_y(pi / 2)
     assert ucs.ux.isclose((0, 0, -1))  # WCS -z-axis
     assert ucs.uy.isclose((0, 1, 0))  # WCS y-axis
     assert ucs.uz.isclose((1, 0, 0))  # WCS x-axis
@@ -151,7 +151,7 @@ def test_rotate_local_z():
     assert ucs.ux == (1, 0, 0)  # WCS x-axis
     assert ucs.uy == (0, 1, 0)  # WCS y-axis
     assert ucs.uz == (0, 0, 1)  # WCS z-axis
-    ucs = ucs.rotate_local_z(pi/2)
+    ucs = ucs.rotate_local_z(pi / 2)
     assert ucs.ux.isclose((0, 1, 0))  # WCS y-axis
     assert ucs.uy.isclose((-1, 0, 0))  # WCS -x-axis
     assert ucs.uz.isclose((0, 0, 1))  # WCS z-axis
@@ -171,3 +171,22 @@ def test_moveto():
     assert ucs.origin == (1, 2, 3)
     ucs.moveto((3, 2, 1))
     assert ucs.origin == (3, 2, 1)
+
+
+def test_transform_ocs_entity_shifting():
+    ucs = UCS(origin=(1, 1, 1))
+    vertices = ucs.transform_ocs_entity_vertices(
+        extrusion=Vector(0, 0, 1),
+        vertices=[Vector(1, 1, 1)],
+    )
+    assert vertices[0] == (2, 2, 2)
+
+
+def test_transform_ocs_entity_rotation():
+    ucs = UCS(origin=(0, 0, 0)).rotate_local_z(-pi / 2)
+
+    angles = ucs.transform_ocs_entity_angles(
+        extrusion=Vector(0, 0, 1),
+        angles=[90],
+    )
+    assert angles[0] == 0

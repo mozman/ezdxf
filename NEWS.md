@@ -13,7 +13,6 @@ Version 0.11a2 - dev
 - NEW: `Drawing.set_modelspace_vport()` set initial view/zoom location for the modelspace
 - NEW: `Layout.add_radius_dim()` implemented
 - NEW: shortcut calls `Layout.add_radius_dim_2p()` and `Layout.add_radius_dim_cra()`
-- NEW: `Circle.transform_to_wcs()` transform CIRCLE from UCS to WCS
 - NEW: `Circle.vertices(angles)` yields vertices for iterable angles in WCS
 - NEW: `Ellipse.vertices(params)` yields vertices for iterable params in WCS
 - NEW: Arc properties `start_point` and `end_point` returns start- and end point of arc in WCS
@@ -21,6 +20,10 @@ Version 0.11a2 - dev
 - NEW: `Drawing.set_modelspace_vport(height, center)` set initial view/zoom location for the modelspace
 - NEW: 2d construction function `ezdxf.math.offset_vertices_2d()`
 - NEW: `Drawing.output_encoding`  returns required output encoding
+- NEW: User Coordinate System (UCS) based entity transformation, allows to work with UCS coordinates, which are 
+  simpler if the UCS is chosen wisely, and transform them later into WCS coordinates. Entities which have a 
+  `transform_to_wcs()` method, automatically take advantage of the new UCS transformation methods, but not all entity 
+  types are supported.
 - NEW: `UCS.rotate(axis, angle)` returns a new UCS rotated around WCS `axis`
 - NEW: `UCS.rotate_local_x(angle)` returns a new UCS rotated around local x-axis
 - NEW: `UCS.rotate_local_y(angle)` returns a new UCS rotated around local y-axis
@@ -28,6 +31,11 @@ Version 0.11a2 - dev
 - NEW: `UCS.copy()` returns a new copy of UCS
 - NEW: `UCS.shift(delta)` shifts UCS inplace by vector `delta`
 - NEW: `UCS.moveto(location)` set new UCS origin to `location` inplace
+- NEW: `Arc.transform_to_wcs(ucs)` transform geometry from UCS to WCS
+- NEW: `Circle.transform_to_wcs(ucs)` transform geometry from UCS to WCS
+- NEW: `Insert.transform_to_wcs(ucs)` transform geometry from UCS to WCS
+- NEW: `Line.transform_to_wcs(ucs)` transform geometry from UCS to WCS
+- NEW: `Text.transform_to_wcs(ucs)` transform geometry from UCS to WCS
 - NEW: load DXF comments from file (`ezdxf.comments.from_file`) or stream (`ezdxf.comments.from_stream`)
 - NEW: user defined point format support for 2d POLYLINE entities: 
   `add_polyline2d([(1, 2 .5), (3, 4, 0)], format='xyb')` 

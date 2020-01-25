@@ -38,16 +38,10 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         End angle in degrees (float)
 
-    .. attribute:: start_point
+    .. autoattribute:: start_point
 
-        Returns the start point of the arc in WCS. This property takes into account a local OCS.
+    .. autoattribute:: end_point
 
-        .. versionadded:: 0.11
-
-    .. attribute:: end_point
-
-        Returns the end point of the arc in WCS. This property takes into account a local OCS.
-
-        .. versionadded:: 0.11
+    .. automethod:: transform_to_wcs(ucs: UCS)
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-0B14D8F1-0EBA-44BF-9108-57D8CE614BC8
