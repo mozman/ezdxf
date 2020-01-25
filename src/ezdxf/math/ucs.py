@@ -179,6 +179,14 @@ class UCS:
         """ z-axis unit vector """
         return self.matrix.uz
 
+    def copy(self) -> 'UCS':
+        """ Returns a copy of this UCS.
+
+        .. versionadded:: 0.11
+
+        """
+        return UCS(self.origin, self.ux, self.uy, self.uz)
+
     def to_wcs(self, point: 'Vertex') -> 'Vector':
         """ Returns WCS vector for UCS `point`. """
         return self.origin + self.matrix.transform(point)
@@ -248,7 +256,8 @@ class UCS:
     def rotate(self, axis: 'Vertex', angle: float) -> 'UCS':
         """
         Returns a new rotated UCS, with the same origin as the source UCS.
-        The rotation vector is located in the origin and has :ref:`WCS` coordinates.
+        The rotation vector is located in the origin and has :ref:`WCS` coordinates e.g. (0, 0, 1) is the WCS z-axis
+        as rotation vector.
 
         .. versionadded:: 0.11
 
@@ -260,6 +269,74 @@ class UCS:
         t = Matrix44.axis_rotate(Vector(axis), angle)
         ux, uy, uz = t.transform_vectors([self.ux, self.uy, self.uz])
         return UCS(origin=self.origin, ux=ux, uy=uy, uz=uz)
+
+    def rotate_local_x(self, angle: float) -> 'UCS':
+        """
+        Returns a new rotated UCS, rotation axis is the local x-axis.
+
+        .. versionadded:: 0.11
+
+        Args:
+             angle: rotation angle in radians
+
+        """
+        t = Matrix44.axis_rotate(self.ux, angle)
+        uy, uz = t.transform_vectors([self.uy, self.uz])
+        return UCS(origin=self.origin, ux=self.ux, uy=uy, uz=uz)
+
+    def rotate_local_y(self, angle: float) -> 'UCS':
+        """
+        Returns a new rotated UCS, rotation axis is the local y-axis.
+
+        .. versionadded:: 0.11
+
+        Args:
+             angle: rotation angle in radians
+
+        """
+        t = Matrix44.axis_rotate(self.uy, angle)
+        ux, uz = t.transform_vectors([self.ux, self.uz])
+        return UCS(origin=self.origin, ux=ux, uy=self.uy, uz=uz)
+
+    def rotate_local_z(self, angle: float) -> 'UCS':
+        """
+        Returns a new rotated UCS, rotation axis is the local z-axis.
+
+        .. versionadded:: 0.11
+
+        Args:
+             angle: rotation angle in radians
+
+        """
+        t = Matrix44.axis_rotate(self.uz, angle)
+        ux, uy = t.transform_vectors([self.ux, self.uy])
+        return UCS(origin=self.origin, ux=ux, uy=uy, uz=self.uz)
+
+    def shift(self, delta: 'Vertex') -> 'UCS':
+        """
+        Shifts current UCS by `delta` vector and returns `self`.
+
+        .. versionadded:: 0.11
+
+        Args:
+            delta: shifting vector
+
+        """
+        self.origin += Vector(delta)
+        return self
+
+    def moveto(self, location: 'Vertex') -> 'UCS':
+        """
+        Place current UCS at new origin `location` and returns `self`.
+
+        .. versionadded:: 0.11
+
+        Args:
+            location: new origin in WCS
+
+        """
+        self.origin = Vector(location)
+        return self
 
     @property
     def is_cartesian(self) -> bool:

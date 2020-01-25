@@ -101,6 +101,8 @@ UCS Class
 
     .. autoattribute:: is_cartesian
 
+    .. automethod:: copy() -> UCS
+
     .. automethod:: to_wcs
 
     .. automethod:: points_to_wcs
@@ -117,7 +119,17 @@ UCS Class
 
     .. automethod:: points_from_wcs
 
-    .. automethod:: rotate
+    .. automethod:: rotate(axis: Vertex, angle:float) -> UCS
+
+    .. automethod:: rotate_local_x(angle:float) -> UCS
+
+    .. automethod:: rotate_local_y(angle:float) -> UCS
+
+    .. automethod:: rotate_local_z(angle:float) -> UCS
+
+    .. automethod:: shift(delta: Vertex) -> UCS
+
+    .. automethod:: moveto(location: Vertex) -> UCS
 
     .. automethod:: from_x_axis_and_point_in_xy
 

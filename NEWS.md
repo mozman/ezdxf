@@ -20,7 +20,13 @@ Version 0.11a2 - dev
 - NEW: `Drawing.set_modelspace_vport(height, center)` set initial view/zoom location for the modelspace
 - NEW: 2d construction function `ezdxf.math.offset_vertices_2d()`
 - NEW: `Drawing.output_encoding`  returns required output encoding
-- NEW: `UCS.rotate(axis, angle)` returns a new rotated UCS
+- NEW: `UCS.rotate(axis, angle)` returns a new UCS rotated around WCS `axis`
+- NEW: `UCS.rotate_local_x(angle)` returns a new UCS rotated around local x-axis
+- NEW: `UCS.rotate_local_y(angle)` returns a new UCS rotated around local y-axis
+- NEW: `UCS.rotate_local_z(angle)` returns a new UCS rotated around local z-axis
+- NEW: `UCS.copy()` returns a new copy of UCS
+- NEW: `UCS.shift(delta)` shifts UCS inplace by vector `delta`
+- NEW: `UCS.moveto(location)` set new UCS origin to `location` inplace
 - NEW: load DXF comments from file (`ezdxf.comments.from_file`) or stream (`ezdxf.comments.from_stream`)
 - NEW: user defined point format support for 2d POLYLINE entities: 
   `add_polyline2d([(1, 2 .5), (3, 4, 0)], format='xyb')` 

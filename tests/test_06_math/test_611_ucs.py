@@ -1,6 +1,6 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from math import isclose, radians
+from math import isclose, radians, pi
 from ezdxf.math import UCS, Vector, X_AXIS, Y_AXIS, Z_AXIS
 
 
@@ -122,3 +122,52 @@ def test_rotate_z_axis():
     assert ucs.ux.isclose((0, 1, 0))
     assert ucs.uy.isclose((-1, 0, 0))
     assert ucs.uz.isclose((0, 0, 1))
+
+
+def test_rotate_local_x():
+    ucs = UCS()
+    assert ucs.ux == (1, 0, 0)  # WCS x-axis
+    assert ucs.uy == (0, 1, 0)  # WCS y-axis
+    assert ucs.uz == (0, 0, 1)  # WCS z-axis
+    ucs = ucs.rotate_local_x(pi/2)
+    assert ucs.ux.isclose((1, 0, 0))  # WCS x-axis
+    assert ucs.uy.isclose((0, 0, 1))  # WCS z-axis
+    assert ucs.uz.isclose((0, -1, 0))  # WCS -y-axis
+
+
+def test_rotate_local_y():
+    ucs = UCS()
+    assert ucs.ux == (1, 0, 0)  # WCS x-axis
+    assert ucs.uy == (0, 1, 0)  # WCS y-axis
+    assert ucs.uz == (0, 0, 1)  # WCS z-axis
+    ucs = ucs.rotate_local_y(pi/2)
+    assert ucs.ux.isclose((0, 0, -1))  # WCS -z-axis
+    assert ucs.uy.isclose((0, 1, 0))  # WCS y-axis
+    assert ucs.uz.isclose((1, 0, 0))  # WCS x-axis
+
+
+def test_rotate_local_z():
+    ucs = UCS()
+    assert ucs.ux == (1, 0, 0)  # WCS x-axis
+    assert ucs.uy == (0, 1, 0)  # WCS y-axis
+    assert ucs.uz == (0, 0, 1)  # WCS z-axis
+    ucs = ucs.rotate_local_z(pi/2)
+    assert ucs.ux.isclose((0, 1, 0))  # WCS y-axis
+    assert ucs.uy.isclose((-1, 0, 0))  # WCS -x-axis
+    assert ucs.uz.isclose((0, 0, 1))  # WCS z-axis
+
+
+def test_shift_ucs():
+    ucs = UCS()
+    ucs.shift((1, 2, 3))
+    assert ucs.origin == (1, 2, 3)
+    ucs.shift((1, 2, 3))
+    assert ucs.origin == (2, 4, 6)
+
+
+def test_moveto():
+    ucs = UCS()
+    ucs.moveto((1, 2, 3))
+    assert ucs.origin == (1, 2, 3)
+    ucs.moveto((3, 2, 1))
+    assert ucs.origin == (3, 2, 1)
