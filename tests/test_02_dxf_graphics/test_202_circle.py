@@ -6,7 +6,7 @@ import pytest
 from ezdxf.entities.circle import Circle
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Vector
+from ezdxf.math import Vector, UCS
 
 TEST_CLASS = Circle
 TEST_TYPE = 'CIRCLE'
@@ -129,3 +129,15 @@ def test_write_dxf(txt, ver):
     collector2 = TagCollector(dxfversion=ver, optional=False)
     circle.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
+
+
+def test_transform_to_wcs():
+    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+        'color': '7',
+        'center': (1, 1, 1),
+        'radius': 2.5,
+    })
+    ucs = UCS(origin=(1, 1, 1))
+    entity.transform_to_wcs(ucs)
+    assert entity.dxf.center == (2, 2, 2)
+    assert entity.has_dxf_attrib('extrusion') is False

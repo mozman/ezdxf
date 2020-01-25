@@ -27,7 +27,11 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         Radius of circle (float)
 
+    .. automethod:: transform_to_wcs(ucs: UCS)
+
     .. automethod:: vertices(angle:Iterable[float]) -> Iterable[Vector]
+
+
 
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-8663262B-222C-414D-B133-4A8506A27C18

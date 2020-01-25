@@ -13,8 +13,9 @@ Version 0.11a2 - dev
 - NEW: `Drawing.set_modelspace_vport()` set initial view/zoom location for the modelspace
 - NEW: `Layout.add_radius_dim()` implemented
 - NEW: shortcut calls `Layout.add_radius_dim_2p()` and `Layout.add_radius_dim_cra()`
-- NEW: `Circle.vertices(angles)`  yields vertices for iterable angles in WCS
-- NEW: `Ellipse.vertices(params)`  yields vertices for iterable params in WCS
+- NEW: `Circle.transform_to_wcs()` transform CIRCLE from UCS to WCS
+- NEW: `Circle.vertices(angles)` yields vertices for iterable angles in WCS
+- NEW: `Ellipse.vertices(params)` yields vertices for iterable params in WCS
 - NEW: Arc properties `start_point` and `end_point` returns start- and end point of arc in WCS
 - NEW: Ellipse properties `start_point` and `end_point` returns start- and end point of ellipse in WCS
 - NEW: `Drawing.set_modelspace_vport(height, center)` set initial view/zoom location for the modelspace
