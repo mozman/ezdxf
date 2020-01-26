@@ -171,22 +171,3 @@ def test_moveto():
     assert ucs.origin == (1, 2, 3)
     ucs.moveto((3, 2, 1))
     assert ucs.origin == (3, 2, 1)
-
-
-def test_transform_ocs_entity_shifting():
-    ucs = UCS(origin=(1, 1, 1))
-    vertices = ucs.transform_ocs_entity_vertices(
-        extrusion=Vector(0, 0, 1),
-        vertices=[Vector(1, 1, 1)],
-    )
-    assert vertices[0] == (2, 2, 2)
-
-
-def test_transform_ocs_entity_rotation():
-    ucs = UCS(origin=(0, 0, 0)).rotate_local_z(-pi / 2)
-
-    angles = ucs.transform_ocs_entity_angles(
-        extrusion=Vector(0, 0, 1),
-        angles=[90],
-    )
-    assert angles[0] == 0

@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-09
 from typing import TYPE_CHECKING, Iterable, List, cast
@@ -11,7 +11,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Tags, Drawing, Vertex, DXFTag
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, DXFTag, UCS
 
 __all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables', 'Wipeout']
 
@@ -161,6 +161,16 @@ class Image(DXFGraphic):
     # only for compatibility to ezdxf prior v.0.8.9
     def get_boundary_path(self) -> List['Vertex']:
         return self._boundary_path
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform IMAGE entity from local :class:`~ezdxf.math.UCS` coordinates to
+        :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        self.dxf.u_pixel = ucs.to_wcs(self.dxf.u_pixel)
+        self.dxf.v_pixel = ucs.to_wcs(self.dxf.v_pixel)
 
 
 acdb_wipeout = DefSubclass('AcDbWipeout', dict(acdb_image.attribs))

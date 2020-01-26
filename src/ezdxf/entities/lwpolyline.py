@@ -1,13 +1,13 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, cast, List
 import array
 import copy
 from contextlib import contextmanager
-from ezdxf.math import Vector
+from ezdxf.math import Vector, OCS, Z_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED, LWPOLYLINE_PLINEGEN
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.packedtags import VertexArray
@@ -16,7 +16,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, Vertex, DXFNamespace
+    from ezdxf.eztypes import TagWriter, Drawing, Vertex, DXFNamespace, UCS
 
 __all__ = ['LWPolyline']
 
@@ -249,6 +249,22 @@ class LWPolyline(DXFGraphic):
     def clear(self) -> None:
         """ Remove all points. """
         self.lwpoints.clear()
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform LWPOLYLINE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        if not Z_AXIS.isclose(self.dxf.extrusion):
+            raise NotImplementedError('Extrusion vector has to be (0, 0, 1)!')
+
+        vertices = list(ucs.points_to_ocs(self.vertices_in_wcs()))
+        lwpoints = [(v[0], v[1], p[2], p[3], p[4]) for v, p in zip(vertices, self.lwpoints)]
+        self.set_points(lwpoints)
+        self.dxf.extrusion = ucs.uz
+        # all new OCS vertices must have the same z-axis, which is the elevation of the polyline
+        self.dxf.elevation = vertices[0][2]
 
 
 class LWPolylinePoints(VertexArray):

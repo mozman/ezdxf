@@ -111,3 +111,4 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: Leader.set_vertices
 
+    .. automethod:: transform_to_wcs(ucs: UCS)

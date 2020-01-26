@@ -166,6 +166,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: add_stacked_text
 
+    .. automethod:: transform_to_wcs(ucs: UCS)
+
 .. _mtext_inline_codes:
 
 MText Inline Codes

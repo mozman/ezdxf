@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-06
 from typing import TYPE_CHECKING, Iterable, Sequence
@@ -16,7 +16,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags, UCS
 
 __all__ = ['Spline']
 
@@ -37,6 +37,7 @@ acdb_spline = DefSubclass('AcDbSpline', {
     'fit_tolerance': DXFAttr(44, default=1e-10, optional=True),
     'start_tangent': DXFAttr(12, xtype=XType.point3d, optional=True),
     'end_tangent': DXFAttr(13, xtype=XType.point3d, optional=True),
+    # extrusion is the normal vector (omitted if the spline is non-planar)
     'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
     # 10: Control points (in WCS); one entry per control point
     # 11: Fit points (in WCS); one entry per fit point
@@ -70,8 +71,8 @@ class Spline(DXFGraphic):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        self.fit_points = []  # data stored as array.array('d')
-        self.control_points = []  # data stored as array.array('d')
+        self.fit_points = VertexArray()  # data stored as array.array('d')
+        self.control_points = VertexArray()  # data stored as array.array('d')
         self.knots = []  # data stored as array.array('d')
         self.weights = []  # data stored as array.array('d')
 
@@ -291,3 +292,16 @@ class Spline(DXFGraphic):
 
         if data.weights is not self.weights:
             self.weights = data.weights
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform SPLINE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        self._control_points.transform_to_wcs(ucs)
+        self._fit_points.transform_to_wcs(ucs)
+        # Transform optional attributes if they exist
+        for attr_name in ('start_tangent', 'end_tangent', 'extrusion'):
+            if self.dxf.hasattr(attr_name):
+                self.dxf.set(attr_name, ucs.to_wcs(self.dxf.get(attr_name)))

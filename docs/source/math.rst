@@ -113,6 +113,8 @@ UCS Class
 
     .. automethod:: to_ocs_angle_deg
 
+    .. automethod:: angles_to_ocs_deg
+
     .. automethod:: to_ocs_angle_rad
 
     .. automethod:: from_wcs
@@ -130,10 +132,6 @@ UCS Class
     .. automethod:: shift(delta: Vertex) -> UCS
 
     .. automethod:: moveto(location: Vertex) -> UCS
-
-    .. automethod:: transform_ocs_entity_vertices(extrusion: Vector, vertices: Iterable[Vector]) -> List[Vector]
-
-    .. automethod:: transform_ocs_entity_angles(extrusion: Vector, angles: Iterable[float]) -> List[float]
 
     .. automethod:: from_x_axis_and_point_in_xy
 

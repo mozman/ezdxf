@@ -116,6 +116,13 @@ def test_str(line):
     assert repr(line) == "<class 'ezdxf.entities.line.Line'> LINE(#0)"
 
 
+def test_get_dxf_defaul(line):
+    # get_dxf_default returns the DXF default value for unset attributes
+    assert line.dxf.get_default('thickness') == 0
+    # get returns the given default for unset attributes, which is None by default :)
+    assert line.dxf.get('thickness') is None
+
+
 def test_ocs(line):
     ocs = line.ocs()
     assert ocs.uz == (0, 0, 1)

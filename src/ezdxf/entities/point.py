@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
@@ -10,7 +10,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
 
 __all__ = ['Point']
 
@@ -48,3 +48,11 @@ class Point(DXFGraphic):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_point.name)
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['location', 'thickness', 'extrusion', 'angle'])
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform POINT entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        self._ucs_and_ocs_transformation(ucs, vector_names=['location'], angle_names=['angle'])

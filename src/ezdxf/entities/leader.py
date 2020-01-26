@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-12
 from typing import TYPE_CHECKING, List, Iterable
@@ -13,7 +13,7 @@ from .factory import register_entity
 from .dimension import OverrideMixin
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, UCS
 
 __all__ = ['Leader']
 
@@ -130,3 +130,16 @@ class Leader(DXFGraphic, OverrideMixin):
         :class:`~ezdxf.math.Vector`.
         """
         self.vertices = [Vector(v) for v in vertices]
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform LEADER entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        self.vertices = [ucs.to_wcs(v) for v in self.vertices]
+        self.dxf.normal_vector = ucs.to_wcs(self.dxf.normal_vector)
+        self.dxf.horizontal_direction = ucs.to_wcs(self.dxf.horizontal_direction)
+        # Transform optional attributes if they exist
+        if self.dxf.hasattr('hookline_direction'):
+            self.dxf.hookline_direction = ucs.to_wcs(self.dxf.hookline_direction)

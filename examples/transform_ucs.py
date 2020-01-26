@@ -14,8 +14,31 @@ DY = 2
 
 
 def add_circle(msp, ucs):
-    circle = msp.add_circle(center=(0, 0), radius=.5, dxfattribs={'color': 6})
+    circle = msp.add_circle(center=(0, 0), radius=0.5, dxfattribs={
+        'color': 6,
+    })
     circle.transform_to_wcs(ucs)
+
+
+def add_solid(msp, ucs):
+    solid = msp.add_solid([(-0.25, -0.15), (0.25, -0.15), (0, -0.5)], dxfattribs={'color': 2})
+    solid.transform_to_wcs(ucs)
+
+
+def add_trace(msp, ucs):
+    solid = msp.add_solid([(-0.25, 0.15), (0.25, 0.15), (0, 0.5)], dxfattribs={'color': 7})
+    solid.transform_to_wcs(ucs)
+
+
+def add_3dface(msp, ucs):
+    solid = msp.add_3dface([(0, 0, 0), (0.5, 0.5, 0), (0.5, 0.5, 0.5), (0, 0, 0.5)], dxfattribs={'color': 8})
+    solid.transform_to_wcs(ucs)
+
+
+def add_lwpolyline(msp, ucs):
+    solid = msp.add_lwpolyline([(0, 0, 0), (0.3, 0, 1), (0.3, 0.3, 0), (0, 0.3, 0)], format='xyb',
+                               dxfattribs={'color': 6})
+    solid.transform_to_wcs(ucs)
 
 
 def add_text(msp, ucs):
@@ -40,8 +63,12 @@ def main(filename):
             ucs.render_axis(msp, length=1)
             add_circle(msp, ucs)
             add_text(msp, ucs)
+            add_solid(msp, ucs)
+            add_trace(msp, ucs)
+            # add_3dface(msp, ucs)
+            add_lwpolyline(msp, ucs)
             ucs = ucs.rotate_local_z(angle)
-        ucs = UCS().rotate_local_x(ix*angle)
+        ucs = UCS().rotate_local_x(ix * angle)
 
     doc.set_modelspace_vport(Y_COUNT * (DY + 2), center=(X_COUNT * DX / 2, Y_COUNT * DY / 2))
     doc.saveas(filename)

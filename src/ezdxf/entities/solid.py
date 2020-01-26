@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-21
 from typing import TYPE_CHECKING
@@ -10,7 +10,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
 
 __all__ = ['Solid', 'Trace', 'Face3d']
 
@@ -68,11 +68,30 @@ class Solid(_Base):
             'vtx0', 'vtx1', 'vtx2', 'vtx3', 'thickness', 'extrusion',
         ])
 
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform SOLID/TRACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        # SOLID is 2d entity, placed by an OCS in 3d space
+        self._ucs_and_ocs_transformation(ucs, vector_names=VERTEXNAMES)
+
+
 
 @register_entity
 class Trace(Solid):
     """ DXF TRACE entity """
     DXFTYPE = 'TRACE'
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform TRACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        # TRACE is 2d entity, placed by an OCS in 3d space
+        self._ucs_and_ocs_transformation(ucs, vector_names=VERTEXNAMES)
 
 
 acdb_face = DefSubclass('AcDbFace', {
@@ -124,3 +143,16 @@ class Face3d(_Base):
         if not self.dxf.hasattr('vtx3'):
             self.dxf.vtx3 = self.dxf.vtx2
         self.dxf.export_dxf_attribs(tagwriter, ['vtx0', 'vtx1', 'vtx2', 'vtx3', 'invisible'])
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform 3DFACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        # 3DFACE is a real 3d entity
+        ucs_to_wcs = ucs.to_wcs
+        self.dxf.vtx0 = ucs_to_wcs(self.dxf.vtx0)
+        self.dxf.vtx1 = ucs_to_wcs(self.dxf.vtx1)
+        self.dxf.vtx2 = ucs_to_wcs(self.dxf.vtx2)
+        self.dxf.vtx3 = ucs_to_wcs(self.dxf.vtx3)

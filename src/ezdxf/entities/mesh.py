@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-06
 from typing import TYPE_CHECKING, Iterable, Sequence, Tuple, Union, List, Dict
@@ -17,7 +17,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags, UCS
 
 __all__ = ['Mesh', 'MeshData']
 
@@ -319,6 +319,14 @@ class Mesh(DXFGraphic):
         data = self.get_data()
         yield data
         self.set_data(data)
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform MESH entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        self._vertices.transform_to_wcs(ucs)
 
 
 class MeshData:

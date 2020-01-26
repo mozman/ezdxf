@@ -22,8 +22,11 @@ Version 0.11a2 - dev
 - NEW: `Drawing.output_encoding`  returns required output encoding
 - NEW: User Coordinate System (UCS) based entity transformation, allows to work with UCS coordinates, which are 
   simpler if the UCS is chosen wisely, and transform them later into WCS coordinates. Entities which have a 
-  `transform_to_wcs()` method, automatically take advantage of the new UCS transformation methods, but not all entity 
-  types are supported.
+  `transform_to_wcs(ucs)` method, automatically take advantage of the new UCS transformation methods, but not all entity 
+  types are supported, embedded ACIS entities like 3DSOLID, REGION, SURFACE and so on, do not expose their geometry.
+- NEW: `transform_to_wcs(ucs)` implemented for following DXF entities:
+  3DFACE, ARC, ATTRIB, ATTDEF, CIRCLE, ELLIPSE, IMAGE, INSERT, LEADER, LINE, LWPOLYLINE, MESH, MTEXT, POINT, 
+  RAY, SHAPE, SOLID, SPLINE, TEXT, TRACE, XLINE
 - NEW: `UCS.rotate(axis, angle)` returns a new UCS rotated around WCS `axis`
 - NEW: `UCS.rotate_local_x(angle)` returns a new UCS rotated around local x-axis
 - NEW: `UCS.rotate_local_y(angle)` returns a new UCS rotated around local y-axis
@@ -31,11 +34,6 @@ Version 0.11a2 - dev
 - NEW: `UCS.copy()` returns a new copy of UCS
 - NEW: `UCS.shift(delta)` shifts UCS inplace by vector `delta`
 - NEW: `UCS.moveto(location)` set new UCS origin to `location` inplace
-- NEW: `Arc.transform_to_wcs(ucs)` transform geometry from UCS to WCS
-- NEW: `Circle.transform_to_wcs(ucs)` transform geometry from UCS to WCS
-- NEW: `Insert.transform_to_wcs(ucs)` transform geometry from UCS to WCS
-- NEW: `Line.transform_to_wcs(ucs)` transform geometry from UCS to WCS
-- NEW: `Text.transform_to_wcs(ucs)` transform geometry from UCS to WCS
 - NEW: load DXF comments from file (`ezdxf.comments.from_file`) or stream (`ezdxf.comments.from_stream`)
 - NEW: user defined point format support for 2d POLYLINE entities: 
   `add_polyline2d([(1, 2 .5), (3, 4, 0)], format='xyb')` 

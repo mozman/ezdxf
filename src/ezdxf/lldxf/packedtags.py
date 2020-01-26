@@ -9,6 +9,7 @@ from .const import DXFTypeError, DXFIndexError, DXFValueError
 from .tags import Tags
 from ezdxf.tools.indexing import Index
 from ezdxf.lldxf.tagwriter import TagWriter
+from ezdxf.math import UCS
 
 
 class TagList:
@@ -198,3 +199,18 @@ class VertexArray:
         """ Replace all vertices by `points`. """
         self.clear()
         self.extend(points)
+
+    def transform_to_wcs(self, ucs: UCS) -> None:
+        """ Transform vertices from local :class:`~ezdxf.math.UCS` coordinates to
+        :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        ucs_to_wcs = ucs.to_wcs
+        values = array('d')
+        for vertex in self:
+            values.extend(ucs_to_wcs(vertex))
+        self.values = values
+
+

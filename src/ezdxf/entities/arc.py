@@ -1,17 +1,16 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
-from ezdxf.math import UCS, Z_AXIS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import acdb_entity
 from .circle import acdb_circle, Circle
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Vector
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Vector, UCS
 
 __all__ = ['Arc']
 
@@ -67,21 +66,10 @@ class Arc(Circle):
         v = list(self.vertices([self.dxf.end_angle]))
         return v[0]
 
-    def transform_to_wcs(self, ucs: UCS) -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
         """ Transform ARC entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
 
         """
-        extrusion = self.dxf.get('extrusion', Z_AXIS)
-        ocs_vertices = ucs.transform_ocs_entity_vertices(extrusion=extrusion, vertices=[
-            self.dxf.center,
-        ])
-        ocs_angles = ucs.transform_ocs_entity_angles(extrusion=extrusion, angles=[
-            self.get_dxf_attrib('start_angle', 0),
-            self.get_dxf_attrib('end_angle', 360),
-        ])
-        self.dxf.center = ocs_vertices[0]
-        self.dxf.start_angle = ocs_angles[0]
-        self.dxf.end_angle = ocs_angles[1]
-        self.dxf.extrusion = ucs.uz
+        self._ucs_and_ocs_transformation(ucs, vector_names=['center'], angle_names=['start_angle', 'end_angle'])

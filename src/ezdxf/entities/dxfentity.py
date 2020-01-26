@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-13
 # DXFEntity - Root Entity
@@ -155,6 +155,11 @@ class DXFNamespace:
                 return default  # return give default
         else:
             raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(key, self.dxftype))
+
+    def get_default(self, key: str) -> Any:
+        """ Returns DXF default value for unset attributes. """
+        value = self.get(key, None)
+        return self.dxf_default_value(key) if value is None else value
 
     def all_existing_dxf_attribs(self) -> dict:
         """

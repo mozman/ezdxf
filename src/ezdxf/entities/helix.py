@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-10
 from typing import TYPE_CHECKING
@@ -11,7 +11,7 @@ from .dxfgfx import acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
 
 __all__ = ['Helix']
 
@@ -59,3 +59,14 @@ class Helix(Spline):
             'radius', 'turns', 'turn_height', 'handedness', 'constrain'
 
         ])
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform HELIX entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        super().transform_to_wcs(ucs)
+        self.dxf.axis_base_point = ucs.to_wcs(self.dxf.axis_base_point)
+        self.dxf.axis_vector = ucs.to_wcs(self.dxf.axis_vector)
+        self.dxf.start_point = ucs.to_wcs(self.dxf.start_point)

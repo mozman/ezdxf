@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-21
 from typing import TYPE_CHECKING
@@ -10,10 +10,9 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
 
 __all__ = ['Shape']
-
 
 acdb_shape = DefSubclass('AcDbShape', {
     'thickness': DXFAttr(39, default=0, optional=True),  # Thickness
@@ -53,3 +52,10 @@ class Shape(DXFGraphic):
             'insert', 'size', 'name', 'thickness', 'rotation', 'xscale', 'oblique', 'extrusion',
         ])
 
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform SHAPE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        self._ucs_and_ocs_transformation(ucs, vector_names=('insert',), angle_names=('rotation',))

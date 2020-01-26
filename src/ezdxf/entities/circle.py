@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
@@ -70,10 +70,5 @@ class Circle(DXFGraphic):
         .. versionadded:: 0.11
 
         """
-        ocs_vertices = ucs.transform_ocs_entity_vertices(
-            extrusion=self.dxf.get('extrusion', Z_AXIS),
-            vertices=[self.dxf.center],
-        )
-        self.dxf.center = ocs_vertices[0]
-        self.dxf.extrusion = ucs.uz
+        self._ucs_and_ocs_transformation(ucs, vector_names=['center'])
 

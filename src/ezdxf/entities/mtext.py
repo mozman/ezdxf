@@ -1,9 +1,8 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-06
 from typing import TYPE_CHECKING, Union, Tuple, List
 import math
-from contextlib import contextmanager
 
 from ezdxf.math import Vector
 from ezdxf.lldxf import const
@@ -16,7 +15,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex, UCS
 
 __all__ = ['MText']
 
@@ -309,6 +308,18 @@ class MText(DXFGraphic):
         # space ' ' in front of {lwr} is important
         self.append(r'\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
 
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform MTEXT entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        if self.dxf.hasattr('text_direction'):
+            self._ucs_and_ocs_transformation(ucs, vector_names=['insert', 'text_direction'])
+            self.dxf.discard('rotation')
+        else:
+            self._ucs_and_ocs_transformation(ucs, vector_names=['insert'], angle_names=['rotation'])
+
 
 ##################################################
 # MTEXT inline codes
@@ -321,7 +332,7 @@ class MText(DXFGraphic):
 # \P	New paragraph (new line)
 # \pxi	Control codes for bullets, numbered paragraphs and columns
 # \X	Paragraph wrap on the dimension line (only in dimensions)
-# \Q	Slanting (obliquing) text by angle - e.g. \Q30;
+# \Q	Slanting (oblique) text by angle - e.g. \Q30;
 # \H	Text height - e.g. \H3x;
 # \W	Text width - e.g. \W0.8x;
 # \F	Font selection

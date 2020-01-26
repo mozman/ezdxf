@@ -4,6 +4,7 @@ import pytest
 from ezdxf.lldxf.packedtags import TagArray, VertexArray
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.tagwriter import TagCollector
+from ezdxf.math import UCS
 
 
 @pytest.fixture()
@@ -120,10 +121,20 @@ def test_vertex_array_to_dxf_tags():
     tags = ExtendedTags.from_text(SPLINE)
     vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
     tags = TagCollector.dxftags(vertices)
-    assert len(tags) == 7*3
-    assert tags[0] == (10,  0.)
+    assert len(tags) == 7 * 3
+    assert tags[0] == (10, 0.)
     assert tags[3] == (10, 10.)
     assert tags[-1] == (30, 60.)
+
+
+def test_vertext_array_transform_to_wcs():
+    vertices = VertexArray()
+    vertices.extend([(0, 0, 0), (1, 0, 0), (1, 1, 0)])
+    ucs = UCS(origin=(0, 0, 1))
+    vertices.transform_to_wcs(ucs)
+    assert vertices[0] == (0, 0, 1)
+    assert vertices[1] == (1, 0, 1)
+    assert vertices[2] == (1, 1, 1)
 
 
 ROOTDICT = """0

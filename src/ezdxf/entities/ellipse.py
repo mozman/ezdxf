@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
@@ -11,7 +11,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
 
 __all__ = ['Ellipse']
 
@@ -19,6 +19,7 @@ __all__ = ['Ellipse']
 acdb_ellipse = DefSubclass('AcDbEllipse', {
     'center': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
     'major_axis': DXFAttr(11, xtype=XType.point3d, default=Vector(1, 0, 0)),  # relative to the center
+    # extrusion does not establish an OCS, it is just the normal vector of the ellipse plane.
     'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0, 0, 1), optional=True),
     'ratio': DXFAttr(40, default=1),
     'start_param': DXFAttr(41, default=0),  # this value is 0.0 for a full ellipse
@@ -93,3 +94,15 @@ class Ellipse(DXFGraphic):
     def end_point(self) -> 'Vector':
         v = list(self.vertices([self.dxf.end_param]))
         return v[0]
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform ELLIPSE entity from local :class:`~ezdxf.math.UCS` coordinates to
+        :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        # Ellipse is an real 3d entity without OCS
+        self.dxf.center = ucs.to_wcs(self.dxf.center)
+        self.dxf.major_axis = ucs.to_wcs(self.dxf.major_axis)
+        self.dxf.extrusion = ucs.to_wcs(self.dxf.extrusion)

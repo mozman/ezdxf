@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
@@ -10,7 +10,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
 
 __all__ = ['Ray', 'XLine']
 
@@ -44,6 +44,16 @@ class XLine(DXFGraphic):
         tagwriter.write_tag2(SUBCLASS_MARKER, self.XLINE_SUBCLASS)
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['start', 'unit_vector'])
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform XLINE/RAY entity from local :class:`~ezdxf.math.UCS` coordinates to
+        :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        self.dxf.start = ucs.to_wcs(self.dxf.start)
+        self.dxf.unit_vector = ucs.to_wcs(self.dxf.unit_vector)
 
 
 @register_entity

@@ -1,16 +1,16 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-13
 #
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
-from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable
+from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Sequence
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXFValueError, DXFKeyError, DXFTableEntryError
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.validator import is_valid_layer_name
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
-from ezdxf.math import OCS
+from ezdxf.math import OCS, UCS, Z_AXIS
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
 from .factory import register_entity
@@ -249,6 +249,28 @@ class DXFGraphic(DXFEntity):
         auditor.check_if_linetype_exists(self)
         auditor.check_for_valid_color_index(self)
         auditor.check_pointer_target_exist(self, zero_pointer_valid=False)
+
+    def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Sequence, angle_names: Sequence = None) -> None:
+        """ Transforms entity for given `ucs` to the parent coordinate system (most likely the WCS).
+
+        Transforms the entity vector and angle attributes from `ucs` to the OCS of the the parent coordinate system
+        established by the extrusion vector :attr:`ucs.uz`.
+
+        Does not support established OCS, where extrusion != (0, 0, 1).
+
+        """
+        if not Z_AXIS.isclose(self.dxf.extrusion):
+            raise NotImplementedError('Extrusion vector has to be (0, 0, 1)!')
+        vectors = (self.dxf.get_default(name) for name in vector_names)
+        ocs_vectors = ucs.points_to_ocs(vectors)
+        for name, value in zip(vector_names, ocs_vectors):
+            self.dxf.set(name, value)
+        if angle_names is not None:
+            angles = (self.dxf.get_default(name) for name in angle_names)
+            ocs_angles = ucs.angles_to_ocs_deg(angles=angles)
+            for name, value in zip(angle_names, ocs_angles):
+                self.dxf.set(name, value)
+        self.dxf.extrusion = ucs.uz
 
 
 @register_entity
