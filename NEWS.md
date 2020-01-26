@@ -25,8 +25,8 @@ Version 0.11a2 - dev
   `transform_to_wcs(ucs)` method, automatically take advantage of the new UCS transformation methods, but not all entity 
   types are supported, embedded ACIS entities like 3DSOLID, REGION, SURFACE and so on, do not expose their geometry.
 - NEW: `transform_to_wcs(ucs)` implemented for following DXF entities:
-  3DFACE, ARC, ATTRIB, ATTDEF, CIRCLE, ELLIPSE, IMAGE, INSERT, LEADER, LINE, LWPOLYLINE, MESH, MTEXT, POINT, 
-  RAY, SHAPE, SOLID, SPLINE, TEXT, TRACE, XLINE
+  3DFACE, ARC, ATTRIB, ATTDEF, CIRCLE, ELLIPSE, HATCH, IMAGE, INSERT, LEADER, LINE, LWPOLYLINE, MESH, MTEXT, POINT, 
+  POLYLINE, RAY, SHAPE, SOLID, SPLINE, TEXT, TRACE, XLINE
 - NEW: `UCS.rotate(axis, angle)` returns a new UCS rotated around WCS `axis`
 - NEW: `UCS.rotate_local_x(angle)` returns a new UCS rotated around local x-axis
 - NEW: `UCS.rotate_local_y(angle)` returns a new UCS rotated around local y-axis

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Option
 from contextlib import contextmanager
 import math
 import copy
-from ezdxf.math import Vector
+from ezdxf.math import Vector, UCS, Z_AXIS
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools.pattern import PATTERN  # acad standard pattern definitions
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -471,6 +471,24 @@ class Hatch(DXFGraphic):
         self.seeds = list(points)
         self.dxf.n_seed_points = len(self.seeds)
 
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform HATCH entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        extrusion = self.dxf.extrusion
+        if not Z_AXIS.isclose(extrusion):
+            raise NotImplementedError('Extrusion vector has to be (0, 0, 1)!')
+
+        def calc_new_elevation() -> float:
+            vertex = ucs.to_ocs((0, 0, elevation))
+            return vertex.z
+
+        elevation = self.dxf.elevation
+        self.paths.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
+        self.dxf.elevation = calc_new_elevation()
+
 
 TPath = Union['PolylinePath', 'EdgePath']
 
@@ -536,6 +554,15 @@ class BoundaryPaths:
         tagwriter.write_tag2(91, len(self.paths))
         for path in self.paths:
             path.export_dxf(tagwriter)
+
+    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
+        """ Transform HATCH boundary paths from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        These paths are 2d elements, placed in to OCS of the HATCH.
+
+        """
+        for path in self.paths:
+            path.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
 
 
 def pop_source_boundary_objects_tags(path_tags: Tags) -> List[str]:
@@ -632,6 +659,17 @@ class PolylinePath:
 
         export_source_boundary_objects(tagwriter, self.source_boundary_objects)
 
+    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
+        """ Transform polyline boundary paths from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        These paths are 2d elements, placed in to OCS of the HATCH.
+
+        """
+        # established OCS not supported yet
+        if len(self.vertices):
+            vertices = list(ucs.points_to_ocs(Vector(x, y, elevation) for x, y, bulge in self.vertices))
+            self.vertices = [(v.x, v.y, p[2]) for v, p in zip(vertices, self.vertices)]
+
 
 class EdgePath:
     PATH_TYPE = 'EdgePath'
@@ -657,6 +695,16 @@ class EdgePath:
             return EDGE_CLASSES[edge_type].load_tags(tags[1:])
         else:
             raise const.DXFStructureError("HATCH: unknown edge type: {}".format(edge_type))
+
+    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
+        """ Transform edge boundary paths from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        These paths are 2d elements, placed in to OCS of the HATCH.
+
+        """
+        # established OCS not supported yet
+        for edge in self.edges:
+            edge.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
 
     def add_line(self, start: Sequence[float], end: Sequence[float]) -> 'LineEdge':
         """
@@ -803,6 +851,10 @@ class EdgePath:
         export_source_boundary_objects(tagwriter, self.source_boundary_objects)
 
 
+def _transform_2d_vertex(ucs, vertex, elevation) -> Tuple[float, float]:
+    return ucs.to_ocs(Vector(vertex).replace(z=elevation)).xyz[:2]  # only x, y
+
+
 class LineEdge:
     EDGE_TYPE = "LineEdge"
 
@@ -831,6 +883,11 @@ class LineEdge:
         x, y, *_ = self.end
         tagwriter.write_tag2(11, float(x))
         tagwriter.write_tag2(21, float(y))
+
+    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
+        # established OCS not supported yet
+        self.start = _transform_2d_vertex(ucs, self.start, elevation)
+        self.end = _transform_2d_vertex(ucs, self.end, elevation)
 
 
 class ArcEdge:
@@ -870,6 +927,11 @@ class ArcEdge:
         tagwriter.write_tag2(51, self.end_angle)
         tagwriter.write_tag2(73, self.is_counter_clockwise)
 
+    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
+        # established OCS not supported yet
+        self.center = _transform_2d_vertex(ucs, self.center, elevation)
+        self.start_angle, self.end_angle = ucs.angles_to_ocs_deg([self.start_angle, self.end_angle])
+
 
 class EllipseEdge:
     EDGE_TYPE = "EllipseEdge"
@@ -879,8 +941,8 @@ class EllipseEdge:
         # Endpoint of major axis relative to center point (in OCS)
         self.major_axis = (1., 0.)  # type: Tuple[float, float]
         self.ratio = 1.
-        self.start_angle = 0.
-        self.end_angle = 360.
+        self.start_angle = 0.  # start param, not a real angle
+        self.end_angle = 360.  # end param, not a real angle
         self.is_counter_clockwise = 0
 
     @classmethod
@@ -914,6 +976,12 @@ class EllipseEdge:
         tagwriter.write_tag2(50, self.start_angle)
         tagwriter.write_tag2(51, self.end_angle)
         tagwriter.write_tag2(73, self.is_counter_clockwise)
+
+    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
+        # established OCS not supported yet
+        self.center = _transform_2d_vertex(ucs, self.center, elevation)
+        self.major_axis = _transform_2d_vertex(ucs, self.major_axis, elevation)
+        # start_angle and end_angle are not real angles, see start_param and end_param in Ellipse.
 
 
 class SplineEdge:
@@ -999,6 +1067,15 @@ class SplineEdge:
             x, y, *_ = self.end_tangent
             tagwriter.write_tag2(13, float(x))
             tagwriter.write_tag2(23, float(y))
+
+    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
+        # established OCS not supported yet
+        self.control_points = [_transform_2d_vertex(ucs, cp, elevation) for cp in self.control_points]
+        self.fit_points = [_transform_2d_vertex(ucs, fp, elevation) for fp in self.fit_points]
+        if self.start_tangent is not None:
+            self.start_tangent = _transform_2d_vertex(ucs, self.start_tangent, elevation)
+        if self.end_tangent is not None:
+            self.end_tangent = _transform_2d_vertex(ucs, self.end_tangent, elevation)
 
 
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]

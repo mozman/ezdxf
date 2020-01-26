@@ -3,7 +3,7 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict
 from itertools import chain
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Z_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.lldxf import const
@@ -13,7 +13,7 @@ from .factory import register_entity
 from .lwpolyline import FORMAT_CODES
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing
+    from ezdxf.eztypes import TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing, UCS
 
 __all__ = ['Polyline', 'Polyface', 'Polymesh']
 
@@ -366,6 +366,39 @@ class Polyline(DXFGraphic):
             return Polymesh.from_polyline(self)
         else:
             return self
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform POLYLINE from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        if self.is_2d_polyline:
+            # Newer DXF versions write 2d polylines always as LWPOLYLINE entities.
+            # No need for optimizations.
+            if not Z_AXIS.isclose(self.dxf.extrusion):
+                raise NotImplementedError('Extrusion vector has to be (0, 0, 1)!')
+            if self.dxf.hasattr('elevation'):
+                z_axis = self.dxf.elevation.z
+            else:
+                z_axis = None
+            new_z_axis = None
+            for vertex in self.vertices:
+                location = vertex.location
+                if z_axis is not None:
+                    # Older DXF version may not have written the z-axis as elevation
+                    # so replace existing z-axis by elevation
+                    location = location.replace(z=z_axis)
+                vertex.location = ucs.to_ocs(location)
+                if new_z_axis is None:
+                    new_z_axis = vertex.location.z
+
+            self.dxf.extrusion = ucs.uz
+            if new_z_axis is not None:
+                self.dxf.elevation = Vector(0, 0, new_z_axis)
+        else:
+            for vertex in self.vertices:
+                vertex.transform_to_wcs(ucs)
 
 
 class Polyface(Polyline):
@@ -838,6 +871,16 @@ class DXFVertex(DXFGraphic):
     @property
     def is_face_record(self) -> bool:
         return (self.dxf.flags & self.FACE_FLAGS) == self.POLYFACE_MESH_VERTEX
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """ Transform VERTEX from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
+
+        """
+        if self.is_face_record:
+            return
+        self.dxf.location = ucs.to_wcs(self.dxf.location)
 
 
 def vertex_attribs(data: Sequence[float], format='xyseb') -> dict:

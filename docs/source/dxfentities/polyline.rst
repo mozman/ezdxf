@@ -151,6 +151,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: insert_vertices
 
+    .. automethod:: transform_to_wcs(ucs: UCS)
+
 Vertex
 ======
 
