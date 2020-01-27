@@ -253,24 +253,21 @@ class DXFGraphic(DXFEntity):
     def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Sequence, angle_names: Sequence = None) -> None:
         """ Transforms entity for given `ucs` to the parent coordinate system (most likely the WCS).
 
-        Transforms the entity vector and angle attributes from `ucs` to the OCS of the the parent coordinate system
-        established by the extrusion vector :attr:`ucs.uz`.
-
-        Does not support established OCS, where extrusion != (0, 0, 1).
+        Transforms the entity vectors and angles attributes from `ucs` to the parent coordinate system.
+        Takes established OCS by the extrusion vector :attr:`dxf.extrusion` into account.
 
         """
-        if not Z_AXIS.isclose(self.dxf.extrusion):
-            raise NotImplementedError('Extrusion vector has to be (0, 0, 1)!')
+        extrusion = self.dxf.extrusion
         vectors = (self.dxf.get_default(name) for name in vector_names)
-        ocs_vectors = ucs.points_to_ocs(vectors)
+        ocs_vectors = ucs.ocs_points_to_ocs(vectors, extrusion=extrusion)
         for name, value in zip(vector_names, ocs_vectors):
             self.dxf.set(name, value)
         if angle_names is not None:
             angles = (self.dxf.get_default(name) for name in angle_names)
-            ocs_angles = ucs.angles_to_ocs_deg(angles=angles)
+            ocs_angles = ucs.ocs_angles_to_ocs_deg(angles=angles, extrusion=extrusion)
             for name, value in zip(angle_names, ocs_angles):
                 self.dxf.set(name, value)
-        self.dxf.extrusion = ucs.uz
+        self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
 
 
 @register_entity

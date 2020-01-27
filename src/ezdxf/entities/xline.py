@@ -53,7 +53,7 @@ class XLine(DXFGraphic):
 
         """
         self.dxf.start = ucs.to_wcs(self.dxf.start)
-        self.dxf.unit_vector = ucs.to_wcs(self.dxf.unit_vector)
+        self.dxf.unit_vector = ucs.direction_to_wcs(self.dxf.unit_vector)
 
 
 @register_entity

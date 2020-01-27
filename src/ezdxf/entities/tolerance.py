@@ -57,5 +57,5 @@ class Tolerance(DXFGraphic):
 
         """
         self.dxf.insert = ucs.to_wcs(self.dxf.insert)
-        self.dxf.x_axis_vector = ucs.to_wcs(self.dxf.x_axis_vector)
-        self.dxf.extrusion = ucs.to_wcs(self.dxf.extrusion)
+        self.dxf.x_axis_vector = ucs.direction_to_wcs(self.dxf.x_axis_vector)
+        self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)

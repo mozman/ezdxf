@@ -104,5 +104,5 @@ class Ellipse(DXFGraphic):
         """
         # Ellipse is an real 3d entity without OCS
         self.dxf.center = ucs.to_wcs(self.dxf.center)
-        self.dxf.major_axis = ucs.to_wcs(self.dxf.major_axis)
-        self.dxf.extrusion = ucs.to_wcs(self.dxf.extrusion)
+        self.dxf.major_axis = ucs.direction_to_wcs(self.dxf.major_axis)
+        self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)

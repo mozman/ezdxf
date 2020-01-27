@@ -2,15 +2,14 @@
 News
 ====
 
-Version 0.11a2 - dev
+Version 0.11a3 - dev
 --------------------
 
 - Using standard git branches: 
   - `master`: development state
-  - `stable`: latest release
+  - `stable`: latest stable release
 - Requires Python 3.6
 - NEW: `Dimension.get_measurement()` supports angular, angular3p and ordinate dimensions
-- NEW: `Drawing.set_modelspace_vport()` set initial view/zoom location for the modelspace
 - NEW: `Layout.add_radius_dim()` implemented
 - NEW: shortcut calls `Layout.add_radius_dim_2p()` and `Layout.add_radius_dim_cra()`
 - NEW: `Circle.vertices(angles)` yields vertices for iterable angles in WCS
@@ -19,15 +18,14 @@ Version 0.11a2 - dev
 - NEW: Ellipse properties `start_point` and `end_point` returns start- and end point of ellipse in WCS
 - NEW: `Drawing.set_modelspace_vport(height, center)` set initial view/zoom location for the modelspace
 - NEW: 2d construction function `ezdxf.math.offset_vertices_2d()`
-- NEW: `Drawing.output_encoding`  returns required output encoding
+- NEW: `Drawing.output_encoding` returns required output encoding
 - NEW: User Coordinate System (UCS) based entity transformation, allows to work with UCS coordinates, which are 
   simpler if the UCS is chosen wisely, and transform them later into WCS coordinates. Entities which have a 
   `transform_to_wcs(ucs)` method, automatically take advantage of the new UCS transformation methods, but not all entity 
   types are supported, embedded ACIS entities like 3DSOLID, REGION, SURFACE and so on, do not expose their geometry.
-- NEW: `transform_to_wcs(ucs)` implemented for following DXF entities:
-  3DFACE, ARC, ATTRIB, ATTDEF, CIRCLE, ELLIPSE, HATCH, IMAGE, INSERT, LEADER, LINE, LWPOLYLINE, MESH, MTEXT, POINT, 
-  POLYLINE, RAY, SHAPE, SOLID, SPLINE, TEXT, TRACE, XLINE
-- NEW: `UCS.rotate(axis, angle)` returns a new UCS rotated around WCS `axis`
+- NEW: `transform_to_wcs(ucs)` implemented for: 3DFACE, ARC, ATTDEF, ATTRIB, CIRCLE, ELLIPSE, HATCH, IMAGE, INSERT, 
+  LEADER, LINE, LWPOLYLINE, MESH, MTEXT, POINT, POLYLINE, RAY, SHAPE, SOLID, SPLINE, TEXT, TRACE, XLINE
+- NEW: `UCS.rotate(axis, angle)` returns a new UCS rotated around WCS vector `axis`
 - NEW: `UCS.rotate_local_x(angle)` returns a new UCS rotated around local x-axis
 - NEW: `UCS.rotate_local_y(angle)` returns a new UCS rotated around local y-axis
 - NEW: `UCS.rotate_local_z(angle)` returns a new UCS rotated around local z-axis
@@ -36,11 +34,11 @@ Version 0.11a2 - dev
 - NEW: `UCS.moveto(location)` set new UCS origin to `location` inplace
 - NEW: load DXF comments from file (`ezdxf.comments.from_file`) or stream (`ezdxf.comments.from_stream`)
 - NEW: user defined point format support for 2d POLYLINE entities: 
-  `add_polyline2d([(1, 2 .5), (3, 4, 0)], format='xyb')` 
+  `add_polyline2d([(1, 2, 0.5), (3, 4, 0)], format='xyb')` 
 - NEW: `Polyline.append_formatted_points()` with user defined point format support
 - NEW: `size` and `center` properties for bounding box classes
 - BUGFIX: fixed base point calculation of aligned dimensions
-- BUGFIX: fixed length extension line support
+- BUGFIX: fixed length extension line support for linear dimensions
 - BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`
 - BUGFIX: check for unsupported DXF versions at `new()`
 
@@ -107,7 +105,7 @@ Version 0.10 - 2019-09-01
 - NEW: `Dimension.get_geometry_block()`, returns the associated anonymous dimension block or `None`
 - NEW: `EntityQuery()` got `first` and `last` properties, to get first or last entity or `None` if query result is empty
 - NEW: added `ngon()`, `star()` and `gear()` to `ezdxf.render.forms`
-- NEW: Source code generator to create Python source code from DXF entities, to recreate this entities by `ezdxf`. 
+- NEW: Source code generator to create Python source code from DXF entities, to recreate this entities by _ezdxf_. 
   This tool creates only simple structures as a useful starting point for parametric DXF entity creation from existing 
   DXF files. Not all DXF entities are supported!
 - NEW: support for named plot style files (STB)

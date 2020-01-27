@@ -477,17 +477,16 @@ class Hatch(DXFGraphic):
         .. versionadded:: 0.11
 
         """
-        extrusion = self.dxf.extrusion
-        if not Z_AXIS.isclose(extrusion):
-            raise NotImplementedError('Extrusion vector has to be (0, 0, 1)!')
 
         def calc_new_elevation() -> float:
-            vertex = ucs.to_ocs((0, 0, elevation))
+            vertex = list(ucs.ocs_points_to_ocs([(0, 0, elevation)], extrusion=extrusion))[0]
             return vertex.z
 
+        extrusion = self.dxf.extrusion
         elevation = self.dxf.elevation
         self.paths.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
         self.dxf.elevation = calc_new_elevation()
+        self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
 
 
 TPath = Union['PolylinePath', 'EdgePath']
@@ -667,7 +666,8 @@ class PolylinePath:
         """
         # established OCS not supported yet
         if len(self.vertices):
-            vertices = list(ucs.points_to_ocs(Vector(x, y, elevation) for x, y, bulge in self.vertices))
+            ocs_vertices = (Vector(x, y, elevation) for x, y, bulge in self.vertices)
+            vertices = list(ucs.ocs_points_to_ocs(ocs_vertices, extrusion=extrusion))
             self.vertices = [(v.x, v.y, p[2]) for v, p in zip(vertices, self.vertices)]
 
 
@@ -851,8 +851,9 @@ class EdgePath:
         export_source_boundary_objects(tagwriter, self.source_boundary_objects)
 
 
-def _transform_2d_vertex(ucs, vertex, elevation) -> Tuple[float, float]:
-    return ucs.to_ocs(Vector(vertex).replace(z=elevation)).xyz[:2]  # only x, y
+def _transform_2d_ocs_vertices(ucs, vertices, elevation, extrusion) -> List[Tuple[float, float]]:
+    ocs_vertices = (Vector(x, y, elevation) for x, y in vertices)
+    return [(v.x, v.y) for v in ucs.ocs_points_to_ocs(ocs_vertices, extrusion=extrusion)]
 
 
 class LineEdge:
@@ -886,8 +887,7 @@ class LineEdge:
 
     def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
         # established OCS not supported yet
-        self.start = _transform_2d_vertex(ucs, self.start, elevation)
-        self.end = _transform_2d_vertex(ucs, self.end, elevation)
+        self.start, self.end = _transform_2d_ocs_vertices(ucs, [self.start, self.end], elevation, extrusion)
 
 
 class ArcEdge:
@@ -929,8 +929,8 @@ class ArcEdge:
 
     def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
         # established OCS not supported yet
-        self.center = _transform_2d_vertex(ucs, self.center, elevation)
-        self.start_angle, self.end_angle = ucs.angles_to_ocs_deg([self.start_angle, self.end_angle])
+        self.center = _transform_2d_ocs_vertices(ucs, [self.center], elevation, extrusion)[0]
+        self.start_angle, self.end_angle = ucs.ocs_angles_to_ocs_deg([self.start_angle, self.end_angle], extrusion)
 
 
 class EllipseEdge:
@@ -979,8 +979,8 @@ class EllipseEdge:
 
     def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
         # established OCS not supported yet
-        self.center = _transform_2d_vertex(ucs, self.center, elevation)
-        self.major_axis = _transform_2d_vertex(ucs, self.major_axis, elevation)
+        self.center = _transform_2d_ocs_vertices(ucs, [self.center], elevation=elevation, extrusion=extrusion)
+        self.major_axis = ucs.direction_to_wcs(self.major_axis).xyz[:2]  # ???
         # start_angle and end_angle are not real angles, see start_param and end_param in Ellipse.
 
 
@@ -1070,12 +1070,12 @@ class SplineEdge:
 
     def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
         # established OCS not supported yet
-        self.control_points = [_transform_2d_vertex(ucs, cp, elevation) for cp in self.control_points]
-        self.fit_points = [_transform_2d_vertex(ucs, fp, elevation) for fp in self.fit_points]
+        self.control_points = _transform_2d_ocs_vertices(ucs, self.control_points, elevation, extrusion)
+        self.fit_points = _transform_2d_ocs_vertices(ucs, self.fit_points, elevation, extrusion)
         if self.start_tangent is not None:
-            self.start_tangent = _transform_2d_vertex(ucs, self.start_tangent, elevation)
+            self.start_tangent = ucs.direction_to_wcs(self.start_tangent).xyz[:2]
         if self.end_tangent is not None:
-            self.end_tangent = _transform_2d_vertex(ucs, self.end_tangent, elevation)
+            self.end_tangent = ucs.direction_to_wcs(self.end_tangent).xyz[:2]
 
 
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]

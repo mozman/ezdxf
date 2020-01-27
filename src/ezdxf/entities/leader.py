@@ -138,8 +138,8 @@ class Leader(DXFGraphic, OverrideMixin):
 
         """
         self.vertices = [ucs.to_wcs(v) for v in self.vertices]
-        self.dxf.normal_vector = ucs.to_wcs(self.dxf.normal_vector)
-        self.dxf.horizontal_direction = ucs.to_wcs(self.dxf.horizontal_direction)
+        self.dxf.normal_vector = ucs.direction_to_wcs(self.dxf.normal_vector)
+        self.dxf.horizontal_direction = ucs.direction_to_wcs(self.dxf.horizontal_direction)
         # Transform optional attributes if they exist
         if self.dxf.hasattr('hookline_direction'):
-            self.dxf.hookline_direction = ucs.to_wcs(self.dxf.hookline_direction)
+            self.dxf.hookline_direction = ucs.direction_to_wcs(self.dxf.hookline_direction)

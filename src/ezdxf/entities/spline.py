@@ -304,4 +304,4 @@ class Spline(DXFGraphic):
         # Transform optional attributes if they exist
         for attr_name in ('start_tangent', 'end_tangent', 'extrusion'):
             if self.dxf.hasattr(attr_name):
-                self.dxf.set(attr_name, ucs.to_wcs(self.dxf.get(attr_name)))
+                self.dxf.set(attr_name, ucs.direction_to_wcs(self.dxf.get(attr_name)))

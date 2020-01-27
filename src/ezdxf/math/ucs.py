@@ -5,7 +5,7 @@ from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 from .matrix44 import Matrix44
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import GenericLayoutType, Vertex, BaseLayout
+    from ezdxf.eztypes import Vertex, BaseLayout
 
 
 def render_axis(layout: 'BaseLayout',
@@ -188,7 +188,7 @@ class UCS:
         return UCS(self.origin, self.ux, self.uy, self.uz)
 
     def to_wcs(self, point: 'Vertex') -> 'Vector':
-        """ Returns WCS vector for UCS `point`. """
+        """ Returns WCS point for UCS `point`. """
         return self.origin + self.matrix.transform(point)
 
     def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
@@ -196,7 +196,24 @@ class UCS:
         for point in points:
             yield self.to_wcs(point)
 
-    def to_ocs(self, point: 'Vertex') -> 'Vertex':
+    def direction_to_wcs(self, vector: 'Vertex') -> 'Vector':
+        """ Returns WCS direction for UCS `vector` without origin adjustment. """
+        return self.matrix.transform(vector)
+
+    def from_wcs(self, point: 'Vertex') -> 'Vector':
+        """ Returns UCS point for WCS `point`. """
+        return self.transpose.transform(point - self.origin)
+
+    def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
+        """ Returns iterable of UCS vectors from WCS `points`. """
+        for point in points:
+            yield self.from_wcs(point)
+
+    def direction_from_wcs(self, vector: 'Vertex') -> 'Vector':
+        """ Returns UCS vector for WCS `vector` without origin adjustment. """
+        return self.transpose.transform(vector)
+
+    def to_ocs(self, point: 'Vertex') -> 'Vector':
         """
         Returns OCS vector for UCS `point`.
 
@@ -206,17 +223,43 @@ class UCS:
         wpoint = self.to_wcs(point)
         return OCS(self.uz).from_wcs(wpoint)
 
-    def points_to_ocs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
+    def points_to_ocs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
         """
         Returns iterable of OCS vectors for UCS `points`.
 
         The :class:`OCS` is defined by the z-axis of the :class:`UCS`.
+
+        Args:
+            points: iterable of UCS vertices
 
         """
         wcs = self.to_wcs
         ocs = OCS(self.uz)
         for point in points:
             yield ocs.from_wcs(wcs(point))
+
+    def ocs_points_to_ocs(self, points: Iterable['Vertex'], extrusion=Z_AXIS) -> Iterable['Vector']:
+        """
+        Returns iterable of OCS vectors for UCS `points` located by an OCS established by
+        the `extrusion` vector.
+
+        Args:
+            points: iterable of UCS vertices located in an OCS
+            extrusion: vector defines the source OCS
+
+        """
+        if Z_AXIS.isclose(extrusion):
+            yield from self.points_to_ocs(points)
+        else:
+            source_ocs = OCS(extrusion)
+            ocs_to_ucs = source_ocs.to_wcs
+            ucs_points = (ocs_to_ucs(p) for p in points)
+
+            wcs = self.to_wcs
+            target_ocs = OCS(self.direction_to_wcs(extrusion))
+            ocs_from_wcs = target_ocs.from_wcs
+            for point in ucs_points:
+                yield ocs_from_wcs(wcs(point))
 
     def to_ocs_angle_deg(self, angle: float) -> float:
         """
@@ -227,9 +270,7 @@ class UCS:
             angle: in UCS in degrees
 
         """
-        vec = Vector.from_deg_angle(angle)
-        vec = self.to_ocs(vec) - self.to_ocs((0, 0, 0))
-        return vec.angle_deg
+        return self.ucs_direction_to_ocs_direction(Vector.from_deg_angle(angle)).angle_deg
 
     def angles_to_ocs_deg(self, angles: Iterable[float]) -> List[float]:
         """
@@ -239,41 +280,72 @@ class UCS:
         Args:
             angles: iterable of UCS (OCS) angles to transform, angles in degrees
 
+        Returns:
+            List of OCS angles in degrees.
+
         """
-        # Convert angles to vectors for transformation
-        ucs_vectors = (Vector.from_deg_angle(a) for a in angles)
+        # Convert angles to direction vectors
+        directions = self.ucs_directions_to_ocs_directions(
+            directions=(Vector.from_deg_angle(a) for a in angles),
+            extrusion=Z_AXIS,
+        )
+        return [vector.angle_deg for vector in directions]
 
-        # Transform UCS coordinates to PCS (Parent Coordinate System), most likely the WCS
-        ucs_to_pcs = self.to_wcs
-        pcs_origin = ucs_to_pcs((0, 0, 0))
-        pcs_vectors = (ucs_to_pcs(v) - pcs_origin for v in ucs_vectors)
-
-        # Convert PCS coordinates to OCS established by UCS.uz
-        ocs = OCS(self.uz)
-        ocs_from_pcs = ocs.from_wcs
-        return [ocs_from_pcs(v).angle_deg for v in pcs_vectors]
-
-    def to_ocs_angle_rad(self, angle: float) -> float:
+    def ocs_angles_to_ocs_deg(self, angles: Iterable[float], extrusion=Z_AXIS) -> List[float]:
         """
-        Returns angle between the UCS vector in the xy-plane defined by `angle` and OCS x-axis, :class:`OCS`
-        is defined by the UCS z-axis.
+        Transforms `angles` from current UCS located in an established OCS defined by the given `extrusion` vector
+        to the parent coordinate system (most likely the WCS) including the transformation to the target OCS established
+        by the transformed `extrusion` vector.
 
         Args:
-            angle: in UCS in radians
+            angles: iterable of UCS (OCS) angles to transform, angles in degrees
+            extrusion: extrusion vector of the source OCS
+
+        Returns:
+            List of OCS angles in degrees.
 
         """
-        vec = Vector.from_angle(angle)
-        vec = self.to_ocs(vec) - self.to_ocs((0, 0, 0))
-        return vec.angle
 
-    def from_wcs(self, point: 'Vertex') -> 'Vector':
-        """ Returns UCS vector for WCS `point`. """
-        return self.transpose.transform(point - self.origin)
+        if Z_AXIS.isclose(extrusion):
+            return self.angles_to_ocs_deg(angles)
 
-    def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
-        """ Returns iterable of UCS vectors from WCS `points`. """
-        for point in points:
-            yield self.from_wcs(point)
+        ocs = OCS(extrusion)
+        ocs_to_wcs = ocs.to_wcs
+        # Convert angles to direction vectors
+        directions = self.ucs_directions_to_ocs_directions(
+            directions=(ocs_to_wcs(Vector.from_deg_angle(a)) for a in angles),
+            extrusion=extrusion,
+        )
+        return [vector.angle_deg for vector in directions]
+
+    def ucs_direction_to_ocs_direction(self, direction: Vector) -> Vector:
+        """
+        Transforms UCS `direction` vector into OCS direction vector of the parent coordinate system (most likely
+        the WCS), target OCS is defined by the UCS z-axis.
+        """
+        return OCS(self.uz).from_wcs(self.direction_to_wcs(direction))
+
+    def ucs_directions_to_ocs_directions(self, directions: Iterable[Vector], extrusion: Vector) -> Iterable[Vector]:
+        """
+        Transforms UCS direction vectors into OCS direction vectors of the parent coordinate system (most likely
+        the WCS), target OCS is defined by the `extrusion` vector.
+
+        Args:
+            directions: iterable of UCS directions
+            extrusion: extrusion vector of the target OCS
+
+        Returns:
+            Iterable of OCS directions as vectors.
+
+        """
+        # Transform UCS directions to PCS (Parent Coordinate System), most likely the WCS
+        ucs_to_pcs = self.direction_to_wcs
+        pcs_directions = (ucs_to_pcs(v) for v in directions)
+
+        # Convert PCS direction to OCS established by transformed extrusion vector
+        target_ocs = OCS(self.direction_to_wcs(extrusion))
+        ocs_from_pcs = target_ocs.from_wcs
+        return (ocs_from_pcs(v) for v in pcs_directions)
 
     def rotate(self, axis: 'Vertex', angle: float) -> 'UCS':
         """

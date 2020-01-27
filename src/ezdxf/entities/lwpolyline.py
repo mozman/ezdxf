@@ -154,13 +154,22 @@ class LWPolyline(DXFGraphic):
 
     def vertices_in_wcs(self) -> Iterable['Vertex']:
         """
-        Returns iterable of all polyline points as (x, y, z) tuples in :ref:`WCS`.
+        Returns iterable of all polyline points as Vector(x, y, z) in :ref:`WCS`.
 
         """
         ocs = self.ocs()
         elevation = self.get_dxf_attrib('elevation', default=0.)
         for x, y in self.vertices():
             yield ocs.to_wcs((x, y, elevation))
+
+    def vertices_in_ocs(self) -> Iterable['Vertex']:
+        """
+        Returns iterable of all polyline points as Vector(x, y, z) in :ref:`OCS`.
+
+        """
+        elevation = self.get_dxf_attrib('elevation', default=0.)
+        for x, y in self.vertices():
+            yield Vector(x, y, elevation)
 
     def append(self, point: Sequence[float], format: str = DEFAULT_FORMAT) -> None:
         """
@@ -256,13 +265,11 @@ class LWPolyline(DXFGraphic):
         .. versionadded:: 0.11
 
         """
-        if not Z_AXIS.isclose(self.dxf.extrusion):
-            raise NotImplementedError('Extrusion vector has to be (0, 0, 1)!')
-
-        vertices = list(ucs.points_to_ocs(self.vertices_in_wcs()))
+        extrusion = self.dxf.extrusion
+        vertices = list(ucs.ocs_points_to_ocs(self.vertices_in_ocs(), extrusion=extrusion))
         lwpoints = [(v[0], v[1], p[2], p[3], p[4]) for v, p in zip(vertices, self.lwpoints)]
         self.set_points(lwpoints)
-        self.dxf.extrusion = ucs.uz
+        self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
         # all new OCS vertices must have the same z-axis, which is the elevation of the polyline
         self.dxf.elevation = vertices[0][2]
 

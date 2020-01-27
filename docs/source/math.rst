@@ -107,19 +107,25 @@ UCS Class
 
     .. automethod:: points_to_wcs
 
+    .. automethod:: direction_to_wcs
+
+    .. automethod:: from_wcs
+
+    .. automethod:: points_from_wcs
+
+    .. automethod:: direction_from_wcs
+
     .. automethod:: to_ocs
 
     .. automethod:: points_to_ocs
+
+    .. automethod:: ocs_points_to_ocs
 
     .. automethod:: to_ocs_angle_deg
 
     .. automethod:: angles_to_ocs_deg
 
-    .. automethod:: to_ocs_angle_rad
-
-    .. automethod:: from_wcs
-
-    .. automethod:: points_from_wcs
+    .. automethod:: ocs_angles_to_ocs_deg
 
     .. automethod:: rotate(axis: Vertex, angle:float) -> UCS
 

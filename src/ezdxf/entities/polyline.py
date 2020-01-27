@@ -373,29 +373,33 @@ class Polyline(DXFGraphic):
         .. versionadded:: 0.11
 
         """
+        def _ocs_locations(elevation):
+            for vertex in self.vertices:
+                location = vertex.location
+                if elevation is not None:
+                    # Older DXF version may not have written the z-axis, which is now 0 by default in ezdxf,
+                    # so replace existing z-axis by elevation value
+                    location = location.replace(z=elevation)
+                yield location
+
         if self.is_2d_polyline:
             # Newer DXF versions write 2d polylines always as LWPOLYLINE entities.
             # No need for optimizations.
-            if not Z_AXIS.isclose(self.dxf.extrusion):
-                raise NotImplementedError('Extrusion vector has to be (0, 0, 1)!')
+            extrusion = self.dxf.extrusion
             if self.dxf.hasattr('elevation'):
                 z_axis = self.dxf.elevation.z
             else:
                 z_axis = None
-            new_z_axis = None
-            for vertex in self.vertices:
-                location = vertex.location
-                if z_axis is not None:
-                    # Older DXF version may not have written the z-axis as elevation
-                    # so replace existing z-axis by elevation
-                    location = location.replace(z=z_axis)
-                vertex.location = ucs.to_ocs(location)
-                if new_z_axis is None:
-                    new_z_axis = vertex.location.z
-
-            self.dxf.extrusion = ucs.uz
-            if new_z_axis is not None:
-                self.dxf.elevation = Vector(0, 0, new_z_axis)
+            # transform locations
+            locations = list(ucs.ocs_points_to_ocs(_ocs_locations(z_axis), extrusion=extrusion))
+            # set new elevation, all locations must have the same z-axis
+            if locations:
+                self.dxf.elevation = locations[0].replace(x=0, y=0)
+            # set new locations
+            for vertex, location in zip(self.vertices, locations):
+                vertex.dxf.location = location
+            # transform extrusion vector
+            self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
         else:
             for vertex in self.vertices:
                 vertex.transform_to_wcs(ucs)

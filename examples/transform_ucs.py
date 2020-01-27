@@ -20,6 +20,35 @@ def add_circle(msp, ucs):
     circle.transform_to_wcs(ucs)
 
 
+def add_ocs_circle(msp, ucs):
+    circle = msp.add_circle(center=(0, 0, .5), radius=0.25, dxfattribs={
+        'color': 6,
+        'extrusion': (1, 0, 0),
+    })
+    circle.transform_to_wcs(ucs)
+
+
+def add_ellipse(msp, ucs):
+    ellipse = msp.add_ellipse(
+        center=(0, 0),
+        major_axis=(.5, 0, 0),
+        ratio=.5,
+        start_param=0,
+        end_param=math.pi,
+        dxfattribs={
+            'color': 1,
+        })
+    ellipse.transform_to_wcs(ucs)
+
+
+def add_ocs_arc(msp, ucs):
+    arc = msp.add_arc(center=(0, 0, 0.5), radius=0.25, start_angle=0, end_angle=90, dxfattribs={
+        'color': 4,
+        'extrusion': (-1, 0, 0),
+    })
+    arc.transform_to_wcs(ucs)
+
+
 def add_solid(msp, ucs):
     solid = msp.add_solid([(-0.25, -0.15), (0.25, -0.15), (0, -0.5)], dxfattribs={'color': 2})
     solid.transform_to_wcs(ucs)
@@ -50,6 +79,20 @@ def add_text(msp, ucs):
     text.transform_to_wcs(ucs)
 
 
+def add_mtext(msp, ucs):
+    # It is always better to use text_direction instead of a rotation angle,
+    # which works only for extrusion == (0, 0, 1)
+    text = msp.add_mtext('MTEXT', dxfattribs={
+        'color': 5,
+        'style': 'OpenSansCondensed-Light',
+        'char_height': .2,
+        'insert': (0, 0),
+        'rotation': 90,
+        'attachment_point': 4,
+    })
+    text.transform_to_wcs(ucs)
+
+
 def main(filename):
     doc = ezdxf.new('R2010', setup=True)
     msp = doc.modelspace()
@@ -62,11 +105,15 @@ def main(filename):
             ucs.moveto((ix * DX, iy * DY, 0))
             ucs.render_axis(msp, length=1)
             add_circle(msp, ucs)
-            add_text(msp, ucs)
-            add_solid(msp, ucs)
-            add_trace(msp, ucs)
+            # add_ocs_circle(msp, ucs)
+            # add_ocs_arc(msp, ucs)
+            # add_text(msp, ucs)
+            add_mtext(msp, ucs)
+            add_ellipse(msp, ucs)
+            # add_solid(msp, ucs)
+            # add_trace(msp, ucs)
             # add_3dface(msp, ucs)
-            add_lwpolyline(msp, ucs)
+            # add_lwpolyline(msp, ucs)
             ucs = ucs.rotate_local_z(angle)
         ucs = UCS().rotate_local_x(ix * angle)
 

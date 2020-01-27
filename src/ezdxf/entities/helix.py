@@ -68,5 +68,5 @@ class Helix(Spline):
         """
         super().transform_to_wcs(ucs)
         self.dxf.axis_base_point = ucs.to_wcs(self.dxf.axis_base_point)
-        self.dxf.axis_vector = ucs.to_wcs(self.dxf.axis_vector)
+        self.dxf.axis_vector = ucs.direction_to_wcs(self.dxf.axis_vector)
         self.dxf.start_point = ucs.to_wcs(self.dxf.start_point)

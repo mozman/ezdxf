@@ -169,8 +169,9 @@ class Image(DXFGraphic):
         .. versionadded:: 0.11
 
         """
-        self.dxf.u_pixel = ucs.to_wcs(self.dxf.u_pixel)
-        self.dxf.v_pixel = ucs.to_wcs(self.dxf.v_pixel)
+        self.dxf.insert = ucs.to_wcs(self.dxf.insert)
+        self.dxf.u_pixel = ucs.direction_to_wcs(self.dxf.u_pixel)
+        self.dxf.v_pixel = ucs.direction_to_wcs(self.dxf.v_pixel)
 
 
 acdb_wipeout = DefSubclass('AcDbWipeout', dict(acdb_image.attribs))

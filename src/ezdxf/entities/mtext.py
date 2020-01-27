@@ -314,11 +314,13 @@ class MText(DXFGraphic):
         .. versionadded:: 0.11
 
         """
-        if self.dxf.hasattr('text_direction'):
-            self._ucs_and_ocs_transformation(ucs, vector_names=['insert', 'text_direction'])
+        if self.dxf.hasattr('rotation'):
+            self.dxf.text_direction = Vector.from_deg_angle(self.dxf.rotation)
             self.dxf.discard('rotation')
-        else:
-            self._ucs_and_ocs_transformation(ucs, vector_names=['insert'], angle_names=['rotation'])
+
+        self.dxf.insert = ucs.to_wcs(self.dxf.insert)
+        self.dxf.text_direction = ucs.direction_to_wcs(self.dxf.text_direction)
+        self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
 
 
 ##################################################
