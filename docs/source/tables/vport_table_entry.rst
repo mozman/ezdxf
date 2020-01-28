@@ -50,7 +50,7 @@ Factory function         :meth:`Drawing.viewports.new`
 
         Upper-right corner of viewport
 
-    .. attribute:: dxf.center_point
+    .. attribute:: dxf.center
 
         View center point (in :ref:`DCS`)
 
