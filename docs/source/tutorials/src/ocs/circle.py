@@ -1,7 +1,6 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 
-# include-start
 import ezdxf
 from ezdxf.math import OCS
 
@@ -26,7 +25,6 @@ msp.add_circle(
     })
 # mark center point of circle in WCS
 msp.add_point((0, 2, 2), dxfattribs={'color': 1})
-# include-end
 
 print(f"center in OCS: {ocs.from_wcs((0, 2, 2))}")
 ocs.render_axis(msp)

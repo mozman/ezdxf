@@ -55,4 +55,6 @@ class Point(DXFGraphic):
         .. versionadded:: 0.11
 
         """
-        self._ucs_and_ocs_transformation(ucs, vector_names=['location'], angle_names=['angle'])
+        self.dxf.location = ucs.to_wcs(self.dxf.location)
+        self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
+

@@ -8,11 +8,11 @@ Create hatches with one boundary path
 
 The simplest form of a hatch has one polyline path with only straight lines as boundary path:
 
-.. literalinclude:: ../../../examples/tut/hatch/solid_hatch_polyline_path.py
+.. literalinclude:: src/hatch/solid_hatch_polyline_path.py
 
 But like all polyline entities the polyline path can also have bulge values:
 
-.. literalinclude:: ../../../examples/tut/hatch/solid_hatch_polyline_path_with_bulge.py
+.. literalinclude:: src/hatch/solid_hatch_polyline_path_with_bulge.py
 
 The most flexible way to define a boundary path is the edge path. An edge path consist of a number of edges and
 each edge can be one of the following elements:
@@ -24,7 +24,7 @@ each edge can be one of the following elements:
 
 Create a solid hatch with an edge path (ellipse) as boundary path:
 
-.. literalinclude:: ../../../examples/tut/hatch/solid_hatch_ellipse.py
+.. literalinclude:: src/hatch/solid_hatch_ellipse.py
 
 Create hatches with multiple boundary paths (islands)
 -----------------------------------------------------
