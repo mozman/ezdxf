@@ -37,6 +37,8 @@ Version 0.11a3 - dev
   `add_polyline2d([(1, 2, 0.5), (3, 4, 0)], format='xyb')` 
 - NEW: `Polyline.append_formatted_points()` with user defined point format support
 - NEW: `size` and `center` properties for bounding box classes
+- NEW: `Insert.ucs()` returns an UCS placed in block reference `insert` location, UCS axis aligned to the block axis.
+- NEW: `Insert.reset_transformation()` reset block reference location, rotation and extrusion vector. 
 - BUGFIX: fixed base point calculation of aligned dimensions
 - BUGFIX: fixed length extension line support for linear dimensions
 - BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`

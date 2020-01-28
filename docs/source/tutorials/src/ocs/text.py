@@ -1,14 +1,15 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
-
-# include-start
 import ezdxf
 from ezdxf.math import UCS, Vector
+from pathlib import Path
+
+OUT_DIR = Path('~/Desktop/Outbox').expanduser()
 
 doc = ezdxf.new('R2010')
 msp = doc.modelspace()
 
-# thickness for text works only with shx fonts not with true type fonts
+# Thickness for text works only with shx fonts not with true type fonts
 doc.styles.new('TXT', dxfattribs={'font': 'romans.shx'})
 
 ucs = UCS(origin=(0, 2, 2), ux=(1, 0, 0), uz=(0, 1, 1))
@@ -31,7 +32,5 @@ text = msp.add_text(
 # set text position in OCS
 text.set_pos(ucs.to_ocs((0, 0, 0)), align='MIDDLE_CENTER')
 
-# include-end
-
 ucs.render_axis(msp)
-doc.saveas('ocs_text.dxf')
+doc.saveas(OUT_DIR / 'ocs_text.dxf')

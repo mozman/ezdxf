@@ -1,13 +1,15 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
-# include-start
 import ezdxf
 from ezdxf.math import Vector, UCS
+from pathlib import Path
+
+OUT_DIR = Path('~/Desktop/Outbox').expanduser()
 
 doc = ezdxf.new('R2010')
 msp = doc.modelspace()
 
-# center point of the pentagon should be (0, 2, 2), and the shape is
+# The center of the pentagon should be (0, 2, 2), and the shape is
 # rotated around x-axis about 45 degree, to accomplish this I use an
 # UCS with z-axis (0, 1, 1) and an x-axis parallel to WCS x-axis.
 ucs = UCS(
@@ -16,7 +18,7 @@ ucs = UCS(
     uz=(0, 1, 1),  # z-axis
 )
 # calculating corner points in local (UCS) coordinates
-points = [Vector.from_deg_angle((360/5)*n) for n in range(5)]
+points = [Vector.from_deg_angle((360 / 5) * n) for n in range(5)]
 # converting UCS into OCS coordinates
 ocs_points = list(ucs.points_to_ocs(points))
 
@@ -25,18 +27,17 @@ ocs_points = list(ucs.points_to_ocs(points))
 elevation = ocs_points[0].z
 
 msp.add_lwpolyline(
-    # LWPOLYLINE point format: (x, y, [start_width, [end_width, [bulge]]])
-    # the z-axis would be start_width, so remove it
-    points=[p[:2] for p in ocs_points],
+    points=ocs_points,
+    format='xy',  # ignore z-axis
     dxfattribs={
         'elevation': elevation,
         'extrusion': ucs.uz,
         'closed': True,
         'color': 1,
     })
-# include-end
 
 from ezdxf.math import OCS
+
 OCS(ucs.uz).render_axis(msp)
 ucs.render_axis(msp)
-doc.saveas('ocs_lwpolyline.dxf')
+doc.saveas(OUT_DIR / 'ocs_lwpolyline.dxf')

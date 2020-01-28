@@ -14,11 +14,10 @@ msp = doc.modelspace()
 # rotated around x-axis about -45 degree
 ucs = UCS(origin=(0, 2, 2)).rotate_local_x(math.radians(-45))
 
-# calculating corner points in UCS coordinates
-points = [Vector.from_deg_angle((360/5)*n).vec2 for n in range(5)]
-
 msp.add_lwpolyline(
-    points=points,
+    # calculating corner points in UCS coordinates
+    points=(Vector.from_deg_angle((360 / 5) * n) for n in range(5)),
+    format='xy',  # ignore z-axis
     dxfattribs={
         'closed': True,
         'color': 1,

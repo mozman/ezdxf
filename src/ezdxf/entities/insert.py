@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List
-from ezdxf.math import Vector
+from ezdxf.math import Vector, UCS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError
 from .dxfentity import base_class, SubclassProcessor
@@ -302,3 +302,27 @@ class Insert(DXFGraphic):
 
         for attrib in self.attribs:
             attrib.transform_to_wcs(ucs)
+
+    def ucs(self) -> UCS:
+        """ Returns an :class:`~ezdxf.math.UCS` placed at the block reference `insert` location, UCS axis aligned
+        to the block axis.
+
+        .. versionadded:: 0.11
+
+        """
+        ocs = self.ocs()
+        return UCS(
+            origin=ocs.to_wcs(self.dxf.insert),
+            ux=ocs.to_wcs((1, 0, 0)),  # block x-axis direction in WCS
+            uz=self.dxf.extrusion,  # block z-axis direction in WCS
+        )
+
+    def reset_transformation(self):
+        """ Reset block reference parameters `location`, `rotation` and `extrusion` vector.
+
+        .. versionadded:: 0.11
+
+        """
+        self.dxf.insert = (0, 0, 0)
+        self.dxf.discard('rotation')
+        self.dxf.discard('extrusion')

@@ -1,5 +1,7 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-20 Manfred Moitzi
 # License: MIT License
+from pathlib import Path
+OUT_DIR = Path('~/Desktop/Outbox').expanduser()
 
 import ezdxf
 from ezdxf.math import OCS
@@ -28,4 +30,4 @@ msp.add_point((0, 2, 2), dxfattribs={'color': 1})
 
 print(f"center in OCS: {ocs.from_wcs((0, 2, 2))}")
 ocs.render_axis(msp)
-doc.saveas('ocs_circle.dxf')
+doc.saveas(OUT_DIR / 'ocs_circle.dxf')
