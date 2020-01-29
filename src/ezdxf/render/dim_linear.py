@@ -478,10 +478,10 @@ class LinearDimension(BaseDimensionRenderer):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
 
-        from_ucs('defpoint', self.wcs)
-        from_ucs('defpoint2', self.wcs)
-        from_ucs('defpoint3', self.wcs)
-        from_ucs('text_midpoint', self.ocs)
+        from_ucs('defpoint', self.ucs.to_wcs)
+        from_ucs('defpoint2', self.ucs.to_wcs)
+        from_ucs('defpoint3', self.ucs.to_wcs)
+        from_ucs('text_midpoint', self.ucs.to_ocs)
         self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(self.dimension.dxf.angle)
 
 

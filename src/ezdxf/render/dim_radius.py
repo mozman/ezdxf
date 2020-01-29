@@ -345,9 +345,9 @@ class RadiusDimension(BaseDimensionRenderer):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
 
-        from_ucs('defpoint', self.wcs)
-        from_ucs('defpoint4', self.wcs)
-        from_ucs('text_midpoint', self.ocs)
+        from_ucs('defpoint', self.ucs.to_wcs)
+        from_ucs('defpoint4', self.ucs.to_wcs)
+        from_ucs('text_midpoint', self.ucs.to_ocs)
 
 
 def add_center_mark(dim):

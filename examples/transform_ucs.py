@@ -3,7 +3,7 @@
 import pathlib
 import math
 import ezdxf
-from ezdxf.math import UCS
+from ezdxf.math import UCS, Vector
 
 OUTDIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 
@@ -93,7 +93,7 @@ def add_mtext(msp, ucs):
     text.transform_to_wcs(ucs)
 
 
-def main(filename):
+def scene1(filename):
     doc = ezdxf.new('R2010', setup=True)
     msp = doc.modelspace()
 
@@ -121,5 +121,40 @@ def main(filename):
     doc.saveas(filename)
 
 
+def add_excentric_text(msp, ucs, location, text):
+    text = msp.add_mtext(text, dxfattribs={
+        'color': 5,
+        'style': 'OpenSansCondensed-Light',
+        'char_height': .2,
+        'insert': location,
+        'attachment_point': 5,
+    })
+    text.transform_to_wcs(ucs)
+    msp.add_line(start=(0, 0, 0), end=(location.x, 0, 0), dxfattribs={'color': 1}).transform_to_wcs(ucs)
+    msp.add_line(start=(location.x, 0, 0), end=(location.x, location.y, 0), dxfattribs={'color': 3}).transform_to_wcs(
+        ucs)
+    msp.add_line(start=(location.x, location.y, 0), end=(location.x, location.y, location.z),
+                 dxfattribs={'color': 5}).transform_to_wcs(ucs)
+
+
+def scene2(filename):
+    doc = ezdxf.new('R2010', setup=True)
+    msp = doc.modelspace()
+    delta = 6
+    for z in range(-2, 3):
+        for y in range(-2, 3):
+            for x in range(-2, 3):
+                cx = x*delta
+                cy = y*delta
+                cz = z*delta
+                ucs = UCS(origin=(cx, cy, cz)).rotate_local_z(math.radians(45)).rotate_local_x(
+                    math.radians(30))
+                add_excentric_text(msp, ucs, location=Vector(1, 2, 3), text=f'Hallo\n(x={cx}, y={cy}, z={cz})')
+
+    doc.set_modelspace_vport(5 * delta)
+    doc.saveas(filename)
+
+
 if __name__ == '__main__':
-    main(OUTDIR / "transform_ucs.dxf")
+    scene1(OUTDIR / "transform_scene_1.dxf")
+    scene2(OUTDIR / "transform_scene_2.dxf")

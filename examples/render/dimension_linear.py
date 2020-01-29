@@ -4,6 +4,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING
 import sys
+import math
 import pathlib
 import random
 import ezdxf
@@ -156,7 +157,7 @@ def example_for_all_text_placings_ucs_R2007():
 
 
 def example_for_all_text_placings_in_space_R2007():
-    ucs = UCS(ux=(1, 1, 0), uy=(0, 0, 1))
+    ucs = UCS(origin=(20, 20, 0)).rotate_local_x(math.radians(45)).rotate_local_z(math.radians(45))
     doc = ezdxf.new('R2007', setup=True)
     set_text_style(doc)
     example_for_all_text_placings(doc, 'dim_linear_text_placing_in_space_R2007.dxf', ucs)
@@ -173,18 +174,16 @@ def example_for_all_text_placings(doc, filename, ucs=None):
         ucs: user defined coordinate system
 
     """
+
     def add_text(lines, insert):
         insert += (.2, 0)
         attribs = dict(TEXT_ATTRIBS)
         line_space = .4
         delta = Vector(0, line_space, 0)
-        if ucs:
-            attribs['rotation'] = ucs.to_ocs_angle_deg(0)
-            attribs['extrusion'] = ucs.uz
-
         for line in lines:
-            location = ucs.to_ocs(insert) if ucs else insert
-            msp.add_text(line, dxfattribs=attribs).set_pos(location)
+            text = msp.add_text(line, dxfattribs=attribs).set_pos(insert)
+            if ucs:
+                text.transform_to_wcs(ucs)
             insert -= delta
 
     msp = doc.modelspace()
@@ -580,18 +579,22 @@ def linear_EZ_MM(fmt):
     doc.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
-ALL = True
+ALL = False
 
 if __name__ == '__main__':
-    linear_tutorial('R2007')
-    linear_tutorial_using_tvp()
-    linear_tutorial_using_limits('R2000')
-    linear_tutorial_using_limits('R12')
-    linear_tutorial_using_tolerances('R2000')
-    linear_tutorial_using_tolerances('R12')
+    example_for_all_text_placings_ucs_R12()
+    example_for_all_text_placings_in_space_R12()
     example_for_all_text_placings_ucs_R2007()
+    example_for_all_text_placings_in_space_R2007()
 
     if ALL:
+        linear_tutorial('R2007')
+        linear_tutorial_using_tvp()
+        linear_tutorial_using_limits('R2000')
+        linear_tutorial_using_limits('R12')
+        linear_tutorial_using_tolerances('R2000')
+        linear_tutorial_using_tolerances('R12')
+
         linear_tutorial('R2007')
         linear_tutorial('R12')
         example_background_fill('R2007')
@@ -600,10 +603,6 @@ if __name__ == '__main__':
 
         example_multi_point_linear_dimension()
         example_random_multi_point_linear_dimension(count=10, length=20)
-
-        example_for_all_text_placings_ucs_R12()
-        example_for_all_text_placings_in_space_R12()
-        example_for_all_text_placings_in_space_R2007()
 
         linear_all_arrow_style('R12')
         linear_all_arrow_style('R12', dimltex1='DOT2', dimltex2='DOT2', filename='dotted_extension_lines_R12.dxf')

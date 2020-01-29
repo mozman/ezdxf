@@ -455,27 +455,6 @@ class BaseDimensionRenderer:
             attribs['lineweight'] = self.dim_lineweight
         return attribs
 
-    def wcs(self, point: 'Vertex') -> Vector:
-        """
-        Transform `point` in UCS coordinates into WCS coordinates.
-
-        """
-        return self.ucs.to_wcs(point)
-
-    def ocs(self, point: 'Vertex') -> Vector:
-        """
-        Transform `point` in UCS coordinates into OCS coordinates.
-
-        """
-        return self.ucs.to_ocs(point)
-
-    def to_ocs_angle(self, angle: float) -> float:
-        """
-        Transform `angle` from UCS to OCS.
-
-        """
-        return self.ucs.to_ocs_angle_deg(angle)
-
     def text_override(self, measurement: float) -> str:
         """
         Create dimension text for `measurement` in drawing units and applies text overriding properties.
@@ -583,7 +562,6 @@ class BaseDimensionRenderer:
         if dxfattribs:
             attribs.update(dxfattribs)
         text_box = self.text_box
-        wcs = self.ucs.to_wcs
         if remove_hidden_lines and (text_box is not None):
             start_inside = int(text_box.is_inside(start))
             end_inside = int(text_box.is_inside(end))
@@ -595,7 +573,7 @@ class BaseDimensionRenderer:
                 # one point inside one point outside -> one intersection point
                 p1 = intersection_points[0]
                 p2 = start if end_inside else end
-                self.block.add_line(wcs(p1), wcs(p2), dxfattribs=attribs)
+                self.block.add_line(p1, p2, dxfattribs=attribs).transform_to_wcs(self.ucs)
                 return
             else:
                 intersection_points = text_box.intersect(ConstructionLine(start, end))
@@ -603,11 +581,11 @@ class BaseDimensionRenderer:
                     # sort intersection points by distance to start point
                     p1, p2 = order(intersection_points[0], intersection_points[1])
                     # line[start-p1] - gap - line[p2-end]
-                    self.block.add_line(wcs(start), wcs(p1), dxfattribs=attribs)
-                    self.block.add_line(wcs(p2), wcs(end), dxfattribs=attribs)
+                    self.block.add_line(start, p1, dxfattribs=attribs).transform_to_wcs(self.ucs)
+                    self.block.add_line(p2, end, dxfattribs=attribs).transform_to_wcs(self.ucs)
                     return
                 # else: fall trough
-        self.block.add_line(wcs(start), wcs(end), dxfattribs=attribs)
+        self.block.add_line(start, end, dxfattribs=attribs).transform_to_wcs(self.ucs)
 
     def add_blockref(self, name: str, insert: 'Vertex', rotation: float = 0,
                      scale: float = 1., dxfattribs: dict = None) -> None:
@@ -623,14 +601,12 @@ class BaseDimensionRenderer:
 
         """
         attribs = self.default_attributes()
-        insert = self.ocs(insert)
-        rotation = self.to_ocs_angle(rotation)
-        if self.requires_extrusion:
-            attribs['extrusion'] = self.ucs.uz
         if name in ARROWS:  # generates automatically BLOCK definitions for arrows if needed
             if dxfattribs:
                 attribs.update(dxfattribs)
             self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, dxfattribs=attribs)
+            # get last added INSERT entity
+            blkref = self.block[-1]
         else:
             if name not in self.drawing.blocks:
                 raise DXFUndefinedBlockError('Undefined block: "{}"'.format(name))
@@ -640,7 +616,8 @@ class BaseDimensionRenderer:
                 attribs['yscale'] = scale
             if dxfattribs:
                 attribs.update(dxfattribs)
-            self.block.add_blockref(name, insert=insert, dxfattribs=attribs)
+            blkref = self.block.add_blockref(name, insert=insert, dxfattribs=attribs)
+        blkref.transform_to_wcs(self.ucs)
 
     def add_text(self, text: str, pos: Vector, rotation: float, dxfattribs: dict = None) -> None:
         """
@@ -656,14 +633,11 @@ class BaseDimensionRenderer:
         attribs = self.default_attributes()
         attribs['style'] = self.text_style_name
         attribs['color'] = self.text_color
-        if self.requires_extrusion:
-            attribs['extrusion'] = self.ucs.uz
 
         if self.supports_dxf_r2000:
-            text_direction = self.ucs.to_wcs(Vec2.from_deg_angle(rotation)) - self.ucs.origin
-            attribs['text_direction'] = text_direction
+            attribs['text_direction'] = Vec2.from_deg_angle(rotation)
             attribs['char_height'] = self.text_height
-            attribs['insert'] = self.wcs(pos)
+            attribs['insert'] = pos
             attribs['attachment_point'] = self.text_attachment_point
 
             if self.supports_dxf_r2007:
@@ -674,14 +648,15 @@ class BaseDimensionRenderer:
 
             if dxfattribs:
                 attribs.update(dxfattribs)
-            self.block.add_mtext(text, dxfattribs=attribs)
+            self.block.add_mtext(text, dxfattribs=attribs).transform_to_wcs(self.ucs)
         else:
-            attribs['rotation'] = self.ucs.to_ocs_angle_deg(rotation)
+            attribs['rotation'] = rotation
             attribs['height'] = self.text_height
             if dxfattribs:
                 attribs.update(dxfattribs)
             dxftext = self.block.add_text(text, dxfattribs=attribs)
-            dxftext.set_pos(self.ocs(pos), align='MIDDLE_CENTER')
+            dxftext.set_pos(pos, align='MIDDLE_CENTER')
+            dxftext.transform_to_wcs(self.ucs)
 
     def add_defpoints(self, points: Iterable['Vertex']) -> None:
         """
@@ -692,7 +667,7 @@ class BaseDimensionRenderer:
             'layer': 'DEFPOINTS',
         }
         for point in points:
-            self.block.add_point(self.wcs(point), dxfattribs=attribs)
+            self.block.add_point(point, dxfattribs=attribs).transform_to_wcs(self.ucs)
 
     def add_leader(self, p1: Vec2, p2: Vec2, p3: Vec2, dxfattribs: dict = None):
         """

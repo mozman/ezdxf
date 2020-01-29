@@ -1,11 +1,11 @@
 # Purpose: using radius DIMENSION
 # Created: 10.11.2018
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
 import pathlib
+import math
 import ezdxf
-from ezdxf.math import Vector
+from ezdxf.math import Vector, UCS
 import logging
 
 # ========================================
@@ -252,15 +252,31 @@ def radius_user_defined_inside_horizontal(dxfversion='R2000', delta=10):
     doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_user_defined_inside_horizontal.dxf')
 
 
+def radius_3d(dxfversion='R2000', delta=10):
+    doc = ezdxf.new(dxfversion, setup=True)
+    msp = doc.modelspace()
+
+    for x, y in multiple_locations(delta=delta):
+        ucs = UCS(origin=(x, y, 0)).rotate_local_x(math.radians(45))
+        angle = Vector(x, y).angle_deg
+        msp.add_circle((0, 0), radius=3).transform_to_wcs(ucs)
+        dim = msp.add_radius_dim(center=(0, 0), radius=3, angle=angle, dimstyle='EZ_RADIUS')
+        dim.render(discard=BRICSCAD, ucs=ucs)
+
+    doc.set_modelspace_vport(height=3 * delta)
+    doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_3d.dxf')
+
+
 if __name__ == '__main__':
-    radius_default_outside()
-    radius_default_inside(dimtmove=0)  # dimline from center
-    radius_default_inside(dimtmove=1)  # dimline from text
-    radius_default_outside_horizontal()
-    radius_default_inside_horizontal(dimtmove=0)  # dimline from center
-    radius_default_inside_horizontal(dimtmove=1)  # dimline from text
-    radius_user_defined_outside()
-    radius_user_defined_outside_horizontal()
-    radius_user_defined_inside(dimtmove=0)  # dimline from text, also for 1
-    radius_user_defined_inside(dimtmove=2)  # dimline from center
-    radius_user_defined_inside_horizontal()
+    # radius_default_outside()
+    # radius_default_inside(dimtmove=0)  # dimline from center
+    # radius_default_inside(dimtmove=1)  # dimline from text
+    # radius_default_outside_horizontal()
+    # radius_default_inside_horizontal(dimtmove=0)  # dimline from center
+    # radius_default_inside_horizontal(dimtmove=1)  # dimline from text
+    # radius_user_defined_outside()
+    # radius_user_defined_outside_horizontal()
+    # radius_user_defined_inside(dimtmove=0)  # dimline from text, also for 1
+    # radius_user_defined_inside(dimtmove=2)  # dimline from center
+    # radius_user_defined_inside_horizontal()
+    radius_3d()
