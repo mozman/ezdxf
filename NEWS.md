@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.10.3 - 2020-01-29
+---------------------------
+
+- BUGFIX: min DXF version for VISUALSTYLE object is R2000
+
 Version 0.10.2 - 2019-10-05
 ---------------------------
 
