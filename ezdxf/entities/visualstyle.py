@@ -1,9 +1,9 @@
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
 # Created: 2019-03-12
-from typing import TYPE_CHECKING, Iterable, List
+from typing import TYPE_CHECKING
 import copy
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007, DXFTypeError, DXF2018
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from ezdxf.lldxf.attributes import DXFAttributes, DefSubclass, DXFAttr
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
@@ -11,7 +11,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, DXFTag
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
 
 __all__ = ['VisualStyle']
 
@@ -110,7 +110,7 @@ class VisualStyle(DXFObject):
     """ DXF VISUALSTYLE entity """
     DXFTYPE = 'VISUALSTYLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_visualstyle)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2007
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2000  # official supported in R2007
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
