@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable, Optional
 from ezdxf.math import Vector, Vec2, ConstructionLine, ConstructionBox
-from ezdxf.math import UCS, PassTroughUCS, xround
+from ezdxf.math import UCS, PassTroughUCS, xround, Z_AXIS
 from ezdxf.lldxf import const
 from ezdxf.options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
@@ -102,7 +102,7 @@ class BaseDimensionRenderer:
 
         # User defined coordinate system for DIMENSION entity
         self.ucs = ucs or PassTroughUCS()
-        self.requires_extrusion = self.ucs.uz != (0, 0, 1)  # type: bool
+        self.requires_extrusion = not self.ucs.uz.isclose(Z_AXIS)  # type: bool
 
         # ezdxf specific attributes beyond DXF reference, therefore not stored in the DXF file (DSTYLE)
         # Some of these are just an rendering effect, which will be ignored by CAD applications if they modify the
@@ -397,6 +397,8 @@ class BaseDimensionRenderer:
         return not self.text_outside
 
     def render(self, block: 'GenericLayoutType'):  # interface definition
+        # Block entities are located in the OCS defined by the extrusion vector of the DIMENSION entity
+        # and the z-axis of the OCS point 'text_midpoint' (group code 11).
         self.block = block
         # tolerance requires MTEXT support, switch off rendering of tolerances and limits
         if not self.supports_dxf_r2000:
@@ -552,12 +554,16 @@ class BaseDimensionRenderer:
 
         """
 
+        def add_line_to_block(start, end):
+            self.block.add_line(to_ocs(start).vec2, to_ocs(end).vec2, dxfattribs=dxfattribs)
+
         def order(a: Vec2, b: Vec2) -> Tuple[Vec2, Vec2]:
             if (start - a).magnitude < (start - b).magnitude:
                 return a, b
             else:
                 return b, a
 
+        to_ocs = self.ucs.to_ocs
         attribs = self.default_attributes()
         if dxfattribs:
             attribs.update(dxfattribs)
@@ -573,7 +579,7 @@ class BaseDimensionRenderer:
                 # one point inside one point outside -> one intersection point
                 p1 = intersection_points[0]
                 p2 = start if end_inside else end
-                self.block.add_line(p1, p2, dxfattribs=attribs).transform_to_wcs(self.ucs)
+                add_line_to_block(p1, p2)
                 return
             else:
                 intersection_points = text_box.intersect(ConstructionLine(start, end))
@@ -581,11 +587,11 @@ class BaseDimensionRenderer:
                     # sort intersection points by distance to start point
                     p1, p2 = order(intersection_points[0], intersection_points[1])
                     # line[start-p1] - gap - line[p2-end]
-                    self.block.add_line(start, p1, dxfattribs=attribs).transform_to_wcs(self.ucs)
-                    self.block.add_line(p2, end, dxfattribs=attribs).transform_to_wcs(self.ucs)
+                    add_line_to_block(start, p1)
+                    add_line_to_block(p2, end)
                     return
                 # else: fall trough
-        self.block.add_line(start, end, dxfattribs=attribs).transform_to_wcs(self.ucs)
+        add_line_to_block(start, end)
 
     def add_blockref(self, name: str, insert: 'Vertex', rotation: float = 0,
                      scale: float = 1., dxfattribs: dict = None) -> None:
@@ -600,13 +606,14 @@ class BaseDimensionRenderer:
             dxfattribs: additional or overridden DXF attributes
 
         """
+        insert = self.ucs.to_ocs(insert).vec2
+        rotation = self.ucs.to_ocs_angle_deg(rotation)
+
         attribs = self.default_attributes()
         if name in ARROWS:  # generates automatically BLOCK definitions for arrows if needed
             if dxfattribs:
                 attribs.update(dxfattribs)
             self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, dxfattribs=attribs)
-            # get last added INSERT entity
-            blkref = self.block[-1]
         else:
             if name not in self.drawing.blocks:
                 raise DXFUndefinedBlockError('Undefined block: "{}"'.format(name))
@@ -616,8 +623,7 @@ class BaseDimensionRenderer:
                 attribs['yscale'] = scale
             if dxfattribs:
                 attribs.update(dxfattribs)
-            blkref = self.block.add_blockref(name, insert=insert, dxfattribs=attribs)
-        blkref.transform_to_wcs(self.ucs)
+            self.block.add_blockref(name, insert=insert, dxfattribs=attribs)
 
     def add_text(self, text: str, pos: Vector, rotation: float, dxfattribs: dict = None) -> None:
         """
@@ -630,6 +636,9 @@ class BaseDimensionRenderer:
             dxfattribs: additional or overridden DXF attributes
 
         """
+        pos = self.ucs.to_ocs(pos).vec2
+        rotation = self.ucs.to_ocs_angle_deg(rotation)
+
         attribs = self.default_attributes()
         attribs['style'] = self.text_style_name
         attribs['color'] = self.text_color
@@ -648,7 +657,7 @@ class BaseDimensionRenderer:
 
             if dxfattribs:
                 attribs.update(dxfattribs)
-            self.block.add_mtext(text, dxfattribs=attribs).transform_to_wcs(self.ucs)
+            self.block.add_mtext(text, dxfattribs=attribs)
         else:
             attribs['rotation'] = rotation
             attribs['height'] = self.text_height
@@ -656,7 +665,6 @@ class BaseDimensionRenderer:
                 attribs.update(dxfattribs)
             dxftext = self.block.add_text(text, dxfattribs=attribs)
             dxftext.set_pos(pos, align='MIDDLE_CENTER')
-            dxftext.transform_to_wcs(self.ucs)
 
     def add_defpoints(self, points: Iterable['Vertex']) -> None:
         """
@@ -667,7 +675,8 @@ class BaseDimensionRenderer:
             'layer': 'DEFPOINTS',
         }
         for point in points:
-            self.block.add_point(point, dxfattribs=attribs).transform_to_wcs(self.ucs)
+            location = self.ucs.to_ocs(point).replace(z=0)
+            self.block.add_point(location, dxfattribs=attribs)
 
     def add_leader(self, p1: Vec2, p2: Vec2, p3: Vec2, dxfattribs: dict = None):
         """

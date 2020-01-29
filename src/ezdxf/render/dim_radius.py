@@ -348,6 +348,8 @@ class RadiusDimension(BaseDimensionRenderer):
         from_ucs('defpoint', self.ucs.to_wcs)
         from_ucs('defpoint4', self.ucs.to_wcs)
         from_ucs('text_midpoint', self.ucs.to_ocs)
+        if self.requires_extrusion:
+            self.dimension.dxf.extrusion = self.ucs.uz
 
 
 def add_center_mark(dim):

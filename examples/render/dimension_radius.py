@@ -268,15 +268,15 @@ def radius_3d(dxfversion='R2000', delta=10):
 
 
 if __name__ == '__main__':
-    # radius_default_outside()
-    # radius_default_inside(dimtmove=0)  # dimline from center
-    # radius_default_inside(dimtmove=1)  # dimline from text
-    # radius_default_outside_horizontal()
-    # radius_default_inside_horizontal(dimtmove=0)  # dimline from center
-    # radius_default_inside_horizontal(dimtmove=1)  # dimline from text
-    # radius_user_defined_outside()
-    # radius_user_defined_outside_horizontal()
-    # radius_user_defined_inside(dimtmove=0)  # dimline from text, also for 1
-    # radius_user_defined_inside(dimtmove=2)  # dimline from center
-    # radius_user_defined_inside_horizontal()
+    radius_default_outside()
+    radius_default_inside(dimtmove=0)  # dimline from center
+    radius_default_inside(dimtmove=1)  # dimline from text
+    radius_default_outside_horizontal()
+    radius_default_inside_horizontal(dimtmove=0)  # dimline from center
+    radius_default_inside_horizontal(dimtmove=1)  # dimline from text
+    radius_user_defined_outside()
+    radius_user_defined_outside_horizontal()
+    radius_user_defined_inside(dimtmove=0)  # dimline from text, also for 1
+    radius_user_defined_inside(dimtmove=2)  # dimline from center
+    radius_user_defined_inside_horizontal()
     radius_3d()

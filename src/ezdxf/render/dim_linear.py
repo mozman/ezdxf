@@ -484,6 +484,9 @@ class LinearDimension(BaseDimensionRenderer):
         from_ucs('text_midpoint', self.ucs.to_ocs)
         self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(self.dimension.dxf.angle)
 
+        if self.requires_extrusion:
+            self.dimension.dxf.extrusion = self.ucs.uz
+
 
 CAN_SUPPRESS_ARROW1 = {
     ARROWS.dot,
