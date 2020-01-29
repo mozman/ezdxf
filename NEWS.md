@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.11a3 - dev
+Version 0.11a4 - dev
 --------------------
 
 - Using standard git branches: 
@@ -43,6 +43,7 @@ Version 0.11a3 - dev
 - BUGFIX: fixed length extension line support for linear dimensions
 - BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`
 - BUGFIX: check for unsupported DXF versions at `new()`
+- BUGFIX: dxf2src error for the HATCH entity
 
 Version 0.10.3 - 2020-01-29
 ---------------------------

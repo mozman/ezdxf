@@ -533,7 +533,7 @@ class _SourceCodeGenerator:
             add_line("e.set_seed_points({})".format(str(entity.seeds)))
         if entity.pattern:
             self.add_list_source_code(entity.pattern.lines, prolog='e.set_pattern_definition([', epilog='])')
-        arg = "    '{}'={},"
+        arg = "    {}={},"
 
         if entity.has_gradient_data:
             g = entity.gradient
@@ -548,13 +548,13 @@ class _SourceCodeGenerator:
         for count, path in enumerate(entity.paths, start=1):
             if path.PATH_TYPE == 'PolylinePath':
                 add_line('# {}. polyline path'.format(count))
-                self.add_list_source_code(path.vertices, prolog='e.path.add_polyline_path([', epilog='    ],')
+                self.add_list_source_code(path.vertices, prolog='e.paths.add_polyline_path([', epilog='    ],')
                 add_line(arg.format('is_closed', str(path.is_closed)))
                 add_line(arg.format('flags', str(path.path_type_flags)))
                 add_line(')')
             else:  # EdgePath
                 add_line('# {}. edge path: associative hatch not supported'.format(count))
-                add_line('ep = e.path.add_edge_path(flags={})'.format(path.path_type_flags))
+                add_line('ep = e.paths.add_edge_path(flags={})'.format(path.path_type_flags))
                 for edge in path.edges:
                     if edge.EDGE_TYPE == 'LineEdge':
                         add_line('ep.add_line({}, {})'.format(str(edge.start[:2]), str(edge.end[:2])))

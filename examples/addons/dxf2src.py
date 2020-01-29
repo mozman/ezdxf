@@ -13,9 +13,9 @@ source = entities_to_code(msp)
 
 print('writing ' + SOUCE_CODE_FILE)
 with open(SOUCE_CODE_FILE, mode='wt') as f:
-    f.write(source.imports())
+    f.write(source.import_str())
     f.write('\n\n')
-    f.write(source.tostring())
+    f.write(source.code_str())
     f.write('\n')
 
 print('done.')

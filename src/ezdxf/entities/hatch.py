@@ -138,7 +138,6 @@ PATTERN_DEFINITION_LINE_CODES = {53, 43, 44, 45, 46, 79, 49}
 @register_entity
 class Hatch(DXFGraphic):
     """ DXF HATCH entity """
-    # todo: HATCH with UCS
     DXFTYPE = 'HATCH'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_hatch)
     DEFAULT_ATTRIBS = {'color': 1, 'layer': '0'}
