@@ -44,6 +44,11 @@ Version 0.11a3 - dev
 - BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`
 - BUGFIX: check for unsupported DXF versions at `new()`
 
+Version 0.10.3 - 2020-01-29
+---------------------------
+
+- BUGFIX: min DXF version for VISUALSTYLE object is R2000
+
 Version 0.10.2 - 2019-10-05
 ---------------------------
 
