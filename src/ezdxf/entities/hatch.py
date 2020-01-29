@@ -50,7 +50,7 @@ acdb_hatch = DefSubclass('AcDbHatch', {
     # 0 = Hatch “odd parity” area (Normal style)
     # 1 = Hatch outermost area only (Outer style)
     # 2 = Hatch through entire area (Ignore style)
-    'hatch_style': DXFAttr(75, default=const.HATCH_STYLE_OUTERMOST),
+    'hatch_style': DXFAttr(75, default=const.HATCH_STYLE_NESTED),
 
     # Hatch pattern type:
     # 0 = User-defined

@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.11a4 - dev
+Version 0.11a5 - dev
 --------------------
 
 - Using standard git branches: 

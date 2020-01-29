@@ -4,9 +4,11 @@ doc = ezdxf.new('R2000')  # hatch requires the DXF R2000 (AC1015) format or late
 msp = doc.modelspace()  # adding entities to the model space
 
 # important: major axis >= minor axis (ratio <= 1.)
-msp.add_ellipse((0, 0), major_axis=(0, 10), ratio=0.5)  # minor axis length = major axis length * ratio
+# minor axis length = major axis length * ratio
+msp.add_ellipse((0, 0), major_axis=(0, 10), ratio=0.5)
 
-hatch = msp.add_hatch(color=2)  # by default a solid fill hatch with fill color=7 (white/black)
+# by default a solid fill hatch with fill color=7 (white/black)
+hatch = msp.add_hatch(color=2)
 
 # every boundary path is always a 2D element
 edge_path = hatch.paths.add_edge_path()
