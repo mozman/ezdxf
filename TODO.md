@@ -12,8 +12,6 @@ DXF Entities
 - DIMENSION rendering
     - angular dim
     - angular 3 point dim
-    - diameter dim
-    - radius dim
     - ordinate dim
 - MLEADER
 - MLINE
