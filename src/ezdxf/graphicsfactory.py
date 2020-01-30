@@ -304,7 +304,7 @@ class CreatorInterface:
         dxfattribs['text'] = text
         return self.new_entity('ATTDEF', dxfattribs)
 
-    def add_polyline2d(self, points: Iterable['Vertex'], dxfattribs: dict = None, format: str = None,) -> 'Polyline':
+    def add_polyline2d(self, points: Iterable['Vertex'], dxfattribs: dict = None, format: str = None, ) -> 'Polyline':
         """
         Add a 2D :class:`~ezdxf.entities.Polyline` entity.
 
@@ -1188,17 +1188,17 @@ class CreatorInterface:
 
     def add_diameter_dim(self,
                          center: 'Vertex',
-                         p1: 'Vertex' = None,
+                         mpoint: 'Vertex' = None,
                          radius: float = None,
                          angle: float = None,
                          location: 'Vertex' = None,
                          text: str = "<>",
-                         dimstyle: str = 'EZDXF',
+                         dimstyle: str = 'EZ_RADIUS',
                          override: dict = None,
                          dxfattribs: dict = None) -> 'DimStyleOverride':
         """
         Add a diameter :class:`~ezdxf.entities.Dimension` line. The diameter dimension line requires a `center` point
-        and a point `p1` on the circle or as an alternative a `radius` and a dimension line `angle` in degrees.
+        and a point `mpoint` on the circle or as an alternative a `radius` and a dimension line `angle` in degrees.
 
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering
@@ -1215,7 +1215,7 @@ class CreatorInterface:
 
         Args:
             center: specifies the center of the circle (in UCS)
-            p1: specifies the measurement point on the circle (in UCS)
+            mpoint: specifies the measurement point on the circle (in UCS)
             radius: specify radius, requires argument `angle`, overrides `p1` argument
             angle: specify angle of dimension line in degrees, requires argument `radius`, overrides `p1` argument
             location: user defined location for text mid point (in UCS)
@@ -1233,20 +1233,30 @@ class CreatorInterface:
         type_ = {'dimtype': const.DIM_DIAMETER | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
         center = Vector(center)
-        if p1 is None:
-            if angle is None:
-                raise ValueError("Argument `angle` or `p1` required.")
+        if location is not None:
             if radius is None:
-                raise ValueError("Argument `radius` or `p1` required.")
-            radius_vec = Vector.from_deg_angle(angle, radius)
-        else:
-            radius_vec = Vector(p1) - center
-        p1 = center - radius_vec
-        p2 = center + radius_vec
+                raise ValueError("Argument radius is required.")
+            location = Vector(location)
+
+            # (center - location) just works as expected, but in my
+            # understanding it should be: (location - center)
+            radius_vec = (center - location).normalize(length=radius)
+        else:  # defined by mpoint = measurement point on circle
+            if mpoint is None:  # defined by radius and angle
+                if angle is None:
+                    raise ValueError("Argument angle or mpoint required.")
+                if radius is None:
+                    raise ValueError("Argument radius or mpoint required.")
+                radius_vec = Vector.from_deg_angle(angle, radius)
+            else:
+                radius_vec = Vector(mpoint) - center
+
+        p1 = center + radius_vec
+        p2 = center - radius_vec
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = dimstyle
-        dxfattribs['defpoint4'] = Vector(p1)  # group code 15
-        dxfattribs['defpoint'] = Vector(p2)  # group code 10
+        dxfattribs['defpoint'] = Vector(p1)  # group code 10
+        dxfattribs['defpoint4'] = Vector(p2)  # group code 15
         dxfattribs['text'] = text
 
         dimline.update_dxf_attribs(dxfattribs)
@@ -1255,6 +1265,39 @@ class CreatorInterface:
         if location is not None:
             style.user_location_override(location)
         return style
+
+    def add_diameter_dim_2p(self,
+                            p1: 'Vertex',
+                            p2: 'Vertex',
+                            text: str = "<>",
+                            dimstyle: str = 'EZ_RADIUS',
+                            override: dict = None,
+                            dxfattribs: dict = None) -> 'DimStyleOverride':
+        """
+        Shortcut method to create a diameter dimension by two points on the circle and the
+        measurement text at the default location defined by the associated `dimstyle`, for
+        further information see general method :func:`add_diameter_dim`. Center point of
+        the virtual circle is the mid point between `p1` and `p2`.
+
+        - dimstyle ``'EZ_RADIUS'``: places the dimension text outside
+        - dimstyle ``'EZ_RADIUS_INSIDE'``: places the dimension text inside
+
+        Args:
+            p1: first point of the circle (in UCS)
+            p2: second point on the opposite side of the center point of the circle (in UCS)
+            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
+                  dimension text, everything else `text` is drawn as dimension text
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZ_RADIUS'``
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        """
+        mpoint = Vector(p1)
+        center = mpoint.lerp(p2)
+        return self.add_diameter_dim(center, mpoint, text=text, dimstyle=dimstyle,
+                                     override=override, dxfattribs=dxfattribs)
 
     def add_radius_dim(self,
                        center: 'Vertex',

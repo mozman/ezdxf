@@ -46,7 +46,7 @@ def test_default_hatch_settings(hatch):
     assert hatch.has_pattern_fill is False
 
     assert hatch.dxf.solid_fill == 1
-    assert hatch.dxf.hatch_style == 1
+    assert hatch.dxf.hatch_style == 0
     assert hatch.dxf.pattern_type == 1
     assert hatch.dxf.pattern_angle == 0
     assert hatch.dxf.pattern_scale == 1

@@ -7,7 +7,7 @@ from ezdxf.math import UCS
 from ezdxf.tools import normalize_text_angle
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
-
+from ezdxf.lldxf.const import DXFInternalEzdxfError
 from .dim_base import BaseDimensionRenderer, TextBox
 
 if TYPE_CHECKING:
@@ -32,10 +32,23 @@ class RadiusDimension(BaseDimensionRenderer):
         override: dimension style override management object
 
     """
+    # Super class of DiameterDimension
+    def _center(self):
+        return Vec2(self.dimension.dxf.defpoint)
 
     def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None, override: 'DimStyleOverride' = None):
         super().__init__(dimension, ucs, override)
-        self.center = Vec2(self.dimension.dxf.defpoint)
+        dimtype = self.dimension.dimtype
+        if dimtype == 3:
+            self.is_diameter_dim = True
+            self.text_prefix = 'Ø'
+        elif dimtype == 4:
+            self.is_radius_dim = True
+            self.text_prefix = 'R'
+        else:
+            raise DXFInternalEzdxfError(f'Invalid dimension type {dimtype}')
+
+        self.center = self._center()  # override in diameter dimension
         self.point_on_circle = Vec2(self.dimension.dxf.defpoint4)
         # modify parameters for special scenarios
         if self.user_location is None:  # default location
@@ -47,8 +60,10 @@ class RadiusDimension(BaseDimensionRenderer):
         direction = self.point_on_circle - self.center
         self.dim_line_vec = direction.normalize()
         self.dim_line_angle = self.dim_line_vec.angle_deg
-        self.measurement = direction.magnitude
-        self.outside_default_distance = self.measurement + 2 * self.arrow_size
+        self.radius = direction.magnitude
+        # get_measurement() works for radius and diameter dimension
+        self.measurement = self.dimension.get_measurement()
+        self.outside_default_distance = self.radius + 2 * self.arrow_size
         self.outside_default_defpoint = self.center + (self.dim_line_vec * self.outside_default_distance)
         self.outside_text_force_dimline = self.dim_style.get('dimtofl', 1)
         # final dimension text (without limits or tolerance)
@@ -73,7 +88,8 @@ class RadiusDimension(BaseDimensionRenderer):
                 self.measurement_upper_limit = measurement + self.tol_maximum
                 self.measurement_lower_limit = measurement - self.tol_minimum
                 self.tol_text_upper = self.format_tolerance_text(self.measurement_upper_limit)
-                self.tol_text_lower = self.format_tolerance_text(self.measurement_lower_limit)
+                # Only the lower limit has a text prefix
+                self.tol_text_lower = self.text_prefix + self.format_tolerance_text(self.measurement_lower_limit)
                 self.tol_text_width = self.tolerance_text_width(max(len(self.tol_text_upper), len(self.tol_text_lower)))
 
                 # only limits are displayed so:
@@ -109,10 +125,11 @@ class RadiusDimension(BaseDimensionRenderer):
             self.dimension.dxf.text_midpoint = self.text_location
 
     def text_override(self, measurement: float) -> str:
-        """ Get measurement text, respect text suppression and insert prefix 'R' """
+        """ Get measurement text, respect text suppression and insert prefix 'R' or 'Ø' """
         text = super().text_override(measurement)
-        if text and text[0] != 'R':
-            text = 'R' + text
+        if text:
+            if text[0] != self.text_prefix:
+                text = self.text_prefix + text
         return text
 
     def get_text_location(self) -> Vec2:
@@ -137,7 +154,7 @@ class RadiusDimension(BaseDimensionRenderer):
         vertical_direction = text_direction.orthogonal(ccw=True)
         vertical_distance = self.text_vertical_distance()
         if self.text_inside:
-            hdist = (self.measurement - self.arrow_size) / 2
+            hdist = (self.radius - self.arrow_size) / 2
             text_midpoint = self.center + (self.dim_line_vec * hdist)
         else:
             hdist = self.dim_text_width / 2. + self.arrow_size + self.text_gap
@@ -162,7 +179,7 @@ class RadiusDimension(BaseDimensionRenderer):
 
     def is_location_outside(self, location: Vec2) -> bool:
         radius = (location - self.center).magnitude
-        return radius > self.measurement
+        return radius > self.radius
 
     def render(self, block: 'GenericLayoutType') -> None:
         """ Create dimension geometry of basic DXF entities in the associated BLOCK layout. """
@@ -188,7 +205,7 @@ class RadiusDimension(BaseDimensionRenderer):
     def render_default_location(self) -> None:
         """ Create dimension geometry at the default dimension line locations. """
         if not self.suppress_arrow1:
-            arrow_connection_point = self.add_arrow()
+            arrow_connection_point = self.add_arrow(self.point_on_circle, rotate=self.text_outside)
         else:
             arrow_connection_point = self.point_on_circle
 
@@ -218,7 +235,7 @@ class RadiusDimension(BaseDimensionRenderer):
             self.text_outside = False  # render dimension line like text inside
         # add arrow symbol (block references)
         if not self.suppress_arrow1:
-            arrow_connection_point = self.add_arrow()
+            arrow_connection_point = self.add_arrow(self.point_on_circle, rotate=self.text_outside)
         else:
             arrow_connection_point = self.point_on_circle
         if self.text_outside:
@@ -244,14 +261,12 @@ class RadiusDimension(BaseDimensionRenderer):
 
         self.text_outside = preserve_outside
 
-    def add_arrow(self) -> Vec2:
+    def add_arrow(self, location, rotate: bool) -> Vec2:
         """ Add arrow or tick to dimension line, returns dimension line connection point. """
         attribs = {
             'color': self.dim_line_color,
         }
         arrow_name = self.arrow1_name
-        location = self.point_on_circle
-        outside = self.text_outside
         if self.tick_size > 0.:  # oblique stroke, but double the size
             self.add_blockref(
                 ARROWS.oblique,
@@ -263,7 +278,7 @@ class RadiusDimension(BaseDimensionRenderer):
         else:
             scale = self.arrow_size
             angle = self.dim_line_angle
-            if outside:
+            if rotate:
                 angle += 180
 
             self.add_blockref(arrow_name, insert=location, scale=scale, rotation=angle, dxfattribs=attribs)

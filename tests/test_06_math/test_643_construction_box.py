@@ -249,3 +249,10 @@ class TestTextBox:
         assert box1.is_overlapping(box2) is True
         assert box2.is_overlapping(box1) is True
 
+
+def test_issue_2020_01_30():
+    box = ConstructionBox((0.22499999999999978, -6.15), 1.0, 0.4, 270.0)
+    start = (-1.4349395363018706e-16, -7.25)
+    end = (-2.1084952758329149e-16, -6.15)
+    assert box.is_inside(start) is False
+    assert box.is_inside(end) is False

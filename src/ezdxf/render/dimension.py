@@ -8,6 +8,7 @@ from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
 from .dim_linear import LinearDimension
 from .dim_radius import RadiusDimension
+from .dim_diameter import DiameterDimension
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, BaseDimensionRenderer
@@ -31,25 +32,25 @@ class DimensionRenderer:
         elif dim_type == 6:
             return self.ordinate(dimension, ucs, override)
         else:
-            raise DXFValueError("Unknown DIMENSION type: {}".format(dim_type))
+            raise DXFValueError(f'Unknown DIMENSION type: {dim_type}')
 
     def linear(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
-        """
-        Call renderer for linear dimension lines: horizontal, vertical and rotated
-        """
+        """ Call renderer for linear dimension lines: horizontal, vertical and rotated """
         return LinearDimension(dimension, ucs, override)
 
     def angular(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def diameter(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
-        raise NotImplemented
+        """ Call renderer for diameter dimension """
+        return DiameterDimension(dimension, ucs, override)
 
     def radius(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
+        """ Call renderer for radius dimension """
         return RadiusDimension(dimension, ucs, override)
 
     def angular3p(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def ordinate(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
-        raise NotImplemented
+        raise NotImplementedError()

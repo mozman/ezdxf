@@ -12,6 +12,8 @@ Version 0.11a5 - dev
 - NEW: `Dimension.get_measurement()` supports angular, angular3p and ordinate dimensions
 - NEW: `Layout.add_radius_dim()` implemented
 - NEW: shortcut calls `Layout.add_radius_dim_2p()` and `Layout.add_radius_dim_cra()`
+- NEW: `Layout.add_diameter_dim()` implemented
+- NEW: shortcut `Layout.add_diameter_dim_2p()`
 - NEW: `Circle.vertices(angles)` yields vertices for iterable angles in WCS
 - NEW: `Ellipse.vertices(params)` yields vertices for iterable params in WCS
 - NEW: Arc properties `start_point` and `end_point` returns start- and end point of arc in WCS
@@ -44,6 +46,7 @@ Version 0.11a5 - dev
 - BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`
 - BUGFIX: check for unsupported DXF versions at `new()`
 - BUGFIX: dxf2src error for the HATCH entity
+- BUGFIX: `left_of_line()` algorithm was incorrect
 
 Version 0.10.3 - 2020-01-29
 ---------------------------

@@ -128,29 +128,14 @@ def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex', online=False) -> b
     A `point` on the line is also "left of line", if `online` is ``True``.
 
     """
-
-    px, py, *_ = point
-    p1x, p1y, *_ = p1
-    p2x, p2y, *_ = p2
-
-    if online:
-        lower, greater = le, ge  # lower/greater or equal
+    cx, cy, *_ = point
+    ax, ay, *_ = p1
+    bx, by, *_ = p2
+    det = ((bx - ax) * (cy - ay) - (by - ay) * (cx - ax))
+    if online and math.isclose(det, 0):
+        return True
     else:
-        lower, greater = lt, gt  # real lower/greater then
-
-    # check if p1 and p2 are on the same vertical line
-    if math.isclose(p1x, p2x):
-        # compute on which side of the line point should be
-        should_be_left = p1y < p2y
-        return lower(px, p1x) if should_be_left else greater(px, p1y)
-    else:
-        # get pitch of line
-        pitch = (p2y - p1y) / (p2x - p1x)
-        # get y-value at points's x-position
-        y = pitch * (px - p1x) + p1y
-        # compute if point should be above or below the line
-        should_be_above = p1x < p2x
-        return greater(py, y) if should_be_above else lower(py, y)
+        return det > 0
 
 
 class ConstructionTool:

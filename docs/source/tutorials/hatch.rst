@@ -69,8 +69,8 @@ The expected result of combinations of various :attr:`hatch_style` values and pa
 overlapping paths is not documented by the DXF reference, so don't ask me, ask Autodesk or just try it by yourself
 and post your experience in the forum.
 
-Create hatches with with pattern fill
--------------------------------------
+Create hatches with pattern fill
+--------------------------------
 
 TODO
 
