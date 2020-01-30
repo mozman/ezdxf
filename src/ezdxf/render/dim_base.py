@@ -574,10 +574,14 @@ class BaseDimensionRenderer:
             inside = start_inside + end_inside
             if inside == 2:  # start and end inside text_box
                 return  # do not draw line
-            elif inside == 1:  # one point inside text_box
+            elif inside == 1:  # one point inside text_box or on a border line
                 intersection_points = text_box.intersect(ConstructionLine(start, end))
-                # one point inside one point outside -> one intersection point
-                p1 = intersection_points[0]
+                if len(intersection_points) == 1:
+                    # one point inside one point outside -> one intersection point
+                    p1 = intersection_points[0]
+                else:
+                    # second point on a text box border line
+                    p1, _ = order(*intersection_points)
                 p2 = start if end_inside else end
                 add_line_to_block(p1, p2)
                 return
