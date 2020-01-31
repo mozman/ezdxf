@@ -47,6 +47,10 @@ Version 0.11b0 - dev
 - BUGFIX: check for unsupported DXF versions at `new()`
 - BUGFIX: dxf2src error for the HATCH entity
 - BUGFIX: `left_of_line()` algorithm was incorrect
+
+Version 0.10.4 - 2020-01-31
+---------------------------
+
 - BUGFIX: height group code (40) for TEXT, ATTRIB and ATTDEF is mandatory
 
 Version 0.10.3 - 2020-01-29
