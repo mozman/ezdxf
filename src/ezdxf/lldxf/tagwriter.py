@@ -32,18 +32,8 @@ class TagWriter:
         self.force_optional = False
 
     def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
-        if self.write_handles:
-            for tag in tags:
-                self.write_tag(tag)
-        else:  # don't write handles todo: not needed for new entity structure, handled by entity itself at export
-            if tags[0] == (0, 'DIMSTYLE'):
-                handle_code = 105
-            else:
-                handle_code = 5
-            for tag in tags:
-                if tag.code == handle_code:
-                    continue  # skip handles in DXF R12 files, use only for DXF R12 files!!!
-                self.write_tag(tag)
+        for tag in tags:
+            self.write_tag(tag)
 
     def write_tag(self, tag: DXFTag) -> None:
         self._stream.write(tag.dxfstr())

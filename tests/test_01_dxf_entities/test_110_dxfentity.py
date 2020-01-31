@@ -79,6 +79,18 @@ def test_is_alive(entity):
     assert entity.is_alive is False
 
 
+def test_dont_write_handles_for_R12(entity):
+    from ezdxf.lldxf.tagwriter import TagWriter
+    from io import StringIO
+    s = StringIO()
+    t = TagWriter(s)
+    t.dxfversion = DXF12
+    t.write_handles = False
+    entity.export_dxf(t)
+    result = s.getvalue()
+    assert '5\nFFFF\n' not in result
+
+
 LINE_DATA = """  0
 LINE
   5

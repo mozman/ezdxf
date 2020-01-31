@@ -5,6 +5,7 @@ import pytest
 
 from ezdxf.entities.dimstyle import DimStyle
 from ezdxf.drawing import Drawing
+from ezdxf.lldxf.const import DXF12
 
 
 @pytest.fixture
@@ -86,6 +87,18 @@ def test_handle_export(dimstyle2):
     assert dimstyle2.dxf.dimblk1_handle == left_arrow.block_record_handle
     assert dimstyle2.dxf.dimblk2_handle == right_arrow.block_record_handle
     assert dimstyle2.dxf.dimldrblk_handle == leader_arrow.block_record_handle
+
+
+def test_dont_write_handles_for_R12(dimstyle):
+    from ezdxf.lldxf.tagwriter import TagWriter
+    from io import StringIO
+    s = StringIO()
+    t = TagWriter(s)
+    t.dxfversion = DXF12
+    t.write_handles = False
+    dimstyle.export_dxf(t)
+    result = s.getvalue()
+    assert '105\nFFFF\n' not in result
 
 
 def test_dimstyle_name(dimstyle2):

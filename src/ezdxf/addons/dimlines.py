@@ -221,7 +221,6 @@ class _DimensionBase:
         """
         Format the dimension text.
         """
-        # TODO: consider roundhalf property
         dimtextfmt = "%." + str(self.prop('roundval')) + "f"
         dimtext = dimtextfmt % dimvalue
         if DIMENSIONS_FLOATINGPOINT in dimtext:
