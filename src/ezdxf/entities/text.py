@@ -17,7 +17,7 @@ __all__ = ['Text', 'acdb_text']
 
 acdb_text = DefSubclass('AcDbText', {
     'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # First alignment point (in OCS)
-    'height': DXFAttr(40, default=2.5, optional=True),  # Text height
+    'height': DXFAttr(40, default=2.5),  # Text height
     'text': DXFAttr(1, default=''),  # Default value (the string itself)
     'rotation': DXFAttr(50, default=0, optional=True),  # Text rotation (optional) in degrees (circle = 360deg)
     'oblique': DXFAttr(51, default=0, optional=True),  # Oblique angle (optional) in degrees, vertical = 0deg
