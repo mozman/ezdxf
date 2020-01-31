@@ -479,12 +479,12 @@ class Hatch(DXFGraphic):
 
         """
 
-        def calc_new_elevation() -> float:
+        def calc_new_elevation() -> Vector:
             vertex = list(ucs.ocs_points_to_ocs([(0, 0, elevation)], extrusion=extrusion))[0]
-            return vertex.z
+            return Vector(0, 0, vertex.z)
 
         extrusion = self.dxf.extrusion
-        elevation = self.dxf.elevation
+        elevation = Vector(self.dxf.elevation).z
         self.paths.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
         self.dxf.elevation = calc_new_elevation()
         self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
@@ -1003,7 +1003,7 @@ class EllipseEdge:
 
     def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
         # established OCS not supported yet
-        self.center = _transform_2d_ocs_vertices(ucs, [self.center], elevation=elevation, extrusion=extrusion)
+        self.center = _transform_2d_ocs_vertices(ucs, [self.center], elevation=elevation, extrusion=extrusion)[0]
         self.major_axis = ucs.direction_to_wcs(self.major_axis).xyz[:2]  # ???
         # start_angle and end_angle are not real angles, see start_param and end_param in Ellipse.
 
