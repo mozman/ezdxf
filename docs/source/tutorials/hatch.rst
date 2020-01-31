@@ -6,7 +6,8 @@ Tutorial for Hatch
 Create hatches with one boundary path
 -------------------------------------
 
-The simplest form of a hatch has one polyline path with only straight lines as boundary path:
+The simplest form of the :class:`~ezdxf.entities.Hatch` entity has one polyline path with only straight lines as
+boundary path:
 
 .. literalinclude:: src/hatch/solid_hatch_polyline_path.py
 
@@ -68,6 +69,22 @@ This is also the result for all 4 paths and :attr:`hatch_style` set to ``1`` (ou
 The expected result of combinations of various :attr:`hatch_style` values and paths `flags`, or the handling of
 overlapping paths is not documented by the DXF reference, so don't ask me, ask Autodesk or just try it by yourself
 and post your experience in the forum.
+
+Associative Boundary Paths
+--------------------------
+
+A HATCH entity can be associative to a base geometry, which means if the base geometry is edited in a CAD
+application the HATCH get the same modification. Because `ezdxf` is **not** a CAD application, this association
+is **not** maintained nor verified by `ezdxf`, so if you modify the base geometry afterwards the geometry
+of the boundary path is not updated and no verification is done to check if the associated geometry matches
+the boundary path, this opens many possibilities to create invalid DXF files: USE WITH CARE.
+
+This example associates a LWPOLYLINE entity to the hatch created from the LWPOLYLINE vertices:
+
+.. literalinclude:: src/hatch/assoc_hatch.py
+    :lines: 8-24
+
+An :class:`EdgePath` needs associations to all geometry entities forming the boundary path.
 
 Create hatches with pattern fill
 --------------------------------

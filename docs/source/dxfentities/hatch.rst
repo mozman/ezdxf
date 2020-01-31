@@ -146,6 +146,8 @@ Path manager: :class:`BoundaryPaths`
 
     .. automethod:: transform_to_wcs(ucs: UCS)
 
+    .. automethod:: associate
+
 Hatch Boundary Helper Classes
 -----------------------------
 

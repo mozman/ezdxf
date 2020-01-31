@@ -18,7 +18,9 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, RGB
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, RGB, DXFEntity
+
+TPath = Union['PolylinePath', 'EdgePath']
 
 __all__ = ['Hatch', 'Gradient', 'Pattern']
 
@@ -487,8 +489,22 @@ class Hatch(DXFGraphic):
         self.dxf.elevation = calc_new_elevation()
         self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
 
+    def associate(self, path: TPath, entities: Iterable['DXFEntity']):
+        """ Set association from hatch boundary `path` to DXF geometry `entities`.
 
-TPath = Union['PolylinePath', 'EdgePath']
+        A HATCH entity can be associative to a base geometry, this association is **not** maintained nor
+        verified by `ezdxf`, so if you modify the base geometry the geometry of the boundary
+        path is not updated and no verification is done to check if the associated geometry matches
+        the boundary path, this opens many possibilities to create invalid DXF files: USE WITH CARE!
+
+        .. versionadded:: 0.11
+
+        """
+        self.dxf.associative = 1
+        hatch_dxf_handle = self.dxf.handle
+        for entity in entities:
+            path.source_boundary_objects.append(entity.dxf.handle)
+            entity.append_reactor_handle(hatch_dxf_handle)
 
 
 class BoundaryPaths:
