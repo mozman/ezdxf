@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Option
 from contextlib import contextmanager
 import math
 import copy
-from ezdxf.math import Vector, UCS, Z_AXIS
+from ezdxf.math import Vector, UCS, Vec2
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools.pattern import PATTERN  # acad standard pattern definitions
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -18,7 +18,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, RGB, DXFEntity
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, RGB, DXFEntity, Vertex
 
 TPath = Union['PolylinePath', 'EdgePath']
 
@@ -803,7 +803,10 @@ class EdgePath:
                    weights: Iterable[float] = None,
                    degree: int = 3,
                    rational: int = 0,
-                   periodic: int = 0) -> 'SplineEdge':
+                   periodic: int = 0,
+                   start_tangent: 'Vertex' = None,
+                   end_tangent: 'Vertex' = None,
+                   ) -> 'SplineEdge':
         """
         Add a :class:`SplineEdge`.
 
@@ -820,6 +823,8 @@ class EdgePath:
             degree: degree of spline (int)
             rational: ``1`` for rational spline, ``0`` for none rational spline
             periodic: ``1`` for periodic spline, ``0`` for none periodic spline
+            start_tangent: start_tangent as 2d vector, optional
+            end_tangent: end_tangent as 2d vector, optional
 
         .. warning::
 
@@ -840,6 +845,10 @@ class EdgePath:
         spline.degree = degree
         spline.rational = int(rational)
         spline.periodic = int(periodic)
+        if start_tangent is not None:
+            spline.start_tangent = Vec2(start_tangent)
+        if end_tangent is not None:
+            spline.end_tangent = Vec2(end_tangent)
         self.edges.append(spline)
         return spline
 
@@ -1011,8 +1020,8 @@ class SplineEdge:
         self.fit_points = []  # type: List[Tuple[float, float]]
         self.weights = []  # type: List[float]
         # do not set tangents by default to (0, 0)
-        self.start_tangent = None  # type: Optional[Tuple[float, float]]
-        self.end_tangent = None  # type: Optional[Tuple[float, float]]
+        self.start_tangent = None  # type: Optional[Vec2]
+        self.end_tangent = None  # type: Optional[Vec2]
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'SplineEdge':
@@ -1034,9 +1043,9 @@ class SplineEdge:
             elif code == 11:
                 edge.fit_points.append(value)
             elif code == 12:
-                edge.start_tangent = value
+                edge.start_tangent = Vec2(value)
             elif code == 13:
-                edge.end_tangent = value
+                edge.end_tangent = Vec2(value)
         return edge
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:

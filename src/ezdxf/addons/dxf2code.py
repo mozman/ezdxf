@@ -589,6 +589,10 @@ class _SourceCodeGenerator:
                         add_line(arg.format('degree', edge.degree))
                         add_line(arg.format('rational', edge.rational))
                         add_line(arg.format('periodic', edge.periodic))
+                        if edge.start_tangent is not None:
+                            add_line(arg.format('start_tangent', str(edge.start_tangent)))
+                        if edge.end_tangent is not None:
+                            add_line(arg.format('end_tangent', str(edge.end_tangent)))
                         add_line(')')
 
     # simple table entries

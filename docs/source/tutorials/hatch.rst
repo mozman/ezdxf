@@ -70,6 +70,15 @@ The expected result of combinations of various :attr:`hatch_style` values and pa
 overlapping paths is not documented by the DXF reference, so don't ask me, ask Autodesk or just try it by yourself
 and post your experience in the forum.
 
+Example for Edge Path Boundary
+------------------------------
+
+.. literalinclude:: src/hatch/edge_path.py
+    :lines: 8-47
+
+.. image:: gfx/hatch-edge-path.png
+    :align: center
+
 Associative Boundary Paths
 --------------------------
 

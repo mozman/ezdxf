@@ -12,7 +12,7 @@ lwpolyline = msp.add_lwpolyline(
     dxfattribs={'closed': True},
 )
 
-hatch = msp.add_hatch(color=2)
+hatch = msp.add_hatch(color=1)
 path = hatch.paths.add_polyline_path(
     # get path vertices from associated LWPOLYLINE entity
     lwpolyline.get_points(format='xyb'),
