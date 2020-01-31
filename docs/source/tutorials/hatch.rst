@@ -95,10 +95,19 @@ This example associates a LWPOLYLINE entity to the hatch created from the LWPOLY
 
 An :class:`EdgePath` needs associations to all geometry entities forming the boundary path.
 
-Create hatches with pattern fill
---------------------------------
+Predefined Hatch Pattern
+------------------------
 
-TODO
+Use predefined hatch pattern by name:
+
+.. code-block:: Python
+
+    hatch.set_pattern_fill('ANSI31', scale=0.5)
+
+
+.. image:: gfx/hatch-predefined-pattern.png
+    :align: center
+
 
 Create hatches with gradient fill
 ---------------------------------

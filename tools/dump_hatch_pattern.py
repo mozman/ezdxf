@@ -1,22 +1,16 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: print object directory
-# Created: 21.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
-
-import sys, os
-
+import sys
+from pathlib import Path
 import ezdxf
 
 
 def main(filename):
-    dwg = ezdxf.readfile(filename)
-    msp = dwg.modelspace()
+    doc = ezdxf.readfile(filename)
+    msp = doc.modelspace()
     hatches = msp.query("HATCH[solid_fill==0]")
-    name, ext = os.path.splitext(filename)
-    dump_pattern(name+'.py', hatches)
+    filename.with_suffix('.py')
+    dump_pattern(filename.with_suffix('.py'), hatches)
 
 
 def dump_pattern(filename, hatches):
@@ -45,4 +39,4 @@ def get_pattern_definition_string(hatch):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main(Path(sys.argv[1]))

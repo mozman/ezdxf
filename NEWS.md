@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.11b0 - dev
+Version 0.11b1 - dev
 --------------------
 
 - Using standard git branches: 
@@ -41,12 +41,17 @@ Version 0.11b0 - dev
 - NEW: `size` and `center` properties for bounding box classes
 - NEW: `Insert.ucs()` returns an UCS placed in block reference `insert` location, UCS axis aligned to the block axis.
 - NEW: `Insert.reset_transformation()` reset block reference location, rotation and extrusion vector.
-- NEW: support for associating HATCH boundary paths to geometry entities 
+- NEW: support for associating HATCH boundary paths to geometry entities
+- CHANGE: Changed predefined pattern scaling to BricsCAD and AutoCAD standard, set global option 
+  `ezdxf.options.use_old_predefined_pattern_scaling` to True, to use the old pattern scaling before v0.11 
+- CHANGE: removed `ezdxf.PATTERN` constant, use `PATTERN = ezdxf.pattern.load()` instead, set argument 
+  `old_pattern=True` to use the old pattern scaling before v0.11
+- BUGFIX: fixed incorrect HATCH pattern scaling
 - BUGFIX: fixed base point calculation of aligned dimensions
 - BUGFIX: fixed length extension line support for linear dimensions
 - BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`
 - BUGFIX: check for unsupported DXF versions at `new()`
-- BUGFIX: dxf2src error for the HATCH entity
+- BUGFIX: fixed dxf2src error for the HATCH entity
 - BUGFIX: `left_of_line()` algorithm was incorrect
 
 Version 0.10.4 - 2020-01-31

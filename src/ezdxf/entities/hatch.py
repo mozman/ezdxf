@@ -7,7 +7,7 @@ import math
 import copy
 from ezdxf.math import Vector, UCS, Vec2
 from ezdxf.tools.rgb import rgb2int, int2rgb
-from ezdxf.tools.pattern import PATTERN  # acad standard pattern definitions
+from ezdxf.tools import pattern
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004
@@ -400,7 +400,8 @@ class Hatch(DXFGraphic):
     def set_pattern_fill(self, name: str, color: int = 7, angle: float = 0., scale: float = 1., double: int = 0,
                          style: int = 1, pattern_type: int = 1, definition=None) -> None:
         """
-        Set :class:`Hatch` to pattern fill mode. Removes all gradient related data.
+        Set :class:`Hatch` to pattern fill mode. Removes all gradient related data. The pattern definition
+        should be designed for scaling factor 1.
 
         Args:
             name: pattern name as string
@@ -426,8 +427,9 @@ class Hatch(DXFGraphic):
 
         if definition is None:
             # get pattern definition from acad standard pattern, default is 'ANSI31'
-            definition = PATTERN.get(name, PATTERN['ANSI31'])
-        self.set_pattern_definition(definition)
+            predefiend_pattern = pattern.load()
+            definition = predefiend_pattern.get(name, predefiend_pattern['ANSI31'])
+        self.set_pattern_definition(definition, factor=self.dxf.pattern_scale)
 
     # just for compatibility
     @contextmanager
@@ -437,10 +439,10 @@ class Hatch(DXFGraphic):
             raise const.DXFValueError('Solid fill HATCH has no pattern data.')
         yield self.pattern
 
-    def set_pattern_definition(self, lines: Sequence) -> None:
+    def set_pattern_definition(self, lines: Sequence, factor: float = 1) -> None:
         """
         Setup hatch patten definition by a list of definition lines and  a definition line is a 4-tuple [angle,
-        base_point, offset, dash_length_items]
+        base_point, offset, dash_length_items], the pattern definition should be designed for scaling factor 1.
 
             - angle: line angle in degrees
             - base-point: 2-tuple (x, y)
@@ -449,8 +451,11 @@ class Hatch(DXFGraphic):
 
         Args:
             lines: list of definition lines
+            factor: pattern scaling factor
 
         """
+        if factor != 1:
+            lines = pattern.scale_pattern(lines, factor)
         self.pattern = Pattern([PatternLine(line[0], line[1], line[2], line[3]) for line in lines])
 
     # just for compatibility
