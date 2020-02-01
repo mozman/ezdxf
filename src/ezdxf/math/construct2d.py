@@ -122,17 +122,17 @@ def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=1e-9):
     return r if ccw else not r
 
 
-def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex', online=False) -> bool:
+def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex', colinear=False) -> bool:
     """
     Returns ``True`` if `point` is "left of line" (`p1`, `p2`).
-    A `point` on the line is also "left of line", if `online` is ``True``.
+    If `colinear` is ``True``, a colinear point is also left of the line.
 
     """
     cx, cy, *_ = point
     ax, ay, *_ = p1
     bx, by, *_ = p2
     det = ((bx - ax) * (cy - ay) - (by - ay) * (cx - ax))
-    if online and math.isclose(det, 0):
+    if colinear and math.isclose(det, 0):
         return True
     else:
         return det > 0

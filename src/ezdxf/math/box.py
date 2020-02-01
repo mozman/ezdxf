@@ -172,7 +172,7 @@ class ConstructionBox(ConstructionTool):
                 # inside if point is "left of line" of all border lines.
                 p1, p2, p3, p4 = self.corners
                 return all(
-                    (left_of_line(point, a, b, online=True) for a, b in [(p1, p2), (p2, p3), (p3, p4), (p4, p1)])
+                    (left_of_line(point, a, b, colinear=True) for a, b in [(p1, p2), (p2, p3), (p3, p4), (p4, p1)])
                 )
 
     def is_any_corner_inside(self, other: 'ConstructionBox') -> bool:

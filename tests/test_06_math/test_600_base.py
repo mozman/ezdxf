@@ -22,19 +22,19 @@ def test_left_of_line():
 
 def test_left_of_line_or_on_the_line():
     # vertical line
-    assert left_of_line((1, 0), (0, 0), (0, 1), online=True) is False
-    assert left_of_line((0, 0.5), (0, 0), (0, 1), online=True) is True
-    assert left_of_line((-1, 0.5), (0, 0), (0, 1), online=True) is True
+    assert left_of_line((1, 0), (0, 0), (0, 1), colinear=True) is False
+    assert left_of_line((0, 0.5), (0, 0), (0, 1), colinear=True) is True
+    assert left_of_line((-1, 0.5), (0, 0), (0, 1), colinear=True) is True
 
     # horizontal line
-    assert left_of_line((0, 1), (0, 0), (1, 0), online=True) is True
-    assert left_of_line((0, 0), (0, 0), (1, 0), online=True) is True
-    assert left_of_line((0, -1), (0, 0), (1, 0), online=True) is False
+    assert left_of_line((0, 1), (0, 0), (1, 0), colinear=True) is True
+    assert left_of_line((0, 0), (0, 0), (1, 0), colinear=True) is True
+    assert left_of_line((0, -1), (0, 0), (1, 0), colinear=True) is False
     # 45 deg line
-    assert left_of_line((0, 0), (0, 0), (1, 1), online=True) is True
-    assert left_of_line((0.5, 0.5), (0, 0), (1, 1), online=True) is True
-    assert left_of_line((1, 1), (0, 0), (1, 1), online=True) is True
-    assert left_of_line((.5, .49), (0, 0), (1, 1), online=True) is False
+    assert left_of_line((0, 0), (0, 0), (1, 1), colinear=True) is True
+    assert left_of_line((0.5, 0.5), (0, 0), (1, 1), colinear=True) is True
+    assert left_of_line((1, 1), (0, 0), (1, 1), colinear=True) is True
+    assert left_of_line((.5, .49), (0, 0), (1, 1), colinear=True) is False
 
 
 def test_is_close_points():
