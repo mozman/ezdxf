@@ -28,21 +28,13 @@ def profile_intersection_line_line_xy(count=COUNT):
         intersection_line_line_xy(line1=(P1, P2), line2=(P3, P4))
 
 
-def print_result(text, t0, t1):
+def profile(text, func):
+    t0 = time.perf_counter()
+    func()
+    t1 = time.perf_counter()
     print(f'{text} {t1 - t0:.3f}s')
 
 
-t0 = time.perf_counter()
-profile_construction_ray()
-t1 = time.perf_counter()
-print_result('intersect ConstructionRay: ', t0, t1)
-
-t0 = time.perf_counter()
-profile_construction_ray_init_once()
-t1 = time.perf_counter()
-print_result('intersect ConstructionRay init once: ', t0, t1)
-
-t0 = time.perf_counter()
-profile_intersection_line_line_xy()
-t1 = time.perf_counter()
-print_result('intersect line line xy: ', t0, t1)
+profile('intersect ConstructionRay: ', profile_construction_ray)
+profile('intersect ConstructionRay init once: ', profile_construction_ray_init_once)
+profile('intersect line line xy: ', profile_intersection_line_line_xy)

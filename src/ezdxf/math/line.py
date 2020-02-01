@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
-from .construct2d import ConstructionTool, left_of_line
+from .construct2d import ConstructionTool, left_of_line, intersection_line_line_xy
 from .bbox import BoundingBox2d
 from .vector import Vec2
 
@@ -90,9 +90,8 @@ class ConstructionRay:
         """ ``True`` if ray is horizontal (parallel to x-axis). """
         return self._is_horizontal
 
-    def __str__(self) -> str:
-        """ Returns string representation ``ConstructionRay(x, y, phi)``. """
-        return 'ConstructionRay(x={0._x:.3f}, y={0._y:.3f}, phi={0.angle:.5f} rad)'.format(self)
+    def __repr__(self) -> str:
+        return 'ConstructionRay(p1=({0.location.x:.3f}, {0.location.y:.3f}), angle={0.angle:.5f})'.format(self)
 
     def is_parallel(self, other: 'ConstructionRay') -> bool:
         """ Returns ``True`` if rays are parallel. """
@@ -195,8 +194,7 @@ class ConstructionLine(ConstructionTool):
         self.start = Vec2(start)
         self.end = Vec2(end)
 
-    def __str__(self) -> str:
-        """ Returns string representation of line ``ConstructionLine(start, end)``. """
+    def __repr__(self) -> str:
         return 'ConstructionLine({0.start}, {0.end})'.format(self)
 
     # ConstructionTool interface
@@ -258,15 +256,7 @@ class ConstructionLine(ConstructionTool):
             other: other :class:`ConstructionLine`
 
         """
-        try:
-            point = self.ray.intersect(other.ray)
-        except ParallelRaysError:
-            return None
-        else:
-            if self.inside_bounding_box(point) and other.inside_bounding_box(point):
-                return point
-            else:
-                return None
+        return intersection_line_line_xy((self.start, self.end), (other.start, other.end), virtual=False)
 
     def has_intersection(self, other: 'ConstructionLine') -> bool:
         """ Returns ``True`` if has intersection with `other` line. """

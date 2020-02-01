@@ -154,12 +154,11 @@ class ConstructionTool:
         pass
 
 
-# Maybe as useful for a Cython optimized version of ezdxf
 def intersection_line_line_xy(
         line1: Tuple[Vec2, Vec2],
         line2: Tuple[Vec2, Vec2],
         virtual=True,
-        abs_tol=1e-6) -> Optional[Vec2]:
+        abs_tol=1e-9) -> Optional[Vec2]:
     """
     Compute the intersection of two lines in the xy-plane.
 
@@ -172,12 +171,11 @@ def intersection_line_line_xy(
     Returns:
         ``None`` if there is no intersection point (parallel lines) or intersection point as :class:`Vec2`
 
-    Sources:
-        compas: https://github.com/compas-dev/compas
-
-        wikipedia: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-
     """
+    # Sources:
+    # compas: https://github.com/compas-dev/compas/blob/master/src/compas/geometry/_core/intersections.py (MIT)
+    # wikipedia: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
+
     a, b = line1
     c, d = line2
 
