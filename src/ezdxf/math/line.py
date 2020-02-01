@@ -114,33 +114,33 @@ class ConstructionRay:
         """
         ray1 = self
         ray2 = other
-        if not ray1.is_parallel(ray2):
-            if ray1._is_vertical:
-                x = ray1._location.x
-                if ray2.is_horizontal:
-                    y = ray2._location.y
-                else:
-                    y = ray2.yof(x)
-            elif ray2._is_vertical:
-                x = ray2._location.x
-                if ray1.is_horizontal:
-                    y = ray1._location.y
-                else:
-                    y = ray1.yof(x)
-            elif ray1.is_horizontal:
-                y = ray1._location.y
-                x = ray2.xof(y)
-            elif ray2.is_horizontal:
-                y = ray2._location.y
-                x = ray1.xof(y)
-            else:
-                # calc intersection with the 'straight-line-equation'
-                # based on y(x) = y0 + x*slope
-                x = (ray1._yof0 - ray2._yof0) / (ray2._slope - ray1._slope)
-                y = ray1.yof(x)
-            return Vec2((x, y))
-        else:
+        if ray1.is_parallel(ray2):
             raise ParallelRaysError("Rays are parallel")
+
+        if ray1._is_vertical:
+            x = ray1._location.x
+            if ray2.is_horizontal:
+                y = ray2._location.y
+            else:
+                y = ray2.yof(x)
+        elif ray2._is_vertical:
+            x = ray2._location.x
+            if ray1.is_horizontal:
+                y = ray1._location.y
+            else:
+                y = ray1.yof(x)
+        elif ray1.is_horizontal:
+            y = ray1._location.y
+            x = ray2.xof(y)
+        elif ray2.is_horizontal:
+            y = ray2._location.y
+            x = ray1.xof(y)
+        else:
+            # calc intersection with the 'straight-line-equation'
+            # based on y(x) = y0 + x*slope
+            x = (ray1._yof0 - ray2._yof0) / (ray2._slope - ray1._slope)
+            y = ray1.yof(x)
+        return Vec2((x, y))
 
     def orthogonal(self, location: 'Vertex') -> 'ConstructionRay':
         """ Returns orthogonal ray at `location`. """

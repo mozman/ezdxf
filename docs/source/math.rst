@@ -25,6 +25,8 @@ Functions
 
 .. autofunction:: xround
 
+.. autofunction:: intersection_line_line_xy(line1: Tuple[Vec2, Vec2], line2: Tuple[Vec2, Vec2], virtual=True, abs_tol=1e-6) -> Optional[Vec2]
+
 .. autofunction:: offset_vertices_2d
 
 .. code-block:: Python

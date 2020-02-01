@@ -2,7 +2,7 @@
 # Created: 27.03.2010, 2018 integrated into ezdxf
 # Copyright (c) 2010-2019 Manfred Moitzi
 # License: MIT License
-from .construct2d import is_close_points, closest_point, convex_hull
+from .construct2d import is_close_points, closest_point, convex_hull, intersection_line_line_xy
 from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 from .matrix44 import Matrix44
 from .matrix import Matrix

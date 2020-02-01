@@ -1,12 +1,12 @@
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List
+from typing import TYPE_CHECKING, Iterable, List, Tuple, Optional
+
 from functools import partial
 import math
-from operator import le, ge, lt, gt
 from abc import abstractmethod
 
-from .vector import Vector
+from .vector import Vector, Vec2
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import BoundingBox2d, Vertex
@@ -152,3 +152,86 @@ class ConstructionTool:
     @abstractmethod
     def move(self, dx: float, dy: float) -> None:
         pass
+
+
+# Maybe as useful for a Cython optimized version of ezdxf
+def intersection_line_line_xy(
+        line1: Tuple[Vec2, Vec2],
+        line2: Tuple[Vec2, Vec2],
+        virtual=True,
+        abs_tol=1e-6) -> Optional[Vec2]:
+    """
+    Compute the intersection of two lines in the xy-plane.
+
+    Args:
+        line1: coordinates of two points defining a line e.g. ((x1, y1), (x2, y2)).
+        line2: coordinates of two points defining another line e.g. ((x3, y3), (x4, y4)).
+        virtual: ``True`` returns any intersection point, ```False`` returns only real intersection points
+        abs_tol: tolerance for membership verification.
+
+    Returns:
+        ``None`` if there is no intersection point (parallel lines) or intersection point as :class:`Vec2`
+
+    Sources:
+        compas: https://github.com/compas-dev/compas
+
+        wikipedia: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
+
+    """
+    a, b = line1
+    c, d = line2
+
+    x1, y1 = a.x, a.y
+    x2, y2 = b.x, b.y
+    x3, y3 = c.x, c.y
+    x4, y4 = d.x, d.y
+
+    x1_x2 = x1 - x2
+    y3_y4 = y3 - y4
+    y1_y2 = y1 - y2
+    x3_x4 = x3 - x4
+
+    d = x1_x2 * y3_y4 - y1_y2 * x3_x4
+
+    if math.fabs(d) <= abs_tol:
+        return None
+
+    a = x1 * y2 - y1 * x2
+    b = x3 * y4 - y3 * x4
+    x = (a * x3_x4 - x1_x2 * b) / d
+    y = (a * y3_y4 - y1_y2 * b) / d
+
+    if not virtual:
+        if x1 > x2:
+            in_range = x2 <= x <= x1
+        else:
+            in_range = x1 <= x <= x2
+
+        if not in_range:
+            return None
+
+        if x3 > x4:
+            in_range = x4 <= x <= x3
+        else:
+            in_range = x3 <= x <= x4
+
+        if not in_range:
+            return None
+
+        if y1 > y2:
+            in_range = y2 <= y <= y1
+        else:
+            in_range = y1 <= y <= y2
+
+        if not in_range:
+            return None
+
+        if y3 > y4:
+            in_range = y4 <= y <= y3
+        else:
+            in_range = y3 <= y <= y4
+
+        if not in_range:
+            return None
+
+    return Vec2((x, y))
