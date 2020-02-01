@@ -291,7 +291,7 @@ class Insert(DXFGraphic):
             db.delete_entity(attrib)
         self.attribs = []
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Insert':
         """ Transform INSERT entity and attached ATTRIB entities from local :class:`~ezdxf.math.UCS` coordinates to
         :ref:`WCS` coordinates.
 
@@ -302,6 +302,7 @@ class Insert(DXFGraphic):
 
         for attrib in self.attribs:
             attrib.transform_to_wcs(ucs)
+        return self
 
     def ucs(self) -> UCS:
         """ Returns an :class:`~ezdxf.math.UCS` placed at the block reference `insert` location, UCS axis aligned

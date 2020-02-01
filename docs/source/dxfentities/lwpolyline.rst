@@ -129,3 +129,4 @@ User Defined Point Format Codes
 
     .. automethod:: points
 
+    .. automethod:: transform_to_wcs(ucs: UCS) -> LWPolyline

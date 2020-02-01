@@ -220,25 +220,11 @@ class ConstructionArc(ConstructionTool):
             dxfattribs: additional DXF attributes for DXF :class:`~ezdxf.entities.Arc` entity
 
         """
-
-        if ucs is not None:
-            if dxfattribs is None:
-                dxfattribs = {}
-            dxfattribs['extrusion'] = ucs.uz
-            ocs = OCS(ucs.uz)
-            wcs_center = ucs.to_wcs(self.center)
-            ocs_center = ocs.from_wcs(wcs_center)
-            arc = self.__class__(radius=self.radius)
-            arc.center = ocs_center
-            arc.start_angle = ucs.to_ocs_angle_deg(self.start_angle)
-            arc.end_angle = ucs.to_ocs_angle_deg(self.end_angle)
-        else:
-            arc = self
-
-        return layout.add_arc(
-            center=arc.center,
-            radius=arc.radius,
-            start_angle=arc.start_angle,
-            end_angle=arc.end_angle,
+        arc = layout.add_arc(
+            center=self.center,
+            radius=self.radius,
+            start_angle=self.start_angle,
+            end_angle=self.end_angle,
             dxfattribs=dxfattribs,
         )
+        return arc if ucs is None else arc.transform_to_wcs(ucs)

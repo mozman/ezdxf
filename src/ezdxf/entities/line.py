@@ -51,7 +51,7 @@ class Line(DXFGraphic):
         self.dxf.export_dxf_attribs(tagwriter, ['start', 'end', 'thickness', 'extrusion'])
         # xdata and embedded objects export will be done by parent class
 
-    def transform_to_wcs(self, ucs: UCS) -> None:
+    def transform_to_wcs(self, ucs: UCS) -> 'Line':
         """ Transform LINE entity from local :class:`~ezdxf.math.UCS` coordinates to
         :ref:`WCS` coordinates.
 
@@ -60,3 +60,4 @@ class Line(DXFGraphic):
         """
         self.dxf.start = ucs.to_wcs(self.dxf.start)
         self.dxf.end = ucs.to_wcs(self.dxf.end)
+        return self

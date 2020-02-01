@@ -293,7 +293,7 @@ class Spline(DXFGraphic):
         if data.weights is not self.weights:
             self.weights = data.weights
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Spline':
         """ Transform SPLINE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
@@ -305,3 +305,4 @@ class Spline(DXFGraphic):
         for attr_name in ('start_tangent', 'end_tangent', 'extrusion'):
             if self.dxf.hasattr(attr_name):
                 self.dxf.set(attr_name, ucs.direction_to_wcs(self.dxf.get(attr_name)))
+        return self

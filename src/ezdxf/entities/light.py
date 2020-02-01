@@ -62,7 +62,7 @@ class Light(DXFGraphic):
             'falloff_angle', 'cast_shadows', 'shadow_type', 'shadow_map_size', 'shadow_map_softness'
         ])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Light':
         """ Transform LIGHT entity from local :class:`~ezdxf.math.UCS` coordinates to
         :ref:`WCS` coordinates.
 
@@ -71,3 +71,4 @@ class Light(DXFGraphic):
         """
         self.dxf.location = ucs.to_wcs(self.dxf.location)
         self.dxf.target = ucs.to_wcs(self.dxf.target)
+        return self

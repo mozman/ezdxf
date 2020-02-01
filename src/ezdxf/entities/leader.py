@@ -131,7 +131,7 @@ class Leader(DXFGraphic, OverrideMixin):
         """
         self.vertices = [Vector(v) for v in vertices]
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Leader':
         """ Transform LEADER entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
@@ -143,3 +143,4 @@ class Leader(DXFGraphic, OverrideMixin):
         # Transform optional attributes if they exist
         if self.dxf.hasattr('hookline_direction'):
             self.dxf.hookline_direction = ucs.direction_to_wcs(self.dxf.hookline_direction)
+        return self

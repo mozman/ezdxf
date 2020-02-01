@@ -37,6 +37,6 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
         extrusion vector, default value is ``(0, 0, 1)``
 
-    .. automethod:: transform_to_wcs(ucs: UCS)
+    .. automethod:: transform_to_wcs(ucs: UCS) -> Line
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-FCEF5726-53AE-4C43-B4EA-C84EB8686A66

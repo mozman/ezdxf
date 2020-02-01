@@ -162,7 +162,7 @@ class Image(DXFGraphic):
     def get_boundary_path(self) -> List['Vertex']:
         return self._boundary_path
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Image':
         """ Transform IMAGE entity from local :class:`~ezdxf.math.UCS` coordinates to
         :ref:`WCS` coordinates.
 
@@ -172,6 +172,7 @@ class Image(DXFGraphic):
         self.dxf.insert = ucs.to_wcs(self.dxf.insert)
         self.dxf.u_pixel = ucs.direction_to_wcs(self.dxf.u_pixel)
         self.dxf.v_pixel = ucs.direction_to_wcs(self.dxf.v_pixel)
+        return self
 
 
 acdb_wipeout = DefSubclass('AcDbWipeout', dict(acdb_image.attribs))

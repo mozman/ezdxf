@@ -42,6 +42,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. autoattribute:: end_point
 
-    .. automethod:: transform_to_wcs(ucs: UCS)
+    .. automethod:: transform_to_wcs(ucs: UCS) -> Arc
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-0B14D8F1-0EBA-44BF-9108-57D8CE614BC8

@@ -477,7 +477,7 @@ class Hatch(DXFGraphic):
         self.seeds = list(points)
         self.dxf.n_seed_points = len(self.seeds)
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Hatch':
         """ Transform HATCH entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
@@ -493,6 +493,7 @@ class Hatch(DXFGraphic):
         self.paths.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
         self.dxf.elevation = calc_new_elevation()
         self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
+        return self
 
     def associate(self, path: TPath, entities: Iterable['DXFEntity']):
         """ Set association from hatch boundary `path` to DXF geometry `entities`.

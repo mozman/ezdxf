@@ -259,7 +259,7 @@ class LWPolyline(DXFGraphic):
         """ Remove all points. """
         self.lwpoints.clear()
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'LWPolyline':
         """ Transform LWPOLYLINE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
@@ -272,6 +272,7 @@ class LWPolyline(DXFGraphic):
         self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
         # all new OCS vertices must have the same z-axis, which is the elevation of the polyline
         self.dxf.elevation = vertices[0][2]
+        return self
 
 
 class LWPolylinePoints(VertexArray):

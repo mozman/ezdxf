@@ -7,7 +7,7 @@ Ray
 RAY entity (`DXF Reference`_) starts at :attr:`Ray.dxf.point` and continues to infinity (construction line).
 
 ======================== ==========================================
-Subclass of              :class:`ezdxf.entities.DXFGraphic`
+Subclass of              :class:`ezdxf.entities.XLine`
 DXF type                 ``'RAY'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_ray`
 Inherited DXF attributes :ref:`Common graphical DXF attributes`

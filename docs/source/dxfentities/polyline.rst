@@ -151,7 +151,7 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: insert_vertices
 
-    .. automethod:: transform_to_wcs(ucs: UCS)
+    .. automethod:: transform_to_wcs(ucs: UCS) -> Polyline
 
 Vertex
 ======
@@ -235,6 +235,11 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: is_face_record
 
+    .. method:: transform_to_wcs(ucs: UCS) -> Vertex
+
+        Transform VERTEX entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        .. versionadded:: 0.11
 
 Polymesh
 ========

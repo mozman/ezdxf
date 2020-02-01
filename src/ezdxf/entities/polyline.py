@@ -367,7 +367,7 @@ class Polyline(DXFGraphic):
         else:
             return self
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Polyline':
         """ Transform POLYLINE from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
@@ -403,6 +403,7 @@ class Polyline(DXFGraphic):
         else:
             for vertex in self.vertices:
                 vertex.transform_to_wcs(ucs)
+        return self
 
 
 class Polyface(Polyline):
@@ -876,15 +877,16 @@ class DXFVertex(DXFGraphic):
     def is_face_record(self) -> bool:
         return (self.dxf.flags & self.FACE_FLAGS) == self.POLYFACE_MESH_VERTEX
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'DXFVertex':
         """ Transform VERTEX from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
 
         """
         if self.is_face_record:
-            return
+            return self
         self.dxf.location = ucs.to_wcs(self.dxf.location)
+        return self
 
 
 def vertex_attribs(data: Sequence[float], format='xyseb') -> dict:

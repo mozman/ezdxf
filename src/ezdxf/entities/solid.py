@@ -68,7 +68,7 @@ class Solid(_Base):
             'vtx0', 'vtx1', 'vtx2', 'vtx3', 'thickness', 'extrusion',
         ])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Solid':
         """ Transform SOLID/TRACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
@@ -76,6 +76,7 @@ class Solid(_Base):
         """
         # SOLID is 2d entity, placed by an OCS in 3d space
         self._ucs_and_ocs_transformation(ucs, vector_names=VERTEXNAMES)
+        return self
 
 
 
@@ -84,7 +85,7 @@ class Trace(Solid):
     """ DXF TRACE entity """
     DXFTYPE = 'TRACE'
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Trace':
         """ Transform TRACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
@@ -92,6 +93,7 @@ class Trace(Solid):
         """
         # TRACE is 2d entity, placed by an OCS in 3d space
         self._ucs_and_ocs_transformation(ucs, vector_names=VERTEXNAMES)
+        return self
 
 
 acdb_face = DefSubclass('AcDbFace', {
@@ -144,7 +146,7 @@ class Face3d(_Base):
             self.dxf.vtx3 = self.dxf.vtx2
         self.dxf.export_dxf_attribs(tagwriter, ['vtx0', 'vtx1', 'vtx2', 'vtx3', 'invisible'])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Face3d':
         """ Transform 3DFACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
@@ -156,3 +158,4 @@ class Face3d(_Base):
         self.dxf.vtx1 = ucs_to_wcs(self.dxf.vtx1)
         self.dxf.vtx2 = ucs_to_wcs(self.dxf.vtx2)
         self.dxf.vtx3 = ucs_to_wcs(self.dxf.vtx3)
+        return self

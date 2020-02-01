@@ -60,7 +60,7 @@ class Helix(Spline):
 
         ])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Helix':
         """ Transform HELIX entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
@@ -70,3 +70,4 @@ class Helix(Spline):
         self.dxf.axis_base_point = ucs.to_wcs(self.dxf.axis_base_point)
         self.dxf.axis_vector = ucs.direction_to_wcs(self.dxf.axis_vector)
         self.dxf.start_point = ucs.to_wcs(self.dxf.start_point)
+        return self

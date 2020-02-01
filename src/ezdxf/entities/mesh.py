@@ -320,13 +320,14 @@ class Mesh(DXFGraphic):
         yield data
         self.set_data(data)
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Mesh':
         """ Transform MESH entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
 
         """
         self._vertices.transform_to_wcs(ucs)
+        return self
 
 
 class MeshData:

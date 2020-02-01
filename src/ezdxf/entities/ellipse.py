@@ -95,7 +95,7 @@ class Ellipse(DXFGraphic):
         v = list(self.vertices([self.dxf.end_param]))
         return v[0]
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Ellipse':
         """ Transform ELLIPSE entity from local :class:`~ezdxf.math.UCS` coordinates to
         :ref:`WCS` coordinates.
 
@@ -106,3 +106,4 @@ class Ellipse(DXFGraphic):
         self.dxf.center = ucs.to_wcs(self.dxf.center)
         self.dxf.major_axis = ucs.direction_to_wcs(self.dxf.major_axis)
         self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
+        return self

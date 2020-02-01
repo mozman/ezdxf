@@ -49,7 +49,7 @@ class Point(DXFGraphic):
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['location', 'thickness', 'extrusion', 'angle'])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Point':
         """ Transform POINT entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
@@ -57,4 +57,5 @@ class Point(DXFGraphic):
         """
         self.dxf.location = ucs.to_wcs(self.dxf.location)
         self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
+        return self
 

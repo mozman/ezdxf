@@ -308,7 +308,7 @@ class MText(DXFGraphic):
         # space ' ' in front of {lwr} is important
         self.append(r'\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS') -> 'MText':
         """ Transform MTEXT entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
 
         .. versionadded:: 0.11
@@ -321,6 +321,7 @@ class MText(DXFGraphic):
         self.dxf.insert = ucs.to_wcs(self.dxf.insert)
         self.dxf.text_direction = ucs.direction_to_wcs(self.dxf.text_direction)
         self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
+        return self
 
 
 ##################################################

@@ -6,7 +6,7 @@ import ezdxf
 from ezdxf.math import UCS, Vector
 
 OUTDIR = pathlib.Path('~/Desktop/Outbox').expanduser()
-
+NARROW = 'OpenSansCondensed-Light'
 X_COUNT = 7
 Y_COUNT = 7
 DX = 2
@@ -14,22 +14,20 @@ DY = 2
 
 
 def add_circle(msp, ucs):
-    circle = msp.add_circle(center=(0, 0), radius=0.5, dxfattribs={
+    msp.add_circle(center=(0, 0), radius=0.5, dxfattribs={
         'color': 6,
-    })
-    circle.transform_to_wcs(ucs)
+    }).transform_to_wcs(ucs)
 
 
 def add_ocs_circle(msp, ucs):
-    circle = msp.add_circle(center=(0, 0, .5), radius=0.25, dxfattribs={
+    msp.add_circle(center=(0, 0, .5), radius=0.25, dxfattribs={
         'color': 6,
         'extrusion': (1, 0, 0),
-    })
-    circle.transform_to_wcs(ucs)
+    }).transform_to_wcs(ucs)
 
 
 def add_ellipse(msp, ucs):
-    ellipse = msp.add_ellipse(
+    msp.add_ellipse(
         center=(0, 0),
         major_axis=(.5, 0, 0),
         ratio=.5,
@@ -37,60 +35,57 @@ def add_ellipse(msp, ucs):
         end_param=math.pi,
         dxfattribs={
             'color': 1,
-        })
-    ellipse.transform_to_wcs(ucs)
+        }).transform_to_wcs(ucs)
 
 
 def add_ocs_arc(msp, ucs):
-    arc = msp.add_arc(center=(0, 0, 0.5), radius=0.25, start_angle=0, end_angle=90, dxfattribs={
+    msp.add_arc(center=(0, 0, 0.5), radius=0.25, start_angle=0, end_angle=90, dxfattribs={
         'color': 4,
         'extrusion': (-1, 0, 0),
-    })
-    arc.transform_to_wcs(ucs)
+    }).transform_to_wcs(ucs)
 
 
 def add_solid(msp, ucs):
-    solid = msp.add_solid([(-0.25, -0.15), (0.25, -0.15), (0, -0.5)], dxfattribs={'color': 2})
-    solid.transform_to_wcs(ucs)
+    msp.add_solid([(-0.25, -0.15), (0.25, -0.15), (0, -0.5)], dxfattribs={'color': 2}).transform_to_wcs(ucs)
 
 
 def add_trace(msp, ucs):
-    solid = msp.add_solid([(-0.25, 0.15), (0.25, 0.15), (0, 0.5)], dxfattribs={'color': 7})
-    solid.transform_to_wcs(ucs)
+    msp.add_trace([(-0.25, 0.15), (0.25, 0.15), (0, 0.5)], dxfattribs={'color': 7}).transform_to_wcs(ucs)
 
 
 def add_3dface(msp, ucs):
-    solid = msp.add_3dface([(0, 0, 0), (0.5, 0.5, 0), (0.5, 0.5, 0.5), (0, 0, 0.5)], dxfattribs={'color': 8})
-    solid.transform_to_wcs(ucs)
+    msp.add_3dface(
+        [(0, 0, 0), (0.5, 0.5, 0), (0.5, 0.5, 0.5), (0, 0, 0.5)],
+        dxfattribs={'color': 8}
+    ).transform_to_wcs(ucs)
 
 
 def add_lwpolyline(msp, ucs):
-    solid = msp.add_lwpolyline([(0, 0, 0), (0.3, 0, 1), (0.3, 0.3, 0), (0, 0.3, 0)], format='xyb',
-                               dxfattribs={'color': 6})
-    solid.transform_to_wcs(ucs)
+    msp.add_lwpolyline(
+        [(0, 0, 0), (0.3, 0, 1), (0.3, 0.3, 0), (0, 0.3, 0)], format='xyb',
+        dxfattribs={'color': 6}
+    ).transform_to_wcs(ucs)
 
 
 def add_text(msp, ucs):
-    text = msp.add_text('TEXT', dxfattribs={
+    msp.add_text('TEXT', dxfattribs={
         'color': 4,
-        'style': 'OpenSansCondensed-Light',
+        'style': NARROW,
         'height': .2,
-    }).set_align('MIDDLE_CENTER')
-    text.transform_to_wcs(ucs)
+    }).set_align('MIDDLE_CENTER').transform_to_wcs(ucs)
 
 
 def add_mtext(msp, ucs):
     # It is always better to use text_direction instead of a rotation angle,
     # which works only for extrusion == (0, 0, 1)
-    text = msp.add_mtext('MTEXT', dxfattribs={
+    msp.add_mtext('MTEXT', dxfattribs={
         'color': 5,
-        'style': 'OpenSansCondensed-Light',
+        'style': NARROW,
         'char_height': .2,
         'insert': (0, 0),
         'rotation': 90,
         'attachment_point': 4,
-    })
-    text.transform_to_wcs(ucs)
+    }).transform_to_wcs(ucs)
 
 
 def scene1(filename):
@@ -111,7 +106,7 @@ def scene1(filename):
             add_mtext(msp, ucs)
             add_ellipse(msp, ucs)
             # add_solid(msp, ucs)
-            # add_trace(msp, ucs)
+            add_trace(msp, ucs)
             # add_3dface(msp, ucs)
             # add_lwpolyline(msp, ucs)
             ucs = ucs.rotate_local_z(angle)
@@ -124,7 +119,7 @@ def scene1(filename):
 def add_excentric_text(msp, ucs, location, text):
     text = msp.add_mtext(text, dxfattribs={
         'color': 5,
-        'style': 'OpenSansCondensed-Light',
+        'style': NARROW,
         'char_height': .2,
         'insert': location,
         'attachment_point': 5,
@@ -144,9 +139,9 @@ def scene2(filename):
     for z in range(-2, 3):
         for y in range(-2, 3):
             for x in range(-2, 3):
-                cx = x*delta
-                cy = y*delta
-                cz = z*delta
+                cx = x * delta
+                cy = y * delta
+                cz = z * delta
                 ucs = UCS(origin=(cx, cy, cz)).rotate_local_z(math.radians(45)).rotate_local_x(
                     math.radians(30))
                 add_excentric_text(msp, ucs, location=Vector(1, 2, 3), text=f'Hallo\n(x={cx}, y={cy}, z={cz})')

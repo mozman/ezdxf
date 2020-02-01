@@ -56,6 +56,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: vertices(params:Iterable[float]) -> Iterable[Vector]
 
-    .. automethod:: transform_to_wcs(ucs: UCS)
+    .. automethod:: transform_to_wcs(ucs: UCS) -> Ellipse
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-107CB04F-AD4D-4D2F-8EC9-AC90888063AB

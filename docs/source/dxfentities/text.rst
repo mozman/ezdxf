@@ -104,6 +104,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: set_align(align: str = 'LEFT') -> Text
 
-    .. automethod:: transform_to_wcs(ucs: UCS)
+    .. automethod:: transform_to_wcs(ucs: UCS) -> Text
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-62E5383D-8A14-47B4-BFC4-35824CAE8363
