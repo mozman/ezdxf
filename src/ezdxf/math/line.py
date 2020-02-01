@@ -128,10 +128,10 @@ class ConstructionRay:
                 y = ray1._location.y
             else:
                 y = ray1.yof(x)
-        elif ray1.is_horizontal:
+        elif ray1._is_horizontal:
             y = ray1._location.y
             x = ray2.xof(y)
-        elif ray2.is_horizontal:
+        elif ray2._is_horizontal:
             y = ray2._location.y
             x = ray1.xof(y)
         else:
