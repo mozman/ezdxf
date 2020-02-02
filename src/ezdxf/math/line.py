@@ -1,5 +1,5 @@
 # Created: 13.03.2010
-# Copyright (c) 2010, Manfred Moitzi
+# Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
@@ -172,8 +172,6 @@ class ConstructionRay:
 
     def bisectrix(self, other: 'ConstructionRay') -> 'ConstructionRay':
         """ Bisectrix between `self` and `other`. """
-        if self.is_parallel(other):
-            raise ParallelRaysError
         intersection = self.intersect(other)
         alpha = (self._angle + other._angle) / 2.
         return ConstructionRay(intersection, angle=alpha)
@@ -260,7 +258,6 @@ class ConstructionLine(ConstructionTool):
 
     def has_intersection(self, other: 'ConstructionLine') -> bool:
         """ Returns ``True`` if has intersection with `other` line. """
-        # required because intersection Vector(0, 0, 0) is also False
         return self.intersect(other) is not None
 
     def left_of_line(self, point: 'Vertex', colinear=False) -> bool:
