@@ -320,3 +320,8 @@ def test_project(vcls):
 
     v = vcls((10, 10))
     assert v.project(vcls((10, 0))) == (5, 5)
+
+
+def test_det():
+    assert Vec2((1, 0)).det(Vec2((0, 1))) == 1
+    assert Vec2((0, 1)).det(Vec2((1, 0))) == -1

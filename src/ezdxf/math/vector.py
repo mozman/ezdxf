@@ -551,10 +551,13 @@ class Vec2:
     """
     __slots__ = ['x', 'y']
 
-    def __init__(self, v: TVec2):
-        if isinstance(v, Vec2):
+    def __init__(self, v, y: float = None):
+        if isinstance(v, (Vec2, Vector)):
             self.x = v.x
             self.y = v.y
+        elif y is not None:
+            self.x = float(v)
+            self.y = float(y)
         else:
             self.x = float(v[0])
             self.y = float(v[1])
@@ -790,6 +793,9 @@ class Vec2:
 
     def dot(self, other: 'VecXY') -> float:
         return self.x * other.x + self.y * other.y
+
+    def det(self, other: 'VecXY') -> float:
+        return self.x * other.y - self.y * other.x
 
     def distance(self, other: 'VecXY') -> float:
         return math.hypot(self.x - other.x, self.y - other.y)

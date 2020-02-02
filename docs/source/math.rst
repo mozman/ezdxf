@@ -11,7 +11,15 @@ Functions
 
 .. autofunction:: closest_point
 
+.. autofunction:: distance_point_line(point: Vec2, line: Sequence[Vec2]) -> float
+
+.. autofunction:: is_point_on_line(point: Vec2, line: Sequence[Vec2], ray=True, abs_tol=1e-12) -> bool
+
+.. autofunction:: is_point_in_polygon(point: Vec2, polygon: Iterable[Vec2], fast=False, abs_tol=1e-12) -> int
+
 .. autofunction:: convex_hull
+
+.. autofunction:: intersection_line_line(line1: Sequence[Vec2], line2: Sequence[Vec2], virtual=True, abs_tol=1e-12) -> Optional[Vec2]
 
 .. autofunction:: bspline_control_frame
 
@@ -24,8 +32,6 @@ Functions
 .. autofunction:: required_knot_values
 
 .. autofunction:: xround
-
-.. autofunction:: intersection_line_line_xy(line1: Tuple[Vec2, Vec2], line2: Tuple[Vec2, Vec2], virtual=True, abs_tol=1e-6) -> Optional[Vec2]
 
 .. autofunction:: offset_vertices_2d
 

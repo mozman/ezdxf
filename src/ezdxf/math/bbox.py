@@ -100,7 +100,7 @@ class BoundingBox2d:
         """
         v = [self.extmin, self.extmax]
         v.extend(vertices)
-        self.extmin, self.extmax = extends(v)
+        self.extmin, self.extmax = extends2d(v)
 
     @property
     def size(self) -> Vec2:

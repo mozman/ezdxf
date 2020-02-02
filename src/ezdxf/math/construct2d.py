@@ -1,22 +1,24 @@
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Tuple, Optional
+from typing import TYPE_CHECKING, Iterable, List, Tuple, Optional, Sequence
 
 from functools import partial
 import math
 from abc import abstractmethod
 
 from .vector import Vector, Vec2
+from .bbox import BoundingBox2d
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BoundingBox2d, Vertex
+    from ezdxf.eztypes import Vertex
 
 HALF_PI = math.pi / 2.  # type: float
 THREE_PI_HALF = 1.5 * math.pi  # type: float
 DOUBLE_PI = math.pi * 2.  # type: float
+TOLERANCE = 1e-12
 
 
-def is_close_points(p1: 'Vertex', p2: 'Vertex', abs_tol=1e-12) -> bool:
+def is_close_points(p1: 'Vertex', p2: 'Vertex', abs_tol=TOLERANCE) -> bool:
     """
     Returns ``True`` if `p1` is very close to `p2`.
 
@@ -106,7 +108,7 @@ def normalize_angle(angle: float) -> float:
     return angle
 
 
-def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=1e-9):
+def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE):
     isclose = partial(math.isclose, abs_tol=abs_tol)
 
     s = normalize_angle(start_angle)
@@ -132,7 +134,7 @@ def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex', colinear=False) ->
     ax, ay, *_ = p1
     bx, by, *_ = p2
     det = ((bx - ax) * (cy - ay) - (by - ay) * (cx - ax))
-    if colinear and math.isclose(det, 0):
+    if colinear and math.isclose(det, 0, abs_tol=TOLERANCE):
         return True
     else:
         return det > 0
@@ -154,19 +156,19 @@ class ConstructionTool:
         pass
 
 
-def intersection_line_line_xy(
-        line1: Tuple[Vec2, Vec2],
-        line2: Tuple[Vec2, Vec2],
+def intersection_line_line(
+        line1: Sequence[Vec2],
+        line2: Sequence[Vec2],
         virtual=True,
-        abs_tol=1e-9) -> Optional[Vec2]:
+        abs_tol=TOLERANCE) -> Optional[Vec2]:
     """
     Compute the intersection of two lines in the xy-plane.
 
     Args:
-        line1: coordinates of two points defining a line e.g. ((x1, y1), (x2, y2)).
-        line2: coordinates of two points defining another line e.g. ((x3, y3), (x4, y4)).
-        virtual: ``True`` returns any intersection point, ```False`` returns only real intersection points
-        abs_tol: tolerance for membership verification.
+        line1: start- and end point of first line to test e.g. ((x1, y1), (x2, y2)).
+        line2: start- and end point of second line to test e.g. ((x3, y3), (x4, y4)).
+        virtual: ``True`` returns any intersection point, ``False`` returns only real intersection points.
+        abs_tol: tolerance for intersection test.
 
     Returns:
         ``None`` if there is no intersection point (parallel lines) or intersection point as :class:`Vec2`
@@ -233,3 +235,95 @@ def intersection_line_line_xy(
             return None
 
     return Vec2((x, y))
+
+
+def is_point_on_line(point: Vec2, line: Sequence[Vec2], ray=True, abs_tol=TOLERANCE) -> bool:
+    """ Returns ``True`` if `point` is on `line`.
+
+    Args:
+        point: 2D point to test
+        line: sequence of 2D start- and end point
+        ray: if ``True`` point has to be on the infinite ray, if ``False`` point has to be on the line segment
+        abs_tol: tolerance for minimum distance to line
+
+    """
+
+    px, py = point
+    x1, y1 = line[0]
+    x2, y2 = line[1]
+    on_line = math.fabs((y2 - y1) * px - (x2 - x1) * py + (x2 * y1 - y2 * x1)) <= abs_tol
+    if not on_line or ray:
+        return on_line
+    else:
+        if x1 > x2:
+            x1, x2 = x2, x1
+        if not (x1 <= px <= x2):
+            return False
+        if y1 > y2:
+            y1, y2 = y2, y1
+        if not (y1 <= py <= y2):
+            return False
+        return True
+
+
+def distance_point_line(point: Vec2, line: Sequence[Vec2]) -> float:
+    """ Returns distance from `point` to `line`.
+
+    Args:
+         point: 2D point to test
+         line: sequence of 2D start- and end point.
+
+    """
+    # wikipedia: https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line.
+    a, b = line
+    if a.isclose(b):
+        raise ZeroDivisionError('Not a line.')
+    # |(b.y-a.y)*p.x - (b.x-a.x)*p.y + (b.x*a.y-b.y*a.x)|
+    return math.fabs((a - point).det(b - point)) / (b - a).magnitude
+
+
+def is_point_in_polygon(point: 'Vertex', polygon: Iterable['Vertex'], fast=False, abs_tol=TOLERANCE) -> int:
+    """
+    Test if `point` is inside `polygon`.
+
+    Source: http://www.faqs.org/faqs/graphics/algorithms-faq/ Subject 2.03: How do I find if a point lies
+    within a polygon?
+
+    Args:
+        point: 2D point to test
+        polygon: iterable of 2D points
+        fast: ``False`` returns reliable ``0`` for points on polygon boundary lines and corner points,
+               but is much slower, else returns ``+1`` or ``-1`` for points on polygon boundary.
+        abs_tol: tolerance for equal checks
+
+    Returns:
+        ``+1`` for inside, ``0`` for on boundary line (if `fast` is ``False``), ``-1`` for outside
+
+    """
+    polygon = Vec2.list(polygon)
+    if not polygon[0].isclose(polygon[-1]):
+        polygon.append(polygon[0])
+    if len(polygon) < 4:  # 3+1 because first point == last point
+        raise ValueError('At least 3 polygon points required.')
+    isclose = partial(math.isclose, abs_tol=abs_tol)
+    fabs = math.fabs
+    reliable = not fast
+    point = Vec2(point)
+    x, y, *_ = point
+    inside = False
+    for i in range(len(polygon) - 1):
+        x1, y1 = polygon[i]
+        x2, y2 = polygon[i + 1]
+        if reliable:
+            if isclose(x1, x) and isclose(y1, y):
+                return 0
+            # is point on polygon border line, see: is_point_on_line()
+            if fabs((y2 - y1) * x - (x2 - x1) * y + (x2 * y1 - y2 * x1)) <= abs_tol:
+                return 0
+
+        if ((y1 <= y < y2) or (y2 <= y < y1)) and x < (x2 - x1 * (y - y1) / (y2 - y1) + x1):
+            inside = not inside
+    if inside:
+        return 1
+    else:
+        return -1
