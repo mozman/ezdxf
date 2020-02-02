@@ -17,6 +17,14 @@ def test_outside_horiz_box():
     assert is_point_in_polygon((0.5, 1.5), square) == -1
 
 
+def test_colinear_outside_horiz_box():
+    square = [(0, 0), (1, 0), (1, 1), (0, 1)]
+    assert is_point_in_polygon((1.5, 0), square) == -1
+    assert is_point_in_polygon((-.5, 0), square) == -1
+    assert is_point_in_polygon((0, 1.5), square) == -1
+    assert is_point_in_polygon((0, -.5), square) == -1
+
+
 def test_corners_horiz_box():
     square = [(0, 0), (1, 0), (1, 1), (0, 1)]
     assert is_point_in_polygon((0, 0), square) == 0
