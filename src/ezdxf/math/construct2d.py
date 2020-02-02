@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2018 Manfred Moitzi
+# Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Tuple, Optional, Sequence
+from typing import TYPE_CHECKING, Iterable, List, Optional, Sequence
 
 from functools import partial
 import math
@@ -282,45 +282,37 @@ def distance_point_line(point: Vec2, line: Sequence[Vec2]) -> float:
     return math.fabs((a - point).det(b - point)) / (b - a).magnitude
 
 
-def is_point_in_polygon(point: 'Vertex', polygon: Iterable['Vertex'], fast=False, abs_tol=TOLERANCE) -> int:
+def is_point_in_polygon(point: 'Vertex', polygon: Iterable['Vertex'], abs_tol=TOLERANCE) -> int:
     """
     Test if `point` is inside `polygon`.
-
-    Source: http://www.faqs.org/faqs/graphics/algorithms-faq/ Subject 2.03: How do I find if a point lies
-    within a polygon?
 
     Args:
         point: 2D point to test
         polygon: iterable of 2D points
-        fast: ``False`` returns reliable ``0`` for points on polygon boundary lines and corner points,
-               but is much slower, else returns ``+1`` or ``-1`` for points on polygon boundary.
-        abs_tol: tolerance for equal checks
+        abs_tol: tolerance for distance check
 
     Returns:
-        ``+1`` for inside, ``0`` for on boundary line (if `fast` is ``False``), ``-1`` for outside
+        ``+1`` for inside, ``0`` for on boundary line, ``-1`` for outside
 
     """
+    # Source: http://www.faqs.org/faqs/graphics/algorithms-faq/
+    # Subject 2.03: How do I find if a point lies within a polygon?
+
     polygon = Vec2.list(polygon)
     if not polygon[0].isclose(polygon[-1]):
         polygon.append(polygon[0])
     if len(polygon) < 4:  # 3+1 because first point == last point
         raise ValueError('At least 3 polygon points required.')
-    isclose = partial(math.isclose, abs_tol=abs_tol)
     fabs = math.fabs
-    reliable = not fast
     point = Vec2(point)
     x, y, *_ = point
     inside = False
     for i in range(len(polygon) - 1):
         x1, y1 = polygon[i]
         x2, y2 = polygon[i + 1]
-        if reliable:
-            if isclose(x1, x) and isclose(y1, y):
-                return 0
-            # is point on polygon border line, see: is_point_on_line()
-            if fabs((y2 - y1) * x - (x2 - x1) * y + (x2 * y1 - y2 * x1)) <= abs_tol:
-                return 0
-
+        # is point on polygon boundary line
+        if fabs((y2 - y1) * x - (x2 - x1) * y + (x2 * y1 - y2 * x1)) <= abs_tol:
+            return 0
         if ((y1 <= y < y2) or (y2 <= y < y1)) and x < (x2 - x1 * (y - y1) / (y2 - y1) + x1):
             inside = not inside
     if inside:
