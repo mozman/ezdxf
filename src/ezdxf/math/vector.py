@@ -1,5 +1,5 @@
-# Author:  mozman <me@mozman.at>
 # Purpose: General purpose 2d/3d Vector() class and special 2d vector Vec2() class for more speed.
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import Tuple, List, Iterable, Any, Union, Sequence, TYPE_CHECKING
 from functools import partial
@@ -540,27 +540,30 @@ class Vec2:
     immutable, :meth:`iadd`, :meth:`isub`, :meth:`imul` and :meth:`idiv` modifies the vector itself, the
     :class:`Vector` class returns a new object.
 
-    :class:`Vec2` initialization accepts only 2- and 3-tuples ``(x, y[, z])`` or :class:`Vec2` and
-    :class:`Vector` objects.
+    :class:`Vec2` initialization accepts float-tuples ``(x, y[, z])``, two floats or any object providing
+    :attr:`x` and :attr:`y` attributes like :class:`Vec2` and :class:`Vector` objects.
 
     Args:
-        v: vector class with :attr:`x` and :attr:`y` attributes/properties or a sequence of float ``[x, y, ...]``
+        v: vector object with :attr:`x` and :attr:`y` attributes/properties or a sequence of float ``[x, y, ...]`` or
+           x-axis as float if argument `y` is not ``None``
+        y: second float for :code:`Vec2(x, y)`
 
     :class:`Vec2` implements a subset of :class:`Vector`.
 
     """
     __slots__ = ['x', 'y']
 
-    def __init__(self, v, y: float = None):
-        if isinstance(v, (Vec2, Vector)):
+    def __init__(self, v: Any, y: float = None):
+        try:  # fast path for Vec2() and Vector() or any object providing x and y attributes
             self.x = v.x
             self.y = v.y
-        elif y is not None:
-            self.x = float(v)
-            self.y = float(y)
-        else:
-            self.x = float(v[0])
-            self.y = float(v[1])
+        except AttributeError:
+            if y is None:  # given one tuple
+                self.x = float(v[0])
+                self.y = float(v[1])
+            else:  # two floats given
+                self.x = float(v)
+                self.y = float(y)
 
     @property
     def vec3(self) -> 'Vector':
@@ -588,7 +591,7 @@ class Vec2:
 
     @classmethod
     def from_angle(cls, angle: float, length: float = 1.) -> 'Vec2':
-        return cls((math.cos(angle) * length, math.sin(angle) * length))
+        return cls(math.cos(angle) * length, math.sin(angle) * length)
 
     @classmethod
     def from_deg_angle(cls, angle: float, length: float = 1.) -> 'Vec2':

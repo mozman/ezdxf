@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
-from .construct2d import ConstructionTool, left_of_line, intersection_line_line
+from .construct2d import ConstructionTool, is_point_left_of_line, intersection_line_line
 from .bbox import BoundingBox2d
 from .vector import Vec2
 
@@ -260,11 +260,11 @@ class ConstructionLine(ConstructionTool):
         """ Returns ``True`` if has intersection with `other` line. """
         return self.intersect(other) is not None
 
-    def left_of_line(self, point: 'Vertex', colinear=False) -> bool:
+    def is_point_left_of_line(self, point: 'Vertex', colinear=False) -> bool:
         """
         Returns ``True`` if `point` is left of construction line in relation to the line direction from start to end.
 
         If `colinear` is ``True``, a colinear point is also left of the line.
 
         """
-        return left_of_line(point, self.start, self.end, colinear=colinear)
+        return is_point_left_of_line(point, self.start, self.end, colinear=colinear)

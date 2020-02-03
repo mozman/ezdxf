@@ -46,13 +46,15 @@ Version 0.11b1 - dev
   `ezdxf.options.use_old_predefined_pattern_scaling` to True, to use the old pattern scaling before v0.11 
 - CHANGE: removed `ezdxf.PATTERN` constant, use `PATTERN = ezdxf.pattern.load()` instead, set argument 
   `old_pattern=True` to use the old pattern scaling before v0.11
+- CHANGE: renamed `ezdxf.math.left_of_line` to `ezdxf.math.is_point_left_of_line`
+- CHANGE: renamed `ConstructionLine.left_of_line` to `ConstructionLine.is_point_left_of_line`
 - BUGFIX: fixed incorrect HATCH pattern scaling
 - BUGFIX: fixed base point calculation of aligned dimensions
 - BUGFIX: fixed length extension line support for linear dimensions
 - BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`
 - BUGFIX: check for unsupported DXF versions at `new()`
 - BUGFIX: fixed dxf2src error for the HATCH entity
-- BUGFIX: `left_of_line()` algorithm was incorrect
+- BUGFIX: `is_point_left_of_line()` algorithm was incorrect
 
 Version 0.10.4 - 2020-01-31
 ---------------------------

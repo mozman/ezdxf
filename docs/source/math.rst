@@ -11,9 +11,13 @@ Functions
 
 .. autofunction:: closest_point
 
-.. autofunction:: distance_point_line(point: Vec2, line: Sequence[Vec2]) -> float
+.. autofunction:: distance_point_line(point: Vec2, start: Vec2, end: Vec2) -> float
 
-.. autofunction:: is_point_on_line(point: Vec2, line: Sequence[Vec2], ray=True, abs_tol=1e-12) -> bool
+.. autofunction:: point_to_line_relation(point: Vec2, start: Vec2, end: Vec2, abs_tol=1e-12) -> int
+
+.. autofunction:: is_point_on_line(point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=1e-12) -> bool
+
+.. autofunction:: is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2, colinear=False) -> bool
 
 .. autofunction:: is_point_in_polygon(point: Vec2, polygon: Iterable[Vec2], abs_tol=1e-12) -> int
 
@@ -596,7 +600,7 @@ ConstructionLine
 
     .. automethod:: has_intersection(other: ConstructionLine) -> bool
 
-    .. automethod:: left_of_line
+    .. automethod:: is_point_left_of_line
 
 
 ConstructionCircle

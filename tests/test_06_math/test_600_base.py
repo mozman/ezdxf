@@ -1,5 +1,5 @@
 # Created: 14.11.2010
-# Copyright (c) 2010, Manfred Moitzi
+# Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -15,26 +15,47 @@ def test_normalize_angle():
 
 
 def test_left_of_line():
-    assert left_of_line((-1, 0), (0, 0), (0.1, 1)) is True
-    assert left_of_line((1, 0), (0, 0), (0, -1)) is True
-    assert left_of_line((-1, -1), (0, 0), (0.1, 1)) is True
+    assert is_point_left_of_line(Vec2(-1, 0), Vec2(0, 0), Vec2(0.1, 1)) is True
+    assert is_point_left_of_line(Vec2(1, 0), Vec2(0, 0), Vec2(0, -1)) is True
+    assert is_point_left_of_line(Vec2(-1, -1), Vec2(0, 0), Vec2(0.1, 1)) is True
+
+
+def test_point_to_line_relation_left():
+    assert point_to_line_relation(Vec2(-1, 0), Vec2(0, 0), Vec2(0.1, 1)) == -1
+    assert point_to_line_relation(Vec2(1, 0), Vec2(0, 0), Vec2(0, -1)) == -1
+    assert point_to_line_relation(Vec2(-1, -1), Vec2(0, 0), Vec2(0.1, 1)) == -1
 
 
 def test_left_of_line_or_on_the_line():
     # vertical line
-    assert left_of_line((1, 0), (0, 0), (0, 1), colinear=True) is False
-    assert left_of_line((0, 0.5), (0, 0), (0, 1), colinear=True) is True
-    assert left_of_line((-1, 0.5), (0, 0), (0, 1), colinear=True) is True
-
+    assert is_point_left_of_line(Vec2(1, 0), Vec2(0, 0), Vec2(0, 1), colinear=True) is False
+    assert is_point_left_of_line(Vec2(0, 0.5), Vec2(0, 0), Vec2(0, 1), colinear=True) is True
+    assert is_point_left_of_line(Vec2(-1, 0.5), Vec2(0, 0), Vec2(0, 1), colinear=True) is True
     # horizontal line
-    assert left_of_line((0, 1), (0, 0), (1, 0), colinear=True) is True
-    assert left_of_line((0, 0), (0, 0), (1, 0), colinear=True) is True
-    assert left_of_line((0, -1), (0, 0), (1, 0), colinear=True) is False
+    assert is_point_left_of_line(Vec2(0, 1), Vec2(0, 0), Vec2(1, 0), colinear=True) is True
+    assert is_point_left_of_line(Vec2(0, 0), Vec2(0, 0), Vec2(1, 0), colinear=True) is True
+    assert is_point_left_of_line(Vec2(0, -1), Vec2(0, 0), Vec2(1, 0), colinear=True) is False
     # 45 deg line
-    assert left_of_line((0, 0), (0, 0), (1, 1), colinear=True) is True
-    assert left_of_line((0.5, 0.5), (0, 0), (1, 1), colinear=True) is True
-    assert left_of_line((1, 1), (0, 0), (1, 1), colinear=True) is True
-    assert left_of_line((.5, .49), (0, 0), (1, 1), colinear=True) is False
+    assert is_point_left_of_line(Vec2(0, 0), Vec2(0, 0), Vec2(1, 1), colinear=True) is True
+    assert is_point_left_of_line(Vec2(0.5, 0.5), Vec2(0, 0), Vec2(1, 1), colinear=True) is True
+    assert is_point_left_of_line(Vec2(1, 1), Vec2(0, 0), Vec2(1, 1), colinear=True) is True
+    assert is_point_left_of_line(Vec2(.5, .49), Vec2(0, 0), Vec2(1, 1), colinear=True) is False
+
+
+def test_point_ot_line_relation_on_line():
+    # vertical line
+    assert point_to_line_relation(Vec2(0, 2), Vec2(0, 0), Vec2(0, 1)) == 0
+    assert point_to_line_relation(Vec2(0, -1), Vec2(0, 0), Vec2(0, 1)) == 0
+    assert point_to_line_relation(Vec2(0, 0.5), Vec2(0, 0), Vec2(0, 1)) == 0
+    # horizontal line
+    assert point_to_line_relation(Vec2(1, 0), Vec2(0, 0), Vec2(1, 0)) == 0
+    assert point_to_line_relation(Vec2(-1, 0), Vec2(0, 0), Vec2(1, 0)) == 0
+    assert point_to_line_relation(Vec2(0, 0), Vec2(0, 0), Vec2(1, 0)) == 0
+    # 45 deg line
+    assert point_to_line_relation(Vec2(0, 0), Vec2(0, 0), Vec2(1, 1)) == 0
+    assert point_to_line_relation(Vec2(0.5, 0.5), Vec2(0, 0), Vec2(1, 1)) == 0
+    assert point_to_line_relation(Vec2(1, 1), Vec2(0, 0), Vec2(1, 1)) == 0
+    assert point_to_line_relation(Vec2(-.5, -.5), Vec2(0, 0), Vec2(1, 1)) == 0
 
 
 def test_is_close_points():

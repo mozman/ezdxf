@@ -1,7 +1,8 @@
 # Purpose: test ConstructionLine
 # Created: 27.01.2019
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from ezdxf.math.line import ConstructionLine
+from ezdxf.math.line import ConstructionLine, Vec2
 
 
 class TestConstructionLine:
@@ -11,39 +12,39 @@ class TestConstructionLine:
 
     def test_left_of_line(self):
         line = ConstructionLine((0, 0), (0.1, 1))
-        assert line.left_of_line((-1, 0)) is True
-        assert line.left_of_line((1, 0)) is False
-        assert line.left_of_line((-1, -1)) is True
+        assert line.is_point_left_of_line(Vec2(-1, 0)) is True
+        assert line.is_point_left_of_line(Vec2(1, 0)) is False
+        assert line.is_point_left_of_line(Vec2(-1, -1)) is True
 
         line = ConstructionLine((0, 0), (0, -1))
-        assert line.left_of_line((1, 0)) is True
+        assert line.is_point_left_of_line(Vec2(1, 0)) is True
 
         line = ConstructionLine((0, 0), (-1, .1))
-        assert line.left_of_line((-1, 0)) is True
+        assert line.is_point_left_of_line(Vec2(-1, 0)) is True
 
         line = ConstructionLine((0, 0), (10, 0))
-        assert line.left_of_line((0, 0)) is False
-        assert line.left_of_line((10, 0)) is False
-        assert line.left_of_line((10, 1)) is True
-        assert line.left_of_line((10, -1)) is False
+        assert line.is_point_left_of_line(Vec2(0, 0)) is False
+        assert line.is_point_left_of_line(Vec2(10, 0)) is False
+        assert line.is_point_left_of_line(Vec2(10, 1)) is True
+        assert line.is_point_left_of_line(Vec2(10, -1)) is False
 
         line = ConstructionLine((10, 0), (0, 0))
-        assert line.left_of_line((0, 0)) is False
-        assert line.left_of_line((10, 0)) is False
-        assert line.left_of_line((10, 1)) is False
-        assert line.left_of_line((10, -1)) is True
+        assert line.is_point_left_of_line(Vec2(0, 0)) is False
+        assert line.is_point_left_of_line(Vec2(10, 0)) is False
+        assert line.is_point_left_of_line(Vec2(10, 1)) is False
+        assert line.is_point_left_of_line(Vec2(10, -1)) is True
 
         line = ConstructionLine((0, 0), (0, 10))
-        assert line.left_of_line((0, 0)) is False
-        assert line.left_of_line((0, 10)) is False
-        assert line.left_of_line((1, 10)) is False
-        assert line.left_of_line((-1, 10)) is True
+        assert line.is_point_left_of_line(Vec2(0, 0)) is False
+        assert line.is_point_left_of_line(Vec2(0, 10)) is False
+        assert line.is_point_left_of_line(Vec2(1, 10)) is False
+        assert line.is_point_left_of_line(Vec2(-1, 10)) is True
 
         line = ConstructionLine((0, 10), (0, 0))
-        assert line.left_of_line((0, 0)) is False
-        assert line.left_of_line((0, 10)) is False
-        assert line.left_of_line((1, 10)) is True
-        assert line.left_of_line((-1, 10)) is False
+        assert line.is_point_left_of_line(Vec2(0, 0)) is False
+        assert line.is_point_left_of_line(Vec2(0, 10)) is False
+        assert line.is_point_left_of_line(Vec2(1, 10)) is True
+        assert line.is_point_left_of_line(Vec2(-1, 10)) is False
 
     def test_intersect_horizontal_line(self):
         line = ConstructionLine((0, 0), (10, 0))

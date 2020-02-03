@@ -1,9 +1,11 @@
+# Copyright (c) 2019-2020, Manfred Moitzi
+# License: MIT License
 from typing import List, Sequence, TYPE_CHECKING, Iterable, Tuple
 import math
 from .vector import Vec2
 from .bbox import BoundingBox2d
 from .line import ConstructionLine
-from .construct2d import left_of_line, ConstructionTool
+from .construct2d import ConstructionTool, point_to_line_relation
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -172,7 +174,7 @@ class ConstructionBox(ConstructionTool):
                 # inside if point is "left of line" of all border lines.
                 p1, p2, p3, p4 = self.corners
                 return all(
-                    (left_of_line(point, a, b, colinear=True) for a, b in [(p1, p2), (p2, p3), (p3, p4), (p4, p1)])
+                    (point_to_line_relation(point, a, b) < 1 for a, b in [(p1, p2), (p2, p3), (p3, p4), (p4, p1)])
                 )
 
     def is_any_corner_inside(self, other: 'ConstructionBox') -> bool:
