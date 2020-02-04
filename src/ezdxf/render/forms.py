@@ -388,26 +388,26 @@ def close_polygon(vertices: Iterable['Vertex']) -> List['Vertex']:
 
 # 8 corner vertices
 _cube_vertices = [
-    (0, 0, 0),
-    (1, 0, 0),
-    (1, 1, 0),
-    (0, 1, 0),
-    (0, 0, 1),
-    (1, 0, 1),
-    (1, 1, 1),
-    (0, 1, 1),
+    Vector(0, 0, 0),
+    Vector(1, 0, 0),
+    Vector(1, 1, 0),
+    Vector(0, 1, 0),
+    Vector(0, 0, 1),
+    Vector(1, 0, 1),
+    Vector(1, 1, 1),
+    Vector(0, 1, 1),
 ]
 
 # 8 corner vertices, 'mass' center in (0, 0, 0)
 _cube0_vertices = [
-    (-.5, -.5, -.5),
-    (+.5, -.5, -.5),
-    (+.5, +.5, -.5),
-    (-.5, +.5, -.5),
-    (-.5, -.5, +.5),
-    (+.5, -.5, +.5),
-    (+.5, +.5, +.5),
-    (-.5, +.5, +.5),
+    Vector(-.5, -.5, -.5),
+    Vector(+.5, -.5, -.5),
+    Vector(+.5, +.5, -.5),
+    Vector(-.5, +.5, -.5),
+    Vector(-.5, -.5, +.5),
+    Vector(+.5, -.5, +.5),
+    Vector(+.5, +.5, +.5),
+    Vector(-.5, +.5, +.5),
 ]
 
 # 6 cube faces

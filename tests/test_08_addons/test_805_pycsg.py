@@ -13,21 +13,8 @@ def test_vector():
     assert (v._x, v._y, v._z) == (1, 2, 3)
 
 
-def test_toPolygons():
-    a = CSG.cube([0.5, 0.5, 0.0])
-    a.to_polygons()
-    b = CSG.sphere()
-    b.to_polygons()
-    c = CSG.cylinder()
-    c.to_polygons()
-
-
 def test_cone():
     CSG.cone(start=[0., 0., 0.], end=[1., 2., 3.], radius=1.0, slices=8)
-
-
-def test_cube():
-    CSG.cube(center=[0., 0., 0.], radius=[1., 2., 3.])
 
 
 def test_cylinder():

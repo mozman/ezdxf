@@ -43,6 +43,8 @@ The :class:`~ezdxf.entities.Mesh` entity supports ngons in AutoCAD, ngons are po
 
     .. automethod:: scale
 
+    .. automethod:: scale_uniform
+
     .. automethod:: render(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None)
 
     .. automethod:: from_mesh

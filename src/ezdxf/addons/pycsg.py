@@ -8,6 +8,9 @@ import math
 import operator
 from functools import reduce
 
+from ezdxf.math import Vector
+from ezdxf.render import MeshVertexMerger, MeshBuilder
+
 __doc__ = """
 Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean
 operations like union and intersection to combine 3D solids. This library
@@ -53,96 +56,6 @@ union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is
 `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 """
-
-
-class Vector:
-    """
-    Immutable 3D vector, compatible to class:`ezdxf.math.vector.Vector` and could be replaced by the ezdxf vector,
-    but this class provides only methods which are really used in pycsg, maybe this class is better to optimize in a
-    Cython version than the general vector from ezdxf.
-
-    """
-    __slots__ = ('_x', '_y', '_z')
-
-    def __init__(self, *args):
-        try:  # fast path Vector(x, y, z)
-            self._x, self._y, self._z = args
-        except ValueError:
-            # slow path Vector([x, y, z]) and Vector(None)
-            self._x, self._y, self._z = args[0] or (0., 0., 0.)
-
-    @property
-    def x(self) -> float:
-        return self._x
-
-    @property
-    def y(self) -> float:
-        return self._y
-
-    @property
-    def z(self) -> float:
-        return self._z
-
-    def copy(self) -> 'Vector':
-        return Vector(self._x, self._y, self._z)
-
-    def __neg__(self) -> 'Vector':
-        """ Negated. """
-        return Vector(-self._x, -self._y, -self._z)
-
-    def __add__(self, a: 'Vector') -> 'Vector':
-        """ Add. """
-        return Vector(self._x + a.x, self._y + a.y, self._z + a.z)
-
-    def __sub__(self, a: 'Vector') -> 'Vector':
-        """ Subtract. """
-        return Vector(self._x - a.x, self._y - a.y, self._z - a.z)
-
-    def __mul__(self, a: float) -> 'Vector':
-        """ Multiply. """
-        return Vector(self._x * a, self._y * a, self._z * a)
-
-    def __truediv__(self, a: float) -> 'Vector':
-        """ Divide. """
-        return Vector(self._x / a, self._y / a, self._z / a)
-
-    def __getitem__(self, key: int) -> float:
-        return (self._x, self._y, self._z)[key]
-
-    def __repr__(self) -> str:
-        return 'Vector(%.2f, %.2f, %0.2f)' % (self._x, self._y, self._z)
-
-    def dot(self, a: 'Vector') -> float:
-        """ Dot. """
-        return self._x * a.x + self._y * a.y + self._z * a.z
-
-    def lerp(self, a: 'Vector', t: float) -> 'Vector':
-        """ Lerp: Linear interpolation from self to a """
-        return self.__add__(a.__sub__(self).__mul__(t))
-
-    @property
-    def magnitude(self) -> float:
-        """ Length """
-        return math.sqrt(self.dot(self))
-
-    def normalize(self) -> 'Vector':
-        """ Normalize """
-        return self.__truediv__(self.magnitude)
-
-    def cross(self, a) -> 'Vector':
-        """ Cross Product """
-        return Vector(
-            self._y * a.z - self._z * a.y,
-            self._z * a.x - self._x * a.z,
-            self._x * a.y - self._y * a.x,
-        )
-
-    def round(self, ndigits: int = 6):
-        return Vector(
-            round(self._x, ndigits=ndigits),
-            round(self._y, ndigits=ndigits),
-            round(self._z, ndigits=ndigits),
-        )
 
 
 class Vertex:
@@ -212,7 +125,7 @@ class Plane:
         self.w = w
 
     @classmethod
-    def from_points(cls, a, b, c) -> 'Plane':
+    def from_points(cls, a: Vector, b: Vector, c: Vector) -> 'Plane':
         n = (b - a).cross(c - a).normalize()
         return Plane(n, n.dot(a))
 
@@ -327,7 +240,7 @@ class Polygon:
 
 class BSPNode:
     """
-    class BSPNode
+    Class BSPNode
 
     Holds a node in a BSP tree. A BSP tree is built from a collection of polygons
     by picking a polygon to split along. That polygon (and all other coplanar
@@ -458,21 +371,35 @@ class CSG:
     """
 
     def __init__(self):
-        self.polygons = []
+        self.polygons = []  # type: List[Polygon]
 
     @classmethod
-    def from_polygons(cls, polygons):
+    def from_polygons(cls, polygons) -> 'CSG':
         csg = CSG()
         csg.polygons = polygons
         return csg
+
+    @classmethod
+    def from_mesh_builder(cls, mesh: MeshBuilder) -> 'CSG':
+        """ Create :class:`CSG` object from :class:`ezdxf.render.MeshBuilder' object. """
+        vertices = mesh.vertices
+        polygons = []
+        for face in mesh.faces:
+            polygons.append(Polygon([Vertex(vertices[index]) for index in face]))
+        return CSG.from_polygons(polygons)
+
+    def to_mesh_builder(self) -> MeshVertexMerger:
+        """ Return :class:`ezdxf.render.MeshBuilder' object. """
+        mesh = MeshVertexMerger()
+        for face in self.polygons:
+            vertices = [vertex.pos for vertex in face.vertices]
+            mesh.add_face(vertices)
+        return mesh
 
     def clone(self):
         csg = CSG()
         csg.polygons = list(map(lambda p: p.clone(), self.polygons))
         return csg
-
-    def to_polygons(self):
-        return self.polygons
 
     def refine(self):
         """
@@ -512,70 +439,10 @@ class CSG:
 
         return new_csg
 
-    def to_vertices_and_polygons(self):
-        """
-        Return list of vertices, polygons (cells), and the total
-        number of vertex indices in the polygon connectivity list
-        (count).
-        """
-        offset = 1.234567890
-        polys = []
-        vertex_index_map = {}
-        count = 0
-        for poly in self.polygons:
-            cell = []
-            for v in poly.vertices:
-                p = v.pos
-                # use string key to remove degeneracy associated
-                # very close points. The format %.10e ensures that
-                # points differing in the 11 digits and higher are 
-                # treated as the same. For instance 1.2e-10 and 
-                # 1.3e-10 are essentially the same.
-                vKey = '%.10e,%.10e,%.10e' % (p[0] + offset,
-                                              p[1] + offset,
-                                              p[2] + offset)
-                if vKey not in vertex_index_map:
-                    vertex_index_map[vKey] = len(vertex_index_map)
-                index = vertex_index_map[vKey]
-                cell.append(index)
-                count += 1
-            polys.append(cell)
-        # sort by index
-        sorted_vertex_index = sorted(vertex_index_map.items(),
-                                     key=operator.itemgetter(1))
-        verts = []
-        for v, i in sorted_vertex_index:
-            p = []
-            for c in v.split(','):
-                p.append(float(c) - offset)
-            verts.append(tuple(p))
-        return verts, polys, count
-
-    def save_VTK(self, filename):
-        """ Save polygons in VTK file. """
-        with open(filename, 'w') as f:
-            f.write('# vtk DataFile Version 3.0\n')
-            f.write('pycsg output\n')
-            f.write('ASCII\n')
-            f.write('DATASET POLYDATA\n')
-
-            verts, cells, count = self.to_vertices_and_polygons()
-
-            f.write('POINTS {0} float\n'.format(len(verts)))
-            for v in verts:
-                f.write('{0} {1} {2}\n'.format(v[0], v[1], v[2]))
-            num_cells = len(cells)
-            f.write('POLYGONS {0} {1}\n'.format(num_cells, count + num_cells))
-            for cell in cells:
-                f.write('{0} '.format(len(cell)))
-                for index in cell:
-                    f.write('{0} '.format(index))
-                f.write('\n')
-
     def union(self, csg):
         """
         Return a new CSG solid representing space in either this solid or in the
-        solid `csg`. Neither this solid nor the solid `csg` are modified.::
+        solid `csg`. Neither this solid nor the solid `csg` are modified::
         
             A.union(B)
         
@@ -598,8 +465,7 @@ class CSG:
         a.build(b.all_polygons())
         return CSG.from_polygons(a.all_polygons())
 
-    def __add__(self, csg):
-        return self.union(csg)
+    __add__ = union
 
     def subtract(self, csg):
         """
@@ -629,8 +495,7 @@ class CSG:
         a.invert()
         return CSG.from_polygons(a.all_polygons())
 
-    def __sub__(self, csg):
-        return self.subtract(csg)
+    __sub__ = subtract
 
     def intersect(self, csg):
         """
@@ -659,8 +524,7 @@ class CSG:
         a.invert()
         return CSG.from_polygons(a.all_polygons())
 
-    def __mul__(self, csg):
-        return self.intersect(csg)
+    __mul__ = intersect
 
     def inverse(self):
         """
@@ -677,9 +541,9 @@ class CSG:
         Construct an axis-aligned solid cuboid. Optional parameters are `center` and
         `radius`, which default to `[0, 0, 0]` and `[1, 1, 1]`. The radius can be
         specified using a single number or a list of three numbers, one for each axis.
-        
+
         Example code::
-        
+
             cube = CSG.cube(
               center=[0, 0, 0],
               radius=1

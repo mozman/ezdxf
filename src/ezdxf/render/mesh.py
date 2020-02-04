@@ -151,8 +151,16 @@ class MeshBuilder:
 
         """
         self.vertices = [Vector(v[0] * sx, v[1] * sy, v[2] * sz) for v in self.vertices]
-        for index, vertex in enumerate(self.vertices):
-            self.vertices[index] = Vector(vertex[0] * sx, vertex[1] * sy, vertex[2] * sz)
+
+    def scale_uniform(self, s: float) -> None:
+        """
+        Scale mesh uniform inplace.
+
+        Args:
+            s: scale factor for x-, y- and z-axis
+
+        """
+        self.vertices = [v * s for v in self.vertices]
 
     def render(self, layout: 'BaseLayout', dxfattribs: dict = None, matrix: 'Matrix44' = None):
         """
