@@ -55,12 +55,13 @@ union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is
 """
 
 
-# increase the max number of recursive calls
-# sys.setrecursionlimit(10000)  # my default is 1000, increasing too much may cause a seg fault
-
-
 class Vector:
-    """ Immutable 3D vector. """
+    """
+    Immutable 3D vector, compatible to class:`ezdxf.math.vector.Vector` and could be replaced by the ezdxf vector,
+    but this class provides only methods which are really used in pycsg, maybe this class is better to optimize in a
+    Cython version than the general vector from ezdxf.
+
+    """
     __slots__ = ('_x', '_y', '_z')
 
     def __init__(self, *args):
@@ -85,35 +86,31 @@ class Vector:
     def copy(self) -> 'Vector':
         return Vector(self._x, self._y, self._z)
 
-    def negated(self) -> 'Vector':
+    def __neg__(self) -> 'Vector':
         """ Negated. """
         return Vector(-self._x, -self._y, -self._z)
 
-    __neg__ = negated
-
-    def plus(self, a: 'Vector') -> 'Vector':
+    def __add__(self, a: 'Vector') -> 'Vector':
         """ Add. """
         return Vector(self._x + a.x, self._y + a.y, self._z + a.z)
 
-    __add__ = plus
-
-    def minus(self, a: 'Vector') -> 'Vector':
+    def __sub__(self, a: 'Vector') -> 'Vector':
         """ Subtract. """
         return Vector(self._x - a.x, self._y - a.y, self._z - a.z)
 
-    __sub__ = minus
-
-    def times(self, a: float) -> 'Vector':
+    def __mul__(self, a: float) -> 'Vector':
         """ Multiply. """
         return Vector(self._x * a, self._y * a, self._z * a)
 
-    __mul__ = times
-
-    def divide(self, a: float) -> 'Vector':
+    def __truediv__(self, a: float) -> 'Vector':
         """ Divide. """
         return Vector(self._x / a, self._y / a, self._z / a)
 
-    __truediv__ = divide
+    def __getitem__(self, key: int) -> float:
+        return (self._x, self._y, self._z)[key]
+
+    def __repr__(self) -> str:
+        return 'Vector(%.2f, %.2f, %0.2f)' % (self._x, self._y, self._z)
 
     def dot(self, a: 'Vector') -> float:
         """ Dot. """
@@ -121,15 +118,16 @@ class Vector:
 
     def lerp(self, a: 'Vector', t: float) -> 'Vector':
         """ Lerp: Linear interpolation from self to a """
-        return self.plus(a.minus(self).times(t))
+        return self.__add__(a.__sub__(self).__mul__(t))
 
-    def length(self) -> float:
+    @property
+    def magnitude(self) -> float:
         """ Length """
         return math.sqrt(self.dot(self))
 
-    def unit(self) -> 'Vector':
+    def normalize(self) -> 'Vector':
         """ Normalize """
-        return self.divide(self.length())
+        return self.__truediv__(self.magnitude)
 
     def cross(self, a) -> 'Vector':
         """ Cross Product """
@@ -146,12 +144,6 @@ class Vector:
             round(self._z, ndigits=ndigits),
         )
 
-    def __getitem__(self, key: int) -> float:
-        return (self._x, self._y, self._z)[key]
-
-    def __repr__(self) -> str:
-        return 'Vector(%.2f, %.2f, %0.2f)' % (self._x, self._y, self._z)
-
 
 class Vertex:
     """
@@ -167,7 +159,7 @@ class Vertex:
     """
     __slots__ = ('pos', 'normal')
 
-    def __init__(self, pos: Vector, normal: Vector = None):
+    def __init__(self, pos: Vector, normal=(0., 0., 0.)):
         self.pos = Vector(pos)
         self.normal = Vector(normal)
 
@@ -221,7 +213,7 @@ class Plane:
 
     @classmethod
     def from_points(cls, a, b, c) -> 'Plane':
-        n = b.minus(a).cross(c.minus(a)).unit()
+        n = (b - a).cross(c - a).normalize()
         return Plane(n, n.dot(a))
 
     def clone(self) -> 'Plane':
@@ -253,7 +245,6 @@ class Plane:
         num_vertices = len(polygon.vertices)
         for i in range(num_vertices):
             t = self.normal.dot(polygon.vertices[i].pos) - self.w
-            loc = -1
             if t < -Plane.EPSILON:
                 loc = BACK
             elif t > Plane.EPSILON:
@@ -292,7 +283,7 @@ class Plane:
                         b.append(vi)
                 if (ti | tj) == SPANNING:
                     # interpolation weight at the intersection point
-                    t = (self.w - self.normal.dot(vi.pos)) / self.normal.dot(vj.pos.minus(vi.pos))
+                    t = (self.w - self.normal.dot(vi.pos)) / self.normal.dot(vj.pos - vi.pos)
                     # intersection point on the plane
                     v = vi.interpolate(vj, t)
                     f.append(v)
@@ -443,8 +434,7 @@ class BSPNode:
         # split all other polygons using the first polygon's plane
         for poly in polygons[1:]:
             # coplanar front and back polygons go into self.polygons
-            self.plane.split_polygon(poly, self.polygons, self.polygons,
-                                     front, back)
+            self.plane.split_polygon(poly, self.polygons, self.polygons, front, back)
         # recursively build the BSP tree
         if len(front) > 0:
             if not self.front:
@@ -529,12 +519,10 @@ class CSG:
         (count).
         """
         offset = 1.234567890
-        verts = []
         polys = []
         vertex_index_map = {}
         count = 0
         for poly in self.polygons:
-            verts = poly.vertices
             cell = []
             for v in poly.vertices:
                 p = v.pos
@@ -576,8 +564,8 @@ class CSG:
             f.write('POINTS {0} float\n'.format(len(verts)))
             for v in verts:
                 f.write('{0} {1} {2}\n'.format(v[0], v[1], v[2]))
-            numCells = len(cells)
-            f.write('POLYGONS {0} {1}\n'.format(numCells, count + numCells))
+            num_cells = len(cells)
+            f.write('POLYGONS {0} {1}\n'.format(num_cells, count + num_cells))
             for cell in cells:
                 f.write('{0} '.format(len(cell)))
                 for index in cell:
@@ -607,7 +595,7 @@ class CSG:
         b.invert()
         b.clip_to(a)
         b.invert()
-        a.build(b.all_polygons());
+        a.build(b.all_polygons())
         return CSG.from_polygons(a.all_polygons())
 
     def __add__(self, csg):
@@ -697,10 +685,8 @@ class CSG:
               radius=1
             )
         """
-        c = Vector(0, 0, 0)
+        c = Vector(center)
         r = [1, 1, 1]
-        if isinstance(center, (list, tuple)):
-            c = Vector(center)
         if isinstance(radius, (list, tuple)):
             r = radius
         else:
@@ -714,8 +700,7 @@ class CSG:
                                  c.x + r[0] * (2 * bool(i & 1) - 1),
                                  c.y + r[1] * (2 * bool(i & 2) - 1),
                                  c.z + r[2] * (2 * bool(i & 4) - 1)
-                             ),
-                             None
+                             )
                          ), v[0]))),
             [
                 [[0, 4, 6, 2], [-1, 0, 0]],
@@ -756,7 +741,7 @@ class CSG:
                 math.cos(theta) * math.sin(phi),
                 math.cos(phi),
                 math.sin(theta) * math.sin(phi))
-            vertices.append(Vertex(c.plus(d.times(r)), d))
+            vertices.append(Vertex(c + (d * r), d))
 
         dTheta = math.pi * 2.0 / float(slices)
         dPhi = math.pi / float(stacks)
@@ -844,22 +829,20 @@ class CSG:
             e = Vector(*e)
         r = kwargs.get('radius', 1.0)
         slices = kwargs.get('slices', 16)
-        ray = e.minus(s)
+        ray = e - s
 
-        z_axis = ray.unit()
+        z_axis = ray.normalize()
         is_y = (math.fabs(z_axis.y) > 0.5)
-        x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).unit()
-        y_axis = x_axis.cross(z_axis).unit()
-        start = Vertex(s, z_axis.negated())
-        end = Vertex(e, z_axis.unit())
+        x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
+        y_axis = x_axis.cross(z_axis).normalize()
+        start = Vertex(s, -z_axis)
+        end = Vertex(e, z_axis.normalize())
         polygons = []
 
-        def point(stack, angle, normalBlend):
-            out = x_axis.times(math.cos(angle)).plus(
-                y_axis.times(math.sin(angle)))
-            pos = s.plus(ray.times(stack)).plus(out.times(r))
-            normal = out.times(1.0 - math.fabs(normalBlend)).plus(
-                z_axis.times(normalBlend))
+        def point(stack, angle, normal_blend):
+            out = (x_axis * math.cos(angle)) + (y_axis * math.sin(angle))
+            pos = s + (ray * stack) + (out * r)
+            normal = out * (1.0 - math.fabs(normal_blend)) + (z_axis * normal_blend)
             return Vertex(pos, normal)
 
         dt = math.pi * 2.0 / float(slices)
@@ -901,27 +884,26 @@ class CSG:
             e = Vector(*e)
         r = kwargs.get('radius', 1.0)
         slices = kwargs.get('slices', 16)
-        ray = e.minus(s)
+        ray = e - s
 
-        z_axis = ray.unit()
-        is_y = (math.fabs(z_axis._y) > 0.5)
-        x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).unit()
-        y_axis = x_axis.cross(z_axis).unit()
-        start_normal = z_axis.negated()
+        z_axis = ray.normalize()
+        is_y = (math.fabs(z_axis.y) > 0.5)
+        x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
+        y_axis = x_axis.cross(z_axis).normalize()
+        start_normal = -z_axis
         start = Vertex(s, start_normal)
         polygons = []
 
-        taper_angle = math.atan2(r, ray.length())
+        taper_angle = math.atan2(r, ray.magnitude)
         sin_taper_angle = math.sin(taper_angle)
         cos_taper_angle = math.cos(taper_angle)
 
         def point(angle):
             # radial direction pointing out
-            out = x_axis.times(math.cos(angle)).plus(
-                y_axis.times(math.sin(angle)))
-            pos = s.plus(out.times(r))
+            out = x_axis * math.cos(angle) + y_axis * math.sin(angle)
+            pos = s + out * r
             # normal taking into account the tapering of the cone
-            normal = out.times(cos_taper_angle).plus(z_axis.times(sin_taper_angle))
+            normal = out * cos_taper_angle + z_axis * sin_taper_angle
             return pos, normal
 
         dt = math.pi * 2.0 / float(slices)
@@ -934,7 +916,7 @@ class CSG:
             p0, n0 = point(t0)
             p1, n1 = point(t1)
             # average normal for the tip
-            n_avg = n0.plus(n1).times(0.5)
+            n_avg = n0 + n1 * 0.5
             # polygon on the low side (disk sector)
             poly_start = Polygon([start.clone(),
                                   Vertex(p0, start_normal),

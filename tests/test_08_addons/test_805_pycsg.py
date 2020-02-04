@@ -3,7 +3,7 @@ from ezdxf.addons.pycsg import CSG, Vector, Vertex, BSPNode, Polygon
 
 
 def test_vector():
-    v = Vector(None)
+    v = Vector(0, 0, 0)
     assert (v._x, v._y, v._z) == (0, 0, 0)
     v = Vector(1, 2, 3)
     assert (v._x, v._y, v._z) == (1, 2, 3)
