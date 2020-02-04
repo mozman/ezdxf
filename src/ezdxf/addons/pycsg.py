@@ -3,7 +3,7 @@
 # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
 # Additions by Alex Pletzer (Pennsylvania State University)
 # Adaptation as ezdxf add-on, Copyright (c) 2020, Manfred Moitzi, MIT License.
-from typing import List
+from typing import List, Optional
 import math
 import operator
 from functools import reduce
@@ -65,12 +65,7 @@ SPANNING = 3  # some vertices are in front, some in the back
 
 
 class Plane:
-    """
-    class Plane
-
-    Represents a plane in 3D space.
-    """
-
+    """ Represents a plane in 3D space.  """
     """
     `Plane.EPSILON` is the tolerance used by `split_polygon()` to decide if a
     point is on the plane.
@@ -161,32 +156,26 @@ class Plane:
                     f.append(v)
                     b.append(v)
             if len(f) >= 3:
-                front.append(Polygon(f, polygon.shared))
+                front.append(Polygon(f))
             if len(b) >= 3:
-                back.append(Polygon(b, polygon.shared))
+                back.append(Polygon(b))
 
 
 class Polygon:
     """
-    class Polygon
-
     Represents a convex polygon. The vertices used to initialize a polygon must
     be coplanar and form a convex loop. They do not have to be `Vertex`
     instances but they must behave similarly (duck typing can be used for
     customization).
 
-    Each convex polygon has a `shared` property, which is shared between all
-    polygons that are clones of each other or were split from the same polygon.
-    This can be used to define per-polygon properties (such as surface color).
     """
 
-    def __init__(self, vertices: List[Vector], shared=None):
+    def __init__(self, vertices: List[Vector]):
         self.vertices = vertices
-        self.shared = shared
         self.plane = Plane.from_points(vertices[0], vertices[1], vertices[2])
 
     def clone(self):
-        return Polygon(list(self.vertices), self.shared)
+        return Polygon(list(self.vertices))
 
     def flip(self):
         self.vertices.reverse()
@@ -198,8 +187,6 @@ class Polygon:
 
 class BSPNode:
     """
-    Class BSPNode
-
     Holds a node in a BSP tree. A BSP tree is built from a collection of polygons
     by picking a polygon to split along. That polygon (and all other coplanar
     polygons) are added directly to that node and the other polygons are added to
@@ -208,9 +195,9 @@ class BSPNode:
     """
 
     def __init__(self, polygons: List[Polygon] = None):
-        self.plane = None  # type: Plane
-        self.front = None  # type: BSPNode
-        self.back = None  # type: BSPNode
+        self.plane = None  # type: Optional[Plane]
+        self.front = None  # type: Optional[BSPNode]
+        self.back = None  # type: Optional[BSPNode]
         self.polygons = []  # type: List[Polygon]
         if polygons:
             self.build(polygons)
@@ -223,13 +210,11 @@ class BSPNode:
             node.front = self.front.clone()
         if self.back:
             node.back = self.back.clone()
-        node.polygons = list(map(lambda p: p.clone(), self.polygons))
+        node.polygons = [p.clone() for p in self.polygons]
         return node
 
     def invert(self):
-        """
-        Convert solid space to empty space and empty space to solid space.
-        """
+        """ Convert solid space to empty space and empty space to solid space. """
         for poly in self.polygons:
             poly.flip()
         self.plane.flip()
@@ -242,10 +227,7 @@ class BSPNode:
         self.back = temp
 
     def clip_polygons(self, polygons: List['Polygon']):
-        """
-        Recursively remove all polygons in `polygons` that are inside this BSP
-        tree.
-        """
+        """ Recursively remove all polygons in `polygons` that are inside this BSP tree. """
         if not self.plane:
             return polygons[:]
 
@@ -266,10 +248,7 @@ class BSPNode:
         return front
 
     def clip_to(self, bsp):
-        """
-        Remove all polygons in this BSP tree that are inside the other BSP tree
-        `bsp`.
-        """
+        """ Remove all polygons in this BSP tree that are inside the other BSP tree `bsp`. """
         self.polygons = bsp.clip_polygons(self.polygons)
         if self.front:
             self.front.clip_to(bsp)
@@ -277,9 +256,7 @@ class BSPNode:
             self.back.clip_to(bsp)
 
     def all_polygons(self):
-        """
-        Return a list of all polygons in this BSP tree.
-        """
+        """ Return a list of all polygons in this BSP tree. """
         polygons = self.polygons[:]
         if self.front:
             polygons.extend(self.front.all_polygons())
@@ -377,14 +354,13 @@ class CSG:
 
             i = 0
             vs = [new_verts[i], new_verts[i + num_verts], new_verts[2 * num_verts], new_verts[2 * num_verts - 1]]
-            new_poly = Polygon(vs, poly.shared)
-            new_poly.shared = poly.shared
+            new_poly = Polygon(vs)
             new_poly.plane = poly.plane
             new_csg.polygons.append(new_poly)
 
             for i in range(1, num_verts):
                 vs = [new_verts[i], new_verts[num_verts + i], new_verts[2 * num_verts], new_verts[num_verts + i - 1]]
-                new_poly = Polygon(vs, poly.shared)
+                new_poly = Polygon(vs)
                 new_csg.polygons.append(new_poly)
 
         return new_csg
@@ -482,11 +458,12 @@ class CSG:
         not modified.
         """
         csg = self.clone()
-        map(lambda p: p.flip(), csg.polygons)
+        for p in csg.polygons:
+            p.flip()
         return csg
 
-    @classmethod
-    def cube(cls, center=(0, 0, 0), scale=(1, 1, 1)):
+    @staticmethod
+    def cube(center=(0, 0, 0), scale=(1, 1, 1)):
         builder = cube()
         if isinstance(scale, (tuple, list)):
             sx, sy, sz = scale
@@ -497,152 +474,160 @@ class CSG:
         center = Vector(center)
         if center:
             builder.translate(*center.xyz)
-        return cls.from_mesh_builder(builder)
+        return CSG.from_mesh_builder(builder)
 
-    @classmethod
-    def sphere(cls, center=(0, 0, 0), radius: float = 1, slices: int = 16, stacks: int = 8):
-        """ Returns a sphere. """
-        center = Vector(center)
-        radius = float(radius)
-        slices = int(slices)
-        stacks = int(stacks)
-        polygons = []
+    @staticmethod
+    def sphere(center=(0, 0, 0), radius: float = 1, slices: int = 16, stacks: int = 8):
+        return CSG.from_mesh_builder(sphere(center, radius, slices, stacks))
 
-        def vertex(theta, phi) -> Vector:
-            return center + Vector(
-                math.cos(theta) * math.sin(phi),
-                math.cos(phi),
-                math.sin(theta) * math.sin(phi),
-            ) * radius
+    @staticmethod
+    def cylinder(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1, slices: int = 16):
+        return CSG.from_mesh_builder(cylinder(start, end, radius, slices))
 
-        delta_theta = math.pi * 2.0 / float(slices)
-        delta_phi = math.pi / float(stacks)
+    @staticmethod
+    def cone(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1.0, slices: int = 16):
+        return CSG.from_mesh_builder(cone(start, end, radius, slices))
 
-        j0 = 0
+
+def sphere(center=(0, 0, 0), radius: float = 1, slices: int = 16, stacks: int = 8) -> MeshBuilder:
+    """ Returns a sphere. """
+    center = Vector(center)
+    radius = float(radius)
+    slices = int(slices)
+    stacks = int(stacks)
+    mesh = MeshBuilder()
+
+    def vertex(theta, phi) -> Vector:
+        return center + Vector(
+            math.cos(theta) * math.sin(phi),
+            math.cos(phi),
+            math.sin(theta) * math.sin(phi),
+        ) * radius
+
+    delta_theta = math.pi * 2.0 / float(slices)
+    delta_phi = math.pi / float(stacks)
+
+    j0 = 0
+    j1 = j0 + 1
+    for i0 in range(0, slices):
+        i1 = i0 + 1
+        #  +--+
+        #  | /
+        #  |/
+        #  +
+        mesh.add_face([
+            vertex(i0 * delta_theta, j0 * delta_phi),
+            vertex(i1 * delta_theta, j1 * delta_phi),
+            vertex(i0 * delta_theta, j1 * delta_phi),
+        ])
+
+        j0 = stacks - 1
         j1 = j0 + 1
         for i0 in range(0, slices):
             i1 = i0 + 1
-            #  +--+
-            #  | /
-            #  |/
-            #  +
-            polygons.append(Polygon([
-                vertex(i0 * delta_theta, j0 * delta_phi),
-                vertex(i1 * delta_theta, j1 * delta_phi),
-                vertex(i0 * delta_theta, j1 * delta_phi),
-            ]))
+        #  +
+        #  |\
+        #  | \
+        #  +--+
+        mesh.add_face([
+            vertex(i0 * delta_theta, j0 * delta_phi),
+            vertex(i1 * delta_theta, j0 * delta_phi),
+            vertex(i0 * delta_theta, j1 * delta_phi),
+        ])
 
-            j0 = stacks - 1
-            j1 = j0 + 1
-            for i0 in range(0, slices):
-                i1 = i0 + 1
-            #  +
-            #  |\
-            #  | \
-            #  +--+
-            polygons.append(Polygon([
-                vertex(i0 * delta_theta, j0 * delta_phi),
-                vertex(i1 * delta_theta, j0 * delta_phi),
-                vertex(i0 * delta_theta, j1 * delta_phi),
-            ]))
+        for j0 in range(1, stacks - 1):
+            j1 = j0 + 0.5
+        j2 = j0 + 1
+        for i0 in range(0, slices):
+            i1 = i0 + 0.5
+        i2 = i0 + 1
+        #  +---+
+        #  |\ /|
+        #  | x |
+        #  |/ \|
+        #  +---+
+        mesh.add_face([
+            vertex(i1 * delta_theta, j1 * delta_phi),
+            vertex(i2 * delta_theta, j2 * delta_phi),
+            vertex(i0 * delta_theta, j2 * delta_phi),
+        ])
+        mesh.add_face([
+            vertex(i1 * delta_theta, j1 * delta_phi),
+            vertex(i0 * delta_theta, j0 * delta_phi),
+            vertex(i2 * delta_theta, j0 * delta_phi),
 
-            for j0 in range(1, stacks - 1):
-                j1 = j0 + 0.5
-            j2 = j0 + 1
-            for i0 in range(0, slices):
-                i1 = i0 + 0.5
-            i2 = i0 + 1
-            #  +---+
-            #  |\ /|
-            #  | x |
-            #  |/ \|
-            #  +---+
-            polygons.append(Polygon([
-                vertex(i1 * delta_theta, j1 * delta_phi),
-                vertex(i2 * delta_theta, j2 * delta_phi),
-                vertex(i0 * delta_theta, j2 * delta_phi),
-            ]))
-            polygons.append(Polygon([
-                vertex(i1 * delta_theta, j1 * delta_phi),
-                vertex(i0 * delta_theta, j0 * delta_phi),
-                vertex(i2 * delta_theta, j0 * delta_phi),
+        ])
+        mesh.add_face([
+            vertex(i1 * delta_theta, j1 * delta_phi),
+            vertex(i0 * delta_theta, j2 * delta_phi),
+            vertex(i0 * delta_theta, j0 * delta_phi),
+        ])
+        mesh.add_face([
+            vertex(i1 * delta_theta, j1 * delta_phi),
+            vertex(i2 * delta_theta, j0 * delta_phi),
+            vertex(i2 * delta_theta, j2 * delta_phi),
+        ])
+    return mesh
 
-            ]))
-            polygons.append(Polygon([
-                vertex(i1 * delta_theta, j1 * delta_phi),
-                vertex(i0 * delta_theta, j2 * delta_phi),
-                vertex(i0 * delta_theta, j0 * delta_phi),
-            ]))
-            polygons.append(Polygon([
-                vertex(i1 * delta_theta, j1 * delta_phi),
-                vertex(i2 * delta_theta, j0 * delta_phi),
-                vertex(i2 * delta_theta, j2 * delta_phi),
-            ]))
-        return CSG.from_polygons(polygons)
 
-    @classmethod
-    def cylinder(cls, start=(0, -1, 0), end=(0, 1, 0), radius: float = 1, slices: int = 16):
-        """ Returns a cylinder.
-            
-        """
-        start = Vector(start)
-        end = Vector(end)
-        radius = float(radius)
-        slices = int(slices)
-        ray = end - start
+def cylinder(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1, slices: int = 16) -> MeshBuilder:
+    """ Returns a cylinder.
+    """
+    start = Vector(start)
+    end = Vector(end)
+    radius = float(radius)
+    slices = int(slices)
+    ray = end - start
 
-        z_axis = ray.normalize()
-        is_y = (math.fabs(z_axis.y) > 0.5)
-        x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
-        y_axis = x_axis.cross(z_axis).normalize()
-        polygons = []
+    z_axis = ray.normalize()
+    is_y = (math.fabs(z_axis.y) > 0.5)
+    x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
+    y_axis = x_axis.cross(z_axis).normalize()
+    mesh = MeshBuilder()
 
-        def vertex(stack, angle):
-            out = (x_axis * math.cos(angle)) + (y_axis * math.sin(angle))
-            return start + (ray * stack) + (out * radius)
+    def vertex(stack, angle):
+        out = (x_axis * math.cos(angle)) + (y_axis * math.sin(angle))
+        return start + (ray * stack) + (out * radius)
 
-        dt = math.pi * 2 / float(slices)
-        for i in range(0, slices):
-            t0 = i * dt
-            i1 = (i + 1) % slices
-            t1 = i1 * dt
-            polygons.append(Polygon([start, vertex(0, t0), vertex(0, t1)]))
-            polygons.append(Polygon([vertex(0, t1), vertex(0, t0), vertex(1, t0), vertex(1, t1)]))
-            polygons.append(Polygon([end, vertex(1, t1), vertex(1, t0)]))
+    dt = math.pi * 2 / float(slices)
+    for i in range(0, slices):
+        t0 = i * dt
+        i1 = (i + 1) % slices
+        t1 = i1 * dt
+        mesh.add_face([start, vertex(0, t0), vertex(0, t1)])
+        mesh.add_face([vertex(0, t1), vertex(0, t0), vertex(1, t0), vertex(1, t1)])
+        mesh.add_face([end, vertex(1, t1), vertex(1, t0)])
+    return mesh
 
-        return CSG.from_polygons(polygons)
 
-    @classmethod
-    def cone(cls, start=Vector(0, -1, 0), end=Vector(0, 1, 0), radius: float = 1.0, slices: int = 16):
-        """ Returns a cone. """
-        start = Vector(start)
-        end = Vector(end)
-        ray = end - start
-        z_axis = ray.normalize()
-        is_y = (math.fabs(z_axis.y) > 0.5)
-        x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
-        y_axis = x_axis.cross(z_axis).normalize()
-        polygons = []
+def cone(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1.0, slices: int = 16) -> MeshBuilder:
+    """ Returns a cone. """
+    start = Vector(start)
+    end = Vector(end)
+    ray = end - start
+    z_axis = ray.normalize()
+    is_y = (math.fabs(z_axis.y) > 0.5)
+    x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
+    y_axis = x_axis.cross(z_axis).normalize()
+    mesh = MeshBuilder()
 
-        def vertex(angle) -> Vector:
-            # radial direction pointing out
-            out = x_axis * math.cos(angle) + y_axis * math.sin(angle)
-            return start + out * radius
+    def vertex(angle) -> Vector:
+        # radial direction pointing out
+        out = x_axis * math.cos(angle) + y_axis * math.sin(angle)
+        return start + out * radius
 
-        dt = math.pi * 2.0 / float(slices)
-        for i in range(0, slices):
-            t0 = i * dt
-            i1 = (i + 1) % slices
-            t1 = i1 * dt
-            # coordinates and associated normal pointing outwards of the cone's
-            # side
-            p0 = vertex(t0)
-            p1 = vertex(t1)
-            # polygon on the low side (disk sector)
-            poly_start = Polygon([start, p0, p1])
-            polygons.append(poly_start)
-            # polygon extending from the low side to the tip
-            poly_side = Polygon([p0, end, p1])
-            polygons.append(poly_side)
+    dt = math.pi * 2.0 / float(slices)
+    for i in range(0, slices):
+        t0 = i * dt
+        i1 = (i + 1) % slices
+        t1 = i1 * dt
+        # coordinates and associated normal pointing outwards of the cone's
+        # side
+        p0 = vertex(t0)
+        p1 = vertex(t1)
+        # polygon on the low side (disk sector)
+        mesh.add_face([start, p0, p1])
+        # polygon extending from the low side to the tip
+        mesh.add_face([p0, end, p1])
 
-        return CSG.from_polygons(polygons)
+    return mesh

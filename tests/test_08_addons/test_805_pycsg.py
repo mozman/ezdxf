@@ -30,11 +30,11 @@ def test_cube_union():
     c.refine().refine()
 
 
-@pytest.mark.skip('Windows stack overflow!')
-def test_sphere_union():
-    a = CSG.sphere(center=(0., 0., 0.), radius=1.0, slices=64, stacks=32)
-    b = CSG.sphere(center=(1.99, 0., 0.), radius=1.0, slices=64, stacks=32)
-    _ = a + b
+# @pytest.mark.skip('Windows stack overflow!')
+# def test_sphere_union():
+#     a = CSG.sphere(center=(0., 0., 0.), radius=1.0, slices=64, stacks=32)
+#     b = CSG.sphere(center=(1.99, 0., 0.), radius=1.0, slices=64, stacks=32)
+#     _ = a + b
 
 
 def test_cube_subtract():
