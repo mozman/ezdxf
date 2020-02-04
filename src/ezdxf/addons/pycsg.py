@@ -10,6 +10,7 @@ from functools import reduce
 
 from ezdxf.math import Vector
 from ezdxf.render import MeshVertexMerger, MeshBuilder
+from ezdxf.render.forms import cube
 
 __doc__ = """
 Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean
@@ -56,48 +57,6 @@ union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is
 `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 """
-
-
-class Vertex:
-    """
-    Class Vertex
-
-    Represents a vertex of a polygon. Use your own vertex class instead of this
-    one to provide additional features like texture coordinates and vertex
-    colors. Custom vertex classes need to provide a `pos` property and `clone()`,
-    `flip()`, and `interpolate()` methods that behave analogous to the ones
-    defined by `Vertex`. This class provides `normal` so convenience
-    functions like `CSG.sphere()` can return a smooth vertex normal, but `normal`
-    is not used anywhere else.
-    """
-    __slots__ = ('pos', 'normal')
-
-    def __init__(self, pos: Vector, normal=(0., 0., 0.)):
-        self.pos = Vector(pos)
-        self.normal = Vector(normal)
-
-    def clone(self) -> 'Vertex':
-        return Vertex(self.pos, self.normal)
-
-    def flip(self):
-        """
-        Invert all orientation-specific data (e.g. vertex normal). Called when the
-        orientation of a polygon is flipped.
-        """
-        self.normal = -self.normal
-
-    def interpolate(self, other, t) -> 'Vertex':
-        """
-        Create a new vertex between this vertex and `other` by linearly
-        interpolating all properties using a parameter of `t`. Subclasses should
-        override this to interpolate additional properties.
-        """
-        return Vertex(self.pos.lerp(other.pos, t),
-                      self.normal.lerp(other.normal, t))
-
-    def __repr__(self) -> str:
-        return repr(self.pos)
-
 
 COPLANAR = 0  # all the vertices are within EPSILON distance from plane
 FRONT = 1  # all the vertices are in front of the plane
@@ -157,7 +116,7 @@ class Plane:
 
         num_vertices = len(polygon.vertices)
         for i in range(num_vertices):
-            t = self.normal.dot(polygon.vertices[i].pos) - self.w
+            t = self.normal.dot(polygon.vertices[i]) - self.w
             if t < -Plane.EPSILON:
                 loc = BACK
             elif t > Plane.EPSILON:
@@ -191,16 +150,16 @@ class Plane:
                     f.append(vi)
                 if ti != FRONT:
                     if ti != BACK:
-                        b.append(vi.clone())
+                        b.append(vi)
                     else:
                         b.append(vi)
                 if (ti | tj) == SPANNING:
                     # interpolation weight at the intersection point
-                    t = (self.w - self.normal.dot(vi.pos)) / self.normal.dot(vj.pos - vi.pos)
+                    t = (self.w - self.normal.dot(vi)) / self.normal.dot(vj - vi)
                     # intersection point on the plane
-                    v = vi.interpolate(vj, t)
+                    v = vi.lerp(vj, t)
                     f.append(v)
-                    b.append(v.clone())
+                    b.append(v)
             if len(f) >= 3:
                 front.append(Polygon(f, polygon.shared))
             if len(b) >= 3:
@@ -221,17 +180,16 @@ class Polygon:
     This can be used to define per-polygon properties (such as surface color).
     """
 
-    def __init__(self, vertices: List[Vertex], shared=None):
+    def __init__(self, vertices: List[Vector], shared=None):
         self.vertices = vertices
         self.shared = shared
-        self.plane = Plane.from_points(vertices[0].pos, vertices[1].pos, vertices[2].pos)
+        self.plane = Plane.from_points(vertices[0], vertices[1], vertices[2])
 
     def clone(self):
         return Polygon(list(self.vertices), self.shared)
 
     def flip(self):
         self.vertices.reverse()
-        map(lambda v: v.flip(), self.vertices)
         self.plane.flip()
 
     def __repr__(self):
@@ -385,20 +343,19 @@ class CSG:
         vertices = mesh.vertices
         polygons = []
         for face in mesh.faces:
-            polygons.append(Polygon([Vertex(vertices[index]) for index in face]))
+            polygons.append(Polygon([Vector(vertices[index]) for index in face]))
         return CSG.from_polygons(polygons)
 
     def to_mesh_builder(self) -> MeshVertexMerger:
         """ Return :class:`ezdxf.render.MeshBuilder' object. """
         mesh = MeshVertexMerger()
         for face in self.polygons:
-            vertices = [vertex.pos for vertex in face.vertices]
-            mesh.add_face(vertices)
+            mesh.add_face(face.vertices)
         return mesh
 
     def clone(self):
         csg = CSG()
-        csg.polygons = list(map(lambda p: p.clone(), self.polygons))
+        csg.polygons = [p.clone() for p in self.polygons]
         return csg
 
     def refine(self):
@@ -415,15 +372,8 @@ class CSG:
             if num_verts == 0:
                 continue
 
-            mid_pos = reduce(operator.add, [v.pos for v in verts]) / float(num_verts)
-            mid_normal = None
-            if verts[0].normal is not None:
-                mid_normal = poly.plane.normal
-            mid_vert = Vertex(mid_pos, mid_normal)
-
-            new_verts = verts + \
-                        [verts[i].interpolate(verts[(i + 1) % num_verts], 0.5) for i in range(num_verts)] + \
-                        [mid_vert]
+            mid_pos = reduce(operator.add, [v for v in verts]) / float(num_verts)
+            new_verts = verts + [verts[i].lerp(verts[(i + 1) % num_verts], 0.5) for i in range(num_verts)] + [mid_pos]
 
             i = 0
             vs = [new_verts[i], new_verts[i + num_verts], new_verts[2 * num_verts], new_verts[2 * num_verts - 1]]
@@ -536,79 +486,37 @@ class CSG:
         return csg
 
     @classmethod
-    def cube(cls, center=(0, 0, 0), radius=(1, 1, 1)):
-        """
-        Construct an axis-aligned solid cuboid. Optional parameters are `center` and
-        `radius`, which default to `[0, 0, 0]` and `[1, 1, 1]`. The radius can be
-        specified using a single number or a list of three numbers, one for each axis.
-
-        Example code::
-
-            cube = CSG.cube(
-              center=[0, 0, 0],
-              radius=1
-            )
-        """
-        c = Vector(center)
-        r = [1, 1, 1]
-        if isinstance(radius, (list, tuple)):
-            r = radius
+    def cube(cls, center=(0, 0, 0), scale=(1, 1, 1)):
+        builder = cube()
+        if isinstance(scale, (tuple, list)):
+            sx, sy, sz = scale
         else:
-            r = (radius, radius, radius)
+            sx, sy, sz = scale, scale, scale
 
-        polygons = list(map(
-            lambda v: Polygon(
-                list(map(lambda i:
-                         Vertex(
-                             Vector(
-                                 c.x + r[0] * (2 * bool(i & 1) - 1),
-                                 c.y + r[1] * (2 * bool(i & 2) - 1),
-                                 c.z + r[2] * (2 * bool(i & 4) - 1)
-                             )
-                         ), v[0]))),
-            [
-                [[0, 4, 6, 2], [-1, 0, 0]],
-                [[1, 3, 7, 5], [+1, 0, 0]],
-                [[0, 1, 5, 4], [0, -1, 0]],
-                [[2, 6, 7, 3], [0, +1, 0]],
-                [[0, 2, 3, 1], [0, 0, -1]],
-                [[4, 5, 7, 6], [0, 0, +1]]
-            ]))
-        return CSG.from_polygons(polygons)
+        builder.scale(sx, sy, sz)
+        center = Vector(center)
+        if center:
+            builder.translate(*center.xyz)
+        return cls.from_mesh_builder(builder)
 
     @classmethod
-    def sphere(cls, **kwargs):
-        """ Returns a sphere.
-            
-            Kwargs:
-                center (list): Center of sphere, default [0, 0, 0].
-                
-                radius (float): Radius of sphere, default 1.0.
-                
-                slices (int): Number of slices, default 16.
-                
-                stacks (int): Number of stacks, default 8.
-        """
-        center = kwargs.get('center', [0.0, 0.0, 0.0])
-        if isinstance(center, float):
-            center = [center, center, center]
-        c = Vector(center)
-        r = kwargs.get('radius', 1.0)
-        if isinstance(r, list) and len(r) > 2:
-            r = r[0]
-        slices = kwargs.get('slices', 16)
-        stacks = kwargs.get('stacks', 8)
+    def sphere(cls, center=(0, 0, 0), radius: float = 1, slices: int = 16, stacks: int = 8):
+        """ Returns a sphere. """
+        center = Vector(center)
+        radius = float(radius)
+        slices = int(slices)
+        stacks = int(stacks)
         polygons = []
 
-        def append_vertex(vertices, theta, phi):
-            d = Vector(
+        def vertex(theta, phi) -> Vector:
+            return center + Vector(
                 math.cos(theta) * math.sin(phi),
                 math.cos(phi),
-                math.sin(theta) * math.sin(phi))
-            vertices.append(Vertex(c + (d * r), d))
+                math.sin(theta) * math.sin(phi),
+            ) * radius
 
-        dTheta = math.pi * 2.0 / float(slices)
-        dPhi = math.pi / float(stacks)
+        delta_theta = math.pi * 2.0 / float(slices)
+        delta_phi = math.pi / float(stacks)
 
         j0 = 0
         j1 = j0 + 1
@@ -618,157 +526,108 @@ class CSG:
             #  | /
             #  |/
             #  +
-            vertices = []
-            append_vertex(vertices, i0 * dTheta, j0 * dPhi)
-            append_vertex(vertices, i1 * dTheta, j1 * dPhi)
-            append_vertex(vertices, i0 * dTheta, j1 * dPhi)
-            polygons.append(Polygon(vertices))
+            polygons.append(Polygon([
+                vertex(i0 * delta_theta, j0 * delta_phi),
+                vertex(i1 * delta_theta, j1 * delta_phi),
+                vertex(i0 * delta_theta, j1 * delta_phi),
+            ]))
 
-        j0 = stacks - 1
-        j1 = j0 + 1
-        for i0 in range(0, slices):
-            i1 = i0 + 1
+            j0 = stacks - 1
+            j1 = j0 + 1
+            for i0 in range(0, slices):
+                i1 = i0 + 1
             #  +
             #  |\
             #  | \
             #  +--+
-            vertices = []
-            append_vertex(vertices, i0 * dTheta, j0 * dPhi)
-            append_vertex(vertices, i1 * dTheta, j0 * dPhi)
-            append_vertex(vertices, i0 * dTheta, j1 * dPhi)
-            polygons.append(Polygon(vertices))
+            polygons.append(Polygon([
+                vertex(i0 * delta_theta, j0 * delta_phi),
+                vertex(i1 * delta_theta, j0 * delta_phi),
+                vertex(i0 * delta_theta, j1 * delta_phi),
+            ]))
 
-        for j0 in range(1, stacks - 1):
-            j1 = j0 + 0.5
+            for j0 in range(1, stacks - 1):
+                j1 = j0 + 0.5
             j2 = j0 + 1
             for i0 in range(0, slices):
                 i1 = i0 + 0.5
-                i2 = i0 + 1
-                #  +---+
-                #  |\ /|
-                #  | x |
-                #  |/ \|
-                #  +---+
-                verticesN = []
-                append_vertex(verticesN, i1 * dTheta, j1 * dPhi)
-                append_vertex(verticesN, i2 * dTheta, j2 * dPhi)
-                append_vertex(verticesN, i0 * dTheta, j2 * dPhi)
-                polygons.append(Polygon(verticesN))
-                verticesS = []
-                append_vertex(verticesS, i1 * dTheta, j1 * dPhi)
-                append_vertex(verticesS, i0 * dTheta, j0 * dPhi)
-                append_vertex(verticesS, i2 * dTheta, j0 * dPhi)
-                polygons.append(Polygon(verticesS))
-                verticesW = []
-                append_vertex(verticesW, i1 * dTheta, j1 * dPhi)
-                append_vertex(verticesW, i0 * dTheta, j2 * dPhi)
-                append_vertex(verticesW, i0 * dTheta, j0 * dPhi)
-                polygons.append(Polygon(verticesW))
-                verticesE = []
-                append_vertex(verticesE, i1 * dTheta, j1 * dPhi)
-                append_vertex(verticesE, i2 * dTheta, j0 * dPhi)
-                append_vertex(verticesE, i2 * dTheta, j2 * dPhi)
-                polygons.append(Polygon(verticesE))
+            i2 = i0 + 1
+            #  +---+
+            #  |\ /|
+            #  | x |
+            #  |/ \|
+            #  +---+
+            polygons.append(Polygon([
+                vertex(i1 * delta_theta, j1 * delta_phi),
+                vertex(i2 * delta_theta, j2 * delta_phi),
+                vertex(i0 * delta_theta, j2 * delta_phi),
+            ]))
+            polygons.append(Polygon([
+                vertex(i1 * delta_theta, j1 * delta_phi),
+                vertex(i0 * delta_theta, j0 * delta_phi),
+                vertex(i2 * delta_theta, j0 * delta_phi),
 
+            ]))
+            polygons.append(Polygon([
+                vertex(i1 * delta_theta, j1 * delta_phi),
+                vertex(i0 * delta_theta, j2 * delta_phi),
+                vertex(i0 * delta_theta, j0 * delta_phi),
+            ]))
+            polygons.append(Polygon([
+                vertex(i1 * delta_theta, j1 * delta_phi),
+                vertex(i2 * delta_theta, j0 * delta_phi),
+                vertex(i2 * delta_theta, j2 * delta_phi),
+            ]))
         return CSG.from_polygons(polygons)
 
     @classmethod
-    def cylinder(cls, **kwargs):
+    def cylinder(cls, start=(0, -1, 0), end=(0, 1, 0), radius: float = 1, slices: int = 16):
         """ Returns a cylinder.
             
-            Kwargs:
-                start (list): Start of cylinder, default [0, -1, 0].
-                
-                end (list): End of cylinder, default [0, 1, 0].
-                
-                radius (float): Radius of cylinder, default 1.0.
-                
-                slices (int): Number of slices, default 16.
         """
-        s = kwargs.get('start', Vector(0.0, -1.0, 0.0))
-        e = kwargs.get('end', Vector(0.0, 1.0, 0.0))
-        if isinstance(s, list):
-            s = Vector(*s)
-        if isinstance(e, list):
-            e = Vector(*e)
-        r = kwargs.get('radius', 1.0)
-        slices = kwargs.get('slices', 16)
-        ray = e - s
+        start = Vector(start)
+        end = Vector(end)
+        radius = float(radius)
+        slices = int(slices)
+        ray = end - start
 
         z_axis = ray.normalize()
         is_y = (math.fabs(z_axis.y) > 0.5)
         x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
         y_axis = x_axis.cross(z_axis).normalize()
-        start = Vertex(s, -z_axis)
-        end = Vertex(e, z_axis.normalize())
         polygons = []
 
-        def point(stack, angle, normal_blend):
+        def vertex(stack, angle):
             out = (x_axis * math.cos(angle)) + (y_axis * math.sin(angle))
-            pos = s + (ray * stack) + (out * r)
-            normal = out * (1.0 - math.fabs(normal_blend)) + (z_axis * normal_blend)
-            return Vertex(pos, normal)
+            return start + (ray * stack) + (out * radius)
 
-        dt = math.pi * 2.0 / float(slices)
+        dt = math.pi * 2 / float(slices)
         for i in range(0, slices):
             t0 = i * dt
             i1 = (i + 1) % slices
             t1 = i1 * dt
-            polygons.append(Polygon([start.clone(),
-                                     point(0., t0, -1.),
-                                     point(0., t1, -1.)]))
-            polygons.append(Polygon([point(0., t1, 0.),
-                                     point(0., t0, 0.),
-                                     point(1., t0, 0.),
-                                     point(1., t1, 0.)]))
-            polygons.append(Polygon([end.clone(),
-                                     point(1., t1, 1.),
-                                     point(1., t0, 1.)]))
+            polygons.append(Polygon([start, vertex(0, t0), vertex(0, t1)]))
+            polygons.append(Polygon([vertex(0, t1), vertex(0, t0), vertex(1, t0), vertex(1, t1)]))
+            polygons.append(Polygon([end, vertex(1, t1), vertex(1, t0)]))
 
         return CSG.from_polygons(polygons)
 
     @classmethod
-    def cone(cls, **kwargs):
-        """ Returns a cone.
-            
-            Kwargs:
-                start (list): Start of cone, default [0, -1, 0].
-                
-                end (list): End of cone, default [0, 1, 0].
-                
-                radius (float): Maximum radius of cone at start, default 1.0.
-                
-                slices (int): Number of slices, default 16.
-        """
-        s = kwargs.get('start', Vector(0.0, -1.0, 0.0))
-        e = kwargs.get('end', Vector(0.0, 1.0, 0.0))
-        if isinstance(s, list):
-            s = Vector(*s)
-        if isinstance(e, list):
-            e = Vector(*e)
-        r = kwargs.get('radius', 1.0)
-        slices = kwargs.get('slices', 16)
-        ray = e - s
-
+    def cone(cls, start=Vector(0, -1, 0), end=Vector(0, 1, 0), radius: float = 1.0, slices: int = 16):
+        """ Returns a cone. """
+        start = Vector(start)
+        end = Vector(end)
+        ray = end - start
         z_axis = ray.normalize()
         is_y = (math.fabs(z_axis.y) > 0.5)
         x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
         y_axis = x_axis.cross(z_axis).normalize()
-        start_normal = -z_axis
-        start = Vertex(s, start_normal)
         polygons = []
 
-        taper_angle = math.atan2(r, ray.magnitude)
-        sin_taper_angle = math.sin(taper_angle)
-        cos_taper_angle = math.cos(taper_angle)
-
-        def point(angle):
+        def vertex(angle) -> Vector:
             # radial direction pointing out
             out = x_axis * math.cos(angle) + y_axis * math.sin(angle)
-            pos = s + out * r
-            # normal taking into account the tapering of the cone
-            normal = out * cos_taper_angle + z_axis * sin_taper_angle
-            return pos, normal
+            return start + out * radius
 
         dt = math.pi * 2.0 / float(slices)
         for i in range(0, slices):
@@ -777,17 +636,13 @@ class CSG:
             t1 = i1 * dt
             # coordinates and associated normal pointing outwards of the cone's
             # side
-            p0, n0 = point(t0)
-            p1, n1 = point(t1)
-            # average normal for the tip
-            n_avg = n0 + n1 * 0.5
+            p0 = vertex(t0)
+            p1 = vertex(t1)
             # polygon on the low side (disk sector)
-            poly_start = Polygon([start.clone(),
-                                  Vertex(p0, start_normal),
-                                  Vertex(p1, start_normal)])
+            poly_start = Polygon([start, p0, p1])
             polygons.append(poly_start)
             # polygon extending from the low side to the tip
-            poly_side = Polygon([Vertex(p0, n0), Vertex(e, n_avg), Vertex(p1, n1)])
+            poly_side = Polygon([p0, end, p1])
             polygons.append(poly_side)
 
         return CSG.from_polygons(polygons)
