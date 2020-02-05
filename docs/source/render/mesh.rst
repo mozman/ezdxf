@@ -62,7 +62,7 @@ Same functionality as :class:`MeshBuilder` but supports inplace transformation.
 
     Subclass of :class:`MeshBuilder`
 
-    .. automethod:: subdivide(quads=False, edges=False) -> MeshTransformer
+    .. automethod:: subdivide(level: int = 1, quads=True, edges=False) -> MeshTransformer
 
     .. automethod:: transform(matrix: Matrix44)
 

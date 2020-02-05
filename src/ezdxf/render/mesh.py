@@ -178,16 +178,22 @@ class MeshBuilder:
 class MeshTransformer(MeshBuilder):
     """ A mesh builder with inplace transformation support. """
 
-    def subdivide(self, quads=False, edges=False) -> 'MeshTransformer':
-        """ Returns a new :class:`MeshBuilder` object with subdivided faces and edges.
+    def subdivide(self, level: int = 1, quads=True, edges=False) -> 'MeshTransformer':
+        """ Returns a new :class:`MeshTransformer` object with subdivided faces and edges.
 
         Args:
-             quads: try to create quad faces if ``True`` else create triangles
+             level: subdivide levels from 1 to max of 5
+             quads: create quad faces if ``True`` else create triangles
              edges: also subdivide edges if ``True``
         """
-        pass
+        mesh = self
+        level = min(int(level), 5)
+        while level > 0:
+            mesh = _subdivide(mesh, quads, edges)
+            level -= 1
+        return MeshTransformer.from_builder(mesh)
 
-    def transform(self, matrix: 'Matrix44') -> None:
+    def transform(self, matrix: 'Matrix44'):
         """
         Transform mesh inplace by applying the transformation `matrix`.
 
@@ -196,8 +202,9 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = matrix.transform_vectors(self.vertices)
+        return self
 
-    def translate(self, x: float = 0, y: float = 0, z: float = 0) -> None:
+    def translate(self, x: float = 0, y: float = 0, z: float = 0):
         """
         Translate mesh inplace.
 
@@ -213,8 +220,9 @@ class MeshTransformer(MeshBuilder):
             t = Vector(x)
         for index, vertex in enumerate(self.vertices):
             self.vertices[index] = t + vertex
+        return self
 
-    def scale(self, sx: float = 1, sy: float = 1, sz: float = 1) -> None:
+    def scale(self, sx: float = 1, sy: float = 1, sz: float = 1):
         """
         Scale mesh inplace.
 
@@ -225,8 +233,9 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = [Vector(v[0] * sx, v[1] * sy, v[2] * sz) for v in self.vertices]
+        return self
 
-    def scale_uniform(self, s: float) -> None:
+    def scale_uniform(self, s: float):
         """
         Scale mesh uniform inplace.
 
@@ -235,8 +244,9 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = [v * s for v in self.vertices]
+        return self
 
-    def rotate_x(self, angle: float) -> None:
+    def rotate_x(self, angle: float):
         """
         Rotate mesh around x-axis about `angle` inplace.
 
@@ -245,8 +255,9 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = Matrix44.x_rotate(angle).transform_vectors(self.vertices)
+        return self
 
-    def rotate_y(self, angle: float) -> None:
+    def rotate_y(self, angle: float):
         """
         Rotate mesh around y-axis about `angle` inplace.
 
@@ -255,8 +266,9 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = Matrix44.y_rotate(angle).transform_vectors(self.vertices)
+        return self
 
-    def rotate_z(self, angle: float) -> None:
+    def rotate_z(self, angle: float):
         """
         Rotate mesh around z-axis about `angle` inplace.
 
@@ -265,8 +277,9 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = Matrix44.z_rotate(angle).transform_vectors(self.vertices)
+        return self
 
-    def rotate_axis(self, axis: 'Vertex', angle: float) -> None:
+    def rotate_axis(self, axis: 'Vertex', angle: float):
         """
         Rotate mesh around an arbitrary axis located in the origin (0, 0, 0) about `angle`.
 
@@ -276,8 +289,9 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = Matrix44.axis_rotate(axis, angle).transform_vectors(self.vertices)
+        return self
 
-    def transform_to_wcs(self, ucs: 'UCS') -> None:
+    def transform_to_wcs(self, ucs: 'UCS'):
         """
         Transform local UCS vertices to WCS vertices.
 
@@ -286,6 +300,37 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = list(ucs.points_to_wcs(self.vertices))
+        return self
+
+
+def _subdivide(mesh, quads=False, edges=False) -> 'MeshVertexMerger':
+    """ Returns a new :class:`MeshVertexMerger` object with subdivided faces and edges.
+
+    Args:
+         quads: create quad faces if ``True`` else create triangles
+         edges: also subdivide edges if ``True``
+    """
+    new_mesh = MeshVertexMerger()
+    for vertices in mesh.faces_as_vertices():
+        if len(vertices) < 3:
+            continue
+        mid_pos = sum(vertices) / len(vertices)
+        subdiv_pos = [v1.lerp(v2) for v1, v2 in zip(vertices[:-1], vertices[1:])]
+        subdiv_pos.append(vertices[-1].lerp(vertices[0]))
+        for index, vertex in enumerate(vertices):
+            if quads:
+                new_mesh.add_face((vertex, subdiv_pos[index], mid_pos, subdiv_pos[index - 1]))
+            else:
+                new_mesh.add_face((subdiv_pos[index - 1], vertex, mid_pos))
+                new_mesh.add_face((vertex, subdiv_pos[index], mid_pos))
+
+    if edges:
+        for start, end in mesh.edges_as_vertices():
+            mid = start.lerp(end)
+            new_mesh.add_edge((start, mid))
+            new_mesh.add_edge((mid, end))
+
+    return new_mesh
 
 
 class MeshVertexMerger(MeshBuilder):

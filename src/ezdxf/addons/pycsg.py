@@ -305,8 +305,11 @@ class CSG:
     
     """
 
-    def __init__(self):
+    def __init__(self, mesh: MeshBuilder = None):
         self.polygons = []  # type: List[Polygon]
+        if mesh is not None:
+            for face in mesh.faces_as_vertices():
+                self.polygons.append(Polygon(face))
 
     @classmethod
     def from_polygons(cls, polygons) -> 'CSG':
@@ -314,15 +317,7 @@ class CSG:
         csg.polygons = polygons
         return csg
 
-    @classmethod
-    def from_mesh_builder(cls, mesh: MeshBuilder) -> 'CSG':
-        """ Create :class:`CSG` object from :class:`ezdxf.render.MeshBuilder' object. """
-        polygons = []
-        for face in mesh.faces_as_vertices():
-            polygons.append(Polygon(face))
-        return CSG.from_polygons(polygons)
-
-    def to_mesh_builder(self) -> MeshTransformer:
+    def mesh(self) -> MeshTransformer:
         """ Return :class:`ezdxf.render.MeshTransformer' object. """
         mesh = MeshVertexMerger()
         for face in self.polygons:
@@ -333,36 +328,6 @@ class CSG:
         csg = CSG()
         csg.polygons = [p.clone() for p in self.polygons]
         return csg
-
-    def refine(self):
-        """
-        Return a refined CSG. To each polygon, a middle point is added to each edge and to the center 
-        of the polygon
-        """
-        new_csg = CSG()
-        for poly in self.polygons:
-
-            verts = poly.vertices
-            num_verts = len(verts)
-
-            if num_verts == 0:
-                continue
-
-            mid_pos = reduce(operator.add, [v for v in verts]) / float(num_verts)
-            new_verts = verts + [verts[i].lerp(verts[(i + 1) % num_verts], 0.5) for i in range(num_verts)] + [mid_pos]
-
-            i = 0
-            vs = [new_verts[i], new_verts[i + num_verts], new_verts[2 * num_verts], new_verts[2 * num_verts - 1]]
-            new_poly = Polygon(vs)
-            new_poly.plane = poly.plane
-            new_csg.polygons.append(new_poly)
-
-            for i in range(1, num_verts):
-                vs = [new_verts[i], new_verts[num_verts + i], new_verts[2 * num_verts], new_verts[num_verts + i - 1]]
-                new_poly = Polygon(vs)
-                new_csg.polygons.append(new_poly)
-
-        return new_csg
 
     def union(self, csg):
         """
@@ -460,94 +425,3 @@ class CSG:
         for p in csg.polygons:
             p.flip()
         return csg
-
-    @staticmethod
-    def cube(center=(0, 0, 0), scale=(1, 1, 1)):
-        builder = cube()
-        if isinstance(scale, (tuple, list)):
-            sx, sy, sz = scale
-        else:
-            sx, sy, sz = scale, scale, scale
-
-        builder.scale(sx, sy, sz)
-        center = Vector(center)
-        if center:
-            builder.translate(*center.xyz)
-        return CSG.from_mesh_builder(builder)
-
-    @staticmethod
-    def sphere(center=(0, 0, 0), radius: float = 1, slices: int = 16, stacks: int = 8):
-        mesh = sphere(radius, slices, stacks)
-        mesh.translate(*Vector(center).xyz)
-        return CSG.from_mesh_builder(mesh)
-
-    @staticmethod
-    def cylinder(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1, slices: int = 16):
-        return CSG.from_mesh_builder(cylinder(start, end, radius, slices))
-
-    @staticmethod
-    def cone(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1.0, slices: int = 16):
-        return CSG.from_mesh_builder(cone(start, end, radius, slices))
-
-
-def cylinder(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1, slices: int = 16) -> MeshTransformer:
-    """ Returns a cylinder.
-    """
-    start = Vector(start)
-    end = Vector(end)
-    radius = float(radius)
-    slices = int(slices)
-    ray = end - start
-
-    z_axis = ray.normalize()
-    is_y = (math.fabs(z_axis.y) > 0.5)
-    x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
-    y_axis = x_axis.cross(z_axis).normalize()
-    mesh = MeshVertexMerger()
-
-    def vertex(stack, angle):
-        out = (x_axis * math.cos(angle)) + (y_axis * math.sin(angle))
-        return start + (ray * stack) + (out * radius)
-
-    dt = math.pi * 2 / float(slices)
-    for i in range(0, slices):
-        t0 = i * dt
-        i1 = (i + 1) % slices
-        t1 = i1 * dt
-        mesh.add_face([start, vertex(0, t0), vertex(0, t1)])
-        mesh.add_face([vertex(0, t1), vertex(0, t0), vertex(1, t0), vertex(1, t1)])
-        mesh.add_face([end, vertex(1, t1), vertex(1, t0)])
-    return MeshTransformer.from_builder(mesh)
-
-
-def cone(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1.0, slices: int = 16) -> MeshTransformer:
-    """ Returns a cone. """
-    start = Vector(start)
-    end = Vector(end)
-    ray = end - start
-    z_axis = ray.normalize()
-    is_y = (math.fabs(z_axis.y) > 0.5)
-    x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
-    y_axis = x_axis.cross(z_axis).normalize()
-    mesh = MeshVertexMerger()
-
-    def vertex(angle) -> Vector:
-        # radial direction pointing out
-        out = x_axis * math.cos(angle) + y_axis * math.sin(angle)
-        return start + out * radius
-
-    dt = math.pi * 2.0 / float(slices)
-    for i in range(0, slices):
-        t0 = i * dt
-        i1 = (i + 1) % slices
-        t1 = i1 * dt
-        # coordinates and associated normal pointing outwards of the cone's
-        # side
-        p0 = vertex(t0)
-        p1 = vertex(t1)
-        # polygon on the low side (disk sector)
-        mesh.add_face([start, p0, p1])
-        # polygon extending from the low side to the tip
-        mesh.add_face([p0, end, p1])
-
-    return MeshTransformer.from_builder(mesh)

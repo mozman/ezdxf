@@ -40,7 +40,7 @@ Build a 3D `Menger sponge <https://en.wikipedia.org/wiki/Menger_sponge>`_.
 
 .. method:: MengerSponge.mesh()
 
-    Returns geometry as one :class:`~ezdxf.render.MeshVertexMerger` entity.
+    Returns geometry as one :class:`~ezdxf.render.MeshTransformer` entity.
 
 SierpinskyPyramid
 -----------------
@@ -73,4 +73,4 @@ Build a 3D `Sierpinsky Pyramid <https://en.wikipedia.org/wiki/Sierpinski_triangl
 
 .. method:: SierpinskyPyramid.mesh()
 
-    Returns geometry as one :class:`~ezdxf.render.MeshVertexMerger` entity.
+    Returns geometry as one :class:`~ezdxf.render.MeshTransformer` entity.

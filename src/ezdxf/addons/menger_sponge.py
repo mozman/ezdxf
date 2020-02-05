@@ -1,9 +1,9 @@
 # Purpose: menger sponge addon for ezdxf
 # Created: 06.12.2016
-# Copyright (c) 2016 Manfred Moitzi
+# Copyright (c) 2016-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple
-from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger
+from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44
@@ -119,7 +119,7 @@ class MengerSponge:
             for cube in self.cubes():
                 cube.render(layout, dxfattribs, matrix=matrix)
 
-    def cubes(self) -> Iterable[MeshBuilder]:
+    def cubes(self) -> Iterable[MeshTransformer]:
         """
         Generates all cubes of the menger sponge as individual MeshBuilder() objects.
 
@@ -128,11 +128,11 @@ class MengerSponge:
         """
         faces = self.faces()
         for vertices in self:
-            mesh = MeshBuilder()
+            mesh = MeshTransformer()
             mesh.add_mesh(vertices=vertices, faces=faces)
             yield mesh
 
-    def mesh(self) -> MeshVertexMerger:
+    def mesh(self) -> MeshTransformer:
         """
         Returns geometry as one single MESH entity.
 
@@ -143,7 +143,7 @@ class MengerSponge:
         mesh = MeshVertexMerger()
         for vertices in self:
             mesh.add_mesh(vertices=vertices, faces=faces)
-        return mesh
+        return MeshTransformer.from_builder(mesh)
 
 
 def _subdivide(location: 'Vertex' = (0., 0., 0.), length: float = 1., kind: int = 0) -> List[Tuple['Vertex', float]]:

@@ -1,10 +1,10 @@
 # Purpose: sierpinski pyramid
 # Created: 07.12.2016
-# Copyright (c) 2016 Manfred Moitzi
+# Copyright (c) 2016-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Sequence, Tuple
 import math
-from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger
+from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44
@@ -108,7 +108,7 @@ class SierpinskyPyramid:
             for pyramid in self.pyramids():
                 pyramid.render(layout, dxfattribs, matrix=matrix)
 
-    def pyramids(self) -> Iterable[MeshBuilder]:
+    def pyramids(self) -> Iterable[MeshTransformer]:
         """
         Generates all pyramids of the sierpinsky pyramid as individual MeshBuilder() objects.
 
@@ -117,11 +117,11 @@ class SierpinskyPyramid:
         """
         faces = self.faces()
         for vertices in self:
-            mesh = MeshBuilder()
+            mesh = MeshTransformer()
             mesh.add_mesh(vertices=vertices, faces=faces)
             yield mesh
 
-    def mesh(self) -> MeshVertexMerger:
+    def mesh(self) -> MeshTransformer:
         """
         Returns geometry as one single MESH entity.
 
@@ -132,7 +132,7 @@ class SierpinskyPyramid:
         mesh = MeshVertexMerger()
         for vertices in self:
             mesh.add_mesh(vertices=vertices, faces=faces)
-        return mesh
+        return MeshTransformer.from_builder(mesh)
 
 
 def sierpinsky_pyramid(location: 'Vertex' = (0., 0., 0.),

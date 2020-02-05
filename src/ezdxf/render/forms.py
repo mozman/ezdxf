@@ -476,10 +476,10 @@ def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close: bool =
     return MeshTransformer.from_builder(mesh)
 
 
-def cylinder(count: int, radius: float = 1., top_radius: float = None, top_center: 'Vertex' = (0, 0, 1),
+def cylinder(count: int = 16, radius: float = 1., top_radius: float = None, top_center: 'Vertex' = (0, 0, 1),
              caps: bool = True) -> MeshTransformer:
     """
-    Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as :class:`~ezdxf.render.MeshVertexMerger` object.
+    Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as :class:`~ezdxf.render.MeshTransformer` object.
 
     Args:
         count: profiles edge count
@@ -498,6 +498,48 @@ def cylinder(count: int, radius: float = 1., top_radius: float = None, top_cente
     base_profile = list(circle(count, radius, close=True))
     top_profile = list(translate(circle(count, top_radius, close=True), top_center))
     return from_profiles_linear([base_profile, top_profile], caps=caps)
+
+
+def cylinder2(count: int = 16, radius: float = 1, base_center=(0, 0, 0), top_center=(0, 0, 1), ) -> MeshTransformer:
+    """
+    Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as :class:`~ezdxf.render.MeshTransformer` object.
+
+    Args:
+        count: profiles edge count
+        radius: radius for bottom profile
+        base_center: center of base circle
+        top_center: center of top circle
+
+    """
+    # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
+    # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
+    # Additions by Alex Pletzer (Pennsylvania State University)
+    # Adaptation for ezdxf, Copyright (c) 2020, Manfred Moitzi, MIT License.
+    start = Vector(base_center)
+    end = Vector(top_center)
+    radius = float(radius)
+    slices = int(count)
+    ray = end - start
+
+    z_axis = ray.normalize()
+    is_y = (fabs(z_axis.y) > 0.5)
+    x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
+    y_axis = x_axis.cross(z_axis).normalize()
+    mesh = MeshVertexMerger()
+
+    def vertex(stack, angle):
+        out = (x_axis * cos(angle)) + (y_axis * sin(angle))
+        return start + (ray * stack) + (out * radius)
+
+    dt = pi * 2 / float(slices)
+    for i in range(0, slices):
+        t0 = i * dt
+        i1 = (i + 1) % slices
+        t1 = i1 * dt
+        mesh.add_face([start, vertex(0, t0), vertex(0, t1)])
+        mesh.add_face([vertex(0, t1), vertex(0, t0), vertex(1, t0), vertex(1, t1)])
+        mesh.add_face([end, vertex(1, t1), vertex(1, t0)])
+    return MeshTransformer.from_builder(mesh)
 
 
 def from_profiles_linear(profiles: Iterable[Iterable['Vertex']], close: bool = True,
@@ -605,7 +647,7 @@ def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int 
     return from_profiles_linear(profiles, close=close, caps=caps)
 
 
-def cone(count: int, radius: float, apex: 'Vertex' = (0, 0, 1), caps: bool = True) -> MeshTransformer:
+def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps: bool = True) -> MeshTransformer:
     """
     Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as :class:`~ezdxf.render.MeshTransformer` object.
 
@@ -613,7 +655,7 @@ def cone(count: int, radius: float, apex: 'Vertex' = (0, 0, 1), caps: bool = Tru
         count: edge count of basis
         radius: radius of basis
         apex: apex of the cone
-        caps: add a bottom face if true
+        caps: add a bottom face if ``True``
 
     """
     mesh = MeshVertexMerger()
@@ -622,6 +664,53 @@ def cone(count: int, radius: float, apex: 'Vertex' = (0, 0, 1), caps: bool = Tru
         mesh.add_face([p1, p2, apex])
     if caps:
         mesh.add_face(base_circle)
+    return MeshTransformer.from_builder(mesh)
+
+
+def cone2(count: int = 16, radius: float = 1.0, base_center=(0, 0, 0), apex=(0, 0, 1)) -> MeshTransformer:
+    """
+    Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as :class:`~ezdxf.render.MeshTransformer` object.
+
+    Args:
+        count: edge count of basis
+        radius: radius of basis
+        base_center: center point of base
+        apex: apex of the cone
+
+    """
+    # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
+    # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
+    # Additions by Alex Pletzer (Pennsylvania State University)
+    # Adaptation for ezdxf, Copyright (c) 2020, Manfred Moitzi, MIT License.
+    start = Vector(base_center)
+    end = Vector(apex)
+    slices = int(count)
+    ray = end - start
+    z_axis = ray.normalize()
+    is_y = (fabs(z_axis.y) > 0.5)
+    x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
+    y_axis = x_axis.cross(z_axis).normalize()
+    mesh = MeshVertexMerger()
+
+    def vertex(angle) -> Vector:
+        # radial direction pointing out
+        out = x_axis * cos(angle) + y_axis * sin(angle)
+        return start + out * radius
+
+    dt = pi * 2.0 / slices
+    for i in range(0, slices):
+        t0 = i * dt
+        i1 = (i + 1) % slices
+        t1 = i1 * dt
+        # coordinates and associated normal pointing outwards of the cone's
+        # side
+        p0 = vertex(t0)
+        p1 = vertex(t1)
+        # polygon on the low side (disk sector)
+        mesh.add_face([start, p0, p1])
+        # polygon extending from the low side to the tip
+        mesh.add_face([p0, end, p1])
+
     return MeshTransformer.from_builder(mesh)
 
 
@@ -656,14 +745,21 @@ def doughnut(mcount: int, ncount: int, outer_radius: float = 1., ring_radius: fl
     pass
 
 
-def sphere(radius: float = 1, slices: int = 16, stacks: int = 8) -> MeshTransformer:
-    """ Returns a sphere center located in the origin (0, 0, 0). """
+def sphere(count: int = 16, stacks: int = 8, radius: float = 1) -> MeshTransformer:
+    """
+    Create a sphere as :class:`~ezdxf.render.MeshTransformer` object.
+
+    Args:
+        count: longitudinal slices
+        stacks: latitude slices
+        radius: radius of sphere
+    """
     # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
     # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
     # Additions by Alex Pletzer (Pennsylvania State University)
     # Adaptation for ezdxf, Copyright (c) 2020, Manfred Moitzi, MIT License.
     radius = float(radius)
-    slices = int(slices)
+    slices = int(count)
     stacks = int(stacks)
     mesh = MeshVertexMerger()
 
