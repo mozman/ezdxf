@@ -4,7 +4,6 @@ from pathlib import Path
 import ezdxf
 from ezdxf.addons.pycsg import CSG
 from ezdxf.render.forms import cube, cylinder
-from ezdxf.math import Matrix44
 from math import radians
 
 DIR = Path('~/Desktop/Outbox').expanduser()
@@ -16,7 +15,7 @@ csg_cube = CSG.from_mesh_builder(builder).refine()
 
 builder = cylinder(count=16, radius=0.5, top_center=(0, 0, 4))
 builder.translate(0, 0, -2)
-builder.transform(Matrix44.y_rotate(radians(90)))
+builder.rotate_x(radians(90))
 csg_cylinder = CSG.from_mesh_builder(builder)
 
 doc = ezdxf.new()

@@ -9,8 +9,8 @@ import operator
 from functools import reduce
 
 from ezdxf.math import Vector
-from ezdxf.render import MeshVertexMerger, MeshBuilder
-from ezdxf.render.forms import cube
+from ezdxf.render import MeshVertexMerger, MeshBuilder, MeshTransformer
+from ezdxf.render.forms import cube, sphere
 
 __doc__ = """
 Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean
@@ -317,18 +317,17 @@ class CSG:
     @classmethod
     def from_mesh_builder(cls, mesh: MeshBuilder) -> 'CSG':
         """ Create :class:`CSG` object from :class:`ezdxf.render.MeshBuilder' object. """
-        vertices = mesh.vertices
         polygons = []
-        for face in mesh.faces:
-            polygons.append(Polygon([Vector(vertices[index]) for index in face]))
+        for face in mesh.faces_as_vertices():
+            polygons.append(Polygon(face))
         return CSG.from_polygons(polygons)
 
-    def to_mesh_builder(self) -> MeshVertexMerger:
-        """ Return :class:`ezdxf.render.MeshBuilder' object. """
+    def to_mesh_builder(self) -> MeshTransformer:
+        """ Return :class:`ezdxf.render.MeshTransformer' object. """
         mesh = MeshVertexMerger()
         for face in self.polygons:
             mesh.add_face(face.vertices)
-        return mesh
+        return MeshTransformer.from_builder(mesh)
 
     def clone(self):
         csg = CSG()
@@ -478,7 +477,9 @@ class CSG:
 
     @staticmethod
     def sphere(center=(0, 0, 0), radius: float = 1, slices: int = 16, stacks: int = 8):
-        return CSG.from_mesh_builder(sphere(center, radius, slices, stacks))
+        mesh = sphere(radius, slices, stacks)
+        mesh.translate(*Vector(center).xyz)
+        return CSG.from_mesh_builder(mesh)
 
     @staticmethod
     def cylinder(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1, slices: int = 16):
@@ -489,88 +490,7 @@ class CSG:
         return CSG.from_mesh_builder(cone(start, end, radius, slices))
 
 
-def sphere(center=(0, 0, 0), radius: float = 1, slices: int = 16, stacks: int = 8) -> MeshBuilder:
-    """ Returns a sphere. """
-    center = Vector(center)
-    radius = float(radius)
-    slices = int(slices)
-    stacks = int(stacks)
-    mesh = MeshBuilder()
-
-    def vertex(theta, phi) -> Vector:
-        return center + Vector(
-            math.cos(theta) * math.sin(phi),
-            math.cos(phi),
-            math.sin(theta) * math.sin(phi),
-        ) * radius
-
-    delta_theta = math.pi * 2.0 / float(slices)
-    delta_phi = math.pi / float(stacks)
-
-    j0 = 0
-    j1 = j0 + 1
-    for i0 in range(0, slices):
-        i1 = i0 + 1
-        #  +--+
-        #  | /
-        #  |/
-        #  +
-        mesh.add_face([
-            vertex(i0 * delta_theta, j0 * delta_phi),
-            vertex(i1 * delta_theta, j1 * delta_phi),
-            vertex(i0 * delta_theta, j1 * delta_phi),
-        ])
-
-        j0 = stacks - 1
-        j1 = j0 + 1
-        for i0 in range(0, slices):
-            i1 = i0 + 1
-        #  +
-        #  |\
-        #  | \
-        #  +--+
-        mesh.add_face([
-            vertex(i0 * delta_theta, j0 * delta_phi),
-            vertex(i1 * delta_theta, j0 * delta_phi),
-            vertex(i0 * delta_theta, j1 * delta_phi),
-        ])
-
-        for j0 in range(1, stacks - 1):
-            j1 = j0 + 0.5
-        j2 = j0 + 1
-        for i0 in range(0, slices):
-            i1 = i0 + 0.5
-        i2 = i0 + 1
-        #  +---+
-        #  |\ /|
-        #  | x |
-        #  |/ \|
-        #  +---+
-        mesh.add_face([
-            vertex(i1 * delta_theta, j1 * delta_phi),
-            vertex(i2 * delta_theta, j2 * delta_phi),
-            vertex(i0 * delta_theta, j2 * delta_phi),
-        ])
-        mesh.add_face([
-            vertex(i1 * delta_theta, j1 * delta_phi),
-            vertex(i0 * delta_theta, j0 * delta_phi),
-            vertex(i2 * delta_theta, j0 * delta_phi),
-
-        ])
-        mesh.add_face([
-            vertex(i1 * delta_theta, j1 * delta_phi),
-            vertex(i0 * delta_theta, j2 * delta_phi),
-            vertex(i0 * delta_theta, j0 * delta_phi),
-        ])
-        mesh.add_face([
-            vertex(i1 * delta_theta, j1 * delta_phi),
-            vertex(i2 * delta_theta, j0 * delta_phi),
-            vertex(i2 * delta_theta, j2 * delta_phi),
-        ])
-    return mesh
-
-
-def cylinder(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1, slices: int = 16) -> MeshBuilder:
+def cylinder(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1, slices: int = 16) -> MeshTransformer:
     """ Returns a cylinder.
     """
     start = Vector(start)
@@ -583,7 +503,7 @@ def cylinder(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1, slices: int = 1
     is_y = (math.fabs(z_axis.y) > 0.5)
     x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
     y_axis = x_axis.cross(z_axis).normalize()
-    mesh = MeshBuilder()
+    mesh = MeshVertexMerger()
 
     def vertex(stack, angle):
         out = (x_axis * math.cos(angle)) + (y_axis * math.sin(angle))
@@ -597,10 +517,10 @@ def cylinder(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1, slices: int = 1
         mesh.add_face([start, vertex(0, t0), vertex(0, t1)])
         mesh.add_face([vertex(0, t1), vertex(0, t0), vertex(1, t0), vertex(1, t1)])
         mesh.add_face([end, vertex(1, t1), vertex(1, t0)])
-    return mesh
+    return MeshTransformer.from_builder(mesh)
 
 
-def cone(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1.0, slices: int = 16) -> MeshBuilder:
+def cone(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1.0, slices: int = 16) -> MeshTransformer:
     """ Returns a cone. """
     start = Vector(start)
     end = Vector(end)
@@ -609,7 +529,7 @@ def cone(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1.0, slices: int = 16)
     is_y = (math.fabs(z_axis.y) > 0.5)
     x_axis = Vector(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
     y_axis = x_axis.cross(z_axis).normalize()
-    mesh = MeshBuilder()
+    mesh = MeshVertexMerger()
 
     def vertex(angle) -> Vector:
         # radial direction pointing out
@@ -630,4 +550,4 @@ def cone(start=(0, -1, 0), end=(0, 1, 0), radius: float = 1.0, slices: int = 16)
         # polygon extending from the low side to the tip
         mesh.add_face([p0, end, p1])
 
-    return mesh
+    return MeshTransformer.from_builder(mesh)

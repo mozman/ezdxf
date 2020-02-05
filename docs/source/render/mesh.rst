@@ -11,6 +11,7 @@ vertices list, and a faces list where each face is a list of indices into the ve
 The :meth:`MeshBuilder.render` method, renders the mesh into a :class:`~ezdxf.entities.Mesh` entity.
 The :class:`~ezdxf.entities.Mesh` entity supports ngons in AutoCAD, ngons are polygons with more than 4 vertices.
 
+The basic :class:`MeshBuilder` class does not support transformations.
 
 .. class:: MeshBuilder
 
@@ -29,6 +30,12 @@ The :class:`~ezdxf.entities.Mesh` entity supports ngons in AutoCAD, ngons are po
         :attr:`vertices` list. A face requires at least three vertices, :class:`~ezdxf.entities.Mesh` supports ngons,
         so the count of vertices is not limited.
 
+    .. automethod:: copy()
+
+    .. automethod:: faces_as_vertices() -> Iterable[List[Vector]]
+
+    .. automethod:: edges_as_vertices() -> Iterable[Tuple[Vector, Vector]]
+
     .. automethod:: add_vertices
 
     .. automethod:: add_edge
@@ -37,7 +44,27 @@ The :class:`~ezdxf.entities.Mesh` entity supports ngons in AutoCAD, ngons are po
 
     .. automethod:: add_mesh(vertices=None, faces=None, edges=None, mesh=None) -> None
 
-    .. automethod:: transform(matrix: Matrix44) -> MeshBuilder
+    .. automethod:: has_none_planar_faces
+
+    .. automethod:: render(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None)
+
+    .. automethod:: from_mesh
+
+    .. automethod:: from_builder(other: MeshBuilder)
+
+
+MeshTransformer
+===============
+
+Same functionality as :class:`MeshBuilder` but supports inplace transformation.
+
+.. class:: MeshTransformer
+
+    Subclass of :class:`MeshBuilder`
+
+    .. automethod:: subdivide(quads=False, edges=False) -> MeshTransformer
+
+    .. automethod:: transform(matrix: Matrix44)
 
     .. automethod:: translate
 
@@ -45,17 +72,34 @@ The :class:`~ezdxf.entities.Mesh` entity supports ngons in AutoCAD, ngons are po
 
     .. automethod:: scale_uniform
 
-    .. automethod:: render(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None)
+    .. automethod:: rotate_x
 
-    .. automethod:: from_mesh
+    .. automethod:: rotate_y
 
+    .. automethod:: rotate_z
+
+    .. automethod:: rotate_axis
+
+    .. automethod:: transform_to_wcs
 
 MeshVertexMerger
 ================
 
 Same functionality as :class:`MeshBuilder`, but creates meshes with unique vertices. Resulting meshes have no doublets,
-but :class:`MeshVertexMerger` needs extra memory for bookkeeping.
+but :class:`MeshVertexMerger` needs extra memory for bookkeeping and also does not support transformations.
 
+This is intended as intermediate object to create a compact mesh and then convert it to :class:`MeshTransformer`
+to apply transformations to the mesh:
+
+.. code-block:: Python
+
+    mesh = MeshVertexMerger()
+
+    # create your mesh
+    mesh.add_face(...)
+
+    # convert mesh to MeshTransformer object
+    return MeshTransformer.from_builder(mesh)
 
 .. class:: MeshVertexMerger
 

@@ -2,11 +2,12 @@
 # Created: 27.03.2010, 2018 integrated into ezdxf
 # Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
+from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 from .construct2d import (
     is_close_points, closest_point, convex_hull, intersection_line_line, distance_point_line,
     is_point_on_line, is_point_in_polygon, is_point_left_of_line, point_to_line_relation,
 )
-from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
+from .construct3d import is_planar_face
 from .matrix44 import Matrix44
 from .matrix import Matrix
 from .bspline import bspline_control_frame, bspline_control_frame_approx

@@ -11,20 +11,6 @@ Functions
 
 .. autofunction:: closest_point
 
-.. autofunction:: distance_point_line(point: Vec2, start: Vec2, end: Vec2) -> float
-
-.. autofunction:: point_to_line_relation(point: Vec2, start: Vec2, end: Vec2, abs_tol=1e-12) -> int
-
-.. autofunction:: is_point_on_line(point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=1e-12) -> bool
-
-.. autofunction:: is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2, colinear=False) -> bool
-
-.. autofunction:: is_point_in_polygon(point: Vec2, polygon: Iterable[Vec2], abs_tol=1e-12) -> int
-
-.. autofunction:: convex_hull
-
-.. autofunction:: intersection_line_line(line1: Sequence[Vec2], line2: Sequence[Vec2], virtual=True, abs_tol=1e-12) -> Optional[Vec2]
-
 .. autofunction:: bspline_control_frame
 
 .. autofunction:: bspline_control_frame_approx
@@ -36,25 +22,6 @@ Functions
 .. autofunction:: required_knot_values
 
 .. autofunction:: xround
-
-.. autofunction:: offset_vertices_2d
-
-.. code-block:: Python
-
-    source = [(0, 0), (3, 0), (3, 3), (0, 3)]
-    result = list(offset_vertices_2d(source, offset=0.5, closed=True))
-
-.. image:: gfx/offset_vertices_2d_1.png
-
-Example for a closed collinear shape, which creates 2 additional vertices and the first one has an unexpected location:
-
-.. code-block:: Python
-
-    source = [(0, 0), (0, 1), (0, 2), (0, 3)]
-    result = list(offset_vertices_2d(source, offset=0.5, closed=True))
-
-.. image:: gfx/offset_vertices_2d_2.png
-
 
 .. _bulge_related_functions:
 
@@ -74,6 +41,47 @@ Bulge Related Functions
 .. autofunction:: bulge_to_arc
 
 .. autofunction:: bulge_3_points
+
+2D Functions
+============
+
+.. autofunction:: distance_point_line(point: Vec2, start: Vec2, end: Vec2) -> float
+
+.. autofunction:: point_to_line_relation(point: Vec2, start: Vec2, end: Vec2, abs_tol=1e-12) -> int
+
+.. autofunction:: is_point_on_line(point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=1e-12) -> bool
+
+.. autofunction:: is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2, colinear=False) -> bool
+
+.. autofunction:: is_point_in_polygon(point: Vec2, polygon: Iterable[Vec2], abs_tol=1e-12) -> int
+
+.. autofunction:: convex_hull
+
+.. autofunction:: intersection_line_line(line1: Sequence[Vec2], line2: Sequence[Vec2], virtual=True, abs_tol=1e-12) -> Optional[Vec2]
+
+.. autofunction:: offset_vertices_2d
+
+.. code-block:: Python
+
+    source = [(0, 0), (3, 0), (3, 3), (0, 3)]
+    result = list(offset_vertices_2d(source, offset=0.5, closed=True))
+
+.. image:: gfx/offset_vertices_2d_1.png
+
+Example for a closed collinear shape, which creates 2 additional vertices and the first one has an unexpected location:
+
+.. code-block:: Python
+
+    source = [(0, 0), (0, 1), (0, 2), (0, 3)]
+    result = list(offset_vertices_2d(source, offset=0.5, closed=True))
+
+.. image:: gfx/offset_vertices_2d_2.png
+
+3D Functions
+============
+
+.. autofunction:: is_planar_face
+
 
 Transformation Classes
 ======================

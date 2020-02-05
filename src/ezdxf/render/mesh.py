@@ -1,12 +1,12 @@
 # Purpose: simple mesh builders
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING
-from ezdxf.math.vector import Vector
 from ezdxf.lldxf.const import DXFValueError
+from ezdxf.math import Matrix44, Vector, is_planar_face
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, Matrix44, BaseLayout
+    from ezdxf.eztypes import Vertex, BaseLayout, UCS
 
 
 class MeshBuilder:
@@ -23,8 +23,24 @@ class MeshBuilder:
 
     def __init__(self):
         self.vertices = []  # type: List[Vector]  # vertex storage, list of (x, y, z) tuples or Vector() objects
-        self.faces = []  # type: List[Sequence[int]]  # face storage, each face is a list/tuple of vertex indices (v0, v1, v2, v3, ....), AutoCAD supports ngons
+        self.faces = []  # type: List[Sequence[int]]  # face storage, each face is a tuple of vertex indices (v0, v1, v2, v3, ....), AutoCAD supports ngons
         self.edges = []  # type: List[Tuple[int, int]]  # edge storage, each edge is a 2-tuple of vertex indices (v0, v1)
+
+    def copy(self):
+        """ Returns a copy of mesh. """
+        return self.from_builder(self)
+
+    def faces_as_vertices(self) -> Iterable[List[Vector]]:
+        """ Iterate over all mesh faces as list of vertices. """
+        v = self.vertices
+        for face in self.faces:
+            yield [v[index] for index in face]
+
+    def edges_as_vertices(self) -> Iterable[Tuple[Vector, Vector]]:
+        """ Iterate over all mesh edges as tuple of two vertices. """
+        v = self.vertices
+        for edge in self.edges:
+            yield v[edge[0]], v[edge[1]]
 
     def add_face(self, vertices: Iterable['Vertex']) -> None:
         """
@@ -107,21 +123,79 @@ class MeshBuilder:
         for face_vertices in faces:
             self.faces.append(tuple(indices[vi] for vi in face_vertices))
 
-    def transform(self, matrix: 'Matrix44') -> 'MeshBuilder':
+    def has_none_planar_faces(self) -> bool:
+        """ Returns ``True`` if any face is none planar. """
+        return not all(is_planar_face(face) for face in self.faces_as_vertices())
+
+    def render(self, layout: 'BaseLayout', dxfattribs: dict = None, matrix: 'Matrix44' = None):
         """
-        Transform actual mesh into a new mesh by applying the transformation `matrix` to vertices.
+        Render mesh as :class:`~ezdxf.entities.Mesh` entity into `layout`.
+
+        Args:
+            layout: :class:`~ezdxf.layouts.BaseLayout` object
+            dxfattribs: dict of DXF attributes e.g. ``{'layer': 'mesh', 'color': 7}``
+            matrix: transformation matrix of type :class:`~ezdxf.math.Matrix44`
+
+        """
+        mesh = layout.add_mesh(dxfattribs=dxfattribs)
+        with mesh.edit_data() as data:
+            if matrix is not None:
+                data.vertices = matrix.transform_vectors(self.vertices)
+            else:
+                data.vertices = self.vertices
+            data.edges = self.edges
+            data.faces = self.faces
+
+    @classmethod
+    def from_mesh(cls, other):
+        """
+        Create new mesh from other mesh as class method.
+
+        Args:
+            other: `mesh` of type :class:`MeshBuilder` and inherited or DXF :class:`~ezdxf.entities.Mesh` entity or
+                   any object providing attributes :attr:`vertices`, :attr:`edges` and :attr:`faces`.
+
+        """
+        # just copy properties
+        mesh = cls()
+        mesh.add_mesh(mesh=other)
+        return mesh
+
+    @classmethod
+    def from_builder(cls, other: 'MeshBuilder'):
+        """
+        Create new mesh from other mesh builder, faster than :meth:`from_mesh` but supports only
+        :class:`MeshBuilder` and inherited classes.
+        """
+        # just copy properties
+        mesh = cls()
+        mesh.vertices = list(other.vertices)
+        mesh.edges = list(other.edges)
+        mesh.faces = list(other.faces)
+        return mesh
+
+
+class MeshTransformer(MeshBuilder):
+    """ A mesh builder with inplace transformation support. """
+
+    def subdivide(self, quads=False, edges=False) -> 'MeshTransformer':
+        """ Returns a new :class:`MeshBuilder` object with subdivided faces and edges.
+
+        Args:
+             quads: try to create quad faces if ``True`` else create triangles
+             edges: also subdivide edges if ``True``
+        """
+        pass
+
+    def transform(self, matrix: 'Matrix44') -> None:
+        """
+        Transform mesh inplace by applying the transformation `matrix`.
 
         Args:
             matrix: 4x4 transformation matrix as :class:`~ezdxf.math.Matrix44` object
 
         """
-        mesh = self.__class__()
-        mesh.add_mesh(
-            vertices=matrix.transform_vectors(self.vertices),
-            faces=self.faces,
-            edges=self.edges,
-        )
-        return mesh
+        self.vertices = matrix.transform_vectors(self.vertices)
 
     def translate(self, x: float = 0, y: float = 0, z: float = 0) -> None:
         """
@@ -162,38 +236,56 @@ class MeshBuilder:
         """
         self.vertices = [v * s for v in self.vertices]
 
-    def render(self, layout: 'BaseLayout', dxfattribs: dict = None, matrix: 'Matrix44' = None):
+    def rotate_x(self, angle: float) -> None:
         """
-        Render mesh as :class:`~ezdxf.entities.Mesh` entity into `layout`.
+        Rotate mesh around x-axis about `angle` inplace.
 
         Args:
-            layout: :class:`~ezdxf.layouts.BaseLayout` object
-            dxfattribs: dict of DXF attributes e.g. ``{'layer': 'mesh', 'color': 7}``
-            matrix: transformation matrix of type :class:`~ezdxf.math.Matrix44`
+            angle: rotation angle in radians
 
         """
-        mesh = layout.add_mesh(dxfattribs=dxfattribs)
-        with mesh.edit_data() as data:
-            if matrix is not None:
-                data.vertices = matrix.transform_vectors(self.vertices)
-            else:
-                data.vertices = self.vertices
-            data.edges = self.edges
-            data.faces = self.faces
+        self.vertices = Matrix44.x_rotate(angle).transform_vectors(self.vertices)
 
-    @classmethod
-    def from_mesh(cls, other) -> 'MeshBuilder':
+    def rotate_y(self, angle: float) -> None:
         """
-        Create new mesh from other mesh as class method.
+        Rotate mesh around y-axis about `angle` inplace.
 
         Args:
-            other: `mesh` of type :class:`MeshBuilder`, :class:`MeshVertexMerger` or :class:`~ezdxf.entities.Mesh` or
-                   any object providing attributes :attr:`vertices`, :attr:`edges` and :attr:`faces`.
+            angle: rotation angle in radians
 
         """
-        mesh = cls()
-        mesh.add_mesh(mesh=other)
-        return mesh
+        self.vertices = Matrix44.y_rotate(angle).transform_vectors(self.vertices)
+
+    def rotate_z(self, angle: float) -> None:
+        """
+        Rotate mesh around z-axis about `angle` inplace.
+
+        Args:
+            angle: rotation angle in radians
+
+        """
+        self.vertices = Matrix44.z_rotate(angle).transform_vectors(self.vertices)
+
+    def rotate_axis(self, axis: 'Vertex', angle: float) -> None:
+        """
+        Rotate mesh around an arbitrary axis located in the origin (0, 0, 0) about `angle`.
+
+        Args:
+            axis: rotation axis as Vector
+            angle: rotation angle in radians
+
+        """
+        self.vertices = Matrix44.axis_rotate(axis, angle).transform_vectors(self.vertices)
+
+    def transform_to_wcs(self, ucs: 'UCS') -> None:
+        """
+        Transform local UCS vertices to WCS vertices.
+
+        Args:
+            ucs: user coordinate system
+
+        """
+        self.vertices = list(ucs.points_to_wcs(self.vertices))
 
 
 class MeshVertexMerger(MeshBuilder):
@@ -203,6 +295,7 @@ class MeshVertexMerger(MeshBuilder):
 
     """
 
+    # can not support vertex transformation
     def __init__(self, precision: int = 6):
         """
         Args:
@@ -255,3 +348,9 @@ class MeshVertexMerger(MeshBuilder):
             return self.ledger[self.key(vertex)]
         except KeyError:
             raise IndexError("vertex {} not found.".format(vertex))
+
+    @classmethod
+    def from_builder(cls, other: 'MeshBuilder'):
+        """ Create new mesh from other mesh builder. """
+        # rebuild from scratch to crate a valid ledger
+        return cls.from_mesh(other)

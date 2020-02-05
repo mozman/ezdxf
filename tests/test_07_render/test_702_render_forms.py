@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from ezdxf.render.forms import circle, close_polygon, cube, extrude, cylinder, cone, square, box, ngon
 from ezdxf.render.forms import open_arrow, arrow2
@@ -6,8 +6,7 @@ from ezdxf.render.forms import spline_interpolation, spline_interpolated_profile
 from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
 from ezdxf.render.forms import rotation_form
 from ezdxf.render.forms import translate, rotate, scale
-from ezdxf.math.construct2d import is_close_points
-from ezdxf.math import Vector
+from ezdxf.math import Vector, is_close_points
 
 
 def test_circle_open():

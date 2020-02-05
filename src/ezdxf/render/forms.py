@@ -3,13 +3,13 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple
-from math import pi, sin, cos, radians, tan, isclose, asin
+from math import pi, sin, cos, radians, tan, isclose, asin, fabs
 from enum import IntEnum
 from ezdxf.math import Vector, Matrix44
 from ezdxf.math.construct2d import is_close_points
 from ezdxf.math.bspline import bspline_control_frame
 from ezdxf.math.eulerspiral import EulerSpiral
-from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger
+from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -421,23 +421,21 @@ cube_faces = [
 ]
 
 
-def cube(center: bool = True, matrix: Matrix44 = None) -> MeshBuilder:
+def cube(center: bool = True) -> MeshTransformer:
     """
-    Create a `cube <https://en.wikipedia.org/wiki/Cube>`_ as :class:`~ezdxf.render.MeshBuilder` object.
+    Create a `cube <https://en.wikipedia.org/wiki/Cube>`_ as :class:`~ezdxf.render.MeshTransformer` object.
 
     Args:
-        matrix: transformation matrix as :class:`~ezdxf.math.Matrix44` object
         center: 'mass' center of cube, ``(0, 0, 0)`` if ``True``, else first corner at ``(0, 0, 0)``
 
     """
-    mesh = MeshBuilder()
-    vertices = _cube0_vertices if center else _cube_vertices
-    vectices = vertices if matrix is None else matrix.transform_vectors(vertices)
+    mesh = MeshTransformer()
+    vectices = _cube0_vertices if center else _cube_vertices
     mesh.add_mesh(vertices=vectices, faces=cube_faces)
     return mesh
 
 
-def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close: bool = True) -> MeshVertexMerger:
+def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close: bool = True) -> MeshTransformer:
     """
     Extrude a `profile` polygon along a `path` polyline, vertices of profile should be in
     counter clockwise order.
@@ -447,7 +445,7 @@ def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close: bool =
         path:  extrusion path as list of ``(x, y, z)`` tuples
         close: close profile polygon if ``True``
 
-    Returns: :class:`~ezdxf.render.MeshVertexMerger`
+    Returns: :class:`~ezdxf.render.MeshTransformer`
 
     """
 
@@ -475,11 +473,11 @@ def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close: bool =
         add_hull(bottom_indices, top_indices)
         bottom_indices = top_indices
         start_point = target_point
-    return mesh
+    return MeshTransformer.from_builder(mesh)
 
 
 def cylinder(count: int, radius: float = 1., top_radius: float = None, top_center: 'Vertex' = (0, 0, 1),
-             caps: bool = True) -> MeshVertexMerger:
+             caps: bool = True) -> MeshTransformer:
     """
     Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as :class:`~ezdxf.render.MeshVertexMerger` object.
 
@@ -503,7 +501,7 @@ def cylinder(count: int, radius: float = 1., top_radius: float = None, top_cente
 
 
 def from_profiles_linear(profiles: Iterable[Iterable['Vertex']], close: bool = True,
-                         caps: bool = False) -> MeshVertexMerger:
+                         caps: bool = False) -> MeshTransformer:
     """
     Create MESH entity by linear connected `profiles`.
 
@@ -531,7 +529,7 @@ def from_profiles_linear(profiles: Iterable[Iterable['Vertex']], close: bool = T
             prev_v1 = v1
             prev_v2 = v2
 
-    return mesh
+    return MeshTransformer.from_builder(mesh)
 
 
 def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: str = 'uniform', power: float = .5,
@@ -583,7 +581,7 @@ def spline_interpolated_profiles(profiles: Iterable[Iterable['Vertex']], subdivi
 
 
 def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int = 4, close: bool = True,
-                         caps: bool = False) -> MeshVertexMerger:
+                         caps: bool = False) -> MeshTransformer:
     """
     Create MESH entity by spline interpolation between given `profiles`. Requires at least 4 profiles.
     A subdivide value of 4, means, create 4 face loops between two profiles, without interpolation two
@@ -595,7 +593,7 @@ def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int 
         close: close profile polygon if ``True``
         caps: close hull with bottom cap and top cap (as N-gons)
 
-    Returns: :class:`~ezdxf.render.MeshVertexMerger`
+    Returns: :class:`~ezdxf.render.MeshTransformer`
 
 
     """
@@ -607,9 +605,9 @@ def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int 
     return from_profiles_linear(profiles, close=close, caps=caps)
 
 
-def cone(count: int, radius: float, apex: 'Vertex' = (0, 0, 1), caps: bool = True) -> MeshVertexMerger:
+def cone(count: int, radius: float, apex: 'Vertex' = (0, 0, 1), caps: bool = True) -> MeshTransformer:
     """
-    Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as :class:`~ezdxf.render.MeshVertexMerger` object.
+    Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as :class:`~ezdxf.render.MeshTransformer` object.
 
     Args:
         count: edge count of basis
@@ -624,11 +622,11 @@ def cone(count: int, radius: float, apex: 'Vertex' = (0, 0, 1), caps: bool = Tru
         mesh.add_face([p1, p2, apex])
     if caps:
         mesh.add_face(base_circle)
-    return mesh
+    return MeshTransformer.from_builder(mesh)
 
 
 def rotation_form(count: int, profile: Iterable['Vertex'], angle: float = 2 * pi,
-                  axis: 'Vertex' = (1, 0, 0)) -> MeshVertexMerger:
+                  axis: 'Vertex' = (1, 0, 0)) -> MeshTransformer:
     """
     Create MESH entity by rotating a `profile` around an `axis`.
 
@@ -638,7 +636,7 @@ def rotation_form(count: int, profile: Iterable['Vertex'], angle: float = 2 * pi
         angle: rotation angle in radians
         axis: rotation axis
 
-    Returns: :class:`~ezdxf.render.MeshVertexMerger`
+    Returns: :class:`~ezdxf.render.MeshTransformer`
 
     """
     if count < 3:
@@ -654,9 +652,89 @@ def rotation_form(count: int, profile: Iterable['Vertex'], angle: float = 2 * pi
     return mesh
 
 
-def doughnut(mcount: int, ncount: int, outer_radius: float = 1., ring_radius: float = .25) -> MeshVertexMerger:
+def doughnut(mcount: int, ncount: int, outer_radius: float = 1., ring_radius: float = .25) -> MeshTransformer:
     pass
 
 
-def sphere(mcount: int, ncount: int, radius: float = 1.) -> MeshVertexMerger:
-    pass
+def sphere(radius: float = 1, slices: int = 16, stacks: int = 8) -> MeshTransformer:
+    """ Returns a sphere center located in the origin (0, 0, 0). """
+    # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
+    # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
+    # Additions by Alex Pletzer (Pennsylvania State University)
+    # Adaptation for ezdxf, Copyright (c) 2020, Manfred Moitzi, MIT License.
+    radius = float(radius)
+    slices = int(slices)
+    stacks = int(stacks)
+    mesh = MeshVertexMerger()
+
+    def vertex(theta, phi) -> Vector:
+        return Vector(
+            cos(theta) * sin(phi),
+            cos(phi),
+            sin(theta) * sin(phi),
+        ) * radius
+
+    delta_theta = pi * 2.0 / float(slices)
+    delta_phi = pi / float(stacks)
+
+    j0 = 0
+    j1 = j0 + 1
+    for i0 in range(0, slices):
+        i1 = i0 + 1
+        #  +--+
+        #  | /
+        #  |/
+        #  +
+        mesh.add_face([
+            vertex(i0 * delta_theta, j0 * delta_phi),
+            vertex(i1 * delta_theta, j1 * delta_phi),
+            vertex(i0 * delta_theta, j1 * delta_phi),
+        ])
+
+        j0 = stacks - 1
+        j1 = j0 + 1
+        for i0 in range(0, slices):
+            i1 = i0 + 1
+        #  +
+        #  |\
+        #  | \
+        #  +--+
+        mesh.add_face([
+            vertex(i0 * delta_theta, j0 * delta_phi),
+            vertex(i1 * delta_theta, j0 * delta_phi),
+            vertex(i0 * delta_theta, j1 * delta_phi),
+        ])
+
+        for j0 in range(1, stacks - 1):
+            j1 = j0 + 0.5
+        j2 = j0 + 1
+        for i0 in range(0, slices):
+            i1 = i0 + 0.5
+        i2 = i0 + 1
+        #  +---+
+        #  |\ /|
+        #  | x |
+        #  |/ \|
+        #  +---+
+        mesh.add_face([
+            vertex(i1 * delta_theta, j1 * delta_phi),
+            vertex(i2 * delta_theta, j2 * delta_phi),
+            vertex(i0 * delta_theta, j2 * delta_phi),
+        ])
+        mesh.add_face([
+            vertex(i1 * delta_theta, j1 * delta_phi),
+            vertex(i0 * delta_theta, j0 * delta_phi),
+            vertex(i2 * delta_theta, j0 * delta_phi),
+
+        ])
+        mesh.add_face([
+            vertex(i1 * delta_theta, j1 * delta_phi),
+            vertex(i0 * delta_theta, j2 * delta_phi),
+            vertex(i0 * delta_theta, j0 * delta_phi),
+        ])
+        mesh.add_face([
+            vertex(i1 * delta_theta, j1 * delta_phi),
+            vertex(i2 * delta_theta, j0 * delta_phi),
+            vertex(i2 * delta_theta, j2 * delta_phi),
+        ])
+    return MeshTransformer.from_builder(mesh)
