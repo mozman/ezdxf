@@ -42,6 +42,9 @@ Version 0.11b1 - dev
 - NEW: `Insert.ucs()` returns an UCS placed in block reference `insert` location, UCS axis aligned to the block axis.
 - NEW: `Insert.reset_transformation()` reset block reference location, rotation and extrusion vector.
 - NEW: support for associating HATCH boundary paths to geometry entities
+- NEW: `MeshTransformer()` class, simple inplace mesh transformations
+- NEW: `pycsg` add-on, a simple Constructive Solid Geometry (CSG) kernel created by Evan Wallace (Javascript) and 
+  Tim Knip (Python)
 - CHANGE: Changed predefined pattern scaling to BricsCAD and AutoCAD standard, set global option 
   `ezdxf.options.use_old_predefined_pattern_scaling` to True, to use the old pattern scaling before v0.11 
 - CHANGE: removed `ezdxf.PATTERN` constant, use `PATTERN = ezdxf.pattern.load()` instead, set argument 
