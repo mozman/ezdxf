@@ -58,6 +58,8 @@ Version 0.11b1 - dev
 - BUGFIX: check for unsupported DXF versions at `new()`
 - BUGFIX: fixed dxf2src error for the HATCH entity
 - BUGFIX: `is_point_left_of_line()` algorithm was incorrect
+- BUGFIX: default `dimtxsty` is `Standard` if `options.default_dimension_text_style` is not defined
+- BUGFIX: default arrows for minimal defined dimstyles are closed filled arrows  
 
 Version 0.10.4 - 2020-01-31
 ---------------------------

@@ -4,13 +4,10 @@
 # Additions by Alex Pletzer (Pennsylvania State University)
 # Adaptation as ezdxf add-on, Copyright (c) 2020, Manfred Moitzi, MIT License.
 from typing import List, Optional
-import math
-import operator
 from functools import reduce
 
 from ezdxf.math import Vector
 from ezdxf.render import MeshVertexMerger, MeshBuilder, MeshTransformer
-from ezdxf.render.forms import cube, sphere
 
 __doc__ = """
 Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean

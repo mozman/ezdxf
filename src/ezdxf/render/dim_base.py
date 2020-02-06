@@ -157,7 +157,8 @@ class BaseDimensionRenderer:
         # ---------------------------------------------
         # dimension measurement factor
         self.dim_measurement_factor = get('dimlfac', 1)  # type: float
-        self.text_style_name = get('dimtxsty', options.default_dimension_text_style)  # type: str
+        self.text_style_name = get('dimtxsty', self.default_text_style())  # type: str
+
         self.text_style = self.drawing.styles.get(self.text_style_name)  # type: Style
         self.text_height = self.char_height * self.dim_scale  # type: float
         self.text_width_factor = self.text_style.get_dxf_attrib('width', 1.)  # type: float
@@ -257,7 +258,7 @@ class BaseDimensionRenderer:
         # ---------------------------------------------
         # ARROWS & TICKS
         # ---------------------------------------------
-        self.tick_size = get('dimtsz') * self.dim_scale
+        self.tick_size = get('dimtsz', 0) * self.dim_scale
         if self.tick_size > 0:
             # use oblique strokes as 'arrows', disables usual 'arrows' and user defined blocks
             self.arrow1_name, self.arrow2_name = None, None  # type: str
@@ -267,7 +268,7 @@ class BaseDimensionRenderer:
         else:
             # arrow name or block name if user defined arrow
             self.arrow1_name, self.arrow2_name = self.dim_style.get_arrow_names()  # type: str
-            self.arrow_size = get('dimasz') * self.dim_scale  # type: float
+            self.arrow_size = get('dimasz', 0.25) * self.dim_scale  # type: float
 
         # Suppresses arrowheads if not enough space is available inside the extension lines.
         # Only if force_text_inside is True
@@ -391,6 +392,12 @@ class BaseDimensionRenderer:
             self.tol_text_height = self.tol_char_height + (self.tol_text_height * self.tol_line_spacing)
             self.tol_text_width = None  # requires actual measurement
             self.text_height = max(self.text_height, self.tol_text_height)
+
+    def default_text_style(self):
+        style = options.default_dimension_text_style
+        if style not in self.drawing.styles:
+            style = 'Standard'
+        return style
 
     @property
     def text_inside(self):
@@ -619,7 +626,7 @@ class BaseDimensionRenderer:
                 attribs.update(dxfattribs)
             self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, dxfattribs=attribs)
         else:
-            if name not in self.drawing.blocks:
+            if name is None or name not in self.drawing.blocks:
                 raise DXFUndefinedBlockError('Undefined block: "{}"'.format(name))
             attribs['rotation'] = rotation
             if scale != 1.:

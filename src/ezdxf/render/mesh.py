@@ -232,7 +232,7 @@ class MeshTransformer(MeshBuilder):
             sz: scale factor for z-axis
 
         """
-        self.vertices = [Vector(v[0] * sx, v[1] * sy, v[2] * sz) for v in self.vertices]
+        self.vertices = [Vector(x * sx, y * sy, z * sz) for x, y, z in self.vertices]
         return self
 
     def scale_uniform(self, s: float):
@@ -303,7 +303,7 @@ class MeshTransformer(MeshBuilder):
         return self
 
 
-def _subdivide(mesh, quads=False, edges=False) -> 'MeshVertexMerger':
+def _subdivide(mesh, quads=True, edges=False) -> 'MeshVertexMerger':
     """ Returns a new :class:`MeshVertexMerger` object with subdivided faces and edges.
 
     Args:

@@ -151,14 +151,14 @@ class DimStyleOverride:
             Tuple[str, str]: tuple of [dimblk1, dimblk2]
 
         """
-        dimtsz = self.get('dimtsz')
+        dimtsz = self.get('dimtsz', 0)
         blk1, blk2 = None, None
         if dimtsz == 0.:
             if bool(self.get('dimsah')):
-                blk1 = self.get('dimblk1')
-                blk2 = self.get('dimblk2')
+                blk1 = self.get('dimblk1', '')
+                blk2 = self.get('dimblk2', '')
             else:
-                blk = self.get('dimblk')
+                blk = self.get('dimblk', '')
                 blk1 = blk
                 blk2 = blk
         return blk1, blk2
