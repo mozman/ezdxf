@@ -60,7 +60,7 @@ Version 0.11b1 - dev
 - BUGFIX: `is_point_left_of_line()` algorithm was incorrect
 - BUGFIX: default `dimtxsty` is `Standard` if `options.default_dimension_text_style` is not defined
 - BUGFIX: default arrows for minimal defined dimstyles are closed filled arrows  
-- BUGFIX: use `Standard` as default dimstyle if `EZDXF` is not defined  
+- BUGFIX: use `Standard` as default for undefined dimension styles, e.g. `EZDXF` without setup  
 
 Version 0.10.4 - 2020-01-31
 ---------------------------
