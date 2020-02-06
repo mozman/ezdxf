@@ -891,6 +891,12 @@ class CreatorInterface:
         underlay_def.append_reactor_handle(underlay.dxf.handle)
         return underlay
 
+    def _save_dimstyle(self, name: str) -> str:
+        if name in self.doc.dimstyles:
+            return name
+        logger.debug(f'Replacing undefined DIMSTYLE "{name}" by "Standard" DIMSTYLE.')
+        return 'Standard'
+
     def add_linear_dim(self,
                        base: 'Vertex',
                        p1: 'Vertex',
@@ -936,7 +942,7 @@ class CreatorInterface:
         type_ = {'dimtype': const.DIM_LINEAR | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs['defpoint'] = Vector(base)  # group code 10
         dxfattribs['text'] = text
         dxfattribs['defpoint2'] = Vector(p1)  # group code 13
@@ -1103,7 +1109,7 @@ class CreatorInterface:
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
 
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs['text'] = text
 
         dxfattribs['defpoint2'] = Vector(line1[0])  # group code 13
@@ -1169,7 +1175,7 @@ class CreatorInterface:
         type_ = {'dimtype': const.DIM_ANGULAR_3P | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs['text'] = text
         dxfattribs['defpoint'] = Vector(base)
         dxfattribs['defpoint2'] = Vector(p1)
@@ -1254,7 +1260,7 @@ class CreatorInterface:
         p1 = center + radius_vec
         p2 = center - radius_vec
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs['defpoint'] = Vector(p1)  # group code 10
         dxfattribs['defpoint4'] = Vector(p2)  # group code 15
         dxfattribs['text'] = text
@@ -1378,7 +1384,7 @@ class CreatorInterface:
                 mpoint = center + Vector.from_deg_angle(angle, radius)
 
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs['defpoint4'] = Vector(mpoint)  # group code 15
         dxfattribs['defpoint'] = Vector(center)  # group code 10
         dxfattribs['text'] = text
@@ -1496,7 +1502,7 @@ class CreatorInterface:
         type_ = {'dimtype': const.DIM_ORDINATE | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs['defpoint'] = Vector(origin)  # group code 10
         dxfattribs['defpoint2'] = Vector(feature_location)  # group code 13
         dxfattribs['defpoint3'] = Vector(leader_endpoint)  # group code 14
@@ -1549,7 +1555,7 @@ class CreatorInterface:
             raise DXFVersionError('LEADER requires DXF R2000')
 
         dxfattribs = dxfattribs or {}
-        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs.setdefault('annotation_type', 3)
         leader = self.new_entity('LEADER', dxfattribs)  # type: Leader
         leader.set_vertices(vertices)

@@ -3,10 +3,8 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable, List, cast
 import math
-from ezdxf.math import Vector, Vec2, ConstructionRay, xround
+from ezdxf.math import Vector, Vec2, ConstructionRay
 from ezdxf.math import UCS
-from ezdxf.lldxf.const import DXFValueError
-from ezdxf.tools import suppress_zeros, normalize_text_angle
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
