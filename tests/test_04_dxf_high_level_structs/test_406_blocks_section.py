@@ -59,7 +59,7 @@ def test_is_layout_block(blocks):
 
 def test_overwrite_existing_block(blocks):
     block = blocks.new('TEST')
-    assert block in blocks
+    assert block.dxf.name in blocks
     old_len = len(blocks)
     with pytest.raises(ezdxf.DXFTableEntryError):
         # can not create block with existing name
@@ -142,7 +142,7 @@ def test_safe_delete_all_blocks(blocks):
 
 def test_rename_block(blocks):
     block = blocks.new('RENAME_ME')
-    assert block in blocks
+    assert block.dxf.name in blocks
 
     blocks.rename_block('RENAME_ME', 'NEW_NAME')
     assert 'NEW_NAME' in blocks
@@ -220,7 +220,7 @@ def test_dxf2000_delete_all_blocks(dxf2000_blocks):
 
 def test_dxf2000_rename_block(dxf2000_blocks):
     block = dxf2000_blocks.new('RENAME_ME')
-    assert block in dxf2000_blocks
+    assert block.dxf.name in dxf2000_blocks
 
     dxf2000_blocks.rename_block('RENAME_ME', 'NEW_NAME')
     assert 'NEW_NAME' in dxf2000_blocks

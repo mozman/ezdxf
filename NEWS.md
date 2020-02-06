@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.11b1 - dev
+Version 0.11b2 - dev
 --------------------
 
 - Using standard git branches: 
@@ -49,6 +49,8 @@ Version 0.11b1 - dev
   `ezdxf.options.use_old_predefined_pattern_scaling` to True, to use the old pattern scaling before v0.11 
 - CHANGE: removed `ezdxf.PATTERN` constant, use `PATTERN = ezdxf.pattern.load()` instead, set argument 
   `old_pattern=True` to use the old pattern scaling before v0.11
+- CHANGE: `Table.key()` accepts only strings, therefore tables check `in` accepts also only strings 
+  like `entity.dxf.name`
 - CHANGE: renamed `ezdxf.math.left_of_line` to `ezdxf.math.is_point_left_of_line`
 - CHANGE: renamed `ConstructionLine.left_of_line` to `ConstructionLine.is_point_left_of_line`
 - BUGFIX: fixed incorrect HATCH pattern scaling

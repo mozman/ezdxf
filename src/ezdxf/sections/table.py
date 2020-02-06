@@ -65,18 +65,19 @@ class Table:
     # start public interface
 
     @staticmethod
-    def key(entity: Union[str, 'DXFEntity']) -> str:
+    def key(name: str) -> str:
         """ Unified table entry key. """
-        if not isinstance(entity, str):
-            entity = entity.dxf.name
-        return entity.lower()  # table key is lower case
+
+        if not isinstance(name, str):
+            raise TypeError('Name has to be a string.')
+        return name.lower()  # table key is lower case
 
     @property
     def name(self) -> str:
         """ Table name like ``layers``. """
         return tablename(self._head.dxf.name)
 
-    def has_entry(self, name: Union[str, 'DXFEntity']) -> bool:
+    def has_entry(self, name: str) -> bool:
         """ Returns ``True`` if an table entry `name` exist. """
         return self.key(name) in self.entries
 
@@ -314,7 +315,7 @@ class ViewportTable(Table):
         raise NotImplementedError()
 
     def _append(self, entry: 'DXFEntity') -> None:
-        key = self.key(entry)
+        key = self.key(entry.dxf.name)
         if key in self.entries:
             self.entries[key].append(entry)  # type: List[DXFEntity]
         else:

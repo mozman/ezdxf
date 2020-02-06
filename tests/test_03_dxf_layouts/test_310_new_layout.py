@@ -15,7 +15,7 @@ def test_create_new_layout(doc):
     assert 'mozman_layout' == new_layout.name
     assert new_layout.dxf_layout in doc.objects
     assert new_layout.name in doc.rootdict['ACAD_LAYOUT']
-    assert new_layout.block_record in doc.block_records
+    assert new_layout.block_record.dxf.name in doc.block_records
     assert new_layout.block_record.dxf.name in doc.blocks
 
 
@@ -29,7 +29,7 @@ def test_create_and_delete_new_layout(doc):
     assert 'mozman_layout_2' == new_layout.name
     assert new_layout.dxf_layout in doc.objects
     assert new_layout.name in doc.rootdict['ACAD_LAYOUT']
-    assert new_layout.block_record in doc.block_records
+    assert new_layout.block_record.dxf.name in doc.block_records
     assert new_layout.block_record.dxf.name in doc.blocks
 
     layout_name = new_layout.name
