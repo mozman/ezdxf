@@ -59,15 +59,11 @@ COPLANAR = 0  # all the vertices are within EPSILON distance from plane
 FRONT = 1  # all the vertices are in front of the plane
 BACK = 2  # all the vertices are at the back of the plane
 SPANNING = 3  # some vertices are in front, some in the back
+PLANE_EPSILON = 1e-5  # Tolerance used by split_polygon() to decide if a point is on the plane.
 
 
 class Plane:
     """ Represents a plane in 3D space.  """
-    """
-    `Plane.EPSILON` is the tolerance used by `split_polygon()` to decide if a
-    point is on the plane.
-    """
-    EPSILON = 1.e-5
     __slots__ = ('normal', 'w')
 
     def __init__(self, normal: Vector, w: float):
@@ -83,7 +79,7 @@ class Plane:
     def clone(self) -> 'Plane':
         return Plane(self.normal, self.w)
 
-    def flip(self):
+    def flip(self) -> None:
         self.normal = -self.normal
         self.w = -self.w
 
@@ -92,7 +88,7 @@ class Plane:
 
     def split_polygon(self, polygon: 'Polygon',
                       coplanar_front: List['Polygon'], coplanar_back: List['Polygon'],
-                      front: List['Polygon'], back: List['Polygon']):
+                      front: List['Polygon'], back: List['Polygon']) -> None:
         """
         Split `polygon` by this plane if needed, then put the polygon or polygon
         fragments in the appropriate lists. Coplanar polygons go into either
@@ -100,28 +96,26 @@ class Plane:
         respect to this plane. Polygons in front or in back of this plane go into
         either `front` or `back`
         """
-
-        # Classify each point as well as the entire polygon into one of the above
-        # four classes.
         polygon_type = 0
-        vertex_locations = []
+        vertex_types = []
+        vertices = polygon.vertices
 
-        num_vertices = len(polygon.vertices)
-        for i in range(num_vertices):
-            t = self.normal.dot(polygon.vertices[i]) - self.w
-            if t < -Plane.EPSILON:
-                loc = BACK
-            elif t > Plane.EPSILON:
-                loc = FRONT
+        # Classify each point as well as the entire polygon into one of four classes:
+        # COPLANAR, FRONT, BACK, SPANNING = FRONT + BACK
+        for vertex in vertices:
+            interpolation_weight = self.normal.dot(vertex) - self.w
+            if interpolation_weight < -PLANE_EPSILON:
+                vertex_type = BACK
+            elif interpolation_weight > PLANE_EPSILON:
+                vertex_type = FRONT
             else:
-                loc = COPLANAR
-            polygon_type |= loc
-            vertex_locations.append(loc)
+                vertex_type = COPLANAR
+            polygon_type |= vertex_type
+            vertex_types.append(vertex_type)
 
         # Put the polygon in the correct list, splitting it when necessary.
         if polygon_type == COPLANAR:
-            normal_dot_plane_normal = self.normal.dot(polygon.plane.normal)
-            if normal_dot_plane_normal > 0:
+            if self.normal.dot(polygon.plane.normal) > 0:
                 coplanar_front.append(polygon)
             else:
                 coplanar_back.append(polygon)
@@ -130,32 +124,28 @@ class Plane:
         elif polygon_type == BACK:
             back.append(polygon)
         elif polygon_type == SPANNING:
-            f = []
-            b = []
-            for i in range(num_vertices):
-                j = (i + 1) % num_vertices
-                ti = vertex_locations[i]
-                tj = vertex_locations[j]
-                vi = polygon.vertices[i]
-                vj = polygon.vertices[j]
-                if ti != BACK:
-                    f.append(vi)
-                if ti != FRONT:
-                    if ti != BACK:
-                        b.append(vi)
-                    else:
-                        b.append(vi)
-                if (ti | tj) == SPANNING:
-                    # interpolation weight at the intersection point
-                    t = (self.w - self.normal.dot(vi)) / self.normal.dot(vj - vi)
-                    # intersection point on the plane
-                    v = vi.lerp(vj, t)
-                    f.append(v)
-                    b.append(v)
-            if len(f) >= 3:
-                front.append(Polygon(f))
-            if len(b) >= 3:
-                back.append(Polygon(b))
+            front_vertices = []
+            back_vertices = []
+            len_vertices = len(vertices)
+            for index in range(len_vertices):
+                next_index = (index + 1) % len_vertices
+                vertex_type = vertex_types[index]
+                next_vertex_type = vertex_types[next_index]
+                vertex = vertices[index]
+                next_vertex = vertices[next_index]
+                if vertex_type != BACK:
+                    front_vertices.append(vertex)
+                if vertex_type != FRONT:
+                    back_vertices.append(vertex)
+                if (vertex_type | next_vertex_type) == SPANNING:
+                    interpolation_weight = (self.w - self.normal.dot(vertex)) / self.normal.dot(next_vertex - vertex)
+                    plane_intersection_point = vertex.lerp(next_vertex, interpolation_weight)
+                    front_vertices.append(plane_intersection_point)
+                    back_vertices.append(plane_intersection_point)
+            if len(front_vertices) >= 3:
+                front.append(Polygon(front_vertices))
+            if len(back_vertices) >= 3:
+                back.append(Polygon(back_vertices))
 
 
 class Polygon:
@@ -171,15 +161,16 @@ class Polygon:
         self.vertices = vertices
         self.plane = Plane.from_points(vertices[0], vertices[1], vertices[2])
 
-    def clone(self):
+    def clone(self) -> 'Polygon':
         return Polygon(list(self.vertices))
 
-    def flip(self):
+    def flip(self) -> None:
         self.vertices.reverse()
         self.plane.flip()
 
-    def __repr__(self):
-        return reduce(lambda x, y: x + y, ['Polygon(['] + [repr(v) + ', ' for v in self.vertices] + ['])'], '')
+    def __repr__(self) -> str:
+        v = ', '.join(repr(v) for v in self.vertices)
+        return f'Polygon([{v}])'
 
 
 class BSPNode:
@@ -199,7 +190,7 @@ class BSPNode:
         if polygons:
             self.build(polygons)
 
-    def clone(self):
+    def clone(self) -> 'BSPNode':
         node = BSPNode()
         if self.plane:
             node.plane = self.plane.clone()
@@ -210,7 +201,7 @@ class BSPNode:
         node.polygons = [p.clone() for p in self.polygons]
         return node
 
-    def invert(self):
+    def invert(self) -> None:
         """ Convert solid space to empty space and empty space to solid space. """
         for poly in self.polygons:
             poly.flip()
@@ -219,9 +210,7 @@ class BSPNode:
             self.front.invert()
         if self.back:
             self.back.invert()
-        temp = self.front
-        self.front = self.back
-        self.back = temp
+        self.front, self.back = self.back, self.front
 
     def clip_polygons(self, polygons: List['Polygon']):
         """ Recursively remove all polygons in `polygons` that are inside this BSP tree. """
@@ -244,7 +233,7 @@ class BSPNode:
         front.extend(back)
         return front
 
-    def clip_to(self, bsp):
+    def clip_to(self, bsp: 'BSPNode') -> None:
         """ Remove all polygons in this BSP tree that are inside the other BSP tree `bsp`. """
         self.polygons = bsp.clip_polygons(self.polygons)
         if self.front:
@@ -252,7 +241,7 @@ class BSPNode:
         if self.back:
             self.back.clip_to(bsp)
 
-    def all_polygons(self):
+    def all_polygons(self) -> List[Polygon]:
         """ Return a list of all polygons in this BSP tree. """
         polygons = self.polygons[:]
         if self.front:
@@ -261,7 +250,7 @@ class BSPNode:
             polygons.extend(self.back.all_polygons())
         return polygons
 
-    def build(self, polygons: List[Polygon]):
+    def build(self, polygons: List[Polygon]) -> None:
         """
         Build a BSP tree out of `polygons`. When called on an existing tree, the
         new polygons are filtered down to the bottom of the tree and become new
@@ -270,7 +259,8 @@ class BSPNode:
         """
         if len(polygons) == 0:
             return
-        if not self.plane:
+        if self.plane is None:
+            # do a wise choice and pick the first one ;)
             self.plane = polygons[0].plane.clone()
         # add polygon to this node
         self.polygons.append(polygons[0])
@@ -282,11 +272,11 @@ class BSPNode:
             self.plane.split_polygon(poly, self.polygons, self.polygons, front, back)
         # recursively build the BSP tree
         if len(front) > 0:
-            if not self.front:
+            if self.front is None:
                 self.front = BSPNode()
             self.front.build(front)
         if len(back) > 0:
-            if not self.back:
+            if self.back is None:
                 self.back = BSPNode()
             self.back.build(back)
 
@@ -303,13 +293,13 @@ class CSG:
     """
 
     def __init__(self, mesh: MeshBuilder = None):
-        self.polygons = []  # type: List[Polygon]
-        if mesh is not None:
-            for face in mesh.faces_as_vertices():
-                self.polygons.append(Polygon(face))
+        if mesh is None:
+            self.polygons = []  # type: List[Polygon]
+        else:
+            self.polygons = [Polygon(face) for face in mesh.faces_as_vertices()]
 
     @classmethod
-    def from_polygons(cls, polygons) -> 'CSG':
+    def from_polygons(cls, polygons: List[Polygon]) -> 'CSG':
         csg = CSG()
         csg.polygons = polygons
         return csg
@@ -321,12 +311,10 @@ class CSG:
             mesh.add_face(face.vertices)
         return MeshTransformer.from_builder(mesh)
 
-    def clone(self):
-        csg = CSG()
-        csg.polygons = [p.clone() for p in self.polygons]
-        return csg
+    def clone(self) -> 'CSG':
+        return self.from_polygons([p.clone() for p in self.polygons])
 
-    def union(self, csg):
+    def union(self, csg: 'CSG') -> 'CSG':
         """
         Return a new CSG solid representing space in either this solid or in the
         solid `csg`. Neither this solid nor the solid `csg` are modified::
@@ -354,7 +342,7 @@ class CSG:
 
     __add__ = union
 
-    def subtract(self, csg):
+    def subtract(self, csg: 'CSG') -> 'CSG':
         """
         Return a new CSG solid representing space in this solid but not in the
         solid `csg`. Neither this solid nor the solid `csg` are modified.::
@@ -384,7 +372,7 @@ class CSG:
 
     __sub__ = subtract
 
-    def intersect(self, csg):
+    def intersect(self, csg: 'CSG') -> 'CSG':
         """
         Return a new CSG solid representing space both this solid and in the
         solid `csg`. Neither this solid nor the solid `csg` are modified.::
@@ -413,7 +401,7 @@ class CSG:
 
     __mul__ = intersect
 
-    def inverse(self):
+    def inverse(self) -> 'CSG':
         """
         Return a new CSG solid with solid and empty space switched. This solid is
         not modified.
