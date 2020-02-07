@@ -38,12 +38,13 @@ def subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[
     """
     if len(face) < 3:
         raise ValueError('3 or more vertices required.')
-    mid_pos = sum(face) / len(face)
-    subdiv_pos = [v1.lerp(v2) for v1, v2 in zip(face[:-1], face[1:])]
-    subdiv_pos.append(face[-1].lerp(face[0]))
+    len_face = len(face)
+    mid_pos = sum(face) / len_face
+    subdiv_location = [face[i].lerp(face[(i + 1) % len_face]) for i in range(len_face)]
+
     for index, vertex in enumerate(face):
         if quads:
-            yield vertex, subdiv_pos[index], mid_pos, subdiv_pos[index - 1]
+            yield vertex, subdiv_location[index], mid_pos, subdiv_location[index - 1]
         else:
-            yield subdiv_pos[index - 1], vertex, mid_pos
-            yield vertex, subdiv_pos[index], mid_pos
+            yield subdiv_location[index - 1], vertex, mid_pos
+            yield vertex, subdiv_location[index], mid_pos
