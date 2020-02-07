@@ -7,7 +7,7 @@ from .construct2d import (
     is_close_points, closest_point, convex_hull, intersection_line_line, distance_point_line,
     is_point_on_line, is_point_in_polygon, is_point_left_of_line, point_to_line_relation,
 )
-from .construct3d import is_planar_face
+from .construct3d import is_planar_face, subdivide_face
 from .matrix44 import Matrix44
 from .matrix import Matrix
 from .bspline import bspline_control_frame, bspline_control_frame_approx

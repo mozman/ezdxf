@@ -224,15 +224,15 @@ class BSPNode:
             self.back.invert()
         self.front, self.back = self.back, self.front
 
-    def clip_polygons(self, polygons: List['Polygon']):
+    def clip_polygons(self, polygons: List[Polygon]) -> List[Polygon]:
         """ Recursively remove all polygons in `polygons` that are inside this BSP tree. """
-        if not self.plane:
+        if self.plane is None:
             return polygons[:]
 
-        front = []
-        back = []
-        for poly in polygons:
-            self.plane.split_polygon(poly, front, back, front, back)
+        front = []  # type: List[Polygon]
+        back = []  # type: List[Polygon]
+        for polygon in polygons:
+            self.plane.split_polygon(polygon, front, back, front, back)
 
         if self.front:
             front = self.front.clip_polygons(front)
@@ -272,13 +272,13 @@ class BSPNode:
         if len(polygons) == 0:
             return
         if self.plane is None:
-            # do a wise choice and pick the first one ;)
+            # do a wise choice and pick the first polygon as split-plane ;)
             self.plane = polygons[0].plane.clone()
-        # add polygon to this node
+        # add first polygon to this node
         self.polygons.append(polygons[0])
-        front = []
-        back = []
-        # split all other polygons using the first polygon's plane
+        front = []  # type: List[Polygon]
+        back = []  # type: List[Polygon]
+        # split all other polygons at the split plane
         for poly in polygons[1:]:
             # coplanar front and back polygons go into self.polygons
             self.plane.split_polygon(poly, self.polygons, self.polygons, front, back)

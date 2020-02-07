@@ -3,8 +3,8 @@
 # License: MIT License
 from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING
 from ezdxf.lldxf.const import DXFValueError
-from ezdxf.math import Matrix44, Vector, is_planar_face
-
+from ezdxf.math import Matrix44, Vector
+from ezdxf.math.construct3d import is_planar_face, subdivide_face
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout, UCS
 
@@ -309,20 +309,14 @@ def _subdivide(mesh, quads=True, edges=False) -> 'MeshVertexMerger':
     Args:
          quads: create quad faces if ``True`` else create triangles
          edges: also subdivide edges if ``True``
+
     """
     new_mesh = MeshVertexMerger()
     for vertices in mesh.faces_as_vertices():
         if len(vertices) < 3:
             continue
-        mid_pos = sum(vertices) / len(vertices)
-        subdiv_pos = [v1.lerp(v2) for v1, v2 in zip(vertices[:-1], vertices[1:])]
-        subdiv_pos.append(vertices[-1].lerp(vertices[0]))
-        for index, vertex in enumerate(vertices):
-            if quads:
-                new_mesh.add_face((vertex, subdiv_pos[index], mid_pos, subdiv_pos[index - 1]))
-            else:
-                new_mesh.add_face((subdiv_pos[index - 1], vertex, mid_pos))
-                new_mesh.add_face((vertex, subdiv_pos[index], mid_pos))
+        for face in subdivide_face(vertices, quads):
+            new_mesh.add_face(face)
 
     if edges:
         for start, end in mesh.edges_as_vertices():
