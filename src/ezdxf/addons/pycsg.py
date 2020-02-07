@@ -4,8 +4,6 @@
 # Additions by Alex Pletzer (Pennsylvania State University)
 # Adaptation as ezdxf add-on, Copyright (c) 2020, Manfred Moitzi, MIT License.
 from typing import List, Optional
-from functools import reduce
-
 from ezdxf.math import Vector
 from ezdxf.render import MeshVertexMerger, MeshBuilder, MeshTransformer
 
@@ -17,43 +15,55 @@ and is meant to serve as an easily understandable implementation of the
 algorithm. All edge cases involving overlapping coplanar polygons in both
 solids are correctly handled.
 
-Example usage::
+Example for usage as ezdxf add-on::
 
-    from csg.core import CSG
+    import ezdxf
+    from ezdxf.render.forms import cube, sphere
+    from ezdxf.addons.pycsg import CSG
     
-    cube = CSG.cube()
-    sphere = CSG.sphere({'radius': 1.3})
-    polygons = cube.subtract(sphere).to_polygons()
-
-## Implementation Details
-
-All CSG operations are implemented in terms of two functions, `clip_to()` and
-`invert()`, which remove parts of a BSP tree inside another BSP tree and swap
-solid and empty space, respectively. To find the union of `a` and `b`, we
-want to remove everything in `a` inside `b` and everything in `b` inside `a`,
-then combine polygons from `a` and `b` into one solid::
-
-    a.clip_to(b)
-    b.clip_to(a)
-    a.build(b.all_polygons())
-
-The only tricky part is handling overlapping coplanar polygons in both trees.
-The code above keeps both copies, but we need to keep them in one tree and
-remove them in the other tree. To remove them from `b` we can clip the
-inverse of `b` against `a`. The code for union now looks like this::
-
-    a.clip_to(b)
-    b.clip_to(a)
-    b.invert()
-    b.clip_to(a)
-    b.invert()
-    a.build(b.all_polygons())
-
-Subtraction and intersection naturally follow from set operations. If
-union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is
-`A & B = ~(~A | ~B)` where `~` is the complement operator.
-
+    # create same geometric primitives as MeshTransformer() objects
+    cube = cube()
+    sphere = sphere(radius=1.3)
+    # build solids and subtract them
+    difference = CSG(cube) - CSG(sphere)
+    # convert result to MeshTransformer() object
+    mesh = difference.mesh()
+    
+    doc = ezdxf.new()
+    # render MeshTransformer() object into modelspace as DXF MESH entity. 
+    mesh.render(doc.modelspace())
+    doc.saveas('csg.dxf')
+    
 """
+# Implementation Details
+# ----------------------
+#
+# All CSG operations are implemented in terms of two functions, clip_to() and
+# invert(), which remove parts of a BSP tree inside another BSP tree and swap
+# solid and empty space, respectively. To find the union of a and b, we
+# want to remove everything in a inside b and everything in b inside a,
+# then combine polygons from a and b into one solid:
+#
+#     a.clip_to(b)
+#     b.clip_to(a)
+#     a.build(b.all_polygons())
+#
+# The only tricky part is handling overlapping coplanar polygons in both trees.
+# The code above keeps both copies, but we need to keep them in one tree and
+# remove them in the other tree. To remove them from b we can clip the
+# inverse of b against a. The code for union now looks like this:
+#
+#     a.clip_to(b)
+#     b.clip_to(a)
+#     b.invert()
+#     b.clip_to(a)
+#     b.invert()
+#     a.build(b.all_polygons())
+#
+# Subtraction and intersection naturally follow from set operations. If
+# union is A | B, subtraction is A - B = ~(~A | B) and intersection is
+# A & B = ~(~A | ~B) where '~' is the complement operator.
+
 
 COPLANAR = 0  # all the vertices are within EPSILON distance from plane
 FRONT = 1  # all the vertices are in front of the plane
@@ -87,8 +97,10 @@ class Plane:
         return f'Plane({self.normal}, {self.w})'
 
     def split_polygon(self, polygon: 'Polygon',
-                      coplanar_front: List['Polygon'], coplanar_back: List['Polygon'],
-                      front: List['Polygon'], back: List['Polygon']) -> None:
+                      coplanar_front: List['Polygon'],
+                      coplanar_back: List['Polygon'],
+                      front: List['Polygon'],
+                      back: List['Polygon']) -> None:
         """
         Split `polygon` by this plane if needed, then put the polygon or polygon
         fragments in the appropriate lists. Coplanar polygons go into either
@@ -133,9 +145,9 @@ class Plane:
                 next_vertex_type = vertex_types[next_index]
                 vertex = vertices[index]
                 next_vertex = vertices[next_index]
-                if vertex_type != BACK:
+                if vertex_type != BACK:  # FRONT or COPLANAR
                     front_vertices.append(vertex)
-                if vertex_type != FRONT:
+                if vertex_type != FRONT:  # BACK or COPLANAR
                     back_vertices.append(vertex)
                 if (vertex_type | next_vertex_type) == SPANNING:
                     interpolation_weight = (self.w - self.normal.dot(vertex)) / self.normal.dot(next_vertex - vertex)
