@@ -62,7 +62,7 @@ def closest_point(base: 'Vertex', points: Iterable['Vertex']) -> 'Vector':
     return found
 
 
-def convex_hull(points: Iterable['Vertex']) -> List['Vertex']:
+def convex_hull_2d(points: Iterable['Vertex']) -> List['Vertex']:
     """ Returns 2D convex hull for `points`.
 
     Args:
@@ -140,7 +140,7 @@ class ConstructionTool:
         pass
 
 
-def intersection_line_line(
+def intersection_line_line_2d(
         line1: Sequence[Vec2],
         line2: Sequence[Vec2],
         virtual=True,
@@ -156,6 +156,8 @@ def intersection_line_line(
 
     Returns:
         ``None`` if there is no intersection point (parallel lines) or intersection point as :class:`Vec2`
+
+    .. versionadded:: 0.11
 
     """
     # Sources:
@@ -221,7 +223,7 @@ def intersection_line_line(
     return Vec2((x, y))
 
 
-def is_point_on_line(point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=TOLERANCE) -> bool:
+def is_point_on_line_2d(point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=TOLERANCE) -> bool:
     """ Returns ``True`` if `point` is on `line`.
 
     Args:
@@ -230,6 +232,8 @@ def is_point_on_line(point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=TOLE
         end: line definition point as :class:`Vec2`
         ray: if ``True`` point has to be on the infinite ray, if ``False`` point has to be on the line segment
         abs_tol: tolerance for on line test
+
+    .. versionadded:: 0.11
 
     """
 
@@ -262,6 +266,8 @@ def point_to_line_relation(point: Vec2, start: Vec2, end: Vec2, abs_tol=TOLERANC
         end: line definition point as :class:`Vec2`
         abs_tol: tolerance for minimum distance to line
 
+    .. versionadded:: 0.11
+
     """
     rel = (end.x - start.x) * (point.y - start.y) - (end.y - start.y) * (point.x - start.x)
     if math.isclose(rel, 0, abs_tol=abs_tol):
@@ -283,6 +289,10 @@ def is_point_left_of_line(point: Vec2, start: Vec2, end:Vec2, colinear=False) ->
         end: line definition point as :class:`Vec2`
         colinear: a colinear point is also "left of line" if ``True``
 
+    .. versionchanged:: 0.11
+
+        renamed from :meth:`is_left_of_line`
+
     """
     rel = point_to_line_relation(point, start, end)
     if colinear:
@@ -291,13 +301,15 @@ def is_point_left_of_line(point: Vec2, start: Vec2, end:Vec2, colinear=False) ->
         return rel < 0
 
 
-def distance_point_line(point: Vec2, start: Vec2, end: Vec2) -> float:
+def distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float:
     """ Returns distance from `point` to line defined by `start-` and `end` point.
 
     Args:
         point: 2D point to test as :class:`Vec2` or tuple of float
         start: line definition point as :class:`Vec2` or tuple of float
         end: line definition point as :class:`Vec2` or tuple of float
+
+    .. versionadded:: 0.11
 
     """
     # wikipedia: https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line.
@@ -306,7 +318,7 @@ def distance_point_line(point: Vec2, start: Vec2, end: Vec2) -> float:
     return math.fabs((start - point).det(end - point)) / (end - start).magnitude
 
 
-def is_point_in_polygon(point: Union[Vec2, Vector], polygon: Iterable[Vec2], abs_tol=TOLERANCE) -> int:
+def is_point_in_polygon_2d(point: Union[Vec2, Vector], polygon: Iterable[Vec2], abs_tol=TOLERANCE) -> int:
     """
     Test if `point` is inside `polygon`.
 
@@ -317,6 +329,8 @@ def is_point_in_polygon(point: Union[Vec2, Vector], polygon: Iterable[Vec2], abs
 
     Returns:
         ``+1`` for inside, ``0`` for on boundary line, ``-1`` for outside
+
+    .. versionadded:: 0.11
 
     """
     # Source: http://www.faqs.org/faqs/graphics/algorithms-faq/

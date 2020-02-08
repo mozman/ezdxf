@@ -4,8 +4,8 @@
 # License: MIT License
 from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 from .construct2d import (
-    is_close_points, closest_point, convex_hull, intersection_line_line, distance_point_line,
-    is_point_on_line, is_point_in_polygon, is_point_left_of_line, point_to_line_relation,
+    is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d, distance_point_line_2d,
+    is_point_on_line_2d, is_point_in_polygon_2d, is_point_left_of_line, point_to_line_relation,
 )
 from .construct3d import (
     is_planar_face, subdivide_face, Plane, LocationState, intersection_ray_ray_3d,

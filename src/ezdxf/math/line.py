@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
-from .construct2d import ConstructionTool, is_point_left_of_line, intersection_line_line
+from .construct2d import ConstructionTool, is_point_left_of_line, intersection_line_line_2d
 from .bbox import BoundingBox2d
 from .vector import Vec2
 
@@ -254,7 +254,7 @@ class ConstructionLine(ConstructionTool):
             other: other :class:`ConstructionLine`
 
         """
-        return intersection_line_line((self.start, self.end), (other.start, other.end), virtual=False)
+        return intersection_line_line_2d((self.start, self.end), (other.start, other.end), virtual=False)
 
     def has_intersection(self, other: 'ConstructionLine') -> bool:
         """ Returns ``True`` if has intersection with `other` line. """

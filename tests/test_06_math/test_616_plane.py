@@ -54,8 +54,8 @@ def test_distance_to():
 
 def test_is_coplanar():
     p = Plane.from_vector((5, 0, 0))
-    assert p.is_coplanar_vector(Vector(5, 5, 0)) is True
-    assert p.is_coplanar_vector(Vector(5, 0, 5)) is True
+    assert p.is_coplanar_vertex(Vector(5, 5, 0)) is True
+    assert p.is_coplanar_vertex(Vector(5, 0, 5)) is True
 
 
 def test_is_coplanar_plane():

@@ -3,24 +3,30 @@
 from pathlib import Path
 import ezdxf
 from ezdxf.addons.pycsg import CSG
-from ezdxf.render.forms import cube, cylinder
-from math import radians
+from ezdxf.render.forms import cube, cylinder_2p
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 
-
-builder = cube().scale_uniform(2).subdivide()
-csg_cube = CSG(builder)
-
-builder = cylinder(count=16, radius=0.5, top_center=(0, 0, 4)).translate(0, 0, -2).rotate_x(radians(90))
-csg_cylinder = CSG(builder)
+cube1 = cube()
+cylinder1 = cylinder_2p(count=32, base_center=(0, -1, 0), top_center=(0, 1, 0), radius=.25)
 
 doc = ezdxf.new()
 doc.set_modelspace_vport(6, center=(5, 0))
 msp = doc.modelspace()
 
-csg_cube.subtract(csg_cylinder).mesh().render(msp)
-csg_cube.union(csg_cylinder).mesh().translate(4).render(msp)
-csg_cube.intersect(csg_cylinder).mesh().translate(8).render(msp)
+# build solid union
+union = CSG(cube1) + CSG(cylinder1)
+# convert to mesh and render mesh to modelspace
+union.mesh().render(msp, dxfattribs={'color': 1})
+
+# build solid difference
+difference = CSG(cube1) - CSG(cylinder1)
+# convert to mesh, translate mesh and render mesh to modelspace
+difference.mesh().translate(1.5).render(msp, dxfattribs={'color': 3})
+
+# build solid intersection
+intersection = CSG(cube1) * CSG(cylinder1)
+# convert to mesh, translate mesh and render mesh to modelspace
+intersection.mesh().translate(2.75).render(msp, dxfattribs={'color': 5})
 
 doc.saveas(DIR / 'pycsg01.dxf')

@@ -1,6 +1,6 @@
 import time
 
-from ezdxf.math import intersection_line_line, ConstructionRay, Vec2
+from ezdxf.math import intersection_line_line_2d, ConstructionRay, Vec2
 
 P1 = Vec2((0, 0))
 P2 = Vec2((10, 10))
@@ -25,7 +25,7 @@ def profile_construction_ray_init_once(count=COUNT):
 
 def profile_intersection_line_line_xy(count=COUNT):
     for _ in range(count):
-        intersection_line_line(line1=(P1, P2), line2=(P3, P4))
+        intersection_line_line_2d(line1=(P1, P2), line2=(P3, P4))
 
 
 def profile(text, func):

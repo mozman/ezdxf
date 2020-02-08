@@ -45,19 +45,19 @@ Bulge Related Functions
 2D Functions
 ============
 
-.. autofunction:: distance_point_line(point: Vec2, start: Vec2, end: Vec2) -> float
+.. autofunction:: distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float
 
 .. autofunction:: point_to_line_relation(point: Vec2, start: Vec2, end: Vec2, abs_tol=1e-12) -> int
 
-.. autofunction:: is_point_on_line(point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=1e-12) -> bool
+.. autofunction:: is_point_on_line_2d(point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=1e-12) -> bool
 
 .. autofunction:: is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2, colinear=False) -> bool
 
-.. autofunction:: is_point_in_polygon(point: Vec2, polygon: Iterable[Vec2], abs_tol=1e-12) -> int
+.. autofunction:: is_point_in_polygon_2d(point: Vec2, polygon: Iterable[Vec2], abs_tol=1e-12) -> int
 
-.. autofunction:: convex_hull
+.. autofunction:: convex_hull_2d
 
-.. autofunction:: intersection_line_line(line1: Sequence[Vec2], line2: Sequence[Vec2], virtual=True, abs_tol=1e-12) -> Optional[Vec2]
+.. autofunction:: intersection_line_line_2d(line1: Sequence[Vec2], line2: Sequence[Vec2], virtual=True, abs_tol=1e-12) -> Optional[Vec2]
 
 .. autofunction:: offset_vertices_2d
 
@@ -80,8 +80,11 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 3D Functions
 ============
 
-.. autofunction:: is_planar_face
+.. autofunction:: is_planar_face(face: Sequence[Vector], abs_tol=1e-9) -> bool
 
+.. autofunction:: subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[List[Vector]]
+
+.. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-12) -> Sequence[Vector]
 
 Transformation Classes
 ======================
@@ -172,6 +175,82 @@ UCS Class
     .. automethod:: from_z_axis_and_point_in_yz
 
     .. automethod:: render_axis
+
+Matrix44
+--------
+
+.. autoclass:: Matrix44
+
+    .. automethod:: __repr__
+
+    .. automethod:: set
+
+    .. automethod:: get_row
+
+    .. automethod:: set_row
+
+    .. automethod:: get_col
+
+    .. automethod:: set_col
+
+    .. automethod:: copy() -> Matrix44
+
+    .. automethod:: __copy__() -> Matrix44
+
+    .. automethod:: scale(sx: float, sy: float = None, sz: float = None) -> Matrix44
+
+    .. automethod:: translate(dx: float, dy: float, dz: float) -> Matrix44
+
+    .. automethod:: x_rotate(angle: float) -> Matrix44
+
+    .. automethod:: y_rotate(angle: float) -> Matrix44
+
+    .. automethod:: z_rotate(angle: float) -> Matrix44
+
+    .. automethod:: axis_rotate(axis: Vertex, angle: float) -> Matrix44
+
+    .. automethod:: xyz_rotate(angle_x: float, angle_y: float, angle_z: float) -> Matrix44
+
+    .. automethod:: perspective_projection(left: float, right: float, top: float, bottom: float, near: float, far: float) -> Matrix44
+
+    .. automethod:: perspective_projection_fov(fov: float, aspect: float, near: float, far: float) -> Matrix44
+
+    .. automethod:: chain(*matrices: Iterable[Matrix44]) -> Matrix44
+
+    .. automethod:: ucs(ux: Vertex, uy: Vertex, uz: Vertex) -> Matrix44
+
+    .. automethod:: __hash__
+
+    .. automethod:: __getitem__
+
+    .. automethod:: __setitem__
+
+    .. automethod:: __iter__
+
+    .. automethod:: rows
+
+    .. automethod:: columns
+
+    .. automethod:: __mul__(other: Matrix44) -> Matrix44
+
+    .. automethod:: __imul__(other: Matrix44) -> Matrix44
+
+    .. automethod:: fast_mul(other: Matrix44) -> Matrix44
+
+    .. automethod:: transform
+
+    .. automethod:: transform_vectors
+
+    .. automethod:: transpose
+
+    .. automethod:: get_transpose() -> Matrix44
+
+    .. automethod:: determinant
+
+    .. automethod:: inverse
+
+Construction Tools
+==================
 
 Vector
 ------
@@ -309,209 +388,31 @@ Vec2
 
 .. autoclass:: Vec2(v)
 
-Matrix44
---------
+Plane
+-----
 
-.. autoclass:: Matrix44
+.. autoclass:: Plane(normal: Vector, distance: float)
 
-    .. automethod:: __repr__
+    .. autoattribute:: normal
 
-    .. automethod:: set
+    .. autoattribute:: distance_from_origin
 
-    .. automethod:: get_row
+    .. autoattribute:: vector
 
-    .. automethod:: set_row
+    .. automethod:: from_3p(a: Vector, b: Vector, c: Vector) -> Plane
 
-    .. automethod:: get_col
+    .. automethod:: from_vector(vector) -> Plane
 
-    .. automethod:: set_col
+    .. automethod:: copy() -> Plane
 
-    .. automethod:: copy() -> Matrix44
+    .. automethod:: signed_distance_to(v: Vector) -> float
 
-    .. automethod:: __copy__() -> Matrix44
+    .. automethod:: distance_to(v: Vector) -> float
 
-    .. automethod:: scale(sx: float, sy: float = None, sz: float = None) -> Matrix44
+    .. automethod:: is_coplanar_vertex(v: Vector, abs_tol=1e-9) -> bool
 
-    .. automethod:: translate(dx: float, dy: float, dz: float) -> Matrix44
+    .. automethod:: is_coplanar_plane(p: Plane, abs_tol=1e-9) -> bool
 
-    .. automethod:: x_rotate(angle: float) -> Matrix44
-
-    .. automethod:: y_rotate(angle: float) -> Matrix44
-
-    .. automethod:: z_rotate(angle: float) -> Matrix44
-
-    .. automethod:: axis_rotate(axis: Vertex, angle: float) -> Matrix44
-
-    .. automethod:: xyz_rotate(angle_x: float, angle_y: float, angle_z: float) -> Matrix44
-
-    .. automethod:: perspective_projection(left: float, right: float, top: float, bottom: float, near: float, far: float) -> Matrix44
-
-    .. automethod:: perspective_projection_fov(fov: float, aspect: float, near: float, far: float) -> Matrix44
-
-    .. automethod:: chain(*matrices: Iterable[Matrix44]) -> Matrix44
-
-    .. automethod:: ucs(ux: Vertex, uy: Vertex, uz: Vertex) -> Matrix44
-
-    .. automethod:: __hash__
-
-    .. automethod:: __getitem__
-
-    .. automethod:: __setitem__
-
-    .. automethod:: __iter__
-
-    .. automethod:: rows
-
-    .. automethod:: columns
-
-    .. automethod:: __mul__(other: Matrix44) -> Matrix44
-
-    .. automethod:: __imul__(other: Matrix44) -> Matrix44
-
-    .. automethod:: fast_mul(other: Matrix44) -> Matrix44
-
-    .. automethod:: transform
-
-    .. automethod:: transform_vectors
-
-    .. automethod:: transpose
-
-    .. automethod:: get_transpose() -> Matrix44
-
-    .. automethod:: determinant
-
-    .. automethod:: inverse
-
-
-Curves
-======
-
-BSpline
--------
-
-.. autoclass:: BSpline
-
-    .. attribute:: control_points
-
-        control points as list of :class:`~ezdxf.math.Vector`
-
-    .. autoattribute:: count
-
-    .. attribute:: degree
-
-    .. attribute:: order
-
-        order of B-spline = degree +  1
-
-    .. autoattribute:: max_t
-
-    .. automethod:: knot_values
-
-    .. automethod:: basis_values
-
-    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
-
-    .. automethod:: point(t: float) -> Vector
-
-    .. automethod:: insert_knot
-
-
-BSplineU
---------
-
-.. autoclass:: BSplineU
-
-BSplineClosed
--------------
-
-.. autoclass:: BSplineClosed
-
-
-DBSpline
---------
-
-.. autoclass:: DBSpline
-
-    .. automethod:: point(t: float) -> Tuple[Vector, Vector, Vector]
-
-DBSplineU
----------
-
-.. autoclass:: DBSplineU
-
-DBSplineClosed
---------------
-
-.. autoclass:: DBSplineClosed
-
-Bezier
-------
-
-.. autoclass:: Bezier
-
-    .. autoattribute:: control_points
-
-    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
-
-    .. automethod:: point(t: float) -> Vector
-
-DBezier
--------
-
-.. autoclass:: DBezier
-
-    .. automethod:: point(t: float) -> Tuple[Vector, Vector, Vector]
-
-Bezier4P
---------
-
-.. autoclass:: Bezier4P
-
-    .. autoattribute:: control_points
-
-    .. automethod:: point
-
-    .. automethod:: tangent
-
-    .. automethod:: approximate
-
-    .. automethod:: approximated_length
-
-BezierSurface
--------------
-
-.. autoclass:: BezierSurface
-
-    .. autoattribute:: nrows
-
-    .. autoattribute:: ncols
-
-    .. automethod:: point
-
-    .. automethod:: approximate
-
-
-EulerSpiral
------------
-
-.. autoclass:: EulerSpiral
-
-    .. automethod:: radius
-
-    .. automethod:: tangent(t: float) -> Vector
-
-    .. automethod:: distance
-
-    .. automethod:: point(t: float) -> Vector
-
-    .. automethod:: circle_center(t: float) -> Vector
-
-    .. automethod:: approximate(length: float, segments: int) -> Iterable[Vector]
-
-    .. automethod:: bspline(length: float, segments: int = 10, degree: int = 3, method: str = 'uniform') -> BSpline
-
-Construction Tools
-==================
 
 BoundingBox
 -----------
@@ -765,6 +666,132 @@ Shape2d
 
     .. automethod:: convex_hull
 
+Curves
+======
+
+BSpline
+-------
+
+.. autoclass:: BSpline
+
+    .. attribute:: control_points
+
+        control points as list of :class:`~ezdxf.math.Vector`
+
+    .. autoattribute:: count
+
+    .. attribute:: degree
+
+    .. attribute:: order
+
+        order of B-spline = degree +  1
+
+    .. autoattribute:: max_t
+
+    .. automethod:: knot_values
+
+    .. automethod:: basis_values
+
+    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
+
+    .. automethod:: point(t: float) -> Vector
+
+    .. automethod:: insert_knot
+
+
+BSplineU
+--------
+
+.. autoclass:: BSplineU
+
+BSplineClosed
+-------------
+
+.. autoclass:: BSplineClosed
+
+
+DBSpline
+--------
+
+.. autoclass:: DBSpline
+
+    .. automethod:: point(t: float) -> Tuple[Vector, Vector, Vector]
+
+DBSplineU
+---------
+
+.. autoclass:: DBSplineU
+
+DBSplineClosed
+--------------
+
+.. autoclass:: DBSplineClosed
+
+Bezier
+------
+
+.. autoclass:: Bezier
+
+    .. autoattribute:: control_points
+
+    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
+
+    .. automethod:: point(t: float) -> Vector
+
+DBezier
+-------
+
+.. autoclass:: DBezier
+
+    .. automethod:: point(t: float) -> Tuple[Vector, Vector, Vector]
+
+Bezier4P
+--------
+
+.. autoclass:: Bezier4P
+
+    .. autoattribute:: control_points
+
+    .. automethod:: point
+
+    .. automethod:: tangent
+
+    .. automethod:: approximate
+
+    .. automethod:: approximated_length
+
+BezierSurface
+-------------
+
+.. autoclass:: BezierSurface
+
+    .. autoattribute:: nrows
+
+    .. autoattribute:: ncols
+
+    .. automethod:: point
+
+    .. automethod:: approximate
+
+
+EulerSpiral
+-----------
+
+.. autoclass:: EulerSpiral
+
+    .. automethod:: radius
+
+    .. automethod:: tangent(t: float) -> Vector
+
+    .. automethod:: distance
+
+    .. automethod:: point(t: float) -> Vector
+
+    .. automethod:: circle_center(t: float) -> Vector
+
+    .. automethod:: approximate(length: float, segments: int) -> Iterable[Vector]
+
+    .. automethod:: bspline(length: float, segments: int = 10, degree: int = 3, method: str = 'uniform') -> BSpline
 
 .. _Curve Global Interpolation: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
 .. _uniform: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-uniform.html

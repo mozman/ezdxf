@@ -4,7 +4,7 @@
 from typing import Union, Iterable, List, TYPE_CHECKING
 import math
 from .vector import Vec2
-from .construct2d import ConstructionTool, convex_hull
+from .construct2d import ConstructionTool, convex_hull_2d
 from .offset2d import offset_vertices_2d
 from .bbox import BoundingBox2d
 
@@ -82,7 +82,7 @@ class Shape2d(ConstructionTool):
 
     def convex_hull(self) -> 'Shape2d':
         """ Returns convex hull as new shape. """
-        return self.__class__(convex_hull(self.vertices))
+        return self.__class__(convex_hull_2d(self.vertices))
 
     # Sequence interface
     def __len__(self) -> int:

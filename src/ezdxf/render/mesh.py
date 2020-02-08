@@ -218,8 +218,7 @@ class MeshTransformer(MeshBuilder):
             t = Vector(x, y, z)
         else:
             t = Vector(x)
-        for index, vertex in enumerate(self.vertices):
-            self.vertices[index] = t + vertex
+        self.vertices = [t + v for v in self.vertices]
         return self
 
     def scale(self, sx: float = 1, sy: float = 1, sz: float = 1):

@@ -21,6 +21,8 @@ def is_planar_face(face: Sequence[Vector], abs_tol=1e-9) -> bool:
          face: sequence of :class:`~ezdxf.math.Vector` objects
          abs_tol: tolerance for normals check
 
+    .. versionadded:: 0.11
+
     """
     if len(face) < 3:
         return False
@@ -45,6 +47,8 @@ def subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[
         face: a sequence of vertices, :class:`Vec2` and :class:`Vector` objects supported.
         quads: create quad faces if ``True`` else create triangles
 
+    .. versionadded:: 0.11
+
     """
     if len(face) < 3:
         raise ValueError('3 or more vertices required.')
@@ -64,10 +68,13 @@ def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vec
     """
     Calculate intersection of two rays, returns a 0-tuple for parallel rays, a 1-tuple for intersecting rays and a
     2-tuple for not intersecting and not parallel rays with points of closest approach on each ray.
+
     Args:
         ray1: first ray as tuple of two points on the ray as :class:`Vector` objects
         ray2: second ray as tuple of two points on the ray as :class:`Vector` objects
         abs_tol: absolute tolerance for comparisons
+
+    .. versionadded:: 0.11
 
     """
     # source: http://www.realtimerendering.com/intersections.html#I304
@@ -96,7 +103,11 @@ def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vec
 
 
 class Plane:
-    """ Represents a plane in 3D space.  """
+    """ Represents a plane in 3D space as normal vector and the perpendicular distance from origin.
+
+    .. versionadded:: 0.11
+
+    """
     __slots__ = ('_normal', '_distance_from_origin')
 
     def __init__(self, normal: Vector, distance: float):
@@ -106,27 +117,33 @@ class Plane:
 
     @property
     def normal(self) -> Vector:
+        """ Normal vector of the plane. """
         return self._normal
 
     @property
     def distance_from_origin(self) -> float:
+        """ The (perpendicular) distance of the plane from origin (0, 0, 0). """
         return self._distance_from_origin
 
     @property
     def vector(self) -> Vector:
+        """ Returns the location vector. """
         return self._normal * self._distance_from_origin
 
     @classmethod
     def from_3p(cls, a: Vector, b: Vector, c: Vector) -> 'Plane':
+        """ Returns a new plane from 3 points in space. """
         n = (b - a).cross(c - a).normalize()
         return Plane(n, n.dot(a))
 
     @classmethod
     def from_vector(cls, vector) -> 'Plane':
+        """ Returns a new plane from a location vector. """
         v = Vector(vector)
         return Plane(v.normalize(), v.magnitude)
 
     def __copy__(self) -> 'Plane':
+        """ Returns a copy of the plane. """
         return self.__class__(self._normal, self._distance_from_origin)
 
     copy = __copy__
@@ -141,19 +158,19 @@ class Plane:
             raise TypeError
 
     def signed_distance_to(self, v: Vector) -> float:
-        """ Returns signed distance of vector `v` to plane, if distance is > 0, `v` is in 'front' of plane, in direction
-        of the normal vector, if distance is < 0, `v` is at the 'back' the plane, in the opposite direction of
+        """ Returns signed distance of vertex `v` to plane, if distance is > 0, `v` is in 'front' of plane, in direction
+        of the normal vector, if distance is < 0, `v` is at the 'back' of the plane, in the opposite direction of
         the normal vector.
 
         """
         return self._normal.dot(v) - self._distance_from_origin
 
     def distance_to(self, v: Vector) -> float:
-        """ Returns absolute (unsigned) distance of vector `v` to plane. """
+        """ Returns absolute (unsigned) distance of vertex `v` to plane. """
         return math.fabs(self.signed_distance_to(v))
 
-    def is_coplanar_vector(self, v: Vector, abs_tol=1e-9) -> bool:
-        """ Returns ``True`` if vector `v` is coplanar, distance from plane to vector `v` is 0. """
+    def is_coplanar_vertex(self, v: Vector, abs_tol=1e-9) -> bool:
+        """ Returns ``True`` if vertex `v` is coplanar, distance from plane to vertex `v` is 0. """
         return self.distance_to(v) < abs_tol
 
     def is_coplanar_plane(self, p: 'Plane', abs_tol=1e-9) -> bool:

@@ -18,8 +18,11 @@ Version 0.11b2 - dev
 - NEW: `Ellipse.vertices(params)` yields vertices for iterable params in WCS
 - NEW: Arc properties `start_point` and `end_point` returns start- and end point of arc in WCS
 - NEW: Ellipse properties `start_point` and `end_point` returns start- and end point of ellipse in WCS
+- NEW: user defined point format support for 2d POLYLINE entities: 
+  `add_polyline2d([(1, 2, 0.5), (3, 4, 0)], format='xyb')` 
+- NEW: `Polyline.append_formatted_points()` with user defined point format support
 - NEW: `Drawing.set_modelspace_vport(height, center)` set initial view/zoom location for the modelspace
-- NEW: 2d construction function `ezdxf.math.offset_vertices_2d()`
+- NEW: support for associating HATCH boundary paths to geometry entities
 - NEW: `Drawing.output_encoding` returns required output encoding
 - NEW: User Coordinate System (UCS) based entity transformation, allows to work with UCS coordinates, which are 
   simpler if the UCS is chosen wisely, and transform them later into WCS coordinates. Entities which have a 
@@ -34,15 +37,24 @@ Version 0.11b2 - dev
 - NEW: `UCS.copy()` returns a new copy of UCS
 - NEW: `UCS.shift(delta)` shifts UCS inplace by vector `delta`
 - NEW: `UCS.moveto(location)` set new UCS origin to `location` inplace
-- NEW: load DXF comments from file (`ezdxf.comments.from_file`) or stream (`ezdxf.comments.from_stream`)
-- NEW: user defined point format support for 2d POLYLINE entities: 
-  `add_polyline2d([(1, 2, 0.5), (3, 4, 0)], format='xyb')` 
-- NEW: `Polyline.append_formatted_points()` with user defined point format support
 - NEW: `size` and `center` properties for bounding box classes
 - NEW: `Insert.ucs()` returns an UCS placed in block reference `insert` location, UCS axis aligned to the block axis.
 - NEW: `Insert.reset_transformation()` reset block reference location, rotation and extrusion vector.
-- NEW: support for associating HATCH boundary paths to geometry entities
-- NEW: `MeshTransformer()` class, simple inplace mesh transformations
+- CHANGE: renamed `ezdxf.math.left_of_line` to `ezdxf.math.is_point_left_of_line` 
+- NEW: `ezdxf.math.point_to_line_relation()` 2D function returns `-1` for left oft line, `+1` for right oif line , `0` on the line
+- NEW: `ezdxf.math.is_point_on_line_2d()` test if 2D point is on 2D line 
+- NEW: `ezdxf.math.distance_point_line_2d()` distance of 2D point from 2D line
+- NEW: `ezdxf.math.is_point_in_polygon_2d()` test if 2D point is inside of a 2D polygon 
+- NEW: `ezdxf.math.intersection_line_line_2d()` calculate intersection for 2D lines 
+- NEW: `ezdxf.math.offset_vertices_2d()` calculate 2D offset vertices for a 2D polygon 
+- NEW: `ezdxf.math.is_planar_face()` test if 3D face is planar
+- NEW: `ezdxf.math.subdivide_face()` linear subdivision for 2D/3D faces/polygons 
+- NEW: `ezdxf.math.intersection_ray_ray_3d()` calculate intersection for 3D rays 
+- NEW: `ezdxf.math.Plane()` 3D plane construction tool 
+- NEW: `ezdxf.render.MeshTransformer()` simple inplace mesh transformations class
+- NEW: `ezdxf.render.forms.cone_2p()` create 3D cone mesh from two points
+- NEW: `ezdxf.render.forms.cylinder_2p()` create 3D cylinder mesh from two points
+- NEW: `ezdxf.render.forms.sphere()` create 3D sphere mesh
 - NEW: `pycsg` add-on, a simple Constructive Solid Geometry (CSG) kernel created by Evan Wallace (Javascript) and 
   Tim Knip (Python)
 - CHANGE: Changed predefined pattern scaling to BricsCAD and AutoCAD standard, set global option 
@@ -51,8 +63,7 @@ Version 0.11b2 - dev
   `old_pattern=True` to use the old pattern scaling before v0.11
 - CHANGE: `Table.key()` accepts only strings, therefore tables check `in` accepts also only strings 
   like `entity.dxf.name`
-- CHANGE: renamed `ezdxf.math.left_of_line` to `ezdxf.math.is_point_left_of_line`
-- CHANGE: renamed `ConstructionLine.left_of_line` to `ConstructionLine.is_point_left_of_line`
+- NEW: load DXF comments from file (`ezdxf.comments.from_file`) or stream (`ezdxf.comments.from_stream`)
 - BUGFIX: fixed incorrect HATCH pattern scaling
 - BUGFIX: fixed base point calculation of aligned dimensions
 - BUGFIX: fixed length extension line support for linear dimensions

@@ -428,6 +428,8 @@ def cube(center: bool = True) -> MeshTransformer:
     Args:
         center: 'mass' center of cube, ``(0, 0, 0)`` if ``True``, else first corner at ``(0, 0, 0)``
 
+    Returns: :class:`~ezdxf.render.MeshTransformer`
+
     """
     mesh = MeshTransformer()
     vectices = _cube0_vertices if center else _cube_vertices
@@ -479,7 +481,8 @@ def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close: bool =
 def cylinder(count: int = 16, radius: float = 1., top_radius: float = None, top_center: 'Vertex' = (0, 0, 1),
              caps: bool = True) -> MeshTransformer:
     """
-    Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as :class:`~ezdxf.render.MeshTransformer` object.
+    Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as :class:`~ezdxf.render.MeshTransformer` object,
+    the base center is fixed in the origin (0, 0, 0).
 
     Args:
         count: profiles edge count
@@ -487,6 +490,8 @@ def cylinder(count: int = 16, radius: float = 1., top_radius: float = None, top_
         top_radius: radius for top profile, if ``None`` top_radius == radius
         top_center: location vector for the center of the top profile
         caps: close hull with bottom cap and top cap (as N-gons)
+
+    Returns: :class:`~ezdxf.render.MeshTransformer`
 
     """
     if top_radius is None:
@@ -500,15 +505,20 @@ def cylinder(count: int = 16, radius: float = 1., top_radius: float = None, top_
     return from_profiles_linear([base_profile, top_profile], caps=caps)
 
 
-def cylinder2(count: int = 16, radius: float = 1, base_center=(0, 0, 0), top_center=(0, 0, 1), ) -> MeshTransformer:
+def cylinder_2p(count: int = 16, radius: float = 1, base_center=(0, 0, 0), top_center=(0, 0, 1), ) -> MeshTransformer:
     """
-    Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as :class:`~ezdxf.render.MeshTransformer` object.
+    Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as :class:`~ezdxf.render.MeshTransformer` object from
+    two points, `base_center` is the center of the base circle and, `top_center` the center of the top circle.
 
     Args:
         count: profiles edge count
         radius: radius for bottom profile
         base_center: center of base circle
         top_center: center of top circle
+
+    Returns: :class:`~ezdxf.render.MeshTransformer`
+
+    .. versionadded:: 0.11
 
     """
     # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
@@ -552,7 +562,7 @@ def from_profiles_linear(profiles: Iterable[Iterable['Vertex']], close: bool = T
         close: close profile polygon if ``True``
         caps: close hull with bottom cap and top cap (as N-gons)
 
-    Returns: :class:`~ezdxf.render.MeshVertexMerger`
+    Returns: :class:`~ezdxf.render.MeshTransformer`
 
     """
     mesh = MeshVertexMerger()
@@ -637,7 +647,6 @@ def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int 
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
-
     """
     profiles = list(profiles)
     if len(profiles) > 3:
@@ -649,13 +658,16 @@ def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int 
 
 def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps: bool = True) -> MeshTransformer:
     """
-    Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as :class:`~ezdxf.render.MeshTransformer` object.
+    Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as :class:`~ezdxf.render.MeshTransformer` object, the base
+    center is fixed in the origin (0, 0, 0).
 
     Args:
         count: edge count of basis
         radius: radius of basis
-        apex: apex of the cone
+        apex: tip of the cone
         caps: add a bottom face if ``True``
+
+    Returns: :class:`~ezdxf.render.MeshTransformer`
 
     """
     mesh = MeshVertexMerger()
@@ -667,15 +679,20 @@ def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps:
     return MeshTransformer.from_builder(mesh)
 
 
-def cone2(count: int = 16, radius: float = 1.0, base_center=(0, 0, 0), apex=(0, 0, 1)) -> MeshTransformer:
+def cone_2p(count: int = 16, radius: float = 1.0, base_center=(0, 0, 0), apex=(0, 0, 1)) -> MeshTransformer:
     """
-    Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as :class:`~ezdxf.render.MeshTransformer` object.
+    Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as :class:`~ezdxf.render.MeshTransformer` object from
+    two points, `base_center` is the center of the base circle and `apex` as the tip of the cone.
 
     Args:
         count: edge count of basis
         radius: radius of basis
-        base_center: center point of base
-        apex: apex of the cone
+        base_center: center point of base circle
+        apex: tip of the cone
+
+    Returns: :class:`~ezdxf.render.MeshTransformer`
+
+    .. versionadded:: 0.11
 
     """
     # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
@@ -745,92 +762,76 @@ def doughnut(mcount: int, ncount: int, outer_radius: float = 1., ring_radius: fl
     pass
 
 
-def sphere(count: int = 16, stacks: int = 8, radius: float = 1) -> MeshTransformer:
+def sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads=False) -> MeshTransformer:
     """
-    Create a sphere as :class:`~ezdxf.render.MeshTransformer` object.
+    Create a `sphere <https://en.wikipedia.org/wiki/Sphere>`_ as :class:`~ezdxf.render.MeshTransformer` object,
+    center is fixed at origin (0, 0, 0).
 
     Args:
         count: longitudinal slices
         stacks: latitude slices
         radius: radius of sphere
+        quads: use quads for body faces if ``True``
+
+    Returns: :class:`~ezdxf.render.MeshTransformer`
+
+    .. versionadded:: 0.11
+
     """
-    # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
-    # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
-    # Additions by Alex Pletzer (Pennsylvania State University)
-    # Adaptation for ezdxf, Copyright (c) 2020, Manfred Moitzi, MIT License.
     radius = float(radius)
     slices = int(count)
-    stacks = int(stacks)
-    mesh = MeshVertexMerger()
-
-    def vertex(theta, phi) -> Vector:
-        return Vector(
-            cos(theta) * sin(phi),
-            cos(phi),
-            sin(theta) * sin(phi),
-        ) * radius
-
+    stacks_2 = int(stacks) // 2  # stacks from - stack/2 to +stack/2
     delta_theta = pi * 2.0 / float(slices)
     delta_phi = pi / float(stacks)
+    mesh = MeshVertexMerger()
 
-    j0 = 0
-    j1 = j0 + 1
-    for i0 in range(0, slices):
-        i1 = i0 + 1
-        #  +--+
-        #  | /
-        #  |/
-        #  +
-        mesh.add_face([
-            vertex(i0 * delta_theta, j0 * delta_phi),
-            vertex(i1 * delta_theta, j1 * delta_phi),
-            vertex(i0 * delta_theta, j1 * delta_phi),
-        ])
+    def radius_of_stack(stack: float) -> float:
+        return radius * cos(delta_phi * stack)
 
-        j0 = stacks - 1
-        j1 = j0 + 1
-        for i0 in range(0, slices):
-            i1 = i0 + 1
-        #  +
-        #  |\
-        #  | \
-        #  +--+
-        mesh.add_face([
-            vertex(i0 * delta_theta, j0 * delta_phi),
-            vertex(i1 * delta_theta, j0 * delta_phi),
-            vertex(i0 * delta_theta, j1 * delta_phi),
-        ])
+    def vertex(slice_: float, r: float, z: float) -> Vector:
+        actual_theta = delta_theta * slice_
+        return Vector(cos(actual_theta) * r, sin(actual_theta) * r, z)
 
-        for j0 in range(1, stacks - 1):
-            j1 = j0 + 0.5
-        j2 = j0 + 1
-        for i0 in range(0, slices):
-            i1 = i0 + 0.5
-        i2 = i0 + 1
-        #  +---+
-        #  |\ /|
-        #  | x |
-        #  |/ \|
-        #  +---+
-        mesh.add_face([
-            vertex(i1 * delta_theta, j1 * delta_phi),
-            vertex(i2 * delta_theta, j2 * delta_phi),
-            vertex(i0 * delta_theta, j2 * delta_phi),
-        ])
-        mesh.add_face([
-            vertex(i1 * delta_theta, j1 * delta_phi),
-            vertex(i0 * delta_theta, j0 * delta_phi),
-            vertex(i2 * delta_theta, j0 * delta_phi),
+    def cap_triangles(stack, top=False):
+        z = sin(stack * delta_phi) * radius
+        cap_vertex = Vector(0, 0, radius) if top else Vector(0, 0, -radius)
+        r1 = radius_of_stack(stack)
+        for slice_ in range(slices):
+            mesh.add_face([
+                vertex(slice_, r1, z),
+                vertex(slice_ + 1, r1, z),
+                cap_vertex,
+            ])
 
-        ])
-        mesh.add_face([
-            vertex(i1 * delta_theta, j1 * delta_phi),
-            vertex(i0 * delta_theta, j2 * delta_phi),
-            vertex(i0 * delta_theta, j0 * delta_phi),
-        ])
-        mesh.add_face([
-            vertex(i1 * delta_theta, j1 * delta_phi),
-            vertex(i2 * delta_theta, j0 * delta_phi),
-            vertex(i2 * delta_theta, j2 * delta_phi),
-        ])
+    # bottom triangle faces
+    cap_triangles(-stacks_2 + 1, top=False)
+
+    # add body faces
+    for actual_stack in range(-stacks_2 + 1, stacks_2 - 1):
+        next_stack = actual_stack + 1
+        r1 = radius_of_stack(actual_stack)
+        r2 = radius_of_stack(next_stack)
+        z1 = sin(delta_phi * actual_stack) * radius
+        z2 = sin(delta_phi * next_stack) * radius
+        for i in range(slices):
+            v1 = vertex(i, r1, z1)
+            v2 = vertex(i + 1, r1, z1)
+            v3 = vertex(i + 1, r2, z2)
+            v4 = vertex(i, r2, z2)
+            if quads:
+                mesh.add_face([v1, v2, v3, v4])
+            else:
+                center = vertex(
+                    i + 0.5,
+                    radius_of_stack(actual_stack + 0.5),
+                    sin(delta_phi * (actual_stack + 0.5))*radius,
+                )
+                mesh.add_face([v1, v2, center])
+                mesh.add_face([v2, v3, center])
+                mesh.add_face([v3, v4, center])
+                mesh.add_face([v4, v1, center])
+
+    # top triangle faces
+    cap_triangles(stacks_2 - 1, top=True)
+
     return MeshTransformer.from_builder(mesh)

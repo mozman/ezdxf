@@ -2,39 +2,11 @@
 # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
 # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
 # Additions by Alex Pletzer (Pennsylvania State University)
-# Adaptation as ezdxf add-on, Copyright (c) 2020, Manfred Moitzi, MIT License.
+# Integration as ezdxf add-on, Copyright (c) 2020, Manfred Moitzi, MIT License.
 from typing import List, Optional
 from ezdxf.math import Vector
 from ezdxf.render import MeshVertexMerger, MeshBuilder, MeshTransformer
 
-__doc__ = """
-Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean
-operations like union and intersection to combine 3D solids. This library
-implements CSG operations on meshes elegantly and concisely using BSP trees,
-and is meant to serve as an easily understandable implementation of the
-algorithm. All edge cases involving overlapping coplanar polygons in both
-solids are correctly handled.
-
-Example for usage as ezdxf add-on::
-
-    import ezdxf
-    from ezdxf.render.forms import cube, sphere
-    from ezdxf.addons.pycsg import CSG
-    
-    # create same geometric primitives as MeshTransformer() objects
-    cube = cube()
-    sphere = sphere(radius=1.3)
-    # build solids and subtract them
-    difference = CSG(cube) - CSG(sphere)
-    # convert result to MeshTransformer() object
-    mesh = difference.mesh()
-    
-    doc = ezdxf.new()
-    # render MeshTransformer() object into modelspace as DXF MESH entity. 
-    mesh.render(doc.modelspace())
-    doc.saveas('csg.dxf')
-    
-"""
 # Implementation Details
 # ----------------------
 #
@@ -297,11 +269,12 @@ class BSPNode:
 class CSG:
     """
     Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean
-    operations like union and intersection to combine 3D solids. This library
-    implements CSG operations on meshes elegantly and concisely using BSP trees,
-    and is meant to serve as an easily understandable implementation of the
-    algorithm. All edge cases involving overlapping coplanar polygons in both
-    solids are correctly handled.
+    operations like union and intersection to combine 3D solids. This class
+    implements CSG operations on meshes.
+
+    New 3D solids are created from :class:`~ezdxf.render.MeshBuilder` objects
+    and results can be exported as :class:`~ezdxf.render.MeshTransformer` objects
+    to `ezdxf` by method :meth:`mesh`.
     
     """
 
@@ -318,7 +291,7 @@ class CSG:
         return csg
 
     def mesh(self) -> MeshTransformer:
-        """ Return :class:`ezdxf.render.MeshTransformer' object. """
+        """ Returns a :class:`ezdxf.render.MeshTransformer` object. """
         mesh = MeshVertexMerger()
         for face in self.polygons:
             mesh.add_face(face.vertices)
@@ -327,10 +300,10 @@ class CSG:
     def clone(self) -> 'CSG':
         return self.from_polygons([p.clone() for p in self.polygons])
 
-    def union(self, csg: 'CSG') -> 'CSG':
+    def union(self, other: 'CSG') -> 'CSG':
         """
         Return a new CSG solid representing space in either this solid or in the
-        solid `csg`. Neither this solid nor the solid `csg` are modified::
+        solid `other`. Neither this solid nor the solid `other` are modified::
         
             A.union(B)
         
@@ -344,7 +317,7 @@ class CSG:
                  +-------+            +-------+
         """
         a = BSPNode(self.clone().polygons)
-        b = BSPNode(csg.clone().polygons)
+        b = BSPNode(other.clone().polygons)
         a.clip_to(b)
         b.clip_to(a)
         b.invert()
@@ -355,10 +328,10 @@ class CSG:
 
     __add__ = union
 
-    def subtract(self, csg: 'CSG') -> 'CSG':
+    def subtract(self, other: 'CSG') -> 'CSG':
         """
         Return a new CSG solid representing space in this solid but not in the
-        solid `csg`. Neither this solid nor the solid `csg` are modified.::
+        solid `other`. Neither this solid nor the solid `other` are modified::
         
             A.subtract(B)
         
@@ -372,7 +345,7 @@ class CSG:
                  +-------+
         """
         a = BSPNode(self.clone().polygons)
-        b = BSPNode(csg.clone().polygons)
+        b = BSPNode(other.clone().polygons)
         a.invert()
         a.clip_to(b)
         b.clip_to(a)
@@ -385,10 +358,10 @@ class CSG:
 
     __sub__ = subtract
 
-    def intersect(self, csg: 'CSG') -> 'CSG':
+    def intersect(self, other: 'CSG') -> 'CSG':
         """
         Return a new CSG solid representing space both this solid and in the
-        solid `csg`. Neither this solid nor the solid `csg` are modified.::
+        solid `other`. Neither this solid nor the solid `other` are modified::
         
             A.intersect(B)
         
@@ -402,7 +375,7 @@ class CSG:
                  +-------+
         """
         a = BSPNode(self.clone().polygons)
-        b = BSPNode(csg.clone().polygons)
+        b = BSPNode(other.clone().polygons)
         a.invert()
         b.clip_to(a)
         b.invert()
