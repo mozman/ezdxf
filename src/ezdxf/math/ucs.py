@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, List
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 from .matrix44 import Matrix44
+from .matrix33 import Matrix33
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout
@@ -14,37 +15,6 @@ def render_axis(layout: 'BaseLayout',
                 colors: Tuple[int, int, int] = (1, 3, 5)) -> None:
     for point, color in zip(points, colors):
         layout.add_line(start, point, dxfattribs={'color': color})
-
-
-class Matrix33:
-    """
-    Simple 3x3 Matrix for coordinate transformation.
-
-    """
-    # faster transformation than Matrix44
-    __slots__ = ('ux', 'uy', 'uz')
-
-    def __init__(self, ux: 'Vertex' = (1, 0, 0), uy: 'Vertex' = (0, 1, 0), uz: 'Vertex' = (0, 0, 1)):
-        self.ux = Vector(ux)
-        self.uy = Vector(uy)
-        self.uz = Vector(uz)
-
-    def transpose(self) -> 'Matrix33':
-        return Matrix33(
-            (self.ux.x, self.uy.x, self.uz.x),
-            (self.ux.y, self.uy.y, self.uz.y),
-            (self.ux.z, self.uy.z, self.uz.z),
-        )
-
-    def transform(self, vector: 'Vertex') -> Vector:
-        px, py, pz = Vector(vector)
-        ux = self.ux
-        uy = self.uy
-        uz = self.uz
-        x = px * ux.x + py * uy.x + pz * uz.x
-        y = px * ux.y + py * uy.y + pz * uz.y
-        z = px * ux.z + py * uy.z + pz * uz.z
-        return Vector(x, y, z)
 
 
 class OCS:

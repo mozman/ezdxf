@@ -64,6 +64,7 @@ Example for usage as ezdxf add-on::
 # union is A | B, subtraction is A - B = ~(~A | B) and intersection is
 # A & B = ~(~A | ~B) where '~' is the complement operator.
 
+__all__ = ['CSG']
 
 COPLANAR = 0  # all the vertices are within EPSILON distance from plane
 FRONT = 1  # all the vertices are in front of the plane
@@ -115,10 +116,10 @@ class Plane:
         # Classify each point as well as the entire polygon into one of four classes:
         # COPLANAR, FRONT, BACK, SPANNING = FRONT + BACK
         for vertex in vertices:
-            interpolation_weight = self.normal.dot(vertex) - self.w
-            if interpolation_weight < -PLANE_EPSILON:
+            distance = self.normal.dot(vertex) - self.w
+            if distance < -PLANE_EPSILON:
                 vertex_type = BACK
-            elif interpolation_weight > PLANE_EPSILON:
+            elif distance > PLANE_EPSILON:
                 vertex_type = FRONT
             else:
                 vertex_type = COPLANAR

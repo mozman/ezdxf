@@ -1,10 +1,20 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Sequence, List, Iterable, Union
-from ezdxf.math.vector import Vector, Vec2
+from typing import Sequence, List, Iterable, Union, Tuple
+from enum import IntEnum
+import math
+from .vector import Vector, Vec2
+from .matrix33 import Matrix33
 
 
-def is_planar_face(face: Sequence[Vector], abs_tol=1e-12) -> bool:
+class LocationState(IntEnum):
+    COPLANAR = 0  # all the vertices are within the plane
+    FRONT = 1  # all the vertices are in front of the plane
+    BACK = 2  # all the vertices are at the back of the plane
+    SPANNING = 3  # some vertices are in front, some in the back
+
+
+def is_planar_face(face: Sequence[Vector], abs_tol=1e-9) -> bool:
     """ Returns ``True`` if sequence of vectors is a planar face.
 
     Args:
@@ -48,3 +58,105 @@ def subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[
         else:
             yield subdiv_location[index - 1], vertex, mid_pos
             yield vertex, subdiv_location[index], mid_pos
+
+
+def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-12) -> Sequence[Vector]:
+    """
+    Calculate intersection of two rays, returns a 0-tuple for parallel rays, a 1-tuple for intersecting rays and a
+    2-tuple for not intersecting and not parallel rays with points of closest approach on each ray.
+    Args:
+        ray1: first ray as tuple of two points on the ray as :class:`Vector` objects
+        ray2: second ray as tuple of two points on the ray as :class:`Vector` objects
+        abs_tol: absolute tolerance for comparisons
+
+    """
+    # source: http://www.realtimerendering.com/intersections.html#I304
+    o1, p1 = ray1
+    d1 = (p1 - o1).normalize()
+    o2, p2 = ray2
+    d2 = (p2 - o2).normalize()
+    d1xd2 = d1.cross(d2)
+    denominator = d1xd2.magnitude ** 2
+    if math.isclose(denominator, 0., abs_tol=abs_tol):
+        # ray1 is parallel to ray2
+        return tuple()
+    else:
+        o2_o1 = o2 - o1
+        det1 = Matrix33(o2_o1, d1, d1xd2).determinant()
+        det2 = Matrix33(o2_o1, d2, d1xd2).determinant()
+        p1 = o1 + d1 * (det1 / denominator)
+        p2 = o2 + d2 * (det2 / denominator)
+        if p1.isclose(p2, abs_tol=abs_tol):
+            # ray1 and ray2 have an intersection point
+            return p1,
+        else:
+            # ray1 and ray2 do not have an intersection point,
+            # p1 and p2 are the points of closest approach on each ray
+            return p1, p2
+
+
+class Plane:
+    """ Represents a plane in 3D space.  """
+    __slots__ = ('_normal', '_distance_from_origin')
+
+    def __init__(self, normal: Vector, distance: float):
+        self._normal = normal
+        # the (perpendicular) distance of the plane from (0, 0, 0)
+        self._distance_from_origin = distance
+
+    @property
+    def normal(self) -> Vector:
+        return self._normal
+
+    @property
+    def distance_from_origin(self) -> float:
+        return self._distance_from_origin
+
+    @property
+    def vector(self) -> Vector:
+        return self._normal * self._distance_from_origin
+
+    @classmethod
+    def from_3p(cls, a: Vector, b: Vector, c: Vector) -> 'Plane':
+        n = (b - a).cross(c - a).normalize()
+        return Plane(n, n.dot(a))
+
+    @classmethod
+    def from_vector(cls, vector) -> 'Plane':
+        v = Vector(vector)
+        return Plane(v.normalize(), v.magnitude)
+
+    def __copy__(self) -> 'Plane':
+        return self.__class__(self._normal, self._distance_from_origin)
+
+    copy = __copy__
+
+    def __repr__(self):
+        return f'Plane({repr(self._normal)}, {self._distance_from_origin})'
+
+    def __eq__(self, other: 'Plane'):
+        if isinstance(other, Plane):
+            return self.vector == other.vector
+        else:
+            raise TypeError
+
+    def signed_distance_to(self, v: Vector) -> float:
+        """ Returns signed distance of vector `v` to plane, if distance is > 0, `v` is in 'front' of plane, in direction
+        of the normal vector, if distance is < 0, `v` is at the 'back' the plane, in the opposite direction of
+        the normal vector.
+
+        """
+        return self._normal.dot(v) - self._distance_from_origin
+
+    def distance_to(self, v: Vector) -> float:
+        """ Returns absolute (unsigned) distance of vector `v` to plane. """
+        return math.fabs(self.signed_distance_to(v))
+
+    def is_coplanar_vector(self, v: Vector, abs_tol=1e-9) -> bool:
+        """ Returns ``True`` if vector `v` is coplanar, distance from plane to vector `v` is 0. """
+        return self.distance_to(v) < abs_tol
+
+    def is_coplanar_plane(self, p: 'Plane', abs_tol=1e-9) -> bool:
+        """ Returns ``True`` if plane `p` is coplanar, normal vectors in same or opposite direction. """
+        n_is_close = self._normal.isclose
+        return n_is_close(p._normal, abs_tol) or n_is_close(-p._normal, abs_tol)
