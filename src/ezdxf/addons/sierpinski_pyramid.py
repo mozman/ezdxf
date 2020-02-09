@@ -4,6 +4,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Sequence, Tuple
 import math
+from ezdxf.math import Vector
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
@@ -51,20 +52,20 @@ class SierpinskyPyramid:
         x, y, z = location
         if self.sides == 4:
             return [
-                (x - len2, y - len2, z),
-                (x + len2, y - len2, z),
-                (x + len2, y + len2, z),
-                (x - len2, y + len2, z),
-                (x, y, z + length * HEIGHT4)
+                Vector(x - len2, y - len2, z),
+                Vector(x + len2, y - len2, z),
+                Vector(x + len2, y + len2, z),
+                Vector(x - len2, y + len2, z),
+                Vector(x, y, z + length * HEIGHT4)
             ]
         elif self.sides == 3:
             dy1 = length * DY1_FACTOR
             dy2 = length * DY2_FACTOR
             return [
-                (x - len2, y - dy1, z),
-                (x + len2, y - dy1, z),
-                (x, y + dy2, z),
-                (x, y, z + length * HEIGHT3)
+                Vector(x - len2, y - dy1, z),
+                Vector(x + len2, y - dy1, z),
+                Vector(x, y + dy2, z),
+                Vector(x, y, z + length * HEIGHT3)
             ]
         else:
             raise ValueError("sides has to be 3 or 4.")
@@ -76,7 +77,7 @@ class SierpinskyPyramid:
         """
         if self.sides == 4:
             return [
-                (0, 1, 2, 3),
+                (3, 2, 1, 0),
                 (0, 1, 4),
                 (1, 2, 4),
                 (2, 3, 4),
@@ -84,7 +85,7 @@ class SierpinskyPyramid:
             ]
         elif self.sides == 3:
             return [
-                (0, 1, 2),
+                (2, 1, 0),
                 (0, 1, 3),
                 (1, 2, 3),
                 (2, 0, 3)
@@ -132,10 +133,10 @@ class SierpinskyPyramid:
         return MeshTransformer.from_builder(mesh)
 
 
-def sierpinsky_pyramid(location: 'Vertex' = (0., 0., 0.),
+def sierpinsky_pyramid(location: (0., 0., 0.),
                        length: float = 1.,
                        level: int = 1,
-                       sides: int = 4) -> List[Tuple['Vertex', float]]:
+                       sides: int = 4) -> List[Tuple[Vector, float]]:
     """ Build a Sierpinski pyramid.
 
     Args:
@@ -147,6 +148,7 @@ def sierpinsky_pyramid(location: 'Vertex' = (0., 0., 0.),
     Returns: list of pyramid vertices
 
     """
+    location = Vector(location)
     level = int(level)
     if level < 1:
         raise ValueError("level has to be 1 or bigger.")
@@ -159,9 +161,9 @@ def sierpinsky_pyramid(location: 'Vertex' = (0., 0., 0.),
     return pyramids
 
 
-def _sierpinsky_pyramid(location: 'Vertex' = (0., 0., 0.),
+def _sierpinsky_pyramid(location: Vector,
                         length: float = 1.,
-                        sides: int = 4) -> List[Tuple['Vertex', float]]:
+                        sides: int = 4) -> List[Tuple[Vector, float]]:
     if sides == 3:
         return sierpinsky_pyramid_3(location, length)
     elif sides == 4:
@@ -170,7 +172,7 @@ def _sierpinsky_pyramid(location: 'Vertex' = (0., 0., 0.),
         raise ValueError("sides has to be 3 or 4.")
 
 
-def sierpinsky_pyramid_4(location: 'Vertex' = (0., 0., 0.), length: float = 1.) -> List[Tuple['Vertex', float]]:
+def sierpinsky_pyramid_4(location: Vector, length: float = 1.) -> List[Tuple[Vector, float]]:
     """ Build a 4-sided Sierpinski pyramid. Pyramid height = length of the base square!
 
     Args:
@@ -184,15 +186,15 @@ def sierpinsky_pyramid_4(location: 'Vertex' = (0., 0., 0.), length: float = 1.) 
     len4 = length / 4
     x, y, z = location
     return [
-        ((x - len4, y - len4, z), len2),
-        ((x + len4, y - len4, z), len2),
-        ((x - len4, y + len4, z), len2),
-        ((x + len4, y + len4, z), len2),
-        ((x, y, z + len2 * HEIGHT4), len2)
+        (Vector(x - len4, y - len4, z), len2),
+        (Vector(x + len4, y - len4, z), len2),
+        (Vector(x - len4, y + len4, z), len2),
+        (Vector(x + len4, y + len4, z), len2),
+        (Vector(x, y, z + len2 * HEIGHT4), len2)
     ]
 
 
-def sierpinsky_pyramid_3(location: 'Vertex' = (0., 0., 0.), length: float = 1.) -> List[Tuple['Vertex', float]]:
+def sierpinsky_pyramid_3(location: Vector, length: float = 1.) -> List[Tuple[Vector, float]]:
     """ Build a 3-sided Sierpinski pyramid (tetraeder).
 
     Args:
@@ -208,8 +210,8 @@ def sierpinsky_pyramid_3(location: 'Vertex' = (0., 0., 0.), length: float = 1.) 
     len4 = length / 4
     x, y, z = location
     return [
-        ((x - len4, y - dy1, z), len2),
-        ((x + len4, y - dy1, z), len2),
-        ((x, y + dy2, z), len2),
-        ((x, y, z + len2 * HEIGHT3), len2)
+        (Vector(x - len4, y - dy1, z), len2),
+        (Vector(x + len4, y - dy1, z), len2),
+        (Vector(x, y + dy2, z), len2),
+        (Vector(x, y, z + len2 * HEIGHT3), len2)
     ]

@@ -99,6 +99,31 @@ argument `quads` to ``True``.
 
 .. image:: gfx/pycsg02.png
 
+Hard core CSG - Menger Sponge Level 3 vs Sphere
+
+Required runtime on an old Xeon E5-1620 Workstation @ 3.60GHz, with default recursion limit of 1000 on Windows 10:
+
+    - CPython 3.8.1 64bit: ~60 seconds,
+    - pypy3 [PyPy 7.2.0] 32bit: ~6 seconds, yes - pypy is worth a look for long running scripts!
+
+.. code-block:: Python
+
+    from ezdxf.render.forms import sphere
+    from ezdxf.addons import MengerSponge
+    from ezdxf.addons.pycsg import CSG
+
+    doc = ezdxf.new()
+    doc.set_modelspace_vport(6, center=(5, 0))
+    msp = doc.modelspace()
+
+    sponge1 = MengerSponge(level=3).mesh()
+    sphere1 = sphere(count=32, stacks=16, radius=.5, quads=True).translate(.25, .25, 1)
+
+    subtract = (CSG(sponge1) - CSG(sphere1)).mesh()
+    subtract.render(msp, dxfattribs={'color': 5})
+
+.. image:: gfx/menger_sponge_vs_sphere_level_3.png
+
 CSG Class
 ---------
 

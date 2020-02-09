@@ -3,6 +3,7 @@
 # Copyright (c) 2016-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple
+from ezdxf.math import Vector
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
@@ -93,6 +94,7 @@ class MengerSponge:
     === ===========================
 
     """
+
     def __init__(self, location: 'Vertex' = (0., 0., 0.), length: float = 1., level: int = 1, kind: int = 0):
         self.cube_definitions = _menger_sponge(location=location, length=length, level=level, kind=kind)
 
@@ -103,7 +105,7 @@ class MengerSponge:
         """
         for location, length in self.cube_definitions:
             x, y, z = location
-            yield [(x + xf * length, y + yf * length, z + zf * length) for xf, yf, zf in _cube_vertices]
+            yield [Vector(x + xf * length, y + yf * length, z + zf * length) for xf, yf, zf in _cube_vertices]
 
     __iter__ = vertices
 
@@ -176,17 +178,19 @@ def _subdivide(location: 'Vertex' = (0., 0., 0.), length: float = 1., kind: int 
     step_size = float(length) / cube_sizes[kind]
     remaining_cubes = building_schemas[kind]
 
-    def sub_location(indices) -> Tuple[float, float, float]:
+    def sub_location(indices) -> Vector:
         x, y, z = indices
-        return (init_x + x * step_size,
-                init_y + y * step_size,
-                init_z + z * step_size)
+        return Vector(
+            init_x + x * step_size,
+            init_y + y * step_size,
+            init_z + z * step_size,
+        )
 
     return [(sub_location(indices), step_size) for indices in remaining_cubes]
 
 
 def _menger_sponge(location: 'Vertex' = (0., 0., 0.), length: float = 1., level: int = 1, kind: int = 0) -> List[
-    Tuple['Vertex', float]]:
+    Tuple[Vector, float]]:
     """
     Builds a menger sponge for given level.
 
