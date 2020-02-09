@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Iterable, List, Tuple
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44
+    from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44, UCS
 
 all_cubes_size_3_template = [
     (0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0), (0, 2, 0), (1, 2, 0), (2, 2, 0),
@@ -77,6 +77,22 @@ cube_faces = [
 
 
 class MengerSponge:
+    """
+
+    Args:
+        location: location of lower left corner as (x, y, z) tuple
+        length: side length
+        level: subdivide level
+        kind: type of menger sponge
+
+    === ===========================
+    0   Original Menger Sponge
+    1   Variant XOX
+    2   Variant OXO
+    3   Jerusalem Cube
+    === ===========================
+
+    """
     def __init__(self, location: 'Vertex' = (0., 0., 0.), length: float = 1., level: int = 1, kind: int = 0):
         self.cube_definitions = _menger_sponge(location=location, length=length, level=level, kind=kind)
 
@@ -100,44 +116,38 @@ class MengerSponge:
         return cube_faces
 
     def render(self, layout: 'GenericLayoutType', merge: bool = False, dxfattribs: dict = None,
-               matrix: 'Matrix44' = None) -> None:
+               matrix: 'Matrix44' = None, ucs: 'UCS' = None) -> None:
         """
-        Renders the menger sponge into layout, set merge == *True* for rendering the whole menger sponge into one MESH
-        entity, set merge to *False* for rendering the individual cubes of the menger sponge as MESH entities.
+        Renders the menger sponge into layout, set `merge` to ``True`` for rendering the whole menger sponge into
+        one MESH entity, set `merge` to ``False`` for rendering the individual cubes of the menger sponge as
+        MESH entities.
 
         Args:
-            layout: target layout (ezdxf)
-            merge: *True* for one MESH entity, *False* for individual MESH entities per cube
+            layout: DXF target layout
+            merge: ``True`` for one MESH entity, ``False`` for individual MESH entities per cube
             dxfattribs: DXF attributes for the MESH entities
             matrix: apply transformation matrix at rendering
+            ucs: apply UCS transformation at rendering
 
         """
         if merge:
             mesh = self.mesh()
-            mesh.render(layout, dxfattribs=dxfattribs, matrix=matrix)
+            mesh.render(layout, dxfattribs=dxfattribs, matrix=matrix, ucs=ucs)
         else:
             for cube in self.cubes():
-                cube.render(layout, dxfattribs, matrix=matrix)
+                cube.render(layout, dxfattribs, matrix=matrix, ucs=ucs)
 
     def cubes(self) -> Iterable[MeshTransformer]:
-        """
-        Generates all cubes of the menger sponge as individual MeshBuilder() objects.
-
-        Yields: MeshBuilder()
-
+        """ Yields all cubes of the menger sponge as individual :class:`MeshTransformer` objects.
         """
         faces = self.faces()
         for vertices in self:
-            mesh = MeshTransformer()
+            mesh = MeshVertexMerger()
             mesh.add_mesh(vertices=vertices, faces=faces)
-            yield mesh
+            yield MeshTransformer.from_builder(mesh)
 
     def mesh(self) -> MeshTransformer:
-        """
-        Returns geometry as one single MESH entity.
-
-        Returns: MeshVertexMerger()
-
+        """ Returns geometry as one :class:`MeshTransformer` object.
         """
         faces = self.faces()
         mesh = MeshVertexMerger()
@@ -175,7 +185,8 @@ def _subdivide(location: 'Vertex' = (0., 0., 0.), length: float = 1., kind: int 
     return [(sub_location(indices), step_size) for indices in remaining_cubes]
 
 
-def _menger_sponge(location: 'Vertex' = (0., 0., 0.), length: float = 1., level: int = 1, kind: int = 0) -> List[Tuple['Vertex', float]]:
+def _menger_sponge(location: 'Vertex' = (0., 0., 0.), length: float = 1., level: int = 1, kind: int = 0) -> List[
+    Tuple['Vertex', float]]:
     """
     Builds a menger sponge for given level.
 

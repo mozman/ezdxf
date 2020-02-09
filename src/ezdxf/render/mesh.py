@@ -128,7 +128,7 @@ class MeshBuilder:
         """ Returns ``True`` if any face is none planar. """
         return not all(is_planar_face(face) for face in self.faces_as_vertices())
 
-    def render(self, layout: 'BaseLayout', dxfattribs: dict = None, matrix: 'Matrix44' = None):
+    def render(self, layout: 'BaseLayout', dxfattribs: dict = None, matrix: 'Matrix44' = None, ucs: 'UCS' = None):
         """
         Render mesh as :class:`~ezdxf.entities.Mesh` entity into `layout`.
 
@@ -136,14 +136,17 @@ class MeshBuilder:
             layout: :class:`~ezdxf.layouts.BaseLayout` object
             dxfattribs: dict of DXF attributes e.g. ``{'layer': 'mesh', 'color': 7}``
             matrix: transformation matrix of type :class:`~ezdxf.math.Matrix44`
+            ucs: transform vertices by :class:`~ezdxf.math.UCS` to :ref:`WCS`
 
         """
         mesh = layout.add_mesh(dxfattribs=dxfattribs)
         with mesh.edit_data() as data:
+            vertices = self.vertices
             if matrix is not None:
-                data.vertices = matrix.transform_vectors(self.vertices)
-            else:
-                data.vertices = self.vertices
+                vertices = matrix.transform_vectors(vertices)
+            if ucs is not None:
+                vertices = list(ucs.points_to_wcs(vertices))
+            data.vertices = vertices
             data.edges = self.edges
             data.faces = self.faces
 

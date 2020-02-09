@@ -7,7 +7,7 @@ import math
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44
+    from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44, UCS
 
 HEIGHT4 = 1. / math.sqrt(2.)  # pyramid4 height (* length)
 HEIGHT3 = math.sqrt(6.) / 3.  # pyramid3 height (* length)
@@ -17,15 +17,20 @@ DY2_FACTOR = 0.5 / math.cos(math.pi / 6.)  # outer circle radius
 
 
 class SierpinskyPyramid:
+    """
+    Args:
+        location: location of base center as (x, y, z) tuple
+        length: side length
+        level: subdivide level
+        sides: sides of base geometry
+
+    """
     def __init__(self, location: 'Vertex' = (0., 0., 0.), length: float = 1., level: int = 1, sides: int = 4):
         self.sides = sides
         self.pyramid_definitions = sierpinsky_pyramid(location=location, length=length, level=level, sides=sides)
 
     def vertices(self) -> Iterable['Vertex']:
-        """
-        Yields the pyramid vertices as list of (x, y, z) tuples.
-
-        """
+        """ Yields the pyramid vertices as list of (x, y, z) tuples. """
         for location, length in self.pyramid_definitions:
             yield self._calc_vertices(location, length)
 
@@ -88,32 +93,28 @@ class SierpinskyPyramid:
             raise ValueError("sides has to be 3 or 4.")
 
     def render(self, layout: 'GenericLayoutType', merge: bool = False, dxfattribs: dict = None,
-               matrix: 'Matrix44' = None) -> None:
+               matrix: 'Matrix44' = None, ucs: 'UCS' = None) -> None:
         """
-        Renders the sierpinsky pyramid into layout, set merge == *True* for rendering the whole sierpinsky pyramid into
-        one MESH entity, set merge to *False* for rendering the individual pyramids of the sierpinsky pyramid as MESH
-        entities.
+        Renders the sierpinsky pyramid into layout, set `merge` to ``True`` for rendering the whole sierpinsky pyramid
+        into one MESH entity, set `merge` to ``False`` for individual pyramids as MESH entities.
 
         Args:
-            layout: target layout (ezdxf)
-            merge: *True* for one MESH entity, *False* for individual MESH entities per pyramid
+            layout: DXF target layout
+            merge: ``True`` for one MESH entity, ``False`` for individual MESH entities per pyramid
             dxfattribs: DXF attributes for the MESH entities
             matrix: apply transformation matrix at rendering
+            ucs: apply UCS at rendering
 
         """
         if merge:
             mesh = self.mesh()
-            mesh.render(layout, dxfattribs=dxfattribs, matrix=matrix)
+            mesh.render(layout, dxfattribs=dxfattribs, matrix=matrix, ucs=ucs)
         else:
             for pyramid in self.pyramids():
-                pyramid.render(layout, dxfattribs, matrix=matrix)
+                pyramid.render(layout, dxfattribs, matrix=matrix, ucs=ucs)
 
     def pyramids(self) -> Iterable[MeshTransformer]:
-        """
-        Generates all pyramids of the sierpinsky pyramid as individual MeshBuilder() objects.
-
-        Yields: MeshBuilder()
-
+        """ Yields all pyramids of the sierpinsky pyramid as individual :class:`MeshTransformer` objects.
         """
         faces = self.faces()
         for vertices in self:
@@ -122,11 +123,7 @@ class SierpinskyPyramid:
             yield mesh
 
     def mesh(self) -> MeshTransformer:
-        """
-        Returns geometry as one single MESH entity.
-
-        Returns: MeshVertexMerger()
-
+        """ Returns geometry as one :class:`MeshTransformer` object.
         """
         faces = self.faces()
         mesh = MeshVertexMerger()
