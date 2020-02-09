@@ -64,7 +64,17 @@ def subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[
             yield vertex, subdiv_location[index], mid_pos
 
 
-def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-12) -> Sequence[Vector]:
+def normal_vector_3p(a: Vector, b: Vector, c: Vector) -> Vector:
+    """ Returns normal vector for 3 points, which is the normalized cross product for: :code:`a->b x a->c`.
+
+    .. versionadded:: 0.11
+
+    """
+    return (b - a).cross(c - a).normalize()
+
+
+def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-12) -> Sequence[
+    Vector]:
     """
     Calculate intersection of two rays, returns a 0-tuple for parallel rays, a 1-tuple for intersecting rays and a
     2-tuple for not intersecting and not parallel rays with points of closest approach on each ray.

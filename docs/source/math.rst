@@ -80,6 +80,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 3D Functions
 ============
 
+.. autofunction:: normal_vector_3p(a: Vector, b: Vector, c: Vector) -> Vector
+
 .. autofunction:: is_planar_face(face: Sequence[Vector], abs_tol=1e-9) -> bool
 
 .. autofunction:: subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[List[Vector]]

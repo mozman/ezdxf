@@ -780,7 +780,7 @@ def sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads=False) -> 
     """
     radius = float(radius)
     slices = int(count)
-    stacks_2 = int(stacks) // 2  # stacks from - stack/2 to +stack/2
+    stacks_2 = int(stacks) // 2  # stacks from -stack/2 to +stack/2
     delta_theta = pi * 2.0 / float(slices)
     delta_phi = pi / float(stacks)
     mesh = MeshVertexMerger()
@@ -824,7 +824,7 @@ def sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads=False) -> 
                 center = vertex(
                     i + 0.5,
                     radius_of_stack(actual_stack + 0.5),
-                    sin(delta_phi * (actual_stack + 0.5))*radius,
+                    sin(delta_phi * (actual_stack + 0.5)) * radius,
                 )
                 mesh.add_face([v1, v2, center])
                 mesh.add_face([v2, v3, center])

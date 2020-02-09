@@ -8,7 +8,7 @@ from .construct2d import (
     is_point_on_line_2d, is_point_in_polygon_2d, is_point_left_of_line, point_to_line_relation,
 )
 from .construct3d import (
-    is_planar_face, subdivide_face, Plane, LocationState, intersection_ray_ray_3d,
+    is_planar_face, subdivide_face, Plane, LocationState, intersection_ray_ray_3d, normal_vector_3p,
 )
 from .matrix44 import Matrix44
 from .matrix33 import Matrix33

@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.11b2 - dev
+Version 0.11b3 - dev
 --------------------
 
 - Using standard git branches: 
@@ -47,6 +47,7 @@ Version 0.11b2 - dev
 - NEW: `ezdxf.math.is_point_in_polygon_2d()` test if 2D point is inside of a 2D polygon 
 - NEW: `ezdxf.math.intersection_line_line_2d()` calculate intersection for 2D lines 
 - NEW: `ezdxf.math.offset_vertices_2d()` calculate 2D offset vertices for a 2D polygon 
+- NEW: `ezdxf.math.normal_vector_3p()` returns normal vector for 3 points
 - NEW: `ezdxf.math.is_planar_face()` test if 3D face is planar
 - NEW: `ezdxf.math.subdivide_face()` linear subdivision for 2D/3D faces/polygons 
 - NEW: `ezdxf.math.intersection_ray_ray_3d()` calculate intersection for 3D rays 

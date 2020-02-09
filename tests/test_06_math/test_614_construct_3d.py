@@ -2,7 +2,8 @@
 # License: MIT License
 import pytest
 
-from ezdxf.math import is_planar_face, Vector, Vec2, subdivide_face, intersection_ray_ray_3d
+from ezdxf.math import is_planar_face, Vector, Vec2, subdivide_face, intersection_ray_ray_3d, normal_vector_3p
+from ezdxf.math import X_AXIS, Y_AXIS, Z_AXIS
 from ezdxf.render.forms import square
 
 REGULAR_FACE = Vector.list([(0, 0, 0), (1, 0, 1), (1, 1, 1), (0, 1, 0)])
@@ -78,6 +79,19 @@ def test_intersection_ray_ray_3d():
     # returns points of closest approach on each ray
     assert Vector(0, 0, 1) in result
     assert Vector(0, 0, 0) in result
+
+
+def test_normal_vector_for_3_points():
+    # normal_vector_3p(a, b, c)
+    # a->b = v1
+    # a->c = v2
+    o = Vector(0, 0, 0)
+    assert normal_vector_3p(o, X_AXIS, Y_AXIS) == Z_AXIS
+    assert normal_vector_3p(o, Y_AXIS, X_AXIS) == -Z_AXIS
+    assert normal_vector_3p(o, Z_AXIS, X_AXIS) == Y_AXIS
+    assert normal_vector_3p(o, X_AXIS, Z_AXIS) == -Y_AXIS
+    assert normal_vector_3p(o, Y_AXIS, Z_AXIS) == X_AXIS
+    assert normal_vector_3p(o, Z_AXIS, Y_AXIS) == -X_AXIS
 
 
 if __name__ == '__main__':

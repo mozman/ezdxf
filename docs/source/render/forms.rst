@@ -69,9 +69,9 @@ Create 3D forms as :class:`~ezdxf.render.MeshTransformer` objects.
 
 .. autofunction:: cone(count: int, radius: float, apex: Vertex = (0, 0, 1), caps: bool = True) -> MeshTransformer
 
-.. autofunction:: cone_2p(count: int, radius: float, apex: Vertex = (0, 0, 1), caps: bool = True) -> MeshTransformer
+.. autofunction:: cone_2p(count: int, radius: float, apex: Vertex = (0, 0, 1)) -> MeshTransformer
 
-.. autofunction:: sphere(count: int = 16, stacks: int = 8, radius: float = 1) -> MeshTransformer
+.. autofunction:: sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads = False) -> MeshTransformer
 
 3D Form Builder
 ---------------
