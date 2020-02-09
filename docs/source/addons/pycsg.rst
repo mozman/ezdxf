@@ -70,6 +70,35 @@ This CSG kernel is **not** compatible with ACIS objects like :class:`~ezdxf.enti
 
          sys.setrecursionlimit(actual_limit)
 
+CSG works also with spheres, but with really bad runtime behavior and most likely :class:`RecursionError`
+exceptions, and use `quadrilaterals`_ as body faces to reduce face count by setting
+argument `quads` to ``True``.
+
+.. code-block:: Python
+
+    import ezdxf
+
+    from ezdxf.render.forms import sphere, cube
+    from ezdxf.addons.pycsg import CSG
+
+    doc = ezdxf.new()
+    doc.set_modelspace_vport(6, center=(5, 0))
+    msp = doc.modelspace()
+
+    cube1 = cube().translate(-.5, -.5, -.5)
+    sphere1 = sphere(count=32, stacks=16, radius=.5, quads=True)
+
+    union = (CSG(cube1) + CSG(sphere1)).mesh()
+    union.render(msp, dxfattribs={'color': 1})
+
+    subtract = (CSG(cube1) - CSG(sphere1)).mesh().translate(2.5)
+    subtract.render(msp, dxfattribs={'color': 3})
+
+    intersection = (CSG(cube1) * CSG(sphere1)).mesh().translate(4)
+    intersection.render(msp, dxfattribs={'color': 5})
+
+.. image:: gfx/pycsg02.png
+
 CSG Class
 ---------
 
@@ -114,3 +143,4 @@ License
 .. _csg.js: https://github.com/evanw/csg.js
 .. _pycsg: https://github.com/timknip/pycsg
 .. _BSP tree: https://en.wikipedia.org/wiki/Binary_space_partitioning
+.. _quadrilaterals: https://en.wikipedia.org/wiki/Quadrilateral
