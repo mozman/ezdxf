@@ -48,6 +48,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: render(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None)
 
+    .. automethod:: render_normals(layout: BaseLayout, length: float = 1, relative=True, dxfattribs: dict = None)
+
     .. automethod:: from_mesh
 
     .. automethod:: from_builder(other: MeshBuilder)

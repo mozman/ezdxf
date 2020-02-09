@@ -3,8 +3,9 @@
 # License: MIT License
 from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING
 from ezdxf.lldxf.const import DXFValueError
-from ezdxf.math import Matrix44, Vector
-from ezdxf.math.construct3d import is_planar_face, subdivide_face
+from ezdxf.math import Matrix44, Vector, NULLVEC
+from ezdxf.math.construct3d import is_planar_face, subdivide_face, normal_vector_3p
+
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout, UCS
 
@@ -145,6 +146,37 @@ class MeshBuilder:
                 data.vertices = self.vertices
             data.edges = self.edges
             data.faces = self.faces
+
+    def render_normals(self, layout: 'BaseLayout', length: float = 1, relative=True, dxfattribs: dict = None):
+        """
+        Render face normals as :class:`~ezdxf.entities.Line` entities into `layout`, useful to check orientation
+        of mesh faces.
+
+        Args:
+            layout: :class:`~ezdxf.layouts.BaseLayout` object
+            length: visual length of normal, use length < 0 to point normals in opposite direction
+            relative: scale length relative to face size if ``True``
+            dxfattribs: dict of DXF attributes e.g. ``{'layer': 'normals', 'color': 6}``
+
+        """
+        for face in self.faces_as_vertices():
+            count = len(face)
+            if count < 3:
+                continue
+            center = sum(face) / count
+            i = 0
+            n = NULLVEC
+            while i <= count - 3:
+                n = normal_vector_3p(face[i], face[i + 1], face[i + 2])
+                if n != NULLVEC:  # not colinear vectors
+                    break
+                i += 1
+
+            if relative:
+                _length = (face[0] - center).magnitude * length
+            else:
+                _length = length
+            layout.add_line(center, center + n * _length, dxfattribs=dxfattribs)
 
     @classmethod
     def from_mesh(cls, other):

@@ -797,11 +797,12 @@ def sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads=False) -> 
         cap_vertex = Vector(0, 0, radius) if top else Vector(0, 0, -radius)
         r1 = radius_of_stack(stack)
         for slice_ in range(slices):
-            mesh.add_face([
-                vertex(slice_, r1, z),
-                vertex(slice_ + 1, r1, z),
-                cap_vertex,
-            ])
+            v1 = vertex(slice_, r1, z)
+            v2 = vertex(slice_ + 1, r1, z)
+            if top:
+                mesh.add_face((v1, v2, cap_vertex))
+            else:
+                mesh.add_face((cap_vertex, v2, v1))
 
     # bottom triangle faces
     cap_triangles(-stacks_2 + 1, top=False)
