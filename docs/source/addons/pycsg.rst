@@ -113,14 +113,19 @@ Required runtime on an old Xeon E5-1620 Workstation @ 3.60GHz, with default recu
     from ezdxf.addons.pycsg import CSG
 
     doc = ezdxf.new()
+    doc.layers.new('sponge', dxfattribs={'color': 5})
+    doc.layers.new('sphere', dxfattribs={'color': 6})
+
     doc.set_modelspace_vport(6, center=(5, 0))
     msp = doc.modelspace()
 
     sponge1 = MengerSponge(level=3).mesh()
     sphere1 = sphere(count=32, stacks=16, radius=.5, quads=True).translate(.25, .25, 1)
 
-    subtract = (CSG(sponge1) - CSG(sphere1)).mesh()
-    subtract.render(msp, dxfattribs={'color': 5})
+    subtract = (CSG(sponge1, meshid=1) - CSG(sphere1, meshid=2))
+    # get mesh result by id
+    subtract.mesh(1).render(msp, dxfattribs={'layer': 'sponge'})
+    subtract.mesh(2).render(msp, dxfattribs={'layer': 'sphere'})
 
 .. image:: gfx/menger_sponge_vs_sphere_level_3.png
 

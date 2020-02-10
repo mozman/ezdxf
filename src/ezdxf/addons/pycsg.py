@@ -84,6 +84,7 @@ class Plane:
         polygon_type = 0
         vertex_types = []
         vertices = polygon.vertices
+        meshid = polygon.meshid  # mesh ID of the associated mesh
 
         # Classify each point as well as the entire polygon into one of four classes:
         # COPLANAR, FRONT, BACK, SPANNING = FRONT + BACK
@@ -128,26 +129,27 @@ class Plane:
                     front_vertices.append(plane_intersection_point)
                     back_vertices.append(plane_intersection_point)
             if len(front_vertices) >= 3:
-                front.append(Polygon(front_vertices))
+                front.append(Polygon(front_vertices, meshid=meshid))
             if len(back_vertices) >= 3:
-                back.append(Polygon(back_vertices))
+                back.append(Polygon(back_vertices, meshid=meshid))
 
 
 class Polygon:
     """
     Represents a convex polygon. The vertices used to initialize a polygon must
-    be coplanar and form a convex loop. They do not have to be `Vertex`
-    instances but they must behave similarly (duck typing can be used for
-    customization).
+    be coplanar and form a convex loop, the `mesh` argument associates a polygon
+    to a mesh.
 
     """
 
-    def __init__(self, vertices: List[Vector]):
+    def __init__(self, vertices: List[Vector], meshid: int = 0):
         self.vertices = vertices
         self.plane = Plane.from_points(vertices[0], vertices[1], vertices[2])
+        # number of mesh, this polygon is associated to
+        self.meshid = meshid
 
     def clone(self) -> 'Polygon':
-        return Polygon(list(self.vertices))
+        return Polygon(list(self.vertices), meshid=self.meshid)
 
     def flip(self) -> None:
         self.vertices.reverse()
@@ -155,7 +157,7 @@ class Polygon:
 
     def __repr__(self) -> str:
         v = ', '.join(repr(v) for v in self.vertices)
-        return f'Polygon([{v}])'
+        return f'Polygon([{v}], mesh={self.meshid})'
 
 
 class BSPNode:
@@ -275,14 +277,17 @@ class CSG:
     New 3D solids are created from :class:`~ezdxf.render.MeshBuilder` objects
     and results can be exported as :class:`~ezdxf.render.MeshTransformer` objects
     to `ezdxf` by method :meth:`mesh`.
-    
-    """
 
-    def __init__(self, mesh: MeshBuilder = None):
+    Args:
+        mesh: :class:`ezdxf.render.MeshBuilder` or inherited object
+        meshid: individual mesh ID to separate result meshes, ``0`` is default
+
+    """
+    def __init__(self, mesh: MeshBuilder = None, meshid: int = 0):
         if mesh is None:
             self.polygons = []  # type: List[Polygon]
         else:
-            self.polygons = [Polygon(face) for face in mesh.faces_as_vertices()]
+            self.polygons = [Polygon(face, meshid) for face in mesh.faces_as_vertices()]
 
     @classmethod
     def from_polygons(cls, polygons: List[Polygon]) -> 'CSG':
@@ -290,11 +295,18 @@ class CSG:
         csg.polygons = polygons
         return csg
 
-    def mesh(self) -> MeshTransformer:
-        """ Returns a :class:`ezdxf.render.MeshTransformer` object. """
+    def mesh(self, meshid: int = 0) -> MeshTransformer:
+        """
+        Returns a :class:`ezdxf.render.MeshTransformer` object.
+
+        Args:
+             meshid: individual mesh ID, ``0`` is default
+
+        """
         mesh = MeshVertexMerger()
         for face in self.polygons:
-            mesh.add_face(face.vertices)
+            if meshid == face.meshid:
+                mesh.add_face(face.vertices)
         return MeshTransformer.from_builder(mesh)
 
     def clone(self) -> 'CSG':
