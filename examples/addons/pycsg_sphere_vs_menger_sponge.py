@@ -17,7 +17,7 @@ doc.layers.new('sphere', dxfattribs={'color': 6})
 doc.set_modelspace_vport(6, center=(5, 0))
 msp = doc.modelspace()
 
-sponge1 = MengerSponge(level=2).mesh()
+sponge1 = MengerSponge(level=3).mesh()
 sphere1 = sphere(count=32, stacks=16, radius=.5, quads=True).translate(.25, .25, 1)
 
 t0 = perf_counter()
