@@ -133,9 +133,9 @@ Required runtime on an old Xeon E5-1620 Workstation @ 3.60GHz, with default recu
 CSG Class
 ---------
 
-.. autoclass:: CSG(mesh: MeshBuilder = None)
+.. autoclass:: CSG(mesh: MeshBuilder, meshid: int = 0)
 
-    .. automethod:: mesh() -> MeshTransformer
+    .. automethod:: mesh(meshid: int = 0) -> MeshTransformer
 
     .. automethod:: union(other: CSG) -> CSG
 
