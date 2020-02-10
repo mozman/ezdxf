@@ -104,7 +104,8 @@ Hard core CSG - Menger Sponge Level 3 vs Sphere
 Required runtime on an old Xeon E5-1620 Workstation @ 3.60GHz, with default recursion limit of 1000 on Windows 10:
 
     - CPython 3.8.1 64bit: ~60 seconds,
-    - pypy3 [PyPy 7.2.0] 32bit: ~6 seconds, yes - pypy is worth a look for long running scripts!
+    - pypy3 [PyPy 7.2.0] 32bit: ~6 seconds, and using ``__slots__`` reduced runtime below 5 seconds, yes - pypy is
+      worth a look for long running scripts!
 
 .. code-block:: Python
 

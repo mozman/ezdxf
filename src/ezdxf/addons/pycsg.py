@@ -137,10 +137,15 @@ class Plane:
 class Polygon:
     """
     Represents a convex polygon. The vertices used to initialize a polygon must
-    be coplanar and form a convex loop, the `mesh` argument associates a polygon
+    be coplanar and form a convex loop, the `meshid` argument associates a polygon
     to a mesh.
 
+    Args:
+        vertices: polygon vertices as :class:`Vector` objects
+        meshid: id associated mesh
+
     """
+    __slots__ = ('vertices', 'plane', 'meshid')
 
     def __init__(self, vertices: List[Vector], meshid: int = 0):
         self.vertices = vertices
@@ -168,6 +173,7 @@ class BSPNode:
     the front and/or back subtrees. This is not a leafy BSP tree since there is
     no distinction between internal and leaf nodes.
     """
+    __slots__ = ('plane', 'front', 'back', 'polygons')
 
     def __init__(self, polygons: List[Polygon] = None):
         self.plane = None  # type: Optional[Plane]
@@ -283,6 +289,7 @@ class CSG:
         meshid: individual mesh ID to separate result meshes, ``0`` is default
 
     """
+
     def __init__(self, mesh: MeshBuilder = None, meshid: int = 0):
         if mesh is None:
             self.polygons = []  # type: List[Polygon]
