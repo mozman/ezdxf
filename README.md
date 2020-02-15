@@ -17,7 +17,7 @@ Quick-Info
 - the intended audience are developers
 - requires at least Python 3.6, for Python 3.5 use ezdxf < 0.11
 - OS independent
-- tested with CPython & PyPy on Windows 10 & Manjaro Linux
+- tested with CPython & pypy3 on Windows 10 & Manjaro Linux
 - additional required packages: [pyparsing](https://pypi.org/project/pyparsing/)
 - MIT-License
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
@@ -77,7 +77,7 @@ Install with pip for Python 3.6 and later:
 
     pip install ezdxf
 
-Install with pip for Python 3.5, this version will get critical bug fixes:
+Install with pip for Python 3.5:
 
     pip install ezdxf<0.11
 

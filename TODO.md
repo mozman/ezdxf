@@ -1,11 +1,6 @@
 TODO
 ====
 
-Python Code
------------
-
-- optimized Vector class, SVec for simple or speedy vectors? profiling required!!!
-
 DXF Entities
 ------------
 
@@ -24,6 +19,12 @@ DXF Audit & Cleanup
 - check ownership
     - DXF objects in OBJECTS section
     - DXF Entities in a layout (model space, paper space, block)
+- check DIMENSION
+    - dimstyle exist
+    - arrows exist
+    - text style exist
+- check TEXT, MTEXT
+    - text style exist
 - check required DXF attributes:
     - R12: layer; cleanup: set to '0' (in ezdxf defaults to '0')
     - R2000+: layer, owner?, handle?
@@ -34,8 +35,11 @@ DXF Audit & Cleanup
     - EXCEPTION: layout blocks
     - EXCEPTION: anonymous blocks without explicit INSERT like DIMENSION geometry
 
-Documentation
--------------
+Cython Code
+-----------
 
-- DIMENSION docs & tutorials
-- HATCH tutorial with islands
+- optional for install, testing and development
+- profiling required!!!
+- optimized Vec2(), Vec3() 
+- optimized Matrix33(), Matrix44()
+- optimized tag loader

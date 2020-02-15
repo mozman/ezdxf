@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.11b3 - dev
---------------------
+Version 0.11 - 2020-02-15
+-------------------------
 
 - Using standard git branches: 
   - `master`: development state
@@ -52,7 +52,7 @@ Version 0.11b3 - dev
 - NEW: `ezdxf.math.subdivide_face()` linear subdivision for 2D/3D faces/polygons 
 - NEW: `ezdxf.math.intersection_ray_ray_3d()` calculate intersection for 3D rays 
 - NEW: `ezdxf.math.Plane()` 3D plane construction tool 
-- NEW: `ezdxf.render.MeshTransformer()` simple inplace mesh transformations class
+- NEW: `ezdxf.render.MeshTransformer()` inplace mesh transformation class, subclass of `MeshBuilder()`
 - NEW: `MeshBuilder.render()` added UCS support
 - NEW: `MeshBuilder.render_normals()` render face normals as LINE entities, useful to check face orientation
 - NEW: `ezdxf.render.forms.cone_2p()` create 3D cone mesh from two points

@@ -46,6 +46,7 @@ Example for usage:
     doc.saveas('csg.dxf')
 
 .. image:: gfx/pycsg01.png
+    :alt: Cube vs Cylinder
 
 This CSG kernel supports only meshes as :class:`~ezdxf.render.MeshBuilder` objects, which can be created from and
 converted to DXF :class:`~ezdxf.entities.Mesh` entities.
@@ -98,8 +99,9 @@ argument `quads` to ``True``.
     intersection.render(msp, dxfattribs={'color': 5})
 
 .. image:: gfx/pycsg02.png
+    :alt: Cube vs Sphere
 
-Hard core CSG - Menger Sponge Level 3 vs Sphere
+Hard Core CSG - Menger Sponge Level 3 vs Sphere
 
 Required runtime on an old Xeon E5-1620 Workstation @ 3.60GHz, with default recursion limit of 1000 on Windows 10:
 
@@ -129,6 +131,7 @@ Required runtime on an old Xeon E5-1620 Workstation @ 3.60GHz, with default recu
     subtract.mesh(2).render(msp, dxfattribs={'layer': 'sphere'})
 
 .. image:: gfx/menger_sponge_vs_sphere_level_3.png
+    :alt: Menger Sponge vs Sphere
 
 CSG Class
 ---------
