@@ -209,6 +209,8 @@ class DXFLayout(PlotSettings):
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
+        # set correct Model Type flag
+        self.set_flag_state(1024, self.dxf.name == 'Model', 'plot_layout_flags')
         # base class export is done by parent class
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_layout.name)
