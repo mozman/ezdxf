@@ -2,6 +2,13 @@
 News
 ====
 
+Version 0.11.1 - dev
+--------------------
+
+- NEW: `Meshbuilder.from_polyface()` to interface to `POLYFACE` and `POLYMESH` 
+- NEW: `Meshbuilder.render_polyface()` create `POLYFACE` objects 
+- BUGFIX: `add_polymesh()` and `add_polyface()` - entity casting before adding to layout
+
 Version 0.11 - 2020-02-15
 -------------------------
 

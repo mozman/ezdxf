@@ -1,9 +1,15 @@
 # Purpose: open example files with big polyface models
 # Created: 23.04.2014
-# Copyright (c) 2014-2019, Manfred Moitzi
+# Copyright (c) 2014-2020, Manfred Moitzi
 # License: MIT License
-import ezdxf
 import time
+from pathlib import Path
+
+import ezdxf
+from ezdxf.render import MeshVertexMerger
+
+SRCDIR = Path(r'D:\Source\dxftest\CADKitSamples')
+OUTDIR = Path('~/Desktop/Outbox').expanduser()
 
 
 def optimize_polyfaces(polyfaces):
@@ -23,7 +29,9 @@ def optimize_polyfaces(polyfaces):
     print(f"removed {vertex_diff} vertices in {runtime:.2f} seconds.")
 
 
-def optimize(filename, new_filename):
+def optimize(name: str):
+    filename = SRCDIR / name
+    new_filename = OUTDIR / ('optimized_' + name)
     print(f'opening DXF file: {filename}')
     start_time = time.time()
     doc = ezdxf.readfile(filename)
@@ -42,6 +50,51 @@ def optimize(filename, new_filename):
     print(f'time for saving: {end_time - start_time:.1f} seconds')
 
 
+def save_as(name):
+    filename = SRCDIR / name
+
+    print(f'opening DXF file: {filename}')
+    start_time = time.time()
+    doc = ezdxf.readfile(filename)
+    msp = doc.modelspace()
+    end_time = time.time()
+    print(f'time for reading: {end_time - start_time:.1f} seconds')
+    print(f"DXF version: {doc.dxfversion}")
+    print(f"Database contains {len(doc.entitydb)} entities.")
+    polyfaces = (polyline for polyline in msp.query('POLYLINE') if polyline.is_poly_face_mesh)
+
+    # create a new documents
+    doc1 = ezdxf.new()
+    msp1 = doc1.modelspace()
+    doc2 = ezdxf.new()
+    msp2 = doc2.modelspace()
+    for polyface in polyfaces:
+        b = MeshVertexMerger.from_polyface(polyface)
+        b.render(msp1, dxfattribs={
+            'layer': polyface.dxf.layer,
+            'color': polyface.dxf.color,
+        })
+        b.render_polyface(msp2, dxfattribs={
+            'layer': polyface.dxf.layer,
+            'color': polyface.dxf.color,
+        })
+
+    new_filename = OUTDIR / ('mesh_' + name)
+    print(f'saving as mesh DXF file: {new_filename}')
+    start_time = time.time()
+    doc1.saveas(new_filename)
+    end_time = time.time()
+    print(f'time for saving: {end_time - start_time:.1f} seconds')
+
+    new_filename = OUTDIR / ('recreated_polyface_' + name)
+    print(f'saving as polyface DXF file: {new_filename}')
+    start_time = time.time()
+    doc2.saveas(new_filename)
+    end_time = time.time()
+    print(f'time for saving: {end_time - start_time:.1f} seconds')
+
+
 if __name__ == '__main__':
-    optimize(r'D:\Source\dxftest\CADKitSamples\fanuc-430-arm.dxf', r'C:\Users\manfred\Desktop\Outbox\fanuc-430-arm-optimized.dxf')
-    optimize(r'D:\Source\dxftest\CADKitSamples\cnc machine.dxf', r'C:\Users\manfred\Desktop\Outbox\cnc machine-optimized.dxf')
+    optimize('fanuc-430-arm.dxf')
+    optimize('cnc machine.dxf')
+    save_as('fanuc-430-arm.dxf')

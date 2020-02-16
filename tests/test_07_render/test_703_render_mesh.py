@@ -5,7 +5,7 @@ from math import radians
 import ezdxf
 from ezdxf.math import Vector, BoundingBox
 from ezdxf.render.forms import cube
-from ezdxf.render.mesh import MeshVertexMerger, MeshBuilder
+from ezdxf.render.mesh import MeshVertexMerger, MeshBuilder, MeshTransformer
 from ezdxf.addons import SierpinskyPyramid
 
 
@@ -74,3 +74,63 @@ def test_rotate_x():
     bbox = BoundingBox(mesh.vertices)
     assert bbox.extmin.isclose((0, -1, 0))
     assert bbox.extmax.isclose((1, 0, 1))
+
+
+@pytest.fixture(scope='module')
+def msp():
+    doc = ezdxf.new()
+    return doc.modelspace()
+
+
+@pytest.fixture(scope='module')
+def cube_polyface(msp):
+    p = msp.add_polyface()
+    p.append_faces(cube().faces_as_vertices())
+    return p
+
+
+def test_from_empty_polyface(msp):
+    empty_polyface = msp.add_polyface()
+    b = MeshBuilder.from_polyface(empty_polyface)
+    assert len(b.vertices) == 0
+    assert len(b.faces) == 0
+
+
+def test_from_cube_polyface(cube_polyface):
+    b = MeshBuilder.from_polyface(cube_polyface)
+    assert len(b.vertices) == 24  # unoptimized mesh builder
+    assert len(b.faces) == 6
+
+
+def test_render_polyface(cube_polyface):
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    t = MeshTransformer.from_polyface(cube_polyface)
+    assert len(t.vertices) == 24  # unoptimized mesh builder
+    assert len(t.faces) == 6
+    t.render_polyface(msp)
+    new_polyface = msp[-1]
+    assert new_polyface.dxftype() == 'POLYLINE'
+    assert new_polyface.is_poly_face_mesh is True
+    assert len(new_polyface.vertices) == 8 + 6
+    assert new_polyface.vertices[0] is not cube_polyface.vertices[0]
+
+
+def test_from_polymesh(msp):
+    polymesh = msp.add_polymesh(size=(4, 4))
+    b = MeshBuilder.from_polyface(polymesh)
+    n = polymesh.dxf.n_count
+    m = polymesh.dxf.m_count
+    nfaces = (n - 1) * (m - 1)
+    assert len(b.vertices) == nfaces * 4  # unoptimized mesh builder
+    assert len(b.faces) == nfaces
+
+
+def test_from_polyface_type_error(msp):
+    polyline = msp.add_polyline3d([(0, 0, 0), (1, 0, 0)])
+    with pytest.raises(TypeError):
+        MeshBuilder.from_polyface(polyline)
+
+    line = msp.add_line(start=(0, 0, 0), end=(1, 0, 0))
+    with pytest.raises(TypeError):
+        MeshBuilder.from_polyface(line)

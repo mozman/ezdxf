@@ -1,13 +1,13 @@
 # Purpose: simple mesh builders
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
-from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING
+from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING, Union
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.math import Matrix44, Vector, NULLVEC
 from ezdxf.math.construct3d import is_planar_face, subdivide_face, normal_vector_3p
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, BaseLayout, UCS
+    from ezdxf.eztypes import Vertex, BaseLayout, UCS, Polyface, Polymesh
 
 
 class MeshBuilder:
@@ -146,9 +146,10 @@ class MeshBuilder:
                 vertices = matrix.transform_vectors(vertices)
             if ucs is not None:
                 vertices = list(ucs.points_to_wcs(vertices))
-            data.vertices = vertices
+            data.vertices = list(vertices)
             data.edges = self.edges
             data.faces = self.faces
+        return mesh
 
     def render_normals(self, layout: 'BaseLayout', length: float = 1, relative=True, dxfattribs: dict = None):
         """
@@ -182,7 +183,7 @@ class MeshBuilder:
             layout.add_line(center, center + n * _length, dxfattribs=dxfattribs)
 
     @classmethod
-    def from_mesh(cls, other):
+    def from_mesh(cls, other) -> 'MeshBuilder':
         """
         Create new mesh from other mesh as class method.
 
@@ -197,7 +198,61 @@ class MeshBuilder:
         return mesh
 
     @classmethod
-    def from_builder(cls, other: 'MeshBuilder'):
+    def from_polyface(cls, other: Union['Polymesh', 'Polyface']) -> 'MeshBuilder':
+        """
+        Create new mesh from a  :class:`~ezdxf.entities.Polyface` or :class:`~ezdxf.entities.Polymesh` object.
+
+        .. versionadded:: 0.11.1
+
+        """
+        if other.dxftype() != 'POLYLINE':
+            raise TypeError(f'Unsupported DXF type: {other.dxftype()}')
+
+        mesh = cls()
+        if other.is_poly_face_mesh:
+            _, faces = other.indexed_faces()
+            for face in faces:
+                mesh.add_face(face.points())
+        elif other.is_polygon_mesh:
+            vertices = other.get_mesh_vertex_cache()
+            for m in range(other.dxf.m_count-1):
+                for n in range(other.dxf.n_count-1):
+                    mesh.add_face(
+                        (
+                            vertices[n, m],
+                            vertices[n+1, m],
+                            vertices[n+1, m+1],
+                            vertices[n, m+1],
+                        )
+                    )
+        else:
+            raise TypeError('Not a polymesh or polyface.')
+        return mesh
+
+    def render_polyface(self, layout: 'BaseLayout', dxfattribs: dict = None, matrix: 'Matrix44' = None, ucs: 'UCS' = None):
+        """
+        Render mesh as :class:`~ezdxf.entities.Polyface` entity into `layout`.
+
+        .. versionadded:: 0.11.1
+
+        Args:
+            layout: :class:`~ezdxf.layouts.BaseLayout` object
+            dxfattribs: dict of DXF attributes e.g. ``{'layer': 'mesh', 'color': 7}``
+            matrix: transformation matrix of type :class:`~ezdxf.math.Matrix44`
+            ucs: transform vertices by :class:`~ezdxf.math.UCS` to :ref:`WCS`
+
+        """
+        polyface = layout.add_polyface(dxfattribs=dxfattribs)
+        t = MeshTransformer.from_builder(self)
+        if matrix is not None:
+            t.transform(matrix)
+        if ucs is not None:
+            t.transform_to_wcs(ucs)
+        polyface.append_faces(t.faces_as_vertices())
+        return polyface
+
+    @classmethod
+    def from_builder(cls, other: 'MeshBuilder') -> 'MeshBuilder':
         """
         Create new mesh from other mesh builder, faster than :meth:`from_mesh` but supports only
         :class:`MeshBuilder` and inherited classes.

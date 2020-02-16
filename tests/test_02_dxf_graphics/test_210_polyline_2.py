@@ -95,6 +95,13 @@ def test_delete_two_vertices(layout):
     assert 2 == len(polyline)
 
 
+def test_polymesh_correct_casting(layout):
+    mesh1 = layout.add_polymesh((4, 4))
+    mesh2 = layout[-1]
+    assert mesh1 is mesh2
+    assert mesh1.vertices is mesh2.vertices
+
+
 def test_polymesh_set_vertex(layout):
     mesh = layout.add_polymesh((4, 4))
     mesh.set_mesh_vertex((1, 1), (1, 2, 3))
@@ -122,6 +129,13 @@ def test_polymesh_mesh_cache(layout):
     assert vertex.dxf.location == cache[pos]
     with pytest.raises(ezdxf.DXFIndexError):
         cache[4, 0]
+
+
+def test_polyface_correct_casting(layout):
+    polyface1 = layout.add_polyface()
+    polyface2 = layout[-1]
+    assert polyface1 is polyface2
+    assert polyface1.vertices is polyface2.vertices
 
 
 def test_polyface_create_face(layout):

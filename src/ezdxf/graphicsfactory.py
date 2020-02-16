@@ -55,6 +55,9 @@ class CreatorInterface:
 
         """
         entity = self.dxffactory.create_db_entry(type_, dxfattribs)
+        if hasattr(entity, 'cast'):  # POLYLINE -> POLYMESH or POLYFACE
+            # call cast() before adding to layout
+            entity = entity.cast()
         self.add_entity(entity)
         return entity
 
@@ -359,12 +362,13 @@ class CreatorInterface:
         dxfattribs['n_count'] = n_size
         m_close = dxfattribs.pop('m_close', False)
         n_close = dxfattribs.pop('n_close', False)
+        # returns casted entity
         polymesh = self.new_entity('POLYLINE', dxfattribs)  # type: Polymesh
 
         points = [(0, 0, 0)] * (m_size * n_size)
         polymesh.append_vertices(points)  # init mesh vertices
         polymesh.close(m_close, n_close)
-        return polymesh.cast()
+        return polymesh
 
     def add_polyface(self, dxfattribs: dict = None) -> 'Polyface':
         """
@@ -380,7 +384,7 @@ class CreatorInterface:
         n_close = dxfattribs.pop('n_close', False)
         polyface = self.new_entity('POLYLINE', dxfattribs)  # type: Polyface
         polyface.close(m_close, n_close)
-        return polyface.cast()
+        return polyface
 
     def _add_quadrilateral(self, type_: str, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'DXFGraphic':
         dxfattribs = dict(dxfattribs or {})

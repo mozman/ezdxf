@@ -8,6 +8,7 @@ DXF Entities
     - angular dim
     - angular 3 point dim
     - ordinate dim
+- MeshBuilder() support for POLYMESH and POLYFACE
 - MLEADER
 - MLINE
 - FIELD
