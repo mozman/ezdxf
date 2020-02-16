@@ -139,14 +139,15 @@ class MeshBuilder:
             ucs: transform vertices by :class:`~ezdxf.math.UCS` to :ref:`WCS`
 
         """
+        vertices = self.vertices
+        if matrix is not None:
+            vertices = matrix.transform_vectors(vertices)
+        if ucs is not None:
+            vertices = ucs.points_to_wcs(vertices)
         mesh = layout.add_mesh(dxfattribs=dxfattribs)
         with mesh.edit_data() as data:
-            vertices = self.vertices
-            if matrix is not None:
-                vertices = matrix.transform_vectors(vertices)
-            if ucs is not None:
-                vertices = list(ucs.points_to_wcs(vertices))
-            data.vertices = list(vertices)
+            # data will be copied at setting in edit_data()
+            data.vertices = vertices
             data.edges = self.edges
             data.faces = self.faces
         return mesh
