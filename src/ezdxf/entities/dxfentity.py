@@ -806,7 +806,11 @@ class DXFEntity:
 
     def audit(self, auditor: 'Auditor') -> None:
         """ Validity check. (internal API) """
-        pass
+        # check owner handle
+        # check app data
+        # check reactors
+        # check extension dict
+        # check XDATA
 
     def check_pointers(self) -> List[str]:
         """ Return all pointers to check by auditor. (internal API)"""

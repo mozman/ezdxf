@@ -331,6 +331,6 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
             else:
                 raise DXFStructureError("Attached MTEXT entity without a preceding entity.")
         prev = entity
-        return are_linked_entities  # caller should know, if *tags* should be stored in the entity space or not
+        return are_linked_entities  # inform caller if `entity` is linked to a parent entity
 
     return entity_linker_
