@@ -277,8 +277,40 @@ class Dictionary(DXFObject):
 
     def audit(self, auditor: 'Auditor') -> None:
         super().audit(auditor)
+        self._check_invalid_entries(auditor)
+
+    def _check_invalid_entries(self, auditor: 'Auditor'):
+        keys_to_discard = []  # do not delete content while iterating
+        append = keys_to_discard.append
+        db = self.entitydb
+        for key, entry in self._data.items():
+            if isinstance(entry, str):  # entry is a handle as string
+                if entry not in db:
+                    append(key)
+            elif entry.is_alive:  # entry is a DXFEntity and alive
+                if entry.dxf.handle not in db:
+                    append(key)
+            else:  # entry is a DXFEntity and was deleted externally
+                append(key)
+        for key in keys_to_discard:
+            if auditor.fix_errors:
+                del self._data[key]
+                auditor.fixed_error(
+                    code=AuditError.INVALID_DICTIONARY_ENTRY,
+                    message=f'Removed entry "{key}" with invalid handle in {str(self)}',
+                    dxf_entity=self,
+                    data=key,
+                )
+            else:
+                auditor.add_error(
+                    code=AuditError.INVALID_DICTIONARY_ENTRY,
+                    message=f'Invalid handle for entry "{key}" in {str(self)}',
+                    dxf_entity=self,
+                    data=key,
+                )
 
     def check_owner(self, auditor: 'Auditor') -> None:
+        # owner handle of the root dict should be '0', and therefore points to a none existing object
         if self is not self.doc.rootdict:
             super().check_owner(auditor)
         elif self.dxf.owner != '0':
@@ -286,19 +318,15 @@ class Dictionary(DXFObject):
                 self.dxf.owner = '0'
                 auditor.fixed_error(
                     code=AuditError.INVALID_OWNER_HANDLE,
-                    message=f'Fixed invalid owner handle for root dict.',
+                    message=f'Fixed invalid owner handle in root {str(self)}.',
                     dxf_entity=self,
                 )
             else:
                 auditor.add_error(
                     code=AuditError.INVALID_OWNER_HANDLE,
-                    message=f'Invalid owner handle for root dict: #{self.dxf.owner}',
+                    message=f'Invalid owner handle in root {str(self)}.',
                     dxf_entity=self,
                 )
-
-    def check_pointers(self) -> List[str]:
-        """ Return all pointers to check by auditor. (internal API) """
-        return [e if isinstance(e, str) else e.dxf.handle for e in self._data.values()]
 
     def destroy(self) -> None:
         if self.is_hard_owner:

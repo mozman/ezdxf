@@ -773,7 +773,7 @@ class Drawing:
         result = list(auditor.filter_zero_pointers(auditor.run()))
         if len(result):
             if print_report:
-                auditor.print_report()
+                auditor.print_error_report()
             return False
         else:
             return True

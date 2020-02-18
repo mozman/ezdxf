@@ -28,7 +28,6 @@ class DXFObject(DXFEntity):
         """ Validity check. (internal API) """
         super().audit(auditor)
         self.check_owner(auditor)
-        auditor.check_pointer_target_exist(self, zero_pointer_valid=False)
 
     def check_owner(self, auditor: 'Auditor') -> None:
         # overridden in DICTIONARY

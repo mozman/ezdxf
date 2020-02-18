@@ -28,6 +28,7 @@ class AuditError(IntEnum):
     INVALID_LAYER_NAME = 200
     INVALID_COLOR_INDEX = 201
     INVALID_OWNER_HANDLE = 202
+    INVALID_DICTIONARY_ENTRY = 203
 
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
@@ -48,9 +49,9 @@ def target_pointers(tags: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
 
 class Auditor:
-    def __init__(self, doc: 'Drawing', fix_error=False):
+    def __init__(self, doc: 'Drawing', fix_errors=False):
         self.doc = doc
-        self.fix_errors = fix_error  # try to fix errors if True
+        self.fix_errors = fix_errors  # try to fix errors if True
 
         self.errors = []  # type: List[ErrorEntry]
         self.fixes = []  # type: List[ErrorEntry]
@@ -58,25 +59,27 @@ class Auditor:
 
     def reset(self) -> None:
         self.errors = []
+        self.fixes = []
         self.undefined_targets = set()
 
     def __len__(self) -> int:
+        """ Returns count of unfixed errors. """
         return len(self.errors)
 
     def __bool__(self) -> bool:
+        """ Returns ``True`` if any unfixed errors exist. """
         return self.__len__() > 0
 
     def __iter__(self) -> Iterable[ErrorEntry]:
+        """ Iterate over all unfixed errors. """
         return iter(self.errors)
 
-    def print_report(self, errors: List[ErrorEntry] = None, stream: TextIO = None) -> None:
+    def print_error_report(self, errors: List[ErrorEntry] = None, stream: TextIO = None) -> None:
         def entity_str(count, code, entity):
             if entity is not None:
-                handle = entity.dxf.handle
-                type_ = entity.dxftype()
-                return f"{count:4d}. Issue [{code}] in {type_} #{handle}"
+                return f"{count:4d}. Issue [{code}] in {str(entity)}."
             else:
-                return f"{count:4d}. Issue [{code}]"
+                return f"{count:4d}. Issue [{code}]."
 
         if errors is None:
             errors = self.errors
@@ -91,6 +94,24 @@ class Auditor:
         else:
             stream.write(f'{len(errors)} issues found.\n\n')
             for count, error in enumerate(errors):
+                stream.write(entity_str(count + 1, error.code, error.entity) + '\n')
+                stream.write('   ' + error.message + '\n\n')
+
+    def print_fixed_errors(self, stream: TextIO = None) -> None:
+        def entity_str(count, code, entity):
+            if entity is not None:
+                return f"{count:4d}. Issue [{code}] fixed in {str(entity)}."
+            else:
+                return f"{count:4d}. Issue [{code}] fixed."
+
+        if stream is None:
+            stream = sys.stdout
+
+        if len(self.fixes) == 0:
+            stream.write('No issues fixed.\n\n')
+        else:
+            stream.write(f'{len(self.fixes)} issues fixed.\n\n')
+            for count, error in enumerate(self.fixes):
                 stream.write(entity_str(count + 1, error.code, error.entity) + '\n')
                 stream.write('   ' + error.message + '\n\n')
 

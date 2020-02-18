@@ -171,6 +171,18 @@ def test_add_dict_var(doc):
     assert new_var.dxf.value == 'Hallo'
 
 
+def test_audit_fix_invalid_root_dict_owner():
+    doc = ezdxf.new()
+    rootdict = doc.rootdict
+    auditor = Auditor(doc, fix_errors=True)
+
+    rootdict.dxf.owner = 'FF'  # set invalid owner
+    auditor.run()
+    assert len(auditor.fixes) == 1
+    assert auditor.fixes[0].code == AuditError.INVALID_OWNER_HANDLE
+    assert rootdict.dxf.owner == '0'
+
+
 def test_audit_ok():
     doc = ezdxf.new()
     auditor = Auditor(doc)
@@ -182,10 +194,7 @@ def test_audit_ok():
 
     rootdict.audit(auditor)
     assert len(auditor) == 0
-
-    handles = rootdict.check_pointers()
-    assert len(handles) == len(rootdict)
-    assert new_var.dxf.handle in handles
+    assert len(rootdict.check_pointers()) == 0, 'should not be used to check DICTIONARY entries'
 
 
 def test_audit_invalid_pointer():
@@ -198,7 +207,26 @@ def test_audit_invalid_pointer():
     d.audit(auditor)
     assert len(auditor) == 1
     e = auditor.errors[0]
-    assert e.code == AuditError.POINTER_TARGET_NOT_EXISTS
+    assert e.code == AuditError.INVALID_DICTIONARY_ENTRY
+
+
+def test_audit_fix_invalid_pointer():
+    doc = ezdxf.new()
+    auditor = Auditor(doc, fix_errors=True)
+
+    d = doc.rootdict.add_new_dict('TEST_AUDIT_3')
+    entry = d.add_dict_var('TEST_VAR_3', 'Hallo')
+    entry.dxf.handle = 'ABBA'
+    d.audit(auditor)
+    assert len(auditor) == 0, 'should return count of unfixed errors'
+    assert len(auditor.errors) == 0
+    assert len(auditor.fixes) == 1
+    fix = auditor.fixes[0]
+    assert fix.code == AuditError.INVALID_DICTIONARY_ENTRY
+
+    # test if invalid entry was removed
+    assert len(d) == 0
+    assert 'TEST_VAR_3' not in d
 
 
 class TestDXFDictWithDefault:

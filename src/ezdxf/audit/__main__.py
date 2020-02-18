@@ -25,7 +25,7 @@ def audit(filename: str, ignore_zero_pointers: bool = False) -> None:
     errors = auditor.run()
     if ignore_zero_pointers:
         errors = auditor.filter_zero_pointers(errors)
-    auditor.print_report(errors)
+    auditor.print_error_report(errors)
 
 
 def processing_msg(text: str) -> None:

@@ -1,4 +1,3 @@
-import pytest
 import sys
 import glob
 import ezdxf
@@ -7,18 +6,6 @@ from itertools import chain
 DIR1 = r"D:\Source\dxftest\CADKitSamples\*.dxf"
 DIR2 = r"D:\Source\dxftest\*.dxf"
 LEGACY_MODE = False
-
-
-@pytest.fixture(params=chain(glob.glob(DIR1), glob.glob(DIR2)))
-def filename(request):
-    return request.param
-
-
-def test_audit_all(filename):
-    dwg = ezdxf.readfile(filename, legacy_mode=LEGACY_MODE)
-    auditor = dwg.auditor()
-    result = list(auditor.filter_zero_pointers(auditor.run()))
-    assert len(result) == 0
 
 
 def run(start):
@@ -34,7 +21,7 @@ def run(start):
         auditor = dwg.auditor()
         errors = list(auditor.filter_zero_pointers(auditor.run()))
         if len(errors):
-            auditor.print_report(errors)
+            auditor.print_error_report(errors)
 
 
 if __name__ == '__main__':
