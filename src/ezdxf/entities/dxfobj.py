@@ -24,6 +24,16 @@ __all__ = ['DXFObject', 'Placeholder', 'XRecord', 'VBAProject', 'SortEntsTable',
 class DXFObject(DXFEntity):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
+    def audit(self, auditor: 'Auditor') -> None:
+        """ Validity check. (internal API) """
+        super().audit(auditor)
+        self.check_owner(auditor)
+        auditor.check_pointer_target_exist(self, zero_pointer_valid=False)
+
+    def check_owner(self, auditor: 'Auditor') -> None:
+        # overridden in DICTIONARY
+        auditor.check_owner_exist(self)
+
 
 @register_entity
 class Placeholder(DXFObject):

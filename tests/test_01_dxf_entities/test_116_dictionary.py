@@ -6,6 +6,7 @@ import ezdxf
 
 from ezdxf.entities.dictionary import Dictionary, DictionaryWithDefault
 from ezdxf import DXFKeyError
+from ezdxf.audit import Auditor, AuditError
 
 
 class MockDoc:
@@ -168,6 +169,36 @@ def test_add_dict_var(doc):
     assert new_var.dxftype() == 'DICTIONARYVAR'
     assert 'MOZMAN_VAR' in rootdict
     assert new_var.dxf.value == 'Hallo'
+
+
+def test_audit_ok():
+    doc = ezdxf.new()
+    auditor = Auditor(doc)
+
+    rootdict = doc.rootdict
+    assert 'TEST_VAR_1' not in rootdict
+    new_var = rootdict.add_dict_var('TEST_VAR_1', 'Hallo')
+    assert new_var.dxftype() == 'DICTIONARYVAR'
+
+    rootdict.audit(auditor)
+    assert len(auditor) == 0
+
+    handles = rootdict.check_pointers()
+    assert len(handles) == len(rootdict)
+    assert new_var.dxf.handle in handles
+
+
+def test_audit_invalid_pointer():
+    doc = ezdxf.new()
+    auditor = Auditor(doc)
+
+    d = doc.rootdict.add_new_dict('TEST_AUDIT_2')
+    entry = d.add_dict_var('TEST_VAR_2', 'Hallo')
+    entry.dxf.handle = 'ABBA'
+    d.audit(auditor)
+    assert len(auditor) == 1
+    e = auditor.errors[0]
+    assert e.code == AuditError.POINTER_TARGET_NOT_EXISTS
 
 
 class TestDXFDictWithDefault:

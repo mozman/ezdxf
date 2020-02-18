@@ -1,12 +1,16 @@
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
 # Created: 2019-02-18
-from typing import TYPE_CHECKING, KeysView, ItemsView, Any, Union, Dict
+from typing import TYPE_CHECKING, KeysView, ItemsView, Any, Union, Dict, List
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFKeyError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
 from .factory import register_entity
+import logging
+
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, Auditor
@@ -117,14 +121,18 @@ class Dictionary(DXFObject):
 
     def export_dict(self, tagwriter: 'TagWriter'):
         # key: dict key string
-        # value: DXFEntity
+        # value: DXFEntity or handle as string
         # Ignore invalid handles at export, because removing can create an empty dictionary, which is more a problem for
         # AutoCAD than invalid handles, and removing the whole dictionary is also a problem maybe.
         for key, value in self._data.items():
             tagwriter.write_tag2(KEY_CODE, key)
             # value can be a handle string or a DXFEntity
-            if not isinstance(value, str):
-                value = value.dxf.handle
+            if isinstance(value, DXFEntity):
+                if value.is_alive:
+                    value = value.dxf.handle
+                else:  # entry was deleted externally
+                    logger.debug(f'Key "{key}" references (external) deleted entry in {str(self)}')
+                    value = '0'
             tagwriter.write_tag2(self._value_code, value)  # use same value code as loaded
 
     @property
@@ -141,7 +149,7 @@ class Dictionary(DXFObject):
     def items(self) -> ItemsView:
         """ Returns :class:`ItemsView` for all dictionary entries as (:attr:`key`, :class:`DXFEntity`) pairs. """
         for key in self.keys():
-            yield (key, self.get(key))  # maybe handle -> DXFEntity
+            yield key, self.get(key)  # maybe handle -> DXFEntity
 
     def __getitem__(self, key: str) -> 'DXFEntity':
         """ Return the value for `key`, raises a :class:`DXFKeyError` if `key` does not exist. """
@@ -268,7 +276,29 @@ class Dictionary(DXFObject):
         return dxf_dict
 
     def audit(self, auditor: 'Auditor') -> None:
-        auditor.check_handles_exist(self, handles=self._data.values())
+        super().audit(auditor)
+
+    def check_owner(self, auditor: 'Auditor') -> None:
+        if self is not self.doc.rootdict:
+            super().check_owner(auditor)
+        elif self.dxf.owner != '0':
+            if auditor.fix_errors:
+                self.dxf.owner = '0'
+                auditor.fixed_error(
+                    code=AuditError.INVALID_OWNER_HANDLE,
+                    message=f'Fixed invalid owner handle for root dict.',
+                    dxf_entity=self,
+                )
+            else:
+                auditor.add_error(
+                    code=AuditError.INVALID_OWNER_HANDLE,
+                    message=f'Invalid owner handle for root dict: #{self.dxf.owner}',
+                    dxf_entity=self,
+                )
+
+    def check_pointers(self) -> List[str]:
+        """ Return all pointers to check by auditor. (internal API) """
+        return [e if isinstance(e, str) else e.dxf.handle for e in self._data.values()]
 
     def destroy(self) -> None:
         if self.is_hard_owner:

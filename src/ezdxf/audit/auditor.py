@@ -50,9 +50,11 @@ def target_pointers(tags: Iterable[DXFTag]) -> Iterable[DXFTag]:
 class Auditor:
     def __init__(self, doc: 'Drawing', fix_error=False):
         self.doc = doc
-        self.errors = []  # type: List[ErrorEntry]
-        self.undefined_targets = set()  # type: Set[str]
         self.fix_errors = fix_error  # try to fix errors if True
+
+        self.errors = []  # type: List[ErrorEntry]
+        self.fixes = []  # type: List[ErrorEntry]
+        self.undefined_targets = set()  # type: Set[str]
 
     def reset(self) -> None:
         self.errors = []
@@ -100,14 +102,14 @@ class Auditor:
             yield error
 
     def add_error(self, code: int, message: str = '', dxf_entity: 'DXFEntity' = None, data: Any = None) -> None:
-        error = ErrorEntry(code, message, dxf_entity, data)
-        self.errors.append(error)
+        self.errors.append(ErrorEntry(code, message, dxf_entity, data))
+
+    def fixed_error(self, code: int, message: str = '', dxf_entity: 'DXFEntity' = None, data: Any = None) -> None:
+        self.fixes.append(ErrorEntry(code, message, dxf_entity, data))
 
     def run(self) -> List[ErrorEntry]:
         self.reset()
-        dxfversion = self.doc.dxfversion
-        if dxfversion > 'AC1009':  # modern style DXF13 or later
-            self.check_root_dict()
+        self.check_root_dict()
         self.check_table_entries()
         self.check_database_entities()
         return self.errors
@@ -218,6 +220,7 @@ class Auditor:
             )
 
     def check_owner_exist(self, entity: 'DXFEntity') -> None:
+        # tables - owner of table entries - are not stored in the entitydb
         if not entity.dxf.hasattr('owner'):
             return
         owner_handle = entity.dxf.owner

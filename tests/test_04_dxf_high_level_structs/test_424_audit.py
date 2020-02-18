@@ -20,30 +20,10 @@ def entity(dxf):
     return dxf.modelspace().add_line((0, 0), (100, 0))
 
 
-def test_target_pointer_not_exists(entity, auditor):
+def test_target_pointer_ignore_owner(entity, auditor):
     entity.dxf.owner = 'FFFF'
     auditor.check_pointer_target_exist(entity)
-    assert len(auditor) == 1
-    assert auditor.errors[0].code == AuditError.POINTER_TARGET_NOT_EXISTS
-
-
-def test_target_pointer_zero_valid(entity, auditor):
-    entity.dxf.owner = '0'
-    auditor.check_pointer_target_exist(entity, zero_pointer_valid=True)
-    assert len(auditor) == 0, '0 should be a valid target pointer'
-
-
-def test_target_pointer_zero_invalid(entity, auditor):
-    entity.dxf.owner = '0'
-    auditor.check_pointer_target_exist(entity, zero_pointer_valid=False)
-    assert len(auditor) == 1, '0 should be a valid target pointer'
-    assert auditor.errors[0].code == AuditError.POINTER_TARGET_NOT_EXISTS
-
-
-def test_target_pointer_ignore_codes(entity, auditor):
-    entity.dxf.owner = '0'
-    auditor.check_pointer_target_exist(entity, zero_pointer_valid=True)
-    assert len(auditor) == 0, '0 should be a valid target pointer'
+    assert len(auditor) == 0, 'should not check owner handle'
 
 
 def test_color_index(entity, auditor):
@@ -82,5 +62,3 @@ def test_for_existing_text_style(text, auditor):
     auditor.check_if_text_style_exists(text)
     assert len(auditor) == 1
     assert auditor.errors[0].code == AuditError.UNDEFINED_TEXT_STYLE
-
-

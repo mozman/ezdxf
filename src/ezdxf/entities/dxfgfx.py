@@ -245,6 +245,7 @@ class DXFGraphic(DXFEntity):
     def audit(self, auditor: 'Auditor') -> None:
         """ Validity check. (internal API) """
         super().audit(auditor)
+        auditor.check_owner_exist(self)
         auditor.check_for_valid_layer_name(self)
         auditor.check_if_linetype_exists(self)
         auditor.check_for_valid_color_index(self)

@@ -806,7 +806,7 @@ class DXFEntity:
 
     def audit(self, auditor: 'Auditor') -> None:
         """ Validity check. (internal API) """
-        # check owner handle
+        # check owner -> DXFGraphic, DXFObject
         # check app data
         # check reactors
         # check extension dict
@@ -814,7 +814,8 @@ class DXFEntity:
 
     def check_pointers(self) -> List[str]:
         """ Return all pointers to check by auditor. (internal API)"""
-        return [self.dxf.owner]
+        # do not return dxf.owner
+        return []
 
     def _new_compound_entity(self, type_: str, dxfattribs: dict) -> 'DXFEntity':
         """
