@@ -62,6 +62,11 @@ class Table:
     def _set_head(self, name: str, handle: str = None) -> None:
         self._head = TableHead.new(handle, owner='0', dxfattribs={'name': name}, doc=self.doc)
 
+    @property
+    def head(self):
+        """ Returns table head entry. """
+        return self._head
+
     # start public interface
 
     @staticmethod
@@ -221,6 +226,13 @@ class Table:
             self._update_owner_handles()
 
     def audit(self, auditor: 'Auditor'):
+        # audit the table structure itself not the entries!
+        # Table entries itself will be checked as database entities.
+        # 1. Check table head handle is not None; fix: assign next entity database handle by self.set_handle()
+        # 2. Check table head owner is '0'; fix: set to '0'
+        # 3. Check all table entries owner handle is table head handle; fix: call self._update_owner_handles()
+        # 4. Check Extension Dictionary
+        # Tables don't support APP data, XDATA, Reactors or embedded objects; fix: set to None
         pass
 
 

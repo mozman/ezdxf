@@ -244,12 +244,12 @@ class DXFGraphic(DXFEntity):
 
     def audit(self, auditor: 'Auditor') -> None:
         """ Validity check. (internal API) """
+        assert self.doc is auditor.doc, 'Auditor for different DXF document.'
         super().audit(auditor)
         auditor.check_owner_exist(self)
         auditor.check_for_valid_layer_name(self)
-        auditor.check_if_linetype_exists(self)
-        auditor.check_for_valid_color_index(self)
-        auditor.check_pointer_target_exist(self, zero_pointer_valid=False)
+        auditor.check_entity_linetype(self)
+        auditor.check_entity_color_index(self)
 
     def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Sequence, angle_names: Sequence = None) -> None:
         """ Transforms entity for given `ucs` to the parent coordinate system (most likely the WCS).

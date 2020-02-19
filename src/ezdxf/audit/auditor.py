@@ -14,7 +14,7 @@ from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
 from ezdxf.entities.dxfentity import DXFEntity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity, Drawing
+    from ezdxf.eztypes import DXFEntity, Drawing, DXFGraphic
 
 
 class AuditError(IntEnum):
@@ -131,7 +131,7 @@ class Auditor:
     def run(self) -> List[ErrorEntry]:
         self.reset()
         self.check_root_dict()
-        self.check_table_entries()
+        self.check_table_structures()
         self.check_database_entities()
         return self.errors
 
@@ -145,7 +145,10 @@ class Auditor:
                     dxf_entity=root_dict,
                 )
 
-    def check_table_entries(self) -> None:
+    def check_table_structures(self) -> None:
+        """ Check table structures. """
+        # Tables or more precise the 'table head' is not stored in the entity database
+        # Table entries are checked as database entities
         tables = self.doc.tables
         tables.linetypes.audit(self)
         tables.layers.audit(self)
@@ -157,13 +160,15 @@ class Auditor:
         tables.block_records.audit(self)
 
     def check_database_entities(self) -> None:
+        """ Check all entities stored in the entity database. """
         for entity in self.doc.entitydb.values():
             entity.audit(self)
 
-    def check_if_linetype_exists(self, entity: 'DXFEntity') -> None:
+    def check_entity_linetype(self, entity: 'DXFEntity') -> None:
         """
         Check for usage of undefined line types. AutoCAD does not load DXF files with undefined line types.
         """
+        assert self.doc is entity.doc, 'Entity from different DXF document.'
         if not entity.dxf.hasattr('linetype'):
             return
         linetype = entity.dxf.linetype
@@ -171,84 +176,130 @@ class Auditor:
             return
 
         if linetype not in self.doc.linetypes:
-            self.add_error(
-                code=AuditError.UNDEFINED_LINETYPE,
-                message=f'Undefined linetype: {linetype}',
-                dxf_entity=entity,
-                data=linetype,
-            )
+            if self.fix_errors:
+                # linetype is optional so discarding resets to 'BYLAYER'
+                entity.dxf.discard('linetype')
+                self.fixed_error(
+                    code=AuditError.UNDEFINED_LINETYPE,
+                    message=f'Removed undefined linetype {linetype} in {str(entity)}',
+                    dxf_entity=entity,
+                    data=linetype,
+                )
+            else:
+                self.add_error(
+                    code=AuditError.UNDEFINED_LINETYPE,
+                    message=f'Undefined linetype {linetype} in {str(entity)}',
+                    dxf_entity=entity,
+                    data=linetype,
+                )
 
-    def check_if_text_style_exists(self, entity: 'DXFEntity') -> None:
+    def check_text_style(self, entity: 'DXFEntity') -> None:
         """
         Check for usage of undefined text styles.
         """
+        assert self.doc is entity.doc, 'Entity from different DXF document.'
         if not entity.dxf.hasattr('style'):
             return
         style = entity.dxf.style
         if style not in self.doc.styles:
-            self.add_error(
-                code=AuditError.UNDEFINED_TEXT_STYLE,
-                message=f'Undefined text style: {style}',
-                dxf_entity=entity,
-                data=style,
-            )
+            if self.fix_errors:
+                # text style is optional in TEXT and MTEXT
+                entity.dxf.discard('style')
+                self.fixed_error(
+                    code=AuditError.UNDEFINED_TEXT_STYLE,
+                    message=f'Removed undefined text style "{style}" from {str(entity)}.',
+                    dxf_entity=entity,
+                    data=style,
+                )
+            else:
+                self.add_error(
+                    code=AuditError.UNDEFINED_TEXT_STYLE,
+                    message=f'Undefined text style "{style}" in {str(entity)}.',
+                    dxf_entity=entity,
+                    data=style,
+                )
 
-    def check_if_dimension_style_exists(self, entity: 'DXFEntity') -> None:
+    def check_dimension_style(self, entity: 'DXFGraphic') -> None:
         """
         Check for usage of undefined dimension styles.
         """
+        assert self.doc is entity.doc, 'Entity from different DXF document.'
         if not entity.dxf.hasattr('dimstyle'):
             return
         dimstyle = entity.dxf.dimstyle
         if dimstyle not in self.doc.dimstyles:
-            self.add_error(
-                code=AuditError.UNDEFINED_DIMENSION_STYLE,
-                message=f'Undefined dimstyle: {dimstyle}',
-                dxf_entity=entity,
-                data=dimstyle,
-            )
+            if self.fix_errors:
+                # dimstyle attribute is not optional
+                entity.dxf.dimstyle = 'Standard'
+                self.fixed_error(
+                    code=AuditError.UNDEFINED_DIMENSION_STYLE,
+                    message=f'Replaced undefined dimstyle "{dimstyle}" in {str(entity)} by "Standard".',
+                    dxf_entity=entity,
+                    data=dimstyle,
+                )
+            else:
+                self.add_error(
+                    code=AuditError.UNDEFINED_DIMENSION_STYLE,
+                    message=f'Undefined dimstyle "{dimstyle}" in {str(entity)}',
+                    dxf_entity=entity,
+                    data=dimstyle,
+                )
 
     def check_for_valid_layer_name(self, entity: 'DXFEntity') -> None:
         """
         Check layer names for invalid characters: <>/\":;?*|='
         """
+        assert self.doc is entity.doc, 'Entity from different DXF document.'
         if not entity.dxf.hasattr('layer'):
             return
         name = entity.dxf.layer
         if not is_valid_layer_name(name):
             if self.doc.dxfversion > 'AC1009' and is_adsk_special_layer(name):
                 return
+            # This error can't be fixed !?
             self.add_error(
                 code=AuditError.INVALID_LAYER_NAME,
-                message=f'Invalid layer name: {name}',
+                message=f'Invalid layer name "{name}" in {str(entity)}',
                 dxf_entity=entity,
                 data=name,
             )
 
-    def check_for_valid_color_index(self, entity: 'DXFEntity') -> None:
+    def check_entity_color_index(self, entity: 'DXFGraphic') -> None:
         if not entity.dxf.hasattr('color'):
             return
+        # Do not use for LAYER entity
         color = entity.dxf.color
         # 0 == BYBLOCK
         # 256 == BYLAYER
         # 257 == BYOBJECT
         if color < 0 or color > 257:
-            self.add_error(
-                code=AuditError.INVALID_COLOR_INDEX,
-                message=f'Invalid color index: {color}',
-                dxf_entity=entity,
-                data=color,
-            )
+            if self.fix_errors:
+                entity.dxf.discard('color')
+                self.fixed_error(
+                    code=AuditError.INVALID_COLOR_INDEX,
+                    message=f'Removed invalid color index from {str(entity)}.',
+                    dxf_entity=entity,
+                    data=color,
+                )
+            else:
+                self.add_error(
+                    code=AuditError.INVALID_COLOR_INDEX,
+                    message=f'Invalid color index {color} in {str(entity)}',
+                    dxf_entity=entity,
+                    data=color,
+                )
 
     def check_owner_exist(self, entity: 'DXFEntity') -> None:
         # tables - owner of table entries - are not stored in the entitydb
+        assert self.doc is entity.doc, 'Entity from different DXF document.'
         if not entity.dxf.hasattr('owner'):
             return
         owner_handle = entity.dxf.owner
         if owner_handle not in self.doc.entitydb:
+            # this error can't be fixed here
             self.add_error(
                 code=AuditError.INVALID_OWNER_HANDLE,
-                message=f'Invalid owner handle: #{owner_handle}',
+                message=f'Invalid owner handle #{owner_handle} in {str(entity)}.',
                 dxf_entity=entity,
                 data=owner_handle,
             )
@@ -260,6 +311,7 @@ class Auditor:
     def check_handles_exist(self, entity: 'DXFEntity',
                             handles: Iterable[str],
                             zero_pointer_valid: bool = False) -> None:
+        assert self.doc is entity.doc, 'Entity from different DXF document.'
         db = self.doc.entitydb
         for handle in handles:
             if handle not in db:
@@ -269,7 +321,7 @@ class Auditor:
                     continue
                 self.add_error(
                     code=AuditError.POINTER_TARGET_NOT_EXISTS,
-                    message=f'Handle target does not exist: (#{handle})',
+                    message=f'Handle target #{handle} does not exist.',
                     dxf_entity=entity,
                     data=handle,
                 )

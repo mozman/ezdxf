@@ -28,13 +28,13 @@ def test_target_pointer_ignore_owner(entity, auditor):
 
 def test_color_index(entity, auditor):
     entity.dxf.color = -1
-    auditor.check_for_valid_color_index(entity)
+    auditor.check_entity_color_index(entity)
     assert len(auditor) == 1
     assert auditor.errors[0].code == AuditError.INVALID_COLOR_INDEX
 
     auditor.reset()
     entity.dxf.color = 258
-    auditor.check_for_valid_color_index(entity)
+    auditor.check_entity_color_index(entity)
     assert len(auditor) == 1
     assert auditor.errors[0].code == AuditError.INVALID_COLOR_INDEX
 
@@ -59,6 +59,6 @@ def text(dxf):
 
 
 def test_for_existing_text_style(text, auditor):
-    auditor.check_if_text_style_exists(text)
+    auditor.check_text_style(text)
     assert len(auditor) == 1
     assert auditor.errors[0].code == AuditError.UNDEFINED_TEXT_STYLE
