@@ -40,7 +40,7 @@ class Layouts:
 
     def _new_special(self, cls, name: str, block_name: str, dxfattribs: dict) -> 'Layout':
         if name in self._layouts:
-            raise DXFValueError('Layout "{}" already exists'.format(name))
+            raise DXFValueError(f'Layout "{name}" already exists')
         dxfattribs['owner'] = self._dxf_layouts.dxf.handle
         layout = cls.new(name, block_name, self.doc, dxfattribs=dxfattribs)
         self._dxf_layouts[name] = layout.dxf_layout
@@ -70,10 +70,10 @@ class Layouts:
         """
         assert isinstance(name, str), type(str)
         if not is_valid_name(name):
-            raise DXFValueError('name contains invalid characters')
+            raise DXFValueError('Layout name contains invalid characters.')
 
         if name in self._layouts:
-            raise DXFValueError('Layout "{}" already exists'.format(name))
+            raise DXFValueError(f'Layout "{name}" already exists')
 
         dxfattribs = dict(dxfattribs or {})  # copy attribs
         dxfattribs['owner'] = self._dxf_layouts.dxf.handle
@@ -101,7 +101,7 @@ class Layouts:
         layout_names = (o.dxf.name for o in doc.objects if o.dxftype == 'LAYOUT')
         for layout_name in layout_names:
             if layout_name not in layouts:
-                logger.debug('Found orphaned LAYOUT "{}"'.format(layout_name))
+                logger.debug(f'Found orphaned LAYOUT "{layout_name}"')
 
         # find orphaned BLOCK_RECORD *Paper_Space? entries
         psp_br_handles = {
@@ -112,8 +112,7 @@ class Layouts:
         }
         mismatch = psp_br_handles.difference(psp_layout_br_handles)
         if len(mismatch):
-            logger.debug(
-                'Found {} layout(s) defined by BLOCK_RECORD entries without LAYOUT entity.'.format(len(mismatch)))
+            logger.debug(f'Found {len(mismatch)} layout(s) defined by BLOCK_RECORD entries without LAYOUT entity.')
 
         return layouts
 
@@ -131,7 +130,7 @@ class Layouts:
             'block_record_handle': block_layout.block_record_handle,
             'taborder': taborder,
         }
-        dxf_layout = self.doc.objects.new_entity('LAYOUT', dxfattribs=dxfattribs)
+        dxf_layout = cast('DXFLayout', self.doc.objects.new_entity('LAYOUT', dxfattribs=dxfattribs))
         if name == 'Model':
             layout = Modelspace.load(dxf_layout, self.doc)
         else:
@@ -204,7 +203,7 @@ class Layouts:
         if old_name == 'Model':
             raise DXFValueError('Can not rename model space.')
         if new_name in self._layouts:
-            raise DXFValueError('Layout "{}" already exist.'.format(new_name))
+            raise DXFValueError(f'Layout "{new_name}" already exist.')
 
         layout = self._layouts[old_name]
         layout.rename(new_name)
