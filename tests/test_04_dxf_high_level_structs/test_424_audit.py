@@ -20,12 +20,6 @@ def entity(dxf):
     return dxf.modelspace().add_line((0, 0), (100, 0))
 
 
-def test_target_pointer_ignore_owner(entity, auditor):
-    entity.dxf.owner = 'FFFF'
-    auditor.check_pointer_target_exist(entity)
-    assert len(auditor) == 0, 'should not check owner handle'
-
-
 def test_color_index(entity, auditor):
     entity.dxf.color = -1
     auditor.check_entity_color_index(entity)

@@ -303,26 +303,3 @@ class Auditor:
                 dxf_entity=entity,
                 data=owner_handle,
             )
-
-    def check_pointer_target_exist(self, entity: 'DXFEntity', zero_pointer_valid: bool = False) -> None:
-        assert isinstance(entity, DXFEntity)
-        self.check_handles_exist(entity, entity.check_pointers(), zero_pointer_valid)
-
-    def check_handles_exist(self, entity: 'DXFEntity',
-                            handles: Iterable[str],
-                            zero_pointer_valid: bool = False) -> None:
-        assert self.doc is entity.doc, 'Entity from different DXF document.'
-        db = self.doc.entitydb
-        for handle in handles:
-            if handle not in db:
-                if handle == '0' and zero_pointer_valid:  # default unset pointer
-                    continue
-                if handle in self.undefined_targets:  # for every undefined pointer add just one error message
-                    continue
-                self.add_error(
-                    code=AuditError.POINTER_TARGET_NOT_EXISTS,
-                    message=f'Handle target #{handle} does not exist.',
-                    dxf_entity=entity,
-                    data=handle,
-                )
-                self.undefined_targets.add(handle)

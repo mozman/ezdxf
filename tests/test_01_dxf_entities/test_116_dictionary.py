@@ -194,7 +194,6 @@ def test_audit_ok():
 
     rootdict.audit(auditor)
     assert len(auditor) == 0
-    assert len(rootdict.check_pointers()) == 0, 'should not be used to check DICTIONARY entries'
 
 
 def test_audit_invalid_pointer():
