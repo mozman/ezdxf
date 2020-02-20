@@ -1,15 +1,16 @@
 # Created: 21.03.2011
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, List, cast
+from typing import TYPE_CHECKING, Dict, Iterable, List, cast, Optional
 import logging
 from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
 from ezdxf.lldxf.const import MODEL_SPACE_R2000, PAPER_SPACE_R2000, TMP_PAPER_SPACE_NAME
 from ezdxf.lldxf.validator import is_valid_name
 from .layout import Layout, Modelspace, Paperspace
+from ezdxf.entities import DXFEntity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity, Dictionary, Drawing
+    from ezdxf.eztypes import Dictionary, Drawing
 
 logger = logging.getLogger('ezdxf')
 
@@ -67,6 +68,7 @@ class Layouts:
             DXFValueError: Layout `name` already exist.
 
         """
+        assert isinstance(name, str), type(str)
         if not is_valid_name(name):
             raise DXFValueError('name contains invalid characters')
 
@@ -154,6 +156,7 @@ class Layouts:
 
     def __contains__(self, name: str) -> bool:
         """ Returns ``True`` if layout `name` exist. """
+        assert isinstance(name, str), type(str)
         return name in self._layouts
 
     def __iter__(self) -> Iterable['Layout']:
@@ -169,7 +172,7 @@ class Layouts:
         """ Returns iterable of all layout names. """
         return self._layouts.keys()
 
-    def get(self, name: str) -> 'Layout':
+    def get(self, name: Optional[str]) -> 'Layout':
         """
         Returns :class:`~ezdxf.layouts.Layout` by `name`.
 
@@ -196,6 +199,8 @@ class Layouts:
             DXFValueError: Layout `new_name` already exist.
 
         """
+        assert isinstance(old_name, str), type(old_name)
+        assert isinstance(new_name, str), type(new_name)
         if old_name == 'Model':
             raise DXFValueError('Can not rename model space.')
         if new_name in self._layouts:
@@ -213,15 +218,19 @@ class Layouts:
 
     def get_layout_for_entity(self, entity: 'DXFEntity') -> 'Layout':
         """ Returns the owner layout for a DXF `entity`. """
+        owner = entity.dxf.owner
+        if owner is None:
+            raise DXFKeyError('No associated layout, owner is None.')
         return self.get_layout_by_key(entity.dxf.owner)
 
     def get_layout_by_key(self, layout_key: str) -> 'Layout':
         """ Returns a layout by its `layout_key`. (internal API) """
+        assert isinstance(layout_key, str), type(layout_key)
         try:
             block_record = self.doc.entitydb[layout_key]
             dxf_layout = self.doc.entitydb[block_record.dxf.layout]
         except KeyError:
-            raise DXFKeyError('Layout with key "{}" does not exist.'.format(layout_key))
+            raise DXFKeyError(f'Layout with key "{layout_key}" does not exist.')
         return self.get(dxf_layout.dxf.name)
 
     def get_active_layout_key(self):
@@ -231,6 +240,7 @@ class Layouts:
 
     def set_active_layout(self, name: str) -> None:
         """ Set layout `name` as active paperspace layout. """
+        assert isinstance(name, str), type(name)
         if name == 'Model':  # reserved layout name
             raise DXFValueError('Can not set model space as active layout')
         new_active_layout = self.get(name)  # raises KeyError if no layout 'name' exists
@@ -253,9 +263,10 @@ class Layouts:
 
         Raises:
             KeyError: if layout `name` do not exists
-            ValueError: if `name` is ``'Model'`` (deleting modelspace)
+            ValueError: if `name` is ``'Model'``, deleting modelspace is not possible
 
         """
+        assert isinstance(name, str), type(name)
         if name == 'Model':
             raise DXFValueError("Can not delete model space layout.")
 

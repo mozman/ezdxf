@@ -1,5 +1,5 @@
 # Created: 10.03.2013
-# Copyright (c) 2013-2018, Manfred Moitzi
+# Copyright (c) 2013-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast
 import math
@@ -55,9 +55,7 @@ class CreatorInterface:
 
         """
         entity = self.dxffactory.create_db_entry(type_, dxfattribs)
-        if hasattr(entity, 'cast'):  # POLYLINE -> POLYMESH or POLYFACE
-            # call cast() before adding to layout
-            entity = entity.cast()
+        # cast() is already called in ezdxf.entities.factory.EntityFactory.new_entity()
         self.add_entity(entity)
         return entity
 

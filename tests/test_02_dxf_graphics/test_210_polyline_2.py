@@ -97,6 +97,7 @@ def test_delete_two_vertices(layout):
 
 def test_polymesh_correct_casting(layout):
     mesh1 = layout.add_polymesh((4, 4))
+    assert mesh1.dxf.handle is not None
     mesh2 = layout[-1]
     assert mesh1 is mesh2
     assert mesh1.vertices is mesh2.vertices

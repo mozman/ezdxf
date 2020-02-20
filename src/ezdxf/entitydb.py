@@ -31,18 +31,17 @@ class EntityDB:
 
     def __setitem__(self, handle: str, entity: DXFEntity) -> None:
         """ Set `entity` for `handle`. """
+        assert isinstance(handle, str), type(handle)
+        assert isinstance(entity, DXFEntity), type(entity)
         self._database[handle] = entity
 
     def __delitem__(self, handle: str) -> None:
         """ Delete entity by `handle`. Removes entity only from database, does not destroy the entity. """
         del self._database[handle]
 
-    def __contains__(self, item: Union[str, DXFEntity]) -> bool:
-        """ ``True`` if database contains `item`, `item` can be a handle or an entity. """
-        if isinstance(item, str):
-            handle = item
-        else:
-            handle = item.dxf.handle
+    def __contains__(self, handle: str) -> bool:
+        """ ``True`` if database contains `handle`. """
+        assert isinstance(handle, str), type(handle)
         return handle in self._database
 
     def __len__(self) -> int:
@@ -55,10 +54,7 @@ class EntityDB:
 
     def get(self, handle: str) -> Optional[DXFEntity]:
         """ Returns entity for `handle` or ``None`` if no entry for `handle` exist. """
-        try:
-            return self.__getitem__(handle)
-        except KeyError:  # internal exception
-            return None
+        return self._database.get(handle)
 
     def next_handle(self) -> str:
         """ Returns next unique handle."""
@@ -125,6 +121,12 @@ class EntityDB:
         self.add(new_entity)
         return new_entity
 
+    def purge(self):
+        """ Remove deleted entities. """
+        delete_handles = [handle for handle, entity in self.items() if not entity.is_alive]
+        for handle in delete_handles:
+            del self._database[handle]
+
 
 class EntitySpace:
     """
@@ -160,6 +162,7 @@ class EntitySpace:
 
     def has_handle(self, handle: str) -> bool:
         """ ``True`` if `handle` is present. """
+        assert isinstance(handle, str), type(handle)
         return any(e.dxf.handle == handle for e in self)
 
     def purge(self):
@@ -184,11 +187,13 @@ class EntitySpace:
 
     def add(self, entity: 'DXFEntity') -> None:
         """ Add `entity`. """
+        assert isinstance(entity, DXFEntity), type(entity)
         self.entities.append(entity)
 
     def extend(self, entities: Iterable['DXFEntity']) -> None:
         """ Add multiple `entities`."""
-        self.entities.extend(entities)
+        for entity in entities:
+            self.add(entity)
 
     def export_dxf(self, tagwriter: 'TagWriter', order=0) -> None:
         """

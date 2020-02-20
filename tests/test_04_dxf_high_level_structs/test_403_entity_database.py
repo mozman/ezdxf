@@ -55,3 +55,16 @@ def test_add_tags():
 
 def test_len(db):
     assert len(db) == 1
+
+
+def test_purge(db):
+    db = EntityDB()
+    entity = DXFEntity.from_text("0\nTEST\n5\nABBA\n")
+    db.add(entity)
+    db.add(ENTITY)
+    assert len(db) == 2
+    entity.destroy()
+    db.purge()
+    assert 'ABBA' not in db
+    assert ENTITY.dxf.handle in db
+    assert len(db) == 1
