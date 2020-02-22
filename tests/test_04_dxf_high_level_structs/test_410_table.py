@@ -1,10 +1,9 @@
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 import pytest
-from io import StringIO
 
 import ezdxf
-from ezdxf.tools.test import load_entities, internal_tag_compiler
+from ezdxf.tools.test import load_entities
 from ezdxf.sections.table import Table
 from ezdxf.lldxf.tagwriter import TagCollector
 

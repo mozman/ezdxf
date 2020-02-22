@@ -274,6 +274,7 @@ class DXFNamespace:
 
 class SubclassProcessor:
     """  Helper class for loading tags into entities. (internal class) """
+
     def __init__(self, tags: ExtendedTags, dxfversion=None):
         if len(tags.subclasses) == 0:
             raise ValueError('Invalid tags.')

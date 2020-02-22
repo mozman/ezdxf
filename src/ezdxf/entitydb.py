@@ -1,11 +1,13 @@
 # Purpose: new entity database, replaces module ezdxf.database
 # Created: 2019-02-14
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import Optional, Iterable, Tuple, Union, TYPE_CHECKING
+from typing import Optional, Iterable, Tuple, TYPE_CHECKING
 from ezdxf.tools.handle import HandleGenerator
+from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.order import priority, zorder
+from ezdxf.audit import AuditError, Auditor
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -33,6 +35,8 @@ class EntityDB:
         """ Set `entity` for `handle`. """
         assert isinstance(handle, str), type(handle)
         assert isinstance(entity, DXFEntity), type(entity)
+        if handle == '0' or not is_valid_handle(handle):
+            raise ValueError(f'Invalid handle {handle}.')
         self._database[handle] = entity
 
     def __delitem__(self, handle: str) -> None:
@@ -121,11 +125,48 @@ class EntityDB:
         self.add(new_entity)
         return new_entity
 
-    def purge(self):
-        """ Remove deleted entities. """
-        delete_handles = [handle for handle, entity in self.items() if not entity.is_alive]
-        for handle in delete_handles:
-            del self._database[handle]
+    def audit(self, auditor: 'Auditor'):
+        """ Restore database integrity:
+
+        - removes deleted database entries (purge)
+        - restore database entries with modified handles (key != entity.dxf.handle)
+        - remove entities with invalid handles
+
+        """
+        db = self._database
+        remove_handles = []
+        add_entities = []
+        for handle, entity in db.items():
+            if not is_valid_handle(handle):
+                auditor.fixed_error(
+                    code=AuditError.INVALID_ENTITY_HANDLE,
+                    message=f'Removed entity {entity.dxftype()} with invalid handle "{handle}" from entity database.',
+                )
+                remove_handles.append(handle)
+            if not entity.is_alive:
+                remove_handles.append(handle)
+            elif handle != entity.dxf.get('handle'):
+                remove_handles.append(handle)
+                add_entities.append(entity)
+
+        for handle in remove_handles:
+            del db[handle]
+
+        for entity in add_entities:
+            handle = entity.dxf.get('handle')
+            if handle is None:
+                auditor.fixed_error(
+                    code=AuditError.INVALID_ENTITY_HANDLE,
+                    message=f'Removed entity {entity.dxftype()} without handle from entity database.',
+                )
+                continue
+            if not is_valid_handle(handle) or handle == '0':
+                auditor.fixed_error(
+                    code=AuditError.INVALID_ENTITY_HANDLE,
+                    message=f'Removed entity {entity.dxftype()} with invalid handle "{handle}" from entity database.',
+                )
+                continue
+            self[handle] = entity
 
 
 class EntitySpace:

@@ -174,7 +174,7 @@ def test_add_dict_var(doc):
 def test_audit_fix_invalid_root_dict_owner():
     doc = ezdxf.new()
     rootdict = doc.rootdict
-    auditor = Auditor(doc, fix_errors=True)
+    auditor = Auditor(doc)
 
     rootdict.dxf.owner = 'FF'  # set invalid owner
     auditor.run()
@@ -204,14 +204,14 @@ def test_audit_invalid_pointer():
     entry = d.add_dict_var('TEST_VAR_2', 'Hallo')
     entry.dxf.handle = 'ABBA'
     d.audit(auditor)
-    assert len(auditor) == 1
-    e = auditor.errors[0]
+    assert len(auditor.fixes) == 1
+    e = auditor.fixes[0]
     assert e.code == AuditError.INVALID_DICTIONARY_ENTRY
 
 
 def test_audit_fix_invalid_pointer():
     doc = ezdxf.new()
-    auditor = Auditor(doc, fix_errors=True)
+    auditor = Auditor(doc)
 
     d = doc.rootdict.add_new_dict('TEST_AUDIT_3')
     entry = d.add_dict_var('TEST_VAR_3', 'Hallo')

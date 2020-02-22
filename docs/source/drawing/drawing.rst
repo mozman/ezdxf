@@ -193,8 +193,6 @@ Drawing Object
 
     .. automethod:: add_xref_def
 
-    .. automethod:: cleanup
-
     .. automethod:: layouts_and_blocks
 
     .. automethod:: chain_layouts_and_blocks
@@ -204,3 +202,7 @@ Drawing Object
     .. automethod:: reset_version_guid
 
     .. automethod:: set_modelspace_vport
+
+    .. automethod:: audit
+
+    .. automethod:: validate

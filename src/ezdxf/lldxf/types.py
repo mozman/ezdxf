@@ -244,6 +244,14 @@ TYPE_TABLE = _build_type_table([
 ])
 
 
+def is_valid_handle(handle: str) -> bool:
+    try:
+        int(handle, 16)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
 def is_binary_data(code: int) -> bool:
     return code in BINARAY_DATA
 

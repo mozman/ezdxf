@@ -3,36 +3,38 @@
 import pytest
 from ezdxf.entitydb import EntityDB
 from ezdxf.entities.dxfentity import DXFEntity
+from ezdxf.audit import Auditor
 
 ENTITY = DXFEntity.from_text("0\nTEST\n5\nFFFF\n")
+auditor = Auditor(None)
 
 
 @pytest.fixture
 def db():
     db = EntityDB()
-    db['0'] = ENTITY
+    db['FEFE'] = ENTITY
     return db
 
 
 def test_get_value(db):
-    assert ENTITY is db['0']
+    assert ENTITY is db['FEFE']
 
 
 def test_set_value(db):
     new_entity = DXFEntity.from_text("0\nTEST\n5\nFFFF\n")
-    db['0'] = new_entity
-    assert new_entity is db['0']
+    db['FEFE'] = new_entity
+    assert new_entity is db['FEFE']
 
 
 def test_del_value(db):
-    del db['0']
+    del db['FEFE']
     with pytest.raises(KeyError):
-        _ = db['0']
+        _ = db['FEFE']
     assert len(db) == 0
 
 
 def test_keys(db):
-    assert list(db.keys()) == ['0']
+    assert list(db.keys()) == ['FEFE']
 
 
 def test_values(db):
@@ -40,7 +42,7 @@ def test_values(db):
 
 
 def test_items(db):
-    assert list(db.items()) == [('0', ENTITY)]
+    assert list(db.items()) == [('FEFE', ENTITY)]
 
 
 def test_get(db):
@@ -57,14 +59,54 @@ def test_len(db):
     assert len(db) == 1
 
 
-def test_purge(db):
+def test_restore_integrity_purge():
     db = EntityDB()
-    entity = DXFEntity.from_text("0\nTEST\n5\nABBA\n")
-    db.add(entity)
-    db.add(ENTITY)
-    assert len(db) == 2
-    entity.destroy()
-    db.purge()
-    assert 'ABBA' not in db
-    assert ENTITY.dxf.handle in db
+    e = DXFEntity.from_text("0\nTEST\n5\nABBA\n")
+    db.add(e)
     assert len(db) == 1
+    db.audit(auditor)
+    assert len(db) == 1
+    e.destroy()
+    db.audit(auditor)
+    assert len(db) == 0
+
+
+def test_restore_integrity_recover():
+    db = EntityDB()
+    e = DXFEntity.from_text("0\nTEST\n5\nABBA\n")
+    db.add(e)
+    assert len(db) == 1
+
+    # modify handle
+    e.dxf.handle = 'FEFE'
+    assert 'ABBA' in db
+    assert 'FEFE' not in db
+
+    db.audit(auditor)
+    assert len(db) == 1
+    assert 'FEFE' in db
+    assert 'ABBA' not in db
+
+
+def test_restore_integrity_remove_invalid_None():
+    db = EntityDB()
+    e = DXFEntity.from_text("0\nTEST\n5\nABBA\n")
+    db.add(e)
+    assert len(db) == 1
+
+    # set invalid handle
+    e.dxf.handle = None
+    db.audit(auditor)
+    assert len(db) == 0
+
+
+def test_restore_integrity_remove_invalid_handle():
+    db = EntityDB()
+    e = DXFEntity.from_text("0\nTEST\n5\nABBA\n")
+    db.add(e)
+    assert len(db) == 1
+
+    # set invalid handle
+    e.dxf.handle = 'XFFF'
+    db.audit(auditor)
+    assert len(db) == 0

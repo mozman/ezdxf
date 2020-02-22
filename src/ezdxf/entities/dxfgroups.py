@@ -1,18 +1,22 @@
 # Created: 2019-02-19
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
 from typing import TYPE_CHECKING, Iterable, cast, Union, List
 from contextlib import contextmanager
+import logging
 
 from ezdxf.lldxf.const import DXFValueError, SUBCLASS_MARKER, DXFTypeError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
+from .dxfgfx import DXFGraphic
 from .factory import register_entity
 from .objectcollection import ObjectCollection
 
+logger = logging.getLogger('ezdxf')
+
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, DXFGraphic
+    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, Auditor
 
 __all__ = ['DXFGroup', 'GroupCollection']
 
@@ -92,6 +96,10 @@ class DXFGroup(DXFObject):
         """ Returns the count of DXF entities in :class:`DXFDGroup`. """
         return len(self._data)
 
+    def __getitem__(self, item):
+        """ Returns entities by standard Python indexing and slicing. """
+        return self._data[item]
+
     def __contains__(self, item: Union[str, 'DXFGraphic']) -> bool:
         """ Returns ``True`` if item is in :class:`DXFDGroup`. `item` has to be a handle string or an object of type
         :class:`GraphicEntity` or inherited.
@@ -135,7 +143,7 @@ class DXFGroup(DXFObject):
         entities = list(entities)  # for generators
         if not all_entities_on_same_layout(entities):
             raise DXFValueError(
-                "All entities have to be on the same layout (modelspace or any paperspace layout but not block).")
+                "All entities have to be on the same layout (modelspace or any paperspace layout but not a block).")
         self.clear()
         self._data = entities
 
@@ -150,23 +158,43 @@ class DXFGroup(DXFObject):
         """
         self._data = []
 
-    def remove_invalid_handles(self) -> None:
+    def audit(self, auditor: 'Auditor') -> None:
         """
         Remove invalid handles from :class:`DXFDGroup`.
 
-        Invalid handles are: deleted entities, entities in a block layout
+        Invalid handles are: deleted entities, not all entities in the same layout or entities in a block layout.
 
         """
-        def handle_not_in_block_definition(entity) -> bool:
-            # owner block_record.layout is 0 if entity is in a block definition
-            owner = self.entitydb[entity.dxf.owner]
-            return owner.dxf.layout != '0'
+        # Remove deleted and invalid entities.
+        self._data = list(self.filter_invalid_entities())
+        if len(self._data) == 0:
+            return
 
-        self._data = [entity for entity in self if entity.is_alive]
-
-        # If one entity is in a block layout remove all entities, because they have to be on the same layout
-        if self._data and handle_not_in_block_definition(self._data[0]):
+        if not all_entities_on_same_layout(self._data):
+            logger.debug(f'Cleared {str(self)}, not all entities are located in the same layout.')
             self.clear()
+
+    def has_valid_owner(self, entity) -> bool:
+        if entity.dxf.owner is None:  # no owner -> no layout association
+            return False
+        owner = self.entitydb.get(entity.dxf.owner)
+        if owner is None or not owner.is_alive:  # owner does not exist or is deleted -> no layout association
+            return False
+        # owner block_record.layout is 0 if entity is in a block definition, which is not allowed
+        valid = owner.dxf.layout != '0'
+        if not valid:
+            logger.debug(f'Removed {str(entity)} from {str(self)}, because entity is located in a block layout.')
+        return valid
+
+    def filter_invalid_entities(self) -> Iterable['DXFGraphic']:
+        db = self.entitydb
+        for e in self._data:
+            if e is None:
+                continue
+            if isinstance(e, str):
+                e = db.get(e)  # returns None for not existing entities
+            if isinstance(e, DXFGraphic) and e.is_alive and self.has_valid_owner(e):
+                yield e
 
 
 def all_entities_on_same_layout(entities: Iterable['DXFGraphic']):
@@ -196,7 +224,7 @@ class GroupCollection(ObjectCollection):
 
     def _next_name(self) -> str:
         self._next_unnamed_number += 1
-        return "*A{}".format(self._next_unnamed_number)
+        return f"*A{self._next_unnamed_number}"
 
     def new(self, name: str = None, description: str = "", selectable: int = 1) -> DXFGroup:
         """
@@ -241,15 +269,16 @@ class GroupCollection(ObjectCollection):
         else:
             raise DXFValueError("GROUP not in group table registered.")
 
-    def cleanup(self) -> None:
+    def audit(self, auditor: 'Auditor') -> None:
         """ Removes empty groups and invalid handles from all groups. """
         empty_groups = []
         for name, group in self:
-            group.remove_invalid_handles()
+            group.restore_integrity()
             if not len(group):  # remove empty group
                 # do not delete groups while iterating over groups!
                 empty_groups.append(name)
 
         # now delete empty groups
         for name in empty_groups:
+            logger.debug(f'Removed empty group "{name}".')
             self.delete(name)

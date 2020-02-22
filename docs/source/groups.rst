@@ -34,6 +34,8 @@ DXFGroup
 
     .. automethod:: __len__
 
+    .. automethod:: __getitem__
+
     .. automethod:: __contains__
 
     .. automethod:: handles
@@ -48,7 +50,7 @@ DXFGroup
 
     .. automethod:: clear
 
-    .. automethod:: remove_invalid_handles
+    .. automethod:: audit
 
 GroupCollection
 ---------------
@@ -87,4 +89,4 @@ Each :class:`~ezdxf.drawing.Drawing` has one group table, which is accessible by
 
        Delete all groups.
 
-    .. automethod:: cleanup
+    .. automethod:: audit

@@ -29,6 +29,7 @@ class AuditError(IntEnum):
     INVALID_COLOR_INDEX = 201
     INVALID_OWNER_HANDLE = 202
     INVALID_DICTIONARY_ENTRY = 203
+    INVALID_ENTITY_HANDLE = 204
 
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
@@ -49,10 +50,8 @@ def target_pointers(tags: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
 
 class Auditor:
-    def __init__(self, doc: 'Drawing', fix_errors=False):
+    def __init__(self, doc: 'Drawing'):
         self.doc = doc
-        self.fix_errors = fix_errors  # try to fix errors if True
-
         self.errors = []  # type: List[ErrorEntry]
         self.fixes = []  # type: List[ErrorEntry]
         self.undefined_targets = set()  # type: Set[str]
@@ -130,9 +129,11 @@ class Auditor:
 
     def run(self) -> List[ErrorEntry]:
         self.reset()
+        self.doc.entitydb.audit(self)
         self.check_root_dict()
         self.check_table_structures()
         self.check_database_entities()
+        self.doc.groups.audit(self)
         return self.errors
 
     def check_root_dict(self) -> None:
@@ -176,22 +177,14 @@ class Auditor:
             return
 
         if linetype not in self.doc.linetypes:
-            if self.fix_errors:
-                # linetype is optional so discarding resets to 'BYLAYER'
-                entity.dxf.discard('linetype')
-                self.fixed_error(
-                    code=AuditError.UNDEFINED_LINETYPE,
-                    message=f'Removed undefined linetype {linetype} in {str(entity)}',
-                    dxf_entity=entity,
-                    data=linetype,
-                )
-            else:
-                self.add_error(
-                    code=AuditError.UNDEFINED_LINETYPE,
-                    message=f'Undefined linetype {linetype} in {str(entity)}',
-                    dxf_entity=entity,
-                    data=linetype,
-                )
+            # linetype is optional so discarding resets to 'BYLAYER'
+            entity.dxf.discard('linetype')
+            self.fixed_error(
+                code=AuditError.UNDEFINED_LINETYPE,
+                message=f'Removed undefined linetype {linetype} in {str(entity)}',
+                dxf_entity=entity,
+                data=linetype,
+            )
 
     def check_text_style(self, entity: 'DXFEntity') -> None:
         """
@@ -202,22 +195,14 @@ class Auditor:
             return
         style = entity.dxf.style
         if style not in self.doc.styles:
-            if self.fix_errors:
-                # text style is optional in TEXT and MTEXT
-                entity.dxf.discard('style')
-                self.fixed_error(
-                    code=AuditError.UNDEFINED_TEXT_STYLE,
-                    message=f'Removed undefined text style "{style}" from {str(entity)}.',
-                    dxf_entity=entity,
-                    data=style,
-                )
-            else:
-                self.add_error(
-                    code=AuditError.UNDEFINED_TEXT_STYLE,
-                    message=f'Undefined text style "{style}" in {str(entity)}.',
-                    dxf_entity=entity,
-                    data=style,
-                )
+            # text style is optional in TEXT and MTEXT
+            entity.dxf.discard('style')
+            self.fixed_error(
+                code=AuditError.UNDEFINED_TEXT_STYLE,
+                message=f'Removed undefined text style "{style}" from {str(entity)}.',
+                dxf_entity=entity,
+                data=style,
+            )
 
     def check_dimension_style(self, entity: 'DXFGraphic') -> None:
         """
@@ -228,22 +213,14 @@ class Auditor:
             return
         dimstyle = entity.dxf.dimstyle
         if dimstyle not in self.doc.dimstyles:
-            if self.fix_errors:
-                # dimstyle attribute is not optional
-                entity.dxf.dimstyle = 'Standard'
-                self.fixed_error(
-                    code=AuditError.UNDEFINED_DIMENSION_STYLE,
-                    message=f'Replaced undefined dimstyle "{dimstyle}" in {str(entity)} by "Standard".',
-                    dxf_entity=entity,
-                    data=dimstyle,
-                )
-            else:
-                self.add_error(
-                    code=AuditError.UNDEFINED_DIMENSION_STYLE,
-                    message=f'Undefined dimstyle "{dimstyle}" in {str(entity)}',
-                    dxf_entity=entity,
-                    data=dimstyle,
-                )
+            # dimstyle attribute is not optional
+            entity.dxf.dimstyle = 'Standard'
+            self.fixed_error(
+                code=AuditError.UNDEFINED_DIMENSION_STYLE,
+                message=f'Replaced undefined dimstyle "{dimstyle}" in {str(entity)} by "Standard".',
+                dxf_entity=entity,
+                data=dimstyle,
+            )
 
     def check_for_valid_layer_name(self, entity: 'DXFEntity') -> None:
         """
@@ -273,21 +250,13 @@ class Auditor:
         # 256 == BYLAYER
         # 257 == BYOBJECT
         if color < 0 or color > 257:
-            if self.fix_errors:
-                entity.dxf.discard('color')
-                self.fixed_error(
-                    code=AuditError.INVALID_COLOR_INDEX,
-                    message=f'Removed invalid color index from {str(entity)}.',
-                    dxf_entity=entity,
-                    data=color,
-                )
-            else:
-                self.add_error(
-                    code=AuditError.INVALID_COLOR_INDEX,
-                    message=f'Invalid color index {color} in {str(entity)}',
-                    dxf_entity=entity,
-                    data=color,
-                )
+            entity.dxf.discard('color')
+            self.fixed_error(
+                code=AuditError.INVALID_COLOR_INDEX,
+                message=f'Removed invalid color index from {str(entity)}.',
+                dxf_entity=entity,
+                data=color,
+            )
 
     def check_owner_exist(self, entity: 'DXFEntity') -> None:
         # tables - owner of table entries - are not stored in the entitydb

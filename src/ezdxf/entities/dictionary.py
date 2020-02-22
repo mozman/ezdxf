@@ -293,40 +293,25 @@ class Dictionary(DXFObject):
             else:  # entry is a DXFEntity and was deleted externally
                 append(key)
         for key in keys_to_discard:
-            if auditor.fix_errors:
-                del self._data[key]
-                auditor.fixed_error(
-                    code=AuditError.INVALID_DICTIONARY_ENTRY,
-                    message=f'Removed entry "{key}" with invalid handle in {str(self)}',
-                    dxf_entity=self,
-                    data=key,
-                )
-            else:
-                auditor.add_error(
-                    code=AuditError.INVALID_DICTIONARY_ENTRY,
-                    message=f'Invalid handle for entry "{key}" in {str(self)}',
-                    dxf_entity=self,
-                    data=key,
-                )
+            del self._data[key]
+            auditor.fixed_error(
+                code=AuditError.INVALID_DICTIONARY_ENTRY,
+                message=f'Removed entry "{key}" with invalid handle in {str(self)}',
+                dxf_entity=self,
+                data=key,
+            )
 
     def check_owner(self, auditor: 'Auditor') -> None:
         # owner handle of the root dict should be '0', and therefore points to a none existing object
         if self is not self.doc.rootdict:
             super().check_owner(auditor)
         elif self.dxf.owner != '0':
-            if auditor.fix_errors:
-                self.dxf.owner = '0'
-                auditor.fixed_error(
-                    code=AuditError.INVALID_OWNER_HANDLE,
-                    message=f'Fixed invalid owner handle in root {str(self)}.',
-                    dxf_entity=self,
-                )
-            else:
-                auditor.add_error(
-                    code=AuditError.INVALID_OWNER_HANDLE,
-                    message=f'Invalid owner handle in root {str(self)}.',
-                    dxf_entity=self,
-                )
+            self.dxf.owner = '0'
+            auditor.fixed_error(
+                code=AuditError.INVALID_OWNER_HANDLE,
+                message=f'Fixed invalid owner handle in root {str(self)}.',
+                dxf_entity=self,
+            )
 
     def destroy(self) -> None:
         if self.is_hard_owner:

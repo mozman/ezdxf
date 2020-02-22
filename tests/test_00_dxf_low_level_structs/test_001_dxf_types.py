@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
-from ezdxf.lldxf.types import DXFTag, get_xcode_for
+from ezdxf.lldxf.types import DXFTag, get_xcode_for, is_valid_handle
 
 
 def test_init():
@@ -57,3 +57,14 @@ def test_xcode_for():
     assert get_xcode_for(40) == 1040
     assert get_xcode_for(5) == 1005
     assert get_xcode_for(344) == 1005
+
+
+def test_is_valid_handle():
+    assert is_valid_handle('0') is True, '0 is a valid handle, but not allowed aa key in the entity database'
+    assert is_valid_handle('ABBA') is True
+    assert is_valid_handle('FEFE') is True
+    assert is_valid_handle(None) is False, 'None is not a valid handle'
+    assert is_valid_handle('X') is False, 'Not a valid hex value'
+    assert is_valid_handle(1) is False, 'Integer is not a valid handle'
+    assert is_valid_handle(1.0) is False, 'Float is not a valid handle'
+

@@ -46,7 +46,7 @@ MANAGED_SECTIONS = {'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECT
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFTag, Table, ViewportTable, VPort
     from ezdxf.eztypes import Dictionary, BlockLayout, Layout
-    from ezdxf.eztypes import DXFEntity, Layer, DXFLayout, BlockRecord
+    from ezdxf.eztypes import DXFEntity, Layer, Auditor
 
     LayoutType = Union[Layout, BlockLayout]
 
@@ -737,31 +737,24 @@ class Drawing:
             'xref_path': filename
         })
 
-    def cleanup(self, groups=True) -> None:
+    def audit(self) -> 'Auditor':
         """
-        Cleanup drawing. Call it before saving the drawing but only if necessary, the process could take a while.
+        Checks document integrity and fixes all fixable problems, not fixable problems are stored in
+        :attr:`Auditor.errors`.
 
-        Args:
-            groups: removes deleted and invalid entities from groups
-
-        """
-        if groups and self.groups is not None:
-            self.groups.cleanup()
-
-    def auditor(self):
-        """
-        Get auditor for this drawing.
-
-        Returns:
-            Auditor() object
+        If you are messing around with internal structures, call this method before saving to be sure to export valid
+        DXF documents, but be aware this is a long running task.
 
         """
         from ezdxf.audit.auditor import Auditor
-        return Auditor(self)
+        auditor = Auditor(self)
+        auditor.run()
+        return auditor
 
     def validate(self, print_report=True) -> bool:
         """
-        Simple way to run an audit process.
+        Simple way to run an audit process. Fixes all fixable problems, return ``False`` if not fixable errors
+        occurs, to get more information about not fixable errors use :meth:`audit` method instead.
 
         Args:
             print_report: print report to stdout
@@ -769,8 +762,8 @@ class Drawing:
         Returns: ``True`` if no errors occurred
 
         """
-        auditor = self.auditor()
-        result = list(auditor.filter_zero_pointers(auditor.run()))
+        auditor = self.audit()
+        result = list(auditor.filter_zero_pointers(auditor))
         if len(result):
             if print_report:
                 auditor.print_error_report()
