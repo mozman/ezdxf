@@ -34,6 +34,23 @@ only LINE, TEXT or POLYLINE entities.
         polyline_exporter.close()
         doc.close()
 
+Supported DXF types:
+
+- ARC
+- LINE
+- CIRCLE
+- ELLIPSE
+- POINT
+- LWPOLYLINE
+- SPLINE
+- 3DFACE
+- SOLID
+- TRACE
+- POLYLINE
+- MESH
+- TEXT
+- MTEXT
+- HATCH
 
 Transfer simple entities to another DXF document:
 

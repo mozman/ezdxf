@@ -92,7 +92,7 @@ class IterDXF:
                             # POLYLINE without SEQEND is a DXF structure error, but here just ignore it.
                             # By using this add-on be sure to get valid DXF files.
                             polyline = None
-                            yield factory.entity(xtags)
+                            yield entity
                 if tag == (0, 'ENDSEC'):
                     break
                 tags = [tag]
