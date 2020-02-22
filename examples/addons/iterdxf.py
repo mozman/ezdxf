@@ -12,11 +12,11 @@ polyline_exporter = doc.export(OUTDIR / 'polyline.dxf')
 try:
     for entity in doc.modelspace():
         if entity.dxftype() == 'LINE':
-            line_exporter.write_entity(entity)
+            line_exporter.write(entity)
         elif entity.dxftype() == 'TEXT':
-            text_exporter.write_entity(entity)
+            text_exporter.write(entity)
         elif entity.dxftype() == 'POLYLINE':
-            polyline_exporter.write_entity(entity)
+            polyline_exporter.write(entity)
 finally:
     line_exporter.close()
     text_exporter.close()

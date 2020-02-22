@@ -7,6 +7,7 @@ Version 0.11.1 - dev
 
 - NEW: `Meshbuilder.from_polyface()` to interface to `POLYFACE` and `POLYMESH` 
 - NEW: `Meshbuilder.render_polyface()` create `POLYFACE` objects
+- NEW: `ezdxf.addons.iterdxf` experimental feature to iterate over modelspace entities of really big DXF files (>5 GB)
 - CHANGES: refactor Auditor() into a DXF document fixer, fixes will be applied automatically (work in progress)
 
 Version 0.11 - 2020-02-15

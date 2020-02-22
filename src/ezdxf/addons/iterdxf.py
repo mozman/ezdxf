@@ -11,13 +11,21 @@ from ezdxf.filemanagement import dxf_file_info
 from ezdxf.entities import DXFGraphic, Polyline
 from ezdxf.entities.factory import EntityFactory
 
-VALID_TYPES = {
+__all__ = ['opendxf', 'SUPPORTED_DXF_TYPES']
+
+SUPPORTED_DXF_TYPES = {
     'ARC', 'LINE', 'CIRCLE', 'ELLIPSE', 'POINT', 'LWPOLYLINE', 'SPLINE', '3DFACE', 'SOLID', 'TRACE',
     'POLYLINE', 'VERTEX', 'SEQEND', 'MESH', 'TEXT', 'MTEXT', 'HATCH',
 }
 
 
 class IterDXF:
+    """ Iterator for DXF entities stored in the modelspace.
+
+    Args:
+         name: filename, has to be a seekable file.
+
+    """
     def __init__(self, name: str):
         self.name = str(name)
         if not is_dxf_file(name):
@@ -30,12 +38,32 @@ class IterDXF:
         self._fp_objects_section = None
 
     def export(self, name: str) -> 'IterDXFWriter':
+        """
+        Returns a companion object to export parts from the source DXF file into another DXF file, the new file will
+        have the same HEADER, CLASSES, TABLES, BLOCKS and OBJECTS sections, which guarantees all necessary dependencies
+        are present in the new file.
+
+        Args:
+            name: filename, no special requirements
+
+        """
         doc = IterDXFWriter(name, self)
         for tag in self._iter_until_entities_section():
             doc.write_tag(tag)
         return doc
 
     def modelspace(self) -> Iterable[DXFGraphic]:
+        """
+
+        Returns an iterator for all supported DXF entities in the modelspace. These entities are regular
+        :class:`~ezdxf.entities.DXFGraphic` objects but without a valid document assigned. It is **not**
+        possible to add these entities to other `ezdxf` documents.
+
+        It is only possible to recreate the objects by factory functions base on attributes of the source entity.
+        For MESH, POLYMESH and POLYFACE it is possible to use the :class:`~ezdxf.render.MeshTransformer` class to
+        render (recreate) this objects as new entities in another document.
+
+        """
         if self._fp_entities_section is None:
             self._fp_entities_section = self._seek_to_section('ENTITIES')
         self.file.seek(self._fp_entities_section)
@@ -47,17 +75,23 @@ class IterDXF:
                 if len(tags):
                     xtags = ExtendedTags(tags)
                     dxftype = xtags.dxftype()
-                    if dxftype in VALID_TYPES:
+                    if dxftype in SUPPORTED_DXF_TYPES:
                         entity = factory.entity(xtags)
-                        if dxftype == 'SEQEND' and polyline is not None:
-                            polyline.seqend = entity
-                            yield polyline
-                            polyline = None
+                        if dxftype == 'SEQEND':
+                            if polyline is not None:
+                                polyline.seqend = entity
+                                yield polyline
+                                polyline = None
+                            # suppress all other SEQEND entities -> ATTRIB
                         elif dxftype == 'VERTEX' and polyline is not None:
+                            # vertices without POLYLINE are DXF structure errors, but here just ignore it.
                             polyline.vertices.append(entity)
                         elif dxftype == 'POLYLINE':
                             polyline = entity
                         else:
+                            # POLYLINE without SEQEND is a DXF structure error, but here just ignore it.
+                            # By using this add-on be sure to get valid DXF files.
+                            polyline = None
                             yield factory.entity(xtags)
                 if tag == (0, 'ENDSEC'):
                     break
@@ -102,6 +136,7 @@ class IterDXF:
                 break
 
     def close(self):
+        """ Safe closing source DXF file. """
         self.file.close()
 
 
@@ -115,12 +150,17 @@ class IterDXFWriter:
     def write_tag(self, tag: DXFTag):
         self.file.write(tag.dxfstr())
 
-    def write_entity(self, entity: DXFGraphic):
+    def write(self, entity: DXFGraphic):
+        """ Write a DXF entity from the source DXF file to the export file.
+
+        Don't write entities from different documents than the source DXF file, dependencies and resources will not
+        match, maybe it will work once, but not in a reliable way for different DXF documents.
+
+        """
         # remove all possible dependencies
         entity.xdata = None
         entity.appdata = None
         entity.extension_dict = None
-        entity.embedded_objects = None
         entity.reactors = None
         entity.export_dxf(self.entity_writer)
         if entity.dxftype() == 'POLYLINE':
@@ -130,6 +170,10 @@ class IterDXFWriter:
             polyline.seqend.export_dxf(self.entity_writer)
 
     def close(self):
+        """
+        Safe closing of exported DXF file. Copying of OBJECTS section happens only at closing the file,
+        without closing the new DXF file is invalid.
+        """
         self.file.write('  0\nENDSEC\n')
         if self.loader.dxfversion > 'AC1009':
             self.file.write('  0\nSECTION\n  2\nOBJECTS\n')
@@ -140,4 +184,10 @@ class IterDXFWriter:
 
 
 def opendxf(filename: str) -> IterDXF:
+    """ Open DXF file for iterating, be sure to open valid DXF files, no DXF structure checks will be applied.
+
+    Args:
+        filename: DXF filename of a seekable file.
+
+    """
     return IterDXF(filename)

@@ -12,5 +12,4 @@ Add-ons
    dxf2code
    pycsg
    forms
-   mtext
-   table
+   iterdxf
