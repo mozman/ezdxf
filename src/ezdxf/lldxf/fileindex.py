@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Tuple, List
+from typing import Tuple, List, Iterable
 from collections import namedtuple
 from .const import DXFStructureError
 from ezdxf.tools.codepage import toencoding
@@ -27,6 +27,7 @@ class FileStructure:
           is also stored as group code 5
 
     """
+
     def __init__(self, filename: str):
         # stores the file system name of the DXF document.
         self.filename = filename
@@ -42,6 +43,28 @@ class FileStructure:
         print(f'encoding: {self.encoding}')
         for entry in self.index:
             print(f'Line: {entry.line} - ({entry.code}, {entry.value})')
+
+    def get(self, code: int, value: str, start: int = 0) -> int:
+        """ Returns index of first entry matching `code` and `value`. """
+        self_index = self.index
+        index = start
+        count = len(self_index)
+        while index < count:
+            entry = self_index[index]
+            if entry.code == code and entry.value == value:
+                return index
+            index += 1
+        raise ValueError(f'No entry for tag ({code}, {value}) found.')
+
+    def iter_tags(self, code: int, value: str, start: int = 0) -> Iterable[IndexEntry]:
+        """ Iterate over all specified entities.
+
+        e.g. iter_tags(0, 'LINE') returns an iterator for all LINE entities.
+
+        """
+        for entry in self.index[start:]:
+            if entry.code == code and entry.value == value:
+                yield entry
 
 
 def load(filename: str) -> FileStructure:

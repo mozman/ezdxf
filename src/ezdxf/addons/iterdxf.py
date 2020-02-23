@@ -1,18 +1,15 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Optional, cast
-from ezdxf.lldxf.validator import is_dxf_file
+from typing import Iterable, Optional, cast, BinaryIO, Tuple
+from io import StringIO
 from ezdxf.lldxf.const import DXFStructureError
-from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.tagger import low_level_tagger, tag_compiler
 from ezdxf.lldxf.tagwriter import TagWriter
-from ezdxf.filemanagement import dxf_file_info
 from ezdxf.entities import DXFGraphic, Polyline
 from ezdxf.entities.factory import EntityFactory
 from ezdxf.lldxf import fileindex
 
-__all__ = ['opendxf', 'SUPPORTED_DXF_TYPES']
+__all__ = ['opendxf']
 
 SUPPORTED_DXF_TYPES = {
     'ARC', 'LINE', 'CIRCLE', 'ELLIPSE', 'POINT', 'LWPOLYLINE', 'SPLINE', '3DFACE', 'SOLID', 'TRACE',
@@ -29,15 +26,30 @@ class IterDXF:
     """
 
     def __init__(self, name: str):
+        # raises DXFStructureError() for invalid or incomplete DXF files
+        self.structure = fileindex.load(name)
         self.name = str(name)
-        if not is_dxf_file(name):
-            raise DXFStructureError(f'File {name} is not a DXF file')
-        info = dxf_file_info(name)
-        self.encoding = info.encoding
-        self.dxfversion = info.version
-        self.file = open(name, mode='rt', encoding=self.encoding)
-        self._fp_entities_section = None
-        self._fp_objects_section = None
+        self.file: BinaryIO = open(name, mode='rb')
+        try:
+            self.index_entities = self.structure.get(2, 'ENTITIES')
+        except ValueError:
+            raise DXFStructureError('No ENTITIES section found.')
+        if self.structure.version > 'AC1009':
+            try:
+                # index of (0, SECTION) before (2, OBJECTS)
+                self.index_objects = self.structure.get(2, 'OBJECTS', self.index_entities) - 1
+            except ValueError:
+                raise DXFStructureError('No OBJECTS section found.')
+        else:
+            self.index_objects = None
+
+    @property
+    def encoding(self):
+        return self.structure.encoding
+
+    @property
+    def dxfversion(self):
+        return self.structure.version
 
     def export(self, name: str) -> 'IterDXFWriter':
         """
@@ -50,9 +62,26 @@ class IterDXF:
 
         """
         doc = IterDXFWriter(name, self)
-        for tag in self._iter_until_entities_section():
-            doc.write_tag(tag)
+        # file location of first entity
+        location = self.structure.index[self.index_entities + 1].location
+        self.file.seek(0)
+        data = self.file.read(location)
+        doc.write_data(data)
         return doc
+
+    def copy_objects_section(self, f: BinaryIO) -> None:
+        start_index = self.index_objects
+        try:
+            end_index = self.structure.get(0, 'ENDSEC', start_index)
+        except ValueError:
+            raise DXFStructureError(f'ENDSEC of OBJECTS section not found.')
+
+        start_location = self.structure.index[start_index].location
+        end_location = self.structure.index[end_index + 1].location
+        count = end_location - start_location
+        self.file.seek(start_location)
+        data = self.file.read(count)
+        f.write(data)
 
     def modelspace(self) -> Iterable[DXFGraphic]:
         """
@@ -66,74 +95,49 @@ class IterDXF:
         render (recreate) this objects as new entities in another document.
 
         """
-        if self._fp_entities_section is None:
-            self._fp_entities_section = self._seek_to_section('ENTITIES')
-        self.file.seek(self._fp_entities_section)
-        tags = []
         factory = EntityFactory()
         polyline: Optional[Polyline] = None
-        for tag in tag_compiler(low_level_tagger(self.file)):
-            if tag.code == 0:  # start new entity
-                if len(tags):
-                    xtags = ExtendedTags(tags)
-                    dxftype = xtags.dxftype()
-                    # do not process paperspace entities
-                    if xtags.noclass.get_first_value(67, 0) == 1:
-                        continue
-                    if dxftype in SUPPORTED_DXF_TYPES:
-                        entity = factory.entity(xtags)
-                        if dxftype == 'SEQEND':
-                            if polyline is not None:
-                                polyline.seqend = entity
-                                yield polyline
-                                polyline = None
-                            # suppress all other SEQEND entities -> ATTRIB
-                        elif dxftype == 'VERTEX' and polyline is not None:
-                            # vertices without POLYLINE are DXF structure errors, but here just ignore it.
-                            polyline.vertices.append(entity)
-                        elif dxftype == 'POLYLINE':
-                            polyline = entity
-                        else:
-                            # POLYLINE without SEQEND is a DXF structure error, but here just ignore it.
-                            # By using this add-on be sure to get valid DXF files.
-                            polyline = None
-                            yield entity
-                if tag == (0, 'ENDSEC'):
+        for index_entry, text in self.entities_as_str(self.index_entities + 1):
+            dxftype = index_entry.value
+            if dxftype in SUPPORTED_DXF_TYPES:
+                xtags = ExtendedTags.from_text(text)
+                # do not process paperspace entities
+                if xtags.noclass.get_first_value(67, 0) == 1:
+                    continue
+                entity = factory.entity(xtags)
+                if dxftype == 'SEQEND':
+                    if polyline is not None:
+                        polyline.seqend = entity
+                        yield polyline
+                        polyline = None
+                    # suppress all other SEQEND entities -> ATTRIB
+                elif dxftype == 'VERTEX' and polyline is not None:
+                    # vertices without POLYLINE are DXF structure errors, but here just ignore it.
+                    polyline.vertices.append(entity)
+                elif dxftype == 'POLYLINE':
+                    polyline = cast(Polyline, entity)
+                else:
+                    # POLYLINE without SEQEND is a DXF structure error, but here just ignore it.
+                    # By using this add-on be sure to get valid DXF files.
+                    polyline = None
+                    yield entity
+
+    def entities_as_str(self, start: int) -> Iterable[Tuple[fileindex.IndexEntry, str]]:
+        def to_str(data: bytes) -> str:
+            return data.decode(self.encoding).replace('\r\n', '\n')
+
+        index = start
+        entry = self.structure.index[index]
+        self.file.seek(entry.location)
+        while entry.value != 'ENDSEC':
+            while True:
+                index += 1
+                next_entry = self.structure.index[index]
+                if next_entry.code == 0:
                     break
-                tags = [tag]
-            else:
-                tags.append(tag)
-
-    def _iter_until_entities_section(self) -> DXFTag:
-        prev_tag = (0, None)
-        self.file.seek(0)
-        for tag in low_level_tagger(self.file):
-            yield tag
-            if tag == (2, 'ENTITIES') and prev_tag == (0, 'SECTION'):
-                break
-            prev_tag = tag
-
-        self._fp_entities_section = self.file.tell()
-
-    def _seek_to_section(self, name: str) -> int:
-        prev_tag = (0, None)
-        self.file.seek(0)
-        find = DXFTag(2, name)
-        section = DXFTag(0, 'SECTION')
-        for tag in low_level_tagger(self.file):
-            if tag == find and prev_tag == section:
-                break
-            prev_tag = tag
-        return self.file.tell()
-
-    def _iter_objects_section(self):
-        if self._fp_objects_section is None:
-            self._fp_objects_section = self._seek_to_section('OBJECTS')
-        self.file.seek(self._fp_objects_section)
-        for tag in low_level_tagger(self.file):
-            yield tag
-            if tag == DXFTag(0, 'ENDSEC'):
-                break
+            size = next_entry.location - entry.location
+            yield entry, to_str(self.file.read(size))
+            entry = next_entry
 
     def close(self):
         """ Safe closing source DXF file. """
@@ -143,12 +147,13 @@ class IterDXF:
 class IterDXFWriter:
     def __init__(self, name: str, loader: IterDXF):
         self.name = str(name)
-        self.file = open(name, mode='wt', encoding=loader.encoding)
-        self.entity_writer = TagWriter(self.file, loader.dxfversion)
+        self.file: BinaryIO = open(name, mode='wb')
+        self.text = StringIO()
+        self.entity_writer = TagWriter(self.text, loader.dxfversion)
         self.loader = loader
 
-    def write_tag(self, tag: DXFTag):
-        self.file.write(tag.dxfstr())
+    def write_data(self, data: bytes):
+        self.file.write(data)
 
     def write(self, entity: DXFGraphic):
         """ Write a DXF entity from the source DXF file to the export file.
@@ -162,24 +167,28 @@ class IterDXFWriter:
         entity.appdata = None
         entity.extension_dict = None
         entity.reactors = None
+        # reset text stream
+        self.text.seek(0)
+        self.text.truncate()
+
         entity.export_dxf(self.entity_writer)
         if entity.dxftype() == 'POLYLINE':
             polyline = cast('Polyline', entity)
             for vertex in polyline.vertices:
                 vertex.export_dxf(self.entity_writer)
             polyline.seqend.export_dxf(self.entity_writer)
+        data = self.text.getvalue().encode(self.loader.encoding)
+        self.file.write(data)
 
     def close(self):
         """
         Safe closing of exported DXF file. Copying of OBJECTS section happens only at closing the file,
         without closing the new DXF file is invalid.
         """
-        self.file.write('  0\nENDSEC\n')
+        self.file.write(b'  0\r\nENDSEC\r\n')  # for ENTITIES section
         if self.loader.dxfversion > 'AC1009':
-            self.file.write('  0\nSECTION\n  2\nOBJECTS\n')
-            for tag in self.loader._iter_objects_section():
-                self.write_tag(tag)
-        self.file.write('  0\nEOF\n')
+            self.loader.copy_objects_section(self.file)
+        self.file.write(b'  0\r\nEOF\r\n')
         self.file.close()
 
 
