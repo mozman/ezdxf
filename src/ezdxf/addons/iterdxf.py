@@ -10,6 +10,7 @@ from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.filemanagement import dxf_file_info
 from ezdxf.entities import DXFGraphic, Polyline
 from ezdxf.entities.factory import EntityFactory
+from ezdxf.lldxf import fileindex
 
 __all__ = ['opendxf', 'SUPPORTED_DXF_TYPES']
 
@@ -26,6 +27,7 @@ class IterDXF:
          name: filename, has to be a seekable file.
 
     """
+
     def __init__(self, name: str):
         self.name = str(name)
         if not is_dxf_file(name):
@@ -75,6 +77,9 @@ class IterDXF:
                 if len(tags):
                     xtags = ExtendedTags(tags)
                     dxftype = xtags.dxftype()
+                    # do not process paperspace entities
+                    if xtags.noclass.get_first_value(67, 0) == 1:
+                        continue
                     if dxftype in SUPPORTED_DXF_TYPES:
                         entity = factory.entity(xtags)
                         if dxftype == 'SEQEND':
@@ -103,12 +108,9 @@ class IterDXF:
         prev_tag = (0, None)
         self.file.seek(0)
         for tag in low_level_tagger(self.file):
-            if tag != (2, 'ENTITIES'):
-                yield tag
-            else:
-                if prev_tag == (0, 'SECTION'):
-                    yield tag  # write (0, 'ENTITIES')
-                    break
+            yield tag
+            if tag == (2, 'ENTITIES') and prev_tag == (0, 'SECTION'):
+                break
             prev_tag = tag
 
         self._fp_entities_section = self.file.tell()
@@ -129,10 +131,8 @@ class IterDXF:
             self._fp_objects_section = self._seek_to_section('OBJECTS')
         self.file.seek(self._fp_objects_section)
         for tag in low_level_tagger(self.file):
-            if tag != DXFTag(0, 'ENDSEC'):
-                yield tag
-            else:
-                yield tag
+            yield tag
+            if tag == DXFTag(0, 'ENDSEC'):
                 break
 
     def close(self):

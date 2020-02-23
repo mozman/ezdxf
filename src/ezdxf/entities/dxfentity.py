@@ -475,7 +475,7 @@ class DXFEntity:
         entity.xdata = other.xdata
         entity.embedded_objects = other.embedded_objects
         entity.dxf.rewire(entity)
-        if entity.dxf.handle is not None:
+        if (entity.doc is not None) and (entity.dxf.handle is not None):
             entity.doc.entitydb[entity.dxf.handle] = entity  # replace entity in entity db, can't call add() here
         return entity
 
