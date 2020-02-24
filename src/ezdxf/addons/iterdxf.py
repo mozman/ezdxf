@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, cast, BinaryIO, Tuple, Dict
+from typing import Iterable, cast, BinaryIO, Tuple, Dict, Optional, List
 from io import StringIO
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
@@ -8,7 +8,7 @@ from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.lldxf.tagger import tag_compiler
 from ezdxf.lldxf import fileindex
 
-from ezdxf.entities import DXFGraphic
+from ezdxf.entities import DXFGraphic, DXFEntity
 from ezdxf.entities.factory import EntityFactory
 from ezdxf.entities.dxfgfx import entity_linker
 from ezdxf.tools.codepage import toencoding
@@ -206,47 +206,48 @@ def opendxf(filename: str) -> IterDXF:
 def single_pass_modelspace(stream: BinaryIO) -> Iterable[DXFGraphic]:
     """
     Iterate over all modelspace entities as :class:`DXFGraphic` objects in one single pass.
-    The DXF stream requires a HEADER section!
 
-    Only useful if the binary stream is not seekable else :func:`iterdxf.opendxf` is slightly faster.
+    Useful if the binary stream is not seekable.
 
     Args:
         stream: (not seekable) binary stream
 
     """
-    fetch_header_var = False
+    fetch_header_var: Optional[str] = None
     encoding = 'cp1252'
     version = 'AC1009'
+    prev_code: int = -1
+    prev_value: str = ''
+    entities = False
 
-    # requires a HEADER section
     for code, value in binary_tagger(stream):
         if code == 0 and value == b'ENDSEC':
             break
-        if code == 9 and value == b'$DWGCODEPAGE':
+        elif code == 2 and prev_code == 0 and value != b'HEADER':
+            # (0, SECTION), (2, name)
+            # First section is not the HEADER section
+            entities = (value == b'ENTITIES')
+            break
+        elif code == 9 and value == b'$DWGCODEPAGE':
             fetch_header_var = 'ENCODING'
-        elif code == 9 and value == b'$ACADVERSION':
+        elif code == 9 and value == b'$ACADVER':
             fetch_header_var = 'VERSION'
-        elif fetch_header_var:
-            if fetch_header_var == 'ENCODING':
-                encoding = toencoding(value.decode())
-            elif fetch_header_var == 'VERSION':
-                version = value.decode()
-            fetch_header_var = False
+        elif fetch_header_var == 'ENCODING':
+            encoding = toencoding(value.decode())
+            fetch_header_var = None
+        elif fetch_header_var == 'VERSION':
+            version = value.decode()
+            fetch_header_var = None
+        prev_code = code
 
-    prev_code: int = -1
-    prev_value: str = ''
-    structure = None  # the actual structure tag: 'SECTION', 'LINE', ...
-    queued = False
+    if version >= 'AC1021':
+        encoding = 'utf-8'
 
-    tags = []
+    queued: Optional[DXFEntity] = None
+    tags: List[DXFTag] = []
     factory = EntityFactory()
     linked_entity = entity_linker()
 
-    def build_entity():
-        xtags = ExtendedTags(tags)
-        return factory.entity(xtags)
-
-    entities = False
     for tag in tag_compiler(binary_tagger(stream, encoding)):
         code = tag.code
         value = tag.value
@@ -256,47 +257,31 @@ def single_pass_modelspace(stream: BinaryIO) -> Iterable[DXFGraphic]:
                     yield queued
                 return
             if code == 0:
-                if len(tags) and structure in SUPPORTED_DXF_TYPES:
-                    entity = build_entity()
+                if len(tags) and tags[0].value in SUPPORTED_DXF_TYPES:
+                    entity = factory.entity(ExtendedTags(tags))
                     if not linked_entity(entity) and entity.dxf.paperspace == 0:
                         if queued:  # queue one entity for collecting linked entities (VERTEX, ATTRIB)
                             yield queued
                         queued = entity
-                structure = value
                 tags = [tag]
             else:
                 tags.append(tag)
-            continue  # nothing else matters
-        elif code == 0:
-            structure = value
+            continue  # if entities - nothing else matters
         elif code == 2 and prev_code == 0 and prev_value == 'SECTION':
             entities = (value == 'ENTITIES')
-            if entities and version > 'AC1009':
-                encoding = 'utf-8'
 
         prev_code = code
         prev_value = value
-    stream.close()
 
 
-def binary_tagger(file: BinaryIO, encoding=None) -> DXFTag:
-    def load_tag() -> DXFTag:
-        try:
-            code = int(file.readline())
-        except ValueError:
-            raise DXFStructureError(f'Invalid group code')
-
-        if code < 0 or code > 1071:
-            raise DXFStructureError(f'Invalid group code {code}')
-        value = file.readline().rstrip(b'\r\n')
-
-        if encoding:
-            return DXFTag(code, value.decode(encoding))
-        else:
-            return DXFTag(code, value)
-
+def binary_tagger(file: BinaryIO, encoding: str = None) -> DXFTag:
     while True:
         try:
-            yield load_tag()
+            try:
+                code = int(file.readline())
+            except ValueError:
+                raise DXFStructureError(f'Invalid group code')
+            value = file.readline().rstrip(b'\r\n')
+            yield DXFTag(code, value.decode(encoding) if encoding else value)
         except IOError:
             return
