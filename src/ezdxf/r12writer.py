@@ -3,7 +3,7 @@
 # Created: 14.04.2016
 # Copyright (C) 2016, Manfred Moitzi
 # License: MIT License
-from typing import TextIO, Union, Sequence, Iterable
+from typing import TextIO, Union, Sequence, Iterable, Tuple
 from contextlib import contextmanager
 
 # types
@@ -31,7 +31,7 @@ TEXT_ALIGN_FLAGS = {
 
 
 @contextmanager
-def r12writer(stream: Union[TextIO, str], fixed_tables: bool=False) -> 'R12FastStreamWriter':
+def r12writer(stream: Union[TextIO, str], fixed_tables: bool = False) -> 'R12FastStreamWriter':
     """
     Context manager for writing DXF entities to a stream/file. `stream` can be any file like object
     with a :func:`write` method or just a string for writing DXF entities to the file system.
@@ -63,6 +63,7 @@ class R12FastStreamWriter:
                       ENTITIES section and some predefined text styles and line types can be used.
 
     """
+
     def __init__(self, stream: TextIO, fixed_tables=False):
         self.stream = stream
         if fixed_tables:
@@ -250,6 +251,7 @@ class R12FastStreamWriter:
             linetype: line type as string see :meth:`add_line`
 
         """
+
         def write_polyline(flags: int) -> None:
             dxf = ["0\nPOLYLINE\n"]
             dxf.append(dxf_attribs(layer, color, linetype))
@@ -273,6 +275,125 @@ class R12FastStreamWriter:
             self.stream.write(''.join(dxf))
         if polyline_flags is not None:
             self.stream.write("0\nSEQEND\n")
+
+    def add_polyface(self,
+                     vertices: Iterable[Vertex],
+                     faces: Iterable[Sequence[int]],
+                     layer: str = "0",
+                     color: int = None,
+                     linetype: str = None) -> None:
+        """
+        Add a POLYFACE entity. The POLYFACE entity supports only faces of maximum 4 vertices, more indices
+        will be ignored. A simple square would be::
+
+            v0 = (0, 0, 0)
+            v1 = (1, 0, 0)
+            v2 = (1, 1, 0)
+            v3 = (0, 1, 0)
+            dxf.add_polyface(vertices=[v0, v1, v2, v3], faces=[(0, 1, 2, 3)])
+
+        All 3D form functions of the :mod:`ezdxf.render.forms` module return :class:`~ezdxf.render.MeshBuilder`
+        objects, which provide the required vertex and face lists.
+
+        See sphere example: https://github.com/mozman/ezdxf/blob/master/examples/r12writer.py
+
+        Args:
+            vertices: iterable of ``(x, y, z)`` tuples
+            faces: iterable of 3 or 4 vertex indices, indices have to be 0-based
+            layer: layer name as string see :meth:`add_line`
+            color: color as :ref:`ACI` see :meth:`add_line`
+            linetype: line type as string see :meth:`add_line`
+
+        """
+        vertices = list(vertices)
+        faces = list(faces)
+
+        def write_polyline(flags: int = 64) -> None:
+            dxf = ["0\nPOLYLINE\n"]
+            dxf.append(dxf_attribs(layer, color, linetype))
+            dxf.append(dxf_tag(66, 1))  # entities follow
+            dxf.append(dxf_tag(70, flags))
+            dxf.append(dxf_tag(71, len(vertices)))
+            dxf.append(dxf_tag(72, len(faces)))
+            self.stream.write(''.join(dxf))
+
+        def write_vertices(flags: int = 64 + 128) -> None:
+            for vertex in vertices:
+                dxf = ["0\nVERTEX\n"]
+                dxf.append(dxf_attribs(layer))
+                dxf.append(dxf_tag(70, flags))
+                dxf.append(dxf_vertex(vertex))
+                self.stream.write(''.join(dxf))
+
+        def write_faces(flags: int = 128) -> None:
+            for face in faces:
+                dxf = ["0\nVERTEX\n"]
+                dxf.append(dxf_attribs(layer, color))
+                dxf.append(dxf_tag(70, flags))
+                dxf.append(dxf_vertex((0, 0, 0)))
+                for code, index in zip((71, 72, 73, 74), face):
+                    dxf.append(dxf_tag(code, index + 1))
+                self.stream.write(''.join(dxf))
+
+        write_polyline()
+        write_vertices()
+        write_faces()
+        self.stream.write("0\nSEQEND\n")
+
+    def add_polymesh(self,
+                     vertices: Iterable[Vertex],
+                     size: Tuple[int, int],
+                     closed=(False, False),
+                     layer: str = "0",
+                     color: int = None,
+                     linetype: str = None) -> None:
+        """
+        Add a POLYMESH entity. A POLYMESH is a mesh of m rows and n columns, each mesh vertex has its own
+        x-, y- and z coordinates. The mesh can be closed in m- and/or n-direction. The vertices have to be in
+        column order:  (m0, n0), (m0, n1), (m0, n2), (m1, n0), (m1, n1), (m1, n2), ...
+
+        See example: https://github.com/mozman/ezdxf/blob/master/examples/r12writer.py
+
+        Args:
+            vertices: iterable of ``(x, y, z)`` tuples, in column order
+            size: mesh dimension as (m, n)-tuple, requirement: ``len(vertices) == m*n``
+            closed: (m_closed, n_closed) tuple, for closed mesh in m and/or n direction
+            layer: layer name as string see :meth:`add_line`
+            color: color as :ref:`ACI` see :meth:`add_line`
+            linetype: line type as string see :meth:`add_line`
+
+        """
+        vertices = list(vertices)
+        m, n = size
+        if m * n != len(vertices):
+            raise ValueError('Invalid mesh dimensions.')
+        m_closed, n_closed = closed
+
+        def write_polyline(flags: int = 16) -> None:
+            if m_closed:
+                flags += 1
+            if n_closed:
+                flags += 32
+
+            dxf = ["0\nPOLYLINE\n"]
+            dxf.append(dxf_attribs(layer, color, linetype))
+            dxf.append(dxf_tag(66, 1))  # entities follow
+            dxf.append(dxf_tag(70, flags))
+            dxf.append(dxf_tag(71, m))
+            dxf.append(dxf_tag(72, n))
+            self.stream.write(''.join(dxf))
+
+        def write_vertices(flags: int = 64) -> None:
+            for vertex in vertices:
+                dxf = ["0\nVERTEX\n"]
+                dxf.append(dxf_attribs(layer))
+                dxf.append(dxf_tag(70, flags))
+                dxf.append(dxf_vertex(vertex))
+                self.stream.write(''.join(dxf))
+
+        write_polyline()
+        write_vertices()
+        self.stream.write("0\nSEQEND\n")
 
     def add_text(self,
                  text: str,

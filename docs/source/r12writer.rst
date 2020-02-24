@@ -117,5 +117,9 @@ Reference
 
     .. automethod:: add_polyline
 
+    .. automethod:: add_polyface
+
+    .. automethod:: add_polymesh
+
     .. automethod:: add_text
 
