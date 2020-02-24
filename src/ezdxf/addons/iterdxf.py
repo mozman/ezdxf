@@ -7,13 +7,14 @@ from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.entities import DXFGraphic, Polyline
 from ezdxf.entities.factory import EntityFactory
+from ezdxf.entities.dxfgfx import entity_linker
 from ezdxf.lldxf import fileindex
 
 __all__ = ['opendxf']
 
 SUPPORTED_DXF_TYPES = {
     'ARC', 'LINE', 'CIRCLE', 'ELLIPSE', 'POINT', 'LWPOLYLINE', 'SPLINE', '3DFACE', 'SOLID', 'TRACE',
-    'POLYLINE', 'VERTEX', 'SEQEND', 'MESH', 'TEXT', 'MTEXT', 'HATCH',
+    'POLYLINE', 'VERTEX', 'SEQEND', 'MESH', 'TEXT', 'MTEXT', 'HATCH', 'INSERT', 'ATTRIB', 'ATTDEF',
 }
 
 
@@ -103,29 +104,16 @@ class IterDXF:
 
         """
         factory = EntityFactory()
-        polyline: Optional[Polyline] = None
+        linked_entities = entity_linker()
+        queued = None
         for xtags in self.load_entities(self.sections['ENTITIES'] + 1):
-            # do not process paperspace entities
-            if xtags.noclass.get_first_value(67, 0) == 1:
-                continue
-            dxftype = xtags.dxftype()
             entity = factory.entity(xtags)
-            if dxftype == 'SEQEND':
-                if polyline is not None:
-                    polyline.seqend = entity
-                    yield polyline
-                    polyline = None
-                # suppress all other SEQEND entities -> ATTRIB
-            elif dxftype == 'VERTEX' and polyline is not None:
-                # vertices without POLYLINE are DXF structure errors, but here just ignore it.
-                polyline.vertices.append(entity)
-            elif dxftype == 'POLYLINE':
-                polyline = cast(Polyline, entity)
-            else:
-                # POLYLINE without SEQEND is a DXF structure error, but here just ignore it.
-                # By using this add-on be sure to get valid DXF files.
-                polyline = None
-                yield entity
+            if not linked_entities(entity) and entity.dxf.paperspace == 0:
+                if queued:  # queue one entity for collecting linked entities (VERTEX, ATTRIB)
+                    yield queued
+                queued = entity
+        if queued:
+            yield queued
 
     def load_entities(self, start: int) -> Iterable[ExtendedTags]:
         def to_str(data: bytes) -> str:
@@ -181,6 +169,12 @@ class IterDXFWriter:
             for vertex in polyline.vertices:
                 vertex.export_dxf(self.entity_writer)
             polyline.seqend.export_dxf(self.entity_writer)
+        elif entity.dxftype() == 'INSERT':
+            insert = cast('Insert', entity)
+            if insert.attribs_follow:
+                for attrib in insert.attribs:
+                    attrib.export_dxf(self.entity_writer)
+                insert.seqend.export_dxf(self.entity_writer)
         data = self.text.getvalue().encode(self.loader.encoding)
         self.file.write(data)
 
