@@ -8,8 +8,10 @@ Version 0.11.1 - dev
 - NEW: `Meshbuilder.from_polyface()` to interface to `POLYFACE` and `POLYMESH` 
 - NEW: `Meshbuilder.render_polyface()` create `POLYFACE` objects
 - NEW: `ezdxf.addons.iterdxf` experimental feature to iterate over modelspace entities of really big DXF files (>5 GB)
-- NEW: `ezdxf.r12writer` supports POLYFACE and POLYMESH entities
+- NEW: `ezdxf.addons.r12writer` supports POLYFACE and POLYMESH entities
 - CHANGES: refactor Auditor() into a DXF document fixer, fixes will be applied automatically (work in progress)
+- CHANGES: moved `r12writer` into `addons` subpackage
+- CHANGES: moved `acadctb` into `addons` subpackage
 
 Version 0.11 - 2020-02-15
 -------------------------

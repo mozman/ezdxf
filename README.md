@@ -57,7 +57,7 @@ Example for the *r12writer*, which writes a simple DXF R12 file without in-memor
 
 ```python
 from random import random
-from ezdxf.r12writer import r12writer
+from ezdxf.addons import r12writer
 
 MAX_X_COORD = 1000
 MAX_Y_COORD = 1000

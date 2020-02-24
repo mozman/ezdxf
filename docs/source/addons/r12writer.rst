@@ -1,9 +1,9 @@
 .. _r12writer:
 
 Fast DXF R12 File/Stream Writer
--------------------------------
+===============================
 
-.. module:: ezdxf.r12writer
+.. module:: ezdxf.addons.r12writer
 
 The fast file/stream writer creates simple DXF R12 drawings with just an ENTITIES section. The HEADER, TABLES and BLOCKS
 sections are not present except FIXED-TABLES are written. Only LINE, CIRCLE, ARC, TEXT, POINT, SOLID, 3DFACE and POLYLINE
@@ -52,7 +52,7 @@ Tutorial
 A simple example with different DXF entities::
 
     from random import random
-    from ezdxf.r12writer import r12writer
+    from ezdxf.addons import r12writer
 
     with r12writer("quick_and_dirty_dxf_r12.dxf") as dxf:
         dxf.add_line((0, 0), (17, 23))
@@ -67,7 +67,7 @@ A simple example with different DXF entities::
 A simple example of writing really many entities in a short time::
 
     from random import random
-    from ezdxf.r12writer import r12writer
+    from ezdxf.addons import r12writer
 
     MAX_X_COORD = 1000.0
     MAX_Y_COORD = 1000.0

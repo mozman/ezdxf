@@ -5,7 +5,7 @@ import pytest
 
 import os
 import math
-from ezdxf.acadctb import *
+from ezdxf.addons.acadctb import *
 
 
 class TestPlotStyle:

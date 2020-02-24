@@ -4,7 +4,7 @@ import pytest
 import os
 from random import random
 import ezdxf
-from ezdxf.r12writer import r12writer
+from ezdxf.addons import r12writer
 
 MAX_X_COORD = 1000.0
 MAX_Y_COORD = 1000.0

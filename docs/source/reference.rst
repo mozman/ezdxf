@@ -47,14 +47,6 @@ Math Utilities
 
     math
 
-Fast DXF R12 File/Stream Writer
--------------------------------
-
-.. toctree::
-    :maxdepth: 1
-
-    r12writer
-
 Miscellaneous
 -------------
 
@@ -62,7 +54,6 @@ Miscellaneous
     :maxdepth: 1
 
     options
-    acadctb
     comments
     tools
 

@@ -17,7 +17,7 @@ style tables, STB files contain named plot style tables.
     - AUTODESK KNOWLEDGE NETWORK: How to `install`_ CTB files in AutoCAD
 
 
-.. module:: ezdxf.acadctb
+.. module:: ezdxf.addons.acadctb
 
 .. autofunction:: load(filename: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]
 

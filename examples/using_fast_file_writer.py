@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from random import random
-from ezdxf.r12writer import r12writer
+from ezdxf.addons import r12writer
 
 MAX_X_COORD = 1000.0
 MAX_Y_COORD = 1000.0

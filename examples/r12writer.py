@@ -4,8 +4,8 @@ from pathlib import Path
 from time import perf_counter
 import math
 from ezdxf.addons import MengerSponge
+from ezdxf.addons import r12writer
 from ezdxf.render.forms import sphere
-from ezdxf.r12writer import r12writer
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 
@@ -30,7 +30,7 @@ def polymesh(filename, size=(10, 10)):
         z1 = math.sin(dx * x)
         for y in range(n):  # cols first
             z2 = math.sin(dy * y)
-            z = z1*z2
+            z = z1 * z2
             vertices.append((x, y, z))
     with r12writer(filename) as r12:
         r12.add_polymesh(vertices, size=size, color=1)
