@@ -4,14 +4,15 @@ import time
 from pathlib import Path
 from ezdxf.addons import iterdxf
 BIGFILE = Path(r'D:\Source\dxftest\GKB-R2010.dxf')
-# BIGFILE = Path(r'D:\Source\dxftest\ACAD_R2000.dxf')
+BIGFILE = Path(r'D:\Source\dxftest\ACAD_R2000.dxf')
 
 t0 = time.perf_counter()
 lines = 0
 text = 0
 polylines = 0
 lwpolylines = 0
-for entity in iterdxf.single_pass_modelspace(BIGFILE):
+
+for entity in iterdxf.single_pass_modelspace(open(BIGFILE, 'rb')):
     if entity.dxftype() == 'LINE':
         lines += 1
     elif entity.dxftype() == 'TEXT':

@@ -203,14 +203,23 @@ def opendxf(filename: str) -> IterDXF:
     return IterDXF(filename)
 
 
-def single_pass_modelspace(filename: str) -> Iterable[DXFGraphic]:
-    file = open(filename, mode='rb')
+def single_pass_modelspace(stream: BinaryIO) -> Iterable[DXFGraphic]:
+    """
+    Iterate over all modelspace entities as :class:`DXFGraphic` objects in one single pass.
+    The DXF stream requires a HEADER section!
+
+    Only useful if the binary stream is not seekable else :func:`iterdxf.opendxf` is slightly faster.
+
+    Args:
+        stream: (not seekable) binary stream
+
+    """
     fetch_header_var = False
     encoding = 'cp1252'
     version = 'AC1009'
 
     # requires a HEADER section
-    for code, value in binary_tagger(file):
+    for code, value in binary_tagger(stream):
         if code == 0 and value == b'ENDSEC':
             break
         if code == 9 and value == b'$DWGCODEPAGE':
@@ -238,7 +247,7 @@ def single_pass_modelspace(filename: str) -> Iterable[DXFGraphic]:
         return factory.entity(xtags)
 
     entities = False
-    for tag in tag_compiler(binary_tagger(file, encoding)):
+    for tag in tag_compiler(binary_tagger(stream, encoding)):
         code = tag.code
         value = tag.value
         if entities:
@@ -267,7 +276,7 @@ def single_pass_modelspace(filename: str) -> Iterable[DXFGraphic]:
 
         prev_code = code
         prev_value = value
-    file.close()
+    stream.close()
 
 
 def binary_tagger(file: BinaryIO, encoding=None) -> DXFTag:
