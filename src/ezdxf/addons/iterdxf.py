@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Optional, cast, BinaryIO, Tuple
+from typing import Iterable, Optional, cast, BinaryIO, Tuple, Dict
 from io import StringIO
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -23,25 +23,31 @@ class IterDXF:
     Args:
          name: filename, has to be a seekable file.
 
+    Raises:
+        DXFStructureError: Invalid or incomplete DXF file
+
     """
 
     def __init__(self, name: str):
-        # raises DXFStructureError() for invalid or incomplete DXF files
-        self.structure = fileindex.load(name)
-        self.name = str(name)
+        self.structure, self.sections = self._load_index(name)
         self.file: BinaryIO = open(name, mode='rb')
-        try:
-            self.index_entities = self.structure.get(2, 'ENTITIES')
-        except ValueError:
-            raise DXFStructureError('No ENTITIES section found.')
-        if self.structure.version > 'AC1009':
-            try:
-                # index of (0, SECTION) before (2, OBJECTS)
-                self.index_objects = self.structure.get(2, 'OBJECTS', self.index_entities) - 1
-            except ValueError:
-                raise DXFStructureError('No OBJECTS section found.')
-        else:
-            self.index_objects = None
+        if 'ENTITIES' not in self.sections:
+            raise DXFStructureError('ENTITIES section not found.')
+        if self.structure.version > 'AC1009' and 'OBJECTS' not in self.sections:
+            raise DXFStructureError('OBJECTS section not found.')
+
+    def _load_index(self, name: str) -> Tuple[fileindex.FileStructure, Dict[str, int]]:
+        structure = fileindex.load(name)
+        sections: Dict[str, int] = dict()
+        new_index = []
+        for e in structure.index:
+            if e.code == 0:
+                new_index.append(e)
+            elif e.code == 2:
+                sections[e.value] = len(new_index) - 1
+            # remove all other tags like handles (code == 5)
+        structure.index = new_index
+        return structure, sections
 
     @property
     def encoding(self):
@@ -62,15 +68,16 @@ class IterDXF:
 
         """
         doc = IterDXFWriter(name, self)
-        # file location of first entity
-        location = self.structure.index[self.index_entities + 1].location
+        # Copy everything from start of source DXF until the first entity
+        # of the ENTITIES section to the new DXF.
+        location = self.structure.index[self.sections['ENTITIES'] + 1].location
         self.file.seek(0)
         data = self.file.read(location)
         doc.write_data(data)
         return doc
 
     def copy_objects_section(self, f: BinaryIO) -> None:
-        start_index = self.index_objects
+        start_index = self.sections['OBJECTS']
         try:
             end_index = self.structure.get(0, 'ENDSEC', start_index)
         except ValueError:
@@ -97,32 +104,30 @@ class IterDXF:
         """
         factory = EntityFactory()
         polyline: Optional[Polyline] = None
-        for index_entry, text in self.entities_as_str(self.index_entities + 1):
-            dxftype = index_entry.value
-            if dxftype in SUPPORTED_DXF_TYPES:
-                xtags = ExtendedTags.from_text(text)
-                # do not process paperspace entities
-                if xtags.noclass.get_first_value(67, 0) == 1:
-                    continue
-                entity = factory.entity(xtags)
-                if dxftype == 'SEQEND':
-                    if polyline is not None:
-                        polyline.seqend = entity
-                        yield polyline
-                        polyline = None
-                    # suppress all other SEQEND entities -> ATTRIB
-                elif dxftype == 'VERTEX' and polyline is not None:
-                    # vertices without POLYLINE are DXF structure errors, but here just ignore it.
-                    polyline.vertices.append(entity)
-                elif dxftype == 'POLYLINE':
-                    polyline = cast(Polyline, entity)
-                else:
-                    # POLYLINE without SEQEND is a DXF structure error, but here just ignore it.
-                    # By using this add-on be sure to get valid DXF files.
+        for xtags in self.load_entities(self.sections['ENTITIES'] + 1):
+            # do not process paperspace entities
+            if xtags.noclass.get_first_value(67, 0) == 1:
+                continue
+            dxftype = xtags.dxftype()
+            entity = factory.entity(xtags)
+            if dxftype == 'SEQEND':
+                if polyline is not None:
+                    polyline.seqend = entity
+                    yield polyline
                     polyline = None
-                    yield entity
+                # suppress all other SEQEND entities -> ATTRIB
+            elif dxftype == 'VERTEX' and polyline is not None:
+                # vertices without POLYLINE are DXF structure errors, but here just ignore it.
+                polyline.vertices.append(entity)
+            elif dxftype == 'POLYLINE':
+                polyline = cast(Polyline, entity)
+            else:
+                # POLYLINE without SEQEND is a DXF structure error, but here just ignore it.
+                # By using this add-on be sure to get valid DXF files.
+                polyline = None
+                yield entity
 
-    def entities_as_str(self, start: int) -> Iterable[Tuple[fileindex.IndexEntry, str]]:
+    def load_entities(self, start: int) -> Iterable[ExtendedTags]:
         def to_str(data: bytes) -> str:
             return data.decode(self.encoding).replace('\r\n', '\n')
 
@@ -130,13 +135,12 @@ class IterDXF:
         entry = self.structure.index[index]
         self.file.seek(entry.location)
         while entry.value != 'ENDSEC':
-            while True:
-                index += 1
-                next_entry = self.structure.index[index]
-                if next_entry.code == 0:
-                    break
+            index += 1
+            next_entry = self.structure.index[index]
             size = next_entry.location - entry.location
-            yield entry, to_str(self.file.read(size))
+            data = self.file.read(size)
+            if entry.value in SUPPORTED_DXF_TYPES:
+                yield ExtendedTags.from_text(to_str(data))
             entry = next_entry
 
     def close(self):

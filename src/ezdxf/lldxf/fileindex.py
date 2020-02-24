@@ -56,10 +56,10 @@ class FileStructure:
             index += 1
         raise ValueError(f'No entry for tag ({code}, {value}) found.')
 
-    def iter_tags(self, code: int, value: str, start: int = 0) -> Iterable[IndexEntry]:
+    def fetchall(self, code: int, value: str, start: int = 0) -> Iterable[IndexEntry]:
         """ Iterate over all specified entities.
 
-        e.g. iter_tags(0, 'LINE') returns an iterator for all LINE entities.
+        e.g. fetchall(0, 'LINE') returns an iterator for all LINE entities.
 
         """
         for entry in self.index[start:]:
