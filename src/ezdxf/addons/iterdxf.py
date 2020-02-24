@@ -1,16 +1,19 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Optional, cast, BinaryIO, Tuple, Dict
+from typing import Iterable, cast, BinaryIO, Tuple, Dict
 from io import StringIO
 from ezdxf.lldxf.const import DXFStructureError
-from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
 from ezdxf.lldxf.tagwriter import TagWriter
-from ezdxf.entities import DXFGraphic, Polyline
-from ezdxf.entities.factory import EntityFactory
-from ezdxf.entities.dxfgfx import entity_linker
+from ezdxf.lldxf.tagger import tag_compiler
 from ezdxf.lldxf import fileindex
 
-__all__ = ['opendxf']
+from ezdxf.entities import DXFGraphic
+from ezdxf.entities.factory import EntityFactory
+from ezdxf.entities.dxfgfx import entity_linker
+from ezdxf.tools.codepage import toencoding
+
+__all__ = ['opendxf', 'single_pass_modelspace']
 
 SUPPORTED_DXF_TYPES = {
     'ARC', 'LINE', 'CIRCLE', 'ELLIPSE', 'POINT', 'LWPOLYLINE', 'SPLINE', '3DFACE', 'SOLID', 'TRACE',
@@ -198,3 +201,93 @@ def opendxf(filename: str) -> IterDXF:
 
     """
     return IterDXF(filename)
+
+
+def single_pass_modelspace(filename: str) -> Iterable[DXFGraphic]:
+    file = open(filename, mode='rb')
+    fetch_header_var = False
+    encoding = 'cp1252'
+    version = 'AC1009'
+
+    # requires a HEADER section
+    for code, value in binary_tagger(file):
+        if code == 0 and value == b'ENDSEC':
+            break
+        if code == 9 and value == b'$DWGCODEPAGE':
+            fetch_header_var = 'ENCODING'
+        elif code == 9 and value == b'$ACADVERSION':
+            fetch_header_var = 'VERSION'
+        elif fetch_header_var:
+            if fetch_header_var == 'ENCODING':
+                encoding = toencoding(value.decode())
+            elif fetch_header_var == 'VERSION':
+                version = value.decode()
+            fetch_header_var = False
+
+    prev_code: int = -1
+    prev_value: str = ''
+    structure = None  # the actual structure tag: 'SECTION', 'LINE', ...
+    queued = False
+
+    tags = []
+    factory = EntityFactory()
+    linked_entity = entity_linker()
+
+    def build_entity():
+        xtags = ExtendedTags(tags)
+        return factory.entity(xtags)
+
+    entities = False
+    for tag in tag_compiler(binary_tagger(file, encoding)):
+        code = tag.code
+        value = tag.value
+        if entities:
+            if code == 0 and value == 'ENDSEC':
+                if queued:
+                    yield queued
+                return
+            if code == 0:
+                if len(tags) and structure in SUPPORTED_DXF_TYPES:
+                    entity = build_entity()
+                    if not linked_entity(entity) and entity.dxf.paperspace == 0:
+                        if queued:  # queue one entity for collecting linked entities (VERTEX, ATTRIB)
+                            yield queued
+                        queued = entity
+                structure = value
+                tags = [tag]
+            else:
+                tags.append(tag)
+            continue  # nothing else matters
+        elif code == 0:
+            structure = value
+        elif code == 2 and prev_code == 0 and prev_value == 'SECTION':
+            entities = (value == 'ENTITIES')
+            if entities and version > 'AC1009':
+                encoding = 'utf-8'
+
+        prev_code = code
+        prev_value = value
+    file.close()
+
+
+def binary_tagger(file: BinaryIO, encoding=None) -> DXFTag:
+    def load_tag() -> DXFTag:
+        try:
+            code = int(file.readline())
+        except ValueError:
+            raise DXFStructureError(f'Invalid group code')
+
+        if code < 0 or code > 1071:
+            raise DXFStructureError(f'Invalid group code {code}')
+        value = file.readline().rstrip(b'\r\n')
+
+        if encoding:
+            return DXFTag(code, value.decode(encoding))
+        else:
+            return DXFTag(code, value)
+
+    while True:
+        try:
+            yield load_tag()
+        except IOError:
+            return
