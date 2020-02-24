@@ -103,22 +103,21 @@ class IterDXF:
         render (recreate) this objects as new entities in another document.
 
         """
-        factory = EntityFactory()
-        linked_entities = entity_linker()
+        linked_entity = entity_linker()
         queued = None
-        for xtags in self.load_entities(self.sections['ENTITIES'] + 1):
-            entity = factory.entity(xtags)
-            if not linked_entities(entity) and entity.dxf.paperspace == 0:
+        for entity in self.load_entities(self.sections['ENTITIES'] + 1):
+            if not linked_entity(entity) and entity.dxf.paperspace == 0:
                 if queued:  # queue one entity for collecting linked entities (VERTEX, ATTRIB)
                     yield queued
                 queued = entity
         if queued:
             yield queued
 
-    def load_entities(self, start: int) -> Iterable[ExtendedTags]:
+    def load_entities(self, start: int) -> Iterable[DXFGraphic]:
         def to_str(data: bytes) -> str:
             return data.decode(self.encoding).replace('\r\n', '\n')
 
+        factory = EntityFactory()
         index = start
         entry = self.structure.index[index]
         self.file.seek(entry.location)
@@ -128,7 +127,8 @@ class IterDXF:
             size = next_entry.location - entry.location
             data = self.file.read(size)
             if entry.value in SUPPORTED_DXF_TYPES:
-                yield ExtendedTags.from_text(to_str(data))
+                xtags = ExtendedTags.from_text(to_str(data))
+                yield factory.entity(xtags)
             entry = next_entry
 
     def close(self):
