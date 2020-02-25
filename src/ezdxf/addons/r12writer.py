@@ -5,6 +5,7 @@
 # License: MIT License
 from typing import TextIO, Union, Sequence, Iterable, Tuple
 from contextlib import contextmanager
+from io import StringIO
 
 # types
 Vertex = Sequence[float]
@@ -260,6 +261,7 @@ class R12FastStreamWriter:
             self.stream.write(''.join(dxf))
 
         polyline_flags, vertex_flags = None, None
+        s = ''
         for vertex in vertices:
             if polyline_flags is None:  # first vertex
                 if len(vertex) == 3:  # 3d polyline
@@ -267,12 +269,10 @@ class R12FastStreamWriter:
                 else:  # 2d polyline
                     polyline_flags, vertex_flags = (0, 0)
                 write_polyline(polyline_flags)
+                s = "0\nVERTEX\n" + dxf_attribs(layer) + dxf_tag(70, vertex_flags)
 
-            dxf = ["0\nVERTEX\n"]
-            dxf.append(dxf_attribs(layer))
-            dxf.append(dxf_tag(70, vertex_flags))
-            dxf.append(dxf_vertex(vertex))
-            self.stream.write(''.join(dxf))
+            self.stream.write(s)
+            self.stream.write(dxf_vertex(vertex))
         if polyline_flags is not None:
             self.stream.write("0\nSEQEND\n")
 
@@ -305,39 +305,45 @@ class R12FastStreamWriter:
             linetype: line type as string see :meth:`add_line`
 
         """
-        vertices = list(vertices)
-        faces = list(faces)
-
         def write_polyline(flags: int = 64) -> None:
             dxf = ["0\nPOLYLINE\n"]
             dxf.append(dxf_attribs(layer, color, linetype))
             dxf.append(dxf_tag(66, 1))  # entities follow
             dxf.append(dxf_tag(70, flags))
-            dxf.append(dxf_tag(71, len(vertices)))
-            dxf.append(dxf_tag(72, len(faces)))
+            dxf.append(dxf_tag(71, vertex_count))
+            dxf.append(dxf_tag(72, face_count))
             self.stream.write(''.join(dxf))
 
-        def write_vertices(flags: int = 64 + 128) -> None:
+        def write_vertices(flags: int = 64 + 128):
+            buf = StringIO()
+            count = 0
+            s = "0\nVERTEX\n" + dxf_attribs(layer) + dxf_tag(70, flags)
             for vertex in vertices:
-                dxf = ["0\nVERTEX\n"]
-                dxf.append(dxf_attribs(layer))
-                dxf.append(dxf_tag(70, flags))
-                dxf.append(dxf_vertex(vertex))
-                self.stream.write(''.join(dxf))
+                count += 1
+                buf.write(s)
+                buf.write(dxf_vertex(vertex))
+            s = buf.getvalue()
+            buf.close()
+            return count, s
 
-        def write_faces(flags: int = 128) -> None:
+        def write_faces(flags: int = 128):
+            buf = StringIO()
+            count = 0
+            s = "0\nVERTEX\n" + dxf_attribs(layer, color) + dxf_tag(70, flags) + dxf_vertex((0, 0, 0))
             for face in faces:
-                dxf = ["0\nVERTEX\n"]
-                dxf.append(dxf_attribs(layer, color))
-                dxf.append(dxf_tag(70, flags))
-                dxf.append(dxf_vertex((0, 0, 0)))
+                count += 1
+                buf.write(s)
                 for code, index in zip((71, 72, 73, 74), face):
-                    dxf.append(dxf_tag(code, index + 1))
-                self.stream.write(''.join(dxf))
+                    buf.write(dxf_tag(code, index + 1))
+            s = buf.getvalue()
+            buf.close()
+            return count, s
 
+        vertex_count, vertex_str = write_vertices()
+        face_count, face_str = write_faces()
         write_polyline()
-        write_vertices()
-        write_faces()
+        self.stream.write(vertex_str)
+        self.stream.write(face_str)
         self.stream.write("0\nSEQEND\n")
 
     def add_polymesh(self,
@@ -363,10 +369,7 @@ class R12FastStreamWriter:
             linetype: line type as string see :meth:`add_line`
 
         """
-        vertices = list(vertices)
         m, n = size
-        if m * n != len(vertices):
-            raise ValueError('Invalid mesh dimensions.')
         m_closed, n_closed = closed
 
         def write_polyline(flags: int = 16) -> None:
@@ -383,16 +386,20 @@ class R12FastStreamWriter:
             dxf.append(dxf_tag(72, n))
             self.stream.write(''.join(dxf))
 
-        def write_vertices(flags: int = 64) -> None:
+        def write_vertices(flags: int = 64) -> int:
+            count = 0
+            s = "0\nVERTEX\n" + dxf_attribs(layer) + dxf_tag(70, flags)
             for vertex in vertices:
-                dxf = ["0\nVERTEX\n"]
-                dxf.append(dxf_attribs(layer))
-                dxf.append(dxf_tag(70, flags))
-                dxf.append(dxf_vertex(vertex))
-                self.stream.write(''.join(dxf))
+                count += 1
+                self.stream.write(s)
+                self.stream.write(dxf_vertex(vertex))
+            return count
 
         write_polyline()
-        write_vertices()
+        count = write_vertices()
+        if m * n != count:
+            raise ValueError('Invalid mesh dimensions.')
+
         self.stream.write("0\nSEQEND\n")
 
     def add_text(self,
