@@ -4,7 +4,7 @@ from ezdxf.render.forms import circle, close_polygon, cube, extrude, cylinder, c
 from ezdxf.render.forms import open_arrow, arrow2
 from ezdxf.render.forms import spline_interpolation, spline_interpolated_profiles
 from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
-from ezdxf.render.forms import rotation_form
+from ezdxf.render.forms import rotation_form, ngon_to_triangles
 from ezdxf.render.forms import translate, rotate, scale
 from ezdxf.math import Vector, is_close_points
 
@@ -184,3 +184,22 @@ def test_heptagon_by_edge_length():
     assert is_close_points(corners[4], (-10.382606982861683, -5, 0))
     assert is_close_points(corners[5], (-2.564292158181387, -11.234898018587335, 0))
     assert is_close_points(corners[6], (7.18498696363685, -9.009688679024192, 0))
+
+
+def test_ngons_to_triangles():
+    open_square = square()
+    r = list(ngon_to_triangles(open_square))
+    assert len(r) == 4
+    center = r[0][2]
+    assert center == (0.5, 0.5, 0)
+
+    closed_square = list(circle(4, elevation=2, close=True))
+    assert len(closed_square) == 5
+    r = list(ngon_to_triangles(closed_square))
+    assert len(r) == 4
+    center = r[0][2]
+    assert center == (0, 0, 2)
+
+    # also subdivide triangles
+    r = list(ngon_to_triangles([(0, 0), (1, 0), (1, 1)]))
+    assert len(r) == 3

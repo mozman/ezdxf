@@ -2,7 +2,7 @@
 # Created: 15.02.2018
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Tuple
+from typing import TYPE_CHECKING, Iterable, List, Tuple, Sequence
 from math import pi, sin, cos, radians, tan, isclose, asin, fabs
 from enum import IntEnum
 from ezdxf.math import Vector, Matrix44
@@ -437,7 +437,7 @@ def cube(center: bool = True) -> MeshTransformer:
     return mesh
 
 
-def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close: bool = True) -> MeshTransformer:
+def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close=True) -> MeshTransformer:
     """
     Extrude a `profile` polygon along a `path` polyline, vertices of profile should be in
     counter clockwise order.
@@ -479,7 +479,7 @@ def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close: bool =
 
 
 def cylinder(count: int = 16, radius: float = 1., top_radius: float = None, top_center: 'Vertex' = (0, 0, 1),
-             caps: bool = True) -> MeshTransformer:
+             caps=True, ngons=True) -> MeshTransformer:
     """
     Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as :class:`~ezdxf.render.MeshTransformer` object,
     the base center is fixed in the origin (0, 0, 0).
@@ -490,6 +490,7 @@ def cylinder(count: int = 16, radius: float = 1., top_radius: float = None, top_
         top_radius: radius for top profile, if ``None`` top_radius == radius
         top_center: location vector for the center of the top profile
         caps: close hull with bottom cap and top cap (as N-gons)
+        ngons: use ngons for caps if ``True`` else subdivide caps into triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
@@ -502,7 +503,7 @@ def cylinder(count: int = 16, radius: float = 1., top_radius: float = None, top_
 
     base_profile = list(circle(count, radius, close=True))
     top_profile = list(translate(circle(count, top_radius, close=True), top_center))
-    return from_profiles_linear([base_profile, top_profile], caps=caps)
+    return from_profiles_linear([base_profile, top_profile], caps=caps, ngons=ngons)
 
 
 def cylinder_2p(count: int = 16, radius: float = 1, base_center=(0, 0, 0), top_center=(0, 0, 1), ) -> MeshTransformer:
@@ -552,26 +553,47 @@ def cylinder_2p(count: int = 16, radius: float = 1, base_center=(0, 0, 0), top_c
     return MeshTransformer.from_builder(mesh)
 
 
-def from_profiles_linear(profiles: Iterable[Iterable['Vertex']], close: bool = True,
-                         caps: bool = False) -> MeshTransformer:
+def ngon_to_triangles(face: Iterable['Vertex']) -> Iterable[Sequence[Vector]]:
+    face = [Vector(v) for v in face]
+    if face[0].isclose(face[-1]):  # closed shape
+        center = sum(face[:-1]) / (len(face) - 1)
+    else:
+        center = sum(face) / len(face)
+        face.append(face[0])
+
+    for v1, v2 in zip(face[:-1], face[1:]):
+        yield v1, v2, center
+
+
+def from_profiles_linear(profiles: Iterable[Iterable['Vertex']], close=True,
+                         caps=False, ngons=True) -> MeshTransformer:
     """
     Create MESH entity by linear connected `profiles`.
 
     Args:
         profiles: list of profiles
         close: close profile polygon if ``True``
-        caps: close hull with bottom cap and top cap (as N-gons)
+        caps: close hull with bottom cap and top cap
+        ngons: use ngons for caps if ``True`` else subdivide caps into triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
     """
     mesh = MeshVertexMerger()
-    profiles = list(profiles)  # generator -> list
+    profiles = list(profiles)
     if close:
         profiles = [close_polygon(p) for p in profiles]
     if caps:
-        mesh.add_face(profiles[0])
-        mesh.add_face(profiles[-1])
+        base = reversed(profiles[0])  # for correct outside pointing normals
+        top = profiles[-1]
+        if ngons:
+            mesh.add_face(base)
+            mesh.add_face(top)
+        else:
+            for face in ngon_to_triangles(base):
+                mesh.add_face(face)
+            for face in ngon_to_triangles(top):
+                mesh.add_face(face)
 
     for profile1, profile2 in zip(profiles, profiles[1:]):
         prev_v1, prev_v2 = None, None
@@ -632,8 +654,8 @@ def spline_interpolated_profiles(profiles: Iterable[Iterable['Vertex']], subdivi
         yield [edge[profile_index] for edge in edges]
 
 
-def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int = 4, close: bool = True,
-                         caps: bool = False) -> MeshTransformer:
+def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int = 4, close=True,
+                         caps=False, ngons=True) -> MeshTransformer:
     """
     Create MESH entity by spline interpolation between given `profiles`. Requires at least 4 profiles.
     A subdivide value of 4, means, create 4 face loops between two profiles, without interpolation two
@@ -643,7 +665,8 @@ def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int 
         profiles: list of profiles
         subdivide: count of face loops
         close: close profile polygon if ``True``
-        caps: close hull with bottom cap and top cap (as N-gons)
+        caps: close hull with bottom cap and top cap
+        ngons: use ngons for caps if ``True`` else subdivide caps into triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
@@ -653,10 +676,10 @@ def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int 
         profiles = spline_interpolated_profiles(profiles, subdivide)
     else:
         raise ValueError("Spline interpolation requires at least 4 profiles")
-    return from_profiles_linear(profiles, close=close, caps=caps)
+    return from_profiles_linear(profiles, close=close, caps=caps, ngons=ngons)
 
 
-def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps: bool = True) -> MeshTransformer:
+def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps=True, ngons=True) -> MeshTransformer:
     """
     Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as :class:`~ezdxf.render.MeshTransformer` object, the base
     center is fixed in the origin (0, 0, 0).
@@ -666,6 +689,7 @@ def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps:
         radius: radius of basis
         apex: tip of the cone
         caps: add a bottom face if ``True``
+        ngons: use ngons for caps if ``True`` else subdivide caps into triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
@@ -675,7 +699,13 @@ def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps:
     for p1, p2 in zip(base_circle, base_circle[1:]):
         mesh.add_face([p1, p2, apex])
     if caps:
-        mesh.add_face(base_circle)
+        base_circle = reversed(base_circle)  # for correct outside pointing normals
+        if ngons:
+            mesh.add_face(base_circle)
+        else:
+            for face in ngon_to_triangles(base_circle):
+                mesh.add_face(face)
+
     return MeshTransformer.from_builder(mesh)
 
 
@@ -762,7 +792,7 @@ def doughnut(mcount: int, ncount: int, outer_radius: float = 1., ring_radius: fl
     pass
 
 
-def sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads=False) -> MeshTransformer:
+def sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads=True) -> MeshTransformer:
     """
     Create a `sphere <https://en.wikipedia.org/wiki/Sphere>`_ as :class:`~ezdxf.render.MeshTransformer` object,
     center is fixed at origin (0, 0, 0).
@@ -771,7 +801,7 @@ def sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads=False) -> 
         count: longitudinal slices
         stacks: latitude slices
         radius: radius of sphere
-        quads: use quads for body faces if ``True``
+        quads: use quads for body faces if ``True`` else triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 

@@ -62,23 +62,23 @@ Create 3D forms as :class:`~ezdxf.render.MeshTransformer` objects.
 
 .. autofunction:: cube(center: bool = True) -> MeshTransformer
 
-.. autofunction:: cylinder(count: int, radius: float = 1., top_radius: float = None, top_center: Vertex = (0, 0, 1), caps: bool = True) -> MeshTransformer
+.. autofunction:: cylinder(count: int, radius: float = 1., top_radius: float = None, top_center: Vertex = (0, 0, 1), caps=True, ngons=True) -> MeshTransformer
 
 .. autofunction:: cylinder_2p(count: int = 16, radius: float = 1, base_center=(0, 0, 0), top_center=(0, 0, 1), ) -> MeshTransformer
 
-.. autofunction:: cone(count: int, radius: float, apex: Vertex = (0, 0, 1), caps: bool = True) -> MeshTransformer
+.. autofunction:: cone(count: int, radius: float, apex: Vertex = (0, 0, 1), caps=True, ngons=True) -> MeshTransformer
 
 .. autofunction:: cone_2p(count: int, radius: float, apex: Vertex = (0, 0, 1)) -> MeshTransformer
 
-.. autofunction:: sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads = False) -> MeshTransformer
+.. autofunction:: sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads=True) -> MeshTransformer
 
 3D Form Builder
 ---------------
 
-.. autofunction:: extrude(profile: Iterable[Vertex], path: Iterable[Vertex], close: bool = True) -> MeshTransformer
+.. autofunction:: extrude(profile: Iterable[Vertex], path: Iterable[Vertex], close=True) -> MeshTransformer
 
-.. autofunction:: from_profiles_linear(profiles: Iterable[Iterable[Vertex]], close: bool = True, caps: bool = False) -> MeshTransformer
+.. autofunction:: from_profiles_linear(profiles: Iterable[Iterable[Vertex]], close=True, caps=False, ngons=True) -> MeshTransformer
 
-.. autofunction:: from_profiles_spline(profiles: Iterable[Iterable[Vertex]], subdivide: int = 4, close: bool = True, caps: bool = False) -> MeshTransformer
+.. autofunction:: from_profiles_spline(profiles: Iterable[Iterable[Vertex]], subdivide: int = 4, close=True, caps=False, ngons=True) -> MeshTransformer
 
 .. autofunction:: rotation_form(count: int, profile: Iterable[Vertex], angle: float = 2 * pi, axis: Vertex = (1, 0, 0)) -> MeshTransformer
