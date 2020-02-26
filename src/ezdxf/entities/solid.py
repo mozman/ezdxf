@@ -39,12 +39,6 @@ class Solid(_Base):
     DXFTYPE = 'SOLID'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_trace)
 
-    def __getitem__(self, num):
-        return self.dxf.get(VERTEXNAMES[num])
-
-    def __setitem__(self, num, value):
-        return self.dxf.set(VERTEXNAMES[num], value)
-
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
