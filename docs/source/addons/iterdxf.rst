@@ -7,9 +7,13 @@ iterdxf
 This add-on allows iterating over entities of the modelspace of really big (> 5GB) DXF files which do not fit into
 memory by only loading one entity at the time.
 
-The entities are regular :class:`~ezdxf.entities.DXFGraphic` objects with access
-to all supported DXF attributes, this entities can be written to new DXF files but not assigned to other DXF
-documents. The following example shows how to split a big DXF files into several separated DXF files which contains
+The entities are regular :class:`~ezdxf.entities.DXFGraphic` objects with access to all supported DXF attributes,
+this entities can be written to new DXF files created by the :meth:`IterDXF.export` method.
+The new :meth:`~ezdxf.layouts.BaseLayout.add_foreign_entity` method allows also to add this entities to
+new regular `ezdxf` drawings (except for the INSERT entity), but resources like linetype and style are removed,
+only layer will be preserved but only with default attributes like color ``7`` and linetype ``CONTINUOUS``.
+
+The following example shows how to split a big DXF files into several separated DXF files which contains
 only LINE, TEXT or POLYLINE entities.
 
 .. code-block:: Python
@@ -56,21 +60,22 @@ Supported DXF types:
 - MTEXT
 - HATCH
 
-Transfer simple entities to another DXF document:
+Transfer simple entities to another DXF document, this works for all supported entities, except for INSERT,
+because INSERT depends on a not available BLOCK definition:
 
 .. code-block:: Python
 
     newdoc = ezdxf.new()
     msp = newdoc.modelspace()
     # line is an entity from a big source file
-    # cumbersome but required to not introduce invalid dependencies like undefined linetypes
-    msp.add_line(start=line.dxf.start, end=line.dxf.end)
-    # lwpolyline is an entity from a big source file
-    msp.add_lwpolyline(points=lwpolyline.points())
+    msp.add_foreign_entity(line)
+    # and so on ...
+    msp.add_foreign_entity(lwpolyline)
+    msp.add_foreign_entity(mesh)
+    msp.add_foreign_entity(polyface)
 
-Don't forget to copy extrusion and elevation values for entities with an defined :ref:`OCS`.
-
-Transfer MESH and POLYFACE (dxftype for POLYFACE and POLYMESH is POLYLINE!) entities into a new DXF document:
+Transfer MESH and POLYFACE (dxftype for POLYFACE and POLYMESH is POLYLINE!) entities into a new DXF document by
+the :class:`MeshTransformer` class:
 
 .. code-block:: Python
 

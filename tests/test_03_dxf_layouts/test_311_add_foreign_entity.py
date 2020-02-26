@@ -48,7 +48,8 @@ def test_01_copy_foreign_entities_reset_resources(src, target):
     assert line_copy.doc is not line.doc
     assert line_copy.dxf.handle != line.dxf.handle
     # check resources
-    assert line_copy.dxf.layer == '0'
+    # layer is preserved
+    assert line_copy.dxf.layer == line.dxf.layer
     assert line_copy.dxf.linetype == 'BYLAYER'
 
 
@@ -82,7 +83,7 @@ def test_03_move_foreign_entities(src, target):
     assert text_moved.doc is not None
 
     # check resources
-    assert text_moved.dxf.layer == '0'
+    assert text_moved.dxf.layer == 'EXTRA_LAYER', 'layer should be preserved'
     assert text_moved.dxf.linetype == 'BYLAYER'
     assert text_moved.dxf.style == 'Standard'
 
@@ -126,13 +127,13 @@ def test_05_copy_polyline_reset_resources(src, target):
     assert pline_copy.doc is not pline.doc
     assert pline_copy.dxf.handle != pline.dxf.handle
     # check resources
-    assert pline_copy.dxf.layer == '0'
+    assert pline_copy.dxf.layer == 'EXTRA_LAYER', 'layer should be preserved'
     assert pline_copy.dxf.linetype == 'BYLAYER'
     # check vertices
     assert len(pline_copy.vertices) == len(pline.vertices)
     for v1, v2 in zip(pline_copy.vertices, pline.vertices):
         assert v1.dxf.handle != v2.dxf.handle
-        assert v1.dxf.layer != v2.dxf.layer
+        assert v1.dxf.layer == 'EXTRA_LAYER', 'layer should be preserved'
         assert v1.dxf.linetype != v2.dxf.linetype
 
 

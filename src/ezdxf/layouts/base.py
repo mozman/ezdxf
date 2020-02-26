@@ -115,16 +115,19 @@ class BaseLayout(CreatorInterface):
     def add_foreign_entity(self, entity: 'DXFGraphic', copy=True) -> None:
         """
         Add a foreign DXF entity to a layout, this foreign entity could be from another DXF document or an entity
-        without an assigned DXF document. The intention of this method is to add **simple** entities from other
-        DXF documents or from DXF iterator add-ons, for more complex operations use the
+        without an assigned DXF document. The intention of this method is to add **simple** entities from another
+        DXF document or from a DXF iterator, for more complex operations use the
         :mod:`~ezdxf.addons.importer` add-on. Especially objects with BLOCK section (INSERT, DIMENSION,
         MLEADER) or OBJECTS section dependencies (IMAGE, UNDERLAY) can not be supported by
         this simple method.
 
         Not all DXF types are supported and every dependency or resource reference from another DXF document will be
-        removed. If the entity is part of another DXF document, it will be unlinked from this document and its
-        entity database if argument `copy` is ``False``, else the entity will be copied. Unassigned entities will just
-        be added.
+        removed except attribute layer will be preserved but only with default attributes like color ``7`` and
+        linetype ``CONTINUOUS`` because the layer attribute doesn't need a layer table entry.
+
+        If the entity is part of another DXF document, it will be unlinked from this document and its
+        entity database if argument `copy` is ``False``, else the entity will be copied. Unassigned entities like
+        from DXF iterators will just be added.
 
         Supported DXF types:
 
@@ -192,10 +195,11 @@ class BaseLayout(CreatorInterface):
             for v in entity.vertices:
                 remove_dependencies(v)
             remove_dependencies(entity.seqend)
+            entity.seqend.dxf.discard('linetype')
 
         # remove resources
-        if entity.dxf.layer not in self.doc.layers:
-            entity.dxf.layer = '0'
+        # The layer attribute is preserved because layer doesn't need a layer table entry, the layer attributes are
+        # reset to default attributes like color is 7 and linetype is CONTINUOUS
 
         if entity.dxf.linetype not in self.doc.linetypes:
             entity.dxf.linetype = 'BYLAYER'
@@ -213,8 +217,9 @@ class BaseLayout(CreatorInterface):
             entity.unassociate()
 
         # add to this document
-        self.entitydb.add(entity)
         entity.doc = self.doc
+        self.entitydb.add(entity)
+
         # add to this layout
         self.add_entity(entity)
 
