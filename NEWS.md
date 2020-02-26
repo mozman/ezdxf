@@ -9,8 +9,8 @@ Version 0.11.1 - dev
 - NEW: `Meshbuilder.render_polyface()` create `POLYFACE` objects
 - NEW: `ezdxf.addons.iterdxf` experimental feature to iterate over modelspace entities of really big DXF files (>5 GB)
 - NEW: `ezdxf.addons.r12writer` supports POLYFACE and POLYMESH entities
-- NEW: `Layout.add_foreign_entity()` add **simple** entities from other DXF documents or unassigned DXF entities 
-  to a layout
+- NEW: `Layout.add_foreign_entity()` copy/move **simple** entities from another DXF document or add unassigned 
+  DXF entities to a layout
 - CHANGES: refactor Auditor() into a DXF document fixer, fixes will be applied automatically (work in progress)
 - CHANGES: moved `r12writer` into `addons` subpackage
 - CHANGES: moved `acadctb` into `addons` subpackage

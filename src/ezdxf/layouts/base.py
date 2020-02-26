@@ -112,7 +112,7 @@ class BaseLayout(CreatorInterface):
 
         self.block_record.add_entity(entity)
 
-    def add_foreign_entity(self, entity: 'DXFGraphic') -> None:
+    def add_foreign_entity(self, entity: 'DXFGraphic', copy=True) -> None:
         """
         Add a foreign DXF entity to a layout, this foreign entity could be from another DXF document or an entity
         without an assigned DXF document. The intention of this method is to add **simple** entities from other
@@ -122,8 +122,9 @@ class BaseLayout(CreatorInterface):
         this simple method.
 
         Not all DXF types are supported and every dependency or resource reference from another DXF document will be
-        removed. If the entity is part of another DXF document, it will be unlinked from the document and its
-        entity database.
+        removed. If the entity is part of another DXF document, it will be unlinked from this document and its
+        entity database if argument `copy` is ``False``, else the entity will be copied. Unassigned entities will just
+        be added.
 
         Supported DXF types:
 
@@ -146,6 +147,10 @@ class BaseLayout(CreatorInterface):
             - MTEXT
             - HATCH
 
+        Args:
+            entity: DXF entity to copy or move
+            copy: if ``True`` copy entity from other document else unlink from other document
+
         .. versionadded:: 0.11.1
 
         """
@@ -157,15 +162,18 @@ class BaseLayout(CreatorInterface):
             raise DXFValueError('Entity from same DXF document.')
 
         if foreign_doc is not None:
-            # unlink entity from other database without destroying
-            del foreign_doc.entitydb[entity.dxf.handle]
-            for e in entity.linked_entities():
-                del foreign_doc.entitydb[e.dxf.handle]
+            if copy:
+                entity = entity.copy()
+            else:
+                # unlink entity from other database without destroying
+                del foreign_doc.entitydb[entity.dxf.handle]
+                for e in entity.linked_entities():
+                    del foreign_doc.entitydb[e.dxf.handle]
 
-            # unlink from layout
-            layout = entity.get_layout()
-            if layout is not None:
-                layout.unlink_entity(entity)
+                # unlink from layout
+                layout = entity.get_layout()
+                if layout is not None:
+                    layout.unlink_entity(entity)
 
         def remove_dependencies(e):
             if e is None:
@@ -206,6 +214,7 @@ class BaseLayout(CreatorInterface):
 
         # add to this document
         self.entitydb.add(entity)
+        entity.doc = self.doc
         # add to this layout
         self.add_entity(entity)
 
