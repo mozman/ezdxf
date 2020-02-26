@@ -6,15 +6,16 @@ from time import perf_counter
 import ezdxf
 from ezdxf.addons import r12writer
 from ezdxf.math.perlin import SimplexNoise
-from ezdxf.addons.iterdxf import single_pass_modelspace
+from ezdxf.addons.iterdxf import single_pass_modelspace, opendxf
 from ezdxf.render import MeshVertexMerger
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 noise = SimplexNoise()
 STACK_SIZE = 16
-GRID_SIZE = 256
+GRID_SIZE = 96
 FILENAME_R12 = DIR / f"perlin_{STACK_SIZE}_stacks_{GRID_SIZE}_x_{GRID_SIZE}_r12.dxf"
 FILENAME_R2010 = DIR / f"perlin_{STACK_SIZE}_stacks_{GRID_SIZE}_x_{GRID_SIZE}_r2010.dxf"
+COMPARE_WITH_READFILE = False
 
 
 def perlin_mesh(writer, size=(10, 10), heigth: float = 1, scale: float = 1, offset: float = 0, color: int = 1):
@@ -37,6 +38,18 @@ def create_r12(filename: str):
             perlin_mesh(r12, size=(GRID_SIZE, GRID_SIZE), heigth=height, offset=height * i * 1.5, color=(i % 254) + 1)
 
 
+def entities(filename):
+    print('using single_pass_modelspace()')
+    return single_pass_modelspace(open(filename, 'rb'))
+
+
+def entities2(filename):
+    print('using opendxf()')
+    doc = opendxf(filename)
+    yield from doc.modelspace()
+    doc.close()
+
+
 def save_as_r2010_mesh(source: str, target: str):
     count = 0
     doc = ezdxf.new('R2010')
@@ -44,7 +57,7 @@ def save_as_r2010_mesh(source: str, target: str):
 
     converting_time = 0.
     t0 = perf_counter()
-    for e in single_pass_modelspace(open(source, 'rb')):
+    for e in entities(source):
         if e.dxftype() == 'POLYLINE':
             e = cast('Polymesh', e)
             count += 1
@@ -78,3 +91,10 @@ if __name__ == '__main__':
     t1 = perf_counter()
     print(f'Saving as R2010 file: "{FILENAME_R2010}"')
     print(f'Runtime {t1 - t0:.2f}s\n')
+
+    if COMPARE_WITH_READFILE:
+        print(f'Loading POLYMESH entities from R12 by ezdxf.readfile().')
+        t0 = perf_counter()
+        doc = ezdxf.readfile(FILENAME_R12)
+        t1 = perf_counter()
+        print(f'Runtime {t1 - t0:.2f}s\n')
