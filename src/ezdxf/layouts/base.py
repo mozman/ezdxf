@@ -1,7 +1,7 @@
 # Created: 2019-02-18
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, List, Hashable
+from typing import TYPE_CHECKING, Iterable, cast
 from ezdxf.lldxf.const import DXFValueError, DXFStructureError
 from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
@@ -9,7 +9,12 @@ from ezdxf.entitydb import EntityDB
 from ezdxf.graphicsfactory import CreatorInterface
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BlockRecord, DXFGraphic, Dictionary, KeyFunc
+    from ezdxf.eztypes import BlockRecord, DXFGraphic, Dictionary, KeyFunc, Polyline
+
+SUPPORTED_FOREIGN_ENTITY_TYPES = {
+    'ARC', 'LINE', 'CIRCLE', 'ELLIPSE', 'POINT', 'LWPOLYLINE', 'SPLINE', '3DFACE', 'SOLID', 'TRACE', 'SHAPE',
+    'POLYLINE', 'MESH', 'TEXT', 'MTEXT', 'HATCH', 'ATTRIB', 'ATTDEF',
+}
 
 
 class BaseLayout(CreatorInterface):
@@ -106,6 +111,103 @@ class BaseLayout(CreatorInterface):
             raise DXFStructureError('Adding entities from a different DXF drawing is not supported.')
 
         self.block_record.add_entity(entity)
+
+    def add_foreign_entity(self, entity: 'DXFGraphic') -> None:
+        """
+        Add a foreign DXF entity to a layout, this foreign entity could be from another DXF document or an entity
+        without an assigned DXF document. The intention of this method is to add **simple** entities from other
+        DXF documents or from DXF iterator add-ons, for more complex operations use the
+        :mod:`~ezdxf.addons.importer` add-on. Especially objects with BLOCK section (INSERT, DIMENSION,
+        MLEADER) or OBJECTS section dependencies (IMAGE, UNDERLAY) can not be supported by
+        this simple method.
+
+        Not all DXF types are supported and every dependency or resource reference from another DXF document will be
+        removed. If the entity is part of another DXF document, it will be unlinked from the document and its
+        entity database.
+
+        Supported DXF types:
+
+            - POINT
+            - LINE
+            - CIRCLE
+            - ARC
+            - ELLIPSE
+            - LWPOLYLINE
+            - SPLINE
+            - POLYLINE
+            - 3DFACE
+            - SOLID
+            - TRACE
+            - SHAPE
+            - MESH
+            - ATTRIB
+            - ATTDEF
+            - TEXT
+            - MTEXT
+            - HATCH
+
+        .. versionadded:: 0.11.1
+
+        """
+        foreign_doc = entity.doc
+        dxftype = entity.dxftype()
+        if dxftype not in SUPPORTED_FOREIGN_ENTITY_TYPES:
+            raise DXFValueError(f'Unsupported entity type: {dxftype}.')
+        if foreign_doc is self.doc:
+            raise DXFValueError('Entity from same DXF document.')
+
+        if foreign_doc is not None:
+            # unlink entity from other database without destroying
+            del foreign_doc.entitydb[entity.dxf.handle]
+            for e in entity.linked_entities():
+                del foreign_doc.entitydb[e.dxf.handle]
+
+            # unlink from layout
+            layout = entity.get_layout()
+            if layout is not None:
+                layout.unlink_entity(entity)
+
+        def remove_dependencies(e):
+            if e is None:
+                return
+            e.dxf.owner = None
+            e.dxf.handle = None
+            e.reactors = None
+            e.extension_dict = None
+            e.appdata = None
+            e.xdata = None
+            e.embedded_objects = None
+
+        remove_dependencies(entity)
+        if dxftype == 'POLYLINE':
+            entity = cast('Polyline', entity)
+            for v in entity.vertices:
+                remove_dependencies(v)
+            remove_dependencies(entity.seqend)
+
+        # remove resources
+        if entity.dxf.layer not in self.doc.layers:
+            entity.dxf.layer = '0'
+
+        if entity.dxf.linetype not in self.doc.linetypes:
+            entity.dxf.linetype = 'BYLAYER'
+
+        entity.dxf.discard('material_handle')
+        entity.dxf.discard('visualstyle_handle')
+        entity.dxf.discard('plotstyle_enum')
+        entity.dxf.discard('plotstyle_handle')
+
+        # TEXT, ATTRIB, ATTDEF  and MTEXT
+        if entity.dxf.hasattr('style') and  entity.dxf.style not in self.doc.styles:
+            entity.dxf.style = 'Standard'
+
+        if dxftype == 'HATCH':
+            entity.unassociate()
+
+        # add to this document
+        self.entitydb.add(entity)
+        # add to this layout
+        self.add_entity(entity)
 
     def unlink_entity(self, entity: 'DXFGraphic') -> None:
         """

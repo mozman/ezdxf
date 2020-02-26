@@ -72,6 +72,8 @@ BaseLayout
 
     .. automethod:: add_entity
 
+    .. automethod:: add_foreign_entity
+
     .. automethod:: add_point
 
     .. automethod:: add_line

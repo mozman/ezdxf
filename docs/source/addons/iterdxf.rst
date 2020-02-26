@@ -47,6 +47,7 @@ Supported DXF types:
 - 3DFACE
 - SOLID
 - TRACE
+- SHAPE
 - MESH
 - INSERT
 - ATTRIB

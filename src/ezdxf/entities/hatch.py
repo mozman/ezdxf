@@ -307,6 +307,12 @@ class Hatch(DXFGraphic):
         """ Context manager to edit hatch boundary data, yields a :class:`BoundaryPaths` object. """
         yield self.paths
 
+    def unassociate(self):
+        """ Remove association to other DXF entities. """
+        self.dxf.associative = 0
+        for path in self.paths:
+            path.source_boundary_objects = []
+
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: 'RGB' = None):
         """
         Set :class:`Hatch` to solid fill mode and removes all gradient and pattern fill related data.
