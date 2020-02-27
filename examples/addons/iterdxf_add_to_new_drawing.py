@@ -13,10 +13,10 @@ BIGFILE = Path(r'D:\Source\dxftest\GKB-R2010.dxf')
 doc = ezdxf.new()
 msp = doc.modelspace()
 
-print('Single Pass Modelspace Iterator:')
+print('Modelspace Iterator:')
 counter = Counter()
 t0 = time.perf_counter()
-for entity in iterdxf.single_pass_modelspace(open(BIGFILE, 'rb')):
+for entity in iterdxf.modelspace(BIGFILE):
     counter[entity.dxftype()] += 1
     try:
         msp.add_foreign_entity(entity)

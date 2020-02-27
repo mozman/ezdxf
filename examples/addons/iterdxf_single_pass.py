@@ -7,18 +7,8 @@ from ezdxf.addons import iterdxf
 BIGFILE = Path(r'D:\Source\dxftest\GKB-R2010.dxf')
 # BIGFILE = Path(r'D:\Source\dxftest\ACAD_R2000.dxf')
 
-
-print('Single Pass Modelspace Iterator:')
-counter = Counter()
-t0 = time.perf_counter()
-for entity in iterdxf.single_pass_modelspace(open(BIGFILE, 'rb')):
-    counter[entity.dxftype()] += 1
-
-ta = time.perf_counter()-t0
-print(f'Processing time: {ta:.2f}s')
-print(counter)
-
-print('iterdxf.opendxf() Iterator:')
+name = 'iterdxf.opendxf()'
+print(f"{name}\n{len(name)*'-'}")
 counter = Counter()
 t0 = time.perf_counter()
 doc = iterdxf.opendxf(BIGFILE)
@@ -29,5 +19,28 @@ doc.close()
 tb = time.perf_counter()-t0
 print(f'Processing time: {tb:.2f}s')
 print(counter)
+print()
 
-print(f'\nAdvantage Single Pass Iterator: {((tb/ta)-1)*100.:.0f}%')
+name = 'iterdxf.single_pass_modelspace()'
+print(f"{name}\n{len(name)*'-'}")
+counter = Counter()
+t0 = time.perf_counter()
+for entity in iterdxf.single_pass_modelspace(open(BIGFILE, 'rb'), types=['LINE']):
+    counter[entity.dxftype()] += 1
+
+ta = time.perf_counter()-t0
+print(f'Processing time: {ta:.2f}s')
+print(counter)
+print(f'Advantage {name}: {((tb/ta)-1)*100.:.0f}%\n')
+
+name = 'iterdxf.modelspace()'
+print(f"{name}\n{len(name)*'-'}")
+counter = Counter()
+t0 = time.perf_counter()
+for entity in iterdxf.modelspace(BIGFILE, types=['LINE']):
+    counter[entity.dxftype()] += 1
+
+tc = time.perf_counter()-t0
+print(f'Processing time: {tc:.2f}s')
+print(counter)
+print(f'Advantage {name}: {((tb/tc)-1)*100.:.0f}%\n')

@@ -97,8 +97,9 @@ smaller parts and use the :class:`~ezdxf.addons.importer.Importer` add-on for a 
 
 .. autofunction:: opendxf(filename: str) -> IterDXF
 
-.. autofunction:: single_pass_modelspace(stream: BinaryIO) -> Iterable[DXFGraphic]
+.. autofunction:: modelspace(filename: str, types:Iterable[str]=None) -> Iterable[DXFGraphic]
 
+.. autofunction:: single_pass_modelspace(stream: BinaryIO, types:Iterable[str]=None) -> Iterable[DXFGraphic]
 
 .. class:: IterDXF
 
