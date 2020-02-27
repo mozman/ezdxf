@@ -197,22 +197,75 @@ class IterDXFWriter:
 def opendxf(filename: str) -> IterDXF:
     """ Open DXF file for iterating, be sure to open valid DXF files, no DXF structure checks will be applied.
 
+    Use this function to split up big DXF files as shown in the example above.
+
     Args:
-        filename: DXF filename of a seekable file.
+        filename: DXF filename of a seekable DXF file.
 
     """
     return IterDXF(filename)
+
+
+def modelspace(filename: str, types: Iterable[str] = None) -> Iterable[DXFGraphic]:
+    """
+    Iterate over all modelspace entities as :class:`DXFGraphic` objects of a seekable file.
+
+    Use this function to 'quick' iterate over modelspace entities of a DXF file,
+    filtering DXF types may speed up things if many entity types will be skipped.
+
+    Args:
+        filename: filename of a seekable DXF file
+        types: DXF types like ``['LINE', '3DFACE']`` which should be returned, ``None`` returns all supported types.
+
+    """
+    info = dxf_file_info(filename)
+    prev_code: int = -1
+    prev_value: str = ''
+    entities = False
+    requested_types = _requested_types(types)
+
+    with open(filename, mode='rt', encoding=info.encoding) as fp:
+        tagger = low_level_tagger(fp)
+        queued: Optional[DXFEntity] = None
+        tags: List[DXFTag] = []
+        factory = EntityFactory()
+        linked_entity = entity_linker()
+        for tag in tag_compiler(tagger):
+            code = tag.code
+            value = tag.value
+            if entities:
+                if code == 0 and value == 'ENDSEC':
+                    if queued:
+                        yield queued
+                    return
+                if code == 0:
+                    if len(tags) and tags[0].value in requested_types:
+                        entity = factory.entity(ExtendedTags(tags))
+                        if not linked_entity(entity) and entity.dxf.paperspace == 0:
+                            if queued:  # queue one entity for collecting linked entities (VERTEX, ATTRIB)
+                                yield queued
+                            queued = entity
+                    tags = [tag]
+                else:
+                    tags.append(tag)
+                continue  # if entities - nothing else matters
+            elif code == 2 and prev_code == 0 and prev_value == 'SECTION':
+                entities = (value == 'ENTITIES')
+
+            prev_code = code
+            prev_value = value
 
 
 def single_pass_modelspace(stream: BinaryIO, types: Iterable[str] = None) -> Iterable[DXFGraphic]:
     """
     Iterate over all modelspace entities as :class:`DXFGraphic` objects in one single pass.
 
-    Useful if the binary stream is not seekable.
+    Use this function to 'quick' iterate over modelspace entities of a **not** seekable binary DXF stream,
+    filtering DXF types may speed up things if many entity types will be skipped.
 
     Args:
-        stream: (not seekable) binary stream
-        types: DXF type names like ['LINE', '3DFACE'] which should be returned
+        stream: (not seekable) binary DXF stream
+        types: DXF types like ``['LINE', '3DFACE']`` which should be returned, ``None`` returns all supported types.
 
     """
     fetch_header_var: Optional[str] = None
@@ -302,52 +355,3 @@ def _requested_types(types: Optional[Iterable[str]]) -> Set[str]:
     else:
         requested = SUPPORTED_DXF_TYPES
     return requested
-
-
-def modelspace(filename: str, types: Iterable[str] = None) -> Iterable[DXFGraphic]:
-    """
-    Iterate over all modelspace entities as :class:`DXFGraphic` objects of as seekable file.
-
-    Useful if the binary stream is not seekable.
-
-    Args:
-        filename: filename of a seekable file
-        types: DXF type names like ['LINE', '3DFACE'] which should be returned
-
-    """
-    info = dxf_file_info(filename)
-    prev_code: int = -1
-    prev_value: str = ''
-    entities = False
-    requested_types = _requested_types(types)
-
-    with open(filename, mode='rt', encoding=info.encoding) as fp:
-        tagger = low_level_tagger(fp)
-        queued: Optional[DXFEntity] = None
-        tags: List[DXFTag] = []
-        factory = EntityFactory()
-        linked_entity = entity_linker()
-        for tag in tag_compiler(tagger):
-            code = tag.code
-            value = tag.value
-            if entities:
-                if code == 0 and value == 'ENDSEC':
-                    if queued:
-                        yield queued
-                    return
-                if code == 0:
-                    if len(tags) and tags[0].value in requested_types:
-                        entity = factory.entity(ExtendedTags(tags))
-                        if not linked_entity(entity) and entity.dxf.paperspace == 0:
-                            if queued:  # queue one entity for collecting linked entities (VERTEX, ATTRIB)
-                                yield queued
-                            queued = entity
-                    tags = [tag]
-                else:
-                    tags.append(tag)
-                continue  # if entities - nothing else matters
-            elif code == 2 and prev_code == 0 and prev_value == 'SECTION':
-                entities = (value == 'ENTITIES')
-
-            prev_code = code
-            prev_value = value
