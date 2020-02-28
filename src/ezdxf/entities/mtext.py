@@ -323,6 +323,68 @@ class MText(DXFGraphic):
         self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
         return self
 
+    def plain_text(self, split=False) -> Union[List[str], str]:
+        """
+        Returns text content without formatting codes.
+
+        Args:
+            split: returns list of strings splitted at line breaks if ``True`` else returns a single string.
+
+        .. versionadded:: 0.11.1
+
+        """
+        return plain_text(self.dxf.text, split=split)
+
+
+def plain_text(text: str, split=False) -> Union[List[str], str]:
+    chars = []
+    raw_chars = list(reversed(text))  # text splitted into chars, in reversed order for efficient pop()
+    while len(raw_chars):
+        char = raw_chars.pop()
+        if char == '\\':  # is a formatting command
+            try:
+                char = raw_chars.pop()
+            except IndexError:
+                break  # premature end of text - just ignore
+
+            if char in '\\{}':
+                chars.append(char)
+            elif char in ONE_CHAR_COMMANDS:
+                if char == 'P':  # new line
+                    chars.append('\n')
+                    # discard other commands
+            else:  # more character commands are terminated by ';'
+                stacking = char == 'S'  # stacking command surrounds user data
+                try:
+                    while char != ';':  # end of format marker
+                        char = raw_chars.pop()
+                        if stacking and char != ';':
+                            chars.append(char)  # append user data of stacking command
+                except IndexError:
+                    break  # premature end of text - just ignore
+        elif char in '{}':  # grouping
+            pass  # discard group markers
+        elif char == '%':  # special characters
+            if len(raw_chars) and raw_chars[-1] == '%':
+                raw_chars.pop()  # discard next '%'
+                if len(raw_chars):
+                    special_char = raw_chars.pop()
+                    # replace or discard formatting code
+                    chars.append(SPECIAL_CHARS.get(special_char, ""))
+            else:  # char is just a single '%'
+                chars.append(char)
+        else:  # char is what it is, a character
+            chars.append(char)
+
+    result = "".join(chars)
+    return result.split('\n') if split else result
+
+
+ONE_CHAR_COMMANDS = "PLlOoKkX"
+SPECIAL_CHARS = {
+    'd': '°'
+}
+
 
 ##################################################
 # MTEXT inline codes

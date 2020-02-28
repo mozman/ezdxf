@@ -78,12 +78,12 @@ def load(loader, start_time, max_count):
 
 
 def main(gridsize=1024):
-    filename = Path(DIR / f"mega_grid_{gridsize}_x_{gridsize}_r12.dxf")
+    filename = Path(DIR / f"megagrid_{gridsize}_x_{gridsize}_r12.dxf")
     max_count = gridsize * gridsize
-    print(f'Creating DXF R12 "{filename}"')
     print(f'Grid size: {gridsize}\nEntities: {max_count} 3DFACE')
 
     if not filename.exists():
+        print(f'Creating DXF R12 "{filename}"')
         t0 = perf_counter()
         create_r12(filename, gridsize)
         t1 = perf_counter()
