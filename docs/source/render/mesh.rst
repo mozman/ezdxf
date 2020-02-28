@@ -115,7 +115,8 @@ MeshAverageVertexMerger
 
 This is an extended version of :class:`MeshVertexMerger`.
 Location of merged vertices is the average location of all vertices with the same key, this needs extra
-memory and runtime in comparision to :class:`MeshVertexMerger` and also does not support transformations.
+memory and runtime in comparision to :class:`MeshVertexMerger` and this class also does not support
+transformations.
 
 .. autoclass:: MeshAverageVertexMerger
 
