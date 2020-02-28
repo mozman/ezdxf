@@ -13,6 +13,7 @@ Version 0.11.1 - dev
 - NEW: `ezdxf.addons.r12writer` supports POLYFACE and POLYMESH entities
 - NEW: `Layout.add_foreign_entity()` copy/move **simple** entities from another DXF document or add unassigned
   DXF entities to a layout
+- NEW: `MText.plain_text()` returns text content without formatting codes
 - CHANGES: refactor Auditor() into a DXF document fixer, fixes will be applied automatically (work in progress)
 - CHANGES: moved `r12writer` into `addons` subpackage
 - CHANGES: moved `acadctb` into `addons` subpackage
