@@ -91,11 +91,12 @@ Same functionality as :class:`MeshBuilder` but supports inplace transformation.
 MeshVertexMerger
 ================
 
-Same functionality as :class:`MeshBuilder`, but creates meshes with unique vertices. Resulting meshes have no doublets,
+Same functionality as :class:`MeshBuilder`, but created meshes with unique vertices and no doublets,
 but :class:`MeshVertexMerger` needs extra memory for bookkeeping and also does not support transformations.
+Location of merged vertices is the location of the first vertex with the same key.
 
-This is intended as intermediate object to create a compact mesh and then convert it to :class:`MeshTransformer`
-to apply transformations to the mesh:
+This class is intended as intermediate object to create a compact meshes and convert them to :class:`MeshTransformer`
+objects to apply transformations to the mesh:
 
 .. code-block:: Python
 
@@ -107,10 +108,14 @@ to apply transformations to the mesh:
     # convert mesh to MeshTransformer object
     return MeshTransformer.from_builder(mesh)
 
-.. class:: MeshVertexMerger
+.. autoclass:: MeshVertexMerger
 
-    Subclass of :class:`MeshBuilder`
+MeshAverageVertexMerger
+=======================
 
-    .. automethod:: __init__
+This is an extended version of :class:`MeshVertexMerger`.
+Location of merged vertices is the average location of all vertices with the same key, this needs extra
+memory and runtime in comparision to :class:`MeshVertexMerger` and also does not support transformations.
 
-    .. automethod:: add_vertices
+.. autoclass:: MeshAverageVertexMerger
+

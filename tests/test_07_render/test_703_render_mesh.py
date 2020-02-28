@@ -5,7 +5,7 @@ from math import radians
 import ezdxf
 from ezdxf.math import Vector, BoundingBox
 from ezdxf.render.forms import cube
-from ezdxf.render.mesh import MeshVertexMerger, MeshBuilder, MeshTransformer
+from ezdxf.render.mesh import MeshVertexMerger, MeshBuilder, MeshTransformer, MeshAverageVertexMerger
 from ezdxf.addons import SierpinskyPyramid
 
 
@@ -32,6 +32,29 @@ def test_vertex_merger_index_of():
         merger.index((7, 8, 9))
 
 
+def test_average_vertex_merger_indices():
+    merger = MeshAverageVertexMerger()
+    indices = merger.add_vertices([(1, 2, 3), (4, 5, 6)])
+    indices2 = merger.add_vertices([(1, 2, 3), (4, 5, 6)])
+    assert indices == indices2
+
+
+def test_average_vertex_merger_vertices():
+    merger = MeshAverageVertexMerger()
+    merger.add_vertices([(1, 2, 3), (4, 5, 6)])
+    merger.add_vertices([(1, 2, 3), (4, 5, 6)])
+    assert merger.vertices == [(1, 2, 3), (4, 5, 6)]
+
+
+def test_average_vertex_merger_index_of():
+    merger = MeshAverageVertexMerger()
+    merger.add_vertices([(1, 2, 3), (4, 5, 6)])
+    assert merger.index((1, 2, 3)) == 0
+    assert merger.index((4, 5, 6)) == 1
+    with pytest.raises(IndexError):
+        merger.index((7, 8, 9))
+
+
 def test_mesh_builder():
     dwg = ezdxf.new('R2000')
     pyramid = SierpinskyPyramid(level=4, sides=3)
@@ -41,11 +64,23 @@ def test_mesh_builder():
 
 
 def test_vertex_merger():
-    dwg = ezdxf.new('R2000')
     pyramid = SierpinskyPyramid(level=4, sides=3)
-    pyramid.render(dwg.modelspace(), merge=True)
-    meshes = dwg.modelspace().query('MESH')
-    assert len(meshes) == 1
+    faces = pyramid.faces()
+    mesh = MeshVertexMerger()
+    for vertices in pyramid:
+        mesh.add_mesh(vertices=vertices, faces=faces)
+    assert len(mesh.vertices) == 514
+    assert len(mesh.faces) == 1024
+
+
+def test_average_vertex_merger():
+    pyramid = SierpinskyPyramid(level=4, sides=3)
+    faces = pyramid.faces()
+    mesh = MeshAverageVertexMerger()
+    for vertices in pyramid:
+        mesh.add_mesh(vertices=vertices, faces=faces)
+    assert len(mesh.vertices) == 514
+    assert len(mesh.faces) == 1024
 
 
 REGULAR_FACE = Vector.list([(0, 0, 0), (1, 0, 1), (1, 1, 1), (0, 1, 0)])

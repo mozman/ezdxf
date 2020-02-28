@@ -7,9 +7,11 @@ Version 0.11.1 - dev
 
 - NEW: `Meshbuilder.from_polyface()` to interface to `POLYFACE` and `POLYMESH` 
 - NEW: `Meshbuilder.render_polyface()` create `POLYFACE` objects
+- NEW: `MeshAverageVertexMerger()` an extended version of `MeshVertexMerger()`, location of merged vertices 
+  is the average location of all vertices with the same key
 - NEW: `ezdxf.addons.iterdxf` experimental feature to iterate over modelspace entities of really big DXF files (>5 GB)
 - NEW: `ezdxf.addons.r12writer` supports POLYFACE and POLYMESH entities
-- NEW: `Layout.add_foreign_entity()` copy/move **simple** entities from another DXF document or add unassigned 
+- NEW: `Layout.add_foreign_entity()` copy/move **simple** entities from another DXF document or add unassigned
   DXF entities to a layout
 - CHANGES: refactor Auditor() into a DXF document fixer, fixes will be applied automatically (work in progress)
 - CHANGES: moved `r12writer` into `addons` subpackage

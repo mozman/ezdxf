@@ -4,6 +4,6 @@
 from .arrows import ARROWS
 from .r12spline import R12Spline
 from .curves import Bezier, EulerSpiral, Spline
-from .mesh import MeshBuilder, MeshVertexMerger, MeshTransformer
+from .mesh import MeshBuilder, MeshVertexMerger, MeshTransformer, MeshAverageVertexMerger
 
 

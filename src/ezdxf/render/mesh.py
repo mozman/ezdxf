@@ -1,7 +1,7 @@
 # Purpose: simple mesh builders
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
-from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING, Union
+from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING, Union, Dict
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.math import Matrix44, Vector, NULLVEC
 from ezdxf.math.construct3d import is_planar_face, subdivide_face, normal_vector_3p
@@ -23,9 +23,9 @@ class MeshBuilder:
     """
 
     def __init__(self):
-        self.vertices = []  # type: List[Vector]  # vertex storage, list of (x, y, z) tuples or Vector() objects
-        self.faces = []  # type: List[Sequence[int]]  # face storage, each face is a tuple of vertex indices (v0, v1, v2, v3, ....), AutoCAD supports ngons
-        self.edges = []  # type: List[Tuple[int, int]]  # edge storage, each edge is a 2-tuple of vertex indices (v0, v1)
+        self.vertices: List[Vector] = []  # vertex storage, list of (x, y, z) tuples or Vector() objects
+        self.faces: List[Sequence[int]] = []  # face storage, each face is a tuple of vertex indices (v0, v1, v2, v3, ....), AutoCAD supports ngons
+        self.edges: List[Tuple[int, int]] = []  # edge storage, each edge is a 2-tuple of vertex indices (v0, v1)
 
     def copy(self):
         """ Returns a copy of mesh. """
@@ -419,8 +419,18 @@ def _subdivide(mesh, quads=True, edges=False) -> 'MeshVertexMerger':
 
 class MeshVertexMerger(MeshBuilder):
     """
-    Mesh with unique vertices. Resulting meshes have no doublets, but MeshVertexMerger() needs extra memory for
-    bookkeeping.
+    Subclass of :class:`MeshBuilder`
+
+    Mesh with unique vertices and no doublets, but needs extra memory for bookkeeping.
+
+    :class:`MeshVertexMerger` creates a key for every vertex by rounding its components by the Python :func:`round`
+    function and a given `precision` value. Each vertex with the same key gets the same vertex index, which is the
+    index of first vertex with this key, so all vertices with the same key will be located at the location of
+    this first vertex. If you want an average location of and for all vertices with the same key look at the
+    :class:`MeshAverageVertexMerger` class.
+
+    Args:
+        precision: floating point precision for vertex rounding
 
     """
 
@@ -432,8 +442,8 @@ class MeshVertexMerger(MeshBuilder):
 
         """
         super().__init__()
-        self.ledger = {}
-        self.precision = precision
+        self.ledger: Dict['Vertex', int] = {}
+        self.precision: int = precision
 
     def key(self, vertex: 'Vertex') -> 'Vertex':
         """ Returns rounded vertex. (internal API) """
@@ -476,7 +486,87 @@ class MeshVertexMerger(MeshBuilder):
         try:
             return self.ledger[self.key(vertex)]
         except KeyError:
-            raise IndexError("vertex {} not found.".format(vertex))
+            raise IndexError(f"Vertex {str(vertex)} not found.")
+
+    @classmethod
+    def from_builder(cls, other: 'MeshBuilder'):
+        """ Create new mesh from other mesh builder. """
+        # rebuild from scratch to crate a valid ledger
+        return cls.from_mesh(other)
+
+
+class MeshAverageVertexMerger(MeshBuilder):
+    """
+    Subclass of :class:`MeshBuilder`
+
+    Mesh with unique vertices and no doublets, but needs extra memory for bookkeeping and runtime for calculation of
+    average vertex location.
+
+    :class:`MeshAverageVertexMerger` creates a key for every vertex by rounding its components by the Python :func:`round`
+    function and a given `precision` value. Each vertex with the same key gets the same vertex index, which is the
+    index of first vertex with this key, the difference to the :class:`MeshVertexMerger` class is the calculation of
+    the average location for all vertices with the same key, this needs extra memory to keep track of the count of
+    vertices for each key and extra runtime for updating the vertex location each time a vertex with an existing key is
+    added.
+
+    Args:
+        precision: floating point precision for vertex rounding
+
+    """
+
+    # can not support vertex transformation
+    def __init__(self, precision: int = 6):
+        super().__init__()
+        self.ledger: Dict[Vector, Tuple[int, int]] = {}  # each key points to a tuple (vertex index, vertex count)
+        self.precision: int = precision
+
+    def add_vertices(self, vertices: Iterable['Vertex']) -> Sequence[int]:
+        """
+        Add new `vertices` only, if no vertex with identical ``(x, y, z)`` coordinates already exist, else the index of
+        the existing vertex is returned as index of the added vertices.
+
+        Args:
+            vertices: list of vertices, vertex as ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vector` objects
+
+        Returns:
+            tuple: indices of the `vertices` added to the :attr:`~MeshBuilder.vertices` list
+
+        """
+        indices = []
+        precision = self.precision
+        for vertex in vertices:
+            vertex = Vector(vertex)
+            key = vertex.round(precision)
+            try:
+                index, count = self.ledger[key]
+            except KeyError:  # new key
+                index = len(self.vertices)
+                self.vertices.append(vertex)
+                self.ledger[key] = (index, 1)
+            else:  # update key entry
+                # calculate new average location
+                average = (self.vertices[index] * count) + vertex
+                count += 1
+                # update vertex location
+                self.vertices[index] = average / count
+                # update ledger
+                self.ledger[key] = (index, count)
+            indices.append(index)
+        return tuple(indices)
+
+    def index(self, vertex: 'Vertex') -> int:
+        """
+        Get index of `vertex`, raise :class:`KeyError` if not found.
+
+        Args:
+            vertex: ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vector` object
+
+        (internal API)
+        """
+        try:
+            return self.ledger[Vector(vertex).round(self.precision)][0]
+        except KeyError:
+            raise IndexError(f"Vertex {str(vertex)} not found.")
 
     @classmethod
     def from_builder(cls, other: 'MeshBuilder'):
