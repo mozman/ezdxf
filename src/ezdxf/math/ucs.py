@@ -1,6 +1,6 @@
-# Copyright (c) 2018-2019 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, List
+from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, List, Union
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 from .matrix44 import Matrix44
 from .matrix33 import Matrix33
@@ -98,7 +98,8 @@ class UCS:
 
     If x- and y-axis are ``None``: ux = ``(1, 0, 0)``, uy = ``(0, 1, 0)``, uz = ``(0, 0, 1)``.
 
-    Normalization of unit vectors is not required.
+    Unit vectors don't have to be normalized, normalization is done at initialization, this is also the reason why
+    scaling gets lost by copying or rotating.
 
     Args:
         origin: defines the UCS origin in world coordinates
@@ -130,7 +131,9 @@ class UCS:
             ux = Vector(ux).normalize()
             uy = Vector(uy).normalize()
             uz = Vector(uz).normalize()
+        self._setup(ux, uy, uz)
 
+    def _setup(self, ux: Vector, uy: Vector, uz: Vector):
         self.matrix = Matrix33(ux, uy, uz)
         self.transpose = self.matrix.transpose()
 
@@ -156,6 +159,22 @@ class UCS:
 
         """
         return UCS(self.origin, self.ux, self.uy, self.uz)
+
+    def scale(self, sx: float = 1, sy: float = 1, sz: float = 1) -> 'UCS':
+        """ Returns a new scaled UCS.
+
+        Scaling gets lost by rotating or copying the UCS, because this operations crates a new UCS and unit
+        vectors always get normalized on initialization.
+
+        Args:
+            sx: x-axis scaling
+            sy: y-axis scaling
+            sz: z-axis scaling
+
+        """
+        ucs = self.copy()
+        ucs._setup(self.ux * sx, self.uy * sy, self.uz * sz)
+        return ucs
 
     def to_wcs(self, point: 'Vertex') -> 'Vector':
         """ Returns WCS point for UCS `point`. """
@@ -323,6 +342,8 @@ class UCS:
         The rotation vector is located in the origin and has :ref:`WCS` coordinates e.g. (0, 0, 1) is the WCS z-axis
         as rotation vector.
 
+        Scaling get lost because creates new UCS and unit vectors always get normalized on initialization.
+
         .. versionadded:: 0.11
 
         Args:
@@ -338,6 +359,8 @@ class UCS:
         """
         Returns a new rotated UCS, rotation axis is the local x-axis.
 
+        Scaling get lost because creates new UCS and unit vectors always get normalized on initialization.
+
         .. versionadded:: 0.11
 
         Args:
@@ -352,6 +375,8 @@ class UCS:
         """
         Returns a new rotated UCS, rotation axis is the local y-axis.
 
+        Scaling get lost because creates new UCS and unit vectors always get normalized on initialization.
+
         .. versionadded:: 0.11
 
         Args:
@@ -365,6 +390,8 @@ class UCS:
     def rotate_local_z(self, angle: float) -> 'UCS':
         """
         Returns a new rotated UCS, rotation axis is the local z-axis.
+
+        Scaling get lost because creates new UCS and unit vectors always get normalized on initialization.
 
         .. versionadded:: 0.11
 
@@ -405,7 +432,7 @@ class UCS:
     @property
     def is_cartesian(self) -> bool:
         """ Returns ``True`` if cartesian coordinate system. """
-        return self.uy.cross(self.uz).isclose(self.ux)
+        return self.uy.cross(self.uz).normalize().isclose(self.ux.normalize())
 
     @staticmethod
     def from_x_axis_and_point_in_xy(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
