@@ -73,6 +73,8 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
         A ``list`` of all attached :class:`Attrib` entities.
 
+    .. automethod:: block
+
     .. automethod:: place
 
     .. automethod:: grid(size: Tuple[int, int] = (1, 1), spacing: Tuple[float, float] = (1, 1)) -> Insert

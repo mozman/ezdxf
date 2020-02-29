@@ -130,6 +130,17 @@ def test_add_attribs(doc):
     assert insert.attribs_follow is True
 
 
+def test_get_block(doc):
+    blk = doc.blocks.new('TEST-2020-02-29')
+    msp = doc.modelspace()
+    insert = msp.add_blockref('TEST-2020-02-29', (0, 0))
+    assert insert.block() is blk
+    insert = msp.add_blockref('NOT-EXIST-2020-02-29', (0, 0))
+    assert insert.block() is None
+    insert = Insert()
+    assert insert.block() is None
+
+
 def test_clone_with_insert(doc):
     # difference of clone() to copy_entity() is:
     # - clone returns and unassigned entity without handle, owner or reactors

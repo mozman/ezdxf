@@ -5,6 +5,7 @@ News
 Version 0.11.2 - dev
 --------------------
 
+- NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if not exist
 - NEW: `UCS.scale()` creates a new scaled UCS
 
 Version 0.11.1 - 2020-02-29

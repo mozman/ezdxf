@@ -10,7 +10,7 @@ from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef, UCS
+    from ezdxf.eztypes import TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef, UCS, BlockLayout
 
 __all__ = ['Insert']
 
@@ -132,6 +132,16 @@ class Insert(DXFGraphic):
         self.delete_all_attribs()
         self.entitydb.delete_entity(self.seqend)
         super().destroy()
+
+    def block(self) -> Optional['BlockLayout']:
+        """  Returns associated :class:`~ezdxf.layouts.BlockLayout`.
+
+        .. versionadded:: 0.11.2
+
+        """
+        if self.doc is None:
+            return None
+        return self.doc.blocks.get(self.dxf.name)
 
     def place(self, insert: 'Vertex' = None,
               scale: Tuple[float, float, float] = None,
