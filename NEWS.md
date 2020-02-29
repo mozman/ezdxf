@@ -11,7 +11,7 @@ Version 0.11.1 - 2020-02-29
   is the average location of all vertices with the same key
 - NEW: `ezdxf.addons.iterdxf` iterate over modelspace entities of really big DXF files (>1 GB) without loading 
   them into memory
-- NEW: `ezdxf.addons.r12writer` supports POLYFACE and POLYMESH entities
+- NEW: `ezdxf.addons.r12writer` supports `POLYFACE` and `POLYMESH` entities
 - NEW: `Layout.add_foreign_entity()` copy/move **simple** entities from another DXF document or add unassigned
   DXF entities to a layout
 - NEW: `MText.plain_text()` returns text content without formatting codes
