@@ -333,7 +333,7 @@ class MText(DXFGraphic):
         .. versionadded:: 0.11.1
 
         """
-        return plain_text(self.dxf.text, split=split)
+        return plain_text(self.text, split=split)
 
 
 def plain_text(text: str, split=False) -> Union[List[str], str]:

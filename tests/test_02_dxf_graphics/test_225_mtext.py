@@ -136,12 +136,14 @@ def test_backslashes():
 def test_new_short_mtext(layout):
     mtext = layout.add_mtext("a new mtext")
     assert "a new mtext" == mtext.text
+    assert "a new mtext" == mtext.plain_text()
 
 
 def test_new_long_mtext(layout):
     text = "0123456789" * 25 + "a new mtext"
     mtext = layout.add_mtext(text)
     assert text == mtext.text
+    assert text == mtext.plain_text()
 
 
 def test_new_long_mtext_2(layout):
