@@ -40,28 +40,14 @@ only LINE, TEXT or POLYLINE entities.
 
 Supported DXF types:
 
-- POINT
-- LINE
-- CIRCLE
-- ARC
-- ELLIPSE
-- LWPOLYLINE
-- SPLINE
-- POLYLINE
-- 3DFACE
-- SOLID
-- TRACE
-- SHAPE
-- MESH
-- INSERT
-- ATTRIB
-- ATTDEF
-- TEXT
-- MTEXT
-- HATCH
 
-Transfer simple entities to another DXF document, this works for all supported entities, except for INSERT,
-because INSERT depends on a not available BLOCK definition:
+3DFACE, ARC, ATTDEF, ATTRIB, CIRCLE, DIMENSION, ELLIPSE, HATCH, HELIX, IMAGE, INSERT,
+LEADER, LINE, LWPOLYLINE, MESH, MLEADER, MLINE, MTEXT, POINT, POLYLINE, RAY, SHAPE,
+SOLID, SPLINE, TEXT, TRACE, VERTEX, WIPEOUT, XLINE
+
+Transfer simple entities to another DXF document, this works for some supported entities, except for entities with
+strong dependencies to the original document like INSERT look at :meth:`~ezdxf.layouts.BaseLayout.add_foreign_entity`
+for all supported types:
 
 .. code-block:: Python
 
@@ -105,7 +91,7 @@ smaller parts and use the :class:`~ezdxf.addons.importer.Importer` add-on for a 
 
     .. automethod:: export(name: str) -> IterDXFWriter
 
-    .. automethod:: modelspace() -> Iterable[DXFGraphic]
+    .. automethod:: modelspace(types: Iterable[str] = None) -> Iterable[DXFGraphic]
 
     .. automethod:: close
 

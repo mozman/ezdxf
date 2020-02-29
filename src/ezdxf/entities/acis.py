@@ -85,7 +85,10 @@ class Body(DXFGraphic):
     @property
     def has_binary_data(self):
         """ Returns ``True`` if ACIS data is of type ``List[bytes]``, ``False`` if data is of type ``List[str]``. """
-        return self.doc.dxfversion >= DXF2013
+        if self.doc:
+            return self.doc.dxfversion >= DXF2013
+        else:
+            return False
 
     def copy(self):
         """ Prevent copying. (internal interface)"""
