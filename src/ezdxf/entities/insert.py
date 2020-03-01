@@ -141,7 +141,10 @@ class Insert(DXFGraphic):
         """
         if self.doc is None:
             return None
-        return self.doc.blocks.get(self.dxf.name)
+        block = self.doc.blocks.get(self.dxf.name)
+        if block.dxf.flags & 12:  # XREF(4) & XREF_OVERLAY(8)
+            return None
+        return block
 
     def place(self, insert: 'Vertex' = None,
               scale: Tuple[float, float, float] = None,

@@ -5,8 +5,9 @@ News
 Version 0.11.2 - dev
 --------------------
 
-- NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if not exist
+- NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if block not exist or is an XREF
 - NEW: `UCS.scale()` creates a new scaled UCS
+- NEW: `Block` properties `is_anonymous`, `is_xref` and `is_xref_overlay`
 
 Version 0.11.1 - 2020-02-29
 ---------------------------

@@ -64,11 +64,16 @@ Factory function         :meth:`Drawing.blocks.new` (returns a :class:`~ezdxf.la
 
     .. attribute:: dxf.xref_path
 
-        File-system path as string, if this BLOCK defines an external reference (XREF).
+        File system path as string, if this block defines an external reference (XREF).
 
-    .. attribute:: is_layout_block
+    .. autoattribute:: is_layout_block
 
-        ``True`` if BLOCK is a :class:`~ezdxf.layouts.Modelspace` or :class:`~ezdxf.layouts.Paperspace` block definition.
+    .. autoattribute:: is_anonymous
+
+    .. autoattribute:: is_xref
+
+    .. autoattribute:: is_xref_overlay
+
 
 EndBlk
 ======
