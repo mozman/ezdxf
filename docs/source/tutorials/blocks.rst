@@ -18,28 +18,8 @@ Create a Block
 Blocks are managed as :class:`~ezdxf.layouts.BlockLayout` by the :class:`~ezdxf.sections.blocks.BlocksSection` class
 and every drawing has only one blocks section: :attr:`Drawing.blocks`.
 
-.. code-block:: python
-
-    import ezdxf
-    import random  # needed for random placing points
-
-
-    def get_random_point():
-        """Returns random x, y coordinates."""
-        x = random.randint(-100, 100)
-        y = random.randint(-100, 100)
-        return x, y
-
-    # Create a new drawing in the DXF format of AutoCAD 2010
-    doc = ezdxf.new('R2010')
-
-    # Create a block with the name 'FLAG'
-    flag = doc.blocks.new(name='FLAG')
-
-    # Add DXF entities to the block 'FLAG'.
-    # The default base point (= insertion point) of the block is (0, 0).
-    flag.add_lwpolyline([(0, 0), (0, 5), (4, 3), (0, 3)])  # the flag symbol as 2D polyline
-    flag.add_circle((0, 0), .4, dxfattribs={'color': 2})  # mark the base point with a circle
+.. literalinclude:: src/blocks.py
+    :lines: 1-21
 
 Block References (Insert)
 -------------------------
@@ -50,26 +30,15 @@ A block reference is a DXF :class:`~ezdxf.entities.Insert` entity and can be pla
 
 Lets insert some random flags into the modelspace:
 
+.. literalinclude:: src/blocks.py
+    :lines: 23-40
+
+Query all block references of block ``FLAG``:
+
 .. code-block:: python
 
-    # Get the modelspace of the drawing.
-    msp = doc.modelspace()
-
-    # Get 50 random placing points.
-    placing_points = [get_random_point() for _ in range(50)]
-
-    for point in placing_points:
-        # Every flag has a different scaling and a rotation of -15 deg.
-        random_scale = 0.5 + random.random() * 2.0
-        # Add a block reference to the block named 'FLAG' at the coordinates 'point'.
-        msp.add_blockref('FLAG', point, dxfattribs={
-            'xscale': random_scale,
-            'yscale': random_scale,
-            'rotation': -15
-        })
-
-    # Save the drawing.
-    doc.saveas("blockref_tutorial.dxf")
+    for flag_ref in msp.query('INSERT[name=="FLAG"]'):
+        print(str(flag_ref))
 
 What are Attributes?
 --------------------
@@ -92,41 +61,15 @@ anonymous block, which makes evaluation of attributes more complex.
 
 Using attribute definitions (:class:`~ezdxf.entities.Attdef`):
 
-.. code-block:: python
-
-    # Define some attributes for the block 'FLAG', placed relative to the base point, (0, 0) in this case.
-    flag.add_attdef('NAME', (0.5, -0.5), {'height': 0.5, 'color': 3})
-    flag.add_attdef('XPOS', (0.5, -1.0), {'height': 0.25, 'color': 4})
-    flag.add_attdef('YPOS', (0.5, -1.5), {'height': 0.25, 'color': 4})
-
-    # Get another 50 random placing points.
-    placing_points = [get_random_point() for _ in range(50)]
-
-    for number, point in enumerate(placing_points):
-        # values is a dict with the attribute tag as item-key and the attribute text content as item-value.
-        values = {
-            'NAME': "P(%d)" % (number+1),
-            'XPOS': "x = %.3f" % point[0],
-            'YPOS': "y = %.3f" % point[1]
-        }
-
-        # Every flag has a different scaling and a rotation of +15 deg.
-        random_scale = 0.5 + random.random() * 2.0
-        msp.add_auto_blockref('FLAG', point, values, dxfattribs={
-            'xscale': random_scale,
-            'yscale': random_scale,
-            'rotation': 15
-        })
-
-    # Save the drawing.
-    doc.saveas("auto_blockref_tutorial.dxf")
+.. literalinclude:: src/blocks.py
+    :lines: 42-69
 
 Get/Set Attributes of Existing Block References
 -----------------------------------------------
 
 See the howto: :ref:`howto_get_attribs`
 
-Evaluate wrapped block references
+Evaluate Wrapped Block References
 ---------------------------------
 
 As mentioned above evaluation of block references wrapped into anonymous blocks is complex:
@@ -150,3 +93,24 @@ As mentioned above evaluation of block references wrapped into anonymous blocks 
     print(flag_numbers)
 
 
+Copying Block Reference Entities Into Modelspace
+------------------------------------------------
+
+.. versionadded:: 0.11.2
+
+This is an advanced feature and not for beginners!
+
+Because `ezdxf` is still not a CAD application, the most work has to be done by yourself.
+The transformation of coordinates and directions has to be done individually for each
+entity in the block definition.
+
+First get the block reference coordinate system :class:`~ezdxf.entities.BRCS`,
+which provides all required transformation methods, next step is to iterate over all
+block entities and copy the entities into modelspace and transform their coordinates
+and properties if required:
+
+.. literalinclude:: src/blocks.py
+    :lines: 71-
+
+This is a kind of poor mans :func:`explode` function, which also shows the problems which
+are arising by supporting :ref:`OCS` and scaling.
