@@ -47,7 +47,7 @@ from .arc import Arc
 from .shape import Shape
 from .solid import Solid, Face3d, Trace
 from .text import Text
-from .insert import Insert
+from .insert import Insert, BRCS
 from .block import Block, EndBlk
 from .polyline import Polyline, Polyface, Polymesh, MeshVertexCache
 from .attrib import Attrib, AttDef

@@ -3,7 +3,7 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List
 import math
-from ezdxf.math import Vector, UCS
+from ezdxf.math import Vector, UCS, Matrix33, Matrix44, X_AXIS, Y_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError
 from .dxfentity import base_class, SubclassProcessor
@@ -13,7 +13,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef, UCS, BlockLayout
 
-__all__ = ['Insert']
+__all__ = ['Insert', 'BRCS']
 
 # multiple insert has subclass id AcDbMInsertBlock
 acdb_block_reference = DefSubclass('AcDbBlockReference', {
@@ -333,26 +333,36 @@ class Insert(DXFGraphic):
             attrib.transform_to_wcs(ucs)
         return self
 
-    def ucs(self) -> UCS:
-        """ Returns an :class:`~ezdxf.math.UCS` placed at the block reference `insert` location, UCS axis aligned
-        to the block axis, z-axis rotation and axis scaling is applied.
+    def brcs(self) -> 'BRCS':
+        """ Returns a block reference coordinate system as :class:`BRCS` object, placed at the block reference
+        `insert` location, axis aligned to the block axis, :attr:`~Insert.dxf.rotation` around z-axis and axis
+        scaling :attr:`~Insert.dxf.xscale`, :attr:`~Insert.dxf.yscale` and :attr:`~Insert.dxf.zscale` are applied.
 
-        .. versionadded:: 0.11
+        .. versionchanged:: 0.11.2
+            renamed from :meth:`ucs`
 
         """
+        sx = self.dxf.xscale
+        sy = self.dxf.yscale
+        sz = self.dxf.zscale
         ocs = self.ocs()
-        ucs = UCS(
-            origin=ocs.to_wcs(self.dxf.insert),
-            ux=ocs.to_wcs((1, 0, 0)),  # block x-axis direction in WCS
-            uz=self.dxf.extrusion,  # block z-axis direction in WCS
+        insert = self.dxf.insert
+        if insert is None:
+            insert = Vector()
+        else:
+            insert = Vector(insert)
+
+        brcs = BRCS(
+            insert=ocs.to_wcs(insert),
+            ux=ocs.to_wcs(X_AXIS) * sx,
+            uy=ocs.to_wcs(Y_AXIS) * sy,
+            uz=Vector(self.dxf.extrusion).normalize(sz),
         )
-        rotation = math.radians(self.dxf.rotatation)
-        if rotation:
-            ucs = ucs.rotate_local_z(rotation)
-        if self.has_scaling:
-            # Apply scaling at last, because UCS rotation removes axis scaling
-            ucs = ucs.scale(sx=self.dxf.xscale, sy=self.dxf.yscale, sz=self.dxf.zscale)
-        return ucs
+        brcs._rotate_local_z(math.radians(self.dxf.rotation))
+        block_layout = self.block()
+        if block_layout is not None:
+            brcs._base_point = Vector(block_layout.block.dxf.base_point)
+        return brcs
 
     def reset_transformation(self):
         """ Reset block reference parameters `location`, `rotation` and `extrusion` vector.
@@ -363,3 +373,45 @@ class Insert(DXFGraphic):
         self.dxf.insert = (0, 0, 0)
         self.dxf.discard('rotation')
         self.dxf.discard('extrusion')
+
+
+class BRCS:
+    """
+    Establish a block reference coordinate system. Create BRCS by :meth:`Insert.brcs()`
+
+    Args:
+        insert: Block reference insert point
+        ux: x-axis as unit vector in :ref:`WCS`
+        uy: y-axis as unit vector in :ref:`WCS`
+        uz: z-axis as unit vector in :ref:`WCS`
+
+    """
+    def __init__(self, insert: Vector, ux: Vector, uy: Vector, uz: Vector):
+        self._origin = insert
+        self._matrix = Matrix33(ux, uy, uz)
+        self._base_point = Vector(0, 0, 0)
+
+    def to_wcs(self, point: 'Vertex') -> Vector:
+        """ Returns WCS point for block reference `point`. """
+        return self._origin + self._matrix.transform(Vector(point)-self._base_point)
+
+    def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable[Vector]:
+        """ Returns iterable of WCS vectors for block reference `points`. """
+        for point in points:
+            yield self.to_wcs(point)
+
+    def direction_to_wcs(self, vector: 'Vertex') -> Vector:
+        """ Returns WCS direction for block reference `vector` without origin adjustment. """
+        return self._matrix.transform(vector)
+
+    def _rotate_local_z(self, angle: float) -> None:
+        """
+        Rotate axis around the local z-axis inplace.
+
+        Args:
+             angle: rotation angle in radians
+
+        """
+        t = Matrix44.axis_rotate(self._matrix.uz, angle)
+        ux, uy = t.transform_vectors([self._matrix.ux, self._matrix.uy])
+        self._matrix = Matrix33(ux, uy, self._matrix.uz)

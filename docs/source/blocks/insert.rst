@@ -95,8 +95,16 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. automethod:: reset_transformation
 
-    .. automethod:: ucs() -> UCS
+    .. automethod:: brcs() -> BRCS
 
     .. automethod:: transform_to_wcs(ucs: UCS) -> Insert
+
+.. autoclass:: BRCS(insert: Vector, ux: Vector, uy: Vector, uz: Vector)
+
+    .. automethod:: to_wcs(point: Vertex) -> Vector
+
+    .. automethod:: points_to_wcs(points: Iterable[Vertex]) -> Iterable[Vector]
+
+    .. automethod:: direction_to_wcs(vector: Vertex) -> Vector
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-28FA4CFB-9D5E-4880-9F11-36C97578252F

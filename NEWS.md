@@ -9,7 +9,7 @@ Version 0.11.2 - dev
 - NEW: `Insert.has_scaling` returns `True` if any axis scaling is applied
 - NEW: `UCS.scale()` creates a new scaled UCS
 - NEW: `Block` properties `is_anonymous`, `is_xref` and `is_xref_overlay`
-- CHANGE: `Insert.ucs()`, returned UCS has applied z-axis rotation and axis scaling
+- CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 
 Version 0.11.1 - 2020-02-29
 ---------------------------
