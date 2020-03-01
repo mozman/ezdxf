@@ -98,15 +98,26 @@ def test_default_new():
     assert entity.dxf.insert.x == 1, 'is not Vector compatible'
     assert entity.dxf.insert.y == 2, 'is not Vector compatible'
     assert entity.dxf.insert.z == 3, 'is not Vector compatible'
+    assert entity.has_scaling is False
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
+
+
+def test_has_scaling():
+    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={'xscale': 2})
+    assert entity.has_scaling is True
+    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={'yscale': 2})
+    assert entity.has_scaling is True
+    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={'zscale': 2})
+    assert entity.has_scaling is True
 
 
 def test_load_from_text(entity):
     assert entity.dxf.layer == '0'
     assert entity.dxf.color == 256, 'default color is 256 (by layer)'
     assert entity.dxf.insert == (0, 0, 0)
+    assert entity.has_scaling is False
 
 
 @pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])

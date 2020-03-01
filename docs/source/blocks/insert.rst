@@ -73,6 +73,8 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
         A ``list`` of all attached :class:`Attrib` entities.
 
+    .. autoattribute:: has_scaling
+
     .. automethod:: block
 
     .. automethod:: place

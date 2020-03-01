@@ -6,8 +6,10 @@ Version 0.11.2 - dev
 --------------------
 
 - NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if block not exist or is an XREF
+- NEW: `Insert.has_scaling` returns `True` if any axis scaling is applied
 - NEW: `UCS.scale()` creates a new scaled UCS
 - NEW: `Block` properties `is_anonymous`, `is_xref` and `is_xref_overlay`
+- CHANGE: `Insert.ucs()`, returned UCS has applied z-axis rotation and axis scaling
 
 Version 0.11.1 - 2020-02-29
 ---------------------------
@@ -22,9 +24,9 @@ Version 0.11.1 - 2020-02-29
 - NEW: `Layout.add_foreign_entity()` copy/move **simple** entities from another DXF document or add unassigned
   DXF entities to a layout
 - NEW: `MText.plain_text()` returns text content without formatting codes
-- CHANGES: refactor Auditor() into a DXF document fixer, fixes will be applied automatically (work in progress)
-- CHANGES: moved `r12writer` into `addons` subpackage
-- CHANGES: moved `acadctb` into `addons` subpackage
+- CHANGE: refactor Auditor() into a DXF document fixer, fixes will be applied automatically (work in progress)
+- CHANGE: moved `r12writer` into `addons` subpackage
+- CHANGE: moved `acadctb` into `addons` subpackage
 
 Version 0.11 - 2020-02-15
 -------------------------

@@ -2,6 +2,7 @@
 # License: MIT License
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List
+import math
 from ezdxf.math import Vector, UCS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError
@@ -132,6 +133,21 @@ class Insert(DXFGraphic):
         self.delete_all_attribs()
         self.entitydb.delete_entity(self.seqend)
         super().destroy()
+
+    @property
+    def has_scaling(self) -> bool:
+        """ Returns ``True`` if any axis scaling is applied.
+
+        .. versionadded:: 0.11.2
+
+        """
+        if self.dxf.hasattr('xscale') and self.dxf.xscale != 1:
+            return True
+        if self.dxf.hasattr('yscale') and self.dxf.yscale != 1:
+            return True
+        if self.dxf.hasattr('zscale') and self.dxf.zscale != 1:
+            return True
+        return False
 
     def block(self) -> Optional['BlockLayout']:
         """  Returns associated :class:`~ezdxf.layouts.BlockLayout`.
@@ -319,17 +335,24 @@ class Insert(DXFGraphic):
 
     def ucs(self) -> UCS:
         """ Returns an :class:`~ezdxf.math.UCS` placed at the block reference `insert` location, UCS axis aligned
-        to the block axis.
+        to the block axis, z-axis rotation and axis scaling is applied.
 
         .. versionadded:: 0.11
 
         """
         ocs = self.ocs()
-        return UCS(
+        ucs = UCS(
             origin=ocs.to_wcs(self.dxf.insert),
             ux=ocs.to_wcs((1, 0, 0)),  # block x-axis direction in WCS
             uz=self.dxf.extrusion,  # block z-axis direction in WCS
         )
+        rotation = math.radians(self.dxf.rotatation)
+        if rotation:
+            ucs = ucs.rotate_local_z(rotation)
+        if self.has_scaling:
+            # Apply scaling at last, because UCS rotation removes axis scaling
+            ucs = ucs.scale(sx=self.dxf.xscale, sy=self.dxf.yscale, sz=self.dxf.zscale)
+        return ucs
 
     def reset_transformation(self):
         """ Reset block reference parameters `location`, `rotation` and `extrusion` vector.
