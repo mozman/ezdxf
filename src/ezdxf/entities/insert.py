@@ -131,7 +131,8 @@ class Insert(DXFGraphic):
 
         """
         self.delete_all_attribs()
-        self.entitydb.delete_entity(self.seqend)
+        if self.seqend is not None:
+            self.entitydb.delete_entity(self.seqend)
         super().destroy()
 
     @property

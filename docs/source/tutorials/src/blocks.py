@@ -102,12 +102,12 @@ for flag_ref in msp.query('INSERT[name=="FLAG"]'):
         # add copy to modelspace
         msp.add_entity(copy)
 
-    # Last step is to copy attached ATTRIB entities into modelspace.
-    # The attributes are already placed in WCS, you only have to copy them.
+    # Last step is to move attached ATTRIB entities into modelspace,
+    # the attributes are already placed in WCS.
     for attrib in flag_ref.attribs:
-        # Copying is required because the original ATTRIB entity will
-        # be destroyed by deleting the block reference later.
-        msp.add_entity(attrib.copy())
-
+        msp.add_entity(attrib)
+    # Unlink ATTRIB entities else they will be destroyed by deleting
+    # the block reference.
+    flag_ref.attribs = []
     # delete 'exploded' block reference
     msp.delete_entity(flag_ref)
