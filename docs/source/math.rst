@@ -180,6 +180,18 @@ UCS Class
 
     .. automethod:: render_axis
 
+
+BRCS Class
+----------
+
+.. autoclass:: BRCS(insert: Vector, ux: Vector, uy: Vector, uz: Vector)
+
+    .. automethod:: to_wcs(point: Vertex) -> Vector
+
+    .. automethod:: points_to_wcs(points: Iterable[Vertex]) -> Iterable[Vector]
+
+    .. automethod:: direction_to_wcs(vector: Vertex) -> Vector
+
 Matrix44
 --------
 

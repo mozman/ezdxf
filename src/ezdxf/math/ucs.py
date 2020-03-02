@@ -574,3 +574,46 @@ class PassTroughUCS(UCS):
     def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable[Vector]:
         for point in points:
             yield Vector(point)
+
+
+class BRCS:
+    """
+    Establish a block reference coordinate system. Create BRCS from block references (:class:`~ezdxf.entities.Insert`)
+    by the :meth:`~ezdxf.entities.Insert.brcs()` method.
+
+    Args:
+        insert: Block reference insert point
+        ux: x-axis as unit vector in :ref:`WCS`
+        uy: y-axis as unit vector in :ref:`WCS`
+        uz: z-axis as unit vector in :ref:`WCS`
+
+    """
+    def __init__(self, insert: Vector, ux: Vector, uy: Vector, uz: Vector):
+        self._origin = insert
+        self._matrix = Matrix33(ux, uy, uz)
+        self._base_point = Vector(0, 0, 0)
+
+    def to_wcs(self, point: 'Vertex') -> Vector:
+        """ Returns WCS point for block reference `point`. """
+        return self._origin + self._matrix.transform(Vector(point)-self._base_point)
+
+    def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable[Vector]:
+        """ Returns iterable of WCS vectors for block reference `points`. """
+        for point in points:
+            yield self.to_wcs(point)
+
+    def direction_to_wcs(self, vector: 'Vertex') -> Vector:
+        """ Returns WCS direction for block reference `vector` without origin adjustment. """
+        return self._matrix.transform(vector)
+
+    def _rotate_local_z(self, angle: float) -> None:
+        """
+        Rotate axis around the local z-axis inplace.
+
+        Args:
+             angle: rotation angle in radians
+
+        """
+        t = Matrix44.axis_rotate(self._matrix.uz, angle)
+        ux, uy = t.transform_vectors([self._matrix.ux, self._matrix.uy])
+        self._matrix = Matrix33(ux, uy, self._matrix.uz)
