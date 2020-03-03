@@ -9,9 +9,13 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
+from ezdxf.explode import explode_block_reference
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef, UCS, BlockLayout
+    from ezdxf.eztypes import (
+        TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef, UCS,
+        BlockLayout, BaseLayout,
+    )
 
 __all__ = ['Insert']
 
@@ -374,3 +378,16 @@ class Insert(DXFGraphic):
         self.dxf.insert = (0, 0, 0)
         self.dxf.discard('rotation')
         self.dxf.discard('extrusion')
+
+    def explode(self, target_layout: 'BaseLayout' = None) -> None:
+        """
+        Explode block reference entities into target layout, if target layout is ``None``, the target layout is the
+        layout of the block reference.
+
+        .. versionadded:: 0.11.2
+
+        """
+        if target_layout is None:
+            target_layout = self.get_layout()
+
+        explode_block_reference(self, target_layout=target_layout)
