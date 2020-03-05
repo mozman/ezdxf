@@ -8,7 +8,9 @@ Version 0.11.2 - dev
 - NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if block not exist or is an XREF
 - NEW: `Insert.has_scaling` returns `True` if any axis scaling is applied
 - NEW: `UCS.scale()` creates a new scaled UCS
-- NEW: `Block` properties `is_anonymous`, `is_xref` and `is_xref_overlay`
+- NEW: `Block()` properties `is_anonymous`, `is_xref` and `is_xref_overlay`
+- NEW: `R12FastStreamWriter.add_polyline_2d()`, add 2D POLYLINE with start width, end width and bulge value support
+- CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 
 Version 0.11.1 - 2020-02-29

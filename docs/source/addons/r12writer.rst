@@ -60,8 +60,16 @@ A simple example with different DXF entities::
         dxf.add_arc((0, 0), radius=3, start=0, end=175)
         dxf.add_solid([(0, 0), (1, 0), (0, 1), (1, 1)])
         dxf.add_point((1.5, 1.5))
-        dxf.add_polyline([(5, 5), (7, 3), (7, 6)])  # 2d polyline
-        dxf.add_polyline([(4, 3, 2), (8, 5, 0), (2, 4, 9)])  # 3d polyline
+
+        # 2d polyline, new in v0.11.2
+        dxf.add_polyline_2d([(5, 5), (7, 3), (7, 6)])
+
+        # 2d polyline with bulge value, new in v0.11.2
+        dxf.add_polyline_2d([(5, 5), (7, 3, 0.5), (7, 6)], format='xyb')
+
+        # 3d polyline only, changed in v0.11.2
+        dxf.add_polyline([(4, 3, 2), (8, 5, 0), (2, 4, 9)])
+
         dxf.add_text("test the text entity", align="MIDDLE_CENTER")
 
 A simple example of writing really many entities in a short time::
@@ -114,6 +122,8 @@ Reference
     .. automethod:: add_3dface
 
     .. automethod:: add_solid
+
+    .. automethod:: add_polyline_2d
 
     .. automethod:: add_polyline
 
