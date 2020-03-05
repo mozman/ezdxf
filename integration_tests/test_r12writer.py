@@ -29,8 +29,11 @@ def test_write_r12(filename):
         dxf.add_arc((0, 0), radius=3, start=0, end=175)
         dxf.add_solid([(0, 0), (1, 0), (0, 1), (1, 1)])
         dxf.add_point((1.5, 1.5))
-        dxf.add_polyline([(5, 5), (7, 3), (7, 6)])  # 2d polyline
-        dxf.add_polyline([(4, 3, 2), (8, 5, 0), (2, 4, 9)])  # 3d polyline
+        dxf.add_polyline_2d([(5, 5), (7, 3), (7, 6)])  # 2d polyline
+        dxf.add_polyline_2d([(5, 5), (7, 3), (7, 6)], closed=True)  # closed 2d polyline
+        dxf.add_polyline_2d([(5, 5), (7, 3, 0.5), (7, 6)], format='xyb', start_width=.1, end_width=.2)  # 2d polyline with bulge value
+        dxf.add_polyline([(4, 3), (8, 5), (2, 4)])  # 2d as 3d polyline
+        dxf.add_polyline([(4, 3, 2), (8, 5, 0), (2, 4, 9)], closed=True)  # closed 3d polyline
         dxf.add_text("test the text entity", align="MIDDLE_CENTER")
 
         for i in range(CIRCLE_COUNT):
@@ -44,6 +47,34 @@ def test_read_r12(filename):
     msp = dwg.modelspace()
     circles = msp.query('CIRCLE')
     assert len(circles) == CIRCLE_COUNT
+
+    polylines = list(msp.query('POLYLINE'))
+
+    p = polylines[0]  # 2d polyline
+    assert len(p) == 3
+    assert p.dxf.flags == 0
+
+    p = polylines[1]  # closed 2d polyline
+    assert len(p) == 3
+    assert p.dxf.flags == 1
+    assert p.is_closed is True
+
+    p = polylines[2]  # 2d polyline with bulge value
+    assert p.dxf.flags == 0
+    assert p.vertices[0].dxf.bulge == 0
+    assert p.vertices[1].dxf.bulge == 0.5
+    assert p.vertices[2].dxf.bulge == 0
+    assert p.dxf.default_start_width == 0.1
+    assert p.dxf.default_end_width == 0.2
+
+    p = polylines[3]  # 2d as 3d polyline
+    assert len(p) == 3
+    assert p.dxf.flags == 8
+
+    p = polylines[4]  # closed 3d polyline
+    assert len(p) == 3
+    assert p.dxf.flags == 1+8
+    assert p.is_closed is True
 
 
 def test_context_manager(filename):

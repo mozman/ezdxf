@@ -30,6 +30,8 @@ TEXT_ALIGN_FLAGS = {
     'TOP_RIGHT': (2, 3),
 }
 
+VERTEX_GROUP_CODES = {'x': 10, 'y': 20, 's': 40, 'e': 41, 'b': 42}
+
 
 @contextmanager
 def r12writer(stream: Union[TextIO, str], fixed_tables: bool = False) -> 'R12FastStreamWriter':
@@ -239,42 +241,109 @@ class R12FastStreamWriter:
 
     def add_polyline(self,
                      vertices: Iterable[Vertex],
+                     closed: bool = False,
                      layer: str = "0",
                      color: int = None,
                      linetype: str = None) -> None:
         """
-        Add a POLYLINE entity. The first vertex (axis count) defines, if the POLYLINE is 2D or 3D.
+        Add a 3D POLYLINE entity.
 
         Args:
-            vertices: iterable of ``(x, y[, z])`` tuples
+            vertices: iterable of ``(x, y[, z])`` tuples, z-axis is ``0`` by default
+            closed: ``True`` creates a closed polyline
+            layer: layer name as string see :meth:`add_line`
+            color: color as :ref:`ACI` see :meth:`add_line`
+            linetype: line type as string see :meth:`add_line`
+
+        .. versionchanged:: 0.11.2
+            Write only 3D POLYLINE entity, added `closed` argument.
+
+        """
+        dxf = ["0\nPOLYLINE\n"]
+        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_tag(66, 1))  # entities follow
+        dxf.append(dxf_tag(70, 8 + int(closed)))  # bit 1 is the closed state
+        self.stream.write(''.join(dxf))
+
+        vertex_template = "0\nVERTEX\n" + dxf_attribs(layer) + dxf_tag(70, 32)
+        for vertex in vertices:
+            self.stream.write(vertex_template)
+            vertex = tuple(vertex)
+            len_vertex = len(vertex)
+            if len_vertex < 2:
+                raise ValueError('Vertices require at least a x- and a y-axis.')
+            elif len_vertex == 2:
+                vertex = (vertex[0], vertex[1], 0)
+            self.stream.write(dxf_vertex(vertex[:3]))
+        self.stream.write("0\nSEQEND\n")
+
+    def add_polyline_2d(self,
+                        points: Iterable[Sequence],
+                        format: str = 'xy',
+                        closed: bool = False,
+                        start_width: float = 0,
+                        end_width: float = 0,
+                        layer: str = "0",
+                        color: int = None,
+                        linetype: str = None) -> None:
+        """
+        Add a 2D POLYLINE entity with start width, end width and bulge value support.
+
+        Format codes:
+
+        === =================================
+        x   x-coordinate
+        y   y-coordinate
+        s   start width
+        e   end width
+        b   bulge value
+        v   (x, y) tuple (z-axis is ignored)
+        === =================================
+
+        Args:
+            points: iterable of (x, y, [start_width, [end_width, [bulge]]]) tuple, value order according to the
+                    `format` string, unset values default to ``0``
+            format: format: format string, default is ``'xy'``
+            closed: ``True`` creates a closed polyline
+            start_width: default start width, default is ``0``
+            end_width: default end width, default is ``0``
             layer: layer name as string see :meth:`add_line`
             color: color as :ref:`ACI` see :meth:`add_line`
             linetype: line type as string see :meth:`add_line`
 
         """
 
-        def write_polyline(flags: int) -> None:
-            dxf = ["0\nPOLYLINE\n"]
-            dxf.append(dxf_attribs(layer, color, linetype))
-            dxf.append(dxf_tag(66, 1))  # entities follow
-            dxf.append(dxf_tag(70, flags))
-            self.stream.write(''.join(dxf))
+        def vertex_attribs(data: Sequence) -> dict:
+            attribs = dict()
+            for code, value in zip(format, data):
+                if code == 'v':
+                    location = tuple(value)
+                    attribs['x'] = location[0]
+                    attribs['y'] = location[1]
+                else:
+                    attribs[code] = value
+            return attribs
 
-        polyline_flags, vertex_flags = None, None
-        s = ''
-        for vertex in vertices:
-            if polyline_flags is None:  # first vertex
-                if len(vertex) == 3:  # 3d polyline
-                    polyline_flags, vertex_flags = (8, 32)
-                else:  # 2d polyline
-                    polyline_flags, vertex_flags = (0, 0)
-                write_polyline(polyline_flags)
-                s = "0\nVERTEX\n" + dxf_attribs(layer) + dxf_tag(70, vertex_flags)
+        dxf = ["0\nPOLYLINE\n"]
+        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_tag(66, 1))  # entities follow
+        dxf.append(dxf_tag(70, int(closed)))  # bit 1 is the closed state
+        if start_width:  # default start width
+            dxf.append(dxf_tag(40, start_width))
+        if end_width:  # default end width
+            dxf.append(dxf_tag(41, end_width))
+        self.stream.write(''.join(dxf))
 
-            self.stream.write(s)
-            self.stream.write(dxf_vertex(vertex))
-        if polyline_flags is not None:
-            self.stream.write("0\nSEQEND\n")
+        vertex_template = "0\nVERTEX\n" + dxf_attribs(layer) + dxf_tag(70, 0)
+        for point in points:
+            self.stream.write(vertex_template)
+            attribs = vertex_attribs(point)
+            for format_code in format:
+                value = attribs.get(format_code, 0)
+                if value == 0 and format_code in 'seb':
+                    continue  # do not write default values
+                self.stream.write(dxf_tag(VERTEX_GROUP_CODES[format_code], value))
+        self.stream.write("0\nSEQEND\n")
 
     def add_polyface(self,
                      vertices: Iterable[Vertex],
@@ -305,6 +374,7 @@ class R12FastStreamWriter:
             linetype: line type as string see :meth:`add_line`
 
         """
+
         def write_polyline(flags: int = 64) -> None:
             dxf = ["0\nPOLYLINE\n"]
             dxf.append(dxf_attribs(layer, color, linetype))
@@ -485,6 +555,8 @@ def dxf_vertex(vertex: Vertex, code=10) -> str:
 def dxf_tag(code: int, value) -> str:
     return "%d\n%s\n" % (code, value)
 
+
+FORMAT_CODES = frozenset('xysebv')
 
 PREFACE = """  0
 SECTION

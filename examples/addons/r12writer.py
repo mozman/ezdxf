@@ -5,7 +5,7 @@ from time import perf_counter
 import math
 from ezdxf.addons import MengerSponge
 from ezdxf.addons import r12writer
-from ezdxf.render.forms import sphere
+from ezdxf.render.forms import sphere, circle, translate
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 
@@ -44,7 +44,22 @@ def polyface_sphere(filename):
     print(f'saved as "{filename}".')
 
 
+def polylines(filename):
+    with r12writer(filename) as r12:
+        r12.add_polyline_2d(circle(8), color=1, closed=False)
+        r12.add_polyline_2d(translate(circle(8), vec=(3, 0)), color=3, closed=True)
+        r12.add_polyline_2d(
+            [(0, 4), (4, 4, 1), (8, 4,  0, 0.2, 0.000001), (12, 4)],
+            format='xybse',
+            start_width=0.1,
+            end_width=0.1,
+            color=5,
+        )
+    print(f'saved as "{filename}".')
+
+
 if __name__ == '__main__':
     menger_sponge(DIR / "menger_sponge_r12.dxf", level=2)
     polymesh(DIR / "polymesh.dxf", size=(20, 10))
     polyface_sphere(DIR / "sphere.dxf")
+    polylines(DIR / "polylines.dxf")
