@@ -111,7 +111,7 @@ $INSUNITS set default drawing units for AutoCAD DesignCenter blocks:
 
 .. _howto_get_attribs:
 
-Get/Set block reference attributes
+Get/Set Block Reference Attributes
 ----------------------------------
 
 Block references (:class:`~ezdxf.entities.Insert`) can have attached attributes (:class:`~ezdxf.entities.Attrib`),
@@ -227,6 +227,24 @@ A360 Viewer Problems
 AutoDesk web service A360_ seems to be more picky than the AutoCAD desktop applications, may be it helps to use the
 latest DXF version supported by ezdxf, which is DXF R2018 (AC1032) in the year of writing this lines (2018).
 
+DXF Entities Are Not Displayed in the Viewer
+--------------------------------------------
+
+`ezdxf` does not automatically locate the main viewport of the modelspace at the entities, you have to perform the
+"Zoom to Extends" command, here in TrueView 2020:
+
+.. image:: gfx/trueview_2020_zoom_to_extends.png
+    :align: center
+
+And here in the Autodesk Online Viewer:
+
+.. image:: gfx/autodesk_online_viewer_zoom_to_extends.png
+    :align: center
+
+Add this line to your code to relocate the main viewport, adjust the `center` (in modelspace coordinates) and
+the `height` (in drawing units) arguments to your needs::
+
+    doc.set_modelspace_vport(height=10, center=(0, 0))
 
 Show IMAGES/XREFS on Loading in AutoCAD
 ---------------------------------------

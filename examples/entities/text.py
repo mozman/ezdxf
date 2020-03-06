@@ -50,6 +50,7 @@ def create_doc(filename):
     add_justify_text("FITTED-TEXT", (15, 10), (35, 5), 'FIT')
     add_grid((0, 0), width=10, height=10)
 
+    doc.set_modelspace_vport(height=30, center=(15, 0))
     doc.saveas(filename)
 
 
