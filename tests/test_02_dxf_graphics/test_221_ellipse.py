@@ -87,12 +87,11 @@ def test_load_from_text(entity):
 
 
 def test_get_start_and_end_vertex():
-
     ellipse = Ellipse.new(handle='ABBA', owner='0', dxfattribs={
         'center': (1, 2, 3),
         'major_axis': (4, 3, 0),
         'ratio': .7,
-        'start_param': math.pi/2,
+        'start_param': math.pi / 2,
         'end_param': math.pi,
         'extrusion': (0, 0, -1),
     })
@@ -115,3 +114,14 @@ def test_write_dxf():
     result = TagCollector.dxftags(entity)
     expected = basic_tags_from_text(ELLIPSE)
     assert result == expected
+
+
+def test_from_arc():
+    from ezdxf.entities.arc import Arc
+    arc = Arc.new(dxfattribs={'center': (2, 2, 2), 'radius': 3})
+    ellipse = Ellipse.from_arc(arc)
+    assert ellipse.dxf.center == (2, 2, 2)
+    assert ellipse.dxf.major_axis == (3, 0, 0)
+    assert ellipse.dxf.ratio == 1
+    assert ellipse.dxf.start_param == 0
+    assert math.isclose(ellipse.dxf.end_param, math.pi * 2)

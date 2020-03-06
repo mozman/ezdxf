@@ -107,3 +107,27 @@ class Ellipse(DXFGraphic):
         self.dxf.major_axis = ucs.direction_to_wcs(self.dxf.major_axis)
         self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
         return self
+
+    @classmethod
+    def from_arc(cls, entity: 'DXFGraphic') -> 'Ellipse':
+        """ Create new ELLIPSE entity from ARC or CIRCLE entity. New entity has no owner and no handle is not stored
+        in the entity database!
+
+        (internal API)
+        """
+        dxftype = entity.dxftype()
+        assert dxftype in {'ARC', 'CIRCLE'}
+        attribs = entity.dxfattribs()
+        attribs['ratio'] = 1.0
+
+        for attrib in ('owner', 'handle', 'thickness'):
+            if attrib in attribs:
+                attribs.pop(attrib)
+
+        attribs['start_param'] = math.radians(attribs.pop('start_angle', 0.))
+        attribs['end_param'] = math.radians(attribs.pop('end_angle', 360))
+
+        ocs = entity.ocs()
+        attribs['center'] = ocs.to_wcs(attribs.pop('center'))
+        attribs['major_axis'] = ocs.to_wcs((attribs.pop('radius'), 0, 0))
+        return Ellipse.new(dxfattribs=attribs, doc=entity.doc)

@@ -1,13 +1,26 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Insert, BaseLayout, EntityDB
+    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic
 
 
 def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') -> None:
+    """
+    Explodes a block reference into single DXF entities.
+
+    Transforms the block entities into the required WCS location by applying the block reference parameter `insert`
+    location, `extrusion`, `rotation` and the scaling values `xscale`, `yscale` and `zscale`. Multiple inserts
+    by row and column parameters is not supported.
+
+    Args:
+        block_ref: Block reference entity (:class:`~ezdxf.entities.Insert`)
+        target_layout: target layout for exploded DXF entities (modelspace, paperspace or block layout),
+                       if ``None`` the layout of the block reference is used.
+
+    """
     if block_ref.doc is None or block_ref.doc.entitydb is None:
         raise DXFStructureError('Block reference has to be assigned to a DXF document.')
 
@@ -15,7 +28,9 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
     if entitydb is None:
         raise DXFStructureError('Exploding a block reference requires an entity database.')
 
-    copy_and_transform_entities_to_target_layout(block_ref, target_layout, entitydb)
+    for entity in virtual_entities(block_ref):
+        entitydb.add(entity)
+        target_layout.add_entity(entity)
 
     # Process attached ATTRIB entities:
     for attrib in block_ref.attribs:
@@ -32,11 +47,32 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
         entitydb.delete_entity(block_ref)
 
 
-def copy_and_transform_entities_to_target_layout(block_ref: 'Insert', target_layout: 'BaseLayout',
-                                                 entitydb: 'EntityDB') -> None:
+def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
+    """
+    Yields 'virtual' entities of block reference `block_ref`. This method is meant to examine the the block reference
+    entities without the need to explode the block reference.
+
+    This entities are located at the 'exploded' positions, but are not stored in the entity database, have no handle
+    are not assigned to any layout. It is possible to convert this entities into regular drawing entities, this lines
+    show how to add the virtual `entity` to the entity database and assign this entity to the modelspace::
+
+        doc.entitydb.add(entity)
+        msp = doc.modelspace()
+        msp.add_entity(entity)
+
+    To explode the whole block reference use :meth:`~ezdxf.entities.Insert.explode`.
+
+    Args:
+        block_ref: Block reference entity (:class:`~ezdxf.entities.Insert`)
+
+    """
     brcs = block_ref.brcs()
     # Non uniform scaling will produce incorrect results for some entities!
-    uniform_scaling = block_ref.dxf.xscale
+    xscale = block_ref.dxf.xscale
+    yscale = block_ref.dxf.yscale
+    uniform_scaling = max(abs(xscale), abs(yscale))
+    non_uniform_scaling = xscale != yscale
+
     block_layout = block_ref.block()
     if block_layout is None:
         raise DXFStructureError(f'Required block definition for "{block_ref.dxf.name}" does not exist.')
@@ -48,24 +84,29 @@ def copy_and_transform_entities_to_target_layout(block_ref: 'Insert', target_lay
 
         # Copy entity with all DXF attributes
         try:
-            copy = entitydb.duplicate_entity(entity)
+            copy = entity.copy()
         except DXFTypeError:
             continue  # non copyable entities will be ignored
+
+        if non_uniform_scaling and dxftype in {'ARC', 'CIRCLE'}:
+            from ezdxf.entities import Ellipse
+            copy = Ellipse.from_arc(entity)
 
         # Basic transformation from BRCS to WCS
         try:
             copy.transform_to_wcs(brcs)
-        except AttributeError:  # entities without 'transform_to_ucs' support will be ignored
+        except NotImplementedError:  # entities without 'transform_to_ucs' support will be ignored
             continue
 
         # Apply DXF attribute scaling:
         # 1. simple entities without properties to scale
         if dxftype in {'LINE', 'POINT', 'LWPOLYLINE', 'POLYLINE', 'MESH', 'ELLIPSE', 'HATCH', 'SPLINE',
-                       'SOLID', '3DFACE', 'TRACE', 'IMAGE', 'XLINE', 'RAY', 'TOLERANCE', 'LIGHT', 'HELIX'}:
+                       'SOLID', '3DFACE', 'TRACE', 'IMAGE', 'WIPEOUT', 'XLINE', 'RAY', 'TOLERANCE',
+                       'LIGHT', 'HELIX'}:
             pass  # nothing else to do
         elif dxftype in {'CIRCLE', 'ARC'}:
             # simple uniform scaling of radius
-            # How to handle non uniform scaling?
+            # How to handle non uniform scaling? -> Ellipse
             copy.dxf.radius = entity.dxf.radius * uniform_scaling
         elif dxftype == 'MTEXT':
             # Scale MTEXT height/width just by uniform_scaling, how to handle non uniform scaling?
@@ -91,5 +132,4 @@ def copy_and_transform_entities_to_target_layout(block_ref: 'Insert', target_lay
             copy.dxf.size *= uniform_scaling
         else:  # unsupported entity will be ignored
             continue
-        # assign exploded entities to target layout
-        target_layout.add_entity(copy)
+        yield copy
