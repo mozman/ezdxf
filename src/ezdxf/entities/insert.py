@@ -388,7 +388,7 @@ class Insert(DXFGraphic):
         attributes `insert`, `extrusion`, `rotation` and the scaling values `xscale`, `yscale` and `zscale`.
         Multiple inserts by row and column attributes is not supported.
 
-        Returns an :class:`~ezdxf.query.EntityQuery` container with all exploded DXF entities.
+        Returns an :class:`~ezdxf.query.EntityQuery` container with all "exploded" DXF entities.
 
         .. versionadded:: 0.11.2
 
@@ -400,18 +400,16 @@ class Insert(DXFGraphic):
 
     def virtual_entities(self) -> Iterable[DXFGraphic]:
         """
-        Yields 'virtual' entities of block reference. This method is meant to examine the the block reference
-        entities without the need of exploding the block reference.
+        Yields "virtual" entities of a block reference. This method is meant to examine the block reference
+        entities at the "exploded" location without really "exploding" the block reference.
 
-        This entities are located at the 'exploded' positions, but are not stored in the entity database, have no handle
-        are not assigned to any layout. It is possible to convert this entities into regular drawing entities, this lines
-        show how to add the virtual `entity` to the entity database and assign this entity to the modelspace::
+        This entities are not stored in the entity database, have no handle and are not assigned to any layout.
+        It is possible to convert this entities into regular drawing entities by adding the entities to the
+        entities database and a layout of the same DXF document as the block reference::
 
             doc.entitydb.add(entity)
             msp = doc.modelspace()
             msp.add_entity(entity)
-
-        To explode the whole block reference use :meth:`~ezdxf.entities.Insert.explode`.
 
         .. versionadded:: 0.11.2
 
