@@ -9,12 +9,12 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
-from ezdxf.explode import explode_block_reference
+from ezdxf.explode import explode_block_reference, virtual_entities
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef, UCS,
-        BlockLayout, BaseLayout,
+        BlockLayout, BaseLayout, EntityQuery
     )
 
 __all__ = ['Insert']
@@ -379,10 +379,16 @@ class Insert(DXFGraphic):
         self.dxf.discard('rotation')
         self.dxf.discard('extrusion')
 
-    def explode(self, target_layout: 'BaseLayout' = None) -> None:
+    def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
         """
         Explode block reference entities into target layout, if target layout is ``None``, the target layout is the
         layout of the block reference.
+
+        Transforms the block entities into the required :ref:`WCS` location by applying the block reference
+        attributes `insert`, `extrusion`, `rotation` and the scaling values `xscale`, `yscale` and `zscale`.
+        Multiple inserts by row and column attributes is not supported.
+
+        Returns an :class:`~ezdxf.query.EntityQuery` container with all exploded DXF entities.
 
         .. versionadded:: 0.11.2
 
@@ -390,4 +396,25 @@ class Insert(DXFGraphic):
         if target_layout is None:
             target_layout = self.get_layout()
 
-        explode_block_reference(self, target_layout=target_layout)
+        return explode_block_reference(self, target_layout=target_layout)
+
+    def virtual_entities(self) -> Iterable[DXFGraphic]:
+        """
+        Yields 'virtual' entities of block reference. This method is meant to examine the the block reference
+        entities without the need of exploding the block reference.
+
+        This entities are located at the 'exploded' positions, but are not stored in the entity database, have no handle
+        are not assigned to any layout. It is possible to convert this entities into regular drawing entities, this lines
+        show how to add the virtual `entity` to the entity database and assign this entity to the modelspace::
+
+            doc.entitydb.add(entity)
+            msp = doc.modelspace()
+            msp.add_entity(entity)
+
+        To explode the whole block reference use :meth:`~ezdxf.entities.Insert.explode`.
+
+        .. versionadded:: 0.11.2
+
+        """
+        return virtual_entities(self)
+

@@ -2,18 +2,21 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
+from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic
 
 
-def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') -> None:
+def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') -> EntityQuery:
     """
-    Explodes a block reference into single DXF entities.
+    Explode a block reference into single DXF entities.
 
-    Transforms the block entities into the required WCS location by applying the block reference parameter `insert`
-    location, `extrusion`, `rotation` and the scaling values `xscale`, `yscale` and `zscale`. Multiple inserts
-    by row and column parameters is not supported.
+    Transforms the block entities into the required :ref:`WCS` location by applying the block reference
+    attributes `insert`, `extrusion`, `rotation` and the scaling values `xscale`, `yscale` and `zscale`.
+    Multiple inserts by row and column attributes is not supported.
+
+    Returns an :class:`~ezdxf.query.EntityQuery` container with all exploded DXF entities.
 
     Args:
         block_ref: Block reference entity (:class:`~ezdxf.entities.Insert`)
@@ -28,14 +31,18 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
     if entitydb is None:
         raise DXFStructureError('Exploding a block reference requires an entity database.')
 
+    entities = []
+
     for entity in virtual_entities(block_ref):
         entitydb.add(entity)
         target_layout.add_entity(entity)
+        entities.append(entity)
 
     # Process attached ATTRIB entities:
     for attrib in block_ref.attribs:
         # Attached ATTRIB entities are already located in the WCS
         target_layout.add_entity(attrib)
+        entities.append(attrib)
 
     # Unlink attributes else they would be destroyed by deleting the block reference.
     block_ref.attribs = []
@@ -45,6 +52,7 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
         source_layout.delete_entity(block_ref)
     else:
         entitydb.delete_entity(block_ref)
+    return EntityQuery(entities)
 
 
 def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:

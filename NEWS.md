@@ -7,7 +7,8 @@ Version 0.11.2 - dev
 
 - NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if block not exist or is an XREF
 - NEW: `Insert.has_scaling` returns `True` if any axis scaling is applied
-- NEW: `Insert.explode()` explode block reference entities into target layout
+- NEW: `Insert.virtual_entities()` yields 'virtual' entities of a block reference (experimental)
+- NEW: `Insert.explode()` explode block reference entities into target layout (experimental)
 - NEW: `UCS.scale()` creates a new scaled UCS
 - NEW: `Block()` properties `is_anonymous`, `is_xref` and `is_xref_overlay`
 - NEW: `R12FastStreamWriter.add_polyline_2d()`, add 2D POLYLINE with start width, end width and bulge value support
