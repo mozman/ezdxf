@@ -251,6 +251,10 @@ class DXFGraphic(DXFEntity):
         auditor.check_entity_linetype(self)
         auditor.check_entity_color_index(self)
 
+    def transform_to_wcs(self, ucs: 'UCS') -> 'DXFGraphic':
+        """ Interface definition. """
+        raise NotImplementedError()
+
     def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Sequence, angle_names: Sequence = None) -> None:
         """ Transforms entity for given `ucs` to the parent coordinate system (most likely the WCS).
 

@@ -99,4 +99,6 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. automethod:: transform_to_wcs(ucs: UCS) -> Insert
 
+    .. automethod:: explode(target_layout: BaseLayout = None) -> None
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-28FA4CFB-9D5E-4880-9F11-36C97578252F
