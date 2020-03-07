@@ -6,7 +6,7 @@
 audit(drawing, stream): check a DXF drawing for errors.
 """
 from enum import IntEnum
-from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any
+from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict
 
 import sys
 from ezdxf.lldxf.types import is_pointer_code, DXFTag
@@ -14,7 +14,7 @@ from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
 from ezdxf.entities.dxfentity import DXFEntity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity, Drawing, DXFGraphic
+    from ezdxf.eztypes import DXFEntity, Drawing, DXFGraphic, BlocksSection
 
 
 class AuditError(IntEnum):
@@ -25,11 +25,13 @@ class AuditError(IntEnum):
     UNDEFINED_LINETYPE = 100
     UNDEFINED_DIMENSION_STYLE = 101
     UNDEFINED_TEXT_STYLE = 102
+    UNDEFINED_BLOCK = 103
     INVALID_LAYER_NAME = 200
     INVALID_COLOR_INDEX = 201
     INVALID_OWNER_HANDLE = 202
     INVALID_DICTIONARY_ENTRY = 203
     INVALID_ENTITY_HANDLE = 204
+    INVALID_BLOCK_REFERENCE_CYCLE = 205
 
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
@@ -134,6 +136,7 @@ class Auditor:
         self.check_table_structures()
         self.check_database_entities()
         self.doc.groups.audit(self)
+        self.check_block_reference_cycles()
         return self.errors
 
     def check_root_dict(self) -> None:
@@ -272,3 +275,47 @@ class Auditor:
                 dxf_entity=entity,
                 data=owner_handle,
             )
+
+    def check_block_reference_cycles(self) -> None:
+        cycle_detector = BlockCycleDetector(self.doc)
+        for block in self.doc.blocks:
+            if cycle_detector.has_cycle(block.name):
+                self.add_error(
+                    code=AuditError.INVALID_BLOCK_REFERENCE_CYCLE,
+                    message=f'Invalid block reference cycle detected in block "{block.name}".',
+                    dxf_entity=block.block_record,
+                )
+
+
+class BlockCycleDetector:
+    def __init__(self, doc: 'Drawing'):
+        self.key = doc.blocks.key
+        self.blocks = self._build_block_ledger(doc.blocks)
+
+    def _build_block_ledger(self, blocks: 'BlocksSection') -> Dict[str, Set[str]]:
+        ledger = dict()
+        for block in blocks:
+            inserts = {self.key(insert.dxf.name) for insert in block.query('INSERT')}
+            ledger[self.key(block.name)] = inserts
+        return ledger
+
+    def has_cycle(self, block_name: str) -> bool:
+        def check(name):
+            # block 'name' does not exist: ignore this error, because it is not
+            # the task of this method to detect not existing block definitions
+            try:
+                inserts = self.blocks[name]
+            except KeyError:
+                return False  # Not existing blocks can't create cycles.
+            path.append(name)
+            for n in inserts:
+                if n in path:
+                    return True
+                elif check(n):
+                    return True
+            path.pop()
+            return False
+
+        path = []
+        block_name = self.key(block_name)
+        return check(block_name)
