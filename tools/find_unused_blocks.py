@@ -7,12 +7,12 @@ from pathlib import Path
 BASE_DXF_FOLDER = r'D:\source\dxftest'
 
 
-def _find_unused_blocks(dwg):
-    references = dwg.query('INSERT')
+def _find_unused_blocks(doc):
+    references = doc.query('INSERT')
     # block names are case insensitive!
     used_block_names = set(entity.dxf.name.lower() for entity in references)
     # exclude layout blocks, they are not referenced by any DXF entity
-    existing_blocks = set(block.name.lower() for block in dwg.blocks if not block.is_layout_block)
+    existing_blocks = set(block.name.lower() for block in doc.blocks if not block.is_layout_block)
     not_referenced_blocks = existing_blocks - used_block_names
     references_without_definition = used_block_names - existing_blocks
 
@@ -27,7 +27,7 @@ def _find_unused_blocks(dwg):
 
 def find_unused_blocks(filename):
     try:
-        dwg = ezdxf.readfile(filename, legacy_mode=True)
+        doc = ezdxf.readfile(filename, legacy_mode=True)
     except IOError:
         pass
     except ezdxf.DXFError as e:
@@ -35,7 +35,7 @@ def find_unused_blocks(filename):
         print('FOUND DXF ERROR: {}'.format(str(e)))
         print('*' * 40 + '\n')
     else:
-        _find_unused_blocks(dwg)
+        _find_unused_blocks(doc)
 
 
 def process_dir(folder):

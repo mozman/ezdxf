@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: count dxftypes
+#!/usr/bin/env python3
 # Created: 28.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
@@ -31,9 +28,9 @@ def print_result(counter):
 
 def main(filename):
     print('reading file ...')
-    dwg = ezdxf.readfile(filename)
+    doc = ezdxf.readfile(filename)
     print('counting elements ...')
-    result = count_elements(dwg.entitydb)
+    result = count_elements(doc.entitydb)
     print_result(result)
 
 

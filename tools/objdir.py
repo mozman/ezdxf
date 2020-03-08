@@ -14,7 +14,7 @@ import ezdxf
 def main(filename):
     dwg = ezdxf.readfile(filename)
     with open('objects.txt', 'wt') as outstream:
-        dumpobjects(outstream, dwg.sections.objects)
+        dumpobjects(outstream, dwg.objects)
 
 
 def dumpobjects(stream, objects):

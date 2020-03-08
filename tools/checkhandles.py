@@ -38,15 +38,17 @@ def checkhandles(stream):
     info = dxf_info(stream)
     stream.seek(0)
     handles = []
-    iterator = low_level_tagger(stream)
+    lineno = 1
+    iterator = low_level_tagger(stream, skip_comments=False)
     for tag in iterator:
         if tag.code in (5, 105):
             try:
                 handle = int(tag.value, 16)
             except ValueError:
-                print('invalid handle at line number %d' % iterator.lineno)
+                print('invalid handle at line number %d' % lineno)
             else:
                 handles.append(handle)
+        lineno += 2
     printhandles(handles, info)
 
 

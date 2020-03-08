@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019, Manfred Moitzi
+# Copyright (c) 2018-2012, Manfred Moitzi
 # License: MIT License
 import pytest
 import os
@@ -11,11 +11,11 @@ def drawing(request):
     return ezdxf.new(request.param)
 
 
-def add_line_entities(entityspace, offset):
+def add_line_entities(layout, offset):
     for color in range(1, 256):
-        entityspace.add_line((offset+0, color), (offset+50, color), {
+        layout.add_line((offset+0, color), (offset+50, color), {
             'color': color,
-            'layer': u'Träger'
+            'layer': 'Träger'
         })
 
 
@@ -27,4 +27,4 @@ def test_basic_graphics(drawing, tmpdir):
         drawing.saveas(filename)
     except ezdxf.DXFError as e:
         pytest.fail("DXFError: {0} for DXF version {1}".format(str(e), drawing.dxfversion))
-    assert os.path.exists(filename)
+    assert os.path.exists(filename) is True

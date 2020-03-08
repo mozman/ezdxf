@@ -8,7 +8,7 @@ doc = ezdxf.readfile(FILENAME) if FILENAME.exists() else ezdxf.new('R2018')
 FMT = """    '{name}': ['{cpp}', '{app}', {flags}, {proxy}, {entity}],\n"""
 with open('class_definitions.txt', mode='wt') as f:
     f.write('CLASSES = {\n')
-    for cls in doc.sections.classes:
+    for cls in doc.classes:
         f.write(FMT.format(
             name=cls.dxf.name,
             cpp=cls.dxf.cpp_class_name,
