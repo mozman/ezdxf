@@ -532,7 +532,7 @@ class CreatorInterface:
         dxfattribs['degree'] = degree
         spline = self.new_entity('SPLINE', dxfattribs)  # type: Spline
         if fit_points is not None:
-            spline.fit_points = fit_points
+            spline.fit_points = Vector.generate(fit_points)
         return spline
 
     def add_spline_control_frame(self, fit_points: Iterable['Vertex'], degree: int = 3, method: str = 'distance',

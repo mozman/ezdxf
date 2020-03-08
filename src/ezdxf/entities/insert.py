@@ -10,11 +10,12 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
 from ezdxf.explode import explode_block_reference, virtual_entities
+from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef, UCS,
-        BlockLayout, BaseLayout, EntityQuery
+        BlockLayout, BaseLayout
     )
 
 __all__ = ['Insert']
@@ -153,6 +154,28 @@ class Insert(DXFGraphic):
         if self.dxf.hasattr('zscale') and self.dxf.zscale != 1:
             return True
         return False
+
+    @property
+    def has_uniform_scaling(self) -> bool:
+        """ Returns ``True`` if scaling is uniform in x-, y- and z-axis.
+
+        .. versionadded:: 0.11.2
+
+        """
+        return self.dxf.xscale == self.dxf.yscale == self.dxf.zscale
+
+    def scale(self, factor: float):
+        """ Set uniform scaling.
+
+        .. versionadded:: 0.11.2
+
+        """
+        if factor == 0:
+            raise ValueError('Invalid scaling factor.')
+        self.dxf.xscale = factor
+        self.dxf.yscale = factor
+        self.dxf.zscale = factor
+        return self
 
     def block(self) -> Optional['BlockLayout']:
         """  Returns associated :class:`~ezdxf.layouts.BlockLayout`.
@@ -379,7 +402,7 @@ class Insert(DXFGraphic):
         self.dxf.discard('rotation')
         self.dxf.discard('extrusion')
 
-    def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
+    def explode(self, target_layout: 'BaseLayout' = None, non_uniform_scaling=False) -> 'EntityQuery':
         """
         Explode block reference entities into target layout, if target layout is ``None``, the target layout is the
         layout of the block reference.
@@ -390,15 +413,29 @@ class Insert(DXFGraphic):
 
         Returns an :class:`~ezdxf.query.EntityQuery` container with all "exploded" DXF entities.
 
+        .. warning::
+
+            **Non uniform scaling** lead to incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
+            some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and and
+            POLYLINE/LWPOLYLINE with arc segments.
+
+        Args:
+            target_layout: target layout for exploded entities
+            non_uniform_scaling: enable non uniform scaling if ``True``, see warning
+
         .. versionadded:: 0.11.2
+            experimental feature
 
         """
         if target_layout is None:
             target_layout = self.get_layout()
 
+        if non_uniform_scaling is False and not self.has_uniform_scaling:
+            return EntityQuery()
+
         return explode_block_reference(self, target_layout=target_layout)
 
-    def virtual_entities(self) -> Iterable[DXFGraphic]:
+    def virtual_entities(self, non_uniform_scaling=False) -> Iterable[DXFGraphic]:
         """
         Yields "virtual" entities of a block reference. This method is meant to examine the block reference
         entities at the "exploded" location without really "exploding" the block reference.
@@ -411,8 +448,20 @@ class Insert(DXFGraphic):
             msp = doc.modelspace()
             msp.add_entity(entity)
 
+        .. warning::
+
+            **Non uniform scaling** returns incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
+            some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
+            POLYLINE/LWPOLYLINE with arc segments.
+
+        Args:
+            non_uniform_scaling: enable non uniform scaling if ``True``, see warning
+
         .. versionadded:: 0.11.2
+            experimental feature
 
         """
-        return virtual_entities(self)
+        if non_uniform_scaling is False and not self.has_uniform_scaling:
+            return []
 
+        return virtual_entities(self)

@@ -128,8 +128,6 @@ UCS Class
 
     .. automethod:: copy() -> UCS
 
-    .. automethod:: scale(sx: float = 1, sy: float = 1, sz: float = 1) -> UCS
-
     .. automethod:: to_wcs
 
     .. automethod:: points_to_wcs

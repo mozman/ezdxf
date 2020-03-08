@@ -229,38 +229,3 @@ def test_moveto():
     ucs.moveto((3, 2, 1))
     assert ucs.origin == (3, 2, 1)
 
-
-def test_uniformed_scaled_ucs_at_origin():
-    ucs = UCS().scale(2, 2, 2)
-    assert ucs.is_cartesian is True
-    assert ucs.to_wcs((0, 0, 0)) == (0, 0, 0)
-    assert ucs.to_wcs((1, 0, 0)) == (2, 0, 0)
-    assert ucs.to_wcs((0, 1, 0)) == (0, 2, 0)
-    assert ucs.to_wcs((0, 0, 1)) == (0, 0, 2)
-
-
-def test_uniformed_scaled_ucs():
-    ucs = UCS(origin=(1, 2, 3)).scale(2, 2, 2)
-    assert ucs.is_cartesian is True
-    assert ucs.to_wcs((0, 0, 0)) == (1, 2, 3)
-    assert ucs.to_wcs((1, 0, 0)) == (3, 2, 3)
-    assert ucs.to_wcs((0, 1, 0)) == (1, 4, 3)
-    assert ucs.to_wcs((0, 0, 1)) == (1, 2, 5)
-
-
-def test_non_uniformed_scaled_ucs_at_origin():
-    ucs = UCS().scale(1.5, 2.5, 3.5)
-    assert ucs.is_cartesian is True
-    assert ucs.to_wcs((0, 0, 0)) == (0, 0, 0)
-    assert ucs.to_wcs((1, 0, 0)) == (1.5, 0, 0)
-    assert ucs.to_wcs((0, 1, 0)) == (0, 2.5, 0)
-    assert ucs.to_wcs((0, 0, 1)) == (0, 0, 3.5)
-
-
-def test_non_uniformed_scaled_ucs():
-    ucs = UCS(origin=(3, 2, 1)).scale(1.5, 2.5, 3.5)
-    assert ucs.is_cartesian is True
-    assert ucs.to_wcs((0, 0, 0)) == (3, 2, 1)
-    assert ucs.to_wcs((1, 0, 0)) == (4.5, 2, 1)
-    assert ucs.to_wcs((0, 1, 0)) == (3, 4.5, 1)
-    assert ucs.to_wcs((0, 0, 1)) == (3, 2, 4.5)
