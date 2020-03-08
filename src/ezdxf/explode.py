@@ -1,8 +1,9 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, cast
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
 from ezdxf.query import EntityQuery
+from ezdxf.math import Vector
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic
@@ -22,6 +23,12 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
         block_ref: Block reference entity (:class:`~ezdxf.entities.Insert`)
         target_layout: target layout for exploded DXF entities (modelspace, paperspace or block layout),
                        if ``None`` the layout of the block reference is used.
+
+    .. warning::
+
+        **Non uniform scaling** lead to incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
+        some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
+        POLYLINE/LWPOLYLINE with arc segments.
 
     """
     if block_ref.doc is None or block_ref.doc.entitydb is None:
@@ -73,6 +80,12 @@ def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
     Args:
         block_ref: Block reference entity (:class:`~ezdxf.entities.Insert`)
 
+    .. warning::
+
+        **Non uniform scaling** returns incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
+        some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
+        POLYLINE/LWPOLYLINE with arc segments.
+
     """
     brcs = block_ref.brcs()
     # Non uniform scaling will produce incorrect results for some entities!
@@ -99,6 +112,7 @@ def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
         if non_uniform_scaling and dxftype in {'ARC', 'CIRCLE'}:
             from ezdxf.entities import Ellipse
             copy = Ellipse.from_arc(entity)
+            dxftype = copy.dxftype()
 
         # Basic transformation from BRCS to WCS
         try:
@@ -108,14 +122,26 @@ def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
 
         # Apply DXF attribute scaling:
         # 1. simple entities without properties to scale
-        if dxftype in {'LINE', 'POINT', 'LWPOLYLINE', 'POLYLINE', 'MESH', 'ELLIPSE', 'HATCH', 'SPLINE',
-                       'SOLID', '3DFACE', 'TRACE', 'IMAGE', 'WIPEOUT', 'XLINE', 'RAY', 'TOLERANCE',
-                       'LIGHT', 'HELIX'}:
+        if dxftype in {'LINE', 'POINT', 'LWPOLYLINE', 'POLYLINE', 'MESH', 'HATCH', 'SPLINE',
+                       'SOLID', '3DFACE', 'TRACE', 'IMAGE', 'WIPEOUT', 'XLINE', 'RAY', 'LIGHT', 'HELIX'}:
             pass  # nothing else to do
         elif dxftype in {'CIRCLE', 'ARC'}:
             # simple uniform scaling of radius
             # How to handle non uniform scaling? -> Ellipse
             copy.dxf.radius = entity.dxf.radius * uniform_scaling
+        elif dxftype == 'ELLIPSE':
+            if non_uniform_scaling:
+                # ELLIPSE -> ELLIPSE
+                if entity.dxftype() == 'ELLIPSE':
+                    ellipse = cast('Ellipse', entity)
+                    major_axis = Vector(ellipse.dxf.major_axis)
+                    minor_axis = ellipse.minor_axis
+                    major_axis_length = brcs.direction_to_wcs(major_axis).magnitude
+                    minor_axis_length = brcs.direction_to_wcs(minor_axis).magnitude
+                    copy.dxf.ratio = max(minor_axis_length / major_axis_length, 1e-6)
+                else:  # ARC -> ELLIPSE
+                    scale = max(min((yscale / xscale), 1.0), 1e-6)
+                    copy.dxf.ratio = scale
         elif dxftype == 'MTEXT':
             # Scale MTEXT height/width just by uniform_scaling, how to handle non uniform scaling?
             copy.dxf.char_height *= uniform_scaling

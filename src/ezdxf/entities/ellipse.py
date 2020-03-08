@@ -15,15 +15,14 @@ if TYPE_CHECKING:
 
 __all__ = ['Ellipse']
 
-
 acdb_ellipse = DefSubclass('AcDbEllipse', {
     'center': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
     'major_axis': DXFAttr(11, xtype=XType.point3d, default=Vector(1, 0, 0)),  # relative to the center
     # extrusion does not establish an OCS, it is just the normal vector of the ellipse plane.
     'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0, 0, 1), optional=True),
-    'ratio': DXFAttr(40, default=1),
+    'ratio': DXFAttr(40, default=1),  # has to be in range 1e-6 to 1
     'start_param': DXFAttr(41, default=0),  # this value is 0.0 for a full ellipse
-    'end_param': DXFAttr(42, default=math.pi*2),  # this value is 2*pi for a full ellipse
+    'end_param': DXFAttr(42, default=math.pi * 2),  # this value is 2*pi for a full ellipse
 })
 
 
@@ -84,6 +83,13 @@ class Ellipse(DXFGraphic):
             # construct WCS coordinates, do not convert from OCS to WCS, extrusion defines only the normal vector of
             # the ellipse plane.
             yield center + (x_axis * x) + (y_axis * y)
+
+    @property
+    def minor_axis(self) -> Vector:
+        major_axis = Vector(self.dxf.major_axis)  # local x-axis, 0 rad
+        extrusion = Vector(self.dxf.extrusion)  # local z-axis, normal vector of the ellipse plane
+        minor_axis_length = major_axis.magnitude * self.dxf.ratio
+        return extrusion.cross(major_axis).normalize(minor_axis_length)
 
     @property
     def start_point(self) -> 'Vector':

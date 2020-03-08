@@ -434,7 +434,7 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3, metho
         else:
             raise DXFValueError('Unknown method: {}'.format(method))
 
-    fit_points = list(fit_points)
+    fit_points = Vector.list(fit_points)
     count = len(fit_points)
     order = degree + 1
     if order > count:

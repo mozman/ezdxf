@@ -51,7 +51,9 @@ def test_01_virtual_entities(msp):
     assert e.dxf.end == blockref.dxf.insert + (0, 1)
 
     blockref = blockrefs[1]
-    virtual_entities = list(blockref.virtual_entities())
+    virtual_entities = list(blockref.virtual_entities(non_uniform_scaling=False))
+    assert len(virtual_entities) == 0
+    virtual_entities = list(blockref.virtual_entities(non_uniform_scaling=True))
     assert len(virtual_entities) == 2
 
     e = virtual_entities[0]

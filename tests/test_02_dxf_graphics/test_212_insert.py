@@ -100,6 +100,7 @@ def test_default_new():
     assert entity.dxf.insert.y == 2, 'is not Vector compatible'
     assert entity.dxf.insert.z == 3, 'is not Vector compatible'
     assert entity.has_scaling is False
+    assert entity.has_uniform_scaling is True
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
@@ -108,10 +109,13 @@ def test_default_new():
 def test_has_scaling():
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={'xscale': 2})
     assert entity.has_scaling is True
+    assert entity.has_uniform_scaling is False
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={'yscale': 2})
     assert entity.has_scaling is True
+    assert entity.has_uniform_scaling is False
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={'zscale': 2})
     assert entity.has_scaling is True
+    assert entity.has_uniform_scaling is False
 
 
 def test_load_from_text(entity):

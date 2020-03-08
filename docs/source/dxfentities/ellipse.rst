@@ -32,7 +32,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.ratio
 
-        Ratio of minor axis to major axis (float), default value is ``1``.
+        Ratio of minor axis to major axis (float), has to be in range from ``0.000001`` to ``1``,
+        default value is ``1``.
 
     .. attribute:: dxf.start_param
 
@@ -53,6 +54,12 @@ Required DXF version     DXF R2000 (``'AC1015'``)
         Returns the end point of the ellipse in WCS.
 
         .. versionadded:: 0.11
+
+    .. attribute:: minor_axis
+
+        Returns the minor axis of the ellipse as :class:`Vector` in WCS.
+
+        .. versionadded:: 0.11.2
 
     .. automethod:: vertices(params:Iterable[float]) -> Iterable[Vector]
 

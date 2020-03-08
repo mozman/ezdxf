@@ -310,22 +310,6 @@ class UCS(TransformUSCToOCSMixin):
         """
         return UCS(self.origin, self.ux, self.uy, self.uz)
 
-    def scale(self, sx: float = 1, sy: float = 1, sz: float = 1) -> 'UCS':
-        """ Returns a new scaled UCS.
-
-        Scaling gets lost by rotating or copying the UCS, because this operations crates a new UCS and unit
-        vectors always get normalized on initialization.
-
-        Args:
-            sx: x-axis scaling
-            sy: y-axis scaling
-            sz: z-axis scaling
-
-        """
-        ucs = self.copy()
-        ucs._setup(self.ux * sx, self.uy * sy, self.uz * sz)
-        return ucs
-
     def to_wcs(self, point: 'Vertex') -> 'Vector':
         """ Returns WCS point for UCS `point`. """
         return self.origin + self.matrix.transform(point)
@@ -635,6 +619,6 @@ class BRCS(TransformUSCToOCSMixin):
              angle: rotation angle in radians
 
         """
-        t = Matrix44.axis_rotate(self._matrix.uz, angle)
+        t = Matrix44.axis_rotate(self._matrix.uz.normalize(), angle)
         ux, uy = t.transform_vectors([self._matrix.ux, self._matrix.uy])
         self._matrix = Matrix33(ux, uy, self._matrix.uz)
