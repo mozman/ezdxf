@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing
 
 
-def get_dxf_doc_from_upload_data(data: bytes) -> Optional['Drawing']:
+def get_dxf_doc_from_upload_data(data: bytes) -> 'Drawing':
     """
     This function turns the dxf data provided by Dash Plotly upload component into an `ezdxf` doc
     Dash plotly upload component only provides base 64 encoded data.
@@ -22,36 +22,39 @@ def get_dxf_doc_from_upload_data(data: bytes) -> Optional['Drawing']:
         DXF document as Drawing() object
 
     """
-    if data is None:
-        return None
-
-    # turn contents list into string. Contents is 64 encoded as per dash plotly
-    contents = str(data)
-    # remove the first part of the decoded info Raw Content
-    # example: data:application/vnd.ms-excel;base64,ICAwU0VDVElPTiAgMkhFQURFUiAgOSRBQ0FEVkVSICAxQUMxMDI0ICA5JEFDQURNQUlOVFZFUiA3MDYgIDkkRFdHQ09ERVBBR0
-    content_type, content_string = contents.split(',')
-    # Decode this into binary data string
-    binary_decoded_unformatted = base64.b64decode(content_string)
-    # fix the end of line problem for the EOF. ie remove the last \r\n so
-    # EZDXF can find the EOF:
-    binary_decoded_no_EOF = binary_decoded_unformatted.rstrip(b'\r\n')
+    # Remove the mime-type and encoding info form data
+    # example: data:application/vnd.ms-excel;base64,ICAwU0VDVElPTiAgMkhFQURFUiAgOSRBQ0FEVkVSICAxQUMxMDI0ICA5JEFDQ...
+    _, data = data.split(b',')
+    # Decode base64 encoded data into binary data
+    binary_data = base64.b64decode(data)
     # Change the \r\n encoding (from windows / 64 encoding) to \n (ezdxf compatible)
-    binary_decoded = binary_decoded_no_EOF.replace(b'\r\n', b'\n')
-    # decode this into unicode utf-8 which is the format required for dxf
-    utf_decoded = binary_decoded.decode("utf-8", errors="ignore")
-    # Create stringIO object to treat the data like a file and write the data to the object
-    # like a file opened in text mode https://docs.python.org/3/library/io.html
-    temp_tx_stream = io.StringIO(utf_decoded)
-    # Get info about the file
-    info = dxf_stream_info(temp_tx_stream)
-    encoding = info.encoding
-    # Re code the binary data using the encoding found in the "info":
-    decoded_data = binary_decoded.decode(encoding, errors="ignore")
-    # Create new text stream for use on the correctly decoded data:
-    tx_stream = io.StringIO(decoded_data)
-    # read the text stream
-    doc = ezdxf.read(tx_stream)
-    # Close the other stream IO objects used for reading the file contents
-    tx_stream.close()
-    temp_tx_stream.close()
+    binary_data = binary_data.replace(b'\r\n', b'\n')
+
+    # Read DXF file info from data, basic DXF information in the HEADER section is ASCII encoded
+    text = binary_data.decode('utf-8', errors='ignore')
+    stream = io.StringIO(text)
+    info = dxf_stream_info(stream)
+    stream.close()
+
+    # Use encoding info to create required text input stream for ezdxf
+    text = binary_data.decode(info.encoding, errors='ignore')
+    stream = io.StringIO(text)
+
+    # Load DXF document from data stream
+    doc = ezdxf.read(stream)
+    stream.close()
     return doc
+
+
+def example_data(doc: 'Drawing') -> bytes:
+    stream = io.StringIO()
+    doc.write(stream)
+    # create binary data with windows line ending
+    binary_data = stream.getvalue().encode('utf-8').replace(b'\n', b'\r\n')
+    return b'data:application/any;base64,' + base64.encodebytes(binary_data)
+
+
+if __name__ == '__main__':
+    data = example_data(ezdxf.new())
+    doc = get_dxf_doc_from_upload_data(data)
+    print(doc.acad_release)
