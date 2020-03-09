@@ -3,7 +3,7 @@
 import pytest
 from ezdxf.lldxf.tagger import internal_tag_compiler
 from ezdxf.drawing import Drawing
-from ezdxf import DXFValueError
+from ezdxf import DXFValueError, decode_base64
 
 
 def test_dxfversion_1():
@@ -74,7 +74,7 @@ def test_r2000_dxfversion(dwg_r2000):
 
 
 def test_r2000_acad_release(dwg_r2000):
-        assert 'R2000' == dwg_r2000.acad_release
+    assert 'R2000' == dwg_r2000.acad_release
 
 
 @pytest.fixture
@@ -134,6 +134,18 @@ def test_chain_layout_and_block(dwg_r12, dwg_r2000):
 
         check = {line_msp.dxf.handle, line_blk.dxf.handle}
         assert check.intersection(handles) == check
+
+
+def test_base64_encoding_r12(dwg_r12):
+    data = dwg_r12.encode_base64()
+    doc = decode_base64(data)
+    assert doc.acad_release == 'R12'
+
+
+def test_base64_encoding_r2000(dwg_r2000):
+    data = dwg_r2000.encode_base64()
+    doc = decode_base64(data)
+    assert doc.acad_release == 'R2000'
 
 
 MINIMALISTIC_DXF12 = """  0

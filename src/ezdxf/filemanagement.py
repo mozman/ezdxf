@@ -4,6 +4,8 @@
 # License: MIT License
 # Local imports to avoid cyclic import
 from typing import TextIO, TYPE_CHECKING, Union, Sequence
+import base64
+import io
 from ezdxf.tools.standards import setup_drawing
 from ezdxf.lldxf.const import DXF12, DXF2013
 from ezdxf.drawing import Drawing
@@ -175,4 +177,40 @@ def readzip(zipfile: str, filename: str = None) -> 'Drawing':
     with ctxZipReader(zipfile, filename) as zipstream:
         doc = read(zipstream)
         doc.filename = zipstream.dxf_file_name
+    return doc
+
+
+def decode_base64(data: bytes) -> 'Drawing':
+    """
+    Load DXF document from base64 encoded binary data, like uploaded data to web applications.
+
+    Args:
+        data: DXF document base64 encoded binary data
+
+    .. versionadded:: 0.11.2
+        Thanks to Joseph Flack
+
+    """
+    # Copyright (c) 2020, Joseph Flack
+    # License: MIT License
+    # Decode base64 encoded data into binary data
+    binary_data = base64.b64decode(data)
+
+    # Replace windows line ending '\r\n' by universal line ending '\n'
+    binary_data = binary_data.replace(b'\r\n', b'\n')
+
+    # Read DXF file info from data, basic DXF information in the HEADER section is ASCII encoded
+    # so encoding setting here is not important for this task:
+    text = binary_data.decode('utf-8', errors='ignore')
+    stream = io.StringIO(text)
+    info = dxf_stream_info(stream)
+    stream.close()
+
+    # Use encoding info to create correct decoded text input stream for ezdxf
+    text = binary_data.decode(info.encoding, errors='ignore')
+    stream = io.StringIO(text)
+
+    # Load DXF document from data stream
+    doc = read(stream)
+    stream.close()
     return doc

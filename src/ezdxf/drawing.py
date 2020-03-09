@@ -4,6 +4,7 @@
 from typing import TYPE_CHECKING, TextIO, Iterable, Union, Sequence, Tuple, Callable, cast
 from datetime import datetime
 import io
+import base64
 import logging
 from itertools import chain
 
@@ -401,6 +402,19 @@ class Drawing:
         self._update_metadata()
         tagwriter = TagWriter(stream, write_handles=handles, dxfversion=dxfversion)
         self.export_sections(tagwriter)
+
+    def encode_base64(self) -> bytes:
+        """ Returns DXF document as base64 encoded binary data.
+
+        .. versionadded:: 0.11.2
+            Thanks to Joseph Flack
+
+        """
+        stream = io.StringIO()
+        self.write(stream)
+        # create binary data with windows line ending
+        binary_data = stream.getvalue().encode(self.output_encoding).replace(b'\n', b'\r\n')
+        return base64.encodebytes(binary_data)
 
     def export_sections(self, tagwriter: 'TagWriter') -> None:
         """ DXF export sections. (internal API) """

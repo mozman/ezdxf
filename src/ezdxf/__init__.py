@@ -16,7 +16,7 @@ from ezdxf.tools import transparency2float, float2transparency
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file, is_dxf_stream
-from ezdxf.filemanagement import readzip, new, read, readfile
+from ezdxf.filemanagement import readzip, new, read, readfile, decode_base64
 from ezdxf.tools.standards import setup_linetypes, setup_styles, setup_dimstyles, setup_dimstyle
 from ezdxf.tools import pattern
 from ezdxf.render.arrows import ARROWS
@@ -32,4 +32,3 @@ import codecs
 from ezdxf.lldxf.encoding import dxf_backslash_replace
 # setup DXF unicode encoder -> '\U+nnnn'
 codecs.register_error('dxfreplace', dxf_backslash_replace)
-

@@ -165,6 +165,8 @@ Drawing Object
 
     .. automethod:: write
 
+    .. automethod:: encode_base64
+
     .. automethod:: query
 
     .. automethod:: groupby

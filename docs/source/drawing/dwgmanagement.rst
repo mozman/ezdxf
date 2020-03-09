@@ -41,6 +41,9 @@ AC1032      R2018      UTF-8          AutoCAD R2018
 
 .. autofunction:: readzip(zipfile: str, filename: str = None) -> Drawing
 
+.. autofunction:: decode_base64(data: bytes) -> Drawing
+
+
 Save Drawings
 -------------
 

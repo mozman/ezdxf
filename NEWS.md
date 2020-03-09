@@ -14,6 +14,8 @@ Version 0.11.2 - dev
 - NEW: `Block()` properties `is_anonymous`, `is_xref` and `is_xref_overlay`
 - NEW: `R12FastStreamWriter.add_polyline_2d()`, add 2D POLYLINE with start width, end width and bulge value support
 - NEW: `Ellipse.minor_axis` property returns minor axis as `Vector`
+- NEW: `drawing.encode_base64()` returns DXF document content as base64 encoded binary data
+- NEW: `ezdxf.decode_base64()` returns DXF document from base64 encoded binary data
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 - BUGFIX: floating point precision error in `intersection_line_line_2d()`
