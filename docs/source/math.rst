@@ -59,6 +59,8 @@ Bulge Related Functions
 
 .. autofunction:: intersection_line_line_2d(line1: Sequence[Vec2], line2: Sequence[Vec2], virtual=True, abs_tol=1e-12) -> Optional[Vec2]
 
+.. autofunction:: rytz_axis_construction(d1: Vector, d2: Vector) -> Tuple[Vector, Vector, float]
+
 .. autofunction:: offset_vertices_2d
 
 .. code-block:: Python

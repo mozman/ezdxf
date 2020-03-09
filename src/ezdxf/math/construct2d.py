@@ -1,12 +1,12 @@
 # Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Iterable, List, Optional, Sequence, Union, Tuple
 
 from functools import partial
 import math
 from abc import abstractmethod
 
-from .vector import Vector, Vec2
+from .vector import Vector, Vec2, NULLVEC
 from .bbox import BoundingBox2d
 
 if TYPE_CHECKING:
@@ -186,36 +186,36 @@ def intersection_line_line_2d(
     b = x3 * y4 - y3 * x4
     x = (a * x3_x4 - x1_x2 * b) / d
     y = (a * y3_y4 - y1_y2 * b) / d
-
+    tol = abs_tol / 2.
     if not virtual:
         if x1 > x2:
-            in_range = x2 <= x <= x1
+            in_range = (x2 - tol) <= x <= (x1 + tol)
         else:
-            in_range = x1 <= x <= x2
+            in_range = (x1 - tol) <= x <= (x2 + tol)
 
         if not in_range:
             return None
 
         if x3 > x4:
-            in_range = x4 <= x <= x3
+            in_range = (x4 - tol) <= x <= (x3 + tol)
         else:
-            in_range = x3 <= x <= x4
+            in_range = (x3 - tol) <= x <= (x4 + tol)
 
         if not in_range:
             return None
 
         if y1 > y2:
-            in_range = y2 <= y <= y1
+            in_range = (y2 - tol) <= y <= (y1 + tol)
         else:
-            in_range = y1 <= y <= y2
+            in_range = (y1 - tol) <= y <= (y2 + tol)
 
         if not in_range:
             return None
 
         if y3 > y4:
-            in_range = y4 <= y <= y3
+            in_range = (y4 - tol) <= y <= (y3 + tol)
         else:
-            in_range = y3 <= y <= y4
+            in_range = (y3 - tol) <= y <= (y4 + tol)
 
         if not in_range:
             return None
@@ -278,7 +278,7 @@ def point_to_line_relation(point: Vec2, start: Vec2, end: Vec2, abs_tol=TOLERANC
         return -1
 
 
-def is_point_left_of_line(point: Vec2, start: Vec2, end:Vec2, colinear=False) -> bool:
+def is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2, colinear=False) -> bool:
     """
     Returns ``True`` if `point` is "left of line" defined by `start-` and `end` point, a colinear point is also
     "left of line" if argument `colinear` is ``True``.
@@ -361,3 +361,41 @@ def is_point_in_polygon_2d(point: Union[Vec2, Vector], polygon: Iterable[Vec2], 
         return 1
     else:
         return -1
+
+
+def rytz_axis_construction(d1: Vector, d2: Vector) -> Tuple[Vector, Vector, float]:
+    """
+    The Rytz’s axis construction is a basic method of descriptive Geometry to find the axes, the semi-major
+    axis and semi-minor axis, starting from two conjugated half-diameters.
+
+    Source: `Wikipedia <https://en.m.wikipedia.org/wiki/Rytz%27s_construction>`_
+
+    Given conjugated diameter `d1` is the vector from center C to point P and the given conjugated diameter `d2` is
+    the vector from center C to point Q. Center of ellipse is always ``(0, 0, 0)``. This algorithm works for
+    2D/3D vectors.
+
+    Args:
+        d1: conjugated semi-major axis as :class:`Vector`
+        d2: conjugated semi-minor axis as :class:`Vector`
+
+    Returns:
+         Tuple of (major axis, minor axis, ratio)
+
+    """
+    Q = Vector(d1)  # vector CQ
+    P1 = Vector(d2).orthogonal(ccw=False)  # vector CP', location P'
+    D = P1.lerp(Q)  # vector CD, location D, midpoint of P'Q
+    radius = D.magnitude
+    radius_vector = (Q - P1).normalize(radius)  # direction vector P'Q
+    A = D - radius_vector  # vector CA, location A
+    B = D + radius_vector  # vector CB, location B
+    if A.isclose(NULLVEC) or B.isclose(NULLVEC):
+        raise ArithmeticError('Conjugated axis required, invalid source data.')
+    major_axis_length = (A - Q).magnitude
+    minor_axis_length = (B - Q).magnitude
+    if math.isclose(major_axis_length, 0.) or math.isclose(minor_axis_length, 0.):
+        raise ArithmeticError('Conjugated axis required, invalid source data.')
+    ratio = minor_axis_length / major_axis_length
+    major_axis = B.normalize(major_axis_length)
+    minor_axis = A.normalize(minor_axis_length)
+    return major_axis, minor_axis, ratio
