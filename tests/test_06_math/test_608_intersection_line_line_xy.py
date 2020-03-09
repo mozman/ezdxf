@@ -74,5 +74,13 @@ def test_intersect_real_colinear():
     assert point.isclose(vec2(2, 2))
 
 
+def test_issue_128():
+    line1 = (vec2(175.0, 5.0), vec2(175.0, 50.))
+    line2 = (vec2(-10.1231, 30.1235), vec2(300.2344, 30.1235))
+    point = intersection_line_line_2d(line1, line2, virtual=False)
+    assert point is not None
+    assert point.isclose(vec2(175.0, 30.1235))
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
