@@ -186,8 +186,9 @@ def intersection_line_line_2d(
     b = x3 * y4 - y3 * x4
     x = (a * x3_x4 - x1_x2 * b) / d
     y = (a * y3_y4 - y1_y2 * b) / d
-    tol = abs_tol / 2.
+
     if not virtual:
+        tol = abs_tol / 2.
         if x1 > x2:
             in_range = (x2 - tol) <= x <= (x1 + tol)
         else:

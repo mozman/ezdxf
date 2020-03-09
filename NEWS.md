@@ -17,6 +17,7 @@ Version 0.11.2 - dev
 - NEW: `Ellipse.minor_axis` property returns minor axis as `Vector`
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
+- BUGFIX: floating point precision error in `intersection_line_line_2d()`
 
 Version 0.11.1 - 2020-02-29
 ---------------------------
