@@ -3,7 +3,7 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 import math
-from ezdxf.math import Vector
+from ezdxf.math import Vector, normalize_angle
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from .dxfentity import base_class, SubclassProcessor
@@ -112,8 +112,8 @@ class Ellipse(DXFGraphic):
         end_param = self.dxf.end_param
         if math.isclose(start_param, 0) and math.isclose(end_param, PI2):
             return
-        self.dxf.start_param = math.fmod(start_param - HALF_PI, PI2)
-        self.dxf.end_param = math.fmod(end_param - HALF_PI, PI2)
+        self.dxf.start_param = normalize_angle(start_param - HALF_PI)
+        self.dxf.end_param = normalize_angle(end_param - HALF_PI)
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'Ellipse':
         """ Transform ELLIPSE entity from local :class:`~ezdxf.math.UCS` coordinates to

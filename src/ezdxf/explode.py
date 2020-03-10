@@ -1,10 +1,9 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, cast
-import math
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
 from ezdxf.query import EntityQuery
-from ezdxf.math import Vector, rytz_axis_construction
+from ezdxf.math import Vector, rytz_axis_construction, normalize_angle
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse
@@ -128,21 +127,33 @@ def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
             pass  # nothing else to do
         elif dxftype in {'CIRCLE', 'ARC'}:
             # simple uniform scaling of radius
-            # How to handle non uniform scaling? -> Ellipse
+            # Non uniform scaling: ARC, CIRCLE -> ELLIPSE
             copy.dxf.radius = entity.dxf.radius * uniform_scaling
         elif dxftype == 'ELLIPSE':
             if non_uniform_scaling:
-                # ELLIPSE -> ELLIPSE
                 if entity.dxftype() == 'ELLIPSE':  # original entity is an ELLIPSE
-                    ellipse = cast('Ellipse', copy)
+                    ellipse = cast('Ellipse', entity)
+
+                    # transform axis
                     conjugated_major_axis = brcs.direction_to_wcs(ellipse.dxf.major_axis)
                     conjugated_minor_axis = brcs.direction_to_wcs(ellipse.minor_axis)
                     major_axis, _, ratio = rytz_axis_construction(conjugated_major_axis, conjugated_minor_axis)
-                    # todo: adjusting start- and end parameter
-                    ellipse.dxf.major_axis = major_axis
-                    ellipse.dxf.ratio = max(ratio, 1e-6)
-                    if ellipse.dxf.ratio > 1:
-                        ellipse.swap_axis()
+                    copy.dxf.major_axis = major_axis
+                    copy.dxf.ratio = max(ratio, 1e-6)
+
+                    # adjusting start- and end parameter
+                    center = copy.dxf.center  # transformed center point
+                    start_point, end_point = ellipse.vertices((ellipse.dxf.start_param, ellipse.dxd.end_param))
+                    start_vec = brcs.to_wcs(start_point) - center
+                    end_vec = brcs.to_wcs(end_point) - center
+                    # The dot product (scalar product) is the angle between two vectors.
+                    # https://en.wikipedia.org/wiki/Dot_product
+                    # Not sure if this is the correct way to adjust start- and end parameter
+                    copy.dxf.start_param = normalize_angle(major_axis.dot(start_vec))
+                    copy.dxf.end_param = normalize_angle(major_axis.dot(end_vec))
+
+                    if copy.dxf.ratio > 1:
+                        copy.swap_axis()
                 else:  # converted from ARC to ELLIPSE
                     ellipse = cast('Ellipse', copy)
                     ellipse.dxf.ratio = max(yscale / xscale, 1e-6)
