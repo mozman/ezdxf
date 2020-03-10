@@ -25,6 +25,9 @@ acdb_ellipse = DefSubclass('AcDbEllipse', {
     'end_param': DXFAttr(42, default=math.pi * 2),  # this value is 2*pi for a full ellipse
 })
 
+PI2 = math.pi * 2.
+HALF_PI = math.pi / 2.
+
 
 @register_entity
 class Ellipse(DXFGraphic):
@@ -100,6 +103,17 @@ class Ellipse(DXFGraphic):
     def end_point(self) -> 'Vector':
         v = list(self.vertices([self.dxf.end_param]))
         return v[0]
+
+    def swap_axis(self):
+        """ Swap axis and adjust start- and end parameter. """
+        self.dxf.major_axis = self.minor_axis
+        self.dxf.ratio = 1.0 / self.dxf.ratio
+        start_param = self.dxf.start_param
+        end_param = self.dxf.end_param
+        if math.isclose(start_param, 0) and math.isclose(end_param, PI2):
+            return
+        self.dxf.start_param = math.fmod(start_param - HALF_PI, PI2)
+        self.dxf.end_param = math.fmod(end_param - HALF_PI, PI2)
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'Ellipse':
         """ Transform ELLIPSE entity from local :class:`~ezdxf.math.UCS` coordinates to

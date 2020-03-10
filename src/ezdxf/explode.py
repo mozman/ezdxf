@@ -1,12 +1,13 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, cast
+import math
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
 from ezdxf.query import EntityQuery
-from ezdxf.math import Vector
+from ezdxf.math import Vector, rytz_axis_construction
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic
+    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse
 
 
 def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') -> EntityQuery:
@@ -132,16 +133,21 @@ def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
         elif dxftype == 'ELLIPSE':
             if non_uniform_scaling:
                 # ELLIPSE -> ELLIPSE
-                if entity.dxftype() == 'ELLIPSE':
-                    ellipse = cast('Ellipse', entity)
-                    major_axis = Vector(ellipse.dxf.major_axis)
-                    minor_axis = ellipse.minor_axis
-                    major_axis_length = brcs.direction_to_wcs(major_axis).magnitude
-                    minor_axis_length = brcs.direction_to_wcs(minor_axis).magnitude
-                    copy.dxf.ratio = max(minor_axis_length / major_axis_length, 1e-6)
-                else:  # ARC -> ELLIPSE
-                    scale = max(min((yscale / xscale), 1.0), 1e-6)
-                    copy.dxf.ratio = scale
+                if entity.dxftype() == 'ELLIPSE':  # original entity is an ELLIPSE
+                    ellipse = cast('Ellipse', copy)
+                    conjugated_major_axis = brcs.direction_to_wcs(ellipse.dxf.major_axis)
+                    conjugated_minor_axis = brcs.direction_to_wcs(ellipse.minor_axis)
+                    major_axis, _, ratio = rytz_axis_construction(conjugated_major_axis, conjugated_minor_axis)
+                    # todo: adjusting start- and end parameter
+                    ellipse.dxf.major_axis = major_axis
+                    ellipse.dxf.ratio = max(ratio, 1e-6)
+                    if ellipse.dxf.ratio > 1:
+                        ellipse.swap_axis()
+                else:  # converted from ARC to ELLIPSE
+                    ellipse = cast('Ellipse', copy)
+                    ellipse.dxf.ratio = max(yscale / xscale, 1e-6)
+                    if ellipse.dxf.ratio > 1:
+                        ellipse.swap_axis()
         elif dxftype == 'MTEXT':
             # Scale MTEXT height/width just by uniform_scaling, how to handle non uniform scaling?
             copy.dxf.char_height *= uniform_scaling
