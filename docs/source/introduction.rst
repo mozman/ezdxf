@@ -27,18 +27,19 @@ What ezdxf is NOT
     - `ezdxf` is not a CAD file format converter: `ezdxf` can not convert DXF files to **ANY** other format, like SVG, PDF
       or DWG
     - `ezdxf` is not a DXF renderer, it does not create a visual representation of the DXF file content (see above).
-    - `ezdxf` is not a CAD kernel, `ezdxf` does not provide any functionality for construction work, it is just an interface
-      to the DXF file format. If you are looking for a CAD kernel with `Python`_ scripting support, look at `FreeCAD`_.
+    - `ezdxf` is not a CAD kernel and does not provide high level functionality for construction work,
+      it is just an interface to the DXF file format. If you are looking for a CAD kernel with `Python`_ scripting
+      support, look at `FreeCAD`_.
 
 
 Supported Python Versions
 -------------------------
 
-`ezdxf` requires at least Python 3.6, for Python 2 support use `ezdxf` < v0.9, I run unit tests with the latest
-stable CPython 3 version and the latest stable release of pypy3 during development.
+`ezdxf` requires at least Python 3.6 and will be tested with the latest stable CPython 3 version and the latest stable
+release of pypy3 during development.
 
 `ezdxf` is written in pure Python and requires only `pyparser` as additional library beside the Python Standard Library.
-`pytest` is required to run the provided unit and integration tests. Data to run the stress and audit test can not be
+`pytest` is required to run the unit- and integration tests. Data to run the stress and audit test can not be
 provided, because I don't have the rights for publishing this DXF files.
 
 Supported Operating Systems
