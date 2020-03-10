@@ -55,6 +55,8 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
 
     .. automethod:: move_to_layout(layout: BaseLayout, source: BaseLayout=None)
 
+    .. automethod:: graphic_properties
+
 .. _Common graphical DXF attributes:
 
 Common graphical DXF attributes

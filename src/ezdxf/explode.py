@@ -1,12 +1,14 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, cast
+from typing import TYPE_CHECKING, Iterable, cast, Union
+import math
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
 from ezdxf.query import EntityQuery
-from ezdxf.math import Vector, rytz_axis_construction, normalize_angle
+from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc
+from ezdxf.entities import Line, Arc
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse
+    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline
 
 
 def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') -> EntityQuery:
@@ -184,3 +186,44 @@ def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
         else:  # unsupported entity will be ignored
             continue
         yield copy
+
+
+def explode_lwpolyline(lwpolyline: 'LWPolyline') -> Iterable[Union['Line', 'Arc']]:
+    elevation = lwpolyline.dxf.elevation
+    extrusion = lwpolyline.dxf.get('extrusion', None)
+    doc = lwpolyline.doc
+    dxfattribs = lwpolyline.graphic_properties()
+    ocs = lwpolyline.ocs()
+    prev_point = None
+    prev_bulge = None
+
+    points = list(lwpolyline.points('xyb'))
+    if len(points) < 2:
+        return
+
+    if lwpolyline.closed:
+        points.append(points[0])
+
+    for x, y, bulge in points:
+        point = Vector(x, y, elevation)
+        if prev_point is None:
+            prev_point = point
+            prev_bulge = bulge
+            continue
+
+        attribs = dict(dxfattribs)
+        if prev_bulge != 0:
+            center, start_angle, end_angle, radius = bulge_to_arc(prev_point, point, prev_bulge)
+            attribs['center'] = Vector(center.x, center.y, elevation)
+            attribs['radius'] = radius
+            attribs['start_angle'] = math.degrees(start_angle)
+            attribs['end_angle'] = math.degrees(end_angle)
+            if extrusion:
+                attribs['extrusion'] = extrusion
+            yield Arc.new(doc=doc, dxfattribs=attribs)
+        else:
+            attribs['start'] = ocs.to_wcs(prev_point)
+            attribs['end'] = ocs.to_wcs(point)
+            yield Line.new(doc=doc, dxfattribs=attribs)
+        prev_point = point
+        prev_bulge = bulge
