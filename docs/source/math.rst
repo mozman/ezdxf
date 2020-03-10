@@ -88,6 +88,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[List[Vector]]
 
+.. autofunction:: subdivide_ngons(faces: Iterable[Sequence[Union[Vector, Vec2]]]) -> Iterable[List[Vector]]
+
 .. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-12) -> Sequence[Vector]
 
 Transformation Classes

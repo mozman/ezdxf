@@ -64,6 +64,25 @@ def subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[
             yield vertex, subdiv_location[index], mid_pos
 
 
+def subdivide_ngons(faces: Iterable[Sequence[Union[Vector, Vec2]]]) -> Iterable[List[Vector]]:
+    """
+    Yields only triangles or quad faces, subdivides ngons into triangles.
+
+    Args:
+        faces: iterable of faces as sequence of :class:`Vec2` and :class:`Vector` objects
+
+    .. versionadded:: 0.11.2
+
+    """
+    for face in faces:
+        if len(face) < 5:
+            yield face
+        else:
+            mid_pos = sum(face) / len(face)
+            for index, vertex in enumerate(face):
+                yield face[index - 1], vertex, mid_pos
+
+
 def normal_vector_3p(a: Vector, b: Vector, c: Vector) -> Vector:
     """ Returns normal vector for 3 points, which is the normalized cross product for: :code:`a->b x a->c`.
 

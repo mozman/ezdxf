@@ -3,8 +3,8 @@
 import pytest
 
 from ezdxf.math import is_planar_face, Vector, Vec2, subdivide_face, intersection_ray_ray_3d, normal_vector_3p
-from ezdxf.math import X_AXIS, Y_AXIS, Z_AXIS
-from ezdxf.render.forms import square
+from ezdxf.math import X_AXIS, Y_AXIS, Z_AXIS, subdivide_ngons
+from ezdxf.render.forms import square, circle
 
 REGULAR_FACE = Vector.list([(0, 0, 0), (1, 0, 1), (1, 1, 1), (0, 1, 0)])
 IRREGULAR_FACE = Vector.list([(0, 0, 0), (1, 0, 1), (1, 1, 0), (0, 1, 0)])
@@ -47,6 +47,12 @@ def test_subdivide_triangle():
     t = Vector.list([(0, 0), (2, 0), (1, 2)])
     assert len(list(subdivide_face(t, quads=True))) == 3
     assert len(list(subdivide_face(t, quads=False))) == 6
+
+
+def test_subdivide_ngons():
+    hexagon = list(circle(6))
+    result = list(subdivide_ngons([hexagon]))
+    assert len(result) == 6
 
 
 def test_subdivide_vec2_square_in_quads():

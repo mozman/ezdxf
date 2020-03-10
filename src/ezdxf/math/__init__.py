@@ -9,7 +9,7 @@ from .construct2d import (
     rytz_axis_construction,
 )
 from .construct3d import (
-    is_planar_face, subdivide_face, Plane, LocationState, intersection_ray_ray_3d, normal_vector_3p,
+    is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState, intersection_ray_ray_3d, normal_vector_3p,
 )
 from .matrix44 import Matrix44
 from .matrix33 import Matrix33

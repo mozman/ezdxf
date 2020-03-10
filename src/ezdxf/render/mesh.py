@@ -4,7 +4,7 @@
 from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING, Union, Dict
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.math import Matrix44, Vector, NULLVEC
-from ezdxf.math.construct3d import is_planar_face, subdivide_face, normal_vector_3p
+from ezdxf.math.construct3d import is_planar_face, subdivide_face, normal_vector_3p, subdivide_ngons
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout, UCS, Polyface, Polymesh
@@ -24,7 +24,8 @@ class MeshBuilder:
 
     def __init__(self):
         self.vertices: List[Vector] = []  # vertex storage, list of (x, y, z) tuples or Vector() objects
-        self.faces: List[Sequence[int]] = []  # face storage, each face is a tuple of vertex indices (v0, v1, v2, v3, ....), AutoCAD supports ngons
+        self.faces: List[Sequence[
+            int]] = []  # face storage, each face is a tuple of vertex indices (v0, v1, v2, v3, ....), AutoCAD supports ngons
         self.edges: List[Tuple[int, int]] = []  # edge storage, each edge is a 2-tuple of vertex indices (v0, v1)
 
     def copy(self):
@@ -216,21 +217,22 @@ class MeshBuilder:
                 mesh.add_face(face.points())
         elif other.is_polygon_mesh:
             vertices = other.get_mesh_vertex_cache()
-            for m in range(other.dxf.m_count-1):
-                for n in range(other.dxf.n_count-1):
+            for m in range(other.dxf.m_count - 1):
+                for n in range(other.dxf.n_count - 1):
                     mesh.add_face(
                         (
                             vertices[n, m],
-                            vertices[n+1, m],
-                            vertices[n+1, m+1],
-                            vertices[n, m+1],
+                            vertices[n + 1, m],
+                            vertices[n + 1, m + 1],
+                            vertices[n, m + 1],
                         )
                     )
         else:
             raise TypeError('Not a polymesh or polyface.')
         return mesh
 
-    def render_polyface(self, layout: 'BaseLayout', dxfattribs: dict = None, matrix: 'Matrix44' = None, ucs: 'UCS' = None):
+    def render_polyface(self, layout: 'BaseLayout', dxfattribs: dict = None, matrix: 'Matrix44' = None,
+                        ucs: 'UCS' = None):
         """
         Render mesh as :class:`~ezdxf.entities.Polyface` entity into `layout`.
 
@@ -249,8 +251,30 @@ class MeshBuilder:
             t.transform(matrix)
         if ucs is not None:
             t.transform_to_wcs(ucs)
-        polyface.append_faces(t.faces_as_vertices())
+        polyface.append_faces(subdivide_ngons(t.faces_as_vertices()))
         return polyface
+
+    def render_3dfaces(self, layout: 'BaseLayout', dxfattribs: dict = None, matrix: 'Matrix44' = None,
+                       ucs: 'UCS' = None):
+        """
+        Render mesh as :class:`~ezdxf.entities.Face3d` entities into `layout`.
+
+        .. versionadded:: 0.11.2
+
+        Args:
+            layout: :class:`~ezdxf.layouts.BaseLayout` object
+            dxfattribs: dict of DXF attributes e.g. ``{'layer': 'mesh', 'color': 7}``
+            matrix: transformation matrix of type :class:`~ezdxf.math.Matrix44`
+            ucs: transform vertices by :class:`~ezdxf.math.UCS` to :ref:`WCS`
+
+        """
+        t = MeshTransformer.from_builder(self)
+        if matrix is not None:
+            t.transform(matrix)
+        if ucs is not None:
+            t.transform_to_wcs(ucs)
+        for face in subdivide_ngons(t.faces_as_vertices()):
+            layout.add_3dface(face, dxfattribs=dxfattribs)
 
     @classmethod
     def from_builder(cls, other: 'MeshBuilder') -> 'MeshBuilder':

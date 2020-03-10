@@ -46,9 +46,11 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: has_none_planar_faces
 
-    .. automethod:: render(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None)
+    .. automethod:: render(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None, ucs: UCS = None)
 
-    .. automethod:: render_polyface(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None)
+    .. automethod:: render_polyface(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None, ucs: UCS = None)
+
+    .. automethod:: render_3dfaces(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None, ucs: UCS = None)
 
     .. automethod:: render_normals(layout: BaseLayout, length: float = 1, relative=True, dxfattribs: dict = None)
 

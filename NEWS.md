@@ -16,6 +16,8 @@ Version 0.11.2 - dev
 - NEW: `Ellipse.minor_axis` property returns minor axis as `Vector`
 - NEW: `drawing.encode_base64()` returns DXF document content as base64 encoded binary data
 - NEW: `ezdxf.decode_base64()` returns DXF document from base64 encoded binary data
+- NEW: `ezdxf.math.subdivide_ngons()` yields only triangles or quads, subdivide ngons into triangles
+- NEW: `Meshbuilder.render_3dfaces()` create `3DFACE` objects
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 - BUGFIX: floating point precision error in `intersection_line_line_2d()`
