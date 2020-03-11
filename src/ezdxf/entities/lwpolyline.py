@@ -301,6 +301,8 @@ class LWPolyline(DXFGraphic):
         """
         if target_layout is None:
             target_layout = self.get_layout()
+            if target_layout is None:
+                raise DXFStructureError('LWPOLYLINE without layout assigment, specify target layout.')
 
         if self.doc is None:
             raise DXFStructureError('LWPOLYLINE has to be assigned to a DXF document.')

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List
 import math
 from ezdxf.math import Vector, UCS, BRCS, X_AXIS, Y_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError, DXFStructureError
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
@@ -429,6 +429,8 @@ class Insert(DXFGraphic):
         """
         if target_layout is None:
             target_layout = self.get_layout()
+            if target_layout is None:
+                raise DXFStructureError('INSERT without layout assigment, specify target layout.')
 
         if non_uniform_scaling is False and not self.has_uniform_scaling:
             return EntityQuery()

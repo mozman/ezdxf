@@ -22,9 +22,8 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
     Returns an :class:`~ezdxf.query.EntityQuery` container with all exploded DXF entities.
 
     Args:
-        block_ref: Block reference entity (:class:`~ezdxf.entities.Insert`)
-        target_layout: target layout for exploded DXF entities (modelspace, paperspace or block layout),
-                       if ``None`` the layout of the block reference is used.
+        block_ref: Block reference entity (INSERT)
+        target_layout: explicit target layout for exploded DXF entities
 
     .. warning::
 
@@ -33,6 +32,9 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
         POLYLINE/LWPOLYLINE with arc segments.
 
     """
+    if target_layout is None:
+        raise DXFStructureError('Target layout is None.')
+
     if block_ref.doc is None:
         raise DXFStructureError('Block reference has to be assigned to a DXF document.')
 
