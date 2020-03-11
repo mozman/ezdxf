@@ -71,7 +71,7 @@ def subdivide_ngons(faces: Iterable[Sequence[Union[Vector, Vec2]]]) -> Iterable[
     Args:
         faces: iterable of faces as sequence of :class:`Vec2` and :class:`Vector` objects
 
-    .. versionadded:: 0.11.2
+    .. versionadded:: 0.12
 
     """
     for face in faces:

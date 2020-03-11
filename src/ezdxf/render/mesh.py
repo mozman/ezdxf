@@ -259,7 +259,7 @@ class MeshBuilder:
         """
         Render mesh as :class:`~ezdxf.entities.Face3d` entities into `layout`.
 
-        .. versionadded:: 0.11.2
+        .. versionadded:: 0.12
 
         Args:
             layout: :class:`~ezdxf.layouts.BaseLayout` object

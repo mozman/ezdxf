@@ -406,7 +406,7 @@ class Drawing:
     def encode_base64(self) -> bytes:
         """ Returns DXF document as base64 encoded binary data.
 
-        .. versionadded:: 0.11.2
+        .. versionadded:: 0.12
             Thanks to Joseph Flack
 
         """

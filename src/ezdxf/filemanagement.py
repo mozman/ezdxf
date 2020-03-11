@@ -187,7 +187,7 @@ def decode_base64(data: bytes) -> 'Drawing':
     Args:
         data: DXF document base64 encoded binary data
 
-    .. versionadded:: 0.11.2
+    .. versionadded:: 0.12
         Thanks to Joseph Flack
 
     """

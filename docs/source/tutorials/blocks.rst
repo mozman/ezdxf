@@ -96,7 +96,7 @@ As mentioned above evaluation of block references wrapped into anonymous blocks 
 Copying Block Reference Entities Into Modelspace
 ------------------------------------------------
 
-.. versionadded:: 0.11.2
+.. versionadded:: 0.12
 
 This is an advanced feature and not for beginners!
 

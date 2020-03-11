@@ -59,7 +59,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         Returns the minor axis of the ellipse as :class:`Vector` in WCS.
 
-        .. versionadded:: 0.11.2
+        .. versionadded:: 0.12
 
     .. automethod:: vertices(params:Iterable[float]) -> Iterable[Vector]
 

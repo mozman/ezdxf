@@ -61,13 +61,13 @@ A simple example with different DXF entities::
         dxf.add_solid([(0, 0), (1, 0), (0, 1), (1, 1)])
         dxf.add_point((1.5, 1.5))
 
-        # 2d polyline, new in v0.11.2
+        # 2d polyline, new in v0.12
         dxf.add_polyline_2d([(5, 5), (7, 3), (7, 6)])
 
-        # 2d polyline with bulge value, new in v0.11.2
+        # 2d polyline with bulge value, new in v0.12
         dxf.add_polyline_2d([(5, 5), (7, 3, 0.5), (7, 6)], format='xyb')
 
-        # 3d polyline only, changed in v0.11.2
+        # 3d polyline only, changed in v0.12
         dxf.add_polyline([(4, 3, 2), (8, 5, 0), (2, 4, 9)])
 
         dxf.add_text("test the text entity", align="MIDDLE_CENTER")

@@ -130,7 +130,7 @@ class DXFGraphic(DXFEntity):
         """ Returns the important common properties layer, color, linetype, lineweight, ltscale, true_color
         and color_name as `dxfattribs` dict.
 
-        .. versionadded:: 0.11.2
+        .. versionadded:: 0.12
 
         """
         attribs = dict()

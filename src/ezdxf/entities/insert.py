@@ -144,7 +144,7 @@ class Insert(DXFGraphic):
     def has_scaling(self) -> bool:
         """ Returns ``True`` if any axis scaling is applied.
 
-        .. versionadded:: 0.11.2
+        .. versionadded:: 0.12
 
         """
         if self.dxf.hasattr('xscale') and self.dxf.xscale != 1:
@@ -159,7 +159,7 @@ class Insert(DXFGraphic):
     def has_uniform_scaling(self) -> bool:
         """ Returns ``True`` if scaling is uniform in x-, y- and z-axis.
 
-        .. versionadded:: 0.11.2
+        .. versionadded:: 0.12
 
         """
         return self.dxf.xscale == self.dxf.yscale == self.dxf.zscale
@@ -167,7 +167,7 @@ class Insert(DXFGraphic):
     def scale(self, factor: float):
         """ Set uniform scaling.
 
-        .. versionadded:: 0.11.2
+        .. versionadded:: 0.12
 
         """
         if factor == 0:
@@ -180,7 +180,7 @@ class Insert(DXFGraphic):
     def block(self) -> Optional['BlockLayout']:
         """  Returns associated :class:`~ezdxf.layouts.BlockLayout`.
 
-        .. versionadded:: 0.11.2
+        .. versionadded:: 0.12
 
         """
         if self.doc is None:
@@ -366,7 +366,7 @@ class Insert(DXFGraphic):
         `insert` location, axis aligned to the block axis, :attr:`~Insert.dxf.rotation` around z-axis and axis
         scaling :attr:`~Insert.dxf.xscale`, :attr:`~Insert.dxf.yscale` and :attr:`~Insert.dxf.zscale` are applied.
 
-        .. versionchanged:: 0.11.2
+        .. versionchanged:: 0.12
             renamed from :meth:`ucs`
 
         """
@@ -423,7 +423,7 @@ class Insert(DXFGraphic):
             target_layout: target layout for exploded entities, ``None`` for same layout as source entity.
             non_uniform_scaling: enable non uniform scaling if ``True``, see warning
 
-        .. versionadded:: 0.11.2
+        .. versionadded:: 0.12
             experimental feature
 
         """
@@ -459,7 +459,7 @@ class Insert(DXFGraphic):
         Args:
             non_uniform_scaling: enable non uniform scaling if ``True``, see warning
 
-        .. versionadded:: 0.11.2
+        .. versionadded:: 0.12
             experimental feature
 
         """
