@@ -36,7 +36,7 @@ acdb_lwpolyline = DefSubclass('AcDbPolyline', {
     'elevation': DXFAttr(38, default=0, optional=True),
     'thickness': DXFAttr(39, default=0, optional=True),
     'flags': DXFAttr(70, default=0),
-    'const_width': DXFAttr(43, default=0.0),
+    'const_width': DXFAttr(43, optional=True),
     'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
     # 10, 20 : Vertex x, y
     # 91: vertex identifier ???
@@ -348,9 +348,8 @@ class LWPolylinePoints(VertexArray):
         for point in self:
             x, y, start_width, end_width, bulge = point
             yield DXFVertex(self.VERTEX_CODE, (x, y))
-            if start_width:
+            if start_width or end_width:
                 yield DXFTag(self.START_WIDTH_CODE, start_width)
-            if end_width:
                 yield DXFTag(self.END_WIDTH_CODE, end_width)
             if bulge:
                 yield DXFTag(self.BULGE_CODE, bulge)

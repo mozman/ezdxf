@@ -43,6 +43,7 @@ def test_default_init():
     assert dxfclass.dxftype() == 'LWPOLYLINE'
     assert dxfclass.dxf.handle is None
     assert dxfclass.dxf.owner is None
+    assert dxfclass.dxf.hasattr('const_width') is False
 
 
 def test_default_new():
