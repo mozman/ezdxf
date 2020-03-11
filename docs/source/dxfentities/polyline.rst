@@ -153,6 +153,10 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: transform_to_wcs(ucs: UCS) -> Polyline
 
+    .. automethod:: virtual_entities() -> Iterable[Union[Line, Arc]]
+
+    .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
+
 Vertex
 ======
 

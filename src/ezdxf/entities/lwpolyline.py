@@ -11,7 +11,7 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED, DXFSt
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.packedtags import VertexArray
-from ezdxf.explode import virtual_lwpolyline_entities
+from ezdxf.explode import virtual_lwpolyline_entities, explode_entity
 from ezdxf.query import EntityQuery
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -283,6 +283,8 @@ class LWPolyline(DXFGraphic):
         This entities are located at the original positions, but are not stored in the entity database, have no handle
         and are not assigned to any layout.
 
+        .. versionadded:: 0.12
+
         """
         return virtual_lwpolyline_entities(self)
 
@@ -296,34 +298,10 @@ class LWPolyline(DXFGraphic):
         Args:
             target_layout: target layout for DXF parts, ``None`` for same layout as source entity.
 
-        .. versionadded:: 0.11.2
+        .. versionadded:: 0.12
 
         """
-        if target_layout is None:
-            target_layout = self.get_layout()
-            if target_layout is None:
-                raise DXFStructureError('LWPOLYLINE without layout assigment, specify target layout.')
-
-        if self.doc is None:
-            raise DXFStructureError('LWPOLYLINE has to be assigned to a DXF document.')
-
-        entitydb = self.doc.entitydb
-        if entitydb is None:
-            raise DXFStructureError('Exploding LWPOLYLINE requires an entity database.')
-
-        entities = []
-
-        for entity in self.virtual_entities():
-            entitydb.add(entity)
-            target_layout.add_entity(entity)
-            entities.append(entity)
-
-        source_layout = self.get_layout()
-        if source_layout is not None:
-            source_layout.delete_entity(self)
-        else:
-            entitydb.delete_entity(self)
-        return EntityQuery(entities)
+        return explode_entity(self, target_layout)
 
 
 class LWPolylinePoints(VertexArray):
