@@ -1,28 +1,29 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, cast
+from typing import TYPE_CHECKING, Iterable, cast, Union
+import math
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
 from ezdxf.query import EntityQuery
-from ezdxf.math import Vector
+from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS
+from ezdxf.entities import Line, Arc
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic
+    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline, Face3d
 
 
 def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') -> EntityQuery:
     """
     Explode a block reference into single DXF entities.
 
-    Transforms the block entities into the required :ref:`WCS` location by applying the block reference
+    Transforms the block entities into the required WCS location by applying the block reference
     attributes `insert`, `extrusion`, `rotation` and the scaling values `xscale`, `yscale` and `zscale`.
     Multiple inserts by row and column attributes is not supported.
 
-    Returns an :class:`~ezdxf.query.EntityQuery` container with all exploded DXF entities.
+    Returns an EntityQuery() container with all exploded DXF entities.
 
     Args:
-        block_ref: Block reference entity (:class:`~ezdxf.entities.Insert`)
-        target_layout: target layout for exploded DXF entities (modelspace, paperspace or block layout),
-                       if ``None`` the layout of the block reference is used.
+        block_ref: Block reference entity (INSERT)
+        target_layout: explicit target layout for exploded DXF entities
 
     .. warning::
 
@@ -30,8 +31,13 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
         some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
         POLYLINE/LWPOLYLINE with arc segments.
 
+    (internal API)
+
     """
-    if block_ref.doc is None or block_ref.doc.entitydb is None:
+    if target_layout is None:
+        raise DXFStructureError('Target layout is None.')
+
+    if block_ref.doc is None:
         raise DXFStructureError('Block reference has to be assigned to a DXF document.')
 
     entitydb = block_ref.doc.entitydb
@@ -40,7 +46,7 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
 
     entities = []
 
-    for entity in virtual_entities(block_ref):
+    for entity in virtual_block_reference_entities(block_ref):
         entitydb.add(entity)
         target_layout.add_entity(entity)
         entities.append(entity)
@@ -62,23 +68,16 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
     return EntityQuery(entities)
 
 
-def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
+def virtual_block_reference_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
     """
-    Yields 'virtual' entities of block reference `block_ref`. This method is meant to examine the the block reference
+    Yields 'virtual' parts of block reference `block_ref`. This method is meant to examine the the block reference
     entities without the need to explode the block reference.
 
     This entities are located at the 'exploded' positions, but are not stored in the entity database, have no handle
-    are not assigned to any layout. It is possible to convert this entities into regular drawing entities, this lines
-    show how to add the virtual `entity` to the entity database and assign this entity to the modelspace::
-
-        doc.entitydb.add(entity)
-        msp = doc.modelspace()
-        msp.add_entity(entity)
-
-    To explode the whole block reference use :meth:`~ezdxf.entities.Insert.explode`.
+    and are not assigned to any layout.
 
     Args:
-        block_ref: Block reference entity (:class:`~ezdxf.entities.Insert`)
+        block_ref: Block reference entity (INSERT)
 
     .. warning::
 
@@ -86,7 +85,11 @@ def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
         some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
         POLYLINE/LWPOLYLINE with arc segments.
 
+    (internal API)
+
     """
+    assert block_ref.dxftype() == 'INSERT'
+
     brcs = block_ref.brcs()
     # Non uniform scaling will produce incorrect results for some entities!
     xscale = block_ref.dxf.xscale
@@ -127,21 +130,38 @@ def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
             pass  # nothing else to do
         elif dxftype in {'CIRCLE', 'ARC'}:
             # simple uniform scaling of radius
-            # How to handle non uniform scaling? -> Ellipse
+            # Non uniform scaling: ARC, CIRCLE -> ELLIPSE
             copy.dxf.radius = entity.dxf.radius * uniform_scaling
         elif dxftype == 'ELLIPSE':
             if non_uniform_scaling:
-                # ELLIPSE -> ELLIPSE
-                if entity.dxftype() == 'ELLIPSE':
+                if entity.dxftype() == 'ELLIPSE':  # original entity is an ELLIPSE
                     ellipse = cast('Ellipse', entity)
-                    major_axis = Vector(ellipse.dxf.major_axis)
-                    minor_axis = ellipse.minor_axis
-                    major_axis_length = brcs.direction_to_wcs(major_axis).magnitude
-                    minor_axis_length = brcs.direction_to_wcs(minor_axis).magnitude
-                    copy.dxf.ratio = max(minor_axis_length / major_axis_length, 1e-6)
-                else:  # ARC -> ELLIPSE
-                    scale = max(min((yscale / xscale), 1.0), 1e-6)
-                    copy.dxf.ratio = scale
+
+                    # transform axis
+                    conjugated_major_axis = brcs.direction_to_wcs(ellipse.dxf.major_axis)
+                    conjugated_minor_axis = brcs.direction_to_wcs(ellipse.minor_axis)
+                    major_axis, _, ratio = rytz_axis_construction(conjugated_major_axis, conjugated_minor_axis)
+                    copy.dxf.major_axis = major_axis
+                    copy.dxf.ratio = max(ratio, 1e-6)
+
+                    # adjusting start- and end parameter
+                    center = copy.dxf.center  # transformed center point
+                    start_point, end_point = ellipse.vertices((ellipse.dxf.start_param, ellipse.dxd.end_param))
+                    start_vec = brcs.to_wcs(start_point) - center
+                    end_vec = brcs.to_wcs(end_point) - center
+                    # The dot product (scalar product) is the angle between two vectors.
+                    # https://en.wikipedia.org/wiki/Dot_product
+                    # Not sure if this is the correct way to adjust start- and end parameter
+                    copy.dxf.start_param = normalize_angle(major_axis.dot(start_vec))
+                    copy.dxf.end_param = normalize_angle(major_axis.dot(end_vec))
+
+                    if copy.dxf.ratio > 1:
+                        copy.swap_axis()
+                else:  # converted from ARC to ELLIPSE
+                    ellipse = cast('Ellipse', copy)
+                    ellipse.dxf.ratio = max(yscale / xscale, 1e-6)
+                    if ellipse.dxf.ratio > 1:
+                        ellipse.swap_axis()
         elif dxftype == 'MTEXT':
             # Scale MTEXT height/width just by uniform_scaling, how to handle non uniform scaling?
             copy.dxf.char_height *= uniform_scaling
@@ -167,3 +187,153 @@ def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
         else:  # unsupported entity will be ignored
             continue
         yield copy
+
+
+def explode_entity(entity: 'DXFGraphic', target_layout: 'BaseLayout' = None) -> 'EntityQuery':
+    """
+    Explode parts of an entity as primitives into target layout, if target layout is ``None``,
+    the target layout is the layout of the POLYLINE.
+
+    Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF parts.
+
+    Args:
+        entity: DXF entity to explode, has to have a :meth:`virtual_entities()` method
+        target_layout: target layout for DXF parts, ``None`` for same layout as source entity
+
+    .. versionadded:: 0.12
+
+    (internal API)
+
+    """
+    dxftype = entity.dxftype()
+    if entity.doc is None:
+        raise DXFStructureError(f'{dxftype} has to be assigned to a DXF document.')
+
+    entitydb = entity.doc.entitydb
+    if entitydb is None:
+        raise DXFStructureError(f'{dxftype} requires an entity database.')
+
+    if target_layout is None:
+        target_layout = entity.get_layout()
+        if target_layout is None:
+            raise DXFStructureError(f'{dxftype} without layout assigment, specify target layout.')
+
+    entities = []
+
+    assert hasattr(entity, 'virtual_entities')
+    for e in entity.virtual_entities():
+        entitydb.add(e)
+        target_layout.add_entity(e)
+        entities.append(e)
+
+    source_layout = entity.get_layout()
+    if source_layout is not None:
+        source_layout.delete_entity(entity)
+    else:
+        entitydb.delete_entity(entity)
+    return EntityQuery(entities)
+
+
+def virtual_lwpolyline_entities(lwpolyline: 'LWPolyline') -> Iterable[Union['Line', 'Arc']]:
+    """
+    Yields 'virtual' entities of LWPOLYLINE as LINE or ARC objects.
+
+    This entities are located at the original positions, but are not stored in the entity database, have no handle
+    and are not assigned to any layout.
+
+    (internal API)
+
+    """
+    assert lwpolyline.dxftype() == 'LWPOLYLINE'
+
+    points = lwpolyline.get_points('xyb')
+    if len(points) < 2:
+        return
+
+    if lwpolyline.closed:
+        points.append(points[0])
+
+    yield from _virtual_polyline_entities(
+        points=points,
+        elevation=lwpolyline.dxf.elevation,
+        extrusion=lwpolyline.dxf.get('extrusion', None),
+        dxfattribs=lwpolyline.graphic_properties(),
+        doc=lwpolyline.doc,
+    )
+
+
+def virtual_polyline_entities(polyline: 'Polyline') -> Iterable[Union['Line', 'Arc', 'Face3d']]:
+    """
+    Yields 'virtual' entities of POLYLINE as LINE, ARC or 3DFACE objects.
+
+    This entities are located at the original positions, but are not stored in the entity database, have no handle
+    and are not assigned to any layout.
+
+    (internal API)
+
+    """
+    assert polyline.dxftype() == 'POLYLINE'
+    if polyline.is_2d_polyline:
+        return virtual_polyline2d_entities(polyline)
+    else:
+        raise NotImplementedError
+
+
+def virtual_polyline2d_entities(polyline: 'Polyline') -> Iterable[Union['Line', 'Arc']]:
+    """
+    Yields 'virtual' entities of 2D POLYLINE as LINE or ARC objects.
+
+    This entities are located at the original positions, but are not stored in the entity database, have no handle
+    and are not assigned to any layout.
+
+    (internal API)
+
+    """
+    assert polyline.dxftype() == 'POLYLINE'
+    assert polyline.is_2d_polyline
+    if len(polyline.vertices) < 2:
+        return
+
+    points = [(v.dxf.location.x, v.dxf.location.y, v.dxf.bulge) for v in polyline.vertices]
+    if polyline.is_closed:
+        points.append(points[0])
+
+    yield from _virtual_polyline_entities(
+        points=points,
+        elevation=Vector(polyline.dxf.get('elevation', (0, 0, 0))).z,
+        extrusion=polyline.dxf.get('extrusion', None),
+        dxfattribs=polyline.graphic_properties(),
+        doc=polyline.doc,
+    )
+
+
+def _virtual_polyline_entities(points, elevation: float, extrusion: Vector, dxfattribs: dict, doc) -> Iterable[
+    Union['Line', 'Arc']]:
+    
+    ocs = OCS(extrusion) if extrusion else OCS()
+    prev_point = None
+    prev_bulge = None
+
+    for x, y, bulge in points:
+        point = Vector(x, y, elevation)
+        if prev_point is None:
+            prev_point = point
+            prev_bulge = bulge
+            continue
+
+        attribs = dict(dxfattribs)
+        if prev_bulge != 0:
+            center, start_angle, end_angle, radius = bulge_to_arc(prev_point, point, prev_bulge)
+            attribs['center'] = Vector(center.x, center.y, elevation)
+            attribs['radius'] = radius
+            attribs['start_angle'] = math.degrees(start_angle)
+            attribs['end_angle'] = math.degrees(end_angle)
+            if extrusion:
+                attribs['extrusion'] = extrusion
+            yield Arc.new(doc=doc, dxfattribs=attribs)
+        else:
+            attribs['start'] = ocs.to_wcs(prev_point)
+            attribs['end'] = ocs.to_wcs(point)
+            yield Line.new(doc=doc, dxfattribs=attribs)
+        prev_point = point
+        prev_bulge = bulge

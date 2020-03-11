@@ -125,3 +125,35 @@ def test_from_arc():
     assert ellipse.dxf.ratio == 1
     assert ellipse.dxf.start_param == 0
     assert math.isclose(ellipse.dxf.end_param, math.pi * 2)
+
+
+def test_swap_axis_full_ellipse():
+    ellipse = Ellipse.new(dxfattribs={
+        'major_axis': (5, 0, 0),
+        'ratio': 2,  # > 1 is not valid
+    })
+    assert ellipse.minor_axis.isclose((0, 10, 0))
+
+    ellipse.swap_axis()
+    assert ellipse.dxf.ratio == 0.5
+    assert ellipse.dxf.major_axis == (0, 10, 0)
+    assert ellipse.minor_axis == (-5, 0, 0)
+    assert ellipse.dxf.start_param == 0
+    assert ellipse.dxf.end_param == math.pi * 2
+
+
+def test_swap_axis_half_ellipse():
+    ellipse = Ellipse.new(dxfattribs={
+        'major_axis': (5, 0, 0),
+        'ratio': 2,  # > 1 is not valid
+        'start_param': math.pi / 2.0,
+        'end_param': math.pi / 2.0 * 3.0
+    })
+    assert ellipse.minor_axis.isclose((0, 10, 0))
+
+    ellipse.swap_axis()
+    assert ellipse.dxf.ratio == 0.5
+    assert ellipse.dxf.major_axis == (0, 10, 0)
+    assert ellipse.minor_axis == (-5, 0, 0)
+    assert ellipse.dxf.start_param == 0
+    assert ellipse.dxf.end_param == math.pi

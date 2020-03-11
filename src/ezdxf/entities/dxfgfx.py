@@ -3,7 +3,7 @@
 # Created 2019-02-13
 #
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
-from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Sequence
+from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Sequence, Dict
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXFValueError, DXFKeyError, DXFTableEntryError
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace
 
 __all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd']
+
+GRAPHIC_PROPERTIES = {'layer', 'linetype', 'color', 'lineweight', 'ltscale', 'true_color', 'color_name', }
 
 acdb_entity = DefSubclass('AcDbEntity', {
     'layer': DXFAttr(8, default='0'),  # layername as string
@@ -123,6 +125,19 @@ class DXFGraphic(DXFEntity):
     def transparency(self, transparency: float) -> None:
         """ Set transparency as float value between 0 and 1, 0 is opaque and 1 is 100% transparent (invisible). """
         self.dxf.set('transparency', float2transparency(transparency))
+
+    def graphic_properties(self) -> Dict:
+        """ Returns the important common properties layer, color, linetype, lineweight, ltscale, true_color
+        and color_name as `dxfattribs` dict.
+
+        .. versionadded:: 0.11.2
+
+        """
+        attribs = dict()
+        for key in GRAPHIC_PROPERTIES:
+            if self.dxf.hasattr(key):
+                attribs[key] = self.dxf.get(key)
+        return attribs
 
     def ocs(self) -> Optional[OCS]:
         """

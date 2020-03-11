@@ -2,25 +2,26 @@
 News
 ====
 
-Version 0.11.2 - dev
---------------------
+Version 0.12 - dev
+------------------
 
 - NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if block not exist or is an XREF
 - NEW: `Insert.has_scaling` returns `True` if any axis scaling is applied
-- NEW: `Insert.has_uniform_scaling` returns `True` if scaling is uniform in x-, y- and z-axis
-- NEW: `Insert.scale(factor)` set uniform scaling
+- NEW: `Insert.has_uniform_scaling` returns `True` if scaling is uniform in x-, y- and z-axis.
+- NEW: `Insert.scale(factor)` set uniform scaling.
 - NEW: `Insert.virtual_entities()` yields 'virtual' entities of a block reference (experimental)
 - NEW: `Insert.explode()` explode block reference entities into target layout (experimental)
+- NEW: `LWPolyline.virtual_entities()` yields 'virtual' LINE and ARC entities
+- NEW: `LWPolyline.explode()` explode LWPOLYLINE as LINE and ARC entities into target layout
+- NEW: `Polyline.virtual_entities()` yields 'virtual' LINE, ARC or 3DFACE entities
+- NEW: `Polyline.explode()` explode POLYLINE as LINE, ARC or 3DFACE entities into target layout
 - NEW: `Block()` properties `is_anonymous`, `is_xref` and `is_xref_overlay`
 - NEW: `R12FastStreamWriter.add_polyline_2d()`, add 2D POLYLINE with start width, end width and bulge value support
 - NEW: `Ellipse.minor_axis` property returns minor axis as `Vector`
-- NEW: `drawing.encode_base64()` returns DXF document content as base64 encoded binary data
-- NEW: `ezdxf.decode_base64()` returns DXF document from base64 encoded binary data
-- NEW: `ezdxf.math.subdivide_ngons()` yields only triangles or quads, subdivide ngons into triangles
-- NEW: `Meshbuilder.render_3dfaces()` create `3DFACE` objects
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 - BUGFIX: floating point precision error in `intersection_line_line_2d()`
+- BUGFIX: attribute error in `Polyline.transform_to_wcs()` for 2d polylines
 
 Version 0.11.1 - 2020-02-29
 ---------------------------

@@ -1,22 +1,24 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
-from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, cast, List
+from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, cast, List, Union
 import array
 import copy
 from contextlib import contextmanager
-from ezdxf.math import Vector, OCS, Z_AXIS
+from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED, DXFStructureError
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.packedtags import VertexArray
+from ezdxf.explode import virtual_lwpolyline_entities, explode_entity
+from ezdxf.query import EntityQuery
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, Vertex, DXFNamespace, UCS
+    from ezdxf.eztypes import TagWriter, Drawing, Vertex, DXFNamespace, UCS, Line, Arc, BaseLayout
 
 __all__ = ['LWPolyline']
 
@@ -273,6 +275,33 @@ class LWPolyline(DXFGraphic):
         # all new OCS vertices must have the same z-axis, which is the elevation of the polyline
         self.dxf.elevation = vertices[0][2]
         return self
+
+    def virtual_entities(self) -> Iterable[Union['Line', 'Arc']]:
+        """
+        Yields 'virtual' parts of LWPOLYLINE as LINE or ARC entities.
+
+        This entities are located at the original positions, but are not stored in the entity database, have no handle
+        and are not assigned to any layout.
+
+        .. versionadded:: 0.12
+
+        """
+        return virtual_lwpolyline_entities(self)
+
+    def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
+        """
+        Explode parts of LWPOLYLINE as LINE or ARC entities into target layout, if target layout is ``None``,
+        the target layout is the layout of the LWPOLYLINE.
+
+        Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF parts.
+
+        Args:
+            target_layout: target layout for DXF parts, ``None`` for same layout as source entity.
+
+        .. versionadded:: 0.12
+
+        """
+        return explode_entity(self, target_layout)
 
 
 class LWPolylinePoints(VertexArray):

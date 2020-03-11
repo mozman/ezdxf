@@ -3,7 +3,7 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 import math
-from ezdxf.math import Vector
+from ezdxf.math import Vector, normalize_angle
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from .dxfentity import base_class, SubclassProcessor
@@ -24,6 +24,9 @@ acdb_ellipse = DefSubclass('AcDbEllipse', {
     'start_param': DXFAttr(41, default=0),  # this value is 0.0 for a full ellipse
     'end_param': DXFAttr(42, default=math.pi * 2),  # this value is 2*pi for a full ellipse
 })
+
+PI2 = math.pi * 2.
+HALF_PI = math.pi / 2.
 
 
 @register_entity
@@ -100,6 +103,17 @@ class Ellipse(DXFGraphic):
     def end_point(self) -> 'Vector':
         v = list(self.vertices([self.dxf.end_param]))
         return v[0]
+
+    def swap_axis(self):
+        """ Swap axis and adjust start- and end parameter. """
+        self.dxf.major_axis = self.minor_axis
+        self.dxf.ratio = 1.0 / self.dxf.ratio
+        start_param = self.dxf.start_param
+        end_param = self.dxf.end_param
+        if math.isclose(start_param, 0) and math.isclose(end_param, PI2):
+            return
+        self.dxf.start_param = normalize_angle(start_param - HALF_PI)
+        self.dxf.end_param = normalize_angle(end_param - HALF_PI)
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'Ellipse':
         """ Transform ELLIPSE entity from local :class:`~ezdxf.math.UCS` coordinates to

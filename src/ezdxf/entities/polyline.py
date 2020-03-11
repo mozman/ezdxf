@@ -1,19 +1,23 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict
 from itertools import chain
 from ezdxf.math import Vector, Z_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES, DXFStructureError
 from ezdxf.lldxf import const
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
 from .lwpolyline import FORMAT_CODES
+from ezdxf.explode import virtual_polyline_entities, explode_entity
+from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing, UCS
+    from ezdxf.eztypes import (
+        TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing, UCS, Line, Arc, Face3d, BaseLayout,
+    )
 
 __all__ = ['Polyline', 'Polyface', 'Polymesh']
 
@@ -373,9 +377,10 @@ class Polyline(DXFGraphic):
         .. versionadded:: 0.11
 
         """
+
         def _ocs_locations(elevation):
             for vertex in self.vertices:
-                location = vertex.location
+                location = vertex.dxf.location
                 if elevation is not None:
                     # Older DXF version may not have written the z-axis, which is now 0 by default in ezdxf,
                     # so replace existing z-axis by elevation value
@@ -404,6 +409,33 @@ class Polyline(DXFGraphic):
             for vertex in self.vertices:
                 vertex.transform_to_wcs(ucs)
         return self
+
+    def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
+        """
+        Explode parts of POLYLINE as LINE, ARC or 3DFACE entities into target layout, if target layout is ``None``,
+        the target layout is the layout of the POLYLINE.
+
+        Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF parts.
+
+        Args:
+            target_layout: target layout for DXF parts, ``None`` for same layout as source entity.
+
+        .. versionadded:: 0.12
+
+        """
+        return explode_entity(self, target_layout)
+
+    def virtual_entities(self) -> Iterable[Union['Line', 'Arc', 'Face3d']]:
+        """
+        Yields 'virtual' parts of POLYLINE as LINE, ARC or 3DFACE entities.
+
+        This entities are located at the original positions, but are not stored in the entity database, have no handle
+        and are not assigned to any layout.
+
+        .. versionadded:: 0.12
+
+        """
+        return virtual_polyline_entities(self)
 
 
 class Polyface(Polyline):
