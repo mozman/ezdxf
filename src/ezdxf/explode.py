@@ -33,7 +33,7 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
         POLYLINE/LWPOLYLINE with arc segments.
 
     """
-    if block_ref.doc is None or block_ref.doc.entitydb is None:
+    if block_ref.doc is None:
         raise DXFStructureError('Block reference has to be assigned to a DXF document.')
 
     entitydb = block_ref.doc.entitydb
@@ -42,7 +42,7 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
 
     entities = []
 
-    for entity in virtual_entities(block_ref):
+    for entity in virtual_block_reference_entities(block_ref):
         entitydb.add(entity)
         target_layout.add_entity(entity)
         entities.append(entity)
@@ -64,14 +64,15 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
     return EntityQuery(entities)
 
 
-def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
+def virtual_block_reference_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
     """
-    Yields 'virtual' entities of block reference `block_ref`. This method is meant to examine the the block reference
+    Yields 'virtual' parts of block reference `block_ref`. This method is meant to examine the the block reference
     entities without the need to explode the block reference.
 
     This entities are located at the 'exploded' positions, but are not stored in the entity database, have no handle
-    are not assigned to any layout. It is possible to convert this entities into regular drawing entities, this lines
-    show how to add the virtual `entity` to the entity database and assign this entity to the modelspace::
+    and are not assigned to any layout. It is possible to convert this entities into regular drawing entities,
+    this lines show how to add the virtual `entity` to the entity database and assign this entity
+    to the modelspace::
 
         doc.entitydb.add(entity)
         msp = doc.modelspace()
@@ -188,7 +189,14 @@ def virtual_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
         yield copy
 
 
-def explode_lwpolyline(lwpolyline: 'LWPolyline') -> Iterable[Union['Line', 'Arc']]:
+def virtual_lwpolyline_entities(lwpolyline: 'LWPolyline') -> Iterable[Union['Line', 'Arc']]:
+    """
+    Yields 'virtual' entities of `lwpolyline` as :class:`~ezdxf.entities.Line` or :class:`~ezdxf.entities.Arc` objects.
+
+    This entities are located at the original positions, but are not stored in the entity database, have no handle
+    and are not assigned to any layout.
+
+    """
     elevation = lwpolyline.dxf.elevation
     extrusion = lwpolyline.dxf.get('extrusion', None)
     doc = lwpolyline.doc
@@ -197,7 +205,7 @@ def explode_lwpolyline(lwpolyline: 'LWPolyline') -> Iterable[Union['Line', 'Arc'
     prev_point = None
     prev_bulge = None
 
-    points = list(lwpolyline.points('xyb'))
+    points = lwpolyline.get_points('xyb')
     if len(points) < 2:
         return
 

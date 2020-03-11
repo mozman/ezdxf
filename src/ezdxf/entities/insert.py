@@ -9,7 +9,7 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
-from ezdxf.explode import explode_block_reference, virtual_entities
+from ezdxf.explode import explode_block_reference, virtual_block_reference_entities
 from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
@@ -420,7 +420,7 @@ class Insert(DXFGraphic):
             POLYLINE/LWPOLYLINE with arc segments.
 
         Args:
-            target_layout: target layout for exploded entities
+            target_layout: target layout for exploded entities, ``None`` for same layout as source entity.
             non_uniform_scaling: enable non uniform scaling if ``True``, see warning
 
         .. versionadded:: 0.11.2
@@ -464,4 +464,4 @@ class Insert(DXFGraphic):
         if non_uniform_scaling is False and not self.has_uniform_scaling:
             return []
 
-        return virtual_entities(self)
+        return virtual_block_reference_entities(self)

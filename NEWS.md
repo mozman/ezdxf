@@ -11,7 +11,8 @@ Version 0.11.2 - dev
 - NEW: `Insert.scale(factor)` set uniform scaling.
 - NEW: `Insert.virtual_entities()` yields 'virtual' entities of a block reference (experimental)
 - NEW: `Insert.explode()` explode block reference entities into target layout (experimental)
-- NEW: `UCS.scale()` creates a new scaled UCS
+- NEW: `LWPolyline.virtual_entities()` yields 'virtual' LINE and ARC entities
+- NEW: `LWPolyline.explode()` explode LWPOLYLINE as LINE and ARC entities into target layout
 - NEW: `Block()` properties `is_anonymous`, `is_xref` and `is_xref_overlay`
 - NEW: `R12FastStreamWriter.add_polyline_2d()`, add 2D POLYLINE with start width, end width and bulge value support
 - NEW: `Ellipse.minor_axis` property returns minor axis as `Vector`
