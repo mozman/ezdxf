@@ -116,7 +116,7 @@ class Face3d(_Base):
 
     def set_edge_visibilty(self, num, status=False):
         """ Set visibility of edge `num`, status `True` for visible, status `False` for invisible. """
-        if status:
+        if not status:
             self.dxf.invisible = self.dxf.invisible | (1 << num)
         else:
             self.dxf.invisible = self.dxf.invisible & ~(1 << num)

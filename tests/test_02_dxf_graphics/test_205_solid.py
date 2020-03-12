@@ -164,11 +164,11 @@ def test_3dface():
     assert face.is_invisible_edge(3) is True
 
     face.dxf.invisible = 0
-    face.set_edge_visibilty(3, True)
-    assert face.dxf.invisible == 8
-    face.set_edge_visibilty(1, True)
-    assert face.dxf.invisible == 10
     face.set_edge_visibilty(3, False)
+    assert face.dxf.invisible == 8
+    face.set_edge_visibilty(1, False)
+    assert face.dxf.invisible == 10
+    face.set_edge_visibilty(3, True)
     assert face.dxf.invisible == 2
 
     collector = TagCollector(dxfversion=DXF2000)

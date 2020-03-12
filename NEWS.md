@@ -23,6 +23,7 @@ Version 0.12 - dev
 - BUGFIX: floating point precision error in `intersection_line_line_2d()`
 - BUGFIX: attribute error in `Polyline.transform_to_wcs()` for 2d polylines
 - BUGFIX: LWPOLYLINE was always exported with `const_width=0`
+- BUGFIX: `Face3d.set_edge_visibility()` set inverted state (visible <-> invisible)
 
 Version 0.11.1 - 2020-02-29
 ---------------------------

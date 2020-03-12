@@ -2,13 +2,13 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, cast, Union
 import math
-from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
+from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
 from ezdxf.query import EntityQuery
 from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS
 from ezdxf.entities import Line, Arc
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline, Face3d
+    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline, Face3d, Polyface, Polymesh
 
 
 def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') -> EntityQuery:
@@ -275,6 +275,12 @@ def virtual_polyline_entities(polyline: 'Polyline') -> Iterable[Union['Line', 'A
     assert polyline.dxftype() == 'POLYLINE'
     if polyline.is_2d_polyline:
         return virtual_polyline2d_entities(polyline)
+    elif polyline.is_3d_polyline:
+        return virtual_polyline3d_entities(polyline)
+    elif polyline.is_polygon_mesh:
+        return virtual_polymesh_entities(polyline)
+    elif polyline.is_poly_face_mesh:
+        return virtual_polyface_entities(polyline)
     else:
         raise NotImplementedError
 
@@ -309,7 +315,6 @@ def virtual_polyline2d_entities(polyline: 'Polyline') -> Iterable[Union['Line', 
 
 def _virtual_polyline_entities(points, elevation: float, extrusion: Vector, dxfattribs: dict, doc) -> Iterable[
     Union['Line', 'Arc']]:
-    
     ocs = OCS(extrusion) if extrusion else OCS()
     prev_point = None
     prev_bulge = None
@@ -337,3 +342,84 @@ def _virtual_polyline_entities(points, elevation: float, extrusion: Vector, dxfa
             yield Line.new(doc=doc, dxfattribs=attribs)
         prev_point = point
         prev_bulge = bulge
+
+
+def virtual_polyline3d_entities(polyline: 'Polyline') -> Iterable['Line']:
+    """
+    Yields 'virtual' entities of 3D POLYLINE as LINE objects.
+
+    This entities are located at the original positions, but are not stored in the entity database, have no handle
+    and are not assigned to any layout.
+
+    (internal API)
+
+    """
+    assert polyline.dxftype() == 'POLYLINE'
+    assert polyline.is_3d_polyline
+    if len(polyline.vertices) < 2:
+        return
+    doc = polyline.doc
+    vertices = polyline.vertices
+    dxfattribs = polyline.graphic_properties()
+    start = -1 if polyline.is_closed else 0
+    for index in range(start, len(vertices) - 1):
+        dxfattribs['start'] = vertices[index].dxf.location
+        dxfattribs['end'] = vertices[index + 1].dxf.location
+        yield Line.new(doc=doc, dxfattribs=dxfattribs)
+
+
+def virtual_polymesh_entities(polyline: 'Polyline') -> Iterable['Face3d']:
+    """
+    Yields 'virtual' entities of POLYMESH as 3DFACE objects.
+
+    This entities are located at the original positions, but are not stored in the entity database, have no handle
+    and are not assigned to any layout.
+
+    (internal API)
+
+    """
+    polymesh = cast('Polymesh', polyline)
+    assert polymesh.dxftype() == 'POLYLINE'
+    assert polymesh.is_polygon_mesh
+    doc = polymesh.doc
+    mesh = polymesh.get_mesh_vertex_cache()
+    dxfattribs = polymesh.graphic_properties()
+    return []
+
+
+def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
+    """
+    Yields 'virtual' entities of POLYFACE as 3DFACE objects.
+
+    This entities are located at the original positions, but are not stored in the entity database, have no handle
+    and are not assigned to any layout.
+
+    (internal API)
+
+    """
+    assert polyline.dxftype() == 'POLYLINE'
+    assert polyline.is_poly_face_mesh
+
+    doc = polyline.doc
+    vertices = polyline.vertices
+    base_attribs = polyline.graphic_properties()
+
+    face_records = (v for v in vertices if v.is_face_record)
+    for face in face_records:
+        face3d_attribs = dict(base_attribs)
+        face3d_attribs.update(face.face_record.graphic_properties())
+        invisible = 0
+        pos = 1
+
+        indices = ((face.dxf.name, name) for name in VERTEXNAMES if face.dxf.hasattr(name))
+        for index, name in indices:
+            # vertex indices are 1-based, negative indices indicate invisible edges
+            if index < 0:
+                index = abs(index)
+                invisible += pos
+            index = index - 1
+            face3d_attribs[name] = vertices[index].dxf.location
+            pos <<= 1
+
+        face3d_attribs['invisible'] = invisible
+        yield Face3d.new(doc=doc, dxfattribs=face3d_attribs)

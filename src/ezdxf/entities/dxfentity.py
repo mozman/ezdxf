@@ -568,8 +568,9 @@ class DXFEntity:
 
     def update_dxf_attribs(self, dxfattribs: dict) -> None:
         """ Set DXF attributes by a ``dict`` like :code:`{'layer': 'test', 'color': 4}`. """
+        setter = self.dxf.set
         for key, value in dxfattribs.items():
-            self.dxf.set(key, value)
+            setter(key, value)
 
     def post_new_hook(self):
         """ Post processing and integrity validation after entity creation (internal API) """
