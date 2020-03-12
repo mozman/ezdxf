@@ -349,6 +349,8 @@ class LWPolylinePoints(VertexArray):
             x, y, start_width, end_width, bulge = point
             yield DXFVertex(self.VERTEX_CODE, (x, y))
             if start_width or end_width:
+                # export always start- and end width together,
+                # required for BricsCAD but not AutoCAD!
                 yield DXFTag(self.START_WIDTH_CODE, start_width)
                 yield DXFTag(self.END_WIDTH_CODE, end_width)
             if bulge:

@@ -22,7 +22,7 @@ Version 0.12 - dev
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 - BUGFIX: floating point precision error in `intersection_line_line_2d()`
 - BUGFIX: attribute error in `Polyline.transform_to_wcs()` for 2d polylines
-- BUGFIX: LWPOLYLINE was always exported with const_width=0
+- BUGFIX: LWPOLYLINE was always exported with `const_width=0`
 
 Version 0.11.1 - 2020-02-29
 ---------------------------
