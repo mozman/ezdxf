@@ -20,6 +20,7 @@ Version 0.12 - dev
 - NEW: `Ellipse.minor_axis` property returns minor axis as `Vector`
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
+- CHANGE: `Polyline.close()`, `Polyline.m_close()` and `Polyline.n_close()` can set and **clear** closed state.
 - BUGFIX: floating point precision error in `intersection_line_line_2d()`
 - BUGFIX: attribute error in `Polyline.transform_to_wcs()` for 2d polylines
 - BUGFIX: LWPOLYLINE was always exported with `const_width=0`

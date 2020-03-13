@@ -135,13 +135,13 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: n_close
 
-    .. method:: close
+    .. automethod:: close
 
-    .. method:: __len__
+    .. automethod:: __len__
 
-    .. method:: __getitem__
+    .. automethod:: __getitem__
 
-    .. method:: points
+    .. automethod:: points
 
     .. automethod:: append_vertex
 

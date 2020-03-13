@@ -5,10 +5,10 @@ import math
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
 from ezdxf.query import EntityQuery
 from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS
-from ezdxf.entities import Line, Arc
+from ezdxf.entities import Line, Arc, Face3d
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline, Face3d, Polyface, Polymesh
+    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline, Polyface, Polymesh
 
 
 def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') -> EntityQuery:
@@ -281,8 +281,7 @@ def virtual_polyline_entities(polyline: 'Polyline') -> Iterable[Union['Line', 'A
         return virtual_polymesh_entities(polyline)
     elif polyline.is_poly_face_mesh:
         return virtual_polyface_entities(polyline)
-    else:
-        raise NotImplementedError
+    return []
 
 
 def virtual_polyline2d_entities(polyline: 'Polyline') -> Iterable[Union['Line', 'Arc']]:
@@ -381,10 +380,25 @@ def virtual_polymesh_entities(polyline: 'Polyline') -> Iterable['Face3d']:
     polymesh = cast('Polymesh', polyline)
     assert polymesh.dxftype() == 'POLYLINE'
     assert polymesh.is_polygon_mesh
+
     doc = polymesh.doc
     mesh = polymesh.get_mesh_vertex_cache()
     dxfattribs = polymesh.graphic_properties()
-    return []
+    m_count = polymesh.dxf.m_count
+    n_count = polymesh.dxf.n_count
+    m_range = m_count - int(not polymesh.is_m_closed)
+    n_range = n_count - int(not polymesh.is_n_closed)
+
+    for m in range(m_range):
+        for n in range(n_range):
+            next_m = (m + 1) % m_count
+            next_n = (n + 1) % n_count
+
+            dxfattribs['vtx0'] = mesh[m, n]
+            dxfattribs['vtx1'] = mesh[next_m, n]
+            dxfattribs['vtx2'] = mesh[next_m, next_n]
+            dxfattribs['vtx3'] = mesh[m, next_n]
+            yield Face3d.new(doc=doc, dxfattribs=dxfattribs)
 
 
 def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
@@ -407,18 +421,19 @@ def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
     face_records = (v for v in vertices if v.is_face_record)
     for face in face_records:
         face3d_attribs = dict(base_attribs)
-        face3d_attribs.update(face.face_record.graphic_properties())
+        face3d_attribs.update(face.graphic_properties())
         invisible = 0
         pos = 1
 
-        indices = ((face.dxf.name, name) for name in VERTEXNAMES if face.dxf.hasattr(name))
+        indices = ((face.dxf.get(name), name) for name in VERTEXNAMES if face.dxf.hasattr(name))
         for index, name in indices:
             # vertex indices are 1-based, negative indices indicate invisible edges
             if index < 0:
                 index = abs(index)
                 invisible += pos
-            index = index - 1
-            face3d_attribs[name] = vertices[index].dxf.location
+            # python list `vertices` is 0-based
+            face3d_attribs[name] = vertices[index - 1].dxf.location
+            # vertex index bit encoded: 1=0b0001, 2=0b0010, 3=0b0100, 4=0b1000
             pos <<= 1
 
         face3d_attribs['invisible'] = invisible

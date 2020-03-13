@@ -16,12 +16,12 @@ def msp():
 
 
 @pytest.fixture
-def polyline(msp):
+def polyline2d(msp):
     return msp.add_polyline2d(points=POINTS, format='xyb', dxfattribs={'layer': 'LAY', 'color': 1})
 
 
-def test_virtual_entities(polyline):
-    result = list(polyline.virtual_entities())
+def test_polyline2d_virtual_entities(polyline2d):
+    result = list(polyline2d.virtual_entities())
     assert len(result) == 3
 
     e = result[0]
@@ -51,9 +51,9 @@ def test_virtual_entities(polyline):
     assert e.dxf.end == (3, 0)
 
 
-def test_virtual_entities_elevation(polyline):
+def test_polyline2d_elevation(polyline2d):
     ucs = UCS(origin=(1, 1, 1))
-    polyline = polyline.transform_to_wcs(ucs)
+    polyline = polyline2d.transform_to_wcs(ucs)
     assert polyline.dxf.elevation == (0, 0, 1)
     result = list(polyline.virtual_entities())
     assert len(result) == 3
@@ -78,7 +78,7 @@ def test_virtual_entities_elevation(polyline):
     assert e.dxf.end == (4, 1, 1)
 
 
-def test_closed_polyline(msp):
+def test_polyline2d_closed(msp):
     # Create a circle by 2D POLYLINE:
     polyline = msp.add_polyline2d(points=[(0, 0, 1), (1, 0, 1)], format='xyb')
     polyline.close(True)
@@ -101,7 +101,7 @@ def test_closed_polyline(msp):
     assert math.isclose(abs(e.dxf.end_angle), 180, abs_tol=1e-12)
 
 
-def test_explode_entities(msp):
+def test_polyline2d_explode(msp):
     polyline = msp.add_polyline2d(POINTS, format='xyb')
     count = len(msp)
     result = polyline.explode()
@@ -110,3 +110,93 @@ def test_explode_entities(msp):
     assert msp[-1] is result[2]
     assert msp[-2] is result[1]
     assert msp[-3] is result[0]
+
+
+def test_polyline3d_virtual_entities(msp):
+    polyline3d = msp.add_polyline3d([(0, 0, 0), (1, 0, 0), (2, 2, 2)])
+    result = list(polyline3d.virtual_entities())
+    assert len(result) == 2
+    line = result[0]
+    assert line.dxftype() == 'LINE'
+    assert line.dxf.start == (0, 0, 0)
+    assert line.dxf.end == (1, 0, 0)
+    line = result[1]
+    assert line.dxftype() == 'LINE'
+    assert line.dxf.start == (1, 0, 0)
+    assert line.dxf.end == (2, 2, 2)
+
+
+def test_polyline3d_closed(msp):
+    polyline3d = msp.add_polyline3d([(0, 0, 0), (1, 0, 0), (2, 2, 2)], dxfattribs={'closed': True})
+    assert polyline3d.is_closed is True
+    result = list(polyline3d.virtual_entities())
+    assert len(result) == 3
+    # The closing element is the first LINE entity.
+    # This is an implementation detail and can change in the future!
+    line = result[0]
+    assert line.dxftype() == 'LINE'
+    assert line.dxf.start == (2, 2, 2)
+    assert line.dxf.end == (0, 0, 0)
+
+
+def test_polyline3d_explode(msp):
+    polyline3d = msp.add_polyline3d([(0, 0, 0), (1, 0, 0), (2, 2, 2)])
+    count = len(msp)
+    result = polyline3d.explode()
+    assert polyline3d.is_alive is False
+    assert len(msp) == count + 1  # LINE, LINE
+    assert msp[-1] is result[1]
+    assert msp[-2] is result[0]
+
+
+@pytest.fixture()
+def polymesh(msp):
+    polymesh = msp.add_polymesh((3, 3))
+    for m in range(3):
+        for n in range(3):
+            polymesh.set_mesh_vertex((m, n), (m, n))
+    return polymesh
+
+
+def test_polymesh_virtual_entities(polymesh):
+    result = list(polymesh.virtual_entities())
+    assert len(result) == 4
+    assert result[0].dxftype() == '3DFACE'
+    # 1. columns, 2. rows
+    # col=0, row=0
+    assert result[0].dxf.vtx0 == (0, 0, 0)
+    assert result[0].dxf.vtx2 == (1, 1, 0)
+    # col=0, row=1
+    assert result[1].dxf.vtx0 == (0, 1, 0)
+    assert result[1].dxf.vtx2 == (1, 2, 0)
+    # col=1, row=0
+    assert result[2].dxf.vtx0 == (1, 0, 0)
+    assert result[2].dxf.vtx2 == (2, 1, 0)
+    # col=1, row=1
+    assert result[3].dxf.vtx0 == (1, 1, 0)
+    assert result[3].dxf.vtx2 == (2, 2, 0)
+
+
+def test_closed_polymesh(polymesh):
+    polymesh.close(m_close=True, n_close=True)
+    assert polymesh.is_m_closed is True
+    assert polymesh.is_n_closed is True
+    result = list(polymesh.virtual_entities())
+    assert len(result) == 9
+
+
+def test_polyface_virtual_entities(msp):
+    from ezdxf.render.forms import cube
+
+    polyface = cube().render_polyface(msp)
+    result = list(polyface.virtual_entities())
+
+    assert len(result) == 6
+    assert result[0].dxftype() == '3DFACE'
+    vertices = set()
+    for face in result:
+        for vertex in face:
+            vertices.add(vertex)
+    assert len(vertices) == 8
+    assert (-0.5, -0.5, -0.5) in vertices
+    assert (0.5, 0.5, 0.5) in vertices

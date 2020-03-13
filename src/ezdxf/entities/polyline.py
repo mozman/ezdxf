@@ -250,22 +250,25 @@ class Polyline(DXFGraphic):
         """ ``True`` if POLYLINE (as :class:`Polymesh`) is closed in n direction. """
         return bool(self.dxf.flags & self.MESH_CLOSED_N_DIRECTION)
 
-    def m_close(self) -> None:
-        """ Close :class:`Polymesh` in m direction (also closes polylines). """
-        self.dxf.flags = self.dxf.flags | self.MESH_CLOSED_M_DIRECTION
-
-    def n_close(self) -> None:
-        """ Close :class:`Polymesh` in n direction. """
-        self.dxf.flags = self.dxf.flags | self.MESH_CLOSED_N_DIRECTION
-
-    def close(self, m_close, n_close=False) -> None:
-        """ Close :class:`Polymesh` in m direction (if `mclose` is ``True``) and/or n direction
-        (if `nclose` is ``True``).
+    def m_close(self, status=True) -> None:
         """
-        if m_close:
-            self.m_close()
-        if n_close:
-            self.n_close()
+        Close POLYMESH in m direction if `status` is ``True`` (also closes POLYLINE),
+        clears closed state if `status` is ``False``.
+        """
+        self.set_flag_state(self.MESH_CLOSED_M_DIRECTION, status, name='flags')
+
+    def n_close(self, status=True) -> None:
+        """
+        Close POLYMESH in n direction if `status` is ``True``, clears closed state if `status` is ``False``.
+        """
+        self.set_flag_state(self.MESH_CLOSED_N_DIRECTION, status, name='flags')
+
+    def close(self, m_close=True, n_close=False) -> None:
+        """ Set closed state of POLYMESH and POLYLINE in m direction and n direction. ``True`` set closed flag,
+        ``False`` clears closed flag.
+        """
+        self.m_close(m_close)
+        self.n_close(n_close)
 
     def __len__(self) -> int:
         """ Returns count of :class:`Vertex` entities. """
@@ -772,7 +775,7 @@ class MeshVertexCache:
     Cache mesh vertices in a dict, keys are 0-based (row, col)-tuples.
 
     vertices:
-       Dict of mesh vertices, keys are 0-based (row, col)-tuples. Writing to this dict doesn't change the DXF entity.
+        Dict of mesh vertices, keys are 0-based (row, col)-tuples. Writing to this dict doesn't change the DXF entity.
 
     """
 
