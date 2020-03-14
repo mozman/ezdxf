@@ -6,12 +6,15 @@ from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
 from ezdxf.query import EntityQuery
 from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS
 from ezdxf.entities import Line, Arc, Face3d
+from ezdxf.tools.pattern import scale_pattern
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline, Polyface, Polymesh
 
+_2PI = math.pi * 2
 
-def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') -> EntityQuery:
+def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
+                            uniform_scaling_factor: float = None) -> EntityQuery:
     """
     Explode a block reference into single DXF entities.
 
@@ -24,6 +27,8 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
     Args:
         block_ref: Block reference entity (INSERT)
         target_layout: explicit target layout for exploded DXF entities
+        uniform_scaling_factor: override uniform scaling factor for text entities (TEXT, ATTRIB, MTEXT)  and
+                                HATCH pattern, default is ``max(abs(xscale), abs(yscale),  abs(zscale))``
 
     .. warning::
 
@@ -46,7 +51,7 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
 
     entities = []
 
-    for entity in virtual_block_reference_entities(block_ref):
+    for entity in virtual_block_reference_entities(block_ref, uniform_scaling_factor=uniform_scaling_factor):
         entitydb.add(entity)
         target_layout.add_entity(entity)
         entities.append(entity)
@@ -68,7 +73,8 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') ->
     return EntityQuery(entities)
 
 
-def virtual_block_reference_entities(block_ref: 'Insert') -> Iterable['DXFGraphic']:
+def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor: float = None) -> Iterable[
+    'DXFGraphic']:
     """
     Yields 'virtual' parts of block reference `block_ref`. This method is meant to examine the the block reference
     entities without the need to explode the block reference.
@@ -78,6 +84,8 @@ def virtual_block_reference_entities(block_ref: 'Insert') -> Iterable['DXFGraphi
 
     Args:
         block_ref: Block reference entity (INSERT)
+        uniform_scaling_factor: override uniform scaling factor for text entities (TEXT, ATTRIB, MTEXT)  and
+                                HATCH pattern, default is ``max(abs(xscale), abs(yscale),  abs(zscale))``
 
     .. warning::
 
@@ -88,105 +96,146 @@ def virtual_block_reference_entities(block_ref: 'Insert') -> Iterable['DXFGraphi
     (internal API)
 
     """
+    from ezdxf.entities import Ellipse
     assert block_ref.dxftype() == 'INSERT'
 
-    brcs = block_ref.brcs()
-    # Non uniform scaling will produce incorrect results for some entities!
-    xscale = block_ref.dxf.xscale
-    yscale = block_ref.dxf.yscale
-    uniform_scaling = max(abs(xscale), abs(yscale))
-    non_uniform_scaling = xscale != yscale
+    def disassemble(layout):
+        for entity in layout:
+            dxftype = entity.dxftype()
+            if dxftype == 'ATTDEF':  # do not explode ATTDEF entities
+                continue
 
+            if has_non_uniform_scaling:
+                if dxftype in {'ARC', 'CIRCLE'}:
+                    # convert ARC to ELLIPSE
+                    yield Ellipse.from_arc(entity)
+                    continue
+                if dxftype in {'LWPOLYLINE', 'POLYLINE'} and entity.has_arc:
+                    # disassemble (LW)POLYLINE into LINE and ARC segments
+                    for segment in entity.virtual_entities():
+                        # convert ARC to ELLIPSE
+                        if segment.dxftype() == 'ARC':
+                            yield Ellipse.from_arc(segment)
+                        else:
+                            yield segment
+                    continue
+
+            # Copy entity with all DXF attributes
+            try:
+                copy = entity.copy()
+            except DXFTypeError:
+                continue  # non copyable entities will be ignored
+
+            yield copy
+
+    brcs = block_ref.brcs()
     block_layout = block_ref.block()
     if block_layout is None:
         raise DXFStructureError(f'Required block definition for "{block_ref.dxf.name}" does not exist.')
 
-    for entity in block_layout:
+    has_scaling = block_ref.has_scaling
+    if has_scaling:
+        xscale = block_ref.dxf.xscale
+        yscale = block_ref.dxf.yscale
+        zscale = block_ref.dxf.zscale
+
+        if uniform_scaling_factor is not None:
+            uniform_scaling_factor = float(uniform_scaling_factor)
+        else:
+            uniform_scaling_factor = max(abs(xscale), abs(yscale), abs(zscale))
+
+        # Non uniform scaling will produce incorrect results for some entities!
+        if xscale == yscale == zscale:
+            has_non_uniform_scaling = False
+            if xscale == 1:  # yscale == 1, zscale == 1
+                has_scaling = False
+        else:
+            has_non_uniform_scaling = True
+    else:
+        xscale, yscale, zscale = (1, 1, 1)
+        uniform_scaling_factor = 1
+        has_non_uniform_scaling = False
+
+    for entity in disassemble(block_layout):
         dxftype = entity.dxftype()
-        if dxftype == 'ATTDEF':  # do not explode ATTDEF entities
-            continue
 
-        # Copy entity with all DXF attributes
-        try:
-            copy = entity.copy()
-        except DXFTypeError:
-            continue  # non copyable entities will be ignored
-
-        if non_uniform_scaling and dxftype in {'ARC', 'CIRCLE'}:
-            from ezdxf.entities import Ellipse
-            copy = Ellipse.from_arc(entity)
-            dxftype = copy.dxftype()
+        if has_non_uniform_scaling and dxftype == 'ELLIPSE':
+            # transform start- and end location before main transformation
+            ellipse = cast('Ellipse', entity)
+            open_ellipse = not math.isclose(
+                normalize_angle(ellipse.dxf.start_param),
+                normalize_angle(ellipse.dxf.end_param),
+            )
+            if open_ellipse:
+                start_point, end_point = brcs.points_to_wcs(ellipse.vertices((ellipse.dxf.start_param, ellipse.dxf.end_param)))
+            minor_axis = brcs.direction_to_wcs(ellipse.minor_axis)
 
         # Basic transformation from BRCS to WCS
         try:
-            copy.transform_to_wcs(brcs)
-        except NotImplementedError:  # entities without 'transform_to_ucs' support will be ignored
+            entity.transform_to_wcs(brcs)
+        except NotImplementedError:  # entities without 'transform_to_wcs' support will be ignored
             continue
 
-        # Apply DXF attribute scaling:
-        # 1. simple entities without properties to scale
-        if dxftype in {'LINE', 'POINT', 'LWPOLYLINE', 'POLYLINE', 'MESH', 'HATCH', 'SPLINE',
-                       'SOLID', '3DFACE', 'TRACE', 'IMAGE', 'WIPEOUT', 'XLINE', 'RAY', 'LIGHT', 'HELIX'}:
-            pass  # nothing else to do
-        elif dxftype in {'CIRCLE', 'ARC'}:
-            # simple uniform scaling of radius
-            # Non uniform scaling: ARC, CIRCLE -> ELLIPSE
-            copy.dxf.radius = entity.dxf.radius * uniform_scaling
-        elif dxftype == 'ELLIPSE':
-            if non_uniform_scaling:
-                if entity.dxftype() == 'ELLIPSE':  # original entity is an ELLIPSE
-                    ellipse = cast('Ellipse', entity)
+        if has_scaling:
+            # Apply DXF attribute scaling:
+            # Simple entities without properties to scale
+            if dxftype in {'LINE', 'POINT', 'LWPOLYLINE', 'POLYLINE', 'MESH', 'SPLINE', 'SOLID', '3DFACE', 'TRACE',
+                           'IMAGE', 'WIPEOUT', 'XLINE', 'RAY', 'LIGHT', 'HELIX'}:
+                pass  # nothing else to do
+            elif dxftype in {'CIRCLE', 'ARC'}:
+                # Non uniform scaling: ARC and CIRCLE converted to ELLIPSE
+                entity.dxf.radius = entity.dxf.radius * uniform_scaling_factor
+            elif dxftype == 'ELLIPSE' and has_non_uniform_scaling:
+                ellipse = cast('Ellipse', entity)
+                # Transform axis
+                major_axis = ellipse.dxf.major_axis
+                if not math.isclose(major_axis.dot(minor_axis), 0):
+                    major_axis, _, ratio = rytz_axis_construction(major_axis, minor_axis)
+                else:
+                    ratio = minor_axis.magnitude / major_axis.magnitude
 
-                    # transform axis
-                    conjugated_major_axis = brcs.direction_to_wcs(ellipse.dxf.major_axis)
-                    conjugated_minor_axis = brcs.direction_to_wcs(ellipse.minor_axis)
-                    major_axis, _, ratio = rytz_axis_construction(conjugated_major_axis, conjugated_minor_axis)
-                    copy.dxf.major_axis = major_axis
-                    copy.dxf.ratio = max(ratio, 1e-6)
-
+                ellipse.dxf.major_axis = major_axis
+                ellipse.dxf.ratio = max(ratio, 1e-6)
+                if open_ellipse:
                     # adjusting start- and end parameter
-                    center = copy.dxf.center  # transformed center point
-                    start_point, end_point = ellipse.vertices((ellipse.dxf.start_param, ellipse.dxd.end_param))
-                    start_vec = brcs.to_wcs(start_point) - center
-                    end_vec = brcs.to_wcs(end_point) - center
-                    # The dot product (scalar product) is the angle between two vectors.
-                    # https://en.wikipedia.org/wiki/Dot_product
-                    # Not sure if this is the correct way to adjust start- and end parameter
-                    copy.dxf.start_param = normalize_angle(major_axis.dot(start_vec))
-                    copy.dxf.end_param = normalize_angle(major_axis.dot(end_vec))
+                    center = ellipse.dxf.center  # transformed center point
+                    start_vec = start_point - center
+                    end_vec = end_point - center
+                    # This is the not the correct way to adjust start- and end parameter.
+                    ellipse.dxf.start_param = major_axis.angle_between(start_vec)
+                    ellipse.dxf.end_param = major_axis.angle_between(end_vec)
 
-                    if copy.dxf.ratio > 1:
-                        copy.swap_axis()
-                else:  # converted from ARC to ELLIPSE
-                    ellipse = cast('Ellipse', copy)
-                    ellipse.dxf.ratio = max(yscale / xscale, 1e-6)
-                    if ellipse.dxf.ratio > 1:
-                        ellipse.swap_axis()
-        elif dxftype == 'MTEXT':
-            # Scale MTEXT height/width just by uniform_scaling, how to handle non uniform scaling?
-            copy.dxf.char_height *= uniform_scaling
-            copy.dxf.width *= uniform_scaling
-        elif dxftype in {'TEXT', 'ATTRIB'}:
-            # Scale TEXT height just by uniform_scaling, how to handle non uniform scaling?
-            copy.dxf.height *= uniform_scaling
-        elif dxftype == 'INSERT':
-            # Set scaling of child INSERT to scaling of parent INSERT
-            for scale in ('xscale', 'yscale', 'zscale'):
-                if block_ref.dxf.hasattr(scale):
-                    original_scale = copy.dxf.get_default(scale)
-                    block_ref_scale = block_ref.dxf.get(scale)
-                    copy.dxf.set(scale, original_scale * block_ref_scale)
-            if uniform_scaling != 1:
+                if ellipse.dxf.ratio > 1:
+                    ellipse.swap_axis()
+            elif dxftype == 'MTEXT':
+                # Scale MTEXT height/width just by uniform_scaling.
+                entity.dxf.char_height *= uniform_scaling_factor
+                entity.dxf.width *= uniform_scaling_factor
+            elif dxftype in {'TEXT', 'ATTRIB'}:
+                # Scale TEXT height just by uniform_scaling.
+                entity.dxf.height *= uniform_scaling_factor
+            elif dxftype == 'INSERT':
+                # Set scaling of child INSERT to scaling of parent INSERT
+                entity.dxf.xscale *= xscale
+                entity.dxf.yscale *= yscale
+                entity.dxf.zscale *= zscale
                 # Scale attached ATTRIB entities:
-                # Scale height just by uniform_scaling, how to handle non uniform scaling?
-                for attrib in copy.attribs:
-                    attrib.dxf.height *= uniform_scaling
-        elif dxftype == 'SHAPE':
-            # Scale SHAPE size just by uniform_scaling, how to handle non uniform scaling?
-            copy.dxf.size *= uniform_scaling
-        else:  # unsupported entity will be ignored
-            continue
-        yield copy
+                for attrib in entity.attribs:
+                    attrib.dxf.height *= uniform_scaling_factor
+            elif dxftype == 'SHAPE':
+                # Scale SHAPE size just by uniform_scaling.
+                entity.dxf.size *= uniform_scaling_factor
+            elif dxftype == 'HATCH':
+                # Non uniform scaling produces incorrect results for boundary paths containing ARC or ELLIPSE segments.
+                # Scale HATCH pattern:
+                hatch = cast('Hatch', entity)
+                if uniform_scaling_factor != 1 and hatch.has_pattern_fill and hatch.pattern is not None:
+                    hatch.dxf.pattern_scale *= uniform_scaling_factor
+                    # hatch.pattern is already scaled by the stored pattern_scale value
+                    hatch.pattern = scale_pattern(hatch.pattern, uniform_scaling_factor)
+            else:  # unsupported entity will be ignored
+                continue
+        yield entity
 
 
 def explode_entity(entity: 'DXFGraphic', target_layout: 'BaseLayout' = None) -> 'EntityQuery':

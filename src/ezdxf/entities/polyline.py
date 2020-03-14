@@ -250,6 +250,14 @@ class Polyline(DXFGraphic):
         """ ``True`` if POLYLINE (as :class:`Polymesh`) is closed in n direction. """
         return bool(self.dxf.flags & self.MESH_CLOSED_N_DIRECTION)
 
+    @property
+    def has_arc(self) -> bool:
+        """ Returns ``True`` if 2D POLYLINE has an arc segment. """
+        if self.is_2d_polyline:
+            return any(bool(v.dxf.bulge) for v in self.vertices)
+        else:
+            return False
+
     def m_close(self, status=True) -> None:
         """
         Close POLYMESH in m direction if `status` is ``True`` (also closes POLYLINE),

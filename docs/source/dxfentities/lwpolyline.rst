@@ -99,6 +99,8 @@ User Defined Point Format Codes
 
     .. autoattribute:: closed
 
+    .. autoattribute:: has_arc
+
     .. automethod:: __len__
 
     .. automethod:: __getitem__

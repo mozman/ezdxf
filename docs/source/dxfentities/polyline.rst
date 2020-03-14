@@ -129,6 +129,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. autoattribute:: is_n_closed
 
+    .. autoattribute:: has_arc
+
     .. automethod:: get_mode
 
     .. automethod:: m_close

@@ -109,6 +109,11 @@ class LWPolyline(DXFGraphic):
         """ Compatibility interface to :class:`Polyline`. """
         self.closed = state
 
+    @property
+    def has_arc(self) -> bool:
+        """ Returns ``True`` if LWPOLYLINE has an arc segment. """
+        return any(bool(b) for x, y, s, e, b in self.lwpoints)
+
     def __len__(self) -> int:
         """ Returns count of polyline points. """
         return len(self.lwpoints)
