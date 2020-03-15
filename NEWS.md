@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.12 - dev
-------------------
+Version 0.12b0 - dev
+--------------------
 
 - NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if block not exist or is an XREF
 - NEW: `Insert.has_scaling` returns `True` if any axis scaling is applied
