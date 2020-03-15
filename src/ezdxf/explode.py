@@ -6,12 +6,12 @@ from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
 from ezdxf.query import EntityQuery
 from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS
 from ezdxf.entities import Line, Arc, Face3d
-from ezdxf.tools.pattern import scale_pattern
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline, Polyface, Polymesh
+    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline
 
 _2PI = math.pi * 2
+
 
 def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
                             uniform_scaling_factor: float = None) -> EntityQuery:
@@ -126,6 +126,22 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
             except DXFTypeError:
                 continue  # non copyable entities will be ignored
 
+            if copy.dxftype() == 'HATCH':
+                if copy.dxf.associative:
+                    # remove associations
+                    copy.dxf.associative = 0
+                    for path in copy.paths:
+                        path.source_boundary_objects = []
+
+                if has_non_uniform_scaling and copy.paths.has_critical_elements():
+                    # None uniform scaling produces incorrect results for the arc and ellipse transformations.
+                    # This causes an DXF structure error for AutoCAD.
+                    # todo: requires testing
+                    continue
+
+                    # For the case that arc and ellipse transformation works correct someday:
+                    # copy.paths.arc_edges_to_ellipse_edges()
+
             yield copy
 
     brcs = block_ref.brcs()
@@ -167,7 +183,8 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                 normalize_angle(ellipse.dxf.end_param),
             )
             if open_ellipse:
-                start_point, end_point = brcs.points_to_wcs(ellipse.vertices((ellipse.dxf.start_param, ellipse.dxf.end_param)))
+                start_point, end_point = brcs.points_to_wcs(
+                    ellipse.vertices((ellipse.dxf.start_param, ellipse.dxf.end_param)))
             minor_axis = brcs.direction_to_wcs(ellipse.minor_axis)
 
         # Basic transformation from BRCS to WCS
@@ -232,7 +249,7 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                 if uniform_scaling_factor != 1 and hatch.has_pattern_fill and hatch.pattern is not None:
                     hatch.dxf.pattern_scale *= uniform_scaling_factor
                     # hatch.pattern is already scaled by the stored pattern_scale value
-                    hatch.pattern = scale_pattern(hatch.pattern, uniform_scaling_factor)
+                    hatch.set_pattern_definition(hatch.pattern.as_list(), uniform_scaling_factor)
             else:  # unsupported entity will be ignored
                 continue
         yield entity
@@ -487,3 +504,5 @@ def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
 
         face3d_attribs['invisible'] = invisible
         yield Face3d.new(doc=doc, dxfattribs=face3d_attribs)
+
+

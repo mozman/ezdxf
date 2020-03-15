@@ -13,6 +13,7 @@ from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004
 from ezdxf.lldxf import const
 from ezdxf.math.bspline import bspline_control_frame
+from ezdxf.math.bulge import bulge_to_arc
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -148,8 +149,8 @@ class Hatch(DXFGraphic):
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
         self.paths = BoundaryPaths()
-        self.pattern = None  # type: Pattern
-        self.gradient = None  # type: Gradient
+        self.pattern: Optional[Pattern] = None
+        self.gradient: Optional[Gradient] = None
         self.seeds = []
 
     def _copy_data(self, entity: 'Hatch') -> None:
@@ -589,6 +590,80 @@ class BoundaryPaths:
         """
         for path in self.paths:
             path.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
+
+    def arc_edges_to_ellipse_edges(self):
+        """
+        Convert polyline paths with bulge values to edge paths with line and arc edges if necessary and then
+        convert arc edges to ellipse edges.
+
+        (internal API)
+        """
+
+        def _edges(points) -> Iterable[Union[LineEdge, ArcEdge]]:
+            prev_point = None
+            prev_bulge = None
+            for x, y, bulge in points[1:]:
+                point = Vector(x, y)
+                if prev_point is None:
+                    prev_point = point
+                    prev_bulge = bulge
+                    continue
+
+                if prev_bulge != 0:
+                    arc = ArcEdge()
+                    arc.center, start_angle, end_angle, arc.radius = bulge_to_arc(prev_point, point, prev_bulge)
+                    arc.start_angle = math.degrees(start_angle)
+                    arc.end_angle = math.degrees(end_angle)
+                    arc.is_counter_clockwise = 1
+                    yield arc
+                else:
+                    line = LineEdge()
+                    line.start = (prev_point.x, prev_point.y)
+                    line.end = (point.x, point.y)
+                    yield line
+
+                prev_point = point
+                prev_bulge = bulge
+
+        def to_edge_path(polyline_path) -> EdgePath:
+            edge_path = EdgePath()
+            edge_path.edges = list(_edges(polyline_path.vertices))
+            return edge_path
+
+        def to_ellipse(arc: ArcEdge) -> EllipseEdge:
+            ellipse = EllipseEdge()
+            ellipse.center = arc.center
+            ellipse.ratio = 1.0
+            ellipse.major_axis = (arc.radius, 0.0)
+            ellipse.start_angle = arc.start_angle
+            ellipse.end_angle = arc.end_angle
+            ellipse.is_counter_clockwise = arc.is_counter_clockwise
+            return ellipse
+
+        for path_index, path in enumerate(self.paths):
+            if path.PATH_TYPE == 'PolylinePath' and path.has_bulge():
+                path = to_edge_path(path)
+                self.paths[path_index] = path
+            if path.PATH_TYPE == 'EdgePath':
+                edges = path.edges
+                for edge_index, edge in enumerate(edges):
+                    if edge.EDGE_TYPE == 'ArcEdge':
+                        edges[edge_index] = to_ellipse(edge)
+
+    def has_critical_elements(self) -> bool:
+        """ Returns ``True`` if any boundary path has bulge values or arc edges or ellipse edges.
+
+        (internal API)
+
+        """
+        for path in self.paths:
+            if path.PATH_TYPE == 'PolylinePath' and path.has_bulge():
+                return True
+            else:
+                for edge in path.edges:
+                    if edge.EDGE_TYPE in {'ArcEdge', 'EllipseEdge'}:
+                        return True
+        return False
 
 
 def pop_source_boundary_objects_tags(path_tags: Tags) -> List[str]:
@@ -1161,6 +1236,9 @@ class Pattern:
     def __str__(self) -> str:
         return "[" + ",".join(str(line) for line in self.lines) + "]"
 
+    def as_list(self) -> List:
+        return [line.as_list() for line in self.lines]
+
 
 class PatternLine:
     def __init__(self,
@@ -1200,6 +1278,9 @@ class PatternLine:
 
     def __str__(self):
         return "[{0.angle}, {0.base_point}, {0.offset}, {0.dash_length_items}]".format(self)
+
+    def as_list(self) -> List:
+        return [self.angle, self.base_point, self.offset, self.dash_length_items]
 
 
 class Gradient:
