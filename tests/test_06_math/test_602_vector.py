@@ -289,6 +289,8 @@ def test_angle_between():
     # reverse order, same result
     angle = v2.angle_between(v1)
     assert math.isclose(angle, math.pi / 4)
+    angle = v1.angle_between(Vector(0, -1))
+    assert math.isclose(angle, math.pi)
 
 
 def test_cross_product():

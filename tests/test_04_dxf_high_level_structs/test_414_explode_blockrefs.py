@@ -2,6 +2,7 @@
 # License: MIT License
 import pytest
 import ezdxf
+import math
 
 
 @pytest.fixture(scope='module')
@@ -97,6 +98,34 @@ def test_02_explode_blockrefs(doc, msp, entitydb):
     assert e.dxftype() == 'LINE'
     assert e.dxf.start == blockref_insert
     assert e.dxf.end == blockref_insert + (0, 1)
+
+
+def test_03_explode_polyline_bulge(doc, msp):
+    blk = doc.blocks.new('Test03')
+    blk.add_lwpolyline([(0, 0), (3, 0, 0.5), (6, 0), (9, 0)], format='xyb')
+    block_ref = msp.add_blockref('Test03', insert=(0, 0), dxfattribs={
+        'yscale': 0.5,
+    })
+    entities = list(block_ref.virtual_entities(non_uniform_scaling=True))
+    assert len(entities) == 3
+
+    e = entities[0]
+    assert e.dxftype() == 'LINE'
+    assert e.dxf.start == (0, 0)
+    assert e.dxf.end == (3, 0)
+
+    e = entities[1]
+    assert e.dxftype() == 'ELLIPSE'
+    assert e.dxf.center.isclose((4.5, 0.5625, 0))
+    assert e.dxf.major_axis.isclose((1.875, 0.0, 0))
+    assert e.dxf.ratio == 0.5
+    assert math.isclose(e.dxf.start_param, -2.498091544796509)
+    assert math.isclose(e.dxf.end_param, -0.6435011087932843)
+
+    e = entities[2]
+    assert e.dxftype() == 'LINE'
+    assert e.dxf.start == (6, 0)
+    assert e.dxf.end == (9, 0)
 
 
 if __name__ == '__main__':

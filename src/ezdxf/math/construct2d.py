@@ -12,10 +12,15 @@ from .bbox import BoundingBox2d
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
-HALF_PI = math.pi / 2.  # type: float
-THREE_PI_HALF = 1.5 * math.pi  # type: float
-DOUBLE_PI = math.pi * 2.  # type: float
+HALF_PI = math.pi / 2.0
+THREE_PI_HALF = 1.5 * math.pi
+DOUBLE_PI = math.pi * 2.0
 TOLERANCE = 1e-12
+
+_90_DEG = math.pi / 2.0
+_180_DEG = math.pi
+_270_DEG = _90_DEG * 3.0
+_360_DEG = 2.0 * math.pi
 
 
 def is_close_points(p1: 'Vertex', p2: 'Vertex', abs_tol=TOLERANCE) -> bool:
@@ -103,9 +108,25 @@ def normalize_angle(angle: float) -> float:
 
     """
     angle = math.fmod(angle, DOUBLE_PI)
-    if angle < 0:
+    if angle < 0.0:
         angle += DOUBLE_PI
     return angle
+
+
+def quadrant(angle: float) -> int:
+    """
+    Returns quadrant of angle (in radians) in range 1 to 4.
+
+    """
+    a = normalize_angle(angle)
+    if a <= _90_DEG:
+        return 1
+    elif a <= _180_DEG:
+        return 2
+    elif a <= _270_DEG:
+        return 3
+    else:
+        return 4
 
 
 def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE):

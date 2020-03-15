@@ -473,9 +473,8 @@ class Vector:
             other: :class:`Vector` compatible object
 
         """
-        v1 = self.normalize()
-        v2 = self.__class__(other).normalize()
-        return math.acos(v1.dot(v2))
+        v2 = self.__class__(other)
+        return math.acos(self.dot(v2)/self.magnitude/v2.magnitude)
 
     def rotate(self, angle: float) -> 'Vector':
         """

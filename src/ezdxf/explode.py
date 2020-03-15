@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Iterable, cast, Union
 import math
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
 from ezdxf.query import EntityQuery
-from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS
+from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS, quadrant
 from ezdxf.entities import Line, Arc, Face3d
 
 if TYPE_CHECKING:
@@ -71,6 +71,25 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
     else:
         entitydb.delete_entity(block_ref)
     return EntityQuery(entities)
+
+
+def angle_to_param(ratio: float, angle: float, quadrant: int = 0) -> float:
+    """ Returns ellipse parameter for argument `angle`.
+
+    Args:
+        ratio: minor axis to major axis ratio as stored in the ELLIPSE entity (always < 1).
+        angle: angle between major axis and line from center to point on the ellipse
+        quadrant: quadrant of the angle, use to ``0`` for no adjustment.
+
+    """
+    # source: http://www.petercollingridge.co.uk/tutorials/computational-geometry/finding-angle-around-ellipse/
+    result = math.atan(1.0 / ratio * math.tan(angle))
+
+    if quadrant in (2, 3):
+        result += math.pi
+    if quadrant in (3, 4):
+        result = -result
+    return result
 
 
 def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor: float = None) -> Iterable[
@@ -183,6 +202,9 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                 normalize_angle(ellipse.dxf.end_param),
             )
             if open_ellipse:
+                # transformed start- and end point
+                start_quadrant = quadrant(ellipse.dxf.start_param)
+                end_quadrant = quadrant(ellipse.dxf.end_param)
                 start_point, end_point = brcs.points_to_wcs(
                     ellipse.vertices((ellipse.dxf.start_param, ellipse.dxf.end_param)))
             minor_axis = brcs.direction_to_wcs(ellipse.minor_axis)
@@ -219,8 +241,8 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                     start_vec = start_point - center
                     end_vec = end_point - center
                     # This is the not the correct way to adjust start- and end parameter.
-                    ellipse.dxf.start_param = major_axis.angle_between(start_vec)
-                    ellipse.dxf.end_param = major_axis.angle_between(end_vec)
+                    ellipse.dxf.start_param = angle_to_param(ratio, major_axis.angle_between(start_vec), start_quadrant)
+                    ellipse.dxf.end_param = angle_to_param(ratio, major_axis.angle_between(end_vec), end_quadrant)
 
                 if ellipse.dxf.ratio > 1:
                     ellipse.swap_axis()
@@ -504,5 +526,3 @@ def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
 
         face3d_attribs['invisible'] = invisible
         yield Face3d.new(doc=doc, dxfattribs=face3d_attribs)
-
-
