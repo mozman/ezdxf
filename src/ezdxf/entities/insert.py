@@ -417,7 +417,7 @@ class Insert(DXFGraphic):
 
             **Non uniform scaling** lead to incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
             some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and and
-            POLYLINE/LWPOLYLINE with arc segments.
+            POLYLINE/LWPOLYLINE with arc segments. Non uniform scaling is getting better, but still not perfect!
 
         Args:
             target_layout: target layout for exploded entities, ``None`` for same layout as source entity.
@@ -454,7 +454,7 @@ class Insert(DXFGraphic):
 
             **Non uniform scaling** returns incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
             some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
-            POLYLINE/LWPOLYLINE with arc segments.
+            POLYLINE/LWPOLYLINE with arc segments. Non uniform scaling is getting better, but still not perfect!
 
         Args:
             non_uniform_scaling: enable non uniform scaling if ``True``, see warning

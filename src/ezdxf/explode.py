@@ -2,10 +2,13 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, cast, Union
 import math
+import logging
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
 from ezdxf.query import EntityQuery
 from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS, quadrant
 from ezdxf.entities import Line, Arc, Face3d
+
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline
@@ -143,6 +146,7 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
             try:
                 copy = entity.copy()
             except DXFTypeError:
+                logger.debug(f'(Virtual Block Reference Entities) Ignoring non copyable entity {str(entity)}')
                 continue  # non copyable entities will be ignored
 
             if copy.dxftype() == 'HATCH':
@@ -156,6 +160,7 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                     # None uniform scaling produces incorrect results for the arc and ellipse transformations.
                     # This causes an DXF structure error for AutoCAD.
                     # todo: requires testing
+                    logger.debug(f'(Virtual Block Reference Entities) Ignoring {str(entity)} for non uniform scaling.')
                     continue
 
                     # For the case that arc and ellipse transformation works correct someday:
@@ -203,16 +208,16 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
             )
             if open_ellipse:
                 # transformed start- and end point
-                start_quadrant = quadrant(ellipse.dxf.start_param)
-                end_quadrant = quadrant(ellipse.dxf.end_param)
-                start_point, end_point = brcs.points_to_wcs(
-                    ellipse.vertices((ellipse.dxf.start_param, ellipse.dxf.end_param)))
+                start_param = ellipse.dxf.start_param
+                end_param = ellipse.dxf.end_param
+                start_point, end_point = brcs.points_to_wcs(ellipse.vertices((start_param, end_param)))
             minor_axis = brcs.direction_to_wcs(ellipse.minor_axis)
 
         # Basic transformation from BRCS to WCS
         try:
             entity.transform_to_wcs(brcs)
         except NotImplementedError:  # entities without 'transform_to_wcs' support will be ignored
+            logger.debug(f'(Virtual Block Reference Entities) Ignoring non transformable entity {str(entity)}')
             continue
 
         if has_scaling:
@@ -238,11 +243,11 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                 if open_ellipse:
                     # adjusting start- and end parameter
                     center = ellipse.dxf.center  # transformed center point
-                    start_vec = start_point - center
-                    end_vec = end_point - center
-                    # This is the not the correct way to adjust start- and end parameter.
-                    ellipse.dxf.start_param = angle_to_param(ratio, major_axis.angle_between(start_vec), start_quadrant)
-                    ellipse.dxf.end_param = angle_to_param(ratio, major_axis.angle_between(end_vec), end_quadrant)
+                    start_angle = major_axis.angle_between(start_point - center)
+                    end_angle = major_axis.angle_between(end_point - center)
+                    # todo: quadrant detection may fail if the rytz's axis construction algorithm is applied
+                    ellipse.dxf.start_param = angle_to_param(ratio, start_angle, quadrant(start_param))
+                    ellipse.dxf.end_param = angle_to_param(ratio, end_angle, quadrant(end_param))
 
                 if ellipse.dxf.ratio > 1:
                     ellipse.swap_axis()
