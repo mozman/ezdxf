@@ -313,7 +313,6 @@ def explode_entity(entity: 'DXFGraphic', target_layout: 'BaseLayout' = None) -> 
 
     entities = []
 
-    assert hasattr(entity, 'virtual_entities')
     for e in entity.virtual_entities():
         entitydb.add(e)
         target_layout.add_entity(e)
