@@ -370,7 +370,7 @@ class Polyline(DXFGraphic):
 
         create_vertex = self.doc.dxffactory.create_db_entry
         for point in points:
-            dxfattribs['location'] = point
+            dxfattribs['location'] = Vector(point)
             yield create_vertex('VERTEX', dxfattribs)
 
     def cast(self) -> Union['Polyline', 'Polymesh', 'Polyface']:
@@ -960,7 +960,7 @@ def vertex_attribs(data: Sequence[float], format='xyseb') -> dict:
         if code not in FORMAT_CODES:
             continue
         if code == 'v':
-            location = cast('Vertex', value)
+            location = Vector(value)
         elif code == 'b':
             attribs['bulge'] = value
         elif code == 's':

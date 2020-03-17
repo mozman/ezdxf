@@ -72,7 +72,7 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['location'] = location
+        dxfattribs['location'] = Vector(location)
         return self.new_entity('POINT', dxfattribs)
 
     def add_line(self, start: 'Vertex', end: 'Vertex', dxfattribs: dict = None) -> 'Line':
@@ -86,8 +86,8 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['start'] = start
-        dxfattribs['end'] = end
+        dxfattribs['start'] = Vector(start)
+        dxfattribs['end'] = Vector(end)
         return self.new_entity('LINE', dxfattribs)
 
     def add_circle(self, center: 'Vertex', radius: float, dxfattribs: dict = None) -> 'Circle':
@@ -102,8 +102,8 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['center'] = center
-        dxfattribs['radius'] = radius
+        dxfattribs['center'] = Vector(center)
+        dxfattribs['radius'] = float(radius)
         return self.new_entity('CIRCLE', dxfattribs)
 
     def add_ellipse(self, center: 'Vertex', major_axis: 'Vertex' = (1, 0, 0), ratio: float = 1, start_param: float = 0,
@@ -124,15 +124,16 @@ class CreatorInterface:
         """
         if self.dxfversion < DXF2000:
             raise DXFVersionError('ELLIPSE requires DXF R2000')
-        if ratio > 1.:
+        ratio = float(ratio)
+        if ratio > 1.0:
             raise DXFValueError("Argument 'ratio' has to be <= 1.0")
 
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['center'] = center
-        dxfattribs['major_axis'] = major_axis
+        dxfattribs['center'] = Vector(center)
+        dxfattribs['major_axis'] = Vector(major_axis)
         dxfattribs['ratio'] = ratio
-        dxfattribs['start_param'] = start_param
-        dxfattribs['end_param'] = end_param
+        dxfattribs['start_param'] = float(start_param)
+        dxfattribs['end_param'] = float(end_param)
         return self.new_entity('ELLIPSE', dxfattribs)
 
     def add_arc(self, center: 'Vertex', radius: float, start_angle: float, end_angle: float,
@@ -151,14 +152,14 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['center'] = center
-        dxfattribs['radius'] = radius
+        dxfattribs['center'] = Vector(center)
+        dxfattribs['radius'] = float(radius)
         if is_counter_clockwise:
-            dxfattribs['start_angle'] = start_angle
-            dxfattribs['end_angle'] = end_angle
+            dxfattribs['start_angle'] = float(start_angle)
+            dxfattribs['end_angle'] = float(end_angle)
         else:
-            dxfattribs['start_angle'] = end_angle
-            dxfattribs['end_angle'] = start_angle
+            dxfattribs['start_angle'] = float(end_angle)
+            dxfattribs['end_angle'] = float(start_angle)
         return self.new_entity('ARC', dxfattribs)
 
     def add_solid(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Solid':
@@ -204,7 +205,7 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['text'] = text
+        dxfattribs['text'] = str(text)
         dxfattribs.setdefault('insert', Vector())
         return self.new_entity('TEXT', dxfattribs)
 
@@ -213,14 +214,17 @@ class CreatorInterface:
         Add an :class:`~ezdxf.entities.Insert` entity.
 
         Args:
-            name: block name
+            name: block name as str
             insert: insert location as 2D/3D point in :ref:`WCS`
             dxfattribs: additional DXF attributes for :class:`Insert` entity
 
         """
+        if not isinstance(name, str):
+            raise DXFValueError('Block name as string required.')
+
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['name'] = name
-        dxfattribs['insert'] = insert
+        dxfattribs['insert'] = Vector(insert)
         blockref = self.new_entity('INSERT', dxfattribs)  # type: Insert
         return blockref
 
@@ -240,6 +244,8 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes for :class:`Insert` entity
 
         """
+        if not isinstance(name, str):
+            raise DXFValueError('Block name as string required.')
 
         def get_dxfattribs(attdef) -> dict:
             dxfattribs = attdef.dxfattribs()
@@ -259,7 +265,6 @@ class CreatorInterface:
                 dxfattribs = get_dxfattribs(attdef)
                 tag, text, insert = unpack(dxfattribs)
                 blockref.add_attrib(tag, text, insert, dxfattribs)
-
         dxfattribs = dict(dxfattribs or {})
         autoblock = self.doc.blocks.new_anonymous_block()
         blockref = autoblock.add_blockref(name, (0, 0))
@@ -279,9 +284,9 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['tag'] = tag
-        dxfattribs['text'] = text
-        dxfattribs['insert'] = insert
+        dxfattribs['tag'] = str(tag)
+        dxfattribs['text'] = str(text)
+        dxfattribs['insert'] = Vector(insert)
         return self.new_entity('ATTRIB', dxfattribs)
 
     def add_attdef(self, tag: str, insert: 'Vertex' = (0, 0), text: str = '', dxfattribs: dict = None) -> 'AttDef':
@@ -300,9 +305,9 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['tag'] = tag
-        dxfattribs['insert'] = insert
-        dxfattribs['text'] = text
+        dxfattribs['tag'] = str(tag)
+        dxfattribs['insert'] = Vector(insert)
+        dxfattribs['text'] = str(text)
         return self.new_entity('ATTDEF', dxfattribs)
 
     def add_polyline2d(self, points: Iterable['Vertex'], dxfattribs: dict = None, format: str = None, ) -> 'Polyline':
@@ -388,7 +393,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         entity = self.new_entity(type_, dxfattribs)
         for x, point in enumerate(self._four_points(points)):
-            entity[x] = point
+            entity[x] = Vector(point)
         return entity
 
     @staticmethod
@@ -413,9 +418,9 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['name'] = name
-        dxfattribs['insert'] = insert
-        dxfattribs['size'] = size
+        dxfattribs['name'] = str(name)
+        dxfattribs['insert'] = Vector(insert)
+        dxfattribs['size'] = float(size)
         return self.new_entity('SHAPE', dxfattribs)
 
     # new entities in DXF AC1015 (R2000)
@@ -469,7 +474,7 @@ class CreatorInterface:
             raise DXFVersionError('MTEXT requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
         mtext = self.new_entity('MTEXT', dxfattribs)  # type: MText
-        mtext.text = text
+        mtext.text = str(text)
         return mtext
 
     def add_ray(self, start: 'Vertex', unit_vector: 'Vertex', dxfattribs: dict = None) -> 'Ray':
@@ -486,8 +491,8 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError('RAY requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['start'] = start
-        dxfattribs['unit_vector'] = unit_vector
+        dxfattribs['start'] = Vector(start)
+        dxfattribs['unit_vector'] = Vector(unit_vector).normalize()
         return self.new_entity('RAY', dxfattribs)
 
     def add_xline(self, start: 'Vertex', unit_vector: 'Vertex', dxfattribs: dict = None) -> 'XLine':
@@ -504,8 +509,8 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError('XLINE requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['start'] = start
-        dxfattribs['unit_vector'] = unit_vector
+        dxfattribs['start'] = Vector(start)
+        dxfattribs['unit_vector'] = Vector(unit_vector).normalize()
         return self.new_entity('XLINE', dxfattribs)
 
     def add_spline(self, fit_points: Iterable['Vertex'] = None, degree: int = 3, dxfattribs: dict = None) -> 'Spline':
@@ -529,7 +534,7 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError('SPLINE requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['degree'] = degree
+        dxfattribs['degree'] = int(degree)
         spline = self.new_entity('SPLINE', dxfattribs)  # type: Spline
         if fit_points is not None:
             spline.fit_points = Vector.generate(fit_points)
@@ -805,7 +810,7 @@ class CreatorInterface:
             raise DXFVersionError('HATCH requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['solid_fill'] = 1
-        dxfattribs['color'] = color
+        dxfattribs['color'] = int(color)
         dxfattribs['pattern_name'] = 'SOLID'
         return self.new_entity('HATCH', dxfattribs)
 
@@ -841,7 +846,7 @@ class CreatorInterface:
         def to_vector(units_per_pixel, angle_in_rad):
             x = math.cos(angle_in_rad) * units_per_pixel
             y = math.sin(angle_in_rad) * units_per_pixel
-            return round(x, 6), round(y, 6), 0  # supports only images in the xy-plane
+            return Vector(round(x, 6), round(y, 6), 0)  # supports only images in the xy-plane
 
         if self.dxfversion < DXF2000:
             raise DXFVersionError('IMAGE requires DXF R2000')
@@ -884,9 +889,9 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError('UNDERLAY requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['insert'] = insert
+        dxfattribs['insert'] = Vector(insert)
         dxfattribs['underlay_def_handle'] = underlay_def.dxf.handle
-        dxfattribs['rotation'] = rotation
+        dxfattribs['rotation'] = float(rotation)
 
         underlay = self.new_entity(underlay_def.entity_name, dxfattribs)  # type: Underlay
         underlay.scaling = scale
@@ -946,7 +951,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs['defpoint'] = Vector(base)  # group code 10
-        dxfattribs['text'] = text
+        dxfattribs['text'] = str(text)
         dxfattribs['defpoint2'] = Vector(p1)  # group code 13
         dxfattribs['defpoint3'] = Vector(p2)  # group code 14
         dxfattribs['angle'] = float(angle)
@@ -1112,7 +1117,7 @@ class CreatorInterface:
 
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
-        dxfattribs['text'] = text
+        dxfattribs['text'] = str(text)
 
         dxfattribs['defpoint2'] = Vector(line1[0])  # group code 13
         dxfattribs['defpoint3'] = Vector(line1[1])  # group code 14
@@ -1178,7 +1183,7 @@ class CreatorInterface:
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
-        dxfattribs['text'] = text
+        dxfattribs['text'] = str(text)
         dxfattribs['defpoint'] = Vector(base)
         dxfattribs['defpoint2'] = Vector(p1)
         dxfattribs['defpoint3'] = Vector(p2)
@@ -1265,7 +1270,7 @@ class CreatorInterface:
         dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs['defpoint'] = Vector(p1)  # group code 10
         dxfattribs['defpoint4'] = Vector(p2)  # group code 15
-        dxfattribs['text'] = text
+        dxfattribs['text'] = str(text)
 
         dimline.update_dxf_attribs(dxfattribs)
 
@@ -1389,7 +1394,7 @@ class CreatorInterface:
         dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs['defpoint4'] = Vector(mpoint)  # group code 15
         dxfattribs['defpoint'] = Vector(center)  # group code 10
-        dxfattribs['text'] = text
+        dxfattribs['text'] = str(text)
 
         dimline.update_dxf_attribs(dxfattribs)
 
@@ -1508,7 +1513,7 @@ class CreatorInterface:
         dxfattribs['defpoint'] = Vector(origin)  # group code 10
         dxfattribs['defpoint2'] = Vector(feature_location)  # group code 13
         dxfattribs['defpoint3'] = Vector(leader_endpoint)  # group code 14
-        dxfattribs['text'] = text
+        dxfattribs['text'] = str(text)
         dimline.update_dxf_attribs(dxfattribs)
 
         style = DimStyleOverride(dimline, override=override)
