@@ -59,9 +59,10 @@ Contents
    tutorials/index
    concepts/index
    reference
+   howto/index
+   faq
    render/index
    addons/index
-   howto
    dxfinternals/index
    develop/index
    glossary
