@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-22
 import math
@@ -13,6 +13,7 @@ from .factory import register_entity
 from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError, DXFTableEntryError
 from ezdxf.lldxf.types import get_xcode_for
 from ezdxf.tools import take2
+from .dimstyleoverride import DimStyleOverride
 import logging
 
 if TYPE_CHECKING:
@@ -485,6 +486,14 @@ class Dimension(DXFGraphic, OverrideMixin):
         else:
             logger.debug("get_measurement() - unknown DIMENSION type {}.".format(self.dimtype))
             return 0
+
+    def override(self) -> 'DimStyleOverride':
+        """ Returns the :class:`~ezdxf.entities.DimStyleOverride` object.
+
+        .. versionadded:: 0.12
+
+        """
+        return DimStyleOverride(self)
 
 
 # todo: DIMASSOC

@@ -200,6 +200,8 @@ Factory Functions
 
     .. automethod:: get_measurement
 
+    .. automethod:: override() -> DimStyleOverride
+
 DimStyleOverride
 ----------------
 
