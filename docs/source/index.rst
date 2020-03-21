@@ -22,16 +22,18 @@ Quick-Info
 - additional read support for DXF versions R13/R14 (upgraded to R2000)
 - additional read support for older DXF versions than R12 (upgraded to R12)
 - preserves third-party DXF content
-- additional add-ons:
 
-   - :ref:`r12writer` add-on to write basic DXF entities direct a DXF R12 file or stream
-   - :ref:`iterdxf` add-on to iterate over entities of the modelspace of really big (> 5GB) DXF files which
-     do not fit into memory
-   - :ref:`importer` add-on to import entities, blocks and table entries from another DXF document
-   - :ref:`dxf2code` add-on to generate Python code for DXF structures loaded from DXF
-     documents as starting point for parametric DXF entity creation
-   - :ref:`plot_style_files` read/write add-on
-   - :ref:`pycsg2` add-on for Constructive Solid Geometry (CSG) modeling technique
+Included Extensions
+-------------------
+
+- :ref:`r12writer` add-on to write basic DXF entities direct and fast into a DXF R12 file or stream
+- :ref:`iterdxf` add-on to iterate over entities of the modelspace of really big (> 5GB) DXF files which
+  do not fit into memory
+- :ref:`importer` add-on to import entities, blocks and table entries from another DXF document
+- :ref:`dxf2code` add-on to generate Python code for DXF structures loaded from DXF
+  documents as starting point for parametric DXF entity creation
+- :ref:`plot_style_files` read/write add-on
+- :ref:`pycsg2` add-on for Constructive Solid Geometry (CSG) modeling technique
 
 Website
 -------
