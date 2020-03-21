@@ -3,7 +3,9 @@
 FAQ
 ===
 
-What is the Relationship Between ezdxf, dxfwrite and dxfgrabber?
+.. _faq001:
+
+What is the Relationship between ezdxf, dxfwrite and dxfgrabber?
 ----------------------------------------------------------------
 
 In 2010 I started my first Python package for creating DXF documents called `dxfwrite`, this package can't

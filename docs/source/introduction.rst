@@ -10,16 +10,15 @@ it allows developers to read and modify existing DXF drawings or create new DXF 
 
 The main objective in the development of `ezdxf` was to hide complex DXF details from the programmer
 but still support most capabilities of the :term:`DXF` format. Nevertheless, a basic understanding of the DXF
-format is required, also to understand which goals are possible to accomplish with the DXF format.
+format is required, also to understand which tasks and goals are possible to accomplish by using the the DXF format.
 
 Not all DXF features are supported yet, but additional features will be added in the future gradually.
 
-`ezdxf` is also a replacement for my `dxfwrite`_ and my `dxfgrabber`_ packages but with different APIs, both packages
-are in maintenance only mode, no new features will be added, but they stay available, getting bug fixes and will adapted
-for new Python versions.
+`ezdxf` is also a replacement for my `dxfwrite`_ and my `dxfgrabber`_ packages but with different APIs, for more
+information see also: :ref:`faq001`
 
-What ezdxf is NOT
------------------
+What ezdxf can't do
+-------------------
 
     - `ezdxf` is not a DXF converter: `ezdxf` can not convert between different DXF versions, if you are looking for an
       appropriate application, try the free `ODAFileConverter`_ from the `Open Design Alliance`_, which converts between
