@@ -24,7 +24,14 @@ Quick-Info
 - additional read support for DXF versions R13/R14 (upgraded to R2000)
 - additional read support for older DXF versions than R12 (upgraded to R12)
 - preserves third-party DXF content
-- additional fast DXF R12 writer, that creates just an ENTITIES section with support for the basic DXF entities
+- add-ons:
+   - `r12writer` add-on to write basic DXF entities direct a DXF R12 file or stream
+   - `iterdxf` add-on to iterate over DXF entities of the modelspace of really big (> 5GB) DXF files which
+     do not fit into memory
+   - `Importer` add-on to import entities, blocks and table entries from another DXF document
+   - `dxf2code` add-on to generate Python code for DXF structures loaded from DXF 
+     documents as starting point for parametric DXF entity creation
+   - Plot Style Files (CTB/STB) read/write add-on
 
 A simple example:
 

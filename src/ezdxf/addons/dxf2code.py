@@ -1,35 +1,6 @@
 # Created: 17.05.2019
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
-r"""
-dxf2code
-========
-
-Translate DXF entities and structures into Python source code.
-
-Example::
-
-    import ezdxf
-    from ezdxf.addons.dxf2code import entities_to_code, block_to_code
-
-    doc = ezdxf.readfile('original.dxf')
-    msp = doc.modelspace()
-    source = entities_to_code(msp)
-
-    # create source code for a block definition
-    block_source = block_to_code(doc.blocks['MyBlock'])
-
-    # merge source code objects
-    source.merge(block_source)
-
-    with open('source.py', mode='wt') as f:
-        f.write(source.import_str())
-        f.write('\n\n')
-        f.write(source.code_str())
-        f.write('\n')
-
-"""
-
 from typing import TYPE_CHECKING, Iterable, List, Mapping, Set
 import json
 

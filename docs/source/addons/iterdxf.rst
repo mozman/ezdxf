@@ -1,3 +1,5 @@
+.. _iterdxf:
+
 .. module:: ezdxf.addons.iterdxf
     :noindex:
 

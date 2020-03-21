@@ -1,7 +1,7 @@
 .. _r12writer:
 
-Fast DXF R12 File/Stream Writer
-===============================
+r12writer
+=========
 
 .. module:: ezdxf.addons.r12writer
 

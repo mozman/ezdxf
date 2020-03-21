@@ -1,5 +1,7 @@
 .. automodule:: ezdxf.addons.pycsg
 
+.. _pycsg2:
+
 PyCSG
 =====
 
