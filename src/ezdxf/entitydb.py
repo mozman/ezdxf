@@ -102,8 +102,9 @@ class EntityDB:
 
     def delete_entity(self, entity: DXFEntity) -> None:
         """ Removes `entity` from database and destroys the `entity`. """
-        del self[entity.dxf.handle]
-        entity.destroy()
+        if entity.is_alive:
+            del self[entity.dxf.handle]
+            entity.destroy()
 
     def duplicate_entity(self, entity: DXFEntity) -> DXFEntity:
         """

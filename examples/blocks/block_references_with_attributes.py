@@ -40,11 +40,9 @@ for number, point in enumerate(SAMPLE_COORDS):
     }
     randomscale = 0.5 + random.random() * 2.0
     modelspace.add_auto_blockref('FLAG', point, values, dxfattribs={
-        'xscale': randomscale,
-        'yscale': randomscale,
         'layer': 'FLAGS',
         'rotation': -15
-    })
+    }).scale(randomscale)
 
 filename = 'flags.dxf'
 doc.saveas(filename)

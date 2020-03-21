@@ -33,6 +33,29 @@ def test_del_value(db):
     assert len(db) == 0
 
 
+def test_delete_entity():
+    db = EntityDB()
+    entity = DXFEntity.from_text("0\nTEST\n5\nFFFF\n")
+    db.add(entity)
+    assert len(db) == 1
+    db.delete_entity(entity)
+    assert len(db) == 0
+
+
+def test_delete_dead_entity_entity():
+    db = EntityDB()
+    entity = DXFEntity.from_text("0\nTEST\n5\nFFFF\n")
+    db.add(entity)
+    assert len(db) == 1
+    entity.destroy()
+    # delete_entity() should not raise an error if entity is not alive!
+    db.delete_entity(entity)
+    # but entity.destroy() does not remove entity from EntityDB!
+    assert 'FFFF' in db
+    assert len(db) == 1
+    # Auditor() removes such dead entities from database see test_restore_integrity_purge()
+
+
 def test_keys(db):
     assert list(db.keys()) == ['FEFE']
 

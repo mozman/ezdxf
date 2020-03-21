@@ -685,9 +685,21 @@ class DXFEntity:
         """ Returns a simple string representation including the class. """
         return str(self.__class__) + " " + str(self)
 
-    def dxfattribs(self) -> dict:
-        """ Returns a ``dict`` with all existing DXF attributes and their values. """
-        return self.dxf.all_existing_dxf_attribs()
+    def dxfattribs(self, discard: Iterable[str] = None) -> dict:
+        """ Returns a ``dict`` with all existing DXF attributes and their values.
+
+        .. versionchanged:: 0.12
+            added discard argument
+
+        Args:
+            discard: iterable of DXF attributes to discard as strings
+
+        """
+        all_attribs = self.dxf.all_existing_dxf_attribs()
+        if discard:
+            return {k: v for k, v in all_attribs.items() if k not in discard}
+        else:
+            return all_attribs
 
     def set_flag_state(self, flag: int, state: bool = True, name: str = 'flags') -> None:
         """

@@ -6,12 +6,12 @@ import logging
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
 from ezdxf.query import EntityQuery
 from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS, quadrant
-from ezdxf.entities import Line, Arc, Face3d
+from ezdxf.entities import Line, Arc, Face3d, Text
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline
+    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline, Attrib
 
 _2PI = math.pi * 2
 
@@ -59,14 +59,15 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
         target_layout.add_entity(entity)
         entities.append(entity)
 
-    # Process attached ATTRIB entities:
+    # Convert attached ATTRIB entities to TEXT entities:
+    # BricsCAD convert ATTRIB entities to ATTDEF entities, but I think a TEXT entity with the content of the ATTRIB
+    # entity is more useful than an ATTDEF which just shows the tag.
     for attrib in block_ref.attribs:
         # Attached ATTRIB entities are already located in the WCS
-        target_layout.add_entity(attrib)
-        entities.append(attrib)
+        text = attrib_to_text(attrib, entitydb)
+        target_layout.add_entity(text)
+        entities.append(text)
 
-    # Unlink attributes else they would be destroyed by deleting the block reference.
-    block_ref.attribs = []
     source_layout = block_ref.get_layout()
     if source_layout is not None:
         # Remove and destroy exploded INSERT if assigned to a layout
@@ -74,6 +75,19 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
     else:
         entitydb.delete_entity(block_ref)
     return EntityQuery(entities)
+
+
+DISCARD_FROM_ATTRIB = {'version', 'prompt', 'tag', 'flags', 'field_length', 'lock_position'}
+
+
+def attrib_to_text(attrib: 'Attrib', entitydb) -> 'Text':
+    dxfattribs = attrib.dxfattribs(discard=DISCARD_FROM_ATTRIB)
+    text = Text.new(doc=attrib.doc, dxfattribs=dxfattribs)
+    # ATTRIB has same owner as INSERT but does not reside in any EntitySpace() and must not deleted from any layout.
+    entitydb.delete_entity(attrib)
+    # New TEXT entity has same handle as the deleted ATTRIB entity and replaces the ATTRIB entity in the database.
+    entitydb.add(text)
+    return text
 
 
 def angle_to_param(ratio: float, angle: float, quadrant: int = 0) -> float:

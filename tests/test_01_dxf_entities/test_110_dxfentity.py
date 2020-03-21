@@ -54,6 +54,13 @@ def test_get_all_dxf_attribs(entity):
     assert dxfattribs['owner'] == 'ABBA'
 
 
+def test_get_dxf_attribs_and_discard_some(entity):
+    dxfattribs = entity.dxfattribs(discard={'owner'})
+    assert len(dxfattribs) == 1
+    assert dxfattribs['handle'] == 'FFFF'
+    assert 'owner' not in dxfattribs
+
+
 def test_write_r12_dxf(entity):
     tagwriter = TagCollector(dxfversion=DXF12)
     entity.export_dxf(tagwriter)
