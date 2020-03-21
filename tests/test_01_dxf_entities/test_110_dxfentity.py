@@ -55,7 +55,7 @@ def test_get_all_dxf_attribs(entity):
 
 
 def test_get_dxf_attribs_and_discard_some(entity):
-    dxfattribs = entity.dxfattribs(discard={'owner'})
+    dxfattribs = entity.dxfattribs(ignore={'owner'})
     assert len(dxfattribs) == 1
     assert dxfattribs['handle'] == 'FFFF'
     assert 'owner' not in dxfattribs

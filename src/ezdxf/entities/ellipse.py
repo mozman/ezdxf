@@ -137,12 +137,8 @@ class Ellipse(DXFGraphic):
         """
         dxftype = entity.dxftype()
         assert dxftype in {'ARC', 'CIRCLE'}
-        attribs = entity.dxfattribs()
+        attribs = entity.dxfattribs(ignore={'owner', 'handle', 'thickness'})
         attribs['ratio'] = 1.0
-
-        for attrib in ('owner', 'handle', 'thickness'):
-            if attrib in attribs:
-                attribs.pop(attrib)
 
         attribs['start_param'] = math.radians(attribs.pop('start_angle', 0.))
         attribs['end_param'] = math.radians(attribs.pop('end_angle', 360))
