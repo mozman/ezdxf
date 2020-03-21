@@ -27,6 +27,9 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
 
     Returns an EntityQuery() container with all exploded DXF entities.
 
+    Attached ATTRIB entities are converted to TEXT entities, this is the behavior of the BURST command of
+    the AutoCAD Express Tools.
+
     Args:
         block_ref: Block reference entity (INSERT)
         target_layout: explicit target layout for exploded DXF entities
@@ -60,8 +63,7 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
         entities.append(entity)
 
     # Convert attached ATTRIB entities to TEXT entities:
-    # BricsCAD convert ATTRIB entities to ATTDEF entities, but I think a TEXT entity with the content of the ATTRIB
-    # entity is more useful than an ATTDEF which just shows the tag.
+    # This is the behavior of the BURST command of the AutoCAD Express Tools
     for attrib in block_ref.attribs:
         # Attached ATTRIB entities are already located in the WCS
         text = attrib_to_text(attrib, entitydb)

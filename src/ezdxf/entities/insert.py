@@ -411,6 +411,9 @@ class Insert(DXFGraphic):
         attributes `insert`, `extrusion`, `rotation` and the scaling values `xscale`, `yscale` and `zscale`.
         Multiple inserts by row and column attributes is not supported.
 
+        Attached ATTRIB entities are converted to TEXT entities, this is the behavior of the BURST command of
+        the AutoCAD Express Tools.
+
         Returns an :class:`~ezdxf.query.EntityQuery` container with all "exploded" DXF entities.
 
         .. warning::
