@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.12b0 - dev
+Version 0.12b1 - dev
 --------------------
 
 - NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if block not exist or is an XREF
@@ -11,6 +11,8 @@ Version 0.12b0 - dev
 - NEW: `Insert.scale(factor)` set uniform scaling.
 - NEW: `Insert.virtual_entities()` yields 'virtual' entities of a block reference (experimental)
 - NEW: `Insert.explode()` explode block reference entities into target layout (experimental)
+- NEW: `Insert.add_auto_attribs()` add ATTRIB entities defined as ATTDEF in the block layout and fill tags 
+        with values defined by a `dict` (experimental)
 - NEW: `LWPolyline.virtual_entities()` yields 'virtual' LINE and ARC entities
 - NEW: `LWPolyline.explode()` explode LWPOLYLINE as LINE and ARC entities into target layout
 - NEW: `Polyline.virtual_entities()` yields 'virtual' LINE, ARC or 3DFACE entities

@@ -42,13 +42,12 @@ for number, point in enumerate(SAMPLE_COORDS):
         'YPOS': f"y = {point[1]:.3f}",
     }
     randomscale = 0.5 + random.random() * 2.0
-    block_ref = modelspace.add_blockref('FLAG', point, dxfattribs={
+    modelspace.add_auto_blockref('FLAG', point, values, dxfattribs={
         'layer': 'FLAGS',
         'rotation': -15
     }).scale(randomscale)
-    block_ref.add_auto_attribs(values)
 
-filename = DIR / 'flags_with_attribs.dxf'
 doc.set_modelspace_vport(height=200)
+filename = DIR/'auto_flags.dxf'
 doc.saveas(filename)
 print("drawing '%s' created.\n" % filename)

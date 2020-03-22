@@ -93,6 +93,8 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. automethod:: add_attrib
 
+    .. automethod:: add_auto_attribs
+
     .. automethod:: delete_attrib
 
     .. automethod:: delete_all_attribs

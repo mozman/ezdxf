@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-16
-from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List
+from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict
 import math
 from ezdxf.math import Vector, UCS, BRCS, X_AXIS, Y_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -163,6 +163,15 @@ class Insert(DXFGraphic):
 
         """
         return self.dxf.xscale == self.dxf.yscale == self.dxf.zscale
+
+    @property
+    def text_scaling(self) -> float:
+        """ Returns uniform scaling factor for text entities.
+
+        .. versionadded:: 0.12
+
+        """
+        return max(abs(self.dxf.xscale), abs(self.dxf.yscale), abs(self.dxf.zscale))
 
     def scale(self, factor: float):
         """ Set uniform scaling.
@@ -470,3 +479,41 @@ class Insert(DXFGraphic):
             return []
 
         return virtual_block_reference_entities(self)
+
+    def add_auto_attribs(self, values: Dict[str, str]) -> 'Insert':
+        """
+        This method adds for each :class:`~ezdxf.entities.Attdef` entity, defined in the block definition,
+        automatically an :class:`Attrib` entity to the block reference and set ``tag/value`` DXF attributes of
+        the ATTRIB entities by the ``key/value`` pairs (both as strings) of the `values` dict.
+        The Attrib entities are placed relative to the insert point, which is equal to the block base point.
+
+        This method avoids the wrapper block of the :meth:`~ezdxf.layouts.BaseLayout.add_auto_blockref` method, but
+        the visual results may not match the results of CAD applications, especially for non uniform scaling.
+        If the visual result is very important to you, use the :meth:`add_auto_blockref` method.
+
+        Args:
+            values: :class:`~ezdxf.entities.Attrib` tag values as ``tag/value`` pairs
+
+        """
+
+        def unpack(dxfattribs) -> Tuple[str, str, 'Vertex']:
+            tag = dxfattribs.pop('tag')
+            text = values.get(tag, "")
+            location = dxfattribs.pop('insert')
+            return tag, text, location
+
+        def autofill() -> None:
+            for attdef in blockdef.attdefs():
+                dxfattribs = attdef.dxfattribs(ignore={'prompt', 'handle'})
+                tag, text, location = unpack(dxfattribs)
+                attrib = self.add_attrib(tag, text, location, dxfattribs)
+                attrib.transform_to_wcs(brcs)
+                attrib.dxf.height *= attrib_scaling_factor
+
+        brcs = cast('UCS', self.brcs())
+        # This method does not work well for non uniform scaled block references!
+        attrib_scaling_factor = self.text_scaling
+        blockdef = self.block()
+        autofill()
+        return self
+

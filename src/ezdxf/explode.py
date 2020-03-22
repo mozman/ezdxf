@@ -198,7 +198,7 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
         if uniform_scaling_factor is not None:
             uniform_scaling_factor = float(uniform_scaling_factor)
         else:
-            uniform_scaling_factor = max(abs(xscale), abs(yscale), abs(zscale))
+            uniform_scaling_factor = block_ref.text_scaling
 
         # Non uniform scaling will produce incorrect results for some entities!
         if xscale == yscale == zscale:

@@ -233,43 +233,44 @@ class CreatorInterface:
         """
         Add an :class:`~ezdxf.entities.Insert` entity. This method adds for each :class:`~ezdxf.entities.Attdef` entity,
         defined in the block definition, automatically an :class:`Attrib` entity to the block reference and
-        set tag/value DXF attributes of the Attrib entities. The `values` dict defines the tag/value attributes
-        as key=tag, value=tag value as string.
+        set ``tag/value`` DXF attributes of the ATTRIB entities by the ``key/value`` pairs (both as strings) of the
+        `values` dict.
         The Attrib entities are placed relative to the insert point, which is equal to the block base point.
+
+        This method wraps the INSERT and all the ATTRIB entities into an anonymous block, which produces the best
+        visual results, especially for non uniform scaled block references, because the transformation and scaling is
+        done by the CAD application. But this makes evaluation of block references with attributes more complicated,
+        if you prefer INSERT and ATTRIB entities without a wrapper block use the :meth:`add_blockref_with_attribs`
+        method.
 
         Args:
             name: block name
             insert: insert location as 2D/3D point in :ref:`WCS`
-            values: :class:`~ezdxf.entities.Attrib` tag values as key=tag, value=tag value pairs
+            values: :class:`~ezdxf.entities.Attrib` tag values as ``tag/value`` pairs
             dxfattribs: additional DXF attributes for :class:`Insert` entity
 
         """
         if not isinstance(name, str):
             raise DXFValueError('Block name as string required.')
 
-        def get_dxfattribs(attdef) -> dict:
-            dxfattribs = attdef.dxfattribs()
-            dxfattribs.pop('prompt', None)
-            dxfattribs.pop('handle', None)
-            return dxfattribs
-
         def unpack(dxfattribs) -> Tuple[str, str, 'Vertex']:
             tag = dxfattribs.pop('tag')
             text = values.get(tag, "")
-            insert = dxfattribs.pop('insert')
-            return tag, text, insert
+            location = dxfattribs.pop('insert')
+            return tag, text, location
 
-        def autofill(blockref, blockdef) -> None:
+        def autofill() -> None:
             # ATTRIBs are placed relative to the base point
             for attdef in blockdef.attdefs():
-                dxfattribs = get_dxfattribs(attdef)
-                tag, text, insert = unpack(dxfattribs)
-                blockref.add_attrib(tag, text, insert, dxfattribs)
+                dxfattribs = attdef.dxfattribs(ignore={'prompt', 'handle'})
+                tag, text, location = unpack(dxfattribs)
+                blockref.add_attrib(tag, text, location, dxfattribs)
+
         dxfattribs = dict(dxfattribs or {})
         autoblock = self.doc.blocks.new_anonymous_block()
         blockref = autoblock.add_blockref(name, (0, 0))
         blockdef = self.doc.blocks[name]
-        autofill(blockref, blockdef)
+        autofill()
         return self.add_blockref(autoblock.name, insert, dxfattribs)
 
     def add_attrib(self, tag: str, text: str, insert: 'Vertex' = (0, 0), dxfattribs: dict = None) -> 'Attrib':
