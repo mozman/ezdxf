@@ -54,10 +54,14 @@ Using Attribute Definitions
 
 The second way to use attributes in block references is a two step process, first step is to create an attribute
 definition (template) in the block definition, the second step is adding the block reference by
-:meth:`Layout.add_auto_blockref` ('auto' is for automatically filled attributes).
+:meth:`Layout.add_blockref` and attach and fill attribute automatically by the
+:meth:`~ezdxf.entities.Insert.add_auto_attribs` method to the block reference.
 The advantage of this method is that all attributes are placed relative to the block base point with the same
-rotation and scaling as the block, but it has the disadvantage, that the block reference is wrapped into an
-anonymous block, which makes evaluation of attributes more complex.
+rotation and scaling as the block, but has the disadvantage that non uniform scaling is not handled very well.
+The method :meth:`Layout.add_auto_blockref` handles non uniform scaling better by wrapping the block reference and its
+attributes into an anonymous block and let the CAD application do the transformation work which will create correct
+graphical representations at least by AutoCAD and BricsCAD. This method has the disadvantage of a more complex
+evaluation of attached attributes
 
 Using attribute definitions (:class:`~ezdxf.entities.Attdef`):
 
@@ -93,24 +97,40 @@ As mentioned above evaluation of block references wrapped into anonymous blocks 
     print(flag_numbers)
 
 
-Copying Block Reference Entities Into Modelspace
-------------------------------------------------
+Exploding Block References
+--------------------------
 
 .. versionadded:: 0.12
 
-This is an advanced feature and not for beginners!
+This is an advanced and still experimental feature and because `ezdxf` is still not a CAD application, the
+results may no be perfect. **Non uniform scaling** lead to incorrect results for text entities
+(TEXT, MTEXT, ATTRIB) and some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and and
+POLYLINE/LWPOLYLINE with arc segments, therefore the argument `non_uniform_scaling` is ``False`` by default, to avoid
+exploding of non uniform scaled block references.
 
-Because `ezdxf` is still not a CAD application, the most work has to be done by yourself.
-The transformation of coordinates and directions has to be done individually for each
-entity in the block definition.
+By default the "exploded" entities are added to the same layout as the block
+reference is located.
 
-First get the block reference coordinate system :class:`~ezdxf.entities.BRCS`,
-which provides all required transformation methods, next step is to iterate over all
-block entities and copy the entities into modelspace and transform their coordinates
-and properties if required:
 
-.. literalinclude:: src/blocks.py
-    :lines: 71-
+.. code-block:: Python
 
-This is a kind of poor mans :func:`explode` function, which also shows the problems which
-are arising by supporting :ref:`OCS` and scaling.
+    for flag_ref in msp.query('INSERT[name=="FLAG"]'):
+        flag_ref.explode()
+
+Examine Entities of Block References
+------------------------------------
+
+.. versionadded:: 0.12
+
+If you just want to examine the entities of a block reference use the :meth:`~ezdxf.entities.Insert.virtual_entities`
+method.
+This methods yields "virtual" entities with attributes identical to "exploded" entities but they are not
+stored in the entity database, have no handle and are not assigned to any layout.
+
+.. code-block:: Python
+
+    for flag_ref in msp.query('INSERT[name=="FLAG"]'):
+        for entity in flag_ref.virtual_entities():
+            if entity.dxftype() == 'LWPOLYLINE':
+                print(f'Found {str(entity)}.')
+

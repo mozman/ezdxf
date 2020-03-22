@@ -492,6 +492,8 @@ class Insert(DXFGraphic):
         the visual results may not match the results of CAD applications, especially for non uniform scaling.
         If the visual result is very important to you, use the :meth:`add_auto_blockref` method.
 
+        .. versionadded: 0.12
+
         Args:
             values: :class:`~ezdxf.entities.Attrib` tag values as ``tag/value`` pairs
 

@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-13
 # DXFEntity - Root Entity
-from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union, Type, TypeVar, Sequence
+from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union, Type, TypeVar, Set
 import copy
 from ezdxf import options
 from ezdxf.lldxf.types import handle_code, dxftag, cast_value
@@ -685,9 +685,9 @@ class DXFEntity:
         """ Returns a simple string representation including the class. """
         return str(self.__class__) + " " + str(self)
 
-    def dxfattribs(self, drop: Sequence[str] = None) -> dict:
+    def dxfattribs(self, drop: Set[str] = None) -> dict:
         """ Returns a ``dict`` with all existing DXF attributes and their values and exclude all DXF attributes
-        listed in sequence `drop`.
+        listed in set `drop`.
 
         .. versionchanged:: 0.12
             added `drop` argument

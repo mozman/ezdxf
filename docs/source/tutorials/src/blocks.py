@@ -59,55 +59,11 @@ for number, point in enumerate(placing_points):
 
     # Every flag has a different scaling and a rotation of +15 deg.
     random_scale = 0.5 + random.random() * 2.0
-    msp.add_auto_blockref('FLAG', point, values, dxfattribs={
-        'xscale': random_scale,
-        'yscale': random_scale,
+    blockref = msp.add_blockref('FLAG', point, dxfattribs={
         'rotation': 15
-    })
+    }).scale(random_scale)
+    blockref.add_auto_attribs(values)
 
 # Save the drawing.
 doc.saveas("auto_blockref_tutorial.dxf")
 
-block = doc.blocks.get('FLAG')
-# Getting the block layout from the block reference is also possible:
-# block = flag_ref.block()
-for flag_ref in msp.query('INSERT[name=="FLAG"]'):
-    brcs = flag_ref.brcs()
-    for entity in block:
-        # Copy entity with all DXF attributes
-        # Not all DXF types support copying!
-        try:
-            copy = doc.entitydb.duplicate_entity(entity)
-        except ezdxf.DXFTypeError:
-            continue
-        if entity.dxftype() == 'CIRCLE':
-            # OCS support is ignored to keep it simple
-            # scaling and rotating is applied by transforming center to WCS
-            copy.dxf.center = brcs.to_wcs(entity.dxf.center)
-            # simple scaling of radius
-            copy.dxf.radius = entity.dxf.radius * flag_ref.dxf.xscale
-            # but first problem of exploding blocks shows up:
-            # convert CIRCLE/ARC to ELLIPSE if x- and y-scaling is not uniform
-
-        elif entity.dxftype() == 'LWPOLYLINE':
-            # this will not work if the block reference establish an OCS
-            # and the transformed LWPOLYLINE is placed in 3D space,
-            # but luckily non uniform scaling is not a problem.
-            transformed_points = []
-            for x, y, s, e, b in copy.get_points(format='xyseb'):
-                p = brcs.to_wcs((x, y))
-                transformed_points.append((p[0], p[1], s, e, b))
-            copy.set_points(transformed_points, format='xyseb')
-
-        # add copy to modelspace
-        msp.add_entity(copy)
-
-    # Last step is to move attached ATTRIB entities into modelspace,
-    # the attributes are already placed in WCS.
-    for attrib in flag_ref.attribs:
-        msp.add_entity(attrib)
-    # Unlink ATTRIB entities else they will be destroyed by deleting
-    # the block reference.
-    flag_ref.attribs = []
-    # delete 'exploded' block reference
-    msp.delete_entity(flag_ref)
