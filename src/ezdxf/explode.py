@@ -83,7 +83,7 @@ IGNORE_FROM_ATTRIB = {'version', 'prompt', 'tag', 'flags', 'field_length', 'lock
 
 
 def attrib_to_text(attrib: 'Attrib', entitydb) -> 'Text':
-    dxfattribs = attrib.dxfattribs(ignore=IGNORE_FROM_ATTRIB)
+    dxfattribs = attrib.dxfattribs(drop=IGNORE_FROM_ATTRIB)
     text = Text.new(doc=attrib.doc, dxfattribs=dxfattribs)
     # ATTRIB has same owner as INSERT but does not reside in any EntitySpace() and must not deleted from any layout.
     entitydb.delete_entity(attrib)

@@ -308,7 +308,7 @@ class Insert(DXFGraphic):
         Args:
             tag: tag name as string
             text: content text as string
-            insert: insert position as tuple ``(x, y[, z])``
+            insert: insert loaction as tuple ``(x, y[, z])`` in :ref:`WCS`
             dxfattribs: additional DXF attributes for the ATTRIB entity
 
         """
@@ -482,10 +482,11 @@ class Insert(DXFGraphic):
 
     def add_auto_attribs(self, values: Dict[str, str]) -> 'Insert':
         """
-        This method adds for each :class:`~ezdxf.entities.Attdef` entity, defined in the block definition,
+        Attach for each :class:`~ezdxf.entities.Attdef` entity, defined in the block definition,
         automatically an :class:`Attrib` entity to the block reference and set ``tag/value`` DXF attributes of
         the ATTRIB entities by the ``key/value`` pairs (both as strings) of the `values` dict.
-        The Attrib entities are placed relative to the insert point, which is equal to the block base point.
+        The ATTRIB entities are placed relative to the insert location of the block reference, which is identical to the
+        block base point.
 
         This method avoids the wrapper block of the :meth:`~ezdxf.layouts.BaseLayout.add_auto_blockref` method, but
         the visual results may not match the results of CAD applications, especially for non uniform scaling.
@@ -504,7 +505,7 @@ class Insert(DXFGraphic):
 
         def autofill() -> None:
             for attdef in blockdef.attdefs():
-                dxfattribs = attdef.dxfattribs(ignore={'prompt', 'handle'})
+                dxfattribs = attdef.dxfattribs(drop={'prompt', 'handle'})
                 tag, text, location = unpack(dxfattribs)
                 attrib = self.add_attrib(tag, text, location, dxfattribs)
                 attrib.transform_to_wcs(brcs)

@@ -262,7 +262,7 @@ class CreatorInterface:
         def autofill() -> None:
             # ATTRIBs are placed relative to the base point
             for attdef in blockdef.attdefs():
-                dxfattribs = attdef.dxfattribs(ignore={'prompt', 'handle'})
+                dxfattribs = attdef.dxfattribs(drop={'prompt', 'handle'})
                 tag, text, location = unpack(dxfattribs)
                 blockref.add_attrib(tag, text, location, dxfattribs)
 
