@@ -58,8 +58,12 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
     entities = []
 
     for entity in virtual_block_reference_entities(block_ref, uniform_scaling_factor=uniform_scaling_factor):
+        dxftype = entity.dxftype()
         entitydb.add(entity)
         target_layout.add_entity(entity)
+        if dxftype == 'DIMENSION':
+            # Render a graphical representation for each exploded DIMENSION entity as anonymous block.
+            cast('Dimension', entity).render()
         entities.append(entity)
 
     # Convert attached ATTRIB entities to TEXT entities:

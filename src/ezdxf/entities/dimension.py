@@ -3,6 +3,8 @@
 # Created 2019-02-22
 import math
 from typing import TYPE_CHECKING, Optional, Union
+from abc import abstractmethod
+
 from ezdxf.math import Vector, X_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007
@@ -17,7 +19,7 @@ from .dimstyleoverride import DimStyleOverride
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS
+    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS, UCS
 
 logger = logging.getLogger('ezdxf')
 
@@ -29,8 +31,8 @@ acdb_dimension = DefSubclass('AcDbDimension', {
     'dimstyle': DXFAttr(3, default='Standard'),  # dimension style name
     # The dimension style is stored in doc.sections.tables.dimstyles,
     # shortcut Drawings.dimstyles property
-    'defpoint': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # definition point for all dimension types
-    'text_midpoint': DXFAttr(11, xtype=XType.point3d),  # midpoint of dimension text
+    'defpoint': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # definition point for all dimension types in WCS
+    'text_midpoint': DXFAttr(11, xtype=XType.point3d),  # midpoint of dimension text in OCS
 
     # Insertion point for clones of a  dimension—Baseline and Continue (in OCS)
     # located in AcDbDimension? Another error in the DXF reference?
@@ -494,6 +496,39 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         """
         return DimStyleOverride(self)
+
+    def render(self) -> None:
+        """ Render graphical representation as anonymous block.
+
+        .. versionadded:: 0.12
+
+        """
+        # todo: delete existing anonymous block?
+        self.override().render()
+
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Dimension':
+        """ Transform DIMENSION entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+
+        Does not transform the graphical representation in the anonymous block!
+
+        .. versionadded:: 0.12
+
+        """
+        # Transform existing OCS points and angles
+        dxf = self.dxf
+        vector_names = [
+            name for name in ['text_midpoint', 'defpoint5', 'insert'] if dxf.hasattr(name)
+        ]
+        angle_names = [
+            name for name in ['text_rotation', 'horizontal_direction', 'angle'] if dxf.hasattr(name)
+        ]
+        self._ucs_and_ocs_transformation(ucs, vector_names=vector_names, angle_names=angle_names)
+
+        # Transform existing WCS points
+        for name in ['defpoint', 'defpoint2', 'defpoint3', 'defpoint4']:
+            if dxf.hasattr(name):
+                dxf.set(name, ucs.to_wcs(dxf.get(name)))
+        return self
 
 
 # todo: DIMASSOC

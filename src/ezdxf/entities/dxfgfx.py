@@ -270,7 +270,7 @@ class DXFGraphic(DXFEntity):
         """ Interface definition. """
         raise NotImplementedError()
 
-    def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Sequence, angle_names: Sequence = None) -> None:
+    def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Iterable, angle_names: Iterable = None) -> None:
         """ Transforms entity for given `ucs` to the parent coordinate system (most likely the WCS).
 
         Transforms the entity vectors and angles attributes from `ucs` to the parent coordinate system.
