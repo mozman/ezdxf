@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 HALF_PI = math.pi / 2.0
 THREE_PI_HALF = 1.5 * math.pi
 DOUBLE_PI = math.pi * 2.0
-TOLERANCE = 1e-12
+TOLERANCE = 1e-11
 
 _90_DEG = math.pi / 2.0
 _180_DEG = math.pi
