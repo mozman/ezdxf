@@ -8,6 +8,7 @@ DXF Entities
     - angular dim
     - angular 3 point dim
     - ordinate dim
+    - arc dim
 - MLEADER
 - MLINE
 - FIELD

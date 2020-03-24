@@ -202,6 +202,15 @@ Factory Functions
 
     .. automethod:: override() -> DimStyleOverride
 
+    .. automethod:: render()
+
+    .. automethod:: transform_to_wcs(ucs: UCS) -> Dimension
+
+    .. automethod:: virtual_entities() -> Iterable[DXFGraphic]
+
+    .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
+
+
 DimStyleOverride
 ----------------
 

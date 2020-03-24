@@ -2,24 +2,24 @@
 # License: MIT License
 # Created 2019-02-22
 import math
-from typing import TYPE_CHECKING, Optional, Union
-from abc import abstractmethod
+from typing import TYPE_CHECKING, Optional, Union, Iterable
 
 from ezdxf.math import Vector, X_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007
+from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError, DXFTableEntryError, DXFTypeError
+from ezdxf.lldxf.types import get_xcode_for
+from ezdxf.tools import take2
 from ezdxf.render.arrows import ARROWS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
-from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError, DXFTableEntryError
-from ezdxf.lldxf.types import get_xcode_for
-from ezdxf.tools import take2
 from .dimstyleoverride import DimStyleOverride
+from ezdxf.explode import explode_entity
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS, UCS
+    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS, UCS, BaseLayout, EntityQuery
 
 logger = logging.getLogger('ezdxf')
 
@@ -31,7 +31,8 @@ acdb_dimension = DefSubclass('AcDbDimension', {
     'dimstyle': DXFAttr(3, default='Standard'),  # dimension style name
     # The dimension style is stored in doc.sections.tables.dimstyles,
     # shortcut Drawings.dimstyles property
-    'defpoint': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # definition point for all dimension types in WCS
+    'defpoint': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    # definition point for all dimension types in WCS
     'text_midpoint': DXFAttr(11, xtype=XType.point3d),  # midpoint of dimension text in OCS
 
     # Insertion point for clones of a  dimension—Baseline and Continue (in OCS)
@@ -49,6 +50,7 @@ acdb_dimension = DefSubclass('AcDbDimension', {
     # 4 = Radius
     # 5 = Angular 3 point;
     # 6 = Ordinate
+    # 8 = Arc Dimension ??? -> ARC_DIMENSION
     # 32 = Indicates that the block reference (group code 2) is referenced by this dimension only
     # 64 = Ordinate type. This is a bit value (bit 7) used only with integer
     # value 6. If set, ordinate is X-type; if not set, ordinate is Y-type
@@ -71,8 +73,8 @@ acdb_dimension = DefSubclass('AcDbDimension', {
     'actual_measurement': DXFAttr(42, dxfversion=DXF2000, optional=True),
     # Actual measurement (optional; read-only value)
     'unknown1': DXFAttr(73, dxfversion=DXF2000, optional=True),
-    'unknown2': DXFAttr(74, dxfversion=DXF2000, optional=True),
-    'unknown3': DXFAttr(75, dxfversion=DXF2000, optional=True),
+    'flip_arrow_1': DXFAttr(74, dxfversion=DXF2000, optional=True),
+    'flip_arrow_2': DXFAttr(75, dxfversion=DXF2000, optional=True),
     'text': DXFAttr(1, default='', optional=True),  # Dimension text explicitly entered by the user
     # default is the measurement.
     # If null or “<>”, the dimension measurement is drawn as the text,
@@ -351,8 +353,13 @@ class Dimension(DXFGraphic, OverrideMixin):
     RADIUS = 4
     ANGULAR_3P = 5
     ORDINATE = 6
+    ARC = 8
     ORDINATE_TYPE = 64
     USER_LOCATION_OVERRIDE = 128
+
+    # WARNING for destroy() method:
+    # Do not destroy associated anonymous block, if DIMENSION is used in a block, the anonymous block may
+    # be used by several block references.
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
@@ -385,8 +392,8 @@ class Dimension(DXFGraphic, OverrideMixin):
         dim_type = self.dimtype
         self.dxf.export_dxf_attribs(tagwriter, [
             'version', 'geometry', 'dimstyle', 'defpoint', 'text_midpoint', 'insert', 'dimtype', 'attachment_point',
-            'line_spacing_style', 'line_spacing_factor', 'actual_measurement', 'unknown1', 'unknown2', 'unknown3',
-            'text', 'oblique_angle', 'text_rotation', 'horizontal_direction', 'extrusion',
+            'line_spacing_style', 'line_spacing_factor', 'actual_measurement', 'unknown1', 'flip_arrow_1',
+            'flip_arrow_2', 'text', 'oblique_angle', 'text_rotation', 'horizontal_direction', 'extrusion',
         ])
 
         if dim_type == 0:  # linear
@@ -416,15 +423,8 @@ class Dimension(DXFGraphic, OverrideMixin):
     @property
     def dimtype(self) -> int:
         """ :attr:`dxf.dimtype` without binary flags (32, 62, 128). """
-        return self.dxf.dimtype & 7
-
-    def destroy(self):
-        """ Destroy associated anonymous block (internal API)"""
-        blocks = self.doc.blocks
-        block_name = self.dxf.geometry
-        if block_name in blocks:
-            blocks.delete_block(block_name, safe=False)
-        super().destroy()
+        # ARC_DIMENSION = 8
+        return self.dxf.dimtype & 15
 
     def get_geometry_block(self) -> Optional['BlockLayout']:
         """
@@ -526,6 +526,90 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         # Transform existing WCS points
         for name in ['defpoint', 'defpoint2', 'defpoint3', 'defpoint4']:
+            if dxf.hasattr(name):
+                dxf.set(name, ucs.to_wcs(dxf.get(name)))
+        return self
+
+    def virtual_entities(self) -> Iterable['DXFGraphic']:
+        """
+        Yields 'virtual' parts of DIMENSION as basic DXF entities like LINE, ARC or TEXT.
+
+        This entities are located at the original positions, but are not stored in the entity database, have no handle
+        and are not assigned to any layout.
+
+        .. versionadded:: 0.12
+
+        """
+        block = self.get_geometry_block()
+        if block is not None:
+            for entity in block:
+                try:
+                    yield entity.copy()
+                except DXFTypeError:
+                    pass
+
+    def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
+        """
+        Explode parts of DIMENSION as basic DXF entities like LINE, ARC or TEXT into target layout,
+        if target layout is ``None``, the target layout is the layout of the DIMENSION.
+
+        Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF parts.
+
+        Args:
+            target_layout: target layout for DXF parts, ``None`` for same layout as source entity.
+
+        .. versionadded:: 0.12
+
+        """
+        return explode_entity(self, target_layout)
+
+
+acdb_arc_dimension = DefSubclass('AcDbArcDimension', {
+    'ext_line1_point': DXFAttr(13, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    'ext_line2_point': DXFAttr(14, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    'arc_center': DXFAttr(15, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    'start_angle': DXFAttr(40),  # radians?
+    'end_angle': DXFAttr(41),  # radians?
+    'is_partial': DXFAttr(70),
+    'has_leader': DXFAttr(71),
+    'leader_point1': DXFAttr(16, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    'leader_point2': DXFAttr(17, xtype=XType.point3d, default=Vector(0, 0, 0)),
+})
+
+
+@register_entity
+class ArcDimension(Dimension):
+    """ DXF ARC_DIMENSION entity """
+    DXFTYPE = 'ARC_DIMENSION'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_dimension, acdb_arc_dimension)
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        # skip Dimension loader
+        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_dimension.name)
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_arc_dimension, index=3)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_arc_dimension.name)
+        return dxf
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        super().export_entity(tagwriter)
+        tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbArcDimension')
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'ext_line1_point', 'ext_line2_point', 'arc_center', 'start_angle', 'end_angle',
+            'is_partial', 'has_leader', 'leader_point1', 'leader_point2',
+        ])
+
+    def transform_to_wcs(self, ucs: 'UCS') -> 'Dimension':
+        super().transform_to_wcs(ucs)
+        self._ucs_and_ocs_transformation(ucs, vector_names=[], angle_names=['start_angle', 'end_angle'])
+        dxf = self.dxf
+        for name in ['leader_point1', 'leader_point2']:
             if dxf.hasattr(name):
                 dxf.set(name, ucs.to_wcs(dxf.get(name)))
         return self
