@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
-from .construct2d import ConstructionTool, is_point_left_of_line, intersection_line_line_2d
+from .construct2d import ConstructionTool, is_point_left_of_line, intersection_line_line_2d, TOLERANCE
 from .bbox import BoundingBox2d
 from .vector import Vec2
 
@@ -188,6 +188,7 @@ class ConstructionLine(ConstructionTool):
         end: end point of line as :class:`Vec2` compatible object
 
     """
+
     def __init__(self, start: 'Vertex', end: 'Vertex'):
         self.start = Vec2(start)
         self.end = Vec2(end)
@@ -246,19 +247,21 @@ class ConstructionLine(ConstructionTool):
         """ Returns ``True`` if `point` is inside of line bounding box. """
         return self.bounding_box.inside(point)
 
-    def intersect(self, other: 'ConstructionLine') -> Optional['Vec2']:
+    def intersect(self, other: 'ConstructionLine', abs_tol: float = TOLERANCE) -> Optional['Vec2']:
         """
         Returns the intersection point of to lines or ``None`` if they have no intersection point.
 
         Args:
             other: other :class:`ConstructionLine`
+            abs_tol: tolerance for distance check
 
         """
-        return intersection_line_line_2d((self.start, self.end), (other.start, other.end), virtual=False)
+        return intersection_line_line_2d((self.start, self.end), (other.start, other.end), virtual=False,
+                                         abs_tol=abs_tol)
 
-    def has_intersection(self, other: 'ConstructionLine') -> bool:
+    def has_intersection(self, other: 'ConstructionLine', abs_tol: float = TOLERANCE) -> bool:
         """ Returns ``True`` if has intersection with `other` line. """
-        return self.intersect(other) is not None
+        return self.intersect(other, abs_tol=abs_tol) is not None
 
     def is_point_left_of_line(self, point: 'Vertex', colinear=False) -> bool:
         """

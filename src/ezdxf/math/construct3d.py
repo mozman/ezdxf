@@ -92,7 +92,7 @@ def normal_vector_3p(a: Vector, b: Vector, c: Vector) -> Vector:
     return (b - a).cross(c - a).normalize()
 
 
-def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-12) -> Sequence[
+def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-10) -> Sequence[
     Vector]:
     """
     Calculate intersection of two rays, returns a 0-tuple for parallel rays, a 1-tuple for intersecting rays and a
