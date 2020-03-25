@@ -3,14 +3,12 @@
 # Created 2019-02-13
 #
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
-from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Sequence, Dict
-from ezdxf import options
+from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Sequence, Dict, List
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXFValueError, DXFKeyError, DXFTableEntryError
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.validator import is_valid_layer_name
-from ezdxf.lldxf.repair import fix_invalid_located_acdb_entity_group_codes
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS, UCS, Z_AXIS
 from ezdxf.tools.rgb import int2rgb, rgb2int
@@ -18,7 +16,7 @@ from ezdxf.tools import float2transparency, transparency2float
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace
+    from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace, Tags
 
 __all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd']
 
@@ -68,6 +66,14 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # 310: Proxy entity graphics data (multiple lines; 256 characters max. per line) (optional)
 })
 
+BASE_CLASS_CODES = {0, 5, 102, 330}
+
+
+def append_base_class_to_acdb_entity(subclasses: List['Tags']) -> None:
+    acdb_entity_tags = subclasses[1]
+    if acdb_entity_tags[0] == (100, 'AcDbEntity'):
+        acdb_entity_tags.extend(tag for tag in subclasses[0] if tag.code not in BASE_CLASS_CODES)
+
 
 class DXFGraphic(DXFEntity):
     """
@@ -87,8 +93,8 @@ class DXFGraphic(DXFEntity):
         if processor is None:
             return dxf
 
-        if options.fix_invalid_located_group_tags:
-            fix_invalid_located_acdb_entity_group_codes(processor.subclasses)
+        if len(processor.subclasses) > 1:
+            append_base_class_to_acdb_entity(processor.subclasses)
 
         tags = processor.load_dxfattribs_into_namespace(dxf, acdb_entity)
         if len(tags) and not processor.r12:

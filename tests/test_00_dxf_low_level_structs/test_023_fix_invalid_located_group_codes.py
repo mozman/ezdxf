@@ -1,8 +1,5 @@
 from ezdxf.entities import LWPolyline
-from ezdxf import options
 import pytest
-
-
 
 
 LWPOLYLINE = """  0
@@ -33,7 +30,6 @@ AcDbPolyline
 
 
 def test_fix_invalid_located_acdb_entity_group_codes():
-    options.fix_invalid_located_group_tags = True
     polyline = LWPolyline.from_text(LWPOLYLINE)
 
     print(str(polyline))
