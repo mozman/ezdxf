@@ -21,6 +21,7 @@ Version 0.12b1 - dev
 - NEW: `R12FastStreamWriter.add_polyline_2d()`, add 2D POLYLINE with start width, end width and bulge value support
 - NEW: `Ellipse.minor_axis` property returns minor axis as `Vector`
 - NEW: `Dimension.override()` returns `DimStyleOverride()` object
+- NEW: Can fix invalid located group tags, if option `ezdxf.options.fix_invalid_located_group_tags` is `True`
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 - CHANGE: `Polyline.close()`, `Polyline.m_close()` and `Polyline.n_close()` can set and **clear** closed state.

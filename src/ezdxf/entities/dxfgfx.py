@@ -4,11 +4,13 @@
 #
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
 from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Sequence, Dict
+from ezdxf import options
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXFValueError, DXFKeyError, DXFTableEntryError
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.validator import is_valid_layer_name
+from ezdxf.lldxf.repair import fix_invalid_located_acdb_entity_group_codes
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS, UCS, Z_AXIS
 from ezdxf.tools.rgb import int2rgb, rgb2int
@@ -84,6 +86,9 @@ class DXFGraphic(DXFEntity):
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
+
+        if options.fix_invalid_located_group_tags:
+            fix_invalid_located_acdb_entity_group_codes(processor.subclasses)
 
         tags = processor.load_dxfattribs_into_namespace(dxf, acdb_entity)
         if len(tags) and not processor.r12:

@@ -1,13 +1,16 @@
 # Created: 05.03.2016
 # Copyright (c) 2016-2019, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Optional, List
+from typing import Iterable, Optional, List, TYPE_CHECKING
 from functools import partial
 import logging
 from .tags import DXFTag
 from .types import POINT_CODES
 
 logger = logging.getLogger('ezdxf')
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags
 
 
 def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
@@ -137,3 +140,20 @@ def filter_invalid_xdata_group_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTa
     for tag in tagger:
         if tag.code < 1000 or tag.code in VALID_XDATA_CODES:
             yield tag
+
+
+ACDB_ENTITY_GROUP_CODES = {8, 6, 62, 370, 48, 60, 420, 430, 440, 284, 347, 348, 380, 390}
+
+
+def fix_invalid_located_acdb_entity_group_codes(subclasses: List['Tags']) -> None:
+    if len(subclasses) < 2:
+        return
+
+    acdb_entity = subclasses[1]
+    if acdb_entity[0] != (100, 'AcDbEntity'):
+        return
+
+    noclass = subclasses[0]
+    for tag in noclass:
+        if tag.code in ACDB_ENTITY_GROUP_CODES:
+            acdb_entity.append(tag)

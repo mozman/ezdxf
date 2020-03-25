@@ -10,6 +10,9 @@ class Options:
         self.check_entity_tag_structures = True
         self.filter_invalid_xdata_group_codes = False
 
+        # Try to fix invalid located group tags
+        self.fix_invalid_located_group_tags = False
+
         self.default_text_style = 'OpenSans'
         self.default_dimension_text_style = 'OpenSansCondensed-Light'
 
