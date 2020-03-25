@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional, Union, Iterable
 
 from ezdxf.math import Vector, X_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007, DXF2004
 from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError, DXFTableEntryError, DXFTypeError
 from ezdxf.lldxf.types import get_xcode_for
 from ezdxf.tools import take2
@@ -582,7 +582,7 @@ class ArcDimension(Dimension):
     """ DXF ARC_DIMENSION entity """
     DXFTYPE = 'ARC_DIMENSION'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_dimension, acdb_arc_dimension)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2004
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         # skip Dimension loader

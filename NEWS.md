@@ -29,7 +29,7 @@ Version 0.12b1 - dev
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 - CHANGE: `Polyline.close()`, `Polyline.m_close()` and `Polyline.n_close()` can set and **clear** closed state.
 - BUGFIX: `Dimension.destroy()` should not not destroy associated anonymous block, because if DIMENSION is used in a 
-           block, the anonymous block may be used by several block references
+          block, the anonymous block may be used by several block references
 - BUGFIX: floating point precision error in `intersection_line_line_2d()`
 - BUGFIX: attribute error in `Polyline.transform_to_wcs()` for 2d polylines
 - BUGFIX: LWPOLYLINE was always exported with `const_width=0`
