@@ -272,6 +272,9 @@ class DXFNamespace:
             raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(name, self.dxftype))
 
 
+BASE_CLASS_CODES = {0, 5, 102, 330}
+
+
 class SubclassProcessor:
     """  Helper class for loading tags into entities. (internal class) """
 
@@ -386,6 +389,18 @@ class SubclassProcessor:
             else:
                 unprocessed_tags.append(tag)
         return unprocessed_tags
+
+    def append_base_class_to_acdb_entity(self) -> None:
+        """
+        It is valid to mix up the base class with AcDbEntity class. This method appends all none base class group
+        codes to the AcDbEntity class
+        """
+        if len(self.subclasses) < 2:
+            return
+
+        acdb_entity_tags = self.subclasses[1]
+        if acdb_entity_tags[0] == (100, 'AcDbEntity'):
+            acdb_entity_tags.extend(tag for tag in self.subclasses[0] if tag.code not in BASE_CLASS_CODES)
 
 
 base_class = DefSubclass(None, {

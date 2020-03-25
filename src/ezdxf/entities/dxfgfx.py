@@ -3,7 +3,7 @@
 # Created 2019-02-13
 #
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
-from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Sequence, Dict, List
+from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Dict
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXFValueError, DXFKeyError, DXFTableEntryError
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
@@ -16,7 +16,7 @@ from ezdxf.tools import float2transparency, transparency2float
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace, Tags
+    from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace
 
 __all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd']
 
@@ -66,14 +66,6 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # 310: Proxy entity graphics data (multiple lines; 256 characters max. per line) (optional)
 })
 
-BASE_CLASS_CODES = {0, 5, 102, 330}
-
-
-def append_base_class_to_acdb_entity(subclasses: List['Tags']) -> None:
-    acdb_entity_tags = subclasses[1]
-    if acdb_entity_tags[0] == (100, 'AcDbEntity'):
-        acdb_entity_tags.extend(tag for tag in subclasses[0] if tag.code not in BASE_CLASS_CODES)
-
 
 class DXFGraphic(DXFEntity):
     """
@@ -93,10 +85,10 @@ class DXFGraphic(DXFEntity):
         if processor is None:
             return dxf
 
-        if len(processor.subclasses) > 1:
-            append_base_class_to_acdb_entity(processor.subclasses)
+        # It is valid to mix up the base class with AcDbEntity class.
+        processor.append_base_class_to_acdb_entity()
 
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_entity)
+        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_entity, index=1)
         if len(tags) and not processor.r12:
             processor.log_unprocessed_tags(tags, subclass=acdb_entity.name)
         return dxf
