@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 HALF_PI = math.pi / 2.0
 THREE_PI_HALF = 1.5 * math.pi
 DOUBLE_PI = math.pi * 2.0
-TOLERANCE = 1e-12
+TOLERANCE = 1e-10
 
 _90_DEG = math.pi / 2.0
 _180_DEG = math.pi
@@ -209,35 +209,34 @@ def intersection_line_line_2d(
     y = (a * y3_y4 - y1_y2 * b) / d
 
     if not virtual:
-        tol = abs_tol / 2.
         if x1 > x2:
-            in_range = (x2 - tol) <= x <= (x1 + tol)
+            in_range = (x2 - abs_tol) <= x <= (x1 + abs_tol)
         else:
-            in_range = (x1 - tol) <= x <= (x2 + tol)
+            in_range = (x1 - abs_tol) <= x <= (x2 + abs_tol)
 
         if not in_range:
             return None
 
         if x3 > x4:
-            in_range = (x4 - tol) <= x <= (x3 + tol)
+            in_range = (x4 - abs_tol) <= x <= (x3 + abs_tol)
         else:
-            in_range = (x3 - tol) <= x <= (x4 + tol)
+            in_range = (x3 - abs_tol) <= x <= (x4 + abs_tol)
 
         if not in_range:
             return None
 
         if y1 > y2:
-            in_range = (y2 - tol) <= y <= (y1 + tol)
+            in_range = (y2 - abs_tol) <= y <= (y1 + abs_tol)
         else:
-            in_range = (y1 - tol) <= y <= (y2 + tol)
+            in_range = (y1 - abs_tol) <= y <= (y2 + abs_tol)
 
         if not in_range:
             return None
 
         if y3 > y4:
-            in_range = (y4 - tol) <= y <= (y3 + tol)
+            in_range = (y4 - abs_tol) <= y <= (y3 + abs_tol)
         else:
-            in_range = (y3 - tol) <= y <= (y4 + tol)
+            in_range = (y3 - abs_tol) <= y <= (y4 + abs_tol)
 
         if not in_range:
             return None
@@ -269,11 +268,11 @@ def is_point_on_line_2d(point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=T
     else:
         if start_x > end_x:
             start_x, end_x = end_x, start_x
-        if not (start_x <= point_x <= end_x):
+        if not (start_x - abs_tol <= point_x <= end_x + abs_tol):
             return False
         if start_y > end_y:
             start_y, end_y = end_y, start_y
-        if not (start_y <= point_y <= end_y):
+        if not (start_y - abs_tol <= point_y <= end_y + abs_tol):
             return False
         return True
 

@@ -87,7 +87,7 @@ class ConstructionCircle(ConstructionTool):
         ray = ConstructionRay(self.center, point_on_circle)
         return ray.orthogonal(point_on_circle)
 
-    def intersect_ray(self, ray: ConstructionRay, abs_tol: float = 1e-12) -> Sequence[Vec2]:
+    def intersect_ray(self, ray: ConstructionRay, abs_tol: float = 1e-10) -> Sequence[Vec2]:
         """
         Returns intersection points of circle and `ray` as sequence of :class:`Vec2` objects.
 
@@ -127,7 +127,7 @@ class ConstructionCircle(ConstructionTool):
         # else no intersection
         return tuple(result)
 
-    def intersect_circle(self, other: 'ConstructionCircle', abs_tol: float = 1e-12) -> Sequence[Vec2]:
+    def intersect_circle(self, other: 'ConstructionCircle', abs_tol: float = 1e-10) -> Sequence[Vec2]:
         """
         Returns intersection points of two circles as sequence of :class:`Vec2` objects.
 

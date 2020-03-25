@@ -47,17 +47,17 @@ Bulge Related Functions
 
 .. autofunction:: distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float
 
-.. autofunction:: point_to_line_relation(point: Vec2, start: Vec2, end: Vec2, abs_tol=1e-12) -> int
+.. autofunction:: point_to_line_relation(point: Vec2, start: Vec2, end: Vec2, abs_tol=1e-10) -> int
 
-.. autofunction:: is_point_on_line_2d(point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=1e-12) -> bool
+.. autofunction:: is_point_on_line_2d(point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=1e-10) -> bool
 
 .. autofunction:: is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2, colinear=False) -> bool
 
-.. autofunction:: is_point_in_polygon_2d(point: Vec2, polygon: Iterable[Vec2], abs_tol=1e-12) -> int
+.. autofunction:: is_point_in_polygon_2d(point: Vec2, polygon: Iterable[Vec2], abs_tol=1e-10) -> int
 
 .. autofunction:: convex_hull_2d
 
-.. autofunction:: intersection_line_line_2d(line1: Sequence[Vec2], line2: Sequence[Vec2], virtual=True, abs_tol=1e-12) -> Optional[Vec2]
+.. autofunction:: intersection_line_line_2d(line1: Sequence[Vec2], line2: Sequence[Vec2], virtual=True, abs_tol=1e-10) -> Optional[Vec2]
 
 .. autofunction:: rytz_axis_construction(d1: Vector, d2: Vector) -> Tuple[Vector, Vector, float]
 
@@ -90,7 +90,7 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: subdivide_ngons(faces: Iterable[Sequence[Union[Vector, Vec2]]]) -> Iterable[List[Vector]]
 
-.. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-12) -> Sequence[Vector]
+.. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-10) -> Sequence[Vector]
 
 Transformation Classes
 ======================
@@ -523,9 +523,9 @@ ConstructionLine
 
     .. automethod:: inside_bounding_box
 
-    .. automethod:: intersect(other: ConstructionLine) -> Optional[Vec2]
+    .. automethod:: intersect(other: ConstructionLine, abs_tol:float=1e-10) -> Optional[Vec2]
 
-    .. automethod:: has_intersection(other: ConstructionLine) -> bool
+    .. automethod:: has_intersection(other: ConstructionLine, abs_tol:float=1e-10) -> bool
 
     .. automethod:: is_point_left_of_line
 
@@ -557,9 +557,9 @@ ConstructionCircle
 
     .. automethod:: tangent(angle: float) -> ConstructionRay
 
-    .. automethod:: intersect_ray(ray: ConstructionRay, abs_tol: float = 1e-12) -> Sequence[Vec2]
+    .. automethod:: intersect_ray(ray: ConstructionRay, abs_tol: float = 1e-10) -> Sequence[Vec2]
 
-    .. automethod:: intersect_circle(other: ConstructionCircle, abs_tol: float = 1e-12) -> Sequence[Vec2]
+    .. automethod:: intersect_circle(other: ConstructionCircle, abs_tol: float = 1e-10) -> Sequence[Vec2]
 
 ConstructionArc
 ---------------
