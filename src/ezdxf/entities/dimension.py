@@ -3,9 +3,8 @@
 # Created 2019-02-22
 import math
 from typing import TYPE_CHECKING, Optional, Union
-from abc import abstractmethod
 
-from ezdxf.math import Vector, X_AXIS
+from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007
 from ezdxf.render.arrows import ARROWS
