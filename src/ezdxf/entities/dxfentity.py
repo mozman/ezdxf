@@ -359,12 +359,14 @@ class SubclassProcessor:
 
         """
 
-        def replace_attrib(code):
+        def replace_attrib(code) -> bool:
+            """ Returns ``True`` if an attribute was replaced by a doublet. """
             for index, dxfattr in enumerate(doublets):
                 if dxfattr.code == code:
                     group_codes[code] = dxfattr
                     del doublets[index]
-                    return
+                    return True
+            return False
 
         unprocessed_tags = Tags()
         # do not cache group codes, content of group code will be deleted while processing
@@ -384,11 +386,9 @@ class SubclassProcessor:
                 if (attrib.xtype != XType.callback) or (attrib.setter is not None):
                     dxf.set(attrib.name, value)
 
-                if len(doublets) > 0:
-                    replace_attrib(code)
-                else:
-                    # remove group code if no more doublets are available
-                    del group_codes[code]
+                if len(doublets) and replace_attrib(code):
+                    continue
+                del group_codes[code]
             else:
                 unprocessed_tags.append(tag)
         return unprocessed_tags
