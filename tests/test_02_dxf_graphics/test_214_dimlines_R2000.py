@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -110,23 +110,46 @@ def test_ordinate_dimline(dxf2000):
 
 def test_add_horizontal_dimline(dxf2000):
     msp = dxf2000.modelspace()
-    dimstyle = msp.add_linear_dim(
+    override = msp.add_linear_dim(
         base=(3, 2, 0),
         p1=(0, 0, 0),
         p2=(3, 0, 0),
 
     )
-    dimline = dimstyle.dimension
+    dimline = override.dimension
     assert dimline.dxf.dimstyle == 'EZDXF'
-    dimstyle.render()
+    override.render()
     block_name = dimline.dxf.geometry
     assert block_name.startswith('*D')
 
-    block = dxf2000.blocks.get(block_name)
+    block = dimline.get_geometry_block()
     assert len(list(block.query('MTEXT'))) == 1
     assert len(list(block.query('INSERT'))) == 2
     assert len(list(block.query('LINE'))) == 3  # dimension line + 2 extension lines
     assert len(list(block.query('POINT'))) == 3  # def points
+
+
+def test_virtual_entities_and_explode(dxf2000):
+    msp = dxf2000.modelspace()
+    override = msp.add_linear_dim(
+        base=(3, 2, 0),
+        p1=(0, 0, 0),
+        p2=(3, 0, 0),
+
+    )
+    dimline = override.dimension
+    dimline.render()
+
+    parts = list(dimline.virtual_entities())
+    assert len(parts) == 9
+    geometry = dimline.dxf.geometry
+    parts = dimline.explode()
+    assert len(list(parts.query('MTEXT'))) == 1
+    assert len(list(parts.query('INSERT'))) == 2
+    assert len(list(parts.query('LINE'))) == 3  # dimension line + 2 extension lines
+    assert len(list(parts.query('POINT'))) == 3  # def points
+    assert dimline.is_alive is False
+    assert geometry in dxf2000.blocks, 'Do not destroy anonymous block, may be used by block references.'
 
 
 def test_dimstyle_override(dxf2000):

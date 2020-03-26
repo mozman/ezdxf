@@ -17,13 +17,19 @@ Version 0.12b1 - dev
 - NEW: `LWPolyline.explode()` explode LWPOLYLINE as LINE and ARC entities into target layout
 - NEW: `Polyline.virtual_entities()` yields 'virtual' LINE, ARC or 3DFACE entities
 - NEW: `Polyline.explode()` explode POLYLINE as LINE, ARC or 3DFACE entities into target layout
+- NEW: `Dimension.virtual_entities()` yields 'virtual' DXF entities
+- NEW: `Dimension.explode()` explode DIMENSION as basic DXF entities into target layout
+- NEW: `Dimension.transform_to_wcs()` support for UCS based entity transformation
+- NEW: `Dimension.override()` returns `DimStyleOverride()` object
+- NEW: `Dimension.render()` render graphical representation as anonymous block
 - NEW: `Block()` properties `is_anonymous`, `is_xref` and `is_xref_overlay`
 - NEW: `R12FastStreamWriter.add_polyline_2d()`, add 2D POLYLINE with start width, end width and bulge value support
 - NEW: `Ellipse.minor_axis` property returns minor axis as `Vector`
-- NEW: `Dimension.override()` returns `DimStyleOverride()` object
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 - CHANGE: `Polyline.close()`, `Polyline.m_close()` and `Polyline.n_close()` can set and **clear** closed state.
+- BUGFIX: `Dimension.destroy()` should not not destroy associated anonymous block, because if DIMENSION is used in a 
+          block, the anonymous block may be used by several block references
 - BUGFIX: floating point precision error in `intersection_line_line_2d()`
 - BUGFIX: attribute error in `Polyline.transform_to_wcs()` for 2d polylines
 - BUGFIX: LWPOLYLINE was always exported with `const_width=0`
