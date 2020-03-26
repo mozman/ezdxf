@@ -77,10 +77,9 @@ class LWPolyline(DXFGraphic):
         return unprocessed_tags
 
     def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
-        if len(self.lwpoints) == 0:
-            # do not export polylines without vertices
-            return False
-        return True
+        # Returns True if entity should be exported
+        # Do not export polylines without vertices
+        return len(self.lwpoints) > 0
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
