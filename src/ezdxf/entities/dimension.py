@@ -4,7 +4,7 @@
 import math
 from typing import TYPE_CHECKING, Optional, Union, Iterable
 
-from ezdxf.math import Vector, X_AXIS
+from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007, DXF2004
 from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError, DXFTableEntryError, DXFTypeError

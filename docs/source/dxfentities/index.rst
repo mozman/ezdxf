@@ -19,6 +19,7 @@ DXF Entities
     body
     circle
     dimension
+    arcdim
     ellipse
     hatch
     image

@@ -51,7 +51,7 @@ from .insert import Insert
 from .block import Block, EndBlk
 from .polyline import Polyline, Polyface, Polymesh, MeshVertexCache
 from .attrib import Attrib, AttDef
-from .dimension import Dimension
+from .dimension import Dimension, ArcDimension
 from .dimstyleoverride import DimStyleOverride
 from .viewport import Viewport
 

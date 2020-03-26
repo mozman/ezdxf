@@ -9,8 +9,9 @@ The ARC_DIMENSION entity was introduced in DXF R2004 and is **not** documented i
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Dimension`
 DXF type                 ``'ARC_DIMENSION'``
-factory function         :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim`
+factory function         :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim` (not implemented)
 Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2004 (``'AC1018'``)
 ======================== ==========================================
 
 .. warning::
@@ -19,3 +20,24 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
 .. class:: ArcDimension
 
+    .. attribute:: dxf.ext_line1_point
+
+    .. attribute:: dxf.ext_line2_point
+
+    .. attribute:: dxf.arc_center
+
+    .. attribute:: dxf.start_angle
+
+    .. attribute:: dxf.end_angle
+
+    .. attribute:: dxf.is_partial
+
+    .. attribute:: dxf.has_leader
+
+    .. attribute:: dxf.leader_point1
+
+    .. attribute:: dxf.leader_point2
+
+    .. attribute:: dimtype
+
+        Returns always ``8``.

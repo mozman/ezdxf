@@ -22,11 +22,11 @@ Factory Functions
 =========================================== ==========================================
 `Linear and Rotated Dimension (DXF)`_       :meth:`~ezdxf.layouts.BaseLayout.add_linear_dim`
 `Aligned Dimension (DXF)`_                  :meth:`~ezdxf.layouts.BaseLayout.add_aligned_dim`
-`Angular Dimension (DXF)`_                  :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim`
-`Angular 3P Dimension (DXF)`_               :meth:`~ezdxf.layouts.BaseLayout.add_angular_3p_dim`
+`Angular Dimension (DXF)`_                  :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim` (not implemented)
+`Angular 3P Dimension (DXF)`_               :meth:`~ezdxf.layouts.BaseLayout.add_angular_3p_dim` (not implemented)
 `Diameter Dimension (DXF)`_                 :meth:`~ezdxf.layouts.BaseLayout.add_diameter_dim`
 `Radius Dimension (DXF)`_                   :meth:`~ezdxf.layouts.BaseLayout.add_radius_dim`
-`Ordinate Dimension (DXF)`_                 :meth:`~ezdxf.layouts.BaseLayout.add_ordinate_dim`
+`Ordinate Dimension (DXF)`_                 :meth:`~ezdxf.layouts.BaseLayout.add_ordinate_dim` (not implemented)
 =========================================== ==========================================
 
 .. warning::
@@ -66,6 +66,7 @@ Factory Functions
         4   `Radius Dimension (DXF)`_
         5   `Angular 3P Dimension (DXF)`_
         6   `Ordinate Dimension (DXF)`_
+        8   subclass :class:`ezdxf.entities.ArcDimension` introduced in DXF R2004
         32  Indicates that graphical representation :attr:`geometry` is referenced by this dimension only.
             (always set in DXF R13 and later)
         64  Ordinate type. This is a bit value (bit 7) used only with integer value 6. If set, ordinate is `X-type`;
