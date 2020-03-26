@@ -365,8 +365,6 @@ class SubclassProcessor:
                     group_codes[code] = dxfattr
                     del doublets[index]
                     return
-            # remove group code if no more doublets are available
-            del group_codes[code]
 
         unprocessed_tags = Tags()
         # do not cache group codes, content of group code will be deleted while processing
@@ -381,11 +379,16 @@ class SubclassProcessor:
         # iterate without leading subclass marker or for r12 without leading (0, ...) structure tag
         for tag in tags:
             code, value = tag
-            if code in group_codes:
-                attrib = group_codes[code]  # type: DXFAttr
+            attrib = group_codes.get(code)
+            if attrib is not None:
                 if (attrib.xtype != XType.callback) or (attrib.setter is not None):
                     dxf.set(attrib.name, value)
-                replace_attrib(code)
+
+                if len(doublets) > 0:
+                    replace_attrib(code)
+                else:
+                    # remove group code if no more doublets are available
+                    del group_codes[code]
             else:
                 unprocessed_tags.append(tag)
         return unprocessed_tags
@@ -395,7 +398,9 @@ class SubclassProcessor:
         It is valid to mix up the base class with AcDbEntity class. This method appends all none base class group
         codes to the AcDbEntity class
         """
-        if len(self.subclasses) < 2:
+        # This is needed for DXFEntity exclusive, so applying this method automatically
+        # to all entities is waste of runtime -> DXFGraphic.load_dxf_attribs()
+        if self.r12:
             return
 
         acdb_entity_tags = self.subclasses[1]
@@ -405,14 +410,16 @@ class SubclassProcessor:
 
 base_class = DefSubclass(None, {
     'handle': DXFAttr(5),
+
     # owner: Soft-pointer ID/handle to owner BLOCK_RECORD object
-    # this tag is not supported by DXF R12, but is used intern to unify entity handling between DXF R12 and DXF R2000+
-    # do not write this tag into DXF file for DXF R12!
+    # This tag is not supported by DXF R12, but is used intern to unify entity handling between DXF R12 and DXF R2000+
+    # Do not write this tag into DXF R12 files!
     'owner': DXFAttr(330),
+
     # Application defined data can only appear here:
-    # {APPID ... multiple entries possible DXF R12?
-    # {ACAD_REACTORS ... one entry DXF R2000+, optional
-    # {ACAD_XDICTIONARY  ... one entry DXF R2000+, optional
+    # 102, {APPID ... multiple entries possible DXF R12?
+    # 102, {ACAD_REACTORS ... one entry DXF R2000+, optional
+    # 102, {ACAD_XDICTIONARY  ... one entry DXF R2000+, optional
 })
 
 T = TypeVar('T', bound='DXFEntity')
