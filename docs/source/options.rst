@@ -34,3 +34,6 @@ Global options stored in :mod:`ezdxf.options`
 
     Export proxy graphics if ``True``, default is ``False``.
 
+.. method:: preserve_proxy_graphics()
+
+    Enable proxy graphic load/store support.

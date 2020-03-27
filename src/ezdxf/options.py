@@ -26,6 +26,11 @@ class Options:
         # Set 'store_proxy_graphics' to True for exporting proxy graphics
         self.store_proxy_graphics = False
 
+    def preserve_proxy_graphics(self):
+        """ Enable proxy graphic load/store support. """
+        self.load_proxy_graphics = True
+        self.store_proxy_graphics = True
+
 
 # Global Options
 options = Options()
