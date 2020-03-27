@@ -21,6 +21,7 @@ from ezdxf.entities.factory import EntityFactory
 from ezdxf.layouts.layouts import Layouts
 from ezdxf.tools.codepage import tocodepage, toencoding
 from ezdxf.tools.juliandate import juliandate
+from ezdxf.options import options
 
 from ezdxf.tools import guid
 from ezdxf.tracker import Tracker
@@ -449,11 +450,21 @@ class Drawing:
         self.header['$ACADMAINTVER'] = acad_maint_ver.get(self.dxfversion, 0)
 
     def _update_metadata(self):
-        now = datetime.now()
-        self.header['$TDUPDATE'] = juliandate(now)
-        self.header['$HANDSEED'] = str(self.entitydb.next_handle())
+        if options.write_fixed_meta_data_for_testing:
+            fixed_date = juliandate(datetime(2000, 1, 1, 0, 0))
+            self.header['$TDCREATE'] = fixed_date
+            self.header['$TDUCREATE'] = fixed_date
+            self.header['$TDUPDATE'] = fixed_date
+            self.header['$TDUUPDATE'] = fixed_date
+            self.header['$VERSIONGUID'] = '00000000-0000-0000-0000-000000000000'
+            self.header['$FINGERPRINTGUID'] = '00000000-0000-0000-0000-000000000000'
+        else:
+            now = datetime.now()
+            self.header['$TDUPDATE'] = juliandate(now)
+            self.reset_version_guid()
+
+        self.header['$HANDSEED'] = str(self.entitydb.handles)  # next handle
         self.header['$DWGCODEPAGE'] = tocodepage(self.encoding)
-        self.reset_version_guid()
 
     def _create_appid_if_not_exist(self, name: str, flags: int = 0) -> None:
         if name not in self.appids:

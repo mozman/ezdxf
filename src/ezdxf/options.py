@@ -26,6 +26,10 @@ class Options:
         # Set 'store_proxy_graphics' to True for exporting proxy graphics
         self.store_proxy_graphics = False
 
+        # Enable this option to always create same meta data for testing scenarios, e.g. to use a diff like tool to
+        # compare DXF documents.
+        self.write_fixed_meta_data_for_testing = False
+
     def preserve_proxy_graphics(self):
         """ Enable proxy graphic load/store support. """
         self.load_proxy_graphics = True

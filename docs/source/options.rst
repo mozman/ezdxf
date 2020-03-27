@@ -34,6 +34,11 @@ Global options stored in :mod:`ezdxf.options`
 
     Export proxy graphics if ``True``, default is ``False``.
 
+.. attribute:: write_fixed_meta_data_for_testing
+
+    Enable this option to always create same meta data for testing scenarios, e.g. to use a diff like tool to
+    compare DXF documents.
+
 .. method:: preserve_proxy_graphics()
 
     Enable proxy graphic load/store support.
