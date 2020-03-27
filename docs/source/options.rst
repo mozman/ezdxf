@@ -25,3 +25,12 @@ Global options stored in :mod:`ezdxf.options`
 .. attribute:: log_unprocessed_tags
 
     Log unprocessed DXF tags for debugging, default value is ``True``
+
+.. attribute:: load_proxy_graphics
+
+    Load proxy graphics if ``True``, default is ``False``.
+
+.. attribute:: store_proxy_graphics
+
+    Export proxy graphics if ``True``, default is ``False``.
+

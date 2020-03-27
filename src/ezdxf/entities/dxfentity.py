@@ -444,19 +444,20 @@ class DXFEntity:
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor. (internal API)"""
         # public attributes for package users
-        self.doc = doc  # type: Drawing
-        self.dxf = DXFNamespace(entity=self)  # type: DXFNamespace
+        self.doc: Drawing = doc
+        self.dxf: DXFNamespace = DXFNamespace(entity=self)
         # priority order: highest value first - 100 (top) before 0 (default) before -100 (bottom)
         # whole int range allowed
-        self.priority = 0  # type: int  # public
+        self.priority: int = 0
 
         # none public attributes for package users
         # create extended data only if needed
-        self.appdata = None  # type: Optional[AppData]
-        self.reactors = None  # type: Optional[Reactors]
-        self.extension_dict = None  # type: Optional[ExtensionDict]
-        self.xdata = None  # type: Optional[XData]
-        self.embedded_objects = None  # type: Optional[EmbeddedObjects]
+        self.appdata: Optional[AppData] = None
+        self.reactors: Optional[Reactors] = None
+        self.extension_dict: Optional[ExtensionDict] = None
+        self.xdata: Optional[XData] = None
+        self.embedded_objects: Optional[EmbeddedObjects] = None
+        self.proxy_graphic: Optional[bytes] = None
 
     # todo: remove compatibility drawing property
     @property
@@ -496,6 +497,7 @@ class DXFEntity:
         entity.appdata = other.appdata
         entity.xdata = other.xdata
         entity.embedded_objects = other.embedded_objects
+        entity.proxy_graphic = other.proxy_graphic
         entity.dxf.rewire(entity)
         if (entity.doc is not None) and (entity.dxf.handle is not None):
             entity.doc.entitydb[entity.dxf.handle] = entity  # replace entity in entity db, can't call add() here
@@ -521,6 +523,7 @@ class DXFEntity:
         entity.dxf.reset_handles()
         entity.extension_dict = None
         entity.reactors = None
+        entity.proxy_graphic = self.proxy_graphic  # immutable bytes
 
         # if appdata contains handles, they are treated as shared resources
         entity.appdata = copy.deepcopy(self.appdata)

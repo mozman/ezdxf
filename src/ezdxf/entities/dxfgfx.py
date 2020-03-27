@@ -10,10 +10,12 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLi
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.validator import is_valid_layer_name
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
-from ezdxf.math import OCS, UCS, Z_AXIS
+from ezdxf.math import OCS, UCS
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
 from .factory import register_entity
+from ezdxf import options
+from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace
@@ -64,6 +66,8 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # 92 or 160?: Number of bytes in the proxy entity graphics represented in the subsequent 310 groups, which are binary
     # chunk records (optional)
     # 310: Proxy entity graphics data (multiple lines; 256 characters max. per line) (optional)
+    # Compiled by TagCompiler() to a DXFBinaryTag() objects
+
 })
 
 
@@ -84,12 +88,17 @@ class DXFGraphic(DXFEntity):
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
-
+        r12 = processor.r12
         # It is valid to mix up the base class with AcDbEntity class.
         processor.append_base_class_to_acdb_entity()
 
+        # Load proxy graphic data if requested
+        if options.load_proxy_graphics:
+            self.proxy_graphic = load_proxy_graphic(processor.subclasses[0 if r12 else 1])
+
+        # Load common AcDbEntity attributes into dxf namespace
         tags = processor.load_dxfattribs_into_namespace(dxf, acdb_entity, index=1)
-        if len(tags) and not processor.r12:
+        if len(tags) and not r12:
             processor.log_unprocessed_tags(tags, subclass=acdb_entity.name)
         return dxf
 
@@ -199,8 +208,8 @@ class DXFGraphic(DXFEntity):
     def export_acdb_entity(self, tagwriter: 'TagWriter'):
         """ Export subclass 'AcDbEntity' as DXF tags. (internal API)"""
         # Full control over tag order and YES, sometimes order matters
-        dxfversion = tagwriter.dxfversion
-        if dxfversion > DXF12:
+        not_r12 = tagwriter.dxfversion > DXF12
+        if not_r12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_entity.name)
 
         self.dxf.export_dxf_attribs(tagwriter, [
@@ -208,6 +217,9 @@ class DXFGraphic(DXFEntity):
             'color_name', 'transparency', 'plotstyle_enum', 'plotstyle_handle', 'shadow_mode',
             'visualstyle_handle',
         ])
+
+        if self.proxy_graphic and not_r12 and options.store_proxy_graphics:
+            export_proxy_graphic(self.proxy_graphic, tagwriter)
 
     def get_layout(self) -> Optional['BaseLayout']:
         """ Returns the owner layout or returns ``None`` if entity is not assigned to any layout. """
