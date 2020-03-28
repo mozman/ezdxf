@@ -582,11 +582,11 @@ class ArcDimension(Dimension):
     """ DXF ARC_DIMENSION entity """
     DXFTYPE = 'ARC_DIMENSION'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_dimension, acdb_arc_dimension)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2004
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         # skip Dimension loader
-        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
+        dxf = super(Dimension, self).load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
             if len(tags) and not processor.r12:

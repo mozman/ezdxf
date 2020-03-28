@@ -5,7 +5,7 @@
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
 from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Dict
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXFValueError, DXFKeyError, DXFTableEntryError
+from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXF2013, DXFValueError, DXFKeyError, DXFTableEntryError
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.validator import is_valid_layer_name
@@ -94,7 +94,15 @@ class DXFGraphic(DXFEntity):
 
         # Load proxy graphic data if requested
         if options.load_proxy_graphics:
-            self.proxy_graphic = load_proxy_graphic(processor.subclasses[0 if r12 else 1])
+            # length tag has group code 92 until DXF R2010
+            if processor.dxfversion and processor.dxfversion < DXF2013:
+                code = 92
+            else:
+                code = 160
+            self.proxy_graphic = load_proxy_graphic(
+                processor.subclasses[0 if r12 else 1],
+                length_code=code,
+            )
 
         # Load common AcDbEntity attributes into dxf namespace
         tags = processor.load_dxfattribs_into_namespace(dxf, acdb_entity, index=1)
@@ -219,7 +227,9 @@ class DXFGraphic(DXFEntity):
         ])
 
         if self.proxy_graphic and not_r12 and options.store_proxy_graphics:
-            export_proxy_graphic(self.proxy_graphic, tagwriter)
+            # length tag has group code 92 until DXF R2010
+            export_proxy_graphic(self.proxy_graphic, tagwriter,
+                                 length_code=(92 if tagwriter.dxfversion < DXF2013 else 160))
 
     def get_layout(self) -> Optional['BaseLayout']:
         """ Returns the owner layout or returns ``None`` if entity is not assigned to any layout. """
