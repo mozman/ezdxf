@@ -2,15 +2,35 @@
 # License: MIT License
 
 import pytest
+
 import ezdxf
 from ezdxf.entities.dimension import ArcDimension
+from ezdxf.lldxf.const import DXF2013, DXF2010
+from ezdxf.lldxf.tagwriter import TagCollector
 
 ezdxf.options.preserve_proxy_graphics()
 
 
-def test_load_arc_dimension():
-    arcdim = ArcDimension.from_text(ARC_DIM)
+@pytest.fixture()
+def arcdim():
+    return ArcDimension.from_text(ARC_DIM)
+
+
+def test_load_arc_dimension(arcdim):
     assert arcdim.proxy_graphic is not None
+    assert len(arcdim.proxy_graphic) == 968
+
+
+def test_export_arc_dimension_R2010(arcdim):
+    tagwriter = TagCollector(dxfversion=DXF2010)
+    arcdim.export_dxf(tagwriter)
+    assert (92, 968) in tagwriter.tags, 'Expected group code 92 for proxy graphic length tag. (< DXF R2013)'
+
+
+def test_export_arc_dimension_R2013(arcdim):
+    tagwriter = TagCollector(dxfversion=DXF2013)
+    arcdim.export_dxf(tagwriter)
+    assert (160, 968) in tagwriter.tags, 'Expected group code 160 for proxy graphic length tag. (>= DXF R2013)'
 
 
 ARC_DIM = """  0
