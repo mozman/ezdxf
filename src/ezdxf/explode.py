@@ -6,13 +6,12 @@ import logging
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
 from ezdxf.query import EntityQuery
 from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS, quadrant
-from ezdxf.entities import Line, Arc, Face3d, Text
-from ezdxf.entities.factory import EntityFactory
+from ezdxf.entities import factory
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Ellipse, LWPolyline, Polyline, Attrib
+    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, LWPolyline, Polyline, Attrib, Line, Arc, Face3d, Text
 
 _2PI = math.pi * 2
 
@@ -139,8 +138,8 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
     (internal API)
 
     """
-    from ezdxf.entities import Ellipse
     assert block_ref.dxftype() == 'INSERT'
+    Ellipse = cast('Ellipse', factory.cls('ELLIPSE'))
 
     def disassemble(layout):
         for entity in layout:
@@ -428,7 +427,6 @@ def virtual_polyline2d_entities(polyline: 'Polyline') -> Iterable[Union['Line', 
 def _virtual_polyline_entities(points, elevation: float, extrusion: Vector, dxfattribs: dict, doc) -> Iterable[
     Union['Line', 'Arc']]:
     ocs = OCS(extrusion) if extrusion else OCS()
-    dxffactory = doc.dxffactory if doc else EntityFactory()
     prev_point = None
     prev_bulge = None
 
@@ -448,11 +446,11 @@ def _virtual_polyline_entities(points, elevation: float, extrusion: Vector, dxfa
             attribs['end_angle'] = math.degrees(end_angle)
             if extrusion:
                 attribs['extrusion'] = extrusion
-            yield dxffactory.new_entity(dxftype='ARC', dxfattribs=attribs)
+            yield factory.new(dxftype='ARC', dxfattribs=attribs, doc=doc)
         else:
             attribs['start'] = ocs.to_wcs(prev_point)
             attribs['end'] = ocs.to_wcs(point)
-            yield dxffactory.new_entity(dxftype='LINE', dxfattribs=attribs)
+            yield factory.new(dxftype='LINE', dxfattribs=attribs, doc=doc)
         prev_point = point
         prev_bulge = bulge
 
@@ -472,14 +470,13 @@ def virtual_polyline3d_entities(polyline: 'Polyline') -> Iterable['Line']:
     if len(polyline.vertices) < 2:
         return
     doc = polyline.doc
-    dxffactory = doc.dxffactory if doc else EntityFactory()
     vertices = polyline.vertices
     dxfattribs = polyline.graphic_properties()
     start = -1 if polyline.is_closed else 0
     for index in range(start, len(vertices) - 1):
         dxfattribs['start'] = vertices[index].dxf.location
         dxfattribs['end'] = vertices[index + 1].dxf.location
-        yield dxffactory.new_entity(dxftype='LINE', dxfattribs=dxfattribs)
+        yield factory.new(dxftype='LINE', dxfattribs=dxfattribs, doc=doc)
 
 
 def virtual_polymesh_entities(polyline: 'Polyline') -> Iterable['Face3d']:
@@ -497,8 +494,6 @@ def virtual_polymesh_entities(polyline: 'Polyline') -> Iterable['Face3d']:
     assert polymesh.is_polygon_mesh
 
     doc = polymesh.doc
-    dxffactory = doc.dxffactory if doc else EntityFactory()
-
     mesh = polymesh.get_mesh_vertex_cache()
     dxfattribs = polymesh.graphic_properties()
     m_count = polymesh.dxf.m_count
@@ -515,7 +510,7 @@ def virtual_polymesh_entities(polyline: 'Polyline') -> Iterable['Face3d']:
             dxfattribs['vtx1'] = mesh[next_m, n]
             dxfattribs['vtx2'] = mesh[next_m, next_n]
             dxfattribs['vtx3'] = mesh[m, next_n]
-            yield dxffactory.new_entity(dxftype='3DFACE', dxfattribs=dxfattribs)
+            yield factory.new(dxftype='3DFACE', dxfattribs=dxfattribs, doc=doc)
 
 
 def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
@@ -532,8 +527,6 @@ def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
     assert polyline.is_poly_face_mesh
 
     doc = polyline.doc
-    dxffactory = doc.dxffactory if doc else EntityFactory()
-
     vertices = polyline.vertices
     base_attribs = polyline.graphic_properties()
 
@@ -556,4 +549,4 @@ def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
             pos <<= 1
 
         face3d_attribs['invisible'] = invisible
-        yield dxffactory.new_entity(dxftype='3DFACE', dxfattribs=face3d_attribs)
+        yield factory.new(dxftype='3DFACE', dxfattribs=face3d_attribs, doc=doc)

@@ -140,7 +140,7 @@ class IterDXF:
             data = self.file.read(size)
             if entry.value in requested_types:
                 xtags = ExtendedTags.from_text(to_str(data))
-                yield factory.entity(xtags)
+                yield factory.entity_from_tags(xtags)
             entry = next_entry
 
     def close(self):
@@ -250,7 +250,7 @@ def modelspace(filename: Filename, types: Iterable[str] = None) -> Iterable[DXFG
             if entities:
                 if code == 0:
                     if len(tags) and tags[0].value in requested_types:
-                        entity = factory.entity(ExtendedTags(tags))
+                        entity = factory.entity_from_tags(ExtendedTags(tags))
                         if not linked_entity(entity) and entity.dxf.paperspace == 0:
                             if queued:  # queue one entity for collecting linked entities (VERTEX, ATTRIB)
                                 yield queued
@@ -328,7 +328,7 @@ def single_pass_modelspace(stream: BinaryIO, types: Iterable[str] = None) -> Ite
                 return
             if code == 0:
                 if len(tags) and tags[0].value in requested_types:
-                    entity = factory.entity(ExtendedTags(tags))
+                    entity = factory.entity_from_tags(ExtendedTags(tags))
                     if not linked_entity(entity) and entity.dxf.paperspace == 0:
                         if queued:  # queue one entity for collecting linked entities (VERTEX, ATTRIB)
                             yield queued

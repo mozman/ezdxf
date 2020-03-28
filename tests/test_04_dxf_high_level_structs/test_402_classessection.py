@@ -14,7 +14,7 @@ from ezdxf.drawing import Drawing
 def section():
     doc = Drawing()
     sec = load_section(TESTCLASSES, 'CLASSES')
-    cls_entities = [doc.dxffactory.entity(e) for e in sec]
+    cls_entities = [doc.dxffactory.entity_from_tags(e) for e in sec]
     return ClassesSection(None, iter(cls_entities))
 
 
@@ -31,7 +31,7 @@ def test_write(section):
 def test_empty_section():
     doc = Drawing()
     sec = load_section(EMPTYSEC, 'CLASSES')
-    cls_entities = [doc.dxffactory.entity(e) for e in sec]
+    cls_entities = [doc.dxffactory.entity_from_tags(e) for e in sec]
 
     section = ClassesSection(None, iter(cls_entities))
     stream = StringIO()
