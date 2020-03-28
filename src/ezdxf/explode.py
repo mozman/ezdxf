@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING, Iterable, cast, Union
 import math
 import logging
+from functools import partial
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
 from ezdxf.query import EntityQuery
 from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS, quadrant
@@ -52,8 +53,10 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
         raise DXFStructureError('Block reference has to be assigned to a DXF document.')
 
     entitydb = block_ref.doc.entitydb
-    if entitydb is None:
-        raise DXFStructureError('Exploding a block reference requires an entity database.')
+    assert entitydb is not None, 'Exploding a block reference requires an entity database.'
+
+    dxffactory = block_ref.doc.dxffactory
+    assert dxffactory is not None, 'Exploding a block reference requires a DXF entity factory.'
 
     entities = []
 
@@ -70,7 +73,7 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
     # This is the behavior of the BURST command of the AutoCAD Express Tools
     for attrib in block_ref.attribs:
         # Attached ATTRIB entities are already located in the WCS
-        text = attrib_to_text(attrib, entitydb)
+        text = attrib_to_text(attrib, dxffactory)
         target_layout.add_entity(text)
         entities.append(text)
 
@@ -86,14 +89,12 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
 IGNORE_FROM_ATTRIB = {'version', 'prompt', 'tag', 'flags', 'field_length', 'lock_position'}
 
 
-def attrib_to_text(attrib: 'Attrib', entitydb) -> 'Text':
+def attrib_to_text(attrib: 'Attrib', dxffactory) -> 'Text':
     dxfattribs = attrib.dxfattribs(drop=IGNORE_FROM_ATTRIB)
-    text = Text.new(doc=attrib.doc, dxfattribs=dxfattribs)
     # ATTRIB has same owner as INSERT but does not reside in any EntitySpace() and must not deleted from any layout.
-    entitydb.delete_entity(attrib)
+    dxffactory.doc.entitydb.delete_entity(attrib)
     # New TEXT entity has same handle as the deleted ATTRIB entity and replaces the ATTRIB entity in the database.
-    entitydb.add(text)
-    return text
+    return dxffactory.create_db_entzry('TEXT', dxfattribs=dxfattribs)
 
 
 def angle_to_param(ratio: float, angle: float, quadrant: int = 0) -> float:
@@ -427,6 +428,13 @@ def virtual_polyline2d_entities(polyline: 'Polyline') -> Iterable[Union['Line', 
 def _virtual_polyline_entities(points, elevation: float, extrusion: Vector, dxfattribs: dict, doc) -> Iterable[
     Union['Line', 'Arc']]:
     ocs = OCS(extrusion) if extrusion else OCS()
+    if doc:
+        new_arc = partial(doc.dxffactory.new_entity, dxftype='ARC')
+        new_line = partial(doc.dxffactory.new_entity, dxftype='LINE')
+    else:
+        new_arc = partial(Arc.new, doc=doc)
+        new_line = partial(Line.new, doc=doc)
+
     prev_point = None
     prev_bulge = None
 
@@ -446,11 +454,11 @@ def _virtual_polyline_entities(points, elevation: float, extrusion: Vector, dxfa
             attribs['end_angle'] = math.degrees(end_angle)
             if extrusion:
                 attribs['extrusion'] = extrusion
-            yield Arc.new(doc=doc, dxfattribs=attribs)
+            yield new_arc(dxfattribs=attribs)
         else:
             attribs['start'] = ocs.to_wcs(prev_point)
             attribs['end'] = ocs.to_wcs(point)
-            yield Line.new(doc=doc, dxfattribs=attribs)
+            yield new_line(dxfattribs=attribs)
         prev_point = point
         prev_bulge = bulge
 
@@ -470,13 +478,17 @@ def virtual_polyline3d_entities(polyline: 'Polyline') -> Iterable['Line']:
     if len(polyline.vertices) < 2:
         return
     doc = polyline.doc
+    if doc:
+        new_line = partial(doc.dxffactory.new_entity, dxftype='LINE')
+    else:
+        new_line = partial(Line.new, doc=doc)
     vertices = polyline.vertices
     dxfattribs = polyline.graphic_properties()
     start = -1 if polyline.is_closed else 0
     for index in range(start, len(vertices) - 1):
         dxfattribs['start'] = vertices[index].dxf.location
         dxfattribs['end'] = vertices[index + 1].dxf.location
-        yield Line.new(doc=doc, dxfattribs=dxfattribs)
+        yield new_line(dxfattribs=dxfattribs)
 
 
 def virtual_polymesh_entities(polyline: 'Polyline') -> Iterable['Face3d']:
@@ -494,6 +506,11 @@ def virtual_polymesh_entities(polyline: 'Polyline') -> Iterable['Face3d']:
     assert polymesh.is_polygon_mesh
 
     doc = polymesh.doc
+    if doc:
+        new_3dface = partial(doc.dxffactory.new_entity, dxftype='3DFACE')
+    else:
+        new_3dface = partial(Face3d.new, doc=doc)
+
     mesh = polymesh.get_mesh_vertex_cache()
     dxfattribs = polymesh.graphic_properties()
     m_count = polymesh.dxf.m_count
@@ -510,7 +527,7 @@ def virtual_polymesh_entities(polyline: 'Polyline') -> Iterable['Face3d']:
             dxfattribs['vtx1'] = mesh[next_m, n]
             dxfattribs['vtx2'] = mesh[next_m, next_n]
             dxfattribs['vtx3'] = mesh[m, next_n]
-            yield Face3d.new(doc=doc, dxfattribs=dxfattribs)
+            yield new_3dface(dxfattribs=dxfattribs)
 
 
 def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
@@ -527,6 +544,11 @@ def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
     assert polyline.is_poly_face_mesh
 
     doc = polyline.doc
+    if doc:
+        new_3dface = partial(doc.dxffactory.new_entity, dxftype='3DFACE')
+    else:
+        new_3dface = partial(Face3d.new, doc=doc)
+
     vertices = polyline.vertices
     base_attribs = polyline.graphic_properties()
 
@@ -549,4 +571,4 @@ def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
             pos <<= 1
 
         face3d_attribs['invisible'] = invisible
-        yield Face3d.new(doc=doc, dxfattribs=face3d_attribs)
+        yield new_3dface(dxfattribs=face3d_attribs)
