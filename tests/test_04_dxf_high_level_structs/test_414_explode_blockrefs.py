@@ -131,16 +131,17 @@ def test_03_explode_polyline_bulge(doc, msp):
 def test_04_explode_blockref_with_attrib(doc, msp, entitydb):
     blockref = msp.add_blockref('Test1', (20, 10))  # with attrib
     blockref.add_attrib(tag='TAG', text='Text', insert=(1.5, 2.6))
-    assert len(blockref.attribs) > 0
+    assert len(blockref.attribs) == 1, 'Error in add_attrib()'
     attrib = blockref.attribs[0]
 
     exploded_entities = blockref.explode()
     assert blockref.is_alive is False, 'Exploded block reference should be destroyed.'
     assert attrib.is_alive is False, 'Exploded attribs should be destroyed.'
-    assert len(exploded_entities) == 3
+    assert len(exploded_entities) == 3, '2x LINE and 1x TEXT'
     text = exploded_entities[-1]
     assert text.dxftype() == 'TEXT'
     assert text.dxf.text == 'Text'
+    assert text.dxf.insert == (1.5, 2.6), 'ATTRIB already located in WCS'
 
 
 if __name__ == '__main__':
