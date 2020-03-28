@@ -37,7 +37,9 @@ class EntityFactory:
         """ Create a new entity. """
         class_ = ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
         entity = class_.new(handle=None, owner=None, dxfattribs=dxfattribs, doc=self.doc)
-        self.doc.tracker.dxftypes.add(dxftype)
+        # to use EntityFactory() without instantiated DXF document
+        if self.doc:
+            self.doc.tracker.dxftypes.add(dxftype)
         return entity.cast() if hasattr(entity, 'cast') else entity
 
     def create_db_entry(self, type_: str, dxfattribs: dict) -> 'DXFEntity':
