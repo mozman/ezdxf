@@ -314,6 +314,10 @@ class DXFGraphic(DXFEntity):
                 self.dxf.set(name, value)
         self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
 
+    def has_hyperlink(self) -> bool:
+        """ Returns ``True`` if entity has an attached hyperlink. """
+        return bool(self.xdata) and ('PE_URL' in self.xdata)
+
     def set_hyperlink(self, link: str, description: str = None, location: str = None):
         """ Set hyperlink of an entity. """
         xdata = [(1001, 'PE_URL'), (1000, str(link))]

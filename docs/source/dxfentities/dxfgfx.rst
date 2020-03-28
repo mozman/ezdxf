@@ -57,6 +57,8 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
 
     .. automethod:: graphic_properties
 
+    .. automethod:: has_hyperlink
+
     .. automethod:: get_hyperlink
 
     .. automethod:: set_hyperlink

@@ -6,8 +6,9 @@ from ezdxf.entities import DXFGraphic
 
 def test_set_hyperlink():
     entity = DXFGraphic()
+    assert entity.has_hyperlink() is False
     entity.set_hyperlink('link')
-    assert 'PE_URL' in entity.xdata
+    assert entity.has_hyperlink() is True
     hyperlink, description, location = entity.get_hyperlink()
     assert hyperlink == 'link'
     assert description == ''
