@@ -314,6 +314,37 @@ class DXFGraphic(DXFEntity):
                 self.dxf.set(name, value)
         self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
 
+    def set_hyperlink(self, link: str, description: str = None, location: str = None):
+        """ Set hyperlink of an entity. """
+        xdata = [(1001, 'PE_URL'), (1000, str(link))]
+        if description:
+            xdata.append((1002, '{'))
+            xdata.append((1000, str(description)))
+            if location:
+                xdata.append((1000, str(location)))
+            xdata.append((1002, '}'))
+
+        self.discard_xdata('PE_URL')
+        self.set_xdata('PE_URL', xdata)
+        if self.doc and 'PE_URL' not in self.doc.appids:
+            self.doc.appids.new('PE_URL')
+        return self
+
+    def get_hyperlink(self) -> Tuple[str, str, str]:
+        """ Returns hyperlink, description and location. """
+        link = ""
+        description = ""
+        location = ""
+        if self.xdata and 'PE_URL' in self.xdata:
+            xdata = [tag.value for tag in self.get_xdata('PE_URL') if tag.code == 1000]
+            if len(xdata):
+                link = xdata[0]
+            if len(xdata) > 1:
+                description = xdata[1]
+            if len(xdata) > 2:
+                location = xdata[2]
+        return link, description, location
+
 
 @register_entity
 class SeqEnd(DXFGraphic):

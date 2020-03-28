@@ -57,6 +57,10 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
 
     .. automethod:: graphic_properties
 
+    .. automethod:: get_hyperlink
+
+    .. automethod:: set_hyperlink
+
 .. _Common graphical DXF attributes:
 
 Common graphical DXF attributes

@@ -27,6 +27,7 @@ Version 0.12b1 - dev
 - NEW: `Ellipse.minor_axis` property returns minor axis as `Vector`
 - NEW: Option `ezdxf.options.write_fixed_meta_data_for_testing`, writes always same timestamps and GUID
 - NEW: Support for loading and exporting proxy graphic encoded as binary data, by default disabled
+- NEW: Get/set hyperlink for graphic entities
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 - CHANGE: `Polyline.close()`, `Polyline.m_close()` and `Polyline.n_close()` can set and **clear** closed state.
