@@ -102,7 +102,7 @@ class Drawing:
         """ Create new drawing. Package users should use the factory function :func:`ezdxf.new`.
         (internal API)
         """
-        doc = Drawing(dxfversion)
+        doc = cls(dxfversion)
         doc._setup()
         return doc
 
@@ -256,14 +256,14 @@ class Drawing:
         for _filter in compiled_tag_filters:
             tagger = _filter(tagger)
 
-        doc = Drawing()
+        doc = cls()
         doc._load(tagger)
         return doc
 
     @classmethod
     def from_tags(cls, compiled_tags: Iterable['DXFTag']) -> 'Drawing':
         """ Create new drawing from compiled tags. (internal API)"""
-        doc = Drawing()
+        doc = cls()
         doc._load(compiled_tags)
         return doc
 
