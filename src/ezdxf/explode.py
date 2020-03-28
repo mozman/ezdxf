@@ -94,7 +94,7 @@ def attrib_to_text(attrib: 'Attrib', dxffactory) -> 'Text':
     # ATTRIB has same owner as INSERT but does not reside in any EntitySpace() and must not deleted from any layout.
     dxffactory.doc.entitydb.delete_entity(attrib)
     # New TEXT entity has same handle as the deleted ATTRIB entity and replaces the ATTRIB entity in the database.
-    return dxffactory.create_db_entzry('TEXT', dxfattribs=dxfattribs)
+    return dxffactory.create_db_entry('TEXT', dxfattribs=dxfattribs)
 
 
 def angle_to_param(ratio: float, angle: float, quadrant: int = 0) -> float:

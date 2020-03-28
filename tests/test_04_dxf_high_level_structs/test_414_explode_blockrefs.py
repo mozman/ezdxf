@@ -128,5 +128,20 @@ def test_03_explode_polyline_bulge(doc, msp):
     assert e.dxf.end == (9, 0)
 
 
+def test_04_explode_blockref_with_attrib(doc, msp, entitydb):
+    blockref = msp.add_blockref('Test1', (20, 10))  # with attrib
+    blockref.add_attrib(tag='TAG', text='Text', insert=(1.5, 2.6))
+    assert len(blockref.attribs) > 0
+    attrib = blockref.attribs[0]
+
+    exploded_entities = blockref.explode()
+    assert blockref.is_alive is False, 'Exploded block reference should be destroyed.'
+    assert attrib.is_alive is False, 'Exploded attribs should be destroyed.'
+    assert len(exploded_entities) == 3
+    text = exploded_entities[-1]
+    assert text.dxftype() == 'TEXT'
+    assert text.dxf.text == 'Text'
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
