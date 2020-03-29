@@ -13,6 +13,7 @@ from .factory import register_entity
 from .lwpolyline import FORMAT_CODES
 from ezdxf.explode import virtual_polyline_entities, explode_entity
 from ezdxf.query import EntityQuery
+from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -106,6 +107,13 @@ class Polyline(DXFGraphic):
         if self.seqend:
             self.seqend.doc = self.doc  # grant same document
             self.entitydb.add(self.seqend)
+        else:
+            self.new_seqend()
+
+    def new_seqend(self):
+        """ Create new ENDSEQ. (internal API)"""
+        seqend = self.doc.dxffactory.create_db_entry('SEQEND', dxfattribs={'layer': self.dxf.layer})
+        self.link_seqend(seqend)
 
     def set_owner(self, owner: str, paperspace: int = 0):
         # At loading from file:
@@ -367,8 +375,10 @@ class Polyline(DXFGraphic):
         dxfattribs['layer'] = self.dxf.layer
         if self.dxf.hasattr('linetype'):
             dxfattribs['linetype'] = self.dxf.linetype
-
-        create_vertex = self.doc.dxffactory.create_db_entry
+        if self.doc:
+            create_vertex = self.doc.dxffactory.create_db_entry
+        else:
+            create_vertex = factory.new
         for point in points:
             dxfattribs['location'] = Vector(point)
             yield create_vertex('VERTEX', dxfattribs)

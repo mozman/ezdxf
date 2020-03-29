@@ -58,7 +58,7 @@ class EntityFactory:
         """ Create new entity and add to drawing-database. """
         entity = self.new_entity(dxftype=dxftype, dxfattribs=dxfattribs)
         self.doc.entitydb.add(entity)
-        if hasattr(entity, 'seqend'):
+        if hasattr(entity, 'seqend') and entity.seqend is None:
             seqend = self.create_db_entry('SEQEND', dxfattribs={'layer': entity.dxf.layer})
             self.doc.entitydb.add(seqend)
             entity.seqend = seqend

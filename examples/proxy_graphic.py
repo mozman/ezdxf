@@ -1,39 +1,13 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-import pytest
+from pathlib import Path
 from ezdxf.lldxf.tags import Tags
-from ezdxf.lldxf.tagwriter import TagCollector
-from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic, ProxyGraphic
+from ezdxf.proxygraphic import load_proxy_graphic, ProxyGraphic
+import logging
+import ezdxf
 
-
-def test_load_proxy_graphic():
-    binary_data = load_proxy_graphic(Tags.from_text(DATA))
-    assert len(binary_data) == 968
-
-
-def test_export_proxy_graphic():
-    tagwriter = TagCollector()
-    binary_data = load_proxy_graphic(Tags.from_text(DATA))
-    export_proxy_graphic(binary_data, tagwriter)
-    s = ''.join(tag.dxfstr() for tag in tagwriter.tags)
-    assert s == DATA
-
-
-class TestProxyGraphic:
-    @pytest.fixture(scope='class')
-    def data(self) -> bytes:
-        return load_proxy_graphic(Tags.from_text(DATA))
-
-    @pytest.fixture
-    def parser(self, data: bytes) -> ProxyGraphic:
-        return ProxyGraphic(data)
-
-    def test_info(self, parser: ProxyGraphic):
-        indices = list(parser.info())
-        assert len(indices) == 13
-        index, size, type_ = indices[0]
-        assert (index, size, type_) == (8, 84, 32)
-
+logging.basicConfig(level=logging.ERROR)
+DIR = Path('~/Desktop/outbox').expanduser()
 
 DATA = """160
 968
@@ -54,5 +28,19 @@ E33F00000000000000000418DC3967E1F83F000000000C0000001200000000000000D00000002600
 310
 000000020000000960E446A3456F405AF2DBF448AB604000000000000000000960E446A3456F405AF2DBF448AB6040000000000000000000000000000000000000000000000000000000000000F03F
 """
-if __name__ == '__main__':
-    pytest.main([__file__])
+
+doc = ezdxf.new()
+msp = doc.modelspace()
+
+data = load_proxy_graphic(Tags.from_text(DATA))
+proxy = ProxyGraphic(data, doc)
+
+for index, size, name in proxy.info():
+    print(f'Index: {index}, Size: {size}, Type: {name}')
+
+for entity in proxy.virtual_entities():
+    print(str(entity))
+    doc.entitydb.add(entity)
+    msp.add_entity(entity)
+
+doc.saveas(DIR / 'proxy.dxf')

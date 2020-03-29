@@ -14,7 +14,7 @@ def test_init():
 
 def test_read_ps():
     bs = ByteStream(b'ABCDABC\x00')
-    s = bs.read_ps()
+    s = bs.read_padded_string()
     assert s == 'ABCDABC'
     assert bs.index == 8
     assert bs.has_data is False
@@ -22,7 +22,7 @@ def test_read_ps():
 
 def test_read_ps_align():
     bs = ByteStream(b'ABCD\x00')
-    s = bs.read_ps()
+    s = bs.read_padded_string()
     assert s == 'ABCD'
     assert bs.index == 8
     assert bs.has_data is False
@@ -30,7 +30,7 @@ def test_read_ps_align():
 
 def test_read_pus():
     bs = ByteStream(b'A\x00B\x00C\x00D\x00\x00\x00')
-    s = bs.read_pus()
+    s = bs.read_padded_unicode_string()
     assert s == 'ABCD'
     assert bs.index == 12
     assert bs.has_data is False

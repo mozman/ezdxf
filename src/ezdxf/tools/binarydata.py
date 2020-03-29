@@ -71,7 +71,13 @@ class ByteStream:
         self.index = self.align(self.index + struct.calcsize(fmt))
         return result
 
-    def read_ps(self, encoding: str = 'utf_8') -> str:
+    def read_float(self):
+        return self.read_struct('d')[0]
+
+    def read_vertex(self):
+        return self.read_struct('3d')
+
+    def read_padded_string(self, encoding: str = 'utf_8') -> str:
         """ PS: Padded String. This is a string, terminated with a zero byte. The file’s text encoding (code page)
         is used to encode/decode the bytes into a string.
         """
@@ -83,7 +89,7 @@ class ByteStream:
                 return buffer[start_index:end_index].decode(encoding)
         raise EndOfBufferError('Unexpected end of buffer, did not detect terminating zero byte.')
 
-    def read_pus(self) -> str:
+    def read_padded_unicode_string(self) -> str:
         """ PUS: Padded Unicode String. The bytes are encoded using Unicode encoding. The bytes consist of
         byte pairs and the string is terminated by 2 zero bytes.
         """
