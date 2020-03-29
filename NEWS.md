@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.12b1 - dev
+Version 0.12b2 - dev
 --------------------
 
 - NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if block not exist or is an XREF
