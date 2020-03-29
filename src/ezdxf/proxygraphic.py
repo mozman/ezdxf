@@ -1,6 +1,7 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
+import struct
 from ezdxf.lldxf.const import DXF12
 from ezdxf.tools.binarydata import bytes_to_hexstr
 
