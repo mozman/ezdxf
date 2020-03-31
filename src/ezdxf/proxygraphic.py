@@ -13,7 +13,7 @@ from ezdxf.math import ConstructionCircle, ConstructionArc
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Tags, TagWriter, Drawing
+    from ezdxf.eztypes import Tags, TagWriter, Drawing, Polymesh, Polyface, Polyline
 
 logger = logging.getLogger('ezdxf')
 
@@ -253,6 +253,40 @@ class ProxyGraphic:
         if polygon.dxftype() == 'POLYLINE':
             polygon.close()
         return polygon
+
+    def lwpolyline(self, data: bytes):
+        # LWPLINE: 20.4.85 Page 211
+        logger.debug(f'LWPOLYLINE supported not implemented.')
+
+    def mesh(self, data: bytes):
+        bs = ByteStream(data)
+        rows, columns = bs.read_struct('2L')
+        attribs = self._build_dxf_attribs()
+        attribs['m_count'] = rows
+        attribs['n_count'] = columns
+        attribs['flags'] = const.POLYLINE_3D_POLYMESH
+        polymesh = cast('Polymesh', self._factory('POLYLINE', dxfattribs=attribs))
+        polymesh.append_vertices(Vector(bs.read_vertex()) for _ in range(rows*columns))
+        return polymesh
+
+    def shell(self, data: bytes):
+        bs = ByteStream(data)
+        attribs = self._build_dxf_attribs()
+        attribs['flags'] = const.POLYLINE_POLYFACE
+        polyface = cast('Polyface', self._factory('POLYLINE', dxfattribs=attribs))
+        vertex_count = bs.read_long()
+        vertices = [Vector(bs.read_vertex()) for _ in range(vertex_count)]
+        face_count = bs.read_long()
+        faces = []
+        for i in range(face_count):
+            vertex_count = abs(bs.read_signed_long())
+            face_indices = [bs.read_long() for _ in range(vertex_count)]
+            face = [vertices[index] for index in face_indices]
+            faces.append(face)
+        polyface.append_faces(faces)
+        polyface.optimize()
+        # todo: SHELL - read face properties, but requires an example.
+        return polyface
 
     def text(self, data: bytes):
         return self._text(data, unicode=False)

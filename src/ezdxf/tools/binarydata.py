@@ -74,6 +74,12 @@ class ByteStream:
     def read_float(self):
         return self.read_struct('d')[0]
 
+    def read_long(self):
+        return self.read_struct('L')[0]
+
+    def read_signed_long(self):
+        return self.read_struct('l')[0]
+
     def read_vertex(self):
         return self.read_struct('3d')
 
@@ -100,3 +106,82 @@ class ByteStream:
                 self.index = self.align(end_index + 2)
                 return buffer[start_index:end_index].decode('utf_16_le')
         raise EndOfBufferError('Unexpected end of buffer, did not detect terminating zero bytes.')
+
+
+class BitStream:
+    """ Process little endian binary data organized as bit stream. """
+
+    # Created for DWG bit stream decoding
+    def __init__(self, buffer: bytes):
+        self.buffer: bytes = buffer
+        self.bit_index: int = 0
+
+    @property
+    def has_data(self) -> bool:
+        return self.bit_index >> 3 < len(self.buffer)
+
+    def align(self, count=4) -> int:
+        """ Align to byte border. """
+        byte_index = self.bit_index >> 3
+        modulo = byte_index % count
+        if modulo:
+            byte_index += count - modulo
+        return byte_index << 3
+
+    def read_bits(self, count) -> int:
+        """ Read `count` bits from buffer. """
+        index = self.bit_index
+        self.bit_index += count
+        if not self.has_data:  # not enough data to read all bits
+            raise EndOfBufferError('Unexpected end of buffer.')
+
+        bit_index = index & 7
+        byte_index = index >> 3
+        value = 0
+        byte = self.buffer[byte_index]
+        while count > 0:
+            value <<= 1
+            value += (1 if byte & (1 << bit_index) else 0)
+            bit_index += 1
+            if bit_index > 7:
+                bit_index = 0
+                byte_index += 1
+                byte = self.buffer[byte_index]
+            count -= 1
+        return value
+
+    def read_unsigned_byte(self) -> int:
+        """ Read an unsigned byte (8 bit) from buffer. """
+        return self.read_bits(8)
+
+    def read_signed_byte(self) -> int:
+        """ Read a signed byte (8 bit) from buffer. """
+        value = self.read_bits(8)
+        if value & 0x80:
+            return -(value & 0x7f)
+
+    def read_unsigned_short(self) -> int:
+        """ Read an unsigned short (16 bit) from buffer. """
+        s1 = self.read_bits(8)
+        s2 = self.read_bits(8)
+        return s2 << 8 + s1
+
+    def read_signed_short(self) -> int:
+        """ Read a signed short (16 bit) from buffer. """
+        value = self.read_unsigned_short()
+        if value & 0x8000:
+            return -(value & 0x7fff)
+
+    def read_unsigned_long(self) -> int:
+        """ Read an unsigned long (32 bit) from buffer. """
+        l1 = self.read_bits(8)
+        l2 = self.read_bits(8)
+        l3 = self.read_bits(8)
+        l4 = self.read_bits(8)
+        return l4 << 24 + l3 << 16 + l2 << 8 + l1
+
+    def read_signed_long(self) -> int:
+        """ Read a signed long (32 bit) from buffer. """
+        value = self.read_unsigned_long()
+        if value & 0x80000000:
+            return -(value & 0x7fffffff)
