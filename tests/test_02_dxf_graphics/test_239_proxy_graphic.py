@@ -32,7 +32,7 @@ class TestProxyGraphic:
         indices = list(parser.info())
         assert len(indices) == 13
         index, size, type_ = indices[0]
-        assert (index, size, type_) == (8, 84, 32)
+        assert (index, size, type_) == (8, 84, 'POLYLINE_WITH_NORMALS')
 
 
 DATA = """160
