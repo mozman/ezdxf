@@ -2,7 +2,7 @@
 # Copyright (c) 2014-2020, Manfred Moitzi
 # License: MIT License
 import sys
-from typing import Iterable, Any
+from typing import Iterable, Any, Sequence
 from array import array
 import struct
 
@@ -131,23 +131,27 @@ class BitStream:
     def read_bits(self, count) -> int:
         """ Read `count` bits from buffer. """
         index = self.bit_index
-        self.bit_index += count
-        if not self.has_data:  # not enough data to read all bits
-            raise EndOfBufferError('Unexpected end of buffer.')
+        buffer = self.buffer
+        next_bit_index = index + count  # index of next bit after reading `count` bits
 
-        bit_index = index & 7
-        byte_index = index >> 3
+        if (next_bit_index - 1) >> 3 > len(buffer):  # not enough data to read all bits
+            raise EndOfBufferError('Unexpected end of buffer.')
+        self.bit_index = next_bit_index
+
+        test_bit = 0x80 >> (index & 7)
+        test_byte_index = index >> 3
         value = 0
-        byte = self.buffer[byte_index]
+        test_byte = buffer[test_byte_index]
         while count > 0:
             value <<= 1
-            value += (1 if byte & (1 << bit_index) else 0)
-            bit_index += 1
-            if bit_index > 7:
-                bit_index = 0
-                byte_index += 1
-                byte = self.buffer[byte_index]
+            if test_byte & test_bit:
+                value |= 1
             count -= 1
+            test_bit >>= 1
+            if not test_bit and count:
+                test_bit = 0x80
+                test_byte_index += 1
+                test_byte = buffer[test_byte_index]
         return value
 
     def read_unsigned_byte(self) -> int:
@@ -158,30 +162,50 @@ class BitStream:
         """ Read a signed byte (8 bit) from buffer. """
         value = self.read_bits(8)
         if value & 0x80:
-            return -(value & 0x7f)
+            # 2er complement
+            return -((~value & 0xff) + 1)
+
+    def read_aligned_bytes(self, count: int) -> Sequence[int]:
+        buffer = self.buffer
+        start_index = self.bit_index >> 3
+        end_index = start_index + count
+        if end_index <= len(buffer):
+            self.bit_index += count << 3
+            return buffer[start_index: end_index]
+        else:
+            raise EndOfBufferError('Unexpected end of buffer.')
 
     def read_unsigned_short(self) -> int:
         """ Read an unsigned short (16 bit) from buffer. """
-        s1 = self.read_bits(8)
-        s2 = self.read_bits(8)
-        return s2 << 8 + s1
+        if self.bit_index & 7:
+            s1 = self.read_bits(8)
+            s2 = self.read_bits(8)
+        else:  # aligned data
+            s1, s2 = self.read_aligned_bytes(2)
+        return (s2 << 8) + s1
 
     def read_signed_short(self) -> int:
         """ Read a signed short (16 bit) from buffer. """
         value = self.read_unsigned_short()
         if value & 0x8000:
-            return -(value & 0x7fff)
+            # 2er complement
+            return -((~value & 0xffff) + 1)
 
     def read_unsigned_long(self) -> int:
         """ Read an unsigned long (32 bit) from buffer. """
-        l1 = self.read_bits(8)
-        l2 = self.read_bits(8)
-        l3 = self.read_bits(8)
-        l4 = self.read_bits(8)
-        return l4 << 24 + l3 << 16 + l2 << 8 + l1
+        if self.bit_index & 7:
+            read_bits = self.read_bits
+            l1 = read_bits(8)
+            l2 = read_bits(8)
+            l3 = read_bits(8)
+            l4 = read_bits(8)
+        else:  # aligned data
+            l1, l2, l3, l4 = self.read_aligned_bytes(4)
+        return (l4 << 24) + (l3 << 16) + (l2 << 8) + l1
 
     def read_signed_long(self) -> int:
         """ Read a signed long (32 bit) from buffer. """
         value = self.read_unsigned_long()
         if value & 0x80000000:
-            return -(value & 0x7fffffff)
+            # 2er complement
+            return -((~value & 0xffffffff) + 1)
