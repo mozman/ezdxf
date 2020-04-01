@@ -1,7 +1,22 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.tools.binarydata import BitStream
+from ezdxf.tools.binarydata import BitStream, EndOfBufferError
+
+
+def test_read_bit():
+    data = b'\xaa'
+    bs = BitStream(data)
+    assert bs.read_bit() == 1
+    assert bs.read_bit() == 0
+    assert bs.read_bit() == 1
+    assert bs.read_bit() == 0
+    assert bs.read_bit() == 1
+    assert bs.read_bit() == 0
+    assert bs.read_bit() == 1
+    assert bs.read_bit() == 0
+    with pytest.raises(EndOfBufferError):
+        _ = bs.read_bit()
 
 
 def test_read_bits():

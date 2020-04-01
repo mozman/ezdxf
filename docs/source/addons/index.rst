@@ -15,5 +15,7 @@ Add-ons
    acadctb
    pycsg
    forms
+   dwg
+
 
 

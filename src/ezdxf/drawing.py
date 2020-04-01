@@ -1,7 +1,7 @@
 # Created: 11.03.2011
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, TextIO, Iterable, Union, Sequence, Tuple, Callable, cast
+from typing import TYPE_CHECKING, TextIO, Iterable, Union, Sequence, Tuple, Callable, cast, Optional
 from datetime import datetime
 import io
 import base64
@@ -12,7 +12,7 @@ from ezdxf.lldxf.const import acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueErro
 from ezdxf.lldxf.const import DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013, \
     versions_supported_by_save, versions_supported_by_new
 from ezdxf.lldxf.const import DXFVersionError
-from ezdxf.lldxf.loader import load_dxf_structure, fill_database
+from ezdxf.lldxf.loader import load_dxf_structure, fill_database, SectionDict
 from ezdxf.lldxf import repair
 from .lldxf.tagwriter import TagWriter
 
@@ -264,11 +264,22 @@ class Drawing:
     def from_tags(cls, compiled_tags: Iterable['DXFTag']) -> 'Drawing':
         """ Create new drawing from compiled tags. (internal API)"""
         doc = cls()
-        doc._load(compiled_tags)
+        doc._load(tagger=compiled_tags)
         return doc
 
-    def _load(self, tagger: Iterable['DXFTag']):
-        sections = load_dxf_structure(tagger)  # load complete DXF entity structure
+    @classmethod
+    def from_section_dict(cls, sections: SectionDict) -> 'Drawing':
+        """ Create new drawing from a SectionDict. (internal API)"""
+        doc = cls()
+        doc._load(sections=sections)
+        return doc
+
+    def _load(self, tagger: Optional[Iterable['DXFTag']] = None, sections: Optional[SectionDict] = None):
+        if tagger is None and sections is None:
+            raise ValueError('DXF tagger or SectionDict required.')
+
+        if sections is None:
+            sections = load_dxf_structure(tagger)  # load complete DXF entity structure
         try:  # discard section THUMBNAILIMAGE
             del sections['THUMBNAILIMAGE']
         except KeyError:
