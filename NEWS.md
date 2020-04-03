@@ -39,6 +39,11 @@ Version 0.12b2 - dev
 - BUGFIX: `Face3d.set_edge_visibility()` set inverted state (visible <-> invisible)
 - BUGFIX: Load `AcDbEntity` group codes from base class
 
+Version 0.11.2 - 2020-04-03
+---------------------------
+
+- BUGFIX: upgrade error from DXF R13/14 to R2000 
+
 Version 0.11.1 - 2020-02-29
 ---------------------------
 
