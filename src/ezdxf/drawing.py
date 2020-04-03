@@ -174,6 +174,9 @@ class Drawing:
             layers.new('0')
         if 'Defpoints' not in layers:
             layers.new('Defpoints', dxfattribs={'plot': 0})  # do not plot
+        else:
+            # AutoCAD requires a plot flag = 0
+            layers.get('Defpoints').dxf.plot = 0
 
     def _setup_metadata(self):
         self.header['$ACADVER'] = self.dxfversion
