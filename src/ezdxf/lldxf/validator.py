@@ -4,7 +4,7 @@
 # License: MIT License
 import logging
 import io
-from typing import TextIO, Iterable, List
+from typing import TextIO, Iterable, List, Optional
 
 from .const import DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError
 from .const import APP_DATA_MARKER, HEADER_VAR_MARKER, XDATA_MARKER
@@ -196,8 +196,33 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
 
 
 def is_dxf_file(filename: str) -> bool:
+    """ Returns ``True`` if `filename` is an ASCII DXF file. """
     with io.open(filename, errors='ignore') as fp:
         return is_dxf_stream(fp)
+
+
+def is_binary_dxf_file(filename: str) -> bool:
+    """ Returns ``True`` if `filename` is a binary DXF file. """
+    with open(filename, 'rb') as fp:
+        sentinel = fp.read(22)
+    return sentinel == b'AutoCAD Binary DXF\r\n\x1a\x00'
+
+
+def is_dwg_file(filename: str) -> bool:
+    """ Returns ``True`` if `filename` is a DWG file. """
+    return dwg_version(filename) is not None
+
+
+def dwg_version(filename: str) -> Optional[str]:
+    """ Returns DWG version of `filename` as string or ``None``. """
+    with open(str(filename), 'rb') as fp:
+        try:
+            version = fp.read(6).decode(errors='ignore')
+        except IOError:
+            return None
+        if version not in acad_release:
+            return None
+        return version
 
 
 def is_dxf_stream(stream: TextIO) -> bool:

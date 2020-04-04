@@ -28,6 +28,7 @@ Version 0.12b2 - dev
 - NEW: Option `ezdxf.options.write_fixed_meta_data_for_testing`, writes always same timestamps and GUID
 - NEW: Support for loading and exporting proxy graphic encoded as binary data, by default disabled
 - NEW: Get/set hyperlink for graphic entities
+- NEW: `odafc` add-on to use an installed ODA File Converter for reading and writing DWG files
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 - CHANGE: `Polyline.close()`, `Polyline.m_close()` and `Polyline.n_close()` can set and **clear** closed state.
@@ -38,6 +39,11 @@ Version 0.12b2 - dev
 - BUGFIX: LWPOLYLINE was always exported with `const_width=0`
 - BUGFIX: `Face3d.set_edge_visibility()` set inverted state (visible <-> invisible)
 - BUGFIX: Load `AcDbEntity` group codes from base class
+
+Version 0.11.2 - 2020-04-03
+---------------------------
+
+- BUGFIX: upgrade error from DXF R13/14 to R2000 
 
 Version 0.11.1 - 2020-02-29
 ---------------------------

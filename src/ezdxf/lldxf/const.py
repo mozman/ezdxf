@@ -4,6 +4,8 @@
 # License: MIT License
 from enum import IntEnum
 
+DXF9 = 'AC1004'
+DXF10 = 'AC1006'
 DXF12 = 'AC1009'
 DXF13 = 'AC1012'
 DXF14 = 'AC1014'
@@ -15,6 +17,8 @@ DXF2013 = 'AC1027'
 DXF2018 = 'AC1032'
 
 acad_release = {
+    DXF9: 'R9',
+    DXF10: 'R10',
     DXF12: 'R12',
     DXF13: 'R13',
     DXF14: 'R14',

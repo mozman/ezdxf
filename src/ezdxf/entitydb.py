@@ -8,6 +8,7 @@ from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.order import priority, zorder
 from ezdxf.audit import AuditError, Auditor
+from ezdxf.lldxf.const import DXFInternalEzdxfError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -26,6 +27,7 @@ class EntityDB:
     def __init__(self):
         self._database = {}
         self.handles = HandleGenerator()
+        self.locked = False  # for debugging
 
     def __getitem__(self, handle: str) -> DXFEntity:
         """ Get entity by `handle`. """
@@ -35,6 +37,9 @@ class EntityDB:
         """ Set `entity` for `handle`. """
         assert isinstance(handle, str), type(handle)
         assert isinstance(entity, DXFEntity), type(entity)
+        if self.locked:
+            raise DXFInternalEzdxfError('Locked entity database.')
+
         if handle == '0' or not is_valid_handle(handle):
             raise ValueError(f'Invalid handle {handle}.')
         self._database[handle] = entity

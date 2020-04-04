@@ -174,6 +174,9 @@ class Drawing:
             layers.new('0')
         if 'Defpoints' not in layers:
             layers.new('Defpoints', dxfattribs={'plot': 0})  # do not plot
+        else:
+            # AutoCAD requires a plot flag = 0
+            layers.get('Defpoints').dxf.plot = 0
 
     def _setup_metadata(self):
         self.header['$ACADVER'] = self.dxfversion
@@ -341,12 +344,26 @@ class Drawing:
         if self.dxfversion in (DXF13, DXF14):
             # upgrade to DXF R2000
             self.dxfversion = DXF2000
+            self.create_all_arrow_blocks()
 
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
 
         self.layouts = Layouts.load(self)
         self._finalize_setup()
+
+    def create_all_arrow_blocks(self):
+        """
+        For upgrading DXF R12/13/14 files to R2000, it is necessary to create all used arrow blocks before saving the
+        DXF file, else $HANDSEED is not the next available handle, which is a problem for AutoCAD.
+        To be save create all known AutoCAD arrows, because references to arrow blocks can be in DIMSTYLE,
+        DIMENSION override, LEADER override and maybe other places.
+
+        """
+        # to be save create all known arrow blocks
+        from ezdxf.render.arrows import ARROWS
+        for arrow_name in ARROWS.__acad__:
+            ARROWS.create_block(self.blocks, arrow_name)
 
     def _create_required_block_records(self):
         if '*Model_Space' not in self.block_records:
