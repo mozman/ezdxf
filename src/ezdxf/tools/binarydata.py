@@ -128,6 +128,15 @@ class BitStream:
             byte_index += count - modulo
         return byte_index << 3
 
+    def read_bit(self) -> int:
+        """ Read one bit from buffer. """
+        index = self.bit_index
+        self.bit_index += 1
+        try:
+            return 1 if self.buffer[index >> 3] & (0x80 >> (index & 7)) else 0
+        except IndexError:
+            raise EndOfBufferError('Unexpected end of buffer.')
+
     def read_bits(self, count) -> int:
         """ Read `count` bits from buffer. """
         index = self.bit_index
