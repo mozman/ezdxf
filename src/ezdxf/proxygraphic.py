@@ -4,8 +4,9 @@ from typing import TYPE_CHECKING, Optional, Iterable, Tuple, List, Dict, cast
 import struct
 import math
 from enum import IntEnum
+from itertools import repeat
 from ezdxf.lldxf import const
-from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream
+from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream, BitStream
 from ezdxf.tools import rgb2int
 from ezdxf.math import Vector
 from ezdxf.entities import factory
@@ -94,6 +95,7 @@ class ProxyGraphic:
         self._factory = doc.dxffactory.new_entity if doc else factory.new
         self._buffer: bytes = data
         self._index: int = 8
+        self.dxfversion = doc.dxfversion if doc else 'AC1015'
         self.color: int = COLOR_BY_LAYER
         self.layer: str = '0'
         self.linetype: str = 'ByLayer'
@@ -255,9 +257,57 @@ class ProxyGraphic:
         return polygon
 
     def lwpolyline(self, data: bytes):
-        # LWPLINE: 20.4.85 Page 211
-        logger.debug(f'LWPOLYLINE supported not implemented.')
+        # OpenDesign Specs LWPLINE: 20.4.85 Page 211
+        bs = BitStream(data)
+        flag = bs.read_bit_short()
+        attribs = self._build_dxf_attribs()
+        if flag & 4:
+            attribs['const_width'] = bs.read_bit_double()
+        if flag & 8:
+            attribs['elevation'] = bs.read_bit_double()
+        if flag & 2:
+            attribs['thickness'] = bs.read_bit_double()
+        if flag & 1:
+            attribs['extrusion'] = Vector(bs.read_bit_double(3))
 
+        num_points = bs.read_bit_long()
+        if flag & 16:
+            num_bulges = bs.read_bit_long()
+        else:
+            num_bulges = 0
+
+        if self.dxfversion >= 'AC1024':  # R2010+
+            vertex_id_count = bs.read_bit_long()
+        else:
+            vertex_id_count = 0
+
+        if flag & 32:
+            num_width = bs.read_bit_long()
+        else:
+            num_width = 0
+        # ignore DXF R13/14 special vertex order
+
+        vertices = [bs.read_raw_double(2)]
+        prev_point = vertices[-1]
+        for _ in range(num_points - 1):
+            x = bs.read_bit_double_default(default=prev_point[0])
+            y = bs.read_bit_double_default(default=prev_point[1])
+            prev_point = (x, y)
+            vertices.append(prev_point)
+        bulges = [bs.read_bit_double() for _ in range(num_bulges)]
+        vertex_ids = [bs.read_bit_long() for _ in range(vertex_id_count)]
+        widths = [(bs.read_bit_double(), bs.read_bit_double()) for _ in range(num_width)]
+        if len(bulges) == 0:
+            bulges = list(repeat(0, num_points))
+        if len(widths) == 0:
+            widths = list(repeat((0, 0), num_points))
+        points = []
+        for v, w, b in zip(vertices, widths, bulges):
+            points.append((v[0], v[1], w[0], w[1], b))
+        lwpolyline = cast('LWPolyline', self._factory('LWPOLYLINE', dxfattribs=attribs))
+        lwpolyline.set_points(points)
+        return lwpolyline
+    
     def mesh(self, data: bytes):
         bs = ByteStream(data)
         rows, columns = bs.read_struct('2L')
@@ -266,7 +316,7 @@ class ProxyGraphic:
         attribs['n_count'] = columns
         attribs['flags'] = const.POLYLINE_3D_POLYMESH
         polymesh = cast('Polymesh', self._factory('POLYLINE', dxfattribs=attribs))
-        polymesh.append_vertices(Vector(bs.read_vertex()) for _ in range(rows*columns))
+        polymesh.append_vertices(Vector(bs.read_vertex()) for _ in range(rows * columns))
         return polymesh
 
     def shell(self, data: bytes):
