@@ -1,7 +1,6 @@
 # Created: 03.05.2014
 # Copyright (c) 2014-2020, Manfred Moitzi
 # License: MIT License
-import sys
 from typing import Iterable, Any, Sequence, Union, Tuple
 from array import array
 import struct
@@ -46,7 +45,6 @@ class ByteStream:
     def __init__(self, buffer: bytes, align: int = 4):
         self.buffer: bytes = buffer
         self.index: int = 0
-        self._not_native_little_endian: bool = sys.byteorder != 'little'
         self._align: int = align
 
     @property
@@ -64,24 +62,21 @@ class ByteStream:
         if not self.has_data:
             raise EndOfBufferError('Unexpected end of buffer.')
 
-        if self._not_native_little_endian:
-            fmt = '<' + fmt
-
         result = struct.unpack_from(fmt, self.buffer, offset=self.index)
         self.index = self.align(self.index + struct.calcsize(fmt))
         return result
 
     def read_float(self):
-        return self.read_struct('d')[0]
+        return self.read_struct('<d')[0]
 
     def read_long(self):
-        return self.read_struct('L')[0]
+        return self.read_struct('<L')[0]
 
     def read_signed_long(self):
-        return self.read_struct('l')[0]
+        return self.read_struct('<l')[0]
 
     def read_vertex(self):
-        return self.read_struct('3d')
+        return self.read_struct('<3d')
 
     def read_padded_string(self, encoding: str = 'utf_8') -> str:
         """ PS: Padded String. This is a string, terminated with a zero byte. The file’s text encoding (code page)

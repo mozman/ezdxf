@@ -122,7 +122,7 @@ class ProxyGraphic:
         index = self._index
         buffer = self._buffer
         while index < len(buffer):
-            size, type_ = struct.unpack_from('2L', self._buffer, offset=index)
+            size, type_ = struct.unpack_from('<2L', self._buffer, offset=index)
             try:
                 name = ProxyGraphicTypes(type_).name
             except ValueError:
@@ -134,7 +134,7 @@ class ProxyGraphic:
         index = self._index
         buffer = self._buffer
         while index < len(buffer):
-            size, type_ = struct.unpack_from('2L', self._buffer, offset=index)
+            size, type_ = struct.unpack_from('<2L', self._buffer, offset=index)
             try:
                 name = ProxyGraphicTypes(type_).name.lower()
             except ValueError:
@@ -153,44 +153,44 @@ class ProxyGraphic:
             index += size
 
     def attribute_color(self, data: bytes):
-        self.color = struct.unpack('L', data)[0]
+        self.color = struct.unpack('<L', data)[0]
         if self.color < 0 or self.color > 256:
             self.color = COLOR_BY_LAYER
 
     def attribute_layer(self, data: bytes):
         if self._doc:
-            index = struct.unpack('L', data)[0]
+            index = struct.unpack('<L', data)[0]
             if index < len(self.layers):
                 self.layer = self.layers[index]
 
     def attribute_linetype(self, data: bytes):
         if self._doc:
-            index = struct.unpack('L', data)[0]
+            index = struct.unpack('<L', data)[0]
             if index < len(self.linetypes):
                 self.linetype = self.linetypes[index]
 
     def attribute_marker(self, data: bytes):
-        self.marker_index = struct.unpack('L', data)[0]
+        self.marker_index = struct.unpack('<L', data)[0]
 
     def attribute_fill(self, data: bytes):
-        self.fill = bool(struct.unpack('L', data)[0])
+        self.fill = bool(struct.unpack('<L', data)[0])
 
     def attribute_true_color(self, data: bytes):
         # todo check byte order!
         self.true_color = rgb2int((data[1], data[2], data[3]))
 
     def attribute_lineweight(self, data: bytes):
-        self.lineweight = struct.unpack('L', data)[0]
+        self.lineweight = struct.unpack('<L', data)[0]
         if self.lineweight == BY_LAYER:
             self.lineweight = const.LINEWEIGHT_BYLAYER
         if self.lineweight == BY_BLOCK:
             self.lineweight = const.LINEWEIGHT_BYBLOCK
 
     def attribute_ltscale(self, data: bytes):
-        self.ltscale = struct.unpack('d', data)[0]
+        self.ltscale = struct.unpack('<d', data)[0]
 
     def attribute_thickness(self, data: bytes):
-        self.thickness = struct.unpack('d', data)[0]
+        self.thickness = struct.unpack('<d', data)[0]
 
     def circle(self, data: bytes):
         bs = ByteStream(data)
@@ -362,7 +362,7 @@ class ProxyGraphic:
         start_point = Vector(bs.read_vertex())
         normal = Vector(bs.read_vertex())
         text_direction = Vector(bs.read_vertex())
-        height, width_factor, oblique_angle = bs.read_struct('3d')
+        height, width_factor, oblique_angle = bs.read_struct('<3d')
         if unicode:
             text = bs.read_padded_unicode_string()
         else:
@@ -383,9 +383,9 @@ class ProxyGraphic:
         normal = Vector(bs.read_vertex())
         text_direction = Vector(bs.read_vertex())
         text = bs.read_padded_string()
-        ignore_length_of_string, raw = bs.read_struct('2l')
-        height, width_factor, oblique_angle, tracking_percentage = bs.read_struct('4d')
-        is_backwards, is_upside_down, is_vertical, is_underline, is_overline = bs.read_struct('5L')
+        ignore_length_of_string, raw = bs.read_struct('<2l')
+        height, width_factor, oblique_angle, tracking_percentage = bs.read_struct('<4d')
+        is_backwards, is_upside_down, is_vertical, is_underline, is_overline = bs.read_struct('<5L')
         font_filename = bs.read_padded_string()
         big_font_filename = bs.read_padded_string()
         attribs = self._build_dxf_attribs()
@@ -406,10 +406,10 @@ class ProxyGraphic:
         normal = Vector(bs.read_vertex())
         text_direction = Vector(bs.read_vertex())
         text = bs.read_padded_unicode_string()
-        ignore_length_of_string, ignore_raw = bs.read_struct('2l')
-        height, width_factor, oblique_angle, tracking_percentage = bs.read_struct('4d')
-        is_backwards, is_upside_down, is_vertical, is_underline, is_overline = bs.read_struct('5L')
-        is_bold, is_italic, charset, pitch = bs.read_struct('4L')
+        ignore_length_of_string, ignore_raw = bs.read_struct('<2l')
+        height, width_factor, oblique_angle, tracking_percentage = bs.read_struct('<4d')
+        is_backwards, is_upside_down, is_vertical, is_underline, is_overline = bs.read_struct('<5L')
+        is_bold, is_italic, charset, pitch = bs.read_struct('<4L')
         type_face = bs.read_padded_unicode_string()
         font_filename = bs.read_padded_unicode_string()
         big_font_filename = bs.read_padded_unicode_string()
@@ -453,10 +453,10 @@ class ProxyGraphic:
 
     def _load_vertices(self, data: bytes):
         bs = ByteStream(data)
-        count = bs.read_struct('L')[0]
+        count = bs.read_struct('<L')[0]
         vertices = []
         while count > 0:
-            vertices.append(Vector(bs.read_struct('3d')))
+            vertices.append(Vector(bs.read_struct('<3d')))
             count -= 1
         return vertices
 
