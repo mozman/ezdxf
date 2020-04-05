@@ -3,10 +3,13 @@
 # Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, TextIO, Iterator
+from itertools import chain
 
+import struct
 from .types import DXFTag, DXFVertex, DXFBinaryTag
-from .const import DXFStructureError
+from .const import DXFStructureError, DXFVersionError
 from .types import POINT_CODES, TYPE_TABLE, BINARAY_DATA
+from ezdxf.tools.codepage import toencoding
 
 
 def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
@@ -88,6 +91,139 @@ def low_level_tagger(stream: TextIO, skip_comments: bool = True) -> Iterable[DXF
             return
 
 
+INT16 = set(chain(
+    range(60, 80),
+    range(170, 180),
+    range(270, 290),
+    range(370, 390),
+    range(400, 410),
+    range(1060, 1071),
+))
+
+BOOL = set(chain(
+    range(290, 300),
+))
+
+INT32 = set(chain(
+    range(90, 100),
+    range(420, 430),
+    range(440, 450),
+    [1071]
+))
+
+INT64 = set(chain(
+    range(160, 169),
+    range(450, 460),  # Long in DXF reference?
+))
+
+DOUBLE = set(chain(
+    range(10, 60),
+    range(110, 150),
+    range(210, 240),
+    range(460, 470),
+    range(1010, 1060),
+))
+
+BINARY_CHUNK = set(chain(
+    range(310, 320), [1004]
+))
+
+
+def low_level_binary_tagger(data: bytes) -> Iterable[DXFTag]:
+    """
+    Yields DXFTag() or DXFBinaryTag() objects from a binary DXF `data` (untrusted external source) and does not
+    optimize coordinates. DXFTag.code is always an int and DXFTag.value is always an unicode string without
+    a trailing '\n'.
+
+    Args:
+        data: binary DXF data
+
+    Raises:
+        DXFStructureError: Not a binary DXF file
+        DXFVersionError: Unsupported DXF version
+
+    """
+    # this version supports only DXF R2000+
+    if data[:22] != b'AutoCAD Binary DXF\r\n\x1a\x00':
+        raise DXFStructureError('Not a binary DXF data structure.')
+
+    def scan_params():
+        dxfversion = 'AC1015'
+        encoding = 'cp1252'
+        try:
+            start = data.index(b'$ACADVER', 22)
+            dxfversion = data[start + 11:start + 17].decode()
+        except IndexError:
+            pass
+
+        if dxfversion >= 'AC1021':
+            encoding = 'utf8'
+        else:
+            try:
+                start = data.index(b'$DWGCODEPAGE', 22)
+                start += 15
+                end = start + 5
+                while data[end] != 0:
+                    end += 1
+                codepage = data[start: end].decode()
+                encoding = toencoding(codepage)
+            except IndexError:
+                pass
+        return encoding, dxfversion
+
+    encoding, dxfversion = scan_params()
+    if dxfversion < 'AC1015':
+        raise DXFVersionError(f'Unsupported (binary) DXF version: {dxfversion}')
+
+    index = 22
+    data_length = len(data)
+    unpack = struct.unpack_from
+
+    while index < data_length:
+        # decode next group code
+        escape = data[index]
+        if escape == 255:  # extended data
+            lo_byte = data[index + 1]
+            hi_byte = data[index + 2]
+            index += 3
+        else:
+            lo_byte = escape
+            hi_byte = data[index + 1]
+            index += 2
+        code = (hi_byte << 8) + lo_byte
+
+        # decode next value
+        if code in BINARY_CHUNK:
+            length = unpack('<B', data, offset=index)[0]
+            index += 1
+            value = data[index:index + length]
+            index += length
+            yield DXFBinaryTag(code, value)
+        else:
+            if code in INT16:
+                value = unpack('<h', data, offset=index)[0]
+                index += 2
+            elif code in DOUBLE:
+                value = unpack('<d', data, offset=index)[0]
+                index += 8
+            elif code in INT32:
+                value = unpack('<i', data, offset=index)[0]
+                index += 4
+            elif code in INT64:
+                value = unpack('<q', data, offset=index)[0]
+                index += 8
+            elif code in BOOL:
+                value = unpack('<B', data, offset=index)[0]
+                index += 1
+            else:  # \0x00 terminated string
+                start_index = index
+                end_index = data.index(b'\x00', start_index)
+                s = data[start_index:end_index]
+                index = end_index + 1
+                value = s.decode(encoding)
+            yield DXFTag(code, value)
+
+
 # invalid point codes if not part of a point started with 1010, 1011, 1012, 1013
 INVALID_POINT_CODES = {1020, 1021, 1022, 1023, 1030, 1031, 1032, 1033}
 
@@ -145,10 +281,14 @@ def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
                     raise DXFStructureError('Invalid floating point values near line: {}.'.format(line))
                 yield DXFVertex(code, point)
             elif code in BINARAY_DATA:
-                try:
-                    yield DXFBinaryTag.from_string(code, x.value)
-                except ValueError:
-                    raise DXFStructureError('Invalid binary data near line: {}.'.format(line))
+                if isinstance(x, DXFBinaryTag):  # maybe pre compiled in low level tagger (binary DXF)
+                    tag = x
+                else:
+                    try:
+                        tag = DXFBinaryTag.from_string(code, x.value)
+                    except ValueError:
+                        raise DXFStructureError('Invalid binary data near line: {}.'.format(line))
+                yield tag
             else:  # just a single tag
                 try:
                     # fast path!
