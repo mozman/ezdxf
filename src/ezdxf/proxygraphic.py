@@ -123,7 +123,11 @@ class ProxyGraphic:
         buffer = self._buffer
         while index < len(buffer):
             size, type_ = struct.unpack_from('2L', self._buffer, offset=index)
-            yield index, size, ProxyGraphicTypes(type_).name
+            try:
+                name = ProxyGraphicTypes(type_).name
+            except ValueError:
+                name = f'Unknown Type Code: {type_}'
+            yield index, size, name
             index += size
 
     def virtual_entities(self):
@@ -131,7 +135,12 @@ class ProxyGraphic:
         buffer = self._buffer
         while index < len(buffer):
             size, type_ = struct.unpack_from('2L', self._buffer, offset=index)
-            name = ProxyGraphicTypes(type_).name.lower()
+            try:
+                name = ProxyGraphicTypes(type_).name.lower()
+            except ValueError:
+                logger.debug(f'Unsupported Type Code: {type_}')
+                index += size
+                continue
             method = getattr(self, name, None)
             if method:
                 result = method(self._buffer[index + 8: index + size])
@@ -258,6 +267,7 @@ class ProxyGraphic:
 
     def lwpolyline(self, data: bytes):
         # OpenDesign Specs LWPLINE: 20.4.85 Page 211
+        # Untested because no real world example found.
         bs = BitStream(data)
         flag = bs.read_bit_short()
         attribs = self._build_dxf_attribs()
