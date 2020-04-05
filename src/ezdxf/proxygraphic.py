@@ -118,7 +118,7 @@ class ProxyGraphic:
             self.linetypes = list(linetype.dxf.name for linetype in self._doc.linetypes)
             self.textstyles = {style.dxf.font: style.dxf.name for style in self._doc.styles}
 
-    def info(self) -> Iterable[Tuple[int, int, int]]:
+    def info(self) -> Iterable[Tuple[int, int, str]]:
         index = self._index
         buffer = self._buffer
         while index < len(buffer):

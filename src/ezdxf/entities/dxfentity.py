@@ -1066,11 +1066,23 @@ class DXFTagStorage(DXFEntity):
         return self.xtags.subclasses[0]
 
     @classmethod
-    def load(cls, tags: Union[ExtendedTags, Tags], doc: 'Drawing' = None) -> 'DXFTagStorage':
+    def load(cls, tags: ExtendedTags, doc: 'Drawing' = None) -> 'DXFTagStorage':
+        assert isinstance(tags, ExtendedTags)
         entity = cls(doc)
         entity.load_tags(tags)
         entity.store_tags(tags)
+        if options.load_proxy_graphics:
+            entity.load_proxy_graphic()
         return entity
+
+    def load_proxy_graphic(self) -> Optional[bytes]:
+        try:
+            acdb_entity = self.xtags.get_subclass('AcDbEntity')
+        except DXFKeyError:
+            return
+        binary_data = [tag.value for tag in acdb_entity.find_all(310)]
+        if len(binary_data):
+            self.proxy_graphic = b''.join(binary_data)
 
     def store_tags(self, tags: ExtendedTags) -> None:
         # store DXFTYPE, overrides class member
@@ -1095,3 +1107,4 @@ class DXFTagStorage(DXFEntity):
     def destroy(self) -> None:
         del self.xtags
         super().destroy()
+
