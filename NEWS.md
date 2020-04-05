@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.12b2 - dev
+Version 0.12b3 - dev
 --------------------
 
 - NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if block not exist or is an XREF
@@ -27,6 +27,7 @@ Version 0.12b2 - dev
 - NEW: `Ellipse.minor_axis` property returns minor axis as `Vector`
 - NEW: Option `ezdxf.options.write_fixed_meta_data_for_testing`, writes always same timestamps and GUID
 - NEW: Support for loading and exporting proxy graphic encoded as binary data, by default disabled
+- NEW: `ezdxf.proxygraphic.ProxyGraphic()` class to examine binary encoded proxy graphic (Need example data for testing!)
 - NEW: Get/set hyperlink for graphic entities
 - NEW: `odafc` add-on to use an installed ODA File Converter for reading and writing DWG files
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
