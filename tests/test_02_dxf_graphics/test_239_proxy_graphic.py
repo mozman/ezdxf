@@ -1,9 +1,12 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
+import sys
 import pytest
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic, ProxyGraphic
+
+WIN = sys.platform.startswith('win')
 
 
 def test_load_proxy_graphic():
@@ -19,6 +22,7 @@ def test_export_proxy_graphic():
     assert s == DATA
 
 
+@pytest.mark.skipif(WIN is not True, reason='works only on Windows yet!')
 class TestProxyGraphic:
     @pytest.fixture(scope='class')
     def data(self) -> bytes:
