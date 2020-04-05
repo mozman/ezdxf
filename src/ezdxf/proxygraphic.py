@@ -98,7 +98,7 @@ class ProxyGraphic:
         self.dxfversion = doc.dxfversion if doc else 'AC1015'
         self.color: int = COLOR_BY_LAYER
         self.layer: str = '0'
-        self.linetype: str = 'ByLayer'
+        self.linetype: str = 'BYLAYER'
         self.marker_index: int = 0
         self.fill: bool = False
         self.true_color: Optional[int] = None
@@ -126,7 +126,7 @@ class ProxyGraphic:
             try:
                 name = ProxyGraphicTypes(type_).name
             except ValueError:
-                name = f'Unknown Type Code: {type_}'
+                name = f'UNKNOWN_TYPE_{type_}'
             yield index, size, name
             index += size
 
@@ -176,7 +176,8 @@ class ProxyGraphic:
         self.fill = bool(struct.unpack('L', data)[0])
 
     def attribute_true_color(self, data: bytes):
-        self.true_color = rgb2int(struct.unpack('3B', data))
+        # todo check byte order!
+        self.true_color = rgb2int((data[1], data[2], data[3]))
 
     def attribute_lineweight(self, data: bytes):
         self.lineweight = struct.unpack('L', data)[0]
@@ -267,7 +268,7 @@ class ProxyGraphic:
 
     def lwpolyline(self, data: bytes):
         # OpenDesign Specs LWPLINE: 20.4.85 Page 211
-        # Untested because no real world example found.
+        logger.warning('Untested proxy graphic entity: LWPOLYLINE - Need examples!')
         bs = BitStream(data)
         flag = bs.read_bit_short()
         attribs = self._build_dxf_attribs()
@@ -319,6 +320,7 @@ class ProxyGraphic:
         return lwpolyline
     
     def mesh(self, data: bytes):
+        logger.warning('Untested proxy graphic entity: MESH - Need examples!')
         bs = ByteStream(data)
         rows, columns = bs.read_struct('2L')
         attribs = self._build_dxf_attribs()
@@ -330,6 +332,7 @@ class ProxyGraphic:
         return polymesh
 
     def shell(self, data: bytes):
+        logger.warning('Untested proxy graphic entity: SHELL - Need examples!')
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
         attribs['flags'] = const.POLYLINE_POLYFACE
@@ -429,6 +432,7 @@ class ProxyGraphic:
         return self._xline(data, 'RAY')
 
     def _xline(self, data: bytes, type_: str):
+        logger.warning('Untested proxy graphic entity: RAY/XLINE - Need examples!')
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
         start_point = Vector(bs.read_vertex())
@@ -462,7 +466,7 @@ class ProxyGraphic:
             attribs['layer'] = self.layer
         if self.color != COLOR_BY_LAYER:
             attribs['color'] = self.color
-        if self.linetype != 'ByLayer':
+        if self.linetype != 'BYLAYER':
             attribs['linetype'] = self.linetype
         if self.lineweight != const.LINEWEIGHT_DEFAULT:
             attribs['lineweight'] = self.lineweight
