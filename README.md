@@ -17,7 +17,7 @@ Quick-Info
 - the intended audience are developers
 - requires at least Python 3.6
 - OS independent
-- tested with CPython & pypy3 on Windows 10 & Manjaro Linux
+- tested with CPython & pypy3 on Windows 10 & ubuntu-latest by GitHub Actions
 - additional required packages: [pyparsing](https://pypi.org/project/pyparsing/)
 - MIT-License
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
