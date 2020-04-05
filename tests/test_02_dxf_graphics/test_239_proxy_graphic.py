@@ -34,6 +34,92 @@ class TestProxyGraphic:
         index, size, type_ = indices[0]
         assert (index, size, type_) == (8, 84, 'POLYLINE_WITH_NORMALS')
 
+    def test_multi_leader_entities(self):
+        # ATTRIBUTE_TRUE_COLOR; size: 12
+        # UNKNOWN_TYPE_51; size: 12
+        # ATTRIBUTE_MARKER; size: 12
+        # UNICODE_TEXT2; size: 200
+        # UNKNOWN_TYPE_51; size: 12
+        # ATTRIBUTE_LAYER; size: 12
+        # ATTRIBUTE_TRUE_COLOR; size: 12
+        # ATTRIBUTE_LINETYPE; size: 12
+        # ATTRIBUTE_MARKER; size: 12
+        # ATTRIBUTE_FILL; size: 12
+        # POLYGON; size: 84
+        # ATTRIBUTE_MARKER; size: 12
+        # POLYLINE; size: 60
+        # ATTRIBUTE_MARKER; size: 12
+        # POLYLINE; size: 60
+        # ATTRIBUTE_TRUE_COLOR; size: 12
+        # ATTRIBUTE_LINETYPE; size: 12
+        # ATTRIBUTE_LINEWEIGHT; size: 12
+        # ATTRIBUTE_MARKER; size: 12
+        # ATTRIBUTE_TRUE_COLOR; size: 12
+        # ATTRIBUTE_LINETYPE; size: 12
+        # ATTRIBUTE_LINEWEIGHT; size: 12
+        # UNKNOWN_TYPE_51; size: 12
+        parser = ProxyGraphic(load_proxy_graphic(Tags.from_text(MULITILEADER)))
+        indices = list(parser.info())
+        assert len(indices) == 23
+        entities = list(parser.virtual_entities())
+        assert len(entities) == 4
+        text = entities[0]
+        assert text.dxftype() == 'TEXT'
+        assert text.dxf.text == 'W410'
+        assert text.dxf.layer == '0'  # no DXF document available
+        assert text.dxf.color == 256  # by layer
+        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
+        assert text.rgb == (0, 0, 192)  # ???
+
+        polyline = entities[1]  # POLYGON
+        assert polyline.dxftype() == 'POLYLINE'
+        assert len(polyline.vertices) == 3
+        assert text.dxf.layer == '0'  # no DXF document available
+        assert text.dxf.color == 256  # by layer
+        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
+        assert polyline.is_closed is True
+
+        polyline = entities[2]
+        assert polyline.is_closed is False
+        assert polyline.dxftype() == 'POLYLINE'
+        assert len(polyline.vertices) == 2
+        assert text.dxf.layer == '0'  # no DXF document available
+        assert text.dxf.color == 256  # by layer
+        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
+
+        polyline = entities[3]
+        assert polyline.is_closed is False
+        assert polyline.dxftype() == 'POLYLINE'
+        assert len(polyline.vertices) == 2
+        assert text.dxf.layer == '0'  # no DXF document available
+        assert text.dxf.color == 256  # by layer
+        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
+
+    def test_image_entities(self):
+        # UNICODE_TEXT2; size: 204
+        # POLYLINE; size: 132
+        parser = ProxyGraphic(load_proxy_graphic(Tags.from_text(IMAGE)))
+        indices = list(parser.info())
+        assert len(indices) == 2
+
+        entities = list(parser.virtual_entities())
+        assert len(indices) == 2
+
+        text = entities[0]
+        assert text.dxftype() == 'TEXT'
+        assert text.dxf.text == 'AcDbRasterImage'
+        assert text.dxf.layer == '0'  # no DXF document available
+        assert text.dxf.color == 256  # by layer
+        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
+
+        polyline = entities[1]
+        assert polyline.is_closed is False
+        assert polyline.dxftype() == 'POLYLINE'
+        assert len(polyline.vertices) == 5
+        assert text.dxf.layer == '0'  # no DXF document available
+        assert text.dxf.color == 256  # by layer
+        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
+
 
 DATA = """160
 968
@@ -54,5 +140,32 @@ E33F00000000000000000418DC3967E1F83F000000000C0000001200000000000000D00000002600
 310
 000000020000000960E446A3456F405AF2DBF448AB604000000000000000000960E446A3456F405AF2DBF448AB6040000000000000000000000000000000000000000000000000000000000000F03F
 """
+
+MULITILEADER = """160
+640
+310
+80020000170000000C00000016000000000000C00C00000033000000000000000C00000013000000993A0000C800000026000000EC2335956D6D9440F0AEEB8E7B766840000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000570034
+310
+00310030000000000004000000010000000000000000000840626666666666F23F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000001000000000000000000000072006F006D0061006E0073002E0073006800780000005C00000000000C000000330000000000
+310
+00000C000000100000001D0000000C00000016000000000000C00C00000012000000FF7F00000C00000013000000010000000C00000014000000010000005400000007000000030000000EA778BBEFF9934072D00E24B4FE694000000000000000005E00F4D6D4EB9340264DF666FD0B6B40000000000000000028C9814D17
+310
+04944016652748DB316A4000000000000000000C00000013000000891300003C00000006000000020000001B387D8403FF9340C41A1BB647186A400000000000000000FB0DD6A357189440F0AEEB8E7BD6684000000000000000000C00000013000000112700003C0000000600000002000000FB0DD6A357189440F0AEEB8E
+310
+7BD66840000000000000000080F9275C765D9440F0AEEB8E7BD6684000000000000000000C00000016000000000000C00C00000012000000FF7F00000C00000017000000000000000C000000130000009A3A00000C00000016000000000000C00C00000012000000FF7F00000C00000017000000FFFFFFFF0C000000330000
+310
+0000000000
+"""
+
+IMAGE = """160
+344
+310
+5801000002000000CC0000002600000092B5D7AAA19916C0BF88551BB606F83F000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000410063004400620052006100730074006500720049006D0061006700650000000F000000000000
+310
+000000000000000000000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000000000000000000074007800740000000000000084000000060000000500000092B5D7AAA19916C0BF88551BB606F83F00000000000000008A21ADA701E6
+310
+01C0BF88551BB606F83F00000000000000008A21ADA701E601C06095C5228F990740000000000000000092B5D7AAA19916C06095C5228F990740000000000000000092B5D7AAA19916C0BF88551BB606F83F0000000000000000
+"""
+
 if __name__ == '__main__':
     pytest.main([__file__])

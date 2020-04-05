@@ -29,7 +29,7 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
 
 @register_entity
 class MLeader(DXFGraphic):
-    DXFTYPE = 'MLEADER'
+    DXFTYPE = 'MULTILEADER'  # DXF Reference : MLEADER
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mleader)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2004
 

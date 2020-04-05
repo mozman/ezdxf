@@ -4,8 +4,9 @@ from typing import TYPE_CHECKING, Optional, Iterable, Tuple, List, Dict, cast
 import struct
 import math
 from enum import IntEnum
+from itertools import repeat
 from ezdxf.lldxf import const
-from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream
+from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream, BitStream
 from ezdxf.tools import rgb2int
 from ezdxf.math import Vector
 from ezdxf.entities import factory
@@ -94,9 +95,10 @@ class ProxyGraphic:
         self._factory = doc.dxffactory.new_entity if doc else factory.new
         self._buffer: bytes = data
         self._index: int = 8
+        self.dxfversion = doc.dxfversion if doc else 'AC1015'
         self.color: int = COLOR_BY_LAYER
         self.layer: str = '0'
-        self.linetype: str = 'ByLayer'
+        self.linetype: str = 'BYLAYER'
         self.marker_index: int = 0
         self.fill: bool = False
         self.true_color: Optional[int] = None
@@ -116,12 +118,16 @@ class ProxyGraphic:
             self.linetypes = list(linetype.dxf.name for linetype in self._doc.linetypes)
             self.textstyles = {style.dxf.font: style.dxf.name for style in self._doc.styles}
 
-    def info(self) -> Iterable[Tuple[int, int, int]]:
+    def info(self) -> Iterable[Tuple[int, int, str]]:
         index = self._index
         buffer = self._buffer
         while index < len(buffer):
             size, type_ = struct.unpack_from('2L', self._buffer, offset=index)
-            yield index, size, ProxyGraphicTypes(type_).name
+            try:
+                name = ProxyGraphicTypes(type_).name
+            except ValueError:
+                name = f'UNKNOWN_TYPE_{type_}'
+            yield index, size, name
             index += size
 
     def virtual_entities(self):
@@ -129,7 +135,12 @@ class ProxyGraphic:
         buffer = self._buffer
         while index < len(buffer):
             size, type_ = struct.unpack_from('2L', self._buffer, offset=index)
-            name = ProxyGraphicTypes(type_).name.lower()
+            try:
+                name = ProxyGraphicTypes(type_).name.lower()
+            except ValueError:
+                logger.debug(f'Unsupported Type Code: {type_}')
+                index += size
+                continue
             method = getattr(self, name, None)
             if method:
                 result = method(self._buffer[index + 8: index + size])
@@ -165,7 +176,8 @@ class ProxyGraphic:
         self.fill = bool(struct.unpack('L', data)[0])
 
     def attribute_true_color(self, data: bytes):
-        self.true_color = rgb2int(struct.unpack('3B', data))
+        # todo check byte order!
+        self.true_color = rgb2int((data[1], data[2], data[3]))
 
     def attribute_lineweight(self, data: bytes):
         self.lineweight = struct.unpack('L', data)[0]
@@ -255,10 +267,60 @@ class ProxyGraphic:
         return polygon
 
     def lwpolyline(self, data: bytes):
-        # LWPLINE: 20.4.85 Page 211
-        logger.debug(f'LWPOLYLINE supported not implemented.')
+        # OpenDesign Specs LWPLINE: 20.4.85 Page 211
+        logger.warning('Untested proxy graphic entity: LWPOLYLINE - Need examples!')
+        bs = BitStream(data)
+        flag = bs.read_bit_short()
+        attribs = self._build_dxf_attribs()
+        if flag & 4:
+            attribs['const_width'] = bs.read_bit_double()
+        if flag & 8:
+            attribs['elevation'] = bs.read_bit_double()
+        if flag & 2:
+            attribs['thickness'] = bs.read_bit_double()
+        if flag & 1:
+            attribs['extrusion'] = Vector(bs.read_bit_double(3))
 
+        num_points = bs.read_bit_long()
+        if flag & 16:
+            num_bulges = bs.read_bit_long()
+        else:
+            num_bulges = 0
+
+        if self.dxfversion >= 'AC1024':  # R2010+
+            vertex_id_count = bs.read_bit_long()
+        else:
+            vertex_id_count = 0
+
+        if flag & 32:
+            num_width = bs.read_bit_long()
+        else:
+            num_width = 0
+        # ignore DXF R13/14 special vertex order
+
+        vertices = [bs.read_raw_double(2)]
+        prev_point = vertices[-1]
+        for _ in range(num_points - 1):
+            x = bs.read_bit_double_default(default=prev_point[0])
+            y = bs.read_bit_double_default(default=prev_point[1])
+            prev_point = (x, y)
+            vertices.append(prev_point)
+        bulges = [bs.read_bit_double() for _ in range(num_bulges)]
+        vertex_ids = [bs.read_bit_long() for _ in range(vertex_id_count)]
+        widths = [(bs.read_bit_double(), bs.read_bit_double()) for _ in range(num_width)]
+        if len(bulges) == 0:
+            bulges = list(repeat(0, num_points))
+        if len(widths) == 0:
+            widths = list(repeat((0, 0), num_points))
+        points = []
+        for v, w, b in zip(vertices, widths, bulges):
+            points.append((v[0], v[1], w[0], w[1], b))
+        lwpolyline = cast('LWPolyline', self._factory('LWPOLYLINE', dxfattribs=attribs))
+        lwpolyline.set_points(points)
+        return lwpolyline
+    
     def mesh(self, data: bytes):
+        logger.warning('Untested proxy graphic entity: MESH - Need examples!')
         bs = ByteStream(data)
         rows, columns = bs.read_struct('2L')
         attribs = self._build_dxf_attribs()
@@ -266,10 +328,11 @@ class ProxyGraphic:
         attribs['n_count'] = columns
         attribs['flags'] = const.POLYLINE_3D_POLYMESH
         polymesh = cast('Polymesh', self._factory('POLYLINE', dxfattribs=attribs))
-        polymesh.append_vertices(Vector(bs.read_vertex()) for _ in range(rows*columns))
+        polymesh.append_vertices(Vector(bs.read_vertex()) for _ in range(rows * columns))
         return polymesh
 
     def shell(self, data: bytes):
+        logger.warning('Untested proxy graphic entity: SHELL - Need examples!')
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
         attribs['flags'] = const.POLYLINE_POLYFACE
@@ -369,6 +432,7 @@ class ProxyGraphic:
         return self._xline(data, 'RAY')
 
     def _xline(self, data: bytes, type_: str):
+        logger.warning('Untested proxy graphic entity: RAY/XLINE - Need examples!')
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
         start_point = Vector(bs.read_vertex())
@@ -402,7 +466,7 @@ class ProxyGraphic:
             attribs['layer'] = self.layer
         if self.color != COLOR_BY_LAYER:
             attribs['color'] = self.color
-        if self.linetype != 'ByLayer':
+        if self.linetype != 'BYLAYER':
             attribs['linetype'] = self.linetype
         if self.lineweight != const.LINEWEIGHT_DEFAULT:
             attribs['lineweight'] = self.lineweight

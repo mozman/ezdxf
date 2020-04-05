@@ -117,7 +117,7 @@ def readfile(filename: str, encoding: str = None, legacy_mode: bool = False, fil
     from ezdxf.tools.codepage import is_supported_encoding
 
     if not is_dxf_file(filename):
-        raise IOError("File '{}' is not a DXF file.".format(filename))
+        raise IOError("File '{}' is not an ASCII DXF file.".format(filename))
 
     info = dxf_file_info(filename)
     if encoding is not None:

@@ -76,5 +76,15 @@ def test_read_aligned_unsigned_long():
     assert bs.read_unsigned_long() == 0xabcdef00
 
 
+def test_read_bitshort():
+    bs = BitStream(b'\xe0')
+    assert bs.read_bit_short() == 256  # 11
+    assert bs.read_bit_short() == 0  # 10
+    bs = BitStream(b'\x00\xff\xff')
+    bs.read_bits(6)
+    assert bs.read_bit_short() == -1
+    assert BitStream(b'\x7f\x00').read_bit_short() == 252
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

@@ -2,7 +2,7 @@
 # Copyright (c) 2014-2020, Manfred Moitzi
 # License: MIT License
 import sys
-from typing import Iterable, Any, Sequence
+from typing import Iterable, Any, Sequence, Union, Tuple
 from array import array
 import struct
 
@@ -112,9 +112,11 @@ class BitStream:
     """ Process little endian binary data organized as bit stream. """
 
     # Created for DWG bit stream decoding
-    def __init__(self, buffer: bytes):
+    def __init__(self, buffer: bytes, dxfversion='AC1015', encoding='cp1252'):
         self.buffer: bytes = buffer
         self.bit_index: int = 0
+        self.dxfversion = dxfversion
+        self.encoding = encoding
 
     @property
     def has_data(self) -> bool:
@@ -218,3 +220,198 @@ class BitStream:
         if value & 0x80000000:
             # 2er complement
             return -((~value & 0xffffffff) + 1)
+
+    def read_float(self) -> float:
+        if self.bit_index & 7:
+            read_bits = self.read_bits
+            data = bytes(read_bits(8) for _ in range(8))
+        else:  # aligned data
+            data = bytes(self.read_aligned_bytes(8))
+        return struct.unpack('<d', data)[0]
+
+    def read_3_bits(self) -> int:
+        bit = self.read_bit()
+        if bit:  # 1
+            bit = self.read_bit()
+            if bit:  # 11
+                bit = self.read_bit()
+                if bit:
+                    return 7  # 111
+                else:
+                    return 6  # 110
+            return 2  # 10
+        else:
+            return 0  # 0
+
+    def read_bit_short(self, count=1) -> Union[int, Sequence[int]]:
+        def _read():
+            bits = self.read_bits(2)
+            if bits == 0:
+                return self.read_signed_short()
+            elif bits == 1:
+                return self.read_unsigned_byte()
+            elif bits == 2:
+                return 0
+            else:
+                return 256
+
+        if count == 1:
+            return _read()
+        else:
+            return tuple(_read() for _ in range(count))
+
+    def read_bit_long(self, count: int = 1) -> Union[int, Sequence[int]]:
+        def _read():
+            bits = self.read_bits(2)
+            if bits == 0:
+                return self.read_signed_long()
+            elif bits == 1:
+                return self.read_unsigned_byte()
+            elif bits == 2:
+                return 0
+            else:  # not used!
+                return 256  # ???
+
+        if count == 1:
+            return _read()
+        else:
+            return tuple(_read() for _ in range(count))
+
+    def read_raw_double(self, count: int = 1) -> Union[float, Sequence[float]]:
+        if count == 1:
+            return self.read_float()
+        else:
+            return tuple(self.read_float() for _ in range(count))
+
+    def read_bit_double(self, count: int = 1) -> Union[float, Sequence[float]]:
+        def _read():
+            bits = self.read_bits(2)
+            if bits == 0:
+                return self.read_float()
+            elif bits == 1:
+                return 1.0
+            elif bits == 2:
+                return 0.0
+            else:  # not used!
+                return 0.0
+
+        if count == 1:
+            return _read()
+        else:
+            return tuple(_read() for _ in range(count))
+
+    def read_bit_double_default(self, count: int = 1, default=0.0) -> Union[float, Sequence[float]]:
+        data = struct.pack('<d', default)
+
+        def _read():
+            bits = self.read_bits(2)
+            if bits == 0:
+                return default
+            elif bits == 1:
+                _data = bytes(self.read_unsigned_byte() for _ in range(4)) + data[4:]
+                return struct.unpack('<d', _data)
+            elif bits == 2:
+                _data = bytearray(data)
+                _data[4] = self.read_unsigned_byte()
+                _data[5] = self.read_unsigned_byte()
+                _data[0] = self.read_unsigned_byte()
+                _data[1] = self.read_unsigned_byte()
+                _data[2] = self.read_unsigned_byte()
+                _data[3] = self.read_unsigned_byte()
+                return struct.unpack('<d', _data)
+            else:
+                return self.read_float()
+
+        if count == 1:
+            return _read()
+        else:
+            return tuple(_read() for _ in range(count))
+
+    def read_bit_extrusion(self) -> Tuple[float, float, float]:
+        if self.read_bit():
+            return 0.0, 0.0, 1.0
+        else:
+            return self.read_bit_double(3)
+
+    def read_bit_thickness(self, dxfversion='AC1015') -> float:
+        if dxfversion >= 'AC1015':
+            if self.read_bit():
+                return 0.0
+        return self.read_bit_double()
+
+    def read_cm_color(self) -> int:
+        return self.read_bit_short()
+
+    def read_text(self) -> str:
+        length = self.read_bit_short()
+        data = bytes(self.read_unsigned_byte() for _ in range(length))
+        return data.decode(encoding=self.encoding)
+
+    def read_text_unicode(self) -> str:
+        # Unicode text is read from the "string stream" within the object data,
+        # see the main Object description section for details.
+        length = self.read_bit_short()
+        data = bytes(self.read_unsigned_byte() for _ in range(length * 2))
+        return data.decode(encoding='utf16')
+
+    def read_text_variable(self) -> str:
+        if self.dxfversion < 'AC1018':  # R2004
+            return self.read_text()
+        else:
+            return self.read_text_unicode()
+
+    def read_cm_color_cms(self) -> Tuple[int, str, str]:
+        _ = self.read_bit_short()  # index always 0
+        color_name = ''
+        book_name = ''
+        rgb = self.read_bit_long()
+        rc = self.read_unsigned_byte()
+        if rc & 1:
+            color_name = self.read_text_variable()
+        if rc & 2:
+            book_name = self.read_text_variable()
+        return rgb, color_name, book_name
+
+    def read_cm_color_enc(self):
+        flags_and_index = self.read_bit_short()
+        flags = flags_and_index >> 8
+        index = flags_and_index & 0xff
+        if flags:
+            rgb = None
+            color_handle = None
+            transparency_type = None
+            transparency = None
+            if flags & 0x80:
+                rgb = self.read_bit_short() & 0x00ffffff
+            if flags & 0x40:
+                color_handle = self.read_handle()
+            if flags & 0x20:
+                data = self.read_bit_long()
+                transparency_type = data >> 24
+                transparency = data & 0xff
+            return rgb, color_handle, transparency_type, transparency
+        else:
+            return index
+
+    def read_handle(self, reference=0) -> Tuple[int, int]:
+        code = self.read_bits(4)
+        counter = self.read_bits(4)
+        if code < 6:
+            handle = 0
+            while counter:
+                handle = handle << 8 + self.read_unsigned_byte()
+                counter -= 1
+            return code, handle
+        elif code == 6:
+            return code, reference + 1
+        elif code == 7:
+            return code, reference - 1
+        else:
+            offset = 0
+            while counter:
+                offset = offset << 8 + self.read_unsigned_byte()
+                counter -= 1
+            if code == 10:
+                return code, reference + offset
+            if code == 12:
+                return code, reference - offset
