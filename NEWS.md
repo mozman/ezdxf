@@ -30,6 +30,7 @@ Version 0.12b3 - dev
 - NEW: `ezdxf.proxygraphic.ProxyGraphic()` class to examine binary encoded proxy graphic (Need example data for testing!)
 - NEW: Get/set hyperlink for graphic entities
 - NEW: `odafc` add-on to use an installed ODA File Converter for reading and writing DWG files
+- NEW: `dxfpp` can read binary DXF files
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 - CHANGE: `Polyline.close()`, `Polyline.m_close()` and `Polyline.n_close()` can set and **clear** closed state.
