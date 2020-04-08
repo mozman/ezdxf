@@ -91,7 +91,7 @@ def low_level_tagger(stream: TextIO, skip_comments: bool = True) -> Iterable[DXF
             return
 
 
-NEW_INT16 = set(chain(
+R2000_INT16 = set(chain(
     range(60, 80),
     range(170, 180),
     range(270, 290),
@@ -100,18 +100,14 @@ NEW_INT16 = set(chain(
     range(1060, 1071),
 ))
 
-LEGACY_INT16 = set(chain(
-    range(60, 70),
-    range(71, 80),
-    range(170, 180),
-    range(1060, 1071),
-))
-
-NEW_BYTES = set(chain(  # Bool
+R2000_BYTES = set(chain(  # Bool
     range(290, 300),
 ))
 
-LEGACY_BYTES = {70}
+R13_INT16 = set(R2000_INT16)
+R13_BYTES = set(R2000_BYTES)
+R13_INT16.remove(70)  # 1-byte value
+R13_BYTES.add(70)
 
 INT32 = set(chain(
     range(90, 100),
@@ -152,7 +148,6 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
         DXFVersionError: Unsupported DXF version
 
     """
-    # this version supports only DXF R2000+
     if data[:22] != b'AutoCAD Binary DXF\r\n\x1a\x00':
         raise DXFStructureError('Not a binary DXF data structure.')
 
@@ -175,7 +170,7 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
                 start = data.index(b'$DWGCODEPAGE', 22) + 14  # start index for 1-byte group code
             except IndexError:
                 pass  # HEADER var $DWGCODEPAGE not present
-            else:
+            else:  # name schema is 'ANSI_xxxx'
                 if data[start] != 65:  # not 'A' = 2-byte group code
                     start += 1
                 end = start + 5
@@ -187,28 +182,27 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
         return encoding, dxfversion
 
     encoding, dxfversion = scan_params()
-    legacy = dxfversion < 'AC1014'
+    legacy = dxfversion < 'AC1012'
     index = 22
     data_length = len(data)
     unpack = struct.unpack_from
     if legacy:
-        INT16 = LEGACY_INT16
-        BYTES = LEGACY_BYTES
+        INT16 = R13_INT16
+        BYTES = R13_BYTES
     else:
-        INT16 = NEW_INT16
-        BYTES = NEW_BYTES
+        INT16 = R2000_INT16
+        BYTES = R2000_BYTES
 
     while index < data_length:
         # decode next group code
-        escape = data[index]
-        if escape == 255:  # extended data
-            code = (data[index + 2] << 8) + data[index + 1]
+        code = data[index]
+        if code == 255:  # extended data
+            code = (data[index + 2] << 8) | data[index + 1]
             index += 3
         elif legacy:
-            code = escape
             index += 1
         else:
-            code = (data[index + 1] << 8) + escape
+            code = (data[index + 1] << 8) | code
             index += 2
 
         # decode next value

@@ -10,7 +10,7 @@ DATADIR = 'data'
 
 @pytest.fixture(params=[
     "bin_dxf_r14.dxf",
-    # "bin_dxf_r13.dxf", does not work yet
+    "bin_dxf_r13.dxf",
 ])
 def filename(request):
     filename = os.path.join(BASEDIR, DATADIR, request.param)
