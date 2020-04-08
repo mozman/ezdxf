@@ -1,6 +1,6 @@
 # Purpose: DXF Pretty Printer
 # Created: 16.07.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Copyright (c) 2015-2020, Manfred Moitzi
 # License: MIT License
 from typing import Iterable
 import sys
@@ -12,7 +12,7 @@ from .dxfpp import dxfpp
 from .rawpp import rawpp
 from ezdxf import options
 from ezdxf.lldxf.const import DXFError, DXFStructureError
-from ezdxf.lldxf.tagger import low_level_tagger, tag_compiler, low_level_binary_tagger
+from ezdxf.lldxf.tagger import low_level_tagger, tag_compiler, binary_tags_loader
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
 from ezdxf.filemanagement import dxf_file_info
@@ -24,7 +24,7 @@ def readfile(filename: str, legacy_mode: bool = False, compile_tags=True, is_bin
     if is_binary_dxf:
         with open(filename, mode='rb') as fp:
             data = fp.read()
-            tagger = low_level_binary_tagger(data)
+            tagger = binary_tags_loader(data)
     else:
         info = dxf_file_info(filename)
         fp = open(filename, mode='rt', encoding=info.encoding, errors='ignore')

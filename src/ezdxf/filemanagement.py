@@ -1,6 +1,6 @@
 # Purpose: DXF file testing and opening
 # Created: 05.01.2018
-# Copyright (C) 2018-2019, Manfred Moitzi
+# Copyright (C) 2018-2020, Manfred Moitzi
 # License: MIT License
 # Local imports to avoid cyclic import
 from typing import TextIO, TYPE_CHECKING, Union, Sequence
@@ -87,11 +87,12 @@ def read(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Drawi
 
 def readfile(filename: str, encoding: str = None, legacy_mode: bool = False, filter_stack=None) -> 'Drawing':
     """
-    Read DXF drawing specified by `filename` from file-system.
+    Read DXF document specified by `filename` from file-system.
 
-    This is the preferred method to open existing DXF files. Read the DXF drawing from the file-system with
-    auto-detection of encoding. Decoding errors will be ignored. Override encoding detection by setting argument
-    `encoding` to the estimated encoding. (use Python encoding names like in the :func:`open` function).
+    This is the preferred method to open existing ASCII or Binary DXF files. Read the DXF drawing from the
+    file-system with auto-detection of encoding for ASCII DXF files. Decoding errors will be ignored.
+    Override encoding detection by setting argument `encoding` to the estimated encoding. (use Python encoding
+    names like in the :func:`open` function).
 
     If argument `legacy_mode` is ``True``, `ezdxf` tries to reorder the coordinates of the LINE entity in files from
     CAD applications which wrote the coordinates in the order: x1, x2, y1, y2. Additional fixes may be added later. The
@@ -102,8 +103,9 @@ def readfile(filename: str, encoding: str = None, legacy_mode: bool = False, fil
         Try argument :code:`legacy_mode=True` if error ``'Missing required y coordinate near line: ...'`` occurs.
 
     Args:
-        filename: DXF filename
-        encoding: use ``None`` for auto detect (default), or set a specific encoding like ``'utf-8'``
+        filename: filename of ASCII or Binary DXF document
+        encoding: use ``None`` for auto detect (default), or set a specific encoding like ``'utf-8'``, ignored for
+                  Binary DXF files
         legacy_mode: adds an extra trouble shooting import layer if ``True``
         filter_stack: interface to put filters between reading layers
 
@@ -113,11 +115,18 @@ def readfile(filename: str, encoding: str = None, legacy_mode: bool = False, fil
 
     """
     # for argument filter_stack see :class:`~ezdxf.drawing.Drawing.read` for more information
-    from ezdxf.lldxf.validator import is_dxf_file
+    from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
     from ezdxf.tools.codepage import is_supported_encoding
+    from ezdxf.lldxf.tagger import binary_tags_loader
+
+    if is_binary_dxf_file(filename):
+        with open(filename, 'rb') as fp:
+            data = fp.read()
+            loader = binary_tags_loader(data)
+            return Drawing.load(loader, legacy_mode, filter_stack)
 
     if not is_dxf_file(filename):
-        raise IOError("File '{}' is not an ASCII DXF file.".format(filename))
+        raise IOError("File '{}' is not a DXF file.".format(filename))
 
     info = dxf_file_info(filename)
     if encoding is not None:

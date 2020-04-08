@@ -1,6 +1,6 @@
 # Purpose: untrusted stream tag reader, tag compiler for trusted and untrusted sources
 # Created: 10.04.2016
-# Copyright (c) 2016-2018, Manfred Moitzi
+# Copyright (c) 2016-2020, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, TextIO, Iterator
 from itertools import chain
@@ -91,7 +91,7 @@ def low_level_tagger(stream: TextIO, skip_comments: bool = True) -> Iterable[DXF
             return
 
 
-INT16 = set(chain(
+NEW_INT16 = set(chain(
     range(60, 80),
     range(170, 180),
     range(270, 290),
@@ -100,9 +100,18 @@ INT16 = set(chain(
     range(1060, 1071),
 ))
 
-BOOL = set(chain(
+LEGACY_INT16 = set(chain(
+    range(60, 70),
+    range(71, 80),
+    range(170, 180),
+    range(1060, 1071),
+))
+
+NEW_BYTES = set(chain(  # Bool
     range(290, 300),
 ))
+
+LEGACY_BYTES = {70}
 
 INT32 = set(chain(
     range(90, 100),
@@ -129,7 +138,7 @@ BINARY_CHUNK = set(chain(
 ))
 
 
-def low_level_binary_tagger(data: bytes) -> Iterable[DXFTag]:
+def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
     """
     Yields DXFTag() or DXFBinaryTag() objects from a binary DXF `data` (untrusted external source) and does not
     optimize coordinates. DXFTag.code is always an int and DXFTag.value is always an unicode string without
@@ -148,53 +157,63 @@ def low_level_binary_tagger(data: bytes) -> Iterable[DXFTag]:
         raise DXFStructureError('Not a binary DXF data structure.')
 
     def scan_params():
-        dxfversion = 'AC1015'
+        dxfversion = 'AC1012'
         encoding = 'cp1252'
         try:
-            start = data.index(b'$ACADVER', 22)
-            dxfversion = data[start + 11:start + 17].decode()
+            start = data.index(b'$ACADVER', 22) + 10  # start index for 1-byte group code
         except IndexError:
-            pass
+            pass  # HEADER var $ACADVER not present
+        else:
+            if data[start] != 65:  # not 'A' = 2-byte group code
+                start += 1
+            dxfversion = data[start:start + 6].decode()
 
         if dxfversion >= 'AC1021':
             encoding = 'utf8'
         else:
             try:
-                start = data.index(b'$DWGCODEPAGE', 22)
-                start += 15
+                start = data.index(b'$DWGCODEPAGE', 22) + 14  # start index for 1-byte group code
+            except IndexError:
+                pass  # HEADER var $DWGCODEPAGE not present
+            else:
+                if data[start] != 65:  # not 'A' = 2-byte group code
+                    start += 1
                 end = start + 5
                 while data[end] != 0:
                     end += 1
                 codepage = data[start: end].decode()
                 encoding = toencoding(codepage)
-            except IndexError:
-                pass
+
         return encoding, dxfversion
 
     encoding, dxfversion = scan_params()
-    if dxfversion < 'AC1015':
-        raise DXFVersionError(f'Unsupported (binary) DXF version: {dxfversion}')
-
+    legacy = dxfversion < 'AC1014'
     index = 22
     data_length = len(data)
     unpack = struct.unpack_from
+    if legacy:
+        INT16 = LEGACY_INT16
+        BYTES = LEGACY_BYTES
+    else:
+        INT16 = NEW_INT16
+        BYTES = NEW_BYTES
 
     while index < data_length:
         # decode next group code
         escape = data[index]
         if escape == 255:  # extended data
-            lo_byte = data[index + 1]
-            hi_byte = data[index + 2]
+            code = (data[index + 2] << 8) + data[index + 1]
             index += 3
+        elif legacy:
+            code = escape
+            index += 1
         else:
-            lo_byte = escape
-            hi_byte = data[index + 1]
+            code = (data[index + 1] << 8) + escape
             index += 2
-        code = (hi_byte << 8) + lo_byte
 
         # decode next value
         if code in BINARY_CHUNK:
-            length = unpack('<B', data, offset=index)[0]
+            length = data[index]
             index += 1
             value = data[index:index + length]
             index += length
@@ -212,10 +231,10 @@ def low_level_binary_tagger(data: bytes) -> Iterable[DXFTag]:
             elif code in INT64:
                 value = unpack('<q', data, offset=index)[0]
                 index += 8
-            elif code in BOOL:
-                value = unpack('<B', data, offset=index)[0]
+            elif code in BYTES:
+                value = data[index]
                 index += 1
-            else:  # \0x00 terminated string
+            else:  # zero terminated string
                 start_index = index
                 end_index = data.index(b'\x00', start_index)
                 s = data[start_index:end_index]
