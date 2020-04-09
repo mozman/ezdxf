@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, TextIO, Iterable, Set
 
 from ezdxf.lldxf.validator import is_dxf_file
 from ezdxf.filemanagement import dxf_file_info
-from ezdxf.lldxf.tagger import low_level_tagger
+from ezdxf.lldxf.tagger import ascii_tags_loader
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFTag
@@ -22,7 +22,7 @@ def from_stream(stream: TextIO, codes: Set[int] = None) -> Iterable['DXFTag']:
     """
     codes = codes or set()
     codes.add(999)
-    return (tag for tag in low_level_tagger(stream, skip_comments=False) if tag.code in codes)
+    return (tag for tag in ascii_tags_loader(stream, skip_comments=False) if tag.code in codes)
 
 
 def from_file(filename: str, codes: Set[int] = None) -> Iterable['DXFTag']:

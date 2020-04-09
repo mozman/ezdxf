@@ -56,12 +56,13 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
             yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
 
 
-def low_level_tagger(stream: TextIO, skip_comments: bool = True) -> Iterable[DXFTag]:
+def ascii_tags_loader(stream: TextIO, skip_comments: bool = True) -> Iterable[DXFTag]:
     """
-    Yields DXFTag() objects from a text `stream` (untrusted external source) and does not
+    Yields :class:``DXFTag`` objects from a text `stream` (untrusted external source) and does not
     optimize coordinates. Comment tags (group code == 999) will be skipped if argument `skip_comments` is `True`.
-    DXFTag.code is always an int and DXFTag.value is always an unicode string without a trailing '\n'.
-    Works with file system streams and StringIO() streams, only required feature is the readline() method.
+    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is always an unicode string without a trailing '\n'.
+    Works with file system streams and :class:`StringIO` streams, only required feature is the :meth:`readline`
+    method.
 
     Args:
         stream: text stream
@@ -233,7 +234,7 @@ INVALID_POINT_CODES = {1020, 1021, 1022, 1023, 1030, 1031, 1032, 1033}
 
 def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
     """
-    Compiles DXF tag values imported by low_level_tagger() into Python types.
+    Compiles DXF tag values imported by ascii_tags_loader() into Python types.
 
     Raises DXFStructureError() for invalid float values and invalid coordinate values.
 
@@ -242,10 +243,10 @@ def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
     that write LINE coordinates in x1, x2, y1, y2 order, which does not work with tag_compiler(). For this cases use
     tag_reorder_layer() from the repair module to reorder the LINE coordinates::
 
-        tag_compiler(tag_reorder_layer(low_level_tagger(stream)))
+        tag_compiler(tag_reorder_layer(ascii_tags_loader(stream)))
 
     Args:
-        tagger: DXF tag generator e.g. low_level_tagger()
+        tagger: DXF tag generator e.g. ascii_tags_loader()
 
     Raises:
         DXFStructureError: Found invalid DXF tag or unexpected coordinate order.

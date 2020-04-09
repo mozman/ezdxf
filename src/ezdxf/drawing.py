@@ -232,8 +232,8 @@ class Drawing:
 
         (internal API)
         """
-        from .lldxf.tagger import low_level_tagger
-        tag_loader = low_level_tagger(stream)
+        from .lldxf.tagger import ascii_tags_loader
+        tag_loader = ascii_tags_loader(stream)
         return cls.load(tag_loader, legacy_mode=legacy_mode, filter_stack=filter_stack)
 
     @classmethod

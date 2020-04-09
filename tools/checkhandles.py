@@ -6,7 +6,7 @@
 
 import sys
 
-from ezdxf.lldxf.tags import low_level_tagger
+from ezdxf.lldxf.tags import ascii_tags_loader
 from ezdxf.lldxf.validator import dxf_info
 
 FORMAT = 'ACAD release: {0.release}\n'\
@@ -39,7 +39,7 @@ def checkhandles(stream):
     stream.seek(0)
     handles = []
     lineno = 1
-    iterator = low_level_tagger(stream, skip_comments=False)
+    iterator = ascii_tags_loader(stream, skip_comments=False)
     for tag in iterator:
         if tag.code in (5, 105):
             try:

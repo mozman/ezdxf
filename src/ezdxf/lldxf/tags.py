@@ -15,7 +15,7 @@ from typing import Iterable, List, TextIO, TYPE_CHECKING, Tuple
 
 from .const import acad_release, DXFStructureError, DXFValueError, HEADER_VAR_MARKER, STRUCTURE_MARKER
 from .types import NONE_TAG, DXFTag, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
-from .tagger import internal_tag_compiler, low_level_tagger
+from .tagger import internal_tag_compiler, ascii_tags_loader
 
 from ezdxf.tools.codepage import toencoding
 

@@ -12,7 +12,7 @@ from .dxfpp import dxfpp
 from .rawpp import rawpp
 from ezdxf import options
 from ezdxf.lldxf.const import DXFError, DXFStructureError
-from ezdxf.lldxf.tagger import low_level_tagger, tag_compiler, binary_tags_loader
+from ezdxf.lldxf.tagger import ascii_tags_loader, tag_compiler, binary_tags_loader
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
 from ezdxf.filemanagement import dxf_file_info
@@ -28,7 +28,7 @@ def readfile(filename: str, legacy_mode: bool = False, compile_tags=True, is_bin
     else:
         info = dxf_file_info(filename)
         fp = open(filename, mode='rt', encoding=info.encoding, errors='ignore')
-        tagger = low_level_tagger(fp)
+        tagger = ascii_tags_loader(fp)
 
     if legacy_mode:
         tagger = tag_reorder_layer(tagger)
