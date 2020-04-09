@@ -1,10 +1,13 @@
 # Created: 13.01.2018
-# Copyright (c) 2018, Manfred Moitzi
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
-from typing import Any, TextIO, TYPE_CHECKING, Union, List, Iterable
+from typing import Any, TextIO, TYPE_CHECKING, Union, List, Iterable, BinaryIO
 from .types import TAG_STRING_FORMAT, cast_tag_value
+from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_CHUNK
 from .tags import DXFTag, Tags
 from .const import LATEST_DXF_VERSION
+from ezdxf.tools import take2
+import struct
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import ExtendedTags, DXFEntity
@@ -47,6 +50,67 @@ class TagWriter:
 
     def write_str(self, s: str) -> None:
         self._stream.write(s)
+
+
+class BinaryTagWriter(TagWriter):
+    """
+    Writes binary encoded DXF tags into a binary stream.
+
+    Args:
+        stream: binary IO stream
+        write_handles: if ``False`` don't write handles (5, 105), use only for DXF R12 format
+
+    """
+
+    def __init__(self, stream: BinaryIO, dxfversion=LATEST_DXF_VERSION, write_handles: bool = True, encoding='utf8'):
+        super().__init__(None, dxfversion, write_handles)
+        self._stream = stream
+        self._encoding = encoding  # output encoding
+        self._one_byte_group_code = self.dxfversion <= 'AC1009'
+
+    def write_signature(self) -> None:
+        self._stream.write(b'AutoCAD Binary DXF\r\n\x1a\x00')
+
+    def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
+        for tag in tags:
+            self.write_tag2(tag.code, tag.value)
+
+    def write_tag(self, tag: DXFTag) -> None:
+        self.write_tag2(tag.code, tag.value)
+
+    def write_str(self, s: str) -> None:
+        data = s.split('\n')
+        for code, value in take2(data):
+            self.write_tag2(int(code), value)
+
+    def write_tag2(self, code: int, value: Any) -> None:
+        # Binary DXF files do not support comments!
+        assert code != 999
+        stream = self._stream
+
+        if code >= 1000:  # extended data
+            stream.write(b'\xff')
+            stream.write(code.to_bytes(2, 'little'))
+        else:
+            sz = 1 if self._one_byte_group_code and code < 256 else 2
+            stream.write(code.to_bytes(sz, 'little'))
+
+        if code in BYTES:
+            stream.write(int(value).to_bytes(1, 'little'))
+        elif code in INT16:
+            stream.write(int(value).to_bytes(2, 'little', signed=True))
+        elif code in INT32:
+            stream.write(int(value).to_bytes(4, 'little', signed=True))
+        elif code in INT64:
+            stream.write(int(value).to_bytes(8, 'little', signed=True))
+        elif code in DOUBLE:
+            stream.write(struct.pack('<d', float(value)))
+        elif code in BINARY_CHUNK:
+            stream.write(len(value).to_bytes(1, 'little'))
+            stream.write(value)
+        else:  # String
+            stream.write(str(value).encode(self._encoding))
+            stream.write(b'\x00')
 
 
 class TagCollector:

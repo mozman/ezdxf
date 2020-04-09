@@ -32,7 +32,7 @@ def test_open_R13_R14(filename, tmpdir):
 
 
 def test_open_R12():
-    filename = os.path.join(BASEDIR, DATADIR, 'bin_dxf_R12.dxf')
+    filename = os.path.join(BASEDIR, DATADIR, 'bin_dxf_r12.dxf')
     doc = ezdxf.readfile(filename)
     assert 'Model' in doc.layouts, 'Model space not found'
     assert 'Layout1' in doc.layouts, 'Paper space not found'
