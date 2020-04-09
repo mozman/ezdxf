@@ -6,7 +6,7 @@ from pathlib import Path
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
 from ezdxf.lldxf.tagwriter import TagWriter
-from ezdxf.lldxf.tagger import tag_compiler, low_level_tagger
+from ezdxf.lldxf.tagger import tag_compiler, ascii_tags_loader
 from ezdxf.filemanagement import dxf_file_info
 from ezdxf.lldxf import fileindex
 
@@ -239,7 +239,7 @@ def modelspace(filename: Filename, types: Iterable[str] = None) -> Iterable[DXFG
     requested_types = _requested_types(types)
 
     with open(filename, mode='rt', encoding=info.encoding) as fp:
-        tagger = low_level_tagger(fp)
+        tagger = ascii_tags_loader(fp)
         queued: Optional[DXFEntity] = None
         tags: List[DXFTag] = []
         factory = EntityFactory()

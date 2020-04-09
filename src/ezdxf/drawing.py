@@ -1,5 +1,5 @@
 # Created: 11.03.2011
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, TextIO, Iterable, Union, Sequence, Tuple, Callable, cast, Optional
 from datetime import datetime
@@ -232,7 +232,28 @@ class Drawing:
 
         (internal API)
         """
-        from .lldxf.tagger import low_level_tagger, tag_compiler
+        from .lldxf.tagger import ascii_tags_loader
+        tag_loader = ascii_tags_loader(stream)
+        return cls.load(tag_loader, legacy_mode=legacy_mode, filter_stack=filter_stack)
+
+    @classmethod
+    def load(cls, tag_loader: Iterable['DXFTag'], legacy_mode: bool = False,
+             filter_stack: TFilterStack = None) -> 'Drawing':
+        """ Load DXF document from DXF tag loader.
+
+        Args:
+             tag_loader: DXF tag loader
+             legacy_mode: apply some low level filters to correct some quirks allowed in legacy (R12) files
+             filter_stack: interface to put filters between reading layers, list of callable filters, for now
+                           two levels are supported, after low level tagging (DXFVertex) and after compiling tags to
+                           DXFVertex and DXFBinaryTag.
+
+                TFilterStack: Sequence[Sequence[Callable[[Iterable[DXFTag]], Iterable[DXFTag]]]]
+                e.g. [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
+
+        (internal API)
+        """
+        from .lldxf.tagger import tag_compiler
         raw_tag_filters = []
         compiled_tag_filters = []
 
@@ -246,21 +267,20 @@ class Drawing:
             compiled_tag_filters = []
 
         # low level tag compiler, creates simple tuple like tags DXFTag(group code, value)
-        tagger = low_level_tagger(stream)
 
         # apply low level filters
         for _filter in raw_tag_filters:
-            tagger = _filter(tagger)
+            tag_loader = _filter(tag_loader)
 
         # compiles vertices and binary tags into DXFVertex() or DXFBinaryTag()
-        tagger = tag_compiler(tagger)
+        tag_loader = tag_compiler(tag_loader)
 
         # apply compiled tags filter
         for _filter in compiled_tag_filters:
-            tagger = _filter(tagger)
+            tag_loader = _filter(tag_loader)
 
         doc = cls()
-        doc._load(tagger)
+        doc._load(tag_loader)
         return doc
 
     @classmethod

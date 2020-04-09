@@ -2048,6 +2048,7 @@ HEADER_VAR_MAP = {
         priority=24800,
         default=256),
     '$INTERFEREOBJVS': HeaderVarDef(
+        # Handle to a VisualStyle, if pointing to an invalid or non-existing VS, copy to clipboard in AutoCAD can fail.
         name='$INTERFEREOBJVS',
         code=345,
         factory=partial(SingleValue, code=345),
@@ -2056,6 +2057,7 @@ HEADER_VAR_MAP = {
         priority=24810,
         default=None),  # will not be written, if not set
     '$INTERFEREVPVS': HeaderVarDef(
+        # Handle to a VisualStyle, if pointing to an invalid or non-existing VS, copy to clipboard in AutoCAD can fail.
         name='$INTERFEREVPVS',
         code=346,
         factory=partial(SingleValue, code=346),

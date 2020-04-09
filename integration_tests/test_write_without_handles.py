@@ -3,7 +3,7 @@
 import os
 import pytest
 import ezdxf
-from ezdxf.lldxf.tagger import low_level_tagger
+from ezdxf.lldxf.tagger import ascii_tags_loader
 from ezdxf.lldxf.loader import load_dxf_structure
 
 BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
@@ -33,7 +33,7 @@ def test_write_R12_without_handles(filename, tmpdir):
 
     # can't check with ezdxf.readfile(), because handles automatically enabled
     with open(export_path) as f:
-        tagger = low_level_tagger(f)
+        tagger = ascii_tags_loader(f)
         sections = load_dxf_structure(tagger)
         for entity in sections['ENTITIES']:
             with pytest.raises(ezdxf.DXFValueError):  # has no handles

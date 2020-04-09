@@ -1,12 +1,15 @@
 # Purpose: untrusted stream tag reader, tag compiler for trusted and untrusted sources
 # Created: 10.04.2016
-# Copyright (c) 2016-2018, Manfred Moitzi
+# Copyright (c) 2016-2020, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, TextIO, Iterator
+from itertools import chain
 
+import struct
 from .types import DXFTag, DXFVertex, DXFBinaryTag
-from .const import DXFStructureError
+from .const import DXFStructureError, DXFVersionError
 from .types import POINT_CODES, TYPE_TABLE, BINARAY_DATA
+from ezdxf.tools.codepage import toencoding
 
 
 def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
@@ -53,12 +56,13 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
             yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
 
 
-def low_level_tagger(stream: TextIO, skip_comments: bool = True) -> Iterable[DXFTag]:
+def ascii_tags_loader(stream: TextIO, skip_comments: bool = True) -> Iterable[DXFTag]:
     """
-    Yields DXFTag() objects from a text `stream` (untrusted external source) and does not
+    Yields :class:``DXFTag`` objects from a text `stream` (untrusted external source) and does not
     optimize coordinates. Comment tags (group code == 999) will be skipped if argument `skip_comments` is `True`.
-    DXFTag.code is always an int and DXFTag.value is always an unicode string without a trailing '\n'.
-    Works with file system streams and StringIO() streams, only required feature is the readline() method.
+    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is always an unicode string without a trailing '\n'.
+    Works with file system streams and :class:`StringIO` streams, only required feature is the :meth:`readline`
+    method.
 
     Args:
         stream: text stream
@@ -88,13 +92,149 @@ def low_level_tagger(stream: TextIO, skip_comments: bool = True) -> Iterable[DXF
             return
 
 
+BYTES = set(chain(  # Bool
+    range(290, 300),
+))
+
+INT16 = set(chain(
+    range(60, 80),
+    range(170, 180),
+    range(270, 290),
+    range(370, 390),
+    range(400, 410),
+    range(1060, 1071),
+))
+
+INT32 = set(chain(
+    range(90, 100),
+    range(420, 430),
+    range(440, 450),
+    [1071]
+))
+
+INT64 = set(chain(
+    range(160, 169),
+    range(450, 460),  # Long in DXF reference, ->signed<- or unsigned?
+))
+
+DOUBLE = set(chain(
+    range(10, 60),
+    range(110, 150),
+    range(210, 240),
+    range(460, 470),
+    range(1010, 1060),
+))
+
+BINARY_CHUNK = set(chain(
+    range(310, 320), [1004]
+))
+
+
+def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
+    """
+    Yields :class:`DXFTag` or :class:`DXFBinaryTag` objects from binary DXF `data` (untrusted external source) and
+    does not optimize coordinates.
+    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is either an unicode string,``float``,
+    ``int`` or ``bytes`` for binary chunks.
+
+    Args:
+        data: binary DXF data
+
+    Raises:
+        DXFStructureError: Not a binary DXF file
+        DXFVersionError: Unsupported DXF version
+
+    """
+    if data[:22] != b'AutoCAD Binary DXF\r\n\x1a\x00':
+        raise DXFStructureError('Not a binary DXF data structure.')
+
+    def scan_params():
+        dxfversion = 'AC1012'
+        encoding = 'cp1252'
+        try:
+            start = data.index(b'$ACADVER', 22) + 10  # start index for 1-byte group code
+        except IndexError:
+            pass  # HEADER var $ACADVER not present
+        else:
+            if data[start] != 65:  # not 'A' = 2-byte group code
+                start += 1
+            dxfversion = data[start:start + 6].decode()
+
+        if dxfversion >= 'AC1021':
+            encoding = 'utf8'
+        else:
+            try:
+                start = data.index(b'$DWGCODEPAGE', 22) + 14  # start index for 1-byte group code
+            except IndexError:
+                pass  # HEADER var $DWGCODEPAGE not present
+            else:  # name schema is 'ANSI_xxxx'
+                if data[start] != 65:  # not 'A' = 2-byte group code
+                    start += 1
+                end = start + 5
+                while data[end] != 0:
+                    end += 1
+                codepage = data[start: end].decode()
+                encoding = toencoding(codepage)
+
+        return encoding, dxfversion
+
+    encoding, dxfversion = scan_params()
+    one_byte_group_code = dxfversion < 'AC1012'
+    index = 22
+    data_length = len(data)
+    unpack = struct.unpack_from
+
+    while index < data_length:
+        # decode next group code
+        code = data[index]
+        if code == 255:  # extended data
+            code = (data[index + 2] << 8) | data[index + 1]
+            index += 3
+        elif one_byte_group_code:
+            index += 1
+        else:  # 2-byte group code
+            code = (data[index + 1] << 8) | code
+            index += 2
+
+        # decode next value
+        if code in BINARY_CHUNK:
+            length = data[index]
+            index += 1
+            value = data[index:index + length]
+            index += length
+            yield DXFBinaryTag(code, value)
+        else:
+            if code in INT16:
+                value = unpack('<h', data, offset=index)[0]
+                index += 2
+            elif code in DOUBLE:
+                value = unpack('<d', data, offset=index)[0]
+                index += 8
+            elif code in INT32:
+                value = unpack('<i', data, offset=index)[0]
+                index += 4
+            elif code in INT64:
+                value = unpack('<q', data, offset=index)[0]
+                index += 8
+            elif code in BYTES:
+                value = data[index]
+                index += 1
+            else:  # zero terminated string
+                start_index = index
+                end_index = data.index(b'\x00', start_index)
+                s = data[start_index:end_index]
+                index = end_index + 1
+                value = s.decode(encoding)
+            yield DXFTag(code, value)
+
+
 # invalid point codes if not part of a point started with 1010, 1011, 1012, 1013
 INVALID_POINT_CODES = {1020, 1021, 1022, 1023, 1030, 1031, 1032, 1033}
 
 
 def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
     """
-    Compiles DXF tag values imported by low_level_tagger() into Python types.
+    Compiles DXF tag values imported by ascii_tags_loader() into Python types.
 
     Raises DXFStructureError() for invalid float values and invalid coordinate values.
 
@@ -103,10 +243,10 @@ def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
     that write LINE coordinates in x1, x2, y1, y2 order, which does not work with tag_compiler(). For this cases use
     tag_reorder_layer() from the repair module to reorder the LINE coordinates::
 
-        tag_compiler(tag_reorder_layer(low_level_tagger(stream)))
+        tag_compiler(tag_reorder_layer(ascii_tags_loader(stream)))
 
     Args:
-        tagger: DXF tag generator e.g. low_level_tagger()
+        tagger: DXF tag generator e.g. ascii_tags_loader()
 
     Raises:
         DXFStructureError: Found invalid DXF tag or unexpected coordinate order.
@@ -145,10 +285,14 @@ def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
                     raise DXFStructureError('Invalid floating point values near line: {}.'.format(line))
                 yield DXFVertex(code, point)
             elif code in BINARAY_DATA:
-                try:
-                    yield DXFBinaryTag.from_string(code, x.value)
-                except ValueError:
-                    raise DXFStructureError('Invalid binary data near line: {}.'.format(line))
+                if isinstance(x, DXFBinaryTag):  # maybe pre compiled in low level tagger (binary DXF)
+                    tag = x
+                else:
+                    try:
+                        tag = DXFBinaryTag.from_string(code, x.value)
+                    except ValueError:
+                        raise DXFStructureError('Invalid binary data near line: {}.'.format(line))
+                yield tag
             else:  # just a single tag
                 try:
                     # fast path!
