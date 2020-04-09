@@ -91,7 +91,6 @@ def ascii_tags_loader(stream: TextIO, skip_comments: bool = True) -> Iterable[DX
             return
 
 
-
 def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
     """
     Yields :class:`DXFTag` or :class:`DXFBinaryTag` objects from binary DXF `data` (untrusted external source) and
@@ -186,7 +185,7 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
                 end_index = data.index(b'\x00', start_index)
                 s = data[start_index:end_index]
                 index = end_index + 1
-                value = s.decode(encoding)
+                value = s.decode(encoding, errors='ignore')
             yield DXFTag(code, value)
 
 

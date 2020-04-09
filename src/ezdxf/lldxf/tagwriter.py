@@ -2,7 +2,7 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import Any, TextIO, TYPE_CHECKING, Union, List, Iterable, BinaryIO
-from .types import TAG_STRING_FORMAT, cast_tag_value
+from .types import TAG_STRING_FORMAT, cast_tag_value, DXFVertex
 from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_CHUNK
 from .tags import DXFTag, Tags
 from .const import LATEST_DXF_VERSION
@@ -76,7 +76,11 @@ class BinaryTagWriter(TagWriter):
             self.write_tag2(tag.code, tag.value)
 
     def write_tag(self, tag: DXFTag) -> None:
-        self.write_tag2(tag.code, tag.value)
+        if isinstance(tag, DXFVertex):
+            for code, value in tag.dxftags():
+                self.write_tag2(code, value)
+        else:
+            self.write_tag2(tag.code, tag.value)
 
     def write_str(self, s: str) -> None:
         data = s.split('\n')
@@ -110,7 +114,7 @@ class BinaryTagWriter(TagWriter):
         elif code in DOUBLE:
             stream.write(struct.pack('<d', float(value)))
         else:  # write zero terminated string
-            stream.write(str(value).encode(self._encoding))
+            stream.write(str(value).encode(self._encoding, errors='dxfreplace'))
             stream.write(b'\x00')
 
     def _write_binary_chunks(self, code: int, data: bytes) -> None:
@@ -123,7 +127,7 @@ class BinaryTagWriter(TagWriter):
 
         while index < size:
             # write group code
-            if code > 1000:  # extended data, just 1004?
+            if code >= 1000:  # extended data, just 1004?
                 stream.write(b'\xff')  # extended data marker
             # binary data does not exist in regular R12 entities,
             # only 2-byte group codes required
