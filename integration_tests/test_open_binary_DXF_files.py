@@ -31,7 +31,6 @@ def test_open_R13_R14(filename, tmpdir):
     assert os.path.exists(converted)
 
 
-@pytest.mark.skip(reason='Loading binary DXF R12 does not work yet.')
 def test_open_R12():
     filename = os.path.join(BASEDIR, DATADIR, 'bin_dxf_R12.dxf')
     doc = ezdxf.readfile(filename)

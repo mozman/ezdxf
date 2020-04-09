@@ -91,7 +91,11 @@ def low_level_tagger(stream: TextIO, skip_comments: bool = True) -> Iterable[DXF
             return
 
 
-R2000_INT16 = set(chain(
+BYTES = set(chain(  # Bool
+    range(290, 300),
+))
+
+INT16 = set(chain(
     range(60, 80),
     range(170, 180),
     range(270, 290),
@@ -99,15 +103,6 @@ R2000_INT16 = set(chain(
     range(400, 410),
     range(1060, 1071),
 ))
-
-R2000_BYTES = set(chain(  # Bool
-    range(290, 300),
-))
-
-R13_INT16 = set(R2000_INT16)
-R13_BYTES = set(R2000_BYTES)
-R13_INT16.remove(70)  # 1-byte value
-R13_BYTES.add(70)
 
 INT32 = set(chain(
     range(90, 100),
@@ -118,7 +113,7 @@ INT32 = set(chain(
 
 INT64 = set(chain(
     range(160, 169),
-    range(450, 460),  # Long in DXF reference?
+    range(450, 460),  # Long in DXF reference, ->signed<- or unsigned?
 ))
 
 DOUBLE = set(chain(
@@ -136,9 +131,10 @@ BINARY_CHUNK = set(chain(
 
 def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
     """
-    Yields DXFTag() or DXFBinaryTag() objects from a binary DXF `data` (untrusted external source) and does not
-    optimize coordinates. DXFTag.code is always an int and DXFTag.value is always an unicode string without
-    a trailing '\n'.
+    Yields :class:`DXFTag` or :class:`DXFBinaryTag` objects from binary DXF `data` (untrusted external source) and
+    does not optimize coordinates.
+    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is either an unicode string,``float``,
+    ``int`` or ``bytes`` for binary chunks.
 
     Args:
         data: binary DXF data
@@ -182,16 +178,10 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
         return encoding, dxfversion
 
     encoding, dxfversion = scan_params()
-    legacy = dxfversion < 'AC1012'
+    one_byte_group_code = dxfversion < 'AC1012'
     index = 22
     data_length = len(data)
     unpack = struct.unpack_from
-    if legacy:
-        INT16 = R13_INT16
-        BYTES = R13_BYTES
-    else:
-        INT16 = R2000_INT16
-        BYTES = R2000_BYTES
 
     while index < data_length:
         # decode next group code
@@ -199,9 +189,9 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
         if code == 255:  # extended data
             code = (data[index + 2] << 8) | data[index + 1]
             index += 3
-        elif legacy:
+        elif one_byte_group_code:
             index += 1
-        else:
+        else:  # 2-byte group code
             code = (data[index + 1] << 8) | code
             index += 2
 
