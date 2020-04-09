@@ -93,9 +93,9 @@ def add_vars(header, vars, dxf):
 
 def read(stream):
     """ Open an existing drawing. """
-    from ezdxf.lldxf.tagger import low_level_tagger, tag_compiler
+    from ezdxf.lldxf.tagger import ascii_tags_loader, tag_compiler
 
-    tagger = list(low_level_tagger(stream))
+    tagger = list(ascii_tags_loader(stream))
     return tag_compiler(iter(tagger))
 
 

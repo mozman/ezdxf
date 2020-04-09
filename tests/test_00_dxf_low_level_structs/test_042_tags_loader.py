@@ -3,7 +3,7 @@
 import pytest
 from io import StringIO
 
-from ezdxf.lldxf.tagger import internal_tag_compiler, low_level_tagger, tag_compiler, DXFStructureError
+from ezdxf.lldxf.tagger import internal_tag_compiler, ascii_tags_loader, tag_compiler, DXFStructureError
 from ezdxf.lldxf.types import strtag, DXFTag, DXFVertex
 from ezdxf.math.vector import Vector
 
@@ -72,17 +72,17 @@ def test_int_no_eof():
 
 
 def external_tag_compiler(text):
-    return tag_compiler(low_level_tagger(StringIO(text)))
+    return tag_compiler(ascii_tags_loader(StringIO(text)))
 
 
 def test_low_level_tagger_skip_comments():
-    tags = list(low_level_tagger(StringIO('999\ncomment\n0\nEOF\n')))
+    tags = list(ascii_tags_loader(StringIO('999\ncomment\n0\nEOF\n')))
     assert (0, 'EOF') == tags[0]
     assert len(tags) == 1
 
 
 def test_low_level_tagger_not_skip_comments():
-    tags = list(low_level_tagger(StringIO('999\ncomment\n0\nEOF\n'), skip_comments=False))
+    tags = list(ascii_tags_loader(StringIO('999\ncomment\n0\nEOF\n'), skip_comments=False))
     assert (999, 'comment') == tags[0]
     assert (0, 'EOF') == tags[1]
     assert len(tags) == 2
@@ -142,7 +142,7 @@ def test_ext_coord_error_tag():
 
 
 def test_polyline_with_xdata():
-    tags = list(tag_compiler(low_level_tagger(StringIO(POLYLINE_WITH_XDATA))))
+    tags = list(tag_compiler(ascii_tags_loader(StringIO(POLYLINE_WITH_XDATA))))
     assert len(tags) == 49
 
 

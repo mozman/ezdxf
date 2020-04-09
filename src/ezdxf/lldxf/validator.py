@@ -9,7 +9,7 @@ from typing import TextIO, Iterable, List, Optional
 from .const import DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError
 from .const import APP_DATA_MARKER, HEADER_VAR_MARKER, XDATA_MARKER
 from .const import INVALID_LAYER_NAME_CHARACTERS, acad_release
-from .tagger import low_level_tagger
+from .tagger import ascii_tags_loader
 from .types import is_embedded_object_marker, DXFTag, NONE_TAG
 from ezdxf.tools.codepage import toencoding
 
@@ -38,7 +38,7 @@ class DXFInfo:
 
 def dxf_info(stream: TextIO) -> DXFInfo:
     info = DXFInfo()
-    tagger = low_level_tagger(stream)  # filters already comments
+    tagger = ascii_tags_loader(stream)  # filters already comments
     if next(tagger) != (0, 'SECTION'):  # maybe a DXF structure error, handled by later processing
         return info
     if next(tagger) != (2, 'HEADER'):  # no leading HEADER section like DXF R12 with only ENTITIES section
@@ -227,7 +227,7 @@ def dwg_version(filename: str) -> Optional[str]:
 
 def is_dxf_stream(stream: TextIO) -> bool:
     try:
-        reader = low_level_tagger(stream)
+        reader = ascii_tags_loader(stream)
     except DXFError:
         return False
     try:

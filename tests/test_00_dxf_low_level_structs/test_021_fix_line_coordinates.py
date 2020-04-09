@@ -2,22 +2,22 @@
 # License: MIT License
 import pytest
 
-from ezdxf.lldxf.tagger import low_level_tagger
+from ezdxf.lldxf.tagger import ascii_tags_loader
 from ezdxf.lldxf.repair import fix_coordinate_order, tag_reorder_layer
 from io import StringIO
 
 
 def string_reorder_tagger(s):
-    return tag_reorder_layer(low_level_tagger(StringIO(s)))
+    return tag_reorder_layer(ascii_tags_loader(StringIO(s)))
 
 
 def test_low_level_tagger():
-    tags = list(low_level_tagger(StringIO(TEST_LINE1)))
+    tags = list(ascii_tags_loader(StringIO(TEST_LINE1)))
     assert len(tags) == 14
 
 
 def test_fix_line_coordinate_order():
-    tags = list(low_level_tagger(StringIO(TEST_LINE1)))
+    tags = list(ascii_tags_loader(StringIO(TEST_LINE1)))
     ordered_tags = list(fix_coordinate_order(tags, codes=(10, 11)))
     assert ordered_tags[0] == (0, 'LINE')
     assert ordered_tags[-6] == (10, '1000.')
