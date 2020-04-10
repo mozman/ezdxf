@@ -140,7 +140,7 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
         return encoding, dxfversion
 
     encoding, dxfversion = scan_params()
-    one_byte_group_code = dxfversion < 'AC1012'
+    r12 = dxfversion <= 'AC1009'
     index = 22
     data_length = len(data)
     unpack = struct.unpack_from
@@ -148,11 +148,12 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
     while index < data_length:
         # decode next group code
         code = data[index]
-        if code == 255:  # extended data
-            code = (data[index + 2] << 8) | data[index + 1]
-            index += 3
-        elif one_byte_group_code:
-            index += 1
+        if r12:
+            if code == 255:  # extended data
+                code = (data[index + 2] << 8) | data[index + 1]
+                index += 3
+            else:
+                index += 1
         else:  # 2-byte group code
             code = (data[index + 1] << 8) | code
             index += 2

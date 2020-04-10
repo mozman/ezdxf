@@ -66,7 +66,7 @@ class BinaryTagWriter(TagWriter):
         super().__init__(None, dxfversion, write_handles)
         self._stream = stream
         self._encoding = encoding  # output encoding
-        self._group_code_size = 1 if self.dxfversion <= 'AC1009' else 2
+        self._r12 = self.dxfversion <= 'AC1009'
 
     def write_signature(self) -> None:
         self._stream.write(b'AutoCAD Binary DXF\r\n\x1a\x00')
@@ -95,13 +95,16 @@ class BinaryTagWriter(TagWriter):
         stream = self._stream
 
         # write group code
-        if code >= 1000:  # extended data
-            stream.write(b'\xff')
-            # always 2-byte group code for extended data
+        if self._r12:
+            # Special group code handling if DXF R12 and older
+            if code >= 1000:  # extended data
+                stream.write(b'\xff')
+                # always 2-byte group code for extended data
+                stream.write(code.to_bytes(2, 'little'))
+            else:
+                stream.write(code.to_bytes(1, 'little'))
+        else:  # for R2000+ do not need a leading 0xff in front of extended data
             stream.write(code.to_bytes(2, 'little'))
-        else:
-            stream.write(code.to_bytes(self._group_code_size, 'little'))
-
         # write tag content
         if code in BYTES:
             stream.write(int(value).to_bytes(1, 'little'))
@@ -127,7 +130,7 @@ class BinaryTagWriter(TagWriter):
 
         while index < size:
             # write group code
-            if code >= 1000:  # extended data, just 1004?
+            if self._r12 and code >= 1000:  # extended data, just 1004?
                 stream.write(b'\xff')  # extended data marker
             # binary data does not exist in regular R12 entities,
             # only 2-byte group codes required
