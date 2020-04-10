@@ -1,7 +1,7 @@
 # Created: 11.03.2011
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, TextIO, Iterable, Union, Sequence, Tuple, Callable, cast, Optional
+from typing import TYPE_CHECKING, TextIO, BinaryIO, Iterable, Union, Sequence, Tuple, Callable, cast, Optional
 from datetime import datetime
 import io
 import base64
@@ -14,7 +14,7 @@ from ezdxf.lldxf.const import DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013, \
 from ezdxf.lldxf.const import DXFVersionError
 from ezdxf.lldxf.loader import load_dxf_structure, fill_database, SectionDict
 from ezdxf.lldxf import repair
-from .lldxf.tagwriter import TagWriter
+from .lldxf.tagwriter import TagWriter, BinaryTagWriter
 
 from ezdxf.entitydb import EntityDB
 from ezdxf.entities.factory import EntityFactory
@@ -391,7 +391,7 @@ class Drawing:
         if '*Paper_Space' not in self.block_records:
             self.block_records.new('*Paper_Space')
 
-    def saveas(self, filename: str, encoding: str = None) -> None:
+    def saveas(self, filename: str, encoding: str = None, fmt: str = 'asc') -> None:
         """
         Set :class:`Drawing` attribute :attr:`filename` to `filename` and write drawing to the file system.
         Override file encoding by argument `encoding`, handle with care, but this option allows you to create
@@ -400,12 +400,13 @@ class Drawing:
         Args:
             filename: file name as string
             encoding: override default encoding as Python encoding string like ``'utf-8'``
+            fmt: ``'asc'`` for ASCII DXF (default) or ``'bin'`` for Binary DXF
 
         """
         self.filename = filename
-        self.save(encoding=encoding)
+        self.save(encoding=encoding, fmt=fmt)
 
-    def save(self, encoding: str = None) -> None:
+    def save(self, encoding: str = None, fmt: str = 'asc') -> None:
         """
         Write drawing to file-system by using the :attr:`filename` attribute as filename.
         Override file encoding by argument `encoding`, handle with care, but this option allows you to create
@@ -413,7 +414,7 @@ class Drawing:
 
         Args:
             encoding: override default encoding as Python encoding string like ``'utf-8'``
-
+            fmt: ``'asc'`` for ASCII DXF (default) or ``'bin'`` for Binary DXF
         """
         # DXF R12, R2000, R2004 - ASCII encoding
         # DXF R2007 and newer - UTF-8 encoding
@@ -421,22 +422,30 @@ class Drawing:
 
         if encoding is None:
             enc = self.output_encoding
-        else:  # override default encoding, for applications that handles encoding different than AutoCAD
+        else:  # override default encoding, for applications that handle encoding different than AutoCAD
             enc = encoding
 
-        with io.open(self.filename, mode='wt', encoding=enc, errors='dxfreplace') as fp:
-            self.write(fp)
+        if fmt.startswith('asc'):
+            fp = io.open(self.filename, mode='wt', encoding=enc, errors='dxfreplace')
+        elif fmt.startswith('bin'):
+            fp = open(self.filename, 'wb')
+        else:
+            raise ValueError(f"Unknown output format: '{fmt}'.")
+        try:
+            self.write(fp,fmt=fmt)
+        finally:
+            fp.close()
 
-    def write(self, stream: TextIO) -> None:
+    def write(self, stream: Union[TextIO, BinaryIO], fmt: str = 'asc') -> None:
         """
-        Write drawing to a text stream. For DXF R2004 (AC1018) and prior open stream with drawing
-        :attr:`encoding` and :code:`mode='wt'`. For DXF R2007 (AC1021) and later use
-        :code:`encoding='utf-8'`, or better use the later added :class:`Drawing` property :attr:`output_encoding`
-        which returns the correct encoding automatically.
+        Write drawing as ASCII DXF to a text stream or as Binary DXF to a binary stream.
+        For DXF R2004 (AC1018) and prior open stream with drawing :attr:`encoding` and :code:`mode='wt'`.
+        For DXF R2007 (AC1021) and later use :code:`encoding='utf-8'`, or better use the later added :class:`Drawing`
+        property :attr:`output_encoding` which returns the correct encoding automatically.
 
         Args:
-            stream: output text stream
-
+            stream: output text stream or binary stream
+            fmt: ``'asc'`` for ASCII DXF (default) or ``'bin'`` for binary DXF
         """
         dxfversion = self.dxfversion
         if dxfversion == DXF12:
@@ -449,7 +458,17 @@ class Drawing:
         self._create_appids()
         self._update_header_vars()
         self._update_metadata()
-        tagwriter = TagWriter(stream, write_handles=handles, dxfversion=dxfversion)
+
+        if fmt.startswith('asc'):
+            tagwriter = TagWriter(stream, write_handles=handles, dxfversion=dxfversion)
+        elif fmt.startswith('bin'):
+            tagwriter = BinaryTagWriter(
+                stream, write_handles=handles, dxfversion=dxfversion, encoding=self.output_encoding,
+            )
+            tagwriter.write_signature()
+        else:
+            raise ValueError(f"Unknown output format: '{fmt}'.")
+
         self.export_sections(tagwriter)
 
     def encode_base64(self) -> bytes:

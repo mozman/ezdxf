@@ -1,10 +1,13 @@
 # Created: 13.01.2018
-# Copyright (c) 2018, Manfred Moitzi
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
-from typing import Any, TextIO, TYPE_CHECKING, Union, List, Iterable
-from .types import TAG_STRING_FORMAT, cast_tag_value
+from typing import Any, TextIO, TYPE_CHECKING, Union, List, Iterable, BinaryIO
+from .types import TAG_STRING_FORMAT, cast_tag_value, DXFVertex
+from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_CHUNK
 from .tags import DXFTag, Tags
 from .const import LATEST_DXF_VERSION
+from ezdxf.tools import take2
+import struct
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import ExtendedTags, DXFEntity
@@ -47,6 +50,98 @@ class TagWriter:
 
     def write_str(self, s: str) -> None:
         self._stream.write(s)
+
+
+class BinaryTagWriter(TagWriter):
+    """
+    Writes binary encoded DXF tags into a binary stream.
+
+    Args:
+        stream: binary IO stream
+        write_handles: if ``False`` don't write handles (5, 105), use only for DXF R12 format
+
+    """
+
+    def __init__(self, stream: BinaryIO, dxfversion=LATEST_DXF_VERSION, write_handles: bool = True, encoding='utf8'):
+        super().__init__(None, dxfversion, write_handles)
+        self._stream = stream
+        self._encoding = encoding  # output encoding
+        self._r12 = self.dxfversion <= 'AC1009'
+
+    def write_signature(self) -> None:
+        self._stream.write(b'AutoCAD Binary DXF\r\n\x1a\x00')
+
+    def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
+        for tag in tags:
+            self.write_tag2(tag.code, tag.value)
+
+    def write_tag(self, tag: DXFTag) -> None:
+        if isinstance(tag, DXFVertex):
+            for code, value in tag.dxftags():
+                self.write_tag2(code, value)
+        else:
+            self.write_tag2(tag.code, tag.value)
+
+    def write_str(self, s: str) -> None:
+        data = s.split('\n')
+        for code, value in take2(data):
+            self.write_tag2(int(code), value)
+
+    def write_tag2(self, code: int, value: Any) -> None:
+        # Binary DXF files do not support comments!
+        assert code != 999
+        if code in BINARY_CHUNK:
+            self._write_binary_chunks(code, value)
+        stream = self._stream
+
+        # write group code
+        if self._r12:
+            # Special group code handling if DXF R12 and older
+            if code >= 1000:  # extended data
+                stream.write(b'\xff')
+                # always 2-byte group code for extended data
+                stream.write(code.to_bytes(2, 'little'))
+            else:
+                stream.write(code.to_bytes(1, 'little'))
+        else:  # for R2000+ do not need a leading 0xff in front of extended data
+            stream.write(code.to_bytes(2, 'little'))
+        # write tag content
+        if code in BYTES:
+            stream.write(int(value).to_bytes(1, 'little'))
+        elif code in INT16:
+            stream.write(int(value).to_bytes(2, 'little', signed=True))
+        elif code in INT32:
+            stream.write(int(value).to_bytes(4, 'little', signed=True))
+        elif code in INT64:
+            stream.write(int(value).to_bytes(8, 'little', signed=True))
+        elif code in DOUBLE:
+            stream.write(struct.pack('<d', float(value)))
+        else:  # write zero terminated string
+            stream.write(str(value).encode(self._encoding, errors='dxfreplace'))
+            stream.write(b'\x00')
+
+    def _write_binary_chunks(self, code: int, data: bytes) -> None:
+        # Split binary data into small chunks, 127 bytes is the
+        # regular size of binary data in ASCII DXF files.
+        CHUNK_SIZE = 127
+        index = 0
+        size = len(data)
+        stream = self._stream
+
+        while index < size:
+            # write group code
+            if self._r12 and code >= 1000:  # extended data, just 1004?
+                stream.write(b'\xff')  # extended data marker
+            # binary data does not exist in regular R12 entities,
+            # only 2-byte group codes required
+            stream.write(code.to_bytes(2, 'little'))
+
+            # write max CHUNK_SIZE bytes of binary data in one tag
+            chunk = data[index: index + CHUNK_SIZE]
+            # write actual chunk size
+            stream.write(len(chunk).to_bytes(1, 'little'))
+            stream.write(chunk)
+            index += CHUNK_SIZE
 
 
 class TagCollector:

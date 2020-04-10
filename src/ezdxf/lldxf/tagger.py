@@ -3,10 +3,9 @@
 # Copyright (c) 2016-2020, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, TextIO, Iterator
-from itertools import chain
-
 import struct
 from .types import DXFTag, DXFVertex, DXFBinaryTag
+from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_CHUNK
 from .const import DXFStructureError, DXFVersionError
 from .types import POINT_CODES, TYPE_TABLE, BINARAY_DATA
 from ezdxf.tools.codepage import toencoding
@@ -92,44 +91,6 @@ def ascii_tags_loader(stream: TextIO, skip_comments: bool = True) -> Iterable[DX
             return
 
 
-BYTES = set(chain(  # Bool
-    range(290, 300),
-))
-
-INT16 = set(chain(
-    range(60, 80),
-    range(170, 180),
-    range(270, 290),
-    range(370, 390),
-    range(400, 410),
-    range(1060, 1071),
-))
-
-INT32 = set(chain(
-    range(90, 100),
-    range(420, 430),
-    range(440, 450),
-    [1071]
-))
-
-INT64 = set(chain(
-    range(160, 169),
-    range(450, 460),  # Long in DXF reference, ->signed<- or unsigned?
-))
-
-DOUBLE = set(chain(
-    range(10, 60),
-    range(110, 150),
-    range(210, 240),
-    range(460, 470),
-    range(1010, 1060),
-))
-
-BINARY_CHUNK = set(chain(
-    range(310, 320), [1004]
-))
-
-
 def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
     """
     Yields :class:`DXFTag` or :class:`DXFBinaryTag` objects from binary DXF `data` (untrusted external source) and
@@ -179,7 +140,7 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
         return encoding, dxfversion
 
     encoding, dxfversion = scan_params()
-    one_byte_group_code = dxfversion < 'AC1012'
+    r12 = dxfversion <= 'AC1009'
     index = 22
     data_length = len(data)
     unpack = struct.unpack_from
@@ -187,11 +148,12 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
     while index < data_length:
         # decode next group code
         code = data[index]
-        if code == 255:  # extended data
-            code = (data[index + 2] << 8) | data[index + 1]
-            index += 3
-        elif one_byte_group_code:
-            index += 1
+        if r12:
+            if code == 255:  # extended data
+                code = (data[index + 2] << 8) | data[index + 1]
+                index += 3
+            else:
+                index += 1
         else:  # 2-byte group code
             code = (data[index + 1] << 8) | code
             index += 2
@@ -224,7 +186,7 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
                 end_index = data.index(b'\x00', start_index)
                 s = data[start_index:end_index]
                 index = end_index + 1
-                value = s.decode(encoding)
+                value = s.decode(encoding, errors='ignore')
             yield DXFTag(code, value)
 
 

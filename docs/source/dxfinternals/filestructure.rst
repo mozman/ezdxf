@@ -5,9 +5,9 @@ DXF File Structure
 
 A DXF File is simply an ASCII text file with a file type of .dxf and special formatted text. The basic file structure
 are DXF tags, a DXF tag consist of a DXF group code as an integer value on its own line and a the DXF value on the
-following line. In the ezdxf documentation DXF tags will be written as :code:`(group code, value)`. I know there exists
+following line. In the ezdxf documentation DXF tags will be written as :code:`(group code, value)`. There exist
 a binary DXF format, but it seems that it is not often used and for reducing file size, zipping is much more efficient.
-ezdxf does not support binary encoded DXF files (yet?).
+`ezdxf` does support reading binary encoded DXF files.
 
 .. seealso::
 

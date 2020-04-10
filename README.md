@@ -23,6 +23,7 @@ Quick-Info
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
 - additional read support for DXF versions R13/R14 (upgraded to R2000)
 - additional read support for older DXF versions than R12 (upgraded to R12)
+- read/write support for ASCII DXF and Binary DXF
 - preserves third-party DXF content
 
 Included extensions:

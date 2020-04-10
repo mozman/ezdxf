@@ -243,6 +243,43 @@ TYPE_TABLE = _build_type_table([
     (int, range(1060, 1072)),
 ])
 
+BYTES = set(chain(  # Bool
+    range(290, 300),
+))
+
+INT16 = set(chain(
+    range(60, 80),
+    range(170, 180),
+    range(270, 290),
+    range(370, 390),
+    range(400, 410),
+    range(1060, 1071),
+))
+
+INT32 = set(chain(
+    range(90, 100),
+    range(420, 430),
+    range(440, 450),
+    [1071]
+))
+
+INT64 = set(chain(
+    range(160, 169),
+    range(450, 460),  # Long in DXF reference, ->signed<- or unsigned?
+))
+
+DOUBLE = set(chain(
+    range(10, 60),
+    range(110, 150),
+    range(210, 240),
+    range(460, 470),
+    range(1010, 1060),
+))
+
+BINARY_CHUNK = set(chain(
+    range(310, 320), [1004]
+))
+
 
 def is_valid_handle(handle: str) -> bool:
     try:
