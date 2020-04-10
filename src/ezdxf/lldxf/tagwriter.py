@@ -12,7 +12,7 @@ import struct
 if TYPE_CHECKING:
     from ezdxf.eztypes import ExtendedTags, DXFEntity
 
-__all__ = ['TagWriter', 'TagCollector', 'basic_tags_from_text']
+__all__ = ['TagWriter', 'BinaryTagWriter', 'TagCollector', 'basic_tags_from_text']
 
 
 class TagWriter:
