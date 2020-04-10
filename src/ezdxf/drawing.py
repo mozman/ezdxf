@@ -2,6 +2,7 @@
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, TextIO, BinaryIO, Iterable, Union, Sequence, Tuple, Callable, cast
+from typing import Optional
 from datetime import datetime
 import io
 import base64
@@ -63,33 +64,34 @@ class Drawing:
         self.dxffactory = EntityFactory(self)
         self.tracker = Tracker()
         target_dxfversion = dxfversion.upper()
-        self._dxfversion = acad_release_to_dxf_version.get(target_dxfversion, target_dxfversion)
+        self._dxfversion: str = acad_release_to_dxf_version.get(target_dxfversion, target_dxfversion)
         if self._dxfversion not in versions_supported_by_new:
-            raise DXFVersionError('Unsupported DXF version "{}".'.format(self.dxfversion))
-        self._loaded_dxfversion = None  # if loaded from file, store original dxf version
-        self.encoding = 'cp1252'
-        self.filename = None  # type: str # read/write
+            raise DXFVersionError(f'Unsupported DXF version "{self.dxfversion}".')
+        # Store original dxf version if loaded (and maybe converted R13/14) from file.
+        self._loaded_dxfversion: Optional[str] = None
+        self.encoding: str = 'cp1252'  # read/write
+        self.filename: Optional[str] = None
 
         # named objects dictionary
-        self.rootdict = None  # type: Dictionary
+        self.rootdict: 'Dictionary' = None
 
         # DXF sections
-        self.header = None  # type: HeaderSection
-        self.classes = None  # type: ClassesSection
-        self.tables = None  # type: TablesSection
-        self.blocks = None  # type: BlocksSection
-        self.entities = None  # type: EntitySection
-        self.objects = None  # type: ObjectsSection
+        self.header: HeaderSection = None
+        self.classes: ClassesSection = None
+        self.tables: TablesSection = None
+        self.blocks: BlocksSection = None
+        self.entities: EntitySection = None
+        self.objects: ObjectsSection = None
 
         # DXF R2013 and later
-        self.acdsdata = None  # type: AcDsDataSection
+        self.acdsdata: AcDsDataSection = None
 
         self.stored_sections = []
-        self.layouts = None  # type: Layouts
-        self.groups = None  # type: GroupCollection  # read only
-        self.materials = None  # type: MaterialCollection # read only
-        self.mleader_styles = None  # type: MLeaderStyleCollection # read only
-        self.mline_styles = None  # type: MLineStyleCollection # read only
+        self.layouts: Layouts = None
+        self.groups: GroupCollection = None
+        self.materials: MaterialCollection = None
+        self.mleader_styles: MLeaderStyleCollection = None
+        self.mline_styles: MLineStyleCollection = None
         self._acad_compatible = True  # will generated DXF file compatible with AutoCAD
         self._dimension_renderer = DimensionRenderer()  # set DIMENSION rendering engine
         self._acad_incompatibility_reason = set()  # avoid multiple warnings for same reason
@@ -204,16 +206,12 @@ class Drawing:
         version = version.upper()
         version = acad_release_to_dxf_version.get(version, version)  # translates 'R12' -> 'AC1009'
         if version not in versions_supported_by_save:
-            raise DXFVersionError('Unsupported DXF version "{}".'.format(version))
+            raise DXFVersionError(f'Unsupported DXF version "{version}".')
         if version == DXF12:
             if self._dxfversion > DXF12:
-                logger.warning('Downgrade from DXF {} to R12 may create an invalid DXF file.'.format(
-                    self.acad_release
-                ))
+                logger.warning(f'Downgrade from DXF {self.acad_release} to R12 may create an invalid DXF file.')
         elif version < self._dxfversion:
-            logger.info('Downgrade from DXF {} to {} can cause lost of features.'.format(
-                self.acad_release, acad_release[version]
-            ))
+            logger.info(f'Downgrade from DXF {self.acad_release} to {acad_release[version]} can cause lost of features.')
         return version
 
     @classmethod
@@ -304,12 +302,13 @@ class Drawing:
         else:
             self.header = HeaderSection.load(header_entities)
         # -----------------------------------------------------------------------------------
-        # missing $ACADVER defaults to DXF R12
-        self._dxfversion = self.header.get('$ACADVER', DXF12)  # type: str
-        self._loaded_dxfversion = self._dxfversion  # save dxf version of loaded file
-        self.encoding = toencoding(self.header.get('$DWGCODEPAGE', 'ANSI_1252'))  # type: str # read/write
+        # Missing $ACADVER defaults to DXF R12
+        self._dxfversion: str = self.header.get('$ACADVER', DXF12)
+        # Store original DXF version of loaded file.
+        self._loaded_dxfversion = self._dxfversion
+        self.encoding = toencoding(self.header.get('$DWGCODEPAGE', 'ANSI_1252'))
         # get handle seed
-        seed = self.header.get('$HANDSEED', str(self.entitydb.handles))  # type: str
+        seed: str = self.header.get('$HANDSEED', str(self.entitydb.handles))
         # setup handles
         self.entitydb.handles.reset(seed)
         # store all necessary DXF entities in the drawing database
@@ -418,7 +417,7 @@ class Drawing:
         else:
             raise ValueError(f"Unknown output format: '{fmt}'.")
         try:
-            self.write(fp,fmt=fmt)
+            self.write(fp, fmt=fmt)
         finally:
             fp.close()
 
@@ -626,7 +625,7 @@ class Drawing:
         self._acad_compatible = False
         if msg not in self._acad_incompatibility_reason:
             self._acad_incompatibility_reason.add(msg)
-            logger.warning('Drawing is incompatible to AutoCAD, because {}.'.format(msg))
+            logger.warning(f'Drawing is incompatible to AutoCAD, because {msg}.')
 
     def query(self, query: str = '*') -> EntityQuery:
         """
@@ -681,7 +680,7 @@ class Drawing:
 
         """
         if name not in self.layouts:
-            raise DXFValueError("Layout '{}' does not exist.".format(name))
+            raise DXFValueError(f"Layout '{name}' does not exist.")
         else:
             self.layouts.delete(name)
 
@@ -700,7 +699,7 @@ class Drawing:
 
         """
         if name in self.layouts:
-            raise DXFValueError("Layout '{}' already exists.".format(name))
+            raise DXFValueError(f"Layout '{name}' already exists.")
         else:
             return self.layouts.new(name, dxfattribs)
 
@@ -714,7 +713,7 @@ class Drawing:
         if ARROWS.is_acad_arrow(name) or ARROWS.is_ezdxf_arrow(name):
             ARROWS.create_block(self.blocks, name)
         elif name not in self.blocks:
-            raise DXFValueError('Arrow block "{}" does not exist.'.format(name))
+            raise DXFValueError(f'Arrow block "{name}" does not exist.')
 
     def add_image_def(self, filename: str, size_in_pixel: Tuple[int, int], name=None):
         """
