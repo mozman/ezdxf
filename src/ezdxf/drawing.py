@@ -14,7 +14,7 @@ from ezdxf.lldxf.const import DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013, \
 from ezdxf.lldxf.const import DXFVersionError
 from ezdxf.lldxf.loader import load_dxf_structure, fill_database
 from ezdxf.lldxf import repair
-from .lldxf.tagwriter import TagWriter, BinaryTagWriter
+from ezdxf.lldxf.tagwriter import TagWriter, BinaryTagWriter
 
 from ezdxf.entitydb import EntityDB
 from ezdxf.entities.factory import EntityFactory
@@ -230,7 +230,6 @@ class Drawing:
                 TFilterStack: Sequence[Sequence[Callable[[Iterable[DXFTag]], Iterable[DXFTag]]]]
                 e.g. [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
 
-        (internal API)
         """
         from .lldxf.tagger import ascii_tags_loader
         tag_loader = ascii_tags_loader(stream)
@@ -251,7 +250,6 @@ class Drawing:
                 TFilterStack: Sequence[Sequence[Callable[[Iterable[DXFTag]], Iterable[DXFTag]]]]
                 e.g. [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
 
-        (internal API)
         """
         from .lldxf.tagger import tag_compiler
         raw_tag_filters = []
@@ -369,7 +367,6 @@ class Drawing:
         DIMENSION override, LEADER override and maybe other places.
 
         """
-        # to be save create all known arrow blocks
         from ezdxf.render.arrows import ARROWS
         for arrow_name in ARROWS.__acad__:
             ARROWS.create_block(self.blocks, arrow_name)
