@@ -110,11 +110,12 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
         raise DXFStructureError('Not a binary DXF data structure.')
 
     def scan_params():
-        dxfversion = 'AC1012'
+        dxfversion = 'AC1009'
         encoding = 'cp1252'
         try:
-            start = data.index(b'$ACADVER', 22) + 10  # start index for 1-byte group code
-        except IndexError:
+            # limit search to first 1024 bytes - an arbitrary number
+            start = data.index(b'$ACADVER', 22, 1024) + 10  # start index for 1-byte group code
+        except ValueError:
             pass  # HEADER var $ACADVER not present
         else:
             if data[start] != 65:  # not 'A' = 2-byte group code
@@ -125,8 +126,9 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
             encoding = 'utf8'
         else:
             try:
-                start = data.index(b'$DWGCODEPAGE', 22) + 14  # start index for 1-byte group code
-            except IndexError:
+                # limit search to first 1024 bytes - an arbitrary number
+                start = data.index(b'$DWGCODEPAGE', 22, 1024) + 14  # start index for 1-byte group code
+            except ValueError:
                 pass  # HEADER var $DWGCODEPAGE not present
             else:  # name schema is 'ANSI_xxxx'
                 if data[start] != 65:  # not 'A' = 2-byte group code

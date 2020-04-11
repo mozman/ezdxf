@@ -1,11 +1,14 @@
 # Purpose: fast & simple but restricted DXF R12 writer, with no in-memory drawing, and without dependencies to other
 # ezdxf modules. The created DXF file contains no HEADER, TABLES or BLOCKS section only the ENTITIES section is present.
 # Created: 14.04.2016
-# Copyright (C) 2016, Manfred Moitzi
+# Copyright (c) 2016-2020, Manfred Moitzi
 # License: MIT License
-from typing import TextIO, Union, Sequence, Iterable, Tuple
+from typing import TextIO, BinaryIO, Union, Sequence, Iterable, Tuple
 from contextlib import contextmanager
 from io import StringIO
+from ezdxf.lldxf.tagwriter import BinaryTagWriter
+from ezdxf.tools import take2
+
 
 # types
 Vertex = Sequence[float]
@@ -33,28 +36,50 @@ TEXT_ALIGN_FLAGS = {
 VERTEX_GROUP_CODES = {'x': 10, 'y': 20, 's': 40, 'e': 41, 'b': 42}
 
 
+class BinaryDXFWriter:
+    def __init__(self, stream: BinaryIO):
+        self._stream = stream
+        self._tagwriter = BinaryTagWriter(self._stream, dxfversion='AC1009', write_handles=False, encoding='cp1252')
+        self._tagwriter.write_signature()
+
+    def write(self, s: str):
+        for code, value in take2(s.split('\n')):
+            self._tagwriter.write_tag2(int(code), value)
+
+
 @contextmanager
-def r12writer(stream: Union[TextIO, str], fixed_tables: bool = False) -> 'R12FastStreamWriter':
+def r12writer(stream: Union[TextIO, BinaryIO, str], fixed_tables: bool = False,
+              fmt: str = 'asc') -> 'R12FastStreamWriter':
     """
     Context manager for writing DXF entities to a stream/file. `stream` can be any file like object
     with a :func:`write` method or just a string for writing DXF entities to the file system.
     If `fixed_tables` is ``True``, a standard TABLES section is written in front of the ENTITIES
     section and some predefined text styles and line types can be used.
+    Set argument `fmt` to ``'asc'`` to write ASCII DXF file (default) or ``'bin'`` to write Binary DXF files. ASCII DXF
+    require as :class:`TextIO` stream, and Binary DXF require a :class:`BinaryIO` stream.
 
     """
-    if hasattr(stream, 'write'):
-        writer = R12FastStreamWriter(stream, fixed_tables)
-        try:
-            yield writer
-        finally:
-            writer.close()
+    _stream = None
+    if fmt.startswith('asc'):
+        if not hasattr(stream, 'write'):
+            _stream = open(stream, 'wt', encoding='cp1252')
+            stream = _stream
+    elif fmt.startswith('bin'):
+        if hasattr(stream, 'write'):
+            stream = BinaryDXFWriter(stream)
+        else:
+            _stream = open(stream, 'wb')
+            stream = BinaryDXFWriter(_stream)
     else:
-        with open(stream, 'wt') as stream:
-            writer = R12FastStreamWriter(stream, fixed_tables)
-            try:
-                yield writer
-            finally:
-                writer.close()
+        raise ValueError(f"Unknown format '{fmt}'.")
+
+    writer = R12FastStreamWriter(stream, fixed_tables)
+    try:
+        yield writer
+    finally:
+        writer.close()
+        if _stream:
+            _stream.close()
 
 
 class R12FastStreamWriter:
@@ -67,7 +92,7 @@ class R12FastStreamWriter:
 
     """
 
-    def __init__(self, stream: TextIO, fixed_tables=False):
+    def __init__(self, stream: [TextIO, BinaryDXFWriter], fixed_tables=False):
         self.stream = stream
         if fixed_tables:
             stream.write(PREFACE)

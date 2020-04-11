@@ -31,13 +31,14 @@ def test_write_r12(filename):
         dxf.add_point((1.5, 1.5))
         dxf.add_polyline_2d([(5, 5), (7, 3), (7, 6)])  # 2d polyline
         dxf.add_polyline_2d([(5, 5), (7, 3), (7, 6)], closed=True)  # closed 2d polyline
-        dxf.add_polyline_2d([(5, 5), (7, 3, 0.5), (7, 6)], format='xyb', start_width=.1, end_width=.2)  # 2d polyline with bulge value
+        dxf.add_polyline_2d([(5, 5), (7, 3, 0.5), (7, 6)], format='xyb', start_width=.1,
+                            end_width=.2)  # 2d polyline with bulge value
         dxf.add_polyline([(4, 3), (8, 5), (2, 4)])  # 2d as 3d polyline
         dxf.add_polyline([(4, 3, 2), (8, 5, 0), (2, 4, 9)], closed=True)  # closed 3d polyline
         dxf.add_text("test the text entity", align="MIDDLE_CENTER")
 
         for i in range(CIRCLE_COUNT):
-            dxf.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
+            dxf.add_circle((MAX_X_COORD * random(), MAX_Y_COORD * random()), radius=2)
 
     assert os.path.exists(filename)
 
@@ -73,7 +74,7 @@ def test_read_r12(filename):
 
     p = polylines[4]  # closed 3d polyline
     assert len(p) == 3
-    assert p.dxf.flags == 1+8
+    assert p.dxf.flags == 1 + 8
     assert p.is_closed is True
 
 
@@ -88,3 +89,17 @@ def test_context_manager(filename):
     assert len(entities) == 1
     assert entities[0].dxftype() == 'LINE'
 
+
+def test_write_and_read_binary_dxf(tmpdir_factory):
+    filename = str(tmpdir_factory.getbasetemp().join("bin.dxf"))
+    with r12writer(filename, fmt='bin') as dxf:
+        dxf.add_line((0, 0), (17, 23))
+
+    doc = ezdxf.readfile(filename)
+    line = doc.modelspace()[0]
+    assert line.dxftype() == 'LINE'
+    assert line.dxf.start == (0, 0, 0)
+    assert line.dxf.end == (17, 23, 0)
+
+    if os.path.exists(filename):
+        os.remove(filename)

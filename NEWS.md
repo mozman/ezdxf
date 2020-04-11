@@ -31,6 +31,7 @@ Version 0.12b3 - dev
 - NEW: Get/set hyperlink for graphic entities
 - NEW: `odafc` add-on to use an installed ODA File Converter for reading and writing DWG files
 - NEW: Support for reading and writing Binary DXF files
+- NEW: Binary DXF support for `r12writer` add-on
 - CHANGE: `R12FastStreamWriter.add_polyline()`, add 3D POLYLINE only, closed flag support
 - CHANGE: renamed `Insert.ucs()` to `Insert.brcs()` which now returns a `BRCS()` object
 - CHANGE: `Polyline.close()`, `Polyline.m_close()` and `Polyline.n_close()` can set and **clear** closed state.
