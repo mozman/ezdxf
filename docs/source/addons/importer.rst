@@ -6,9 +6,6 @@
 Importer
 ========
 
-This rewritten Importer class from ezdxf v0.10 is not compatible to previous ezdxf versions, but previous implementation
-was already broken.
-
 This add-on is meant to import graphical entities from another DXF drawing and their required table entries like LAYER,
 LTYPE or STYLE.
 
@@ -23,7 +20,7 @@ Removed data which could contain source drawing dependencies: Extension Dictiona
 
     DON'T EXPECT PERFECT RESULTS!
 
-The new Importer() supports following data import:
+The :class:`Importer` supports following data import:
 
   - entities which are really safe to import: LINE, POINT, CIRCLE, ARC, TEXT, SOLID, TRACE, 3DFACE, SHAPE, POLYLINE,
     ATTRIB, ATTDEF, INSERT, ELLIPSE, MTEXT, LWPOLYLINE, SPLINE, HATCH, MESH, XLINE, RAY, DIMENSION, LEADER, VIEWPORT

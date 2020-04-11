@@ -7,7 +7,7 @@ iterdxf
 =======
 
 This add-on allows iterating over entities of the modelspace of really big (> 5GB) DXF files which do not fit into
-memory by only loading one entity at the time.
+memory by only loading one entity at the time. Only ASCII DXF files are supported.
 
 The entities are regular :class:`~ezdxf.entities.DXFGraphic` objects with access to all supported DXF attributes,
 this entities can be written to new DXF files created by the :meth:`IterDXF.export` method.

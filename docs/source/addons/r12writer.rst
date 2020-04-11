@@ -46,6 +46,9 @@ If using FIXED-TABLES, following predefined text styles are available:
 - OpenSans
 - OpenSansCondensed-Light
 
+.. versionadded:: 0.12
+    Write Binary DXF files.
+
 Tutorial
 --------
 
@@ -105,7 +108,7 @@ Show all available line types::
 Reference
 ---------
 
-.. autofunction:: r12writer
+.. autofunction:: r12writer(stream: Union[TextIO, BinaryIO, str], fixed_tables = False, fmt = 'asc') -> R12FastStreamWriter
 
 .. autoclass:: R12FastStreamWriter
 
