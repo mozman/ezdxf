@@ -12,6 +12,13 @@ def doc():
 # todo: real MLEADER tests
 def test_generic_mleader(doc):
     msp = doc.modelspace()
+    mleader = msp.new_entity('MLEADER', {})
+    assert mleader.dxftype() == 'MLEADER'
+    assert mleader.dxf.leader_style_handle == '0'
+
+
+def test_synonym_multileader(doc):
+    msp = doc.modelspace()
     mleader = msp.new_entity('MULTILEADER', {})
     assert mleader.dxftype() == 'MULTILEADER'
     assert mleader.dxf.leader_style_handle == '0'

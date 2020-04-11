@@ -29,7 +29,7 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
 
 @register_entity
 class MLeader(DXFGraphic):
-    DXFTYPE = 'MULTILEADER'  # DXF Reference : MLEADER
+    DXFTYPE = 'MLEADER'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mleader)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2004
 
@@ -55,6 +55,11 @@ class MLeader(DXFGraphic):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         tagwriter.write_tags(self.tags)
+
+
+@register_entity
+class MultiLeader(MLeader):
+    DXFTYPE = 'MULTILEADER'
 
 
 acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
