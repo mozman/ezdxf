@@ -260,12 +260,12 @@ INT32 = set(chain(
     range(90, 100),
     range(420, 430),
     range(440, 450),
+    range(450, 460),  # Long in DXF reference, ->signed<- or unsigned?
     [1071]
 ))
 
 INT64 = set(chain(
     range(160, 169),
-    range(450, 460),  # Long in DXF reference, ->signed<- or unsigned?
 ))
 
 DOUBLE = set(chain(
