@@ -73,7 +73,7 @@ class BinaryTagWriter(TagWriter):
 
     def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
         for tag in tags:
-            self.write_tag2(tag.code, tag.value)
+            self.write_tag(tag)
 
     def write_tag(self, tag: DXFTag) -> None:
         if isinstance(tag, DXFVertex):
@@ -92,6 +92,7 @@ class BinaryTagWriter(TagWriter):
         assert code != 999
         if code in BINARY_CHUNK:
             self._write_binary_chunks(code, value)
+            return
         stream = self._stream
 
         # write group code
