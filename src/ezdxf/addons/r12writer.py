@@ -7,7 +7,6 @@ from typing import TextIO, BinaryIO, Union, Sequence, Iterable, Tuple
 from contextlib import contextmanager
 from io import StringIO
 from ezdxf.lldxf.tagwriter import BinaryTagWriter
-from ezdxf.tools import take2
 
 
 # types
@@ -42,9 +41,8 @@ class BinaryDXFWriter:
         self._tagwriter = BinaryTagWriter(self._stream, dxfversion='AC1009', write_handles=False, encoding='cp1252')
         self._tagwriter.write_signature()
 
-    def write(self, s: str):
-        for code, value in take2(s.split('\n')):
-            self._tagwriter.write_tag2(int(code), value)
+    def write(self, s: str) -> None:
+        self._tagwriter.write_str(s)
 
 
 @contextmanager
