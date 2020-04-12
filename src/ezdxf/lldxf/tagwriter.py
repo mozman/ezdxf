@@ -60,6 +60,21 @@ class BinaryTagWriter(TagWriter):
         stream: binary IO stream
         write_handles: if ``False`` don't write handles (5, 105), use only for DXF R12 format
 
+    .. warning::
+
+        DXF files containing ``ACSH_SWEEP_CLASS`` entities and saved as Binary DXF by `ezdxf` can not be opened
+        with AutoCAD, this is maybe also true for other 3rd party entities. BricsCAD opens this binary DXF files
+        without complaining, but saves the ``ACSH_SWEEP_CLASS`` entities as ``ACAD_PROXY_OBJECT`` when writing back,
+        so error analyzing is not possible without the full version of AutoCAD.
+
+        I have no clue why, because converting this DXF files from binary format back to ASCII format by
+        `ezdxf` produces a valid DXF for AutoCAD - so all required information is preserved.
+
+        Two examples available:
+
+            - AutodeskSamples\visualization_-_condominium_with_skylight.dxf
+            - AutodeskSamples\visualization_-_conference_room.dxf
+
     """
 
     def __init__(self, stream: BinaryIO, dxfversion=LATEST_DXF_VERSION, write_handles: bool = True, encoding='utf8'):
