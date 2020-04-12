@@ -1,5 +1,5 @@
 # Created: 30.04.2014
-# Copyright (c) 2014-2018, Manfred Moitzi
+# Copyright (c) 2014-2020, Manfred Moitzi
 # License: MIT License
 """
 
@@ -39,8 +39,55 @@ BINARY_FLAGS = {70, 90}
 HANDLE_CODES = {5, 105}
 POINTER_CODES = set(chain(range(320, 370), range(390, 400), (480, 481, 1005)))
 HEX_HANDLE_CODES = set(chain(HANDLE_CODES, POINTER_CODES))
-BINARAY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
+BINARY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 EMBEDDED_OBJ_STR = 'Embedded Object'
+
+BYTES = set(range(290, 300))  # bool
+
+INT16 = set(chain(
+    range(60, 80),
+    range(170, 180),
+    range(270, 290),
+    range(370, 390),
+    range(400, 410),
+    range(1060, 1071),
+))
+
+INT32 = set(chain(
+    range(90, 100),
+    range(420, 430),
+    range(440, 450),
+    range(450, 460),  # Long in DXF reference, ->signed<- or unsigned?
+    [1071]
+))
+
+INT64 = set(range(160, 169))
+
+DOUBLE = set(chain(
+    range(10, 60),
+    range(110, 150),
+    range(210, 240),
+    range(460, 470),
+    range(1010, 1060),
+))
+
+
+def _build_type_table(types):
+    table = {}
+    for caster, codes in types:
+        for code in codes:
+            table[code] = caster
+    return table
+
+
+TYPE_TABLE = _build_type_table([
+    # all group code < 0 are spacial tags for internal use
+    (float, DOUBLE),
+    (int, BYTES),
+    (int, INT16),
+    (int, INT32),
+    (int, INT64),
+])
 
 
 def handle_code(dxftype: str) -> int:
@@ -197,7 +244,7 @@ def dxftag(code: int, value: 'TagValue') -> DXFTag:
     Returns: :class:`DXFTag` or inherited
 
     """
-    if code in BINARAY_DATA:
+    if code in BINARY_DATA:
         return DXFBinaryTag(code, value)
     elif code in POINT_CODES:
         return DXFVertex(code, value)
@@ -210,75 +257,10 @@ def tuples_to_tags(iterable: Iterable[Tuple[int, 'TagValue']]) -> Iterable[DXFTa
     for code, value in iterable:
         if code in POINT_CODES:
             yield DXFVertex(code, value)
-        elif code in BINARAY_DATA:
+        elif code in BINARY_DATA:
             yield DXFBinaryTag.from_string(code, value)
         else:
             yield DXFTag(code, value)
-
-
-def _build_type_table(types):
-    table = {}
-    for caster, codes in types:
-        for code in codes:
-            table[code] = caster
-    return table
-
-
-TYPE_TABLE = _build_type_table([
-    # all group code < 0 are spacial tags for internal use, but not accessible by get_dxf_attrib()
-    (float, range(10, 60)),
-    (int, range(60, 100)),
-    (float, range(110, 150)),
-    (int, range(160, 170)),
-    (int, range(170, 180)),
-    (float, range(210, 240)),
-    (int, range(270, 290)),
-    (int, range(290, 300)),  # bool 1=True 0=False
-    (int, range(370, 390)),
-    (int, range(400, 410)),
-    (int, range(420, 430)),
-    (int, range(440, 460)),
-    (float, range(460, 470)),
-    (float, range(1010, 1060)),
-    (int, range(1060, 1072)),
-])
-
-BYTES = set(chain(  # Bool
-    range(290, 300),
-))
-
-INT16 = set(chain(
-    range(60, 80),
-    range(170, 180),
-    range(270, 290),
-    range(370, 390),
-    range(400, 410),
-    range(1060, 1071),
-))
-
-INT32 = set(chain(
-    range(90, 100),
-    range(420, 430),
-    range(440, 450),
-    range(450, 460),  # Long in DXF reference, ->signed<- or unsigned?
-    [1071]
-))
-
-INT64 = set(chain(
-    range(160, 169),
-))
-
-DOUBLE = set(chain(
-    range(10, 60),
-    range(110, 150),
-    range(210, 240),
-    range(460, 470),
-    range(1010, 1060),
-))
-
-BINARY_CHUNK = set(chain(
-    range(310, 320), [1004]
-))
 
 
 def is_valid_handle(handle: str) -> bool:
@@ -290,7 +272,7 @@ def is_valid_handle(handle: str) -> bool:
 
 
 def is_binary_data(code: int) -> bool:
-    return code in BINARAY_DATA
+    return code in BINARY_DATA
 
 
 def is_pointer_code(code: int) -> bool:
@@ -320,7 +302,7 @@ def strtag(tag: Union[DXFTag, Tuple[int, Any]]) -> str:
 def get_xcode_for(code) -> int:
     if code in HEX_HANDLE_CODES:
         return 1005
-    if code in BINARAY_DATA:
+    if code in BINARY_DATA:
         return 1004
     type_ = TYPE_TABLE.get(code, str)
     if type_ is int:

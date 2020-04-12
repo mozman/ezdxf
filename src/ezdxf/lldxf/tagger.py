@@ -5,9 +5,9 @@
 from typing import Iterable, TextIO, Iterator
 import struct
 from .types import DXFTag, DXFVertex, DXFBinaryTag
-from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_CHUNK
+from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_DATA
 from .const import DXFStructureError, DXFVersionError
-from .types import POINT_CODES, TYPE_TABLE, BINARAY_DATA
+from .types import POINT_CODES, TYPE_TABLE, BINARY_DATA
 from ezdxf.tools.codepage import toencoding
 
 
@@ -49,7 +49,7 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
             else:  # 2d point
                 point = (float(value), float(y))
             yield DXFVertex(code, point)  # 2d/3d point
-        elif code in BINARAY_DATA:
+        elif code in BINARY_DATA:
             yield DXFBinaryTag.from_string(code, value)
         else:  # single value tag: int, float or string
             yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
@@ -161,7 +161,7 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
             index += 2
 
         # decode next value
-        if code in BINARY_CHUNK:
+        if code in BINARY_DATA:
             length = data[index]
             index += 1
             value = data[index:index + length]
@@ -248,7 +248,7 @@ def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
                 except ValueError:  # internal exception
                     raise DXFStructureError('Invalid floating point values near line: {}.'.format(line))
                 yield DXFVertex(code, point)
-            elif code in BINARAY_DATA:
+            elif code in BINARY_DATA:
                 if isinstance(x, DXFBinaryTag):  # maybe pre compiled in low level tagger (binary DXF)
                     tag = x
                 else:

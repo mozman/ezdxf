@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import Any, TextIO, TYPE_CHECKING, Union, List, Iterable, BinaryIO
 from .types import TAG_STRING_FORMAT, cast_tag_value, DXFVertex
-from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_CHUNK
+from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_DATA
 from .tags import DXFTag, Tags
 from .const import LATEST_DXF_VERSION
 from ezdxf.tools import take2
@@ -90,7 +90,7 @@ class BinaryTagWriter(TagWriter):
     def write_tag2(self, code: int, value: Any) -> None:
         # Binary DXF files do not support comments!
         assert code != 999
-        if code in BINARY_CHUNK:
+        if code in BINARY_DATA:
             self._write_binary_chunks(code, value)
             return
         stream = self._stream
