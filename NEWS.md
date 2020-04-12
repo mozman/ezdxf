@@ -2,9 +2,10 @@
 News
 ====
 
-Version 0.12b3 - dev
---------------------
+Version 0.12 - 2020-04-12
+-------------------------
 
+- Release notes: https://ezdxf.mozman.at/release-v0-12.html
 - NEW: `Insert.block()` returns associated `BlockLayout()` or `None` if block not exist or is an XREF
 - NEW: `Insert.has_scaling` returns `True` if any axis scaling is applied
 - NEW: `Insert.has_uniform_scaling` returns `True` if scaling is uniform in x-, y- and z-axis.
@@ -27,7 +28,8 @@ Version 0.12b3 - dev
 - NEW: `Ellipse.minor_axis` property returns minor axis as `Vector`
 - NEW: Option `ezdxf.options.write_fixed_meta_data_for_testing`, writes always same timestamps and GUID
 - NEW: Support for loading and exporting proxy graphic encoded as binary data, by default disabled
-- NEW: `ezdxf.proxygraphic.ProxyGraphic()` class to examine binary encoded proxy graphic (Need example data for testing!)
+- NEW: `ezdxf.proxygraphic.ProxyGraphic()` class to examine binary encoded proxy graphic (Need more example data 
+        for testing!)
 - NEW: Get/set hyperlink for graphic entities
 - NEW: `odafc` add-on to use an installed ODA File Converter for reading and writing DWG files
 - NEW: Support for reading and writing Binary DXF files
@@ -68,6 +70,7 @@ Version 0.11.1 - 2020-02-29
 Version 0.11 - 2020-02-15
 -------------------------
 
+- Release notes: https://ezdxf.mozman.at/release-v0-11.html
 - Using standard git branches: 
   - `master`: development state
   - `stable`: latest stable release
