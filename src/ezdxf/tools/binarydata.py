@@ -119,7 +119,8 @@ class BitStream:
 
     def align(self, count=4) -> int:
         """ Align to byte border. """
-        byte_index = self.bit_index >> 3
+
+        byte_index = (self.bit_index >> 3) + bool(self.bit_index & 7)
         modulo = byte_index % count
         if modulo:
             byte_index += count - modulo
@@ -170,6 +171,8 @@ class BitStream:
         if value & 0x80:
             # 2er complement
             return -((~value & 0xff) + 1)
+        else:
+            return value
 
     def read_aligned_bytes(self, count: int) -> Sequence[int]:
         buffer = self.buffer
@@ -196,6 +199,8 @@ class BitStream:
         if value & 0x8000:
             # 2er complement
             return -((~value & 0xffff) + 1)
+        else:
+            return value
 
     def read_unsigned_long(self) -> int:
         """ Read an unsigned long (32 bit) from buffer. """
@@ -215,6 +220,8 @@ class BitStream:
         if value & 0x80000000:
             # 2er complement
             return -((~value & 0xffffffff) + 1)
+        else:
+            return value
 
     def read_float(self) -> float:
         if self.bit_index & 7:
