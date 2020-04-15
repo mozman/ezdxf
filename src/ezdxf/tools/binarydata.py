@@ -126,6 +126,10 @@ class BitStream:
             byte_index += count - modulo
         return byte_index << 3
 
+    def skip(self, count: int) -> None:
+        """ Skip `count` bits. """
+        self.bit_index += count
+
     def read_bit(self) -> int:
         """ Read one bit from buffer. """
         index = self.bit_index
@@ -279,6 +283,22 @@ class BitStream:
         else:
             return tuple(_read() for _ in range(count))
 
+    # LibreDWG: https://github.com/LibreDWG/libredwg/blob/master/src/bits.c
+    # Read 1 bitlonglong (compacted uint64_t) for REQUIREDVERSIONS, preview_size.
+    # ODA doc bug. ODA say 1-3 bits until the first 0 bit. See 3BLL.
+    # The first 3 bits indicate the length l (see paragraph 2.1). Then
+    # l bytes follow, which represent the number (the least significant
+    # byte is first).
+    def read_bit_long_long(self) -> int:
+        value = 0
+        shifting = 0
+        length = self.read_bits(3)  # or read_3_bits() ?
+        while length > 0:
+            value += (self.read_unsigned_byte() << shifting)
+            length -= 1
+            shifting += 8
+        return value
+
     def read_raw_double(self, count: int = 1) -> Union[float, Sequence[float]]:
         if count == 1:
             return self.read_float()
@@ -417,3 +437,40 @@ class BitStream:
                 return code, reference + offset
             if code == 12:
                 return code, reference - offset
+
+    def read_code(self, code: str):
+        """ Read data from bit stream by data codes defined in the ODA reference. """
+        if code == 'B':
+            return self.read_bit()
+        elif code == 'RC':
+            return self.read_unsigned_byte()
+        elif code == 'RS':
+            return self.read_signed_short()
+        elif code == 'BS':
+            return self.read_bit_short()
+        elif code == 'RL':
+            return self.read_signed_long()
+        elif code == 'BL':
+            return self.read_bit_long()
+        elif code == 'RD':
+            return self.read_raw_double()
+        elif code == '2RD':
+            return self.read_raw_double(2)
+        elif code == 'BD':
+            return self.read_bit_double()
+        elif code == '2BD':
+            return self.read_bit_double(2)
+        elif code == '3BD':
+            return self.read_bit_double(3)
+        elif code == 'T':
+            return self.read_text()
+        elif code == 'TV':
+            return self.read_text_variable()
+        elif code == 'H':
+            return self.read_handle()
+        elif code == 'BLL':
+            return self.read_bit_long_long()
+        elif code == 'CMC':
+            return self.read_cm_color()
+        raise ValueError(f'Unknown code: {code}')
+

@@ -9,6 +9,7 @@ ACAD_2007 = 'AC1021'
 ACAD_2010 = 'AC1024'
 ACAD_2013 = 'AC1027'
 ACAD_2018 = 'AC1032'
+ACAD_LATEST = ACAD_2018
 
 SUPPORTED_VERSIONS = [ACAD_13, ACAD_14, ACAD_2000]
 HEADER_ID = 0
@@ -30,4 +31,8 @@ class DwgCorruptedFileHeader(DwgError):
 
 
 class DwgCorruptedClassesSection(DwgError):
+    pass
+
+
+class DwgCorruptedHeaderSection(DwgError):
     pass

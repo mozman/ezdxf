@@ -9,8 +9,11 @@ from ezdxf.lldxf.types import DXFTag, DXFVertex, DXFBinaryTag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.drawing import Drawing
 from ezdxf.tools.binarydata import BitStream
+from ezdxf.tools.codepage import encoding_to_codepage
+from ezdxf.sections.headervars import HEADER_VAR_MAP
 
 from .const import *
+from . import header
 
 __all__ = ['readfile', 'load', 'Document', 'FileHeader']
 
@@ -51,15 +54,14 @@ class FileHeader:
         if ver not in SUPPORTED_VERSIONS:
             raise DwgVersionError(f'Not a DWG file or unsupported DWG version, signature: {ver}.')
         self.version: str = ver
-        self.encoding: str = 'cp1252'
+        codepage: int = struct.unpack_from('<h', data, 0x13)[0]
+        self.encoding = codepage_to_encoding.get(codepage, 'cp1252')
+        self.maintenance_release_version = data[0xB]
         self.sections = dict()
-
         if self.version in [ACAD_13, ACAD_14, ACAD_2000]:
             self.acad_13_14_15(data)
 
     def acad_13_14_15(self, data: bytes):
-        codepage: int = struct.unpack_from('<h', data, 0x13)[0]
-        self.encoding = codepage_to_encoding.get(codepage, 'cp1252')
         index = 0x15
         section_count: int = struct.unpack_from('<L', data, index)[0]
         index += 4
@@ -138,7 +140,35 @@ class Document:
         self.load_objects()
 
     def load_header(self) -> None:
+        hdr_vars = self.load_header_vars()
+        self.set_header_vars(hdr_vars)
+
+    def set_header_vars(self, hdr_vars: Dict):
         pass
+
+    def load_header_vars(self) -> Dict:
+        data = self.header_data()
+        index = 0
+        sentinel = data[index:index + 16]
+        index += 16
+        if sentinel != b'\xCF\x7B\x1F\x23\xFD\xDE\x38\xA9\x5F\x7C\x68\xB8\x4E\x6D\x33\x5F':
+            raise DwgCorruptedHeaderSection('Sentinel for start of HEADER section not found.')
+        size = struct.unpack_from('<L', data, index)[0]
+        index += 4
+        bs = BitStream(data[index: index + size], dxfversion=self.specs.version, encoding=self.specs.encoding)
+        hdr_vars = header.parse(bs)
+        index += (size + 2)  # skip crc
+        sentinel = data[index: index + 16]
+        if sentinel != b'\x30\x84\xE0\xDC\x02\x21\xC7\x56\xA0\x83\x97\x47\xB1\x92\xCC\xA0':
+            raise DwgCorruptedHeaderSection('Sentinel for end of HEADER section not found.')
+        return hdr_vars
+
+    def header_data(self) -> bytes:
+        if self.specs.version <= ACAD_2000:
+            seeker, section_size = self.specs.sections[HEADER_ID]
+            return self.data[seeker:seeker + section_size]
+        else:
+            return bytes()
 
     def load_classes(self) -> None:
         if self.specs.version <= ACAD_2000:
@@ -153,7 +183,7 @@ class Document:
         seeker, section_size = self.specs.sections[CLASSES_ID]
         sentinel = self.data[seeker: seeker + SENTINEL_SIZE]
         if sentinel != b'\x8D\xA1\xC4\xB8\xC4\xA9\xF8\xC5\xC0\xDC\xF4\x5F\xE7\xCF\xB6\x8A':
-            raise DwgCorruptedClassesSection('Sentinel for start of section not found.')
+            raise DwgCorruptedClassesSection('Sentinel for start of CLASSES section not found.')
 
         cls_tag = DXFTag(0, 'CLASS')
         classes = self.sections['CLASSES']
@@ -181,7 +211,7 @@ class Document:
                 DXFTag(3, app_name),
                 DXFTag(90, flags),
                 DXFTag(280, was_a_zombie),
-                DXFTag(281, 1 if item_class_id == 0x1f2 else 0)
+                DXFTag(281, int(item_class_id == 0x1f2))
             ]))
             self.dxf_object_types[class_num] = class_dxf_name
 
@@ -191,7 +221,7 @@ class Document:
         _index = seeker + (SENTINEL_SIZE + 6 + class_data_size)
         sentinel = self.data[_index: _index + SENTINEL_SIZE]
         if sentinel != b'\x72\x5E\x3B\x47\x3B\x56\x07\x3A\x3F\x23\x0B\xA0\x18\x30\x49\x75':
-            raise DwgCorruptedClassesSection('Sentinel for end of section not found.')
+            raise DwgCorruptedClassesSection('Sentinel for end of CLASSES section not found.')
 
     def classes_R2004(self) -> None:
         pass
