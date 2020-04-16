@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 from pathlib import Path
-from ezdxf.addons.dwg import Document
+from ezdxf.addons.dwg.loader import DwgDocument
 from ezdxf.addons.dwg.header import load_commands, DESCRIPTION, CMD_SET_VERSION, CMD_SKIP_BITS, CMD_SKIP_NEXT_IF, \
     CMD_SET_VAR, ACAD_LATEST
 
@@ -16,11 +16,17 @@ def dwg1() -> bytes:
 
 
 def test_load_classes(dwg1):
-    doc = Document(dwg1)
+    doc = DwgDocument(dwg1)
     doc.load()
     assert len(doc.dxf_object_types) == 15
     assert doc.dxf_object_types[500] == 'ACDBDICTIONARYWDFLT'
     assert doc.dxf_object_types[514] == 'LAYOUT'
+
+    classes = doc.doc.classes
+    cls_dict = classes.classes
+    assert len(cls_dict) == 15
+    assert classes.get('ACDBDICTIONARYWDFLT') is not None
+    assert classes.get('LAYOUT') is not None
 
 
 def test_header_commands():

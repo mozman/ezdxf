@@ -524,7 +524,7 @@ def _min_max_versions(version: str) -> Tuple[str, str]:
     return min_ver, max_ver
 
 
-def load_commands(desc: str) -> List[Sequence]:
+def load_commands(desc: str) -> List[Tuple[str, Any]]:
     commands = []
     lines = desc.split('\n')
     for line in lines:
@@ -548,7 +548,7 @@ def load_commands(desc: str) -> List[Sequence]:
     return commands
 
 
-def parse_bitstream(bs: BitStream, commands: List[Sequence]) -> Dict[str, Any]:
+def parse_bitstream(bs: BitStream, commands: List[Tuple[str, Any]]) -> Dict[str, Any]:
     version = bs.dxfversion
     min_ver = ACAD_13
     max_ver = ACAD_LATEST

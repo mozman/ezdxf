@@ -4,18 +4,24 @@
 from typing import Dict
 import struct
 
-from ezdxf.lldxf.loader import SectionDict
-from ezdxf.lldxf.types import DXFTag, DXFVertex, DXFBinaryTag
-from ezdxf.lldxf.tags import Tags
 from ezdxf.drawing import Drawing
 from ezdxf.tools.binarydata import BitStream
 from ezdxf.tools.codepage import encoding_to_codepage
 from ezdxf.sections.headervars import HEADER_VAR_MAP
 
+from ezdxf.sections.header import HeaderSection
+from ezdxf.sections.classes import ClassesSection
+from ezdxf.sections.tables import TablesSection
+from ezdxf.sections.blocks import BlocksSection
+from ezdxf.sections.entities import EntitySection
+from ezdxf.sections.objects import ObjectsSection
+from ezdxf.sections.acdsdata import AcDsDataSection
+from ezdxf.entities import DXFClass
+
 from .const import *
 from . import header
 
-__all__ = ['readfile', 'load', 'Document', 'FileHeader']
+__all__ = ['readfile', 'load', 'FileHeader']
 
 
 def readfile(filename: str) -> 'Drawing':
@@ -24,9 +30,8 @@ def readfile(filename: str) -> 'Drawing':
 
 
 def load(data: bytes) -> Drawing:
-    doc = Document(data)
-    doc.load()
-    return Drawing.from_section_dict(doc.sections)
+    doc = DwgDocument(data)
+    return doc.doc
 
 
 codepage_to_encoding = {
@@ -89,50 +94,24 @@ class FileHeader:
         print('Objects: seeker {0[0]} size: {0[1]}'.format(self.sections[2]))
 
 
-class Document:
+class DwgDocument:
     def __init__(self, data: bytes):
         self.data: bytes = data
         self.specs = FileHeader(data)
+        self.doc: Drawing = self._setup_doc()
         # Store DXF object types by class number (500+):
         self.dxf_object_types: Dict[int, str] = dict()
-        self.sections: SectionDict = {
-            'HEADER': [
-                Tags([
-                    DXFTag(0, 'SECTION'),
-                    DXFTag(2, 'HEADER'),
-                ])
-            ],
-            'CLASSES': [
-                Tags([
-                    DXFTag(0, 'SECTION'),
-                    DXFTag(2, 'CLASSES'),
-                ])
-            ],
-            'TABLES': [
-                Tags([
-                    DXFTag(0, 'SECTION'),
-                    DXFTag(2, 'TABLES'),
-                ])
-            ],
-            'BLOCKS': [
-                Tags([
-                    DXFTag(0, 'SECTION'),
-                    DXFTag(2, 'BLOCKS'),
-                ])
-            ],
-            'ENTITIES': [
-                Tags([
-                    DXFTag(0, 'SECTION'),
-                    DXFTag(2, 'ENTITIES'),
-                ])
-            ],
-            'OBJECTS': [
-                Tags([
-                    DXFTag(0, 'SECTION'),
-                    DXFTag(2, 'OBJECTS'),
-                ])
-            ],
-        }
+
+    def _setup_doc(self) -> Drawing:
+        doc = Drawing(dxfversion=self.specs.version)
+        doc.header = HeaderSection.new()
+        doc.classes = ClassesSection(doc)
+        # doc.tables = TablesSection(doc)
+        # doc.blocks = BlocksSection(doc)
+        # doc.entities = EntitySection(doc)
+        # doc.objects = ObjectsSection(doc)
+        # doc.acdsdata = AcDsDataSection(doc)
+        return doc
 
     def load(self):
         self.load_header()
@@ -185,8 +164,6 @@ class Document:
         if sentinel != b'\x8D\xA1\xC4\xB8\xC4\xA9\xF8\xC5\xC0\xDC\xF4\x5F\xE7\xCF\xB6\x8A':
             raise DwgCorruptedClassesSection('Sentinel for start of CLASSES section not found.')
 
-        cls_tag = DXFTag(0, 'CLASS')
-        classes = self.sections['CLASSES']
         bs = BitStream(
             self.data[seeker + SENTINEL_SIZE: seeker + section_size],
             dxfversion=self.specs.version,
@@ -197,23 +174,17 @@ class Document:
 
         while bs.bit_index < end_index:
             class_num = bs.read_bit_short()
-            flags = bs.read_bit_short()  # version?
-            app_name = bs.read_text()
-            cpp_class_name = bs.read_text()
-            class_dxf_name = bs.read_text()
-            was_a_zombie = bs.read_bit()
-            item_class_id = bs.read_bit_short()
-            # print((class_num, flags, app_name, class_dxf_name, cpp_class_name, was_a_zombie, item_class_id))
-            classes.append(Tags([
-                cls_tag,
-                DXFTag(1, class_dxf_name),
-                DXFTag(2, cpp_class_name),
-                DXFTag(3, app_name),
-                DXFTag(90, flags),
-                DXFTag(280, was_a_zombie),
-                DXFTag(281, int(item_class_id == 0x1f2))
-            ]))
-            self.dxf_object_types[class_num] = class_dxf_name
+            dxfattribs = {
+                'flags': bs.read_bit_short(),  # version?
+                'app_name': bs.read_text(),
+                'cpp_class_name': bs.read_text(),
+                'name': bs.read_text(),
+                'was_a_proxy': bs.read_bit(),
+                'is_an_entity': int(bs.read_bit_short() == 0x1f2),
+            }
+            dxfclass = DXFClass.new(dxfattribs=dxfattribs)
+            self.doc.classes.register(dxfclass)
+            self.dxf_object_types[class_num] = dxfclass.dxf.name
 
         # Ignore crc for the sake of speed.
         # _index = index + (20 + class_data_size)
