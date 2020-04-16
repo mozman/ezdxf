@@ -383,6 +383,8 @@ class BitStream:
             return self.read_text_unicode()
 
     def read_cm_color_cms(self) -> Tuple[int, str, str]:
+        """ Returns tuple (rgb, color_name, book_name).
+        """
         _ = self.read_bit_short()  # index always 0
         color_name = ''
         book_name = ''
@@ -394,7 +396,9 @@ class BitStream:
             book_name = self.read_text_variable()
         return rgb, color_name, book_name
 
-    def read_cm_color_enc(self):
+    def read_cm_color_enc(self) -> Union[int, Tuple[int, int, int, int]]:
+        """ Returns color index as int or tuple (rgb, color_handle, transparency_type, transparency).
+        """
         flags_and_index = self.read_bit_short()
         flags = flags_and_index >> 8
         index = flags_and_index & 0xff
@@ -406,7 +410,7 @@ class BitStream:
             if flags & 0x80:
                 rgb = self.read_bit_short() & 0x00ffffff
             if flags & 0x40:
-                color_handle = self.read_handle()
+                _, color_handle = self.read_handle()
             if flags & 0x20:
                 data = self.read_bit_long()
                 transparency_type = data >> 24
@@ -415,31 +419,35 @@ class BitStream:
         else:
             return index
 
-    def read_handle(self, reference=0) -> Tuple[int, int]:
+    def read_handle(self, reference: int = 0) -> int:
+        """ Returns handle as integer value. """
         code = self.read_bits(4)
-        counter = self.read_bits(4)
+        length = self.read_bits(4)
+        if code == 6:
+            return reference + 1
+        if code == 8:
+            return reference - 1
+
+        data = bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00')
+        for index in range(length):
+            data[index] = self.read_unsigned_byte()
+        offset = struct.unpack('<Q', data)[0]
+
         if code < 6:
-            handle = 0
-            while counter:
-                handle = handle << 8 + self.read_unsigned_byte()
-                counter -= 1
-            return code, handle
-        elif code == 6:
-            return code, reference + 1
-        elif code == 7:
-            return code, reference - 1
+            return offset
         else:
-            offset = 0
-            while counter:
-                offset = offset << 8 + self.read_unsigned_byte()
-                counter -= 1
             if code == 10:
-                return code, reference + offset
+                return reference + offset
             if code == 12:
-                return code, reference - offset
+                return reference - offset
+
+    def read_hex_handle(self, reference: int = 0) -> str:
+        """ Returns handle as hex string. """
+        return '%X' % self.read_handle(reference)
 
     def read_code(self, code: str):
-        """ Read data from bit stream by data codes defined in the ODA reference. """
+        """ Read data from bit stream by data codes defined in the ODA reference.
+        """
         if code == 'B':
             return self.read_bit()
         elif code == 'RC':
@@ -467,10 +475,9 @@ class BitStream:
         elif code == 'TV':
             return self.read_text_variable()
         elif code == 'H':
-            return self.read_handle()
+            return self.read_hex_handle()
         elif code == 'BLL':
             return self.read_bit_long_long()
         elif code == 'CMC':
             return self.read_cm_color()
         raise ValueError(f'Unknown code: {code}')
-
