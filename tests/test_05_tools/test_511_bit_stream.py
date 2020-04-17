@@ -86,5 +86,27 @@ def test_read_bitshort():
     assert BitStream(b'\x7f\x00').read_bit_short() == 252
 
 
+def test_read_modular_chars():
+    bs = BitStream(bytes([
+        0b11101001, 0b10010111, 0b11100110, 0b00110101,
+        0b10000010, 0b00100100,
+        0b10000101, 0b01001011,
+    ]))
+    mc = bs.read_modular_chars()
+    assert mc == 112823273
+    mc = bs.read_modular_chars()
+    assert mc == 4610
+    mc = bs.read_modular_chars()
+    assert mc == -1413
+
+
+def test_read_modular_shorts():
+    bs = BitStream(bytes([
+        0b00110001, 0b11110100, 0b10001101, 0b00000000,
+    ]))
+    ms = bs.read_modular_shorts()
+    assert ms == 4650033
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

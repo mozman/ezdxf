@@ -349,6 +349,41 @@ class BitStream:
         else:
             return tuple(_read() for _ in range(count))
 
+    def read_modular_chars(self) -> int:
+        """
+        Modular characters are a method of storing compressed integer values.
+        They consist of a stream of bytes, terminating when the high bit (8)
+        of the byte is 0 else another byte follows. Negative numbers are
+        indicated by bit 7 set in the last byte.
+
+        """
+        shifting = 0
+        value = 0
+        while True:
+            char = self.read_unsigned_byte()
+            if char & 0x80:
+                # bit 8 set = another char follows
+                value |= ((char & 0x7f) << shifting)
+                shifting += 7
+            else:
+                # bit 8 clear = end of modular char
+                # bit 7 set = negative number
+                value |= ((char & 0x3f) << shifting)
+                return -value if char & 0x40 else value
+
+    def read_modular_shorts(self) -> int:
+        """
+        Modular shorts are a method of storing compressed unsigned integer values.
+        Only 1 or 2 shorts in practical usage (1GB), if the high bit (16) of
+        the first short is set another short follows.
+
+        """
+        short = self.read_unsigned_short()
+        if short & 0x8000:
+            return (self.read_unsigned_short() << 15) | (short & 0x7fff)
+        else:
+            return short
+
     def read_bit_extrusion(self) -> Tuple[float, float, float]:
         if self.read_bit():
             return 0.0, 0.0, 1.0
