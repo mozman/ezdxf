@@ -6,7 +6,7 @@ import struct
 
 from ezdxf.drawing import Drawing
 from ezdxf.tools.binarydata import BitStream
-from ezdxf.tools.codepage import encoding_to_codepage
+from ezdxf.tools import codepage
 from ezdxf.sections.headervars import HEADER_VAR_MAP
 
 from ezdxf.sections.header import HeaderSection
@@ -104,7 +104,14 @@ class DwgDocument:
 
     def _setup_doc(self) -> Drawing:
         doc = Drawing(dxfversion=self.specs.version)
+        doc.encoding = self.specs.encoding
         doc.header = HeaderSection.new()
+
+        # Setup basic header variables not stored in the header section of the DWG file.
+        doc.header['$ACADVER'] = self.specs.version
+        doc.header['$ACADMAINTVER'] = self.specs.maintenance_release_version
+        doc.header['$DWGCODEPAGE'] = codepage.tocodepage(self.specs.encoding)
+
         doc.classes = ClassesSection(doc)
         # doc.tables = TablesSection(doc)
         # doc.blocks = BlocksSection(doc)
