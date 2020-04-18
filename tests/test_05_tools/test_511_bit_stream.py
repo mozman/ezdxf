@@ -108,5 +108,12 @@ def test_read_modular_shorts():
     assert ms == 4650033
 
 
+def test_read_object_type():
+    assert BitStream(bytes([0b00000000, 0b01000000])).read_object_type() == 1
+    assert BitStream(bytes([0b01000000, 0b01000000])).read_object_type() == 1 + 0x1f0
+    assert BitStream(bytes([0b10000000, 0b01000000, 0b01000000])).read_object_type() == 257
+    assert BitStream(bytes([0b11000000, 0b01000000, 0b01000000])).read_object_type() == 257
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

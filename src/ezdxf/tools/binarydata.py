@@ -117,14 +117,13 @@ class BitStream:
     def has_data(self) -> bool:
         return self.bit_index >> 3 < len(self.buffer)
 
-    def align(self, count=4) -> int:
+    def align(self, count: int) -> None:
         """ Align to byte border. """
-
         byte_index = (self.bit_index >> 3) + bool(self.bit_index & 7)
         modulo = byte_index % count
         if modulo:
             byte_index += count - modulo
-        return byte_index << 3
+        self.bit_index = byte_index << 3
 
     def skip(self, count: int) -> None:
         """ Skip `count` bits. """
@@ -453,6 +452,15 @@ class BitStream:
             return rgb, color_handle, transparency_type, transparency
         else:
             return index
+
+    def read_object_type(self) -> int:
+        bits = self.read_bits(2)
+        if bits == 0:
+            return self.read_unsigned_byte()
+        elif bits == 1:
+            return self.read_unsigned_byte() + 0x1f0
+        else:
+            return self.read_unsigned_short()
 
     def read_handle(self, reference: int = 0) -> int:
         """ Returns handle as integer value. """

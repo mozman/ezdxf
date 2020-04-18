@@ -36,3 +36,7 @@ class DwgCorruptedClassesSection(DwgError):
 
 class DwgCorruptedHeaderSection(DwgError):
     pass
+
+
+class CRCError(DwgError):
+    pass

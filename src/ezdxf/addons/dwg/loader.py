@@ -20,6 +20,7 @@ from ezdxf.entities import DXFClass
 
 from .const import *
 from . import header
+from .crc import crc8, crc32
 
 __all__ = ['readfile', 'load', 'FileHeader']
 
@@ -50,9 +51,17 @@ codepage_to_encoding = {
     36: 'cp1257',  # Baltic
 }
 
+FILE_HEADER_MAGIC = {
+    3: 0xa598,
+    4: 0x8101,
+    5: 0x3cc4,
+    6: 0x8461,
+}
+
 
 class FileHeader:
-    def __init__(self, data: bytes):
+    def __init__(self, data: bytes, crc_check=False):
+        self.crc_check = crc_check
         if len(data) < 6:
             raise DwgVersionError('Not a DWG file.')
         ver = data[:6].decode(errors='ignore')
@@ -79,7 +88,14 @@ class FileHeader:
             num, seeker, size = struct.unpack_from(fmt, data, index)
             index += record_size
             self.sections[num] = (seeker, size)
-        # skip crc
+
+        if self.crc_check:
+            # CRC from first byte of file until start of crc value
+            check = crc8(data[:index], seed=0) ^ FILE_HEADER_MAGIC[len(self.sections)]
+            crc = struct.unpack_from('<H', data, index)[0]
+            if crc != check:
+                raise CRCError('CRC error in file header.')
+
         index += 2
         sentinel = data[index: index + SENTINEL_SIZE]
         if sentinel != b'\x95\xA0\x4E\x28\x99\x82\x1A\xE5\x5E\x41\xE0\x5F\x9D\x3A\x4D\x00':
@@ -95,9 +111,10 @@ class FileHeader:
 
 
 class DwgDocument:
-    def __init__(self, data: bytes):
+    def __init__(self, data: bytes, crc_check=False):
         self.data: bytes = data
-        self.specs = FileHeader(data)
+        self.crc_check = crc_check
+        self.specs = FileHeader(data, crc_check=crc_check)
         self.doc: Drawing = self._setup_doc()
         # Store DXF object types by class number (500+):
         self.dxf_object_types: Dict[int, str] = dict()
@@ -134,17 +151,22 @@ class DwgDocument:
 
     def load_header_vars(self) -> Dict:
         data = self.header_data()
-        index = 0
-        sentinel = data[index:index + 16]
-        index += 16
+        sentinel = data[:16]
         if sentinel != b'\xCF\x7B\x1F\x23\xFD\xDE\x38\xA9\x5F\x7C\x68\xB8\x4E\x6D\x33\x5F':
             raise DwgCorruptedHeaderSection('Sentinel for start of HEADER section not found.')
+        index = 16
         size = struct.unpack_from('<L', data, index)[0]
         index += 4
         bs = BitStream(data[index: index + size], dxfversion=self.specs.version, encoding=self.specs.encoding)
         hdr_vars = header.parse(bs)
-        index += (size + 2)  # skip crc
-        sentinel = data[index: index + 16]
+        index += size
+        if self.crc_check:
+            check = struct.unpack_from('<H', data, index)[0]
+            # CRC of data from end of sentinel until start of crc value
+            crc = crc8(data[16:-18], seed=0xc0c1)
+            if check != crc:
+                raise CRCError('CRC error in header section.')
+        sentinel = data[-16:]
         if sentinel != b'\x30\x84\xE0\xDC\x02\x21\xC7\x56\xA0\x83\x97\x47\xB1\x92\xCC\xA0':
             raise DwgCorruptedHeaderSection('Sentinel for end of HEADER section not found.')
         return hdr_vars
