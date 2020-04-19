@@ -1,11 +1,12 @@
 # Copyright (c) 2014-2019, Manfred Moitzi
 # License: MIT License
-from ezdxf.tools.binarydata import hex_strings_to_bytes, hexstr_to_bytes
+from binascii import unhexlify
+from ezdxf.tools.binarydata import hex_strings_to_bytes
 from ezdxf.tools.binarydata import int_to_hexstr, bytes_to_hexstr
 
 
 def test_hexstr_to_bytes():
-    assert hexstr_to_bytes('FFFF') == b"\xff\xff"
+    assert unhexlify('FFFF') == b"\xff\xff"
 
 
 def test_hexstr_data_to_bytes_1():

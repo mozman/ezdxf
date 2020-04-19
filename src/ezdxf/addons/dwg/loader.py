@@ -192,16 +192,18 @@ class DwgDocument:
         sentinel = self.data[seeker: seeker + SENTINEL_SIZE]
         if sentinel != b'\x8D\xA1\xC4\xB8\xC4\xA9\xF8\xC5\xC0\xDC\xF4\x5F\xE7\xCF\xB6\x8A':
             raise DwgCorruptedClassesSection('Sentinel for start of CLASSES section not found.')
-
+        start_index = seeker + SENTINEL_SIZE
         bs = BitStream(
-            self.data[seeker + SENTINEL_SIZE: seeker + section_size],
+            self.data[start_index: seeker + section_size],
             dxfversion=self.specs.version,
             encoding=self.specs.encoding,
         )
         class_data_size = bs.read_unsigned_long()  # data size in bytes
-        end_index = (3 + class_data_size) << 3
+        end_sentinel_index = seeker + (SENTINEL_SIZE + 6 + class_data_size)
+        end_index = end_sentinel_index - 2
+        end_bit_index = (3 + class_data_size) << 3
 
-        while bs.bit_index < end_index:
+        while bs.bit_index < end_bit_index:
             class_num = bs.read_bit_short()
             dxfattribs = {
                 'flags': bs.read_bit_short(),  # version?
@@ -215,11 +217,14 @@ class DwgDocument:
             self.doc.classes.register(dxfclass)
             self.dxf_object_types[class_num] = dxfclass.dxf.name
 
-        # Ignore crc for the sake of speed.
-        # _index = index + (20 + class_data_size)
-        # crc = struct.unpack_from('<h', self.data, index)
-        _index = seeker + (SENTINEL_SIZE + 6 + class_data_size)
-        sentinel = self.data[_index: _index + SENTINEL_SIZE]
+        if self.crc_check and False:
+            check = struct.unpack_from('<H', self.data, end_index)[0]
+            # TODO: classes crc check
+            # Which data should be checked? This is not correct:
+            crc = crc8(self.data[start_index: end_index])
+            if check != crc:
+                raise CRCError('CRC error in classes section.')
+        sentinel = self.data[end_sentinel_index: end_sentinel_index + SENTINEL_SIZE]
         if sentinel != b'\x72\x5E\x3B\x47\x3B\x56\x07\x3A\x3F\x23\x0B\xA0\x18\x30\x49\x75':
             raise DwgCorruptedClassesSection('Sentinel for end of CLASSES section not found.')
 

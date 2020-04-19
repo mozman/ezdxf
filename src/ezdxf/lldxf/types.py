@@ -17,10 +17,11 @@ Required DXF tag interface:
 from typing import Union, Tuple, Iterable, Callable, Sequence, Any, TYPE_CHECKING
 from array import array
 from itertools import chain
+from binascii import unhexlify
 import reprlib
 from ezdxf.math.vector import Vector
 
-from ezdxf.tools.binarydata import hexstr_to_bytes, int_to_hexstr
+from ezdxf.tools.binarydata import int_to_hexstr
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
@@ -230,7 +231,7 @@ class DXFBinaryTag(DXFTag):
 
     @classmethod
     def from_string(cls, code: int, value: str):
-        return cls(code, hexstr_to_bytes(value))
+        return cls(code, unhexlify(value))
 
 
 def dxftag(code: int, value: 'TagValue') -> DXFTag:

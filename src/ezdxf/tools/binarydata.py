@@ -4,19 +4,14 @@
 from typing import Iterable, Any, Sequence, Union, Tuple
 from array import array
 import struct
+from binascii import unhexlify
 
 
 def hex_strings_to_bytes(data: Iterable[str]) -> bytes:
     """ Returns multiple hex strings `data` as bytes. """
     byte_array = array('B')
     for hexstr in data:
-        byte_array.extend(int(hexstr[index:index + 2], 16) for index in range(0, len(hexstr), 2))
-    return byte_array.tobytes()
-
-
-def hexstr_to_bytes(data: str) -> bytes:
-    """ Returns hex string `data` as bytes. """
-    byte_array = array('B', (int(data[index:index + 2], 16) for index in range(0, len(data), 2)))
+        byte_array.extend(unhexlify(hexstr))
     return byte_array.tobytes()
 
 
@@ -27,7 +22,7 @@ def int_to_hexstr(data: int) -> str:
 
 def bytes_to_hexstr(data: bytes) -> str:
     """ Returns `data` bytes as plain hex string. """
-    return ''.join(int_to_hexstr(byte) for byte in data)
+    return ''.join("%0.2X" % byte for byte in data)
 
 
 NULL_NULL = b'\x00\x00'
