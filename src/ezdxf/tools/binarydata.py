@@ -108,7 +108,7 @@ class BitStream:
 
     @property
     def has_data(self) -> bool:
-        return self.bit_index >> 3 < len(self.buffer)
+        return (self.bit_index >> 3) < len(self.buffer)
 
     def align(self, count: int) -> None:
         """ Align to byte border. """
@@ -175,8 +175,17 @@ class BitStream:
         start_index = self.bit_index >> 3
         end_index = start_index + count
         if end_index <= len(buffer):
-            self.bit_index += count << 3
+            self.bit_index += (count << 3)
             return buffer[start_index: end_index]
+        else:
+            raise EndOfBufferError('Unexpected end of buffer.')
+
+    def read_aligned_byte(self) -> int:
+        buffer = self.buffer
+        index = self.bit_index >> 3
+        if index <= len(buffer):
+            self.bit_index += 8
+            return buffer[index]
         else:
             raise EndOfBufferError('Unexpected end of buffer.')
 
@@ -349,10 +358,14 @@ class BitStream:
         indicated by bit 7 set in the last byte.
 
         """
+        aligned = self.bit_index & 7 == 0
         shifting = 0
         value = 0
         while True:
-            char = self.read_unsigned_byte()
+            if aligned:
+                char = self.read_aligned_byte()
+            else:
+                char = self.read_unsigned_byte()
             if char & 0x80:
                 # bit 8 set = another char follows
                 value |= ((char & 0x7f) << shifting)
@@ -370,10 +383,14 @@ class BitStream:
         of the byte is 0 else another byte follows.
 
         """
+        aligned = self.bit_index & 7 == 0
         shifting = 0
         value = 0
         while True:
-            char = self.read_unsigned_byte()
+            if aligned:
+                char = self.read_aligned_byte()
+            else:
+                char = self.read_unsigned_byte()
             value |= ((char & 0x7f) << shifting)
             shifting += 7
             # bit 8 set = another char follows

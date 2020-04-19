@@ -54,11 +54,9 @@ class DwgClassesSectionR2000(DwgSectionLoader):
             }
             yield class_num, DXFClass.new(dxfattribs=dxfattribs)
 
-        if self.crc_check and False:
+        if self.crc_check:
             check = struct.unpack_from('<H', self.data, end_index)[0]
-            # TODO: classes crc check
-            # Which data should be checked? This is not correct:
-            crc = crc8(self.data[start_index: end_index])
+            crc = crc8(self.data[start_index: end_index], seed=0xc0c1)
             if check != crc:
                 raise CRCError('CRC error in classes section.')
         sentinel = self.data[end_sentinel_index: end_sentinel_index + SENTINEL_SIZE]

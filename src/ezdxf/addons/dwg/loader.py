@@ -18,6 +18,7 @@ from .const import *
 from .fileheader import FileHeader
 from .header_section import load_header_section
 from .classes_section import load_classes_section
+from .objects_section import load_objects_map
 
 __all__ = ['readfile', 'load']
 
@@ -41,6 +42,7 @@ class DwgDocument:
         self.doc: Drawing = self._setup_doc()
         # Store DXF object types by class number:
         self.dxf_object_types: Dict[int, str] = dict()
+        self.objects_map: Dict[str, int] = dict()
 
     def _setup_doc(self) -> Drawing:
         doc = Drawing(dxfversion=self.specs.version)
@@ -63,6 +65,7 @@ class DwgDocument:
     def load(self):
         self.load_header()
         self.load_classes()
+        self.load_objects_map()
         self.load_objects()
         self.store_objects()
 
@@ -79,6 +82,10 @@ class DwgDocument:
         for class_num, dxfclass in cls_section.load_classes():
             self.doc.classes.register(dxfclass)
             self.dxf_object_types[class_num] = dxfclass.dxf.name
+
+    def load_objects_map(self) -> None:
+        section_data = load_objects_map(self.specs, self.data, self.crc_check)
+        self.objects_map = dict(section_data.handles())
 
     def load_objects(self) -> None:
         pass
