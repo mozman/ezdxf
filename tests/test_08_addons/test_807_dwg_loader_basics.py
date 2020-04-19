@@ -3,7 +3,7 @@
 import pytest
 from pathlib import Path
 from ezdxf.addons.dwg.loader import DwgDocument
-from ezdxf.addons.dwg.header_parser import load_commands, DESCRIPTION, \
+from ezdxf.addons.dwg.header_section import load_commands, HEADER_DESCRIPTION, \
     CMD_SET_VERSION, CMD_SKIP_BITS, CMD_SKIP_NEXT_IF, CMD_SET_VAR, ACAD_LATEST
 from ezdxf.addons.dwg.crc import crc8, crc32
 
@@ -46,7 +46,7 @@ def test_header_commands():
 
 
 def test_load_all():
-    commands = load_commands(DESCRIPTION)
+    commands = load_commands(HEADER_DESCRIPTION)
     assert len(commands) > 0
 
 
