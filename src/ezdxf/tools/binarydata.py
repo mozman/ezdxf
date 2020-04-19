@@ -15,11 +15,6 @@ def hex_strings_to_bytes(data: Iterable[str]) -> bytes:
     return byte_array.tobytes()
 
 
-def int_to_hexstr(data: int) -> str:
-    """ Returns integer `data` as plain hex string. """
-    return "%0.2X" % data
-
-
 def bytes_to_hexstr(data: bytes) -> str:
     """ Returns `data` bytes as plain hex string. """
     return ''.join("%0.2X" % byte for byte in data)

@@ -7,7 +7,7 @@ import functools
 import html
 from .juliandate import juliandate, calendardate
 from .rgb import int2rgb, rgb2int, aci2rgb
-from .binarydata import hex_strings_to_bytes, int_to_hexstr, bytes_to_hexstr
+from .binarydata import hex_strings_to_bytes, bytes_to_hexstr
 
 escape = functools.partial(html.escape, quote=True)
 

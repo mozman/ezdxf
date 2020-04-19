@@ -21,12 +21,11 @@ from binascii import unhexlify
 import reprlib
 from ezdxf.math.vector import Vector
 
-from ezdxf.tools.binarydata import int_to_hexstr
-
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
 
 TAG_STRING_FORMAT = '%3d\n%s\n'
+INT_TO_HEX = "%0.2X"
 POINT_CODES = {10, 11, 12, 13, 14, 15, 16, 17, 18, 110, 111, 112, 210, 211, 212, 213, 1010, 1011, 1012, 1013}
 
 GENERAL_MARKER = 0
@@ -223,7 +222,7 @@ class DXFBinaryTag(DXFTag):
 
     def tostring(self) -> str:  # value to string
         """ Returns binary value as single hex-string. """
-        return ''.join(int_to_hexstr(b) for b in self.value)
+        return ''.join(INT_TO_HEX % b for b in self.value)
 
     def dxfstr(self) -> str:
         """ Returns the DXF string for all vertex components. """

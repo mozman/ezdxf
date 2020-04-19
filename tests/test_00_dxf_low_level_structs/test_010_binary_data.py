@@ -2,7 +2,7 @@
 # License: MIT License
 from binascii import unhexlify
 from ezdxf.tools.binarydata import hex_strings_to_bytes
-from ezdxf.tools.binarydata import int_to_hexstr, bytes_to_hexstr
+from ezdxf.tools.binarydata import bytes_to_hexstr
 
 
 def test_hexstr_to_bytes():
@@ -15,10 +15,6 @@ def test_hexstr_data_to_bytes_1():
 
 def test_hexstr_data_to_bytes_2():
     assert hex_strings_to_bytes(['F0F0', '1A1C']) == b"\xF0\xF0\x1A\x1C"
-
-
-def test_byte_to_hexstr():
-    assert int_to_hexstr(65535) == 'FFFF'
 
 
 def test_bytes_to_hexstr():
