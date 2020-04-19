@@ -5,6 +5,9 @@ from typing import Iterable, Any, Sequence, Union, Tuple
 from array import array
 import struct
 from binascii import unhexlify
+from codecs import decode
+
+Bytes = Union[bytes, bytearray, memoryview]
 
 
 def hex_strings_to_bytes(data: Iterable[str]) -> bytes:
@@ -32,8 +35,8 @@ class ByteStream:
     """
 
     # Created for Proxy Entity Graphic decoding
-    def __init__(self, buffer: bytes, align: int = 4):
-        self.buffer: bytes = buffer
+    def __init__(self, buffer: Bytes, align: int = 4):
+        self.buffer = memoryview(buffer)
         self.index: int = 0
         self._align: int = align
 
@@ -77,7 +80,7 @@ class ByteStream:
             if buffer[end_index] == 0:
                 start_index = self.index
                 self.index = self.align(end_index + 1)
-                return buffer[start_index:end_index].decode(encoding)
+                return decode(buffer[start_index:end_index], encoding=encoding)
         raise EndOfBufferError('Unexpected end of buffer, did not detect terminating zero byte.')
 
     def read_padded_unicode_string(self) -> str:
@@ -89,7 +92,7 @@ class ByteStream:
             if buffer[end_index:end_index + 2] == NULL_NULL:
                 start_index = self.index
                 self.index = self.align(end_index + 2)
-                return buffer[start_index:end_index].decode('utf_16_le')
+                return decode(buffer[start_index:end_index], encoding='utf_16_le')
         raise EndOfBufferError('Unexpected end of buffer, did not detect terminating zero bytes.')
 
 
@@ -97,8 +100,8 @@ class BitStream:
     """ Process little endian binary data organized as bit stream. """
 
     # Created for DWG bit stream decoding
-    def __init__(self, buffer: bytes, dxfversion='AC1015', encoding='cp1252'):
-        self.buffer: bytes = buffer
+    def __init__(self, buffer: Bytes, dxfversion: str = 'AC1015', encoding: str = 'cp1252'):
+        self.buffer = memoryview(buffer)
         self.bit_index: int = 0
         self.dxfversion = dxfversion
         self.encoding = encoding

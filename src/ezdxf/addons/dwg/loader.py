@@ -1,7 +1,7 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 # Created: 2020-04-01
-from typing import Dict
+from typing import Dict, Union
 import struct
 
 from ezdxf.drawing import Drawing
@@ -23,6 +23,8 @@ from . import header
 from .crc import crc8, crc32
 
 __all__ = ['readfile', 'load', 'FileHeader']
+
+Bytes = Union[bytes, bytearray, memoryview]
 
 
 def readfile(filename: str) -> 'Drawing':
@@ -60,7 +62,7 @@ FILE_HEADER_MAGIC = {
 
 
 class FileHeader:
-    def __init__(self, data: bytes, crc_check=False):
+    def __init__(self, data: Bytes, crc_check=False):
         self.crc_check = crc_check
         if len(data) < 6:
             raise DwgVersionError('Not a DWG file.')
@@ -75,7 +77,7 @@ class FileHeader:
         if self.version in [ACAD_13, ACAD_14, ACAD_2000]:
             self.acad_13_14_15(data)
 
-    def acad_13_14_15(self, data: bytes):
+    def acad_13_14_15(self, data: Bytes):
         index = 0x15
         section_count: int = struct.unpack_from('<L', data, index)[0]
         index += 4
@@ -111,8 +113,8 @@ class FileHeader:
 
 
 class DwgDocument:
-    def __init__(self, data: bytes, crc_check=False):
-        self.data: bytes = data
+    def __init__(self, data: Bytes, crc_check=False):
+        self.data = memoryview(data)
         self.crc_check = crc_check
         self.specs = FileHeader(data, crc_check=crc_check)
         self.doc: Drawing = self._setup_doc()
@@ -171,7 +173,7 @@ class DwgDocument:
             raise DwgCorruptedHeaderSection('Sentinel for end of HEADER section not found.')
         return hdr_vars
 
-    def header_data(self) -> bytes:
+    def header_data(self) -> Bytes:
         if self.specs.version <= ACAD_2000:
             seeker, section_size = self.specs.sections[HEADER_ID]
             return self.data[seeker:seeker + section_size]

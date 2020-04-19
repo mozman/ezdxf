@@ -1,10 +1,12 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
+from typing import Union
 
 __all__ = ['crc8', 'crc32']
+Bytes = Union[bytes, bytearray, memoryview]
 
 
-def crc8(data: bytes, seed: int = 0) -> int:
+def crc8(data: Bytes, seed: int = 0) -> int:
     for byte in data:
         index = byte ^ (seed & 0xFF)
         seed = (seed >> 8) & 0xFF
@@ -12,7 +14,7 @@ def crc8(data: bytes, seed: int = 0) -> int:
     return seed
 
 
-def crc32(data: bytes, seed: int = 0) -> int:
+def crc32(data: Bytes, seed: int = 0) -> int:
     inverted_crc = ~seed
     for byte in data:
         inverted_crc = (inverted_crc >> 8) ^ CRC32_TABLE[(inverted_crc ^ byte) & 0xff]
