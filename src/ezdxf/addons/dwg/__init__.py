@@ -2,4 +2,6 @@
 # License: MIT License
 # Created: 2020-04-01
 
-from .loader import load, readfile, FileHeader
+from .loader import load, readfile
+from .fileheader import FileHeader
+

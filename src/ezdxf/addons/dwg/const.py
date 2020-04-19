@@ -1,5 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
+from typing import Union
 
 ACAD_13 = 'AC1012'
 ACAD_14 = 'AC1014'
@@ -16,6 +17,8 @@ HEADER_ID = 0
 CLASSES_ID = 1
 OBJECTS_ID = 2
 SENTINEL_SIZE = 16
+
+Bytes = Union[bytes, bytearray, memoryview]
 
 
 class DwgError(Exception):

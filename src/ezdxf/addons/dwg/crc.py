@@ -3,7 +3,8 @@
 from typing import Union
 
 __all__ = ['crc8', 'crc32']
-Bytes = Union[bytes, bytearray, memoryview]
+
+from .const import Bytes
 
 
 def crc8(data: Bytes, seed: int = 0) -> int:

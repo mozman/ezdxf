@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Dict, Any, List, Sequence, Tuple
+from typing import Dict, Any, List, Tuple
 from ezdxf.tools.binarydata import BitStream
 from ezdxf.lldxf.const import acad_release_to_dxf_version
 from .const import *
@@ -574,6 +574,6 @@ def parse_bitstream(bs: BitStream, commands: List[Tuple[str, Any]]) -> Dict[str,
     return hdr_vars
 
 
-def parse(bs: BitStream) -> Dict[str, Any]:
+def parse_header(bs: BitStream) -> Dict[str, Any]:
     commands = load_commands(DESCRIPTION)
     return parse_bitstream(bs, commands)

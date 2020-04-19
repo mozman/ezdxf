@@ -3,8 +3,8 @@
 import pytest
 from pathlib import Path
 from ezdxf.addons.dwg.loader import DwgDocument
-from ezdxf.addons.dwg.header import load_commands, DESCRIPTION, CMD_SET_VERSION, CMD_SKIP_BITS, CMD_SKIP_NEXT_IF, \
-    CMD_SET_VAR, ACAD_LATEST
+from ezdxf.addons.dwg.header_parser import load_commands, DESCRIPTION, \
+    CMD_SET_VERSION, CMD_SKIP_BITS, CMD_SKIP_NEXT_IF, CMD_SET_VAR, ACAD_LATEST
 from ezdxf.addons.dwg.crc import crc8, crc32
 
 FILE1 = Path(__file__).parent / '807_1.dwg'
