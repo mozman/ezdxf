@@ -22,13 +22,14 @@ from .classes_section import load_classes_section
 __all__ = ['readfile', 'load']
 
 
-def readfile(filename: str) -> 'Drawing':
+def readfile(filename: str, crc_check=False) -> 'Drawing':
     data = open(filename, 'rb').read()
-    return load(data)
+    return load(data, crc_check)
 
 
-def load(data: bytes) -> Drawing:
-    doc = DwgDocument(data)
+def load(data: bytes, crc_check=False) -> Drawing:
+    doc = DwgDocument(data, crc_check=crc_check)
+    doc.load()
     return doc.doc
 
 
