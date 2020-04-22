@@ -249,6 +249,8 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
             elif dxftype in {'CIRCLE', 'ARC'}:
                 # Non uniform scaling: ARC and CIRCLE converted to ELLIPSE
                 entity.dxf.radius = entity.dxf.radius * uniform_scaling_factor
+            elif dxftype == 'ELLIPSE' and not has_non_uniform_scaling:
+                pass  # nothing else to do
             elif dxftype == 'ELLIPSE' and has_non_uniform_scaling:
                 ellipse = cast('Ellipse', entity)
                 # Transform axis

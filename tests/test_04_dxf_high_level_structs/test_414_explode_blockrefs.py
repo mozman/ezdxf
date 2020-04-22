@@ -144,5 +144,16 @@ def test_04_explode_blockref_with_attrib(doc, msp, entitydb):
     assert text.dxf.insert == (1.5, 2.6), 'ATTRIB already located in WCS'
 
 
+def test_05_examine_uniform_scaled_ellipse(doc, msp):
+    blk = doc.blocks.new('EllipseBlk')
+    blk.add_ellipse((0, 0), major_axis=(2, 0), ratio=0.5)
+    blkref = msp.add_blockref('EllipseBlk', insert=(2, 2)).scale(2)
+    ellipse = list(blkref.virtual_entities())[0]
+    assert ellipse.dxftype() == 'ELLIPSE'
+    assert ellipse.dxf.center == (2, 2)
+    assert ellipse.dxf.major_axis == (4, 0)
+    assert ellipse.dxf.ratio == 0.5
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
