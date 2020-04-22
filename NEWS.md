@@ -6,6 +6,7 @@ Version 0.12.1 - 2020-04-xx
 ---------------------------
 
 - BUGFIX: fixed uniform scaled ellipse handling in `explode.virtual_block_reference_entities()`
+- BUGFIX: fixed crash caused by floating point inaccuracy in `Vector.angle_between()` (Matt Broadway)
 
 Version 0.12 - 2020-04-12
 -------------------------
