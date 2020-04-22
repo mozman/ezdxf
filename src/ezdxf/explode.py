@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, cast, Union
+from typing import TYPE_CHECKING, Iterable, cast, Union, Tuple, Generator
 import math
 import logging
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
@@ -115,8 +115,9 @@ def angle_to_param(ratio: float, angle: float, quadrant: int = 0) -> float:
     return result
 
 
-def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor: float = None) -> Iterable[
-    'DXFGraphic']:
+def virtual_block_reference_entities(block_ref: 'Insert',
+                                     uniform_scaling_factor: float = None,
+                                     only_return_skipped_entities: bool = False) -> Iterable['DXFGraphic']:
     """
     Yields 'virtual' parts of block reference `block_ref`. This method is meant to examine the the block reference
     entities without the need to explode the block reference.
@@ -128,6 +129,8 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
         block_ref: Block reference entity (INSERT)
         uniform_scaling_factor: override uniform scaling factor for text entities (TEXT, ATTRIB, MTEXT)  and
                                 HATCH pattern, default is ``max(abs(xscale), abs(yscale),  abs(zscale))``
+        only_return_skipped_entities: rather than returning the entities whose transformation is supported,
+                                return any entities that were skipped for any reason.
 
     .. warning::
 
@@ -141,25 +144,26 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
     assert block_ref.dxftype() == 'INSERT'
     Ellipse = cast('Ellipse', factory.cls('ELLIPSE'))
 
-    def disassemble(layout):
+    def disassemble(layout) -> Generator[Tuple[bool, 'DXFGraphic'], None, None]:
         for entity in layout:
             dxftype = entity.dxftype()
             if dxftype == 'ATTDEF':  # do not explode ATTDEF entities
+                yield True, entity
                 continue
 
             if has_non_uniform_scaling:
                 if dxftype in {'ARC', 'CIRCLE'}:
                     # convert ARC to ELLIPSE
-                    yield Ellipse.from_arc(entity)
+                    yield False, Ellipse.from_arc(entity)
                     continue
                 if dxftype in {'LWPOLYLINE', 'POLYLINE'} and entity.has_arc:
                     # disassemble (LW)POLYLINE into LINE and ARC segments
                     for segment in entity.virtual_entities():
                         # convert ARC to ELLIPSE
                         if segment.dxftype() == 'ARC':
-                            yield Ellipse.from_arc(segment)
+                            yield False, Ellipse.from_arc(segment)
                         else:
-                            yield segment
+                            yield False, segment
                     continue
 
             # Copy entity with all DXF attributes
@@ -167,6 +171,7 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                 copy = entity.copy()
             except DXFTypeError:
                 logger.debug(f'(Virtual Block Reference Entities) Ignoring non copyable entity {str(entity)}')
+                yield True, entity
                 continue  # non copyable entities will be ignored
 
             if copy.dxftype() == 'HATCH':
@@ -181,12 +186,13 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                     # This causes an DXF structure error for AutoCAD.
                     # todo: requires testing
                     logger.debug(f'(Virtual Block Reference Entities) Ignoring {str(entity)} for non uniform scaling.')
+                    yield True, entity
                     continue
 
                     # For the case that arc and ellipse transformation works correct someday:
                     # copy.paths.arc_edges_to_ellipse_edges()
 
-            yield copy
+            yield False, copy
 
     brcs = block_ref.brcs()
     block_layout = block_ref.block()
@@ -216,7 +222,12 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
         uniform_scaling_factor = 1
         has_non_uniform_scaling = False
 
-    for entity in disassemble(block_layout):
+    for entity_skipped, entity in disassemble(block_layout):
+        if entity_skipped:
+            if only_return_skipped_entities:
+                yield entity
+            continue
+
         dxftype = entity.dxftype()
 
         if has_non_uniform_scaling and dxftype == 'ELLIPSE':
@@ -238,6 +249,8 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
             entity.transform_to_wcs(brcs)
         except NotImplementedError:  # entities without 'transform_to_wcs' support will be ignored
             logger.debug(f'(Virtual Block Reference Entities) Ignoring non transformable entity {str(entity)}')
+            if only_return_skipped_entities:
+                yield entity
             continue
 
         if has_scaling:
@@ -300,8 +313,12 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                     # hatch.pattern is already scaled by the stored pattern_scale value
                     hatch.set_pattern_definition(hatch.pattern.as_list(), uniform_scaling_factor)
             else:  # unsupported entity will be ignored
+                if only_return_skipped_entities:
+                    yield entity
                 continue
-        yield entity
+
+        if not only_return_skipped_entities:
+            yield entity
 
 
 def explode_entity(entity: 'DXFGraphic', target_layout: 'BaseLayout' = None) -> 'EntityQuery':

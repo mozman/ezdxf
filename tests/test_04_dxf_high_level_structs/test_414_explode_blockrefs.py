@@ -4,6 +4,8 @@ import pytest
 import ezdxf
 import math
 
+from ezdxf.explode import virtual_block_reference_entities
+
 
 @pytest.fixture(scope='module')
 def doc():
@@ -153,6 +155,19 @@ def test_05_examine_uniform_scaled_ellipse(doc, msp):
     assert ellipse.dxf.center == (2, 2)
     assert ellipse.dxf.major_axis == (4, 0)
     assert ellipse.dxf.ratio == 0.5
+
+
+def test_06_return_skipped_entities(doc, msp):
+    blk = doc.blocks.new('test_block')
+    blk.add_attdef('attrib')
+    blk.add_line((0, 0), (1, 0))
+    blkref = msp.add_blockref('test_block', insert=(2, 2))
+    entities = list(virtual_block_reference_entities(blkref, None))
+    assert len(entities) == 1
+    assert entities[0].dxftype() == 'LINE'
+    skipped_entities = list(virtual_block_reference_entities(blkref, None, only_return_skipped_entities=True))
+    assert len(skipped_entities) == 1
+    assert skipped_entities[0].dxftype() == 'ATTDEF'
 
 
 if __name__ == '__main__':
