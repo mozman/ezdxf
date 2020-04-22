@@ -162,10 +162,15 @@ def test_06_return_skipped_entities(doc, msp):
     blk.add_attdef('attrib')
     blk.add_line((0, 0), (1, 0))
     blkref = msp.add_blockref('test_block', insert=(2, 2))
-    entities = list(virtual_block_reference_entities(blkref, None))
+    skipped_entities = []
+
+    def on_entity_skipped(entity):
+        skipped_entities.append(entity)
+
+    entities = list(virtual_block_reference_entities(blkref, 1.0, skipped_entity_callback=on_entity_skipped))
+
     assert len(entities) == 1
     assert entities[0].dxftype() == 'LINE'
-    skipped_entities = list(virtual_block_reference_entities(blkref, None, only_return_skipped_entities=True))
     assert len(skipped_entities) == 1
     assert skipped_entities[0].dxftype() == 'ATTDEF'
 
