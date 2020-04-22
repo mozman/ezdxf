@@ -18,6 +18,7 @@ from .fileheader import FileHeader
 from .header_section import load_header_section
 from .classes_section import load_classes_section
 from .objects_section import load_objects_map
+from .objects import Directory
 
 __all__ = ['readfile', 'load', 'document']
 
@@ -63,6 +64,9 @@ class DwgDocument:
 
         # Entity handle to file location mapping
         self.objects_map: Dict[str, int] = dict()
+
+        # Entity Directory
+        self.object_directory: Directory = Directory()
 
     def _setup_doc(self) -> Drawing:
         doc = Drawing(dxfversion=self.specs.version)
@@ -110,6 +114,7 @@ class DwgDocument:
 
     def load_objects_directory(self) -> None:
         pass
+        # self.object_directory.load(self.specs, self.data, self.objects_map, self.crc_check)
 
     def store_header(self):
         pass

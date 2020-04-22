@@ -481,6 +481,8 @@ class BitStream:
             return index
 
     def read_object_type(self) -> int:
+        if self.dxfversion < 'AC1024':  # < R2010
+            return self.read_bit_short()
         bits = self.read_bits(2)
         if bits == 0:
             return self.read_unsigned_byte()

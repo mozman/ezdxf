@@ -25,6 +25,10 @@ class DwgError(Exception):
     pass
 
 
+class DwgObjectError(DwgError):
+    pass
+
+
 class DwgVersionError(DwgError):
     pass
 
