@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.12.1 - 2020-04-xx
+---------------------------
+
+- BUGFIX: fixed uniform scaled ellipse handling in `explode.virtual_block_reference_entities()`
+
 Version 0.12 - 2020-04-12
 -------------------------
 
