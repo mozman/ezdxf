@@ -249,30 +249,29 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
             elif dxftype in {'CIRCLE', 'ARC'}:
                 # Non uniform scaling: ARC and CIRCLE converted to ELLIPSE
                 entity.dxf.radius = entity.dxf.radius * uniform_scaling_factor
-            elif dxftype == 'ELLIPSE' and not has_non_uniform_scaling:
-                pass  # nothing else to do
-            elif dxftype == 'ELLIPSE' and has_non_uniform_scaling:
-                ellipse = cast('Ellipse', entity)
-                # Transform axis
-                major_axis = ellipse.dxf.major_axis
-                if not math.isclose(major_axis.dot(minor_axis), 0):
-                    major_axis, _, ratio = rytz_axis_construction(major_axis, minor_axis)
-                else:
-                    ratio = minor_axis.magnitude / major_axis.magnitude
+            elif dxftype == 'ELLIPSE':
+                if has_non_uniform_scaling:
+                    ellipse = cast('Ellipse', entity)
+                    # Transform axis
+                    major_axis = ellipse.dxf.major_axis
+                    if not math.isclose(major_axis.dot(minor_axis), 0):
+                        major_axis, _, ratio = rytz_axis_construction(major_axis, minor_axis)
+                    else:
+                        ratio = minor_axis.magnitude / major_axis.magnitude
 
-                ellipse.dxf.major_axis = major_axis
-                ellipse.dxf.ratio = max(ratio, 1e-6)
-                if open_ellipse:
-                    # adjusting start- and end parameter
-                    center = ellipse.dxf.center  # transformed center point
-                    start_angle = major_axis.angle_between(start_point - center)
-                    end_angle = major_axis.angle_between(end_point - center)
-                    # todo: quadrant detection may fail if the rytz's axis construction algorithm is applied
-                    ellipse.dxf.start_param = angle_to_param(ratio, start_angle, quadrant(start_param))
-                    ellipse.dxf.end_param = angle_to_param(ratio, end_angle, quadrant(end_param))
+                    ellipse.dxf.major_axis = major_axis
+                    ellipse.dxf.ratio = max(ratio, 1e-6)
+                    if open_ellipse:
+                        # adjusting start- and end parameter
+                        center = ellipse.dxf.center  # transformed center point
+                        start_angle = major_axis.angle_between(start_point - center)
+                        end_angle = major_axis.angle_between(end_point - center)
+                        # todo: quadrant detection may fail if the rytz's axis construction algorithm is applied
+                        ellipse.dxf.start_param = angle_to_param(ratio, start_angle, quadrant(start_param))
+                        ellipse.dxf.end_param = angle_to_param(ratio, end_angle, quadrant(end_param))
 
-                if ellipse.dxf.ratio > 1:
-                    ellipse.swap_axis()
+                    if ellipse.dxf.ratio > 1:
+                        ellipse.swap_axis()
             elif dxftype == 'MTEXT':
                 # Scale MTEXT height/width just by uniform_scaling.
                 entity.dxf.char_height *= uniform_scaling_factor
