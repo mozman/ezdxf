@@ -131,8 +131,7 @@ def virtual_block_reference_entities(block_ref: 'Insert',
         block_ref: Block reference entity (INSERT)
         uniform_scaling_factor: override uniform scaling factor for text entities (TEXT, ATTRIB, MTEXT)  and
                                 HATCH pattern, default is ``max(abs(xscale), abs(yscale),  abs(zscale))``
-        skipped_entity_callback: called whenever the transformation of an entity is not supported and so was
-                                skipped.
+        skipped_entity_callback: called whenever the transformation of an entity is not supported and so was skipped.
 
     .. warning::
 

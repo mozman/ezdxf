@@ -4,8 +4,6 @@ import pytest
 import ezdxf
 import math
 
-from ezdxf.explode import virtual_block_reference_entities
-
 
 @pytest.fixture(scope='module')
 def doc():
@@ -167,7 +165,7 @@ def test_06_return_skipped_entities(doc, msp):
     def on_entity_skipped(entity):
         skipped_entities.append(entity)
 
-    entities = list(virtual_block_reference_entities(blkref, 1.0, skipped_entity_callback=on_entity_skipped))
+    entities = list(blkref.virtual_entities(skipped_entity_callback=on_entity_skipped))
 
     assert len(entities) == 1
     assert entities[0].dxftype() == 'LINE'
