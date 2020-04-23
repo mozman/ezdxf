@@ -195,6 +195,9 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
 
     has_scaling = block_ref.has_scaling
     if has_scaling:
+        # Non uniform scaling will produce incorrect results for some entities!
+        # Mirroring about an axis is handled like non uniform scaling! (-1, 1, 1)
+        has_non_uniform_scaling = not block_ref.has_uniform_scaling
         xscale = block_ref.dxf.xscale
         yscale = block_ref.dxf.yscale
         zscale = block_ref.dxf.zscale
@@ -203,14 +206,6 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
             uniform_scaling_factor = float(uniform_scaling_factor)
         else:
             uniform_scaling_factor = block_ref.text_scaling
-
-        # Non uniform scaling will produce incorrect results for some entities!
-        if xscale == yscale == zscale:
-            has_non_uniform_scaling = False
-            if xscale == 1:  # yscale == 1, zscale == 1
-                has_scaling = False
-        else:
-            has_non_uniform_scaling = True
     else:
         xscale, yscale, zscale = (1, 1, 1)
         uniform_scaling_factor = 1
@@ -248,9 +243,11 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                 pass  # nothing else to do
             elif dxftype in {'CIRCLE', 'ARC'}:
                 # Non uniform scaling: ARC and CIRCLE converted to ELLIPSE
+                # todo: ARC - check mirroring by scaling (-1)
                 entity.dxf.radius = entity.dxf.radius * uniform_scaling_factor
             elif dxftype == 'ELLIPSE':
                 if has_non_uniform_scaling:
+                    # todo: ELLIPSE - check mirroring by scaling (-1)
                     ellipse = cast('Ellipse', entity)
                     # Transform axis
                     major_axis = ellipse.dxf.major_axis
@@ -277,9 +274,11 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                         ellipse.swap_axis()
             elif dxftype == 'MTEXT':
                 # Scale MTEXT height/width just by uniform_scaling.
+                # todo: MTEXT - check mirroring by scaling (-1)
                 entity.dxf.char_height *= uniform_scaling_factor
                 entity.dxf.width *= uniform_scaling_factor
             elif dxftype in {'TEXT', 'ATTRIB'}:
+                # todo: TEXT - check mirroring by scaling (-1)
                 # Scale TEXT height just by uniform_scaling.
                 entity.dxf.height *= uniform_scaling_factor
             elif dxftype == 'INSERT':
