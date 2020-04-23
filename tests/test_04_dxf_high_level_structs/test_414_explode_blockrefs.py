@@ -155,5 +155,28 @@ def test_05_examine_uniform_scaled_ellipse(doc, msp):
     assert ellipse.dxf.ratio == 0.5
 
 
+def test_06_skipped_entities_callback(doc, msp):
+    blk = doc.blocks.new('test_block')
+    hatch = blk.add_hatch()
+    edge_path = hatch.paths.add_edge_path()
+    edge_path.add_arc((0, 0))
+    blk.add_line((0, 0), (1, 0))
+    blkref = msp.add_blockref('test_block', insert=(0, 0)).place((0, 0), (1, 2, 3))
+    skipped_entities = []
+
+    def on_entity_skipped(entity, reason):
+        skipped_entities.append((entity, reason))
+
+    assert not blkref.has_uniform_scaling
+    assert hatch.paths.has_critical_elements()
+    entities = list(blkref.virtual_entities(non_uniform_scaling=True, skipped_entity_callback=on_entity_skipped))
+
+    assert len(entities) == 1
+    assert entities[0].dxftype() == 'LINE'
+    assert len(skipped_entities) == 1
+    assert skipped_entities[0][0].dxftype() == 'HATCH'
+    assert skipped_entities[0][1] == 'unsupported non-uniform scaling'
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
