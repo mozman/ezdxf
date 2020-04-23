@@ -263,6 +263,7 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                         try:
                             major_axis, _, ratio = rytz_axis_construction(major_axis, minor_axis)
                         except ArithmeticError:  # axis construction error - skip entity
+                            skipped_entity_callback(entity, 'axis construction error - bug report would be nice.')
                             continue
                     else:
                         ratio = minor_axis.magnitude / major_axis.magnitude
