@@ -116,6 +116,12 @@ def test_has_scaling():
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={'zscale': 2})
     assert entity.has_scaling is True
     assert entity.has_uniform_scaling is False
+    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+        'xscale': -2,  # mirroring has the same problems like non uniform scaling
+        'yscale': 2,
+        'zscale': 2,
+    })
+    assert entity.has_uniform_scaling is False
 
 
 def test_load_from_text(entity):
