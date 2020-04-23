@@ -254,8 +254,11 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                     ellipse = cast('Ellipse', entity)
                     # Transform axis
                     major_axis = ellipse.dxf.major_axis
-                    if not math.isclose(major_axis.dot(minor_axis), 0):
-                        major_axis, _, ratio = rytz_axis_construction(major_axis, minor_axis)
+                    if not math.isclose(major_axis.dot(minor_axis), 0, abs_tol=1e-9):
+                        try:
+                            major_axis, _, ratio = rytz_axis_construction(major_axis, minor_axis)
+                        except ArithmeticError:  # axis construction error - skip entity
+                            continue
                     else:
                         ratio = minor_axis.magnitude / major_axis.magnitude
 
