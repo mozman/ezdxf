@@ -451,7 +451,7 @@ class Insert(DXFGraphic):
 
     def virtual_entities(self,
                          non_uniform_scaling=False,
-                         skipped_entity_callback: Optional[Callable[['DXFGraphic'], None]] = None
+                         skipped_entity_callback: Optional[Callable[['DXFGraphic', str], None]] = None
                          ) -> Iterable[DXFGraphic]:
         """
         Yields "virtual" entities of a block reference. This method is meant to examine the block reference
