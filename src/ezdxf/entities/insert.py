@@ -451,11 +451,14 @@ class Insert(DXFGraphic):
 
     def virtual_entities(self,
                          non_uniform_scaling=False,
-                         skipped_entity_callback: Optional[Callable[['DXFGraphic', str], None]] = None
+                         skipped_entity_callback: Optional[Callable[[DXFGraphic, str], None]] = None
                          ) -> Iterable[DXFGraphic]:
         """
         Yields "virtual" entities of a block reference. This method is meant to examine the block reference
-        entities at the "exploded" location without really "exploding" the block reference.
+        entities at the "exploded" location without really "exploding" the block reference. The
+        `skipped_entity_callback()` will be called for all entities which are not processed, signature:
+        :code:`skipped_entity_callback(entity: DXFEntity, reason: str)`, `entity` is the original (untransformed)
+        DXF entity of the block definition, the `reason` string is an explanation why the entity was skipped.
 
         This entities are not stored in the entity database, have no handle and are not assigned to any layout.
         It is possible to convert this entities into regular drawing entities by adding the entities to the

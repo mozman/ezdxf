@@ -122,7 +122,10 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                                      ) -> Iterable['DXFGraphic']:
     """
     Yields 'virtual' parts of block reference `block_ref`. This method is meant to examine the the block reference
-    entities without the need to explode the block reference.
+    entities without the need to explode the block reference. The `skipped_entity_callback()` will be called for all
+    entities which are not processed, signature: :code:`skipped_entity_callback(entity: DXFEntity, reason: str)`,
+    `entity` is the original (untransformed) DXF entity of the block definition, the `reason` string is an
+    explanation why the entity was skipped.
 
     This entities are located at the 'exploded' positions, but are not stored in the entity database, have no handle
     and are not assigned to any layout.
@@ -263,7 +266,7 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                         try:
                             major_axis, _, ratio = rytz_axis_construction(major_axis, minor_axis)
                         except ArithmeticError:  # axis construction error - skip entity
-                            skipped_entity_callback(entity, 'axis construction error - bug report would be nice.')
+                            skipped_entity_callback(entity, 'axis construction error - please send a bug report.')
                             continue
                     else:
                         ratio = minor_axis.magnitude / major_axis.magnitude
