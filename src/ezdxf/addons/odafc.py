@@ -107,11 +107,11 @@ def readfile(filename: str, version: str = None, audit=False) -> Optional[Drawin
         version = _version
 
     version = map_version(version)
-    cmd = _odafc_cmd(name, in_folder, tmp_folder, fmt='DXF', version=version, audit=audit)
+    cmd = _odafc_cmd(name, str(in_folder), str(tmp_folder), fmt='DXF', version=version, audit=audit)
     _execute_odafc(cmd)
 
     if dxf_temp_file.exists():
-        doc = ezdxf.readfile(dxf_temp_file)
+        doc = ezdxf.readfile(str(dxf_temp_file))
         dxf_temp_file.unlink()
         doc.filename = infile.with_suffix('.dxf')
         return doc
