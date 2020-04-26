@@ -389,11 +389,15 @@ class Insert(DXFGraphic):
         else:
             insert = Vector(insert)
 
+        ez = Vector(self.dxf.extrusion)
+        if ez.magnitude == 0:
+            ez = Vector(0,0,1)
+
         brcs = BRCS(
             insert=ocs.to_wcs(insert),
             ux=ocs.to_wcs(X_AXIS) * sx,
             uy=ocs.to_wcs(Y_AXIS) * sy,
-            uz=Vector(self.dxf.extrusion).normalize(sz),
+            uz=ez.normalize(sz),
         )
         brcs._rotate_local_z(math.radians(self.dxf.rotation))
         block_layout = self.block()

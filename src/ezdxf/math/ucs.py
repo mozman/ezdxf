@@ -27,7 +27,11 @@ class OCS:
     """
 
     def __init__(self, extrusion: 'Vertex' = Z_AXIS):
-        Az = Vector(extrusion).normalize()
+        Az = Vector(extrusion) #.normalize()
+        if Az.magnitude == 0:
+            Az = Vector(0,0,1)
+        else:
+            Az = Az.normalize()
         self.transform = not Az.isclose(Z_AXIS)
         if self.transform:
             if (abs(Az.x) < 1 / 64.) and (abs(Az.y) < 1 / 64.):
@@ -619,6 +623,10 @@ class BRCS(TransformUSCToOCSMixin):
              angle: rotation angle in radians
 
         """
-        t = Matrix44.axis_rotate(self._matrix.uz.normalize(), angle)
+        if self._matrix.uz.magnitude == 0:
+            z = Vector(0,0,1)
+        else:
+            z = self._matrix.uz.normalize()
+        t = Matrix44.axis_rotate(z, angle)
         ux, uy = t.transform_vectors([self._matrix.ux, self._matrix.uy])
         self._matrix = Matrix33(ux, uy, self._matrix.uz)

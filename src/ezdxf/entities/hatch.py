@@ -963,7 +963,7 @@ class EdgePath:
 
 
 def _transform_2d_ocs_vertices(ucs, vertices, elevation, extrusion) -> List[Tuple[float, float]]:
-    ocs_vertices = (Vector(x, y, elevation) for x, y in vertices)
+    ocs_vertices = (Vector(v[0], v[1], elevation) for v in vertices)
     return [(v.x, v.y) for v in ucs.ocs_points_to_ocs(ocs_vertices, extrusion=extrusion)]
 
 
