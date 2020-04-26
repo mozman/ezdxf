@@ -169,7 +169,7 @@ class AcDsRecord:
     def __init__(self, tags: Tags):
         self._dxftype = tags[0]
         self.flags = tags[1]
-        self.sections = [Section(tags) for tags in group_tags(islice(tags, 2, None), splitcode=2)]
+        self.sections = [Section(group) for group in group_tags(islice(tags, 2, None), splitcode=2)]
 
     def dxftype(self) -> str:
         return 'ACDSRECORD'
