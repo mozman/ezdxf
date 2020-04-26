@@ -118,8 +118,11 @@ class BitStream:
             byte_index += count - modulo
         self.bit_index = byte_index << 3
 
-    def skip(self, count: int) -> None:
-        """ Skip `count` bits. """
+    def reset(self, index: int = 0) -> None:
+        self.bit_index = index
+
+    def move(self, count: int) -> None:
+        """ Move index by `count` bits. """
         self.bit_index += count
 
     def read_bit(self) -> int:

@@ -1,7 +1,8 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional, Any
 import struct
+from abc import abstractmethod
 
 from ezdxf.tools.binarydata import BitStream
 from .const import *
@@ -125,27 +126,41 @@ TYPE_TO_DXF_NAME = {
 # WIPEOUTVARIABLE
 # XRECORD >> 0x4F
 
-class DwgObject:
+
+class DwgRootObject:
+    """ Common super class for DwgObject() and DwgEntity(). """
+
     def __init__(self, specs: FileHeader, data: Bytes, handle: str = ''):
         self.specs = specs
         # data start after the leading size value as modular shorts or modular chars
         self.data: Bytes = data
         self.dxfname: str = ''
-        self.handle: str = handle
-        self.owner: str = ''
-        self.object_type: int = 0  # 0 == unused!
-        self.object_common_data_location = 0  # start location of common object data in bits
-        self.object_data_size: int = 0  # object data size in bits or 'endbit' of pre-handles section
-        self.object_data_location: int = 0  # start location of object specific data in bits
+        self.dxfattribs: Dict[str, Any] = dict()
+        self.dxfattribs['handle'] = handle
         self.persistent_reactors_count: int = 0
         self.persistent_reactors: List[str] = []  # list of handles as hex string
         self.has_xdictionary = False
         self.xdictionary: str = ''  # handle to XDictionary as hex string
         self.has_data_store_content = False
-        self.handle_stream_size: int = 0  # size in bits
-        self.object_handles_location: int = 0  # start location of object specific handles in bits
+
+        # set by init_data_stream():
+        self.handle_stream_size: int = 0  # size in bits, required for later usage?
+        self.object_data_start: int = 0  # start of object data - first bit of object type
+        self.data_stream = self.init_data_stream()
+
+        # set by load_common_data():
+        self.object_type: int = 0  # 0 == unused!
+        self.object_data_size: int = 0
         self.load_common_data()
-        self.load_common_handles()
+
+        # R13+: All handles are stored in the handle stream
+        self.handle_stream: BitStream = self.init_handle_stream()
+
+        # R2007+: All Strings are stored in the string stream
+        self.string_stream: Optional[BitStream] = self.init_string_stream()
+
+        # Data loading process:
+        self.load_data()
 
     @property
     def version(self):
@@ -155,45 +170,93 @@ class DwgObject:
     def encoding(self):
         return self.specs.encoding
 
-    def load_common_data(self) -> None:
+    @property
+    def handle(self) -> str:
+        return self.dxfattribs['handle']
+
+    @property
+    def handle_section_start(self) -> int:
+        return self.object_data_start + self.object_data_size
+
+    def init_data_stream(self) -> BitStream:
         version = self.version
         bs = BitStream(self.data, version, self.encoding)
         if version >= ACAD_2010:
             self.handle_stream_size = bs.read_unsigned_modular_chars()
+        self.object_data_start = bs.bit_index
+        return bs
+
+    def load_common_data(self) -> None:
+        version = self.version
+        bs = self.data_stream
+        bs.reset(self.object_data_start)
         self.object_type = bs.read_object_type()
 
+        # Read objects data size for R2000+
         if ACAD_2000 <= version <= ACAD_2007:
+            # object data size in bits or 'endbit' of pre-handles section
+            # start is first bit of object type?
             self.object_data_size = bs.read_unsigned_long()
+        elif version >= ACAD_2010:
+            # todo: R2010+ - calculate object size in bits
+            pass
+
+        # Read handle and check if equal to objects map entry
         handle = bs.read_hex_handle()
         if handle != self.handle:
             raise DwgObjectError(
                 f'Handle stored inside of object (#{handle}) does not match handle in objects map (#{self.handle}).')
+
+        # Entity Extended data
         extended_data_size = bs.read_bit_short()
         if extended_data_size > 0:
             # todo: implement extended data loader
-            bs.skip(extended_data_size * 8)
-        if ACAD_13 <= version <= ACAD_14:
-            self.object_data_size = bs.read_unsigned_long()
-        # common?
-        self.persistent_reactors_count = bs.read_bit_long()
-        if version >= ACAD_2004:
-            self.has_xdictionary = bool(bs.read_bit())
-        if version >= ACAD_2013:
-            self.has_data_store_content = bool(bs.read_bit())
-        self.object_data_location = bs.bit_index
+            bs.move(extended_data_size * 8)
+        # Here is the data fork of DwgObject and DwgEntity.
 
     def init_handle_stream(self) -> BitStream:
         bs = BitStream(self.data, self.specs.version)
-        bs.bit_index = self.object_data_location + self.object_data_size
+        bs.reset(self.handle_section_start)
         return bs
 
-    def load_common_handles(self) -> None:
-        bs = self.init_handle_stream()
-        self.owner = bs.read_handle()
+    def init_string_stream(self) -> Optional[BitStream]:
+        if self.version >= ACAD_2007:
+            bs = BitStream(self.data, self.specs.version)
+            bs.reset(self.handle_section_start - 1)
+            if bs.read_bit():  # string stream present
+                # ODA error: string stream size calculation - 16 bytes should be 16 bits
+                bs.move(-17)  # 1 bit and 1 short back
+                size = bs.read_unsigned_short()  # 1 short forward
+                if size & 0x8000:
+                    bs.move(-32)  # 2 shorts back
+                    hi_size = bs.read_unsigned_short()  # 1 short forward
+                    size = (size & 0x7fff) | (hi_size << 15)
+                bs.move(-16)  # 1 short back, set index to start of size or hi_size value
+                # string stream starts backward from from start location of size or hi_size value
+                bs.move(-size)
+                return bs
+        return None
+
+    def load_data(self) -> None:
+        self.load_specific_data()
+        self.load_common_handles()
+        self.load_specific_handles()
+
+    @abstractmethod
+    def load_specific_data(self):
+        pass
+
+    def load_common_handles(self) -> BitStream:
+        bs = self.handle_stream = self.init_handle_stream()
+        self.dxfattribs['owner'] = bs.read_handle()
         self.persistent_reactors.extend(bs.read_hex_handle() for _ in range(self.persistent_reactors_count))
         if self.has_xdictionary:
             self.xdictionary = bs.read_hex_handle()
-        self.object_handles_location = bs.bit_index
+        return bs
+
+    @abstractmethod
+    def load_specific_handles(self):
+        pass
 
     def update_dxfname(self, dxf_object_types: Dict[int, str]) -> None:
         object_type = self.object_type
@@ -208,6 +271,101 @@ class DwgObject:
             raise DwgObjectError(f'Invalid/unknown object type: {object_type}.')
 
 
+class DwgObject(DwgRootObject):
+    def load_common_data(self) -> None:
+        super().load_common_data()
+        version = self.version
+        # Data stream is located after extended object data (EED in ODS 5.4.1 chapter 20.1)
+        bs = self.data_stream
+        if version <= ACAD_14:
+            self.object_data_size = bs.read_unsigned_long()  # in bits
+        # Error in ODS: this entry is present in all DWG version and not R13-R14 only
+        self.persistent_reactors_count = bs.read_bit_long()
+        if version >= ACAD_2004:
+            self.has_xdictionary = not bool(bs.read_bit())
+            # todo: how is this flag stored in R2000 and prior?
+        if version >= ACAD_2013:
+            self.has_data_store_content = bool(bs.read_bit())
+        # Specific objects data follow (ODS 5.4.1 chapter 20.1)
+
+
+class DwgEntity(DwgRootObject):
+    def __init__(self, specs: FileHeader, data: Bytes, handle: str = ''):
+        self.relative_owner_handle = False
+        self.linkers_present = False
+        self.linetype_flags: int = 0
+        self.plotstyle_flags: int = 0
+        self.material_flags: int = 0
+        self.has_full_visual_style = False
+        self.has_face_visual_style = False
+        self.has_edge_visual_style = False
+        super().__init__(specs, data, handle)
+
+    def load_common_data(self) -> None:
+        super().load_common_data()
+        version = self.version
+        # Data stream is located after extended object data (EED in ODS 5.4.1 chapter 20.4.1)
+        bs = self.data_stream
+        dxfattribs = self.dxfattribs
+
+        graphic_image = bs.read_bit()
+        if graphic_image:
+            if version < ACAD_2010:
+                image_size = bs.read_unsigned_long()  # in bytes
+            else:
+                image_size = bs.read_bit_long_long()  # in bytes
+            bs.move(image_size << 3)  # skip graphic
+
+        if version <= ACAD_14:
+            self.object_data_size = bs.read_unsigned_long()  # in bits
+
+        self.relative_owner_handle = False
+        entity_mode = bs.read_bits(2)
+        if entity_mode == 0:
+            self.relative_owner_handle = True
+        elif entity_mode == 1:
+            dxfattribs['paperspace'] = 1
+        elif entity_mode == 2:
+            dxfattribs['paperspace'] = 0
+
+        self.persistent_reactors_count = bs.read_bit_long(2)
+
+        if version >= ACAD_2004:
+            self.has_xdictionary = not bool(bs.read_bit())
+
+        if version >= ACAD_2013:
+            self.has_data_store_content = bool(bs.read_bit())
+
+        if version <= ACAD_14:
+            self.linetype_flags = 0 if bs.read_bit() else 3
+
+        self.linkers_present = not bool(bs.read_bit())
+        if version < ACAD_2004:
+            dxfattribs['color'] = bs.read_cm_color()
+        else:
+            pass  # todo: encoded color
+
+        dxfattribs['ltscale'] = bs.read_bit_double()
+
+        if version >= ACAD_2000:
+            self.linetype_flags = bs.read_bits(2)
+            self.plotstyle_flags = bs.read_bits(2)
+
+        if version >= ACAD_2007:
+            self.material_flags = bs.read_bits(2)
+            dxfattribs['shadow_mode'] = bs.read_unsigned_byte()
+
+        if version >= ACAD_2010:
+            self.has_full_visual_style = bool(bs.read_bit())
+            self.has_face_visual_style = bool(bs.read_bit())
+            self.has_edge_visual_style = bool(bs.read_bit())
+
+        dxfattribs['invisible'] = bs.read_bit_short()
+
+        if version >= ACAD_2000:
+            dxfattribs['lineweight'] = bs.read_signed_byte()
+
+
 def dwg_object_data_size(data: Bytes, location: int, version: str) -> Tuple[int, int]:
     bs = BitStream(data[location: location + 4])
     if version >= ACAD_2010:
@@ -216,6 +374,17 @@ def dwg_object_data_size(data: Bytes, location: int, version: str) -> Tuple[int,
         object_size = bs.read_modular_shorts()
     size_size = bs.bit_index >> 3
     return location + size_size, object_size
+
+
+def dwg_object_type(data: bytes, version: str) -> int:
+    """ Read object type from DWG object data stream, `data` has to start
+    after object size (first MS in chapter 20.1).
+
+    """
+    bs = BitStream(data, version)
+    if version >= ACAD_2010:
+        bs.read_unsigned_modular_chars()
+    return bs.read_object_type()
 
 
 class Directory:

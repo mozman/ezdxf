@@ -126,7 +126,7 @@ def parse_bitstream(bs: BitStream, commands: List[Tuple[str, Any]]) -> Dict[str,
         if cmd == CMD_SET_VERSION:
             min_ver, max_ver = params
         elif cmd == CMD_SKIP_BITS:
-            bs.skip(int(params))
+            bs.move(int(params))
         elif cmd == CMD_SKIP_NEXT_IF:
             skip_next_cmd = eval(params, None, {'header': hdr_vars})
         elif cmd == CMD_SET_VAR:
