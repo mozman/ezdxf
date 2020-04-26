@@ -300,6 +300,16 @@ def test_angle_between(vcls):
     assert math.isclose(angle, math.pi / 4)
 
 
+def test_angle_between_outside_domain():
+    v1 = Vector(721.046967113573, 721.0469671135688, 0.0)
+    v2 = Vector(-721.0469671135725, -721.0469671135688, 0.0)
+    angle = v1.angle_between(v2)
+    assert math.isclose(angle, math.pi)
+    # reverse order, same result
+    angle = v2.angle_between(v1)
+    assert math.isclose(angle, math.pi)
+
+
 def test_rotate(vcls):
     assert vcls((2, 2)).rotate_deg(90) == (-2, 2)
 

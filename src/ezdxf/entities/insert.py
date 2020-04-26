@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-16
-from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict
+from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict, Callable
 import math
 from ezdxf.math import Vector, UCS, BRCS, X_AXIS, Y_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -449,10 +449,16 @@ class Insert(DXFGraphic):
 
         return explode_block_reference(self, target_layout=target_layout)
 
-    def virtual_entities(self, non_uniform_scaling=False) -> Iterable[DXFGraphic]:
+    def virtual_entities(self,
+                         non_uniform_scaling=False,
+                         skipped_entity_callback: Optional[Callable[[DXFGraphic, str], None]] = None
+                         ) -> Iterable[DXFGraphic]:
         """
         Yields "virtual" entities of a block reference. This method is meant to examine the block reference
-        entities at the "exploded" location without really "exploding" the block reference.
+        entities at the "exploded" location without really "exploding" the block reference. The
+        `skipped_entity_callback()` will be called for all entities which are not processed, signature:
+        :code:`skipped_entity_callback(entity: DXFEntity, reason: str)`, `entity` is the original (untransformed)
+        DXF entity of the block definition, the `reason` string is an explanation why the entity was skipped.
 
         This entities are not stored in the entity database, have no handle and are not assigned to any layout.
         It is possible to convert this entities into regular drawing entities by adding the entities to the
@@ -470,6 +476,7 @@ class Insert(DXFGraphic):
 
         Args:
             non_uniform_scaling: enable non uniform scaling if ``True``, see warning
+            skipped_entity_callback: called whenever the transformation of an entity is not supported and so was skipped
 
         .. versionadded:: 0.12
             experimental feature
@@ -478,7 +485,7 @@ class Insert(DXFGraphic):
         if non_uniform_scaling is False and not self.has_uniform_scaling:
             return []
 
-        return virtual_block_reference_entities(self)
+        return virtual_block_reference_entities(self, skipped_entity_callback=skipped_entity_callback)
 
     def add_auto_attribs(self, values: Dict[str, str]) -> 'Insert':
         """

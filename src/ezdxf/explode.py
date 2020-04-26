@@ -1,12 +1,13 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, cast, Union
-import math
 import logging
-from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
-from ezdxf.query import EntityQuery
-from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS, quadrant
+import math
+from typing import TYPE_CHECKING, Iterable, cast, Union, Generator, Callable, Optional
+
 from ezdxf.entities import factory
+from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
+from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS, quadrant
+from ezdxf.query import EntityQuery
 
 logger = logging.getLogger('ezdxf')
 
@@ -115,11 +116,16 @@ def angle_to_param(ratio: float, angle: float, quadrant: int = 0) -> float:
     return result
 
 
-def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor: float = None) -> Iterable[
-    'DXFGraphic']:
+def virtual_block_reference_entities(block_ref: 'Insert',
+                                     uniform_scaling_factor: float = None,
+                                     skipped_entity_callback: Optional[Callable[['DXFGraphic', str], None]] = None
+                                     ) -> Iterable['DXFGraphic']:
     """
     Yields 'virtual' parts of block reference `block_ref`. This method is meant to examine the the block reference
-    entities without the need to explode the block reference.
+    entities without the need to explode the block reference. The `skipped_entity_callback()` will be called for all
+    entities which are not processed, signature: :code:`skipped_entity_callback(entity: DXFEntity, reason: str)`,
+    `entity` is the original (untransformed) DXF entity of the block definition, the `reason` string is an
+    explanation why the entity was skipped.
 
     This entities are located at the 'exploded' positions, but are not stored in the entity database, have no handle
     and are not assigned to any layout.
@@ -128,6 +134,7 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
         block_ref: Block reference entity (INSERT)
         uniform_scaling_factor: override uniform scaling factor for text entities (TEXT, ATTRIB, MTEXT)  and
                                 HATCH pattern, default is ``max(abs(xscale), abs(yscale),  abs(zscale))``
+        skipped_entity_callback: called whenever the transformation of an entity is not supported and so was skipped.
 
     .. warning::
 
@@ -140,11 +147,14 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
     """
     assert block_ref.dxftype() == 'INSERT'
     Ellipse = cast('Ellipse', factory.cls('ELLIPSE'))
+    if skipped_entity_callback is None:
+        def skipped_entity_callback(entity, reason):
+            logger.debug(f'(Virtual Block Reference Entities) Ignoring {str(entity)}: "{reason}"')
 
-    def disassemble(layout):
+    def disassemble(layout) -> Generator['DXFGraphic', None, None]:
         for entity in layout:
             dxftype = entity.dxftype()
-            if dxftype == 'ATTDEF':  # do not explode ATTDEF entities
+            if dxftype == 'ATTDEF':  # do not explode ATTDEF entities. Already available in Insert.attribs
                 continue
 
             if has_non_uniform_scaling:
@@ -166,7 +176,7 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
             try:
                 copy = entity.copy()
             except DXFTypeError:
-                logger.debug(f'(Virtual Block Reference Entities) Ignoring non copyable entity {str(entity)}')
+                skipped_entity_callback(entity, 'non copyable')
                 continue  # non copyable entities will be ignored
 
             if copy.dxftype() == 'HATCH':
@@ -180,7 +190,7 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                     # None uniform scaling produces incorrect results for the arc and ellipse transformations.
                     # This causes an DXF structure error for AutoCAD.
                     # todo: requires testing
-                    logger.debug(f'(Virtual Block Reference Entities) Ignoring {str(entity)} for non uniform scaling.')
+                    skipped_entity_callback(entity, 'unsupported non-uniform scaling')
                     continue
 
                     # For the case that arc and ellipse transformation works correct someday:
@@ -195,6 +205,9 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
 
     has_scaling = block_ref.has_scaling
     if has_scaling:
+        # Non uniform scaling will produce incorrect results for some entities!
+        # Mirroring about an axis is handled like non uniform scaling! (-1, 1, 1)
+        has_non_uniform_scaling = not block_ref.has_uniform_scaling
         xscale = block_ref.dxf.xscale
         yscale = block_ref.dxf.yscale
         zscale = block_ref.dxf.zscale
@@ -203,20 +216,13 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
             uniform_scaling_factor = float(uniform_scaling_factor)
         else:
             uniform_scaling_factor = block_ref.text_scaling
-
-        # Non uniform scaling will produce incorrect results for some entities!
-        if xscale == yscale == zscale:
-            has_non_uniform_scaling = False
-            if xscale == 1:  # yscale == 1, zscale == 1
-                has_scaling = False
-        else:
-            has_non_uniform_scaling = True
     else:
         xscale, yscale, zscale = (1, 1, 1)
         uniform_scaling_factor = 1
         has_non_uniform_scaling = False
 
     for entity in disassemble(block_layout):
+
         dxftype = entity.dxftype()
 
         if has_non_uniform_scaling and dxftype == 'ELLIPSE':
@@ -237,7 +243,7 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
         try:
             entity.transform_to_wcs(brcs)
         except NotImplementedError:  # entities without 'transform_to_wcs' support will be ignored
-            logger.debug(f'(Virtual Block Reference Entities) Ignoring non transformable entity {str(entity)}')
+            skipped_entity_callback(entity, 'non transformable')
             continue
 
         if has_scaling:
@@ -248,36 +254,43 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                 pass  # nothing else to do
             elif dxftype in {'CIRCLE', 'ARC'}:
                 # Non uniform scaling: ARC and CIRCLE converted to ELLIPSE
+                # todo: ARC - check mirroring by scaling (-1)
                 entity.dxf.radius = entity.dxf.radius * uniform_scaling_factor
-            elif dxftype == 'ELLIPSE' and not has_non_uniform_scaling:
-                pass  # nothing else to do
-            elif dxftype == 'ELLIPSE' and has_non_uniform_scaling:
-                ellipse = cast('Ellipse', entity)
-                # Transform axis
-                major_axis = ellipse.dxf.major_axis
-                if not math.isclose(major_axis.dot(minor_axis), 0):
-                    major_axis, _, ratio = rytz_axis_construction(major_axis, minor_axis)
-                else:
-                    ratio = minor_axis.magnitude / major_axis.magnitude
+            elif dxftype == 'ELLIPSE':
+                if has_non_uniform_scaling:
+                    # todo: ELLIPSE - check mirroring by scaling (-1)
+                    ellipse = cast('Ellipse', entity)
+                    # Transform axis
+                    major_axis = ellipse.dxf.major_axis
+                    if not math.isclose(major_axis.dot(minor_axis), 0, abs_tol=1e-9):
+                        try:
+                            major_axis, _, ratio = rytz_axis_construction(major_axis, minor_axis)
+                        except ArithmeticError:  # axis construction error - skip entity
+                            skipped_entity_callback(entity, 'axis construction error - please send a bug report.')
+                            continue
+                    else:
+                        ratio = minor_axis.magnitude / major_axis.magnitude
 
-                ellipse.dxf.major_axis = major_axis
-                ellipse.dxf.ratio = max(ratio, 1e-6)
-                if open_ellipse:
-                    # adjusting start- and end parameter
-                    center = ellipse.dxf.center  # transformed center point
-                    start_angle = major_axis.angle_between(start_point - center)
-                    end_angle = major_axis.angle_between(end_point - center)
-                    # todo: quadrant detection may fail if the rytz's axis construction algorithm is applied
-                    ellipse.dxf.start_param = angle_to_param(ratio, start_angle, quadrant(start_param))
-                    ellipse.dxf.end_param = angle_to_param(ratio, end_angle, quadrant(end_param))
+                    ellipse.dxf.major_axis = major_axis
+                    ellipse.dxf.ratio = max(ratio, 1e-6)
+                    if open_ellipse:
+                        # adjusting start- and end parameter
+                        center = ellipse.dxf.center  # transformed center point
+                        start_angle = major_axis.angle_between(start_point - center)
+                        end_angle = major_axis.angle_between(end_point - center)
+                        # todo: quadrant detection may fail if the rytz's axis construction algorithm is applied
+                        ellipse.dxf.start_param = angle_to_param(ratio, start_angle, quadrant(start_param))
+                        ellipse.dxf.end_param = angle_to_param(ratio, end_angle, quadrant(end_param))
 
-                if ellipse.dxf.ratio > 1:
-                    ellipse.swap_axis()
+                    if ellipse.dxf.ratio > 1:
+                        ellipse.swap_axis()
             elif dxftype == 'MTEXT':
                 # Scale MTEXT height/width just by uniform_scaling.
+                # todo: MTEXT - check mirroring by scaling (-1)
                 entity.dxf.char_height *= uniform_scaling_factor
                 entity.dxf.width *= uniform_scaling_factor
             elif dxftype in {'TEXT', 'ATTRIB'}:
+                # todo: TEXT - check mirroring by scaling (-1)
                 # Scale TEXT height just by uniform_scaling.
                 entity.dxf.height *= uniform_scaling_factor
             elif dxftype == 'INSERT':
@@ -300,7 +313,9 @@ def virtual_block_reference_entities(block_ref: 'Insert', uniform_scaling_factor
                     # hatch.pattern is already scaled by the stored pattern_scale value
                     hatch.set_pattern_definition(hatch.pattern.as_list(), uniform_scaling_factor)
             else:  # unsupported entity will be ignored
+                skipped_entity_callback(entity, 'unsupported entity')
                 continue
+
         yield entity
 
 

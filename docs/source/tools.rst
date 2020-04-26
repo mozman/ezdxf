@@ -17,8 +17,6 @@ Some handy tool functions used internally by ``ezdxf``.
 
 .. autofunction:: guid
 
-.. autofunction:: int_to_hexstr
-
 .. autofunction:: bytes_to_hexstr
 
 .. autofunction:: suppress_zeros

@@ -474,7 +474,14 @@ class Vector:
 
         """
         v2 = self.__class__(other)
-        return math.acos(self.dot(v2)/self.magnitude/v2.magnitude)
+        cos_theta = self.dot(v2) / (self.magnitude * v2.magnitude)
+        abs_cos_theta = math.fabs(cos_theta)
+        if abs_cos_theta > 1.0:
+            if abs_cos_theta - 1.0 < 1e-5:
+                cos_theta = math.modf(cos_theta)[1]
+            else:
+                raise ValueError(f'domain error: {cos_theta}')
+        return math.acos(cos_theta)
 
     def rotate(self, angle: float) -> 'Vector':
         """

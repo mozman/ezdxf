@@ -657,8 +657,8 @@ class BoundaryPaths:
 
         """
         for path in self.paths:
-            if path.PATH_TYPE == 'PolylinePath' and path.has_bulge():
-                return True
+            if path.PATH_TYPE == 'PolylinePath':
+                return path.has_bulge()
             else:
                 for edge in path.edges:
                     if edge.EDGE_TYPE in {'ArcEdge', 'EllipseEdge'}:
