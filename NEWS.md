@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.12.2 - 2020-04-25
----------------------------
+Version 0.12.2 - dev
+--------------------
 
 - BUGFIX: `XData.get()` now raises `DXFValueError` for not existing appids, like all other methods of the `XData()` class
 
