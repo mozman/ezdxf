@@ -41,7 +41,7 @@ class XData:
 
     def add(self, appid: str, tags: Iterable) -> None:
         data = Tags(dxftag(code, value) for code, value in tags)
-        if data[0] != (XDATA_MARKER, appid):
+        if len(data) == 0 or data[0] != (XDATA_MARKER, appid):
             data.insert(0, dxftag(XDATA_MARKER, appid))
         self._add(data)
 
