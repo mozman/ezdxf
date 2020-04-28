@@ -115,6 +115,11 @@ def test_get_default_description(layer):
     assert layer.description == ""
 
 
+def test_get_default_description_at_existing_xdata(layer):
+    layer.set_xdata('mozman', [(1000, 'test')])
+    assert layer.description == ""
+
+
 def test_set_description(layer):
     layer.description = "my Layer"
     assert layer.description == "my Layer"

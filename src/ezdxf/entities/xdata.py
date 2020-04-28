@@ -49,7 +49,7 @@ class XData:
         if appid in self.data:
             return self.data[appid]
         else:
-            raise DXFKeyError(appid)
+            raise DXFValueError(appid)
 
     def discard(self, appid):
         if appid in self.data:
@@ -126,7 +126,7 @@ class XData:
         """
         try:
             xdata = self.get(appid)
-        except DXFKeyError:
+        except DXFValueError:
             pass
         else:
             try:
