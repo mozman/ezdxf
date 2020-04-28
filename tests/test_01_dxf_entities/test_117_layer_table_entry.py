@@ -120,6 +120,16 @@ def test_get_default_description_at_existing_xdata(layer):
     assert layer.description == ""
 
 
+def test_description_for_unusual_xdata_structure(layer):
+    # Just one group code 1000 tag - not reproducible with BricsCAD
+    layer.set_xdata('AcAecLayerStandard', [(1000, 'test')])
+    assert layer.description == ""
+
+    # or empty XDATA section - not reproducible with BricsCAD
+    layer.set_xdata('AcAecLayerStandard', [])
+    assert layer.description == ""
+
+
 def test_set_description(layer):
     layer.description = "my Layer"
     assert layer.description == "my Layer"
