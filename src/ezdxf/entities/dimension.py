@@ -414,7 +414,7 @@ class Dimension(DXFGraphic, OverrideMixin):
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbRadialDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint4', 'leader_length'])
         elif dim_type == 5:  # angular & angular3p
-            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb3dPointAngularDimension')
+            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb3PointAngularDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'defpoint4', 'defpoint5'])
         elif dim_type == 6:  # ordinate
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbOrdinateDimension')

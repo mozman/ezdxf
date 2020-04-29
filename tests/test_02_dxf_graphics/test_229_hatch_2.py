@@ -5,6 +5,7 @@ import pytest
 from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector
 
+
 @pytest.fixture
 def hatch():
     return Hatch.new()
@@ -75,7 +76,6 @@ def test_remove_all_paths(path_hatch):
 
 
 def test_add_polyline_path(hatch):
-
     new_path = hatch.paths.add_polyline_path([(0, 0), (0, 1), (1, 1), (1, 0)])
     assert 'PolylinePath' == new_path.PATH_TYPE, "invalid path type"
     assert 4 == len(new_path.vertices), "invalid vertex count"
@@ -124,7 +124,7 @@ def test_edge_path_edges(edge_hatch):
     assert 'EllipseEdge' == edge.EDGE_TYPE, "invalid edge type for 1. edge"
     assert (10, 5) == edge.center
     assert (3, 0) == edge.major_axis
-    assert 1./3. == edge.ratio
+    assert 1. / 3. == edge.ratio
     assert 270 == edge.start_angle
     assert 450 == edge.end_angle  # this value was created by AutoCAD == 90 degree
     assert 1 == edge.is_counter_clockwise
@@ -253,6 +253,22 @@ def test_create_spline_edge(spline_edge_hatch):
     assert [(1, 1), (2, 2), (3, 3), (4, 4)] == spline.fit_points
     assert [1, 2, 3, 4, 5, 6] == spline.knot_values
     assert [4, 3, 2, 1] == spline.weights
+
+    writer = TagCollector()
+    spline.export_dxf(writer)
+    assert (97, 4) in writer.tags
+
+
+def test_no_fit_points_export(spline_edge_hatch):
+    path = spline_edge_hatch.paths[0]
+    spline = path.add_spline(control_points=[(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, rational=1, periodic=1)
+    spline.knot_values = [1, 2, 3, 4, 5, 6]
+    assert [(1, 1), (2, 2), (3, 3), (4, 4)] == spline.control_points
+    assert len(spline.fit_points) == 0
+    writer = TagCollector()
+    spline.export_dxf(writer)
+    # do not write length tag 97 if no fit points exists
+    assert any(tag.code == 97 for tag in writer.tags) is False
 
 
 def test_is_pattern_hatch(hatch_pattern):
@@ -697,7 +713,7 @@ ACAD
 0.0
 """
 
-EDGE_HATCH_WITH_SPLINE ="""  0
+EDGE_HATCH_WITH_SPLINE = """  0
 HATCH
   5
 220
