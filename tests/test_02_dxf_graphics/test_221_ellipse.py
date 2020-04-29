@@ -1,10 +1,13 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # created 2019-02-15
+import random
+
 import pytest
 import math
 
-from ezdxf.math import Vector
+from ezdxf.explode import angle_to_param
+from ezdxf.math import Vector, quadrant
 from ezdxf.entities.ellipse import Ellipse
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
@@ -157,3 +160,40 @@ def test_swap_axis_half_ellipse():
     assert ellipse.minor_axis == (-5, 0, 0)
     assert ellipse.dxf.start_param == 0
     assert ellipse.dxf.end_param == math.pi
+
+
+def test_angle_to_param():
+    angle = 1.23
+    assert quadrant(angle) == 1
+    assert math.isclose(angle_to_param(1.0, angle, quadrant(angle)), angle)
+
+    angle = 1.23 + math.pi / 2
+    assert quadrant(angle) == 2
+    assert math.isclose(angle_to_param(1.0, angle, quadrant(angle)), angle)
+
+    angle = 1.23 + math.pi
+    assert quadrant(angle) == 3
+    assert math.isclose(angle_to_param(1.0, angle, quadrant(angle)), angle)
+
+    angle = 1.23 + 3 * math.pi / 2
+    assert quadrant(angle) == 4
+    assert math.isclose(angle_to_param(1.0, angle, quadrant(angle)), angle)
+
+    angle = math.pi / 2 + 1e-15
+    assert quadrant(angle) == 2
+    assert math.isclose(angle_to_param(1.0, angle, quadrant(angle)), angle)
+
+    random.seed(0)
+    for i in range(1000):
+        ratio = random.uniform(0, 1)
+        angle = random.uniform(0, 2 * math.pi)
+        param = angle_to_param(ratio, angle, quadrant(angle))
+        ellipse = Ellipse.new(dxfattribs={
+            'major_axis': (1, 0, 0),
+            'ratio': ratio,
+            'start_param': 0,
+            'end_param': param,
+        })
+        calculated_angle = ellipse.dxf.major_axis.angle_between(ellipse.end_point)
+        assert math.isclose(calculated_angle, angle)
+
