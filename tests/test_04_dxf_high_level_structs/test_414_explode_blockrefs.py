@@ -121,6 +121,12 @@ def test_03_explode_polyline_bulge(doc, msp):
     assert e.dxf.ratio == 0.5
     assert math.isclose(e.dxf.start_param, -2.498091544796509)
     assert math.isclose(e.dxf.end_param, -0.6435011087932843)
+    assert math.isclose(e.start_point.x, 3.0)
+    assert math.isclose(e.start_point.y, 0.0)
+    assert math.isclose(e.start_point.z, 0.0)
+    assert math.isclose(e.end_point.x, 6.0)
+    assert math.isclose(e.end_point.y, 0.0, abs_tol=1e-5)
+    assert math.isclose(e.end_point.z, 0.0)
 
     e = entities[2]
     assert e.dxftype() == 'LINE'
