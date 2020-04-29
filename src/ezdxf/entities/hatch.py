@@ -1165,10 +1165,11 @@ class SplineEdge:
         # build fit points
         # fit points have to be present and valid, otherwise AutoCAD crashes
         # edit 2016-12-20: this is not true - there are examples with no fit points and without crashing AutoCAD
-        write_tag(97, len(self.fit_points))
-        for x, y, *_ in self.fit_points:
-            tagwriter.write_tag2(11, float(x))
-            tagwriter.write_tag2(21, float(y))
+        if len(self.fit_points) > 0:
+            write_tag(97, len(self.fit_points))
+            for x, y, *_ in self.fit_points:
+                tagwriter.write_tag2(11, float(x))
+                tagwriter.write_tag2(21, float(y))
 
         if self.start_tangent is not None:
             x, y, *_ = self.start_tangent

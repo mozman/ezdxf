@@ -9,6 +9,7 @@ Version 0.12.2 - dev
 - BUGFIX: `Layer.description` returns an empty string for unknown XDATA structure in `AcAecLayerStandard`
 - BUGFIX: Initialize/Load `Hatch` edge coordinates as `Vec2()` objects
 - BUGFIX: typo in 3 point angular dimension subclass marker 
+- BUGFIX: HATCH/SplineEdge did export length tag 97 if no fit points exist, creates invalid DXF for AutoCAD/BricsCAD  
 
 Version 0.12.1 - 2020-04-25
 ---------------------------
