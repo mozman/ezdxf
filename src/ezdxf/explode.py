@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Iterable, cast, Union, Generator, Callable, Op
 
 from ezdxf.entities import factory
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
-from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS, quadrant
+from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS
 from ezdxf.query import EntityQuery
 
 logger = logging.getLogger('ezdxf')
@@ -97,23 +97,18 @@ def attrib_to_text(attrib: 'Attrib', dxffactory) -> 'Text':
     return dxffactory.create_db_entry('TEXT', dxfattribs=dxfattribs)
 
 
-def angle_to_param(ratio: float, angle: float, quadrant: int = 0) -> float:
+def angle_to_param(ratio: float, angle: float) -> float:
     """ Returns ellipse parameter for argument `angle`.
 
     Args:
-        ratio: minor axis to major axis ratio as stored in the ELLIPSE entity (always < 1).
+        ratio: minor axis to major axis ratio as stored in the ELLIPSE entity (always <= 1).
         angle: angle between major axis and line from center to point on the ellipse
-        quadrant: quadrant of the angle, use to ``0`` for no adjustment.
 
+    Returns:
+        the ellipse parameter in the range [0, 2pi)
     """
-    # source: http://www.petercollingridge.co.uk/tutorials/computational-geometry/finding-angle-around-ellipse/
-    result = math.atan(1.0 / ratio * math.tan(angle))
-
-    if quadrant in (2, 3):
-        result += math.pi
-    if quadrant in (3, 4):
-        result = -result
-    return result
+    x, y = math.cos(angle), math.sin(angle) / ratio
+    return normalize_angle(math.atan2(y, x))
 
 
 def virtual_block_reference_entities(block_ref: 'Insert',
@@ -276,11 +271,10 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                     if open_ellipse:
                         # adjusting start- and end parameter
                         center = ellipse.dxf.center  # transformed center point
-                        start_angle = major_axis.angle_between(start_point - center)
-                        end_angle = major_axis.angle_between(end_point - center)
-                        # todo: quadrant detection may fail if the rytz's axis construction algorithm is applied
-                        ellipse.dxf.start_param = angle_to_param(ratio, start_angle, quadrant(start_param))
-                        ellipse.dxf.end_param = angle_to_param(ratio, end_angle, quadrant(end_param))
+                        start_angle = ellipse.dxf.extrusion.angle_about(major_axis, start_point - center)
+                        end_angle = ellipse.dxf.extrusion.angle_about(major_axis, end_point - center)
+                        ellipse.dxf.start_param = angle_to_param(ratio, start_angle)
+                        ellipse.dxf.end_param = angle_to_param(ratio, end_angle)
 
                     if ellipse.dxf.ratio > 1:
                         ellipse.swap_axis()

@@ -109,22 +109,6 @@ def normalize_angle(angle: float) -> float:
     return angle
 
 
-def quadrant(angle: float) -> int:
-    """
-    Returns quadrant of angle (in radians) in range 1 to 4.
-
-    """
-    a = normalize_angle(angle)
-    if a <= RADIANS_90:
-        return 1
-    elif a <= RADIANS_180:
-        return 2
-    elif a <= RADIANS_270:
-        return 3
-    else:
-        return 4
-
-
 def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE):
     isclose = partial(math.isclose, abs_tol=abs_tol)
 
