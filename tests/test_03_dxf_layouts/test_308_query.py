@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2019, Manfred Moitzi
+# Copyright (c) 2013-2020, Manfred Moitzi
 # License: MIT-License
 import pytest
 import ezdxf
@@ -31,8 +31,9 @@ def modelspace():
     modelspace.add_line((0, 0), (10, 0), {'layer': 'lay_lines', 'color': 7})
     modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_lines', 'color': 6})
     modelspace.add_text("TEST", dxfattribs={'layer': 'lay_text', 'color': 6})
-    # just 3 entities: LINE, TEXT, POLYLINE - VERTEX & SEQEND now linked to the POLYLINE entity, and do not appear
-    # in any entity space
+    modelspace.add_circle((0, 0), 1, dxfattribs={'layer': 'π'})
+    # just 4 entities: LINE, TEXT, POLYLINE, CIRCLE
+    # VERTEX & SEQEND are linked to the POLYLINE entity and do not appear in any entity space
     return doc.modelspace()
 
 
@@ -43,9 +44,9 @@ def test_empty_init():
 
 def test_select_all(modelspace):
     result = EntityQuery(modelspace, '*')
-    # 1xLINE, 1xPOLYLINE, 0xVERTEX, 0xSEQEND, 1x TEXT
-    assert len(result.entities) == 3
-    assert len(result) == 3
+    # 1xLINE, 1xPOLYLINE, 0xVERTEX, 0xSEQEND, 1x TEXT, 1x CIRCLE
+    assert len(result.entities) == 4
+    assert len(result) == 4
 
 
 def test_first(modelspace):
@@ -55,14 +56,14 @@ def test_first(modelspace):
 
 def test_last(modelspace):
     result = EntityQuery(modelspace, '*')
-    assert result.last.dxftype() == 'TEXT'
+    assert result.last.dxftype() == 'CIRCLE'
 
 
 def test_new_query_select_all(modelspace):
     result = ezdxf.query.new(modelspace, '*')
-    # 1xLINE, 1xPOLYLINE, 0xVERTEX, 0xSEQEND, 1x TEXT
-    assert len(result.entities) == 3
-    assert len(result) == 3
+    # 1xLINE, 1xPOLYLINE, 0xVERTEX, 0xSEQEND, 1x TEXT, 1x CIRCLE
+    assert len(result.entities) == 4
+    assert len(result) == 4
 
 
 def test_new_empty_query():
@@ -78,8 +79,15 @@ def test_select_line(modelspace):
 
 def test_select_layer_1(modelspace):
     result = EntityQuery(modelspace, '*[layer=="lay_lines"]')
-    # 1xLINE 1xPOLYLINE
     assert len(result) == 2
+    assert result.first.dxftype() == 'LINE'
+    assert result.last.dxftype() == 'POLYLINE'
+
+
+def test_select_unicode_layer_name(modelspace):
+    result = EntityQuery(modelspace, '*[layer=="π"]')
+    assert len(result) == 1
+    assert result.first.dxftype() == 'CIRCLE'
 
 
 def test_select_layer_1_exclude_line(modelspace):

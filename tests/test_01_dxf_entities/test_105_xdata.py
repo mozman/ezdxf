@@ -63,7 +63,7 @@ def test_get_data(xdata):
     assert tags[2] == (1000, 'DataStr2')
     assert tags[3] == (1040, 3.14)
 
-    with pytest.raises(DXFKeyError):
+    with pytest.raises(DXFValueError):
         _ = xdata.get('XXX')
 
 

@@ -174,7 +174,11 @@ class Layer(DXFEntity):
         except DXFValueError:
             return ""
         else:
-            return xdata[1].value
+            if len(xdata) > 1:
+                # this is the usual case in BricsCAD
+                return xdata[1].value
+            else:
+                return ""
 
     @description.setter
     def description(self, value: str) -> None:

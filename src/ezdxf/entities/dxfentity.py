@@ -800,10 +800,13 @@ class DXFEntity:
 
     def export_base_class(self, tagwriter: 'TagWriter') -> None:
         """ Export base class DXF attributes and structures. (internal API) """
+        dxftype = self.DXFTYPE
+        _handle_code = 105 if dxftype == 'DIMSTYLE' else 5
         # 1. tag: (0, DXFTYPE)
-        tagwriter.write_tag2(STRUCTURE_MARKER, self.DXFTYPE)
+        tagwriter.write_tag2(STRUCTURE_MARKER, dxftype)
+
         if tagwriter.dxfversion >= DXF2000:
-            tagwriter.write_tag2(handle_code(self.dxf.dxftype), self.dxf.handle)
+            tagwriter.write_tag2(_handle_code, self.dxf.handle)
             if self.appdata:
                 self.appdata.export_dxf(tagwriter)
             if self.extension_dict:
@@ -813,7 +816,7 @@ class DXFEntity:
             tagwriter.write_tag2(OWNER_CODE, self.dxf.owner)
         else:  # DXF R12
             if tagwriter.write_handles:
-                tagwriter.write_tag2(handle_code(self.dxf.dxftype), self.dxf.handle)
+                tagwriter.write_tag2(_handle_code, self.dxf.handle)
                 # do not write owner handle - not supported by DXF R12
 
     # interface definition
@@ -1107,4 +1110,3 @@ class DXFTagStorage(DXFEntity):
     def destroy(self) -> None:
         del self.xtags
         super().destroy()
-

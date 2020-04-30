@@ -691,10 +691,11 @@ class PolylinePath:
     PATH_TYPE = 'PolylinePath'
 
     def __init__(self):
-        self.path_type_flags = const.BOUNDARY_PATH_POLYLINE
+        self.path_type_flags: int = const.BOUNDARY_PATH_POLYLINE
         self.is_closed = False
-        self.vertices = []  # type: List[Tuple[float, float, float]]  # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
-        self.source_boundary_objects = []  # type: List[str]  # (330, handle) tags
+        # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
+        self.vertices: List[Tuple[float, float, float]] = []
+        self.source_boundary_objects: List[str] = []  # (330, handle) tags
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'PolylinePath':
@@ -971,8 +972,8 @@ class LineEdge:
     EDGE_TYPE = "LineEdge"
 
     def __init__(self):
-        self.start = (0, 0)  # type: Tuple[float, float]
-        self.end = (0, 0)  # type: Tuple[float, float]
+        self.start = Vec2((0, 0))
+        self.end = Vec2((0, 0))
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'LineEdge':
@@ -980,9 +981,9 @@ class LineEdge:
         for tag in tags:
             code, value = tag
             if code == 10:
-                edge.start = Vector(value)
+                edge.start = Vec2(value)
             elif code == 11:
-                edge.end = Vector(value)
+                edge.end = Vec2(value)
         return edge
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
@@ -1005,11 +1006,11 @@ class ArcEdge:
     EDGE_TYPE = "ArcEdge"
 
     def __init__(self):
-        self.center = (0., 0.)  # type: Tuple[float, float]
-        self.radius = 1.
-        self.start_angle = 0.
-        self.end_angle = 360.
-        self.is_counter_clockwise = 0
+        self.center = Vec2((0., 0.))
+        self.radius: float = 1.
+        self.start_angle: float = 0.
+        self.end_angle: float = 360.
+        self.is_counter_clockwise: int = 0
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'ArcEdge':
@@ -1017,7 +1018,7 @@ class ArcEdge:
         for tag in tags:
             code, value = tag
             if code == 10:
-                edge.center = value
+                edge.center = Vec2(value)
             elif code == 40:
                 edge.radius = value
             elif code == 50:
@@ -1048,13 +1049,13 @@ class EllipseEdge:
     EDGE_TYPE = "EllipseEdge"
 
     def __init__(self):
-        self.center = (0., 0.)  # type: Tuple[float, float]
+        self.center = Vec2((0., 0.))
         # Endpoint of major axis relative to center point (in OCS)
-        self.major_axis = (1., 0.)  # type: Tuple[float, float]
-        self.ratio = 1.
-        self.start_angle = 0.  # start param, not a real angle
-        self.end_angle = 360.  # end param, not a real angle
-        self.is_counter_clockwise = 0
+        self.major_axis = Vec2((1., 0.))
+        self.ratio: float = 1.
+        self.start_angle: float = 0.  # start param, not a real angle
+        self.end_angle: float = 360.  # end param, not a real angle
+        self.is_counter_clockwise: int = 0
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'EllipseEdge':
@@ -1062,9 +1063,9 @@ class EllipseEdge:
         for tag in tags:
             code, value = tag
             if code == 10:
-                edge.center = value
+                edge.center = Vec2(value)
             elif code == 11:
-                edge.major_axis = value
+                edge.major_axis = Vec2(value)
             elif code == 40:
                 edge.ratio = value
             elif code == 50:
@@ -1099,16 +1100,16 @@ class SplineEdge:
     EDGE_TYPE = "SplineEdge"
 
     def __init__(self):
-        self.degree = 3  # code = 94
-        self.rational = 0  # code = 73
-        self.periodic = 0  # code = 74
-        self.knot_values = []  # type: List[float]
-        self.control_points = []  # type: List[Tuple[float, float]]
-        self.fit_points = []  # type: List[Tuple[float, float]]
-        self.weights = []  # type: List[float]
+        self.degree: int = 3  # code = 94
+        self.rational: int = 0  # code = 73
+        self.periodic: int = 0  # code = 74
+        self.knot_values: List[float] = []
+        self.control_points: List[Vec2] = []
+        self.fit_points: List[Vec2] = []
+        self.weights: List[float] = []
         # do not set tangents by default to (0, 0)
-        self.start_tangent = None  # type: Optional[Vec2]
-        self.end_tangent = None  # type: Optional[Vec2]
+        self.start_tangent: Optional[Vec2] = None
+        self.end_tangent: Optional[Vec2] = None
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'SplineEdge':
@@ -1126,9 +1127,9 @@ class SplineEdge:
             elif code == 42:
                 edge.weights.append(value)
             elif code == 10:
-                edge.control_points.append(value)
+                edge.control_points.append(Vec2(value))
             elif code == 11:
-                edge.fit_points.append(value)
+                edge.fit_points.append(Vec2(value))
             elif code == 12:
                 edge.start_tangent = Vec2(value)
             elif code == 13:
@@ -1164,10 +1165,11 @@ class SplineEdge:
         # build fit points
         # fit points have to be present and valid, otherwise AutoCAD crashes
         # edit 2016-12-20: this is not true - there are examples with no fit points and without crashing AutoCAD
-        write_tag(97, len(self.fit_points))
-        for x, y, *_ in self.fit_points:
-            tagwriter.write_tag2(11, float(x))
-            tagwriter.write_tag2(21, float(y))
+        if len(self.fit_points) > 0:
+            write_tag(97, len(self.fit_points))
+            for x, y, *_ in self.fit_points:
+                tagwriter.write_tag2(11, float(x))
+                tagwriter.write_tag2(21, float(y))
 
         if self.start_tangent is not None:
             x, y, *_ = self.start_tangent

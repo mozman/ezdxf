@@ -293,6 +293,24 @@ def test_angle_between():
     assert math.isclose(angle, math.pi)
 
 
+def test_angle_about():
+    extrusion = Vector(0, 0, 1)
+    a = Vector(1, 0, 0)
+    b = Vector(1, 1, 0)
+    assert math.isclose(a.angle_between(b), math.pi / 4)
+    assert math.isclose(extrusion.angle_about(a, b), math.pi / 4)
+
+    extrusion = Vector(0, 0, -1)
+    assert math.isclose(a.angle_between(b), math.pi / 4)
+    assert math.isclose(extrusion.angle_about(a, b), (-math.pi / 4) % math.tau)
+
+    extrusion = Vector(0, 0, 1)
+    a = Vector(1, 1, 0)
+    b = Vector(1, 1, 0)
+    assert math.isclose(a.angle_between(b), 0, abs_tol=1e-5)
+    assert math.isclose(extrusion.angle_about(a, b), 0)
+
+
 def test_cross_product():
     v1 = Vector(2, 7, 9)
     v2 = Vector(3, 9, 1)
