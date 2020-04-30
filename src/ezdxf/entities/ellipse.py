@@ -107,7 +107,10 @@ class Ellipse(DXFGraphic):
     def swap_axis(self):
         """ Swap axis and adjust start- and end parameter. """
         self.dxf.major_axis = self.minor_axis
-        self.dxf.ratio = 1.0 / self.dxf.ratio
+        ratio = 1.0 / self.dxf.ratio
+        # AutoCAD does not accept a ratio < 1e-6 -> invalid DXF file
+        self.dxf.ratio = max(ratio, 1e-6)
+
         start_param = self.dxf.start_param
         end_param = self.dxf.end_param
         if math.isclose(start_param, 0) and math.isclose(end_param, PI2):
