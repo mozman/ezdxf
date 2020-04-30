@@ -221,14 +221,14 @@ def virtual_block_reference_entities(block_ref: 'Insert',
         dxftype = entity.dxftype()
 
         if has_non_uniform_scaling and dxftype == 'ELLIPSE':
-            # transform start- and end location before main transformation
+            # transform start- and end point before main transformation
             ellipse = cast('Ellipse', entity)
             open_ellipse = not math.isclose(
                 normalize_angle(ellipse.dxf.start_param),
                 normalize_angle(ellipse.dxf.end_param),
             )
             if open_ellipse:
-                # transformed start- and end point
+                # transform start- and end point
                 start_param = ellipse.dxf.start_param
                 end_param = ellipse.dxf.end_param
                 start_point, end_point = brcs.points_to_wcs(ellipse.vertices((start_param, end_param)))
@@ -267,12 +267,15 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                         ratio = minor_axis.magnitude / major_axis.magnitude
 
                     ellipse.dxf.major_axis = major_axis
+                    # AutoCAD does not accept a ratio < 1e-6 -> invalid DXF file
                     ellipse.dxf.ratio = max(ratio, 1e-6)
                     if open_ellipse:
                         # adjusting start- and end parameter
                         center = ellipse.dxf.center  # transformed center point
-                        start_angle = ellipse.dxf.extrusion.angle_about(major_axis, start_point - center)
-                        end_angle = ellipse.dxf.extrusion.angle_about(major_axis, end_point - center)
+                        extrusion = ellipse.dxf.extrusion  # transformed extrusion vector, default is (0, 0, 1)
+
+                        start_angle = extrusion.angle_about(major_axis, start_point - center)
+                        end_angle = extrusion.angle_about(major_axis, end_point - center)
                         ellipse.dxf.start_param = angle_to_param(ratio, start_angle)
                         ellipse.dxf.end_param = angle_to_param(ratio, end_angle)
 
