@@ -50,6 +50,9 @@ class Ellipse(DXFGraphic):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_ellipse.name)
+
+        # AutoCAD does not accept a ratio < 1e-6 -> invalid DXF file
+        self.dxf.ratio = max(self.dxf.ratio, 1e-6)
         self.dxf.export_dxf_attribs(tagwriter, [
             'center', 'major_axis', 'extrusion', 'ratio', 'start_param', 'end_param',
         ])
