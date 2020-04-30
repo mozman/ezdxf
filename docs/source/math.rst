@@ -379,6 +379,8 @@ Vector
 
     .. automethod:: distance
 
+    .. automethod:: angle_about(base: Vector, target: Vector) -> float
+
     .. automethod:: angle_between
 
     .. automethod:: rotate(angle: float) -> Vector

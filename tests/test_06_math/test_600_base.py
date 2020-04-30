@@ -10,7 +10,7 @@ from math import isclose, radians
 
 def test_normalize_angle():
     angle = 2
-    huge_angle = angle + 16 * RADIANS_90
+    huge_angle = angle + 16 * RADIANS_180
     assert isclose(normalize_angle(huge_angle), 2.)
 
 

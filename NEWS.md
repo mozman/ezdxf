@@ -10,6 +10,7 @@ Version 0.12.2 - dev
 - BUGFIX: Initialize/Load `Hatch` edge coordinates as `Vec2()` objects
 - BUGFIX: typo in 3 point angular dimension subclass marker 
 - BUGFIX: HATCH/SplineEdge did export length tag 97 if no fit points exist, creates invalid DXF for AutoCAD/BricsCAD  
+- BUGFIX: Ellipse handling in `virtual_block_reference_entities()` by Matt Broadway  
 
 Version 0.12.1 - 2020-04-25
 ---------------------------
