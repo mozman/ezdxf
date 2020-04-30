@@ -483,6 +483,17 @@ class Vector:
                 raise ValueError(f'domain error: {cos_theta}')
         return math.acos(cos_theta)
 
+    def angle_about(self, a: "Vector", b: "Vector"):
+        """
+        anticlockwise angle about this vector from a to b when projected
+        onto the plane defined by this vector as the normal
+        """
+        x_axis = a.normalize()
+        y_axis = self.cross(x_axis).normalize()
+        b_projected_x = x_axis.dot(b)
+        b_projected_y = y_axis.dot(b)
+        return math.atan2(b_projected_y, b_projected_x) % math.tau
+
     def rotate(self, angle: float) -> 'Vector':
         """
         Returns vector rotated about `angle` around the z-axis.

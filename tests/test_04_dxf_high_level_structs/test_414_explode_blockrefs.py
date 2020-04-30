@@ -1,8 +1,14 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
+from typing import cast
+
 import pytest
 import ezdxf
 import math
+
+from ezdxf.entities import Ellipse
+from ezdxf.explode import angle_to_param
+from ezdxf.math import normalize_angle, Vector
 
 
 @pytest.fixture(scope='module')
@@ -115,12 +121,15 @@ def test_03_explode_polyline_bulge(doc, msp):
     assert e.dxf.end == (3, 0)
 
     e = entities[1]
+    e = cast(Ellipse, e)
     assert e.dxftype() == 'ELLIPSE'
     assert e.dxf.center.isclose((4.5, 0.5625, 0))
     assert e.dxf.major_axis.isclose((1.875, 0.0, 0))
     assert e.dxf.ratio == 0.5
-    assert math.isclose(e.dxf.start_param, -2.498091544796509)
-    assert math.isclose(e.dxf.end_param, -0.6435011087932843)
+    assert math.isclose(e.dxf.start_param, -2.498091544796509 % math.tau)
+    assert math.isclose(e.dxf.end_param, -0.6435011087932843 % math.tau)
+    assert e.start_point.isclose(Vector(3, 0, 0))
+    assert e.end_point.isclose(Vector(6, 0, 0), abs_tol=1e-5)
 
     e = entities[2]
     assert e.dxftype() == 'LINE'
