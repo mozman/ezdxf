@@ -14,8 +14,6 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, LWPolyline, Polyline, Attrib, Line, Arc, Face3d, Text
 
-_2PI = math.pi * 2
-
 
 def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
                             uniform_scaling_factor: float = None) -> EntityQuery:
