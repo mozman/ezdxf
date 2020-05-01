@@ -233,7 +233,7 @@ def _check_curve(ellipse: Ellipse, expected_start: Vector, expected_end: Vector,
 # TODO: currently zscale=-1 is failing
 #@pytest.mark.parametrize('zscale,is_arc', [(1, False), (0.5, False), (1, True), (0.5, True), (-1, False), (-1, True)])
 @pytest.mark.parametrize('zscale,is_arc', [(1, False), (0.5, False), (1, True), (0.5, True)])
-def test_07_rotated_and_reflected_ellipses(zscale, is_arc):
+def test_07_rotated_and_reflected_curves(zscale, is_arc):
     scale = Vector(1, 1, zscale)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
@@ -292,7 +292,7 @@ def test_07_rotated_and_reflected_ellipses(zscale, is_arc):
 
 
 @pytest.mark.parametrize('stretch,is_arc', [(0.5, False), (0.5, True)])
-def test_08_rotated_and_reflected_and_stretched_ellipses(stretch, is_arc):
+def test_08_rotated_and_reflected_and_stretched_curves(stretch, is_arc):
     scale = Vector(1, stretch, 1)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
