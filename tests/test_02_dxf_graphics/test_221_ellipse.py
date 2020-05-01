@@ -162,6 +162,26 @@ def test_swap_axis_half_ellipse():
     assert ellipse.dxf.end_param == math.pi
 
 
+def test_swap_axis_arbitrary_params():
+    def random_params(count):
+        return [random.random() * math.tau for _ in range(count)]
+
+    for start_param, end_parm in zip(random_params(10), random_params(10)):
+        ellipse = Ellipse.new(dxfattribs={
+            'major_axis': (5, 0, 0),
+            'ratio': 2,  # > 1 is not valid
+            'start_param': start_param,
+            'end_param': end_parm
+        })
+        start_point = ellipse.start_point
+        end_point = ellipse.end_point
+
+        ellipse.swap_axis()
+        assert ellipse.dxf.ratio == 0.5
+        assert ellipse.start_point.isclose(start_point, abs_tol=1e-9)
+        assert ellipse.end_point.isclose(end_point, abs_tol=1e-9)
+
+
 def test_angle_to_param():
     angle = 1.23
     assert math.isclose(angle_to_param(1.0, angle), angle)
@@ -195,4 +215,3 @@ def test_angle_to_param():
         assert math.isclose(calculated_angle, angle, abs_tol=1e-5)
         assert (math.isclose(calculated_angle, calculated_angle_without_direction) or
                 math.isclose(math.tau - calculated_angle, calculated_angle_without_direction))
-
