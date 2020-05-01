@@ -193,7 +193,7 @@ def virtual_block_reference_entities(block_ref: 'Insert',
         yscale = block_ref.dxf.yscale
         zscale = block_ref.dxf.zscale
 
-        if has_non_uniform_scaling is False and xscale < 0:
+        if block_ref.has_uniform_scaling and xscale < 0:
             # handle reflection about all three axis -x, -y, -z explicit as non uniform scaling
             has_non_uniform_scaling = True
 
