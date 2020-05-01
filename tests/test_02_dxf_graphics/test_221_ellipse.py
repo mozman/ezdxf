@@ -6,8 +6,7 @@ import random
 import pytest
 import math
 
-from ezdxf.explode import angle_to_param
-from ezdxf.math import Vector
+from ezdxf.math import Vector, angle_to_param, NULLVEC
 from ezdxf.entities.ellipse import Ellipse
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
@@ -162,7 +161,39 @@ def test_swap_axis_half_ellipse():
     assert ellipse.dxf.end_param == math.pi
 
 
+def non_zero_random(limit=10):
+    return random.uniform(0.001, limit) * random.choice((1, -1))
+
+
+def test_swap_axis_arbitrary_params():
+    random_tests_count = 100
+    random.seed(0)
+
+    for _ in range(random_tests_count):
+        ellipse = Ellipse.new(dxfattribs={
+            # avoid (0, 0, 0) as major axis
+            'major_axis': (non_zero_random(), non_zero_random(), 0),
+            'ratio': 2,
+            'start_param': random.uniform(0, math.tau),
+            'end_param': random.uniform(0, math.tau),
+            'extrusion': (0, 0, random.choice((1, -1))),
+        })
+
+        # Test if coordinates of start- and end point stay at the same location
+        # before and after swapping axis.
+        start_point = ellipse.start_point
+        end_point = ellipse.end_point
+        minor_axis = ellipse.minor_axis
+        ellipse.swap_axis()
+        assert ellipse.dxf.major_axis.isclose(minor_axis, abs_tol=1e-9)
+        assert ellipse.start_point.isclose(start_point, abs_tol=1e-9)
+        assert ellipse.end_point.isclose(end_point, abs_tol=1e-9)
+
+
 def test_angle_to_param():
+    random_tests_count = 100
+    random.seed(0)
+
     angle = 1.23
     assert math.isclose(angle_to_param(1.0, angle), angle)
 
@@ -178,21 +209,20 @@ def test_angle_to_param():
     angle = math.pi / 2 + 1e-15
     assert math.isclose(angle_to_param(1.0, angle), angle)
 
-    random.seed(0)
-    for i in range(1000):
-        ratio = random.uniform(0, 1)
+    for _ in range(random_tests_count):
+        ratio = random.uniform(1e-6, 1)
         angle = random.uniform(0, math.tau)
         param = angle_to_param(ratio, angle)
         ellipse = Ellipse.new(dxfattribs={
-            'major_axis': (random.uniform(-10, 10), random.uniform(-10, 10), 0),
+            # avoid (0, 0, 0) as major axis
+            'major_axis': (non_zero_random(), non_zero_random(), 0),
             'ratio': ratio,
             'start_param': 0,
             'end_param': param,
-            'extrusion': (0, 0, random.choice([1, -1])),
+            'extrusion': (0, 0, random.choice((1, -1))),
         })
         calculated_angle = ellipse.dxf.extrusion.angle_about(ellipse.dxf.major_axis, ellipse.end_point)
         calculated_angle_without_direction = ellipse.dxf.major_axis.angle_between(ellipse.end_point)
-        assert math.isclose(calculated_angle, angle, abs_tol=1e-5)
+        assert math.isclose(calculated_angle, angle, abs_tol=1e-9)
         assert (math.isclose(calculated_angle, calculated_angle_without_direction) or
                 math.isclose(math.tau - calculated_angle, calculated_angle_without_direction))
-

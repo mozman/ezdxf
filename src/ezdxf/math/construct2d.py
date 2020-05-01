@@ -109,6 +109,20 @@ def normalize_angle(angle: float) -> float:
     return angle
 
 
+def angle_to_param(ratio: float, angle: float) -> float:
+    """ Returns ellipse parameter for argument `angle`.
+
+    Args:
+        ratio: minor axis to major axis ratio as stored in the ELLIPSE entity (always <= 1).
+        angle: angle between major axis and line from center to point on the ellipse
+
+    Returns:
+        the ellipse parameter in the range [0, 2pi)
+    """
+    x, y = math.cos(angle), math.sin(angle) / ratio
+    return normalize_angle(math.atan2(y, x))
+
+
 def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE):
     isclose = partial(math.isclose, abs_tol=abs_tol)
 

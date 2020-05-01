@@ -486,8 +486,8 @@ class Vector:
     def angle_about(self, base: 'Vector', target: 'Vector') -> float:
         # (c) 2020 by Matt Broadway, MIT License
         """
-        Returns anti-clockwise angle about this vector from `base` to `target` when projected
-        onto the plane defined by this vector as the normal.
+        Returns counter clockwise angle in radians about `self` from `base` to `target` when projected
+        onto the plane defined by `self` as the normal vector.
 
         Args:
             base: base vector, defines angle 0
