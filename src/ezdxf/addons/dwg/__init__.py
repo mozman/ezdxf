@@ -15,26 +15,13 @@ def export_objects_test_data(doc, filename):
         filename: Python export file name
 
     """
-    import struct
     from textwrap import wrap
     from base64 import b64encode
     from .crc import crc8
     from .objects import dwg_object_data_size
 
-    data = doc.data
-    crc_check = False
-    version = doc.specs.version
     with open(filename, 'wt') as fp:
-        for handle, location in doc.objects_map.items():
-            object_start, object_size = dwg_object_data_size(data, location, version)
-            object_end = object_start + object_size
-            object_data = data[object_start: object_end]
-            if crc_check:
-                check = struct.unpack_from('<H', data, object_end)
-                crc = crc8(object_data, seed=0xc0c1)
-                if check != crc:
-                    raise ValueError(f'CRC error in object #{handle}.')
-
+        for handle, object_data in doc.objects_directory.objects.items():
             object_name = f'OBJECT_{handle}'
             lines = wrap(b64encode(object_data).decode())
             if len(lines) > 1:

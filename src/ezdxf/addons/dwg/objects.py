@@ -400,6 +400,7 @@ def dwg_object_type(data: bytes, version: str) -> int:
 class ObjectsDirectory:
     def __init__(self):
         self.objects: Dict[str, memoryview] = dict()
+        self.locations: Dict[str, int] = dict()
 
     def __getitem__(self, handle: str) -> memoryview:
         return self.objects[handle]
@@ -408,6 +409,7 @@ class ObjectsDirectory:
         return handle in self.objects
 
     def load(self, specs: FileHeader, data: Bytes, object_map: Dict[str, int], crc_check=False) -> None:
+        self.locations = object_map
         version = specs.version
         for handle, location in object_map.items():
             object_start, object_size = dwg_object_data_size(data, location, version)

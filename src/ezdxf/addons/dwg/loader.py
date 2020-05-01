@@ -65,9 +65,6 @@ class DwgDocument:
         # Store DXF object types by class number
         self.dxf_object_types: Dict[int, str] = dict()
 
-        # Entity handle to file location mapping
-        self.objects_map: Dict[str, int] = dict()
-
         # Entity Directory
         self.objects_directory: ObjectsDirectory = ObjectsDirectory()
 
@@ -121,8 +118,8 @@ class DwgDocument:
 
     def load_objects_directory(self) -> None:
         section_data = load_objects_map(self.specs, self.data, self.crc_check)
-        self.objects_map = dict(section_data.handles())
-        self.objects_directory.load(self.specs, self.data, self.objects_map, self.crc_check)
+        objects_map = dict(section_data.handles())
+        self.objects_directory.load(self.specs, self.data, objects_map, self.crc_check)
 
     def load_tables(self) -> None:
         self.load_table('APPID', entry_factory=DwgAppID, dxf_table=self.doc.appids)
