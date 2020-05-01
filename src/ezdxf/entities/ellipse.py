@@ -22,11 +22,10 @@ acdb_ellipse = DefSubclass('AcDbEllipse', {
     'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0, 0, 1), optional=True),
     'ratio': DXFAttr(40, default=1),  # has to be in range 1e-6 to 1
     'start_param': DXFAttr(41, default=0),  # this value is 0.0 for a full ellipse
-    'end_param': DXFAttr(42, default=math.pi * 2),  # this value is 2*pi for a full ellipse
+    'end_param': DXFAttr(42, default=math.tau),  # this value is 2*pi for a full ellipse
 })
 
-PI2 = math.pi * 2.
-HALF_PI = math.pi / 2.
+HALF_PI = math.pi / 2.0
 
 
 @register_entity
@@ -116,7 +115,7 @@ class Ellipse(DXFGraphic):
 
         start_param = self.dxf.start_param
         end_param = self.dxf.end_param
-        if math.isclose(start_param, 0) and math.isclose(end_param, PI2):
+        if math.isclose(start_param, 0) and math.isclose(end_param, math.tau):
             return
         self.dxf.start_param = normalize_angle(start_param - HALF_PI)
         self.dxf.end_param = normalize_angle(end_param - HALF_PI)
@@ -136,13 +135,12 @@ class Ellipse(DXFGraphic):
 
     @classmethod
     def from_arc(cls, entity: 'DXFGraphic') -> 'Ellipse':
-        """ Create new ELLIPSE entity from ARC or CIRCLE entity. New entity has no owner and no handle is not stored
-        in the entity database!
+        """ Create new ELLIPSE entity from ARC or CIRCLE entity. New entity has no owner
+        and no handle and is not stored in the entity database!
 
         (internal API)
         """
-        dxftype = entity.dxftype()
-        assert dxftype in {'ARC', 'CIRCLE'}
+        assert entity.dxftype() in {'ARC', 'CIRCLE'}
         attribs = entity.dxfattribs(drop={'owner', 'handle', 'thickness'})
         attribs['ratio'] = 1.0
 
