@@ -6,8 +6,7 @@ import random
 import pytest
 import math
 
-from ezdxf.explode import angle_to_param
-from ezdxf.math import Vector
+from ezdxf.math import Vector, angle_to_param
 from ezdxf.entities.ellipse import Ellipse
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
@@ -163,26 +162,37 @@ def test_swap_axis_half_ellipse():
 
 
 def test_swap_axis_arbitrary_params():
-    def random_params(count):
-        return [random.random() * math.tau for _ in range(count)]
+    random_tests_count = 100
+    random.seed(0)
 
-    for start_param, end_parm in zip(random_params(10), random_params(10)):
+    def random_params():
+        return [random.uniform(0, math.tau) for _ in range(random_tests_count)]
+
+    for start_param, end_parm in zip(random_params(), random_params()):
+        x = random.uniform(1, 5)
+        y = random.uniform(1, 5)
         ellipse = Ellipse.new(dxfattribs={
-            'major_axis': (5, 0, 0),
-            'ratio': 2,  # > 1 is not valid
+            'major_axis': (x, y, 0),
+            'ratio': 2,
             'start_param': start_param,
-            'end_param': end_parm
+            'end_param': end_parm,
+            'extrusion': (0, 0, random.choice([1, -1])),
         })
+
+        # Test if coordinates of start- and end point stay at the same location
+        # before and after swapping axis.
         start_point = ellipse.start_point
         end_point = ellipse.end_point
-
         ellipse.swap_axis()
-        assert ellipse.dxf.ratio == 0.5
+        assert ellipse.dxf.ratio == 0.5, 'Axis should be swapped.'
         assert ellipse.start_point.isclose(start_point, abs_tol=1e-9)
         assert ellipse.end_point.isclose(end_point, abs_tol=1e-9)
 
 
 def test_angle_to_param():
+    random_tests_count = 100
+    random.seed(0)
+
     angle = 1.23
     assert math.isclose(angle_to_param(1.0, angle), angle)
 
@@ -198,8 +208,7 @@ def test_angle_to_param():
     angle = math.pi / 2 + 1e-15
     assert math.isclose(angle_to_param(1.0, angle), angle)
 
-    random.seed(0)
-    for i in range(1000):
+    for _ in range(random_tests_count):
         ratio = random.uniform(0, 1)
         angle = random.uniform(0, math.tau)
         param = angle_to_param(ratio, angle)
