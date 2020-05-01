@@ -183,8 +183,9 @@ def test_swap_axis_arbitrary_params():
         # before and after swapping axis.
         start_point = ellipse.start_point
         end_point = ellipse.end_point
+        minor_axis = ellipse.minor_axis
         ellipse.swap_axis()
-        assert ellipse.dxf.ratio == 0.5, 'Axis should be swapped.'
+        assert ellipse.dxf.major_axis.isclose(minor_axis, abs_tol=1e-9)
         assert ellipse.start_point.isclose(start_point, abs_tol=1e-9)
         assert ellipse.end_point.isclose(end_point, abs_tol=1e-9)
 
