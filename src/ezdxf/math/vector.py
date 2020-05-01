@@ -493,7 +493,7 @@ class Vector:
             base: base vector, defines angle 0
             target: target vector
         """
-        x_axis = base.normalize()
+        x_axis = (base - self.project(base)).normalize()
         y_axis = self.cross(x_axis).normalize()
         target_projected_x = x_axis.dot(target)
         target_projected_y = y_axis.dot(target)
