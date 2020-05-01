@@ -45,5 +45,9 @@ class DwgCorruptedHeaderSection(DwgError):
     pass
 
 
+class DwgCorruptedTableSection(DwgError):
+    pass
+
+
 class CRCError(DwgError):
     pass

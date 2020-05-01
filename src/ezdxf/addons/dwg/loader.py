@@ -1,7 +1,8 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 # Created: 2020-04-01
-from typing import Dict, Any
+from typing import Dict, Any, Iterable, Callable
+import logging
 from ezdxf.drawing import Drawing
 from ezdxf.tools import codepage
 
@@ -18,9 +19,11 @@ from .fileheader import FileHeader
 from .header_section import load_header_section
 from .classes_section import load_classes_section
 from .objects_section import load_objects_map
-from .objects import Directory
+from .objects import ObjectsDirectory
+from .objects import DwgAppID, load_table_handles
 
 __all__ = ['readfile', 'load', 'document']
+logger = logging.getLogger('ezdxf')
 
 
 def readfile(filename: str, crc_check=False) -> 'Drawing':
@@ -66,7 +69,15 @@ class DwgDocument:
         self.objects_map: Dict[str, int] = dict()
 
         # Entity Directory
-        self.object_directory: Directory = Directory()
+        self.objects_directory: ObjectsDirectory = ObjectsDirectory()
+
+        self.table_section = dict()
+        self.block_section = dict()
+        self.object_section = dict()
+
+    @property
+    def entitydb(self):
+        return self.doc.entitydb
 
     def _setup_doc(self) -> Drawing:
         doc = Drawing(dxfversion=self.specs.version)
@@ -79,7 +90,7 @@ class DwgDocument:
         doc.header['$DWGCODEPAGE'] = codepage.tocodepage(self.specs.encoding)
 
         doc.classes = ClassesSection(doc)
-        # doc.tables = TablesSection(doc)
+        doc.tables = TablesSection(doc)
         # doc.blocks = BlocksSection(doc)
         # doc.entities = EntitySection(doc)
         # doc.objects = ObjectsSection(doc)
@@ -89,8 +100,8 @@ class DwgDocument:
     def load(self):
         self.load_header()
         self.load_classes()
-        self.load_objects_map()
         self.load_objects_directory()
+        self.load_tables()
 
         # copy data to DXF document
         self.store_header()
@@ -108,13 +119,45 @@ class DwgDocument:
             self.doc.classes.register(dxfclass)
             self.dxf_object_types[class_num] = dxfclass.dxf.name
 
-    def load_objects_map(self) -> None:
+    def load_objects_directory(self) -> None:
         section_data = load_objects_map(self.specs, self.data, self.crc_check)
         self.objects_map = dict(section_data.handles())
+        self.objects_directory.load(self.specs, self.data, self.objects_map, self.crc_check)
 
-    def load_objects_directory(self) -> None:
-        pass
-        # self.object_directory.load(self.specs, self.data, self.objects_map, self.crc_check)
+    def load_tables(self) -> None:
+        self.load_table('APPID', entry_factory=DwgAppID, dxf_table=self.doc.appids)
+
+    def load_table(self, name: str, entry_factory: Callable, dxf_table) -> None:
+        add_to_entitydb = self.entitydb.add
+        add_to_table = dxf_table.add_entry
+        try:
+            handle = self.raw_header_vars[f'%{name}_TABLE']
+        except KeyError:
+            raise DwgCorruptedTableSection(f'{name} table handle not present.')
+        else:
+            dxf_table.init_table_head(name, handle)
+            add_to_entitydb(dxf_table.head)
+            for entry in self.load_table_entries(handle, name=name, entry_factory=entry_factory):
+                add_to_entitydb(entry)
+                add_to_table(entry)
+
+    def load_table_entries(self, handle: str, name: str, entry_factory: Callable) -> Iterable:
+        dxffactory = self.doc.dxffactory
+        objects = self.objects_directory
+        try:
+            data = objects[handle]
+        except KeyError:
+            raise DwgCorruptedTableSection(f'{name} table control not found in objects map.')
+        else:
+            for handle in load_table_handles(self.specs, data, handle):
+                try:
+                    data = objects[handle]
+                except KeyError:
+                    raise DwgCorruptedTableSection(f'{name} #{handle} not found in objects map.')
+                else:
+                    dwg_object = entry_factory(self.specs, data, handle)
+                    dwg_object.update_dxfname(self.dxf_object_types)
+                    yield dwg_object.dxf(dxffactory)
 
     def store_header(self):
         pass

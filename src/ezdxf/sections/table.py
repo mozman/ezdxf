@@ -56,10 +56,10 @@ class Table:
     def new_table(cls, name: str, handle: str, doc: 'Drawing') -> 'Table':
         """ Create new table. (internal API)"""
         table = cls(doc)
-        table._set_head(name, handle)
+        table.init_table_head(name, handle)
         return table
 
-    def _set_head(self, name: str, handle: str = None) -> None:
+    def init_table_head(self, name: str, handle: str = None) -> None:
         self._head = TableHead.new(handle, owner='0', dxfattribs={'name': name}, doc=self.doc)
 
     @property

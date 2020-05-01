@@ -105,7 +105,7 @@ def load_commands(desc: str) -> List[Tuple[str, Any]]:
             commands.append((CMD_SET_VERSION, _min_max_versions(param)))
         elif command in {CMD_SKIP_BITS, CMD_SKIP_NEXT_IF}:
             commands.append((command, param))
-        elif command[0] == '$':
+        elif command[0] in '$%':
             commands.append((CMD_SET_VAR, (command, param)))
         else:
             raise ValueError(f'Unknown command: {command}')
@@ -144,6 +144,8 @@ def parse_header(bs: BitStream) -> Dict[str, Any]:
 
 
 HEADER_DESCRIPTION = """
+# $... DXF header variables stored in the DXF header section
+# %... DWG header information not stored in the DXF header section
 ver: R2007
 $SIZE_IN_BITS: RL # Size in bits 
 
@@ -166,7 +168,7 @@ ver: R13-R14
 $UNKNOWN: BS # Unknown short, default value 0 
 
 ver: R13-R2000 
-$CURRENT_VIEWPORT_ENTITY_HEADER: H # Handle of the current viewport entity header (hard pointer) 
+%CURRENT_VIEWPORT_ENTITY_HEADER: H # Handle of the current viewport entity header (hard pointer) 
 
 ver: all
 $DIMASO: B 
@@ -296,10 +298,10 @@ ver: R13-R2004
 $MENUNAME: TV
 
 ver: all 
-$TDCREATE: BL # (Julian day) 
-$TDCREATE: BL # (Milliseconds into the day) 
-$TDUPDATE: BL # (Julian day) 
-$TDUPDATE: BL # (Milliseconds into the day) 
+$TDCREATE_DAY: BL # (Julian day) 
+$TDCREATE_TIME: BL # (Milliseconds into the day) 
+$TDUPDATE_DAY: BL # (Julian day) 
+$TDUPDATE_TIME: BL # (Milliseconds into the day) 
 
 ver: R2004+
 $UNKNOWN: BL 
@@ -307,10 +309,10 @@ $UNKNOWN: BL
 $UNKNOWN: BL 
 
 ver: all 
-$TDINDWG: BL # (Days) 
-$TDINDWG: BL # (Milliseconds into the day) 
-$TDUSRTIMER: BL # (Days) 
-$TDUSRTIMER: BL # (Milliseconds into the day) 
+$TDINDWG_DAY: BL # (Days) 
+$TDINDWG_TIME: BL # (Milliseconds into the day) 
+$TDUSRTIMER_DAY: BL # (Days) 
+$TDUSRTIMER_TIME: BL # (Milliseconds into the day) 
 $CECOLOR: CMC
 
 # with an 8-bit length specifier preceding the handle bytes (standard hex handle form) (code 0). 
@@ -521,39 +523,39 @@ $DIMLWD: BS
 $DIMLWE: BS 
 
 ver: all 
-$BLOCK_CONTROL_OBJECT: H # (hard owner) Block Record Table
-$LAYER_CONTROL_OBJECT: H # (hard owner) Layer Table
-$STYLE_CONTROL_OBJECT: H # (hard owner) Style Table
-$LINETYPE_CONTROL_OBJECT: H # (hard owner) Linetype Table
-$VIEW_CONTROL_OBJECT: H # (hard owner) View table
-$UCS_CONTROL_OBJECT: H # (hard owner)  UCS Table
-$VPORT_CONTROL_OBJECT: H # (hard owner)  Viewport table
-$APPID_CONTROL_OBJECT: H # (hard owner)  AppID Table
-$DIMSTYLE_CONTROL_OBJECT: H # (hard owner)  Dimstyle Table
+%BLOCK_RECORD_TABLE: H # (hard owner)
+%LAYER_TABLE: H # (hard owner)
+%STYLE_TABLE: H # (hard owner)
+%LTYPE_TABLE: H # (hard owner)
+%VIEW_TABLE: H # (hard owner)
+%UCS_TABLE: H # (hard owner)
+%VPORT_TABLE: H # (hard owner)
+%APPID_TABLE: H # (hard owner)
+%DIMSTYLE_TABLE: H # (hard owner)
 
 ver: R13-R2000 
-$VIEWPORT_ENTITY_HEADER_CONTROL_OBJECT: H # (hard owner) 
+%VIEWPORT_ENTITY_HEADER_TABLE: H # (hard owner) 
 
 ver: all 
-$ACAD_GROUP_DICTIONARY: H # (hard pointer) 
-$ACAD_MLINESTYLE_DICTIONARY: H # (hard pointer) 
-$ROOT_DICTIONARY: H # (NAMED OBJECTS) (hard owner) 
+%ACAD_GROUP_DICTIONARY: H # (hard pointer) 
+%ACAD_MLINESTYLE_DICTIONARY: H # (hard pointer) 
+%ROOT_DICTIONARY: H # (NAMED OBJECTS) (hard owner) 
 
 ver: R2000+ 
 $TSTACKALIGN: BS # default = 1 (not present in DXF) 
 $TSTACKSIZE: BS #  default = 70 (not present in DXF) 
 $HYPERLINKBASE: TV 
 $STYLESHEET: TV 
-$LAYOUTS_DICTIONARY: H # (hard pointer) 
-$PLOTSETTINGS_DICTIONARY: H # (hard pointer) 
-$PLOTSTYLES_DICTIONARY: H # (hard pointer) 
+%LAYOUTS_DICTIONARY: H # (hard pointer) 
+%PLOTSETTINGS_DICTIONARY: H # (hard pointer) 
+%PLOTSTYLES_DICTIONARY: H # (hard pointer) 
 
 ver: R2004+ 
-$MATERIALS_DICTIONARY: H # (hard pointer) 
-$COLORS_DICTIONARY: H # (hard pointer) 
+%MATERIALS_DICTIONARY: H # (hard pointer) 
+%COLORS_DICTIONARY: H # (hard pointer) 
 
 ver: R2007+ 
-$VISUALSTYLE_DICTIONARY: H # (hard pointer) 
+%VISUALSTYLE_DICTIONARY: H # (hard pointer) 
 
 ver: R2013+
 $UNKNOWN: H # (hard pointer) 
@@ -591,11 +593,11 @@ $INTERSECTIONDISPLAY: RC
 $PROJECTNAME: TV 
 
 ver: all 
-$PAPER_SPACE_BLOCK_RECORD: H # (hard pointer) 
-$MODEL_SPACE_BLOCK_RECORD: H #  (hard pointer) 
-$BYLAYER_LTYPE: H # (hard pointer) 
-$BYBLOCK_LTYPE: H # (hard pointer) 
-$CONTINUOUS_LTYPE: H # (hard pointer) 
+%PAPER_SPACE_BLOCK_RECORD: H # (hard pointer) 
+%MODEL_SPACE_BLOCK_RECORD: H #  (hard pointer) 
+%BYLAYER_LTYPE: H # (hard pointer) 
+%BYBLOCK_LTYPE: H # (hard pointer) 
+%CONTINUOUS_LTYPE: H # (hard pointer) 
 
 ver: R2007+ 
 $CAMERADISPLAY: B 

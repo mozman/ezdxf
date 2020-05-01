@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Dict, List, Tuple, Optional, Any, TYPE_CHECKING
 import struct
 from abc import abstractmethod
 
@@ -8,6 +8,9 @@ from ezdxf.tools.binarydata import BitStream
 from .const import *
 from .crc import crc8
 from .fileheader import FileHeader
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import EntityFactory, DXFEntity
 
 TYPE_TO_DXF_NAME = {
     0x01: 'TEXT',
@@ -56,25 +59,25 @@ TYPE_TO_DXF_NAME = {
     0x2D: 'LEADER',
     0x2E: 'TOLERANCE',
     0x2F: 'MLINE',
-    0x30: 'BLOCK_RECORD_CTRL_OBJ',
+    0x30: 'BLOCK_RECORD_TABLE',
     0x31: 'BLOCK_RECORD',
-    0x32: 'LAYER_CTRL_OBJ',
+    0x32: 'LAYER_TABLE',
     0x33: 'LAYER',
-    0x34: 'STYLE_CTRL_OBJ',
+    0x34: 'STYLE_TABLE',
     0x35: 'STYLE',
-    0x38: 'LTYPE_CTRL_OBJ',
+    0x38: 'LTYPE_TABLE',
     0x39: 'LTYPE',
-    0x3C: 'VIEW_CTRL_OBJ',
+    0x3C: 'VIEW_TABLE',
     0x3D: 'VIEW',
-    0x3E: 'UCS_CTRL_OBJ',
+    0x3E: 'UCS_TABLE',
     0x3F: 'UCS',
-    0x40: 'VPORT_CTRL_OBJ',
+    0x40: 'VPORT_TABLE',
     0x41: 'VPORT',
-    0x42: 'APPID_CTRL_OBJ',
+    0x42: 'APPID_TABLE',
     0x43: 'APPID',
-    0x44: 'DIMSTYLE_CTRL_OBJ',
+    0x44: 'DIMSTYLE_TABLE',
     0x45: 'DIMSTYLE',
-    0x46: 'VIEWPORT_ENTITY_HDR_CTRL_OBJ',
+    0x46: 'VIEWPORT_ENTITY_TABLE',
     0x47: 'VIEWPORT_ENTITY_HDR',
     0x48: 'GROUP',
     0x49: 'MLINESTYLE',
@@ -135,6 +138,7 @@ class DwgRootObject:
         # data start after the leading size value as modular shorts or modular chars
         self.data: Bytes = data
         self.dxfname: str = ''
+        self.object_type: int = 0  # 0 == unused!
         self.dxfattribs: Dict[str, Any] = dict()
         self.dxfattribs['handle'] = handle
         self.persistent_reactors_count: int = 0
@@ -145,11 +149,9 @@ class DwgRootObject:
 
         # set by init_data_stream():
         self.handle_stream_size: int = 0  # size in bits, required for later usage?
-        self.object_data_start: int = 0  # start of object data - first bit of object type
         self.data_stream = self.init_data_stream()
 
         # set by load_common_data():
-        self.object_type: int = 0  # 0 == unused!
         self.object_data_size: int = 0
         self.load_common_data()
 
@@ -176,21 +178,19 @@ class DwgRootObject:
 
     @property
     def handle_section_start(self) -> int:
-        return self.object_data_start + self.object_data_size
+        return self.object_data_size
 
     def init_data_stream(self) -> BitStream:
         version = self.version
         bs = BitStream(self.data, version, self.encoding)
+        self.object_type = bs.read_object_type()
         if version >= ACAD_2010:
             self.handle_stream_size = bs.read_unsigned_modular_chars()
-        self.object_data_start = bs.bit_index
         return bs
 
     def load_common_data(self) -> None:
         version = self.version
         bs = self.data_stream
-        bs.reset(self.object_data_start)
-        self.object_type = bs.read_object_type()
 
         # Read objects data size for R2000+
         if ACAD_2000 <= version <= ACAD_2007:
@@ -243,16 +243,22 @@ class DwgRootObject:
         self.load_specific_handles()
 
     @abstractmethod
-    def load_specific_data(self):
+    def load_specific_data(self) -> None:
         pass
 
-    def load_common_handles(self) -> BitStream:
-        bs = self.handle_stream = self.init_handle_stream()
+    def load_common_handles(self) -> None:
+        bs = self.handle_stream
         self.dxfattribs['owner'] = bs.read_handle()
         self.persistent_reactors.extend(bs.read_hex_handle() for _ in range(self.persistent_reactors_count))
-        if self.has_xdictionary:
+
+        # R13-R2000 the xdictionary handle is always present and is 0 for no xdictionary
+        if self.version <= ACAD_2000:
+            handle = bs.read_hex_handle()
+            if handle != '0':
+                self.has_xdictionary = True
+                self.xdictionary = handle
+        elif self.has_xdictionary:
             self.xdictionary = bs.read_hex_handle()
-        return bs
 
     @abstractmethod
     def load_specific_handles(self):
@@ -270,6 +276,12 @@ class DwgRootObject:
         else:
             raise DwgObjectError(f'Invalid/unknown object type: {object_type}.')
 
+    def dxf(self, factory: 'EntityFactory'):
+        entity = factory.new_entity(self.dxfname, self.dxfattribs)
+        entity.set_reactors(self.persistent_reactors)
+        # set xdata
+        return entity
+
 
 class DwgObject(DwgRootObject):
     def load_common_data(self) -> None:
@@ -283,7 +295,7 @@ class DwgObject(DwgRootObject):
         self.persistent_reactors_count = bs.read_bit_long()
         if version >= ACAD_2004:
             self.has_xdictionary = not bool(bs.read_bit())
-            # todo: how is this flag stored in R2000 and prior?
+            # For <= R2000 xdictionary handle is always present and is 0 for no xdictionary
         if version >= ACAD_2013:
             self.has_data_store_content = bool(bs.read_bit())
         # Specific objects data follow (ODS 5.4.1 chapter 20.1)
@@ -382,19 +394,14 @@ def dwg_object_type(data: bytes, version: str) -> int:
 
     """
     bs = BitStream(data, version)
-    if version >= ACAD_2010:
-        bs.read_unsigned_modular_chars()
     return bs.read_object_type()
 
 
-class Directory:
+class ObjectsDirectory:
     def __init__(self):
-        self.objects: Dict[str, DwgObject] = dict()
+        self.objects: Dict[str, memoryview] = dict()
 
-    def add(self, obj: DwgObject) -> None:
-        self.objects[obj.handle] = obj
-
-    def __getitem__(self, handle: str) -> DwgObject:
+    def __getitem__(self, handle: str) -> memoryview:
         return self.objects[handle]
 
     def __contains__(self, handle: str) -> bool:
@@ -406,9 +413,32 @@ class Directory:
             object_start, object_size = dwg_object_data_size(data, location, version)
             object_end = object_start + object_size
             object_data = data[object_start: object_end]
+            self.objects[handle] = object_data
+            crc_check = False  # todo: crc check for objects
             if crc_check:
                 check = struct.unpack_from('<H', data, object_end)
                 crc = crc8(object_data, seed=0xc0c1)
                 if check != crc:
                     raise CRCError(f'CRC error in object #{handle}.')
-            self.add(DwgObject(specs, object_data, handle))
+
+
+def load_table_handles(specs: FileHeader, data: Bytes, handle: str) -> List[str]:
+    dwg_object = DwgObject(specs, data, handle)
+    num_entries = dwg_object.data_stream.read_bit_long()
+    handle = dwg_object.handle_stream.read_hex_handle
+    return [handle() for _ in range(num_entries)]
+
+
+class DwgAppID(DwgObject):
+    # ODA chapter 22.4.66 APPID(67)
+    def load_specific_data(self):
+        bs = self.data_stream
+        self.dxfattribs['name'] = bs.read_text_variable()
+        bs.read_bit()  # ignore bit coded value 64, see DXF Reference
+        bs.read_bit_short()  # xref index see ODA 20.4.66, ignore for DXF import
+        is_externally_xref_dependent = bs.read_bit() << 4  # 16 = If set, table entry is externally dependent on an xref
+        self.dxfattribs['flags'] = is_externally_xref_dependent
+
+    def load_specific_handles(self):
+        # ignore: External reference block handle (hard pointer)
+        pass
