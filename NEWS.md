@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.12.2b0 - 2020-04-30
------------------------------
+Version 0.12.2 - 2020-05-02
+---------------------------
 
 - BUGFIX: `XData.get()` now raises `DXFValueError` for not existing appids, like all other methods of the `XData()` class
 - BUGFIX: `Layer.description` returns an empty string for unknown XDATA structure in `AcAecLayerStandard`
