@@ -206,19 +206,9 @@ def virtual_block_reference_entities(block_ref: 'Insert',
 
         dxftype = entity.dxftype()
 
+        original_ellipse: Optional[Ellipse] = None
         if has_non_uniform_scaling and dxftype == 'ELLIPSE':
-            # transform start- and end point before main transformation
-            ellipse = cast('Ellipse', entity)
-            open_ellipse = not math.isclose(
-                normalize_angle(ellipse.dxf.start_param),
-                normalize_angle(ellipse.dxf.end_param),
-            )
-            if open_ellipse:
-                # transform start- and end point
-                start_param = ellipse.dxf.start_param
-                end_param = ellipse.dxf.end_param
-                start_point, end_point = brcs.points_to_wcs(ellipse.vertices((start_param, end_param)))
-            minor_axis = brcs.direction_to_wcs(ellipse.minor_axis)
+            original_ellipse = entity.copy()
 
         # Basic transformation from BRCS to WCS
         try:
@@ -235,11 +225,18 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                 pass  # nothing else to do
             elif dxftype in {'CIRCLE', 'ARC'}:
                 # Non uniform scaling: ARC and CIRCLE converted to ELLIPSE
-                # todo: ARC - check mirroring by scaling (-1)
+                # TODO: since non uniform scale => ellipse, scaling by (-s, -s, -s) is the only possible reflection here
+                # TODO: handle reflections about z
                 entity.dxf.radius = entity.dxf.radius * uniform_scaling_factor
             elif dxftype == 'ELLIPSE':
+                # TODO: handle reflections about z
                 if has_non_uniform_scaling:
-                    # todo: ELLIPSE - check mirroring by scaling (-1)
+                    open_ellipse = not math.isclose(
+                        normalize_angle(original_ellipse.dxf.start_param),
+                        normalize_angle(original_ellipse.dxf.end_param),
+                    )
+                    minor_axis = brcs.direction_to_wcs(original_ellipse.minor_axis)
+
                     ellipse = cast('Ellipse', entity)
                     # Transform axis
                     major_axis = ellipse.dxf.major_axis
@@ -256,24 +253,41 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                     # AutoCAD does not accept a ratio < 1e-6 -> invalid DXF file
                     ellipse.dxf.ratio = max(ratio, 1e-6)
                     if open_ellipse:
+                        original_start_param = original_ellipse.dxf.start_param
+                        original_end_param = original_ellipse.dxf.end_param
+                        start_point, end_point = brcs.points_to_wcs(
+                            original_ellipse.vertices((original_start_param, original_end_param))
+                        )
+
                         # adjusting start- and end parameter
                         center = ellipse.dxf.center  # transformed center point
                         extrusion = ellipse.dxf.extrusion  # transformed extrusion vector, default is (0, 0, 1)
 
                         start_angle = extrusion.angle_about(major_axis, start_point - center)
                         end_angle = extrusion.angle_about(major_axis, end_point - center)
-                        ellipse.dxf.start_param = angle_to_param(ratio, start_angle)
-                        ellipse.dxf.end_param = angle_to_param(ratio, end_angle)
+                        start_param = angle_to_param(ratio, start_angle)
+                        end_param = angle_to_param(ratio, end_angle)
+
+                        # if drawing the wrong side of the ellipse
+                        if (start_param > end_param) != (original_start_param > original_end_param):
+                            start_param, end_param = end_param, start_param
+
+                        ellipse.dxf.start_param = start_param
+                        ellipse.dxf.end_param = end_param
 
                     if ellipse.dxf.ratio > 1:
                         ellipse.swap_axis()
             elif dxftype == 'MTEXT':
+                # TODO: handle reflections. Note that the entity does store enough information to represent being
+                #  reflected. This can be seen by reflecting then exploding in Autocad.
+                #  The text will no longer be reflected.
                 # Scale MTEXT height/width just by uniform_scaling.
-                # todo: MTEXT - check mirroring by scaling (-1)
                 entity.dxf.char_height *= uniform_scaling_factor
                 entity.dxf.width *= uniform_scaling_factor
             elif dxftype in {'TEXT', 'ATTRIB'}:
-                # todo: TEXT - check mirroring by scaling (-1)
+                # TODO: handle reflections. Note that the entity does store enough information to represent being
+                #  reflected. This can be seen by reflecting then exploding in Autocad.
+                #  The text will no longer be reflected.
                 # Scale TEXT height just by uniform_scaling.
                 entity.dxf.height *= uniform_scaling_factor
             elif dxftype == 'INSERT':
