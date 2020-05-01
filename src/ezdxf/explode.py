@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Iterable, cast, Union, Generator, Callable, Op
 
 from ezdxf.entities import factory
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
-from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS
+from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS, angle_to_param
 from ezdxf.query import EntityQuery
 
 logger = logging.getLogger('ezdxf')
@@ -95,20 +95,6 @@ def attrib_to_text(attrib: 'Attrib', dxffactory) -> 'Text':
     dxffactory.doc.entitydb.delete_entity(attrib)
     # New TEXT entity has same handle as the deleted ATTRIB entity and replaces the ATTRIB entity in the database.
     return dxffactory.create_db_entry('TEXT', dxfattribs=dxfattribs)
-
-
-def angle_to_param(ratio: float, angle: float) -> float:
-    """ Returns ellipse parameter for argument `angle`.
-
-    Args:
-        ratio: minor axis to major axis ratio as stored in the ELLIPSE entity (always <= 1).
-        angle: angle between major axis and line from center to point on the ellipse
-
-    Returns:
-        the ellipse parameter in the range [0, 2pi)
-    """
-    x, y = math.cos(angle), math.sin(angle) / ratio
-    return normalize_angle(math.atan2(y, x))
 
 
 def virtual_block_reference_entities(block_ref: 'Insert',
