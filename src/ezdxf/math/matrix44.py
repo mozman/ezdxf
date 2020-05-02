@@ -80,6 +80,7 @@ class Matrix44:
         """ Returns the representation string of the matrix:
         ``Matrix44((col0, col1, col2, col3), (...), (...), (...))``
         """
+
         def format_row(row):
             return "(%s)" % ", ".join(str(value) for value in row)
 
@@ -139,6 +140,13 @@ class Matrix44:
         return self.__class__(self.matrix)
 
     __copy__ = copy
+
+    def get_scaling(self) -> Tuple[float, float, float]:
+        """ Extract scaling factors from transformation matrix. """
+        sx = Vector(self.get_row(0)).magnitude
+        sy = Vector(self.get_row(1)).magnitude
+        sz = Vector(self.get_row(2)).magnitude
+        return sx, sy, sz
 
     @classmethod
     def scale(cls, sx: float, sy: float = None, sz: float = None) -> 'Matrix44':
@@ -465,30 +473,53 @@ class Matrix44:
 
     def transform(self, vector: 'Vertex') -> Vector:
         """
-        Transforms a 3D vector and returns the result as a tuple.
+        Returns a transformed a 3D vertex.
 
         """
         m = self.matrix
         x, y, z = vector
         return Vector(x * m[0] + y * m[4] + z * m[8] + m[12],
-                x * m[1] + y * m[5] + z * m[9] + m[13],
-                x * m[2] + y * m[6] + z * m[10] + m[14])
+                      x * m[1] + y * m[5] + z * m[9] + m[13],
+                      x * m[2] + y * m[6] + z * m[10] + m[14])
 
-    def transform_vectors(self, vectors: Iterable['Vertex']) -> List[Vector]:
+    def transform_direction(self, vector: 'Vertex') -> Vector:
         """
-        Returns a list of transformed vectors.
+        Returns a transformed3D direction vector without translation.
 
         """
-        result = []
+        m = self.matrix
+        x, y, z = vector
+        return Vector(x * m[0] + y * m[4] + z * m[8],
+                      x * m[1] + y * m[5] + z * m[9],
+                      x * m[2] + y * m[6] + z * m[10])
+
+    def transform_vertices(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
+        """
+        Returns an generator of transformed vertices.
+
+        """
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 = self.matrix
         for vector in vectors:
             x, y, z = vector
-            result.append(Vector(
+            yield Vector(
                 x * m0 + y * m4 + z * m8 + m12,
                 x * m1 + y * m5 + z * m9 + m13,
                 x * m2 + y * m6 + z * m10 + m14
-            ))
-        return result
+            )
+
+    def transform_directions(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
+        """
+        Returns a generator of transformed direction vectors without translation.
+
+        """
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, *_ = self.matrix
+        for vector in vectors:
+            x, y, z = vector
+            yield Vector(
+                x * m0 + y * m4 + z * m8,
+                x * m1 + y * m5 + z * m9,
+                x * m2 + y * m6 + z * m10
+            )
 
     def transpose(self) -> None:
         """

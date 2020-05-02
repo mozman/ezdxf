@@ -32,16 +32,16 @@ msp.add_spline(fit_points=spline_points, dxfattribs={'color': 1})
 msp.add_text("Spline.render_as_fit_points() differs from AutoCAD fit point rendering", dxfattribs={'height': .1}).set_pos(spline_points[0])
 
 # open uniform b-spline
-spline_points = next_frame.transform_vectors(spline_points)
+spline_points = list(next_frame.transform_vertices(spline_points))
 draw(spline_points)
 msp.add_text("Spline.render_open_bspline() matches AutoCAD", dxfattribs={'height': .1}).set_pos(spline_points[0])
 Spline(spline_points).render_open_bspline(msp, degree=3, dxfattribs={'color': 3})  # B-spline defined by control points, open uniform knots
 msp.add_open_spline(control_points=spline_points, degree=3, dxfattribs={'color': 4})
 
-rbspline_points = right_frame.transform_vectors(spline_points)
+rbspline_points = list(right_frame.transform_vertices(spline_points))
 
 # uniform b-spline
-spline_points = next_frame.transform_vectors(spline_points)
+spline_points = list(next_frame.transform_vertices(spline_points))
 draw(spline_points)
 msp.add_text("Spline.render_uniform_bspline() matches AutoCAD", dxfattribs={'height': .1}).set_pos(spline_points[0])
 Spline(spline_points).render_uniform_bspline(msp, degree=3, dxfattribs={'color': 3})  # B-spline defined by control points, uniform knots
@@ -49,7 +49,7 @@ spline = msp.add_spline(dxfattribs={'color': 4})
 spline.set_uniform(control_points=spline_points, degree=3)  # has no factory method
 
 # closed b-spline
-spline_points = next_frame.transform_vectors(spline_points)
+spline_points = list(next_frame.transform_vertices(spline_points))
 draw(spline_points)
 Spline(spline_points).render_closed_bspline(msp, degree=3, dxfattribs={'color': 3})
 msp.add_closed_spline(spline_points, degree=3)
@@ -64,7 +64,7 @@ msp.add_rational_spline(control_points=spline_points, weights=weights, degree=3,
 msp.add_text("Spline.render_open_rbspline() matches AutoCAD", dxfattribs={'height': .1}).set_pos(spline_points[0])
 
 # rational closed b-spline
-spline_points = next_frame.transform_vectors(spline_points)
+spline_points = list(next_frame.transform_vertices(spline_points))
 weights = [5, 25, 25, 5]
 draw(spline_points)
 Spline(spline_points).render_closed_rbspline(msp, weights=weights, degree=3, dxfattribs={'color': 3})  # closed Rational B-spline defined by control points, uniform knots

@@ -10,7 +10,7 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLi
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.validator import is_valid_layer_name
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
-from ezdxf.math import OCS, UCS
+from ezdxf.math import OCS, UCS, Matrix44
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
 from .factory import register_entity
@@ -293,6 +293,17 @@ class DXFGraphic(DXFEntity):
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'DXFGraphic':
         """ Interface definition. """
+        raise NotImplementedError()
+
+    def transform(self, m: 'Matrix44') -> 'DXFGraphic':
+        """ Inplace transformation interface, returns `self`.
+
+        Args:
+             m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
+
+        .. versionadded:: 0.13
+
+        """
         raise NotImplementedError()
 
     def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Iterable, angle_names: Iterable = None) -> None:

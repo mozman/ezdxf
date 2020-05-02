@@ -63,6 +63,8 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
 
     .. automethod:: set_hyperlink
 
+    .. automethod:: transform(t: Matrix44) -> DXFGraphic
+
 .. _Common graphical DXF attributes:
 
 Common graphical DXF attributes

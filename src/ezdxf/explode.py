@@ -195,7 +195,7 @@ def virtual_block_reference_entities(block_ref: 'Insert',
 
         if block_ref.has_uniform_scaling and xscale < 0:
             # handle reflection about all three axis -x, -y, -z explicit as non uniform scaling
-            has_non_uniform_scaling = True
+            has_non_uniform_scaling = False
 
         if uniform_scaling_factor is not None:
             uniform_scaling_factor = float(uniform_scaling_factor)

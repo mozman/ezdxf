@@ -34,14 +34,14 @@ msp.add_line((0, -5), (0, +5), dxfattribs=attribs)
 
 for rotation in [0, 30, 45, 60, 90]:
     m = tmatrix(20, 0, rotation)
-    render(m.transform_vectors(ellipse(100, rx=5., ry=2.)))
+    render(m.transform_vertices(ellipse(100, rx=5., ry=2.)))
 
 for startangle in [0, 30, 45, 60, 90]:
     m = tmatrix(40, 0, startangle)
-    render(m.transform_vectors(
+    render(m.transform_vertices(
         ellipse(90, rx=5., ry=2., start_param=radians(startangle), end_param= radians(startangle+90)))
     )
-    render(m.transform_vectors(
+    render(m.transform_vertices(
         ellipse(90, rx=5., ry=2., start_param=radians(startangle+180), end_param= radians(startangle+270)))
     )
 

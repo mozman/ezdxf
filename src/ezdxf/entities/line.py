@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
-from ezdxf.math import Vector, UCS
+from ezdxf.math import Vector, UCS, Matrix44
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -60,4 +60,18 @@ class Line(DXFGraphic):
         """
         self.dxf.start = ucs.to_wcs(self.dxf.start)
         self.dxf.end = ucs.to_wcs(self.dxf.end)
+        return self
+
+    def transform(self, m: Matrix44) -> 'Line':
+        """ Transform LINE entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        start, end = m.transform_vertices([self.dxf.start, self.dxf.end])
+        self.dxf.start = start
+        self.dxf.end = end
+        if self.dxf.hasattr('extrusion'):
+            # extrusion is a direction vector
+            self.dxf.extrusion = m.transform_direction(self.dxf.extrusion)
         return self

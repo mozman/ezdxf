@@ -142,7 +142,7 @@ class MeshBuilder:
         """
         vertices = self.vertices
         if matrix is not None:
-            vertices = matrix.transform_vectors(vertices)
+            vertices = list(matrix.transform_vertices(vertices))
         if ucs is not None:
             vertices = ucs.points_to_wcs(vertices)
         mesh = layout.add_mesh(dxfattribs=dxfattribs)
@@ -316,7 +316,7 @@ class MeshTransformer(MeshBuilder):
             matrix: 4x4 transformation matrix as :class:`~ezdxf.math.Matrix44` object
 
         """
-        self.vertices = matrix.transform_vectors(self.vertices)
+        self.vertices = list(matrix.transform_vertices(self.vertices))
         return self
 
     def translate(self, x: float = 0, y: float = 0, z: float = 0):
@@ -368,7 +368,7 @@ class MeshTransformer(MeshBuilder):
             angle: rotation angle in radians
 
         """
-        self.vertices = Matrix44.x_rotate(angle).transform_vectors(self.vertices)
+        self.vertices = list(Matrix44.x_rotate(angle).transform_vertices(self.vertices))
         return self
 
     def rotate_y(self, angle: float):
@@ -379,7 +379,7 @@ class MeshTransformer(MeshBuilder):
             angle: rotation angle in radians
 
         """
-        self.vertices = Matrix44.y_rotate(angle).transform_vectors(self.vertices)
+        self.vertices = list(Matrix44.y_rotate(angle).transform_vertices(self.vertices))
         return self
 
     def rotate_z(self, angle: float):
@@ -390,7 +390,7 @@ class MeshTransformer(MeshBuilder):
             angle: rotation angle in radians
 
         """
-        self.vertices = Matrix44.z_rotate(angle).transform_vectors(self.vertices)
+        self.vertices = list(Matrix44.z_rotate(angle).transform_vertices(self.vertices))
         return self
 
     def rotate_axis(self, axis: 'Vertex', angle: float):
@@ -402,7 +402,7 @@ class MeshTransformer(MeshBuilder):
             angle: rotation angle in radians
 
         """
-        self.vertices = Matrix44.axis_rotate(axis, angle).transform_vectors(self.vertices)
+        self.vertices = list(Matrix44.axis_rotate(axis, angle).transform_vertices(self.vertices))
         return self
 
     def transform_to_wcs(self, ucs: 'UCS'):

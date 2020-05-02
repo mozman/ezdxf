@@ -193,12 +193,12 @@ class TestMatrix44:
         r = Matrix44.axis_rotate(angle=pi / 2, axis=(0., 0., 1.))
         points = ((23., 97., .5), (2., 7., 13.))
 
-        p1 = s.transform_vectors(points)
-        p1 = t.transform_vectors(p1)
-        p1 = r.transform_vectors(p1)
+        p1 = s.transform_vertices(points)
+        p1 = t.transform_vertices(p1)
+        p1 = r.transform_vertices(p1)
 
         c = Matrix44.chain(s, t, r)
-        p2 = c.transform_vectors(points)
+        p2 = c.transform_vertices(points)
         assert equal_vectors(p1, p2) is True
 
     def test_transform(self):
@@ -220,3 +220,10 @@ class TestMatrix44:
     def test_inverse_error(self):
         m = Matrix44([1] * 16)
         pytest.raises(ZeroDivisionError, m.inverse)
+
+    def test_get_scaling(self):
+        s = Matrix44.scale(10, 20, 30)
+        assert s.get_scaling() == (10, 20, 30)
+
+        # s = Matrix44.scale(-10, -20, -30)
+        # assert s.get_scaling() == (-10, -20, -30)

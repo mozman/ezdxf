@@ -352,7 +352,7 @@ class UCS(TransformUSCToOCSMixin):
 
         """
         t = Matrix44.axis_rotate(Vector(axis), angle)
-        ux, uy, uz = t.transform_vectors([self.ux, self.uy, self.uz])
+        ux, uy, uz = t.transform_vertices([self.ux, self.uy, self.uz])
         return UCS(origin=self.origin, ux=ux, uy=uy, uz=uz)
 
     def rotate_local_x(self, angle: float) -> 'UCS':
@@ -368,7 +368,7 @@ class UCS(TransformUSCToOCSMixin):
 
         """
         t = Matrix44.axis_rotate(self.ux, angle)
-        uy, uz = t.transform_vectors([self.uy, self.uz])
+        uy, uz = t.transform_vertices([self.uy, self.uz])
         return UCS(origin=self.origin, ux=self.ux, uy=uy, uz=uz)
 
     def rotate_local_y(self, angle: float) -> 'UCS':
@@ -384,7 +384,7 @@ class UCS(TransformUSCToOCSMixin):
 
         """
         t = Matrix44.axis_rotate(self.uy, angle)
-        ux, uz = t.transform_vectors([self.ux, self.uz])
+        ux, uz = t.transform_vertices([self.ux, self.uz])
         return UCS(origin=self.origin, ux=ux, uy=self.uy, uz=uz)
 
     def rotate_local_z(self, angle: float) -> 'UCS':
@@ -400,7 +400,7 @@ class UCS(TransformUSCToOCSMixin):
 
         """
         t = Matrix44.axis_rotate(self.uz, angle)
-        ux, uy = t.transform_vectors([self.ux, self.uy])
+        ux, uy = t.transform_vertices([self.ux, self.uy])
         return UCS(origin=self.origin, ux=ux, uy=uy, uz=self.uz)
 
     def shift(self, delta: 'Vertex') -> 'UCS':
@@ -620,5 +620,5 @@ class BRCS(TransformUSCToOCSMixin):
 
         """
         t = Matrix44.axis_rotate(self._matrix.uz.normalize(), angle)
-        ux, uy = t.transform_vectors([self._matrix.ux, self._matrix.uy])
+        ux, uy = t.transform_vertices([self._matrix.ux, self._matrix.uy])
         self._matrix = Matrix33(ux, uy, self._matrix.uz)

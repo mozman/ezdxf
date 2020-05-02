@@ -257,7 +257,7 @@ Matrix44
 
     .. automethod:: transform
 
-    .. automethod:: transform_vectors
+    .. automethod:: transform_vertices
 
     .. automethod:: transpose
 
