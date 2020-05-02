@@ -2,8 +2,10 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
+import math
 
-from ezdxf.math import Vector, UCS, OCS, Z_AXIS
+from ezdxf.math import Vector, UCS, Matrix44, OCS
+from ezdxf.math.transformtools import transform_extrusion, transform_length, NonUniformScalingError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -73,3 +75,28 @@ class Circle(DXFGraphic):
         self._ucs_and_ocs_transformation(ucs, vector_names=['center'])
         return self
 
+    def transform(self, m: Matrix44) -> 'Circle':
+        """ Transform CIRCLE entity by transformation matrix `m` inplace.
+
+        Raises ``NonUniformScalingError()`` for non uniform scaling.
+
+        .. versionadded:: 0.13
+
+        """
+        # OCS entity!
+        extrusion, has_uniform_scaling_in_ocs_xy = transform_extrusion(self.dxf.extrusion, m)
+        if has_uniform_scaling_in_ocs_xy:
+            old_ocs = OCS(self.dxf.extrusion)
+            new_ocs = OCS(extrusion)
+            self.dxf.extrusion = extrusion
+            center_in_wcs = m.transform(old_ocs.to_wcs(self.dxf.center))
+            self.dxf.center = new_ocs.from_wcs(center_in_wcs)
+            # old_ocs has a uniform scaled xy-plane, direction of radius-vector in
+            # the xy-plane is not important, choose x-axis for no reason:
+            self.dxf.radius = transform_length((self.dxf.radius, 0, 0), old_ocs, m)
+            # thickness vector points in the z-direction of the old_ocs:
+            self.dxf.thickness = transform_length((0, 0, self.dxf.thickness), old_ocs, m)
+        else:
+            raise NonUniformScalingError('CIRCLE does not support non uniform scaling.')
+            # Parent function has to catch this Exception and convert this CIRCLE into an ELLIPSE
+        return self

@@ -3,6 +3,7 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import transform_thickness_and_extrusion_without_ocs
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -66,7 +67,7 @@ class Point(DXFGraphic):
 
         """
         self.dxf.location = m.transform(self.dxf.location)
-        self._transform_thickness_and_extrusion_without_ocs(m)
+        transform_thickness_and_extrusion_without_ocs(self, m)
         # ignore dxf.angle!
         return self
 
