@@ -2,7 +2,6 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
-import math
 
 from ezdxf.math import Vector, UCS, Matrix44, OCS
 from ezdxf.math.transformtools import transform_extrusion, transform_length, NonUniformScalingError
@@ -83,7 +82,6 @@ class Circle(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        # OCS entity!
         extrusion, has_uniform_scaling_in_ocs_xy = transform_extrusion(self.dxf.extrusion, m)
         if has_uniform_scaling_in_ocs_xy:
             old_ocs = OCS(self.dxf.extrusion)
@@ -96,7 +94,8 @@ class Circle(DXFGraphic):
             self.dxf.radius = transform_length((self.dxf.radius, 0, 0), old_ocs, m)
             # thickness vector points in the z-direction of the old_ocs:
             self.dxf.thickness = transform_length((0, 0, self.dxf.thickness), old_ocs, m)
+
         else:
-            raise NonUniformScalingError('CIRCLE does not support non uniform scaling.')
-            # Parent function has to catch this Exception and convert this CIRCLE into an ELLIPSE
+            raise NonUniformScalingError('CIRCLE/ARC does not support non uniform scaling')
+            # Parent function has to catch this Exception and convert this CIRCLE/ARC into an ELLIPSE
         return self

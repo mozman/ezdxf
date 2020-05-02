@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 import math
-from ezdxf.entities import Line, Point, Circle
+from ezdxf.entities import Line, Point, Circle, Arc
 from ezdxf.math import Matrix44, OCS, Vector
 from ezdxf.math.transformtools import NonUniformScalingError
 
@@ -99,7 +99,7 @@ def test_circle_user_ocs():
     circle = Circle.new(dxfattribs={'center': center, 'extrusion': extrusion, 'thickness': 2})
     ocs = OCS(extrusion)
     v = ocs.to_wcs(center)  # (-2, 4, 3)
-    v = Vector(v.x*2, v.y*4, v.z*2)
+    v = Vector(v.x * 2, v.y * 4, v.z * 2)
     v += (1, 1, 1)
     # and back to OCS, extrusion is unchanged
     result = ocs.from_wcs(v)
@@ -109,6 +109,24 @@ def test_circle_user_ocs():
     assert circle.dxf.center == result
     assert circle.dxf.extrusion == (0, 1, 0)
     assert circle.dxf.thickness == 8  # in WCS y-axis
+
+
+def test_arc_default_ocs():
+    arc = Arc.new(dxfattribs={'center': (2, 3, 4), 'thickness': 2, 'start_angle': 30, 'end_angle': 60})
+    # 1. rotation - 2. scaling - 3. translation
+    m = Matrix44.chain(Matrix44.scale(2, 2, 3), Matrix44.translate(1, 1, 1))
+    # default extrusion is (0, 0, 1), therefore scale(2, 2, ..) is a uniform scaling in the xy-play of the OCS
+    arc.transform(m)
+
+    assert arc.dxf.center == (5, 7, 13)
+    assert arc.dxf.extrusion == (0, 0, 1)
+    assert arc.dxf.thickness == 6
+    assert math.isclose(arc.dxf.start_angle, 30, abs_tol=1e-9)
+    assert math.isclose(arc.dxf.end_angle, 60, abs_tol=1e-9)
+
+    arc.transform(Matrix44.z_rotate(math.radians(30)))
+    assert math.isclose(arc.dxf.start_angle, 60, abs_tol=1e-9)
+    assert math.isclose(arc.dxf.end_angle, 90, abs_tol=1e-9)
 
 
 if __name__ == '__main__':

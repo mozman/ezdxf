@@ -39,4 +39,6 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: transform_to_wcs(ucs: UCS) -> Line
 
+    .. automethod:: transform(m: Matrix44) -> Line
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-FCEF5726-53AE-4C43-B4EA-C84EB8686A66

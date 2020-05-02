@@ -70,7 +70,7 @@ def test_registered():
 
 
 def test_default_init():
-    entity= TEST_CLASS()
+    entity = TEST_CLASS()
     assert entity.dxftype() == TEST_TYPE
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
@@ -103,7 +103,6 @@ def test_default_new():
 
 
 def test_get_start_and_end_vertices_with_ocs():
-
     arc = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
         'center': (1, 2, 3),
         'radius': 2.5,
@@ -141,3 +140,19 @@ def test_write_dxf(txt, ver):
     collector2 = TagCollector(dxfversion=ver, optional=False)
     arc.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
+
+
+def test_angles():
+    arc = Arc.new(dxfattribs={'radius': 1, 'start_angle': 30, 'end_angle': 60})
+    assert tuple(arc.angles(2)) == (30, 60)
+    assert tuple(arc.angles(3)) == (30, 45, 60)
+
+    arc.dxf.start_angle = 180
+    arc.dxf.end_angle = 0
+    assert tuple(arc.angles(2)) == (180, 0)
+    assert tuple(arc.angles(3)) == (180, 270, 0)
+
+    arc.dxf.start_angle = -90
+    arc.dxf.end_angle = -180
+    assert tuple(arc.angles(2)) == (270, 180)
+    assert tuple(arc.angles(4)) == (270, 0, 90, 180)
