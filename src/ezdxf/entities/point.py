@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -57,5 +57,16 @@ class Point(DXFGraphic):
         """
         self.dxf.location = ucs.to_wcs(self.dxf.location)
         self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
+        return self
+
+    def transform(self, m: Matrix44) -> 'Point':
+        """ Transform POINT entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        self.dxf.location = m.transform(self.dxf.location)
+        self._transform_thickness_and_extrusion_without_ocs(m)
+        # ignore dxf.angle!
         return self
 

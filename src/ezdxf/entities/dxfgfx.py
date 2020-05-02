@@ -306,6 +306,16 @@ class DXFGraphic(DXFEntity):
         """
         raise NotImplementedError()
 
+    def _transform_thickness_and_extrusion_without_ocs(self, m: Matrix44):
+        if self.dxf.hasattr('thickness'):
+            thickness = m.transform_direction(self.dxf.extrusion * self.dxf.thickness)
+            self.dxf.thickness = thickness.magnitude
+            self.dxf.extrusion = thickness.normalize()
+        elif self.dxf.hasattr('extrusion'):  # without thickness?
+            extrusion = m.transform_direction(self.dxf.extrusion)
+            self.dxf.extrusion = extrusion.normalize()
+        return self
+
     def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Iterable, angle_names: Iterable = None) -> None:
         """ Transforms entity for given `ucs` to the parent coordinate system (most likely the WCS).
 

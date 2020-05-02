@@ -71,7 +71,5 @@ class Line(DXFGraphic):
         start, end = m.transform_vertices([self.dxf.start, self.dxf.end])
         self.dxf.start = start
         self.dxf.end = end
-        if self.dxf.hasattr('extrusion'):
-            # extrusion is a direction vector
-            self.dxf.extrusion = m.transform_direction(self.dxf.extrusion)
+        self._transform_thickness_and_extrusion_without_ocs(m)
         return self
