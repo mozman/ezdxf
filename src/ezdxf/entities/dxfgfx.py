@@ -18,7 +18,7 @@ from ezdxf import options
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace
+    from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex
 
 __all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd']
 
@@ -296,7 +296,7 @@ class DXFGraphic(DXFEntity):
         raise NotImplementedError()
 
     def transform(self, m: 'Matrix44') -> 'DXFGraphic':
-        """ Inplace transformation interface, returns `self`.
+        """ Inplace transformation interface, returns `self` (floating interface).
 
         Args:
              m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
@@ -305,6 +305,80 @@ class DXFGraphic(DXFEntity):
 
         """
         raise NotImplementedError()
+
+    def translate(self, dx: float, dy: float, dz: float) -> 'DXFGraphic':
+        """ Translate entity inplace about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        Basic implementation uses the :meth:`transform` interface, subclasses may have faster implementations.
+
+        .. versionadded:: 0.13
+
+        """
+        return self.transform(Matrix44.translate(dx, dy, dz))
+
+    def scale(self, sx: float, sy: float, sz: float) -> 'DXFGraphic':
+        """ Scale entity inplace about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        return self.transform(Matrix44.scale(sx, sy, sz))
+
+    def scale_uniform(self, s: float) -> 'DXFGraphic':
+        """ Scale entity inplace uniform about `s` in x-axis, y-axis and z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        return self.transform(Matrix44.scale(s))
+
+    def rotate_axis(self, axis: 'Vertex', angle: float) -> 'DXFGraphic':
+        """ Rotate entity inplace about vector `axis`, returns `self` (floating interface).
+
+        Args:
+            axis: rotation axis as tuple or :class:`Vector`
+            angle: rotation angle in radians
+
+        .. versionadded:: 0.13
+
+        """
+        return self.transform(Matrix44.axis_rotate(axis, angle))
+
+    def rotate_x(self, angle: float) -> 'DXFGraphic':
+        """ Rotate entity inplace about x-axis, returns `self` (floating interface).
+
+        Args:
+            angle: rotation angle in radians
+
+        .. versionadded:: 0.13
+
+        """
+        return self.transform(Matrix44.x_rotate(angle))
+
+    def rotate_y(self, angle: float) -> 'DXFGraphic':
+        """ Rotate entity inplace about y-axis, returns `self` (floating interface).
+
+        Args:
+            angle: rotation angle in radians
+
+        .. versionadded:: 0.13
+
+        """
+        return self.transform(Matrix44.x_rotate(angle))
+
+    def rotate_z(self, angle: float) -> 'DXFGraphic':
+        """ Rotate entity inplace about z-axis, returns `self` (floating interface).
+
+        Args:
+            angle: rotation angle in radians
+
+        .. versionadded:: 0.13
+
+        """
+        return self.transform(Matrix44.x_rotate(angle))
 
     def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Iterable, angle_names: Iterable = None) -> None:
         """ Transforms entity for given `ucs` to the parent coordinate system (most likely the WCS).

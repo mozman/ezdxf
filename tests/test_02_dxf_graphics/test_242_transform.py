@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 import math
-from ezdxf.entities import Line, Point, Circle, Arc
+from ezdxf.entities import DXFGraphic, Line, Point, Circle, Arc
 from ezdxf.math import Matrix44, OCS, Vector
 from ezdxf.math.transformtools import NonUniformScalingError
 
@@ -11,7 +11,7 @@ from ezdxf.math.transformtools import NonUniformScalingError
 # Test for Matrix44() class are located in test_605_matrix44.py
 
 
-def test_transform_interface_by_line_entity():
+def test_transform_interface():
     line = Line.new(dxfattribs={'start': (0, 0, 0), 'end': (1, 0, 0), 'extrusion': (0, 1, 0)})
     m = Matrix44.translate(1, 2, 3)
     line.transform(m)
@@ -29,6 +29,22 @@ def test_transform_interface_by_line_entity():
     assert new_line.dxf.start == (2, 4, 6)
     assert new_line.dxf.end == (3, 4, 6)
     assert new_line.dxf.extrusion == (0, 1, 0)
+
+
+def test_basic_transformation_interfaces():
+    # test basic implementation = forward operation to transform interface
+    class BasicGraphic(DXFGraphic):
+        def transform(self, m: 'Matrix44') -> 'DXFGraphic':
+            return self
+
+    interface_mockup = BasicGraphic.new()
+    assert interface_mockup.translate(1, 2, 3) is interface_mockup
+    assert interface_mockup.scale(1, 2, 3) is interface_mockup
+    assert interface_mockup.scale_uniform(1) is interface_mockup
+    assert interface_mockup.rotate_axis((1, 2, 3), 1) is interface_mockup
+    assert interface_mockup.rotate_x(1) is interface_mockup
+    assert interface_mockup.rotate_y(1) is interface_mockup
+    assert interface_mockup.rotate_z(1) is interface_mockup
 
 
 def test_line_rotation():
