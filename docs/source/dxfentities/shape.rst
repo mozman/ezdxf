@@ -47,4 +47,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: transform_to_wcs(ucs: UCS) -> Shape
 
+    .. automethod:: transform(m: Matrix44) -> Shape
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-0988D755-9AAB-4D6C-8E26-EC636F507F2C

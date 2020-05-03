@@ -9,7 +9,7 @@ from .dxfgfx import acdb_entity, DXFGraphic
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS, Matrix44
 
 __all__ = ['Light']
 
@@ -71,4 +71,14 @@ class Light(DXFGraphic):
         """
         self.dxf.location = ucs.to_wcs(self.dxf.location)
         self.dxf.target = ucs.to_wcs(self.dxf.target)
+        return self
+
+    def transform(self, m: 'Matrix44') -> 'Light':
+        """ Transform LIGHT entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        self.dxf.location = m.transform(self.dxf.location)
+        self.dxf.target = m.transform(self.dxf.target)
         return self

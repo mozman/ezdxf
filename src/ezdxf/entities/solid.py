@@ -3,7 +3,7 @@
 # Created 2019-02-21
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector, Matrix44, OCS
-from ezdxf.math.transformtools import transform_extrusion, transform_ocs_vertex
+from ezdxf.math.transformtools import transform_extrusion, transform_ocs_vertex, transform_length
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from .dxfentity import base_class, SubclassProcessor
@@ -80,14 +80,18 @@ class Solid(_Base):
 
         """
         # SOLID/TRACE is 2d entity, placed by an OCS in 3d space
-        extrusion = self.dxf.extrusion
+        dxf = self.dxf
+        extrusion = dxf.extrusion
         old_ocs = OCS(extrusion)
         extrusion, _ = transform_extrusion(extrusion, m)
         new_ocs = OCS(extrusion)
-        dxf = self.dxf
+
         for name in VERTEXNAMES:
             if dxf.hasattr(name):
                 dxf.set(name, transform_ocs_vertex(dxf.get(name), old_ocs, new_ocs, m))
+        dxf.extrusion = extrusion
+        if dxf.hasattr('thickness'):
+            dxf.thickness = transform_length((0, 0, dxf.thickness), old_ocs, m)
         return self
 
 

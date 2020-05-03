@@ -110,4 +110,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: transform_to_wcs(ucs: UCS) -> Image
 
+    .. automethod:: transform(m: Matrix44) -> Image
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3A2FF847-BE14-4AC5-9BD4-BD3DCAEF2281

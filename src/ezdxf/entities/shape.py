@@ -3,6 +3,7 @@
 # Created 2019-02-21
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector
+from ezdxf.math.transformtools import transform_extrusion, transform_angle, transform_length
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -10,7 +11,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS, Matrix44
 
 __all__ = ['Shape']
 
@@ -59,4 +60,21 @@ class Shape(DXFGraphic):
 
         """
         self._ucs_and_ocs_transformation(ucs, vector_names=('insert',), angle_names=('rotation',))
+        return self
+
+    def transform(self, m: 'Matrix44') -> 'Shape':
+        """ Transform SHAPE entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        dxf = self.dxf
+        dxf.insert = m.transform(dxf.insert)  # DXF Reference: WCS?
+        old_ocs = self.ocs()
+        extrusion, _ = transform_extrusion(dxf.extrusion, m)
+        dxf.rotation = transform_angle(dxf.rotation, old_ocs, extrusion, m)
+        dxf.oblique = transform_angle(dxf.oblique, old_ocs, extrusion, m)
+        dxf.size = transform_length((0, dxf.size, 0), old_ocs, m)
+        dxf.x_scale = transform_length((dxf.x_scale, 0, 0), old_ocs, m)
+        dxf.extrusion = extrusion
         return self

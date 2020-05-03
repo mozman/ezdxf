@@ -3,7 +3,7 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 import math
-from ezdxf.math import Vector, UCS, Matrix44, OCS, linspace, enclosing_angles
+from ezdxf.math import Vector, UCS, Matrix44, OCS, linspace, enclosing_angles, X_AXIS
 from ezdxf.math.transformtools import transform_angle
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -115,4 +115,26 @@ class Arc(Circle):
             new_start_angle, new_end_angle = new_end_angle, new_start_angle
         self.dxf.start_angle = new_start_angle
         self.dxf.end_angle = new_end_angle
+        return self
+
+    def transform_2(self, m: Matrix44) -> 'Arc':
+        # alternative implementation, but both do not pass test 242/07
+        """ Transform ARC entity by transformation matrix `m` inplace.
+
+        Raises ``NonUniformScalingError()`` for non uniform scaling.
+
+        .. versionadded:: 0.13
+
+        """
+        # in WCS
+        vertices = list(m.transform_vertices(self.vertices((self.dxf.start_angle, self.dxf.end_angle))))
+        super().transform(m)
+
+        new_ocs = OCS(self.dxf.extrusion)
+        start_point, end_point = new_ocs.points_from_wcs(vertices)
+        center = self.dxf.center
+        new_start_angle = self.dxf.extrusion.angle_about(X_AXIS, start_point - center)
+        new_end_angle = self.dxf.extrusion.angle_about(X_AXIS, end_point - center)
+        self.dxf.start_angle = math.degrees(new_start_angle)
+        self.dxf.end_angle = math.degrees(new_end_angle)
         return self

@@ -11,7 +11,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, DXFTag, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, DXFTag, UCS, Matrix44
 
 __all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables', 'Wipeout']
 
@@ -172,6 +172,17 @@ class Image(DXFGraphic):
         self.dxf.insert = ucs.to_wcs(self.dxf.insert)
         self.dxf.u_pixel = ucs.direction_to_wcs(self.dxf.u_pixel)
         self.dxf.v_pixel = ucs.direction_to_wcs(self.dxf.v_pixel)
+        return self
+
+    def transform(self, m: 'Matrix44') -> 'Image':
+        """ Transform IMAGE entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        self.dxf.insert = m.transform(self.dxf.insert)
+        self.dxf.u_pixel = m.transform_direction(self.dxf.u_pixel)
+        self.dxf.v_pixel = m.transform_direction(self.dxf.v_pixel)
         return self
 
 

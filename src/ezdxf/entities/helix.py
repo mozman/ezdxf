@@ -3,6 +3,7 @@
 # Created 2019-03-10
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector
+from ezdxf.math.transformtools import transform_length
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER
 from .spline import Spline, acdb_spline
@@ -11,7 +12,7 @@ from .dxfgfx import acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS, Matrix44
 
 __all__ = ['Helix']
 
@@ -70,4 +71,17 @@ class Helix(Spline):
         self.dxf.axis_base_point = ucs.to_wcs(self.dxf.axis_base_point)
         self.dxf.axis_vector = ucs.direction_to_wcs(self.dxf.axis_vector)
         self.dxf.start_point = ucs.to_wcs(self.dxf.start_point)
+        return self
+
+    def transform(self, m: 'Matrix44') -> 'Helix':
+        """ Transform HELIX entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        super().transform(m)
+        self.dxf.axis_base_point = m.transform(self.dxf.axis_base_point)
+        self.dxf.axis_vector = m.transform_direction(self.dxf.axis_vector)
+        self.dxf.start_point = m.transform(self.dxf.start_point)
+        self.dxf.radius = m.transform_direction((self.dxf.radius, 0, 0)).magnitude
         return self

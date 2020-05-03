@@ -3,6 +3,7 @@
 # Created 2019-03-12
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector
+from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from .dxfentity import base_class, SubclassProcessor
@@ -10,7 +11,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS, Matrix44
 
 __all__ = ['Tolerance']
 
@@ -59,4 +60,15 @@ class Tolerance(DXFGraphic):
         self.dxf.insert = ucs.to_wcs(self.dxf.insert)
         self.dxf.x_axis_vector = ucs.direction_to_wcs(self.dxf.x_axis_vector)
         self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
+        return self
+
+    def transform(self, m: 'Matrix44') -> 'Tolerance':
+        """ Transform TOLERANCE entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        self.dxf.insert = m.transform(self.dxf.insert)
+        self.dxf.x_axis_vector = m.transform_direction(self.dxf.x_axis_vector)
+        self.dxf.extrusion, _ = transform_extrusion(self.dxf.extrusion, m)
         return self
