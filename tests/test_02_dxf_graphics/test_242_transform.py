@@ -3,7 +3,7 @@
 from typing import Union
 import pytest
 import math
-from ezdxf.entities import DXFGraphic, Line, Point, Circle, Arc, Ellipse, XLine, Mesh
+from ezdxf.entities import DXFGraphic, Line, Point, Circle, Arc, Ellipse, XLine, Mesh, Spline
 from ezdxf.math import Matrix44, OCS, Vector
 from ezdxf.math.transformtools import NonUniformScalingError
 
@@ -355,6 +355,20 @@ def test_mesh_transform_interface():
     mesh.vertices.append(Vector(1, 2, 3))
     mesh.transform(Matrix44.translate(1, 1, 1))
     assert mesh.vertices[0] == (2, 3, 4)
+
+
+def test_spline_transform_interface():
+    spline = Spline()
+    spline.set_uniform([(1, 0, 0), (3, 3, 0), (6, 0, 1)])
+    spline.dxf.start_tangent = Vector(1, 0, 0)
+    spline.dxf.end_tangent = Vector(2, 0, 0)
+    spline.dxf.extrusion = Vector(3, 0, 0)
+    spline.transform(Matrix44.translate(1, 2, 3))
+    assert spline.control_points[0] == (2, 2, 3)
+    # direction vectors are not transformed by translation
+    assert spline.dxf.start_tangent == (1, 0, 0)
+    assert spline.dxf.end_tangent == (2, 0, 0)
+    assert spline.dxf.extrusion == (3, 0, 0)
 
 
 if __name__ == '__main__':

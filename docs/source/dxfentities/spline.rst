@@ -130,6 +130,8 @@ Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. automethod:: transform_to_wcs(ucs: UCS) -> Spline
 
+    .. automethod:: transform(m: Matrix44) -> Spline
+
 .. _Cambridge: https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node4.html
 
 .. _Wikipedia: https://en.wikipedia.org/wiki/Spline_%28mathematics%29
