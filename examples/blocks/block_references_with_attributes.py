@@ -45,7 +45,7 @@ for number, point in enumerate(SAMPLE_COORDS):
     block_ref = modelspace.add_blockref('FLAG', point, dxfattribs={
         'layer': 'FLAGS',
         'rotation': -15
-    }).scale(randomscale)
+    }).set_scale(randomscale)
     block_ref.add_auto_attribs(values)
 
 filename = DIR / 'flags_with_attribs.dxf'

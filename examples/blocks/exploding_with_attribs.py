@@ -43,7 +43,7 @@ for number, point in enumerate(placing_points):
 
     # Every flag has a different scaling and a rotation of +15 deg.
     random_scale = 0.5 + random.random() * 2.0
-    msp.add_auto_blockref('FLAG', point, values, dxfattribs={'rotation': 15}).scale(random_scale)
+    msp.add_auto_blockref('FLAG', point, values, dxfattribs={'rotation': 15}).set_scale(random_scale)
 
 doc.set_modelspace_vport(200)
 doc.saveas(DIR / 'flags-with-attribs.dxf')

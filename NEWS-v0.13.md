@@ -14,11 +14,12 @@ Version 0.13 - dev
     - `DXFGraphic.rotate_z(angle)`
     
    supported entities: POINT, LINE, CIRCLE, ARC, ELLIPSE, MESH, SPLINE, POLYLINE, LWPOLYLINE, TEXT, MTEXT, 
-   SOLID, TRACE, 3DFACE, HELIX, IMAGE, LEADER, LIGHT, TOLERANCE, SHAPE, XLINE, RAY
+   INSERT, SOLID, TRACE, 3DFACE, HELIX, IMAGE, LEADER, LIGHT, TOLERANCE, SHAPE, XLINE, RAY
    
    
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
 - NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
+- CHANGE: renamed old `Insert.scale()` to `Insert.set_scale()`, name conflict with transformation interface
 - REMOVED: `ezdxf.math.normalize_angle(angle)`, replace call by expression: `angle % math.tau`
 - DEPRECATED: `DXFGraphic.transform_to_wcs()`, replace call by `entity.transform(ucs.matrix)` (not implemented)

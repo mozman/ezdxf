@@ -67,6 +67,9 @@ def transform_length(length: 'Vertex', old_ocs: OCS, m: Matrix44) -> float:
     return m.transform_direction(old_ocs.to_wcs(length)).magnitude
 
 
+transform_scale_factor = transform_length
+
+
 def transform_angle(angle: float, old_ocs: OCS, extrusion: Vector, m: Matrix44) -> float:
     """ Returns new angle in radians.
 

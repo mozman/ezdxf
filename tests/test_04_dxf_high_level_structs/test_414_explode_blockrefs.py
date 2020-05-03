@@ -155,7 +155,7 @@ def test_04_explode_blockref_with_attrib(doc, msp, entitydb):
 def test_05_examine_uniform_scaled_ellipse(doc, msp):
     blk = doc.blocks.new('EllipseBlk')
     blk.add_ellipse((0, 0), major_axis=(2, 0), ratio=0.5)
-    blkref = msp.add_blockref('EllipseBlk', insert=(2, 2)).scale(2)
+    blkref = msp.add_blockref('EllipseBlk', insert=(2, 2)).set_scale(2)
     ellipse = list(blkref.virtual_entities())[0]
     assert ellipse.dxftype() == 'ELLIPSE'
     assert ellipse.dxf.center == (2, 2)

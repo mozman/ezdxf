@@ -3,7 +3,11 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict, Callable
 import math
-from ezdxf.math import Vector, UCS, BRCS, X_AXIS, Y_AXIS
+from ezdxf.math import Vector, UCS, BRCS, X_AXIS, Y_AXIS, Matrix44, OCS
+from ezdxf.math.transformtools import (
+    transform_extrusion, transform_ocs_vertex, transform_scale_factor, transform_angle
+)
+
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError, DXFStructureError
 from .dxfentity import base_class, SubclassProcessor
@@ -173,7 +177,7 @@ class Insert(DXFGraphic):
         """
         return max(abs(self.dxf.xscale), abs(self.dxf.yscale), abs(self.dxf.zscale))
 
-    def scale(self, factor: float):
+    def set_scale(self, factor: float):
         """ Set uniform scaling.
 
         .. versionadded:: 0.12
@@ -370,6 +374,29 @@ class Insert(DXFGraphic):
             attrib.transform_to_wcs(ucs)
         return self
 
+    def transform(self, m: 'Matrix44') -> 'Insert':
+        """ Transform INSERT entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        dxf = self.dxf
+        old_ocs = OCS(dxf.extrusion)
+        new_extrusion, _ = transform_extrusion(dxf.extrusion, m)
+        new_ocs = OCS(new_extrusion)
+
+        dxf.insert = transform_ocs_vertex(dxf.insert, old_ocs, new_ocs, m)
+        dxf.rotation = math.degrees(transform_angle(math.radians(dxf.rotation), old_ocs, new_extrusion, m))
+
+        # todo: transform_scale_factor is transform_length and does not return negative scaling
+        dxf.xscale = transform_scale_factor((dxf.xscale, 0, 0), old_ocs, m)
+        dxf.yscale = transform_scale_factor((0, dxf.yscale, 0), old_ocs, m)
+        dxf.zscale = transform_scale_factor((0, 0, dxf.zscale), old_ocs, m)
+
+        for attrib in self.attribs:
+            attrib.transform(m)
+        return self
+
     def brcs(self) -> 'BRCS':
         """ Returns a block reference coordinate system as :class:`BRCS` object, placed at the block reference
         `insert` location, axis aligned to the block axis, :attr:`~Insert.dxf.rotation` around z-axis and axis
@@ -526,4 +553,3 @@ class Insert(DXFGraphic):
         blockdef = self.block()
         autofill()
         return self
-

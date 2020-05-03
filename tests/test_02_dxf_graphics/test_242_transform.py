@@ -5,7 +5,7 @@ import pytest
 import math
 from ezdxf.entities import (
     DXFGraphic, Line, Point, Circle, Arc, Ellipse, XLine, Mesh, Spline, Solid, Face3d, LWPolyline, Polyline, Text,
-    MText,
+    MText, Insert,
 )
 from ezdxf.math import Matrix44, OCS, Vector
 from ezdxf.math.transformtools import NonUniformScalingError
@@ -436,6 +436,17 @@ def test_mtext_transform_interface():
     mtext.dxf.insert = (1, 0, 0)
     mtext.translate(1, 2, 3)
     assert mtext.dxf.insert == (2, 2, 3)
+
+
+def test_insert_transform_interface():
+    insert = Insert()
+    insert.dxf.insert = (1, 0, 0)
+    insert.translate(1, 2, 3)
+    assert insert.dxf.insert == (2, 2, 3)
+    insert.scale(2, 3, 4)
+    assert insert.dxf.xscale == 2
+    assert insert.dxf.yscale == 3
+    assert insert.dxf.zscale == 4
 
 
 if __name__ == '__main__':
