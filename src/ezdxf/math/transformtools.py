@@ -83,3 +83,9 @@ def transform_angle(angle: float, old_ocs: OCS, extrusion: Vector, m: Matrix44) 
     """
     new_angle_vec = m.transform_direction(old_ocs.to_wcs(Vector.from_angle(angle)))
     return extrusion.angle_about(X_AXIS, new_angle_vec)
+
+
+def transform_ocs_vertex(vertex: 'Vertex', old_ocs: OCS, new_ocs: OCS, m: Matrix44):
+    """ Returns vertex transformed from old OCS into new OCS by transformation matrix `m`.
+    """
+    return new_ocs.from_wcs(m.transform(old_ocs.to_wcs(vertex)))

@@ -2,7 +2,8 @@
 # License: MIT License
 # Created 2019-02-21
 from typing import TYPE_CHECKING
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44, OCS
+from ezdxf.math.transformtools import transform_extrusion, transform_ocs_vertex
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from .dxfentity import base_class, SubclassProcessor
@@ -72,22 +73,28 @@ class Solid(_Base):
         self._ucs_and_ocs_transformation(ucs, vector_names=VERTEXNAMES)
         return self
 
+    def transform(self, m: Matrix44) -> 'Solid':
+        """ Transform SOLID/TRACE  entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        # SOLID/TRACE is 2d entity, placed by an OCS in 3d space
+        extrusion = self.dxf.extrusion
+        old_ocs = OCS(extrusion)
+        extrusion, _ = transform_extrusion(extrusion, m)
+        new_ocs = OCS(extrusion)
+        dxf = self.dxf
+        for name in VERTEXNAMES:
+            if dxf.hasattr(name):
+                dxf.set(name, transform_ocs_vertex(dxf.get(name), old_ocs, new_ocs, m))
+        return self
 
 
 @register_entity
 class Trace(Solid):
     """ DXF TRACE entity """
     DXFTYPE = 'TRACE'
-
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Trace':
-        """ Transform TRACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        # TRACE is 2d entity, placed by an OCS in 3d space
-        self._ucs_and_ocs_transformation(ucs, vector_names=VERTEXNAMES)
-        return self
 
 
 acdb_face = DefSubclass('AcDbFace', {
@@ -152,4 +159,15 @@ class Face3d(_Base):
         self.dxf.vtx1 = ucs_to_wcs(self.dxf.vtx1)
         self.dxf.vtx2 = ucs_to_wcs(self.dxf.vtx2)
         self.dxf.vtx3 = ucs_to_wcs(self.dxf.vtx3)
+        return self
+
+    def transform(self, m: Matrix44) -> 'Face3d':
+        """ Transform 3DFACE  entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        dxf = self.dxf
+        # 3DFACE is a real 3d entity
+        dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3 = m.transform_vertices((dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3))
         return self
