@@ -7,8 +7,7 @@ import ezdxf
 import math
 
 from ezdxf.entities import Ellipse, Point, Arc
-from ezdxf.explode import angle_to_param
-from ezdxf.math import normalize_angle, Vector
+from ezdxf.math import Vector
 
 
 @pytest.fixture(scope='module')

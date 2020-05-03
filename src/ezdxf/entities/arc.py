@@ -3,7 +3,7 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 import math
-from ezdxf.math import Vector, UCS, Matrix44, OCS, normalize_angle
+from ezdxf.math import Vector, UCS, Matrix44, OCS, linspace
 from ezdxf.math.transformtools import transform_angle
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -69,22 +69,20 @@ class Arc(Circle):
         v = list(self.vertices([self.dxf.end_angle]))
         return v[0]
 
-    def angles(self, count: int) -> Iterable[float]:
-        """ Returns `count` angles from start- to end angle in degrees in counter clockwise order.
+    def angles(self, num: int) -> Iterable[float]:
+        """ Returns `num` angles from start- to end angle in degrees in counter clockwise order.
 
         All angles are normalized in the range from [0, 360).
 
         """
-        if count < 2:
-            raise ValueError('Count >= 2')
+        if num < 2:
+            raise ValueError('num >= 2')
         start = self.dxf.start_angle % 360
-        end = self.dxf.end_angle % 360
-        if end <= start:
-            end += 360
-        delta = (end - start) / (count - 1)
-        for _ in range(count):
-            yield start
-            start = (start + delta) % 360
+        stop = self.dxf.end_angle % 360
+        if stop <= start:
+            stop += 360
+        for angle in linspace(start, stop, num=num, endpoint=True):
+            yield angle % 360
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'Arc':
         """ Transform ARC entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.

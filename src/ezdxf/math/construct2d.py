@@ -41,6 +41,29 @@ def is_close_points(p1: 'Vertex', p2: 'Vertex', abs_tol=TOLERANCE) -> bool:
     return True
 
 
+def linspace(start: float, stop: float, num: int, endpoint=True) -> Iterable[float]:
+    """ Return evenly spaced numbers over a specified interval, like numpy.linspace().
+
+    Returns `num` evenly spaced samples, calculated over the interval [start, stop].
+    The endpoint of the interval can optionally be excluded.
+
+    """
+    if num < 0:
+        raise ValueError(f'Number of samples, {num}, must be non-negative.')
+    elif num == 0:
+        return
+    elif num == 1:
+        yield start
+        return
+
+    start = float(start)
+    count = (num - 1) if endpoint else num
+    delta = (float(stop) - start) / count
+    for _ in range(num):
+        yield start
+        start += delta
+
+
 def closest_point(base: 'Vertex', points: Iterable['Vertex']) -> 'Vector':
     """
     Returns closest point to `base`.
@@ -98,17 +121,6 @@ def convex_hull_2d(points: Iterable['Vertex']) -> List['Vertex']:
     return upper_hull
 
 
-def normalize_angle(angle: float) -> float:
-    """
-    Returns normalized angle between ``0`` and ``2*pi``.
-
-    """
-    angle = math.fmod(angle, RADIANS_360)
-    if angle < 0.0:
-        angle += RADIANS_360
-    return angle
-
-
 def angle_to_param(ratio: float, angle: float) -> float:
     """ Returns ellipse parameter for argument `angle`.
 
@@ -120,15 +132,15 @@ def angle_to_param(ratio: float, angle: float) -> float:
         the ellipse parameter in the range [0, 2pi)
     """
     x, y = math.cos(angle), math.sin(angle) / ratio
-    return normalize_angle(math.atan2(y, x))
+    return math.atan2(y, x) % math.tau
 
 
 def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE):
     isclose = partial(math.isclose, abs_tol=abs_tol)
 
-    s = normalize_angle(start_angle)
-    e = normalize_angle(end_angle)
-    a = normalize_angle(angle)
+    s = start_angle % math.tau
+    e = end_angle % math.tau
+    a = angle % math.tau
     if isclose(s, e):
         return isclose(s, a)
 

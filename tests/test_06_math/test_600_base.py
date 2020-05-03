@@ -8,12 +8,6 @@ from ezdxf.math.construct2d import *
 from math import isclose, radians
 
 
-def test_normalize_angle():
-    angle = 2
-    huge_angle = angle + 16 * RADIANS_180
-    assert isclose(normalize_angle(huge_angle), 2.)
-
-
 def test_left_of_line():
     assert is_point_left_of_line(Vec2(-1, 0), Vec2(0, 0), Vec2(0.1, 1)) is True
     assert is_point_left_of_line(Vec2(1, 0), Vec2(0, 0), Vec2(0, -1)) is True
@@ -122,3 +116,13 @@ def test_two_points():
 
 def test_more_points():
     assert closest_point((0, 0), [(0, 0, 1), (1, 1, 1), (2, 2, 2), (0, 0, -.5)]) == (0, 0, -.5)
+
+
+def test_linspace():
+    assert list(linspace(1, 4, num=4)) == [1, 2, 3, 4]
+    assert list(linspace(1, 4, num=1)) == [1]
+    assert list(linspace(1, 4, num=0)) == []
+    assert list(linspace(1, 5, num=4, endpoint=False)) == [1, 2, 3, 4]
+    assert list(linspace(2, -2, num=5)) == [2, 1, 0, -1, -2]
+    with pytest.raises(ValueError):
+        list(linspace(1, 4, num=-1))

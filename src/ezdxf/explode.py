@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Iterable, cast, Union, Generator, Callable, Op
 
 from ezdxf.entities import factory
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
-from ezdxf.math import Vector, rytz_axis_construction, normalize_angle, bulge_to_arc, OCS, angle_to_param
+from ezdxf.math import Vector, rytz_axis_construction, bulge_to_arc, OCS, angle_to_param
 from ezdxf.query import EntityQuery
 
 logger = logging.getLogger('ezdxf')
@@ -236,8 +236,8 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                 # TODO: handle reflections about z
                 if has_non_uniform_scaling:
                     open_ellipse = not math.isclose(
-                        normalize_angle(original_ellipse.dxf.start_param),
-                        normalize_angle(original_ellipse.dxf.end_param),
+                        original_ellipse.dxf.start_param % math.tau,
+                        original_ellipse.dxf.end_param % math.tau,
                     )
                     minor_axis = brcs.direction_to_wcs(original_ellipse.minor_axis)
 

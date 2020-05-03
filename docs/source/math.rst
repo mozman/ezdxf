@@ -23,6 +23,8 @@ Functions
 
 .. autofunction:: xround
 
+.. autofunction:: linspace
+
 .. _bulge_related_functions:
 
 Bulge Related Functions
