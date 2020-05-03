@@ -50,6 +50,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: transform_to_wcs(ucs: UCS) -> Mesh
 
+    .. automethod:: transform(m: Matrix44) -> Mesh
 
 MeshData
 --------

@@ -3,7 +3,7 @@
 from typing import Union
 import pytest
 import math
-from ezdxf.entities import DXFGraphic, Line, Point, Circle, Arc, Ellipse, XLine
+from ezdxf.entities import DXFGraphic, Line, Point, Circle, Arc, Ellipse, XLine, Mesh
 from ezdxf.math import Matrix44, OCS, Vector
 from ezdxf.math.transformtools import NonUniformScalingError
 
@@ -348,6 +348,13 @@ def test_xline_fast_translation():
     xline.translate(1, 2, 3)
     assert xline.dxf.start == (3, 5, 7)
     assert xline.dxf.unit_vector == (1, 0, 0)
+
+
+def test_mesh_transform_interface():
+    mesh = Mesh()
+    mesh.vertices.append(Vector(1, 2, 3))
+    mesh.transform(Matrix44.translate(1, 1, 1))
+    assert mesh.vertices[0] == (2, 3, 4)
 
 
 if __name__ == '__main__':
