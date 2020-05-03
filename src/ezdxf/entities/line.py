@@ -74,3 +74,15 @@ class Line(DXFGraphic):
         self.dxf.end = end
         transform_thickness_and_extrusion_without_ocs(self, m)
         return self
+
+    def translate(self, dx: float, dy: float, dz: float) -> 'Line':
+        """ Optimized LINE translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        vec = Vector(dx, dy, dz)
+        self.dxf.start = vec + self.dxf.start
+        self.dxf.end = vec + self.dxf.end
+        return self

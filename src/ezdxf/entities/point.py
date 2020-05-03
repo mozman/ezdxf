@@ -71,3 +71,12 @@ class Point(DXFGraphic):
         # ignore dxf.angle!
         return self
 
+    def translate(self, dx: float, dy: float, dz: float) -> 'Point':
+        """ Optimized POINT translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        self.dxf.location = Vector(dx, dy, dz) + self.dxf.location
+        return self

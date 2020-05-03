@@ -47,6 +47,13 @@ def test_basic_transformation_interfaces():
     assert interface_mockup.rotate_z(1) is interface_mockup
 
 
+def test_line_fast_translation():
+    line = Line.new(dxfattribs={'start': (0, 0, 0), 'end': (1, 0, 0), 'extrusion': (0, 1, 0)})
+    line.translate(1, 2, 3)
+    assert line.dxf.start == (1, 2, 3)
+    assert line.dxf.end == (2, 2, 3)
+
+
 def test_line_rotation():
     line = Line.new(dxfattribs={'start': (0, 0, 0), 'end': (1, 0, 0), 'extrusion': (0, 1, 0)})
     angle = math.pi / 4
@@ -83,6 +90,12 @@ def test_point():
     assert math.isclose(point.dxf.thickness, 6)
 
 
+def test_point_fast_translation():
+    point = Point.new(dxfattribs={'location': (2, 3, 4), 'extrusion': (0, 1, 0), 'thickness': 2})
+    point.translate(1, 2, 3)
+    assert point.dxf.location == (3, 5, 7)
+
+
 def test_circle_default_ocs():
     circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'thickness': 2})
     # 1. rotation - 2. scaling - 3. translation
@@ -93,6 +106,12 @@ def test_circle_default_ocs():
     assert circle.dxf.center == (5, 7, 13)
     assert circle.dxf.extrusion == (0, 0, 1)
     assert circle.dxf.thickness == 6
+
+
+def test_circle_fast_translation():
+    circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'thickness': 2})
+    circle.translate(1, 2, 3)
+    assert circle.dxf.center == (3, 5, 7)
 
 
 def test_circle_non_uniform_scaling():

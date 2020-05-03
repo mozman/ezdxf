@@ -99,3 +99,13 @@ class Circle(DXFGraphic):
             raise NonUniformScalingError('CIRCLE/ARC does not support non uniform scaling')
             # Parent function has to catch this Exception and convert this CIRCLE/ARC into an ELLIPSE
         return self
+
+    def translate(self, dx: float, dy: float, dz: float) -> 'Circle':
+        """ Optimized CIRCLE/ARC translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        self.dxf.center = Vector(dx, dy, dz) + self.dxf.center
+        return self
