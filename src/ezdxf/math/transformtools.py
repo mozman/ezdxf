@@ -89,3 +89,9 @@ def transform_ocs_vertex(vertex: 'Vertex', old_ocs: OCS, new_ocs: OCS, m: Matrix
     """ Returns vertex transformed from old OCS into new OCS by transformation matrix `m`.
     """
     return new_ocs.from_wcs(m.transform(old_ocs.to_wcs(vertex)))
+
+
+def transform_ocs_direction(direction: 'Vertex', old_ocs: OCS, new_ocs: OCS, m: Matrix44):
+    """ Returns direction transformed from old OCS into new OCS by transformation matrix `m`.
+    """
+    return new_ocs.from_wcs(m.transform_direction(old_ocs.to_wcs(direction)))

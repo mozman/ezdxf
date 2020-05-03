@@ -4,7 +4,10 @@
 from typing import TYPE_CHECKING, Union, Tuple, List
 import math
 
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44, OCS
+from ezdxf.math.transformtools import (
+    transform_extrusion, transform_ocs_vertex, transform_ocs_direction, transform_length, transform_angle
+)
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
@@ -321,6 +324,39 @@ class MText(DXFGraphic):
         self.dxf.insert = ucs.to_wcs(self.dxf.insert)
         self.dxf.text_direction = ucs.direction_to_wcs(self.dxf.text_direction)
         self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
+        return self
+
+    def transform(self, m: Matrix44) -> 'MText':
+        """ Transform TEXT entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        dxf = self.dxf
+
+        old_extrusion = dxf.extrusion
+        old_ocs = OCS(old_extrusion)
+        new_extrusion, _ = transform_extrusion(old_extrusion, m)
+        new_ocs = OCS(new_extrusion)
+
+        rotation = dxf.rotation  # 0 by default
+        if dxf.hasattr('rotation'):
+            dxf.rotation = math.degrees(transform_angle(math.radians(rotation), old_ocs, new_extrusion, m))
+
+        if dxf.hasattr('text_direction'):
+            rotation = Vector(dxf.text_direction).angle_deg
+            dxf.text_direction = transform_ocs_direction(dxf.text_direction, old_ocs, new_ocs, m)
+
+        self.dxf.insert = transform_ocs_vertex(dxf.insert, old_ocs, new_ocs, m)
+
+        char_height_vec = Vector.from_deg_angle(rotation + 90, dxf.char_height)
+        dxf.char_height = transform_length(char_height_vec, old_ocs, m)
+
+        if dxf.hasattr('width'):
+            width_vec = Vector.from_deg_angle(rotation, dxf.width)
+            dxf.width = transform_length(width_vec, old_ocs, m)
+
+        self.dxf.extrusion = new_extrusion
         return self
 
     def plain_text(self, split=False) -> Union[List[str], str]:

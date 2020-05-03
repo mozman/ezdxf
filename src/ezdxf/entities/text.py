@@ -2,7 +2,11 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Tuple, Union
-from ezdxf.math import Vector
+import math
+from ezdxf.math import Vector, Matrix44, OCS, Z_AXIS
+from ezdxf.math.transformtools import (
+    transform_extrusion, transform_ocs_vertex, transform_length, transform_angle
+)
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, DXFValueError
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
@@ -198,4 +202,37 @@ class Text(DXFGraphic):
         if not self.dxf.hasattr('align_point'):
             self.dxf.align_point = self.dxf.insert
         self._ucs_and_ocs_transformation(ucs, vector_names=['insert', 'align_point'], angle_names=['rotation'])
+        return self
+
+    def transform(self, m: Matrix44) -> 'Text':
+        """ Transform TEXT entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        dxf = self.dxf
+        if not dxf.hasattr('align_point'):
+            dxf.align_point = dxf.insert
+
+        old_extrusion = dxf.extrusion
+        old_ocs = OCS(old_extrusion)
+        new_extrusion, _ = transform_extrusion(old_extrusion, m)
+        new_ocs = OCS(new_extrusion)
+
+        dxf.insert = transform_ocs_vertex(dxf.insert, old_ocs, new_ocs, m)
+        dxf.align_point = transform_ocs_vertex(dxf.align_point, old_ocs, new_ocs, m)
+
+        dxf.rotation = math.degrees(transform_angle(math.radians(dxf.rotation), old_ocs, new_extrusion, m))
+        dxf.oblique = math.degrees(transform_angle(math.radians(dxf.oblique), old_ocs, new_extrusion, m))
+
+        width_vec = Vector.from_deg_angle(dxf.rotation, dxf.width)
+        dxf.width = transform_length(width_vec, old_ocs, m)
+
+        height_vec = Vector.from_deg_angle(dxf.rotation + 90, dxf.height)
+        dxf.height = transform_length(height_vec, old_ocs, m)
+
+        if dxf.hasattr('thickness'):
+            dxf.thickness = transform_length((0, 0, dxf.thickness), old_ocs, m)
+
+        dxf.extrusion = new_extrusion
         return self

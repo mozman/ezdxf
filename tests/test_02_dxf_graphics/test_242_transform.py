@@ -3,7 +3,10 @@
 from typing import Union
 import pytest
 import math
-from ezdxf.entities import DXFGraphic, Line, Point, Circle, Arc, Ellipse, XLine, Mesh, Spline, Solid, Face3d
+from ezdxf.entities import (
+    DXFGraphic, Line, Point, Circle, Arc, Ellipse, XLine, Mesh, Spline, Solid, Face3d, LWPolyline, Polyline, Text,
+    MText,
+)
 from ezdxf.math import Matrix44, OCS, Vector
 from ezdxf.math.transformtools import NonUniformScalingError
 
@@ -383,6 +386,56 @@ def test_trace_transform_interface():
     face.dxf.vtx1 = (3, 3, 0)
     face.translate(1, 1, 0)
     assert face.dxf.vtx1 == (4, 4, 0)
+
+
+def test_lwpolyline_transform_interface():
+    pline = LWPolyline()
+    pline.set_points([(0, 0), (2, 0), (1, 1)], format='xy')
+    pline.translate(1, 1, 1)
+    vertices = list(pline.vertices())
+    assert vertices[0] == (1, 1)
+    assert vertices[1] == (3, 1)
+    assert vertices[2] == (2, 2)
+    assert pline.dxf.elevation == 1
+    assert Vector(0, 0, 1).isclose(pline.dxf.extrusion)
+
+
+def test_polyline2d_transform_interface():
+    pline = Polyline()
+    pline.append_vertices([(0, 0, 0), (2, 0, 0), (1, 1, 0)])
+    pline.translate(1, 1, 1)
+    vertices = list(v.dxf.location for v in pline.vertices)
+    assert pline.is_2d_polyline is True
+    assert vertices[0] == (1, 1, 1)
+    assert vertices[1] == (3, 1, 1)
+    assert vertices[2] == (2, 2, 1)
+    assert pline.dxf.elevation == (0, 0, 1)
+    assert Vector(0, 0, 1).isclose(pline.dxf.extrusion)
+
+
+def test_polyline3d_transform_interface():
+    pline = Polyline.new(dxfattribs={'flags': 8})
+    pline.append_vertices([(0, 0, 0), (2, 0, 0), (1, 1, 0)])
+    pline.translate(1, 1, 1)
+    vertices = list(v.dxf.location for v in pline.vertices)
+    assert pline.is_3d_polyline is True
+    assert vertices[0] == (1, 1, 1)
+    assert vertices[1] == (3, 1, 1)
+    assert vertices[2] == (2, 2, 1)
+
+
+def test_text_transform_interface():
+    text = Text()
+    text.dxf.insert = (1, 0, 0)
+    text.translate(1, 2, 3)
+    assert text.dxf.insert == (2, 2, 3)
+
+
+def test_mtext_transform_interface():
+    mtext = MText()
+    mtext.dxf.insert = (1, 0, 0)
+    mtext.translate(1, 2, 3)
+    assert mtext.dxf.insert == (2, 2, 3)
 
 
 if __name__ == '__main__':

@@ -3,9 +3,12 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict
 from itertools import chain
-from ezdxf.math import Vector, Z_AXIS
+from ezdxf.math import Vector, Matrix44, OCS
+from ezdxf.math.transformtools import (
+    transform_extrusion, NonUniformScalingError, transform_ocs_vertex, transform_length,
+)
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES, DXFStructureError
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.lldxf import const
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
@@ -429,6 +432,58 @@ class Polyline(DXFGraphic):
         else:
             for vertex in self.vertices:
                 vertex.transform_to_wcs(ucs)
+        return self
+
+    def transform(self, m: Matrix44) -> 'Polyline':
+        """ Transform POLYLINE entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        def _ocs_locations(elevation):
+            for vertex in self.vertices:
+                location = vertex.dxf.location
+                if elevation is not None:
+                    # Older DXF version may not have written the z-axis, which is now 0 by default in ezdxf,
+                    # so replace existing z-axis by elevation value
+                    location = location.replace(z=elevation)
+                yield location
+
+        if self.is_2d_polyline:
+            dxf = self.dxf
+
+            # Newer DXF versions write 2d polylines always as LWPOLYLINE entities.
+            # No need for optimizations.
+            extrusion, has_uniform_scaling_in_ocs_xy = transform_extrusion(dxf.extrusion, m)
+            if not has_uniform_scaling_in_ocs_xy:
+                raise NonUniformScalingError('2D POLYLINE with arcs does not support non uniform scaling')
+                # Parent function has to catch this Exception and explode this 2D POLYLINE into LINE and ELLIPSE entities.
+
+            old_ocs = OCS(dxf.extrusion)
+            new_ocs = OCS(extrusion)
+            if dxf.hasattr('elevation'):
+                z_axis = dxf.elevation.z
+            else:
+                z_axis = None
+
+            # transform old OCS locations into new OCS locations by transformation matrix m
+            vertices = [transform_ocs_vertex(vertex, old_ocs, new_ocs, m) for vertex in _ocs_locations(z_axis)]
+
+            # set new elevation, all vertices of a 2D polyline must have the same z-axis
+            if vertices:
+                dxf.elevation = vertices[0].replace(x=0, y=0)
+
+            # set new vertex locations
+            for vertex, location in zip(self.vertices, vertices):
+                vertex.dxf.location = location
+
+            if dxf.hasattr('thickness'):
+                dxf.thickness = transform_length((0, 0, dxf.thickness), old_ocs, m)
+
+            dxf.extrusion = extrusion
+        else:
+            for vertex in self.vertices:
+                vertex.transform(m)
         return self
 
     def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
@@ -939,6 +994,17 @@ class DXFVertex(DXFGraphic):
         if self.is_face_record:
             return self
         self.dxf.location = ucs.to_wcs(self.dxf.location)
+        return self
+
+    def transform(self, m: 'Matrix44') -> 'DXFVertex':
+        """ Transform VERTEX entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        if self.is_face_record:
+            return self
+        self.dxf.location = m.transform(self.dxf.location)
         return self
 
 

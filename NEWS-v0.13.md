@@ -13,8 +13,8 @@ Version 0.13 - dev
     - `DXFGraphic.rotate_y(angle)`
     - `DXFGraphic.rotate_z(angle)`
     
-   supported entities: POINT, LINE, CIRCLE, ARC, ELLIPSE, XLINE, RAY, MESH, SPLINE, SOLID, TRACE, 3DFACE, 
-   HELIX, IMAGE, LEADER, LIGHT, TOLERANCE, SHAPE
+   supported entities: POINT, LINE, CIRCLE, ARC, ELLIPSE, MESH, SPLINE, POLYLINE, LWPOLYLINE, TEXT, MTEXT, 
+   SOLID, TRACE, 3DFACE, HELIX, IMAGE, LEADER, LIGHT, TOLERANCE, SHAPE, XLINE, RAY
    
    
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
