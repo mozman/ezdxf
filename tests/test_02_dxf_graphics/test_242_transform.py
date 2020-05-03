@@ -3,7 +3,7 @@
 from typing import Union
 import pytest
 import math
-from ezdxf.entities import DXFGraphic, Line, Point, Circle, Arc, Ellipse
+from ezdxf.entities import DXFGraphic, Line, Point, Circle, Arc, Ellipse, XLine
 from ezdxf.math import Matrix44, OCS, Vector
 from ezdxf.math.transformtools import NonUniformScalingError
 
@@ -329,6 +329,25 @@ def test_08_rotated_and_reflected_and_stretched_curves(stretch, is_arc):
 
     ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
     _check_curve(ellipse, Vector(0, 1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
+
+
+def test_xline():
+    # same implementation for Ray()
+    xline = XLine.new(dxfattribs={'start': (2, 3, 4), 'unit_vector': (1, 0, 0)})
+    # 1. scaling - 2. rotation - 3. translation
+    m = Matrix44.chain(Matrix44.scale(2, 2, 3), Matrix44.translate(1, 1, 1))
+    xline.transform(m)
+
+    assert xline.dxf.start == (5, 7, 13)
+    assert xline.dxf.unit_vector == (1, 0, 0)
+
+
+def test_xline_fast_translation():
+    # same implementation for Ray()
+    xline = XLine.new(dxfattribs={'start': (2, 3, 4), 'unit_vector': (1, 0, 0)})
+    xline.translate(1, 2, 3)
+    assert xline.dxf.start == (3, 5, 7)
+    assert xline.dxf.unit_vector == (1, 0, 0)
 
 
 if __name__ == '__main__':

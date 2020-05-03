@@ -28,4 +28,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: transform_to_wcs(ucs: UCS) -> XLine
 
+    .. automethod:: transform(m: Matrix44) -> XLine
 
+    .. automethod:: translate(dx: float, dy: float, dz: float) -> XLine
