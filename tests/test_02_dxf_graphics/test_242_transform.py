@@ -1,8 +1,9 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
+from typing import Union
 import pytest
 import math
-from ezdxf.entities import DXFGraphic, Line, Point, Circle, Arc
+from ezdxf.entities import DXFGraphic, Line, Point, Circle, Arc, Ellipse
 from ezdxf.math import Matrix44, OCS, Vector
 from ezdxf.math.transformtools import NonUniformScalingError
 
@@ -162,6 +163,172 @@ def test_arc_default_ocs():
     arc.transform(Matrix44.z_rotate(math.radians(30)))
     assert math.isclose(arc.dxf.start_angle, 60, abs_tol=1e-9)
     assert math.isclose(arc.dxf.end_angle, 90, abs_tol=1e-9)
+
+
+def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool) -> Union[Ellipse, Arc]:
+    if is_arc:
+        entity = Arc.new(dxfattribs={'center': (0, 0), 'radius': 1, 'start_angle': 0, 'end_angle': 90})
+    else:
+        entity = Ellipse.new(
+            dxfattribs={'center': (0, 0), 'major_axis': (1, 0), 'ratio': 1, 'start_param': 0, 'end_param': math.pi / 2})
+
+    assert entity.start_point.isclose(Vector(1, 0, 0))
+    assert entity.end_point.isclose(Vector(0, 1, 0))
+
+    m = Matrix44.chain(
+        Matrix44.scale(scale_factors.x, scale_factors.y, scale_factors.z),
+        Matrix44.z_rotate(rotation),
+    )
+    has_uniform_scaling = True
+    try:
+        entity.transform(m)
+    except NonUniformScalingError:
+        entity = Ellipse.from_arc(entity)
+        entity.transform(m)
+        has_uniform_scaling = False
+
+    if is_arc and has_uniform_scaling:
+        assert entity.dxftype() == 'ARC'
+    else:
+        assert entity.dxftype() == 'ELLIPSE'
+
+    start_point = m.transform((1, 0, 0))
+    end_point = m.transform((0, 1, 0))
+
+    # reference points should have the same transformation as the ellipse
+    assert start_point.isclose(entity.start_point)
+    assert end_point.isclose(entity.end_point)
+    return entity
+
+
+def _check_curve(ellipse: Ellipse, expected_start: Vector, expected_end: Vector, expected_extrusion: Vector):
+    assert ellipse.start_point.isclose(expected_start)
+    assert ellipse.end_point.isclose(expected_end)
+    # todo: given extrusions do not match the reconstructed extrusion vectors: x-axis cross y-axis
+    # assert ellipse.dxf.extrusion.isclose(expected_extrusion.normalize())
+
+
+@pytest.mark.parametrize('zscale,is_arc', [
+    (1, False), (0.5, False),
+    # (1, True), (0.5, True),  # todo: does not work for ARC
+    (-1, False),
+    # (-1, True),  # todo: does not work for ARC
+])
+def test_07_rotated_and_reflected_curves(zscale, is_arc):
+    scale = Vector(1, 1, zscale)
+
+    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
+    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, 1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
+    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, -1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
+
+    scale = Vector(1, -1, zscale)
+
+    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
+    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, 1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
+    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, -1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
+
+    scale = Vector(-1, 1, zscale)
+
+    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
+    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, -1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
+    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, 1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
+
+    scale = Vector(-1, -1, zscale)
+
+    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
+    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, -1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
+    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
+
+    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, 1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
+
+
+@pytest.mark.parametrize('stretch,is_arc', [(0.5, False), (0.5, True)])
+def test_08_rotated_and_reflected_and_stretched_curves(stretch, is_arc):
+    scale = Vector(1, stretch, 1)
+
+    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
+    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, 1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
+    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, -1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
+
+    scale = Vector(1, -stretch, 1)
+
+    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
+    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, 1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
+    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, -1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
+
+    scale = Vector(-1, stretch, 1)
+
+    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
+    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, -1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
+    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, 1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
+
+    scale = Vector(-1, -stretch, 1)
+
+    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
+    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, -1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
+    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
+
+    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
+    _check_curve(ellipse, Vector(0, 1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 import math
-from ezdxf.math import Vector, linspace, Matrix44
+from ezdxf.math import Vector, linspace, Matrix44, rytz_axis_construction, angle_to_param
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from .dxfentity import base_class, SubclassProcessor
@@ -174,7 +174,47 @@ class Ellipse(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        super().transform(m)
+        center = m.transform(self.dxf.center)
+        start_param = self.dxf.start_param % math.tau
+        end_param = self.dxf.end_param % math.tau
+        major_axis, minor_axis = m.transform_directions((
+            self.dxf.major_axis,
+            self.minor_axis,
+        ))
+        extrusion = major_axis.cross(minor_axis).normalize()
+        # Original ellipse parameters stay untouched until end of transformation
+        if not math.isclose(major_axis.dot(minor_axis), 0, abs_tol=1e-9):
+            try:  # Transform conjugated axis
+                major_axis, minor_axis, ratio = rytz_axis_construction(major_axis, minor_axis)
+            except ArithmeticError as err:
+                err.args = (f'Axis construction error in {str(self)} - please send a bug report.',)
+                raise
+        else:
+            ratio = minor_axis.magnitude / major_axis.magnitude
+
+        if math.isclose(start_param, end_param, abs_tol=1e-9):
+            # open ellipse, adjusting start- and end parameter
+            start_point, end_point = m.transform_vertices(self.vertices((start_param, end_param)))
+            start_angle = extrusion.angle_about(major_axis, start_point - center)
+            end_angle = extrusion.angle_about(major_axis, end_point - center)
+            old_param_relation = start_param > end_param
+            start_param = angle_to_param(ratio, start_angle)
+            end_param = angle_to_param(ratio, end_angle)
+
+            # if drawing the wrong side of the ellipse
+            if (start_param > end_param) != old_param_relation:
+                start_param, end_param = end_param, start_param
+
+        self.dxf.center = center
+        self.dxf.extrusion = extrusion
+        self.dxf.major_axis = major_axis
+        # AutoCAD does not accept a ratio < 1e-6 -> invalid DXF file
+        self.dxf.ratio = max(ratio, 1e-6)
+        self.dxf.start_param = start_param
+        self.dxf.end_param = end_param
+        if self.dxf.ratio > 1:
+            self.swap_axis()
+        return self
 
     def translate(self, dx: float, dy: float, dz: float) -> 'Ellipse':
         """ Optimized ELLIPSE translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,

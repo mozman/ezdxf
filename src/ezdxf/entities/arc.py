@@ -3,7 +3,7 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 import math
-from ezdxf.math import Vector, UCS, Matrix44, OCS, linspace
+from ezdxf.math import Vector, UCS, Matrix44, OCS, linspace, enclosing_angles
 from ezdxf.math.transformtools import transform_angle
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -102,10 +102,17 @@ class Arc(Circle):
 
         """
         old_ocs = OCS(self.dxf.extrusion)
+        start_angle, mid_angle, end_angle = self.angles(3)
         super().transform(m)
-        # todo: transformations can change the arc orientation
-        self.dxf.start_angle = math.degrees(
-            transform_angle(math.radians(self.dxf.start_angle), old_ocs, self.dxf.extrusion, m))
-        self.dxf.end_angle = math.degrees(
-            transform_angle(math.radians(self.dxf.end_angle), old_ocs, self.dxf.extrusion, m))
+
+        new_start_angle = math.degrees(transform_angle(math.radians(start_angle), old_ocs, self.dxf.extrusion, m))
+        new_mid_angle = math.degrees(transform_angle(math.radians(mid_angle), old_ocs, self.dxf.extrusion, m))
+        new_end_angle = math.degrees(transform_angle(math.radians(end_angle), old_ocs, self.dxf.extrusion, m))
+
+        # if drawing the wrong side of the arc
+        if enclosing_angles(new_mid_angle, new_start_angle, new_end_angle) != \
+                enclosing_angles(mid_angle, start_angle, end_angle):
+            new_start_angle, new_end_angle = new_end_angle, new_start_angle
+        self.dxf.start_angle = new_start_angle
+        self.dxf.end_angle = new_end_angle
         return self
