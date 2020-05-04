@@ -310,6 +310,14 @@ class UCS(TransformUSCToOCSMixin):
         """
         return UCS(self.origin, self.ux, self.uy, self.uz)
 
+    def matrix44(self) -> Matrix44:
+        """ Returns transformation matrix.
+
+        .. versionadded:: 0.13
+
+        """
+        return Matrix44.ucs(self.ux, self.uy, self.uz, self.origin)
+
     def to_wcs(self, point: 'Vertex') -> 'Vector':
         """ Returns WCS point for UCS `point`. """
         return self.origin + self.matrix.transform(point)

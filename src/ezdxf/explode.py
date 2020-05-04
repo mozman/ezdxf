@@ -120,6 +120,7 @@ def virtual_block_reference_entities(block_ref: 'Insert',
 
     """
     assert block_ref.dxftype() == 'INSERT'
+    # Importing Ellipse() causes a recursive import error
     Ellipse = cast('Ellipse', factory.cls('ELLIPSE'))
     if skipped_entity_callback is None:
         def skipped_entity_callback(entity, reason):
@@ -342,21 +343,18 @@ def virtual_block_reference_entities2(block_ref: 'Insert',
 
     def disassemble(layout) -> Generator['DXFGraphic', None, None]:
         for entity in layout:
-            dxftype = entity.dxftype()
-            if dxftype == 'ATTDEF':  # do not explode ATTDEF entities. Already available in Insert.attribs
+            # Do not explode ATTDEF entities. Already available in Insert.attribs
+            if entity.dxftype() == 'ATTDEF':
                 continue
 
-            # Copy entity with all DXF attributes
             try:
                 copy = entity.copy()
             except DXFTypeError:
                 skipped_entity_callback(entity, 'non copyable')
-                continue  # non copyable entities will be ignored
-
-            if hasattr(copy, 'remove_association'):
-                copy.remove_association()
-
-            yield copy
+            else:
+                if hasattr(copy, 'remove_association'):
+                    copy.remove_association()
+                yield copy
 
     def transform(entities):
         for entity in entities:

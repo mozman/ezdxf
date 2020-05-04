@@ -440,6 +440,9 @@ class Insert(DXFGraphic):
 
     def matrix44(self) -> Matrix44:
         """ Returns a transformation :class:`Matrix44` object to transform block entities into WCS.
+
+        .. versionadded:: 0.13
+
         """
         sx = self.dxf.xscale
         sy = self.dxf.yscale

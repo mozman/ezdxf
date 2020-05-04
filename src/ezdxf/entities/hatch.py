@@ -161,7 +161,11 @@ class Hatch(DXFGraphic):
         entity.seeds = copy.deepcopy(self.seeds)
 
     def remove_association(self):
-        """ Remove associated path elements. """
+        """ Remove associated path elements.
+
+        .. versionadded:: 0.13
+
+        """
         if self.dxf.associative:
             self.dxf.associative = 0
             for path in self.paths:
