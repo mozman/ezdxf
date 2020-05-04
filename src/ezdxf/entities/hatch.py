@@ -160,6 +160,13 @@ class Hatch(DXFGraphic):
         entity.gradient = copy.deepcopy(self.gradient)
         entity.seeds = copy.deepcopy(self.seeds)
 
+    def remove_association(self):
+        """ Remove associated path elements. """
+        if self.dxf.associative:
+            self.dxf.associative = 0
+            for path in self.paths:
+                path.source_boundary_objects = []
+
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:

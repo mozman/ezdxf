@@ -16,8 +16,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, LWPolyline, Polyline, Attrib, Line, Arc, Face3d, Text
 
 
-def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
-                            uniform_scaling_factor: float = None) -> EntityQuery:
+def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') -> EntityQuery:
     """
     Explode a block reference into single DXF entities.
 
@@ -33,8 +32,6 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
     Args:
         block_ref: Block reference entity (INSERT)
         target_layout: explicit target layout for exploded DXF entities
-        uniform_scaling_factor: override uniform scaling factor for text entities (TEXT, ATTRIB, MTEXT)  and
-                                HATCH pattern, default is ``max(abs(xscale), abs(yscale),  abs(zscale))``
 
     .. warning::
 
@@ -59,7 +56,7 @@ def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
 
     entities = []
 
-    for entity in virtual_block_reference_entities(block_ref, uniform_scaling_factor=uniform_scaling_factor):
+    for entity in virtual_block_reference_entities(block_ref):
         dxftype = entity.dxftype()
         entitydb.add(entity)
         target_layout.add_entity(entity)
@@ -97,7 +94,6 @@ def attrib_to_text(attrib: 'Attrib', dxffactory) -> 'Text':
 
 
 def virtual_block_reference_entities(block_ref: 'Insert',
-                                     uniform_scaling_factor: float = None,
                                      skipped_entity_callback: Optional[Callable[['DXFGraphic', str], None]] = None
                                      ) -> Iterable['DXFGraphic']:
     """
@@ -112,8 +108,6 @@ def virtual_block_reference_entities(block_ref: 'Insert',
 
     Args:
         block_ref: Block reference entity (INSERT)
-        uniform_scaling_factor: override uniform scaling factor for text entities (TEXT, ATTRIB, MTEXT)  and
-                                HATCH pattern, default is ``max(abs(xscale), abs(yscale),  abs(zscale))``
         skipped_entity_callback: called whenever the transformation of an entity is not supported and so was skipped.
 
     .. warning::
@@ -160,11 +154,7 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                 continue  # non copyable entities will be ignored
 
             if copy.dxftype() == 'HATCH':
-                if copy.dxf.associative:
-                    # remove associations
-                    copy.dxf.associative = 0
-                    for path in copy.paths:
-                        path.source_boundary_objects = []
+                copy.remove_association()
 
                 if has_non_uniform_scaling and copy.paths.has_critical_elements():
                     # None uniform scaling produces incorrect results for the arc and ellipse transformations.
@@ -198,10 +188,7 @@ def virtual_block_reference_entities(block_ref: 'Insert',
             # handle reflection about all three axis -x, -y, -z explicit as non uniform scaling
             has_non_uniform_scaling = False
 
-        if uniform_scaling_factor is not None:
-            uniform_scaling_factor = float(uniform_scaling_factor)
-        else:
-            uniform_scaling_factor = block_ref.text_scaling
+        uniform_scaling_factor = block_ref.text_scaling
     else:
         xscale, yscale, zscale = (1, 1, 1)
         uniform_scaling_factor = 1
@@ -366,12 +353,8 @@ def virtual_block_reference_entities2(block_ref: 'Insert',
                 skipped_entity_callback(entity, 'non copyable')
                 continue  # non copyable entities will be ignored
 
-            if copy.dxftype() == 'HATCH':
-                if copy.dxf.associative:
-                    # remove associations
-                    copy.dxf.associative = 0
-                    for path in copy.paths:
-                        path.source_boundary_objects = []
+            if hasattr(copy, 'remove_association'):
+                copy.remove_association()
 
             yield copy
 
@@ -389,7 +372,6 @@ def virtual_block_reference_entities2(block_ref: 'Insert',
                     yield from transform(entity.virtual_entities())
                 else:
                     skipped_entity_callback(entity, 'unsupported non-uniform scaling')
-                    continue
             else:
                 yield entity
 
