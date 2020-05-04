@@ -441,8 +441,14 @@ def test_mtext_transform_interface():
 def test_insert_transform_interface():
     insert = Insert()
     insert.dxf.insert = (1, 0, 0)
-    insert.translate(1, 2, 3)
+
+    insert.transform(Matrix44.translate(1, 2, 3))
     assert insert.dxf.insert == (2, 2, 3)
+
+    # optimized translate implementation
+    insert.translate(-1, -2, -3)
+    assert insert.dxf.insert == (1, 0, 0)
+
     insert.scale(2, 3, 4)
     assert insert.dxf.xscale == 2
     assert insert.dxf.yscale == 3

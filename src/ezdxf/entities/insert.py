@@ -397,6 +397,16 @@ class Insert(DXFGraphic):
             attrib.transform(m)
         return self
 
+    def translate(self, dx: float, dy: float, dz: float) -> 'Ellipse':
+        """ Optimized INSERT translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        self.dxf.insert = Vector(dx, dy, dz) + self.dxf.insert
+        return self
+
     def brcs(self) -> 'BRCS':
         """ Returns a block reference coordinate system as :class:`BRCS` object, placed at the block reference
         `insert` location, axis aligned to the block axis, :attr:`~Insert.dxf.rotation` around z-axis and axis
@@ -427,6 +437,42 @@ class Insert(DXFGraphic):
         if block_layout is not None:
             brcs._base_point = Vector(block_layout.block.dxf.base_point)
         return brcs
+
+    def matrix44(self) -> Matrix44:
+        """ Returns a transformation :class:`Matrix44` object to transform block entities into WCS.
+        """
+        sx = self.dxf.xscale
+        sy = self.dxf.yscale
+        sz = self.dxf.zscale
+
+        extrusion = Vector(self.dxf.extrusion)
+        ocs = self.ocs()
+        ux = Vector(ocs.to_wcs(X_AXIS)) * sx
+        uy = Vector(ocs.to_wcs(Y_AXIS)) * sy
+        uz = extrusion.normalize(sz)
+
+        m = Matrix44((
+            ux.x, ux.y, ux.z, 0.0,
+            uy.x, uy.y, uy.z, 0.0,
+            uz.x, uz.y, uz.z, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        ))
+
+        angle = math.radians(self.dxf.rotation)
+        if angle != 0.0:
+            m *= Matrix44.axis_rotate(uz, angle)
+
+        insert = self.dxf.insert
+        if insert is None:
+            insert = Vector()
+        else:
+            insert = Vector(insert)
+
+        block_layout = self.block()
+        if block_layout is not None:
+            insert -= Vector(block_layout.block.dxf.base_point)
+        m.set_row(3, insert.xyz)
+        return m
 
     def reset_transformation(self):
         """ Reset block reference parameters `location`, `rotation` and `extrusion` vector.

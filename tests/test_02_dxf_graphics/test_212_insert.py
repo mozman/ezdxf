@@ -222,6 +222,61 @@ def test_copy_with_insert(doc):
     assert copy.attribs[0].dxf.owner == psp.layout_key
 
 
+def test_matrix44_no_transform():
+    insert = TEST_CLASS.new(handle='ABBA', owner='0')
+    m = insert.matrix44()
+    assert m.transform((0, 0, 0)) == (0, 0, 0)
+    assert m.transform_direction((1, 0, 0)) == (1, 0, 0)
+
+
+def test_matrix44_insert():
+    insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+        'insert': (1, 2, 3),
+    })
+    m = insert.matrix44()
+    assert m.transform((0, 0, 0)) == (1, 2, 3)
+    assert m.transform_direction((1, 0, 0)) == (1, 0, 0)
+
+
+def test_matrix44_insert_and_base_point(doc):
+    doc.blocks.new('Matrix44_001', base_point=(2, 2, 2))
+    insert = doc.modelspace().add_blockref('Matrix44_001', insert=(1, 2, 3))
+    m = insert.matrix44()
+    assert m.transform((0, 0, 0)) == (-1, 0, 1)
+    assert m.transform_direction((1, 0, 0)) == (1, 0, 0)
+
+
+def test_matrix44_rotation():
+    insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+        'insert': (0, 0, 0),
+        'rotation': 90,
+    })
+    m = insert.matrix44()
+    assert list(m.transform_vertices([(1, 0, 0), (0, 0, 1)])) == [(0, 1, 0), (0, 0, 1)]
+    assert m.transform_direction((1, 0, 0)) == (0, 1, 0)
+
+
+def test_matrix44_scaled():
+    insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+        'xscale': 2,
+        'yscale': 3,
+        'zscale': 4,
+    })
+    m = insert.matrix44()
+    assert m.transform((1, 1, 1)) == (2, 3, 4)
+    assert m.transform_direction((1, 0, 0)) == (2, 0, 0), 'scaling has to be applied for directions'
+
+
+def test_matrix44_dircection():
+    insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+        'insert': (1, 2, 3),
+        'xscale': 2,
+    })
+    m = insert.matrix44()
+    assert m.transform((1, 0, 0)) == (3, 2, 3)
+    assert m.transform_direction((1, 0, 0)) == (2, 0, 0), 'only scaling has to be applied for directions'
+
+
 def test_brcs_no_transform():
     insert = TEST_CLASS.new(handle='ABBA', owner='0')
     brcs = insert.brcs()

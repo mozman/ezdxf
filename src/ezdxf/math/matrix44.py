@@ -52,7 +52,7 @@ class Matrix44:
         Matrix44(row1, row2, row3, row4) four rows, each row with four values.
 
         """
-        self.matrix = None  # type: List
+        self.matrix: List[float] = None
         self.set(*args)
 
     def set(self, *args) -> None:
@@ -323,7 +323,7 @@ class Matrix44:
         return cls.perspective_projection(left, right, bottom, top, near, far)
 
     @staticmethod
-    def chain(*matrices: Iterable['Matrix44']) -> 'Matrix44':
+    def chain(*matrices: 'Matrix44') -> 'Matrix44':
         """
         Compose a transformation matrix from one or more `matrices`.
 
@@ -334,10 +334,9 @@ class Matrix44:
         return transformation
 
     @staticmethod
-    def ucs(ux: 'Vertex', uy: 'Vertex', uz: 'Vertex') -> 'Matrix44':
+    def ucs(ux: 'Vertex', uy: 'Vertex', uz: 'Vertex', origin: 'Vertex' = (0, 0, 0)) -> 'Matrix44':
         """
         Returns a matrix for coordinate transformation from WCS to UCS.
-        Origin of both systems is ``(0, 0, 0)``.
         For transformation from UCS to WCS, transpose the returned matrix.
 
         All vectors as ``(x, y, z)`` tuples or :class:`Vector` objects.
@@ -346,16 +345,18 @@ class Matrix44:
             ux: x-axis for UCS as unit vector
             uy: y-axis for UCS as unit vector
             uz: z-axis for UCS as unit vector
+            origin: UCS origin as location vector
 
         """
         ux_x, ux_y, ux_z = ux
         uy_x, uy_y, uy_z = uy
         uz_x, uz_y, uz_z = uz
+        or_x, or_y, or_z = origin
         return Matrix44((
             ux_x, uy_x, uz_x, 0,
             ux_y, uy_y, uz_y, 0,
             ux_z, uy_z, uz_z, 0,
-            0, 0, 0, 1,
+            or_x, or_y, or_z, 1,
         ))
 
     def __hash__(self) -> int:

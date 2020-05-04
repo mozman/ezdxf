@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Iterable, cast, Union, Generator, Callable, Op
 from ezdxf.entities import factory
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
 from ezdxf.math import Vector, rytz_axis_construction, bulge_to_arc, OCS, angle_to_param
+from ezdxf.math.transformtools import NonUniformScalingError
 from ezdxf.query import EntityQuery
 
 logger = logging.getLogger('ezdxf')
@@ -318,6 +319,86 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                 continue
 
         yield entity
+
+
+def virtual_block_reference_entities2(block_ref: 'Insert',
+                                      skipped_entity_callback: Optional[Callable[['DXFGraphic', str], None]] = None
+                                      ) -> Iterable['DXFGraphic']:
+    """
+    Yields 'virtual' parts of block reference `block_ref`. This method is meant to examine the the block reference
+    entities without the need to explode the block reference. The `skipped_entity_callback()` will be called for all
+    entities which are not processed, signature: :code:`skipped_entity_callback(entity: DXFEntity, reason: str)`,
+    `entity` is the original (untransformed) DXF entity of the block definition, the `reason` string is an
+    explanation why the entity was skipped.
+
+    This entities are located at the 'exploded' positions, but are not stored in the entity database, have no handle
+    and are not assigned to any layout.
+
+    Args:
+        block_ref: Block reference entity (INSERT)
+        skipped_entity_callback: called whenever the transformation of an entity is not supported and so was skipped.
+
+    .. warning::
+
+        **Non uniform scaling** returns incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
+        some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
+        POLYLINE/LWPOLYLINE with arc segments.
+
+    (internal API)
+
+    """
+    assert block_ref.dxftype() == 'INSERT'
+    Ellipse = cast('Ellipse', factory.cls('ELLIPSE'))
+    if skipped_entity_callback is None:
+        def skipped_entity_callback(entity, reason):
+            logger.debug(f'(Virtual Block Reference Entities) Ignoring {str(entity)}: "{reason}"')
+
+    def disassemble(layout) -> Generator['DXFGraphic', None, None]:
+        for entity in layout:
+            dxftype = entity.dxftype()
+            if dxftype == 'ATTDEF':  # do not explode ATTDEF entities. Already available in Insert.attribs
+                continue
+
+            # Copy entity with all DXF attributes
+            try:
+                copy = entity.copy()
+            except DXFTypeError:
+                skipped_entity_callback(entity, 'non copyable')
+                continue  # non copyable entities will be ignored
+
+            if copy.dxftype() == 'HATCH':
+                if copy.dxf.associative:
+                    # remove associations
+                    copy.dxf.associative = 0
+                    for path in copy.paths:
+                        path.source_boundary_objects = []
+
+            yield copy
+
+    def transform(entities):
+        for entity in entities:
+            try:
+                entity.transform(m)
+            except NotImplementedError:
+                skipped_entity_callback(entity, 'non transformable')
+            except NonUniformScalingError:
+                dxftype = entity.dxftype()
+                if dxftype in {'ARC', 'CIRCLE'}:
+                    yield Ellipse.from_arc(entity).transform(m)
+                elif dxftype in {'LWPOLYLINE', 'POLYLINE'}:  # has arcs
+                    yield from transform(entity.virtual_entities())
+                else:
+                    skipped_entity_callback(entity, 'unsupported non-uniform scaling')
+                    continue
+            else:
+                yield entity
+
+    m = block_ref.matrix44()
+    block_layout = block_ref.block()
+    if block_layout is None:
+        raise DXFStructureError(f'Required block definition for "{block_ref.dxf.name}" does not exist.')
+
+    yield from transform(disassemble(block_layout))
 
 
 def explode_entity(entity: 'DXFGraphic', target_layout: 'BaseLayout' = None) -> 'EntityQuery':
