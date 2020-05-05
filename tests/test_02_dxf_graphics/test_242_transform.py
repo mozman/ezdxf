@@ -175,32 +175,37 @@ def synced_translation(entity, chk, dx, dy, dz):
     return entity, chk
 
 
-def test_random_circle_transformation():
+@pytest.mark.parametrize('sx, sy, sz', [
+    (-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2),
+    (2, -2, -2), (-2, 2, -2), (-3, -3, -3)
+])
+def test_random_circle_transformation(sx, sy, sz):
+    # testing only uniform scaling, for non uniform scaling
+    # the circle has to be converted to an ellipse
+    vertex_count = 8
+
     def build():
         circle = Circle()
-        vertices = list(circle.vertices(linspace(0, 360, 8, endpoint=False)))
+        vertices = list(circle.vertices(linspace(0, 360, vertex_count, endpoint=False)))
         circle, vertices = synced_rotation(circle, vertices, axis=Vector.random(), angle=random.uniform(0, math.tau))
         circle, vertices = synced_translation(
             circle, vertices, dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2))
         return circle, vertices
 
-    def check(src, chk):
-        ocs = src.ocs()
-        center = ocs.to_wcs(src.dxf.center)
-        chk_center = chk[0].lerp(chk[int(len(chk)/2)])
-        assert center.isclose(chk_center, abs_tol=1e-9)
-        radius = src.dxf.radius
-        for p in chk:
-            assert math.isclose((p - center).magnitude, radius, abs_tol=1e-9)
+    def check(circle, vertices):
+        ocs = circle.ocs()
+        wcs_circle_center = ocs.to_wcs(circle.dxf.center)
+        vertices_center = vertices[0].lerp(vertices[int(vertex_count / 2)])
+        assert wcs_circle_center.isclose(vertices_center, abs_tol=1e-9)
+        radius = circle.dxf.radius
+        for vtx in vertices:
+            assert math.isclose((vtx - wcs_circle_center).magnitude, radius, abs_tol=1e-9)
 
+    # test transformed circle against transformed WCS vertices of the circle
     for _ in range(10):
         circle0, vertices0 = build()
         check(circle0, vertices0)
-        # testing only uniform scaling, for non uniform scaling
-        # the circle has to be converted to an ellipse
-        check(*synced_scaling(circle0, vertices0, -1, 1, 1))
-        check(*synced_scaling(circle0, vertices0, -2, -2, 2))
-        check(*synced_scaling(circle0, vertices0, -3, -3, -3))
+        check(*synced_scaling(circle0, vertices0, sx, sy, sz))
 
 
 def test_arc_default_ocs():
