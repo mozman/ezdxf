@@ -3,7 +3,7 @@
 # Created 2019-02-21
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector
-from ezdxf.math.transformtools import transform_extrusion, transform_angle, transform_length
+from ezdxf.math.transformtools import OCSTransform
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -70,11 +70,11 @@ class Shape(DXFGraphic):
         """
         dxf = self.dxf
         dxf.insert = m.transform(dxf.insert)  # DXF Reference: WCS?
-        old_ocs = self.ocs()
-        extrusion, _ = transform_extrusion(dxf.extrusion, m)
-        dxf.rotation = transform_angle(dxf.rotation, old_ocs, extrusion, m)
-        dxf.oblique = transform_angle(dxf.oblique, old_ocs, extrusion, m)
-        dxf.size = transform_length((0, dxf.size, 0), old_ocs, m)
-        dxf.x_scale = transform_length((dxf.x_scale, 0, 0), old_ocs, m)
-        dxf.extrusion = extrusion
+        ocs = OCSTransform(self.dxf.extrusion, m)
+
+        dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
+        dxf.oblique = ocs.transform_deg_angle(dxf.oblique)
+        dxf.size = ocs.transform_length((0, dxf.size, 0))
+        dxf.x_scale = ocs.transform_length((dxf.x_scale, 0, 0))
+        dxf.extrusion = ocs.new_extrusion
         return self

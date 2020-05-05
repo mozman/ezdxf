@@ -4,10 +4,9 @@
 from typing import TYPE_CHECKING, Union, Tuple, List
 import math
 
-from ezdxf.math import Vector, Matrix44, OCS
-from ezdxf.math.transformtools import (
-    transform_extrusion, transform_ocs_vertex, transform_ocs_direction, transform_length, transform_angle
-)
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform
+
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
@@ -333,30 +332,26 @@ class MText(DXFGraphic):
 
         """
         dxf = self.dxf
-
-        old_extrusion = dxf.extrusion
-        old_ocs = OCS(old_extrusion)
-        new_extrusion, _ = transform_extrusion(old_extrusion, m)
-        new_ocs = OCS(new_extrusion)
+        ocs = OCSTransform(self.dxf.extrusion, m)
 
         rotation = dxf.rotation  # 0 by default
         if dxf.hasattr('rotation'):
-            dxf.rotation = math.degrees(transform_angle(math.radians(rotation), old_ocs, new_extrusion, m))
+            dxf.rotation = ocs.transform_deg_angle(rotation)
 
         if dxf.hasattr('text_direction'):
             rotation = Vector(dxf.text_direction).angle_deg
-            dxf.text_direction = transform_ocs_direction(dxf.text_direction, old_ocs, new_ocs, m)
+            dxf.text_direction = ocs.transform_direction(dxf.text_direction)
 
-        self.dxf.insert = transform_ocs_vertex(dxf.insert, old_ocs, new_ocs, m)
+        self.dxf.insert = ocs.transform_vertex(dxf.insert)
 
         char_height_vec = Vector.from_deg_angle(rotation + 90, dxf.char_height)
-        dxf.char_height = transform_length(char_height_vec, old_ocs, m)
+        dxf.char_height = ocs.transform_length(char_height_vec)
 
         if dxf.hasattr('width'):
             width_vec = Vector.from_deg_angle(rotation, dxf.width)
-            dxf.width = transform_length(width_vec, old_ocs, m)
+            dxf.width = ocs.transform_length(width_vec)
 
-        self.dxf.extrusion = new_extrusion
+        self.dxf.extrusion = ocs.new_extrusion
         return self
 
     def plain_text(self, split=False) -> Union[List[str], str]:

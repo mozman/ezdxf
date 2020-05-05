@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING, Iterable
 import math
 from ezdxf.math import Vector, UCS, Matrix44, OCS, linspace, enclosing_angles, X_AXIS
-from ezdxf.math.transformtools import transform_angle
+from ezdxf.math.transformtools import OCSTransform
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
@@ -101,13 +101,13 @@ class Arc(Circle):
         .. versionadded:: 0.13
 
         """
-        old_ocs = OCS(self.dxf.extrusion)
+        ocs = OCSTransform(self.dxf.extrusion, m)
         start_angle, mid_angle, end_angle = self.angles(3)
         super().transform(m)
 
-        new_start_angle = math.degrees(transform_angle(math.radians(start_angle), old_ocs, self.dxf.extrusion, m))
-        new_mid_angle = math.degrees(transform_angle(math.radians(mid_angle), old_ocs, self.dxf.extrusion, m))
-        new_end_angle = math.degrees(transform_angle(math.radians(end_angle), old_ocs, self.dxf.extrusion, m))
+        new_start_angle = ocs.transform_deg_angle(start_angle)
+        new_mid_angle = ocs.transform_deg_angle(mid_angle)
+        new_end_angle = ocs.transform_deg_angle(end_angle)
 
         # if drawing the wrong side of the arc
         if enclosing_angles(new_mid_angle, new_start_angle, new_end_angle) != \

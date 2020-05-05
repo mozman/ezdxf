@@ -2,11 +2,9 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Tuple, Union
-import math
-from ezdxf.math import Vector, Matrix44, OCS, Z_AXIS
-from ezdxf.math.transformtools import (
-    transform_extrusion, transform_ocs_vertex, transform_length, transform_angle
-)
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform
+
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, DXFValueError
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
@@ -213,28 +211,19 @@ class Text(DXFGraphic):
         dxf = self.dxf
         if not dxf.hasattr('align_point'):
             dxf.align_point = dxf.insert
+        ocs = OCSTransform(self.dxf.extrusion, m)
 
-        old_extrusion = dxf.extrusion
-        old_ocs = OCS(old_extrusion)
-        new_extrusion, _ = transform_extrusion(old_extrusion, m)
-        new_ocs = OCS(new_extrusion)
-
-        dxf.insert = transform_ocs_vertex(dxf.insert, old_ocs, new_ocs, m)
-        dxf.align_point = transform_ocs_vertex(dxf.align_point, old_ocs, new_ocs, m)
-
-        dxf.rotation = math.degrees(transform_angle(math.radians(dxf.rotation), old_ocs, new_extrusion, m))
-        dxf.oblique = math.degrees(transform_angle(math.radians(dxf.oblique), old_ocs, new_extrusion, m))
-
-        width_vec = Vector.from_deg_angle(dxf.rotation, dxf.width)
-        dxf.width = transform_length(width_vec, old_ocs, m)
-
-        height_vec = Vector.from_deg_angle(dxf.rotation + 90, dxf.height)
-        dxf.height = transform_length(height_vec, old_ocs, m)
+        dxf.insert = ocs.transform_vertex(dxf.insert)
+        dxf.align_point = ocs.transform_vertex(dxf.align_point)
+        dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
+        dxf.oblique = ocs.transform_angle(dxf.oblique)
+        dxf.width = ocs.transform_length( Vector.from_deg_angle(dxf.rotation, dxf.width))
+        dxf.height = ocs.transform_length(Vector.from_deg_angle(dxf.rotation + 90, dxf.height))
 
         if dxf.hasattr('thickness'):
-            dxf.thickness = transform_length((0, 0, dxf.thickness), old_ocs, m)
+            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness))
 
-        dxf.extrusion = new_extrusion
+        dxf.extrusion = ocs.new_extrusion
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> 'Text':

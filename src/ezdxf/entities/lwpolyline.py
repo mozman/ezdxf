@@ -5,10 +5,9 @@ from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, cast, List, Union
 import array
 import copy
 from contextlib import contextmanager
-from ezdxf.math import Vector, Matrix44, OCS
-from ezdxf.math.transformtools import (
-    transform_extrusion, transform_ocs_vertex, transform_length, NonUniformScalingError
-)
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
+
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED
 from ezdxf.lldxf.tags import Tags
@@ -291,13 +290,11 @@ class LWPolyline(DXFGraphic):
 
         """
         dxf = self.dxf
-        extrusion, has_uniform_scaling_in_ocs_xy = transform_extrusion(dxf.extrusion, m)
-        if not has_uniform_scaling_in_ocs_xy:
+        ocs = OCSTransform(self.dxf.extrusion, m)
+        if not ocs.scale_uniform:
             raise NonUniformScalingError('2D POLYLINE with arcs does not support non uniform scaling')
             # Parent function has to catch this Exception and explode this LWPOLYLINE into LINE and ELLIPSE entities.
-        old_ocs = OCS(dxf.extrusion)
-        new_ocs = OCS(extrusion)
-        vertices = list(transform_ocs_vertex(v, old_ocs, new_ocs, m) for v in self.vertices_in_ocs())
+        vertices = list(ocs.transform_vertex(v) for v in self.vertices_in_ocs())
         lwpoints = [(v[0], v[1], p[2], p[3], p[4]) for v, p in zip(vertices, self.lwpoints)]
         self.set_points(lwpoints)
 
@@ -306,8 +303,8 @@ class LWPolyline(DXFGraphic):
             dxf.elevation = vertices[0][2]
 
         if dxf.hasattr('thickness'):
-            dxf.thickness = transform_length((0, 0, dxf.thickness), old_ocs, m)
-        dxf.extrusion = extrusion
+            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness))
+        dxf.extrusion = ocs.new_extrusion
         return self
 
     def virtual_entities(self) -> Iterable[Union['Line', 'Arc']]:

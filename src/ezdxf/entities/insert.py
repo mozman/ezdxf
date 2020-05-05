@@ -4,9 +4,7 @@
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict, Callable
 import math
 from ezdxf.math import Vector, UCS, BRCS, X_AXIS, Y_AXIS, Matrix44, OCS
-from ezdxf.math.transformtools import (
-    transform_extrusion, transform_ocs_vertex, transform_scale_factor, transform_angle
-)
+from ezdxf.math.transformtools import OCSTransform
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError, DXFStructureError
@@ -381,23 +379,20 @@ class Insert(DXFGraphic):
 
         """
         dxf = self.dxf
-        old_ocs = OCS(dxf.extrusion)
-        new_extrusion, _ = transform_extrusion(dxf.extrusion, m)
-        new_ocs = OCS(new_extrusion)
-
-        dxf.insert = transform_ocs_vertex(dxf.insert, old_ocs, new_ocs, m)
-        dxf.rotation = math.degrees(transform_angle(math.radians(dxf.rotation), old_ocs, new_extrusion, m))
+        ocs = OCSTransform(self.dxf.extrusion, m)
+        dxf.insert = ocs.transform_vertex(dxf.insert)
+        dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
 
         # todo: transform_scale_factor is transform_length and does not return negative scaling
-        dxf.xscale = transform_scale_factor((dxf.xscale, 0, 0), old_ocs, m)
-        dxf.yscale = transform_scale_factor((0, dxf.yscale, 0), old_ocs, m)
-        dxf.zscale = transform_scale_factor((0, 0, dxf.zscale), old_ocs, m)
+        dxf.xscale = ocs.transform_scale_factor((dxf.xscale, 0, 0))
+        dxf.yscale = ocs.transform_scale_factor((0, dxf.yscale, 0))
+        dxf.zscale = ocs.transform_scale_factor((0, 0, dxf.zscale))
 
         for attrib in self.attribs:
             attrib.transform(m)
         return self
 
-    def translate(self, dx: float, dy: float, dz: float) -> 'Ellipse':
+    def translate(self, dx: float, dy: float, dz: float) -> 'Insert':
         """ Optimized INSERT translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
         returns `self` (floating interface).
 

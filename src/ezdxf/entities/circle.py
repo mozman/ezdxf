@@ -3,8 +3,8 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 
-from ezdxf.math import Vector, UCS, Matrix44, OCS
-from ezdxf.math.transformtools import transform_extrusion, transform_length, NonUniformScalingError, transform_ocs_vertex
+from ezdxf.math import Vector, UCS, Matrix44
+from ezdxf.math.transformtools import OCSTransform,  NonUniformScalingError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -82,17 +82,16 @@ class Circle(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        extrusion, has_uniform_scaling_in_ocs_xy = transform_extrusion(self.dxf.extrusion, m)
-        if has_uniform_scaling_in_ocs_xy:
-            old_ocs = OCS(self.dxf.extrusion)
-            new_ocs = OCS(extrusion)
-            self.dxf.extrusion = extrusion
-            self.dxf.center = transform_ocs_vertex(self.dxf.center, old_ocs, new_ocs, m)
+        ocs = OCSTransform(self.dxf.extrusion, m)
+
+        if ocs.scale_uniform:
+            self.dxf.extrusion = ocs.new_extrusion
+            self.dxf.center = ocs.transform_vertex(self.dxf.center)
             # old_ocs has a uniform scaled xy-plane, direction of radius-vector in
             # the xy-plane is not important, choose x-axis for no reason:
-            self.dxf.radius = transform_length((self.dxf.radius, 0, 0), old_ocs, m)
+            self.dxf.radius = ocs.transform_length((self.dxf.radius, 0, 0))
             # thickness vector points in the z-direction of the old_ocs:
-            self.dxf.thickness = transform_length((0, 0, self.dxf.thickness), old_ocs, m)
+            self.dxf.thickness = ocs.transform_length((0, 0, self.dxf.thickness))
 
         else:
             raise NonUniformScalingError('CIRCLE/ARC does not support non uniform scaling')

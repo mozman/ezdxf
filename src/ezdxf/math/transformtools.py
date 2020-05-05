@@ -55,46 +55,48 @@ def transform_extrusion(extrusion: 'Vertex', m: Matrix44) -> Tuple[Vector, bool]
     return new_extrusion, is_uniform
 
 
-def transform_length(length: 'Vertex', old_ocs: OCS, m: Matrix44) -> float:
-    """ Returns length of transformed `length` vector.
+class OCSTransform:
+    def __init__(self, extrusion: Vector, m: Matrix44):
+        self.m = m
+        self.old_extrusion = extrusion
+        self.old_ocs = OCS(extrusion)
+        self.new_extrusion, self.scale_uniform = transform_extrusion(extrusion, m)
+        self.new_ocs = OCS(self.new_extrusion)
 
-    Args:
-        length: length vector in old OCS
-        old_ocs: old OCS
-        m: transformation matrix
+    def transform_length(self, length: 'Vertex') -> float:
+        """ Returns length of transformed `length` vector.
 
-    """
-    return m.transform_direction(old_ocs.to_wcs(length)).magnitude
+        Args:
+            length: length vector in old OCS
 
+        """
+        return self.m.transform_direction(self.old_ocs.to_wcs(length)).magnitude
 
-transform_scale_factor = transform_length
+    transform_scale_factor = transform_length
 
+    def transform_vertex(self, vertex: 'Vertex'):
+        """ Returns vertex transformed from old OCS into new OCS by transformation matrix `m`.
+        """
+        return self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(vertex)))
 
-def transform_angle(angle: float, old_ocs: OCS, extrusion: Vector, m: Matrix44) -> float:
-    """ Returns new angle in radians.
+    def transform_direction(self, direction: 'Vertex'):
+        """ Returns direction transformed from old OCS into new OCS by transformation matrix `m`.
+        """
+        return self.new_ocs.from_wcs(self.m.transform_direction(self.old_ocs.to_wcs(direction)))
 
-    Transform old `angle` from old OCS to a WCS vector, transforms this WCS vector by transformation matrix `m` and
-    calculates the angle in the OCS established by the new `extrusion` vector between to the new OCS x-axis and the
-    transformed angle vector.
+    def transform_angle(self, angle: float) -> float:
+        """ Returns new angle in radians.
 
-    Args:
-        angle: old angle in radians
-        old_ocs: old OCS
-        extrusion: new extrusion vector
-        m: transformation matrix
+        Transform old `angle` from old OCS to a WCS vector, transforms this WCS vector by transformation matrix `m` and
+        calculates the angle in the OCS established by the new `extrusion` vector between to the new OCS x-axis and the
+        transformed angle vector.
 
-    """
-    new_angle_vec = m.transform_direction(old_ocs.to_wcs(Vector.from_angle(angle)))
-    return extrusion.angle_about(X_AXIS, new_angle_vec)
+        Args:
+            angle: old angle in radians
 
+        """
+        new_angle_vec = self.m.transform_direction(self.old_ocs.to_wcs(Vector.from_angle(angle)))
+        return self.new_extrusion.angle_about(X_AXIS, new_angle_vec)
 
-def transform_ocs_vertex(vertex: 'Vertex', old_ocs: OCS, new_ocs: OCS, m: Matrix44):
-    """ Returns vertex transformed from old OCS into new OCS by transformation matrix `m`.
-    """
-    return new_ocs.from_wcs(m.transform(old_ocs.to_wcs(vertex)))
-
-
-def transform_ocs_direction(direction: 'Vertex', old_ocs: OCS, new_ocs: OCS, m: Matrix44):
-    """ Returns direction transformed from old OCS into new OCS by transformation matrix `m`.
-    """
-    return new_ocs.from_wcs(m.transform_direction(old_ocs.to_wcs(direction)))
+    def transform_deg_angle(self, angle: float) -> float:
+        return math.degrees(self.transform_angle(math.radians(angle)))

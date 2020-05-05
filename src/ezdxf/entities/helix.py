@@ -3,7 +3,6 @@
 # Created 2019-03-10
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector
-from ezdxf.math.transformtools import transform_length
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER
 from .spline import Spline, acdb_spline

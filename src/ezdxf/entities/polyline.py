@@ -3,10 +3,9 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict
 from itertools import chain
-from ezdxf.math import Vector, Matrix44, OCS
-from ezdxf.math.transformtools import (
-    transform_extrusion, NonUniformScalingError, transform_ocs_vertex, transform_length,
-)
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
+
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.lldxf import const
@@ -451,23 +450,20 @@ class Polyline(DXFGraphic):
 
         if self.is_2d_polyline:
             dxf = self.dxf
-
+            ocs = OCSTransform(self.dxf.extrusion, m)
             # Newer DXF versions write 2d polylines always as LWPOLYLINE entities.
             # No need for optimizations.
-            extrusion, has_uniform_scaling_in_ocs_xy = transform_extrusion(dxf.extrusion, m)
-            if not has_uniform_scaling_in_ocs_xy:
+            if not ocs.scale_uniform:
                 raise NonUniformScalingError('2D POLYLINE with arcs does not support non uniform scaling')
                 # Parent function has to catch this Exception and explode this 2D POLYLINE into LINE and ELLIPSE entities.
 
-            old_ocs = OCS(dxf.extrusion)
-            new_ocs = OCS(extrusion)
             if dxf.hasattr('elevation'):
                 z_axis = dxf.elevation.z
             else:
                 z_axis = None
 
             # transform old OCS locations into new OCS locations by transformation matrix m
-            vertices = [transform_ocs_vertex(vertex, old_ocs, new_ocs, m) for vertex in _ocs_locations(z_axis)]
+            vertices = [ocs.transform_vertex(vertex) for vertex in _ocs_locations(z_axis)]
 
             # set new elevation, all vertices of a 2D polyline must have the same z-axis
             if vertices:
@@ -478,9 +474,9 @@ class Polyline(DXFGraphic):
                 vertex.dxf.location = location
 
             if dxf.hasattr('thickness'):
-                dxf.thickness = transform_length((0, 0, dxf.thickness), old_ocs, m)
+                dxf.thickness = ocs.transform_length((0, 0, dxf.thickness))
 
-            dxf.extrusion = extrusion
+            dxf.extrusion = ocs.new_extrusion
         else:
             for vertex in self.vertices:
                 vertex.transform(m)
