@@ -64,39 +64,29 @@ class OCSTransform:
         self.new_ocs = OCS(self.new_extrusion)
 
     def transform_length(self, length: 'Vertex') -> float:
-        """ Returns length of transformed `length` vector.
-
-        Args:
-            length: length vector in old OCS
-
+        """ Returns magnitude of `length` direction vector transformed form old OCS into new OCS.
         """
         return self.m.transform_direction(self.old_ocs.to_wcs(length)).magnitude
 
     transform_scale_factor = transform_length
 
     def transform_vertex(self, vertex: 'Vertex'):
-        """ Returns vertex transformed from old OCS into new OCS by transformation matrix `m`.
+        """ Returns vertex transformed form old OCS into new OCS.
         """
         return self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(vertex)))
 
     def transform_direction(self, direction: 'Vertex'):
-        """ Returns direction transformed from old OCS into new OCS by transformation matrix `m`.
+        """ Returns direction transformed from old OCS into new OCS.
         """
         return self.new_ocs.from_wcs(self.m.transform_direction(self.old_ocs.to_wcs(direction)))
 
     def transform_angle(self, angle: float) -> float:
-        """ Returns new angle in radians.
-
-        Transform old `angle` from old OCS to a WCS vector, transforms this WCS vector by transformation matrix `m` and
-        calculates the angle in the OCS established by the new `extrusion` vector between to the new OCS x-axis and the
-        transformed angle vector.
-
-        Args:
-            angle: old angle in radians
-
+        """ Returns angle (in radians) from old OCS transformed into new OCS.
         """
         new_angle_vec = self.m.transform_direction(self.old_ocs.to_wcs(Vector.from_angle(angle)))
         return self.new_extrusion.angle_about(X_AXIS, new_angle_vec)
 
     def transform_deg_angle(self, angle: float) -> float:
+        """ Returns angle (in degrees) from old OCS transformed into new OCS.
+        """
         return math.degrees(self.transform_angle(math.radians(angle)))
