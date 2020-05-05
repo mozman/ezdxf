@@ -382,8 +382,6 @@ class Insert(DXFGraphic):
         ocs = OCSTransform(self.dxf.extrusion, m)
         dxf.insert = ocs.transform_vertex(dxf.insert)
         dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
-
-        # todo: transform_scale_factor is transform_length and does not return negative scaling
         dxf.xscale = ocs.transform_scale_factor((dxf.xscale, 0, 0))
         dxf.yscale = ocs.transform_scale_factor((0, dxf.yscale, 0))
         dxf.zscale = ocs.transform_scale_factor((0, 0, dxf.zscale))

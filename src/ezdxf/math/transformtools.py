@@ -64,14 +64,15 @@ class OCSTransform:
         self.new_ocs = OCS(self.new_extrusion)
 
     def transform_length(self, length: 'Vertex') -> float:
-        """ Returns magnitude of `length` direction vector transformed form old OCS into new OCS.
+        """ Returns magnitude of `length` direction vector transformed from old OCS into new OCS.
         """
         return self.m.transform_direction(self.old_ocs.to_wcs(length)).magnitude
 
+    # todo: transform_scale_factor() is transform_length() and does not return negative scaling
     transform_scale_factor = transform_length
 
     def transform_vertex(self, vertex: 'Vertex'):
-        """ Returns vertex transformed form old OCS into new OCS.
+        """ Returns vertex transformed from old OCS into new OCS.
         """
         return self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(vertex)))
 
