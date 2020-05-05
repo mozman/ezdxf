@@ -236,3 +236,17 @@ class Text(DXFGraphic):
 
         dxf.extrusion = new_extrusion
         return self
+
+    def translate(self, dx: float, dy: float, dz: float) -> 'Text':
+        """ Optimized TEXT/ATTRIB/ATTDEF translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        dxf = self.dxf
+        vec = Vector(dx, dy, dz)
+        dxf.insert = vec + dxf.insert
+        if dxf.hasattr('align_point'):
+            dxf.align_point = vec + dxf.align_point
+        return self

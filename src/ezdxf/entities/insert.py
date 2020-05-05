@@ -405,6 +405,8 @@ class Insert(DXFGraphic):
 
         """
         self.dxf.insert = Vector(dx, dy, dz) + self.dxf.insert
+        for attrib in self.attribs:
+            attrib.translate(dx, dy, dz)
         return self
 
     def brcs(self) -> 'BRCS':

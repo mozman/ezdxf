@@ -427,8 +427,14 @@ def test_polyline3d_transform_interface():
 def test_text_transform_interface():
     text = Text()
     text.dxf.insert = (1, 0, 0)
-    text.translate(1, 2, 3)
+    text.transform(Matrix44.translate(1, 2, 3))
     assert text.dxf.insert == (2, 2, 3)
+
+    # optimized translate
+    text.dxf.align_point = (3, 2, 1)
+    text.translate(1, 2, 3)
+    assert text.dxf.insert == (3, 4, 6)
+    assert text.dxf.align_point == (4, 4, 4)
 
 
 def test_mtext_transform_interface():
