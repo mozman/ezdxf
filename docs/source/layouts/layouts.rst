@@ -293,6 +293,10 @@ BlockLayout
 
     .. autoattribute:: dxf
 
+    .. autoattribute:: can_explode
+
+    .. autoattribute:: scale_uniformly
+
     .. automethod:: __contains__
 
     .. automethod:: attdefs
