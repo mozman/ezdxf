@@ -76,6 +76,12 @@ class OCSTransform:
         """
         return self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(vertex)))
 
+    def transform_2d_vertex(self, vertex: 'Vertex', elevation: float):
+        """ Returns 2d vertex transformed from old OCS into new OCS.
+        """
+        v = Vector(vertex).replace(z=elevation)
+        return self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(v))).vec2
+
     def transform_direction(self, direction: 'Vertex'):
         """ Returns direction transformed from old OCS into new OCS.
         """

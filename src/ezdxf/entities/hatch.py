@@ -1,11 +1,12 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-08
-from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Optional
+from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Optional, cast
 from contextlib import contextmanager
 import math
 import copy
-from ezdxf.math import Vector, UCS, Vec2
+from ezdxf.math import Vector, UCS, Vec2, Matrix44
+from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -17,6 +18,7 @@ from ezdxf.math.bulge import bulge_to_arc
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
+from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, RGB, DXFEntity, Vertex
@@ -319,12 +321,6 @@ class Hatch(DXFGraphic):
         """ Context manager to edit hatch boundary data, yields a :class:`BoundaryPaths` object. """
         yield self.paths
 
-    def unassociate(self):
-        """ Remove association to other DXF entities. """
-        self.dxf.associative = 0
-        for path in self.paths:
-            path.source_boundary_objects = []
-
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: 'RGB' = None):
         """
         Set :class:`Hatch` to solid fill mode and removes all gradient and pattern fill related data.
@@ -513,6 +509,24 @@ class Hatch(DXFGraphic):
         self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
         return self
 
+    def transform(self, m: 'Matrix44') -> 'Hatch':
+        """ Transform HATCH entity by transformation matrix `m` inplace.
+
+        Raises ``NonUniformScalingError()`` for non uniform scaling.
+
+        .. versionadded:: 0.13
+
+        """
+        dxf = self.dxf
+        ocs = OCSTransform(dxf.extrusion, m)
+
+        elevation = Vector(dxf.elevation).z
+        self.paths.transform(ocs, elevation=elevation)
+        dxf.elevation = ocs.transform_vertex(Vector(0, 0, elevation)).replace(x=0, y=0)
+        dxf.extrusion = ocs.new_extrusion
+        # todo scale pattern
+        return self
+
     def associate(self, path: TPath, entities: Iterable['DXFEntity']):
         """ Set association from hatch boundary `path` to DXF geometry `entities`.
 
@@ -601,6 +615,18 @@ class BoundaryPaths:
         """
         for path in self.paths:
             path.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
+
+    def transform(self, ocs: OCSTransform, elevation: float = 0) -> None:
+        """ Transform HATCH boundary paths.
+
+        These paths are 2d elements, placed in to OCS of the HATCH.
+
+        """
+        if not ocs.scale_uniform:
+            self.arc_edges_to_ellipse_edges()
+
+        for path in self.paths:
+            path.transform(ocs, elevation=elevation)
 
     def arc_edges_to_ellipse_edges(self):
         """
@@ -784,6 +810,22 @@ class PolylinePath:
             vertices = list(ucs.ocs_points_to_ocs(ocs_vertices, extrusion=extrusion))
             self.vertices = [(v.x, v.y, p[2]) for v, p in zip(vertices, self.vertices)]
 
+    def transform(self, ocs: OCSTransform, elevation: float) -> None:
+        """ Transform polyline path.
+        """
+        has_non_uniform_scaling = not ocs.scale_uniform
+
+        def _transform():
+            for x, y, bulge in self.vertices:
+                # PolylinePaths() with arcs should be converted to EdgePath (in BoundaryPath.transform()).
+                if bulge and has_non_uniform_scaling:
+                    raise NonUniformScalingError('Polyline path with arcs does not support non uniform scaling')
+                v = ocs.transform_vertex(Vector(x, y, elevation))
+                yield v.x, v.y, bulge
+
+        if self.vertices:
+            self.vertices = list(_transform())
+
 
 class EdgePath:
     PATH_TYPE = 'EdgePath'
@@ -819,6 +861,12 @@ class EdgePath:
         # established OCS not supported yet
         for edge in self.edges:
             edge.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
+
+    def transform(self, ocs: OCSTransform, elevation: float) -> None:
+        """ Transform edge boundary paths.
+        """
+        for edge in self.edges:
+            edge.transform(ocs, elevation=elevation)
 
     def add_line(self, start: Sequence[float], end: Sequence[float]) -> 'LineEdge':
         """
@@ -1012,6 +1060,10 @@ class LineEdge:
         # established OCS not supported yet
         self.start, self.end = _transform_2d_ocs_vertices(ucs, [self.start, self.end], elevation, extrusion)
 
+    def transform(self, ocs: OCSTransform, elevation: float) -> None:
+        self.start = ocs.transform_2d_vertex(self.start, elevation)
+        self.end = ocs.transform_2d_vertex(self.end, elevation)
+
 
 class ArcEdge:
     EDGE_TYPE = "ArcEdge"
@@ -1054,6 +1106,11 @@ class ArcEdge:
         # established OCS not supported yet
         self.center = _transform_2d_ocs_vertices(ucs, [self.center], elevation, extrusion)[0]
         self.start_angle, self.end_angle = ucs.ocs_angles_to_ocs_deg([self.start_angle, self.end_angle], extrusion)
+
+    def transform(self, ocs: OCSTransform, elevation: float) -> None:
+        self.center = ocs.transform_2d_vertex(self.center, elevation)
+        self.start_angle = ocs.transform_deg_angle(self.start_angle)
+        self.end_angle = ocs.transform_deg_angle(self.end_angle)
 
 
 class EllipseEdge:
@@ -1105,6 +1162,33 @@ class EllipseEdge:
         self.center = _transform_2d_ocs_vertices(ucs, [self.center], elevation=elevation, extrusion=extrusion)[0]
         self.major_axis = ucs.direction_to_wcs(self.major_axis).xyz[:2]  # ???
         # start_angle and end_angle are not real angles, see start_param and end_param in Ellipse.
+
+    def transform(self, ocs: OCSTransform, elevation: float) -> None:
+        # reuse ELLIPSE transformation
+        center = ocs.old_ocs.to_wcs(Vector(self.center).replace(z=elevation))
+        # transform end point of major axis in to WCS
+        end_point = self.center + self.major_axis
+        end_point = ocs.old_ocs.to_wcs(Vector(end_point).replace(z=elevation))
+        major_axis = end_point - center
+        # start- and end param (angle) are relative to the major axis, so this values
+        # should be the same in WCS and OCS.
+        ellipse = cast('Ellipse', factory.new('ELLIPSE', dxfattribs={
+            'center': center,
+            'major_axis': major_axis,
+            'ratio': self.ratio,
+            'start_param': math.radians(self.start_angle),
+            'end_param': math.radians(self.end_angle),
+            'extrusion': ocs.old_extrusion,
+        }))
+        ellipse.transform(ocs.m)
+        assert ocs.new_extrusion.isclose(ellipse.dxf.extrusion, abs_tol=1e-9)
+
+        self.center = ocs.transform_2d_vertex(self.center, elevation)
+        end_point = ocs.new_ocs.from_wcs(ellipse.dxf.center + ellipse.dxf.major_axis).vec2
+        self.major_axis = end_point - self.center
+        self.ratio = ellipse.dxf.ratio
+        self.start_angle = math.degrees(ellipse.dxf.start_param)
+        self.end_angle = math.degrees(ellipse.dxf.end_param)
 
 
 class SplineEdge:
@@ -1200,6 +1284,16 @@ class SplineEdge:
             self.start_tangent = ucs.direction_to_wcs(self.start_tangent).xyz[:2]
         if self.end_tangent is not None:
             self.end_tangent = ucs.direction_to_wcs(self.end_tangent).xyz[:2]
+
+    def transform(self, ocs: OCSTransform, elevation: float) -> None:
+        self.control_points = list(ocs.transform_2d_vertex(v, elevation) for v in self.control_points)
+        self.fit_points = list(ocs.transform_2d_vertex(v, elevation) for v in self.fit_points)
+        if self.start_tangent is not None:
+            t = Vector(self.start_tangent).replace(z=elevation)
+            self.start_tangent = ocs.transform_direction(t).vec2
+        if self.end_tangent is not None:
+            t = Vector(self.end_tangent).replace(z=elevation)
+            self.end_tangent = ocs.transform_direction(t).vec2
 
 
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]
