@@ -2,12 +2,13 @@
 # License: MIT License
 from typing import Union
 import pytest
+import random
 import math
 from ezdxf.entities import (
     DXFGraphic, Line, Point, Circle, Arc, Ellipse, XLine, Mesh, Spline, Solid, Face3d, LWPolyline, Polyline, Text,
     MText, Insert, Dimension,
 )
-from ezdxf.math import Matrix44, OCS, Vector
+from ezdxf.math import Matrix44, OCS, Vector, linspace
 from ezdxf.math.transformtools import NonUniformScalingError
 
 
@@ -113,9 +114,12 @@ def test_circle_default_ocs():
 
 
 def test_circle_fast_translation():
-    circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'thickness': 2})
-    circle.translate(1, 2, 3)
-    assert circle.dxf.center == (3, 5, 7)
+    circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'extrusion': Vector.random()})
+    ocs = circle.ocs()
+    offset = Vector(1, 2, 3)
+    center = ocs.to_wcs(circle.dxf.center) + offset
+    circle.translate(*offset)
+    assert ocs.to_wcs(circle.dxf.center).isclose(center, abs_tol=1e-9)
 
 
 def test_circle_non_uniform_scaling():
@@ -148,6 +152,55 @@ def test_circle_user_ocs():
     assert circle.dxf.center == result
     assert circle.dxf.extrusion == (0, 1, 0)
     assert circle.dxf.thickness == 8  # in WCS y-axis
+
+
+def synced_scaling(entity, chk, sx=1, sy=1, sz=1):
+    entity = entity.copy()
+    entity.scale(sx, sy, sz)
+    chk = list(Matrix44.scale(sx, sy, sz).transform_vertices(chk))
+    return entity, chk
+
+
+def synced_rotation(entity, chk, axis, angle):
+    entity = entity.copy()
+    entity.rotate_axis(axis, angle)
+    chk = list(Matrix44.axis_rotate(axis, angle).transform_vertices(chk))
+    return entity, chk
+
+
+def synced_translation(entity, chk, dx, dy, dz):
+    entity = entity.copy()
+    entity.translate(dx, dy, dz)
+    chk = list(Matrix44.translate(dx, dy, dz).transform_vertices(chk))
+    return entity, chk
+
+
+def test_random_circle_transformation():
+    def build():
+        circle = Circle()
+        vertices = list(circle.vertices(linspace(0, 360, 8, endpoint=False)))
+        circle, vertices = synced_rotation(circle, vertices, axis=Vector.random(), angle=random.uniform(0, math.tau))
+        circle, vertices = synced_translation(
+            circle, vertices, dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2))
+        return circle, vertices
+
+    def check(src, chk):
+        ocs = src.ocs()
+        center = ocs.to_wcs(src.dxf.center)
+        chk_center = chk[0].lerp(chk[int(len(chk)/2)])
+        assert center.isclose(chk_center, abs_tol=1e-9)
+        radius = src.dxf.radius
+        for p in chk:
+            assert math.isclose((p - center).magnitude, radius, abs_tol=1e-9)
+
+    for _ in range(10):
+        circle0, vertices0 = build()
+        check(circle0, vertices0)
+        # testing only uniform scaling, for non uniform scaling
+        # the circle has to be converted to an ellipse
+        check(*synced_scaling(circle0, vertices0, -1, 1, 1))
+        check(*synced_scaling(circle0, vertices0, -2, -2, 2))
+        check(*synced_scaling(circle0, vertices0, -3, -3, -3))
 
 
 def test_arc_default_ocs():

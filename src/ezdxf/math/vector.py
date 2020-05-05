@@ -4,6 +4,7 @@
 from typing import Tuple, List, Iterable, Any, Union, Sequence, TYPE_CHECKING
 from functools import partial
 import math
+import random
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import VecXY, Vertex
@@ -173,6 +174,14 @@ class Vector:
             x, y, z = args
             return float(x), float(y), float(z)
         raise ValueError('invalid arguments {}'.format(str(args)))
+
+    @classmethod
+    def random(cls, length: float = 1) -> 'Vector':
+        """ Returns a random vector. """
+        x = random.uniform(-1, 1)
+        y = random.uniform(-1, 1)
+        z = random.uniform(-1, 1)
+        return Vector(x, y, z).normalize(length)
 
     def __str__(self) -> str:
         """ Return ``'(x, y, z)'`` as string. """

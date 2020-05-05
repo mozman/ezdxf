@@ -83,16 +83,16 @@ class Circle(DXFGraphic):
 
         """
         ocs = OCSTransform(self.dxf.extrusion, m)
-
+        dxf = self.dxf
         if ocs.scale_uniform:
-            self.dxf.extrusion = ocs.new_extrusion
-            self.dxf.center = ocs.transform_vertex(self.dxf.center)
+            dxf.extrusion = ocs.new_extrusion
+            dxf.center = ocs.transform_vertex(dxf.center)
             # old_ocs has a uniform scaled xy-plane, direction of radius-vector in
             # the xy-plane is not important, choose x-axis for no reason:
-            self.dxf.radius = ocs.transform_length((self.dxf.radius, 0, 0))
-            # thickness vector points in the z-direction of the old_ocs:
-            self.dxf.thickness = ocs.transform_length((0, 0, self.dxf.thickness))
-
+            dxf.radius = ocs.transform_length((dxf.radius, 0, 0))
+            if dxf.hasattr('thickness'):
+                # thickness vector points in the z-direction of the old_ocs:
+                self.dxf.thickness = ocs.transform_length((0, 0, self.dxf.thickness))
         else:
             raise NonUniformScalingError('CIRCLE/ARC does not support non uniform scaling')
             # Parent function has to catch this Exception and convert this CIRCLE/ARC into an ELLIPSE
@@ -105,5 +105,6 @@ class Circle(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        self.dxf.center = Vector(dx, dy, dz) + self.dxf.center
+        ocs = self.ocs()
+        self.dxf.center = ocs.from_wcs(Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
         return self
