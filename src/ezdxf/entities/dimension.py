@@ -4,9 +4,10 @@
 import math
 from typing import TYPE_CHECKING, Optional, Union, Iterable
 
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007, DXF2004
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007
 from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError, DXFTableEntryError, DXFTypeError
 from ezdxf.lldxf.types import get_xcode_for
 from ezdxf.tools import take2
@@ -528,6 +529,33 @@ class Dimension(DXFGraphic, OverrideMixin):
         for name in ['defpoint', 'defpoint2', 'defpoint3', 'defpoint4']:
             if dxf.hasattr(name):
                 dxf.set(name, ucs.to_wcs(dxf.get(name)))
+        return self
+
+    def transform(self, m: 'Matrix44') -> 'Dimension':
+        """ Transform DIMENSION entity by transformation matrix `m` inplace.
+
+        Raises ``NonUniformScalingError()`` for non uniform scaling.
+
+        .. versionadded:: 0.13
+
+        """
+        def transform_if_exist(name: str, func):
+            if dxf.hasattr(name):
+                dxf.set(name, func(dxf.get(name)))
+
+        dxf = self.dxf
+        ocs = OCSTransform(self.dxf.extrusion, m)
+
+        for vertex_name in ('text_midpoint', 'defpoint5', 'insert'):
+            transform_if_exist(vertex_name, ocs.transform_vertex)
+
+        for angle_name in ('text_rotation', 'horizontal_direction', 'angle'):
+            transform_if_exist(angle_name, ocs.transform_deg_angle)
+
+        for vertex_name in ('defpoint', 'defpoint2', 'defpoint3', 'defpoint4'):
+            transform_if_exist(vertex_name, m.transform)
+
+        dxf.extrusion = ocs.new_extrusion
         return self
 
     def virtual_entities(self) -> Iterable['DXFGraphic']:

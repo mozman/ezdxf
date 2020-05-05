@@ -207,6 +207,8 @@ Factory Functions
 
     .. automethod:: transform_to_wcs(ucs: UCS) -> Dimension
 
+    .. automethod:: transform(m: Matrix44) -> Dimension
+
     .. automethod:: virtual_entities() -> Iterable[DXFGraphic]
 
     .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery

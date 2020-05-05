@@ -5,7 +5,7 @@ import pytest
 import math
 from ezdxf.entities import (
     DXFGraphic, Line, Point, Circle, Arc, Ellipse, XLine, Mesh, Spline, Solid, Face3d, LWPolyline, Polyline, Text,
-    MText, Insert,
+    MText, Insert, Dimension,
 )
 from ezdxf.math import Matrix44, OCS, Vector
 from ezdxf.math.transformtools import NonUniformScalingError
@@ -459,6 +459,21 @@ def test_insert_transform_interface():
     assert insert.dxf.xscale == 2
     assert insert.dxf.yscale == 3
     assert insert.dxf.zscale == 4
+
+
+def test_dimension_transform_interface():
+    dim = Dimension()
+    dim.dxf.insert = (1, 0, 0)  # OCS point
+    dim.dxf.defpoint = (0, 1, 0)  # WCS point
+    dim.dxf.angle = 45
+
+    dim.transform(Matrix44.translate(1, 2, 3))
+    assert dim.dxf.insert == (2, 2, 3)
+    assert dim.dxf.defpoint == (1, 3, 3)
+    assert dim.dxf.angle == 45
+
+    dim.transform(Matrix44.z_rotate(math.radians(45)))
+    assert dim.dxf.angle == 90
 
 
 if __name__ == '__main__':
