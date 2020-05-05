@@ -21,7 +21,7 @@ acdb_blockrec = DefSubclass('AcDbBlockTableRecord', {
     'name': DXFAttr(2),
     'layout': DXFAttr(340, default='0'),  # handle to associated DXF LAYOUT object
     'explode': DXFAttr(280, default=1, dxfversion=DXF2007),  # 0 = can not explode; 1 = can explode
-    'scale': DXFAttr(281, default=1, dxfversion=DXF2007),  # 0 = can not scale; 1 = can scale
+    'scale': DXFAttr(281, default=0, dxfversion=DXF2007),  # 0 = scale non uniformly; 1 = scale uniformly
     'units': DXFAttr(70, default=0, dxfversion=DXF2007),  # ezdxf.InsertUnits
     # 0 = Unitless
     # 1 = Inches

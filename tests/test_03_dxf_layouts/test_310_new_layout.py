@@ -47,3 +47,17 @@ def test_set_active_layout(doc):
     doc.layouts.set_active_layout('mozman_layout_3')
     assert '*Paper_Space' == new_layout.block_record_name
     assert new_layout.layout_key == doc.block_records.get('*Paper_Space').dxf.handle
+
+
+def test_new_block_layout(doc):
+    block = doc.blocks.new('Test01')
+    block.add_point((0, 0, 0))
+    assert len(block) == 1
+    assert block.can_explode is True
+    assert block.scale_uniformly is False
+
+    block.can_explode = False
+    block.scale_uniformly = True
+
+    assert block.block_record.dxf.explode == 0
+    assert block.block_record.dxf.scale == 1
