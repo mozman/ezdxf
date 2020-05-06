@@ -6,6 +6,8 @@ Version 0.12.3 - dev
 --------------------
 
 - BUGFIX: DXF R2010+ requires zero length tag 97 for HATCH/SplineEdge if no fit points exist (vshu3000)
+- NEW: `BlockLayout()` properties `can_explode` and `scale_uniformly`
+- NEW: `Hatch.remove_association()`
 
 Version 0.12.2 - 2020-05-03
 ---------------------------
