@@ -5,7 +5,7 @@ News
 Version 0.12.3 - dev
 --------------------
 
-- BUGFIX: DXF R2010+ requires zero length tag 97 for HATCH/SplineEdge if no fit points exist by vshu3000
+- BUGFIX: DXF R2010+ requires zero length tag 97 for HATCH/SplineEdge if no fit points exist (vshu3000)
 
 Version 0.12.2 - 2020-05-03
 ---------------------------
@@ -13,9 +13,9 @@ Version 0.12.2 - 2020-05-03
 - BUGFIX: `XData.get()` now raises `DXFValueError` for not existing appids, like all other methods of the `XData()` class
 - BUGFIX: `Layer.description` returns an empty string for unknown XDATA structure in `AcAecLayerStandard`
 - BUGFIX: Initialize/Load `Hatch` edge coordinates as `Vec2()` objects
-- BUGFIX: typo in 3 point angular dimension subclass marker by vshu3000
-- BUGFIX: HATCH/SplineEdge did export length tag 97 if no fit points exist, creates invalid DXF for AutoCAD/BricsCAD by vshu3000  
-- BUGFIX: Ellipse handling in `virtual_block_reference_entities()` by Matt Broadway  
+- BUGFIX: typo in 3 point angular dimension subclass marker (vshu3000)
+- BUGFIX: HATCH/SplineEdge did export length tag 97 if no fit points exist, creates invalid DXF for AutoCAD/BricsCAD (vshu3000)  
+- BUGFIX: Ellipse handling in `virtual_block_reference_entities()` (Matt Broadway)  
 
 Version 0.12.1 - 2020-04-25
 ---------------------------
