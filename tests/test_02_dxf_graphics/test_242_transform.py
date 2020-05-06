@@ -265,15 +265,14 @@ def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool)
 def _check_curve(ellipse: Ellipse, expected_start: Vector, expected_end: Vector, expected_extrusion: Vector):
     assert ellipse.start_point.isclose(expected_start)
     assert ellipse.end_point.isclose(expected_end)
-    # todo: given extrusions do not match the reconstructed extrusion vectors: x-axis cross y-axis
-    # assert ellipse.dxf.extrusion.isclose(expected_extrusion.normalize())
+    assert ellipse.dxf.extrusion.is_parallel(expected_extrusion)
 
 
 @pytest.mark.parametrize('zscale,is_arc', [
     (1, False), (0.5, False),
-    # (1, True), (0.5, True),  # todo: does not work for ARC
+    (1, True), (0.5, True),
     (-1, False),
-    # (-1, True),  # todo: does not work for ARC
+    (-1, True),
 ])
 def test_07_rotated_and_reflected_curves(zscale, is_arc):
     scale = Vector(1, 1, zscale)

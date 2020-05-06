@@ -102,39 +102,8 @@ class Arc(Circle):
 
         """
         ocs = OCSTransform(self.dxf.extrusion, m)
-        start_angle, mid_angle, end_angle = self.angles(3)
         super().transform(m)
-
-        new_start_angle = ocs.transform_deg_angle(start_angle)
-        new_mid_angle = ocs.transform_deg_angle(mid_angle)
-        new_end_angle = ocs.transform_deg_angle(end_angle)
-
-        # if drawing the wrong side of the arc
-        if enclosing_angles(new_mid_angle, new_start_angle, new_end_angle) != \
-                enclosing_angles(mid_angle, start_angle, end_angle):
-            new_start_angle, new_end_angle = new_end_angle, new_start_angle
-        self.dxf.start_angle = new_start_angle
-        self.dxf.end_angle = new_end_angle
+        self.dxf.start_angle = ocs.transform_deg_angle(self.dxf.start_angle)
+        self.dxf.end_angle = ocs.transform_deg_angle(self.dxf.end_angle)
         return self
 
-    def transform_2(self, m: Matrix44) -> 'Arc':
-        # alternative implementation, but both do not pass test 242/07
-        """ Transform ARC entity by transformation matrix `m` inplace.
-
-        Raises ``NonUniformScalingError()`` for non uniform scaling.
-
-        .. versionadded:: 0.13
-
-        """
-        # in WCS
-        vertices = list(m.transform_vertices(self.vertices((self.dxf.start_angle, self.dxf.end_angle))))
-        super().transform(m)
-
-        new_ocs = OCS(self.dxf.extrusion)
-        start_point, end_point = new_ocs.points_from_wcs(vertices)
-        center = self.dxf.center
-        new_start_angle = self.dxf.extrusion.angle_about(X_AXIS, start_point - center)
-        new_end_angle = self.dxf.extrusion.angle_about(X_AXIS, end_point - center)
-        self.dxf.start_angle = math.degrees(new_start_angle)
-        self.dxf.end_angle = math.degrees(new_end_angle)
-        return self

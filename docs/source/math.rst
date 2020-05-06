@@ -341,6 +341,8 @@ Vector
 
     .. automethod:: lerp(other: Any, factor=.5) -> Vector
 
+    .. automethod:: is_parallel(other: Vector, abs_tolr=1e-12) -> bool
+
     .. automethod:: project(other: Any) -> Vector
 
     .. automethod:: normalize(length: float = 1.) -> Vector

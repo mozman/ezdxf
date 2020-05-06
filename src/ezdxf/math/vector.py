@@ -256,6 +256,12 @@ class Vector:
         """ ``True`` for ``Vector(0, 0, 0)``. """
         return self.__eq__((0, 0, 0))  # __eq__ uses is_close()
 
+    def is_parallel(self, other: 'Vector', abs_tol: float = 1e-12) -> bool:
+        """ Returns ``True`` if `self` and `other` are parallel to vectors. """
+        v1 = self.normalize()
+        v2 = other.normalize()
+        return v1.isclose(v2, abs_tol=abs_tol) or v1.isclose(-v2, abs_tol=abs_tol)
+
     @property
     def spatial_angle(self) -> float:
         """ Spatial angle between vector and x-axis in radians.  """

@@ -90,8 +90,7 @@ class OCSTransform:
     def transform_angle(self, angle: float) -> float:
         """ Returns angle (in radians) from old OCS transformed into new OCS.
         """
-        new_angle_vec = self.m.transform_direction(self.old_ocs.to_wcs(Vector.from_angle(angle)))
-        return self.new_extrusion.angle_about(X_AXIS, new_angle_vec)
+        return self.transform_direction(Vector.from_angle(angle)).angle % math.tau
 
     def transform_deg_angle(self, angle: float) -> float:
         """ Returns angle (in degrees) from old OCS transformed into new OCS.
