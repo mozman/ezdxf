@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.12.3 - dev
+--------------------
+
+- BUGFIX: DXF R2010+ requires zero length tag 97 for HATCH/SplineEdge if no fit points exist by vshu3000
+
 Version 0.12.2 - 2020-05-03
 ---------------------------
 
