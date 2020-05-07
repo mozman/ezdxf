@@ -75,6 +75,9 @@ class Shape(DXFGraphic):
         dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
         dxf.oblique = ocs.transform_deg_angle(dxf.oblique)
         dxf.size = ocs.transform_length((0, dxf.size, 0))
-        dxf.x_scale = ocs.transform_length((dxf.x_scale, 0, 0))
+        dxf.x_scale = ocs.transform_length((dxf.x_scale, 0, 0), reflexion=dxf.x_scale)
+        if dxf.hasattr('thickness'):  # thickness can be negative
+            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflexion=dxf.thickness)
+
         dxf.extrusion = ocs.new_extrusion
         return self

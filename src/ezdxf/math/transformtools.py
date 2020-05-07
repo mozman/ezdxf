@@ -21,8 +21,10 @@ class NonUniformScalingError(TransformError):
 
 def transform_thickness_and_extrusion_without_ocs(entity: 'DXFGraphic', m: Matrix44) -> None:
     if entity.dxf.hasattr('thickness'):
-        thickness = m.transform_direction(entity.dxf.extrusion * entity.dxf.thickness)
-        entity.dxf.thickness = thickness.magnitude
+        thickness = entity.dxf.thickness
+        reflexion = sign(thickness)
+        thickness = m.transform_direction(entity.dxf.extrusion * thickness)
+        entity.dxf.thickness = thickness.magnitude * reflexion
         entity.dxf.extrusion = thickness.normalize()
     elif entity.dxf.hasattr('extrusion'):  # without thickness?
         extrusion = m.transform_direction(entity.dxf.extrusion)
@@ -63,17 +65,13 @@ class OCSTransform:
         self.new_extrusion, self.scale_uniform = transform_extrusion(extrusion, m)
         self.new_ocs = OCS(self.new_extrusion)
 
-    def transform_length(self, length: 'Vertex') -> float:
-        """ Returns magnitude of `length` direction vector transformed from old OCS into new OCS.
-        """
-        return self.m.transform_direction(self.old_ocs.to_wcs(length)).magnitude
-
-    def transform_scale_factor(self, length: 'Vertex', reflexion=1.0):
+    def transform_length(self, length: 'Vertex', reflexion=1.0) -> float:
         """ Returns magnitude of `length` direction vector transformed from
         old OCS into new OCS including `reflexion` correction applied.
-
         """
-        return self.transform_length(length) * sign(reflexion)
+        return self.m.transform_direction(self.old_ocs.to_wcs(length)).magnitude * sign(reflexion)
+
+    transform_scale_factor = transform_length
 
     def transform_vertex(self, vertex: 'Vertex'):
         """ Returns vertex transformed from old OCS into new OCS.

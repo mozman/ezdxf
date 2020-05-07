@@ -220,8 +220,8 @@ class Text(DXFGraphic):
         dxf.width = ocs.transform_length( Vector.from_deg_angle(dxf.rotation, dxf.width))
         dxf.height = ocs.transform_length(Vector.from_deg_angle(dxf.rotation + 90, dxf.height))
 
-        if dxf.hasattr('thickness'):
-            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness))
+        if dxf.hasattr('thickness'):  # can be negative
+            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflexion=dxf.thickness)
 
         dxf.extrusion = ocs.new_extrusion
         return self

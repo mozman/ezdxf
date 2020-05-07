@@ -91,8 +91,8 @@ class Circle(DXFGraphic):
             # the xy-plane is not important, choose x-axis for no reason:
             dxf.radius = ocs.transform_length((dxf.radius, 0, 0))
             if dxf.hasattr('thickness'):
-                # thickness vector points in the z-direction of the old_ocs:
-                self.dxf.thickness = ocs.transform_length((0, 0, self.dxf.thickness))
+                # thickness vector points in the z-direction of the old_ocs, thickness can be negative
+                dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflexion=dxf.thickness)
         else:
             raise NonUniformScalingError('CIRCLE/ARC does not support non uniform scaling')
             # Parent function has to catch this Exception and convert this CIRCLE/ARC into an ELLIPSE
