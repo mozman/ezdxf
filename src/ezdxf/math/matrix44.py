@@ -15,8 +15,14 @@ if TYPE_CHECKING:
 
 Tuple4Float = Tuple[float, float, float, float]
 
+__all__ = ['Matrix44', 'sign']
+
 
 # removed array.array because array is optimized for space not speed, and space optimization is not needed
+
+def sign(f: float) -> float:
+    """ Return sign of float `f` as -1 or +1, 0 returns +1 """
+    return -1.0 if f < 0.0 else +1.0
 
 
 def floats(items: Iterable) -> List[float]:
@@ -41,9 +47,9 @@ class Matrix44:
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     )
-    __slots__ = ('matrix',)
+    __slots__ = ('matrix', 'reflexions')
 
-    def __init__(self, *args):
+    def __init__(self, *args, reflexions=(1.0, 1.0, 1.0)):
         """
         Matrix44() is the identity matrix.
 
@@ -51,8 +57,14 @@ class Matrix44:
 
         Matrix44(row1, row2, row3, row4) four rows, each row with four values.
 
+        The `reflexions` attribute stores reflexion (negative scaling) signs for x-, y-
+        and z-unit vectors  as +1 and -1, this values have no impact on calculations
+        and are not validated if they match applied scaling, they exist only to
+        preserves this information for applicants like ``Insert.transform()``.
+
         """
         self.matrix: List[float] = None
+        self.reflexions: Tuple[float, float, float] = reflexions
         self.set(*args)
 
     def set(self, *args) -> None:
@@ -75,6 +87,16 @@ class Matrix44:
             raise ValueError("Invalid count of arguments (4 row vectors or one list with 16 values).")
         if len(self.matrix) != 16:
             raise ValueError("Invalid matrix count")
+
+    def combine_reflexions(self, r: Tuple[float, float, float]):
+        """ Combine existing reflexions with given reflexions `r`.
+
+        This is an naive approach to preserve reflexion information across multiple
+        transformations an will not work for every scenario.
+        """
+        sx, sy, sz = self.reflexions
+        rx, ry, rz = r
+        self.reflexions = (sx * rx, sy * ry, sz * rz)
 
     def __repr__(self) -> str:
         """ Returns the representation string of the matrix:
@@ -159,12 +181,14 @@ class Matrix44:
         if sz is None:
             sz = sx
 
-        return cls([
+        m = cls([
             float(sx), 0., 0., 0.,
             0., float(sy), 0., 0.,
             0., 0., float(sz), 0.,
             0., 0., 0., 1.
         ])
+        m.reflexions = (sign(sx), sign(sy), sign(sz))
+        return m
 
     @classmethod
     def translate(cls, dx: float, dy: float, dz: float) -> 'Matrix44':
@@ -324,13 +348,12 @@ class Matrix44:
 
     @staticmethod
     def chain(*matrices: 'Matrix44') -> 'Matrix44':
-        """
-        Compose a transformation matrix from one or more `matrices`.
-
+        """ Compose a transformation matrix from one or more `matrices`.
         """
         transformation = Matrix44()
         for matrix in matrices:
             transformation *= matrix
+            transformation.combine_reflexions(matrix.reflexions)
         return transformation
 
     @staticmethod
