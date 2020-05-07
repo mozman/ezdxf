@@ -379,12 +379,16 @@ class Insert(DXFGraphic):
 
         """
         dxf = self.dxf
-        ocs = OCSTransform(self.dxf.extrusion, m)
+        ocs = OCSTransform(dxf.extrusion, m)
         dxf.insert = ocs.transform_vertex(dxf.insert)
         dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
-        dxf.xscale = ocs.transform_scale_factor((dxf.xscale, 0, 0))
-        dxf.yscale = ocs.transform_scale_factor((0, dxf.yscale, 0))
-        dxf.zscale = ocs.transform_scale_factor((0, 0, dxf.zscale))
+        rx, ry, rz = m.reflexions
+        sx = dxf.xscale
+        sy = dxf.yscale
+        sz = dxf.zscale
+        dxf.xscale = ocs.transform_scale_factor((sx, 0, 0), reflexion=sx * rx)
+        dxf.yscale = ocs.transform_scale_factor((0, sy, 0), reflexion=sy * ry)
+        dxf.zscale = ocs.transform_scale_factor((0, 0, sz), reflexion=sz * rz)
 
         for attrib in self.attribs:
             attrib.transform(m)
@@ -397,7 +401,8 @@ class Insert(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        self.dxf.insert = Vector(dx, dy, dz) + self.dxf.insert
+        ocs = self.ocs()
+        self.dxf.insert = ocs.from_wcs(Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.insert))
         for attrib in self.attribs:
             attrib.translate(dx, dy, dz)
         return self

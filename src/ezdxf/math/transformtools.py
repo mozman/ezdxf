@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple
 import math
-from .matrix44 import Matrix44
+from .matrix44 import Matrix44, sign
 from .vector import Vector, X_AXIS, Y_AXIS
 from .ucs import OCS
 
@@ -68,8 +68,12 @@ class OCSTransform:
         """
         return self.m.transform_direction(self.old_ocs.to_wcs(length)).magnitude
 
-    # todo: transform_scale_factor() is transform_length() and does not return negative scaling
-    transform_scale_factor = transform_length
+    def transform_scale_factor(self, length: 'Vertex', reflexion=1.0):
+        """ Returns magnitude of `length` direction vector transformed from
+        old OCS into new OCS including `reflexion` correction applied.
+
+        """
+        return self.transform_length(length) * sign(reflexion)
 
     def transform_vertex(self, vertex: 'Vertex'):
         """ Returns vertex transformed from old OCS into new OCS.

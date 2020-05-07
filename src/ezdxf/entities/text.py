@@ -233,9 +233,11 @@ class Text(DXFGraphic):
         .. versionadded:: 0.13
 
         """
+        ocs = self.ocs()
         dxf = self.dxf
         vec = Vector(dx, dy, dz)
-        dxf.insert = vec + dxf.insert
+
+        dxf.insert = ocs.from_wcs(vec + ocs.to_wcs(dxf.insert))
         if dxf.hasattr('align_point'):
-            dxf.align_point = vec + dxf.align_point
+            dxf.align_point = ocs.from_wcs(vec + ocs.to_wcs(dxf.align_point))
         return self

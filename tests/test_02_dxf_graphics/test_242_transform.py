@@ -512,10 +512,30 @@ def test_insert_transform_interface():
     insert.translate(-1, -2, -3)
     assert insert.dxf.insert == (1, 0, 0)
 
+
+def test_insert_scaling():
+    insert = Insert()
+    insert.dxf.insert = (0, 0, 0)
+
     insert.scale(2, 3, 4)
     assert insert.dxf.xscale == 2
     assert insert.dxf.yscale == 3
     assert insert.dxf.zscale == 4
+
+    insert.scale(-1, 1, 1)
+    assert insert.dxf.xscale == -2
+    assert insert.dxf.yscale == 3
+    assert insert.dxf.zscale == 4
+
+    insert.scale(-1, -1, 1)
+    assert insert.dxf.xscale == 2
+    assert insert.dxf.yscale == -3
+    assert insert.dxf.zscale == 4
+
+    insert.scale(-2, -2, -2)
+    assert insert.dxf.xscale == -4
+    assert insert.dxf.yscale == 6
+    assert insert.dxf.zscale == -8
 
 
 def test_dimension_transform_interface():
