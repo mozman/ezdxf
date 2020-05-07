@@ -193,19 +193,61 @@ def test_random_circle_transformation(sx, sy, sz):
         return circle, vertices
 
     def check(circle, vertices):
+        # Vertex(angle=0) of old_ocs is not the vertex(angle=0) of the new OCS
+        # because of the arbitrary Axis algorithm.
+
+        # Checking center point:
         ocs = circle.ocs()
         wcs_circle_center = ocs.to_wcs(circle.dxf.center)
         vertices_center = vertices[0].lerp(vertices[int(vertex_count / 2)])
         assert wcs_circle_center.isclose(vertices_center, abs_tol=1e-9)
+
+        # Check distance of vertices from circle center point:
         radius = circle.dxf.radius
         for vtx in vertices:
             assert math.isclose((vtx - wcs_circle_center).magnitude, radius, abs_tol=1e-9)
+
+        # Check for parallel plane orientation
+        vertices_extrusion = (vertices[0] - vertices_center).cross((vertices[1] - vertices_center))
+        assert vertices_extrusion.is_parallel(circle.dxf.extrusion, abs_tol=1e-9)
 
     # test transformed circle against transformed WCS vertices of the circle
     for _ in range(10):
         circle0, vertices0 = build()
         check(circle0, vertices0)
         check(*synced_scaling(circle0, vertices0, sx, sy, sz))
+
+
+@pytest.mark.parametrize('sx, sy, sz', [
+    (-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2),
+    (2, -2, -2), (-2, 2, -2), (-3, -3, -3)
+])
+def test_random_arc_transformation(sx, sy, sz):
+    # testing only uniform scaling, for non uniform scaling
+    # the circle has to be converted to an ellipse
+    vertex_count = 8
+
+    def build():
+        arc = Arc.new(dxfattribs={
+            'start_angle': random.uniform(0, 360),
+            'end_angle': random.uniform(0, 360),
+        })
+
+        vertices = list(arc.vertices(arc.angles(vertex_count)))
+        arc, vertices = synced_rotation(arc, vertices, axis=Vector.random(), angle=random.uniform(0, math.tau))
+        arc, vertices = synced_translation(
+            arc, vertices, dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2))
+        return arc, vertices
+
+    def check(arc, vertices):
+        arc_vertices = arc.vertices(arc.angles(vertex_count))
+        for vtx, chk in zip(arc_vertices, vertices):
+            assert vtx.isclose(chk, abs_tol=1e-9)
+
+    for _ in range(10):
+        arc0, vertices0 = build()
+        check(arc0, vertices0)
+        check(*synced_scaling(arc0, vertices0, sx, sy, sz))
 
 
 def test_arc_default_ocs():
@@ -269,12 +311,9 @@ def _check_curve(ellipse: Ellipse, expected_start: Vector, expected_end: Vector,
 
 
 @pytest.mark.parametrize('zscale,is_arc', [
-    (1, False), (0.5, False),
-    (1, True), (0.5, True),
-    (-1, False),
-    (-1, True),
+    (1, False), (0.5, False), (1, True), (0.5, True), (-1, False), (-1, True),
 ])
-def test_07_rotated_and_reflected_curves(zscale, is_arc):
+def test_rotated_and_reflected_curves(zscale, is_arc):
     scale = Vector(1, 1, zscale)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
@@ -333,7 +372,7 @@ def test_07_rotated_and_reflected_curves(zscale, is_arc):
 
 
 @pytest.mark.parametrize('stretch,is_arc', [(0.5, False), (0.5, True)])
-def test_08_rotated_and_reflected_and_stretched_curves(stretch, is_arc):
+def test_rotated_and_reflected_and_stretched_curves(stretch, is_arc):
     scale = Vector(1, stretch, 1)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
