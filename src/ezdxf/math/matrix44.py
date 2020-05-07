@@ -88,6 +88,10 @@ class Matrix44:
         if len(self.matrix) != 16:
             raise ValueError("Invalid matrix count")
 
+    def set_reflexions(self, rx: float, ry: float, rz: float):
+        """ Set reflexions, values can differ from -1 or +1. """
+        self.reflexions = (sign(rx), sign(ry), sign(rz))
+
     def combine_reflexions(self, r: Tuple[float, float, float]):
         """ Combine existing reflexions with given reflexions `r`.
 

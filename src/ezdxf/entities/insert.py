@@ -470,6 +470,7 @@ class Insert(DXFGraphic):
         if block_layout is not None:
             insert -= Vector(block_layout.block.dxf.base_point)
         m.set_row(3, insert.xyz)
+        m.set_reflexions(sx, sy, sz)
         return m
 
     def reset_transformation(self):
