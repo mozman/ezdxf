@@ -67,33 +67,31 @@ class Ellipse(DXFGraphic):
         .. versionadded:: 0.11
 
         """
-        # get main axis
-        major_axis = Vector(self.dxf.major_axis)  # local x-axis, 0 rad
-        extrusion = Vector(self.dxf.extrusion)  # local z-axis, normal vector of the ellipse plane
-        minor_axis = extrusion.cross(major_axis)  # local y-axis, pi/2 rad, need only normalized direction
+        dxf = self.dxf
+        major_axis = Vector(dxf.major_axis)  # local x-axis
+        extrusion = Vector(dxf.extrusion)  # local z-axis
+        minor_axis = extrusion.cross(major_axis)  # local y-axis
 
-        # normal vectors for local x- and y-axis
-        x_axis = major_axis.normalize()
-        y_axis = minor_axis.normalize()
+        x_unit_vector = major_axis.normalize()
+        y_unit_vector = minor_axis.normalize()
 
-        # point on ellipse calculation
         radius_x = major_axis.magnitude
-        radius_y = radius_x * self.dxf.ratio
-        center = Vector(self.dxf.center)
+        radius_y = radius_x * dxf.ratio
+        center = Vector(dxf.center)
         for param in params:
             # Ellipse params in radians by definition (DXF Reference)
-            x = math.cos(param) * radius_x
-            y = math.sin(param) * radius_y
+            x = math.cos(param) * radius_x * x_unit_vector
+            y = math.sin(param) * radius_y * y_unit_vector
 
-            # construct WCS coordinates, do not convert from OCS to WCS, extrusion defines only the normal vector of
-            # the ellipse plane.
-            yield center + (x_axis * x) + (y_axis * y)
+            # Construct WCS coordinates, ELLIPSE is not an OCS entity!
+            yield center + x + y
 
     @property
     def minor_axis(self) -> Vector:
-        major_axis = Vector(self.dxf.major_axis)  # local x-axis, 0 rad
-        extrusion = Vector(self.dxf.extrusion)  # local z-axis, normal vector of the ellipse plane
-        minor_axis_length = major_axis.magnitude * self.dxf.ratio
+        dxf = self.dxf
+        major_axis = Vector(dxf.major_axis)  # local x-axis
+        extrusion = Vector(dxf.extrusion)  # local z-axis, normal vector of the ellipse plane
+        minor_axis_length = major_axis.magnitude * dxf.ratio
         return extrusion.cross(major_axis).normalize(minor_axis_length)
 
     @property
@@ -174,45 +172,52 @@ class Ellipse(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        center = m.transform(self.dxf.center)
-        start_param = self.dxf.start_param % math.tau
-        end_param = self.dxf.end_param % math.tau
-        major_axis, minor_axis = m.transform_directions((
-            self.dxf.major_axis,
-            self.minor_axis,
-        ))
-        extrusion = major_axis.cross(minor_axis).normalize()
+        dxf = self.dxf
+        center = m.transform(dxf.center)
+        start_param = dxf.start_param % math.tau
+        end_param = dxf.end_param % math.tau
+        major_axis, minor_axis = m.transform_directions((dxf.major_axis, self.minor_axis))
         # Original ellipse parameters stay untouched until end of transformation
+
         if not math.isclose(major_axis.dot(minor_axis), 0, abs_tol=1e-9):
             try:  # Transform conjugated axis
                 major_axis, minor_axis, ratio = rytz_axis_construction(major_axis, minor_axis)
             except ArithmeticError as err:
                 err.args = (f'Axis construction error in {str(self)} - please send a bug report.',)
                 raise
+            adjust_params = True
         else:
             ratio = minor_axis.magnitude / major_axis.magnitude
-
-        if math.isclose(start_param, end_param, abs_tol=1e-9):
+            adjust_params = False
+            
+        if adjust_params and not math.isclose(start_param, end_param, abs_tol=1e-9):
             # open ellipse, adjusting start- and end parameter
-            start_point, end_point = m.transform_vertices(self.vertices((start_param, end_param)))
-            start_angle = extrusion.angle_about(major_axis, start_point - center)
-            end_angle = extrusion.angle_about(major_axis, end_point - center)
+            x_axis = major_axis.normalize()
+            y_axis = minor_axis.normalize()
+
+            def param(vec: 'Vector') -> float:
+                dy = y_axis.dot(vec) / ratio  # adjust to circle
+                dx = x_axis.dot(vec)
+                return math.atan2(dy, dx) % math.tau
+
             old_param_relation = start_param > end_param
-            start_param = angle_to_param(ratio, start_angle)
-            end_param = angle_to_param(ratio, end_angle)
+            # transformed start- and end point of old ellipse
+            start_point, end_point = m.transform_vertices(self.vertices((start_param, end_param)))
+            start_param = param(start_point - center)
+            end_param = param(end_point - center)
 
             # if drawing the wrong side of the ellipse
             if (start_param > end_param) != old_param_relation:
                 start_param, end_param = end_param, start_param
 
-        self.dxf.center = center
-        self.dxf.extrusion = extrusion
-        self.dxf.major_axis = major_axis
+        dxf.center = center
+        dxf.extrusion = major_axis.cross(minor_axis).normalize()
+        dxf.major_axis = major_axis
         # AutoCAD does not accept a ratio < 1e-6 -> invalid DXF file
-        self.dxf.ratio = max(ratio, 1e-6)
-        self.dxf.start_param = start_param
-        self.dxf.end_param = end_param
-        if self.dxf.ratio > 1:
+        dxf.ratio = max(ratio, 1e-6)
+        dxf.start_param = start_param
+        dxf.end_param = end_param
+        if dxf.ratio > 1:
             self.swap_axis()
         return self
 

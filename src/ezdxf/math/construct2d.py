@@ -6,7 +6,8 @@ from functools import partial
 import math
 from abc import abstractmethod
 
-from .vector import Vector, Vec2, NULLVEC
+from .vector import Vector, Vec2, NULLVEC, Z_AXIS
+from .matrix44 import Matrix44
 from .bbox import BoundingBox2d
 
 if TYPE_CHECKING:
@@ -410,7 +411,14 @@ def rytz_axis_construction(d1: Vector, d2: Vector) -> Tuple[Vector, Vector, floa
 
     """
     Q = Vector(d1)  # vector CQ
-    P1 = Vector(d2).orthogonal(ccw=False)  # vector CP', location P'
+    # calculate vector CP', location P'
+    if math.isclose(d1.z, 0, abs_tol=1e-9) and math.isclose(d2.z, 0, abs_tol=1e-9):
+        # Vector.orthogonal() works only for vectors in the xy-plane!
+        P1 = Vector(d2).orthogonal(ccw=False)
+    else:
+        extrusion = d1.cross(d2)
+        P1 = extrusion.cross(d2).normalize(d2.magnitude)
+
     D = P1.lerp(Q)  # vector CD, location D, midpoint of P'Q
     radius = D.magnitude
     radius_vector = (Q - P1).normalize(radius)  # direction vector P'Q
