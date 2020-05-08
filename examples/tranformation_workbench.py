@@ -62,7 +62,7 @@ def arc(radius=1, start=30, end=150, count=8):
     return arc_, control_vertices
 
 
-def ellipse(major_axis=(1, 0), ratio=0.5, start=0, end=math.tau, count=8):
+def ellipse(major_axis=(1, 0), ratio: float = 0.5, start: float = 0, end: float = math.tau, count: int = 8):
     major_axis = Vector(major_axis).replace(z=0)
     ellipse_ = Ellipse.new(dxfattribs={
         'center': (0, 0, 0),
@@ -82,12 +82,12 @@ NON_UNIFORM_SCALING = [(-1, 2, 3), (1, -2, 3), (1, 2, -3), (-3, -2, 1), (3, -2, 
 
 def main(layout):
     def random_angle():
-        return random.uniform(math.pi, math.tau)
+        return random.uniform(0, math.tau)
 
-    entity, vertices, axis_vertices = ellipse(start=0, end=math.pi)
+    entity, vertices, axis_vertices = ellipse(start=math.pi/2, end=-math.pi/2)
     axis = Vector.random()
     angle = random_angle()
-    entity, vertices, axis_vertices = synced_rotation(entity, vertices, axis_vertices, axis = axis, angle = angle)
+    entity, vertices, axis_vertices = synced_rotation(entity, vertices, axis_vertices, axis=axis, angle=angle)
     entity, vertices, axis_vertices = synced_translation(
         entity, vertices, axis_vertices,
         dx=random.uniform(-2, 2),
@@ -95,7 +95,7 @@ def main(layout):
         dz=random.uniform(-2, 2)
     )
 
-    for sx, sy, sz in NON_UNIFORM_SCALING:
+    for sx, sy, sz in UNIFORM_SCALING + NON_UNIFORM_SCALING:
         entity0, vertices0, axis0 = synced_scaling(entity, vertices, axis_vertices, sx, sy, sz)
         add(layout, entity0, vertices0, layer=f'new ellipse')
         layout.add_line(axis0[0], axis0[2], dxfattribs={'color': 6, 'linetype': 'DASHED', 'layer': 'old axis'})

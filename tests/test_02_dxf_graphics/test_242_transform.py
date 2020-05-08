@@ -11,6 +11,9 @@ from ezdxf.entities import (
 from ezdxf.math import Matrix44, OCS, Vector, linspace
 from ezdxf.math.transformtools import NonUniformScalingError
 
+UNIFORM_SCALING = [(-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
+NON_UNIFORM_SCALING = [(-1, 2, 3), (1, -2, 3), (1, 2, -3), (-3, -2, 1), (3, -2, -1), (-3, 2, -1), (-3, -2, -1)]
+
 
 # Assuming Transformation by Matrix44() class is correct.
 # Test for Matrix44() class are located in test_605_matrix44.py
@@ -175,10 +178,7 @@ def synced_translation(entity, chk, dx, dy, dz):
     return entity, chk
 
 
-@pytest.mark.parametrize('sx, sy, sz', [
-    (-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2),
-    (2, -2, -2), (-2, 2, -2), (-3, -3, -3)
-])
+@pytest.mark.parametrize('sx, sy, sz', UNIFORM_SCALING)
 def test_random_circle_transformation(sx, sy, sz):
     # testing only uniform scaling, for non uniform scaling
     # the circle has to be converted to an ellipse
@@ -218,10 +218,7 @@ def test_random_circle_transformation(sx, sy, sz):
         check(*synced_scaling(circle0, vertices0, sx, sy, sz))
 
 
-@pytest.mark.parametrize('sx, sy, sz', [
-    (-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2),
-    (2, -2, -2), (-2, 2, -2), (-3, -3, -3)
-])
+@pytest.mark.parametrize('sx, sy, sz', UNIFORM_SCALING)
 def test_random_arc_transformation(sx, sy, sz):
     # testing only uniform scaling, for non uniform scaling
     # the circle has to be converted to an ellipse
@@ -268,166 +265,43 @@ def test_arc_default_ocs():
     assert math.isclose(arc.dxf.end_angle, 90, abs_tol=1e-9)
 
 
-def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool) -> Union[Ellipse, Arc]:
-    if is_arc:
-        entity = Arc.new(dxfattribs={'center': (0, 0), 'radius': 1, 'start_angle': 0, 'end_angle': 90})
-    else:
-        entity = Ellipse.new(
-            dxfattribs={'center': (0, 0), 'major_axis': (1, 0), 'ratio': 1, 'start_param': 0, 'end_param': math.pi / 2})
-
-    assert entity.start_point.isclose(Vector(1, 0, 0))
-    assert entity.end_point.isclose(Vector(0, 1, 0))
-
-    m = Matrix44.chain(
-        Matrix44.scale(scale_factors.x, scale_factors.y, scale_factors.z),
-        Matrix44.z_rotate(rotation),
-    )
-    has_uniform_scaling = True
-    try:
-        entity.transform(m)
-    except NonUniformScalingError:
-        entity = Ellipse.from_arc(entity)
-        entity.transform(m)
-        has_uniform_scaling = False
-
-    if is_arc and has_uniform_scaling:
-        assert entity.dxftype() == 'ARC'
-    else:
-        assert entity.dxftype() == 'ELLIPSE'
-
-    start_point = m.transform((1, 0, 0))
-    end_point = m.transform((0, 1, 0))
-
-    # reference points should have the same transformation as the ellipse
-    assert start_point.isclose(entity.start_point)
-    assert end_point.isclose(entity.end_point)
-    return entity
-
-
-def _check_curve(ellipse: Ellipse, expected_start: Vector, expected_end: Vector, expected_extrusion: Vector):
-    assert ellipse.start_point.isclose(expected_start)
-    assert ellipse.end_point.isclose(expected_end)
-    assert ellipse.dxf.extrusion.is_parallel(expected_extrusion)
-
-
-@pytest.mark.parametrize('zscale,is_arc', [
-    (1, False), (0.5, False), (1, True), (0.5, True), (-1, False), (-1, True),
+@pytest.mark.parametrize('sx, sy, sz', UNIFORM_SCALING + NON_UNIFORM_SCALING)
+@pytest.mark.parametrize('start, end', [
+    # closed ellipse fails at non uniform scaling test, because no start-
+    # and end param adjustment is applied, so generated vertices do not
+    # match test vertices.
+    (0, math.pi),  # half ellipse as special case
+    (math.pi / 6, math.pi / 6 * 11),  # start < end
+    (math.pi / 6 * 11, math.pi / 6),  # start > end
 ])
-def test_rotated_and_reflected_curves(zscale, is_arc):
-    scale = Vector(1, 1, zscale)
+def test_random_ellipse_transformation(sx, sy, sz, start, end):
+    vertex_count = 8
 
-    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
+    def build():
+        ellipse = Ellipse.new(dxfattribs={
+            'start_param': start,
+            'end_param': end,
+        })
 
-    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
+        vertices = list(ellipse.vertices(ellipse.params(vertex_count)))
+        ellipse, vertices = synced_rotation(ellipse, vertices, axis=Vector.random(), angle=random.uniform(0, math.tau))
+        ellipse, vertices = synced_translation(
+            ellipse, vertices, dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2))
+        return ellipse, vertices
 
-    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
+    def check(ellipse, vertices):
+        ellipse_vertices = list(ellipse.vertices(ellipse.params(vertex_count)))
+        # Ellipse vertices may appear in reverse order
+        if not vertices[0].isclose(ellipse_vertices[0], abs_tol=1e-9):
+            ellipse_vertices.reverse()
 
-    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
+        for vtx, chk in zip(ellipse_vertices, vertices):
+            assert vtx.isclose(chk, abs_tol=1e-9)
 
-    scale = Vector(1, -1, zscale)
-
-    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
-
-    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
-
-    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
-
-    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
-
-    scale = Vector(-1, 1, zscale)
-
-    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
-
-    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
-
-    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
-
-    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
-
-    scale = Vector(-1, -1, zscale)
-
-    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
-
-    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
-
-    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
-
-    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
-
-
-@pytest.mark.parametrize('stretch,is_arc', [(0.5, False), (0.5, True)])
-def test_rotated_and_reflected_and_stretched_curves(stretch, is_arc):
-    scale = Vector(1, stretch, 1)
-
-    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
-
-    scale = Vector(1, -stretch, 1)
-
-    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
-
-    scale = Vector(-1, stretch, 1)
-
-    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
-
-    scale = Vector(-1, -stretch, 1)
-
-    ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
-
-    ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
+    for _ in range(10):
+        ellipse0, vertices0 = build()
+        check(ellipse0, vertices0)
+        check(*synced_scaling(ellipse0, vertices0, sx, sy, sz))
 
 
 def test_xline():
@@ -589,7 +463,7 @@ def test_dimension_transform_interface():
     assert dim.dxf.angle == 45
 
     dim.transform(Matrix44.z_rotate(math.radians(45)))
-    assert dim.dxf.angle == 90
+    assert math.isclose(dim.dxf.angle, 90)
 
 
 if __name__ == '__main__':
