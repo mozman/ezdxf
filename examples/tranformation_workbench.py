@@ -84,7 +84,7 @@ def main(layout):
     def random_angle():
         return random.uniform(math.pi, math.tau)
 
-    entity, vertices, axis_vertices = ellipse(start=random_angle(), end=random_angle())
+    entity, vertices, axis_vertices = ellipse(start=0, end=math.pi)
     axis = Vector.random()
     angle = random_angle()
     entity, vertices, axis_vertices = synced_rotation(entity, vertices, axis_vertices, axis = axis, angle = angle)

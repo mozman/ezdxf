@@ -177,38 +177,43 @@ class Ellipse(DXFGraphic):
         start_param = dxf.start_param % math.tau
         end_param = dxf.end_param % math.tau
         major_axis, minor_axis = m.transform_directions((dxf.major_axis, self.minor_axis))
-        # Original ellipse parameters stay untouched until end of transformation
 
+        # Original ellipse parameters stay untouched until end of transformation
         if not math.isclose(major_axis.dot(minor_axis), 0, abs_tol=1e-9):
-            try:  # Transform conjugated axis
-                major_axis, minor_axis, ratio = rytz_axis_construction(major_axis, minor_axis)
-            except ArithmeticError as err:
-                err.args = (f'Axis construction error in {str(self)} - please send a bug report.',)
-                raise
+            major_axis, minor_axis, ratio = rytz_axis_construction(major_axis, minor_axis)
             adjust_params = True
         else:
             ratio = minor_axis.magnitude / major_axis.magnitude
             adjust_params = False
-            
+
         if adjust_params and not math.isclose(start_param, end_param, abs_tol=1e-9):
             # open ellipse, adjusting start- and end parameter
             x_axis = major_axis.normalize()
             y_axis = minor_axis.normalize()
+            old_param_span = (end_param - start_param) % math.tau
 
             def param(vec: 'Vector') -> float:
                 dy = y_axis.dot(vec) / ratio  # adjust to circle
                 dx = x_axis.dot(vec)
                 return math.atan2(dy, dx) % math.tau
 
-            old_param_relation = start_param > end_param
             # transformed start- and end point of old ellipse
             start_point, end_point = m.transform_vertices(self.vertices((start_param, end_param)))
             start_param = param(start_point - center)
             end_param = param(end_point - center)
 
             # if drawing the wrong side of the ellipse
-            if (start_param > end_param) != old_param_relation:
-                start_param, end_param = end_param, start_param
+            if math.isclose(old_param_span, math.pi, abs_tol=1e-9):
+                # todo: equal param span check works well, except for a span of exact pi (180 deg)!
+                # check for same relation of start- to end param does not work
+                # if (start_param > end_param) != old_param_relation:
+                #     start_param, end_param = end_param, start_param
+                pass
+            else:
+                new_param_span = (end_param - start_param) % math.tau
+                equal_param_span = math.isclose(old_param_span, new_param_span, abs_tol=1e-9)
+                if not equal_param_span:
+                    start_param, end_param = end_param, start_param
 
         dxf.center = center
         dxf.extrusion = major_axis.cross(minor_axis).normalize()
