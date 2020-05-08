@@ -129,7 +129,7 @@ class Ellipse(DXFGraphic):
         if num < 2:
             raise ValueError('num >= 2')
         start = self.dxf.start_param % math.tau
-        end = self.dxf.end_angle % math.tau
+        end = self.dxf.end_param % math.tau
         if end <= start:
             end += math.tau
 
