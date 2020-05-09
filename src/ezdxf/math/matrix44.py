@@ -13,8 +13,6 @@ from .vector import Vector
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
-Tuple4Float = Tuple[float, float, float, float]
-
 __all__ = ['Matrix44', 'sign']
 
 
@@ -113,7 +111,7 @@ class Matrix44:
         return "Matrix44(%s)" % \
                ", ".join(format_row(row) for row in self.rows())
 
-    def get_row(self, row: int) -> Tuple4Float:
+    def get_row(self, row: int) -> Tuple[float, ...]:
         """ Get row as list of of four float values.
 
         Args:
@@ -135,7 +133,7 @@ class Matrix44:
         index = row * 4
         self.matrix[index:index + len(values)] = floats(values)
 
-    def get_col(self, col: int) -> Tuple4Float:
+    def get_col(self, col: int) -> Tuple[float, ...]:
         """
         Returns a column as a tuple of four floats.
 
@@ -163,16 +161,9 @@ class Matrix44:
 
     def copy(self) -> 'Matrix44':
         """ Copy of :class:`Matrix` """
-        return self.__class__(self.matrix)
+        return self.__class__(self.matrix, reflexions=self.reflexions)
 
     __copy__ = copy
-
-    def get_scaling(self) -> Tuple[float, float, float]:
-        """ Extract scaling factors from transformation matrix. """
-        sx = Vector(self.get_row(0)).magnitude
-        sy = Vector(self.get_row(1)).magnitude
-        sz = Vector(self.get_row(2)).magnitude
-        return sx, sy, sz
 
     @property
     def origin(self) -> Vector:
@@ -514,14 +505,14 @@ class Matrix44:
         ]
         return self
 
-    def rows(self) -> Iterable[Tuple4Float]:
+    def rows(self) -> Iterable[Tuple[float, ...]]:
         """
         Iterate over rows as 4-tuples.
 
         """
         return (self.get_row(index) for index in (0, 1, 2, 3))
 
-    def columns(self) -> Iterable[Tuple4Float]:
+    def columns(self) -> Iterable[Tuple[float, ...]]:
         """
         Iterate over columns as 4-tuples.
 
@@ -530,7 +521,7 @@ class Matrix44:
 
     def transform(self, vector: 'Vertex') -> Vector:
         """
-        Returns a transformed a 3D vertex.
+        Returns a transformed vertex.
 
         """
         m = self.matrix
@@ -541,7 +532,7 @@ class Matrix44:
 
     def transform_direction(self, vector: 'Vertex') -> Vector:
         """
-        Returns a transformed 3D direction vector without translation.
+        Returns a transformed direction vector without translation.
 
         """
         m = self.matrix
@@ -568,7 +559,7 @@ class Matrix44:
 
     def transform_directions(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
         """
-        Returns a generator of transformed UCS direction vectors without translation.
+        Returns a generator of transformed direction vectors without translation.
 
         """
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, *_ = self.matrix
@@ -584,7 +575,7 @@ class Matrix44:
         """
         Returns an UCS vector from WCS vertex.
 
-        Works only if matrix is used as UCS without scaling.
+        Works only if matrix is used as cartesian UCS without scaling.
 
         """
         return self.ucs_direction_from_wcs(wcs - self.origin)
@@ -593,7 +584,7 @@ class Matrix44:
         """
         Returns UCS direction vector from WCS direction.
 
-        Works only if matrix is used as UCS without scaling. (internal API)
+        Works only if matrix is used as cartesian UCS without scaling. (internal API)
 
         """
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self.matrix

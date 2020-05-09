@@ -24,8 +24,8 @@ class OCS:
 
     Args:
         extrusion: extrusion vector.
-    """
 
+    """
     def __init__(self, extrusion: 'Vertex' = Z_AXIS):
         Az = Vector(extrusion).normalize()
         self.transform = not Az.isclose(Z_AXIS)
@@ -62,8 +62,12 @@ class OCS:
 
     def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
         """ Returns iterable of OCS vectors from WCS `points`. """
-        for point in points:
-            yield self.from_wcs(point)
+        if self.transform:
+            from_wcs = self.matrix.ocs_from_wcs
+            for point in points:
+                yield from_wcs(point)
+        else:
+            return points
 
     def to_wcs(self, point: 'Vertex') -> 'Vertex':
         """ Returns WCS vector for OCS `point`. """
@@ -74,8 +78,12 @@ class OCS:
 
     def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
         """ Returns iterable of WCS vectors for OCS `points`. """
-        for point in points:
-            yield self.to_wcs(point)
+        if self.transform:
+            to_wcs = self.matrix.ocs_to_wcs
+            for point in points:
+                yield to_wcs(point)
+        else:
+            return points
 
     def render_axis(self, layout: 'BaseLayout', length: float = 1, colors: Tuple[int, int, int] = (1, 3, 5)):
         """ Render axis as 3D lines into a `layout`. """
@@ -321,8 +329,7 @@ class UCS(TransformUSCToOCSMixin):
 
     def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
         """ Returns iterable of WCS vectors for UCS `points`. """
-        for point in points:
-            yield self.to_wcs(point)
+        return self.matrix.transform_vertices(points)
 
     def direction_to_wcs(self, vector: 'Vertex') -> 'Vector':
         """ Returns WCS direction for UCS `vector` without origin adjustment. """
@@ -334,8 +341,9 @@ class UCS(TransformUSCToOCSMixin):
 
     def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
         """ Returns iterable of UCS vectors from WCS `points`. """
+        from_wcs = self.from_wcs
         for point in points:
-            yield self.from_wcs(point)
+            yield from_wcs(point)
 
     def direction_from_wcs(self, vector: 'Vertex') -> 'Vector':
         """ Returns UCS vector for WCS `vector` without origin adjustment. """
@@ -437,7 +445,7 @@ class UCS(TransformUSCToOCSMixin):
     @property
     def is_cartesian(self) -> bool:
         """ Returns ``True`` if cartesian coordinate system. """
-        return self.uy.cross(self.uz).normalize().isclose(self.ux.normalize())
+        return self.matrix.is_cartesian
 
     @staticmethod
     def from_x_axis_and_point_in_xy(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':

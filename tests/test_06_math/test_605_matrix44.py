@@ -221,10 +221,6 @@ class TestMatrix44:
         m = Matrix44([1] * 16)
         pytest.raises(ZeroDivisionError, m.inverse)
 
-    def test_get_scaling(self):
-        s = Matrix44.scale(10, 20, 30)
-        assert s.get_scaling() == (10, 20, 30)
-
         # s = Matrix44.scale(-10, -20, -30)
         # assert s.get_scaling() == (-10, -20, -30)
 
