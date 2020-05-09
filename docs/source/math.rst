@@ -134,8 +134,6 @@ UCS Class
 
     .. automethod:: copy() -> UCS
 
-    .. automethod:: matrix44() -> Matrix44
-
     .. automethod:: to_wcs
 
     .. automethod:: points_to_wcs

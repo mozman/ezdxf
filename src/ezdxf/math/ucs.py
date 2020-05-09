@@ -36,8 +36,7 @@ class OCS:
                 Ax = Z_AXIS.cross(Az)
             Ax = Ax.normalize()
             Ay = Az.cross(Ax).normalize()
-            self.matrix = Matrix33(Ax, Ay, Az)
-            self.transpose = self.matrix.transpose()
+            self.matrix = Matrix44.ucs(Ax, Ay, Az)
 
     @property
     def ux(self) -> Vector:
@@ -57,7 +56,7 @@ class OCS:
     def from_wcs(self, point: 'Vertex') -> 'Vertex':
         """ Returns OCS vector for WCS `point`. """
         if self.transform:
-            return self.transpose.transform(point)
+            return self.matrix.ocs_from_wcs(point)
         else:
             return point
 
@@ -69,7 +68,7 @@ class OCS:
     def to_wcs(self, point: 'Vertex') -> 'Vertex':
         """ Returns WCS vector for OCS `point`. """
         if self.transform:
-            return self.matrix.transform(point)
+            return self.matrix.ocs_to_wcs(point)
         else:
             return point
 
@@ -315,14 +314,6 @@ class UCS(TransformUSCToOCSMixin):
 
         """
         return UCS(self.origin, self.ux, self.uy, self.uz)
-
-    def matrix44(self) -> Matrix44:
-        """ Returns transformation matrix.
-
-        .. versionadded:: 0.13
-
-        """
-        return Matrix44.ucs(self.ux, self.uy, self.uz, self.origin)
 
     def to_wcs(self, point: 'Vertex') -> 'Vector':
         """ Returns WCS point for UCS `point`. """
