@@ -261,7 +261,19 @@ Matrix44
 
     .. automethod:: transform
 
+    .. automethod:: inv_transform
+
+    .. automethod:: transform_direction
+
+    .. automethod:: inv_transform_direction
+
     .. automethod:: transform_vertices
+
+    .. automethod:: inv_transform_vertices
+
+    .. automethod:: transform_directions
+
+    .. automethod:: inv_transform_directions
 
     .. automethod:: transpose
 

@@ -174,6 +174,26 @@ class Matrix44:
         sz = Vector(self.get_row(2)).magnitude
         return sx, sy, sz
 
+    @property
+    def origin(self) -> Vector:
+        m = self.matrix
+        return Vector(m[12], m[13], m[14])
+
+    @property
+    def ux(self) -> Vector:
+        m = self.matrix
+        return Vector(m[0], m[4], m[8])
+
+    @property
+    def uy(self) -> Vector:
+        m = self.matrix
+        return Vector(m[1], m[5], m[9])
+
+    @property
+    def uz(self) -> Vector:
+        m = self.matrix
+        return Vector(m[2], m[6], m[10])
+
     @classmethod
     def scale(cls, sx: float, sy: float = None, sz: float = None) -> 'Matrix44':
         """
@@ -361,7 +381,8 @@ class Matrix44:
         return transformation
 
     @staticmethod
-    def ucs(ux: 'Vertex', uy: 'Vertex', uz: 'Vertex', origin: 'Vertex' = (0, 0, 0)) -> 'Matrix44':
+    def ucs(ux: 'Vertex' = (1, 0, 0), uy: 'Vertex' = (0, 1, 0), uz: 'Vertex' = (0, 0, 1),
+            origin: 'Vertex' = (0, 0, 0)) -> 'Matrix44':
         """
         Returns a matrix for coordinate transformation from WCS to UCS.
         For transformation from UCS to WCS, transpose the returned matrix.
@@ -510,9 +531,20 @@ class Matrix44:
                       x * m[1] + y * m[5] + z * m[9] + m[13],
                       x * m[2] + y * m[6] + z * m[10] + m[14])
 
+    def inv_transform(self, vector: 'Vertex') -> Vector:
+        """
+        Returns a inverse transformed a 3D vertex.
+
+        """
+        m = self.matrix
+        x, y, z = vector
+        return Vector(x * m[0] + y * m[1] + z * m[2] - m[12],
+                      x * m[4] + y * m[5] + z * m[6] - m[13],
+                      x * m[8] + y * m[9] + z * m[10] - m[14])
+
     def transform_direction(self, vector: 'Vertex') -> Vector:
         """
-        Returns a transformed3D direction vector without translation.
+        Returns a transformed 3D direction vector without translation.
 
         """
         m = self.matrix
@@ -520,6 +552,17 @@ class Matrix44:
         return Vector(x * m[0] + y * m[4] + z * m[8],
                       x * m[1] + y * m[5] + z * m[9],
                       x * m[2] + y * m[6] + z * m[10])
+
+    def inv_transform_direction(self, vector: 'Vertex') -> Vector:
+        """
+        Returns a inverse transformed 3D direction vector without translation.
+
+        """
+        m = self.matrix
+        x, y, z = vector
+        return Vector(x * m[0] + y * m[1] + z * m[2],
+                      x * m[4] + y * m[5] + z * m[6],
+                      x * m[8] + y * m[9] + z * m[10])
 
     def transform_vertices(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
         """
@@ -535,6 +578,20 @@ class Matrix44:
                 x * m2 + y * m6 + z * m10 + m14
             )
 
+    def inv_transform_vertices(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
+        """
+        Returns an generator of inverse transformed vertices.
+
+        """
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 = self.matrix
+        for vector in vectors:
+            x, y, z = vector
+            yield Vector(
+                x * m0 + y * m1 + z * m2 + m12,
+                x * m4 + y * m5 + z * m6 + m13,
+                x * m8 + y * m9 + z * m10 + m14
+            )
+
     def transform_directions(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
         """
         Returns a generator of transformed direction vectors without translation.
@@ -547,6 +604,20 @@ class Matrix44:
                 x * m0 + y * m4 + z * m8,
                 x * m1 + y * m5 + z * m9,
                 x * m2 + y * m6 + z * m10
+            )
+
+    def inv_transform_directions(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
+        """
+        Returns a generator of inverse transformed direction vectors without translation.
+
+        """
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, *_ = self.matrix
+        for vector in vectors:
+            x, y, z = vector
+            yield Vector(
+                x * m0 + y * m1 + z * m2,
+                x * m4 + y * m5 + z * m6,
+                x * m8 + y * m9 + z * m10
             )
 
     def transpose(self) -> None:
