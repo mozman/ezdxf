@@ -179,20 +179,30 @@ class Matrix44:
         m = self.matrix
         return Vector(m[12], m[13], m[14])
 
+    @origin.setter
+    def origin(self, v: 'Vertex') -> None:
+        m = self.matrix
+        m[12], m[13], m[14] = Vector(v)
+
     @property
     def ux(self) -> Vector:
         m = self.matrix
-        return Vector(m[0], m[4], m[8])
+        return Vector(m[0:3])
 
     @property
     def uy(self) -> Vector:
         m = self.matrix
-        return Vector(m[1], m[5], m[9])
+        return Vector(m[4:7])
 
     @property
     def uz(self) -> Vector:
         m = self.matrix
-        return Vector(m[2], m[6], m[10])
+        return Vector(m[8:11])
+
+    @property
+    def is_cartesian(self) -> bool:
+        """ Returns ``True`` if UCS matrix is a cartesian coordinate system. """
+        return self.uy.cross(self.uz).normalize().isclose(self.ux.normalize())
 
     @classmethod
     def scale(cls, sx: float, sy: float = None, sz: float = None) -> 'Matrix44':
@@ -381,13 +391,11 @@ class Matrix44:
         return transformation
 
     @staticmethod
-    def ucs(ux: 'Vertex' = (1, 0, 0), uy: 'Vertex' = (0, 1, 0), uz: 'Vertex' = (0, 0, 1),
-            origin: 'Vertex' = (0, 0, 0)) -> 'Matrix44':
+    def ucs(ux=Vector(1, 0, 0), uy=Vector(0, 1, 0), uz=Vector(0, 0, 1),
+            origin=Vector(0, 0, 0)) -> 'Matrix44':
         """
         Returns a matrix for coordinate transformation from WCS to UCS.
         For transformation from UCS to WCS, transpose the returned matrix.
-
-        All vectors as ``(x, y, z)`` tuples or :class:`Vector` objects.
 
         Args:
             ux: x-axis for UCS as unit vector
@@ -401,9 +409,9 @@ class Matrix44:
         uz_x, uz_y, uz_z = uz
         or_x, or_y, or_z = origin
         return Matrix44((
-            ux_x, uy_x, uz_x, 0,
-            ux_y, uy_y, uz_y, 0,
-            ux_z, uy_z, uz_z, 0,
+            ux_x, ux_y, ux_z, 0,
+            uy_x, uy_y, uy_z, 0,
+            uz_x, uz_y, uz_z, 0,
             or_x, or_y, or_z, 1,
         ))
 
@@ -531,17 +539,6 @@ class Matrix44:
                       x * m[1] + y * m[5] + z * m[9] + m[13],
                       x * m[2] + y * m[6] + z * m[10] + m[14])
 
-    def inv_transform(self, vector: 'Vertex') -> Vector:
-        """
-        Returns a inverse transformed a 3D vertex.
-
-        """
-        m = self.matrix
-        x, y, z = vector
-        return Vector(x * m[0] + y * m[1] + z * m[2] - m[12],
-                      x * m[4] + y * m[5] + z * m[6] - m[13],
-                      x * m[8] + y * m[9] + z * m[10] - m[14])
-
     def transform_direction(self, vector: 'Vertex') -> Vector:
         """
         Returns a transformed 3D direction vector without translation.
@@ -553,16 +550,7 @@ class Matrix44:
                       x * m[1] + y * m[5] + z * m[9],
                       x * m[2] + y * m[6] + z * m[10])
 
-    def inv_transform_direction(self, vector: 'Vertex') -> Vector:
-        """
-        Returns a inverse transformed 3D direction vector without translation.
-
-        """
-        m = self.matrix
-        x, y, z = vector
-        return Vector(x * m[0] + y * m[1] + z * m[2],
-                      x * m[4] + y * m[5] + z * m[6],
-                      x * m[8] + y * m[9] + z * m[10])
+    ocs_to_wcs = transform_direction
 
     def transform_vertices(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
         """
@@ -578,23 +566,9 @@ class Matrix44:
                 x * m2 + y * m6 + z * m10 + m14
             )
 
-    def inv_transform_vertices(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
-        """
-        Returns an generator of inverse transformed vertices.
-
-        """
-        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 = self.matrix
-        for vector in vectors:
-            x, y, z = vector
-            yield Vector(
-                x * m0 + y * m1 + z * m2 + m12,
-                x * m4 + y * m5 + z * m6 + m13,
-                x * m8 + y * m9 + z * m10 + m14
-            )
-
     def transform_directions(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
         """
-        Returns a generator of transformed direction vectors without translation.
+        Returns a generator of transformed UCS direction vectors without translation.
 
         """
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, *_ = self.matrix
@@ -606,19 +580,31 @@ class Matrix44:
                 x * m2 + y * m6 + z * m10
             )
 
-    def inv_transform_directions(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
+    def ucs_vertex_from_wcs(self, wcs: Vector) -> Vector:
         """
-        Returns a generator of inverse transformed direction vectors without translation.
+        Returns an UCS vector from WCS vertex.
+
+        Works only if matrix is used as UCS without scaling.
 
         """
-        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, *_ = self.matrix
-        for vector in vectors:
-            x, y, z = vector
-            yield Vector(
-                x * m0 + y * m1 + z * m2,
-                x * m4 + y * m5 + z * m6,
-                x * m8 + y * m9 + z * m10
-            )
+        return self.ucs_direction_from_wcs(wcs - self.origin)
+
+    def ucs_direction_from_wcs(self, wcs: Vector) -> Vector:
+        """
+        Returns UCS direction vector from WCS direction.
+
+        Works only if matrix is used as UCS without scaling. (internal API)
+
+        """
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self.matrix
+        x, y, z = wcs
+        return Vector(
+            x * m0 + y * m1 + z * m2,
+            x * m4 + y * m5 + z * m6,
+            x * m8 + y * m9 + z * m10,
+        )
+
+    ocs_from_wcs = ucs_direction_from_wcs
 
     def transpose(self) -> None:
         """

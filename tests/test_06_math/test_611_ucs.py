@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from math import isclose, radians, pi
-from ezdxf.math import UCS, Vector, X_AXIS, Y_AXIS, Z_AXIS
+from ezdxf.math import UCS, Vector, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 
 
 def test_ucs_init():
@@ -56,6 +56,22 @@ def test_rotation():
     assert ucs.is_cartesian is True
 
 
+def test_matrix44_rotation():
+    # normalization is not necessary
+    ux = Vector(1, 2, 0)
+    # only cartesian coord systems work
+    uy = ux.rotate_deg(90)
+    ucs = UCS(ux=ux, uy=uy)
+    m = Matrix44.ucs(ux=ux.normalize(), uy=uy.normalize())
+    assert m.ux == ux.normalize()
+    assert m.uy == uy.normalize()
+    assert m.uz == (0, 0, 1)
+    assert m.is_cartesian
+    v = m.transform((1, 2, 3))
+    assert v == ucs.to_wcs((1, 2, 3))
+    assert m.ucs_vertex_from_wcs(v) == (1, 2, 3)
+
+
 def test_none_cartesian():
     ucs = UCS(ux=(1, 2), uy=(0, 2))
     assert ucs.is_cartesian is False
@@ -67,7 +83,15 @@ def test_arbitrary_ucs():
     def_point_in_xy_plane = Vector(3, 10, 4)
     uz = ux.cross(def_point_in_xy_plane - origin)
     ucs = UCS(origin=origin, ux=ux, uz=uz)
+    m = Matrix44.ucs(ucs.ux, ucs.uy, ucs.uz, ucs.origin)
     def_point_in_ucs = ucs.from_wcs(def_point_in_xy_plane)
+
+    assert ucs.ux == m.ux
+    assert ucs.uy == m.uy
+    assert ucs.uz == m.uz
+    assert ucs.origin == m.origin
+
+    assert def_point_in_ucs == m.ucs_vertex_from_wcs(def_point_in_xy_plane)
     assert def_point_in_ucs.z == 0
     assert ucs.to_wcs(def_point_in_ucs) == def_point_in_xy_plane
     assert ucs.is_cartesian is True
@@ -131,7 +155,7 @@ def test_ocs_angles_to_ocs_deg():
 
 
 def test_constructor_functions():
-    # does not check the math, because tis would just duplicate the implementation code
+    # does not check the math, because this would just duplicate the implementation code
     origin = (3, 3, 3)
     axis = (1, 0, -1)
     def_point = (3, 10, 4)
@@ -228,4 +252,3 @@ def test_moveto():
     assert ucs.origin == (1, 2, 3)
     ucs.moveto((3, 2, 1))
     assert ucs.origin == (3, 2, 1)
-
