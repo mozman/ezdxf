@@ -260,7 +260,6 @@ class UCS(TransformUSCToOCSMixin):
     """
 
     def __init__(self, origin: 'Vertex' = (0, 0, 0), ux: 'Vertex' = None, uy: 'Vertex' = None, uz: 'Vertex' = None):
-        self.origin = Vector(origin)
         if ux is None and uy is None:
             ux = X_AXIS
             uy = Y_AXIS
@@ -281,11 +280,8 @@ class UCS(TransformUSCToOCSMixin):
             ux = Vector(ux).normalize()
             uy = Vector(uy).normalize()
             uz = Vector(uz).normalize()
-        self._setup(ux, uy, uz)
 
-    def _setup(self, ux: Vector, uy: Vector, uz: Vector):
-        self.matrix = Matrix33(ux, uy, uz)
-        self.transpose = self.matrix.transpose()
+        self.matrix: Matrix44 = Matrix44.ucs(ux, uy, uz, origin)
 
     @property
     def ux(self) -> Vector:
@@ -301,6 +297,16 @@ class UCS(TransformUSCToOCSMixin):
     def uz(self) -> Vector:
         """ z-axis unit vector """
         return self.matrix.uz
+
+    @property
+    def origin(self) -> Vector:
+        """ Returns the origin """
+        return self.matrix.origin
+
+    @origin.setter
+    def origin(self, v: 'Vertex') -> None:
+        """ Set origin. """
+        self.matrix.origin = v
 
     def copy(self) -> 'UCS':
         """ Returns a copy of this UCS.
@@ -320,7 +326,7 @@ class UCS(TransformUSCToOCSMixin):
 
     def to_wcs(self, point: 'Vertex') -> 'Vector':
         """ Returns WCS point for UCS `point`. """
-        return self.origin + self.matrix.transform(point)
+        return self.matrix.transform(point)
 
     def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
         """ Returns iterable of WCS vectors for UCS `points`. """
@@ -329,11 +335,11 @@ class UCS(TransformUSCToOCSMixin):
 
     def direction_to_wcs(self, vector: 'Vertex') -> 'Vector':
         """ Returns WCS direction for UCS `vector` without origin adjustment. """
-        return self.matrix.transform(vector)
+        return self.matrix.transform_direction(vector)
 
     def from_wcs(self, point: 'Vertex') -> 'Vector':
         """ Returns UCS point for WCS `point`. """
-        return self.transpose.transform(point - self.origin)
+        return self.matrix.ucs_vertex_from_wcs(point)
 
     def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
         """ Returns iterable of UCS vectors from WCS `points`. """
@@ -342,7 +348,7 @@ class UCS(TransformUSCToOCSMixin):
 
     def direction_from_wcs(self, vector: 'Vertex') -> 'Vector':
         """ Returns UCS vector for WCS `vector` without origin adjustment. """
-        return self.transpose.transform(vector)
+        return self.matrix.ucs_direction_from_wcs(vector)
 
     def rotate(self, axis: 'Vertex', angle: float) -> 'UCS':
         """
