@@ -177,7 +177,7 @@ class Ellipse(DXFGraphic):
             m,
             Vector(dxf.center),
             Vector(dxf.major_axis),
-            self.minor_axis,
+            Vector(dxf.extrusion),
             dxf.ratio,
             dxf.start_param,
             dxf.end_param,

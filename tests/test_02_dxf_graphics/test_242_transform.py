@@ -305,18 +305,6 @@ def test_random_ellipse_transformation(sx, sy, sz, start, end):
         check(*synced_scaling(ellipse0, vertices0, sx, sy, sz))
 
 
-def _test_transform_ellipse():
-    e = Ellipse.new()
-    m = Matrix44.scale(1, 2, 1)
-    dxf = e.dxf
-    r = ellipse.transform(m, dxf.center, dxf.major_axis, e.minor_axis, dxf.ratio, dxf.start_param, dxf.end_param)
-    e.transform(m)
-    assert r.center == e.dxf.center
-    assert r.major_axis.isclose(e.dxf.major_axis)
-    assert r.extrusion.isclose(e.dxf.extrusion)
-    assert r.minor_axis.isclose(e.minor_axis, abs_tol=1e-9)
-
-
 def test_xline():
     # same implementation for Ray()
     xline = XLine.new(dxfattribs={'start': (2, 3, 4), 'unit_vector': (1, 0, 0)})

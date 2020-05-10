@@ -10,12 +10,13 @@ EllipseParams = namedtuple('EllipseParams', 'center major_axis minor_axis extrus
 pi2 = math.pi / 2
 
 
-def transform(m: Matrix44, center: Vector, major_axis: Vector, minor_axis_: Vector, ratio: float,
+def transform(m: Matrix44, center: Vector, major_axis: Vector, extrusion: Vector, ratio: float,
               start_param: float, end_param: float) -> EllipseParams:
     new_center = m.transform(center)
     old_start_param = start_param = start_param % math.tau
     old_end_param = end_param = end_param % math.tau
-    new_major_axis, new_minor_axis = m.transform_directions((major_axis, minor_axis_))
+    old_minor_axis = minor_axis(major_axis, extrusion, ratio)
+    new_major_axis, new_minor_axis = m.transform_directions((major_axis, old_minor_axis))
 
     # Original ellipse parameters stay untouched until end of transformation
     if not math.isclose(new_major_axis.dot(new_minor_axis), 0, abs_tol=1e-9):
@@ -37,8 +38,8 @@ def transform(m: Matrix44, center: Vector, major_axis: Vector, minor_axis_: Vect
             return math.atan2(dy, dx) % math.tau
 
         # transformed start- and end point of old ellipse
-        start_point = m.transform(vertex(start_param, major_axis, minor_axis_, center, ratio))
-        end_point = m.transform(vertex(end_param, major_axis, minor_axis_, center, ratio))
+        start_point = m.transform(vertex(start_param, major_axis, old_minor_axis, center, ratio))
+        end_point = m.transform(vertex(end_param, major_axis, old_minor_axis, center, ratio))
 
         start_param = param(start_point - new_center)
         end_param = param(end_point - new_center)
@@ -54,7 +55,7 @@ def transform(m: Matrix44, center: Vector, major_axis: Vector, minor_axis_: Vect
             old_chk_point = m.transform(vertex(
                 mid_param(old_start_param, old_end_param),
                 major_axis,
-                minor_axis_,
+                old_minor_axis,
                 center,
                 ratio,
             ))

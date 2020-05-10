@@ -1158,35 +1158,27 @@ class EllipseEdge:
         tagwriter.write_tag2(73, self.is_counter_clockwise)
 
     def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
-        # established OCS not supported yet
         self.center = _transform_2d_ocs_vertices(ucs, [self.center], elevation=elevation, extrusion=extrusion)[0]
-        self.major_axis = ucs.direction_to_wcs(self.major_axis).xyz[:2]  # ???
-        # start_angle and end_angle are not real angles, see start_param and end_param in Ellipse.
+        self.major_axis = ucs.direction_to_wcs(self.major_axis).vec2
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
-        # reuse ELLIPSE transformation
         ocs_to_wcs = ocs.old_ocs.to_wcs
-        center = ocs_to_wcs(Vector(self.center).replace(z=elevation))
-        # transform end point of major axis in to WCS
-        major_axis = ocs_to_wcs(Vector(self.major_axis))
-        # start- and end param (angle) are relative to the major axis, so this values
-        # should be the same in WCS and OCS.
-        new_params = ellipse.transform(
+        e = ellipse.transform(
             ocs.m,
-            center,
-            major_axis,
-            ellipse.minor_axis(major_axis, ocs.old_extrusion, self.ratio),
+            ocs_to_wcs(Vector(self.center).replace(z=elevation)),
+            ocs_to_wcs(Vector(self.major_axis)),
+            ocs.old_extrusion,
             self.ratio,
             math.radians(self.start_angle),
             math.radians(self.end_angle),
         )
-        assert ocs.new_extrusion.isclose(new_params.extrusion, abs_tol=1e-9)
+        assert ocs.new_extrusion.isclose(e.extrusion, abs_tol=1e-9)
         wcs_to_ocs = ocs.new_ocs.from_wcs
-        self.center = wcs_to_ocs(new_params.center).vec2
-        self.major_axis = wcs_to_ocs(new_params.major_axis).vec2
-        self.ratio = new_params.ratio
-        self.start_angle = math.degrees(new_params.start_param)
-        self.end_angle = math.degrees(new_params.end_param)
+        self.center = wcs_to_ocs(e.center).vec2
+        self.major_axis = wcs_to_ocs(e.major_axis).vec2
+        self.ratio = e.ratio
+        self.start_angle = math.degrees(e.start_param)
+        self.end_angle = math.degrees(e.end_param)
 
 
 class SplineEdge:
