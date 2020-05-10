@@ -379,31 +379,32 @@ class Insert(DXFGraphic):
 
         """
 
-        def new_extrusion():
-            ocs_x_axis_in_wcs = ocs.old_ocs.to_wcs(X_AXIS) * rx
-            ocs_y_axis_in_wcs = ocs.old_ocs.to_wcs(Y_AXIS) * ry
-            x_axis, y_axis = m.transform_directions((ocs_x_axis_in_wcs, ocs_y_axis_in_wcs))
-            return x_axis.cross(y_axis).normalize()
+        def ocs_transform():
+            ocs = OCSTransform(dxf.extrusion, m)
+            ocs.set_new_ocs(m.transform_direction(ocs.old_extrusion))
+            return ocs
+            # scaling should not influence the OCS creation
+            # ocs_x_axis_in_wcs = ocs.old_ocs.to_wcs(X_AXIS) * sign(sx)
+            # ocs_y_axis_in_wcs = ocs.old_ocs.to_wcs(Y_AXIS) * sign(sy)
+            # x_axis, y_axis = m.transform_directions((ocs_x_axis_in_wcs, ocs_y_axis_in_wcs))
+            # return x_axis.cross(y_axis).normalize()
 
         dxf = self.dxf
-        rx, ry, rz = m.reflexions
         sx = dxf.xscale
         sy = dxf.yscale
         sz = dxf.zscale
-        rx = sign(sx * rx)
-        ry = sign(sy * ry)
-        rz = sign(sz * rz)
 
-        ocs = OCSTransform(dxf.extrusion, m)
-        ocs.new_extrusion = new_extrusion()
-        ocs.new_ocs = OCS(ocs.new_extrusion)
+        ocs = ocs_transform()
         dxf.extrusion = ocs.new_extrusion
         dxf.insert = ocs.transform_vertex(dxf.insert)
         dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
 
-        dxf.xscale = ocs.transform_scale_factor((sx, 0, 0), reflexion=rx)
-        dxf.yscale = ocs.transform_scale_factor((0, sy, 0), reflexion=ry)
-        dxf.zscale = ocs.transform_scale_factor((0, 0, sz), reflexion=rz)
+        # rx, ry, and rz are the reflexions applied by the transformation matrix m
+        rx, ry, rz = m.reflexions
+        # sx, sy and sz are the actual scaling parameter of the INSERT entity
+        dxf.xscale = ocs.transform_scale_factor((sx, 0, 0), reflexion=rx * sx)
+        dxf.yscale = ocs.transform_scale_factor((0, sy, 0), reflexion=ry * sy)
+        dxf.zscale = ocs.transform_scale_factor((0, 0, sz), reflexion=rz * sz)
 
         for attrib in self.attribs:
             attrib.transform(m)
@@ -422,37 +423,6 @@ class Insert(DXFGraphic):
             attrib.translate(dx, dy, dz)
         return self
 
-    def _brcs(self) -> 'BRCS':
-        """ Returns a block reference coordinate system as :class:`BRCS` object, placed at the block reference
-        `insert` location, axis aligned to the block axis, :attr:`~Insert.dxf.rotation` around z-axis and axis
-        scaling :attr:`~Insert.dxf.xscale`, :attr:`~Insert.dxf.yscale` and :attr:`~Insert.dxf.zscale` are applied.
-
-        .. versionchanged:: 0.12
-            renamed from :meth:`ucs`
-
-        """
-        sx = self.dxf.xscale
-        sy = self.dxf.yscale
-        sz = self.dxf.zscale
-        ocs = self.ocs()
-        insert = self.dxf.insert
-        if insert is None:
-            insert = Vector()
-        else:
-            insert = Vector(insert)
-
-        brcs = BRCS(
-            insert=ocs.to_wcs(insert),
-            ux=ocs.to_wcs(X_AXIS) * sx,
-            uy=ocs.to_wcs(Y_AXIS) * sy,
-            uz=Vector(self.dxf.extrusion).normalize(sz),
-        )
-        brcs._rotate_local_z(math.radians(self.dxf.rotation))
-        block_layout = self.block()
-        if block_layout is not None:
-            brcs._base_point = Vector(block_layout.block.dxf.base_point)
-        return brcs
-
     def matrix44(self) -> Matrix44:
         """ Returns a transformation :class:`Matrix44` object to transform block entities into WCS.
 
@@ -469,13 +439,7 @@ class Insert(DXFGraphic):
         uy = Vector(ocs.to_wcs(Y_AXIS)) * sy
         uz = extrusion.normalize(sz)
 
-        m = Matrix44((
-            ux.x, ux.y, ux.z, 0.0,
-            uy.x, uy.y, uy.z, 0.0,
-            uz.x, uz.y, uz.z, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        ))
-
+        m = Matrix44.ucs(ux=ux, uy=uy, uz=uz)
         angle = math.radians(self.dxf.rotation)
         if angle != 0.0:
             m *= Matrix44.axis_rotate(uz, angle)
@@ -484,22 +448,23 @@ class Insert(DXFGraphic):
         if insert is None:
             insert = Vector()
         else:
-            insert = Vector(insert)
+            insert = ocs.to_wcs(insert)
 
         block_layout = self.block()
         if block_layout is not None:
-            insert -= Vector(block_layout.block.dxf.base_point)
+            # todo: transform base point from OCS to WCS?
+            insert -= ocs.to_wcs(block_layout.block.dxf.base_point)
         m.set_row(3, insert.xyz)
         m.set_reflexions(sx, sy, sz)
         return m
 
-    def reset_transformation(self):
+    def reset_transformation(self) -> None:
         """ Reset block reference parameters `location`, `rotation` and `extrusion` vector.
 
         .. versionadded:: 0.11
 
         """
-        self.dxf.insert = (0, 0, 0)
+        self.dxf.insert = Vector(0, 0, 0)
         self.dxf.discard('rotation')
         self.dxf.discard('extrusion')
 

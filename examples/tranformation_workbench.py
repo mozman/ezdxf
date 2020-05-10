@@ -77,19 +77,7 @@ def ellipse(major_axis=(1, 0), ratio: float = 0.5, start: float = 0, end: float 
 
 
 UNIFORM_SCALING = [(-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
-NON_UNIFORM_SCALING = [(-1, 2, 3), (1, -2, 3), (1, 2, -3), (-3, -2, 1), (3, -2, -1), (-3, 2, -1), (-3, -2, -1)]
-
-
-def insert():
-    return Insert.new(dxfattribs={
-        'name': 'UCS',
-        'insert': (0, 0, 0),
-        'xscale': 1,
-        'yscale': 1,
-        'zscale': 1,
-        'rotation': 0,
-        'layer': 'insert',
-    }, doc=doc), [(0, 0, 0,), X_AXIS, Y_AXIS, Z_AXIS]
+NON_UNIFORM_SCALING = [(-1, 2, 3.1), (1, -2, 3.2), (1, 2, -3.3), (-3.4, -2, 1), (3.5, -2, -1), (-3.6, 2, -1), (-3.7, -2, -1)]
 
 
 def main_ellipse(layout):
@@ -118,6 +106,17 @@ def main_ellipse(layout):
 
 
 def main_insert(layout):
+    def insert():
+        return Insert.new(dxfattribs={
+            'name': 'UCS',
+            'insert': (0, 0, 0),
+            'xscale': 1,
+            'yscale': 1,
+            'zscale': 1,
+            'rotation': 0,
+            'layer': 'insert',
+        }, doc=doc), [(0, 0, 0), X_AXIS, Y_AXIS, Z_AXIS]
+
     def random_angle():
         return random.uniform(0, math.tau)
 
@@ -129,7 +128,7 @@ def main_insert(layout):
         # 1. scale
         entity0, vertices0 = synced_scaling(entity, vertices, sx=sx, sy=sy, sz=sz)
         # 2. rotate
-        entity0, vertices0 = synced_rotation(entity0, vertices0, axis=axis, angle=angle)
+        # entity0, vertices0 = synced_rotation(entity0, vertices0, axis=axis, angle=angle)
         # 3. translate
         entity0, vertices0 = synced_translation(
             entity0, vertices0,
@@ -155,7 +154,6 @@ if __name__ == '__main__':
     msp = doc.modelspace()
     blk = doc.blocks.new('UCS')
     setup_blk(blk)
-    for _ in range(1):
-        main_insert(msp)
+    main_insert(msp)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')

@@ -65,6 +65,10 @@ class OCSTransform:
         self.new_extrusion, self.scale_uniform = transform_extrusion(extrusion, m)
         self.new_ocs = OCS(self.new_extrusion)
 
+    def set_new_ocs(self, extrusion: 'Vertex'):
+        self.new_extrusion = Vector(extrusion)
+        self.new_ocs = OCS(self.new_extrusion)
+
     def transform_length(self, length: 'Vertex', reflexion=1.0) -> float:
         """ Returns magnitude of `length` direction vector transformed from
         old OCS into new OCS including `reflexion` correction applied.
