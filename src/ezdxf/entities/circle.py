@@ -65,15 +65,6 @@ class Circle(DXFGraphic):
             # convert from OCS to WCS
             yield ocs.to_wcs(v)
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Circle':
-        """ Transform CIRCLE from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        self._ucs_and_ocs_transformation(ucs, vector_names=['center'])
-        return self
-
     def transform(self, m: Matrix44) -> 'Circle':
         """ Transform CIRCLE entity by transformation matrix `m` inplace.
 

@@ -133,19 +133,6 @@ class Ellipse(DXFGraphic):
         for param in linspace(start, end, num):
             yield param % math.tau
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Ellipse':
-        """ Transform ELLIPSE entity from local :class:`~ezdxf.math.UCS` coordinates to
-        :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        # Ellipse is an real 3d entity without OCS
-        self.dxf.center = ucs.to_wcs(self.dxf.center)
-        self.dxf.major_axis = ucs.direction_to_wcs(self.dxf.major_axis)
-        self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
-        return self
-
     @classmethod
     def from_arc(cls, entity: 'DXFGraphic') -> 'Ellipse':
         """ Create new ELLIPSE entity from ARC or CIRCLE entity. New entity has no owner

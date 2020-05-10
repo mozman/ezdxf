@@ -99,9 +99,9 @@ def test_spatial_arc_from_3p():
     dxf_arc = arc.add_to_layout(msp, ucs)
     assert dxf_arc.dxftype() == 'ARC'
     assert isclose(dxf_arc.dxf.radius, 0.81649658, abs_tol=1e-9)
-    assert isclose(dxf_arc.dxf.start_angle, -30)
-    assert isclose(dxf_arc.dxf.end_angle, -150)
-    assert is_close_points(dxf_arc.dxf.extrusion, (0.57735027, 0.57735027, 0.57735027), abs_tol=1e-9)
+    assert isclose(dxf_arc.dxf.start_angle, 330)
+    assert isclose(dxf_arc.dxf.end_angle, 210)
+    assert dxf_arc.dxf.extrusion.isclose((0.57735027, 0.57735027, 0.57735027), abs_tol=1e-9)
 
 
 def test_bounding_box():

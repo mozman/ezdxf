@@ -320,15 +320,6 @@ class Mesh(DXFGraphic):
         yield data
         self.set_data(data)
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Mesh':
-        """ Transform MESH entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        self._vertices.transform_to_wcs(ucs)
-        return self
-
     def transform(self, m: 'Matrix44') -> 'Mesh':
         """ Transform MESH entity by transformation matrix `m` inplace.
 

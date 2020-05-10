@@ -4,6 +4,7 @@
 #
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
 from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Dict
+import warnings
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXF2013, DXFValueError, DXFKeyError, DXFTableEntryError
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
@@ -292,8 +293,11 @@ class DXFGraphic(DXFEntity):
         auditor.check_entity_color_index(self)
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'DXFGraphic':
-        """ Interface definition. """
-        raise NotImplementedError()
+        warnings.warn(
+            'DXFGraphic.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix) instead.',
+            DeprecationWarning
+        )
+        return self.transform(ucs.matrix)
 
     def transform(self, m: 'Matrix44') -> 'DXFGraphic':
         """ Inplace transformation interface, returns `self` (floating interface).
