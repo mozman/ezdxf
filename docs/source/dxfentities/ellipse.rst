@@ -65,8 +65,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: params
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Ellipse
-
     .. automethod:: transform(m: Matrix44) -> Ellipse
 
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Ellipse

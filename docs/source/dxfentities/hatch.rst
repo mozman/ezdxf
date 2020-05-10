@@ -144,8 +144,6 @@ Path manager: :class:`BoundaryPaths`
 
     .. automethod:: set_seed_points
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Hatch
-
     .. automethod:: transform(m: Matrix44) -> Hatch
 
     .. automethod:: associate

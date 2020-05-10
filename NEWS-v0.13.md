@@ -23,6 +23,7 @@ Version 0.13 - dev
 - NEW: `Matrix44` tries to preserve reflexion information  
 - NEW: `UCS` and `OCS` uses `Matrix44`for transformations
 - REMOVED: `ezdxf.math.Matrix33` class  
+- REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`  
 - CHANGE: renamed old `Insert.scale()` to `Insert.set_scale()`, name conflict with transformation interface
 - REMOVED: `ezdxf.math.normalize_angle(angle)`, replace call by expression: `angle % math.tau`
 - DEPRECATED: `DXFGraphic.transform_to_wcs()`, replace call by `entity.transform(ucs.matrix)`

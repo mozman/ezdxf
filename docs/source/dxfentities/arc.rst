@@ -44,8 +44,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: angles
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Arc
-
     .. automethod:: transform(m: Matrix44) -> Arc
 
 

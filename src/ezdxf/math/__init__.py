@@ -21,7 +21,7 @@ from .bezier import Bezier, DBezier
 from .bezier4p import Bezier4P
 from .surfaces import BezierSurface
 from .eulerspiral import EulerSpiral
-from .ucs import OCS, UCS, PassTroughUCS, BRCS
+from .ucs import OCS, UCS, PassTroughUCS
 from .bulge import bulge_to_arc, bulge_3_points, bulge_center, bulge_radius, arc_to_bulge
 from .arc import ConstructionArc
 from .line import ConstructionRay, ConstructionLine

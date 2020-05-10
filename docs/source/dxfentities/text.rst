@@ -104,8 +104,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: set_align(align: str = 'LEFT') -> Text
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Text
-
     .. automethod:: transform(m: Matrix44) -> Text
 
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Text

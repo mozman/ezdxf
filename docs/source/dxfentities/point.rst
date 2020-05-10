@@ -27,8 +27,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         Angle in degrees of the x-axis for the UCS in effect when POINT was drawn (float); used when PDMODE is nonzero.
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Point
-
     .. automethod:: transform(m: Matrix44) -> Point
 
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Point

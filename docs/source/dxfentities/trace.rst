@@ -38,8 +38,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         Location of 4. vertex (2D/3D Point in :ref:`OCS`)
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Trace
-
     .. automethod:: transform(m: Matrix44) -> Trace
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-EA6FBCA8-1AD6-4FB2-B149-770313E93511

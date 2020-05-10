@@ -51,8 +51,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         Combine values by adding them, e.g. 1+4 = first and third edge is invisible.
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Face3d
-
     .. automethod:: transform(m: Matrix44) -> Face3d
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-747865D5-51F0-45F2-BEFE-9572DBC5B151

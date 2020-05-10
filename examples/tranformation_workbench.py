@@ -4,13 +4,13 @@ from pathlib import Path
 import math
 import random
 import ezdxf
-from ezdxf.math import linspace, Vector, Matrix44, Z_AXIS
-from ezdxf.entities import Circle, Arc, Ellipse
+from ezdxf.math import linspace, Vector, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
+from ezdxf.entities import Circle, Arc, Ellipse, Insert
 
 DIR = Path('~/Desktop/Outbox/ezdxf').expanduser()
 
 
-def synced_scaling(entity, chk, axis_vertices=None, sx=1, sy=1, sz=1):
+def synced_scaling(entity, chk, axis_vertices=None, sx: float = 1, sy: float = 1, sz: float = 1):
     entity = entity.copy()
     entity.scale(sx, sy, sz)
     m = Matrix44.scale(sx, sy, sz)
@@ -21,7 +21,7 @@ def synced_scaling(entity, chk, axis_vertices=None, sx=1, sy=1, sz=1):
     return entity, chk
 
 
-def synced_rotation(entity, chk, axis_vertices=None, axis=Z_AXIS, angle=0):
+def synced_rotation(entity, chk, axis_vertices=None, axis=Z_AXIS, angle: float = 0):
     entity = entity.copy()
     entity.rotate_axis(axis, angle)
     m = Matrix44.axis_rotate(axis, angle)
@@ -32,7 +32,7 @@ def synced_rotation(entity, chk, axis_vertices=None, axis=Z_AXIS, angle=0):
     return entity, chk
 
 
-def synced_translation(entity, chk, axis_vertices=None, dx=0, dy=0, dz=0):
+def synced_translation(entity, chk, axis_vertices=None, dx: float = 0, dy: float = 0, dz: float = 0):
     entity = entity.copy()
     entity.translate(dx, dy, dz)
     m = Matrix44.translate(dx, dy, dz)
@@ -80,11 +80,23 @@ UNIFORM_SCALING = [(-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2),
 NON_UNIFORM_SCALING = [(-1, 2, 3), (1, -2, 3), (1, 2, -3), (-3, -2, 1), (3, -2, -1), (-3, 2, -1), (-3, -2, -1)]
 
 
-def main(layout):
+def insert():
+    return Insert.new(dxfattribs={
+        'name': 'UCS',
+        'insert': (0, 0, 0),
+        'xscale': 1,
+        'yscale': 1,
+        'zscale': 1,
+        'rotation': 0,
+        'layer': 'insert',
+    }, doc=doc), [(0, 0, 0,), X_AXIS, Y_AXIS, Z_AXIS]
+
+
+def main_ellipse(layout):
     def random_angle():
         return random.uniform(0, math.tau)
 
-    entity, vertices, axis_vertices = ellipse(start=math.pi/2, end=-math.pi/2)
+    entity, vertices, axis_vertices = ellipse(start=math.pi / 2, end=-math.pi / 2)
     axis = Vector.random()
     angle = random_angle()
     entity, vertices, axis_vertices = synced_rotation(entity, vertices, axis_vertices, axis=axis, angle=angle)
@@ -105,9 +117,45 @@ def main(layout):
         layout.add_line(p[1], p[3], dxfattribs={'color': 3, 'layer': 'new axis'})
 
 
+def main_insert(layout):
+    def random_angle():
+        return random.uniform(0, math.tau)
+
+    entity, vertices = insert()
+    axis = Vector.random()
+    angle = random_angle()
+
+    for sx, sy, sz in NON_UNIFORM_SCALING:
+        # 1. scale
+        entity0, vertices0 = synced_scaling(entity, vertices, sx=sx, sy=sy, sz=sz)
+        # 2. rotate
+        entity0, vertices0 = synced_rotation(entity0, vertices0, axis=axis, angle=angle)
+        # 3. translate
+        entity0, vertices0 = synced_translation(
+            entity0, vertices0,
+            dx=random.uniform(-2, 2),
+            dy=random.uniform(-2, 2),
+            dz=random.uniform(-2, 2)
+        )
+        layout.add_entity(entity0)
+        origin, x, y, z = list(vertices0)
+        layout.add_line(origin, x, dxfattribs={'color': 2, 'layer': 'new axis'})
+        layout.add_line(origin, y, dxfattribs={'color': 4, 'layer': 'new axis'})
+        layout.add_line(origin, z, dxfattribs={'color': 6, 'layer': 'new axis'})
+
+
+def setup_blk(blk):
+    blk.add_line((0, 0, 0), X_AXIS, dxfattribs={'color': 1})
+    blk.add_line((0, 0, 0), Y_AXIS, dxfattribs={'color': 3})
+    blk.add_line((0, 0, 0), Z_AXIS, dxfattribs={'color': 5})
+
+
 if __name__ == '__main__':
     doc = ezdxf.new('R2000', setup=True)
     msp = doc.modelspace()
-    main(msp)
+    blk = doc.blocks.new('UCS')
+    setup_blk(blk)
+    for _ in range(1):
+        main_insert(msp)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')

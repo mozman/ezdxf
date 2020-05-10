@@ -101,10 +101,6 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. automethod:: reset_transformation
 
-    .. automethod:: brcs() -> BRCS
-
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Insert
-
     .. automethod:: transform(m: Matrix44) -> Insert
 
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Insert

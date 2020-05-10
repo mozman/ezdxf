@@ -29,8 +29,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: vertices(angle:Iterable[float]) -> Iterable[Vector]
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Circle
-
     .. automethod:: transform(m: Matrix44) -> Circle
 
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Circle

@@ -3,7 +3,7 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict, Callable
 import math
-from ezdxf.math import Vector, UCS, BRCS, X_AXIS, Y_AXIS, Matrix44, OCS
+from ezdxf.math import Vector, UCS, X_AXIS, Y_AXIS, Matrix44, sign, OCS
 from ezdxf.math.transformtools import OCSTransform
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -378,17 +378,32 @@ class Insert(DXFGraphic):
         .. versionadded:: 0.13
 
         """
+
+        def new_extrusion():
+            ocs_x_axis_in_wcs = ocs.old_ocs.to_wcs(X_AXIS) * rx
+            ocs_y_axis_in_wcs = ocs.old_ocs.to_wcs(Y_AXIS) * ry
+            x_axis, y_axis = m.transform_directions((ocs_x_axis_in_wcs, ocs_y_axis_in_wcs))
+            return x_axis.cross(y_axis).normalize()
+
         dxf = self.dxf
-        ocs = OCSTransform(dxf.extrusion, m)
-        dxf.insert = ocs.transform_vertex(dxf.insert)
-        dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
         rx, ry, rz = m.reflexions
         sx = dxf.xscale
         sy = dxf.yscale
         sz = dxf.zscale
-        dxf.xscale = ocs.transform_scale_factor((sx, 0, 0), reflexion=sx * rx)
-        dxf.yscale = ocs.transform_scale_factor((0, sy, 0), reflexion=sy * ry)
-        dxf.zscale = ocs.transform_scale_factor((0, 0, sz), reflexion=sz * rz)
+        rx = sign(sx * rx)
+        ry = sign(sy * ry)
+        rz = sign(sz * rz)
+
+        ocs = OCSTransform(dxf.extrusion, m)
+        ocs.new_extrusion = new_extrusion()
+        ocs.new_ocs = OCS(ocs.new_extrusion)
+        dxf.extrusion = ocs.new_extrusion
+        dxf.insert = ocs.transform_vertex(dxf.insert)
+        dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
+
+        dxf.xscale = ocs.transform_scale_factor((sx, 0, 0), reflexion=rx)
+        dxf.yscale = ocs.transform_scale_factor((0, sy, 0), reflexion=ry)
+        dxf.zscale = ocs.transform_scale_factor((0, 0, sz), reflexion=rz)
 
         for attrib in self.attribs:
             attrib.transform(m)
@@ -407,7 +422,7 @@ class Insert(DXFGraphic):
             attrib.translate(dx, dy, dz)
         return self
 
-    def brcs(self) -> 'BRCS':
+    def _brcs(self) -> 'BRCS':
         """ Returns a block reference coordinate system as :class:`BRCS` object, placed at the block reference
         `insert` location, axis aligned to the block axis, :attr:`~Insert.dxf.rotation` around z-axis and axis
         scaling :attr:`~Insert.dxf.xscale`, :attr:`~Insert.dxf.yscale` and :attr:`~Insert.dxf.zscale` are applied.
@@ -594,10 +609,10 @@ class Insert(DXFGraphic):
                 dxfattribs = attdef.dxfattribs(drop={'prompt', 'handle'})
                 tag, text, location = unpack(dxfattribs)
                 attrib = self.add_attrib(tag, text, location, dxfattribs)
-                attrib.transform_to_wcs(brcs)
+                attrib.transform(m)
                 attrib.dxf.height *= attrib_scaling_factor
 
-        brcs = cast('UCS', self.brcs())
+        m = self.matrix44()
         # This method does not work well for non uniform scaled block references!
         attrib_scaling_factor = self.text_scaling
         blockdef = self.block()

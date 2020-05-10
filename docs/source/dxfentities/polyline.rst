@@ -153,8 +153,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: insert_vertices
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Polyline
-
     .. automethod:: transform(m: Matrix44) -> Polyline
 
     .. automethod:: virtual_entities() -> Iterable[Union[Line, Arc]]
