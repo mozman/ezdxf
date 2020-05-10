@@ -20,7 +20,7 @@ Version 0.13 - dev
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
 - NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
-- NEW: `Matrix44` got inverse transformations, and tries to preserve reflexion information  
+- NEW: `Matrix44` tries to preserve reflexion information  
 - NEW: `UCS` and `OCS` uses `Matrix44`for transformations
 - REMOVED: `ezdxf.math.Matrix33` class  
 - CHANGE: renamed old `Insert.scale()` to `Insert.set_scale()`, name conflict with transformation interface

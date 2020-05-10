@@ -3,9 +3,11 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 import math
+
 from ezdxf.math import Vector, linspace, Matrix44, rytz_axis_construction
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
+from ezdxf.math import ellipse
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -89,10 +91,7 @@ class Ellipse(DXFGraphic):
     @property
     def minor_axis(self) -> Vector:
         dxf = self.dxf
-        major_axis = Vector(dxf.major_axis)  # local x-axis
-        extrusion = Vector(dxf.extrusion)  # local z-axis, normal vector of the ellipse plane
-        minor_axis_length = major_axis.magnitude * dxf.ratio
-        return extrusion.cross(major_axis).normalize(minor_axis_length)
+        return ellipse.minor_axis(Vector(dxf.major_axis), Vector(dxf.extrusion), dxf.ratio)
 
     @property
     def start_point(self) -> 'Vector':
@@ -173,76 +172,22 @@ class Ellipse(DXFGraphic):
 
         """
 
-        def vertex(param: float, major_axis: Vector, minor_axis: Vector, center: Vector, ratio: float) -> Vector:
-            x_axis = major_axis.normalize()
-            y_axis = minor_axis.normalize()
-            radius_x = major_axis.magnitude
-            radius_y = radius_x * ratio
-            x = math.cos(param) * radius_x * x_axis
-            y = math.sin(param) * radius_y * y_axis
-            return center + x + y
-
-        def mid_param(start: float, end: float) -> float:
-            if end < start:
-                end += math.tau
-            return (start + end) / 2.0
-
         dxf = self.dxf
-        center = m.transform(dxf.center)
-        start_param = dxf.start_param % math.tau
-        end_param = dxf.end_param % math.tau
-        major_axis, minor_axis = m.transform_directions((dxf.major_axis, self.minor_axis))
-
-        # Original ellipse parameters stay untouched until end of transformation
-        if not math.isclose(major_axis.dot(minor_axis), 0, abs_tol=1e-9):
-            major_axis, minor_axis, ratio = rytz_axis_construction(major_axis, minor_axis)
-            adjust_params = True
-        else:
-            ratio = minor_axis.magnitude / major_axis.magnitude
-            adjust_params = False
-
-        if adjust_params and not math.isclose(start_param, end_param, abs_tol=1e-9):
-            # open ellipse, adjusting start- and end parameter
-            x_axis = major_axis.normalize()
-            y_axis = minor_axis.normalize()
-            old_param_span = (end_param - start_param) % math.tau
-
-            def param(vec: 'Vector') -> float:
-                dy = y_axis.dot(vec) / ratio  # adjust to circle
-                dx = x_axis.dot(vec)
-                return math.atan2(dy, dx) % math.tau
-
-            # transformed start- and end point of old ellipse
-            start_point, end_point = m.transform_vertices(self.vertices((start_param, end_param)))
-            start_param = param(start_point - center)
-            end_param = param(end_point - center)
-
-            # Test if drawing the correct side of the curve
-            if not math.isclose(old_param_span, math.pi, abs_tol=1e-9):
-                # equal param span check works well, except for a span of exact pi (180 deg)
-                new_param_span = (end_param - start_param) % math.tau
-                if not math.isclose(old_param_span, new_param_span, abs_tol=1e-9):
-                    start_param, end_param = end_param, start_param
-            else:  # param span is exact pi (180 deg)
-                # expensive but it seem to work:
-                old_chk_point = m.transform(vertex(
-                    mid_param(dxf.start_param, dxf.end_param),
-                    dxf.major_axis, self.minor_axis,
-                    dxf.center, dxf.ratio
-                ))
-                new_chk_point = vertex(mid_param(start_param, end_param), major_axis, minor_axis, center, ratio)
-                if not old_chk_point.isclose(new_chk_point, abs_tol=1e-9):
-                    start_param, end_param = end_param, start_param
-
-        dxf.center = center
-        dxf.extrusion = major_axis.cross(minor_axis).normalize()
-        dxf.major_axis = major_axis
-        # AutoCAD does not accept a ratio < 1e-6 -> invalid DXF file
-        dxf.ratio = max(ratio, 1e-6)
-        dxf.start_param = start_param
-        dxf.end_param = end_param
-        if dxf.ratio > 1:
-            self.swap_axis()
+        ellipse_params = ellipse.transform(
+            m,
+            Vector(dxf.center),
+            Vector(dxf.major_axis),
+            self.minor_axis,
+            dxf.ratio,
+            dxf.start_param,
+            dxf.end_param,
+        )
+        dxf.center = ellipse_params.center
+        dxf.major_axis = ellipse_params.major_axis
+        dxf.extrusion = ellipse_params.extrusion
+        dxf.ratio = ellipse_params.ratio
+        dxf.start_param = ellipse_params.start_param
+        dxf.end_param = ellipse_params.end_param
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> 'Ellipse':

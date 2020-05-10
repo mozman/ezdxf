@@ -179,11 +179,11 @@ def test_06_skipped_entities_callback(doc, msp):
     assert hatch.paths.has_critical_elements()
     entities = list(blkref.virtual_entities(non_uniform_scaling=True, skipped_entity_callback=on_entity_skipped))
 
-    assert len(entities) == 1
-    assert entities[0].dxftype() == 'LINE'
-    assert len(skipped_entities) == 1
-    assert skipped_entities[0][0].dxftype() == 'HATCH'
-    assert skipped_entities[0][1] == 'unsupported non-uniform scaling'
+    assert len(entities) == 2
+    assert entities[0].dxftype() == 'HATCH'
+    assert entities[1].dxftype() == 'LINE'
+    assert len(skipped_entities) == 0
+    # assert skipped_entities[0][0].dxftype() == 'HATCH'
 
 
 def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool) -> Union[Ellipse, Arc]:

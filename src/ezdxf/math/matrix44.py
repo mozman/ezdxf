@@ -3,7 +3,7 @@
 # Author: Will McGugan
 # Download-URL: http://code.google.com/p/gameobjects/downloads/list
 # Created: 19.04.2010
-# Copyright (c) 2010-2018 Manfred Moitzi
+# Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
 from typing import Sequence, Iterable, List, Tuple, TYPE_CHECKING
 from math import sin, cos, tan
@@ -93,7 +93,7 @@ class Matrix44:
     def combine_reflexions(self, r: Tuple[float, float, float]):
         """ Combine existing reflexions with given reflexions `r`.
 
-        This is an naive approach to preserve reflexion information across multiple
+        This is a naive approach to preserve reflexion information across multiple
         transformations an will not work for every scenario.
         """
         sx, sy, sz = self.reflexions

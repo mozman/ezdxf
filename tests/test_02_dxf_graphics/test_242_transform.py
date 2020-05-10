@@ -10,6 +10,7 @@ from ezdxf.entities import (
 )
 from ezdxf.math import Matrix44, OCS, Vector, linspace
 from ezdxf.math.transformtools import NonUniformScalingError
+from ezdxf.math import ellipse
 
 UNIFORM_SCALING = [(-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
 NON_UNIFORM_SCALING = [(-1, 2, 3), (1, -2, 3), (1, 2, -3), (-3, -2, 1), (3, -2, -1), (-3, 2, -1), (-3, -2, -1)]
@@ -302,6 +303,18 @@ def test_random_ellipse_transformation(sx, sy, sz, start, end):
         ellipse0, vertices0 = build()
         check(ellipse0, vertices0)
         check(*synced_scaling(ellipse0, vertices0, sx, sy, sz))
+
+
+def _test_transform_ellipse():
+    e = Ellipse.new()
+    m = Matrix44.scale(1, 2, 1)
+    dxf = e.dxf
+    r = ellipse.transform(m, dxf.center, dxf.major_axis, e.minor_axis, dxf.ratio, dxf.start_param, dxf.end_param)
+    e.transform(m)
+    assert r.center == e.dxf.center
+    assert r.major_axis.isclose(e.dxf.major_axis)
+    assert r.extrusion.isclose(e.dxf.extrusion)
+    assert r.minor_axis.isclose(e.minor_axis, abs_tol=1e-9)
 
 
 def test_xline():

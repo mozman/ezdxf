@@ -15,10 +15,10 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004
 from ezdxf.lldxf import const
 from ezdxf.math.bspline import bspline_control_frame
 from ezdxf.math.bulge import bulge_to_arc
+from ezdxf.math import ellipse
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
-from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, RGB, DXFEntity, Vertex
@@ -1165,30 +1165,28 @@ class EllipseEdge:
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         # reuse ELLIPSE transformation
-        center = ocs.old_ocs.to_wcs(Vector(self.center).replace(z=elevation))
+        ocs_to_wcs = ocs.old_ocs.to_wcs
+        center = ocs_to_wcs(Vector(self.center).replace(z=elevation))
         # transform end point of major axis in to WCS
-        end_point = self.center + self.major_axis
-        end_point = ocs.old_ocs.to_wcs(Vector(end_point).replace(z=elevation))
-        major_axis = end_point - center
+        major_axis = ocs_to_wcs(Vector(self.major_axis))
         # start- and end param (angle) are relative to the major axis, so this values
         # should be the same in WCS and OCS.
-        ellipse = cast('Ellipse', factory.new('ELLIPSE', dxfattribs={
-            'center': center,
-            'major_axis': major_axis,
-            'ratio': self.ratio,
-            'start_param': math.radians(self.start_angle),
-            'end_param': math.radians(self.end_angle),
-            'extrusion': ocs.old_extrusion,
-        }))
-        ellipse.transform(ocs.m)
-        assert ocs.new_extrusion.isclose(ellipse.dxf.extrusion, abs_tol=1e-9)
-
-        self.center = ocs.transform_2d_vertex(self.center, elevation)
-        end_point = ocs.new_ocs.from_wcs(ellipse.dxf.center + ellipse.dxf.major_axis).vec2
-        self.major_axis = end_point - self.center
-        self.ratio = ellipse.dxf.ratio
-        self.start_angle = math.degrees(ellipse.dxf.start_param)
-        self.end_angle = math.degrees(ellipse.dxf.end_param)
+        new_params = ellipse.transform(
+            ocs.m,
+            center,
+            major_axis,
+            ellipse.minor_axis(major_axis, ocs.old_extrusion, self.ratio),
+            self.ratio,
+            math.radians(self.start_angle),
+            math.radians(self.end_angle),
+        )
+        assert ocs.new_extrusion.isclose(new_params.extrusion, abs_tol=1e-9)
+        wcs_to_ocs = ocs.new_ocs.from_wcs
+        self.center = wcs_to_ocs(new_params.center).vec2
+        self.major_axis = wcs_to_ocs(new_params.major_axis).vec2
+        self.ratio = new_params.ratio
+        self.start_angle = math.degrees(new_params.start_param)
+        self.end_angle = math.degrees(new_params.end_param)
 
 
 class SplineEdge:

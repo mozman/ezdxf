@@ -93,9 +93,9 @@ def attrib_to_text(attrib: 'Attrib', dxffactory) -> 'Text':
     return dxffactory.create_db_entry('TEXT', dxfattribs=dxfattribs)
 
 
-def virtual_block_reference_entities(block_ref: 'Insert',
-                                     skipped_entity_callback: Optional[Callable[['DXFGraphic', str], None]] = None
-                                     ) -> Iterable['DXFGraphic']:
+def _virtual_block_reference_entities(block_ref: 'Insert',
+                                      skipped_entity_callback: Optional[Callable[['DXFGraphic', str], None]] = None
+                                      ) -> Iterable['DXFGraphic']:
     """
     Yields 'virtual' parts of block reference `block_ref`. This method is meant to examine the the block reference
     entities without the need to explode the block reference. The `skipped_entity_callback()` will be called for all
@@ -309,9 +309,9 @@ def virtual_block_reference_entities(block_ref: 'Insert',
         yield entity
 
 
-def virtual_block_reference_entities2(block_ref: 'Insert',
-                                      skipped_entity_callback: Optional[Callable[['DXFGraphic', str], None]] = None
-                                      ) -> Iterable['DXFGraphic']:
+def virtual_block_reference_entities(block_ref: 'Insert',
+                                     skipped_entity_callback: Optional[Callable[['DXFGraphic', str], None]] = None
+                                     ) -> Iterable['DXFGraphic']:
     """
     Yields 'virtual' parts of block reference `block_ref`. This method is meant to examine the the block reference
     entities without the need to explode the block reference. The `skipped_entity_callback()` will be called for all
