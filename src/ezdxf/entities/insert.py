@@ -378,6 +378,7 @@ class Insert(DXFGraphic):
         .. versionadded:: 0.13
 
         """
+
         def ocs_without_reflexion():
             ocs = OCSTransform(dxf.extrusion, m.without_reflexion())
             ocs.set_new_ocs(ocs.m.transform_direction(ocs.old_extrusion))
@@ -427,31 +428,29 @@ class Insert(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        sx = self.dxf.xscale
-        sy = self.dxf.yscale
-        sz = self.dxf.zscale
+        dxf = self.dxf
+        sx = dxf.xscale
+        sy = dxf.yscale
+        sz = dxf.zscale
 
-        extrusion = Vector(self.dxf.extrusion)
         ocs = self.ocs()
-        ux = Vector(ocs.to_wcs(X_AXIS)) * sx
-        uy = Vector(ocs.to_wcs(Y_AXIS)) * sy
-        uz = extrusion.normalize(sz)
+        extrusion = ocs.uz
+        ux = Vector(ocs.to_wcs(X_AXIS))
+        uy = Vector(ocs.to_wcs(Y_AXIS))
+        m = Matrix44.ucs(ux=ux * sx, uy=uy * sy, uz=extrusion * sz)
 
-        m = Matrix44.ucs(ux=ux, uy=uy, uz=uz)
-        angle = math.radians(self.dxf.rotation)
+        angle = math.radians(dxf.rotation)
         if angle != 0.0:
-            m *= Matrix44.axis_rotate(uz, angle)
+            m = Matrix44.chain(m, Matrix44.axis_rotate(extrusion, angle))
 
-        insert = self.dxf.insert
-        if insert is None:
-            insert = Vector()
-        else:
-            insert = ocs.to_wcs(insert)
+        insert = ocs.to_wcs(dxf.get('insert', Vector()))
 
         block_layout = self.block()
         if block_layout is not None:
             # transform block base point into WCS without translation
             insert -= m.transform_direction(block_layout.block.dxf.base_point)
+
+        # set translation
         m.set_row(3, insert.xyz)
         m.set_reflexions(sx, sy, sz)
         return m
