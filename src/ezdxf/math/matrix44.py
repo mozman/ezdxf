@@ -406,6 +406,10 @@ class Matrix44:
             or_x, or_y, or_z, 1,
         ))
 
+    def without_reflexion(self) -> 'Matrix44':
+        rx, ry, rz = self.reflexions
+        return Matrix44.ucs(self.ux * rx, self.uy * ry, self.uz * rz, self.origin)
+
     def __hash__(self) -> int:
         """ Returns hash value of matrix. """
         return self.matrix.__hash__()

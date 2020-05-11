@@ -378,30 +378,28 @@ class Insert(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-
-        def ocs_transform():
-            ocs = OCSTransform(dxf.extrusion, m)
-            ocs.set_new_ocs(m.transform_direction(ocs.old_extrusion))
+        def ocs_without_reflexion():
+            ocs = OCSTransform(dxf.extrusion, m.without_reflexion())
+            ocs.set_new_ocs(ocs.m.transform_direction(ocs.old_extrusion))
             return ocs
-            # scaling should not influence the OCS creation
-            # ocs_x_axis_in_wcs = ocs.old_ocs.to_wcs(X_AXIS) * sign(sx)
-            # ocs_y_axis_in_wcs = ocs.old_ocs.to_wcs(Y_AXIS) * sign(sy)
-            # x_axis, y_axis = m.transform_directions((ocs_x_axis_in_wcs, ocs_y_axis_in_wcs))
-            # return x_axis.cross(y_axis).normalize()
 
         dxf = self.dxf
-        sx = dxf.xscale
-        sy = dxf.yscale
-        sz = dxf.zscale
 
-        ocs = ocs_transform()
+        # OCS transformations have to be done by the transformation
+        # matrix without reflexions. (?)
+        ocs = ocs_without_reflexion()
         dxf.extrusion = ocs.new_extrusion
         dxf.insert = ocs.transform_vertex(dxf.insert)
         dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
 
         # rx, ry, and rz are the reflexions applied by the transformation matrix m
         rx, ry, rz = m.reflexions
+
         # sx, sy and sz are the actual scaling parameter of the INSERT entity
+        sx = dxf.xscale
+        sy = dxf.yscale
+        sz = dxf.zscale
+
         dxf.xscale = ocs.transform_scale_factor((sx, 0, 0), reflexion=rx * sx)
         dxf.yscale = ocs.transform_scale_factor((0, sy, 0), reflexion=ry * sy)
         dxf.zscale = ocs.transform_scale_factor((0, 0, sz), reflexion=rz * sz)
@@ -452,8 +450,8 @@ class Insert(DXFGraphic):
 
         block_layout = self.block()
         if block_layout is not None:
-            # todo: transform base point from OCS to WCS?
-            insert -= ocs.to_wcs(block_layout.block.dxf.base_point)
+            # transform block base point into WCS without translation
+            insert -= m.transform_direction(block_layout.block.dxf.base_point)
         m.set_row(3, insert.xyz)
         m.set_reflexions(sx, sy, sz)
         return m

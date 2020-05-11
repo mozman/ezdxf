@@ -128,7 +128,7 @@ def main_insert(layout):
         # 1. scale
         entity0, vertices0 = synced_scaling(entity, vertices, sx=sx, sy=sy, sz=sz)
         # 2. rotate
-        # entity0, vertices0 = synced_rotation(entity0, vertices0, axis=axis, angle=angle)
+        entity0, vertices0 = synced_rotation(entity0, vertices0, axis=axis, angle=angle)
         # 3. translate
         entity0, vertices0 = synced_translation(
             entity0, vertices0,
