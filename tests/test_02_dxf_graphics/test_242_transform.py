@@ -8,11 +8,11 @@ from ezdxf.entities import (
     DXFGraphic, Line, Point, Circle, Arc, Ellipse, XLine, Mesh, Spline, Solid, Face3d, LWPolyline, Polyline, Text,
     MText, Insert, Dimension,
 )
-from ezdxf.math import Matrix44, OCS, Vector, linspace
+from ezdxf.math import Matrix44, OCS, Vector, linspace, X_AXIS, Y_AXIS, Z_AXIS
 from ezdxf.math.transformtools import NonUniformScalingError
-from ezdxf.math import ellipse
+import ezdxf
 
-UNIFORM_SCALING = [(-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
+UNIFORM_SCALING = [(2, 2, 2), (-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
 NON_UNIFORM_SCALING = [(-1, 2, 3), (1, -2, 3), (1, 2, -3), (-3, -2, 1), (3, -2, -1), (-3, 2, -1), (-3, -2, -1)]
 
 
@@ -179,6 +179,13 @@ def synced_translation(entity, chk, dx, dy, dz):
     return entity, chk
 
 
+def synced_transformation(entity, chk, m: Matrix44):
+    entity = entity.copy()
+    entity.transform(m)
+    chk = list(m.transform_vertices(chk))
+    return entity, chk
+
+
 @pytest.mark.parametrize('sx, sy, sz', UNIFORM_SCALING)
 def test_random_circle_transformation(sx, sy, sz):
     # testing only uniform scaling, for non uniform scaling
@@ -188,10 +195,11 @@ def test_random_circle_transformation(sx, sy, sz):
     def build():
         circle = Circle()
         vertices = list(circle.vertices(linspace(0, 360, vertex_count, endpoint=False)))
-        circle, vertices = synced_rotation(circle, vertices, axis=Vector.random(), angle=random.uniform(0, math.tau))
-        circle, vertices = synced_translation(
-            circle, vertices, dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2))
-        return circle, vertices
+        m = Matrix44.chain(
+            Matrix44.axis_rotate(axis=Vector.random(), angle=random.uniform(0, math.tau)),
+            Matrix44.translate(dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2)),
+        )
+        return synced_transformation(circle, vertices, m)
 
     def check(circle, vertices):
         # Vertex(angle=0) of old_ocs is not the vertex(angle=0) of the new OCS
@@ -230,12 +238,12 @@ def test_random_arc_transformation(sx, sy, sz):
             'start_angle': random.uniform(0, 360),
             'end_angle': random.uniform(0, 360),
         })
-
         vertices = list(arc.vertices(arc.angles(vertex_count)))
-        arc, vertices = synced_rotation(arc, vertices, axis=Vector.random(), angle=random.uniform(0, math.tau))
-        arc, vertices = synced_translation(
-            arc, vertices, dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2))
-        return arc, vertices
+        m = Matrix44.chain(
+            Matrix44.axis_rotate(axis=Vector.random(), angle=random.uniform(0, math.tau)),
+            Matrix44.translate(dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2)),
+        )
+        return synced_transformation(arc, vertices, m)
 
     def check(arc, vertices):
         arc_vertices = arc.vertices(arc.angles(vertex_count))
@@ -283,12 +291,12 @@ def test_random_ellipse_transformation(sx, sy, sz, start, end):
             'start_param': start,
             'end_param': end,
         })
-
         vertices = list(ellipse.vertices(ellipse.params(vertex_count)))
-        ellipse, vertices = synced_rotation(ellipse, vertices, axis=Vector.random(), angle=random.uniform(0, math.tau))
-        ellipse, vertices = synced_translation(
-            ellipse, vertices, dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2))
-        return ellipse, vertices
+        m = Matrix44.chain(
+            Matrix44.axis_rotate(axis=Vector.random(), angle=random.uniform(0, math.tau)),
+            Matrix44.translate(dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2)),
+        )
+        return synced_transformation(ellipse, vertices, m)
 
     def check(ellipse, vertices):
         ellipse_vertices = list(ellipse.vertices(ellipse.params(vertex_count)))
@@ -303,6 +311,56 @@ def test_random_ellipse_transformation(sx, sy, sz, start, end):
         ellipse0, vertices0 = build()
         check(ellipse0, vertices0)
         check(*synced_scaling(ellipse0, vertices0, sx, sy, sz))
+
+
+@pytest.fixture(scope='module')
+def doc1():
+    doc = ezdxf.new()
+    blk = doc.blocks.new('TEST1')
+    blk.add_line((0, 0, 0), X_AXIS, dxfattribs={'color': 1})
+    blk.add_line((0, 0, 0), Y_AXIS, dxfattribs={'color': 3})
+    blk.add_line((0, 0, 0), Z_AXIS, dxfattribs={'color': 5})
+    return doc
+
+
+@pytest.mark.parametrize('sx, sy, sz', UNIFORM_SCALING)
+def test_random_block_reference_transformation(sx, sy, sz, doc1):
+    def insert():
+        return Insert.new(dxfattribs={
+            'name': 'TEST1',
+            'insert': (0, 0, 0),
+            'xscale': 1,
+            'yscale': 1,
+            'zscale': 1,
+            'rotation': 0,
+            'layer': 'insert',
+        }, doc=doc1), [Vector(0, 0, 0), X_AXIS, Y_AXIS, Z_AXIS]
+
+    def check(lines, chk):
+        origin, x, y, z = chk
+        l1, l2, l3 = lines
+        assert origin.isclose(l1.dxf.start)
+        assert x.isclose(l1.dxf.end)
+        assert origin.isclose(l2.dxf.start)
+        assert y.isclose(l2.dxf.end)
+        assert origin.isclose(l3.dxf.start)
+        assert z.isclose(l3.dxf.end)
+
+    entity0, vertices0 = insert()
+    entity0, vertices0 = synced_scaling(entity0, vertices0, 1, 2, 3)
+
+    m = Matrix44.chain(
+        # Transformation order is important: scale - rotate - translate
+        # Because scaling after rotation leads to a non orthogonal
+        # coordinate system, which can not represented by the
+        # INSERT entity.
+        Matrix44.scale(sx, sy, sz),
+        Matrix44.axis_rotate(axis=Vector.random(), angle=random.uniform(0, math.tau)),
+        Matrix44.translate(dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2)),
+    )
+    entity, vertices = synced_transformation(entity0, vertices0, m)
+    lines = list(entity.virtual_entities(non_uniform_scaling=True))
+    check(lines, vertices)
 
 
 def test_xline():
