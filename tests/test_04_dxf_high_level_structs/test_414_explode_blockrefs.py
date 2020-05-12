@@ -183,7 +183,6 @@ def test_06_skipped_entities_callback(doc, msp):
     assert entities[0].dxftype() == 'HATCH'
     assert entities[1].dxftype() == 'LINE'
     assert len(skipped_entities) == 0
-    # assert skipped_entities[0][0].dxftype() == 'HATCH'
 
 
 def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool) -> Union[Ellipse, Arc]:
@@ -205,11 +204,6 @@ def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool)
     })
     entities = list(block_ref.virtual_entities(non_uniform_scaling=True))
     assert len(entities) == 3
-
-    if is_arc and block_ref.has_uniform_scaling:
-        assert entities[0].dxftype() == 'ARC'
-    else:
-        assert entities[0].dxftype() == 'ELLIPSE'
     ellipse = cast(Union[Ellipse, Arc], entities[0])
 
     # points should have been transformed the same as the ellipse
@@ -229,15 +223,7 @@ def _check_curve(ellipse: Ellipse, expected_start: Vector, expected_end: Vector,
     assert ellipse.dxf.extrusion.is_parallel(expected_extrusion)
 
 
-# TODO: currently zscale=-1 is failing
-@pytest.mark.parametrize('zscale,is_arc', [
-    (1, False),
-    (0.5, False),
-    # (1, True),  # todo
-    # (0.5, True),  # todo
-    (-1, False),
-    # (-1, True),  # todo
-])
+@pytest.mark.parametrize('zscale,is_arc', [(1, False), (0.5, False), (1, True), (0.5, True), (-1, False), (-1, True)])
 def test_07_rotated_and_reflected_curves(zscale, is_arc):
     scale = Vector(1, 1, zscale)
 
