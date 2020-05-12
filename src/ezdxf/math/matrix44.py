@@ -6,6 +6,7 @@
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
 from typing import Sequence, Iterable, List, Tuple, TYPE_CHECKING
+import math
 from math import sin, cos, tan
 from itertools import chain
 from .vector import Vector
@@ -192,8 +193,22 @@ class Matrix44:
 
     @property
     def is_cartesian(self) -> bool:
-        """ Returns ``True`` if UCS matrix is a cartesian coordinate system. """
+        """ Returns ``True`` if target coordinate system is a left handed cartesian coordinate system. """
         return self.uy.cross(self.uz).normalize().isclose(self.ux.normalize())
+
+    @property
+    def is_orthogonal(self) -> bool:
+        """ Returns ``True`` if target coordinate system has orthogonal axis.
+
+        Does not check for left- or right handed orientation, any orientation of the axis valid.
+
+        """
+        ux = self.ux.normalize()
+        uy = self.uy.normalize()
+        uz = self.uz.normalize()
+        return math.isclose(ux.dot(uy), 0.0, abs_tol=1e-9) and \
+               math.isclose(ux.dot(uz), 0.0, abs_tol=1e-9) and \
+               math.isclose(uy.dot(uz), 0.0, abs_tol=1e-9)
 
     @classmethod
     def scale(cls, sx: float, sy: float = None, sz: float = None) -> 'Matrix44':

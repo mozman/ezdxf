@@ -3,8 +3,8 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict, Callable
 import math
-from ezdxf.math import Vector, UCS, X_AXIS, Y_AXIS, Matrix44, sign, OCS
-from ezdxf.math.transformtools import OCSTransform
+from ezdxf.math import Vector, UCS, X_AXIS, Y_AXIS, Matrix44
+from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError, DXFStructureError
@@ -383,6 +383,9 @@ class Insert(DXFGraphic):
             ocs = OCSTransform(dxf.extrusion, m.without_reflexion())
             ocs.set_new_ocs(ocs.m.transform_direction(ocs.old_extrusion))
             return ocs
+
+        if not m.is_orthogonal:
+            raise InsertTransformationError('Transformation creates a non orthogonal coordinate system which can not represented by the INSERT entity.')
 
         dxf = self.dxf
 

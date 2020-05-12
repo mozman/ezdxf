@@ -19,6 +19,10 @@ class NonUniformScalingError(TransformError):
     pass
 
 
+class InsertTransformationError(TransformError):
+    pass
+
+
 def transform_thickness_and_extrusion_without_ocs(entity: 'DXFGraphic', m: Matrix44) -> None:
     if entity.dxf.hasattr('thickness'):
         thickness = entity.dxf.thickness

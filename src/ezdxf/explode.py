@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Iterable, cast, Union, Generator, Callable, Op
 
 from ezdxf.entities import factory
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
-from ezdxf.math import Vector, rytz_axis_construction, bulge_to_arc, OCS, angle_to_param
-from ezdxf.math.transformtools import NonUniformScalingError
+from ezdxf.math import Vector, bulge_to_arc, OCS
+from ezdxf.math.transformtools import NonUniformScalingError, InsertTransformationError
 from ezdxf.query import EntityQuery
 
 logger = logging.getLogger('ezdxf')
@@ -154,6 +154,8 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                     yield from transform(entity.virtual_entities())
                 else:
                     skipped_entity_callback(entity, 'unsupported non-uniform scaling')
+            except InsertTransformationError as e:
+                skipped_entity_callback(entity, str(e))
             else:
                 yield entity
 
