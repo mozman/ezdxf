@@ -549,16 +549,17 @@ class Matrix44:
                       x * m[1] + y * m[5] + z * m[9] + m[13],
                       x * m[2] + y * m[6] + z * m[10] + m[14])
 
-    def transform_direction(self, vector: 'Vertex') -> Vector:
+    def transform_direction(self, vector: 'Vertex', normalize=False) -> Vector:
         """
         Returns a transformed direction vector without translation.
 
         """
         m = self.matrix
         x, y, z = vector
-        return Vector(x * m[0] + y * m[4] + z * m[8],
-                      x * m[1] + y * m[5] + z * m[9],
-                      x * m[2] + y * m[6] + z * m[10])
+        v = Vector(x * m[0] + y * m[4] + z * m[8],
+                   x * m[1] + y * m[5] + z * m[9],
+                   x * m[2] + y * m[6] + z * m[10])
+        return v.normalize() if normalize else v
 
     ocs_to_wcs = transform_direction
 
@@ -576,7 +577,7 @@ class Matrix44:
                 x * m2 + y * m6 + z * m10 + m14
             )
 
-    def transform_directions(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
+    def transform_directions(self, vectors: Iterable['Vertex'], normalize=False) -> Iterable[Vector]:
         """
         Returns a generator of transformed direction vectors without translation.
 
@@ -584,11 +585,12 @@ class Matrix44:
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, *_ = self.matrix
         for vector in vectors:
             x, y, z = vector
-            yield Vector(
+            v = Vector(
                 x * m0 + y * m4 + z * m8,
                 x * m1 + y * m5 + z * m9,
                 x * m2 + y * m6 + z * m10
             )
+            yield v.normalize() if normalize else v
 
     def ucs_vertex_from_wcs(self, wcs: Vector) -> Vector:
         """

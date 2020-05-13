@@ -121,6 +121,7 @@ def main_insert(layout):
         return random.uniform(0, math.tau)
 
     entity, vertices = insert()
+    entity, vertices = synced_translation(entity, vertices, dx=1, dy=0, dz=0)
     axis = Vector.random()
     angle = random_angle()
 
@@ -141,6 +142,11 @@ def main_insert(layout):
         layout.add_line(origin, x, dxfattribs={'color': 2, 'layer': 'new axis'})
         layout.add_line(origin, y, dxfattribs={'color': 4, 'layer': 'new axis'})
         layout.add_line(origin, z, dxfattribs={'color': 6, 'layer': 'new axis'})
+
+        for line in entity0.virtual_entities(non_uniform_scaling=True):
+            line.dxf.layer = 'exploded axis'
+            line.dxf.color = 7
+            layout.add_entity(line)
 
 
 def setup_blk(blk):

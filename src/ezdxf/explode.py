@@ -154,8 +154,11 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                     yield from transform(entity.virtual_entities())
                 else:
                     skipped_entity_callback(entity, 'unsupported non-uniform scaling')
-            except InsertTransformationError as e:
-                skipped_entity_callback(entity, str(e))
+            except InsertTransformationError:
+                # INSERT entity can not represent the target coordinate system defined
+                # by transformation matrix 'm'. Yield transformed sub-entities of the
+                # INSERT entity:
+                yield from transform(virtual_block_reference_entities(entity, skipped_entity_callback))
             else:
                 yield entity
 

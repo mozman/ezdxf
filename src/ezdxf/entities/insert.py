@@ -3,7 +3,7 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict, Callable
 import math
-from ezdxf.math import Vector, UCS, X_AXIS, Y_AXIS, Matrix44
+from ezdxf.math import Vector, UCS, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -384,16 +384,31 @@ class Insert(DXFGraphic):
             ocs.set_new_ocs(ocs.m.transform_direction(ocs.old_extrusion))
             return ocs
 
-        if not m.is_orthogonal:
-            raise InsertTransformationError('Transformation creates a non orthogonal coordinate system which can not represented by the INSERT entity.')
+        def is_orthogonal_transformation() -> bool:
+            # Transform x-, y- and z-axis of current INSERT into WCS:
+            wcs_axis = self.matrix44().transform_directions((X_AXIS, Y_AXIS, Z_AXIS))
+
+            # Transform WCS axis into target coordinate system, remove possible scaling by normalizing:
+            ux, uy, uz = m.transform_directions(wcs_axis, normalize=True)
+
+            # Check if axis are orthogonal:
+            return math.isclose(ux.dot(uy), 0.0, abs_tol=1e-9) and \
+                   math.isclose(ux.dot(uz), 0.0, abs_tol=1e-9) and \
+                   math.isclose(uy.dot(uz), 0.0, abs_tol=1e-9)
 
         dxf = self.dxf
 
         # OCS transformations have to be done by the transformation
         # matrix without reflexions. (?)
         ocs = ocs_without_reflexion()
+
+        if not is_orthogonal_transformation():
+            raise InsertTransformationError(
+                'INSERT entity can not represent a non orthogonal target coordinate system.')
+
         dxf.extrusion = ocs.new_extrusion
         dxf.insert = ocs.transform_vertex(dxf.insert)
+        # todo: rotation transformation is maybe a to simple approach
         dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
 
         # rx, ry, and rz are the reflexions applied by the transformation matrix m

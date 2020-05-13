@@ -1,6 +1,7 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 from typing import Union
+from typing import TYPE_CHECKING
 import pytest
 import random
 import math
@@ -9,8 +10,11 @@ from ezdxf.entities import (
     MText, Insert, Dimension,
 )
 from ezdxf.math import Matrix44, OCS, Vector, linspace, X_AXIS, Y_AXIS, Z_AXIS
-from ezdxf.math.transformtools import NonUniformScalingError
+from ezdxf.math.transformtools import NonUniformScalingError, InsertTransformationError
 import ezdxf
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing
 
 UNIFORM_SCALING = [(2, 2, 2), (-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
 NON_UNIFORM_SCALING = [(-1, 2, 3), (1, -2, 3), (1, 2, -3), (-3, -2, 1), (3, -2, -1), (-3, 2, -1), (-3, -2, -1)]
@@ -314,9 +318,9 @@ def test_random_ellipse_transformation(sx, sy, sz, start, end):
 
 
 @pytest.fixture(scope='module')
-def doc1():
+def doc1() -> 'Drawing':
     doc = ezdxf.new()
-    blk = doc.blocks.new('TEST1')
+    blk = doc.blocks.new('AXIS')
     blk.add_line((0, 0, 0), X_AXIS, dxfattribs={'color': 1})
     blk.add_line((0, 0, 0), Y_AXIS, dxfattribs={'color': 3})
     blk.add_line((0, 0, 0), Z_AXIS, dxfattribs={'color': 5})
@@ -324,10 +328,10 @@ def doc1():
 
 
 @pytest.mark.parametrize('sx, sy, sz', UNIFORM_SCALING)
-def test_random_block_reference_transformation(sx, sy, sz, doc1):
+def test_random_block_reference_transformation(sx, sy, sz, doc1: 'Drawing'):
     def insert():
         return Insert.new(dxfattribs={
-            'name': 'TEST1',
+            'name': 'AXIS',
             'insert': (0, 0, 0),
             'xscale': 1,
             'yscale': 1,
@@ -361,6 +365,17 @@ def test_random_block_reference_transformation(sx, sy, sz, doc1):
     entity, vertices = synced_transformation(entity0, vertices0, m)
     lines = list(entity.virtual_entities(non_uniform_scaling=True))
     check(lines, vertices)
+
+
+def test_insert_transformation_error(doc1: 'Drawing'):
+    insert = Insert.new(dxfattribs={
+        'name': 'AXIS',
+        'insert': (0, 0, 0),
+        'rotation': 45,
+    }, doc=doc1)
+    m = Matrix44.scale(0.5, 1, 1)
+    with pytest.raises(InsertTransformationError):
+        insert.transform(m)
 
 
 def test_xline():
