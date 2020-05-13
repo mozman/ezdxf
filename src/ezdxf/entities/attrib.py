@@ -156,7 +156,7 @@ class AttDef(BaseAttrib):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_text, acdb_attdef)  # don't add acdb_attdef_xrecord here
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
-        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
+        dxf = super(Text, self).load_dxf_attribs(processor)
         # do not call Text loader
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text)
@@ -216,7 +216,7 @@ class Attrib(BaseAttrib):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_text, acdb_attrib)  # don't add acdb_attdef_xrecord here
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
-        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
+        dxf = super(Text, self).load_dxf_attribs(processor)
         # do not call Text loader
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text)
