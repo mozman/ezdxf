@@ -11,7 +11,7 @@ from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags, group_tags
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010
 from ezdxf.lldxf import const
 from ezdxf.math.bspline import bspline_control_frame
 from ezdxf.math.bulge import bulge_to_arc
@@ -1240,8 +1240,8 @@ class SplineEdge:
         # build control points
         # control points have to be present and valid, otherwise AutoCAD crashes
         for x, y, *_ in self.control_points:
-            tagwriter.write_tag2(10, float(x))
-            tagwriter.write_tag2(20, float(y))
+            write_tag(10, float(x))
+            write_tag(20, float(y))
 
         # build weights list, optional
         for value in self.weights:
@@ -1253,18 +1253,21 @@ class SplineEdge:
         if len(self.fit_points) > 0:
             write_tag(97, len(self.fit_points))
             for x, y, *_ in self.fit_points:
-                tagwriter.write_tag2(11, float(x))
-                tagwriter.write_tag2(21, float(y))
+                write_tag(11, float(x))
+                write_tag(21, float(y))
+        elif tagwriter.dxfversion >= DXF2010:
+            # (97, 0) len tag required by AutoCAD 2010+
+            write_tag(97, 0)
 
         if self.start_tangent is not None:
             x, y, *_ = self.start_tangent
-            tagwriter.write_tag2(12, float(x))
-            tagwriter.write_tag2(22, float(y))
+            write_tag(12, float(x))
+            write_tag(22, float(y))
 
         if self.end_tangent is not None:
             x, y, *_ = self.end_tangent
-            tagwriter.write_tag2(13, float(x))
-            tagwriter.write_tag2(23, float(y))
+            write_tag(13, float(x))
+            write_tag(23, float(y))
 
     def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
         # established OCS not supported yet
