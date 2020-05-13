@@ -125,7 +125,7 @@ def virtual_block_reference_entities(block_ref: 'Insert',
         def skipped_entity_callback(entity, reason):
             logger.debug(f'(Virtual Block Reference Entities) Ignoring {str(entity)}: "{reason}"')
 
-    def disassemble(layout) -> Generator['DXFGraphic', None, None]:
+    def disassemble(layout) -> Iterable['DXFGraphic']:
         for entity in layout:
             # Do not explode ATTDEF entities. Already available in Insert.attribs
             if entity.dxftype() == 'ATTDEF':
@@ -155,9 +155,9 @@ def virtual_block_reference_entities(block_ref: 'Insert',
                 else:
                     skipped_entity_callback(entity, 'unsupported non-uniform scaling')
             except InsertTransformationError:
-                # INSERT entity can not represent the target coordinate system defined
-                # by transformation matrix 'm'. Yield transformed sub-entities of the
-                # INSERT entity:
+                # INSERT entity can not represented in the target coordinate system defined
+                # by transformation matrix `m`.
+                # Yield transformed sub-entities of the INSERT entity:
                 yield from transform(virtual_block_reference_entities(entity, skipped_entity_callback))
             else:
                 yield entity
@@ -173,7 +173,7 @@ def virtual_block_reference_entities(block_ref: 'Insert',
 def explode_entity(entity: 'DXFGraphic', target_layout: 'BaseLayout' = None) -> 'EntityQuery':
     """
     Explode parts of an entity as primitives into target layout, if target layout is ``None``,
-    the target layout is the layout of the POLYLINE.
+    the target layout is the layout of the source entity.
 
     Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF parts.
 
@@ -187,12 +187,16 @@ def explode_entity(entity: 'DXFGraphic', target_layout: 'BaseLayout' = None) -> 
 
     """
     dxftype = entity.dxftype()
+
+    if not hasattr(entity, 'virtual_entities'):
+        raise DXFTypeError(f'Can not explode entity {dxftype}.')
+
     if entity.doc is None:
         raise DXFStructureError(f'{dxftype} has to be assigned to a DXF document.')
 
     entitydb = entity.doc.entitydb
     if entitydb is None:
-        raise DXFStructureError(f'{dxftype} requires an entity database.')
+        raise DXFStructureError(f'Exploding {dxftype} requires an entity database.')
 
     if target_layout is None:
         target_layout = entity.get_layout()
