@@ -5,7 +5,7 @@ import math
 import random
 import ezdxf
 from ezdxf.math import linspace, Vector, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
-from ezdxf.entities import Circle, Arc, Ellipse, Insert
+from ezdxf.entities import Circle, Arc, Ellipse, Insert, Text
 
 DIR = Path('~/Desktop/Outbox/ezdxf').expanduser()
 
@@ -86,6 +86,8 @@ def ellipse(major_axis=(1, 0), ratio: float = 0.5, start: float = 0, end: float 
 UNIFORM_SCALING = [(-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
 NON_UNIFORM_SCALING = [(-1, 2, 3.1), (1, -2, 3.2), (1, 2, -3.3), (-3.4, -2, 1), (3.5, -2, -1), (-3.6, 2, -1),
                        (-3.7, -2, -1)]
+
+SCALING_WITHOUT_REFLEXION = [(2, 2, 2), (1, 2, 3)]
 
 
 def main_ellipse(layout):
@@ -179,7 +181,7 @@ def main_insert2(layout):
     doc.layers.new('exploded axis', dxfattribs={'color': -7})
 
     for i in range(5):
-        print(f'\n{i+1}. transformation')
+        print(f'\n{i + 1}. transformation')
 
         entity, vertices = synced_transformation(entity, vertices, m)
         print(f'INSERT extrusion {entity.dxf.extrusion}')
@@ -199,6 +201,51 @@ def main_insert2(layout):
             layout.add_entity(line)
 
 
+def main_text(layout):
+    content = '{}RSKNZQ'
+
+    def text(num):
+        height = 1.0
+        width = 1.0
+        p1 = Vector(0, 0, 0)
+
+        t = Text.new(dxfattribs={
+            'text': content.format(num),  # should easily show reflexion errors
+            'height': height,
+            'width': width,
+            'rotation': 0,
+            'layer': 'text',
+        }, doc=doc)
+        t.set_pos(p1, align='LEFT')
+        tlen = height * len(t.dxf.text) * width
+        p2 = p1.replace(x=tlen)
+        p3 = p2.replace(y=height)
+        p4 = p1.replace(y=height)
+        v = [p1, p2, p3, p4, p3.lerp(p4), p1.lerp(p4)]
+        return t, v
+
+    for i in range(20):
+        entity0, vertices0 = text(i+1)
+        m = Matrix44.chain(
+            Matrix44.scale(random.uniform(.5, 2), random.uniform(.5, 2), 1),
+            Matrix44.z_rotate(random.uniform(0, 90)),
+            Matrix44.translate(random.uniform(-20, 20), random.uniform(-20, 20), 0),
+        )
+        entity, vertices = synced_transformation(entity0, vertices0, m)
+        entity.dxf.text = content.format(i + 1)
+
+        layout.add_entity(entity)
+        p1, p2, p3, p4, center_top, center_left = vertices
+        layout.add_line(p1, p2, dxfattribs={'color': 1, 'layer': 'rect'})
+        layout.add_line(p2, p3, dxfattribs={'color': 3, 'layer': 'rect'})
+        layout.add_line(p3, p4, dxfattribs={'color': 1, 'layer': 'rect'})
+        layout.add_line(p4, p1, dxfattribs={'color': 3, 'layer': 'rect'})
+        layout.add_line(center_left, p2, dxfattribs={'color': 2, 'layer': 'rect'})
+        layout.add_line(center_left, p3, dxfattribs={'color': 2, 'layer': 'rect'})
+        layout.add_line(center_top, p1, dxfattribs={'color': 4, 'layer': 'rect'})
+        layout.add_line(center_top, p2, dxfattribs={'color': 4, 'layer': 'rect'})
+
+
 def setup_blk(blk):
     blk.add_line((0, 0, 0), X_AXIS, dxfattribs={'color': 1})
     blk.add_line((0, 0, 0), Y_AXIS, dxfattribs={'color': 3})
@@ -210,6 +257,6 @@ if __name__ == '__main__':
     msp = doc.modelspace()
     blk = doc.blocks.new('UCS')
     setup_blk(blk)
-    main_insert2(msp)
+    main_text(msp)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')

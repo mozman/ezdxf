@@ -212,14 +212,16 @@ class Text(DXFGraphic):
         if not dxf.hasattr('align_point'):
             dxf.align_point = dxf.insert
         ocs = OCSTransform(self.dxf.extrusion, m)
-
         dxf.insert = ocs.transform_vertex(dxf.insert)
         dxf.align_point = ocs.transform_vertex(dxf.align_point)
-        dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
-        dxf.oblique = ocs.transform_angle(dxf.oblique)
-        dxf.width = ocs.transform_length( Vector.from_deg_angle(dxf.rotation, dxf.width))
-        dxf.height = ocs.transform_length(Vector.from_deg_angle(dxf.rotation + 90, dxf.height))
 
+        dxf.oblique = ocs.transform_angle(dxf.oblique)
+        x_scale = ocs.transform_length(Vector.from_deg_angle(dxf.rotation))
+        y_scale = ocs.transform_length(Vector.from_deg_angle(dxf.rotation+90))
+        dxf.width *= x_scale / y_scale
+        dxf.height *= y_scale
+
+        dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
         if dxf.hasattr('thickness'):  # can be negative
             dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflexion=dxf.thickness)
 
