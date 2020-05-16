@@ -43,6 +43,13 @@ def synced_translation(entity, chk, axis_vertices=None, dx: float = 0, dy: float
     return entity, chk
 
 
+def synced_transformation(entity, chk, m: Matrix44):
+    entity = entity.copy()
+    entity.transform(m)
+    chk = list(m.transform_vertices(chk))
+    return entity, chk
+
+
 def add(msp, entity, vertices, layer='0'):
     entity.dxf.layer = layer
     entity.dxf.color = 2
@@ -77,7 +84,8 @@ def ellipse(major_axis=(1, 0), ratio: float = 0.5, start: float = 0, end: float 
 
 
 UNIFORM_SCALING = [(-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
-NON_UNIFORM_SCALING = [(-1, 2, 3.1), (1, -2, 3.2), (1, 2, -3.3), (-3.4, -2, 1), (3.5, -2, -1), (-3.6, 2, -1), (-3.7, -2, -1)]
+NON_UNIFORM_SCALING = [(-1, 2, 3.1), (1, -2, 3.2), (1, 2, -3.3), (-3.4, -2, 1), (3.5, -2, -1), (-3.6, 2, -1),
+                       (-3.7, -2, -1)]
 
 
 def main_ellipse(layout):
@@ -149,6 +157,48 @@ def main_insert(layout):
             layout.add_entity(line)
 
 
+def main_insert2(layout):
+    def insert():
+        return Insert.new(dxfattribs={
+            'name': 'UCS',
+            'insert': (0, 0, 0),
+            'xscale': 1,
+            'yscale': 1,
+            'zscale': 1,
+            'rotation': 0,
+            'layer': 'insert',
+        }, doc=doc), [(0, 0, 0), X_AXIS, Y_AXIS, Z_AXIS]
+
+    entity, vertices = insert()
+    m = Matrix44.chain(
+        Matrix44.scale(-1.1, 1.1, 1),
+        Matrix44.z_rotate(math.radians(10)),
+        Matrix44.translate(1, 1, 1),
+    )
+    print(f'MATRIX44 reflexions x= {m.reflexions[0]}, y= {m.reflexions[1]}')
+    doc.layers.new('exploded axis', dxfattribs={'color': -7})
+
+    for i in range(5):
+        print(f'\n{i+1}. transformation')
+
+        entity, vertices = synced_transformation(entity, vertices, m)
+        print(f'INSERT extrusion {entity.dxf.extrusion}')
+        print(f'INSERT scale x= {entity.dxf.xscale:.3f}, y= {entity.dxf.yscale:.3f}')
+        print(f'INSERT rotation = {entity.dxf.rotation:.3f} deg')
+        layout.add_entity(entity)
+
+        origin, x, y, z = list(vertices)
+        layout.add_line(origin, x, dxfattribs={'color': 2, 'layer': 'new axis'})
+        layout.add_line(origin, y, dxfattribs={'color': 4, 'layer': 'new axis'})
+        layout.add_line(origin, z, dxfattribs={'color': 6, 'layer': 'new axis'})
+        print(f'LINES extrusion {(z - origin).normalize()}')
+
+        for line in entity.virtual_entities(non_uniform_scaling=True):
+            line.dxf.layer = 'exploded axis'
+            line.dxf.color = 7
+            layout.add_entity(line)
+
+
 def setup_blk(blk):
     blk.add_line((0, 0, 0), X_AXIS, dxfattribs={'color': 1})
     blk.add_line((0, 0, 0), Y_AXIS, dxfattribs={'color': 3})
@@ -160,6 +210,6 @@ if __name__ == '__main__':
     msp = doc.modelspace()
     blk = doc.blocks.new('UCS')
     setup_blk(blk)
-    main_insert(msp)
+    main_insert2(msp)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')

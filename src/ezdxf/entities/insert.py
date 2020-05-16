@@ -379,8 +379,9 @@ class Insert(DXFGraphic):
 
         """
 
-        def ocs_without_reflexion():
-            ocs = OCSTransform(dxf.extrusion, m.without_reflexion())
+        def ocs_transform():
+            # Remark: OCS transformations without reflexions is not correct
+            ocs = OCSTransform(dxf.extrusion, m)
             ocs.set_new_ocs(ocs.m.transform_direction(ocs.old_extrusion))
             return ocs
 
@@ -397,10 +398,7 @@ class Insert(DXFGraphic):
                    math.isclose(uy.dot(uz), 0.0, abs_tol=1e-9)
 
         dxf = self.dxf
-
-        # OCS transformations have to be done by the transformation
-        # matrix without reflexions. (?)
-        ocs = ocs_without_reflexion()
+        ocs = ocs_transform()
 
         if not is_orthogonal_transformation():
             raise InsertTransformationError(
