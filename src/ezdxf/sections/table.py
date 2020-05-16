@@ -94,7 +94,9 @@ class Table:
 
     def __iter__(self) -> Iterable['DXFEntity']:
         """ Iterable of all table entries. """
-        return iter(self.entries.values())
+        for e in self.entries.values():
+            if e.is_alive:
+                yield e
 
     def new(self, name: str, dxfattribs: dict = None) -> 'DXFEntity':
         """

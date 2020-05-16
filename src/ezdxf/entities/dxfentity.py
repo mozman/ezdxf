@@ -795,8 +795,8 @@ class DXFEntity:
 
         # ! Last step !
         # write xdata, embedded objects
-        self.export_xdata(tagwriter)
         self.export_embedded_objects(tagwriter)
+        self.export_xdata(tagwriter)
 
     def export_base_class(self, tagwriter: 'TagWriter') -> None:
         """ Export base class DXF attributes and structures. (internal API) """

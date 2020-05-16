@@ -4,7 +4,7 @@ import pytest
 
 from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector
-
+from ezdxf.lldxf.const import DXF2007, DXF2010
 
 @pytest.fixture
 def hatch():
@@ -265,10 +265,15 @@ def test_no_fit_points_export(spline_edge_hatch):
     spline.knot_values = [1, 2, 3, 4, 5, 6]
     assert [(1, 1), (2, 2), (3, 3), (4, 4)] == spline.control_points
     assert len(spline.fit_points) == 0
-    writer = TagCollector()
+    writer = TagCollector(dxfversion=DXF2007)
     spline.export_dxf(writer)
-    # do not write length tag 97 if no fit points exists
+    # do not write length tag 97 if no fit points exists for DXF2007 and prior
     assert any(tag.code == 97 for tag in writer.tags) is False
+
+    writer = TagCollector(dxfversion=DXF2010)
+    spline.export_dxf(writer)
+    # do write length tag 97 if no fit points exists for DXF2010+
+    assert (97, 0) in writer.tags
 
 
 def test_is_pattern_hatch(hatch_pattern):

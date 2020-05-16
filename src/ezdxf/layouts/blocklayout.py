@@ -14,6 +14,7 @@ class BlockLayout(BaseLayout):
     in the :class:`BlocksSection` class. It represents a DXF Block.
 
     """
+
     def __contains__(self, entity: Union['DXFGraphic', str]) -> bool:
         """ Returns ``True`` if block contains `entity`.
 
@@ -49,6 +50,24 @@ class BlockLayout(BaseLayout):
     def dxf(self):
         """ DXF name space of associated :class:`~ezdxf.entities.BlockRecord` table entry. """
         return self.block_record.dxf
+
+    @property
+    def can_explode(self) -> bool:
+        """ Set property to ``True`` to allow exploding block references of this block. """
+        return bool(self.block_record.dxf.explode)
+
+    @can_explode.setter
+    def can_explode(self, value: bool):
+        self.block_record.dxf.explode = int(value)
+
+    @property
+    def scale_uniformly(self) -> bool:
+        """ Set property to ``True`` to allow block references of this block only scale uniformly. """
+        return bool(self.block_record.dxf.scale)
+
+    @scale_uniformly.setter
+    def scale_uniformly(self, value: bool):
+        self.block_record.dxf.scale = int(value)
 
     def attdefs(self) -> Iterable['AttDef']:
         """ Returns iterable of all :class:`~ezdxf.entities.attrib.Attdef` entities. """

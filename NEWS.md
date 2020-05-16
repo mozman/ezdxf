@@ -2,15 +2,24 @@
 News
 ====
 
-Version 0.12.2 - 2020-05-02
+Version 0.12.3 - 2020-05-16
+---------------------------
+
+- BUGFIX: DXF R2010+ requires zero length tag 97 for HATCH/SplineEdge if no fit points exist (vshu3000)
+- BUGFIX: Export order of XDATA and embedded objects (vshu3000)
+- BUGFIX: ATTRIB and ATTDEF did not load basic DXF attributes
+- NEW: `BlockLayout()` properties `can_explode` and `scale_uniformly`
+- NEW: `Hatch.remove_association()`
+
+Version 0.12.2 - 2020-05-03
 ---------------------------
 
 - BUGFIX: `XData.get()` now raises `DXFValueError` for not existing appids, like all other methods of the `XData()` class
 - BUGFIX: `Layer.description` returns an empty string for unknown XDATA structure in `AcAecLayerStandard`
 - BUGFIX: Initialize/Load `Hatch` edge coordinates as `Vec2()` objects
-- BUGFIX: typo in 3 point angular dimension subclass marker by vshu3000
-- BUGFIX: HATCH/SplineEdge did export length tag 97 if no fit points exist, creates invalid DXF for AutoCAD/BricsCAD by vshu3000  
-- BUGFIX: Ellipse handling in `virtual_block_reference_entities()` by Matt Broadway  
+- BUGFIX: typo in 3 point angular dimension subclass marker (vshu3000)
+- BUGFIX: HATCH/SplineEdge did export length tag 97 if no fit points exist, creates invalid DXF for AutoCAD/BricsCAD (vshu3000)  
+- BUGFIX: Ellipse handling in `virtual_block_reference_entities()` (Matt Broadway)  
 
 Version 0.12.1 - 2020-04-25
 ---------------------------

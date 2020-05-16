@@ -14,8 +14,6 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, LWPolyline, Polyline, Attrib, Line, Arc, Face3d, Text
 
-_2PI = math.pi * 2
-
 
 def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout',
                             uniform_scaling_factor: float = None) -> EntityQuery:
@@ -188,10 +186,16 @@ def virtual_block_reference_entities(block_ref: 'Insert',
     if has_scaling:
         # Non uniform scaling will produce incorrect results for some entities!
         # Mirroring about an axis is handled like non uniform scaling! (-1, 1, 1)
+        # (-1, -1, -1) is uniform scaling!
         has_non_uniform_scaling = not block_ref.has_uniform_scaling
+
         xscale = block_ref.dxf.xscale
         yscale = block_ref.dxf.yscale
         zscale = block_ref.dxf.zscale
+
+        if block_ref.has_uniform_scaling and xscale < 0:
+            # handle reflection about all three axis -x, -y, -z explicit as non uniform scaling
+            has_non_uniform_scaling = True
 
         if uniform_scaling_factor is not None:
             uniform_scaling_factor = float(uniform_scaling_factor)
