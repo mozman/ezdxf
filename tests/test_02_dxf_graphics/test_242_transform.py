@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 UNIFORM_SCALING = [(2, 2, 2), (-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
 NON_UNIFORM_SCALING = [(-1, 2, 3), (1, -2, 3), (1, 2, -3), (-3, -2, 1), (3, -2, -1), (-3, 2, -1), (-3, -2, -1)]
+SCALING_WITHOUT_REFLEXIONS = [(1, 1, 1), (2, 2, 2), (1, 2, 3)]
 
 
 # Assuming Transformation by Matrix44() class is correct.
@@ -327,8 +328,7 @@ def doc1() -> 'Drawing':
     return doc
 
 
-@pytest.mark.skip('Reflexions for INSERT still do not work!')
-@pytest.mark.parametrize('sx, sy, sz', UNIFORM_SCALING)
+@pytest.mark.parametrize('sx, sy, sz', SCALING_WITHOUT_REFLEXIONS)
 def test_random_block_reference_transformation(sx, sy, sz, doc1: 'Drawing'):
     def insert():
         return Insert.new(dxfattribs={
