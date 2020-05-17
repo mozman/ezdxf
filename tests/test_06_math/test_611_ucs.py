@@ -118,40 +118,10 @@ def test_points_to_ocs():
     assert result == expected
 
 
-def test_ocs_points_to_ocs():
-    ucs = UCS(ux=(0, 0, -1), uz=(1, 0, 0))
-    points = [(1, 2, 3), (4, 5, 6), (9, 8, 7)]
-    # tests only the actual state - as it is - not granted results are correct
-    expected = [
-        Vector(-1.4547842173342707, 1.6981174520612865, 3),
-        Vector(-3.0545253372991867, 5.6275993961721635, 6),
-        Vector(-3.8776861825487807, 11.400155694974972, 7),
-    ]
-    result = list(ucs.ocs_points_to_ocs(points, extrusion=Vector(2, 4, 7)))
-    assert result == expected
-
-
 def test_to_ocs_angle_deg():
     ucs = UCS.from_x_axis_and_point_in_xy(origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5))
     expected = 120.077450607124
     assert isclose(ucs.to_ocs_angle_deg(45), expected)
-
-
-def test_angles_to_ocs_deg():
-    ucs = UCS.from_x_axis_and_point_in_xy(origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5))
-    angles = [15, 30, 90]
-    expected = [ucs.to_ocs_angle_deg(a) for a in angles]
-    result = ucs.angles_to_ocs_deg(angles)
-    assert result == expected
-
-
-def test_ocs_angles_to_ocs_deg():
-    ucs = UCS.from_x_axis_and_point_in_xy(origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5))
-    angles = [15, 30, 90]
-    # tests only the actual state - as it is - not granted results are correct
-    expected = [-128.92976741554182, -113.92976741554183, -53.929767415541825]
-    result = ucs.ocs_angles_to_ocs_deg(angles, extrusion=Vector(1, 2, 3))
-    assert result == expected
 
 
 def test_constructor_functions():
