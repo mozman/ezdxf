@@ -491,28 +491,8 @@ class Hatch(DXFGraphic):
         self.seeds = list(points)
         self.dxf.n_seed_points = len(self.seeds)
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Hatch':
-        """ Transform HATCH entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-
-        def calc_new_elevation() -> Vector:
-            vertex = list(ucs.ocs_points_to_ocs([(0, 0, elevation)], extrusion=extrusion))[0]
-            return Vector(0, 0, vertex.z)
-
-        extrusion = self.dxf.extrusion
-        elevation = Vector(self.dxf.elevation).z
-        self.paths.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
-        self.dxf.elevation = calc_new_elevation()
-        self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
-        return self
-
     def transform(self, m: 'Matrix44') -> 'Hatch':
         """ Transform HATCH entity by transformation matrix `m` inplace.
-
-        Raises ``NonUniformScalingError()`` for non uniform scaling.
 
         .. versionadded:: 0.13
 
