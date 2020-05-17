@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Union, Tuple, List
 import math
 
 from ezdxf.math import Vector, Matrix44
-from ezdxf.math.transformtools import OCSTransform
+from ezdxf.math.transformtools import OCSTransform, transform_extrusion
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -311,32 +311,32 @@ class MText(DXFGraphic):
         self.append(r'\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
 
     def transform(self, m: Matrix44) -> 'MText':
-        """ Transform TEXT entity by transformation matrix `m` inplace.
+        """ Transform MTEXT entity by transformation matrix `m` inplace.
 
         .. versionadded:: 0.13
 
         """
         dxf = self.dxf
-        ocs = OCSTransform(self.dxf.extrusion, m)
+        old_extrusion = Vector(dxf.extrusion)
+        new_extrusion = m.transform_direction(old_extrusion)
 
-        rotation = dxf.rotation  # 0 by default
         if dxf.hasattr('rotation'):
-            dxf.rotation = ocs.transform_deg_angle(rotation)
+            dxf.text_direction = Vector.from_deg_angle(dxf.rotation)
+            dxf.discard('rotation')
 
-        if dxf.hasattr('text_direction'):
-            rotation = Vector(dxf.text_direction).angle_deg
-            dxf.text_direction = ocs.transform_direction(dxf.text_direction)
+        old_text_direction = Vector(dxf.text_direction)
+        new_text_direction = m.transform_direction(old_text_direction)
 
-        self.dxf.insert = ocs.transform_vertex(dxf.insert)
-
-        char_height_vec = Vector.from_deg_angle(rotation + 90, dxf.char_height)
-        dxf.char_height = ocs.transform_length(char_height_vec)
+        char_height_vec = old_extrusion.cross(old_text_direction).normalize(dxf.char_height)
+        dxf.char_height = m.transform_direction(char_height_vec).magnitude
 
         if dxf.hasattr('width'):
-            width_vec = Vector.from_deg_angle(rotation, dxf.width)
-            dxf.width = ocs.transform_length(width_vec)
+            width_vec = old_text_direction.normalize(dxf.width)
+            dxf.width = m.transform_direction(width_vec).magnitude
 
-        self.dxf.extrusion = ocs.new_extrusion
+        dxf.insert = m.transform(dxf.insert)
+        dxf.text_direction = new_text_direction
+        dxf.extrusion = new_extrusion
         return self
 
     def plain_text(self, split=False) -> Union[List[str], str]:
