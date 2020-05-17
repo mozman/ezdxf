@@ -45,17 +45,6 @@ class XLine(DXFGraphic):
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['start', 'unit_vector'])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'XLine':
-        """ Transform XLINE/RAY entity from local :class:`~ezdxf.math.UCS` coordinates to
-        :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        self.dxf.start = ucs.to_wcs(self.dxf.start)
-        self.dxf.unit_vector = ucs.direction_to_wcs(self.dxf.unit_vector)
-        return self
-
     def transform(self, m: Matrix44) -> 'XLine':
         """ Transform XLINE/RAY entity by transformation matrix `m` inplace.
 

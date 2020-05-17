@@ -162,18 +162,6 @@ class Image(DXFGraphic):
     def get_boundary_path(self) -> List['Vertex']:
         return self._boundary_path
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Image':
-        """ Transform IMAGE entity from local :class:`~ezdxf.math.UCS` coordinates to
-        :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        self.dxf.insert = ucs.to_wcs(self.dxf.insert)
-        self.dxf.u_pixel = ucs.direction_to_wcs(self.dxf.u_pixel)
-        self.dxf.v_pixel = ucs.direction_to_wcs(self.dxf.v_pixel)
-        return self
-
     def transform(self, m: 'Matrix44') -> 'Image':
         """ Transform IMAGE entity by transformation matrix `m` inplace.
 

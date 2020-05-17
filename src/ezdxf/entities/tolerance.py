@@ -50,18 +50,6 @@ class Tolerance(DXFGraphic):
             'dimstyle', 'insert', 'content', 'extrusion', 'x_axis_vector'
         ])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Tolerance':
-        """ Transform LINE entity from local :class:`~ezdxf.math.UCS` coordinates to
-        :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        self.dxf.insert = ucs.to_wcs(self.dxf.insert)
-        self.dxf.x_axis_vector = ucs.direction_to_wcs(self.dxf.x_axis_vector)
-        self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
-        return self
-
     def transform(self, m: 'Matrix44') -> 'Tolerance':
         """ Transform TOLERANCE entity by transformation matrix `m` inplace.
 

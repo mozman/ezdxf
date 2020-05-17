@@ -53,15 +53,6 @@ class Shape(DXFGraphic):
             'insert', 'size', 'name', 'thickness', 'rotation', 'xscale', 'oblique', 'extrusion',
         ])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Shape':
-        """ Transform SHAPE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        self._ucs_and_ocs_transformation(ucs, vector_names=('insert',), angle_names=('rotation',))
-        return self
-
     def transform(self, m: 'Matrix44') -> 'Shape':
         """ Transform SHAPE entity by transformation matrix `m` inplace.
 
@@ -73,7 +64,7 @@ class Shape(DXFGraphic):
         ocs = OCSTransform(self.dxf.extrusion, m)
 
         dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
-        dxf.oblique = ocs.transform_deg_angle(dxf.oblique)
+        # dxf.oblique = ocs.transform_deg_angle(dxf.oblique)
         dxf.size = ocs.transform_length((0, dxf.size, 0))
         dxf.x_scale = ocs.transform_length((dxf.x_scale, 0, 0), reflexion=dxf.x_scale)
         if dxf.hasattr('thickness'):  # thickness can be negative

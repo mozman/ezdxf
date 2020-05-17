@@ -63,16 +63,6 @@ class Solid(_Base):
             'vtx0', 'vtx1', 'vtx2', 'vtx3', 'thickness', 'extrusion',
         ])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Solid':
-        """ Transform SOLID/TRACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        # SOLID is 2d entity, placed by an OCS in 3d space
-        self._ucs_and_ocs_transformation(ucs, vector_names=VERTEXNAMES)
-        return self
-
     def transform(self, m: Matrix44) -> 'Solid':
         """ Transform SOLID/TRACE  entity by transformation matrix `m` inplace.
 
@@ -147,20 +137,6 @@ class Face3d(_Base):
         if not self.dxf.hasattr('vtx3'):
             self.dxf.vtx3 = self.dxf.vtx2
         self.dxf.export_dxf_attribs(tagwriter, ['vtx0', 'vtx1', 'vtx2', 'vtx3', 'invisible'])
-
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Face3d':
-        """ Transform 3DFACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        # 3DFACE is a real 3d entity
-        ucs_to_wcs = ucs.to_wcs
-        self.dxf.vtx0 = ucs_to_wcs(self.dxf.vtx0)
-        self.dxf.vtx1 = ucs_to_wcs(self.dxf.vtx1)
-        self.dxf.vtx2 = ucs_to_wcs(self.dxf.vtx2)
-        self.dxf.vtx3 = ucs_to_wcs(self.dxf.vtx3)
-        return self
 
     def transform(self, m: Matrix44) -> 'Face3d':
         """ Transform 3DFACE  entity by transformation matrix `m` inplace.

@@ -54,8 +54,7 @@ def test_virtual_entities(lwpolyline):
 
 
 def test_virtual_entities_elevation(lwpolyline):
-    ucs = UCS(origin=(1, 1, 1))
-    lwpolyline = lwpolyline.transform_to_wcs(ucs)
+    lwpolyline = lwpolyline.translate(1, 1, 1)
     assert lwpolyline.dxf.elevation == 1
     result = list(lwpolyline.virtual_entities())
     assert len(result) == 3
