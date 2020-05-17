@@ -221,29 +221,34 @@ def main_text(layout):
         p2 = p1.replace(x=tlen)
         p3 = p2.replace(y=height)
         p4 = p1.replace(y=height)
-        v = [p1, p2, p3, p4, p3.lerp(p4), p1.lerp(p4)]
+        v = [p1, p2, p3, p4, p3.lerp(p4), p2.lerp(p3)]
         return t, v
 
-    for i in range(20):
-        entity0, vertices0 = text(i+1)
+    def add_box(vertices):
+        p1, p2, p3, p4, center_top, center_right = vertices
+        layout.add_line(p1, p2, dxfattribs={'color': 1, 'layer': 'rect'})
+        layout.add_line(p2, p3, dxfattribs={'color': 3, 'layer': 'rect'})
+        layout.add_line(p3, p4, dxfattribs={'color': 1, 'layer': 'rect'})
+        layout.add_line(p4, p1, dxfattribs={'color': 3, 'layer': 'rect'})
+        layout.add_line(center_right, p1, dxfattribs={'color': 2, 'layer': 'rect'})
+        layout.add_line(center_right, p4, dxfattribs={'color': 2, 'layer': 'rect'})
+        layout.add_line(center_top, p1, dxfattribs={'color': 4, 'layer': 'rect'})
+        layout.add_line(center_top, p2, dxfattribs={'color': 4, 'layer': 'rect'})
+
+    entity0, vertices0 = text(1)
+    entity0, vertices0 = synced_rotation(entity0, vertices0, axis=Z_AXIS, angle=math.radians(30))
+    entity0, vertices0 = synced_translation(entity0, vertices0, dx=3, dy=3)
+
+    for i, reflexion in enumerate([(1, 2), (-1, 2), (-1, -2), (1, -2)]):
+        rx, ry = reflexion
         m = Matrix44.chain(
-            Matrix44.scale(random.uniform(.5, 2), random.uniform(.5, 2), 1),
-            Matrix44.z_rotate(random.uniform(0, 90)),
-            Matrix44.translate(random.uniform(-20, 20), random.uniform(-20, 20), 0),
+            Matrix44.scale(rx, ry, 1),
         )
         entity, vertices = synced_transformation(entity0, vertices0, m)
         entity.dxf.text = content.format(i + 1)
 
         layout.add_entity(entity)
-        p1, p2, p3, p4, center_top, center_left = vertices
-        layout.add_line(p1, p2, dxfattribs={'color': 1, 'layer': 'rect'})
-        layout.add_line(p2, p3, dxfattribs={'color': 3, 'layer': 'rect'})
-        layout.add_line(p3, p4, dxfattribs={'color': 1, 'layer': 'rect'})
-        layout.add_line(p4, p1, dxfattribs={'color': 3, 'layer': 'rect'})
-        layout.add_line(center_left, p2, dxfattribs={'color': 2, 'layer': 'rect'})
-        layout.add_line(center_left, p3, dxfattribs={'color': 2, 'layer': 'rect'})
-        layout.add_line(center_top, p1, dxfattribs={'color': 4, 'layer': 'rect'})
-        layout.add_line(center_top, p2, dxfattribs={'color': 4, 'layer': 'rect'})
+        add_box(vertices)
 
 
 def setup_blk(blk):

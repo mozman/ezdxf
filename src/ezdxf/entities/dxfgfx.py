@@ -371,7 +371,7 @@ class DXFGraphic(DXFEntity):
         .. versionadded:: 0.13
 
         """
-        return self.transform(Matrix44.x_rotate(angle))
+        return self.transform(Matrix44.y_rotate(angle))
 
     def rotate_z(self, angle: float) -> 'DXFGraphic':
         """ Rotate entity inplace about z-axis, returns `self` (floating interface).
@@ -382,7 +382,7 @@ class DXFGraphic(DXFEntity):
         .. versionadded:: 0.13
 
         """
-        return self.transform(Matrix44.x_rotate(angle))
+        return self.transform(Matrix44.z_rotate(angle))
 
     def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Iterable, angle_names: Iterable = None) -> None:
         """ Transforms entity for given `ucs` to the parent coordinate system (most likely the WCS).

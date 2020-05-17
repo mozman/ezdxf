@@ -2,6 +2,7 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Tuple, Union
+import math
 from ezdxf.math import Vector, Matrix44
 from ezdxf.math.transformtools import OCSTransform
 
@@ -214,17 +215,23 @@ class Text(DXFGraphic):
         ocs = OCSTransform(self.dxf.extrusion, m)
         dxf.insert = ocs.transform_vertex(dxf.insert)
         dxf.align_point = ocs.transform_vertex(dxf.align_point)
+        old_rotation = dxf.rotation
+        new_rotation = ocs.transform_deg_angle(old_rotation)
+        x_scale = ocs.transform_length(Vector.from_deg_angle(old_rotation))
+        y_scale = ocs.transform_length(Vector.from_deg_angle(old_rotation + 90.0))
 
-        dxf.oblique = ocs.transform_angle(dxf.oblique)
-        x_scale = ocs.transform_length(Vector.from_deg_angle(dxf.rotation))
-        y_scale = ocs.transform_length(Vector.from_deg_angle(dxf.rotation+90))
+        if not ocs.scale_uniform:
+            oblique_vec = Vector.from_deg_angle(old_rotation + 90.0 - dxf.oblique)
+            new_oblique_deg = new_rotation + 90.0 - ocs.transform_direction(oblique_vec).angle_deg
+            dxf.oblique = new_oblique_deg
+            y_scale *= math.cos(math.radians(new_oblique_deg))
+
         dxf.width *= x_scale / y_scale
         dxf.height *= y_scale
+        dxf.rotation = new_rotation
 
-        dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
         if dxf.hasattr('thickness'):  # can be negative
             dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflexion=dxf.thickness)
-
         dxf.extrusion = ocs.new_extrusion
         return self
 

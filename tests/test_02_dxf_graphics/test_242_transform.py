@@ -379,6 +379,8 @@ def test_insert_transformation_error(doc1: 'Drawing'):
         insert.transform(m)
 
 
+
+
 def test_xline():
     # same implementation for Ray()
     xline = XLine.new(dxfattribs={'start': (2, 3, 4), 'unit_vector': (1, 0, 0)})
@@ -480,6 +482,38 @@ def test_text_transform_interface():
     text.translate(1, 2, 3)
     assert text.dxf.insert == (3, 4, 6)
     assert text.dxf.align_point == (4, 4, 4)
+
+def get_text():
+    return Text.new(dxfattribs={
+        'text': 'TEXT',
+        'height': 1.0,
+        'width': 1.0,
+        'rotation': 0,
+        'layer': 'text',
+    }).set_pos((0, 0, 0), align='LEFT')
+
+@pytest.mark.parametrize('rx, ry', [(1, 1), (-1, 1), (-1, -1), (1, -1)])
+def test_text_scale_and_reflexion(rx, ry):
+    insert = Vector(0, 0, 0)
+    m = Matrix44.chain(
+        Matrix44.scale(2*rx, 3*ry, 1),
+        Matrix44.z_rotate(math.radians(45)),
+        Matrix44.translate(3 * rx, 3 * ry, 0),
+    )
+    text = get_text()
+    text.transform(m)
+    check_point = m.transform(insert)
+    ocs = text.ocs()
+    assert ocs.to_wcs(text.dxf.insert).isclose(check_point)
+    assert math.isclose(text.dxf.height, 3.0)
+    assert math.isclose(text.dxf.width, 2.0/3.0)
+
+
+def test_text_non_uniform_scaling():
+    text = get_text()
+    text.rotate_z(math.radians(30))
+    text.scale(1, 2, 1)
+    assert math.isclose(text.dxf.oblique, 33.004491598883064)
 
 
 def test_mtext_transform_interface():
