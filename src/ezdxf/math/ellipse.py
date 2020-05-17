@@ -78,14 +78,21 @@ def transform(m: Matrix44, center: Vector, major_axis: Vector, extrusion: Vector
             start_param -= pi2
             end_param -= pi2
 
+    # normalize start- and end params
+    start_param = start_param % math.tau
+    end_param = end_param % math.tau
+    if math.isclose(start_param, end_param):
+        start_param = 0.0
+        end_param = math.tau
+
     return EllipseParams(
         new_center,
         new_major_axis,
         new_minor_axis,
         new_extrusion,
         max(new_ratio, 1e-6),
-        start_param % math.tau,
-        end_param % math.tau,
+        start_param,
+        end_param,
     )
 
 
