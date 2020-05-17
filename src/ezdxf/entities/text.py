@@ -192,17 +192,6 @@ class Text(DXFGraphic):
             valign = 0
         return const.TEXT_ALIGNMENT_BY_FLAGS.get((halign, valign), 'LEFT')
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Text':
-        """ Transform TEXT entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        if not self.dxf.hasattr('align_point'):
-            self.dxf.align_point = self.dxf.insert
-        self._ucs_and_ocs_transformation(ucs, vector_names=['insert', 'align_point'], angle_names=['rotation'])
-        return self
-
     def transform(self, m: Matrix44) -> 'Text':
         """ Transform TEXT entity by transformation matrix `m` inplace.
 
