@@ -126,3 +126,15 @@ def test_linspace():
     assert list(linspace(2, -2, num=5)) == [2, 1, 0, -1, -2]
     with pytest.raises(ValueError):
         list(linspace(1, 4, num=-1))
+
+
+def test_reflect_angle_x_deg():
+    for a, expected in [(0, 180), (45, 135), (90, 90), (135, 45), (180, 0),
+                        (225, 315), (270, 270), (315, 225), (360, 180), ]:
+        assert isclose(reflect_angle_x_deg(a), expected)
+
+
+def test_reflect_angle_y_deg():
+    for a, expected in [(0, 0), (45, 315), (90, 270), (135, 225), (180, 180),
+                        (225, 135), (270, 90), (315, 45), (360, 0), ]:
+        assert isclose(reflect_angle_y_deg(a), expected)

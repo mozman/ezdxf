@@ -48,6 +48,8 @@ def linspace(start: float, stop: float, num: int, endpoint=True) -> Iterable[flo
     Returns `num` evenly spaced samples, calculated over the interval [start, stop].
     The endpoint of the interval can optionally be excluded.
 
+    .. versionadded:: 0.12.3
+
     """
     if num < 0:
         raise ValueError(f'Number of samples, {num}, must be non-negative.')
@@ -63,6 +65,34 @@ def linspace(start: float, stop: float, num: int, endpoint=True) -> Iterable[flo
     for _ in range(num):
         yield start
         start += delta
+
+
+def reflect_angle_x_deg(a: float) -> float:
+    """
+    Returns reflected angle of `a` in x-direction in degrees.
+    Angles are counter clockwise orientated and +x-axis is at 0 degrees.
+
+    Args:
+        a: angle to reflect in degrees
+
+    .. versionadded:: 0.13
+
+    """
+    return (180. - (a % 360.)) % 360.
+
+
+def reflect_angle_y_deg(a: float) -> float:
+    """
+    Returns reflected angle of `a` in y-direction in degrees.
+    Angles are counter clockwise orientated and +y-axis is at 90 degrees.
+
+    Args:
+        a: angle to reflect in degrees
+
+    .. versionadded:: 0.13
+
+    """
+    return (360. - (a % 360.)) % 360.
 
 
 def closest_point(base: 'Vertex', points: Iterable['Vertex']) -> 'Vector':
