@@ -3,7 +3,7 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict, Callable
 import math
-from ezdxf.math import Vector, UCS, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
+from ezdxf.math import Vector, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -16,7 +16,7 @@ from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef, UCS,
+        TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef,
         BlockLayout, BaseLayout
     )
 
@@ -159,21 +159,14 @@ class Insert(DXFGraphic):
 
     @property
     def has_uniform_scaling(self) -> bool:
-        """ Returns ``True`` if scaling is uniform in x-, y- and z-axis.
+        """
+        Returns ``True`` if scaling is uniform in x-, y- and z-axis ignoring reflections
+        e.g. (1, 1, -1) is uniform scaling.
 
         .. versionadded:: 0.12
 
         """
-        return self.dxf.xscale == self.dxf.yscale == self.dxf.zscale
-
-    @property
-    def text_scaling(self) -> float:
-        """ Returns uniform scaling factor for text entities.
-
-        .. versionadded:: 0.12
-
-        """
-        return max(abs(self.dxf.xscale), abs(self.dxf.yscale), abs(self.dxf.zscale))
+        return abs(self.dxf.xscale) == abs(self.dxf.yscale) == abs(self.dxf.zscale)
 
     def set_scale(self, factor: float):
         """ Set uniform scaling.
@@ -362,12 +355,16 @@ class Insert(DXFGraphic):
     def transform(self, m: 'Matrix44') -> 'Insert':
         """ Transform INSERT entity by transformation matrix `m` inplace.
 
+        Unlike the transformation matrix `m`, the INSERT entity can not represent a non orthogonal
+        target coordinate system, for this case an :class:`InsertTransformationError` will be raised.
+
+        Reflections do not work yet!
+
         .. versionadded:: 0.13
 
         """
 
         def ocs_transform():
-            # Remark: OCS transformations without reflexions is not correct
             ocs = OCSTransform(dxf.extrusion, m)
             ocs.set_new_ocs(ocs.m.transform_direction(ocs.old_extrusion))
             return ocs
@@ -393,7 +390,7 @@ class Insert(DXFGraphic):
 
         dxf.extrusion = ocs.new_extrusion
         dxf.insert = ocs.transform_vertex(dxf.insert)
-        # todo: rotation transformation is maybe a to simple approach
+        # todo: rotation angle transformation is maybe a to simple approach
         dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
 
         # rx, ry, and rz are the reflexions applied by the transformation matrix m
@@ -485,7 +482,7 @@ class Insert(DXFGraphic):
         .. warning::
 
             **Non uniform scaling** lead to incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
-            some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and and
+            some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
             POLYLINE/LWPOLYLINE with arc segments. Non uniform scaling is getting better, but still not perfect!
 
         Args:
@@ -575,11 +572,8 @@ class Insert(DXFGraphic):
                 tag, text, location = unpack(dxfattribs)
                 attrib = self.add_attrib(tag, text, location, dxfattribs)
                 attrib.transform(m)
-                attrib.dxf.height *= attrib_scaling_factor
 
         m = self.matrix44()
-        # This method does not work well for non uniform scaled block references!
-        attrib_scaling_factor = self.text_scaling
         blockdef = self.block()
         autofill()
         return self

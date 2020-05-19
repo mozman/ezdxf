@@ -312,6 +312,6 @@ if __name__ == '__main__':
     msp = doc.modelspace()
     blk = doc.blocks.new('UCS')
     setup_blk(blk)
-    main_mtext(msp)
+    main_insert2(msp)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')

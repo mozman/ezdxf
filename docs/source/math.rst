@@ -150,13 +150,7 @@ UCS Class
 
     .. automethod:: points_to_ocs
 
-    .. automethod:: ocs_points_to_ocs
-
     .. automethod:: to_ocs_angle_deg
-
-    .. automethod:: angles_to_ocs_deg
-
-    .. automethod:: ocs_angles_to_ocs_deg
 
     .. automethod:: rotate(axis: Vertex, angle:float) -> UCS
 
