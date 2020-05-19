@@ -4,9 +4,8 @@
 from typing import TYPE_CHECKING, Union, Tuple, List
 import math
 
-from ezdxf.math import Vector, Matrix44
-from ezdxf.math.transformtools import OCSTransform, transform_extrusion
-
+from ezdxf.math import Vector, Matrix44, OCS
+from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
@@ -17,7 +16,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex
 
 __all__ = ['MText']
 
@@ -318,17 +317,24 @@ class MText(DXFGraphic):
         """
         dxf = self.dxf
         old_extrusion = Vector(dxf.extrusion)
-        new_extrusion = m.transform_direction(old_extrusion)
+        new_extrusion, _ = transform_extrusion(old_extrusion, m)
 
-        if dxf.hasattr('rotation'):
-            dxf.text_direction = Vector.from_deg_angle(dxf.rotation)
-            dxf.discard('rotation')
+        if dxf.hasattr('rotation') and not dxf.hasattr('text_direction'):
+            # MTEXT is not an OCS entity, but I don't know how else to convert
+            # a rotation angle for an entity just defined by an extrusion vector.
+            # It's correct for the most common case: extrusion=(0, 0, 1)
+            ocs = OCS(old_extrusion)
+            dxf.text_direction = ocs.to_wcs(Vector.from_deg_angle(dxf.rotation))
+
+        dxf.discard('rotation')
 
         old_text_direction = Vector(dxf.text_direction)
         new_text_direction = m.transform_direction(old_text_direction)
 
-        char_height_vec = old_extrusion.cross(old_text_direction).normalize(dxf.char_height)
-        dxf.char_height = m.transform_direction(char_height_vec).magnitude
+        old_char_height_vec = old_extrusion.cross(old_text_direction).normalize(dxf.char_height)
+        new_char_height_vec = m.transform_direction(old_char_height_vec)
+        oblique = new_text_direction.angle_between(new_char_height_vec)
+        dxf.char_height = new_char_height_vec.magnitude * math.sin(oblique)
 
         if dxf.hasattr('width'):
             width_vec = old_text_direction.normalize(dxf.width)

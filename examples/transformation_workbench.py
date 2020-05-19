@@ -5,7 +5,7 @@ import math
 import random
 import ezdxf
 from ezdxf.math import linspace, Vector, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
-from ezdxf.entities import Circle, Arc, Ellipse, Insert, Text
+from ezdxf.entities import Circle, Arc, Ellipse, Insert, Text, MText
 
 DIR = Path('~/Desktop/Outbox/ezdxf').expanduser()
 
@@ -251,6 +251,56 @@ def main_text(layout):
         add_box(vertices)
 
 
+def main_mtext(layout):
+    content = '{}RSKNZQ'
+
+    def mtext(num):
+        height = 1.0
+        width = 1.0
+        p1 = Vector(0, 0, 0)
+
+        t = MText.new(dxfattribs={
+            'char_height': height,
+            'width': width,
+            'text_direction': (1, 0, 0),
+            'attachment_point': 7,
+            'layer': 'text',
+        }, doc=doc)
+        t.text = content.format(num)
+        tlen = height * len(t.text) * width
+        p2 = p1.replace(x=tlen)
+        p3 = p2.replace(y=height)
+        p4 = p1.replace(y=height)
+        v = [p1, p2, p3, p4, p3.lerp(p4), p2.lerp(p3)]
+        return t, v
+
+    def add_box(vertices):
+        p1, p2, p3, p4, center_top, center_right = vertices
+        layout.add_line(p1, p2, dxfattribs={'color': 1, 'layer': 'rect'})
+        layout.add_line(p2, p3, dxfattribs={'color': 3, 'layer': 'rect'})
+        layout.add_line(p3, p4, dxfattribs={'color': 1, 'layer': 'rect'})
+        layout.add_line(p4, p1, dxfattribs={'color': 3, 'layer': 'rect'})
+        layout.add_line(center_right, p1, dxfattribs={'color': 2, 'layer': 'rect'})
+        layout.add_line(center_right, p4, dxfattribs={'color': 2, 'layer': 'rect'})
+        layout.add_line(center_top, p1, dxfattribs={'color': 4, 'layer': 'rect'})
+        layout.add_line(center_top, p2, dxfattribs={'color': 4, 'layer': 'rect'})
+
+    entity0, vertices0 = mtext(1)
+    entity0, vertices0 = synced_rotation(entity0, vertices0, axis=Z_AXIS, angle=math.radians(30))
+    entity0, vertices0 = synced_translation(entity0, vertices0, dx=3, dy=3)
+
+    for i, reflexion in enumerate([(1, 2), (-1, 2), (-1, -2), (1, -2)]):
+        rx, ry = reflexion
+        m = Matrix44.chain(
+            Matrix44.scale(rx, ry, 1),
+        )
+        entity, vertices = synced_transformation(entity0, vertices0, m)
+        entity.text = content.format(i + 1)
+
+        layout.add_entity(entity)
+        add_box(vertices)
+
+
 def setup_blk(blk):
     blk.add_line((0, 0, 0), X_AXIS, dxfattribs={'color': 1})
     blk.add_line((0, 0, 0), Y_AXIS, dxfattribs={'color': 3})
@@ -262,6 +312,6 @@ if __name__ == '__main__':
     msp = doc.modelspace()
     blk = doc.blocks.new('UCS')
     setup_blk(blk)
-    main_text(msp)
+    main_mtext(msp)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')
