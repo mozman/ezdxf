@@ -402,6 +402,9 @@ class Insert(DXFGraphic):
         dxf.xscale = x_scale
         dxf.yscale = y_scale
         dxf.zscale = z_scale
+        
+        for attrib in self.attribs:
+            attrib.transform(m)
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> 'Insert':
