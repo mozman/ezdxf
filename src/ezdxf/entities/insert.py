@@ -394,7 +394,7 @@ class Insert(DXFGraphic):
             # apply y-reflection:
             y_scale = -y_scale
 
-        ocs = OCSTransform.explicit(OCS(dxf.extrusion), OCS(uz), m)
+        ocs = OCSTransform.from_ocs(OCS(dxf.extrusion), OCS(uz), m)
         dxf.insert = ocs.transform_vertex(dxf.insert)
         dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
 

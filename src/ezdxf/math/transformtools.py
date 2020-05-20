@@ -83,7 +83,7 @@ class OCSTransform:
         return self.new_ocs.uz
 
     @classmethod
-    def explicit(cls, old: OCS, new: OCS, m: Matrix44) -> 'OCSTransform':
+    def from_ocs(cls, old: OCS, new: OCS, m: Matrix44) -> 'OCSTransform':
         ocs = cls()
         ocs.m = m
         ocs.old_ocs = old
