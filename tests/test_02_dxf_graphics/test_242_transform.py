@@ -328,7 +328,7 @@ def doc1() -> 'Drawing':
     return doc
 
 
-@pytest.mark.parametrize('sx, sy, sz', SCALING_WITHOUT_REFLEXIONS)
+@pytest.mark.parametrize('sx, sy, sz', UNIFORM_SCALING + NON_UNIFORM_SCALING)
 def test_random_block_reference_transformation(sx, sy, sz, doc1: 'Drawing'):
     def insert():
         return Insert.new(dxfattribs={
@@ -377,6 +377,40 @@ def test_insert_transformation_error(doc1: 'Drawing'):
     m = Matrix44.scale(0.5, 1, 1)
     with pytest.raises(InsertTransformationError):
         insert.transform(m)
+
+
+@pytest.mark.parametrize('sx, sy, sz', [
+    # Non uniform scaling will throw InsertTransformationError(),
+    # because this multiple applied transformations cause non orthogonal
+    # target coordinate systems, which can not represented by the INSERT entity.
+    (1.1, 1.1, 1.1), (-1.1, -1.1, -1.1),
+    (-1.1, 1.1, 1.1), (1.1, -1.1, 1.1), (1.1, 1.1, -1.1),
+    (-1.1, -1.1, 1.1), (1.1, -1.1, -1.1), (-1.1, 1.1, -1.1),
+])
+def test_apply_transformation_multiple_times(sx, sy, sz, doc1: 'Drawing'):
+    def insert():
+        return Insert.new(dxfattribs={
+            'name': 'AXIS',
+            'insert': (0, 0, 0),
+            'xscale': 1,
+            'yscale': 1,
+            'zscale': 1,
+            'rotation': 0,
+        }, doc=doc1), [(0, 0, 0), X_AXIS, Y_AXIS, Z_AXIS]
+
+    entity, vertices = insert()
+    m = Matrix44.chain(
+        Matrix44.scale(sx, sy, sz),
+        Matrix44.z_rotate(math.radians(10)),
+        Matrix44.translate(1, 1, 1),
+    )
+
+    for i in range(5):
+        entity, vertices = synced_transformation(entity, vertices, m)
+        points = list(vertices)
+        for num, line in enumerate(entity.virtual_entities(non_uniform_scaling=True)):
+            assert points[0].isclose(line.dxf.start, abs_tol=1e-9)
+            assert points[num + 1].isclose(line.dxf.end, abs_tol=1e-9)
 
 
 def test_xline():
@@ -481,6 +515,7 @@ def test_text_transform_interface():
     assert text.dxf.insert == (3, 4, 6)
     assert text.dxf.align_point == (4, 4, 4)
 
+
 def get_text():
     return Text.new(dxfattribs={
         'text': 'TEXT',
@@ -490,11 +525,12 @@ def get_text():
         'layer': 'text',
     }).set_pos((0, 0, 0), align='LEFT')
 
+
 @pytest.mark.parametrize('rx, ry', [(1, 1), (-1, 1), (-1, -1), (1, -1)])
 def test_text_scale_and_reflexion(rx, ry):
     insert = Vector(0, 0, 0)
     m = Matrix44.chain(
-        Matrix44.scale(2*rx, 3*ry, 1),
+        Matrix44.scale(2 * rx, 3 * ry, 1),
         Matrix44.z_rotate(math.radians(45)),
         Matrix44.translate(3 * rx, 3 * ry, 0),
     )
@@ -504,7 +540,7 @@ def test_text_scale_and_reflexion(rx, ry):
     ocs = text.ocs()
     assert ocs.to_wcs(text.dxf.insert).isclose(check_point)
     assert math.isclose(text.dxf.height, 3.0)
-    assert math.isclose(text.dxf.width, 2.0/3.0)
+    assert math.isclose(text.dxf.width, 2.0 / 3.0)
 
 
 def test_text_non_uniform_scaling():
