@@ -177,7 +177,6 @@ def main_insert2(layout):
         Matrix44.z_rotate(math.radians(10)),
         Matrix44.translate(1, 1, 1),
     )
-    print(f'MATRIX44 reflexions x= {m.reflexions[0]}, y= {m.reflexions[1]}')
     doc.layers.new('exploded axis', dxfattribs={'color': -7})
 
     for i in range(5):
@@ -312,6 +311,6 @@ if __name__ == '__main__':
     msp = doc.modelspace()
     blk = doc.blocks.new('UCS')
     setup_blk(blk)
-    main_insert2(msp)
+    main_insert(msp)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')
