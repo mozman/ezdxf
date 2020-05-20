@@ -379,8 +379,6 @@ def test_insert_transformation_error(doc1: 'Drawing'):
         insert.transform(m)
 
 
-
-
 def test_xline():
     # same implementation for Ray()
     xline = XLine.new(dxfattribs={'start': (2, 3, 4), 'unit_vector': (1, 0, 0)})
@@ -536,28 +534,31 @@ def test_insert_transform_interface():
 
 
 def test_insert_scaling():
+    # Insert.transform() changes the extrusion vector
+    # sign of scaling factors depend from new extrusion vector
+    # just compare absolute values
     insert = Insert()
     insert.dxf.insert = (0, 0, 0)
 
     insert.scale(2, 3, 4)
-    assert insert.dxf.xscale == 2
-    assert insert.dxf.yscale == 3
-    assert insert.dxf.zscale == 4
+    assert abs(insert.dxf.xscale) == 2
+    assert abs(insert.dxf.yscale) == 3
+    assert abs(insert.dxf.zscale) == 4
 
     insert.scale(-1, 1, 1)
-    assert insert.dxf.xscale == -2
-    assert insert.dxf.yscale == 3
-    assert insert.dxf.zscale == 4
+    assert abs(insert.dxf.xscale) == 2
+    assert abs(insert.dxf.yscale) == 3
+    assert abs(insert.dxf.zscale) == 4
 
     insert.scale(-1, -1, 1)
-    assert insert.dxf.xscale == 2
-    assert insert.dxf.yscale == -3
-    assert insert.dxf.zscale == 4
+    assert abs(insert.dxf.xscale) == 2
+    assert abs(insert.dxf.yscale) == 3
+    assert abs(insert.dxf.zscale) == 4
 
     insert.scale(-2, -2, -2)
-    assert insert.dxf.xscale == -4
-    assert insert.dxf.yscale == 6
-    assert insert.dxf.zscale == -8
+    assert abs(insert.dxf.xscale) == 4
+    assert abs(insert.dxf.yscale) == 6
+    assert abs(insert.dxf.zscale) == 8
 
 
 def test_dimension_transform_interface():

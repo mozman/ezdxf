@@ -3,7 +3,7 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict, Callable
 import math
-from ezdxf.math import Vector, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
+from ezdxf.math import Vector, X_AXIS, Y_AXIS, Z_AXIS, Matrix44, OCS
 from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -37,6 +37,8 @@ acdb_block_reference = DefSubclass('AcDbBlockReference', {
     'row_spacing': DXFAttr(45, default=0, optional=True),
     'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
 })
+
+NON_ORTHO_MSG = 'INSERT entity can not represent a non orthogonal target coordinate system.'
 
 
 @register_entity
@@ -358,55 +360,48 @@ class Insert(DXFGraphic):
         Unlike the transformation matrix `m`, the INSERT entity can not represent a non orthogonal
         target coordinate system, for this case an :class:`InsertTransformationError` will be raised.
 
-        Reflections do not work yet!
-
         .. versionadded:: 0.13
 
         """
 
-        def ocs_transform():
-            ocs = OCSTransform(dxf.extrusion, m)
-            ocs.set_new_ocs(ocs.m.transform_direction(ocs.old_extrusion))
-            return ocs
-
-        def is_orthogonal_transformation() -> bool:
-            # Transform x-, y- and z-axis of current INSERT into WCS:
-            wcs_axis = self.matrix44().transform_directions((X_AXIS, Y_AXIS, Z_AXIS))
-
-            # Transform WCS axis into target coordinate system, remove possible scaling by normalizing:
-            ux, uy, uz = m.transform_directions(wcs_axis, normalize=True)
-
-            # Check if axis are orthogonal:
-            return math.isclose(ux.dot(uy), 0.0, abs_tol=1e-9) and \
-                   math.isclose(ux.dot(uz), 0.0, abs_tol=1e-9) and \
-                   math.isclose(uy.dot(uz), 0.0, abs_tol=1e-9)
-
         dxf = self.dxf
-        ocs = ocs_transform()
+        m1 = self.matrix44()
 
-        if not is_orthogonal_transformation():
-            raise InsertTransformationError(
-                'INSERT entity can not represent a non orthogonal target coordinate system.')
+        # Transform scaled source axis into target coordinate system
+        ux, uy, uz = m.transform_directions((m1.ux, m1.uy, m1.uz))
 
-        dxf.extrusion = ocs.new_extrusion
+        # Get new scaling factors, all are positive:
+        # z-axis is the real new z-axis, no reflection required
+        # x-axis is the real new x-axis, no reflection required
+        # y-axis - reflection is detected below
+        z_scale = uz.magnitude
+        x_scale = ux.magnitude
+        y_scale = uy.magnitude
+
+        # check for orthogonal x-, y- and z-axis
+        ux = ux.normalize()
+        uy = uy.normalize()
+        uz = uz.normalize()
+        if not (math.isclose(ux.dot(uz), 0.0, abs_tol=1e-9) and
+                math.isclose(ux.dot(uy), 0.0, abs_tol=1e-9) and
+                math.isclose(uz.dot(uy), 0.0, abs_tol=1e-9)):
+            raise InsertTransformationError(NON_ORTHO_MSG)
+
+        # expected y-axis for an orthogonal right handed coordinate system
+        expected_uy = uz.cross(ux)
+        if expected_uy.isclose(-uy, abs_tol=1e-9):
+            # transformed y-axis points into opposite direction of the expected y-axis
+            # apply y-reflection:
+            y_scale = -y_scale
+
+        ocs = OCSTransform.explicit(OCS(dxf.extrusion), OCS(uz), m)
         dxf.insert = ocs.transform_vertex(dxf.insert)
-        # todo: rotation angle transformation is maybe a to simple approach
         dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
 
-        # rx, ry, and rz are the reflexions applied by the transformation matrix m
-        rx, ry, rz = m.reflexions
-
-        # sx, sy and sz are the actual scaling parameter of the INSERT entity
-        sx = dxf.xscale
-        sy = dxf.yscale
-        sz = dxf.zscale
-
-        dxf.xscale = ocs.transform_scale_factor((sx, 0, 0), reflexion=rx * sx)
-        dxf.yscale = ocs.transform_scale_factor((0, sy, 0), reflexion=ry * sy)
-        dxf.zscale = ocs.transform_scale_factor((0, 0, sz), reflexion=rz * sz)
-
-        for attrib in self.attribs:
-            attrib.transform(m)
+        dxf.extrusion = uz
+        dxf.xscale = x_scale
+        dxf.yscale = y_scale
+        dxf.zscale = z_scale
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> 'Insert':

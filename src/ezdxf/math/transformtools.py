@@ -62,16 +62,32 @@ def transform_extrusion(extrusion: 'Vertex', m: Matrix44) -> Tuple[Vector, bool]
 
 
 class OCSTransform:
-    def __init__(self, extrusion: Vector, m: Matrix44):
+    def __init__(self, extrusion: Vector = None, m: Matrix44 = None):
         self.m = m
-        self.old_extrusion = extrusion
-        self.old_ocs = OCS(extrusion)
-        self.new_extrusion, self.scale_uniform = transform_extrusion(extrusion, m)
-        self.new_ocs = OCS(self.new_extrusion)
+        if extrusion is None:
+            self.old_ocs = None
+            self.scale_uniform = False
+            self.new_ocs = None
+        else:
+            self.old_ocs = OCS(extrusion)
+            new_extrusion, self.scale_uniform = transform_extrusion(extrusion, m)
+            self.new_ocs = OCS(new_extrusion)
 
-    def set_new_ocs(self, extrusion: 'Vertex'):
-        self.new_extrusion = Vector(extrusion)
-        self.new_ocs = OCS(self.new_extrusion)
+    @property
+    def old_extrusion(self) -> Vector:
+        return self.old_ocs.uz
+
+    @property
+    def new_extrusion(self) -> Vector:
+        return self.new_ocs.uz
+
+    @classmethod
+    def explicit(cls, old: OCS, new: OCS, m: Matrix44) -> 'OCSTransform':
+        ocs = cls()
+        ocs.m = m
+        ocs.old_ocs = old
+        ocs.new_ocs = new
+        return ocs
 
     def transform_length(self, length: 'Vertex', reflexion=1.0) -> float:
         """ Returns magnitude of `length` direction vector transformed from
