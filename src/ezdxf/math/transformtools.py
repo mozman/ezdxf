@@ -3,7 +3,8 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple
 import math
-from .matrix44 import Matrix44, sign
+from .matrix44 import Matrix44
+from .construct2d import sign
 from .vector import Vector, X_AXIS, Y_AXIS
 from .ucs import OCS
 
@@ -26,9 +27,9 @@ class InsertTransformationError(TransformError):
 def transform_thickness_and_extrusion_without_ocs(entity: 'DXFGraphic', m: Matrix44) -> None:
     if entity.dxf.hasattr('thickness'):
         thickness = entity.dxf.thickness
-        reflexion = sign(thickness)
+        reflection = sign(thickness)
         thickness = m.transform_direction(entity.dxf.extrusion * thickness)
-        entity.dxf.thickness = thickness.magnitude * reflexion
+        entity.dxf.thickness = thickness.magnitude * reflection
         entity.dxf.extrusion = thickness.normalize()
     elif entity.dxf.hasattr('extrusion'):  # without thickness?
         extrusion = m.transform_direction(entity.dxf.extrusion)
@@ -89,11 +90,11 @@ class OCSTransform:
         ocs.new_ocs = new
         return ocs
 
-    def transform_length(self, length: 'Vertex', reflexion=1.0) -> float:
+    def transform_length(self, length: 'Vertex', reflection=1.0) -> float:
         """ Returns magnitude of `length` direction vector transformed from
-        old OCS into new OCS including `reflexion` correction applied.
+        old OCS into new OCS including `reflection` correction applied.
         """
-        return self.m.transform_direction(self.old_ocs.to_wcs(length)).magnitude * sign(reflexion)
+        return self.m.transform_direction(self.old_ocs.to_wcs(length)).magnitude * sign(reflection)
 
     transform_scale_factor = transform_length
 

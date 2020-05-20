@@ -6,8 +6,7 @@ from functools import partial
 import math
 from abc import abstractmethod
 
-from .vector import Vector, Vec2, NULLVEC, Z_AXIS
-from .matrix44 import Matrix44
+from .vector import Vector, Vec2, NULLVEC
 from .bbox import BoundingBox2d
 
 if TYPE_CHECKING:
@@ -65,6 +64,11 @@ def linspace(start: float, stop: float, num: int, endpoint=True) -> Iterable[flo
     for _ in range(num):
         yield start
         start += delta
+
+
+def sign(f: float) -> float:
+    """ Return sign of float `f` as -1 or +1, 0 returns +1 """
+    return -1.0 if f < 0.0 else +1.0
 
 
 def reflect_angle_x_deg(a: float) -> float:

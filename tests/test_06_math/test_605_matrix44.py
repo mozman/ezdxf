@@ -221,27 +221,3 @@ class TestMatrix44:
         m = Matrix44([1] * 16)
         pytest.raises(ZeroDivisionError, m.inverse)
 
-        # s = Matrix44.scale(-10, -20, -30)
-        # assert s.get_scaling() == (-10, -20, -30)
-
-    def test_reflexion(self):
-        s = Matrix44.scale(10, 20, 30)
-        assert s.reflexions == (1, 1, 1)
-
-        s = Matrix44.scale(-10, 20, -30)
-        assert s.reflexions == (-1, 1, -1)
-
-    def test_combine_reflexion(self):
-        s = Matrix44.scale(10, 20, 30)
-        s.combine_reflexions((1, -1, 1))
-        assert s.reflexions == (1, -1, 1)
-
-        # Matrix44.chain() applies combine_reflexion() automatically
-        s1 = Matrix44.scale(10, 20, 30)
-        s2 = Matrix44.scale(-10, 20, -30)
-        s = Matrix44.chain(s1, s2)
-        assert s.reflexions == (-1, 1, -1)
-
-        # Matrix multiplication does not maintain reflexion
-        s = s1 * s2
-        assert (s.reflexions == (-1, 1, -1)) is False

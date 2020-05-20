@@ -6,12 +6,13 @@ from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d, distance_point_line_2d,
     is_point_on_line_2d, is_point_in_polygon_2d, is_point_left_of_line, point_to_line_relation,
-    rytz_axis_construction, angle_to_param, linspace, enclosing_angles, reflect_angle_x_deg, reflect_angle_y_deg,
+    rytz_axis_construction, angle_to_param, linspace, enclosing_angles, reflect_angle_x_deg,
+    reflect_angle_y_deg, sign,
 )
 from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState, intersection_ray_ray_3d, normal_vector_3p,
 )
-from .matrix44 import Matrix44, sign
+from .matrix44 import Matrix44
 from .matrix33 import Matrix33
 from .matrix import Matrix
 from .bspline import bspline_control_frame, bspline_control_frame_approx

@@ -447,7 +447,6 @@ class Insert(DXFGraphic):
 
         # set translation
         m.set_row(3, insert.xyz)
-        m.set_reflexions(sx, sy, sz)
         return m
 
     def reset_transformation(self) -> None:

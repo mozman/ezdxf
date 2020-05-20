@@ -77,7 +77,7 @@ class Solid(_Base):
                 dxf.set(name, ocs.transform_vertex(dxf.get(name)))
         if dxf.hasattr('thickness'):
             # thickness can be negative
-            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflexion=dxf.thickness)
+            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflection=dxf.thickness)
         dxf.extrusion = ocs.new_extrusion
         return self
 

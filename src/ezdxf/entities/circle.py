@@ -62,7 +62,6 @@ class Circle(DXFGraphic):
         ocs = self.ocs()
         for angle in angles:
             v = Vector.from_deg_angle(angle, self.dxf.radius) + self.dxf.center
-            # convert from OCS to WCS
             yield ocs.to_wcs(v)
 
     def transform(self, m: Matrix44) -> 'Circle':
@@ -83,7 +82,7 @@ class Circle(DXFGraphic):
             dxf.radius = ocs.transform_length((dxf.radius, 0, 0))
             if dxf.hasattr('thickness'):
                 # thickness vector points in the z-direction of the old_ocs, thickness can be negative
-                dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflexion=dxf.thickness)
+                dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflection=dxf.thickness)
         else:
             raise NonUniformScalingError('CIRCLE/ARC does not support non uniform scaling')
             # Parent function has to catch this Exception and convert this CIRCLE/ARC into an ELLIPSE

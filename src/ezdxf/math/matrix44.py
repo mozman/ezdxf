@@ -14,15 +14,10 @@ from .vector import Vector
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
-__all__ = ['Matrix44', 'sign']
+__all__ = ['Matrix44']
 
 
 # removed array.array because array is optimized for space not speed, and space optimization is not needed
-
-def sign(f: float) -> float:
-    """ Return sign of float `f` as -1 or +1, 0 returns +1 """
-    return -1.0 if f < 0.0 else +1.0
-
 
 def floats(items: Iterable) -> List[float]:
     return [float(v) for v in items]
@@ -46,9 +41,9 @@ class Matrix44:
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     )
-    __slots__ = ('matrix', 'reflexions')
+    __slots__ = ('matrix')
 
-    def __init__(self, *args, reflexions=(1.0, 1.0, 1.0)):
+    def __init__(self, *args):
         """
         Matrix44() is the identity matrix.
 
@@ -56,14 +51,8 @@ class Matrix44:
 
         Matrix44(row1, row2, row3, row4) four rows, each row with four values.
 
-        The `reflexions` attribute stores reflexion (negative scaling) signs for x-, y-
-        and z-unit vectors  as +1 and -1, this values have no impact on calculations
-        and are not validated if they match applied scaling, they exist only to
-        preserves this information for applicants like ``Insert.transform()``.
-
         """
         self.matrix: List[float] = None
-        self.reflexions: Tuple[float, float, float] = reflexions
         self.set(*args)
 
     def set(self, *args) -> None:
@@ -86,20 +75,6 @@ class Matrix44:
             raise ValueError("Invalid count of arguments (4 row vectors or one list with 16 values).")
         if len(self.matrix) != 16:
             raise ValueError("Invalid matrix count")
-
-    def set_reflexions(self, rx: float, ry: float, rz: float):
-        """ Set reflexions, values can differ from -1 or +1. """
-        self.reflexions = (sign(rx), sign(ry), sign(rz))
-
-    def combine_reflexions(self, r: Tuple[float, float, float]):
-        """ Combine existing reflexions with given reflexions `r`.
-
-        This is a naive approach to preserve reflexion information across multiple
-        transformations an will not work for every scenario.
-        """
-        sx, sy, sz = self.reflexions
-        rx, ry, rz = r
-        self.reflexions = (sx * rx, sy * ry, sz * rz)
 
     def __repr__(self) -> str:
         """ Returns the representation string of the matrix:
@@ -162,7 +137,7 @@ class Matrix44:
 
     def copy(self) -> 'Matrix44':
         """ Copy of :class:`Matrix` """
-        return self.__class__(self.matrix, reflexions=self.reflexions)
+        return self.__class__(self.matrix)
 
     __copy__ = copy
 
@@ -227,7 +202,6 @@ class Matrix44:
             0., 0., float(sz), 0.,
             0., 0., 0., 1.
         ])
-        m.reflexions = (sign(sx), sign(sy), sign(sz))
         return m
 
     @classmethod
@@ -393,7 +367,6 @@ class Matrix44:
         transformation = Matrix44()
         for matrix in matrices:
             transformation *= matrix
-            transformation.combine_reflexions(matrix.reflexions)
         return transformation
 
     @staticmethod
@@ -420,10 +393,6 @@ class Matrix44:
             uz_x, uz_y, uz_z, 0,
             or_x, or_y, or_z, 1,
         ))
-
-    def without_reflexion(self) -> 'Matrix44':
-        rx, ry, rz = self.reflexions
-        return Matrix44.ucs(self.ux * rx, self.uy * ry, self.uz * rz, self.origin)
 
     def __hash__(self) -> int:
         """ Returns hash value of matrix. """
