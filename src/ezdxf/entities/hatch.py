@@ -778,18 +778,6 @@ class PolylinePath:
 
         export_source_boundary_objects(tagwriter, self.source_boundary_objects)
 
-    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
-        """ Transform polyline boundary paths from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        These paths are 2d elements, placed in to OCS of the HATCH.
-
-        """
-        # established OCS not supported yet
-        if len(self.vertices):
-            ocs_vertices = (Vector(x, y, elevation) for x, y, bulge in self.vertices)
-            vertices = list(ucs.ocs_points_to_ocs(ocs_vertices, extrusion=extrusion))
-            self.vertices = [(v.x, v.y, p[2]) for v, p in zip(vertices, self.vertices)]
-
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         """ Transform polyline path.
         """
@@ -831,16 +819,6 @@ class EdgePath:
             return EDGE_CLASSES[edge_type].load_tags(tags[1:])
         else:
             raise const.DXFStructureError("HATCH: unknown edge type: {}".format(edge_type))
-
-    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
-        """ Transform edge boundary paths from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        These paths are 2d elements, placed in to OCS of the HATCH.
-
-        """
-        # established OCS not supported yet
-        for edge in self.edges:
-            edge.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         """ Transform edge boundary paths.
@@ -1036,10 +1014,6 @@ class LineEdge:
         tagwriter.write_tag2(11, float(x))
         tagwriter.write_tag2(21, float(y))
 
-    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
-        # established OCS not supported yet
-        self.start, self.end = _transform_2d_ocs_vertices(ucs, [self.start, self.end], elevation, extrusion)
-
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         self.start = ocs.transform_2d_vertex(self.start, elevation)
         self.end = ocs.transform_2d_vertex(self.end, elevation)
@@ -1081,11 +1055,6 @@ class ArcEdge:
         tagwriter.write_tag2(50, self.start_angle)
         tagwriter.write_tag2(51, self.end_angle)
         tagwriter.write_tag2(73, self.is_counter_clockwise)
-
-    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
-        # established OCS not supported yet
-        self.center = _transform_2d_ocs_vertices(ucs, [self.center], elevation, extrusion)[0]
-        self.start_angle, self.end_angle = ucs.ocs_angles_to_ocs_deg([self.start_angle, self.end_angle], extrusion)
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         self.center = ocs.transform_2d_vertex(self.center, elevation)
@@ -1136,10 +1105,6 @@ class EllipseEdge:
         tagwriter.write_tag2(50, self.start_angle)
         tagwriter.write_tag2(51, self.end_angle)
         tagwriter.write_tag2(73, self.is_counter_clockwise)
-
-    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
-        self.center = _transform_2d_ocs_vertices(ucs, [self.center], elevation=elevation, extrusion=extrusion)[0]
-        self.major_axis = ucs.direction_to_wcs(self.major_axis).vec2
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         ocs_to_wcs = ocs.old_ocs.to_wcs
@@ -1248,15 +1213,6 @@ class SplineEdge:
             x, y, *_ = self.end_tangent
             write_tag(13, float(x))
             write_tag(23, float(y))
-
-    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
-        # established OCS not supported yet
-        self.control_points = _transform_2d_ocs_vertices(ucs, self.control_points, elevation, extrusion)
-        self.fit_points = _transform_2d_ocs_vertices(ucs, self.fit_points, elevation, extrusion)
-        if self.start_tangent is not None:
-            self.start_tangent = ucs.direction_to_wcs(self.start_tangent).xyz[:2]
-        if self.end_tangent is not None:
-            self.end_tangent = ucs.direction_to_wcs(self.end_tangent).xyz[:2]
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         self.control_points = list(ocs.transform_2d_vertex(v, elevation) for v in self.control_points)
