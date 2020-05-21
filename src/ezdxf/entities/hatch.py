@@ -1,11 +1,11 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-08
-from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Optional, cast
+from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Optional
 from contextlib import contextmanager
 import math
 import copy
-from ezdxf.math import Vector, Vec2, Matrix44, reflect_angle_x_deg
+from ezdxf.math import Vector, Vec2, Matrix44, reflect_angle_y_deg
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
@@ -1128,8 +1128,7 @@ class EllipseEdge:
         if ocs.new_extrusion.isclose(e.extrusion, abs_tol=1e-9):
             pass
         elif ocs.new_extrusion.isclose(-e.extrusion, abs_tol=1e-9):
-            # reverse extrusion vector
-            pass
+            self.is_counter_clockwise = 0
         else:
             raise ArithmeticError('Invalid EllipseEdge() transformation, please send bug report.')
         wcs_to_ocs = ocs.new_ocs.from_wcs

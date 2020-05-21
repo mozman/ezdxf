@@ -1,11 +1,12 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
+from typing import cast
 from pathlib import Path
 import math
 import random
 import ezdxf
 from ezdxf.math import linspace, Vector, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
-from ezdxf.entities import Circle, Arc, Ellipse, Insert, Text, MText
+from ezdxf.entities import Circle, Arc, Ellipse, Insert, Text, MText, Hatch
 
 DIR = Path('~/Desktop/Now/ezdxf').expanduser()
 UNIFORM_SCALING = [(-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
@@ -132,6 +133,19 @@ def main_ellipse(layout):
         p = list(entity0.vertices([0, math.pi / 2, math.pi, math.pi * 1.5]))
         layout.add_line(p[0], p[2], dxfattribs={'color': 1, 'layer': 'new axis'})
         layout.add_line(p[1], p[3], dxfattribs={'color': 3, 'layer': 'new axis'})
+
+
+def main_multi_ellipse(layout):
+    m = Matrix44.chain(
+        Matrix44.scale(1.1, 1.3, 1),
+        Matrix44.z_rotate(math.radians(10)),
+        Matrix44.translate(1, 1, 0),
+    )
+    entity, vertices, axis_vertices = ellipse(start=math.pi / 2, end=-math.pi / 2)
+
+    for index in range(5):
+        entity, vertices = synced_transformation(entity, vertices, m)
+        add(layout, entity, vertices)
 
 
 def main_insert(layout):
@@ -292,18 +306,19 @@ def main_mtext(layout):
         add_box(vertices)
 
 
-def hatch_polyline(msp):
+def hatch_polyline(msp, edge_path=True):
     vertices = [(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)]
     hatch = msp.add_hatch(color=1)
     hatch.paths.add_polyline_path(vertices, is_closed=1)
-    hatch.paths.arc_edges_to_ellipse_edges()
+    if edge_path:
+        hatch.paths.arc_edges_to_ellipse_edges()
     lwpoly = msp.add_lwpolyline(vertices, format='xyb', dxfattribs={'color': 1, 'closed': 1})
     return hatch, lwpoly
 
 
 def main_uniform_hatch_polyline(layout):
     entitydb = layout.doc.entitydb
-    hatch, lwpolyline = hatch_polyline(layout)
+    hatch, lwpolyline = hatch_polyline(layout, edge_path=False)
     m = Matrix44.chain(
         Matrix44.scale(-1.1, 1.1, 1),
         Matrix44.z_rotate(math.radians(10)),
@@ -343,16 +358,54 @@ def main_non_uniform_hatch_polyline(layout):
         layout.add_entity(hatch)
 
 
+def main_ellipse_hatch(layout):
+    def draw_ellipse_axis(ellipse):
+        center = ellipse.center
+        major_axis = ellipse.major_axis
+        msp.add_line(center, center+major_axis)
+
+    entitydb = layout.doc.entitydb
+    hatch = cast(Hatch, layout.add_hatch(color=1))
+    path = hatch.paths.add_edge_path()
+    path.add_line((0, 0), (5, 0))
+    path.add_ellipse((2.5, 0), (2.5, 0), ratio=.5, start_angle=0, end_angle=180, is_counter_clockwise=1)
+
+    chk_ellipse, chk_vertices, _ = ellipse((2.5, 0), ratio=0.5, start=0, end=math.pi)
+    chk_ellipse, chk_vertices = synced_translation(chk_ellipse, chk_vertices, dx=2.5)
+
+    m = Matrix44.chain(
+        Matrix44.scale(1.1, 1.3, 1),
+        Matrix44.z_rotate(math.radians(15)),
+        Matrix44.translate(1, 1, 0),
+    )
+    for index in range(2):
+        color = 2 + index
+
+        hatch = hatch.copy()
+        entitydb.add(hatch)
+        hatch.dxf.color = color
+        hatch.transform(m)
+        layout.add_entity(hatch)
+
+        ellipse_edge = hatch.paths[0].edges[1]
+        draw_ellipse_axis(ellipse_edge)
+
+        chk_ellipse, chk_vertices = synced_transformation(chk_ellipse, chk_vertices, m)
+        add(layout, chk_ellipse, chk_vertices)
+
+
 if __name__ == '__main__':
     doc = ezdxf.new('R2000', setup=True)
     setup_csys_blk('UCS')
     msp = doc.modelspace()
     # main_ellipse(msp)
+    # main_multi_ellipse(msp)
     # main_text(msp)
     # main_mtext(msp)
     # main_insert(msp)
     # main_insert2(msp)
-    # main_uniform_hatch_polyline(msp)
-    main_non_uniform_hatch_polyline(msp)
+    main_uniform_hatch_polyline(msp)
+    # main_ellipse_hatch(msp)
+    # main_non_uniform_hatch_polyline(msp)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')
