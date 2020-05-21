@@ -437,10 +437,6 @@ class DXFEntity:
     DEFAULT_ATTRIBS = None  # type: dict
     MIN_DXF_VERSION_FOR_EXPORT = DXF12
 
-    # Explicit excluding is better than implicit excluding; idea to exclude attribs with leading '_' prevents
-    # 'protected' members from cloning, which may cause other problems.
-    EXCLUDE_FROM_CLONING = {'doc'}
-
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor. (internal API)"""
         # public attributes for package users
