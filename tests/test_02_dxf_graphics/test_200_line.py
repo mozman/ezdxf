@@ -1,11 +1,13 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-02-15
 import pytest
+import math
 
 from ezdxf.entities.line import Line
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.math import Matrix44
 
 TEST_CLASS = Line
 TEST_TYPE = 'LINE'
@@ -112,3 +114,50 @@ def test_write_dxf(txt, ver):
     line.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
 
+
+def test_transform():
+    line = Line.new(dxfattribs={'start': (0, 0, 0), 'end': (1, 0, 0), 'extrusion': (0, 1, 0)})
+    m = Matrix44.translate(1, 2, 3)
+    line.transform(m)
+
+    # simple 3D entity - no OCS transformation,
+    assert line.dxf.start == (1, 2, 3)
+    assert line.dxf.end == (2, 2, 3)
+    # extrusion direction without translation - not an OCS extrusion vector!
+    assert line.dxf.extrusion == (0, 1, 0)
+
+    # Create new entity by transformation:
+    new_line = line.copy()
+    new_line.transform(m)
+
+    assert new_line.dxf.start == (2, 4, 6)
+    assert new_line.dxf.end == (3, 4, 6)
+    assert new_line.dxf.extrusion == (0, 1, 0)
+
+
+def test_translation():
+    line = Line.new(dxfattribs={'start': (0, 0, 0), 'end': (1, 0, 0), 'extrusion': (0, 1, 0)})
+    line.translate(1, 2, 3)
+    assert line.dxf.start == (1, 2, 3)
+    assert line.dxf.end == (2, 2, 3)
+
+
+def test_rotation():
+    line = Line.new(dxfattribs={'start': (0, 0, 0), 'end': (1, 0, 0), 'extrusion': (0, 1, 0)})
+    angle = math.pi / 4
+    m = Matrix44.z_rotate(angle)
+    line.transform(m)
+    assert line.dxf.start == (0, 0, 0)
+    assert line.dxf.end.isclose((math.cos(angle), math.sin(angle), 0), abs_tol=1e-9)
+    assert line.dxf.extrusion.isclose((-math.cos(angle), math.sin(angle), 0), abs_tol=1e-9)
+    assert line.dxf.thickness == 0
+
+
+def test_scaling():
+    line = Line.new(dxfattribs={'start': (0, 0, 0), 'end': (1, 0, 0), 'extrusion': (0, 1, 0), 'thickness': 2})
+    m = Matrix44.scale(2, 2, 0)
+    line.transform(m)
+    assert line.dxf.start == (0, 0, 0)
+    assert line.dxf.end == (2, 0, 0)
+    assert line.dxf.extrusion == (0, 1, 0)
+    assert line.dxf.thickness == 4

@@ -7,7 +7,7 @@ import ezdxf
 from ezdxf.entities.insert import Insert
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Vector
+from ezdxf.math import Matrix44, InsertTransformationError
 
 TEST_CLASS = Insert
 TEST_TYPE = 'INSERT'
@@ -277,3 +277,54 @@ def test_matrix44_direction():
     m = insert.matrix44()
     assert m.transform((1, 0, 0)) == (3, 2, 3)
     assert m.transform_direction((1, 0, 0)) == (2, 0, 0), 'only scaling has to be applied for directions'
+
+
+def test_insert_transform_interface():
+    insert = Insert()
+    insert.dxf.insert = (1, 0, 0)
+
+    insert.transform(Matrix44.translate(1, 2, 3))
+    assert insert.dxf.insert == (2, 2, 3)
+
+    # optimized translate implementation
+    insert.translate(-1, -2, -3)
+    assert insert.dxf.insert == (1, 0, 0)
+
+
+def test_insert_transformation_error():
+    insert = Insert.new(dxfattribs={
+        'name': 'AXIS',
+        'insert': (0, 0, 0),
+        'rotation': 45,
+    })
+    m = Matrix44.scale(0.5, 1, 1)
+    with pytest.raises(InsertTransformationError):
+        insert.transform(m)
+
+
+def test_insert_scaling():
+    # Insert.transform() changes the extrusion vector
+    # sign of scaling factors depend from new extrusion vector
+    # just compare absolute values
+    insert = Insert()
+    insert.dxf.insert = (0, 0, 0)
+
+    insert.scale(2, 3, 4)
+    assert abs(insert.dxf.xscale) == 2
+    assert abs(insert.dxf.yscale) == 3
+    assert abs(insert.dxf.zscale) == 4
+
+    insert.scale(-1, 1, 1)
+    assert abs(insert.dxf.xscale) == 2
+    assert abs(insert.dxf.yscale) == 3
+    assert abs(insert.dxf.zscale) == 4
+
+    insert.scale(-1, -1, 1)
+    assert abs(insert.dxf.xscale) == 2
+    assert abs(insert.dxf.yscale) == 3
+    assert abs(insert.dxf.zscale) == 4
+
+    insert.scale(-2, -2, -2)
+    assert abs(insert.dxf.xscale) == 4
+    assert abs(insert.dxf.yscale) == 6
+    assert abs(insert.dxf.zscale) == 8

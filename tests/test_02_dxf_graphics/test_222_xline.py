@@ -5,6 +5,7 @@ import pytest
 
 from ezdxf.entities.xline import XLine
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.math import Matrix44
 
 XLINE = """0
 XLINE
@@ -74,3 +75,22 @@ def test_write_dxf():
     result = TagCollector.dxftags(entity)
     expected = basic_tags_from_text(XLINE)
     assert result == expected
+
+
+def test_xline_transform():
+    # same implementation for Ray()
+    xline = XLine.new(dxfattribs={'start': (2, 3, 4), 'unit_vector': (1, 0, 0)})
+    # 1. scaling - 2. rotation - 3. translation
+    m = Matrix44.chain(Matrix44.scale(2, 2, 3), Matrix44.translate(1, 1, 1))
+    xline.transform(m)
+
+    assert xline.dxf.start == (5, 7, 13)
+    assert xline.dxf.unit_vector == (1, 0, 0)
+
+
+def test_xline_fast_translation():
+    # same implementation for Ray()
+    xline = XLine.new(dxfattribs={'start': (2, 3, 4), 'unit_vector': (1, 0, 0)})
+    xline.translate(1, 2, 3)
+    assert xline.dxf.start == (3, 5, 7)
+    assert xline.dxf.unit_vector == (1, 0, 0)

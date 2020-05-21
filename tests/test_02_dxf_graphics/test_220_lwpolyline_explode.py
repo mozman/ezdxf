@@ -4,7 +4,6 @@ import pytest
 import math
 import ezdxf
 from ezdxf.entities.lwpolyline import LWPolyline
-from ezdxf.math import UCS
 
 POINTS = [(0, 0), (1, 0, 1), (2, 0), (3, 0)]
 

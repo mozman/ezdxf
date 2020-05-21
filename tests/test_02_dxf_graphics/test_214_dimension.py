@@ -1,9 +1,9 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-02-15
 import pytest
 import math
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44
 
 from ezdxf.entities.dimension import Dimension, linear_measurement
 from ezdxf.lldxf.const import DXF12, DXF2000
@@ -209,7 +209,22 @@ def test_linear_measurement_without_ocs():
     assert measurement == 1
 
     measurement = linear_measurement(Vector(0, 0, 0), Vector(1, 0, 0), angle=math.radians(45))
-    assert math.isclose(measurement, 1./math.sqrt(2.))
+    assert math.isclose(measurement, 1. / math.sqrt(2.))
 
     measurement = linear_measurement(Vector(0, 0, 0), Vector(1, 0, 0), angle=math.radians(90))
     assert math.isclose(measurement, 0, abs_tol=1e-12)
+
+
+def test_dimension_transform_interface():
+    dim = Dimension()
+    dim.dxf.insert = (1, 0, 0)  # OCS point
+    dim.dxf.defpoint = (0, 1, 0)  # WCS point
+    dim.dxf.angle = 45
+
+    dim.transform(Matrix44.translate(1, 2, 3))
+    assert dim.dxf.insert == (2, 2, 3)
+    assert dim.dxf.defpoint == (1, 3, 3)
+    assert dim.dxf.angle == 45
+
+    dim.transform(Matrix44.z_rotate(math.radians(45)))
+    assert math.isclose(dim.dxf.angle, 90)

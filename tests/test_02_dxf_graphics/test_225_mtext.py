@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-03-06
 import pytest
@@ -275,3 +275,10 @@ def test_mtext_plain_text():
 
 def test_mtext_plain_text_special_char():
     assert plain_text("%%d") == "°"
+
+
+def test_mtext_transform_interface():
+    mtext = MText()
+    mtext.dxf.insert = (1, 0, 0)
+    mtext.translate(1, 2, 3)
+    assert mtext.dxf.insert == (2, 2, 3)

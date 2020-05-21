@@ -1,11 +1,13 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-02-15
 import pytest
+import math
 
 from ezdxf.entities.text import Text
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.math import Vector, Matrix44
 
 TEST_CLASS = Text
 TEST_TYPE = 'TEXT'
@@ -188,3 +190,49 @@ def test_text_get_pos_LEFT(text):
     assert align == "LEFT"
     assert p1 == (2, 2)
     assert p2 is None
+
+def test_text_transform_interface():
+    text = Text()
+    text.dxf.insert = (1, 0, 0)
+    text.transform(Matrix44.translate(1, 2, 3))
+    assert text.dxf.insert == (2, 2, 3)
+
+    # optimized translate
+    text.dxf.align_point = (3, 2, 1)
+    text.translate(1, 2, 3)
+    assert text.dxf.insert == (3, 4, 6)
+    assert text.dxf.align_point == (4, 4, 4)
+
+
+@pytest.fixture
+def text2():
+    return Text.new(dxfattribs={
+        'text': 'TEXT',
+        'height': 1.0,
+        'width': 1.0,
+        'rotation': 0,
+        'layer': 'text',
+    }).set_pos((0, 0, 0), align='LEFT')
+
+
+@pytest.mark.parametrize('rx, ry', [(1, 1), (-1, 1), (-1, -1), (1, -1)])
+def test_text_scale_and_reflexion(rx, ry, text2):
+    insert = Vector(0, 0, 0)
+    m = Matrix44.chain(
+        Matrix44.scale(2 * rx, 3 * ry, 1),
+        Matrix44.z_rotate(math.radians(45)),
+        Matrix44.translate(3 * rx, 3 * ry, 0),
+    )
+
+    text2.transform(m)
+    check_point = m.transform(insert)
+    ocs = text2.ocs()
+    assert ocs.to_wcs(text2.dxf.insert).isclose(check_point)
+    assert math.isclose(text2.dxf.height, 3.0)
+    assert math.isclose(text2.dxf.width, 2.0 / 3.0)
+
+
+def test_text_non_uniform_scaling(text2):
+    text2.rotate_z(math.radians(30))
+    text2.scale(1, 2, 1)
+    assert math.isclose(text2.dxf.oblique, 33.004491598883064)

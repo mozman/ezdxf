@@ -1,11 +1,14 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-02-15
 import pytest
+import math
+
 from ezdxf.math import Vector
 from ezdxf.entities.arc import Arc
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.math import Matrix44
 
 TEST_CLASS = Arc
 TEST_TYPE = 'ARC'
@@ -156,3 +159,21 @@ def test_angles():
     arc.dxf.end_angle = -180
     assert tuple(arc.angles(2)) == (270, 180)
     assert tuple(arc.angles(4)) == (270, 0, 90, 180)
+
+
+def test_arc_default_ocs():
+    arc = Arc.new(dxfattribs={'center': (2, 3, 4), 'thickness': 2, 'start_angle': 30, 'end_angle': 60})
+    # 1. rotation - 2. scaling - 3. translation
+    m = Matrix44.chain(Matrix44.scale(2, 2, 3), Matrix44.translate(1, 1, 1))
+    # default extrusion is (0, 0, 1), therefore scale(2, 2, ..) is a uniform scaling in the xy-play of the OCS
+    arc.transform(m)
+
+    assert arc.dxf.center == (5, 7, 13)
+    assert arc.dxf.extrusion == (0, 0, 1)
+    assert arc.dxf.thickness == 6
+    assert math.isclose(arc.dxf.start_angle, 30, abs_tol=1e-9)
+    assert math.isclose(arc.dxf.end_angle, 60, abs_tol=1e-9)
+
+    arc.transform(Matrix44.z_rotate(math.radians(30)))
+    assert math.isclose(arc.dxf.start_angle, 60, abs_tol=1e-9)
+    assert math.isclose(arc.dxf.end_angle, 90, abs_tol=1e-9)
