@@ -6,7 +6,8 @@ from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d, distance_point_line_2d,
     is_point_on_line_2d, is_point_in_polygon_2d, is_point_left_of_line, point_to_line_relation,
-    rytz_axis_construction, normalize_angle, angle_to_param,
+    rytz_axis_construction, angle_to_param, linspace, enclosing_angles, reflect_angle_x_deg,
+    reflect_angle_y_deg, sign,
 )
 from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState, intersection_ray_ray_3d, normal_vector_3p,
@@ -21,7 +22,7 @@ from .bezier import Bezier, DBezier
 from .bezier4p import Bezier4P
 from .surfaces import BezierSurface
 from .eulerspiral import EulerSpiral
-from .ucs import OCS, UCS, PassTroughUCS, BRCS
+from .ucs import OCS, UCS, PassTroughUCS
 from .bulge import bulge_to_arc, bulge_3_points, bulge_center, bulge_radius, arc_to_bulge
 from .arc import ConstructionArc
 from .line import ConstructionRay, ConstructionLine
@@ -30,6 +31,7 @@ from .box import ConstructionBox
 from .shape import Shape2d
 from .bbox import BoundingBox2d, BoundingBox
 from .offset2d import offset_vertices_2d
+from .transformtools import NonUniformScalingError, InsertTransformationError
 
 
 def xround(value: float, rounding: float = 0.) -> float:

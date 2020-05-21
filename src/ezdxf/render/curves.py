@@ -279,7 +279,7 @@ class EulerSpiral:
         """
         points = self.spiral.approximate(length, segments)
         if matrix is not None:
-            points = matrix.transform_vectors(points)
+            points = matrix.transform_vertices(points)
         return layout.add_polyline3d(list(points), dxfattribs=dxfattribs)
 
     def render_spline(self, layout: 'BaseLayout', length: float = 1, fit_points: int = 10, degree: int = 3,
@@ -302,7 +302,7 @@ class EulerSpiral:
         spline = self.spiral.bspline(length, fit_points, degree=degree)
         points = spline.control_points
         if matrix is not None:
-            points = matrix.transform_vectors(points)
+            points = matrix.transform_vertices(points)
         return layout.add_open_spline(
             control_points=points,
             degree=spline.degree,

@@ -17,7 +17,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags, UCS, Matrix44
 
 __all__ = ['Mesh', 'MeshData']
 
@@ -320,13 +320,13 @@ class Mesh(DXFGraphic):
         yield data
         self.set_data(data)
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Mesh':
-        """ Transform MESH entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: 'Matrix44') -> 'Mesh':
+        """ Transform MESH entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        self._vertices.transform_to_wcs(ucs)
+        self._vertices.transform(m)
         return self
 
 

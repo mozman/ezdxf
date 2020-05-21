@@ -131,7 +131,7 @@ User Defined Point Format Codes
 
     .. automethod:: points
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> LWPolyline
+    .. automethod:: transform(m: Matrix44) -> LWPolyline
 
     .. automethod:: virtual_entities() -> Iterable[Union[Line, Arc]]
 

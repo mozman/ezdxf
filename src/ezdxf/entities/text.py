@@ -2,7 +2,10 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Tuple, Union
-from ezdxf.math import Vector
+import math
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform
+
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, DXFValueError
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
@@ -189,13 +192,50 @@ class Text(DXFGraphic):
             valign = 0
         return const.TEXT_ALIGNMENT_BY_FLAGS.get((halign, valign), 'LEFT')
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Text':
-        """ Transform TEXT entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: Matrix44) -> 'Text':
+        """ Transform TEXT entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        if not self.dxf.hasattr('align_point'):
-            self.dxf.align_point = self.dxf.insert
-        self._ucs_and_ocs_transformation(ucs, vector_names=['insert', 'align_point'], angle_names=['rotation'])
+        dxf = self.dxf
+        if not dxf.hasattr('align_point'):
+            dxf.align_point = dxf.insert
+        ocs = OCSTransform(self.dxf.extrusion, m)
+        dxf.insert = ocs.transform_vertex(dxf.insert)
+        dxf.align_point = ocs.transform_vertex(dxf.align_point)
+        old_rotation = dxf.rotation
+        new_rotation = ocs.transform_deg_angle(old_rotation)
+        x_scale = ocs.transform_length(Vector.from_deg_angle(old_rotation))
+        y_scale = ocs.transform_length(Vector.from_deg_angle(old_rotation + 90.0))
+
+        if not ocs.scale_uniform:
+            oblique_vec = Vector.from_deg_angle(old_rotation + 90.0 - dxf.oblique)
+            new_oblique_deg = new_rotation + 90.0 - ocs.transform_direction(oblique_vec).angle_deg
+            dxf.oblique = new_oblique_deg
+            y_scale *= math.cos(math.radians(new_oblique_deg))
+
+        dxf.width *= x_scale / y_scale
+        dxf.height *= y_scale
+        dxf.rotation = new_rotation
+
+        if dxf.hasattr('thickness'):  # can be negative
+            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflection=dxf.thickness)
+        dxf.extrusion = ocs.new_extrusion
+        return self
+
+    def translate(self, dx: float, dy: float, dz: float) -> 'Text':
+        """ Optimized TEXT/ATTRIB/ATTDEF translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        ocs = self.ocs()
+        dxf = self.dxf
+        vec = Vector(dx, dy, dz)
+
+        dxf.insert = ocs.from_wcs(vec + ocs.to_wcs(dxf.insert))
+        if dxf.hasattr('align_point'):
+            dxf.align_point = ocs.from_wcs(vec + ocs.to_wcs(dxf.align_point))
         return self

@@ -52,8 +52,7 @@ def test_polyline2d_virtual_entities(polyline2d):
 
 
 def test_polyline2d_elevation(polyline2d):
-    ucs = UCS(origin=(1, 1, 1))
-    polyline = polyline2d.transform_to_wcs(ucs)
+    polyline = polyline2d.translate(1, 1, 1)
     assert polyline.dxf.elevation == (0, 0, 1)
     result = list(polyline.virtual_entities())
     assert len(result) == 3

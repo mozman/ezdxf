@@ -3,6 +3,7 @@
 # Created 2019-02-21
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector
+from ezdxf.math.transformtools import OCSTransform
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -10,7 +11,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS, Matrix44
 
 __all__ = ['Shape']
 
@@ -52,11 +53,22 @@ class Shape(DXFGraphic):
             'insert', 'size', 'name', 'thickness', 'rotation', 'xscale', 'oblique', 'extrusion',
         ])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Shape':
-        """ Transform SHAPE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: 'Matrix44') -> 'Shape':
+        """ Transform SHAPE entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        self._ucs_and_ocs_transformation(ucs, vector_names=('insert',), angle_names=('rotation',))
+        dxf = self.dxf
+        dxf.insert = m.transform(dxf.insert)  # DXF Reference: WCS?
+        ocs = OCSTransform(self.dxf.extrusion, m)
+
+        dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
+        # dxf.oblique = ocs.transform_deg_angle(dxf.oblique)
+        dxf.size = ocs.transform_length((0, dxf.size, 0))
+        dxf.x_scale = ocs.transform_length((dxf.x_scale, 0, 0), reflection=dxf.x_scale)
+        if dxf.hasattr('thickness'):  # thickness can be negative
+            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflection=dxf.thickness)
+
+        dxf.extrusion = ocs.new_extrusion
         return self

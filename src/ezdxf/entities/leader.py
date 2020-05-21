@@ -4,6 +4,7 @@
 from typing import TYPE_CHECKING, List, Iterable
 import copy
 from ezdxf.math import Vector
+from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
@@ -13,7 +14,7 @@ from .factory import register_entity
 from .dimension import OverrideMixin
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, UCS, Matrix44
 
 __all__ = ['Leader']
 
@@ -81,7 +82,7 @@ class Leader(DXFGraphic, OverrideMixin):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        self.vertices = []  # type: List[Vector]
+        self.vertices: List[Vector] = []
 
     def _copy_data(self, entity: 'Leader') -> None:
         """ Copy vertices. """
@@ -131,16 +132,16 @@ class Leader(DXFGraphic, OverrideMixin):
         """
         self.vertices = [Vector(v) for v in vertices]
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Leader':
-        """ Transform LEADER entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: 'Matrix44') -> 'Leader':
+        """ Transform LEADER entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        self.vertices = [ucs.to_wcs(v) for v in self.vertices]
-        self.dxf.normal_vector = ucs.direction_to_wcs(self.dxf.normal_vector)
-        self.dxf.horizontal_direction = ucs.direction_to_wcs(self.dxf.horizontal_direction)
-        # Transform optional attributes if they exist
+        self.vertices = list(m.transform_vertices(self.vertices))
+        self.dxf.normal_vector, _ = transform_extrusion(self.dxf.normal_vector, m)  # ???
+        self.dxf.horizontal_direction = m.transform_direction(self.dxf.horizontal_direction)
+        # Transform optional attributes
         if self.dxf.hasattr('hookline_direction'):
-            self.dxf.hookline_direction = ucs.direction_to_wcs(self.dxf.hookline_direction)
+            self.dxf.hookline_direction = m.transform_direction(self.dxf.hookline_direction)
         return self

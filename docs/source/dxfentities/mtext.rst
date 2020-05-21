@@ -168,7 +168,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: plain_text
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> MText
+    .. automethod:: transform(m: Matrix44) -> MText
 
 .. _mtext_inline_codes:
 

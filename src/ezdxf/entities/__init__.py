@@ -59,7 +59,7 @@ from .viewport import Viewport
 # register graphical entities R2000
 from .lwpolyline import LWPolyline
 from .ellipse import Ellipse
-from .xline import XLine
+from .xline import XLine, Ray
 from .mtext import MText
 from .spline import Spline
 from .mesh import Mesh, MeshData

@@ -1,7 +1,11 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
+import math
+from ezdxf.math import Vector, UCS, Matrix44, OCS, linspace, enclosing_angles, X_AXIS
+from ezdxf.math.transformtools import OCSTransform
+
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -13,7 +17,6 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Vector, UCS
 
 __all__ = ['Arc']
-
 
 acdb_arc = DefSubclass('AcDbArc', {
     'start_angle': DXFAttr(50, default=0),
@@ -66,11 +69,32 @@ class Arc(Circle):
         v = list(self.vertices([self.dxf.end_angle]))
         return v[0]
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Arc':
-        """ Transform ARC entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def angles(self, num: int) -> Iterable[float]:
+        """ Returns `num` angles from start- to end angle in degrees in counter clockwise order.
 
-        .. versionadded:: 0.11
+        All angles are normalized in the range from [0, 360).
 
         """
-        self._ucs_and_ocs_transformation(ucs, vector_names=['center'], angle_names=['start_angle', 'end_angle'])
+        if num < 2:
+            raise ValueError('num >= 2')
+        start = self.dxf.start_angle % 360
+        stop = self.dxf.end_angle % 360
+        if stop <= start:
+            stop += 360
+        for angle in linspace(start, stop, num=num, endpoint=True):
+            yield angle % 360
+
+    def transform(self, m: Matrix44) -> 'Arc':
+        """ Transform ARC entity by transformation matrix `m` inplace.
+
+        Raises ``NonUniformScalingError()`` for non uniform scaling.
+
+        .. versionadded:: 0.13
+
+        """
+        ocs = OCSTransform(self.dxf.extrusion, m)
+        super().transform(m)
+        self.dxf.start_angle = ocs.transform_deg_angle(self.dxf.start_angle)
+        self.dxf.end_angle = ocs.transform_deg_angle(self.dxf.end_angle)
         return self
+

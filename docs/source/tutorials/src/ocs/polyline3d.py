@@ -20,7 +20,7 @@ tmatrix = Matrix44.chain(  # creating a transformation matrix
     Matrix44.z_rotate(math.radians(15)),  # 1. rotation around z-axis
     Matrix44.translate(0, .333, .333),  # 2. translation
 )
-transformed_corners_ucs = tmatrix.transform_vectors(corners_ucs)
+transformed_corners_ucs = tmatrix.transform_vertices(corners_ucs)
 
 # transform UCS into WCS
 ucs = UCS(

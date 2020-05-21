@@ -3,7 +3,8 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 
-from ezdxf.math import Vector, UCS, OCS, Z_AXIS
+from ezdxf.math import Vector, UCS, Matrix44
+from ezdxf.math.transformtools import OCSTransform,  NonUniformScalingError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -61,15 +62,39 @@ class Circle(DXFGraphic):
         ocs = self.ocs()
         for angle in angles:
             v = Vector.from_deg_angle(angle, self.dxf.radius) + self.dxf.center
-            # convert from OCS to WCS
             yield ocs.to_wcs(v)
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Circle':
-        """ Transform CIRCLE from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: Matrix44) -> 'Circle':
+        """ Transform CIRCLE entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        Raises ``NonUniformScalingError()`` for non uniform scaling.
+
+        .. versionadded:: 0.13
 
         """
-        self._ucs_and_ocs_transformation(ucs, vector_names=['center'])
+        ocs = OCSTransform(self.dxf.extrusion, m)
+        dxf = self.dxf
+        if ocs.scale_uniform:
+            dxf.extrusion = ocs.new_extrusion
+            dxf.center = ocs.transform_vertex(dxf.center)
+            # old_ocs has a uniform scaled xy-plane, direction of radius-vector in
+            # the xy-plane is not important, choose x-axis for no reason:
+            dxf.radius = ocs.transform_length((dxf.radius, 0, 0))
+            if dxf.hasattr('thickness'):
+                # thickness vector points in the z-direction of the old_ocs, thickness can be negative
+                dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflection=dxf.thickness)
+        else:
+            raise NonUniformScalingError('CIRCLE/ARC does not support non uniform scaling')
+            # Parent function has to catch this Exception and convert this CIRCLE/ARC into an ELLIPSE
         return self
 
+    def translate(self, dx: float, dy: float, dz: float) -> 'Circle':
+        """ Optimized CIRCLE/ARC translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        ocs = self.ocs()
+        self.dxf.center = ocs.from_wcs(Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
+        return self

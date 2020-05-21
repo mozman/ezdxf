@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from math import isclose, radians, pi
-from ezdxf.math import UCS, Vector, X_AXIS, Y_AXIS, Z_AXIS
+from ezdxf.math import UCS, Vector, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 
 
 def test_ucs_init():
@@ -56,6 +56,22 @@ def test_rotation():
     assert ucs.is_cartesian is True
 
 
+def test_matrix44_rotation():
+    # normalization is not necessary
+    ux = Vector(1, 2, 0)
+    # only cartesian coord systems work
+    uy = ux.rotate_deg(90)
+    ucs = UCS(ux=ux, uy=uy)
+    m = Matrix44.ucs(ux=ux.normalize(), uy=uy.normalize())
+    assert m.ux == ux.normalize()
+    assert m.uy == uy.normalize()
+    assert m.uz == (0, 0, 1)
+    assert m.is_cartesian
+    v = m.transform((1, 2, 3))
+    assert v == ucs.to_wcs((1, 2, 3))
+    assert m.ucs_vertex_from_wcs(v) == (1, 2, 3)
+
+
 def test_none_cartesian():
     ucs = UCS(ux=(1, 2), uy=(0, 2))
     assert ucs.is_cartesian is False
@@ -67,7 +83,15 @@ def test_arbitrary_ucs():
     def_point_in_xy_plane = Vector(3, 10, 4)
     uz = ux.cross(def_point_in_xy_plane - origin)
     ucs = UCS(origin=origin, ux=ux, uz=uz)
+    m = Matrix44.ucs(ucs.ux, ucs.uy, ucs.uz, ucs.origin)
     def_point_in_ucs = ucs.from_wcs(def_point_in_xy_plane)
+
+    assert ucs.ux == m.ux
+    assert ucs.uy == m.uy
+    assert ucs.uz == m.uz
+    assert ucs.origin == m.origin
+
+    assert def_point_in_ucs == m.ucs_vertex_from_wcs(def_point_in_xy_plane)
     assert def_point_in_ucs.z == 0
     assert ucs.to_wcs(def_point_in_ucs) == def_point_in_xy_plane
     assert ucs.is_cartesian is True
@@ -94,44 +118,14 @@ def test_points_to_ocs():
     assert result == expected
 
 
-def test_ocs_points_to_ocs():
-    ucs = UCS(ux=(0, 0, -1), uz=(1, 0, 0))
-    points = [(1, 2, 3), (4, 5, 6), (9, 8, 7)]
-    # tests only the actual state - as it is - not granted results are correct
-    expected = [
-        Vector(-1.4547842173342707, 1.6981174520612865, 3),
-        Vector(-3.0545253372991867, 5.6275993961721635, 6),
-        Vector(-3.8776861825487807, 11.400155694974972, 7),
-    ]
-    result = list(ucs.ocs_points_to_ocs(points, extrusion=Vector(2, 4, 7)))
-    assert result == expected
-
-
 def test_to_ocs_angle_deg():
     ucs = UCS.from_x_axis_and_point_in_xy(origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5))
     expected = 120.077450607124
     assert isclose(ucs.to_ocs_angle_deg(45), expected)
 
 
-def test_angles_to_ocs_deg():
-    ucs = UCS.from_x_axis_and_point_in_xy(origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5))
-    angles = [15, 30, 90]
-    expected = [ucs.to_ocs_angle_deg(a) for a in angles]
-    result = ucs.angles_to_ocs_deg(angles)
-    assert result == expected
-
-
-def test_ocs_angles_to_ocs_deg():
-    ucs = UCS.from_x_axis_and_point_in_xy(origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5))
-    angles = [15, 30, 90]
-    # tests only the actual state - as it is - not granted results are correct
-    expected = [-128.92976741554182, -113.92976741554183, -53.929767415541825]
-    result = ucs.ocs_angles_to_ocs_deg(angles, extrusion=Vector(1, 2, 3))
-    assert result == expected
-
-
 def test_constructor_functions():
-    # does not check the math, because tis would just duplicate the implementation code
+    # does not check the math, because this would just duplicate the implementation code
     origin = (3, 3, 3)
     axis = (1, 0, -1)
     def_point = (3, 10, 4)
@@ -228,4 +222,3 @@ def test_moveto():
     assert ucs.origin == (1, 2, 3)
     ucs.moveto((3, 2, 1))
     assert ucs.origin == (3, 2, 1)
-

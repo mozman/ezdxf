@@ -782,7 +782,7 @@ def rotation_form(count: int, profile: Iterable['Vertex'], angle: float = 2 * pi
     profile = [Vector(p) for p in profile]
     profiles = [profile]
     for _ in range(int(count)):
-        profile = m.transform_vectors(profile)
+        profile = list(m.transform_vertices(profile))
         profiles.append(profile)
     mesh = from_profiles_linear(profiles, close=False, caps=False)
     return mesh

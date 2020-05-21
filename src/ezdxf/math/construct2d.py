@@ -41,6 +41,64 @@ def is_close_points(p1: 'Vertex', p2: 'Vertex', abs_tol=TOLERANCE) -> bool:
     return True
 
 
+def linspace(start: float, stop: float, num: int, endpoint=True) -> Iterable[float]:
+    """ Return evenly spaced numbers over a specified interval, like numpy.linspace().
+
+    Returns `num` evenly spaced samples, calculated over the interval [start, stop].
+    The endpoint of the interval can optionally be excluded.
+
+    .. versionadded:: 0.12.3
+
+    """
+    if num < 0:
+        raise ValueError(f'Number of samples, {num}, must be non-negative.')
+    elif num == 0:
+        return
+    elif num == 1:
+        yield start
+        return
+
+    start = float(start)
+    count = (num - 1) if endpoint else num
+    delta = (float(stop) - start) / count
+    for _ in range(num):
+        yield start
+        start += delta
+
+
+def sign(f: float) -> float:
+    """ Return sign of float `f` as -1 or +1, 0 returns +1 """
+    return -1.0 if f < 0.0 else +1.0
+
+
+def reflect_angle_x_deg(a: float) -> float:
+    """
+    Returns reflected angle of `a` in x-direction in degrees.
+    Angles are counter clockwise orientated and +x-axis is at 0 degrees.
+
+    Args:
+        a: angle to reflect in degrees
+
+    .. versionadded:: 0.13
+
+    """
+    return (180. - (a % 360.)) % 360.
+
+
+def reflect_angle_y_deg(a: float) -> float:
+    """
+    Returns reflected angle of `a` in y-direction in degrees.
+    Angles are counter clockwise orientated and +y-axis is at 90 degrees.
+
+    Args:
+        a: angle to reflect in degrees
+
+    .. versionadded:: 0.13
+
+    """
+    return (360. - (a % 360.)) % 360.
+
+
 def closest_point(base: 'Vertex', points: Iterable['Vertex']) -> 'Vector':
     """
     Returns closest point to `base`.
@@ -98,17 +156,6 @@ def convex_hull_2d(points: Iterable['Vertex']) -> List['Vertex']:
     return upper_hull
 
 
-def normalize_angle(angle: float) -> float:
-    """
-    Returns normalized angle between ``0`` and ``2*pi``.
-
-    """
-    angle = math.fmod(angle, RADIANS_360)
-    if angle < 0.0:
-        angle += RADIANS_360
-    return angle
-
-
 def angle_to_param(ratio: float, angle: float) -> float:
     """ Returns ellipse parameter for argument `angle`.
 
@@ -120,15 +167,15 @@ def angle_to_param(ratio: float, angle: float) -> float:
         the ellipse parameter in the range [0, 2pi)
     """
     x, y = math.cos(angle), math.sin(angle) / ratio
-    return normalize_angle(math.atan2(y, x))
+    return math.atan2(y, x) % math.tau
 
 
 def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE):
     isclose = partial(math.isclose, abs_tol=abs_tol)
 
-    s = normalize_angle(start_angle)
-    e = normalize_angle(end_angle)
-    a = normalize_angle(angle)
+    s = start_angle % math.tau
+    e = end_angle % math.tau
+    a = angle % math.tau
     if isclose(s, e):
         return isclose(s, a)
 
@@ -398,7 +445,14 @@ def rytz_axis_construction(d1: Vector, d2: Vector) -> Tuple[Vector, Vector, floa
 
     """
     Q = Vector(d1)  # vector CQ
-    P1 = Vector(d2).orthogonal(ccw=False)  # vector CP', location P'
+    # calculate vector CP', location P'
+    if math.isclose(d1.z, 0, abs_tol=1e-9) and math.isclose(d2.z, 0, abs_tol=1e-9):
+        # Vector.orthogonal() works only for vectors in the xy-plane!
+        P1 = Vector(d2).orthogonal(ccw=False)
+    else:
+        extrusion = d1.cross(d2)
+        P1 = extrusion.cross(d2).normalize(d2.magnitude)
+
     D = P1.lerp(Q)  # vector CD, location D, midpoint of P'Q
     radius = D.magnitude
     radius_vector = (Q - P1).normalize(radius)  # direction vector P'Q

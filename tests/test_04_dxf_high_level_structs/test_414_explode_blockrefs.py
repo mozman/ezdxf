@@ -7,8 +7,7 @@ import ezdxf
 import math
 
 from ezdxf.entities import Ellipse, Point, Arc
-from ezdxf.explode import angle_to_param
-from ezdxf.math import normalize_angle, Vector
+from ezdxf.math import Vector
 
 
 @pytest.fixture(scope='module')
@@ -156,7 +155,7 @@ def test_04_explode_blockref_with_attrib(doc, msp, entitydb):
 def test_05_examine_uniform_scaled_ellipse(doc, msp):
     blk = doc.blocks.new('EllipseBlk')
     blk.add_ellipse((0, 0), major_axis=(2, 0), ratio=0.5)
-    blkref = msp.add_blockref('EllipseBlk', insert=(2, 2)).scale(2)
+    blkref = msp.add_blockref('EllipseBlk', insert=(2, 2)).set_scale(2)
     ellipse = list(blkref.virtual_entities())[0]
     assert ellipse.dxftype() == 'ELLIPSE'
     assert ellipse.dxf.center == (2, 2)
@@ -180,11 +179,10 @@ def test_06_skipped_entities_callback(doc, msp):
     assert hatch.paths.has_critical_elements()
     entities = list(blkref.virtual_entities(non_uniform_scaling=True, skipped_entity_callback=on_entity_skipped))
 
-    assert len(entities) == 1
-    assert entities[0].dxftype() == 'LINE'
-    assert len(skipped_entities) == 1
-    assert skipped_entities[0][0].dxftype() == 'HATCH'
-    assert skipped_entities[0][1] == 'unsupported non-uniform scaling'
+    assert len(entities) == 2
+    assert entities[0].dxftype() == 'HATCH'
+    assert entities[1].dxftype() == 'LINE'
+    assert len(skipped_entities) == 0
 
 
 def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool) -> Union[Ellipse, Arc]:
@@ -206,11 +204,6 @@ def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool)
     })
     entities = list(block_ref.virtual_entities(non_uniform_scaling=True))
     assert len(entities) == 3
-
-    if is_arc and block_ref.has_uniform_scaling:
-        assert entities[0].dxftype() == 'ARC'
-    else:
-        assert entities[0].dxftype() == 'ELLIPSE'
     ellipse = cast(Union[Ellipse, Arc], entities[0])
 
     # points should have been transformed the same as the ellipse
@@ -227,12 +220,10 @@ def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool)
 def _check_curve(ellipse: Ellipse, expected_start: Vector, expected_end: Vector, expected_extrusion: Vector):
     assert ellipse.start_point.isclose(expected_start)
     assert ellipse.end_point.isclose(expected_end)
-    assert ellipse.dxf.extrusion.isclose(expected_extrusion)
+    assert ellipse.dxf.extrusion.is_parallel(expected_extrusion)
 
 
-# TODO: currently zscale=-1 is failing
-#@pytest.mark.parametrize('zscale,is_arc', [(1, False), (0.5, False), (1, True), (0.5, True), (-1, False), (-1, True)])
-@pytest.mark.parametrize('zscale,is_arc', [(1, False), (0.5, False), (1, True), (0.5, True)])
+@pytest.mark.parametrize('zscale,is_arc', [(1, False), (0.5, False), (1, True), (0.5, True), (-1, False), (-1, True)])
 def test_07_rotated_and_reflected_curves(zscale, is_arc):
     scale = Vector(1, 1, zscale)
 

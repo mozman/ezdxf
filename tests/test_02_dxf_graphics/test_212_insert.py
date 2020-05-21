@@ -7,7 +7,7 @@ import ezdxf
 from ezdxf.entities.insert import Insert
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Vector
+from ezdxf.math import Matrix44, InsertTransformationError
 
 TEST_CLASS = Insert
 TEST_TYPE = 'INSERT'
@@ -116,12 +116,14 @@ def test_has_scaling():
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={'zscale': 2})
     assert entity.has_scaling is True
     assert entity.has_uniform_scaling is False
+
+    # reflections are under control, so (-2, 2, 2) is a uniform scaling
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'xscale': -2,  # mirroring has the same problems like non uniform scaling
+        'xscale': -2,
         'yscale': 2,
         'zscale': 2,
     })
-    assert entity.has_uniform_scaling is False
+    assert entity.has_uniform_scaling is True
 
 
 def test_load_from_text(entity):
@@ -222,56 +224,107 @@ def test_copy_with_insert(doc):
     assert copy.attribs[0].dxf.owner == psp.layout_key
 
 
-def test_brcs_no_transform():
+def test_matrix44_no_transform():
     insert = TEST_CLASS.new(handle='ABBA', owner='0')
-    brcs = insert.brcs()
-    assert brcs.to_wcs((0, 0, 0)) == (0, 0, 0)
-    assert brcs.direction_to_wcs((1, 0, 0)) == (1, 0, 0)
+    m = insert.matrix44()
+    assert m.transform((0, 0, 0)) == (0, 0, 0)
+    assert m.transform_direction((1, 0, 0)) == (1, 0, 0)
 
 
-def test_brcs_insert():
+def test_matrix44_insert():
     insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
         'insert': (1, 2, 3),
     })
-    brcs = insert.brcs()
-    assert brcs.to_wcs((0, 0, 0)) == (1, 2, 3)
-    assert brcs.direction_to_wcs((1, 0, 0)) == (1, 0, 0)
+    m = insert.matrix44()
+    assert m.transform((0, 0, 0)) == (1, 2, 3)
+    assert m.transform_direction((1, 0, 0)) == (1, 0, 0)
 
 
-def test_brcs_insert_and_base_point(doc):
-    doc.blocks.new('BRCS_001', base_point=(2, 2, 2))
-    insert = doc.modelspace().add_blockref('BRCS_001', insert=(1, 2, 3))
-    brcs = insert.brcs()
-    assert brcs.to_wcs((0, 0, 0)) == (-1, 0, 1)
-    assert brcs.direction_to_wcs((1, 0, 0)) == (1, 0, 0)
+def test_matrix44_insert_and_base_point(doc):
+    doc.blocks.new('Matrix44_001', base_point=(2, 2, 2))
+    insert = doc.modelspace().add_blockref('Matrix44_001', insert=(1, 2, 3))
+    m = insert.matrix44()
+    assert m.transform((0, 0, 0)) == (-1, 0, 1)
+    assert m.transform_direction((1, 0, 0)) == (1, 0, 0)
 
 
-def test_brcs_rotation():
+def test_matrix44_rotation():
     insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
         'insert': (0, 0, 0),
         'rotation': 90,
     })
-    brcs = insert.brcs()
-    assert list(brcs.points_to_wcs([(1, 0, 0), (0, 0, 1)])) == [(0, 1, 0), (0, 0, 1)]
-    assert brcs.direction_to_wcs((1, 0, 0)) == (0, 1, 0)
+    m = insert.matrix44()
+    assert list(m.transform_vertices([(1, 0, 0), (0, 0, 1)])) == [(0, 1, 0), (0, 0, 1)]
+    assert m.transform_direction((1, 0, 0)) == (0, 1, 0)
 
 
-def test_brcs_scaled():
+def test_matrix44_scaled():
     insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
         'xscale': 2,
         'yscale': 3,
         'zscale': 4,
     })
-    brcs = insert.brcs()
-    assert brcs.to_wcs((1, 1, 1)) == (2, 3, 4)
-    assert brcs.direction_to_wcs((1, 0, 0)) == (2, 0, 0), 'scaling has to be applied for directions'
+    m = insert.matrix44()
+    assert m.transform((1, 1, 1)) == (2, 3, 4)
+    assert m.transform_direction((1, 0, 0)) == (2, 0, 0), 'scaling has to be applied for directions'
 
 
-def test_brcs_dircection():
+def test_matrix44_direction():
     insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
         'insert': (1, 2, 3),
         'xscale': 2,
     })
-    brcs = insert.brcs()
-    assert brcs.to_wcs((1, 0, 0)) == (3, 2, 3)
-    assert brcs.direction_to_wcs((1, 0, 0)) == (2, 0, 0), 'only scaling has to be applied for directions'
+    m = insert.matrix44()
+    assert m.transform((1, 0, 0)) == (3, 2, 3)
+    assert m.transform_direction((1, 0, 0)) == (2, 0, 0), 'only scaling has to be applied for directions'
+
+
+def test_insert_transform_interface():
+    insert = Insert()
+    insert.dxf.insert = (1, 0, 0)
+
+    insert.transform(Matrix44.translate(1, 2, 3))
+    assert insert.dxf.insert == (2, 2, 3)
+
+    # optimized translate implementation
+    insert.translate(-1, -2, -3)
+    assert insert.dxf.insert == (1, 0, 0)
+
+
+def test_insert_transformation_error():
+    insert = Insert.new(dxfattribs={
+        'name': 'AXIS',
+        'insert': (0, 0, 0),
+        'rotation': 45,
+    })
+    m = Matrix44.scale(0.5, 1, 1)
+    with pytest.raises(InsertTransformationError):
+        insert.transform(m)
+
+
+def test_insert_scaling():
+    # Insert.transform() changes the extrusion vector
+    # sign of scaling factors depend from new extrusion vector
+    # just compare absolute values
+    insert = Insert()
+    insert.dxf.insert = (0, 0, 0)
+
+    insert.scale(2, 3, 4)
+    assert abs(insert.dxf.xscale) == 2
+    assert abs(insert.dxf.yscale) == 3
+    assert abs(insert.dxf.zscale) == 4
+
+    insert.scale(-1, 1, 1)
+    assert abs(insert.dxf.xscale) == 2
+    assert abs(insert.dxf.yscale) == 3
+    assert abs(insert.dxf.zscale) == 4
+
+    insert.scale(-1, -1, 1)
+    assert abs(insert.dxf.xscale) == 2
+    assert abs(insert.dxf.yscale) == 3
+    assert abs(insert.dxf.zscale) == 4
+
+    insert.scale(-2, -2, -2)
+    assert abs(insert.dxf.xscale) == 4
+    assert abs(insert.dxf.yscale) == 6
+    assert abs(insert.dxf.zscale) == 8

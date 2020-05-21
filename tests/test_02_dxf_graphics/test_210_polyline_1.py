@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-02-15
 import pytest
@@ -7,6 +7,7 @@ import ezdxf
 from ezdxf.entities.polyline import Polyline
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.math import Vector
 
 TEST_CLASS = Polyline
 TEST_TYPE = 'POLYLINE'
@@ -150,3 +151,27 @@ def test_write_dxf(txt, ver):
     collector2 = TagCollector(dxfversion=ver, optional=False)
     polyline.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
+
+
+def test_polyline2d_transform_interface():
+    pline = Polyline()
+    pline.append_vertices([(0, 0, 0), (2, 0, 0), (1, 1, 0)])
+    pline.translate(1, 1, 1)
+    vertices = list(v.dxf.location for v in pline.vertices)
+    assert pline.is_2d_polyline is True
+    assert vertices[0] == (1, 1, 1)
+    assert vertices[1] == (3, 1, 1)
+    assert vertices[2] == (2, 2, 1)
+    assert pline.dxf.elevation == (0, 0, 1)
+    assert Vector(0, 0, 1).isclose(pline.dxf.extrusion)
+
+
+def test_polyline3d_transform_interface():
+    pline = Polyline.new(dxfattribs={'flags': 8})
+    pline.append_vertices([(0, 0, 0), (2, 0, 0), (1, 1, 0)])
+    pline.translate(1, 1, 1)
+    vertices = list(v.dxf.location for v in pline.vertices)
+    assert pline.is_3d_polyline is True
+    assert vertices[0] == (1, 1, 1)
+    assert vertices[1] == (3, 1, 1)
+    assert vertices[2] == (2, 2, 1)

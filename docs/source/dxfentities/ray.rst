@@ -26,3 +26,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     Unit direction vector as (3D Point in :ref:`WCS`)
 
+    .. automethod:: transform(m: Matrix44) -> Ray
+
+    .. automethod:: translate(dx: float, dy: float, dz: float) -> Ray

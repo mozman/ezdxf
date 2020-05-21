@@ -4,6 +4,7 @@
 from typing import Tuple, List, Iterable, Any, Union, Sequence, TYPE_CHECKING
 from functools import partial
 import math
+import random
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import VecXY, Vertex
@@ -174,6 +175,14 @@ class Vector:
             return float(x), float(y), float(z)
         raise ValueError('invalid arguments {}'.format(str(args)))
 
+    @classmethod
+    def random(cls, length: float = 1) -> 'Vector':
+        """ Returns a random vector. """
+        x = random.uniform(-1, 1)
+        y = random.uniform(-1, 1)
+        z = random.uniform(-1, 1)
+        return Vector(x, y, z).normalize(length)
+
     def __str__(self) -> str:
         """ Return ``'(x, y, z)'`` as string. """
         return '({0.x}, {0.y}, {0.z})'.format(self)
@@ -246,6 +255,12 @@ class Vector:
     def is_null(self) -> bool:
         """ ``True`` for ``Vector(0, 0, 0)``. """
         return self.__eq__((0, 0, 0))  # __eq__ uses is_close()
+
+    def is_parallel(self, other: 'Vector', abs_tol: float = 1e-12) -> bool:
+        """ Returns ``True`` if `self` and `other` are parallel to vectors. """
+        v1 = self.normalize()
+        v2 = other.normalize()
+        return v1.isclose(v2, abs_tol=abs_tol) or v1.isclose(-v2, abs_tol=abs_tol)
 
     @property
     def spatial_angle(self) -> float:

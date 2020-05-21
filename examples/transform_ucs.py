@@ -16,14 +16,14 @@ DY = 2
 def add_circle(msp, ucs):
     msp.add_circle(center=(0, 0), radius=0.5, dxfattribs={
         'color': 6,
-    }).transform_to_wcs(ucs)
+    }).transform(ucs.matrix)
 
 
 def add_ocs_circle(msp, ucs):
     msp.add_circle(center=(0, 0, .5), radius=0.25, dxfattribs={
         'color': 6,
         'extrusion': (1, 0, 0),
-    }).transform_to_wcs(ucs)
+    }).transform(ucs.matrix)
 
 
 def add_ellipse(msp, ucs):
@@ -35,36 +35,36 @@ def add_ellipse(msp, ucs):
         end_param=math.pi,
         dxfattribs={
             'color': 1,
-        }).transform_to_wcs(ucs)
+        }).transform(ucs.matrix)
 
 
 def add_ocs_arc(msp, ucs):
     msp.add_arc(center=(0, 0, 0.5), radius=0.25, start_angle=0, end_angle=90, dxfattribs={
         'color': 4,
         'extrusion': (-1, 0, 0),
-    }).transform_to_wcs(ucs)
+    }).transform(ucs.matrix)
 
 
 def add_solid(msp, ucs):
-    msp.add_solid([(-0.25, -0.15), (0.25, -0.15), (0, -0.5)], dxfattribs={'color': 2}).transform_to_wcs(ucs)
+    msp.add_solid([(-0.25, -0.15), (0.25, -0.15), (0, -0.5)], dxfattribs={'color': 2}).transform(ucs.matrix)
 
 
 def add_trace(msp, ucs):
-    msp.add_trace([(-0.25, 0.15), (0.25, 0.15), (0, 0.5)], dxfattribs={'color': 7}).transform_to_wcs(ucs)
+    msp.add_trace([(-0.25, 0.15), (0.25, 0.15), (0, 0.5)], dxfattribs={'color': 7}).transform(ucs.matrix)
 
 
 def add_3dface(msp, ucs):
     msp.add_3dface(
         [(0, 0, 0), (0.5, 0.5, 0), (0.5, 0.5, 0.5), (0, 0, 0.5)],
         dxfattribs={'color': 8}
-    ).transform_to_wcs(ucs)
+    ).transform(ucs.matrix)
 
 
 def add_lwpolyline(msp, ucs):
     msp.add_lwpolyline(
         [(0, 0, 0), (0.3, 0, 1), (0.3, 0.3, 0), (0, 0.3, 0)], format='xyb',
         dxfattribs={'color': 6}
-    ).transform_to_wcs(ucs)
+    ).transform(ucs.matrix)
 
 
 def add_text(msp, ucs):
@@ -72,7 +72,7 @@ def add_text(msp, ucs):
         'color': 4,
         'style': NARROW,
         'height': .2,
-    }).set_align('MIDDLE_CENTER').transform_to_wcs(ucs)
+    }).set_align('MIDDLE_CENTER').transform(ucs.matrix)
 
 
 def add_mtext(msp, ucs):
@@ -85,7 +85,7 @@ def add_mtext(msp, ucs):
         'insert': (0, 0),
         'rotation': 90,
         'attachment_point': 4,
-    }).transform_to_wcs(ucs)
+    }).transform(ucs.matrix)
 
 
 def scene1(filename):
@@ -124,12 +124,11 @@ def add_excentric_text(msp, ucs, location, text):
         'insert': location,
         'attachment_point': 5,
     })
-    text.transform_to_wcs(ucs)
-    msp.add_line(start=(0, 0, 0), end=(location.x, 0, 0), dxfattribs={'color': 1}).transform_to_wcs(ucs)
-    msp.add_line(start=(location.x, 0, 0), end=(location.x, location.y, 0), dxfattribs={'color': 3}).transform_to_wcs(
-        ucs)
+    text.transform(ucs.matrix)
+    msp.add_line(start=(0, 0, 0), end=(location.x, 0, 0), dxfattribs={'color': 1}).transform(ucs.matrix)
+    msp.add_line(start=(location.x, 0, 0), end=(location.x, location.y, 0), dxfattribs={'color': 3}).transform(ucs.matrix)
     msp.add_line(start=(location.x, location.y, 0), end=(location.x, location.y, location.z),
-                 dxfattribs={'color': 5}).transform_to_wcs(ucs)
+                 dxfattribs={'color': 5}).transform(ucs.matrix)
 
 
 def scene2(filename):

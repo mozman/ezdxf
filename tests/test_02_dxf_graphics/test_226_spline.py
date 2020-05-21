@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-03-06
 import pytest
@@ -7,6 +7,7 @@ import math
 import ezdxf
 from ezdxf.entities.spline import Spline
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.math import Vector, Matrix44
 
 SPLINE = """0
 SPLINE
@@ -283,6 +284,20 @@ def test_closed_rational_spline(msp, points, weights):
     assert len(spline.weights) == len(points)
     assert spline.dxf.n_knots == len(points) + 1  # according the Autodesk developer documentation
     assert spline.closed is True
+
+
+def test_spline_transform_interface():
+    spline = Spline()
+    spline.set_uniform([(1, 0, 0), (3, 3, 0), (6, 0, 1)])
+    spline.dxf.start_tangent = Vector(1, 0, 0)
+    spline.dxf.end_tangent = Vector(2, 0, 0)
+    spline.dxf.extrusion = Vector(3, 0, 0)
+    spline.transform(Matrix44.translate(1, 2, 3))
+    assert spline.control_points[0] == (2, 2, 3)
+    # direction vectors are not transformed by translation
+    assert spline.dxf.start_tangent == (1, 0, 0)
+    assert spline.dxf.end_tangent == (2, 0, 0)
+    assert spline.dxf.extrusion == (3, 0, 0)
 
 
 SPLINE2 = """  0

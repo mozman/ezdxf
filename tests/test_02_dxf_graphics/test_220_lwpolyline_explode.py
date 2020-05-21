@@ -4,7 +4,6 @@ import pytest
 import math
 import ezdxf
 from ezdxf.entities.lwpolyline import LWPolyline
-from ezdxf.math import UCS
 
 POINTS = [(0, 0), (1, 0, 1), (2, 0), (3, 0)]
 
@@ -54,8 +53,7 @@ def test_virtual_entities(lwpolyline):
 
 
 def test_virtual_entities_elevation(lwpolyline):
-    ucs = UCS(origin=(1, 1, 1))
-    lwpolyline = lwpolyline.transform_to_wcs(ucs)
+    lwpolyline = lwpolyline.translate(1, 1, 1)
     assert lwpolyline.dxf.elevation == 1
     result = list(lwpolyline.virtual_entities())
     assert len(result) == 3

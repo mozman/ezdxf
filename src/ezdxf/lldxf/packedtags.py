@@ -1,5 +1,5 @@
 # created: 19.04.2018
-# Copyright (c) 2018-2019 Manfred Moitzi
+# Copyright (c) 2018-2012 Manfred Moitzi
 # License: MIT License
 from array import array
 from typing import Iterable, Sequence
@@ -9,7 +9,7 @@ from .const import DXFTypeError, DXFIndexError, DXFValueError
 from .tags import Tags
 from ezdxf.tools.indexing import Index
 from ezdxf.lldxf.tagwriter import TagWriter
-from ezdxf.math import UCS
+from ezdxf.math import UCS, Matrix44
 
 
 class TagList:
@@ -211,6 +211,17 @@ class VertexArray:
         values = array('d')
         for vertex in self:
             values.extend(ucs_to_wcs(vertex))
+        self.values = values
+
+    def transform(self, m: Matrix44) -> None:
+        """ Transform vertices by transformation matrix `m`.
+
+        .. versionadded:: 0.13
+
+        """
+        values = array('d')
+        for vertex in m.transform_vertices(self):
+            values.extend(vertex)
         self.values = values
 
 

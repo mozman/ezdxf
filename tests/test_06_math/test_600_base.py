@@ -8,12 +8,6 @@ from ezdxf.math.construct2d import *
 from math import isclose, radians
 
 
-def test_normalize_angle():
-    angle = 2
-    huge_angle = angle + 16 * RADIANS_180
-    assert isclose(normalize_angle(huge_angle), 2.)
-
-
 def test_left_of_line():
     assert is_point_left_of_line(Vec2(-1, 0), Vec2(0, 0), Vec2(0.1, 1)) is True
     assert is_point_left_of_line(Vec2(1, 0), Vec2(0, 0), Vec2(0, -1)) is True
@@ -122,3 +116,25 @@ def test_two_points():
 
 def test_more_points():
     assert closest_point((0, 0), [(0, 0, 1), (1, 1, 1), (2, 2, 2), (0, 0, -.5)]) == (0, 0, -.5)
+
+
+def test_linspace():
+    assert list(linspace(1, 4, num=4)) == [1, 2, 3, 4]
+    assert list(linspace(1, 4, num=1)) == [1]
+    assert list(linspace(1, 4, num=0)) == []
+    assert list(linspace(1, 5, num=4, endpoint=False)) == [1, 2, 3, 4]
+    assert list(linspace(2, -2, num=5)) == [2, 1, 0, -1, -2]
+    with pytest.raises(ValueError):
+        list(linspace(1, 4, num=-1))
+
+
+def test_reflect_angle_x_deg():
+    for a, expected in [(0, 180), (45, 135), (90, 90), (135, 45), (180, 0),
+                        (225, 315), (270, 270), (315, 225), (360, 180), ]:
+        assert isclose(reflect_angle_x_deg(a), expected)
+
+
+def test_reflect_angle_y_deg():
+    for a, expected in [(0, 0), (45, 315), (90, 270), (135, 225), (180, 180),
+                        (225, 135), (270, 90), (315, 45), (360, 0), ]:
+        assert isclose(reflect_angle_y_deg(a), expected)

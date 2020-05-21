@@ -4,9 +4,10 @@
 import math
 from typing import TYPE_CHECKING, Optional, Union, Iterable
 
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007, DXF2004
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007
 from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError, DXFTableEntryError, DXFTypeError
 from ezdxf.lldxf.types import get_xcode_for
 from ezdxf.tools import take2
@@ -506,28 +507,31 @@ class Dimension(DXFGraphic, OverrideMixin):
         # todo: delete existing anonymous block?
         self.override().render()
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Dimension':
-        """ Transform DIMENSION entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: 'Matrix44') -> 'Dimension':
+        """ Transform DIMENSION entity by transformation matrix `m` inplace.
 
-        Does not transform the graphical representation in the anonymous block!
+        Raises ``NonUniformScalingError()`` for non uniform scaling.
 
-        .. versionadded:: 0.12
+        .. versionadded:: 0.13
 
         """
-        # Transform existing OCS points and angles
-        dxf = self.dxf
-        vector_names = [
-            name for name in ['text_midpoint', 'defpoint5', 'insert'] if dxf.hasattr(name)
-        ]
-        angle_names = [
-            name for name in ['text_rotation', 'horizontal_direction', 'angle'] if dxf.hasattr(name)
-        ]
-        self._ucs_and_ocs_transformation(ucs, vector_names=vector_names, angle_names=angle_names)
-
-        # Transform existing WCS points
-        for name in ['defpoint', 'defpoint2', 'defpoint3', 'defpoint4']:
+        def transform_if_exist(name: str, func):
             if dxf.hasattr(name):
-                dxf.set(name, ucs.to_wcs(dxf.get(name)))
+                dxf.set(name, func(dxf.get(name)))
+
+        dxf = self.dxf
+        ocs = OCSTransform(self.dxf.extrusion, m)
+
+        for vertex_name in ('text_midpoint', 'defpoint5', 'insert'):
+            transform_if_exist(vertex_name, ocs.transform_vertex)
+
+        for angle_name in ('text_rotation', 'horizontal_direction', 'angle'):
+            transform_if_exist(angle_name, ocs.transform_deg_angle)
+
+        for vertex_name in ('defpoint', 'defpoint2', 'defpoint3', 'defpoint4'):
+            transform_if_exist(vertex_name, m.transform)
+
+        dxf.extrusion = ocs.new_extrusion
         return self
 
     def virtual_entities(self) -> Iterable['DXFGraphic']:

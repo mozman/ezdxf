@@ -77,7 +77,7 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. autoattribute:: has_uniform_scaling
 
-    .. automethod:: scale
+    .. automethod:: set_scale
 
     .. automethod:: block
 
@@ -101,9 +101,9 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. automethod:: reset_transformation
 
-    .. automethod:: brcs() -> BRCS
+    .. automethod:: transform(m: Matrix44) -> Insert
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Insert
+    .. automethod:: translate(dx: float, dy: float, dz: float) -> Insert
 
     .. automethod:: virtual_entities(non_uniform_scaling = False, skipped_entity_callback: Callable[[DXFGraphic, str], None] = None) -> Iterable[DXFGraphic]
 

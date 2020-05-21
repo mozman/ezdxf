@@ -4,7 +4,6 @@ from typing import Sequence, List, Iterable, Union, Tuple
 from enum import IntEnum
 import math
 from .vector import Vector, Vec2
-from .matrix33 import Matrix33
 
 
 class LocationState(IntEnum):
@@ -92,6 +91,17 @@ def normal_vector_3p(a: Vector, b: Vector, c: Vector) -> Vector:
     return (b - a).cross(c - a).normalize()
 
 
+def _determinant(v1, v2, v3) -> float:
+    """ Returns determinant. """
+    e11, e12, e13 = v1
+    e21, e22, e23 = v2
+    e31, e32, e33 = v3
+
+    return e11 * e22 * e33 + e12 * e23 * e31 + \
+           e13 * e21 * e32 - e13 * e22 * e31 - \
+           e11 * e23 * e32 - e12 * e21 * e33
+
+
 def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-10) -> Sequence[
     Vector]:
     """
@@ -118,8 +128,8 @@ def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vec
         return tuple()
     else:
         o2_o1 = o2 - o1
-        det1 = Matrix33(o2_o1, d1, d1xd2).determinant()
-        det2 = Matrix33(o2_o1, d2, d1xd2).determinant()
+        det1 = _determinant(o2_o1, d1, d1xd2)
+        det2 = _determinant(o2_o1, d2, d1xd2)
         p1 = o1 + d1 * (det1 / denominator)
         p2 = o2 + d2 * (det2 / denominator)
         if p1.isclose(p2, abs_tol=abs_tol):

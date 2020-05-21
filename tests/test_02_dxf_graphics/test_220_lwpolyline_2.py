@@ -1,10 +1,11 @@
 # Created: 2011-05-01, 2018 rewritten for pytest
-# Copyright (C) 2011-2019, Manfred Moitzi
+# Copyright (C) 2011-2020, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities.lwpolyline import format_point, compile_array, LWPolylinePoints, LWPolyline
+from ezdxf.math import Vector
 
 
 def lwpolyline(points, dxfattribs=None):
@@ -211,6 +212,18 @@ def test_packed_points_to_dxf_tags_with_bulge():
     assert tags[3] == (40, .1)
     assert tags[4] == (41, .2)
     assert tags[5] == (42, -1)
+
+
+def test_lwpolyline_transform_interface():
+    pline = LWPolyline()
+    pline.set_points([(0, 0), (2, 0), (1, 1)], format='xy')
+    pline.translate(1, 1, 1)
+    vertices = list(pline.vertices())
+    assert vertices[0] == (1, 1)
+    assert vertices[1] == (3, 1)
+    assert vertices[2] == (2, 2)
+    assert pline.dxf.elevation == 1
+    assert Vector(0, 0, 1).isclose(pline.dxf.extrusion)
 
 
 LWPOLYLINE1 = """0

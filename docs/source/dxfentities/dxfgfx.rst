@@ -63,6 +63,22 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
 
     .. automethod:: set_hyperlink
 
+    .. automethod:: transform(t: Matrix44) -> DXFGraphic
+
+    .. automethod:: translate(dx: float, dy: float, dz: float) -> DXFGraphic
+
+    .. automethod:: scale(sx: float, sy: float, sz: float) -> DXFGraphic
+
+    .. automethod:: scale_uniform(s: float) -> DXFGraphic
+
+    .. automethod:: rotate_x(angle: float) -> DXFGraphic
+
+    .. automethod:: rotate_y(angle: float) -> DXFGraphic
+
+    .. automethod:: rotate_z(angle: float) -> DXFGraphic
+
+    .. automethod:: rotate_axis(axis: Vector, angle: float) -> DXFGraphic
+
 .. _Common graphical DXF attributes:
 
 Common graphical DXF attributes

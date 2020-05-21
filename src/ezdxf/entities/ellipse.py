@@ -3,9 +3,11 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 import math
-from ezdxf.math import Vector, normalize_angle
+
+from ezdxf.math import Vector, linspace, Matrix44, rytz_axis_construction
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
+from ezdxf.math import ellipse
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -67,34 +69,29 @@ class Ellipse(DXFGraphic):
         .. versionadded:: 0.11
 
         """
-        # get main axis
-        major_axis = Vector(self.dxf.major_axis)  # local x-axis, 0 rad
-        extrusion = Vector(self.dxf.extrusion)  # local z-axis, normal vector of the ellipse plane
-        minor_axis = extrusion.cross(major_axis)  # local y-axis, pi/2 rad, need only normalized direction
+        dxf = self.dxf
+        major_axis = Vector(dxf.major_axis)  # local x-axis
+        extrusion = Vector(dxf.extrusion)  # local z-axis
+        minor_axis = extrusion.cross(major_axis)  # local y-axis
 
-        # normal vectors for local x- and y-axis
-        x_axis = major_axis.normalize()
-        y_axis = minor_axis.normalize()
+        x_unit_vector = major_axis.normalize()
+        y_unit_vector = minor_axis.normalize()
 
-        # point on ellipse calculation
         radius_x = major_axis.magnitude
-        radius_y = radius_x * self.dxf.ratio
-        center = Vector(self.dxf.center)
+        radius_y = radius_x * dxf.ratio
+        center = Vector(dxf.center)
         for param in params:
             # Ellipse params in radians by definition (DXF Reference)
-            x = math.cos(param) * radius_x
-            y = math.sin(param) * radius_y
+            x = math.cos(param) * radius_x * x_unit_vector
+            y = math.sin(param) * radius_y * y_unit_vector
 
-            # construct WCS coordinates, do not convert from OCS to WCS, extrusion defines only the normal vector of
-            # the ellipse plane.
-            yield center + (x_axis * x) + (y_axis * y)
+            # Construct WCS coordinates, ELLIPSE is not an OCS entity!
+            yield center + x + y
 
     @property
     def minor_axis(self) -> Vector:
-        major_axis = Vector(self.dxf.major_axis)  # local x-axis, 0 rad
-        extrusion = Vector(self.dxf.extrusion)  # local z-axis, normal vector of the ellipse plane
-        minor_axis_length = major_axis.magnitude * self.dxf.ratio
-        return extrusion.cross(major_axis).normalize(minor_axis_length)
+        dxf = self.dxf
+        return ellipse.minor_axis(Vector(dxf.major_axis), Vector(dxf.extrusion), dxf.ratio)
 
     @property
     def start_point(self) -> 'Vector':
@@ -117,21 +114,24 @@ class Ellipse(DXFGraphic):
         end_param = self.dxf.end_param
         if math.isclose(start_param, 0) and math.isclose(end_param, math.tau):
             return
-        self.dxf.start_param = normalize_angle(start_param - HALF_PI)
-        self.dxf.end_param = normalize_angle(end_param - HALF_PI)
+        self.dxf.start_param = (start_param - HALF_PI) % math.tau
+        self.dxf.end_param = (end_param - HALF_PI) % math.tau
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Ellipse':
-        """ Transform ELLIPSE entity from local :class:`~ezdxf.math.UCS` coordinates to
-        :ref:`WCS` coordinates.
+    def params(self, num: int) -> Iterable[float]:
+        """ Returns `num` params from start- to end param in counter clockwise order.
 
-        .. versionadded:: 0.11
+        All params are normalized in the range from [0, 2pi).
 
         """
-        # Ellipse is an real 3d entity without OCS
-        self.dxf.center = ucs.to_wcs(self.dxf.center)
-        self.dxf.major_axis = ucs.direction_to_wcs(self.dxf.major_axis)
-        self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
-        return self
+        if num < 2:
+            raise ValueError('num >= 2')
+        start = self.dxf.start_param % math.tau
+        end = self.dxf.end_param % math.tau
+        if end <= start:
+            end += math.tau
+
+        for param in linspace(start, end, num):
+            yield param % math.tau
 
     @classmethod
     def from_arc(cls, entity: 'DXFGraphic') -> 'Ellipse':
@@ -151,3 +151,38 @@ class Ellipse(DXFGraphic):
         attribs['center'] = ocs.to_wcs(attribs.pop('center'))
         attribs['major_axis'] = ocs.to_wcs((attribs.pop('radius'), 0, 0))
         return Ellipse.new(dxfattribs=attribs, doc=entity.doc)
+
+    def transform(self, m: Matrix44) -> 'Ellipse':
+        """ Transform ELLIPSE entity by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+
+        dxf = self.dxf
+        ellipse_params = ellipse.transform(
+            m,
+            Vector(dxf.center),
+            Vector(dxf.major_axis),
+            Vector(dxf.extrusion),
+            dxf.ratio,
+            dxf.start_param,
+            dxf.end_param,
+        )
+        dxf.center = ellipse_params.center
+        dxf.major_axis = ellipse_params.major_axis
+        dxf.extrusion = ellipse_params.extrusion
+        dxf.ratio = ellipse_params.ratio
+        dxf.start_param = ellipse_params.start_param
+        dxf.end_param = ellipse_params.end_param
+        return self
+
+    def translate(self, dx: float, dy: float, dz: float) -> 'Ellipse':
+        """ Optimized ELLIPSE translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        self.dxf.center = Vector(dx, dy, dz) + self.dxf.center
+        return self
