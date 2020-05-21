@@ -69,6 +69,7 @@ def synced_transformation(entity, chk, m: Matrix44):
 def add(msp, entity, vertices, layer='0'):
     entity.dxf.layer = layer
     entity.dxf.color = 2
+    msp.entitydb.add(entity)
     msp.add_entity(entity)
     msp.add_polyline3d(vertices, dxfattribs={'layer': 'vertices', 'color': 6})
 
@@ -151,6 +152,7 @@ def main_insert(layout):
             dy=random.uniform(-2, 2),
             dz=random.uniform(-2, 2)
         )
+        layout.entitydb.add(entity0)
         layout.add_entity(entity0)
         origin, x, y, z = list(vertices0)
         layout.add_line(origin, x, dxfattribs={'color': 2, 'layer': 'new axis'})
@@ -160,6 +162,7 @@ def main_insert(layout):
         for line in entity0.virtual_entities(non_uniform_scaling=True):
             line.dxf.layer = 'exploded axis'
             line.dxf.color = 7
+            layout.entitydb.add(line)
             layout.add_entity(line)
 
 
@@ -174,6 +177,7 @@ def main_insert2(layout):
 
     for i in range(5):
         entity, vertices = synced_transformation(entity, vertices, m)
+        layout.entitydb.add(entity)
         layout.add_entity(entity)
 
         origin, x, y, z = list(vertices)
@@ -184,6 +188,7 @@ def main_insert2(layout):
         for line in entity.virtual_entities(non_uniform_scaling=True):
             line.dxf.layer = 'exploded axis'
             line.dxf.color = 7
+            layout.entitydb.add(line)
             layout.add_entity(line)
 
 
@@ -287,6 +292,57 @@ def main_mtext(layout):
         add_box(vertices)
 
 
+def hatch_polyline(msp):
+    vertices = [(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)]
+    hatch = msp.add_hatch(color=1)
+    hatch.paths.add_polyline_path(vertices, is_closed=1)
+    hatch.paths.arc_edges_to_ellipse_edges()
+    lwpoly = msp.add_lwpolyline(vertices, format='xyb', dxfattribs={'color': 1, 'closed': 1})
+    return hatch, lwpoly
+
+
+def main_uniform_hatch_polyline(layout):
+    entitydb = layout.doc.entitydb
+    hatch, lwpolyline = hatch_polyline(layout)
+    m = Matrix44.chain(
+        Matrix44.scale(-1.1, 1.1, 1),
+        Matrix44.z_rotate(math.radians(10)),
+        Matrix44.translate(1, 1, 1),
+    )
+    for index in range(4):
+        color = 2 + index
+
+        hatch = hatch.copy()
+        entitydb.add(hatch)
+        hatch.dxf.color = color
+        hatch.transform(m)
+
+        lwpolyline = lwpolyline.copy()
+        entitydb.add(lwpolyline)
+        lwpolyline.dxf.color = color
+        lwpolyline.transform(m)
+
+        layout.add_entity(lwpolyline)
+        layout.add_entity(hatch)
+
+
+def main_non_uniform_hatch_polyline(layout):
+    entitydb = layout.doc.entitydb
+    hatch, lwpolyline = hatch_polyline(layout)
+    m = Matrix44.chain(
+        Matrix44.scale(-1.1, 1.1, 1),
+        Matrix44.z_rotate(math.radians(10)),
+        Matrix44.translate(1, 1, 1),
+    )
+    for index in range(4):
+        color = 2 + index
+        hatch = hatch.copy()
+        entitydb.add(hatch)
+        hatch.dxf.color = color
+        hatch.transform(m)
+        layout.add_entity(hatch)
+
+
 if __name__ == '__main__':
     doc = ezdxf.new('R2000', setup=True)
     setup_csys_blk('UCS')
@@ -294,7 +350,9 @@ if __name__ == '__main__':
     # main_ellipse(msp)
     # main_text(msp)
     # main_mtext(msp)
-    main_insert(msp)
+    # main_insert(msp)
     # main_insert2(msp)
+    # main_uniform_hatch_polyline(msp)
+    main_non_uniform_hatch_polyline(msp)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')

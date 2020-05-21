@@ -7,7 +7,7 @@ from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.lldxf.const import DXF2007, DXF2010
 from ezdxf.render.forms import box
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vector, Matrix44, NonUniformScalingError
 
 
 @pytest.fixture
@@ -129,6 +129,33 @@ def test_polyline_path_transform_interface(hatch, m44):
     chk = m44.transform_vertices(vertices)
     for v, c in zip(path.vertices, chk):
         assert c.isclose(v)
+
+
+def test_arc_to_ellipse_edges(hatch):
+    hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True)
+    hatch.paths.arc_edges_to_ellipse_edges()
+    path = hatch.paths[0]
+    assert path.PATH_TYPE == 'EdgePath', 'polyline path not converted to edge path'
+
+    edge = path.edges[0]
+    assert edge.EDGE_TYPE == 'EllipseEdge'
+    assert edge.center == (5, 0)
+    assert edge.major_axis == (5, 0)
+    assert edge.ratio == 1.0
+
+    edge = path.edges[1]
+    assert edge.EDGE_TYPE == 'LineEdge'
+    assert edge.start == (10, 0)
+    assert edge.end == (10, 10)
+
+    edge = path.edges[2]
+    assert edge.EDGE_TYPE == 'EllipseEdge'
+    assert edge.ratio == 1.0
+
+    edge = path.edges[3]
+    assert edge.EDGE_TYPE == 'LineEdge'
+    assert edge.start == (0, 10)
+    assert edge.end == (0, 0)
 
 
 def test_edge_path_count(edge_hatch):

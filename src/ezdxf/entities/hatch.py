@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Option
 from contextlib import contextmanager
 import math
 import copy
-from ezdxf.math import Vector, UCS, Vec2, Matrix44
+from ezdxf.math import Vector, Vec2, Matrix44, reflect_angle_x_deg
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
@@ -587,15 +587,6 @@ class BoundaryPaths:
         for path in self.paths:
             path.export_dxf(tagwriter)
 
-    def transform_to_wcs(self, ucs: 'UCS', elevation: float = 0, extrusion: Vector = None) -> None:
-        """ Transform HATCH boundary paths from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        These paths are 2d elements, placed in to OCS of the HATCH.
-
-        """
-        for path in self.paths:
-            path.transform_to_wcs(ucs, elevation=elevation, extrusion=extrusion)
-
     def transform(self, ocs: OCSTransform, elevation: float = 0) -> None:
         """ Transform HATCH boundary paths.
 
@@ -619,7 +610,7 @@ class BoundaryPaths:
         def _edges(points) -> Iterable[Union[LineEdge, ArcEdge]]:
             prev_point = None
             prev_bulge = None
-            for x, y, bulge in points[1:]:
+            for x, y, bulge in points:
                 point = Vector(x, y)
                 if prev_point is None:
                     prev_point = point
@@ -629,9 +620,15 @@ class BoundaryPaths:
                 if prev_bulge != 0:
                     arc = ArcEdge()
                     arc.center, start_angle, end_angle, arc.radius = bulge_to_arc(prev_point, point, prev_bulge)
-                    arc.start_angle = math.degrees(start_angle)
-                    arc.end_angle = math.degrees(end_angle)
-                    arc.is_counter_clockwise = 1
+                    chk_point = arc.center + Vec2.from_angle(start_angle, arc.radius)
+                    if chk_point.isclose(prev_point, abs_tol=1e-9):
+                        arc.is_counter_clockwise = 1
+                    else:
+                        start_angle += math.pi
+                        end_angle += math.pi
+                        arc.is_counter_clockwise = 0
+                    arc.start_angle = math.degrees(start_angle) % 360.0
+                    arc.end_angle = math.degrees(end_angle) % 360.0
                     yield arc
                 else:
                     line = LineEdge()
@@ -644,7 +641,10 @@ class BoundaryPaths:
 
         def to_edge_path(polyline_path) -> EdgePath:
             edge_path = EdgePath()
-            edge_path.edges = list(_edges(polyline_path.vertices))
+            vertices = list(polyline_path.vertices)
+            if polyline_path.is_closed:
+                vertices.append(vertices[0])
+            edge_path.edges = list(_edges(vertices))
             return edge_path
 
         def to_ellipse(arc: ArcEdge) -> EllipseEdge:
@@ -1108,22 +1108,36 @@ class EllipseEdge:
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         ocs_to_wcs = ocs.old_ocs.to_wcs
+        start_param = math.radians(self.start_angle)
+        end_param = math.radians(self.end_angle)
+        if not self.is_counter_clockwise:
+            # todo: adjustment required?
+            start_param, end_param = end_param, start_param
         e = ellipse.transform(
             ocs.m,
             ocs_to_wcs(Vector(self.center).replace(z=elevation)),
             ocs_to_wcs(Vector(self.major_axis)),
             ocs.old_extrusion,
             self.ratio,
-            math.radians(self.start_angle),
-            math.radians(self.end_angle),
+            start_param,
+            end_param,
         )
-        assert ocs.new_extrusion.isclose(e.extrusion, abs_tol=1e-9)
+        # todo: start- and end param adjustment does not work
+        start_angle = math.degrees(e.start_param)
+        end_angle = math.degrees(e.end_param)
+        if ocs.new_extrusion.isclose(e.extrusion, abs_tol=1e-9):
+            pass
+        elif ocs.new_extrusion.isclose(-e.extrusion, abs_tol=1e-9):
+            # reverse extrusion vector
+            pass
+        else:
+            raise ArithmeticError('Invalid EllipseEdge() transformation, please send bug report.')
         wcs_to_ocs = ocs.new_ocs.from_wcs
         self.center = wcs_to_ocs(e.center).vec2
         self.major_axis = wcs_to_ocs(e.major_axis).vec2
         self.ratio = e.ratio
-        self.start_angle = math.degrees(e.start_param)
-        self.end_angle = math.degrees(e.end_param)
+        self.start_angle = start_angle % 360.0
+        self.end_angle = end_angle % 360.0
 
 
 class SplineEdge:
