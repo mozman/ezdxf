@@ -7,7 +7,23 @@ import ezdxf
 from ezdxf.math import linspace, Vector, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
 from ezdxf.entities import Circle, Arc, Ellipse, Insert, Text, MText
 
-DIR = Path('~/Desktop/Outbox/ezdxf').expanduser()
+DIR = Path('~/Desktop/Now/ezdxf').expanduser()
+UNIFORM_SCALING = [(-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
+NON_UNIFORM_SCALING = [(-1, 2, 3.1), (1, -2, 3.2), (1, 2, -3.3), (-3.4, -2, 1), (3.5, -2, -1), (-3.6, 2, -1),
+                       (-3.7, -2, -1)]
+
+SCALING_WITHOUT_REFLEXION = [(2, 2, 2), (1, 2, 3)]
+
+
+def setup_csys_blk(name: str):
+    blk = doc.blocks.new(name)
+    blk.add_line((0, 0, 0), X_AXIS, dxfattribs={'color': 1})
+    blk.add_line((0, 0, 0), Y_AXIS, dxfattribs={'color': 3})
+    blk.add_line((0, 0, 0), Z_AXIS, dxfattribs={'color': 5})
+
+
+def random_angle():
+    return random.uniform(0, math.tau)
 
 
 def synced_scaling(entity, chk, axis_vertices=None, sx: float = 1, sy: float = 1, sz: float = 1):
@@ -83,17 +99,19 @@ def ellipse(major_axis=(1, 0), ratio: float = 0.5, start: float = 0, end: float 
     return ellipse_, control_vertices, axis_vertices
 
 
-UNIFORM_SCALING = [(-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
-NON_UNIFORM_SCALING = [(-1, 2, 3.1), (1, -2, 3.2), (1, 2, -3.3), (-3.4, -2, 1), (3.5, -2, -1), (-3.6, 2, -1),
-                       (-3.7, -2, -1)]
-
-SCALING_WITHOUT_REFLEXION = [(2, 2, 2), (1, 2, 3)]
+def insert():
+    return Insert.new(dxfattribs={
+        'name': 'UCS',
+        'insert': (0, 0, 0),
+        'xscale': 1,
+        'yscale': 1,
+        'zscale': 1,
+        'rotation': 0,
+        'layer': 'insert',
+    }, doc=doc), [(0, 0, 0), X_AXIS, Y_AXIS, Z_AXIS]
 
 
 def main_ellipse(layout):
-    def random_angle():
-        return random.uniform(0, math.tau)
-
     entity, vertices, axis_vertices = ellipse(start=math.pi / 2, end=-math.pi / 2)
     axis = Vector.random()
     angle = random_angle()
@@ -116,20 +134,6 @@ def main_ellipse(layout):
 
 
 def main_insert(layout):
-    def insert():
-        return Insert.new(dxfattribs={
-            'name': 'UCS',
-            'insert': (0, 0, 0),
-            'xscale': 1,
-            'yscale': 1,
-            'zscale': 1,
-            'rotation': 0,
-            'layer': 'insert',
-        }, doc=doc), [(0, 0, 0), X_AXIS, Y_AXIS, Z_AXIS]
-
-    def random_angle():
-        return random.uniform(0, math.tau)
-
     entity, vertices = insert()
     entity, vertices = synced_translation(entity, vertices, dx=1, dy=0, dz=0)
     axis = Vector.random()
@@ -160,17 +164,6 @@ def main_insert(layout):
 
 
 def main_insert2(layout):
-    def insert():
-        return Insert.new(dxfattribs={
-            'name': 'UCS',
-            'insert': (0, 0, 0),
-            'xscale': 1,
-            'yscale': 1,
-            'zscale': 1,
-            'rotation': 0,
-            'layer': 'insert',
-        }, doc=doc), [(0, 0, 0), X_AXIS, Y_AXIS, Z_AXIS]
-
     entity, vertices = insert()
     m = Matrix44.chain(
         Matrix44.scale(-1.1, 1.1, 1),
@@ -180,19 +173,13 @@ def main_insert2(layout):
     doc.layers.new('exploded axis', dxfattribs={'color': -7})
 
     for i in range(5):
-        print(f'\n{i + 1}. transformation')
-
         entity, vertices = synced_transformation(entity, vertices, m)
-        print(f'INSERT extrusion {entity.dxf.extrusion}')
-        print(f'INSERT scale x= {entity.dxf.xscale:.3f}, y= {entity.dxf.yscale:.3f}')
-        print(f'INSERT rotation = {entity.dxf.rotation:.3f} deg')
         layout.add_entity(entity)
 
         origin, x, y, z = list(vertices)
         layout.add_line(origin, x, dxfattribs={'color': 2, 'layer': 'new axis'})
         layout.add_line(origin, y, dxfattribs={'color': 4, 'layer': 'new axis'})
         layout.add_line(origin, z, dxfattribs={'color': 6, 'layer': 'new axis'})
-        print(f'LINES extrusion {(z - origin).normalize()}')
 
         for line in entity.virtual_entities(non_uniform_scaling=True):
             line.dxf.layer = 'exploded axis'
@@ -300,17 +287,14 @@ def main_mtext(layout):
         add_box(vertices)
 
 
-def setup_blk(blk):
-    blk.add_line((0, 0, 0), X_AXIS, dxfattribs={'color': 1})
-    blk.add_line((0, 0, 0), Y_AXIS, dxfattribs={'color': 3})
-    blk.add_line((0, 0, 0), Z_AXIS, dxfattribs={'color': 5})
-
-
 if __name__ == '__main__':
     doc = ezdxf.new('R2000', setup=True)
+    setup_csys_blk('UCS')
     msp = doc.modelspace()
-    blk = doc.blocks.new('UCS')
-    setup_blk(blk)
+    # main_ellipse(msp)
+    # main_text(msp)
+    # main_mtext(msp)
     main_insert(msp)
+    # main_insert2(msp)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')

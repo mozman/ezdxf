@@ -122,4 +122,4 @@ class OCSTransform:
     def transform_deg_angle(self, angle: float) -> float:
         """ Returns angle (in degrees) from old OCS transformed into new OCS.
         """
-        return math.degrees(self.transform_angle(math.radians(angle)))
+        return math.degrees(self.transform_angle(math.radians(angle))) % 360.0

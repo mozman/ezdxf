@@ -250,8 +250,6 @@ Matrix44
 
     .. automethod:: transpose
 
-    .. automethod:: get_transpose() -> Matrix44
-
     .. automethod:: determinant
 
     .. automethod:: inverse
