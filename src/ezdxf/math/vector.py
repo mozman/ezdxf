@@ -254,7 +254,7 @@ class Vector:
     @property
     def is_null(self) -> bool:
         """ ``True`` for ``Vector(0, 0, 0)``. """
-        return self.__eq__((0, 0, 0))  # __eq__ uses is_close()
+        return self.__eq__((0, 0, 0))
 
     def is_parallel(self, other: 'Vector', abs_tol: float = 1e-12) -> bool:
         """ Returns ``True`` if `self` and `other` are parallel to vectors. """
@@ -325,10 +325,10 @@ class Vector:
 
     def isclose(self, other: Any, abs_tol: float = 1e-12) -> bool:
         """ Returns ``True`` if `self` is close to `other`. Uses :func:`math.isclose` to compare all axis. """
-        other = self.__class__(other)
-        return math.isclose(self.x, other.x, abs_tol=abs_tol) and \
-               math.isclose(self.y, other.y, abs_tol=abs_tol) and \
-               math.isclose(self.z, other.z, abs_tol=abs_tol)
+        x, y, z = self.decompose(other)
+        return math.isclose(self._x, x, abs_tol=abs_tol) and \
+               math.isclose(self._y, y, abs_tol=abs_tol) and \
+               math.isclose(self._z, z, abs_tol=abs_tol)
 
     def __eq__(self, other: Any) -> bool:
         """
