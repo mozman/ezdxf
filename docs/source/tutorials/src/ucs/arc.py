@@ -22,19 +22,19 @@ msp.add_arc(
     start_angle=START_ANGLE,
     end_angle=END_ANGLE,
     dxfattribs={'color': 6},
-).transform_to_wcs(ucs)
+).transform(ucs.matrix)
 
 msp.add_line(
     start=CENTER,
     end=Vector.from_deg_angle(START_ANGLE),
     dxfattribs={'color': 6},
-).transform_to_wcs(ucs)
+).transform(ucs.matrix)
 
 msp.add_line(
     start=CENTER,
     end=Vector.from_deg_angle(END_ANGLE),
     dxfattribs={'color': 6},
-).transform_to_wcs(ucs)
+).transform(ucs.matrix)
 
 ucs.render_axis(msp)
 doc.saveas(OUT_DIR / 'ucs_arc.dxf')

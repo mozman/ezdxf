@@ -259,7 +259,7 @@ def diameter_3d(dxfversion='R2000', delta=10):
     for x, y in multiple_locations(delta=delta):
         ucs = UCS(origin=(x, y, 0)).rotate_local_x(math.radians(45))
         angle = Vector(x, y).angle_deg
-        msp.add_circle((0, 0), radius=3).transform_to_wcs(ucs)
+        msp.add_circle((0, 0), radius=3).transform(ucs.matrix)
         dim = msp.add_diameter_dim(center=(0, 0), radius=3, angle=angle, dimstyle='EZ_RADIUS')
         dim.render(discard=BRICSCAD, ucs=ucs)
 

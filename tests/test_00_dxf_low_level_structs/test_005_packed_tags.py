@@ -127,11 +127,11 @@ def test_vertex_array_to_dxf_tags():
     assert tags[-1] == (30, 60.)
 
 
-def test_vertext_array_transform_to_wcs():
+def test_vertext_array_transform_by_ucs():
     vertices = VertexArray()
     vertices.extend([(0, 0, 0), (1, 0, 0), (1, 1, 0)])
     ucs = UCS(origin=(0, 0, 1))
-    vertices.transform_to_wcs(ucs)
+    vertices.transform(ucs.matrix)
     assert vertices[0] == (0, 0, 1)
     assert vertices[1] == (1, 0, 1)
     assert vertices[2] == (1, 1, 1)

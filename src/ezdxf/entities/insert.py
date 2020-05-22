@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Callable, Dict
 import math
 import warnings
-from ezdxf.math import Vector, X_AXIS, Y_AXIS, Matrix44, OCS
+from ezdxf.math import Vector, X_AXIS, Y_AXIS, Matrix44, OCS, UCS
 from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -453,6 +453,13 @@ class Insert(DXFGraphic):
         m.set_row(3, insert.xyz)
         return m
 
+    def ucs(self):
+        """ Returns the block reference coordinate system as :class:`ezdxf.math.UCS` object. """
+        m = self.matrix44()
+        ucs = UCS()
+        ucs.matrix = m
+        return ucs
+
     def reset_transformation(self) -> None:
         """ Reset block reference parameters `location`, `rotation` and `extrusion` vector.
 
@@ -526,8 +533,7 @@ class Insert(DXFGraphic):
         .. warning::
 
             **Non uniform scaling** returns incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
-            some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
-            POLYLINE/LWPOLYLINE with arc segments. Non uniform scaling is getting better, but still not perfect!
+            some other entities like HATCH with arc or ellipse path segments.
 
         Args:
             skipped_entity_callback: called whenever the transformation of an entity is not supported and so was skipped

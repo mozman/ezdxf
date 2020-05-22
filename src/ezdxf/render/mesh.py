@@ -2,6 +2,7 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING, Union, Dict
+import warnings
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.math import Matrix44, Vector, NULLVEC
 from ezdxf.math.construct3d import is_planar_face, subdivide_face, normal_vector_3p, subdivide_ngons
@@ -250,7 +251,7 @@ class MeshBuilder:
         if matrix is not None:
             t.transform(matrix)
         if ucs is not None:
-            t.transform_to_wcs(ucs)
+            t.transform(ucs.matrix)
         polyface.append_faces(subdivide_ngons(t.faces_as_vertices()))
         return polyface
 
@@ -272,7 +273,7 @@ class MeshBuilder:
         if matrix is not None:
             t.transform(matrix)
         if ucs is not None:
-            t.transform_to_wcs(ucs)
+            t.transform(ucs.matrix)
         for face in subdivide_ngons(t.faces_as_vertices()):
             layout.add_3dface(face, dxfattribs=dxfattribs)
 
@@ -405,16 +406,12 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(Matrix44.axis_rotate(axis, angle).transform_vertices(self.vertices))
         return self
 
-    def transform_to_wcs(self, ucs: 'UCS'):
-        """
-        Transform local UCS vertices to WCS vertices.
-
-        Args:
-            ucs: user coordinate system
-
-        """
-        self.vertices = list(ucs.points_to_wcs(self.vertices))
-        return self
+    def transform_to_wcs(self, ucs: 'UCS') -> 'MeshTransformer':
+        warnings.warn(
+            'MeshTransformer.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix) instead.',
+            DeprecationWarning
+        )
+        return self.transform(ucs.matrix)
 
 
 def _subdivide(mesh, quads=True, edges=False) -> 'MeshVertexMerger':

@@ -8,10 +8,11 @@ Tutorial for UCS Based Transformations
 
 With `ezdxf` v0.11 a new feature for entity transformation was introduced, which makes working with OCS/UCS much
 easier, this is a new edition of the older :ref:`tut_ocs`. For the basic information read the old tutorial
-please.
+please. In `ezdxf` v0.13 the :meth:`transform_to_wcs()` interface was replaced by the general transformation
+interface: :meth:`transform()`.
 
 For this tutorial we don't have to worry about the OCS and the extrusion vector, this is done automatically
-by the :meth:`transform_to_wcs` method of each DXF entity.
+by the :meth:`transform` method of each DXF entity.
 
 Placing 2D Circle in 3D Space
 -----------------------------
@@ -58,7 +59,7 @@ place the POLYLINE in 3D space.
 Placing 2D Text in 3D Space
 ---------------------------
 
-The problem with the text rotation in the old tutorial disappears (or better it is hidden in :meth:`transform_to_wcs`)
+The problem with the text rotation in the old tutorial disappears (or better it is hidden in :meth:`transform`)
 with the new UCS based transformation method:
 
 AutoCAD supports thickness for the TEXT entity only for `.shx` fonts and not for true type fonts.

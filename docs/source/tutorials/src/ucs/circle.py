@@ -20,10 +20,10 @@ circle = msp.add_circle(
     radius=1,
     dxfattribs={'color': 1}
 )
-circle.transform_to_wcs(ucs)
+circle.transform(ucs.matrix)
 
 # mark center point of circle in WCS
-msp.add_point((0, 0, 2), dxfattribs={'color': 1}).transform_to_wcs(ucs)
+msp.add_point((0, 0, 2), dxfattribs={'color': 1}).transform(ucs.matrix)
 
 ucs.render_axis(msp)
 doc.saveas(OUT_DIR / 'ucs_circle.dxf')

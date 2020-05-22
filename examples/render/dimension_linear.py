@@ -183,7 +183,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
         for line in lines:
             text = msp.add_text(line, dxfattribs=attribs).set_pos(insert)
             if ucs:
-                text.transform_to_wcs(ucs)
+                text.transform(ucs.matrix)
             insert -= delta
 
     msp = doc.modelspace()

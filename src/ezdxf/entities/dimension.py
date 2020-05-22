@@ -609,13 +609,28 @@ class ArcDimension(Dimension):
             'is_partial', 'has_leader', 'leader_point1', 'leader_point2',
         ])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Dimension':
-        super().transform_to_wcs(ucs)
-        self._ucs_and_ocs_transformation(ucs, vector_names=[], angle_names=['start_angle', 'end_angle'])
-        dxf = self.dxf
-        for name in ['leader_point1', 'leader_point2']:
+    def transform(self, m: 'Matrix44') -> 'Dimension':
+        """ Transform ARC_DIMENSION entity by transformation matrix `m` inplace.
+
+        Raises ``NonUniformScalingError()`` for non uniform scaling.
+
+        .. versionadded:: 0.13
+
+        """
+        def transform_if_exist(name: str, func):
             if dxf.hasattr(name):
-                dxf.set(name, ucs.to_wcs(dxf.get(name)))
+                dxf.set(name, func(dxf.get(name)))
+
+        dxf = self.dxf
+        ocs = OCSTransform(self.dxf.extrusion, m)
+
+        for angle_name in ('start_angle', 'end_angle'):
+            transform_if_exist(angle_name, ocs.transform_deg_angle)
+
+        for vertex_name in ('leader_point1', 'leader_point2'):
+            transform_if_exist(vertex_name, m.transform)
+
+        dxf.extrusion = ocs.new_extrusion
         return self
 
 

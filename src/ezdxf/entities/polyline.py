@@ -942,17 +942,6 @@ class DXFVertex(DXFGraphic):
     def is_face_record(self) -> bool:
         return (self.dxf.flags & self.FACE_FLAGS) == self.POLYFACE_MESH_VERTEX
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'DXFVertex':
-        """ Transform VERTEX from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        if self.is_face_record:
-            return self
-        self.dxf.location = ucs.to_wcs(self.dxf.location)
-        return self
-
     def transform(self, m: 'Matrix44') -> 'DXFVertex':
         """ Transform VERTEX entity by transformation matrix `m` inplace.
 

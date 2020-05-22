@@ -61,7 +61,7 @@ for number, point in enumerate(placing_points):
     random_scale = 0.5 + random.random() * 2.0
     blockref = msp.add_blockref('FLAG', point, dxfattribs={
         'rotation': 15
-    }).scale(random_scale)
+    }).set_scale(random_scale)
     blockref.add_auto_attribs(values)
 
 # Save the drawing.

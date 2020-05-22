@@ -200,19 +200,6 @@ class VertexArray:
         self.clear()
         self.extend(points)
 
-    def transform_to_wcs(self, ucs: UCS) -> None:
-        """ Transform vertices from local :class:`~ezdxf.math.UCS` coordinates to
-        :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        ucs_to_wcs = ucs.to_wcs
-        values = array('d')
-        for vertex in self:
-            values.extend(ucs_to_wcs(vertex))
-        self.values = values
-
     def transform(self, m: Matrix44) -> None:
         """ Transform vertices by transformation matrix `m`.
 

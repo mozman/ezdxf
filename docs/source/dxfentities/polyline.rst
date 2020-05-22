@@ -241,11 +241,6 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: is_face_record
 
-    .. method:: transform_to_wcs(ucs: UCS) -> Vertex
-
-        Transform VERTEX entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
 
 Polymesh
 ========

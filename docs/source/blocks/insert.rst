@@ -109,6 +109,7 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
 
+    .. automethod:: ucs() -> UCS
 
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-28FA4CFB-9D5E-4880-9F11-36C97578252F
