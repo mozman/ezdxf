@@ -1113,28 +1113,29 @@ class EllipseEdge:
         if not self.is_counter_clockwise:
             # todo: adjustment required?
             start_param, end_param = end_param, start_param
-        e = ellipse.transform(
-            ocs.m,
+        params = ellipse.Params(
             ocs_to_wcs(Vector(self.center).replace(z=elevation)),
             ocs_to_wcs(Vector(self.major_axis)),
+            None,  # minor axis, not needed as input
             ocs.old_extrusion,
             self.ratio,
             start_param,
             end_param,
         )
+        params = ellipse.transform(params, ocs.m)
         # todo: start- and end param adjustment does not work
-        start_angle = math.degrees(e.start_param)
-        end_angle = math.degrees(e.end_param)
-        if ocs.new_extrusion.isclose(e.extrusion, abs_tol=1e-9):
+        start_angle = math.degrees(params.start)
+        end_angle = math.degrees(params.end)
+        if ocs.new_extrusion.isclose(params.extrusion, abs_tol=1e-9):
             pass
-        elif ocs.new_extrusion.isclose(-e.extrusion, abs_tol=1e-9):
+        elif ocs.new_extrusion.isclose(-params.extrusion, abs_tol=1e-9):
             self.is_counter_clockwise = 0
         else:
             raise ArithmeticError('Invalid EllipseEdge() transformation, please send bug report.')
         wcs_to_ocs = ocs.new_ocs.from_wcs
-        self.center = wcs_to_ocs(e.center).vec2
-        self.major_axis = wcs_to_ocs(e.major_axis).vec2
-        self.ratio = e.ratio
+        self.center = wcs_to_ocs(params.center).vec2
+        self.major_axis = wcs_to_ocs(params.major_axis).vec2
+        self.ratio = params.ratio
         self.start_angle = start_angle % 360.0
         self.end_angle = end_angle % 360.0
 

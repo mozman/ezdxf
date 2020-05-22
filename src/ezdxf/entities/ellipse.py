@@ -160,21 +160,22 @@ class Ellipse(DXFGraphic):
         """
 
         dxf = self.dxf
-        ellipse_params = ellipse.transform(
-            m,
+        params = ellipse.Params(
             Vector(dxf.center),
             Vector(dxf.major_axis),
+            None,   # minor axis, not needed as input
             Vector(dxf.extrusion),
             dxf.ratio,
             dxf.start_param,
             dxf.end_param,
         )
+        ellipse_params = ellipse.transform(params, m)
         dxf.center = ellipse_params.center
         dxf.major_axis = ellipse_params.major_axis
         dxf.extrusion = ellipse_params.extrusion
         dxf.ratio = ellipse_params.ratio
-        dxf.start_param = ellipse_params.start_param
-        dxf.end_param = ellipse_params.end_param
+        dxf.start_param = ellipse_params.start
+        dxf.end_param = ellipse_params.end
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> 'Ellipse':
