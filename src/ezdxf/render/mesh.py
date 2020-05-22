@@ -319,20 +319,20 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(matrix.transform_vertices(self.vertices))
         return self
 
-    def translate(self, x: float = 0, y: float = 0, z: float = 0):
+    def translate(self, dx: float = 0, dy: float = 0, dz: float = 0):
         """
         Translate mesh inplace.
 
         Args:
-            x: translation in x-axis
-            y: translation in y-axis
-            z: translation in z-axis
+            dx: translation in x-axis
+            dy: translation in y-axis
+            dz: translation in z-axis
 
         """
-        if isinstance(x, (float, int)):
-            t = Vector(x, y, z)
+        if isinstance(dx, (float, int)):
+            t = Vector(dx, dy, dz)
         else:
-            t = Vector(x)
+            t = Vector(dx)
         self.vertices = [t + v for v in self.vertices]
         return self
 

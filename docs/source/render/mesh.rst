@@ -88,8 +88,6 @@ Same functionality as :class:`MeshBuilder` but supports inplace transformation.
 
     .. automethod:: rotate_axis
 
-    .. automethod:: transform_to_wcs
-
 MeshVertexMerger
 ================
 
