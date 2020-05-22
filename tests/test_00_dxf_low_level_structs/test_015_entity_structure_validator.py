@@ -94,39 +94,37 @@ def test_xrecord_with_group_code_102():
 XRECORD_WITH_GROUP_CODE_102 = """0
 XRECORD
 5
-D9B071D01A0CB6A5
+4E6F
 102
 {ACAD_REACTORS
 330
-D9B071D01A0CB69D
+4E50
 102
 }
 330
-D9B071D01A0CB69D
+4E50
 100
 AcDbXrecord
 280
- 1
-102
-ACAD_ROUNDTRIP_PRE2007_TABLESTYLE
-90
-    4
-91
-    0
 1
-
-92
-    4
-93
-    0
-2
-
-94
-    4
-95
-    0
-3
-
+1
+dik
+40
+20.0
+1
+bt.var
+102
+{
+102
+{
+1
+<!I@M:DOT!>
+1
+kbez
+102
+}
+102
+}
 """
 
 

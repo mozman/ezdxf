@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.12.4 - dev
+--------------------
+
+- BUGFIX: structure validator for XRECORD
+
 Version 0.12.3 - 2020-05-16
 ---------------------------
 

@@ -11,7 +11,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, DXFTag, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, DXFTag, UCS, Matrix44
 
 __all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables', 'Wipeout']
 
@@ -162,16 +162,15 @@ class Image(DXFGraphic):
     def get_boundary_path(self) -> List['Vertex']:
         return self._boundary_path
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Image':
-        """ Transform IMAGE entity from local :class:`~ezdxf.math.UCS` coordinates to
-        :ref:`WCS` coordinates.
+    def transform(self, m: 'Matrix44') -> 'Image':
+        """ Transform IMAGE entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        self.dxf.insert = ucs.to_wcs(self.dxf.insert)
-        self.dxf.u_pixel = ucs.direction_to_wcs(self.dxf.u_pixel)
-        self.dxf.v_pixel = ucs.direction_to_wcs(self.dxf.v_pixel)
+        self.dxf.insert = m.transform(self.dxf.insert)
+        self.dxf.u_pixel = m.transform_direction(self.dxf.u_pixel)
+        self.dxf.v_pixel = m.transform_direction(self.dxf.v_pixel)
         return self
 
 

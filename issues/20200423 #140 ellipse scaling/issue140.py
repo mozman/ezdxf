@@ -29,7 +29,7 @@ def main():
                     print(f' - {key}: {value}')
 
             print('\nvirtual entities:')
-            entities = entity.virtual_entities(non_uniform_scaling=True)
+            entities = entity.virtual_entities()
             for child in entities:
                 print(f'child: {child.dxftype()}')
 

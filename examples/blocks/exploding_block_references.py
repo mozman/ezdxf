@@ -21,12 +21,12 @@ block.add_lwpolyline([(0, 1.1), (0.3, 1.1, -0.5), (.7, 1.1), (1, 1.1)], format='
 
 # horizontal
 msp.add_blockref('TEST', (0, 0))
-msp.add_blockref('TEST', (2, 0)).scale(2)
+msp.add_blockref('TEST', (2, 0)).set_scale(2)
 msp.add_blockref('TEST', (5, 0), dxfattribs={'xscale': 2})  # none uniform scaling
 
 # rotated 45 degrees
 msp.add_blockref('TEST', (0, 3), dxfattribs={'rotation': 45})
-msp.add_blockref('TEST', (2, 3), dxfattribs={'rotation': 45}).scale(2)
+msp.add_blockref('TEST', (2, 3), dxfattribs={'rotation': 45}).set_scale(2)
 msp.add_blockref('TEST', (5, 3), dxfattribs={'xscale': 2, 'rotation': 45})  # none uniform scaling
 
 doc.set_modelspace_vport(4, center=(3, 3))
@@ -34,6 +34,6 @@ doc.saveas(DIR / 'scaling.dxf')
 
 # Explode flag block references
 for block in msp.query("INSERT[name=='TEST']"):
-    cast('Insert', block).explode(non_uniform_scaling=True)
+    cast('Insert', block).explode()
 
 doc.saveas(DIR / 'exploded.dxf')

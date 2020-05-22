@@ -1,11 +1,11 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-02-14
 import pytest
 import ezdxf
 
 from ezdxf.entities.dxfgfx import DXFGraphic
-
+from ezdxf.math import Matrix44
 
 @pytest.fixture
 def entity():
@@ -85,6 +85,22 @@ def test_clone_graphical_entity(entity):
     assert entity.dxf.color == 13
     assert entity.get_reactors() == ['A', 'F']
     assert entity.get_xdata('MOZMAN') == [(1000, 'extended data')]
+
+
+def test_basic_transformation_interfaces():
+    # test basic implementation = forward operation to transform interface
+    class BasicGraphic(DXFGraphic):
+        def transform(self, m: Matrix44) -> DXFGraphic:
+            return self
+
+    interface_mockup = BasicGraphic.new()
+    assert interface_mockup.translate(1, 2, 3) is interface_mockup
+    assert interface_mockup.scale(1, 2, 3) is interface_mockup
+    assert interface_mockup.scale_uniform(1) is interface_mockup
+    assert interface_mockup.rotate_axis((1, 2, 3), 1) is interface_mockup
+    assert interface_mockup.rotate_x(1) is interface_mockup
+    assert interface_mockup.rotate_y(1) is interface_mockup
+    assert interface_mockup.rotate_z(1) is interface_mockup
 
 
 LINE = """0

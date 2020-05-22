@@ -2,6 +2,7 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING, Union, Dict
+import warnings
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.math import Matrix44, Vector, NULLVEC
 from ezdxf.math.construct3d import is_planar_face, subdivide_face, normal_vector_3p, subdivide_ngons
@@ -142,7 +143,7 @@ class MeshBuilder:
         """
         vertices = self.vertices
         if matrix is not None:
-            vertices = matrix.transform_vectors(vertices)
+            vertices = list(matrix.transform_vertices(vertices))
         if ucs is not None:
             vertices = ucs.points_to_wcs(vertices)
         mesh = layout.add_mesh(dxfattribs=dxfattribs)
@@ -250,7 +251,7 @@ class MeshBuilder:
         if matrix is not None:
             t.transform(matrix)
         if ucs is not None:
-            t.transform_to_wcs(ucs)
+            t.transform(ucs.matrix)
         polyface.append_faces(subdivide_ngons(t.faces_as_vertices()))
         return polyface
 
@@ -272,7 +273,7 @@ class MeshBuilder:
         if matrix is not None:
             t.transform(matrix)
         if ucs is not None:
-            t.transform_to_wcs(ucs)
+            t.transform(ucs.matrix)
         for face in subdivide_ngons(t.faces_as_vertices()):
             layout.add_3dface(face, dxfattribs=dxfattribs)
 
@@ -316,23 +317,23 @@ class MeshTransformer(MeshBuilder):
             matrix: 4x4 transformation matrix as :class:`~ezdxf.math.Matrix44` object
 
         """
-        self.vertices = matrix.transform_vectors(self.vertices)
+        self.vertices = list(matrix.transform_vertices(self.vertices))
         return self
 
-    def translate(self, x: float = 0, y: float = 0, z: float = 0):
+    def translate(self, dx: float = 0, dy: float = 0, dz: float = 0):
         """
         Translate mesh inplace.
 
         Args:
-            x: translation in x-axis
-            y: translation in y-axis
-            z: translation in z-axis
+            dx: translation in x-axis
+            dy: translation in y-axis
+            dz: translation in z-axis
 
         """
-        if isinstance(x, (float, int)):
-            t = Vector(x, y, z)
+        if isinstance(dx, (float, int)):
+            t = Vector(dx, dy, dz)
         else:
-            t = Vector(x)
+            t = Vector(dx)
         self.vertices = [t + v for v in self.vertices]
         return self
 
@@ -368,7 +369,7 @@ class MeshTransformer(MeshBuilder):
             angle: rotation angle in radians
 
         """
-        self.vertices = Matrix44.x_rotate(angle).transform_vectors(self.vertices)
+        self.vertices = list(Matrix44.x_rotate(angle).transform_vertices(self.vertices))
         return self
 
     def rotate_y(self, angle: float):
@@ -379,7 +380,7 @@ class MeshTransformer(MeshBuilder):
             angle: rotation angle in radians
 
         """
-        self.vertices = Matrix44.y_rotate(angle).transform_vectors(self.vertices)
+        self.vertices = list(Matrix44.y_rotate(angle).transform_vertices(self.vertices))
         return self
 
     def rotate_z(self, angle: float):
@@ -390,7 +391,7 @@ class MeshTransformer(MeshBuilder):
             angle: rotation angle in radians
 
         """
-        self.vertices = Matrix44.z_rotate(angle).transform_vectors(self.vertices)
+        self.vertices = list(Matrix44.z_rotate(angle).transform_vertices(self.vertices))
         return self
 
     def rotate_axis(self, axis: 'Vertex', angle: float):
@@ -402,19 +403,15 @@ class MeshTransformer(MeshBuilder):
             angle: rotation angle in radians
 
         """
-        self.vertices = Matrix44.axis_rotate(axis, angle).transform_vectors(self.vertices)
+        self.vertices = list(Matrix44.axis_rotate(axis, angle).transform_vertices(self.vertices))
         return self
 
-    def transform_to_wcs(self, ucs: 'UCS'):
-        """
-        Transform local UCS vertices to WCS vertices.
-
-        Args:
-            ucs: user coordinate system
-
-        """
-        self.vertices = list(ucs.points_to_wcs(self.vertices))
-        return self
+    def transform_to_wcs(self, ucs: 'UCS') -> 'MeshTransformer':
+        warnings.warn(
+            'MeshTransformer.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix) instead.',
+            DeprecationWarning
+        )
+        return self.transform(ucs.matrix)
 
 
 def _subdivide(mesh, quads=True, edges=False) -> 'MeshVertexMerger':

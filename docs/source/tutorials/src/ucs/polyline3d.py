@@ -27,14 +27,14 @@ msp.add_polyline3d(
         'closed': True,
         'color': 1,
     }
-).transform_to_wcs(location_ucs)
+).transform(location_ucs.matrix)
 
 # Add lines from the center of the POLYLINE to the corners
 center_ucs = transformation_ucs.to_wcs((0, 0, 0))
 for corner in corners_ucs:
     msp.add_line(
         center_ucs, corner, dxfattribs={'color': 1}
-    ).transform_to_wcs(location_ucs)
+    ).transform(location_ucs.matrix)
 
 location_ucs.render_axis(msp)
 doc.saveas(OUT_DIR / 'ucs_polyline3d.dxf')

@@ -227,4 +227,4 @@ class ConstructionArc(ConstructionTool):
             end_angle=self.end_angle,
             dxfattribs=dxfattribs,
         )
-        return arc if ucs is None else arc.transform_to_wcs(ucs)
+        return arc if ucs is None else arc.transform(ucs.matrix)

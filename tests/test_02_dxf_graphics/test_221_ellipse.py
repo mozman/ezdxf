@@ -6,7 +6,7 @@ import random
 import pytest
 import math
 
-from ezdxf.math import Vector, angle_to_param, NULLVEC
+from ezdxf.math import Vector, angle_to_param, linspace
 from ezdxf.entities.ellipse import Ellipse
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
@@ -226,3 +226,11 @@ def test_angle_to_param():
         assert math.isclose(calculated_angle, angle, abs_tol=1e-9)
         assert (math.isclose(calculated_angle, calculated_angle_without_direction) or
                 math.isclose(math.tau - calculated_angle, calculated_angle_without_direction))
+
+
+def test_generate_params():
+    count = 9
+    e = Ellipse.new(dxfattribs={'start_param': math.pi / 2, 'end_param': -math.pi / 2})
+    params = list(e.params(count))
+    expected = list(linspace(math.pi / 2, math.pi / 2.0 * 3.0, count))
+    assert params == expected

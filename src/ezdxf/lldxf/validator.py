@@ -111,6 +111,7 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
     """
     assert isinstance(tags, list)
     dxftype = tags[0].value  # type: str
+    is_xrecord = dxftype == 'XRECORD'
     handle = '???'
     app_data = False
     xdata = False
@@ -148,7 +149,8 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
                         'Invalid XDATA structure in entity {}(#{}), unbalanced list markers, missing  (1002, "{{").'.format(
                             dxftype, handle))
 
-        if tag.code == APP_DATA_MARKER:
+        if tag.code == APP_DATA_MARKER and not is_xrecord:
+            # Ignore control tags (102, ...) tags in XRECORD
             value = tag.value
             if value.startswith('{'):
                 if app_data:  # already in app data mode
@@ -166,9 +168,8 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
                 app_data = False
                 app_data_closing_tag = '}'
             else:
-                if dxftype != 'XRECORD':  # group code 102 as non app data allowed in XRECORD
-                    raise DXFAppDataError(
-                        'Invalid APP DATA structure tag (102, "{}") in entity {}(#{}).'.format(value, dxftype, handle))
+                raise DXFAppDataError(
+                    'Invalid APP DATA structure tag (102, "{}") in entity {}(#{}).'.format(value, dxftype, handle))
 
         # XDATA section starts with (1001, APPID) and is always at the end of an entity,
         # since AutoCAD 2018, embedded objects may follow XDATA

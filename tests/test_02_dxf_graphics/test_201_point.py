@@ -1,11 +1,13 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-02-15
 import pytest
+import math
 
 from ezdxf.entities.point import Point
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.math import Matrix44
 
 TEST_CLASS = Point
 TEST_TYPE = 'POINT'
@@ -98,4 +100,22 @@ def test_write_dxf(txt, ver):
     assert collector.has_all_tags(collector2)
 
 
+def test_transform():
+    point = Point.new(dxfattribs={'location': (2, 3, 4), 'extrusion': (0, 1, 0), 'thickness': 2})
+    # 1. rotation - 2. scaling - 3. translation
+    m = Matrix44.chain(Matrix44.scale(2, 3, 1), Matrix44.translate(1, 1, 1))
+    point.transform(m)
+    assert point.dxf.location == (5, 10, 5)
+    assert point.dxf.extrusion == (0, 1, 0)
+    assert point.dxf.thickness == 6
 
+    angle = math.pi / 4
+    point.transform(Matrix44.z_rotate(math.pi / 4))
+    assert point.dxf.extrusion.isclose((-math.cos(angle), math.sin(angle), 0))
+    assert math.isclose(point.dxf.thickness, 6)
+
+
+def test_fast_translation():
+    point = Point.new(dxfattribs={'location': (2, 3, 4), 'extrusion': (0, 1, 0), 'thickness': 2})
+    point.translate(1, 2, 3)
+    assert point.dxf.location == (3, 5, 7)

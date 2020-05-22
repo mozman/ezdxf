@@ -48,7 +48,7 @@ def setup_csys(blk, size=3):
 def ucs_rotation(ucs: UCS, axis: Vector, angle: float):
     # new in ezdxf v0.11: UCS.rotate(axis, angle)
     t = Matrix44.axis_rotate(axis, math.radians(angle))
-    ux, uy, uz = t.transform_vectors([ucs.ux, ucs.uy, ucs.uz])
+    ux, uy, uz = t.transform_vertices([ucs.ux, ucs.uy, ucs.uz])
     return UCS(origin=ucs.origin, ux=ux, uy=uy, uz=uz)
 
 

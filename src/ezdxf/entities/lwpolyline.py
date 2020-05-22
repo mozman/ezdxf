@@ -5,9 +5,11 @@ from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, cast, List, Union
 import array
 import copy
 from contextlib import contextmanager
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
+
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED, DXFStructureError
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.packedtags import VertexArray
@@ -265,19 +267,29 @@ class LWPolyline(DXFGraphic):
         """ Remove all points. """
         self.lwpoints.clear()
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'LWPolyline':
-        """ Transform LWPOLYLINE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: 'Matrix44') -> 'LWPolyline':
+        """ Transform LWPOLYLINE entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        extrusion = self.dxf.extrusion
-        vertices = list(ucs.ocs_points_to_ocs(self.vertices_in_ocs(), extrusion=extrusion))
+        dxf = self.dxf
+        ocs = OCSTransform(self.dxf.extrusion, m)
+        if not ocs.scale_uniform:
+            raise NonUniformScalingError('2D POLYLINE with arcs does not support non uniform scaling')
+            # Parent function has to catch this Exception and explode this LWPOLYLINE into LINE and ELLIPSE entities.
+        vertices = list(ocs.transform_vertex(v) for v in self.vertices_in_ocs())
         lwpoints = [(v[0], v[1], p[2], p[3], p[4]) for v, p in zip(vertices, self.lwpoints)]
         self.set_points(lwpoints)
-        self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
+
         # all new OCS vertices must have the same z-axis, which is the elevation of the polyline
-        self.dxf.elevation = vertices[0][2]
+        if vertices:
+            dxf.elevation = vertices[0][2]
+
+        if dxf.hasattr('thickness'):
+            # thickness can be negative
+            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflection=dxf.thickness)
+        dxf.extrusion = ocs.new_extrusion
         return self
 
     def virtual_entities(self) -> Iterable[Union['Line', 'Arc']]:

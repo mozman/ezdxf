@@ -35,7 +35,7 @@ if doc.dxfversion > 'AC1009':
     msp.add_open_spline(control_points=spline_points, degree=2, dxfattribs={'color': 4})
 
 # open cubic b-spline
-spline_points = next_frame.transform_vectors(spline_points)
+spline_points = list(next_frame.transform_vertices(spline_points))
 draw(spline_points)
 msp.add_text("Open Cubic R12Spline", dxfattribs={'height': .1}).set_pos(spline_points[0])
 R12Spline(spline_points, degree=3, closed=False).render(msp, segments=SEGMENTS, dxfattribs={'color': 3})
@@ -43,7 +43,7 @@ if doc.dxfversion > 'AC1009':
     msp.add_open_spline(control_points=spline_points, degree=3, dxfattribs={'color': 4})
 
 # closed cubic b-spline
-spline_points = next_frame.transform_vectors(spline_points)
+spline_points = list(next_frame.transform_vertices(spline_points))
 draw(spline_points)
 msp.add_text("Closed Cubic R12Spline", dxfattribs={'height': .1}).set_pos(spline_points[0])
 R12Spline(spline_points, degree=3, closed=True).render(msp, segments=SEGMENTS, dxfattribs={'color': 3})

@@ -26,7 +26,7 @@ text = msp.add_text(
 )
 # set text position in UCS
 text.set_pos((0, 0, 0), align='MIDDLE_CENTER')
-text.transform_to_wcs(ucs)
+text.transform(ucs.matrix)
 
 ucs.render_axis(msp)
 doc.saveas(OUT_DIR / 'ucs_text.dxf')

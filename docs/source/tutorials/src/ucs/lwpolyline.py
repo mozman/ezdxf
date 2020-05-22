@@ -22,7 +22,7 @@ msp.add_lwpolyline(
         'closed': True,
         'color': 1,
     }
-).transform_to_wcs(ucs)
+).transform(ucs.matrix)
 
 ucs.render_axis(msp)
 doc.saveas(OUT_DIR / 'ucs_lwpolyline.dxf')

@@ -36,17 +36,10 @@ def test_to_ocs():
     assert ucs.to_ocs((1, 2, 3)) == Vector(1, 2, 3)
     assert ucs.to_ocs((3, 4, 5)) == Vector(3, 4, 5)
 
-    ucs2 = UCS()
-    assert ucs.to_ocs((1, 2, 3)) == ucs2.to_ocs((1, 2, 3))
-    assert ucs.to_ocs((3, 4, 5)) == ucs2.to_ocs((3, 4, 5))
-
 
 def test_points_to_ocs():
     ucs = PassTroughUCS()
     assert list(ucs.points_to_ocs([(1, 2, 3), (3, 4, 5)])) == [Vector(1, 2, 3), Vector(3, 4, 5)]
-
-    ucs2 = UCS()
-    assert list(ucs.points_to_ocs([(1, 2, 3), (3, 4, 5)])) == list(ucs2.points_to_ocs([(1, 2, 3), (3, 4, 5)]))
 
 
 def test_from_wcs():

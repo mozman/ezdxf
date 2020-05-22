@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from .dxfentity import base_class, SubclassProcessor
@@ -45,15 +45,24 @@ class XLine(DXFGraphic):
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['start', 'unit_vector'])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'XLine':
-        """ Transform XLINE/RAY entity from local :class:`~ezdxf.math.UCS` coordinates to
-        :ref:`WCS` coordinates.
+    def transform(self, m: Matrix44) -> 'XLine':
+        """ Transform XLINE/RAY entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        self.dxf.start = ucs.to_wcs(self.dxf.start)
-        self.dxf.unit_vector = ucs.direction_to_wcs(self.dxf.unit_vector)
+        self.dxf.start = m.transform(self.dxf.start)
+        self.dxf.unit_vector = m.transform_direction(self.dxf.unit_vector).normalize()
+        return self
+
+    def translate(self, dx: float, dy: float, dz: float) -> 'XLine':
+        """ Optimized XLINE/RAY translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        self.dxf.start = Vector(dx, dy, dz) + self.dxf.start
         return self
 
 

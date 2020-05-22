@@ -2,7 +2,8 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import transform_thickness_and_extrusion_without_ocs
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -49,13 +50,23 @@ class Point(DXFGraphic):
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['location', 'thickness', 'extrusion', 'angle'])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Point':
-        """ Transform POINT entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: Matrix44) -> 'Point':
+        """ Transform POINT entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        self.dxf.location = ucs.to_wcs(self.dxf.location)
-        self.dxf.extrusion = ucs.direction_to_wcs(self.dxf.extrusion)
+        self.dxf.location = m.transform(self.dxf.location)
+        transform_thickness_and_extrusion_without_ocs(self, m)
+        # ignore dxf.angle!
         return self
 
+    def translate(self, dx: float, dy: float, dz: float) -> 'Point':
+        """ Optimized POINT translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        self.dxf.location = Vector(dx, dy, dz) + self.dxf.location
+        return self

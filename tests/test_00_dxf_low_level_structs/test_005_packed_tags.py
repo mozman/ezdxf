@@ -4,7 +4,7 @@ import pytest
 from ezdxf.lldxf.packedtags import TagArray, VertexArray
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.tagwriter import TagCollector
-from ezdxf.math import UCS
+from ezdxf.math import UCS, Matrix44
 
 
 @pytest.fixture()
@@ -127,11 +127,21 @@ def test_vertex_array_to_dxf_tags():
     assert tags[-1] == (30, 60.)
 
 
-def test_vertext_array_transform_to_wcs():
+def test_vertext_array_transform_by_ucs():
     vertices = VertexArray()
     vertices.extend([(0, 0, 0), (1, 0, 0), (1, 1, 0)])
     ucs = UCS(origin=(0, 0, 1))
-    vertices.transform_to_wcs(ucs)
+    vertices.transform(ucs.matrix)
+    assert vertices[0] == (0, 0, 1)
+    assert vertices[1] == (1, 0, 1)
+    assert vertices[2] == (1, 1, 1)
+
+
+def test_vertext_transform():
+    vertices = VertexArray()
+    vertices.extend([(0, 0, 0), (1, 0, 0), (1, 1, 0)])
+    m = Matrix44.translate(0, 0, 1)
+    vertices.transform(m)
     assert vertices[0] == (0, 0, 1)
     assert vertices[1] == (1, 0, 1)
     assert vertices[2] == (1, 1, 1)

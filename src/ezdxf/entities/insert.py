@@ -1,9 +1,12 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-16
-from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict, Callable
+from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Callable, Dict
 import math
-from ezdxf.math import Vector, UCS, BRCS, X_AXIS, Y_AXIS
+import warnings
+from ezdxf.math import Vector, X_AXIS, Y_AXIS, Matrix44, OCS, UCS
+from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
+
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError, DXFStructureError
 from .dxfentity import base_class, SubclassProcessor
@@ -14,7 +17,7 @@ from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef, UCS,
+        TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef,
         BlockLayout, BaseLayout
     )
 
@@ -35,6 +38,8 @@ acdb_block_reference = DefSubclass('AcDbBlockReference', {
     'row_spacing': DXFAttr(45, default=0, optional=True),
     'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
 })
+
+NON_ORTHO_MSG = 'INSERT entity can not represent a non orthogonal target coordinate system.'
 
 
 @register_entity
@@ -157,23 +162,16 @@ class Insert(DXFGraphic):
 
     @property
     def has_uniform_scaling(self) -> bool:
-        """ Returns ``True`` if scaling is uniform in x-, y- and z-axis.
+        """
+        Returns ``True`` if scaling is uniform in x-, y- and z-axis ignoring reflections
+        e.g. (1, 1, -1) is uniform scaling.
 
         .. versionadded:: 0.12
 
         """
-        return self.dxf.xscale == self.dxf.yscale == self.dxf.zscale
+        return abs(self.dxf.xscale) == abs(self.dxf.yscale) == abs(self.dxf.zscale)
 
-    @property
-    def text_scaling(self) -> float:
-        """ Returns uniform scaling factor for text entities.
-
-        .. versionadded:: 0.12
-
-        """
-        return max(abs(self.dxf.xscale), abs(self.dxf.yscale), abs(self.dxf.zscale))
-
-    def scale(self, factor: float):
+    def set_scale(self, factor: float):
         """ Set uniform scaling.
 
         .. versionadded:: 0.12
@@ -357,61 +355,122 @@ class Insert(DXFGraphic):
             db.delete_entity(attrib)
         self.attribs = []
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Insert':
-        """ Transform INSERT entity and attached ATTRIB entities from local :class:`~ezdxf.math.UCS` coordinates to
-        :ref:`WCS` coordinates.
+    def transform(self, m: 'Matrix44') -> 'Insert':
+        """ Transform INSERT entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        Unlike the transformation matrix `m`, the INSERT entity can not represent a non orthogonal
+        target coordinate system, for this case an :class:`InsertTransformationError` will be raised.
+
+        .. versionadded:: 0.13
 
         """
-        self._ucs_and_ocs_transformation(ucs, vector_names=['insert'], angle_names=['rotation'])
 
+        dxf = self.dxf
+        m1 = self.matrix44()
+
+        # Transform scaled source axis into target coordinate system
+        ux, uy, uz = m.transform_directions((m1.ux, m1.uy, m1.uz))
+
+        # Get new scaling factors, all are positive:
+        # z-axis is the real new z-axis, no reflection required
+        # x-axis is the real new x-axis, no reflection required
+        # y-axis - reflection is detected below
+        z_scale = uz.magnitude
+        x_scale = ux.magnitude
+        y_scale = uy.magnitude
+
+        # check for orthogonal x-, y- and z-axis
+        ux = ux.normalize()
+        uy = uy.normalize()
+        uz = uz.normalize()
+        if not (math.isclose(ux.dot(uz), 0.0, abs_tol=1e-9) and
+                math.isclose(ux.dot(uy), 0.0, abs_tol=1e-9) and
+                math.isclose(uz.dot(uy), 0.0, abs_tol=1e-9)):
+            raise InsertTransformationError(NON_ORTHO_MSG)
+
+        # expected y-axis for an orthogonal right handed coordinate system
+        expected_uy = uz.cross(ux)
+        if expected_uy.isclose(-uy, abs_tol=1e-9):
+            # transformed y-axis points into opposite direction of the expected y-axis
+            # apply y-reflection:
+            y_scale = -y_scale
+
+        ocs = OCSTransform.from_ocs(OCS(dxf.extrusion), OCS(uz), m)
+        dxf.insert = ocs.transform_vertex(dxf.insert)
+        dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
+
+        dxf.extrusion = uz
+        dxf.xscale = x_scale
+        dxf.yscale = y_scale
+        dxf.zscale = z_scale
+        
         for attrib in self.attribs:
-            attrib.transform_to_wcs(ucs)
+            attrib.transform(m)
         return self
 
-    def brcs(self) -> 'BRCS':
-        """ Returns a block reference coordinate system as :class:`BRCS` object, placed at the block reference
-        `insert` location, axis aligned to the block axis, :attr:`~Insert.dxf.rotation` around z-axis and axis
-        scaling :attr:`~Insert.dxf.xscale`, :attr:`~Insert.dxf.yscale` and :attr:`~Insert.dxf.zscale` are applied.
+    def translate(self, dx: float, dy: float, dz: float) -> 'Insert':
+        """ Optimized INSERT translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
 
-        .. versionchanged:: 0.12
-            renamed from :meth:`ucs`
+        .. versionadded:: 0.13
 
         """
-        sx = self.dxf.xscale
-        sy = self.dxf.yscale
-        sz = self.dxf.zscale
         ocs = self.ocs()
-        insert = self.dxf.insert
-        if insert is None:
-            insert = Vector()
-        else:
-            insert = Vector(insert)
+        self.dxf.insert = ocs.from_wcs(Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.insert))
+        for attrib in self.attribs:
+            attrib.translate(dx, dy, dz)
+        return self
 
-        brcs = BRCS(
-            insert=ocs.to_wcs(insert),
-            ux=ocs.to_wcs(X_AXIS) * sx,
-            uy=ocs.to_wcs(Y_AXIS) * sy,
-            uz=Vector(self.dxf.extrusion).normalize(sz),
-        )
-        brcs._rotate_local_z(math.radians(self.dxf.rotation))
+    def matrix44(self) -> Matrix44:
+        """ Returns a transformation :class:`Matrix44` object to transform block entities into WCS.
+
+        .. versionadded:: 0.13
+
+        """
+        dxf = self.dxf
+        sx = dxf.xscale
+        sy = dxf.yscale
+        sz = dxf.zscale
+
+        ocs = self.ocs()
+        extrusion = ocs.uz
+        ux = Vector(ocs.to_wcs(X_AXIS))
+        uy = Vector(ocs.to_wcs(Y_AXIS))
+        m = Matrix44.ucs(ux=ux * sx, uy=uy * sy, uz=extrusion * sz)
+
+        angle = math.radians(dxf.rotation)
+        if angle != 0.0:
+            m = Matrix44.chain(m, Matrix44.axis_rotate(extrusion, angle))
+
+        insert = ocs.to_wcs(dxf.get('insert', Vector()))
+
         block_layout = self.block()
         if block_layout is not None:
-            brcs._base_point = Vector(block_layout.block.dxf.base_point)
-        return brcs
+            # transform block base point into WCS without translation
+            insert -= m.transform_direction(block_layout.block.dxf.base_point)
 
-    def reset_transformation(self):
+        # set translation
+        m.set_row(3, insert.xyz)
+        return m
+
+    def ucs(self):
+        """ Returns the block reference coordinate system as :class:`ezdxf.math.UCS` object. """
+        m = self.matrix44()
+        ucs = UCS()
+        ucs.matrix = m
+        return ucs
+
+    def reset_transformation(self) -> None:
         """ Reset block reference parameters `location`, `rotation` and `extrusion` vector.
 
         .. versionadded:: 0.11
 
         """
-        self.dxf.insert = (0, 0, 0)
+        self.dxf.insert = Vector(0, 0, 0)
         self.dxf.discard('rotation')
         self.dxf.discard('extrusion')
 
-    def explode(self, target_layout: 'BaseLayout' = None, non_uniform_scaling=False) -> 'EntityQuery':
+    def explode(self, target_layout: 'BaseLayout' = None, non_uniform_scaling=None) -> 'EntityQuery':
         """
         Explode block reference entities into target layout, if target layout is ``None``, the target layout is the
         layout of the block reference.
@@ -428,15 +487,16 @@ class Insert(DXFGraphic):
         .. warning::
 
             **Non uniform scaling** lead to incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
-            some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and and
-            POLYLINE/LWPOLYLINE with arc segments. Non uniform scaling is getting better, but still not perfect!
+            some other entities like HATCH with arc or ellipse path segments.
 
         Args:
             target_layout: target layout for exploded entities, ``None`` for same layout as source entity.
-            non_uniform_scaling: enable non uniform scaling if ``True``, see warning
 
         .. versionadded:: 0.12
             experimental feature
+
+        .. versionchanged:: 0.13
+            deprecated `non_uniform_scaling` argument
 
         """
         if target_layout is None:
@@ -444,13 +504,15 @@ class Insert(DXFGraphic):
             if target_layout is None:
                 raise DXFStructureError('INSERT without layout assigment, specify target layout.')
 
-        if non_uniform_scaling is False and not self.has_uniform_scaling:
-            return EntityQuery()
-
+        if non_uniform_scaling is not None:
+            warnings.warn(
+                'Insert.explode() argument `non_uniform_scaling` is deprecated.',
+                DeprecationWarning
+            )
         return explode_block_reference(self, target_layout=target_layout)
 
     def virtual_entities(self,
-                         non_uniform_scaling=False,
+                         non_uniform_scaling=None,
                          skipped_entity_callback: Optional[Callable[[DXFGraphic, str], None]] = None
                          ) -> Iterable[DXFGraphic]:
         """
@@ -471,19 +533,23 @@ class Insert(DXFGraphic):
         .. warning::
 
             **Non uniform scaling** returns incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
-            some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
-            POLYLINE/LWPOLYLINE with arc segments. Non uniform scaling is getting better, but still not perfect!
+            some other entities like HATCH with arc or ellipse path segments.
 
         Args:
-            non_uniform_scaling: enable non uniform scaling if ``True``, see warning
             skipped_entity_callback: called whenever the transformation of an entity is not supported and so was skipped
 
         .. versionadded:: 0.12
             experimental feature
 
+        .. versionchanged:: 0.13
+            deprecated `non_uniform_scaling` argument
+
         """
-        if non_uniform_scaling is False and not self.has_uniform_scaling:
-            return []
+        if non_uniform_scaling is not None:
+            warnings.warn(
+                'Insert.virtual_entities() argument `non_uniform_scaling` is deprecated.',
+                DeprecationWarning
+            )
 
         return virtual_block_reference_entities(self, skipped_entity_callback=skipped_entity_callback)
 
@@ -517,13 +583,9 @@ class Insert(DXFGraphic):
                 dxfattribs = attdef.dxfattribs(drop={'prompt', 'handle'})
                 tag, text, location = unpack(dxfattribs)
                 attrib = self.add_attrib(tag, text, location, dxfattribs)
-                attrib.transform_to_wcs(brcs)
-                attrib.dxf.height *= attrib_scaling_factor
+                attrib.transform(m)
 
-        brcs = cast('UCS', self.brcs())
-        # This method does not work well for non uniform scaled block references!
-        attrib_scaling_factor = self.text_scaling
+        m = self.matrix44()
         blockdef = self.block()
         autofill()
         return self
-

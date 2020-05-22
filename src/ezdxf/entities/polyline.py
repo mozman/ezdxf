@@ -3,9 +3,11 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict
 from itertools import chain
-from ezdxf.math import Vector, Z_AXIS
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
+
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES, DXFStructureError
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.lldxf import const
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
@@ -392,13 +394,12 @@ class Polyline(DXFGraphic):
         else:
             return self
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Polyline':
-        """ Transform POLYLINE from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: Matrix44) -> 'Polyline':
+        """ Transform POLYLINE entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-
         def _ocs_locations(elevation):
             for vertex in self.vertices:
                 location = vertex.dxf.location
@@ -409,26 +410,37 @@ class Polyline(DXFGraphic):
                 yield location
 
         if self.is_2d_polyline:
+            dxf = self.dxf
+            ocs = OCSTransform(self.dxf.extrusion, m)
             # Newer DXF versions write 2d polylines always as LWPOLYLINE entities.
             # No need for optimizations.
-            extrusion = self.dxf.extrusion
-            if self.dxf.hasattr('elevation'):
-                z_axis = self.dxf.elevation.z
+            if not ocs.scale_uniform:
+                raise NonUniformScalingError('2D POLYLINE with arcs does not support non uniform scaling')
+                # Parent function has to catch this Exception and explode this 2D POLYLINE into LINE and ELLIPSE entities.
+
+            if dxf.hasattr('elevation'):
+                z_axis = dxf.elevation.z
             else:
                 z_axis = None
-            # transform locations
-            locations = list(ucs.ocs_points_to_ocs(_ocs_locations(z_axis), extrusion=extrusion))
-            # set new elevation, all locations must have the same z-axis
-            if locations:
-                self.dxf.elevation = locations[0].replace(x=0, y=0)
-            # set new locations
-            for vertex, location in zip(self.vertices, locations):
+
+            # transform old OCS locations into new OCS locations by transformation matrix m
+            vertices = [ocs.transform_vertex(vertex) for vertex in _ocs_locations(z_axis)]
+
+            # set new elevation, all vertices of a 2D polyline must have the same z-axis
+            if vertices:
+                dxf.elevation = vertices[0].replace(x=0, y=0)
+
+            # set new vertex locations
+            for vertex, location in zip(self.vertices, vertices):
                 vertex.dxf.location = location
-            # transform extrusion vector
-            self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
+
+            if dxf.hasattr('thickness'):
+                dxf.thickness = ocs.transform_length((0, 0, dxf.thickness))
+
+            dxf.extrusion = ocs.new_extrusion
         else:
             for vertex in self.vertices:
-                vertex.transform_to_wcs(ucs)
+                vertex.transform(m)
         return self
 
     def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
@@ -930,15 +942,15 @@ class DXFVertex(DXFGraphic):
     def is_face_record(self) -> bool:
         return (self.dxf.flags & self.FACE_FLAGS) == self.POLYFACE_MESH_VERTEX
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'DXFVertex':
-        """ Transform VERTEX from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: 'Matrix44') -> 'DXFVertex':
+        """ Transform VERTEX entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
         if self.is_face_record:
             return self
-        self.dxf.location = ucs.to_wcs(self.dxf.location)
+        self.dxf.location = m.transform(self.dxf.location)
         return self
 
 

@@ -2,7 +2,8 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
-from ezdxf.math import Vector, UCS
+from ezdxf.math import Vector, UCS, Matrix44
+from ezdxf.math.transformtools import transform_thickness_and_extrusion_without_ocs
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -51,13 +52,26 @@ class Line(DXFGraphic):
         self.dxf.export_dxf_attribs(tagwriter, ['start', 'end', 'thickness', 'extrusion'])
         # xdata and embedded objects export will be done by parent class
 
-    def transform_to_wcs(self, ucs: UCS) -> 'Line':
-        """ Transform LINE entity from local :class:`~ezdxf.math.UCS` coordinates to
-        :ref:`WCS` coordinates.
+    def transform(self, m: Matrix44) -> 'Line':
+        """ Transform LINE entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        self.dxf.start = ucs.to_wcs(self.dxf.start)
-        self.dxf.end = ucs.to_wcs(self.dxf.end)
+        start, end = m.transform_vertices([self.dxf.start, self.dxf.end])
+        self.dxf.start = start
+        self.dxf.end = end
+        transform_thickness_and_extrusion_without_ocs(self, m)
+        return self
+
+    def translate(self, dx: float, dy: float, dz: float) -> 'Line':
+        """ Optimized LINE translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
+        returns `self` (floating interface).
+
+        .. versionadded:: 0.13
+
+        """
+        vec = Vector(dx, dy, dz)
+        self.dxf.start = vec + self.dxf.start
+        self.dxf.end = vec + self.dxf.end
         return self

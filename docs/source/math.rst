@@ -23,6 +23,8 @@ Functions
 
 .. autofunction:: xround
 
+.. autofunction:: linspace
+
 .. _bulge_related_functions:
 
 Bulge Related Functions
@@ -148,13 +150,7 @@ UCS Class
 
     .. automethod:: points_to_ocs
 
-    .. automethod:: ocs_points_to_ocs
-
     .. automethod:: to_ocs_angle_deg
-
-    .. automethod:: angles_to_ocs_deg
-
-    .. automethod:: ocs_angles_to_ocs_deg
 
     .. automethod:: rotate(axis: Vertex, angle:float) -> UCS
 
@@ -182,17 +178,6 @@ UCS Class
 
     .. automethod:: render_axis
 
-
-BRCS Class
-----------
-
-.. autoclass:: BRCS(insert: Vector, ux: Vector, uy: Vector, uz: Vector)
-
-    .. automethod:: to_wcs(point: Vertex) -> Vector
-
-    .. automethod:: points_to_wcs(points: Iterable[Vertex]) -> Iterable[Vector]
-
-    .. automethod:: direction_to_wcs(vector: Vertex) -> Vector
 
 Matrix44
 --------
@@ -257,11 +242,13 @@ Matrix44
 
     .. automethod:: transform
 
-    .. automethod:: transform_vectors
+    .. automethod:: transform_direction
+
+    .. automethod:: transform_vertices
+
+    .. automethod:: transform_directions
 
     .. automethod:: transpose
-
-    .. automethod:: get_transpose() -> Matrix44
 
     .. automethod:: determinant
 
@@ -336,6 +323,8 @@ Vector
     .. automethod:: orthogonal(ccw: bool = True) -> Vector
 
     .. automethod:: lerp(other: Any, factor=.5) -> Vector
+
+    .. automethod:: is_parallel(other: Vector, abs_tolr=1e-12) -> bool
 
     .. automethod:: project(other: Any) -> Vector
 

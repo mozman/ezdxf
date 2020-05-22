@@ -34,14 +34,14 @@ def setup_csys(blk, size=3):
     ucs = UCS(ux=(0, 1, 0), uy=(0, 0, 1))
     txt_props['extrusion'] = ucs.uz
     txt_props['color'] = GREEN
-    blk.add_text('YZ', dxfattribs=txt_props).set_pos(ucs.to_ocs((size2, size2)), align='MIDDLE_CENTER')
+    blk.add_text('YZ', dxfattribs=txt_props).set_pos(ucs.to_ocs((size2, size2, 0)), align='MIDDLE_CENTER')
 
     # XZ-plane text
     ucs = UCS(ux=(1, 0, 0), uy=(0, 0, 1))
     txt_props['extrusion'] = ucs.uz
     txt_props['color'] = BLUE
     txt_props['text_generation_flag'] = MIRROR_X
-    blk.add_text('XZ', dxfattribs=txt_props).set_pos(ucs.to_ocs((size2, size2)), align='MIDDLE_CENTER')
+    blk.add_text('XZ', dxfattribs=txt_props).set_pos(ucs.to_ocs((size2, size2, 0)), align='MIDDLE_CENTER')
 
 
 doc = ezdxf.new('R2010', setup=True)
@@ -55,7 +55,7 @@ msp.add_blockref(
     insert=(0, 0),
     # rotation around the block z-axis (= WCS x-axis)
     dxfattribs={'rotation': 15},
-).transform_to_wcs(ucs)
+).transform(ucs.matrix)
 
 doc.set_modelspace_vport(5)
 doc.saveas(OUT_DIR / 'ucs_insert_01.dxf')
@@ -65,7 +65,7 @@ msp.delete_all_entities()
 # by rotating the UCS:
 ucs = UCS(origin=(1, 2, 0)).rotate_local_x(math.radians(15))
 blockref = msp.add_blockref('CSYS', insert=(0, 0, 0))
-blockref.transform_to_wcs(ucs)
+blockref.transform(ucs.matrix)
 
 doc.saveas(OUT_DIR / 'ucs_insert_02.dxf')
 
@@ -73,7 +73,7 @@ doc.saveas(OUT_DIR / 'ucs_insert_02.dxf')
 ucs = UCS((-3, -1, 1))
 # Transform an already placed block reference, including
 # the transformation of the established OCS.
-blockref.transform_to_wcs(ucs)
+blockref.transform(ucs.matrix)
 
 doc.saveas(OUT_DIR / 'ucs_insert_03.dxf')
 
@@ -90,6 +90,6 @@ ucs = ucs.rotate_local_y(math.radians(-90))
 blockref.reset_transformation()
 
 # Transform block reference from UCS to WCS
-blockref.transform_to_wcs(ucs)
+blockref.transform(ucs.matrix)
 
 doc.saveas(OUT_DIR / 'ucs_insert_04.dxf')

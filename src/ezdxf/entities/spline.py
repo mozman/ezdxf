@@ -6,7 +6,7 @@ import array
 import copy
 from itertools import chain
 from contextlib import contextmanager
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
 from ezdxf.lldxf.packedtags import VertexArray
@@ -293,16 +293,18 @@ class Spline(DXFGraphic):
         if data.weights is not self.weights:
             self.weights = data.weights
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Spline':
-        """ Transform SPLINE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: 'Matrix44') -> 'Spline':
+        """ Transform SPLINE entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        self._control_points.transform_to_wcs(ucs)
-        self._fit_points.transform_to_wcs(ucs)
+        self._control_points.transform(m)
+        self._fit_points.transform(m)
         # Transform optional attributes if they exist
-        for attr_name in ('start_tangent', 'end_tangent', 'extrusion'):
-            if self.dxf.hasattr(attr_name):
-                self.dxf.set(attr_name, ucs.direction_to_wcs(self.dxf.get(attr_name)))
+        dxf = self.dxf
+        for name in ('start_tangent', 'end_tangent', 'extrusion'):
+            if dxf.hasattr(name):
+                dxf.set(name, m.transform_direction(dxf.get(name)))
+
         return self

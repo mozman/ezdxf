@@ -205,7 +205,7 @@ Factory Functions
 
     .. automethod:: render()
 
-    .. automethod:: transform_to_wcs(ucs: UCS) -> Dimension
+    .. automethod:: transform(m: Matrix44) -> Dimension
 
     .. automethod:: virtual_entities() -> Iterable[DXFGraphic]
 

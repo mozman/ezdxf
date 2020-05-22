@@ -45,7 +45,7 @@ ucs = UCS().rotate_local_x(angle=math.radians(45))
 ucs = ucs.rotate(axis=(0, 0, 1), angle=math.radians(45))
 
 # Last step transform block reference from UCS to WCS
-blockref.transform_to_wcs(ucs)
+blockref.transform(ucs.matrix)
 
 doc.set_modelspace_vport(3)
 doc.saveas(DIR / 'cube.dxf')

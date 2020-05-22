@@ -1,10 +1,14 @@
-# Copyright (c) 2015-2019, Manfred Moitzi
+# Copyright (c) 2015-2020, Manfred Moitzi
 # License: MIT License
 import pytest
+import math
 
 from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.lldxf.const import DXF2007, DXF2010
+from ezdxf.render.forms import box
+from ezdxf.math import Vector, Matrix44, NonUniformScalingError
+
 
 @pytest.fixture
 def hatch():
@@ -91,7 +95,7 @@ def test_add_polyline_path(hatch):
     assert path.is_closed == 1
 
 
-def test_PolylinePathAttribs(path_hatch):
+def test_polyline_path_attribs(path_hatch):
     path = path_hatch.paths[0]  # test first boundary path
     assert 'PolylinePath' == path.PATH_TYPE, "invalid path type"
     assert 4 == len(path.vertices)
@@ -100,13 +104,58 @@ def test_PolylinePathAttribs(path_hatch):
     assert 7 == path.path_type_flags, "unexpected path type flags"
 
 
-def test_PolylinePathVertices(path_hatch):
+def test_polyline_path_vertices(path_hatch):
     path = path_hatch.paths[0]  # test first boundary path
     assert 'PolylinePath' == path.PATH_TYPE, "invalid path type"
     assert 4 == len(path.vertices)
     # vertex format: x, y, bulge_value
     assert (10, 10, 0) == path.vertices[0], "invalid first vertex"
     assert (10, 0, 0) == path.vertices[3], "invalid last vertex"
+
+
+@pytest.fixture()
+def m44():
+    return Matrix44.chain(
+        Matrix44.z_rotate(math.pi / 2),
+        Matrix44.translate(1, 2, 0),
+    )
+
+
+def test_polyline_path_transform_interface(hatch, m44):
+    vertices = list(box(1.0, 2.0))
+    path = hatch.paths.add_polyline_path(vertices)
+
+    hatch.transform(m44)
+    chk = m44.transform_vertices(vertices)
+    for v, c in zip(path.vertices, chk):
+        assert c.isclose(v)
+
+
+def test_arc_to_ellipse_edges(hatch):
+    hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True)
+    hatch.paths.arc_edges_to_ellipse_edges()
+    path = hatch.paths[0]
+    assert path.PATH_TYPE == 'EdgePath', 'polyline path not converted to edge path'
+
+    edge = path.edges[0]
+    assert edge.EDGE_TYPE == 'EllipseEdge'
+    assert edge.center == (5, 0)
+    assert edge.major_axis == (5, 0)
+    assert edge.ratio == 1.0
+
+    edge = path.edges[1]
+    assert edge.EDGE_TYPE == 'LineEdge'
+    assert edge.start == (10, 0)
+    assert edge.end == (10, 10)
+
+    edge = path.edges[2]
+    assert edge.EDGE_TYPE == 'EllipseEdge'
+    assert edge.ratio == 1.0
+
+    edge = path.edges[3]
+    assert edge.EDGE_TYPE == 'LineEdge'
+    assert edge.start == (0, 10)
+    assert edge.end == (0, 0)
 
 
 def test_edge_path_count(edge_hatch):
@@ -204,6 +253,41 @@ def test_add_edge_path(edge_hatch):
     assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 4. edge"
     assert (10, 0) == edge.start
     assert (0, 0) == edge.end
+
+
+def test_edge_path_transform_interface(hatch, m44):
+    path = hatch.paths.add_edge_path()
+    path.add_line((0, 0), (10, 0))
+    path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, is_counter_clockwise=1)
+    path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180)
+    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, rational=1, periodic=1)
+    # the following values do not represent a mathematically valid spline
+    spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
+    spline.knot_values = [1, 2, 3, 4, 5, 6]
+    spline.weights = [4, 3, 2, 1]
+    spline.start_tangent = (10, 1)
+    spline.end_tangent = (2, 20)
+
+    chk = list(m44.transform_vertices([
+        Vector(0, 0), Vector(10, 0), Vector(10, 5), Vector(5, 10),
+        Vector(1, 1), Vector(2, 2), Vector(3, 3), Vector(4, 4),
+    ]))
+
+    hatch.transform(m44)
+    line = path.edges[0]
+    assert chk[0].isclose(line.start)
+    assert chk[1].isclose(line.end)
+    arc = path.edges[1]
+    assert chk[2].isclose(arc.center)
+    ellipse = path.edges[2]
+    assert chk[3].isclose(ellipse.center)
+    spline = path.edges[3]
+    for c, v in zip(chk[4:], spline.control_points):
+        assert c.isclose(v)
+    for c, v in zip(chk[4:], spline.fit_points):
+        assert c.isclose(v)
+    assert m44.transform_direction((10, 1, 0)).isclose(spline.start_tangent)
+    assert m44.transform_direction((2, 20, 0)).isclose(spline.end_tangent)
 
 
 def test_spline_edge_hatch_get_params(spline_edge_hatch):

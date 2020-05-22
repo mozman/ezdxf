@@ -11,7 +11,7 @@ from .dxfgfx import acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS, Matrix44
 
 __all__ = ['Helix']
 
@@ -60,14 +60,15 @@ class Helix(Spline):
 
         ])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Helix':
-        """ Transform HELIX entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: 'Matrix44') -> 'Helix':
+        """ Transform HELIX entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        super().transform_to_wcs(ucs)
-        self.dxf.axis_base_point = ucs.to_wcs(self.dxf.axis_base_point)
-        self.dxf.axis_vector = ucs.direction_to_wcs(self.dxf.axis_vector)
-        self.dxf.start_point = ucs.to_wcs(self.dxf.start_point)
+        super().transform(m)
+        self.dxf.axis_base_point = m.transform(self.dxf.axis_base_point)
+        self.dxf.axis_vector = m.transform_direction(self.dxf.axis_vector)
+        self.dxf.start_point = m.transform(self.dxf.start_point)
+        self.dxf.radius = m.transform_direction((self.dxf.radius, 0, 0)).magnitude
         return self

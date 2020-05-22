@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-02-15
 import pytest
@@ -175,3 +175,17 @@ def test_3dface():
     face.export_dxf(collector)
     assert collector.tags[0] == (0, '3DFACE')
     assert collector.tags[5] == (100, 'AcDbFace')
+
+
+def test_solid_translate():
+    solid = Solid()
+    solid.dxf.vtx1 = (3, 3, 0)
+    solid.translate(1, 1, 0)
+    assert solid.dxf.vtx1 == (4, 4, 0)
+
+
+def test_trace_translate():
+    face = Face3d()
+    face.dxf.vtx1 = (3, 3, 0)
+    face.translate(1, 1, 0)
+    assert face.dxf.vtx1 == (4, 4, 0)

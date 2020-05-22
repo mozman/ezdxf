@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-02-15
 import pytest
@@ -6,7 +6,7 @@ import pytest
 from ezdxf.entities.circle import Circle
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Vector, UCS
+from ezdxf.math import Vector, Matrix44, OCS, NonUniformScalingError
 
 TEST_CLASS = Circle
 TEST_TYPE = 'CIRCLE'
@@ -104,7 +104,7 @@ def test_get_point_2d_circle():
         'radius': radius,
     })
     vertices = list(circle.vertices([90]))
-    assert vertices[0].isclose(Vector(1, 2+radius, z))
+    assert vertices[0].isclose(Vector(1, 2 + radius, z))
 
 
 def test_get_point_with_ocs():
@@ -130,3 +130,55 @@ def test_write_dxf(txt, ver):
     circle.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
 
+
+def test_circle_default_ocs():
+    circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'thickness': 2})
+    # 1. rotation - 2. scaling - 3. translation
+    m = Matrix44.chain(Matrix44.scale(2, 2, 3), Matrix44.translate(1, 1, 1))
+    # default extrusion is (0, 0, 1), therefore scale(2, 2, ..) is a uniform scaling in the xy-play of the OCS
+    circle.transform(m)
+
+    assert circle.dxf.center == (5, 7, 13)
+    assert circle.dxf.extrusion == (0, 0, 1)
+    assert circle.dxf.thickness == 6
+
+
+def test_circle_fast_translation():
+    circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'extrusion': Vector.random()})
+    ocs = circle.ocs()
+    offset = Vector(1, 2, 3)
+    center = ocs.to_wcs(circle.dxf.center) + offset
+    circle.translate(*offset)
+    assert ocs.to_wcs(circle.dxf.center).isclose(center, abs_tol=1e-9)
+
+
+def test_circle_non_uniform_scaling():
+    circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'extrusion': (0, 1, 0), 'thickness': 2})
+    # extrusion in WCS y-axis, therefore scale(2, ..., 3) is a non uniform scaling in the xy-play of the OCS
+    # which is the xz-plane of the WCS
+    with pytest.raises(NonUniformScalingError):
+        circle.transform(Matrix44.scale(2, 2, 3))
+
+    # source values unchanged after exception
+    assert circle.dxf.center == (2, 3, 4)
+    assert circle.dxf.extrusion == (0, 1, 0)
+    assert circle.dxf.thickness == 2
+
+
+def test_circle_user_ocs():
+    center = (2, 3, 4)
+    extrusion = (0, 1, 0)
+
+    circle = Circle.new(dxfattribs={'center': center, 'extrusion': extrusion, 'thickness': 2})
+    ocs = OCS(extrusion)
+    v = ocs.to_wcs(center)  # (-2, 4, 3)
+    v = Vector(v.x * 2, v.y * 4, v.z * 2)
+    v += (1, 1, 1)
+    # and back to OCS, extrusion is unchanged
+    result = ocs.from_wcs(v)
+
+    m = Matrix44.chain(Matrix44.scale(2, 4, 2), Matrix44.translate(1, 1, 1))
+    circle.transform(m)
+    assert circle.dxf.center == result
+    assert circle.dxf.extrusion == (0, 1, 0)
+    assert circle.dxf.thickness == 8  # in WCS y-axis

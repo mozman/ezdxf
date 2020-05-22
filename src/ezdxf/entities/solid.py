@@ -2,7 +2,8 @@
 # License: MIT License
 # Created 2019-02-21
 from typing import TYPE_CHECKING
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from .dxfentity import base_class, SubclassProcessor
@@ -62,32 +63,29 @@ class Solid(_Base):
             'vtx0', 'vtx1', 'vtx2', 'vtx3', 'thickness', 'extrusion',
         ])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Solid':
-        """ Transform SOLID/TRACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: Matrix44) -> 'Solid':
+        """ Transform SOLID/TRACE  entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
-        # SOLID is 2d entity, placed by an OCS in 3d space
-        self._ucs_and_ocs_transformation(ucs, vector_names=VERTEXNAMES)
+        # SOLID/TRACE is 2d entity, placed by an OCS in 3d space
+        dxf = self.dxf
+        ocs = OCSTransform(self.dxf.extrusion, m)
+        for name in VERTEXNAMES:
+            if dxf.hasattr(name):
+                dxf.set(name, ocs.transform_vertex(dxf.get(name)))
+        if dxf.hasattr('thickness'):
+            # thickness can be negative
+            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflection=dxf.thickness)
+        dxf.extrusion = ocs.new_extrusion
         return self
-
 
 
 @register_entity
 class Trace(Solid):
     """ DXF TRACE entity """
     DXFTYPE = 'TRACE'
-
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Trace':
-        """ Transform TRACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
-
-        .. versionadded:: 0.11
-
-        """
-        # TRACE is 2d entity, placed by an OCS in 3d space
-        self._ucs_and_ocs_transformation(ucs, vector_names=VERTEXNAMES)
-        return self
 
 
 acdb_face = DefSubclass('AcDbFace', {
@@ -140,16 +138,13 @@ class Face3d(_Base):
             self.dxf.vtx3 = self.dxf.vtx2
         self.dxf.export_dxf_attribs(tagwriter, ['vtx0', 'vtx1', 'vtx2', 'vtx3', 'invisible'])
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'Face3d':
-        """ Transform 3DFACE entity from local :class:`~ezdxf.math.UCS` coordinates to :ref:`WCS` coordinates.
+    def transform(self, m: Matrix44) -> 'Face3d':
+        """ Transform 3DFACE  entity by transformation matrix `m` inplace.
 
-        .. versionadded:: 0.11
+        .. versionadded:: 0.13
 
         """
+        dxf = self.dxf
         # 3DFACE is a real 3d entity
-        ucs_to_wcs = ucs.to_wcs
-        self.dxf.vtx0 = ucs_to_wcs(self.dxf.vtx0)
-        self.dxf.vtx1 = ucs_to_wcs(self.dxf.vtx1)
-        self.dxf.vtx2 = ucs_to_wcs(self.dxf.vtx2)
-        self.dxf.vtx3 = ucs_to_wcs(self.dxf.vtx3)
+        dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3 = m.transform_vertices((dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3))
         return self
