@@ -13,6 +13,6 @@ msp = doc.modelspace()
 
 for flag_ref in msp.query('INSERT'):
     print(f'Block reference: {str(flag_ref)}')
-    for entity in flag_ref.virtual_entities(non_uniform_scaling=True):
+    for entity in flag_ref.virtual_entities():
         if entity.dxftype() == 'HATCH':
             print("  HATCH:", entity.dxf.pattern_name)

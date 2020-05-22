@@ -200,7 +200,7 @@ def test_random_block_reference_transformation(sx, sy, sz, doc1: 'Drawing'):
         Matrix44.translate(dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2)),
     )
     entity, vertices = synced_transformation(entity0, vertices0, m)
-    lines = list(entity.virtual_entities(non_uniform_scaling=True))
+    lines = list(entity.virtual_entities())
     check(lines, vertices)
 
 
@@ -233,7 +233,7 @@ def test_apply_transformation_multiple_times(sx, sy, sz, doc1: 'Drawing'):
     for i in range(5):
         entity, vertices = synced_transformation(entity, vertices, m)
         points = list(vertices)
-        for num, line in enumerate(entity.virtual_entities(non_uniform_scaling=True)):
+        for num, line in enumerate(entity.virtual_entities()):
             assert points[0].isclose(line.dxf.start, abs_tol=1e-9)
             assert points[num + 1].isclose(line.dxf.end, abs_tol=1e-9)
 

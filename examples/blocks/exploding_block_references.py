@@ -34,6 +34,6 @@ doc.saveas(DIR / 'scaling.dxf')
 
 # Explode flag block references
 for block in msp.query("INSERT[name=='TEST']"):
-    cast('Insert', block).explode(non_uniform_scaling=True)
+    cast('Insert', block).explode()
 
 doc.saveas(DIR / 'exploded.dxf')

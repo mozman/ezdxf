@@ -105,9 +105,9 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Insert
 
-    .. automethod:: virtual_entities(non_uniform_scaling = False, skipped_entity_callback: Callable[[DXFGraphic, str], None] = None) -> Iterable[DXFGraphic]
+    .. automethod:: virtual_entities(skipped_entity_callback: Callable[[DXFGraphic, str], None] = None) -> Iterable[DXFGraphic]
 
-    .. automethod:: explode(target_layout: BaseLayout = None, non_uniform_scaling = False) -> EntityQuery
+    .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
 
 
 

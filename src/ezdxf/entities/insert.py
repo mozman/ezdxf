@@ -1,9 +1,10 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-16
-from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Dict, Callable
+from typing import TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List, Callable, Dict
 import math
-from ezdxf.math import Vector, X_AXIS, Y_AXIS, Z_AXIS, Matrix44, OCS
+import warnings
+from ezdxf.math import Vector, X_AXIS, Y_AXIS, Matrix44, OCS
 from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -462,7 +463,7 @@ class Insert(DXFGraphic):
         self.dxf.discard('rotation')
         self.dxf.discard('extrusion')
 
-    def explode(self, target_layout: 'BaseLayout' = None, non_uniform_scaling=False) -> 'EntityQuery':
+    def explode(self, target_layout: 'BaseLayout' = None, non_uniform_scaling=None) -> 'EntityQuery':
         """
         Explode block reference entities into target layout, if target layout is ``None``, the target layout is the
         layout of the block reference.
@@ -479,15 +480,16 @@ class Insert(DXFGraphic):
         .. warning::
 
             **Non uniform scaling** lead to incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
-            some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
-            POLYLINE/LWPOLYLINE with arc segments. Non uniform scaling is getting better, but still not perfect!
+            some other entities like HATCH with arc or ellipse path segments.
 
         Args:
             target_layout: target layout for exploded entities, ``None`` for same layout as source entity.
-            non_uniform_scaling: enable non uniform scaling if ``True``, see warning
 
         .. versionadded:: 0.12
             experimental feature
+
+        .. versionchanged:: 0.13
+            deprecated `non_uniform_scaling` argument
 
         """
         if target_layout is None:
@@ -495,13 +497,15 @@ class Insert(DXFGraphic):
             if target_layout is None:
                 raise DXFStructureError('INSERT without layout assigment, specify target layout.')
 
-        if non_uniform_scaling is False and not self.has_uniform_scaling:
-            return EntityQuery()
-
+        if non_uniform_scaling is not None:
+            warnings.warn(
+                'Insert.explode() argument `non_uniform_scaling` is deprecated.',
+                DeprecationWarning
+            )
         return explode_block_reference(self, target_layout=target_layout)
 
     def virtual_entities(self,
-                         non_uniform_scaling=False,
+                         non_uniform_scaling=None,
                          skipped_entity_callback: Optional[Callable[[DXFGraphic, str], None]] = None
                          ) -> Iterable[DXFGraphic]:
         """
@@ -526,15 +530,20 @@ class Insert(DXFGraphic):
             POLYLINE/LWPOLYLINE with arc segments. Non uniform scaling is getting better, but still not perfect!
 
         Args:
-            non_uniform_scaling: enable non uniform scaling if ``True``, see warning
             skipped_entity_callback: called whenever the transformation of an entity is not supported and so was skipped
 
         .. versionadded:: 0.12
             experimental feature
 
+        .. versionchanged:: 0.13
+            deprecated `non_uniform_scaling` argument
+
         """
-        if non_uniform_scaling is False and not self.has_uniform_scaling:
-            return []
+        if non_uniform_scaling is not None:
+            warnings.warn(
+                'Insert.virtual_entities() argument `non_uniform_scaling` is deprecated.',
+                DeprecationWarning
+            )
 
         return virtual_block_reference_entities(self, skipped_entity_callback=skipped_entity_callback)
 

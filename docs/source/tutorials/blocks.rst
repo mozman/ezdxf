@@ -104,9 +104,7 @@ Exploding Block References
 
 This is an advanced and still experimental feature and because `ezdxf` is still not a CAD application, the
 results may no be perfect. **Non uniform scaling** lead to incorrect results for text entities
-(TEXT, MTEXT, ATTRIB) and some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and and
-POLYLINE/LWPOLYLINE with arc segments, therefore the argument `non_uniform_scaling` is ``False`` by default, to avoid
-exploding of non uniform scaled block references.
+(TEXT, MTEXT, ATTRIB) and some other entities like HATCH with arc or ellipse path segments.
 
 By default the "exploded" entities are added to the same layout as the block
 reference is located.

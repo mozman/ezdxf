@@ -113,8 +113,7 @@ def virtual_block_reference_entities(block_ref: 'Insert',
     .. warning::
 
         **Non uniform scaling** returns incorrect results for text entities (TEXT, MTEXT, ATTRIB) and
-        some other entities like ELLIPSE, SHAPE, HATCH with arc or ellipse path segments and
-        POLYLINE/LWPOLYLINE with arc segments.
+        some other entities like HATCH with arc or ellipse path segments.
 
     (internal API)
 

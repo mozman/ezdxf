@@ -57,9 +57,7 @@ def test_01_virtual_entities(msp):
     assert e.dxf.end == blockref.dxf.insert + (0, 1)
 
     blockref = blockrefs[1]
-    virtual_entities = list(blockref.virtual_entities(non_uniform_scaling=False))
-    assert len(virtual_entities) == 0
-    virtual_entities = list(blockref.virtual_entities(non_uniform_scaling=True))
+    virtual_entities = list(blockref.virtual_entities())
     assert len(virtual_entities) == 2
 
     e = virtual_entities[0]
@@ -111,7 +109,7 @@ def test_03_explode_polyline_bulge(doc, msp):
     block_ref = msp.add_blockref('Test03', insert=(0, 0), dxfattribs={
         'yscale': 0.5,
     })
-    entities = list(block_ref.virtual_entities(non_uniform_scaling=True))
+    entities = list(block_ref.virtual_entities())
     assert len(entities) == 3
 
     e = entities[0]
@@ -177,7 +175,7 @@ def test_06_skipped_entities_callback(doc, msp):
 
     assert not blkref.has_uniform_scaling
     assert hatch.paths.has_critical_elements()
-    entities = list(blkref.virtual_entities(non_uniform_scaling=True, skipped_entity_callback=on_entity_skipped))
+    entities = list(blkref.virtual_entities(skipped_entity_callback=on_entity_skipped))
 
     assert len(entities) == 2
     assert entities[0].dxftype() == 'HATCH'
@@ -202,7 +200,7 @@ def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool)
         'xscale': scale_factors.x, 'yscale': scale_factors.y, 'zscale': scale_factors.z,
         'rotation': math.degrees(rotation)
     })
-    entities = list(block_ref.virtual_entities(non_uniform_scaling=True))
+    entities = list(block_ref.virtual_entities())
     assert len(entities) == 3
     ellipse = cast(Union[Ellipse, Arc], entities[0])
 

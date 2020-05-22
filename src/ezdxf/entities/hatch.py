@@ -492,7 +492,11 @@ class Hatch(DXFGraphic):
         self.dxf.n_seed_points = len(self.seeds)
 
     def transform(self, m: 'Matrix44') -> 'Hatch':
-        """ Transform HATCH entity by transformation matrix `m` inplace.
+        """
+        Transform HATCH entity by transformation matrix `m` inplace.
+
+        Non uniform scaling for hatches containing arc- or ellipse edges is not correct,
+        but at least do not produce invalid DXF files.
 
         .. versionadded:: 0.13
 

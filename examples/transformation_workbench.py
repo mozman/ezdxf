@@ -173,7 +173,7 @@ def main_insert(layout):
         layout.add_line(origin, y, dxfattribs={'color': 4, 'layer': 'new axis'})
         layout.add_line(origin, z, dxfattribs={'color': 6, 'layer': 'new axis'})
 
-        for line in entity0.virtual_entities(non_uniform_scaling=True):
+        for line in entity0.virtual_entities():
             line.dxf.layer = 'exploded axis'
             line.dxf.color = 7
             layout.entitydb.add(line)
@@ -199,7 +199,7 @@ def main_insert2(layout):
         layout.add_line(origin, y, dxfattribs={'color': 4, 'layer': 'new axis'})
         layout.add_line(origin, z, dxfattribs={'color': 6, 'layer': 'new axis'})
 
-        for line in entity.virtual_entities(non_uniform_scaling=True):
+        for line in entity.virtual_entities():
             line.dxf.layer = 'exploded axis'
             line.dxf.color = 7
             layout.entitydb.add(line)
