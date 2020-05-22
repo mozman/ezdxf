@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Option
 from contextlib import contextmanager
 import math
 import copy
-from ezdxf.math import Vector, Vec2, Matrix44, reflect_angle_y_deg
+from ezdxf.math import Vector, Vec2, Matrix44, reflect_angle_x_deg
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
@@ -1107,12 +1107,15 @@ class EllipseEdge:
         tagwriter.write_tag2(73, self.is_counter_clockwise)
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
+        def adjust_angle(a: float, ratio: float) -> float:
+            return math.atan2(math.sin(a) * ratio, math.cos(a))
+
+        def adjust_param(p: float, ratio: float) -> float:
+            return math.atan2(math.sin(p) / ratio, math.cos(p))
+        # todo: start- and end param adjustment still incorrect for non-uniform scaling (axis transformation)
         ocs_to_wcs = ocs.old_ocs.to_wcs
-        start_param = math.radians(self.start_angle)
-        end_param = math.radians(self.end_angle)
-        if not self.is_counter_clockwise:
-            # todo: adjustment required?
-            start_param, end_param = end_param, start_param
+        start_param = adjust_param(math.radians(self.start_angle), self.ratio)
+        end_param = adjust_param(math.radians(self.end_angle), self.ratio)
         params = ellipse.Params(
             ocs_to_wcs(Vector(self.center).replace(z=elevation)),
             ocs_to_wcs(Vector(self.major_axis)),
@@ -1123,21 +1126,20 @@ class EllipseEdge:
             end_param,
         )
         params = ellipse.transform(params, ocs.m)
-        # todo: start- and end param adjustment does not work
-        start_angle = math.degrees(params.start)
-        end_angle = math.degrees(params.end)
-        if ocs.new_extrusion.isclose(params.extrusion, abs_tol=1e-9):
-            pass
-        elif ocs.new_extrusion.isclose(-params.extrusion, abs_tol=1e-9):
-            self.is_counter_clockwise = 0
-        else:
-            raise ArithmeticError('Invalid EllipseEdge() transformation, please send bug report.')
         wcs_to_ocs = ocs.new_ocs.from_wcs
         self.center = wcs_to_ocs(params.center).vec2
         self.major_axis = wcs_to_ocs(params.major_axis).vec2
         self.ratio = params.ratio
-        self.start_angle = start_angle % 360.0
-        self.end_angle = end_angle % 360.0
+        self.start_angle = math.degrees(adjust_angle(params.start, params.ratio))
+        self.end_angle = math.degrees(adjust_angle(params.end, params.ratio))
+        if ocs.new_extrusion.isclose(params.extrusion, abs_tol=1e-9):
+            # ellipse extrusion matches new hatch extrusion
+            pass
+        elif ocs.new_extrusion.isclose(-params.extrusion, abs_tol=1e-9):
+            # ellipse extrusion is opposite to new hatch extrusion
+            self.is_counter_clockwise = 1 - int(self.is_counter_clockwise)
+        else:
+            raise ArithmeticError('Invalid EllipseEdge() transformation, please send bug report.')
 
 
 class SplineEdge:

@@ -378,7 +378,7 @@ def main_ellipse_hatch(layout):
         Matrix44.z_rotate(math.radians(15)),
         Matrix44.translate(1, 1, 0),
     )
-    for index in range(2):
+    for index in range(3):
         color = 2 + index
 
         hatch = hatch.copy()
@@ -404,8 +404,8 @@ if __name__ == '__main__':
     # main_mtext(msp)
     # main_insert(msp)
     # main_insert2(msp)
-    main_uniform_hatch_polyline(msp)
+    # main_uniform_hatch_polyline(msp)
     # main_ellipse_hatch(msp)
-    # main_non_uniform_hatch_polyline(msp)
+    main_non_uniform_hatch_polyline(msp)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')
