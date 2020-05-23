@@ -19,6 +19,15 @@ __all__ = ['Textstyle']
 acdb_style = DefSubclass('AcDbTextStyleTableRecord', {
     'name': DXFAttr(2, default='Standard'),
     'flags': DXFAttr(70, default=0),
+    # 1 = If set, this entry describes a shape (ODA 4 bit)
+    # 4 = Vertical text (ODA 1 bit)
+    # 16 = If set, table entry is externally dependent on an xref
+    # 32 = If both this bit and bit 16 are set, the externally dependent xref has
+    # been successfully resolved
+    # 64 = If set, the table entry was referenced by at least one entity in the
+    # drawing the last time the drawing was edited. (This flag is for the benefit of
+    # AutoCAD commands. It can be ignored by most programs that read DXF files and
+    # need not be set by programs that write DXF files)
     'height': DXFAttr(40, default=0),  # fixed height, 0 if not fixed
     'width': DXFAttr(41, default=1),  # width factor
     'oblique': DXFAttr(50, default=0),  # oblique angle in degree, 0 = vertical

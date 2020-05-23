@@ -20,7 +20,7 @@ from .header_section import load_header_section
 from .classes_section import load_classes_section
 from .objects_section import load_objects_map
 from .objects import ObjectsDirectory
-from .objects import DwgAppID, load_table_handles
+from .objects import DwgAppID, load_table_handles, DwgTextStyle
 
 __all__ = ['readfile', 'load', 'document']
 logger = logging.getLogger('ezdxf')
@@ -123,6 +123,7 @@ class DwgDocument:
 
     def load_tables(self) -> None:
         self.load_table('APPID', entry_factory=DwgAppID, dxf_table=self.doc.appids)
+        # self.load_table('STYLE', entry_factory=DwgTextStyle, dxf_table=self.doc.styles)
 
     def load_table(self, name: str, entry_factory: Callable, dxf_table) -> None:
         add_to_entitydb = self.entitydb.add

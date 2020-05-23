@@ -5,6 +5,7 @@ import struct
 from abc import abstractmethod
 
 from ezdxf.tools.binarydata import BitStream
+from ezdxf.lldxf.tags import Tags, DXFTag
 from .const import *
 from .crc import crc8
 from .fileheader import FileHeader
@@ -130,6 +131,14 @@ TYPE_TO_DXF_NAME = {
 # XRECORD >> 0x4F
 
 def dwg_object_data_size(data: Bytes, location: int, version: str) -> Tuple[int, int]:
+    """ Returns object start location and object size.
+
+    Args:
+        data: raw DWG data
+        location: object location from objects map
+        version: DWG version string
+
+    """
     bs = BitStream(data[location: location + 4])
     if version >= ACAD_2010:
         object_size = bs.read_unsigned_modular_chars()
@@ -137,15 +146,6 @@ def dwg_object_data_size(data: Bytes, location: int, version: str) -> Tuple[int,
         object_size = bs.read_modular_shorts()
     size_size = bs.bit_index >> 3
     return location + size_size, object_size
-
-
-def dwg_object_type(data: bytes, version: str) -> int:
-    """ Read object type from DWG object data stream, `data` has to start
-    after object size (first MS in chapter 20.1).
-
-    """
-    bs = BitStream(data, version)
-    return bs.read_object_type()
 
 
 def load_table_handles(specs: FileHeader, data: Bytes, handle: str) -> List[str]:
@@ -156,6 +156,8 @@ def load_table_handles(specs: FileHeader, data: Bytes, handle: str) -> List[str]
 
 
 class ObjectsDirectory:
+    """ A directory of all DWG objects, stored by handle string. """
+
     def __init__(self):
         self.objects: Dict[str, memoryview] = dict()
         self.locations: Dict[str, int] = dict()
@@ -183,7 +185,7 @@ class ObjectsDirectory:
 
 
 class DwgRootObject:
-    """ Common super class for DwgObject() and DwgEntity(). """
+    """ Common super class for all DWG objects. """
 
     def __init__(self, specs: FileHeader, data: Bytes, handle: str = ''):
         self.specs = specs
@@ -193,6 +195,7 @@ class DwgRootObject:
         self.object_type: int = 0  # 0 == unused!
         self.dxfattribs: Dict[str, Any] = dict()
         self.dxfattribs['handle'] = handle
+        self.dwg_data: Dict[str, Any] = dict()  # data not used for DXF
         self.persistent_reactors_count: int = 0
         self.persistent_reactors: List[str] = []  # list of handles as hex string
         self.has_xdictionary = False
@@ -335,8 +338,9 @@ class DwgRootObject:
         return entity
 
 
-# Base class for non-graphical objects, e.g. LTYPE, LAYER, DICTIONARY, LAYOUT
 class DwgObject(DwgRootObject):
+    """ Base class for non-graphical objects, e.g. LTYPE, LAYER, DICTIONARY, LAYOUT... """
+
     def load_common_data(self) -> None:
         super().load_common_data()
         version = self.version
@@ -349,13 +353,14 @@ class DwgObject(DwgRootObject):
         if version >= ACAD_2004:
             self.has_xdictionary = not bool(bs.read_bit())
             # For <= R2000 xdictionary handle is always present and is 0 for no xdictionary
-        if version >= ACAD_2013:
-            self.has_data_store_content = bool(bs.read_bit())
+        # if version >= ACAD_2013: ???
+            # self.has_data_store_content = bool(bs.read_bit())
         # Specific objects data follow (ODS 5.4.1 chapter 20.1)
 
 
-# Base class for graphical objects, e.g. LINE, CIRCLE, ...
 class DwgEntity(DwgRootObject):
+    """ Base class for graphical objects, e.g. LINE, CIRCLE, ... """
+
     def __init__(self, specs: FileHeader, data: Bytes, handle: str = ''):
         self.relative_owner_handle = False
         self.linkers_present = False
@@ -432,16 +437,77 @@ class DwgEntity(DwgRootObject):
             dxfattribs['lineweight'] = bs.read_signed_byte()
 
 
-class DwgAppID(DwgObject):
-    # ODA chapter 22.4.66 APPID(67)
+class DwgTableEntry(DwgObject):
+    """ Base class for all table entries: APPID, LTYPE, LAYER, STYLE, DIMSTYLE, UCS, VIEW, VPORT, BLOCK_RECORD
+    """
+
     def load_specific_data(self):
         bs = self.data_stream
         self.dxfattribs['name'] = bs.read_text_variable()
-        bs.read_bit()  # ignore bit coded value 64, see DXF Reference
-        bs.read_bit_short()  # xref index see ODA 20.4.66, ignore for DXF import
-        is_externally_xref_dependent = bs.read_bit() << 4  # 16 = If set, table entry is externally dependent on an xref
-        self.dxfattribs['flags'] = is_externally_xref_dependent
+        flags = bs.read_bit() << 6  # bit coded value 64, see DXF Reference
+        # dict `dwg_data` stores unused/ignored DWG data
+        self.dwg_data['xref_index'] = bs.read_bit_short()  # xref index see ODA 20.4.66, ignore for DXF import
+        flags |= (bs.read_bit() << 4)  # 16 = If set, table entry is externally dependent on an xref
+        self.dxfattribs['flags'] = flags
+        # loads data until: Xdep - B - 70
 
     def load_specific_handles(self):
-        # ignore: External reference block handle (hard pointer)
-        pass
+        # todo: is xref_ptr dependent form flags?
+        is_externally_xref_dependent = bool(self.dxfattribs['flags'] & 16)
+        # if is_externally_xref_dependent:
+        self.dwg_data['xref_ptr'] = self.handle_stream.read_hex_handle()
+
+
+class DwgAppID(DwgTableEntry):
+    # ODA chapter 20.4.66 APPID(67)
+    def load_specific_data(self):
+        super().load_specific_data()
+
+
+class DwgTextStyle(DwgTableEntry):
+    # ODA chapter 20.4.56 SHAPEFILE(53)
+    def load_specific_data(self):
+        super().load_specific_data()
+        bs = self.data_stream
+        flags = self.dxfattribs.get('flags', 0)
+        flags |= (bs.read_bit() << 2)  # vertical text
+        flags |= bs.read_bit()  # 1 is a shape, 0 is a font
+        self.dxfattribs['flags'] = flags
+        self.dxfattribs['height'] = bs.read_bit_double()  # fixed height
+        self.dxfattribs['width'] = bs.read_bit_double()  # width factor
+        self.dxfattribs['oblique'] = bs.read_bit_double()  # oblique angle in degrees?
+        self.dxfattribs['generation_flags'] = bs.read_unsigned_byte()
+        self.dxfattribs['last_height'] = bs.read_bit_double()
+        self.dxfattribs['font'] = bs.read_text_variable()
+        self.dxfattribs['bigfont'] = bs.read_text_variable()
+
+
+class DwgLinetype(DwgTableEntry):
+    # ODA chapter 20.4.58 LTYPE(57)
+    def __init__(self, specs: FileHeader, data: Bytes, handle: str = ''):
+        super().__init__(specs, data, handle)
+        self.pattern_tags = Tags()
+        self.num_dashes = 0
+
+    def load_specific_data(self):
+        super().load_specific_data()
+        bs = self.data_stream
+        self.dxfattribs['description'] = bs.read_text_variable()
+        tags = self.pattern_tags
+        pattern_length = bs.read_bit_double()
+        tags.append(DXFTag(72, bs.read_unsigned_byte()))  # alignment always 'A'
+        self.num_dashes = bs.read_unsigned_byte()
+        tags.append(DXFTag(73, self.num_dashes))
+        tags.append(DXFTag(40, pattern_length))
+        for _ in range(self.num_dashes):
+            pass
+
+    def load_specific_handles(self):
+        super().load_specific_handles()
+        for _ in range(self.num_dashes):
+            style_handle = self.handle_stream.read_hex_handle()
+            self.pattern_tags.append(DXFTag(340, style_handle))
+
+    def dxf(self, factory: 'EntityFactory'):
+        entity = super().dxf(factory)
+        return entity

@@ -100,6 +100,21 @@ class ComplexLineTypePart:
         else:
             handle = 0
         tags = []
+
+        # ODA complex linetype specification (20.4.58):
+        # code 49: dash or dot specifier (float)
+        # code 75: complex_shape_code (int)
+        # code 44: x-offset (float)
+        # code 45: y-offset (float)
+        # code 46: scale (float)
+        # code 50: rotation in degrees (float)
+        # code 74: shape_flag (bit coded)
+        # - 1: text is rotated 0 deg, otherwise follows the segment
+        # - 2: complex_shape_code holds the index of the shape
+        # - 4: complex_shape_code holds the index into the text area of the string to be drawn
+        # code 340: handle to STYLE entry
+        # code 9: string area
+
         if self.type == 'TEXT':
             tags.append(DXFTag(74, 2))
             tags.append(DXFTag(75, 0))
