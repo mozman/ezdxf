@@ -141,11 +141,11 @@ class DwgDocument:
     def load_table_entries(self, handle: str, name: str, entry_factory: Callable) -> Iterable:
         dxffactory = self.doc.dxffactory
         objects = self.objects_directory
-        try:
+        try:  # load table control object
             data = objects[handle]
         except KeyError:
             raise DwgCorruptedTableSection(f'{name} table control not found in objects map.')
-        else:
+        else:  # load table entries
             for handle in load_table_handles(self.specs, data, handle):
                 try:
                     data = objects[handle]

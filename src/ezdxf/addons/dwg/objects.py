@@ -10,7 +10,7 @@ from .crc import crc8
 from .fileheader import FileHeader
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import EntityFactory, DXFEntity
+    from ezdxf.eztypes import EntityFactory
 
 TYPE_TO_DXF_NAME = {
     0x01: 'TEXT',
@@ -128,6 +128,58 @@ TYPE_TO_DXF_NAME = {
 # VISUALSTYLE
 # WIPEOUTVARIABLE
 # XRECORD >> 0x4F
+
+def dwg_object_data_size(data: Bytes, location: int, version: str) -> Tuple[int, int]:
+    bs = BitStream(data[location: location + 4])
+    if version >= ACAD_2010:
+        object_size = bs.read_unsigned_modular_chars()
+    else:
+        object_size = bs.read_modular_shorts()
+    size_size = bs.bit_index >> 3
+    return location + size_size, object_size
+
+
+def dwg_object_type(data: bytes, version: str) -> int:
+    """ Read object type from DWG object data stream, `data` has to start
+    after object size (first MS in chapter 20.1).
+
+    """
+    bs = BitStream(data, version)
+    return bs.read_object_type()
+
+
+def load_table_handles(specs: FileHeader, data: Bytes, handle: str) -> List[str]:
+    dwg_object = DwgObject(specs, data, handle)
+    num_entries = dwg_object.data_stream.read_bit_long()
+    handle = dwg_object.handle_stream.read_hex_handle
+    return [handle() for _ in range(num_entries)]
+
+
+class ObjectsDirectory:
+    def __init__(self):
+        self.objects: Dict[str, memoryview] = dict()
+        self.locations: Dict[str, int] = dict()
+
+    def __getitem__(self, handle: str) -> memoryview:
+        return self.objects[handle]
+
+    def __contains__(self, handle: str) -> bool:
+        return handle in self.objects
+
+    def load(self, specs: FileHeader, data: Bytes, object_map: Dict[str, int], crc_check=False) -> None:
+        self.locations = object_map
+        version = specs.version
+        for handle, location in object_map.items():
+            object_start, object_size = dwg_object_data_size(data, location, version)
+            object_end = object_start + object_size
+            object_data = data[object_start: object_end]
+            self.objects[handle] = object_data
+            crc_check = False  # todo: crc check for objects
+            if crc_check:
+                check = struct.unpack_from('<H', data, object_end)
+                crc = crc8(object_data, seed=0xc0c1)
+                if check != crc:
+                    raise CRCError(f'CRC error in object #{handle}.')
 
 
 class DwgRootObject:
@@ -279,10 +331,11 @@ class DwgRootObject:
     def dxf(self, factory: 'EntityFactory'):
         entity = factory.new_entity(self.dxfname, self.dxfattribs)
         entity.set_reactors(self.persistent_reactors)
-        # set xdata
+        # todo: set xdata
         return entity
 
 
+# Base class for non-graphical objects, e.g. LTYPE, LAYER, DICTIONARY, LAYOUT
 class DwgObject(DwgRootObject):
     def load_common_data(self) -> None:
         super().load_common_data()
@@ -301,6 +354,7 @@ class DwgObject(DwgRootObject):
         # Specific objects data follow (ODS 5.4.1 chapter 20.1)
 
 
+# Base class for graphical objects, e.g. LINE, CIRCLE, ...
 class DwgEntity(DwgRootObject):
     def __init__(self, specs: FileHeader, data: Bytes, handle: str = ''):
         self.relative_owner_handle = False
@@ -376,59 +430,6 @@ class DwgEntity(DwgRootObject):
 
         if version >= ACAD_2000:
             dxfattribs['lineweight'] = bs.read_signed_byte()
-
-
-def dwg_object_data_size(data: Bytes, location: int, version: str) -> Tuple[int, int]:
-    bs = BitStream(data[location: location + 4])
-    if version >= ACAD_2010:
-        object_size = bs.read_unsigned_modular_chars()
-    else:
-        object_size = bs.read_modular_shorts()
-    size_size = bs.bit_index >> 3
-    return location + size_size, object_size
-
-
-def dwg_object_type(data: bytes, version: str) -> int:
-    """ Read object type from DWG object data stream, `data` has to start
-    after object size (first MS in chapter 20.1).
-
-    """
-    bs = BitStream(data, version)
-    return bs.read_object_type()
-
-
-class ObjectsDirectory:
-    def __init__(self):
-        self.objects: Dict[str, memoryview] = dict()
-        self.locations: Dict[str, int] = dict()
-
-    def __getitem__(self, handle: str) -> memoryview:
-        return self.objects[handle]
-
-    def __contains__(self, handle: str) -> bool:
-        return handle in self.objects
-
-    def load(self, specs: FileHeader, data: Bytes, object_map: Dict[str, int], crc_check=False) -> None:
-        self.locations = object_map
-        version = specs.version
-        for handle, location in object_map.items():
-            object_start, object_size = dwg_object_data_size(data, location, version)
-            object_end = object_start + object_size
-            object_data = data[object_start: object_end]
-            self.objects[handle] = object_data
-            crc_check = False  # todo: crc check for objects
-            if crc_check:
-                check = struct.unpack_from('<H', data, object_end)
-                crc = crc8(object_data, seed=0xc0c1)
-                if check != crc:
-                    raise CRCError(f'CRC error in object #{handle}.')
-
-
-def load_table_handles(specs: FileHeader, data: Bytes, handle: str) -> List[str]:
-    dwg_object = DwgObject(specs, data, handle)
-    num_entries = dwg_object.data_stream.read_bit_long()
-    handle = dwg_object.handle_stream.read_hex_handle
-    return [handle() for _ in range(num_entries)]
 
 
 class DwgAppID(DwgObject):
