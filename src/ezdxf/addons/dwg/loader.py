@@ -22,7 +22,7 @@ from .header_section import load_header_section, HEADER_VARS_TO_RESOLVE
 from .classes_section import load_classes_section
 from .objects_section import load_objects_map
 from .objects import ObjectsDirectory
-from .objects import DwgAppID, load_table_handles, DwgTextStyle
+from .objects import DwgAppID, load_table_handles, DwgTextStyle, DwgLayer, DwgLinetype
 
 __all__ = ['readfile', 'load', 'document']
 logger = logging.getLogger('ezdxf')
@@ -123,6 +123,8 @@ class DwgDocument:
     def load_tables(self) -> None:
         self.load_table('APPID', entry_factory=DwgAppID, dxf_table=self.doc.appids)
         self.load_table('STYLE', entry_factory=DwgTextStyle, dxf_table=self.doc.styles)
+        # self.load_table('LTYPE', entry_factory=DwgLinetype, dxf_table=self.doc.linetypes)
+        self.load_table('LAYER', entry_factory=DwgLayer, dxf_table=self.doc.layers)
 
     def load_table(self, name: str, entry_factory: Callable, dxf_table) -> None:
         add_to_entitydb = self.entitydb.add

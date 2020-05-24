@@ -5,7 +5,7 @@ import base64
 import ezdxf
 from ezdxf.addons.dwg import FileHeader
 from ezdxf.addons.dwg.const import *
-from ezdxf.addons.dwg.objects import DwgAppID, DwgTextStyle
+from ezdxf.addons.dwg.objects import DwgAppID, DwgTextStyle, DwgLayer
 from ezdxf.entities.factory import EntityFactory
 
 
@@ -66,6 +66,24 @@ def test_style_11(specs, factory):
     xdata = dxf_obj.get_xdata('12')
     assert xdata[0] == (1000, 'Arial')
     assert xdata[1] == (1071, 0)
+
+
+OBJECT_10 = "TNwAAAAARCkBMMPADQdBAjGaUFEPURY="
+
+
+def test_layer_10(specs, factory):
+    data = base64.b64decode(OBJECT_10)
+    dwg_obj = DwgLayer(specs, data, handle='10')
+    assert dwg_obj.object_type == 51
+    dwg_obj.update_dxfname({})
+
+    dxf_obj = dwg_obj.dxf(factory)
+    assert dxf_obj.dxf.name == '0'
+    assert dxf_obj.dxf.flags == 0
+    assert dxf_obj.dxf.color == 7
+    # stored handle for Continuous
+    assert dxf_obj.dxf.linetype == '16'
+    assert dxf_obj.dxf.lineweight == -3
 
 
 if __name__ == '__main__':

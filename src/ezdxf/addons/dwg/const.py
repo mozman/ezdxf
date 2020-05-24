@@ -52,6 +52,7 @@ class DwgCorruptedTableSection(DwgError):
 class CRCError(DwgError):
     pass
 
+
 codepage_to_encoding = {
     37: 'cp874',  # Thai,
     38: 'cp932',  # Japanese
@@ -66,4 +67,34 @@ codepage_to_encoding = {
     34: 'cp1255',  # Hebrew
     35: 'cp1256',  # Arabic
     36: 'cp1257',  # Baltic
+}
+
+DXF_LINE_WIDTH = {
+    0: 0,
+    1: 5,
+    2: 9,
+    3: 13,
+    4: 15,
+    5: 18,
+    6: 20,
+    7: 25,
+    8: 30,
+    9: 35,
+    10: 40,
+    11: 50,
+    12: 53,
+    13: 60,
+    14: 70,
+    15: 80,
+    16: 90,
+    17: 100,
+    18: 106,
+    19: 120,
+    20: 140,
+    21: 158,
+    22: 200,
+    23: 211,
+    29: -1,  # BYLAYER
+    30: -2,  # BYBLOCK
+    31: -3,  # DEFAULT
 }

@@ -488,6 +488,10 @@ class BitStream:
                 _, color_handle = self.read_handle()
             if flags & 0x20:
                 data = self.read_bit_long()
+                # transparency type:
+                # 0 = BYLAYER,
+                # 1 = BYBLOCK,
+                # 3 = the transparency value in the last byte.
                 transparency_type = data >> 24
                 transparency = data & 0xff
             return rgb, color_handle, transparency_type, transparency

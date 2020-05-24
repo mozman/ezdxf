@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Dict, List, Tuple, Optional, Any, TYPE_CHECKING, List
+from typing import Dict, List, Tuple, Optional, Any, TYPE_CHECKING, List, cast
 import struct
 import logging
 from abc import abstractmethod
@@ -14,7 +14,7 @@ from .fileheader import FileHeader
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import EntityFactory
+    from ezdxf.eztypes import EntityFactory, Layer
 
 TYPE_TO_DXF_NAME = {
     0x01: 'TEXT',
@@ -529,10 +529,8 @@ class DwgTableEntry(DwgObject):
         # loads data until: Xdep - B - 70
 
     def load_specific_handles(self):
-        # todo: is xref_ptr dependent form flags?
-        is_externally_xref_dependent = bool(self.dxfattribs['flags'] & 16)
-        # if is_externally_xref_dependent:
-        self.dwg_data['xref_ptr'] = self.handle_stream.read_hex_handle()
+        # xref_handle is always present, does not dependent from flag status
+        self.dwg_data['xref_handle'] = self.handle_stream.read_hex_handle()
 
 
 class DwgAppID(DwgTableEntry):
@@ -557,6 +555,75 @@ class DwgTextStyle(DwgTableEntry):
         self.dxfattribs['last_height'] = bs.read_bit_double()
         self.dxfattribs['font'] = bs.read_text_variable()
         self.dxfattribs['bigfont'] = bs.read_text_variable()
+
+
+class DwgLayer(DwgTableEntry):
+    # ODA chapter 20.4.54 LAYER(51)
+    def load_specific_data(self):
+        super().load_specific_data()
+        bs = self.data_stream
+        dxfattribs = self.dxfattribs
+        version = self.specs.version
+
+        if version < ACAD_2000:
+            frozen = bs.read_bit()
+            is_off = bs.read_bit()
+            frozen_in_new = bs.read_bit()
+            locked = bs.read_bit()
+
+        else:
+            flags = bs.read_bit_short()
+            frozen = 1 if flags & 1 else 0
+            is_off = 1 if flags & 2 else 0
+            frozen_in_new = 1 if flags & 4 else 0
+            locked = 1 if flags & 8 else 0
+            dxfattribs['plot'] = bool(flags & 16)
+            dxfattribs['lineweight'] = DXF_LINE_WIDTH.get((flags & 0x3E0) >> 5, -3)
+
+        flags = dxfattribs.get('flags', 0) | frozen | (frozen_in_new << 1) | (locked << 2)
+        dxfattribs['flags'] = flags
+
+        if version <= ACAD_2000:
+            color = bs.read_cm_color()
+        else:
+            color = bs.read_cm_color_enc()
+            if isinstance(color, tuple):
+                rgb, color_handle, transparency_type, transparency = color
+                # todo: get color from color handle
+                color = 7
+                dxfattribs['true_color'] = rgb
+                self.dwg_data['color_handle'] = color_handle
+                self.dwg_data['transparency'] = transparency
+                self.dwg_data['transparency_type'] = transparency_type
+
+        if is_off:
+            color = -color
+        dxfattribs['color'] = color
+
+    def load_specific_handles(self):
+        super().load_specific_handles()
+        bs = self.handle_stream
+        dxfattribs = self.dxfattribs
+        version = self.specs.version
+
+        if version >= ACAD_2000:
+            dxfattribs['plotstyle_handle'] = bs.read_hex_handle()
+        if version >= ACAD_2007:
+            dxfattribs['material_handle'] = bs.read_hex_handle()
+        self.dxfattribs['linetype'] = bs.read_hex_handle()
+
+    def dxf(self, factory: 'EntityFactory'):
+        layer = cast('Layer', super().dxf(factory))
+        if 'color_handle' in self.dwg_data:
+            doc = factory.doc
+            if doc and doc.entitydb:
+                color = doc.entitydb.get(self.dwg_data['color_handle'])
+                # todo: and now???
+        if 'transparency' in self.dwg_data:
+            transparency_type = self.dwg_data['transparency_type']
+            transparency = self.dwg_data['transparency']
+            layer.set_transparency((transparency_type << 24) | transparency)
+        return layer
 
 
 class DwgLinetype(DwgTableEntry):

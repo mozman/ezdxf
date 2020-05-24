@@ -25,11 +25,14 @@ acdb_symbol_table_record = DefSubclass('AcDbSymbolTableRecord', {})
 acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
     'name': DXFAttr(2),  # layer name
     'flags': DXFAttr(70, default=0),
+    # 1 = Layer is frozen; otherwise layer is thawed
+    # 2 = Layer is frozen by default in new viewports
+    # 4 = Layer is locked
     'color': DXFAttr(62, default=7),  # dxf color index
     'true_color': DXFAttr(420, dxfversion=DXF2004, optional=True),  # true color
     'linetype': DXFAttr(6, default='Continuous'),  # linetype name
     'plot': DXFAttr(290, default=1, dxfversion=DXF2000, optional=True),  # don't plot this layer if 0 else 1
-    'lineweight': DXFAttr(370, default=-3, dxfversion=DXF2000),  # 1/100 mm, min 13 = 0.13mm, max 200 = 2.0mm
+    'lineweight': DXFAttr(370, default=-3, dxfversion=DXF2000),  # 1/100 mm, min 13 = 0.13mm, max 211 = 2.11mm
 
     # code 390 is required for AutoCAD
     # Pointer/handle to PlotStyleName
@@ -199,14 +202,17 @@ class Layer(DXFEntity):
 
     @transparency.setter
     def transparency(self, value: float) -> None:
+        if 0 <= value <= 1:
+            self.set_transparency(float2transparency(value))
+        else:
+            raise ValueError('Value out of range (0 .. 1).')
+
+    def set_transparency(self, value: int):
         # create AppID table entry if not present
         if self.doc and AcCmTransparency not in self.doc.appids:
             self.doc.appids.new(AcCmTransparency)
-        if 0 <= value <= 1:
-            self.discard_xdata(AcCmTransparency)
-            self.set_xdata(AcCmTransparency, [(1071, float2transparency(value))])
-        else:
-            raise ValueError('Value out of range (0 .. 1).')
+        self.discard_xdata(AcCmTransparency)
+        self.set_xdata(AcCmTransparency, [(1071, value)])
 
     def rename(self, name: str) -> None:
         """

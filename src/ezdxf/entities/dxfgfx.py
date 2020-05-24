@@ -33,7 +33,7 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # thickness and extrusion is defined in Entity specific subclasses
     # Stored and moved around as a 16-bit integer
     'lineweight': DXFAttr(370, default=-1, dxfversion=DXF2000, optional=True),
-    # Line weight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13 and biggest line weight is 200, values
+    # Line weight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13 and biggest line weight is 211, values
     # outside this range prevents AutoCAD from loading the file.
     # Special values:
     # LINEWEIGHT_BYLAYER = -1
