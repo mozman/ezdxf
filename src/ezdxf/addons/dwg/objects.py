@@ -570,7 +570,6 @@ class DwgLayer(DwgTableEntry):
             is_off = bs.read_bit()
             frozen_in_new = bs.read_bit()
             locked = bs.read_bit()
-
         else:
             flags = bs.read_bit_short()
             frozen = 1 if flags & 1 else 0
@@ -578,7 +577,7 @@ class DwgLayer(DwgTableEntry):
             frozen_in_new = 1 if flags & 4 else 0
             locked = 1 if flags & 8 else 0
             dxfattribs['plot'] = bool(flags & 16)
-            dxfattribs['lineweight'] = DXF_LINE_WIDTH.get((flags & 0x3E0) >> 5, -3)
+            dxfattribs['lineweight'] = DXF_LINE_WEIGHT.get((flags & 0x3E0) >> 5, -3)
 
         flags = dxfattribs.get('flags', 0) | frozen | (frozen_in_new << 1) | (locked << 2)
         dxfattribs['flags'] = flags
@@ -588,13 +587,17 @@ class DwgLayer(DwgTableEntry):
         else:
             color = bs.read_cm_color_enc()
             if isinstance(color, tuple):
-                rgb, color_handle, transparency_type, transparency = color
-                # todo: get color from color handle
+                rgb, color_handle, _, transparency = color
+                # Set default color value and get real ACI from AcDbColor object later.
                 color = 7
-                dxfattribs['true_color'] = rgb
-                self.dwg_data['color_handle'] = color_handle
-                self.dwg_data['transparency'] = transparency
-                self.dwg_data['transparency_type'] = transparency_type
+                if rgb is not None:
+                    dxfattribs['true_color'] = rgb
+                if color_handle is not None:
+                    self.dwg_data['color_handle'] = color_handle
+                if transparency is not None:
+                    # No DXF group code for layer transparency and
+                    # other transparency type than 3 make no sense for Layer
+                    self.dwg_data['transparency'] = transparency
 
         if is_off:
             color = -color
@@ -614,15 +617,18 @@ class DwgLayer(DwgTableEntry):
 
     def dxf(self, factory: 'EntityFactory'):
         layer = cast('Layer', super().dxf(factory))
-        if 'color_handle' in self.dwg_data:
-            doc = factory.doc
-            if doc and doc.entitydb:
-                color = doc.entitydb.get(self.dwg_data['color_handle'])
-                # todo: and now???
-        if 'transparency' in self.dwg_data:
-            transparency_type = self.dwg_data['transparency_type']
-            transparency = self.dwg_data['transparency']
-            layer.set_transparency((transparency_type << 24) | transparency)
+        get_dwg_data = self.dwg_data.get
+
+        color_handle = get_dwg_data('color_handle')
+        if color_handle:
+            # Requires the %COLORS_DICTIONARY which is loaded later,
+            # store color handle as temporarily attribute in the layer object
+            # and remove this attribute after resolving the color handle.
+            layer.color_handle = color_handle
+        transparency = get_dwg_data('transparency')
+        if transparency:
+            # other transparency types make no sense for Layer
+            layer.set_transparency(0x3000000 | transparency)
         return layer
 
 

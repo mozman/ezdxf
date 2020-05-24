@@ -69,7 +69,7 @@ codepage_to_encoding = {
     36: 'cp1257',  # Baltic
 }
 
-DXF_LINE_WIDTH = {
+DXF_LINE_WEIGHT = {
     0: 0,
     1: 5,
     2: 9,

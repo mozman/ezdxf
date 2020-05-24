@@ -124,6 +124,7 @@ class DwgDocument:
         self.load_table('APPID', entry_factory=DwgAppID, dxf_table=self.doc.appids)
         self.load_table('STYLE', entry_factory=DwgTextStyle, dxf_table=self.doc.styles)
         # self.load_table('LTYPE', entry_factory=DwgLinetype, dxf_table=self.doc.linetypes)
+        # to resolve 'color_handle' in LAYER the %COLORS_DICTIONARY is required
         self.load_table('LAYER', entry_factory=DwgLayer, dxf_table=self.doc.layers)
 
     def load_table(self, name: str, entry_factory: Callable, dxf_table) -> None:
@@ -180,6 +181,16 @@ class DwgDocument:
             - appids in XDATA
 
         """
+        def resolve_color_handles():
+            for layer in self.doc.layers:
+                if hasattr(layer, 'color_handle'):
+                    handle = layer.color_handle
+                    delattr(layer, 'color_handle')
+                    color = entitydb.get(handle)
+                    if color:
+                        # todo: set layer color attributes from AcDbColor object
+                        pass
+
         def handle_to_attrib(entity: 'DXFEntity', name: str):
             if entity.dxf.hasattr(name):
                 handle = entity.dxf.get(name)
@@ -191,7 +202,7 @@ class DwgDocument:
                     entity.dxf.discard(name)
 
         entitydb = self.entitydb
-
+        resolve_color_handles()
         for entity in entitydb.values():
             handle_to_attrib(entity, 'layer')
             handle_to_attrib(entity, 'linetype')
