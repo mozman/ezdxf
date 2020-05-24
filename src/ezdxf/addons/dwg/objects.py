@@ -1,7 +1,8 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Dict, List, Tuple, Optional, Any, TYPE_CHECKING
+from typing import Dict, List, Tuple, Optional, Any, TYPE_CHECKING, List
 import struct
+import logging
 from abc import abstractmethod
 
 from ezdxf.tools.binarydata import BitStream
@@ -9,6 +10,8 @@ from ezdxf.lldxf.tags import Tags, DXFTag
 from .const import *
 from .crc import crc8
 from .fileheader import FileHeader
+
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import EntityFactory
@@ -155,6 +158,76 @@ def load_table_handles(specs: FileHeader, data: Bytes, handle: str) -> List[str]
     return [handle() for _ in range(num_entries)]
 
 
+def extended_data_loader(bs: BitStream, size: int, version: str = ACAD_2000) -> List[Tuple]:
+    """ Load extended data as list of tuples (group code, value).
+
+    Args:
+         bs: data bit stream
+         size: size of XDATA to read in bytes
+         version: DWG version
+
+    """
+    tags = list()
+    loaded_data_size = 0
+    while loaded_data_size < size:
+        code = bs.read_unsigned_byte()
+        loaded_data_size += 1
+        # code 1 (1001) is invalid - defines appid
+        if code == 0:  # string
+            if version < ACAD_2007:
+                length = bs.read_unsigned_byte()
+                codepage = bs.read_unsigned_short()
+                encoding = codepage_to_encoding.get(codepage, 'cp1252')
+                binary_data = bs.read_bytes(length)
+                length += 3
+            else:
+                length = bs.read_unsigned_short()
+                binary_data = bs.read_bytes(length * 2)
+                encoding = 'utf16'
+                length = (2 + length * 2)
+            string = binary_data.decode(encoding=encoding)
+            tags.append((1000, string))
+            loaded_data_size += length
+
+        elif code == 2:  # structure tag { and }
+            char = bs.read_unsigned_byte()
+            tags.append((1002, '}' if char else '{'))
+            loaded_data_size += 1
+
+        elif code in (3, 5):  # layer table reference or entity handle
+            handle = bs.read_unsigned_long_long()
+            tags.append((1000 + code, '%X' % handle))
+            loaded_data_size += 8
+
+        elif code == 4:  # binary chunk
+            length = bs.read_unsigned_byte()
+            tags.append((1004, bs.read_bytes(length)))
+            loaded_data_size += (length + 1)
+
+        elif code in (40, 41, 42):  # double
+            tags.append((1000 + code, bs.read_raw_double()))
+            loaded_data_size += 8
+
+        elif code in (10, 11, 12, 13):  # points
+            tags.append((1000 + code, bs.read_raw_double(3)))
+            loaded_data_size += 24
+
+        elif code == 70:  # short
+            tags.append((1070, bs.read_signed_short()))
+            loaded_data_size += 2
+
+        elif code == 71:  # long
+            tags.append((1071, bs.read_signed_long()))
+            loaded_data_size += 4
+        else:
+            logger.debug(f'DWG Loader: Invalid group code {1000 + code} in XDATA')
+
+    if loaded_data_size != size:
+        logger.debug(f'DWG Loader: loaded XDATA size mismatch')
+
+    return tags
+
+
 class ObjectsDirectory:
     """ A directory of all DWG objects, stored by handle string. """
 
@@ -200,6 +273,7 @@ class DwgRootObject:
         self.persistent_reactors: List[str] = []  # list of handles as hex string
         self.has_xdictionary = False
         self.xdictionary: str = ''  # handle to XDictionary as hex string
+        self.xdata: Dict[str, Tags] = dict()
         self.has_data_store_content = False
 
         # set by init_data_stream():
@@ -264,9 +338,10 @@ class DwgRootObject:
 
         # Entity Extended data
         extended_data_size = bs.read_bit_short()
-        if extended_data_size > 0:
-            # todo: implement extended data loader
-            bs.move(extended_data_size * 8)
+        while extended_data_size > 0:
+            app_handle = bs.read_hex_handle()
+            self.xdata[app_handle] = extended_data_loader(bs, extended_data_size, self.specs.version)
+            extended_data_size = bs.read_bit_short()
         # Here is the data fork of DwgObject and DwgEntity.
 
     def init_handle_stream(self) -> BitStream:
@@ -334,7 +409,10 @@ class DwgRootObject:
     def dxf(self, factory: 'EntityFactory'):
         entity = factory.new_entity(self.dxfname, self.dxfattribs)
         entity.set_reactors(self.persistent_reactors)
-        # todo: set xdata
+
+        for handle, tags in self.xdata.items():
+            # AppID handles are used as app names and has to be resolved later
+            entity.set_xdata(handle, tags)
         return entity
 
 
@@ -354,7 +432,7 @@ class DwgObject(DwgRootObject):
             self.has_xdictionary = not bool(bs.read_bit())
             # For <= R2000 xdictionary handle is always present and is 0 for no xdictionary
         # if version >= ACAD_2013: ???
-            # self.has_data_store_content = bool(bs.read_bit())
+        # self.has_data_store_content = bool(bs.read_bit())
         # Specific objects data follow (ODS 5.4.1 chapter 20.1)
 
 
@@ -444,11 +522,10 @@ class DwgTableEntry(DwgObject):
     def load_specific_data(self):
         bs = self.data_stream
         self.dxfattribs['name'] = bs.read_text_variable()
-        flags = bs.read_bit() << 6  # bit coded value 64, see DXF Reference
+        bs.read_bit() << 6  # ignore bit coded value 64, see DXF Reference
         # dict `dwg_data` stores unused/ignored DWG data
         self.dwg_data['xref_index'] = bs.read_bit_short()  # xref index see ODA 20.4.66, ignore for DXF import
-        flags |= (bs.read_bit() << 4)  # 16 = If set, table entry is externally dependent on an xref
-        self.dxfattribs['flags'] = flags
+        self.dxfattribs['flags'] = (bs.read_bit() << 4)  # 16 = If set, table entry is externally dependent on an xref
         # loads data until: Xdep - B - 70
 
     def load_specific_handles(self):
@@ -510,4 +587,5 @@ class DwgLinetype(DwgTableEntry):
 
     def dxf(self, factory: 'EntityFactory'):
         entity = super().dxf(factory)
+        entity.pattern_tags = self.pattern_tags
         return entity

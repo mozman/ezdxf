@@ -4,22 +4,6 @@ import struct
 from .const import *
 from .crc import crc8
 
-codepage_to_encoding = {
-    37: 'cp874',  # Thai,
-    38: 'cp932',  # Japanese
-    39: 'gbk',  # UnifiedChinese
-    40: 'cp949',  # Korean
-    41: 'cp950',  # TradChinese
-    28: 'cp1250',  # CentralEurope
-    29: 'cp1251',  # Cyrillic
-    30: 'cp1252',  # WesternEurope
-    32: 'cp1253',  # Greek
-    33: 'cp1254',  # Turkish
-    34: 'cp1255',  # Hebrew
-    35: 'cp1256',  # Arabic
-    36: 'cp1257',  # Baltic
-}
-
 FILE_HEADER_MAGIC = {
     3: 0xa598,
     4: 0x8101,

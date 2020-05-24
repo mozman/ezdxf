@@ -173,6 +173,13 @@ class BitStream:
         else:
             return value
 
+    def read_bytes(self, count: int) -> bytes:
+        """ Read `count` unsigned bytes (8 bit) from buffer. """
+        if self.bit_index & 7:
+            return bytes(self.read_bits(8) for _ in range(count))
+        else:
+            return bytes(self.read_aligned_bytes(count))
+
     def read_aligned_bytes(self, count: int) -> Sequence[int]:
         buffer = self.buffer
         start_index = self.bit_index >> 3
@@ -286,6 +293,10 @@ class BitStream:
             return _read()
         else:
             return tuple(_read() for _ in range(count))
+
+    def read_unsigned_long_long(self) -> int:
+        binary_data = bytes(self.read_unsigned_byte() for _ in range(8))
+        return struct.unpack('<Q', binary_data)[0]
 
     # LibreDWG: https://github.com/LibreDWG/libredwg/blob/master/src/bits.c
     # Read 1 bitlonglong (compacted uint64_t) for REQUIREDVERSIONS, preview_size.

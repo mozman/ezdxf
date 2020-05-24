@@ -3,6 +3,7 @@
 # Created: 2020-04-01
 from typing import Dict, Any, Iterable, Callable
 import logging
+from collections import OrderedDict
 from ezdxf.drawing import Drawing
 from ezdxf.tools import codepage
 
@@ -13,6 +14,7 @@ from ezdxf.sections.blocks import BlocksSection
 from ezdxf.sections.entities import EntitySection
 from ezdxf.sections.objects import ObjectsSection
 from ezdxf.sections.acdsdata import AcDsDataSection
+from ezdxf.entities import DXFEntity, XData
 
 from .const import *
 from .fileheader import FileHeader
@@ -71,6 +73,7 @@ class DwgDocument:
         self.table_section = dict()
         self.block_section = dict()
         self.object_section = dict()
+        self.resolve_resources()
 
     @property
     def entitydb(self):
@@ -123,7 +126,7 @@ class DwgDocument:
 
     def load_tables(self) -> None:
         self.load_table('APPID', entry_factory=DwgAppID, dxf_table=self.doc.appids)
-        # self.load_table('STYLE', entry_factory=DwgTextStyle, dxf_table=self.doc.styles)
+        self.load_table('STYLE', entry_factory=DwgTextStyle, dxf_table=self.doc.styles)
 
     def load_table(self, name: str, entry_factory: Callable, dxf_table) -> None:
         add_to_entitydb = self.entitydb.add
@@ -168,3 +171,43 @@ class DwgDocument:
 
     def store_objects(self) -> None:
         pass
+
+    def resolve_resources(self) -> None:
+        """
+        DWG loader uses handles instead of names for resources:
+
+            - layer
+            - linetype
+            - style
+            - dimstyle
+            - appids in XDATA
+
+        """
+        def handle_to_attrib(entity: 'DXFEntity', name: str):
+            if entity.dxf.hasattr(name):
+                handle = entity.dxf.get(name)
+                resource = entitydb.get(handle)
+                if resource:
+                    entity.dxf.set(name, resource.dxf.name)
+                else:
+                    logger.debug(f'DWG Loader: Undefined resource for {name} handle #{handle}.')
+                    entity.dxf.discard(name)
+
+        entitydb = self.entitydb
+
+        for entity in entitydb.values():
+            handle_to_attrib(entity, 'layer')
+            handle_to_attrib(entity, 'linetype')
+            handle_to_attrib(entity, 'style')
+            handle_to_attrib(entity, 'dimstyle')
+            if entity.xdata:
+                # replace app handles by app names
+                old_xdata = entity.xdata.data
+                new_xdata = OrderedDict()
+                for app_handle, data in old_xdata.items():
+                    appid = entitydb.get(app_handle)
+                    if appid:
+                        new_xdata[appid.dxf.name] = data
+                    else:
+                        logger.debug(f'DWG Loader: Undefined AppID for app handle #{app_handle}.')
+                entity.xdata.data = new_xdata
