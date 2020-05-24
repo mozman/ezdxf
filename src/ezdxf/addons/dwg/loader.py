@@ -18,7 +18,7 @@ from ezdxf.entities import DXFEntity, XData
 
 from .const import *
 from .fileheader import FileHeader
-from .header_section import load_header_section
+from .header_section import load_header_section, HEADER_VARS_TO_RESOLVE
 from .classes_section import load_classes_section
 from .objects_section import load_objects_map
 from .objects import ObjectsDirectory
@@ -103,11 +103,7 @@ class DwgDocument:
         self.load_objects_directory()
         self.load_tables()
 
-        # copy data to DXF document
-        self.store_header()
-        self.store_tables()
-        self.store_blocks()
-        self.store_objects()
+        self.set_dxf_header_vars()
 
     def load_header(self) -> None:
         hdr_section = load_header_section(self.specs, self.data, self.crc_check)
@@ -160,17 +156,16 @@ class DwgDocument:
                     dwg_object.update_dxfname(self.dxf_object_types)
                     yield dwg_object.dxf(dxffactory)
 
-    def store_header(self):
-        pass
-
-    def store_tables(self) -> None:
-        pass
-
-    def store_blocks(self) -> None:
-        pass
-
-    def store_objects(self) -> None:
-        pass
+    def set_dxf_header_vars(self):
+        dxf_header = self.doc.header
+        entitydb = self.entitydb
+        for name, value in self.raw_header_vars.items():
+            # Set only supported DXF header vars, a new HEADER section
+            # contains for all supported DXF header vars a default value.
+            if name in dxf_header:
+                if name in HEADER_VARS_TO_RESOLVE and value in entitydb:
+                    value = entitydb.get(value).dxf.name
+                dxf_header[name] = value
 
     def resolve_resources(self) -> None:
         """

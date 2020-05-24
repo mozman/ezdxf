@@ -143,6 +143,15 @@ def parse_header(bs: BitStream) -> Dict[str, Any]:
     return parse_bitstream(bs, commands)
 
 
+HEADER_VARS_TO_RESOLVE = {
+    '$CELTYPE',
+    '$CLAYER',
+    '$CMLSTYLE',
+    '$DIMSTYLE',
+    '$DIMTXSTY',
+    '$TEXTSTYLE',
+}
+
 HEADER_DESCRIPTION = """
 # $... DXF header variables stored in the DXF header section
 # %... DWG header information not stored in the DXF header section
