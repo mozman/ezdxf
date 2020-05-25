@@ -443,7 +443,7 @@ class Hatch(DXFGraphic):
             # get pattern definition from acad standard pattern, default is 'ANSI31'
             predefiend_pattern = pattern.load()
             definition = predefiend_pattern.get(name, predefiend_pattern['ANSI31'])
-        self.set_pattern_definition(definition, factor=self.dxf.pattern_scale)
+        self.set_pattern_definition(definition, factor=self.dxf.pattern_scale, rotate=self.dxf.pattern_angle)
 
     # just for compatibility
     @contextmanager
@@ -453,7 +453,7 @@ class Hatch(DXFGraphic):
             raise const.DXFValueError('Solid fill HATCH has no pattern data.')
         yield self.pattern
 
-    def set_pattern_definition(self, lines: Sequence, factor: float = 1) -> None:
+    def set_pattern_definition(self, lines: Sequence, factor: float = 1, rotate: float = 0) -> None:
         """
         Setup hatch patten definition by a list of definition lines and  a definition line is a 4-tuple [angle,
         base_point, offset, dash_length_items], the pattern definition should be designed for scaling factor 1.
@@ -466,10 +466,11 @@ class Hatch(DXFGraphic):
         Args:
             lines: list of definition lines
             factor: pattern scaling factor
+            rotate: rotation angle in degrees
 
         """
         if factor != 1:
-            lines = pattern.scale_pattern(lines, factor)
+            lines = pattern.scale_pattern(lines, factor=factor, rotate=rotate)
         self.pattern = Pattern([PatternLine(line[0], line[1], line[2], line[3]) for line in lines])
 
     # just for compatibility
@@ -1116,6 +1117,7 @@ class EllipseEdge:
 
         def adjust_param(p: float, ratio: float) -> float:
             return math.atan2(math.sin(p) / ratio, math.cos(p))
+
         # todo: start- and end param adjustment still incorrect for non-uniform scaling (axis transformation)
         ocs_to_wcs = ocs.old_ocs.to_wcs
         start_param = adjust_param(math.radians(self.start_angle), self.ratio)
