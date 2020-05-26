@@ -384,11 +384,15 @@ def test_edit_pattern(hatch_pattern):
     assert [0.125, -0.0625] == line1.dash_length_items
 
 
-def test_create_new_pattern_hatch(hatch):
-    pattern = [
+@pytest.fixture()
+def pattern():
+    return [
         [45, (0, 0), (0, 1), []],  # 1. Line: continuous
         [45, (0, 0.5), (0, 1), [0.2, -0.1]]  # 2. Line: dashed
     ]
+
+
+def test_create_new_pattern_hatch(hatch, pattern):
     hatch.set_pattern_fill("MOZMAN", definition=pattern)
     assert hatch.has_solid_fill is False
     assert hatch.has_gradient_data is False
@@ -408,6 +412,56 @@ def test_create_new_pattern_hatch(hatch):
     assert (0, 1) == line1.offset
     assert 2 == len(line1.dash_length_items)
     assert [0.2, -0.1] == line1.dash_length_items
+
+
+def test_pattern_scale(hatch, pattern):
+    hatch.set_pattern_fill("MOZMAN", definition=pattern)
+    hatch.set_pattern_scale(2)
+    assert hatch.dxf.pattern_scale == 2
+    line1, line2 = hatch.pattern.lines
+    assert line1.base_point == (0, 0)
+    assert line1.offset == (0, 2)
+    assert line2.base_point == (0, 1)
+    assert line2.offset == (0, 2)
+
+
+def test_pattern_scale_x_times(hatch, pattern):
+    hatch.set_pattern_fill("MOZMAN", definition=pattern)
+    hatch.set_pattern_scale(2)
+    # scale pattern 3 times of actual scaling 2
+    # = base pattern x 6
+    hatch.set_pattern_scale(hatch.dxf.pattern_scale * 3)
+    assert hatch.dxf.pattern_scale == 6
+    line1, line2 = hatch.pattern.lines
+    assert line1.base_point == (0, 0)
+    assert line1.offset == (0, 6)
+    assert line2.base_point == (0, 3)
+    assert line2.offset == (0, 6)
+
+
+def test_pattern_rotation(hatch, pattern):
+    hatch.set_pattern_fill("MOZMAN", definition=pattern)
+    assert hatch.dxf.pattern_angle == 0
+    hatch.set_pattern_angle(45)
+    assert hatch.dxf.pattern_angle == 45
+    line1, line2 = hatch.pattern.lines
+    assert line1.angle == 90
+    assert line1.base_point == (0, 0)
+    assert line1.offset == (-0.7071, 0.7071)
+    assert line2.angle == 90
+    assert line2.base_point == (-0.3536, 0.3536)
+    assert line2.offset == (-0.7071, 0.7071)
+
+
+def test_pattern_rotation_add_angle(hatch, pattern):
+    hatch.set_pattern_fill("MOZMAN", definition=pattern)
+    assert hatch.dxf.pattern_angle == 0
+    hatch.set_pattern_angle(45)
+    assert hatch.dxf.pattern_angle == 45
+
+    # add 45 degrees to actual pattern rotation
+    hatch.set_pattern_angle(hatch.dxf.pattern_angle + 45)
+    assert hatch.dxf.pattern_angle == 90
 
 
 def test_create_gradient(hatch):

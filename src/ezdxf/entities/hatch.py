@@ -412,7 +412,6 @@ class Hatch(DXFGraphic):
         gradient.name = name
         self.gradient = gradient
 
-    # just for compatibility
     @contextmanager
     def edit_gradient(self) -> 'Gradient':
         """ Context manager to edit hatch gradient data, yields a :class:`GradientData` object. """
@@ -453,12 +452,10 @@ class Hatch(DXFGraphic):
         self.dxf.pattern_type = pattern_type
 
         if definition is None:
-            # get pattern definition from acad standard pattern, default is 'ANSI31'
-            predefiend_pattern = pattern.load()
-            definition = predefiend_pattern.get(name, predefiend_pattern['ANSI31'])
+            predefined_pattern = pattern.load()
+            definition = predefined_pattern.get(name, predefined_pattern['ANSI31'])
         self.set_pattern_definition(definition, factor=self.dxf.pattern_scale, angle=self.dxf.pattern_angle)
 
-    # just for compatibility
     @contextmanager
     def edit_pattern(self) -> 'Pattern':
         """ Context manager to edit hatch pattern data, yields a :class:`PatternData` object. """
@@ -512,9 +509,7 @@ class Hatch(DXFGraphic):
         if not self.has_pattern_fill:
             return
         dxf = self.dxf
-        scale = 1.0 / dxf.pattern_scale * scale
-
-        self.pattern.scale(factor=scale)
+        self.pattern.scale(factor=1.0 / dxf.pattern_scale * scale)
         dxf.pattern_scale = scale
 
     def set_pattern_angle(self, angle: float) -> None:
@@ -535,12 +530,9 @@ class Hatch(DXFGraphic):
         if not self.has_pattern_fill:
             return
         dxf = self.dxf
-        angle = (-dxf.pattern_angle + angle) % 360.0
+        self.pattern.scale(angle=angle-dxf.pattern_angle)
+        dxf.pattern_angle = angle % 360.0
 
-        self.pattern.scale(angle=angle)
-        dxf.pattern_angle = angle
-
-    # just for compatibility
     def get_seed_points(self) -> List:
         """
         Returns seed points as list of ``(x, y)`` points, I don't know why there can be more than one seed point.

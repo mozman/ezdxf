@@ -24,7 +24,6 @@ Version 0.13 - dev
 - CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
 - NEW: `Hatch.set_pattern_scale()` to set scaling of pattern definition
 - NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition
-- NEW: `Hatch.remove_association()` to remove associated path elements
 - DEPRECATED: getter and edit methods in `Hatch` for attributes `paths`, `gradient`, `pattern` and `seeds` 
 - REMOVED: `ezdxf.math.Matrix33` class  
 - REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`
