@@ -408,7 +408,7 @@ class MeshTransformer(MeshBuilder):
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'MeshTransformer':
         warnings.warn(
-            'MeshTransformer.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix) instead.',
+            'MeshTransformer.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix). (removed in v0.15)',
             DeprecationWarning
         )
         return self.transform(ucs.matrix)

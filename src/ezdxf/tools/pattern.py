@@ -432,19 +432,19 @@ def load(old_pattern=None):
     return PATTERN_OLD if use_old else PATTERN_NEW
 
 
-def scale_pattern(pattern, factor: float = 1, rotate: float = 0, ndigits: int = 4):
+def scale_pattern(pattern, factor: float = 1, angle: float = 0, ndigits: int = 4):
     def _scale(iterable):
         return [round(i * factor, ndigits) for i in iterable]
 
     def _scale_line(line):
-        angle, base_point, offset, dash_length_items = line
-        if rotate:
-            angle += rotate
-            base_point = Vec2(base_point).rotate_deg(rotate)
-            offset = Vec2(offset).rotate_deg(rotate)
+        angle0, base_point, offset, dash_length_items = line
+        if angle:
+            base_point = Vec2(base_point).rotate_deg(angle)
+            offset = Vec2(offset).rotate_deg(angle)
+            angle0 = (angle0 + angle) % 360.0
 
         return [
-            round(angle, ndigits),
+            round(angle0, ndigits),
             tuple(_scale(base_point)),
             tuple(_scale(offset)),
             _scale(dash_length_items)
@@ -453,8 +453,8 @@ def scale_pattern(pattern, factor: float = 1, rotate: float = 0, ndigits: int = 
     return [_scale_line(line) for line in pattern]
 
 
-def scale_all(pattern: dict, factor: float = 1, rotate: float = 0, ndigits: int = 4):
-    return {name: scale_pattern(p, factor, rotate, ndigits) for name, p in pattern.items()}
+def scale_all(pattern: dict, factor: float = 1, angle: float = 0, ndigits: int = 4):
+    return {name: scale_pattern(p, factor, angle, ndigits) for name, p in pattern.items()}
 
 
 PATTERN_OLD = scale_all(PATTERN_NEW, factor=0.03906836964688205)

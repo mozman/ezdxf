@@ -77,16 +77,18 @@ Path manager: :class:`BoundaryPaths`
         === ===================
         0   user
         1   predefined
-        2   custom (???)
+        2   custom
         === ===================
 
     .. attribute:: dxf.pattern_angle
 
-        Pattern angle in degrees. (float)
+        Actual pattern angle in degrees (float). Changing this value does not rotate the pattern,
+        use :meth:`~Hatch.set_pattern_angle` for this task.
 
     .. attribute:: dxf.pattern_scale
 
-        Pattern scaling factor. (float)
+        Actual pattern scaling factor (float). Changing this value does not scale the pattern
+        use :meth:`~Hatch.set_pattern_scale` for this task.
 
     .. attribute:: dxf.pattern_double
 
@@ -124,23 +126,17 @@ Path manager: :class:`BoundaryPaths`
 
     .. autoattribute:: bgcolor
 
-    .. automethod:: edit_boundary() -> BoundaryPaths
-
-    .. automethod:: edit_pattern() -> Pattern
-
     .. automethod:: set_pattern_definition
+
+    .. automethod:: set_pattern_scale
+
+    .. automethod:: set_pattern_angle
 
     .. automethod:: set_solid_fill
 
     .. automethod:: set_pattern_fill
 
     .. automethod:: set_gradient
-
-    .. automethod:: get_gradient
-
-    .. automethod:: edit_gradient
-
-    .. automethod:: get_seed_points
 
     .. automethod:: set_seed_points
 
@@ -369,6 +365,8 @@ Hatch Pattern Definition Helper Classes
     .. automethod:: new_line
 
     .. automethod:: clear
+
+    .. automethod:: scale
 
 
 .. class:: PatternLine

@@ -22,7 +22,7 @@ def test_load():
 def test_scale_pattern():
     p = pattern.load(old_pattern=False)
     ansi31 = p['ANSI31']
-    s = pattern.scale_pattern(ansi31, 2, rotate=90)
+    s = pattern.scale_pattern(ansi31, 2, angle=90)
 
     angle, base, offset, lines = s[0]
     assert angle == 135

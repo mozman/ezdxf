@@ -20,6 +20,12 @@ Version 0.13 - dev
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
 - NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
 - NEW: `UCS` and `OCS` uses `Matrix44`for transformations
+- CHANGE: `Hatch` full support for rotated patterns.
+- CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
+- NEW: `Hatch.set_pattern_scale()` to set scaling of pattern definition
+- NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition
+- NEW: `Hatch.remove_association()` to remove associated path elements
+- DEPRECATED: getter and edit methods in `Hatch` for attributes `paths`, `gradient`, `pattern` and `seeds` 
 - REMOVED: `ezdxf.math.Matrix33` class  
 - REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`
 - CHANGE: renamed old `Insert.scale()` to `Insert.set_scale()`, name conflict with transformation interface

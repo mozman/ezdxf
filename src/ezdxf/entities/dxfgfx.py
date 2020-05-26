@@ -294,7 +294,7 @@ class DXFGraphic(DXFEntity):
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'DXFGraphic':
         warnings.warn(
-            'DXFGraphic.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix) instead.',
+            'DXFGraphic.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix). (removed in v0.15)',
             DeprecationWarning
         )
         return self.transform(ucs.matrix)

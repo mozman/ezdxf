@@ -1,11 +1,12 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-08
 from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Optional
 from contextlib import contextmanager
 import math
 import copy
-from ezdxf.math import Vector, Vec2, Matrix44, reflect_angle_x_deg
+import warnings
+from ezdxf.math import Vector, Vec2, Matrix44
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
@@ -319,6 +320,10 @@ class Hatch(DXFGraphic):
     @contextmanager
     def edit_boundary(self) -> 'BoundaryPaths':
         """ Context manager to edit hatch boundary data, yields a :class:`BoundaryPaths` object. """
+        warnings.warn(
+            'Hatch.edit_boundaries() is deprecated (removed in v0.15).',
+            DeprecationWarning
+        )
         yield self.paths
 
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: 'RGB' = None):
@@ -346,6 +351,10 @@ class Hatch(DXFGraphic):
 
     def get_gradient(self):
         """ Returns gradient data as :class:`GradientData` object. """
+        warnings.warn(
+            'Hatch.get_gradient() is deprecated (removed in v0.15).',
+            DeprecationWarning
+        )
         return self.gradient
 
     def set_gradient(self,
@@ -407,6 +416,10 @@ class Hatch(DXFGraphic):
     @contextmanager
     def edit_gradient(self) -> 'Gradient':
         """ Context manager to edit hatch gradient data, yields a :class:`GradientData` object. """
+        warnings.warn(
+            'Hatch.edit_gradient() is deprecated (removed in v0.15).',
+            DeprecationWarning
+        )
         if not self.gradient:
             raise const.DXFValueError('HATCH has no gradient data.')
         yield self.gradient
@@ -443,20 +456,25 @@ class Hatch(DXFGraphic):
             # get pattern definition from acad standard pattern, default is 'ANSI31'
             predefiend_pattern = pattern.load()
             definition = predefiend_pattern.get(name, predefiend_pattern['ANSI31'])
-        self.set_pattern_definition(definition, factor=self.dxf.pattern_scale, rotate=self.dxf.pattern_angle)
+        self.set_pattern_definition(definition, factor=self.dxf.pattern_scale, angle=self.dxf.pattern_angle)
 
     # just for compatibility
     @contextmanager
     def edit_pattern(self) -> 'Pattern':
         """ Context manager to edit hatch pattern data, yields a :class:`PatternData` object. """
+        warnings.warn(
+            'Hatch.edit_pattern() is deprecated (removed in v0.15).',
+            DeprecationWarning
+        )
         if not self.pattern:
             raise const.DXFValueError('Solid fill HATCH has no pattern data.')
         yield self.pattern
 
-    def set_pattern_definition(self, lines: Sequence, factor: float = 1, rotate: float = 0) -> None:
+    def set_pattern_definition(self, lines: Sequence, factor: float = 1, angle: float = 0) -> None:
         """
         Setup hatch patten definition by a list of definition lines and  a definition line is a 4-tuple [angle,
-        base_point, offset, dash_length_items], the pattern definition should be designed for scaling factor 1.
+        base_point, offset, dash_length_items], the pattern definition should be designed for scaling factor
+        ``1`` and angle ``0``.
 
             - angle: line angle in degrees
             - base-point: 2-tuple (x, y)
@@ -466,12 +484,61 @@ class Hatch(DXFGraphic):
         Args:
             lines: list of definition lines
             factor: pattern scaling factor
-            rotate: rotation angle in degrees
+            angle: rotation angle in degrees
+
+        .. versionchanged:: 0.13
+            added `angle` argument
 
         """
-        if factor != 1:
-            lines = pattern.scale_pattern(lines, factor=factor, rotate=rotate)
+        if factor != 1 or angle:
+            lines = pattern.scale_pattern(lines, factor=factor, angle=angle)
         self.pattern = Pattern([PatternLine(line[0], line[1], line[2], line[3]) for line in lines])
+
+    def set_pattern_scale(self, scale: float) -> None:
+        """
+        Set scaling of pattern definition to `scale`.
+
+        Starts always from the original base scaling, :code:`set_pattern_scale(1)`
+        reset the pattern scaling to the original appearance as defined by the pattern designer, but only if the
+        the pattern attribute :attr:`dxf.pattern_scale` represents the actual scaling, it is not possible to recreate
+        the original pattern scaling from the pattern definition itself.
+
+        Args:
+            scale: pattern scaling factor
+
+        .. versionadded:: 0.13
+
+        """
+        if not self.has_pattern_fill:
+            return
+        dxf = self.dxf
+        scale = 1.0 / dxf.pattern_scale * scale
+
+        self.pattern.scale(factor=scale)
+        dxf.pattern_scale = scale
+
+    def set_pattern_angle(self, angle: float) -> None:
+        """
+        Set rotation of pattern definition to `angle` in degrees.
+
+        Starts always from the original base rotation ``0``, :code:`set_pattern_angle(0)`
+        reset the pattern rotation to the original appearance as defined by the pattern designer, but only if the
+        the pattern attribute :attr:`dxf.pattern_angle` represents the actual rotation, it is not possible to
+        recreate the original rotation from the pattern definition itself.
+
+        Args:
+            angle: rotation angle in degrees
+
+        .. versionadded:: 0.13
+
+        """
+        if not self.has_pattern_fill:
+            return
+        dxf = self.dxf
+        angle = (-dxf.pattern_angle + angle) % 360.0
+
+        self.pattern.scale(angle=angle)
+        dxf.pattern_angle = angle
 
     # just for compatibility
     def get_seed_points(self) -> List:
@@ -479,6 +546,10 @@ class Hatch(DXFGraphic):
         Returns seed points as list of ``(x, y)`` points, I don't know why there can be more than one seed point.
         All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value).
         """
+        warnings.warn(
+            'Hatch.get_seed_points() is deprecated (removed in v0.15).',
+            DeprecationWarning
+        )
         return self.seeds
 
     def set_seed_points(self, points: Sequence[Tuple[float, float]]) -> None:
@@ -1296,6 +1367,25 @@ class Pattern:
 
     def as_list(self) -> List:
         return [line.as_list() for line in self.lines]
+
+    def scale(self, factor: float = 1, angle: float = 0) -> None:
+        """
+        Scale and rotate pattern.
+
+        Be careful, this changes the base pattern definition, maybe better use :meth:`Hatch.set_pattern_scale` or
+        :meth:`Hatch.set_pattern_angle`.
+
+        Args:
+            factor: scaling factor
+            angle: rotation angle in degrees
+
+        .. versionadded:: 0.13
+
+        """
+        scaled_pattern = pattern.scale_pattern(self.as_list(), factor=factor, angle=angle)
+        self.clear()
+        for line in scaled_pattern:
+            self.add_line(*line)
 
 
 class PatternLine:

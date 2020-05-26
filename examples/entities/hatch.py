@@ -107,10 +107,9 @@ def using_hatch_style_with_edge_path():
         def shift(point):
             return x + point[0], y + point[1]
 
-        with hatch.edit_boundary() as editor:  # get boundary editor as context object
-            add_edge_path(editor, map(shift, [(0, 0), (0, 8), (8, 8), (8, 0)]))  # 1. path
-            add_edge_path(editor, map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]), flags=const.BOUNDARY_PATH_OUTERMOST)
-            add_edge_path(editor, map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]), flags=const.BOUNDARY_PATH_OUTERMOST)
+        add_edge_path(hatch.paths, map(shift, [(0, 0), (0, 8), (8, 8), (8, 0)]))  # 1. path
+        add_edge_path(hatch.paths, map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]), flags=const.BOUNDARY_PATH_OUTERMOST)
+        add_edge_path(hatch.paths, map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]), flags=const.BOUNDARY_PATH_OUTERMOST)
 
     doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space

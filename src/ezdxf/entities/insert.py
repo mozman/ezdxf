@@ -506,7 +506,7 @@ class Insert(DXFGraphic):
 
         if non_uniform_scaling is not None:
             warnings.warn(
-                'Insert.explode() argument `non_uniform_scaling` is deprecated.',
+                'Insert.explode() argument `non_uniform_scaling` is deprecated (removed in v0.15).',
                 DeprecationWarning
             )
         return explode_block_reference(self, target_layout=target_layout)
@@ -547,7 +547,7 @@ class Insert(DXFGraphic):
         """
         if non_uniform_scaling is not None:
             warnings.warn(
-                'Insert.virtual_entities() argument `non_uniform_scaling` is deprecated.',
+                'Insert.virtual_entities() argument `non_uniform_scaling` is deprecated (removed in v0.15).',
                 DeprecationWarning
             )
 
