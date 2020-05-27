@@ -16,7 +16,6 @@ Add-ons
    pycsg
    forms
    odafc
-   dwg
 
 
 
