@@ -14,7 +14,7 @@ from .factory import register_entity
 from .dimension import OverrideMixin
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, UCS, Matrix44
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Matrix44
 
 __all__ = ['Leader']
 

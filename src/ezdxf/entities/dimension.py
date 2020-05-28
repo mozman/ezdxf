@@ -20,7 +20,7 @@ from ezdxf.explode import explode_entity
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS, UCS, BaseLayout, EntityQuery
+    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS, BaseLayout, EntityQuery, Drawing
 
 logger = logging.getLogger('ezdxf')
 
@@ -515,6 +515,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         .. versionadded:: 0.13
 
         """
+
         def transform_if_exist(name: str, func):
             if dxf.hasattr(name):
                 dxf.set(name, func(dxf.get(name)))
@@ -617,6 +618,7 @@ class ArcDimension(Dimension):
         .. versionadded:: 0.13
 
         """
+
         def transform_if_exist(name: str, func):
             if dxf.hasattr(name):
                 dxf.set(name, func(dxf.get(name)))

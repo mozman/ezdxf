@@ -740,6 +740,21 @@ class DXFEntity:
         """ Returns ``False`` if entity has been deleted. """
         return hasattr(self, 'dxf')
 
+    def remove_dependencies(self, other: 'Drawing' = None):
+        """
+        Remove all dependencies from actual document.
+        (internal API)
+
+        """
+        if self.is_alive:
+            self.dxf.owner = None
+            self.dxf.handle = None
+            self.reactors = None
+            self.extension_dict = None
+            self.appdata = None
+            self.xdata = None
+            self.embedded_objects = None
+
     def destroy(self) -> None:
         """
         Delete all data and references. Does not delete entity from structures like layouts or groups.

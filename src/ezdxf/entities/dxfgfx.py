@@ -19,7 +19,7 @@ from ezdxf import options
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex
+    from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex, Drawing
 
 __all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd']
 
@@ -452,6 +452,26 @@ class DXFGraphic(DXFEntity):
             if len(xdata) > 2:
                 location = xdata[2]
         return link, description, location
+
+    def remove_dependencies(self, other: 'Drawing' = None) -> None:
+        """
+        Remove all dependencies from actual document.
+        (internal API)
+
+        """
+        if not self.is_alive:
+            return
+
+        super().remove_dependencies(other)
+        # The layer attribute is preserved because layer doesn't need a layer table entry, the layer attributes are
+        # reset to default attributes like color is 7 and linetype is CONTINUOUS
+        has_linetype = (bool(other) and self.dxf.linetype in other.linetypes)
+        if not has_linetype:
+            self.dxf.linetype = 'BYLAYER'
+        self.dxf.discard('material_handle')
+        self.dxf.discard('visualstyle_handle')
+        self.dxf.discard('plotstyle_enum')
+        self.dxf.discard('plotstyle_handle')
 
 
 @register_entity

@@ -9,7 +9,7 @@ from ezdxf.entitydb import EntityDB
 from ezdxf.graphicsfactory import CreatorInterface
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BlockRecord, DXFGraphic, Dictionary, KeyFunc, Polyline
+    from ezdxf.eztypes import BlockRecord, DXFGraphic, Dictionary, KeyFunc
 
 SUPPORTED_FOREIGN_ENTITY_TYPES = {
     'ARC', 'LINE', 'CIRCLE', 'ELLIPSE', 'POINT', 'LWPOLYLINE', 'SPLINE', '3DFACE', 'SOLID', 'TRACE', 'SHAPE',
@@ -178,43 +178,14 @@ class BaseLayout(CreatorInterface):
                 if layout is not None:
                     layout.unlink_entity(entity)
 
-        def remove_dependencies(e):
-            if e is None:
-                return
-            e.dxf.owner = None
-            e.dxf.handle = None
-            e.reactors = None
-            e.extension_dict = None
-            e.appdata = None
-            e.xdata = None
-            e.embedded_objects = None
-
-        remove_dependencies(entity)
+        entity.remove_dependencies(self.doc)
         if dxftype == 'POLYLINE':
             entity = cast('Polyline', entity)
             for v in entity.vertices:
-                remove_dependencies(v)
-            remove_dependencies(entity.seqend)
-            entity.seqend.dxf.discard('linetype')
+                v.remove_dependencies(self.doc)
 
-        # remove resources
-        # The layer attribute is preserved because layer doesn't need a layer table entry, the layer attributes are
-        # reset to default attributes like color is 7 and linetype is CONTINUOUS
-
-        if entity.dxf.linetype not in self.doc.linetypes:
-            entity.dxf.linetype = 'BYLAYER'
-
-        entity.dxf.discard('material_handle')
-        entity.dxf.discard('visualstyle_handle')
-        entity.dxf.discard('plotstyle_enum')
-        entity.dxf.discard('plotstyle_handle')
-
-        # TEXT, ATTRIB, ATTDEF  and MTEXT
-        if entity.dxf.hasattr('style') and  entity.dxf.style not in self.doc.styles:
-            entity.dxf.style = 'Standard'
-
-        if dxftype == 'HATCH':
-            entity.unassociate()
+            if entity.seqend:
+                entity.seqend.remove_dependencies(self.doc)
 
         # add to this document
         entity.doc = self.doc
@@ -225,19 +196,19 @@ class BaseLayout(CreatorInterface):
 
     def unlink_entity(self, entity: 'DXFGraphic') -> None:
         """
-        Unlink `entity` from layout but does not delete entity from the drawing database, this removes `entity` just
+        Unlink `entity` from layout but does not delete entity from the entity database, this removes `entity` just
         from the layout entity space.
 
         """
         self.block_record.unlink_entity(entity)
 
     def delete_entity(self, entity: 'DXFGraphic') -> None:
-        """ Delete `entity` from layout entity space and the drawing database, this destroys the `entity`. """
+        """ Delete `entity` from layout entity space and the entity database, this destroys the `entity`. """
         self.block_record.delete_entity(entity)
 
     def delete_all_entities(self) -> None:
         """
-        Delete all entities from layout entity space and from drawing database, this destroys all entities in this
+        Delete all entities from layout entity space and from entity database, this destroys all entities in this
         layout.
         """
         # noinspection PyTypeChecker
@@ -246,7 +217,7 @@ class BaseLayout(CreatorInterface):
 
     def get_entity_by_handle(self, handle: str) -> 'DXFGraphic':
         """
-        Get entity by handle as GraphicEntity() or inherited.
+        Get entity by handle.
 
         (internal API)
         """

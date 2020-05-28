@@ -163,6 +163,18 @@ class Hatch(DXFGraphic):
         entity.gradient = copy.deepcopy(self.gradient)
         entity.seeds = copy.deepcopy(self.seeds)
 
+    def remove_dependencies(self, other: 'Drawing' = None) -> None:
+        """
+        Remove all dependencies from actual document.
+        (internal API)
+
+        """
+        if not self.is_alive:
+            return
+
+        super().remove_dependencies()
+        self.remove_association()
+
     def remove_association(self):
         """ Remove associated path elements.
 
@@ -530,7 +542,7 @@ class Hatch(DXFGraphic):
         if not self.has_pattern_fill:
             return
         dxf = self.dxf
-        self.pattern.scale(angle=angle-dxf.pattern_angle)
+        self.pattern.scale(angle=angle - dxf.pattern_angle)
         dxf.pattern_angle = angle % 360.0
 
     def get_seed_points(self) -> List:

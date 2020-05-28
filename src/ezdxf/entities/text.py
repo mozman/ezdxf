@@ -14,7 +14,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Vertex, DXFNamespace, UCS
+    from ezdxf.eztypes import TagWriter, Vertex, DXFNamespace, Drawing
 
 __all__ = ['Text', 'acdb_text']
 
@@ -239,3 +239,17 @@ class Text(DXFGraphic):
         if dxf.hasattr('align_point'):
             dxf.align_point = ocs.from_wcs(vec + ocs.to_wcs(dxf.align_point))
         return self
+
+    def remove_dependencies(self, other: 'Drawing' = None) -> None:
+        """
+        Remove all dependencies from actual document.
+        (internal API)
+
+        """
+        if not self.is_alive:
+            return
+
+        super().remove_dependencies()
+        has_style = (bool(other) and (self.dxf.style in other.styles))
+        if not has_style:
+            self.dxf.style = 'Standard'
