@@ -743,8 +743,15 @@ class DXFEntity:
     def remove_dependencies(self, other: 'Drawing' = None):
         """
         Remove all dependencies from actual document.
-        (internal API)
 
+        Intended usage is to remove dependencies from the actual document to move or copy the entity to an
+        `other` document.
+
+        An error free call of this method does NOT guarantee that this entity can be moved/copied
+        to the `other` document, some entities like DIMENSION have too much dependencies to a document
+        to move or copy them, but to check this is not the domain of this method!
+
+        (internal API)
         """
         if self.is_alive:
             self.dxf.owner = None
@@ -758,6 +765,10 @@ class DXFEntity:
     def destroy(self) -> None:
         """
         Delete all data and references. Does not delete entity from structures like layouts or groups.
+
+        This method should not be used to delete entities from a layout/document by the package user,
+        use :meth:`BaseLayout.delete_entity` method for that!
+
         (internal API)
 
         """
