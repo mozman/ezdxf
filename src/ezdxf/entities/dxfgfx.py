@@ -245,6 +245,28 @@ class DXFGraphic(DXFEntity):
         except DXFTableEntryError:
             return None
 
+    def unlink_from_layout(self) -> None:
+        """
+        Unlink entity from associated layout. Does nothing if entity is already unlinked.
+
+        It is more efficient to call the :meth:`~ezdxf.layouts.BaseLayout.unlink_entity` method
+        of the associated layout, especially if you have to unlink more than one entity.
+
+        .. versionadded:: 0.13
+
+        """
+        if not self.is_alive:
+            raise TypeError('Can not unlink destroyed entity.')
+
+        if self.doc is None:
+            # no doc -> no layout
+            self.dxf.owner = None
+            return
+
+        layout = self.get_layout()
+        if layout:
+            layout.unlink_entity(self)
+
     def move_to_layout(self, layout: 'BaseLayout', source: 'BaseLayout' = None) -> None:
         """
         Move entity from model space or a paper space layout to another layout. For block layout as source, the
@@ -383,25 +405,6 @@ class DXFGraphic(DXFEntity):
 
         """
         return self.transform(Matrix44.z_rotate(angle))
-
-    def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Iterable, angle_names: Iterable = None) -> None:
-        """ Transforms entity for given `ucs` to the parent coordinate system (most likely the WCS).
-
-        Transforms the entity vectors and angles attributes from `ucs` to the parent coordinate system.
-        Takes established OCS by the extrusion vector :attr:`dxf.extrusion` into account.
-
-        """
-        extrusion = self.dxf.extrusion
-        vectors = (self.dxf.get_default(name) for name in vector_names)
-        ocs_vectors = ucs.ocs_points_to_ocs(vectors, extrusion=extrusion)
-        for name, value in zip(vector_names, ocs_vectors):
-            self.dxf.set(name, value)
-        if angle_names is not None:
-            angles = (self.dxf.get_default(name) for name in angle_names)
-            ocs_angles = ucs.ocs_angles_to_ocs_deg(angles=angles, extrusion=extrusion)
-            for name, value in zip(angle_names, ocs_angles):
-                self.dxf.set(name, value)
-        self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
 
     def has_hyperlink(self) -> bool:
         """ Returns ``True`` if entity has an attached hyperlink.

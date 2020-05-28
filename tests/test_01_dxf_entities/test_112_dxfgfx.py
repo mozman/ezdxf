@@ -7,6 +7,7 @@ import ezdxf
 from ezdxf.entities.dxfgfx import DXFGraphic
 from ezdxf.math import Matrix44
 
+
 @pytest.fixture
 def entity():
     return DXFGraphic.from_text(LINE)
@@ -103,6 +104,30 @@ def test_basic_transformation_interfaces():
     assert interface_mockup.rotate_z(1) is interface_mockup
 
 
+def test_unlink_from_layout(entity):
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    point = msp.add_point((0, 0))
+    assert point.dxf.owner is not None
+    point.unlink_from_layout()
+    assert point.dxf.owner is None
+    assert point.dxf.handle in doc.entitydb, 'Do not delete unlinked entity from entitydb.'
+
+    # unlinking an already unlinked entity should pass silently
+    point.unlink_from_layout()
+
+
+def test_unlink_from_layout_without_doc(entity):
+    entity.unlink_from_layout()
+    assert entity.dxf.owner is None
+
+
+def test_unlink_destroyed_entity_from_layout(entity):
+    entity.destroy()
+    with pytest.raises(TypeError):
+        entity.unlink_from_layout()
+
+
 LINE = """0
 LINE
 5
@@ -134,6 +159,3 @@ AcDbLine
 31
 1.0
 """
-
-
-

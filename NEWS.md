@@ -18,7 +18,7 @@ Version 0.13 - dev
     - `DXFGraphic.rotate_z(angle)`
     
    supported entities: POINT, LINE, CIRCLE, ARC, ELLIPSE, MESH, SPLINE, POLYLINE, LWPOLYLINE, TEXT, MTEXT, 
-   INSERT, SOLID, TRACE, 3DFACE, HELIX, IMAGE, LEADER, LIGHT, TOLERANCE, SHAPE, XLINE, RAY
+   ATTRIB, ATTDEF, INSERT, SOLID, TRACE, 3DFACE, HATCH, IMAGE, SHAPE, XLINE, RAY
    
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
@@ -28,6 +28,7 @@ Version 0.13 - dev
 - CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
 - NEW: `Hatch.set_pattern_scale()` to set scaling of pattern definition
 - NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition
+- NEW: `DXFGraphic.unlink_from_layout()` to unlink entity from associated layout
 - DEPRECATED: getter and edit methods in `Hatch` for attributes `paths`, `gradient`, `pattern` and `seeds` 
 - REMOVED: `ezdxf.math.Matrix33` class  
 - REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`
