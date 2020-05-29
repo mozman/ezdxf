@@ -5,7 +5,6 @@ import math
 from .line import ConstructionRay
 from .vector import Vec2
 from .bbox import BoundingBox2d
-from .construct2d import ConstructionTool
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
 HALF_PI = math.pi / 2.
 
 
-class ConstructionCircle(ConstructionTool):
+class ConstructionCircle:
     """ Circle construction tool.
 
     Args:

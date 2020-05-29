@@ -6,7 +6,7 @@ from collections import namedtuple
 from .vector import Vector, NULLVEC, X_AXIS, Z_AXIS
 from .matrix44 import Matrix44
 from .ucs import OCS
-from .construct2d import rytz_axis_construction, ConstructionTool, enclosing_angles, linspace
+from .construct2d import rytz_axis_construction, enclosing_angles, linspace
 from .bbox import BoundingBox
 
 Params = namedtuple('Params', 'center major_axis minor_axis extrusion ratio start end')
@@ -19,7 +19,7 @@ QUARTER_PARAMS = [0, math.pi * .5, math.pi, math.pi * 1.5]
 HALF_PI = math.pi / 2.0
 
 
-class ConstructionEllipse(ConstructionTool):
+class ConstructionEllipse:
     """
     This is a helper class to create parameters for ellipses.
 

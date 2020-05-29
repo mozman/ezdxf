@@ -4,7 +4,7 @@
 from typing import Union, Iterable, List, TYPE_CHECKING
 import math
 from .vector import Vec2
-from .construct2d import ConstructionTool, convex_hull_2d
+from .construct2d import convex_hull_2d
 from .offset2d import offset_vertices_2d
 from .bbox import BoundingBox2d
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 
-class Shape2d(ConstructionTool):
+class Shape2d:
     """
     2D geometry object as list of :class:`Vec2` objects, vertices can be moved, rotated and scaled.
 

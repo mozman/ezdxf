@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
-from .construct2d import ConstructionTool, is_point_left_of_line, intersection_line_line_2d, TOLERANCE
+from .construct2d import is_point_left_of_line, intersection_line_line_2d, TOLERANCE
 from .bbox import BoundingBox2d
 from .vector import Vec2
 
@@ -177,7 +177,7 @@ class ConstructionRay:
         return ConstructionRay(intersection, angle=alpha)
 
 
-class ConstructionLine(ConstructionTool):
+class ConstructionLine:
     """
     2D ConstructionLine is similar to :class:`ConstructionRay`, but has a start- and endpoint.
     The direction of line goes from start- to endpoint, "left of line" is always in relation

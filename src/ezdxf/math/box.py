@@ -5,13 +5,13 @@ import math
 from .vector import Vec2
 from .bbox import BoundingBox2d
 from .line import ConstructionLine
-from .construct2d import ConstructionTool, point_to_line_relation
+from .construct2d import point_to_line_relation
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 
-class ConstructionBox(ConstructionTool):
+class ConstructionBox:
     """
     Helper class to create rectangles.
 

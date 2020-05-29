@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Tuple
 
 from .vector import Vec2
 from .bbox import BoundingBox2d
-from .construct2d import ConstructionTool, enclosing_angles
+from .construct2d import enclosing_angles
 from .circle import ConstructionCircle
 from .ucs import UCS
 import math
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 QUARTER_ANGLES = [0, math.pi * .5, math.pi, math.pi * 1.5]
 
 
-class ConstructionArc(ConstructionTool):
+class ConstructionArc:
     """
     This is a helper class to create parameters for the DXF :class:`~ezdxf.entities.Arc` class.
 
