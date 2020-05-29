@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING, Iterable
 import math
 
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS, ConstructionEllipse
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from ezdxf.math import ellipse
@@ -58,32 +58,6 @@ class Ellipse(DXFGraphic):
             'center', 'major_axis', 'extrusion', 'ratio', 'start_param', 'end_param',
         ])
 
-    def vertices(self, params: Iterable[float]) -> Iterable[Vector]:
-        """
-        Yields vertices on ellipse for iterable `params` in WCS.
-
-        Args:
-            params: param values in the range from ``0`` to ``2*pi`` in radians, param goes counter clockwise around the
-                    extrusion vector, major_axis = local x-axis = 0 rad.
-
-        .. versionadded:: 0.11
-
-        """
-        yield from self.construction_tool.vertices(params)
-
-    @property
-    def construction_tool(self) -> ellipse.ConstructionEllipse:
-        """ Returns construction tool ConstructionEllipse(). """
-        dxf = self.dxf
-        return ellipse.ConstructionEllipse(
-            dxf.center,
-            dxf.major_axis,
-            dxf.extrusion,
-            dxf.ratio,
-            dxf.start_param,
-            dxf.end_param,
-        )
-
     @property
     def minor_axis(self) -> Vector:
         dxf = self.dxf
@@ -97,19 +71,22 @@ class Ellipse(DXFGraphic):
     def end_point(self) -> 'Vector':
         return list(self.vertices([self.dxf.end_param]))[0]
 
-    def swap_axis(self):
-        """ Swap axis and adjust start- and end parameter. """
-        self.dxf.major_axis = self.minor_axis
-        ratio = 1.0 / self.dxf.ratio
-        # AutoCAD does not accept a ratio < 1e-6 -> invalid DXF file
-        self.dxf.ratio = max(ratio, 1e-6)
+    def construction_tool(self) -> ConstructionEllipse:
+        """
+        Returns construction tool :class:`ezdxf.math.ConstructionEllipse`.
 
-        start_param = self.dxf.start_param
-        end_param = self.dxf.end_param
-        if math.isclose(start_param, 0) and math.isclose(end_param, math.tau):
-            return
-        self.dxf.start_param = (start_param - HALF_PI) % math.tau
-        self.dxf.end_param = (end_param - HALF_PI) % math.tau
+        .. versionadded:: 0.13
+
+        """
+        dxf = self.dxf
+        return ConstructionEllipse(
+            dxf.center,
+            dxf.major_axis,
+            dxf.extrusion,
+            dxf.ratio,
+            dxf.start_param,
+            dxf.end_param,
+        )
 
     def params(self, num: int) -> Iterable[float]:
         """ Returns `num` params from start- to end param in counter clockwise order.
@@ -120,6 +97,25 @@ class Ellipse(DXFGraphic):
         start = self.dxf.start_param % math.tau
         end = self.dxf.end_param % math.tau
         yield from ellipse.get_params(start, end, num)
+
+    def vertices(self, params: Iterable[float]) -> Iterable[Vector]:
+        """
+        Yields vertices on ellipse for iterable `params` in WCS.
+
+        Args:
+            params: param values in the range from ``0`` to ``2*pi`` in radians, param goes counter clockwise around the
+                    extrusion vector, major_axis = local x-axis = 0 rad.
+
+        .. versionadded:: 0.11
+
+        """
+        yield from self.construction_tool().vertices(params)
+
+    def swap_axis(self):
+        """ Swap axis and adjust start- and end parameter. """
+        e = self.construction_tool()
+        e.swap_axis()
+        self.update_dxf_attribs(e.dxfattribs())
 
     @classmethod
     def from_arc(cls, entity: 'DXFGraphic') -> 'Ellipse':
@@ -146,24 +142,9 @@ class Ellipse(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-
-        dxf = self.dxf
-        params = ellipse.Params(
-            Vector(dxf.center),
-            Vector(dxf.major_axis),
-            None,  # minor axis, not needed as input
-            Vector(dxf.extrusion),
-            dxf.ratio,
-            dxf.start_param,
-            dxf.end_param,
-        )
-        ellipse_params = ellipse.transform(params, m)
-        dxf.center = ellipse_params.center
-        dxf.major_axis = ellipse_params.major_axis
-        dxf.extrusion = ellipse_params.extrusion
-        dxf.ratio = ellipse_params.ratio
-        dxf.start_param = ellipse_params.start
-        dxf.end_param = ellipse_params.end
+        e = self.construction_tool()
+        e.transform(m)
+        self.update_dxf_attribs(e.dxfattribs())
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> 'Ellipse':

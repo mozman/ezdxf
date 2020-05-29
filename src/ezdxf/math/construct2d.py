@@ -199,6 +199,7 @@ class ConstructionTool:
 
     @abstractmethod
     def move(self, dx: float, dy: float) -> None:
+        # todo: remove move() method
         pass
 
 

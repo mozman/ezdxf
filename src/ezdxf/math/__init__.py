@@ -27,6 +27,7 @@ from .bulge import bulge_to_arc, bulge_3_points, bulge_center, bulge_radius, arc
 from .arc import ConstructionArc
 from .line import ConstructionRay, ConstructionLine
 from .circle import ConstructionCircle
+from .ellipse import ConstructionEllipse
 from .box import ConstructionBox
 from .shape import Shape2d
 from .bbox import BoundingBox2d, BoundingBox

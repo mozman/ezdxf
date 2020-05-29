@@ -123,7 +123,7 @@ class ConstructionEllipse(ConstructionTool):
         # required by the ConstructionTool interface
         self.center += Vector((dx, dy, 0))
 
-    def transform(self, m: Matrix44):
+    def transform(self, m: Matrix44) -> None:
         """ Transform ellipse in place by transformation matrix `m`. """
         params = Params(self.center, self.major_axis, self.minor_axis, self.extrusion, self.ratio, self.start_param,
                         self.end_param)
@@ -164,7 +164,7 @@ class ConstructionEllipse(ConstructionTool):
             y = math.sin(param) * radius_y * y_axis
             yield center + x + y
 
-    def swap_axis(self):
+    def swap_axis(self) -> None:
         """ Swap axis and adjust start- and end parameter. """
         self.major_axis = self.minor_axis
         ratio = 1.0 / self.ratio
