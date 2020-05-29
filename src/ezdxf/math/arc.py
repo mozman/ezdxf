@@ -1,13 +1,14 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable
+import math
 
 from .vector import Vec2
 from .bbox import BoundingBox2d
 from .construct2d import enclosing_angles, linspace
 from .circle import ConstructionCircle
 from .ucs import UCS
-import math
+from ezdxf.math import bspline
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout
@@ -28,6 +29,7 @@ class ConstructionArc:
         is_counter_clockwise: swaps start- and end angle if ``False``
 
     """
+
     def __init__(self,
                  center: 'Vertex' = (0, 0),
                  radius: float = 1,
@@ -75,6 +77,13 @@ class ConstructionArc:
             stop += 360
         for angle in linspace(start, stop, num=num, endpoint=True):
             yield angle % 360
+
+    def vertices(self, a: Iterable[float]) -> Iterable[Vec2]:
+        center = self.center
+        radius = self.radius
+
+        for angle in a:
+            yield center + Vec2.from_deg_angle(angle, radius)
 
     def main_axis_points(self):
         center = self.center
@@ -221,6 +230,19 @@ class ConstructionArc:
             end_angle=(end_point - center).angle_deg,
             is_counter_clockwise=ccw,
         )
+
+    def spline(self, num: int = 16) -> bspline.BSpline:
+        """ Returns a curve approximation as spline with `num` control points. """
+        fit_points = list(self.vertices(self.angles(num)))
+        count = len(fit_points)
+        degree = 2
+        order = degree + 1
+        t_vector = list(bspline.uniform_t_vector(fit_points))
+        knots = list(bspline.control_frame_knots(count - 1, degree, t_vector))
+        control_points = bspline.global_curve_interpolation(fit_points, degree, t_vector, knots)
+        spline = bspline.BSpline(control_points, order=order, knots=knots)
+        spline.t_array = t_vector
+        return spline
 
     def add_to_layout(self, layout: 'BaseLayout', ucs: UCS = None, dxfattribs: dict = None) -> 'DXFArc':
         """

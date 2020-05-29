@@ -593,6 +593,62 @@ ConstructionArc
 
     .. automethod:: add_to_layout(layout: BaseLayout, ucs: UCS = None, dxfattribs: dict = None) -> Arc
 
+    .. automethod:: spline
+
+ConstructionEllipse
+-------------------
+
+.. autoclass:: ConstructionEllipse
+
+    .. attribute:: center
+
+        center point as :class:`Vector`
+
+    .. attribute:: major_axis
+
+        major axis as :class:`Vector`
+
+    .. attribute:: minor_axis
+
+        minor axis as :class:`Vector`, automatically calculated from
+        :attr:`major_axis` and :attr:`extrusion`.
+
+    .. attribute:: extrusion
+
+        extrusion vector (normal of ellipse plane) as :class:`Vector`
+
+    .. attribute:: ratio
+
+        ratio of minor axis to major axis (float)
+
+    .. attribute:: start
+
+        start param in radians (float)
+
+    .. attribute:: end
+
+        end param in radians (float)
+
+    .. autoattribute:: start_point
+
+    .. autoattribute:: end_point
+
+    .. automethod:: params
+
+    .. automethod:: vertices
+
+    .. automethod:: dxfattribs
+
+    .. automethod:: main_axis_points
+
+    .. automethod:: from_arc(center: Vertex=(0, 0, 0), radius: float = 1, extrusion: Vertex=(0, 0, 1), start: float = 0, end: float = 360, ccw: bool = True) -> ConstructionEllipse
+
+    .. automethod:: transform(m: Matrix44)
+
+    .. automethod:: swap_axis
+
+    .. automethod:: spline
+
 ConstructionBox
 ---------------
 

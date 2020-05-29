@@ -7,6 +7,7 @@ from .vector import Vector, NULLVEC, X_AXIS, Z_AXIS
 from .matrix44 import Matrix44
 from .ucs import OCS
 from .construct2d import rytz_axis_construction, enclosing_angles, linspace
+from ezdxf.math import bspline
 
 Params = namedtuple('Params', 'center major_axis minor_axis extrusion ratio start end')
 pi2 = math.pi / 2
@@ -20,7 +21,7 @@ HALF_PI = math.pi / 2.0
 
 class ConstructionEllipse:
     """
-    This is a helper class to create parameters for ellipses.
+    This is a helper class to create parameters for 3D ellipses.
 
     Args:
         center: 3D center point
@@ -75,12 +76,12 @@ class ConstructionEllipse:
 
     @property
     def start_point(self) -> Vector:
-        """ Returns start point of ellipse. """
+        """ Returns start point of ellipse as Vector. """
         return vertex(self.start_param, self.major_axis, self.minor_axis, self.center, self.ratio)
 
     @property
     def end_point(self) -> Vector:
-        """ Returns end point of ellipse. """
+        """ Returns end point of ellipse as Vector. """
         return vertex(self.end_param, self.major_axis, self.minor_axis, self.center, self.ratio)
 
     def dxfattribs(self) -> Dict:
@@ -165,6 +166,19 @@ class ConstructionEllipse:
             return
         self.start_param = (start_param - HALF_PI) % math.tau
         self.end_param = (end_param - HALF_PI) % math.tau
+
+    def spline(self, num: int = 16) -> bspline.BSpline:
+        """ Returns a curve approximation as spline with `num` control points. """
+        fit_points = list(self.vertices(self.params(num)))
+        count = len(fit_points)
+        degree = 2
+        order = degree + 1
+        t_vector = list(bspline.uniform_t_vector(fit_points))
+        knots = list(bspline.control_frame_knots(count - 1, degree, t_vector))
+        control_points = bspline.global_curve_interpolation(fit_points, degree, t_vector, knots)
+        spline = bspline.BSpline(control_points, order=order, knots=knots)
+        spline.t_array = t_vector
+        return spline
 
 
 def transform(params: Params, m: Matrix44) -> Params:
