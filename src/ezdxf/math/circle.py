@@ -49,7 +49,7 @@ class ConstructionCircle:
         rvec = Vec2((self.radius, self.radius))
         return BoundingBox2d((self.center - rvec, self.center + rvec))
 
-    def move(self, dx: float, dy: float) -> None:
+    def translate(self, dx: float, dy: float) -> None:
         """
         Move circle about `dx` in x-axis and about `dy` in y-axis.
 

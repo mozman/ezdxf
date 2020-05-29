@@ -133,7 +133,7 @@ class ConstructionBox:
         """ Returns string representation of box as ``ConstructionBox(center, width, height, angle)`` """
         return "ConstructionBox({0.center}, {0.width}, {0.height}, {0.angle})".format(self)
 
-    def move(self, dx: float, dy: float) -> None:
+    def translate(self, dx: float, dy: float) -> None:
         """
         Move box about `dx` in x-axis and about `dy` in y-axis.
 

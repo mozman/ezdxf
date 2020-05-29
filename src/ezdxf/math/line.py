@@ -196,7 +196,6 @@ class ConstructionLine:
     def __repr__(self) -> str:
         return 'ConstructionLine({0.start}, {0.end})'.format(self)
 
-    # ConstructionTool interface
     @property
     def bounding_box(self) -> BoundingBox2d:
         """ bounding box of line as :class:`BoundingBox2d` object. """

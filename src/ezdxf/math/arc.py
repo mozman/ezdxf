@@ -70,7 +70,7 @@ class ConstructionArc:
             if enclosing_angles(angle, start, end):
                 yield center + Vec2.from_angle(angle, radius)
 
-    def move(self, dx: float, dy: float) -> None:
+    def translate(self, dx: float, dy: float) -> None:
         """
         Move arc about `dx` in x-axis and about `dy` in y-axis.
 

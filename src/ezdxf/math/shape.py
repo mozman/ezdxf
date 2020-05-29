@@ -24,17 +24,6 @@ class Shape2d:
     def __init__(self, vertices: Iterable['Vertex'] = None):
         self.vertices = [] if vertices is None else Vec2.list(vertices)  # type: List[Vec2]
 
-    def move(self, dx: float, dy: float) -> None:
-        """
-        Move shape about `dx` in x-axis and about `dy` in y-axis.
-
-        Args:
-            dx: translation in x-axis
-            dy: translation in y-axis
-
-        """
-        self.translate(Vec2((dx, dy)))
-
     @property
     def bounding_box(self) -> BoundingBox2d:
         """ :class:`BoundingBox2d` """

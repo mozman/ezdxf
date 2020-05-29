@@ -506,7 +506,7 @@ ConstructionLine
 
     .. automethod:: __str__
 
-    .. automethod:: move
+    .. automethod:: translate
 
     .. automethod:: length
 
@@ -540,7 +540,7 @@ ConstructionCircle
 
     .. automethod:: __str__
 
-    .. automethod:: move
+    .. automethod:: translate
 
     .. automethod:: point_at(angle: float) -> Vec2
 
@@ -583,7 +583,7 @@ ConstructionArc
 
     .. autoattribute:: bounding_box
 
-    .. automethod:: move
+    .. automethod:: translate
 
     .. automethod:: from_2p_angle(start_point: Vertex, end_point: Vertex, angle: float, ccw: bool = True) -> ConstructionArc
 
@@ -622,7 +622,7 @@ ConstructionBox
 
     .. automethod:: from_points(p1: Vertex, p2: Vertex) -> ConstructionBox
 
-    .. automethod:: move
+    .. automethod:: translate
 
     .. automethod:: expand
 
@@ -658,8 +658,6 @@ Shape2d
     .. automethod:: append
 
     .. automethod:: extend
-
-    .. automethod:: move
 
     .. automethod:: translate
 

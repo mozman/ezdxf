@@ -95,9 +95,9 @@ class TestTextBox:
         assert box[0] == (+0.5, -1.5)
         assert box[2] == (-0.5, +1.5)
 
-    def test_move(self):
+    def test_translate(self):
         box = ConstructionBox()
-        box.move(3, 4)
+        box.translate(3, 4)
         assert box.center == (3, 4)
         assert box[0] == (2.5, 3.5)
         assert box[2] == (3.5, 4.5)
