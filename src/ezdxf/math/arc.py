@@ -1,10 +1,10 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Iterable
 
 from .vector import Vec2
 from .bbox import BoundingBox2d
-from .construct2d import enclosing_angles
+from .construct2d import enclosing_angles, linspace
 from .circle import ConstructionCircle
 from .ucs import UCS
 import math
@@ -60,6 +60,21 @@ class ConstructionArc:
         bbox = BoundingBox2d((self.start_point, self.end_point))
         bbox.extend(self.main_axis_points())
         return bbox
+
+    def angles(self, num: int) -> Iterable[float]:
+        """ Returns `num` angles from start- to end angle in degrees in counter clockwise order.
+
+        All angles are normalized in the range from [0, 360).
+
+        """
+        if num < 2:
+            raise ValueError('num >= 2')
+        start = self.start_angle % 360
+        stop = self.end_angle % 360
+        if stop <= start:
+            stop += 360
+        for angle in linspace(start, stop, num=num, endpoint=True):
+            yield angle % 360
 
     def main_axis_points(self):
         center = self.center
