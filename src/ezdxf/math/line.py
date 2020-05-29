@@ -202,7 +202,7 @@ class ConstructionLine:
         """ bounding box of line as :class:`BoundingBox2d` object. """
         return BoundingBox2d((self.start, self.end))
 
-    def move(self, dx: float, dy: float) -> None:
+    def translate(self, dx: float, dy: float) -> None:
         """
         Move line about `dx` in x-axis and about `dy` in y-axis.
 

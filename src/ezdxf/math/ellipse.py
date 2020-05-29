@@ -7,7 +7,6 @@ from .vector import Vector, NULLVEC, X_AXIS, Z_AXIS
 from .matrix44 import Matrix44
 from .ucs import OCS
 from .construct2d import rytz_axis_construction, enclosing_angles, linspace
-from .bbox import BoundingBox
 
 Params = namedtuple('Params', 'center major_axis minor_axis extrusion ratio start end')
 pi2 = math.pi / 2
@@ -84,13 +83,6 @@ class ConstructionEllipse:
         """ Returns end point of ellipse. """
         return vertex(self.end_param, self.major_axis, self.minor_axis, self.center, self.ratio)
 
-    @property
-    def bounding_box(self) -> BoundingBox:
-        """ Returns bounding box of ellipse. """
-        bbox = BoundingBox((self.start_point, self.end_point))
-        bbox.extend(self.main_axis_points())
-        return bbox
-
     def dxfattribs(self) -> Dict:
         """ Returns required DXF attributes to build an ELLIPSE entity.
 
@@ -118,10 +110,6 @@ class ConstructionEllipse:
         for param in QUARTER_PARAMS:
             if enclosing_angles(param, start, end):
                 yield vertex(param, self.major_axis, self.minor_axis, self.center, self.ratio)
-
-    def move(self, dx: float, dy: float) -> None:
-        # required by the ConstructionTool interface
-        self.center += Vector((dx, dy, 0))
 
     def transform(self, m: Matrix44) -> None:
         """ Transform ellipse in place by transformation matrix `m`. """
