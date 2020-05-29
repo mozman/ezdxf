@@ -157,6 +157,7 @@ class ConstructionEllipse:
         self.major_axis = self.minor_axis
         ratio = 1.0 / self.ratio
         self.ratio = max(ratio, 1e-6)
+        self.minor_axis = minor_axis(self.major_axis, self.extrusion, self.ratio)
 
         start_param = self.start_param
         end_param = self.end_param
