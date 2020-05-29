@@ -29,6 +29,7 @@ Version 0.13 - dev
 - NEW: `Hatch.set_pattern_scale()` to set scaling of pattern definition
 - NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition
 - NEW: `DXFGraphic.unlink_from_layout()` to unlink entity from associated layout
+- NEW: `ezdxf.math.ConstructionEllipse()`
 - DEPRECATED: getter and edit methods in `Hatch` for attributes `paths`, `gradient`, `pattern` and `seeds` 
 - REMOVED: `ezdxf.math.Matrix33` class  
 - REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`
