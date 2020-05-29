@@ -6,7 +6,7 @@ from .vector import Vec2
 from .bbox import BoundingBox2d
 from .construct2d import ConstructionTool, enclosing_angles
 from .circle import ConstructionCircle
-from .ucs import OCS, UCS
+from .ucs import UCS
 import math
 
 if TYPE_CHECKING:

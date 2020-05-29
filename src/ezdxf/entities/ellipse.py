@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING, Iterable
 import math
 
-from ezdxf.math import Vector, linspace, Matrix44, rytz_axis_construction
+from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from ezdxf.math import ellipse
@@ -13,7 +13,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace
 
 __all__ = ['Ellipse']
 
@@ -69,24 +69,20 @@ class Ellipse(DXFGraphic):
         .. versionadded:: 0.11
 
         """
+        yield from self.construction_tool.vertices(params)
+
+    @property
+    def construction_tool(self) -> ellipse.ConstructionEllipse:
+        """ Returns construction tool ConstructionEllipse(). """
         dxf = self.dxf
-        major_axis = Vector(dxf.major_axis)  # local x-axis
-        extrusion = Vector(dxf.extrusion)  # local z-axis
-        minor_axis = extrusion.cross(major_axis)  # local y-axis
-
-        x_unit_vector = major_axis.normalize()
-        y_unit_vector = minor_axis.normalize()
-
-        radius_x = major_axis.magnitude
-        radius_y = radius_x * dxf.ratio
-        center = Vector(dxf.center)
-        for param in params:
-            # Ellipse params in radians by definition (DXF Reference)
-            x = math.cos(param) * radius_x * x_unit_vector
-            y = math.sin(param) * radius_y * y_unit_vector
-
-            # Construct WCS coordinates, ELLIPSE is not an OCS entity!
-            yield center + x + y
+        return ellipse.ConstructionEllipse(
+            dxf.center,
+            dxf.major_axis,
+            dxf.extrusion,
+            dxf.ratio,
+            dxf.start_param,
+            dxf.end_param,
+        )
 
     @property
     def minor_axis(self) -> Vector:
@@ -95,13 +91,11 @@ class Ellipse(DXFGraphic):
 
     @property
     def start_point(self) -> 'Vector':
-        v = list(self.vertices([self.dxf.start_param]))
-        return v[0]
+        return list(self.vertices([self.dxf.start_param]))[0]
 
     @property
     def end_point(self) -> 'Vector':
-        v = list(self.vertices([self.dxf.end_param]))
-        return v[0]
+        return list(self.vertices([self.dxf.end_param]))[0]
 
     def swap_axis(self):
         """ Swap axis and adjust start- and end parameter. """
@@ -123,15 +117,9 @@ class Ellipse(DXFGraphic):
         All params are normalized in the range from [0, 2pi).
 
         """
-        if num < 2:
-            raise ValueError('num >= 2')
         start = self.dxf.start_param % math.tau
         end = self.dxf.end_param % math.tau
-        if end <= start:
-            end += math.tau
-
-        for param in linspace(start, end, num):
-            yield param % math.tau
+        yield from ellipse.get_params(start, end, num)
 
     @classmethod
     def from_arc(cls, entity: 'DXFGraphic') -> 'Ellipse':
@@ -142,14 +130,14 @@ class Ellipse(DXFGraphic):
         """
         assert entity.dxftype() in {'ARC', 'CIRCLE'}
         attribs = entity.dxfattribs(drop={'owner', 'handle', 'thickness'})
-        attribs['ratio'] = 1.0
-
-        attribs['start_param'] = math.radians(attribs.pop('start_angle', 0.))
-        attribs['end_param'] = math.radians(attribs.pop('end_angle', 360))
-
-        ocs = entity.ocs()
-        attribs['center'] = ocs.to_wcs(attribs.pop('center'))
-        attribs['major_axis'] = ocs.to_wcs((attribs.pop('radius'), 0, 0))
+        e = ellipse.ConstructionEllipse.from_arc(
+            center=attribs.get('center', NULLVEC),
+            radius=attribs.pop('radius', 1.0),  # not an ELLIPSE attribute
+            extrusion=attribs.get('extrusion', Z_AXIS),
+            start=attribs.pop('start_angle', 0),  # not an ELLIPSE attribute
+            end=attribs.pop('end_angle', 360)  # not an ELLIPSE attribute
+        )
+        attribs.update(e.dxfattribs())
         return Ellipse.new(dxfattribs=attribs, doc=entity.doc)
 
     def transform(self, m: Matrix44) -> 'Ellipse':
@@ -163,7 +151,7 @@ class Ellipse(DXFGraphic):
         params = ellipse.Params(
             Vector(dxf.center),
             Vector(dxf.major_axis),
-            None,   # minor axis, not needed as input
+            None,  # minor axis, not needed as input
             Vector(dxf.extrusion),
             dxf.ratio,
             dxf.start_param,

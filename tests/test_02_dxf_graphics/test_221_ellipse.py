@@ -126,7 +126,7 @@ def test_from_arc():
     assert ellipse.dxf.major_axis == (3, 0, 0)
     assert ellipse.dxf.ratio == 1
     assert ellipse.dxf.start_param == 0
-    assert math.isclose(ellipse.dxf.end_param, math.pi * 2)
+    assert math.isclose(ellipse.dxf.end_param, math.tau)
 
 
 def test_swap_axis_full_ellipse():
