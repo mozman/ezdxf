@@ -6,7 +6,7 @@ from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d, distance_point_line_2d,
     is_point_on_line_2d, is_point_in_polygon_2d, is_point_left_of_line, point_to_line_relation,
-    rytz_axis_construction, angle_to_param, linspace, enclosing_angles, reflect_angle_x_deg,
+    linspace, enclosing_angles, reflect_angle_x_deg,
     reflect_angle_y_deg, sign,
 )
 from .construct3d import (
@@ -27,7 +27,7 @@ from .bulge import bulge_to_arc, bulge_3_points, bulge_center, bulge_radius, arc
 from .arc import ConstructionArc
 from .line import ConstructionRay, ConstructionLine
 from .circle import ConstructionCircle
-from .ellipse import ConstructionEllipse
+from .ellipse import ConstructionEllipse, angle_to_param, param_to_angle, rytz_axis_construction
 from .box import ConstructionBox
 from .shape import Shape2d
 from .bbox import BoundingBox2d, BoundingBox

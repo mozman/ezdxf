@@ -6,7 +6,7 @@ from contextlib import contextmanager
 import math
 import copy
 import warnings
-from ezdxf.math import Vector, Vec2, Matrix44
+from ezdxf.math import Vector, Vec2, Matrix44, angle_to_param, param_to_angle
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
@@ -16,7 +16,7 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010
 from ezdxf.lldxf import const
 from ezdxf.math.bspline import bspline_control_frame
 from ezdxf.math.bulge import bulge_to_arc
-from ezdxf.math import ellipse
+from ezdxf.math import ConstructionEllipse
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -754,6 +754,7 @@ class BoundaryPaths:
 
         (internal API)
         """
+
         def to_spline_edge(e) -> SplineEdge:
             return e
 
@@ -1204,36 +1205,29 @@ class EllipseEdge:
         tagwriter.write_tag2(73, self.is_counter_clockwise)
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
-        def adjust_angle(a: float, ratio: float) -> float:
-            return math.atan2(math.sin(a) * ratio, math.cos(a))
-
-        def adjust_param(p: float, ratio: float) -> float:
-            return math.atan2(math.sin(p) / ratio, math.cos(p))
-
         # todo: start- and end param adjustment still incorrect for non-uniform scaling (axis transformation)
         ocs_to_wcs = ocs.old_ocs.to_wcs
-        start_param = adjust_param(math.radians(self.start_angle), self.ratio)
-        end_param = adjust_param(math.radians(self.end_angle), self.ratio)
-        params = ellipse.Params(
-            ocs_to_wcs(Vector(self.center).replace(z=elevation)),
-            ocs_to_wcs(Vector(self.major_axis)),
-            None,  # minor axis, not needed as input
-            ocs.old_extrusion,
-            self.ratio,
-            start_param,
-            end_param,
+        start_param = angle_to_param(self.ratio, math.radians(self.start_angle))
+        end_param = angle_to_param(self.ratio, math.radians(self.end_angle))
+        e = ConstructionEllipse(
+            center=ocs_to_wcs(Vector(self.center).replace(z=elevation)),
+            major_axis=ocs_to_wcs(Vector(self.major_axis)),
+            extrusion=ocs.old_extrusion,
+            ratio=self.ratio,
+            start=start_param,
+            end=end_param,
         )
-        params = ellipse.transform(params, ocs.m)
+        e.transform(ocs.m)
         wcs_to_ocs = ocs.new_ocs.from_wcs
-        self.center = wcs_to_ocs(params.center).vec2
-        self.major_axis = wcs_to_ocs(params.major_axis).vec2
-        self.ratio = params.ratio
-        self.start_angle = math.degrees(adjust_angle(params.start, params.ratio))
-        self.end_angle = math.degrees(adjust_angle(params.end, params.ratio))
-        if ocs.new_extrusion.isclose(params.extrusion, abs_tol=1e-9):
+        self.center = wcs_to_ocs(e.center).vec2
+        self.major_axis = wcs_to_ocs(e.major_axis).vec2
+        self.ratio = e.ratio
+        self.start_angle = math.degrees(param_to_angle(e.ratio, e.start_param))
+        self.end_angle = math.degrees(param_to_angle(e.ratio, e.end_param))
+        if ocs.new_extrusion.isclose(e.extrusion, abs_tol=1e-9):
             # ellipse extrusion matches new hatch extrusion
             pass
-        elif ocs.new_extrusion.isclose(-params.extrusion, abs_tol=1e-9):
+        elif ocs.new_extrusion.isclose(-e.extrusion, abs_tol=1e-9):
             # ellipse extrusion is opposite to new hatch extrusion
             self.is_counter_clockwise = 1 - int(self.is_counter_clockwise)
         else:
