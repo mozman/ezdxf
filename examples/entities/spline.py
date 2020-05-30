@@ -136,7 +136,7 @@ def spline_insert_knot():
 
     bspline = BSpline(control_points, order=4)
     bspline.insert_knot(bspline.max_t/2)
-    add_spline(bspline.control_points, color=4, knots=bspline.knot_values())
+    add_spline(bspline.control_points, color=4, knots=bspline.knots())
 
     doc.saveas("Spline_R2000_spline_insert_knot.dxf")
 

@@ -1,9 +1,10 @@
 # Created: 06.01.2012
-# Copyright (c) 2012 Manfred Moitzi
+# Copyright (c) 2012-2020 Manfred Moitzi
 # License: MIT License
+import math
 from math import isclose
-from ezdxf.math.bspline import BSpline, BSplineU
-
+from ezdxf.math.bspline import BSpline, BSplineU, rational_spline_from_ellipse
+from ezdxf.math import ConstructionEllipse
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 DEFWEIGHTS = [1, 10, 10, 10, 1]
@@ -33,6 +34,25 @@ def test_rbsplineu():
         assert isclose(epx, rpx)
         assert isclose(epy, rpy)
         assert isclose(epz, rpz)
+
+
+def test_rational_spline_from_ellipse():
+    e = ConstructionEllipse(start=0, end=math.pi/2)
+    # This function creates very well fitting splines but only for exact quarter ellipses :(
+    spline = rational_spline_from_ellipse(e)
+    assert spline.degree == 2
+
+    cpoints = spline.control_points
+    assert len(cpoints) == 3
+    assert cpoints[0].isclose((1, 0, 0))
+    assert cpoints[1].isclose((1, 1, 0))
+    assert cpoints[2].isclose((0, 1, 0))
+
+    weigths = spline.basis.weights
+    assert len(weigths) == 3
+    assert weigths[0] == 1.0
+    assert weigths[1] == math.sin(math.pi/4)
+    assert weigths[2] == 1.0
 
 
 RBSPLINE = [
@@ -122,6 +142,3 @@ RBSPLINEU = [
     [40.6499313989532, 9.304334569846029, 25.347832715076986],
     [40.90909090909091, 9.09090909090909, 25.454545454545453]
 ]
-
-if __name__ == "__main__":
-    unittest.main()

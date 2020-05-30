@@ -306,6 +306,6 @@ class EulerSpiral:
         return layout.add_open_spline(
             control_points=points,
             degree=spline.degree,
-            knots=spline.knot_values(),
+            knots=spline.knots(),
             dxfattribs=dxfattribs,
         )

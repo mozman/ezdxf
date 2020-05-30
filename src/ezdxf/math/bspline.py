@@ -223,8 +223,10 @@ rather than normal 3D coordinates.
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional
 from .vector import Vector, distance
 from .matrix import Matrix
+import math
 from math import pow, isclose
 from ezdxf.lldxf.const import DXFValueError
+from ezdxf.math import intersection_ray_ray_3d
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -576,10 +578,10 @@ def global_curve_approximation(fit_points: Iterable['Vertex'],
 
 class Basis:
     def __init__(self, knots: Iterable[float], order: int, count: int, weights: Sequence[float] = None):
-        self.knots = list(knots)  # type: List[float]
-        self.order = order  # type: int
-        self.count = count  # type: int
-        self.weights = weights  # type: Optional[Sequence[float]]
+        self.knots: List[float] = list(knots)
+        self.order: int = order
+        self.count: int = count
+        self.weights: Optional[Sequence[float]] = weights
 
     @property
     def max_t(self) -> float:
@@ -752,11 +754,22 @@ class BSpline:
         """ Degree (p) of B-spline = order - 1 """
         return self.order - 1
 
-    def knot_values(self) -> List[float]:
+    def knots(self) -> List[float]:
         """ Returns a list of `knot`_ values as floats, the knot vector always has order+count values
         (n + p + 2 in math definition).
         """
         return self.basis.knots
+
+    knot_values = knots
+
+    def weights(self) -> List[float]:
+        """ Returns a list of weights values as floats, one for each control point or an empty list.
+        """
+        w = self.basis.weights
+        if w:
+            return list(w)
+        else:
+            return []
 
     def basis_values(self, t: float) -> List[float]:
         """ Returns the `basis`_ vector for position t. """
@@ -908,7 +921,7 @@ class DBSpline(DerivativePoint, BSpline):
                  knots: Iterable[float] = None,
                  weights: Iterable[float] = None):
         super().__init__(control_points, order=order, knots=knots, weights=weights)
-        self.basis = DBasis(self.knot_values(), self.order, self.count)
+        self.basis = DBasis(self.knots(), self.order, self.count)
 
 
 class DBSplineU(DerivativePoint, BSplineU):
@@ -921,7 +934,7 @@ class DBSplineU(DerivativePoint, BSplineU):
 
     def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
         super().__init__(control_points, order=order, weights=weights)
-        self.basis = DBasisU(self.knot_values(), self.order, self.count)
+        self.basis = DBasisU(self.knots(), self.order, self.count)
 
 
 class DBSplineClosed(DerivativePoint, BSplineClosed):
@@ -935,4 +948,58 @@ class DBSplineClosed(DerivativePoint, BSplineClosed):
 
     def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
         super().__init__(control_points, order=order, weights=weights)
-        self.basis = DBasisU(self.knot_values(), self.order, self.count)
+        self.basis = DBasisU(self.knots(), self.order, self.count)
+
+
+HALF_PI = math.pi / 2.0
+
+
+def _fit_point_params(s: float, e: float) -> Iterable[float]:
+    yield s
+    param = HALF_PI
+    while s > param:
+        param += HALF_PI
+
+    while param < e:
+        yield param
+        param += HALF_PI
+    yield e
+
+
+def rational_spline_from_ellipse(ellipse: 'ConstructionEllipse') -> BSpline:
+    """ This function can only create rational splines for exact quarter arcs and ellipsis. :-( """
+    def intermediate_control_point(index1, index2) -> Vector:
+        ray1 = vertices[index1], vertices[index1] + tangents[index1]
+        ray2 = vertices[index2], vertices[index2] - tangents[index2]
+        result = intersection_ray_ray_3d(ray1, ray2)
+        if len(result) == 1:
+            return result[0]
+        else:
+            p1, p2 = result
+            if p1.isclose(p2, abs_tol=1e-6):
+                return p1.lerp(p2)
+            else:
+                raise ArithmeticError('Control point calculation error, please send bug report.')
+
+    start_param = ellipse.start_param % math.tau
+    end_param = ellipse.end_param % math.tau
+    if end_param <= start_param:
+        end_param += math.tau
+
+    params = list(_fit_point_params(start_param, end_param))
+    vertices = list(ellipse.vertices(params))
+    tangents = list(ellipse.tangents(params))
+    control_points = list()
+    weights = list()
+    for i1 in range(len(vertices) - 1):
+        i2 = i1 + 1
+        control_points.append(vertices[i1])
+        weights.append(1.0)
+        icp = intermediate_control_point(i1, i2)
+        angle = tangents[i1].angle_between(tangents[i2]) / 2.0
+        control_points.append(icp)
+        weights.append(math.sin(angle))
+    control_points.append(vertices[-1])
+    weights.append(1.0)
+    # open uniform knots are calculated by default
+    return BSpline(control_points=control_points, order=3, weights=weights)

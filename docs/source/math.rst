@@ -760,7 +760,9 @@ BSpline
 
     .. autoattribute:: max_t
 
-    .. automethod:: knot_values
+    .. automethod:: knots
+
+    .. automethod:: weights
 
     .. automethod:: basis_values
 
