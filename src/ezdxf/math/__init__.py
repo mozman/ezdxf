@@ -13,7 +13,6 @@ from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState, intersection_ray_ray_3d, normal_vector_3p,
 )
 from .matrix44 import Matrix44
-from .matrix33 import Matrix33
 from .matrix import Matrix
 from .bspline import bspline_control_frame, bspline_control_frame_approx
 from .bspline import uniform_knot_vector, open_uniform_knot_vector, required_knot_values

@@ -1,10 +1,8 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, List
-from abc import abstractmethod
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 from .matrix44 import Matrix44
-from .matrix33 import Matrix33
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout
