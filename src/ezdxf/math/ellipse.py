@@ -69,8 +69,8 @@ class ConstructionEllipse:
         return cls(center, major_axis, extrusion, ratio, start_param, end_param, bool(ccw))
 
     def __copy__(self):
-        return ConstructionEllipse(self.center, self.major_axis, self.extrusion, self.ratio, self.start_param,
-                                   self.end_param)
+        return self.__class__(self.center, self.major_axis, self.extrusion, self.ratio,
+                              self.start_param, self.end_param)
 
     @property
     def start_point(self) -> Vector:

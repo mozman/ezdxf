@@ -90,10 +90,8 @@ def test_intersection_ray_ray_3d():
 def test_intersection_ray_ray_3d_random():
     for _ in range(5):
         intersection_point = Vector.random(5)
-        ray1_dir = Vector.random()
-        ray2_dir = Vector.random()
-        ray1 = (intersection_point, intersection_point+ray1_dir)
-        ray2 = (intersection_point, intersection_point+ray2_dir)
+        ray1 = (intersection_point, intersection_point+Vector.random())
+        ray2 = (intersection_point, intersection_point-Vector.random())
 
         result = intersection_ray_ray_3d(ray1, ray2)
         assert len(result) == 1
