@@ -583,6 +583,12 @@ ConstructionArc
 
     .. autoattribute:: bounding_box
 
+    .. automethod:: angles
+
+    .. automethod:: vertices
+
+    .. automethod:: tangents
+
     .. automethod:: translate(dx: float, dy: float) -> ConstructionArc
 
     .. automethod:: scale_uniform(s: float) -> ConstructionArc

@@ -169,7 +169,7 @@ class Spline(DXFGraphic):
 
     @control_points.setter
     def control_points(self, points: Iterable['Vertex']) -> None:
-        self._control_points = VertexArray(chain.from_iterable(points))
+        self._control_points = VertexArray(chain.from_iterable(Vector.generate(points)))
 
     def control_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_control_points
         """ Count of control points. """
@@ -182,7 +182,7 @@ class Spline(DXFGraphic):
 
     @fit_points.setter
     def fit_points(self, points: Iterable['Vertex']) -> None:
-        self._fit_points = VertexArray(chain.from_iterable(points))
+        self._fit_points = VertexArray(chain.from_iterable(Vector.generate(points)))
 
     def fit_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_fit_points
         """ Count of fit points. """
@@ -228,7 +228,7 @@ class Spline(DXFGraphic):
         """
         self.set_open_uniform(control_points, degree=degree)
         self.dxf.flags = self.dxf.flags | self.RATIONAL
-        if len(weights) != len(control_points):
+        if len(weights) != len(self.control_points):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.weights = weights
 
@@ -241,7 +241,7 @@ class Spline(DXFGraphic):
         """
         self.set_uniform(control_points, degree=degree)
         self.dxf.flags = self.dxf.flags | self.RATIONAL
-        if len(weights) != len(control_points):
+        if len(weights) != len(self.control_points):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.weights = weights
 
@@ -254,7 +254,7 @@ class Spline(DXFGraphic):
         """
         self.set_periodic(control_points, degree=degree)
         self.dxf.flags = self.dxf.flags | self.RATIONAL
-        if len(weights) != len(control_points):
+        if len(weights) != len(self.control_points):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.weights = weights
 

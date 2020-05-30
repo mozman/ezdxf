@@ -222,6 +222,24 @@ class ConstructionEllipse:
             y = math.sin(param) * radius_y * y_axis
             yield center + x + y
 
+    def tangents(self, params: Iterable[float]) -> Iterable[Vector]:
+        """
+        Yields tangents on ellipse for iterable `params` in WCS as direction vectors.
+
+        Args:
+            params: param values in the range from ``0`` to ``2*pi`` in radians, param goes counter clockwise around the
+                    extrusion vector, major_axis = local x-axis = 0 rad.
+
+        """
+        ratio = self.ratio
+        x_axis = self.major_axis.normalize()
+        y_axis = self.minor_axis.normalize()
+
+        for param in params:
+            x = -math.sin(param) * x_axis
+            y = math.cos(param) * ratio * y_axis
+            yield (x + y).normalize()
+
     def swap_axis(self) -> None:
         """ Swap axis and adjust start- and end parameter. """
         self.major_axis = self.minor_axis

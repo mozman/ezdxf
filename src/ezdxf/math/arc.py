@@ -82,11 +82,32 @@ class ConstructionArc:
             yield angle % 360
 
     def vertices(self, a: Iterable[float]) -> Iterable[Vec2]:
+        """
+        Yields vertices on arc for angles in iterable `a` in WCS as location vectors.
+
+        Args:
+            a: angles in the range from ``0`` to ``360`` in degrees, arc goes counter clockwise around the
+                z-axis, WCS x-axis = 0 deg.
+
+        """
         center = self.center
         radius = self.radius
 
         for angle in a:
             yield center + Vec2.from_deg_angle(angle, radius)
+
+    def tangents(self, a: Iterable[float]) -> Iterable[Vec2]:
+        """
+        Yields tangents on arc for angles in iterable `a` in WCS as direction vectors.
+
+        Args:
+            a: angles in the range from ``0`` to ``360`` in degrees, arc goes counter clockwise around the
+                z-axis, WCS x-axis = 0 deg.
+
+        """
+        for angle in a:
+            r = math.radians(angle)
+            yield Vec2((-math.sin(r), math.cos(r)))
 
     def main_axis_points(self):
         center = self.center

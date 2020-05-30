@@ -1014,9 +1014,9 @@ class EdgePath:
         Add a :class:`SplineEdge`.
 
         Args:
-            fit_points: points through which the spline must go, at least 3 fit points are required.
+            fit_points: optional points through which the spline must go, at least 3 fit points are required.
                         list of ``(x, y)`` tuples
-            control_points: affects the shape of the spline, mandatory amd AutoCAD crashes on invalid data.
+            control_points: affects the shape of the spline, mandatory and AutoCAD crashes on invalid data.
                             list of ``(x, y)`` tuples
             knot_values: (knot vector) mandatory and AutoCAD crashes on invalid data. list of floats;
                          `ezdxf` provides two tool functions to calculate valid knot values:
