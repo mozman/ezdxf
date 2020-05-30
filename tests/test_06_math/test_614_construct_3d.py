@@ -87,6 +87,19 @@ def test_intersection_ray_ray_3d():
     assert Vector(0, 0, 0) in result
 
 
+def test_intersection_ray_ray_3d_random():
+    for _ in range(5):
+        intersection_point = Vector.random(5)
+        ray1_dir = Vector.random()
+        ray2_dir = Vector.random()
+        ray1 = (intersection_point, intersection_point+ray1_dir)
+        ray2 = (intersection_point, intersection_point+ray2_dir)
+
+        result = intersection_ray_ray_3d(ray1, ray2)
+        assert len(result) == 1
+        assert result[0].isclose(intersection_point)
+
+
 def test_normal_vector_for_3_points():
     # normal_vector_3p(a, b, c)
     # a->b = v1
