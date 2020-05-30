@@ -169,3 +169,35 @@ def test_angle_to_param():
         assert math.isclose(calculated_angle, angle, abs_tol=1e-9)
         assert (math.isclose(calculated_angle, calculated_angle_without_direction) or
                 math.isclose(math.tau - calculated_angle, calculated_angle_without_direction))
+
+
+def test_vertices():
+    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5, start=0, end=math.pi * 1.5)
+    params = list(e.params(7))
+    result = [
+        (5.0, 3.0, 0.0),
+        (4.414213562373095, 3.7071067811865475, 0.0),
+        (3.0, 4.0, 0.0),
+        (1.585786437626905, 3.7071067811865475, 0.0),
+        (1.0, 3.0, 0.0),
+        (1.5857864376269046, 2.2928932188134525, 0.0),
+        (3.0, 2.0, 0.0),
+    ]
+    for v, r in zip(e.vertices(params), result):
+        assert v.isclose(r)
+
+
+def test_tangents():
+    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5, start=0, end=math.pi * 1.5)
+    params = list(e.params(7))
+    result = [
+        (0.0, 1.0, 0.0),
+        (-0.894427190999916, 0.447213595499958, 0.0),
+        (-1.0, 3.061616997868383e-17, 0.0),
+        (-0.894427190999916, -0.4472135954999579, 0.0),
+        (-2.4492935982947064e-16, -1.0, 0.0),
+        (0.8944271909999159, -0.44721359549995804, 0.0),
+        (1.0, 0.0, 0.0)
+    ]
+    for v, r in zip(e.tangents(params), result):
+        assert v.isclose(r)
