@@ -593,8 +593,6 @@ ConstructionArc
 
     .. automethod:: add_to_layout(layout: BaseLayout, ucs: UCS = None, dxfattribs: dict = None) -> Arc
 
-    .. automethod:: spline
-
 ConstructionEllipse
 -------------------
 
@@ -647,7 +645,8 @@ ConstructionEllipse
 
     .. automethod:: swap_axis
 
-    .. automethod:: spline
+    .. automethod:: add_to_layout(layout: BaseLayout, dxfattribs: dict = None) -> Ellipse
+
 
 ConstructionBox
 ---------------
@@ -755,12 +754,15 @@ BSpline
 
     .. automethod:: basis_values
 
-    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
-
     .. automethod:: point(t: float) -> Vector
 
     .. automethod:: insert_knot
 
+    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
+
+    .. automethod:: from_ellipse(ellipse: ConstructionEllipse, num:int=16) -> BSpline
+
+    .. automethod:: from_arc(arc: ConstructionArc, num:int=16) -> BSpline
 
 BSplineU
 --------

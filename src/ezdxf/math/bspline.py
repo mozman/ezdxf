@@ -228,6 +228,7 @@ from ezdxf.lldxf.const import DXFValueError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
+    from ezdxf.math import ConstructionArc, ConstructionEllipse
 
 
 def open_uniform_knot_vector(n: int, order: int) -> List[float]:
@@ -519,6 +520,7 @@ def global_curve_interpolation(fit_points: Sequence['Vertex'],
                                t_vector: Iterable[float],
                                knots: Iterable[float]) -> List[Vector]:
     """ Algorithm: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html """
+
     def create_matrix_N():
         spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
         return Matrix([spline.basis(t) for t in t_vector])
@@ -702,6 +704,34 @@ class BSpline:
                 raise ValueError("{} knot values required, got {}.".format(self.nplusc, len(knots)))
 
         self.basis = Basis(knots, self.order, self.count, weights=weights)
+
+    @classmethod
+    def from_ellipse(cls, ellipse: 'ConstructionEllipse', num: int = 16) -> 'BSpline':
+        """ Returns an ellipse approximation as :class:`BSpline` with `num` control points. """
+        fit_points = list(ellipse.vertices(ellipse.params(num)))
+        count = len(fit_points)
+        degree = 2
+        order = degree + 1
+        t_vector = list(uniform_t_vector(fit_points))
+        knots = list(control_frame_knots(count - 1, degree, t_vector))
+        control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
+        spline = cls(control_points, order=order, knots=knots)
+        spline.t_array = t_vector
+        return spline
+
+    @classmethod
+    def from_arc(cls, arc: 'ConstructionArc', num: int = 16) -> 'BSpline':
+        """ Returns an arc approximation as :class:`BSpline` with `num` control points. """
+        fit_points = list(arc.vertices(arc.angles(num)))
+        count = len(fit_points)
+        degree = 2
+        order = degree + 1
+        t_vector = list(uniform_t_vector(fit_points))
+        knots = list(control_frame_knots(count - 1, degree, t_vector))
+        control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
+        spline = BSpline(control_points, order=order, knots=knots)
+        spline.t_array = t_vector
+        return spline
 
     @property
     def nplusc(self) -> int:

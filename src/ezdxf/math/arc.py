@@ -8,11 +8,9 @@ from .bbox import BoundingBox2d
 from .construct2d import enclosing_angles, linspace
 from .circle import ConstructionCircle
 from .ucs import UCS
-from ezdxf.math import bspline
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, BaseLayout
-    from ezdxf.eztypes import Arc as DXFArc
+    from ezdxf.eztypes import Vertex, BaseLayout, Arc
 
 QUARTER_ANGLES = [0, math.pi * .5, math.pi, math.pi * 1.5]
 
@@ -231,20 +229,7 @@ class ConstructionArc:
             is_counter_clockwise=ccw,
         )
 
-    def spline(self, num: int = 16) -> bspline.BSpline:
-        """ Returns a curve approximation as spline with `num` control points. """
-        fit_points = list(self.vertices(self.angles(num)))
-        count = len(fit_points)
-        degree = 2
-        order = degree + 1
-        t_vector = list(bspline.uniform_t_vector(fit_points))
-        knots = list(bspline.control_frame_knots(count - 1, degree, t_vector))
-        control_points = bspline.global_curve_interpolation(fit_points, degree, t_vector, knots)
-        spline = bspline.BSpline(control_points, order=order, knots=knots)
-        spline.t_array = t_vector
-        return spline
-
-    def add_to_layout(self, layout: 'BaseLayout', ucs: UCS = None, dxfattribs: dict = None) -> 'DXFArc':
+    def add_to_layout(self, layout: 'BaseLayout', ucs: UCS = None, dxfattribs: dict = None) -> 'Arc':
         """
         Add arc as DXF :class:`~ezdxf.entities.Arc` entity to a layout.
 

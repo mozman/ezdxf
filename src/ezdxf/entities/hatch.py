@@ -732,6 +732,7 @@ class BoundaryPaths:
             ellipse.center = arc.center
             ellipse.ratio = 1.0
             ellipse.major_axis = (arc.radius, 0.0)
+            # todo: OCS transformation?
             ellipse.start_angle = arc.start_angle
             ellipse.end_angle = arc.end_angle
             ellipse.is_counter_clockwise = arc.is_counter_clockwise
@@ -746,6 +747,22 @@ class BoundaryPaths:
                 for edge_index, edge in enumerate(edges):
                     if edge.EDGE_TYPE == 'ArcEdge':
                         edges[edge_index] = to_ellipse(edge)
+
+    def to_spline_edges(self):
+        """
+        Convert all ellipse edges to spline edges (approximation).
+
+        (internal API)
+        """
+        def to_spline_edge(e) -> SplineEdge:
+            return e
+
+        for path_index, path in enumerate(self.paths):
+            if path.PATH_TYPE == 'EdgePath':
+                edges = path.edges
+                for edge_index, edge in enumerate(edges):
+                    if edge.EDGE_TYPE == 'EllipseEdge':
+                        edges[edge_index] = to_spline_edge(edge)
 
     def has_critical_elements(self) -> bool:
         """ Returns ``True`` if any boundary path has bulge values or arc edges or ellipse edges.
