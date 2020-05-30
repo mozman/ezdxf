@@ -19,6 +19,11 @@ class ConstructionArc:
     """
     This is a helper class to create parameters for the DXF :class:`~ezdxf.entities.Arc` class.
 
+    :class:`ConstructionArc` represents a 2D arc in the xy-plane, use an :class:`UCS` to place
+    arc in 3D space, see method :meth:`add_to_layout`.
+
+    Implements the 2D transformation tools: :meth:`translate`, :meth:`scale_uniform` and :meth:`rotate_z`
+
     Args:
         center: center point as :class:`Vec2` compatible object
         radius: radius
@@ -92,9 +97,9 @@ class ConstructionArc:
             if enclosing_angles(angle, start, end):
                 yield center + Vec2.from_angle(angle, radius)
 
-    def translate(self, dx: float, dy: float) -> None:
+    def translate(self, dx: float, dy: float) -> 'ConstructionArc':
         """
-        Move arc about `dx` in x-axis and about `dy` in y-axis.
+        Move arc about `dx` in x-axis and about `dy` in y-axis, returns `self` (floating interface).
 
         Args:
             dx: translation in x-axis
@@ -102,6 +107,24 @@ class ConstructionArc:
 
         """
         self.center += Vec2((dx, dy))
+        return self
+
+    def scale_uniform(self, s: float) -> 'ConstructionArc':
+        """ Scale arc inplace uniform about `s` in x- and y-axis, returns `self` (floating interface).
+        """
+        self.radius *= float(s)
+        return self
+
+    def rotate_z(self, angle: float) -> 'ConstructionArc':
+        """ Rotate arc inplace about z-axis, returns `self` (floating interface).
+
+        Args:
+            angle: rotation angle in degrees
+
+        """
+        self.start_angle += angle
+        self.end_angle += angle
+        return self
 
     @property
     def start_angle_rad(self) -> float:

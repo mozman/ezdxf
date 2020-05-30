@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Dict, cast, Tuple
+from typing import TYPE_CHECKING, Iterable, Dict, Tuple
 import math
 from .vector import Vector, NULLVEC, X_AXIS, Z_AXIS
 from .matrix44 import Matrix44
@@ -60,11 +60,12 @@ class ConstructionEllipse:
         """
         ratio = 1.0
         ocs = OCS(extrusion)
-        # todo: start- and end angle in OCS!
+        center = ocs.to_wcs(center)
+        # Major axis along the OCS x-axis.
+        major_axis = ocs.to_wcs(Vector(radius, 0, 0))
+        # No further adjustment of start- and end angle required.
         start_param = math.radians(start)
         end_param = math.radians(end)
-        center = ocs.to_wcs(center)
-        major_axis = ocs.to_wcs(Vector(radius, 0, 0))
         return cls(center, major_axis, extrusion, ratio, start_param, end_param, bool(ccw))
 
     def __copy__(self):
@@ -248,7 +249,8 @@ class ConstructionEllipse:
         dxfattribs = dxfattribs or dict()
         dxfattribs.update(self.dxfattribs())
         e = Ellipse.new(dxfattribs=dxfattribs, doc=layout.doc)
-        return cast(Ellipse, layout.add_entity(e))
+        layout.add_entity(e)
+        return e
 
 
 def mid_param(start: float, end: float) -> float:

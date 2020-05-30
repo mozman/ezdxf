@@ -583,7 +583,11 @@ ConstructionArc
 
     .. autoattribute:: bounding_box
 
-    .. automethod:: translate
+    .. automethod:: translate(dx: float, dy: float) -> ConstructionArc
+
+    .. automethod:: scale_uniform(s: float) -> ConstructionArc
+
+    .. automethod:: rotate_z(angle: float) -> ConstructionArc
 
     .. automethod:: from_2p_angle(start_point: Vertex, end_point: Vertex, angle: float, ccw: bool = True) -> ConstructionArc
 
