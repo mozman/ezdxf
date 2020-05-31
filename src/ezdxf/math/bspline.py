@@ -634,23 +634,14 @@ class DBasis(Basis):
         for k in range(2, self.order + 1):
             for i in range(self.nplusc - k):
                 i1 = i + 1
+                ik = i + k
+
+                knot_ik_1__knot_i = knots[ik - 1] - knots[i]
+                knot_ik__knot_i1 = knots[ik] - knots[i1]
+                t__knot_i = t - knots[i]
+                knot_ik__t = knots[ik] - t
 
                 nbasis_i = nbasis[i]
-                nbasis_i1 = nbasis[i1]
-                d1nbasis_i = d1nbasis[i]
-                d1nbasis_i1 = d1nbasis[i1]
-                d2nbasis_i = d2nbasis[i]
-                d2nbasis_i1 = d2nbasis[i1]
-
-                knot_i = knots[i]
-                knot_i1 = knots[i1]
-                knot_ik = knots[i + k]
-                knot_ik_1 = knots[i + k - 1]
-
-                knot_ik_1__knot_i = knot_ik_1 - knot_i
-                knot_ik__knot_i1 = knot_ik - knot_i1
-                t__knot_i = t - knot_i
-                knot_ik__t = knot_ik - t
 
                 if nbasis_i:
                     b1 = t__knot_i * nbasis_i / knot_ik_1__knot_i
@@ -659,12 +650,16 @@ class DBasis(Basis):
                     b1 = 0.0
                     f1 = 0.0
 
+                nbasis_i1 = nbasis[i1]
+
                 if nbasis_i1:
                     b2 = knot_ik__t * nbasis_i1 / knot_ik__knot_i1
                     f2 = -nbasis_i1 / knot_ik__knot_i1
                 else:
                     b2 = 0.0
                     f2 = 0.0
+
+                d1nbasis_i = d1nbasis[i]
 
                 if d1nbasis_i:
                     f3 = t__knot_i * d1nbasis_i / knot_ik_1__knot_i
@@ -673,6 +668,8 @@ class DBasis(Basis):
                     f3 = 0.0
                     s1 = 0.0
 
+                d1nbasis_i1 = d1nbasis[i1]
+
                 if d1nbasis_i1:
                     f4 = knot_ik__t * d1nbasis_i1 / knot_ik__knot_i1
                     s2 = -2.0 * d1nbasis_i1 / knot_ik__knot_i1
@@ -680,8 +677,8 @@ class DBasis(Basis):
                     f4 = 0.0
                     s2 = 0.0
 
-                s3 = t__knot_i * d2nbasis_i / knot_ik_1__knot_i if d2nbasis_i else 0.0
-                s4 = knot_ik__t * d2nbasis_i1 / knot_ik__knot_i1 if d2nbasis_i1 else 0.0
+                s3 = t__knot_i * d2nbasis[i] / knot_ik_1__knot_i if d2nbasis[i] else 0.0
+                s4 = knot_ik__t * d2nbasis[i1] / knot_ik__knot_i1 if d2nbasis[i1] else 0.0
 
                 nbasis[i] = b1 + b2
                 d1nbasis[i] = f1 + f2 + f3 + f4

@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.13 - dev
-------------------
+Version 0.13b0 - dev
+--------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-13.html
 - NEW: general transformation interface: `DXFGraphic.transform(m)`, 
