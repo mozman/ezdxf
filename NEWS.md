@@ -28,8 +28,9 @@ Version 0.13 - dev
 - NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition
 - NEW: `DXFGraphic.unlink_from_layout()` to unlink entity from associated layout
 - NEW: `ezdxf.math.ConstructionEllipse()`
-- NEW: `BSpline.from_arc()` returns a B-Spline approximation for a `ConstructionArc()`
-- NEW: `BSpline.from_ellipse()` returns a B-Spline approximation for a `ConstructionEllipse()`
+- NEW: `BSpline.from_fit_points()` returns a B-Spline from fit points
+- NEW: `BSpline.from_arc()` returns a B-Spline approximation for an arc defined by `ConstructionArc()`
+- NEW: `BSpline.from_ellipse()` returns a B-Spline approximation for an ellipse defined by `ConstructionEllipse()`
 - CHANGE: `Hatch` full support for rotated patterns.
 - CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
 - CHANGE: renamed 2D `ConstructionXXX.move()` methods to `translate()`

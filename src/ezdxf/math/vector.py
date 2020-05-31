@@ -112,12 +112,12 @@ class Vector:
         )
 
     @classmethod
-    def list(cls, items: Iterable[Sequence[float]]) -> List['Vector']:
+    def list(cls, items: Iterable['Vertex']) -> List['Vector']:
         """ Returns a list of :class:`Vector` objects. """
         return list(cls.generate(items))
 
     @classmethod
-    def generate(cls, items: Iterable[Sequence[float]]) -> Iterable['Vector']:
+    def generate(cls, items: Iterable['Vertex']) -> Iterable['Vector']:
         """ Returns an iterable of :class:`Vector` objects. """
         return (cls(item) for item in items)
 

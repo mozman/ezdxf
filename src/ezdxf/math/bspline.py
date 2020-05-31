@@ -606,8 +606,10 @@ class Basis:
         # calculate the higher order basis functions
         for k in range(2, self.order + 1):
             for i in range(self.nplusc - k):
-                d = ((t - knots[i]) * nbasis[i]) / (knots[i + k - 1] - knots[i]) if nbasis[i] != 0. else 0.
-                e = ((knots[i + k] - t) * nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if nbasis[i + 1] != 0. else 0.
+                i1 = i + 1
+                ik = i + k
+                d = ((t - knots[i]) * nbasis[i]) / (knots[ik - 1] - knots[i]) if nbasis[i] else 0.
+                e = ((knots[ik] - t) * nbasis[i1]) / (knots[ik] - knots[i1]) if nbasis[i1] else 0.
                 nbasis[i] = d + e
         if isclose(t, self.max_t):  # pick up last point
             nbasis[self.count - 1] = 1.
@@ -631,23 +633,55 @@ class DBasis(Basis):
 
         for k in range(2, self.order + 1):
             for i in range(self.nplusc - k):
-                # calculate basis functions
-                b1 = ((t - knots[i]) * nbasis[i]) / (knots[i + k - 1] - knots[i]) if nbasis[i] != 0. else 0.
-                b2 = ((knots[i + k] - t) * nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if nbasis[i + 1] != 0. else 0.
+                i1 = i + 1
 
-                # calculate first derivative
-                f1 = nbasis[i] / (knots[i + k - 1] - knots[i]) if nbasis[i] != 0. else 0.
-                f2 = -nbasis[i + 1] / (knots[i + k] - knots[i + 1]) if nbasis[i + 1] != 0. else 0.
-                f3 = ((t - knots[i]) * d1nbasis[i]) / (knots[i + k - 1] - knots[i]) if d1nbasis[i] != 0. else 0.
-                f4 = ((knots[i + k] - t) * d1nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if d1nbasis[
-                                                                                                   i + 1] != 0. else 0.
+                nbasis_i = nbasis[i]
+                nbasis_i1 = nbasis[i1]
+                d1nbasis_i = d1nbasis[i]
+                d1nbasis_i1 = d1nbasis[i1]
+                d2nbasis_i = d2nbasis[i]
+                d2nbasis_i1 = d2nbasis[i1]
 
-                # calculate second derivative
-                s1 = (2 * d1nbasis[i]) / (knots[i + k - 1] - knots[i]) if d1nbasis[i] != 0. else 0.
-                s2 = (-2 * d1nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if d1nbasis[i + 1] != 0. else 0.
-                s3 = ((t - knots[i]) * d2nbasis[i]) / (knots[i + k - 1] - knots[i]) if d2nbasis[i] != 0. else 0.
-                s4 = ((knots[i + k] - t) * d2nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if d2nbasis[
-                                                                                                   i + 1] != 0. else 0.
+                knot_i = knots[i]
+                knot_i1 = knots[i1]
+                knot_ik = knots[i + k]
+                knot_ik_1 = knots[i + k - 1]
+
+                knot_ik_1__knot_i = knot_ik_1 - knot_i
+                knot_ik__knot_i1 = knot_ik - knot_i1
+                t__knot_i = t - knot_i
+                knot_ik__t = knot_ik - t
+
+                if nbasis_i:
+                    b1 = t__knot_i * nbasis_i / knot_ik_1__knot_i
+                    f1 = nbasis_i / knot_ik_1__knot_i
+                else:
+                    b1 = 0.0
+                    f1 = 0.0
+
+                if nbasis_i1:
+                    b2 = knot_ik__t * nbasis_i1 / knot_ik__knot_i1
+                    f2 = -nbasis_i1 / knot_ik__knot_i1
+                else:
+                    b2 = 0.0
+                    f2 = 0.0
+
+                if d1nbasis_i:
+                    f3 = t__knot_i * d1nbasis_i / knot_ik_1__knot_i
+                    s1 = 2.0 * d1nbasis_i / knot_ik_1__knot_i
+                else:
+                    f3 = 0.0
+                    s1 = 0.0
+
+                if d1nbasis_i1:
+                    f4 = knot_ik__t * d1nbasis_i1 / knot_ik__knot_i1
+                    s2 = -2.0 * d1nbasis_i1 / knot_ik__knot_i1
+                else:
+                    f4 = 0.0
+                    s2 = 0.0
+
+                s3 = t__knot_i * d2nbasis_i / knot_ik_1__knot_i if d2nbasis_i else 0.0
+                s4 = knot_ik__t * d2nbasis_i1 / knot_ik__knot_i1 if d2nbasis_i1 else 0.0
 
                 nbasis[i] = b1 + b2
                 d1nbasis[i] = f1 + f2 + f3 + f4
@@ -657,7 +691,7 @@ class DBasis(Basis):
         if self.weights is None:
             return nbasis[:count], d1nbasis[:count], d2nbasis[:count]
         else:
-            self.weighting(nbasis[:count]), self.weighting(d1nbasis[:count]), self.weighting(d2nbasis[:count])
+            return self.weighting(nbasis[:count]), self.weighting(d1nbasis[:count]), self.weighting(d2nbasis[:count])
 
     def create_nbasis2(self, t: float) -> List[float]:
         nbasis = self.create_nbasis(t)
@@ -693,8 +727,8 @@ class BSpline:
                  order: int = 4,
                  knots: Iterable[float] = None,
                  weights: Iterable[float] = None):
-        self.control_points = Vector.list(control_points)
-        self.order = order
+        self.control_points: List[Vector] = Vector.list(control_points)
+        self.order: int = order
         if order > self.count:
             raise DXFValueError('Invalid need more control points for order {}'.format(order))
 
@@ -708,32 +742,25 @@ class BSpline:
         self.basis = Basis(knots, self.order, self.count, weights=weights)
 
     @classmethod
-    def from_ellipse(cls, ellipse: 'ConstructionEllipse', num: int = 16) -> 'BSpline':
-        """ Returns an ellipse approximation as :class:`BSpline` with `num` control points. """
-        fit_points = list(ellipse.vertices(ellipse.params(num)))
-        count = len(fit_points)
-        degree = 2
-        order = degree + 1
+    def from_fit_points(cls, points: Iterable['Vertex'], degree=3) -> 'BSpline':
+        """ Returns :class:`BSpline` defined by fit points. """
+        fit_points = Vector.list(points)
         t_vector = list(uniform_t_vector(fit_points))
-        knots = list(control_frame_knots(count - 1, degree, t_vector))
+        knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector))
         control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
-        spline = cls(control_points, order=order, knots=knots)
+        spline = cls(control_points, order=degree + 1, knots=knots)
         spline.t_array = t_vector
         return spline
 
     @classmethod
+    def from_ellipse(cls, ellipse: 'ConstructionEllipse', num: int = 16) -> 'BSpline':
+        """ Returns an ellipse approximation as :class:`BSpline` with `num` control points. """
+        return cls.from_fit_points(ellipse.vertices(ellipse.params(num)), degree=2)
+
+    @classmethod
     def from_arc(cls, arc: 'ConstructionArc', num: int = 16) -> 'BSpline':
         """ Returns an arc approximation as :class:`BSpline` with `num` control points. """
-        fit_points = list(arc.vertices(arc.angles(num)))
-        count = len(fit_points)
-        degree = 2
-        order = degree + 1
-        t_vector = list(uniform_t_vector(fit_points))
-        knots = list(control_frame_knots(count - 1, degree, t_vector))
-        control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
-        spline = BSpline(control_points, order=order, knots=knots)
-        spline.t_array = t_vector
-        return spline
+        return cls.from_fit_points(arc.vertices(arc.angles(num)), degree=2)
 
     @property
     def nplusc(self) -> int:
@@ -968,6 +995,7 @@ def _fit_point_params(s: float, e: float) -> Iterable[float]:
 
 def rational_spline_from_ellipse(ellipse: 'ConstructionEllipse') -> BSpline:
     """ This function can only create rational splines for exact quarter arcs and ellipsis. :-( """
+
     def intermediate_control_point(index1, index2) -> Vector:
         ray1 = vertices[index1], vertices[index1] + tangents[index1]
         ray2 = vertices[index2], vertices[index2] - tangents[index2]

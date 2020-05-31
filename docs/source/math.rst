@@ -312,9 +312,9 @@ Vector
 
     .. automethod:: replace(x: float = None, y: float = None, z: float = None) -> Vector
 
-    .. automethod:: generate(items: Iterable[Sequence[float]]) -> Iterable[Vector]
+    .. automethod:: generate(items: Iterable[Vertex]) -> Iterable[Vector]
 
-    .. automethod:: list(items: Iterable[Sequence[float]]) -> List[Vector]
+    .. automethod:: list(items: Iterable[Vertex]) -> List[Vector]
 
     .. automethod:: from_angle(angle: float, length: float = 1.) -> Vector
 
@@ -771,6 +771,8 @@ BSpline
     .. automethod:: insert_knot
 
     .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
+
+    .. automethod:: from_fit_points(points: Iterable[Vertex], degree:int=3) -> BSpline
 
     .. automethod:: from_ellipse(ellipse: ConstructionEllipse, num:int=16) -> BSpline
 
