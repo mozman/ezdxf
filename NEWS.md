@@ -23,6 +23,10 @@ Version 0.13b0 - dev
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
 - NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
+- NEW: `Ellipse.construction_tool()`, return `ConstructionEllipse()`
+- NEW: `Ellipse.apply_construction_tool(e)`, apply `ConstructionEllipse()` data
+- NEW: `Spline.construction_tool()`, return `ezdxf.math.BSpline()`
+- NEW: `Spline.apply_construction_tool(s)`, apply `ezdxf.math.BSpline()` data
 - NEW: `UCS` and `OCS` uses `Matrix44`for transformations
 - NEW: `Hatch.set_pattern_scale()` to set scaling of pattern definition
 - NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition

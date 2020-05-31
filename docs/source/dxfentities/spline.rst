@@ -116,6 +116,10 @@ Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. automethod:: knot_count
 
+    .. automethod:: construction_tool() -> BSpline
+
+    .. automethod:: apply_construction_tool(s: BSpline) -> None
+
     .. automethod:: set_open_uniform
 
     .. automethod:: set_uniform

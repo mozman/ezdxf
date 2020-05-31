@@ -10,13 +10,13 @@ from ezdxf.math import Vector, Matrix44
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
 from ezdxf.lldxf.packedtags import VertexArray
-from ezdxf.math.bspline import uniform_knot_vector, open_uniform_knot_vector
+from ezdxf.math.bspline import uniform_knot_vector, open_uniform_knot_vector, BSpline
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags
 
 __all__ = ['Spline']
 
@@ -187,6 +187,36 @@ class Spline(DXFGraphic):
     def fit_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_fit_points
         """ Count of fit points. """
         return len(self.fit_points)
+
+    def construction_tool(self) -> BSpline:
+        """
+        Returns construction tool :class:`ezdxf.math.BSpline`.
+
+        .. versionadded:: 0.13
+
+        """
+        if self.control_point_count():
+            weights = self.weights if len(self.weights) else None
+            knots = self.knots if len(self.knots) else None
+            return BSpline(control_points=self.control_points, order=self.dxf.degree + 1, knots=knots, weights=weights)
+        elif self.fit_point_count():
+            return BSpline.from_fit_points(self.fit_points, degree=self.dxf.degree)
+        else:
+            raise ValueError('Construction tool requires control- or fit points.')
+
+    def apply_construction_tool(self, s: BSpline) -> None:
+        """
+        Set SPLINE data from construction tool :class:`ezdxf.math.BSpline`.
+
+        .. versionadded:: 0.13
+
+        """
+        self.dxf.degree = s.degree
+        self.control_points = s.control_points
+        self.fit_points = []  # remove fit points
+        self.knots = s.knots()
+        self.weights = s.weights()
+        self.set_flag_state(Spline.RATIONAL, state=bool(len(self.weights)))
 
     def set_open_uniform(self, control_points: Sequence['Vertex'], degree: int = 3) -> None:
         """
