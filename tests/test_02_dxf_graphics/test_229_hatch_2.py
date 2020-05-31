@@ -158,6 +158,22 @@ def test_arc_to_ellipse_edges(hatch):
     assert edge.end == (0, 0)
 
 
+def _test_ellipse_edges_to_spline_edges(hatch):
+    hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True)
+    hatch.paths.all_to_spline_edges(num=32)
+    path = hatch.paths[0]
+
+    edge = path.edges[0]
+    assert edge.EDGE_TYPE == 'SplineEdge'
+    assert edge.control_points[0] == (0, 0)
+    assert edge.control_points[-1] == (10, 0)
+
+    edge = path.edges[2]
+    assert edge.EDGE_TYPE == 'SplineEdge'
+    assert edge.control_points[0] == (10, 10)
+    assert edge.control_points[-1] == (0, 10)
+
+
 def test_edge_path_count(edge_hatch):
     assert 1 == len(edge_hatch.paths), "invalid boundary path count"
 
@@ -176,7 +192,7 @@ def test_edge_path_edges(edge_hatch):
     assert 1. / 3. == edge.ratio
     assert 270 == edge.start_angle
     assert 450 == edge.end_angle  # this value was created by AutoCAD == 90 degree
-    assert 1 == edge.is_counter_clockwise
+    assert 1 == edge.ccw
 
     edge = path.edges[1]
     assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 2. edge"
@@ -194,7 +210,7 @@ def test_edge_path_edges(edge_hatch):
     assert 1 == edge.radius
     assert 360 == edge.start_angle  # this value was created by AutoCAD == 0 degree
     assert 540 == edge.end_angle  # this value was created by AutoCAD == 180 degree
-    assert 0 == edge.is_counter_clockwise
+    assert 0 == edge.ccw
 
     edge = path.edges[4]
     assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 5. edge"
@@ -221,7 +237,7 @@ def test_add_edge_path(edge_hatch):
     path = edge_hatch.paths.add_edge_path()
     assert 'EdgePath' == path.PATH_TYPE, "created wrong path type"
     path.add_line((0, 0), (10, 0))
-    path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, is_counter_clockwise=1)
+    path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, ccw=True)
     path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180)
     path.add_line((10, 0), (0, 0))
     # exit with statement and create DXF tags
@@ -238,7 +254,7 @@ def test_add_edge_path(edge_hatch):
     assert 5 == edge.radius
     assert 270 == edge.start_angle
     assert 450 == edge.end_angle
-    assert edge.is_counter_clockwise == 1
+    assert edge.ccw is True
 
     edge = path.edges[2]
     assert 'EllipseEdge' == edge.EDGE_TYPE, "invalid edge type for 3. edge"
@@ -247,7 +263,7 @@ def test_add_edge_path(edge_hatch):
     assert .2 == edge.ratio
     assert 0 == edge.start_angle
     assert 180 == edge.end_angle
-    assert edge.is_counter_clockwise == 0
+    assert edge.ccw is True
 
     edge = path.edges[3]
     assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 4. edge"
@@ -258,7 +274,7 @@ def test_add_edge_path(edge_hatch):
 def test_edge_path_transform_interface(hatch, m44):
     path = hatch.paths.add_edge_path()
     path.add_line((0, 0), (10, 0))
-    path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, is_counter_clockwise=1)
+    path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, ccw=1)
     path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180)
     spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, rational=1, periodic=1)
     # the following values do not represent a mathematically valid spline

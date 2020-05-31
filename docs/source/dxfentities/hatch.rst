@@ -236,9 +236,9 @@ Hatch Boundary Helper Classes
 
     .. automethod:: add_line(start, end) -> LineEdge
 
-    .. automethod:: add_arc(center, radius=1., start_angle=0., end_angle=360., is_counter_clockwise=0) -> ArcEdge
+    .. automethod:: add_arc(center, radius=1., start_angle=0., end_angle=360., ccw:bool=True) -> ArcEdge
 
-    .. automethod:: add_ellipse(center, major_axis_vector=(1., 0.), minor_axis_length=1., start_angle=0., end_angle=360., is_counter_clockwise=0) -> EllipsePath
+    .. automethod:: add_ellipse(center, major_axis_vector=(1., 0.), minor_axis_length=1., start_angle=0., end_angle=360., ccw:bool=True) -> EllipsePath
 
     .. automethod:: add_spline(fit_points=None, control_points=None, knot_values=None, weights=None, degree=3, rational=0, periodic=0) -> SplinePath
 
@@ -276,9 +276,9 @@ Hatch Boundary Helper Classes
 
         Arc end angle in degrees. (read/write)
 
-    .. attribute:: is_counter_clockwise
+    .. attribute:: ccw
 
-        ``1`` for counter clockwise arc else ``0``. (read/write)
+        ``True`` for counter clockwise arc else ``False``. (read/write)
 
 
 .. class:: EllipseEdge
@@ -305,9 +305,9 @@ Hatch Boundary Helper Classes
 
         Ellipse end angle in degrees. (read/write)
 
-    .. attribute:: is_counter_clockwise
+    .. attribute:: ccw
 
-        ``1`` for counter clockwise ellipse else ``0``. (read/write)
+        ``True`` for counter clockwise ellipse else ``False``. (read/write)
 
 
 .. class:: SplineEdge

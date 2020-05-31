@@ -6,7 +6,7 @@ from contextlib import contextmanager
 import math
 import copy
 import warnings
-from ezdxf.math import Vector, Vec2, Matrix44, angle_to_param, param_to_angle
+from ezdxf.math import Vector, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
@@ -679,7 +679,7 @@ class BoundaryPaths:
         for path in self.paths:
             path.transform(ocs, elevation=elevation)
 
-    def arc_edges_to_ellipse_edges(self):
+    def arc_edges_to_ellipse_edges(self) -> None:
         """
         Convert polyline paths with bulge values to edge paths with line and arc edges if necessary and then
         convert arc edges to ellipse edges.
@@ -702,13 +702,15 @@ class BoundaryPaths:
                     arc.center, start_angle, end_angle, arc.radius = bulge_to_arc(prev_point, point, prev_bulge)
                     chk_point = arc.center + Vec2.from_angle(start_angle, arc.radius)
                     if chk_point.isclose(prev_point, abs_tol=1e-9):
-                        arc.is_counter_clockwise = 1
+                        arc.ccw = 1
                     else:
                         start_angle += math.pi
                         end_angle += math.pi
-                        arc.is_counter_clockwise = 0
+                        arc.ccw = 0
                     arc.start_angle = math.degrees(start_angle) % 360.0
                     arc.end_angle = math.degrees(end_angle) % 360.0
+                    if math.isclose(arc.start_angle, arc.end_angle) and math.isclose(arc.start_angle, 0):
+                        arc.end_angle = 360.0
                     yield arc
                 else:
                     line = LineEdge()
@@ -735,7 +737,7 @@ class BoundaryPaths:
             # todo: OCS transformation?
             ellipse.start_angle = arc.start_angle
             ellipse.end_angle = arc.end_angle
-            ellipse.is_counter_clockwise = arc.is_counter_clockwise
+            ellipse.ccw = arc.ccw
             return ellipse
 
         for path_index, path in enumerate(self.paths):
@@ -748,15 +750,35 @@ class BoundaryPaths:
                     if edge.EDGE_TYPE == 'ArcEdge':
                         edges[edge_index] = to_ellipse(edge)
 
-    def to_spline_edges(self):
+    def ellipse_edges_to_spline_edges(self, num: int = 32) -> None:
         """
         Convert all ellipse edges to spline edges (approximation).
+
+        Args:
+            num: count of control points for a **full** ellipse, partial ellipses have proportional fewer control points
+                 but at least 3.
 
         (internal API)
         """
 
-        def to_spline_edge(e) -> SplineEdge:
-            return e
+        def to_spline_edge(e: EllipseEdge) -> SplineEdge:
+            # No OCS transformation needed, source ellipse and target spline reside in the same OCS.
+            ellipse = ConstructionEllipse(
+                center=e.center, major_axis=e.major_axis, ratio=e.ratio,
+                start=e.start_param, end=e.end_param,
+            )
+            # start- and end params maybe swapped
+            end = ellipse.end_param
+            if end < ellipse.start_param:
+                end += math.tau
+            param_span = end - ellipse.start_param
+            count = max(int(float(num) * param_span / math.tau), 3)
+            tool = BSpline.from_ellipse(ellipse, count)
+            spline = SplineEdge()
+            spline.degree = tool.degree
+            spline.control_points = Vec2.list(tool.control_points)
+            spline.knot_values = tool.knots()
+            return spline
 
         for path_index, path in enumerate(self.paths):
             if path.PATH_TYPE == 'EdgePath':
@@ -764,6 +786,18 @@ class BoundaryPaths:
                 for edge_index, edge in enumerate(edges):
                     if edge.EDGE_TYPE == 'EllipseEdge':
                         edges[edge_index] = to_spline_edge(edge)
+
+    def all_to_spline_edges(self, num: int = 32) -> None:
+        """ Convert all bulge, arc and ellipse edges to spline edges (approximation).
+
+        Args:
+            num: count of control points for a **full** ellipse, partial ellipses have proportional fewer control points
+                 but at least 3.
+
+        (internal API)
+        """
+        self.arc_edges_to_ellipse_edges()
+        self.ellipse_edges_to_spline_edges(num)
 
     def has_critical_elements(self) -> bool:
         """ Returns ``True`` if any boundary path has bulge values or arc edges or ellipse edges.
@@ -943,22 +977,16 @@ class EdgePath:
                 radius: float = 1.,
                 start_angle: float = 0.,
                 end_angle: float = 360.,
-                is_counter_clockwise: int = 0) -> 'ArcEdge':
+                ccw: bool = True) -> 'ArcEdge':
         """
         Add an :class:`ArcEdge`.
-
-        :param tuple center:
-        :param float radius: radius of circle
-        :param float start_angle: start angle of arc in degrees
-        :param float end_angle: end angle of arc in degrees
-        :param int is_counter_clockwise: 1 for yes 0 for no
 
         Args:
             center: center point of arc, ``(x, y)`` tuple
             radius: radius of circle
             start_angle: start angle of arc in degrees
             end_angle: end angle of arc in degrees
-            is_counter_clockwise: ``1`` for counter clockwise ``0`` for clockwise orientation
+            ccw: ``True`` for counter clockwise ``False`` for clockwise orientation
 
         """
         arc = ArcEdge()
@@ -966,7 +994,7 @@ class EdgePath:
         arc.radius = radius
         arc.start_angle = start_angle
         arc.end_angle = end_angle
-        arc.is_counter_clockwise = 1 if bool(is_counter_clockwise) else 0
+        arc.ccw = bool(ccw)
         self.edges.append(arc)
         return arc
 
@@ -975,7 +1003,7 @@ class EdgePath:
                     ratio: float = 1.,
                     start_angle: float = 0.,
                     end_angle: float = 360.,
-                    is_counter_clockwise: int = 0) -> 'EllipseEdge':
+                    ccw: bool = True) -> 'EllipseEdge':
         """
         Add an :class:`EllipseEdge`.
 
@@ -985,7 +1013,7 @@ class EdgePath:
             ratio: ratio of minor axis to major axis as float
             start_angle: start angle of arc in degrees
             end_angle: end angle of arc in degrees
-            is_counter_clockwise: ``1`` for counter clockwise ``0`` for clockwise orientation
+            ccw: ``True`` for counter clockwise ``False`` for clockwise orientation
 
         """
         if ratio > 1.:
@@ -996,7 +1024,7 @@ class EdgePath:
         ellipse.ratio = ratio
         ellipse.start_angle = start_angle
         ellipse.end_angle = end_angle
-        ellipse.is_counter_clockwise = is_counter_clockwise
+        ellipse.ccw = bool(ccw)
         self.edges.append(ellipse)
         return ellipse
 
@@ -1125,7 +1153,7 @@ class ArcEdge:
         self.radius: float = 1.
         self.start_angle: float = 0.
         self.end_angle: float = 360.
-        self.is_counter_clockwise: int = 0
+        self.ccw: bool = True
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'ArcEdge':
@@ -1141,7 +1169,7 @@ class ArcEdge:
             elif code == 51:
                 edge.end_angle = value
             elif code == 73:
-                edge.is_counter_clockwise = value
+                edge.ccw = bool(value)
         return edge
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
@@ -1152,7 +1180,7 @@ class ArcEdge:
         tagwriter.write_tag2(40, self.radius)
         tagwriter.write_tag2(50, self.start_angle)
         tagwriter.write_tag2(51, self.end_angle)
-        tagwriter.write_tag2(73, self.is_counter_clockwise)
+        tagwriter.write_tag2(73, int(self.ccw))
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         self.center = ocs.transform_2d_vertex(self.center, elevation)
@@ -1170,7 +1198,23 @@ class EllipseEdge:
         self.ratio: float = 1.
         self.start_angle: float = 0.  # start param, not a real angle
         self.end_angle: float = 360.  # end param, not a real angle
-        self.is_counter_clockwise: int = 0
+        self.ccw: bool = True
+
+    @property
+    def start_param(self) -> float:
+        return angle_to_param(self.ratio, math.radians(self.start_angle))
+
+    @start_param.setter
+    def start_param(self, param: float) -> None:
+        self.start_angle = math.degrees(param_to_angle(self.ratio, param))
+
+    @property
+    def end_param(self) -> float:
+        return angle_to_param(self.ratio, math.radians(self.end_angle))
+
+    @end_param.setter
+    def end_param(self, param: float) -> None:
+        self.end_angle = math.degrees(param_to_angle(self.ratio, param))
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'EllipseEdge':
@@ -1188,7 +1232,7 @@ class EllipseEdge:
             elif code == 51:
                 edge.end_angle = value
             elif code == 73:
-                edge.is_counter_clockwise = value
+                edge.ccw = bool(value)
         return edge
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
@@ -1202,34 +1246,32 @@ class EllipseEdge:
         tagwriter.write_tag2(40, self.ratio)
         tagwriter.write_tag2(50, self.start_angle)
         tagwriter.write_tag2(51, self.end_angle)
-        tagwriter.write_tag2(73, self.is_counter_clockwise)
+        tagwriter.write_tag2(73, int(self.ccw))
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         # todo: start- and end param adjustment still incorrect for non-uniform scaling (axis transformation)
         ocs_to_wcs = ocs.old_ocs.to_wcs
-        start_param = angle_to_param(self.ratio, math.radians(self.start_angle))
-        end_param = angle_to_param(self.ratio, math.radians(self.end_angle))
         e = ConstructionEllipse(
             center=ocs_to_wcs(Vector(self.center).replace(z=elevation)),
             major_axis=ocs_to_wcs(Vector(self.major_axis)),
             extrusion=ocs.old_extrusion,
             ratio=self.ratio,
-            start=start_param,
-            end=end_param,
+            start=self.start_param,
+            end=self.end_param,
         )
         e.transform(ocs.m)
         wcs_to_ocs = ocs.new_ocs.from_wcs
         self.center = wcs_to_ocs(e.center).vec2
         self.major_axis = wcs_to_ocs(e.major_axis).vec2
         self.ratio = e.ratio
-        self.start_angle = math.degrees(param_to_angle(e.ratio, e.start_param))
-        self.end_angle = math.degrees(param_to_angle(e.ratio, e.end_param))
+        self.start_param = e.start_param
+        self.end_param = e.end_param
         if ocs.new_extrusion.isclose(e.extrusion, abs_tol=1e-9):
             # ellipse extrusion matches new hatch extrusion
             pass
         elif ocs.new_extrusion.isclose(-e.extrusion, abs_tol=1e-9):
             # ellipse extrusion is opposite to new hatch extrusion
-            self.is_counter_clockwise = 1 - int(self.is_counter_clockwise)
+            self.ccw = bool(1 - int(self.ccw))
         else:
             raise ArithmeticError('Invalid EllipseEdge() transformation, please send bug report.')
 

@@ -341,9 +341,13 @@ def main_uniform_hatch_polyline(layout):
         layout.add_entity(hatch)
 
 
-def main_non_uniform_hatch_polyline(layout):
+def main_non_uniform_hatch_polyline(layout, spline=False):
     entitydb = layout.doc.entitydb
     hatch, lwpolyline = hatch_polyline(layout)
+    if spline:
+        hatch.paths.arc_edges_to_ellipse_edges()
+        hatch.paths.ellipse_edges_to_spline_edges()
+
     m = Matrix44.chain(
         Matrix44.scale(-1.1, 1.1, 1),
         Matrix44.z_rotate(math.radians(10)),
@@ -358,7 +362,7 @@ def main_non_uniform_hatch_polyline(layout):
         layout.add_entity(hatch)
 
 
-def main_ellipse_hatch(layout):
+def main_ellipse_hatch(layout, spline=False):
     def draw_ellipse_axis(ellipse):
         center = ellipse.center
         major_axis = ellipse.major_axis
@@ -368,7 +372,9 @@ def main_ellipse_hatch(layout):
     hatch = cast(Hatch, layout.add_hatch(color=1))
     path = hatch.paths.add_edge_path()
     path.add_line((0, 0), (5, 0))
-    path.add_ellipse((2.5, 0), (2.5, 0), ratio=.5, start_angle=0, end_angle=180, is_counter_clockwise=1)
+    path.add_ellipse((2.5, 0), (2.5, 0), ratio=.5, start_angle=0, end_angle=180, ccw=1)
+    if spline:
+        hatch.paths.ellipse_edges_to_spline_edges()
 
     chk_ellipse, chk_vertices, _ = ellipse((2.5, 0), ratio=0.5, start=0, end=math.pi)
     chk_ellipse, chk_vertices = synced_translation(chk_ellipse, chk_vertices, dx=2.5)
@@ -406,6 +412,6 @@ if __name__ == '__main__':
     # main_insert2(msp)
     # main_uniform_hatch_polyline(msp)
     # main_ellipse_hatch(msp)
-    main_non_uniform_hatch_polyline(msp)
+    main_non_uniform_hatch_polyline(msp, spline=True)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')

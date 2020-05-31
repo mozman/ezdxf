@@ -21,22 +21,24 @@ Version 0.13b0 - dev
    ATTRIB, ATTDEF, INSERT, SOLID, TRACE, 3DFACE, HATCH, IMAGE, SHAPE, XLINE, RAY
    
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
+- NEW: `DXFGraphic.unlink_from_layout()` to unlink entity from associated layout
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
 - NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
-- NEW: `Ellipse.construction_tool()`, return `ConstructionEllipse()`
+- NEW: `ezdxf.math.ConstructionEllipse()`
+- NEW: `Ellipse.construction_tool()`, return ellipse data as `ConstructionEllipse()`
 - NEW: `Ellipse.apply_construction_tool(e)`, apply `ConstructionEllipse()` data
-- NEW: `Spline.construction_tool()`, return `ezdxf.math.BSpline()`
+- NEW: `Spline.construction_tool()`, return spline data as `ezdxf.math.BSpline()`
 - NEW: `Spline.apply_construction_tool(s)`, apply `ezdxf.math.BSpline()` data
 - NEW: `UCS` and `OCS` uses `Matrix44`for transformations
 - NEW: `Hatch.set_pattern_scale()` to set scaling of pattern definition
 - NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition
-- NEW: `DXFGraphic.unlink_from_layout()` to unlink entity from associated layout
-- NEW: `ezdxf.math.ConstructionEllipse()`
 - NEW: `BSpline.from_fit_points()` returns a B-Spline from fit points
 - NEW: `BSpline.from_arc()` returns a B-Spline approximation for an arc defined by `ConstructionArc()`
 - NEW: `BSpline.from_ellipse()` returns a B-Spline approximation for an ellipse defined by `ConstructionEllipse()`
 - CHANGE: `Hatch` full support for rotated patterns.
 - CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
+- CHANGE: `Hatch.path.add_arc` renamed argument `is_counter_clockwise` to `ccw`, type `bool` and `True` by default 
+- CHANGE: `Hatch.path.add_ellipse` renamed argument `is_counter_clockwise` to `ccw`, type `bool` and `True` by default 
 - CHANGE: renamed 2D `ConstructionXXX.move()` methods to `translate()`
 - CHANGE: renamed old `Insert.scale()` to `Insert.set_scale()`, name conflict with transformation interface
 - REMOVED: `ezdxf.math.Matrix33` class  
