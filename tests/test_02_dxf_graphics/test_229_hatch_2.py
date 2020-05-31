@@ -158,7 +158,7 @@ def test_arc_to_ellipse_edges(hatch):
     assert edge.end == (0, 0)
 
 
-def _test_ellipse_edges_to_spline_edges(hatch):
+def test_ellipse_edges_to_spline_edges(hatch):
     hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True)
     hatch.paths.all_to_spline_edges(num=32)
     path = hatch.paths[0]
@@ -170,8 +170,8 @@ def _test_ellipse_edges_to_spline_edges(hatch):
 
     edge = path.edges[2]
     assert edge.EDGE_TYPE == 'SplineEdge'
-    assert edge.control_points[0] == (10, 10)
-    assert edge.control_points[-1] == (0, 10)
+    assert Vector(10, 10).isclose(edge.control_points[0])
+    assert Vector(0, 10).isclose(edge.control_points[-1])
 
 
 def test_edge_path_count(edge_hatch):

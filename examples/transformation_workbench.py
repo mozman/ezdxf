@@ -345,8 +345,7 @@ def main_non_uniform_hatch_polyline(layout, spline=False):
     entitydb = layout.doc.entitydb
     hatch, lwpolyline = hatch_polyline(layout)
     if spline:
-        hatch.paths.arc_edges_to_ellipse_edges()
-        hatch.paths.ellipse_edges_to_spline_edges()
+        hatch.paths.all_to_spline_edges()
 
     m = Matrix44.chain(
         Matrix44.scale(-1.1, 1.1, 1),

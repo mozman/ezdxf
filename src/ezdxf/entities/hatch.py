@@ -684,9 +684,7 @@ class BoundaryPaths:
         Convert polyline paths with bulge values to edge paths with line and arc edges if necessary and then
         convert arc edges to ellipse edges.
 
-        (internal API)
         """
-
         def _edges(points) -> Iterable[Union[LineEdge, ArcEdge]]:
             prev_point = None
             prev_bulge = None
@@ -758,16 +756,19 @@ class BoundaryPaths:
             num: count of control points for a **full** ellipse, partial ellipses have proportional fewer control points
                  but at least 3.
 
-        (internal API)
         """
-
         def to_spline_edge(e: EllipseEdge) -> SplineEdge:
             # No OCS transformation needed, source ellipse and target spline reside in the same OCS.
+            start_param = e.start_param
+            end_param = e.end_param
+            if not e.ccw:
+                # I don't know why this works, but so far it does.
+                start_param += math.pi
+                end_param += math.pi
             ellipse = ConstructionEllipse(
                 center=e.center, major_axis=e.major_axis, ratio=e.ratio,
-                start=e.start_param, end=e.end_param,
+                start=start_param, end=end_param,
             )
-            # start- and end params maybe swapped
             end = ellipse.end_param
             if end < ellipse.start_param:
                 end += math.tau
@@ -776,7 +777,12 @@ class BoundaryPaths:
             tool = BSpline.from_ellipse(ellipse, count)
             spline = SplineEdge()
             spline.degree = tool.degree
-            spline.control_points = Vec2.list(tool.control_points)
+
+            cp = Vec2.list(tool.control_points)
+            if not e.ccw:
+                # I don't know why this works, but so far it does.
+                cp = list(reversed(cp))
+            spline.control_points = cp
             spline.knot_values = tool.knots()
             return spline
 
@@ -791,10 +797,9 @@ class BoundaryPaths:
         """ Convert all bulge, arc and ellipse edges to spline edges (approximation).
 
         Args:
-            num: count of control points for a **full** ellipse, partial ellipses have proportional fewer control points
-                 but at least 3.
+            num: count of control points for a **full** circle/ellipse, partial circles/ellipses have
+                 proportional fewer control points but at least 3.
 
-        (internal API)
         """
         self.arc_edges_to_ellipse_edges()
         self.ellipse_edges_to_spline_edges(num)
