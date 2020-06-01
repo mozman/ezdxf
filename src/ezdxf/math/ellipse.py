@@ -292,6 +292,22 @@ class ConstructionEllipse:
         layout.add_entity(e)
         return e
 
+    def to_ocs(self) -> 'ConstructionEllipse':
+        """
+        Returns ellipse parameters as OCS representation.
+
+        OCS elevation is stored in :attr:`center.z`.
+
+        """
+        ocs = OCS(self.extrusion)
+        return self.__class__(
+            center=ocs.from_wcs(self.center),
+            major_axis=ocs.from_wcs(self.major_axis).replace(z=0),
+            ratio=self.ratio,
+            start=self.start_param,
+            end=self.end_param,
+        )
+
 
 def mid_param(start: float, end: float) -> float:
     if end < start:

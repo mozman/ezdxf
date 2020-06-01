@@ -1262,36 +1262,47 @@ class EllipseEdge:
             major_axis=Vector(self.major_axis),
             extrusion=Vector(0, 0, 1),
             ratio=self.ratio,
-            start=self.start_param,
-            end=self.end_param,
+            # ConstructionEllipse() is always in ccw orientation
+            start=self.start_param if self.ccw else self.end_param,
+            end=self.end_param if self.ccw else self.start_param,
         )
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
-        ocs_to_wcs = ocs.old_ocs.to_wcs
         e = self.construction_tool()
 
-        # Transform OCS representation to WCS
+        # Transform old OCS representation to WCS
+        ocs_to_wcs = ocs.old_ocs.to_wcs
         e.center = ocs_to_wcs(e.center.replace(z=elevation))
         e.major_axis = ocs_to_wcs(e.major_axis)
         e.extrusion = ocs.old_extrusion
 
         # Apply matrix transformation
         e.transform(ocs.m)
+
+        # Transform WCS representation to new OCS
         wcs_to_ocs = ocs.new_ocs.from_wcs
         self.center = wcs_to_ocs(e.center).vec2
         self.major_axis = wcs_to_ocs(e.major_axis).vec2
         self.ratio = e.ratio
-        self.start_param = e.start_param
-        self.end_param = e.end_param
+
+        # ConstructionEllipse() is always in ccw orientation
+        self.start_param = e.start_param if self.ccw else e.end_param
+        self.end_param = e.end_param if self.ccw else e.start_param
+
         if ocs.new_extrusion.isclose(e.extrusion, abs_tol=1e-9):
             # ellipse extrusion matches new hatch extrusion
             pass
         elif ocs.new_extrusion.isclose(-e.extrusion, abs_tol=1e-9):
             # ellipse extrusion is opposite to new hatch extrusion
-            self.ccw = not self.ccw
-            # todo: start- and end param adjustment still incorrect for non-uniform scaling (axis transformation)
+            self.start_angle, self.end_angle = -self.end_angle, -self.start_angle
         else:
             raise ArithmeticError('Invalid EllipseEdge() transformation, please send bug report.')
+
+        # normalize angles in range 0 to 360 degrees
+        self.start_angle = self.start_angle % 360.0
+        self.end_angle = self.end_angle % 360.0
+        if math.isclose(self.end_angle, 0):
+            self.end_angle = 360.0
 
 
 class SplineEdge:

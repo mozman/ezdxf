@@ -641,6 +641,8 @@ ConstructionEllipse
 
     .. autoattribute:: end_point
 
+    .. automethod:: to_ocs() -> ConstructionEllipse
+
     .. automethod:: params
 
     .. automethod:: vertices

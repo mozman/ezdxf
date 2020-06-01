@@ -365,7 +365,7 @@ def main_ellipse_hatch(layout, spline=False):
     def draw_ellipse_axis(ellipse):
         center = ellipse.center
         major_axis = ellipse.major_axis
-        msp.add_line(center, center+major_axis)
+        msp.add_line(center, center + major_axis)
 
     entitydb = layout.doc.entitydb
     hatch = cast(Hatch, layout.add_hatch(color=1))
@@ -400,18 +400,37 @@ def main_ellipse_hatch(layout, spline=False):
         add(layout, chk_ellipse, chk_vertices)
 
 
+def add_hatch_for_all_ellipses(layout):
+    for ellipse in layout.query('ELLIPSE'):
+        hatch = layout.add_hatch(color=2, dxfattribs={
+            'extrusion': ellipse.dxf.extrusion,
+            'layer': 'HATCH',
+        })
+        path = hatch.paths.add_edge_path()
+        e = ellipse.construction_tool().to_ocs()
+        hatch.dxf.elevation = e.center.replace(x=0, y=0)
+        edge = path.add_ellipse(
+            center=e.center.vec2,
+            major_axis=e.major_axis.vec2,
+            ratio=e.ratio,
+        )
+        edge.start_param = e.start_param
+        edge.end_param = e.end_param
+
+
 if __name__ == '__main__':
     doc = ezdxf.new('R2000', setup=True)
     setup_csys_blk('UCS')
     msp = doc.modelspace()
     # main_ellipse(msp)
     # main_multi_ellipse(msp)
+    # add_hatch_for_all_ellipses(msp)
     # main_text(msp)
     # main_mtext(msp)
     # main_insert(msp)
     # main_insert2(msp)
     # main_uniform_hatch_polyline(msp)
-    main_ellipse_hatch(msp, spline=True)
+    main_ellipse_hatch(msp, spline=False)
     # main_non_uniform_hatch_polyline(msp, spline=True)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')
