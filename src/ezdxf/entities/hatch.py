@@ -6,7 +6,7 @@ from contextlib import contextmanager
 import math
 import copy
 import warnings
-from ezdxf.math import Vector, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline
+from ezdxf.math import Vector, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline, reflect_angle_x_deg
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
@@ -685,6 +685,7 @@ class BoundaryPaths:
         convert arc edges to ellipse edges.
 
         """
+
         def _edges(points) -> Iterable[Union[LineEdge, ArcEdge]]:
             prev_point = None
             prev_bulge = None
@@ -757,6 +758,7 @@ class BoundaryPaths:
                  but at least 3.
 
         """
+
         def to_spline_edge(e: EllipseEdge) -> SplineEdge:
             # No OCS transformation needed, source ellipse and target spline reside in the same OCS.
             start_param = e.start_param
@@ -1253,17 +1255,27 @@ class EllipseEdge:
         tagwriter.write_tag2(51, self.end_angle)
         tagwriter.write_tag2(73, int(self.ccw))
 
-    def transform(self, ocs: OCSTransform, elevation: float) -> None:
-        # todo: start- and end param adjustment still incorrect for non-uniform scaling (axis transformation)
-        ocs_to_wcs = ocs.old_ocs.to_wcs
-        e = ConstructionEllipse(
-            center=ocs_to_wcs(Vector(self.center).replace(z=elevation)),
-            major_axis=ocs_to_wcs(Vector(self.major_axis)),
-            extrusion=ocs.old_extrusion,
+    def construction_tool(self):
+        """ Returns ConstructionEllipse() for the OCS representation. """
+        return ConstructionEllipse(
+            center=Vector(self.center),
+            major_axis=Vector(self.major_axis),
+            extrusion=Vector(0, 0, 1),
             ratio=self.ratio,
             start=self.start_param,
             end=self.end_param,
         )
+
+    def transform(self, ocs: OCSTransform, elevation: float) -> None:
+        ocs_to_wcs = ocs.old_ocs.to_wcs
+        e = self.construction_tool()
+
+        # Transform OCS representation to WCS
+        e.center = ocs_to_wcs(e.center.replace(z=elevation))
+        e.major_axis = ocs_to_wcs(e.major_axis)
+        e.extrusion = ocs.old_extrusion
+
+        # Apply matrix transformation
         e.transform(ocs.m)
         wcs_to_ocs = ocs.new_ocs.from_wcs
         self.center = wcs_to_ocs(e.center).vec2
@@ -1276,7 +1288,8 @@ class EllipseEdge:
             pass
         elif ocs.new_extrusion.isclose(-e.extrusion, abs_tol=1e-9):
             # ellipse extrusion is opposite to new hatch extrusion
-            self.ccw = bool(1 - int(self.ccw))
+            self.ccw = not self.ccw
+            # todo: start- and end param adjustment still incorrect for non-uniform scaling (axis transformation)
         else:
             raise ArithmeticError('Invalid EllipseEdge() transformation, please send bug report.')
 
