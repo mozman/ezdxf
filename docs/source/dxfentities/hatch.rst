@@ -161,11 +161,17 @@ Hatch Boundary Helper Classes
 
     .. automethod:: add_edge_path(flags=1) -> EdgePath
 
+    .. automethod:: polyline_to_edge_path
+
     .. automethod:: arc_edges_to_ellipse_edges
 
     .. automethod:: ellipse_edges_to_spline_edges
 
+    .. automethod:: spline_edges_to_line_edges
+
     .. automethod:: all_to_spline_edges
+
+    .. automethod:: all_to_line_edges
 
     .. automethod:: clear
 

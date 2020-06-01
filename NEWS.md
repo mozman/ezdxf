@@ -32,9 +32,11 @@ Version 0.13b2 - dev
 - NEW: `UCS` and `OCS` uses `Matrix44`for transformations
 - NEW: `Hatch.set_pattern_scale()` to set scaling of pattern definition
 - NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition
-- NEW: `Hatch.paths.arc_edges_to_ellipse_edges()` convert bulges and arcs to ellipse edges
+- NEW: `Hatch.paths.polyline_to_edge_path()` convert polyline paths with bulge values to edge paths with lines and arcs
+- NEW: `Hatch.paths.arc_edges_to_ellipse_edges()` convert arc edges to ellipse edges
 - NEW: `Hatch.paths.ellipse_edges_to_spline_edges()` convert ellipse edges to spline edges
-- NEW: `Hatch.paths.all_to_spline_edges()` convert all curves to spline edges
+- NEW: `Hatch.paths.all_to_spline_edges()` convert all curves to approximated spline edges
+- NEW: `Hatch.paths.all_to_line_edges()` convert all curves to approximated line edges
 - NEW: `BSpline.from_fit_points()` returns a B-Spline from fit points
 - NEW: `BSpline.from_arc()` returns a B-Spline approximation for an arc defined by `ConstructionArc()`
 - NEW: `BSpline.from_ellipse()` returns a B-Spline approximation for an ellipse defined by `ConstructionEllipse()`

@@ -373,7 +373,7 @@ def main_ellipse_hatch(layout, spline=False):
     path.add_line((0, 0), (5, 0))
     path.add_ellipse((2.5, 0), (2.5, 0), ratio=.5, start_angle=0, end_angle=180, ccw=1)
     if spline:
-        hatch.paths.ellipse_edges_to_spline_edges()
+        hatch.paths.all_to_line_edges(spline_factor=2)
 
     chk_ellipse, chk_vertices, _ = ellipse((2.5, 0), ratio=0.5, start=0, end=math.pi)
     chk_ellipse, chk_vertices = synced_translation(chk_ellipse, chk_vertices, dx=2.5)
@@ -430,7 +430,7 @@ if __name__ == '__main__':
     # main_insert(msp)
     # main_insert2(msp)
     # main_uniform_hatch_polyline(msp)
-    main_ellipse_hatch(msp, spline=False)
+    main_ellipse_hatch(msp, spline=True)
     # main_non_uniform_hatch_polyline(msp, spline=True)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')

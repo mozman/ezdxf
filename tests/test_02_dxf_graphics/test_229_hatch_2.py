@@ -133,9 +133,12 @@ def test_polyline_path_transform_interface(hatch, m44):
 
 def test_arc_to_ellipse_edges(hatch):
     hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True)
-    hatch.paths.arc_edges_to_ellipse_edges()
+
+    hatch.paths.polyline_to_edge_path()
     path = hatch.paths[0]
     assert path.PATH_TYPE == 'EdgePath', 'polyline path not converted to edge path'
+
+    hatch.paths.arc_edges_to_ellipse_edges()
 
     edge = path.edges[0]
     assert edge.EDGE_TYPE == 'EllipseEdge'

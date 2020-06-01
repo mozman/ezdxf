@@ -6,13 +6,13 @@ from contextlib import contextmanager
 import math
 import copy
 import warnings
-from ezdxf.math import Vector, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline, reflect_angle_x_deg
+from ezdxf.math import Vector, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags, group_tags
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010, DXFStructureError
 from ezdxf.lldxf import const
 from ezdxf.math.bspline import bspline_control_frame
 from ezdxf.math.bulge import bulge_to_arc
@@ -674,18 +674,20 @@ class BoundaryPaths:
 
         """
         if not ocs.scale_uniform:
+            self.polyline_to_edge_path(just_with_bulge=True)
             self.arc_edges_to_ellipse_edges()
 
         for path in self.paths:
             path.transform(ocs, elevation=elevation)
 
-    def arc_edges_to_ellipse_edges(self) -> None:
+    def polyline_to_edge_path(self, just_with_bulge=True) -> None:
         """
-        Convert polyline paths with bulge values to edge paths with line and arc edges if necessary and then
-        convert arc edges to ellipse edges.
+        Convert polyline paths with bulge values to edge paths with line and arc edges.
+
+        Args:
+            just_with_bulge: convert only polyline paths with bulge values if ``True``
 
         """
-
         def _edges(points) -> Iterable[Union[LineEdge, ArcEdge]]:
             prev_point = None
             prev_bulge = None
@@ -728,21 +730,25 @@ class BoundaryPaths:
             edge_path.edges = list(_edges(vertices))
             return edge_path
 
+        for path_index, path in enumerate(self.paths):
+            if path.PATH_TYPE == 'PolylinePath':
+                if just_with_bulge and not path.has_bulge():
+                    continue
+                self.paths[path_index] = to_edge_path(path)
+
+    def arc_edges_to_ellipse_edges(self) -> None:
+        """ Convert all arc edges to ellipse edges. """
         def to_ellipse(arc: ArcEdge) -> EllipseEdge:
             ellipse = EllipseEdge()
             ellipse.center = arc.center
             ellipse.ratio = 1.0
             ellipse.major_axis = (arc.radius, 0.0)
-            # todo: OCS transformation?
             ellipse.start_angle = arc.start_angle
             ellipse.end_angle = arc.end_angle
             ellipse.ccw = arc.ccw
             return ellipse
 
-        for path_index, path in enumerate(self.paths):
-            if path.PATH_TYPE == 'PolylinePath' and path.has_bulge():
-                path = to_edge_path(path)
-                self.paths[path_index] = path
+        for path in self.paths:
             if path.PATH_TYPE == 'EdgePath':
                 edges = path.edges
                 for edge_index, edge in enumerate(edges):
@@ -795,6 +801,45 @@ class BoundaryPaths:
                     if edge.EDGE_TYPE == 'EllipseEdge':
                         edges[edge_index] = to_spline_edge(edge)
 
+    def spline_edges_to_line_edges(self, factor: int = 3) -> None:
+        """ Convert all spline edges to line edges (approximation).
+
+        Args:
+            factor: count of approximation segments = count of control points x factor
+
+        """
+
+        def to_line_edges(spline_edge):
+            weights = spline_edge.weights
+            if len(spline_edge.control_points):
+                bspline = BSpline(
+                    control_points=spline_edge.control_points,
+                    order=spline_edge.degree + 1,
+                    knots=spline_edge.knot_values,
+                    weights=weights if len(weights) else None,
+                )
+            elif len(spline_edge.fit_points):
+                bspline = BSpline.from_fit_points(spline_edge.fit_points, spline_edge.degree)
+            else:
+                raise DXFStructureError('SplineEdge() without control points or fit points.')
+            segments = (max(len(bspline.control_points), 3) - 1) * factor
+            vertices = list(bspline.approximate(segments))
+            for v1, v2 in zip(vertices[:-1], vertices[1:]):
+                edge = LineEdge()
+                edge.start = v1.vec2
+                edge.end = v2.vec2
+                yield edge
+
+        for path in self.paths:
+            if path.PATH_TYPE == 'EdgePath':
+                new_edges = []
+                for edge in path.edges:
+                    if edge.EDGE_TYPE == 'SplineEdge':
+                        new_edges.extend(to_line_edges(edge))
+                    else:
+                        new_edges.append(edge)
+                path.edges = new_edges
+
     def all_to_spline_edges(self, num: int = 32) -> None:
         """ Convert all bulge, arc and ellipse edges to spline edges (approximation).
 
@@ -803,8 +848,24 @@ class BoundaryPaths:
                  proportional fewer control points but at least 3.
 
         """
+        self.polyline_to_edge_path(just_with_bulge=True)
         self.arc_edges_to_ellipse_edges()
         self.ellipse_edges_to_spline_edges(num)
+
+    def all_to_line_edges(self, num: int = 32, spline_factor: int = 3) -> None:
+        """ Convert all bulge, arc and ellipse edges to spline edges and approximate this splines by
+        line edges.
+
+        Args:
+            num: count of control points for a **full** circle/ellipse, partial circles/ellipses have
+                 proportional fewer control points but at least 3.
+            spline_factor: count of spline approximation segments = count of control points x spline_factor
+
+        """
+        self.polyline_to_edge_path(just_with_bulge=True)
+        self.arc_edges_to_ellipse_edges()
+        self.ellipse_edges_to_spline_edges(num)
+        self.spline_edges_to_line_edges(spline_factor)
 
     def has_critical_elements(self) -> bool:
         """ Returns ``True`` if any boundary path has bulge values or arc edges or ellipse edges.
