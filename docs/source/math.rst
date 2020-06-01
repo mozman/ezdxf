@@ -645,6 +645,8 @@ ConstructionEllipse
 
     .. automethod:: vertices
 
+    .. automethod:: params_from_vertices
+
     .. automethod:: dxfattribs
 
     .. automethod:: main_axis_points

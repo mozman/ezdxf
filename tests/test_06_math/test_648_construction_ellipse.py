@@ -186,6 +186,9 @@ def test_vertices():
     for v, r in zip(e.vertices(params), result):
         assert v.isclose(r)
 
+    v1, v2 = e.vertices([0, math.tau])
+    assert v1 == v2
+
 
 def test_tangents():
     e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5, start=0, end=math.pi * 1.5)
@@ -201,3 +204,28 @@ def test_tangents():
     ]
     for v, r in zip(e.tangents(params), result):
         assert v.isclose(r)
+
+
+def test_params_from_vertices_random():
+    center = Vector.random(5)
+    major_axis = Vector.random(5)
+    extrusion = Vector.random()
+    ratio = 0.75
+    e = ConstructionEllipse(center, major_axis, extrusion, ratio)
+
+    params = [random.uniform(0.0001, math.tau - 0.0001) for _ in range(20)]
+    vertices = e.vertices(params)
+    new_params = e.params_from_vertices(vertices)
+    for expected, param in zip(params, new_params):
+        assert math.isclose(expected, param)
+
+    # This creates the same vertex as v1 and v2
+    v1, v2 = e.vertices([0, math.tau])
+    assert v1.isclose(v2)
+
+    # This should create the same param for v1 and v2, but
+    # floating point inaccuracy produces unpredictable results:
+    p1, p2 = e.params_from_vertices((v1, v2))
+
+    assert math.isclose(p1, 0, abs_tol=1e-9) or math.isclose(p1, math.tau, abs_tol=1e-9)
+    assert math.isclose(p2, 0, abs_tol=1e-9) or math.isclose(p2, math.tau, abs_tol=1e-9)

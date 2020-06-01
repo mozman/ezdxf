@@ -222,6 +222,28 @@ class ConstructionEllipse:
             y = math.sin(param) * radius_y * y_axis
             yield center + x + y
 
+    def params_from_vertices(self, vertices: Iterable['Vertex']) -> Iterable[float]:
+        """
+        Yields ellipse params for all given `vertices`.
+
+        The vertex don't has to be exact on the ellipse curve or in the range from start- to end param or even
+        in the ellipse plane. Param is calculated from the intersection point of the ray projected on the ellipse
+        plane from the center of the ellipse through the vertex.
+
+        .. warning::
+
+            An input for start- and end vertex at param 0 and 2*pi return unpredictable results because of
+            floating point inaccuracy, sometimes 0 and sometimes 2*pi.
+
+        """
+        x_axis = self.major_axis.normalize()
+        y_axis = self.minor_axis.normalize()
+        ratio = self.ratio
+        center = self.center
+        for v in Vector.generate(vertices):
+            v -= center
+            yield math.atan2(y_axis.dot(v) / ratio, x_axis.dot(v)) % math.tau
+
     def tangents(self, params: Iterable[float]) -> Iterable[Vector]:
         """
         Yields tangents on ellipse for iterable `params` in WCS as direction vectors.
