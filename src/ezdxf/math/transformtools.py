@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Tuple
 import math
 from .matrix44 import Matrix44
 from .construct2d import sign
-from .vector import Vector, X_AXIS, Y_AXIS
+from .vector import Vector, X_AXIS, Y_AXIS, Vec2
 from .ucs import OCS
 
 if TYPE_CHECKING:
@@ -98,20 +98,17 @@ class OCSTransform:
 
     transform_scale_factor = transform_length
 
-    def transform_vertex(self, vertex: 'Vertex'):
-        """ Returns vertex transformed from old OCS into new OCS.
-        """
+    def transform_vertex(self, vertex: 'Vertex') -> Vector:
+        """ Returns vertex transformed from old OCS into new OCS. """
         return self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(vertex)))
 
-    def transform_2d_vertex(self, vertex: 'Vertex', elevation: float):
-        """ Returns 2d vertex transformed from old OCS into new OCS.
-        """
+    def transform_2d_vertex(self, vertex: 'Vertex', elevation: float) -> Vec2:
+        """ Returns 2D vertex transformed from old OCS into new OCS. """
         v = Vector(vertex).replace(z=elevation)
         return self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(v))).vec2
 
-    def transform_direction(self, direction: 'Vertex'):
-        """ Returns direction transformed from old OCS into new OCS.
-        """
+    def transform_direction(self, direction: 'Vertex') -> Vector:
+        """ Returns direction transformed from old OCS into new OCS. """
         return self.new_ocs.from_wcs(self.m.transform_direction(self.old_ocs.to_wcs(direction)))
 
     def transform_angle(self, angle: float) -> float:

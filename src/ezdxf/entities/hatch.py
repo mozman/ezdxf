@@ -670,7 +670,7 @@ class BoundaryPaths:
     def transform(self, ocs: OCSTransform, elevation: float = 0) -> None:
         """ Transform HATCH boundary paths.
 
-        These paths are 2d elements, placed in to OCS of the HATCH.
+        These paths are 2d elements, placed in the OCS of the HATCH.
 
         """
         if not ocs.scale_uniform:
@@ -682,10 +682,10 @@ class BoundaryPaths:
 
     def polyline_to_edge_path(self, just_with_bulge=True) -> None:
         """
-        Convert polyline paths with bulge values to edge paths with line and arc edges.
+        Convert polyline paths including bulge values to line- and arc edges.
 
         Args:
-            just_with_bulge: convert only polyline paths with bulge values if ``True``
+            just_with_bulge: convert only polyline paths including bulge values if ``True``
 
         """
         def _edges(points) -> Iterable[Union[LineEdge, ArcEdge]]:
@@ -788,7 +788,6 @@ class BoundaryPaths:
 
             cp = Vec2.list(tool.control_points)
             if not e.ccw:
-                # I don't know why this works, but so far it does.
                 cp = list(reversed(cp))
             spline.control_points = cp
             spline.knot_values = tool.knots()
@@ -822,8 +821,8 @@ class BoundaryPaths:
                 bspline = BSpline.from_fit_points(spline_edge.fit_points, spline_edge.degree)
             else:
                 raise DXFStructureError('SplineEdge() without control points or fit points.')
-            segments = (max(len(bspline.control_points), 3) - 1) * factor
-            vertices = list(bspline.approximate(segments))
+            segment_count = (max(len(bspline.control_points), 3) - 1) * factor
+            vertices = list(bspline.approximate(segment_count))
             for v1, v2 in zip(vertices[:-1], vertices[1:]):
                 edge = LineEdge()
                 edge.start = v1.vec2
@@ -868,11 +867,7 @@ class BoundaryPaths:
         self.spline_edges_to_line_edges(spline_factor)
 
     def has_critical_elements(self) -> bool:
-        """ Returns ``True`` if any boundary path has bulge values or arc edges or ellipse edges.
-
-        (internal API)
-
-        """
+        """ Returns ``True`` if any boundary path has bulge values or arc edges or ellipse edges. """
         for path in self.paths:
             if path.PATH_TYPE == 'PolylinePath':
                 return path.has_bulge()
@@ -958,10 +953,7 @@ class PolylinePath:
         self.source_boundary_objects = []
 
     def has_bulge(self) -> bool:
-        for x, y, bulge in self.vertices:
-            if bulge != 0:
-                return True
-        return False
+        return any(bulge for x, y, bulge in self.vertices)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         has_bulge = self.has_bulge()
@@ -1420,7 +1412,7 @@ class SplineEdge:
             for value in self.knot_values:
                 write_tag(40, float(value))
         else:
-            raise const.DXFValueError("SplineEdge: missing required knot values")
+            raise const.DXFStructureError("SplineEdge: missing required knot values")
 
         # build control points
         # control points have to be present and valid, otherwise AutoCAD crashes
