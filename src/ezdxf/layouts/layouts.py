@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Iterable, List, cast, Optional
 import logging
-from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
+from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError, DXFStructureError
 from ezdxf.lldxf.const import MODEL_SPACE_R2000, PAPER_SPACE_R2000, TMP_PAPER_SPACE_NAME
 from ezdxf.lldxf.validator import is_valid_name
 from .layout import Layout, Modelspace, Paperspace
@@ -121,7 +121,10 @@ class Layouts:
         if name in self._layouts:
             return
         block_layout = self.doc.blocks.get(block_record_name)
-        self._new_from_block_layout(name, block_layout, taborder)
+        if block_layout is not None:
+            self._new_from_block_layout(name, block_layout, taborder)
+        else:
+            raise DXFStructureError(f"Missing required BLOCK '{block_record_name}'.")
 
     def _new_from_block_layout(self, name, block_layout, taborder: int) -> 'Layout':
         dxfattribs = {

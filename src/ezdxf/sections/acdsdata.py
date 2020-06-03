@@ -80,7 +80,7 @@ from itertools import islice
 from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 
-if TYPE_CHECKING:  # import forward declarations
+if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing
 
 
@@ -89,8 +89,8 @@ class AcDsDataSection:
 
     def __init__(self, doc: 'Drawing', entities: Iterable[Tags] = None):
         self.doc = doc
-        self.entities = []  # type: List[AcDsData]
-        self.section_info = []  # type: Tags
+        self.entities: List[AcDsData] = []
+        self.section_info: Tags = []
         if entities is not None:
             self.load_tags(iter(entities))
 

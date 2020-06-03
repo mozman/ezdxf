@@ -3,6 +3,7 @@
 # Created: 2020-04-01
 from typing import Dict, Any, Iterable, Callable
 import logging
+import warnings
 from collections import OrderedDict
 from ezdxf.drawing import Drawing
 from ezdxf.tools import codepage
@@ -24,7 +25,7 @@ from .objects_section import load_objects_map
 from .objects import ObjectsDirectory
 from .objects import DwgAppID, load_table_handles, DwgTextStyle, DwgLayer, DwgLinetype
 
-__all__ = ['readfile', 'load', 'document']
+__all__ = ['readfile', 'load']
 logger = logging.getLogger('ezdxf')
 
 
@@ -36,12 +37,11 @@ def readfile(filename: str, crc_check=False) -> 'Drawing':
 
 def load(data: bytes, crc_check=False) -> Drawing:
     """ Load DXF Document from DWG data. """
-    doc = document(data, crc_check)
-    return doc.doc
+    return document(data, crc_check).doc
 
 
 def document(data: bytes, crc_check=False) -> 'DwgDocument':
-    """ Returns DWG Document loader object - just for testing. """
+    """ Returns DWG Document loader object. """
     doc = DwgDocument(data, crc_check=crc_check)
     doc.load()
     return doc
@@ -70,11 +70,6 @@ class DwgDocument:
         # Entity Directory
         self.objects_directory: ObjectsDirectory = ObjectsDirectory()
 
-        self.table_section = dict()
-        self.block_section = dict()
-        self.object_section = dict()
-        self.resolve_resources()
-
     @property
     def entitydb(self):
         return self.doc.entitydb
@@ -91,10 +86,10 @@ class DwgDocument:
 
         doc.classes = ClassesSection(doc)
         doc.tables = TablesSection(doc)
-        # doc.blocks = BlocksSection(doc)
-        # doc.entities = EntitySection(doc)
-        # doc.objects = ObjectsSection(doc)
-        # doc.acdsdata = AcDsDataSection(doc)
+        doc.blocks = BlocksSection(doc)
+        doc.entities = EntitySection(doc)
+        doc.objects = ObjectsSection(doc)
+        doc.acdsdata = AcDsDataSection(doc)
         return doc
 
     def load(self):
@@ -104,6 +99,9 @@ class DwgDocument:
         self.load_tables()
 
         self.set_dxf_header_vars()
+        self.resolve_resources()
+        self.create_required_structures()
+        self.audit()
 
     def load_header(self) -> None:
         hdr_section = load_header_section(self.specs, self.data, self.crc_check)
@@ -219,3 +217,23 @@ class DwgDocument:
                     else:
                         logger.debug(f'DWG Loader: Undefined AppID for app handle #{app_handle}.')
                 entity.xdata.data = new_xdata
+
+    def create_required_structures(self):
+        from ezdxf.layouts import Layouts
+        doc = self.doc  # DXF document
+        if doc.dxfversion in (ACAD_13, ACAD_14):
+            # upgrade to R2000
+            doc.dxfversion = ACAD_2000
+            doc.create_all_arrow_blocks()
+
+        doc.rootdict = doc.objects.rootdict
+        doc.objects.setup_objects_management_tables(doc.rootdict)  # create missing tables
+
+        if len(doc.block_records):
+            warnings.warn('Remove block records check!', category=DeprecationWarning)
+            doc.layouts = Layouts.load(doc)
+
+        doc._finalize_setup()
+
+    def audit(self):
+        pass
