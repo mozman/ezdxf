@@ -219,6 +219,7 @@ class DwgDocument:
                 entity.xdata.data = new_xdata
 
     def create_required_structures(self):
+        # todo: This is a code duplication of the last part from Drawing._load()
         from ezdxf.layouts import Layouts
         doc = self.doc  # DXF document
         if doc.dxfversion in (ACAD_13, ACAD_14):
