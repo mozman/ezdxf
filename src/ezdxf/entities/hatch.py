@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Option
 from contextlib import contextmanager
 import math
 import copy
-from ezdxf.math import Vector, UCS, Vec2
+from ezdxf.math import Vector, UCS, Vec2, open_uniform_knot_vector
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -890,7 +890,6 @@ class EdgePath:
                    knot_values: Iterable[float] = None,
                    weights: Iterable[float] = None,
                    degree: int = 3,
-                   rational: int = 0,
                    periodic: int = 0,
                    start_tangent: 'Vertex' = None,
                    end_tangent: 'Vertex' = None,
@@ -905,11 +904,10 @@ class EdgePath:
                             list of ``(x, y)`` tuples
             knot_values: (knot vector) mandatory and AutoCAD crashes on invalid data. list of floats;
                          `ezdxf` provides two tool functions to calculate valid knot values:
-                         :func:`ezdxf.math.bspline.knot_values` and
-                         :func:`ezdxf.math.bspline.knot_values_uniform`
+                         :func:`ezdxf.math.uniform_knot_vector`,
+                         :func:`ezdxf.math.open_uniform_knot_vector` (default if ``None``)
             weights: weight of control point, not mandatory, list of floats.
             degree: degree of spline (int)
-            rational: ``1`` for rational spline, ``0`` for none rational spline
             periodic: ``1`` for periodic spline, ``0`` for none periodic spline
             start_tangent: start_tangent as 2d vector, optional
             end_tangent: end_tangent as 2d vector, optional
@@ -928,10 +926,12 @@ class EdgePath:
             spline.control_points = list(control_points)
         if knot_values is not None:
             spline.knot_values = list(knot_values)
+        else:
+            spline.knot_values = list(open_uniform_knot_vector(len(spline.control_points), degree+1))
         if weights is not None:
             spline.weights = list(weights)
         spline.degree = degree
-        spline.rational = int(rational)
+        spline.rational = int(bool(len(spline.weights)))
         spline.periodic = int(periodic)
         if start_tangent is not None:
             spline.start_tangent = Vec2(start_tangent)
@@ -1137,6 +1137,14 @@ class SplineEdge:
         return edge
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        if len(self.weights):
+            if len(self.weights) == len(self.control_points):
+                self.rational = 1
+            else:
+                raise const.DXFValueError("SplineEdge: count of control points and count of weights mismatch")
+        else:
+            self.rational = 0
+
         write_tag = tagwriter.write_tag2
         write_tag(72, 4)  # edge type
         write_tag(94, int(self.degree))
@@ -1154,17 +1162,18 @@ class SplineEdge:
 
         # build control points
         # control points have to be present and valid, otherwise AutoCAD crashes
-        for x, y, *_ in self.control_points:
-            write_tag(10, float(x))
-            write_tag(20, float(y))
+        cp = Vec2.generate(self.control_points)
+        if self.rational:
+            for point, weight in zip(cp, self.weights):
+                write_tag(10, float(point.x))
+                write_tag(20, float(point.y))
+                write_tag(42, float(weight))
+        else:
+            for x, y in cp:
+                write_tag(10, float(x))
+                write_tag(20, float(y))
 
-        # build weights list, optional
-        for value in self.weights:
-            write_tag(42, float(value))
-
-        # build fit points
-        # fit points have to be present and valid, otherwise AutoCAD crashes
-        # edit 2016-12-20: this is not true - there are examples with no fit points and without crashing AutoCAD
+        # build optional fit points
         if len(self.fit_points) > 0:
             write_tag(97, len(self.fit_points))
             for x, y, *_ in self.fit_points:
