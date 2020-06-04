@@ -233,7 +233,7 @@ def test_spline_edge_hatch_get_params(spline_edge_hatch):
 def test_create_spline_edge(spline_edge_hatch):
     # create the spline
     path = spline_edge_hatch.paths[0]
-    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, rational=1, periodic=1)
+    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1)
     # the following values do not represent a mathematically valid spline
     spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
     spline.knot_values = [1, 2, 3, 4, 5, 6]
@@ -245,7 +245,6 @@ def test_create_spline_edge(spline_edge_hatch):
     path = spline_edge_hatch.paths[0]
     spline = path.edges[-1]
     assert 3 == spline.degree
-    assert 1 == spline.rational
     assert 1 == spline.periodic
     assert (10, 1) == spline.start_tangent
     assert (2, 20) == spline.end_tangent
@@ -261,7 +260,7 @@ def test_create_spline_edge(spline_edge_hatch):
 
 def test_no_fit_points_export(spline_edge_hatch):
     path = spline_edge_hatch.paths[0]
-    spline = path.add_spline(control_points=[(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, rational=1, periodic=1)
+    spline = path.add_spline(control_points=[(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1)
     spline.knot_values = [1, 2, 3, 4, 5, 6]
     assert [(1, 1), (2, 2), (3, 3), (4, 4)] == spline.control_points
     assert len(spline.fit_points) == 0
