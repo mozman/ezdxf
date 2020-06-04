@@ -55,6 +55,11 @@ Version 0.13b2 - dev
 - DEPRECATED: `non_uniform_scaling` argument for `Insert.virtual_entities()`  
 - DEPRECATED: getter and edit methods in `Hatch` for attributes `paths`, `gradient`, `pattern` and `seeds` 
 
+Version 0.12.5 - 2020-06-xx
+---------------------------
+
+- BUGFIX: DXF export error for hatches with rational spline edges
+
 Version 0.12.4 - 2020-05-22
 ---------------------------
 
