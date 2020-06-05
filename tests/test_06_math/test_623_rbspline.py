@@ -3,8 +3,9 @@
 # License: MIT License
 import math
 from math import isclose
-from ezdxf.math import rational_spline_from_arc, BSpline, BSplineU
+from ezdxf.math import BSpline, BSplineU
 from ezdxf.math.bspline import nurbs_arc_parameters, required_knot_values
+from ezdxf.math import rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 DEFWEIGHTS = [1, 10, 10, 10, 1]
@@ -36,7 +37,7 @@ def test_rbsplineu():
         assert isclose(epz, rpz)
 
 
-def test_rational_splines_from_quarter_arc():
+def test_rational_splines_from_circular_arc():
     spline = rational_spline_from_arc(end_angle=90)
     assert spline.degree == 2
 
@@ -45,6 +46,29 @@ def test_rational_splines_from_quarter_arc():
     assert cpoints[0].isclose((1, 0, 0))
     assert cpoints[1].isclose((1, 1, 0))
     assert cpoints[2].isclose((0, 1, 0))
+
+    weights = spline.weights()
+    assert len(weights) == 3
+    assert weights[0] == 1.0
+    assert weights[1] == math.cos(math.pi / 4)
+    assert weights[2] == 1.0
+
+
+def test_rational_spline_from_elliptic_arc():
+    spline = rational_spline_from_ellipse(ConstructionEllipse(
+        center=(1, 1),
+        major_axis=(2, 0),
+        ratio=0.5,
+        start=0,
+        end=math.pi/2,
+    ))
+    assert spline.degree == 2
+
+    cpoints = spline.control_points
+    assert len(cpoints) == 3
+    assert cpoints[0].isclose((3, 1, 0))
+    assert cpoints[1].isclose((3, 2, 0))
+    assert cpoints[2].isclose((1, 2, 0))
 
     weights = spline.weights()
     assert len(weights) == 3

@@ -226,7 +226,6 @@ from .matrix import Matrix
 import math
 from math import pow, isclose
 from ezdxf.lldxf.const import DXFValueError
-from ezdxf.math import intersection_line_line_2d, intersection_ray_ray_3d
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -962,7 +961,7 @@ class DBSplineClosed(DerivativePoint, BSplineClosed):
 
 def rational_spline_from_arc(
         center: Vector = (0, 0), radius=1, start_angle: float = 0, end_angle: float = 360,
-        segments: int = 0) -> BSpline:
+        segments: int = 1) -> BSpline:
     """
     Returns a rational B-splines for a circular 2D arc.
 
@@ -971,7 +970,7 @@ def rational_spline_from_arc(
         radius: circle radius
         start_angle: start angle in degrees
         end_angle: end angle in degrees
-        segments: count of spline segments, at least one segment for each quarter (90 deg), ``0`` for as few as needed.
+        segments: count of spline segments, at least one segment for each quarter (90 deg), ``1`` for as few as needed.
 
     .. versionadded:: 0.13
 
@@ -992,12 +991,38 @@ def rational_spline_from_arc(
 PI_2 = math.pi / 2.0
 
 
-def rational_spline_from_ellipse(ellipse: 'ConstructionEllipse') -> BSpline:
-    """ Returns a rational B-splines for an elliptic arc. """
-    pass
+def rational_spline_from_ellipse(ellipse: 'ConstructionEllipse', segments: int = 1) -> BSpline:
+    """
+    Returns a rational B-splines for an elliptic arc.
+
+    Args:
+        ellipse: ellipse parameters as :class:`~ezdxf.math.ConstructionEllipse` object
+        segments: count of spline segments, at least one segment for each quarter (pi/2), ``1`` for as few as needed.
+
+    .. versionadded:: 0.13
+
+    """
+    from ezdxf.math import param_to_angle
+    start_angle = param_to_angle(ellipse.ratio, ellipse.start_param)
+    end_angle = param_to_angle(ellipse.ratio, ellipse.end_param)
+
+    def transform_control_points() -> Iterable[Vector]:
+        center = Vector(ellipse.center)
+        x_axis = ellipse.major_axis
+        y_axis = ellipse.minor_axis
+        for p in control_points:
+            yield center + x_axis * p.x + y_axis * p.y
+
+    control_points, weights, knots = nurbs_arc_parameters(start_angle, end_angle, segments)
+    return BSpline(
+        control_points=transform_control_points(),
+        weights=weights,
+        knots=knots,
+        order=3,
+    )
 
 
-def nurbs_arc_parameters(start_angle: float, end_angle: float, segments: int = 0):
+def nurbs_arc_parameters(start_angle: float, end_angle: float, segments: int = 1):
     """
     Returns a rational B-spline parameters for a circular 2D arc with center at (0, 0) and a radius of 1.
 
@@ -1009,6 +1034,9 @@ def nurbs_arc_parameters(start_angle: float, end_angle: float, segments: int = 0
     Returns: control_points, weights, knots
 
     """
+    # Source: https://www.researchgate.net/publication/283497458_ONE_METHOD_FOR_REPRESENTING_AN_ARC_OF_ELLIPSE_BY_A_NURBS_CURVE/citation/download
+    if segments < 1:
+        raise ValueError('Invalid argument segments (>= 1).')
     delta_angle = end_angle - start_angle
     arc_count = max(math.ceil(delta_angle / PI_2), segments)
 
@@ -1042,6 +1070,6 @@ def nurbs_arc_parameters(start_angle: float, end_angle: float, segments: int = 0
     while g < 1.0:
         knots.extend((g, g))
         g += step
-    knots.extend([1.0] * (required_knot_values(len(control_points), 3)-len(knots)))
+    knots.extend([1.0] * (required_knot_values(len(control_points), 3) - len(knots)))
 
     return control_points, weights, knots

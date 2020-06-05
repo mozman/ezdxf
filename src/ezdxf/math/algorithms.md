@@ -134,3 +134,14 @@ points from those on the boundary, see [O'Rourke (C)] pp. 239-245.
 For a method based on winding number, see Dan Sunday,
 "Fast Winding Number Test for Point Inclusion in a Polygon,"
 http://softsurfer.com/algorithms.htm, March 2001.
+
+## NURBS from Circular Arc
+ 
+Source: [ResearchGate.net](https://www.researchgate.net/publication/283497458_ONE_METHOD_FOR_REPRESENTING_AN_ARC_OF_ELLIPSE_BY_A_NURBS_CURVE/citation/download)
+
+- TY  - BOOK
+- AU  - Petkov, Emiliyan
+- AU  - Cekov, Liuben
+- PY  - 2005/01/01
+- T1  - ONE METHOD FOR REPRESENTING AN ARC OF ELLIPSE BY A NURBS CURVE
+- DO  - 10.13140/RG.2.1.4541.6403

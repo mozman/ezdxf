@@ -14,9 +14,11 @@ from .construct3d import (
 )
 from .matrix44 import Matrix44
 from .matrix import Matrix
-from .bspline import bspline_control_frame, bspline_control_frame_approx, rational_spline_from_arc
-from .bspline import uniform_knot_vector, open_uniform_knot_vector, required_knot_values
-from .bspline import BSpline, BSplineU, BSplineClosed, DBSpline, DBasisU, DBSplineClosed, DBSplineU
+from .bspline import (
+    bspline_control_frame, bspline_control_frame_approx, rational_spline_from_arc, rational_spline_from_ellipse,
+    uniform_knot_vector, open_uniform_knot_vector, required_knot_values, BSpline, BSplineU, BSplineClosed, DBSpline,
+    DBasisU, DBSplineClosed, DBSplineU,
+)
 from .bezier import Bezier, DBezier
 from .bezier4p import Bezier4P
 from .surfaces import BezierSurface

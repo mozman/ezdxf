@@ -94,7 +94,9 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-10) -> Sequence[Vector]
 
-.. autofunction:: rational_spline_from_arc(center: Vector = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 0) -> BSpline
+.. autofunction:: rational_spline_from_arc(center: Vector = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> BSpline
+
+.. autofunction:: rational_spline_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> BSpline
 
 Transformation Classes
 ======================
