@@ -36,7 +36,7 @@ def test_rbsplineu():
         assert isclose(epz, rpz)
 
 
-def test_rational_spline_from_ellipse():
+def test_rational_splines_from_quarter_ellipse():
     e = ConstructionEllipse(start=0, end=math.pi/2)
     # This function creates very well fitting splines but only for exact quarter ellipses :(
     splines = list(rational_splines_from_ellipse(e))
@@ -56,6 +56,12 @@ def test_rational_spline_from_ellipse():
     assert weigths[0] == 1.0
     assert weigths[1] == math.sin(math.pi/4)
     assert weigths[2] == 1.0
+
+
+def test_rational_splines_from_full_ellipse():
+    e = ConstructionEllipse()
+    splines = list(rational_splines_from_ellipse(e))
+    assert len(splines) == 4
 
 
 RBSPLINE = [

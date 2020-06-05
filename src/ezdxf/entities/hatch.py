@@ -782,7 +782,7 @@ class BoundaryPaths:
                 end += math.tau
             param_span = end - ellipse.start_param
             count = max(int(float(num) * param_span / math.tau), 3)
-            tool = BSpline.from_ellipse(ellipse, count)
+            tool = BSpline.ellipse_approximation(ellipse, count)
             spline = SplineEdge()
             spline.degree = tool.degree
 

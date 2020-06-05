@@ -703,7 +703,7 @@ class DBasisU(DBasis):
 
 class BSpline:
     """
-    Calculate the points of a `B-spline`_ curve, using an uniform open `knot`_ vector ("clamped").
+    Representation of a `B-spline`_ curve, using an uniform open `knot`_ vector ("clamped").
 
     Accepts 2D points as definition points, but output is always 3D (z-axis = ``0``).
 
@@ -722,14 +722,14 @@ class BSpline:
         self.control_points: List[Vector] = Vector.list(control_points)
         self.order: int = order
         if order > self.count:
-            raise DXFValueError('Invalid need more control points for order {}'.format(order))
+            raise DXFValueError(f'Invalid need more control points for order {order}')
 
         if knots is None:
             knots = open_uniform_knot_vector(self.count, self.order)
         else:
             knots = list(knots)
             if len(knots) != self.nplusc:
-                raise ValueError("{} knot values required, got {}.".format(self.nplusc, len(knots)))
+                raise ValueError(f"{self.nplusc} knot values required, got {len(knots)}.")
 
         self.basis = Basis(knots, self.order, self.count, weights=weights)
 
@@ -745,12 +745,12 @@ class BSpline:
         return spline
 
     @classmethod
-    def from_ellipse(cls, ellipse: 'ConstructionEllipse', num: int = 16) -> 'BSpline':
+    def ellipse_approximation(cls, ellipse: 'ConstructionEllipse', num: int = 16) -> 'BSpline':
         """ Returns an ellipse approximation as :class:`BSpline` with `num` control points. """
         return cls.from_fit_points(ellipse.vertices(ellipse.params(num)), degree=2)
 
     @classmethod
-    def from_arc(cls, arc: 'ConstructionArc', num: int = 16) -> 'BSpline':
+    def arc_approximation(cls, arc: 'ConstructionArc', num: int = 16) -> 'BSpline':
         """ Returns an arc approximation as :class:`BSpline` with `num` control points. """
         return cls.from_fit_points(arc.vertices(arc.angles(num)), degree=2)
 
@@ -860,12 +860,7 @@ class BSpline:
 
 
 class BSplineU(BSpline):
-    """
-    Subclass of :class:`BSpline`
-
-    Calculate the points of a `B-spline`_ curve, uniform (periodic) `knot`_ vector (`open curve`_).
-
-    """
+    """ Representation of an uniform (periodic) `B-spline`_ curve (`open curve`_). """
 
     def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
         control_points = list(control_points)
@@ -886,12 +881,7 @@ class BSplineU(BSpline):
 
 
 class BSplineClosed(BSplineU):
-    """
-    Subclass of :class:`BSpline`
-
-    Calculate the points of a closed uniform `B-spline`_ curve (`closed curve`_).
-
-    """
+    """ Representation of a closed uniform `B-spline`_ curve (`closed curve`_). """
 
     def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
         # control points wrap around
@@ -970,10 +960,10 @@ class DBSplineClosed(DerivativePoint, BSplineClosed):
         self.basis = DBasisU(self.knots(), self.order, self.count)
 
 
-HALF_PI = math.pi / 2.0
+PI_2 = math.pi / 2.0
 
 
-def rational_splines_from_ellipse(ellipse: 'ConstructionEllipse') -> Iterable[BSpline]:
+def rational_splines_from_ellipse(ellipse: 'ConstructionEllipse') -> Iterable[BSplineU]:
     """
     This function yields B-splines for an elliptic arc.
 
@@ -1000,18 +990,16 @@ def rational_splines_from_ellipse(ellipse: 'ConstructionEllipse') -> Iterable[BS
         end_param += math.tau
 
     while start_param < end_param:
-        s, e = start_param, end_param
-        if s - e > HALF_PI:
-            e = s + HALF_PI
+        # maximum param span per rational B-spline is pi/2
+        next_end_param = start_param + min(end_param - start_param, PI_2)
+        params = start_param, next_end_param
 
-        params = s, e
         v0, v2 = ellipse.vertices(params)
         t0, t2 = ellipse.tangents(params)
         angle = (math.pi - t0.angle_between(t2)) / 2.0
-        # open uniform knots are calculated by default
-        yield BSpline(
+        yield BSplineU(
             control_points=[v0, intermediate_control_point(), v2],
             weights=[1.0, math.sin(angle), 1.0],
             order=3,
         )
-        start_param = e
+        start_param = next_end_param

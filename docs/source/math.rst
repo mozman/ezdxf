@@ -778,9 +778,9 @@ BSpline
 
     .. automethod:: from_fit_points(points: Iterable[Vertex], degree:int=3) -> BSpline
 
-    .. automethod:: from_ellipse(ellipse: ConstructionEllipse, num:int=16) -> BSpline
+    .. automethod:: ellipse_approximation(ellipse: ConstructionEllipse, num:int=16) -> BSpline
 
-    .. automethod:: from_arc(arc: ConstructionArc, num:int=16) -> BSpline
+    .. automethod:: arc_approximation(arc: ConstructionArc, num:int=16) -> BSpline
 
 BSplineU
 --------
