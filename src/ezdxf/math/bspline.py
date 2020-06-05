@@ -226,7 +226,7 @@ from .matrix import Matrix
 import math
 from math import pow, isclose
 from ezdxf.lldxf.const import DXFValueError
-from ezdxf.math import intersection_line_line_2d
+from ezdxf.math import intersection_line_line_2d, intersection_ray_ray_3d
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -960,13 +960,10 @@ class DBSplineClosed(DerivativePoint, BSplineClosed):
         self.basis = DBasisU(self.knots(), self.order, self.count)
 
 
-def rational_splines_from_arc(
+def rational_spline_from_arc(
         center: Vector = (0, 0), radius=1, start_angle: float = 0, end_angle: float = 360) -> Iterable[BSpline]:
     """
-    Yields rational B-splines for a circular 2D arc.
-
-    The function creates rational splines for a maximum angle span of 90 deg,
-    if the arc angle span is greater, multiple splines will be calculated.
+    Returns a rational B-splines for a circular 2D arc.
 
     Args:
         center: circle center as :class:`Vector` compatible object
@@ -1010,3 +1007,109 @@ def rational_splines_from_arc(
             order=3,
         )
         start_angle = next_end_angle
+
+
+PI_2 = math.pi / 2.0
+
+
+def _fit_point_params(s: float, e: float) -> Iterable[float]:
+    yield s
+    param = PI_2
+    while s > param:
+        param += PI_2
+
+    while param < e:
+        yield param
+        param += PI_2
+    yield e
+
+
+def rational_spline_from_ellipse(ellipse: 'ConstructionEllipse') -> BSpline:
+    """ This function can only create rational splines for exact quarter arcs and ellipsis. """
+
+    def intermediate_control_point(index1, index2) -> Vector:
+        ray1 = vertices[index1], vertices[index1] + tangents[index1]
+        ray2 = vertices[index2], vertices[index2] - tangents[index2]
+        result = intersection_ray_ray_3d(ray1, ray2)
+        if len(result) == 1:
+            return result[0]
+        else:
+            p1, p2 = result
+            if p1.isclose(p2, abs_tol=1e-6):
+                return p1.lerp(p2)
+            else:
+                raise ArithmeticError('Control point calculation error, please send bug report.')
+
+    from ezdxf.math.ellipse import param_to_angle
+    start_param = ellipse.start_param % math.tau
+    end_param = ellipse.end_param % math.tau
+    if end_param <= start_param:
+        end_param += math.tau
+
+    params = list(_fit_point_params(start_param, end_param))
+    vertices = list(ellipse.vertices(params))
+    tangents = list(ellipse.tangents(params))
+    control_points = list()
+    weights = list()
+    for i1 in range(len(vertices) - 1):
+        i2 = i1 + 1
+        control_points.append(vertices[i1])
+        weights.append(1.0)
+        icp = intermediate_control_point(i1, i2)
+        angle = (math.pi - tangents[i1].angle_between(tangents[i2])) / 2.0
+        control_points.append(icp)
+        weights.append(math.sin(angle))
+    control_points.append(vertices[-1])
+    weights.append(1.0)
+    return BSpline(control_points=control_points, order=3, weights=weights)
+
+
+def nurbs_arc_parameters(start_angle: float, end_angle: float, segments: int = 0):
+    """
+    Returns a rational B-spline parameters for a circular 2D arc with center at (0, 0) and a radius of 1.
+
+    Args:
+        start_angle: start angle in radians
+        end_angle: end angle in radians
+        segments: count of segments, at least one segment for each quarter (pi/2)
+
+    Returns: control_points, weights, knots
+
+    """
+    delta_angle = end_angle - start_angle
+    arc_count = max(math.ceil(delta_angle / PI_2), segments)
+
+    segment_angle = delta_angle / arc_count
+    segment_angle_2 = segment_angle / 2
+    arc_weight = math.cos(segment_angle_2)
+
+    control_points = [Vector(math.cos(start_angle), math.sin(start_angle))]
+    weights = [1.0]
+
+    angle = start_angle
+    d = 1.0 / math.cos(segment_angle / 2.0)
+    for _ in range(arc_count):
+        angle += segment_angle_2
+        control_points.append(Vector(math.cos(angle) * d, math.sin(angle) * d))
+        weights.append(arc_weight)
+
+        angle += segment_angle_2
+        control_points.append(Vector(math.cos(angle), math.sin(angle)))
+        weights.append(1.0)
+
+    # knot vector calculation
+    knot_count = len(control_points) + 1
+    required_knots = required_knot_values(len(control_points), 3)
+    knots = [0.0] * int((required_knots - knot_count) / 2)
+    step = 1.0
+    g = 0.0
+    if knot_count > 4:
+        step = 1.0 / ((knot_count - 4) / 2.0 + 1.0)
+    for _ in range(0, knot_count, 2):
+        knots.extend((g, g))
+        g += step
+
+    while len(knots) < required_knots:
+        knots.append(knots[-1])
+
+    return control_points, weights, knots

@@ -3,7 +3,8 @@
 # License: MIT License
 import math
 from math import isclose
-from ezdxf.math import ConstructionEllipse, rational_splines_from_arc, BSpline, BSplineU
+from ezdxf.math import rational_spline_from_arc, BSpline, BSplineU
+from ezdxf.math.bspline import nurbs_arc_parameters, required_knot_values
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 DEFWEIGHTS = [1, 10, 10, 10, 1]
@@ -36,7 +37,7 @@ def test_rbsplineu():
 
 
 def test_rational_splines_from_quarter_arc():
-    splines = list(rational_splines_from_arc(end_angle=90))
+    splines = list(rational_spline_from_arc(end_angle=90))
     assert len(splines) == 1
 
     spline = splines[0]
@@ -55,9 +56,31 @@ def test_rational_splines_from_quarter_arc():
     assert weigths[2] == 1.0
 
 
-def test_rational_splines_from_full_circle():
-    splines = list(rational_splines_from_arc())
-    assert len(splines) == 4
+def test_nurbs_arc_parameter_quarter_arc_1_segment():
+    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=math.pi/2, segments=1)
+
+    assert len(control_points) == 3
+    assert len(weights) == len(control_points)
+    assert len(knots) == required_knot_values(len(control_points), order=3)
+
+    assert control_points[0].isclose((1, 0, 0))
+    assert control_points[1].isclose((1, 1, 0))
+    assert control_points[2].isclose((0, 1, 0))
+
+    assert weights[0] == 1.0
+    assert weights[1] == math.cos(math.pi/4)
+    assert weights[2] == 1.0
+
+
+def test_nurbs_arc_parameter_quarter_arc_4_segments():
+    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=math.pi/2, segments=4)
+
+    assert len(control_points) == 9
+    assert len(weights) == len(control_points)
+    assert len(knots) == required_knot_values(len(control_points), order=3)
+
+    assert knots[0:3] == [0.0, 0.0, 0.0]
+    assert knots[-3:] == [1.0, 1.0, 1.0]
 
 
 RBSPLINE = [
