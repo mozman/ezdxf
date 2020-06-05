@@ -963,7 +963,7 @@ class DBSplineClosed(DerivativePoint, BSplineClosed):
 PI_2 = math.pi / 2.0
 
 
-def rational_splines_from_ellipse(ellipse: 'ConstructionEllipse') -> Iterable[BSplineU]:
+def rational_splines_from_ellipse(ellipse: 'ConstructionEllipse') -> Iterable[BSpline]:
     """
     This function yields B-splines for an elliptic arc.
 
@@ -997,7 +997,7 @@ def rational_splines_from_ellipse(ellipse: 'ConstructionEllipse') -> Iterable[BS
         v0, v2 = ellipse.vertices(params)
         t0, t2 = ellipse.tangents(params)
         angle = (math.pi - t0.angle_between(t2)) / 2.0
-        yield BSplineU(
+        yield BSpline(
             control_points=[v0, intermediate_control_point(), v2],
             weights=[1.0, math.sin(angle), 1.0],
             order=3,
