@@ -786,6 +786,8 @@ BSpline
 
     .. automethod:: arc_approximation(arc: ConstructionArc, num:int=16) -> BSpline
 
+    .. automethod:: transform(m: Matrix44) -> BSpline
+
 BSplineU
 --------
 

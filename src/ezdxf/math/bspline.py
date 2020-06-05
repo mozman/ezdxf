@@ -221,15 +221,15 @@ rather than normal 3D coordinates.
 
 """
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional
-from .vector import Vector, distance
-from .matrix import Matrix
 import math
 from math import pow, isclose
+from .vector import Vector, distance
+from .matrix import Matrix
 from ezdxf.lldxf.const import DXFValueError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
-    from ezdxf.math import ConstructionArc, ConstructionEllipse
+    from ezdxf.math import ConstructionArc, ConstructionEllipse, Matrix44
 
 
 def open_uniform_knot_vector(n: int, order: int) -> List[float]:
@@ -856,6 +856,15 @@ class BSpline:
         cpoints[k - p + 1:k] = [new_point(i) for i in range(k - p + 1, k + 1)]
         knots.insert(k + 1, t)  # knot[k] <= t < knot[k+1]
         self.basis.count = len(cpoints)
+
+    def transform(self, m: 'Matrix44') -> 'BSpline':
+        """ Transform B-spline by transformation matrix `m` inplace.
+
+        .. versionadded:: 0.13
+
+        """
+        self.control_points = list(m.transform_vertices(self.control_points))
+        return self
 
 
 class BSplineU(BSpline):
