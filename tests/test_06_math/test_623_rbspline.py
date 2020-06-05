@@ -46,15 +46,15 @@ def test_rational_splines_from_quarter_arc():
     assert cpoints[1].isclose((1, 1, 0))
     assert cpoints[2].isclose((0, 1, 0))
 
-    weigths = spline.basis.weights
-    assert len(weigths) == 3
-    assert weigths[0] == 1.0
-    assert weigths[1] == math.cos(math.pi/4)
-    assert weigths[2] == 1.0
+    weights = spline.weights()
+    assert len(weights) == 3
+    assert weights[0] == 1.0
+    assert weights[1] == math.cos(math.pi / 4)
+    assert weights[2] == 1.0
 
 
 def test_nurbs_arc_parameter_quarter_arc_1_segment():
-    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=math.pi/2, segments=1)
+    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=math.pi / 2, segments=1)
 
     assert len(control_points) == 3
     assert len(weights) == len(control_points)
@@ -65,19 +65,22 @@ def test_nurbs_arc_parameter_quarter_arc_1_segment():
     assert control_points[2].isclose((0, 1, 0))
 
     assert weights[0] == 1.0
-    assert weights[1] == math.cos(math.pi/4)
+    assert weights[1] == math.cos(math.pi / 4)
     assert weights[2] == 1.0
 
 
 def test_nurbs_arc_parameter_quarter_arc_4_segments():
-    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=math.pi/2, segments=4)
-
+    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=math.pi / 2, segments=4)
     assert len(control_points) == 9
     assert len(weights) == len(control_points)
     assert len(knots) == required_knot_values(len(control_points), order=3)
 
-    assert knots[0:3] == [0.0, 0.0, 0.0]
-    assert knots[-3:] == [1.0, 1.0, 1.0]
+
+def test_nurbs_arc_parameter_full_circle():
+    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=2 * math.pi, segments=4)
+    cos_pi_4 = math.cos(math.pi / 4)
+    assert knots == [0.0, 0.0, 0.0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1.0, 1.0, 1.0]
+    assert weights == [1.0, cos_pi_4, 1.0, cos_pi_4, 1.0, cos_pi_4, 1.0, cos_pi_4, 1.0]
 
 
 RBSPLINE = [

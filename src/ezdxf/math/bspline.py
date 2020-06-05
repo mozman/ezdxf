@@ -1016,31 +1016,32 @@ def nurbs_arc_parameters(start_angle: float, end_angle: float, segments: int = 0
     segment_angle_2 = segment_angle / 2
     arc_weight = math.cos(segment_angle_2)
 
+    # First control point
     control_points = [Vector(math.cos(start_angle), math.sin(start_angle))]
     weights = [1.0]
 
     angle = start_angle
     d = 1.0 / math.cos(segment_angle / 2.0)
     for _ in range(arc_count):
+        # next control point between points on arc
         angle += segment_angle_2
         control_points.append(Vector(math.cos(angle) * d, math.sin(angle) * d))
         weights.append(arc_weight)
 
+        # next control point on arc
         angle += segment_angle_2
         control_points.append(Vector(math.cos(angle), math.sin(angle)))
         weights.append(1.0)
 
-    # knot vector calculation
-    required_knots = required_knot_values(len(control_points), 3)
-    knot_count = min(len(control_points) + 1, 4)
-    knots = [0.0] * int((required_knots - knot_count) / 2)
-    g = 0.0
-    step = 1.0 / ((knot_count - 4) / 2.0 + 1.0)
-    for _ in range(0, knot_count, 2):
+    # Knot vector calculation for B-spline of order=3
+    # Clamped B-Spline starts with `order` 0.0 knots and
+    # ends with `order` 1.0 knots
+    knots = [0.0, 0.0, 0.0]
+    step = 1.0 / ((max(len(control_points) + 1, 4) - 4) / 2.0 + 1.0)
+    g = step
+    while g < 1.0:
         knots.extend((g, g))
         g += step
-
-    while len(knots) < required_knots:
-        knots.append(knots[-1])
+    knots.extend([1.0] * (required_knot_values(len(control_points), 3)-len(knots)))
 
     return control_points, weights, knots
