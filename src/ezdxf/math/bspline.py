@@ -961,7 +961,8 @@ class DBSplineClosed(DerivativePoint, BSplineClosed):
 
 
 def rational_spline_from_arc(
-        center: Vector = (0, 0), radius=1, start_angle: float = 0, end_angle: float = 360) -> Iterable[BSpline]:
+        center: Vector = (0, 0), radius=1, start_angle: float = 0, end_angle: float = 360,
+        segments: int = 0) -> BSpline:
     """
     Returns a rational B-splines for a circular 2D arc.
 
@@ -970,98 +971,30 @@ def rational_spline_from_arc(
         radius: circle radius
         start_angle: start angle in degrees
         end_angle: end angle in degrees
+        segments: count of spline segments, at least one segment for each quarter (90 deg), ``0`` for as few as needed.
+
+    .. versionadded:: 0.13
 
     """
-
-    def intermediate_control_point():
-        line1 = v0, v0 + t0
-        line2 = v2, v2 - t2
-        result = intersection_line_line_2d(line1, line2, virtual=True)
-        if result:
-            return result
-        else:
-            raise ArithmeticError('Control point calculation error, please send bug report.')
-
-    from ezdxf.math import ConstructionArc
-    arc = ConstructionArc(center=center, radius=radius, start_angle=start_angle, end_angle=end_angle)
-
-    # All arc angles in degrees as usual for DXF entity ARC
-    start_angle = arc.start_angle % 360.0
-    end_angle = arc.end_angle % 360.0
-    if end_angle <= start_angle:
-        end_angle += 360.0
-
-    while start_angle < end_angle:
-        # maximum param span per rational B-spline is 90 deg
-        next_end_angle = start_angle + min(end_angle - start_angle, 90.0)
-        angles = start_angle, next_end_angle
-
-        v0, v2 = arc.vertices(angles)
-        t0, t2 = arc.tangents(angles)
-
-        # internal calculations in radians
-        angle = (math.pi - t0.angle_between(t2)) / 2.0
-        yield BSpline(
-            control_points=[v0, intermediate_control_point(), v2],
-            weights=[1.0, math.sin(angle), 1.0],
-            order=3,
-        )
-        start_angle = next_end_angle
+    center = Vector(center)
+    radius = float(radius)
+    start_angle = math.radians(start_angle)
+    end_angle = math.radians(end_angle)
+    control_points, weights, knots = nurbs_arc_parameters(start_angle, end_angle, segments)
+    return BSpline(
+        control_points=(center + (p * radius) for p in control_points),
+        weights=weights,
+        knots=knots,
+        order=3,
+    )
 
 
 PI_2 = math.pi / 2.0
 
 
-def _fit_point_params(s: float, e: float) -> Iterable[float]:
-    yield s
-    param = PI_2
-    while s > param:
-        param += PI_2
-
-    while param < e:
-        yield param
-        param += PI_2
-    yield e
-
-
 def rational_spline_from_ellipse(ellipse: 'ConstructionEllipse') -> BSpline:
-    """ This function can only create rational splines for exact quarter arcs and ellipsis. """
-
-    def intermediate_control_point(index1, index2) -> Vector:
-        ray1 = vertices[index1], vertices[index1] + tangents[index1]
-        ray2 = vertices[index2], vertices[index2] - tangents[index2]
-        result = intersection_ray_ray_3d(ray1, ray2)
-        if len(result) == 1:
-            return result[0]
-        else:
-            p1, p2 = result
-            if p1.isclose(p2, abs_tol=1e-6):
-                return p1.lerp(p2)
-            else:
-                raise ArithmeticError('Control point calculation error, please send bug report.')
-
-    from ezdxf.math.ellipse import param_to_angle
-    start_param = ellipse.start_param % math.tau
-    end_param = ellipse.end_param % math.tau
-    if end_param <= start_param:
-        end_param += math.tau
-
-    params = list(_fit_point_params(start_param, end_param))
-    vertices = list(ellipse.vertices(params))
-    tangents = list(ellipse.tangents(params))
-    control_points = list()
-    weights = list()
-    for i1 in range(len(vertices) - 1):
-        i2 = i1 + 1
-        control_points.append(vertices[i1])
-        weights.append(1.0)
-        icp = intermediate_control_point(i1, i2)
-        angle = (math.pi - tangents[i1].angle_between(tangents[i2])) / 2.0
-        control_points.append(icp)
-        weights.append(math.sin(angle))
-    control_points.append(vertices[-1])
-    weights.append(1.0)
-    return BSpline(control_points=control_points, order=3, weights=weights)
+    """ Returns a rational B-splines for an elliptic arc. """
+    pass
 
 
 def nurbs_arc_parameters(start_angle: float, end_angle: float, segments: int = 0):
@@ -1098,13 +1031,11 @@ def nurbs_arc_parameters(start_angle: float, end_angle: float, segments: int = 0
         weights.append(1.0)
 
     # knot vector calculation
-    knot_count = len(control_points) + 1
     required_knots = required_knot_values(len(control_points), 3)
+    knot_count = min(len(control_points) + 1, 4)
     knots = [0.0] * int((required_knots - knot_count) / 2)
-    step = 1.0
     g = 0.0
-    if knot_count > 4:
-        step = 1.0 / ((knot_count - 4) / 2.0 + 1.0)
+    step = 1.0 / ((knot_count - 4) / 2.0 + 1.0)
     for _ in range(0, knot_count, 2):
         knots.extend((g, g))
         g += step

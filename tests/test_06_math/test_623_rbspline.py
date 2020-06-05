@@ -37,10 +37,7 @@ def test_rbsplineu():
 
 
 def test_rational_splines_from_quarter_arc():
-    splines = list(rational_spline_from_arc(end_angle=90))
-    assert len(splines) == 1
-
-    spline = splines[0]
+    spline = rational_spline_from_arc(end_angle=90)
     assert spline.degree == 2
 
     cpoints = spline.control_points
@@ -52,7 +49,7 @@ def test_rational_splines_from_quarter_arc():
     weigths = spline.basis.weights
     assert len(weigths) == 3
     assert weigths[0] == 1.0
-    assert weigths[1] == math.sin(math.pi/4)
+    assert weigths[1] == math.cos(math.pi/4)
     assert weigths[2] == 1.0
 
 

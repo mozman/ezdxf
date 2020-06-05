@@ -24,7 +24,7 @@ Version 0.13b2 - dev
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
 - NEW: `ezdxf.math.ConstructionEllipse()`
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
-- NEW: `ezdxf.math.rational_spline_from_arc()` yields rational B-splines for a circular 2D arc.
+- NEW: `ezdxf.math.rational_spline_from_arc()` returns a rational B-spline for a circular 2D arc.
 - NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
 - NEW: `Ellipse.construction_tool()`, return ellipse data as `ConstructionEllipse()`
 - NEW: `Ellipse.apply_construction_tool(e)`, apply `ConstructionEllipse()` data
