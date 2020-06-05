@@ -436,7 +436,7 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3, metho
     count = len(fit_points)
     order = degree + 1
     if order > count:
-        raise DXFValueError('Need more fit points for degree {}'.format(degree))
+        raise DXFValueError('More fit points required for degree {}'.format(degree))
 
     t_vector = list(create_t_vector())
     knots = list(control_frame_knots(count - 1, degree, t_vector))
@@ -973,24 +973,17 @@ class DBSplineClosed(DerivativePoint, BSplineClosed):
 HALF_PI = math.pi / 2.0
 
 
-def _fit_point_params(s: float, e: float) -> Iterable[float]:
-    yield s
-    param = HALF_PI
-    while s > param:
-        param += HALF_PI
+def rational_splines_from_ellipse(ellipse: 'ConstructionEllipse') -> Iterable[BSpline]:
+    """
+    This function yields B-splines for an elliptic arc.
 
-    while param < e:
-        yield param
-        param += HALF_PI
-    yield e
+    The function creates rational splines for a maximum param span of pi/2,
+    if the ellipse spans is greater, multiple splines will be calculated.
 
-
-def rational_spline_from_ellipse(ellipse: 'ConstructionEllipse') -> BSpline:
-    """ This function can only create rational splines for exact quarter arcs and ellipsis. :-( """
-
-    def intermediate_control_point(index1, index2) -> Vector:
-        ray1 = vertices[index1], vertices[index1] + tangents[index1]
-        ray2 = vertices[index2], vertices[index2] - tangents[index2]
+    """
+    def intermediate_control_point() -> Vector:
+        ray1 = v0, v0 + t0
+        ray2 = v2, v2 - t2
         result = intersection_ray_ray_3d(ray1, ray2)
         if len(result) == 1:
             return result[0]
@@ -1006,20 +999,19 @@ def rational_spline_from_ellipse(ellipse: 'ConstructionEllipse') -> BSpline:
     if end_param <= start_param:
         end_param += math.tau
 
-    params = list(_fit_point_params(start_param, end_param))
-    vertices = list(ellipse.vertices(params))
-    tangents = list(ellipse.tangents(params))
-    control_points = list()
-    weights = list()
-    for i1 in range(len(vertices) - 1):
-        i2 = i1 + 1
-        control_points.append(vertices[i1])
-        weights.append(1.0)
-        icp = intermediate_control_point(i1, i2)
-        angle = tangents[i1].angle_between(tangents[i2]) / 2.0
-        control_points.append(icp)
-        weights.append(math.sin(angle))
-    control_points.append(vertices[-1])
-    weights.append(1.0)
-    # open uniform knots are calculated by default
-    return BSpline(control_points=control_points, order=3, weights=weights)
+    while start_param < end_param:
+        s, e = start_param, end_param
+        if s - e > HALF_PI:
+            e = s + HALF_PI
+
+        params = s, e
+        v0, v2 = ellipse.vertices(params)
+        t0, t2 = ellipse.tangents(params)
+        angle = (math.pi - t0.angle_between(t2)) / 2.0
+        # open uniform knots are calculated by default
+        yield BSpline(
+            control_points=[v0, intermediate_control_point(), v2],
+            weights=[1.0, math.sin(angle), 1.0],
+            order=3,
+        )
+        start_param = e

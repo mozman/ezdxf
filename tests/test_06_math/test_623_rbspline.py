@@ -3,7 +3,7 @@
 # License: MIT License
 import math
 from math import isclose
-from ezdxf.math.bspline import BSpline, BSplineU, rational_spline_from_ellipse
+from ezdxf.math.bspline import BSpline, BSplineU, rational_splines_from_ellipse
 from ezdxf.math import ConstructionEllipse
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
@@ -39,7 +39,10 @@ def test_rbsplineu():
 def test_rational_spline_from_ellipse():
     e = ConstructionEllipse(start=0, end=math.pi/2)
     # This function creates very well fitting splines but only for exact quarter ellipses :(
-    spline = rational_spline_from_ellipse(e)
+    splines = list(rational_splines_from_ellipse(e))
+    assert len(splines) == 1
+
+    spline = splines[0]
     assert spline.degree == 2
 
     cpoints = spline.control_points
