@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.12.5 - 2020-06-xx
+Version 0.12.5 - 2020-06-05
 ---------------------------
 
 - BUGFIX: DXF export error for hatches with rational spline edges
