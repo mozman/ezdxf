@@ -128,8 +128,8 @@ def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vec
         return tuple()
     else:
         o2_o1 = o2 - o1
-        det1 = _determinant(o2_o1, d1, d1xd2)
-        det2 = _determinant(o2_o1, d2, d1xd2)
+        det1 = _determinant(o2_o1, d2, d1xd2)
+        det2 = _determinant(o2_o1, d1, d1xd2)
         p1 = o1 + d1 * (det1 / denominator)
         p2 = o2 + d2 * (det2 / denominator)
         if p1.isclose(p2, abs_tol=abs_tol):
