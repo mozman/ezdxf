@@ -20,11 +20,12 @@ Version 0.13b2 - dev
    supported entities: POINT, LINE, CIRCLE, ARC, ELLIPSE, MESH, SPLINE, POLYLINE, LWPOLYLINE, TEXT, MTEXT, 
    ATTRIB, ATTDEF, INSERT, SOLID, TRACE, 3DFACE, HATCH, IMAGE, SHAPE, XLINE, RAY
    
-- NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
 - NEW: `DXFGraphic.unlink_from_layout()` to unlink entity from associated layout
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
-- NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
 - NEW: `ezdxf.math.ConstructionEllipse()`
+- NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
+- NEW: `ezdxf.math.rational_splines_from_arc()` yields rational B-splines for a circular 2D arc.
+- NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
 - NEW: `Ellipse.construction_tool()`, return ellipse data as `ConstructionEllipse()`
 - NEW: `Ellipse.apply_construction_tool(e)`, apply `ConstructionEllipse()` data
 - NEW: `Spline.construction_tool()`, return spline data as `ezdxf.math.BSpline()`

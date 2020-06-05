@@ -3,8 +3,7 @@
 # License: MIT License
 import math
 from math import isclose
-from ezdxf.math.bspline import BSpline, BSplineU, rational_splines_from_ellipse
-from ezdxf.math import ConstructionEllipse
+from ezdxf.math import ConstructionEllipse, rational_splines_from_arc, BSpline, BSplineU
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 DEFWEIGHTS = [1, 10, 10, 10, 1]
@@ -36,10 +35,8 @@ def test_rbsplineu():
         assert isclose(epz, rpz)
 
 
-def test_rational_splines_from_quarter_ellipse():
-    e = ConstructionEllipse(start=0, end=math.pi/2)
-    # This function creates very well fitting splines but only for exact quarter ellipses :(
-    splines = list(rational_splines_from_ellipse(e))
+def test_rational_splines_from_quarter_arc():
+    splines = list(rational_splines_from_arc(end_angle=90))
     assert len(splines) == 1
 
     spline = splines[0]
@@ -58,9 +55,8 @@ def test_rational_splines_from_quarter_ellipse():
     assert weigths[2] == 1.0
 
 
-def test_rational_splines_from_full_ellipse():
-    e = ConstructionEllipse()
-    splines = list(rational_splines_from_ellipse(e))
+def test_rational_splines_from_full_circle():
+    splines = list(rational_splines_from_arc())
     assert len(splines) == 4
 
 

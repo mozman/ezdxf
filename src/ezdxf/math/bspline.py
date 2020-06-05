@@ -226,7 +226,7 @@ from .matrix import Matrix
 import math
 from math import pow, isclose
 from ezdxf.lldxf.const import DXFValueError
-from ezdxf.math import intersection_ray_ray_3d
+from ezdxf.math import intersection_line_line_2d
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -960,46 +960,53 @@ class DBSplineClosed(DerivativePoint, BSplineClosed):
         self.basis = DBasisU(self.knots(), self.order, self.count)
 
 
-PI_2 = math.pi / 2.0
-
-
-def rational_splines_from_ellipse(ellipse: 'ConstructionEllipse') -> Iterable[BSpline]:
+def rational_splines_from_arc(
+        center: Vector = (0, 0), radius=1, start_angle: float = 0, end_angle: float = 360) -> Iterable[BSpline]:
     """
-    This function yields B-splines for an elliptic arc.
+    Yields rational B-splines for a circular 2D arc.
 
-    The function creates rational splines for a maximum param span of pi/2,
-    if the ellipse spans is greater, multiple splines will be calculated.
+    The function creates rational splines for a maximum angle span of 90 deg,
+    if the arc angle span is greater, multiple splines will be calculated.
+
+    Args:
+        center: circle center as :class:`Vector` compatible object
+        radius: circle radius
+        start_angle: start angle in degrees
+        end_angle: end angle in degrees
 
     """
-    def intermediate_control_point() -> Vector:
-        ray1 = v0, v0 + t0
-        ray2 = v2, v2 - t2
-        result = intersection_ray_ray_3d(ray1, ray2)
-        if len(result) == 1:
-            return result[0]
+
+    def intermediate_control_point():
+        line1 = v0, v0 + t0
+        line2 = v2, v2 - t2
+        result = intersection_line_line_2d(line1, line2, virtual=True)
+        if result:
+            return result
         else:
-            p1, p2 = result
-            if p1.isclose(p2, abs_tol=1e-6):
-                return p1.lerp(p2)
-            else:
-                raise ArithmeticError('Control point calculation error, please send bug report.')
+            raise ArithmeticError('Control point calculation error, please send bug report.')
 
-    start_param = ellipse.start_param % math.tau
-    end_param = ellipse.end_param % math.tau
-    if end_param <= start_param:
-        end_param += math.tau
+    from ezdxf.math import ConstructionArc
+    arc = ConstructionArc(center=center, radius=radius, start_angle=start_angle, end_angle=end_angle)
 
-    while start_param < end_param:
-        # maximum param span per rational B-spline is pi/2
-        next_end_param = start_param + min(end_param - start_param, PI_2)
-        params = start_param, next_end_param
+    # All arc angles in degrees as usual for DXF entity ARC
+    start_angle = arc.start_angle % 360.0
+    end_angle = arc.end_angle % 360.0
+    if end_angle <= start_angle:
+        end_angle += 360.0
 
-        v0, v2 = ellipse.vertices(params)
-        t0, t2 = ellipse.tangents(params)
+    while start_angle < end_angle:
+        # maximum param span per rational B-spline is 90 deg
+        next_end_angle = start_angle + min(end_angle - start_angle, 90.0)
+        angles = start_angle, next_end_angle
+
+        v0, v2 = arc.vertices(angles)
+        t0, t2 = arc.tangents(angles)
+
+        # internal calculations in radians
         angle = (math.pi - t0.angle_between(t2)) / 2.0
         yield BSpline(
             control_points=[v0, intermediate_control_point(), v2],
             weights=[1.0, math.sin(angle), 1.0],
             order=3,
         )
-        start_param = next_end_param
+        start_angle = next_end_angle
