@@ -38,8 +38,8 @@ Version 0.13b2 - dev
 - NEW: `Hatch.paths.all_to_spline_edges()` convert all curves to approximated spline edges
 - NEW: `Hatch.paths.all_to_line_edges()` convert all curves to approximated line edges
 - NEW: `BSpline.from_fit_points()` returns a B-Spline from fit points
-- NEW: `BSpline.from_arc()` returns a B-Spline approximation for an arc defined by `ConstructionArc()`
-- NEW: `BSpline.from_ellipse()` returns a B-Spline approximation for an ellipse defined by `ConstructionEllipse()`
+- NEW: `BSpline.arc_approximation()` returns a B-Spline approximation for an arc defined by `ConstructionArc()`
+- NEW: `BSpline.ellipse_approximation()` returns a B-Spline approximation for an ellipse defined by `ConstructionEllipse()`
 - CHANGE: `Hatch` full support for rotated patterns.
 - CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
 - CHANGE: `Hatch.path.add_arc` renamed argument `is_counter_clockwise` to `ccw`, type `bool` and `True` by default 
