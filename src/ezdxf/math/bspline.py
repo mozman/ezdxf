@@ -255,11 +255,6 @@ def open_uniform_knot_vector(n: int, order: int) -> List[float]:
     return knots
 
 
-def is_uniform_knots(knots: Sequence[float], places: int = 4) -> bool:
-    deltas = set(round(k2 - k1, ndigits=places) for k1, k2 in zip(knots, knots[1:]))
-    return len(deltas) == 1
-
-
 def uniform_knot_vector(n: int, order: int) -> List[float]:
     """
     Returns an uniform knot vector for a B-spline of `order` and `n` control points.
