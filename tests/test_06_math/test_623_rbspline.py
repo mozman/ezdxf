@@ -5,7 +5,7 @@ import math
 from math import isclose
 from ezdxf.math import BSpline, BSplineU
 from ezdxf.math.bspline import nurbs_arc_parameters, required_knot_values
-from ezdxf.math import rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse
+from ezdxf.math import rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse, ConstructionArc
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 DEFWEIGHTS = [1, 10, 10, 10, 1]
@@ -38,7 +38,8 @@ def test_rbsplineu():
 
 
 def test_rational_splines_from_circular_arc():
-    spline = rational_spline_from_arc(end_angle=90)
+    arc = ConstructionArc(end_angle=90)
+    spline = rational_spline_from_arc(end_angle=arc.end_angle)
     assert spline.degree == 2
 
     cpoints = spline.control_points
@@ -53,15 +54,20 @@ def test_rational_splines_from_circular_arc():
     assert weights[1] == math.cos(math.pi / 4)
     assert weights[2] == 1.0
 
+    # as BSpline constructor()
+    s2 = BSpline.from_arc(arc)
+    assert spline.control_points == s2.control_points
+
 
 def test_rational_spline_from_elliptic_arc():
-    spline = rational_spline_from_ellipse(ConstructionEllipse(
+    ellipse = ConstructionEllipse(
         center=(1, 1),
         major_axis=(2, 0),
         ratio=0.5,
         start=0,
         end=math.pi/2,
-    ))
+    )
+    spline = rational_spline_from_ellipse(ellipse)
     assert spline.degree == 2
 
     cpoints = spline.control_points
@@ -75,6 +81,10 @@ def test_rational_spline_from_elliptic_arc():
     assert weights[0] == 1.0
     assert weights[1] == math.cos(math.pi / 4)
     assert weights[2] == 1.0
+    
+    # as BSpline constructor()
+    s2 = BSpline.from_ellipse(ellipse)
+    assert spline.control_points == s2.control_points
 
 
 def test_nurbs_arc_parameter_quarter_arc_1_segment():

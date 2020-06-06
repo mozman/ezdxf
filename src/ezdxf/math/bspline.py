@@ -753,6 +753,16 @@ class BSpline:
         """ Returns an arc approximation as :class:`BSpline` with `num` control points. """
         return cls.from_fit_points(arc.vertices(arc.angles(num)), degree=2)
 
+    @staticmethod
+    def from_ellipse(ellipse: 'ConstructionEllipse') -> 'BSpline':
+        """ Returns the ellipse as :class:`BSpline` of 2nd degree with as few control points as possible. """
+        return rational_spline_from_ellipse(ellipse, segments=1)
+
+    @staticmethod
+    def from_arc(arc: 'ConstructionArc') -> 'BSpline':
+        """ Returns the arc as :class:`BSpline` of 2nd degree with as few control points as possible. """
+        return rational_spline_from_arc(arc.center, arc.radius, arc.start_angle, arc.end_angle, segments=1)
+
     @property
     def nplusc(self) -> int:
         return self.count + self.order
@@ -969,7 +979,7 @@ class DBSplineClosed(DerivativePoint, BSplineClosed):
 
 
 def rational_spline_from_arc(
-        center: Vector = (0, 0), radius=1, start_angle: float = 0, end_angle: float = 360,
+        center: Vector = (0, 0), radius: float = 1, start_angle: float = 0, end_angle: float = 360,
         segments: int = 1) -> BSpline:
     """
     Returns a rational B-splines for a circular 2D arc.
