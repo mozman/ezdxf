@@ -4,6 +4,7 @@
 from typing import TYPE_CHECKING, Iterable, Sequence
 import array
 import copy
+import warnings
 from itertools import chain
 from contextlib import contextmanager
 from ezdxf.math import Vector, Matrix44
@@ -309,6 +310,7 @@ class Spline(DXFGraphic):
                 # on exit the context manager sets spline data automatically and updates all counters
 
         """
+        warnings.warn('Spline.edit_data() is deprecated (removed in v0.15).', DeprecationWarning)
         data = SplineData(self)
         yield data
         if data.fit_points is not self.fit_points:

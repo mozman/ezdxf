@@ -143,29 +143,11 @@ def test_knot_values(spline):
     assert values == list(spline.knots)
 
 
-def test_knots_ctx_manager(spline):
-    spline = spline
-    values = [1, 2, 3, 4, 5, 6, 7]
-    spline.knots = values
-    with spline.edit_data() as data:
-        data.knots.extend([8, 9])
-    assert [1, 2, 3, 4, 5, 6, 7, 8, 9] == list(spline.knots)
-
-
 def test_weights(spline):
     spline = spline
     weights = [1, 2, 3, 4, 5, 6, 7]
     spline.weights = weights
     assert weights == list(spline.weights)
-
-
-def test_weights_ctx_manager(spline):
-    spline = spline
-    values = [1, 2, 3, 4, 5, 6, 7]
-    spline.weights = values
-    with spline.edit_data() as data:
-        data.weights.extend([8, 9])
-    assert [1, 2, 3, 4, 5, 6, 7, 8, 9] == list(spline.weights)
 
 
 def test_control_points(spline, points):

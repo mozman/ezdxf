@@ -2,9 +2,11 @@
 # Created: 13.04.2014
 # Copyright (c) 2014 Manfred Moitzi
 # License: MIT License
+from typing import cast
 import ezdxf
 from ezdxf.math.bspline import bspline_control_frame, bspline_control_frame_approx
 from ezdxf.math import BSpline, Vector
+from ezdxf.entities import Spline
 
 new = ezdxf.new
 readfile = ezdxf.readfile
@@ -13,7 +15,7 @@ readfile = ezdxf.readfile
 def clone_spline():
     doc = readfile("Spline_R2000_fit_spline.dxf")
     msp = doc.modelspace()
-    spline = msp.query('SPLINE')[0]  # take first spline
+    spline = cast(Spline, msp.query('SPLINE').first)
     # delete the existing spline from model space and drawing database
     msp.delete_entity(spline)
     # add a new spline
@@ -45,13 +47,13 @@ def fit_spline_with_control_points():
 def add_points_to_spline():
     doc = readfile("Spline_R2000_fit_spline.dxf")
     msp = doc.modelspace()
-    spline = msp.query('SPLINE')[0]  # take first spline
-    with spline.edit_data() as data:
-        data.fit_points.append((3130, 610, 0))
-        # As far I tested this works without complaints from AutoCAD, but for the case of problems
-        data.control_points = []  # delete control points, this could modify the geometry of the spline
-        data.knots = []  # delete knot values, this shouldn't modify the geometry of the spline
-        data.weights = []  # delete weights, this could modify the geometry of the spline
+    spline = cast(Spline, msp.query('SPLINE').first)
+
+    spline.fit_points.append((3130, 610, 0))
+    # As far I tested this works without complaints from AutoCAD, but for the case of problems
+    spline.control_points = []  # delete control points, this could modify the geometry of the spline
+    spline.knots = []  # delete knot values, this shouldn't modify the geometry of the spline
+    spline.weights = []  # delete weights, this could modify the geometry of the spline
 
     doc.saveas("Spline_R2000_with_added_points.dxf")
 

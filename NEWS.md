@@ -59,6 +59,7 @@ Version 0.13b2 - dev
 - DEPRECATED: `non_uniform_scaling` argument for `Insert.explode()`  
 - DEPRECATED: `non_uniform_scaling` argument for `Insert.virtual_entities()`  
 - DEPRECATED: getter and edit methods in `Hatch` for attributes `paths`, `gradient`, `pattern` and `seeds` 
+- DEPRECATED: `Spline.edit_data()` all attributes accessible by properties
 - BUGFIX: `ezdxf.math.intersection_ray_ray_3d()` 
 
 Version 0.12.5 - 2020-06-05
