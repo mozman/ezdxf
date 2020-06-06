@@ -5,9 +5,10 @@ from typing import TYPE_CHECKING, Iterable, Sequence
 import array
 import copy
 import warnings
+import math
 from itertools import chain
 from contextlib import contextmanager
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vector, Matrix44, ConstructionEllipse, X_AXIS, Z_AXIS, NULLVEC
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
 from ezdxf.lldxf.packedtags import VertexArray
@@ -218,6 +219,22 @@ class Spline(DXFGraphic):
         self.knots = s.knots()
         self.weights = s.weights()
         self.set_flag_state(Spline.RATIONAL, state=bool(len(self.weights)))
+
+    @classmethod
+    def from_ellipse(cls, entity: 'DXFGraphic') -> 'Spline':
+        """ Create new SPLINE entity from ELLIPSE entity. New entity has no owner
+        and no handle and is not stored in the entity database!
+
+        """
+        assert entity.dxftype() == 'ELLIPSE', 'ELLIPSE entity required'
+        spline = Spline.new(dxfattribs=entity.graphic_properties(), doc=entity.doc)
+        s = BSpline.from_ellipse(entity.construction_tool())
+        spline.dxf.degree = s.degree
+        spline.dxf.flags = Spline.RATIONAL
+        spline.control_points = s.control_points
+        spline.knots = s.knots()
+        spline.weights = s.weights()
+        return spline
 
     def set_open_uniform(self, control_points: Sequence['Vertex'], degree: int = 3) -> None:
         """

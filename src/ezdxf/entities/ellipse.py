@@ -131,7 +131,6 @@ class Ellipse(DXFGraphic):
         """ Create new ELLIPSE entity from ARC or CIRCLE entity. New entity has no owner
         and no handle and is not stored in the entity database!
 
-        (internal API)
         """
         assert entity.dxftype() in {'ARC', 'CIRCLE'}
         attribs = entity.dxfattribs(drop={'owner', 'handle', 'thickness'})
