@@ -232,7 +232,7 @@ if TYPE_CHECKING:
     from ezdxf.math import ConstructionArc, ConstructionEllipse, Matrix44
 
 
-def open_uniform_knot_vector(n: int, order: int) -> List[float]:
+def open_uniform_knot_vector(n: int, order: int, normalize=False) -> List[float]:
     """
     Returns an open uniform knot vector for a B-spline of `order` and `n` control points.
 
@@ -241,20 +241,24 @@ def open_uniform_knot_vector(n: int, order: int) -> List[float]:
     Args:
         n: count of control points
         order: spline order
+        normalize: normalize values in range [0, 1] if ``True``
 
     """
-    nplusc = n + order
-    nplus2 = n + 2
-    knots = [0.]
-    for i in range(2, nplusc + 1):
-        if (i > order) and (i < nplus2):
-            knots.append(knots[-1] + 1.)
-        else:
-            knots.append(knots[-1])
+    count = n - order
+    if normalize:
+        max_value = float(n - order + 1)
+        tail = [1.0] * order
+    else:
+        max_value = 1.0
+        tail = [1.0 + count] * order
+
+    knots = [0.0] * order
+    knots.extend((1.0 + v) / max_value for v in range(count))
+    knots.extend(tail)
     return knots
 
 
-def uniform_knot_vector(n: int, order: int) -> List[float]:
+def uniform_knot_vector(n: int, order: int, normalize=False) -> List[float]:
     """
     Returns an uniform knot vector for a B-spline of `order` and `n` control points.
 
@@ -263,9 +267,14 @@ def uniform_knot_vector(n: int, order: int) -> List[float]:
     Args:
         n: count of control points
         order: spline order
+        normalize: normalize values in range [0, 1] if ``True``
 
     """
-    return [float(knot_value) for knot_value in range(0, n + order)]
+    if normalize:
+        max_value = float(n + order - 1)
+    else:
+        max_value = 1.0
+    return [knot_value / max_value for knot_value in range(n + order)]
 
 
 def required_knot_values(count: int, order: int) -> int:
