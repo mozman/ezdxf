@@ -64,8 +64,8 @@ def test_rational_spline_from_elliptic_arc():
         center=(1, 1),
         major_axis=(2, 0),
         ratio=0.5,
-        start=0,
-        end=math.pi/2,
+        start_param=0,
+        end_param=math.pi / 2,
     )
     spline = rational_spline_from_ellipse(ellipse)
     assert spline.degree == 2
@@ -81,7 +81,7 @@ def test_rational_spline_from_elliptic_arc():
     assert weights[0] == 1.0
     assert weights[1] == math.cos(math.pi / 4)
     assert weights[2] == 1.0
-    
+
     # as BSpline constructor()
     s2 = BSpline.from_ellipse(ellipse)
     assert spline.control_points == s2.control_points

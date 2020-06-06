@@ -25,27 +25,27 @@ class ConstructionEllipse:
         major_axis: major axis as 3D vector
         extrusion: normal vector of ellipse plane
         ratio: ratio of minor axis to major axis
-        start: start param in radians
-        end: end param in radians
+        start_param: start param in radians
+        end_param: end param in radians
         ccw: is counter clockwise flag - swaps start- and end param if ``False``
 
     """
 
     def __init__(self, center: 'Vertex' = NULLVEC, major_axis: 'Vertex' = X_AXIS, extrusion: 'Vertex' = Z_AXIS,
-                 ratio: float = 1, start: float = 0, end: float = math.tau, ccw: bool = True):
+                 ratio: float = 1, start_param: float = 0, end_param: float = math.tau, ccw: bool = True):
         self.center = Vector(center)
         self.major_axis = Vector(major_axis)
         self.extrusion = Vector(extrusion)
         self.ratio = float(ratio)
-        self.start_param = float(start)
-        self.end_param = float(end)
+        self.start_param = float(start_param)
+        self.end_param = float(end_param)
         if not ccw:
             self.start_param, self.end_param = self.end_param, self.start_param
         self.minor_axis = minor_axis(self.major_axis, self.extrusion, self.ratio)
 
     @classmethod
-    def from_arc(cls, center: 'Vertex' = NULLVEC, radius: float = 1, extrusion: 'Vertex' = Z_AXIS, start: float = 0,
-                 end: float = 360, ccw: bool = True) -> 'ConstructionEllipse':
+    def from_arc(cls, center: 'Vertex' = NULLVEC, radius: float = 1, extrusion: 'Vertex' = Z_AXIS,
+                 start_angle: float = 0, end_angle: float = 360, ccw: bool = True) -> 'ConstructionEllipse':
         """ Returns :class:`ConstructionEllipse` from arc or circle.
 
         Arc and Circle parameters defined in OCS.
@@ -54,8 +54,8 @@ class ConstructionEllipse:
              center: center in OCS
              radius: arc or circle radius
              extrusion: OCS extrusion vector
-             start: start angle in degrees
-             end: end angle in degrees
+             start_angle: start angle in degrees
+             end_angle: end angle in degrees
              ccw: arc curve goes counter clockwise from start to end if ``True``
         """
         ratio = 1.0
@@ -64,8 +64,8 @@ class ConstructionEllipse:
         # Major axis along the OCS x-axis.
         major_axis = ocs.to_wcs(Vector(radius, 0, 0))
         # No further adjustment of start- and end angle required.
-        start_param = math.radians(start)
-        end_param = math.radians(end)
+        start_param = math.radians(start_angle)
+        end_param = math.radians(end_angle)
         return cls(center, major_axis, extrusion, ratio, start_param, end_param, bool(ccw))
 
     def __copy__(self):
@@ -304,8 +304,8 @@ class ConstructionEllipse:
             center=ocs.from_wcs(self.center),
             major_axis=ocs.from_wcs(self.major_axis).replace(z=0),
             ratio=self.ratio,
-            start=self.start_param,
-            end=self.end_param,
+            start_param=self.start_param,
+            end_param=self.end_param,
         )
 
 

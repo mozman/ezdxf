@@ -657,7 +657,7 @@ ConstructionEllipse
 
     .. automethod:: main_axis_points
 
-    .. automethod:: from_arc(center: Vertex=(0, 0, 0), radius: float = 1, extrusion: Vertex=(0, 0, 1), start: float = 0, end: float = 360, ccw: bool = True) -> ConstructionEllipse
+    .. automethod:: from_arc(center: Vertex=(0, 0, 0), radius: float = 1, extrusion: Vertex=(0, 0, 1), start_angle: float = 0, end_angle: float = 360, ccw: bool = True) -> ConstructionEllipse
 
     .. automethod:: transform(m: Matrix44)
 

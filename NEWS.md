@@ -39,11 +39,11 @@ Version 0.13b2 - dev
 - NEW: `Hatch.paths.ellipse_edges_to_spline_edges()` convert ellipse edges to spline edges
 - NEW: `Hatch.paths.all_to_spline_edges()` convert all curves to approximated spline edges
 - NEW: `Hatch.paths.all_to_line_edges()` convert all curves to approximated line edges
-- NEW: `BSpline.from_arc()` returns a B-Spline from a `ConstructionArc()`
-- NEW: `BSpline.from_ellipse()` returns a B-Spline from a `ConstructionEllipse()`
-- NEW: `BSpline.from_fit_points()` returns a B-Spline from fit points
-- NEW: `BSpline.arc_approximation()` returns a B-Spline approximation for an arc defined by `ConstructionArc()`
-- NEW: `BSpline.ellipse_approximation()` returns a B-Spline approximation for an ellipse defined by `ConstructionEllipse()`
+- NEW: `BSpline.from_arc()` B-Spline from a `ConstructionArc()`, best fit with minimal count of control points
+- NEW: `BSpline.from_ellipse()` B-Spline from a `ConstructionEllipse()`, best fit with minimal count of control points
+- NEW: `BSpline.from_fit_points()` B-Spline from fit points
+- NEW: `BSpline.arc_approximation()` B-Spline approximation for an arc defined by `ConstructionArc()`
+- NEW: `BSpline.ellipse_approximation()` B-Spline approximation for an ellipse defined by `ConstructionEllipse()`
 - NEW: `BSpline.transform()` transform B-spline by transformation matrix inplace
 - CHANGE: `Hatch` full support for rotated patterns.
 - CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 

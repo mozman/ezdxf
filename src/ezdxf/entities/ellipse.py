@@ -139,8 +139,8 @@ class Ellipse(DXFGraphic):
             center=attribs.get('center', NULLVEC),
             radius=attribs.pop('radius', 1.0),  # not an ELLIPSE attribute
             extrusion=attribs.get('extrusion', Z_AXIS),
-            start=attribs.pop('start_angle', 0),  # not an ELLIPSE attribute
-            end=attribs.pop('end_angle', 360)  # not an ELLIPSE attribute
+            start_angle=attribs.pop('start_angle', 0),  # not an ELLIPSE attribute
+            end_angle=attribs.pop('end_angle', 360)  # not an ELLIPSE attribute
         )
         attribs.update(e.dxfattribs())
         return Ellipse.new(dxfattribs=attribs, doc=entity.doc)

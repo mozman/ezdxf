@@ -775,7 +775,7 @@ class BoundaryPaths:
                 end_param += math.pi
             ellipse = ConstructionEllipse(
                 center=e.center, major_axis=e.major_axis, ratio=e.ratio,
-                start=start_param, end=end_param,
+                start_param=start_param, end_param=end_param,
             )
             end = ellipse.end_param
             if end < ellipse.start_param:
@@ -1316,8 +1316,8 @@ class EllipseEdge:
             extrusion=Vector(0, 0, 1),
             ratio=self.ratio,
             # ConstructionEllipse() is always in ccw orientation
-            start=self.start_param if self.ccw else self.end_param,
-            end=self.end_param if self.ccw else self.start_param,
+            start_param=self.start_param if self.ccw else self.end_param,
+            end_param=self.end_param if self.ccw else self.start_param,
         )
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:

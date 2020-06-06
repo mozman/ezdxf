@@ -38,8 +38,8 @@ def test_get_start_and_end_vertex():
         major_axis=(4, 3, 0),
         extrusion=(0, 0, -1),
         ratio=.7,
-        start=math.pi / 2,
-        end=math.pi,
+        start_param=math.pi / 2,
+        end_param=math.pi,
     )
 
     start, end = list(ellipse.vertices([
@@ -83,8 +83,8 @@ def test_swap_axis_half_ellipse():
     ellipse = ConstructionEllipse(
         major_axis=(5, 0, 0),
         ratio=2,
-        start=math.pi / 2.0,
-        end=math.pi / 2.0 * 3.0,
+        start_param=math.pi / 2.0,
+        end_param=math.pi / 2.0 * 3.0,
     )
     assert ellipse.minor_axis.isclose((0, 10, 0))
 
@@ -109,8 +109,8 @@ def test_swap_axis_arbitrary_params():
             # avoid (0, 0, 0) as major axis
             major_axis=(non_zero_random(), non_zero_random(), 0),
             ratio=2,
-            start=random.uniform(0, math.tau),
-            end=random.uniform(0, math.tau),
+            start_param=random.uniform(0, math.tau),
+            end_param=random.uniform(0, math.tau),
             extrusion=(0, 0, random.choice((1, -1))),
         )
 
@@ -127,7 +127,7 @@ def test_swap_axis_arbitrary_params():
 
 def test_params():
     count = 9
-    e = ConstructionEllipse(start=math.pi / 2, end=-math.pi / 2)
+    e = ConstructionEllipse(start_param=math.pi / 2, end_param=-math.pi / 2)
     params = list(e.params(count))
     expected = list(linspace(math.pi / 2, math.pi / 2.0 * 3.0, count))
     assert params == expected
@@ -160,8 +160,8 @@ def test_angle_to_param():
             # avoid (0, 0, 0) as major axis
             major_axis=(non_zero_random(), non_zero_random(), 0),
             ratio=ratio,
-            start=0,
-            end=param,
+            start_param=0,
+            end_param=param,
             extrusion=(0, 0, random.choice((1, -1))),
         )
         calculated_angle = ellipse.extrusion.angle_about(ellipse.major_axis, ellipse.end_point)
@@ -172,7 +172,7 @@ def test_angle_to_param():
 
 
 def test_vertices():
-    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5, start=0, end=math.pi * 1.5)
+    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5, start_param=0, end_param=math.pi * 1.5)
     params = list(e.params(7))
     result = [
         (5.0, 3.0, 0.0),
@@ -191,7 +191,7 @@ def test_vertices():
 
 
 def test_tangents():
-    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5, start=0, end=math.pi * 1.5)
+    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5, start_param=0, end_param=math.pi * 1.5)
     params = list(e.params(7))
     result = [
         (0.0, 1.0, 0.0),
@@ -229,3 +229,8 @@ def test_params_from_vertices_random():
 
     assert math.isclose(p1, 0, abs_tol=1e-9) or math.isclose(p1, math.tau, abs_tol=1e-9)
     assert math.isclose(p2, 0, abs_tol=1e-9) or math.isclose(p2, math.tau, abs_tol=1e-9)
+
+
+def test_to_ocs():
+    e = ConstructionEllipse().to_ocs()
+    assert e.center == (0, 0)
