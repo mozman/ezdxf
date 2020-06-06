@@ -1,5 +1,5 @@
 # created: 19.04.2018
-# Copyright (c) 2018-2012 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from array import array
 from typing import Iterable, Sequence
@@ -88,16 +88,21 @@ class VertexArray:
         else:
             self._del_point(self._index(index))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ String representation. """
         name = self.__class__.__name__
         data = ",\n".join(str(p) for p in self)
         return "{} = [\n{}\n]".format(name, data)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Sequence[float]]:
         """ Returns iterable of vertices. """
-        for index in range(len(self)):
-            yield self[index]
+        size = self.VERTEX_SIZE
+        values = self.values
+        index = 0
+        len_array = len(values)
+        while index < len_array:
+            yield tuple(values[index: index + size])
+            index += size
 
     def insert(self, pos: int, point: Sequence[float]):
         """
@@ -155,7 +160,7 @@ class VertexArray:
     def _set_point(self, index: int, point: Sequence[float]):
         size = self.VERTEX_SIZE
         if len(point) != size:
-            raise DXFValueError('point requires exact {} components.'.format(size))
+            raise DXFValueError(f'point requires exact {size} components.')
         if isinstance(point, (tuple, list)):
             point = array('d', point)
         index = index * size
@@ -183,7 +188,7 @@ class VertexArray:
     def append(self, point: Sequence[float]) -> None:
         """ Append `point`. """
         if len(point) != self.VERTEX_SIZE:
-            raise DXFValueError('point requires exact {} components.'.format(self.VERTEX_SIZE))
+            raise DXFValueError(f'point requires exact {self.VERTEX_SIZE} components.')
         self.values.extend(point)
 
     def extend(self, points: Iterable[Sequence[float]]) -> None:
@@ -210,5 +215,3 @@ class VertexArray:
         for vertex in m.transform_vertices(self):
             values.extend(vertex)
         self.values = values
-
-
