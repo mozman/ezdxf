@@ -239,7 +239,7 @@ class Spline(DXFGraphic):
         self.control_points = control_points
         self.knots = uniform_knot_vector(len(control_points), degree + 1)
 
-    def set_periodic(self, control_points: Sequence['Vertex'], degree=3) -> None:
+    def set_closed(self, control_points: Sequence['Vertex'], degree=3) -> None:
         """
         Closed B-spline with uniform knot vector, start and end at your first control point.
 
@@ -247,9 +247,12 @@ class Spline(DXFGraphic):
         self.dxf.flags = self.PERIODIC | self.CLOSED
         self.dxf.degree = degree
         self.control_points = control_points
+        self.control_points.extend(control_points[:degree])
         # AutoDesk Developer Docs:
         # If the spline is periodic, the length of knot vector will be greater than length of the control array by 1.
-        self.knots = range(len(control_points) + 1)
+        # but this does not work with BricsCAD
+        # self.knots = range(len(control_points) + 1)
+        self.knots = uniform_knot_vector(len(self.control_points), degree+1)
 
     def set_open_rational(self, control_points: Sequence['Vertex'], weights: Sequence[float], degree: int = 3) -> None:
         """
@@ -276,15 +279,17 @@ class Spline(DXFGraphic):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.weights = weights
 
-    def set_periodic_rational(self, control_points: Sequence['Vertex'], weights: Sequence[float],
-                              degree: int = 3) -> None:
+    def set_closed_rational(self, control_points: Sequence['Vertex'], weights: Sequence[float],
+                            degree: int = 3) -> None:
         """
         Closed rational B-spline with uniform knot vector, start and end at your first control point, and has
         additional control possibilities by weighting each control point.
 
         """
-        self.set_periodic(control_points, degree=degree)
+        self.set_closed(control_points, degree=degree)
         self.dxf.flags = self.dxf.flags | self.RATIONAL
+        weights = list(weights)
+        weights.extend(weights[:degree])
         if len(weights) != len(self.control_points):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.weights = weights

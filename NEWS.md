@@ -50,6 +50,8 @@ Version 0.13b2 - dev
 - CHANGE: `Hatch.path.add_ellipse` renamed argument `is_counter_clockwise` to `ccw`, type `bool` and `True` by default 
 - CHANGE: renamed 2D `ConstructionXXX.move()` methods to `translate()`
 - CHANGE: renamed old `Insert.scale()` to `Insert.set_scale()`, name conflict with transformation interface
+- CHANGE: renamed `Spline.set_peridic` to `Spline.set_closed()`
+- CHANGE: renamed `Spline.set_peridic_rational` to `Spline.set_closed_rational()`
 - REMOVED: `ezdxf.math.Matrix33` class, `UCS` and `OCS` uses `Matrix44`for transformations  
 - REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`
 - REMOVED: `ezdxf.math.ConstructionTool` base class
@@ -60,6 +62,7 @@ Version 0.13b2 - dev
 - DEPRECATED: getter and edit methods in `Hatch` for attributes `paths`, `gradient`, `pattern` and `seeds` 
 - DEPRECATED: `Spline.edit_data()` all attributes accessible by properties
 - BUGFIX: `ezdxf.math.intersection_ray_ray_3d()` 
+- BUGFIX: `Spline.set_periodic()` created invalid data for BricsCAD - misleading information by Autodesk
 
 Version 0.12.5 - 2020-06-05
 ---------------------------

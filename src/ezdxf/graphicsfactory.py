@@ -638,7 +638,7 @@ class CreatorInterface:
 
         """
         spline = self.add_spline(dxfattribs=dxfattribs)
-        spline.set_periodic(list(control_points), degree)
+        spline.set_closed(list(control_points), degree)
         if knots is not None:
             spline.knots = knots
         return spline
@@ -686,7 +686,7 @@ class CreatorInterface:
 
         """
         spline = self.add_spline(dxfattribs=dxfattribs)
-        spline.set_periodic_rational(list(control_points), weights, degree)
+        spline.set_closed_rational(list(control_points), weights, degree)
         if knots is not None:
             spline.knots = knots
         return spline

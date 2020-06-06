@@ -124,13 +124,13 @@ Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. automethod:: set_uniform
 
-    .. automethod:: set_periodic
+    .. automethod:: set_closed
 
     .. automethod:: set_open_rational
 
     .. automethod:: set_uniform_rational
 
-    .. automethod:: set_periodic_rational
+    .. automethod:: set_closed_rational
 
     .. automethod:: transform(m: Matrix44) -> Spline
 
