@@ -31,7 +31,6 @@ Version 0.13b2 - dev
 - NEW: `Ellipse.apply_construction_tool(e)`, apply `ConstructionEllipse()` data
 - NEW: `Spline.construction_tool()`, return spline data as `ezdxf.math.BSpline()`
 - NEW: `Spline.apply_construction_tool(s)`, apply `ezdxf.math.BSpline()` data
-- NEW: `UCS` and `OCS` uses `Matrix44`for transformations
 - NEW: `Hatch.set_pattern_scale()` to set scaling of pattern definition
 - NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition
 - NEW: `Hatch.paths.polyline_to_edge_path()` convert polyline paths with bulge values to edge paths with lines and arcs
@@ -39,11 +38,11 @@ Version 0.13b2 - dev
 - NEW: `Hatch.paths.ellipse_edges_to_spline_edges()` convert ellipse edges to spline edges
 - NEW: `Hatch.paths.all_to_spline_edges()` convert all curves to approximated spline edges
 - NEW: `Hatch.paths.all_to_line_edges()` convert all curves to approximated line edges
-- NEW: `BSpline.from_arc()` B-Spline from a `ConstructionArc()`, best fit with minimal count of control points
-- NEW: `BSpline.from_ellipse()` B-Spline from a `ConstructionEllipse()`, best fit with minimal count of control points
-- NEW: `BSpline.from_fit_points()` B-Spline from fit points
-- NEW: `BSpline.arc_approximation()` B-Spline approximation for an arc defined by `ConstructionArc()`
-- NEW: `BSpline.ellipse_approximation()` B-Spline approximation for an ellipse defined by `ConstructionEllipse()`
+- NEW: `BSpline.from_arc()` B-spline from a `ConstructionArc()`, best fit with minimal count of control points
+- NEW: `BSpline.from_ellipse()` B-spline from a `ConstructionEllipse()`, best fit with minimal count of control points
+- NEW: `BSpline.from_fit_points()` B-spline from fit points
+- NEW: `BSpline.arc_approximation()` B-spline approximation for an arc defined by `ConstructionArc()`
+- NEW: `BSpline.ellipse_approximation()` B-spline approximation for an ellipse defined by `ConstructionEllipse()`
 - NEW: `BSpline.transform()` transform B-spline by transformation matrix inplace
 - CHANGE: `Hatch` full support for rotated patterns.
 - CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
@@ -51,7 +50,7 @@ Version 0.13b2 - dev
 - CHANGE: `Hatch.path.add_ellipse` renamed argument `is_counter_clockwise` to `ccw`, type `bool` and `True` by default 
 - CHANGE: renamed 2D `ConstructionXXX.move()` methods to `translate()`
 - CHANGE: renamed old `Insert.scale()` to `Insert.set_scale()`, name conflict with transformation interface
-- REMOVED: `ezdxf.math.Matrix33` class  
+- REMOVED: `ezdxf.math.Matrix33` class, `UCS` and `OCS` uses `Matrix44`for transformations  
 - REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`
 - REMOVED: `ezdxf.math.ConstructionTool` base class
 - REMOVED: `ezdxf.math.normalize_angle(angle)`, replace call by expression: `angle % math.tau`
