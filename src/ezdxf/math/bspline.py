@@ -1031,8 +1031,8 @@ def rational_spline_from_ellipse(ellipse: 'ConstructionEllipse', segments: int =
 
     """
     from ezdxf.math import param_to_angle
-    start_angle = param_to_angle(ellipse.ratio, ellipse.start_param)
-    end_angle = param_to_angle(ellipse.ratio, ellipse.end_param)
+    start_angle = param_to_angle(ellipse.ratio, ellipse.start_param) % math.tau
+    end_angle = param_to_angle(ellipse.ratio, ellipse.end_param) % math.tau
 
     def transform_control_points() -> Iterable[Vector]:
         center = Vector(ellipse.center)

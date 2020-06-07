@@ -2,7 +2,6 @@
 # License: MIT License
 from pathlib import Path
 import ezdxf
-from ezdxf.math import rational_spline_from_arc
 
 DIR = Path('~/Desktop/outbox').expanduser()
 
@@ -11,16 +10,16 @@ msp = doc.modelspace()
 
 
 arc = msp.add_arc(
-    center=(1, -1),
-    radius=3.0,
-    start_angle=15,
-    end_angle=225,
+    center=(0, 0),
+    radius=1.0,
+    start_angle=0,
+    end_angle=360,
     dxfattribs={'layer': 'arc'},
 )
-s = rational_spline_from_arc(arc.dxf.center, arc.dxf.radius, arc.dxf.start_angle, arc.dxf.end_angle)
-spline = msp.add_spline(dxfattribs={'color': 1, 'layer': 'B-spline'})
-spline.apply_construction_tool(s)
 
+spline = arc.to_spline(replace=False)
+spline.dxf.layer = 'B-spline'
+spline.dxf.color = 1
 
 doc.set_modelspace_vport(2)
 
