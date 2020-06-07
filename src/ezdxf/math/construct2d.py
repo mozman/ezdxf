@@ -172,23 +172,6 @@ def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE)
     return r if ccw else not r
 
 
-class ConstructionTool:
-    """
-    Abstract base class for all 2D construction classes.
-
-    """
-
-    @property
-    @abstractmethod
-    def bounding_box(self) -> 'BoundingBox2d':
-        pass
-
-    @abstractmethod
-    def move(self, dx: float, dy: float) -> None:
-        # todo: remove move() method
-        pass
-
-
 def intersection_line_line_2d(
         line1: Sequence[Vec2],
         line2: Sequence[Vec2],
