@@ -24,10 +24,6 @@ Version 0.13b3 - dev
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
 - NEW: `Circle.to_ellipse()`, convert CIRCLE/ARC to ELLIPSE entity
 - NEW: `Circle.to_spline()`, convert CIRCLE/ARC to SPLINE entity
-- NEW: `ezdxf.math.ConstructionEllipse()`
-- NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
-- NEW: `ezdxf.math.rational_spline_from_arc()` returns a rational B-spline for a circular arc
-- NEW: `ezdxf.math.rational_spline_from_ellipse()` returns a rational B-spline for an elliptic arc
 - NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
 - NEW: `Ellipse.construction_tool()`, return ellipse data as `ConstructionEllipse()`
 - NEW: `Ellipse.apply_construction_tool()`, apply `ConstructionEllipse()` data
@@ -43,6 +39,10 @@ Version 0.13b3 - dev
 - NEW: `Hatch.paths.ellipse_edges_to_spline_edges()` convert ellipse edges to spline edges
 - NEW: `Hatch.paths.all_to_spline_edges()` convert all curves to approximated spline edges
 - NEW: `Hatch.paths.all_to_line_edges()` convert all curves to approximated line edges
+- NEW: `ezdxf.math.ConstructionEllipse()`
+- NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
+- NEW: `ezdxf.math.rational_spline_from_arc()` returns a rational B-spline for a circular arc
+- NEW: `ezdxf.math.rational_spline_from_ellipse()` returns a rational B-spline for an elliptic arc
 - NEW: `BSpline.from_arc()` B-spline from an arc, best approximation with a minimum number of control points
 - NEW: `BSpline.from_ellipse()` B-spline from an ellipse, best approximation with a minimum number of control points
 - NEW: `BSpline.from_fit_points()` B-spline from fit points
