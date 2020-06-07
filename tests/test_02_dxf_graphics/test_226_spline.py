@@ -7,7 +7,7 @@ import math
 import ezdxf
 from ezdxf.entities.spline import Spline
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vector, Matrix44, required_knot_values
 
 SPLINE = """0
 SPLINE
@@ -283,6 +283,64 @@ def test_spline_transform_interface():
     assert spline.dxf.start_tangent == (1, 0, 0)
     assert spline.dxf.end_tangent == (2, 0, 0)
     assert spline.dxf.extrusion == (3, 0, 0)
+
+
+def test_from_circle():
+    from ezdxf.entities import Circle
+    spline = Spline.from_arc(Circle.new(dxfattribs={
+        'center': (1, 1),
+        'radius': 2,
+        'layer': 'circle',
+    }))
+    assert spline.dxf.handle is None
+    assert spline.dxf.owner is None
+    assert spline.dxf.layer == 'circle'
+    assert spline.dxf.degree == 2
+    assert len(spline.control_points) > 2
+    assert len(spline.weights) > 2
+    assert len(spline.fit_points) == 0
+    assert len(spline.knots) == required_knot_values(len(spline.control_points), spline.dxf.degree + 1)
+
+
+def test_from_arc():
+    from ezdxf.entities import Arc
+    spline = Spline.from_arc(Arc.new(dxfattribs={
+        'center': (1, 1),
+        'radius': 2,
+        'start_angle': 30,  # degrees
+        'end_angle': 150,
+        'layer': 'arc',
+    }))
+    assert spline.dxf.layer == 'arc'
+    assert spline.dxf.degree == 2
+    assert len(spline.control_points) > 2
+    assert len(spline.weights) > 2
+    assert len(spline.fit_points) == 0
+    assert len(spline.knots) == required_knot_values(len(spline.control_points), spline.dxf.degree + 1)
+
+
+def test_from_ellipse():
+    from ezdxf.entities import Ellipse
+    spline = Spline.from_arc(Ellipse.new(dxfattribs={
+        'center': (1, 1),
+        'major_axis': (2, 0),
+        'ratio': 0.5,
+        'start_param': 0.5,  # radians
+        'end_param': 3,
+        'layer': 'ellipse',
+    }))
+    assert spline.dxf.layer == 'ellipse'
+    assert spline.dxf.degree == 2
+    assert len(spline.control_points) > 2
+    assert len(spline.weights) > 2
+    assert len(spline.fit_points) == 0
+    assert len(spline.knots) == required_knot_values(len(spline.control_points), spline.dxf.degree + 1)
+
+
+def test_from_line_with_type_error():
+    from ezdxf.entities import Line
+    with pytest.raises(TypeError):
+        Spline.from_arc(Line.new())
 
 
 SPLINE2 = """  0

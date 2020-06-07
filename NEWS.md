@@ -28,9 +28,11 @@ Version 0.13b2 - dev
 - NEW: `ezdxf.math.rational_spline_from_ellipse()` returns a rational B-spline for an elliptic arc
 - NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
 - NEW: `Ellipse.construction_tool()`, return ellipse data as `ConstructionEllipse()`
-- NEW: `Ellipse.apply_construction_tool(e)`, apply `ConstructionEllipse()` data
+- NEW: `Ellipse.apply_construction_tool()`, apply `ConstructionEllipse()` data
+- NEW: `Ellipse.from_arc()`, create a new ELLIPSE entity from CIRCLE or ARC entity 
 - NEW: `Spline.construction_tool()`, return spline data as `ezdxf.math.BSpline()`
-- NEW: `Spline.apply_construction_tool(s)`, apply `ezdxf.math.BSpline()` data
+- NEW: `Spline.apply_construction_tool()`, apply `ezdxf.math.BSpline()` data
+- NEW: `Spline.from_arc()`, create a new SPLINE entity from CIRCLE, ARC or ELLIPSE entity
 - NEW: `Hatch.set_pattern_scale()` to set scaling of pattern definition
 - NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition
 - NEW: `Hatch.paths.polyline_to_edge_path()` convert polyline paths with bulge values to edge paths with lines and arcs

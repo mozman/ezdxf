@@ -1,14 +1,13 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-06
-from typing import TYPE_CHECKING, Iterable, Sequence
+from typing import TYPE_CHECKING, Iterable, Sequence, cast
 import array
 import copy
 import warnings
-import math
 from itertools import chain
 from contextlib import contextmanager
-from ezdxf.math import Vector, Matrix44, ConstructionEllipse, X_AXIS, Z_AXIS, NULLVEC
+from ezdxf.math import Vector, Matrix44, ConstructionEllipse, Z_AXIS, NULLVEC
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
 from ezdxf.lldxf.packedtags import VertexArray
@@ -18,7 +17,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags, Ellipse
 
 __all__ = ['Spline']
 
@@ -221,14 +220,37 @@ class Spline(DXFGraphic):
         self.set_flag_state(Spline.RATIONAL, state=bool(len(self.weights)))
 
     @classmethod
-    def from_ellipse(cls, entity: 'DXFGraphic') -> 'Spline':
-        """ Create new SPLINE entity from ELLIPSE entity. New entity has no owner
-        and no handle and is not stored in the entity database!
+    def from_arc(cls, entity: 'DXFGraphic') -> 'Spline':
+        """ Create a new SPLINE entity from CIRCLE, ARC or ELLIPSE entity.
+
+        The new SPLINE entity has no owner, no handle, is not stored in
+        the entity database nor assigned to any layout!
+
+        .. versionadded:: 0.13
 
         """
-        assert entity.dxftype() == 'ELLIPSE', 'ELLIPSE entity required'
+        dxftype = entity.dxftype()
+        if dxftype == 'ELLIPSE':
+            ellipse = cast('Ellipse', entity).construction_tool()
+        elif dxftype == 'CIRCLE':
+            ellipse = ConstructionEllipse.from_arc(
+                center=entity.dxf.get('center', NULLVEC),
+                radius=entity.dxf.get('radius', 1.0),
+                extrusion=entity.dxf.get('extrusion', Z_AXIS),
+            )
+        elif dxftype == 'ARC':
+            ellipse = ConstructionEllipse.from_arc(
+                center=entity.dxf.get('center', NULLVEC),
+                radius=entity.dxf.get('radius', 1.0),
+                extrusion=entity.dxf.get('extrusion', Z_AXIS),
+                start_angle=entity.dxf.get('start_angle', 0),
+                end_angle=entity.dxf.get('end_angle', 360)
+            )
+        else:
+            raise TypeError('CIRCLE, ARC or ELLIPSE entity required.')
+
         spline = Spline.new(dxfattribs=entity.graphic_properties(), doc=entity.doc)
-        s = BSpline.from_ellipse(entity.construction_tool())
+        s = BSpline.from_ellipse(ellipse)
         spline.dxf.degree = s.degree
         spline.dxf.flags = Spline.RATIONAL
         spline.control_points = s.control_points

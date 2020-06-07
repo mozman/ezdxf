@@ -128,8 +128,12 @@ class Ellipse(DXFGraphic):
 
     @classmethod
     def from_arc(cls, entity: 'DXFGraphic') -> 'Ellipse':
-        """ Create new ELLIPSE entity from ARC or CIRCLE entity. New entity has no owner
-        and no handle and is not stored in the entity database!
+        """ Create a new ELLIPSE entity from ARC or CIRCLE entity.
+
+        The new SPLINE entity has no owner, no handle, is not stored in
+        the entity database nor assigned to any layout!
+
+        .. versionadded:: 0.13
 
         """
         assert entity.dxftype() in {'ARC', 'CIRCLE'}

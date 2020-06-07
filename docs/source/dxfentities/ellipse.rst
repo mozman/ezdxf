@@ -73,4 +73,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Ellipse
 
+    .. automethod:: from_arc(entity: DXFGraphic) -> Ellipse
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-107CB04F-AD4D-4D2F-8EC9-AC90888063AB
