@@ -43,8 +43,8 @@ Version 0.13b3 - dev
 - NEW: `Hatch.paths.ellipse_edges_to_spline_edges()` convert ellipse edges to spline edges
 - NEW: `Hatch.paths.all_to_spline_edges()` convert all curves to approximated spline edges
 - NEW: `Hatch.paths.all_to_line_edges()` convert all curves to approximated line edges
-- NEW: `BSpline.from_arc()` B-spline from a `ConstructionArc()`, best approximation with a minimum number of control points
-- NEW: `BSpline.from_ellipse()` B-spline from a `ConstructionEllipse()`, best approximation with a minimum number of control points
+- NEW: `BSpline.from_arc()` B-spline from an arc, best approximation with a minimum number of control points
+- NEW: `BSpline.from_ellipse()` B-spline from an ellipse, best approximation with a minimum number of control points
 - NEW: `BSpline.from_fit_points()` B-spline from fit points
 - NEW: `BSpline.arc_approximation()` B-spline approximation from arc vertices as fit points
 - NEW: `BSpline.ellipse_approximation()` B-spline approximation from ellipse vertices as fit points

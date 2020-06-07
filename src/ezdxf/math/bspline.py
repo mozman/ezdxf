@@ -1005,8 +1005,8 @@ def rational_spline_from_arc(
     """
     center = Vector(center)
     radius = float(radius)
-    start_angle = math.radians(start_angle)
-    end_angle = math.radians(end_angle)
+    start_angle = math.radians(start_angle) % math.tau
+    end_angle = math.radians(end_angle) % math.tau
     control_points, weights, knots = nurbs_arc_parameters(start_angle, end_angle, segments)
     return BSpline(
         control_points=(center + (p * radius) for p in control_points),
