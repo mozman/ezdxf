@@ -22,6 +22,8 @@ Version 0.13b2 - dev
    
 - NEW: `DXFGraphic.unlink_from_layout()` to unlink entity from associated layout
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
+- NEW: `Circle.to_ellipse()`, convert CIRCLE/ARC to ELLIPSE entity
+- NEW: `Circle.to_spline()`, convert CIRCLE/ARC to SPLINE entity
 - NEW: `ezdxf.math.ConstructionEllipse()`
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
 - NEW: `ezdxf.math.rational_spline_from_arc()` returns a rational B-spline for a circular arc
@@ -29,10 +31,11 @@ Version 0.13b2 - dev
 - NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
 - NEW: `Ellipse.construction_tool()`, return ellipse data as `ConstructionEllipse()`
 - NEW: `Ellipse.apply_construction_tool()`, apply `ConstructionEllipse()` data
-- NEW: `Ellipse.from_arc()`, create a new ELLIPSE entity from CIRCLE or ARC entity 
+- NEW: `Ellipse.to_spline()`, convert ELLIPSE to SPLINE entity 
+- NEW: `Ellipse.from_arc()`, create a new ELLIPSE entity from CIRCLE or ARC entity (constructor)
 - NEW: `Spline.construction_tool()`, return spline data as `ezdxf.math.BSpline()`
 - NEW: `Spline.apply_construction_tool()`, apply `ezdxf.math.BSpline()` data
-- NEW: `Spline.from_arc()`, create a new SPLINE entity from CIRCLE, ARC or ELLIPSE entity
+- NEW: `Spline.from_arc()`, create a new SPLINE entity from CIRCLE, ARC or ELLIPSE entity (constructor)
 - NEW: `Hatch.set_pattern_scale()` to set scaling of pattern definition
 - NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition
 - NEW: `Hatch.paths.polyline_to_edge_path()` convert polyline paths with bulge values to edge paths with lines and arcs

@@ -21,7 +21,7 @@ from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
 if TYPE_CHECKING:
     from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex, Drawing
 
-__all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd']
+__all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd', 'add_entity', 'replace_entity']
 
 GRAPHIC_PROPERTIES = {'layer', 'linetype', 'color', 'lineweight', 'ltscale', 'true_color', 'color_name', }
 
@@ -538,3 +538,36 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
         return are_linked_entities  # inform caller if `entity` is linked to a parent entity
 
     return entity_linker_
+
+
+def add_entity(source: 'DXFGraphic', target: 'DXFGraphic') -> None:
+    """ Add `target` entity to the entity database and to the same layout as the `source` entity.
+    """
+    assert target.dxf.handle is None
+    source.entitydb.add(target)
+    layout = source.get_layout()
+    if layout is not None:
+        layout.add_entity(target)
+
+
+def replace_entity(source: 'DXFGraphic', target: 'DXFGraphic') -> None:
+    """ Add `target` entity to the entity database and to the same layout
+    as the `source` entity and replace the `source` entity by the
+    `target` entity.
+
+    """
+    assert target.dxf.handle is None
+    target.dxf.handle = source.dxf.handle
+    layout = source.get_layout()
+    entitydb = source.entitydb
+
+    if layout is not None:
+        # replace in layout and entity database
+        layout.delete_entity(source)
+    else:
+        # replace just in entity database
+        source.entitydb.delete_entity(source)
+
+    entitydb.add(target)
+    if layout is not None:
+        layout.add_entity(target)

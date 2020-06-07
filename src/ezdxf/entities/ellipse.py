@@ -9,11 +9,11 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from ezdxf.math import ellipse
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Spline
 
 __all__ = ['Ellipse']
 
@@ -168,3 +168,23 @@ class Ellipse(DXFGraphic):
         """
         self.dxf.center = Vector(dx, dy, dz) + self.dxf.center
         return self
+
+    def to_spline(self, replace=True) -> 'Spline':
+        """ Convert ELLIPSE to a :class:`~ezdxf.entities.Spline` entity.
+
+        Adds the new SPLINE entity to the entity database and to the
+        same layout as the source entity.
+
+        Args:
+            replace: replace (delete) source entity by SPLINE entity if ``True``
+
+        .. versionadded:: 0.13
+
+        """
+        from ezdxf.entities import Spline
+        spline = Spline.from_arc(self)
+        if replace:
+            replace_entity(self, spline)
+        else:
+            add_entity(self, spline)
+        return spline
