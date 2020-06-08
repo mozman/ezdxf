@@ -2,9 +2,10 @@
 # Created: 26.03.2010
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
-from typing import List, TYPE_CHECKING, Iterable, Union
+from typing import List, TYPE_CHECKING, Iterable, Union, Sequence
 import math
-from ezdxf.math import Vector, Vec2
+from itertools import chain
+from ezdxf.math import Vector, Vec2, Matrix
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -31,7 +32,7 @@ class Bezier4P:
 
     """
 
-    def __init__(self, defpoints: List['Vertex']):
+    def __init__(self, defpoints: Sequence['Vertex']):
         if len(defpoints) == 4:
             is3d = any(len(p) > 2 for p in defpoints)
             vector_class = Vector if is3d else Vec2
@@ -134,3 +135,39 @@ def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: 
         control_point_1 = start_point + (-start_point.y * tangent_length, start_point.x * tangent_length)
         control_point_2 = end_point + (end_point.y * tangent_length, -end_point.x * tangent_length)
         yield start_point, control_point_1, control_point_2, end_point
+
+
+def bezier_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
+    """
+    Get n-1 cubic Bezier curves for n given data points, the i. curve goes from point[i] to point[i+1].
+
+    Args:
+        points: data points
+
+    """
+    # Source: https://towardsdatascience.com/b%C3%A9zier-interpolation-8033e9a262c2
+    points = Vector.list(points)
+    if len(points) < 3:
+        raise ValueError('At least 3 points required.')
+
+    num = len(points) - 1
+    coefficients = Matrix(shape=(num, num))
+    coefficients.set_diagonal(4.0)
+    coefficients.set_diagonal(1.0, row_offset=1)
+    coefficients.set_diagonal(1.0, col_offset=1)
+    coefficients[0, 0] = 2.0
+    coefficients[num - 1, num - 1] = 7.0
+    coefficients[num - 1, num - 2] = 2.0
+
+    points_vector = [points[0] + 2.0 * points[1]]
+    points_vector.extend(2.0 * (2.0 * points[i] + points[i + 1]) for i in range(1, num-1))
+    points_vector.append(8.0 * points[num - 1] + points[num])
+
+    # solve linear equation system
+    solution = coefficients.gauss_matrix(Matrix(shape=(num, 3), items=chain(points_vector)))
+    control_points_1 = Vector.list(solution.rows())
+    control_points_2 = [p * 2.0 - cp for p, cp in zip(points[1:], control_points_1[1:])]
+    control_points_2.append((control_points_1[num - 1] + points[num]) / 2.0)
+
+    for defpoints in zip(points[:-1], control_points_1, control_points_2, points[1:]):
+        yield Bezier4P(defpoints)

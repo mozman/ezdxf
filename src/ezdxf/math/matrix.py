@@ -77,6 +77,13 @@ class Matrix:
     def cols(self) -> List[List[float]]:
         return [self.col(i) for i in range(self.ncols)]
 
+    def set_diagonal(self, value: float = 1.0, row_offset: int = 0, col_offset: int = 0):
+        for index in range(max(self.nrows, self.ncols)):
+            try:
+                self.matrix[index + row_offset][index + col_offset] = value
+            except IndexError:
+                return
+
     def append_row(self, items: Sequence[float]) -> None:
         if self.matrix is None:
             self.matrix = [list(items)]
