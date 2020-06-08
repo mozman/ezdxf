@@ -94,10 +94,10 @@ class Bezier4P:
     def approximated_length(self, segments: int = 100) -> float:
         """ Returns estimated length of `Bézier curve`_ as approximation by line `segments`. """
         length = 0.
-        point_gen = self.approximate(segments)
-        prev_point = next(point_gen)
-        for point in point_gen:
-            length += prev_point.distance(point)
+        prev_point = None
+        for point in self.approximate(segments):
+            if prev_point is not None:
+                length += prev_point.distance(point)
             prev_point = point
         return length
 
