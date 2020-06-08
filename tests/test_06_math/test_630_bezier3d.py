@@ -1,9 +1,10 @@
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
 import pytest
+import math
 from math import isclose
 from ezdxf.math.bezier import Bezier, DBezier
-from ezdxf.math.bezier4p import Bezier4P
+from ezdxf.math.bezier4p import Bezier4P, cubic_bezier_arc_parameters
 
 DEFPOINTS2D = [(0., 0., 0.), (3., 0., 0.), (7., 10., 0.), (10., 10., 0.)]
 DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
@@ -105,6 +106,36 @@ def test_derivative_2(dbezier):
         assert isclose(epx, rpx)
         assert isclose(epy, rpy)
         assert isclose(epz, rpz)
+
+
+def test_cubic_bezier_arc_parameters():
+    parts = list(cubic_bezier_arc_parameters(0, math.tau))
+    assert len(parts) == 4
+
+    chk = 4.0 * (math.sqrt(2) - 1.0) / 3.0
+    sp, cp1, cp2, ep = parts[0]
+    assert sp.isclose((1, 0))
+    assert cp1.isclose((1, chk))
+    assert cp2.isclose((chk, 1))
+    assert ep.isclose((0, 1))
+
+    sp, cp1, cp2, ep = parts[1]
+    assert sp.isclose((0, 1))
+    assert cp1.isclose((-chk, 1))
+    assert cp2.isclose((-1, chk))
+    assert ep.isclose((-1, 0))
+
+    sp, cp1, cp2, ep = parts[2]
+    assert sp.isclose((-1, 0))
+    assert cp1.isclose((-1, -chk))
+    assert cp2.isclose((-chk, -1))
+    assert ep.isclose((0, -1))
+
+    sp, cp1, cp2, ep = parts[3]
+    assert sp.isclose((0, -1))
+    assert cp1.isclose((chk, -1))
+    assert cp2.isclose((1, -chk))
+    assert ep.isclose((1, 0))
 
 
 POINTS2D = [

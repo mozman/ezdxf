@@ -3,6 +3,9 @@
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
 from typing import List, TYPE_CHECKING, Iterable, Sequence
+import math
+from ezdxf.math import Vector
+
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
@@ -166,3 +169,37 @@ class D3D:
         return ((point1[0] - point2[0]) ** 2 +
                 (point1[1] - point2[1]) ** 2 +
                 (point1[2] - point2[2]) ** 2) ** 0.5
+
+
+def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: int = 1):
+    """
+    Yields cubic Bezier curve parameters for a circular 2D arc with center at (0, 0) and a radius of 1
+    in the form of [start point, 1. control point, 2. control point, endpoint].
+
+    Args:
+        start_angle: start angle in radians
+        end_angle: end angle in radians (end_angle > start_angle!)
+        segments: count of segments, at least one segment for each quarter (pi/2)
+
+    """
+    # Source: https://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves
+    if segments < 1:
+        raise ValueError('Invalid argument segments (>= 1).')
+    delta_angle = end_angle - start_angle
+    if delta_angle > 0:
+        arc_count = max(math.ceil(delta_angle / math.pi * 2.0), segments)
+    else:
+        raise ValueError('Delta angle from start- to end angle has to be > 0.')
+
+    segment_angle = delta_angle / arc_count
+    tangent_length = 4.0 / 3.0 * math.tan(segment_angle / 4.0)
+
+    angle = start_angle
+    end_point = None
+    for _ in range(arc_count):
+        start_point = Vector.from_angle(angle) if end_point is None else end_point
+        angle += segment_angle
+        end_point = Vector.from_angle(angle)
+        control_point_1 = start_point + (-start_point.y * tangent_length, start_point.x * tangent_length)
+        control_point_2 = end_point + (end_point.y * tangent_length, -end_point.x * tangent_length)
+        yield start_point, control_point_1, control_point_2, end_point
