@@ -845,11 +845,11 @@ Bezier4P
 
     .. autoattribute:: control_points
 
-    .. automethod:: point
+    .. automethod:: point(t: float) -> Union[Vector, Vec2]
 
-    .. automethod:: tangent
+    .. automethod:: tangent(t: float) -> Union[Vector, Vec2]
 
-    .. automethod:: approximate
+    .. automethod:: approximate(segments: int) -> Iterable[Union[Vector, Vec2]]
 
     .. automethod:: approximated_length
 
