@@ -23,7 +23,7 @@ definitions.
 
 (75) linear P(t) = (1-t)*P0 + t*P1
 (76) quadratic P(t) = (1-t)^2*P0 + 2*(t-1)*t*P1 + t^2*P2
-(77) cubic P(t) = (1-t)^3*P0 + 3*(t-1)^2*t*P1 + 3*(t-1)*t^2*P2 + t^3*P3
+(77) cubic P(t) = (1-t)^3*P0 + 3*(1-t)^2*t*P1 + 3*(1-t)*t^2*P2 + t^3*P3
 
 Ways of thinking about Bezier curves
 ------------------------------------
@@ -186,7 +186,7 @@ def bernstein_basis(n: int, i: int, t: float) -> float:
 
 
 class _Factorial:
-    _values = {0: 1.0}  # type: Dict[int, float]
+    _values: Dict[int, float] = {0: 1.0}
 
     def __init__(self, maxvalue: int = 33):
         value = 1.

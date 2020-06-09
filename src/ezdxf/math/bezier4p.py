@@ -5,6 +5,7 @@
 from typing import List, TYPE_CHECKING, Iterable, Union, Sequence
 import math
 from itertools import chain
+from functools import lru_cache
 from ezdxf.math import Vector, Vec2, Matrix
 from ezdxf.math.ellipse import ConstructionEllipse
 
@@ -20,6 +21,34 @@ __all__ = [
 def check_if_in_valid_range(t: float):
     if not (0 <= t <= 1.):
         raise ValueError("t not in range [0 to 1]")
+
+
+# Optimization:
+# cubic P(t) = (1-t)^3*P0 + 3*(1-t)^2*t*P1 + 3*(1-t)*t^2*P2 + t^3*P3
+# cubic P(t) = a*P0 + b*P1 + c*P2 + d*P3
+# a, b, c, d = bernstein3(t) ... cached
+@lru_cache
+def bernstein3(t: float) -> Sequence[float]:
+    """ Bernstein polynom of 3rd degree. """
+    t2 = t * t
+    _1_minus_t = 1.0 - t
+    _1_minus_t_square = _1_minus_t * _1_minus_t
+    a = _1_minus_t_square * _1_minus_t
+    b = 3.0 * _1_minus_t_square * t
+    c = 3.0 * _1_minus_t * t2
+    d = t2 * t
+    return a, b, c, d
+
+
+@lru_cache
+def bernstein3_d1(t: float) -> Sequence[float]:
+    """ First derivative of Bernstein polynom of 3rd degree. """
+    t2 = t * t
+    a = -3.0 * (1.0 - t) ** 2
+    b = 3.0 * (1.0 - 4.0 * t + 3.0 * t2)
+    c = 3.0 * t * (2.0 - 3.0 * t)
+    d = 3.0 * t2
+    return a, b, c, d
 
 
 class Bezier4P:
@@ -92,19 +121,18 @@ class Bezier4P:
         delta_t = 1. / segments
         yield self._control_points[0]
         for segment in range(1, segments):
-            yield self.point(delta_t * segment)
+            yield self._get_curve_point(delta_t * segment)
         yield self._control_points[3]
 
     def _get_curve_point(self, t: float) -> Union[Vector, Vec2]:
         b1, b2, b3, b4 = self._control_points
-        one_minus_t = 1. - t
-        return b1 * (one_minus_t ** 3) + (b2 * (3. * one_minus_t ** 2 * t)) + (b3 * (3. * one_minus_t * t ** 2)) + (
-                b4 * (t ** 3))
+        a, b, c, d = bernstein3(t)
+        return b1 * a + b2 * b + b3 * c + b4 * d
 
     def _get_curve_tangent(self, t: float) -> Union[Vector, Vec2]:
         b1, b2, b3, b4 = self._control_points
-        return b1 * (-3. * (1. - t) ** 2) + (b2 * (3. * (1. - 4. * t + 3. * t ** 2))) + (
-                b3 * (3. * t * (2. - 3. * t))) + (b4 * (3. * t ** 2))
+        a, b, c, d = bernstein3_d1(t)
+        return b1 * a + b2 * b + b3 * c + b4 * d
 
     def approximated_length(self, segments: int = 100) -> float:
         """ Returns estimated length of `Bézier curve`_ as approximation by line `segments`. """
