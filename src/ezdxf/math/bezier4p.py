@@ -27,7 +27,7 @@ def check_if_in_valid_range(t: float):
 # cubic P(t) = (1-t)^3*P0 + 3*(1-t)^2*t*P1 + 3*(1-t)*t^2*P2 + t^3*P3
 # cubic P(t) = a*P0 + b*P1 + c*P2 + d*P3
 # a, b, c, d = bernstein3(t) ... cached
-@lru_cache
+@lru_cache(maxsize=128)
 def bernstein3(t: float) -> Sequence[float]:
     """ Bernstein polynom of 3rd degree. """
     t2 = t * t
@@ -40,7 +40,7 @@ def bernstein3(t: float) -> Sequence[float]:
     return a, b, c, d
 
 
-@lru_cache
+@lru_cache(maxsize=128)
 def bernstein3_d1(t: float) -> Sequence[float]:
     """ First derivative of Bernstein polynom of 3rd degree. """
     t2 = t * t
