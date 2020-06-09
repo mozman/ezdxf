@@ -6,9 +6,15 @@ from typing import List, TYPE_CHECKING, Iterable, Union, Sequence
 import math
 from itertools import chain
 from ezdxf.math import Vector, Vec2, Matrix
+from ezdxf.math.ellipse import ConstructionEllipse
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
+
+__all__ = [
+    'Bezier4P', 'bezier4p_interpolation', 'cubic_bezier_arc_parameters', 'bezier4p_from_arc',
+    'bezier4p_from_ellipse'
+]
 
 
 def check_if_in_valid_range(t: float):
@@ -39,6 +45,14 @@ class Bezier4P:
             self._control_points = vector_class.list(defpoints)
         else:
             raise ValueError("Four control points required.")
+
+    def to3d(self) -> 'Bezier4P':
+        """ Returns the bezier curve with 3d control points. """
+        return self.__class__([Vector(p) for p in self._control_points])
+
+    def to2d(self) -> 'Bezier4P':
+        """ Returns the bezier curve with 2d control points. (discards the z-axis) """
+        return self.__class__([Vec2(p) for p in self._control_points])
 
     @property
     def control_points(self) -> List[Union[Vector, Vec2]]:
@@ -103,9 +117,63 @@ class Bezier4P:
         return length
 
 
-def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: int = 1):
+def bezier4p_from_arc(
+        center: Vector = (0, 0), radius: float = 1, start_angle: float = 0, end_angle: float = 360,
+        segments: int = 1) -> Iterable[Bezier4P]:
     """
-    Yields cubic Bezier curve parameters for a circular 2D arc with center at (0, 0) and a radius of 1
+    Returns an approximation for a circular 2D arc by multiple cubic Bézier curves.
+
+    Args:
+        center: circle center as :class:`Vector` compatible object
+        radius: circle radius
+        start_angle: start angle in degrees
+        end_angle: end angle in degrees
+        segments: count of spline segments, at least one segment for each quarter (90 deg), ``1`` for as few as needed.
+
+    .. versionadded:: 0.13
+
+    """
+    center = Vector(center)
+    radius = float(radius)
+    start_angle = math.radians(start_angle) % math.tau
+    end_angle = math.radians(end_angle) % math.tau
+    for control_points in cubic_bezier_arc_parameters(start_angle, end_angle, segments):
+        defpoints = [center + (p * radius) for p in control_points]
+        yield Bezier4P(defpoints)
+
+
+PI_2 = math.pi / 2.0
+
+
+def bezier4p_from_ellipse(ellipse: 'ConstructionEllipse', segments: int = 1) -> Iterable[Bezier4P]:
+    """
+    Returns an approximation for an elliptic arc by multiple cubic Bézier curves.
+
+    Args:
+        ellipse: ellipse parameters as :class:`~ezdxf.math.ConstructionEllipse` object
+        segments: count of spline segments, at least one segment for each quarter (pi/2), ``1`` for as few as needed.
+
+    .. versionadded:: 0.13
+
+    """
+    from ezdxf.math import param_to_angle
+    start_angle = param_to_angle(ellipse.ratio, ellipse.start_param) % math.tau
+    end_angle = param_to_angle(ellipse.ratio, ellipse.end_param) % math.tau
+
+    def transform(points: Iterable[Vector]) -> Iterable[Vector]:
+        center = Vector(ellipse.center)
+        x_axis = ellipse.major_axis
+        y_axis = ellipse.minor_axis
+        for p in points:
+            yield center + x_axis * p.x + y_axis * p.y
+
+    for defpoints in cubic_bezier_arc_parameters(start_angle, end_angle, segments):
+        yield Bezier4P(tuple(transform(defpoints)))
+
+
+def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: int = 1) -> Sequence[Vector]:
+    """
+    Yields cubic Bézier curve parameters for a circular 2D arc with center at (0, 0) and a radius of 1
     in the form of [start point, 1. control point, 2. control point, end point].
 
     Args:
@@ -137,12 +205,15 @@ def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: 
         yield start_point, control_point_1, control_point_2, end_point
 
 
-def bezier_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
+def bezier4p_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
     """
-    Get n-1 cubic Bezier curves for n given data points, the i. curve goes from point[i] to point[i+1].
+    Returns an interpolation curve for given data `points` as multiple cubic Bézier curves.
+    Returns n-1 cubic Bézier curves for n given data points, curve i goes from point[i] to point[i+1].
 
     Args:
         points: data points
+
+    .. versionadded:: 0.13
 
     """
     # Source: https://towardsdatascience.com/b%C3%A9zier-interpolation-8033e9a262c2
@@ -160,7 +231,7 @@ def bezier_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
     coefficients[num - 1, num - 2] = 2.0
 
     points_vector = [points[0] + 2.0 * points[1]]
-    points_vector.extend(2.0 * (2.0 * points[i] + points[i + 1]) for i in range(1, num-1))
+    points_vector.extend(2.0 * (2.0 * points[i] + points[i + 1]) for i in range(1, num - 1))
     points_vector.append(8.0 * points[num - 1] + points[num])
 
     # solve linear equation system

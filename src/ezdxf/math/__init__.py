@@ -20,7 +20,7 @@ from .bspline import (
     DBasisU, DBSplineClosed, DBSplineU,
 )
 from .bezier import Bezier, DBezier
-from .bezier4p import Bezier4P
+from .bezier4p import Bezier4P, bezier4p_from_arc, bezier4p_from_ellipse, bezier4p_interpolation
 from .surfaces import BezierSurface
 from .eulerspiral import EulerSpiral
 from .ucs import OCS, UCS, PassTroughUCS

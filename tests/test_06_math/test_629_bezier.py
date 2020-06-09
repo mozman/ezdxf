@@ -1,10 +1,7 @@
-# Copyright (c) 2010-2018 Manfred Moitzi
+# Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
 import pytest
-import math
-from math import isclose
 from ezdxf.math.bezier import Bezier, DBezier
-from ezdxf.math.bezier4p import Bezier4P, cubic_bezier_arc_parameters, bezier_interpolation
 
 DEFPOINTS2D = [(0., 0., 0.), (3., 0., 0.), (7., 10., 0.), (10., 10., 0.)]
 DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
@@ -12,59 +9,24 @@ DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.
 
 def test_points_2d():
     bcurve = Bezier(DEFPOINTS2D)
-    for index, epoint in enumerate(POINTS2D):
-        epx, epy = epoint
-        rpx, rpy, rpz = bcurve.point(index * .1)
-        assert isclose(epx, rpx) is True
-        assert isclose(epy, rpy) is True
+    for index, chk in enumerate(POINTS2D):
+        assert bcurve.point(index * .1).isclose(chk)
 
 
-def test_bezier4p_points_2d():
-    bcurve = Bezier4P(DEFPOINTS2D)
-    for index, epoint in enumerate(POINTS2D):
-        epx, epy = epoint
-        rpx, rpy, rpz = bcurve.point(index * .1)
-        assert isclose(epx, rpx) is True
-        assert isclose(epy, rpy) is True
-
-
-def test_points_2d_2():
+def test_point_and_tangent_2d():
     dbcurve = DBezier(DEFPOINTS2D)
-    for index, epoint in enumerate(POINTS2D):
-        epx, epy = epoint
+    for index, (chk_pnt, chk_d1) in enumerate(zip(POINTS2D, TANGENTS2D)):
         pnt, d1, d2 = dbcurve.point(index * .1)
-        assert isclose(epx, pnt[0])
-        assert isclose(epy, pnt[1])
-
-
-def test_tangents_2d():
-    dbcurve = DBezier(DEFPOINTS2D)
-    for index, epoint in enumerate(TANGENTS2D):
-        etx, ety = epoint
-        pnt, d1, d2 = dbcurve.point(index * .1)
-        assert isclose(etx, d1[0])
-        assert isclose(ety, d1[1])
-
-
-def test_bezire4p_tangents_2d():
-    dbcurve = Bezier4P(DEFPOINTS2D)
-    for index, epoint in enumerate(TANGENTS2D):
-        etx, ety = epoint
-        d1 = dbcurve.tangent(index * .1)
-        assert isclose(etx, d1[0])
-        assert isclose(ety, d1[1])
+        assert pnt.isclose(chk_pnt)
+        assert d1.isclose(chk_d1)
 
 
 def test_points_3d():
     bcurve = Bezier(DEFPOINTS3D)
     points = list(bcurve.approximate(40))
 
-    for rpoint, epoint in zip(points, iter_dbezier(DBEZIER3D, 0)):
-        epx, epy, epz = epoint
-        rpx, rpy, rpz = rpoint
-        assert isclose(epx, rpx)
-        assert isclose(epy, rpy)
-        assert isclose(epz, rpz)
+    for point, chk in zip(points, iter_dbezier(DBEZIER3D, 0)):
+        assert point.isclose(chk)
 
 
 @pytest.fixture(scope='module')
@@ -82,84 +44,18 @@ def iter_dbezier(values, n):
 
 
 def test_points(dbezier):
-    for rpoint, epoint in iter_data(dbezier, 0):
-        epx, epy, epz = epoint
-        rpx, rpy, rpz = rpoint
-        assert isclose(epx, rpx)
-        assert isclose(epy, rpy)
-        assert isclose(epz, rpz)
+    for point, chk in iter_data(dbezier, 0):
+        assert point.isclose(chk)
 
 
 def test_derivative_1(dbezier):
-    for rpoint, epoint in iter_data(dbezier, 1):
-        epx, epy, epz = epoint
-        rpx, rpy, rpz = rpoint
-        assert isclose(epx, rpx)
-        assert isclose(epy, rpy)
-        assert isclose(epz, rpz)
+    for point, chk in iter_data(dbezier, 1):
+        assert point.isclose(chk)
 
 
 def test_derivative_2(dbezier):
-    for rpoint, epoint in iter_data(dbezier, 2):
-        epx, epy, epz = epoint
-        rpx, rpy, rpz = rpoint
-        assert isclose(epx, rpx)
-        assert isclose(epy, rpy)
-        assert isclose(epz, rpz)
-
-
-def test_cubic_bezier_arc_parameters():
-    parts = list(cubic_bezier_arc_parameters(0, math.tau))
-    assert len(parts) == 4
-
-    chk = 4.0 * (math.sqrt(2) - 1.0) / 3.0
-    sp, cp1, cp2, ep = parts[0]
-    assert sp.isclose((1, 0))
-    assert cp1.isclose((1, chk))
-    assert cp2.isclose((chk, 1))
-    assert ep.isclose((0, 1))
-
-    sp, cp1, cp2, ep = parts[1]
-    assert sp.isclose((0, 1))
-    assert cp1.isclose((-chk, 1))
-    assert cp2.isclose((-1, chk))
-    assert ep.isclose((-1, 0))
-
-    sp, cp1, cp2, ep = parts[2]
-    assert sp.isclose((-1, 0))
-    assert cp1.isclose((-1, -chk))
-    assert cp2.isclose((-chk, -1))
-    assert ep.isclose((0, -1))
-
-    sp, cp1, cp2, ep = parts[3]
-    assert sp.isclose((0, -1))
-    assert cp1.isclose((chk, -1))
-    assert cp2.isclose((1, -chk))
-    assert ep.isclose((1, 0))
-
-
-def test_bezier_interpolation():
-    points = [(0, 0), (3, 1), (5, 3), (0, 8)]
-    result = list(bezier_interpolation(points))
-    assert len(result) == 3
-    c1, c2, c3 = result
-    p = c1.control_points
-    assert p[0].isclose((0, 0))
-    assert p[1].isclose((0.9333333333333331, 0.3111111111111111))
-    assert p[2].isclose((1.8666666666666663, 0.6222222222222222))
-    assert p[3].isclose((3, 1))
-
-    p = c2.control_points
-    assert p[0].isclose((3, 1))
-    assert p[1].isclose((4.133333333333334, 1.3777777777777778))
-    assert p[2].isclose((5.466666666666667, 1.822222222222222))
-    assert p[3].isclose((5, 3))
-
-    p = c3.control_points
-    assert p[0].isclose((5, 3))
-    assert p[1].isclose((4.533333333333333, 4.177777777777778))
-    assert p[2].isclose((2.2666666666666666, 6.088888888888889))
-    assert p[3].isclose((0, 8))
+    for point, chk in iter_data(dbezier, 2):
+        assert point.isclose(chk)
 
 
 POINTS2D = [
