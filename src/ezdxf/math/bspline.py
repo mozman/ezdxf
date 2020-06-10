@@ -223,7 +223,7 @@ rather than normal 3D coordinates.
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional
 import math
 from math import pow, isclose
-from .vector import Vector, distance
+from .vector import Vector, distance, NULLVEC
 from .matrix import Matrix
 from ezdxf.lldxf.const import DXFValueError
 
@@ -405,7 +405,10 @@ def bspline_vertex(u: float, degree: int, control_points: Sequence['Vertex'], kn
     return vertex
 
 
-def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3, method: str = 'distance', power: float = .5):
+def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3,
+                          tangents: Tuple['Vertex', 'Vertex'] = None,
+                          method: str = 'distance',
+                          power: float = 0.5):
     """
     Generates the control points for the `B-spline`_ control frame by `Curve Global Interpolation`_.
     Given are the fit points and the degree of the B-spline. The function provides 3 methods for generating the
@@ -421,6 +424,7 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3, metho
 
     Args:
         fit_points: fit points of B-spline, as list of :class:`Vector` compatible objects
+        tangents: define start- and end tangent as 2-tuple of :class:`Vector` compatible objects (optional)
         degree: degree of B-spline
         method: calculation method for parameter vector t
         power: power for centripetal method
@@ -447,8 +451,19 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3, metho
         raise DXFValueError('More fit points required for degree {}'.format(degree))
 
     t_vector = list(create_t_vector())
-    knots = list(control_frame_knots(count - 1, degree, t_vector))
-    control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
+    if bool(tangents):
+        start_tangent, end_tangent = tangents
+        if not (bool(start_tangent) and bool(end_tangent)):
+            from .bezier4p import bezier4p_end_tangents
+            s, e = bezier4p_end_tangents(fit_points)
+            if not start_tangent:
+                start_tangent = s
+            if not end_tangent:
+                end_tangent = e
+        control_points, knots = global_curve_interpolation_with_tangents(fit_points, start_tangent, end_tangent, degree, t_vector)
+    else:
+        control_points, knots = global_curve_interpolation(fit_points, degree, t_vector)
+
     bspline = BSpline(control_points, order=order, knots=knots)
     bspline.t_array = t_vector
     return bspline
@@ -522,17 +537,44 @@ def control_frame_knots(n: int, p: int, t_vector: Iterable[float]) -> Iterable[f
 
 def global_curve_interpolation(fit_points: Sequence['Vertex'],
                                degree: int,
-                               t_vector: Iterable[float],
-                               knots: Iterable[float]) -> List[Vector]:
+                               t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
     """ Algorithm: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html """
 
-    def create_matrix_N():
-        spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
-        return Matrix([spline.basis(t) for t in t_vector])
+    knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector))
+    spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
+    matrix = Matrix([spline.basis(t) for t in t_vector])
+    control_points = matrix.gauss_matrix(fit_points)
+    return Vector.list(control_points.rows()), knots
 
-    matrix_N = create_matrix_N()
-    control_points = matrix_N.gauss_matrix(fit_points)
-    return Vector.list(control_points.rows())
+
+def global_curve_interpolation_with_tangents(
+        fit_points: List[Vector],
+        start_tangent: Vector,
+        end_tangent: Vector,
+        degree: int,
+        t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
+
+    n = len(fit_points) - 1
+    p = degree
+    m = n + p + 3
+
+    knots = [0.0] * (p + 1)
+    knots.extend(sum(t_vector[j: j + p - 1]) for j in range(n - p + 2))
+    knots.extend([1.0] * (p + 1))
+    assert len(knots) == m + 1
+
+    spline = Basis(knots=knots, order=p + 1, count=n + 3)
+    rows = [spline.basis(u) for u in t_vector]
+    space = [0.0] * (n + 1)
+    rows.insert(1, [-1.0, +1.0] + space)
+    rows.insert(-1, space + [-1.0, +1.0])
+
+    fit_points.insert(1, Vector(start_tangent) * knots[p + 1] / p)
+    fit_points.insert(-1, Vector(end_tangent) * (1.0 - knots[m - p - 1]) / p)
+    matrix = Matrix(rows)
+
+    control_points = matrix.gauss_matrix(fit_points)
+    return Vector.list(control_points.rows()), knots
 
 
 def global_curve_approximation(fit_points: Iterable['Vertex'],
@@ -745,9 +787,8 @@ class BSpline:
     def from_fit_points(cls, points: Iterable['Vertex'], degree=3) -> 'BSpline':
         """ Returns :class:`BSpline` defined by fit points. """
         fit_points = Vector.list(points)
-        t_vector = list(uniform_t_vector(fit_points))
-        knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector))
-        control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
+        t_vector = list(distance_t_vector(fit_points))
+        control_points, knots = global_curve_interpolation(fit_points, degree, t_vector)
         spline = cls(control_points, order=degree + 1, knots=knots)
         spline.t_array = t_vector
         return spline

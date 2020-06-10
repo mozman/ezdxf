@@ -2,9 +2,8 @@
 # Created: 26.03.2010
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
-from typing import List, TYPE_CHECKING, Iterable, Union, Sequence
+from typing import List, TYPE_CHECKING, Iterable, Union, Sequence, Tuple
 import math
-from itertools import chain
 from functools import lru_cache
 from ezdxf.math import Vector, Vec2, Matrix
 from ezdxf.math.ellipse import ConstructionEllipse
@@ -14,7 +13,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     'Bezier4P', 'bezier4p_interpolation', 'cubic_bezier_arc_parameters', 'bezier4p_from_arc',
-    'bezier4p_from_ellipse'
+    'bezier4p_from_ellipse', 'bezier4p_end_tangents',
 ]
 
 
@@ -263,10 +262,26 @@ def bezier4p_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
     points_vector.append(8.0 * points[num - 1] + points[num])
 
     # solve linear equation system
-    solution = coefficients.gauss_matrix(Matrix(shape=(num, 3), items=chain(points_vector)))
+    solution = coefficients.gauss_matrix(Matrix(items=points_vector))
     control_points_1 = Vector.list(solution.rows())
     control_points_2 = [p * 2.0 - cp for p, cp in zip(points[1:], control_points_1[1:])]
     control_points_2.append((control_points_1[num - 1] + points[num]) / 2.0)
 
     for defpoints in zip(points[:-1], control_points_1, control_points_2, points[1:]):
         yield Bezier4P(defpoints)
+
+
+def bezier4p_end_tangents(points: List[Vector]) -> Tuple[Vector, Vector]:
+    """ Returns start- and end tangent for a Bézier curve interpolation of `points`.
+
+    .. versionadded:: 0.13
+
+    """
+    if len(points) < 3:
+        raise ValueError('At least 3 points required')
+    curves = list(bezier4p_interpolation(points))
+    points = curves[0].control_points
+    start_tangent = points[1] - points[0]
+    points = curves[-1].control_points
+    end_tangent = points[3] - points[2]
+    return start_tangent, end_tangent
