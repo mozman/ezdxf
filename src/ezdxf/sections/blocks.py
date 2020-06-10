@@ -1,9 +1,9 @@
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Union, Sequence, List, cast
 import logging
 
-from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFBlockInUseError, DXFTableEntryError, DXFKeyError
+from ezdxf.lldxf.const import DXFStructureError, DXFBlockInUseError, DXFTableEntryError, DXFKeyError
 from ezdxf.lldxf import const
 from ezdxf.entities.dxfgfx import entity_linker
 from ezdxf.layouts.blocklayout import BlockLayout
@@ -34,8 +34,7 @@ def is_special_block(name: str) -> bool:
 
 class BlocksSection:
     """
-    Manages BLOCK definitions in a dict(). Since v0.8.5 ezdxf uses a lower case key. 'Test' == 'TEST', to behave
-    like AutoCAD.
+    Manages BLOCK definitions in a dict(), block names are case insensitive e.g. 'Test' == 'TEST'.
 
     """
 
@@ -170,22 +169,21 @@ class BlocksSection:
     def get_block_layout_by_handle(self, block_record_handle: str) -> 'BlockLayout':
         """ Returns a block layout by block record handle. (internal API)
         """
-        block_record = self.doc.entitydb[block_record_handle]  # type: BlockRecord
-        return block_record.block_layout
+        return self.doc.entitydb[block_record_handle].block_layout
 
     def new(self, name: str, base_point: Sequence[float] = (0, 0), dxfattribs: dict = None) -> 'BlockLayout':
         """ Create and add a new :class:`~ezdxf.layouts.BlockLayout`, `name` is the BLOCK name, `base_point` is the
         insertion point of the BLOCK.
         """
-        block_record = self.doc.block_records.new(name)  # type: BlockRecord
+        block_record = self.doc.block_records.new(name)
 
         dxfattribs = dxfattribs or {}
         dxfattribs['owner'] = block_record.dxf.handle
         dxfattribs['name'] = name
         dxfattribs['name2'] = name
         dxfattribs['base_point'] = base_point
-        head = self.dxffactory.create_db_entry('BLOCK', dxfattribs)  # type: Block
-        tail = self.dxffactory.create_db_entry('ENDBLK', {'owner': block_record.dxf.handle})  # type: EndBlk
+        head = self.dxffactory.create_db_entry('BLOCK', dxfattribs)
+        tail = self.dxffactory.create_db_entry('ENDBLK', {'owner': block_record.dxf.handle})
         block_record.set_block(head, tail)
         return self.add(block_record)
 
@@ -225,13 +223,13 @@ class BlocksSection:
         """
         while True:
             self._anonymous_block_counter += 1
-            blockname = "*%s%d" % (type_char, self._anonymous_block_counter)
+            blockname = f"*{type_char}{self._anonymous_block_counter}"
             if not self.__contains__(blockname):
                 return blockname
 
     def rename_block(self, old_name: str, new_name: str) -> None:
         """ Rename :class:`~ezdxf.layouts.BlockLayout` `old_name` to `new_name` """
-        block_record = self.block_records.get(old_name)  # type: BlockRecord
+        block_record: 'BlockRecord' = self.block_records.get(old_name)
         block_record.rename(new_name)
         self.block_records.replace(old_name, block_record)
         self.add(block_record)
@@ -251,13 +249,11 @@ class BlocksSection:
         """
         if safe:
             if is_special_block(name):
-                raise DXFBlockInUseError('Special block "{}" maybe used without explicit INSERT entity.'.format(name))
+                raise DXFBlockInUseError(f'Special block "{name}" maybe used without explicit INSERT entity.')
 
-            block_refs = self.doc.query("INSERT[name=='{}']i".format(name))  # ignore case
+            block_refs = self.doc.query(f"INSERT[name=='{name}']i")  # ignore case
             if len(block_refs):
-                raise DXFBlockInUseError(
-                    'Block "{}" is still in use and can not deleted. (Hint: block name is case insensitive!)'.format(
-                        name))
+                raise DXFBlockInUseError(f'Block "{name}" is still in use and can not deleted.')
         self.__delitem__(name)
 
     def delete_all_blocks(self, safe: bool = True) -> None:
