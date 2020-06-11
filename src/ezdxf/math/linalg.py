@@ -191,16 +191,14 @@ class Matrix:
     def transpose(self) -> 'Matrix':
         return Matrix(matrix=list(zip_to_list(*self.matrix)))
 
-    def gauss_vector_solver(self, col: Sequence[float]) -> List[float]:
-        return gauss_vector_solver(self.matrix, col)
+    def gauss_vector_solver(self, vector: Iterable[float]) -> List[float]:
+        return gauss_vector_solver(self.matrix, vector)
 
-    def gauss_matrix_solver(self, matrix: Sequence) -> 'Matrix':
-        if self.nrows != len(matrix):
-            raise ValueError('Row count of matrices do not match.')
+    def gauss_matrix_solver(self, matrix: Iterable[Iterable[float]]) -> 'Matrix':
         return gauss_matrix_solver(self.matrix, matrix)
 
 
-def gauss_vector_solver(A: Sequence[Sequence[float]], B: Sequence[float]) -> List[float]:
+def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]:
     """
     Solves a nxn Matrix A . x = B, for vector B with n elements. A, B stay unmodified.
 
@@ -217,20 +215,22 @@ def gauss_vector_solver(A: Sequence[Sequence[float]], B: Sequence[float]) -> Lis
     """
     if isinstance(A, Matrix):
         A = A.matrix
-    n = len(A)
-    if len(A[0]) != n:
-        raise ValueError('Matrix A has to have same row and column count.')
-    if len(B) != n:
-        raise ValueError('Item count of vector B has to be equal to row count of matrix A.')
+
     # copy input data
     A = [list(row) for row in A]
     B = list(B)
+    num = len(A)
+    if len(A[0]) != num:
+        raise ValueError('Matrix has to have same row and column count.')
+    if len(B) != num:
+        raise ValueError('Item count of vector has to be equal to row count of matrix.')
+
     # inplace modification of A & B
     _build_upper_triangle(A, B)
     return _backsubstitution(A, B)
 
 
-def gauss_matrix_solver(A: Sequence[Sequence[float]], B: Sequence[Sequence[float]]) -> Matrix:
+def gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix:
     """
     Solves a nxn Matrix A . x = B, for nxm Matrix B. A, B stay unmodified.
 
@@ -251,15 +251,16 @@ def gauss_matrix_solver(A: Sequence[Sequence[float]], B: Sequence[Sequence[float
     if isinstance(A, Matrix):
         A = A.matrix
 
-    n = len(A)
-    if len(A[0]) != n:
-        raise ValueError('Matrix A has to have same row and column count.')
-    if len(B) != n:
-        raise ValueError('Row count of matrix B has to be equal to row count of matrix A.')
-
     # copy input data
     A = [list(row) for row in A]
     B = [list(row) for row in B]
+
+    num = len(A)
+    if len(A[0]) != num:
+        raise ValueError('Matrix has to have same row and column count.')
+    if len(B) != num:
+        raise ValueError('Row count of matrices has to match.')
+
     # inplace modification of A & B
     _build_upper_triangle(A, B)
 
