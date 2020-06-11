@@ -13,7 +13,9 @@ from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState, intersection_ray_ray_3d, normal_vector_3p,
 )
 from .matrix44 import Matrix44
-from .linalg import Matrix
+from .linalg import (
+    Matrix, LUDecomposition, gauss_jordan_inverse, gauss_jordan_solver, gauss_vector_solver, gauss_matrix_solver
+)
 from .bspline import (
     bspline_control_frame, bspline_control_frame_approx, rational_spline_from_arc, rational_spline_from_ellipse,
     uniform_knot_vector, open_uniform_knot_vector, required_knot_values, BSpline, BSplineU, BSplineClosed, DBSpline,

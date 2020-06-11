@@ -896,6 +896,101 @@ EulerSpiral
 
     .. automethod:: bspline(length: float, segments: int = 10, degree: int = 3, method: str = 'uniform') -> BSpline
 
+Linear Algebra
+==============
+
+Functions
+---------
+
+.. autofunction:: gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Tuple[Matrix, Matrix]
+
+.. autofunction:: gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix
+
+.. autofunction:: gauss_vector_solver
+
+.. autofunction:: gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix
+
+Matrix Class
+------------
+
+.. autoclass:: Matrix
+
+    .. autoattribute:: nrows
+
+    .. autoattribute:: ncols
+
+    .. autoattribute:: shape
+
+    .. automethod:: reshape
+
+    .. automethod:: identity
+
+    .. automethod:: row
+
+    .. automethod:: col
+
+    .. automethod:: rows
+
+    .. automethod:: cols
+
+    .. automethod:: set_row
+
+    .. automethod:: set_col
+
+    .. automethod:: set_diag
+
+    .. automethod:: append_row
+
+    .. automethod:: append_col
+
+    .. automethod:: swap_rows
+
+    .. automethod:: swap_cols
+
+    .. automethod:: transpose() -> Matrix
+
+    .. automethod:: inverse() -> Matrix
+
+    .. automethod:: gauss_vector_solver
+
+    .. automethod:: gauss_matrix_solver(matrix: Iterable[Iterable[float]]) -> Matrix
+
+    .. automethod:: gauss_jordan_solver(matrix: Iterable[Iterable[float]]) -> Tuple[Matrix, Matrix]
+
+    .. automethod:: __getitem__(item: Tuple[int, int]) -> float
+
+    .. automethod:: __setitem__(item: Tuple[int, int], value: float)
+
+    .. automethod:: __eq__(other: Matrix) -> bool
+
+    .. automethod:: __add__(other: Union[Matrix, float]) -> Matrix
+
+    .. automethod:: __iadd__(other: Union[Matrix, float]) -> Matrix
+
+    .. automethod:: __sub__(other: Union[Matrix, float]) -> Matrix
+
+    .. automethod:: __isub__(other: Union[Matrix, float]) -> Matrix
+
+    .. automethod:: __mul__(other: Union[Matrix, float]) -> Matrix
+
+    .. automethod:: __imul__(other: Union[Matrix, float]) -> Matrix
+
+
+LUDecomposition Class
+---------------------
+
+.. autoclass:: LUDecomposition
+
+    .. autoattribute:: nrows
+
+    .. automethod:: solve_vector
+
+    .. automethod:: solve_matrix(B: Iterable[Iterable[float]]) -> Matrix
+
+    .. automethod:: inverse() -> Matrix
+
+    .. automethod:: determinant
+
 .. _Curve Global Interpolation: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
 .. _uniform: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-uniform.html
 .. _chord length: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-chord-length.html
@@ -908,3 +1003,6 @@ EulerSpiral
 .. _B-spline: https://en.wikipedia.org/wiki/B-spline
 .. _Bézier curve: https://en.wikipedia.org/wiki/B%C3%A9zier_curve
 .. _Lee Mac: http://www.lee-mac.com/bulgeconversion.html
+.. _Gauss-Jordan: https://en.wikipedia.org/wiki/Gaussian_elimination
+.. _Gauss-Elimination: https://en.wikipedia.org/wiki/Gaussian_elimination
+.. _LU Decomposition: https://en.wikipedia.org/wiki/LU_decomposition

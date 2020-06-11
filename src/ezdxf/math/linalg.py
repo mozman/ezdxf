@@ -27,7 +27,9 @@ def copy_float_matrix(A) -> MatrixData:
 
 class Matrix:
     """
-    Simple unoptimized Matrix implementation.
+    Simple unoptimized Matrix implementation. Matrix data is stored row major order, this means
+    in a list of rows, where each row is a list of floats. You have direct access to the data by the
+    attribute :attr:`Matrix.matrix`
 
     Initialization:
 
@@ -75,44 +77,62 @@ class Matrix:
 
     @staticmethod
     def reshape(items: Iterable[float], shape: Shape) -> 'Matrix':
+        """ Returns a new matrix for iterable `items` in the configuration of `shape`. """
         items = iter(items)
         rows, cols = shape
         return Matrix(matrix=[[next(items) for _ in range(cols)] for _ in range(rows)])
 
     @property
     def nrows(self) -> int:
+        """ Count of matrix rows. """
         return len(self.matrix)
 
     @property
     def ncols(self) -> int:
+        """ Count of matrix columns. """
         return len(self.matrix[0])
 
     @property
     def shape(self) -> Shape:
+        """ Shape of matrix as (n, m) tuple for n rows and m columns. """
         return self.nrows, self.ncols
 
     def row(self, index) -> List[float]:
+        """ Return a matrix row by `index` as list of floats. """
         return self.matrix[index]
 
     def col(self, index) -> List[float]:
+        """ Return a matrix column by `index` as list of floats. """
         return [row[index] for row in self.matrix]
 
     def rows(self) -> MatrixData:
+        """ Return a list of all rows. """
         return self.matrix
 
     def cols(self) -> MatrixData:
+        """ Return a list of all columns. """
         return [self.col(i) for i in range(self.ncols)]
 
     def set_row(self, index: int, items: List[float]) -> None:
+        """ Set matrix row `index` to `items`. """
         if len(items) != self.ncols:
             raise ValueError('Invalid item count')
         self.matrix[index] = items
 
     def set_col(self, index: int, items: List[float]) -> None:
+        """ Set matrix column `index` to `items`. """
         for row, item in zip(self.rows(), items):
             row[index] = item
 
     def set_diag(self, value: float = 1.0, row_offset: int = 0, col_offset: int = 0):
+        """ Set diagonal matrix values to a fixed value.
+
+        Args:
+             value: fixed value
+             row_offset: shift diagonal down
+             col_offset: shift diagonal right
+
+        """
         for index in range(max(self.nrows, self.ncols)):
             try:
                 self.matrix[index + row_offset][index + col_offset] = value
@@ -121,11 +141,13 @@ class Matrix:
 
     @classmethod
     def identity(cls, shape: Shape) -> 'Matrix':
+        """Returns the identity matrix for configuration `shape`. """
         m = Matrix(shape=shape)
         m.set_diag(1.0)
         return m
 
     def append_row(self, items: Sequence[float]) -> None:
+        """ Append a row to the matrix. """
         if self.matrix is None:
             self.matrix = [list(items)]
         elif len(items) == self.ncols:
@@ -134,6 +156,7 @@ class Matrix:
             raise ValueError('Invalid item count.')
 
     def append_col(self, items: Sequence[float]) -> None:
+        """ Append a column to the matrix. """
         if self.matrix is None:
             self.matrix = [[item] for item in items]
         elif len(items) == self.nrows:
@@ -156,8 +179,8 @@ class Matrix:
         row, col = item
         return self.matrix[row][col]
 
-    def __setitem__(self, key: Tuple[int, int], value: float):
-        row, col = key
+    def __setitem__(self, item: Tuple[int, int], value: float):
+        row, col = item
         self.matrix[row][col] = value
 
     def __eq__(self, other: 'Matrix') -> bool:
@@ -221,7 +244,10 @@ class Matrix:
 
 def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]:
     """
-    Solves a nxn Matrix A . x = B, for vector B with n elements. A, B stay unmodified.
+    Solves the linear equation system given by a nxn Matrix A . x = B, for
+    vector B with n elements by the `Gauss-Elimination`_ algorithm, which is
+    faster than the `Gauss-Jordan`_ algorithm. The speed up is more significant
+    for solving multiple vertices as matrix at once.
 
     Args:
         A: matrix [[a11, a12, ..., a1n],
@@ -231,7 +257,8 @@ def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Lis
                    [an1, an2, ..., ann],]
         B: [b1, b2, ..., bn]
 
-    Returns: result vector x
+    Returns:
+        Result vector as list of floats
 
     """
     # copy input data
@@ -250,7 +277,9 @@ def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Lis
 
 def gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix:
     """
-    Solves a nxn Matrix A . x = B, for nxm Matrix B. A, B stay unmodified.
+    Solves the linear equation system given by a nxn Matrix A . x = B, for
+    nxm Matrix B by the `Gauss-Elimination`_ algorithm, which is faster than
+    the `Gauss-Jordan`_ algorithm.
 
     Args:
         A: matrix [[a11, a12, ..., a1n],
@@ -263,7 +292,8 @@ def gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
                    ...
                    [bn1, bn2, ..., bnm]]
 
-    Returns: result matrix x
+    Returns:
+        Result matrix as :class:`~ezdxf.math.Matrix` object
 
     """
     # copy input data
@@ -347,6 +377,25 @@ def _backsubstitution(A: MatrixData, B: List[float]) -> List[float]:
 
 
 def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Tuple[Matrix, Matrix]:
+    """ Solves the linear equation system given by a nxn Matrix A . x = B, for
+    nxm Matrix B by the `Gauss-Jordan`_ algorithm,  which is the slowest of all, but
+    it is very reliable. Returns a copy of the modified input matrix `A` and the
+    result matrix `x`.
+
+    Args:
+        A: matrix [[a11, a12, ..., a1n],
+                   [a21, a22, ..., a2n],
+                   [a21, a22, ..., a2n],
+                   ...
+                   [an1, an2, ..., ann]]
+        B: matrix [[b11, b12, ..., b1m],
+                   [b21, b22, ..., b2m],
+                   ...
+                   [bn1, bn2, ..., bnm]]
+    Returns:
+        2-tuple of :class:`~ezdxf.math.Matrix` objects
+
+    """
     # copy input data
     A = copy_float_matrix(A)
     B = copy_float_matrix(B)
@@ -405,6 +454,7 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
 
 
 def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
+    """ Returns the inverse of matrix `A` as :class:`~ezdxf.math.Matrix` object. """
     if isinstance(A, Matrix):
         A = A.matrix
     else:
@@ -417,6 +467,23 @@ TINY = 1e-12
 
 
 class LUDecomposition:
+    """ Represents a `LU decomposition`_ matrix of A, raise :class:`ZeroDivisionError` for a singular matrix.
+
+    This algorithm is a little bit faster than the `Gauss-Elimination`_ algorithm using CPython and
+    much faster when using pypy.
+
+    The :attr:`LUDecomposition.matrix` attribute gives access to the matrix data
+    as list of rows like in the :class:`Matrix` class, and the :attr:`LUDecomposition.index`
+    attribute gives access to the swaped row indices.
+
+    Args:
+        A: matrix [[a11, a12, ..., a1n],
+                   [a21, a22, ..., a2n],
+                   [a21, a22, ..., a2n],
+                   ...
+                   [an1, an2, ..., ann]]
+
+    """
     def __init__(self, A: Iterable[Iterable[float]]):
         lu = copy_float_matrix(A)
         n = len(lu)
@@ -459,9 +526,21 @@ class LUDecomposition:
 
     @property
     def nrows(self) -> int:
+        """ Count of matrix rows (and cols). """
         return len(self.matrix)
 
     def solve_vector(self, B: Iterable[float]) -> List[float]:
+        """
+        Solves the linear equation system given by the nxn Matrix A . x = B,
+        for vector B with n elements.
+
+        Args:
+            B: [b1, b2, ..., bn]
+
+        Returns:
+            Result vector as list of floats.
+
+        """
         X = [float(v) for v in B]
         lu = self.matrix
         index = self.index
@@ -490,6 +569,20 @@ class LUDecomposition:
         return X
 
     def solve_matrix(self, B: Iterable[Iterable[float]]) -> Matrix:
+        """
+        Solves the linear equation system given by the nxn Matrix A . x = B,
+        for nxm Matrix B.
+
+        Args:
+            B: matrix [[b11, b12, ..., b1m],
+                       [b21, b22, ..., b2m],
+                       ...
+                       [bn1, bn2, ..., bnm]]
+
+        Returns:
+            Result matrix as :class:`~ezdxf.math.Matrix` object
+
+        """
         if not isinstance(B, Matrix):
             B = Matrix(matrix=[list(row) for row in B])
         if B.nrows != self.nrows:
@@ -498,9 +591,13 @@ class LUDecomposition:
         return Matrix(matrix=[self.solve_vector(col) for col in B.cols()]).transpose()
 
     def inverse(self) -> Matrix:
+        """ Returns the inverse of matrix as :class:`~ezdxf.math.Matrix` object,
+        raise :class:`ZeroDivisionError` for a singular matrix. """
         return self.solve_matrix(Matrix.identity(shape=(self.nrows, self.nrows)))
 
     def determinant(self) -> float:
+        """ Returns the determinant of matrix, raise :class:`ZeroDivisionError` for a singular matrix.
+        """
         det = self._det
         lu = self.matrix
         for i in range(self.nrows):
