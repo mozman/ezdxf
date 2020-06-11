@@ -429,7 +429,7 @@ class LUDecomposition:
         for k in range(n):
             big = 0.0
             imax = k
-            for i in range(n):
+            for i in range(k, n):
                 temp = scaling[i] * abs(lu[i][k])
                 if temp > big:
                     big = temp
@@ -447,11 +447,11 @@ class LUDecomposition:
             index.append(imax)
             if lu[k][k] == 0.0:
                 lu[k][k] = TINY
-            for row in range(k + 1, n):
-                temp = lu[row][k] / lu[k][k]
-                lu[row][k] = temp
-                for col in range(k + 1, n):
-                    lu[row][col] -= temp * lu[k][col]
+            for i in range(k + 1, n):
+                temp = lu[i][k] / lu[k][k]
+                lu[i][k] = temp
+                for j in range(k + 1, n):
+                    lu[i][j] -= temp * lu[k][j]
 
         self.index: List[int] = index
         self.matrix: MatrixData = lu

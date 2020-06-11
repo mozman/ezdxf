@@ -275,7 +275,39 @@ def test_gauss_jordan_inverse():
     assert result == m
 
 
-@pytest.mark.skip(reason='Something is wrong!')
-def test_LU_decomposition():
+def test_LU_decomposition_solve_vector():
     R = LUDecomposition(A).solve_vector(B1)
-    assert are_close_vectors(R, SOLUTION_B1)
+    are_close_vectors(R, SOLUTION_B1)
+
+
+def test_LU_decomposition_solve_matrix():
+    lu = LUDecomposition(A)
+
+    B = Matrix()
+    B.append_col(B1)
+    B.append_col(B2)
+    B.append_col(B3)
+
+    result = lu.solve_matrix(B)
+    are_close_vectors(result.col(0), gauss_vector_solver(A, B1))
+    are_close_vectors(result.col(1), gauss_vector_solver(A, B2))
+    are_close_vectors(result.col(2), gauss_vector_solver(A, B3))
+
+
+def test_LU_decomposition_inverse():
+    m = Matrix(matrix=EXPECTED_INVERSE)
+    assert LUDecomposition(A).inverse() == m
+
+
+def test_determinant():
+    from ezdxf.math import Matrix44
+    A = [
+        [2, 3, 2, 5],
+        [5, 1, 4, 5],
+        [1, 12, 3, 1],
+        [7, 3, 2, 2],
+    ]
+    det = LUDecomposition(A).determinant()
+    chk = Matrix44(*A)
+    assert chk.determinant() == det
+
