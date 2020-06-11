@@ -543,7 +543,7 @@ def global_curve_interpolation(fit_points: Sequence['Vertex'],
     knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector))
     spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
     matrix = Matrix([spline.basis(t) for t in t_vector])
-    control_points = matrix.gauss_matrix(fit_points)
+    control_points = matrix.gauss_matrix_solver([list(row) for row in fit_points])
     return Vector.list(control_points.rows()), knots
 
 
@@ -573,7 +573,7 @@ def global_curve_interpolation_with_tangents(
     fit_points.insert(-1, Vector(end_tangent) * (1.0 - knots[m - p - 1]) / p)
     matrix = Matrix(rows)
 
-    control_points = matrix.gauss_matrix(fit_points)
+    control_points = matrix.gauss_matrix_solver(fit_points)
     return Vector.list(control_points.rows()), knots
 
 
@@ -614,7 +614,7 @@ def global_curve_approximation(fit_points: Iterable['Vertex'],
     matrix_Q = [sum(Q(k) * matrix_N[k][i] for k in range(1, n)) for i in range(1, h)]
     matrix_N = Matrix([row[1:h] for row in matrix_N[1:-1]])
     matrix_M = matrix_N.transpose() * matrix_N
-    P = matrix_M.gauss_matrix(matrix_Q)
+    P = matrix_M.gauss_matrix_solver(matrix_Q)
     control_points = [d0]
     control_points.extend(Vector.generate(P.rows()))
     control_points.append(dn)

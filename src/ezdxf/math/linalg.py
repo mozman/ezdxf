@@ -4,6 +4,8 @@ from typing import Iterable, Tuple, List, Sequence, Union, Any
 from itertools import repeat
 import math
 
+__all__ = ['Matrix', 'gauss_vector_solver', 'gauss_matrix_solver']
+
 
 def zip_to_list(*args) -> Iterable[List]:
     for e in zip(*args):  # returns immutable tuples
@@ -49,6 +51,12 @@ class Matrix:
     def __iter__(self) -> Iterable[float]:
         for row in self.matrix:
             yield from row
+
+    def __copy__(self) -> 'Matrix':
+        m = Matrix()
+        m.abs_tol = self.abs_tol
+        m.matrix = [list(row) for row in self.rows()]
+        return m
 
     @staticmethod
     def reshape(items: Iterable[float], shape: Shape) -> 'Matrix':
@@ -96,6 +104,12 @@ class Matrix:
             except IndexError:
                 return
 
+    @classmethod
+    def identity(cls, shape: Shape) -> 'Matrix':
+        m = Matrix(shape=shape)
+        m.set_diag(1.0)
+        return m
+
     def append_row(self, items: Sequence[float]) -> None:
         if self.matrix is None:
             self.matrix = [list(items)]
@@ -113,11 +127,13 @@ class Matrix:
         else:
             raise ValueError('Invalid item count.')
 
-    def swap_row(self, a: int, b: int) -> None:
+    def swap_rows(self, a: int, b: int) -> None:
+        """ Swap rows `a` and `b` inplace. """
         m = self.matrix
         m[a], m[b] = m[b], m[a]
 
-    def swap_col(self, a: int, b: int) -> None:
+    def swap_cols(self, a: int, b: int) -> None:
+        """ Swap columns `a` and `b` inplace. """
         for row in self.rows():
             row[a], row[b] = row[b], row[a]
 
@@ -175,63 +191,140 @@ class Matrix:
     def transpose(self) -> 'Matrix':
         return Matrix(matrix=list(zip_to_list(*self.matrix)))
 
-    def gauss(self, col):
-        m = Matrix(self)
-        m.append_col(col)
-        return gauss(m.matrix)
+    def gauss_vector_solver(self, col: Sequence[float]) -> List[float]:
+        return gauss_vector_solver(self.matrix, col)
 
-    def gauss_matrix(self, matrix) -> 'Matrix':
-        B = Matrix(matrix)
-        if self.nrows != B.nrows:
+    def gauss_matrix_solver(self, matrix: Sequence) -> 'Matrix':
+        if self.nrows != len(matrix):
             raise ValueError('Row count of matrices do not match.')
-        result = [self.gauss(col) for col in B.cols()]
-        return Matrix(items=zip(*result))
+        return gauss_matrix_solver(self.matrix, matrix)
 
 
-def gauss(matrix: MatrixData) -> List[float]:
+def gauss_vector_solver(A: Sequence[Sequence[float]], B: Sequence[float]) -> List[float]:
     """
-    Solves a nxn Matrix A x = b, Matrix has 1 column more than rows.
+    Solves a nxn Matrix A . x = B, for vector B with n elements. A, B stay unmodified.
 
     Args:
-        matrix: matrix [[a11, a12, ..., a1n, b1],
-                   [a21, a22, ..., a2n, b2],
-                   [a21, a22, ..., a2n, b3],
+        A: matrix [[a11, a12, ..., a1n],
+                   [a21, a22, ..., a2n],
+                   [a21, a22, ..., a2n],
                    ...
-                   [an1, an2, ..., ann, bn],]
+                   [an1, an2, ..., ann],]
+        B: [b1, b2, ..., bn]
 
-    Returns: x vector as list
+    Returns: result vector x
 
     """
-    n = len(matrix)
+    if isinstance(A, Matrix):
+        A = A.matrix
+    n = len(A)
+    if len(A[0]) != n:
+        raise ValueError('Matrix A has to have same row and column count.')
+    if len(B) != n:
+        raise ValueError('Item count of vector B has to be equal to row count of matrix A.')
+    # copy input data
+    A = [list(row) for row in A]
+    B = list(B)
+    # inplace modification of A & B
+    _build_upper_triangle(A, B)
+    return _backsubstitution(A, B)
+
+
+def gauss_matrix_solver(A: Sequence[Sequence[float]], B: Sequence[Sequence[float]]) -> Matrix:
+    """
+    Solves a nxn Matrix A . x = B, for nxm Matrix B. A, B stay unmodified.
+
+    Args:
+        A: matrix [[a11, a12, ..., a1n],
+                   [a21, a22, ..., a2n],
+                   [a21, a22, ..., a2n],
+                   ...
+                   [an1, an2, ..., ann]]
+        B: matrix [[b11, b12, ..., b1m],
+                   [b21, b22, ..., b2m],
+                   ...
+                   [bn1, bn2, ..., bnm]]
+
+    Returns: result matrix x
+
+    """
+    if isinstance(A, Matrix):
+        A = A.matrix
+
+    n = len(A)
+    if len(A[0]) != n:
+        raise ValueError('Matrix A has to have same row and column count.')
+    if len(B) != n:
+        raise ValueError('Row count of matrix B has to be equal to row count of matrix A.')
+
+    # copy input data
+    A = [list(row) for row in A]
+    B = [list(row) for row in B]
+    # inplace modification of A & B
+    _build_upper_triangle(A, B)
+
+    columns = Matrix(matrix=B).cols()
+    result = Matrix()
+    for col in columns:
+        result.append_col(_backsubstitution(A, col))
+    return result
+
+
+def _build_upper_triangle(A: MatrixData, B: List) -> None:
+    """ Build upper triangle for backsubstitution. Modifies A and B inplace!
+
+    Args:
+         A: row major matrix
+         B: vector of floats or row major matrix
+
+    """
+    n = len(A)
+    try:
+        bcols = len(B[0])
+    except TypeError:
+        bcols = 1
 
     for i in range(0, n):
         # Search for maximum in this column
-        max_element = abs(matrix[i][i])
+        max_element = abs(A[i][i])
         max_row = i
         for k in range(i + 1, n):
-            if abs(matrix[k][i]) > max_element:
-                max_element = abs(matrix[k][i])
+            value = abs(A[k][i])
+            if value > max_element:
+                max_element = value
                 max_row = k
 
-        # Swap maximum row with current row (column by column)
-        for k in range(i, n + 1):
-            tmp = matrix[max_row][k]
-            matrix[max_row][k] = matrix[i][k]
-            matrix[i][k] = tmp
+        # Swap maximum row with current row
+        A[max_row], A[i] = A[i], A[max_row]
+        B[max_row], B[i] = B[i], B[max_row]
 
         # Make all rows below this one 0 in current column
         for k in range(i + 1, n):
-            c = -matrix[k][i] / matrix[i][i]
-            for j in range(i, n + 1):
+            c = -A[k][i] / A[i][i]
+            for j in range(i, n):
                 if i == j:
-                    matrix[k][j] = 0
+                    A[k][j] = 0
                 else:
-                    matrix[k][j] += c * matrix[i][j]
+                    A[k][j] += c * A[i][j]
+            if bcols == 1:
+                B[k] += c * B[i]
+            else:
+                for col in range(bcols):
+                    B[k][col] += c * B[i][col]
 
-    # Solve equation Ax=b for an upper triangular matrix A
-    x = [0.] * n
+
+def _backsubstitution(A: MatrixData, B: List[float]) -> List[float]:
+    """ Solve equation A . x = B for an upper triangular matrix A by backsubstitution.
+
+    Args:
+        A: row major matrix
+        B: vector of floats
+
+    """
+    n = len(A)
+    x = [0.0] * n
     for i in range(n - 1, -1, -1):
-        x[i] = matrix[i][n] / matrix[i][i]
+        x[i] = B[i] / A[i][i]
         for k in range(i - 1, -1, -1):
-            matrix[k][n] -= matrix[k][i] * x[i]
+            B[k] -= A[k][i] * x[i]
     return x

@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math.linalg import Matrix
+from ezdxf.math.linalg import Matrix, gauss_vector_solver, gauss_matrix_solver
 
 
 @pytest.fixture
@@ -46,10 +46,42 @@ def test_row(X):
     assert list(X.rows()) == [[12, 7], [4, 5], [3, 8]]
 
 
+def test_set_row(X):
+    X.set_row(0, [1, 1])
+    X.set_row(2, [2, 2])
+    assert X.row(0) == [1, 1]
+    assert X.row(2) == [2, 2]
+    assert list(X.rows()) == [[1, 1], [4, 5], [2, 2]]
+
+    X.set_row(-1, [7, 7])
+    assert X.row(2) == [7, 7]
+
+
+def test_set_row_error(X):
+    with pytest.raises(IndexError):
+        X.set_row(5, [1, 1])
+
+
 def test_col(X):
     assert X.col(0) == [12, 4, 3]
     assert X.col(1) == [7, 5, 8]
     assert list(X.cols()) == [[12, 4, 3], [7, 5, 8]]
+
+
+def test_set_col(X):
+    X.set_col(0, [1, 1, 1])
+    X.set_col(1, [2, 2, 2])
+    assert X.col(0) == [1, 1, 1]
+    assert X.col(1) == [2, 2, 2]
+    assert list(X.cols()) == [[1, 1, 1], [2, 2, 2]]
+
+    X.set_col(-1, [3, 3, 3])
+    assert X.col(1) == [3, 3, 3]
+
+
+def test_set_col_error(X):
+    with pytest.raises(IndexError):
+        X.set_col(2, [1, 1, 1])
 
 
 def test_mul():
@@ -103,6 +135,20 @@ def test_transpose(X):
     assert T[0, 0] == 99
 
 
+def test_swap_rows(X):
+    # X = [[12, 7], [4, 5], [3, 8]]
+    X.swap_rows(0, 2)
+    assert X.row(0) == [3, 8]
+    assert X.row(2) == [12, 7]
+
+
+def test_swap_cols(X):
+    # X = [[12, 7], [4, 5], [3, 8]]
+    X.swap_cols(0, 1)
+    assert X.col(0) == [7, 5, 8]
+    assert X.col(1) == [12, 4, 3]
+
+
 def test_add(X):
     R = X + X
     assert R == Matrix([[24, 14], [8, 10], [6, 16]])
@@ -142,3 +188,43 @@ def test_build_matrix_by_cols():
     m.append_col([1, 2, 3])
     assert m.nrows == 3
     assert m.ncols == 1
+
+
+def test_identity():
+    m = Matrix.identity((3, 4))
+    for i in range(3):
+        assert m[i, i] == 1.0
+
+
+A = [
+    [2, 3, 2, 5, 6],
+    [5, 1, 4, 5, 3],
+    [1, 12, 3, 1, 12],
+    [7, 3, 2, 2, 6],
+    [9, 4, 2, 13, 6],
+]
+B1 = [6, 9, 5, 4, 8]
+B2 = [5, 10, 6, 3, 2]
+B3 = [1, 7, 3, 9, 12]
+
+
+def test_gauss_vector_solver():
+    result = gauss_vector_solver(A, B1)
+    assert result == [
+        -0.14854771784232382,
+        -0.3128630705394192,
+        1.7966804979253113,
+        0.41908713692946065,
+        0.2578146611341633,
+    ]
+
+
+def test_gauss_matrix_solver():
+    B = Matrix()
+    B.append_col(B1)
+    B.append_col(B2)
+    B.append_col(B3)
+    result = gauss_matrix_solver(A, B.matrix)
+    assert result.col(0) == gauss_vector_solver(A, B1)
+    assert result.col(1) == gauss_vector_solver(A, B2)
+    assert result.col(2) == gauss_vector_solver(A, B3)
