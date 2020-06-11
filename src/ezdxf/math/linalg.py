@@ -36,7 +36,7 @@ class Matrix:
             if shape is not None:
                 self.matrix = Matrix.reshape(repeat(0.), shape).matrix
             else:  # items is None, shape is None
-                pass
+                return
         elif isinstance(items, Matrix):
             if shape is None:
                 shape = items.shape
@@ -354,8 +354,8 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
     m = len(B[0])
     icol = 0
     irow = 0
-    indxc = [0] * n
-    indxr = [0] * n
+    col_indices = [0] * n
+    row_indices = [0] * n
     ipiv = [0] * n
 
     for i in range(n):
@@ -374,39 +374,39 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
             A[irow], A[icol] = A[icol], A[irow]
             B[irow], B[icol] = B[icol], B[irow]
 
-        indxr[i] = irow
-        indxc[i] = icol
+        row_indices[i] = irow
+        col_indices[i] = icol
 
         if math.isclose(A[icol][icol], 0.0):
             raise ArithmeticError("Singular Matrix")
+        
         pivinv = 1.0 / A[icol][icol]
         A[icol][icol] = 1.0
-        for l in range(n):
-            A[icol][l] *= pivinv
-        for l in range(m):
-            B[icol][l] *= pivinv
-        for ll in range(n):
-            if ll != icol:
-                dum = A[ll][icol]
-                A[ll][icol] = 0.0
-                for l in range(n):
-                    A[ll][l] -= A[icol][l] * dum
-                for l in range(m):
-                    B[ll][l] -= B[icol][l] * dum
+        A[icol] = [v * pivinv for v in A[icol]]
+        B[icol] = [v * pivinv for v in B[icol]]
+        for row in range(n):
+            if row == icol:
+                continue
+            dum = A[row][icol]
+            A[row][icol] = 0.0
+            for col in range(n):
+                A[row][col] -= A[icol][col] * dum
+            for col in range(m):
+                B[row][col] -= B[icol][col] * dum
 
-    for l in range(n - 1, -1, -1):
-        if indxr[l] != indxc[l]:
-            for k in range(n):
-                tmp = A[k][indxr[l]]
-                A[k][indxr[l]] = A[k][indxc[l]]
-                A[k][indxc[l]] = tmp
+    for i in range(n - 1, -1, -1):
+        irow = row_indices[i]
+        icol = col_indices[i]
+        if irow != icol:
+            for row in A:
+                row[irow], row[icol] = row[icol], row[irow]
     return Matrix(matrix=A), Matrix(matrix=B)
 
 
 def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
     if isinstance(A, Matrix):
         A = A.matrix
-
-    A = list(A)
+    else:
+        A = list(A)
     nrows = len(A)
     return gauss_jordan_solver(A, repeat([0.0], nrows))[0]
