@@ -58,6 +58,12 @@ class Matrix:
         m.matrix = [list(row) for row in self.rows()]
         return m
 
+    def __str__(self) -> str:
+        return '[{}]'.format(', '.join([str(row) for row in self.rows()]))
+
+    def __repr__(self) -> str:
+        return f'Matrix(matrix={self.__str__()})'
+
     @staticmethod
     def reshape(items: Iterable[float], shape: Shape) -> 'Matrix':
         items = iter(items)
@@ -371,7 +377,7 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
         indxr[i] = irow
         indxc[i] = icol
 
-        if A[icol][icol] == 0.0:
+        if math.isclose(A[icol][icol], 0.0):
             raise ArithmeticError("Singular Matrix")
         pivinv = 1.0 / A[icol][icol]
         A[icol][icol] = 1.0
@@ -401,10 +407,6 @@ def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
     if isinstance(A, Matrix):
         A = A.matrix
 
-    # copy input data
     A = list(A)
     nrows = len(A)
-    B = Matrix(shape=(nrows, 1), items=[0.0] * nrows)
-    R, _ = gauss_jordan_solver(A, B.matrix)
-    return R
-
+    return gauss_jordan_solver(A, repeat([0.0], nrows))[0]

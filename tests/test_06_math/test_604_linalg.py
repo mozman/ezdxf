@@ -3,7 +3,9 @@
 from typing import Iterable
 import pytest
 import math
-from ezdxf.math.linalg import Matrix, gauss_vector_solver, gauss_matrix_solver, gauss_jordan_solver
+from ezdxf.math.linalg import (
+    Matrix, gauss_vector_solver, gauss_matrix_solver, gauss_jordan_solver, gauss_jordan_inverse,
+)
 
 
 @pytest.fixture
@@ -249,3 +251,25 @@ def test_gauss_jordan_matrix_solver():
     are_close_vectors(result_B.col(0), gauss_vector_solver(A, B1))
     are_close_vectors(result_B.col(1), gauss_vector_solver(A, B2))
     are_close_vectors(result_B.col(2), gauss_vector_solver(A, B3))
+
+
+EXPECTED_INVERSE = [
+    [-0.16390041493775933617, -0.002489626556016597522, -0.007468879668049792526, 0.13651452282157676342,
+     0.043568464730290456478],
+    [-0.33402489626556016593, 0.05062240663900414948, 0.15186721991701244817, -0.10912863070539419082,
+     0.11410788381742738587],
+    [-0.05394190871369294633, 0.34854771784232365142, 0.04564315352697095431, -0.11203319502074688787,
+     -0.099585062240663900493],
+    [0.06016597510373443986, -0.00414937759336099577, -0.012448132780082987519, -0.10580912863070539416,
+     0.072614107883817427371],
+    [0.35615491009681881048, -0.13720608575380359624, -0.078284923928077455093, 0.13457814661134163205,
+     -0.098893499308437067754],
+]
+
+
+def test_gauss_jordan_inverse():
+    result = gauss_jordan_inverse(A)
+    assert result.nrows == len(A)
+    assert result.ncols == len(A[0])
+    m = Matrix(matrix=EXPECTED_INVERSE)
+    assert result == m
