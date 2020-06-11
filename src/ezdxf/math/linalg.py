@@ -4,7 +4,10 @@ from typing import Iterable, Tuple, List, Sequence, Union, Any
 from itertools import repeat
 import math
 
-__all__ = ['Matrix', 'gauss_vector_solver', 'gauss_matrix_solver', 'gauss_jordan_solver', 'gauss_jordan_inverse']
+__all__ = [
+    'Matrix', 'gauss_vector_solver', 'gauss_matrix_solver', 'gauss_jordan_solver', 'gauss_jordan_inverse',
+    'LUDecomposition',
+]
 
 
 def zip_to_list(*args) -> Iterable[List]:
@@ -14,6 +17,12 @@ def zip_to_list(*args) -> Iterable[List]:
 
 MatrixData = List[List[float]]
 Shape = Tuple[int, int]
+
+
+def copy_float_matrix(A) -> MatrixData:
+    if isinstance(A, Matrix):
+        A = A.matrix
+    return [[float(v) for v in row] for row in A]
 
 
 class Matrix:
@@ -197,6 +206,9 @@ class Matrix:
     def transpose(self) -> 'Matrix':
         return Matrix(matrix=list(zip_to_list(*self.matrix)))
 
+    def inverse(self) -> 'Matrix':
+        return gauss_jordan_inverse(self)
+
     def gauss_vector_solver(self, vector: Iterable[float]) -> List[float]:
         return gauss_vector_solver(self.matrix, vector)
 
@@ -222,11 +234,8 @@ def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Lis
     Returns: result vector x
 
     """
-    if isinstance(A, Matrix):
-        A = A.matrix
-
     # copy input data
-    A = [list(row) for row in A]
+    A = copy_float_matrix(A)
     B = list(B)
     num = len(A)
     if len(A[0]) != num:
@@ -257,12 +266,9 @@ def gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
     Returns: result matrix x
 
     """
-    if isinstance(A, Matrix):
-        A = A.matrix
-
     # copy input data
-    A = [list(row) for row in A]
-    B = [list(row) for row in B]
+    A = copy_float_matrix(A)
+    B = copy_float_matrix(B)
 
     num = len(A)
     if len(A[0]) != num:
@@ -341,14 +347,9 @@ def _backsubstitution(A: MatrixData, B: List[float]) -> List[float]:
 
 
 def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Tuple[Matrix, Matrix]:
-    if isinstance(A, Matrix):
-        A = A.matrix
-    if isinstance(B, Matrix):
-        B = B.matrix
-
     # copy input data
-    A = [list(row) for row in A]
-    B = [list(row) for row in B]
+    A = copy_float_matrix(A)
+    B = copy_float_matrix(B)
 
     n = len(A)
     m = len(B[0])
@@ -378,8 +379,8 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
         col_indices[i] = icol
 
         if math.isclose(A[icol][icol], 0.0):
-            raise ArithmeticError("Singular Matrix")
-        
+            raise ZeroDivisionError('Singular Matrix')
+
         pivinv = 1.0 / A[icol][icol]
         A[icol][icol] = 1.0
         A[icol] = [v * pivinv for v in A[icol]]
@@ -410,3 +411,98 @@ def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
         A = list(A)
     nrows = len(A)
     return gauss_jordan_solver(A, repeat([0.0], nrows))[0]
+
+
+TINY = 1e-12
+
+
+class LUDecomposition:
+    def __init__(self, A: Iterable[Iterable[float]]):
+        lu = copy_float_matrix(A)
+        n = len(lu)
+        det = 1.0
+        index = []
+
+        # find max value for each row, raises ZeroDivisionError for singular matrix!
+        scaling = [1.0 / max(abs(v) for v in row) for row in lu]
+
+        for k in range(n):
+            big = 0.0
+            imax = k
+            for i in range(n):
+                temp = scaling[i] * abs(lu[i][k])
+                if temp > big:
+                    big = temp
+                    imax = i
+
+            if k != imax:
+                for col in range(n):
+                    temp = lu[imax][col]
+                    lu[imax][col] = lu[k][col]
+                    lu[k][col] = temp
+
+                det = -det
+                scaling[imax] = scaling[k]
+
+            index.append(imax)
+            if lu[k][k] == 0.0:
+                lu[k][k] = TINY
+            for row in range(k + 1, n):
+                temp = lu[row][k] / lu[k][k]
+                lu[row][k] = temp
+                for col in range(k + 1, n):
+                    lu[row][col] -= temp * lu[k][col]
+
+        self.index: List[int] = index
+        self.matrix: MatrixData = lu
+        self._det = det
+
+    @property
+    def nrows(self) -> int:
+        return len(self.matrix)
+
+    def solve_vector(self, B: Iterable[float]) -> List[float]:
+        X = [float(v) for v in B]
+        lu = self.matrix
+        index = self.index
+        n = self.nrows
+        ii = 0
+
+        if len(X) != n:
+            raise ValueError('Item count of vector has to be equal to row count of matrix.')
+
+        for i in range(n):
+            ip = index[i]
+            sum_ = X[ip]
+            X[ip] = X[i]
+            if ii != 0:
+                for j in range(ii - 1, i):
+                    sum_ -= lu[i][j] * X[j]
+            elif sum_ != 0.0:
+                ii = i + 1
+            X[i] = sum_
+
+        for row in range(n - 1, -1, -1):
+            sum_ = X[row]
+            for col in range(row + 1, n):
+                sum_ -= lu[row][col] * X[col]
+            X[row] = sum_ / lu[row][row]
+        return X
+
+    def solve_matrix(self, B: Iterable[Iterable[float]]) -> Matrix:
+        if not isinstance(B, Matrix):
+            B = Matrix(matrix=[list(row) for row in B])
+        if B.nrows != self.nrows:
+            raise ValueError('Item count of vector has to be equal to row count of matrix.')
+
+        return Matrix(matrix=[self.solve_vector(col) for col in B.cols()]).transpose()
+
+    def inverse(self) -> Matrix:
+        return self.solve_matrix(Matrix.identity(shape=(self.nrows, self.nrows)))
+
+    def determinant(self) -> float:
+        det = self._det
+        lu = self.matrix
+        for i in range(self.nrows):
+            det *= lu[i][i]
+        return det

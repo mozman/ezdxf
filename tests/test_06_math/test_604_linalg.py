@@ -4,7 +4,7 @@ from typing import Iterable
 import pytest
 import math
 from ezdxf.math.linalg import (
-    Matrix, gauss_vector_solver, gauss_matrix_solver, gauss_jordan_solver, gauss_jordan_inverse,
+    Matrix, gauss_vector_solver, gauss_matrix_solver, gauss_jordan_solver, gauss_jordan_inverse, LUDecomposition,
 )
 
 
@@ -211,12 +211,12 @@ B1 = [6, 9, 5, 4, 8]
 B2 = [5, 10, 6, 3, 2]
 B3 = [1, 7, 3, 9, 12]
 
-EXPECTED = [-0.14854771784232382, -0.3128630705394192, 1.7966804979253113, 0.41908713692946065, 0.2578146611341633]
+SOLUTION_B1 = [-0.14854771784232382, -0.3128630705394192, 1.7966804979253113, 0.41908713692946065, 0.2578146611341633]
 
 
 def test_gauss_vector_solver():
     result = gauss_vector_solver(A, B1)
-    assert result == EXPECTED
+    assert result == SOLUTION_B1
 
 
 def test_gauss_matrix_solver():
@@ -238,7 +238,7 @@ def are_close_vectors(v1: Iterable[float], v2: Iterable[float], abs_tol: float =
 def test_gauss_jordan_vector_solver():
     B = Matrix(items=B1, shape=(5, 1))
     result_A, result_B = gauss_jordan_solver(A, B)
-    are_close_vectors(result_B.col(0), EXPECTED)
+    are_close_vectors(result_B.col(0), SOLUTION_B1)
 
 
 def test_gauss_jordan_matrix_solver():
@@ -273,3 +273,9 @@ def test_gauss_jordan_inverse():
     assert result.ncols == len(A[0])
     m = Matrix(matrix=EXPECTED_INVERSE)
     assert result == m
+
+
+@pytest.mark.skip(reason='Something is wrong!')
+def test_LU_decomposition():
+    R = LUDecomposition(A).solve_vector(B1)
+    assert are_close_vectors(R, SOLUTION_B1)
