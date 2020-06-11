@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math.matrix import Matrix
+from ezdxf.math.linalg import Matrix
 
 
 @pytest.fixture

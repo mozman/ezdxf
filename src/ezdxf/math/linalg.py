@@ -1,12 +1,17 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import Iterable, Tuple, List, Sequence, Union, Any
 from itertools import repeat
+import math
 
 
 def zip_to_list(*args) -> Iterable[List]:
     for e in zip(*args):  # returns immutable tuples
         yield list(e)  # need mutable list
+
+
+MatrixData = List[List[float]]
+Shape = Tuple[int, int]
 
 
 class Matrix:
@@ -22,10 +27,9 @@ class Matrix:
 
     """
 
-    def __init__(self, items: Any = None,
-                 shape: Tuple[int, int] = None,
-                 matrix: List[List[float]] = None):
-        self.matrix = matrix  # type: List[List[float]]
+    def __init__(self, items: Any = None, shape: Shape = None, matrix: MatrixData = None):
+        self.matrix: MatrixData = matrix
+        self.abs_tol: float = 1e-12
         if items is None:
             if shape is not None:
                 self.matrix = Matrix.reshape(repeat(0.), shape).matrix
@@ -44,11 +48,10 @@ class Matrix:
 
     def __iter__(self) -> Iterable[float]:
         for row in self.matrix:
-            for item in row:
-                yield item
+            yield from row
 
     @staticmethod
-    def reshape(items: Iterable[float], shape: Tuple[int, int]) -> 'Matrix':
+    def reshape(items: Iterable[float], shape: Shape) -> 'Matrix':
         items = iter(items)
         rows, cols = shape
         return Matrix(matrix=[[next(items) for _ in range(cols)] for _ in range(rows)])
@@ -62,7 +65,7 @@ class Matrix:
         return len(self.matrix[0])
 
     @property
-    def shape(self) -> Tuple[int, int]:
+    def shape(self) -> Shape:
         return self.nrows, self.ncols
 
     def row(self, index) -> List[float]:
@@ -71,13 +74,22 @@ class Matrix:
     def col(self, index) -> List[float]:
         return [row[index] for row in self.matrix]
 
-    def rows(self) -> List[List[float]]:
+    def rows(self) -> MatrixData:
         return self.matrix
 
-    def cols(self) -> List[List[float]]:
+    def cols(self) -> MatrixData:
         return [self.col(i) for i in range(self.ncols)]
 
-    def set_diagonal(self, value: float = 1.0, row_offset: int = 0, col_offset: int = 0):
+    def set_row(self, index: int, items: List[float]) -> None:
+        if len(items) != self.ncols:
+            raise ValueError('Invalid item count')
+        self.matrix[index] = items
+
+    def set_col(self, index: int, items: List[float]) -> None:
+        for row, item in zip(self.rows(), items):
+            row[index] = item
+
+    def set_diag(self, value: float = 1.0, row_offset: int = 0, col_offset: int = 0):
         for index in range(max(self.nrows, self.ncols)):
             try:
                 self.matrix[index + row_offset][index + col_offset] = value
@@ -101,6 +113,14 @@ class Matrix:
         else:
             raise ValueError('Invalid item count.')
 
+    def swap_row(self, a: int, b: int) -> None:
+        m = self.matrix
+        m[a], m[b] = m[b], m[a]
+
+    def swap_col(self, a: int, b: int) -> None:
+        for row in self.rows():
+            row[a], row[b] = row[b], row[a]
+
     def __getitem__(self, item: Tuple[int, int]) -> float:
         row, col = item
         return self.matrix[row][col]
@@ -115,8 +135,9 @@ class Matrix:
         if self.shape != other.shape:
             raise TypeError('Matrices has to have the same shape.')
         for row1, row2 in zip(self.matrix, other.matrix):
-            if list(row1) != list(row2):
-                return False
+            for item1, item2 in zip(row1, row2):
+                if not math.isclose(item1, item2, abs_tol=self.abs_tol):
+                    return False
         return True
 
     def __mul__(self, other: Union['Matrix', float]) -> 'Matrix':
@@ -126,7 +147,7 @@ class Matrix:
                         self.matrix])
         else:
             factor = float(other)
-            matrix = Matrix.reshape([item * factor for item in self], shape=self.shape)
+            matrix = Matrix(matrix=[[item * factor for item in row] for row in self.matrix])
         return matrix
 
     __imul__ = __mul__
@@ -135,8 +156,8 @@ class Matrix:
         if isinstance(other, Matrix):
             matrix = Matrix.reshape([a + b for a, b in zip(self, other)], shape=self.shape)
         else:
-            other = float(other)
-            matrix = Matrix.reshape([item + other for item in self], shape=self.shape)
+            value = float(other)
+            matrix = Matrix(matrix=[[item + value for item in row] for row in self.matrix])
         return matrix
 
     __iadd__ = __add__
@@ -145,8 +166,8 @@ class Matrix:
         if isinstance(other, Matrix):
             matrix = Matrix.reshape([a - b for a, b in zip(self, other)], shape=self.shape)
         else:
-            other = float(other)
-            matrix = Matrix.reshape([item - other for item in self], shape=self.shape)
+            value = float(other)
+            matrix = Matrix(matrix=[[item - value for item in row] for row in self.matrix])
         return matrix
 
     __isub__ = __sub__
@@ -167,7 +188,7 @@ class Matrix:
         return Matrix(items=zip(*result))
 
 
-def gauss(matrix: List[List[float]]) -> List[float]:
+def gauss(matrix: MatrixData) -> List[float]:
     """
     Solves a nxn Matrix A x = b, Matrix has 1 column more than rows.
 

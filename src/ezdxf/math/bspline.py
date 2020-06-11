@@ -224,7 +224,7 @@ from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optiona
 import math
 from math import pow, isclose
 from .vector import Vector, distance, NULLVEC
-from .matrix import Matrix
+from .linalg import Matrix
 from ezdxf.lldxf.const import DXFValueError
 
 if TYPE_CHECKING:
