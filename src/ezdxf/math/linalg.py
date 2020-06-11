@@ -278,39 +278,39 @@ def _build_upper_triangle(A: MatrixData, B: List) -> None:
          B: vector of floats or row major matrix
 
     """
-    n = len(A)
+    num = len(A)
     try:
-        bcols = len(B[0])
+        b_col_count = len(B[0])
     except TypeError:
-        bcols = 1
+        b_col_count = 1
 
-    for i in range(0, n):
+    for i in range(0, num):
         # Search for maximum in this column
         max_element = abs(A[i][i])
         max_row = i
-        for k in range(i + 1, n):
-            value = abs(A[k][i])
+        for row in range(i + 1, num):
+            value = abs(A[row][i])
             if value > max_element:
                 max_element = value
-                max_row = k
+                max_row = row
 
         # Swap maximum row with current row
         A[max_row], A[i] = A[i], A[max_row]
         B[max_row], B[i] = B[i], B[max_row]
 
         # Make all rows below this one 0 in current column
-        for k in range(i + 1, n):
-            c = -A[k][i] / A[i][i]
-            for j in range(i, n):
-                if i == j:
-                    A[k][j] = 0
+        for row in range(i + 1, num):
+            c = -A[row][i] / A[i][i]
+            for col in range(i, num):
+                if i == col:
+                    A[row][col] = 0
                 else:
-                    A[k][j] += c * A[i][j]
-            if bcols == 1:
-                B[k] += c * B[i]
+                    A[row][col] += c * A[i][col]
+            if b_col_count == 1:
+                B[row] += c * B[i]
             else:
-                for col in range(bcols):
-                    B[k][col] += c * B[i][col]
+                for col in range(b_col_count):
+                    B[row][col] += c * B[i][col]
 
 
 def _backsubstitution(A: MatrixData, B: List[float]) -> List[float]:
@@ -321,10 +321,10 @@ def _backsubstitution(A: MatrixData, B: List[float]) -> List[float]:
         B: vector of floats
 
     """
-    n = len(A)
-    x = [0.0] * n
-    for i in range(n - 1, -1, -1):
+    num = len(A)
+    x = [0.0] * num
+    for i in range(num - 1, -1, -1):
         x[i] = B[i] / A[i][i]
-        for k in range(i - 1, -1, -1):
-            B[k] -= A[k][i] * x[i]
+        for row in range(i - 1, -1, -1):
+            B[row] -= A[row][i] * x[i]
     return x

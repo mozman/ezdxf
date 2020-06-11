@@ -16,7 +16,7 @@ RANDOM_GAUSS_MATRIX_1 = random_matrix(rows=SIZE, cols=SIZE)
 B_VECTOR = [random.random() for _ in range(SIZE)]
 
 
-def profile_reference_gauss_solver(count):
+def profile_gauss_vector_solver(count):
     for _ in range(count):
         gauss_vector_solver(RANDOM_GAUSS_MATRIX_1.matrix, B_VECTOR)
 
@@ -28,5 +28,5 @@ def profile(text, func, *args):
     print(f'{text} {t1 - t0:.3f}s')
 
 
-profile('reference Solver gauss(): ', profile_reference_gauss_solver, 5)
+profile('Reference Gauss vector solver(): ', profile_gauss_vector_solver, 5)
 
