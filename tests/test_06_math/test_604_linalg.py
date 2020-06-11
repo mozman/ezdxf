@@ -1,7 +1,9 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
+from typing import Iterable
 import pytest
-from ezdxf.math.linalg import Matrix, gauss_vector_solver, gauss_matrix_solver
+import math
+from ezdxf.math.linalg import Matrix, gauss_vector_solver, gauss_matrix_solver, gauss_jordan_solver
 
 
 @pytest.fixture
@@ -207,16 +209,12 @@ B1 = [6, 9, 5, 4, 8]
 B2 = [5, 10, 6, 3, 2]
 B3 = [1, 7, 3, 9, 12]
 
+EXPECTED = [-0.14854771784232382, -0.3128630705394192, 1.7966804979253113, 0.41908713692946065, 0.2578146611341633]
+
 
 def test_gauss_vector_solver():
     result = gauss_vector_solver(A, B1)
-    assert result == [
-        -0.14854771784232382,
-        -0.3128630705394192,
-        1.7966804979253113,
-        0.41908713692946065,
-        0.2578146611341633,
-    ]
+    assert result == EXPECTED
 
 
 def test_gauss_matrix_solver():
@@ -228,3 +226,26 @@ def test_gauss_matrix_solver():
     assert result.col(0) == gauss_vector_solver(A, B1)
     assert result.col(1) == gauss_vector_solver(A, B2)
     assert result.col(2) == gauss_vector_solver(A, B3)
+
+
+def are_close_vectors(v1: Iterable[float], v2: Iterable[float], abs_tol: float = 1e-12):
+    for i, j in zip(v1, v2):
+        assert math.isclose(i, j, abs_tol=abs_tol)
+
+
+def test_gauss_jordan_vector_solver():
+    B = Matrix(items=B1, shape=(5, 1))
+    result_A, result_B = gauss_jordan_solver(A, B)
+    are_close_vectors(result_B.col(0), EXPECTED)
+
+
+def test_gauss_jordan_matrix_solver():
+    B = Matrix()
+    B.append_col(B1)
+    B.append_col(B2)
+    B.append_col(B3)
+
+    result_A, result_B = gauss_jordan_solver(A, B)
+    are_close_vectors(result_B.col(0), gauss_vector_solver(A, B1))
+    are_close_vectors(result_B.col(1), gauss_vector_solver(A, B2))
+    are_close_vectors(result_B.col(2), gauss_vector_solver(A, B3))

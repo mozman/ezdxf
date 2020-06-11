@@ -4,7 +4,7 @@ from typing import Iterable, Tuple, List, Sequence, Union, Any
 from itertools import repeat
 import math
 
-__all__ = ['Matrix', 'gauss_vector_solver', 'gauss_matrix_solver']
+__all__ = ['Matrix', 'gauss_vector_solver', 'gauss_matrix_solver', 'gauss_jordan_solver', 'gauss_jordan_inverse']
 
 
 def zip_to_list(*args) -> Iterable[List]:
@@ -197,6 +197,9 @@ class Matrix:
     def gauss_matrix_solver(self, matrix: Iterable[Iterable[float]]) -> 'Matrix':
         return gauss_matrix_solver(self.matrix, matrix)
 
+    def gauss_jordan_solver(self, matrix: Iterable[Iterable[float]]) -> Tuple['Matrix', 'Matrix']:
+        return gauss_jordan_solver(self.matrix, matrix)
+
 
 def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]:
     """
@@ -329,3 +332,79 @@ def _backsubstitution(A: MatrixData, B: List[float]) -> List[float]:
         for row in range(i - 1, -1, -1):
             B[row] -= A[row][i] * x[i]
     return x
+
+
+def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Tuple[Matrix, Matrix]:
+    if isinstance(A, Matrix):
+        A = A.matrix
+    if isinstance(B, Matrix):
+        B = B.matrix
+
+    # copy input data
+    A = [list(row) for row in A]
+    B = [list(row) for row in B]
+
+    n = len(A)
+    m = len(B[0])
+    icol = 0
+    irow = 0
+    indxc = [0] * n
+    indxr = [0] * n
+    ipiv = [0] * n
+
+    for i in range(n):
+        big = 0.0
+        for j in range(n):
+            if ipiv[j] != 1:
+                for k in range(n):
+                    if ipiv[k] == 0:
+                        if abs(A[j][k]) >= big:
+                            big = abs(A[j][k])
+                            irow = j
+                            icol = k
+
+        ipiv[icol] += 1
+        if irow != icol:
+            A[irow], A[icol] = A[icol], A[irow]
+            B[irow], B[icol] = B[icol], B[irow]
+
+        indxr[i] = irow
+        indxc[i] = icol
+
+        if A[icol][icol] == 0.0:
+            raise ArithmeticError("Singular Matrix")
+        pivinv = 1.0 / A[icol][icol]
+        A[icol][icol] = 1.0
+        for l in range(n):
+            A[icol][l] *= pivinv
+        for l in range(m):
+            B[icol][l] *= pivinv
+        for ll in range(n):
+            if ll != icol:
+                dum = A[ll][icol]
+                A[ll][icol] = 0.0
+                for l in range(n):
+                    A[ll][l] -= A[icol][l] * dum
+                for l in range(m):
+                    B[ll][l] -= B[icol][l] * dum
+
+    for l in range(n - 1, -1, -1):
+        if indxr[l] != indxc[l]:
+            for k in range(n):
+                tmp = A[k][indxr[l]]
+                A[k][indxr[l]] = A[k][indxc[l]]
+                A[k][indxc[l]] = tmp
+    return Matrix(matrix=A), Matrix(matrix=B)
+
+
+def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
+    if isinstance(A, Matrix):
+        A = A.matrix
+
+    # copy input data
+    A = list(A)
+    nrows = len(A)
+    B = Matrix(shape=(nrows, 1), items=[0.0] * nrows)
+    R, _ = gauss_jordan_solver(A, B.matrix)
+    return R
+
