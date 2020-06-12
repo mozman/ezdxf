@@ -607,7 +607,7 @@ def from_profiles_linear(profiles: Iterable[Iterable['Vertex']], close=True,
     return MeshTransformer.from_builder(mesh)
 
 
-def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: str = 'uniform', power: float = .5,
+def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: str = 'chord',
                          subdivide: int = 4) -> List[Vector]:
     """
     B-spline interpolation, vertices are fit points for the spline definition.
@@ -617,15 +617,14 @@ def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: 
     Args:
         vertices: fit points
         degree: degree of B-spline
-        method: 'uniform', 'distance' or 'centripetal', calculation method for parameter t
-        power: power for 'centripetal', default is distance ^ .5
+        method: 'uniform', 'chord'/'distance', or 'centripetal'/'sqrt_chord', calculation method for parameter t
         subdivide: count of sub vertices + 1, e.g. 4 creates 3 sub-vertices
 
     Returns: list of vertices
 
     """
     vertices = list(vertices)
-    spline = bspline_control_frame(vertices, degree=degree, method=method, power=power)
+    spline = bspline_control_frame(vertices, degree=degree, method=method)
     return list(spline.approximate(segments=(len(vertices) - 1) * subdivide))
 
 

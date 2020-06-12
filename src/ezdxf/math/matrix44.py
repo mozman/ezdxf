@@ -513,7 +513,7 @@ class Matrix44:
         Returns an iterable of transformed direction vectors without translation.
 
         """
-        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, *_ = self.matrix
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self.matrix
         for vector in vectors:
             x, y, z = vector
             v = Vector(

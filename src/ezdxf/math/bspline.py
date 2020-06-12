@@ -7,217 +7,11 @@ B-Splines
 
 https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node4.html
 
-n + 1 ... number of control points P_1, P_2, ..., P_{n+1} or P_0, P_1, ..., P_n
-k ... order of the B-spline, 2 <= k <= n + 1
-degree ... k - 1
-
-B-splines are a more general type of curve than Bezier curves. In a B-spline each control point is associated with a 
-basis function.
-
-(87) P(t) = sum {i=1}^{n+1} N_{i,k}(t) P_i, t_min <= t < t_max
-
-There are n + 1 control points,  P_1, P_2, ..., P_{n+1}. The N_{i,k} basis functions are of order k(degree k-1). 
-k must be at least 2 (linear), and can be no more than n+1 (the number of control points). The important point here is 
-that the order of the curve (linear, quadratic, cubic,...) is therefore not dependent on the number of control points 
-(which it is for Bezier curves, where k must always equal n+1).
-
-Equation (87) defines a piecewise continuous function. A knot vector,  (t_1, t_2, ..., t_{k+(n+1)}), must be specified. 
-This determines the values of t at which the pieces of curve join, like knots joining bits of string. It is necessary 
-that:
-
-(88)  t_i <= t_{i+1}, for all i
-
-The N_{i,k} depend only on the value of k and the values in the knot vector. N is defined recursively as:
-
-(89) N_{i,1}(t)	= 1 for t_i <= t < t_{i+1}; 0 otherwise
-     N_{i,k}(t)	= (t-t_i) / ({t_{i+k-1} - t_i}) * N_{i,k-1}(t) + (t_{i+k}-t) / (t_{i+k} - t_{i+1}) * N_{i+1,k-1}(t)
-
-This is essentially a modified version of the idea of taking linear interpolations of linear interpolations of linear 
-interpolations ... n
-
-
-The Knot Vector
----------------
-
-The above explanation shows that the knot vector is very important. The knot vector can, by its definition, be any 
-sequence of numbers provided that each one is greater than or equal to the preceding one. Some types of knot vector are 
-more useful than others. Knot vectors are generally placed into one of three categories: uniform, open uniform, and 
-non-uniform.
-
-Uniform Knot Vector
-~~~~~~~~~~~~~~~~~~~
-
-These are knot vectors for which 
-
-(90) t_{i+1} - t_i = constant, for all i
-
-e.g. [1, 2, 3, 4, 5, 6, 7, 8], [0, .25, .5, .75, 1.]
-
-Open Uniform Knot Vector
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-These are uniform knot vectors which have k equal knot values at each end
- 
-(91) t_i = t_1,  i <= k
-     t_{i+1} - t_i = constant, k <= i < n+2
-     t_i = t_{k+(n+1)}, i >= n + 2
-
-e.g. [0, 0, 0, 0, 1, 2, 3, 4, 4, 4, 4] for k=4, 
-     [1, 1, 1, 2, 3, 4, 5, 6, 6, 6] for k=3
-     [.1, .1, .1, .1, .1, .3, .5, .7, .7, .7, .7, .7] for k=5
-
-Non-uniform Knot Vector
-~~~~~~~~~~~~~~~~~~~~~~~
-
-This is the general case, the only constraint being the standard  t_i <= t_{i+1}, for all i (Equations 88). 
-
-e.g. [1, 3, 7, 22, 23, 23, 49, 50, 50]
-     [1, 1, 1, 2, 2, 3, 4, 5, 6, 6, 6, 7, 7, 7]
-     [.2, .7, .7, .7, 1.2, 1.2, 2.9, 3.6]
-
-The shapes of the N_{i,k} basis functions are determined entirely by the relative spacing between the knots.
- 
-    scaling: t_i' = alpha * t_i, for all i
-    translating t_i'= t_i + delta t, for all i
-    
-The knot vector has no effect on the shapes of the N_{i,k}.
-
-The above gives a description of the various types of knot vector but it doesn't really give you any insight into how 
-the knot vector determines the shape of the curve. The following subsections look at the different types of knot vector 
-in more detail. However, the best way to get to feel for these is to derive and draw the basis functions yourself.
-
-Uniform Knot Vector
-~~~~~~~~~~~~~~~~~~~
-
-For simplicity, let t_i = i (this is allowable given that the scaling or translating the knot vector has no effect on 
-the shapes of the N_{i,k}). The knot vector thus becomes  [1,2,3, ... ,k+(n+1)] and equation (89) simplifies to:
-
-(92) N_{i,1}(t)	= 1 for t_i <= t < t_{i+1}; 0 otherwise
-     N_{i,k}(t)	= (t-i)(k-1) * N_{i,k-1}(t) + (i+k-t)/ (k-1) * N_{i+1,k-1}(t)
-
-Things you can change about a uniform B-spline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-With a uniform B-spline, you obviously cannot change the basis functions (they are fixed because all the knots are 
-equi-spaced). However you can alter the shape of the curve by modifying a number of things:
-
-Moving control points:
-
-Moving the control points obviously changes the shape of the curve.
-
-Multiple control points:
-
-Sticking two adjacent control points on top of one another causes the curve to pass closer to that point. Stick enough 
-adjacent control points on top of one another and you can make the curve pass through that point.
-
-Order:
-
-Increasing the order k increases the continuity of the curve at the knots, increases the smoothness of the curve, and 
-tends to move the curve farther from its defining polygon.
-
-Joining the ends:
-
-You can join the ends of the curve to make a closed loop. Say you have M points,  P_1, ... P_M. You want a closed 
-B-spline defined by these points. For a given order, k, you will need M+(k-1) control points (repeating the first k-1 
-points):  P_1, ... P_M, P_1, ..., P_{k-1}. Your knot vector will thus have M+2k-1 uniformly spaced knots.
-
-Open Uniform Knot Vector
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-The previous section intimated that uniform B-splines can be used to describe closed curves: all you have to do is join 
-the ends as described above. If you do not want a closed curve, and you use a uniform knot vector, you find that you 
-need to specify control points at each end of the curve which the curve doesn't go near.
-
-If you wish your B-spline to start and end at your first and last control points then you need an open uniform knot 
-vector. The only difference between this and the uniform knot vector being that the open uniform version has k equal 
-knots at each end.
-
-An order k open uniform B-spline with n+1=k points is the Bezier curve of order k.
-
-Non-uniform Knot Vector
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Any B-spline whose knot vector is neither uniform nor open uniform is non-uniform. Non-uniform knot vectors allow any 
-spacing of the knots, including multiple knots (adjacent knots with the same value). We need to know how this 
-non-uniform spacing affects the basis functions in order to understand where non-uniform knot vectors could be useful. 
-
-It transpires that there are only three cases of any interest: 
-
-    1. multiple knots (adjacent knots equal)
-    2. adjacent knots more closely spaced than the next knot in the vector
-    3. adjacent knots less closely spaced than the next knot in the vector 
-    
-Obviously, case (3) is simply case (2) turned the other way round.
-
-Multiple knots:
-
-A multiple knot reduces the degree of continuity at that knot value. Across a normal knot the continuity is Ck-2. Each 
-extra knot with the same value reduces continuity at that value by one. This is the only way to reduce the continuity of 
-the curve at the knot values. If there are k-1 (or more) equal knots then you get a discontinuity in the curve.
-
-Close knots:
-
-As two knots' values get closer together, relative to the spacing of the other knots, the curve moves closer to the 
-related control point.
-
-Distant knots:
-
-As two knots' values get further apart, relative to the spacing of the other knots, the curve moves further away from 
-the related control point.
-
-Use of Non-uniform Knot Vectors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Standard procedure is to use uniform or open uniform B-splines unless there is a very good reason not to do so. 
-Moving two knots closer together tends to move the curve only slightly and so there is usually little point in doing it. 
-This leads to the conclusion that the main use of non-uniform B-splines is to allow for multiple knots, which adjust the 
-continuity of the curve at the knot values.
-
-However, non-uniform B-splines are the general form of the B-spline because they incorporate open uniform and uniform 
-B-splines as special cases. Thus we will talk about non-uniform B-splines when we mean the general case, incorporating 
-both uniform and open uniform.
-
-What can you do to control the shape of a B-spline?
-
-    - Move the control points.
-    - Add or remove control points.
-    - Use multiple control points.
-    - Change the order, k.
-    - Change the type of knot vector.
-    - Change the relative spacing of the knots.
-    - Use multiple knot values in the knot vector.
-
-What should the defaults be?
-
-If there are no pressing reasons for doing otherwise, your B-spline should be defined as follows:
-
-    - k=4 (cubic)
-    - no multiple control points
-    - uniform (for a closed curve) or open uniform (for an open curve) knot vector.
-
-
 Rational B-splines
 ==================
 
 https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node5.html:
 
-Rational B-splines have all of the properties of non-rational B-splines plus the following two useful features:
-They produce the correct results under projective transformations (while non-rational B-splines only produce the correct
-results under affine transformations).
-
-They can be used to represent lines, conics, non-rational B-splines; and, when generalised to patches, can represents
-planes, quadrics, and tori.
-
-The antonym of rational is non-rational. Non-rational B-splines are a special case of rational B-splines, just as
-uniform B-splines are a special case of non-uniform B-splines. Thus, non-uniform rational B-splines encompass almost
-every other possible 3D shape definition. Non-uniform rational B-spline is a bit of a mouthful and so it is generally
-abbreviated to NURBS.
-
-We have already learnt all about the the B-spline bit of NURBS and about the non-uniform bit. So now all we need to
-know is the meaning of the rational bit and we will fully(?) understand NURBS.
-
-Rational B-splines are defined simply by applying the B-spline equation (Equation 87) to homogeneous coordinates,
-rather than normal 3D coordinates.
 
 """
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional
@@ -308,14 +102,19 @@ def uniform_t_vector(fit_points: Sequence) -> Iterable[float]:
         yield float(t) / n
 
 
-def distance_t_vector(fit_points: Iterable['Vertex']):
-    return centripetal_t_vector(fit_points, power=1)
+def distance_t_vector(fit_points: Iterable['Vertex']) -> Iterable[float]:
+    distances = [distance(p1, p2) for p1, p2 in zip(fit_points, fit_points[1:])]
+    yield from _normalize_distances(distances)
 
 
-def centripetal_t_vector(fit_points: Iterable['Vertex'], power: float = .5) -> Iterable[float]:
-    distances = [pow(distance(p1, p2), power) for p1, p2 in zip(fit_points, fit_points[1:])]
+def centripetal_t_vector(fit_points: Iterable['Vertex']) -> Iterable[float]:
+    distances = [math.sqrt(distance(p1, p2)) for p1, p2 in zip(fit_points, fit_points[1:])]
+    yield from _normalize_distances(distances)
+
+
+def _normalize_distances(distances: Sequence[float]) -> Iterable[float]:
     total_length = sum(distances)
-    s = 0.
+    s = 0.0
     yield s
     for d in distances:
         s += d
@@ -407,27 +206,28 @@ def bspline_vertex(u: float, degree: int, control_points: Sequence['Vertex'], kn
 
 def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3,
                           tangents: Tuple['Vertex', 'Vertex'] = None,
-                          method: str = 'distance',
-                          power: float = 0.5):
+                          method: str = 'chord'):
     """
     Generates the control points for the `B-spline`_ control frame by `Curve Global Interpolation`_.
     Given are the fit points and the degree of the B-spline. The function provides 3 methods for generating the
     parameter vector t:
 
-    =================== ============================================================
-    Method              Description
-    =================== ============================================================
-    ``'uniform'``       creates a uniform t vector, from ``0`` to ``1`` evenly spaced; see `uniform`_ method
-    ``'distance'``      creates a t vector with values proportional to the fit point distances, see `chord length`_ method
-    ``'centripetal'``   creates a t vector with values proportional to the fit point distances ^ ``power``; see `centripetal`_ method
-    =================== ============================================================
+    ======================= ====================================================================
+    Method                  Description
+    ======================= ====================================================================
+    uniform                 creates a uniform t vector, from ``0`` to ``1`` evenly spaced,
+                            see `uniform`_ method
+    distance, chord         creates a t vector with values proportional to the fit point distances,
+                            see `chord length`_ method
+    centripetal, sqrt_chord creates a t vector with values proportional to the fit point sqrt(distances),
+                            see `centripetal`_ method
+    ======================= ====================================================================
 
     Args:
         fit_points: fit points of B-spline, as list of :class:`Vector` compatible objects
         tangents: define start- and end tangent as 2-tuple of :class:`Vector` compatible objects (optional)
         degree: degree of B-spline
         method: calculation method for parameter vector t
-        power: power for centripetal method
 
     Returns:
         :class:`BSpline`
@@ -437,10 +237,10 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3,
     def create_t_vector():
         if method == 'uniform':
             return uniform_t_vector(fit_points)  # equally spaced 0 .. 1
-        elif method == 'distance':
+        elif method in ('distance', 'chord'):
             return distance_t_vector(fit_points)
-        elif method == 'centripetal':
-            return centripetal_t_vector(fit_points, power=power)
+        elif method in ('centripetal', 'sqrt_chord'):
+            return centripetal_t_vector(fit_points)
         else:
             raise DXFValueError('Unknown method: {}'.format(method))
 
@@ -460,7 +260,8 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3,
                 start_tangent = s
             if not end_tangent:
                 end_tangent = e
-        control_points, knots = global_curve_interpolation_with_tangents(fit_points, start_tangent, end_tangent, degree, t_vector)
+        control_points, knots = global_curve_interpolation_with_tangents(fit_points, start_tangent, end_tangent, degree,
+                                                                         t_vector)
     else:
         control_points, knots = global_curve_interpolation(fit_points, degree, t_vector)
 
@@ -469,8 +270,7 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3,
     return bspline
 
 
-def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, degree: int = 3, method: str = 'distance',
-                                 power: float = .5):
+def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, degree: int = 3, method: str = 'chord'):
     """
     Approximate `B-spline`_ by a reduced count of control points, given are the fit points and the degree of
     the B-spline.
@@ -480,7 +280,6 @@ def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, deg
         count: count of designated control points
         degree: degree of B-spline
         method: calculation method for parameter vector t, see :func:`bspline_control_frame`
-        power: power for centripetal method
 
     Returns:
         :class:`BSpline`
@@ -490,10 +289,10 @@ def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, deg
     def create_t_vector():
         if method == 'uniform':
             return uniform_t_vector(fit_points)  # equally spaced 0 .. 1
-        elif method == 'distance':
+        elif method in ('distance', 'chord'):
             return distance_t_vector(fit_points)
-        elif method == 'centripetal':
-            return centripetal_t_vector(fit_points, power=power)
+        elif method in ('centripetal', 'sqrt_chord'):
+            return centripetal_t_vector(fit_points)
         else:
             raise DXFValueError('Unknown method: {}'.format(method))
 
@@ -553,7 +352,6 @@ def global_curve_interpolation_with_tangents(
         end_tangent: Vector,
         degree: int,
         t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
-
     n = len(fit_points) - 1
     p = degree
     m = n + p + 3

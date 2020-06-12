@@ -204,8 +204,8 @@ class Spline:
         """
         self.segments = (len(self.points) - 1) * segments
 
-    def render_as_fit_points(self, layout: 'BaseLayout', degree: int = 3, method: str = 'distance',
-                             power: float = .5, dxfattribs: dict = None) -> None:
+    def render_as_fit_points(self, layout: 'BaseLayout', degree: int = 3, method: str = 'chord',
+                             dxfattribs: dict = None) -> None:
         """
         Render a B-spline as 2D/3D :class:`~ezdxf.entities.Polyline`, where the definition points are fit points.
 
@@ -215,12 +215,11 @@ class Spline:
         Args:
             layout: :class:`~ezdxf.layouts.BaseLayout` object
             degree: degree of B-spline (order = `degree` + 1)
-            method: ``'uniform'``, ``'distance'`` or ``'centripetal'``, calculation method for parameter t
-            power: power for ``'centripetal'``, default = ``0.5``
+            method: 'uniform', 'distance'/'chord' or 'centripetal'/'sqrt_chord', calculation method for parameter t
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
         """
-        spline = bspline_control_frame(self.points, degree=degree, method=method, power=power)
+        spline = bspline_control_frame(self.points, degree=degree, method=method)
         vertices = list(spline.approximate(self.segments))
         if any(vertex.z != 0. for vertex in vertices):
             layout.add_polyline3d(vertices, dxfattribs=dxfattribs)
