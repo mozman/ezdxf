@@ -191,6 +191,10 @@ class Matrix:
         """ Returns a frozen matrix, all data is stored in immutable tuples. """
         return freeze_matrix(self.matrix)
 
+    def lu_decomp(self) -> 'LUDecomposition':
+        """ Returns the `LU decomposition`_ as :class:`LUDecomposition` object, a faster linear equation solver. """
+        return LUDecomposition(self)
+
     def __getitem__(self, item: Tuple[int, int]) -> float:
         row, col = item
         return self.matrix[row][col]
@@ -200,6 +204,9 @@ class Matrix:
         self.matrix[row][col] = value
 
     def __eq__(self, other: 'Matrix') -> bool:
+        """ Returns ``True`` if this matrix equals `other` matrix, tolerance value for comparision
+        is adjustable by the attribute :attr:`Matrix.abs_tol`.
+        """
         if not isinstance(other, Matrix):
             raise TypeError('Only comparable to class Matrix.')
         if self.shape != other.shape:
@@ -243,18 +250,23 @@ class Matrix:
     __isub__ = __sub__
 
     def transpose(self) -> 'Matrix':
+        """ Returns a new transposed matrix. """
         return Matrix(matrix=list(zip_to_list(*self.matrix)))
 
     def inverse(self) -> 'Matrix':
+        """ Returns inverse of matrix as new object. """
         return gauss_jordan_inverse(self)
 
     def gauss_vector_solver(self, vector: Iterable[float]) -> List[float]:
+        """ Linear equation solver for a single vector. """
         return gauss_vector_solver(self.matrix, vector)
 
     def gauss_matrix_solver(self, matrix: Iterable[Iterable[float]]) -> 'Matrix':
+        """ Linear equation solver for multiple vectors as matrix input. """
         return gauss_matrix_solver(self.matrix, matrix)
 
     def gauss_jordan_solver(self, matrix: Iterable[Iterable[float]]) -> Tuple['Matrix', 'Matrix']:
+        """ A slow but reliable linear equation solver for multiple vectors as matrix input. """
         return gauss_jordan_solver(self.matrix, matrix)
 
 

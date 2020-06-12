@@ -46,6 +46,7 @@ Version 0.13b3 - dev
 - NEW: `ezdxf.math.bezier4p_from_arc()` returns an approximation for a circular 2D arc by multiple cubic Bézier curves
 - NEW: `ezdxf.math.bezier4p_from_ellipse()` returns an approximation for an elliptic arc by multiple cubic Bézier curves
 - NEW: `ezdxf.math.bezier4p_interpolation()` returns an interpolation curve for arbitrary data points as multiple cubic Bézier curves
+- NEW: `ezdxf.math.LUDecomposition` linear equation solver, for more linear algebra tools see module `ezdxf.math.linalg`
 - NEW: `BSpline.from_arc()` B-spline from an arc, best approximation with a minimum number of control points
 - NEW: `BSpline.from_ellipse()` B-spline from an ellipse, best approximation with a minimum number of control points
 - NEW: `BSpline.from_fit_points()` B-spline from fit points

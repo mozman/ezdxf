@@ -949,11 +949,13 @@ Matrix Class
 
     .. automethod:: swap_cols
 
-    .. automethod:: freeze() -> Matrix
-
     .. automethod:: transpose() -> Matrix
 
     .. automethod:: inverse() -> Matrix
+
+    .. automethod:: freeze() -> Matrix
+
+    .. automethod:: lu_decomp() -> LUDecomposition
 
     .. automethod:: gauss_vector_solver
 
