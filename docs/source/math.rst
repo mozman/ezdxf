@@ -931,6 +931,8 @@ Matrix Class
 
     .. automethod:: col
 
+    .. automethod:: diag
+
     .. automethod:: rows
 
     .. automethod:: cols

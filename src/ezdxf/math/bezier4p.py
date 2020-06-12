@@ -250,9 +250,9 @@ def bezier4p_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
 
     num = len(points) - 1
     coefficients = Matrix(shape=(num, num))
-    coefficients.set_diag(4.0)
-    coefficients.set_diag(1.0, row_offset=1)
-    coefficients.set_diag(1.0, col_offset=1)
+    coefficients.set_diag(0, 4.0)
+    coefficients.set_diag(-1, 1.0)
+    coefficients.set_diag(+1, 1.0)
     coefficients[0, 0] = 2.0
     coefficients[num - 1, num - 1] = 7.0
     coefficients[num - 1, num - 2] = 2.0

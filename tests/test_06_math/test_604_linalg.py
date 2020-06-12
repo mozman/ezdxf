@@ -203,30 +203,51 @@ def test_build_matrix_by_cols():
     assert m.ncols == 1
 
 
+DIAG = [
+    [1, 2, 5, 7],
+    [5, 2, 3, 6],
+    [7, 4, 3, 4],
+    [8, 6, 3, 4],
+]
+
+
+def test_diag():
+    m = Matrix(DIAG)
+    assert m.diag(0) == [1, 2, 3, 4]
+    assert m.diag(1) == [2, 3, 4]
+    assert m.diag(2) == [5, 6]
+    assert m.diag(3) == [7]
+    assert m.diag(4) == []
+    assert m.diag(-1) == [5, 4, 3]
+    assert m.diag(-2) == [7, 6]
+    assert m.diag(-3) == [8]
+    assert m.diag(-4) == []
+
+
 def test_set_diag_float():
     m = Matrix(shape=(4, 4))
-    m.set_diag(2)
+    m.set_diag(0, 2)
     for i in range(4):
         assert m[i, i] == 2.0
 
 
-def test_set_diag_col_offset():
+def test_set_diag_above():
     m = Matrix(shape=(4, 4))
-    m.set_diag(2, col_offset=1)
+    m.set_diag(1, 2)
     for i in range(3):
         assert m[i, i + 1] == 2.0
 
 
-def test_set_diag_row_offset():
+def test_set_diag_below():
     m = Matrix(shape=(4, 4))
-    m.set_diag(2, row_offset=1)
+    m.set_diag(-1, 2)
     for i in range(3):
         assert m[i + 1, i] == 2.0
 
 
 def test_set_diag_iterable():
     m = Matrix(shape=(4, 4))
-    m.set_diag(range(5))
+    m.set_diag(0, range(5))
     for i in range(4):
         assert m[i, i] == i
 

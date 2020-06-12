@@ -3,6 +3,7 @@
 from typing import Iterable, Tuple, List, Sequence, Union, Any
 from itertools import repeat
 import math
+import reprlib
 
 __all__ = [
     'Matrix', 'gauss_vector_solver', 'gauss_matrix_solver', 'gauss_jordan_solver', 'gauss_jordan_inverse',
@@ -46,10 +47,10 @@ class Matrix:
 
     Initialization:
 
-        - Matrix(shape=(rows, cols)) -> Matrix filled with zeros
-        - Matrix(matrix[, shape=(rows, cols)]) -> Matrix by copy a Matrix and optional reshape
-        - Matrix([[row_0], [row_1], ..., [row_n]]) -> Matrix from List[List[float]]
-        - Matrix([a1, a2, ..., an], shape=(rows, cols)) -> Matrix from List[float] and shape
+        - Matrix(shape=(rows, cols)) ... new matrix filled with zeros
+        - Matrix(matrix[, shape=(rows, cols)]) ... from copy of matrix and optional reshape
+        - Matrix([[row_0], [row_1], ..., [row_n]]) ... from Iterable[Iterable[float]]
+        - Matrix([a1, a2, ..., an], shape=(rows, cols)) ... from Iterable[float] and shape
 
     .. versionadded:: 0.13
 
@@ -86,10 +87,10 @@ class Matrix:
         return m
 
     def __str__(self) -> str:
-        return '[{}]'.format(', '.join([str(row) for row in self.rows()]))
+        return str(self.matrix)
 
     def __repr__(self) -> str:
-        return f'Matrix(matrix={self.__str__()})'
+        return f'Matrix({reprlib.repr(self.matrix)})'
 
     @staticmethod
     def reshape(items: Iterable[float], shape: Shape) -> 'Matrix':
@@ -114,12 +115,35 @@ class Matrix:
         return self.nrows, self.ncols
 
     def row(self, index) -> List[float]:
-        """ Return a matrix row by `index` as list of floats. """
+        """ Returns row `index` as list of floats. """
         return self.matrix[index]
 
     def col(self, index) -> List[float]:
-        """ Return a matrix column by `index` as list of floats. """
+        """ Return column `index` as list of floats. """
         return [row[index] for row in self.matrix]
+
+    def diag(self, index) -> List[float]:
+        """ Return diagonal `index` as list of floats.
+
+        An `index` of ``0`` specifies the main diagonal, negative values specifies diagonals below the
+        main diagonal and positive values specifies diagonals above the main diagonal.
+
+        e.g. given a 4x4 matrix:
+        index ``0`` is [00, 11, 22, 33],
+        index ``-1`` is [10, 21, 32] and
+        index ``+1`` is [01, 12, 23]
+
+        """
+        get = self.__getitem__
+        col_offset = max(index, 0)
+        row_offset = abs(min(index, 0))
+        result = []
+        for i in range(max(self.nrows, self.ncols)):
+            try:
+                result.append(get((i+row_offset, i+col_offset)))
+            except IndexError:
+                break
+        return result
 
     def rows(self) -> MatrixData:
         """ Return a list of all rows. """
@@ -129,28 +153,41 @@ class Matrix:
         """ Return a list of all columns. """
         return [self.col(i) for i in range(self.ncols)]
 
-    def set_row(self, index: int, items: List[float]) -> None:
-        """ Set matrix row `index` to `items`. """
+    def set_row(self, index: int, items: Union[float, Iterable[float]] = 1.0) -> None:
+        """ Set row values to a fixed value or from an iterable of floats. """
+        if isinstance(items, (float, int)):
+            items = [float(items)] * self.ncols
+
         if len(items) != self.ncols:
             raise ValueError('Invalid item count')
         self.matrix[index] = items
 
-    def set_col(self, index: int, items: List[float]) -> None:
-        """ Set matrix column `index` to `items`. """
+    def set_col(self, index: int, items: Union[float, Iterable[float]] = 1.0) -> None:
+        """ Set column values to a fixed value or from an iterable of floats. """
+        if isinstance(items, (float, int)):
+            items = [float(items)] * self.nrows
+
         for row, item in zip(self.rows(), items):
             row[index] = item
 
-    def set_diag(self, items: Union[float, Iterable[float]] = 1.0, row_offset: int = 0, col_offset: int = 0):
-        """ Set diagonal matrix values to a fixed value.
+    def set_diag(self, index: int = 0, items: Union[float, Iterable[float]] = 1.0) -> None:
+        """ Set diagonal values to a fixed value or from an iterable of floats.
 
-        Args:
-             items: as fixed value or as iterable of floats
-             row_offset: shift diagonal down
-             col_offset: shift diagonal right
+        An `index` of ``0`` specifies the main diagonal, negative values specifies diagonals below the
+        main diagonal and positive values specifies diagonals above the main diagonal.
+
+        e.g. given a 4x4 matrix:
+        index ``0`` is [00, 11, 22, 33],
+        index ``-1`` is [10, 21, 32] and
+        index ``+1`` is [01, 12, 23]
 
         """
         if isinstance(items, (float, int)):
             items = repeat(float(items))
+
+        col_offset = max(index, 0)
+        row_offset = abs(min(index, 0))
+
         for index, value in zip(range(max(self.nrows, self.ncols)), items):
             try:
                 self.matrix[index + row_offset][index + col_offset] = value
@@ -161,7 +198,7 @@ class Matrix:
     def identity(cls, shape: Shape) -> 'Matrix':
         """Returns the identity matrix for configuration `shape`. """
         m = Matrix(shape=shape)
-        m.set_diag(1.0)
+        m.set_diag(0, 1.0)
         return m
 
     def append_row(self, items: Sequence[float]) -> None:
@@ -570,6 +607,12 @@ class LUDecomposition:
         self.index: List[int] = index
         self.matrix: MatrixData = lu
         self._det = det
+
+    def __str__(self) -> str:
+        return str(self.matrix)
+
+    def __repr__(self) -> str:
+        return f'{self.__class__} {reprlib.repr(self.matrix)}'
 
     @property
     def nrows(self) -> int:
