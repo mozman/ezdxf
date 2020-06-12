@@ -46,7 +46,7 @@ def random_2d_path(steps: int = 100, max_step_size: float = 1.0, max_heading: fl
     for i in range(steps):
         if i % retarget == 0:
             target = target + next_global_target()
-        angle = (walker - target).angle
+        angle = (target - walker).angle
         heading = angle + rnd_perlin(max_heading, walker)
         length = max_step_size * random.random()
         walker = walker + Vec2.from_angle(heading, length)
@@ -76,7 +76,7 @@ def random_3d_path(steps: int = 100, max_step_size: float = 1.0, max_heading: fl
     for i in range(steps):
         if i % retarget == 0:
             target = target + next_global_target()
-        angle = (walker - target).angle
+        angle = (target - walker).angle
         length = max_step_size * random.random()
         heading_angle = angle + rnd_perlin(max_heading, walker)
         next_step = Vector.from_angle(heading_angle, length)
