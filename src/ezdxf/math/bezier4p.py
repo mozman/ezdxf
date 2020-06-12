@@ -5,7 +5,7 @@
 from typing import List, TYPE_CHECKING, Iterable, Union, Sequence, Tuple
 import math
 from functools import lru_cache
-from ezdxf.math import Vector, Vec2, Matrix
+from ezdxf.math import Vector, Vec2, Matrix, LUDecomposition
 from ezdxf.math.ellipse import ConstructionEllipse
 
 if TYPE_CHECKING:
@@ -262,7 +262,7 @@ def bezier4p_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
     points_vector.append(8.0 * points[num - 1] + points[num])
 
     # solve linear equation system
-    solution = coefficients.gauss_matrix_solver(points_vector)
+    solution = LUDecomposition(coefficients).solve_matrix(points_vector)
     control_points_1 = Vector.list(solution.rows())
     control_points_2 = [p * 2.0 - cp for p, cp in zip(points[1:], control_points_1[1:])]
     control_points_2.append((control_points_1[num - 1] + points[num]) / 2.0)

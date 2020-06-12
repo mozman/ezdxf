@@ -957,12 +957,6 @@ Matrix Class
 
     .. automethod:: lu_decomp() -> LUDecomposition
 
-    .. automethod:: gauss_vector_solver
-
-    .. automethod:: gauss_matrix_solver(matrix: Iterable[Iterable[float]]) -> Matrix
-
-    .. automethod:: gauss_jordan_solver(matrix: Iterable[Iterable[float]]) -> Tuple[Matrix, Matrix]
-
     .. automethod:: __getitem__(item: Tuple[int, int]) -> float
 
     .. automethod:: __setitem__(item: Tuple[int, int], value: float)

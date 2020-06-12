@@ -37,9 +37,12 @@ def freeze_matrix(A: Union[MatrixData, 'Matrix']) -> 'Matrix':
 
 class Matrix:
     """
-    Simple unoptimized Matrix implementation. Matrix data is stored row major order, this means
-    in a list of rows, where each row is a list of floats. You have direct access to the data by the
-    attribute :attr:`Matrix.matrix`
+    Basic matrix implementation without any optimization for speed of memory usage. Matrix data is stored in
+    row major order, this means in a list of rows, where each row is a list of floats. Direct access to the
+    data is accessible by the attribute :attr:`Matrix.matrix`.
+
+    The matrix can be frozen by function :func:`freeze_matrix` or method :meth:`Matrix.freeze`, than the data
+    is stored in immutable tuples.
 
     Initialization:
 
@@ -48,7 +51,10 @@ class Matrix:
         - Matrix([[row_0], [row_1], ..., [row_n]]) -> Matrix from List[List[float]]
         - Matrix([a1, a2, ..., an], shape=(rows, cols)) -> Matrix from List[float] and shape
 
+    .. versionadded:: 0.13
+
     """
+    __slots__ = ('matrix', 'abs_tol')
 
     def __init__(self, items: Any = None, shape: Shape = None, matrix: MatrixData = None):
         self.matrix: MatrixData = matrix
@@ -254,20 +260,8 @@ class Matrix:
         return Matrix(matrix=list(zip_to_list(*self.matrix)))
 
     def inverse(self) -> 'Matrix':
-        """ Returns inverse of matrix as new object. """
+        """ Returns inverse of matrix as new object, calculated by the slow Gauss-Jordan solver! """
         return gauss_jordan_inverse(self)
-
-    def gauss_vector_solver(self, vector: Iterable[float]) -> List[float]:
-        """ Linear equation solver for a single vector. """
-        return gauss_vector_solver(self.matrix, vector)
-
-    def gauss_matrix_solver(self, matrix: Iterable[Iterable[float]]) -> 'Matrix':
-        """ Linear equation solver for multiple vectors as matrix input. """
-        return gauss_matrix_solver(self.matrix, matrix)
-
-    def gauss_jordan_solver(self, matrix: Iterable[Iterable[float]]) -> Tuple['Matrix', 'Matrix']:
-        """ A slow but reliable linear equation solver for multiple vectors as matrix input. """
-        return gauss_jordan_solver(self.matrix, matrix)
 
 
 def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]:
@@ -276,6 +270,8 @@ def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Lis
     vector B with n elements by the `Gauss-Elimination`_ algorithm, which is
     faster than the `Gauss-Jordan`_ algorithm. The speed up is more significant
     for solving multiple vertices as matrix at once.
+
+    Reference implementation for error checking.
 
     Args:
         A: matrix [[a11, a12, ..., a1n],
@@ -287,6 +283,8 @@ def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Lis
 
     Returns:
         Result vector as list of floats
+
+    .. versionadded:: 0.13
 
     """
     # copy input data
@@ -309,6 +307,8 @@ def gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
     nxm Matrix B by the `Gauss-Elimination`_ algorithm, which is faster than
     the `Gauss-Jordan`_ algorithm.
 
+    Reference implementation for error checking.
+
     Args:
         A: matrix [[a11, a12, ..., a1n],
                    [a21, a22, ..., a2n],
@@ -322,6 +322,8 @@ def gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
 
     Returns:
         Result matrix as :class:`~ezdxf.math.Matrix` object
+
+    .. versionadded:: 0.13
 
     """
     # copy input data
@@ -410,6 +412,8 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
     it is very reliable. Returns a copy of the modified input matrix `A` and the
     result matrix `x`.
 
+    Internally used for matrix inverse calculation.
+
     Args:
         A: matrix [[a11, a12, ..., a1n],
                    [a21, a22, ..., a2n],
@@ -422,6 +426,8 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
                    [bn1, bn2, ..., bnm]]
     Returns:
         2-tuple of :class:`~ezdxf.math.Matrix` objects
+
+    .. versionadded:: 0.13
 
     """
     # copy input data
@@ -482,7 +488,11 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
 
 
 def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
-    """ Returns the inverse of matrix `A` as :class:`~ezdxf.math.Matrix` object. """
+    """ Returns the inverse of matrix `A` as :class:`~ezdxf.math.Matrix` object.
+
+    .. versionadded:: 0.13
+
+    """
     if isinstance(A, Matrix):
         A = A.matrix
     else:
@@ -511,7 +521,10 @@ class LUDecomposition:
                    ...
                    [an1, an2, ..., ann]]
 
+    .. versionadded:: 0.13
+
     """
+    __slots__ = ('matrix', 'index', '_det')
 
     def __init__(self, A: Iterable[Iterable[float]]):
         lu = copy_float_matrix(A)
