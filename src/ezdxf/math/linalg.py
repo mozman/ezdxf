@@ -202,21 +202,23 @@ class Matrix:
         return LUDecomposition(self)
 
     def __getitem__(self, item: Tuple[int, int]) -> float:
+        """ Get value by (row, col) index tuple, fancy slicing as known from numpy is not supported. """
         row, col = item
         return self.matrix[row][col]
 
     def __setitem__(self, item: Tuple[int, int], value: float):
+        """ Set value by (row, col) index tuple, fancy slicing as known from numpy is not supported. """
         row, col = item
         self.matrix[row][col] = value
 
     def __eq__(self, other: 'Matrix') -> bool:
-        """ Returns ``True`` if this matrix equals `other` matrix, tolerance value for comparision
+        """ Returns ``True`` if matrices are equal, tolerance value for comparision
         is adjustable by the attribute :attr:`Matrix.abs_tol`.
         """
         if not isinstance(other, Matrix):
-            raise TypeError('Only comparable to class Matrix.')
+            raise TypeError('Matrix class required.')
         if self.shape != other.shape:
-            raise TypeError('Matrices has to have the same shape.')
+            raise TypeError('Matrices have different shapes.')
         for row1, row2 in zip(self.matrix, other.matrix):
             for item1, item2 in zip(row1, row2):
                 if not math.isclose(item1, item2, abs_tol=self.abs_tol):
@@ -224,6 +226,7 @@ class Matrix:
         return True
 
     def __mul__(self, other: Union['Matrix', float]) -> 'Matrix':
+        """ Matrix multiplication by another matrix or a float, returns a new matrix. """
         if isinstance(other, Matrix):
             matrix = Matrix(
                 matrix=[[sum(a * b for a, b in zip(X_row, Y_col)) for Y_col in zip(*other.matrix)] for X_row in
@@ -236,6 +239,7 @@ class Matrix:
     __imul__ = __mul__
 
     def __add__(self, other: Union['Matrix', float]) -> 'Matrix':
+        """ Matrix addition by another matrix or a float, returns a new matrix. """
         if isinstance(other, Matrix):
             matrix = Matrix.reshape([a + b for a, b in zip(self, other)], shape=self.shape)
         else:
@@ -246,6 +250,7 @@ class Matrix:
     __iadd__ = __add__
 
     def __sub__(self, other: Union['Matrix', float]) -> 'Matrix':
+        """ Matrix subtraction by another matrix or a float, returns a new matrix. """
         if isinstance(other, Matrix):
             matrix = Matrix.reshape([a - b for a, b in zip(self, other)], shape=self.shape)
         else:
@@ -282,7 +287,7 @@ def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Lis
         B: [b1, b2, ..., bn]
 
     Returns:
-        Result vector as list of floats
+        vector as list of floats
 
     .. versionadded:: 0.13
 
@@ -321,7 +326,7 @@ def gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
                    [bn1, bn2, ..., bnm]]
 
     Returns:
-        Result matrix as :class:`~ezdxf.math.Matrix` object
+        matrix as :class:`Matrix` object
 
     .. versionadded:: 0.13
 
@@ -425,7 +430,7 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
                    ...
                    [bn1, bn2, ..., bnm]]
     Returns:
-        2-tuple of :class:`~ezdxf.math.Matrix` objects
+        2-tuple of :class:`Matrix` objects
 
     .. versionadded:: 0.13
 
@@ -488,7 +493,7 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
 
 
 def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
-    """ Returns the inverse of matrix `A` as :class:`~ezdxf.math.Matrix` object.
+    """ Returns the inverse of matrix `A` as :class:`Matrix` object.
 
     .. versionadded:: 0.13
 
@@ -580,7 +585,7 @@ class LUDecomposition:
             B: [b1, b2, ..., bn]
 
         Returns:
-            Result vector as list of floats.
+            vector as list of floats
 
         """
         X = [float(v) for v in B]
@@ -622,7 +627,7 @@ class LUDecomposition:
                        [bn1, bn2, ..., bnm]]
 
         Returns:
-            Result matrix as :class:`~ezdxf.math.Matrix` object
+            matrix as :class:`Matrix` object
 
         """
         if not isinstance(B, Matrix):
@@ -633,7 +638,7 @@ class LUDecomposition:
         return Matrix(matrix=[self.solve_vector(col) for col in B.cols()]).transpose()
 
     def inverse(self) -> Matrix:
-        """ Returns the inverse of matrix as :class:`~ezdxf.math.Matrix` object,
+        """ Returns the inverse of matrix as :class:`Matrix` object,
         raise :class:`ZeroDivisionError` for a singular matrix. """
         return self.solve_matrix(Matrix.identity(shape=(self.nrows, self.nrows)))
 

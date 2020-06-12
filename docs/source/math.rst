@@ -965,15 +965,9 @@ Matrix Class
 
     .. automethod:: __add__(other: Union[Matrix, float]) -> Matrix
 
-    .. automethod:: __iadd__(other: Union[Matrix, float]) -> Matrix
-
     .. automethod:: __sub__(other: Union[Matrix, float]) -> Matrix
 
-    .. automethod:: __isub__(other: Union[Matrix, float]) -> Matrix
-
     .. automethod:: __mul__(other: Union[Matrix, float]) -> Matrix
-
-    .. automethod:: __imul__(other: Union[Matrix, float]) -> Matrix
 
 
 LUDecomposition Class
