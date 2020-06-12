@@ -7,7 +7,7 @@ import reprlib
 
 __all__ = [
     'Matrix', 'gauss_vector_solver', 'gauss_matrix_solver', 'gauss_jordan_solver', 'gauss_jordan_inverse',
-    'LUDecomposition', 'freeze_matrix',
+    'LUDecomposition', 'freeze_matrix', 'tridag_vector_solver', 'tridag_matrix_solver',
 ]
 
 
@@ -140,7 +140,7 @@ class Matrix:
         result = []
         for i in range(max(self.nrows, self.ncols)):
             try:
-                result.append(get((i+row_offset, i+col_offset)))
+                result.append(get((i + row_offset, i + col_offset)))
             except IndexError:
                 break
         return result
@@ -316,12 +316,8 @@ def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Lis
     Reference implementation for error checking.
 
     Args:
-        A: matrix [[a11, a12, ..., a1n],
-                   [a21, a22, ..., a2n],
-                   [a21, a22, ..., a2n],
-                   ...
-                   [an1, an2, ..., ann],]
-        B: [b1, b2, ..., bn]
+        A: matrix [[a11, a12, ..., a1n], [a21, a22, ..., a2n], [a21, a22, ..., a2n], ... [an1, an2, ..., ann]]
+        B: vector [b1, b2, ..., bn]
 
     Returns:
         vector as list of floats
@@ -352,15 +348,8 @@ def gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
     Reference implementation for error checking.
 
     Args:
-        A: matrix [[a11, a12, ..., a1n],
-                   [a21, a22, ..., a2n],
-                   [a21, a22, ..., a2n],
-                   ...
-                   [an1, an2, ..., ann]]
-        B: matrix [[b11, b12, ..., b1m],
-                   [b21, b22, ..., b2m],
-                   ...
-                   [bn1, bn2, ..., bnm]]
+        A: matrix [[a11, a12, ..., a1n], [a21, a22, ..., a2n], [a21, a22, ..., a2n], ... [an1, an2, ..., ann]]
+        B: matrix [[b11, b12, ..., b1m], [b21, b22, ..., b2m], ... [bn1, bn2, ..., bnm]]
 
     Returns:
         matrix as :class:`Matrix` object
@@ -457,15 +446,9 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
     Internally used for matrix inverse calculation.
 
     Args:
-        A: matrix [[a11, a12, ..., a1n],
-                   [a21, a22, ..., a2n],
-                   [a21, a22, ..., a2n],
-                   ...
-                   [an1, an2, ..., ann]]
-        B: matrix [[b11, b12, ..., b1m],
-                   [b21, b22, ..., b2m],
-                   ...
-                   [bn1, bn2, ..., bnm]]
+        A: matrix [[a11, a12, ..., a1n], [a21, a22, ..., a2n], [a21, a22, ..., a2n], ... [an1, an2, ..., ann]]
+        B: matrix [[b11, b12, ..., b1m], [b21, b22, ..., b2m], ... [bn1, bn2, ..., bnm]]
+
     Returns:
         2-tuple of :class:`Matrix` objects
 
@@ -554,14 +537,10 @@ class LUDecomposition:
 
     The :attr:`LUDecomposition.matrix` attribute gives access to the matrix data
     as list of rows like in the :class:`Matrix` class, and the :attr:`LUDecomposition.index`
-    attribute gives access to the swaped row indices.
+    attribute gives access to the swapped row indices.
 
     Args:
-        A: matrix [[a11, a12, ..., a1n],
-                   [a21, a22, ..., a2n],
-                   [a21, a22, ..., a2n],
-                   ...
-                   [an1, an2, ..., ann]]
+        A: matrix [[a11, a12, ..., a1n], [a21, a22, ..., a2n], [a21, a22, ..., a2n], ... [an1, an2, ..., ann]]
 
     .. versionadded:: 0.13
 
@@ -625,7 +604,7 @@ class LUDecomposition:
         for vector B with n elements.
 
         Args:
-            B: [b1, b2, ..., bn]
+            B: vector [b1, b2, ..., bn]
 
         Returns:
             vector as list of floats
@@ -664,10 +643,7 @@ class LUDecomposition:
         for nxm Matrix B.
 
         Args:
-            B: matrix [[b11, b12, ..., b1m],
-                       [b21, b22, ..., b2m],
-                       ...
-                       [bn1, bn2, ..., bnm]]
+            B: matrix [[b11, b12, ..., b1m], [b21, b22, ..., b2m], ... [bn1, bn2, ..., bnm]]
 
         Returns:
             matrix as :class:`Matrix` object
@@ -693,3 +669,82 @@ class LUDecomposition:
         for i in range(self.nrows):
             det *= lu[i][i]
         return det
+
+
+def tridag_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]:
+    """
+    Solves the linear equation system given by a diagonal nxn Matrix A . x = B, for vector B.
+    Matrix A is diagonal matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
+    Note: a0 is not used but has to be present, cn-1 is also not used and must not be present.
+
+    Args:
+        A: diagonal matrix [[a0..an-1], [b0..bn-1], [c0..cn-1]] ::
+
+            [[b0, c0, 0, 0, ...],
+            [a1, b1, c1, 0, ...],
+            [0, a2, b2, c2, ...],
+            [...]]
+
+        B: iterable of floats [[b1, b1, ..., bn]
+
+    Returns:
+        list of floats
+
+    .. versionadded:: 0.13
+
+    """
+    a, b, c = [list(v) for v in A]
+    return _tridag_vector(a, b, c, list(B))
+
+
+def tridag_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix:
+    """
+    Solves the linear equation system given by a diagonal nxn Matrix A . x = B, for nxm Matrix  B.
+    Matrix A is diagonal matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
+    Note: a0 is not used but has to be present, cn-1 is also not used and must not be present.
+
+    Args:
+        A: diagonal matrix [[a0..an-1], [b0..bn-1], [c0..cn-1]] ::
+
+            [[b0, c0, 0, 0, ...],
+            [a1, b1, c1, 0, ...],
+            [0, a2, b2, c2, ...],
+            [...]]
+
+        B: matrix [[b11, b12, ..., b1m],
+                   [b21, b22, ..., b2m],
+                   ...
+                   [bn1, bn2, ..., bnm]]
+
+    Returns:
+        matrix as :class:`Matrix` object
+
+    .. versionadded:: 0.13
+
+    """
+    a, b, c = [list(v) for v in A]
+    m = Matrix()
+    for r in list(B):
+        m.append_col(_tridag_vector(a, b, c, list(r)))
+    return m
+
+
+def _tridag_vector(a: List[float], b: List[float], c: List[float], r: List[float]) -> List[float]:
+    n = len(a)
+    u = [0.0] * n
+    gam = [0.0] * n
+    bet = b[0]
+    if bet == 0.0:
+        raise ArithmeticError("Error 1 in tridag")
+    bet = b[0]
+    u[0] = r[0] / bet
+    for j in range(1, n):
+        gam[j] = c[j - 1] / bet
+        bet = b[j] - a[j] * gam[j]
+        if bet == 0.0:
+            raise ArithmeticError("Error 2 in tridag")
+        u[j] = (r[j] - a[j] * u[j - 1]) / bet
+
+    for j in range((n - 2), -1, -1):
+        u[j] -= gam[j + 1] * u[j + 1]
+    return u
