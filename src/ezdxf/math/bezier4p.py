@@ -249,6 +249,8 @@ def bezier4p_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
         raise ValueError('At least 3 points required.')
 
     num = len(points) - 1
+
+    # setup tri-diagonal matrix (a, b, c)
     b = [4.0] * num
     a = [1.0] * num
     c = [1.0] * num
@@ -256,6 +258,7 @@ def bezier4p_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
     b[num - 1] = 7.0
     a[num - 1] = 2.0
 
+    # setup right-hand side quantities
     points_vector = [points[0] + 2.0 * points[1]]
     points_vector.extend(2.0 * (2.0 * points[i] + points[i + 1]) for i in range(1, num - 1))
     points_vector.append(8.0 * points[num - 1] + points[num])
@@ -266,7 +269,7 @@ def bezier4p_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
     control_points_2 = [p * 2.0 - cp for p, cp in zip(points[1:], control_points_1[1:])]
     control_points_2.append((control_points_1[num - 1] + points[num]) / 2.0)
 
-    for defpoints in zip(points[:-1], control_points_1, control_points_2, points[1:]):
+    for defpoints in zip(points, control_points_1, control_points_2, points[1:]):
         yield Bezier4P(defpoints)
 
 

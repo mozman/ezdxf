@@ -308,10 +308,10 @@ class Matrix:
 
 def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]:
     """
-    Solves the linear equation system given by a nxn Matrix A . x = B, for
-    vector B with n elements by the `Gauss-Elimination`_ algorithm, which is
-    faster than the `Gauss-Jordan`_ algorithm. The speed up is more significant
-    for solving multiple vertices as matrix at once.
+    Solves the linear equation system given by a nxn Matrix A . x = B,
+    right-hand side quantities as vector B with n elements by the `Gauss-Elimination`_
+    algorithm, which is faster than the `Gauss-Jordan`_ algorithm. The speed improvement
+    is more significant for solving multiple right-hand side quantities as matrix at once.
 
     Reference implementation for error checking.
 
@@ -341,9 +341,9 @@ def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Lis
 
 def gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix:
     """
-    Solves the linear equation system given by a nxn Matrix A . x = B, for
-    nxm Matrix B by the `Gauss-Elimination`_ algorithm, which is faster than
-    the `Gauss-Jordan`_ algorithm.
+    Solves the linear equation system given by a nxn Matrix A . x = B,
+    right-hand side quantities as nxm Matrix B by the `Gauss-Elimination`_ algorithm,
+    which is faster than the `Gauss-Jordan`_ algorithm.
 
     Reference implementation for error checking.
 
@@ -438,7 +438,7 @@ def _backsubstitution(A: MatrixData, B: List[float]) -> List[float]:
 
 
 def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Tuple[Matrix, Matrix]:
-    """ Solves the linear equation system given by a nxn Matrix A . x = B, for
+    """ Solves the linear equation system given by a nxn Matrix A . x = B, right-hand side quantities as
     nxm Matrix B by the `Gauss-Jordan`_ algorithm,  which is the slowest of all, but
     it is very reliable. Returns a copy of the modified input matrix `A` and the
     result matrix `x`.
@@ -607,7 +607,7 @@ class LUDecomposition:
     def solve_vector(self, B: Iterable[float]) -> List[float]:
         """
         Solves the linear equation system given by the nxn Matrix A . x = B,
-        for vector B with n elements.
+        right-hand side quantities as vector B with n elements.
 
         Args:
             B: vector [b1, b2, ..., bn]
@@ -646,7 +646,7 @@ class LUDecomposition:
     def solve_matrix(self, B: Iterable[Iterable[float]]) -> Matrix:
         """
         Solves the linear equation system given by the nxn Matrix A . x = B,
-        for nxm Matrix B.
+        right-hand side quantities as nxm Matrix B.
 
         Args:
             B: matrix [[b11, b12, ..., b1m], [b21, b22, ..., b2m], ... [bn1, bn2, ..., bnm]]
@@ -679,7 +679,8 @@ class LUDecomposition:
 
 def tridiagonal_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]:
     """
-    Solves the linear equation system given by a tri-diagonal nxn Matrix A . x = B, for vector B.
+    Solves the linear equation system given by a tri-diagonal nxn Matrix A . x = B,
+    right-hand side quantities as vector B.
     Matrix A is diagonal matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
     Note: a0 is not used but has to be present, cn-1 is also not used and must not be present.
 
@@ -705,7 +706,8 @@ def tridiagonal_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) 
 
 def tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix:
     """
-    Solves the linear equation system given by a tri-diagonal nxn Matrix A . x = B, for nxm Matrix  B.
+    Solves the linear equation system given by a tri-diagonal nxn Matrix A . x = B,
+    right-hand side quantities as nxm Matrix B.
     Matrix A is diagonal matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
     Note: a0 is not used but has to be present, cn-1 is also not used and must not be present.
 
