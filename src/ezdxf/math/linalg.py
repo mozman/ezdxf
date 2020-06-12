@@ -124,16 +124,18 @@ class Matrix:
         for row, item in zip(self.rows(), items):
             row[index] = item
 
-    def set_diag(self, value: float = 1.0, row_offset: int = 0, col_offset: int = 0):
+    def set_diag(self, items: Union[float, Iterable[float]] = 1.0, row_offset: int = 0, col_offset: int = 0):
         """ Set diagonal matrix values to a fixed value.
 
         Args:
-             value: fixed value
+             items: as fixed value or as iterable of floats
              row_offset: shift diagonal down
              col_offset: shift diagonal right
 
         """
-        for index in range(max(self.nrows, self.ncols)):
+        if isinstance(items, (float, int)):
+            items = repeat(float(items))
+        for index, value in zip(range(max(self.nrows, self.ncols)), items):
             try:
                 self.matrix[index + row_offset][index + col_offset] = value
             except IndexError:

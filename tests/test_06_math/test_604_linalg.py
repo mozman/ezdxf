@@ -194,6 +194,34 @@ def test_build_matrix_by_cols():
     assert m.ncols == 1
 
 
+def test_set_diag_float():
+    m = Matrix(shape=(4, 4))
+    m.set_diag(2)
+    for i in range(4):
+        assert m[i, i] == 2.0
+
+
+def test_set_diag_col_offset():
+    m = Matrix(shape=(4, 4))
+    m.set_diag(2, col_offset=1)
+    for i in range(3):
+        assert m[i, i + 1] == 2.0
+
+
+def test_set_diag_row_offset():
+    m = Matrix(shape=(4, 4))
+    m.set_diag(2, row_offset=1)
+    for i in range(3):
+        assert m[i + 1, i] == 2.0
+
+
+def test_set_diag_iterable():
+    m = Matrix(shape=(4, 4))
+    m.set_diag(range(5))
+    for i in range(4):
+        assert m[i, i] == i
+
+
 def test_identity():
     m = Matrix.identity((3, 4))
     for i in range(3):
@@ -310,4 +338,3 @@ def test_determinant():
     det = LUDecomposition(A).determinant()
     chk = Matrix44(*A)
     assert chk.determinant() == det
-
