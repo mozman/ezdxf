@@ -5,7 +5,7 @@
 from typing import List, TYPE_CHECKING, Iterable, Union, Sequence, Tuple
 import math
 from functools import lru_cache
-from ezdxf.math import Vector, Vec2, Matrix, LUDecomposition
+from ezdxf.math import Vector, Vec2, tridiagonal_matrix_solver
 from ezdxf.math.ellipse import ConstructionEllipse
 
 if TYPE_CHECKING:
@@ -249,20 +249,19 @@ def bezier4p_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
         raise ValueError('At least 3 points required.')
 
     num = len(points) - 1
-    coefficients = Matrix(shape=(num, num))
-    coefficients.set_diag(0, 4.0)
-    coefficients.set_diag(-1, 1.0)
-    coefficients.set_diag(+1, 1.0)
-    coefficients[0, 0] = 2.0
-    coefficients[num - 1, num - 1] = 7.0
-    coefficients[num - 1, num - 2] = 2.0
+    b = [4.0] * num
+    a = [1.0] * num
+    c = [1.0] * num
+    b[0] = 2.0
+    b[num - 1] = 7.0
+    a[num - 1] = 2.0
 
     points_vector = [points[0] + 2.0 * points[1]]
     points_vector.extend(2.0 * (2.0 * points[i] + points[i + 1]) for i in range(1, num - 1))
     points_vector.append(8.0 * points[num - 1] + points[num])
 
-    # solve linear equation system
-    solution = LUDecomposition(coefficients).solve_matrix(points_vector)
+    # solve tri-diagonal linear equation system
+    solution = tridiagonal_matrix_solver((a, b, c), points_vector)
     control_points_1 = Vector.list(solution.rows())
     control_points_2 = [p * 2.0 - cp for p, cp in zip(points[1:], control_points_1[1:])]
     control_points_2.append((control_points_1[num - 1] + points[num]) / 2.0)
