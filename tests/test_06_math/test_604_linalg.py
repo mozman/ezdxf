@@ -88,6 +88,15 @@ def test_set_col_error(X):
         X.set_col(2, [1, 1, 1])
 
 
+def test_freeze_matrix(X):
+    m = X.freeze()
+    assert m == X
+    assert m[0, 0] == 12
+    assert m[2, 1] == 8
+    with pytest.raises(TypeError):
+        m[0, 0] = 1.0
+
+
 def test_mul():
     X = Matrix([
         [12, 7, 3],

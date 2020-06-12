@@ -6,7 +6,7 @@ import math
 
 __all__ = [
     'Matrix', 'gauss_vector_solver', 'gauss_matrix_solver', 'gauss_jordan_solver', 'gauss_jordan_inverse',
-    'LUDecomposition',
+    'LUDecomposition', 'freeze_matrix',
 ]
 
 
@@ -16,6 +16,7 @@ def zip_to_list(*args) -> Iterable[List]:
 
 
 MatrixData = List[List[float]]
+FrozenMatrixData = Tuple[Tuple[float, ...]]
 Shape = Tuple[int, int]
 
 
@@ -23,6 +24,15 @@ def copy_float_matrix(A) -> MatrixData:
     if isinstance(A, Matrix):
         A = A.matrix
     return [[float(v) for v in row] for row in A]
+
+
+def freeze_matrix(A: Union[MatrixData, 'Matrix']) -> 'Matrix':
+    """ Returns a frozen matrix, all data is stored in immutable tuples. """
+    if isinstance(A, Matrix):
+        A = A.matrix
+    m = Matrix()
+    m.matrix = tuple(tuple(float(v) for v in row) for row in A)
+    return m
 
 
 class Matrix:
@@ -176,6 +186,10 @@ class Matrix:
         """ Swap columns `a` and `b` inplace. """
         for row in self.rows():
             row[a], row[b] = row[b], row[a]
+
+    def freeze(self) -> 'Matrix':
+        """ Returns a frozen matrix, all data is stored in immutable tuples. """
+        return freeze_matrix(self.matrix)
 
     def __getitem__(self, item: Tuple[int, int]) -> float:
         row, col = item
@@ -486,6 +500,7 @@ class LUDecomposition:
                    [an1, an2, ..., ann]]
 
     """
+
     def __init__(self, A: Iterable[Iterable[float]]):
         lu = copy_float_matrix(A)
         n = len(lu)

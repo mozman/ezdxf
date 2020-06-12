@@ -910,6 +910,8 @@ Functions
 
 .. autofunction:: gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix
 
+.. autofunction:: freeze_matrix(A: Union[MatrixData, Matrix]) -> Matrix
+
 Matrix Class
 ------------
 
@@ -946,6 +948,8 @@ Matrix Class
     .. automethod:: swap_rows
 
     .. automethod:: swap_cols
+
+    .. automethod:: freeze() -> Matrix
 
     .. automethod:: transpose() -> Matrix
 
