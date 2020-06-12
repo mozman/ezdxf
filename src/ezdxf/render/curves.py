@@ -3,7 +3,9 @@
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple, Optional
-from ezdxf.math.vector import Vector
+import random
+import math
+from ezdxf.math import Vector, Vec2, Matrix44, perlin
 from ezdxf.math.bspline import bspline_control_frame
 from ezdxf.math.bspline import BSpline, BSplineU, BSplineClosed
 from ezdxf.math.bezier4p import Bezier4P
@@ -11,6 +13,76 @@ from ezdxf.math.eulerspiral import EulerSpiral as _EulerSpiral
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout, Matrix44
+
+
+def rnd(max_value):
+    return max_value / 2.0 - random.random() * max_value
+
+
+def rnd_perlin(max_value, walker):
+    r = perlin.snoise2(walker.x, walker.y)
+    return max_value / 2.0 - r * max_value
+
+
+def random_2d_path(steps: int = 100, max_step_size: float = 1.0, max_heading: float = math.pi / 2,
+                   retarget: int = 20) -> Iterable[Vec2]:
+    """
+    Returns a random 2D path as iterable of :class:`~ezdxf.math.Vec2` objects.
+
+    Args:
+        steps: count of vertices to generate
+        max_step_size: max step size
+        max_heading: limit heading angle change per step to ± max_heading/2 in radians
+        retarget: specifies steps before changing global walking target
+
+    """
+    max_ = max_step_size * steps
+
+    def next_global_target():
+        return Vec2((rnd(max_), rnd(max_)))
+
+    walker = Vec2(0, 0)
+    target = next_global_target()
+    for i in range(steps):
+        if i % retarget == 0:
+            target = target + next_global_target()
+        angle = (walker - target).angle
+        heading = angle + rnd_perlin(max_heading, walker)
+        length = max_step_size * random.random()
+        walker = walker + Vec2.from_angle(heading, length)
+        yield walker
+
+
+def random_3d_path(steps: int = 100, max_step_size: float = 1.0, max_heading: float = math.pi / 2.0,
+                   max_pitch: float = math.pi / 8.0, retarget: int = 20) -> Iterable[Vector]:
+    """
+    Returns a random 3D path as iterable of :class:`~ezdxf.math.Vector` objects.
+
+    Args:
+        steps: count of vertices to generate
+        max_step_size: max step size
+        max_heading: limit heading angle change per step to ± max_heading/2, rotation about the z-axis in radians
+        max_pitch: limit pitch angle change per step to ± max_pitch/2, rotation about the x-axis in radians
+        retarget: specifies steps before changing global walking target
+
+    """
+    max_ = max_step_size * steps
+
+    def next_global_target():
+        return Vector((rnd(max_), rnd(max_), rnd(max_)))
+
+    walker = Vector()
+    target = next_global_target()
+    for i in range(steps):
+        if i % retarget == 0:
+            target = target + next_global_target()
+        angle = (walker - target).angle
+        length = max_step_size * random.random()
+        heading_angle = angle + rnd_perlin(max_heading, walker)
+        next_step = Vector.from_angle(heading_angle, length)
+        pitch_angle = rnd_perlin(max_pitch, walker)
+        walker += Matrix44.x_rotate(pitch_angle).transform(next_step)
+        yield walker
 
 
 class Bezier:

@@ -18,6 +18,13 @@ class TestBoundingBox:
         assert bbox.extmin == (-1, -2, -3)
         assert bbox.extmax == (7, 8, 9)
 
+    def test_init_none(self):
+        bbox = BoundingBox()
+        assert bbox.has_data is False
+        bbox.extend([(0, 0, 0), (10, 10, 10)])
+        assert bbox.size == (10, 10, 10)
+        assert bbox.has_data is True
+
     def test_inside(self):
         bbox = BoundingBox([(0, 0, 0), (10, 10, 10)])
         assert bbox.inside((0, 0, 0)) is True
@@ -64,6 +71,13 @@ class TestBoundingBox2d:
         bbox = BoundingBox2d([(7, -2), (-1, 8)])
         assert bbox.extmin == (-1, -2)
         assert bbox.extmax == (7, 8)
+
+    def test_init_none(self):
+        bbox = BoundingBox2d()
+        assert bbox.has_data is False
+        bbox.extend([(0, 0), (10, 10)])
+        assert bbox.size == (10, 10)
+        assert bbox.has_data is True
 
     def test_inside(self):
         bbox = BoundingBox2d([(0, 0), (10, 10)])

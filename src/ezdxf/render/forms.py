@@ -1,15 +1,16 @@
 # Purpose: basic forms
 # Created: 15.02.2018
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple, Sequence
 from math import pi, sin, cos, radians, tan, isclose, asin, fabs
 from enum import IntEnum
-from ezdxf.math import Vector, Matrix44
+import random
+from ezdxf.math import Vector, Matrix44, Vec2
 from ezdxf.math.construct2d import is_close_points
 from ezdxf.math.bspline import bspline_control_frame
 from ezdxf.math.eulerspiral import EulerSpiral
-from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger, MeshTransformer
+from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
