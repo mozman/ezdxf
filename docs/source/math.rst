@@ -910,9 +910,9 @@ Functions
 
 .. autofunction:: gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix
 
-.. autofunction:: tridag_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]
+.. autofunction:: tridiagonal_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]
 
-.. autofunction:: tridag_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix
+.. autofunction:: tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix
 
 .. autofunction:: freeze_matrix(A: Union[MatrixData, Matrix]) -> Matrix
 

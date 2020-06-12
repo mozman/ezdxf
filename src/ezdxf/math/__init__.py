@@ -15,7 +15,7 @@ from .construct3d import (
 from .matrix44 import Matrix44
 from .linalg import (
     Matrix, LUDecomposition, gauss_jordan_inverse, gauss_jordan_solver, gauss_vector_solver, gauss_matrix_solver,
-    freeze_matrix, tridag_matrix_solver, tridag_vector_solver,
+    freeze_matrix, tridiagonal_matrix_solver, tridiagonal_vector_solver,
 )
 from .bspline import (
     bspline_control_frame, bspline_control_frame_approx, rational_spline_from_arc, rational_spline_from_ellipse,

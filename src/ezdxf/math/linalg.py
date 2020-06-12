@@ -7,7 +7,7 @@ import reprlib
 
 __all__ = [
     'Matrix', 'gauss_vector_solver', 'gauss_matrix_solver', 'gauss_jordan_solver', 'gauss_jordan_inverse',
-    'LUDecomposition', 'freeze_matrix', 'tridag_vector_solver', 'tridag_matrix_solver',
+    'LUDecomposition', 'freeze_matrix', 'tridiagonal_vector_solver', 'tridiagonal_matrix_solver',
 ]
 
 
@@ -330,9 +330,9 @@ def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Lis
     B = list(B)
     num = len(A)
     if len(A[0]) != num:
-        raise ValueError('Matrix has to have same row and column count.')
+        raise ValueError('A square nxn matrix A is required.')
     if len(B) != num:
-        raise ValueError('Item count of vector has to be equal to row count of matrix.')
+        raise ValueError('Item count of vector B has to be equal to row count of matrix A.')
 
     # inplace modification of A & B
     _build_upper_triangle(A, B)
@@ -363,9 +363,9 @@ def gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
 
     num = len(A)
     if len(A[0]) != num:
-        raise ValueError('Matrix has to have same row and column count.')
+        raise ValueError('A square nxn matrix A is required.')
     if len(B) != num:
-        raise ValueError('Row count of matrices has to match.')
+        raise ValueError('Row count of matrices A and B has to match.')
 
     # inplace modification of A & B
     _build_upper_triangle(A, B)
@@ -461,6 +461,12 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
 
     n = len(A)
     m = len(B[0])
+
+    if len(A[0]) != n:
+        raise ValueError('A square nxn matrix A is required.')
+    if len(B) != n:
+        raise ValueError('Row count of matrices A and B has to match.')
+
     icol = 0
     irow = 0
     col_indices = [0] * n
@@ -617,7 +623,7 @@ class LUDecomposition:
         ii = 0
 
         if len(X) != n:
-            raise ValueError('Item count of vector has to be equal to row count of matrix.')
+            raise ValueError('Item count of vector B has to be equal to self.nrows.')
 
         for i in range(n):
             ip = index[i]
@@ -652,7 +658,7 @@ class LUDecomposition:
         if not isinstance(B, Matrix):
             B = Matrix(matrix=[list(row) for row in B])
         if B.nrows != self.nrows:
-            raise ValueError('Item count of vector has to be equal to row count of matrix.')
+            raise ValueError('Row count of matrix B has to be equal self.nrows.')
 
         return Matrix(matrix=[self.solve_vector(col) for col in B.cols()]).transpose()
 
@@ -671,9 +677,9 @@ class LUDecomposition:
         return det
 
 
-def tridag_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]:
+def tridiagonal_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]:
     """
-    Solves the linear equation system given by a diagonal nxn Matrix A . x = B, for vector B.
+    Solves the linear equation system given by a tri-diagonal nxn Matrix A . x = B, for vector B.
     Matrix A is diagonal matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
     Note: a0 is not used but has to be present, cn-1 is also not used and must not be present.
 
@@ -697,9 +703,9 @@ def tridag_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Li
     return _tridag_vector(a, b, c, list(B))
 
 
-def tridag_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix:
+def tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix:
     """
-    Solves the linear equation system given by a diagonal nxn Matrix A . x = B, for nxm Matrix  B.
+    Solves the linear equation system given by a tri-diagonal nxn Matrix A . x = B, for nxm Matrix  B.
     Matrix A is diagonal matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
     Note: a0 is not used but has to be present, cn-1 is also not used and must not be present.
 
@@ -723,10 +729,12 @@ def tridag_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[floa
 
     """
     a, b, c = [list(v) for v in A]
-    m = Matrix()
-    for r in list(B):
-        m.append_col(_tridag_vector(a, b, c, list(r)))
-    return m
+    if not isinstance(B, Matrix):
+        B = Matrix(matrix=[list(row) for row in B])
+    if B.nrows != len(b):
+        raise ValueError('Row count of matrix Â has to be equal to row count of matrix B.')
+
+    return Matrix(matrix=[_tridag_vector(a, b, c, col) for col in B.cols()]).transpose()
 
 
 def _tridag_vector(a: List[float], b: List[float], c: List[float], r: List[float]) -> List[float]:

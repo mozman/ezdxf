@@ -5,6 +5,7 @@ import pytest
 import math
 from ezdxf.math.linalg import (
     Matrix, gauss_vector_solver, gauss_matrix_solver, gauss_jordan_solver, gauss_jordan_inverse, LUDecomposition,
+    tridiagonal_vector_solver, tridiagonal_matrix_solver,
 )
 
 
@@ -278,11 +279,7 @@ def test_gauss_vector_solver():
 
 
 def test_gauss_matrix_solver():
-    B = Matrix()
-    B.append_col(B1)
-    B.append_col(B2)
-    B.append_col(B3)
-    result = gauss_matrix_solver(A, B.matrix)
+    result = gauss_matrix_solver(A, zip(B1, B2, B3))
     assert result.col(0) == gauss_vector_solver(A, B1)
     assert result.col(1) == gauss_vector_solver(A, B2)
     assert result.col(2) == gauss_vector_solver(A, B3)
@@ -300,12 +297,7 @@ def test_gauss_jordan_vector_solver():
 
 
 def test_gauss_jordan_matrix_solver():
-    B = Matrix()
-    B.append_col(B1)
-    B.append_col(B2)
-    B.append_col(B3)
-
-    result_A, result_B = gauss_jordan_solver(A, B)
+    result_A, result_B = gauss_jordan_solver(A, zip(B1, B2, B3))
     are_close_vectors(result_B.col(0), gauss_vector_solver(A, B1))
     are_close_vectors(result_B.col(1), gauss_vector_solver(A, B2))
     are_close_vectors(result_B.col(2), gauss_vector_solver(A, B3))
@@ -340,13 +332,7 @@ def test_LU_decomposition_solve_vector():
 
 def test_LU_decomposition_solve_matrix():
     lu = LUDecomposition(A)
-
-    B = Matrix()
-    B.append_col(B1)
-    B.append_col(B2)
-    B.append_col(B3)
-
-    result = lu.solve_matrix(B)
+    result = lu.solve_matrix(zip(B1, B2, B3))
     are_close_vectors(result.col(0), gauss_vector_solver(A, B1))
     are_close_vectors(result.col(1), gauss_vector_solver(A, B2))
     are_close_vectors(result.col(2), gauss_vector_solver(A, B3))
@@ -368,3 +354,34 @@ def test_determinant():
     det = LUDecomposition(A).determinant()
     chk = Matrix44(*A)
     assert chk.determinant() == det
+
+
+TRI_DIAGONAL = [
+    [2, 3, 0, 0, 0],
+    [5, 1, 4, 0, 0],
+    [0, 9, 3, 1, 0],
+    [0, 0, 2, 2, 6],
+    [0, 0, 0, 4, 6],
+]
+
+TRI_SOLUTION = gauss_matrix_solver(TRI_DIAGONAL, zip(B1, B2, B3))
+
+
+@pytest.fixture
+def tridiag():
+    m = Matrix(TRI_DIAGONAL)
+    a = [0]  # a0 is not used but must be present
+    a.extend(m.diag(-1))
+    b = m.diag(0)
+    c = m.diag(+1)
+    return a, b, c
+
+
+def test_tridiagonal_vector_solver(tridiag):
+    result = tridiagonal_vector_solver(tridiag, B1)
+    are_close_vectors(result, TRI_SOLUTION.col(0))
+
+
+def test_tridiagonal_matrix_solver(tridiag):
+    result = tridiagonal_matrix_solver(tridiag, zip(B1, B2, B3))
+    assert result == TRI_SOLUTION
