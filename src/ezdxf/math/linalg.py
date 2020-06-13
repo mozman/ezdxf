@@ -332,6 +332,9 @@ def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Lis
     Returns:
         vector as list of floats
 
+    Raises:
+        ZeroDivisionError: singular matrix
+
     .. versionadded:: 0.13
 
     """
@@ -363,6 +366,9 @@ def gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
 
     Returns:
         matrix as :class:`Matrix` object
+
+    Raises:
+        ZeroDivisionError: singular matrix
 
     .. versionadded:: 0.13
 
@@ -462,6 +468,9 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
     Returns:
         2-tuple of :class:`Matrix` objects
 
+    Raises:
+        ZeroDivisionError: singular matrix
+
     .. versionadded:: 0.13
 
     """
@@ -502,9 +511,6 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
         row_indices[i] = irow
         col_indices[i] = icol
 
-        if math.isclose(A[icol][icol], 0.0):
-            raise ZeroDivisionError('Singular Matrix')
-
         pivinv = 1.0 / A[icol][icol]
         A[icol][icol] = 1.0
         A[icol] = [v * pivinv for v in A[icol]]
@@ -535,6 +541,9 @@ def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
 
         For small matrices (n<10) is this function faster than LUDecomposition(m).inverse()
         and as fast even if the decomposition is already done.
+
+    Raises:
+        ZeroDivisionError: singular matrix
 
     .. versionadded:: 0.13
 
@@ -697,6 +706,7 @@ def tridiagonal_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) 
     Solves the linear equation system given by a tri-diagonal nxn Matrix A . x = B,
     right-hand side quantities as vector B.
     Matrix A is diagonal matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
+
     Note: a0 is not used but has to be present, cn-1 is also not used and must not be present.
 
     Args:
@@ -712,6 +722,9 @@ def tridiagonal_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) 
     Returns:
         list of floats
 
+    Raises:
+        ZeroDivisionError: singular matrix
+
     .. versionadded:: 0.13
 
     """
@@ -724,6 +737,7 @@ def tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable
     Solves the linear equation system given by a tri-diagonal nxn Matrix A . x = B,
     right-hand side quantities as nxm Matrix B.
     Matrix A is diagonal matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
+
     Note: a0 is not used but has to be present, cn-1 is also not used and must not be present.
 
     Args:
@@ -741,6 +755,9 @@ def tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable
 
     Returns:
         matrix as :class:`Matrix` object
+
+    Raises:
+        ZeroDivisionError: singular matrix
 
     .. versionadded:: 0.13
 
@@ -767,26 +784,24 @@ def _solve_tridiagonal_matrix(a: List[float], b: List[float], c: List[float], r:
     Args:
         a: lower diagonal [a0 .. an-1], a0 is not used but has to be present
         b: central diagonal [b0 .. bn-1]
-        c: upper diagonal [c0 .. cn-1], cn-1 is not used and must not be present.
+        c: upper diagonal [c0 .. cn-1], cn-1 is not used and must not be present
         r: right-hand side quantities
 
     Returns:
         vector x as list of floats
+
+    Raises:
+        ZeroDivisionError: singular matrix
 
     """
     n = len(a)
     u = [0.0] * n
     gam = [0.0] * n
     bet = b[0]
-    if bet == 0.0:
-        raise ArithmeticError("Error 1 in tridag")
-    bet = b[0]
     u[0] = r[0] / bet
     for j in range(1, n):
         gam[j] = c[j - 1] / bet
         bet = b[j] - a[j] * gam[j]
-        if bet == 0.0:
-            raise ArithmeticError("Error 2 in tridag")
         u[j] = (r[j] - a[j] * u[j - 1]) / bet
 
     for j in range((n - 2), -1, -1):
