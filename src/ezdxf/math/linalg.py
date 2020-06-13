@@ -766,7 +766,7 @@ def tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable
     if not isinstance(B, Matrix):
         B = Matrix(matrix=[list(row) for row in B])
     if B.nrows != len(b):
-        raise ValueError('Row count of matrix Â has to be equal to row count of matrix B.')
+        raise ValueError('Row count of matrix A has to be equal to row count of matrix B.')
 
     return Matrix(matrix=[_solve_tridiagonal_matrix(a, b, c, col) for col in B.cols()]).transpose()
 
@@ -807,3 +807,119 @@ def _solve_tridiagonal_matrix(a: List[float], b: List[float], c: List[float], r:
     for j in range((n - 2), -1, -1):
         u[j] -= gam[j + 1] * u[j + 1]
     return u
+
+
+class BandedMatrix:
+    def __init__(self, A: Matrix, m1: int, m2: int):
+        self.matrix = A.matrix  # store reference to source banded matrix
+        self.au = copy_float_matrix(A)  # upper triangle of LU decomposition
+        self.m1 = int(m1)
+        self.m2 = int(m2)
+
+        n = self.nrows
+        self.al = [[0.0] * m1 for _ in range(n)]  # lower triangle of LU decomposition
+        self.index = [0] * n
+        self._det = 1.0
+
+        m1 = self.m1
+        m2 = self.m2
+        au = self.au
+        al = self.al
+
+        mm = m1 + m2 + 1
+        l = m1
+        for i in range(m1):
+            for j in range(m1 - i, mm):
+                au[i][j - l] = au[i][j]
+            l -= 1
+            for j in range(mm - l - 1, mm):
+                au[i][j] = 0.0
+
+        l = m1
+        for k in range(n):
+            dum = au[k][0]
+            i = k
+            if l < n:
+                l += 1
+            for j in range(k + 1, l):
+                if abs(au[j][0]) > abs(dum):
+                    dum = au[j][0]
+                    i = j
+            self.index[k] = i + 1
+            if dum == 0.0:
+                au[k][0] = 1.0e-40  # avoid DivisionByZero exception
+
+            if i != k:
+                self._det = -self._det
+                for j in range(mm):
+                    au[k][j], au[i][j] = au[i][j], au[k][j]
+
+            for i in range(k + 1, l):
+                dum = au[i][0] / au[k][0]
+                al[k][i - k - 1] = dum
+                for j in range(1, mm):
+                    au[i][j - 1] = au[i][j] - dum * au[k][j]
+                au[i][mm - 1] = 0.0
+
+    @property
+    def nrows(self):
+        return len(self.matrix)
+
+    def solve_vector(self, B: List[float]) -> List[float]:
+        x = list(B)
+        if len(x) != self.nrows:
+            raise ValueError('Item count of vector B has to be equal to matrix row count.')
+
+        n = self.nrows
+        m1 = self.m1
+        m2 = self.m2
+        index = self.index
+        al = self.al
+        au = self.au
+
+        mm = m1 + m2 + 1
+        l = m1
+        for k in range(n):
+            j = index[k] - 1
+            if j != k:
+                x[k], x[j] = x[j], x[k]
+            if l < n:
+                l += 1
+            for j in range(k + 1, l):
+                x[j] -= al[k][j - k - 1] * x[k]
+
+        l = 1
+        for i in range(n - 1, -1, -1):
+            dum = x[i]
+            for k in range(1, l):
+                dum -= au[i][k] * x[k + i]
+            x[i] = dum / au[i][0]
+            if l < mm:
+                l += 1
+
+        return x
+
+    def determinant(self) -> float:
+        dd = self._det
+        au = self.au
+
+        for i in range(0, len(au)):
+            dd *= au[i][0]
+
+        return dd
+
+    def __mul__(self, x: Iterable[float]) -> List[float]:
+        x = list(x)
+        n = self.nrows
+        if len(x) != n:
+            raise ValueError('Item count of vector x has to be equal to matrix row count.')
+
+        a = self.matrix
+        b = []
+        m1 = self. m1
+        mm1 = m1 + self.m2 + 1
+        for i in range(n):
+            k = i - m1
+            tmploop = min(mm1, n - k)
+            b.append(sum(a[i][j] * x[j + k] for j in range(max(0, -k), tmploop)))
+        return b

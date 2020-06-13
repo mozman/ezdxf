@@ -264,7 +264,8 @@ def bspline_interpolation(fit_points: Iterable['Vertex'], degree: int = 3,
     return bspline
 
 
-def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, degree: int = 3, method: str = 'chord')->'BSpline':
+def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, degree: int = 3,
+                                 method: str = 'chord') -> 'BSpline':
     """
     Approximate `B-spline`_ by a reduced count of control points, given are the fit points and the degree of
     the B-spline.
