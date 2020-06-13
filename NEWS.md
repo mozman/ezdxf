@@ -43,9 +43,9 @@ Version 0.13b3 - dev
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
 - NEW: `ezdxf.math.rational_spline_from_arc()` returns a rational B-spline for a circular arc
 - NEW: `ezdxf.math.rational_spline_from_ellipse()` returns a rational B-spline for an elliptic arc
-- NEW: `ezdxf.math.bezier4p_from_arc()` returns an approximation for a circular 2D arc by multiple cubic Bézier curves
-- NEW: `ezdxf.math.bezier4p_from_ellipse()` returns an approximation for an elliptic arc by multiple cubic Bézier curves
-- NEW: `ezdxf.math.bezier4p_interpolation()` returns an interpolation curve for arbitrary data points as multiple cubic Bézier curves
+- NEW: `ezdxf.math.cubic_bezier_from_arc()` returns an approximation for a circular 2D arc by multiple cubic Bézier curves
+- NEW: `ezdxf.math.cubic_bezier_from_ellipse()` returns an approximation for an elliptic arc by multiple cubic Bézier curves
+- NEW: `ezdxf.math.cubic_bezier_interpolation()` returns an interpolation curve for arbitrary data points as multiple cubic Bézier curves
 - NEW: `ezdxf.math.LUDecomposition` linear equation solver, for more linear algebra tools see module `ezdxf.math.linalg`
 - NEW: `ezdxf.render.random_2d_path()` generate random 2D path for testing purpose
 - NEW: `ezdxf.render.random_3d_path()` generate random 3D path for testing purpose

@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 __all__ = [
-    'Bezier4P', 'bezier4p_interpolation', 'cubic_bezier_arc_parameters', 'bezier4p_from_arc',
-    'bezier4p_from_ellipse', 'bezier4p_end_tangents',
+    'Bezier4P', 'cubic_bezier_interpolation', 'cubic_bezier_arc_parameters', 'cubic_bezier_from_arc',
+    'cubic_bezier_from_ellipse', 'cube_bezier_end_tangents',
 ]
 
 
@@ -144,7 +144,7 @@ class Bezier4P:
         return length
 
 
-def bezier4p_from_arc(
+def cubic_bezier_from_arc(
         center: Vector = (0, 0), radius: float = 1, start_angle: float = 0, end_angle: float = 360,
         segments: int = 1) -> Iterable[Bezier4P]:
     """
@@ -172,7 +172,7 @@ def bezier4p_from_arc(
 PI_2 = math.pi / 2.0
 
 
-def bezier4p_from_ellipse(ellipse: 'ConstructionEllipse', segments: int = 1) -> Iterable[Bezier4P]:
+def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse', segments: int = 1) -> Iterable[Bezier4P]:
     """
     Returns an approximation for an elliptic arc by multiple cubic Bézier curves.
 
@@ -232,7 +232,7 @@ def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: 
         yield start_point, control_point_1, control_point_2, end_point
 
 
-def bezier4p_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
+def cubic_bezier_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
     """
     Returns an interpolation curve for given data `points` as multiple cubic Bézier curves.
     Returns n-1 cubic Bézier curves for n given data points, curve i goes from point[i] to point[i+1].
@@ -273,7 +273,7 @@ def bezier4p_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
         yield Bezier4P(defpoints)
 
 
-def bezier4p_end_tangents(points: List[Vector]) -> Tuple[Vector, Vector]:
+def cube_bezier_end_tangents(points: List[Vector]) -> Tuple[Vector, Vector]:
     """ Returns start- and end tangent for a Bézier curve interpolation of `points`.
 
     .. versionadded:: 0.13
@@ -281,7 +281,7 @@ def bezier4p_end_tangents(points: List[Vector]) -> Tuple[Vector, Vector]:
     """
     if len(points) < 3:
         raise ValueError('At least 3 points required')
-    curves = list(bezier4p_interpolation(points))
+    curves = list(cubic_bezier_interpolation(points))
     points = curves[0].control_points
     start_tangent = points[1] - points[0]
     points = curves[-1].control_points

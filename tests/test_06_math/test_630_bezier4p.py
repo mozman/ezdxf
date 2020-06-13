@@ -3,7 +3,7 @@
 import math
 from ezdxf.math import ConstructionEllipse
 from ezdxf.math.bezier4p import (
-    Bezier4P, cubic_bezier_arc_parameters, bezier4p_interpolation, bezier4p_from_arc, bezier4p_from_ellipse
+    Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_interpolation, cubic_bezier_from_arc, cubic_bezier_from_ellipse
 )
 
 DEFPOINTS2D = [(0., 0., 0.), (3., 0., 0.), (7., 10., 0.), (10., 10., 0.)]
@@ -54,7 +54,7 @@ def test_cubic_bezier_arc_parameters():
 
 def test_bezier_interpolation():
     points = [(0, 0), (3, 1), (5, 3), (0, 8)]
-    result = list(bezier4p_interpolation(points))
+    result = list(cubic_bezier_interpolation(points))
     assert len(result) == 3
     c1, c2, c3 = result
     p = c1.control_points
@@ -77,7 +77,7 @@ def test_bezier_interpolation():
 
 
 def test_bezier4p_from_circular_arc():
-    curves = list(bezier4p_from_arc(end_angle=90))
+    curves = list(cubic_bezier_from_arc(end_angle=90))
     assert len(curves) == 1
 
     bezier4p = curves[0]
@@ -97,7 +97,7 @@ def test_rational_spline_from_elliptic_arc():
         start_param=0,
         end_param=math.pi / 2,
     )
-    curves = list(bezier4p_from_ellipse(ellipse))
+    curves = list(cubic_bezier_from_ellipse(ellipse))
     assert len(curves) == 1
 
     p1, p2, p3, p4 = curves[0].control_points

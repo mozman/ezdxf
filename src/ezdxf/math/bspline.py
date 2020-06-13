@@ -254,8 +254,8 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3,
     if bool(tangents):
         start_tangent, end_tangent = tangents
         if not (bool(start_tangent) and bool(end_tangent)):
-            from .bezier4p import bezier4p_end_tangents
-            s, e = bezier4p_end_tangents(fit_points)
+            from .bezier4p import cube_bezier_end_tangents
+            s, e = cube_bezier_end_tangents(fit_points)
             if not start_tangent:
                 start_tangent = s
             if not end_tangent:

@@ -5,7 +5,7 @@ import time
 import ezdxf
 from pathlib import Path
 import math
-from ezdxf.math import bezier4p_interpolation, BoundingBox
+from ezdxf.math import cubic_bezier_interpolation, BoundingBox
 from ezdxf.render import random_3d_path
 
 DIR = Path('~/Desktop/Outbox').expanduser()
@@ -13,7 +13,7 @@ DIR = Path('~/Desktop/Outbox').expanduser()
 
 def profile_bezier_interpolation(count, path):
     for _ in range(count):
-        curves = list(bezier4p_interpolation(path))
+        curves = list(cubic_bezier_interpolation(path))
 
 
 def profile(text, func, *args):
@@ -28,7 +28,7 @@ def export_path(path):
     msp = doc.modelspace()
     bbox = BoundingBox(path)
     msp.add_polyline3d(path, dxfattribs={'layer': 'Path', 'color': 2})
-    for curve in bezier4p_interpolation(path):
+    for curve in cubic_bezier_interpolation(path):
         msp.add_polyline3d(curve.approximate(20), dxfattribs={'layer': 'Bézier', 'color': 1})
     doc.set_modelspace_vport(center=bbox.center, height=bbox.size[1])
     doc.saveas(DIR / 'path1.dxf')

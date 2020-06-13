@@ -98,11 +98,11 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: rational_spline_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> BSpline
 
-.. autofunction:: bezier4p_from_arc(center: Vector = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> Iterable[Bezier4P]
+.. autofunction:: cubic_bezier_from_arc(center: Vector = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> Iterable[Bezier4P]
 
-.. autofunction:: bezier4p_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> Iterable[Bezier4P]
+.. autofunction:: cubic_bezier_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> Iterable[Bezier4P]
 
-.. autofunction:: bezier4p_interpolation(points: Iterable[Vertex]) -> List[Bezier4P]
+.. autofunction:: cubic_bezier_interpolation(points: Iterable[Vertex]) -> List[Bezier4P]
 
 Transformation Classes
 ======================
