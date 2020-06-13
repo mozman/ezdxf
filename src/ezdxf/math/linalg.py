@@ -302,8 +302,18 @@ class Matrix:
         return Matrix(matrix=list(zip_to_list(*self.matrix)))
 
     def inverse(self) -> 'Matrix':
-        """ Returns inverse of matrix as new object, calculated by the slow Gauss-Jordan solver! """
-        return gauss_jordan_inverse(self)
+        """ Returns inverse of matrix as new object. """
+        if self.nrows != self.ncols:
+            raise TypeError('Inverse of non-square matrix not supported.')
+
+        if self.nrows > 10:
+            return LUDecomposition(self).inverse()
+        else:  # faster for small matrices
+            return gauss_jordan_inverse(self)
+
+    def determinant(self) -> float:
+        """ Returns determinant of matrix, raises :class:`ZeroDivisionError` if matrix is singular. """
+        return LUDecomposition(self).determinant()
 
 
 def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]:
@@ -521,6 +531,11 @@ def gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float
 def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
     """ Returns the inverse of matrix `A` as :class:`Matrix` object.
 
+    .. hint::
+
+        For small matrices (n<10) is this function faster than LUDecomposition(m).inverse()
+        and as fast even if the decomposition is already done.
+
     .. versionadded:: 0.13
 
     """
@@ -668,7 +683,7 @@ class LUDecomposition:
         return self.solve_matrix(Matrix.identity(shape=(self.nrows, self.nrows)))
 
     def determinant(self) -> float:
-        """ Returns the determinant of matrix, raise :class:`ZeroDivisionError` for a singular matrix.
+        """ Returns the determinant of matrix, raises :class:`ZeroDivisionError` if matrix is singular.
         """
         det = self._det
         lu = self.matrix
@@ -690,7 +705,7 @@ def tridiagonal_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) 
             [[b0, c0, 0, 0, ...],
             [a1, b1, c1, 0, ...],
             [0, a2, b2, c2, ...],
-            [...]]
+            ... ]
 
         B: iterable of floats [[b1, b1, ..., bn]
 
@@ -701,7 +716,7 @@ def tridiagonal_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) 
 
     """
     a, b, c = [list(v) for v in A]
-    return _tridag_vector(a, b, c, list(B))
+    return _solve_tridiagonal_matrix(a, b, c, list(B))
 
 
 def tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix:
@@ -717,7 +732,7 @@ def tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable
             [[b0, c0, 0, 0, ...],
             [a1, b1, c1, 0, ...],
             [0, a2, b2, c2, ...],
-            [...]]
+            ... ]
 
         B: matrix [[b11, b12, ..., b1m],
                    [b21, b22, ..., b2m],
@@ -736,10 +751,29 @@ def tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable
     if B.nrows != len(b):
         raise ValueError('Row count of matrix Â has to be equal to row count of matrix B.')
 
-    return Matrix(matrix=[_tridag_vector(a, b, c, col) for col in B.cols()]).transpose()
+    return Matrix(matrix=[_solve_tridiagonal_matrix(a, b, c, col) for col in B.cols()]).transpose()
 
 
-def _tridag_vector(a: List[float], b: List[float], c: List[float], r: List[float]) -> List[float]:
+def _solve_tridiagonal_matrix(a: List[float], b: List[float], c: List[float], r: List[float]) -> List[float]:
+    """ Solves the linear equation system given by a tri-diagonal Matrix(a, b, c) . x = r.
+
+    Matrix configuration::
+
+        [[b0, c0, 0, 0, ...],
+        [a1, b1, c1, 0, ...],
+        [0, a2, b2, c2, ...],
+        ... ]
+
+    Args:
+        a: lower diagonal [a0 .. an-1], a0 is not used but has to be present
+        b: central diagonal [b0 .. bn-1]
+        c: upper diagonal [c0 .. cn-1], cn-1 is not used and must not be present.
+        r: right-hand side quantities
+
+    Returns:
+        vector x as list of floats
+
+    """
     n = len(a)
     u = [0.0] * n
     gam = [0.0] * n

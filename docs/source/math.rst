@@ -959,6 +959,8 @@ Matrix Class
 
     .. automethod:: inverse() -> Matrix
 
+    .. automethod:: determinant
+
     .. automethod:: freeze() -> Matrix
 
     .. automethod:: lu_decomp() -> LUDecomposition

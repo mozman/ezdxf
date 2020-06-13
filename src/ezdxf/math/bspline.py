@@ -212,7 +212,7 @@ def bspline_interpolation(fit_points: Iterable['Vertex'], degree: int = 3,
     The function provides 3 methods for generating the parameter vector t:
 
     - "uniform": creates a uniform t vector, from 0 to 1 evenly spaced, see `uniform`_ method
-    - "distance", "chord": creates a t vector with values proportional to the fit point distances,
+    - "chord", "distance": creates a t vector with values proportional to the fit point distances,
       see `chord length`_ method
     - "centripetal", "sqrt_chord": creates a t vector with values proportional to the fit point sqrt(distances),
       see `centripetal`_ method

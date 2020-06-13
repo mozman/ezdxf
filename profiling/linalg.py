@@ -3,7 +3,10 @@
 import time
 import random
 
-from ezdxf.math.linalg import Matrix, gauss_vector_solver, LUDecomposition, gauss_matrix_solver, gauss_jordan_solver
+from ezdxf.math.linalg import (
+    Matrix, gauss_vector_solver, LUDecomposition, gauss_matrix_solver, gauss_jordan_solver,
+    gauss_jordan_inverse,
+)
 
 
 def random_matrix(rows, cols):
@@ -11,6 +14,8 @@ def random_matrix(rows, cols):
 
 
 SIZE = 200
+CYCLES = 5
+
 random.seed = 0
 RANDOM_GAUSS_MATRIX_1 = random_matrix(rows=SIZE, cols=SIZE)
 B1_VECTOR = [random.random() for _ in range(SIZE)]
@@ -50,6 +55,16 @@ def profile_LU_matrix_solver(count):
         lu.solve_matrix(B_MATRIX)
 
 
+def profile_gauss_jordan_inverse(count):
+    for _ in range(count):
+        gauss_jordan_inverse(RANDOM_GAUSS_MATRIX_1)
+
+
+def profile_LU_decomposition_inverse(count):
+    for _ in range(count):
+        LUDecomposition(RANDOM_GAUSS_MATRIX_1).inverse()
+
+
 def profile(text, func, *args):
     t0 = time.perf_counter()
     func(*args)
@@ -57,8 +72,11 @@ def profile(text, func, *args):
     print(f'{text} {t1 - t0:.3f}s')
 
 
+print(f'Profiling a random {SIZE}x{SIZE} Matrix, 5x each task:')
 profile('Gauss-Jordan matrix solver - 3 vectors: ', profile_gauss_jordan_solver, 5)
+profile('Gauss-Jordan inverse: ', profile_gauss_jordan_inverse, 5)
 profile('Gauss elimination vector solver - 1 vector : ', profile_gauss_vector_solver, 5)
 profile('Gauss elimination matrix solver  - 3 vectors: ', profile_gauss_matrix_solver, 5)
 profile('LU decomposition vector solver - 1 vector: ', profile_LU_vector_solver, 5)
 profile('LU decomposition matrix solver - 3 vectors: ', profile_LU_matrix_solver, 5)
+profile('LU decomposition inverse: ', profile_LU_decomposition_inverse, 5)
