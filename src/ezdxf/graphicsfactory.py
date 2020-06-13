@@ -8,7 +8,7 @@ import logging
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
 from ezdxf.math import Vector
-from ezdxf.math import bspline_control_frame, bspline_control_frame_approx
+from ezdxf.math import bspline_interpolation, bspline_control_frame_approx
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
@@ -546,16 +546,11 @@ class CreatorInterface:
         """
         Add a :class:`~ezdxf.entities.Spline` entity trough fit points but defined by control points.
 
-        ======================= ============================================================
-        Method                  Description
-        ======================= ============================================================
-        uniform                 creates a uniform t vector, from ``0`` to ``1`` evenly spaced,
-                                see `uniform`_ method
-        distance, chord         creates a t vector with values proportional to the fit point distances,
-                                see `chord length`_ method
-        centripetal, sqrt_chord creates a t vector with values proportional to the fit point sqrt(distances),
-                                see `centripetal`_ method
-        ======================= ============================================================
+        - "uniform": creates a uniform t vector, from 0 to 1 evenly spaced, see `uniform`_ method
+        - "distance", "chord": creates a t vector with values proportional to the fit point distances,
+          see `chord length`_ method
+        - "centripetal", "sqrt_chord": creates a t vector with values proportional to the fit point sqrt(distances),
+          see `centripetal`_ method
 
         None of this methods matches the spline created from fit points by AutoCAD.
         See also: :ref:`tut_spline`.
@@ -567,7 +562,7 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes
 
         """
-        bspline = bspline_control_frame(fit_points, degree=degree, method=method)
+        bspline = bspline_interpolation(fit_points, degree=degree, method=method)
         return self.add_open_spline(
             control_points=bspline.control_points,
             degree=bspline.degree,
@@ -581,16 +576,11 @@ class CreatorInterface:
         Approximate B-spline (:class:`~ezdxf.entities.Spline` entity) by a reduced count of control points, given are
         the fit points and the degree of the B-spline.
 
-        ======================= ============================================================
-        Method                  Description
-        ======================= ============================================================
-        uniform                 creates a uniform t vector, from ``0`` to ``1`` evenly spaced,
-                                see `uniform`_ method
-        distance, chord         creates a t vector with values proportional to the fit point distances,
-                                see `chord length`_ method
-        centripetal, sqrt_chord creates a t vector with values proportional to the fit point sqrt(distances),
-                                see `centripetal`_ method
-        ======================= ============================================================
+        - "uniform": creates a uniform t vector, from 0 to 1 evenly spaced, see `uniform`_ method
+        - "distance", "chord": creates a t vector with values proportional to the fit point distances,
+          see `chord length`_ method
+        - "centripetal", "sqrt_chord": creates a t vector with values proportional to the fit point sqrt(distances),
+          see `centripetal`_ method
 
         Args:
             fit_points: all fit points of B-spline

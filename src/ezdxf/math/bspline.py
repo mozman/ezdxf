@@ -16,7 +16,6 @@ https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node5.html:
 """
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional
 import math
-from math import pow, isclose
 from .vector import Vector, distance
 from .linalg import LUDecomposition, Matrix
 from ezdxf.lldxf.const import DXFValueError
@@ -178,7 +177,7 @@ def bspline_basis_vector(u: float, count: int, degree: int, knots: Sequence[floa
     """
     assert len(knots) == (count + degree + 1)
     basis = [bspline_basis(u, index, degree, knots) for index in range(count)]  # type: List[float]
-    if isclose(u, knots[-1]):  # pick up last point ??? why is this necessary ???
+    if math.isclose(u, knots[-1]):  # pick up last point ??? why is this necessary ???
         basis[-1] = 1.
     return basis
 
@@ -204,24 +203,19 @@ def bspline_vertex(u: float, degree: int, control_points: Sequence['Vertex'], kn
     return vertex
 
 
-def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3,
+def bspline_interpolation(fit_points: Iterable['Vertex'], degree: int = 3,
                           tangents: Tuple['Vertex', 'Vertex'] = None,
-                          method: str = 'chord'):
+                          method: str = 'chord') -> 'BSpline':
     """
-    Generates the control points for the `B-spline`_ control frame by `Curve Global Interpolation`_.
-    Given are the fit points and the degree of the B-spline. The function provides 3 methods for generating the
-    parameter vector t:
+    `B-spline`_ interpolation  by `Curve Global Interpolation`_.
+    Given are the fit points and the degree of the B-spline.
+    The function provides 3 methods for generating the parameter vector t:
 
-    ======================= ====================================================================
-    Method                  Description
-    ======================= ====================================================================
-    uniform                 creates a uniform t vector, from ``0`` to ``1`` evenly spaced,
-                            see `uniform`_ method
-    distance, chord         creates a t vector with values proportional to the fit point distances,
-                            see `chord length`_ method
-    centripetal, sqrt_chord creates a t vector with values proportional to the fit point sqrt(distances),
-                            see `centripetal`_ method
-    ======================= ====================================================================
+    - "uniform": creates a uniform t vector, from 0 to 1 evenly spaced, see `uniform`_ method
+    - "distance", "chord": creates a t vector with values proportional to the fit point distances,
+      see `chord length`_ method
+    - "centripetal", "sqrt_chord": creates a t vector with values proportional to the fit point sqrt(distances),
+      see `centripetal`_ method
 
     Args:
         fit_points: fit points of B-spline, as list of :class:`Vector` compatible objects
@@ -270,7 +264,7 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3,
     return bspline
 
 
-def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, degree: int = 3, method: str = 'chord'):
+def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, degree: int = 3, method: str = 'chord')->'BSpline':
     """
     Approximate `B-spline`_ by a reduced count of control points, given are the fit points and the degree of
     the B-spline.
@@ -279,7 +273,7 @@ def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, deg
         fit_points: all fit points of B-spline as :class:`Vector` compatible objects
         count: count of designated control points
         degree: degree of B-spline
-        method: calculation method for parameter vector t, see :func:`bspline_control_frame`
+        method: calculation method for parameter vector t, see :func:`bspline_interpolation`
 
     Returns:
         :class:`BSpline`
@@ -453,7 +447,7 @@ class Basis:
                 d = ((t - knots[i]) * nbasis[i]) / (knots[ik - 1] - knots[i]) if nbasis[i] else 0.
                 e = ((knots[ik] - t) * nbasis[i1]) / (knots[ik] - knots[i1]) if nbasis[i1] else 0.
                 nbasis[i] = d + e
-        if isclose(t, self.max_t):  # pick up last point
+        if math.isclose(t, self.max_t):  # pick up last point
             nbasis[self.count - 1] = 1.
         if self.weights is None:
             return nbasis[:self.count]
@@ -534,7 +528,7 @@ class DBasis(Basis):
 
     def create_nbasis2(self, t: float) -> List[float]:
         nbasis = self.create_nbasis(t)
-        if isclose(t, self.max_t):
+        if math.isclose(t, self.max_t):
             nbasis[self.count - 1] = 1.
         return nbasis
 
@@ -542,7 +536,7 @@ class DBasis(Basis):
 class DBasisU(DBasis):
     def create_nbasis2(self, t: float) -> List[float]:
         nbasis = self.create_nbasis(t)
-        if isclose(t, self.knots[self.count]):
+        if math.isclose(t, self.knots[self.count]):
             nbasis[self.count - 1] = 1.
             nbasis[self.count] = 0.
         return nbasis
@@ -671,7 +665,7 @@ class BSpline:
         Returns: Vector(x, y, z)
 
         """
-        if isclose(t, self.max_t):
+        if math.isclose(t, self.max_t):
             t = self.max_t
 
         p = Vector()
@@ -768,7 +762,7 @@ class DerivativePoint:  # Mixin
             t: parameter in range [0, max_t]
 
         """
-        if isclose(self.max_t, t):
+        if math.isclose(self.max_t, t):
             t = self.max_t
 
         nbasis, d1nbasis, d2nbasis = self.basis_values(t)

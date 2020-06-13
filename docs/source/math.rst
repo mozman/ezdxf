@@ -11,7 +11,7 @@ Functions
 
 .. autofunction:: closest_point
 
-.. autofunction:: bspline_control_frame
+.. autofunction:: bspline_interpolation
 
 .. autofunction:: bspline_control_frame_approx
 

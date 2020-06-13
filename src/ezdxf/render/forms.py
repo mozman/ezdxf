@@ -8,7 +8,7 @@ from enum import IntEnum
 import random
 from ezdxf.math import Vector, Matrix44, Vec2
 from ezdxf.math.construct2d import is_close_points
-from ezdxf.math.bspline import bspline_control_frame
+from ezdxf.math.bspline import bspline_interpolation
 from ezdxf.math.eulerspiral import EulerSpiral
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
@@ -617,14 +617,14 @@ def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: 
     Args:
         vertices: fit points
         degree: degree of B-spline
-        method: 'uniform', 'chord'/'distance', or 'centripetal'/'sqrt_chord', calculation method for parameter t
+        method: "uniform", "chord"/"distance", or "centripetal"/"sqrt_chord", calculation method for parameter t
         subdivide: count of sub vertices + 1, e.g. 4 creates 3 sub-vertices
 
     Returns: list of vertices
 
     """
     vertices = list(vertices)
-    spline = bspline_control_frame(vertices, degree=degree, method=method)
+    spline = bspline_interpolation(vertices, degree=degree, method=method)
     return list(spline.approximate(segments=(len(vertices) - 1) * subdivide))
 
 

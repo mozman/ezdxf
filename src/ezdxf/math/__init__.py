@@ -18,7 +18,7 @@ from .linalg import (
     freeze_matrix, tridiagonal_matrix_solver, tridiagonal_vector_solver,
 )
 from .bspline import (
-    bspline_control_frame, bspline_control_frame_approx, rational_spline_from_arc, rational_spline_from_ellipse,
+    bspline_interpolation, bspline_control_frame_approx, rational_spline_from_arc, rational_spline_from_ellipse,
     uniform_knot_vector, open_uniform_knot_vector, required_knot_values, BSpline, BSplineU, BSplineClosed, DBSpline,
     DBasisU, DBSplineClosed, DBSplineU,
 )

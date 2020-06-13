@@ -14,7 +14,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010, DXFStructureError
 from ezdxf.lldxf import const
-from ezdxf.math.bspline import bspline_control_frame
+from ezdxf.math.bspline import bspline_interpolation
 from ezdxf.math.bulge import bulge_to_arc
 from ezdxf.math import ConstructionEllipse
 from .dxfentity import base_class, SubclassProcessor
@@ -1147,7 +1147,7 @@ class EdgePath:
                                  degree: int = 3,
                                  method: str = 'distance',
                                  power: float = .5) -> 'SplineEdge':
-        bspline = bspline_control_frame(fit_points=fit_points, degree=degree, method=method, power=power)
+        bspline = bspline_interpolation(fit_points=fit_points, degree=degree, method=method, power=power)
         return self.add_spline(
             fit_points=fit_points,
             control_points=bspline.control_points,
