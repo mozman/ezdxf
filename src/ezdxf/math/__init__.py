@@ -15,7 +15,8 @@ from .construct3d import (
 from .matrix44 import Matrix44
 from .linalg import (
     Matrix, LUDecomposition, gauss_jordan_inverse, gauss_jordan_solver, gauss_vector_solver, gauss_matrix_solver,
-    freeze_matrix, tridiagonal_matrix_solver, tridiagonal_vector_solver,
+    freeze_matrix, tridiagonal_matrix_solver, tridiagonal_vector_solver, detect_banded_matrix, compact_banded_matrix,
+    BandedMatrixLU, banded_matrix,
 )
 from .bspline import (
     bspline_interpolation, bspline_control_frame_approx, rational_spline_from_arc, rational_spline_from_ellipse,

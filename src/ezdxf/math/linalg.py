@@ -8,6 +8,7 @@ import reprlib
 __all__ = [
     'Matrix', 'gauss_vector_solver', 'gauss_matrix_solver', 'gauss_jordan_solver', 'gauss_jordan_inverse',
     'LUDecomposition', 'freeze_matrix', 'tridiagonal_vector_solver', 'tridiagonal_matrix_solver',
+    'detect_banded_matrix', 'compact_banded_matrix', 'BandedMatrixLU', 'banded_matrix',
 ]
 
 
@@ -819,63 +820,163 @@ def _solve_tridiagonal_matrix(a: List[float], b: List[float], c: List[float], r:
     return u
 
 
-class BandedMatrix:
+def banded_matrix(A: Matrix, check_all=True) -> Tuple[Matrix, int, int]:
+    """
+    Transform matrix A into a compact banded matrix representation.
+    Returns compact representation as :class:`Matrix` object and
+    lower- and upper band count m1 and m2.
+
+    Args:
+        A: input :class:`Matrix`
+        check_all: check all diagonals if ``True`` or abort testing
+            after first all zero diagonal if ``False``.
+
+    """
+    m1, m2 = detect_banded_matrix(A, check_all)
+    m = compact_banded_matrix(A, m1, m2)
+    return m, m1, m2
+
+
+def detect_banded_matrix(A: Matrix, check_all=True) -> Tuple[int, int]:
+    """
+    Returns lower- and upper band count m1 and m2.
+
+    Args:
+        A: input :class:`Matrix`
+        check_all: check all diagonals if ``True`` or abort testing
+            after first all zero diagonal if ``False``.
+
+    """
+    def detect_m2() -> int:
+        m2 = 0
+        for d in range(1, A.ncols):
+            if any(A.iter_diag(d)):
+                m2 = d
+            elif not check_all:
+                break
+        return m2
+
+    def detect_m1() -> int:
+        m1 = 0
+        for d in range(1, A.nrows):
+            if any(A.iter_diag(-d)):
+                m1 = d
+            elif not check_all:
+                break
+        return m1
+
+    return detect_m1(), detect_m2()
+
+
+def compact_banded_matrix(A: Matrix, m1: int, m2: int) -> Matrix:
+    """
+    Returns compact banded matrix representation as :class:`Matrix` object.
+
+    Args:
+        A: matrix to transform
+        m1: lower band count, excluding main matrix diagonal
+        m2: upper band count, excluding main matrix diagonal
+
+    """
+    if A.nrows != A.ncols:
+        raise TypeError('Square matrix required.')
+
+    m = Matrix()
+
+    for d in range(m1, 0, -1):
+        col = [0.0] * d
+        col.extend(A.diag(-d))
+        m.append_col(col)
+
+    m.append_col(A.diag(0))
+
+    for d in range(1, m2 + 1):
+        col = A.diag(d)
+        col.extend([0.0] * d)
+        m.append_col(col)
+    return m
+
+
+class BandedMatrixLU:
+    """ Represents a LU decomposition of a compact banded matrix.
+
+    Attributes:
+
+        - :attr:`upper` - upper triangle
+        - :attr:`lower` - lower triangle
+        - :attr:`m1` - lower band count, excluding main matrix diagonal
+        - :attr:`m2` - upper band count, excluding main matrix diagonal
+        - :attr:`index` - swapped indices
+
+    """
+
     def __init__(self, A: Matrix, m1: int, m2: int):
-        self.matrix = A.matrix  # store reference to source banded matrix
-        self.au = copy_float_matrix(A)  # upper triangle of LU decomposition
+        self.upper = copy_float_matrix(A)  # upper triangle of LU decomposition
         self.m1 = int(m1)
         self.m2 = int(m2)
 
         n = self.nrows
-        self.al = [[0.0] * m1 for _ in range(n)]  # lower triangle of LU decomposition
+        self.lower = [[0.0] * m1 for _ in range(n)]  # lower triangle of LU decomposition
         self.index = [0] * n
         self._det = 1.0
 
         m1 = self.m1
         m2 = self.m2
-        au = self.au
-        al = self.al
+        upper = self.upper
+        lower = self.lower
 
         mm = m1 + m2 + 1
         l = m1
         for i in range(m1):
             for j in range(m1 - i, mm):
-                au[i][j - l] = au[i][j]
+                upper[i][j - l] = upper[i][j]
             l -= 1
             for j in range(mm - l - 1, mm):
-                au[i][j] = 0.0
+                upper[i][j] = 0.0
 
         l = m1
         for k in range(n):
-            dum = au[k][0]
+            dum = upper[k][0]
             i = k
             if l < n:
                 l += 1
             for j in range(k + 1, l):
-                if abs(au[j][0]) > abs(dum):
-                    dum = au[j][0]
+                if abs(upper[j][0]) > abs(dum):
+                    dum = upper[j][0]
                     i = j
             self.index[k] = i + 1
             if dum == 0.0:
-                au[k][0] = 1.0e-40  # avoid DivisionByZero exception
+                upper[k][0] = 1.0e-40  # avoid DivisionByZero exception
 
             if i != k:
                 self._det = -self._det
                 for j in range(mm):
-                    au[k][j], au[i][j] = au[i][j], au[k][j]
+                    upper[k][j], upper[i][j] = upper[i][j], upper[k][j]
 
             for i in range(k + 1, l):
-                dum = au[i][0] / au[k][0]
-                al[k][i - k - 1] = dum
+                dum = upper[i][0] / upper[k][0]
+                lower[k][i - k - 1] = dum
                 for j in range(1, mm):
-                    au[i][j - 1] = au[i][j] - dum * au[k][j]
-                au[i][mm - 1] = 0.0
+                    upper[i][j - 1] = upper[i][j] - dum * upper[k][j]
+                upper[i][mm - 1] = 0.0
 
     @property
     def nrows(self):
-        return len(self.matrix)
+        """ Count of matrix rows. """
+        return len(self.upper)
 
-    def solve_vector(self, B: List[float]) -> List[float]:
+    def solve_vector(self, B: Iterable[float]) -> List[float]:
+        """
+        Solves the linear equation system given by the banded nxn Matrix A . x = B,
+        right-hand side quantities as vector B with n elements.
+
+        Args:
+            B: vector [b1, b2, ..., bn]
+
+        Returns:
+            vector as list of floats
+
+        """
         x = list(B)
         if len(x) != self.nrows:
             raise ValueError('Item count of vector B has to be equal to matrix row count.')
@@ -884,8 +985,8 @@ class BandedMatrix:
         m1 = self.m1
         m2 = self.m2
         index = self.index
-        al = self.al
-        au = self.au
+        al = self.lower
+        au = self.upper
 
         mm = m1 + m2 + 1
         l = m1
@@ -909,27 +1010,31 @@ class BandedMatrix:
 
         return x
 
+    def solve_matrix(self, B: Iterable[Iterable[float]]) -> Matrix:
+        """
+        Solves the linear equation system given by the banded nxn Matrix A . x = B,
+        right-hand side quantities as nxm Matrix B.
+
+        Args:
+            B: matrix [[b11, b12, ..., b1m], [b21, b22, ..., b2m], ... [bn1, bn2, ..., bnm]]
+
+        Returns:
+            matrix as :class:`Matrix` object
+
+        """
+        if not isinstance(B, Matrix):
+            B = Matrix(matrix=[list(row) for row in B])
+        if B.nrows != self.nrows:
+            raise ValueError('Row count of matrix B has to be equal self.nrows.')
+
+        return Matrix(matrix=[self.solve_vector(col) for col in B.cols()]).transpose()
+
     def determinant(self) -> float:
+        """ Returns the determinant of matrix. """
         dd = self._det
-        au = self.au
+        au = self.upper
 
         for i in range(0, len(au)):
             dd *= au[i][0]
 
         return dd
-
-    def __mul__(self, x: Iterable[float]) -> List[float]:
-        x = list(x)
-        n = self.nrows
-        if len(x) != n:
-            raise ValueError('Item count of vector x has to be equal to matrix row count.')
-
-        a = self.matrix
-        b = []
-        m1 = self. m1
-        mm1 = m1 + self.m2 + 1
-        for i in range(n):
-            k = i - m1
-            tmploop = min(mm1, n - k)
-            b.append(sum(a[i][j] * x[j + k] for j in range(max(0, -k), tmploop)))
-        return b

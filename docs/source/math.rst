@@ -914,6 +914,12 @@ Functions
 
 .. autofunction:: tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix
 
+.. autofunction:: banded_matrix(A: Matrix, check_all=True) -> Tuple[int, int]
+
+.. autofunction:: detect_banded_matrix(A: Matrix, check_all=True) -> Tuple[int, int]
+
+.. autofunction:: compact_banded_matrix(A: Matrix, m1: int, m2: int) -> Matrix
+
 .. autofunction:: freeze_matrix(A: Union[MatrixData, Matrix]) -> Matrix
 
 Matrix Class
@@ -996,6 +1002,19 @@ LUDecomposition Class
     .. automethod:: solve_matrix(B: Iterable[Iterable[float]]) -> Matrix
 
     .. automethod:: inverse() -> Matrix
+
+    .. automethod:: determinant
+
+BandedMatrixLU Class
+--------------------
+
+.. autoclass:: BandedMatrixLU
+
+    .. autoattribute:: nrows
+
+    .. automethod:: solve_vector
+
+    .. automethod:: solve_matrix(B: Iterable[Iterable[float]]) -> Matrix
 
     .. automethod:: determinant
 
