@@ -42,6 +42,11 @@ def test_detect_banded_matrix():
     m1, m2 = detect_banded_matrix(TRICKY, check_all=True)
     assert (m1, m2) == (5, 6)
 
+    assert detect_banded_matrix(Matrix(shape=(10, 10))) == (0, 0)
+    
+    identity = Matrix.identity(shape=(10, 10))
+    assert detect_banded_matrix(identity) == (0, 0)
+
 
 def test_compact_banded_matrix():
     m1, m2 = detect_banded_matrix(BANDED_MATRIX)
