@@ -17,8 +17,9 @@ https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node5.html:
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional
 import math
 from .vector import Vector, distance
-from .linalg import LUDecomposition, Matrix
+from .linalg import LUDecomposition, Matrix, banded_matrix, BandedMatrixLU
 from ezdxf.lldxf.const import DXFValueError
+from ezdxf import PYPY, PYPY_ON_WINDOWS
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -329,6 +330,21 @@ def control_frame_knots(n: int, p: int, t_vector: Iterable[float]) -> Iterable[f
         yield t_vector[-1]
 
 
+def _get_solver(matrix: List):
+    # Acceleration of banded matrix solver kicks in at:
+    # N=15 for CPython on Windows
+    # N=60 for pypy3 on Windows
+    A = Matrix(matrix=matrix)
+    limit = 15  # CPython on Windows
+    if PYPY:
+        limit = 60  # pypy3 on Windows
+    if len(matrix) < limit:
+        lu = LUDecomposition(A)
+    else:
+        lu = BandedMatrixLU(*banded_matrix(A, check_all=False))
+    return lu
+
+
 def global_curve_interpolation(fit_points: Sequence['Vertex'],
                                degree: int,
                                t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
@@ -336,8 +352,8 @@ def global_curve_interpolation(fit_points: Sequence['Vertex'],
 
     knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector))
     spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
-    lu = LUDecomposition([spline.basis(t) for t in t_vector])
-    control_points = lu.solve_matrix([list(row) for row in fit_points])
+    solver = _get_solver([spline.basis(t) for t in t_vector])
+    control_points = solver.solve_matrix([list(row) for row in fit_points])
     return Vector.list(control_points.rows()), knots
 
 
@@ -361,11 +377,11 @@ def global_curve_interpolation_with_tangents(
     space = [0.0] * (n + 1)
     rows.insert(1, [-1.0, +1.0] + space)
     rows.insert(-1, space + [-1.0, +1.0])
+    solver = _get_solver(rows)
 
     fit_points.insert(1, Vector(start_tangent) * knots[p + 1] / p)
     fit_points.insert(-1, Vector(end_tangent) * (1.0 - knots[m - p - 1]) / p)
-
-    control_points = LUDecomposition(rows).solve_matrix(fit_points)
+    control_points = solver.solve_matrix(fit_points)
     return Vector.list(control_points.rows()), knots
 
 
@@ -406,7 +422,8 @@ def global_curve_approximation(fit_points: Iterable['Vertex'],
     Q = [sum(get_Q(k) * N[k][i] for k in range(1, n)) for i in range(1, h)]
     N = Matrix([row[1:h] for row in N[1:-1]])
     M = N.transpose() * N
-    P = LUDecomposition(M).solve_matrix(Q)
+    solver = _get_solver(M.matrix)
+    P = solver.solve_matrix(Q)
     control_points = [d0]
     control_points.extend(Vector.generate(P.rows()))
     control_points.append(dn)
