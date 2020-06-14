@@ -356,7 +356,7 @@ def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> Lis
     if len(A[0]) != num:
         raise ValueError('A square nxn matrix A is required.')
     if len(B) != num:
-        raise ValueError('Item count of vector B has to be equal to row count of matrix A.')
+        raise ValueError('Item count of vector B has to be equal to matrix A row count.')
 
     # inplace modification of A & B
     _build_upper_triangle(A, B)
@@ -658,7 +658,7 @@ class LUDecomposition:
         ii = 0
 
         if len(X) != n:
-            raise ValueError('Item count of vector B has to be equal to self.nrows.')
+            raise ValueError('Item count of vector B has to be equal to matrix row count.')
 
         for i in range(n):
             ip = index[i]
@@ -693,7 +693,7 @@ class LUDecomposition:
         if not isinstance(B, Matrix):
             B = Matrix(matrix=[list(row) for row in B])
         if B.nrows != self.nrows:
-            raise ValueError('Row count of matrix B has to be equal self.nrows.')
+            raise ValueError('Row count of self and matrix B has to match.')
 
         return Matrix(matrix=[self.solve_vector(col) for col in B.cols()]).transpose()
 
@@ -719,6 +719,9 @@ def tridiagonal_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) 
     Matrix A is diagonal matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
 
     Note: a0 is not used but has to be present, cn-1 is also not used and must not be present.
+
+    If an :class:`ZeroDivisionError` exception occurs, the equation system can possibly be solved by
+    :code:`BandedMatrixLU(A, 1, 1).solve_vector(B)`
 
     Args:
         A: diagonal matrix [[a0..an-1], [b0..bn-1], [c0..cn-1]] ::
@@ -751,6 +754,9 @@ def tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable
 
     Note: a0 is not used but has to be present, cn-1 is also not used and must not be present.
 
+    If an :class:`ZeroDivisionError` exception occurs, the equation system can possibly be solved by
+    :code:`BandedMatrixLU(A, 1, 1).solve_vector(B)`
+
     Args:
         A: diagonal matrix [[a0..an-1], [b0..bn-1], [c0..cn-1]] ::
 
@@ -777,7 +783,7 @@ def tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable
     if not isinstance(B, Matrix):
         B = Matrix(matrix=[list(row) for row in B])
     if B.nrows != len(b):
-        raise ValueError('Row count of matrix A has to be equal to row count of matrix B.')
+        raise ValueError('Row count of matrices A and B has to match.')
 
     return Matrix(matrix=[_solve_tridiagonal_matrix(a, b, c, col) for col in B.cols()]).transpose()
 
@@ -1025,7 +1031,7 @@ class BandedMatrixLU:
         if not isinstance(B, Matrix):
             B = Matrix(matrix=[list(row) for row in B])
         if B.nrows != self.nrows:
-            raise ValueError('Row count of matrix B has to be equal self.nrows.')
+            raise ValueError('Row count of self and matrix B has to match.')
 
         return Matrix(matrix=[self.solve_vector(col) for col in B.cols()]).transpose()
 
