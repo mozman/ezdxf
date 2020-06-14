@@ -933,9 +933,15 @@ Matrix Class
 
     .. automethod:: row
 
+    .. automethod:: iter_row
+
     .. automethod:: col
 
+    .. automethod:: iter_col
+
     .. automethod:: diag
+
+    .. automethod:: iter_diag
 
     .. automethod:: rows
 

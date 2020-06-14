@@ -118,12 +118,20 @@ class Matrix:
         """ Returns row `index` as list of floats. """
         return self.matrix[index]
 
+    def iter_row(self, index) -> Iterable[float]:
+        """ Yield values of row `index`. """
+        return iter(self.matrix[index])
+
     def col(self, index) -> List[float]:
         """ Return column `index` as list of floats. """
         return [row[index] for row in self.matrix]
 
+    def iter_col(self, index) -> Iterable[float]:
+        """ Yield values of column `index`. """
+        return (row[index] for row in self.matrix)
+
     def diag(self, index) -> List[float]:
-        """ Return diagonal `index` as list of floats.
+        """ Returns diagonal `index` as list of floats.
 
         An `index` of ``0`` specifies the main diagonal, negative values specifies diagonals below the
         main diagonal and positive values specifies diagonals above the main diagonal.
@@ -134,16 +142,18 @@ class Matrix:
         index ``+1`` is [01, 12, 23]
 
         """
+        return list(self.iter_diag(index))
+
+    def iter_diag(self, index) -> Iterable[float]:
+        """ Yield values of diagonal `index`, see also :meth:`diag`. """
         get = self.__getitem__
         col_offset = max(index, 0)
         row_offset = abs(min(index, 0))
-        result = []
         for i in range(max(self.nrows, self.ncols)):
             try:
-                result.append(get((i + row_offset, i + col_offset)))
+                yield get((i + row_offset, i + col_offset))
             except IndexError:
                 break
-        return result
 
     def rows(self) -> MatrixData:
         """ Return a list of all rows. """
