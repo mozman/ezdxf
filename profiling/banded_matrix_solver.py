@@ -48,7 +48,7 @@ with open(DIR / 'profiling_banded_matrix.csv', mode='wt', newline='') as f:
     writer.writerow(['Parameters', 'Standard LU', 'Banded LU', 'Factor'])
     for size in range(10, 101, 5):
         for m1, m2 in [(1, 1), (2, 1), (1, 2), (2, 2), (2, 3), (3, 2), (3, 3), (3, 4), (4, 3), (4, 4)]:
-            A = random_matrix((size, size), m1, m1)
+            A = random_matrix((size, size), m1, m2)
             B = Matrix(list(zip(random_values(size), random_values(size), random_values(size))))
             t0 = profile(profile_LU_matrix_solver, REPEAT, A, B)
             t1 = profile(profile_banded_matrix_solver, REPEAT, A, B)
