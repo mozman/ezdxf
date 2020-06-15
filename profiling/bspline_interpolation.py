@@ -5,9 +5,8 @@ import time
 import ezdxf
 from pathlib import Path
 import math
-from ezdxf.math import bspline_interpolation, BoundingBox
+from ezdxf.math import bspline_interpolation, BoundingBox, linspace, BSpline
 from ezdxf.render import random_3d_path
-from geomdl import fitting
 DIR = Path('~/Desktop/Outbox').expanduser()
 
 
@@ -16,9 +15,10 @@ def profile_ezdxf_interpolation(count, path):
         bspline_interpolation(path)
 
 
-def profile_geomdl_interpolation(count, path):
+def profile_vertex_calculation(count, spline, num):
     for _ in range(count):
-        fitting.interpolate_curve(path, degree=3)
+        for t in linspace(0.0, spline.max_t, num):
+            spline.point(t)
 
 
 def profile(text, func, *args):
@@ -44,4 +44,6 @@ path = list(random_3d_path(100, max_step_size=10, max_heading=math.pi * 0.8))
 export_path(path)
 
 profile('ezdxf B-spline interpolation: ', profile_ezdxf_interpolation, 100, path)
-profile('geomdl B-spline interpolation: ', profile_geomdl_interpolation, 100, path)
+
+spline = BSpline.from_fit_points(path, degree=3)
+profile('calculate 10x 1000 B-spline vertices: ', profile_vertex_calculation, 10, spline, 1000)

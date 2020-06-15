@@ -696,7 +696,8 @@ class BSpline:
 
         p = Vector()
         for control_point, basis in zip(self.control_points, self.basis_values(t)):
-            p += control_point * basis
+            if basis:  # all 0 values can be skipped and there are a lot of them
+                p += control_point * basis
         return p
 
     def insert_knot(self, t: float) -> None:
