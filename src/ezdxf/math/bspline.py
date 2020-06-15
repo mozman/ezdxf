@@ -262,56 +262,6 @@ def bspline_interpolation(
     return bspline
 
 
-def cubic_bspline_interpolation(
-        fit_points: Iterable['Vertex'],
-        tangents: Tuple['Vertex', 'Vertex'] = None,
-        method: str = 'chord') -> 'BSpline':
-    """
-    Optimized cubic `B-spline`_ (degree=3) interpolation by `Curve Global Interpolation`_.
-    Given are the fit points of the B-spline. The function provides 3 methods for
-    generating the parameter vector t:
-
-    - "uniform": creates a uniform t vector, from 0 to 1 evenly spaced, see `uniform`_ method
-    - "chord", "distance": creates a t vector with values proportional to the fit point distances,
-      see `chord length`_ method
-    - "centripetal", "sqrt_chord": creates a t vector with values proportional to the fit point sqrt(distances),
-      see `centripetal`_ method
-
-    Args:
-        fit_points: fit points of B-spline, as list of :class:`Vector` compatible objects
-        tangents: define start- and end tangent as 2-tuple of :class:`Vector` compatible objects (optional)
-        method: calculation method for parameter vector t
-
-    Returns:
-        :class:`BSpline`
-
-    .. versionadded:: 0.13
-
-    """
-
-    fit_points = Vector.list(fit_points)
-    if len(fit_points) < 4:
-        raise DXFValueError('At least 4 fit points required')
-
-    t_vector = list(create_t_vector(fit_points, method))
-    if bool(tangents):
-        start_tangent, end_tangent = tangents
-        if not all(tangents):
-            from .bezier4p import cube_bezier_end_tangents
-            s, e = cube_bezier_end_tangents(fit_points)
-            if not start_tangent:
-                start_tangent = s
-            if not end_tangent:
-                end_tangent = e
-        control_points, knots = global_bspline_interpolation_tangents(fit_points, start_tangent, end_tangent, 3,
-                                                                      t_vector)
-    else:
-        control_points, knots = global_cubic_bspline_interpolation(fit_points, t_vector)
-
-    bspline = BSpline(control_points, order=4, knots=knots)
-    bspline.t_array = t_vector
-    return bspline
-
 
 def bspline_control_frame_approx(
         fit_points: Iterable['Vertex'],
@@ -408,18 +358,7 @@ def global_bspline_interpolation(
     knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector))
     spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
     solver = _get_best_solver([spline.basis(t) for t in t_vector])
-    control_points = solver.solve_matrix([list(row) for row in fit_points])
-    return Vector.list(control_points.rows()), knots
-
-
-def global_cubic_bspline_interpolation(
-        fit_points: Sequence['Vertex'],
-        t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
-    knots = list(control_frame_knots(len(fit_points) - 1, 3, t_vector))
-    spline = Basis(knots=knots, order=4, count=len(fit_points))
-
-    solver = _get_best_solver([spline.basis(t) for t in t_vector])
-    control_points = solver.solve_matrix([list(row) for row in fit_points])
+    control_points = solver.solve_matrix(fit_points)
     return Vector.list(control_points.rows()), knots
 
 
