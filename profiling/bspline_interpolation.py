@@ -10,7 +10,7 @@ from ezdxf.render import random_3d_path
 DIR = Path('~/Desktop/Outbox').expanduser()
 
 
-def profile_ezdxf_interpolation(count, path):
+def profile_bspline_interpolation(count, path):
     for _ in range(count):
         bspline_interpolation(path)
 
@@ -43,7 +43,7 @@ def export_path(path):
 path = list(random_3d_path(100, max_step_size=10, max_heading=math.pi * 0.8))
 export_path(path)
 
-profile('ezdxf B-spline interpolation: ', profile_ezdxf_interpolation, 100, path)
+profile('B-spline interpolation: ', profile_bspline_interpolation, 100, path)
 
 spline = BSpline.from_fit_points(path, degree=3)
 profile('calculate 10x 1000 B-spline vertices: ', profile_vertex_calculation, 10, spline, 1000)

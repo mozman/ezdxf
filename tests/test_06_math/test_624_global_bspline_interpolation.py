@@ -66,7 +66,7 @@ def test_control_frame_knot_values(fit_points):
             assert k1 <= k2
 
 
-def test_control_frame(fit_points):
+def test_bspline_interpolation(fit_points):
     spline = bspline_interpolation(fit_points, degree=3)
     assert len(spline.control_points) == len(fit_points)
     assert spline.t_array[0] == 0.
