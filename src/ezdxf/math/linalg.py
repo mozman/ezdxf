@@ -9,7 +9,7 @@ import reprlib
 __all__ = [
     'Matrix', 'gauss_vector_solver', 'gauss_matrix_solver', 'gauss_jordan_solver', 'gauss_jordan_inverse',
     'LUDecomposition', 'freeze_matrix', 'tridiagonal_vector_solver', 'tridiagonal_matrix_solver',
-    'detect_banded_matrix', 'compact_banded_matrix', 'BandedMatrixLU', 'banded_matrix',
+    'detect_banded_matrix', 'compact_banded_matrix', 'BandedMatrixLU', 'banded_matrix', 'SVD'
 ]
 
 
@@ -1048,7 +1048,7 @@ class BandedMatrixLU:
         return dd
 
 
-class SVDecomposition:
+class SVD:
     """ Singular Value Decomposition - singular matrix solver.
 
     Args:
@@ -1204,7 +1204,7 @@ class SVDecomposition:
                         u[k][i] *= scale
             w[i] = scale * g
             g, s, scale = 0.0, 0.0, 0.0
-            if i + 1 <= m and i + 1 != n:
+            if (i + 1 <= m) and (i + 1 != n):
                 for k in range(l - 1, n):
                     scale += abs(u[i][k])
                 if scale != 0.0:
@@ -1274,7 +1274,7 @@ class SVDecomposition:
                 flag = True
                 for l in range(k, -1, -1):
                     nm = l - 1
-                    if l == 0 or abs(rv1[l]) <= eps * anorm:
+                    if (l == 0) or (abs(rv1[l]) <= eps * anorm):
                         flag = False
                         break
 
