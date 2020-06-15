@@ -17,7 +17,10 @@ https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node5.html:
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional, Union
 import math
 from .vector import Vector, distance
-from .linalg import LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix, detect_banded_matrix
+from .linalg import (
+    LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix, detect_banded_matrix,
+    quadratric_equation
+)
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf import PYPY
 
@@ -294,7 +297,7 @@ def bspline_control_frame_approx(
     return bspline
 
 
-def create_t_vector(fit_points: List[Vector], method: str):
+def create_t_vector(fit_points: List[Vector], method: str) -> Iterable[float]:
     if method == 'uniform':
         return uniform_t_vector(fit_points)  # equally spaced 0 .. 1
     elif method in ('distance', 'chord'):
@@ -438,6 +441,94 @@ def global_bspline_approximation(
     control_points.extend(Vector.generate(P.rows()))
     control_points.append(dn)
     return control_points
+
+
+def estimate_cubic_spline_tangents_3p(fit_points: List[Vector], method: str = 'chord') -> List[Vector]:
+    t = list(create_t_vector(fit_points, method))
+    delta_t = [t1 - t0 for t0, t1 in zip(t, t[1:])]
+    q = _delta_q(fit_points)
+    d = [qk / dtk for qk, dtk in zip(q, delta_t)]
+    alpha = [dt0 / (dt0 + dt1) for dt0, dt1 in zip(delta_t, delta_t[1:])]
+    tangents = [0.0]  # dummy
+    tangents.extend([(1.0 - alpha[k]) * d[k] + alpha[k] * d[k + 1] for k in range(len(d) - 1)])
+    tangents[0] = 2.0 * d[0] - tangents[1]
+    tangents.append(2.0 * d[-1] - tangents[-1])
+    return [tangent.normalize() for tangent in tangents]
+
+
+def _delta_q(points: List[Vector]) -> List[Vector]:
+    n = len(points)
+    q = [0.0]  # dummy
+    q.extend([points[k + 1] - points[k] for k in range(n - 1)])
+    q[0] = 2.0 * q[1] - q[2]
+    q.append(2.0 * q[n - 1] - q[n - 2])  # q[n]
+    q.append(2.0 * q[n] - q[n - 1])  # q[n+1]
+    q.append(2.0 * q[0] - q[1])  # q[-1]
+    return q
+
+
+def estimate_cubic_spline_tangents_5p(fit_points: List[Vector]) -> List[Vector]:
+    n = len(fit_points)
+    q = _delta_q(fit_points)
+
+    alpha = list()
+    for k in range(n):
+        v1 = (q[k - 1].cross(q[k])).magnitude
+        v2 = (q[k + 1].cross(q[k + 2])).magnitude
+        alpha.append(v1 / (v1 + v2))
+
+    tangents = []
+    for k in range(n):
+        vk = (1.0 - alpha[k]) * q[k] + alpha[k] * q[k + 1]
+        tangents.append(vk / vk.magnitude)
+    return tangents
+
+
+def local_cubic_bspline_interpolation(fit_points: List[Vector], tangents: List[Vector]) -> Tuple[
+    List[Vector], List[float]]:
+    """ The NURBS Book: Chapter 9.3.4 Local Cubic Curve Interpolation
+
+    Args:
+        fit_points: curve definition points - curve has to pass all given fit points
+        tangents: one tangent vector for each fit point as unit vectors
+
+    Returns:
+        list of control points and list of knots
+
+    """
+    assert len(fit_points) == len(tangents)
+    assert len(fit_points) > 2
+
+    degree = 3
+    order = degree + 1
+    control_points = [fit_points[0]]
+    u = 0.0
+    params = []
+    for i in range(len(fit_points) - 1):
+        p0 = fit_points[i]
+        p3 = fit_points[i + 1]
+        t0 = tangents[i]
+        t3 = tangents[i + 1]
+        a = 16.0 - (t0 + t3).magnitude_square
+        b = 12.0 * (p3 - p0).dot(t0 + t3)
+        c = -36.0 * (p3 - p0).magnitude_square
+        alpha_plus, alpha_minus = quadratric_equation(a, b, c)
+        p1 = p0 + alpha_plus * t0 / 3.0
+        p2 = p3 - alpha_plus * t3 / 3.0
+        control_points.extend((p1, p2))
+        u += 3.0 * (p1 - p0).magnitude
+        params.append(u)
+    control_points.append(fit_points[-1])
+
+    knots = [0.0] * order
+    max_u = params[-1]
+    for v in params[:-1]:
+        knot = v / max_u
+        knots.extend((knot, knot))
+    knots.extend([1.0] * 4)
+
+    assert len(knots) == required_knot_values(len(control_points), order)
+    return control_points, knots
 
 
 class Basis:

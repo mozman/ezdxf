@@ -328,6 +328,11 @@ class Matrix:
         return LUDecomposition(self).determinant()
 
 
+def quadratric_equation(a: float, b: float, c: float) -> Tuple[float, float]:
+    discriminant = math.sqrt(b ** 2 - 4 * a * c)
+    return ((-b + discriminant) / (2.0 * a)), ((-b - discriminant) / (2.0 * a))
+
+
 def gauss_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]:
     """
     Solves the linear equation system given by a nxn Matrix A . x = B,
