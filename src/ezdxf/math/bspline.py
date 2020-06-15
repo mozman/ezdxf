@@ -262,7 +262,6 @@ def bspline_interpolation(
     return bspline
 
 
-
 def bspline_control_frame_approx(
         fit_points: Iterable['Vertex'],
         count: int,
