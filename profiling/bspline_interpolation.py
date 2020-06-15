@@ -43,7 +43,7 @@ def export_path(path):
 path = list(random_3d_path(100, max_step_size=10, max_heading=math.pi * 0.8))
 export_path(path)
 
-profile('B-spline interpolation: ', profile_bspline_interpolation, 100, path)
+profile('B-spline interpolation 100x: ', profile_bspline_interpolation, 100, path)
 
 spline = BSpline.from_fit_points(path, degree=3)
-profile('calculate 10x 1000 B-spline vertices: ', profile_vertex_calculation, 10, spline, 1000)
+profile('calculate 25x 1000 B-spline vertices: ', profile_vertex_calculation, 25, spline, 1000)

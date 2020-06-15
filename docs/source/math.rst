@@ -790,7 +790,7 @@ BSpline
 
     .. automethod:: from_arc(arc: ConstructionArc) -> BSpline
 
-    .. automethod:: from_fit_points(points: Iterable[Vertex], degree:int=3) -> BSpline
+    .. automethod:: from_fit_points(points: Iterable[Vertex], degree:int=3, method='chord') -> BSpline
 
     .. automethod:: ellipse_approximation(ellipse: ConstructionEllipse, num:int=16) -> BSpline
 

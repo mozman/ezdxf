@@ -598,10 +598,10 @@ class BSpline:
         self.basis = Basis(knots, self.order, self.count, weights=weights)
 
     @classmethod
-    def from_fit_points(cls, points: Iterable['Vertex'], degree=3) -> 'BSpline':
+    def from_fit_points(cls, points: Iterable['Vertex'], degree=3, method='chord') -> 'BSpline':
         """ Returns :class:`BSpline` defined by fit points. """
         fit_points = Vector.list(points)
-        t_vector = list(distance_t_vector(fit_points))
+        t_vector = list(create_t_vector(fit_points, method))
         control_points, knots = global_bspline_interpolation(fit_points, degree, t_vector)
         spline = cls(control_points, order=degree + 1, knots=knots)
         spline.t_array = t_vector
