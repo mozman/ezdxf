@@ -17,7 +17,7 @@ https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node5.html:
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional, Union
 import math
 from .vector import Vector, distance
-from .linalg import LUDecomposition, Matrix, banded_matrix, BandedMatrixLU
+from .linalg import LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix, detect_banded_matrix
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf import PYPY
 
@@ -331,8 +331,10 @@ def control_frame_knots(n: int, p: int, t_vector: Iterable[float]) -> Iterable[f
         yield t_vector[-1]
 
 
-def _get_best_solver(matrix: Union[List, Matrix]):
-    """ Returns best suited linear equation solver depending on matrix configuration and python interpreter. """
+def _get_best_solver(matrix: Union[List, Matrix], degree: int):
+    """ Returns best suited linear equation solver depending on matrix
+    configuration and python interpreter.
+    """
     A = matrix if isinstance(matrix, Matrix) else Matrix(matrix=matrix)
     if PYPY:
         limit = USE_BANDED_MATRIX_SOLVER_PYPY_LIMIT
@@ -341,10 +343,13 @@ def _get_best_solver(matrix: Union[List, Matrix]):
     if A.nrows < limit:  # use default equation solver
         lu = LUDecomposition(A)
     else:
-        # It is not necessary to check the whole matrix, there is guaranteed no
-        # data beyond the first empty diagonal. This is of course only true for
-        # B-spline interpolation and approximation!
-        lu = BandedMatrixLU(*banded_matrix(A, check_all=False))
+        # Theory: band parameters m1, m2 are at maximum degree-1, for
+        # B-spline interpolation and approximation:
+        # m1 = m2 = degree-1
+        # But the speed gain is not that big and just to be sure:
+        m1, m2 = detect_banded_matrix(A, check_all=False)
+        A = compact_banded_matrix(A, m1, m2)
+        lu = BandedMatrixLU(A, m1, m2)
     return lu
 
 
@@ -356,7 +361,7 @@ def global_bspline_interpolation(
 
     knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector))
     spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
-    solver = _get_best_solver([spline.basis(t) for t in t_vector])
+    solver = _get_best_solver([spline.basis(t) for t in t_vector], degree)
     control_points = solver.solve_matrix(fit_points)
     return Vector.list(control_points.rows()), knots
 
@@ -381,7 +386,7 @@ def global_bspline_interpolation_tangents(
     space = [0.0] * (n + 1)
     rows.insert(1, [-1.0, +1.0] + space)
     rows.insert(-1, space + [-1.0, +1.0])
-    solver = _get_best_solver(rows)
+    solver = _get_best_solver(rows, degree)
 
     fit_points.insert(1, Vector(start_tangent) * knots[p + 1] / p)
     fit_points.insert(-1, Vector(end_tangent) * (1.0 - knots[m - p - 1]) / p)
@@ -427,7 +432,7 @@ def global_bspline_approximation(
     Q = [sum(get_Q(k) * N[k][i] for k in range(1, n)) for i in range(1, h)]
     N = Matrix([row[1:h] for row in N[1:-1]])
     M = N.transpose() * N
-    solver = _get_best_solver(M)
+    solver = _get_best_solver(M, degree)
     P = solver.solve_matrix(Q)
     control_points = [d0]
     control_points.extend(Vector.generate(P.rows()))
