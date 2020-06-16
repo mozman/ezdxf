@@ -131,11 +131,11 @@ def finite_difference_interpolation(fit_points: List[Vector], normalize=True) ->
 
 def cardinal_interpolation(fit_points: List[Vector], tension: float) -> List[Vector]:
     # https://en.wikipedia.org/wiki/Cubic_Hermite_spline
-    def point(p0, p1):
+    def tangent(p0, p1):
         return (p0 - p1).normalize(1.0 - tension)
 
-    t = [point(fit_points[0], fit_points[1])]
+    t = [tangent(fit_points[0], fit_points[1])]
     for k in range(1, len(fit_points) - 1):
-        t.append(point(fit_points[k + 1], fit_points[k - 1]))
-    t.append(point(fit_points[-1], fit_points[-2]))
+        t.append(tangent(fit_points[k + 1], fit_points[k - 1]))
+    t.append(tangent(fit_points[-1], fit_points[-2]))
     return t

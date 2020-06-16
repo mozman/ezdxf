@@ -255,7 +255,7 @@ def _global_bspline_interpolation_end_tangents(
     m = n + p + 3
 
     knots = [0.0] * (p + 1)
-    knots.extend(sum(t_vector[j: j + p - 1]) for j in range(n - p + 2))
+    knots.extend(sum(t_vector[j: j + p - 1]) / p for j in range(n - p + 2))
     knots.extend([1.0] * (p + 1))
     assert len(knots) == m + 1
 
