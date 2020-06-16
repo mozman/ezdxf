@@ -18,7 +18,7 @@ def create_t_vector(fit_points: List[Vector], method: str) -> Iterable[float]:
 
 
 def uniform_t_vector(length: int) -> Iterable[float]:
-    n = float(length-1)
+    n = float(length - 1)
     for t in range(length):
         yield float(t) / n
 
@@ -42,16 +42,17 @@ def _normalize_distances(distances: Sequence[float]) -> Iterable[float]:
         yield s / total_length
 
 
-def estimate_tangents(points: List[Vector], method: str = 'cubic-bezier') -> List[Vector]:
+def estimate_tangents(points: List[Vector], method: str = '5-points') -> List[Vector]:
     """
     Estimate tangents for curve defined by given fit points.
     Calculated tangents are normalized (unit-vectors).
 
     Available tangent estimation methods:
 
-        - "cubic-bezier": tangents from an interpolated cubic bezier curve
         - "3-points": 3 point interpolation
         - "5-points": 5 point interpolation
+        - "cubic-bezier": tangents from an interpolated cubic bezier curve
+        - "diff": finite difference
 
     Args:
         points: start-, end- and passing points of curve
@@ -69,6 +70,8 @@ def estimate_tangents(points: List[Vector], method: str = 'cubic-bezier') -> Lis
         return tangents_3_point_interpolation(points)
     elif method.startswith('5-p'):
         return tangents_5_point_interpolation(points)
+    elif method.startswith('diff'):
+        return finite_difference_interpolation(points)
     else:
         raise ValueError(f'Unknown method: {method}')
 
@@ -112,3 +115,14 @@ def _delta_q(points: List[Vector]) -> List[Vector]:
     q.append(2.0 * q[n] - q[n - 1])  # q[n+1]
     q.append(2.0 * q[0] - q[1])  # q[-1]
     return q
+
+
+def finite_difference_interpolation(fit_points: List[Vector]) -> List[Vector]:
+    f = 2.0
+    p = fit_points
+
+    t = [(p[1] - p[0]) / f]
+    for k in range(1, len(fit_points) - 1):
+        t.append((p[k] - p[k-1]) / f + (p[k+1] - p[k]) / f)
+    t.append((p[-1] - p[-2]) / f)
+    return [v.normalize() for v in t]

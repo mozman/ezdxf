@@ -98,7 +98,7 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: rational_spline_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> BSpline
 
-.. autofunction:: local_cubic_bspline_interpolation(fit_points: Iterable[Vertex], method: str = 'cubic-bezier', tangents :Iterable[Vertex] = None) -> BSpline
+.. autofunction:: local_cubic_bspline_interpolation(fit_points: Iterable[Vertex], method: str = '5-points', tangents :Iterable[Vertex] = None) -> BSpline
 
 .. autofunction:: estimate_tangents(points: List[Vector], method: str = 'cubic-bezier') -> List[Vector]
 

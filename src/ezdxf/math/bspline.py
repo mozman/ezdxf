@@ -140,7 +140,7 @@ def global_bspline_interpolation(
 
     t_vector = list(create_t_vector(fit_points, method))
     if bool(tangents):
-        control_points, knots = _global_bspline_interpolation_tangents(
+        control_points, knots = _global_bspline_interpolation_end_tangents(
             fit_points, Vector(tangents[0]), Vector(tangents[1]), degree, t_vector)
     else:
         control_points, knots = _global_bspline_interpolation(fit_points, degree, t_vector)
@@ -243,12 +243,13 @@ def _global_bspline_interpolation(
     return Vector.list(control_points.rows()), knots
 
 
-def _global_bspline_interpolation_tangents(
+def _global_bspline_interpolation_end_tangents(
         fit_points: List[Vector],
         start_tangent: Vector,
         end_tangent: Vector,
         degree: int,
         t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
+    # DOES NOT WORK!
     n = len(fit_points) - 1
     p = degree
     m = n + p + 3
@@ -319,7 +320,7 @@ def global_bspline_approximation(
 
 def local_cubic_bspline_interpolation(
         fit_points: Iterable['Vertex'],
-        method: str = 'cubic-bezier',
+        method: str = '5-points',
         tangents: Iterable['Vertex'] = None) -> 'BSpline':
     """
     `B-spline`_ interpolation by 'Local Cubic Curve Interpolation', which creates
@@ -330,9 +331,11 @@ def local_cubic_bspline_interpolation(
 
     Available tangent estimation methods:
 
-        - "cubic-bezier": interpolate a cubic bezier curve
+
         - "3-points": 3 point interpolation
         - "5-points": 5 point interpolation
+        - "cubic-bezier": interpolate a cubic bezier curve
+        - "diff": finite difference
 
     or pass pre-calculated tangents, which overrides tangent estimation.
 
