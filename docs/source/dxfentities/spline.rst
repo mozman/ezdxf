@@ -118,7 +118,7 @@ Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. automethod:: construction_tool() -> BSpline
 
-    .. automethod:: apply_construction_tool(s: BSpline) -> None
+    .. automethod:: apply_construction_tool(s: BSpline) -> Spline
 
     .. automethod:: set_open_uniform
 

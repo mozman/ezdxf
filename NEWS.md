@@ -74,6 +74,8 @@ Version 0.13b3 - dev
 - DEPRECATED: `non_uniform_scaling` argument for `Insert.virtual_entities()`  
 - DEPRECATED: getter and edit methods in `Hatch` for attributes `paths`, `gradient`, `pattern` and `seeds` 
 - DEPRECATED: `Spline.edit_data()` all attributes accessible by properties
+- DEPRECATED: `Layout.add_spline_approx()` is misleading and will be removed in v0.15, use B-spline construction tools 
+  and `Spline.apply_construction_tool()` for special spline creations
 - BUGFIX: `ezdxf.math.intersection_ray_ray_3d()` 
 - BUGFIX: `Spline.set_periodic()` created invalid data for BricsCAD - misleading information by Autodesk
 

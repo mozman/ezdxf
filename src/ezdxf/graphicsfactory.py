@@ -4,6 +4,7 @@
 from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast
 import math
 import logging
+import warnings
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
@@ -590,6 +591,12 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes
 
         """
+        warnings.warn('Method name add_spline_approx() is misleading and will be removed in v0.15', DeprecationWarning)
+        # Universal approach to add splines from one of many B-spline construction tools:
+        # from ezdxf.math import bspline_control_frame_approx
+        # construction_tool = bspline_control_frame_approx(fit_points, ...)
+        # spline = msp.add_spline().apply.construction_tool(construction_tool)
+
         bspline = bspline_control_frame_approx(fit_points, count, degree=degree, method=method)
         return self.add_open_spline(
             control_points=bspline.control_points,

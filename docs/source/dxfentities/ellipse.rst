@@ -63,7 +63,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: construction_tool() -> ConstructionEllipse
 
-    .. automethod:: apply_construction_tool(e: ConstructionEllipse) -> None
+    .. automethod:: apply_construction_tool(e: ConstructionEllipse) -> Ellipse
 
     .. automethod:: vertices(params:Iterable[float]) -> Iterable[Vector]
 

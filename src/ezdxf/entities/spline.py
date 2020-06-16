@@ -205,7 +205,7 @@ class Spline(DXFGraphic):
         else:
             raise ValueError('Construction tool requires control- or fit points.')
 
-    def apply_construction_tool(self, s: BSpline) -> None:
+    def apply_construction_tool(self, s: BSpline) -> 'Spline':
         """
         Set SPLINE data from construction tool :class:`ezdxf.math.BSpline`.
 
@@ -218,6 +218,7 @@ class Spline(DXFGraphic):
         self.knots = s.knots()
         self.weights = s.weights()
         self.set_flag_state(Spline.RATIONAL, state=bool(len(self.weights)))
+        return self  # floating interface
 
     @classmethod
     def from_arc(cls, entity: 'DXFGraphic') -> 'Spline':

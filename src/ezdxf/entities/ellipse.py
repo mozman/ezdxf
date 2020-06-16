@@ -88,7 +88,7 @@ class Ellipse(DXFGraphic):
             dxf.end_param,
         )
 
-    def apply_construction_tool(self, e: ConstructionEllipse) -> None:
+    def apply_construction_tool(self, e: ConstructionEllipse) -> 'Ellipse':
         """
         Set ELLIPSE data from construction tool :class:`ezdxf.math.ConstructionEllipse`.
 
@@ -96,6 +96,7 @@ class Ellipse(DXFGraphic):
 
         """
         self.update_dxf_attribs(e.dxfattribs())
+        return self  # floating interface
 
     def params(self, num: int) -> Iterable[float]:
         """ Returns `num` params from start- to end param in counter clockwise order.
