@@ -545,7 +545,9 @@ class CreatorInterface:
     def add_spline_control_frame(self, fit_points: Iterable['Vertex'], degree: int = 3, method: str = 'chord',
                                  dxfattribs: dict = None) -> 'Spline':
         """
-        Add a :class:`~ezdxf.entities.Spline` entity trough fit points but defined by control points.
+        Add a :class:`~ezdxf.entities.Spline` entity passing through given fit points by
+        global B-spline interpolation, the new SPLINE entity is defined by a control frame
+        and not by the fit points.
 
         - "uniform": creates a uniform t vector, from 0 to 1 evenly spaced, see `uniform`_ method
         - "distance", "chord": creates a t vector with values proportional to the fit point distances,
@@ -594,8 +596,8 @@ class CreatorInterface:
         warnings.warn('Method name add_spline_approx() is misleading and will be removed in v0.15', DeprecationWarning)
         # Universal approach to add splines from one of many B-spline construction tools:
         # from ezdxf.math import bspline_control_frame_approx
-        # construction_tool = bspline_control_frame_approx(fit_points, ...)
-        # spline = msp.add_spline().apply.construction_tool(construction_tool)
+        # spline_tool = bspline_control_frame_approx(fit_points, ...)
+        # spline = msp.add_spline().apply_construction_tool(spline_tool)
 
         bspline = bspline_control_frame_approx(fit_points, count, degree=degree, method=method)
         return self.add_open_spline(
