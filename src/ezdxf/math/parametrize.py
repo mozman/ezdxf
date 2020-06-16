@@ -4,6 +4,7 @@ from typing import List, Iterable, Sequence
 import math
 from ezdxf.math import Vector
 from ezdxf.lldxf.const import DXFValueError
+from .bezier4p import tangents_cubic_bezier_interpolation
 
 
 def create_t_vector(fit_points: List[Vector], method: str) -> Iterable[float]:
@@ -62,8 +63,6 @@ def estimate_tangents(points: List[Vector], method: str = '5-points') -> List[Ve
         tangents as list of :class:`Vector` objects
 
     """
-    from .bezier4p import tangents_cubic_bezier_interpolation
-
     if method == 'cubic-bezier':
         return tangents_cubic_bezier_interpolation(points, normalize=True)
     elif method.startswith('3-p'):
@@ -117,12 +116,26 @@ def _delta_q(points: List[Vector]) -> List[Vector]:
     return q
 
 
-def finite_difference_interpolation(fit_points: List[Vector]) -> List[Vector]:
+def finite_difference_interpolation(fit_points: List[Vector], normalize=True) -> List[Vector]:
     f = 2.0
     p = fit_points
 
     t = [(p[1] - p[0]) / f]
     for k in range(1, len(fit_points) - 1):
-        t.append((p[k] - p[k-1]) / f + (p[k+1] - p[k]) / f)
+        t.append((p[k] - p[k - 1]) / f + (p[k + 1] - p[k]) / f)
     t.append((p[-1] - p[-2]) / f)
-    return [v.normalize() for v in t]
+    if normalize:
+        t = [v.normalize() for v in t]
+    return t
+
+
+def cardinal_interpolation(fit_points: List[Vector], tension: float) -> List[Vector]:
+    # https://en.wikipedia.org/wiki/Cubic_Hermite_spline
+    def point(p0, p1):
+        return (p0 - p1).normalize(1.0 - tension)
+
+    t = [point(fit_points[0], fit_points[1])]
+    for k in range(1, len(fit_points) - 1):
+        t.append(point(fit_points[k + 1], fit_points[k - 1]))
+    t.append(point(fit_points[-1], fit_points[-2]))
+    return t

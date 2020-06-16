@@ -281,7 +281,7 @@ def tangents_cubic_bezier_interpolation(fit_points: List[Vector], normalize=True
     tangents = [(curve.control_points[1] - curve.control_points[0]) for curve in curves]
 
     last_points = curves[-1].control_points
-    tangents.append(last_points[1] - last_points[0])
+    tangents.append(last_points[2] - last_points[1])
     if normalize:
         tangents = [t.normalize() for t in tangents]
     return tangents
