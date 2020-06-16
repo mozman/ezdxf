@@ -9,7 +9,7 @@ import reprlib
 __all__ = [
     'Matrix', 'gauss_vector_solver', 'gauss_matrix_solver', 'gauss_jordan_solver', 'gauss_jordan_inverse',
     'LUDecomposition', 'freeze_matrix', 'tridiagonal_vector_solver', 'tridiagonal_matrix_solver',
-    'detect_banded_matrix', 'compact_banded_matrix', 'BandedMatrixLU', 'banded_matrix', 'SVD'
+    'detect_banded_matrix', 'compact_banded_matrix', 'BandedMatrixLU', 'banded_matrix', 'SVD', 'quadratic_equation',
 ]
 
 
@@ -328,7 +328,7 @@ class Matrix:
         return LUDecomposition(self).determinant()
 
 
-def quadratric_equation(a: float, b: float, c: float) -> Tuple[float, float]:
+def quadratic_equation(a: float, b: float, c: float) -> Tuple[float, float]:
     discriminant = math.sqrt(b ** 2 - 4 * a * c)
     return ((-b + discriminant) / (2.0 * a)), ((-b - discriminant) / (2.0 * a))
 

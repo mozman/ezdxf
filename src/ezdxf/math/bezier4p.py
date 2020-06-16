@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     'Bezier4P', 'cubic_bezier_interpolation', 'cubic_bezier_arc_parameters', 'cubic_bezier_from_arc',
-    'cubic_bezier_from_ellipse', 'cube_bezier_end_tangents',
+    'cubic_bezier_from_ellipse', 'tangents_cubic_bezier_interpolation',
 ]
 
 
@@ -273,17 +273,15 @@ def cubic_bezier_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
         yield Bezier4P(defpoints)
 
 
-def cube_bezier_end_tangents(points: List[Vector]) -> Tuple[Vector, Vector]:
-    """ Returns start- and end tangent for a Bézier curve interpolation of `points`.
-
-    .. versionadded:: 0.13
-
-    """
-    if len(points) < 3:
+def tangents_cubic_bezier_interpolation(fit_points: List[Vector], normalize=True) -> List[Vector]:
+    if len(fit_points) < 3:
         raise ValueError('At least 3 points required')
-    curves = list(cubic_bezier_interpolation(points))
-    points = curves[0].control_points
-    start_tangent = points[1] - points[0]
-    points = curves[-1].control_points
-    end_tangent = points[3] - points[2]
-    return start_tangent, end_tangent
+
+    curves = list(cubic_bezier_interpolation(fit_points))
+    tangents = [(curve.control_points[1] - curve.control_points[0]) for curve in curves]
+
+    last_points = curves[-1].control_points
+    tangents.append(last_points[1] - last_points[0])
+    if normalize:
+        tangents = [t.normalize() for t in tangents]
+    return tangents

@@ -2,7 +2,8 @@
 # License: MIT License
 from math import isclose
 from ezdxf.math import Vector
-from ezdxf.math.bspline import bspline_basis_vector, Basis, uniform_t_vector, control_frame_knots
+from ezdxf.math.parametrize import uniform_t_vector
+from ezdxf.math.bspline import bspline_basis_vector, Basis, control_frame_knots
 from ezdxf.math.bspline import bspline_control_frame_approx
 
 POINTS2 = [(1, 1), (2, 4), (4, 1), (7, 6), (5, 8), (3, 3), (1, 7)]
@@ -12,7 +13,7 @@ def test_basis_vector_N_ip():
     degree = 3
     fit_points = Vector.list(POINTS2)  # data points D
     n = len(fit_points) - 1
-    t_vector = list(uniform_t_vector(fit_points))
+    t_vector = list(uniform_t_vector(len(fit_points)))
     knots = list(control_frame_knots(n, degree, t_vector))
     should_count = len(fit_points) - 2  # target control point count
     h = should_count - 1

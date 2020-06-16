@@ -1,13 +1,14 @@
 import pytest
 import ezdxf
 from math import isclose
+from ezdxf.math import Vector
 from ezdxf.math.bspline import bspline_interpolation
-from ezdxf.math.bspline import uniform_t_vector, distance_t_vector, centripetal_t_vector
+from ezdxf.math.parametrize import uniform_t_vector, distance_t_vector, centripetal_t_vector
 from ezdxf.math.bspline import control_frame_knots, required_knot_values
 
 
-POINTS1 = [(1, 1), (2, 4), (4, 1), (7, 6)]
-POINTS2 = [(1, 1), (2, 4), (4, 1), (7, 6), (5, 8), (3, 3), (1, 7)]
+POINTS1 = Vector.list([(1, 1), (2, 4), (4, 1), (7, 6)])
+POINTS2 = Vector.list([(1, 1), (2, 4), (4, 1), (7, 6), (5, 8), (3, 3), (1, 7)])
 
 
 @pytest.fixture(params=[POINTS1, POINTS2])
@@ -16,7 +17,7 @@ def fit_points(request):
 
 
 def test_uniform_t_array(fit_points):
-    t_vector = list(uniform_t_vector(fit_points))
+    t_vector = list(uniform_t_vector(len(fit_points)))
     assert len(t_vector) == len(fit_points)
     assert t_vector[0] == 0.
     assert t_vector[-1] == 1.
@@ -57,7 +58,7 @@ def test_control_frame_knot_values(fit_points):
     degrees = (2, 3, 4) if len(fit_points) > 4 else (2, 3)
     for p in degrees:  # degree
         order = p + 1
-        t_vector = uniform_t_vector(fit_points)
+        t_vector = uniform_t_vector(len(fit_points))
         knots = list(control_frame_knots(n, p, t_vector))
         assert len(knots) == required_knot_values(count, order)
         assert len(set(knots[:order])) == 1, 'first order elements have to be equal'

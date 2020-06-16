@@ -16,10 +16,11 @@ https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node5.html:
 """
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional, Union
 import math
-from .vector import Vector, distance
+from .vector import Vector
+from .parametrize import create_t_vector
 from .linalg import (
     LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix, detect_banded_matrix,
-    quadratric_equation
+    quadratic_equation
 )
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf import PYPY
@@ -103,31 +104,6 @@ def required_knot_values(count: int, order: int) -> int:
         raise DXFValueError('Invalid count/order combination')
     # n + p + 2 = count + order
     return n + p + 2
-
-
-def uniform_t_vector(fit_points: Sequence) -> Iterable[float]:
-    n = float(len(fit_points) - 1)
-    for t in range(len(fit_points)):
-        yield float(t) / n
-
-
-def distance_t_vector(fit_points: Iterable['Vertex']) -> Iterable[float]:
-    distances = [distance(p1, p2) for p1, p2 in zip(fit_points, fit_points[1:])]
-    yield from _normalize_distances(distances)
-
-
-def centripetal_t_vector(fit_points: Iterable['Vertex']) -> Iterable[float]:
-    distances = [math.sqrt(distance(p1, p2)) for p1, p2 in zip(fit_points, fit_points[1:])]
-    yield from _normalize_distances(distances)
-
-
-def _normalize_distances(distances: Sequence[float]) -> Iterable[float]:
-    total_length = sum(distances)
-    s = 0.0
-    yield s
-    for d in distances:
-        s += d
-        yield s / total_length
 
 
 def bspline_basis(u: float, index: int, degree: int, knots: Sequence[float]) -> float:
@@ -249,12 +225,12 @@ def bspline_interpolation(
     if bool(tangents):
         start_tangent, end_tangent = tangents
         if not all(tangents):
-            from .bezier4p import cube_bezier_end_tangents
-            s, e = cube_bezier_end_tangents(fit_points)
+            from .bezier4p import tangents_cubic_bezier_interpolation
+            tangents = tangents_cubic_bezier_interpolation(fit_points, normalize=False)
             if not start_tangent:
-                start_tangent = s
+                start_tangent = tangents[0]
             if not end_tangent:
-                end_tangent = e
+                end_tangent = tangents[-1]
         control_points, knots = global_bspline_interpolation_tangents(fit_points, start_tangent, end_tangent, degree,
                                                                       t_vector)
     else:
@@ -285,7 +261,7 @@ def bspline_control_frame_approx(
 
     """
 
-    fit_points = list(fit_points)
+    fit_points = Vector.list(fit_points)
     order = degree + 1
     if order > count:
         raise DXFValueError('More control points for degree {} required.'.format(degree))
@@ -295,17 +271,6 @@ def bspline_control_frame_approx(
     control_points = global_bspline_approximation(fit_points, count, degree, t_vector, knots)
     bspline = BSpline(control_points, order=order)
     return bspline
-
-
-def create_t_vector(fit_points: List[Vector], method: str) -> Iterable[float]:
-    if method == 'uniform':
-        return uniform_t_vector(fit_points)  # equally spaced 0 .. 1
-    elif method in ('distance', 'chord'):
-        return distance_t_vector(fit_points)
-    elif method in ('centripetal', 'sqrt_chord'):
-        return centripetal_t_vector(fit_points)
-    else:
-        raise DXFValueError('Unknown method: {}'.format(method))
 
 
 def control_frame_knots(n: int, p: int, t_vector: Iterable[float]) -> Iterable[float]:
@@ -443,48 +408,45 @@ def global_bspline_approximation(
     return control_points
 
 
-def estimate_cubic_spline_tangents_3p(fit_points: List[Vector], method: str = 'chord') -> List[Vector]:
-    t = list(create_t_vector(fit_points, method))
-    delta_t = [t1 - t0 for t0, t1 in zip(t, t[1:])]
-    q = _delta_q(fit_points)
-    d = [qk / dtk for qk, dtk in zip(q, delta_t)]
-    alpha = [dt0 / (dt0 + dt1) for dt0, dt1 in zip(delta_t, delta_t[1:])]
-    tangents = [0.0]  # dummy
-    tangents.extend([(1.0 - alpha[k]) * d[k] + alpha[k] * d[k + 1] for k in range(len(d) - 1)])
-    tangents[0] = 2.0 * d[0] - tangents[1]
-    tangents.append(2.0 * d[-1] - tangents[-1])
-    return [tangent.normalize() for tangent in tangents]
+def local_cubic_bspline_interpolation(
+        fit_points: Iterable['Vertex'],
+        method: str = 'cubic-bezier',
+        tangents: Iterable['Vertex'] = None) -> 'BSpline':
+    """
+    `B-spline`_ interpolation by 'Local Cubic Curve Interpolation', which creates
+    B-spline from fit points and estimated tangent direction at start-, end- and
+    passing points.
+
+    Algorithm: "The NURBS Book" chapter 9.3.4 Local Cubic Curve Interpolation
+
+    Available tangent estimation methods:
+
+        - "cubic-bezier": interpolate a cubic bezier curve
+        - "3-points": 3 point interpolation
+        - "5-points": 5 point interpolation
+
+    or pass pre-calculated tangents, which overrides tangent estimation.
+
+    Args:
+        fit_points: all B-spline fit points as :class:`Vector` compatible objects
+        method: tangent estimation method
+        tangents: tangents as :class:`Vector` compatible objects (optional)
+
+    Returns:
+        :class:`BSpline`
+
+    """
+    from .parametrize import estimate_tangents
+    fit_points = Vector.list(fit_points)
+    if tangents:
+        tangents = Vector.list(tangents)
+    else:
+        tangents = estimate_tangents(fit_points, method)
+    control_points, knots = local_cubic_bspline_interpolation_from_tangents(fit_points, tangents)
+    return BSpline(control_points, order=4, knots=knots)
 
 
-def _delta_q(points: List[Vector]) -> List[Vector]:
-    n = len(points)
-    q = [0.0]  # dummy
-    q.extend([points[k + 1] - points[k] for k in range(n - 1)])
-    q[0] = 2.0 * q[1] - q[2]
-    q.append(2.0 * q[n - 1] - q[n - 2])  # q[n]
-    q.append(2.0 * q[n] - q[n - 1])  # q[n+1]
-    q.append(2.0 * q[0] - q[1])  # q[-1]
-    return q
-
-
-def estimate_cubic_spline_tangents_5p(fit_points: List[Vector]) -> List[Vector]:
-    n = len(fit_points)
-    q = _delta_q(fit_points)
-
-    alpha = list()
-    for k in range(n):
-        v1 = (q[k - 1].cross(q[k])).magnitude
-        v2 = (q[k + 1].cross(q[k + 2])).magnitude
-        alpha.append(v1 / (v1 + v2))
-
-    tangents = []
-    for k in range(n):
-        vk = (1.0 - alpha[k]) * q[k] + alpha[k] * q[k + 1]
-        tangents.append(vk / vk.magnitude)
-    return tangents
-
-
-def local_cubic_bspline_interpolation(fit_points: List[Vector], tangents: List[Vector]) -> Tuple[
+def local_cubic_bspline_interpolation_from_tangents(fit_points: List[Vector], tangents: List[Vector]) -> Tuple[
     List[Vector], List[float]]:
     """ The NURBS Book: Chapter 9.3.4 Local Cubic Curve Interpolation
 
@@ -512,7 +474,7 @@ def local_cubic_bspline_interpolation(fit_points: List[Vector], tangents: List[V
         a = 16.0 - (t0 + t3).magnitude_square
         b = 12.0 * (p3 - p0).dot(t0 + t3)
         c = -36.0 * (p3 - p0).magnitude_square
-        alpha_plus, alpha_minus = quadratric_equation(a, b, c)
+        alpha_plus, alpha_minus = quadratic_equation(a, b, c)
         p1 = p0 + alpha_plus * t0 / 3.0
         p2 = p3 - alpha_plus * t3 / 3.0
         control_points.extend((p1, p2))

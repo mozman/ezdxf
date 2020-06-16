@@ -18,10 +18,11 @@ from .linalg import (
     freeze_matrix, tridiagonal_matrix_solver, tridiagonal_vector_solver, detect_banded_matrix, compact_banded_matrix,
     BandedMatrixLU, banded_matrix,
 )
+from .parametrize import estimate_tangents
 from .bspline import (
     bspline_interpolation, bspline_control_frame_approx, rational_spline_from_arc, rational_spline_from_ellipse,
     uniform_knot_vector, open_uniform_knot_vector, required_knot_values, BSpline, BSplineU, BSplineClosed, DBSpline,
-    DBasisU, DBSplineClosed, DBSplineU,
+    DBasisU, DBSplineClosed, DBSplineU, local_cubic_bspline_interpolation,
 )
 from .bezier import Bezier, DBezier
 from .bezier4p import Bezier4P, cubic_bezier_from_arc, cubic_bezier_from_ellipse, cubic_bezier_interpolation
