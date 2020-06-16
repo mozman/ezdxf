@@ -249,7 +249,7 @@ def _global_bspline_interpolation_end_tangents(
         end_tangent: Vector,
         degree: int,
         t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
-    # DOES NOT WORK!
+    # Algorithm still incorrect!
     n = len(fit_points) - 1
     p = degree
     m = n + p + 3
@@ -262,12 +262,14 @@ def _global_bspline_interpolation_end_tangents(
     spline = Basis(knots=knots, order=p + 1, count=n + 3)
     rows = [spline.basis(u) for u in t_vector]
     space = [0.0] * (n + 1)
-    rows.insert(1, [-1.0, +1.0] + space)
-    rows.insert(-1, space + [-1.0, +1.0])
+    v = p / knots[p + 1]
+    rows.insert(1, [-v, v] + space)
+    v = p / (1.0 - knots[m - p - 1])
+    rows.insert(-1, space + [-v, v])
     solver = _get_best_solver(rows, degree)
 
-    fit_points.insert(1, start_tangent * (knots[p + 1] / p))
-    fit_points.insert(-1, end_tangent * ((1.0 - knots[m - p - 1]) / p))
+    fit_points.insert(1, start_tangent)
+    fit_points.insert(-1, end_tangent)
     control_points = solver.solve_matrix(fit_points)
     return Vector.list(control_points.rows()), knots
 
