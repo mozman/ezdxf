@@ -573,9 +573,6 @@ def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
     return gauss_jordan_solver(A, repeat([0.0], nrows))[0]
 
 
-TINY = 1e-12
-
-
 class LUDecomposition:
     """ Represents a `LU decomposition`_ matrix of A, raise :class:`ZeroDivisionError` for a singular matrix.
 
@@ -588,6 +585,9 @@ class LUDecomposition:
 
     Args:
         A: matrix [[a11, a12, ..., a1n], [a21, a22, ..., a2n], [a21, a22, ..., a2n], ... [an1, an2, ..., ann]]
+
+    raises:
+        ZeroDivisionError: singular matrix
 
     .. versionadded:: 0.13
 
@@ -622,8 +622,6 @@ class LUDecomposition:
                 scaling[imax] = scaling[k]
 
             index.append(imax)
-            if lu[k][k] == 0.0:
-                lu[k][k] = TINY
             for i in range(k + 1, n):
                 temp = lu[i][k] / lu[k][k]
                 lu[i][k] = temp
@@ -958,9 +956,6 @@ class BandedMatrixLU:
                     dum = upper[j][0]
                     i = j
             self.index[k] = i + 1
-            if dum == 0.0:
-                upper[k][0] = 1.0e-40  # avoid DivisionByZero exception
-
             if i != k:
                 self._det = -self._det
                 for j in range(mm):

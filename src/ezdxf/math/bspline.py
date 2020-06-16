@@ -262,14 +262,14 @@ def _global_bspline_interpolation_end_tangents(
     spline = Basis(knots=knots, order=p + 1, count=n + 3)
     rows = [spline.basis(u) for u in t_vector]
     space = [0.0] * (n + 1)
-    v = p / knots[p + 1]
-    rows.insert(1, [-v, v] + space)
-    v = p / (1.0 - knots[m - p - 1])
-    rows.insert(-1, space + [-v, v])
-    solver = _get_best_solver(rows, degree)
-
+    v1 = p / knots[p + 1]
+    rows.insert(1, [-v1, v1] + space)
+    v2 = p / (1.0 - knots[m - p - 1])
+    rows.insert(-1, space + [-v2, v2])
     fit_points.insert(1, start_tangent)
     fit_points.insert(-1, end_tangent)
+
+    solver = _get_best_solver(rows, degree)
     control_points = solver.solve_matrix(fit_points)
     return Vector.list(control_points.rows()), knots
 
