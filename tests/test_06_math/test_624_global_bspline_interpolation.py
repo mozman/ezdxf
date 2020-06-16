@@ -2,7 +2,7 @@ import pytest
 import ezdxf
 from math import isclose
 from ezdxf.math import Vector
-from ezdxf.math.bspline import bspline_interpolation
+from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math.parametrize import uniform_t_vector, distance_t_vector, centripetal_t_vector
 from ezdxf.math.bspline import control_frame_knots, required_knot_values
 
@@ -68,7 +68,7 @@ def test_control_frame_knot_values(fit_points):
 
 
 def test_bspline_interpolation(fit_points):
-    spline = bspline_interpolation(fit_points, degree=3)
+    spline = global_bspline_interpolation(fit_points, degree=3)
     assert len(spline.control_points) == len(fit_points)
     assert spline.t_array[0] == 0.
     assert spline.t_array[-1] == 1.
@@ -135,7 +135,7 @@ expected = [
 
 def test_check_values():
     test_points = [(0., 0.), (1., 2.), (3., 1.), (5., 3.)]
-    spline = bspline_interpolation(test_points, degree=3, method='distance')
+    spline = global_bspline_interpolation(test_points, degree=3, method='distance')
     result = list(spline.approximate(49))
     assert len(result) == 50
     for p1, p2 in zip(result, expected):

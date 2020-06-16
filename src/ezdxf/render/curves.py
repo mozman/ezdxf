@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Iterable, List, Tuple, Optional
 import random
 import math
 from ezdxf.math import Vector, Vec2, Matrix44, perlin
-from ezdxf.math.bspline import bspline_interpolation
+from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math.bspline import BSpline, BSplineU, BSplineClosed
 from ezdxf.math.bezier4p import Bezier4P
 from ezdxf.math.eulerspiral import EulerSpiral as _EulerSpiral
@@ -219,7 +219,7 @@ class Spline:
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
         """
-        spline = bspline_interpolation(self.points, degree=degree, method=method)
+        spline = global_bspline_interpolation(self.points, degree=degree, method=method)
         vertices = list(spline.approximate(self.segments))
         if any(vertex.z != 0. for vertex in vertices):
             layout.add_polyline3d(vertices, dxfattribs=dxfattribs)

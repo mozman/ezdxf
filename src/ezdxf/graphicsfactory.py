@@ -8,7 +8,7 @@ import logging
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
 from ezdxf.math import Vector
-from ezdxf.math import bspline_interpolation, bspline_control_frame_approx
+from ezdxf.math import global_bspline_interpolation, bspline_control_frame_approx
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
@@ -562,7 +562,7 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes
 
         """
-        bspline = bspline_interpolation(fit_points, degree=degree, method=method)
+        bspline = global_bspline_interpolation(fit_points, degree=degree, method=method)
         return self.add_open_spline(
             control_points=bspline.control_points,
             degree=bspline.degree,

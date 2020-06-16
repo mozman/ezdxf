@@ -43,11 +43,11 @@ Version 0.13b3 - dev
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
 - NEW: `ezdxf.math.rational_spline_from_arc()` returns a rational B-spline for a circular arc
 - NEW: `ezdxf.math.rational_spline_from_ellipse()` returns a rational B-spline for an elliptic arc
+- NEW: `ezdxf.math.local_cubic_bspline_interpolation()`
 - NEW: `ezdxf.math.cubic_bezier_from_arc()` returns an approximation for a circular 2D arc by multiple cubic Bézier curves
 - NEW: `ezdxf.math.cubic_bezier_from_ellipse()` returns an approximation for an elliptic arc by multiple cubic Bézier curves
 - NEW: `ezdxf.math.cubic_bezier_interpolation()` returns an interpolation curve for arbitrary data points as multiple cubic Bézier curves
 - NEW: `ezdxf.math.LUDecomposition` linear equation solver, for more linear algebra tools see module `ezdxf.math.linalg`
-- NEW: `ezdxf.math.local_cubic_bspline_interpolation()`
 - NEW: `ezdxf.render.random_2d_path()` generate random 2D path for testing purpose
 - NEW: `ezdxf.render.random_3d_path()` generate random 3D path for testing purpose
 - NEW: `BSpline.from_arc()` B-spline from an arc, best approximation with a minimum number of control points
@@ -64,7 +64,7 @@ Version 0.13b3 - dev
 - CHANGE: renamed old `Insert.scale()` to `Insert.set_scale()`, name conflict with transformation interface
 - CHANGE: renamed `Spline.set_periodic()` to `Spline.set_closed()`
 - CHANGE: renamed `Spline.set_periodic_rational()` to `Spline.set_closed_rational()`
-- CHANGE: renamed `ezdxf.math.bspline_control_frame()` to `ezdxf.math.bspline_interpolation()`
+- CHANGE: renamed `ezdxf.math.bspline_control_frame()` to `ezdxf.math.global_bspline_interpolation()`
 - REMOVED: `ezdxf.math.Matrix33` class, `UCS` and `OCS` uses `Matrix44`for transformations  
 - REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`
 - REMOVED: `ezdxf.math.ConstructionTool` base class

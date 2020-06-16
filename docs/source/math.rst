@@ -90,7 +90,7 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-10) -> Sequence[Vector]
 
-.. autofunction:: bspline_interpolation
+.. autofunction:: global_bspline_interpolation
 
 .. autofunction:: bspline_control_frame_approx
 

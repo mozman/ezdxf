@@ -8,7 +8,7 @@ from enum import IntEnum
 import random
 from ezdxf.math import Vector, Matrix44, Vec2
 from ezdxf.math.construct2d import is_close_points
-from ezdxf.math.bspline import bspline_interpolation
+from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math.eulerspiral import EulerSpiral
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
@@ -624,7 +624,7 @@ def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: 
 
     """
     vertices = list(vertices)
-    spline = bspline_interpolation(vertices, degree=degree, method=method)
+    spline = global_bspline_interpolation(vertices, degree=degree, method=method)
     return list(spline.approximate(segments=(len(vertices) - 1) * subdivide))
 
 

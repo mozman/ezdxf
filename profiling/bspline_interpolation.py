@@ -5,14 +5,14 @@ import time
 import ezdxf
 from pathlib import Path
 import math
-from ezdxf.math import bspline_interpolation, BoundingBox, linspace, BSpline
+from ezdxf.math import global_bspline_interpolation, BoundingBox, linspace, BSpline
 from ezdxf.render import random_3d_path
 DIR = Path('~/Desktop/Outbox').expanduser()
 
 
 def profile_bspline_interpolation(count, path):
     for _ in range(count):
-        bspline_interpolation(path)
+        global_bspline_interpolation(path)
 
 
 def profile_vertex_calculation(count, spline, num):
@@ -34,7 +34,7 @@ def export_path(path):
     bbox = BoundingBox(path)
     msp.add_polyline3d(path, dxfattribs={'layer': 'Path', 'color': 2})
     spline = msp.add_spline(dxfattribs={'layer': 'B-spline', 'color': 1})
-    curve = bspline_interpolation(path)
+    curve = global_bspline_interpolation(path)
     spline.apply_construction_tool(curve)
     doc.set_modelspace_vport(center=bbox.center, height=bbox.size[1])
     doc.saveas(DIR / 'path1.dxf')

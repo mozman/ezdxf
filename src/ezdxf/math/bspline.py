@@ -106,90 +106,7 @@ def required_knot_values(count: int, order: int) -> int:
     return n + p + 2
 
 
-def bspline_basis(u: float, index: int, degree: int, knots: Sequence[float]) -> float:
-    """
-    B-spline basis function.
-
-    Simple recursive implementation for testing and comparison.
-
-    Args:
-        u: curve parameter in range [0 .. max(knots)]
-        index: index of control point
-        degree: degree of B-spline
-        knots: knots vector
-
-    Returns:
-        float: basis value N_i,p(u)
-
-    """
-    cache = {}  # type: Dict[Tuple[int, int], float]
-    u = float(u)
-
-    def N(i: int, p: int) -> float:
-        try:
-            return cache[(i, p)]
-        except KeyError:
-            if p == 0:
-                retval = 1 if knots[i] <= u < knots[i + 1] else 0.
-            else:
-                dominator = (knots[i + p] - knots[i])
-                f1 = (u - knots[i]) / dominator * N(i, p - 1) if dominator else 0.
-
-                dominator = (knots[i + p + 1] - knots[i + 1])
-                f2 = (knots[i + p + 1] - u) / dominator * N(i + 1, p - 1) if dominator else 0.
-
-                retval = f1 + f2
-            cache[(i, p)] = retval
-            return retval
-
-    return N(int(index), int(degree))
-
-
-def bspline_basis_vector(u: float, count: int, degree: int, knots: Sequence[float]) -> List[float]:
-    """
-    Create basis vector at parameter u.
-
-    Used with the bspline_basis() for testing and comparison.
-
-    Args:
-        u: curve parameter in range [0 .. max(knots)]
-        count: control point count (n + 1)
-        degree: degree of B-spline (order = degree + 1)
-        knots: knot vector
-
-    Returns:
-        List[float]: basis vector, len(basis) == count
-
-    """
-    assert len(knots) == (count + degree + 1)
-    basis = [bspline_basis(u, index, degree, knots) for index in range(count)]  # type: List[float]
-    if math.isclose(u, knots[-1]):  # pick up last point ??? why is this necessary ???
-        basis[-1] = 1.
-    return basis
-
-
-def bspline_vertex(u: float, degree: int, control_points: Sequence['Vertex'], knots: Sequence[float]) -> Vector:
-    """
-    Calculate B-spline vertex at parameter u.
-
-    Used with the bspline_basis_vector() for testing and comparison.
-
-    Args:
-        u:  curve parameter in range [0 .. max(knots)]
-        degree: degree of B-spline (order = degree + 1)
-        control_points: control points as list of (x, y[,z]) tuples
-        knots: knot vector as list of floats, len(knots) == (count + order)
-
-    """
-    basis_vector = bspline_basis_vector(u, count=len(control_points), degree=degree, knots=knots)
-
-    vertex = Vector()
-    for basis, point in zip(basis_vector, control_points):
-        vertex += Vector(point) * basis
-    return vertex
-
-
-def bspline_interpolation(
+def global_bspline_interpolation(
         fit_points: Iterable['Vertex'], degree: int = 3,
         tangents: Tuple['Vertex', 'Vertex'] = None,
         method: str = 'chord') -> 'BSpline':
@@ -223,18 +140,12 @@ def bspline_interpolation(
 
     t_vector = list(create_t_vector(fit_points, method))
     if bool(tangents):
-        start_tangent, end_tangent = tangents
-        if not all(tangents):
-            from .bezier4p import tangents_cubic_bezier_interpolation
-            tangents = tangents_cubic_bezier_interpolation(fit_points, normalize=False)
-            if not start_tangent:
-                start_tangent = tangents[0]
-            if not end_tangent:
-                end_tangent = tangents[-1]
-        control_points, knots = global_bspline_interpolation_tangents(fit_points, start_tangent, end_tangent, degree,
-                                                                      t_vector)
+        start_tangent = Vector(tangents[0])
+        end_tangent = Vector(tangents[1])
+        control_points, knots = _global_bspline_interpolation_tangents(
+            fit_points, start_tangent, end_tangent, degree, t_vector)
     else:
-        control_points, knots = global_bspline_interpolation(fit_points, degree, t_vector)
+        control_points, knots = _global_bspline_interpolation(fit_points, degree, t_vector)
 
     bspline = BSpline(control_points, order=order, knots=knots)
     bspline.t_array = t_vector
@@ -254,7 +165,7 @@ def bspline_control_frame_approx(
         fit_points: all fit points of B-spline as :class:`Vector` compatible objects
         count: count of designated control points
         degree: degree of B-spline
-        method: calculation method for parameter vector t, see :func:`bspline_interpolation`
+        method: calculation method for parameter vector t, see :func:`global_bspline_interpolation`
 
     Returns:
         :class:`BSpline`
@@ -321,7 +232,7 @@ def _get_best_solver(matrix: Union[List, Matrix], degree: int):
     return lu
 
 
-def global_bspline_interpolation(
+def _global_bspline_interpolation(
         fit_points: Sequence['Vertex'],
         degree: int,
         t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
@@ -334,7 +245,7 @@ def global_bspline_interpolation(
     return Vector.list(control_points.rows()), knots
 
 
-def global_bspline_interpolation_tangents(
+def _global_bspline_interpolation_tangents(
         fit_points: List[Vector],
         start_tangent: Vector,
         end_tangent: Vector,
@@ -356,8 +267,8 @@ def global_bspline_interpolation_tangents(
     rows.insert(-1, space + [-1.0, +1.0])
     solver = _get_best_solver(rows, degree)
 
-    fit_points.insert(1, Vector(start_tangent) * knots[p + 1] / p)
-    fit_points.insert(-1, Vector(end_tangent) * (1.0 - knots[m - p - 1]) / p)
+    fit_points.insert(1, start_tangent * knots[p + 1] / p)
+    fit_points.insert(-1, end_tangent * (1.0 - knots[m - p - 1]) / p)
     control_points = solver.solve_matrix(fit_points)
     return Vector.list(control_points.rows()), knots
 
@@ -660,7 +571,7 @@ class BSpline:
         """ Returns :class:`BSpline` defined by fit points. """
         fit_points = Vector.list(points)
         t_vector = list(create_t_vector(fit_points, method))
-        control_points, knots = global_bspline_interpolation(fit_points, degree, t_vector)
+        control_points, knots = _global_bspline_interpolation(fit_points, degree, t_vector)
         spline = cls(control_points, order=degree + 1, knots=knots)
         spline.t_array = t_vector
         return spline
@@ -1015,3 +926,86 @@ def nurbs_arc_parameters(start_angle: float, end_angle: float, segments: int = 1
     knots.extend([1.0] * (required_knot_values(len(control_points), 3) - len(knots)))
 
     return control_points, weights, knots
+
+
+def bspline_basis(u: float, index: int, degree: int, knots: Sequence[float]) -> float:
+    """
+    B-spline basis function.
+
+    Simple recursive implementation for testing and comparison.
+
+    Args:
+        u: curve parameter in range [0 .. max(knots)]
+        index: index of control point
+        degree: degree of B-spline
+        knots: knots vector
+
+    Returns:
+        float: basis value N_i,p(u)
+
+    """
+    cache = {}  # type: Dict[Tuple[int, int], float]
+    u = float(u)
+
+    def N(i: int, p: int) -> float:
+        try:
+            return cache[(i, p)]
+        except KeyError:
+            if p == 0:
+                retval = 1 if knots[i] <= u < knots[i + 1] else 0.
+            else:
+                dominator = (knots[i + p] - knots[i])
+                f1 = (u - knots[i]) / dominator * N(i, p - 1) if dominator else 0.
+
+                dominator = (knots[i + p + 1] - knots[i + 1])
+                f2 = (knots[i + p + 1] - u) / dominator * N(i + 1, p - 1) if dominator else 0.
+
+                retval = f1 + f2
+            cache[(i, p)] = retval
+            return retval
+
+    return N(int(index), int(degree))
+
+
+def bspline_basis_vector(u: float, count: int, degree: int, knots: Sequence[float]) -> List[float]:
+    """
+    Create basis vector at parameter u.
+
+    Used with the bspline_basis() for testing and comparison.
+
+    Args:
+        u: curve parameter in range [0 .. max(knots)]
+        count: control point count (n + 1)
+        degree: degree of B-spline (order = degree + 1)
+        knots: knot vector
+
+    Returns:
+        List[float]: basis vector, len(basis) == count
+
+    """
+    assert len(knots) == (count + degree + 1)
+    basis = [bspline_basis(u, index, degree, knots) for index in range(count)]  # type: List[float]
+    if math.isclose(u, knots[-1]):  # pick up last point ??? why is this necessary ???
+        basis[-1] = 1.
+    return basis
+
+
+def bspline_vertex(u: float, degree: int, control_points: Sequence['Vertex'], knots: Sequence[float]) -> Vector:
+    """
+    Calculate B-spline vertex at parameter u.
+
+    Used with the bspline_basis_vector() for testing and comparison.
+
+    Args:
+        u:  curve parameter in range [0 .. max(knots)]
+        degree: degree of B-spline (order = degree + 1)
+        control_points: control points as list of (x, y[,z]) tuples
+        knots: knot vector as list of floats, len(knots) == (count + order)
+
+    """
+    basis_vector = bspline_basis_vector(u, count=len(control_points), degree=degree, knots=knots)
+
+    vertex = Vector()
+    for basis, point in zip(basis_vector, control_points):
+        vertex += Vector(point) * basis
+    return vertex
