@@ -74,9 +74,9 @@ def estimate_tangents(points: List[Vector], method: str = 'cubic-bezier') -> Lis
 
 
 def tangents_3_point_interpolation(fit_points: List[Vector], method: str = 'chord') -> List[Vector]:
+    q = [Q1 - Q0 for Q0, Q1 in zip(fit_points, fit_points[1:])]
     t = list(create_t_vector(fit_points, method))
     delta_t = [t1 - t0 for t0, t1 in zip(t, t[1:])]
-    q = _delta_q(fit_points)
     d = [qk / dtk for qk, dtk in zip(q, delta_t)]
     alpha = [dt0 / (dt0 + dt1) for dt0, dt1 in zip(delta_t, delta_t[1:])]
     tangents = [0.0]  # placeholder

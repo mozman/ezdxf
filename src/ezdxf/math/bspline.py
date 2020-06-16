@@ -140,10 +140,8 @@ def global_bspline_interpolation(
 
     t_vector = list(create_t_vector(fit_points, method))
     if bool(tangents):
-        start_tangent = Vector(tangents[0])
-        end_tangent = Vector(tangents[1])
         control_points, knots = _global_bspline_interpolation_tangents(
-            fit_points, start_tangent, end_tangent, degree, t_vector)
+            fit_points, Vector(tangents[0]), Vector(tangents[1]), degree, t_vector)
     else:
         control_points, knots = _global_bspline_interpolation(fit_points, degree, t_vector)
 
@@ -267,8 +265,8 @@ def _global_bspline_interpolation_tangents(
     rows.insert(-1, space + [-1.0, +1.0])
     solver = _get_best_solver(rows, degree)
 
-    fit_points.insert(1, start_tangent * knots[p + 1] / p)
-    fit_points.insert(-1, end_tangent * (1.0 - knots[m - p - 1]) / p)
+    fit_points.insert(1, start_tangent * (knots[p + 1] / p))
+    fit_points.insert(-1, end_tangent * ((1.0 - knots[m - p - 1]) / p))
     control_points = solver.solve_matrix(fit_points)
     return Vector.list(control_points.rows()), knots
 
