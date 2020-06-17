@@ -52,19 +52,20 @@ def test_invalid_order_count_combination():
         list(control_frame_knots(n=count - 1, p=order - 1, t_vector=[]))
 
 
-def test_control_frame_knot_values(fit_points):
+@pytest.mark.parametrize('p', (2, 3, 4))
+@pytest.mark.parametrize('method', ('average', 'natural'))
+def test_knot_generation(p, method):
+    fit_points = POINTS2
     count = len(fit_points)
     n = count - 1
-    degrees = (2, 3, 4) if len(fit_points) > 4 else (2, 3)
-    for p in degrees:  # degree
-        order = p + 1
-        t_vector = uniform_t_vector(len(fit_points))
-        knots = list(control_frame_knots(n, p, t_vector))
-        assert len(knots) == required_knot_values(count, order)
-        assert len(set(knots[:order])) == 1, 'first order elements have to be equal'
-        assert len(set(knots[-order:])) == 1, 'last order elements have to be equal'
-        for k1, k2 in zip(knots, knots[1:]):
-            assert k1 <= k2
+    order = p + 1
+    t_vector = uniform_t_vector(len(fit_points))
+    knots = list(control_frame_knots(n, p, t_vector, method))
+    assert len(knots) == required_knot_values(count, order)
+    assert len(set(knots[:order])) == 1, 'first order elements have to be equal'
+    assert len(set(knots[-order:])) == 1, 'last order elements have to be equal'
+    for k1, k2 in zip(knots, knots[1:]):
+        assert k1 <= k2
 
 
 def test_bspline_interpolation(fit_points):

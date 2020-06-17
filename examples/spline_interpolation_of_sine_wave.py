@@ -41,8 +41,8 @@ s = local_cubic_bspline_interpolation(data, tangents=[t.normalize() for t in tan
 # s = local_cubic_bspline_interpolation(data, method=METHOD)
 msp.add_spline(dxfattribs={'color': 3, 'layer': f'Local interpolation ({METHOD})'}).apply_construction_tool(s)
 
-# global interpolation: the optional argument 'tangents' accepts only start- and end tangent
-s = global_bspline_interpolation(data, tangents=(tangents[0], tangents[-1]))
+# global interpolation: take first and last vector from 'tangents' as start- and end tangent
+s = global_bspline_interpolation(data)  # , tangents=(tangents[0], tangents[-1]))
 msp.add_spline(dxfattribs={'color': 4, 'layer': f'Global interpolation ({METHOD})'}).apply_construction_tool(s)
 
 doc.set_modelspace_vport(5, center=(4, 1))

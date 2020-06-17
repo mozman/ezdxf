@@ -36,79 +36,9 @@ USE_BANDED_MATRIX_SOLVER_CPYTHON_LIMIT = 15
 USE_BANDED_MATRIX_SOLVER_PYPY_LIMIT = 60
 
 
-def open_uniform_knot_vector(n: int, order: int, normalize=False) -> List[float]:
-    """
-    Returns an open (clamped) uniform knot vector for a B-spline of `order` and `n` control points.
-
-    `order` = degree + 1
-
-    Args:
-        n: count of control points
-        order: spline order
-        normalize: normalize values in range [0, 1] if ``True``
-
-    """
-    count = n - order
-    if normalize:
-        max_value = float(n - order + 1)
-        tail = [1.0] * order
-    else:
-        max_value = 1.0
-        tail = [1.0 + count] * order
-
-    knots = [0.0] * order
-    knots.extend((1.0 + v) / max_value for v in range(count))
-    knots.extend(tail)
-    return knots
-
-
-def uniform_knot_vector(n: int, order: int, normalize=False) -> List[float]:
-    """
-    Returns an uniform knot vector for a B-spline of `order` and `n` control points.
-
-    `order` = degree + 1
-
-    Args:
-        n: count of control points
-        order: spline order
-        normalize: normalize values in range [0, 1] if ``True``
-
-    """
-    if normalize:
-        max_value = float(n + order - 1)
-    else:
-        max_value = 1.0
-    return [knot_value / max_value for knot_value in range(n + order)]
-
-
-def required_knot_values(count: int, order: int) -> int:
-    """
-    Returns the count of required knot values for a B-spline of `order` and `count` control points.
-
-    degree =  degree of B-spline, in math papers often called: `p`
-
-    Args:
-        count: count of control points, in math papers often called:  `n` + 1
-        order: order of B-Spline, in math papers often called:  `k`
-
-    Relationships:
-
-    - `k` (order) = `p` (degree) + 1
-    - 2 ≤ `k` (order) ≤ `n` + 1 (count)
-
-    """
-    k = order
-    n = count - 1
-    p = k - 1
-    if not (2 <= k <= (n + 1)):
-        raise DXFValueError('Invalid count/order combination')
-    # n + p + 2 = count + order
-    return n + p + 2
-
-
 def global_bspline_interpolation(
         fit_points: Iterable['Vertex'], degree: int = 3,
-        tangents: Tuple['Vertex', 'Vertex'] = None,
+        tangents: Iterable['Vertex'] = None,
         method: str = 'chord') -> 'BSpline':
     """
     `B-spline`_ interpolation  by `Curve Global Interpolation`_.
@@ -123,7 +53,9 @@ def global_bspline_interpolation(
 
     Args:
         fit_points: fit points of B-spline, as list of :class:`Vector` compatible objects
-        tangents: define start- and end tangent as 2-tuple of :class:`Vector` compatible objects (optional)
+        tangents: if only two vectors are given, take the first and the last vector as start-
+            and end tangent constraints or if for each fit point a tangent is given use all
+            tangents as interpolation constraints (optional)
         degree: degree of B-spline
         method: calculation method for parameter vector t
 
@@ -136,140 +68,30 @@ def global_bspline_interpolation(
     count = len(fit_points)
     order = degree + 1
     if order > count:
-        raise DXFValueError('More fit points required for degree {}'.format(degree))
+        raise DXFValueError(f'More fit points required for degree {degree}')
 
     t_vector = list(create_t_vector(fit_points, method))
-    if bool(tangents):
-        control_points, knots = _global_bspline_interpolation_end_tangents(
-            fit_points, Vector(tangents[0]), Vector(tangents[1]), degree, t_vector)
+    if tangents is not None:
+        tangents = Vector.list(tangents)
+        if len(tangents) == 2:
+            control_points, knots = _global_bspline_interpolation_end_tangents(
+                fit_points, tangents[0], tangents[1], degree, t_vector)
+        elif len(tangents) == len(fit_points):
+            control_points, knots = _global_bspline_interpolation_all_tangents(
+                fit_points, tangents, degree, t_vector)
+        else:
+            raise ValueError(
+                'Invalid count of tangents, two tangents as start- and end tangent constrains'
+                ' or one tangent for each fit point.'
+            )
     else:
-        control_points, knots = _global_bspline_interpolation(fit_points, degree, t_vector)
+        # natural knot generation for uneven degrees else averaged
+        knot_generation_method = 'natural' if degree % 2 else 'average'
+        control_points, knots = _global_bspline_interpolation(fit_points, degree, t_vector, knot_generation_method)
 
     bspline = BSpline(control_points, order=order, knots=knots)
     bspline.t_array = t_vector
     return bspline
-
-
-def bspline_control_frame_approx(
-        fit_points: Iterable['Vertex'],
-        count: int,
-        degree: int = 3,
-        method: str = 'chord') -> 'BSpline':
-    """
-    Approximate `B-spline`_ by a reduced count of control points, given are the fit points and the degree of
-    the B-spline.
-
-    Args:
-        fit_points: all fit points of B-spline as :class:`Vector` compatible objects
-        count: count of designated control points
-        degree: degree of B-spline
-        method: calculation method for parameter vector t, see :func:`global_bspline_interpolation`
-
-    Returns:
-        :class:`BSpline`
-
-    """
-
-    fit_points = Vector.list(fit_points)
-    order = degree + 1
-    if order > count:
-        raise DXFValueError('More control points for degree {} required.'.format(degree))
-
-    t_vector = list(create_t_vector(fit_points, method))
-    knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector))
-    control_points = global_bspline_approximation(fit_points, count, degree, t_vector, knots)
-    bspline = BSpline(control_points, order=order)
-    return bspline
-
-
-def control_frame_knots(n: int, p: int, t_vector: Iterable[float]) -> Iterable[float]:
-    """
-    Generates a 'clamped' knot vector for control frame creation. All knot values in the range [0 .. 1].
-
-    Args:
-        n: count fit points - 1
-        p: degree of spline
-        t_vector: parameter vector, length(t_vector) == n+1
-
-    Returns:
-        Iterable[float]: n+p+2 knot values
-
-    """
-    order = int(p + 1)
-    if order > (n + 1):
-        raise DXFValueError('Invalid n/p combination')
-
-    t_vector = [float(t) for t in t_vector]
-    for _ in range(order):  # clamped spline has 'order' leading 0s
-        yield t_vector[0]
-    for j in range(1, n - p + 1):
-        yield sum(t_vector[j: j + p]) / p
-    for _ in range(order):  # clamped spline has 'order' appended 1s
-        yield t_vector[-1]
-
-
-def _get_best_solver(matrix: Union[List, Matrix], degree: int):
-    """ Returns best suited linear equation solver depending on matrix
-    configuration and python interpreter.
-    """
-    A = matrix if isinstance(matrix, Matrix) else Matrix(matrix=matrix)
-    if PYPY:
-        limit = USE_BANDED_MATRIX_SOLVER_PYPY_LIMIT
-    else:
-        limit = USE_BANDED_MATRIX_SOLVER_CPYTHON_LIMIT
-    if A.nrows < limit:  # use default equation solver
-        lu = LUDecomposition(A)
-    else:
-        # Theory: band parameters m1, m2 are at maximum degree-1, for
-        # B-spline interpolation and approximation:
-        # m1 = m2 = degree-1
-        # But the speed gain is not that big and just to be sure:
-        m1, m2 = detect_banded_matrix(A, check_all=False)
-        A = compact_banded_matrix(A, m1, m2)
-        lu = BandedMatrixLU(A, m1, m2)
-    return lu
-
-
-def _global_bspline_interpolation(
-        fit_points: Sequence['Vertex'],
-        degree: int,
-        t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
-    """ Algorithm: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html """
-
-    knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector))
-    spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
-    solver = _get_best_solver([spline.basis(t) for t in t_vector], degree)
-    control_points = solver.solve_matrix(fit_points)
-    return Vector.list(control_points.rows()), knots
-
-
-def _global_bspline_interpolation_end_tangents(
-        fit_points: List[Vector],
-        start_tangent: Vector,
-        end_tangent: Vector,
-        degree: int,
-        t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
-
-    n = len(fit_points) - 1
-    p = degree
-    m = n + p + 3
-
-    knots = [0.0] * (p + 1)
-    knots.extend(sum(t_vector[j: j + p]) / p for j in range(n - p + 2))
-    knots.extend([1.0] * (p + 1))
-    assert len(knots) == m + 1
-
-    spline = Basis(knots=knots, order=p + 1, count=n + 3)
-    rows = [spline.basis(u) for u in t_vector]
-    space = [0.0] * (n + 1)
-    rows.insert(1, [-1.0, +1.0] + space)
-    rows.insert(-1, space + [-1.0, +1.0])
-    fit_points.insert(1, start_tangent * (knots[p + 1] / p))
-    fit_points.insert(-1, end_tangent * ((1.0 - knots[m - p - 1]) / p))
-
-    solver = _get_best_solver(rows, degree)
-    control_points = solver.solve_matrix(fit_points)
-    return Vector.list(control_points.rows()), knots
 
 
 def global_bspline_approximation(
@@ -356,6 +178,239 @@ def local_cubic_bspline_interpolation(
         tangents = estimate_tangents(fit_points, method)
     control_points, knots = local_cubic_bspline_interpolation_from_tangents(fit_points, tangents)
     return BSpline(control_points, order=4, knots=knots)
+
+
+def open_uniform_knot_vector(n: int, order: int, normalize=False) -> List[float]:
+    """
+    Returns an open (clamped) uniform knot vector for a B-spline of `order` and `n` control points.
+
+    `order` = degree + 1
+
+    Args:
+        n: count of control points
+        order: spline order
+        normalize: normalize values in range [0, 1] if ``True``
+
+    """
+    count = n - order
+    if normalize:
+        max_value = float(n - order + 1)
+        tail = [1.0] * order
+    else:
+        max_value = 1.0
+        tail = [1.0 + count] * order
+
+    knots = [0.0] * order
+    knots.extend((1.0 + v) / max_value for v in range(count))
+    knots.extend(tail)
+    return knots
+
+
+def uniform_knot_vector(n: int, order: int, normalize=False) -> List[float]:
+    """
+    Returns an uniform knot vector for a B-spline of `order` and `n` control points.
+
+    `order` = degree + 1
+
+    Args:
+        n: count of control points
+        order: spline order
+        normalize: normalize values in range [0, 1] if ``True``
+
+    """
+    if normalize:
+        max_value = float(n + order - 1)
+    else:
+        max_value = 1.0
+    return [knot_value / max_value for knot_value in range(n + order)]
+
+
+def required_knot_values(count: int, order: int) -> int:
+    """
+    Returns the count of required knot values for a B-spline of `order` and `count` control points.
+
+    degree =  degree of B-spline, in math papers often called: `p`
+
+    Args:
+        count: count of control points, in math papers often called:  `n` + 1
+        order: order of B-Spline, in math papers often called:  `k`
+
+    Relationships:
+
+    - `k` (order) = `p` (degree) + 1
+    - 2 ≤ `k` (order) ≤ `n` + 1 (count)
+
+    """
+    k = order
+    n = count - 1
+    p = k - 1
+    if not (2 <= k <= (n + 1)):
+        raise DXFValueError('Invalid count/order combination')
+    # n + p + 2 = count + order
+    return n + p + 2
+
+
+def bspline_control_frame_approx(
+        fit_points: Iterable['Vertex'],
+        count: int,
+        degree: int = 3,
+        method: str = 'chord') -> 'BSpline':
+    """
+    Approximate `B-spline`_ by a reduced count of control points, given are the fit points and the degree of
+    the B-spline.
+
+    Args:
+        fit_points: all fit points of B-spline as :class:`Vector` compatible objects
+        count: count of designated control points
+        degree: degree of B-spline
+        method: calculation method for parameter vector t, see :func:`global_bspline_interpolation`
+
+    Returns:
+        :class:`BSpline`
+
+    """
+
+    fit_points = Vector.list(fit_points)
+    order = degree + 1
+    if order > count:
+        raise DXFValueError('More control points for degree {} required.'.format(degree))
+
+    t_vector = list(create_t_vector(fit_points, method))
+    knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector))
+    control_points = global_bspline_approximation(fit_points, count, degree, t_vector, knots)
+    bspline = BSpline(control_points, order=order)
+    return bspline
+
+
+def control_frame_knots(n: int, p: int, t_vector: Iterable[float], method='average') -> Iterable[float]:
+    """
+    Generates a 'clamped' knot vector for control frame creation. All knot values in the range [0 .. 1].
+
+    Args:
+        n: count fit points - 1
+        p: degree of spline
+        t_vector: parameter vector, length(t_vector) == n
+        method: "average", "natural"
+
+    Returns:
+        Iterable[float]: n+p+2 knot values
+
+    """
+    order = int(p + 1)
+    if order > (n + 1):
+        raise DXFValueError('Invalid n/p combination')
+    t_vector = [float(v) for v in t_vector]
+    if method == 'average':
+        return averaged_knots(n, p, t_vector)
+    elif method == 'natural':
+        return natural_knots(n, p, t_vector)
+    else:
+        raise ValueError(f'Unknown knot generation method: {method}')
+
+
+def averaged_knots(n: int, p: int, t_vector) -> Iterable[float]:
+    order = p + 1
+    for _ in range(order):  # clamped spline has 'order' leading 0s
+        yield t_vector[0]
+    for j in range(1, n - p + 1):
+        yield sum(t_vector[j: j + p]) / p
+    for _ in range(order):  # clamped spline has 'order' appended 1s
+        yield t_vector[-1]
+
+
+def natural_knots(n: int, p: int, t_vector) -> Iterable[float]:
+    """
+    Generate knot vector from parametrization vector t_vector,
+    for unconstrained curves.
+
+    Args:
+        n: count of control points - 1
+        p: degree
+        t_vector: parametrization vector
+    """
+    order = p + 1
+    for _ in range(order):  # clamped spline has 'order' leading 0s
+        yield t_vector[0]
+    yield from t_vector[2: n - p + 2]
+    for _ in range(order):  # clamped spline has 'order' appended 1s
+        yield t_vector[-1]
+
+
+def _get_best_solver(matrix: Union[List, Matrix], degree: int):
+    """ Returns best suited linear equation solver depending on matrix
+    configuration and python interpreter.
+    """
+    A = matrix if isinstance(matrix, Matrix) else Matrix(matrix=matrix)
+    if PYPY:
+        limit = USE_BANDED_MATRIX_SOLVER_PYPY_LIMIT
+    else:
+        limit = USE_BANDED_MATRIX_SOLVER_CPYTHON_LIMIT
+    if A.nrows < limit:  # use default equation solver
+        lu = LUDecomposition(A)
+    else:
+        # Theory: band parameters m1, m2 are at maximum degree-1, for
+        # B-spline interpolation and approximation:
+        # m1 = m2 = degree-1
+        # But the speed gain is not that big and just to be sure:
+        m1, m2 = detect_banded_matrix(A, check_all=False)
+        A = compact_banded_matrix(A, m1, m2)
+        lu = BandedMatrixLU(A, m1, m2)
+    return lu
+
+
+def _global_bspline_interpolation(
+        fit_points: Sequence['Vertex'],
+        degree: int,
+        t_vector: Sequence[float],
+        knot_generation_method: str = 'average') -> Tuple[List[Vector], List[float]]:
+    """ Algorithm: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html """
+    knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector, knot_generation_method))
+    spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
+    solver = _get_best_solver([spline.basis(t) for t in t_vector], degree)
+    control_points = solver.solve_matrix(fit_points)
+    return Vector.list(control_points.rows()), knots
+
+
+def _global_bspline_interpolation_end_tangents(
+        fit_points: List[Vector],
+        start_tangent: Vector,
+        end_tangent: Vector,
+        degree: int,
+        t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
+    n = len(fit_points) - 1
+    p = degree
+    m = n + p + 3
+
+    knots = [0.0] * (p + 1)
+    knots.extend(sum(t_vector[j: j + p]) / p for j in range(n - p + 2))
+    knots.extend([1.0] * (p + 1))
+    assert len(knots) == m + 1
+
+    spline = Basis(knots=knots, order=p + 1, count=n + 3)
+    rows = [spline.basis(u) for u in t_vector]
+    space = [0.0] * (n + 1)
+    rows.insert(1, [-1.0, +1.0] + space)
+    rows.insert(-1, space + [-1.0, +1.0])
+    fit_points.insert(1, start_tangent * (knots[p + 1] / p))
+    fit_points.insert(-1, end_tangent * ((1.0 - knots[m - p - 1]) / p))
+
+    solver = _get_best_solver(rows, degree)
+    control_points = solver.solve_matrix(fit_points)
+    return Vector.list(control_points.rows()), knots
+
+
+def _global_bspline_interpolation_all_tangents(
+        fit_points: List[Vector],
+        tangents: List[Vector],
+        degree: int,
+        t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
+    return _global_bspline_interpolation_end_tangents(
+        fit_points,
+        start_tangent=tangents[0],
+        end_tangent=tangents[-1],
+        degree=degree,
+        t_vector=t_vector,
+    )
 
 
 def local_cubic_bspline_interpolation_from_tangents(fit_points: List[Vector], tangents: List[Vector]) -> Tuple[
@@ -567,25 +622,20 @@ class BSpline:
 
         self.basis = Basis(knots, self.order, self.count, weights=weights)
 
-    @classmethod
-    def from_fit_points(cls, points: Iterable['Vertex'], degree=3, method='chord') -> 'BSpline':
+    @staticmethod
+    def from_fit_points(points: Iterable['Vertex'], degree=3, method='chord') -> 'BSpline':
         """ Returns :class:`BSpline` defined by fit points. """
-        fit_points = Vector.list(points)
-        t_vector = list(create_t_vector(fit_points, method))
-        control_points, knots = _global_bspline_interpolation(fit_points, degree, t_vector)
-        spline = cls(control_points, order=degree + 1, knots=knots)
-        spline.t_array = t_vector
-        return spline
+        return global_bspline_interpolation(points, degree, method=method)
 
-    @classmethod
-    def ellipse_approximation(cls, ellipse: 'ConstructionEllipse', num: int = 16) -> 'BSpline':
+    @staticmethod
+    def ellipse_approximation(ellipse: 'ConstructionEllipse', num: int = 16) -> 'BSpline':
         """ Returns an ellipse approximation as :class:`BSpline` with `num` control points. """
-        return cls.from_fit_points(ellipse.vertices(ellipse.params(num)), degree=2)
+        return global_bspline_interpolation(ellipse.vertices(ellipse.params(num)), degree=2)
 
-    @classmethod
-    def arc_approximation(cls, arc: 'ConstructionArc', num: int = 16) -> 'BSpline':
+    @staticmethod
+    def arc_approximation(arc: 'ConstructionArc', num: int = 16) -> 'BSpline':
         """ Returns an arc approximation as :class:`BSpline` with `num` control points. """
-        return cls.from_fit_points(arc.vertices(arc.angles(num)), degree=2)
+        return global_bspline_interpolation(arc.vertices(arc.angles(num)), degree=2)
 
     @staticmethod
     def from_ellipse(ellipse: 'ConstructionEllipse') -> 'BSpline':

@@ -1103,7 +1103,7 @@ class EdgePath:
         Args:
             fit_points: points through which the spline must go, at least 3 fit points are required.
                         list of ``(x, y)`` tuples
-            control_points: affects the shape of the spline, mandatory amd AutoCAD crashes on invalid data.
+            control_points: affects the shape of the spline, mandatory and AutoCAD crashes on invalid data.
                             list of ``(x, y)`` tuples
             knot_values: (knot vector) mandatory and AutoCAD crashes on invalid data. list of floats;
                          `ezdxf` provides two tool functions to calculate valid knot values:
@@ -1145,9 +1145,8 @@ class EdgePath:
 
     def add_spline_control_frame(self, fit_points: Iterable[Tuple[float, float]],
                                  degree: int = 3,
-                                 method: str = 'distance',
-                                 power: float = .5) -> 'SplineEdge':
-        bspline = global_bspline_interpolation(fit_points=fit_points, degree=degree, method=method, power=power)
+                                 method: str = 'distance') -> 'SplineEdge':
+        bspline = global_bspline_interpolation(fit_points=fit_points, degree=degree, method=method)
         return self.add_spline(
             fit_points=fit_points,
             control_points=bspline.control_points,
