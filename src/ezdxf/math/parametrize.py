@@ -111,7 +111,8 @@ def estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') 
 
     Available estimation methods:
 
-        - "chord": total chord length
+        - "chord": total chord length, curve approximation by straight segments
+        - "arc": total arc length, curve approximation by arcs
 
     Args:
         points: start-, end- and passing points of curve
@@ -120,6 +121,9 @@ def estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') 
     """
     if method == 'chord':
         total_length = sum(p0.distance(p1) for p0, p1 in zip(points, points[1:]))
+        return total_length, total_length
+    elif method == 'arc':
+        total_length = sum(arc_distances(points))
         return total_length, total_length
     else:
         raise ValueError(f'Unknown tangent magnitude calculation method: {method}')
