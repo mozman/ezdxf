@@ -17,7 +17,7 @@ https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node5.html:
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional, Union
 import math
 from .vector import Vector
-from .parametrize import create_t_vector
+from .parametrize import create_t_vector, estimate_tangents, estimate_end_tangent_magnitude
 from .linalg import (
     LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix, detect_banded_matrix,
     quadratic_equation
@@ -34,6 +34,23 @@ if TYPE_CHECKING:
 # N=60 for pypy3 on Windows and Linux
 USE_BANDED_MATRIX_SOLVER_CPYTHON_LIMIT = 15
 USE_BANDED_MATRIX_SOLVER_PYPY_LIMIT = 60
+
+
+def cad_app_spline(fit_points: Sequence['Vertex'], degree: int, method='chord') -> 'BSpline':
+    """ Returns the control frame configuration like common CAD applications. """
+    points = Vector.list(fit_points)
+    # 5-points is the closest estimation method I found
+    tangents = estimate_tangents(points, method='5-p')
+    m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
+    control_points, knots = _global_bspline_interpolation_end_tangents(
+        points,
+        start_tangent=tangents[0].normalize(m1),
+        end_tangent=tangents[-1].normalize(m2),
+        degree=degree,
+        t_vector=list(create_t_vector(points, method=method)),
+        knot_generation_method='natural' if degree % 2 else 'average',
+    )
+    return BSpline(control_points, degree, knots=knots)
 
 
 def global_bspline_interpolation(
@@ -71,22 +88,23 @@ def global_bspline_interpolation(
         raise DXFValueError(f'More fit points required for degree {degree}')
 
     t_vector = list(create_t_vector(fit_points, method))
+    # natural knot generation for uneven degrees else averaged
+    knot_generation_method = 'natural' if degree % 2 else 'average'
     if tangents is not None:
         tangents = Vector.list(tangents)
         if len(tangents) == 2:
             control_points, knots = _global_bspline_interpolation_end_tangents(
-                fit_points, tangents[0], tangents[1], degree, t_vector)
+                fit_points, tangents[0], tangents[1], degree, t_vector, knot_generation_method)
         elif len(tangents) == len(fit_points):
             control_points, knots = _global_bspline_interpolation_all_tangents(
-                fit_points, tangents, degree, t_vector)
+                fit_points, tangents, degree, t_vector, knot_generation_method)
         else:
             raise ValueError(
                 'Invalid count of tangents, two tangents as start- and end tangent constrains'
                 ' or one tangent for each fit point.'
             )
     else:
-        # natural knot generation for uneven degrees else averaged
-        knot_generation_method = 'natural' if degree % 2 else 'average'
+
         control_points, knots = _global_bspline_interpolation(fit_points, degree, t_vector, knot_generation_method)
 
     bspline = BSpline(control_points, order=order, knots=knots)
@@ -303,7 +321,7 @@ def control_frame_knots(n: int, p: int, t_vector: Iterable[float], method='avera
     if method == 'average':
         return averaged_knots(n, p, t_vector)
     elif method == 'natural':
-        return natural_knots(n, p, t_vector)
+        return natural_knots_unconstrained(n, p, t_vector)
     else:
         raise ValueError(f'Unknown knot generation method: {method}')
 
@@ -318,7 +336,7 @@ def averaged_knots(n: int, p: int, t_vector) -> Iterable[float]:
         yield t_vector[-1]
 
 
-def natural_knots(n: int, p: int, t_vector) -> Iterable[float]:
+def natural_knots_unconstrained(n: int, p: int, t_vector) -> Iterable[float]:
     """
     Generate knot vector from parametrization vector t_vector,
     for unconstrained curves.
@@ -332,6 +350,28 @@ def natural_knots(n: int, p: int, t_vector) -> Iterable[float]:
     for _ in range(order):  # clamped spline has 'order' leading 0s
         yield t_vector[0]
     yield from t_vector[2: n - p + 2]
+    for _ in range(order):  # clamped spline has 'order' appended 1s
+        yield t_vector[-1]
+
+
+def natural_knots_constrained(n: int, p: int, t_vector) -> Iterable[float]:
+    """
+    Generate knot vector from parametrization vector t_vector,
+    for constrained curves.
+
+    Seems to be used by BricsCAD for generating control points
+    from fit points and two end tangents.
+
+    Args:
+        n: count of control points - 1
+        p: degree
+        t_vector: parametrization vector
+
+    """
+    order = p + 1
+    for _ in range(order):  # clamped spline has 'order' leading 0s
+        yield t_vector[0]
+    yield from t_vector[1: n - p + 1]
     for _ in range(order):  # clamped spline has 'order' appended 1s
         yield t_vector[-1]
 
@@ -376,14 +416,18 @@ def _global_bspline_interpolation_end_tangents(
         start_tangent: Vector,
         end_tangent: Vector,
         degree: int,
-        t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
+        t_vector: Sequence[float],
+        knot_generation_method: str = 'average') -> Tuple[List[Vector], List[float]]:
     n = len(fit_points) - 1
     p = degree
     m = n + p + 3
 
-    knots = [0.0] * (p + 1)
-    knots.extend(sum(t_vector[j: j + p]) / p for j in range(n - p + 2))
-    knots.extend([1.0] * (p + 1))
+    if knot_generation_method == 'average':
+        knots = list(averaged_knots(n + 2, p, t_vector))
+    elif knot_generation_method == 'natural':
+        knots = list(natural_knots_constrained(n + 2, p, t_vector))
+    else:
+        raise ValueError(f'Unknown knot generation method: {knot_generation_method}')
     assert len(knots) == m + 1
 
     spline = Basis(knots=knots, order=p + 1, count=n + 3)
@@ -403,13 +447,15 @@ def _global_bspline_interpolation_all_tangents(
         fit_points: List[Vector],
         tangents: List[Vector],
         degree: int,
-        t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
+        t_vector: Sequence[float],
+        knot_generation_method: str = 'average') -> Tuple[List[Vector], List[float]]:
     return _global_bspline_interpolation_end_tangents(
         fit_points,
         start_tangent=tangents[0],
         end_tangent=tangents[-1],
         degree=degree,
         t_vector=t_vector,
+        knot_generation_method=knot_generation_method,
     )
 
 

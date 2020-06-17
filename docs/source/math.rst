@@ -92,6 +92,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: estimate_tangents(points: List[Vector], method: str = 'cubic-bezier', normalize = True) -> List[Vector]
 
+.. autofunction:: estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') -> List[Vector]
+
 .. autofunction:: global_bspline_interpolation
 
 .. autofunction:: bspline_control_frame_approx

@@ -2,7 +2,7 @@ from typing import Iterable
 from pathlib import Path
 import math
 import ezdxf
-from ezdxf.math import Vector, estimate_tangents, linspace
+from ezdxf.math import Vector, estimate_tangents, linspace, estimate_end_tangent_magnitude
 from ezdxf.math import local_cubic_bspline_interpolation, global_bspline_interpolation
 
 DIR = Path('~/Desktop/Outbox').expanduser()
@@ -26,7 +26,7 @@ msp.add_lwpolyline(sine_wave(count=800, scale=2.0), dxfattribs={'color': 1, 'lay
 msp.add_spline(data, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
 
 # tangent estimation method
-METHOD = 'diff'
+METHOD = '5-p'
 
 # create not normalized tangents (default is normalized)
 tangents = estimate_tangents(data, METHOD, normalize=False)
@@ -42,7 +42,8 @@ s = local_cubic_bspline_interpolation(data, tangents=[t.normalize() for t in tan
 msp.add_spline(dxfattribs={'color': 3, 'layer': f'Local interpolation ({METHOD})'}).apply_construction_tool(s)
 
 # global interpolation: take first and last vector from 'tangents' as start- and end tangent
-s = global_bspline_interpolation(data)  # , tangents=(tangents[0], tangents[-1]))
+m1, m2 = estimate_end_tangent_magnitude(data, method='chord')
+s = global_bspline_interpolation(data, tangents=(tangents[0].normalize(m1), tangents[-1].normalize(m2)))
 msp.add_spline(dxfattribs={'color': 4, 'layer': f'Global interpolation ({METHOD})'}).apply_construction_tool(s)
 
 doc.set_modelspace_vport(5, center=(4, 1))

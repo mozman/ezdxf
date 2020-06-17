@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import List, Iterable, Sequence
+from typing import List, Iterable, Sequence, Tuple
 import math
 from ezdxf.math import Vector
 from ezdxf.lldxf.const import DXFValueError
@@ -74,6 +74,25 @@ def estimate_tangents(points: List[Vector], method: str = '5-points', normalize=
         return finite_difference_interpolation(points, normalize=normalize)
     else:
         raise ValueError(f'Unknown method: {method}')
+
+
+def estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') -> Tuple[float, float]:
+    """ Estimate tangent magnitude of start- and end tangents.
+
+    Available estimation methods:
+
+        - "chord": total chord length
+
+    Args:
+        points: start-, end- and passing points of curve
+        method: tangent magnitude estimation method
+
+    """
+    if method == 'chord':
+        total_length = sum(p0.distance(p1) for p0, p1 in zip(points, points[1:]))
+        return total_length, total_length
+    else:
+        raise ValueError(f'Unknown tangent magnitude calculation method: {method}')
 
 
 def tangents_3_point_interpolation(fit_points: List[Vector], method: str = 'chord', normalize=True) -> List[Vector]:

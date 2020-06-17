@@ -18,7 +18,7 @@ from .linalg import (
     freeze_matrix, tridiagonal_matrix_solver, tridiagonal_vector_solver, detect_banded_matrix, compact_banded_matrix,
     BandedMatrixLU, banded_matrix,
 )
-from .parametrize import estimate_tangents
+from .parametrize import estimate_tangents, estimate_end_tangent_magnitude
 from .bspline import (
     global_bspline_interpolation, bspline_control_frame_approx, rational_spline_from_arc, rational_spline_from_ellipse,
     uniform_knot_vector, open_uniform_knot_vector, required_knot_values, BSpline, BSplineU, BSplineClosed, DBSpline,
