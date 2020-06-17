@@ -43,7 +43,7 @@ def _normalize_distances(distances: Sequence[float]) -> Iterable[float]:
         yield s / total_length
 
 
-def estimate_tangents(points: List[Vector], method: str = '5-points') -> List[Vector]:
+def estimate_tangents(points: List[Vector], method: str = '5-points', normalize=True) -> List[Vector]:
     """
     Estimate tangents for curve defined by given fit points.
     Calculated tangents are normalized (unit-vectors).
@@ -58,24 +58,26 @@ def estimate_tangents(points: List[Vector], method: str = '5-points') -> List[Ve
     Args:
         points: start-, end- and passing points of curve
         method: tangent estimation method
+        normalize: normalize tangents if ``True``
 
     Returns:
         tangents as list of :class:`Vector` objects
 
     """
     if method == 'cubic-bezier':
-        return tangents_cubic_bezier_interpolation(points, normalize=True)
+        return tangents_cubic_bezier_interpolation(points, normalize=normalize)
     elif method.startswith('3-p'):
-        return tangents_3_point_interpolation(points)
+        return tangents_3_point_interpolation(points, normalize=normalize)
     elif method.startswith('5-p'):
-        return tangents_5_point_interpolation(points)
+        return tangents_5_point_interpolation(points, normalize=normalize)
     elif method.startswith('diff'):
-        return finite_difference_interpolation(points)
+        return finite_difference_interpolation(points, normalize=normalize)
     else:
         raise ValueError(f'Unknown method: {method}')
 
 
-def tangents_3_point_interpolation(fit_points: List[Vector], method: str = 'chord') -> List[Vector]:
+def tangents_3_point_interpolation(fit_points: List[Vector], method: str = 'chord', normalize=True) -> List[Vector]:
+    """ Returns from 3 points interpolated and optional normalized tangent vectors. """
     q = [Q1 - Q0 for Q0, Q1 in zip(fit_points, fit_points[1:])]
     t = list(create_t_vector(fit_points, method))
     delta_t = [t1 - t0 for t0, t1 in zip(t, t[1:])]
@@ -85,10 +87,13 @@ def tangents_3_point_interpolation(fit_points: List[Vector], method: str = 'chor
     tangents.extend([(1.0 - alpha[k]) * d[k] + alpha[k] * d[k + 1] for k in range(len(d) - 1)])
     tangents[0] = 2.0 * d[0] - tangents[1]
     tangents.append(2.0 * d[-1] - tangents[-1])
-    return [tangent.normalize() for tangent in tangents]
+    if normalize:
+        tangents = [v.normalize() for v in tangents]
+    return tangents
 
 
-def tangents_5_point_interpolation(fit_points: List[Vector]) -> List[Vector]:
+def tangents_5_point_interpolation(fit_points: List[Vector], normalize=True) -> List[Vector]:
+    """ Returns from 5 points interpolated and optional normalized tangent vectors. """
     n = len(fit_points)
     q = _delta_q(fit_points)
 
@@ -101,7 +106,9 @@ def tangents_5_point_interpolation(fit_points: List[Vector]) -> List[Vector]:
     tangents = []
     for k in range(n):
         vk = (1.0 - alpha[k]) * q[k] + alpha[k] * q[k + 1]
-        tangents.append(vk.normalize())
+        tangents.append(vk)
+    if normalize:
+        tangents = [v.normalize() for v in tangents]
     return tangents
 
 

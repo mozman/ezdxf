@@ -41,6 +41,8 @@ Version 0.13b3 - dev
 - NEW: `Hatch.paths.all_to_line_edges()` convert all curves to approximated line edges
 - NEW: `ezdxf.math.ConstructionEllipse()`
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
+- NEW: `ezdxf.math.global_bspline_interpolation()` supports start- and end tangent constraints
+- NEW: `ezdxf.math.estimate_tangents()` curve tangent estimator for given fit points, multiple methods supported
 - NEW: `ezdxf.math.rational_spline_from_arc()` returns a rational B-spline for a circular arc
 - NEW: `ezdxf.math.rational_spline_from_ellipse()` returns a rational B-spline for an elliptic arc
 - NEW: `ezdxf.math.local_cubic_bspline_interpolation()`
