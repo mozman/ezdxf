@@ -617,7 +617,7 @@ def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: 
     Args:
         vertices: fit points
         degree: degree of B-spline
-        method: "uniform", "chord"/"distance", or "centripetal"/"sqrt_chord", calculation method for parameter t
+        method: "uniform", "chord"/"distance", "centripetal"/"sqrt_chord" or "arc" calculation method for parameter t
         subdivide: count of sub vertices + 1, e.g. 4 creates 3 sub-vertices
 
     Returns: list of vertices

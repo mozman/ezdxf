@@ -1,11 +1,11 @@
 import pytest
 import ezdxf
 from math import isclose
+import math
 from ezdxf.math import Vector
 from ezdxf.math.bspline import global_bspline_interpolation
-from ezdxf.math.parametrize import uniform_t_vector, distance_t_vector, centripetal_t_vector
+from ezdxf.math.parametrize import uniform_t_vector, distance_t_vector, centripetal_t_vector, arc_t_vector, arc_distances
 from ezdxf.math.bspline import control_frame_knots, required_knot_values
-
 
 POINTS1 = Vector.list([(1, 1), (2, 4), (4, 1), (7, 6)])
 POINTS2 = Vector.list([(1, 1), (2, 4), (4, 1), (7, 6), (5, 8), (3, 3), (1, 7)])
@@ -36,6 +36,31 @@ def test_chord_length_t_array(fit_points):
 
 def test_centripetal_length_t_array(fit_points):
     t_vector = list(centripetal_t_vector(fit_points))
+    assert len(t_vector) == len(fit_points)
+    assert t_vector[0] == 0.
+    assert t_vector[-1] == 1.
+    for t1, t2 in zip(t_vector, t_vector[1:]):
+        assert t1 <= t2
+
+
+def test_arc_distances():
+    p = Vector.list([(0, 0), (2, 2), (4, 0), (6, -2), (8, 0)])
+    # p[1]..p[3] are a straight line, radius calculation fails and
+    # a straight line from p[1] to p[2] is used as replacement
+    # for the second arc
+    radius = 2.0
+    arc_length = math.pi * 0.5 * radius
+    diagonal = math.sqrt(2.0) * radius
+    distances = list(arc_distances(p))
+    assert len(distances) == 4
+    assert isclose(distances[0], arc_length)
+    assert isclose(distances[1], diagonal)  # replacement for arc
+    assert isclose(distances[2], arc_length)
+    assert isclose(distances[3], arc_length)
+
+
+def test_arc_length_t_array(fit_points):
+    t_vector = list(arc_t_vector(fit_points))
     assert len(t_vector) == len(fit_points)
     assert t_vector[0] == 0.
     assert t_vector[-1] == 1.

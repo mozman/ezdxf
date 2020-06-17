@@ -393,3 +393,12 @@ def is_point_in_polygon_2d(point: Union[Vec2, Vector], polygon: Iterable[Vec2], 
         return 1
     else:
         return -1
+
+
+def circle_radius_3p(a: Vector, b: Vector, c: Vector) -> float:
+    ba = b - a
+    ca = c - a
+    cb = c - b
+    upper = ba.magnitude * ca.magnitude * cb.magnitude
+    lower = ba.cross(ca).magnitude * 2.0
+    return upper / lower

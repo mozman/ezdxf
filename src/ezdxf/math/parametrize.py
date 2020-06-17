@@ -5,6 +5,7 @@ import math
 from ezdxf.math import Vector
 from ezdxf.lldxf.const import DXFValueError
 from .bezier4p import tangents_cubic_bezier_interpolation
+from .construct2d import circle_radius_3p
 
 
 def create_t_vector(fit_points: List[Vector], method: str) -> Iterable[float]:
@@ -14,6 +15,8 @@ def create_t_vector(fit_points: List[Vector], method: str) -> Iterable[float]:
         return distance_t_vector(fit_points)
     elif method in ('centripetal', 'sqrt_chord'):
         return centripetal_t_vector(fit_points)
+    elif method == 'arc':
+        return arc_t_vector(fit_points)
     else:
         raise DXFValueError('Unknown method: {}'.format(method))
 
@@ -41,6 +44,33 @@ def _normalize_distances(distances: Sequence[float]) -> Iterable[float]:
     for d in distances:
         s += d
         yield s / total_length
+
+
+def arc_t_vector(fit_points: List[Vector]) -> Iterable[float]:
+    distances = list(arc_distances(fit_points))
+    yield from _normalize_distances(distances)
+
+
+def arc_distances(fit_points: List[Vector]) -> Iterable[float]:
+    p = fit_points
+
+    def _radii() -> List[float]:
+        for i in range(len(p) - 2):
+            try:
+                radius = circle_radius_3p(p[i], p[i + 1], p[i + 2])
+            except ZeroDivisionError:
+                radius = 0.0
+            yield radius
+
+    r = list(_radii())
+    r.append(r[-1])  # 2x last radius
+    for k in range(0, len(p) - 1):
+        distance = (p[k + 1] - p[k]).magnitude
+        rk = r[k]
+        if math.isclose(rk, 0):
+            yield distance
+        else:
+            yield math.asin(distance / 2.0 / rk) * 2.0 * rk
 
 
 def estimate_tangents(points: List[Vector], method: str = '5-points', normalize=True) -> List[Vector]:

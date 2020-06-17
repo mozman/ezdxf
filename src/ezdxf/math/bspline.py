@@ -85,6 +85,7 @@ def global_bspline_interpolation(
       see `chord length`_ method
     - "centripetal", "sqrt_chord": creates a t vector with values proportional to the fit point sqrt(distances),
       see `centripetal`_ method
+    - "arc": creates a t vector with values proportional to the arc length between fit points.
 
     Args:
         fit_points: fit points of B-spline, as list of :class:`Vector` compatible objects

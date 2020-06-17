@@ -554,9 +554,7 @@ class CreatorInterface:
           see `chord length`_ method
         - "centripetal", "sqrt_chord": creates a t vector with values proportional to the fit point sqrt(distances),
           see `centripetal`_ method
-
-        None of this methods matches the spline created from fit points by AutoCAD.
-        See also: :ref:`tut_spline`.
+        - "arc": creates a t vector with values proportional to the arc length between fit points.
 
         Args:
             fit_points: iterable of fit points as (x, y[, z]) in :ref:`WCS`
@@ -584,6 +582,7 @@ class CreatorInterface:
           see `chord length`_ method
         - "centripetal", "sqrt_chord": creates a t vector with values proportional to the fit point sqrt(distances),
           see `centripetal`_ method
+        - "arc": creates a t vector with values proportional to the arc length between fit points.
 
         Args:
             fit_points: all fit points of B-spline

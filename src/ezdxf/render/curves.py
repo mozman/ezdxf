@@ -215,7 +215,8 @@ class Spline:
         Args:
             layout: :class:`~ezdxf.layouts.BaseLayout` object
             degree: degree of B-spline (order = `degree` + 1)
-            method: "uniform", "distance"/"chord" or "centripetal"/"sqrt_chord", calculation method for parameter t
+            method: "uniform", "distance"/"chord", "centripetal"/"sqrt_chord" or "arc"
+                    calculation method for parameter t
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
         """
