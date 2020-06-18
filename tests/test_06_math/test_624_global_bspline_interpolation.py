@@ -6,10 +6,11 @@ import math
 from ezdxf.math import Vector
 from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math.parametrize import uniform_t_vector, distance_t_vector, centripetal_t_vector, arc_t_vector, \
-    arc_distances
+    arc_distances, estimate_tangents
 from ezdxf.math.bspline import (
-    control_frame_knots, required_knot_values, averaged_knots_unconstrained, natural_knots_constrained, averaged_knots_constrained,
-    natural_knots_unconstrained,
+    control_frame_knots, required_knot_values, averaged_knots_unconstrained, natural_knots_constrained,
+    averaged_knots_constrained,
+    natural_knots_unconstrained, double_knots,
 )
 
 POINTS1 = Vector.list([(1, 1), (2, 4), (4, 1), (7, 6)])
@@ -146,6 +147,16 @@ def test_constrained_natural_knots(p, fit_points_2):
     check_knots(n + 3, p + 1, knots)
 
 
+@pytest.mark.parametrize('p', (2, 3, 4, 5))
+def test_double_knots(p, fit_points_2):
+    t_vector = list(distance_t_vector(fit_points_2))
+    n = len(fit_points_2) - 1
+
+    # create knots for each control point and 1st derivative
+    knots = double_knots(n, p, t_vector)
+    check_knots((n + 1) * 2, p + 1, knots)
+
+
 def test_bspline_interpolation(fit_points):
     spline = global_bspline_interpolation(fit_points, degree=3)
     assert len(spline.control_points) == len(fit_points)
@@ -156,6 +167,12 @@ def test_bspline_interpolation(fit_points):
     t_points = [spline.point(t) for t in spline.t_array]
     for p1, p2 in zip(t_points, fit_points):
         assert p1 == p2
+
+
+def test_bspline_interpolation_first_derivatives(fit_points):
+    tangents = estimate_tangents(fit_points)
+    spline = global_bspline_interpolation(fit_points, degree=3, tangents=tangents)
+    assert len(spline.control_points) == 2 * len(fit_points)
 
 
 expected = [

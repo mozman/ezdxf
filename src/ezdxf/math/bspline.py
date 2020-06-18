@@ -87,10 +87,18 @@ def global_bspline_interpolation(
       see `centripetal`_ method
     - "arc": creates a t vector with values proportional to the arc length between fit points.
 
+    It is possible to constraint the curve by tangents, by start- and end tangent if only two tangents
+    are given or by one tangent for each fit point.
+
+    If tangents are given, they represent 1st derivatives and and should be scaled if they are
+    unit vectors, if only start- and end tangents given the function :func:`~ezdxf.math.estimate_end_tangent_magnitude`
+    helps with an educated guess, if all tangents are given, scaling by chord length is a reasonable
+    choice (Piegl & Tiller).
+
     Args:
         fit_points: fit points of B-spline, as list of :class:`Vector` compatible objects
         tangents: if only two vectors are given, take the first and the last vector as start-
-            and end tangent constraints or if for each fit point a tangent is given use all
+            and end tangent constraints or if for all fit points a tangent is given use all
             tangents as interpolation constraints (optional)
         degree: degree of B-spline
         method: calculation method for parameter vector t
@@ -99,7 +107,6 @@ def global_bspline_interpolation(
         :class:`BSpline`
 
     """
-
     fit_points = Vector.list(fit_points)
     count = len(fit_points)
     order = degree + 1
@@ -115,8 +122,8 @@ def global_bspline_interpolation(
             control_points, knots = _global_bspline_interpolation_end_tangents(
                 fit_points, tangents[0], tangents[1], degree, t_vector, knot_generation_method)
         elif len(tangents) == len(fit_points):
-            control_points, knots = _global_bspline_interpolation_all_tangents(
-                fit_points, tangents, degree, t_vector, knot_generation_method)
+            control_points, knots = _global_bspline_interpolation_first_derivatives(
+                fit_points, tangents, degree, t_vector)
         else:
             raise ValueError(
                 'Invalid count of tangents, two tangents as start- and end tangent constrains'
@@ -446,7 +453,8 @@ def _global_bspline_interpolation(
         degree: int,
         t_vector: Sequence[float],
         knot_generation_method: str = 'average') -> Tuple[List[Vector], List[float]]:
-    """ Algorithm: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html """
+    # Source: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
+    # Source: Piegl & Tiller: "The NURBS Book" - chapter 9.2.1
     knots = control_frame_knots(len(fit_points) - 1, degree, t_vector, knot_generation_method, constrained=False)
     spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
     solver = _get_best_solver([spline.basis(t) for t in t_vector], degree)
@@ -461,6 +469,7 @@ def _global_bspline_interpolation_end_tangents(
         degree: int,
         t_vector: Sequence[float],
         knot_generation_method: str = 'average') -> Tuple[List[Vector], List[float]]:
+    # Source:  Piegl & Tiller: "The NURBS Book" - chapter 9.2.2
     n = len(fit_points) - 1
     p = degree
     m = n + p + 3
@@ -483,20 +492,68 @@ def _global_bspline_interpolation_end_tangents(
     return Vector.list(control_points.rows()), knots
 
 
-def _global_bspline_interpolation_all_tangents(
+def double_knots(n: int, p: int, t_vector: Sequence[float]) -> List[float]:
+    u = [0.0] * (p + 1)
+    prev_t = 0.0
+
+    u1 = []
+    for t in t_vector[1:-1]:
+        if p == 2:
+            # add one knot between prev_t and t
+            u1.append((prev_t + t) / 2.0)
+            u1.append(t)
+        else:
+            if prev_t == 0.0:  # first knot
+                u1.append(t / 2)
+            else:
+                # add one knot at the 1st third and one knot
+                # at the 2nd third between prev_t and t.
+                u1.append((2 * prev_t + t) / 3.0)
+                u1.append((prev_t + 2 * t) / 3.0)
+        prev_t = t
+    u.extend(u1[:n * 2 - p])
+    u.append((t_vector[-2] + 1.0) / 2.0)  # last knot
+    u.extend([1.0] * (p + 1))
+    return u
+
+
+def _global_bspline_interpolation_first_derivatives(
         fit_points: List[Vector],
-        tangents: List[Vector],
+        derivatives: List[Vector],
         degree: int,
-        t_vector: Sequence[float],
-        knot_generation_method: str = 'average') -> Tuple[List[Vector], List[float]]:
-    return _global_bspline_interpolation_end_tangents(
-        fit_points,
-        start_tangent=tangents[0],
-        end_tangent=tangents[-1],
-        degree=degree,
-        t_vector=t_vector,
-        knot_generation_method=knot_generation_method,
-    )
+        t_vector: Sequence[float]) -> Tuple[List[Vector], List[float]]:
+    # Source: Piegl & Tiller: "The NURBS Book" - chapter 9.2.4
+    p = degree
+    n = len(fit_points) - 1
+    knots = double_knots(n, p, t_vector)
+    count = len(fit_points) * 2
+
+    # Build linear equation system A
+    N = DBasis(knots=knots, order=p + 1, count=count)
+    A = [
+        [1.0] + [0.0] * (count - 1),  # Q0
+        [-1.0, +1.0] + [0.0] * (count - 2),  # D0
+    ]
+    for d0, d1, _ in (N.basis(t) for t in t_vector[1:-1]):
+        A.extend((d0, d1))  # Qi, Di
+    # swapped equations!
+    A.append([0.0] * (count - 2) + [-1.0, +1.0])  # Dn
+    A.append([0.0] * (count - 1) + [+1.0])  # Qn
+
+    # Build right handed matrix B
+    B = []
+    for rows in zip(fit_points, derivatives):
+        B.extend(rows)  # Qi, Di
+
+    # also swap last rows!
+    B[-1], B[-2] = B[-2], B[-1]  # Dn, Qn
+
+    # modify equation for derivatives D0 and Dn
+    B[1] *= knots[p + 1] / 3.0
+    B[-2] *= (1.0 - knots[-(p + 2)]) / 3.0
+    solver = _get_best_solver(A, degree)
+    control_points = solver.solve_matrix(B)
+    return Vector.list(control_points.rows()), knots
 
 
 def local_cubic_bspline_interpolation_from_tangents(fit_points: List[Vector], tangents: List[Vector]) -> Tuple[
