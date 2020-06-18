@@ -90,7 +90,7 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-10) -> Sequence[Vector]
 
-.. autofunction:: estimate_tangents(points: List[Vector], method: str = 'cubic-bezier', normalize = True) -> List[Vector]
+.. autofunction:: estimate_tangents(points: List[Vector], method: str = '5-points', normalize = True) -> List[Vector]
 
 .. autofunction:: estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') -> List[Vector]
 

@@ -319,7 +319,7 @@ def bspline_control_frame_approx(
     return bspline
 
 
-def control_frame_knots(n: int, p: int, t_vector: Iterable[float], method='average') -> Iterable[float]:
+def control_frame_knots(n: int, p: int, t_vector: Iterable[float], method='average', constrained=False) -> List[float]:
     """
     Generates a 'clamped' knot vector for control frame creation. All knot values in the range [0 .. 1].
 
@@ -328,6 +328,7 @@ def control_frame_knots(n: int, p: int, t_vector: Iterable[float], method='avera
         p: degree of spline
         t_vector: parameter vector, length(t_vector) == n
         method: "average", "natural"
+        constrained: ``True`` for constrained curve
 
     Returns:
         Iterable[float]: n+p+2 knot values
@@ -338,61 +339,84 @@ def control_frame_knots(n: int, p: int, t_vector: Iterable[float], method='avera
         raise DXFValueError('Invalid n/p combination')
     t_vector = [float(v) for v in t_vector]
     if method == 'average':
-        return averaged_knots(n, p, t_vector)
+        return averaged_knots_constrained(n, p, t_vector) if constrained else averaged_knots_unconstrained(n, p,
+                                                                                                           t_vector)
     elif method == 'natural':
-        return natural_knots_unconstrained(n, p, t_vector)
+        return natural_knots_constrained(n, p, t_vector) if constrained else natural_knots_unconstrained(n, p, t_vector)
     else:
         raise ValueError(f'Unknown knot generation method: {method}')
 
 
-def averaged_knots(n: int, p: int, t_vector) -> Iterable[float]:
-    order = p + 1
-    for _ in range(order):  # clamped spline has 'order' leading 0s
-        yield t_vector[0]
-    for j in range(1, n - p + 1):
-        yield sum(t_vector[j: j + p]) / p
-    for _ in range(order):  # clamped spline has 'order' appended 1s
-        yield t_vector[-1]
-
-
-def natural_knots_unconstrained(n: int, p: int, t_vector) -> Iterable[float]:
+def averaged_knots_unconstrained(n: int, p: int, t_vector: Sequence[float]) -> List[float]:
     """
-    Generate knot vector from parametrization vector t_vector,
-    for unconstrained curves.
+    Generate knot vector from parametrization vector t_vector for unconstrained curves.
 
     Args:
         n: count of control points - 1
         p: degree
-        t_vector: parametrization vector
+        t_vector: parametrization vector, normalized [0..1]
+
     """
-    order = p + 1
-    for _ in range(order):  # clamped spline has 'order' leading 0s
-        yield t_vector[0]
-    yield from t_vector[2: n - p + 2]
-    for _ in range(order):  # clamped spline has 'order' appended 1s
-        yield t_vector[-1]
+    knots = [0.0] * (p + 1)
+    knots.extend(sum(t_vector[j: j + p]) / p for j in range(1, n - p + 1))
+    if knots[-1] > 1.0:
+        raise ValueError('Normalized [0..1] values required')
+    knots.extend([1.0] * (p + 1))
+    return knots
 
 
-def natural_knots_constrained(n: int, p: int, t_vector) -> Iterable[float]:
+def averaged_knots_constrained(n: int, p: int, t_vector: Sequence[float]) -> List[float]:
     """
-    Generate knot vector from parametrization vector t_vector,
-    for constrained curves.
-
-    Seems to be used by BricsCAD for generating control points
-    from fit points and two end tangents.
+    Generate knot vector from parametrization vector t_vector for constrained curves.
 
     Args:
         n: count of control points - 1
         p: degree
-        t_vector: parametrization vector
+        t_vector: parametrization vector, normalized [0..1]
 
     """
-    order = p + 1
-    for _ in range(order):  # clamped spline has 'order' leading 0s
-        yield t_vector[0]
-    yield from t_vector[1: n - p + 1]
-    for _ in range(order):  # clamped spline has 'order' appended 1s
-        yield t_vector[-1]
+    knots = [0.0] * (p + 1)
+    knots.extend(sum(t_vector[j: j + p - 1]) / p for j in range(n - p))
+    if knots[-1] > 1.0:
+        raise ValueError('Normalized [0..1] values required')
+    knots.extend([1.0] * (p + 1))
+    return knots
+
+
+def natural_knots_unconstrained(n: int, p: int, t_vector: Sequence[float]) -> List[float]:
+    """
+    Generate knot vector from parametrization vector t_vector for unconstrained curves.
+
+    Args:
+        n: count of control points - 1
+        p: degree
+        t_vector: parametrization vector, normalized [0..1]
+
+    """
+    knots = [0.0] * (p + 1)
+    knots.extend(t_vector[2: n - p + 2])
+    if knots[-1] > 1.0:
+        raise ValueError('Normalized [0..1] values required')
+    knots.extend([1.0] * (p + 1))
+    return knots
+
+
+def natural_knots_constrained(n: int, p: int, t_vector: Sequence[float]) -> List[float]:
+    """
+    Generate knot vector from parametrization vector t_vector for constrained curves.
+
+    Args:
+        n: count of control points - 1
+        p: degree
+        t_vector: parametrization vector, normalized [0..1]
+
+    """
+    knots = [0.0] * (p + 1)
+    knots.extend(t_vector[1: n - p + 1])
+    if knots[-1] > 1.0:
+        raise ValueError('Normalized [0..1] values required')
+    knots.extend([1.0] * (p + 1))
+    return knots
 
 
 def _get_best_solver(matrix: Union[List, Matrix], degree: int):
@@ -423,7 +447,7 @@ def _global_bspline_interpolation(
         t_vector: Sequence[float],
         knot_generation_method: str = 'average') -> Tuple[List[Vector], List[float]]:
     """ Algorithm: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html """
-    knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector, knot_generation_method))
+    knots = control_frame_knots(len(fit_points) - 1, degree, t_vector, knot_generation_method, constrained=False)
     spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
     solver = _get_best_solver([spline.basis(t) for t in t_vector], degree)
     control_points = solver.solve_matrix(fit_points)
@@ -440,13 +464,10 @@ def _global_bspline_interpolation_end_tangents(
     n = len(fit_points) - 1
     p = degree
     m = n + p + 3
-
-    if knot_generation_method == 'average':
-        knots = list(averaged_knots(n + 2, p, t_vector))
-    elif knot_generation_method == 'natural':
-        knots = list(natural_knots_constrained(n + 2, p, t_vector))
-    else:
-        raise ValueError(f'Unknown knot generation method: {knot_generation_method}')
+    if degree > 3:
+        # todo: 'average' produces weird results for degree > 3, 'natural' is better but also not not good
+        knot_generation_method = 'natural'
+    knots = control_frame_knots(n + 2, p, t_vector, knot_generation_method, constrained=True)
     assert len(knots) == m + 1
 
     spline = Basis(knots=knots, order=p + 1, count=n + 3)

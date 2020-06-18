@@ -1,11 +1,16 @@
+from typing import List
 import pytest
 import ezdxf
 from math import isclose
 import math
 from ezdxf.math import Vector
 from ezdxf.math.bspline import global_bspline_interpolation
-from ezdxf.math.parametrize import uniform_t_vector, distance_t_vector, centripetal_t_vector, arc_t_vector, arc_distances
-from ezdxf.math.bspline import control_frame_knots, required_knot_values
+from ezdxf.math.parametrize import uniform_t_vector, distance_t_vector, centripetal_t_vector, arc_t_vector, \
+    arc_distances
+from ezdxf.math.bspline import (
+    control_frame_knots, required_knot_values, averaged_knots_unconstrained, natural_knots_constrained, averaged_knots_constrained,
+    natural_knots_unconstrained,
+)
 
 POINTS1 = Vector.list([(1, 1), (2, 4), (4, 1), (7, 6)])
 POINTS2 = Vector.list([(1, 1), (2, 4), (4, 1), (7, 6), (5, 8), (3, 3), (1, 7)])
@@ -77,20 +82,68 @@ def test_invalid_order_count_combination():
         list(control_frame_knots(n=count - 1, p=order - 1, t_vector=[]))
 
 
-@pytest.mark.parametrize('p', (2, 3, 4))
-@pytest.mark.parametrize('method', ('average', 'natural'))
-def test_knot_generation(p, method):
-    fit_points = POINTS2
-    count = len(fit_points)
-    n = count - 1
-    order = p + 1
-    t_vector = uniform_t_vector(len(fit_points))
-    knots = list(control_frame_knots(n, p, t_vector, method))
+def check_knots(count: int, order: int, knots: List[float]):
     assert len(knots) == required_knot_values(count, order)
     assert len(set(knots[:order])) == 1, 'first order elements have to be equal'
     assert len(set(knots[-order:])) == 1, 'last order elements have to be equal'
     for k1, k2 in zip(knots, knots[1:]):
         assert k1 <= k2
+
+
+@pytest.mark.parametrize('p', (2, 3, 4))
+@pytest.mark.parametrize('method', ('average', 'natural'))
+def test_knot_generation(p, method):
+    fit_points = Vector.list([(0, 0), (0, 10), (10, 10), (20, 10), (20, 0), (30, 0), (30, 10), (40, 10), (40, 0)])
+    count = len(fit_points)
+    n = count - 1
+    order = p + 1
+    t_vector = distance_t_vector(fit_points)
+    knots = list(control_frame_knots(n, p, t_vector, method))
+    check_knots(n + 1, p + 1, knots)
+
+
+@pytest.fixture
+def fit_points_2():
+    return Vector.list([(0, 0), (0, 10), (10, 10), (20, 10), (20, 0), (30, 0), (30, 10), (40, 10), (40, 0)])
+
+
+@pytest.mark.parametrize('p', (2, 3, 4, 5))
+def test_unconstrained_averaged_knots(p, fit_points_2):
+    t_vector = list(distance_t_vector(fit_points_2))
+    n = len(fit_points_2) - 1
+
+    knots = averaged_knots_unconstrained(n, p, t_vector)
+    check_knots(n + 1, p + 1, knots)
+
+
+@pytest.mark.parametrize('p', (2, 3, 4, 5))
+def test_constrained_averaged_knots(p, fit_points_2):
+    t_vector = list(distance_t_vector(fit_points_2))
+    n = len(fit_points_2) - 1
+
+    # add 2 knots for tangents
+    knots = averaged_knots_constrained(n + 2, p, t_vector)
+    check_knots(n + 3, p + 1, knots)
+
+
+@pytest.mark.parametrize('p', (2, 3, 4, 5))
+def test_unconstrained_natural_knots(p, fit_points_2):
+    t_vector = list(distance_t_vector(fit_points_2))
+    n = len(fit_points_2) - 1
+
+    # add 2 knots for tangents
+    knots = natural_knots_unconstrained(n, p, t_vector)
+    check_knots(n + 1, p + 1, knots)
+
+
+@pytest.mark.parametrize('p', (2, 3, 4, 5))
+def test_constrained_natural_knots(p, fit_points_2):
+    t_vector = list(distance_t_vector(fit_points_2))
+    n = len(fit_points_2) - 1
+
+    # add 2 knots for tangents
+    knots = natural_knots_constrained(n + 2, p, t_vector)
+    check_knots(n + 3, p + 1, knots)
 
 
 def test_bspline_interpolation(fit_points):

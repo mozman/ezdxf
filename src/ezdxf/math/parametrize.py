@@ -4,7 +4,7 @@ from typing import List, Iterable, Sequence, Tuple
 import math
 from ezdxf.math import Vector
 from ezdxf.lldxf.const import DXFValueError
-from .bezier4p import tangents_cubic_bezier_interpolation
+from .bezier4p import tangents_cubic_bezier_interpolation, cubic_bezier_interpolation
 from .construct2d import circle_radius_3p
 
 
@@ -28,8 +28,7 @@ def uniform_t_vector(length: int) -> Iterable[float]:
 
 
 def distance_t_vector(fit_points: List[Vector]) -> Iterable[float]:
-    distances = [p1.distance(p2) for p1, p2 in zip(fit_points, fit_points[1:])]
-    yield from _normalize_distances(distances)
+    yield from _normalize_distances(list(linear_distances(fit_points)))
 
 
 def centripetal_t_vector(fit_points: List[Vector]) -> Iterable[float]:
@@ -44,6 +43,16 @@ def _normalize_distances(distances: Sequence[float]) -> Iterable[float]:
     for d in distances:
         s += d
         yield s / total_length
+
+
+def linear_distances(points: Iterable[Vector]) -> Iterable[float]:
+    prev = None
+    for p in points:
+        if prev is None:
+            prev = p
+            continue
+        yield prev.distance(p)
+        prev = p
 
 
 def arc_t_vector(fit_points: List[Vector]) -> Iterable[float]:
@@ -82,7 +91,7 @@ def estimate_tangents(points: List[Vector], method: str = '5-points', normalize=
 
         - "3-points": 3 point interpolation
         - "5-points": 5 point interpolation
-        - "cubic-bezier": tangents from an interpolated cubic bezier curve
+        - "bezier": tangents from an interpolated cubic bezier curve
         - "diff": finite difference
 
     Args:
@@ -94,7 +103,7 @@ def estimate_tangents(points: List[Vector], method: str = '5-points', normalize=
         tangents as list of :class:`Vector` objects
 
     """
-    if method == 'cubic-bezier':
+    if method == 'bezier':
         return tangents_cubic_bezier_interpolation(points, normalize=normalize)
     elif method.startswith('3-p'):
         return tangents_3_point_interpolation(points, normalize=normalize)
@@ -113,6 +122,7 @@ def estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') 
 
         - "chord": total chord length, curve approximation by straight segments
         - "arc": total arc length, curve approximation by arcs
+        - "bezier-n": total length from cubic bezier curve approximation, n segments per section
 
     Args:
         points: start-, end- and passing points of curve
@@ -125,6 +135,12 @@ def estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') 
     elif method == 'arc':
         total_length = sum(arc_distances(points))
         return total_length, total_length
+    elif method.startswith('bezier-'):
+        count = int(method[7:])
+        s = 0.0
+        for curve in cubic_bezier_interpolation(points):
+            s += sum(linear_distances(curve.approximate(count)))
+        return s, s
     else:
         raise ValueError(f'Unknown tangent magnitude calculation method: {method}')
 
