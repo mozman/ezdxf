@@ -28,11 +28,12 @@ def setup():
 
 # 1. Fit points from DXF file: Interpolation without any constraints
 doc, msp = setup()
+# First spline defined by control vertices interpolated from given fit points
 s = global_bspline_interpolation(points, degree=3)
 msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_construction_tool(s)
-# Does not match the BricsCAD Interpolation
+# Second spline defined only by fit points as reference, does not match the BricsCAD interpolation.
 spline = msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
-doc.saveas(DIR / f'fit-points-only.dxf')
+doc.saveas(DIR / 'fit-points-only.dxf')
 
 # 2. Store fit points, start- and end tangent values in DXF file:
 doc, msp = setup()
@@ -50,7 +51,7 @@ msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_c
 spline = msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
 spline.dxf.start_tangent = Vector.from_deg_angle(100)
 spline.dxf.end_tangent = Vector.from_deg_angle(-100)
-doc.saveas(DIR / f'fit-points-and-tangents.dxf')
+doc.saveas(DIR / 'fit-points-and-tangents.dxf')
 
 # 3. Need control vertices to render the B-spline but start- and
 # end tangents are not stored in the DXF file like in scenario 1.
@@ -59,7 +60,6 @@ doc.saveas(DIR / f'fit-points-and-tangents.dxf')
 doc, msp = setup()
 tangents = estimate_tangents(points, method='5-points')
 # Estimated tangent angles: (108.43494882292201, -108.43494882292201) degree
-# Also tangent magnitude estimation is different to scenario 2
 m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
 start_tangent = tangents[0].normalize(m1)
 end_tangent = tangents[-1].normalize(m2)
@@ -69,7 +69,7 @@ msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_c
 # Result does not matches the BricsCAD interpolation
 # tangents angle: (101.0035408517495, -101.0035408517495) degree
 msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
-doc.saveas(DIR / f'tangents-estimated.dxf')
+doc.saveas(DIR / 'tangents-estimated.dxf')
 
 # Theory Check:
 doc, msp = setup()
@@ -77,18 +77,18 @@ m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
 # Following values are calculated from a DXF file saved by Brics CAD
 # and SPLINE "Method" switched from "fit points" to "control vertices"
 # tangent vector = 2nd control vertex - 1st control vertex
-required_angel = 101.0035408517495  # angle of tangent vector in degrees
+required_angle = 101.0035408517495  # angle of tangent vector in degrees
 required_magnitude = m1 * 1.3097943444804256  # magnitude of tangent vector
-start_tangent = Vector.from_deg_angle(required_angel, required_magnitude)
-end_tangent = Vector.from_deg_angle(-required_angel, required_magnitude)
+start_tangent = Vector.from_deg_angle(required_angle, required_magnitude)
+end_tangent = Vector.from_deg_angle(-required_angle, required_magnitude)
 s = global_bspline_interpolation(points, degree=3, tangents=(start_tangent, end_tangent))
 msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_construction_tool(s)
 # Now result matches the BricsCAD interpolation - but only in this case
 msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
-doc.saveas(DIR / f'theory-check.dxf')
+doc.saveas(DIR / 'theory-check.dxf')
 
 # 1. If tangents are given (stored in DXF) the magnitude of the input tangents for the
 #    interpolation function is "total chord length".
 # 2. Without given tangents the magnitude is different, in this case: m1*1.3097943444804256,
-#    but it is not a constant value.
+#    but it is not a constant factor.
 # The required information is the estimated start- and end tangent in direction and magnitude
