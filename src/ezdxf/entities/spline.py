@@ -36,6 +36,8 @@ acdb_spline = DefSubclass('AcDbSpline', {
     'knot_tolerance': DXFAttr(42, default=1e-10, optional=True),
     'control_point_tolerance': DXFAttr(43, default=1e-10, optional=True),
     'fit_tolerance': DXFAttr(44, default=1e-10, optional=True),
+    # Start- and end tangents should be normalized, but CAD applications do not
+    # crash if they are not normalized.
     'start_tangent': DXFAttr(12, xtype=XType.point3d, optional=True),
     'end_tangent': DXFAttr(13, xtype=XType.point3d, optional=True),
     # extrusion is the normal vector (omitted if the spline is non-planar)

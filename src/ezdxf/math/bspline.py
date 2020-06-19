@@ -94,32 +94,23 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'], degree: int = 3, method
 
     """
     points = Vector.list(fit_points)
+    m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
     if tangents is None:
         # 5-points is the closest estimation method I found so far
         tangents = estimate_tangents(points, method='5-p')
-        m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
         start_tangent = tangents[0].normalize(m1)
         end_tangent = tangents[-1].normalize(m2)
     else:
         tangents = Vector.list(tangents)
-        start_tangent = Vector(tangents[0])
-        end_tangent = Vector(tangents[-1])
+        start_tangent = Vector(tangents[0]).normalize(m1)
+        end_tangent = Vector(tangents[-1]).normalize(m2)
 
     degree = int(degree)
     if degree < 2:
         degree = 2
     elif degree > 3:
         degree = 3
-
-    control_points, knots = global_bspline_interpolation_end_tangents(
-        points,
-        start_tangent=start_tangent,
-        end_tangent=end_tangent,
-        degree=degree,
-        t_vector=list(create_t_vector(points, method=method)),
-        knot_generation_method='natural' if degree % 2 else 'average',
-    )
-    return BSpline(control_points, degree, knots=knots)
+    return global_bspline_interpolation(points, degree, (start_tangent, end_tangent), method)
 
 
 def global_bspline_interpolation(
