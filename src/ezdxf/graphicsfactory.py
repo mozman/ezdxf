@@ -9,7 +9,7 @@ import warnings
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
 from ezdxf.math import Vector
-from ezdxf.math import global_bspline_interpolation, bspline_control_frame_approx
+from ezdxf.math import global_bspline_interpolation, global_bspline_approximation
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
@@ -574,8 +574,7 @@ class CreatorInterface:
     def add_spline_approx(self, fit_points: Iterable['Vertex'], count: int, degree: int = 3, method: str = 'chord',
                           dxfattribs: dict = None) -> 'Spline':
         """
-        Approximate B-spline (:class:`~ezdxf.entities.Spline` entity) by a reduced count of control points, given are
-        the fit points and the degree of the B-spline.
+        Approximate `B-spline`_ by a given `count` of control points and passing the fit points as close as possible.
 
         - "uniform": creates a uniform t vector, from 0 to 1 evenly spaced, see `uniform`_ method
         - "distance", "chord": creates a t vector with values proportional to the fit point distances,
@@ -592,13 +591,7 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes
 
         """
-        warnings.warn('Method name add_spline_approx() is misleading and will be removed in v0.15', DeprecationWarning)
-        # Universal approach to add splines from one of many B-spline construction tools:
-        # from ezdxf.math import bspline_control_frame_approx
-        # spline_tool = bspline_control_frame_approx(fit_points, ...)
-        # spline = msp.add_spline().apply_construction_tool(spline_tool)
-
-        bspline = bspline_control_frame_approx(fit_points, count, degree=degree, method=method)
+        bspline = global_bspline_approximation(fit_points, count, degree=degree, method=method)
         return self.add_open_spline(
             control_points=bspline.control_points,
             degree=bspline.degree,

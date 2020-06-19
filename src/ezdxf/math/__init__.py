@@ -20,7 +20,8 @@ from .linalg import (
 )
 from .parametrize import estimate_tangents, estimate_end_tangent_magnitude
 from .bspline import (
-    global_bspline_interpolation, bspline_control_frame_approx, rational_spline_from_arc, rational_spline_from_ellipse,
+    fit_points_to_cad_cv, global_bspline_interpolation, global_bspline_approximation,
+    rational_spline_from_arc, rational_spline_from_ellipse,
     uniform_knot_vector, open_uniform_knot_vector, required_knot_values, BSpline, BSplineU, BSplineClosed, DBSpline,
     DBasisU, DBSplineClosed, DBSplineU, local_cubic_bspline_interpolation,
 )

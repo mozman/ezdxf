@@ -122,6 +122,8 @@ BaseLayout
 
     .. automethod:: add_spline_control_frame
 
+    .. automethod:: add_spline_approx
+
     .. automethod:: add_open_spline
 
     .. automethod:: add_closed_spline

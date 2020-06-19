@@ -3,8 +3,8 @@
 from math import isclose
 from ezdxf.math import Vector
 from ezdxf.math.parametrize import uniform_t_vector
-from ezdxf.math.bspline import bspline_basis_vector, Basis, control_frame_knots
-from ezdxf.math.bspline import bspline_control_frame_approx
+from ezdxf.math.bspline import bspline_basis_vector, Basis, knots_from_parametrization
+from ezdxf.math.bspline import global_bspline_approximation
 
 POINTS2 = [(1, 1), (2, 4), (4, 1), (7, 6), (5, 8), (3, 3), (1, 7)]
 
@@ -14,7 +14,7 @@ def test_basis_vector_N_ip():
     fit_points = Vector.list(POINTS2)  # data points D
     n = len(fit_points) - 1
     t_vector = list(uniform_t_vector(len(fit_points)))
-    knots = list(control_frame_knots(n, degree, t_vector))
+    knots = list(knots_from_parametrization(n, degree, t_vector))
     should_count = len(fit_points) - 2  # target control point count
     h = should_count - 1
     spline = Basis(knots, order=degree+1, count=len(fit_points))
@@ -28,7 +28,7 @@ def test_basis_vector_N_ip():
 
 def test_control_frame_approx():
     points = [(1, 1), (2, 4), (4, 1), (7, 6), (5, 8), (3, 3), (1, 7), (2, 10), (5, 12), (7, 8)]
-    spline = bspline_control_frame_approx(points, 7, degree=3)
+    spline = global_bspline_approximation(points, 7, degree=3)
     assert len(spline.control_points) == 7
     assert spline.control_points[0] == points[0]
     assert spline.control_points[-1] == points[-1]

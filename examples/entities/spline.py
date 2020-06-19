@@ -4,7 +4,7 @@
 # License: MIT License
 from typing import cast
 import ezdxf
-from ezdxf.math.bspline import global_bspline_interpolation, bspline_control_frame_approx
+from ezdxf.math.bspline import global_bspline_interpolation, global_bspline_approximation
 from ezdxf.math import BSpline, Vector
 from ezdxf.entities import Spline
 
@@ -118,7 +118,7 @@ def spline_control_frame_approximation():
     msp = doc.modelspace()
     msp.add_polyline2d(fit_points, dxfattribs={'color': 2, 'linetype': 'DOT2'})
 
-    spline = bspline_control_frame_approx(fit_points, count=7, degree=3, method='uniform')
+    spline = global_bspline_approximation(fit_points, count=7, degree=3, method='uniform')
     msp.add_polyline2d(spline.control_points, dxfattribs={'color': 3, 'linetype': 'DASHED'})
     msp.add_open_spline(spline.control_points, degree=spline.degree, dxfattribs={'color': 3})
     msp.add_spline(fit_points, degree=3, dxfattribs={'color': 1})

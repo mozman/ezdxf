@@ -68,6 +68,7 @@ Version 0.13b3 - dev
 - CHANGE: renamed `Spline.set_periodic()` to `Spline.set_closed()`
 - CHANGE: renamed `Spline.set_periodic_rational()` to `Spline.set_closed_rational()`
 - CHANGE: renamed `ezdxf.math.bspline_control_frame()` to `ezdxf.math.global_bspline_interpolation()`
+- CHANGE: renamed `ezdxf.math.bspline_control_frame_approx()` to `ezdxf.math.global_bspline_approximation()`
 - REMOVED: `ezdxf.math.Matrix33` class, `UCS` and `OCS` uses `Matrix44`for transformations  
 - REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`
 - REMOVED: `ezdxf.math.ConstructionTool` base class
@@ -77,8 +78,6 @@ Version 0.13b3 - dev
 - DEPRECATED: `non_uniform_scaling` argument for `Insert.virtual_entities()`  
 - DEPRECATED: getter and edit methods in `Hatch` for attributes `paths`, `gradient`, `pattern` and `seeds` 
 - DEPRECATED: `Spline.edit_data()` all attributes accessible by properties
-- DEPRECATED: `Layout.add_spline_approx()` is misleading and will be removed in v0.15, use B-spline construction tools 
-  and `Spline.apply_construction_tool()` for special spline creations
 - BUGFIX: `ezdxf.math.intersection_ray_ray_3d()` 
 - BUGFIX: `Spline.set_periodic()` created invalid data for BricsCAD - misleading information by Autodesk
 

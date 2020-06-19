@@ -8,7 +8,7 @@ from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math.parametrize import uniform_t_vector, distance_t_vector, centripetal_t_vector, arc_t_vector, \
     arc_distances, estimate_tangents
 from ezdxf.math.bspline import (
-    control_frame_knots, required_knot_values, averaged_knots_unconstrained, natural_knots_constrained,
+    knots_from_parametrization, required_knot_values, averaged_knots_unconstrained, natural_knots_constrained,
     averaged_knots_constrained,
     natural_knots_unconstrained, double_knots,
 )
@@ -80,7 +80,7 @@ def test_invalid_order_count_combination():
     with pytest.raises(ezdxf.DXFValueError):
         required_knot_values(count, order)
     with pytest.raises(ezdxf.DXFValueError):
-        list(control_frame_knots(n=count - 1, p=order - 1, t_vector=[]))
+        list(knots_from_parametrization(n=count - 1, p=order - 1, t=[]))
 
 
 def check_knots(count: int, order: int, knots: List[float]):
@@ -99,7 +99,7 @@ def test_knot_generation(p, method):
     n = count - 1
     order = p + 1
     t_vector = distance_t_vector(fit_points)
-    knots = list(control_frame_knots(n, p, t_vector, method))
+    knots = list(knots_from_parametrization(n, p, t_vector, method))
     check_knots(n + 1, p + 1, knots)
 
 

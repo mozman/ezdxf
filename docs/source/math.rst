@@ -94,15 +94,17 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') -> List[Vector]
 
+.. autofunction:: fit_points_to_cad_cv
+
 .. autofunction:: global_bspline_interpolation
 
-.. autofunction:: bspline_control_frame_approx
+.. autofunction:: global_bspline_approximation
+
+.. autofunction:: local_cubic_bspline_interpolation(fit_points: Iterable[Vertex], method: str = '5-points', tangents :Iterable[Vertex] = None) -> BSpline
 
 .. autofunction:: rational_spline_from_arc(center: Vector = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> BSpline
 
 .. autofunction:: rational_spline_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> BSpline
-
-.. autofunction:: local_cubic_bspline_interpolation(fit_points: Iterable[Vertex], method: str = '5-points', tangents :Iterable[Vertex] = None) -> BSpline
 
 .. autofunction:: cubic_bezier_from_arc(center: Vector = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> Iterable[Bezier4P]
 
@@ -1025,7 +1027,7 @@ BandedMatrixLU Class
 
     .. automethod:: determinant
 
-.. _Curve Global Interpolation: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
+.. _Global Curve Interpolation: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
 .. _uniform: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-uniform.html
 .. _chord length: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-chord-length.html
 .. _centripetal: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-centripetal.html
