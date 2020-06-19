@@ -1,7 +1,6 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import Iterable, Tuple, List, Sequence, Union, Any
-import sys
 from itertools import repeat
 import math
 import reprlib
