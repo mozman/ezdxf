@@ -27,6 +27,7 @@ Quick-Info
 Included Extensions
 -------------------
 
+- :ref:`draw` add-on to visualise and convert DXF files to images which can be saved to various formats such as png, pdf and svg
 - :ref:`r12writer` add-on to write basic DXF entities direct and fast into a DXF R12 file or stream
 - :ref:`iterdxf` add-on to iterate over entities of the modelspace of really big (> 5GB) DXF files which
   do not fit into memory

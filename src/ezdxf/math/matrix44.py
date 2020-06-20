@@ -28,6 +28,10 @@ class Matrix44:
     This is a pure Python implementation for 4x4 transformation matrices, to avoid dependency to big numerical packages
     like :mod:`numpy`, before binary wheels, installation of these packages wasn't always easy on Windows.
 
+    The utility functions for constructing transformations and transforming vectors and points assumes that vectors
+    are stored as row vectors, meaning when multiplied, transformations are applied left to right
+    (e.g. vAB transforms v by A then by B).
+
     Matrix44 initialization:
 
         - ``Matrix44()`` returns the identity matrix.
@@ -403,6 +407,11 @@ class Matrix44:
     def __iter__(self) -> Iterable[float]:
         """ Iterates over all matrix values. """
         return iter(self.matrix)
+
+    def __matmul__(self, other: 'Matrix44') -> 'Matrix44':
+        res_matrix = self.copy()
+        res_matrix.__imul__(other)
+        return res_matrix
 
     def __mul__(self, other: 'Matrix44') -> 'Matrix44':
         """ Returns a new matrix as result of the matrix multiplication with another matrix. """
