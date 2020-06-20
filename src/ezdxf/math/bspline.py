@@ -40,7 +40,7 @@ USE_BANDED_MATRIX_SOLVER_PYPY_LIMIT = 60
 
 __all__ = [
     # High level functions:
-    'fit_points_to_cad_cv', 'global_bspline_interpolation', 'global_bspline_approximation',
+    'fit_points_to_cad_cv', 'global_bspline_interpolation',
     'local_cubic_bspline_interpolation', 'rational_spline_from_arc', 'rational_spline_from_ellipse',
 
     # B-spline representation without derivatives support:
@@ -178,84 +178,6 @@ def global_bspline_interpolation(
     bspline = BSpline(control_points, order=order, knots=knots)
     bspline.t_array = t_vector
     return bspline
-
-
-def global_bspline_approximation(
-        points: Iterable['Vertex'],
-        count: int,
-        degree: int = 3,
-        method: str = 'chord') -> 'BSpline':
-    """
-    Approximate `B-spline`_ by a given `count` of control points and passing the fit points as close as possible.
-
-    Args:
-        points: data points the B-spline should fit as :class:`Vector` compatible objects
-        count: count of designated control points
-        degree: degree of B-spline
-        method: calculation method for parameter vector t, see :func:`global_bspline_interpolation`
-
-    Returns:
-        :class:`BSpline`
-
-    """
-    points = Vector.list(points)
-    order = degree + 1
-    if order > count:
-        raise DXFValueError(f'More control points for degree {degree} required.')
-
-    t_vector = list(create_t_vector(points, method))
-    knots = list(knots_from_parametrization(len(points) - 1, degree, t_vector))
-    control_points = _bspline_approximation(points, count, degree, t_vector, knots)
-    bspline = BSpline(control_points, order=order)
-    return bspline
-
-
-def _bspline_approximation(
-        points: Iterable['Vertex'],
-        count: int,
-        degree: int,
-        t_vector: Iterable[float],
-        knots: Iterable[float]) -> List[Vector]:
-    """
-    Approximate given data points by a `B-spline`_ of `count` control points.
-
-    Source: Piegl & Tiller: "The NURBS Book" - chapter 9.4.1
-
-    Args:
-        points: data points the B-spline should fit as :class:`Vector` compatible objects
-        count: count of designated control points
-        degree: degree of B-spline
-        t_vector: parameter vector
-        knots: knot vector
-
-    Returns:
-        List[Vector]: control points
-
-    """
-    # source: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-APP-global.html
-    points = Vector.list(points)  # data points D
-    n = len(points) - 1
-    h = count - 1
-    d0 = points[0]
-    dn = points[n]
-    spline = Basis(knots, order=degree + 1, count=len(points))
-    # matrix_N[0] == row 0
-    N = [spline.basis(t) for t in t_vector]  # 0 .. n
-
-    def get_Q(k):
-        ntk = N[k]
-        return points[k] - d0 * ntk[0] - dn * ntk[h]
-
-    # Q[0] == row 1
-    Q = [sum(get_Q(k) * N[k][i] for k in range(1, n)) for i in range(1, h)]
-    N = Matrix([row[1:h] for row in N[1:-1]])
-    M = N.transpose() * N
-    solver = _get_best_solver(M, degree)
-    P = solver.solve_matrix(Q)
-    control_points = [d0]
-    control_points.extend(Vector.generate(P.rows()))
-    control_points.append(dn)
-    return control_points
 
 
 def local_cubic_bspline_interpolation(
@@ -862,6 +784,7 @@ class BSpline:
         weights: iterable of weight values
 
     """
+
     def __init__(self, control_points: Iterable['Vertex'],
                  order: int = 4,
                  knots: Iterable[float] = None,

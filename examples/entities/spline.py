@@ -4,7 +4,7 @@
 # License: MIT License
 from typing import cast
 import ezdxf
-from ezdxf.math.bspline import global_bspline_interpolation, global_bspline_approximation
+from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math import BSpline, Vector
 from ezdxf.entities import Spline
 
@@ -111,20 +111,6 @@ def spline_control_frame_from_fit_points():
     doc.saveas("Spline_R2000_spline_control_frame_from_fit_points.dxf")
 
 
-def spline_control_frame_approximation():
-    doc = new('R2000', setup=True)
-
-    fit_points = Vector.list([(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50), (80, 70), (65, 75)])
-    msp = doc.modelspace()
-    msp.add_polyline2d(fit_points, dxfattribs={'color': 2, 'linetype': 'DOT2'})
-
-    spline = global_bspline_approximation(fit_points, count=7, degree=3, method='uniform')
-    msp.add_polyline2d(spline.control_points, dxfattribs={'color': 3, 'linetype': 'DASHED'})
-    msp.add_open_spline(spline.control_points, degree=spline.degree, dxfattribs={'color': 3})
-    msp.add_spline(fit_points, degree=3, dxfattribs={'color': 1})
-    doc.saveas("Spline_R2000_spline_control_frame_approximation.dxf")
-
-
 def spline_insert_knot():
     doc = ezdxf.new('R2000', setup=True)
     msp = doc.modelspace()
@@ -153,5 +139,4 @@ if __name__ == '__main__':
     rational_spline()
     closed_rational_spline()
     spline_control_frame_from_fit_points()
-    spline_control_frame_approximation()
     spline_insert_knot()

@@ -9,7 +9,7 @@ import warnings
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
 from ezdxf.math import Vector
-from ezdxf.math import global_bspline_interpolation, global_bspline_approximation
+from ezdxf.math import global_bspline_interpolation
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
@@ -568,33 +568,6 @@ class CreatorInterface:
             control_points=bspline.control_points,
             degree=bspline.degree,
             knots=bspline.knot_values(),
-            dxfattribs=dxfattribs,
-        )
-
-    def add_spline_approx(self, fit_points: Iterable['Vertex'], count: int, degree: int = 3, method: str = 'chord',
-                          dxfattribs: dict = None) -> 'Spline':
-        """
-        Approximate `B-spline`_ by a given `count` of control points and passing the fit points as close as possible.
-
-        - "uniform": creates a uniform t vector, from 0 to 1 evenly spaced, see `uniform`_ method
-        - "distance", "chord": creates a t vector with values proportional to the fit point distances,
-          see `chord length`_ method
-        - "centripetal", "sqrt_chord": creates a t vector with values proportional to the fit point sqrt(distances),
-          see `centripetal`_ method
-        - "arc": creates a t vector with values proportional to the arc length between fit points.
-
-        Args:
-            fit_points: all fit points of B-spline
-            count: count of designated control points
-            degree: degree of B-spline
-            method: calculation method for parameter vector t
-            dxfattribs: additional DXF attributes
-
-        """
-        bspline = global_bspline_approximation(fit_points, count, degree=degree, method=method)
-        return self.add_open_spline(
-            control_points=bspline.control_points,
-            degree=bspline.degree,
             dxfattribs=dxfattribs,
         )
 

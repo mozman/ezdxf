@@ -98,8 +98,6 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: global_bspline_interpolation
 
-.. autofunction:: global_bspline_approximation
-
 .. autofunction:: local_cubic_bspline_interpolation(fit_points: Iterable[Vertex], method: str = '5-points', tangents :Iterable[Vertex] = None) -> BSpline
 
 .. autofunction:: rational_spline_from_arc(center: Vector = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> BSpline

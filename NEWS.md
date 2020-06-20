@@ -68,11 +68,14 @@ Version 0.13b3 - dev
 - CHANGE: renamed `Spline.set_periodic()` to `Spline.set_closed()`
 - CHANGE: renamed `Spline.set_periodic_rational()` to `Spline.set_closed_rational()`
 - CHANGE: renamed `ezdxf.math.bspline_control_frame()` to `ezdxf.math.global_bspline_interpolation()`
-- CHANGE: renamed `ezdxf.math.bspline_control_frame_approx()` to `ezdxf.math.global_bspline_approximation()`
 - REMOVED: `ezdxf.math.Matrix33` class, `UCS` and `OCS` uses `Matrix44`for transformations  
 - REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`
 - REMOVED: `ezdxf.math.ConstructionTool` base class
 - REMOVED: `ezdxf.math.normalize_angle(angle)`, replace call by expression: `angle % math.tau`
+- REMOVED: `BaseLayout.add_spline_approx()`, incorrect and nobody noticed it - so it's not really needed, if required 
+  use the `geomdl.fitting.approximate_curve()` function from the package 
+  [geomdl](https://github.com/orbingol/NURBS-Python) (a.k.a. NURBS-Python), see example `using_geomdl.py`
+- REMOVED: `ezdxf.math.bspline_control_frame_approx()`, incorrect and nobody noticed it - so it's not really needed 
 - DEPRECATED: `DXFGraphic.transform_to_wcs(ucs)`, replace call by `DXFGraphic.transform(ucs.matrix)`
 - DEPRECATED: `non_uniform_scaling` argument for `Insert.explode()`  
 - DEPRECATED: `non_uniform_scaling` argument for `Insert.virtual_entities()`  
