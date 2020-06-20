@@ -20,17 +20,6 @@ class _Ellipse(qw.QGraphicsEllipseItem):
         painter.setPen(self.pen())
         painter.drawArc(self.rect(), self.startAngle(), self.spanAngle())
 
-    def boundingRect(self) -> qc.QRectF:
-        """ the default implementation does not rotate the rect. This implementation still isn't perfect but that could
-        be because the un-rotated bounding rect is also slightly wrong.
-        """
-        rect = super().boundingRect()
-        center = rect.center()
-        cx, cy = center.x(), center.y()
-        t = qg.QTransform().translate(cx, cy).rotate(self.rotation()).translate(-cx, -cy)
-        transformed_rect = t.mapRect(rect)
-        return transformed_rect
-
 
 class _Point(qw.QAbstractGraphicsShapeItem):
     """ a point which is drawn 'cosmetically' (scale depends on view) """

@@ -77,7 +77,9 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
 
     def drawForeground(self, painter: qg.QPainter, rect: qc.QRectF) -> None:
         if self._current_item is not None:
-            painter.fillRect(self._current_item.boundingRect(), qg.QColor(0, 255, 0, 100))
+            r = self._current_item.boundingRect()
+            r = self._current_item.sceneTransform().mapRect(r)
+            painter.fillRect(r, qg.QColor(0, 255, 0, 100))
 
     def mouseMoveEvent(self, event: qg.QMouseEvent) -> None:
         pos = self.mapToScene(event.pos())
