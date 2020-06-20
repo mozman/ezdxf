@@ -828,6 +828,16 @@ class BSpline:
         """ Returns the arc as :class:`BSpline` of 2nd degree with as few control points as possible. """
         return rational_spline_from_arc(arc.center, arc.radius, arc.start_angle, arc.end_angle, segments=1)
 
+    @staticmethod
+    def from_geomdl_curve(curve) -> 'BSpline':
+        """
+        Interface to :mod:`geomdl` aka NURBS-Python.
+
+        Returns a :class:`BSpline` object from a :class:`geomdl.BSpline.Curve` object.
+
+        """
+        return BSpline(control_points=curve.ctrlpts, order=curve.degree + 1, knots=curve.knotvector)
+
     @property
     def nplusc(self) -> int:
         return self.count + self.order
@@ -941,6 +951,19 @@ class BSpline:
         """
         self.control_points = list(m.transform_vertices(self.control_points))
         return self
+
+    def geomdl_curve(self):
+        """
+        Returns a :class:`geomdl.BSpline.Curve` object if the :mod:`geomdl` package aka NURBS-Python is installed.
+
+        """
+        from geomdl import BSpline
+        # todo: rational B-splines
+        curve = BSpline.Curve()
+        curve.degree = self.degree
+        curve.ctrlpts = [v.xyz for v in self.control_points]
+        curve.knotvector = self.knots()
+        return curve
 
 
 class BSplineU(BSpline):

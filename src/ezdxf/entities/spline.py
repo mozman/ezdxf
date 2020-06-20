@@ -207,15 +207,21 @@ class Spline(DXFGraphic):
         else:
             raise ValueError('Construction tool requires control- or fit points.')
 
-    def apply_construction_tool(self, s: BSpline) -> 'Spline':
+    def apply_construction_tool(self, s) -> 'Spline':
         """
-        Set SPLINE data from construction tool :class:`ezdxf.math.BSpline`.
+        Set SPLINE data from construction tool :class:`ezdxf.math.BSpline` or from a
+        :class:`geomdl.BSpline.Curve` object.
 
         .. versionadded:: 0.13
 
         """
+        try:
+            self.control_points = s.control_points
+        except AttributeError:  # maybe a geomdl.BSpline.Curve class
+            s = BSpline.from_geomdl_curve(s)
+            self.control_points = s.control_points
+
         self.dxf.degree = s.degree
-        self.control_points = s.control_points
         self.fit_points = []  # remove fit points
         self.knots = s.knots()
         self.weights = s.weights()

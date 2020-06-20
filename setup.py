@@ -52,7 +52,7 @@ setup(
     provides=['ezdxf'],
     install_requires=['pyparsing>=2.0.1'],
     setup_requires=['wheel'],
-    tests_require=['pytest'],
+    tests_require=['pytest', 'geomdl'],
     keywords=['DXF', 'CAD'],
     long_description=read('README.md')+read('NEWS.md', until='Version 0.8.9'),
     long_description_content_type="text/markdown",
