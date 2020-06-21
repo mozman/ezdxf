@@ -56,16 +56,6 @@ class CADGraphicsView(qw.QGraphicsView):
             factor = self._zoom_limits[1] / self._zoom
         self.scale(factor, factor)
         self._zoom *= factor
-        self.scene().invalidate()
-
-    def mouseReleaseEvent(self, event: qg.QMouseEvent) -> None:
-        """
-        when moving, some text will not render correctly.
-        to keep panning responsive: only refresh after user interaction finishes
-        """
-        super().mouseReleaseEvent(event)
-        if event.button() == qc.Qt.LeftButton:
-            self.scene().invalidate()
 
 
 class CADGraphicsViewWithOverlay(CADGraphicsView):
