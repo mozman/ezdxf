@@ -44,6 +44,7 @@ class _Point(qw.QAbstractGraphicsShapeItem):
 
 
 CorrespondingDXFEntity = 0  # the key used to store the dxf entity corresponding to each graphics element
+CorrespondingDXFEntityStack = 1
 
 
 class PyQtBackend(DrawingBackend):
@@ -78,12 +79,16 @@ class PyQtBackend(DrawingBackend):
         pen.setCosmetic(True)  # changes width depending on zoom
         return pen
 
+    def _set_item_data(self, item: qw.QGraphicsItem) -> None:
+        item.setData(CorrespondingDXFEntity, self.current_entity)
+        item.setData(CorrespondingDXFEntityStack, self.current_entity_stack)
+
     def set_background(self, color: Color):
         self.scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
 
     def draw_line(self, start: Vector, end: Vector, color: Color) -> None:
         item = self.scene.addLine(start.x, start.y, end.x, end.y, self._get_pen(color))
-        item.setData(CorrespondingDXFEntity, self.current_entity)
+        self._set_item_data(item)
 
     def draw_line_string(self, points: List[Vector], color: Color) -> None:
         if not points:
@@ -93,12 +98,12 @@ class PyQtBackend(DrawingBackend):
         for p in points[1:]:
             path.lineTo(p.x, p.y)
         item = self.scene.addPath(path, self._get_pen(color), self._no_fill)
-        item.setData(CorrespondingDXFEntity, self.current_entity)
+        self._set_item_data(item)
 
     def draw_point(self, pos: Vector, color: Color) -> None:
         brush = qg.QBrush(self._get_color(color), qc.Qt.SolidPattern)
         item = _Point(pos.x, pos.y, self.point_radius, brush)
-        item.setData(CorrespondingDXFEntity, self.current_entity)
+        self._set_item_data(item)
         self.scene.addItem(item)
 
     def draw_filled_polygon(self, points: List[Vector], color: Color) -> None:
@@ -107,7 +112,7 @@ class PyQtBackend(DrawingBackend):
         for p in points:
             polygon.append(qc.QPointF(p.x, p.y))
         item = self.scene.addPolygon(polygon, self._no_line, brush)
-        item.setData(CorrespondingDXFEntity, self.current_entity)
+        self._set_item_data(item)
 
     def draw_text(self, text: str, transform: Matrix44, color: Color, cap_height: float) -> None:
         if not text:
@@ -121,7 +126,7 @@ class PyQtBackend(DrawingBackend):
         path.addText(0, 0, self._font, text)
         path = _matrix_to_qtransform(transform).map(path)
         item = self.scene.addPath(path, self._no_line, self._get_color(color))
-        item.setData(CorrespondingDXFEntity, self.current_entity)
+        self._set_item_data(item)
 
     def get_font_measurements(self, cap_height: float) -> FontMeasurements:
         return self._font_measurements.scale_from_baseline(desired_cap_height=cap_height)
@@ -150,7 +155,7 @@ class PyQtBackend(DrawingBackend):
             span_angle = -math.degrees(b - a)
             ellipse.setStartAngle(int(start_angle * 16))  # angles stored as integers in 16ths of a degree units
             ellipse.setSpanAngle(int(span_angle * 16))
-        ellipse.setData(CorrespondingDXFEntity, self.current_entity)
+        self._set_item_data(ellipse)
         self.scene.addItem(ellipse)
 
     def clear(self) -> None:

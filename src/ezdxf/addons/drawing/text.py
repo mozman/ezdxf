@@ -261,6 +261,7 @@ def _get_wcs_insert(text: AnyText) -> Vector:
 
 
 def simplified_text_chunks(text: AnyText, out: DrawingBackend,
+                           *,
                            debug_draw_rect: bool = False) -> Iterable[Tuple[str, Matrix44, float]]:
     """
     Splits a complex text entity into simple chunks of text which can all be rendered the same way:
