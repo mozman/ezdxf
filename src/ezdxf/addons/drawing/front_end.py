@@ -4,13 +4,13 @@
 import copy
 import math
 from math import radians
-from typing import Set, Optional, Iterable, cast, Union, Callable
+from typing import Set, Optional, Iterable, cast, Union, Callable, Tuple, List
 
 from ezdxf.addons.drawing.backend_interface import DrawingBackend
 from ezdxf.addons.drawing.colors import ColorContext, VIEWPORT_COLOR
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.type_hints import LayerName, Color
-from ezdxf.addons.drawing.utils import normalise_angle, get_rotation_direction_from_extrusion_vector, \
+from ezdxf.addons.drawing.utils import normalize_angle, get_rotation_direction_from_extrusion_vector, \
     get_draw_angles, get_tri_or_quad_points
 from ezdxf.entities import DXFGraphic, Insert, MText, Dimension, Polyline, LWPolyline, Face3d, Mesh, Solid, Trace, \
     Spline, Hatch, Attrib, Text
@@ -90,7 +90,7 @@ def _draw_curve_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) ->
         # 'param' angles are anticlockwise around the extrusion vector
         # 'param' angles are relative to the major axis angle
         # major axis angle always anticlockwise in global frame
-        major_axis_angle = normalise_angle(math.atan2(d.major_axis.y, d.major_axis.x))
+        major_axis_angle = normalize_angle(math.atan2(d.major_axis.y, d.major_axis.x))
         width = 2 * d.major_axis.magnitude
         height = d.ratio * width  # ratio == height / width
         direction = get_rotation_direction_from_extrusion_vector(d.extrusion)
@@ -177,10 +177,12 @@ def _default_ignore_callback(entity: DXFGraphic, _colors: ColorContext, _out: Dr
 
 
 def draw_entity(entity: DXFGraphic, colors: ColorContext, out: DrawingBackend,
-                ignore_callback: Optional[IgnoredCallback] = _default_ignore_callback) -> None:
+                *,
+                ignore_callback: Optional[IgnoredCallback] = _default_ignore_callback,
+                parent_stack: Tuple[DXFGraphic, ...] = ()) -> None:
     color = colors.get_entity_color(entity)
     dxftype = entity.dxftype()
-    out.set_current_entity(entity)
+    out.set_current_entity(entity, parent_stack)
     if dxftype in LINE_ENTITY_TYPES:
         _draw_line_entity(entity, color, out)
     elif dxftype in TEXT_ENTITY_TYPES:
@@ -194,26 +196,29 @@ def draw_entity(entity: DXFGraphic, colors: ColorContext, out: DrawingBackend,
     out.set_current_entity(None)
 
 
-def _flatten_entities(entities: Iterable[DXFGraphic], colors: ColorContext) -> Iterable[DXFGraphic]:
+def _flatten_entities(entities: Iterable[DXFGraphic],
+                      colors: ColorContext,
+                      parent_stack: List[DXFGraphic]) -> Iterable[DXFGraphic]:
     for e in entities:
         dxftype = e.dxftype()
 
         if dxftype == 'INSERT':
             e = cast(Insert, e)
             colors.push_state(colors.get_entity_color(e), e.dxf.layer.lower())
+            parent_stack.append(e)
             yield from e.attribs
             try:
                 children = list(e.virtual_entities())
             except Exception as e:
                 print(f'Exception {type(e)}({e}) failed to get children of insert entity: {e}')
                 continue
-            yield from _flatten_entities(children, colors)
+            yield from _flatten_entities(children, colors, parent_stack)
+            parent_stack.pop()
             colors.pop_state()
 
         elif 'DIMENSION' in dxftype:  # several different dxftypes
             if not isinstance(e, Dimension):
-                # TODO: I don't think this is intentional
-                print(f'entitiy has DIMENSION dfxtype but it not a dimension: {e.dxftype()}, {type(e)}')
+                print(f'warning: ignoring unknown DIMENSION entitiy {e.dxftype()} {type(e)}')
                 continue
             e = cast(Dimension, e)
 
@@ -226,11 +231,15 @@ def _flatten_entities(entities: Iterable[DXFGraphic], colors: ColorContext) -> I
                 print(f'Exception {type(e)}({e}) failed to get children of dimension entity: {e}')
                 continue
 
-            yield from _flatten_entities(children, colors)
+            parent_stack.append(e)
+            yield from _flatten_entities(children, colors, parent_stack)
+            parent_stack.pop()
 
         elif dxftype in ('LWPOLYLINE', 'POLYLINE'):
             e = cast(Union[LWPolyline, Polyline], e)
-            yield from _flatten_entities(e.virtual_entities(), colors)
+            parent_stack.append(e)
+            yield from _flatten_entities(e.virtual_entities(), colors, parent_stack)
+            parent_stack.pop()
 
         else:
             yield e
@@ -249,9 +258,10 @@ def draw_entities(entities: Iterable[DXFGraphic], colors: ColorContext, out: Dra
     if visible_layers is not None:
         visible_layers = {l.lower() for l in visible_layers}
 
-    for entity in _flatten_entities(entities, colors):
+    parent_stack = []
+    for entity in _flatten_entities(entities, colors, parent_stack):
         if visible_layers is None or _is_visible(entity, visible_layers, colors.insert_layer):
-            draw_entity(entity, colors, out)
+            draw_entity(entity, colors, out, parent_stack=tuple(parent_stack))
 
 
 def draw_layout(layout: Layout,

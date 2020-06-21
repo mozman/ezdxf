@@ -13,7 +13,8 @@ from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 import ezdxf
 from ezdxf.addons.drawing.colors import get_layer_color
 from ezdxf.addons.drawing.front_end import draw_layout
-from ezdxf.addons.drawing.pyqt_backend import _get_x_scale, PyQtBackend, CorrespondingDXFEntity
+from ezdxf.addons.drawing.pyqt_backend import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
+    CorrespondingDXFEntityStack
 from ezdxf.drawing import Drawing
 
 
@@ -56,16 +57,6 @@ class CADGraphicsView(qw.QGraphicsView):
             factor = self._zoom_limits[1] / self._zoom
         self.scale(factor, factor)
         self._zoom *= factor
-        self.scene().invalidate()
-
-    def mouseReleaseEvent(self, event: qg.QMouseEvent) -> None:
-        """
-        when moving, some text will not render correctly.
-        to keep panning responsive: only refresh after user interaction finishes
-        """
-        super().mouseReleaseEvent(event)
-        if event.button() == qc.Qt.LeftButton:
-            self.scene().invalidate()
 
 
 class CADGraphicsViewWithOverlay(CADGraphicsView):
@@ -199,9 +190,16 @@ class CadViewer(qw.QMainWindow):
             if dxf_entity is None:
                 text = 'No data'
             else:
-                text = f'Current Entity: {dxf_entity} (layer {dxf_entity.dxf.layer})\n\nDXF Attributes:\n'
+                text = f'Current Entity: {dxf_entity}\nLayer: {dxf_entity.dxf.layer}\n\nDXF Attributes:\n'
                 for key, value in dxf_entity.dxf.all_existing_dxf_attribs().items():
                     text += f'- {key}: {value}\n'
+
+                dxf_entity_stack = element.data(CorrespondingDXFEntityStack)
+                if dxf_entity_stack:
+                    text += '\nParents:\n'
+                    for entity in reversed(dxf_entity_stack):
+                        text += f'- {entity}\n'
+
             self.info.setPlainText(text)
 
 
