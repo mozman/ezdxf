@@ -73,6 +73,7 @@ see `drawing.md` in the ezdxf repository for additional behaviours documented du
 Limitations
 -----------
 - Patterns, line styles and line widths are ignored
+- rich text formatting is ignored (drawn as plain text)
 - If the backend does not match the font then the exact text placement and wrapping may appear slightly different
 - No support for leaders
 - The style which POINT entities are drawn in are not stored in the dxf file and so cannot be replicated exactly

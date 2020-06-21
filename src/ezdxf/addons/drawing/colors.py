@@ -10,6 +10,7 @@ from ezdxf.layouts import Layout
 from ezdxf.lldxf import const as DXFConstants
 
 DEFAULT_MODEL_SPACE_BACKGROUND_COLOR = '#212830'
+PAPER_SPACE_BACKGROUND_COLOR = '#ffffff'
 VIEWPORT_COLOR = '#aaaaaa'  # arbitrary choice
 # color codes are 1-indexed so an additional entry was put in the 0th position
 # different plot styles may choose different colors for the same code
@@ -89,7 +90,7 @@ class ColorContext:
 
     @staticmethod
     def get_layout_background_color(layout: Layout) -> Color:
-        return DEFAULT_MODEL_SPACE_BACKGROUND_COLOR if layout.is_modelspace else '#ffffff'
+        return DEFAULT_MODEL_SPACE_BACKGROUND_COLOR if layout.is_modelspace else PAPER_SPACE_BACKGROUND_COLOR
 
     def _get_color(self,
                    maybe_true_color: Optional[Tuple[int, int, int]],

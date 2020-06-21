@@ -15,14 +15,23 @@ if TYPE_CHECKING:
 class DrawingBackend(ABC):
     def __init__(self):
         self._current_entity = None
+        self._current_entity_stack = ()
 
-    def set_current_entity(self, entity: Optional[DXFGraphic]) -> None:
+    def set_current_entity(self, entity: Optional[DXFGraphic], parent_stack: Tuple[DXFGraphic, ...] = ()) -> None:
         self._current_entity = entity
+        self._current_entity_stack = parent_stack
 
     @property
     def current_entity(self) -> Optional[DXFGraphic]:
         """ obtain the current entity being drawn """
         return self._current_entity
+
+    @property
+    def current_entity_stack(self) -> Tuple[DXFGraphic, ...]:
+        """ When the entity is virtual, the stack of entities which were exploded to obtain the entity.
+        When the entity is 'real', an empty tuple.
+        """
+        return self._current_entity_stack
 
     @abstractmethod
     def set_background(self, color: Color) -> None:
