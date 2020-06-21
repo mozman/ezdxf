@@ -23,9 +23,7 @@ What ezdxf can't do
     - `ezdxf` is not a DXF converter: `ezdxf` can not convert between different DXF versions, if you are looking for an
       appropriate application, try the free `ODAFileConverter`_ from the `Open Design Alliance`_, which converts between
       different DXF version and also between the DXF and the DWG file format.
-    - `ezdxf` is not a CAD file format converter: `ezdxf` can not convert DXF files to **ANY** other format, like SVG, PDF
-      or DWG
-    - `ezdxf` is not a DXF renderer, it does not create a visual representation of the DXF file content (see above).
+    - `ezdxf` is not a CAD file format converter: `ezdxf` can not convert DXF files to other CAD formats such as DWG
     - `ezdxf` is not a CAD kernel and does not provide high level functionality for construction work,
       it is just an interface to the DXF file format. If you are looking for a CAD kernel with `Python`_ scripting
       support, look at `FreeCAD`_.
