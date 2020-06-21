@@ -19,8 +19,10 @@ Version 0.13b4 - dev
     
    supported entities: POINT, LINE, CIRCLE, ARC, ELLIPSE, MESH, SPLINE, POLYLINE, LWPOLYLINE, TEXT, MTEXT, 
    ATTRIB, ATTDEF, INSERT, SOLID, TRACE, 3DFACE, HATCH, IMAGE, SHAPE, XLINE, RAY
-- NEW: render add-on [drawing](https://ezdxf.mozman.at/docs/addons/draw.html) by Mathew Broadway to produce a 
-  rasterized or vector-graphic image from DXF documents
+- NEW: render add-on [drawing](https://ezdxf.mozman.at/docs/addons/draw.html) by Matt Broadway to produce a 
+  rasterized or vector-graphic image from DXF documents, supported backends for now: 
+  [matplotlib](https://pypi.org/project/matplotlib/) and [PyQt5](https://pypi.org/project/PyQt5/), both packages 
+  are optional and __not required__ to install _ezdxf_. 
 - NEW: `DXFGraphic.unlink_from_layout()` to unlink entity from associated layout
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
 - NEW: `Circle.to_ellipse()`, convert CIRCLE/ARC to ELLIPSE entity
