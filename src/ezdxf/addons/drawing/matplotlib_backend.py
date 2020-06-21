@@ -20,6 +20,7 @@ from ezdxf.math import Vector, param_to_angle, Matrix44
 class MatplotlibBackend(DrawingBackend):
     def __init__(self, ax: plt.Axes,
                  *,
+                 adjust_figure: bool = True,
                  line_width: float = 0.5,
                  point_size: float = 2.0,
                  point_size_relative: bool = True,
@@ -27,6 +28,7 @@ class MatplotlibBackend(DrawingBackend):
                  ):
         super().__init__()
         self.ax = ax
+        self._adjust_figure = adjust_figure
 
         # like set_axis_off, except that the face_color can still be set
         self.ax.xaxis.set_visible(False)
@@ -111,6 +113,12 @@ class MatplotlibBackend(DrawingBackend):
 
     def finalize(self):
         self.ax.autoscale(True)
+        if self._adjust_figure:
+            minx, maxx = self.ax.get_xlim()
+            miny, maxy = self.ax.get_ylim()
+            data_width, data_height = maxx - minx, maxy - miny
+            width, height = plt.figaspect(data_height / data_width)
+            self.ax.get_figure().set_size_inches(width, height, forward=True)
 
 
 def _transform_path(path: Path, transform: Matrix44) -> Path:
