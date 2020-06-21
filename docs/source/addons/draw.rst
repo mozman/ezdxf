@@ -13,7 +13,7 @@ The module provides two scripts which can be run to save rendered images to file
 
 .. code-block::
 
-    $ ./draw_cad.py --suppored_formats
+    $ ./draw_cad.py --supported_formats
     # will list the file formats supported by the matplotlib backend.
     # Many formats are supported including vector graphics formats
     # such as pdf and svg
@@ -27,7 +27,7 @@ The module provides two scripts which can be run to save rendered images to file
     $ ./cad_viewer.py
 
 
-Simple example for the :mod:`matplotlib` backend:
+Example for the usage of the :mod:`matplotlib` backend:
 
 .. code-block:: Python
 
@@ -39,11 +39,11 @@ Simple example for the :mod:`matplotlib` backend:
     doc = ezdxf.readfile('your.dxf')
     msp = doc.modelspace()
 
-    fig: plt.Figure = plt.figure()
-    ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
-    out = MatplotlibBackend(ax)
-    draw_layout(msp, out)
-    out.finalize()
+    fig = plt.figure()
+    ax = fig.add_axes([0, 0, 1, 1])
+    backend = MatplotlibBackend(ax)
+    draw_layout(msp, backend)
+    backend.finalize()
     fig.savefig('your.png', dpi=300)
 
 Details
@@ -81,19 +81,26 @@ Limitations
   - infinite lines (rendered as lines with a finite length)
   - hatches with holes (holes are rendered filled)
   - viewports (rendered as rectangles)
-  - 3D (some entities may not display correctly in 3D (see possible improvements below)) however many things should already work in 3D.
+  - 3D (some entities may not display correctly in 3D (see possible improvements below))
+    however many things should already work in 3D.
   - vertical text (will render as horizontal text)
   - multiple columns of text (placement of additional columns may be incorrect)
 
 
 Future Possible Improvements
 ----------------------------
-- remove all dependence on getting the direction from the extrusion vector. `get_rotation_direction_from_extrusion_vector()` is only correct for 2D drawings so this is the main limitation for drawing in 3D
+- remove all dependence on getting the direction from the extrusion vector.
+  `get_rotation_direction_from_extrusion_vector()` is only correct for 2D drawings
+  so this is the main limitation for drawing in 3D
 - render polylines using draw_line_string if it does not contain any arcs
 - pass the font to backend if available
 - deal with nested polygons/hatches by triangulating them: Triangulation_
-- both the matplotlib and pyqt backends have built-in support for rendering hatched patterns (see MatplotlibHatch_ and QtBrushHatch_) so the interface could pass that information through or query the backend to determine whether it automatically supports complex drawing commands such as hatching, or whether the frontend should break the shape into simpler commands (i.e. calculate and draw each line of a hatch)
-- text formatting commands could be interpreted and broken into text chunks which can be drawn with a single font weight or modification such as italics
+- both the matplotlib and pyqt backends have built-in support for rendering hatched patterns
+  (see MatplotlibHatch_ and QtBrushHatch_) so the interface could pass that information through or query the backend
+  to determine whether it automatically supports complex drawing commands such as hatching, or whether the frontend
+  should break the shape into simpler commands (i.e. calculate and draw each line of a hatch)
+- text formatting commands could be interpreted and broken into text chunks which can be drawn with a single font
+  weight or modification such as italics
 
 .. _Triangulation: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 .. _MatplotlibHatch: https://matplotlib.org/3.2.1/gallery/shapes_and_collections/hatch_demo.html
