@@ -61,18 +61,30 @@ def _draw_text_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> 
         raise TypeError(dxftype)
 
 
+def _get_arc_wcs_center(arc: DXFGraphic) -> Vector:
+    """ Returns the center of an ARC or CIRCLE as WCS coordinates. """
+    center = arc.dxf.center
+    if arc.dxf.hasattr('extrusion'):
+        ocs = arc.ocs()
+        return ocs.to_wcs(center)
+    else:
+        return center
+
+
 def _draw_curve_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> None:
     d, dxftype = entity.dxf, entity.dxftype()
 
     if dxftype == 'CIRCLE':
+        center = _get_arc_wcs_center(entity)
         diameter = 2 * d.radius
-        out.draw_arc(d.center, diameter, diameter, 0, None, color)
+        out.draw_arc(center, diameter, diameter, 0, None, color)
 
     elif dxftype == 'ARC':
+        center = _get_arc_wcs_center(entity)
         diameter = 2 * d.radius
         direction = get_rotation_direction_from_extrusion_vector(d.extrusion)
         draw_angles = get_draw_angles(direction, radians(d.start_angle), radians(d.end_angle))
-        out.draw_arc(d.center, diameter, diameter, 0, draw_angles, color)
+        out.draw_arc(center, diameter, diameter, 0, draw_angles, color)
 
     elif dxftype == 'ELLIPSE':
         # 'param' angles are anticlockwise around the extrusion vector
@@ -191,7 +203,7 @@ def _flatten_entities(entities: Iterable[DXFGraphic], colors: ColorContext) -> I
             colors.push_state(colors.get_entity_color(e), e.dxf.layer.lower())
             yield from e.attribs
             try:
-                children = list(e.virtual_entities(non_uniform_scaling=True))
+                children = list(e.virtual_entities())
             except Exception as e:
                 print(f'Exception {type(e)}({e}) failed to get children of insert entity: {e}')
                 continue
