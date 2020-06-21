@@ -244,6 +244,13 @@ def required_knot_values(count: int, order: int) -> int:
     return n + p + 2
 
 
+def normalize_knots(knots: List[float]) -> List[float]:
+    """ Normalize knot vector into range [0, 1]. """
+    min_val = min(knots)
+    max_val = max(knots) - min_val
+    return [(v - min_val) / max_val for v in knots]
+
+
 def uniform_knot_vector(count: int, order: int, normalize=False) -> List[float]:
     """
     Returns an uniform knot vector for a B-spline of `order` and `count` control points.
@@ -800,8 +807,12 @@ class BSpline:
             knots = list(knots)
             if len(knots) != self.nplusc:
                 raise ValueError(f"{self.nplusc} knot values required, got {len(knots)}.")
-
+            if knots[0] != 0.0:
+                knots = normalize_knots(knots)
         self.basis = Basis(knots, self.order, self.count, weights=weights)
+
+    def __str__(self):
+        return f'BSpline degree={self.degree}, {len(self.control_points)} control points, {len(self.knots())} knot values, {len(self.weights())} weights'
 
     @staticmethod
     def from_fit_points(points: Iterable['Vertex'], degree=3, method='chord') -> 'BSpline':

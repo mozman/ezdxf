@@ -4,9 +4,10 @@ A collection of AutoCAD behaviors determined experimentally. There may be mistak
 inner workings of the algorithms. Not all edge cases may have been considered.
 
 ## Colors
+
 - most entities are colored contextually, based on the layer or block that they reside in
 - usually entity colors are not stored directly (e.g. as RGB), but are indices into a lookup table. Different 
-  CAD applications may use different color palletes making consistent coloring difficult.
+  CAD applications may use different color palettes making consistent coloring difficult.
 - if a block insert is placed on layer 'A', and the block contains an entity on layer 'B' with BYLAYER color: 
   the entity will be drawn with the color of layer 'B'.
 - if a block insert is placed on layer 'A', and the block contains an entity on layer '0' with BYLAYER color: 
@@ -16,6 +17,7 @@ inner workings of the algorithms. Not all edge cases may have been considered.
   which is white in the modelspace and black in the paperspace.
 
 ## Layers and Draw Order
+
 - layers are case insensitive, but are sometimes stored lowercase (e.g. document layers table) and sometimes stored 
   with the original mixture of upper and lower case (e.g. `entity.dxf.layer`).
 - layers do not play a role in entity draw order, only whether they appear at all based on the visibility of the layer
@@ -31,6 +33,7 @@ inner workings of the algorithms. Not all edge cases may have been considered.
 
     
 ## Text
+
 - the 'char_height' in dxf corresponds to the cap-height of the font
 - the default line spacing is 5/3 * cap-height between the previous baseline and the next baseline. The 'line space 
   factor' is a factor applied directly to this value, so a factor of 3/5 results in 0 space between lines, because 
@@ -51,6 +54,7 @@ inner workings of the algorithms. Not all edge cases may have been considered.
   alignment parameters are stored in the dxf. Those are for re-adjusting the anchor when the text is edited.
 
 ## Draw Styles
+
 - the style that points are drawn in might not be stored in the dxf file, but up to the CAD application
     - <https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2019/ENU/AutoCAD-Core/files/GUID-48AD2AE9-1EDE-4BF1-B3FA-F5B15225189E-htm.html>
     - points can be drawn relative to the view scale or in absolute units

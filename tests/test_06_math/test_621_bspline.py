@@ -4,7 +4,7 @@
 import pytest
 from math import isclose
 from ezdxf.math.bspline import BSpline, DBSpline
-from ezdxf.math.bspline import bspline_basis_vector, Basis, open_uniform_knot_vector
+from ezdxf.math.bspline import bspline_basis_vector, Basis, open_uniform_knot_vector, normalize_knots
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 
@@ -26,7 +26,7 @@ def test_bspline_basis_vector():
     count = 10
     knots = list(open_uniform_knot_vector(count, order=degree + 1))
     max_t = max(knots)
-    basis_func = Basis(knots=knots, order=degree+1, count=count)
+    basis_func = Basis(knots=knots, order=degree + 1, count=count)
     for u in (0, 2., 2.5, 3.5, 4., max_t):
         basis = bspline_basis_vector(u, count=count, degree=degree, knots=knots)
         basis2 = basis_func.basis(u)
@@ -55,6 +55,22 @@ def test_dbspline_points(dbspline):
         assert isclose(epx, rpx)
         assert isclose(epy, rpy)
         assert isclose(epz, rpz)
+
+
+def test_normalize_knots():
+    assert normalize_knots([0, 0.25, 0.5, 0.75, 1.0]) == [0, 0.25, 0.5, 0.75, 1.0]
+    assert normalize_knots([0, 1, 2, 3, 4]) == [0, 0.25, 0.5, 0.75, 1.0]
+    assert normalize_knots([2, 3, 4, 5, 6]) == [0, 0.25, 0.5, 0.75, 1.0]
+
+
+def test_normalize_knots_if_needed():
+    s = BSpline(
+        control_points=DEFPOINTS,
+        knots=[2, 2, 2, 2, 3, 6, 6, 6, 6],
+        order=4,
+    )
+    k = s.knots()
+    assert k[0] == 0.0
 
 
 def test_dbspline_derivative_1(dbspline):
