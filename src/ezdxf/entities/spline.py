@@ -218,7 +218,7 @@ class Spline(DXFGraphic):
         try:
             self.control_points = s.control_points
         except AttributeError:  # maybe a geomdl.BSpline.Curve class
-            s = BSpline.from_geomdl_curve(s)
+            s = BSpline.from_nurbs_python_curve(s)
             self.control_points = s.control_points
 
         self.dxf.degree = s.degree

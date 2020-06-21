@@ -14,7 +14,7 @@ if hatch:
         if edge.EDGE_TYPE == 'SplineEdge':
             s = BSpline(control_points=edge.control_points, knots=edge.knot_values, order=edge.degree + 1)
             print(s.knots())
-            c = s.geomdl_curve()
+            c = s.to_nurbs_python_curve()
             print(c.knotvector)
             print(s)
             print(list(s.approximate(10)))

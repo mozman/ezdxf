@@ -62,8 +62,8 @@ Version 0.13b4 - dev
 - NEW: `BSpline.arc_approximation()` B-spline approximation from arc vertices as fit points
 - NEW: `BSpline.ellipse_approximation()` B-spline approximation from ellipse vertices as fit points
 - NEW: `BSpline.transform()` transform B-spline by transformation matrix inplace
-- NEW: `BSpline.geomdl_curve()` and `BSpline.from_geomdl_curve()`, interface to [geomdl](https://github.com/orbingol/NURBS-Python) 
-  (aka NURBS-Python), `geomdl` is now a testing dependency
+- NEW: `BSpline.to_nurbs_python_curve()` and `BSpline.from_nurbs_python_curve()`, interface to 
+  [NURBS-Python](https://github.com/orbingol/NURBS-Python), `NURBS-Python` is now a testing dependency
 - CHANGE: `Hatch` full support for rotated patterns.
 - CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
 - CHANGE: `Hatch.path.add_arc` renamed argument `is_counter_clockwise` to `ccw`, type `bool` and `True` by default 
@@ -79,7 +79,7 @@ Version 0.13b4 - dev
 - REMOVED: `ezdxf.math.normalize_angle(angle)`, replace call by expression: `angle % math.tau`
 - REMOVED: `BaseLayout.add_spline_approx()`, incorrect and nobody noticed it - so it's not really needed, if required 
   use the `geomdl.fitting.approximate_curve()` function from the package 
-  [geomdl](https://github.com/orbingol/NURBS-Python) (aka NURBS-Python), see example `using_geomdl.py`
+  [NURBS-Python](https://github.com/orbingol/NURBS-Python), see example `using_nurbs_python.py`
 - REMOVED: `ezdxf.math.bspline_control_frame_approx()`, incorrect and nobody noticed it - so it's not really needed 
 - DEPRECATED: `DXFGraphic.transform_to_wcs(ucs)`, replace call by `DXFGraphic.transform(ucs.matrix)`
 - DEPRECATED: `non_uniform_scaling` argument for `Insert.explode()`  

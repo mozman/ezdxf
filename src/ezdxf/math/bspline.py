@@ -840,9 +840,9 @@ class BSpline:
         return rational_spline_from_arc(arc.center, arc.radius, arc.start_angle, arc.end_angle, segments=1)
 
     @staticmethod
-    def from_geomdl_curve(curve) -> 'BSpline':
+    def from_nurbs_python_curve(curve) -> 'BSpline':
         """
-        Interface to :mod:`geomdl` aka NURBS-Python.
+        Interface to `NURBS-Python <https://pypi.org/project/geomdl/>`_.
 
         Returns a :class:`BSpline` object from a :class:`geomdl.BSpline.Curve` object.
 
@@ -963,9 +963,10 @@ class BSpline:
         self.control_points = list(m.transform_vertices(self.control_points))
         return self
 
-    def geomdl_curve(self):
+    def to_nurbs_python_curve(self):
         """
-        Returns a :class:`geomdl.BSpline.Curve` object if the :mod:`geomdl` package aka NURBS-Python is installed.
+        Returns a :class:`geomdl.BSpline.Curve` object if the `NURBS-Python <https://pypi.org/project/geomdl/>`_
+        package is installed.
 
         """
         from geomdl import BSpline
