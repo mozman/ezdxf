@@ -48,10 +48,10 @@ class DrawingBackend(ABC):
         raise NotImplementedError
 
     def start_polyline(self):
-        """ Called when a polyline is encountered. Any draw calls up until the next call to end_polyline can be buffered
-        into a single un-broken path if the backend supports this.
+        """ Called when a polyline is encountered. Any draw calls up until the next time _polyline_nesting_depth drops
+        to 0 can be buffered into a single un-broken path if the backend supports this.
         """
-        # allow nested polylines (e.g. spline as part of a polyline)
+        # using an integer rather than a boolean to allow nested polylines (e.g. spline as part of a polyline)
         self._polyline_nesting_depth += 1
 
     def end_polyline(self):

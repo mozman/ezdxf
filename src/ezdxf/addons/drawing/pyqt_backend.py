@@ -218,6 +218,8 @@ class PyQtBackend(DrawingBackend):
                  draw_angles: Optional[Tuple[Radians, Radians]], color: Color) -> None:
         top = center.x - width / 2
         left = center.y - height / 2
+
+        # any angle other than 0 is not possible with arcTo and a complete circle/ellipse wouldn't make sense
         if self.is_drawing_polyline and angle == 0.0 and draw_angles is not None:
             start, span = _draw_angles_to_start_and_span(draw_angles)
             self._polyline_components.append(_BufferedArc(qc.QRectF(top, left, width, height), start, span, color))

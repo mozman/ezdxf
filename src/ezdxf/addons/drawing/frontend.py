@@ -249,7 +249,7 @@ def draw_entity(entity: DXFGraphic, colors: ColorContext, out: DrawingBackend, p
     elif dxftype in MISC_ENTITY_TYPES:
         _draw_misc_entity(entity, color, out)
     elif dxftype in COMPOSITE_ENTITY_TYPES or 'DIMENSION' in dxftype:
-        _draw_composite_entity(entity, colors, out, parent_stack)
+        _draw_composite_entity(entity, colors, out, parent_stack, visible_layers=visible_layers)
     else:
         out.ignored_entity(entity, colors)
     out.set_current_entity(None)
