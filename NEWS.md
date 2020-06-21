@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.13b3 - dev
+Version 0.13b4 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-13.html
@@ -19,7 +19,8 @@ Version 0.13b3 - dev
     
    supported entities: POINT, LINE, CIRCLE, ARC, ELLIPSE, MESH, SPLINE, POLYLINE, LWPOLYLINE, TEXT, MTEXT, 
    ATTRIB, ATTDEF, INSERT, SOLID, TRACE, 3DFACE, HATCH, IMAGE, SHAPE, XLINE, RAY
-   
+- NEW: render add-on [drawing](https://ezdxf.mozman.at/docs/addons/draw.html) by Mathew Broadway to produce a 
+  rasterized or vector-graphic image from DXF documents
 - NEW: `DXFGraphic.unlink_from_layout()` to unlink entity from associated layout
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
 - NEW: `Circle.to_ellipse()`, convert CIRCLE/ARC to ELLIPSE entity

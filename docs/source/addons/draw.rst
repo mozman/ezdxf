@@ -14,8 +14,9 @@ The module provides two scripts which can be run to save rendered images to file
 .. code-block::
 
     $ ./draw_cad.py --suppored_formats
-    # will list the file formats supported by the matplotlib backend. Many formats are supported including vector
-    # graphics formats such as pdf and svg
+    # will list the file formats supported by the matplotlib backend.
+    # Many formats are supported including vector graphics formats
+    # such as pdf and svg
 
     $ ./draw_cad.py <my_file.dxf> --out image.png
 
@@ -25,6 +26,25 @@ The module provides two scripts which can be run to save rendered images to file
     # opens a GUI application to view CAD files
     $ ./cad_viewer.py
 
+
+Simple example for the :mod:`matplotlib` backend:
+
+.. code-block:: Python
+
+    import ezdxf
+    import matplotlib.pyplot as plt
+    from ezdxf.addons.drawing.front_end import draw_layout
+    from ezdxf.addons.drawing.matplotlib_backend import MatplotlibBackend
+
+    doc = ezdxf.readfile('your.dxf')
+    msp = doc.modelspace()
+
+    fig: plt.Figure = plt.figure()
+    ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
+    out = MatplotlibBackend(ax)
+    draw_layout(msp, out)
+    out.finalise()
+    fig.savefig('your.png', dpi=300)
 
 Details
 -------
