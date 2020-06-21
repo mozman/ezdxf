@@ -35,6 +35,9 @@ class CADGraphicsView(qw.QGraphicsView):
 
         self.setRenderHints(qg.QPainter.Antialiasing | qg.QPainter.TextAntialiasing | qg.QPainter.SmoothPixmapTransform)
 
+    def clear(self):
+        pass
+
     def fit_to_scene(self):
         r = self.sceneRect()
         bx, by = r.width() * self._view_buffer / 2, r.height() * self._view_buffer / 2
@@ -60,11 +63,15 @@ class CADGraphicsView(qw.QGraphicsView):
 
 
 class CADGraphicsViewWithOverlay(CADGraphicsView):
-    element_selected = qc.pyqtSignal(object)
+    element_selected = qc.pyqtSignal(object, qc.QPointF)
 
     def __init__(self):
         super().__init__()
         self._current_item: Optional[qw.QGraphicsItem] = None
+
+    def clear(self):
+        super().clear()
+        self._current_item = None
 
     def drawForeground(self, painter: qg.QPainter, rect: qc.QRectF) -> None:
         if self._current_item is not None:
@@ -75,7 +82,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
     def mouseMoveEvent(self, event: qg.QMouseEvent) -> None:
         pos = self.mapToScene(event.pos())
         self._current_item = self.scene().itemAt(pos, qg.QTransform())
-        self.element_selected.emit(self._current_item)
+        self.element_selected.emit(self._current_item, pos)
         self.scene().invalidate(self.sceneRect(), qw.QGraphicsScene.ForegroundLayer)
         super().mouseMoveEvent(event)
 
@@ -105,6 +112,10 @@ class CadViewer(qw.QMainWindow):
         toggle_sidebar_action = qw.QAction('Toggle Sidebar', self)
         toggle_sidebar_action.triggered.connect(self._toggle_sidebar)
         menu.addAction(toggle_sidebar_action)
+
+        toggle_join_polylines_action = qw.QAction('Toggle Join Polylines', self)
+        toggle_join_polylines_action.triggered.connect(self._toggle_join_polylines)
+        menu.addAction(toggle_join_polylines_action)
 
         self.sidebar = qw.QSplitter(qc.Qt.Vertical)
         self.layers = qw.QListWidget()
@@ -162,6 +173,7 @@ class CadViewer(qw.QMainWindow):
         print(f'drawing {layout_name}')
         self._current_layout = layout_name
         self.renderer.clear()
+        self.view.clear()
         draw_layout(self.doc.layout(layout_name), self.renderer, self._visible_layers)
         self.view.fit_to_scene()
 
@@ -181,16 +193,22 @@ class CadViewer(qw.QMainWindow):
     def _toggle_sidebar(self):
         self.sidebar.setHidden(not self.sidebar.isHidden())
 
-    @qc.pyqtSlot(object)
-    def _on_element_selected(self, element: Optional[qw.QGraphicsItem]):
+    @qc.pyqtSlot()
+    def _toggle_join_polylines(self):
+        self.renderer.draw_individual_polyline_elements = not self.renderer.draw_individual_polyline_elements
+        self.draw_layout(self._current_layout)
+
+    @qc.pyqtSlot(object, qc.QPointF)
+    def _on_element_selected(self, element: Optional[qw.QGraphicsItem], mouse_pos: qc.QPointF):
+        text = f'mouse position: {mouse_pos.x():.4f}, {mouse_pos.y():.4f}\n'
         if element is None:
-            self.info.setPlainText('No element selected')
+            text += 'No element selected'
         else:
             dxf_entity = element.data(CorrespondingDXFEntity)
             if dxf_entity is None:
-                text = 'No data'
+                text += 'No data'
             else:
-                text = f'Current Entity: {dxf_entity}\nLayer: {dxf_entity.dxf.layer}\n\nDXF Attributes:\n'
+                text += f'Current Entity: {dxf_entity}\nLayer: {dxf_entity.dxf.layer}\n\nDXF Attributes:\n'
                 for key, value in dxf_entity.dxf.all_existing_dxf_attribs().items():
                     text += f'- {key}: {value}\n'
 
@@ -200,7 +218,7 @@ class CadViewer(qw.QMainWindow):
                     for entity in reversed(dxf_entity_stack):
                         text += f'- {entity}\n'
 
-            self.info.setPlainText(text)
+        self.info.setPlainText(text)
 
 
 def _main():

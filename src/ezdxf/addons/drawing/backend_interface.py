@@ -4,9 +4,10 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
+from ezdxf.addons.drawing.colors import ColorContext
 from ezdxf.addons.drawing.type_hints import Color, Radians
 from ezdxf.entities import DXFGraphic
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vector, Matrix44, BSpline
 
 if TYPE_CHECKING:
     from ezdxf.addons.drawing.text import FontMeasurements
@@ -16,6 +17,7 @@ class DrawingBackend(ABC):
     def __init__(self):
         self._current_entity = None
         self._current_entity_stack = ()
+        self._polyline_nesting_depth = 0
 
     def set_current_entity(self, entity: Optional[DXFGraphic], parent_stack: Tuple[DXFGraphic, ...] = ()) -> None:
         self._current_entity = entity
@@ -33,6 +35,10 @@ class DrawingBackend(ABC):
         """
         return self._current_entity_stack
 
+    @property
+    def is_drawing_polyline(self) -> bool:
+        return self._polyline_nesting_depth > 0
+
     @abstractmethod
     def set_background(self, color: Color) -> None:
         raise NotImplementedError
@@ -41,9 +47,23 @@ class DrawingBackend(ABC):
     def draw_line(self, start: Vector, end: Vector, color: Color) -> None:
         raise NotImplementedError
 
-    def draw_line_string(self, points: List[Vector], color: Color) -> None:
+    def start_polyline(self):
+        """ Called when a polyline is encountered. Any draw calls up until the next call to end_polyline can be buffered
+        into a single un-broken path if the backend supports this.
+        """
+        # allow nested polylines (e.g. spline as part of a polyline)
+        self._polyline_nesting_depth += 1
+
+    def end_polyline(self):
+        self._polyline_nesting_depth -= 1
+        assert self._polyline_nesting_depth >= 0
+
+    def draw_spline(self, spline: BSpline, color: Color) -> None:
+        points = list(spline.approximate(segments=100))
+        self.start_polyline()
         for a, b in zip(points, points[1:]):
             self.draw_line(a, b, color)
+        self.end_polyline()
 
     @abstractmethod
     def draw_point(self, pos: Vector, color: Color) -> None:
@@ -75,7 +95,13 @@ class DrawingBackend(ABC):
 
     @abstractmethod
     def clear(self) -> None:
+        """ clear the canvas. Does not reset the internal state of the backend. Make sure that the previous drawing
+        is finished before clearing.
+        """
         raise NotImplementedError
 
     def finalize(self) -> None:
-        pass
+        assert self._polyline_nesting_depth == 0
+
+    def ignored_entity(self, entity: DXFGraphic, colors: ColorContext):
+        print(f'ignoring {entity.dxftype()} entity')

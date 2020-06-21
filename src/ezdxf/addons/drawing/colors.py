@@ -49,6 +49,8 @@ class ColorContext:
         self._block_color, self._insert_layer = self._saved_states.pop()
 
     def get_entity_color(self, entity: DXFGraphic, *, default_hatch_transparency: float = 0.8) -> Color:
+        if not entity.dxf.hasattr('color'):
+            return self.layout_default_color  # unknown
         color_code = entity.dxf.color  # defaults to BYLAYER
 
         if color_code == DXFConstants.BYLAYER:
