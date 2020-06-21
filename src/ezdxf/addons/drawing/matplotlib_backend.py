@@ -109,7 +109,7 @@ class MatplotlibBackend(DrawingBackend):
     def clear(self):
         self.ax.clear()
 
-    def finalise(self):
+    def finalize(self):
         self.ax.autoscale(True)
 
 

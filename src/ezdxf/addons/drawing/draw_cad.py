@@ -42,7 +42,7 @@ def _main():
     ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
     out = MatplotlibBackend(ax)
     draw_layout(layout, out)
-    out.finalise()
+    out.finalize()
     if args.out is not None:
         print(f'saving to "{args.out}"')
         fig.savefig(args.out, dpi=args.dpi)

@@ -156,7 +156,7 @@ class PyQtBackend(DrawingBackend):
     def clear(self) -> None:
         self.scene.clear()
 
-    def finalise(self) -> None:
+    def finalize(self) -> None:
         self.scene.setSceneRect(self.scene.itemsBoundingRect())
         if self._debug_draw_rect:
             self.scene.addRect(self.scene.sceneRect(), self._get_pen('#000000'), self._no_fill)

@@ -43,7 +43,7 @@ Simple example for the :mod:`matplotlib` backend:
     ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
     out = MatplotlibBackend(ax)
     draw_layout(msp, out)
-    out.finalise()
+    out.finalize()
     fig.savefig('your.png', dpi=300)
 
 Details

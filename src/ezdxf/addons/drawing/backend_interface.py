@@ -68,5 +68,5 @@ class DrawingBackend(ABC):
     def clear(self) -> None:
         raise NotImplementedError
 
-    def finalise(self) -> None:
+    def finalize(self) -> None:
         pass

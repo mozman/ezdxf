@@ -251,6 +251,6 @@ def draw_layout(layout: Layout,
     draw_entities(entities, colors, out, visible_layers)
     out.set_background(colors.get_layout_background_color(layout))
     if finalise:
-        out.finalise()
+        out.finalize()
 
 
