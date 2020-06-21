@@ -1,6 +1,7 @@
 # Created: 06.2020
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
+import math
 from math import degrees
 from typing import List, Optional, Tuple
 
@@ -117,8 +118,9 @@ class MatplotlibBackend(DrawingBackend):
             minx, maxx = self.ax.get_xlim()
             miny, maxy = self.ax.get_ylim()
             data_width, data_height = maxx - minx, maxy - miny
-            width, height = plt.figaspect(data_height / data_width)
-            self.ax.get_figure().set_size_inches(width, height, forward=True)
+            if not math.isclose(data_width, 0):
+                width, height = plt.figaspect(data_height / data_width)
+                self.ax.get_figure().set_size_inches(width, height, forward=True)
 
 
 def _transform_path(path: Path, transform: Matrix44) -> Path:
