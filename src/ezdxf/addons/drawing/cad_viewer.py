@@ -12,7 +12,7 @@ from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
 from ezdxf.addons.drawing.colors import get_layer_color
-from ezdxf.addons.drawing.front_end import draw_layout
+from ezdxf.addons.drawing.frontend import draw_layout
 from ezdxf.addons.drawing.pyqt_backend import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFEntityStack
 from ezdxf.drawing import Drawing
