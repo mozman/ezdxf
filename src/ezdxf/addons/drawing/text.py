@@ -263,6 +263,13 @@ def _apply_alignment(alignment: Alignment,
     return (anchor_x, anchor_y), line_xs, line_ys
 
 
+def _get_wcs_insert(text: AnyText) -> Vector:
+    if isinstance(text, Text):
+        return text.ocs().to_wcs(text.dxf.insert)
+    else:
+        return text.dxf.insert
+
+
 def simplified_text_chunks(text: AnyText, out: DrawingBackend,
                            debug_draw_rect: bool = False) -> Iterable[Tuple[str, Matrix44, float]]:
     """
@@ -282,12 +289,13 @@ def simplified_text_chunks(text: AnyText, out: DrawingBackend,
         _apply_alignment(alignment, line_widths, cap_height, line_spacing, box_width, font_measurements)
     rotation = _get_rotation(text)
     extra_transform = _get_extra_transform(text)
+    insert = _get_wcs_insert(text)
 
     whole_text_transform = (
         Matrix44.translate(-anchor[0], -anchor[1], 0) @
         extra_transform @
         rotation @
-        Matrix44.translate(*text.dxf.insert.xyz)
+        Matrix44.translate(*insert.xyz)
     )
     for i, (line, line_x, line_y) in enumerate(zip(lines, line_xs, line_ys)):
         transform = Matrix44.translate(line_x, line_y, 0) @ whole_text_transform
