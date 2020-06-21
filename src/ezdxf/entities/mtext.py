@@ -18,7 +18,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex
 
-__all__ = ['MText']
+__all__ = ['MText', 'plain_text']
 
 acdb_mtext = DefSubclass('AcDbMText', {
     'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
@@ -130,7 +130,7 @@ class MText(DXFGraphic):
     GROUP_START = '{'
     GROUP_END = '}'
     GROUP = GROUP_START + '%s' + GROUP_END
-    NBSP = r'\~'  # none breaking space
+    NBSP = r'\~'  # non breaking space
 
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor """

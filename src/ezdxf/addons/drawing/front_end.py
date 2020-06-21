@@ -10,7 +10,7 @@ from ezdxf.addons.drawing.backend_interface import DrawingBackend
 from ezdxf.addons.drawing.colors import ColorContext, VIEWPORT_COLOR
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.type_hints import LayerName, Color
-from ezdxf.addons.drawing.utils import normalise_angle, get_rotation_direction_from_extrusion_vector, \
+from ezdxf.addons.drawing.utils import normalize_angle, get_rotation_direction_from_extrusion_vector, \
     get_draw_angles, get_tri_or_quad_points
 from ezdxf.entities import DXFGraphic, Insert, MText, Dimension, Polyline, LWPolyline, Face3d, Mesh, Solid, Trace, \
     Spline, Hatch, Attrib, Text
@@ -90,7 +90,7 @@ def _draw_curve_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) ->
         # 'param' angles are anticlockwise around the extrusion vector
         # 'param' angles are relative to the major axis angle
         # major axis angle always anticlockwise in global frame
-        major_axis_angle = normalise_angle(math.atan2(d.major_axis.y, d.major_axis.x))
+        major_axis_angle = normalize_angle(math.atan2(d.major_axis.y, d.major_axis.x))
         width = 2 * d.major_axis.magnitude
         height = d.ratio * width  # ratio == height / width
         direction = get_rotation_direction_from_extrusion_vector(d.extrusion)

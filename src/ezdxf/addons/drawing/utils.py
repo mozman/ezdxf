@@ -12,7 +12,7 @@ from ezdxf.entities.mtext import plain_text
 from ezdxf.math import Vector
 
 
-def normalise_angle(theta: Radians) -> Radians:
+def normalize_angle(theta: Radians) -> Radians:
     # have to mod tau twice to obtain [0, tau), because some angles once normalised become exactly equal to tau
     # e.g. (-1e-16 % tau) == tau
     # so (-1e-16 % tau) % tau == 0.0
@@ -59,9 +59,9 @@ def get_rotation_direction_from_extrusion_vector(extrusion_vector: Union[Vector,
 def get_draw_angles(direction: Direction, start_angle: Radians, end_angle: Radians) -> Optional[Tuple[Radians, Radians]]:
     if direction == Direction.CLOCKWISE:
         # arc always drawn anticlockwise
-        start_angle, end_angle = normalise_angle(-end_angle), normalise_angle(-start_angle)
+        start_angle, end_angle = normalize_angle(-end_angle), normalize_angle(-start_angle)
     elif direction == Direction.ANTI_CLOCKWISE:
-        start_angle, end_angle = normalise_angle(start_angle), normalise_angle(end_angle)
+        start_angle, end_angle = normalize_angle(start_angle), normalize_angle(end_angle)
     else:
         raise ValueError(direction)
 
