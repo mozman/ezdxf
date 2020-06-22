@@ -129,6 +129,9 @@ def _draw_misc_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> 
 
     elif dxftype == 'HATCH':
         entity = cast(Hatch, entity)
+        ocs = entity.ocs()
+        # all OCS coordinates have the same z-axis stored as vector (0, 0, z), default (0, 0, 0)
+        elevation = entity.dxf.elevation.z
         paths = copy.deepcopy(entity.paths)
         paths.polyline_to_edge_path(just_with_bulge=False)
         paths.all_to_line_edges(spline_factor=10)
@@ -138,12 +141,16 @@ def _draw_misc_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> 
             last_vertex = None
             for e in p.edges:
                 assert e.EDGE_TYPE == 'LineEdge'
-                v = Vector(e.start[0], e.start[1], 0)
+                # WCS transformation is only done if the extrusion vector is != (0, 0, 1)
+                # else to_wcs() returns just the input - no big speed penalty!
+                # Simple projection into xy-plane by just removing the z-axis from
+                # WCS vector, assuming we do not support 3D hatches!?
+                v = ocs.to_wcs(Vector(e.start[0], e.start[1], elevation)).replace(z=0.0)
                 if last_vertex is not None and not last_vertex.isclose(v):
                     print(f'warning: hatch edges not contiguous: {last_vertex} -> {e.start}, {e.end}')
                     vertices.append(last_vertex)
                 vertices.append(v)
-                last_vertex = Vector(e.end[0], e.end[1], 0)
+                last_vertex = ocs.to_wcs(Vector(e.end[0], e.end[1], elevation)).replace(z=0.0)
             if vertices:
                 if last_vertex.isclose(vertices[0]):
                     vertices.append(last_vertex)
