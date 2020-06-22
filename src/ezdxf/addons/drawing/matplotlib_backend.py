@@ -113,6 +113,7 @@ class MatplotlibBackend(DrawingBackend):
         self.ax.clear()
 
     def finalize(self):
+        super().finalize()
         self.ax.autoscale(True)
         if self._adjust_figure:
             minx, maxx = self.ax.get_xlim()

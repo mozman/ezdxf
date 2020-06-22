@@ -4,7 +4,7 @@
 import ezdxf
 from pathlib import Path
 import matplotlib.pyplot as plt
-from ezdxf.addons.drawing.front_end import draw_layout
+from ezdxf.addons.drawing.frontend import draw_layout
 from ezdxf.addons.drawing.matplotlib_backend import MatplotlibBackend
 from ezdxf.math import global_bspline_interpolation
 
