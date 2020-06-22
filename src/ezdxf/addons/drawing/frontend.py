@@ -115,8 +115,12 @@ def _draw_misc_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> 
     elif dxftype in ('3DFACE', 'SOLID', 'TRACE'):
         # TRACE is the same thing as SOLID according to the documentation
         # https://ezdxf.readthedocs.io/en/stable/dxfentities/trace.html
+        # except TRACE has OCS coordinates and SOLID has WCS coordinates.
         entity = cast(Union[Face3d, Solid, Trace], entity)
         points = get_tri_or_quad_points(entity)
+        if dxftype == 'TRACE' and d.hasattr('extrusion'):
+            ocs = entity.ocs()
+            points = list(ocs.points_to_wcs(points))
         if dxftype in ('SOLID', 'TRACE'):
             out.draw_filled_polygon(points, color)
         else:
