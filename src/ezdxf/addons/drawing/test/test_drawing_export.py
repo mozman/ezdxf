@@ -1,4 +1,4 @@
-from ezdxf.addons.drawing.front_end import _is_visible
+from ezdxf.addons.drawing.frontend import _is_visible
 from ezdxf.entities import Point
 
 

@@ -8,7 +8,7 @@ import sys
 import matplotlib.pyplot as plt
 
 import ezdxf
-from ezdxf.addons.drawing.front_end import draw_layout
+from ezdxf.addons.drawing.frontend import draw_layout
 from ezdxf.addons.drawing.matplotlib_backend import MatplotlibBackend
 
 

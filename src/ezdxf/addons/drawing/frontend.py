@@ -23,6 +23,7 @@ LINE_ENTITY_TYPES = {'LINE', 'XLINE', 'RAY', 'MESH'}
 TEXT_ENTITY_TYPES = {'TEXT', 'MTEXT', 'ATTRIB'}
 CURVE_ENTITY_TYPES = {'CIRCLE', 'ARC', 'ELLIPSE', 'SPLINE'}
 MISC_ENTITY_TYPES = {'POINT', '3DFACE', 'SOLID', 'TRACE', 'MESH', 'HATCH', 'VIEWPORT'}
+COMPOSITE_ENTITY_TYPES = {'INSERT', 'POLYLINE', 'LWPOLYLINE'}  # and DIMENSION*
 
 
 def _draw_line_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> None:
@@ -99,9 +100,7 @@ def _draw_curve_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) ->
 
     elif dxftype == 'SPLINE':
         entity = cast(Spline, entity)
-        spline = entity.construction_tool()
-        points = list(spline.approximate(segments=100))
-        out.draw_line_string(points, color)
+        out.draw_spline(entity.construction_tool(), color)
 
     else:
         raise TypeError(dxftype)
@@ -169,20 +168,78 @@ def _draw_misc_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> 
         raise TypeError(dxftype)
 
 
-IgnoredCallback = Callable[[DXFGraphic, ColorContext, DrawingBackend], None]
+def _draw_composite_entity(entity: DXFGraphic,
+                           colors: ColorContext,
+                           out: DrawingBackend,
+                           parent_stack: List[DXFGraphic],
+                           **kwargs) -> None:
+    dxftype = entity.dxftype()
+
+    if dxftype == 'INSERT':
+        entity = cast(Insert, entity)
+        colors.push_state(colors.get_entity_color(entity), entity.dxf.layer.lower())
+        parent_stack.append(entity)
+        for attrib in entity.attribs:
+            draw_entity(attrib, colors, out, parent_stack, **kwargs)
+        try:
+            children = list(entity.virtual_entities())
+        except Exception as e:
+            print(f'Exception {type(e)}({e}) failed to get children of insert entity: {e}')
+            return
+        for child in children:
+            draw_entity(child, colors, out, parent_stack, **kwargs)
+        parent_stack.pop()
+        colors.pop_state()
+
+    elif 'DIMENSION' in dxftype:  # several different dxftypes
+        if not isinstance(entity, Dimension):
+            print(f'warning: ignoring unknown DIMENSION entitiy {dxftype} {type(entity)}')
+            return
+        entity = cast(Dimension, entity)
+
+        children = []
+        try:
+            for child in entity.virtual_entities():
+                child.transparency = 0.0  # defaults to 1.0 (fully transparent)
+                children.append(child)
+        except Exception as e:
+            print(f'Exception {type(e)}({e}) failed to get children of dimension entity: {e}')
+            return
+
+        parent_stack.append(entity)
+        for child in children:
+            draw_entity(child, colors, out, parent_stack, **kwargs)
+        parent_stack.pop()
+
+    elif dxftype in ('LWPOLYLINE', 'POLYLINE'):
+        entity = cast(Union[LWPolyline, Polyline], entity)
+        parent_stack.append(entity)
+        out.start_polyline()
+        for child in entity.virtual_entities():
+            draw_entity(child, colors, out, parent_stack, **kwargs)
+        parent_stack.pop()
+
+        out.set_current_entity(entity, tuple(parent_stack))
+        out.end_polyline()
+        out.set_current_entity(None)
+
+    else:
+        raise TypeError(dxftype)
 
 
-def _default_ignore_callback(entity: DXFGraphic, _colors: ColorContext, _out: DrawingBackend) -> None:
-    print(f'ignoring {entity.dxftype()} entity')
+def draw_entity(entity: DXFGraphic, colors: ColorContext, out: DrawingBackend, parent_stack: List[DXFGraphic],
+                *, visible_layers: Optional[Set[LayerName]] = None) -> None:
+    """
+    Args:
+        visible_layers: warning: unlike draw_entities, this function does not convert layer names to lowercase,
+          so the user of this function must ensure that they convert the layer names beforehand.
+    """
+    if not _is_visible(entity, visible_layers, colors.insert_layer):
+        return
 
-
-def draw_entity(entity: DXFGraphic, colors: ColorContext, out: DrawingBackend,
-                *,
-                ignore_callback: Optional[IgnoredCallback] = _default_ignore_callback,
-                parent_stack: Tuple[DXFGraphic, ...] = ()) -> None:
     color = colors.get_entity_color(entity)
     dxftype = entity.dxftype()
-    out.set_current_entity(entity, parent_stack)
+    out.set_current_entity(entity, tuple(parent_stack))
     if dxftype in LINE_ENTITY_TYPES:
         _draw_line_entity(entity, color, out)
     elif dxftype in TEXT_ENTITY_TYPES:
@@ -191,61 +248,16 @@ def draw_entity(entity: DXFGraphic, colors: ColorContext, out: DrawingBackend,
         _draw_curve_entity(entity, color, out)
     elif dxftype in MISC_ENTITY_TYPES:
         _draw_misc_entity(entity, color, out)
+    elif dxftype in COMPOSITE_ENTITY_TYPES or 'DIMENSION' in dxftype:
+        _draw_composite_entity(entity, colors, out, parent_stack, visible_layers=visible_layers)
     else:
-        ignore_callback(entity, colors, out)
+        out.ignored_entity(entity, colors)
     out.set_current_entity(None)
 
 
-def _flatten_entities(entities: Iterable[DXFGraphic],
-                      colors: ColorContext,
-                      parent_stack: List[DXFGraphic]) -> Iterable[DXFGraphic]:
-    for e in entities:
-        dxftype = e.dxftype()
-
-        if dxftype == 'INSERT':
-            e = cast(Insert, e)
-            colors.push_state(colors.get_entity_color(e), e.dxf.layer.lower())
-            parent_stack.append(e)
-            yield from e.attribs
-            try:
-                children = list(e.virtual_entities())
-            except Exception as e:
-                print(f'Exception {type(e)}({e}) failed to get children of insert entity: {e}')
-                continue
-            yield from _flatten_entities(children, colors, parent_stack)
-            parent_stack.pop()
-            colors.pop_state()
-
-        elif 'DIMENSION' in dxftype:  # several different dxftypes
-            if not isinstance(e, Dimension):
-                print(f'warning: ignoring unknown DIMENSION entitiy {e.dxftype()} {type(e)}')
-                continue
-            e = cast(Dimension, e)
-
-            children = []
-            try:
-                for child in e.virtual_entities():
-                    child.transparency = 0.0  # defaults to 1.0 (fully transparent)
-                    children.append(child)
-            except Exception as e:
-                print(f'Exception {type(e)}({e}) failed to get children of dimension entity: {e}')
-                continue
-
-            parent_stack.append(e)
-            yield from _flatten_entities(children, colors, parent_stack)
-            parent_stack.pop()
-
-        elif dxftype in ('LWPOLYLINE', 'POLYLINE'):
-            e = cast(Union[LWPolyline, Polyline], e)
-            parent_stack.append(e)
-            yield from _flatten_entities(e.virtual_entities(), colors, parent_stack)
-            parent_stack.pop()
-
-        else:
-            yield e
-
-
-def _is_visible(entity: DXFGraphic, visible_layers: Set[LayerName], insert_layer: Optional[LayerName]) -> bool:
+def _is_visible(entity: DXFGraphic, visible_layers: Optional[Set[LayerName]], insert_layer: Optional[LayerName]) -> bool:
+    if visible_layers is None:
+        return True
     layer = entity.dxf.layer.lower()
     if insert_layer is not None and layer == '0':
         return insert_layer in visible_layers
@@ -257,11 +269,8 @@ def draw_entities(entities: Iterable[DXFGraphic], colors: ColorContext, out: Dra
                   visible_layers: Optional[Set[LayerName]] = None) -> None:
     if visible_layers is not None:
         visible_layers = {l.lower() for l in visible_layers}
-
-    parent_stack = []
-    for entity in _flatten_entities(entities, colors, parent_stack):
-        if visible_layers is None or _is_visible(entity, visible_layers, colors.insert_layer):
-            draw_entity(entity, colors, out, parent_stack=tuple(parent_stack))
+    for entity in entities:
+        draw_entity(entity, colors, out, [], visible_layers=visible_layers)
 
 
 def draw_layout(layout: Layout,
