@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, TYPE_CHECKING
+from typing import List, Optional, Tuple, TYPE_CHECKING, Iterable
 
 from ezdxf.addons.drawing.colors import ColorContext
 from ezdxf.addons.drawing.type_hints import Color, Radians
@@ -11,6 +11,7 @@ from ezdxf.math import Vector, Matrix44, BSpline
 
 if TYPE_CHECKING:
     from ezdxf.addons.drawing.text import FontMeasurements
+    from ezdxf.eztypes import Hatch, Spline, LWPolyline
 
 
 class DrawingBackend(ABC):
@@ -58,12 +59,19 @@ class DrawingBackend(ABC):
         self._polyline_nesting_depth -= 1
         assert self._polyline_nesting_depth >= 0
 
+    @property
+    def has_spline_support(self):
+        return False
+
     def draw_spline(self, spline: BSpline, color: Color) -> None:
-        points = list(spline.approximate(segments=100))
-        self.start_polyline()
-        for a, b in zip(points, points[1:]):
-            self.draw_line(a, b, color)
-        self.end_polyline()
+        raise NotImplementedError
+
+    @property
+    def has_hatch_support(self):
+        return False
+
+    def draw_hatch(self, hatch: 'Hatch', color: Color) -> None:
+        raise NotImplementedError
 
     @abstractmethod
     def draw_point(self, pos: Vector, color: Color) -> None:

@@ -100,7 +100,15 @@ def _draw_curve_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) ->
 
     elif dxftype == 'SPLINE':
         entity = cast(Spline, entity)
-        out.draw_spline(entity.construction_tool(), color)
+        spline = entity.construction_tool()
+        if out.has_spline_support:
+            out.draw_spline(spline, color)
+        else:
+            points = list(spline.approximate(segments=100))
+            out.start_polyline()
+            for a, b in zip(points, points[1:]):
+                out.draw_line(a, b, color)
+            out.end_polyline()
 
     else:
         raise TypeError(dxftype)
@@ -129,6 +137,10 @@ def _draw_misc_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> 
 
     elif dxftype == 'HATCH':
         entity = cast(Hatch, entity)
+        if out.has_hatch_support:
+            out.draw_hatch(entity, color)
+            return
+
         ocs = entity.ocs()
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z), default (0, 0, 0)
         elevation = entity.dxf.elevation.z
