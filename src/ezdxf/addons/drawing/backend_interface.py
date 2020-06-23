@@ -66,13 +66,6 @@ class DrawingBackend(ABC):
     def draw_spline(self, spline: BSpline, color: Color) -> None:
         raise NotImplementedError
 
-    @property
-    def has_hatch_support(self):
-        return False
-
-    def draw_hatch(self, hatch: 'Hatch', color: Color) -> None:
-        raise NotImplementedError
-
     @abstractmethod
     def draw_point(self, pos: Vector, color: Color) -> None:
         raise NotImplementedError

@@ -53,7 +53,7 @@ def _draw_line_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> 
 
 def _draw_text_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> None:
     d, dxftype = entity.dxf, entity.dxftype()
-
+    # todo: how to handle text placed in 3D (extrusion != (0, 0, [1, -1]))
     if dxftype in ('TEXT', 'MTEXT', 'ATTRIB'):
         entity = cast(Union[Text, MText, Attrib], entity)
         for line, transform, cap_height in simplified_text_chunks(entity, out):
@@ -73,6 +73,7 @@ def _get_arc_wcs_center(arc: DXFGraphic) -> Vector:
 
 
 def _draw_curve_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> None:
+    # todo: how to handle ARC and CIRCLE placed in 3D (extrusion != (0, 0, [1, -1]))
     d, dxftype = entity.dxf, entity.dxftype()
 
     if dxftype == 'CIRCLE':
@@ -137,10 +138,6 @@ def _draw_misc_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> 
 
     elif dxftype == 'HATCH':
         entity = cast(Hatch, entity)
-        if out.has_hatch_support:
-            out.draw_hatch(entity, color)
-            return
-
         ocs = entity.ocs()
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z), default (0, 0, 0)
         elevation = entity.dxf.elevation.z
@@ -155,9 +152,7 @@ def _draw_misc_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> 
                 assert e.EDGE_TYPE == 'LineEdge'
                 # WCS transformation is only done if the extrusion vector is != (0, 0, 1)
                 # else to_wcs() returns just the input - no big speed penalty!
-                # Simple projection into xy-plane by just removing the z-axis from
-                # WCS vector, assuming we do not support 3D hatches!?
-                v = ocs.to_wcs(Vector(e.start[0], e.start[1], elevation)).replace(z=0.0)
+                v = ocs.to_wcs(Vector(e.start[0], e.start[1], elevation))
                 if last_vertex is not None and not last_vertex.isclose(v):
                     print(f'warning: hatch edges not contiguous: {last_vertex} -> {e.start}, {e.end}')
                     vertices.append(last_vertex)
