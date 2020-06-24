@@ -11,7 +11,7 @@ from typing import Optional
 from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
-from ezdxf.addons.drawing.colors import get_layer_color
+from ezdxf.addons.drawing.properties import get_layer_color
 from ezdxf.addons.drawing.frontend import draw_layout
 from ezdxf.addons.drawing.pyqt_backend import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFEntityStack
@@ -236,7 +236,7 @@ def _main():
         try:
             v.draw_layout(args.layout)
         except KeyError:
-            print(f'could not find layout "{args.layout}". Valid layouts: {[l.name for l in doc.layouts]}')
+            print(f'could not find layout "{args.layout}". Valid layouts: {[l.name for l in v.doc.layouts]}')
             sys.exit(1)
     sys.exit(app.exec_())
 

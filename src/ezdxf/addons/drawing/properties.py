@@ -474,3 +474,13 @@ def compile_line_pattern(total_length: float, elements: Sequence[float]) -> Tupl
     # possible: dash-point or point-dash - just ignore yet
     # never: dash-dash or gap-gap or point-point
     return tuple(abs(e) for e in elements)
+
+
+def get_layer_color(layer: 'Layer', color_index: Optional[List[str]] = None) -> Optional[Color]:
+    color_index = color_index or AUTOCAD_COLOR_INDEX
+    if layer.rgb is not None:
+        return rgb_to_hex(layer.rgb)
+    elif layer.color is not None and 0 < layer.color < len(color_index):  # 0 is not a valid color code
+        return color_index[layer.color]
+    else:
+        return None  # unknown / invalid
