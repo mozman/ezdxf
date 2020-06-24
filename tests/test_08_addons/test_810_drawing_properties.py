@@ -57,15 +57,15 @@ def doc():
 def test_load_default_ctb(doc):
     msp = doc.modelspace()
     ctx = PropertyContext(msp, 'color.ctb')
-    assert bool(ctx.plot_style_table) is True
-    assert ctx.plot_style_table[1].color == (255, 0, 0)
+    assert bool(ctx.plotstyles) is True
+    assert ctx.plotstyles[1].color == (255, 0, 0)
 
 
 def test_new_ctb(doc):
     msp = doc.modelspace()
     ctx = PropertyContext(msp)
-    assert bool(ctx.plot_style_table) is True
-    assert ctx.plot_style_table[1].color == (255, 0, 0)
+    assert bool(ctx.plotstyles) is True
+    assert ctx.plotstyles[1].color == (255, 0, 0)
 
 
 def test_resolve_entity_color(doc):

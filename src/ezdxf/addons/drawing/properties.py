@@ -4,17 +4,15 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence
 from ezdxf.lldxf import const as DXFConstants
-from ezdxf.addons.drawing.type_hints import Color, LayerName
+from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons import acadctb
-
-DEFAULT_MODEL_SPACE_BACKGROUND_COLOR = '#212830'
-PAPER_SPACE_BACKGROUND_COLOR = '#ffffff'
-VIEWPORT_COLOR = '#aaaaaa'  # arbitrary choice
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Layout, Table, Layer, Linetype
     from ezdxf.entities.ltype import LinetypePattern
 
+MODEL_SPACE_BG_COLOR = '#212830'
+PAPER_SPACE_BG_COLOR = '#ffffff'
 CONTINUOUS_PATTERN = tuple()
 
 # color codes are 1-indexed so an additional entry was put in the 0th position
@@ -55,7 +53,7 @@ AUTOCAD_COLOR_INDEX = [
 
 
 def is_dark_color(color: Color) -> bool:
-    return color <= DEFAULT_MODEL_SPACE_BACKGROUND_COLOR  # todo: remove hack
+    return color <= MODEL_SPACE_BG_COLOR  # todo: remove hack
 
 
 class Properties:
@@ -110,13 +108,15 @@ class LayerProperties(Properties):
 class PropertyContext:
     def __init__(self, layout: 'Layout', ctb: str = ''):
         self._saved_states: List[Properties] = []
-        self.block_reference_properties: Optional[Properties] = None
-
+        self._layout_background_color = '#000000'
+        self._layout_default_color = '#ffffff'
+        self._layout_has_dark_background = True
         self._known_line_pattern = _load_line_pattern(layout.doc.linetypes) if layout.doc else dict()
-        self.plot_style_table = self._load_plot_style_table(ctb)
-        self.layout_properties = self._get_default_layout_properties(layout)
-        self.layout_has_dark_background = is_dark_color(self.get_layout_background_color(layout))
-        self.layer_properties = self._gather_layer_properties(layout.doc.layers)
+
+        self.set_layout_colors(bg=MODEL_SPACE_BG_COLOR if layout.is_modelspace else PAPER_SPACE_BG_COLOR)
+        self.current_block: Optional[Properties] = None
+        self.plotstyles = self._load_plot_style_table(ctb)
+        self.layers = self._gather_layer_properties(layout.doc.layers)
 
     def _gather_layer_properties(self, layers: 'Table') -> Dict[str, LayerProperties]:
         layer_table = {}
@@ -169,23 +169,18 @@ class PropertyContext:
                 entry.color = hex_to_rgb(AUTOCAD_COLOR_INDEX[aci])
         return ctb
 
-    def _get_default_layout_properties(self, layout: 'Layout') -> Properties:
-        p = Properties()
-        p.color = self.get_layout_default_color(layout)
-        return p
-
-    @staticmethod
-    def get_layout_default_color(layout: 'Layout') -> Color:
-        # todo: Get info from HEADER section?
-        # The LAYOUT entity has no explicit graphic properties.
-        # BLOCK and BLOCK_RECORD entities also have no graphic properties.
-        # Maybe XDATA or ExtensionDict in any of this entities.
-        return '#ffffff' if layout.is_modelspace else '#000000'
-
     @staticmethod
     def get_layout_background_color(layout: 'Layout') -> Color:
-        # This values are managed by the CAD application, offer a method to set this value by user.
-        return DEFAULT_MODEL_SPACE_BACKGROUND_COLOR if layout.is_modelspace else PAPER_SPACE_BACKGROUND_COLOR
+        # This values are managed by the CAD application.
+        return MODEL_SPACE_BG_COLOR if layout.is_modelspace else PAPER_SPACE_BG_COLOR
+
+    def set_layout_colors(self, bg: Color, fg: Color = None) -> None:
+        self._layout_background_color = bg
+        self._layout_has_dark_background = is_dark_color(bg)
+        if fg is not None:
+            self._layout_default_color = fg
+        else:
+            self._layout_default_color = '#ffffff' if self._layout_has_dark_background else '#000000'
 
     @staticmethod
     def layer_key(name: str) -> str:
@@ -193,15 +188,27 @@ class PropertyContext:
         return name.lower()
 
     @property
-    def is_block_reference_context(self) -> bool:
-        return bool(self.block_reference_properties)
+    def layout_background_color(self) -> Color:
+        return self._layout_background_color
+
+    @property
+    def layout_default_color(self) -> Color:
+        return self._layout_default_color
+
+    @property
+    def layout_has_dark_background(self) -> bool:
+        return self._layout_has_dark_background
+
+    @property
+    def is_block_context(self) -> bool:
+        return bool(self.current_block)
 
     def push_state(self, block_reference: Properties) -> None:
-        self._saved_states.append(self.block_reference_properties)
-        self.block_reference_properties = block_reference
+        self._saved_states.append(self.current_block)
+        self.current_block = block_reference
 
     def pop_state(self) -> None:
-        self.block_reference_properties = self._saved_states.pop()
+        self.current_block = self._saved_states.pop()
 
     def resolve_all(self, entity: 'DXFGraphic') -> Properties:
         """ Resolve all properties for DXF `entity`. """
@@ -221,16 +228,16 @@ class PropertyContext:
         if aci == DXFConstants.BYLAYER:
             entity_layer = self.layer_key(entity.dxf.layer)
             # AutoCAD appears to treat layer 0 differently to other layers in this case.
-            if self.is_block_reference_context and entity_layer == '0':
-                color = self.block_reference_properties.color
+            if self.is_block_context and entity_layer == '0':
+                color = self.current_block.color
             else:
-                color = self.layer_properties[entity_layer].color
+                color = self.layers[entity_layer].color
 
         elif aci == DXFConstants.BYBLOCK:
-            if not self.is_block_reference_context:
-                color = self.layout_properties.color
+            if not self.is_block_context:
+                color = self.layout_default_color
             else:
-                color = self.block_reference_properties.color
+                color = self.current_block.color
 
         else:  # BYOBJECT
             color = self._true_entity_color(entity.rgb, aci)
@@ -255,7 +262,7 @@ class PropertyContext:
         elif 0 < aci < 256:
             return self._aci_to_true_color(aci)
         else:
-            return self.layout_properties.color  # unknown / invalid
+            return self.layout_default_color  # unknown / invalid
 
     def _aci_to_true_color(self, aci: int) -> Color:
         if aci == 7:  # black/white; todo: bypasses plot style table
@@ -264,33 +271,34 @@ class PropertyContext:
             else:
                 return '#000000'  # black
         else:
-            return rgb_to_hex(self.plot_style_table[aci].color)
+            return rgb_to_hex(self.plotstyles[aci].color)
 
     def resolve_linetype(self, entity: 'DXFGraphic'):
         """ Resolve linetype of DXF `entity` """
         aci = entity.dxf.color
         # Not sure if plotstyle table overrides actual entity setting?
-        if (0 < aci < 256) and self.plot_style_table[aci].linetype != acadctb.OBJECT_LINETYPE:
+        if (0 < aci < 256) and self.plotstyles[aci].linetype != acadctb.OBJECT_LINETYPE:
             pass  # todo: return special line types  - overriding linetypes by plotstyle table
         name = entity.dxf.linetype.upper()  # default is 'BYLAYER'
         if name == 'BYLAYER':
             entity_layer = self.layer_key(entity.dxf.layer)
 
             # AutoCAD appears to treat layer 0 differently to other layers in this case.
-            if self.is_block_reference_context and entity_layer == '0':
-                name = self.block_reference_properties.linetype_name
-                pattern = self.block_reference_properties.linetype_pattern
+            if self.is_block_context and entity_layer == '0':
+                name = self.current_block.linetype_name
+                pattern = self.current_block.linetype_pattern
             else:
-                name = self.layer_properties[entity_layer].linetype_name
-                pattern = self.layer_properties[entity_layer].linetype_pattern
+                name = self.layers[entity_layer].linetype_name
+                pattern = self.layers[entity_layer].linetype_pattern
 
         elif name == 'BYBLOCK':
-            if not self.is_block_reference_context:
-                name = self.layout_properties.linetype_name
-                pattern = self.layout_properties.linetype_pattern
+            if self.is_block_context:
+                name = self.current_block.linetype_name
+                pattern = self.current_block.linetype_pattern
             else:
-                name = self.block_reference_properties.linetype_name
-                pattern = self.block_reference_properties.linetype_pattern
+                # There is no default layout linetype
+                name = 'STANDARD'
+                pattern = CONTINUOUS_PATTERN
         else:
             pattern = self._known_line_pattern.get(name, CONTINUOUS_PATTERN)
         return name, pattern
@@ -304,24 +312,25 @@ class PropertyContext:
         # Maybe XDATA or ExtensionDict in any of this entities.
         aci = entity.dxf.color
         # Not sure if plotstyle table overrides actual entity setting?
-        if (0 < aci < 256) and self.plot_style_table[aci].lineweight != acadctb.OBJECT_LINEWEIGHT:
+        if (0 < aci < 256) and self.plotstyles[aci].lineweight != acadctb.OBJECT_LINEWEIGHT:
             # overriding lineweight by plotstyle table
-            return self.plot_style_table.get_lineweight(aci)
+            return self.plotstyles.get_lineweight(aci)
         lineweight = entity.dxf.lineweight  # default is BYLAYER
         if lineweight == DXFConstants.LINEWEIGHT_BYLAYER:
             entity_layer = self.layer_key(entity.dxf.layer)
 
             # AutoCAD appears to treat layer 0 differently to other layers in this case.
-            if self.is_block_reference_context and entity_layer == '0':
-                return self.block_reference_properties.lineweight
+            if self.is_block_context and entity_layer == '0':
+                return self.current_block.lineweight
             else:
-                return self.layer_properties[entity_layer].lineweight
+                return self.layers[entity_layer].lineweight
 
         elif lineweight == DXFConstants.LINEWEIGHT_BYBLOCK:
-            if not self.is_block_reference_context:
-                return self.layout_properties.lineweight
+            if self.is_block_context:
+                return self.current_block.lineweight
             else:
-                return self.block_reference_properties.lineweight
+                # There is no default layout lineweight
+                return self.default_lineweight()
         elif lineweight == DXFConstants.LINEWEIGHT_DEFAULT:
             return self.default_lineweight()
         else:
