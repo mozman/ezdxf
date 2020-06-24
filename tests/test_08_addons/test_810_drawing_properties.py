@@ -20,7 +20,7 @@ def test_load_default_ctb(doc):
 
 def test_new_ctb(doc):
     msp = doc.modelspace()
-    ctx = PropertyContext(msp, 'does_not_exist.ctb')
+    ctx = PropertyContext(msp)
     assert bool(ctx.plot_style_table) is True
     assert ctx.plot_style_table[1].color == (255, 0, 0)
 

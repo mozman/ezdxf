@@ -43,7 +43,7 @@ setup(
     package_dir={'': 'src'},
     packages=find_packages('src'),
     zip_safe=False,
-    package_data={'ezdxf': ['pp/*.html', 'pp/*.js', 'pp/*.css', 'addons/res/*.*']},
+    package_data={'ezdxf': ['pp/*.html', 'pp/*.js', 'pp/*.css']},
     entry_points={
         'console_scripts': [
             'dxfpp = ezdxf.pp.__main__:main',  # DXF Pretty Printer

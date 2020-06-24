@@ -8,7 +8,6 @@ from ezdxf.lldxf import const as DXFConstants
 from ezdxf.addons.drawing.type_hints import Color, LayerName
 from ezdxf.addons import acadctb
 
-DEFAULT_CTB = 'color.ctb'
 DEFAULT_MODEL_SPACE_BACKGROUND_COLOR = '#212830'
 PAPER_SPACE_BACKGROUND_COLOR = '#ffffff'
 VIEWPORT_COLOR = '#aaaaaa'  # arbitrary choice
@@ -113,7 +112,7 @@ class LayerProperties(Properties):
 
 
 class PropertyContext:
-    def __init__(self, layout: 'Layout', ctb: str = DEFAULT_CTB):
+    def __init__(self, layout: 'Layout', ctb: str = ''):
         self._saved_states: List[Properties] = []
         self.plot_style_table = self._load_plot_style_table(ctb)
         self.layout_properties: Optional[Properties] = self._get_default_layout_properties(layout)
@@ -141,15 +140,7 @@ class PropertyContext:
         try:
             ctb = acadctb.load(filename)
         except IOError:
-            try:  # try setuptools to locate the default ctb-file:
-                import pkg_resources
-                filename = pkg_resources.resource_filename('ezdxf', f'addons/res/{DEFAULT_CTB}')
-            except ImportError:  # or the old fashioned unsafe way
-                filename = str(Path(__file__).parent/DEFAULT_CTB)
-            try:
-                ctb = acadctb.load(filename)
-            except IOError:
-                ctb = acadctb.new_ctb()
+            ctb = acadctb.new_ctb()
 
         # Colors in CTB files can be RGB colors but don't have to,
         # therefor initialize color without RGB values by the
