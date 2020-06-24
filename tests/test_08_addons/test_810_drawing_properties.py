@@ -3,7 +3,7 @@
 
 import pytest
 import ezdxf
-from ezdxf.addons.drawing.properties import PropertyContext, Properties, compile_pattern
+from ezdxf.addons.drawing.properties import PropertyContext, Properties, compile_line_pattern
 
 
 @pytest.fixture(scope='module')
@@ -68,12 +68,12 @@ def test_resolve_entity_linetype(doc):
 
 
 def test_compile_pattern():
-    assert compile_pattern(0, [0.0]) == tuple()
-    assert compile_pattern(2.0, [1.25, -0.25, 0.25, -0.25]) == (1.25, 0.25, 0.25, 0.25)
-    assert compile_pattern(3.5, [2.5, -0.25, 0.5, -0.25]) == (2.5, 0.25, 0.5, 0.25)
-    assert compile_pattern(1.4, [1.0, -0.2, 0.0, -0.2]) == (1.0, 0.2, 0.0, 0.2)
-    assert compile_pattern(0.2, [0.0, -0.2]) == (0.0, 0.2)
-    assert compile_pattern(2.6, [2.0, -0.2, 0.0, -0.2, 0.0, -0.2]) == (2.0, 0.2, 0.0, 0.2, 0.0, 0.2)
+    assert compile_line_pattern(0, [0.0]) == tuple()
+    assert compile_line_pattern(2.0, [1.25, -0.25, 0.25, -0.25]) == (1.25, 0.25, 0.25, 0.25)
+    assert compile_line_pattern(3.5, [2.5, -0.25, 0.5, -0.25]) == (2.5, 0.25, 0.5, 0.25)
+    assert compile_line_pattern(1.4, [1.0, -0.2, 0.0, -0.2]) == (1.0, 0.2, 0.0, 0.2)
+    assert compile_line_pattern(0.2, [0.0, -0.2]) == (0.0, 0.2)
+    assert compile_line_pattern(2.6, [2.0, -0.2, 0.0, -0.2, 0.0, -0.2]) == (2.0, 0.2, 0.0, 0.2, 0.0, 0.2)
 
 
 if __name__ == '__main__':

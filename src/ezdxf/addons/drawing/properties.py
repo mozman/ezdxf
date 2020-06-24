@@ -352,36 +352,40 @@ def _rgba(color: Color, alpha: int) -> Color:
 
 
 def _load_line_pattern(linetypes: 'Table') -> Dict[str, Tuple]:
+    """ Load linetypes defined in a DXF document into  as dictionary,
+    key is the upper case linetype name, value is the simplified line pattern,
+    see compile_line_pattern().
+    """
     pattern = dict()
     for linetype in linetypes:  # type: Linetype
         name = linetype.dxf.name.upper()
-        pattern[name] = _compile_pattern_from_tags(linetype.pattern_tags)
+        pattern[name] = _compile_line_pattern_from_tags(linetype.pattern_tags)
     return pattern
 
 
-def _sign(v):
-    if v < 0:
-        return -1
-    elif v > 0:
-        return +1
-    return 0
-
-
 def _merge_dashes(elements: Sequence[float]) -> Iterable[float]:
+    """ Merge multiple consecutive lines, gaps or points into a single element. """
+    def sign(v):
+        if v < 0:
+            return -1
+        elif v > 0:
+            return +1
+        return 0
+
     buffer = elements[0]
-    last_sign = _sign(buffer)
+    prev_sign = sign(buffer)
     for e in elements[1:]:
-        if _sign(e) == last_sign:
+        if sign(e) == prev_sign:
             buffer += e
         else:
             yield buffer
             buffer = e
-            last_sign = _sign(e)
+            prev_sign = sign(e)
     yield buffer
 
 
-def _compile_pattern_from_tags(pattern: 'LinetypePattern') -> Tuple[float, ...]:
-    """ Returns simplified dash-gap-dash... line pattern and dash is 0 for a point """
+def _compile_line_pattern_from_tags(pattern: 'LinetypePattern') -> Tuple[float, ...]:
+    """ Returns simplified dash-gap-dash... line pattern and dash is 0 for a point. """
     # complex line types with text and shapes are not supported
     if pattern.is_complex_type():
         return CONTINUOUS_PATTERN
@@ -396,10 +400,10 @@ def _compile_pattern_from_tags(pattern: 'LinetypePattern') -> Tuple[float, ...]:
 
     if len(elements) < 2:
         return CONTINUOUS_PATTERN
-    return compile_pattern(pattern_length, elements)
+    return compile_line_pattern(pattern_length, elements)
 
 
-def compile_pattern(total_length: float, elements: Sequence[float]) -> Tuple[float, ...]:
+def compile_line_pattern(total_length: float, elements: Sequence[float]) -> Tuple[float, ...]:
     """ Returns simplified dash-gap-dash... line pattern and dash is 0 for a point """
     elements = list(_merge_dashes(elements))
     if len(elements) < 2 or total_length <= 0.0:
@@ -415,7 +419,7 @@ def compile_pattern(total_length: float, elements: Sequence[float]) -> Tuple[flo
             elements[-1] += e
         else:  # add last gap
             elements.append(e)
-    # line-gap-point
-    # possible: line-point or point-line - just ignore yet
-    # never: line-line or gap-gap or point-point
+    # dash-gap-point
+    # possible: dash-point or point-dash - just ignore yet
+    # never: dash-dash or gap-gap or point-point
     return tuple(abs(e) for e in elements)
