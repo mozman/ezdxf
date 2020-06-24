@@ -2,8 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union, List
-from pathlib import Path
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence
 from ezdxf.lldxf import const as DXFConstants
 from ezdxf.addons.drawing.type_hints import Color, LayerName
 from ezdxf.addons import acadctb
@@ -13,9 +12,10 @@ PAPER_SPACE_BACKGROUND_COLOR = '#ffffff'
 VIEWPORT_COLOR = '#aaaaaa'  # arbitrary choice
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic, Layout, Table, Layer
+    from ezdxf.eztypes import DXFGraphic, Layout, Table, Layer, Linetype
+    from ezdxf.entities.ltype import LinetypePattern
 
-CONTINUOUS_PATTERN = (1.0,)
+CONTINUOUS_PATTERN = tuple()
 
 # color codes are 1-indexed so an additional entry was put in the 0th position
 # different plot styles may choose different colors for the same code
@@ -85,6 +85,7 @@ class Properties:
         # Stored as tuple, so pattern could be used as key for caching.
         # SVG dash-pattern does not support points, so a minimal line length has to be used, which alters
         # the overall line appearance a little bit - but linetype mapping will never be perfect.
+        # The continuous pattern is an empty tuple ()
         self.linetype_pattern: Tuple[float, ...] = CONTINUOUS_PATTERN
         self.linetype_scale: float = 1.0
         self.lineweight: float = 0.13  # line weight in mm
@@ -114,6 +115,7 @@ class LayerProperties(Properties):
 class PropertyContext:
     def __init__(self, layout: 'Layout', ctb: str = ''):
         self._saved_states: List[Properties] = []
+        self._known_line_pattern = _load_line_pattern(layout.doc.linetypes) if layout.doc else dict()
         self.plot_style_table = self._load_plot_style_table(ctb)
         self.layout_properties: Optional[Properties] = self._get_default_layout_properties(layout)
         self.block_reference_properties: Optional[Properties] = None
@@ -170,8 +172,20 @@ class PropertyContext:
         # This values are managed by the CAD application, offer a method to set this value by user.
         return DEFAULT_MODEL_SPACE_BACKGROUND_COLOR if layout.is_modelspace else PAPER_SPACE_BACKGROUND_COLOR
 
-    def _true_layer_color(self, layer: 'Layer') -> Color:
-        return '#000000'  # todo
+    def _true_layer_color(self, layer: 'Layer', dark_background=True) -> Color:
+        if layer.dxf.hasattr('true_color'):
+            return rgb_to_hex(layer.rgb)
+        else:
+            aci = layer.color
+            if aci < 1 or aci > 255:
+                aci = 7  # default layer color
+            if aci == 7:  # black/white
+                if dark_background:
+                    return '#ffffff'  # white
+                else:
+                    return '#000000'  # black
+            else:
+                return rgb_to_hex(self.plot_style_table[aci].color)
 
     def _true_layer_lineweight(self, lineweight: int) -> float:
         return 0.0  # todo
@@ -243,7 +257,7 @@ class PropertyContext:
             return self.layout_properties.color  # unknown / invalid
 
     def resolve_linetype(self, entity: 'DXFGraphic'):
-        raise NotImplementedError
+        return 'STANDARD', CONTINUOUS_PATTERN  # todo
 
     def resolve_lineweight(self, entity: 'DXFGraphic'):
         # Line weight in mm times 100 (e.g. 0.13mm = 13).
@@ -256,7 +270,7 @@ class PropertyContext:
         # DEFAULT: The LAYOUT entity has no explicit graphic properties.
         # BLOCK and BLOCK_RECORD entities also have no graphic properties.
         # Maybe XDATA or ExtensionDict in any of this entities.
-        raise NotImplementedError
+        return 0.0  # todo
 
 
 def rgb_to_hex(rgb: Union[Tuple[int, int, int], Tuple[float, float, float]]) -> Color:
@@ -282,3 +296,73 @@ def _rgba(color: Color, alpha: int) -> Color:
     assert color.startswith('#') and len(color) in (7, 9), f'invalid RGB color: "{color}"'
     assert 0 <= alpha < 255, f'alpha out of range: {alpha}'
     return f'{color[:7]}{alpha:02x}'
+
+
+def _load_line_pattern(linetypes: 'Table') -> Dict[str, Tuple]:
+    pattern = dict()
+    for linetype in linetypes:  # type: Linetype
+        name = linetype.dxf.name.upper()
+        pattern[name] = _compile_pattern_from_tags(linetype.pattern_tags)
+    return pattern
+
+
+def _sign(v):
+    if v < 0:
+        return -1
+    elif v > 0:
+        return +1
+    return 0
+
+
+def _merge_dashes(elements: Sequence[float]) -> Iterable[float]:
+    buffer = elements[0]
+    last_sign = _sign(buffer)
+    for e in elements[1:]:
+        if _sign(e) == last_sign:
+            buffer += e
+        else:
+            yield buffer
+            buffer = e
+            last_sign = _sign(e)
+    yield buffer
+
+
+def _compile_pattern_from_tags(pattern: 'LinetypePattern') -> Tuple[float, ...]:
+    """ Returns simplified dash-gap-dash... line pattern and dash is 0 for a point """
+    # complex line types with text and shapes are not supported
+    if pattern.is_complex_type():
+        return CONTINUOUS_PATTERN
+
+    pattern_length = 0.0
+    elements = []
+    for tag in pattern.tags:
+        if tag.code == 40:
+            pattern_length = tag.value
+        elif tag.code == 49:
+            elements.append(tag.value)
+
+    if len(elements) < 2:
+        return CONTINUOUS_PATTERN
+    return compile_pattern(pattern_length, elements)
+
+
+def compile_pattern(total_length: float, elements: Sequence[float]) -> Tuple[float, ...]:
+    """ Returns simplified dash-gap-dash... line pattern and dash is 0 for a point """
+    elements = list(_merge_dashes(elements))
+    if len(elements) < 2 or total_length <= 0.0:
+        return CONTINUOUS_PATTERN
+
+    sum_elements = sum(abs(e) for e in elements)
+    if total_length > sum_elements:  # append a gap
+        elements.append(sum_elements - total_length)
+
+    if elements[0] < 0:  # start with a gap
+        e = elements.pop(0)
+        if elements[-1] < 0:  # extend last gap
+            elements[-1] += e
+        else:  # add last gap
+            elements.append(e)
+    # line-gap-point
+    # possible: line-point or point-line - just ignore yet
+    # never: line-line or gap-gap or point-point
+    return tuple(abs(e) for e in elements)
