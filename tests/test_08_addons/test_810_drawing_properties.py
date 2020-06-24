@@ -3,7 +3,7 @@
 
 import pytest
 import ezdxf
-from ezdxf.addons.drawing.properties import PropertyContext, Properties, compile_line_pattern
+from ezdxf.addons.drawing.properties import PropertyContext, compile_line_pattern
 
 
 @pytest.fixture(scope='module')
@@ -48,10 +48,10 @@ def test_resolve_entity_color(doc):
     msp = doc.modelspace()
     ctx = PropertyContext(msp)
     lines = msp.query('LINE')
-    line1 = Properties.resolve(lines[0], ctx)
+    line1 = ctx.resolve(lines[0])
     assert line1.color == '#0000ff'  # by layer
 
-    line2 = Properties.resolve(lines[1], ctx)
+    line2 = ctx.resolve(lines[1])
     assert line2.color == '#ff0000'
 
 
@@ -60,11 +60,23 @@ def test_resolve_entity_linetype(doc):
     ctx = PropertyContext(msp)
     lines = msp.query('LINE')
 
-    line1 = Properties.resolve(lines[0], ctx)
+    line1 = ctx.resolve(lines[0])
     assert line1.linetype_name == 'DOT'  # by layer
 
-    line2 = Properties.resolve(lines[1], ctx)
+    line2 = ctx.resolve(lines[1])
     assert line2.linetype_name == 'DASHED'
+
+
+def test_resolve_entity_lineweight(doc):
+    msp = doc.modelspace()
+    ctx = PropertyContext(msp)
+    lines = msp.query('LINE')
+
+    line1 = ctx.resolve(lines[0])
+    assert line1.lineweight == 0.70  # by layer
+
+    line2 = ctx.resolve(lines[1])
+    assert line2.lineweight == 0.50
 
 
 def test_compile_pattern():

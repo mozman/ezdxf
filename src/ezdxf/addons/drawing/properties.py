@@ -54,6 +54,10 @@ AUTOCAD_COLOR_INDEX = [
 ]
 
 
+def is_dark_color(color: Color) -> bool:
+    return color <= DEFAULT_MODEL_SPACE_BACKGROUND_COLOR  # todo: remove hack
+
+
 class Properties:
     """ An implementation agnostic representation of entity properties like color and linetype.
     """
@@ -92,18 +96,6 @@ class Properties:
         self.is_visible = True
         self.layer: str = '0'
 
-    @classmethod
-    def resolve(cls, entity: 'DXFGraphic', ctx: 'PropertyContext') -> 'Properties':
-        p = cls()
-        p.color = ctx.resolve_color(entity)
-        p.linetype_name, p.linetype_pattern = ctx.resolve_linetype(entity)
-        p.lineweight = ctx.resolve_lineweight(entity)
-        dxf = entity.dxf
-        p.linetype_scale = dxf.ltscale
-        p.is_visible = not bool(dxf.invisible)
-        p.layer = dxf.layer
-        return p
-
     def __str__(self):
         return f'({self.color}, {self.linetype_name}, {self.lineweight}, {self.layer})'
 
@@ -122,7 +114,19 @@ class PropertyContext:
         self.plot_style_table = self._load_plot_style_table(ctb)
         self.layout_properties: Optional[Properties] = self._get_default_layout_properties(layout)
         self.block_reference_properties: Optional[Properties] = None
+        self.has_dark_background = is_dark_color(self.get_layout_background_color(layout))
         self.layer_properties: Dict[LayerName, LayerProperties] = self._gather_layer_properties(layout.doc.layers)
+
+    def resolve(self, entity: 'DXFGraphic') -> 'Properties':
+        p = Properties()
+        p.color = self.resolve_color(entity)
+        p.linetype_name, p.linetype_pattern = self.resolve_linetype(entity)
+        p.lineweight = self.resolve_lineweight(entity)
+        dxf = entity.dxf
+        p.linetype_scale = dxf.ltscale
+        p.is_visible = not bool(dxf.invisible)
+        p.layer = dxf.layer
+        return p
 
     def _gather_layer_properties(self, layers: 'Table'):
         layer_table = {}
@@ -175,21 +179,6 @@ class PropertyContext:
     def get_layout_background_color(layout: 'Layout') -> Color:
         # This values are managed by the CAD application, offer a method to set this value by user.
         return DEFAULT_MODEL_SPACE_BACKGROUND_COLOR if layout.is_modelspace else PAPER_SPACE_BACKGROUND_COLOR
-
-    def _true_layer_color(self, layer: 'Layer', dark_background=True) -> Color:
-        if layer.dxf.hasattr('true_color'):
-            return rgb_to_hex(layer.rgb)
-        else:
-            aci = layer.color
-            if aci < 1 or aci > 255:
-                aci = 7  # default layer color
-            if aci == 7:  # black/white
-                if dark_background:
-                    return '#ffffff'  # white
-                else:
-                    return '#000000'  # black
-            else:
-                return rgb_to_hex(self.plot_style_table[aci].color)
 
     def _true_layer_lineweight(self, lineweight: int) -> float:
         if lineweight < 0:
@@ -248,17 +237,35 @@ class PropertyContext:
         else:
             return _rgba(color, alpha)
 
+    def _true_layer_color(self, layer: 'Layer') -> Color:
+        if layer.dxf.hasattr('true_color'):
+            return rgb_to_hex(layer.rgb)
+        else:
+            # Don't use layer.dxf.color: color < 0 indicated layer state off
+            aci = layer.color
+            # aci: 0=BYBLOCK, 256=BYLAYER, 257=BYOBJECT
+            if aci < 1 or aci > 255:
+                aci = 7  # default layer color
+            return self._aci_to_true_color(aci)
+
     def _true_entity_color(self,
                            true_color: Optional[Tuple[int, int, int]],
                            aci: int) -> Optional[Color]:  # AutoCAD Color Index
         if true_color is not None:
             return rgb_to_hex(true_color)
-        # aci: 0=BYBLOCK, 256=BYLAYER, 257=BYOBJECT
-        elif aci is not None and 0 < aci < 256:
-            # plot style color format (r, g, b, mode) - todo: apply mode?
-            return rgb_to_hex(self.plot_style_table[aci].color[:3])
+        elif 0 < aci < 256:
+            return self._aci_to_true_color(aci)
         else:
             return self.layout_properties.color  # unknown / invalid
+
+    def _aci_to_true_color(self, aci: int) -> Color:
+        if aci == 7:  # black/white; todo: bypasses plot style table
+            if self.has_dark_background:
+                return '#ffffff'  # white
+            else:
+                return '#000000'  # black
+        else:
+            return rgb_to_hex(self.plot_style_table[aci].color)
 
     def resolve_linetype(self, entity: 'DXFGraphic'):
         aci = entity.dxf.color
@@ -290,10 +297,8 @@ class PropertyContext:
 
     def resolve_lineweight(self, entity: 'DXFGraphic'):
         # Line weight in mm times 100 (e.g. 0.13mm = 13).
-        # Smallest line weight is 13 and biggest line weight is 211
-        # The DWG format is limited to a fixed value table: ...
-        # todo: BricsCAD offers smaller values (0.00, 0.05, 0.09), to be investigated!
-        # 0.0 seems to represent BYOBJECT
+        # Smallest line weight is 0 and biggest line weight is 211
+        # The DWG format is limited to a fixed value table: 0, 5, 9, ... 200, 211
         # DEFAULT: The LAYOUT entity has no explicit graphic properties.
         # BLOCK and BLOCK_RECORD entities also have no graphic properties.
         # Maybe XDATA or ExtensionDict in any of this entities.
@@ -365,6 +370,7 @@ def _load_line_pattern(linetypes: 'Table') -> Dict[str, Tuple]:
 
 def _merge_dashes(elements: Sequence[float]) -> Iterable[float]:
     """ Merge multiple consecutive lines, gaps or points into a single element. """
+
     def sign(v):
         if v < 0:
             return -1
