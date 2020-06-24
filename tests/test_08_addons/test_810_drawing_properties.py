@@ -108,6 +108,7 @@ def test_resolve_block_entities(doc):
     ctx = PropertyContext(msp)
     blockref = msp.query('INSERT').first
     ctx.push_state(ctx.resolve_all(blockref))
+    assert ctx.is_block_context is True
     lines = list(blockref.virtual_entities())
 
     # properties by block
@@ -130,7 +131,9 @@ def test_resolve_block_entities(doc):
     assert line3.color == '#0000ff'
     assert line3.linetype_name == 'DOT'
     assert line3.lineweight == 0.70
+    
     ctx.pop_state()
+    assert ctx.is_block_context is False
 
 
 def test_compile_pattern():

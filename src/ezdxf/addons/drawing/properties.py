@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence, Set
 from ezdxf.lldxf import const as DXFConstants
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons import acadctb
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 MODEL_SPACE_BG_COLOR = '#212830'
 PAPER_SPACE_BG_COLOR = '#ffffff'
+VIEWPORT_COLOR = '#aaaaaa'  # arbitrary choice
 CONTINUOUS_PATTERN = tuple()
 
 # color codes are 1-indexed so an additional entry was put in the 0th position
@@ -117,6 +118,9 @@ class PropertyContext:
         self.current_block: Optional[Properties] = None
         self.plotstyles = self._load_plot_style_table(ctb)
         self.layers = self._gather_layer_properties(layout.doc.layers)
+        # Alternative layer state, independent from DXF layer state, if None the
+        # DXF layer state is used to determine visibility:
+        self.visible_layers: Optional[Set[str]] = None
 
     def _gather_layer_properties(self, layers: 'Table') -> Dict[str, LayerProperties]:
         layer_table = {}
@@ -182,6 +186,17 @@ class PropertyContext:
         else:
             self._layout_default_color = '#ffffff' if self._layout_has_dark_background else '#000000'
 
+    def set_visible_layers(self, layers: Optional[Set[str]]):
+        """ Set additional layers visual state independent from the DXF. """
+        if layers is not None:
+            self.visible_layers = {self.layer_key(name) for name in layers}
+        else:
+            self.visible_layers = None
+
+    @property
+    def has_alternate_layer_state(self) -> bool:
+        return self.visible_layers is not None
+
     @staticmethod
     def layer_key(name: str) -> str:
         # keep in sync with ezdxf.sections.LayerTable.key
@@ -210,6 +225,19 @@ class PropertyContext:
     def pop_state(self) -> None:
         self.current_block = self._saved_states.pop()
 
+    def is_visible(self, entity) -> bool:
+        if entity.dxf.invisible:
+            return False
+        layer_name = self.layer_key(entity.dxf.layer)
+        if self.has_alternate_layer_state:
+            return layer_name in self.visible_layers
+        else:  # use DXF state
+            layer = self.layers.get(layer_name)
+            # todo: should we consider the plot flag too?
+            if layer and not layer.is_visible:
+                return False
+        return True
+
     def resolve_all(self, entity: 'DXFGraphic') -> Properties:
         """ Resolve all properties for DXF `entity`. """
         p = Properties()
@@ -220,6 +248,14 @@ class PropertyContext:
         p.linetype_scale = dxf.ltscale
         p.is_visible = not bool(dxf.invisible)
         p.layer = dxf.layer
+        layer_name = self.layer_key(p.layer)
+        layer = self.layers.get(layer_name)
+
+        if self.has_alternate_layer_state and p.is_visible:
+            p.is_visible = layer_name in self.visible_layers
+        elif layer and p.is_visible:
+            p.is_visible = layer.is_visible
+
         return p
 
     def resolve_color(self, entity: 'DXFGraphic', *, default_hatch_transparency: float = 0.8) -> Color:

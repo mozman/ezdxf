@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple, TYPE_CHECKING, Iterable
 
 from ezdxf.addons.drawing.colors import ColorContext
+from ezdxf.addons.drawing.properties import PropertyContext
 from ezdxf.addons.drawing.type_hints import Color, Radians
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Vector, Matrix44, BSpline
@@ -104,5 +105,5 @@ class DrawingBackend(ABC):
     def finalize(self) -> None:
         assert self._polyline_nesting_depth == 0
 
-    def ignored_entity(self, entity: DXFGraphic, colors: ColorContext):
+    def ignored_entity(self, entity: DXFGraphic, ctx: PropertyContext):
         print(f'ignoring {entity.dxftype()} entity')

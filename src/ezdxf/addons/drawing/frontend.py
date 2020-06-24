@@ -4,12 +4,11 @@
 import copy
 import math
 from math import radians
-from typing import Set, Optional, Iterable, cast, Union, Callable, Tuple, List
+from typing import Set, Optional, Iterable, cast, Union, List
 
 from ezdxf.addons.drawing.backend_interface import DrawingBackend
-from ezdxf.addons.drawing.colors import ColorContext, VIEWPORT_COLOR
+from ezdxf.addons.drawing.properties import PropertyContext, VIEWPORT_COLOR
 from ezdxf.addons.drawing.text import simplified_text_chunks
-from ezdxf.addons.drawing.type_hints import LayerName, Color
 from ezdxf.addons.drawing.utils import normalize_angle, get_rotation_direction_from_extrusion_vector, \
     get_draw_angles, get_tri_or_quad_points
 from ezdxf.entities import DXFGraphic, Insert, MText, Dimension, Polyline, LWPolyline, Face3d, Mesh, Solid, Trace, \
@@ -26,9 +25,9 @@ MISC_ENTITY_TYPES = {'POINT', '3DFACE', 'SOLID', 'TRACE', 'MESH', 'HATCH', 'VIEW
 COMPOSITE_ENTITY_TYPES = {'INSERT', 'POLYLINE', 'LWPOLYLINE'}  # and DIMENSION*
 
 
-def _draw_line_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> None:
+def _draw_line_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBackend) -> None:
     d, dxftype = entity.dxf, entity.dxftype()
-
+    color = ctx.resolve_color(entity)
     if dxftype == 'LINE':
         out.draw_line(d.start, d.end, color)
 
@@ -51,9 +50,10 @@ def _draw_line_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> 
         raise TypeError(dxftype)
 
 
-def _draw_text_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> None:
+def _draw_text_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBackend) -> None:
     d, dxftype = entity.dxf, entity.dxftype()
     # todo: how to handle text placed in 3D (extrusion != (0, 0, [1, -1]))
+    color = ctx.resolve_color(entity)
     if dxftype in ('TEXT', 'MTEXT', 'ATTRIB'):
         entity = cast(Union[Text, MText, Attrib], entity)
         for line, transform, cap_height in simplified_text_chunks(entity, out):
@@ -72,10 +72,10 @@ def _get_arc_wcs_center(arc: DXFGraphic) -> Vector:
         return center
 
 
-def _draw_curve_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> None:
+def _draw_curve_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBackend) -> None:
     # todo: how to handle ARC and CIRCLE placed in 3D (extrusion != (0, 0, [1, -1]))
     d, dxftype = entity.dxf, entity.dxftype()
-
+    color = ctx.resolve_color(entity)
     if dxftype == 'CIRCLE':
         center = _get_arc_wcs_center(entity)
         diameter = 2 * d.radius
@@ -115,9 +115,9 @@ def _draw_curve_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) ->
         raise TypeError(dxftype)
 
 
-def _draw_misc_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> None:
+def _draw_misc_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBackend) -> None:
     d, dxftype = entity.dxf, entity.dxftype()
-
+    color = ctx.resolve_color(entity)
     if dxftype == 'POINT':
         out.draw_point(d.location, color)
 
@@ -186,28 +186,25 @@ def _draw_misc_entity(entity: DXFGraphic, color: Color, out: DrawingBackend) -> 
         raise TypeError(dxftype)
 
 
-def _draw_composite_entity(entity: DXFGraphic,
-                           colors: ColorContext,
-                           out: DrawingBackend,
-                           parent_stack: List[DXFGraphic],
-                           **kwargs) -> None:
+def _draw_composite_entity(entity: DXFGraphic, ctx: PropertyContext,
+                           out: DrawingBackend, parent_stack: List[DXFGraphic]) -> None:
     dxftype = entity.dxftype()
 
     if dxftype == 'INSERT':
         entity = cast(Insert, entity)
-        colors.push_state(colors.get_entity_color(entity), entity.dxf.layer.lower())
+        ctx.push_state(ctx.resolve_all(entity))
         parent_stack.append(entity)
         for attrib in entity.attribs:
-            draw_entity(attrib, colors, out, parent_stack, **kwargs)
+            draw_entity(attrib, ctx, out, parent_stack)
         try:
             children = list(entity.virtual_entities())
         except Exception as e:
             print(f'Exception {type(e)}({e}) failed to get children of insert entity: {e}')
             return
         for child in children:
-            draw_entity(child, colors, out, parent_stack, **kwargs)
+            draw_entity(child, ctx, out, parent_stack)
         parent_stack.pop()
-        colors.pop_state()
+        ctx.pop_state()
 
     elif 'DIMENSION' in dxftype:  # several different dxftypes
         if not isinstance(entity, Dimension):
@@ -226,7 +223,7 @@ def _draw_composite_entity(entity: DXFGraphic,
 
         parent_stack.append(entity)
         for child in children:
-            draw_entity(child, colors, out, parent_stack, **kwargs)
+            draw_entity(child, ctx, out, parent_stack)
         parent_stack.pop()
 
     elif dxftype in ('LWPOLYLINE', 'POLYLINE'):
@@ -234,7 +231,7 @@ def _draw_composite_entity(entity: DXFGraphic,
         parent_stack.append(entity)
         out.start_polyline()
         for child in entity.virtual_entities():
-            draw_entity(child, colors, out, parent_stack, **kwargs)
+            draw_entity(child, ctx, out, parent_stack)
         parent_stack.pop()
 
         out.set_current_entity(entity, tuple(parent_stack))
@@ -245,61 +242,44 @@ def _draw_composite_entity(entity: DXFGraphic,
         raise TypeError(dxftype)
 
 
-def draw_entity(entity: DXFGraphic, colors: ColorContext, out: DrawingBackend, parent_stack: List[DXFGraphic],
-                *, visible_layers: Optional[Set[LayerName]] = None) -> None:
-    """
-    Args:
-        visible_layers: warning: unlike draw_entities, this function does not convert layer names to lowercase,
-          so the user of this function must ensure that they convert the layer names beforehand.
-    """
-    if not _is_visible(entity, visible_layers, colors.insert_layer):
-        return
-
-    color = colors.get_entity_color(entity)
+def draw_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBackend, parent_stack: List[DXFGraphic]) -> None:
     dxftype = entity.dxftype()
     out.set_current_entity(entity, tuple(parent_stack))
     if dxftype in LINE_ENTITY_TYPES:
-        _draw_line_entity(entity, color, out)
+        _draw_line_entity(entity, ctx, out)
     elif dxftype in TEXT_ENTITY_TYPES:
-        _draw_text_entity(entity, color, out)
+        _draw_text_entity(entity, ctx, out)
     elif dxftype in CURVE_ENTITY_TYPES:
-        _draw_curve_entity(entity, color, out)
+        _draw_curve_entity(entity, ctx, out)
     elif dxftype in MISC_ENTITY_TYPES:
-        _draw_misc_entity(entity, color, out)
+        _draw_misc_entity(entity, ctx, out)
     elif dxftype in COMPOSITE_ENTITY_TYPES or 'DIMENSION' in dxftype:
-        _draw_composite_entity(entity, colors, out, parent_stack, visible_layers=visible_layers)
+        _draw_composite_entity(entity, ctx, out, parent_stack)
     else:
-        out.ignored_entity(entity, colors)
+        out.ignored_entity(entity, ctx)
     out.set_current_entity(None)
 
 
-def _is_visible(entity: DXFGraphic, visible_layers: Optional[Set[LayerName]], insert_layer: Optional[LayerName]) -> bool:
-    if visible_layers is None:
-        return True
-    layer = entity.dxf.layer.lower()
-    if insert_layer is not None and layer == '0':
-        return insert_layer in visible_layers
-    else:
-        return layer in visible_layers
-
-
-def draw_entities(entities: Iterable[DXFGraphic], colors: ColorContext, out: DrawingBackend,
-                  visible_layers: Optional[Set[LayerName]] = None) -> None:
-    if visible_layers is not None:
-        visible_layers = {l.lower() for l in visible_layers}
+def draw_entities(entities: Iterable[DXFGraphic], ctx: PropertyContext, out: DrawingBackend) -> None:
     for entity in entities:
-        draw_entity(entity, colors, out, [], visible_layers=visible_layers)
+        if ctx.is_visible(entity):
+            draw_entity(entity, ctx, out, [])
 
 
-def draw_layout(layout: Layout,
-                out: DrawingBackend,
-                visible_layers: Optional[Set[LayerName]] = None,
-                finalise: bool = True) -> None:
-    colors = ColorContext(layout)
+def draw_layout(layout: Layout, out: DrawingBackend, visible_layers: Set[str] = None, finalize: bool = True) -> None:
+    """
+
+    Args:
+        layout: DXF layout
+        out:  backend
+        visible_layers: alternative layer state independent from DXF layer state
+        finalize: finalize backend automatically
+
+    """
+    ctx = PropertyContext(layout)
+    ctx.set_visible_layers(visible_layers)
     entities = layout.entity_space
-    draw_entities(entities, colors, out, visible_layers)
-    out.set_background(colors.get_layout_background_color(layout))
-    if finalise:
+    draw_entities(entities, ctx, out)
+    out.set_background(ctx.layout_background_color)
+    if finalize:
         out.finalize()
-
-
