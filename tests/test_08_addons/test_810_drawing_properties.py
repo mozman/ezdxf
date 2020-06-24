@@ -9,10 +9,24 @@ from ezdxf.addons.drawing.properties import PropertyContext, Properties, compile
 @pytest.fixture(scope='module')
 def doc():
     d = ezdxf.new(setup=True)
-    d.layers.new('Test', dxfattribs={'color': 5})  # blues: 0000ff
+    d.layers.new('Test', dxfattribs={
+        'color': 5,   # blue: 0000ff
+        'linetype': 'DOT',
+        'lineweight': 70,  # 0.70
+    })
     msp = d.modelspace()
-    msp.add_line((0, 0), (1, 0), dxfattribs={'color': 256, 'layer': 'Test'})  # bylayer
-    msp.add_line((0, 0), (1, 0), dxfattribs={'color': 1, 'layer': 'Test'})  # red: ff0000
+    msp.add_line((0, 0), (1, 0), dxfattribs={
+        'color': 256,  # by layer
+        'linetype': 'BYLAYER',
+        'lineweight': -1,  # by layer
+        'layer': 'Test',
+    })
+    msp.add_line((0, 0), (1, 0), dxfattribs={
+        'color': 1,  # red: ff0000
+        'linetype': 'DASHED',
+        'lineweight': 50,  # 0.50
+        'layer': 'Test',
+    })
     return d
 
 
@@ -35,9 +49,22 @@ def test_resolve_entity_color(doc):
     ctx = PropertyContext(msp)
     lines = msp.query('LINE')
     line1 = Properties.resolve(lines[0], ctx)
+    assert line1.color == '#0000ff'  # by layer
+
     line2 = Properties.resolve(lines[1], ctx)
-    assert line1.color == '#0000ff'
     assert line2.color == '#ff0000'
+
+
+def test_resolve_entity_linetype(doc):
+    msp = doc.modelspace()
+    ctx = PropertyContext(msp)
+    lines = msp.query('LINE')
+
+    line1 = Properties.resolve(lines[0], ctx)
+    assert line1.linetype_name == 'DOT'  # by layer
+
+    line2 = Properties.resolve(lines[1], ctx)
+    assert line2.linetype_name == 'DASHED'
 
 
 def test_compile_pattern():
@@ -48,8 +75,6 @@ def test_compile_pattern():
     assert compile_pattern(0.2, [0.0, -0.2]) == (0.0, 0.2)
     assert compile_pattern(2.6, [2.0, -0.2, 0.0, -0.2, 0.0, -0.2]) == (2.0, 0.2, 0.0, 0.2, 0.0, 0.2)
 
-
-#  [0.8, 0.5, -0.1, 0.0, -0.1, 0.0, -0.1]),
 
 if __name__ == '__main__':
     pytest.main([__file__])

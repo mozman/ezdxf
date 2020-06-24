@@ -64,7 +64,7 @@ class Properties:
 
         # Store linetype name for backends which don't have the ability to use user-defined linetypes,
         # but have some predefined linetypes, maybe matching most common AutoCAD linetypes is possible
-        self.linetype_name: str = 'CONTINUOUS'  # default linetype
+        self.linetype_name: str = 'CONTINUOUS'  # default linetype - store in UPPERCASE
 
         # Linetypes: Complex DXF linetypes are not supported:
         # 1. Don't know if there are any backends which can use linetypes including text or shapes
@@ -128,7 +128,8 @@ class PropertyContext:
             name = self.layer_key(layer.dxf.name)
             properties.layer = name
             properties.color = self._true_layer_color(layer)
-            properties.linetype = str(layer.dxf.linetype).upper()  # normalize linetype names
+            properties.linetype_name = str(layer.dxf.linetype).upper()  # normalize linetype names
+            properties.linetype_pattern = self._known_line_pattern.get(properties.linetype_name, CONTINUOUS_PATTERN)
             properties.lineweight = self._true_layer_lineweight(layer.dxf.lineweight)
             properties.is_on = layer.is_on()
             properties.plot = bool(layer.dxf.plot)
@@ -188,7 +189,10 @@ class PropertyContext:
                 return rgb_to_hex(self.plot_style_table[aci].color)
 
     def _true_layer_lineweight(self, lineweight: int) -> float:
-        return 0.0  # todo
+        if lineweight < 0:
+            return self.default_lineweight()
+        else:
+            return float(lineweight) / 100.0
 
     @staticmethod
     def layer_key(name: str) -> str:
@@ -211,11 +215,8 @@ class PropertyContext:
         self.block_reference_properties = self._saved_states.pop()
 
     def resolve_color(self, entity: 'DXFGraphic', *, default_hatch_transparency: float = 0.8) -> Color:
-        if not entity.dxf.hasattr('color'):
-            return self.layout_properties.color  # unknown
-        color_code = entity.dxf.color  # defaults to BYLAYER
-
-        if color_code == DXFConstants.BYLAYER:
+        aci = entity.dxf.color  # defaults to BYLAYER
+        if aci == DXFConstants.BYLAYER:
             entity_layer = self.layer_key(entity.dxf.layer)
             # AutoCAD appears to treat layer 0 differently to other layers in this case.
             if self.is_block_reference_context and entity_layer == '0':
@@ -223,14 +224,14 @@ class PropertyContext:
             else:
                 color = self.layer_properties[entity_layer].color
 
-        elif color_code == DXFConstants.BYBLOCK:
+        elif aci == DXFConstants.BYBLOCK:
             if not self.is_block_reference_context:
                 color = self.layout_properties.color
             else:
                 color = self.block_reference_properties.color
 
         else:  # BYOBJECT
-            color = self._true_entity_color(entity.rgb, color_code)
+            color = self._true_entity_color(entity.rgb, aci)
 
         if entity.dxftype() == 'HATCH':
             transparency = default_hatch_transparency
@@ -257,20 +258,69 @@ class PropertyContext:
             return self.layout_properties.color  # unknown / invalid
 
     def resolve_linetype(self, entity: 'DXFGraphic'):
-        return 'STANDARD', CONTINUOUS_PATTERN  # todo
+        aci = entity.dxf.color
+        # Not sure if plotstyle table overrides actual entity setting?
+        if (0 < aci < 256) and self.plot_style_table[aci].linetype != acadctb.OBJECT_LINETYPE:
+            pass  # todo: return special line types  - overriding linetypes by plotstyle table
+        name = entity.dxf.linetype.upper()  # default is 'BYLAYER'
+        if name == 'BYLAYER':
+            entity_layer = self.layer_key(entity.dxf.layer)
+
+            # AutoCAD appears to treat layer 0 differently to other layers in this case.
+            if self.is_block_reference_context and entity_layer == '0':
+                name = self.block_reference_properties.linetype_name
+                pattern = self.block_reference_properties.linetype_pattern
+            else:
+                name = self.layer_properties[entity_layer].linetype_name
+                pattern = self.layer_properties[entity_layer].linetype_pattern
+
+        elif name == 'BYBLOCK':
+            if not self.is_block_reference_context:
+                name = self.layout_properties.linetype_name
+                pattern = self.layout_properties.linetype_pattern
+            else:
+                name = self.block_reference_properties.linetype_name
+                pattern = self.block_reference_properties.linetype_pattern
+        else:
+            pattern = self._known_line_pattern.get(name, CONTINUOUS_PATTERN)
+        return name, pattern
 
     def resolve_lineweight(self, entity: 'DXFGraphic'):
         # Line weight in mm times 100 (e.g. 0.13mm = 13).
         # Smallest line weight is 13 and biggest line weight is 211
         # The DWG format is limited to a fixed value table: ...
         # todo: BricsCAD offers smaller values (0.00, 0.05, 0.09), to be investigated!
-        # -1 = BYLAYER
-        # -2 = BYBLOCK
-        # -3 = DEFAULT
+        # 0.0 seems to represent BYOBJECT
         # DEFAULT: The LAYOUT entity has no explicit graphic properties.
         # BLOCK and BLOCK_RECORD entities also have no graphic properties.
         # Maybe XDATA or ExtensionDict in any of this entities.
-        return 0.0  # todo
+        aci = entity.dxf.color
+        # Not sure if plotstyle table overrides actual entity setting?
+        if (0 < aci < 256) and self.plot_style_table[aci].lineweight != acadctb.OBJECT_LINEWEIGHT:
+            # overriding lineweight by plotstyle table
+            return self.plot_style_table.get_lineweight(aci)
+        lineweight = entity.dxf.lineweight  # default is BYLAYER
+        if lineweight == DXFConstants.LINEWEIGHT_BYLAYER:
+            entity_layer = self.layer_key(entity.dxf.layer)
+
+            # AutoCAD appears to treat layer 0 differently to other layers in this case.
+            if self.is_block_reference_context and entity_layer == '0':
+                return self.block_reference_properties.lineweight
+            else:
+                return self.layer_properties[entity_layer].lineweight
+
+        elif lineweight == DXFConstants.LINEWEIGHT_BYBLOCK:
+            if not self.is_block_reference_context:
+                return self.layout_properties.lineweight
+            else:
+                return self.block_reference_properties.lineweight
+        elif lineweight == DXFConstants.LINEWEIGHT_DEFAULT:
+            return self.default_lineweight()
+        else:
+            return float(lineweight) / 100.0
+
+    def default_lineweight(self):
+        return 0.25  # todo: ???
 
 
 def rgb_to_hex(rgb: Union[Tuple[int, int, int], Tuple[float, float, float]]) -> Color:
