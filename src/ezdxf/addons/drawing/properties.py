@@ -225,7 +225,7 @@ class PropertyContext:
     def pop_state(self) -> None:
         self.current_block = self._saved_states.pop()
 
-    def is_visible(self, entity) -> bool:
+    def is_visible(self, entity: 'DXFGraphic') -> bool:
         if entity.dxf.invisible:
             return False
         layer_name = self.layer_key(entity.dxf.layer)

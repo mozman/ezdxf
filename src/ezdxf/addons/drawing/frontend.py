@@ -4,7 +4,7 @@
 import copy
 import math
 from math import radians
-from typing import Set, Optional, Iterable, cast, Union, List
+from typing import Set, Iterable, cast, Union, List
 
 from ezdxf.addons.drawing.backend_interface import DrawingBackend
 from ezdxf.addons.drawing.properties import PropertyContext, VIEWPORT_COLOR
@@ -13,6 +13,7 @@ from ezdxf.addons.drawing.utils import normalize_angle, get_rotation_direction_f
     get_draw_angles, get_tri_or_quad_points
 from ezdxf.entities import DXFGraphic, Insert, MText, Dimension, Polyline, LWPolyline, Face3d, Mesh, Solid, Trace, \
     Spline, Hatch, Attrib, Text
+from ezdxf.entities.dxfentity import DXFTagStorage
 from ezdxf.layouts import Layout
 from ezdxf.math import Vector
 
@@ -27,24 +28,24 @@ COMPOSITE_ENTITY_TYPES = {'INSERT', 'POLYLINE', 'LWPOLYLINE'}  # and DIMENSION*
 
 def _draw_line_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBackend) -> None:
     d, dxftype = entity.dxf, entity.dxftype()
-    color = ctx.resolve_color(entity)
+    properties = ctx.resolve_all(entity)
     if dxftype == 'LINE':
-        out.draw_line(d.start, d.end, color)
+        out.draw_line(d.start, d.end, properties)
 
     elif dxftype in ('XLINE', 'RAY'):
         start = d.start
         delta = Vector(d.unit_vector.x, d.unit_vector.y, 0) * INFINITE_LINE_LENGTH
         if dxftype == 'XLINE':
-            out.draw_line(start - delta / 2, start + delta / 2, color)
+            out.draw_line(start - delta / 2, start + delta / 2, properties)
         elif dxftype == 'RAY':
-            out.draw_line(start, start + delta, color)
+            out.draw_line(start, start + delta, properties)
 
     elif dxftype == 'MESH':
         entity = cast(Mesh, entity)
         data = entity.get_data()  # unpack into more readable format
         points = [Vector(x, y, z) for x, y, z in data.vertices]
         for a, b in data.edges:
-            out.draw_line(points[a], points[b], color)
+            out.draw_line(points[a], points[b], properties)
 
     else:
         raise TypeError(dxftype)
@@ -53,11 +54,11 @@ def _draw_line_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBack
 def _draw_text_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBackend) -> None:
     d, dxftype = entity.dxf, entity.dxftype()
     # todo: how to handle text placed in 3D (extrusion != (0, 0, [1, -1]))
-    color = ctx.resolve_color(entity)
+    properties = ctx.resolve_all(entity)
     if dxftype in ('TEXT', 'MTEXT', 'ATTRIB'):
         entity = cast(Union[Text, MText, Attrib], entity)
         for line, transform, cap_height in simplified_text_chunks(entity, out):
-            out.draw_text(line, transform, color, cap_height)
+            out.draw_text(line, transform, properties, cap_height)
     else:
         raise TypeError(dxftype)
 
@@ -75,18 +76,18 @@ def _get_arc_wcs_center(arc: DXFGraphic) -> Vector:
 def _draw_curve_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBackend) -> None:
     # todo: how to handle ARC and CIRCLE placed in 3D (extrusion != (0, 0, [1, -1]))
     d, dxftype = entity.dxf, entity.dxftype()
-    color = ctx.resolve_color(entity)
+    properties = ctx.resolve_all(entity)
     if dxftype == 'CIRCLE':
         center = _get_arc_wcs_center(entity)
         diameter = 2 * d.radius
-        out.draw_arc(center, diameter, diameter, 0, None, color)
+        out.draw_arc(center, diameter, diameter, 0, None, properties)
 
     elif dxftype == 'ARC':
         center = _get_arc_wcs_center(entity)
         diameter = 2 * d.radius
         direction = get_rotation_direction_from_extrusion_vector(d.extrusion)
         draw_angles = get_draw_angles(direction, radians(d.start_angle), radians(d.end_angle))
-        out.draw_arc(center, diameter, diameter, 0, draw_angles, color)
+        out.draw_arc(center, diameter, diameter, 0, draw_angles, properties)
 
     elif dxftype == 'ELLIPSE':
         # 'param' angles are anticlockwise around the extrusion vector
@@ -97,18 +98,18 @@ def _draw_curve_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBac
         height = d.ratio * width  # ratio == height / width
         direction = get_rotation_direction_from_extrusion_vector(d.extrusion)
         draw_angles = get_draw_angles(direction, d.start_param, d.end_param)
-        out.draw_arc(d.center, width, height, major_axis_angle, draw_angles, color)
+        out.draw_arc(d.center, width, height, major_axis_angle, draw_angles, properties)
 
     elif dxftype == 'SPLINE':
         entity = cast(Spline, entity)
         spline = entity.construction_tool()
         if out.has_spline_support:
-            out.draw_spline(spline, color)
+            out.draw_spline(spline, properties)
         else:
             points = list(spline.approximate(segments=100))
             out.start_polyline()
             for a, b in zip(points, points[1:]):
-                out.draw_line(a, b, color)
+                out.draw_line(a, b, properties)
             out.end_polyline()
 
     else:
@@ -117,9 +118,9 @@ def _draw_curve_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBac
 
 def _draw_misc_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBackend) -> None:
     d, dxftype = entity.dxf, entity.dxftype()
-    color = ctx.resolve_color(entity)
+    properties = ctx.resolve_all(entity)
     if dxftype == 'POINT':
-        out.draw_point(d.location, color)
+        out.draw_point(d.location, properties)
 
     elif dxftype in ('3DFACE', 'SOLID', 'TRACE'):
         # TRACE is the same thing as SOLID according to the documentation
@@ -131,10 +132,10 @@ def _draw_misc_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBack
             ocs = entity.ocs()
             points = list(ocs.points_to_wcs(points))
         if dxftype in ('SOLID', 'TRACE'):
-            out.draw_filled_polygon(points, color)
+            out.draw_filled_polygon(points, properties)
         else:
             for a, b in zip(points, points[1:]):
-                out.draw_line(a, b, color)
+                out.draw_line(a, b, properties)
 
     elif dxftype == 'HATCH':
         entity = cast(Hatch, entity)
@@ -161,7 +162,7 @@ def _draw_misc_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBack
             if vertices:
                 if last_vertex.isclose(vertices[0]):
                     vertices.append(last_vertex)
-                out.draw_filled_polygon(vertices, color)
+                out.draw_filled_polygon(vertices, properties)
 
     elif dxftype == 'VIEWPORT':
         view_vector: Vector = d.view_direction_vector
@@ -206,12 +207,8 @@ def _draw_composite_entity(entity: DXFGraphic, ctx: PropertyContext,
         parent_stack.pop()
         ctx.pop_state()
 
-    elif 'DIMENSION' in dxftype:  # several different dxftypes
-        if not isinstance(entity, Dimension):
-            print(f'warning: ignoring unknown DIMENSION entitiy {dxftype} {type(entity)}')
-            return
+    elif dxftype == 'DIMENSION':
         entity = cast(Dimension, entity)
-
         children = []
         try:
             for child in entity.virtual_entities():
@@ -253,15 +250,19 @@ def draw_entity(entity: DXFGraphic, ctx: PropertyContext, out: DrawingBackend, p
         _draw_curve_entity(entity, ctx, out)
     elif dxftype in MISC_ENTITY_TYPES:
         _draw_misc_entity(entity, ctx, out)
-    elif dxftype in COMPOSITE_ENTITY_TYPES or 'DIMENSION' in dxftype:
+    elif dxftype in COMPOSITE_ENTITY_TYPES:
         _draw_composite_entity(entity, ctx, out, parent_stack)
     else:
-        out.ignored_entity(entity, ctx)
+        out.ignored_entity(entity)
     out.set_current_entity(None)
 
 
 def draw_entities(entities: Iterable[DXFGraphic], ctx: PropertyContext, out: DrawingBackend) -> None:
     for entity in entities:
+        if isinstance(entity, DXFTagStorage):
+            print(f'ignoring unsupported DXF entity: {str(entity)}')
+            # unsupported DXF entity, just tag storage to preserve data
+            continue
         if ctx.is_visible(entity):
             draw_entity(entity, ctx, out, [])
 
@@ -272,7 +273,9 @@ def draw_layout(layout: Layout, out: DrawingBackend, visible_layers: Set[str] = 
     Args:
         layout: DXF layout
         out:  backend
-        visible_layers: alternative layer state independent from DXF layer state
+        visible_layers: alternative layer state independent from DXF layer state,
+                        existing layer names from this set are visible all other layers
+                        are invisible, if `None` the usual DXF layer state is significant.
         finalize: finalize backend automatically
 
     """

@@ -14,6 +14,7 @@ from matplotlib.textpath import TextPath
 
 from ezdxf.addons.drawing.backend_interface import DrawingBackend
 from ezdxf.addons.drawing.text import FontMeasurements
+from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color, Radians
 from ezdxf.math import Vector, param_to_angle, Matrix44
 
@@ -54,28 +55,29 @@ class MatplotlibBackend(DrawingBackend):
     def set_background(self, color: Color):
         self.ax.set_facecolor(color)
 
-    def draw_line(self, start: Vector, end: Vector, color: Color):
+    def draw_line(self, start: Vector, end: Vector, properties: Properties):
         self.ax.add_line(Line2D((start.x, end.x), (start.y, end.y),
-                                linewidth=self.line_width, color=color, zorder=self._get_z()))
+                                linewidth=self.line_width, color=properties.color, zorder=self._get_z()))
 
-    def draw_point(self, pos: Vector, color: Color):
+    def draw_point(self, pos: Vector, properties: Properties):
+        color = properties.color
         if self.point_size_relative:
             self.ax.scatter([pos.x], [pos.y], s=self.point_size, c=color, zorder=self._get_z())
         else:
             self.ax.add_patch(Circle((pos.x, pos.y), radius=self.point_size,
                                      facecolor=color, edgecolor=None, zorder=self._get_z()))
 
-    def draw_filled_polygon(self, points: List[Vector], color: Color):
-        self.ax.fill(*zip(*((p.x, p.y) for p in points)), color=color, zorder=self._get_z())
+    def draw_filled_polygon(self, points: List[Vector], properties: Properties):
+        self.ax.fill(*zip(*((p.x, p.y) for p in points)), color=properties.color, zorder=self._get_z())
 
-    def draw_text(self, text: str, transform: Matrix44, color: Color, cap_height: float):
+    def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float):
         if not text:
             return  # no point rendering empty strings
         assert '\n' not in text, 'not a single line of text'
         scale = cap_height / self._font_measurements.cap_height
         path = _text_path(text, self.font)
         transformed_path = _transform_path(path, Matrix44.scale(scale) @ transform)
-        self.ax.add_patch(PathPatch(transformed_path, facecolor=color, linewidth=0, zorder=self._get_z()))
+        self.ax.add_patch(PathPatch(transformed_path, facecolor=properties.color, linewidth=0, zorder=self._get_z()))
 
     def get_font_measurements(self, cap_height: float) -> FontMeasurements:
         return self._font_measurements.scale_from_baseline(desired_cap_height=cap_height)
@@ -90,7 +92,7 @@ class MatplotlibBackend(DrawingBackend):
         return max(transformed_xs)
 
     def draw_arc(self, center: Vector, width: float, height: float, angle: Radians,
-                 draw_angles: Optional[Tuple[Radians, Radians]], color: Color):
+                 draw_angles: Optional[Tuple[Radians, Radians]], properties: Properties):
         if min(width, height) < 1e-5:
             return  # matplotlib crashes if the arc has almost 0 size
 
@@ -105,7 +107,7 @@ class MatplotlibBackend(DrawingBackend):
             start, end = param_to_angle(ratio, draw_angles[0]), param_to_angle(ratio, draw_angles[1])
             start_degrees, end_degrees = degrees(start), degrees(end)
 
-        arc = Arc((center.x, center.y), width, height, color=color, linewidth=self.line_width,
+        arc = Arc((center.x, center.y), width, height, color=properties.color, linewidth=self.line_width,
                   angle=degrees(angle), theta1=start_degrees, theta2=end_degrees, zorder=self._get_z())
         self.ax.add_patch(arc)
 
@@ -143,5 +145,3 @@ def _get_font_measurements(font: FontProperties = FontProperties()) -> "FontMeas
         x_top=max(lower_x),
         bottom=min(lower_p)
     )
-
-

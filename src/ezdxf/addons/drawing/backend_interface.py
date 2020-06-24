@@ -2,17 +2,15 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, TYPE_CHECKING, Iterable
+from typing import List, Optional, Tuple, TYPE_CHECKING
 
-from ezdxf.addons.drawing.colors import ColorContext
-from ezdxf.addons.drawing.properties import PropertyContext
+from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color, Radians
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Vector, Matrix44, BSpline
 
 if TYPE_CHECKING:
     from ezdxf.addons.drawing.text import FontMeasurements
-    from ezdxf.eztypes import Hatch, Spline, LWPolyline
 
 
 class DrawingBackend(ABC):
@@ -46,7 +44,7 @@ class DrawingBackend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_line(self, start: Vector, end: Vector, color: Color) -> None:
+    def draw_line(self, start: Vector, end: Vector, properties: Properties) -> None:
         raise NotImplementedError
 
     def start_polyline(self):
@@ -64,19 +62,19 @@ class DrawingBackend(ABC):
     def has_spline_support(self):
         return False
 
-    def draw_spline(self, spline: BSpline, color: Color) -> None:
+    def draw_spline(self, spline: BSpline, properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def draw_point(self, pos: Vector, color: Color) -> None:
+    def draw_point(self, pos: Vector, properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def draw_filled_polygon(self, points: List[Vector], color: Color) -> None:
+    def draw_filled_polygon(self, points: List[Vector], properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def draw_text(self, text: str, transform: Matrix44, color: Color, cap_height: float) -> None:
+    def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float) -> None:
         """ draw a single line of text with the anchor point at the baseline left point """
         raise NotImplementedError
 
@@ -92,7 +90,7 @@ class DrawingBackend(ABC):
 
     @abstractmethod
     def draw_arc(self, center: Vector, width: float, height: float, angle: Radians,
-                 draw_angles: Optional[Tuple[Radians, Radians]], color: Color) -> None:
+                 draw_angles: Optional[Tuple[Radians, Radians]], properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -105,5 +103,5 @@ class DrawingBackend(ABC):
     def finalize(self) -> None:
         assert self._polyline_nesting_depth == 0
 
-    def ignored_entity(self, entity: DXFGraphic, ctx: PropertyContext):
+    def ignored_entity(self, entity: DXFGraphic):
         print(f'ignoring {entity.dxftype()} entity')

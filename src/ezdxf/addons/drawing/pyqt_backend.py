@@ -9,6 +9,7 @@ from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 from ezdxf.addons.drawing.backend_interface import DrawingBackend
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Radians, Color
+from ezdxf.addons.drawing.properties import Properties
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Vector, Matrix44
 
@@ -152,7 +153,8 @@ class PyQtBackend(DrawingBackend):
     def set_background(self, color: Color):
         self.scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
 
-    def draw_line(self, start: Vector, end: Vector, color: Color) -> None:
+    def draw_line(self, start: Vector, end: Vector, properties: Properties) -> None:
+        color = properties.color
         if self.is_drawing_polyline:
             self._polyline_components.append(_BufferedLineSegment(start, end, color))
         else:
@@ -176,21 +178,21 @@ class PyQtBackend(DrawingBackend):
 
         self._polyline_components = []
 
-    def draw_point(self, pos: Vector, color: Color) -> None:
-        brush = qg.QBrush(self._get_color(color), qc.Qt.SolidPattern)
+    def draw_point(self, pos: Vector, properties: Properties) -> None:
+        brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
         item = _Point(pos.x, pos.y, self.point_radius, brush)
         self._set_item_data(item)
         self.scene.addItem(item)
 
-    def draw_filled_polygon(self, points: List[Vector], color: Color) -> None:
-        brush = qg.QBrush(self._get_color(color), qc.Qt.SolidPattern)
+    def draw_filled_polygon(self, points: List[Vector], properties: Properties) -> None:
+        brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
         polygon = qg.QPolygonF()
         for p in points:
             polygon.append(qc.QPointF(p.x, p.y))
         item = self.scene.addPolygon(polygon, self._no_line, brush)
         self._set_item_data(item)
 
-    def draw_text(self, text: str, transform: Matrix44, color: Color, cap_height: float) -> None:
+    def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float) -> None:
         if not text:
             return  # no point rendering empty strings
         assert '\n' not in text, 'not a single line of text'
@@ -201,7 +203,7 @@ class PyQtBackend(DrawingBackend):
         path = qg.QPainterPath()
         path.addText(0, 0, self._font, text)
         path = _matrix_to_qtransform(transform).map(path)
-        item = self.scene.addPath(path, self._no_line, self._get_color(color))
+        item = self.scene.addPath(path, self._no_line, self._get_color(properties.color))
         self._set_item_data(item)
 
     def get_font_measurements(self, cap_height: float) -> FontMeasurements:
@@ -215,9 +217,10 @@ class PyQtBackend(DrawingBackend):
         return _get_text_rect(self._font, text).right() * scale
 
     def draw_arc(self, center: Vector, width: float, height: float, angle: Radians,
-                 draw_angles: Optional[Tuple[Radians, Radians]], color: Color) -> None:
+                 draw_angles: Optional[Tuple[Radians, Radians]], properties: Properties) -> None:
         top = center.x - width / 2
         left = center.y - height / 2
+        color = properties.color
 
         # any angle other than 0 is not possible with arcTo and a complete circle/ellipse wouldn't make sense
         if self.is_drawing_polyline and angle == 0.0 and draw_angles is not None:
