@@ -88,7 +88,8 @@ class Properties:
         # The continuous pattern is an empty tuple ()
         self.linetype_pattern: Tuple[float, ...] = CONTINUOUS_PATTERN
         self.linetype_scale: float = 1.0
-        self.lineweight: float = 0.13  # line weight in mm
+        self.lineweight: float = 0.25  # line weight in mm, default lineweight 0.25?
+        self.is_visible = True
         self.layer: str = '0'
 
     @classmethod
@@ -97,8 +98,10 @@ class Properties:
         p.color = ctx.resolve_color(entity)
         p.linetype_name, p.linetype_pattern = ctx.resolve_linetype(entity)
         p.lineweight = ctx.resolve_lineweight(entity)
-        p.linetype_scale = entity.dxf.ltscale
-        p.layer = entity.dxf.layer
+        dxf = entity.dxf
+        p.linetype_scale = dxf.ltscale
+        p.is_visible = not bool(dxf.invisible)
+        p.layer = dxf.layer
         return p
 
     def __str__(self):
@@ -108,7 +111,7 @@ class Properties:
 class LayerProperties(Properties):
     def __init__(self):
         super().__init__()
-        self.is_on = True
+        # layer on/off state is stored in Properties.is_visible
         self.plot = True
 
 
@@ -131,7 +134,7 @@ class PropertyContext:
             properties.linetype_name = str(layer.dxf.linetype).upper()  # normalize linetype names
             properties.linetype_pattern = self._known_line_pattern.get(properties.linetype_name, CONTINUOUS_PATTERN)
             properties.lineweight = self._true_layer_lineweight(layer.dxf.lineweight)
-            properties.is_on = layer.is_on()
+            properties.is_visible = layer.is_on()
             properties.plot = bool(layer.dxf.plot)
             layer_table[name] = properties
         return layer_table
