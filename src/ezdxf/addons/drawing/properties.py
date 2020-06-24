@@ -110,25 +110,15 @@ class LayerProperties(Properties):
 class PropertyContext:
     def __init__(self, layout: 'Layout', ctb: str = ''):
         self._saved_states: List[Properties] = []
+        self.block_reference_properties: Optional[Properties] = None
+
         self._known_line_pattern = _load_line_pattern(layout.doc.linetypes) if layout.doc else dict()
         self.plot_style_table = self._load_plot_style_table(ctb)
-        self.layout_properties: Optional[Properties] = self._get_default_layout_properties(layout)
-        self.block_reference_properties: Optional[Properties] = None
-        self.has_dark_background = is_dark_color(self.get_layout_background_color(layout))
-        self.layer_properties: Dict[LayerName, LayerProperties] = self._gather_layer_properties(layout.doc.layers)
+        self.layout_properties = self._get_default_layout_properties(layout)
+        self.layout_has_dark_background = is_dark_color(self.get_layout_background_color(layout))
+        self.layer_properties = self._gather_layer_properties(layout.doc.layers)
 
-    def resolve(self, entity: 'DXFGraphic') -> 'Properties':
-        p = Properties()
-        p.color = self.resolve_color(entity)
-        p.linetype_name, p.linetype_pattern = self.resolve_linetype(entity)
-        p.lineweight = self.resolve_lineweight(entity)
-        dxf = entity.dxf
-        p.linetype_scale = dxf.ltscale
-        p.is_visible = not bool(dxf.invisible)
-        p.layer = dxf.layer
-        return p
-
-    def _gather_layer_properties(self, layers: 'Table'):
+    def _gather_layer_properties(self, layers: 'Table') -> Dict[str, LayerProperties]:
         layer_table = {}
         for layer in layers:  # type: Layer
             properties = LayerProperties()
@@ -142,6 +132,23 @@ class PropertyContext:
             properties.plot = bool(layer.dxf.plot)
             layer_table[name] = properties
         return layer_table
+
+    def _true_layer_color(self, layer: 'Layer') -> Color:
+        if layer.dxf.hasattr('true_color'):
+            return rgb_to_hex(layer.rgb)
+        else:
+            # Don't use layer.dxf.color: color < 0 is layer state off
+            aci = layer.color
+            # aci: 0=BYBLOCK, 256=BYLAYER, 257=BYOBJECT
+            if aci < 1 or aci > 255:
+                aci = 7  # default layer color
+            return self._aci_to_true_color(aci)
+
+    def _true_layer_lineweight(self, lineweight: int) -> float:
+        if lineweight < 0:
+            return self.default_lineweight()
+        else:
+            return float(lineweight) / 100.0
 
     @staticmethod
     def _load_plot_style_table(filename: str):
@@ -180,20 +187,10 @@ class PropertyContext:
         # This values are managed by the CAD application, offer a method to set this value by user.
         return DEFAULT_MODEL_SPACE_BACKGROUND_COLOR if layout.is_modelspace else PAPER_SPACE_BACKGROUND_COLOR
 
-    def _true_layer_lineweight(self, lineweight: int) -> float:
-        if lineweight < 0:
-            return self.default_lineweight()
-        else:
-            return float(lineweight) / 100.0
-
     @staticmethod
     def layer_key(name: str) -> str:
         # keep in sync with ezdxf.sections.LayerTable.key
         return name.lower()
-
-    @property
-    def block_reference_layer(self) -> str:
-        return self.block_reference_properties.layer
 
     @property
     def is_block_reference_context(self) -> bool:
@@ -206,7 +203,20 @@ class PropertyContext:
     def pop_state(self) -> None:
         self.block_reference_properties = self._saved_states.pop()
 
+    def resolve_all(self, entity: 'DXFGraphic') -> Properties:
+        """ Resolve all properties for DXF `entity`. """
+        p = Properties()
+        p.color = self.resolve_color(entity)
+        p.linetype_name, p.linetype_pattern = self.resolve_linetype(entity)
+        p.lineweight = self.resolve_lineweight(entity)
+        dxf = entity.dxf
+        p.linetype_scale = dxf.ltscale
+        p.is_visible = not bool(dxf.invisible)
+        p.layer = dxf.layer
+        return p
+
     def resolve_color(self, entity: 'DXFGraphic', *, default_hatch_transparency: float = 0.8) -> Color:
+        """ Resolve color of DXF `entity` """
         aci = entity.dxf.color  # defaults to BYLAYER
         if aci == DXFConstants.BYLAYER:
             entity_layer = self.layer_key(entity.dxf.layer)
@@ -237,17 +247,6 @@ class PropertyContext:
         else:
             return _rgba(color, alpha)
 
-    def _true_layer_color(self, layer: 'Layer') -> Color:
-        if layer.dxf.hasattr('true_color'):
-            return rgb_to_hex(layer.rgb)
-        else:
-            # Don't use layer.dxf.color: color < 0 indicated layer state off
-            aci = layer.color
-            # aci: 0=BYBLOCK, 256=BYLAYER, 257=BYOBJECT
-            if aci < 1 or aci > 255:
-                aci = 7  # default layer color
-            return self._aci_to_true_color(aci)
-
     def _true_entity_color(self,
                            true_color: Optional[Tuple[int, int, int]],
                            aci: int) -> Optional[Color]:  # AutoCAD Color Index
@@ -260,7 +259,7 @@ class PropertyContext:
 
     def _aci_to_true_color(self, aci: int) -> Color:
         if aci == 7:  # black/white; todo: bypasses plot style table
-            if self.has_dark_background:
+            if self.layout_has_dark_background:
                 return '#ffffff'  # white
             else:
                 return '#000000'  # black
@@ -268,6 +267,7 @@ class PropertyContext:
             return rgb_to_hex(self.plot_style_table[aci].color)
 
     def resolve_linetype(self, entity: 'DXFGraphic'):
+        """ Resolve linetype of DXF `entity` """
         aci = entity.dxf.color
         # Not sure if plotstyle table overrides actual entity setting?
         if (0 < aci < 256) and self.plot_style_table[aci].linetype != acadctb.OBJECT_LINETYPE:
