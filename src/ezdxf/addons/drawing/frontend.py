@@ -7,7 +7,7 @@ from math import radians
 from typing import Iterable, cast, Union, List, Callable
 
 from ezdxf.addons.drawing.backend_interface import DrawingBackend
-from ezdxf.addons.drawing.properties import RenderContext, VIEWPORT_COLOR
+from ezdxf.addons.drawing.properties import RenderContext, VIEWPORT_COLOR, Properties
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.utils import normalize_angle, get_rotation_direction_from_extrusion_vector, \
     get_draw_angles, get_tri_or_quad_points
@@ -35,8 +35,8 @@ class Frontend:
         visibility_filter: callback to override entity visibility, signature is ``func(entity: DXFGraphic) -> bool``,
                            entity enters processing pipeline if this function returns ``True``, independent
                            from visibility state stored in DXF properties or layer visibility.
-                           But the backend can ignore this decision and check the visibility of the DXF
-                           entity by itself.
+                           Entity property `is_visible` is updated, but the backend can still ignore this decision
+                           and check the visibility of the DXF entity by itself.
 
     """
 
@@ -84,7 +84,7 @@ class Frontend:
 
     def draw_line_entity(self, entity: DXFGraphic) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
-        properties = self.ctx.resolve_all(entity)
+        properties = self._resolve_properties(entity)
         if dxftype == 'LINE':
             self.out.draw_line(d.start, d.end, properties)
 
@@ -106,10 +106,16 @@ class Frontend:
         else:
             raise TypeError(dxftype)
 
+    def _resolve_properties(self, entity: DXFGraphic) -> Properties:
+        properties = self.ctx.resolve_all(entity)
+        if self.visibility_filter:  # override visibility by callback
+            properties.is_visible = self.visibility_filter(entity)
+        return properties
+
     def draw_text_entity(self, entity: DXFGraphic) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
         # todo: how to handle text placed in 3D (extrusion != (0, 0, [1, -1]))
-        properties = self.ctx.resolve_all(entity)
+        properties = self._resolve_properties(entity)
         if dxftype in ('TEXT', 'MTEXT', 'ATTRIB'):
             entity = cast(Union[Text, MText, Attrib], entity)
             for line, transform, cap_height in simplified_text_chunks(entity, self.out):
@@ -120,7 +126,7 @@ class Frontend:
     def draw_curve_entity(self, entity: DXFGraphic) -> None:
         # todo: how to handle ARC and CIRCLE placed in 3D (extrusion != (0, 0, [1, -1]))
         d, dxftype = entity.dxf, entity.dxftype()
-        properties = self.ctx.resolve_all(entity)
+        properties = self._resolve_properties(entity)
         if dxftype == 'CIRCLE':
             center = _get_arc_wcs_center(entity)
             diameter = 2 * d.radius
@@ -161,7 +167,7 @@ class Frontend:
 
     def draw_misc_entity(self, entity: DXFGraphic) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
-        properties = self.ctx.resolve_all(entity)
+        properties = self._resolve_properties(entity)
         if dxftype == 'POINT':
             self.out.draw_point(d.location, properties)
 
@@ -233,7 +239,7 @@ class Frontend:
         dxftype = entity.dxftype()
         if dxftype == 'INSERT':
             entity = cast(Insert, entity)
-            self.ctx.push_state(self.ctx.resolve_all(entity))
+            self.ctx.push_state(self._resolve_properties(entity))
             parent_stack.append(entity)
             for attrib in entity.attribs:
                 self.draw_entity(attrib, parent_stack)
