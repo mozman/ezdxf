@@ -3,7 +3,7 @@
 
 import pytest
 import ezdxf
-from ezdxf.addons.drawing.properties import PropertyContext, compile_line_pattern
+from ezdxf.addons.drawing.properties import RenderContext, compile_line_pattern
 
 
 @pytest.fixture(scope='module')
@@ -55,22 +55,20 @@ def doc():
 
 
 def test_load_default_ctb(doc):
-    msp = doc.modelspace()
-    ctx = PropertyContext(msp, 'color.ctb')
-    assert bool(ctx.plotstyles) is True
-    assert ctx.plotstyles[1].color == (255, 0, 0)
+    ctx = RenderContext(doc, 'color.ctb')
+    assert bool(ctx.plot_styles) is True
+    assert ctx.plot_styles[1].color == (255, 0, 0)
 
 
 def test_new_ctb(doc):
-    msp = doc.modelspace()
-    ctx = PropertyContext(msp)
-    assert bool(ctx.plotstyles) is True
-    assert ctx.plotstyles[1].color == (255, 0, 0)
+    ctx = RenderContext(doc)
+    assert bool(ctx.plot_styles) is True
+    assert ctx.plot_styles[1].color == (255, 0, 0)
 
 
 def test_resolve_entity_color(doc):
+    ctx = RenderContext(doc)
     msp = doc.modelspace()
-    ctx = PropertyContext(msp)
     lines = msp.query('LINE')
     line1 = ctx.resolve_all(lines[0])
     assert line1.color == '#0000ff'  # by layer
@@ -80,8 +78,8 @@ def test_resolve_entity_color(doc):
 
 
 def test_resolve_entity_linetype(doc):
+    ctx = RenderContext(doc)
     msp = doc.modelspace()
-    ctx = PropertyContext(msp)
     lines = msp.query('LINE')
 
     line1 = ctx.resolve_all(lines[0])
@@ -92,8 +90,8 @@ def test_resolve_entity_linetype(doc):
 
 
 def test_resolve_entity_lineweight(doc):
+    ctx = RenderContext(doc)
     msp = doc.modelspace()
-    ctx = PropertyContext(msp)
     lines = msp.query('LINE')
 
     line1 = ctx.resolve_all(lines[0])
@@ -104,8 +102,8 @@ def test_resolve_entity_lineweight(doc):
 
 
 def test_resolve_block_entities(doc):
+    ctx = RenderContext(doc)
     msp = doc.modelspace()
-    ctx = PropertyContext(msp)
     blockref = msp.query('INSERT').first
     ctx.push_state(ctx.resolve_all(blockref))
     assert ctx.is_block_context is True

@@ -11,7 +11,7 @@ from typing import Optional
 from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
-from ezdxf.addons.drawing.properties import get_layer_color
+from ezdxf.addons.drawing.properties import get_layer_color, RenderContext
 from ezdxf.addons.drawing.frontend import draw_layout
 from ezdxf.addons.drawing.pyqt_backend import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFEntityStack
@@ -91,6 +91,7 @@ class CadViewer(qw.QMainWindow):
     def __init__(self):
         super().__init__()
         self.doc = None
+        self._render_context = None
         self._visible_layers = None
         self._current_layout = None
 
@@ -146,6 +147,7 @@ class CadViewer(qw.QMainWindow):
 
     def set_document(self, document: Drawing):
         self.doc = document
+        self._render_context = RenderContext(document)
         self._visible_layers = None
         self._current_layout = None
         self._populate_layouts()
@@ -174,7 +176,7 @@ class CadViewer(qw.QMainWindow):
         self._current_layout = layout_name
         self.renderer.clear()
         self.view.clear()
-        draw_layout(self.doc.layout(layout_name), self.renderer, self._visible_layers)
+        draw_layout(self.doc.layout(layout_name), self._render_context, self.renderer, self._visible_layers)
         self.view.fit_to_scene()
 
     def resizeEvent(self, event: qg.QResizeEvent) -> None:
