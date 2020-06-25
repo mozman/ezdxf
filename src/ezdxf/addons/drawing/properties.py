@@ -106,6 +106,9 @@ class LayerProperties(Properties):
         self.plot = True
 
 
+DEFAULT_LAYER_PROPERTIES = LayerProperties()
+
+
 class LayoutProperties:
     def __init__(self):
         self.name: str = 'Model'  # tab/display  name
@@ -150,7 +153,8 @@ class RenderContext:
         self.current_layout = LayoutProperties()  # default is 'Model'
         self.current_block: Optional[Properties] = None
         self.plot_styles = self._load_plot_style_table(ctb)
-        self.layers = self._gather_layer_properties(doc.layers)
+        # Always consider: entity layer may not exist
+        self.layers = self._gather_layer_properties(doc.layers) if doc else dict()
 
     def _gather_layer_properties(self, layers: 'Table') -> Dict[str, LayerProperties]:
         layer_table = {}
@@ -273,7 +277,7 @@ class RenderContext:
             if self.is_block_context and entity_layer == '0':
                 color = self.current_block.color
             else:
-                color = self.layers[entity_layer].color
+                color = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).color
 
         elif aci == DXFConstants.BYBLOCK:
             if not self.is_block_context:
@@ -330,8 +334,9 @@ class RenderContext:
                 name = self.current_block.linetype_name
                 pattern = self.current_block.linetype_pattern
             else:
-                name = self.layers[entity_layer].linetype_name
-                pattern = self.layers[entity_layer].linetype_pattern
+                layer = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES)
+                name = layer.linetype_name
+                pattern = layer.linetype_pattern
 
         elif name == 'BYBLOCK':
             if self.is_block_context:
@@ -365,7 +370,7 @@ class RenderContext:
             if self.is_block_context and entity_layer == '0':
                 return self.current_block.lineweight
             else:
-                return self.layers[entity_layer].lineweight
+                return self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).lineweight
 
         elif lineweight == DXFConstants.LINEWEIGHT_BYBLOCK:
             if self.is_block_context:
