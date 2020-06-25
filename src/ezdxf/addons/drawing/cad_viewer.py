@@ -177,16 +177,16 @@ class CadViewer(qw.QMainWindow):
         self.renderer.clear()
         self.view.clear()
         layout = self.doc.layout(layout_name)
-        self._render_context.set_current_layout(layout)
-        self._update_layers_state()
+        self._update_render_context(layout)
         draw_layout(layout, self._render_context, self.renderer)
         self.view.fit_to_scene()
 
-    def _update_layers_state(self):
-        if self._visible_layers is None or self._render_context is None:
-            return
+    def _update_render_context(self, layout):
+        assert self._render_context
+        self._render_context.set_current_layout(layout)
         # Direct modification of RenderContext.layers would be more flexible, but would also expose the internals.
-        self._render_context.set_layers_state(self._visible_layers, state=True)
+        if self._visible_layers is not None:
+            self._render_context.set_layers_state(self._visible_layers, state=True)
 
     def resizeEvent(self, event: qg.QResizeEvent) -> None:
         self.view.fit_to_scene()
