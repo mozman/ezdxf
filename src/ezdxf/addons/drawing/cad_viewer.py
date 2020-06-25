@@ -12,7 +12,7 @@ from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
 from ezdxf.addons.drawing.properties import get_layer_color, RenderContext
-from ezdxf.addons.drawing.frontend import draw_layout
+from ezdxf.addons.drawing.frontend import Frontend
 from ezdxf.addons.drawing.pyqt_backend import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFEntityStack
 from ezdxf.drawing import Drawing
@@ -32,7 +32,6 @@ class CADGraphicsView(qw.QGraphicsView):
         self.setHorizontalScrollBarPolicy(qc.Qt.ScrollBarAlwaysOff)
         self.setDragMode(qw.QGraphicsView.ScrollHandDrag)
         self.setFrameShape(qw.QFrame.NoFrame)
-
         self.setRenderHints(qg.QPainter.Antialiasing | qg.QPainter.TextAntialiasing | qg.QPainter.SmoothPixmapTransform)
 
     def clear(self):
@@ -178,7 +177,7 @@ class CadViewer(qw.QMainWindow):
         self.view.clear()
         layout = self.doc.layout(layout_name)
         self._update_render_context(layout)
-        draw_layout(layout, self._render_context, self.renderer)
+        Frontend(self._render_context, self.renderer).draw_layout(layout)
         self.view.fit_to_scene()
 
     def _update_render_context(self, layout):

@@ -8,7 +8,7 @@ import sys
 import matplotlib.pyplot as plt
 
 import ezdxf
-from ezdxf.addons.drawing.frontend import draw_layout, RenderContext
+from ezdxf.addons.drawing.frontend import RenderContext, Frontend
 from ezdxf.addons.drawing.matplotlib_backend import MatplotlibBackend
 
 
@@ -42,8 +42,7 @@ def _main():
     ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
     ctx = RenderContext(doc)
     out = MatplotlibBackend(ax)
-    draw_layout(layout, ctx, out)
-    out.finalize()
+    Frontend(ctx, out).draw_layout(layout, finalize=True)
     if args.out is not None:
         print(f'saving to "{args.out}"')
         fig.savefig(args.out, dpi=args.dpi)
