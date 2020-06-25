@@ -151,9 +151,6 @@ class RenderContext:
         self.current_block: Optional[Properties] = None
         self.plot_styles = self._load_plot_style_table(ctb)
         self.layers = self._gather_layer_properties(doc.layers)
-        # Alternative layer state, independent from DXF layer state, if None the
-        # DXF layer state is used to determine visibility:
-        self.visible_layers: Optional[Set[str]] = None
 
     def _gather_layer_properties(self, layers: 'Table') -> Dict[str, LayerProperties]:
         layer_table = {}
@@ -206,16 +203,24 @@ class RenderContext:
                 entry.color = hex_to_rgb(AUTOCAD_COLOR_INDEX[aci])
         return ctb
 
-    def set_visible_layers(self, layers: Optional[Set[str]]):
-        """ Set additional layers visual state independent from the DXF. """
-        if layers is not None:
-            self.visible_layers = {self.layer_key(name) for name in layers}
-        else:
-            self.visible_layers = None
+    def set_layers_state(self, layers: Set[str], state=True):
+        """ Set layer state of `layers` to on/off.
 
-    @property
-    def has_alternate_layer_state(self) -> bool:
-        return self.visible_layers is not None
+        Args:
+             layers: set of layer names
+             state: `True` turn this `layers` on and others off,
+                    `False` turn this `layers` off and others on
+        """
+        key = self.layer_key
+        layers = {key(name) for name in layers}
+        for name, layer in self.layers.items():
+            if name in layers:
+                layer.is_visible = state
+            else:
+                layer.is_visible = not state
+
+    def set_current_layout(self, layout: 'Layout'):
+        self.current_layout.set_layout(layout)
 
     @staticmethod
     def layer_key(name: str) -> str:
@@ -237,13 +242,10 @@ class RenderContext:
         if entity.dxf.invisible:
             return False
         layer_name = self.layer_key(entity.dxf.layer)
-        if self.has_alternate_layer_state:
-            return layer_name in self.visible_layers
-        else:  # use DXF state
-            layer = self.layers.get(layer_name)
-            # todo: should we consider the plot flag too?
-            if layer and not layer.is_visible:
-                return False
+        layer = self.layers.get(layer_name)
+        # todo: should we consider the plot flag too?
+        if layer and not layer.is_visible:
+            return False
         return True
 
     def resolve_all(self, entity: 'DXFGraphic') -> Properties:
@@ -258,12 +260,8 @@ class RenderContext:
         p.layer = dxf.layer
         layer_name = self.layer_key(p.layer)
         layer = self.layers.get(layer_name)
-
-        if self.has_alternate_layer_state and p.is_visible:
-            p.is_visible = layer_name in self.visible_layers
-        elif layer and p.is_visible:
+        if layer and p.is_visible:
             p.is_visible = layer.is_visible
-
         return p
 
     def resolve_color(self, entity: 'DXFGraphic', *, default_hatch_transparency: float = 0.8) -> Color:

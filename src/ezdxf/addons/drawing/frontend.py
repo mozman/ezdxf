@@ -267,20 +267,16 @@ def draw_entities(entities: Iterable[DXFGraphic], ctx: RenderContext, out: Drawi
             draw_entity(entity, ctx, out, [])
 
 
-def draw_layout(layout: 'Layout', ctx: RenderContext, out: DrawingBackend, visible_layers: Set[str] = None, finalize: bool = True) -> None:
+def draw_layout(layout: 'Layout', ctx: RenderContext, out: DrawingBackend, finalize: bool = True) -> None:
     """
 
     Args:
         layout: layout to draw
         ctx: actual render context of a DXF document
         out:  backend
-        visible_layers: alternative layer state independent from DXF layer state,
-                        existing layer names from this set are visible all other layers
-                        are invisible, if `None` the usual DXF layer state is significant.
         finalize: finalize backend automatically
 
     """
-    ctx.set_visible_layers(visible_layers)
     entities = layout.entity_space
     draw_entities(entities, ctx, out)
     out.set_background(ctx.current_layout.background_color)
