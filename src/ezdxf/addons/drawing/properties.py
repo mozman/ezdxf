@@ -3,13 +3,19 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence, Set
-from ezdxf.lldxf import const as DXFConstants
+from ezdxf.lldxf import const
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons import acadctb
+from ezdxf.sections.table import table_key as layer_key
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Layout, Table, Layer, Linetype, Drawing
     from ezdxf.entities.ltype import LinetypePattern
+
+__all__ = [
+    'Properties', 'LayerProperties', 'RenderContext', 'layer_key', 'rgb_to_hex', 'hex_to_rgb',
+    'MODEL_SPACE_BG_COLOR', 'PAPER_SPACE_BG_COLOR', 'VIEWPORT_COLOR', 'CONTINUOUS_PATTERN',
+]
 
 MODEL_SPACE_BG_COLOR = '#212830'
 PAPER_SPACE_BG_COLOR = '#ffffff'
@@ -102,7 +108,8 @@ class Properties:
 class LayerProperties(Properties):
     def __init__(self):
         super().__init__()
-        # layer on/off state is stored in Properties.is_visible
+        # LayerProperties.is_visible stores layer on/off state
+        # LayerProperties.layer stores real layer name (mixed case)
         self.plot = True
 
 
@@ -154,22 +161,23 @@ class RenderContext:
         self.current_block: Optional[Properties] = None
         self.plot_styles = self._load_plot_style_table(ctb)
         # Always consider: entity layer may not exist
-        self.layers = self._gather_layer_properties(doc.layers) if doc else dict()
+        # Layer name as key is normalized, most likely name.lower(), but may change in the future.
+        self.layers: Dict[str, LayerProperties] = dict()
+        if doc:
+            for layer in doc.layers:  # type: Layer
+                self.add_layer(layer)
 
-    def _gather_layer_properties(self, layers: 'Table') -> Dict[str, LayerProperties]:
-        layer_table = {}
-        for layer in layers:  # type: Layer
-            properties = LayerProperties()
-            name = self.layer_key(layer.dxf.name)
-            properties.layer = name
-            properties.color = self._true_layer_color(layer)
-            properties.linetype_name = str(layer.dxf.linetype).upper()  # normalize linetype names
-            properties.linetype_pattern = self.line_pattern.get(properties.linetype_name, CONTINUOUS_PATTERN)
-            properties.lineweight = self._true_layer_lineweight(layer.dxf.lineweight)
-            properties.is_visible = layer.is_on()
-            properties.plot = bool(layer.dxf.plot)
-            layer_table[name] = properties
-        return layer_table
+    def add_layer(self, layer: 'Layer') -> None:
+        properties = LayerProperties()
+        name = layer_key(layer.dxf.name)
+        properties.layer = layer.dxf.name  # store real layer name (mixed case)
+        properties.color = self._true_layer_color(layer)
+        properties.linetype_name = str(layer.dxf.linetype).upper()  # normalize linetype names
+        properties.linetype_pattern = self.line_pattern.get(properties.linetype_name, CONTINUOUS_PATTERN)
+        properties.lineweight = self._true_layer_lineweight(layer.dxf.lineweight)
+        properties.is_visible = layer.is_on()
+        properties.plot = bool(layer.dxf.plot)
+        self.layers[name] = properties
 
     def _true_layer_color(self, layer: 'Layer') -> Color:
         if layer.dxf.hasattr('true_color'):
@@ -215,8 +223,7 @@ class RenderContext:
              state: `True` turn this `layers` on and others off,
                     `False` turn this `layers` off and others on
         """
-        key = self.layer_key
-        layers = {key(name) for name in layers}
+        layers = {layer_key(name) for name in layers}
         for name, layer in self.layers.items():
             if name in layers:
                 layer.is_visible = state
@@ -225,11 +232,6 @@ class RenderContext:
 
     def set_current_layout(self, layout: 'Layout'):
         self.current_layout.set_layout(layout)
-
-    @staticmethod
-    def layer_key(name: str) -> str:
-        # keep in sync with ezdxf.sections.LayerTable.key
-        return name.lower()
 
     @property
     def is_block_context(self) -> bool:
@@ -245,7 +247,7 @@ class RenderContext:
     def is_visible(self, entity: 'DXFGraphic') -> bool:
         if entity.dxf.invisible:
             return False
-        layer_name = self.layer_key(entity.dxf.layer)
+        layer_name = layer_key(entity.dxf.layer)
         layer = self.layers.get(layer_name)
         # todo: should we consider the plot flag too?
         if layer and not layer.is_visible:
@@ -262,7 +264,7 @@ class RenderContext:
         p.linetype_scale = dxf.ltscale
         p.is_visible = not bool(dxf.invisible)
         p.layer = dxf.layer
-        layer_name = self.layer_key(p.layer)
+        layer_name = layer_key(p.layer)
         layer = self.layers.get(layer_name)
         if layer and p.is_visible:
             p.is_visible = layer.is_visible
@@ -271,15 +273,15 @@ class RenderContext:
     def resolve_color(self, entity: 'DXFGraphic', *, default_hatch_transparency: float = 0.8) -> Color:
         """ Resolve color of DXF `entity` """
         aci = entity.dxf.color  # defaults to BYLAYER
-        if aci == DXFConstants.BYLAYER:
-            entity_layer = self.layer_key(entity.dxf.layer)
+        if aci == const.BYLAYER:
+            entity_layer = layer_key(entity.dxf.layer)
             # AutoCAD appears to treat layer 0 differently to other layers in this case.
             if self.is_block_context and entity_layer == '0':
                 color = self.current_block.color
             else:
                 color = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).color
 
-        elif aci == DXFConstants.BYBLOCK:
+        elif aci == const.BYBLOCK:
             if not self.is_block_context:
                 color = self.current_layout.default_color
             else:
@@ -327,7 +329,7 @@ class RenderContext:
             pass  # todo: return special line types  - overriding linetypes by plotstyle table
         name = entity.dxf.linetype.upper()  # default is 'BYLAYER'
         if name == 'BYLAYER':
-            entity_layer = self.layer_key(entity.dxf.layer)
+            entity_layer = layer_key(entity.dxf.layer)
 
             # AutoCAD appears to treat layer 0 differently to other layers in this case.
             if self.is_block_context and entity_layer == '0':
@@ -363,8 +365,8 @@ class RenderContext:
             # overriding lineweight by plotstyle table
             return self.plot_styles.get_lineweight(aci)
         lineweight = entity.dxf.lineweight  # default is BYLAYER
-        if lineweight == DXFConstants.LINEWEIGHT_BYLAYER:
-            entity_layer = self.layer_key(entity.dxf.layer)
+        if lineweight == const.LINEWEIGHT_BYLAYER:
+            entity_layer = layer_key(entity.dxf.layer)
 
             # AutoCAD appears to treat layer 0 differently to other layers in this case.
             if self.is_block_context and entity_layer == '0':
@@ -372,13 +374,13 @@ class RenderContext:
             else:
                 return self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).lineweight
 
-        elif lineweight == DXFConstants.LINEWEIGHT_BYBLOCK:
+        elif lineweight == const.LINEWEIGHT_BYBLOCK:
             if self.is_block_context:
                 return self.current_block.lineweight
             else:
                 # There is no default layout lineweight
                 return self.default_lineweight()
-        elif lineweight == DXFConstants.LINEWEIGHT_DEFAULT:
+        elif lineweight == const.LINEWEIGHT_DEFAULT:
             return self.default_lineweight()
         else:
             return float(lineweight) / 100.0
