@@ -275,6 +275,8 @@ def test_mtext_plain_text():
 
 def test_mtext_plain_text_special_char():
     assert plain_text("%%d") == "°"
+    assert plain_text("%%u") == ""
+    assert plain_text("%%U") == ""
 
 
 def test_mtext_transform_interface():

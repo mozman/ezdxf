@@ -55,6 +55,9 @@ acdb_text2 = DefSubclass('AcDbText', {
     # 3 = Top
 })
 
+# Formatting codes:
+# %%d: '°'
+# %%u in TEXT start underline formatting until next %%u or until end of line
 
 @register_entity
 class Text(DXFGraphic):

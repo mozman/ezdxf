@@ -406,7 +406,7 @@ ONE_CHAR_COMMANDS = "PLlOoKkX"
 SPECIAL_CHARS = {
     'd': '°'
 }
-
+# %%u in TEXT start underline formatting until next %%u or until end of line
 
 ##################################################
 # MTEXT inline codes

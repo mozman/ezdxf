@@ -118,7 +118,7 @@ def _get_cap_height(text: AnyText) -> float:
 
 def _get_plain_text(text: AnyText) -> str:
     if isinstance(text, Text):
-        return text.dxf.text
+        return remove_formatting(text.dxf.text)
     elif isinstance(text, (MText, Attrib)):
         return remove_formatting(text.text)
     else:
