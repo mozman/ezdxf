@@ -9,7 +9,6 @@ from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 
 import ezdxf.lldxf.const as DXFConstants
 from ezdxf.addons.drawing.backend_interface import DrawingBackend
-from ezdxf.addons.drawing.utils import remove_formatting
 from ezdxf.entities import MText, Text, Attrib
 from ezdxf.math import Matrix44, Vector
 
@@ -116,15 +115,6 @@ def _get_cap_height(text: AnyText) -> float:
         raise TypeError(type(text))
 
 
-def _get_plain_text(text: AnyText) -> str:
-    if isinstance(text, Text):
-        return text.plain_text()
-    elif isinstance(text, (MText, Attrib)):
-        return remove_formatting(text.text)
-    else:
-        raise TypeError(type(text))
-
-
 def _get_line_spacing(text: AnyText, cap_height: float) -> float:
     if isinstance(text, (Attrib, Text)):
         return 0.0
@@ -174,7 +164,7 @@ def _split_multiline_text(text: str, box_width: Optional[float], get_text_width:
 
 
 def _split_into_lines(text: AnyText, box_width: Optional[float], get_text_width: Callable[[str], float]) -> List[str]:
-    plain_text = _get_plain_text(text)
+    plain_text = text.plain_text()
     if isinstance(text, (Text, Attrib)):
         assert '\n' not in plain_text
         return [plain_text]

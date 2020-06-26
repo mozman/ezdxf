@@ -19,10 +19,6 @@ def normalize_angle(theta: Radians) -> Radians:
     return (theta % tau) % tau
 
 
-def remove_formatting(text: str) -> str:
-    return plain_mtext(text, split=False).replace('^M^J', '\n').replace('^J', '\n')
-
-
 @enum.unique
 class Direction(enum.Enum):
     CLOCKWISE = 0
