@@ -27,7 +27,7 @@ COMPOSITE_ENTITY_TYPES = {
     # Unsupported types, represented as DXFTagStorage(), will sorted out in Frontend.draw_entities().
     'INSERT', 'POLYLINE', 'LWPOLYLINE',
     # This types have a virtual_entities() method, which returns the content of the associated anonymous block
-    'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIUS_DIMENSION', 'ACAD_TABLE',
+    'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'ACAD_TABLE',
 }
 
 
