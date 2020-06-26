@@ -262,6 +262,7 @@ TEXT_ALIGN_FLAGS = {
     'TOP_RIGHT': (2, 3),
 }
 TEXT_ALIGNMENT_BY_FLAGS = dict((flags, name) for name, flags in TEXT_ALIGN_FLAGS.items())
+
 LEFT = 0
 CENTER = 1
 RIGHT = 2
@@ -271,6 +272,13 @@ MIDDLE = 2
 TOP = 3
 MIRROR_X = 2
 MIRROR_Y = 4
+
+# Special char and encodings and formattins codes used in TEXT
+# %%d: "°"
+# %%u in TEXT start underline formatting until next %%u or until end of line
+SPECIAL_CHARS_ENCODING = {
+    'd': '°'
+}
 
 MTEXT_TOP_LEFT = 1
 MTEXT_TOP_CENTER = 2

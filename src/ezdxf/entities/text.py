@@ -8,7 +8,7 @@ from ezdxf.math.transformtools import OCSTransform
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, DXFValueError
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, SPECIAL_CHARS_ENCODING
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -16,7 +16,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Vertex, DXFNamespace, Drawing
 
-__all__ = ['Text', 'acdb_text']
+__all__ = ['Text', 'acdb_text', 'plain_text']
 
 acdb_text = DefSubclass('AcDbText', {
     'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # First alignment point (in OCS)
@@ -54,6 +54,7 @@ acdb_text2 = DefSubclass('AcDbText', {
     # 2 = Middle
     # 3 = Top
 })
+
 
 # Formatting codes:
 # %%d: '°'
@@ -256,3 +257,32 @@ class Text(DXFGraphic):
         has_style = (bool(other) and (self.dxf.style in other.styles))
         if not has_style:
             self.dxf.style = 'Standard'
+
+    def plain_text(self) -> str:
+        """
+        Returns text content without formatting codes.
+
+        .. versionadded:: 0.13
+
+        """
+        return plain_text(self.dxf.text)
+
+
+def plain_text(text: str) -> str:
+    chars = []
+    raw_chars = list(reversed(text))
+    while len(raw_chars):
+        char = raw_chars.pop()
+        if char == '%':  # special characters
+            if len(raw_chars) and raw_chars[-1] == '%':
+                raw_chars.pop()  # discard next '%'
+                if len(raw_chars):
+                    special_char = raw_chars.pop()
+                    # replace or discard formatting code
+                    chars.append(SPECIAL_CHARS_ENCODING.get(special_char, ''))
+            else:  # char is just a single '%'
+                chars.append(char)
+        else:  # char is what it is, a character
+            chars.append(char)
+
+    return "".join(chars)

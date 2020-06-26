@@ -8,7 +8,7 @@ from typing import Union, Tuple, Optional, List
 
 from ezdxf.addons.drawing.type_hints import Radians
 from ezdxf.entities import Face3d, Solid, Trace
-from ezdxf.entities.mtext import plain_text
+from ezdxf.entities.mtext import plain_mtext
 from ezdxf.math import Vector
 
 
@@ -20,7 +20,7 @@ def normalize_angle(theta: Radians) -> Radians:
 
 
 def remove_formatting(text: str) -> str:
-    return plain_text(text, split=False).replace('^M^J', '\n').replace('^J', '\n')
+    return plain_mtext(text, split=False).replace('^M^J', '\n').replace('^J', '\n')
 
 
 @enum.unique

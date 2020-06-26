@@ -42,6 +42,7 @@ Version 0.13b4 - dev
 - NEW: `Hatch.paths.ellipse_edges_to_spline_edges()` convert ellipse edges to spline edges
 - NEW: `Hatch.paths.all_to_spline_edges()` convert all curves to approximated spline edges
 - NEW: `Hatch.paths.all_to_line_edges()` convert all curves to approximated line edges
+- NEW: `Text.plain_text()` returns text content without formatting codes
 - NEW: `ezdxf.math.ConstructionEllipse()`
 - NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
 - NEW: `ezdxf.math.global_bspline_interpolation()` supports start- and end tangent constraints

@@ -8,7 +8,7 @@ from ezdxf.math import Vector, Matrix44, OCS
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, SPECIAL_CHARS_ENCODING
 from ezdxf.lldxf.tags import Tags
 from ezdxf.tools.rgb import rgb2int
 from .dxfentity import base_class, SubclassProcessor
@@ -18,7 +18,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex
 
-__all__ = ['MText', 'plain_text']
+__all__ = ['MText', 'plain_mtext']
 
 acdb_mtext = DefSubclass('AcDbMText', {
     'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
@@ -355,10 +355,10 @@ class MText(DXFGraphic):
         .. versionadded:: 0.11.1
 
         """
-        return plain_text(self.text, split=split)
+        return plain_mtext(self.text, split=split)
 
 
-def plain_text(text: str, split=False) -> Union[List[str], str]:
+def plain_mtext(text: str, split=False) -> Union[List[str], str]:
     chars = []
     raw_chars = list(reversed(text))  # text splitted into chars, in reversed order for efficient pop()
     while len(raw_chars):
@@ -392,7 +392,7 @@ def plain_text(text: str, split=False) -> Union[List[str], str]:
                 if len(raw_chars):
                     special_char = raw_chars.pop()
                     # replace or discard formatting code
-                    chars.append(SPECIAL_CHARS.get(special_char, ""))
+                    chars.append(SPECIAL_CHARS_ENCODING.get(special_char, ""))
             else:  # char is just a single '%'
                 chars.append(char)
         else:  # char is what it is, a character
@@ -403,11 +403,6 @@ def plain_text(text: str, split=False) -> Union[List[str], str]:
 
 
 ONE_CHAR_COMMANDS = "PLlOoKkX"
-SPECIAL_CHARS = {
-    'd': '°'
-}
-# %%u in TEXT start underline formatting until next %%u or until end of line
-
 ##################################################
 # MTEXT inline codes
 # \L	Start underline

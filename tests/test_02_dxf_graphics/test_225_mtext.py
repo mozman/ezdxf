@@ -5,7 +5,7 @@ import pytest
 import ezdxf
 from ezdxf.lldxf import const
 
-from ezdxf.entities.mtext import MText, split_mtext_string, plain_text
+from ezdxf.entities.mtext import MText, split_mtext_string, plain_mtext
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 MTEXT = """0
@@ -270,13 +270,13 @@ def test_do_not_split_at_carret():
 def test_mtext_plain_text():
     raw_text = r"\A1;Das ist eine MText\PZeile mit {\LFormat}ierung\Pänder die Farbe\P\pi-7.5,l7.5,t7.5;1.^INummerierung\P2.^INummerierung\P\pi0,l0,tz;\P{\H0.7x;\S1/2500;}  ein Bruch"
     expected = "Das ist eine MText\nZeile mit Formatierung\nänder die Farbe\n1.^INummerierung\n2.^INummerierung\n\n1/2500  ein Bruch"
-    assert plain_text(raw_text) == expected
+    assert plain_mtext(raw_text) == expected
 
 
 def test_mtext_plain_text_special_char():
-    assert plain_text("%%d") == "°"
-    assert plain_text("%%u") == ""
-    assert plain_text("%%U") == ""
+    assert plain_mtext("%%d") == "°"
+    assert plain_mtext("%%u") == ""
+    assert plain_mtext("%%U") == ""
 
 
 def test_mtext_transform_interface():
