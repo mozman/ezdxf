@@ -17,6 +17,8 @@ from ezdxf.entities.dxfentity import DXFTagStorage
 from ezdxf.layouts import Layout
 from ezdxf.math import Vector
 
+__all__ = ['Frontend']
+
 INFINITE_LINE_LENGTH = 25
 
 LINE_ENTITY_TYPES = {'LINE', 'XLINE', 'RAY', 'MESH'}
@@ -33,10 +35,11 @@ COMPOSITE_ENTITY_TYPES = {
 
 class Frontend:
     """
+    Drawing frontend, responsible for decomposing entities into graphic primitives and resolving entity properties.
 
     Args:
         ctx: actual render context of a DXF document
-        out:  backend
+        out: backend
         visibility_filter: callback to override entity visibility, signature is ``func(entity: DXFGraphic) -> bool``,
                            entity enters processing pipeline if this function returns ``True``, independent
                            from visibility state stored in DXF properties or layer visibility.
@@ -44,7 +47,6 @@ class Frontend:
                            and check the visibility of the DXF entity by itself.
 
     """
-
     def __init__(self, ctx: RenderContext, out: DrawingBackend, visibility_filter: Callable[[DXFGraphic], bool] = None):
         self.ctx = ctx
         self.out = out
@@ -270,7 +272,7 @@ class Frontend:
             self.out.end_polyline()
             self.out.set_current_entity(None)
 
-        # DIMENSION, ARC_DIMENSION, LARGE_RADIUS_DIMENSION, MLEADER and ACAD_TABLE
+        # DIMENSION, ARC_DIMENSION, LARGE_RADIAL_DIMENSION and ACAD_TABLE
         # All these entities have an associated anonymous geometry block.
         elif hasattr(entity, 'virtual_entities'):
             entity = cast(Dimension, entity)
