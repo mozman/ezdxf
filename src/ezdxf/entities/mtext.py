@@ -176,7 +176,7 @@ class MText(DXFGraphic):
             if tag.code == 3:
                 parts.append(tag.value)
         parts.append(tail)
-        self.text = "".join(parts)
+        self.text = normalize_line_breaks("".join(parts))
         tags.remove_tags((1, 3))
 
     def export_mtext(self, tagwriter: 'TagWriter') -> None:
@@ -403,6 +403,8 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
 
 
 ONE_CHAR_COMMANDS = "PLlOoKkX"
+
+
 ##################################################
 # MTEXT inline codes
 # \L	Start underline
@@ -475,3 +477,11 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
             chunks.append(chunk)
         else:
             return chunks
+
+
+def normalize_line_breaks(text: str) -> str:
+    """ Replaces '^J', '^M' and '^M^J' by '\\P' """
+    text = text.replace('^M^J', '\\P')
+    text = text.replace('^M', '\\P')
+    text = text.replace('^J', '\\P')
+    return text

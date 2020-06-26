@@ -5,7 +5,7 @@ import pytest
 import ezdxf
 from ezdxf.lldxf import const
 
-from ezdxf.entities.mtext import MText, split_mtext_string, plain_mtext
+from ezdxf.entities.mtext import MText, split_mtext_string, plain_mtext, normalize_line_breaks
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 MTEXT = """0
@@ -284,3 +284,10 @@ def test_mtext_transform_interface():
     mtext.dxf.insert = (1, 0, 0)
     mtext.translate(1, 2, 3)
     assert mtext.dxf.insert == (2, 2, 3)
+
+
+def test_normalize_line_breaks():
+    assert normalize_line_breaks('1^J2') == '1\\P2'
+    assert normalize_line_breaks('1^M2') == '1\\P2'
+    assert normalize_line_breaks('1^M^J2') == '1\\P2'
+    assert normalize_line_breaks('1^J^M2') == '1\\P\\P2'
