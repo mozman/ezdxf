@@ -847,7 +847,12 @@ class BSpline:
         Returns a :class:`BSpline` object from a :class:`geomdl.BSpline.Curve` object.
 
         """
-        return BSpline(control_points=curve.ctrlpts, order=curve.degree + 1, knots=curve.knotvector)
+        return BSpline(
+            control_points=curve.ctrlpts,
+            order=curve.order,
+            knots=curve.knotvector,
+            weights=curve.weights,
+        )
 
     @property
     def nplusc(self) -> int:
@@ -969,12 +974,15 @@ class BSpline:
         package is installed.
 
         """
-        from geomdl import BSpline
-        # todo: rational B-splines
-        curve = BSpline.Curve()
+        if self.basis.weights:
+            from geomdl.NURBS import Curve
+        else:
+            from geomdl.BSpline import Curve
+        curve = Curve()
         curve.degree = self.degree
         curve.ctrlpts = [v.xyz for v in self.control_points]
         curve.knotvector = self.knots()
+        curve.weights = self.weights()
         return curve
 
 
