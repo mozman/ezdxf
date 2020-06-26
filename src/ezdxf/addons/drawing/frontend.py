@@ -23,7 +23,7 @@ LINE_ENTITY_TYPES = {'LINE', 'XLINE', 'RAY', 'MESH'}
 TEXT_ENTITY_TYPES = {'TEXT', 'MTEXT', 'ATTRIB'}
 CURVE_ENTITY_TYPES = {'CIRCLE', 'ARC', 'ELLIPSE', 'SPLINE'}
 MISC_ENTITY_TYPES = {'POINT', '3DFACE', 'SOLID', 'TRACE', 'MESH', 'HATCH', 'VIEWPORT'}
-COMPOSITE_ENTITY_TYPES = {'INSERT', 'POLYLINE', 'LWPOLYLINE'}  # and DIMENSION*
+COMPOSITE_ENTITY_TYPES = {'INSERT', 'POLYLINE', 'LWPOLYLINE', 'DIMENSION', 'ARC_DIMENSION'}  # LARGE_RADIUS_DIMENSION
 
 
 class Frontend:
@@ -253,7 +253,21 @@ class Frontend:
             parent_stack.pop()
             self.ctx.pop_state()
 
-        elif dxftype == 'DIMENSION':
+        elif dxftype in ('LWPOLYLINE', 'POLYLINE'):
+            entity = cast(Union[LWPolyline, Polyline], entity)
+            parent_stack.append(entity)
+            self.out.start_polyline()
+            for child in entity.virtual_entities():
+                self.draw_entity(child, parent_stack)
+            parent_stack.pop()
+
+            self.out.set_current_entity(entity, tuple(parent_stack))
+            self.out.end_polyline()
+            self.out.set_current_entity(None)
+
+        # DIMENSION, ARC_DIMENSION, LARGE_RADIUS_DIMENSION, maybe ACAD_TABLE in the future
+        # All these entities have an associated anonymous geometry block.
+        elif hasattr(entity, 'virtual_entities'):
             entity = cast(Dimension, entity)
             children = []
             try:
@@ -268,18 +282,6 @@ class Frontend:
             for child in children:
                 self.draw_entity(child, parent_stack)
             parent_stack.pop()
-
-        elif dxftype in ('LWPOLYLINE', 'POLYLINE'):
-            entity = cast(Union[LWPolyline, Polyline], entity)
-            parent_stack.append(entity)
-            self.out.start_polyline()
-            for child in entity.virtual_entities():
-                self.draw_entity(child, parent_stack)
-            parent_stack.pop()
-
-            self.out.set_current_entity(entity, tuple(parent_stack))
-            self.out.end_polyline()
-            self.out.set_current_entity(None)
 
         else:
             raise TypeError(dxftype)
