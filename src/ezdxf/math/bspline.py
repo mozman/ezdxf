@@ -959,6 +959,12 @@ class BSpline:
         knots.insert(k + 1, t)  # knot[k] <= t < knot[k+1]
         self.basis.count = len(cpoints)
 
+    def knot_refinement(self, u: Iterable[float]) -> None:
+        """ Insert multiple knots, without altering the curve"""
+        # there exist a more efficient method
+        for t in u:
+            self.insert_knot(t)
+
     def transform(self, m: 'Matrix44') -> 'BSpline':
         """ Transform B-spline by transformation matrix `m` inplace.
 
