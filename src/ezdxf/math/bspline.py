@@ -805,8 +805,9 @@ class BSpline:
             knots = open_uniform_knot_vector(self.count, self.order)
         else:
             knots = list(knots)
-            if len(knots) != self.nplusc:
-                raise ValueError(f"{self.nplusc} knot values required, got {len(knots)}.")
+            required_knot_count = self.count + self.order
+            if len(knots) != required_knot_count:
+                raise ValueError(f"{required_knot_count} knot values required, got {len(knots)}.")
             if knots[0] != 0.0:
                 knots = normalize_knots(knots)
         self.basis = Basis(knots, self.order, self.count, weights=weights)
@@ -853,10 +854,6 @@ class BSpline:
             knots=curve.knotvector,
             weights=curve.weights,
         )
-
-    @property
-    def nplusc(self) -> int:
-        return self.count + self.order
 
     @property
     def count(self) -> int:
@@ -933,16 +930,11 @@ class BSpline:
 
         """
         if self.basis.weights is not None:
-            raise DXFValueError('Rational splines not supported.')
+            raise TypeError('Rational splines not supported.')
 
         knots = self.basis.knots
         cpoints = self.control_points
         p = self.degree
-
-        def find_knot_index() -> int:
-            for knot_index in range(1, len(knots)):
-                if knots[knot_index - 1] <= t < knots[knot_index]:
-                    return knot_index - 1
 
         def new_point(index: int) -> Vector:
             a = (t - knots[index]) / (knots[index + p] - knots[index])
@@ -951,7 +943,7 @@ class BSpline:
         if t <= 0. or t >= self.max_t:
             raise DXFValueError('Invalid position t')
 
-        k = find_knot_index()
+        k = self.find_span(t)
         if k < p:
             raise DXFValueError('Invalid position t')
 
@@ -960,10 +952,31 @@ class BSpline:
         self.basis.count = len(cpoints)
 
     def knot_refinement(self, u: Iterable[float]) -> None:
-        """ Insert multiple knots, without altering the curve"""
-        # there exist a more efficient method
+        """ Insert multiple knots, without altering the curve
+
+        Args:
+            u: vector of new knots t and for each t: 0 < t  < max_t
+
+        """
         for t in u:
             self.insert_knot(t)
+
+    def find_span(self, u: float) -> int:
+        """ Determine the knot span index. """
+        # Source: The NURBS Book: Algorithm A2.1
+        high = self.count
+        knots = self.basis.knots
+        if u == knots[high]:
+            return high - 1
+        low = self.order - 1
+        while True:
+            mid = (low + high) // 2
+            if knots[mid] <= u < knots[mid + 1]:
+                return mid
+            if u < knots[mid]:
+                high = mid
+            else:
+                low = mid
 
     def transform(self, m: 'Matrix44') -> 'BSpline':
         """ Transform B-spline by transformation matrix `m` inplace.
