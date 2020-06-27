@@ -19,7 +19,7 @@ https://books.google.at/books/about/The_NURBS_Book.html?id=7dqY5dyAwWkC&redir_es
 """
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional, Union
 import math
-from .vector import Vector
+from .vector import Vector, NULLVEC
 from .parametrize import create_t_vector, estimate_tangents, estimate_end_tangent_magnitude
 from .linalg import (
     LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix, detect_banded_matrix,
@@ -929,8 +929,8 @@ class BSpline:
             t: position of new knot 0 < t < max_t
 
         """
-        if self.basis.weights is not None:
-            raise TypeError('Rational splines not supported.')
+        if self.basis.weights:
+            raise TypeError('Rational B-splines not supported.')
 
         knots = self.basis.knots
         cpoints = self.control_points
@@ -1003,6 +1003,57 @@ class BSpline:
         curve.knotvector = self.knots()
         curve.weights = self.weights()
         return curve
+
+    def bezier_decomposition(self) -> Iterable[List[Vector]]:
+        """ Decompose a non-rational B-spline into multiple Bézier curves.
+
+        Returns:
+            Yields control points of Bézier curves, each Bézier segment
+            has degree+1 control points e.g. B-spline of 3rd degree yields
+            cubic Bézier curves of 4 control points.
+
+        """
+        if self.basis.weights:
+            raise TypeError('Rational B-splines not supported.')
+
+        n = self.count - 1
+        p = self.degree
+        knots = self.basis.knots  # U
+        control_points = self.control_points  # Pw
+        alphas = [0.0] * len(knots)
+
+        m = n + p + 1
+        a = p
+        b = p + 1
+        bezier_points = control_points[0: p + 1]  # Qw
+
+        while b < m:
+            next_bezier_points = [NULLVEC] * (p + 1)
+            i = b
+            while b < m and math.isclose(knots[b + 1], knots[b]):
+                b += 1
+            mult = b - i + 1
+            if mult < p:
+                numer = knots[b] - knots[a]
+                for j in range(p, mult, -1):
+                    alphas[j - mult - 1] = numer / (knots[a + j] - knots[a])
+                r = p - mult
+                for j in range(1, r + 1):
+                    save = r - j
+                    s = mult + j
+                    for k in range(p, s - 1, -1):
+                        alpha = alphas[k - s]
+                        bezier_points[k] = bezier_points[k] * alpha + bezier_points[k - 1] * (1.0 - alpha)
+                    if b < m:
+                        next_bezier_points[save] = bezier_points[p]
+            yield bezier_points
+
+            if b < m:
+                for i in range(p - mult, p + 1):
+                    next_bezier_points[i] = control_points[b - p + i]
+                a = b
+                b += 1
+                bezier_points = next_bezier_points
 
 
 class BSplineU(BSpline):
