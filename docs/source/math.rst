@@ -805,6 +805,10 @@ BSpline
 
     .. automethod:: transform(m: Matrix44) -> BSpline
 
+    .. automethod:: bezier_decomposition() -> Iterable[List[Vector]]
+
+    .. automethod:: cubic_bezier_approximation(level: int = 3, segments: int = None) -> Iterable[Bezier4P]
+
 BSplineU
 --------
 

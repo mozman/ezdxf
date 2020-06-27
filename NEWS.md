@@ -63,8 +63,11 @@ Version 0.13b4 - dev
 - NEW: `BSpline.arc_approximation()` B-spline approximation from arc vertices as fit points
 - NEW: `BSpline.ellipse_approximation()` B-spline approximation from ellipse vertices as fit points
 - NEW: `BSpline.transform()` transform B-spline by transformation matrix inplace
+- NEW: `BSpline.transform()` transform B-spline by transformation matrix inplace
 - NEW: `BSpline.to_nurbs_python_curve()` and `BSpline.from_nurbs_python_curve()`, interface to 
   [NURBS-Python](https://github.com/orbingol/NURBS-Python), `NURBS-Python` is now a testing dependency
+- NEW: `BSpline.bezier_decomposition()` decompose a non-rational B-spline into multiple Bézier curves 
+- NEW: `BSpline.cubic_bezier_approximation()` approximate any B-spline by multiple cubic Bézier curves 
 - CHANGE: `Hatch` full support for rotated patterns.
 - CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
 - CHANGE: `Hatch.path.add_arc` renamed argument `is_counter_clockwise` to `ccw`, type `bool` and `True` by default 

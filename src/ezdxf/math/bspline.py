@@ -1071,7 +1071,7 @@ class BSpline:
         segments is based on the count of control points and their distribution along the
         B-spline, every additional level is a subdivision of the previous level.
         E.g. a B-Spline of 8 control points has 7 segments at the first level, 14 at the 2nd level
-        and 28 ar the 3rd level, a level >= 3 is recommended.
+        and 28 at the 3rd level, a level >= 3 is recommended.
 
         2. approximation by a given count of evenly distributed approximation segments.
 
@@ -1080,8 +1080,7 @@ class BSpline:
             segments: absolute count of approximation segments
 
         Returns:
-            Yields control points of cubic Bézier curves, each Bézier segment
-            has 4 control points
+            Yields control points of cubic Bézier curves as :class:`Bezier4P` objects
 
         """
 
