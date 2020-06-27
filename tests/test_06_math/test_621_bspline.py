@@ -4,7 +4,7 @@
 import pytest
 from math import isclose
 from ezdxf.math.bspline import BSpline, DBSpline
-from ezdxf.math.bspline import bspline_basis_vector, Basis, open_uniform_knot_vector, normalize_knots
+from ezdxf.math.bspline import bspline_basis_vector, Basis, open_uniform_knot_vector, normalize_knots, subdivide_params
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 
@@ -123,6 +123,21 @@ def test_bezier_decomposition():
         (69.54617236126121, 50.37880459351478, 0.0),
         (80.0, 70.0, 0.0)
     ]
+
+
+def test_cubic_bezier_approximation():
+    bspline = BSpline.from_fit_points([(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50), (80, 70)])
+    bezier_segments = list(bspline.cubic_bezier_approximation(level=3))
+    assert len(bezier_segments) == 28
+    bezier_segments = list(bspline.cubic_bezier_approximation(segments=40))
+    assert len(bezier_segments) == 40
+    # The interpolation is based on cubic_bezier_interpolation()
+    # and therefore the interpolation result is not topic of this test.
+
+
+def test_subdivide_params():
+    assert list(subdivide_params([0.0, 1.0])) == [0.0, 0.5, 1.0]
+    assert list(subdivide_params([0.0, 0.5, 1.0])) == [0.0, 0.25, 0.5, 0.75, 1.0]
 
 
 DBSPLINE = [

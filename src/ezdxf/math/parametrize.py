@@ -3,7 +3,6 @@
 from typing import List, Iterable, Sequence, Tuple
 import math
 from ezdxf.math import Vector
-from ezdxf.lldxf.const import DXFValueError
 from .bezier4p import tangents_cubic_bezier_interpolation, cubic_bezier_interpolation
 from .construct2d import circle_radius_3p
 
@@ -18,7 +17,7 @@ def create_t_vector(fit_points: List[Vector], method: str) -> Iterable[float]:
     elif method == 'arc':
         return arc_t_vector(fit_points)
     else:
-        raise DXFValueError('Unknown method: {}'.format(method))
+        raise ValueError('Unknown method: {}'.format(method))
 
 
 def uniform_t_vector(length: int) -> Iterable[float]:

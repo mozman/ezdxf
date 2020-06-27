@@ -232,7 +232,7 @@ def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: 
         yield start_point, control_point_1, control_point_2, end_point
 
 
-def cubic_bezier_interpolation(points: Iterable['Vertex']) -> List[Bezier4P]:
+def cubic_bezier_interpolation(points: Iterable['Vertex']) -> Iterable[Bezier4P]:
     """
     Returns an interpolation curve for given data `points` as multiple cubic Bézier curves.
     Returns n-1 cubic Bézier curves for n given data points, curve i goes from point[i] to point[i+1].

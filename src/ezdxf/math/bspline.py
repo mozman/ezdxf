@@ -31,6 +31,7 @@ from ezdxf import PYPY
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
     from ezdxf.math import ConstructionArc, ConstructionEllipse, Matrix44
+    from .bezier4p import Bezier4P
 
 # Acceleration of banded diagonal matrix solver kicks in at:
 # N=15 for CPython on Windows and Linux
@@ -1007,12 +1008,17 @@ class BSpline:
     def bezier_decomposition(self) -> Iterable[List[Vector]]:
         """ Decompose a non-rational B-spline into multiple Bézier curves.
 
+        This is the preferred method to represent the most common non-rational
+        B-splines of 3rd degree by cubic Bézier curves, which are often supported
+        by render backends.
+
         Returns:
             Yields control points of Bézier curves, each Bézier segment
             has degree+1 control points e.g. B-spline of 3rd degree yields
             cubic Bézier curves of 4 control points.
 
         """
+        # Source: "The NURBS Book": Algorithm A5.6
         if self.basis.weights:
             raise TypeError('Rational B-splines not supported.')
 
@@ -1054,6 +1060,50 @@ class BSpline:
                 a = b
                 b += 1
                 bezier_points = next_bezier_points
+
+    def cubic_bezier_approximation(self, level: int = 3, segments: int = None) -> Iterable['Bezier4P']:
+        """ Approximate arbitrary B-splines (degree != 3 and/or rational) by multiple segments of
+        cubic Bézier curves. The choice of cubic Bézier curves is based on the widely support
+        of this curves by many render backends. For cubic non-rational B-splines, which is maybe the
+        most common used B-spline, is :meth:`bezier_decomposition` the better choice.
+
+        1. approximation by `level`: an educated guess for the first level of approximation
+        segments is based on the count of control points and their distribution along the
+        B-spline, every additional level is a subdivision of the previous level.
+        E.g. a B-Spline of 8 control points has 7 segments at the first level, 14 at the 2nd level
+        and 28 ar the 3rd level, a level >= 3 is recommended.
+
+        2. approximation by a given count of evenly distributed approximation segments.
+
+        Args:
+            level: subdivision level of approximation segments (ignored if argument ``segments`` != ``None``)
+            segments: absolute count of approximation segments
+
+        Returns:
+            Yields control points of cubic Bézier curves, each Bézier segment
+            has 4 control points
+
+        """
+
+        def parametrization():
+            params = list(create_t_vector(self.control_points, 'chord'))
+            for _ in range(level - 1):
+                params = list(subdivide_params(params))
+            return [self.point(t) for t in params]
+
+        if segments is None:
+            points = parametrization()
+        else:
+            points = list(self.approximate(segments))
+        from .bezier4p import cubic_bezier_interpolation
+        return cubic_bezier_interpolation(points)
+
+
+def subdivide_params(p: List[float]) -> Iterable[float]:
+    for i in range(len(p) - 1):
+        yield p[i]
+        yield (p[i] + p[i + 1]) / 2.0
+    yield p[-1]
 
 
 class BSplineU(BSpline):
