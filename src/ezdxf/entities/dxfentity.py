@@ -266,6 +266,9 @@ class DXFNamespace:
                 # just use x, y for 2d points if value is a 3d point (Vector, tuple)
                 if attrib.xtype == XType.point2d and len(value) > 2:
                     value = value[:2]
+                if isinstance(value, str):
+                    assert '\n' not in value, "line break '\\n' not allowed"
+                    assert '\r' not in value, "line break '\\r' not allowed"
                 tag = dxftag(attrib.code, value)
                 tagwriter.write_tag(tag)
         else:

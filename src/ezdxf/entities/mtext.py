@@ -180,8 +180,8 @@ class MText(DXFGraphic):
         tags.remove_tags((1, 3))
 
     def export_mtext(self, tagwriter: 'TagWriter') -> None:
-        # replacing '\n' by '\P' is required, else an invalid DXF file would be created
-        txt = self.text.replace('\n', '\\P')
+        # replacing '\n' and '\r' by '\P' is required, else an invalid DXF file would be created
+        txt = self.text.replace('\n', '\\P').replace('\r', '\\P')
         str_chunks = split_mtext_string(txt, size=250)
         if len(str_chunks) == 0:
             str_chunks.append("")

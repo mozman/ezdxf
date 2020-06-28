@@ -150,6 +150,15 @@ def test_write_dxf(txt, ver):
     assert collector.has_all_tags(collector2)
 
 
+def test_do_not_write_line_endings():
+    txt = Text()
+    txt.dxf.text = 'test\ntext\r'
+    collector = TagCollector(optional=True)
+    txt.export_dxf(collector)
+    for tag in collector.tags:
+        if tag[0] == 1:
+            assert tag[1] == 'testtext'
+
 @pytest.fixture
 def text():
     return Text.new(handle='ABBA', owner='0')

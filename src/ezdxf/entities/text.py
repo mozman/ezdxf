@@ -291,4 +291,5 @@ def plain_text(text: str) -> str:
 
 
 def safe_text(t: str):
-    return t.replace('\n', '')
+    # Writing '\n' or '\r' into DXF files creates invalid files.
+    return t.replace('\n', '').replace('\r', '')
