@@ -65,7 +65,7 @@ developing this add-on) great care has been taken to achieve similar behavior in
   measurements are taken of the font being used to match text as closely as possible.
 - Visibility determination (based on which layers are visible) should match AutoCAD
 
-see `ezdxf.addons.drawing.cad_viewer` for an advanced use of the module. See `ezdxf.addons.drawing.draw_cad`
+see ``examples/addons/drawing/cad_viewer.py`` for an advanced use of the module. See ``examples/addons/drawing/draw_cad.py``
 for a simple use of the module.
 
 see `drawing.md` in the ezdxf repository for additional behaviours documented during the development of this add-on.
@@ -90,9 +90,6 @@ Limitations
 
 Future Possible Improvements
 ----------------------------
-- remove all dependence on getting the direction from the extrusion vector.
-  `get_rotation_direction_from_extrusion_vector()` is only correct for 2D drawings
-  so this is the main limitation for drawing in 3D
 - render polylines using draw_line_string if it does not contain any arcs
 - pass the font to backend if available
 - deal with nested polygons/hatches by triangulating them: Triangulation_

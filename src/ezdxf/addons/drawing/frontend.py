@@ -9,13 +9,12 @@ from typing import Iterable, cast, Union, List, Callable
 from ezdxf.addons.drawing.backend_interface import DrawingBackend
 from ezdxf.addons.drawing.properties import RenderContext, VIEWPORT_COLOR, Properties
 from ezdxf.addons.drawing.text import simplified_text_chunks
-from ezdxf.addons.drawing.utils import normalize_angle, get_rotation_direction_from_extrusion_vector, \
-    get_draw_angles, get_tri_or_quad_points
-from ezdxf.entities import DXFGraphic, Insert, MText, Dimension, Polyline, LWPolyline, Face3d, Solid, Trace, \
+from ezdxf.addons.drawing.utils import normalize_angle, get_tri_or_quad_points, get_draw_angles
+from ezdxf.entities import DXFGraphic, Insert, MText, Polyline, LWPolyline, Face3d, Solid, Trace, \
     Spline, Hatch, Attrib, Text, Ellipse, Polyface
 from ezdxf.entities.dxfentity import DXFTagStorage
 from ezdxf.layouts import Layout
-from ezdxf.math import Vector, Z_AXIS, ConstructionEllipse, linspace
+from ezdxf.math import Vector, Z_AXIS, ConstructionEllipse, linspace, OCS
 from ezdxf.render import MeshBuilder
 
 __all__ = ['Frontend']
@@ -186,8 +185,7 @@ class Frontend:
         elif dxftype == 'ARC':
             center = _get_arc_wcs_center(entity)
             diameter = 2 * dxf.radius
-            direction = get_rotation_direction_from_extrusion_vector(dxf.extrusion)
-            draw_angles = get_draw_angles(direction, radians(dxf.start_angle), radians(dxf.end_angle))
+            draw_angles = get_draw_angles(radians(dxf.start_angle), radians(dxf.end_angle), Vector(dxf.extrusion))
             self.out.draw_arc(center, diameter, diameter, 0, draw_angles, properties)
 
         elif dxftype == 'ELLIPSE':
@@ -197,8 +195,7 @@ class Frontend:
             major_axis_angle = normalize_angle(math.atan2(dxf.major_axis.y, dxf.major_axis.x))
             width = 2 * dxf.major_axis.magnitude
             height = dxf.ratio * width  # ratio == height / width
-            direction = get_rotation_direction_from_extrusion_vector(dxf.extrusion)
-            draw_angles = get_draw_angles(direction, dxf.start_param, dxf.end_param)
+            draw_angles = get_draw_angles(dxf.start_param, dxf.end_param, Vector(dxf.extrusion))
             self.out.draw_arc(dxf.center, width, height, major_axis_angle, draw_angles, properties)
         else:
             raise TypeError(dxftype)
