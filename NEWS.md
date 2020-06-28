@@ -51,9 +51,9 @@ Version 0.13b5 - dev
 - NEW: `ezdxf.math.rational_spline_from_arc()` returns a rational B-spline for a circular arc
 - NEW: `ezdxf.math.rational_spline_from_ellipse()` returns a rational B-spline for an elliptic arc
 - NEW: `ezdxf.math.local_cubic_bspline_interpolation()`
-- NEW: `ezdxf.math.cubic_bezier_from_arc()` returns an approximation for a circular 2D arc by multiple cubic Bézier curves
-- NEW: `ezdxf.math.cubic_bezier_from_ellipse()` returns an approximation for an elliptic arc by multiple cubic Bézier curves
-- NEW: `ezdxf.math.cubic_bezier_interpolation()` returns an interpolation curve for arbitrary data points as multiple cubic Bézier curves
+- NEW: `ezdxf.math.cubic_bezier_from_arc()` returns an approximation for a circular 2D arc by multiple cubic Bezier curves
+- NEW: `ezdxf.math.cubic_bezier_from_ellipse()` returns an approximation for an elliptic arc by multiple cubic Bezier curves
+- NEW: `ezdxf.math.cubic_bezier_interpolation()` returns an interpolation curve for arbitrary data points as multiple cubic Bezier curves
 - NEW: `ezdxf.math.LUDecomposition` linear equation solver, for more linear algebra tools see module `ezdxf.math.linalg`
 - NEW: `ezdxf.render.random_2d_path()` generate random 2D path for testing purpose
 - NEW: `ezdxf.render.random_3d_path()` generate random 3D path for testing purpose
@@ -66,8 +66,8 @@ Version 0.13b5 - dev
 - NEW: `BSpline.transform()` transform B-spline by transformation matrix inplace
 - NEW: `BSpline.to_nurbs_python_curve()` and `BSpline.from_nurbs_python_curve()`, interface to 
   [NURBS-Python](https://github.com/orbingol/NURBS-Python), `NURBS-Python` is now a testing dependency
-- NEW: `BSpline.bezier_decomposition()` decompose a non-rational B-spline into multiple Bézier curves 
-- NEW: `BSpline.cubic_bezier_approximation()` approximate any B-spline by multiple cubic Bézier curves 
+- NEW: `BSpline.bezier_decomposition()` decompose a non-rational B-spline into multiple Bezier curves 
+- NEW: `BSpline.cubic_bezier_approximation()` approximate any B-spline by multiple cubic Bezier curves 
 - CHANGE: `Hatch` full support for rotated patterns.
 - CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
 - CHANGE: `Hatch.path.add_arc` renamed argument `is_counter_clockwise` to `ccw`, type `bool` and `True` by default 
