@@ -106,6 +106,8 @@ class Text(DXFGraphic):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text.name)
         # for all DXF versions
+        if self.dxf.hasattr('text'):
+            self.dxf.text = safe_text(self.dxf.text)
         self.dxf.export_dxf_attribs(tagwriter, [
             'insert', 'height', 'text', 'thickness', 'rotation', 'oblique', 'style', 'width', 'text_generation_flag',
             'halign', 'align_point', 'extrusion'
@@ -270,7 +272,7 @@ class Text(DXFGraphic):
 
 def plain_text(text: str) -> str:
     chars = []
-    raw_chars = list(reversed(text))
+    raw_chars = list(reversed(safe_text(text)))
     while len(raw_chars):
         char = raw_chars.pop()
         if char == '%':  # special characters
@@ -286,3 +288,7 @@ def plain_text(text: str) -> str:
             chars.append(char)
 
     return "".join(chars)
+
+
+def safe_text(t: str):
+    return t.replace('\n', '')
