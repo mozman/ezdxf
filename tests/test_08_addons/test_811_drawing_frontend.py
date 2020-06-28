@@ -139,7 +139,7 @@ def test_polyline(msp, basic):
     assert result[1][0] == 'line'
 
 
-def test_arc(msp, basic):
+def test_2d_arc(msp, basic):
     msp.add_circle((0, 0), radius=2)
     msp.add_arc((0, 0), radius=2, start_angle=30, end_angle=60, dxfattribs={'layer': 'Test1'})
     msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1, end_param=2, dxfattribs={'layer': 'Test1'})
@@ -151,12 +151,46 @@ def test_arc(msp, basic):
     assert result[2][0] == 'arc'
 
 
-def test_text(msp, basic):
+def test_3d_circle(msp, basic):
+    basic.circle_resolution = 30
+    msp.add_circle((0, 0), radius=2,
+                   dxfattribs={'extrusion': (0, 1, 1)})
+    basic.draw_entities(msp)
+    result = basic.out.collector
+    assert len(result) == 30
+
+
+def test_3d_arc(msp, basic):
+    basic.circle_resolution = 120
+    msp.add_arc((0, 0), radius=2, start_angle=30, end_angle=60,
+                dxfattribs={'extrusion': (0, 1, 1)})
+    basic.draw_entities(msp)
+    result = basic.out.collector
+    assert len(result) == 10
+
+
+def test_3d_ellipse(msp, basic):
+    basic.circle_resolution = 120
+    msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1, end_param=2,
+                    dxfattribs={'extrusion': (0, 1, 1)})
+    basic.draw_entities(msp)
+    result = basic.out.collector
+    assert len(result) == 19
+
+
+def test_2d_text(msp, basic):
     msp.add_text('test\ntest')  # \n shouldn't be  problem
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 1
     assert result[0][0] == 'text'
+
+
+def test_ignore_3d_text(msp, basic):
+    msp.add_text('test', dxfattribs={'extrusion': (0, 1, 1)})
+    basic.draw_entities(msp)
+    result = basic.out.collector
+    assert len(result) == 0
 
 
 def test_mtext(msp, basic):

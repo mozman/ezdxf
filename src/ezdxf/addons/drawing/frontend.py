@@ -12,18 +12,18 @@ from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.utils import normalize_angle, get_rotation_direction_from_extrusion_vector, \
     get_draw_angles, get_tri_or_quad_points
 from ezdxf.entities import DXFGraphic, Insert, MText, Dimension, Polyline, LWPolyline, Face3d, Mesh, Solid, Trace, \
-    Spline, Hatch, Attrib, Text
+    Spline, Hatch, Attrib, Text, Ellipse
 from ezdxf.entities.dxfentity import DXFTagStorage
 from ezdxf.layouts import Layout
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Z_AXIS, ConstructionEllipse, linspace
 
 __all__ = ['Frontend']
-
+NEG_Z_AXIS = -Z_AXIS
 INFINITE_LINE_LENGTH = 25
 
 LINE_ENTITY_TYPES = {'LINE', 'XLINE', 'RAY', 'MESH'}
 TEXT_ENTITY_TYPES = {'TEXT', 'MTEXT', 'ATTRIB'}
-CURVE_ENTITY_TYPES = {'CIRCLE', 'ARC', 'ELLIPSE', 'SPLINE'}
+CURVE_ENTITY_TYPES = {'CIRCLE', 'ARC', 'ELLIPSE'}
 MISC_ENTITY_TYPES = {'POINT', '3DFACE', 'SOLID', 'TRACE', 'MESH', 'HATCH', 'VIEWPORT'}
 COMPOSITE_ENTITY_TYPES = {
     # Unsupported types, represented as DXFTagStorage(), will sorted out in Frontend.draw_entities().
@@ -47,10 +47,19 @@ class Frontend:
                            and check the visibility of the DXF entity by itself.
 
     """
+
     def __init__(self, ctx: RenderContext, out: DrawingBackend, visibility_filter: Callable[[DXFGraphic], bool] = None):
         self.ctx = ctx
         self.out = out
         self.visibility_filter = visibility_filter
+        # approximate a full circle by `n` segments, arcs have proportional less segments
+        self.circle_resolution = 100
+        # The sagitta (also known as the versine) is a line segment drawn perpendicular to a chord, between the
+        # midpoint of that chord and the arc of the circle. https://en.wikipedia.org/wiki/Circle
+        # not used yet!
+        self.approximation_max_sagitta = 0.01
+        # approximate splines by `n` segments
+        self.spline_resolution = 100
 
     def draw_layout(self, layout: 'Layout', finalize: bool = True) -> None:
         self.draw_entities(layout)
@@ -78,9 +87,18 @@ class Frontend:
         if dxftype in LINE_ENTITY_TYPES:
             self.draw_line_entity(entity)
         elif dxftype in TEXT_ENTITY_TYPES:
-            self.draw_text_entity(entity)
+            if is_spatial(Vector(entity.dxf.extrusion)):
+                self.draw_text_entity_3d(entity)
+            else:
+                self.draw_text_entity_2d(entity)
+
         elif dxftype in CURVE_ENTITY_TYPES:
-            self.draw_curve_entity(entity)
+            if is_spatial(Vector(entity.dxf.extrusion)):
+                self.draw_elliptic_arc_entity_3d(entity)
+            else:
+                self.draw_elliptic_arc_entity_2d(entity)
+        elif dxftype == 'SPLINE':
+            self.draw_spline_entity(entity)
         elif dxftype in MISC_ENTITY_TYPES:
             self.draw_misc_entity(entity)
         elif dxftype in COMPOSITE_ENTITY_TYPES:
@@ -119,9 +137,8 @@ class Frontend:
             properties.is_visible = self.visibility_filter(entity)
         return properties
 
-    def draw_text_entity(self, entity: DXFGraphic) -> None:
+    def draw_text_entity_2d(self, entity: DXFGraphic) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
-        # todo: how to handle text placed in 3D (extrusion != (0, 0, [1, -1]))
         properties = self._resolve_properties(entity)
         if dxftype in ('TEXT', 'MTEXT', 'ATTRIB'):
             entity = cast(Union[Text, MText, Attrib], entity)
@@ -130,47 +147,76 @@ class Frontend:
         else:
             raise TypeError(dxftype)
 
-    def draw_curve_entity(self, entity: DXFGraphic) -> None:
-        # todo: how to handle ARC and CIRCLE placed in 3D (extrusion != (0, 0, [1, -1]))
-        d, dxftype = entity.dxf, entity.dxftype()
+    def draw_text_entity_3d(self, entity: DXFGraphic) -> None:
+        return  # not supported
+
+    def draw_elliptic_arc_entity_3d(self, entity: DXFGraphic) -> None:
+        dxf, dxftype = entity.dxf, entity.dxftype()
+        properties = self._resolve_properties(entity)
+
+        if dxftype in {'CIRCLE', 'ARC'}:
+            center = dxf.center  # ocs transformation in .from_arc()
+            radius = dxf.radius
+            if dxftype == 'CIRCLE':
+                start_angle = 0
+                end_angle = 360
+            else:
+                start_angle = dxf.start_angle
+                end_angle = dxf.end_angle
+            e = ConstructionEllipse.from_arc(center, radius, dxf.extrusion, start_angle, end_angle)
+        elif dxftype == 'ELLIPSE':
+            e = cast(Ellipse, entity).construction_tool()
+        else:
+            raise TypeError(dxftype)
+
+        # Approximate as 3D polyline
+        segments = int((e.end_param - e.start_param) / math.tau * self.circle_resolution)
+        points = list(e.vertices(linspace(e.start_param, e.end_param, max(4, segments + 1))))
+        self.out.start_polyline()
+        for a, b in zip(points, points[1:]):
+            self.out.draw_line(a, b, properties)
+        self.out.end_polyline()
+
+    def draw_elliptic_arc_entity_2d(self, entity: DXFGraphic) -> None:
+        dxf, dxftype = entity.dxf, entity.dxftype()
         properties = self._resolve_properties(entity)
         if dxftype == 'CIRCLE':
             center = _get_arc_wcs_center(entity)
-            diameter = 2 * d.radius
+            diameter = 2 * dxf.radius
             self.out.draw_arc(center, diameter, diameter, 0, None, properties)
 
         elif dxftype == 'ARC':
             center = _get_arc_wcs_center(entity)
-            diameter = 2 * d.radius
-            direction = get_rotation_direction_from_extrusion_vector(d.extrusion)
-            draw_angles = get_draw_angles(direction, radians(d.start_angle), radians(d.end_angle))
+            diameter = 2 * dxf.radius
+            direction = get_rotation_direction_from_extrusion_vector(dxf.extrusion)
+            draw_angles = get_draw_angles(direction, radians(dxf.start_angle), radians(dxf.end_angle))
             self.out.draw_arc(center, diameter, diameter, 0, draw_angles, properties)
 
         elif dxftype == 'ELLIPSE':
             # 'param' angles are anticlockwise around the extrusion vector
             # 'param' angles are relative to the major axis angle
             # major axis angle always anticlockwise in global frame
-            major_axis_angle = normalize_angle(math.atan2(d.major_axis.y, d.major_axis.x))
-            width = 2 * d.major_axis.magnitude
-            height = d.ratio * width  # ratio == height / width
-            direction = get_rotation_direction_from_extrusion_vector(d.extrusion)
-            draw_angles = get_draw_angles(direction, d.start_param, d.end_param)
-            self.out.draw_arc(d.center, width, height, major_axis_angle, draw_angles, properties)
-
-        elif dxftype == 'SPLINE':
-            entity = cast(Spline, entity)
-            spline = entity.construction_tool()
-            if self.out.has_spline_support:
-                self.out.draw_spline(spline, properties)
-            else:
-                points = list(spline.approximate(segments=100))
-                self.out.start_polyline()
-                for a, b in zip(points, points[1:]):
-                    self.out.draw_line(a, b, properties)
-                self.out.end_polyline()
-
+            major_axis_angle = normalize_angle(math.atan2(dxf.major_axis.y, dxf.major_axis.x))
+            width = 2 * dxf.major_axis.magnitude
+            height = dxf.ratio * width  # ratio == height / width
+            direction = get_rotation_direction_from_extrusion_vector(dxf.extrusion)
+            draw_angles = get_draw_angles(direction, dxf.start_param, dxf.end_param)
+            self.out.draw_arc(dxf.center, width, height, major_axis_angle, draw_angles, properties)
         else:
             raise TypeError(dxftype)
+
+    def draw_spline_entity(self, entity: DXFGraphic) -> None:
+        assert entity.dxftype() == 'SPLINE'
+        properties = self._resolve_properties(entity)
+        spline = cast(Spline, entity).construction_tool()
+        if self.out.has_spline_support:
+            self.out.draw_spline(spline, properties)
+        else:
+            points = list(spline.approximate(segments=self.spline_resolution))
+            self.out.start_polyline()
+            for a, b in zip(points, points[1:]):
+                self.out.draw_line(a, b, properties)
+            self.out.end_polyline()
 
     def draw_misc_entity(self, entity: DXFGraphic) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
@@ -302,3 +348,7 @@ def _get_arc_wcs_center(arc: DXFGraphic) -> Vector:
         return ocs.to_wcs(center)
     else:
         return center
+
+
+def is_spatial(v: Vector) -> bool:
+    return not v.isclose(Z_AXIS) and not v.isclose(NEG_Z_AXIS)
