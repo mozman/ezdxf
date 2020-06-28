@@ -6,6 +6,7 @@ import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext, Properties
 from ezdxf.addons.drawing.backend_interface import DrawingBackend, Radians
 from ezdxf.addons.drawing.text import FontMeasurements
+from ezdxf.render.forms import cube
 from ezdxf.math import Vector, Matrix44, BSpline
 
 
@@ -226,6 +227,26 @@ def test_extended_spline(msp, extended):
     result = extended.out.collector
     assert len(result) == 1
     assert result[0][0] == 'spline'
+
+
+def test_mesh(msp, basic):
+    c = cube()
+    c.render(msp)
+    basic.draw_entities(msp)
+    result = basic.out.collector
+    assert len(result) == 6
+    entities = {e[0] for e in result}
+    assert entities == {'filled_polygon'}
+
+
+def test_polyface(msp, basic):
+    c = cube()
+    c.render_polyface(msp)
+    basic.draw_entities(msp)
+    result = basic.out.collector
+    assert len(result) == 6
+    entities = {e[0] for e in result}
+    assert entities == {'filled_polygon'}
 
 
 if __name__ == '__main__':

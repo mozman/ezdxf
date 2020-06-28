@@ -88,7 +88,7 @@ class MeshBuilder:
 
         """
         start_index = len(self.vertices)
-        self.vertices.extend(vertices)
+        self.vertices.extend(Vector.generate(vertices))
         return tuple(range(start_index, len(self.vertices)))
 
     def add_mesh(self,
@@ -110,7 +110,7 @@ class MeshBuilder:
 
         """
         if mesh is not None:
-            vertices = mesh.vertices
+            vertices = Vector.list(mesh.vertices)
             faces = mesh.faces
             edges = mesh.edges
 

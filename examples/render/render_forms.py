@@ -1,9 +1,12 @@
-# Copyright (c) 2018-2019 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 import math
+from pathlib import Path
 import ezdxf
 from ezdxf.render import forms
 from itertools import cycle
+
+DIR = Path('~/desktop/Outbox').expanduser()
 
 
 def write_mesh(filename, mesh):
@@ -50,6 +53,6 @@ def create_gear(filename, teeth=20, outside_radius=10, top_width=2, bottom_width
 
 
 if __name__ == '__main__':
-    build_cylinder("forms_cylinder_16.dxf", sides=16)
-    build_rotation_form("forms_rotate_profile_32.dxf", sides=32)
-    create_gear('gear.dxf')
+    build_cylinder(DIR / "forms_cylinder_16.dxf", sides=16)
+    build_rotation_form(DIR / "forms_rotate_profile_32.dxf", sides=32)
+    create_gear(DIR / 'gear.dxf')

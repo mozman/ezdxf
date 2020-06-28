@@ -11,20 +11,17 @@ from ezdxf.addons.drawing.properties import RenderContext, VIEWPORT_COLOR, Prope
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.utils import normalize_angle, get_rotation_direction_from_extrusion_vector, \
     get_draw_angles, get_tri_or_quad_points
-from ezdxf.entities import DXFGraphic, Insert, MText, Dimension, Polyline, LWPolyline, Face3d, Mesh, Solid, Trace, \
-    Spline, Hatch, Attrib, Text, Ellipse
+from ezdxf.entities import DXFGraphic, Insert, MText, Dimension, Polyline, LWPolyline, Face3d, Solid, Trace, \
+    Spline, Hatch, Attrib, Text, Ellipse, Polyface
 from ezdxf.entities.dxfentity import DXFTagStorage
 from ezdxf.layouts import Layout
 from ezdxf.math import Vector, Z_AXIS, ConstructionEllipse, linspace
+from ezdxf.render import MeshBuilder
 
 __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
 INFINITE_LINE_LENGTH = 25
 
-LINE_ENTITY_TYPES = {'LINE', 'XLINE', 'RAY', 'MESH'}
-TEXT_ENTITY_TYPES = {'TEXT', 'MTEXT', 'ATTRIB'}
-CURVE_ENTITY_TYPES = {'CIRCLE', 'ARC', 'ELLIPSE'}
-MISC_ENTITY_TYPES = {'POINT', '3DFACE', 'SOLID', 'TRACE', 'MESH', 'HATCH', 'VIEWPORT'}
 COMPOSITE_ENTITY_TYPES = {
     # Unsupported types, represented as DXFTagStorage(), will sorted out in Frontend.draw_entities().
     'INSERT', 'POLYLINE', 'LWPOLYLINE',
@@ -84,25 +81,34 @@ class Frontend:
     def draw_entity(self, entity: DXFGraphic, parent_stack: List[DXFGraphic]) -> None:
         dxftype = entity.dxftype()
         self.out.set_current_entity(entity, tuple(parent_stack))
-        if dxftype in LINE_ENTITY_TYPES:
+        if dxftype in {'LINE', 'XLINE', 'RAY'}:
             self.draw_line_entity(entity)
-        elif dxftype in TEXT_ENTITY_TYPES:
+        elif dxftype in {'TEXT', 'MTEXT', 'ATTRIB'}:
             if is_spatial(Vector(entity.dxf.extrusion)):
                 self.draw_text_entity_3d(entity)
             else:
                 self.draw_text_entity_2d(entity)
-
-        elif dxftype in CURVE_ENTITY_TYPES:
+        elif dxftype in {'CIRCLE', 'ARC', 'ELLIPSE'}:
             if is_spatial(Vector(entity.dxf.extrusion)):
                 self.draw_elliptic_arc_entity_3d(entity)
             else:
                 self.draw_elliptic_arc_entity_2d(entity)
         elif dxftype == 'SPLINE':
             self.draw_spline_entity(entity)
-        elif dxftype in MISC_ENTITY_TYPES:
-            self.draw_misc_entity(entity)
+        elif dxftype == 'POINT':
+            self.draw_point_entity(entity)
+        elif dxftype == 'HATCH':
+            self.draw_hatch_entity(entity)
+        elif dxftype == 'MESH':
+            self.draw_mesh_entity(entity)
+        elif dxftype in {'3DFACE', 'SOLID', 'TRACE'}:
+            self.draw_solid_entity(entity)
+        elif dxftype in {'POLYLINE', 'LWPOLYLINE'}:
+            self.draw_polyline_entity(entity, parent_stack)
         elif dxftype in COMPOSITE_ENTITY_TYPES:
             self.draw_composite_entity(entity, parent_stack)
+        elif dxftype == 'VIEWPORT':
+            self.draw_viewport_entity(entity)
         else:
             self.out.ignored_entity(entity)
         self.out.set_current_entity(None)
@@ -120,14 +126,6 @@ class Frontend:
                 self.out.draw_line(start - delta / 2, start + delta / 2, properties)
             elif dxftype == 'RAY':
                 self.out.draw_line(start, start + delta, properties)
-
-        elif dxftype == 'MESH':
-            entity = cast(Mesh, entity)
-            data = entity.get_data()  # unpack into more readable format
-            points = [Vector(x, y, z) for x, y, z in data.vertices]
-            for a, b in data.edges:
-                self.out.draw_line(points[a], points[b], properties)
-
         else:
             raise TypeError(dxftype)
 
@@ -206,7 +204,6 @@ class Frontend:
             raise TypeError(dxftype)
 
     def draw_spline_entity(self, entity: DXFGraphic) -> None:
-        assert entity.dxftype() == 'SPLINE'
         properties = self._resolve_properties(entity)
         spline = cast(Spline, entity).construction_tool()
         if self.out.has_spline_support:
@@ -218,75 +215,107 @@ class Frontend:
                 self.out.draw_line(a, b, properties)
             self.out.end_polyline()
 
-    def draw_misc_entity(self, entity: DXFGraphic) -> None:
-        d, dxftype = entity.dxf, entity.dxftype()
+    def draw_point_entity(self, entity: DXFGraphic) -> None:
         properties = self._resolve_properties(entity)
-        if dxftype == 'POINT':
-            self.out.draw_point(d.location, properties)
+        self.out.draw_point(entity.dxf.location, properties)
 
-        elif dxftype in ('3DFACE', 'SOLID', 'TRACE'):
-            # TRACE is the same thing as SOLID according to the documentation
-            # https://ezdxf.readthedocs.io/en/stable/dxfentities/trace.html
-            # except TRACE has OCS coordinates and SOLID has WCS coordinates.
-            entity = cast(Union[Face3d, Solid, Trace], entity)
-            points = get_tri_or_quad_points(entity)
-            if dxftype == 'TRACE' and d.hasattr('extrusion'):
-                ocs = entity.ocs()
-                points = list(ocs.points_to_wcs(points))
-            if dxftype in ('SOLID', 'TRACE'):
-                self.out.draw_filled_polygon(points, properties)
-            else:
-                for a, b in zip(points, points[1:]):
-                    self.out.draw_line(a, b, properties)
-
-        elif dxftype == 'HATCH':
-            entity = cast(Hatch, entity)
+    def draw_solid_entity(self, entity: DXFGraphic) -> None:
+        dxf, dxftype = entity.dxf, entity.dxftype()
+        properties = self._resolve_properties(entity)
+        # TRACE is the same thing as SOLID according to the documentation
+        # https://ezdxf.readthedocs.io/en/stable/dxfentities/trace.html
+        # except TRACE has OCS coordinates and SOLID has WCS coordinates.
+        entity = cast(Union[Face3d, Solid, Trace], entity)
+        points = get_tri_or_quad_points(entity)
+        if dxftype == 'TRACE' and dxf.hasattr('extrusion'):
             ocs = entity.ocs()
-            # all OCS coordinates have the same z-axis stored as vector (0, 0, z), default (0, 0, 0)
-            elevation = entity.dxf.elevation.z
-            paths = copy.deepcopy(entity.paths)
-            paths.polyline_to_edge_path(just_with_bulge=False)
-            paths.all_to_line_edges(spline_factor=10)
-            for p in paths:
-                assert p.PATH_TYPE == 'EdgePath'
-                vertices = []
-                last_vertex = None
-                for e in p.edges:
-                    assert e.EDGE_TYPE == 'LineEdge'
-                    # WCS transformation is only done if the extrusion vector is != (0, 0, 1)
-                    # else to_wcs() returns just the input - no big speed penalty!
-                    v = ocs.to_wcs(Vector(e.start[0], e.start[1], elevation))
-                    if last_vertex is not None and not last_vertex.isclose(v):
-                        print(f'warning: hatch edges not contiguous: {last_vertex} -> {e.start}, {e.end}')
-                        vertices.append(last_vertex)
-                    vertices.append(v)
-                    last_vertex = ocs.to_wcs(Vector(e.end[0], e.end[1], elevation)).replace(z=0.0)
-                if vertices:
-                    if last_vertex.isclose(vertices[0]):
-                        vertices.append(last_vertex)
-                    self.out.draw_filled_polygon(vertices, properties)
-
-        elif dxftype == 'VIEWPORT':
-            view_vector: Vector = d.view_direction_vector
-            mag = view_vector.magnitude
-            if math.isclose(mag, 0.0):
-                print('warning: viewport with null view vector')
-                return
-            view_vector /= mag
-            if not math.isclose(view_vector.dot(Vector(0, 0, 1)), 1.0):
-                print(f'cannot render viewport with non-perpendicular view direction: {d.view_direction_vector}')
-                return
-
-            cx, cy = d.center.x, d.center.y
-            dx = d.width / 2
-            dy = d.height / 2
-            minx, miny = cx - dx, cy - dy
-            maxx, maxy = cx + dx, cy + dy
-            points = [(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy), (minx, miny)]
-            self.out.draw_filled_polygon([Vector(x, y, 0) for x, y in points], VIEWPORT_COLOR)
-
+            points = list(ocs.points_to_wcs(points))
+        if dxftype in ('SOLID', 'TRACE'):
+            self.out.draw_filled_polygon(points, properties)
         else:
-            raise TypeError(dxftype)
+            for a, b in zip(points, points[1:]):
+                self.out.draw_line(a, b, properties)
+
+    def draw_hatch_entity(self, entity: DXFGraphic) -> None:
+        properties = self._resolve_properties(entity)
+        entity = cast(Hatch, entity)
+        ocs = entity.ocs()
+        # all OCS coordinates have the same z-axis stored as vector (0, 0, z), default (0, 0, 0)
+        elevation = entity.dxf.elevation.z
+        paths = copy.deepcopy(entity.paths)
+        paths.polyline_to_edge_path(just_with_bulge=False)
+        paths.all_to_line_edges(spline_factor=10)
+        for p in paths:
+            assert p.PATH_TYPE == 'EdgePath'
+            vertices = []
+            last_vertex = None
+            for e in p.edges:
+                assert e.EDGE_TYPE == 'LineEdge'
+                # WCS transformation is only done if the extrusion vector is != (0, 0, 1)
+                # else to_wcs() returns just the input - no big speed penalty!
+                v = ocs.to_wcs(Vector(e.start[0], e.start[1], elevation))
+                if last_vertex is not None and not last_vertex.isclose(v):
+                    print(f'warning: hatch edges not contiguous: {last_vertex} -> {e.start}, {e.end}')
+                    vertices.append(last_vertex)
+                vertices.append(v)
+                last_vertex = ocs.to_wcs(Vector(e.end[0], e.end[1], elevation)).replace(z=0.0)
+            if vertices:
+                if last_vertex.isclose(vertices[0]):
+                    vertices.append(last_vertex)
+                self.out.draw_filled_polygon(vertices, properties)
+
+    def draw_viewport_entity(self, entity: DXFGraphic) -> None:
+        assert entity.dxftype() == 'VIEWPORT'
+        dxf = entity.dxf
+        view_vector: Vector = dxf.view_direction_vector
+        mag = view_vector.magnitude
+        if math.isclose(mag, 0.0):
+            print('warning: viewport with null view vector')
+            return
+        view_vector /= mag
+        if not math.isclose(view_vector.dot(Vector(0, 0, 1)), 1.0):
+            print(f'cannot render viewport with non-perpendicular view direction: {dxf.view_direction_vector}')
+            return
+
+        cx, cy = dxf.center.x, dxf.center.y
+        dx = dxf.width / 2
+        dy = dxf.height / 2
+        minx, miny = cx - dx, cy - dy
+        maxx, maxy = cx + dx, cy + dy
+        points = [(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy), (minx, miny)]
+        self.out.draw_filled_polygon([Vector(x, y, 0) for x, y in points], VIEWPORT_COLOR)
+
+    def draw_mesh_entity(self, entity: DXFGraphic) -> None:
+        properties = self._resolve_properties(entity)
+        builder = MeshBuilder.from_mesh(entity)
+        self.draw_mesh_builder_entity(builder, properties)
+
+    def draw_mesh_builder_entity(self, builder: MeshBuilder, properties: Properties) -> None:
+        for face in builder.faces_as_vertices():
+            # todo: draw 4 edges as mesh face?
+            self.out.draw_filled_polygon(face, properties)
+
+    def draw_polyline_entity(self, entity: DXFGraphic, parent_stack: List[DXFGraphic]):
+        dxftype = entity.dxftype()
+
+        if dxftype == 'POLYLINE':
+            e = cast(Polyface, entity)
+            if e.is_polygon_mesh or e.is_poly_face_mesh:
+                self.draw_mesh_builder_entity(
+                    MeshBuilder.from_polyface(e),
+                    self._resolve_properties(entity),
+                )
+                return
+
+        entity = cast(Union[LWPolyline, Polyline], entity)
+        parent_stack.append(entity)
+        self.out.set_current_entity(entity, tuple(parent_stack))
+        # self.out.start_polyline() todo: virtual entities are not in correct order
+        for child in entity.virtual_entities():
+            self.draw_entity(child, parent_stack)
+        parent_stack.pop()
+        # self.out.end_polyline()
+        self.out.set_current_entity(None)
 
     def draw_composite_entity(self, entity: DXFGraphic, parent_stack: List[DXFGraphic]) -> None:
         dxftype = entity.dxftype()
@@ -306,29 +335,16 @@ class Frontend:
             parent_stack.pop()
             self.ctx.pop_state()
 
-        elif dxftype in ('LWPOLYLINE', 'POLYLINE'):
-            entity = cast(Union[LWPolyline, Polyline], entity)
-            parent_stack.append(entity)
-            self.out.start_polyline()
-            for child in entity.virtual_entities():
-                self.draw_entity(child, parent_stack)
-            parent_stack.pop()
-
-            self.out.set_current_entity(entity, tuple(parent_stack))
-            self.out.end_polyline()
-            self.out.set_current_entity(None)
-
         # DIMENSION, ARC_DIMENSION, LARGE_RADIAL_DIMENSION and ACAD_TABLE
         # All these entities have an associated anonymous geometry block.
         elif hasattr(entity, 'virtual_entities'):
-            entity = cast(Dimension, entity)
             children = []
             try:
                 for child in entity.virtual_entities():
-                    child.transparency = 0.0  # defaults to 1.0 (fully transparent)
+                    child.transparency = 0.0  # todo: defaults to 1.0 (fully transparent)???
                     children.append(child)
             except Exception as e:
-                print(f'Exception {type(e)}({e}) failed to get children of dimension entity: {e}')
+                print(f'Exception {type(e)}({e}) failed to get children of entity: {str(entity)}')
                 return
 
             parent_stack.append(entity)
