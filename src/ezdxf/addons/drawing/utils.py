@@ -25,7 +25,7 @@ def get_draw_angles(start: float, end: float, extrusion: Vector):
         ocs = OCS(extrusion)
         s = ocs.to_wcs(Vector.from_angle(start))
         e = ocs.to_wcs(Vector.from_angle(end))
-        return e.angle % math.tau, s.angle % math.tau
+        return normalize_angle(e.angle), normalize_angle(s.angle)
 
 
 def get_tri_or_quad_points(shape: Union[Face3d, Solid, Trace]) -> List[Vector]:
