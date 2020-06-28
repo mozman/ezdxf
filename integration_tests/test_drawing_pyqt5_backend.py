@@ -1,31 +1,25 @@
-from typing import Dict
-
-import matplotlib.pyplot as plt
+# Created: 06.2020
+# Copyright (c) 2020, Matthew Broadway
+# License: MIT License
 import pytest
-from PyQt5 import QtCore as qc, QtWidgets as qw
 
-from ezdxf.addons.drawing.backend_interface import DrawingBackend
-from ezdxf.addons.drawing.matplotlib_backend import MatplotlibBackend
+qc = pytest.importorskip('PyQt5.QtCore')
+from PyQt5 import QtWidgets as qw
 from ezdxf.addons.drawing.pyqt_backend import PyQtBackend, _buffer_rect
 
 _app = None
 
 
 @pytest.fixture()
-def backends() -> Dict[str, DrawingBackend]:
+def backend():
     global _app
     _app = qw.QApplication([])
     scene = qw.QGraphicsScene()
-    fig, ax = plt.subplots()
-    return dict(
-        pyqt_backend=PyQtBackend(scene),
-        matplotlib_backend=MatplotlibBackend(ax)
-    )
+    return PyQtBackend(scene)
 
 
-def test_get_text_width(backends):
-    for name, backend in backends.items():
-        assert backend.get_text_line_width('   abc', 100) > backend.get_text_line_width('abc', 100)
+def test_get_text_width(backend):
+    assert backend.get_text_line_width('   abc', 100) > backend.get_text_line_width('abc', 100)
 
 
 def test_qrect_buffer():

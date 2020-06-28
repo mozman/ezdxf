@@ -11,8 +11,7 @@ from typing import Optional
 from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
-from ezdxf.addons.drawing.properties import get_layer_color, RenderContext
-from ezdxf.addons.drawing.frontend import Frontend
+from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.pyqt_backend import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFEntityStack
 from ezdxf.drawing import Drawing
@@ -156,10 +155,11 @@ class CadViewer(qw.QMainWindow):
     def _populate_layer_list(self):
         self.layers.blockSignals(True)
         self.layers.clear()
-        for name, layer in self.doc.layers.entries.items():
+        for layer in self._render_context.layers.values():
+            name = layer.layer
             item = qw.QListWidgetItem(name)
             item.setCheckState(qc.Qt.Checked)
-            item.setBackground(qg.QColor(get_layer_color(layer)))
+            item.setBackground(qg.QColor(layer.color))
             self.layers.addItem(item)
         self.layers.blockSignals(False)
 

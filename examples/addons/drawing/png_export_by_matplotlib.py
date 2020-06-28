@@ -4,7 +4,7 @@
 import ezdxf
 from pathlib import Path
 import matplotlib.pyplot as plt
-from ezdxf.addons.drawing.frontend import draw_layout
+from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.matplotlib_backend import MatplotlibBackend
 from ezdxf.math import global_bspline_interpolation
 
@@ -23,6 +23,5 @@ msp.add_spline(dxfattribs={'color': 2}).apply_construction_tool(s)
 fig = plt.figure()
 ax = fig.add_axes([0, 0, 1, 1])
 backend = MatplotlibBackend(ax)
-draw_layout(msp, backend)
-backend.finalize()
+Frontend(RenderContext(doc), backend).draw_layout(msp)
 fig.savefig(DIR / f'{FILE}.png', dpi=300)

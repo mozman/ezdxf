@@ -79,7 +79,7 @@ class DrawingBackend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_font_measurements(self, cap_height: float) -> "FontMeasurements":
+    def get_font_measurements(self, cap_height: float) -> 'FontMeasurements':
         """ note: backends might want to cache the results of these calls """
         raise NotImplementedError
 

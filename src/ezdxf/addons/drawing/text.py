@@ -14,6 +14,9 @@ from ezdxf.math import Matrix44, Vector
 
 """
 Search google for 'typography' or 'font anatomy' for explanations of terms like 'baseline' and 'x-height'
+
+A Visual Guide to the Anatomy of Typography: https://visme.co/blog/type-anatomy/
+Anatomy of a Character: https://www.fonts.com/content/learning/fontology/level-1/type-anatomy/anatomy
 """
 
 

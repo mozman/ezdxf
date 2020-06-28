@@ -5,7 +5,7 @@ from ezdxf.math import Vector, BSpline
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 
-doc = ezdxf.readfile('../../src/ezdxf/addons/drawing/test_files/hatches_2.dxf')
+doc = ezdxf.readfile('../../examples/addons/drawing/test_files/hatches_2.dxf')
 msp = doc.modelspace()
 
 hatch = cast('Hatch', msp.query('HATCH').first)
