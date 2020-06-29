@@ -230,23 +230,25 @@ def test_extended_spline(msp, extended):
 
 
 def test_mesh(msp, basic):
+    # draw mesh as wire frame
     c = cube()
     c.render(msp)
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 6
+    assert len(result) == 24
     entities = {e[0] for e in result}
-    assert entities == {'filled_polygon'}
+    assert entities == {'line'}
 
 
 def test_polyface(msp, basic):
+    # draw mesh as wire frame
     c = cube()
     c.render_polyface(msp)
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 6
+    assert len(result) == 24
     entities = {e[0] for e in result}
-    assert entities == {'filled_polygon'}
+    assert entities == {'line'}
 
 
 if __name__ == '__main__':

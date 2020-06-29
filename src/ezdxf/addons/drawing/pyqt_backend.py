@@ -61,7 +61,7 @@ class _PolylinePath:
         pos = self.path.currentPosition()
         pos = Vector(pos.x(), pos.y(), 0)
         start = component.start_point()
-        jump_distance = pos.distance(start)
+        jump_distance = pos.distance(start.xy)  # compare 2D to 2D
         if jump_distance > 1e-5:
             if not self.first_component:
                 print(f'warning: non-contiguous polyline: {self.current_entity}. '

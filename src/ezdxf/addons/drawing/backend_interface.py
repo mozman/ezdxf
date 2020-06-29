@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, TYPE_CHECKING
+from typing import List, Optional, Tuple, TYPE_CHECKING, Iterable
 
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color, Radians
@@ -57,6 +57,26 @@ class DrawingBackend(ABC):
     def end_polyline(self):
         self._polyline_nesting_depth -= 1
         assert self._polyline_nesting_depth >= 0
+
+    def draw_line_string(self, vertices: Iterable[Vector], close: bool, properties: Properties) -> None:
+        """ Draw efficient multiple lines as connected polyline.
+
+        Override in backend for a more efficient implementation.
+
+        """
+        self.start_polyline()
+        prev = None
+        first = None
+        for vertex in vertices:
+            if prev is None:
+                prev = vertex
+                first = vertex
+                continue
+            self.draw_line(prev, vertex, properties)
+            prev = vertex
+        if close and not prev.isclose(first):
+            self.draw_line(prev, first, properties)
+        self.end_polyline()
 
     @property
     def has_spline_support(self):

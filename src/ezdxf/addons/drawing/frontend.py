@@ -16,6 +16,8 @@ from ezdxf.entities.dxfentity import DXFTagStorage
 from ezdxf.layouts import Layout
 from ezdxf.math import Vector, Z_AXIS, ConstructionEllipse, linspace, OCS
 from ezdxf.render import MeshBuilder
+from ezdxf.render.forms import close_polygon
+
 
 __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
@@ -301,8 +303,7 @@ class Frontend:
 
     def draw_mesh_builder_entity(self, builder: MeshBuilder, properties: Properties) -> None:
         for face in builder.faces_as_vertices():
-            # todo: draw 4 edges as mesh face?
-            self.out.draw_filled_polygon(face, properties)
+            self.out.draw_line_string(face, close=True, properties=properties)
 
     def draw_polyline_entity(self, entity: DXFGraphic):
         dxftype = entity.dxftype()
