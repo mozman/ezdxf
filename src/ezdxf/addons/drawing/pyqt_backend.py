@@ -25,6 +25,7 @@ class _Ellipse(qw.QGraphicsEllipseItem):
 
 class _Point(qw.QAbstractGraphicsShapeItem):
     """ a point which is drawn 'cosmetically' (scale depends on view) """
+
     def __init__(self, x: float, y: float, radius: float, brush: qg.QBrush):
         super().__init__()
         self.pos = qc.QPointF(x, y)
@@ -277,13 +278,7 @@ def _matrix_to_qtransform(matrix: Matrix44) -> qg.QTransform:
     A more correct transformation could be implemented like so:
     https://stackoverflow.com/questions/10629737/convert-3d-4x4-rotation-matrix-into-2d
     """
-    m11, m12, _, _ = matrix.get_row(0)
-    m21, m22, _, _ = matrix.get_row(1)
-    _, _, _, _ = matrix.get_row(2)
-    tx, ty, _, _ = matrix.get_row(3)
-    return qg.QTransform(m11, m12, 0,
-                         m21, m22, 0,
-                         tx, ty, 1)
+    return qg.QTransform(*matrix.get_2d_transformation())
 
 
 def _draw_angles_to_start_and_span(draw_angles: Tuple[float, float]) -> Tuple[float, float]:

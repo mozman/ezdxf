@@ -45,7 +45,7 @@ class Matrix44:
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     )
-    __slots__ = ('matrix', )
+    __slots__ = ('matrix',)
 
     def __init__(self, *args):
         """
@@ -90,6 +90,15 @@ class Matrix44:
 
         return "Matrix44(%s)" % \
                ", ".join(format_row(row) for row in self.rows())
+
+    def get_2d_transformation(self) -> Tuple[float, ...]:
+        """ Returns a the 2D transformation as a row-major matrix in a linear array (tuple).
+
+        A more correct transformation could be implemented like so:
+        https://stackoverflow.com/questions/10629737/convert-3d-4x4-rotation-matrix-into-2d
+        """
+        m = self.matrix
+        return m[0], m[1], 0.0, m[4], m[5], 0.0, m[12], m[13], 1.0
 
     def get_row(self, row: int) -> Tuple[float, ...]:
         """ Get row as list of of four float values.
