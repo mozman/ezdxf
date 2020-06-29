@@ -196,7 +196,7 @@ class CadViewer(qw.QMainWindow):
         for i in range(self.layers.count()):
             layer = self.layers.item(i)
             if layer.checkState() == qc.Qt.Checked:
-                self._visible_layers.add(layer.text().lower())
+                self._visible_layers.add(layer.text())
         self.draw_layout(self._current_layout)
 
     @qc.pyqtSlot()

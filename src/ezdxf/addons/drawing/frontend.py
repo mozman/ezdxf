@@ -45,19 +45,31 @@ class Frontend:
     """
 
     def __init__(self, ctx: RenderContext, out: DrawingBackend, visibility_filter: Callable[[DXFGraphic], bool] = None):
+        # RenderContext contains all information to resolve resources for a specific DXF document.
         self.ctx = ctx
+
+        # DrawingBackend is the interface to the render engine
         self.out = out
+
+        # The `visibility_filter` let you override the visibility of an entity independent from the DXF attributes
         self.visibility_filter = visibility_filter
-        # approximate a full circle by `n` segments, arcs have proportional less segments
-        self.circle_resolution = 100
+
+        # Parents entities of current entity/sub-entity
+        self.parent_stack: List[DXFGraphic] = []
+
+        # Approximate a full circle by `n` segments, arcs have proportional less segments
+        self.circle_approximation_count = 128
+
+        # Count of spline approximation segments = count of control points x factor
+        self.spline_approximation_factor = 16
+
         # The sagitta (also known as the versine) is a line segment drawn perpendicular to a chord, between the
         # midpoint of that chord and the arc of the circle. https://en.wikipedia.org/wiki/Circle
-        # not used yet!
+        # not used yet! Could be used for all curves CIRCLE, ARC, ELLIPSE and SPLINE
         self.approximation_max_sagitta = 0.01
-        # approximate splines by `n` segments
-        self.spline_resolution = 100
 
     def draw_layout(self, layout: 'Layout', finalize: bool = True) -> None:
+        self.parent_stack = []
         self.draw_entities(layout)
         self.out.set_background(self.ctx.current_layout.background_color)
         if finalize:
@@ -72,14 +84,14 @@ class Frontend:
             if self.visibility_filter:
                 # visibility depends only on filter result
                 if self.visibility_filter(entity):
-                    self.draw_entity(entity, [])
+                    self.draw_entity(entity)
             # visibility depends only from DXF properties and layer state
             elif self.ctx.is_visible(entity):
-                self.draw_entity(entity, [])
+                self.draw_entity(entity)
 
-    def draw_entity(self, entity: DXFGraphic, parent_stack: List[DXFGraphic]) -> None:
+    def draw_entity(self, entity: DXFGraphic) -> None:
         dxftype = entity.dxftype()
-        self.out.set_current_entity(entity, tuple(parent_stack))
+        self.out.set_current_entity(entity, tuple(self.parent_stack))
         if dxftype in {'LINE', 'XLINE', 'RAY'}:
             self.draw_line_entity(entity)
         elif dxftype in {'TEXT', 'MTEXT', 'ATTRIB'}:
@@ -103,9 +115,9 @@ class Frontend:
         elif dxftype in {'3DFACE', 'SOLID', 'TRACE'}:
             self.draw_solid_entity(entity)
         elif dxftype in {'POLYLINE', 'LWPOLYLINE'}:
-            self.draw_polyline_entity(entity, parent_stack)
+            self.draw_polyline_entity(entity)
         elif dxftype in COMPOSITE_ENTITY_TYPES:
-            self.draw_composite_entity(entity, parent_stack)
+            self.draw_composite_entity(entity)
         elif dxftype == 'VIEWPORT':
             self.draw_viewport_entity(entity)
         else:
@@ -167,7 +179,7 @@ class Frontend:
             raise TypeError(dxftype)
 
         # Approximate as 3D polyline
-        segments = int((e.end_param - e.start_param) / math.tau * self.circle_resolution)
+        segments = int((e.end_param - e.start_param) / math.tau * self.circle_approximation_count)
         points = list(e.vertices(linspace(e.start_param, e.end_param, max(4, segments + 1))))
         self.out.start_polyline()
         for a, b in zip(points, points[1:]):
@@ -206,7 +218,9 @@ class Frontend:
         if self.out.has_spline_support:
             self.out.draw_spline(spline, properties)
         else:
-            points = list(spline.approximate(segments=self.spline_resolution))
+            points = list(spline.approximate(
+                segments=self.spline_approximation_factor * len(spline.control_points))
+            )
             self.out.start_polyline()
             for a, b in zip(points, points[1:]):
                 self.out.draw_line(a, b, properties)
@@ -292,7 +306,7 @@ class Frontend:
             # todo: draw 4 edges as mesh face?
             self.out.draw_filled_polygon(face, properties)
 
-    def draw_polyline_entity(self, entity: DXFGraphic, parent_stack: List[DXFGraphic]):
+    def draw_polyline_entity(self, entity: DXFGraphic):
         dxftype = entity.dxftype()
 
         if dxftype == 'POLYLINE':
@@ -305,31 +319,33 @@ class Frontend:
                 return
 
         entity = cast(Union[LWPolyline, Polyline], entity)
-        parent_stack.append(entity)
-        self.out.set_current_entity(entity, tuple(parent_stack))
+        self.parent_stack.append(entity)
+        self.out.set_current_entity(entity, tuple(self.parent_stack))
         # self.out.start_polyline() todo: virtual entities are not in correct order
         for child in entity.virtual_entities():
-            self.draw_entity(child, parent_stack)
-        parent_stack.pop()
+            # all child entities have the same properties as the parent,
+            # no visibility check required:
+            self.draw_entity(child)
+        self.parent_stack.pop()
         # self.out.end_polyline()
         self.out.set_current_entity(None)
 
-    def draw_composite_entity(self, entity: DXFGraphic, parent_stack: List[DXFGraphic]) -> None:
+    def draw_composite_entity(self, entity: DXFGraphic) -> None:
         dxftype = entity.dxftype()
         if dxftype == 'INSERT':
             entity = cast(Insert, entity)
             self.ctx.push_state(self._resolve_properties(entity))
-            parent_stack.append(entity)
-            for attrib in entity.attribs:
-                self.draw_entity(attrib, parent_stack)
+            self.parent_stack.append(entity)
+            # visibility check is required:
+            self.draw_entities(entity.attribs)
             try:
                 children = list(entity.virtual_entities())
             except Exception as e:
                 print(f'Exception {type(e)}({e}) failed to get children of insert entity: {e}')
                 return
-            for child in children:
-                self.draw_entity(child, parent_stack)
-            parent_stack.pop()
+            # visibility check is required:
+            self.draw_entities(children)
+            self.parent_stack.pop()
             self.ctx.pop_state()
 
         # DIMENSION, ARC_DIMENSION, LARGE_RADIAL_DIMENSION and ACAD_TABLE
@@ -344,10 +360,10 @@ class Frontend:
                 print(f'Exception {type(e)}({e}) failed to get children of entity: {str(entity)}')
                 return
 
-            parent_stack.append(entity)
-            for child in children:
-                self.draw_entity(child, parent_stack)
-            parent_stack.pop()
+            self.parent_stack.append(entity)
+            # visibility check is required:
+            self.draw_entities(children)
+            self.parent_stack.pop()
 
         else:
             raise TypeError(dxftype)

@@ -106,7 +106,7 @@ class _BufferedArc:
 class PyQtBackend(DrawingBackend):
     def __init__(self,
                  scene: qw.QGraphicsScene,
-                 point_radius: float = 2.0,
+                 point_radius: float = 0.5,
                  *,
                  draw_individual_polyline_elements: bool = False,
                  debug_draw_rect: bool = False):

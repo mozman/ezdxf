@@ -32,7 +32,7 @@ class BasicBackend(DrawingBackend):
         self.collector.append(('text', transform, properties))
 
     def get_font_measurements(self, cap_height: float) -> FontMeasurements:
-        return FontMeasurements(baseline=0.0, cap_top=1.0, x_top=0.0, bottom=-0.2)
+        return FontMeasurements(baseline=0.0, cap_top=1.0, x_top=0.5, bottom=-0.2)
 
     def set_background(self, color: str) -> None:
         self.collector.append(('bgcolor', color))
@@ -153,7 +153,7 @@ def test_2d_arc(msp, basic):
 
 
 def test_3d_circle(msp, basic):
-    basic.circle_resolution = 30
+    basic.circle_approximation_count = 30
     msp.add_circle((0, 0), radius=2,
                    dxfattribs={'extrusion': (0, 1, 1)})
     basic.draw_entities(msp)
@@ -162,7 +162,7 @@ def test_3d_circle(msp, basic):
 
 
 def test_3d_arc(msp, basic):
-    basic.circle_resolution = 120
+    basic.circle_approximation_count = 120
     msp.add_arc((0, 0), radius=2, start_angle=30, end_angle=60,
                 dxfattribs={'extrusion': (0, 1, 1)})
     basic.draw_entities(msp)
@@ -171,7 +171,7 @@ def test_3d_arc(msp, basic):
 
 
 def test_3d_ellipse(msp, basic):
-    basic.circle_resolution = 120
+    basic.circle_approximation_count = 120
     msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1, end_param=2,
                     dxfattribs={'extrusion': (0, 1, 1)})
     basic.draw_entities(msp)
