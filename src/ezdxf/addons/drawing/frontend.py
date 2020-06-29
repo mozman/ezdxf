@@ -18,7 +18,6 @@ from ezdxf.math import Vector, Z_AXIS, ConstructionEllipse, linspace, OCS
 from ezdxf.render import MeshBuilder
 from ezdxf.render.forms import close_polygon
 
-
 __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
 INFINITE_LINE_LENGTH = 25
@@ -318,15 +317,31 @@ class Frontend:
                 return
 
         entity = cast(Union[LWPolyline, Polyline], entity)
+        if not entity.has_arc:
+            properties = self._resolve_properties(entity)
+            if dxftype == 'LWPOLYLINE':
+                self.out.draw_line_string(Vector.generate(entity.vertices_in_wcs()), close=entity.closed,
+                                          properties=properties)
+            else:  # POLYLINE
+                if entity.is_2d_polyline:
+                    ocs = entity.ocs()
+                    elevation = Vector(entity.dxf.elevation).z
+                    vertices = ocs.points_to_wcs(Vector(p[0], p[1], elevation) for p in entity.points())
+                else:
+                    vertices = Vector.generate(entity.points())
+                self.out.draw_line_string(vertices, close=entity.is_closed, properties=properties)
+            return
+
         self.parent_stack.append(entity)
         self.out.set_current_entity(entity, tuple(self.parent_stack))
-        # self.out.start_polyline() todo: virtual entities are not in correct order
+        # todo: end points of virtual entities are not in correct order
+        #  can't use self.out.start_polyline()
         for child in entity.virtual_entities():
             # all child entities have the same properties as the parent,
             # no visibility check required:
             self.draw_entity(child)
-        self.parent_stack.pop()
         # self.out.end_polyline()
+        self.parent_stack.pop()
         self.out.set_current_entity(None)
 
     def draw_composite_entity(self, entity: DXFGraphic) -> None:

@@ -3,7 +3,7 @@
 # Created 2019-02-16
 from typing import TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict
 from itertools import chain
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vector, Matrix44, NULLVEC
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -28,7 +28,7 @@ acdb_polyline = DefSubclass('AcDbPolylineDummy', {  # AcDbPolylineDummy is a tem
     # 66: obsolete - not read and not written, because POLYLINE without vertices makes no sense
     # a “dummy” point; the X and Y values are always 0, and the Z value is the polyline's elevation
     # (in OCS when 2D, WCS when 3D) x, y ALWAYS 0
-    'elevation': DXFAttr(10, xtype=XType.point3d),
+    'elevation': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
     # Polyline flag (bit-coded):
     'flags': DXFAttr(70, default=0),
     # 1 = This is a closed polyline (or a polygon mesh closed in the M direction)

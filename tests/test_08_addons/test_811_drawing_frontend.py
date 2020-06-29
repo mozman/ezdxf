@@ -131,8 +131,26 @@ def test_line(msp, basic):
     assert result[0][0] == 'line'
 
 
-def test_polyline(msp, basic):
+def test_lwpolyline(msp, basic):
     msp.add_lwpolyline([(0, 0), (1, 0), (2, 0)])
+    basic.draw_entities(msp)
+    result = basic.out.collector
+    assert len(result) == 2
+    assert result[0][0] == 'line'
+    assert result[1][0] == 'line'
+
+
+def test_polyline_2d(msp, basic):
+    msp.add_polyline2d([(0, 0), (1, 0), (2, 0)])
+    basic.draw_entities(msp)
+    result = basic.out.collector
+    assert len(result) == 2
+    assert result[0][0] == 'line'
+    assert result[1][0] == 'line'
+
+
+def test_polyline_3d(msp, basic):
+    msp.add_polyline3d([(0, 0, 0), (1, 0, 1), (2, 0, 5)])
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 2

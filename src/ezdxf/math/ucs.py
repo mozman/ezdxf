@@ -65,7 +65,7 @@ class OCS:
             for point in points:
                 yield from_wcs(point)
         else:
-            return points
+            yield from points
 
     def to_wcs(self, point: 'Vertex') -> 'Vertex':
         """ Returns WCS vector for OCS `point`. """
@@ -81,7 +81,7 @@ class OCS:
             for point in points:
                 yield to_wcs(point)
         else:
-            return points
+            yield from points
 
     def render_axis(self, layout: 'BaseLayout', length: float = 1, colors: Tuple[int, int, int] = (1, 3, 5)):
         """ Render axis as 3D lines into a `layout`. """
