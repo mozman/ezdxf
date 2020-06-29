@@ -28,8 +28,8 @@ def get_draw_angles(start: float, end: float, extrusion: Vector):
         return normalize_angle(e.angle), normalize_angle(s.angle)
 
 
-def get_tri_or_quad_points(shape: Union[Face3d, Solid, Trace]) -> List[Vector]:
-    d = shape.dxf
+def get_tri_or_quad_points(solid) -> List[Vector]:
+    d = solid.dxf
     vertices: List[Vector] = [d.vtx0, d.vtx1, d.vtx2]
     if d.vtx3 != d.vtx2:  # when the face is a triangle, vtx2 == vtx3
         vertices.append(d.vtx3)

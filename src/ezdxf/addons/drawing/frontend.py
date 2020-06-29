@@ -66,7 +66,7 @@ class Frontend:
         # The sagitta (also known as the versine) is a line segment drawn perpendicular to a chord, between the
         # midpoint of that chord and the arc of the circle. https://en.wikipedia.org/wiki/Circle
         # not used yet! Could be used for all curves CIRCLE, ARC, ELLIPSE and SPLINE
-        self.approximation_max_sagitta = 0.01
+        self.approximation_max_sagitta = 0.01  # for drawing unit = 1m, max sagitta = 1cm
 
     def draw_layout(self, layout: 'Layout', finalize: bool = True) -> None:
         self.parent_stack = []
@@ -231,21 +231,19 @@ class Frontend:
         self.out.draw_point(entity.dxf.location, properties)
 
     def draw_solid_entity(self, entity: DXFGraphic) -> None:
+        # Handles SOLID, TRACE and 3DFACE
         dxf, dxftype = entity.dxf, entity.dxftype()
         properties = self._resolve_properties(entity)
-        # TRACE is the same thing as SOLID according to the documentation
-        # https://ezdxf.readthedocs.io/en/stable/dxfentities/trace.html
-        # except TRACE has OCS coordinates and SOLID has WCS coordinates.
-        entity = cast(Union[Face3d, Solid, Trace], entity)
         points = get_tri_or_quad_points(entity)
+        # TRACE is an OCS entity
         if dxftype == 'TRACE' and dxf.hasattr('extrusion'):
             ocs = entity.ocs()
             points = list(ocs.points_to_wcs(points))
-        if dxftype in ('SOLID', 'TRACE'):
-            self.out.draw_filled_polygon(points, properties)
-        else:
+        if dxftype == '3DFACE':
             for a, b in zip(points, points[1:]):
                 self.out.draw_line(a, b, properties)
+        else:  # SOLID, TRACE
+            self.out.draw_filled_polygon(points, properties)
 
     def draw_hatch_entity(self, entity: DXFGraphic) -> None:
         properties = self._resolve_properties(entity)
