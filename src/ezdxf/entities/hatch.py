@@ -751,7 +751,7 @@ class BoundaryPaths:
             else:
                 # todo: strange angle conversion!
                 #  example clockwise_arcs_hatch.dxf is correct now, but hatches_1.dxf is wrong now!
-                #  I don't get!
+                #  I don't get it!
                 ellipse.start_angle = 360.0 - arc.start_angle
                 ellipse.end_angle = 360.0 - arc.end_angle
 
