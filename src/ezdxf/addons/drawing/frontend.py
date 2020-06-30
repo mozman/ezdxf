@@ -182,10 +182,10 @@ class Frontend:
         # Approximate as 3D polyline
         segments = int((e.end_param - e.start_param) / math.tau * self.circle_approximation_count)
         points = list(e.vertices(linspace(e.start_param, e.end_param, max(4, segments + 1))))
-        self.out.start_polyline()
+        self.out.start_path()
         for a, b in zip(points, points[1:]):
             self.out.draw_line(a, b, properties)
-        self.out.end_polyline()
+        self.out.end_path()
 
     def draw_elliptic_arc_entity_2d(self, entity: DXFGraphic) -> None:
         dxf, dxftype = entity.dxf, entity.dxftype()
@@ -222,10 +222,10 @@ class Frontend:
             points = list(spline.approximate(
                 segments=self.spline_approximation_factor * len(spline.control_points))
             )
-            self.out.start_polyline()
+            self.out.start_path()
             for a, b in zip(points, points[1:]):
                 self.out.draw_line(a, b, properties)
-            self.out.end_polyline()
+            self.out.end_path()
 
     def draw_point_entity(self, entity: DXFGraphic) -> None:
         properties = self._resolve_properties(entity)
@@ -253,22 +253,27 @@ class Frontend:
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z), default (0, 0, 0)
         elevation = entity.dxf.elevation.z
         paths = copy.deepcopy(entity.paths)
+        # todo: still errors in "AEC Plan Elev Sample.dxf", arc or ellipse approximation
         paths.polyline_to_edge_path(just_with_bulge=False)
-        paths.all_to_line_edges(spline_factor=10)
+        paths.all_to_line_edges(spline_factor=self.spline_approximation_factor)
         for p in paths:
             assert p.PATH_TYPE == 'EdgePath'
             vertices = []
             last_vertex = None
             for e in p.edges:
                 assert e.EDGE_TYPE == 'LineEdge'
-                # WCS transformation is only done if the extrusion vector is != (0, 0, 1)
-                # else to_wcs() returns just the input - no big speed penalty!
-                v = ocs.to_wcs(Vector(e.start[0], e.start[1], elevation))
-                if last_vertex is not None and not last_vertex.isclose(v):
-                    print(f'warning: hatch edges not contiguous: {last_vertex} -> {e.start}, {e.end}')
-                    vertices.append(last_vertex)
-                vertices.append(v)
-                last_vertex = ocs.to_wcs(Vector(e.end[0], e.end[1], elevation)).replace(z=0.0)
+                start, end = ocs.points_to_wcs([
+                    Vector(e.start[0], e.start[1], elevation),
+                    Vector(e.end[0], e.end[1], elevation),
+                ])
+                if last_vertex is None:
+                    vertices.append(start)
+                elif not last_vertex.isclose(start):
+                    print(f'warning: hatch edges not contiguous: {last_vertex} -> {start}')
+                    vertices.append(start)
+                vertices.append(end)
+                last_vertex = end
+
             if vertices:
                 if last_vertex.isclose(vertices[0]):
                     vertices.append(last_vertex)
@@ -335,12 +340,12 @@ class Frontend:
         self.parent_stack.append(entity)
         self.out.set_current_entity(entity, tuple(self.parent_stack))
         # todo: end points of virtual entities are not in correct order
-        #  can't use self.out.start_polyline()
+        #  can't use self.out.start_path()
         for child in entity.virtual_entities():
             # all child entities have the same properties as the parent,
             # no visibility check required:
             self.draw_entity(child)
-        # self.out.end_polyline()
+        # self.out.end_path()
         self.parent_stack.pop()
         self.out.set_current_entity(None)
 

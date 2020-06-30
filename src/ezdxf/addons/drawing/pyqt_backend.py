@@ -123,8 +123,8 @@ class PyQtBackend(DrawingBackend):
         self._polyline_components: List[Union[_BufferedLineSegment, _BufferedArc]] = []
 
     @property
-    def is_drawing_polyline(self) -> bool:
-        return not self.draw_individual_polyline_elements and self._polyline_nesting_depth > 0
+    def is_path_mode(self) -> bool:
+        return not self.draw_individual_polyline_elements and self._path_mode
 
     def _get_color(self, color: Color) -> qg.QColor:
         qt_color = self._color_cache.get(color, None)
@@ -156,20 +156,20 @@ class PyQtBackend(DrawingBackend):
 
     def draw_line(self, start: Vector, end: Vector, properties: Properties) -> None:
         color = properties.color
-        if self.is_drawing_polyline:
+        if self.is_path_mode:
             self._polyline_components.append(_BufferedLineSegment(start, end, color))
         else:
             item = self.scene.addLine(start.x, start.y, end.x, end.y, self._get_pen(color))
             self._set_item_data(item)
 
-    def start_polyline(self):
-        if not self.is_drawing_polyline:
+    def start_path(self):
+        if not self.is_path_mode:
             assert not self._polyline_components
-        super().start_polyline()
+        super().start_path()
 
-    def end_polyline(self):
-        super().end_polyline()
-        if self.is_drawing_polyline or not self._polyline_components:
+    def end_path(self):
+        super().end_path()
+        if not self._polyline_components:
             return
         path = _PolylinePath(self.current_entity)
         for component in self._polyline_components:
@@ -224,7 +224,7 @@ class PyQtBackend(DrawingBackend):
         color = properties.color
 
         # any angle other than 0 is not possible with arcTo and a complete circle/ellipse wouldn't make sense
-        if self.is_drawing_polyline and angle == 0.0 and draw_angles is not None:
+        if self.is_path_mode and angle == 0.0 and draw_angles is not None:
             start, span = _draw_angles_to_start_and_span(draw_angles)
             self._polyline_components.append(_BufferedArc(qc.QRectF(top, left, width, height), start, span, color))
             return

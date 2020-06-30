@@ -16,7 +16,7 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010, DXFStr
 from ezdxf.lldxf import const
 from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math.bulge import bulge_to_arc
-from ezdxf.math import ConstructionEllipse
+from ezdxf.math import ConstructionEllipse, NULLVEC, Z_AXIS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -30,10 +30,10 @@ __all__ = ['Hatch', 'Gradient', 'Pattern']
 
 acdb_hatch = DefSubclass('AcDbHatch', {
     # 3D point (X and Y always equal 0, Z represents the elevation)
-    'elevation': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # OCS
+    'elevation': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),  # OCS
 
     # Extrusion direction (optional; default = 0, 0, 1)
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Z_AXIS),
 
     # Hatch pattern name
     'pattern_name': DXFAttr(2, default='SOLID'),  # for solid fill
@@ -791,6 +791,7 @@ class BoundaryPaths:
                 cp = list(reversed(cp))
             spline.control_points = cp
             spline.knot_values = tool.knots()
+            spline.weights = tool.weights()
             return spline
 
         for path_index, path in enumerate(self.paths):

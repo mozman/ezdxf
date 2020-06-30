@@ -17,7 +17,7 @@ class DrawingBackend(ABC):
     def __init__(self):
         self._current_entity = None
         self._current_entity_stack = ()
-        self._polyline_nesting_depth = 0
+        self._path_mode = False
 
     def set_current_entity(self, entity: Optional[DXFGraphic], parent_stack: Tuple[DXFGraphic, ...] = ()) -> None:
         self._current_entity = entity
@@ -36,8 +36,8 @@ class DrawingBackend(ABC):
         return self._current_entity_stack
 
     @property
-    def is_drawing_polyline(self) -> bool:
-        return self._polyline_nesting_depth > 0
+    def is_path_mode(self) -> bool:
+        return self._path_mode
 
     @abstractmethod
     def set_background(self, color: Color) -> None:
@@ -47,16 +47,16 @@ class DrawingBackend(ABC):
     def draw_line(self, start: Vector, end: Vector, properties: Properties) -> None:
         raise NotImplementedError
 
-    def start_polyline(self):
-        """ Called when a polyline is encountered. Any draw calls up until the next time _polyline_nesting_depth drops
-        to 0 can be buffered into a single un-broken path if the backend supports this.
+    def start_path(self):
+        """ Called when a polyline path is encountered. Any draw calls up until end_path() is called,
+        can be buffered into a single un-broken path if the backend supports this.
         """
-        # using an integer rather than a boolean to allow nested polylines (e.g. spline as part of a polyline)
-        self._polyline_nesting_depth += 1
+        assert self._path_mode is False, 'Nested paths not supported.'
+        self._path_mode = True
 
-    def end_polyline(self):
-        self._polyline_nesting_depth -= 1
-        assert self._polyline_nesting_depth >= 0
+    def end_path(self):
+        assert self._path_mode is True, 'Path mode not started.'
+        self._path_mode = False
 
     def draw_line_string(self, vertices: Iterable[Vector], close: bool, properties: Properties) -> None:
         """ Draw efficient multiple lines as connected polyline.
@@ -64,7 +64,7 @@ class DrawingBackend(ABC):
         Override in backend for a more efficient implementation.
 
         """
-        self.start_polyline()
+        self.start_path()
         prev = None
         first = None
         for vertex in vertices:
@@ -76,7 +76,7 @@ class DrawingBackend(ABC):
             prev = vertex
         if close and not prev.isclose(first):
             self.draw_line(prev, first, properties)
-        self.end_polyline()
+        self.end_path()
 
     @property
     def has_spline_support(self):
@@ -121,7 +121,7 @@ class DrawingBackend(ABC):
         raise NotImplementedError
 
     def finalize(self) -> None:
-        assert self._polyline_nesting_depth == 0
+        assert self._path_mode is False, 'Missing end of path.'
 
     def ignored_entity(self, entity: DXFGraphic):
         print(f'ignoring {entity.dxftype()} entity')
