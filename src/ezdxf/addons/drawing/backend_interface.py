@@ -71,10 +71,10 @@ class DrawingBackend(ABC):
             if prev is None:
                 prev = vertex
                 first = vertex
-                continue
-            self.draw_line(prev, vertex, properties)
-            prev = vertex
-        if close and not prev.isclose(first):
+            else:
+                self.draw_line(prev, vertex, properties)
+                prev = vertex
+        if close and prev is not None and not prev.isclose(first):
             self.draw_line(prev, first, properties)
         self.end_path()
 
@@ -122,6 +122,3 @@ class DrawingBackend(ABC):
 
     def finalize(self) -> None:
         assert self._path_mode is False, 'Missing end of path.'
-
-    def ignored_entity(self, entity: DXFGraphic):
-        print(f'ignoring {entity.dxftype()} entity')

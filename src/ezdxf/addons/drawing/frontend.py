@@ -122,7 +122,7 @@ class Frontend:
         elif dxftype == 'VIEWPORT':
             self.draw_viewport_entity(entity)
         else:
-            self.out.ignored_entity(entity)
+            print(f'ignoring {dxftype} entity')
         self.out.set_current_entity(None)
 
     def draw_line_entity(self, entity: DXFGraphic) -> None:
