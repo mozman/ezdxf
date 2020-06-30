@@ -688,6 +688,7 @@ class BoundaryPaths:
             just_with_bulge: convert only polyline paths including bulge values if ``True``
 
         """
+
         def _edges(points) -> Iterable[Union[LineEdge, ArcEdge]]:
             prev_point = None
             prev_bulge = None
@@ -738,13 +739,22 @@ class BoundaryPaths:
 
     def arc_edges_to_ellipse_edges(self) -> None:
         """ Convert all arc edges to ellipse edges. """
+
         def to_ellipse(arc: ArcEdge) -> EllipseEdge:
             ellipse = EllipseEdge()
             ellipse.center = arc.center
             ellipse.ratio = 1.0
             ellipse.major_axis = (arc.radius, 0.0)
-            ellipse.start_angle = arc.start_angle
-            ellipse.end_angle = arc.end_angle
+            if arc.ccw:
+                ellipse.start_angle = arc.start_angle
+                ellipse.end_angle = arc.end_angle
+            else:
+                # todo: strange angle conversion!
+                #  example clockwise_arcs_hatch.dxf is correct now, but hatches_1.dxf is wrong now!
+                #  I don't get!
+                ellipse.start_angle = 360.0 - arc.start_angle
+                ellipse.end_angle = 360.0 - arc.end_angle
+
             ellipse.ccw = arc.ccw
             return ellipse
 
@@ -767,15 +777,9 @@ class BoundaryPaths:
 
         def to_spline_edge(e: EllipseEdge) -> SplineEdge:
             # No OCS transformation needed, source ellipse and target spline reside in the same OCS.
-            start_param = e.start_param
-            end_param = e.end_param
-            if not e.ccw:
-                # I don't know why this works, but so far it does.
-                start_param += math.pi
-                end_param += math.pi
             ellipse = ConstructionEllipse(
                 center=e.center, major_axis=e.major_axis, ratio=e.ratio,
-                start_param=start_param, end_param=end_param,
+                start_param=e.start_param, end_param=e.end_param, ccw=e.ccw,
             )
             end = ellipse.end_param
             if end < ellipse.start_param:
@@ -785,11 +789,10 @@ class BoundaryPaths:
             tool = BSpline.ellipse_approximation(ellipse, count)
             spline = SplineEdge()
             spline.degree = tool.degree
-
-            cp = Vec2.list(tool.control_points)
             if not e.ccw:
-                cp = list(reversed(cp))
-            spline.control_points = cp
+                tool = tool.reverse()
+
+            spline.control_points = Vec2.list(tool.control_points)
             spline.knot_values = tool.knots()
             spline.weights = tool.weights()
             return spline
@@ -1131,7 +1134,7 @@ class EdgePath:
         if knot_values is not None:
             spline.knot_values = list(knot_values)
         else:
-            spline.knot_values = list(open_uniform_knot_vector(len(spline.control_points), degree+1))
+            spline.knot_values = list(open_uniform_knot_vector(len(spline.control_points), degree + 1))
         if weights is not None:
             spline.weights = list(weights)
         spline.degree = degree

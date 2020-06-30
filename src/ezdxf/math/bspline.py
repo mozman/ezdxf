@@ -856,6 +856,19 @@ class BSpline:
             weights=curve.weights,
         )
 
+    def reverse(self):
+        """ Returns a BSpline with revered control point order. """
+        def reverse_knots():
+            for k in reversed(normalize_knots(self.knots())):
+                yield 1.0 - k
+
+        return BSpline(
+            control_points=reversed(self.control_points),
+            order=self.order,
+            knots=reverse_knots(),
+            weights=reversed(self.weights()),
+        )
+
     @property
     def count(self) -> int:
         """ Count of control points, (n + 1 in math definition). """
