@@ -269,7 +269,7 @@ class Frontend:
                 if last_vertex is None:
                     vertices.append(start)
                 elif not last_vertex.isclose(start):
-                    print(f'warning: hatch edges not contiguous: {last_vertex} -> {start}')
+                    print(f'warning: {str(entity)} edges not contiguous: {last_vertex} -> {start}')
                     vertices.append(start)
                 vertices.append(end)
                 last_vertex = end
