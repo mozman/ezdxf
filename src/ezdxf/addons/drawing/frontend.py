@@ -235,7 +235,7 @@ class Frontend:
         # Handles SOLID, TRACE and 3DFACE
         dxf, dxftype = entity.dxf, entity.dxftype()
         properties = self._resolve_properties(entity)
-        points = get_tri_or_quad_points(entity)
+        points = get_tri_or_quad_points(entity, adjust_order=dxftype != '3DFACE')
         # TRACE is an OCS entity
         if dxftype == 'TRACE' and dxf.hasattr('extrusion'):
             ocs = entity.ocs()
