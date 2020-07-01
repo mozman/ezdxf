@@ -1023,6 +1023,9 @@ class EdgePath:
         self.edges = []
         self.source_boundary_objects = []
 
+    def __iter__(self):
+        return iter(self.edges)
+
     @classmethod
     def load_tags(cls, tags: Tags) -> 'EdgePath':
         edge_path = cls()
