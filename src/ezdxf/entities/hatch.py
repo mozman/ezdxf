@@ -703,12 +703,7 @@ class BoundaryPaths:
                     arc = ArcEdge()
                     arc.center, start_angle, end_angle, arc.radius = bulge_to_arc(prev_point, point, prev_bulge)
                     chk_point = arc.center + Vec2.from_angle(start_angle, arc.radius)
-                    if chk_point.isclose(prev_point, abs_tol=1e-9):
-                        arc.ccw = 1
-                    else:
-                        start_angle += math.pi
-                        end_angle += math.pi
-                        arc.ccw = 0
+                    arc.ccw = chk_point.isclose(prev_point, abs_tol=1e-9)
                     arc.start_angle = math.degrees(start_angle) % 360.0
                     arc.end_angle = math.degrees(end_angle) % 360.0
                     if math.isclose(arc.start_angle, arc.end_angle) and math.isclose(arc.start_angle, 0):
@@ -745,16 +740,8 @@ class BoundaryPaths:
             ellipse.center = arc.center
             ellipse.ratio = 1.0
             ellipse.major_axis = (arc.radius, 0.0)
-            if arc.ccw:
-                ellipse.start_angle = arc.start_angle
-                ellipse.end_angle = arc.end_angle
-            else:
-                # todo: strange angle conversion!
-                #  example clockwise_arcs_hatch.dxf is correct now, but hatches_1.dxf is wrong now!
-                #  I don't get it!
-                ellipse.start_angle = 360.0 - arc.start_angle
-                ellipse.end_angle = 360.0 - arc.end_angle
-
+            ellipse.start_angle = arc.start_angle
+            ellipse.end_angle = arc.end_angle
             ellipse.ccw = arc.ccw
             return ellipse
 
@@ -777,15 +764,14 @@ class BoundaryPaths:
 
         def to_spline_edge(e: EllipseEdge) -> SplineEdge:
             # No OCS transformation needed, source ellipse and target spline reside in the same OCS.
+            # ezdxf stores angles always in counter-clockwise orientation.
+            # DXF conversion is done at export, see also ArcEdge.load_tags() for explanation
+
             ellipse = ConstructionEllipse(
                 center=e.center, major_axis=e.major_axis, ratio=e.ratio,
-                start_param=e.start_param, end_param=e.end_param, ccw=e.ccw,
+                start_param=e.start_param, end_param=e.end_param,
             )
-            end = ellipse.end_param
-            if end < ellipse.start_param:
-                end += math.tau
-            param_span = end - ellipse.start_param
-            count = max(int(float(num) * param_span / math.tau), 3)
+            count = max(int(float(num) * ellipse.param_span / math.tau), 3)
             tool = BSpline.ellipse_approximation(ellipse, count)
             spline = SplineEdge()
             spline.degree = tool.degree
@@ -804,7 +790,7 @@ class BoundaryPaths:
                     if edge.EDGE_TYPE == 'EllipseEdge':
                         edges[edge_index] = to_spline_edge(edge)
 
-    def spline_edges_to_line_edges(self, factor: int = 3) -> None:
+    def spline_edges_to_line_edges(self, factor: int = 8) -> None:
         """ Convert all spline edges to line edges (approximation).
 
         Args:
@@ -843,7 +829,45 @@ class BoundaryPaths:
                         new_edges.append(edge)
                 path.edges = new_edges
 
-    def all_to_spline_edges(self, num: int = 32) -> None:
+    def ellipse_edges_to_line_edges(self, num: int = 64) -> None:
+        """ Convert all ellipse edges to line edges (approximation).
+
+        Args:
+            num: count of control points for a **full** ellipse, partial ellipses have proportional fewer control points
+                 but at least 3.
+
+        """
+
+        def to_line_edges(edge):
+            ellipse = ConstructionEllipse(
+                center=edge.center,
+                major_axis=edge.major_axis,
+                ratio=edge.ratio,
+                start_param=edge.start_param,
+                end_param=edge.end_param,
+            )
+            segment_count = max(int(float(num) * ellipse.param_span / math.tau), 3)
+            params = ellipse.params(segment_count + 1)
+            if not edge.ccw:
+                params = reversed(list(params))
+            vertices = list(ellipse.vertices(params))
+            for v1, v2 in zip(vertices[:-1], vertices[1:]):
+                line = LineEdge()
+                line.start = v1.vec2
+                line.end = v2.vec2
+                yield line
+
+        for path in self.paths:
+            if path.PATH_TYPE == 'EdgePath':
+                new_edges = []
+                for edge in path.edges:
+                    if edge.EDGE_TYPE == 'EllipseEdge':
+                        new_edges.extend(to_line_edges(edge))
+                    else:
+                        new_edges.append(edge)
+                path.edges = new_edges
+
+    def all_to_spline_edges(self, num: int = 64) -> None:
         """ Convert all bulge, arc and ellipse edges to spline edges (approximation).
 
         Args:
@@ -855,7 +879,7 @@ class BoundaryPaths:
         self.arc_edges_to_ellipse_edges()
         self.ellipse_edges_to_spline_edges(num)
 
-    def all_to_line_edges(self, num: int = 32, spline_factor: int = 3) -> None:
+    def all_to_line_edges(self, num: int = 64, spline_factor: int = 8) -> None:
         """ Convert all bulge, arc and ellipse edges to spline edges and approximate this splines by
         line edges.
 
@@ -867,7 +891,7 @@ class BoundaryPaths:
         """
         self.polyline_to_edge_path(just_with_bulge=True)
         self.arc_edges_to_ellipse_edges()
-        self.ellipse_edges_to_spline_edges(num)
+        self.ellipse_edges_to_line_edges(num)
         self.spline_edges_to_line_edges(spline_factor)
 
     def has_critical_elements(self) -> bool:
@@ -1092,8 +1116,8 @@ class EdgePath:
         self.edges.append(ellipse)
         return ellipse
 
-    def add_spline(self, fit_points: Iterable[Tuple[float, float]] = None,
-                   control_points: Iterable[Tuple[float, float]] = None,
+    def add_spline(self, fit_points: Iterable['Vertex'] = None,
+                   control_points: Iterable['Vertex'] = None,
                    knot_values: Iterable[float] = None,
                    weights: Iterable[float] = None,
                    degree: int = 3,
@@ -1128,9 +1152,9 @@ class EdgePath:
         """
         spline = SplineEdge()
         if fit_points is not None:
-            spline.fit_points = list(fit_points)
+            spline.fit_points = Vec2.list(fit_points)
         if control_points is not None:
-            spline.control_points = list(control_points)
+            spline.control_points = Vec2.list(control_points)
         if knot_values is not None:
             spline.knot_values = list(knot_values)
         else:
@@ -1221,6 +1245,8 @@ class ArcEdge:
     @classmethod
     def load_tags(cls, tags: Tags) -> 'ArcEdge':
         edge = cls()
+        start = 0.0
+        end = 0.0
         for tag in tags:
             code, value = tag
             if code == 10:
@@ -1228,21 +1254,41 @@ class ArcEdge:
             elif code == 40:
                 edge.radius = value
             elif code == 50:
-                edge.start_angle = value
+                start = value
             elif code == 51:
-                edge.end_angle = value
+                end = value
             elif code == 73:
                 edge.ccw = bool(value)
+
+        # The DXF format stores the clockwise oriented start- and end angles
+        # for HATCH arc- and ellipse edges as complementary angle (360-angle).
+        # This is a problem in many ways for processing clockwise oriented
+        # angles correct, especially rotation transformation won't work.
+        # Solution: convert clockwise angles into counter-clockwise angles
+        # and swap start- and end angle at loading and exporting:
+        if edge.ccw:
+            edge.start_angle = start
+            edge.end_angle = end
+        else:
+            edge.start_angle = 360.0 - end
+            edge.end_angle = 360.0 - start
         return edge
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_tag2(72, 2)  # edge type
         x, y, *_ = self.center
+        if self.ccw:
+            start = self.start_angle
+            end = self.end_angle
+        else:
+            # swap and convert to complementary angles: see ArcEdge.load_tags() for explanation
+            start = 360.0 - self.end_angle
+            end = 360.0 - self.start_angle
         tagwriter.write_tag2(10, float(x))
         tagwriter.write_tag2(20, float(y))
         tagwriter.write_tag2(40, self.radius)
-        tagwriter.write_tag2(50, self.start_angle)
-        tagwriter.write_tag2(51, self.end_angle)
+        tagwriter.write_tag2(50, start)
+        tagwriter.write_tag2(51, end)
         tagwriter.write_tag2(73, int(self.ccw))
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
@@ -1282,6 +1328,8 @@ class EllipseEdge:
     @classmethod
     def load_tags(cls, tags: Tags) -> 'EllipseEdge':
         edge = cls()
+        start = 0.0
+        end = 0.0
         for tag in tags:
             code, value = tag
             if code == 10:
@@ -1291,11 +1339,20 @@ class EllipseEdge:
             elif code == 40:
                 edge.ratio = value
             elif code == 50:
-                edge.start_angle = value
+                start = value
             elif code == 51:
-                edge.end_angle = value
+                end = value
             elif code == 73:
                 edge.ccw = bool(value)
+
+        if edge.ccw:
+            edge.start_angle = start
+            edge.end_angle = end
+        else:
+            # swap and convert to complementary angles: see ArcEdge.load_tags() for explanation
+            edge.start_angle = 360.0 - end
+            edge.end_angle = 360.0 - start
+
         return edge
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
@@ -1307,8 +1364,16 @@ class EllipseEdge:
         tagwriter.write_tag2(11, float(x))
         tagwriter.write_tag2(21, float(y))
         tagwriter.write_tag2(40, self.ratio)
-        tagwriter.write_tag2(50, self.start_angle)
-        tagwriter.write_tag2(51, self.end_angle)
+        if self.ccw:
+            start = self.start_angle
+            end = self.end_angle
+        else:
+            # swap and convert to complementary angles: see ArcEdge.load_tags() for explanation
+            start = 360.0 - self.end_angle
+            end = 360.0 - self.start_angle
+
+        tagwriter.write_tag2(50, start)
+        tagwriter.write_tag2(51, end)
         tagwriter.write_tag2(73, int(self.ccw))
 
     def construction_tool(self):

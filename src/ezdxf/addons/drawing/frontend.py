@@ -253,9 +253,10 @@ class Frontend:
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z), default (0, 0, 0)
         elevation = entity.dxf.elevation.z
         paths = copy.deepcopy(entity.paths)
-        # todo: still errors in "AEC Plan Elev Sample.dxf", arc or ellipse approximation
         paths.polyline_to_edge_path(just_with_bulge=False)
-        paths.all_to_line_edges(spline_factor=self.spline_approximation_factor)
+
+        # For hatches, the approximation don't have to be that precise.
+        paths.all_to_line_edges(num=64, spline_factor=8)
         for p in paths:
             assert p.PATH_TYPE == 'EdgePath'
             vertices = []

@@ -7,7 +7,7 @@ from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.lldxf.const import DXF2007, DXF2010
 from ezdxf.render.forms import box
-from ezdxf.math import Vector, Matrix44, NonUniformScalingError
+from ezdxf.math import Vector, Matrix44
 
 
 @pytest.fixture
@@ -211,9 +211,13 @@ def test_edge_path_edges(edge_hatch):
     assert 'ArcEdge' == edge.EDGE_TYPE, "invalid edge type for 4. edge"
     assert (5, 10) == edge.center
     assert 1 == edge.radius
-    assert 360 == edge.start_angle  # this value was created by AutoCAD == 0 degree
-    assert 540 == edge.end_angle  # this value was created by AutoCAD == 180 degree
+    # clockwise arc edge:
     assert 0 == edge.ccw
+    # now we get converted and swapped angles
+    assert 360 == 360.0 - edge.end_angle  # this value was created by AutoCAD (0 degree)
+    assert 540 == 360.0 - edge.start_angle  # this value was created by AutoCAD (-180 degree)
+    assert -180 == edge.start_angle  # ezdxf representation
+    assert 0 == edge.end_angle  # ezdxf representation
 
     edge = path.edges[4]
     assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 5. edge"
