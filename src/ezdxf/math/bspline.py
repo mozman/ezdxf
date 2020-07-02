@@ -842,88 +842,6 @@ class Basis:
         return CK
 
 
-class DBasis(Basis):
-    def basis(self, t: float) -> Tuple[List[float], List[float], List[float]]:
-        knots = self.knots
-        nbasis = self.create_nbasis2(t)
-        d1nbasis = [0.] * self.nplusc
-        d2nbasis = d1nbasis[:]
-
-        for k in range(2, self.order + 1):
-            for i in range(self.nplusc - k):
-                i1 = i + 1
-                ik = i + k
-
-                knot_ik_1__knot_i = knots[ik - 1] - knots[i]
-                knot_ik__knot_i1 = knots[ik] - knots[i1]
-                t__knot_i = t - knots[i]
-                knot_ik__t = knots[ik] - t
-
-                nbasis_i = nbasis[i]
-
-                if nbasis_i:
-                    b1 = t__knot_i * nbasis_i / knot_ik_1__knot_i
-                    f1 = nbasis_i / knot_ik_1__knot_i
-                else:
-                    b1 = 0.0
-                    f1 = 0.0
-
-                nbasis_i1 = nbasis[i1]
-
-                if nbasis_i1:
-                    b2 = knot_ik__t * nbasis_i1 / knot_ik__knot_i1
-                    f2 = -nbasis_i1 / knot_ik__knot_i1
-                else:
-                    b2 = 0.0
-                    f2 = 0.0
-
-                d1nbasis_i = d1nbasis[i]
-
-                if d1nbasis_i:
-                    f3 = t__knot_i * d1nbasis_i / knot_ik_1__knot_i
-                    s1 = 2.0 * d1nbasis_i / knot_ik_1__knot_i
-                else:
-                    f3 = 0.0
-                    s1 = 0.0
-
-                d1nbasis_i1 = d1nbasis[i1]
-
-                if d1nbasis_i1:
-                    f4 = knot_ik__t * d1nbasis_i1 / knot_ik__knot_i1
-                    s2 = -2.0 * d1nbasis_i1 / knot_ik__knot_i1
-                else:
-                    f4 = 0.0
-                    s2 = 0.0
-
-                s3 = t__knot_i * d2nbasis[i] / knot_ik_1__knot_i if d2nbasis[i] else 0.0
-                s4 = knot_ik__t * d2nbasis[i1] / knot_ik__knot_i1 if d2nbasis[i1] else 0.0
-
-                nbasis[i] = b1 + b2
-                d1nbasis[i] = f1 + f2 + f3 + f4
-                d2nbasis[i] = s1 + s2 + s3 + s4
-
-        count = self.count
-        if self.weights is None:
-            return nbasis[:count], d1nbasis[:count], d2nbasis[:count]
-        else:
-            return self.weighting(nbasis[:count]), self.weighting(d1nbasis[:count]), self.weighting(d2nbasis[:count])
-
-    def create_nbasis2(self, t: float) -> List[float]:
-        nbasis = self.create_nbasis(t)
-        if math.isclose(t, self.max_t):
-            nbasis[self.count - 1] = 1.
-        return nbasis
-
-
-class DBasisU(DBasis):
-    def create_nbasis2(self, t: float) -> List[float]:
-        nbasis = self.create_nbasis(t)
-        if math.isclose(t, self.knots[self.count]):
-            nbasis[self.count - 1] = 1.
-            nbasis[self.count] = 0.
-        return nbasis
-
-
 class BSpline:
     """
     Representation of a `B-spline`_ curve, using an uniform open `knot`_ vector ("clamped").
@@ -1321,45 +1239,15 @@ class BSplineClosed(BSplineU):
 
 
 class DBSpline(BSpline):
-    """
-    Subclass of :class:`BSpline`
-
-    Calculate points and derivative of a `B-spline`_ curve, using an uniform open `knot`_ vector (`clamped curve`_).
-
-    """
-
-    def __init__(self, control_points: Iterable['Vertex'],
-                 order: int = 4,
-                 knots: Iterable[float] = None,
-                 weights: Iterable[float] = None):
-        super().__init__(control_points, order=order, knots=knots, weights=weights)
-        self.basis = Basis(self.knots(), self.order, self.count)
+    pass  # todo: remove
 
 
 class DBSplineU(BSplineU):
-    """
-    Subclass of :class:`DBSpline`
-
-    Calculate points and derivative of a `B-spline`_ curve, uniform (periodic) `knot`_ vector (`open curve`_).
-
-    """
-
-    def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
-        super().__init__(control_points, order=order, weights=weights)
-        self.basis = DBasisU(self.knots(), self.order, self.count)
+    pass  # todo: remove
 
 
 class DBSplineClosed(BSplineClosed):
-    """
-    Subclass of :class:`DBSpline`
-
-    Calculate the points and derivative of a closed uniform `B-spline`_ curve (`closed curve`_).
-
-    UNTESTED!
-    """
-
-    def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
-        super().__init__(control_points, order=order, weights=weights)
+    pass  # todo: remove
 
 
 def rational_spline_from_arc(
