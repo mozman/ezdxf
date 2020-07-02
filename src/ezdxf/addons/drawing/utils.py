@@ -36,7 +36,7 @@ def get_tri_or_quad_points(solid, adjust_order=True) -> List[Vector]:
 
     # adjust weird vertex order of SOLID and TRACE but not 3DFACE:
     # 0, 1, 2, 3 -> 0, 1, 3, 2
-    if adjust_order:
+    if adjust_order and len(vertices) > 3:
         vertices[2], vertices[3] = vertices[3], vertices[2]
 
     if not vertices[0].isclose(vertices[-1]):

@@ -858,6 +858,7 @@ class BSpline:
 
     def reverse(self):
         """ Returns a BSpline with revered control point order. """
+
         def reverse_knots():
             for k in reversed(normalize_knots(self.knots())):
                 yield 1.0 - k
@@ -868,6 +869,10 @@ class BSpline:
             knots=reverse_knots(),
             weights=reversed(self.weights()),
         )
+
+    def normalize_knots(self):
+        if self.basis.knots:
+            self.basis.knots = normalize_knots(self.basis.knots)
 
     @property
     def count(self) -> int:
@@ -1109,6 +1114,34 @@ class BSpline:
             points = list(self.approximate(segments))
         from .bezier4p import cubic_bezier_interpolation
         return cubic_bezier_interpolation(points)
+
+    def check_and_repair_closed_spline(self) -> 'BSpline':
+        knots = self.basis.knots
+        first = self.point(knots[0])
+        last = self.point(knots[-1])
+        if not first.isclose(last, abs_tol=1e-9):
+            overlap = self.count_of_overlapping_control_points()
+            if overlap != 1:
+                control_points = self.control_points[:-overlap]
+                control_points.append(control_points[0])
+                weights = self.weights()
+                if weights:
+                    weights = weights[:-overlap]
+                    weights.append(weights[0])
+                else:
+                    weights = None
+                return BSpline(control_points, self.order, weights)
+        return self
+
+    def count_of_overlapping_control_points(self) -> int:
+        first = self.control_points[0]
+        count = 1
+        while not self.control_points[-count].isclose(first):
+            count += 1
+        if count == len(self.control_points):
+            return 0
+        else:
+            return count
 
 
 def subdivide_params(p: List[float]) -> Iterable[float]:

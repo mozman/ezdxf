@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.13b5 - dev
+Version 0.13b6 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-13.html
@@ -15,14 +15,11 @@ Version 0.13b5 - dev
     - `DXFGraphic.rotate_axis(axis, angle)`
     - `DXFGraphic.rotate_x(angle)`
     - `DXFGraphic.rotate_y(angle)`
-    - `DXFGraphic.rotate_z(angle)`
-    
-   supported entities: POINT, LINE, CIRCLE, ARC, ELLIPSE, MESH, SPLINE, POLYLINE, LWPOLYLINE, TEXT, MTEXT, 
-   ATTRIB, ATTDEF, INSERT, SOLID, TRACE, 3DFACE, HATCH, IMAGE, SHAPE, XLINE, RAY
-- NEW: render add-on [drawing](https://ezdxf.mozman.at/docs/addons/draw.html) by Matt Broadway to produce a 
-  rasterized or vector-graphic image from DXF documents, supported backends for now: 
+    - `DXFGraphic.rotate_z(angle)`   
+- NEW: [drawing](https://ezdxf.mozman.at/docs/addons/draw.html) add-on by Matt Broadway is a translation
+  layer to send DXF data to a render backend, supported backends for now: 
   [matplotlib](https://pypi.org/project/matplotlib/) and [PyQt5](https://pypi.org/project/PyQt5/), both packages 
-  are optional and __not required__ to install _ezdxf_. 
+  are optional and not required to install _ezdxf_. 
 - NEW: `DXFGraphic.unlink_from_layout()` to unlink entity from associated layout
 - NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
 - NEW: `Circle.to_ellipse()`, convert CIRCLE/ARC to ELLIPSE entity
