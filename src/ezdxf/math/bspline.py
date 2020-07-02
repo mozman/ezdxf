@@ -23,8 +23,9 @@ from .vector import Vector, NULLVEC
 from .parametrize import create_t_vector, estimate_tangents, estimate_end_tangent_magnitude
 from .linalg import (
     LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix, detect_banded_matrix,
-    quadratic_equation
+    quadratic_equation,
 )
+from .construct2d import linspace
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf import PYPY
 
@@ -48,7 +49,7 @@ __all__ = [
     'BSpline', 'BSplineU', 'BSplineClosed',
 
     # B-spline representation with 1st and 2nd derivatives support:
-    'DBSpline', 'DBSplineU', 'DBSplineClosed', 'DBasisU',
+    'DBSpline', 'DBSplineU', 'DBSplineClosed',
 
     # Low level interpolation function:
     'unconstrained_global_bspline_interpolation', 'global_bspline_interpolation_end_tangents',
@@ -565,19 +566,25 @@ def global_bspline_interpolation_first_derivatives(
         2-tuple of control points as list of Vector objects and the knot vector as list of floats
 
     """
+
+    def nbasis(t: float):
+        span = N.find_span(t)
+        front = span - p
+        back = count + p + 1 - span
+        for basis in N.basis_funcs_derivatives(span, t, n=1):
+            yield [0.0] * front + basis + [0.0] * back
+
     p = degree
     n = len(fit_points) - 1
     knots = double_knots(n, p, t_vector)
     count = len(fit_points) * 2
-
-    # Build linear equation system A
-    N = DBasis(knots=knots, order=p + 1, count=count)
+    N = Basis(knots=knots, order=p + 1, count=count)
     A = [
         [1.0] + [0.0] * (count - 1),  # Q0
         [-1.0, +1.0] + [0.0] * (count - 2),  # D0
     ]
-    for d0, d1, _ in (N.basis(t) for t in t_vector[1:-1]):
-        A.extend((d0, d1))  # Qi, Di
+    for f in (nbasis(t) for t in t_vector[1:-1]):
+        A.extend(f)  # Qi, Di
     # swapped equations!
     A.append([0.0] * (count - 2) + [-1.0, +1.0])  # Dn
     A.append([0.0] * (count - 1) + [+1.0])  # Qn
@@ -801,9 +808,8 @@ class Basis:
             r *= (p - k)
 
         if self.weights is not None:
-            return [self.span_weighting(d, span) for d in derivatives]
-        else:
-            return derivatives
+            derivatives = [self.span_weighting(d, span) for d in derivatives]
+        return derivatives[:n + 1]
 
     def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
         p = self.order - 1
@@ -1050,9 +1056,11 @@ class BSpline:
         """ Approximates the whole B-spline from 0 to max_t, by line segments as a list of vertices, vertices count =
         segments + 1.
         """
-        step = self.step_size(segments)
-        for point_index in range(segments + 1):
-            yield self.point(point_index * step)
+        for u in self.params(segments):
+            yield self.point(u)
+
+    def params(self, segments: int) -> Iterable[float]:
+        return linspace(0, self.max_t, segments + 1)
 
     def point(self, t: float) -> Vector:
         """
@@ -1286,10 +1294,14 @@ class BSplineU(BSpline):
         return float(self.count - self.order + 1) / segments
 
     def approximate(self, segments=20) -> Iterable[Vector]:
+        for u in self.params(segments):
+            yield self.point(u)
+
+    def params(self, segments: int) -> Iterable[float]:
         step = self.step_size(segments)
         base = float(self.order - 1)
-        for point_index in range(segments + 1):
-            yield self.point(base + point_index * step)
+        for i in range(segments + 1):
+            yield base + i * step
 
     def t_array(self) -> List[float]:
         raise NotImplemented
@@ -1308,31 +1320,7 @@ class BSplineClosed(BSplineU):
         super().__init__(points, order=order, weights=weights)
 
 
-class DerivativePoint:  # Mixin
-    def point(self, t: float) -> Tuple[Vector, Vector, Vector]:
-        """
-        Get point, 1st and 2nd derivative at B-spline(t) as tuple (p, d1, d3),
-        where p, d1 and d2 are :class:`Vector` objects.
-
-        Args:
-            t: parameter in range [0, max_t]
-
-        """
-        if math.isclose(self.max_t, t):
-            t = self.max_t
-
-        nbasis, d1nbasis, d2nbasis = self.basis.basis(t)
-        point = Vector()
-        d1 = Vector()
-        d2 = Vector()
-        for i, control_point in enumerate(self.control_points):
-            point += control_point * nbasis[i]
-            d1 += control_point * d1nbasis[i]
-            d2 += control_point * d2nbasis[i]
-        return point, d1, d2
-
-
-class DBSpline(DerivativePoint, BSpline):
+class DBSpline(BSpline):
     """
     Subclass of :class:`BSpline`
 
@@ -1345,10 +1333,10 @@ class DBSpline(DerivativePoint, BSpline):
                  knots: Iterable[float] = None,
                  weights: Iterable[float] = None):
         super().__init__(control_points, order=order, knots=knots, weights=weights)
-        self.basis = DBasis(self.knots(), self.order, self.count)
+        self.basis = Basis(self.knots(), self.order, self.count)
 
 
-class DBSplineU(DerivativePoint, BSplineU):
+class DBSplineU(BSplineU):
     """
     Subclass of :class:`DBSpline`
 
@@ -1361,7 +1349,7 @@ class DBSplineU(DerivativePoint, BSplineU):
         self.basis = DBasisU(self.knots(), self.order, self.count)
 
 
-class DBSplineClosed(DerivativePoint, BSplineClosed):
+class DBSplineClosed(BSplineClosed):
     """
     Subclass of :class:`DBSpline`
 
@@ -1372,7 +1360,6 @@ class DBSplineClosed(DerivativePoint, BSplineClosed):
 
     def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
         super().__init__(control_points, order=order, weights=weights)
-        self.basis = DBasisU(self.knots(), self.order, self.count)
 
 
 def rational_spline_from_arc(

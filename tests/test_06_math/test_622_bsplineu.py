@@ -25,7 +25,7 @@ def test_bsplineu_points():
 @pytest.fixture
 def dbsplineu():
     curve = DBSplineU(DEFPOINTS, order=3)
-    return list(curve.approximate(40))
+    return list(curve.derivatives(curve.params(40)))
 
 
 def iter_points(values, n):
