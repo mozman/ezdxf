@@ -698,6 +698,143 @@ class Basis:
         s = sum(products)
         return [0.0] * self.count if s == 0.0 else [p / s for p in products]
 
+    def find_span(self, u: float) -> int:
+        """ Determine the knot span index. """
+        span = 0  # Knot span index starts from zero
+        knots = self.knots
+        count = self.count
+        while span < count and knots[span] <= u:
+            span += 1
+        return span - 1
+
+    def basis_funcs(self, span: int, u: float) -> List[float]:
+        # Source: The NURBS Book: Algorithm A2.2
+        degree = self.order - 1
+        knots = self.knots
+        N = [0.0] * (degree + 1)
+        left = list(N)
+        right = list(N)
+        N[0] = 1.0
+        for j in range(1, degree + 1):
+            left[j] = u - knots[span + 1 - j]
+            right[j] = knots[span + j] - u
+            saved = 0.0
+            for r in range(j):
+                temp = N[r] / (right[r + 1] + left[j - r])
+                N[r] = saved + right[r + 1] * temp
+                saved = left[j - r] * temp
+            N[j] = saved
+        if self.weights is not None:
+            return self.span_weighting(N, span)
+        else:
+            return N
+
+    def basis_funcs_derivatives(self, span: int, u: float, n: int = 1):
+        # Source: The NURBS Book: Algorithm A2.3
+        order = self.order
+        p = order - 1
+        n = min(n, p)
+
+        knots = self.knots
+        left = [1.0] * order
+        right = [1.0] * order
+        ndu = [[1.0] * order for _ in range(order)]
+
+        for j in range(1, order):
+            left[j] = u - knots[span + 1 - j]
+            right[j] = knots[span + j] - u
+            saved = 0.0
+            for r in range(j):
+                # lower triangle
+                ndu[j][r] = right[r + 1] + left[j - r]
+                temp = ndu[r][j - 1] / ndu[j][r]
+                # upper triangle
+                ndu[r][j] = saved + (right[r + 1] * temp)
+                saved = left[j - r] * temp
+            ndu[j][j] = saved
+
+        # load the basis functions
+        derivatives = [[0.0] * order for _ in range(order)]
+        for j in range(order):
+            derivatives[0][j] = ndu[j][p]
+
+        # loop over function index
+        a = [[1.0] * order, [1.0] * order]
+        for r in range(order):
+            s1 = 0
+            s2 = 1
+            # alternate rows in array a
+            a[0][0] = 1.0
+
+            # loop to compute kth derivative
+            for k in range(1, n + 1):
+                d = 0.0
+                rk = r - k
+                pk = p - k
+                if r >= k:
+                    a[s2][0] = a[s1][0] / ndu[pk + 1][rk]
+                    d = a[s2][0] * ndu[rk][pk]
+                if rk >= -1:
+                    j1 = 1
+                else:
+                    j1 = -rk
+                if (r - 1) <= pk:
+                    j2 = k - 1
+                else:
+                    j2 = p - r
+                for j in range(j1, j2 + 1):
+                    a[s2][j] = (a[s1][j] - a[s1][j - 1]) / ndu[pk + 1][rk + j]
+                    d += (a[s2][j] * ndu[rk + j][pk])
+                if r <= pk:
+                    a[s2][k] = -a[s1][k - 1] / ndu[pk + 1][r]
+                    d += (a[s2][k] * ndu[r][pk])
+                derivatives[k][r] = d
+
+                # Switch rows
+                s1, s2 = s2, s1
+
+        # Multiply through by the the correct factors
+        r = float(p)
+        for k in range(1, n + 1):
+            for j in range(order):
+                derivatives[k][j] *= r
+            r *= (p - k)
+
+        if self.weights is not None:
+            return [self.span_weighting(d, span) for d in derivatives]
+        else:
+            return derivatives
+
+    def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
+        p = self.order - 1
+        weights = self.weights[span - p: span - p + self.order]
+        products = [nb * w for nb, w in zip(nbasis, weights)]
+        s = sum(products)
+        return [0.0] * self.order if s == 0.0 else [p / s for p in products]
+
+    def curve_point(self, u: float, control_points: Sequence[Vector]) -> Vector:
+        # Source: The NURBS Book: Algorithm A3.1
+        p = self.order - 1
+        span = self.find_span(u)
+        N = self.basis_funcs(span, u)
+        point = Vector()
+        for i in range(p + 1):
+            point += N[i] * control_points[span - p + i]
+        return point
+
+    def curve_derivatives(self, u: float, control_points: Sequence[Vector], n: int = 1) -> List[Vector]:
+        # Source: The NURBS Book: Algorithm A3.2
+        p = self.order - 1
+        span = self.find_span(u)
+        nders = self.basis_funcs_derivatives(span, u, n)
+        CK = []
+        for k in range(n + 1):
+            deriv = Vector()
+            for j in range(p + 1):
+                deriv += nders[k][j] * control_points[span - p + j]
+            CK.append(deriv)
+        return CK
+
 
 class DBasis(Basis):
     def basis(self, t: float) -> Tuple[List[float], List[float], List[float]]:
@@ -906,10 +1043,6 @@ class BSpline:
         else:
             return []
 
-    def basis_values(self, t: float) -> List[float]:
-        """ Returns the `basis`_ vector for position t. """
-        return self.basis.basis(t)
-
     def step_size(self, segments: int) -> float:
         return self.max_t / float(segments)
 
@@ -923,22 +1056,57 @@ class BSpline:
 
     def point(self, t: float) -> Vector:
         """
-        Get point at SplineCurve(t) as tuple (x, y, z).
+        Returns point for parameter `t`.
 
         Args:
             t: parameter in range [0, max_t]
 
-        Returns: Vector(x, y, z)
+        """
+        if math.isclose(t, self.max_t):
+            t = self.max_t
+        return self.basis.curve_point(t, self.control_points)
+
+    def points(self, t: Iterable[float]) -> Iterable[Vector]:
+        """
+        Yields points for parameter vector `t`.
+
+        Args:
+            t: parameters in range [0, max_t]
+
+        """
+        for u in t:
+            yield self.point(u)
+
+    def derivative(self, t: float, n: int = 2) -> List[Vector]:
+        """
+        Return derivatives up to `n` for parameter `t`.
+
+        Args:
+            t: parameter in range [0, max_t]
+            n: compute all derivatives up tu n
+
+        Returns:
+            n+1 values as :class:`Vector` objects
 
         """
         if math.isclose(t, self.max_t):
             t = self.max_t
+        return self.basis.curve_derivatives(t, self.control_points, n)
 
-        p = Vector()
-        for control_point, basis in zip(self.control_points, self.basis_values(t)):
-            if basis:  # all 0 values can be skipped and there are a lot of them
-                p += control_point * basis
-        return p
+    def derivatives(self, t: Iterable[float], n: int = 2) -> Iterable[List[Vector]]:
+        """
+        Yields derivatives up to `n` for parameter vector `t`.
+
+        Args:
+            t: parameters in range [0, max_t]
+            n: compute all derivatives up tu n
+
+        Returns:
+            List of n+1 values as :class:`Vector` objects
+
+        """
+        for u in t:
+            yield self.derivative(u, n)
 
     def insert_knot(self, t: float) -> None:
         """
@@ -962,7 +1130,7 @@ class BSpline:
         if t <= 0. or t >= self.max_t:
             raise DXFValueError('Invalid position t')
 
-        k = self.find_span(t)
+        k = self.basis.find_span(t)
         if k < p:
             raise DXFValueError('Invalid position t')
 
@@ -979,23 +1147,6 @@ class BSpline:
         """
         for t in u:
             self.insert_knot(t)
-
-    def find_span(self, u: float) -> int:
-        """ Determine the knot span index. """
-        # Source: The NURBS Book: Algorithm A2.1
-        high = self.count
-        knots = self.basis.knots
-        if u == knots[high]:
-            return high - 1
-        low = self.order - 1
-        while True:
-            mid = (low + high) // 2
-            if knots[mid] <= u < knots[mid + 1]:
-                return mid
-            if u < knots[mid]:
-                high = mid
-            else:
-                low = mid
 
     def transform(self, m: 'Matrix44') -> 'BSpline':
         """ Transform B-spline by transformation matrix `m` inplace.
@@ -1115,34 +1266,6 @@ class BSpline:
         from .bezier4p import cubic_bezier_interpolation
         return cubic_bezier_interpolation(points)
 
-    def check_and_repair_closed_spline(self) -> 'BSpline':
-        knots = self.basis.knots
-        first = self.point(knots[0])
-        last = self.point(knots[-1])
-        if not first.isclose(last, abs_tol=1e-9):
-            overlap = self.count_of_overlapping_control_points()
-            if overlap != 1:
-                control_points = self.control_points[:-overlap]
-                control_points.append(control_points[0])
-                weights = self.weights()
-                if weights:
-                    weights = weights[:-overlap]
-                    weights.append(weights[0])
-                else:
-                    weights = None
-                return BSpline(control_points, self.order, weights)
-        return self
-
-    def count_of_overlapping_control_points(self) -> int:
-        first = self.control_points[0]
-        count = 1
-        while not self.control_points[-count].isclose(first):
-            count += 1
-        if count == len(self.control_points):
-            return 0
-        else:
-            return count
-
 
 def subdivide_params(p: List[float]) -> Iterable[float]:
     for i in range(len(p) - 1):
@@ -1198,7 +1321,7 @@ class DerivativePoint:  # Mixin
         if math.isclose(self.max_t, t):
             t = self.max_t
 
-        nbasis, d1nbasis, d2nbasis = self.basis_values(t)
+        nbasis, d1nbasis, d2nbasis = self.basis.basis(t)
         point = Vector()
         d1 = Vector()
         d2 = Vector()

@@ -201,10 +201,7 @@ class Spline(DXFGraphic):
         if self.control_point_count():
             weights = self.weights if len(self.weights) else None
             knots = self.knots if len(self.knots) else None
-            tool = BSpline(control_points=self.control_points, order=self.dxf.degree + 1, knots=knots, weights=weights)
-            if self.closed:
-                tool = tool.check_and_repair_closed_spline()
-            return tool
+            return BSpline(control_points=self.control_points, order=self.dxf.degree + 1, knots=knots, weights=weights)
         elif self.fit_point_count():
             return BSpline.from_fit_points(self.fit_points, degree=self.dxf.degree)
         else:

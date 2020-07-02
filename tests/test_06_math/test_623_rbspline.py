@@ -5,7 +5,7 @@ import math
 from math import isclose
 from ezdxf.math import BSpline, BSplineU
 from ezdxf.math.bspline import nurbs_arc_parameters, required_knot_values
-from ezdxf.math import rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse, ConstructionArc
+from ezdxf.math import rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse, ConstructionArc, linspace
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 DEFWEIGHTS = [1, 10, 10, 10, 1]

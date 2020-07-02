@@ -5,6 +5,7 @@ import pytest
 from math import isclose
 from ezdxf.math.bspline import BSpline, DBSpline
 from ezdxf.math.bspline import bspline_basis_vector, Basis, open_uniform_knot_vector, normalize_knots, subdivide_params
+from ezdxf.math import linspace
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 
@@ -37,7 +38,9 @@ def test_bspline_basis_vector():
 @pytest.fixture()
 def dbspline():
     curve = DBSpline(DEFPOINTS, order=3)
-    return list(curve.approximate(40))
+    segments = 40
+    t = linspace(0, curve.max_t, segments + 1)
+    return list(curve.derivatives(t, 2))
 
 
 def iter_points(values, n):
@@ -50,6 +53,24 @@ def iter_data(result, n):
 
 def test_dbspline_points(dbspline):
     for rpoint, epoint in iter_data(dbspline, 0):
+        epx, epy, epz = epoint
+        rpx, rpy, rpz = rpoint
+        assert isclose(epx, rpx)
+        assert isclose(epy, rpy)
+        assert isclose(epz, rpz)
+
+
+def test_dbspline_derivative_1(dbspline):
+    for rpoint, epoint in iter_data(dbspline, 1):
+        epx, epy, epz = epoint
+        rpx, rpy, rpz = rpoint
+        assert isclose(epx, rpx)
+        assert isclose(epy, rpy)
+        assert isclose(epz, rpz)
+
+
+def test_dbspline_derivative_2(dbspline):
+    for rpoint, epoint in iter_data(dbspline, 2):
         epx, epy, epz = epoint
         rpx, rpy, rpz = rpoint
         assert isclose(epx, rpx)
@@ -71,24 +92,6 @@ def test_normalize_knots_if_needed():
     )
     k = s.knots()
     assert k[0] == 0.0
-
-
-def test_dbspline_derivative_1(dbspline):
-    for rpoint, epoint in iter_data(dbspline, 1):
-        epx, epy, epz = epoint
-        rpx, rpy, rpz = rpoint
-        assert isclose(epx, rpx)
-        assert isclose(epy, rpy)
-        assert isclose(epz, rpz)
-
-
-def test_dbspline_derivative_2(dbspline):
-    for rpoint, epoint in iter_data(dbspline, 2):
-        epx, epy, epz = epoint
-        rpx, rpy, rpz = rpoint
-        assert isclose(epx, rpx)
-        assert isclose(epy, rpy)
-        assert isclose(epz, rpz)
 
 
 def test_bspline_insert_knot():
@@ -218,12 +221,6 @@ def test_check_and_repair_closed_spline():
     first = closed_spline.point(0)
     last = closed_spline.point(closed_spline.max_t)
     assert first.isclose(last, 1e-9) is False, 'The loaded SPLINE is not a correct closed B-spline.'
-    assert closed_spline.count_of_overlapping_control_points() == 2
-
-    new_closed_spline = closed_spline.check_and_repair_closed_spline()
-    first = new_closed_spline.point(0)
-    last = new_closed_spline.point(new_closed_spline.max_t)
-    assert first.isclose(last, 1e-9) is True, 'Should be a correct closed B-spline.'
 
 
 DBSPLINE = [
