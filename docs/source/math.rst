@@ -1016,6 +1016,26 @@ BandedMatrixLU Class
 
 .. autoclass:: BandedMatrixLU
 
+    .. attribute:: upper
+
+        Upper triangle
+
+    .. attribute:: lower
+
+        Lower triangle
+
+    .. attribute:: m1
+
+        Lower band count, excluding main matrix diagonal
+
+    .. attribute:: m2
+
+        Upper band count, excluding main matrix diagonal
+
+    .. attribute:: index
+
+        Swapped indices
+
     .. autoattribute:: nrows
 
     .. automethod:: solve_vector

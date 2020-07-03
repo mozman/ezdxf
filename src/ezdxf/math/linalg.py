@@ -908,17 +908,7 @@ def compact_banded_matrix(A: Matrix, m1: int, m2: int) -> Matrix:
 
 
 class BandedMatrixLU:
-    """ Represents a LU decomposition of a compact banded matrix.
-
-    Attributes:
-
-        - :attr:`upper` - upper triangle
-        - :attr:`lower` - lower triangle
-        - :attr:`m1` - lower band count, excluding main matrix diagonal
-        - :attr:`m2` - upper band count, excluding main matrix diagonal
-        - :attr:`index` - swapped indices
-
-    """
+    """ Represents a LU decomposition of a compact banded matrix. """
 
     def __init__(self, A: Matrix, m1: int, m2: int):
         self.upper = copy_float_matrix(A)  # upper triangle of LU decomposition
