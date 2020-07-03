@@ -54,6 +54,7 @@ Version 0.13b6 - dev
 - NEW: `ezdxf.math.LUDecomposition` linear equation solver, for more linear algebra tools see module `ezdxf.math.linalg`
 - NEW: `ezdxf.render.random_2d_path()` generate random 2D path for testing purpose
 - NEW: `ezdxf.render.random_3d_path()` generate random 3D path for testing purpose
+- NEW: `BSpline()` uses normalized knot vector for 'clamped' curves by default (open uniform knots)
 - NEW: `BSpline.points()` compute multiple points
 - NEW: `BSpline.derivative()` compute point and derivative up to n <= degree
 - NEW: `BSpline.derivatives()` compute multiple points and derivatives up to n <= degree

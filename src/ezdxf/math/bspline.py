@@ -677,6 +677,10 @@ class Basis:
 
     def find_span(self, u: float) -> int:
         """ Determine the knot span index. """
+        # Linear search is more reliable than binary search of the Algorithm A2.1
+        # from The NURBS Book by Piegl & Tiller,
+        # Tried also the helpers.find_span_binsearch() function from NURBS-Python package,
+        # but Test 621 : test_weired_closed_spline() goes into a infinity loop
         span = 0  # Knot span index starts from zero
         knots = self.knots
         count = self.count
@@ -834,7 +838,7 @@ class BSpline:
             raise DXFValueError(f'Invalid need more control points for order {order}')
 
         if knots is None:
-            knots = open_uniform_knot_vector(self.count, self.order)
+            knots = open_uniform_knot_vector(self.count, self.order, normalize=True)
         else:
             knots = list(knots)
             required_knot_count = self.count + self.order

@@ -1,25 +1,50 @@
 # Created: 06.01.2012
-# Copyright (c) 2012-2018 Manfred Moitzi
+# Copyright (c) 2012-2020 Manfred Moitzi
 # License: MIT License
-import pytest
 from math import isclose
-from ezdxf.math.bspline import BSpline
+import random
+from ezdxf.math.bspline import BSpline, Vector
 from ezdxf.math.bspline import bspline_basis_vector, Basis, open_uniform_knot_vector, normalize_knots, subdivide_params
-from ezdxf.math import linspace
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 
 
-def test_bspine_points():
-    curve = BSpline(DEFPOINTS, order=3)
-    points = list(curve.approximate(40))
+def random_point_comparision_to_nurbs_python(spline: BSpline, count: int = 10):
+    curve = spline.to_nurbs_python_curve()
+    for _ in range(count):
+        t = random.random()
+        p1 = spline.point(t)
+        p2 = curve.evaluate_single(t)
+        assert p1.isclose(p2)
 
-    for rpoint, epoint in zip(points, iter_points(DBSPLINE, 0)):
-        epx, epy, epz = epoint
-        rpx, rpy, rpz = rpoint
-        assert isclose(epx, rpx)
-        assert isclose(epy, rpy)
-        assert isclose(epz, rpz)
+
+def random_derivatives_comparision_to_nurbs_python(spline: BSpline, count: int = 10):
+    curve = spline.to_nurbs_python_curve()
+    for _ in range(count):
+        t = random.random()
+        p1, d1_1, d2_1 = spline.derivative(t, n=2)
+        p2, d1_2, d2_2 = curve.derivatives(t, order=2)
+        assert p1.isclose(p2)
+        assert d1_1.isclose(d1_2)
+        assert d2_1.isclose(d2_2)
+
+
+def test_if_nurbs_python_is_reliable():
+    # Testing for some known values, just for the case
+    # that NURBS-Python is incorrect.
+    expected = [
+        (0.0, 0.0, 0.0),
+        (11.840000000000003, 13.760000000000002, 16.64),
+        (22.72, 14.079999999999998, 22.719999999999995),
+        (31.759999999999994, 11.2, 24.399999999999995),
+        (39.92, 7.999999999999999, 26.0),
+        (50.0, 0.0, 30.0)
+    ]
+    params = [0, .2, .4, .6, .8, 1.0]
+    curve = BSpline(DEFPOINTS).to_nurbs_python_curve()
+    points = curve.evaluate_list(params)
+    for expect, point in zip(expected, points):
+        assert Vector(expect).isclose(point)
 
 
 def test_bspline_basis_vector():
@@ -32,51 +57,22 @@ def test_bspline_basis_vector():
         basis = bspline_basis_vector(u, count=count, degree=degree, knots=knots)
         basis2 = basis_func.basis_vector(u)
         assert len(basis) == len(basis2)
-        for v1, v2 in  zip(basis, basis2):
+        for v1, v2 in zip(basis, basis2):
             assert isclose(v1, v2)
-
-
-@pytest.fixture()
-def dbspline():
-    curve = BSpline(DEFPOINTS, order=3)
-    segments = 40
-    t = linspace(0, curve.max_t, segments + 1)
-    return list(curve.derivatives(t, 2))
 
 
 def iter_points(values, n):
     return (data[n] for data in values)
 
 
-def iter_data(result, n):
-    return zip(iter_points(result, n), iter_points(DBSPLINE, n))
+def test_bspine_points_random():
+    spline = BSpline(DEFPOINTS, order=3)
+    random_point_comparision_to_nurbs_python(spline)
 
 
-def test_dbspline_points(dbspline):
-    for rpoint, epoint in iter_data(dbspline, 0):
-        epx, epy, epz = epoint
-        rpx, rpy, rpz = rpoint
-        assert isclose(epx, rpx)
-        assert isclose(epy, rpy)
-        assert isclose(epz, rpz)
-
-
-def test_dbspline_derivative_1(dbspline):
-    for rpoint, epoint in iter_data(dbspline, 1):
-        epx, epy, epz = epoint
-        rpx, rpy, rpz = rpoint
-        assert isclose(epx, rpx)
-        assert isclose(epy, rpy)
-        assert isclose(epz, rpz)
-
-
-def test_dbspline_derivative_2(dbspline):
-    for rpoint, epoint in iter_data(dbspline, 2):
-        epx, epy, epz = epoint
-        rpx, rpy, rpz = rpoint
-        assert isclose(epx, rpx)
-        assert isclose(epy, rpy)
-        assert isclose(epz, rpz)
+def test_bspine_derivatives_random():
+    spline = BSpline(DEFPOINTS, order=3)
+    random_derivatives_comparision_to_nurbs_python(spline)
 
 
 def test_normalize_knots():
@@ -144,7 +140,7 @@ def test_subdivide_params():
     assert list(subdivide_params([0.0, 0.5, 1.0])) == [0.0, 0.25, 0.5, 0.75, 1.0]
 
 
-def test_check_and_repair_closed_spline():
+def test_weired_closed_spline():
     # test spline from: 'CADKitSamples\Tamiya TT-01.dxf'
     control_points = [
         (-52.08772752271847, 158.6939842216689, 0.0),
@@ -218,62 +214,10 @@ def test_check_and_repair_closed_spline():
         1.0625,
         1.0625,
     ]
-    closed_spline = BSpline(control_points, order=4, knots=knots)
-    first = closed_spline.point(0)
-    last = closed_spline.point(closed_spline.max_t)
+    spline = BSpline(control_points, order=4, knots=knots)
+    first = spline.point(0)
+    last = spline.point(spline.max_t)
     assert first.isclose(last, 1e-9) is False, 'The loaded SPLINE is not a correct closed B-spline.'
+    random_point_comparision_to_nurbs_python(spline)
 
 
-DBSPLINE = [
-    [[0.0, 0.0, 0.0], [20.0, 40.0, 40.0], [0.0, -50.0, -35.0]],
-    [[1.5000000000000002, 2.8593750000000004, 2.9015625000000003], [20.0, 36.25, 37.375], [0.0, -50.0, -35.0]],
-    [[2.9999999999999996, 5.437499999999999, 5.606249999999999], [20.0, 32.5, 34.75], [0.0, -50.0, -35.0]],
-    [[4.499999999999999, 7.734374999999999, 8.1140625], [20.0, 28.750000000000004, 32.125], [0.0, -50.0, -35.0]],
-    [[5.999999999999999, 9.749999999999998, 10.424999999999999], [20.0, 24.999999999999996, 29.499999999999996],
-     [0.0, -50.0, -35.0]],
-    [[7.5, 11.484375, 12.5390625], [20.0, 21.25, 26.875], [0.0, -50.0, -35.0]],
-    [[8.999999999999998, 12.937499999999998, 14.456249999999999], [20.0, 17.500000000000004, 24.25],
-     [0.0, -50.0, -35.0]],
-    [[10.5, 14.109375000000002, 16.176562500000003], [20.0, 13.75, 21.625], [0.0, -50.0, -35.0]],
-    [[12.0, 15.0, 17.7], [20.0, 10.0, 19.0], [0.0, -50.0, -35.0]],
-    [[13.5, 15.609375, 19.026562499999997], [20.0, 6.250000000000005, 16.375000000000007], [0.0, -50.0, -35.0]],
-    [[15.0, 15.9375, 20.15625], [20.0, 2.5, 13.75], [0.0, -50.0, -35.0]],
-    [[16.5, 15.984375, 21.089062499999997], [20.0, -1.25, 11.125], [0.0, -50.0, -35.0]],
-    [[17.999999999999996, 15.75, 21.825], [20.0, -4.999999999999995, 8.500000000000002], [0.0, -50.0, -35.0]],
-    [[19.5, 15.234375, 22.3640625], [20.0, -8.75, 5.875], [0.0, -50.0, -35.0]],
-    [[20.9875, 14.5125, 22.74375], [19.5, -9.5, 4.749999999999997], [-10.0, 10.0, -5.0]],
-    [[22.421875, 13.828125, 23.0859375], [18.75, -8.75, 4.375], [-10.0, 10.0, -5.0]],
-    [[23.799999999999997, 13.2, 23.4], [18.0, -8.0, 4.000000000000001], [-10.0, 10.0, -5.0]],
-    [[25.121875, 12.628124999999999, 23.6859375], [17.25, -7.250000000000001, 3.625], [-10.0, 10.0, -5.0]],
-    [[26.3875, 12.112499999999999, 23.943749999999998], [16.5, -6.500000000000002, 3.25], [-10.0, 10.0, -5.0]],
-    [[27.596875, 11.653125, 24.1734375], [15.749999999999996, -5.75, 2.875], [-10.0, 10.0, -5.0]],
-    [[28.75, 11.25, 24.375], [15.0, -5.0, 2.5], [-10.0, 10.0, -5.0]],
-    [[29.846874999999997, 10.903125, 24.5484375], [14.250000000000004, -4.25, 2.125], [-10.0, 10.0, -5.0]],
-    [[30.887500000000003, 10.6125, 24.69375], [13.5, -3.500000000000001, 1.75], [-10.0, 10.0, -5.0]],
-    [[31.871875, 10.378125, 24.8109375], [12.749999999999996, -2.7500000000000018, 1.3749999999999964],
-     [-10.0, 10.0, -5.0]],
-    [[32.8, 10.2, 24.900000000000002], [12.0, -2.0000000000000018, 1.0000000000000036], [-10.0, 10.0, -5.0]],
-    [[33.671875, 10.078125, 24.9609375], [11.25, -1.25, 0.625], [-10.0, 10.0, -5.0]],
-    [[34.4875, 10.0125, 24.99375], [10.500000000000007, -0.5, 0.25000000000000355], [-10.0, 10.0, -5.0]],
-    [[35.253125, 9.993749999999999, 25.003125], [10.250000000000002, -0.49999999999999645, 0.24999999999999822],
-     [10.0, -20.0, 10.0]],
-    [[36.05, 9.899999999999999, 25.05], [11.000000000000002, -2.0000000000000027, 1.0000000000000018],
-     [10.0, -20.0, 10.0]],
-    [[36.903125, 9.693750000000001, 25.153125000000003], [11.749999999999996, -3.4999999999999964, 1.75],
-     [10.0, -20.0, 10.0]],
-    [[37.8125, 9.375, 25.3125], [12.5, -5.0, 2.5], [10.0, -20.0, 10.0]],
-    [[38.778124999999996, 8.943750000000001, 25.528125], [13.249999999999996, -6.499999999999995, 3.25],
-     [10.0, -20.0, 10.0]],
-    [[39.8, 8.4, 25.799999999999997], [14.0, -7.999999999999998, 4.0], [10.0, -20.0, 10.0]],
-    [[40.878125, 7.743749999999999, 26.128124999999997], [14.75, -9.500000000000002, 4.75], [10.0, -20.0, 10.0]],
-    [[42.0125, 6.975000000000003, 26.512500000000003], [15.5, -10.999999999999996, 5.4999999999999964],
-     [10.0, -20.0, 10.0]],
-    [[43.203125, 6.09375, 26.953125], [16.25, -12.5, 6.25], [10.0, -20.0, 10.0]],
-    [[44.44999999999999, 5.100000000000004, 27.449999999999996], [16.999999999999993, -13.999999999999996, 7.0],
-     [10.0, -20.0, 10.0]],
-    [[45.753125, 3.9937500000000017, 28.003125], [17.75, -15.499999999999996, 7.75], [10.0, -20.0, 10.0]],
-    [[47.112500000000004, 2.7749999999999986, 28.6125], [18.5, -17.000000000000004, 8.5], [10.0, -20.0, 10.0]],
-    [[48.52812499999999, 1.4437500000000032, 29.278124999999996],
-     [19.250000000000014, -18.499999999999993, 9.249999999999993], [10.0, -20.0, 10.0]],
-    [[50.0, 0.0, 30.0], [20.0, -20.0, 10.0], [10.0, -20.0, 10.0]]
-]
