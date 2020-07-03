@@ -660,9 +660,7 @@ class Basis:
         self.knots: List[float] = list(knots)
         self.order: int = order
         self.count: int = count
-        self.weights: Optional[Sequence[float]] = None
-        if weights:
-            self.weights = weights
+        self.weights: Optional[Sequence[float]] = weights
 
     @property
     def max_t(self) -> float:
@@ -687,7 +685,7 @@ class Basis:
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller,
         # Tried also the helpers.find_span_binsearch() function from NURBS-Python package,
-        # but Test 621 : test_weired_closed_spline() goes into a infinity loop
+        # but Test 621 : test_weired_closed_spline() goes into an infinity loop
         span = 0  # Knot span index starts from zero
         knots = self.knots
         count = self.count
