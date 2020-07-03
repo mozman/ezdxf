@@ -902,12 +902,13 @@ class BSpline:
         )
 
     def normalize_knots(self):
+        """ Normalize knot vector into range [0, 1]. """
         if self.basis.knots:
             self.basis.knots = normalize_knots(self.basis.knots)
 
     @property
     def count(self) -> int:
-        """ Count of control points, (n + 1 in math definition). """
+        """ Count of control points, (n + 1 in text book notation). """
         return len(self.control_points)
 
     @property
@@ -921,8 +922,8 @@ class BSpline:
         return self.order - 1
 
     def knots(self) -> List[float]:
-        """ Returns a list of `knot`_ values as floats, the knot vector always has order+count values
-        (n + p + 2 in math definition).
+        """ Returns a list of `knot`_ values as floats, the knot vector **always** has order + count values
+        (n + p + 2 in text book notation).
         """
         return self.basis.knots
 
@@ -948,6 +949,7 @@ class BSpline:
         yield from self.points(self.params(segments))
 
     def params(self, segments: int) -> Iterable[float]:
+        """ Yield evenly spaced parameters from 0 to max_t for given segment count. """
         return linspace(0, self.max_t, segments + 1)
 
     def point(self, t: float) -> Vector:
@@ -975,11 +977,13 @@ class BSpline:
 
     def derivative(self, t: float, n: int = 2) -> List[Vector]:
         """
-        Return derivatives up to `n` for parameter `t`.
+        Return point and derivatives up to `n` <= degree for parameter `t`.
+
+        e.g. n=1 returns point and 1st derivative.
 
         Args:
             t: parameter in range [0, max_t]
-            n: compute all derivatives up tu n
+            n: compute all derivatives up to n <= degree
 
         Returns:
             n+1 values as :class:`Vector` objects
@@ -991,11 +995,13 @@ class BSpline:
 
     def derivatives(self, t: Iterable[float], n: int = 2) -> Iterable[List[Vector]]:
         """
-        Yields derivatives up to `n` for parameter vector `t`.
+        Yields points and derivatives up to `n` <= degree for parameter vector `t`.
+
+        e.g. n=1 returns point and 1st derivative.
 
         Args:
             t: parameters in range [0, max_t]
-            n: compute all derivatives up tu n
+            n: compute all derivatives up to n <= degree
 
         Returns:
             List of n+1 values as :class:`Vector` objects

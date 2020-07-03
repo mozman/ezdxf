@@ -769,23 +769,25 @@ BSpline
 
     .. attribute:: control_points
 
-        control points as list of :class:`~ezdxf.math.Vector`
+        Control points as list of :class:`~ezdxf.math.Vector`
 
     .. autoattribute:: count
 
-    .. attribute:: degree
+    .. autoattribute:: degree
 
     .. attribute:: order
 
-        order of B-spline = degree +  1
+        Order of B-spline = degree +  1
 
     .. autoattribute:: max_t
 
     .. automethod:: knots
 
+    .. automethod:: normalize_knots
+
     .. automethod:: weights
 
-    .. automethod:: basis_values
+    .. automethod:: params
 
     .. automethod:: reverse() -> BSpline
 
@@ -795,15 +797,9 @@ BSpline
 
     .. automethod:: derivative(t: float, n: int=2) -> List[Vector]
 
-    .. automethod:: points(t: Iterable[float]) -> List[Vector]
-
-    .. automethod:: derivative(t: float, n: int=2) -> List[Vector]
-
-    .. automethod:: derivatives(t: Iterable[float], n: int=2) -> Iterablle[List[Vector]]
+    .. automethod:: derivatives(t: Iterable[float], n: int=2) -> Iterable[List[Vector]]
 
     .. automethod:: insert_knot
-
-    .. automethod:: params
 
     .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
 
