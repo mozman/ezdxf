@@ -54,6 +54,11 @@ Version 0.13b6 - dev
 - NEW: `ezdxf.math.LUDecomposition` linear equation solver, for more linear algebra tools see module `ezdxf.math.linalg`
 - NEW: `ezdxf.render.random_2d_path()` generate random 2D path for testing purpose
 - NEW: `ezdxf.render.random_3d_path()` generate random 3D path for testing purpose
+- NEW: `BSpline.points()` compute multiple points
+- NEW: `BSpline.derivative()` compute point and derivative up to n <= degree
+- NEW: `BSpline.derivativen()` compute multiple points and derivatives up to n <= degree
+- NEW: `BSpline.params()` return evenly spaced B-spline params from start- to end param
+- NEW: `BSpline.reverse()` returns a new reversed B-spline
 - NEW: `BSpline.from_arc()` B-spline from an arc, best approximation with a minimum number of control points
 - NEW: `BSpline.from_ellipse()` B-spline from an ellipse, best approximation with a minimum number of control points
 - NEW: `BSpline.from_fit_points()` B-spline from fit points 
@@ -78,6 +83,9 @@ Version 0.13b6 - dev
 - REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`
 - REMOVED: `ezdxf.math.ConstructionTool` base class
 - REMOVED: `ezdxf.math.normalize_angle(angle)`, replace call by expression: `angle % math.tau`
+- REMOVED: `ezdxf.math.DBSpline`, integrated as `BSpline.derivatives()`
+- REMOVED: `ezdxf.math.DBSplineU`, integrated as `BSplineU.derivatives()`
+- REMOVED: `ezdxf.math.DBSplineClosed`, integrated as `BSplineClosed.derivatives()`
 - REMOVED: `BaseLayout.add_spline_approx()`, incorrect and nobody noticed it - so it's not really needed, if required 
   use the `geomdl.fitting.approximate_curve()` function from the package 
   [NURBS-Python](https://github.com/orbingol/NURBS-Python), see example `using_nurbs_python.py`

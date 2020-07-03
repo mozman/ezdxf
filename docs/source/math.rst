@@ -787,9 +787,23 @@ BSpline
 
     .. automethod:: basis_values
 
+    .. automethod:: reverse() -> BSpline
+
     .. automethod:: point(t: float) -> Vector
 
+    .. automethod:: points(t: float) -> List[Vector]
+
+    .. automethod:: derivative(t: float, n: int=2) -> List[Vector]
+
+    .. automethod:: points(t: Iterable[float]) -> List[Vector]
+
+    .. automethod:: derivative(t: float, n: int=2) -> List[Vector]
+
+    .. automethod:: derivatives(t: Iterable[float], n: int=2) -> Iterablle[List[Vector]]
+
     .. automethod:: insert_knot
+
+    .. automethod:: params
 
     .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
 
@@ -819,23 +833,6 @@ BSplineClosed
 
 .. autoclass:: BSplineClosed
 
-
-DBSpline
---------
-
-.. autoclass:: DBSpline
-
-    .. automethod:: point(t: float) -> Tuple[Vector, Vector, Vector]
-
-DBSplineU
----------
-
-.. autoclass:: DBSplineU
-
-DBSplineClosed
---------------
-
-.. autoclass:: DBSplineClosed
 
 Bezier
 ------

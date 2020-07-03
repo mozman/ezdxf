@@ -4,7 +4,7 @@
 # License: MIT License
 import pytest
 from math import isclose
-from ezdxf.math.bspline import BSplineU, DBSplineU
+from ezdxf.math.bspline import BSplineU
 
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
@@ -24,7 +24,7 @@ def test_bsplineu_points():
 
 @pytest.fixture
 def dbsplineu():
-    curve = DBSplineU(DEFPOINTS, order=3)
+    curve = BSplineU(DEFPOINTS, order=3)
     return list(curve.derivatives(curve.params(40)))
 
 

@@ -22,8 +22,8 @@ from .parametrize import estimate_tangents, estimate_end_tangent_magnitude
 from .bspline import (
     fit_points_to_cad_cv, global_bspline_interpolation,
     rational_spline_from_arc, rational_spline_from_ellipse,
-    uniform_knot_vector, open_uniform_knot_vector, required_knot_values, BSpline, BSplineU, BSplineClosed, DBSpline,
-    DBSplineClosed, DBSplineU, local_cubic_bspline_interpolation,
+    uniform_knot_vector, open_uniform_knot_vector, required_knot_values, BSpline, BSplineU, BSplineClosed,
+    local_cubic_bspline_interpolation,
 )
 from .bezier import Bezier, DBezier
 from .bezier4p import Bezier4P, cubic_bezier_from_arc, cubic_bezier_from_ellipse, cubic_bezier_interpolation

@@ -3,7 +3,7 @@
 # License: MIT License
 import pytest
 from math import isclose
-from ezdxf.math.bspline import BSpline, DBSpline
+from ezdxf.math.bspline import BSpline
 from ezdxf.math.bspline import bspline_basis_vector, Basis, open_uniform_knot_vector, normalize_knots, subdivide_params
 from ezdxf.math import linspace
 
@@ -37,7 +37,7 @@ def test_bspline_basis_vector():
 
 @pytest.fixture()
 def dbspline():
-    curve = DBSpline(DEFPOINTS, order=3)
+    curve = BSpline(DEFPOINTS, order=3)
     segments = 40
     t = linspace(0, curve.max_t, segments + 1)
     return list(curve.derivatives(t, 2))

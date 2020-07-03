@@ -48,9 +48,6 @@ __all__ = [
     # B-spline representation without derivatives support:
     'BSpline', 'BSplineU', 'BSplineClosed',
 
-    # B-spline representation with 1st and 2nd derivatives support:
-    'DBSpline', 'DBSplineU', 'DBSplineClosed',
-
     # Low level interpolation function:
     'unconstrained_global_bspline_interpolation', 'global_bspline_interpolation_end_tangents',
     'global_bspline_interpolation_first_derivatives', 'local_cubic_bspline_interpolation_from_tangents',
@@ -917,14 +914,14 @@ class BSpline:
             weights=curve.weights,
         )
 
-    def reverse(self):
-        """ Returns a BSpline with revered control point order. """
+    def reverse(self) -> 'BSpline':
+        """ Returns a new BSpline with revered control point order. """
 
         def reverse_knots():
             for k in reversed(normalize_knots(self.knots())):
                 yield 1.0 - k
 
-        return BSpline(
+        return self.__class__(
             control_points=reversed(self.control_points),
             order=self.order,
             knots=reverse_knots(),
@@ -971,11 +968,11 @@ class BSpline:
         return self.max_t / float(segments)
 
     def approximate(self, segments: int = 20) -> Iterable[Vector]:
-        """ Approximates the whole B-spline from 0 to max_t, by line segments as a list of vertices, vertices count =
-        segments + 1.
         """
-        for u in self.params(segments):
-            yield self.point(u)
+        Approximates the whole B-spline from 0 to max_t, by line segments
+        as a list of vertices, vertices count = segments + 1.
+        """
+        yield from self.points(self.params(segments))
 
     def params(self, segments: int) -> Iterable[float]:
         return linspace(0, self.max_t, segments + 1)
@@ -1203,17 +1200,16 @@ def subdivide_params(p: List[float]) -> Iterable[float]:
 class BSplineU(BSpline):
     """ Representation of an uniform (periodic) `B-spline`_ curve (`open curve`_). """
 
-    def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
+    def __init__(self, control_points: Iterable['Vertex'],
+                 order: int = 4,
+                 knots: Iterable[float] = None,  # just for consistent interface
+                 weights: Iterable[float] = None):
         control_points = list(control_points)
-        knots = uniform_knot_vector(len(control_points), order)
+        knots = uniform_knot_vector(len(control_points), order, normalize=False)
         super().__init__(control_points, order=order, knots=knots, weights=weights)
 
     def step_size(self, segments: int) -> float:
         return float(self.count - self.order + 1) / segments
-
-    def approximate(self, segments=20) -> Iterable[Vector]:
-        for u in self.params(segments):
-            yield self.point(u)
 
     def params(self, segments: int) -> Iterable[float]:
         step = self.step_size(segments)
@@ -1226,28 +1222,20 @@ class BSplineU(BSpline):
 
 
 class BSplineClosed(BSplineU):
-    """ Representation of a closed uniform `B-spline`_ curve (`closed curve`_). """
+    """ Representation of a closed uniform `B-spline`_ curve (`closed curve`_).
+    """
 
-    def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
+    def __init__(self, control_points: Iterable['Vertex'],
+                 order: int = 4,
+                 knots: Iterable[float] = None,  # just for consistent interface
+                 weights: Iterable[float] = None):
         # control points wrap around
         points = list(control_points)
         points.extend(points[:order - 1])
         if weights is not None:
             weights = list(weights)
             weights.extend(weights[:order - 1])
-        super().__init__(points, order=order, weights=weights)
-
-
-class DBSpline(BSpline):
-    pass  # todo: remove
-
-
-class DBSplineU(BSplineU):
-    pass  # todo: remove
-
-
-class DBSplineClosed(BSplineClosed):
-    pass  # todo: remove
+        super().__init__(points, order=order, knots=None, weights=weights)
 
 
 def rational_spline_from_arc(
