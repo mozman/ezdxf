@@ -19,6 +19,7 @@ https://books.google.at/books/about/The_NURBS_Book.html?id=7dqY5dyAwWkC&redir_es
 """
 from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional, Union
 import math
+import bisect
 from .vector import Vector, NULLVEC
 from .parametrize import create_t_vector, estimate_tangents, estimate_end_tangent_magnitude
 from .linalg import (
@@ -683,15 +684,22 @@ class Basis:
     def find_span(self, u: float) -> int:
         """ Determine the knot span index. """
         # Linear search is more reliable than binary search of the Algorithm A2.1
-        # from The NURBS Book by Piegl & Tiller,
-        # Tried also the helpers.find_span_binsearch() function from NURBS-Python package,
-        # but Test 621 : test_weired_closed_spline() goes into an infinity loop
-        span = 0  # Knot span index starts from zero
+        # from The NURBS Book by Piegl & Tiller.
         knots = self.knots
         count = self.count
-        while span < count and knots[span] <= u:
-            span += 1
-        return span - 1
+        p = self.order - 1
+        # if it is an standard clamped spline
+        if knots[p] == 0.0:  # use binary search
+            # This is fast and works most of the time,
+            # but Test 621 : test_weired_closed_spline()
+            # goes into an infinity loop, because of
+            # a weird knot configuration.
+            return bisect.bisect_right(knots, u, p, count) - 1
+        else:  # use linear search
+            for span in range(count):
+                if knots[span] > u:
+                    return span - 1
+            return count - 1
 
     def basis_funcs(self, span: int, u: float) -> List[float]:
         # Source: The NURBS Book: Algorithm A2.2

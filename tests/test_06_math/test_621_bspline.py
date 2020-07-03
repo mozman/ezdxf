@@ -5,6 +5,7 @@ from math import isclose
 import random
 from ezdxf.math.bspline import BSpline, Vector
 from ezdxf.math.bspline import bspline_basis_vector, Basis, open_uniform_knot_vector, normalize_knots, subdivide_params
+import bisect
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 
@@ -27,6 +28,20 @@ def random_derivatives_comparision_to_nurbs_python(spline: BSpline, count: int =
         assert p1.isclose(p2)
         assert d1_1.isclose(d1_2)
         assert d2_1.isclose(d2_2)
+
+
+def _bisect():
+    def find_span(u: float):
+        low = spline.degree
+        high = spline.basis.count
+        knots = spline.basis.knots
+        span = bisect.bisect_right(knots, u, low, high) - 1
+        return span
+
+    spline = BSpline(DEFPOINTS)
+    for t in (0, .1, .2, .8, .9, 1):
+        expected = spline.basis.find_span(t)
+        assert find_span(t) == expected
 
 
 def test_if_nurbs_python_is_reliable():
@@ -219,5 +234,3 @@ def test_weired_closed_spline():
     last = spline.point(spline.max_t)
     assert first.isclose(last, 1e-9) is False, 'The loaded SPLINE is not a correct closed B-spline.'
     random_point_comparision_to_nurbs_python(spline)
-
-
