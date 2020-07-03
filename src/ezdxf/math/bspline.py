@@ -489,7 +489,7 @@ def unconstrained_global_bspline_interpolation(
     # Source: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
     knots = knots_from_parametrization(len(fit_points) - 1, degree, t_vector, knot_generation_method, constrained=False)
     N = Basis(knots=knots, order=degree + 1, count=len(fit_points))
-    solver = _get_best_solver([N.basis(t) for t in t_vector], degree)
+    solver = _get_best_solver([N.basis_vector(t) for t in t_vector], degree)
     control_points = solver.solve_matrix(fit_points)
     return Vector.list(control_points.rows()), knots
 
@@ -529,7 +529,7 @@ def global_bspline_interpolation_end_tangents(
     knots = knots_from_parametrization(n + 2, p, t_vector, knot_generation_method, constrained=True)
 
     N = Basis(knots=knots, order=p + 1, count=n + 3)
-    rows = [N.basis(u) for u in t_vector]
+    rows = [N.basis_vector(u) for u in t_vector]
     spacing = [0.0] * (n + 1)
     rows.insert(1, [-1.0, +1.0] + spacing)
     rows.insert(-1, spacing + [-1.0, +1.0])
@@ -666,41 +666,14 @@ class Basis:
     def max_t(self) -> float:
         return self.knots[-1]
 
-    @property
-    def nplusc(self) -> int:
-        return self.count + self.order
-
-    def create_nbasis(self, t: float) -> List[float]:
-        """
-        Calculate the first order basis functions N[i][1]
-
-        Returns: list of basis values
-
-        """
-        return [1. if k1 <= t < k2 else 0. for k1, k2 in zip(self.knots, self.knots[1:])]
-
-    def basis(self, t: float) -> List[float]:
-        knots = self.knots
-        nbasis = self.create_nbasis(t)
-        # calculate the higher order basis functions
-        for k in range(2, self.order + 1):
-            for i in range(self.nplusc - k):
-                i1 = i + 1
-                ik = i + k
-                d = ((t - knots[i]) * nbasis[i]) / (knots[ik - 1] - knots[i]) if nbasis[i] else 0.
-                e = ((knots[ik] - t) * nbasis[i1]) / (knots[ik] - knots[i1]) if nbasis[i1] else 0.
-                nbasis[i] = d + e
-        if math.isclose(t, self.max_t):  # pick up last point
-            nbasis[self.count - 1] = 1.
-        if self.weights is None:
-            return nbasis[:self.count]
-        else:
-            return self.weighting(nbasis[:self.count])
-
-    def weighting(self, nbasis: Iterable[float]) -> List[float]:
-        products = [nb * w for nb, w in zip(nbasis, self.weights)]
-        s = sum(products)
-        return [0.0] * self.count if s == 0.0 else [p / s for p in products]
+    def basis_vector(self, t: float) -> List[float]:
+        """ Returns the expanded basis vector. """
+        span = self.find_span(t)
+        p = self.order - 1
+        front = span - p
+        back = self.count - span - 1
+        basis = self.basis_funcs(span, t)
+        return ([0.0] * front) + basis + ([0.0] * back)
 
     def find_span(self, u: float) -> int:
         """ Determine the knot span index. """
@@ -757,7 +730,7 @@ class Basis:
                 saved = left[j - r] * temp
             ndu[j][j] = saved
 
-        # load the basis functions
+        # load the basis_vector functions
         derivatives = [[0.0] * order for _ in range(order)]
         for j in range(order):
             derivatives[0][j] = ndu[j][p]
@@ -1357,7 +1330,7 @@ def nurbs_arc_parameters(start_angle: float, end_angle: float, segments: int = 1
 
 def bspline_basis(u: float, index: int, degree: int, knots: Sequence[float]) -> float:
     """
-    B-spline basis function.
+    B-spline basis_vector function.
 
     Simple recursive implementation for testing and comparison.
 
@@ -1368,7 +1341,7 @@ def bspline_basis(u: float, index: int, degree: int, knots: Sequence[float]) -> 
         knots: knots vector
 
     Returns:
-        float: basis value N_i,p(u)
+        float: basis_vector value N_i,p(u)
 
     """
     cache = {}  # type: Dict[Tuple[int, int], float]
@@ -1396,7 +1369,7 @@ def bspline_basis(u: float, index: int, degree: int, knots: Sequence[float]) -> 
 
 def bspline_basis_vector(u: float, count: int, degree: int, knots: Sequence[float]) -> List[float]:
     """
-    Create basis vector at parameter u.
+    Create basis_vector vector at parameter u.
 
     Used with the bspline_basis() for testing and comparison.
 
@@ -1407,7 +1380,7 @@ def bspline_basis_vector(u: float, count: int, degree: int, knots: Sequence[floa
         knots: knot vector
 
     Returns:
-        List[float]: basis vector, len(basis) == count
+        List[float]: basis_vector vector, len(basis_vector) == count
 
     """
     assert len(knots) == (count + degree + 1)

@@ -685,8 +685,8 @@ def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps=
     center is fixed in the origin (0, 0, 0).
 
     Args:
-        count: edge count of basis
-        radius: radius of basis
+        count: edge count of basis_vector
+        radius: radius of basis_vector
         apex: tip of the cone
         caps: add a bottom face if ``True``
         ngons: use ngons for caps if ``True`` else subdivide caps into triangles
@@ -715,8 +715,8 @@ def cone_2p(count: int = 16, radius: float = 1.0, base_center=(0, 0, 0), apex=(0
     two points, `base_center` is the center of the base circle and `apex` as the tip of the cone.
 
     Args:
-        count: edge count of basis
-        radius: radius of basis
+        count: edge count of basis_vector
+        radius: radius of basis_vector
         base_center: center point of base circle
         apex: tip of the cone
 

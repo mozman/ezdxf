@@ -30,9 +30,10 @@ def test_bspline_basis_vector():
     basis_func = Basis(knots=knots, order=degree + 1, count=count)
     for u in (0, 2., 2.5, 3.5, 4., max_t):
         basis = bspline_basis_vector(u, count=count, degree=degree, knots=knots)
-        basis2 = basis_func.basis(u)
+        basis2 = basis_func.basis_vector(u)
         assert len(basis) == len(basis2)
-        assert basis == basis2
+        for v1, v2 in  zip(basis, basis2):
+            assert isclose(v1, v2)
 
 
 @pytest.fixture()

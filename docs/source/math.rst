@@ -1034,7 +1034,7 @@ BandedMatrixLU Class
 .. _clamped curve: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-curve.html
 .. _open curve: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-curve-open.html
 .. _closed curve: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-curve-closed.html
-.. _basis: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-basis.html
+.. _basis: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-basis_vector.html
 .. _B-spline: https://en.wikipedia.org/wiki/B-spline
 .. _Bézier curve: https://en.wikipedia.org/wiki/B%C3%A9zier_curve
 .. _Lee Mac: http://www.lee-mac.com/bulgeconversion.html
