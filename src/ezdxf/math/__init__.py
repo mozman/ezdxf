@@ -25,7 +25,7 @@ from .bspline import (
     uniform_knot_vector, open_uniform_knot_vector, required_knot_values, BSpline, BSplineU, BSplineClosed,
     local_cubic_bspline_interpolation,
 )
-from .bezier import Bezier, DBezier
+from .bezier import Bezier
 from .bezier4p import Bezier4P, cubic_bezier_from_arc, cubic_bezier_from_ellipse, cubic_bezier_interpolation
 from .surfaces import BezierSurface
 from .eulerspiral import EulerSpiral

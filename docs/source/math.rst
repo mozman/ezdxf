@@ -837,16 +837,18 @@ Bezier
 
     .. autoattribute:: control_points
 
+    .. automethod:: params
+
     .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
 
     .. automethod:: point(t: float) -> Vector
 
-DBezier
--------
+    .. automethod:: points(t: Iterable[float]) -> Iterable[Vector]
 
-.. autoclass:: DBezier
+    .. automethod:: derivative(t: float) -> Tuple[Vector, Vector, Vector]
 
-    .. automethod:: point(t: float) -> Tuple[Vector, Vector, Vector]
+    .. automethod:: derivatives(t: Iterable[float]) -> Iterable[Tuple[Vector, Vector, Vector]]
+
 
 Bezier4P
 --------

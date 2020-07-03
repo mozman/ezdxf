@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math.bezier import Bezier, DBezier
+from ezdxf.math.bezier import Bezier
 
 DEFPOINTS2D = [(0., 0., 0.), (3., 0., 0.), (7., 10., 0.), (10., 10., 0.)]
 DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
@@ -14,9 +14,9 @@ def test_points_2d():
 
 
 def test_point_and_tangent_2d():
-    dbcurve = DBezier(DEFPOINTS2D)
+    dbcurve = Bezier(DEFPOINTS2D)
     for index, (chk_pnt, chk_d1) in enumerate(zip(POINTS2D, TANGENTS2D)):
-        pnt, d1, d2 = dbcurve.point(index * .1)
+        pnt, d1, d2 = dbcurve.derivative(index * .1)
         assert pnt.isclose(chk_pnt)
         assert d1.isclose(chk_d1)
 
@@ -31,8 +31,8 @@ def test_points_3d():
 
 @pytest.fixture(scope='module')
 def dbezier():
-    curve = DBezier(DEFPOINTS3D)
-    return list(curve.approximate(40))
+    curve = Bezier(DEFPOINTS3D)
+    return list(curve.derivatives(curve.params(40)))
 
 
 def iter_data(result, n):

@@ -56,7 +56,7 @@ Version 0.13b6 - dev
 - NEW: `ezdxf.render.random_3d_path()` generate random 3D path for testing purpose
 - NEW: `BSpline.points()` compute multiple points
 - NEW: `BSpline.derivative()` compute point and derivative up to n <= degree
-- NEW: `BSpline.derivativen()` compute multiple points and derivatives up to n <= degree
+- NEW: `BSpline.derivatives()` compute multiple points and derivatives up to n <= degree
 - NEW: `BSpline.params()` return evenly spaced B-spline params from start- to end param
 - NEW: `BSpline.reverse()` returns a new reversed B-spline
 - NEW: `BSpline.from_arc()` B-spline from an arc, best approximation with a minimum number of control points
@@ -70,6 +70,9 @@ Version 0.13b6 - dev
   [NURBS-Python](https://github.com/orbingol/NURBS-Python), `NURBS-Python` is now a testing dependency
 - NEW: `BSpline.bezier_decomposition()` decompose a non-rational B-spline into multiple Bezier curves 
 - NEW: `BSpline.cubic_bezier_approximation()` approximate any B-spline by multiple cubic Bezier curves 
+- NEW: `Bezier.points()` compute multiple points
+- NEW: `Bezier.derivative()` compute point, 1st and 2nd derivative for one parameter
+- NEW: `Bezier.derivatives()` compute point and derivative for multiple parameters
 - CHANGE: `Hatch` full support for rotated patterns.
 - CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
 - CHANGE: `Hatch.path.add_arc` renamed argument `is_counter_clockwise` to `ccw`, type `bool` and `True` by default 
@@ -86,6 +89,7 @@ Version 0.13b6 - dev
 - REMOVED: `ezdxf.math.DBSpline`, integrated as `BSpline.derivatives()`
 - REMOVED: `ezdxf.math.DBSplineU`, integrated as `BSplineU.derivatives()`
 - REMOVED: `ezdxf.math.DBSplineClosed`, integrated as `BSplineClosed.derivatives()`
+- REMOVED: `ezdxf.math.DBezier`, integrated as `Bezier.derivatives()`
 - REMOVED: `BaseLayout.add_spline_approx()`, incorrect and nobody noticed it - so it's not really needed, if required 
   use the `geomdl.fitting.approximate_curve()` function from the package 
   [NURBS-Python](https://github.com/orbingol/NURBS-Python), see example `using_nurbs_python.py`

@@ -942,10 +942,7 @@ class BSpline:
         return self.max_t / float(segments)
 
     def approximate(self, segments: int = 20) -> Iterable[Vector]:
-        """
-        Approximates the whole B-spline from 0 to max_t, by line segments
-        as a list of vertices, vertices count = segments + 1.
-        """
+        """ Approximates curve by vertices as :class:`Vector` objects, vertices count = segments + 1. """
         yield from self.points(self.params(segments))
 
     def params(self, segments: int) -> Iterable[float]:
