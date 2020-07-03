@@ -781,6 +781,8 @@ BSpline
 
     .. autoattribute:: max_t
 
+    .. autoattribute:: is_rational
+
     .. automethod:: knots
 
     .. automethod:: normalize_knots

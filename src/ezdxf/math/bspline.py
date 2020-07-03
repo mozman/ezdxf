@@ -660,11 +660,18 @@ class Basis:
         self.knots: List[float] = list(knots)
         self.order: int = order
         self.count: int = count
-        self.weights: Optional[Sequence[float]] = weights
+        self.weights: Optional[Sequence[float]] = None
+        if weights:
+            self.weights = weights
 
     @property
     def max_t(self) -> float:
         return self.knots[-1]
+
+    @property
+    def is_rational(self) -> bool:
+        """ Returns ``True`` if curve is a rational B-spline. (has weights) """
+        return bool(self.weights)
 
     def basis_vector(self, t: float) -> List[float]:
         """ Returns the expanded basis vector. """
@@ -705,7 +712,7 @@ class Basis:
                 N[r] = saved + right[r + 1] * temp
                 saved = left[j - r] * temp
             N[j] = saved
-        if self.weights is not None:
+        if self.is_rational:
             return self.span_weighting(N, span)
         else:
             return N
@@ -781,7 +788,7 @@ class Basis:
                 derivatives[k][j] *= r
             r *= (p - k)
 
-        if self.weights is not None:
+        if self.is_rational:
             derivatives = [self.span_weighting(d, span) for d in derivatives]
         return derivatives[:n + 1]
 
@@ -925,6 +932,11 @@ class BSpline:
         """ Degree (p) of B-spline = order - 1 """
         return self.order - 1
 
+    @property
+    def is_rational(self):
+        """ Returns ``True`` if curve is a rational B-spline. (has weights) """
+        return self.basis.is_rational
+
     def knots(self) -> List[float]:
         """ Returns a list of `knot`_ values as floats, the knot vector **always** has order + count values
         (n + p + 2 in text book notation).
@@ -936,9 +948,8 @@ class BSpline:
     def weights(self) -> List[float]:
         """ Returns a list of weights values as floats, one for each control point or an empty list.
         """
-        w = self.basis.weights
-        if w:
-            return list(w)
+        if self.basis.is_rational:
+            return list(self.basis.weights)
         else:
             return []
 
@@ -1019,7 +1030,7 @@ class BSpline:
             t: position of new knot 0 < t < max_t
 
         """
-        if self.basis.weights:
+        if self.basis.is_rational:
             raise TypeError('Rational B-splines not supported.')
 
         knots = self.basis.knots
@@ -1066,7 +1077,7 @@ class BSpline:
         package is installed.
 
         """
-        if self.basis.weights:
+        if self.basis.is_rational:
             from geomdl.NURBS import Curve
         else:
             from geomdl.BSpline import Curve
@@ -1091,7 +1102,7 @@ class BSpline:
 
         """
         # Source: "The NURBS Book": Algorithm A5.6
-        if self.basis.weights:
+        if self.basis.is_rational:
             raise TypeError('Rational B-splines not supported.')
 
         n = self.count - 1
