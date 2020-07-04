@@ -51,6 +51,8 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
 
     .. automethod:: get_layout() -> BaseLayout
 
+    .. automethod:: unlink_from_layout
+
     .. automethod:: copy_to_layout(layout: BaseLayout) -> DXFEntity
 
     .. automethod:: move_to_layout(layout: BaseLayout, source: BaseLayout=None)

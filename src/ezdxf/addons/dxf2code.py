@@ -535,7 +535,7 @@ class _SourceCodeGenerator:
                         add_line(arg.format('radius', edge.radius))
                         add_line(arg.format('start_angle', edge.start_angle))
                         add_line(arg.format('end_angle', edge.end_angle))
-                        add_line(arg.format('is_counter_clockwise', edge.is_counter_clockwise))
+                        add_line(arg.format('ccw', edge.ccw))
                         add_line(')')
                     elif edge.EDGE_TYPE == 'EllipseEdge':
                         add_line('ep.add_ellipse(')
@@ -544,7 +544,7 @@ class _SourceCodeGenerator:
                         add_line(arg.format('ratio', edge.ratio))
                         add_line(arg.format('start_angle', edge.start_angle))
                         add_line(arg.format('end_angle', edge.end_angle))
-                        add_line(arg.format('is_counter_clockwise', edge.is_counter_clockwise))
+                        add_line(arg.format('ccw', edge.ccw))
                         add_line(')')
                     elif edge.EDGE_TYPE == 'SplineEdge':
                         add_line('ep.add_spline(')

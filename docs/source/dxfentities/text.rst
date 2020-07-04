@@ -108,4 +108,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Text
 
+    .. automethod:: plain_text
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-62E5383D-8A14-47B4-BFC4-35824CAE8363

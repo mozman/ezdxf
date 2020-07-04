@@ -4,7 +4,7 @@
 from typing import Union, Iterable, List, TYPE_CHECKING
 import math
 from .vector import Vec2
-from .construct2d import ConstructionTool, convex_hull_2d
+from .construct2d import convex_hull_2d
 from .offset2d import offset_vertices_2d
 from .bbox import BoundingBox2d
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 
-class Shape2d(ConstructionTool):
+class Shape2d:
     """
     2D geometry object as list of :class:`Vec2` objects, vertices can be moved, rotated and scaled.
 
@@ -23,17 +23,6 @@ class Shape2d(ConstructionTool):
 
     def __init__(self, vertices: Iterable['Vertex'] = None):
         self.vertices = [] if vertices is None else Vec2.list(vertices)  # type: List[Vec2]
-
-    def move(self, dx: float, dy: float) -> None:
-        """
-        Move shape about `dx` in x-axis and about `dy` in y-axis.
-
-        Args:
-            dx: translation in x-axis
-            dy: translation in y-axis
-
-        """
-        self.translate(Vec2((dx, dy)))
 
     @property
     def bounding_box(self) -> BoundingBox2d:

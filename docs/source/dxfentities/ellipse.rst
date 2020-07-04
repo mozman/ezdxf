@@ -61,6 +61,10 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         .. versionadded:: 0.12
 
+    .. automethod:: construction_tool() -> ConstructionEllipse
+
+    .. automethod:: apply_construction_tool(e: ConstructionEllipse) -> Ellipse
+
     .. automethod:: vertices(params:Iterable[float]) -> Iterable[Vector]
 
     .. automethod:: params
@@ -68,5 +72,9 @@ Required DXF version     DXF R2000 (``'AC1015'``)
     .. automethod:: transform(m: Matrix44) -> Ellipse
 
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Ellipse
+
+    .. automethod:: to_spline(replace=True) -> Spline
+
+    .. automethod:: from_arc(entity: DXFGraphic) -> Ellipse
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-107CB04F-AD4D-4D2F-8EC9-AC90888063AB

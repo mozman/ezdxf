@@ -1,15 +1,16 @@
 # Purpose: basic forms
 # Created: 15.02.2018
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple, Sequence
 from math import pi, sin, cos, radians, tan, isclose, asin, fabs
 from enum import IntEnum
-from ezdxf.math import Vector, Matrix44
+import random
+from ezdxf.math import Vector, Matrix44, Vec2
 from ezdxf.math.construct2d import is_close_points
-from ezdxf.math.bspline import bspline_control_frame
+from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math.eulerspiral import EulerSpiral
-from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger, MeshTransformer
+from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -606,7 +607,7 @@ def from_profiles_linear(profiles: Iterable[Iterable['Vertex']], close=True,
     return MeshTransformer.from_builder(mesh)
 
 
-def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: str = 'uniform', power: float = .5,
+def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: str = 'chord',
                          subdivide: int = 4) -> List[Vector]:
     """
     B-spline interpolation, vertices are fit points for the spline definition.
@@ -616,15 +617,14 @@ def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: 
     Args:
         vertices: fit points
         degree: degree of B-spline
-        method: 'uniform', 'distance' or 'centripetal', calculation method for parameter t
-        power: power for 'centripetal', default is distance ^ .5
+        method: "uniform", "chord"/"distance", "centripetal"/"sqrt_chord" or "arc" calculation method for parameter t
         subdivide: count of sub vertices + 1, e.g. 4 creates 3 sub-vertices
 
     Returns: list of vertices
 
     """
     vertices = list(vertices)
-    spline = bspline_control_frame(vertices, degree=degree, method=method, power=power)
+    spline = global_bspline_interpolation(vertices, degree=degree, method=method)
     return list(spline.approximate(segments=(len(vertices) - 1) * subdivide))
 
 
@@ -685,8 +685,8 @@ def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps=
     center is fixed in the origin (0, 0, 0).
 
     Args:
-        count: edge count of basis
-        radius: radius of basis
+        count: edge count of basis_vector
+        radius: radius of basis_vector
         apex: tip of the cone
         caps: add a bottom face if ``True``
         ngons: use ngons for caps if ``True`` else subdivide caps into triangles
@@ -715,8 +715,8 @@ def cone_2p(count: int = 16, radius: float = 1.0, base_center=(0, 0, 0), apex=(0
     two points, `base_center` is the center of the base circle and `apex` as the tip of the cone.
 
     Args:
-        count: edge count of basis
-        radius: radius of basis
+        count: edge count of basis_vector
+        radius: radius of basis_vector
         base_center: center point of base circle
         apex: tip of the cone
 

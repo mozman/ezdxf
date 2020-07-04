@@ -2,8 +2,114 @@
 News
 ====
 
-Version 0.12.4 - dev
---------------------
+Version 0.13 - 2020-07-05
+-------------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v0-13.html
+- NEW: general transformation interface: `DXFGraphic.transform(m)`, 
+  transform entity by a transformation matrix `m` inplace
+- NEW: specialized entity transformation interfaces:
+    - `DXFGraphic.translate(dx, dy, dz)`
+    - `DXFGraphic.scale(sx, sy, sz)`
+    - `DXFGraphic.scale_uniform(s)`
+    - `DXFGraphic.rotate_axis(axis, angle)`
+    - `DXFGraphic.rotate_x(angle)`
+    - `DXFGraphic.rotate_y(angle)`
+    - `DXFGraphic.rotate_z(angle)`   
+- NEW: [drawing](https://ezdxf.mozman.at/docs/addons/draw.html) add-on by Matt Broadway is a translation
+  layer to send DXF data to a render backend, supported backends for now: 
+  [matplotlib](https://pypi.org/project/matplotlib/) and [PyQt5](https://pypi.org/project/PyQt5/), both packages 
+  are optional and not required to install _ezdxf_. 
+- NEW: `DXFGraphic.unlink_from_layout()` to unlink entity from associated layout
+- NEW: `Arc.angles(num)`, yields `num` angles from start- to end angle in counter clockwise order
+- NEW: `Circle.to_ellipse()`, convert CIRCLE/ARC to ELLIPSE entity
+- NEW: `Circle.to_spline()`, convert CIRCLE/ARC to SPLINE entity
+- NEW: `Ellipse.params(num)`, yields `num` params from start- to end param in counter clockwise order
+- NEW: `Ellipse.construction_tool()`, return ellipse data as `ConstructionEllipse()`
+- NEW: `Ellipse.apply_construction_tool()`, apply `ConstructionEllipse()` data
+- NEW: `Ellipse.to_spline()`, convert ELLIPSE to SPLINE entity 
+- NEW: `Ellipse.from_arc()`, create a new ELLIPSE entity from CIRCLE or ARC entity (constructor)
+- NEW: `Spline.construction_tool()`, return spline data as `ezdxf.math.BSpline()`
+- NEW: `Spline.apply_construction_tool()`, apply `ezdxf.math.BSpline()` data
+- NEW: `Spline.from_arc()`, create a new SPLINE entity from CIRCLE, ARC or ELLIPSE entity (constructor)
+- NEW: `Hatch.set_pattern_scale()` to set scaling of pattern definition
+- NEW: `Hatch.set_pattern_angle()` to set rotation angle of pattern definition
+- NEW: `Hatch.paths.polyline_to_edge_path()` convert polyline paths with bulge values to edge paths with lines and arcs
+- NEW: `Hatch.paths.arc_edges_to_ellipse_edges()` convert arc edges to ellipse edges
+- NEW: `Hatch.paths.ellipse_edges_to_spline_edges()` convert ellipse edges to spline edges
+- NEW: `Hatch.paths.all_to_spline_edges()` convert all curves to approximated spline edges
+- NEW: `Hatch.paths.all_to_line_edges()` convert all curves to approximated line edges
+- NEW: `Text.plain_text()` returns text content without formatting codes
+- NEW: `ezdxf.math.ConstructionEllipse()`
+- NEW: `ezdxf.math.linspace()` like `numpy.linspace()`
+- NEW: `ezdxf.math.global_bspline_interpolation()` supports start- and end tangent constraints
+- NEW: `ezdxf.math.estimate_tangents()` curve tangent estimator for given fit points
+- NEW: `ezdxf.math.estimate_end_tangent_magnitude()` curve end tangent magnitude estimator for given fit points
+- NEW: `ezdxf.math.rational_spline_from_arc()` returns a rational B-spline for a circular arc
+- NEW: `ezdxf.math.rational_spline_from_ellipse()` returns a rational B-spline for an elliptic arc
+- NEW: `ezdxf.math.local_cubic_bspline_interpolation()`
+- NEW: `ezdxf.math.cubic_bezier_from_arc()` returns an approximation for a circular 2D arc by multiple cubic Bezier curves
+- NEW: `ezdxf.math.cubic_bezier_from_ellipse()` returns an approximation for an elliptic arc by multiple cubic Bezier curves
+- NEW: `ezdxf.math.cubic_bezier_interpolation()` returns an interpolation curve for arbitrary data points as multiple cubic Bezier curves
+- NEW: `ezdxf.math.LUDecomposition` linear equation solver, for more linear algebra tools see module `ezdxf.math.linalg`
+- NEW: `ezdxf.render.random_2d_path()` generate random 2D path for testing purpose
+- NEW: `ezdxf.render.random_3d_path()` generate random 3D path for testing purpose
+- NEW: `BSpline()` uses normalized knot vector for 'clamped' curves by default (open uniform knots)
+- NEW: `BSpline.points()` compute multiple points
+- NEW: `BSpline.derivative()` compute point and derivative up to n <= degree
+- NEW: `BSpline.derivatives()` compute multiple points and derivatives up to n <= degree
+- NEW: `BSpline.params()` return evenly spaced B-spline params from start- to end param
+- NEW: `BSpline.reverse()` returns a new reversed B-spline
+- NEW: `BSpline.from_arc()` B-spline from an arc, best approximation with a minimum number of control points
+- NEW: `BSpline.from_ellipse()` B-spline from an ellipse, best approximation with a minimum number of control points
+- NEW: `BSpline.from_fit_points()` B-spline from fit points 
+- NEW: `BSpline.arc_approximation()` B-spline approximation from arc vertices as fit points
+- NEW: `BSpline.ellipse_approximation()` B-spline approximation from ellipse vertices as fit points
+- NEW: `BSpline.transform()` transform B-spline by transformation matrix inplace
+- NEW: `BSpline.transform()` transform B-spline by transformation matrix inplace
+- NEW: `BSpline.to_nurbs_python_curve()` and `BSpline.from_nurbs_python_curve()`, interface to 
+  [NURBS-Python](https://github.com/orbingol/NURBS-Python), `NURBS-Python` is now a testing dependency
+- NEW: `BSpline.bezier_decomposition()` decompose a non-rational B-spline into multiple Bezier curves 
+- NEW: `BSpline.cubic_bezier_approximation()` approximate any B-spline by multiple cubic Bezier curves 
+- NEW: `Bezier.points()` compute multiple points
+- NEW: `Bezier.derivative()` compute point, 1st and 2nd derivative for one parameter
+- NEW: `Bezier.derivatives()` compute point and derivative for multiple parameters
+- CHANGE: `Hatch` full support for rotated patterns.
+- CHANGE: `Hatch.set_pattern_definition()` added argument `angle` for pattern rotation. 
+- CHANGE: `Hatch.path.add_arc` renamed argument `is_counter_clockwise` to `ccw`, type `bool` and `True` by default 
+- CHANGE: `Hatch.path.add_ellipse` renamed argument `is_counter_clockwise` to `ccw`, type `bool` and `True` by default 
+- CHANGE: renamed 2D `ConstructionXXX.move()` methods to `translate()`
+- CHANGE: renamed old `Insert.scale()` to `Insert.set_scale()`, name conflict with transformation interface
+- CHANGE: renamed `Spline.set_periodic()` to `Spline.set_closed()`
+- CHANGE: renamed `Spline.set_periodic_rational()` to `Spline.set_closed_rational()`
+- CHANGE: renamed `ezdxf.math.bspline_control_frame()` to `ezdxf.math.global_bspline_interpolation()`
+- REMOVED: `ezdxf.math.Matrix33` class, `UCS` and `OCS` uses `Matrix44`for transformations  
+- REMOVED: `ezdxf.math.BRCS` class and `Insert.brcs()`
+- REMOVED: `ezdxf.math.ConstructionTool` base class
+- REMOVED: `ezdxf.math.normalize_angle(angle)`, replace call by expression: `angle % math.tau`
+- REMOVED: `ezdxf.math.DBSpline`, integrated as `BSpline.derivatives()`
+- REMOVED: `ezdxf.math.DBSplineU`, integrated as `BSplineU.derivatives()`
+- REMOVED: `ezdxf.math.DBSplineClosed`, integrated as `BSplineClosed.derivatives()`
+- REMOVED: `ezdxf.math.DBezier`, integrated as `Bezier.derivatives()`
+- REMOVED: `BaseLayout.add_spline_approx()`, incorrect and nobody noticed it - so it's not really needed, if required 
+  use the `geomdl.fitting.approximate_curve()` function from the package 
+  [NURBS-Python](https://github.com/orbingol/NURBS-Python), see example `using_nurbs_python.py`
+- REMOVED: `ezdxf.math.bspline_control_frame_approx()`, incorrect and nobody noticed it - so it's not really needed 
+- DEPRECATED: `DXFGraphic.transform_to_wcs(ucs)`, replace call by `DXFGraphic.transform(ucs.matrix)`
+- DEPRECATED: `non_uniform_scaling` argument for `Insert.explode()`  
+- DEPRECATED: `non_uniform_scaling` argument for `Insert.virtual_entities()`  
+- DEPRECATED: getter and edit methods in `Hatch` for attributes `paths`, `gradient`, `pattern` and `seeds` 
+- DEPRECATED: `Spline.edit_data()` all attributes accessible by properties
+- BUGFIX: `ezdxf.math.intersection_ray_ray_3d()` 
+- BUGFIX: `Spline.set_periodic()` created invalid data for BricsCAD - misleading information by Autodesk
+
+Version 0.12.5 - 2020-06-05
+---------------------------
+
+- BUGFIX: DXF export error for hatches with rational spline edges
+
+Version 0.12.4 - 2020-05-22
+---------------------------
 
 - BUGFIX: structure validator for XRECORD
 

@@ -18,7 +18,8 @@ Quick-Info
 - requires at least Python 3.6
 - OS independent
 - tested with CPython & pypy3 on Windows 10 & ubuntu-latest by GitHub Actions
-- additional required packages: [pyparsing](https://pypi.org/project/pyparsing/)
+- additional required packages: [pyparsing](https://pypi.org/project/pyparsing/) and for testing 
+  [geomdl](https://github.com/orbingol/NURBS-Python) (aka NURBS-Python)
 - MIT-License
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
 - additional read support for DXF versions R13/R14 (upgraded to R2000)

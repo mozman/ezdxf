@@ -3,14 +3,14 @@
 .eggs
 .idea
 .vscode
-/DXFResearch
-/build
-/dist
-/src/ezdxf.egg-info
-/docs/build
-/tools/plotstyles
-/__pycache__
-/tools/ltype/
+DXFResearch
+build
+dist
+src/ezdxf.egg-info
+docs/build
+tools/plotstyles
+tools/ltype/
+__pycache__
 
 examples/**/*.dxf
 issues/**/*.dxf

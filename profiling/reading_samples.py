@@ -1,3 +1,5 @@
+# Copyright (c) 2020, Manfred Moitzi
+# License: MIT License
 import ezdxf
 import os
 from collections import Counter

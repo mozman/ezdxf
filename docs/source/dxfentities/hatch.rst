@@ -77,16 +77,18 @@ Path manager: :class:`BoundaryPaths`
         === ===================
         0   user
         1   predefined
-        2   custom (???)
+        2   custom
         === ===================
 
     .. attribute:: dxf.pattern_angle
 
-        Pattern angle in degrees. (float)
+        Actual pattern angle in degrees (float). Changing this value does not rotate the pattern,
+        use :meth:`~Hatch.set_pattern_angle` for this task.
 
     .. attribute:: dxf.pattern_scale
 
-        Pattern scaling factor. (float)
+        Actual pattern scaling factor (float). Changing this value does not scale the pattern
+        use :meth:`~Hatch.set_pattern_scale` for this task.
 
     .. attribute:: dxf.pattern_double
 
@@ -124,23 +126,17 @@ Path manager: :class:`BoundaryPaths`
 
     .. autoattribute:: bgcolor
 
-    .. automethod:: edit_boundary() -> BoundaryPaths
-
-    .. automethod:: edit_pattern() -> Pattern
-
     .. automethod:: set_pattern_definition
+
+    .. automethod:: set_pattern_scale
+
+    .. automethod:: set_pattern_angle
 
     .. automethod:: set_solid_fill
 
     .. automethod:: set_pattern_fill
 
     .. automethod:: set_gradient
-
-    .. automethod:: get_gradient
-
-    .. automethod:: edit_gradient
-
-    .. automethod:: get_seed_points
 
     .. automethod:: set_seed_points
 
@@ -164,6 +160,18 @@ Hatch Boundary Helper Classes
     .. automethod:: add_polyline_path(path_vertices, is_closed=1, flags=1) -> PolylinePath
 
     .. automethod:: add_edge_path(flags=1) -> EdgePath
+
+    .. automethod:: polyline_to_edge_path
+
+    .. automethod:: arc_edges_to_ellipse_edges
+
+    .. automethod:: ellipse_edges_to_spline_edges
+
+    .. automethod:: spline_edges_to_line_edges
+
+    .. automethod:: all_to_spline_edges
+
+    .. automethod:: all_to_line_edges
 
     .. automethod:: clear
 
@@ -240,9 +248,9 @@ Hatch Boundary Helper Classes
 
     .. automethod:: add_line(start, end) -> LineEdge
 
-    .. automethod:: add_arc(center, radius=1., start_angle=0., end_angle=360., is_counter_clockwise=0) -> ArcEdge
+    .. automethod:: add_arc(center, radius=1., start_angle=0., end_angle=360., ccw:bool=True) -> ArcEdge
 
-    .. automethod:: add_ellipse(center, major_axis_vector=(1., 0.), minor_axis_length=1., start_angle=0., end_angle=360., is_counter_clockwise=0) -> EllipsePath
+    .. automethod:: add_ellipse(center, major_axis_vector=(1., 0.), minor_axis_length=1., start_angle=0., end_angle=360., ccw:bool=True) -> EllipsePath
 
     .. automethod:: add_spline(fit_points=None, control_points=None, knot_values=None, weights=None, degree=3, rational=0, periodic=0) -> SplinePath
 
@@ -280,9 +288,9 @@ Hatch Boundary Helper Classes
 
         Arc end angle in degrees. (read/write)
 
-    .. attribute:: is_counter_clockwise
+    .. attribute:: ccw
 
-        ``1`` for counter clockwise arc else ``0``. (read/write)
+        ``True`` for counter clockwise arc else ``False``. (read/write)
 
 
 .. class:: EllipseEdge
@@ -309,9 +317,9 @@ Hatch Boundary Helper Classes
 
         Ellipse end angle in degrees. (read/write)
 
-    .. attribute:: is_counter_clockwise
+    .. attribute:: ccw
 
-        ``1`` for counter clockwise ellipse else ``0``. (read/write)
+        ``True`` for counter clockwise ellipse else ``False``. (read/write)
 
 
 .. class:: SplineEdge
@@ -369,6 +377,8 @@ Hatch Pattern Definition Helper Classes
     .. automethod:: new_line
 
     .. automethod:: clear
+
+    .. automethod:: scale
 
 
 .. class:: PatternLine

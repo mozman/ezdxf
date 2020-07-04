@@ -68,7 +68,7 @@ acdb_plot_settings = DefSubclass('AcDbPlotSettings', {
     # 3 = View specified by code 6
     # 4 = Window specified by codes 48, 49, 140, and 141
     # 5 = Layout information
-    'current_style_sheet': DXFAttr(7, default=''),
+    'current_style_sheet': DXFAttr(7, default=''),  # ctb-file
     'standard_scale_type': DXFAttr(75, default=16),
     # 0 = Scaled to Fit
     # 1 = 1/128"=1'

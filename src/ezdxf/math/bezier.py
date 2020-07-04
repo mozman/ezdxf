@@ -3,7 +3,8 @@
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List, Iterable, Tuple, Dict
-from ezdxf.math.vector import Vector
+from .vector import Vector
+from .construct2d import linspace
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -23,7 +24,7 @@ definitions.
 
 (75) linear P(t) = (1-t)*P0 + t*P1
 (76) quadratic P(t) = (1-t)^2*P0 + 2*(t-1)*t*P1 + t^2*P2
-(77) cubic P(t) = (1-t)^3*P0 + 3*(t-1)^2*t*P1 + 3*(t-1)*t^2*P2 + t^3*P3
+(77) cubic P(t) = (1-t)^3*P0 + 3*(1-t)^2*t*P1 + 3*(1-t)*t^2*P2 + t^3*P3
 
 Ways of thinking about Bezier curves
 ------------------------------------
@@ -83,34 +84,24 @@ class Bezier:
 
     @property
     def control_points(self) -> List[Vector]:
-        """ control points as list of :class:`Vector` objects. """
+        """ Control points as list of :class:`Vector` objects. """
         return self._defpoints
 
     def approximate(self, segments: int = 20) -> Iterable[Vector]:
-        """
-        Approximate `Bézier curve`_ by vertices, yields `segments` + 1 vertices as :class:`Vector` objects.
+        """ Approximates curve by vertices as :class:`Vector` objects, vertices count = segments + 1. """
+        return self.points(self.params(segments))
 
-        Args:
-            segments: count of segments for approximation
-
-        """
-        step = 1.0 / float(segments)
-        for point_index in range(segments + 1):
-            yield self.point(point_index * step)
+    def params(self, segments: int) -> Iterable[float]:
+        """ Yield evenly spaced parameters from 0 to 1 for given segment count. """
+        for t in linspace(0.0, 1.0, segments + 1):
+            yield min(t, 1.0)  # linspace() sometimes over shoot minimal
 
     def point(self, t: float) -> Vector:
         """
-        Returns a point for location `t` at the `Bézier curve`_ as :class:`Vector` object.
-
-        A `Bézier curve`_ is a parametric curve, parameter `t` goes from ``0`` to ``1``, where ``0`` is the first
-        definition point anf ``1`` is the last definition point.
-
-        Args:
-            t: parameter in range ``[0, 1]``
-
+        Returns a point for parameter `t` in range [0, 1] as :class:`Vector` object.
         """
         if t < 0. or t > 1.:
-            raise ValueError('parameter t in range [0, 1]')
+            raise ValueError('Parameter t not in range [0, 1]')
         if (1.0 - t) < 5e-6:
             t = 1.0
         point = [0., 0., 0.]
@@ -123,26 +114,20 @@ class Bezier:
                 point[axis] += bsf * defpoints[i][axis]
         return Vector(point)
 
-
-class DBezier(Bezier):
-    """
-    Subclass of :class:`Bezier`.
-
-    Calculate vertices and derivative of a `Bézier curve`_.
-
-    """
-
-    def point(self, t: float) -> Tuple[Vector, Vector, Vector]:
+    def points(self, t: Iterable[float]) -> Iterable[Vector]:
+        """ Yields multiple points for parameters in vector `t` as :class:`Vector` objects.
+        Parameters have to be in range [0, 1].
         """
-        Returns (point, 1st derivative, 2nd derivative) tuple for location `t` at the `Bézier curve`_,
-        all values  as :class:`Vector` objects.
+        for u in t:
+            yield self.point(u)
 
-        Args:
-            t: parameter in range ``[0, 1]``
-
+    def derivative(self, t: float) -> Tuple[Vector, Vector, Vector]:
+        """
+        Returns (point, 1st derivative, 2nd derivative) tuple for parameter `t` in range [0, 1]
+        as :class:`Vector` objects.
         """
         if t < 0. or t > 1.:
-            raise ValueError('parameter t in range [0, 1]')
+            raise ValueError('Parameter t not in range [0, 1]')
 
         if (1.0 - t) < 5e-6:
             t = 1.0
@@ -170,6 +155,14 @@ class DBezier(Bezier):
                                                       defpoints[npts0 - 2][axis])
         return Vector(point), Vector(d1), Vector(d2)
 
+    def derivatives(self, t: Iterable[float]) -> Iterable[Tuple[Vector, Vector, Vector]]:
+        """
+        Returns multiple (point, 1st derivative, 2nd derivative) tuples for parameter vector  `t` as :class:`Vector` objects.
+        Parameters in range [0, 1]
+        """
+        for u in t:
+            yield self.derivative(u)
+
 
 def bernstein_basis(n: int, i: int, t: float) -> float:
     # handle the special cases to avoid domain problem with pow
@@ -186,7 +179,7 @@ def bernstein_basis(n: int, i: int, t: float) -> float:
 
 
 class _Factorial:
-    _values = {0: 1.0}  # type: Dict[int, float]
+    _values: Dict[int, float] = {0: 1.0}
 
     def __init__(self, maxvalue: int = 33):
         value = 1.

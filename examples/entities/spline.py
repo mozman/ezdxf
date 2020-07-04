@@ -2,9 +2,11 @@
 # Created: 13.04.2014
 # Copyright (c) 2014 Manfred Moitzi
 # License: MIT License
+from typing import cast
 import ezdxf
-from ezdxf.math.bspline import bspline_control_frame, bspline_control_frame_approx
+from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math import BSpline, Vector
+from ezdxf.entities import Spline
 
 new = ezdxf.new
 readfile = ezdxf.readfile
@@ -13,7 +15,7 @@ readfile = ezdxf.readfile
 def clone_spline():
     doc = readfile("Spline_R2000_fit_spline.dxf")
     msp = doc.modelspace()
-    spline = msp.query('SPLINE')[0]  # take first spline
+    spline = cast(Spline, msp.query('SPLINE').first)
     # delete the existing spline from model space and drawing database
     msp.delete_entity(spline)
     # add a new spline
@@ -45,13 +47,13 @@ def fit_spline_with_control_points():
 def add_points_to_spline():
     doc = readfile("Spline_R2000_fit_spline.dxf")
     msp = doc.modelspace()
-    spline = msp.query('SPLINE')[0]  # take first spline
-    with spline.edit_data() as data:
-        data.fit_points.append((3130, 610, 0))
-        # As far I tested this works without complaints from AutoCAD, but for the case of problems
-        data.control_points = []  # delete control points, this could modify the geometry of the spline
-        data.knots = []  # delete knot values, this shouldn't modify the geometry of the spline
-        data.weights = []  # delete weights, this could modify the geometry of the spline
+    spline = cast(Spline, msp.query('SPLINE').first)
+
+    spline.fit_points.append((3130, 610, 0))
+    # As far I tested this works without complaints from AutoCAD, but for the case of problems
+    spline.control_points = []  # delete control points, this could modify the geometry of the spline
+    spline.knots = []  # delete knot values, this shouldn't modify the geometry of the spline
+    spline.weights = []  # delete weights, this could modify the geometry of the spline
 
     doc.saveas("Spline_R2000_with_added_points.dxf")
 
@@ -98,7 +100,7 @@ def spline_control_frame_from_fit_points():
     msp.add_polyline2d(fit_points, dxfattribs={'color': 2, 'linetype': 'DOT2'})
 
     def add_spline(degree=2, color=3):
-        spline = bspline_control_frame(fit_points, degree=degree, method='distance')
+        spline = global_bspline_interpolation(fit_points, degree=degree, method='distance')
         msp.add_polyline2d(spline.control_points, dxfattribs={'color': color, 'linetype': 'DASHED'})
         msp.add_open_spline(spline.control_points, degree=spline.degree, dxfattribs={'color': color})
 
@@ -107,20 +109,6 @@ def spline_control_frame_from_fit_points():
 
     msp.add_spline(fit_points, degree=3, dxfattribs={'color': 1})
     doc.saveas("Spline_R2000_spline_control_frame_from_fit_points.dxf")
-
-
-def spline_control_frame_approximation():
-    doc = new('R2000', setup=True)
-
-    fit_points = Vector.list([(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50), (80, 70), (65, 75)])
-    msp = doc.modelspace()
-    msp.add_polyline2d(fit_points, dxfattribs={'color': 2, 'linetype': 'DOT2'})
-
-    spline = bspline_control_frame_approx(fit_points, count=7, degree=3, method='uniform')
-    msp.add_polyline2d(spline.control_points, dxfattribs={'color': 3, 'linetype': 'DASHED'})
-    msp.add_open_spline(spline.control_points, degree=spline.degree, dxfattribs={'color': 3})
-    msp.add_spline(fit_points, degree=3, dxfattribs={'color': 1})
-    doc.saveas("Spline_R2000_spline_control_frame_approximation.dxf")
 
 
 def spline_insert_knot():
@@ -136,7 +124,7 @@ def spline_insert_knot():
 
     bspline = BSpline(control_points, order=4)
     bspline.insert_knot(bspline.max_t/2)
-    add_spline(bspline.control_points, color=4, knots=bspline.knot_values())
+    add_spline(bspline.control_points, color=4, knots=bspline.knots())
 
     doc.saveas("Spline_R2000_spline_insert_knot.dxf")
 
@@ -151,5 +139,4 @@ if __name__ == '__main__':
     rational_spline()
     closed_rational_spline()
     spline_control_frame_from_fit_points()
-    spline_control_frame_approximation()
     spline_insert_knot()

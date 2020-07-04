@@ -1,3 +1,5 @@
+# Copyright (c) 2020, Manfred Moitzi
+# License: MIT License
 import time
 
 from ezdxf.math import intersection_line_line_2d, ConstructionRay, Vec2

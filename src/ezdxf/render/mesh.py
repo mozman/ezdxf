@@ -88,7 +88,7 @@ class MeshBuilder:
 
         """
         start_index = len(self.vertices)
-        self.vertices.extend(vertices)
+        self.vertices.extend(Vector.generate(vertices))
         return tuple(range(start_index, len(self.vertices)))
 
     def add_mesh(self,
@@ -110,7 +110,7 @@ class MeshBuilder:
 
         """
         if mesh is not None:
-            vertices = mesh.vertices
+            vertices = Vector.list(mesh.vertices)
             faces = mesh.faces
             edges = mesh.edges
 
@@ -408,7 +408,7 @@ class MeshTransformer(MeshBuilder):
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'MeshTransformer':
         warnings.warn(
-            'MeshTransformer.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix) instead.',
+            'MeshTransformer.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix). (removed in v0.15)',
             DeprecationWarning
         )
         return self.transform(ucs.matrix)

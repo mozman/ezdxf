@@ -8,7 +8,7 @@ import ezdxf
 from ezdxf.math import linspace, Vector, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
 from ezdxf.entities import Circle, Arc, Ellipse, Insert, Text, MText, Hatch
 
-DIR = Path('~/Desktop/Now/ezdxf').expanduser()
+DIR = Path('~/Desktop/Outbox').expanduser()
 UNIFORM_SCALING = [(-1, 1, 1), (1, -1, 1), (1, 1, -1), (-2, -2, 2), (2, -2, -2), (-2, 2, -2), (-3, -3, -3)]
 NON_UNIFORM_SCALING = [(-1, 2, 3.1), (1, -2, 3.2), (1, 2, -3.3), (-3.4, -2, 1), (3.5, -2, -1), (-3.6, 2, -1),
                        (-3.7, -2, -1)]
@@ -341,9 +341,12 @@ def main_uniform_hatch_polyline(layout):
         layout.add_entity(hatch)
 
 
-def main_non_uniform_hatch_polyline(layout):
+def main_non_uniform_hatch_polyline(layout, spline=False):
     entitydb = layout.doc.entitydb
     hatch, lwpolyline = hatch_polyline(layout)
+    if spline:
+        hatch.paths.all_to_spline_edges()
+
     m = Matrix44.chain(
         Matrix44.scale(-1.1, 1.1, 1),
         Matrix44.z_rotate(math.radians(10)),
@@ -358,17 +361,19 @@ def main_non_uniform_hatch_polyline(layout):
         layout.add_entity(hatch)
 
 
-def main_ellipse_hatch(layout):
+def main_ellipse_hatch(layout, spline=False):
     def draw_ellipse_axis(ellipse):
         center = ellipse.center
         major_axis = ellipse.major_axis
-        msp.add_line(center, center+major_axis)
+        msp.add_line(center, center + major_axis)
 
     entitydb = layout.doc.entitydb
     hatch = cast(Hatch, layout.add_hatch(color=1))
     path = hatch.paths.add_edge_path()
     path.add_line((0, 0), (5, 0))
-    path.add_ellipse((2.5, 0), (2.5, 0), ratio=.5, start_angle=0, end_angle=180, is_counter_clockwise=1)
+    path.add_ellipse((2.5, 0), (2.5, 0), ratio=.5, start_angle=0, end_angle=180, ccw=1)
+    if spline:
+        hatch.paths.all_to_line_edges(spline_factor=4)
 
     chk_ellipse, chk_vertices, _ = ellipse((2.5, 0), ratio=0.5, start=0, end=math.pi)
     chk_ellipse, chk_vertices = synced_translation(chk_ellipse, chk_vertices, dx=2.5)
@@ -388,10 +393,29 @@ def main_ellipse_hatch(layout):
         layout.add_entity(hatch)
 
         ellipse_edge = hatch.paths[0].edges[1]
-        draw_ellipse_axis(ellipse_edge)
+        if not spline:
+            draw_ellipse_axis(ellipse_edge)
 
         chk_ellipse, chk_vertices = synced_transformation(chk_ellipse, chk_vertices, m)
         add(layout, chk_ellipse, chk_vertices)
+
+
+def add_hatch_for_all_ellipses(layout):
+    for ellipse in layout.query('ELLIPSE'):
+        hatch = layout.add_hatch(color=2, dxfattribs={
+            'extrusion': ellipse.dxf.extrusion,
+            'layer': 'HATCH',
+        })
+        path = hatch.paths.add_edge_path()
+        e = ellipse.construction_tool().to_ocs()
+        hatch.dxf.elevation = e.center.replace(x=0, y=0)
+        edge = path.add_ellipse(
+            center=e.center.vec2,
+            major_axis=e.major_axis.vec2,
+            ratio=e.ratio,
+        )
+        edge.start_param = e.start_param
+        edge.end_param = e.end_param
 
 
 if __name__ == '__main__':
@@ -400,12 +424,13 @@ if __name__ == '__main__':
     msp = doc.modelspace()
     # main_ellipse(msp)
     # main_multi_ellipse(msp)
+    # add_hatch_for_all_ellipses(msp)
     # main_text(msp)
     # main_mtext(msp)
     # main_insert(msp)
     # main_insert2(msp)
     # main_uniform_hatch_polyline(msp)
-    # main_ellipse_hatch(msp)
-    main_non_uniform_hatch_polyline(msp)
+    main_ellipse_hatch(msp, spline=True)
+    # main_non_uniform_hatch_polyline(msp, spline=True)
     doc.set_modelspace_vport(5)
     doc.saveas(DIR / 'transform.dxf')

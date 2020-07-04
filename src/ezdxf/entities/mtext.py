@@ -8,7 +8,7 @@ from ezdxf.math import Vector, Matrix44, OCS
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, SPECIAL_CHARS_ENCODING
 from ezdxf.lldxf.tags import Tags
 from ezdxf.tools.rgb import rgb2int
 from .dxfentity import base_class, SubclassProcessor
@@ -18,7 +18,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex
 
-__all__ = ['MText']
+__all__ = ['MText', 'plain_mtext']
 
 acdb_mtext = DefSubclass('AcDbMText', {
     'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
@@ -130,7 +130,7 @@ class MText(DXFGraphic):
     GROUP_START = '{'
     GROUP_END = '}'
     GROUP = GROUP_START + '%s' + GROUP_END
-    NBSP = r'\~'  # none breaking space
+    NBSP = r'\~'  # non breaking space
 
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor """
@@ -176,12 +176,12 @@ class MText(DXFGraphic):
             if tag.code == 3:
                 parts.append(tag.value)
         parts.append(tail)
-        self.text = "".join(parts)
+        self.text = normalize_line_breaks("".join(parts))
         tags.remove_tags((1, 3))
 
     def export_mtext(self, tagwriter: 'TagWriter') -> None:
-        # replacing '\n' by '\P' is required, else an invalid DXF file would be created
-        txt = self.text.replace('\n', '\\P')
+        # replacing '\n' and '\r' by '\P' is required, else an invalid DXF file would be created
+        txt = self.text.replace('\n', '\\P').replace('\r', '\\P')
         str_chunks = split_mtext_string(txt, size=250)
         if len(str_chunks) == 0:
             str_chunks.append("")
@@ -355,10 +355,10 @@ class MText(DXFGraphic):
         .. versionadded:: 0.11.1
 
         """
-        return plain_text(self.text, split=split)
+        return plain_mtext(self.text, split=split)
 
 
-def plain_text(text: str, split=False) -> Union[List[str], str]:
+def plain_mtext(text: str, split=False) -> Union[List[str], str]:
     chars = []
     raw_chars = list(reversed(text))  # text splitted into chars, in reversed order for efficient pop()
     while len(raw_chars):
@@ -392,7 +392,7 @@ def plain_text(text: str, split=False) -> Union[List[str], str]:
                 if len(raw_chars):
                     special_char = raw_chars.pop()
                     # replace or discard formatting code
-                    chars.append(SPECIAL_CHARS.get(special_char, ""))
+                    chars.append(SPECIAL_CHARS_ENCODING.get(special_char, ""))
             else:  # char is just a single '%'
                 chars.append(char)
         else:  # char is what it is, a character
@@ -403,9 +403,6 @@ def plain_text(text: str, split=False) -> Union[List[str], str]:
 
 
 ONE_CHAR_COMMANDS = "PLlOoKkX"
-SPECIAL_CHARS = {
-    'd': '°'
-}
 
 
 ##################################################
@@ -480,3 +477,11 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
             chunks.append(chunk)
         else:
             return chunks
+
+
+def normalize_line_breaks(text: str) -> str:
+    """ Replaces '^J', '^M' and '^M^J' by '\\P' """
+    text = text.replace('^M^J', '\\P')
+    text = text.replace('^M', '\\P')
+    text = text.replace('^J', '\\P')
+    return text

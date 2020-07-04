@@ -36,6 +36,14 @@ def tablename(dxfname: str) -> str:
     return name
 
 
+def table_key(name: str) -> str:
+    """ Unified table entry key. """
+
+    if not isinstance(name, str):
+        raise TypeError('Name has to be a string.')
+    return name.lower()  # table key is lower case
+
+
 class Table:
     def __init__(self, doc: 'Drawing' = None, entities: Iterable['DXFEntity'] = None):
         self.doc = doc
@@ -72,10 +80,7 @@ class Table:
     @staticmethod
     def key(name: str) -> str:
         """ Unified table entry key. """
-
-        if not isinstance(name, str):
-            raise TypeError('Name has to be a string.')
-        return name.lower()  # table key is lower case
+        return table_key(name)
 
     @property
     def name(self) -> str:

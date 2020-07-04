@@ -266,6 +266,9 @@ class DXFNamespace:
                 # just use x, y for 2d points if value is a 3d point (Vector, tuple)
                 if attrib.xtype == XType.point2d and len(value) > 2:
                     value = value[:2]
+                if isinstance(value, str):
+                    assert '\n' not in value, "line break '\\n' not allowed"
+                    assert '\r' not in value, "line break '\\r' not allowed"
                 tag = dxftag(attrib.code, value)
                 tagwriter.write_tag(tag)
         else:
@@ -740,9 +743,35 @@ class DXFEntity:
         """ Returns ``False`` if entity has been deleted. """
         return hasattr(self, 'dxf')
 
+    def remove_dependencies(self, other: 'Drawing' = None):
+        """
+        Remove all dependencies from actual document.
+
+        Intended usage is to remove dependencies from the actual document to move or copy the entity to an
+        `other` document.
+
+        An error free call of this method does NOT guarantee that this entity can be moved/copied
+        to the `other` document, some entities like DIMENSION have too much dependencies to a document
+        to move or copy them, but to check this is not the domain of this method!
+
+        (internal API)
+        """
+        if self.is_alive:
+            self.dxf.owner = None
+            self.dxf.handle = None
+            self.reactors = None
+            self.extension_dict = None
+            self.appdata = None
+            self.xdata = None
+            self.embedded_objects = None
+
     def destroy(self) -> None:
         """
         Delete all data and references. Does not delete entity from structures like layouts or groups.
+
+        This method should not be used to delete entities from a layout/document by the package user,
+        use :meth:`BaseLayout.delete_entity` method for that!
+
         (internal API)
 
         """

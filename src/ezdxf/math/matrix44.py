@@ -28,6 +28,10 @@ class Matrix44:
     This is a pure Python implementation for 4x4 transformation matrices, to avoid dependency to big numerical packages
     like :mod:`numpy`, before binary wheels, installation of these packages wasn't always easy on Windows.
 
+    The utility functions for constructing transformations and transforming vectors and points assumes that vectors
+    are stored as row vectors, meaning when multiplied, transformations are applied left to right
+    (e.g. vAB transforms v by A then by B).
+
     Matrix44 initialization:
 
         - ``Matrix44()`` returns the identity matrix.
@@ -41,7 +45,7 @@ class Matrix44:
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     )
-    __slots__ = ('matrix', )
+    __slots__ = ('matrix',)
 
     def __init__(self, *args):
         """
@@ -86,6 +90,15 @@ class Matrix44:
 
         return "Matrix44(%s)" % \
                ", ".join(format_row(row) for row in self.rows())
+
+    def get_2d_transformation(self) -> Tuple[float, ...]:
+        """ Returns a the 2D transformation as a row-major matrix in a linear array (tuple).
+
+        A more correct transformation could be implemented like so:
+        https://stackoverflow.com/questions/10629737/convert-3d-4x4-rotation-matrix-into-2d
+        """
+        m = self.matrix
+        return m[0], m[1], 0.0, m[4], m[5], 0.0, m[12], m[13], 1.0
 
     def get_row(self, row: int) -> Tuple[float, ...]:
         """ Get row as list of of four float values.
@@ -404,6 +417,11 @@ class Matrix44:
         """ Iterates over all matrix values. """
         return iter(self.matrix)
 
+    def __matmul__(self, other: 'Matrix44') -> 'Matrix44':
+        res_matrix = self.copy()
+        res_matrix.__imul__(other)
+        return res_matrix
+
     def __mul__(self, other: 'Matrix44') -> 'Matrix44':
         """ Returns a new matrix as result of the matrix multiplication with another matrix. """
         res_matrix = self.copy()
@@ -513,7 +531,7 @@ class Matrix44:
         Returns an iterable of transformed direction vectors without translation.
 
         """
-        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, *_ = self.matrix
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self.matrix
         for vector in vectors:
             x, y, z = vector
             v = Vector(

@@ -5,13 +5,13 @@ import math
 from .vector import Vec2
 from .bbox import BoundingBox2d
 from .line import ConstructionLine
-from .construct2d import ConstructionTool, point_to_line_relation
+from .construct2d import point_to_line_relation
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 
-class ConstructionBox(ConstructionTool):
+class ConstructionBox:
     """
     Helper class to create rectangles.
 
@@ -133,7 +133,7 @@ class ConstructionBox(ConstructionTool):
         """ Returns string representation of box as ``ConstructionBox(center, width, height, angle)`` """
         return "ConstructionBox({0.center}, {0.width}, {0.height}, {0.angle})".format(self)
 
-    def move(self, dx: float, dy: float) -> None:
+    def translate(self, dx: float, dy: float) -> None:
         """
         Move box about `dx` in x-axis and about `dy` in y-axis.
 

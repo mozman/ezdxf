@@ -1,21 +1,22 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-08
 from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Optional
 from contextlib import contextmanager
 import math
 import copy
-from ezdxf.math import Vector, Vec2, Matrix44, reflect_angle_x_deg
+import warnings
+from ezdxf.math import Vector, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline, open_uniform_knot_vector
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags, group_tags
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010, DXFStructureError
 from ezdxf.lldxf import const
-from ezdxf.math.bspline import bspline_control_frame
+from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math.bulge import bulge_to_arc
-from ezdxf.math import ellipse
+from ezdxf.math import ConstructionEllipse, NULLVEC, Z_AXIS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -29,10 +30,10 @@ __all__ = ['Hatch', 'Gradient', 'Pattern']
 
 acdb_hatch = DefSubclass('AcDbHatch', {
     # 3D point (X and Y always equal 0, Z represents the elevation)
-    'elevation': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # OCS
+    'elevation': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),  # OCS
 
     # Extrusion direction (optional; default = 0, 0, 1)
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Z_AXIS),
 
     # Hatch pattern name
     'pattern_name': DXFAttr(2, default='SOLID'),  # for solid fill
@@ -161,6 +162,18 @@ class Hatch(DXFGraphic):
         entity.pattern = copy.deepcopy(self.pattern)
         entity.gradient = copy.deepcopy(self.gradient)
         entity.seeds = copy.deepcopy(self.seeds)
+
+    def remove_dependencies(self, other: 'Drawing' = None) -> None:
+        """
+        Remove all dependencies from actual document.
+        (internal API)
+
+        """
+        if not self.is_alive:
+            return
+
+        super().remove_dependencies()
+        self.remove_association()
 
     def remove_association(self):
         """ Remove associated path elements.
@@ -319,6 +332,10 @@ class Hatch(DXFGraphic):
     @contextmanager
     def edit_boundary(self) -> 'BoundaryPaths':
         """ Context manager to edit hatch boundary data, yields a :class:`BoundaryPaths` object. """
+        warnings.warn(
+            'Hatch.edit_boundaries() is deprecated (removed in v0.15).',
+            DeprecationWarning
+        )
         yield self.paths
 
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: 'RGB' = None):
@@ -346,6 +363,10 @@ class Hatch(DXFGraphic):
 
     def get_gradient(self):
         """ Returns gradient data as :class:`GradientData` object. """
+        warnings.warn(
+            'Hatch.get_gradient() is deprecated (removed in v0.15).',
+            DeprecationWarning
+        )
         return self.gradient
 
     def set_gradient(self,
@@ -403,10 +424,13 @@ class Hatch(DXFGraphic):
         gradient.name = name
         self.gradient = gradient
 
-    # just for compatibility
     @contextmanager
     def edit_gradient(self) -> 'Gradient':
         """ Context manager to edit hatch gradient data, yields a :class:`GradientData` object. """
+        warnings.warn(
+            'Hatch.edit_gradient() is deprecated (removed in v0.15).',
+            DeprecationWarning
+        )
         if not self.gradient:
             raise const.DXFValueError('HATCH has no gradient data.')
         yield self.gradient
@@ -440,23 +464,26 @@ class Hatch(DXFGraphic):
         self.dxf.pattern_type = pattern_type
 
         if definition is None:
-            # get pattern definition from acad standard pattern, default is 'ANSI31'
-            predefiend_pattern = pattern.load()
-            definition = predefiend_pattern.get(name, predefiend_pattern['ANSI31'])
-        self.set_pattern_definition(definition, factor=self.dxf.pattern_scale)
+            predefined_pattern = pattern.load()
+            definition = predefined_pattern.get(name, predefined_pattern['ANSI31'])
+        self.set_pattern_definition(definition, factor=self.dxf.pattern_scale, angle=self.dxf.pattern_angle)
 
-    # just for compatibility
     @contextmanager
     def edit_pattern(self) -> 'Pattern':
         """ Context manager to edit hatch pattern data, yields a :class:`PatternData` object. """
+        warnings.warn(
+            'Hatch.edit_pattern() is deprecated (removed in v0.15).',
+            DeprecationWarning
+        )
         if not self.pattern:
             raise const.DXFValueError('Solid fill HATCH has no pattern data.')
         yield self.pattern
 
-    def set_pattern_definition(self, lines: Sequence, factor: float = 1) -> None:
+    def set_pattern_definition(self, lines: Sequence, factor: float = 1, angle: float = 0) -> None:
         """
         Setup hatch patten definition by a list of definition lines and  a definition line is a 4-tuple [angle,
-        base_point, offset, dash_length_items], the pattern definition should be designed for scaling factor 1.
+        base_point, offset, dash_length_items], the pattern definition should be designed for scaling factor
+        ``1`` and angle ``0``.
 
             - angle: line angle in degrees
             - base-point: 2-tuple (x, y)
@@ -466,18 +493,67 @@ class Hatch(DXFGraphic):
         Args:
             lines: list of definition lines
             factor: pattern scaling factor
+            angle: rotation angle in degrees
+
+        .. versionchanged:: 0.13
+            added `angle` argument
 
         """
-        if factor != 1:
-            lines = pattern.scale_pattern(lines, factor)
+        if factor != 1 or angle:
+            lines = pattern.scale_pattern(lines, factor=factor, angle=angle)
         self.pattern = Pattern([PatternLine(line[0], line[1], line[2], line[3]) for line in lines])
 
-    # just for compatibility
+    def set_pattern_scale(self, scale: float) -> None:
+        """
+        Set scaling of pattern definition to `scale`.
+
+        Starts always from the original base scaling, :code:`set_pattern_scale(1)`
+        reset the pattern scaling to the original appearance as defined by the pattern designer, but only if the
+        the pattern attribute :attr:`dxf.pattern_scale` represents the actual scaling, it is not possible to recreate
+        the original pattern scaling from the pattern definition itself.
+
+        Args:
+            scale: pattern scaling factor
+
+        .. versionadded:: 0.13
+
+        """
+        if not self.has_pattern_fill:
+            return
+        dxf = self.dxf
+        self.pattern.scale(factor=1.0 / dxf.pattern_scale * scale)
+        dxf.pattern_scale = scale
+
+    def set_pattern_angle(self, angle: float) -> None:
+        """
+        Set rotation of pattern definition to `angle` in degrees.
+
+        Starts always from the original base rotation ``0``, :code:`set_pattern_angle(0)`
+        reset the pattern rotation to the original appearance as defined by the pattern designer, but only if the
+        the pattern attribute :attr:`dxf.pattern_angle` represents the actual rotation, it is not possible to
+        recreate the original rotation from the pattern definition itself.
+
+        Args:
+            angle: rotation angle in degrees
+
+        .. versionadded:: 0.13
+
+        """
+        if not self.has_pattern_fill:
+            return
+        dxf = self.dxf
+        self.pattern.scale(angle=angle - dxf.pattern_angle)
+        dxf.pattern_angle = angle % 360.0
+
     def get_seed_points(self) -> List:
         """
         Returns seed points as list of ``(x, y)`` points, I don't know why there can be more than one seed point.
         All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value).
         """
+        warnings.warn(
+            'Hatch.get_seed_points() is deprecated (removed in v0.15).',
+            DeprecationWarning
+        )
         return self.seeds
 
     def set_seed_points(self, points: Sequence[Tuple[float, float]]) -> None:
@@ -594,21 +670,23 @@ class BoundaryPaths:
     def transform(self, ocs: OCSTransform, elevation: float = 0) -> None:
         """ Transform HATCH boundary paths.
 
-        These paths are 2d elements, placed in to OCS of the HATCH.
+        These paths are 2d elements, placed in the OCS of the HATCH.
 
         """
         if not ocs.scale_uniform:
+            self.polyline_to_edge_path(just_with_bulge=True)
             self.arc_edges_to_ellipse_edges()
 
         for path in self.paths:
             path.transform(ocs, elevation=elevation)
 
-    def arc_edges_to_ellipse_edges(self):
+    def polyline_to_edge_path(self, just_with_bulge=True) -> None:
         """
-        Convert polyline paths with bulge values to edge paths with line and arc edges if necessary and then
-        convert arc edges to ellipse edges.
+        Convert polyline paths including bulge values to line- and arc edges.
 
-        (internal API)
+        Args:
+            just_with_bulge: convert only polyline paths including bulge values if ``True``
+
         """
 
         def _edges(points) -> Iterable[Union[LineEdge, ArcEdge]]:
@@ -625,14 +703,11 @@ class BoundaryPaths:
                     arc = ArcEdge()
                     arc.center, start_angle, end_angle, arc.radius = bulge_to_arc(prev_point, point, prev_bulge)
                     chk_point = arc.center + Vec2.from_angle(start_angle, arc.radius)
-                    if chk_point.isclose(prev_point, abs_tol=1e-9):
-                        arc.is_counter_clockwise = 1
-                    else:
-                        start_angle += math.pi
-                        end_angle += math.pi
-                        arc.is_counter_clockwise = 0
+                    arc.ccw = chk_point.isclose(prev_point, abs_tol=1e-9)
                     arc.start_angle = math.degrees(start_angle) % 360.0
                     arc.end_angle = math.degrees(end_angle) % 360.0
+                    if math.isclose(arc.start_angle, arc.end_angle) and math.isclose(arc.start_angle, 0):
+                        arc.end_angle = 360.0
                     yield arc
                 else:
                     line = LineEdge()
@@ -651,6 +726,15 @@ class BoundaryPaths:
             edge_path.edges = list(_edges(vertices))
             return edge_path
 
+        for path_index, path in enumerate(self.paths):
+            if path.PATH_TYPE == 'PolylinePath':
+                if just_with_bulge and not path.has_bulge():
+                    continue
+                self.paths[path_index] = to_edge_path(path)
+
+    def arc_edges_to_ellipse_edges(self) -> None:
+        """ Convert all arc edges to ellipse edges. """
+
         def to_ellipse(arc: ArcEdge) -> EllipseEdge:
             ellipse = EllipseEdge()
             ellipse.center = arc.center
@@ -658,25 +742,160 @@ class BoundaryPaths:
             ellipse.major_axis = (arc.radius, 0.0)
             ellipse.start_angle = arc.start_angle
             ellipse.end_angle = arc.end_angle
-            ellipse.is_counter_clockwise = arc.is_counter_clockwise
+            ellipse.ccw = arc.ccw
             return ellipse
 
-        for path_index, path in enumerate(self.paths):
-            if path.PATH_TYPE == 'PolylinePath' and path.has_bulge():
-                path = to_edge_path(path)
-                self.paths[path_index] = path
+        for path in self.paths:
             if path.PATH_TYPE == 'EdgePath':
                 edges = path.edges
                 for edge_index, edge in enumerate(edges):
                     if edge.EDGE_TYPE == 'ArcEdge':
                         edges[edge_index] = to_ellipse(edge)
 
-    def has_critical_elements(self) -> bool:
-        """ Returns ``True`` if any boundary path has bulge values or arc edges or ellipse edges.
+    def ellipse_edges_to_spline_edges(self, num: int = 32) -> None:
+        """
+        Convert all ellipse edges to spline edges (approximation).
 
-        (internal API)
+        Args:
+            num: count of control points for a **full** ellipse, partial ellipses have proportional fewer control points
+                 but at least 3.
 
         """
+
+        def to_spline_edge(e: EllipseEdge) -> SplineEdge:
+            # No OCS transformation needed, source ellipse and target spline reside in the same OCS.
+            # ezdxf stores angles always in counter-clockwise orientation.
+            # DXF conversion is done at export, see also ArcEdge.load_tags() for explanation
+
+            ellipse = ConstructionEllipse(
+                center=e.center, major_axis=e.major_axis, ratio=e.ratio,
+                start_param=e.start_param, end_param=e.end_param,
+            )
+            count = max(int(float(num) * ellipse.param_span / math.tau), 3)
+            tool = BSpline.ellipse_approximation(ellipse, count)
+            spline = SplineEdge()
+            spline.degree = tool.degree
+            if not e.ccw:
+                tool = tool.reverse()
+
+            spline.control_points = Vec2.list(tool.control_points)
+            spline.knot_values = tool.knots()
+            spline.weights = tool.weights()
+            return spline
+
+        for path_index, path in enumerate(self.paths):
+            if path.PATH_TYPE == 'EdgePath':
+                edges = path.edges
+                for edge_index, edge in enumerate(edges):
+                    if edge.EDGE_TYPE == 'EllipseEdge':
+                        edges[edge_index] = to_spline_edge(edge)
+
+    def spline_edges_to_line_edges(self, factor: int = 8) -> None:
+        """ Convert all spline edges to line edges (approximation).
+
+        Args:
+            factor: count of approximation segments = count of control points x factor
+
+        """
+
+        def to_line_edges(spline_edge):
+            weights = spline_edge.weights
+            if len(spline_edge.control_points):
+                bspline = BSpline(
+                    control_points=spline_edge.control_points,
+                    order=spline_edge.degree + 1,
+                    knots=spline_edge.knot_values,
+                    weights=weights if len(weights) else None,
+                )
+            elif len(spline_edge.fit_points):
+                bspline = BSpline.from_fit_points(spline_edge.fit_points, spline_edge.degree)
+            else:
+                raise DXFStructureError('SplineEdge() without control points or fit points.')
+            segment_count = (max(len(bspline.control_points), 3) - 1) * factor
+            vertices = list(bspline.approximate(segment_count))
+            for v1, v2 in zip(vertices[:-1], vertices[1:]):
+                edge = LineEdge()
+                edge.start = v1.vec2
+                edge.end = v2.vec2
+                yield edge
+
+        for path in self.paths:
+            if path.PATH_TYPE == 'EdgePath':
+                new_edges = []
+                for edge in path.edges:
+                    if edge.EDGE_TYPE == 'SplineEdge':
+                        new_edges.extend(to_line_edges(edge))
+                    else:
+                        new_edges.append(edge)
+                path.edges = new_edges
+
+    def ellipse_edges_to_line_edges(self, num: int = 64) -> None:
+        """ Convert all ellipse edges to line edges (approximation).
+
+        Args:
+            num: count of control points for a **full** ellipse, partial ellipses have proportional fewer control points
+                 but at least 3.
+
+        """
+
+        def to_line_edges(edge):
+            ellipse = ConstructionEllipse(
+                center=edge.center,
+                major_axis=edge.major_axis,
+                ratio=edge.ratio,
+                start_param=edge.start_param,
+                end_param=edge.end_param,
+            )
+            segment_count = max(int(float(num) * ellipse.param_span / math.tau), 3)
+            params = ellipse.params(segment_count + 1)
+            if not edge.ccw:
+                params = reversed(list(params))
+            vertices = list(ellipse.vertices(params))
+            for v1, v2 in zip(vertices[:-1], vertices[1:]):
+                line = LineEdge()
+                line.start = v1.vec2
+                line.end = v2.vec2
+                yield line
+
+        for path in self.paths:
+            if path.PATH_TYPE == 'EdgePath':
+                new_edges = []
+                for edge in path.edges:
+                    if edge.EDGE_TYPE == 'EllipseEdge':
+                        new_edges.extend(to_line_edges(edge))
+                    else:
+                        new_edges.append(edge)
+                path.edges = new_edges
+
+    def all_to_spline_edges(self, num: int = 64) -> None:
+        """ Convert all bulge, arc and ellipse edges to spline edges (approximation).
+
+        Args:
+            num: count of control points for a **full** circle/ellipse, partial circles/ellipses have
+                 proportional fewer control points but at least 3.
+
+        """
+        self.polyline_to_edge_path(just_with_bulge=True)
+        self.arc_edges_to_ellipse_edges()
+        self.ellipse_edges_to_spline_edges(num)
+
+    def all_to_line_edges(self, num: int = 64, spline_factor: int = 8) -> None:
+        """ Convert all bulge, arc and ellipse edges to spline edges and approximate this splines by
+        line edges.
+
+        Args:
+            num: count of control points for a **full** circle/ellipse, partial circles/ellipses have
+                 proportional fewer control points but at least 3.
+            spline_factor: count of spline approximation segments = count of control points x spline_factor
+
+        """
+        self.polyline_to_edge_path(just_with_bulge=True)
+        self.arc_edges_to_ellipse_edges()
+        self.ellipse_edges_to_line_edges(num)
+        self.spline_edges_to_line_edges(spline_factor)
+
+    def has_critical_elements(self) -> bool:
+        """ Returns ``True`` if any boundary path has bulge values or arc edges or ellipse edges. """
         for path in self.paths:
             if path.PATH_TYPE == 'PolylinePath':
                 return path.has_bulge()
@@ -762,10 +981,7 @@ class PolylinePath:
         self.source_boundary_objects = []
 
     def has_bulge(self) -> bool:
-        for x, y, bulge in self.vertices:
-            if bulge != 0:
-                return True
-        return False
+        return any(bulge for x, y, bulge in self.vertices)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         has_bulge = self.has_bulge()
@@ -806,6 +1022,9 @@ class EdgePath:
         self.path_type_flags = const.BOUNDARY_PATH_DEFAULT
         self.edges = []
         self.source_boundary_objects = []
+
+    def __iter__(self):
+        return iter(self.edges)
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'EdgePath':
@@ -849,22 +1068,16 @@ class EdgePath:
                 radius: float = 1.,
                 start_angle: float = 0.,
                 end_angle: float = 360.,
-                is_counter_clockwise: int = 0) -> 'ArcEdge':
+                ccw: bool = True) -> 'ArcEdge':
         """
         Add an :class:`ArcEdge`.
-
-        :param tuple center:
-        :param float radius: radius of circle
-        :param float start_angle: start angle of arc in degrees
-        :param float end_angle: end angle of arc in degrees
-        :param int is_counter_clockwise: 1 for yes 0 for no
 
         Args:
             center: center point of arc, ``(x, y)`` tuple
             radius: radius of circle
             start_angle: start angle of arc in degrees
             end_angle: end angle of arc in degrees
-            is_counter_clockwise: ``1`` for counter clockwise ``0`` for clockwise orientation
+            ccw: ``True`` for counter clockwise ``False`` for clockwise orientation
 
         """
         arc = ArcEdge()
@@ -872,7 +1085,7 @@ class EdgePath:
         arc.radius = radius
         arc.start_angle = start_angle
         arc.end_angle = end_angle
-        arc.is_counter_clockwise = 1 if bool(is_counter_clockwise) else 0
+        arc.ccw = bool(ccw)
         self.edges.append(arc)
         return arc
 
@@ -881,7 +1094,7 @@ class EdgePath:
                     ratio: float = 1.,
                     start_angle: float = 0.,
                     end_angle: float = 360.,
-                    is_counter_clockwise: int = 0) -> 'EllipseEdge':
+                    ccw: bool = True) -> 'EllipseEdge':
         """
         Add an :class:`EllipseEdge`.
 
@@ -891,7 +1104,7 @@ class EdgePath:
             ratio: ratio of minor axis to major axis as float
             start_angle: start angle of arc in degrees
             end_angle: end angle of arc in degrees
-            is_counter_clockwise: ``1`` for counter clockwise ``0`` for clockwise orientation
+            ccw: ``True`` for counter clockwise ``False`` for clockwise orientation
 
         """
         if ratio > 1.:
@@ -902,16 +1115,15 @@ class EdgePath:
         ellipse.ratio = ratio
         ellipse.start_angle = start_angle
         ellipse.end_angle = end_angle
-        ellipse.is_counter_clockwise = is_counter_clockwise
+        ellipse.ccw = bool(ccw)
         self.edges.append(ellipse)
         return ellipse
 
-    def add_spline(self, fit_points: Iterable[Tuple[float, float]] = None,
-                   control_points: Iterable[Tuple[float, float]] = None,
+    def add_spline(self, fit_points: Iterable['Vertex'] = None,
+                   control_points: Iterable['Vertex'] = None,
                    knot_values: Iterable[float] = None,
                    weights: Iterable[float] = None,
                    degree: int = 3,
-                   rational: int = 0,
                    periodic: int = 0,
                    start_tangent: 'Vertex' = None,
                    end_tangent: 'Vertex' = None,
@@ -922,15 +1134,14 @@ class EdgePath:
         Args:
             fit_points: points through which the spline must go, at least 3 fit points are required.
                         list of ``(x, y)`` tuples
-            control_points: affects the shape of the spline, mandatory amd AutoCAD crashes on invalid data.
+            control_points: affects the shape of the spline, mandatory and AutoCAD crashes on invalid data.
                             list of ``(x, y)`` tuples
             knot_values: (knot vector) mandatory and AutoCAD crashes on invalid data. list of floats;
                          `ezdxf` provides two tool functions to calculate valid knot values:
-                         :func:`ezdxf.math.bspline.knot_values` and
-                         :func:`ezdxf.math.bspline.knot_values_uniform`
+                         :func:`ezdxf.math.uniform_knot_vector`,
+                         :func:`ezdxf.math.open_uniform_knot_vector` (default if ``None``)
             weights: weight of control point, not mandatory, list of floats.
             degree: degree of spline (int)
-            rational: ``1`` for rational spline, ``0`` for none rational spline
             periodic: ``1`` for periodic spline, ``0`` for none periodic spline
             start_tangent: start_tangent as 2d vector, optional
             end_tangent: end_tangent as 2d vector, optional
@@ -944,15 +1155,17 @@ class EdgePath:
         """
         spline = SplineEdge()
         if fit_points is not None:
-            spline.fit_points = list(fit_points)
+            spline.fit_points = Vec2.list(fit_points)
         if control_points is not None:
-            spline.control_points = list(control_points)
+            spline.control_points = Vec2.list(control_points)
         if knot_values is not None:
             spline.knot_values = list(knot_values)
+        else:
+            spline.knot_values = list(open_uniform_knot_vector(len(spline.control_points), degree + 1))
         if weights is not None:
             spline.weights = list(weights)
         spline.degree = degree
-        spline.rational = int(rational)
+        spline.rational = int(bool(len(spline.weights)))
         spline.periodic = int(periodic)
         if start_tangent is not None:
             spline.start_tangent = Vec2(start_tangent)
@@ -963,9 +1176,8 @@ class EdgePath:
 
     def add_spline_control_frame(self, fit_points: Iterable[Tuple[float, float]],
                                  degree: int = 3,
-                                 method: str = 'distance',
-                                 power: float = .5) -> 'SplineEdge':
-        bspline = bspline_control_frame(fit_points=fit_points, degree=degree, method=method, power=power)
+                                 method: str = 'distance') -> 'SplineEdge':
+        bspline = global_bspline_interpolation(fit_points=fit_points, degree=degree, method=method)
         return self.add_spline(
             fit_points=fit_points,
             control_points=bspline.control_points,
@@ -1031,11 +1243,13 @@ class ArcEdge:
         self.radius: float = 1.
         self.start_angle: float = 0.
         self.end_angle: float = 360.
-        self.is_counter_clockwise: int = 0
+        self.ccw: bool = True
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'ArcEdge':
         edge = cls()
+        start = 0.0
+        end = 0.0
         for tag in tags:
             code, value = tag
             if code == 10:
@@ -1043,22 +1257,42 @@ class ArcEdge:
             elif code == 40:
                 edge.radius = value
             elif code == 50:
-                edge.start_angle = value
+                start = value
             elif code == 51:
-                edge.end_angle = value
+                end = value
             elif code == 73:
-                edge.is_counter_clockwise = value
+                edge.ccw = bool(value)
+
+        # The DXF format stores the clockwise oriented start- and end angles
+        # for HATCH arc- and ellipse edges as complementary angle (360-angle).
+        # This is a problem in many ways for processing clockwise oriented
+        # angles correct, especially rotation transformation won't work.
+        # Solution: convert clockwise angles into counter-clockwise angles
+        # and swap start- and end angle at loading and exporting:
+        if edge.ccw:
+            edge.start_angle = start
+            edge.end_angle = end
+        else:
+            edge.start_angle = 360.0 - end
+            edge.end_angle = 360.0 - start
         return edge
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_tag2(72, 2)  # edge type
         x, y, *_ = self.center
+        if self.ccw:
+            start = self.start_angle
+            end = self.end_angle
+        else:
+            # swap and convert to complementary angles: see ArcEdge.load_tags() for explanation
+            start = 360.0 - self.end_angle
+            end = 360.0 - self.start_angle
         tagwriter.write_tag2(10, float(x))
         tagwriter.write_tag2(20, float(y))
         tagwriter.write_tag2(40, self.radius)
-        tagwriter.write_tag2(50, self.start_angle)
-        tagwriter.write_tag2(51, self.end_angle)
-        tagwriter.write_tag2(73, self.is_counter_clockwise)
+        tagwriter.write_tag2(50, start)
+        tagwriter.write_tag2(51, end)
+        tagwriter.write_tag2(73, int(self.ccw))
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         self.center = ocs.transform_2d_vertex(self.center, elevation)
@@ -1076,11 +1310,29 @@ class EllipseEdge:
         self.ratio: float = 1.
         self.start_angle: float = 0.  # start param, not a real angle
         self.end_angle: float = 360.  # end param, not a real angle
-        self.is_counter_clockwise: int = 0
+        self.ccw: bool = True
+
+    @property
+    def start_param(self) -> float:
+        return angle_to_param(self.ratio, math.radians(self.start_angle))
+
+    @start_param.setter
+    def start_param(self, param: float) -> None:
+        self.start_angle = math.degrees(param_to_angle(self.ratio, param))
+
+    @property
+    def end_param(self) -> float:
+        return angle_to_param(self.ratio, math.radians(self.end_angle))
+
+    @end_param.setter
+    def end_param(self, param: float) -> None:
+        self.end_angle = math.degrees(param_to_angle(self.ratio, param))
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'EllipseEdge':
         edge = cls()
+        start = 0.0
+        end = 0.0
         for tag in tags:
             code, value = tag
             if code == 10:
@@ -1090,11 +1342,20 @@ class EllipseEdge:
             elif code == 40:
                 edge.ratio = value
             elif code == 50:
-                edge.start_angle = value
+                start = value
             elif code == 51:
-                edge.end_angle = value
+                end = value
             elif code == 73:
-                edge.is_counter_clockwise = value
+                edge.ccw = bool(value)
+
+        if edge.ccw:
+            edge.start_angle = start
+            edge.end_angle = end
+        else:
+            # swap and convert to complementary angles: see ArcEdge.load_tags() for explanation
+            edge.start_angle = 360.0 - end
+            edge.end_angle = 360.0 - start
+
         return edge
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
@@ -1106,44 +1367,66 @@ class EllipseEdge:
         tagwriter.write_tag2(11, float(x))
         tagwriter.write_tag2(21, float(y))
         tagwriter.write_tag2(40, self.ratio)
-        tagwriter.write_tag2(50, self.start_angle)
-        tagwriter.write_tag2(51, self.end_angle)
-        tagwriter.write_tag2(73, self.is_counter_clockwise)
+        if self.ccw:
+            start = self.start_angle
+            end = self.end_angle
+        else:
+            # swap and convert to complementary angles: see ArcEdge.load_tags() for explanation
+            start = 360.0 - self.end_angle
+            end = 360.0 - self.start_angle
+
+        tagwriter.write_tag2(50, start)
+        tagwriter.write_tag2(51, end)
+        tagwriter.write_tag2(73, int(self.ccw))
+
+    def construction_tool(self):
+        """ Returns ConstructionEllipse() for the OCS representation. """
+        return ConstructionEllipse(
+            center=Vector(self.center),
+            major_axis=Vector(self.major_axis),
+            extrusion=Vector(0, 0, 1),
+            ratio=self.ratio,
+            # ConstructionEllipse() is always in ccw orientation
+            start_param=self.start_param if self.ccw else self.end_param,
+            end_param=self.end_param if self.ccw else self.start_param,
+        )
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
-        def adjust_angle(a: float, ratio: float) -> float:
-            return math.atan2(math.sin(a) * ratio, math.cos(a))
+        e = self.construction_tool()
 
-        def adjust_param(p: float, ratio: float) -> float:
-            return math.atan2(math.sin(p) / ratio, math.cos(p))
-        # todo: start- and end param adjustment still incorrect for non-uniform scaling (axis transformation)
+        # Transform old OCS representation to WCS
         ocs_to_wcs = ocs.old_ocs.to_wcs
-        start_param = adjust_param(math.radians(self.start_angle), self.ratio)
-        end_param = adjust_param(math.radians(self.end_angle), self.ratio)
-        params = ellipse.Params(
-            ocs_to_wcs(Vector(self.center).replace(z=elevation)),
-            ocs_to_wcs(Vector(self.major_axis)),
-            None,  # minor axis, not needed as input
-            ocs.old_extrusion,
-            self.ratio,
-            start_param,
-            end_param,
-        )
-        params = ellipse.transform(params, ocs.m)
+        e.center = ocs_to_wcs(e.center.replace(z=elevation))
+        e.major_axis = ocs_to_wcs(e.major_axis)
+        e.extrusion = ocs.old_extrusion
+
+        # Apply matrix transformation
+        e.transform(ocs.m)
+
+        # Transform WCS representation to new OCS
         wcs_to_ocs = ocs.new_ocs.from_wcs
-        self.center = wcs_to_ocs(params.center).vec2
-        self.major_axis = wcs_to_ocs(params.major_axis).vec2
-        self.ratio = params.ratio
-        self.start_angle = math.degrees(adjust_angle(params.start, params.ratio))
-        self.end_angle = math.degrees(adjust_angle(params.end, params.ratio))
-        if ocs.new_extrusion.isclose(params.extrusion, abs_tol=1e-9):
+        self.center = wcs_to_ocs(e.center).vec2
+        self.major_axis = wcs_to_ocs(e.major_axis).vec2
+        self.ratio = e.ratio
+
+        # ConstructionEllipse() is always in ccw orientation
+        self.start_param = e.start_param if self.ccw else e.end_param
+        self.end_param = e.end_param if self.ccw else e.start_param
+
+        if ocs.new_extrusion.isclose(e.extrusion, abs_tol=1e-9):
             # ellipse extrusion matches new hatch extrusion
             pass
-        elif ocs.new_extrusion.isclose(-params.extrusion, abs_tol=1e-9):
+        elif ocs.new_extrusion.isclose(-e.extrusion, abs_tol=1e-9):
             # ellipse extrusion is opposite to new hatch extrusion
-            self.is_counter_clockwise = 1 - int(self.is_counter_clockwise)
+            self.start_angle, self.end_angle = -self.end_angle, -self.start_angle
         else:
             raise ArithmeticError('Invalid EllipseEdge() transformation, please send bug report.')
+
+        # normalize angles in range 0 to 360 degrees
+        self.start_angle = self.start_angle % 360.0
+        self.end_angle = self.end_angle % 360.0
+        if math.isclose(self.end_angle, 0):
+            self.end_angle = 360.0
 
 
 class SplineEdge:
@@ -1187,6 +1470,14 @@ class SplineEdge:
         return edge
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        if len(self.weights):
+            if len(self.weights) == len(self.control_points):
+                self.rational = 1
+            else:
+                raise const.DXFValueError("SplineEdge: count of control points and count of weights mismatch")
+        else:
+            self.rational = 0
+
         write_tag = tagwriter.write_tag2
         write_tag(72, 4)  # edge type
         write_tag(94, int(self.degree))
@@ -1204,17 +1495,18 @@ class SplineEdge:
 
         # build control points
         # control points have to be present and valid, otherwise AutoCAD crashes
-        for x, y, *_ in self.control_points:
-            write_tag(10, float(x))
-            write_tag(20, float(y))
+        cp = Vec2.generate(self.control_points)
+        if self.rational:
+            for point, weight in zip(cp, self.weights):
+                write_tag(10, float(point.x))
+                write_tag(20, float(point.y))
+                write_tag(42, float(weight))
+        else:
+            for x, y in cp:
+                write_tag(10, float(x))
+                write_tag(20, float(y))
 
-        # build weights list, optional
-        for value in self.weights:
-            write_tag(42, float(value))
-
-        # build fit points
-        # fit points have to be present and valid, otherwise AutoCAD crashes
-        # edit 2016-12-20: this is not true - there are examples with no fit points and without crashing AutoCAD
+        # build optional fit points
         if len(self.fit_points) > 0:
             write_tag(97, len(self.fit_points))
             for x, y, *_ in self.fit_points:
@@ -1294,6 +1586,25 @@ class Pattern:
 
     def as_list(self) -> List:
         return [line.as_list() for line in self.lines]
+
+    def scale(self, factor: float = 1, angle: float = 0) -> None:
+        """
+        Scale and rotate pattern.
+
+        Be careful, this changes the base pattern definition, maybe better use :meth:`Hatch.set_pattern_scale` or
+        :meth:`Hatch.set_pattern_angle`.
+
+        Args:
+            factor: scaling factor
+            angle: rotation angle in degrees
+
+        .. versionadded:: 0.13
+
+        """
+        scaled_pattern = pattern.scale_pattern(self.as_list(), factor=factor, angle=angle)
+        self.clear()
+        for line in scaled_pattern:
+            self.add_line(*line)
 
 
 class PatternLine:

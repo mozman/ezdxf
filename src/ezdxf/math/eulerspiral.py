@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import Dict, Iterable
 from ezdxf.math import Vector
-from ezdxf.math.bspline import bspline_control_frame, BSpline
+from ezdxf.math.bspline import global_bspline_interpolation, BSpline
 
 
 class EulerSpiral:
@@ -103,7 +103,7 @@ class EulerSpiral:
 
         """
         fit_points = list(self.approximate(length, segments=segments))
-        spline = bspline_control_frame(fit_points, degree, method=method)
+        spline = global_bspline_interpolation(fit_points, degree, method=method)
         knots = [v * length for v in spline.knot_values()]  # scale knot values to length
         spline.basis.knots = knots
         return spline

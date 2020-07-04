@@ -5,7 +5,6 @@ import math
 from .line import ConstructionRay
 from .vector import Vec2
 from .bbox import BoundingBox2d
-from .construct2d import ConstructionTool
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
 HALF_PI = math.pi / 2.
 
 
-class ConstructionCircle(ConstructionTool):
+class ConstructionCircle:
     """ Circle construction tool.
 
     Args:
@@ -50,7 +49,7 @@ class ConstructionCircle(ConstructionTool):
         rvec = Vec2((self.radius, self.radius))
         return BoundingBox2d((self.center - rvec, self.center + rvec))
 
-    def move(self, dx: float, dy: float) -> None:
+    def translate(self, dx: float, dy: float) -> None:
         """
         Move circle about `dx` in x-axis and about `dy` in y-axis.
 

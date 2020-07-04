@@ -32,7 +32,7 @@ Factory function         creating a new SUN entity is not supported
 
     .. attribute:: dxf.true_color
 
-        :term:`True color` value of the sun.
+        :term:`true color` value of the sun.
 
     .. attribute:: dxf.intensity
 

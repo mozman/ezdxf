@@ -2,8 +2,8 @@
 # License: MIT License
 
 import ezdxf
-from ezdxf.math.construct2d import is_close_points
-from ezdxf.math import ConstructionArc, Vector, UCS
+import math
+from ezdxf.math import ConstructionArc, Vector, UCS, Vec2
 from math import isclose
 
 
@@ -116,3 +116,38 @@ def test_bounding_box():
     bbox = ConstructionArc(center=(0, 0), radius=1, start_angle=270, end_angle=90).bounding_box
     assert bbox.extmin == (0, -1)
     assert bbox.extmax == (1, 1)
+
+
+def test_angles():
+    arc = ConstructionArc(radius=1, start_angle=30, end_angle=60)
+    assert tuple(arc.angles(2)) == (30, 60)
+    assert tuple(arc.angles(3)) == (30, 45, 60)
+
+    arc.start_angle = 180
+    arc.end_angle = 0
+    assert tuple(arc.angles(2)) == (180, 0)
+    assert tuple(arc.angles(3)) == (180, 270, 0)
+
+    arc.start_angle = -90
+    arc.end_angle = -180
+    assert tuple(arc.angles(2)) == (270, 180)
+    assert tuple(arc.angles(4)) == (270, 0, 90, 180)
+
+
+def test_vertices():
+    angles = [0, 45, 90, 135, -45, -90, -135, 180]
+    arc = ConstructionArc(center=(1, 1))
+    vertices = list(arc.vertices(angles))
+    for v, a in zip(vertices, angles):
+        a = math.radians(a)
+        assert v.isclose(Vec2((1 + math.cos(a), 1 + math.sin(a))))
+
+
+def test_tangents():
+    angles = [0, 45, 90, 135, -45, -90, -135, 180]
+    sin45 = math.sin(math.pi/4)
+    result = [(0, 1), (-sin45, sin45), (-1, 0), (-sin45, -sin45), (sin45, sin45), (1, 0), (sin45, -sin45), (0, -1)]
+    arc = ConstructionArc(center=(1, 1))
+    vertices = list(arc.tangents(angles))
+    for v, r in zip(vertices, result):
+        assert v.isclose(Vec2(r))

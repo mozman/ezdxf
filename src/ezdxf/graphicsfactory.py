@@ -4,11 +4,12 @@
 from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast
 import math
 import logging
+import warnings
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
 from ezdxf.math import Vector
-from ezdxf.math import bspline_control_frame, bspline_control_frame_approx
+from ezdxf.math import global_bspline_interpolation
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
@@ -541,65 +542,32 @@ class CreatorInterface:
             spline.fit_points = Vector.generate(fit_points)
         return spline
 
-    def add_spline_control_frame(self, fit_points: Iterable['Vertex'], degree: int = 3, method: str = 'distance',
-                                 power: float = .5, dxfattribs: dict = None) -> 'Spline':
+    def add_spline_control_frame(self, fit_points: Iterable['Vertex'], degree: int = 3, method: str = 'chord',
+                                 dxfattribs: dict = None) -> 'Spline':
         """
-        Add a :class:`~ezdxf.entities.Spline` entity trough fit points but defined by control points.
+        Add a :class:`~ezdxf.entities.Spline` entity passing through given fit points by
+        global B-spline interpolation, the new SPLINE entity is defined by a control frame
+        and not by the fit points.
 
-        =================== ============================================================
-        Method              Description
-        =================== ============================================================
-        ``'uniform'``       creates a uniform t vector, from ``0`` to ``1`` evenly spaced; see `uniform`_ method
-        ``'distance'``      creates a t vector with values proportional to the fit point distances, see `chord length`_ method
-        ``'centripetal'``   creates a t vector with values proportional to the fit point distances ^ ``power``; see `centripetal`_ method
-        =================== ============================================================
-
-        None of this methods matches the spline created from fit points by AutoCAD.
-        See also: :ref:`tut_spline`.
+        - "uniform": creates a uniform t vector, from 0 to 1 evenly spaced, see `uniform`_ method
+        - "distance", "chord": creates a t vector with values proportional to the fit point distances,
+          see `chord length`_ method
+        - "centripetal", "sqrt_chord": creates a t vector with values proportional to the fit point sqrt(distances),
+          see `centripetal`_ method
+        - "arc": creates a t vector with values proportional to the arc length between fit points.
 
         Args:
             fit_points: iterable of fit points as (x, y[, z]) in :ref:`WCS`
             degree: degree of B-spline
             method: calculation method for parameter vector t
-            power: power for centripetal method
             dxfattribs: additional DXF attributes
 
         """
-        bspline = bspline_control_frame(fit_points, degree=degree, method=method, power=power)
+        bspline = global_bspline_interpolation(fit_points, degree=degree, method=method)
         return self.add_open_spline(
             control_points=bspline.control_points,
             degree=bspline.degree,
             knots=bspline.knot_values(),
-            dxfattribs=dxfattribs,
-        )
-
-    def add_spline_approx(self, fit_points: Iterable['Vertex'], count: int, degree: int = 3, method: str = 'distance',
-                          power: float = .5, dxfattribs: dict = None) -> 'Spline':
-        """
-        Approximate B-spline (:class:`~ezdxf.entities.Spline` entity) by a reduced count of control points, given are
-        the fit points and the degree of the B-spline.
-
-        =================== ============================================================
-        Method              Description
-        =================== ============================================================
-        ``'uniform'``       creates a uniform t vector, from ``0`` to ``1`` evenly spaced; see `uniform`_ method
-        ``'distance'``      creates a t vector with values proportional to the fit point distances, see `chord length`_ method
-        ``'centripetal'``   creates a t vector with values proportional to the fit point distances ^ ``power``; see `centripetal`_ method
-        =================== ============================================================
-
-        Args:
-            fit_points: all fit points of B-spline
-            count: count of designated control points
-            degree: degree of B-spline
-            method: calculation method for parameter vector t
-            power: power for centripetal method
-            dxfattribs: additional DXF attributes
-
-        """
-        bspline = bspline_control_frame_approx(fit_points, count, degree=degree, method=method, power=power)
-        return self.add_open_spline(
-            control_points=bspline.control_points,
-            degree=bspline.degree,
             dxfattribs=dxfattribs,
         )
 
@@ -638,7 +606,7 @@ class CreatorInterface:
 
         """
         spline = self.add_spline(dxfattribs=dxfattribs)
-        spline.set_periodic(list(control_points), degree)
+        spline.set_closed(list(control_points), degree)
         if knots is not None:
             spline.knots = knots
         return spline
@@ -686,7 +654,7 @@ class CreatorInterface:
 
         """
         spline = self.add_spline(dxfattribs=dxfattribs)
-        spline.set_periodic_rational(list(control_points), weights, degree)
+        spline.set_closed_rational(list(control_points), weights, degree)
         if knots is not None:
             spline.knots = knots
         return spline

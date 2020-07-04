@@ -70,9 +70,9 @@ class TestConstructionLine:
         assert bbox.extmin == (0, 0)
         assert bbox.extmax == (7, 10)
 
-    def test_move(self):
+    def test_translate(self):
         line = ConstructionLine((0, 0), (0, 10))
-        line.move(3, 7)
+        line.translate(3, 7)
         assert line.start == (3, 7)
         assert line.end == (3, 17)
         bbox = line.bounding_box

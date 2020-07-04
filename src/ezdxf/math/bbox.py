@@ -16,8 +16,17 @@ class BoundingBox:
 
     """
 
-    def __init__(self, vertices: Iterable['Vertex']):
-        self.extmin, self.extmax = extends(vertices)
+    def __init__(self, vertices: Iterable['Vertex'] = None):
+        if vertices is None:
+            self.extmax = None
+            self.extmin = None
+        else:
+            self.extmin, self.extmax = extends(vertices)
+
+    @property
+    def has_data(self) -> bool:
+        """ Returns ``True`` if data is available """
+        return self.extmin is not None
 
     def inside(self, vertex: 'Vertex') -> bool:
         """ Returns ``True`` if `vertex` is inside bounding box. """
@@ -33,8 +42,9 @@ class BoundingBox:
             vertices: iterable of ``(x, y, z)`` tuples or :class:`Vector` objects
 
         """
-        v = [self.extmin, self.extmax]
-        v.extend(vertices)
+        v = list(vertices)
+        if self.has_data:
+            v.extend([self.extmin, self.extmax])
         self.extmin, self.extmax = extends(v)
 
     @property
@@ -81,8 +91,17 @@ class BoundingBox2d:
 
     """
 
-    def __init__(self, vertices: Iterable['Vertex']):
-        self.extmin, self.extmax = extends2d(vertices)
+    def __init__(self, vertices: Iterable['Vertex'] = None):
+        if vertices is None:
+            self.extmax = None
+            self.extmin = None
+        else:
+            self.extmin, self.extmax = extends2d(vertices)
+
+    @property
+    def has_data(self) -> bool:
+        """ Returns ``True`` if data is available """
+        return self.extmin is not None
 
     def inside(self, vertex: 'Vertex') -> bool:
         """ Returns ``True`` if `vertex` is inside bounding box. """
@@ -98,8 +117,9 @@ class BoundingBox2d:
             vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vector` objects
 
         """
-        v = [self.extmin, self.extmax]
-        v.extend(vertices)
+        v = list(vertices)
+        if self.has_data:
+            v.extend([self.extmin, self.extmax])
         self.extmin, self.extmax = extends2d(v)
 
     @property

@@ -1,10 +1,8 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, List
-from abc import abstractmethod
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 from .matrix44 import Matrix44
-from .matrix33 import Matrix33
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout
@@ -67,7 +65,7 @@ class OCS:
             for point in points:
                 yield from_wcs(point)
         else:
-            return points
+            yield from points
 
     def to_wcs(self, point: 'Vertex') -> 'Vertex':
         """ Returns WCS vector for OCS `point`. """
@@ -83,7 +81,7 @@ class OCS:
             for point in points:
                 yield to_wcs(point)
         else:
-            return points
+            yield from points
 
     def render_axis(self, layout: 'BaseLayout', length: float = 1, colors: Tuple[int, int, int] = (1, 3, 5)):
         """ Render axis as 3D lines into a `layout`. """

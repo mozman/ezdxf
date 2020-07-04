@@ -7,7 +7,7 @@ from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.lldxf.const import DXF2007, DXF2010
 from ezdxf.render.forms import box
-from ezdxf.math import Vector, Matrix44, NonUniformScalingError
+from ezdxf.math import Vector, Matrix44
 
 
 @pytest.fixture
@@ -133,9 +133,12 @@ def test_polyline_path_transform_interface(hatch, m44):
 
 def test_arc_to_ellipse_edges(hatch):
     hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True)
-    hatch.paths.arc_edges_to_ellipse_edges()
+
+    hatch.paths.polyline_to_edge_path()
     path = hatch.paths[0]
     assert path.PATH_TYPE == 'EdgePath', 'polyline path not converted to edge path'
+
+    hatch.paths.arc_edges_to_ellipse_edges()
 
     edge = path.edges[0]
     assert edge.EDGE_TYPE == 'EllipseEdge'
@@ -158,6 +161,22 @@ def test_arc_to_ellipse_edges(hatch):
     assert edge.end == (0, 0)
 
 
+def test_ellipse_edges_to_spline_edges(hatch):
+    hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True)
+    hatch.paths.all_to_spline_edges(num=32)
+    path = hatch.paths[0]
+
+    edge = path.edges[0]
+    assert edge.EDGE_TYPE == 'SplineEdge'
+    assert edge.control_points[0] == (0, 0)
+    assert edge.control_points[-1] == (10, 0)
+
+    edge = path.edges[2]
+    assert edge.EDGE_TYPE == 'SplineEdge'
+    assert Vector(10, 10).isclose(edge.control_points[0])
+    assert Vector(0, 10).isclose(edge.control_points[-1])
+
+
 def test_edge_path_count(edge_hatch):
     assert 1 == len(edge_hatch.paths), "invalid boundary path count"
 
@@ -176,7 +195,7 @@ def test_edge_path_edges(edge_hatch):
     assert 1. / 3. == edge.ratio
     assert 270 == edge.start_angle
     assert 450 == edge.end_angle  # this value was created by AutoCAD == 90 degree
-    assert 1 == edge.is_counter_clockwise
+    assert 1 == edge.ccw
 
     edge = path.edges[1]
     assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 2. edge"
@@ -192,9 +211,13 @@ def test_edge_path_edges(edge_hatch):
     assert 'ArcEdge' == edge.EDGE_TYPE, "invalid edge type for 4. edge"
     assert (5, 10) == edge.center
     assert 1 == edge.radius
-    assert 360 == edge.start_angle  # this value was created by AutoCAD == 0 degree
-    assert 540 == edge.end_angle  # this value was created by AutoCAD == 180 degree
-    assert 0 == edge.is_counter_clockwise
+    # clockwise arc edge:
+    assert 0 == edge.ccw
+    # now we get converted and swapped angles
+    assert 360 == 360.0 - edge.end_angle  # this value was created by AutoCAD (0 degree)
+    assert 540 == 360.0 - edge.start_angle  # this value was created by AutoCAD (-180 degree)
+    assert -180 == edge.start_angle  # ezdxf representation
+    assert 0 == edge.end_angle  # ezdxf representation
 
     edge = path.edges[4]
     assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 5. edge"
@@ -221,7 +244,7 @@ def test_add_edge_path(edge_hatch):
     path = edge_hatch.paths.add_edge_path()
     assert 'EdgePath' == path.PATH_TYPE, "created wrong path type"
     path.add_line((0, 0), (10, 0))
-    path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, is_counter_clockwise=1)
+    path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, ccw=True)
     path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180)
     path.add_line((10, 0), (0, 0))
     # exit with statement and create DXF tags
@@ -238,7 +261,7 @@ def test_add_edge_path(edge_hatch):
     assert 5 == edge.radius
     assert 270 == edge.start_angle
     assert 450 == edge.end_angle
-    assert edge.is_counter_clockwise == 1
+    assert edge.ccw is True
 
     edge = path.edges[2]
     assert 'EllipseEdge' == edge.EDGE_TYPE, "invalid edge type for 3. edge"
@@ -247,7 +270,7 @@ def test_add_edge_path(edge_hatch):
     assert .2 == edge.ratio
     assert 0 == edge.start_angle
     assert 180 == edge.end_angle
-    assert edge.is_counter_clockwise == 0
+    assert edge.ccw is True
 
     edge = path.edges[3]
     assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 4. edge"
@@ -258,9 +281,9 @@ def test_add_edge_path(edge_hatch):
 def test_edge_path_transform_interface(hatch, m44):
     path = hatch.paths.add_edge_path()
     path.add_line((0, 0), (10, 0))
-    path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, is_counter_clockwise=1)
+    path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, ccw=1)
     path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180)
-    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, rational=1, periodic=1)
+    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1)
     # the following values do not represent a mathematically valid spline
     spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
     spline.knot_values = [1, 2, 3, 4, 5, 6]
@@ -317,7 +340,7 @@ def test_spline_edge_hatch_get_params(spline_edge_hatch):
 def test_create_spline_edge(spline_edge_hatch):
     # create the spline
     path = spline_edge_hatch.paths[0]
-    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, rational=1, periodic=1)
+    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1)
     # the following values do not represent a mathematically valid spline
     spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
     spline.knot_values = [1, 2, 3, 4, 5, 6]
@@ -329,7 +352,6 @@ def test_create_spline_edge(spline_edge_hatch):
     path = spline_edge_hatch.paths[0]
     spline = path.edges[-1]
     assert 3 == spline.degree
-    assert 1 == spline.rational
     assert 1 == spline.periodic
     assert (10, 1) == spline.start_tangent
     assert (2, 20) == spline.end_tangent
@@ -345,7 +367,7 @@ def test_create_spline_edge(spline_edge_hatch):
 
 def test_no_fit_points_export(spline_edge_hatch):
     path = spline_edge_hatch.paths[0]
-    spline = path.add_spline(control_points=[(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, rational=1, periodic=1)
+    spline = path.add_spline(control_points=[(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1)
     spline.knot_values = [1, 2, 3, 4, 5, 6]
     assert [(1, 1), (2, 2), (3, 3), (4, 4)] == spline.control_points
     assert len(spline.fit_points) == 0
@@ -384,11 +406,15 @@ def test_edit_pattern(hatch_pattern):
     assert [0.125, -0.0625] == line1.dash_length_items
 
 
-def test_create_new_pattern_hatch(hatch):
-    pattern = [
+@pytest.fixture()
+def pattern():
+    return [
         [45, (0, 0), (0, 1), []],  # 1. Line: continuous
         [45, (0, 0.5), (0, 1), [0.2, -0.1]]  # 2. Line: dashed
     ]
+
+
+def test_create_new_pattern_hatch(hatch, pattern):
     hatch.set_pattern_fill("MOZMAN", definition=pattern)
     assert hatch.has_solid_fill is False
     assert hatch.has_gradient_data is False
@@ -408,6 +434,56 @@ def test_create_new_pattern_hatch(hatch):
     assert (0, 1) == line1.offset
     assert 2 == len(line1.dash_length_items)
     assert [0.2, -0.1] == line1.dash_length_items
+
+
+def test_pattern_scale(hatch, pattern):
+    hatch.set_pattern_fill("MOZMAN", definition=pattern)
+    hatch.set_pattern_scale(2)
+    assert hatch.dxf.pattern_scale == 2
+    line1, line2 = hatch.pattern.lines
+    assert line1.base_point == (0, 0)
+    assert line1.offset == (0, 2)
+    assert line2.base_point == (0, 1)
+    assert line2.offset == (0, 2)
+
+
+def test_pattern_scale_x_times(hatch, pattern):
+    hatch.set_pattern_fill("MOZMAN", definition=pattern)
+    hatch.set_pattern_scale(2)
+    # scale pattern 3 times of actual scaling 2
+    # = base pattern x 6
+    hatch.set_pattern_scale(hatch.dxf.pattern_scale * 3)
+    assert hatch.dxf.pattern_scale == 6
+    line1, line2 = hatch.pattern.lines
+    assert line1.base_point == (0, 0)
+    assert line1.offset == (0, 6)
+    assert line2.base_point == (0, 3)
+    assert line2.offset == (0, 6)
+
+
+def test_pattern_rotation(hatch, pattern):
+    hatch.set_pattern_fill("MOZMAN", definition=pattern)
+    assert hatch.dxf.pattern_angle == 0
+    hatch.set_pattern_angle(45)
+    assert hatch.dxf.pattern_angle == 45
+    line1, line2 = hatch.pattern.lines
+    assert line1.angle == 90
+    assert line1.base_point == (0, 0)
+    assert line1.offset == (-0.7071, 0.7071)
+    assert line2.angle == 90
+    assert line2.base_point == (-0.3536, 0.3536)
+    assert line2.offset == (-0.7071, 0.7071)
+
+
+def test_pattern_rotation_add_angle(hatch, pattern):
+    hatch.set_pattern_fill("MOZMAN", definition=pattern)
+    assert hatch.dxf.pattern_angle == 0
+    hatch.set_pattern_angle(45)
+    assert hatch.dxf.pattern_angle == 45
+
+    # add 45 degrees to actual pattern rotation
+    hatch.set_pattern_angle(hatch.dxf.pattern_angle + 45)
+    assert hatch.dxf.pattern_angle == 90
 
 
 def test_create_gradient(hatch):

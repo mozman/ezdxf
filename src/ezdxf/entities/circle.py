@@ -3,16 +3,16 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 
-from ezdxf.math import Vector, UCS, Matrix44
-from ezdxf.math.transformtools import OCSTransform,  NonUniformScalingError
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Ellipse, Spline
 
 __all__ = ['Circle']
 
@@ -98,3 +98,43 @@ class Circle(DXFGraphic):
         ocs = self.ocs()
         self.dxf.center = ocs.from_wcs(Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
         return self
+
+    def to_ellipse(self, replace=True) -> 'Ellipse':
+        """ Convert CIRCLE/ARC to an :class:`~ezdxf.entities.Ellipse` entity.
+
+        Adds the new ELLIPSE entity to the entity database and to the
+        same layout as the source entity.
+
+        Args:
+            replace: replace (delete) source entity by ELLIPSE entity if ``True``
+
+        .. versionadded:: 0.13
+
+        """
+        from ezdxf.entities import Ellipse
+        ellipse = Ellipse.from_arc(self)
+        if replace:
+            replace_entity(self, ellipse)
+        else:
+            add_entity(self, ellipse)
+        return ellipse
+
+    def to_spline(self, replace=True) -> 'Spline':
+        """ Convert CIRCLE/ARC to a :class:`~ezdxf.entities.Spline` entity.
+
+        Adds the new SPLINE entity to the entity database and to the
+        same layout as the source entity.
+
+        Args:
+            replace: replace (delete) source entity by SPLINE entity if ``True``
+
+        .. versionadded:: 0.13
+
+        """
+        from ezdxf.entities import Spline
+        spline = Spline.from_arc(self)
+        if replace:
+            replace_entity(self, spline)
+        else:
+            add_entity(self, spline)
+        return spline

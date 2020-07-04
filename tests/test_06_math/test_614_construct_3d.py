@@ -62,7 +62,7 @@ def test_subdivide_vec2_square_in_quads():
     assert result[0] == ((0, 0), (1, 0), (1, 1), (0, 1))
 
 
-def test_intersection_ray_ray_3d():
+def test_intersection_ray_ray_3d_1():
     ray1 = (Vector(0, 0, 0), Vector(1, 0, 0))
     ray2 = (Vector(0, 0, 0), Vector(0, 0, 1))
 
@@ -85,6 +85,24 @@ def test_intersection_ray_ray_3d():
     # returns points of closest approach on each ray
     assert Vector(0, 0, 1) in result
     assert Vector(0, 0, 0) in result
+
+
+def test_intersection_ray_ray_3d_2():
+    ray1 = (Vector(1, 0, 0), Vector(1, 1, 0))
+    ray2 = (Vector(0, 0.5, 0), Vector(1, 0.5, 0))
+    result = intersection_ray_ray_3d(ray1, ray2)
+    assert len(result) == 1
+
+
+def test_intersection_ray_ray_3d_random():
+    for _ in range(5):
+        intersection_point = Vector.random(5)
+        ray1 = (intersection_point, intersection_point + Vector.random())
+        ray2 = (intersection_point, intersection_point - Vector.random())
+
+        result = intersection_ray_ray_3d(ray1, ray2)
+        assert len(result) == 1
+        assert result[0].isclose(intersection_point)
 
 
 def test_normal_vector_for_3_points():

@@ -122,14 +122,14 @@ def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vec
     o2, p2 = ray2
     d2 = (p2 - o2).normalize()
     d1xd2 = d1.cross(d2)
-    denominator = d1xd2.magnitude ** 2
+    denominator = d1xd2.magnitude_square
     if math.isclose(denominator, 0., abs_tol=abs_tol):
         # ray1 is parallel to ray2
         return tuple()
     else:
         o2_o1 = o2 - o1
-        det1 = _determinant(o2_o1, d1, d1xd2)
-        det2 = _determinant(o2_o1, d2, d1xd2)
+        det1 = _determinant(o2_o1, d2, d1xd2)
+        det2 = _determinant(o2_o1, d1, d1xd2)
         p1 = o1 + d1 * (det1 / denominator)
         p2 = o2 + d2 * (det2 / denominator)
         if p1.isclose(p2, abs_tol=abs_tol):

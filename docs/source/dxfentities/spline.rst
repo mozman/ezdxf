@@ -37,7 +37,6 @@ Factory Functions
 =========================================== ==========================================
 Basic spline entity                         :meth:`~ezdxf.layouts.BaseLayout.add_spline`
 Spline control frame from fit points        :meth:`~ezdxf.layouts.BaseLayout.add_spline_control_frame`
-Spline with reduced count of control points :meth:`~ezdxf.layouts.BaseLayout.add_spline_approx`
 Open uniform spline                         :meth:`~ezdxf.layouts.BaseLayout.add_open_spline`
 Closed uniform spline                       :meth:`~ezdxf.layouts.BaseLayout.add_closed_spline`
 Open rational uniform spline                :meth:`~ezdxf.layouts.BaseLayout.add_rational_spline`
@@ -116,19 +115,25 @@ Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. automethod:: knot_count
 
+    .. automethod:: construction_tool() -> BSpline
+
+    .. automethod:: apply_construction_tool(s: BSpline) -> Spline
+
     .. automethod:: set_open_uniform
 
     .. automethod:: set_uniform
 
-    .. automethod:: set_periodic
+    .. automethod:: set_closed
 
     .. automethod:: set_open_rational
 
     .. automethod:: set_uniform_rational
 
-    .. automethod:: set_periodic_rational
+    .. automethod:: set_closed_rational
 
     .. automethod:: transform(m: Matrix44) -> Spline
+
+    .. automethod:: from_arc(entity: DXFGraphic) -> Spline
 
 .. _Cambridge: https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node4.html
 

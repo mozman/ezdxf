@@ -19,9 +19,9 @@ from ezdxf import options
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex
+    from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex, Drawing
 
-__all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd']
+__all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd', 'add_entity', 'replace_entity']
 
 GRAPHIC_PROPERTIES = {'layer', 'linetype', 'color', 'lineweight', 'ltscale', 'true_color', 'color_name', }
 
@@ -245,6 +245,28 @@ class DXFGraphic(DXFEntity):
         except DXFTableEntryError:
             return None
 
+    def unlink_from_layout(self) -> None:
+        """
+        Unlink entity from associated layout. Does nothing if entity is already unlinked.
+
+        It is more efficient to call the :meth:`~ezdxf.layouts.BaseLayout.unlink_entity` method
+        of the associated layout, especially if you have to unlink more than one entity.
+
+        .. versionadded:: 0.13
+
+        """
+        if not self.is_alive:
+            raise TypeError('Can not unlink destroyed entity.')
+
+        if self.doc is None:
+            # no doc -> no layout
+            self.dxf.owner = None
+            return
+
+        layout = self.get_layout()
+        if layout:
+            layout.unlink_entity(self)
+
     def move_to_layout(self, layout: 'BaseLayout', source: 'BaseLayout' = None) -> None:
         """
         Move entity from model space or a paper space layout to another layout. For block layout as source, the
@@ -294,7 +316,7 @@ class DXFGraphic(DXFEntity):
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'DXFGraphic':
         warnings.warn(
-            'DXFGraphic.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix) instead.',
+            'DXFGraphic.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix). (removed in v0.15)',
             DeprecationWarning
         )
         return self.transform(ucs.matrix)
@@ -384,25 +406,6 @@ class DXFGraphic(DXFEntity):
         """
         return self.transform(Matrix44.z_rotate(angle))
 
-    def _ucs_and_ocs_transformation(self, ucs: UCS, vector_names: Iterable, angle_names: Iterable = None) -> None:
-        """ Transforms entity for given `ucs` to the parent coordinate system (most likely the WCS).
-
-        Transforms the entity vectors and angles attributes from `ucs` to the parent coordinate system.
-        Takes established OCS by the extrusion vector :attr:`dxf.extrusion` into account.
-
-        """
-        extrusion = self.dxf.extrusion
-        vectors = (self.dxf.get_default(name) for name in vector_names)
-        ocs_vectors = ucs.ocs_points_to_ocs(vectors, extrusion=extrusion)
-        for name, value in zip(vector_names, ocs_vectors):
-            self.dxf.set(name, value)
-        if angle_names is not None:
-            angles = (self.dxf.get_default(name) for name in angle_names)
-            ocs_angles = ucs.ocs_angles_to_ocs_deg(angles=angles, extrusion=extrusion)
-            for name, value in zip(angle_names, ocs_angles):
-                self.dxf.set(name, value)
-        self.dxf.extrusion = ucs.direction_to_wcs(extrusion)
-
     def has_hyperlink(self) -> bool:
         """ Returns ``True`` if entity has an attached hyperlink.
 
@@ -449,6 +452,26 @@ class DXFGraphic(DXFEntity):
             if len(xdata) > 2:
                 location = xdata[2]
         return link, description, location
+
+    def remove_dependencies(self, other: 'Drawing' = None) -> None:
+        """
+        Remove all dependencies from actual document.
+        (internal API)
+
+        """
+        if not self.is_alive:
+            return
+
+        super().remove_dependencies(other)
+        # The layer attribute is preserved because layer doesn't need a layer table entry, the layer attributes are
+        # reset to default attributes like color is 7 and linetype is CONTINUOUS
+        has_linetype = (bool(other) and self.dxf.linetype in other.linetypes)
+        if not has_linetype:
+            self.dxf.linetype = 'BYLAYER'
+        self.dxf.discard('material_handle')
+        self.dxf.discard('visualstyle_handle')
+        self.dxf.discard('plotstyle_enum')
+        self.dxf.discard('plotstyle_handle')
 
 
 @register_entity
@@ -515,3 +538,36 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
         return are_linked_entities  # inform caller if `entity` is linked to a parent entity
 
     return entity_linker_
+
+
+def add_entity(source: 'DXFGraphic', target: 'DXFGraphic') -> None:
+    """ Add `target` entity to the entity database and to the same layout as the `source` entity.
+    """
+    assert target.dxf.handle is None
+    source.entitydb.add(target)
+    layout = source.get_layout()
+    if layout is not None:
+        layout.add_entity(target)
+
+
+def replace_entity(source: 'DXFGraphic', target: 'DXFGraphic') -> None:
+    """ Add `target` entity to the entity database and to the same layout
+    as the `source` entity and replace the `source` entity by the
+    `target` entity.
+
+    """
+    assert target.dxf.handle is None
+    target.dxf.handle = source.dxf.handle
+    layout = source.get_layout()
+    entitydb = source.entitydb
+
+    if layout is not None:
+        # replace in layout and entity database
+        layout.delete_entity(source)
+    else:
+        # replace just in entity database
+        source.entitydb.delete_entity(source)
+
+    entitydb.add(target)
+    if layout is not None:
+        layout.add_entity(target)

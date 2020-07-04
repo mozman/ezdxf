@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # import forward declarations
     from ezdxf.drawing import Drawing
     from ezdxf.eztypes import TagWriter
 
-# name: cpp_class_name, app_name, flags, was_a_proxy, is_an_entity
+# name: cpp_class_name (2), app_name (3), flags(90), was_a_proxy (280), is_an_entity (281)
 # multiple entries for 'name' possible
 CLASS_DEFINITIONS = {
     'ACDBDICTIONARYWDFLT': ['AcDbDictionaryWithDefault', 'ObjectDBX Classes', 0, 0, 0],
@@ -72,6 +72,7 @@ CLASS_DEFINITIONS = {
     'SORTENTSTABLE': ['AcDbSortentsTable', 'ObjectDBX Classes', 0, 0, 0],
     'ACAD_TABLE': ['AcDbTable', 'ObjectDBX Classes', 1025, 0, 1],
     'ARC_DIMENSION': ['AcDbArcDimension', 'ObjectDBX Classes', 1025, 0, 1],
+    'LARGE_RADIAL_DIMENSION': ['AcDbRadialDimensionLarge', 'ObjectDBX Classes', 1025, 0, 1],
 }
 
 REQ_R2000 = ['ACDBDICTIONARYWDFLT', 'SUN', 'VISUALSTYLE', 'MATERIAL', 'SCALE', 'TABLESTYLE', 'MLEADERSTYLE',

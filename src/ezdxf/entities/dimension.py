@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional, Union, Iterable
 from ezdxf.math import Vector, Matrix44
 from ezdxf.math.transformtools import OCSTransform
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007, DXF2004
 from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError, DXFTableEntryError, DXFTypeError
 from ezdxf.lldxf.types import get_xcode_for
 from ezdxf.tools import take2
@@ -20,7 +20,7 @@ from ezdxf.explode import explode_entity
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS, UCS, BaseLayout, EntityQuery
+    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS, BaseLayout, EntityQuery, Drawing
 
 logger = logging.getLogger('ezdxf')
 
@@ -515,6 +515,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         .. versionadded:: 0.13
 
         """
+
         def transform_if_exist(name: str, func):
             if dxf.hasattr(name):
                 dxf.set(name, func(dxf.get(name)))
@@ -617,12 +618,14 @@ class ArcDimension(Dimension):
         .. versionadded:: 0.13
 
         """
+
         def transform_if_exist(name: str, func):
             if dxf.hasattr(name):
                 dxf.set(name, func(dxf.get(name)))
 
         dxf = self.dxf
-        ocs = OCSTransform(self.dxf.extrusion, m)
+        ocs = OCSTransform(dxf.extrusion, m)
+        super().transform(m)
 
         for angle_name in ('start_angle', 'end_angle'):
             transform_if_exist(angle_name, ocs.transform_deg_angle)
@@ -630,8 +633,74 @@ class ArcDimension(Dimension):
         for vertex_name in ('leader_point1', 'leader_point2'):
             transform_if_exist(vertex_name, m.transform)
 
-        dxf.extrusion = ocs.new_extrusion
         return self
+
+
+acdb_radial_dimension_large = DefSubclass('AcDbRadialDimensionLarge', {
+    # center_point = def_point from subclass AcDbDimension
+    'chord_point': DXFAttr(13, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    'override_center': DXFAttr(14, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    'jog_point': DXFAttr(15, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    'unknown2': DXFAttr(40),
+})
+
+
+# Undocumented DXF entity - OpenDesignAlliance DWG Specification: chapter 20.4.30
+@register_entity
+class RadialDimensionLarge(Dimension):
+    """ DXF LARGE_RADIAL_DIMENSION entity """
+    DXFTYPE = 'LARGE_RADIAL_DIMENSION'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_dimension, acdb_radial_dimension_large)
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2004
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        # skip Dimension loader
+        dxf = super(Dimension, self).load_dxf_attribs(processor)
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_dimension.name)
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_radial_dimension_large, index=3)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_arc_dimension.name)
+        return dxf
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        super().export_entity(tagwriter)
+        tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbRadialDimensionLarge')
+        self.dxf.export_dxf_attribs(tagwriter, ['chord_point', 'override_center', 'jog_point', 'unknown2'])
+
+    def transform(self, m: 'Matrix44') -> 'Dimension':
+        """ Transform LARGE_RADIAL_DIMENSION entity by transformation matrix `m` inplace.
+
+        Raises ``NonUniformScalingError()`` for non uniform scaling.
+
+        .. versionadded:: 0.13
+
+        """
+
+        def transform_if_exist(name: str, func):
+            if dxf.hasattr(name):
+                dxf.set(name, func(dxf.get(name)))
+
+        dxf = self.dxf
+        super().transform(m)
+        # todo: are this WCS points?
+        for vertex_name in ('chord_point', 'override_center', 'Jog_point'):
+            transform_if_exist(vertex_name, m.transform)
+
+        return self
+
+
+# XDATA extension - meaning unknown
+# 1001, ACAD_DSTYLE_DIMRADIAL_EXTENSION
+# 1070, 387
+# 1070, 1
+# 1070, 388
+# 1040, 0.0
+# 1070, 390
+# 1040, 0.0
 
 
 # todo: DIMASSOC

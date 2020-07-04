@@ -1,9 +1,11 @@
 # Created: 06.01.2012
-# Copyright (c) 2012 Manfred Moitzi
+# Copyright (c) 2012-2020 Manfred Moitzi
 # License: MIT License
+import math
 from math import isclose
-from ezdxf.math.bspline import BSpline, BSplineU
-
+from ezdxf.math import BSpline, BSplineU
+from ezdxf.math.bspline import nurbs_arc_parameters, required_knot_values
+from ezdxf.math import rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse, ConstructionArc, linspace
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 DEFWEIGHTS = [1, 10, 10, 10, 1]
@@ -33,6 +35,86 @@ def test_rbsplineu():
         assert isclose(epx, rpx)
         assert isclose(epy, rpy)
         assert isclose(epz, rpz)
+
+
+def test_rational_splines_from_circular_arc():
+    arc = ConstructionArc(end_angle=90)
+    spline = rational_spline_from_arc(end_angle=arc.end_angle)
+    assert spline.degree == 2
+
+    cpoints = spline.control_points
+    assert len(cpoints) == 3
+    assert cpoints[0].isclose((1, 0, 0))
+    assert cpoints[1].isclose((1, 1, 0))
+    assert cpoints[2].isclose((0, 1, 0))
+
+    weights = spline.weights()
+    assert len(weights) == 3
+    assert weights[0] == 1.0
+    assert weights[1] == math.cos(math.pi / 4)
+    assert weights[2] == 1.0
+
+    # as BSpline constructor()
+    s2 = BSpline.from_arc(arc)
+    assert spline.control_points == s2.control_points
+
+
+def test_rational_spline_from_elliptic_arc():
+    ellipse = ConstructionEllipse(
+        center=(1, 1),
+        major_axis=(2, 0),
+        ratio=0.5,
+        start_param=0,
+        end_param=math.pi / 2,
+    )
+    spline = rational_spline_from_ellipse(ellipse)
+    assert spline.degree == 2
+
+    cpoints = spline.control_points
+    assert len(cpoints) == 3
+    assert cpoints[0].isclose((3, 1, 0))
+    assert cpoints[1].isclose((3, 2, 0))
+    assert cpoints[2].isclose((1, 2, 0))
+
+    weights = spline.weights()
+    assert len(weights) == 3
+    assert weights[0] == 1.0
+    assert weights[1] == math.cos(math.pi / 4)
+    assert weights[2] == 1.0
+
+    # as BSpline constructor()
+    s2 = BSpline.from_ellipse(ellipse)
+    assert spline.control_points == s2.control_points
+
+
+def test_nurbs_arc_parameter_quarter_arc_1_segment():
+    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=math.pi / 2, segments=1)
+
+    assert len(control_points) == 3
+    assert len(weights) == len(control_points)
+    assert len(knots) == required_knot_values(len(control_points), order=3)
+
+    assert control_points[0].isclose((1, 0, 0))
+    assert control_points[1].isclose((1, 1, 0))
+    assert control_points[2].isclose((0, 1, 0))
+
+    assert weights[0] == 1.0
+    assert weights[1] == math.cos(math.pi / 4)
+    assert weights[2] == 1.0
+
+
+def test_nurbs_arc_parameter_quarter_arc_4_segments():
+    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=math.pi / 2, segments=4)
+    assert len(control_points) == 9
+    assert len(weights) == len(control_points)
+    assert len(knots) == required_knot_values(len(control_points), order=3)
+
+
+def test_nurbs_arc_parameter_full_circle():
+    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=2 * math.pi, segments=4)
+    cos_pi_4 = math.cos(math.pi / 4)
+    assert knots == [0.0, 0.0, 0.0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1.0, 1.0, 1.0]
+    assert weights == [1.0, cos_pi_4, 1.0, cos_pi_4, 1.0, cos_pi_4, 1.0, cos_pi_4, 1.0]
 
 
 RBSPLINE = [
@@ -122,6 +204,3 @@ RBSPLINEU = [
     [40.6499313989532, 9.304334569846029, 25.347832715076986],
     [40.90909090909091, 9.09090909090909, 25.454545454545453]
 ]
-
-if __name__ == "__main__":
-    unittest.main()

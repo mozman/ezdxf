@@ -136,7 +136,7 @@ class PlotStyle:
         self.fill_style = int(data.get('fill_style', FILL_STYLE_OBJECT))
 
     @property
-    def color(self) -> Optional[Tuple[int, int, int, int]]:
+    def color(self) -> Optional[Tuple[int, int, int]]:
         """  Get style color as ``(r, g, b)`` tuple or ``None``, if style has object color. """
         if self.has_object_color():
             return None  # object color

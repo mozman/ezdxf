@@ -4,7 +4,7 @@
 import pytest
 import math
 
-from ezdxf.entities.text import Text
+from ezdxf.entities.text import Text, plain_text
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vector, Matrix44
@@ -150,6 +150,15 @@ def test_write_dxf(txt, ver):
     assert collector.has_all_tags(collector2)
 
 
+def test_do_not_write_line_endings():
+    txt = Text()
+    txt.dxf.text = 'test\ntext\r'
+    collector = TagCollector(optional=True)
+    txt.export_dxf(collector)
+    for tag in collector.tags:
+        if tag[0] == 1:
+            assert tag[1] == 'testtext'
+
 @pytest.fixture
 def text():
     return Text.new(handle='ABBA', owner='0')
@@ -190,6 +199,7 @@ def test_text_get_pos_LEFT(text):
     assert align == "LEFT"
     assert p1 == (2, 2)
     assert p2 is None
+
 
 def test_text_transform_interface():
     text = Text()
@@ -236,3 +246,14 @@ def test_text_non_uniform_scaling(text2):
     text2.rotate_z(math.radians(30))
     text2.scale(1, 2, 1)
     assert math.isclose(text2.dxf.oblique, 33.004491598883064)
+
+
+def test_plain_text():
+    assert plain_text('%%d') == '°'
+    # underline
+    assert plain_text('%%u') == ''
+    assert plain_text('%%utext%%u') == 'text'
+    # single %
+    assert plain_text('%u%d%') == '%u%d%'
+    t = Text.new(dxfattribs={'text': '45%%d'})
+    assert t.plain_text() == '45°'

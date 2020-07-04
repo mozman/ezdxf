@@ -11,10 +11,6 @@ Functions
 
 .. autofunction:: closest_point
 
-.. autofunction:: bspline_control_frame
-
-.. autofunction:: bspline_control_frame_approx
-
 .. autofunction:: uniform_knot_vector
 
 .. autofunction:: open_uniform_knot_vector
@@ -93,6 +89,27 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 .. autofunction:: subdivide_ngons(faces: Iterable[Sequence[Union[Vector, Vec2]]]) -> Iterable[List[Vector]]
 
 .. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-10) -> Sequence[Vector]
+
+.. autofunction:: estimate_tangents(points: List[Vector], method: str = '5-points', normalize = True) -> List[Vector]
+
+.. autofunction:: estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') -> List[Vector]
+
+.. autofunction:: fit_points_to_cad_cv
+
+.. autofunction:: global_bspline_interpolation
+
+.. autofunction:: local_cubic_bspline_interpolation(fit_points: Iterable[Vertex], method: str = '5-points', tangents :Iterable[Vertex] = None) -> BSpline
+
+.. autofunction:: rational_spline_from_arc(center: Vector = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> BSpline
+
+.. autofunction:: rational_spline_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> BSpline
+
+.. autofunction:: cubic_bezier_from_arc(center: Vector = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> Iterable[Bezier4P]
+
+.. autofunction:: cubic_bezier_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> Iterable[Bezier4P]
+
+.. autofunction:: cubic_bezier_interpolation(points: Iterable[Vertex]) -> List[Bezier4P]
+
 
 Transformation Classes
 ======================
@@ -312,9 +329,9 @@ Vector
 
     .. automethod:: replace(x: float = None, y: float = None, z: float = None) -> Vector
 
-    .. automethod:: generate(items: Iterable[Sequence[float]]) -> Iterable[Vector]
+    .. automethod:: generate(items: Iterable[Vertex]) -> Iterable[Vector]
 
-    .. automethod:: list(items: Iterable[Sequence[float]]) -> List[Vector]
+    .. automethod:: list(items: Iterable[Vertex]) -> List[Vector]
 
     .. automethod:: from_angle(angle: float, length: float = 1.) -> Vector
 
@@ -506,7 +523,7 @@ ConstructionLine
 
     .. automethod:: __str__
 
-    .. automethod:: move
+    .. automethod:: translate
 
     .. automethod:: length
 
@@ -540,7 +557,7 @@ ConstructionCircle
 
     .. automethod:: __str__
 
-    .. automethod:: move
+    .. automethod:: translate
 
     .. automethod:: point_at(angle: float) -> Vec2
 
@@ -583,7 +600,17 @@ ConstructionArc
 
     .. autoattribute:: bounding_box
 
-    .. automethod:: move
+    .. automethod:: angles
+
+    .. automethod:: vertices
+
+    .. automethod:: tangents
+
+    .. automethod:: translate(dx: float, dy: float) -> ConstructionArc
+
+    .. automethod:: scale_uniform(s: float) -> ConstructionArc
+
+    .. automethod:: rotate_z(angle: float) -> ConstructionArc
 
     .. automethod:: from_2p_angle(start_point: Vertex, end_point: Vertex, angle: float, ccw: bool = True) -> ConstructionArc
 
@@ -592,6 +619,65 @@ ConstructionArc
     .. automethod:: from_3p(start_point: Vertex, end_point: Vertex, def_point: Vertex, ccw: bool = True) -> ConstructionArc
 
     .. automethod:: add_to_layout(layout: BaseLayout, ucs: UCS = None, dxfattribs: dict = None) -> Arc
+
+ConstructionEllipse
+-------------------
+
+.. autoclass:: ConstructionEllipse
+
+    .. attribute:: center
+
+        center point as :class:`Vector`
+
+    .. attribute:: major_axis
+
+        major axis as :class:`Vector`
+
+    .. attribute:: minor_axis
+
+        minor axis as :class:`Vector`, automatically calculated from
+        :attr:`major_axis` and :attr:`extrusion`.
+
+    .. attribute:: extrusion
+
+        extrusion vector (normal of ellipse plane) as :class:`Vector`
+
+    .. attribute:: ratio
+
+        ratio of minor axis to major axis (float)
+
+    .. attribute:: start
+
+        start param in radians (float)
+
+    .. attribute:: end
+
+        end param in radians (float)
+
+    .. autoattribute:: start_point
+
+    .. autoattribute:: end_point
+
+    .. automethod:: to_ocs() -> ConstructionEllipse
+
+    .. automethod:: params
+
+    .. automethod:: vertices
+
+    .. automethod:: params_from_vertices
+
+    .. automethod:: dxfattribs
+
+    .. automethod:: main_axis_points
+
+    .. automethod:: from_arc(center: Vertex=(0, 0, 0), radius: float = 1, extrusion: Vertex=(0, 0, 1), start_angle: float = 0, end_angle: float = 360, ccw: bool = True) -> ConstructionEllipse
+
+    .. automethod:: transform(m: Matrix44)
+
+    .. automethod:: swap_axis
+
+    .. automethod:: add_to_layout(layout: BaseLayout, dxfattribs: dict = None) -> Ellipse
+
 
 ConstructionBox
 ---------------
@@ -622,7 +708,7 @@ ConstructionBox
 
     .. automethod:: from_points(p1: Vertex, p2: Vertex) -> ConstructionBox
 
-    .. automethod:: move
+    .. automethod:: translate
 
     .. automethod:: expand
 
@@ -659,8 +745,6 @@ Shape2d
 
     .. automethod:: extend
 
-    .. automethod:: move
-
     .. automethod:: translate
 
     .. automethod:: scale
@@ -685,28 +769,57 @@ BSpline
 
     .. attribute:: control_points
 
-        control points as list of :class:`~ezdxf.math.Vector`
+        Control points as list of :class:`~ezdxf.math.Vector`
 
     .. autoattribute:: count
 
-    .. attribute:: degree
+    .. autoattribute:: degree
 
     .. attribute:: order
 
-        order of B-spline = degree +  1
+        Order of B-spline = degree +  1
 
     .. autoattribute:: max_t
 
-    .. automethod:: knot_values
+    .. autoattribute:: is_rational
 
-    .. automethod:: basis_values
+    .. automethod:: knots
 
-    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
+    .. automethod:: normalize_knots
+
+    .. automethod:: weights
+
+    .. automethod:: params
+
+    .. automethod:: reverse() -> BSpline
 
     .. automethod:: point(t: float) -> Vector
 
+    .. automethod:: points(t: float) -> List[Vector]
+
+    .. automethod:: derivative(t: float, n: int=2) -> List[Vector]
+
+    .. automethod:: derivatives(t: Iterable[float], n: int=2) -> Iterable[List[Vector]]
+
     .. automethod:: insert_knot
 
+    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
+
+    .. automethod:: from_ellipse(ellipse: ConstructionEllipse) -> BSpline
+
+    .. automethod:: from_arc(arc: ConstructionArc) -> BSpline
+
+    .. automethod:: from_fit_points(points: Iterable[Vertex], degree:int=3, method='chord') -> BSpline
+
+    .. automethod:: ellipse_approximation(ellipse: ConstructionEllipse, num:int=16) -> BSpline
+
+    .. automethod:: arc_approximation(arc: ConstructionArc, num:int=16) -> BSpline
+
+    .. automethod:: transform(m: Matrix44) -> BSpline
+
+    .. automethod:: bezier_decomposition() -> Iterable[List[Vector]]
+
+    .. automethod:: cubic_bezier_approximation(level: int = 3, segments: int = None) -> Iterable[Bezier4P]
 
 BSplineU
 --------
@@ -719,23 +832,6 @@ BSplineClosed
 .. autoclass:: BSplineClosed
 
 
-DBSpline
---------
-
-.. autoclass:: DBSpline
-
-    .. automethod:: point(t: float) -> Tuple[Vector, Vector, Vector]
-
-DBSplineU
----------
-
-.. autoclass:: DBSplineU
-
-DBSplineClosed
---------------
-
-.. autoclass:: DBSplineClosed
-
 Bezier
 ------
 
@@ -743,16 +839,18 @@ Bezier
 
     .. autoattribute:: control_points
 
+    .. automethod:: params
+
     .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
 
     .. automethod:: point(t: float) -> Vector
 
-DBezier
--------
+    .. automethod:: points(t: Iterable[float]) -> Iterable[Vector]
 
-.. autoclass:: DBezier
+    .. automethod:: derivative(t: float) -> Tuple[Vector, Vector, Vector]
 
-    .. automethod:: point(t: float) -> Tuple[Vector, Vector, Vector]
+    .. automethod:: derivatives(t: Iterable[float]) -> Iterable[Tuple[Vector, Vector, Vector]]
+
 
 Bezier4P
 --------
@@ -761,11 +859,15 @@ Bezier4P
 
     .. autoattribute:: control_points
 
-    .. automethod:: point
+    .. automethod:: to2d() -> Bezier4P
 
-    .. automethod:: tangent
+    .. automethod:: to3d() -> Bezier4P
 
-    .. automethod:: approximate
+    .. automethod:: point(t: float) -> Union[Vector, Vec2]
+
+    .. automethod:: tangent(t: float) -> Union[Vector, Vec2]
+
+    .. automethod:: approximate(segments: int) -> Iterable[Union[Vector, Vec2]]
 
     .. automethod:: approximated_length
 
@@ -802,7 +904,149 @@ EulerSpiral
 
     .. automethod:: bspline(length: float, segments: int = 10, degree: int = 3, method: str = 'uniform') -> BSpline
 
-.. _Curve Global Interpolation: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
+Linear Algebra
+==============
+
+Functions
+---------
+
+.. autofunction:: gauss_jordan_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Tuple[Matrix, Matrix]
+
+.. autofunction:: gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix
+
+.. autofunction:: gauss_vector_solver
+
+.. autofunction:: gauss_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix
+
+.. autofunction:: tridiagonal_vector_solver(A: Iterable[Iterable[float]], B: Iterable[float]) -> List[float]
+
+.. autofunction:: tridiagonal_matrix_solver(A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]) -> Matrix
+
+.. autofunction:: banded_matrix(A: Matrix, check_all=True) -> Tuple[int, int]
+
+.. autofunction:: detect_banded_matrix(A: Matrix, check_all=True) -> Tuple[int, int]
+
+.. autofunction:: compact_banded_matrix(A: Matrix, m1: int, m2: int) -> Matrix
+
+.. autofunction:: freeze_matrix(A: Union[MatrixData, Matrix]) -> Matrix
+
+Matrix Class
+------------
+
+.. autoclass:: Matrix
+
+    .. autoattribute:: nrows
+
+    .. autoattribute:: ncols
+
+    .. autoattribute:: shape
+
+    .. automethod:: reshape
+
+    .. automethod:: identity
+
+    .. automethod:: row
+
+    .. automethod:: iter_row
+
+    .. automethod:: col
+
+    .. automethod:: iter_col
+
+    .. automethod:: diag
+
+    .. automethod:: iter_diag
+
+    .. automethod:: rows
+
+    .. automethod:: cols
+
+    .. automethod:: set_row
+
+    .. automethod:: set_col
+
+    .. automethod:: set_diag
+
+    .. automethod:: append_row
+
+    .. automethod:: append_col
+
+    .. automethod:: swap_rows
+
+    .. automethod:: swap_cols
+
+    .. automethod:: transpose() -> Matrix
+
+    .. automethod:: inverse() -> Matrix
+
+    .. automethod:: determinant
+
+    .. automethod:: freeze() -> Matrix
+
+    .. automethod:: lu_decomp() -> LUDecomposition
+
+    .. automethod:: __getitem__(item: Tuple[int, int]) -> float
+
+    .. automethod:: __setitem__(item: Tuple[int, int], value: float)
+
+    .. automethod:: __eq__(other: Matrix) -> bool
+
+    .. automethod:: __add__(other: Union[Matrix, float]) -> Matrix
+
+    .. automethod:: __sub__(other: Union[Matrix, float]) -> Matrix
+
+    .. automethod:: __mul__(other: Union[Matrix, float]) -> Matrix
+
+
+LUDecomposition Class
+---------------------
+
+.. autoclass:: LUDecomposition
+
+    .. autoattribute:: nrows
+
+    .. automethod:: solve_vector
+
+    .. automethod:: solve_matrix(B: Iterable[Iterable[float]]) -> Matrix
+
+    .. automethod:: inverse() -> Matrix
+
+    .. automethod:: determinant
+
+BandedMatrixLU Class
+--------------------
+
+.. autoclass:: BandedMatrixLU
+
+    .. attribute:: upper
+
+        Upper triangle
+
+    .. attribute:: lower
+
+        Lower triangle
+
+    .. attribute:: m1
+
+        Lower band count, excluding main matrix diagonal
+
+    .. attribute:: m2
+
+        Upper band count, excluding main matrix diagonal
+
+    .. attribute:: index
+
+        Swapped indices
+
+    .. autoattribute:: nrows
+
+    .. automethod:: solve_vector
+
+    .. automethod:: solve_matrix(B: Iterable[Iterable[float]]) -> Matrix
+
+    .. automethod:: determinant
+
+.. _Global Curve Interpolation: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
 .. _uniform: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-uniform.html
 .. _chord length: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-chord-length.html
 .. _centripetal: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-centripetal.html
@@ -810,7 +1054,10 @@ EulerSpiral
 .. _clamped curve: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-curve.html
 .. _open curve: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-curve-open.html
 .. _closed curve: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-curve-closed.html
-.. _basis: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-basis.html
+.. _basis: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-basis_vector.html
 .. _B-spline: https://en.wikipedia.org/wiki/B-spline
 .. _Bézier curve: https://en.wikipedia.org/wiki/B%C3%A9zier_curve
 .. _Lee Mac: http://www.lee-mac.com/bulgeconversion.html
+.. _Gauss-Jordan: https://en.wikipedia.org/wiki/Gaussian_elimination
+.. _Gauss-Elimination: https://en.wikipedia.org/wiki/Gaussian_elimination
+.. _LU Decomposition: https://en.wikipedia.org/wiki/LU_decomposition

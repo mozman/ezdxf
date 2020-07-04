@@ -156,20 +156,6 @@ def convex_hull_2d(points: Iterable['Vertex']) -> List['Vertex']:
     return upper_hull
 
 
-def angle_to_param(ratio: float, angle: float) -> float:
-    """ Returns ellipse parameter for argument `angle`.
-
-    Args:
-        ratio: minor axis to major axis ratio as stored in the ELLIPSE entity (always <= 1).
-        angle: angle between major axis and line from center to point on the ellipse
-
-    Returns:
-        the ellipse parameter in the range [0, 2pi)
-    """
-    x, y = math.cos(angle), math.sin(angle) / ratio
-    return math.atan2(y, x) % math.tau
-
-
 def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE):
     isclose = partial(math.isclose, abs_tol=abs_tol)
 
@@ -184,22 +170,6 @@ def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE)
     else:
         r = not (e < a < s)
     return r if ccw else not r
-
-
-class ConstructionTool:
-    """
-    Abstract base class for all 2D construction classes.
-
-    """
-
-    @property
-    @abstractmethod
-    def bounding_box(self) -> 'BoundingBox2d':
-        pass
-
-    @abstractmethod
-    def move(self, dx: float, dy: float) -> None:
-        pass
 
 
 def intersection_line_line_2d(
@@ -425,46 +395,10 @@ def is_point_in_polygon_2d(point: Union[Vec2, Vector], polygon: Iterable[Vec2], 
         return -1
 
 
-def rytz_axis_construction(d1: Vector, d2: Vector) -> Tuple[Vector, Vector, float]:
-    """
-    The Rytz’s axis construction is a basic method of descriptive Geometry to find the axes, the semi-major
-    axis and semi-minor axis, starting from two conjugated half-diameters.
-
-    Source: `Wikipedia <https://en.m.wikipedia.org/wiki/Rytz%27s_construction>`_
-
-    Given conjugated diameter `d1` is the vector from center C to point P and the given conjugated diameter `d2` is
-    the vector from center C to point Q. Center of ellipse is always ``(0, 0, 0)``. This algorithm works for
-    2D/3D vectors.
-
-    Args:
-        d1: conjugated semi-major axis as :class:`Vector`
-        d2: conjugated semi-minor axis as :class:`Vector`
-
-    Returns:
-         Tuple of (major axis, minor axis, ratio)
-
-    """
-    Q = Vector(d1)  # vector CQ
-    # calculate vector CP', location P'
-    if math.isclose(d1.z, 0, abs_tol=1e-9) and math.isclose(d2.z, 0, abs_tol=1e-9):
-        # Vector.orthogonal() works only for vectors in the xy-plane!
-        P1 = Vector(d2).orthogonal(ccw=False)
-    else:
-        extrusion = d1.cross(d2)
-        P1 = extrusion.cross(d2).normalize(d2.magnitude)
-
-    D = P1.lerp(Q)  # vector CD, location D, midpoint of P'Q
-    radius = D.magnitude
-    radius_vector = (Q - P1).normalize(radius)  # direction vector P'Q
-    A = D - radius_vector  # vector CA, location A
-    B = D + radius_vector  # vector CB, location B
-    if A.isclose(NULLVEC) or B.isclose(NULLVEC):
-        raise ArithmeticError('Conjugated axis required, invalid source data.')
-    major_axis_length = (A - Q).magnitude
-    minor_axis_length = (B - Q).magnitude
-    if math.isclose(major_axis_length, 0.) or math.isclose(minor_axis_length, 0.):
-        raise ArithmeticError('Conjugated axis required, invalid source data.')
-    ratio = minor_axis_length / major_axis_length
-    major_axis = B.normalize(major_axis_length)
-    minor_axis = A.normalize(minor_axis_length)
-    return major_axis, minor_axis, ratio
+def circle_radius_3p(a: Vector, b: Vector, c: Vector) -> float:
+    ba = b - a
+    ca = c - a
+    cb = c - b
+    upper = ba.magnitude * ca.magnitude * cb.magnitude
+    lower = ba.cross(ca).magnitude * 2.0
+    return upper / lower

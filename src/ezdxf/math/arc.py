@@ -1,24 +1,28 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Iterable
+import math
 
 from .vector import Vec2
 from .bbox import BoundingBox2d
-from .construct2d import ConstructionTool, enclosing_angles
+from .construct2d import enclosing_angles, linspace
 from .circle import ConstructionCircle
-from .ucs import OCS, UCS
-import math
+from .ucs import UCS
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, BaseLayout
-    from ezdxf.eztypes import Arc as DXFArc
+    from ezdxf.eztypes import Vertex, BaseLayout, Arc
 
 QUARTER_ANGLES = [0, math.pi * .5, math.pi, math.pi * 1.5]
 
 
-class ConstructionArc(ConstructionTool):
+class ConstructionArc:
     """
     This is a helper class to create parameters for the DXF :class:`~ezdxf.entities.Arc` class.
+
+    :class:`ConstructionArc` represents a 2D arc in the xy-plane, use an :class:`UCS` to place
+    arc in 3D space, see method :meth:`add_to_layout`.
+
+    Implements the 2D transformation tools: :meth:`translate`, :meth:`scale_uniform` and :meth:`rotate_z`
 
     Args:
         center: center point as :class:`Vec2` compatible object
@@ -28,6 +32,7 @@ class ConstructionArc(ConstructionTool):
         is_counter_clockwise: swaps start- and end angle if ``False``
 
     """
+
     def __init__(self,
                  center: 'Vertex' = (0, 0),
                  radius: float = 1,
@@ -61,6 +66,49 @@ class ConstructionArc(ConstructionTool):
         bbox.extend(self.main_axis_points())
         return bbox
 
+    def angles(self, num: int) -> Iterable[float]:
+        """ Returns `num` angles from start- to end angle in degrees in counter clockwise order.
+
+        All angles are normalized in the range from [0, 360).
+
+        """
+        if num < 2:
+            raise ValueError('num >= 2')
+        start = self.start_angle % 360
+        stop = self.end_angle % 360
+        if stop <= start:
+            stop += 360
+        for angle in linspace(start, stop, num=num, endpoint=True):
+            yield angle % 360
+
+    def vertices(self, a: Iterable[float]) -> Iterable[Vec2]:
+        """
+        Yields vertices on arc for angles in iterable `a` in WCS as location vectors.
+
+        Args:
+            a: angles in the range from ``0`` to ``360`` in degrees, arc goes counter clockwise around the
+                z-axis, WCS x-axis = 0 deg.
+
+        """
+        center = self.center
+        radius = self.radius
+
+        for angle in a:
+            yield center + Vec2.from_deg_angle(angle, radius)
+
+    def tangents(self, a: Iterable[float]) -> Iterable[Vec2]:
+        """
+        Yields tangents on arc for angles in iterable `a` in WCS as direction vectors.
+
+        Args:
+            a: angles in the range from ``0`` to ``360`` in degrees, arc goes counter clockwise around the
+                z-axis, WCS x-axis = 0 deg.
+
+        """
+        for angle in a:
+            r = math.radians(angle)
+            yield Vec2((-math.sin(r), math.cos(r)))
+
     def main_axis_points(self):
         center = self.center
         radius = self.radius
@@ -70,9 +118,9 @@ class ConstructionArc(ConstructionTool):
             if enclosing_angles(angle, start, end):
                 yield center + Vec2.from_angle(angle, radius)
 
-    def move(self, dx: float, dy: float) -> None:
+    def translate(self, dx: float, dy: float) -> 'ConstructionArc':
         """
-        Move arc about `dx` in x-axis and about `dy` in y-axis.
+        Move arc about `dx` in x-axis and about `dy` in y-axis, returns `self` (floating interface).
 
         Args:
             dx: translation in x-axis
@@ -80,6 +128,24 @@ class ConstructionArc(ConstructionTool):
 
         """
         self.center += Vec2((dx, dy))
+        return self
+
+    def scale_uniform(self, s: float) -> 'ConstructionArc':
+        """ Scale arc inplace uniform about `s` in x- and y-axis, returns `self` (floating interface).
+        """
+        self.radius *= float(s)
+        return self
+
+    def rotate_z(self, angle: float) -> 'ConstructionArc':
+        """ Rotate arc inplace about z-axis, returns `self` (floating interface).
+
+        Args:
+            angle: rotation angle in degrees
+
+        """
+        self.start_angle += angle
+        self.end_angle += angle
+        return self
 
     @property
     def start_angle_rad(self) -> float:
@@ -207,7 +273,7 @@ class ConstructionArc(ConstructionTool):
             is_counter_clockwise=ccw,
         )
 
-    def add_to_layout(self, layout: 'BaseLayout', ucs: UCS = None, dxfattribs: dict = None) -> 'DXFArc':
+    def add_to_layout(self, layout: 'BaseLayout', ucs: UCS = None, dxfattribs: dict = None) -> 'Arc':
         """
         Add arc as DXF :class:`~ezdxf.entities.Arc` entity to a layout.
 

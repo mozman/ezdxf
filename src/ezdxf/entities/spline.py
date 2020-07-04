@@ -1,22 +1,23 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-06
-from typing import TYPE_CHECKING, Iterable, Sequence
+from typing import TYPE_CHECKING, Iterable, Sequence, cast
 import array
 import copy
+import warnings
 from itertools import chain
 from contextlib import contextmanager
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vector, Matrix44, ConstructionEllipse, Z_AXIS, NULLVEC
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
 from ezdxf.lldxf.packedtags import VertexArray
-from ezdxf.math.bspline import uniform_knot_vector, open_uniform_knot_vector
+from ezdxf.math.bspline import uniform_knot_vector, open_uniform_knot_vector, BSpline
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags, Ellipse
 
 __all__ = ['Spline']
 
@@ -35,6 +36,8 @@ acdb_spline = DefSubclass('AcDbSpline', {
     'knot_tolerance': DXFAttr(42, default=1e-10, optional=True),
     'control_point_tolerance': DXFAttr(43, default=1e-10, optional=True),
     'fit_tolerance': DXFAttr(44, default=1e-10, optional=True),
+    # Start- and end tangents should be normalized, but CAD applications do not
+    # crash if they are not normalized.
     'start_tangent': DXFAttr(12, xtype=XType.point3d, optional=True),
     'end_tangent': DXFAttr(13, xtype=XType.point3d, optional=True),
     # extrusion is the normal vector (omitted if the spline is non-planar)
@@ -169,7 +172,7 @@ class Spline(DXFGraphic):
 
     @control_points.setter
     def control_points(self, points: Iterable['Vertex']) -> None:
-        self._control_points = VertexArray(chain.from_iterable(points))
+        self._control_points = VertexArray(chain.from_iterable(Vector.generate(points)))
 
     def control_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_control_points
         """ Count of control points. """
@@ -182,11 +185,87 @@ class Spline(DXFGraphic):
 
     @fit_points.setter
     def fit_points(self, points: Iterable['Vertex']) -> None:
-        self._fit_points = VertexArray(chain.from_iterable(points))
+        self._fit_points = VertexArray(chain.from_iterable(Vector.generate(points)))
 
     def fit_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_fit_points
         """ Count of fit points. """
         return len(self.fit_points)
+
+    def construction_tool(self) -> BSpline:
+        """
+        Returns construction tool :class:`ezdxf.math.BSpline`.
+
+        .. versionadded:: 0.13
+
+        """
+        if self.control_point_count():
+            weights = self.weights if len(self.weights) else None
+            knots = self.knots if len(self.knots) else None
+            return BSpline(control_points=self.control_points, order=self.dxf.degree + 1, knots=knots, weights=weights)
+        elif self.fit_point_count():
+            return BSpline.from_fit_points(self.fit_points, degree=self.dxf.degree)
+        else:
+            raise ValueError('Construction tool requires control- or fit points.')
+
+    def apply_construction_tool(self, s) -> 'Spline':
+        """
+        Set SPLINE data from construction tool :class:`ezdxf.math.BSpline` or from a
+        :class:`geomdl.BSpline.Curve` object.
+
+        .. versionadded:: 0.13
+
+        """
+        try:
+            self.control_points = s.control_points
+        except AttributeError:  # maybe a geomdl.BSpline.Curve class
+            s = BSpline.from_nurbs_python_curve(s)
+            self.control_points = s.control_points
+
+        self.dxf.degree = s.degree
+        self.fit_points = []  # remove fit points
+        self.knots = s.knots()
+        self.weights = s.weights()
+        self.set_flag_state(Spline.RATIONAL, state=bool(len(self.weights)))
+        return self  # floating interface
+
+    @classmethod
+    def from_arc(cls, entity: 'DXFGraphic') -> 'Spline':
+        """ Create a new SPLINE entity from CIRCLE, ARC or ELLIPSE entity.
+
+        The new SPLINE entity has no owner, no handle, is not stored in
+        the entity database nor assigned to any layout!
+
+        .. versionadded:: 0.13
+
+        """
+        dxftype = entity.dxftype()
+        if dxftype == 'ELLIPSE':
+            ellipse = cast('Ellipse', entity).construction_tool()
+        elif dxftype == 'CIRCLE':
+            ellipse = ConstructionEllipse.from_arc(
+                center=entity.dxf.get('center', NULLVEC),
+                radius=entity.dxf.get('radius', 1.0),
+                extrusion=entity.dxf.get('extrusion', Z_AXIS),
+            )
+        elif dxftype == 'ARC':
+            ellipse = ConstructionEllipse.from_arc(
+                center=entity.dxf.get('center', NULLVEC),
+                radius=entity.dxf.get('radius', 1.0),
+                extrusion=entity.dxf.get('extrusion', Z_AXIS),
+                start_angle=entity.dxf.get('start_angle', 0),
+                end_angle=entity.dxf.get('end_angle', 360)
+            )
+        else:
+            raise TypeError('CIRCLE, ARC or ELLIPSE entity required.')
+
+        spline = Spline.new(dxfattribs=entity.graphic_properties(), doc=entity.doc)
+        s = BSpline.from_ellipse(ellipse)
+        spline.dxf.degree = s.degree
+        spline.dxf.flags = Spline.RATIONAL
+        spline.control_points = s.control_points
+        spline.knots = s.knots()
+        spline.weights = s.weights()
+        return spline
 
     def set_open_uniform(self, control_points: Sequence['Vertex'], degree: int = 3) -> None:
         """
@@ -208,7 +287,7 @@ class Spline(DXFGraphic):
         self.control_points = control_points
         self.knots = uniform_knot_vector(len(control_points), degree + 1)
 
-    def set_periodic(self, control_points: Sequence['Vertex'], degree=3) -> None:
+    def set_closed(self, control_points: Sequence['Vertex'], degree=3) -> None:
         """
         Closed B-spline with uniform knot vector, start and end at your first control point.
 
@@ -216,9 +295,12 @@ class Spline(DXFGraphic):
         self.dxf.flags = self.PERIODIC | self.CLOSED
         self.dxf.degree = degree
         self.control_points = control_points
+        self.control_points.extend(control_points[:degree])
         # AutoDesk Developer Docs:
         # If the spline is periodic, the length of knot vector will be greater than length of the control array by 1.
-        self.knots = range(len(control_points) + 1)
+        # but this does not work with BricsCAD
+        # self.knots = range(len(control_points) + 1)
+        self.knots = uniform_knot_vector(len(self.control_points), degree+1)
 
     def set_open_rational(self, control_points: Sequence['Vertex'], weights: Sequence[float], degree: int = 3) -> None:
         """
@@ -228,7 +310,7 @@ class Spline(DXFGraphic):
         """
         self.set_open_uniform(control_points, degree=degree)
         self.dxf.flags = self.dxf.flags | self.RATIONAL
-        if len(weights) != len(control_points):
+        if len(weights) != len(self.control_points):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.weights = weights
 
@@ -241,20 +323,22 @@ class Spline(DXFGraphic):
         """
         self.set_uniform(control_points, degree=degree)
         self.dxf.flags = self.dxf.flags | self.RATIONAL
-        if len(weights) != len(control_points):
+        if len(weights) != len(self.control_points):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.weights = weights
 
-    def set_periodic_rational(self, control_points: Sequence['Vertex'], weights: Sequence[float],
-                              degree: int = 3) -> None:
+    def set_closed_rational(self, control_points: Sequence['Vertex'], weights: Sequence[float],
+                            degree: int = 3) -> None:
         """
         Closed rational B-spline with uniform knot vector, start and end at your first control point, and has
         additional control possibilities by weighting each control point.
 
         """
-        self.set_periodic(control_points, degree=degree)
+        self.set_closed(control_points, degree=degree)
         self.dxf.flags = self.dxf.flags | self.RATIONAL
-        if len(weights) != len(control_points):
+        weights = list(weights)
+        weights.extend(weights[:degree])
+        if len(weights) != len(self.control_points):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.weights = weights
 
@@ -279,6 +363,7 @@ class Spline(DXFGraphic):
                 # on exit the context manager sets spline data automatically and updates all counters
 
         """
+        warnings.warn('Spline.edit_data() is deprecated (removed in v0.15).', DeprecationWarning)
         data = SplineData(self)
         yield data
         if data.fit_points is not self.fit_points:
