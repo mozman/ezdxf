@@ -21,19 +21,21 @@ Add-ons
 Render Tools
 ------------
 
-- Leader.virtual_entities()
-- ACADTable.virtual_entities()
-- MLeader.virtual_entities() ???
-- MLine.virtual_entities() ???
-- Tracer(), builder object to create banded lines like polylines 
+- `Leader.virtual_entities()`
+- `ACADTable.virtual_entities()`
+- `MLeader.virtual_entities()` ???
+- `MLine.virtual_entities()` ???
+- `Tracer()` a builder-object to create banded lines like polylines 
   with start- and end width.
-  - virtual_entities(type, dxfattribs) yields TRACE, SOLID or 3DFACE entities
-  - add_line(start_point, end_point, start_width, endwidth) 
-  - add_spline(BSpline, start_width, end_width, segments)
-  - add arcs or ellipses, by converting them to B-splines
-- Approximate polylines with bulges by just straight line paths 
-  as generator yielding (start-point, end-point, start-width, end-width) 
-  tuples as input for Tracer()
+  - `virtual_entities(type, dxfattribs)` yields TRACE, SOLID or 3DFACE entities
+  - `add_line(start_point, end_point, start_width, end_width)` 
+  - `add_spline(bspline, start_width, end_width, segments)`
+  - add arcs or ellipses by converting them to B-splines, required
+    tools are already implemented
+- Decompose polylines into lines and bulges into splines with start- 
+  and end-width as input for `Tracer()`
+- LWPOLYLINE and 2D POLYLINE the `virtual_entities(type)` method
+  could return bulges as ARC, ELLIPSE or SPLINE entities
   
 
 DXF Entities
