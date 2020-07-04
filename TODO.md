@@ -25,16 +25,21 @@ Render Tools
 - `ACADTable.virtual_entities()`
 - `MLeader.virtual_entities()` ???
 - `MLine.virtual_entities()` ???
-- `Tracer()` a builder-object to create banded lines like polylines 
+- `Tracer()` a 2D builder-object to create banded lines like polylines 
   with start- and end width.
-  - `virtual_entities(type, dxfattribs)` yields TRACE, SOLID or 3DFACE entities
   - `add_line(start_point, end_point, start_width, end_width)` 
   - `add_spline(bspline, start_width, end_width, segments)`
   - add arcs or ellipses by converting them to B-splines, required
     tools are already implemented
+  - `virtual_entities(dxftype='TRACE', dxfattribs=None)` yields TRACE, SOLID or 3DFACE entities
+  - `faces()` yields 4 vertices for each face as a tuple of `Vector()` objects
+  - `partial_faces()` yields only the last 2 vertices for each face, 2 vertices of 
+    the previous face are the first 2 vertices of the actual face, this works only 
+    for traces without width changes at the segment border, end-width of previous 
+    segment is equal to the start-width of the actual segment. 
 - Decompose polylines into lines and bulges into splines with start- 
   and end-width as input for `Tracer()`
-- LWPOLYLINE and 2D POLYLINE the `virtual_entities(type)` method
+- LWPOLYLINE and 2D POLYLINE the `virtual_entities(dxftype='ARC')` method
   could return bulges as ARC, ELLIPSE or SPLINE entities
   
 
