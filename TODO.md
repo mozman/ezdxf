@@ -6,6 +6,35 @@ Add-ons
 
 - DWG loader (work in progress)
 - Simple SVG exporter
+- drawing
+    - LEADER
+    - ACAD_TABLE
+    - MLEADER ???
+    - MLINE ???
+    - start- and end width support for 2D polylines
+    - render POINT symbols
+    - resolve fonts and pass them to `draw_text()`, 
+      `get_font_measurements()` and `get_text_line_width()`
+    - render proxy graphic, class `ProxyGraphic()` is already 
+      implemented but not tested with real world data.
+
+Render Tools
+------------
+
+- Leader.virtual_entities()
+- ACADTable.virtual_entities()
+- MLeader.virtual_entities() ???
+- MLine.virtual_entities() ???
+- Tracer(), builder object to create banded lines like polylines 
+  with start- and end width.
+  - virtual_entities(type, dxfattribs) yields TRACE, SOLID or 3DFACE entities
+  - add_line(start_point, end_point, start_width, endwidth) 
+  - add_spline(BSpline, start_width, end_width, segments)
+  - add arcs or ellipses, by converting them to B-splines
+- Approximate polylines with bulges by just straight line paths 
+  as generator yielding (start-point, end-point, start-width, end-width) 
+  tuples as input for Tracer()
+  
 
 DXF Entities
 ------------

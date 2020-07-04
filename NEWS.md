@@ -2,6 +2,12 @@
 News
 ====
 
+Version 0.13.1 - dev
+--------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v0-13.html
+- BUGFIX: ...
+
 Version 0.13 - 2020-07-04
 -------------------------
 
