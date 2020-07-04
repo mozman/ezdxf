@@ -143,10 +143,6 @@ Drawing Object
 
         Reference to the appids table, see also :class:`AppID`.
 
-    .. attribute:: groups
-
-        :class:`~ezdxf.entities.dxfgroups.GroupCollection` of all :class:`~ezdxf.entities.dxfgroups.DXFGroup` objects.
-
     .. attribute:: materials
 
         :class:`~ezdxf.entities.MaterialCollection` of all :class:`~ezdxf.entities.Material` objects.
