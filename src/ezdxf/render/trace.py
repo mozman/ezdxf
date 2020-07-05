@@ -1,12 +1,13 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import List, TYPE_CHECKING, Iterable, Tuple, Dict, Union
+from typing import List, TYPE_CHECKING, Iterable, Tuple, Dict, Union, cast
 from collections import namedtuple
 from collections.abc import Sequence
-from ezdxf.math import Vec2, BSpline, linspace, ConstructionRay, ParallelRaysError
+import math
+from ezdxf.math import Vec2, BSpline, linspace, ConstructionRay, ParallelRaysError, bulge_to_arc, ConstructionArc
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, Solid, Trace, Face3d, Drawing
+    from ezdxf.eztypes import Vertex, Solid, Trace, Face3d, Drawing, DXFGraphic, LWPolyline, Polyline
 
 __all__ = ['TraceBuilder']
 
@@ -206,6 +207,79 @@ class TraceBuilder(Sequence):
             if doc:
                 doc.entitydb.add(entity)
             yield entity
+
+    @classmethod
+    def from_polyline(cls, polyline: 'DXFGraphic', segments: int = 40) -> 'TraceBuilder':
+        dxftype = polyline.dxftype()
+        if dxftype == 'LWPOLYLINE':
+            polyline = cast('LWPOLYLINE', polyline)
+            const_width = polyline.dxf.const_width
+            points = []
+            for x, y, start_width, end_width, bulge in polyline.lwpoints:
+                location = Vec2(x, y)
+                if const_width:
+                    start_width = const_width
+                    end_width = const_width
+                points.append((location, start_width, end_width, bulge))
+            closed = polyline.closed
+        elif dxftype == 'POLYLINE':
+            polyline = cast('POLYLINE', polyline)
+            if not polyline.is_2d_polyline:
+                raise TypeError('2D POLYLINE required')
+            closed = polyline.is_closed
+            default_start_width = polyline.dxf.default_start_width
+            default_end_width = polyline.dxf.default_end_width
+            points = []
+            for vertex in polyline.vertices:
+                location = Vec2(vertex.dxf.location)
+                if vertex.dxf.has_attr('start_width'):
+                    start_width = vertex.dxf.start_width
+                else:
+                    start_width = default_start_width
+                if vertex.dxf.has_attr('end_width'):
+                    end_width = vertex.dxf.end_width
+                else:
+                    end_width = default_end_width
+                bulge = vertex.dxf.bulge
+                points.append((location, start_width, end_width, bulge))
+        else:
+            raise TypeError(f'Invalid DXF type {dxftype}')
+        trace = cls()
+        prev_point = None
+        prev_start_width = None
+        prev_end_width = None
+        prev_bulge = None
+        # todo: closed polygons
+        for point, start_width, end_width, bulge in points:
+            if prev_point is None:
+                prev_point = point
+                prev_start_width = start_width
+                prev_end_width = end_width
+                prev_bulge = bulge
+                trace.add_station(point, start_width, end_width)
+                continue
+
+            if prev_bulge != 0:  # arc from prev_point to point
+                center, start_angle, end_angle, radius = bulge_to_arc(prev_point, point, prev_bulge)
+                arc = ConstructionArc(
+                    center,
+                    radius,
+                    math.degrees(start_angle),
+                    math.degrees(end_angle),
+                    is_counter_clockwise=True,
+                )
+                spline = BSpline.from_arc(arc)
+                if not spline.control_points[0].isclose(trace.last_vertex):
+                    spline = spline.reverse()
+                trace.add_spline(spline, prev_start_width, prev_end_width, segments)
+
+            trace.add_station(point, start_width, end_width)
+            prev_point = point
+            prev_bulge = bulge
+            prev_start_width = start_width
+            prev_end_width = end_width
+
+        return trace
 
 
 def _normal_offset_points(start: Vec2, end: Vec2, start_width: float, end_width: float) -> Face:

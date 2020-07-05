@@ -915,7 +915,7 @@ class BSpline:
             control_points=reversed(self.control_points),
             order=self.order,
             knots=reverse_knots(),
-            weights=reversed(self.weights()),
+            weights=list(reversed(self.weights())),
         )
 
     def normalize_knots(self):
@@ -1255,6 +1255,8 @@ def rational_spline_from_arc(
     radius = float(radius)
     start_angle = math.radians(start_angle) % math.tau
     end_angle = math.radians(end_angle) % math.tau
+    if end_angle == 0:
+        end_angle = math.tau
     control_points, weights, knots = nurbs_arc_parameters(start_angle, end_angle, segments)
     return BSpline(
         control_points=(center + (p * radius) for p in control_points),
