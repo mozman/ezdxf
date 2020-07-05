@@ -4,10 +4,8 @@ from typing import TYPE_CHECKING, Iterable, List, Optional, Sequence, Union, Tup
 
 from functools import partial
 import math
-from abc import abstractmethod
-
-from .vector import Vector, Vec2, NULLVEC
-from .bbox import BoundingBox2d
+from .vector import Vector, Vec2
+from decimal import Decimal
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -58,11 +56,11 @@ def linspace(start: float, stop: float, num: int, endpoint=True) -> Iterable[flo
         yield start
         return
 
-    start = float(start)
+    start = Decimal(start)
     count = (num - 1) if endpoint else num
-    delta = (float(stop) - start) / count
+    delta = (Decimal(stop) - start) / count
     for _ in range(num):
-        yield start
+        yield float(start)
         start += delta
 
 

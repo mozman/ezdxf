@@ -25,9 +25,8 @@ Render Tools
 - `ACADTable.virtual_entities()`
 - `MLeader.virtual_entities()` ???
 - `MLine.virtual_entities()` ???
-- `Tracer()` a 2D builder-object to create banded lines like polylines 
-  with start- and end width.
-  - `add_line(start_point, end_point, start_width, end_width)` 
+- `TraceBuilder()` class to create banded lines like polylines with start- and end width.
+  - `add_station(vertex, start_width, end_width)` 
   - `add_spline(bspline, start_width, end_width, segments)`
   - add arcs or ellipses by converting them to B-splines, required
     tools are already implemented
