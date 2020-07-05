@@ -31,9 +31,9 @@ Example for the usage of the :mod:`matplotlib` backend:
 
 .. code-block:: Python
 
-    import ezdxf
     import matplotlib.pyplot as plt
-    from ezdxf.addons.drawing.front_end import draw_layout
+    import ezdxf
+    from ezdxf.addons.drawing import RenderContext, Frontend
     from ezdxf.addons.drawing.matplotlib_backend import MatplotlibBackend
 
     doc = ezdxf.readfile('your.dxf')
@@ -41,9 +41,9 @@ Example for the usage of the :mod:`matplotlib` backend:
 
     fig = plt.figure()
     ax = fig.add_axes([0, 0, 1, 1])
-    backend = MatplotlibBackend(ax)
-    draw_layout(msp, backend)
-    backend.finalize()
+    ctx = RenderContext(doc)
+    out = MatplotlibBackend(ax)
+    Frontend(ctx, out).draw_layout(layout, finalize=True)
     fig.savefig('your.png', dpi=300)
 
 Details

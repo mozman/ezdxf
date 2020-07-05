@@ -1,13 +1,10 @@
 # Created: 06.2020
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
-import enum
-import math
 from math import tau
-from typing import Union, List
+from typing import List
 
 from ezdxf.addons.drawing.type_hints import Radians
-from ezdxf.entities import Face3d, Solid, Trace
 from ezdxf.math import Vector, Z_AXIS, OCS
 
 
