@@ -2,6 +2,7 @@
 # License: MIT License
 import pytest
 import math
+import ezdxf
 from ezdxf.render.trace import TraceBuilder
 from ezdxf.math import BSpline, Vec2
 
@@ -88,6 +89,34 @@ def test_two_angled_faces():
     assert face2[2].isclose(Vec2(4.353553390593274, 1.6464466094067263))
     assert face2[3].isclose(Vec2(3.646446609406726, 2.353553390593274))
 
+
+def test_virtual_entities():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    t = TraceBuilder()
+    t.add_station((0, 0), 1, 1)
+    t.add_station((1, 0), 0, 0)
+
+    dxfattribs = {'layer': 'TEST'}
+    solid = list(t.virtual_entities('SOLID', dxfattribs, doc))[0]
+    assert solid.DXFTYPE == 'SOLID'
+    assert solid.dxf.layer == 'TEST'
+    assert solid.dxf.handle in doc.entitydb
+    msp.add_entity(solid)
+
+    trace = list(t.virtual_entities('TRACE', dxfattribs, doc))[0]
+    assert trace.DXFTYPE == 'TRACE'
+    assert trace.dxf.layer == 'TEST'
+    assert trace.dxf.handle in doc.entitydb
+    msp.add_entity(trace)
+
+    face = list(t.virtual_entities('3DFACE', dxfattribs, doc))[0]
+    assert face.DXFTYPE == '3DFACE'
+    assert face.dxf.layer == 'TEST'
+    assert face.dxf.handle in doc.entitydb
+    msp.add_entity(face)
+
+    assert len(msp) == 3
 
 if __name__ == '__main__':
     pytest.main([__file__])

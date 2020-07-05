@@ -1,13 +1,12 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import List, TYPE_CHECKING, Iterable, Tuple
+from typing import List, TYPE_CHECKING, Iterable, Tuple, Dict, Union
 from collections import namedtuple
 from collections.abc import Sequence
-import math
 from ezdxf.math import Vec2, BSpline, linspace, ConstructionRay, ParallelRaysError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.eztypes import Vertex, Solid, Trace, Face3d, Drawing
 
 __all__ = ['TraceBuilder']
 
@@ -175,6 +174,38 @@ class TraceBuilder(Sequence):
                 vtx2 = low2
                 vtx3 = up2
             yield vtx0, vtx1, vtx2, vtx3
+
+    def virtual_entities(self, dxftype='TRACE', dxfattribs: Dict = None, doc: 'Drawing' = None) -> Union[
+        'Solid', 'Trace', 'Face3d']:
+        """
+        Yields faces as SOLID, TRACE or 3DFACE entities with DXF attributes given in `dxfattribs`.
+
+        If a document is given, the doc attribute of the new entities will be set and the new
+        entities will be automatically added to the entity database of that document.
+
+        Args:
+            dxftype: DXF type as string, "SOLID", "TRACE" or "3DFACE"
+            dxfattribs: DXF attributes for SOLID, TRACE or 3DFACE entities
+            doc: associated document
+
+        """
+        from ezdxf.entities.factory import new
+
+        if dxftype not in {'SOLID', 'TRACE', '3DFACE'}:
+            raise TypeError(f'Invalid dxftype {dxftype}.')
+        dxfattribs = dxfattribs or {}
+        for face in self.faces():
+            for i in range(4):
+                dxfattribs[f'vtx{i}'] = face[i]
+
+            if dxftype != '3DFACE':
+                # weird vertex order for SOLID and TRACE
+                dxfattribs['vtx2'] = face[3]
+                dxfattribs['vtx3'] = face[2]
+            entity = new(dxftype, dxfattribs, doc)
+            if doc:
+                doc.entitydb.add(entity)
+            yield entity
 
 
 def _normal_offset_points(start: Vec2, end: Vec2, start_width: float, end_width: float) -> Face:
