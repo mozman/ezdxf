@@ -1,9 +1,10 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Iterable, Tuple
 from collections import namedtuple
 from collections.abc import Sequence
-from ezdxf.math import Vec2, BSpline, linspace
+import math
+from ezdxf.math import Vec2, BSpline, linspace, ConstructionRay, ParallelRaysError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -12,9 +13,9 @@ __all__ = ['TraceBuilder']
 
 Station = namedtuple('Station', ('vertex', 'start_width', 'end_width'))
 
-
 # start_width of the next (following) segment
 # end_width of the next (following) segment
+Face = Tuple[Vec2, Vec2, Vec2, Vec2]
 
 
 class TraceBuilder(Sequence):
@@ -35,15 +36,18 @@ class TraceBuilder(Sequence):
         return self._stations[item]
 
     @property
-    def last_point(self):
+    def last_vertex(self):
+        """ Returns the last vertex, raises :class:`IndexError` if no station exist. """
         return self._stations[-1].vertex
 
     @property
     def last_station(self):
+        """ Returns the last station, raises :class:`IndexError` if no station exist. """
         return self._stations[-1]
 
     @property
-    def is_started(self):
+    def is_started(self) -> bool:
+        """ `True` if at least one station exist. """
         return bool(self._stations)
 
     def add_station(self, point: 'Vertex', start_width: float, end_width: float = None) -> None:
@@ -63,7 +67,8 @@ class TraceBuilder(Sequence):
         if end_width is None:
             end_width = start_width
         point = Vec2(point)
-        if self.is_started and self.last_point.isclose(point, self.abs_tol):  # replace last station
+        if self.is_started and self.last_vertex.isclose(point, self.abs_tol):
+            # replace last station
             self._stations.pop()
         self._stations.append(Station(point, float(start_width), float(end_width)))
 
@@ -78,7 +83,7 @@ class TraceBuilder(Sequence):
         direction, it is not possible to represent clockwise arcs or ellipses.
 
         Continuity means the first control point of a clamped spline should be close to the actual
-        :attr:`TraceBuilder.end_vertex`. It is not a problem if this is not the case, the last station
+        :attr:`TraceBuilder.last_vertex`. It is not a problem if this is not the case, the last station
         will be connected to the first spline vertex, but this is often not the expected result.
 
         Args:
@@ -94,3 +99,87 @@ class TraceBuilder(Sequence):
         widths.append(widths[-1])  # end width of last segment
         for index, vertex in enumerate(spline.approximate(int(segments))):
             self.add_station(vertex, widths[index], widths[index + 1])
+
+    def faces(self) -> Iterable[Face]:
+        """ Yields all faces as 4-tuples of :class:`~ezdxf.math.Vec2` objects.
+
+        First and last miter is 90 degrees if the path is not closed, otherwise the
+        intersection of first and last segment is taken into account,
+        a closed path has to have explicit the same last and first vertex.
+
+        """
+        count = len(self._stations)
+        if count < 2:
+            raise ValueError('Two or more stations required.')
+
+        def offset_rays(segment):
+            up1, up2, low1, low2 = segments[segment]
+            if up1.isclose(up2):
+                angle = (self._stations[segment].vertex - self._stations[segment + 1].vertex).angle
+                offset_ray1 = ConstructionRay(up1, angle)
+            else:
+                offset_ray1 = ConstructionRay(up1, up2)
+
+            if low1.isclose(low2):
+                angle = (self._stations[segment].vertex - self._stations[segment + 1].vertex).angle
+                offset_ray2 = ConstructionRay(low1, angle)
+            else:
+                offset_ray2 = ConstructionRay(low1, low2)
+            return offset_ray1, offset_ray2
+
+        # todo: closed paths
+        is_closed = self._stations[0].vertex.isclose(self.last_vertex)
+
+        segments = []
+        for station in range(count - 1):
+            start, sw1, ew1 = self._stations[station]
+            end, sw2, ew2 = self._stations[station + 1]
+            segments.append(_normal_offset_points(start, end, sw1, ew1))
+
+        offset_ray1, offset_ray2 = offset_rays(0)
+        prev_offset_ray1 = offset_ray1
+        prev_offset_ray2 = offset_ray2
+        for i in range(len(segments)):
+            up1, up2, low1, low2 = segments[i]
+            if i == 0:
+                vtx0 = up1
+                vtx1 = low1
+                prev_offset_ray1 = offset_ray1
+                prev_offset_ray2 = offset_ray2
+            else:
+                try:
+                    vtx0 = prev_offset_ray1.intersect(offset_ray1)
+                except ParallelRaysError:
+                    vtx0 = up1
+                try:
+                    vtx1 = prev_offset_ray2.intersect(offset_ray2)
+                except ParallelRaysError:
+                    vtx1 = low1
+
+            if i < len(segments) - 1:
+                next_offset_ray1, next_offset_ray2 = offset_rays(i + 1)
+                try:
+                    vtx2 = offset_ray2.intersect(next_offset_ray2)
+                except ParallelRaysError:
+                    vtx2 = low2
+                try:
+                    vtx3 = offset_ray1.intersect(next_offset_ray1)
+                except ParallelRaysError:
+                    vtx3 = up2
+
+                prev_offset_ray1 = offset_ray1
+                prev_offset_ray2 = offset_ray2
+                offset_ray1 = next_offset_ray1
+                offset_ray2 = next_offset_ray2
+            else:
+                vtx2 = low2
+                vtx3 = up2
+            yield vtx0, vtx1, vtx2, vtx3
+
+
+def _normal_offset_points(start: Vec2, end: Vec2, start_width: float, end_width: float) -> Face:
+    dir_vector = (end - start).normalize()
+    ortho = dir_vector.orthogonal(True)
+    offset_start = ortho.normalize(start_width / 2)
+    offset_end = ortho.normalize(end_width / 2)
+    return start + offset_start, end + offset_end, start - offset_start, end - offset_end
