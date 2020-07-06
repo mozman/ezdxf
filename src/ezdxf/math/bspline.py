@@ -794,13 +794,12 @@ class Basis:
                 derivatives[k][j] *= r
             r *= (p - k)
 
-        if self.is_rational:
+        if self.is_rational:  # todo: Algorithm A4.2
             derivatives = [self.span_weighting(d, span) for d in derivatives]
         return derivatives[:n + 1]
 
     def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
-        p = self.order - 1
-        weights = self.weights[span - p: span - p + self.order]
+        weights = self.weights[span - self.order + 1: span + 1]
         products = [nb * w for nb, w in zip(nbasis, weights)]
         s = sum(products)
         return [0.0] * self.order if s == 0.0 else [p / s for p in products]
@@ -915,7 +914,7 @@ class BSpline:
             control_points=reversed(self.control_points),
             order=self.order,
             knots=reverse_knots(),
-            weights=reversed(self.weights()),
+            weights=list(reversed(self.weights())),
         )
 
     def normalize_knots(self):
@@ -1156,7 +1155,7 @@ class BSpline:
         of this curves by many render backends. For cubic non-rational B-splines, which is maybe the
         most common used B-spline, is :meth:`bezier_decomposition` the better choice.
 
-        1. approximation by `level`: an educated guess for the first level of approximation
+        1. approximation by `level`: an educated guess, the first level of approximation
         segments is based on the count of control points and their distribution along the
         B-spline, every additional level is a subdivision of the previous level.
         E.g. a B-Spline of 8 control points has 7 segments at the first level, 14 at the 2nd level
@@ -1172,19 +1171,28 @@ class BSpline:
             Yields control points of cubic Bézier curves as :class:`Bezier4P` objects
 
         """
-
-        def parametrization():
-            params = list(create_t_vector(self.control_points, 'chord'))
-            for _ in range(level - 1):
-                params = list(subdivide_params(params))
-            return [self.point(t) for t in params]
-
         if segments is None:
-            points = parametrization()
+            points = list(self.points(self.approximation_params(level)))
         else:
             points = list(self.approximate(segments))
         from .bezier4p import cubic_bezier_interpolation
         return cubic_bezier_interpolation(points)
+
+    def approximation_params(self, level: int = 3) -> List[float]:
+        """ Returns an educated guess, the first level of approximation
+        segments is based on the count of control points and their distribution along the
+        B-spline, every additional level is a subdivision of the previous level.
+        E.g. a B-Spline of 8 control points has 7 segments at the first level, 14 at the 2nd level
+        and 28 at the 3rd level.
+
+        """
+        params = list(create_t_vector(self.control_points, 'chord'))
+        if self.max_t != 1.0:
+            max_t = self.max_t
+            params = [p * max_t for p in params]
+        for _ in range(level - 1):
+            params = list(subdivide_params(params))
+        return params
 
 
 def subdivide_params(p: List[float]) -> Iterable[float]:
@@ -1255,6 +1263,8 @@ def rational_spline_from_arc(
     radius = float(radius)
     start_angle = math.radians(start_angle) % math.tau
     end_angle = math.radians(end_angle) % math.tau
+    if end_angle == 0:
+        end_angle = math.tau
     control_points, weights, knots = nurbs_arc_parameters(start_angle, end_angle, segments)
     return BSpline(
         control_points=(center + (p * radius) for p in control_points),
@@ -1412,24 +1422,3 @@ def bspline_basis_vector(u: float, count: int, degree: int, knots: Sequence[floa
     if math.isclose(u, knots[-1]):  # pick up last point ??? why is this necessary ???
         basis[-1] = 1.
     return basis
-
-
-def bspline_vertex(u: float, degree: int, control_points: Sequence['Vertex'], knots: Sequence[float]) -> Vector:
-    """
-    Calculate B-spline vertex at parameter u.
-
-    Used with the bspline_basis_vector() for testing and comparison.
-
-    Args:
-        u:  curve parameter in range [0 .. max(knots)]
-        degree: degree of B-spline (order = degree + 1)
-        control_points: control points as list of (x, y[,z]) tuples
-        knots: knot vector as list of floats, len(knots) == (count + order)
-
-    """
-    basis_vector = bspline_basis_vector(u, count=len(control_points), degree=degree, knots=knots)
-
-    vertex = Vector()
-    for basis, point in zip(basis_vector, control_points):
-        vertex += Vector(point) * basis
-    return vertex

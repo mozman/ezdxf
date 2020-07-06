@@ -81,6 +81,14 @@ class ConstructionArc:
         for angle in linspace(start, stop, num=num, endpoint=True):
             yield angle % 360
 
+    @property
+    def angle_span(self) -> float:
+        """ Returns angle span of arc from start- to end param. """
+        end = self.end_angle
+        if end < self.start_angle:
+            end += 360.0
+        return end - self.start_angle
+
     def vertices(self, a: Iterable[float]) -> Iterable[Vec2]:
         """
         Yields vertices on arc for angles in iterable `a` in WCS as location vectors.

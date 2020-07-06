@@ -32,7 +32,7 @@ from .eulerspiral import EulerSpiral
 from .ucs import OCS, UCS, PassTroughUCS
 from .bulge import bulge_to_arc, bulge_3_points, bulge_center, bulge_radius, arc_to_bulge
 from .arc import ConstructionArc
-from .line import ConstructionRay, ConstructionLine
+from .line import ConstructionRay, ConstructionLine, ParallelRaysError
 from .circle import ConstructionCircle
 from .ellipse import ConstructionEllipse, angle_to_param, param_to_angle, rytz_axis_construction
 from .box import ConstructionBox
