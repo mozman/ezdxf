@@ -590,6 +590,8 @@ ConstructionArc
 
         end angle in degrees
 
+    .. autoattribute:: angle_span
+
     .. autoattribute:: start_angle_rad
 
     .. autoattribute:: end_angle_rad

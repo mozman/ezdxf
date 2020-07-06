@@ -145,9 +145,18 @@ def test_vertices():
 
 def test_tangents():
     angles = [0, 45, 90, 135, -45, -90, -135, 180]
-    sin45 = math.sin(math.pi/4)
+    sin45 = math.sin(math.pi / 4)
     result = [(0, 1), (-sin45, sin45), (-1, 0), (-sin45, -sin45), (sin45, sin45), (1, 0), (sin45, -sin45), (0, -1)]
     arc = ConstructionArc(center=(1, 1))
     vertices = list(arc.tangents(angles))
     for v, r in zip(vertices, result):
         assert v.isclose(Vec2(r))
+
+
+def test_angle_span():
+    assert ConstructionArc(start_angle=30, end_angle=270).angle_span == 240
+    # crossing 0-degree:
+    assert ConstructionArc(start_angle=30, end_angle=270, is_counter_clockwise=False).angle_span == 120
+    # crossing 0-degree:
+    assert ConstructionArc(start_angle=300, end_angle=60).angle_span == 120
+    assert ConstructionArc(start_angle=300, end_angle=60, is_counter_clockwise=False).angle_span == 240
