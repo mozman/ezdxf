@@ -10,7 +10,7 @@ from ezdxf.math import Vec2, BSpline, linspace, ConstructionRay, ParallelRaysErr
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, Drawing, DXFGraphic
 
-__all__ = ['TraceBuilder', 'LinearTrace', 'CurveStation']
+__all__ = ['TraceBuilder', 'LinearTrace', 'CurvedTrace']
 
 LinearStation = namedtuple('LinearStation', ('vertex', 'start_width', 'end_width'))
 # start_width of the next (following) segment
@@ -215,7 +215,8 @@ def _normal_offset_points(start: Vec2, end: Vec2, start_width: float, end_width:
 class CurvedTrace(AbstractTrace):
     """ 2D banded curves like arcs or splines with start- and end width.
 
-    Represents one curved entity.
+    Represents always only one curved entity and all miter of curve segments
+    are perpendicular to curve tangents.
 
     Accepts 3D input, but z-axis is ignored.
 
@@ -232,33 +233,46 @@ class CurvedTrace(AbstractTrace):
 
     @classmethod
     def from_spline(cls, spline: BSpline, start_width: float, end_width: float, segments: int) -> 'CurvedTrace':
+        """
+        Create curved trace from a B-spline.
+
+        Args:
+            spline: :class:`~ezdxf.math.BSpline` object
+            start_width: start width
+            end_width: end width
+            segments: count of segments for approximation
+
+        """
+
         curve_trace = cls()
         count = segments + 1
         t = linspace(0, spline.max_t, count)
         for ((point, derivative), width) in zip(spline.derivatives(t, n=1), linspace(start_width, end_width, count)):
             normal = Vec2(derivative).orthogonal(True)
-            curve_trace.append(Vec2(point), normal, width)
+            curve_trace._append(Vec2(point), normal, width)
         return curve_trace
 
     @classmethod
     def from_arc(cls, arc: ConstructionArc, start_width: float, end_width: float, segments: int = 64) -> 'CurvedTrace':
-        """ Create curve trace from arc.
+        """
+        Create curved trace from an arc.
 
-        Arg:
+        Args:
             arc: :class:`~ezdxf.math.ConstructionArc` object
             start_width: start width
             end_width: end width
-            segments: count of segments for full circle (360 degree), partial arc have proportional
-                      less segments, but at lest 3
+            segments: count of segments for full circle (360 degree) approximation, partial arcs have proportional
+                      less segments, but at least 3
+
         """
         curve_trace = cls()
         count = max(math.ceil(arc.angle_span / 360.0 * segments), 3) + 1
         center = Vec2(arc.center)
         for point, width in zip(arc.vertices(arc.angles(count)), linspace(start_width, end_width, count)):
-            curve_trace.append(point, point - center, width)
+            curve_trace._append(point, point - center, width)
         return curve_trace
 
-    def append(self, point: Vec2, normal: Vec2, width: float) -> None:
+    def _append(self, point: Vec2, normal: Vec2, width: float) -> None:
         """
         Add a curve trace station (like a vertex) at location `point`.
 
@@ -297,7 +311,7 @@ class TraceBuilder(Sequence):
 
     """
 
-    def __init__(self, default_start_width=None):
+    def __init__(self):
         self._traces: List[AbstractTrace] = []
         self.abs_tol = 1e-12
 
@@ -308,6 +322,7 @@ class TraceBuilder(Sequence):
         return self._traces[item]
 
     def append(self, trace: AbstractTrace) -> None:
+        """ Append a new trace. """
         self._traces.append(trace)
 
     def faces(self) -> Iterable[Face]:
@@ -345,6 +360,16 @@ class TraceBuilder(Sequence):
 
     @classmethod
     def from_polyline(cls, polyline: 'DXFGraphic', segments: int = 64) -> 'TraceBuilder':
+        """
+        Create a complete trace from a LWPOLYLINE or a 2D POLYLINE entity, the trace
+        consist of multiple sub-traces if :term:`bulge` values are present.
+
+        Args:
+            polyline: :class:`~ezdxf.entities.LWPolyline` or 2D :class:`~ezdxf.entities.Polyline`
+            segments: count of segments for bulge approximation, given count is for a full circle,
+                      partial arcs have proportional less segments, but at least 3
+
+        """
         dxftype = polyline.dxftype()
         if dxftype == 'LWPOLYLINE':
             polyline = cast('LWPOLYLINE', polyline)

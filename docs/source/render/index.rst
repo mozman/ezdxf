@@ -21,6 +21,4 @@ rendering engine in the sense of true graphical rendering for screen or paper.
     curves
     forms
     mesh
-
-
-
+    trace
