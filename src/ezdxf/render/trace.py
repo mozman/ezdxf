@@ -332,8 +332,19 @@ class TraceBuilder(Sequence):
         for trace in self._traces:
             yield from trace.virtual_entities(dxftype, dxfattribs, doc)
 
+    def close(self):
+        """ Close multi traces by merging first and last trace, if linear traces. """
+        traces = self._traces
+        if len(traces) < 2:
+            return
+        if isinstance(traces[0], LinearTrace) and isinstance(traces[-1], LinearTrace):
+            first = cast(LinearTrace, traces.pop(0))
+            last = cast(LinearTrace, traces[-1])
+            for point, start_width, end_width in first:
+                last.add_station(point, start_width, end_width)
+
     @classmethod
-    def from_polyline(cls, polyline: 'DXFGraphic', segments: int = 40) -> 'TraceBuilder':
+    def from_polyline(cls, polyline: 'DXFGraphic', segments: int = 64) -> 'TraceBuilder':
         dxftype = polyline.dxftype()
         if dxftype == 'LWPOLYLINE':
             polyline = cast('LWPOLYLINE', polyline)
@@ -371,13 +382,16 @@ class TraceBuilder(Sequence):
         else:
             raise TypeError(f'Invalid DXF type {dxftype}')
 
+        if closed and not points[0][0].isclose(points[-1][0]):
+            # close polyline explicit
+            points.append(points[0])
+
         trace = cls()
         store_bulge = None
         store_start_width = None
         store_end_width = None
         store_point = None
 
-        # todo: closed polygons
         linear_trace = LinearTrace()
         for point, start_width, end_width, bulge in points:
             if store_bulge:
@@ -413,4 +427,9 @@ class TraceBuilder(Sequence):
             linear_trace.add_station(point, start_width, end_width)
         if linear_trace.is_started:
             trace.append(linear_trace)
+
+        if closed and len(trace) > 1:
+            # This is required for traces with multiple paths to create the correct
+            # miter at the closing point. (only linear to linear trace).
+            trace.close()
         return trace
