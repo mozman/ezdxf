@@ -77,16 +77,6 @@ class LinearTrace(AbstractTrace):
         return self._stations[item]
 
     @property
-    def last_vertex(self):
-        """ Returns the last vertex, raises :class:`IndexError` if no station exist. """
-        return self._stations[-1].vertex
-
-    @property
-    def last_station(self):
-        """ Returns the last station, raises :class:`IndexError` if no station exist. """
-        return self._stations[-1]
-
-    @property
     def is_started(self) -> bool:
         """ `True` if at least one station exist. """
         return bool(self._stations)
@@ -108,10 +98,12 @@ class LinearTrace(AbstractTrace):
         if end_width is None:
             end_width = start_width
         point = Vec2(point)
-        if self.is_started and self.last_vertex.isclose(point, self.abs_tol):
+        stations = self._stations
+
+        if bool(stations) and stations[-1].vertex.isclose(point, self.abs_tol):
             # replace last station
-            self._stations.pop()
-        self._stations.append(LinearStation(point, float(start_width), float(end_width)))
+            stations.pop()
+        stations.append(LinearStation(point, float(start_width), float(end_width)))
 
     def faces(self) -> Iterable[Face]:
         """ Yields all faces as 4-tuples of :class:`~ezdxf.math.Vec2` objects.
@@ -121,72 +113,92 @@ class LinearTrace(AbstractTrace):
         a closed path has to have explicit the same last and first vertex.
 
         """
-        count = len(self._stations)
+        stations = self._stations
+        count = len(stations)
         if count < 2:
             raise ValueError('Two or more stations required.')
 
-        def offset_rays(segment):
-            up1, up2, low1, low2 = segments[segment]
-            if up1.isclose(up2):
-                angle = (self._stations[segment].vertex - self._stations[segment + 1].vertex).angle
-                offset_ray1 = ConstructionRay(up1, angle)
-            else:
-                offset_ray1 = ConstructionRay(up1, up2)
+        def offset_rays(segment: int) -> Tuple[ConstructionRay, ConstructionRay]:
+            """ Create offset rays from segment offset vertices. """
+            def ray(v1, v2):
+                if v1.isclose(v2):
+                    # vertices too close to define a ray, offset ray is parallel to segment:
+                    angle = (stations[segment].vertex - stations[segment + 1].vertex).angle
+                    return ConstructionRay(v1, angle)
+                else:
+                    return ConstructionRay(v1, v2)
+            left1, left2, right1, right2 = segments[segment]
+            return ray(left1, left2), ray(right1, right2)
 
-            if low1.isclose(low2):
-                angle = (self._stations[segment].vertex - self._stations[segment + 1].vertex).angle
-                offset_ray2 = ConstructionRay(low1, angle)
-            else:
-                offset_ray2 = ConstructionRay(low1, low2)
-            return offset_ray1, offset_ray2
+        def intersect(ray1: ConstructionRay, ray2: ConstructionRay, default: Vec2) -> Vec2:
+            """ Intersect two rays but take parallel rays into account. """
+            try:
+                v = ray1.intersect(ray2)
+            except ParallelRaysError:
+                v = default
+            return v
 
-        # todo: closed paths
-        is_closed = self._stations[0].vertex.isclose(self.last_vertex)
+        # Path has to be explicit closed by vertices:
+        is_closed = stations[0].vertex.isclose(stations[-1].vertex)
 
         segments = []
+        # Each segment has 4 offset vertices normal to the line from start- to end vertex
+        # 1st vertex left of line at the start, distance = start_width/2
+        # 2nd vertex left of line at the end, distance = end_width/2
+        # 3rd vertex right of line at the start, distance = start_width/2
+        # 4th vertex right of line at the end, distance = end_width/2
         for station in range(count - 1):
-            start, sw1, ew1 = self._stations[station]
-            end, sw2, ew2 = self._stations[station + 1]
-            segments.append(_normal_offset_points(start, end, sw1, ew1))
+            start_vertex, start_width, end_width = stations[station]
+            end_vertex = stations[station + 1].vertex
+            segments.append(_normal_offset_points(start_vertex, end_vertex, start_width, end_width))
 
+        # offset rays:
+        # 1 is the upper or left of line
+        # 2 is the lower or right of line
         offset_ray1, offset_ray2 = offset_rays(0)
-        prev_offset_ray1 = offset_ray1
-        prev_offset_ray2 = offset_ray2
+        prev_offset_ray1 = None
+        prev_offset_ray2 = None
+
+        # Store last vertices explicit, they get modified for closed paths.
+        last_up1, last_up2, last_low1, last_low2 = segments[-1]
+
         for i in range(len(segments)):
             up1, up2, low1, low2 = segments[i]
             if i == 0:
-                vtx0 = up1
-                vtx1 = low1
+                # Set first vertices of the first face.
+                if is_closed:
+                    # Compute first two vertices as intersection of first and last segment
+                    last_offset_ray1, last_offset_ray2 = offset_rays(len(segments)-1)
+                    vtx0 = intersect(last_offset_ray1, offset_ray1, up1)
+                    vtx1 = intersect(last_offset_ray2, offset_ray2, low1)
+
+                    # Store last vertices for the closing face.
+                    last_up2 = vtx0
+                    last_low2 = vtx1
+                else:
+                    # Set first two vertices of the first face for an open path.
+                    vtx0 = up1
+                    vtx1 = low1
                 prev_offset_ray1 = offset_ray1
                 prev_offset_ray2 = offset_ray2
             else:
-                try:
-                    vtx0 = prev_offset_ray1.intersect(offset_ray1)
-                except ParallelRaysError:
-                    vtx0 = up1
-                try:
-                    vtx1 = prev_offset_ray2.intersect(offset_ray2)
-                except ParallelRaysError:
-                    vtx1 = low1
+                # Compute first two vertices for the actual face.
+                vtx0 = intersect(prev_offset_ray1, offset_ray1, up1)
+                vtx1 = intersect(prev_offset_ray2, offset_ray2, low1)
 
             if i < len(segments) - 1:
+                # Compute last two vertices for the actual face.
                 next_offset_ray1, next_offset_ray2 = offset_rays(i + 1)
-                try:
-                    vtx2 = offset_ray2.intersect(next_offset_ray2)
-                except ParallelRaysError:
-                    vtx2 = low2
-                try:
-                    vtx3 = offset_ray1.intersect(next_offset_ray1)
-                except ParallelRaysError:
-                    vtx3 = up2
-
+                vtx2 = intersect(next_offset_ray2, offset_ray2, low2)
+                vtx3 = intersect(next_offset_ray1, offset_ray1, up2)
                 prev_offset_ray1 = offset_ray1
                 prev_offset_ray2 = offset_ray2
                 offset_ray1 = next_offset_ray1
                 offset_ray2 = next_offset_ray2
             else:
-                vtx2 = low2
-                vtx3 = up2
+                # Pickup last two vertices for the last face.
+                vtx2 = last_low2
+                vtx3 = last_up2
             yield vtx0, vtx1, vtx2, vtx3
 
 
@@ -237,7 +249,7 @@ class CurvedTrace(AbstractTrace):
 
     def append(self, point: Vec2, normal: Vec2, width: float) -> None:
         """
-        Add a curve trace station (like a vertex) at location `point`^.
+        Add a curve trace station (like a vertex) at location `point`.
 
         Args:
             point: 2D curve location (vertex), z-axis of 3D vertices is ignored.
@@ -319,6 +331,8 @@ class TraceBuilder(Sequence):
             for x, y, start_width, end_width, bulge in polyline.lwpoints:
                 location = Vec2(x, y)
                 if const_width:
+                    # This is AutoCAD behavior, BricsCAD uses const width
+                    # only for missing width values.
                     start_width = const_width
                     end_width = const_width
                 points.append((location, start_width, end_width, bulge))

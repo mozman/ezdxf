@@ -34,7 +34,8 @@ def test_add_station_3d():
 
 
 def test_add_spline_segment():
-    t = CurvedTrace.from_spline(BSpline.from_fit_points([(1, 0), (3, 1), (5, -1), (6, 0)]), start_width=2, end_width=1, segments=10)
+    t = CurvedTrace.from_spline(BSpline.from_fit_points([(1, 0), (3, 1), (5, -1), (6, 0)]), start_width=2, end_width=1,
+                                segments=10)
     assert len(t) == 11
 
 
@@ -47,6 +48,19 @@ def test_square_face():
     assert face[1].isclose(Vec2(0, -0.5))
     assert face[2].isclose(Vec2(1, -0.5))
     assert face[3].isclose(Vec2(1, +0.5))
+
+
+def test_closed_linear_path():
+    t = LinearTrace()
+    t.add_station((0, 0), 1, 1)
+    t.add_station((1, 0), 1, 1)
+    t.add_station((1, 1), 1, 1)
+    t.add_station((0, 1), 1, 1)
+    t.add_station((0, 0), 1, 1)
+    faces = list(t.faces())
+    assert len(faces) == 4
+    assert faces[0] == (Vec2(0.5, 0.5), Vec2(-0.5, -0.5), Vec2(1.5, -0.5), Vec2(0.5, 0.5))
+    assert faces[3] == (Vec2(0.5, 0.5), Vec2(-0.5, 1.5), Vec2(-0.5, -0.5), Vec2(0.5, 0.5))
 
 
 def test_two_straight_faces():

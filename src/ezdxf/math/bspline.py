@@ -799,8 +799,7 @@ class Basis:
         return derivatives[:n + 1]
 
     def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
-        p = self.order - 1
-        weights = self.weights[span - p: span - p + self.order]
+        weights = self.weights[span - self.order + 1: span + 1]
         products = [nb * w for nb, w in zip(nbasis, weights)]
         s = sum(products)
         return [0.0] * self.order if s == 0.0 else [p / s for p in products]
