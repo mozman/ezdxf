@@ -794,7 +794,7 @@ class Basis:
                 derivatives[k][j] *= r
             r *= (p - k)
 
-        if self.is_rational:
+        if self.is_rational:  # todo: Algorithm A4.2
             derivatives = [self.span_weighting(d, span) for d in derivatives]
         return derivatives[:n + 1]
 
@@ -1413,24 +1413,3 @@ def bspline_basis_vector(u: float, count: int, degree: int, knots: Sequence[floa
     if math.isclose(u, knots[-1]):  # pick up last point ??? why is this necessary ???
         basis[-1] = 1.
     return basis
-
-
-def bspline_vertex(u: float, degree: int, control_points: Sequence['Vertex'], knots: Sequence[float]) -> Vector:
-    """
-    Calculate B-spline vertex at parameter u.
-
-    Used with the bspline_basis_vector() for testing and comparison.
-
-    Args:
-        u:  curve parameter in range [0 .. max(knots)]
-        degree: degree of B-spline (order = degree + 1)
-        control_points: control points as list of (x, y[,z]) tuples
-        knots: knot vector as list of floats, len(knots) == (count + order)
-
-    """
-    basis_vector = bspline_basis_vector(u, count=len(control_points), degree=degree, knots=knots)
-
-    vertex = Vector()
-    for basis, point in zip(basis_vector, control_points):
-        vertex += Vector(point) * basis
-    return vertex

@@ -1,6 +1,7 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import Iterable, Tuple, List, Sequence, Union, Any
+from functools import lru_cache
 from itertools import repeat
 import math
 import reprlib
@@ -35,6 +36,28 @@ def freeze_matrix(A: Union[MatrixData, 'Matrix']) -> 'Matrix':
     m = Matrix()
     m.matrix = tuple(tuple(float(v) for v in row) for row in A)
     return m
+
+
+@lru_cache(maxsize=128)
+def binomial_coefficient(k: int, i: int) -> float:
+    # (c) Onur Rauf Bingol <orbingol@gmail.com>, NURBS-Python, MIT-License
+    """ Computes the binomial coefficient (denoted by `k choose i`).
+
+    Please see the following website for details: http://mathworld.wolfram.com/BinomialCoefficient.html
+
+    Args:
+        k: size of the set of distinct elements
+        i: size of the subsets
+
+    """
+    # Special case
+    if i > k:
+        return float(0)
+    # Compute binomial coefficient
+    k_fact = math.factorial(k)
+    i_fact = math.factorial(i)
+    k_i_fact = math.factorial(k - i)
+    return float(k_fact / (k_i_fact * i_fact))
 
 
 class Matrix:
