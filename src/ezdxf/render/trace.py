@@ -120,6 +120,7 @@ class LinearTrace(AbstractTrace):
 
         def offset_rays(segment: int) -> Tuple[ConstructionRay, ConstructionRay]:
             """ Create offset rays from segment offset vertices. """
+
             def ray(v1, v2):
                 if v1.isclose(v2):
                     # vertices too close to define a ray, offset ray is parallel to segment:
@@ -127,6 +128,7 @@ class LinearTrace(AbstractTrace):
                     return ConstructionRay(v1, angle)
                 else:
                     return ConstructionRay(v1, v2)
+
             left1, left2, right1, right2 = segments[segment]
             return ray(left1, left2), ray(right1, right2)
 
@@ -168,7 +170,7 @@ class LinearTrace(AbstractTrace):
                 # Set first vertices of the first face.
                 if is_closed:
                     # Compute first two vertices as intersection of first and last segment
-                    last_offset_ray1, last_offset_ray2 = offset_rays(len(segments)-1)
+                    last_offset_ray1, last_offset_ray2 = offset_rays(len(segments) - 1)
                     vtx0 = intersect(last_offset_ray1, offset_ray1, up1)
                     vtx1 = intersect(last_offset_ray2, offset_ray2, low1)
 
@@ -239,9 +241,18 @@ class CurvedTrace(AbstractTrace):
         return curve_trace
 
     @classmethod
-    def from_arc(cls, arc: ConstructionArc, start_width: float, end_width: float, segments: int) -> 'CurvedTrace':
+    def from_arc(cls, arc: ConstructionArc, start_width: float, end_width: float, segments: int = 64) -> 'CurvedTrace':
+        """ Create curve trace from arc.
+
+        Arg:
+            arc: :class:`~ezdxf.math.ConstructionArc` object
+            start_width: start width
+            end_width: end width
+            segments: count of segments for full circle (360 degree), partial arc have proportional
+                      less segments, but at lest 3
+        """
         curve_trace = cls()
-        count = segments + 1
+        count = max(math.ceil(arc.angle_span / 360.0 * segments), 3) + 1
         center = Vec2(arc.center)
         for point, width in zip(arc.vertices(arc.angles(count)), linspace(start_width, end_width, count)):
             curve_trace.append(point, point - center, width)

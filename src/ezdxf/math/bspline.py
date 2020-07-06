@@ -1155,7 +1155,7 @@ class BSpline:
         of this curves by many render backends. For cubic non-rational B-splines, which is maybe the
         most common used B-spline, is :meth:`bezier_decomposition` the better choice.
 
-        1. approximation by `level`: an educated guess for the first level of approximation
+        1. approximation by `level`: an educated guess, the first level of approximation
         segments is based on the count of control points and their distribution along the
         B-spline, every additional level is a subdivision of the previous level.
         E.g. a B-Spline of 8 control points has 7 segments at the first level, 14 at the 2nd level
@@ -1171,19 +1171,28 @@ class BSpline:
             Yields control points of cubic Bézier curves as :class:`Bezier4P` objects
 
         """
-
-        def parametrization():
-            params = list(create_t_vector(self.control_points, 'chord'))
-            for _ in range(level - 1):
-                params = list(subdivide_params(params))
-            return [self.point(t) for t in params]
-
         if segments is None:
-            points = parametrization()
+            points = list(self.points(self.approximation_params(level)))
         else:
             points = list(self.approximate(segments))
         from .bezier4p import cubic_bezier_interpolation
         return cubic_bezier_interpolation(points)
+
+    def approximation_params(self, level: int = 3) -> List[float]:
+        """ Returns an educated guess, the first level of approximation
+        segments is based on the count of control points and their distribution along the
+        B-spline, every additional level is a subdivision of the previous level.
+        E.g. a B-Spline of 8 control points has 7 segments at the first level, 14 at the 2nd level
+        and 28 at the 3rd level.
+
+        """
+        params = list(create_t_vector(self.control_points, 'chord'))
+        if self.max_t != 1.0:
+            max_t = self.max_t
+            params = [p * max_t for p in params]
+        for _ in range(level - 1):
+            params = list(subdivide_params(params))
+        return params
 
 
 def subdivide_params(p: List[float]) -> Iterable[float]:
