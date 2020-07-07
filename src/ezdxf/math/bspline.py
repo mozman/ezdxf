@@ -806,10 +806,7 @@ class Basis:
         p = self.order - 1
         span = self.find_span(u)
         N = self.basis_funcs(span, u)
-        point = NULLVEC
-        for i in range(p + 1):
-            point += N[i] * control_points[span - p + i]
-        return point
+        return sum(N[i] * control_points[span - p + i] for i in range(p + 1))
 
     def curve_derivatives(self, u: float, control_points: Sequence[Vector], n: int = 1) -> List[Vector]:
         # Source: The NURBS Book: Algorithm A3.2
@@ -841,12 +838,11 @@ class Basis:
                     v -= binomial_coefficient(k, i) * wders[i] * CK[k - i]
                 CK.append(v / wders[0])
         else:
-            CK = []
-            for k in range(n + 1):
-                v = NULLVEC
-                for j in range(p + 1):
-                    v += basis_funcs_derivatives[k][j] * control_points[span - p + j]
-                CK.append(v)
+            CK = [
+                sum(basis_funcs_derivatives[k][j] * control_points[span - p + j]
+                    for j in range(p + 1))
+                for k in range(n + 1)
+            ]
         return CK
 
 
