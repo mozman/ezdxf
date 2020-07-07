@@ -73,7 +73,6 @@ def test_rational_splines_points_with_nurbs_python():
         assert p.isclose(e)
 
 
-@pytest.mark.skip(reason='Implement algorithm 4.2 from the NURBS book.')
 def test_rational_splines_derivatives_with_nurbs_python():
     arc = ConstructionArc(end_angle=90)
     spline = rational_spline_from_arc(end_angle=arc.end_angle)

@@ -24,7 +24,7 @@ from .vector import Vector, NULLVEC
 from .parametrize import create_t_vector, estimate_tangents, estimate_end_tangent_magnitude
 from .linalg import (
     LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix, detect_banded_matrix,
-    quadratic_equation,
+    quadratic_equation, binomial_coefficient,
 )
 from .construct2d import linspace
 from ezdxf.lldxf.const import DXFValueError
@@ -723,6 +723,12 @@ class Basis:
         else:
             return N
 
+    def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
+        weights = self.weights[span - self.order + 1: span + 1]
+        products = [nb * w for nb, w in zip(nbasis, weights)]
+        s = sum(products)
+        return [0.0] * self.order if s == 0.0 else [p / s for p in products]
+
     def basis_funcs_derivatives(self, span: int, u: float, n: int = 1):
         # Source: The NURBS Book: Algorithm A2.3
         order = self.order
@@ -793,23 +799,14 @@ class Basis:
             for j in range(order):
                 derivatives[k][j] *= r
             r *= (p - k)
-
-        if self.is_rational:  # todo: Algorithm A4.2
-            derivatives = [self.span_weighting(d, span) for d in derivatives]
         return derivatives[:n + 1]
-
-    def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
-        weights = self.weights[span - self.order + 1: span + 1]
-        products = [nb * w for nb, w in zip(nbasis, weights)]
-        s = sum(products)
-        return [0.0] * self.order if s == 0.0 else [p / s for p in products]
 
     def curve_point(self, u: float, control_points: Sequence[Vector]) -> Vector:
         # Source: The NURBS Book: Algorithm A3.1
         p = self.order - 1
         span = self.find_span(u)
         N = self.basis_funcs(span, u)
-        point = Vector()
+        point = NULLVEC
         for i in range(p + 1):
             point += N[i] * control_points[span - p + i]
         return point
@@ -818,13 +815,38 @@ class Basis:
         # Source: The NURBS Book: Algorithm A3.2
         p = self.order - 1
         span = self.find_span(u)
-        nders = self.basis_funcs_derivatives(span, u, n)
-        CK = []
-        for k in range(n + 1):
-            deriv = Vector()
-            for j in range(p + 1):
-                deriv += nders[k][j] * control_points[span - p + j]
-            CK.append(deriv)
+        basis_funcs_derivatives = self.basis_funcs_derivatives(span, u, n)
+        if self.is_rational:
+            # Homogeneous point representation required:
+            # (x*w, y*w, z*w, w)
+            CKw = []
+            wders = []
+            for k in range(n + 1):
+                v = NULLVEC
+                wder = 0.0
+                for j in range(p + 1):
+                    index = span - p + j
+                    bas_func_weight = basis_funcs_derivatives[k][j] * self.weights[index]
+                    # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
+                    v += control_points[index] * bas_func_weight
+                    wder += bas_func_weight
+                CKw.append(v)
+                wders.append(wder)
+
+            # Source: The NURBS Book: Algorithm A4.2
+            CK = []
+            for k in range(n + 1):
+                v = CKw[k]
+                for i in range(1, k + 1):
+                    v -= binomial_coefficient(k, i) * wders[i] * CK[k - i]
+                CK.append(v / wders[0])
+        else:
+            CK = []
+            for k in range(n + 1):
+                v = NULLVEC
+                for j in range(p + 1):
+                    v += basis_funcs_derivatives[k][j] * control_points[span - p + j]
+                CK.append(v)
         return CK
 
 

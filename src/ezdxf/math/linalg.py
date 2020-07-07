@@ -10,6 +10,7 @@ __all__ = [
     'Matrix', 'gauss_vector_solver', 'gauss_matrix_solver', 'gauss_jordan_solver', 'gauss_jordan_inverse',
     'LUDecomposition', 'freeze_matrix', 'tridiagonal_vector_solver', 'tridiagonal_matrix_solver',
     'detect_banded_matrix', 'compact_banded_matrix', 'BandedMatrixLU', 'banded_matrix', 'quadratic_equation',
+    'binomial_coefficient',
 ]
 
 
