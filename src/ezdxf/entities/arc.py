@@ -2,8 +2,7 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
-import math
-from ezdxf.math import Vector, UCS, Matrix44, OCS, linspace, enclosing_angles, X_AXIS
+from ezdxf.math import Vector, Matrix44, linspace, ConstructionArc
 from ezdxf.math.transformtools import OCSTransform
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -98,3 +97,33 @@ class Arc(Circle):
         self.dxf.end_angle = ocs.transform_deg_angle(self.dxf.end_angle)
         return self
 
+    def construction_tool(self) -> ConstructionArc:
+        """
+        Returns 2D construction tool :class:`ezdxf.math.ConstructionArc`, ignoring the
+        extrusion vector.
+
+        .. versionadded:: 0.14
+
+        """
+        dxf = self.dxf
+        return ConstructionArc(
+            dxf.center,
+            dxf.radius,
+            dxf.start_angle,
+            dxf.end_angle,
+        )
+
+    def apply_construction_tool(self, arc: ConstructionArc) -> 'Arc':
+        """
+        Set ARC data from construction tool :class:`ezdxf.math.ConstructionArc`,
+        will not change the extrusion vector.
+
+        .. versionadded:: 0.14
+
+        """
+        dxf = self.dxf
+        dxf.center = Vector(arc.center)
+        dxf.radius = arc.radius
+        dxf.start_angle = arc.start_angle
+        dxf.end_angle = arc.end_angle
+        return self  # floating interface
