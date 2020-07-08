@@ -7,7 +7,7 @@ from ezdxf.lldxf import const
 from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.addons import acadctb
 from ezdxf.sections.table import table_key as layer_key
-from ezdxf.tools.rgb import luminance
+from ezdxf.tools.rgb import luminance, DXF_DEFAULT_COLORS, int2rgb
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Layout, Table, Layer, Linetype, Drawing
@@ -22,42 +22,6 @@ MODEL_SPACE_BG_COLOR = '#212830'
 PAPER_SPACE_BG_COLOR = '#ffffff'
 VIEWPORT_COLOR = '#aaaaaa'  # arbitrary choice
 CONTINUOUS_PATTERN = tuple()
-
-# color codes are 1-indexed so an additional entry was put in the 0th position
-# different plot styles may choose different colors for the same code
-# from ftp://ftp.ecn.purdue.edu/jshan/86/help/html/import_export/dxf_colortable.htm
-# alternative color tables can be found at:
-#  - http://www.temblast.com/songview/color3.htm
-#  - http://gohtx.com/acadcolors.php
-
-AUTOCAD_COLOR_INDEX = [
-    None, '#ff0000', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff', '#ffffff', '#808080', '#c0c0c0', '#ff0000',
-    '#ff7f7f', '#a50000', '#a55252', '#7f0000', '#7f3f3f', '#4c0000', '#4c2626', '#260000', '#261313', '#ff3f00',
-    '#ff9f7f', '#a52900', '#a56752', '#7f1f00', '#7f4f3f', '#4c1300', '#4c2f26', '#260900', '#261713', '#ff7f00',
-    '#ffbf7f', '#a55200', '#a57c52', '#7f3f00', '#7f5f3f', '#4c2600', '#4c3926', '#261300', '#261c13', '#ffbf00',
-    '#ffdf7f', '#a57c00', '#a59152', '#7f5f00', '#7f6f3f', '#4c3900', '#4c4226', '#261c00', '#262113', '#ffff00',
-    '#ffff7f', '#a5a500', '#a5a552', '#7f7f00', '#7f7f3f', '#4c4c00', '#4c4c26', '#262600', '#262613', '#bfff00',
-    '#dfff7f', '#7ca500', '#91a552', '#5f7f00', '#6f7f3f', '#394c00', '#424c26', '#1c2600', '#212613', '#7fff00',
-    '#bfff7f', '#52a500', '#7ca552', '#3f7f00', '#5f7f3f', '#264c00', '#394c26', '#132600', '#1c2613', '#3fff00',
-    '#9fff7f', '#29a500', '#67a552', '#1f7f00', '#4f7f3f', '#134c00', '#2f4c26', '#092600', '#172613', '#00ff00',
-    '#7fff7f', '#00a500', '#52a552', '#007f00', '#3f7f3f', '#004c00', '#264c26', '#002600', '#132613', '#00ff3f',
-    '#7fff9f', '#00a529', '#52a567', '#007f1f', '#3f7f4f', '#004c13', '#264c2f', '#002609', '#132617', '#00ff7f',
-    '#7fffbf', '#00a552', '#52a57c', '#007f3f', '#3f7f5f', '#004c26', '#264c39', '#002613', '#13261c', '#00ffbf',
-    '#7fffdf', '#00a57c', '#52a591', '#007f5f', '#3f7f6f', '#004c39',
-    '#264c42', '#00261c', '#132621', '#00ffff', '#7fffff', '#00a5a5', '#52a5a5', '#007f7f', '#3f7f7f', '#004c4c',
-    '#264c4c', '#002626', '#132626', '#00bfff', '#7fdfff', '#007ca5', '#5291a5', '#005f7f', '#3f6f7f', '#00394c',
-    '#26424c', '#001c26', '#132126', '#007fff', '#7fbfff', '#0052a5', '#527ca5', '#003f7f', '#3f5f7f', '#00264c',
-    '#26394c', '#001326', '#131c26', '#003fff', '#7f9fff', '#0029a5', '#5267a5', '#001f7f', '#3f4f7f', '#00134c',
-    '#262f4c', '#000926', '#131726', '#0000ff', '#7f7fff', '#0000a5', '#5252a5', '#00007f', '#3f3f7f', '#00004c',
-    '#26264c', '#000026', '#131326', '#3f00ff', '#9f7fff', '#2900a5', '#6752a5', '#1f007f', '#4f3f7f', '#13004c',
-    '#2f264c', '#090026', '#171326', '#7f00ff', '#bf7fff', '#5200a5', '#7c52a5', '#3f007f', '#5f3f7f', '#26004c',
-    '#39264c', '#130026', '#1c1326', '#bf00ff', '#df7fff', '#7c00a5', '#9152a5', '#5f007f', '#6f3f7f', '#39004c',
-    '#42264c', '#1c0026', '#211326', '#ff00ff', '#ff7fff', '#a500a5', '#a552a5', '#7f007f', '#7f3f7f', '#4c004c',
-    '#4c264c', '#260026', '#261326', '#ff00bf', '#ff7fdf', '#a5007c', '#a55291', '#7f005f', '#7f3f6f', '#4c0039',
-    '#4c2642', '#26001c', '#261321', '#ff007f', '#ff7fbf', '#a50052', '#a5527c', '#7f003f', '#7f3f5f', '#4c0026',
-    '#4c2639', '#260013', '#26131c', '#ff003f', '#ff7f9f', '#a50029', '#a55267', '#7f001f', '#7f3f4f', '#4c0013',
-    '#4c262f', '#260009', '#261317', '#545454', '#767676', '#a0a0a0', '#c0c0c0', '#e0e0e0', '#000000'
-]
 
 
 def is_dark_color(color: Color) -> bool:
@@ -225,7 +189,7 @@ class RenderContext:
             entry = ctb[aci]
             if entry.has_object_color():
                 # initialize with default AutoCAD palette
-                entry.color = hex_to_rgb(AUTOCAD_COLOR_INDEX[aci])
+                entry.color = int2rgb(DXF_DEFAULT_COLORS[aci])
         return ctb
 
     def set_layers_state(self, layers: Set[str], state=True):
@@ -408,7 +372,7 @@ def rgb_to_hex(rgb: Union[Tuple[int, int, int], Tuple[float, float, float]]) -> 
     return f'#{r:02x}{g:02x}{b:02x}'
 
 
-def hex_to_rgb(hex_string: Color) -> Tuple[int, int, int]:
+def hex_to_rgb(hex_string: Color) -> RGB:
     hex_string = hex_string.lstrip('#')
     assert len(hex_string) == 6
     r = int(hex_string[0:2], 16)
