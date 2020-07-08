@@ -312,10 +312,10 @@ class Frontend:
 
     def draw_polyline_entity(self, entity: DXFGraphic):
         dxftype = entity.dxftype()
-
         if dxftype == 'POLYLINE':
             e = cast(Polyface, entity)
             if e.is_polygon_mesh or e.is_poly_face_mesh:
+                # draw 3D mesh or poly-face entity
                 self.draw_mesh_builder_entity(
                     MeshBuilder.from_polyface(e),
                     self._resolve_properties(entity),
@@ -323,18 +323,31 @@ class Frontend:
                 return
 
         entity = cast(Union[LWPolyline, Polyline], entity)
-        if entity.has_width:  # draw banded 2D line
+        is_lwpolyline = dxftype == 'LWPOLYLINE'
+
+        if entity.has_width:  # draw banded 2D polyline
             properties = self._resolve_properties(entity)
+            elevation = 0.0
             ocs = entity.ocs()
-            trace = TraceBuilder.from_polyline(entity, segments=self.circle_approximation_count//2)
+            transform = ocs.transform
+            if transform:
+                if is_lwpolyline:  # stored as float
+                    elevation = entity.dxf.elevation
+                else:  # stored as vector (0, 0, elevation)
+                    elevation = entity.dxf.elevation.z
+
+            trace = TraceBuilder.from_polyline(entity, segments=self.circle_approximation_count // 2)
             for face in trace.faces():
-                points = ocs.points_to_wcs(Vector.generate(face))
+                if transform:
+                    points = ocs.points_to_wcs(Vector(v.x, v.y, elevation) for v in face)
+                else:
+                    points = Vector.generate(face)
                 self.out.draw_filled_polygon(points, properties)
             return
 
-        if not entity.has_arc:
+        if not entity.has_arc:  # draw 2D/3D polyline without arcs
             properties = self._resolve_properties(entity)
-            if dxftype == 'LWPOLYLINE':
+            if is_lwpolyline:
                 self.out.draw_line_string(Vector.generate(entity.vertices_in_wcs()), close=entity.closed,
                                           properties=properties)
             else:  # POLYLINE
@@ -347,6 +360,7 @@ class Frontend:
                 self.out.draw_line_string(vertices, close=entity.is_closed, properties=properties)
             return
 
+        # draw 2D polyline with arcs
         self.parent_stack.append(entity)
         self.out.set_current_entity(entity, tuple(self.parent_stack))
         # todo: end points of virtual entities are not in correct order
