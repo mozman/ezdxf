@@ -9,3 +9,4 @@ Version 0.14 - dev
 - NEW: `Arc.apply_construction_tool()` apply parameters from `ConstructionArc()`
 - NEW: `LWPolyline.has_width` property is ``True`` if any width attribute is set
 - NEW: `Polyline.has_width` property is ``True`` if any width attribute is set
+- NEW: `addons.drawing.Frontend()` supports width attributes of LWPOLYLINE and 2D POLYLINE entities

@@ -11,7 +11,6 @@ Add-ons
     - ACAD_TABLE
     - MLEADER ???
     - MLINE ???
-    - start- and end width support for 2D polylines
     - render POINT symbols
     - resolve fonts and pass them to `draw_text()`, 
       `get_font_measurements()` and `get_text_line_width()`
