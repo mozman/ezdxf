@@ -7,3 +7,4 @@ Version 0.14 - dev
   from LWPOLYLINE or 2D POLYLINE with width information.
 - NEW: `Arc.construction_tool()` returns the 2D `ConstructionArc()`
 - NEW: `Arc.apply_construction_tool()` apply parameters from `ConstructionArc()`
+- NEW: `LWPolyline.has_width` property is ``True`` if any width attribute is set

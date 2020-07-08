@@ -115,6 +115,18 @@ class LWPolyline(DXFGraphic):
         """ Returns ``True`` if LWPOLYLINE has an arc segment. """
         return any(bool(b) for x, y, s, e, b in self.lwpoints)
 
+    @property
+    def has_width(self) -> bool:
+        """ Returns ``True`` if LWPOLYLINE has any segment with width attributes or DXF attribute const_width != 0.
+
+        .. versionadded:: 0.14
+
+        """
+        if self.dxf.hasattr('const_width'):
+            # const_width overrides all individual start- or end width settings
+            return self.dxf.const_width != 0.0
+        return any((s or e) for x, y, s, e, b in self.lwpoints)
+
     def __len__(self) -> int:
         """ Returns count of polyline points. """
         return len(self.lwpoints)

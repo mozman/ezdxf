@@ -82,6 +82,34 @@ def test_write_dxf():
     assert result == expected
 
 
+def test_has_const_width():
+    pline = LWPolyline()
+    assert pline.has_width is False
+    pline.dxf.const_width = 1
+    assert pline.has_width is True
+
+
+def test_has_any_start_width():
+    pline = LWPolyline()
+    assert pline.has_width is False
+    pline.lwpoints.append((0, 0, .1, 0, 0))
+    assert pline.has_width is True
+
+
+def test_has_any_end_width():
+    pline = LWPolyline()
+    assert pline.has_width is False
+    pline.lwpoints.append((0, 0, 0, .1, 0))
+    assert pline.has_width is True
+
+
+def test_has_arc():
+    pline = LWPolyline()
+    assert pline.has_arc is False
+    pline.lwpoints.append((0, 0, 0, 0, 1))
+    assert pline.has_arc is True
+
+
 RESULT1 = """0
 LWPOLYLINE
 5
