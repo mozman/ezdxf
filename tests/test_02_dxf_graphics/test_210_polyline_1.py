@@ -175,3 +175,28 @@ def test_polyline3d_transform_interface():
     assert vertices[0] == (1, 1, 1)
     assert vertices[1] == (3, 1, 1)
     assert vertices[2] == (2, 2, 1)
+
+
+def test_2d_polyline_has_default_width():
+    assert Polyline.new().has_width is False
+    assert Polyline.new(dxfattribs={'default_start_width': .1}).has_width is True
+    assert Polyline.new(dxfattribs={'default_end_width': .1}).has_width is True
+
+
+def test_2d_polyline_has_any_start_width():
+    pline = Polyline.new()
+    pline.append_formatted_vertices([(0, 0, .1)], format='xys')
+    assert pline.has_width is True
+
+
+def test_2d_polyline_has_any_end_width():
+    pline = Polyline.new()
+    pline.append_formatted_vertices([(0, 0, .1)], format='xye')
+    assert pline.has_width is True
+
+
+def test_2d_polyline_has_any_arc():
+    pline = Polyline.new()
+    assert pline.has_arc is False
+    pline.append_formatted_vertices([(0, 0, 1.0)], format='xyb')
+    assert pline.has_arc is True

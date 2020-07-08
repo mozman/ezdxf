@@ -131,6 +131,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. autoattribute:: has_arc
 
+    .. autoattribute:: has_width
+
     .. automethod:: get_mode
 
     .. automethod:: m_close

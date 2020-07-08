@@ -268,6 +268,25 @@ class Polyline(DXFGraphic):
         else:
             return False
 
+    @property
+    def has_width(self) -> bool:
+        """ Returns ``True`` if 2D POLYLINE has default width values or any segment with width attributes.
+
+        .. versionadded:: 0.14
+
+        """
+        if self.is_2d_polyline:
+            if self.dxf.hasattr('default_start_width') and bool(self.dxf.default_start_width):
+                return True
+            if self.dxf.hasattr('default_end_width') and bool(self.dxf.default_end_width):
+                return True
+            for v in self.vertices:
+                if v.dxf.hasattr('start_width') and bool(v.dxf.start_width):
+                    return True
+                if v.dxf.hasattr('end_width') and bool(v.dxf.end_width):
+                    return True
+        return False
+
     def m_close(self, status=True) -> None:
         """
         Close POLYMESH in m direction if `status` is ``True`` (also closes POLYLINE),
@@ -330,7 +349,10 @@ class Polyline(DXFGraphic):
         if self.dxf.hasattr('linetype'):
             dxfattribs['linetype'] = self.dxf.linetype
 
-        create_vertex = self.doc.dxffactory.create_db_entry
+        if self.doc:
+            create_vertex = self.doc.dxffactory.create_db_entry
+        else:
+            create_vertex = factory.new
 
         for point in points:
             attribs = vertex_attribs(point, format)
