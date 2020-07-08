@@ -4,7 +4,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence, Set
 from ezdxf.lldxf import const
-from ezdxf.addons.drawing.type_hints import Color
+from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.addons import acadctb
 from ezdxf.sections.table import table_key as layer_key
 from ezdxf.tools.rgb import luminance
@@ -94,8 +94,9 @@ class Properties:
         # DXF: ("DASHDOTX2", "Dash dot (2x) ____  .  ____  .  ____  .  ____", [2.4, 2.0, -0.2, 0.0, -0.2])
         # linetype_pattern: [2.0, 0.2, 0.0, 0.2] = line-gap-point-gap
         # Stored as tuple, so pattern could be used as key for caching.
-        # SVG dash-pattern does not support points, so a minimal line length has to be used, which alters
-        # the overall line appearance a little bit - but linetype mapping will never be perfect.
+        # SVG dash-pattern does not support points, so a minimal line length (maybe inferred from linewidth?)
+        # has to be used, which alters# the overall line appearance a little bit - but linetype
+        # mapping will never be perfect.
         # The continuous pattern is an empty tuple ()
         self.linetype_pattern: Tuple[float, ...] = CONTINUOUS_PATTERN
         self.linetype_scale: float = 1.0
@@ -105,6 +106,16 @@ class Properties:
 
     def __str__(self):
         return f'({self.color}, {self.linetype_name}, {self.lineweight}, {self.layer})'
+
+    @property
+    def rgb(self) -> RGB:
+        """ Returns color as RGB tuple."""
+        return hex_to_rgb(self.color[:7])  # ignore alpha if present
+
+    @property
+    def luminance(self) -> float:
+        """ Returns perceived color luminance in range [0, 1] from dark to light. """
+        return luminance(self.rgb)
 
 
 class LayerProperties(Properties):
