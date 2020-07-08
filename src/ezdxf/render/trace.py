@@ -115,8 +115,8 @@ class LinearTrace(AbstractTrace):
         """
         stations = self._stations
         count = len(stations)
-        if count < 2:
-            raise ValueError('Two or more stations required.')
+        if count < 2:  # Two or more stations required to create faces
+            return
 
         def offset_rays(segment: int) -> Tuple[ConstructionRay, ConstructionRay]:
             """ Create offset rays from segment offset vertices. """
@@ -289,8 +289,8 @@ class CurvedTrace(AbstractTrace):
         """ Yields all faces as 4-tuples of :class:`~ezdxf.math.Vec2` objects.
         """
         count = len(self._stations)
-        if count < 2:
-            raise ValueError('Two or more stations required.')
+        if count < 2:  # Two or more stations required to create faces
+            return
 
         vtx0 = None
         vtx1 = None
@@ -394,11 +394,11 @@ class TraceBuilder(Sequence):
             points = []
             for vertex in polyline.vertices:
                 location = Vec2(vertex.dxf.location)
-                if vertex.dxf.has_attr('start_width'):
+                if vertex.dxf.hasattr('start_width'):
                     start_width = vertex.dxf.start_width
                 else:
                     start_width = default_start_width
-                if vertex.dxf.has_attr('end_width'):
+                if vertex.dxf.hasattr('end_width'):
                     end_width = vertex.dxf.end_width
                 else:
                     end_width = default_end_width

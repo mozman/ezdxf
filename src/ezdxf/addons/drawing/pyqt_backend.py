@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Optional, Tuple, List, Union
+from typing import Optional, Tuple, List, Union, Iterable
 
 from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 
@@ -185,7 +185,7 @@ class PyQtBackend(DrawingBackend):
         self._set_item_data(item)
         self.scene.addItem(item)
 
-    def draw_filled_polygon(self, points: List[Vector], properties: Properties) -> None:
+    def draw_filled_polygon(self, points: Iterable[Vector], properties: Properties) -> None:
         brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
         polygon = qg.QPolygonF()
         for p in points:

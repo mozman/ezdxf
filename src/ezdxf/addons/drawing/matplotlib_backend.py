@@ -3,7 +3,7 @@
 # License: MIT License
 import math
 from math import degrees
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple, Iterable
 
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
@@ -67,7 +67,7 @@ class MatplotlibBackend(DrawingBackend):
             self.ax.add_patch(Circle((pos.x, pos.y), radius=self.point_size,
                                      facecolor=color, edgecolor=None, zorder=self._get_z()))
 
-    def draw_filled_polygon(self, points: List[Vector], properties: Properties):
+    def draw_filled_polygon(self, points: Iterable[Vector], properties: Properties):
         self.ax.fill(*zip(*((p.x, p.y) for p in points)), color=properties.color, zorder=self._get_z())
 
     def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float):

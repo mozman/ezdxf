@@ -14,9 +14,9 @@ from ezdxf.entities import DXFGraphic, Insert, MText, Polyline, LWPolyline, Face
     Spline, Hatch, Attrib, Text, Ellipse, Polyface
 from ezdxf.entities.dxfentity import DXFTagStorage
 from ezdxf.layouts import Layout
-from ezdxf.math import Vector, Z_AXIS, ConstructionEllipse, linspace, OCS
+from ezdxf.math import Vector, Z_AXIS, ConstructionEllipse, linspace
 from ezdxf.render import MeshBuilder
-from ezdxf.render.forms import close_polygon
+from ezdxf.render.trace import TraceBuilder
 
 __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
@@ -24,7 +24,7 @@ INFINITE_LINE_LENGTH = 25
 
 COMPOSITE_ENTITY_TYPES = {
     # Unsupported types, represented as DXFTagStorage(), will sorted out in Frontend.draw_entities().
-    'INSERT', 'POLYLINE', 'LWPOLYLINE',
+    'INSERT',
     # This types have a virtual_entities() method, which returns the content of the associated anonymous block
     'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'ACAD_TABLE',
 }
@@ -323,6 +323,15 @@ class Frontend:
                 return
 
         entity = cast(Union[LWPolyline, Polyline], entity)
+        if entity.has_width:  # draw banded 2D line
+            properties = self._resolve_properties(entity)
+            ocs = entity.ocs()
+            trace = TraceBuilder.from_polyline(entity, segments=self.circle_approximation_count//2)
+            for face in trace.faces():
+                points = ocs.points_to_wcs(Vector.generate(face))
+                self.out.draw_filled_polygon(points, properties)
+            return
+
         if not entity.has_arc:
             properties = self._resolve_properties(entity)
             if dxftype == 'LWPOLYLINE':

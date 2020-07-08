@@ -90,7 +90,7 @@ class DrawingBackend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_filled_polygon(self, points: List[Vector], properties: Properties) -> None:
+    def draw_filled_polygon(self, points: Iterable[Vector], properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
