@@ -3,6 +3,7 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from typing import Tuple
+import math
 
 RGB = Tuple[int, int, int]
 
@@ -27,6 +28,15 @@ def aci2rgb(index: int) -> RGB:
     if index < 1:
         raise IndexError(index)
     return int2rgb(dxf_default_colors[index])
+
+
+def luminance(color: RGB) -> float:
+    """ Returns perceived luminance for a RGB color in the range [0.0, 1.0]  from dark to light. """
+    r, g, b = color
+    r = float(r) / 255.0
+    g = float(g) / 255.0
+    b = float(b) / 255.0
+    return round(math.sqrt(0.299 * r ** 2 + 0.587 * g ** 2 + 0.114 * b ** 2), 3)
 
 
 dxf_default_colors = [

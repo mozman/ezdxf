@@ -7,6 +7,7 @@ from ezdxf.lldxf import const
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons import acadctb
 from ezdxf.sections.table import table_key as layer_key
+from ezdxf.tools.rgb import luminance
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Layout, Table, Layer, Linetype, Drawing
@@ -60,7 +61,8 @@ AUTOCAD_COLOR_INDEX = [
 
 
 def is_dark_color(color: Color) -> bool:
-    return color <= MODEL_SPACE_BG_COLOR  # todo: remove hack
+    luma = luminance(hex_to_rgb(color))
+    return luma <= 0.2
 
 
 class Properties:
