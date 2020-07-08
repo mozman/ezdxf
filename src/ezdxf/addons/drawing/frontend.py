@@ -334,10 +334,10 @@ class Frontend:
                 if is_lwpolyline:  # stored as float
                     elevation = entity.dxf.elevation
                 else:  # stored as vector (0, 0, elevation)
-                    elevation = entity.dxf.elevation.z
+                    elevation = Vector(entity.dxf.elevation).z
 
             trace = TraceBuilder.from_polyline(entity, segments=self.circle_approximation_count // 2)
-            for face in trace.faces():
+            for face in trace.faces():  # face is a 4-tuple of Vec2()
                 if transform:
                     points = ocs.points_to_wcs(Vector(v.x, v.y, elevation) for v in face)
                 else:
