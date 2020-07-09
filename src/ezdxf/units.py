@@ -1,6 +1,7 @@
 # Created: 2019-01-05
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
+from typing import Optional
 
 MSP_METRIC_UNITS_FACTORS = {
     'km': .001,
@@ -45,3 +46,51 @@ class PaperSpaceUnits:
         paper_space_units = value * self.scale * self._psp.factor(unit)
         model_space_units = paper_space_units * self._msp.factor(self.unit)
         return model_space_units
+
+
+# Layout units are stored as enum in the associated BLOCK_RECORD: BlockRecord.dxf.units
+# or as  optional XDATA for all DXF versions
+# 1000: "ACAD"
+# 1001: "DesignCenter Data" (optional)
+# 1002: "{"
+# 1070: Autodesk Design Center version number
+# 1070: Insert units: like 'units'
+# 1002: "}"
+# The model space units are also stored as enum in the header var $INSUNITS
+
+# units stored as enum in BlockRecord.dxf.units
+# 0 = Unitless
+# 1 = Inches
+# 2 = Feet
+# 3 = Miles
+# 4 = Millimeters
+# 5 = Centimeters
+# 6 = Meters
+# 7 = Kilometers
+# 8 = Microinches = 1e-6 in
+# 9 = Mils = 0.001 in
+# 10 = Yards
+# 11 = Angstroms = 1e-10m
+# 12 = Nanometers = 1e-9m
+# 13 = Microns = 1e-6m
+# 14 = Decimeters = 0.1m
+# 15 = Decameters = 10m
+# 16 = Hectometers = 100m
+# 17 = Gigameters = 1e+9 m
+# 18 = Astronomical units = 149 597 870 700m = 1.581 250 74 e−5 ly =  4.848 136 81 e−6 Parsec
+# 19 = Light years = 9.46e15 m
+# 20 = Parsecs =  3.09e16 m
+# 21 = US Survey Feet
+# 22 = US Survey Inch
+# 23 = US Survey Yard
+# 24 = US Survey Mile
+_unit_spec = [
+    None, 'in', 'ft', 'mi', 'mm', 'cm', 'm', 'km',
+    'µin', 'mil', 'yd', 'Å', 'nm', 'µm', 'dm', 'dam', 'hm', 'gm',
+    'au', 'ly', 'pc',
+    None, None, None, None,
+]
+
+
+def decode(enum: int) -> Optional[str]:
+    return _unit_spec[int(enum)]

@@ -22,33 +22,7 @@ acdb_blockrec = DefSubclass('AcDbBlockTableRecord', {
     'layout': DXFAttr(340, default='0'),  # handle to associated DXF LAYOUT object
     'explode': DXFAttr(280, default=1, dxfversion=DXF2007),  # 0 = can not explode; 1 = can explode
     'scale': DXFAttr(281, default=0, dxfversion=DXF2007),  # 0 = scale non uniformly; 1 = scale uniformly
-    'units': DXFAttr(70, default=0, dxfversion=DXF2007),  # ezdxf.InsertUnits
-    # 0 = Unitless
-    # 1 = Inches
-    # 2 = Feet
-    # 3 = Miles
-    # 4 = Millimeters
-    # 5 = Centimeters
-    # 6 = Meters
-    # 7 = Kilometers
-    # 8 = Microinches
-    # 9 = Mils
-    # 10 = Yards
-    # 11 = Angstroms
-    # 12 = Nanometers
-    # 13 = Microns
-    # 14 = Decimeters
-    # 15 = Decameters
-    # 16 = Hectometers
-    # 17 = Gigameters
-    # 18 = Astronomical units
-    # 19 = Light years
-    # 20 = Parsecs
-    # 21 = US Survey Feet
-    # 22 = US Survey Inch
-    # 23 = US Survey Yard
-    # 24 = US Survey Mile
-    # ---------------------
+    'units': DXFAttr(70, default=0, dxfversion=DXF2007),  # see ezdxf/units.py
     # 310: Binary data for bitmap preview (optional) - removed (ignored) by ezdxf
 })
 

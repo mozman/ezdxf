@@ -50,6 +50,8 @@ BaseLayout
 
     .. autoattribute:: is_block_layout
 
+    .. autoattribute:: units
+
     .. automethod:: __len__
 
     .. automethod:: __iter__

@@ -25,6 +25,18 @@ def test_dxffactory_property(doc, modelspace):
     assert doc.dxffactory is line.dxffactory
 
 
+def test_default_properties(modelspace):
+    assert modelspace.units == 0
+
+
+def test_set_units(modelspace):
+    assert modelspace.units == 0
+    modelspace.units = 6
+    assert modelspace.units == 6
+    # reset - because module scope
+    modelspace.units = 0
+
+
 def test_delete_entity():
     doc = ezdxf.new('R12')
     layout = doc.modelspace()

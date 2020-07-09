@@ -73,6 +73,22 @@ class BaseLayout(CreatorInterface):
         """ ``True`` if not any kind of modelspace or paperspace layout, just a regular block definition. """
         return self.block_record.is_block_layout
 
+    @property
+    def units(self) -> int:
+        """ Get/Set drawing units as enum, see also :ref:`set drawing units`.
+        """
+        # todo: doesn't care about units stored in XDATA, see ezdxf/units.py
+        return self.block_record.dxf.units
+
+    @units.setter
+    def units(self, value: int) -> None:
+        """ Set drawing units as enum. """
+        value = int(value)
+        if 0 <= value < 25:
+            self.block_record.dxf.units = value
+        else:
+            raise DXFValueError(f'Invalid unit enum: {value}')
+
     def get_extension_dict(self) -> 'Dictionary':
         """
         Returns the associated extension dictionary, creates a new one if necessary.
