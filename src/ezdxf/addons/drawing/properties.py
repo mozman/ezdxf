@@ -96,6 +96,7 @@ DEFAULT_LAYER_PROPERTIES = LayerProperties()
 class LayoutProperties:
     def __init__(self):
         self.name: str = 'Model'  # tab/display  name
+        self.units = 0  # default is unit less
         self._background_color: Color = MODEL_SPACE_BG_COLOR
         self._default_color: Color = '#ffffff'
         self._has_dark_background: bool = True
@@ -112,7 +113,8 @@ class LayoutProperties:
     def has_dark_background(self) -> bool:
         return self._has_dark_background
 
-    def set_layout(self, layout: 'Layout', bg: Optional[Color] = None, fg: Optional[Color] = None) -> None:
+    def set_layout(self, layout: 'Layout', bg: Optional[Color] = None, fg: Optional[Color] = None,
+                   units: Optional[int] = None) -> None:
         self.name = layout.name
         if bg is None:
             if self.name == 'Model':
@@ -120,6 +122,10 @@ class LayoutProperties:
             else:
                 bg = PAPER_SPACE_BG_COLOR
         self.set_colors(bg, fg)
+        if units is None:
+            self.units = layout.units
+        else:
+            self.units = int(units)
 
     def set_colors(self, bg: Color, fg: Color = None) -> None:
         self._background_color = bg
@@ -140,9 +146,17 @@ class RenderContext:
         # Always consider: entity layer may not exist
         # Layer name as key is normalized, most likely name.lower(), but may change in the future.
         self.layers: Dict[str, LayerProperties] = dict()
+        self.units = 0  # store modelspace units as enum, see ezdxf/units.py
         if doc:
             for layer in doc.layers:  # type: Layer
                 self.add_layer(layer)
+            self.units = doc.header.get('$INSBASE', 0)
+            if self.units == 0:
+                if doc.header.get('$MEASUREMENT', 1) == 1:
+                    self.units = 6  # 1 m
+                else:
+                    self.units = 1  # 1 in
+        self.current_layout.units = self.units
 
     def add_layer(self, layer: 'Layer') -> None:
         properties = LayerProperties()
@@ -208,7 +222,7 @@ class RenderContext:
                 layer.is_visible = not state
 
     def set_current_layout(self, layout: 'Layout'):
-        self.current_layout.set_layout(layout)
+        self.current_layout.set_layout(layout, units=self.units)
 
     @property
     def is_block_context(self) -> bool:
