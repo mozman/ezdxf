@@ -75,14 +75,16 @@ class BaseLayout(CreatorInterface):
 
     @property
     def units(self) -> int:
-        """ Get/Set drawing units as enum, see also :ref:`set drawing units`.
+        """ Get/Set layout/block drawing units as enum, see also :ref:`set drawing units`.
         """
         # todo: doesn't care about units stored in XDATA, see ezdxf/units.py
+        # Don't know what this units are used for, but header var $INSUNITS
+        # are the real units of the model space.
         return self.block_record.dxf.units
 
     @units.setter
     def units(self, value: int) -> None:
-        """ Set drawing units as enum. """
+        """ Set layout/block drawing units as enum. """
         value = int(value)
         if 0 <= value < 25:
             self.block_record.dxf.units = value
