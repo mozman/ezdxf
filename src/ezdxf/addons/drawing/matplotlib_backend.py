@@ -18,12 +18,22 @@ from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color, Radians
 from ezdxf.math import Vector, param_to_angle, Matrix44
 
+# matplotlib docs: https://matplotlib.org/index.html
+
+# line style:
+# https://matplotlib.org/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D.set_linestyle
+# https://matplotlib.org/gallery/lines_bars_and_markers/linestyles.html
+
+# line width:
+# https://matplotlib.org/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D.set_linewidth
+# points unit (pt), 1pt = 1/72 inch, 1pt = 0.3527mm
+POINTS = 1.0 / 0.3527  # mm -> points
+
 
 class MatplotlibBackend(DrawingBackend):
     def __init__(self, ax: plt.Axes,
                  *,
                  adjust_figure: bool = True,
-                 line_width: float = 0.5,
                  point_size: float = 2.0,
                  point_size_relative: bool = True,
                  font: FontProperties = FontProperties(),
@@ -41,7 +51,6 @@ class MatplotlibBackend(DrawingBackend):
         self.ax.autoscale(False)
         self.ax.set_aspect('equal', 'datalim')
         self._current_z = 0
-        self.line_width = line_width
         self.point_size = point_size
         self.point_size_relative = point_size_relative
         self.font = font
@@ -56,8 +65,13 @@ class MatplotlibBackend(DrawingBackend):
         self.ax.set_facecolor(color)
 
     def draw_line(self, start: Vector, end: Vector, properties: Properties):
-        self.ax.add_line(Line2D((start.x, end.x), (start.y, end.y),
-                                linewidth=self.line_width, color=properties.color, zorder=self._get_z()))
+        self.ax.add_line(
+            Line2D(
+                (start.x, end.x), (start.y, end.y),
+                linewidth=properties.lineweight * POINTS,
+                color=properties.color,
+                zorder=self._get_z()
+            ))
 
     def draw_point(self, pos: Vector, properties: Properties):
         color = properties.color
@@ -107,8 +121,11 @@ class MatplotlibBackend(DrawingBackend):
             start, end = param_to_angle(ratio, draw_angles[0]), param_to_angle(ratio, draw_angles[1])
             start_degrees, end_degrees = degrees(start), degrees(end)
 
-        arc = Arc((center.x, center.y), width, height, color=properties.color, linewidth=self.line_width,
-                  angle=degrees(angle), theta1=start_degrees, theta2=end_degrees, zorder=self._get_z())
+        arc = Arc(
+            (center.x, center.y), width, height,
+            color=properties.color,
+            linewidth=properties.lineweight * POINTS,
+            angle=degrees(angle), theta1=start_degrees, theta2=end_degrees, zorder=self._get_z())
         self.ax.add_patch(arc)
 
     def clear(self):
