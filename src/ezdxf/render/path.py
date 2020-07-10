@@ -1,10 +1,11 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 # Created: 2020-07-10
-from typing import TYPE_CHECKING, List, Tuple, Iterable
-from collections.abc import Sequence
+from typing import TYPE_CHECKING, List, Tuple, Iterable, Sequence
+from collections import abc
 from enum import Enum
-from ezdxf.math import Vector, NULLVEC, Bezier4P, Matrix44
+import math
+from ezdxf.math import Vector, NULLVEC, Bezier4P, Matrix44, bulge_to_arc, cubic_bezier_from_arc
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import LWPolyline, Polyline, Vertex
@@ -18,7 +19,7 @@ class Command(Enum):
     CUBIC = 2
 
 
-class Path(Sequence):
+class Path(abc.Sequence):
     def __init__(self, start: 'Vertex' = NULLVEC):
         self._start = Vector(start)
         self._commands: List[Tuple] = []
@@ -51,11 +52,56 @@ class Path(Sequence):
 
     @classmethod
     def from_lwpolyline(cls, lwpolyline: 'LWPolyline') -> 'Path':
-        pass
+        assert lwpolyline.dxftype() == 'LWPOLYLINE'
+        path = cls()
+        path._setup_polyline(lwpolyline.points('xyb'), close=lwpolyline.closed)
+        return path
 
     @classmethod
     def from_polyline(cls, polyline: 'Polyline') -> 'Path':
-        pass
+        assert polyline.dxftype() == 'POLYLINE'
+        points = [vertex.format('xyb') for vertex in polyline.vertices]
+        path = cls()
+        path._setup_polyline(points, close=polyline.is_closed)
+        return path
+
+    def _setup_polyline(self, points: Iterable[Sequence[float]], close: bool) -> None:
+        def bulge_to(p1: Vector, p2: Vector, bulge: float):
+            center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
+            curves = list(
+                cubic_bezier_from_arc(Vector(center), radius, math.degrees(start_angle), math.degrees(end_angle)))
+
+            if not curves[0].control_points[0].isclose(p1):
+                # reverse all curves
+                curves = list(c.reverse() for c in curves)
+                curves.reverse()
+
+            for curve in curves:
+                pts = curve.control_points
+                self.cubic_to(pts[3], pts[1], pts[2])
+
+        prev_point = None
+        prev_bulge = 0
+        for x, y, bulge in points:
+            point = Vector(x, y)
+            if prev_point is None:
+                self.start = point
+                prev_point = point
+                prev_bulge = bulge
+                continue
+
+            if prev_bulge:
+                bulge_to(prev_point, point, prev_bulge)
+            else:
+                self.line_to(point)
+            prev_point = point
+            prev_bulge = bulge
+
+        if close and not self.start.isclose(self.end):
+            if prev_bulge:
+                bulge_to(self.end, self.start, prev_bulge)
+            else:
+                self.line_to(self.start)
 
     @classmethod
     def from_hatch_polyline_path(cls, path: 'PolylinePath') -> 'Path':
