@@ -22,3 +22,4 @@ rendering engine in the sense of true graphical rendering for screen or paper.
     forms
     mesh
     trace
+    path

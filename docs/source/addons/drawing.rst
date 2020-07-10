@@ -1,7 +1,4 @@
 .. module:: ezdxf.addons.drawing
-    :noindex:
-
-.. _draw:
 
 Drawing / Export Addon
 ======================
@@ -9,7 +6,8 @@ Drawing / Export Addon
 This add-on provides the functionality to render a DXF document to produce a rasterized or vector-graphic image which
 can be saved to a file or viewed interactively depending on the backend being used.
 
-The module provides two scripts which can be run to save rendered images to files or view an interactive visualisation
+The module provides two example scripts in the folder ``examples/addons/drawing`` which can be run to save rendered
+images to files or view an interactive visualisation
 
 .. code-block::
 
@@ -34,7 +32,7 @@ Example for the usage of the :mod:`matplotlib` backend:
     import matplotlib.pyplot as plt
     import ezdxf
     from ezdxf.addons.drawing import RenderContext, Frontend
-    from ezdxf.addons.drawing.matplotlib_backend import MatplotlibBackend
+    from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 
     doc = ezdxf.readfile('your.dxf')
     msp = doc.modelspace()
@@ -51,15 +49,16 @@ Details
 
 The rendering is performed in two stages. The front-end traverses the DXF document structure, converting each
 encountered entity into primitive drawing commands. These commands are fed to a back-end which implements the interface:
-:class:`ezdxf.addons.drawing.backend_interface.DrawingBackend`.
+:class:`~ezdxf.addons.drawing.backend.Backend`.
 Currently a PyQt5 (QGraphicsScene based) and Matplotlib backend are implemented.
 
 Although the resulting images will not be pixel-perfect with AutoCAD (which was taken as the ground truth when
 developing this add-on) great care has been taken to achieve similar behavior in some areas:
 
 - The algorithm for determining color should match AutoCAD. However, the color palette is not stored in the dxf file,
-  so the chosen colors may be different to what is expected. The :class:`ezdxf.addons.drawing.colors.ColorContext` class
-  supports passing a custom color palette but uses the same palette as AutoCAD by default.
+  so the chosen colors may be different to what is expected. The :class:`~ezdxf.addons.drawing.properties.RenderContext`
+  class supports passing a plot style table (:term:`CTB`-file) as custom color palette but uses the same palette as AutoCAD
+  by default.
 - Text rendering is quite accurate, text positioning, alignment and word wrapping are very faithful. Differences may
   occur if a different font from what was used by the CAD application but even in that case, for supported backends,
   measurements are taken of the font being used to match text as closely as possible.
@@ -72,6 +71,7 @@ see `drawing.md` in the ezdxf repository for additional behaviours documented du
 
 Limitations
 -----------
+
 - Patterns, line styles and line widths are ignored
 - rich text formatting is ignored (drawn as plain text)
 - If the backend does not match the font then the exact text placement and wrapping may appear slightly different
@@ -90,7 +90,7 @@ Limitations
 
 Future Possible Improvements
 ----------------------------
-- render polylines using draw_line_string if it does not contain any arcs
+
 - pass the font to backend if available
 - deal with nested polygons/hatches by triangulating them: Triangulation_
 - both the matplotlib and pyqt backends have built-in support for rendering hatched patterns

@@ -152,7 +152,7 @@ class RenderContext:
             for layer in doc.layers:  # type: Layer
                 self.add_layer(layer)
             self.linetype_scale = doc.header.get('$LTSCALE', 1.0)
-            self.units = doc.header.get('$INSBASE', 0)
+            self.units = doc.header.get('$INSUNITS', 0)
             if self.units == 0:
                 # set default units based on measurement system: imperial (0) / metric (1)
                 if doc.header.get('$MEASUREMENT', 1) == 1:

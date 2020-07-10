@@ -6,7 +6,7 @@ from typing import Optional, Tuple, List, Union, Iterable
 
 from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 
-from ezdxf.addons.drawing.backend_interface import DrawingBackend
+from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Radians, Color
 from ezdxf.addons.drawing.properties import Properties
@@ -103,7 +103,7 @@ class _BufferedArc:
         path.arcTo(self.rect, self.start_angle, self.span_angle)
 
 
-class PyQtBackend(DrawingBackend):
+class PyQtBackend(Backend):
     def __init__(self,
                  scene: qw.QGraphicsScene,
                  point_radius: float = 0.5,

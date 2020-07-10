@@ -5,7 +5,7 @@ import pytest
 
 plt = pytest.importorskip('matplotlib.pyplot')
 
-from ezdxf.addons.drawing.matplotlib_backend import MatplotlibBackend
+from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 
 
 @pytest.fixture()

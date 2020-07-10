@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ezdxf.addons.drawing.text import FontMeasurements
 
 
-class DrawingBackend(ABC):
+class Backend(ABC):
     def __init__(self):
         self._current_entity = None
         self._current_entity_stack = ()

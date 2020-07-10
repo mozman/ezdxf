@@ -5,7 +5,7 @@ import pytest
 
 qc = pytest.importorskip('PyQt5.QtCore')
 from PyQt5 import QtWidgets as qw
-from ezdxf.addons.drawing.pyqt_backend import PyQtBackend, _buffer_rect
+from ezdxf.addons.drawing.pyqt import PyQtBackend, _buffer_rect
 
 _app = None
 

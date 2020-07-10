@@ -4,13 +4,13 @@ from typing import Optional, Tuple, List
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext, Properties
-from ezdxf.addons.drawing.backend_interface import DrawingBackend, Radians
+from ezdxf.addons.drawing.backend import Backend, Radians
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.render.forms import cube
 from ezdxf.math import Vector, Matrix44, BSpline
 
 
-class BasicBackend(DrawingBackend):
+class BasicBackend(Backend):
     def __init__(self):
         super().__init__()
         self.collector = []

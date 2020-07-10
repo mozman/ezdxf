@@ -11,7 +11,7 @@ Add-ons
    r12writer
    iterdxf
    importer
-   draw
+   drawing
    dxf2code
    acadctb
    pycsg

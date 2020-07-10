@@ -8,7 +8,7 @@ from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 
 import ezdxf.lldxf.const as DXFConstants
-from ezdxf.addons.drawing.backend_interface import DrawingBackend
+from ezdxf.addons.drawing.backend import Backend
 from ezdxf.entities import MText, Text, Attrib
 from ezdxf.math import Matrix44, Vector
 
@@ -253,7 +253,7 @@ def _get_wcs_insert(text: AnyText) -> Vector:
         return text.dxf.insert
 
 
-def simplified_text_chunks(text: AnyText, out: DrawingBackend,
+def simplified_text_chunks(text: AnyText, out: Backend,
                            *,
                            debug_draw_rect: bool = False) -> Iterable[Tuple[str, Matrix44, float]]:
     """

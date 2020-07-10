@@ -1,0 +1,1 @@
+.. automodule:: ezdxf.render.path

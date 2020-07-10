@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 import ezdxf
 from ezdxf.addons.drawing import RenderContext, Frontend
-from ezdxf.addons.drawing.matplotlib_backend import MatplotlibBackend
+from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 
 
 def _main():

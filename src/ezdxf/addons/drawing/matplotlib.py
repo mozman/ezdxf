@@ -12,7 +12,7 @@ from matplotlib.patches import Arc, Circle, PathPatch
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
 
-from ezdxf.addons.drawing.backend_interface import DrawingBackend
+from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color, Radians
@@ -30,7 +30,7 @@ from ezdxf.math import Vector, param_to_angle, Matrix44
 POINTS = 1.0 / 0.3527  # mm -> points
 
 
-class MatplotlibBackend(DrawingBackend):
+class MatplotlibBackend(Backend):
     def __init__(self, ax: plt.Axes,
                  *,
                  adjust_figure: bool = True,

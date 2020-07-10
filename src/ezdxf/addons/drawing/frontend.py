@@ -6,7 +6,7 @@ import math
 from math import radians
 from typing import Iterable, cast, Union, List, Callable
 
-from ezdxf.addons.drawing.backend_interface import DrawingBackend
+from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import RenderContext, VIEWPORT_COLOR, Properties
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.utils import normalize_angle, get_tri_or_quad_points, get_draw_angles
@@ -45,7 +45,7 @@ class Frontend:
 
     """
 
-    def __init__(self, ctx: RenderContext, out: DrawingBackend, visibility_filter: Callable[[DXFGraphic], bool] = None):
+    def __init__(self, ctx: RenderContext, out: Backend, visibility_filter: Callable[[DXFGraphic], bool] = None):
         # RenderContext contains all information to resolve resources for a specific DXF document.
         self.ctx = ctx
 

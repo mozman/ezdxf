@@ -12,7 +12,7 @@ from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext
-from ezdxf.addons.drawing.pyqt_backend import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
+from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFEntityStack
 from ezdxf.drawing import Drawing
 

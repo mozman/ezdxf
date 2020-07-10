@@ -1,5 +1,4 @@
 .. module:: ezdxf.addons.importer
-    :noindex:
 
 .. _importer:
 
