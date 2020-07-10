@@ -71,14 +71,15 @@ class Path(abc.Sequence):
             curves = list(
                 cubic_bezier_from_arc(Vector(center), radius, math.degrees(start_angle), math.degrees(end_angle)))
 
+            # Curves from p1 to p2?
             if not curves[0].control_points[0].isclose(p1):
                 # reverse all curves
                 curves = list(c.reverse() for c in curves)
                 curves.reverse()
 
             for curve in curves:
-                pts = curve.control_points
-                self.cubic_to(pts[3], pts[1], pts[2])
+                _, ctrl1, ctrl2, end = curve.control_points
+                self.cubic_to(end, ctrl1, ctrl2)
 
         prev_point = None
         prev_bulge = 0
