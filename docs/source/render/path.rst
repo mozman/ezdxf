@@ -45,6 +45,10 @@ cubic Bézier curves, other B-splines will be approximated.
 
     .. automethod:: cubic_to(location: Vector, ctrl1: Vector, ctrl2: Vector)
 
+    .. automethod:: transform(m: Matrix44) -> Path
+
+    .. automethod:: approximate(segments: int) -> Iterable[Vector]
+
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qtforpython/PySide2/QtGui/QPainterPath.html
 .. _SVG-Path: https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths

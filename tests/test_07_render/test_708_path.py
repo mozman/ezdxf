@@ -2,7 +2,8 @@
 # License: MIT License
 
 import pytest
-from ezdxf.render.path import Path, Vector
+from ezdxf.render.path import Path, Command
+from ezdxf.math import Vector, Matrix44
 
 
 def test_init():
@@ -23,14 +24,14 @@ def test_set_start():
 def test_line_to():
     path = Path()
     path.line_to((1, 2, 3))
-    assert path[0] == ('line', Vector(1, 2, 3))
+    assert path[0] == (Command.LINE, Vector(1, 2, 3))
     assert path.end == (1, 2, 3)
 
 
 def test_cubic_to():
     path = Path()
     path.cubic_to((1, 2, 3), (0, 1, 0), (0, 2, 0))
-    assert path[0] == ('cubic', (1, 2, 3), (0, 1, 0), (0, 2, 0))
+    assert path[0] == (Command.CUBIC, (1, 2, 3), (0, 1, 0), (0, 2, 0))
     assert path.end == (1, 2, 3)
 
 
@@ -62,6 +63,19 @@ def test_approximate_line_cubic():
     assert vertices[0] == (0, 0)
     assert vertices[1] == (2, 0)
     assert vertices[-1] == (4, 0)
+
+
+def test_transform():
+    path = Path()
+    path.line_to((2, 0))
+    path.cubic_to((4, 0), (2, 1), (4, 1))
+    p2 = path.transform(Matrix44.translate(1, 1, 0))
+    assert p2.start == (1, 1)
+    assert p2[0][1] == (3, 1)  # line to location
+    assert p2[1][1] == (5, 1)  # cubic to location
+    assert p2[1][2] == (3, 2)  # cubic ctrl1
+    assert p2[1][3] == (5, 2)  # cubic ctrl2
+    assert p2.end == (5, 1)
 
 
 if __name__ == '__main__':
