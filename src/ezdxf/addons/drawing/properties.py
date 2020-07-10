@@ -147,11 +147,14 @@ class RenderContext:
         # Layer name as key is normalized, most likely name.lower(), but may change in the future.
         self.layers: Dict[str, LayerProperties] = dict()
         self.units = 0  # store modelspace units as enum, see ezdxf/units.py
+        self.linetype_scale: float = 1.0  # overall modelspace linetype scaling
         if doc:
             for layer in doc.layers:  # type: Layer
                 self.add_layer(layer)
+            self.linetype_scale = doc.header.get('$LTSCALE', 1.0)
             self.units = doc.header.get('$INSBASE', 0)
             if self.units == 0:
+                # set default units based on measurement system: imperial (0) / metric (1)
                 if doc.header.get('$MEASUREMENT', 1) == 1:
                     self.units = 6  # 1 m
                 else:
