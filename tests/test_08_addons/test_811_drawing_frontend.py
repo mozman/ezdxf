@@ -44,15 +44,6 @@ class BasicBackend(DrawingBackend):
         self.collector = []
 
 
-class ExtendedBackend(BasicBackend):
-    @property
-    def has_spline_support(self):
-        return True
-
-    def draw_spline(self, spline: BSpline, properties: Properties) -> None:
-        self.collector.append(('spline', spline, properties))
-
-
 @pytest.fixture
 def doc():
     d = ezdxf.new()
@@ -75,17 +66,8 @@ def basic(doc, ctx):
     return Frontend(ctx, BasicBackend())
 
 
-@pytest.fixture
-def extended(doc, ctx):
-    return Frontend(ctx, ExtendedBackend())
-
-
 def test_basic_frontend_init(basic):
     assert isinstance(basic.out, BasicBackend)
-
-
-def test_extended_frontend_init(extended):
-    assert isinstance(extended.out, ExtendedBackend)
 
 
 def test_draw_layout(msp, basic):
@@ -254,14 +236,6 @@ def test_basic_spline(msp, basic):
     assert len(result) > 1
     entities = {e[0] for e in result}
     assert entities == {'line'}
-
-
-def test_extended_spline(msp, extended):
-    msp.add_spline(fit_points=[(0, 0), (3, 2), (4, 5), (6, 4), (12, 0)])
-    extended.draw_entities(msp)
-    result = extended.out.collector
-    assert len(result) == 1
-    assert result[0][0] == 'spline'
 
 
 def test_mesh(msp, basic):

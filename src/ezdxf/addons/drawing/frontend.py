@@ -216,16 +216,13 @@ class Frontend:
     def draw_spline_entity(self, entity: DXFGraphic) -> None:
         properties = self._resolve_properties(entity)
         spline = cast(Spline, entity).construction_tool()
-        if self.out.has_spline_support:
-            self.out.draw_spline(spline, properties)
-        else:
-            points = list(spline.approximate(
-                segments=self.spline_approximation_factor * len(spline.control_points))
-            )
-            self.out.start_path()
-            for a, b in zip(points, points[1:]):
-                self.out.draw_line(a, b, properties)
-            self.out.end_path()
+        points = list(spline.approximate(
+            segments=self.spline_approximation_factor * len(spline.control_points))
+        )
+        self.out.start_path()
+        for a, b in zip(points, points[1:]):
+            self.out.draw_line(a, b, properties)
+        self.out.end_path()
 
     def draw_point_entity(self, entity: DXFGraphic) -> None:
         properties = self._resolve_properties(entity)

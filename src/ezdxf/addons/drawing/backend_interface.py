@@ -78,13 +78,6 @@ class DrawingBackend(ABC):
             self.draw_line(prev, first, properties)
         self.end_path()
 
-    @property
-    def has_spline_support(self):
-        return False
-
-    def draw_spline(self, spline: BSpline, properties: Properties) -> None:
-        raise NotImplementedError
-
     @abstractmethod
     def draw_point(self, pos: Vector, properties: Properties) -> None:
         raise NotImplementedError
