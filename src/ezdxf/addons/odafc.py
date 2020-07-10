@@ -162,10 +162,14 @@ def _odafc_cmd(filename: str, in_folder: str, out_folder: str, fmt: str = 'DXF',
     return [exec_path, in_folder, out_folder, version, fmt, recurse, audit, filename]
 
 
-def _execute_odafc(cmd) -> bytes:
+def _execute_odafc(cmd) -> Optional[bytes]:
     logger.debug(f'run="{cmd}"')
-    result = subprocess.run(args=cmd, stdout=subprocess.PIPE, stderr=None)
-    if result.returncode != 0:
+    # New code from George-Jiang to solve the GUI pop-up problem
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags = subprocess.CREATE_NEW_CONSOLE | subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = subprocess.SW_HIDE
+    result = subprocess.Popen(args=cmd, stdout=subprocess.PIPE, stderr=None, startupinfo=startupinfo)
+    if result.returncode:
         msg = f'ODA File Converter returns error code: {result.returncode}'
         logger.debug(msg)
         raise ODAFCError(msg)
