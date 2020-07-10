@@ -922,7 +922,7 @@ class BSpline:
         )
 
     def reverse(self) -> 'BSpline':
-        """ Returns a new BSpline with revered control point order. """
+        """ Returns a new BSpline with reversed control point order. """
 
         def reverse_knots():
             for k in reversed(normalize_knots(self.knots())):

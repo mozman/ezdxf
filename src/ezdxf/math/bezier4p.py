@@ -143,6 +143,10 @@ class Bezier4P:
             prev_point = point
         return length
 
+    def reverse(self) -> 'Bezier4P':
+        """ Returns a new Bezier curve with reversed control point order. """
+        return Bezier4P(list(reversed(self.control_points)))
+
 
 def cubic_bezier_from_arc(
         center: Vector = (0, 0), radius: float = 1, start_angle: float = 0, end_angle: float = 360,
