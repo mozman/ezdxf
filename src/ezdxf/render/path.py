@@ -7,7 +7,7 @@ from enum import Enum
 import math
 from ezdxf.math import (
     Vector, NULLVEC, Bezier4P, Matrix44, bulge_to_arc, cubic_bezier_from_ellipse,
-    ConstructionEllipse, Z_AXIS, BSpline,
+    ConstructionEllipse, Z_AXIS, BSpline, OCS
 )
 
 if TYPE_CHECKING:
@@ -18,8 +18,8 @@ __all__ = ['Path', 'Command']
 
 
 class Command(Enum):
-    LINE = 1
-    CUBIC = 2
+    LINE_TO = 1
+    CURVE_TO = 2
 
 
 class Path(abc.Sequence):
@@ -58,22 +58,53 @@ class Path(abc.Sequence):
 
     @classmethod
     def from_lwpolyline(cls, lwpolyline: 'LWPolyline') -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.LWPolyline` entity. """
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.LWPolyline` entity, all vertices
+        transformed to WCS.
+        """
         assert lwpolyline.dxftype() == 'LWPOLYLINE'
         path = cls()
-        path._setup_polyline(lwpolyline.get_points('xyb'), close=lwpolyline.closed)
+        path._setup_polyline_2d(
+            lwpolyline.get_points('xyb'),
+            close=lwpolyline.closed,
+            ocs=lwpolyline.ocs(),
+            elevation=lwpolyline.dxf.elevation,
+        )
         return path
 
     @classmethod
     def from_polyline(cls, polyline: 'Polyline') -> 'Path':
-        """ Returns a :class:`Path` from a 2D :class:`~ezdxf.entities.Polyline` entity. """
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Polyline` entity, all vertices
+        transformed to WCS.        
+        """
         assert polyline.dxftype() == 'POLYLINE'
-        points = [vertex.format('xyb') for vertex in polyline.vertices]
         path = cls()
-        path._setup_polyline(points, close=polyline.is_closed)
+
+        if len(polyline.vertices) == 0:
+            return path
+
+        if polyline.is_3d_polyline:
+            path.start = polyline.vertices[0].dxf.location
+            for v in polyline.vertices[1:]:
+                path.line_to(v.dxf.location)
+            return path
+
+        points = [vertex.format('xyb') for vertex in polyline.vertices]
+        ocs = polyline.ocs()
+        if polyline.dxf.hasattr('elevation'):
+            elevation = Vector(polyline.dxf.elevation).z
+        else:
+            # Elevation attribute is mandatory, but you never know,
+            # take elevation from first vertex.
+            elevation = Vector(polyline.vertices[0].dxf.location).z
+        path._setup_polyline_2d(
+            points,
+            close=polyline.is_closed,
+            ocs=ocs,
+            elevation=elevation,
+        )
         return path
 
-    def _setup_polyline(self, points: Iterable[Sequence[float]], close: bool) -> None:
+    def _setup_polyline_2d(self, points: Iterable[Sequence[float]], close: bool, ocs: OCS, elevation: float) -> None:
         def bulge_to(p1: Vector, p2: Vector, bulge: float):
             center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
             ellipse = ConstructionEllipse.from_arc(
@@ -106,6 +137,16 @@ class Path(abc.Sequence):
             else:
                 self.line_to(self.start)
 
+        if ocs.transform or elevation:
+            self._to_wcs(ocs, elevation)
+
+    def _to_wcs(self, ocs: OCS, elevation: float):
+        self._start = ocs.to_wcs(self._start.replace(z=elevation))
+        for i, cmd in enumerate(self._commands):
+            new_cmd = [cmd[0]]
+            new_cmd.extend(ocs.points_to_wcs(p.replace(z=elevation) for p in cmd[1:]))
+            self._commands[i] = tuple(new_cmd)
+
     @classmethod
     def from_hatch_polyline_path(cls, path: 'PolylinePath') -> 'Path':
         """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch` polyline path. """
@@ -119,13 +160,13 @@ class Path(abc.Sequence):
     def line_to(self, location: 'Vertex') -> None:
         """ Add a line from actual path end point to `location`.
         """
-        self._commands.append((Command.LINE, Vector(location)))
+        self._commands.append((Command.LINE_TO, Vector(location)))
 
     def curve_to(self, location: 'Vertex', ctrl1: 'Vertex', ctrl2: 'Vertex') -> None:
         """ Add a cubic Bèzier-curve from actual path end point to `location`, `ctrl1` and
         `ctrl2` are the control points for the cubic Bèzier-curve.
         """
-        self._commands.append((Command.CUBIC, Vector(location), Vector(ctrl1), Vector(ctrl2)))
+        self._commands.append((Command.CURVE_TO, Vector(location), Vector(ctrl1), Vector(ctrl2)))
 
     def add_curves(self, curves: Iterable[Bezier4P]) -> None:
         """ Add multiple cubic Bèzier-curves to the path.
@@ -209,9 +250,9 @@ class Path(abc.Sequence):
         for cmd in self._commands:
             type_ = cmd[0]
             end_location = cmd[1]
-            if type_ == Command.LINE:
+            if type_ == Command.LINE_TO:
                 yield end_location
-            elif type_ == Command.CUBIC:
+            elif type_ == Command.CURVE_TO:
                 pts = iter(Bezier4P((start, cmd[2], cmd[3], end_location)).approximate(segments))
                 next(pts)  # skip first vertex
                 yield from pts
@@ -229,9 +270,9 @@ class Path(abc.Sequence):
         new_path = self.__class__(m.transform(self.start))
         for cmd in self._commands:
             type_ = cmd[0]
-            if type_ == Command.LINE:
+            if type_ == Command.LINE_TO:
                 new_path.line_to(m.transform(cmd[1]))
-            elif type_ == Command.CUBIC:
+            elif type_ == Command.CURVE_TO:
                 loc, ctrl1, ctrl2 = m.transform_vertices(cmd[1:])
                 new_path.curve_to(loc, ctrl1, ctrl2)
             else:

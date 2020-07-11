@@ -22,14 +22,14 @@ def test_init_start():
 def test_line_to():
     path = Path()
     path.line_to((1, 2, 3))
-    assert path[0] == (Command.LINE, Vector(1, 2, 3))
+    assert path[0] == (Command.LINE_TO, Vector(1, 2, 3))
     assert path.end == (1, 2, 3)
 
 
 def test_curve_to():
     path = Path()
     path.curve_to((1, 2, 3), (0, 1, 0), (0, 2, 0))
-    assert path[0] == (Command.CUBIC, (1, 2, 3), (0, 1, 0), (0, 2, 0))
+    assert path[0] == (Command.CURVE_TO, (1, 2, 3), (0, 1, 0), (0, 2, 0))
     assert path.end == (1, 2, 3)
 
 
@@ -104,6 +104,77 @@ def test_add_ellipse():
     path.add_ellipse(ellipse, reset=False)
     assert path.start == (0, 0)
     assert path.end == (2, 0)
+
+
+def test_lwpolyine_lines():
+    from ezdxf.entities import LWPolyline
+    pline = LWPolyline()
+    pline.append_points([(1, 1), (2, 1), (2, 2)], format='xy')
+    path = Path.from_lwpolyline(pline)
+    assert path.start == (1, 1)
+    assert path.end == (2, 2)
+    assert len(path) == 2
+
+    pline.dxf.elevation = 1.0
+    path = Path.from_lwpolyline(pline)
+    assert path.start == (1, 1, 1)
+    assert path.end == (2, 2, 1)
+
+
+POINTS = [
+    (0, 0, 0),
+    (3, 0, -1),
+    (6, 0, 0),
+    (9, 0, 0),
+    (9, -3, 0),
+]
+
+
+def test_lwpolyine_with_bulges():
+    from ezdxf.entities import LWPolyline
+    pline = LWPolyline()
+    pline.closed = True
+    pline.append_points(POINTS, format='xyb')
+    path = Path.from_lwpolyline(pline)
+    assert path.start == (0, 0)
+    assert path.end == (0, 0)  # closed
+    assert any(cmd[0] == Command.CURVE_TO for cmd in path)
+
+
+def test_polyine_lines():
+    from ezdxf.entities import Polyline
+    pline = Polyline()
+    pline.append_formatted_vertices([(1, 1), (2, 1), (2, 2)], format='xy')
+    path = Path.from_polyline(pline)
+    assert path.start == (1, 1)
+    assert path.end == (2, 2)
+    assert len(path) == 2
+
+    pline.dxf.elevation = (0, 0, 1)
+    path = Path.from_polyline(pline)
+    assert path.start == (1, 1, 1)
+    assert path.end == (2, 2, 1)
+
+
+def test_polyine_with_bulges():
+    from ezdxf.entities import Polyline
+    pline = Polyline()
+    pline.close(True)
+    pline.append_formatted_vertices(POINTS, format='xyb')
+    path = Path.from_polyline(pline)
+    assert path.start == (0, 0)
+    assert path.end == (0, 0)  # closed
+    assert any(cmd[0] == Command.CURVE_TO for cmd in path)
+
+
+def test_3d_polyine():
+    from ezdxf.entities import Polyline
+    pline = Polyline.new(dxfattribs={'flags': Polyline.POLYLINE_3D})
+    pline.append_vertices([(1, 1, 1), (2, 1, 3), (2, 2, 2)])
+    path = Path.from_polyline(pline)
+    assert path.start == (1, 1, 1)
+    assert path.end == (2, 2, 2)
+    assert len(path) == 2
 
 
 def test_approximate_lines():
