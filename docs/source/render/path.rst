@@ -13,25 +13,32 @@ Minimum common interface:
     - matplotlib.path.Path() codes:
     - MOVETO
     - LINETO
-    - CURVE4 - cubic bezier curve
+    - CURVE4 - cubic Bèzier-curve
 
 - PyQt: `QPainterPath`_
     - moveTo()
     - lineTo()
-    - cubicTo() - cubic bezier curve
+    - cubicTo() - cubic Bèzier-curve
+
+- PyCairo: `Context`_
+    - move_to()
+    - line_to()
+    - curve_to() - cubic Bèzier-curve
 
 - SVG: `SVG-Path`_
     - "M" - absolute move to
     - "L" - absolute line to
-    - "C" - absolute cubic bezier curve
+    - "C" - absolute cubic Bèzier-curve
 
-ARC and ELLIPSE entities are approximated by multiple cubic Bézier curves, which are close enough
+ARC and ELLIPSE entities are approximated by multiple cubic Bézier-curves, which are close enough
 for display rendering. Non-rational SPLINES of 3rd degree can be represented exact as multiple
-cubic Bézier curves, other B-splines will be approximated.
+cubic Bézier-curves, other B-splines will be approximated.
 
 .. class:: Path
 
     .. autoattribute:: start
+
+    .. autoattribute:: end
 
     .. automethod:: from_lwpolyline
 
@@ -43,7 +50,13 @@ cubic Bézier curves, other B-splines will be approximated.
 
     .. automethod:: line_to(location: Vector)
 
-    .. automethod:: cubic_to(location: Vector, ctrl1: Vector, ctrl2: Vector)
+    .. automethod:: curve_to(location: Vector, ctrl1: Vector, ctrl2: Vector)
+
+    .. automethod:: add_curves(curves: Iterable[Bezier4P])
+
+    .. automethod:: add_ellipse(ellipse: ConstructionEllipse, segments=1)
+
+    .. automethod:: add_spline(spline: BSpline, level=4)
 
     .. automethod:: transform(m: Matrix44) -> Path
 
@@ -52,3 +65,4 @@ cubic Bézier curves, other B-splines will be approximated.
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qtforpython/PySide2/QtGui/QPainterPath.html
 .. _SVG-Path: https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+.. _Context: https://pycairo.readthedocs.io/en/latest/reference/context.html

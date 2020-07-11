@@ -2,7 +2,7 @@
 # Created: 26.03.2010
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
-from typing import List, TYPE_CHECKING, Iterable, Union, Sequence, Tuple
+from typing import List, TYPE_CHECKING, Iterable, Union, Sequence
 import math
 from functools import lru_cache
 from ezdxf.math import Vector, Vec2, tridiagonal_matrix_solver
@@ -75,11 +75,11 @@ class Bezier4P:
             raise ValueError("Four control points required.")
 
     def to3d(self) -> 'Bezier4P':
-        """ Returns the bezier curve with 3d control points. """
+        """ Returns the Bèzier-curve with 3d control points. """
         return self.__class__([Vector(p) for p in self._control_points])
 
     def to2d(self) -> 'Bezier4P':
-        """ Returns the bezier curve with 2d control points. (discards the z-axis) """
+        """ Returns the Bèzier-curve with 2d control points. (discards the z-axis) """
         return self.__class__([Vec2(p) for p in self._control_points])
 
     @property
@@ -89,7 +89,7 @@ class Bezier4P:
 
     def tangent(self, t: float) -> Union[Vector, Vec2]:
         """
-        Returns direction vector of tangent for location `t` at the `Bézier curve`_.
+        Returns direction vector of tangent for location `t` at the Bèzier-curve.
 
         Args:
             t: curve position in the range ``[0, 1]``
@@ -100,7 +100,7 @@ class Bezier4P:
 
     def point(self, t: float) -> Union[Vector, Vec2]:
         """
-        Returns point for location `t`` at the `Bézier curve`_.
+        Returns point for location `t`` at the Bèzier-curve.
 
         Args:
             t: curve position in the range ``[0, 1]``
@@ -134,7 +134,7 @@ class Bezier4P:
         return b1 * a + b2 * b + b3 * c + b4 * d
 
     def approximated_length(self, segments: int = 100) -> float:
-        """ Returns estimated length of `Bézier curve`_ as approximation by line `segments`. """
+        """ Returns estimated length of Bèzier-curve as approximation by line `segments`. """
         length = 0.
         prev_point = None
         for point in self.approximate(segments):
@@ -144,7 +144,7 @@ class Bezier4P:
         return length
 
     def reverse(self) -> 'Bezier4P':
-        """ Returns a new Bezier curve with reversed control point order. """
+        """ Returns a new Bèzier-curve with reversed control point order. """
         return Bezier4P(list(reversed(self.control_points)))
 
 
@@ -152,14 +152,15 @@ def cubic_bezier_from_arc(
         center: Vector = (0, 0), radius: float = 1, start_angle: float = 0, end_angle: float = 360,
         segments: int = 1) -> Iterable[Bezier4P]:
     """
-    Returns an approximation for a circular 2D arc by multiple cubic Bézier curves.
+    Returns an approximation for a circular 2D arc by multiple cubic Bézier-curves.
 
     Args:
         center: circle center as :class:`Vector` compatible object
         radius: circle radius
         start_angle: start angle in degrees
         end_angle: end angle in degrees
-        segments: count of spline segments, at least one segment for each quarter (90 deg), ``1`` for as few as needed.
+        segments: count of Bèzier-curve segments, at least one segment for each quarter (90 deg),
+                  ``1`` for as few as possible.
 
     .. versionadded:: 0.13
 
@@ -168,6 +169,9 @@ def cubic_bezier_from_arc(
     radius = float(radius)
     start_angle = math.radians(start_angle) % math.tau
     end_angle = math.radians(end_angle) % math.tau
+    if math.isclose(end_angle, 0.0):
+        end_angle = math.tau
+
     for control_points in cubic_bezier_arc_parameters(start_angle, end_angle, segments):
         defpoints = [center + (p * radius) for p in control_points]
         yield Bezier4P(defpoints)
@@ -178,11 +182,12 @@ PI_2 = math.pi / 2.0
 
 def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse', segments: int = 1) -> Iterable[Bezier4P]:
     """
-    Returns an approximation for an elliptic arc by multiple cubic Bézier curves.
+    Returns an approximation for an elliptic arc by multiple cubic Bézier-curves.
 
     Args:
         ellipse: ellipse parameters as :class:`~ezdxf.math.ConstructionEllipse` object
-        segments: count of spline segments, at least one segment for each quarter (pi/2), ``1`` for as few as needed.
+        segments: count of Bèzier-curve segments, at least one segment for each quarter (pi/2),
+        ``1`` for as few as possible.
 
     .. versionadded:: 0.13
 
@@ -190,6 +195,8 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse', segments: int = 1)
     from ezdxf.math import param_to_angle
     start_angle = param_to_angle(ellipse.ratio, ellipse.start_param) % math.tau
     end_angle = param_to_angle(ellipse.ratio, ellipse.end_param) % math.tau
+    if math.isclose(end_angle, 0.0):
+        end_angle = math.tau
 
     def transform(points: Iterable[Vector]) -> Iterable[Vector]:
         center = Vector(ellipse.center)
@@ -204,13 +211,13 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse', segments: int = 1)
 
 def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: int = 1) -> Sequence[Vector]:
     """
-    Yields cubic Bézier curve parameters for a circular 2D arc with center at (0, 0) and a radius of 1
+    Yields cubic Bézier-curve parameters for a circular 2D arc with center at (0, 0) and a radius of 1
     in the form of [start point, 1. control point, 2. control point, end point].
 
     Args:
         start_angle: start angle in radians
         end_angle: end angle in radians (end_angle > start_angle!)
-        segments: count of segments, at least one segment for each quarter (pi/2)
+        segments: count of Bèzier-curve segments, at least one segment for each quarter (pi/2)
 
     """
     # Source: https://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves
@@ -238,8 +245,8 @@ def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: 
 
 def cubic_bezier_interpolation(points: Iterable['Vertex']) -> Iterable[Bezier4P]:
     """
-    Returns an interpolation curve for given data `points` as multiple cubic Bézier curves.
-    Returns n-1 cubic Bézier curves for n given data points, curve i goes from point[i] to point[i+1].
+    Returns an interpolation curve for given data `points` as multiple cubic Bézier-curves.
+    Returns n-1 cubic Bézier-curves for n given data points, curve i goes from point[i] to point[i+1].
 
     Args:
         points: data points
