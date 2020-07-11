@@ -7,7 +7,8 @@ from ezdxf.addons.drawing import Frontend, RenderContext, Properties
 from ezdxf.addons.drawing.backend import Backend, Radians
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.render.forms import cube
-from ezdxf.math import Vector, Matrix44, BSpline
+from ezdxf.render import Path
+from ezdxf.math import Vector, Matrix44
 
 
 class BasicBackend(Backend):
@@ -68,6 +69,15 @@ def basic(doc, ctx):
 
 def test_basic_frontend_init(basic):
     assert isinstance(basic.out, BasicBackend)
+
+
+def test_backend_default_draw_path():
+    backend = BasicBackend()
+    path = Path.from_vertices([(0, 0), (1, 0), (2, 0)])
+    backend.draw_path(path, None)
+    result = backend.collector
+    assert len(result) == 2
+    assert result[0][0] == 'line'
 
 
 def test_draw_layout(msp, basic):
@@ -138,6 +148,7 @@ def test_polyline_2d(msp, basic):
     assert len(result) == 2
     assert result[0][0] == 'line'
     assert result[1][0] == 'line'
+
 
 def test_banded_polyline_2d(msp, basic):
     msp.add_polyline2d([(0, 0, 0.1, 0.2), (1, 0, 0.2, 0.1), (2, 0, 0.1, 0.5)], format='xyse')

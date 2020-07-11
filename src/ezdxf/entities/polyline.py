@@ -422,6 +422,7 @@ class Polyline(DXFGraphic):
         .. versionadded:: 0.13
 
         """
+
         def _ocs_locations(elevation):
             for vertex in self.vertices:
                 location = vertex.dxf.location
@@ -974,6 +975,34 @@ class DXFVertex(DXFGraphic):
             return self
         self.dxf.location = m.transform(self.dxf.location)
         return self
+
+    def format(self, format='xyz') -> Sequence:
+        """ Return formatted vertex components as tuple.
+
+        Format codes:
+
+            - ``x`` = x-coordinate
+            - ``y`` = y-coordinate
+            - ``z`` = z-coordinate
+            - ``s`` = start width
+            - ``e`` = end width
+            - ``b`` = bulge value
+            - ``v`` = (x, y, z) as tuple
+
+        Args:
+            format: format string, default is "xyz"
+
+        .. versionadded:: 0.14
+
+        """
+        dxf = self.dxf
+        v = Vector(dxf.location)
+        x, y, z = v.xyz
+        b = dxf.bulge
+        s = dxf.start_width
+        e = dxf.end_width
+        vars = locals()
+        return tuple(vars[code] for code in format.lower())
 
 
 def vertex_attribs(data: Sequence[float], format='xyseb') -> dict:

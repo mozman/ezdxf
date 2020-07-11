@@ -873,6 +873,9 @@ Bezier4P
 
     .. automethod:: approximated_length
 
+    .. automethod:: reverse() -> Bezier4P
+
+
 BezierSurface
 -------------
 

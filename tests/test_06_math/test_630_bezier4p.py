@@ -107,6 +107,14 @@ def test_rational_spline_from_elliptic_arc():
     assert p4.isclose((1, 2, 0))
 
 
+def test_reverse():
+    curve = Bezier4P(DEFPOINTS2D)
+    vertices = list(curve.approximate(10))
+    rev_curve = curve.reverse()
+    rev_vertices = list(rev_curve.approximate(10))
+    assert list(reversed(vertices)) == rev_vertices
+
+
 POINTS2D = [
     (0.000, 0.000),
     (0.928, 0.280),

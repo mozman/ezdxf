@@ -35,7 +35,11 @@ class ConstructionEllipse:
                  ratio: float = 1, start_param: float = 0, end_param: float = math.tau, ccw: bool = True):
         self.center = Vector(center)
         self.major_axis = Vector(major_axis)
+        if self.major_axis.isclose(NULLVEC):
+            raise ValueError(f'Invalid major axis (null vector).')
         self.extrusion = Vector(extrusion)
+        if self.major_axis.isclose(NULLVEC):
+            raise ValueError(f'Invalid extrusion vector (null vector).')
         self.ratio = float(ratio)
         self.start_param = float(start_param)
         self.end_param = float(end_param)

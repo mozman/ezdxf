@@ -2,12 +2,13 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, TYPE_CHECKING, Iterable
+from typing import Optional, Tuple, TYPE_CHECKING, Iterable
 
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color, Radians
 from ezdxf.entities import DXFGraphic
-from ezdxf.math import Vector, Matrix44, BSpline
+from ezdxf.math import Vector, Matrix44
+from ezdxf.render.path import Path
 
 if TYPE_CHECKING:
     from ezdxf.addons.drawing.text import FontMeasurements
@@ -17,7 +18,6 @@ class Backend(ABC):
     def __init__(self):
         self._current_entity = None
         self._current_entity_stack = ()
-        self._path_mode = False
 
     def set_current_entity(self, entity: Optional[DXFGraphic], parent_stack: Tuple[DXFGraphic, ...] = ()) -> None:
         self._current_entity = entity
@@ -35,9 +35,6 @@ class Backend(ABC):
         """
         return self._current_entity_stack
 
-    @property
-    def is_path_mode(self) -> bool:
-        return self._path_mode
 
     @abstractmethod
     def set_background(self, color: Color) -> None:
@@ -47,36 +44,18 @@ class Backend(ABC):
     def draw_line(self, start: Vector, end: Vector, properties: Properties) -> None:
         raise NotImplementedError
 
-    def start_path(self):
-        """ Called when a polyline path is encountered. Any draw calls up until end_path() is called,
-        can be buffered into a single un-broken path if the backend supports this.
-        """
-        assert self._path_mode is False, 'Nested paths not supported.'
-        self._path_mode = True
+    def draw_path(self, path: Path, properties) -> None:
+        """ Fall-back implementation, approximate path by line segments.
 
-    def end_path(self):
-        assert self._path_mode is True, 'Path mode not started.'
-        self._path_mode = False
-
-    def draw_line_string(self, vertices: Iterable[Vector], close: bool, properties: Properties) -> None:
-        """ Draw efficient multiple lines as connected polyline.
-
-        Override in backend for a more efficient implementation.
+        Override in inherited back-end for a more efficient implementation.
 
         """
-        self.start_path()
-        prev = None
-        first = None
-        for vertex in vertices:
-            if prev is None:
-                prev = vertex
-                first = vertex
-            else:
+        if len(path):
+            vertices = iter(path.approximate(segments=32))
+            prev = next(vertices)
+            for vertex in vertices:
                 self.draw_line(prev, vertex, properties)
                 prev = vertex
-        if close and prev is not None and not prev.isclose(first):
-            self.draw_line(prev, first, properties)
-        self.end_path()
 
     @abstractmethod
     def draw_point(self, pos: Vector, properties: Properties) -> None:
@@ -114,4 +93,5 @@ class Backend(ABC):
         raise NotImplementedError
 
     def finalize(self) -> None:
-        assert self._path_mode is False, 'Missing end of path.'
+        pass
+

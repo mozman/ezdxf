@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 TPath = Union['PolylinePath', 'EdgePath']
 
-__all__ = ['Hatch', 'Gradient', 'Pattern']
+__all__ = ['Hatch', 'Gradient', 'Pattern', 'PolylinePath', 'EdgePath']
 
 acdb_hatch = DefSubclass('AcDbHatch', {
     # 3D point (X and Y always equal 0, Z represents the elevation)

@@ -10,13 +10,13 @@ from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import RenderContext, VIEWPORT_COLOR, Properties
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.utils import normalize_angle, get_tri_or_quad_points, get_draw_angles
-from ezdxf.entities import DXFGraphic, Insert, MText, Polyline, LWPolyline, Face3d, Solid, Trace, \
-    Spline, Hatch, Attrib, Text, Ellipse, Polyface
+from ezdxf.entities import (
+    DXFGraphic, Insert, MText, Polyline, LWPolyline, Spline, Hatch, Attrib, Text, Ellipse, Polyface
+)
 from ezdxf.entities.dxfentity import DXFTagStorage
 from ezdxf.layouts import Layout
 from ezdxf.math import Vector, Z_AXIS, ConstructionEllipse, linspace
-from ezdxf.render import MeshBuilder
-from ezdxf.render.trace import TraceBuilder
+from ezdxf.render import MeshBuilder, TraceBuilder, Path
 
 __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
@@ -167,6 +167,8 @@ class Frontend:
         if dxftype in {'CIRCLE', 'ARC'}:
             center = dxf.center  # ocs transformation in .from_arc()
             radius = dxf.radius
+            if math.isclose(radius, 0):
+                return
             if dxftype == 'CIRCLE':
                 start_angle = 0
                 end_angle = 360
@@ -181,11 +183,8 @@ class Frontend:
 
         # Approximate as 3D polyline
         segments = int((e.end_param - e.start_param) / math.tau * self.circle_approximation_count)
-        points = list(e.vertices(linspace(e.start_param, e.end_param, max(4, segments + 1))))
-        self.out.start_path()
-        for a, b in zip(points, points[1:]):
-            self.out.draw_line(a, b, properties)
-        self.out.end_path()
+        points = e.vertices(linspace(e.start_param, e.end_param, max(4, segments + 1)))
+        self.out.draw_path(Path.from_vertices(points), properties)
 
     def draw_elliptic_arc_entity_2d(self, entity: DXFGraphic) -> None:
         dxf, dxftype = entity.dxf, entity.dxftype()
@@ -219,10 +218,8 @@ class Frontend:
         points = list(spline.approximate(
             segments=self.spline_approximation_factor * len(spline.control_points))
         )
-        self.out.start_path()
-        for a, b in zip(points, points[1:]):
-            self.out.draw_line(a, b, properties)
-        self.out.end_path()
+        # todo: add_spline(), has an error
+        self.out.draw_path(Path.from_vertices(points), properties)
 
     def draw_point_entity(self, entity: DXFGraphic) -> None:
         properties = self._resolve_properties(entity)
@@ -238,8 +235,7 @@ class Frontend:
             ocs = entity.ocs()
             points = list(ocs.points_to_wcs(points))
         if dxftype == '3DFACE':
-            for a, b in zip(points, points[1:]):
-                self.out.draw_line(a, b, properties)
+            self.out.draw_path(Path.from_vertices(points, close=True), properties)
         else:  # SOLID, TRACE
             self.out.draw_filled_polygon(points, properties)
 
@@ -305,7 +301,7 @@ class Frontend:
 
     def draw_mesh_builder_entity(self, builder: MeshBuilder, properties: Properties) -> None:
         for face in builder.faces_as_vertices():
-            self.out.draw_line_string(face, close=True, properties=properties)
+            self.out.draw_path(Path.from_vertices(face, close=True), properties=properties)
 
     def draw_polyline_entity(self, entity: DXFGraphic):
         dxftype = entity.dxftype()
@@ -321,9 +317,9 @@ class Frontend:
 
         entity = cast(Union[LWPolyline, Polyline], entity)
         is_lwpolyline = dxftype == 'LWPOLYLINE'
+        properties = self._resolve_properties(entity)
 
         if entity.has_width:  # draw banded 2D polyline
-            properties = self._resolve_properties(entity)
             elevation = 0.0
             ocs = entity.ocs()
             transform = ocs.transform
@@ -342,33 +338,8 @@ class Frontend:
                 self.out.draw_filled_polygon(points, properties)
             return
 
-        if not entity.has_arc:  # draw 2D/3D polyline without arcs
-            properties = self._resolve_properties(entity)
-            if is_lwpolyline:
-                self.out.draw_line_string(Vector.generate(entity.vertices_in_wcs()), close=entity.closed,
-                                          properties=properties)
-            else:  # POLYLINE
-                if entity.is_2d_polyline:
-                    ocs = entity.ocs()
-                    elevation = Vector(entity.dxf.elevation).z
-                    vertices = ocs.points_to_wcs(Vector(p[0], p[1], elevation) for p in entity.points())
-                else:
-                    vertices = Vector.generate(entity.points())
-                self.out.draw_line_string(vertices, close=entity.is_closed, properties=properties)
-            return
-
-        # draw 2D polyline with arcs
-        self.parent_stack.append(entity)
-        self.out.set_current_entity(entity, tuple(self.parent_stack))
-        # todo: end points of virtual entities are not in correct order
-        #  can't use self.out.start_path()
-        for child in entity.virtual_entities():
-            # all child entities have the same properties as the parent,
-            # no visibility check required:
-            self.draw_entity(child)
-        # self.out.end_path()
-        self.parent_stack.pop()
-        self.out.set_current_entity(None)
+        path = Path.from_lwpolyline(entity) if is_lwpolyline else Path.from_polyline(entity)
+        self.out.draw_path(path, properties)
 
     def draw_composite_entity(self, entity: DXFGraphic) -> None:
         dxftype = entity.dxftype()
