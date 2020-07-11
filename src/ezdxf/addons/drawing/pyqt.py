@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Optional, Tuple, List, Union, Iterable
+from typing import Optional, Tuple, Union, Iterable
 
 from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 
@@ -10,8 +10,8 @@ from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Radians, Color
 from ezdxf.addons.drawing.properties import Properties
-from ezdxf.entities import DXFGraphic
 from ezdxf.math import Vector, Matrix44
+from ezdxf.render import Path, Command
 
 
 class _Ellipse(qw.QGraphicsEllipseItem):
@@ -50,81 +50,21 @@ CorrespondingDXFEntity = 0  # the key used to store the dxf entity corresponding
 CorrespondingDXFEntityStack = 1
 
 
-class _PolylinePath:
-    def __init__(self, current_entity: DXFGraphic):
-        self.path = qg.QPainterPath()
-        self.color = None
-        self.first_component = True
-        self.current_entity = current_entity
-
-    def draw(self, component: Union["_BufferedLineSegment", "_BufferedArc"]):
-        pos = self.path.currentPosition()
-        pos = Vector(pos.x(), pos.y(), 0)
-        start = component.start_point()
-        jump_distance = pos.distance(start.xy)  # compare 2D to 2D
-        if jump_distance > 1e-5:
-            if not self.first_component:
-                print(f'warning: non-contiguous polyline: {self.current_entity}. '
-                      f'Jump from {pos} to {start} (distance of {jump_distance})')
-            self.path.moveTo(start.x, start.y)
-        component.draw(self.path)
-        if self.color is None:
-            self.color = component.color
-        elif component.color != self.color:
-            print(f'warning: component has different color to the polyline {component.color} != {self.color}')
-        self.first_component = False
-
-
-class _BufferedLineSegment:
-    def __init__(self, start: Vector, end: Vector, color: Color):
-        self.start = start
-        self.end = end
-        self.color = color
-
-    def start_point(self) -> Vector:
-        return self.start
-
-    def draw(self, path: qg.QPainterPath):
-        path.lineTo(self.end.x, self.end.y)
-
-
-class _BufferedArc:
-    def __init__(self, rect: qc.QRectF, start_angle: float, span_angle: float, color: Color):
-        self.rect = rect
-        self.start_angle = start_angle
-        self.span_angle = span_angle
-        self.color = color
-
-    def start_point(self) -> Vector:
-        c = self.rect.center()
-        return Vector(c.x(), c.y(), 0) + Vector(self.rect.width() / 2, 0, 0).rotate_deg(self.start_angle)
-
-    def draw(self, path: qg.QPainterPath):
-        path.arcTo(self.rect, self.start_angle, self.span_angle)
-
-
 class PyQtBackend(Backend):
     def __init__(self,
                  scene: qw.QGraphicsScene,
                  point_radius: float = 0.5,
                  *,
-                 draw_individual_polyline_elements: bool = False,
                  debug_draw_rect: bool = False):
         super().__init__()
         self.scene = scene
         self._color_cache = {}
         self.point_radius = point_radius
-        self.draw_individual_polyline_elements = draw_individual_polyline_elements
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
         self._font = qg.QFont()
         self._font_measurements = _get_font_measurements(self._font)
         self._debug_draw_rect = debug_draw_rect
-        self._polyline_components: List[Union[_BufferedLineSegment, _BufferedArc]] = []
-
-    @property
-    def is_path_mode(self) -> bool:
-        return not self.draw_individual_polyline_elements and self._path_mode
 
     def _get_color(self, color: Color) -> qg.QColor:
         qt_color = self._color_cache.get(color, None)
@@ -156,28 +96,25 @@ class PyQtBackend(Backend):
 
     def draw_line(self, start: Vector, end: Vector, properties: Properties) -> None:
         color = properties.color
-        if self.is_path_mode:
-            self._polyline_components.append(_BufferedLineSegment(start, end, color))
-        else:
-            item = self.scene.addLine(start.x, start.y, end.x, end.y, self._get_pen(color))
-            self._set_item_data(item)
-
-    def start_path(self):
-        if not self.is_path_mode:
-            assert not self._polyline_components
-        super().start_path()
-
-    def end_path(self):
-        super().end_path()
-        if not self._polyline_components:
-            return
-        path = _PolylinePath(self.current_entity)
-        for component in self._polyline_components:
-            path.draw(component)
-        item = self.scene.addPath(path.path, self._get_pen(path.color), self._no_fill)
+        item = self.scene.addLine(start.x, start.y, end.x, end.y, self._get_pen(color))
         self._set_item_data(item)
 
-        self._polyline_components = []
+    def draw_path(self, path: Path, properties) -> None:
+        qt_path = qg.QPainterPath()
+        start = path.start
+        qt_path.moveTo(start.x, start.y)
+        for cmd in path:
+            type_ = cmd[0]
+            if type_ == Command.LINE_TO:
+                end = cmd[1]
+                qt_path.lineTo(end.x, end.y)
+            elif type_ == Command.CURVE_TO:
+                _, end, ctrl1, ctrl2 = cmd
+                qt_path.cubicTo(ctrl1.x, ctrl1.y, ctrl2.x, ctrl2.y, end.x, end.y)
+            else:
+                raise ValueError(f'Unknown path command: {type_}')
+        item = self.scene.addPath(qt_path, self._get_pen(properties.color), self._no_fill)
+        self._set_item_data(item)
 
     def draw_point(self, pos: Vector, properties: Properties) -> None:
         brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
@@ -222,13 +159,6 @@ class PyQtBackend(Backend):
         top = center.x - width / 2
         left = center.y - height / 2
         color = properties.color
-
-        # any angle other than 0 is not possible with arcTo and a complete circle/ellipse wouldn't make sense
-        if self.is_path_mode and angle == 0.0 and draw_angles is not None:
-            start, span = _draw_angles_to_start_and_span(draw_angles)
-            self._polyline_components.append(_BufferedArc(qc.QRectF(top, left, width, height), start, span, color))
-            return
-
         ellipse = _Ellipse(top, left, width, height)
         ellipse.setBrush(self._no_fill)
         ellipse.setPen(self._get_pen(color))

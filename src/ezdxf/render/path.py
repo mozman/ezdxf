@@ -119,6 +119,8 @@ class Path(abc.Sequence):
 
     def _setup_polyline_2d(self, points: Iterable[Sequence[float]], close: bool, ocs: OCS, elevation: float) -> None:
         def bulge_to(p1: Vector, p2: Vector, bulge: float):
+            if p1.isclose(p2):
+                return
             center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
             ellipse = ConstructionEllipse.from_arc(
                 center, radius, Z_AXIS,

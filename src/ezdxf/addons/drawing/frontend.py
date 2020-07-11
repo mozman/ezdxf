@@ -167,6 +167,8 @@ class Frontend:
         if dxftype in {'CIRCLE', 'ARC'}:
             center = dxf.center  # ocs transformation in .from_arc()
             radius = dxf.radius
+            if math.isclose(radius, 0):
+                return
             if dxftype == 'CIRCLE':
                 start_angle = 0
                 end_angle = 360
@@ -216,6 +218,7 @@ class Frontend:
         points = list(spline.approximate(
             segments=self.spline_approximation_factor * len(spline.control_points))
         )
+        # todo: add_spline(), has an error
         self.out.draw_path(Path.from_vertices(points), properties)
 
     def draw_point_entity(self, entity: DXFGraphic) -> None:
@@ -314,9 +317,9 @@ class Frontend:
 
         entity = cast(Union[LWPolyline, Polyline], entity)
         is_lwpolyline = dxftype == 'LWPOLYLINE'
+        properties = self._resolve_properties(entity)
 
         if entity.has_width:  # draw banded 2D polyline
-            properties = self._resolve_properties(entity)
             elevation = 0.0
             ocs = entity.ocs()
             transform = ocs.transform
@@ -335,11 +338,8 @@ class Frontend:
                 self.out.draw_filled_polygon(points, properties)
             return
 
-        properties = self._resolve_properties(entity)
-        if is_lwpolyline:
-            self.out.draw_path(Path.from_lwpolyline(entity), properties)
-        else:  # POLYLINE
-            self.out.draw_path(Path.from_polyline(entity), properties)
+        path = Path.from_lwpolyline(entity) if is_lwpolyline else Path.from_polyline(entity)
+        self.out.draw_path(path, properties)
 
     def draw_composite_entity(self, entity: DXFGraphic) -> None:
         dxftype = entity.dxftype()

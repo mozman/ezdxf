@@ -18,7 +18,6 @@ class Backend(ABC):
     def __init__(self):
         self._current_entity = None
         self._current_entity_stack = ()
-        self._path_mode = False
 
     def set_current_entity(self, entity: Optional[DXFGraphic], parent_stack: Tuple[DXFGraphic, ...] = ()) -> None:
         self._current_entity = entity
@@ -36,9 +35,6 @@ class Backend(ABC):
         """
         return self._current_entity_stack
 
-    @property
-    def is_path_mode(self) -> bool:
-        return self._path_mode
 
     @abstractmethod
     def set_background(self, color: Color) -> None:
@@ -48,32 +44,18 @@ class Backend(ABC):
     def draw_line(self, start: Vector, end: Vector, properties: Properties) -> None:
         raise NotImplementedError
 
-    def start_path(self):
-        """ Called when a polyline path is encountered. Any draw calls up until end_path() is called,
-        can be buffered into a single un-broken path if the backend supports this.
-        """
-        assert self._path_mode is False, 'Nested paths not supported.'
-        self._path_mode = True
-
-    def end_path(self):
-        assert self._path_mode is True, 'Path mode not started.'
-        self._path_mode = False
-
     def draw_path(self, path: Path, properties) -> None:
         """ Fall-back implementation, approximate path by line segments.
 
         Override in inherited back-end for a more efficient implementation.
 
         """
-        self.start_path()
-        prev = None
-        for vertex in path.approximate(segments=32):
-            if prev is None:
-                prev = vertex
-            else:
+        if len(path):
+            vertices = iter(path.approximate(segments=32))
+            prev = next(vertices)
+            for vertex in vertices:
                 self.draw_line(prev, vertex, properties)
                 prev = vertex
-        self.end_path()
 
     @abstractmethod
     def draw_point(self, pos: Vector, properties: Properties) -> None:
@@ -111,4 +93,5 @@ class Backend(ABC):
         raise NotImplementedError
 
     def finalize(self) -> None:
-        assert self._path_mode is False, 'Missing end of path.'
+        pass
+
