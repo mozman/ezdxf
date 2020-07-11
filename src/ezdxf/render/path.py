@@ -125,7 +125,10 @@ class Path(abc.Sequence):
                 math.degrees(start_angle),
                 math.degrees(end_angle),
             )
-            self.add_ellipse(ellipse)
+            curves = list(cubic_bezier_from_ellipse(ellipse))
+            if curves[0].control_points[0].isclose(p2):
+                curves = _reverse_bezier_curves(curves)
+            self.add_curves(curves)
 
         prev_point = None
         prev_bulge = 0

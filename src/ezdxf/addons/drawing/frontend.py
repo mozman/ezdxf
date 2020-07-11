@@ -335,26 +335,11 @@ class Frontend:
                 self.out.draw_filled_polygon(points, properties)
             return
 
-        if not entity.has_arc:  # draw 2D/3D polyline without arcs
-            properties = self._resolve_properties(entity)
-            if is_lwpolyline:
-                self.out.draw_path(Path.from_lwpolyline(entity), properties)
-            else:  # POLYLINE
-                self.out.draw_path(Path.from_polyline(entity), properties)
-            return
-
-        # draw 2D polyline with arcs
-        self.parent_stack.append(entity)
-        self.out.set_current_entity(entity, tuple(self.parent_stack))
-        # todo: end points of virtual entities are not in correct order
-        #  can't use self.out.start_path()
-        for child in entity.virtual_entities():
-            # all child entities have the same properties as the parent,
-            # no visibility check required:
-            self.draw_entity(child)
-        # self.out.end_path()
-        self.parent_stack.pop()
-        self.out.set_current_entity(None)
+        properties = self._resolve_properties(entity)
+        if is_lwpolyline:
+            self.out.draw_path(Path.from_lwpolyline(entity), properties)
+        else:  # POLYLINE
+            self.out.draw_path(Path.from_polyline(entity), properties)
 
     def draw_composite_entity(self, entity: DXFGraphic) -> None:
         dxftype = entity.dxftype()

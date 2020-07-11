@@ -141,6 +141,26 @@ def test_lwpolyine_with_bulges():
     assert any(cmd[0] == Command.CURVE_TO for cmd in path)
 
 
+S_SHAPE = [
+    (0, 0, 0),
+    (5, 0, 1),
+    (5, 1, 0),
+    (0, 1, -1),
+    (0, 2, 0),
+    (5, 2, 0),
+]
+
+
+def test_lwpolyine_s_shape():
+    from ezdxf.entities import LWPolyline
+    pline = LWPolyline()
+    pline.append_points(S_SHAPE, format='xyb')
+    path = Path.from_lwpolyline(pline)
+    assert path.start == (0, 0)
+    assert path.end == (5, 2)  # closed
+    assert any(cmd[0] == Command.CURVE_TO for cmd in path)
+
+
 def test_polyine_lines():
     from ezdxf.entities import Polyline
     pline = Polyline()

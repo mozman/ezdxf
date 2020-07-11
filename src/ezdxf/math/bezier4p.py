@@ -198,6 +198,9 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse', segments: int = 1)
     if math.isclose(end_angle, 0.0):
         end_angle = math.tau
 
+    if start_angle > end_angle:
+        end_angle += math.tau
+
     def transform(points: Iterable[Vector]) -> Iterable[Vector]:
         center = Vector(ellipse.center)
         x_axis = ellipse.major_axis
