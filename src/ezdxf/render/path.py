@@ -56,6 +56,22 @@ class Path(abc.Sequence):
         else:
             return self._start
 
+    @property
+    def is_closed(self) -> bool:
+        """ Returns ``True`` if the start point is close to the end point. """
+        return self._start.isclose(self.end)
+
+    @classmethod
+    def from_vertices(cls, vertices: Iterable['Vertex'], close=False) -> 'Path':
+        """ Returns a :class:`Path` from vertices.  """
+        vertices = Vector.list(vertices)
+        path = cls(start=vertices[0])
+        for vertex in vertices[1:]:
+            path.line_to(vertex)
+        if close:
+            path.close()
+        return path
+
     @classmethod
     def from_lwpolyline(cls, lwpolyline: 'LWPolyline') -> 'Path':
         """ Returns a :class:`Path` from a :class:`~ezdxf.entities.LWPolyline` entity, all vertices
@@ -74,7 +90,7 @@ class Path(abc.Sequence):
     @classmethod
     def from_polyline(cls, polyline: 'Polyline') -> 'Path':
         """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Polyline` entity, all vertices
-        transformed to WCS.        
+        transformed to WCS.
         """
         assert polyline.dxftype() == 'POLYLINE'
         path = cls()
@@ -83,10 +99,7 @@ class Path(abc.Sequence):
             return path
 
         if polyline.is_3d_polyline:
-            path.start = polyline.vertices[0].dxf.location
-            for v in polyline.vertices[1:]:
-                path.line_to(v.dxf.location)
-            return path
+            return cls.from_vertices(polyline.points(), polyline.is_closed)
 
         points = [vertex.format('xyb') for vertex in polyline.vertices]
         ocs = polyline.ocs()
@@ -167,6 +180,11 @@ class Path(abc.Sequence):
         `ctrl2` are the control points for the cubic Bèzier-curve.
         """
         self._commands.append((Command.CURVE_TO, Vector(location), Vector(ctrl1), Vector(ctrl2)))
+
+    def close(self) -> None:
+        """ Close path by adding a line segment from the end point to the start point. """
+        if not self.is_closed:
+            self.line_to(self.start)
 
     def add_curves(self, curves: Iterable[Bezier4P]) -> None:
         """ Add multiple cubic Bèzier-curves to the path.

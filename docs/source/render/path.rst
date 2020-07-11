@@ -40,6 +40,8 @@ cubic Bézier-curves, other B-splines will be approximated.
 
     .. autoattribute:: end
 
+    .. autoattribute:: is_closed
+
     .. automethod:: from_lwpolyline
 
     .. automethod:: from_polyline
@@ -49,6 +51,8 @@ cubic Bézier-curves, other B-splines will be approximated.
     .. automethod:: from_hatch_edge_path
 
     .. automethod:: line_to(location: Vector)
+
+    .. automethod:: close
 
     .. automethod:: curve_to(location: Vector, ctrl1: Vector, ctrl2: Vector)
 

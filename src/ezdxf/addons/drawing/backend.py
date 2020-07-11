@@ -2,12 +2,13 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, TYPE_CHECKING, Iterable
+from typing import Optional, Tuple, TYPE_CHECKING, Iterable
 
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color, Radians
 from ezdxf.entities import DXFGraphic
-from ezdxf.math import Vector, Matrix44, BSpline
+from ezdxf.math import Vector, Matrix44
+from ezdxf.render.path import Path
 
 if TYPE_CHECKING:
     from ezdxf.addons.drawing.text import FontMeasurements
@@ -58,24 +59,20 @@ class Backend(ABC):
         assert self._path_mode is True, 'Path mode not started.'
         self._path_mode = False
 
-    def draw_line_string(self, vertices: Iterable[Vector], close: bool, properties: Properties) -> None:
-        """ Draw efficient multiple lines as connected polyline.
+    def draw_path(self, path: Path, properties) -> None:
+        """ Fall-back implementation, approximate path by line segments.
 
-        Override in backend for a more efficient implementation.
+        Override in inherited back-end for a more efficient implementation.
 
         """
         self.start_path()
         prev = None
-        first = None
-        for vertex in vertices:
+        for vertex in path.approximate(segments=32):
             if prev is None:
                 prev = vertex
-                first = vertex
             else:
                 self.draw_line(prev, vertex, properties)
                 prev = vertex
-        if close and prev is not None and not prev.isclose(first):
-            self.draw_line(prev, first, properties)
         self.end_path()
 
     @abstractmethod
