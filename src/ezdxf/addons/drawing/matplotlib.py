@@ -17,6 +17,7 @@ from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color, Radians
 from ezdxf.math import Vector, param_to_angle, Matrix44
+from ezdxf.render import Command
 
 # matplotlib docs: https://matplotlib.org/index.html
 
@@ -28,6 +29,7 @@ from ezdxf.math import Vector, param_to_angle, Matrix44
 # https://matplotlib.org/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D.set_linewidth
 # points unit (pt), 1pt = 1/72 inch, 1pt = 0.3527mm
 POINTS = 1.0 / 0.3527  # mm -> points
+CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
 
 
 class MatplotlibBackend(Backend):
@@ -72,6 +74,17 @@ class MatplotlibBackend(Backend):
                 color=properties.color,
                 zorder=self._get_z()
             ))
+
+    def draw_path(self, path, properties: Properties):
+        vertices, codes = _get_path_patch_data(path)
+        patch = PathPatch(
+            Path(vertices, codes),
+            linewidth=properties.lineweight * POINTS,
+            color=properties.color,
+            fill=False,
+            zorder=self._get_z()
+        )
+        self.ax.add_patch(patch)
 
     def draw_point(self, pos: Vector, properties: Properties):
         color = properties.color
@@ -162,3 +175,20 @@ def _get_font_measurements(font: FontProperties = FontProperties()) -> "FontMeas
         x_top=max(lower_x),
         bottom=min(lower_p)
     )
+
+
+def _get_path_patch_data(path):
+    codes = [Path.MOVETO]
+    vertices = [path.start]
+    for cmd in path:
+        type_ = cmd[0]
+        if type_ == Command.LINE_TO:
+            codes.append(Path.LINETO)
+            vertices.append(cmd[1])
+        elif type_ == Command.CURVE_TO:
+            _, end, ctrl1, ctrl2 = cmd
+            codes.extend(CURVE4x3)
+            vertices.extend((ctrl1, ctrl2, end))
+        else:
+            raise ValueError(f'Invalid command: {type_}')
+    return [(p.x, p.y) for p in vertices], codes
