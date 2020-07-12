@@ -240,6 +240,8 @@ class Path(abc.Sequence):
 
         """
         curves = list(curves)
+        if not len(curves):
+            return
         end = curves[-1].control_points[-1]
         if self.end.isclose(end):
             # connect to new curves end point

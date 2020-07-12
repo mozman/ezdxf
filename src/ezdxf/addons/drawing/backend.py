@@ -18,6 +18,9 @@ class Backend(ABC):
     def __init__(self):
         self._current_entity = None
         self._current_entity_stack = ()
+        # Approximate cubic Bèzier-curves by `n` segments, only used for basic back-ends
+        # without draw_path() support.
+        self.bezier_approximation_count = 32
 
     def set_current_entity(self, entity: Optional[DXFGraphic], parent_stack: Tuple[DXFGraphic, ...] = ()) -> None:
         self._current_entity = entity
@@ -51,7 +54,7 @@ class Backend(ABC):
 
         """
         if len(path):
-            vertices = iter(path.approximate(segments=32))
+            vertices = iter(path.approximate(segments=self.bezier_approximation_count))
             prev = next(vertices)
             for vertex in vertices:
                 self.draw_line(prev, vertex, properties)

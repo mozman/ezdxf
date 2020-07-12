@@ -12,6 +12,7 @@ from ezdxf.math import Vector, Matrix44
 
 
 class BasicBackend(Backend):
+    """ The basic backend has no draw_path() support and approximates all curves by lines. """
     def __init__(self):
         super().__init__()
         self.collector = []
@@ -45,6 +46,11 @@ class BasicBackend(Backend):
         self.collector = []
 
 
+class PathBackend(BasicBackend):
+    def draw_path(self, path: Path, properties: Properties) -> None:
+        self.collector.append(('path', path, properties))
+
+
 @pytest.fixture
 def doc():
     d = ezdxf.new()
@@ -65,6 +71,15 @@ def ctx(doc):
 @pytest.fixture
 def basic(doc, ctx):
     return Frontend(ctx, BasicBackend())
+
+
+@pytest.fixture
+def path_backend(doc, ctx):
+    return Frontend(ctx, PathBackend())
+
+
+def unique_types(result):
+    return {e[0] for e in result}
 
 
 def test_basic_frontend_init(basic):
@@ -123,13 +138,20 @@ def test_line(msp, basic):
     assert result[0][0] == 'line'
 
 
-def test_lwpolyline(msp, basic):
+def test_lwpolyline_basic(msp, basic):
     msp.add_lwpolyline([(0, 0), (1, 0), (2, 0)])
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 2
-    assert result[0][0] == 'line'
-    assert result[1][0] == 'line'
+    assert unique_types(result) == {'line'}
+
+
+def test_lwpolyline_path(msp, path_backend):
+    msp.add_lwpolyline([(0, 0), (1, 0), (2, 0)])
+    path_backend.draw_entities(msp)
+    result = path_backend.out.collector
+    assert len(result) == 1
+    assert unique_types(result) == {'path'}
 
 
 def test_banded_lwpolyline(msp, basic):
@@ -137,7 +159,7 @@ def test_banded_lwpolyline(msp, basic):
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 1
-    assert result[0][0] == 'filled_polygon'
+    assert unique_types(result) == {'filled_polygon'}
 
 
 def test_polyline_2d(msp, basic):
@@ -157,52 +179,84 @@ def test_banded_polyline_2d(msp, basic):
     assert result[0][0] == 'filled_polygon'
 
 
-def test_polyline_3d(msp, basic):
+def test_polyline_3d_basic(msp, basic):
     msp.add_polyline3d([(0, 0, 0), (1, 0, 1), (2, 0, 5)])
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 2
-    assert result[0][0] == 'line'
-    assert result[1][0] == 'line'
+    assert unique_types(result) == {'line'}
 
 
-def test_2d_arc(msp, basic):
+def test_polyline_3d_path(msp, path_backend):
+    msp.add_polyline3d([(0, 0, 0), (1, 0, 1), (2, 0, 5)])
+    path_backend.draw_entities(msp)
+    result = path_backend.out.collector
+    assert len(result) == 1
+    assert unique_types(result) == {'path'}
+
+
+def test_2d_arc_basic(msp, basic):
     msp.add_circle((0, 0), radius=2)
     msp.add_arc((0, 0), radius=2, start_angle=30, end_angle=60, dxfattribs={'layer': 'Test1'})
     msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1, end_param=2, dxfattribs={'layer': 'Test1'})
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 3
-    assert result[0][0] == 'arc'
-    assert result[1][0] == 'arc'
-    assert result[2][0] == 'arc'
+    assert len(result) > 3
+    assert unique_types(result) == {'line'}
 
 
-def test_3d_circle(msp, basic):
-    basic.circle_approximation_count = 30
+def test_3d_circle_basic(msp, basic):
     msp.add_circle((0, 0), radius=2,
                    dxfattribs={'extrusion': (0, 1, 1)})
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 30
+    assert len(result) > 30
+    assert unique_types(result) == {'line'}
 
 
-def test_3d_arc(msp, basic):
-    basic.circle_approximation_count = 120
+def test_3d_circle_path(msp, path_backend):
+    msp.add_circle((0, 0), radius=2,
+                   dxfattribs={'extrusion': (0, 1, 1)})
+    path_backend.draw_entities(msp)
+    result = path_backend.out.collector
+    assert len(result) == 1
+    assert unique_types(result) == {'path'}
+
+
+def test_3d_arc_basic(msp, basic):
     msp.add_arc((0, 0), radius=2, start_angle=30, end_angle=60,
                 dxfattribs={'extrusion': (0, 1, 1)})
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 10
+    assert len(result) > 10
+    assert unique_types(result) == {'line'}
 
 
-def test_3d_ellipse(msp, basic):
-    basic.circle_approximation_count = 120
+def test_3d_arc_path(msp, path_backend):
+    msp.add_arc((0, 0), radius=2, start_angle=30, end_angle=60,
+                dxfattribs={'extrusion': (0, 1, 1)})
+    path_backend.draw_entities(msp)
+    result = path_backend.out.collector
+    assert len(result) == 1
+    assert unique_types(result) == {'path'}
+
+
+def test_3d_ellipse_basic(msp, basic):
     msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1, end_param=2,
                     dxfattribs={'extrusion': (0, 1, 1)})
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 19
+    assert len(result) > 10
+    assert unique_types(result) == {'line'}
+
+
+def test_3d_ellipse_path(msp, path_backend):
+    msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1, end_param=2,
+                    dxfattribs={'extrusion': (0, 1, 1)})
+    path_backend.draw_entities(msp)
+    result = path_backend.out.collector
+    assert len(result) == 1
+    assert unique_types(result) == {'path'}
 
 
 def test_2d_text(msp, basic):
@@ -254,8 +308,7 @@ def test_mesh(msp, basic):
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 24
-    entities = {e[0] for e in result}
-    assert entities == {'line'}
+    assert unique_types(result) == {'line'}
 
 
 def test_polyface(msp, basic):
