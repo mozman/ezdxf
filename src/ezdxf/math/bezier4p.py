@@ -235,8 +235,15 @@ def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: 
     else:
         raise ValueError('Delta angle from start- to end angle has to be > 0.')
 
+    # optimization: https://spencermortensen.com/articles/bezier-circle/
+    # actual_c = 0.5522847498307935  = 4.0/3.0*(sqrt(2)-1.0)
+    # optimal_c = 0.551915024494
+    factor = 4.0 / 3.0  # original = 1.33333333333
+    # factor = 1.3324407374108935  # optimized
+    # Not sure if this is the correct way to apply this optimization,
+    # so i stick to the original version for now.
     segment_angle = delta_angle / arc_count
-    tangent_length = 4.0 / 3.0 * math.tan(segment_angle / 4.0)
+    tangent_length = factor * math.tan(segment_angle / 4.0)
 
     angle = start_angle
     end_point = None
