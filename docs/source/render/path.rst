@@ -46,6 +46,8 @@ cubic Bézier-curves, other B-splines will be approximated.
 
     .. automethod:: from_polyline
 
+    .. automethod:: from_spline
+
     .. automethod:: from_hatch_polyline_path
 
     .. automethod:: from_hatch_edge_path

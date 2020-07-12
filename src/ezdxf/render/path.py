@@ -11,7 +11,7 @@ from ezdxf.math import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import LWPolyline, Polyline, Vertex
+    from ezdxf.eztypes import LWPolyline, Polyline, Vertex, Spline
     from ezdxf.entities.hatch import PolylinePath, EdgePath
 
 __all__ = ['Path', 'Command']
@@ -166,6 +166,13 @@ class Path(abc.Sequence):
             self._commands[i] = tuple(new_cmd)
 
     @classmethod
+    def from_spline(cls, spline: 'Spline', level: int = 4) -> 'Path':
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Spline`. """
+        path = cls()
+        path.add_spline(spline.construction_tool(), level=level, reset=True)
+        return path
+
+    @classmethod
     def from_hatch_polyline_path(cls, path: 'PolylinePath') -> 'Path':
         """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch` polyline path. """
         pass
@@ -254,7 +261,7 @@ class Path(abc.Sequence):
         """
         if len(self) == 0 and reset:
             self.start = spline.point(0)
-        if spline.degree == 3 and not spline.is_rational:
+        if spline.degree == 3 and not spline.is_rational and spline.is_clamped:
             curves = [Bezier4P(points) for points in spline.bezier_decomposition()]
         else:
             curves = spline.cubic_bezier_approximation(level=level)

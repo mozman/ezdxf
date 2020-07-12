@@ -960,6 +960,11 @@ class BSpline:
         """ Returns ``True`` if curve is a rational B-spline. (has weights) """
         return self.basis.is_rational
 
+    @property
+    def is_clamped(self):
+        """ Returns ``True`` if curve is a clamped (open) B-spline. """
+        return not any(self.basis.knots[:self.order])
+
     def knots(self) -> List[float]:
         """ Returns a list of `knot`_ values as floats, the knot vector **always** has order + count values
         (n + p + 2 in text book notation).
@@ -1127,6 +1132,8 @@ class BSpline:
         # Source: "The NURBS Book": Algorithm A5.6
         if self.basis.is_rational:
             raise TypeError('Rational B-splines not supported.')
+        if not self.is_clamped:
+            raise TypeError('Clamped B-Spline required.')
 
         n = self.count - 1
         p = self.degree

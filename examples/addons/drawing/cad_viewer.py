@@ -112,10 +112,6 @@ class CadViewer(qw.QMainWindow):
         toggle_sidebar_action.triggered.connect(self._toggle_sidebar)
         menu.addAction(toggle_sidebar_action)
 
-        toggle_join_polylines_action = qw.QAction('Toggle Join Polylines', self)
-        toggle_join_polylines_action.triggered.connect(self._toggle_join_polylines)
-        menu.addAction(toggle_join_polylines_action)
-
         self.sidebar = qw.QSplitter(qc.Qt.Vertical)
         self.layers = qw.QListWidget()
         self.layers.setStyleSheet('font-size: 12pt')
@@ -202,11 +198,6 @@ class CadViewer(qw.QMainWindow):
     @qc.pyqtSlot()
     def _toggle_sidebar(self):
         self.sidebar.setHidden(not self.sidebar.isHidden())
-
-    @qc.pyqtSlot()
-    def _toggle_join_polylines(self):
-        self.renderer.draw_individual_polyline_elements = not self.renderer.draw_individual_polyline_elements
-        self.draw_layout(self._current_layout)
 
     @qc.pyqtSlot(object, qc.QPointF)
     def _on_element_selected(self, element: Optional[qw.QGraphicsItem], mouse_pos: qc.QPointF):

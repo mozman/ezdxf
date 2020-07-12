@@ -224,12 +224,8 @@ class Frontend:
 
     def draw_spline_entity(self, entity: DXFGraphic) -> None:
         properties = self._resolve_properties(entity)
-        spline = cast(Spline, entity).construction_tool()
-        points = list(spline.approximate(
-            segments=self.spline_approximation_factor * len(spline.control_points))
-        )
-        # todo: add_spline(), has an error
-        self.out.draw_path(Path.from_vertices(points), properties)
+        path = Path.from_spline(cast(Spline, entity))
+        self.out.draw_path(path, properties)
 
     def draw_point_entity(self, entity: DXFGraphic) -> None:
         properties = self._resolve_properties(entity)
@@ -302,7 +298,9 @@ class Frontend:
         minx, miny = cx - dx, cy - dy
         maxx, maxy = cx + dx, cy + dy
         points = [(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy), (minx, miny)]
-        self.out.draw_filled_polygon([Vector(x, y, 0) for x, y in points], VIEWPORT_COLOR)
+        props = Properties()
+        props.color = VIEWPORT_COLOR
+        self.out.draw_filled_polygon([Vector(x, y, 0) for x, y in points], props)
 
     def draw_mesh_entity(self, entity: DXFGraphic) -> None:
         properties = self._resolve_properties(entity)

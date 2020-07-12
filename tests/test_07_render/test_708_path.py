@@ -82,6 +82,15 @@ def test_add_spline():
     assert path.end == (8, 0)
 
 
+def test_from_spline():
+    from ezdxf.entities import Spline
+    spline = Spline.new()
+    spline.fit_points = [(2, 0), (4, 1), (6, -1), (8, 0)]
+    path = Path.from_spline(spline)
+    assert path.start == (2, 0)
+    assert path.end == (8, 0)
+
+
 def test_add_ellipse():
     from ezdxf.math import ConstructionEllipse
     ellipse = ConstructionEllipse(center=(3, 0), major_axis=(1, 0), ratio=0.5,
