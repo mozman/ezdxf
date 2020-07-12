@@ -86,13 +86,6 @@ class Backend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_arc(self, center: Vector, width: float, height: float, base_angle: Radians, start_angle: Optional[Radians],
-                 end_angle: Optional[Radians], properties: Properties) -> None:
-        # Start- and end angle are relative to `base_angle`. The arc is drawn count-clockwise from
-        # start- to end angle.
-        raise NotImplementedError
-
-    @abstractmethod
     def clear(self) -> None:
         """ clear the canvas. Does not reset the internal state of the backend. Make sure that the previous drawing
         is finished before clearing.

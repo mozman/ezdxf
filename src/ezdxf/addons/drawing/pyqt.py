@@ -14,15 +14,6 @@ from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command
 
 
-class _Ellipse(qw.QGraphicsEllipseItem):
-    """ an ellipse item which does not draw radii to the ends of the arc """
-
-    # noinspection PyMethodOverriding
-    def paint(self, painter: qg.QPainter, option: qw.QStyleOptionGraphicsItem, widget: Optional[qw.QWidget]) -> None:
-        painter.setPen(self.pen())
-        painter.drawArc(self.rect(), self.startAngle(), self.spanAngle())
-
-
 class _Point(qw.QAbstractGraphicsShapeItem):
     """ a point which is drawn 'cosmetically' (scale depends on view) """
 
@@ -154,24 +145,6 @@ class PyQtBackend(Backend):
         scale = cap_height / self._font_measurements.cap_height
         return _get_text_rect(self._font, text).right() * scale
 
-    def draw_arc(self, center: Vector, width: float, height: float, base_angle: Radians,
-                 start_angle: Optional[Radians], end_angle: Optional[Radians], properties: Properties) -> None:
-        top = center.x - width / 2
-        left = center.y - height / 2
-        color = properties.color
-        ellipse = _Ellipse(top, left, width, height)
-        ellipse.setBrush(self._no_fill)
-        ellipse.setPen(self._get_pen(color))
-        ellipse.setTransformOriginPoint(center.x, center.y)
-        ellipse.setRotation(math.degrees(base_angle))
-        if start_angle is not None:
-            start, span = _draw_angles_to_start_and_span(start_angle, end_angle)
-            # angles stored as integers in 16ths of a degree units
-            ellipse.setStartAngle(round(start * 16))
-            ellipse.setSpanAngle(round(span * 16))
-        self._set_item_data(ellipse)
-        self.scene.addItem(ellipse)
-
     def clear(self) -> None:
         self.scene.clear()
 
@@ -180,19 +153,6 @@ class PyQtBackend(Backend):
         self.scene.setSceneRect(self.scene.itemsBoundingRect())
         if self._debug_draw_rect:
             self.scene.addRect(self.scene.sceneRect(), self._get_pen('#000000'), self._no_fill)
-
-
-def _buffer_rect(r: Union[qc.QRect, qc.QRectF], buffer_x: float,
-                 buffer_y: Optional[float] = None) -> Union[qc.QRect, qc.QRectF]:
-    if buffer_y is None:
-        buffer_y = buffer_x
-    bx = buffer_x / 2
-    by = buffer_y / 2
-    if isinstance(r, qc.QRect):
-        bx, by = int(bx), int(by)
-    # arguments are deltas to apply to the left, top, right, bottom of the rect
-    # note: +y is down
-    return r.adjusted(-bx, -by, bx, by)
 
 
 def _get_x_scale(t: qg.QTransform) -> float:
@@ -209,14 +169,6 @@ def _matrix_to_qtransform(matrix: Matrix44) -> qg.QTransform:
     https://stackoverflow.com/questions/10629737/convert-3d-4x4-rotation-matrix-into-2d
     """
     return qg.QTransform(*matrix.get_2d_transformation())
-
-
-def _draw_angles_to_start_and_span(a: Radians, b: Radians) -> Tuple[Radians, Radians]:
-    if b < a:  # arc crosses the discontinuity at n*360
-        b += math.tau
-    start_angle = -math.degrees(a)
-    span_angle = -math.degrees(b - a)
-    return start_angle, span_angle
 
 
 def _get_text_rect(font: qg.QFont, text: str) -> qc.QRectF:
