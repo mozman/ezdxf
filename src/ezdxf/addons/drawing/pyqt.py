@@ -2,13 +2,13 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Optional, Tuple, Union, Iterable
+from typing import Optional, Iterable
 
 from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.text import FontMeasurements
-from ezdxf.addons.drawing.type_hints import Radians, Color
+from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command

@@ -15,8 +15,8 @@ from matplotlib.textpath import TextPath
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.properties import Properties
-from ezdxf.addons.drawing.type_hints import Color, Radians
-from ezdxf.math import Vector, param_to_angle, Matrix44
+from ezdxf.addons.drawing.type_hints import Color
+from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Command
 
 # matplotlib docs: https://matplotlib.org/index.html
@@ -117,29 +117,6 @@ class MatplotlibBackend(Backend):
         scale = cap_height / self._font_measurements.cap_height
         transformed_xs = _transform_path(path, Matrix44.scale(scale)).vertices[:, 0].tolist()
         return max(transformed_xs)
-
-    def draw_arc(self, center: Vector, width: float, height: float, base_angle: Radians,
-                 start_angle: Optional[Radians], end_angle: Optional[Radians], properties: Properties):
-        if min(width, height) < 1e-5:
-            return  # matplotlib crashes if the arc has almost 0 size
-        if start_angle is None:
-            start_degrees = 0.0
-            end_degrees = 360.0
-        else:
-            # draw angles are relative to `angle`. The arc is drawn anticlockwise from start to end.
-            # draw_angles are *NOT* in the global coordinate system, but instead are angles inside the
-            # local coordinate system defined by the major and minor axes of the ellipse
-            # (where the ellipse looks like a circle)
-            ratio = height / width
-            start, end = param_to_angle(ratio, start_angle), param_to_angle(ratio, end_angle)
-            start_degrees, end_degrees = degrees(start), degrees(end)
-
-        arc = Arc(
-            (center.x, center.y), width, height,
-            color=properties.color,
-            linewidth=properties.lineweight * POINTS,
-            angle=degrees(base_angle), theta1=start_degrees, theta2=end_degrees, zorder=self._get_z())
-        self.ax.add_patch(arc)
 
     def clear(self):
         self.ax.clear()
