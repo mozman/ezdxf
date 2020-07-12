@@ -36,3 +36,11 @@ def test_closed_arrow_doc_r2000():
     assert arrow_entities[0].dxftype() == 'LWPOLYLINE'
 
 
+def test_render_to_virtual_layout():
+    from ezdxf.graphicsfactory import VirtualLayout
+
+    layout = VirtualLayout()
+    ARROWS.render_arrow(layout, ARROWS.closed, insert=(0, 0, 0))
+    assert len(layout.entities) > 0
+
+

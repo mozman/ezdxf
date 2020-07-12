@@ -4,15 +4,16 @@
 from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast
 import math
 import logging
-import warnings
 
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
+from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007, LATEST_DXF_VERSION
 from ezdxf.math import Vector
 from ezdxf.math import global_bspline_interpolation
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
+from ezdxf.entities import factory
 from ezdxf.render.dim_linear import multi_point_linear_dimension
+from ezdxf.entitydb import EntitySpace
 
 logger = logging.getLogger('ezdxf')
 
@@ -1542,6 +1543,27 @@ class CreatorInterface:
             # Class Leader() supports the required OverrideMixin() interface
             DimStyleOverride(cast('Dimension', leader), override=override).commit()
         return leader
+
+
+class VirtualLayout(CreatorInterface):
+    def __init__(self, doc: 'Drawing' = None):
+        super().__init__(doc)
+        self.entities = EntitySpace()
+
+    @property
+    def dxfversion(self) -> str:
+        if self.doc:
+            return self.doc.dxfversion
+        else:
+            return LATEST_DXF_VERSION
+
+    def add_entity(self, entity: 'DXFGraphic') -> None:
+        self.entities.add(entity)
+
+    def new_entity(self, type_: str, dxfattribs: dict) -> 'DXFGraphic':
+        entity = factory.new(type_, dxfattribs=dxfattribs, doc=self.doc)
+        self.entities.add(entity)
+        return entity
 
 
 LEADER_UNSUPPORTED_DIMSTYLE_ATTRIBS = {'dimblk', 'dimblk1', 'dimblk2'}
