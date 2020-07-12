@@ -338,11 +338,11 @@ class Frontend:
                     elevation = Vector(entity.dxf.elevation).z
 
             trace = TraceBuilder.from_polyline(entity, segments=self.circle_approximation_count // 2)
-            for face in trace.faces():  # face is a 4-tuple of Vec2()
+            for polygon in trace.polygons():  # polygon is a sequence of Vec2()
                 if transform:
-                    points = ocs.points_to_wcs(Vector(v.x, v.y, elevation) for v in face)
+                    points = ocs.points_to_wcs(Vector(v.x, v.y, elevation) for v in polygon)
                 else:
-                    points = Vector.generate(face)
+                    points = Vector.generate(polygon)
                 self.out.draw_filled_polygon(points, properties)
             return
 

@@ -1,7 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 import pytest
-import math
 import ezdxf
 from ezdxf.render.trace import TraceBuilder, LinearTrace, CurvedTrace
 from ezdxf.math import BSpline, Vec2
@@ -91,6 +90,17 @@ def test_two_angled_faces():
     assert face1[3].isclose(Vec2(1.5936828611675133, 0.3007896423540608))
     assert face2[2].isclose(Vec2(4.353553390593274, 1.6464466094067263))
     assert face2[3].isclose(Vec2(3.646446609406726, 2.353553390593274))
+
+
+def test_linear_trace_polygon():
+    t = LinearTrace()
+    t.add_station((0, 0), 1, 1)
+    t.add_station((2, 0), 1, 1)
+    t.add_station((4, 0), 1, 1)
+    polygon = t.polygon()
+    assert len(polygon) == 6
+    assert polygon[0].isclose(Vec2(0, -0.5))
+    assert polygon[-1].isclose(Vec2(0, +0.5))
 
 
 def test_virtual_entities():

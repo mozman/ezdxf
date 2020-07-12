@@ -1,9 +1,8 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import List, TYPE_CHECKING, Iterable, Tuple, Dict, Union, cast
+from typing import List, TYPE_CHECKING, Iterable, Tuple, Dict, Union, cast, Sequence
 from abc import abstractmethod
 from collections import namedtuple
-from collections.abc import Sequence
 import math
 from ezdxf.math import Vec2, BSpline, linspace, ConstructionRay, ParallelRaysError, bulge_to_arc, ConstructionArc
 
@@ -19,13 +18,42 @@ LinearStation = namedtuple('LinearStation', ('vertex', 'start_width', 'end_width
 CurveStation = namedtuple('CurveStation', ('vertex0', 'vertex1'))
 
 Face = Tuple[Vec2, Vec2, Vec2, Vec2]
+Polygon = Sequence[Vec2]
 Quadrilateral = Union['Solid', 'Trace', 'Face3d']
 
 
 class AbstractTrace:
     @abstractmethod
     def faces(self) -> Iterable[Face]:
+        # vertex order: up1, down1, down2, up2
+        # faces connections:
+        # up2 -> next up1
+        # down2 -> next down1
         pass
+
+    def polygon(self) -> Polygon:
+        def merge(vertices: Polygon) -> Polygon:
+            if not len(vertices):
+                return
+
+            vertices = iter(vertices)
+            prev = next(vertices)
+            yield prev
+            for vertex in vertices:
+                if not prev.isclose(vertex):
+                    yield vertex
+                    prev = vertex
+
+        forward_contour: List[Vec2] = []
+        backward_contour: List[Vec2] = []
+        for up1, down1, down2, up2 in self.faces():
+            forward_contour.extend((down1, down2))
+            backward_contour.extend((up1, up2))
+
+        contour = list(merge(forward_contour))
+        contour.extend(reversed(list(merge(backward_contour))))
+        # todo: close polygon?
+        return contour
 
     def virtual_entities(self, dxftype='TRACE', dxfattribs: Dict = None, doc: 'Drawing' = None) -> Quadrilateral:
         """
@@ -330,6 +358,12 @@ class TraceBuilder(Sequence):
         """
         for trace in self._traces:
             yield from trace.faces()
+
+    def polygons(self) -> Iterable[Polygon]:
+        """ Yields for each sub-trace a single polygon as sequence of :class:`~ezdxf.math.Vec2` objects.
+        """
+        for trace in self._traces:
+            yield trace.polygon()
 
     def virtual_entities(self, dxftype='TRACE', dxfattribs: Dict = None, doc: 'Drawing' = None) -> Quadrilateral:
         """

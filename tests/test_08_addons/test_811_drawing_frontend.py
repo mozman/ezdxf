@@ -136,9 +136,8 @@ def test_banded_lwpolyline(msp, basic):
     msp.add_lwpolyline([(0, 0), (1, 0), (2, 0)], dxfattribs={'const_width': 0.1})
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 2
+    assert len(result) == 1
     assert result[0][0] == 'filled_polygon'
-    assert result[1][0] == 'filled_polygon'
 
 
 def test_polyline_2d(msp, basic):
@@ -154,9 +153,8 @@ def test_banded_polyline_2d(msp, basic):
     msp.add_polyline2d([(0, 0, 0.1, 0.2), (1, 0, 0.2, 0.1), (2, 0, 0.1, 0.5)], format='xyse')
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 2
+    assert len(result) == 1
     assert result[0][0] == 'filled_polygon'
-    assert result[1][0] == 'filled_polygon'
 
 
 def test_polyline_3d(msp, basic):
