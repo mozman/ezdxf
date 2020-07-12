@@ -12,9 +12,10 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .dimension import OverrideMixin
+from ezdxf.explode import virtual_leader_entities, explode_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Matrix44
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Matrix44, BaseLayout, EntityQuery
 
 __all__ = ['Leader']
 
@@ -46,7 +47,7 @@ acdb_leader = DefSubclass('AcDbLeader', {
     'text_height': DXFAttr(40, default=1, optional=True),
 
     # Text annotation width
-    'text_width': DXFAttr(41, default=1, optional=True),
+    'text_width': DXFAttr(41, default=0, optional=True),
 
     # 76: Number of vertices in leader (ignored for OPEN)
     # 10, 20, 30: Vertex coordinates (one entry for each vertex)
@@ -145,3 +146,30 @@ class Leader(DXFGraphic, OverrideMixin):
         if self.dxf.hasattr('hookline_direction'):
             self.dxf.hookline_direction = m.transform_direction(self.dxf.hookline_direction)
         return self
+
+    def virtual_entities(self) -> Iterable['DXFGraphic']:
+        """
+        Yields 'virtual' parts of LEADER as DXF primitives.
+
+        This entities are located at the original positions, but are not stored in the entity database, have no handle
+        and are not assigned to any layout.
+
+        .. versionadded:: 0.14
+
+        """
+        return virtual_leader_entities(self)
+
+    def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
+        """
+        Explode parts of LEADER as DXF primitives into target layout, if target layout is ``None``,
+        the target layout is the layout of the LEADER.
+
+        Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF parts.
+
+        Args:
+            target_layout: target layout for DXF parts, ``None`` for same layout as source entity.
+
+        .. versionadded:: 0.14
+
+        """
+        return explode_entity(self, target_layout)

@@ -440,6 +440,7 @@ class _Arrows:
 
     def arrow_shape(self, name: str, insert: 'Vertex', size: float, rotation: float) -> BaseArrow:
         # size depending shapes
+        name = name.upper()
         if name == self.dot_small:
             size *= .25
         elif name == self.dot_smallblank:

@@ -11,6 +11,8 @@ Version 0.14 - dev
   see [docs](https://ezdxf.mozman.at/docs/render/path.html)  
 - NEW: `Arc.construction_tool()` returns the 2D `ConstructionArc()`
 - NEW: `Arc.apply_construction_tool()` apply parameters from `ConstructionArc()`
+- NEW: `Leader.virtual_entities()` yields 'virtual' DXF primitives
+- NEW: `Leader.explode()` explode LEADER as DXF primitives into target layout
 - NEW: `Bezier4P.reverse()` returns object with reversed control point order
 - NEW: `LWPolyline.has_width` property is `True` if any width attribute is set
 - NEW: `Polyline.has_width` property is `True` if any width attribute is set

@@ -7,7 +7,6 @@ Add-ons
 - DWG loader (work in progress)
 - Simple SVG exporter
 - drawing
-    - LEADER
     - ACAD_TABLE
     - MLEADER ???
     - MLINE ???
@@ -20,7 +19,6 @@ Add-ons
 Render Tools
 ------------
 
-- `Leader.virtual_entities()`
 - `ACADTable.virtual_entities()`
 - `MLeader.virtual_entities()` ???
 - `MLine.virtual_entities()` ???
@@ -57,6 +55,7 @@ DXF Audit & Repair
     - R12: layer; repair: set to '0' (in ezdxf defaults to '0')
     - R2000+: layer, owner?, handle?
 - VERTEX on same layer as POLYLINE; repair: set VERTEX layer to POLYLINE layer
+- LEADER requires more than 2 vertices; repair: delete LEADER entity
 - find unreferenced objects:
     - DICTIONARY e.g. orphaned extension dicts; repair: delete
 - find unused BLOCK definitions: has no corresponding INSERT; repair: delete

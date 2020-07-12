@@ -109,6 +109,10 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         List of :class:`~ezdxf.math.Vector` objects, representing the vertices of the leader (3D Point in :ref:`WCS`).
 
-    .. automethod:: Leader.set_vertices
+    .. automethod:: set_vertices
 
     .. automethod:: transform(m: Matrix44) -> Leader
+
+    .. automethod:: virtual_entities() -> Iterable[Union[Line, Arc]]
+
+    .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery

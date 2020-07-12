@@ -26,7 +26,7 @@ COMPOSITE_ENTITY_TYPES = {
     # Unsupported types, represented as DXFTagStorage(), will sorted out in Frontend.draw_entities().
     'INSERT',
     # This types have a virtual_entities() method, which returns the content of the associated anonymous block
-    'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'ACAD_TABLE',
+    'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'LEADER', 'ACAD_TABLE',
 }
 
 
@@ -317,13 +317,9 @@ class Frontend:
         # All these entities have an associated anonymous geometry block.
         elif hasattr(entity, 'virtual_entities'):
             children = []
-            try:
-                for child in entity.virtual_entities():
-                    child.transparency = 0.0  # todo: defaults to 1.0 (fully transparent)???
-                    children.append(child)
-            except Exception as e:
-                print(f'Exception {type(e)}({e}) failed to get children of entity: {str(entity)}')
-                return
+            for child in entity.virtual_entities():
+                child.transparency = 0.0  # todo: defaults to 1.0 (fully transparent)???
+                children.append(child)
 
             self.parent_stack.append(entity)
             # visibility check is required:

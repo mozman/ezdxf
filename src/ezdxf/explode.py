@@ -2,10 +2,10 @@
 # License: MIT License
 import logging
 import math
-from typing import TYPE_CHECKING, Iterable, cast, Union, Generator, Callable, Optional
+from typing import TYPE_CHECKING, Iterable, Union, Callable, Optional, cast
 
 from ezdxf.entities import factory
-from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
+from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES, BYBLOCK
 from ezdxf.math import Vector, bulge_to_arc, OCS
 from ezdxf.math.transformtools import NonUniformScalingError, InsertTransformationError
 from ezdxf.query import EntityQuery
@@ -13,7 +13,10 @@ from ezdxf.query import EntityQuery
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, LWPolyline, Polyline, Attrib, Line, Arc, Face3d, Text
+    from ezdxf.eztypes import (
+        Insert, BaseLayout, DXFGraphic, LWPolyline, Polyline, Attrib, Line, Arc, Face3d, Text,
+        Leader,
+    )
 
 
 def explode_block_reference(block_ref: 'Insert', target_layout: 'BaseLayout') -> EntityQuery:
@@ -421,3 +424,93 @@ def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
 
         face3d_attribs['invisible'] = invisible
         yield factory.new(dxftype='3DFACE', dxfattribs=face3d_attribs, doc=doc)
+
+
+def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
+    from ezdxf.entities import DimStyleOverride
+    assert leader.dxftype() == 'LEADER'
+
+    vertices = Vector.list(leader.vertices)  # WCS
+    if len(vertices) > 3:
+        raise ValueError('More than 2 vertices required.')
+
+    dimtad = 1
+    dimgap = 0.625
+    dimscale = 1.0
+    dimclrd = leader.dxf.color
+    override = None
+    doc = leader.doc
+    if doc:
+        override = DimStyleOverride(cast('Dimension', leader))
+        dimtad = override.get('dimtad', dimtad)
+        dimgap = override.get('dimgap', dimgap)
+        dimscale = override.get('dimscale', dimscale)
+        dimclrd = override.get('dimclrd', dimclrd)
+
+    dxf = leader.dxf
+    text_width = dxf.text_width
+    hook_line_vector = Vector(dxf.horizontal_direction)
+    if dxf.hookline_direction == 1:
+        hook_line_vector = -hook_line_vector
+
+    if dimtad != 0 and text_width > 0:
+        vertices.append(vertices[-1] + hook_line_vector * (dimgap * dimscale + text_width))
+
+    dxfattribs = leader.graphic_properties()
+    dxfattribs['color'] = dimclrd
+    if dxfattribs.get('color') == BYBLOCK:
+        dxfattribs['color'] = dxf.block_color
+    if dxf.path_type == 1:  # Spline
+        raise NotImplementedError
+    else:
+        attribs = dict(dxfattribs)
+        prev = vertices[0]
+        for vertex in vertices[1:]:
+            attribs['start'] = prev
+            attribs['end'] = vertex
+            yield factory.new(dxftype='LINE', dxfattribs=attribs, doc=leader.doc)
+            prev = vertex
+
+    if dxf.has_arrowhead and override:
+        arrow_name = override.get('dimldrblk', '')
+        if arrow_name is None:
+            return
+        size = override.get('dimasz', 0.625) * dimscale
+        rotation = (vertices[0] - vertices[1]).angle_deg
+        if doc and arrow_name in doc.blocks:
+            dxfattribs.update({
+                'name': arrow_name,
+                'insert': vertices[0],
+                'rotation': rotation,
+                'xscale': size,
+                'yscale': size,
+                'zscale': size,
+            })
+            # create a virtual block reference
+            insert = factory.new('INSERT', dxfattribs=dxfattribs, doc=doc)
+            yield from insert.virtual_entities()
+        else:
+            yield from virtual_arrow(
+                arrow_name,
+                vertices[0],
+                size,
+                rotation,
+                dxfattribs,
+            )
+
+
+def virtual_arrow(name: str, insert: Vector = Vector(), size: float = 0.625, rotation: float = 0,
+                  dxfattribs=None, doc=None):
+    from ezdxf.graphicsfactory import VirtualLayout
+    from ezdxf.render.arrows import ARROWS
+    if name in ARROWS:
+        layout = VirtualLayout(doc)
+        dxfattribs = dxfattribs or {}
+        ARROWS.render_arrow(
+            layout, name,
+            insert=insert,
+            size=size,
+            rotation=rotation,
+            dxfattribs=dxfattribs,
+        )
+        yield from layout.entities

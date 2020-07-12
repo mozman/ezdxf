@@ -82,7 +82,7 @@ def test_default_new():
     assert entity.dxf.hookline_direction == 0
     assert entity.dxf.has_hookline == 0
     assert entity.dxf.text_height == 1
-    assert entity.dxf.text_width == 1
+    assert entity.dxf.text_width == 0
     assert entity.dxf.block_color == 7
     assert entity.dxf.annotation_handle == '0'
     assert entity.dxf.normal_vector == (0, 0, 1)
@@ -128,3 +128,14 @@ def test_add_leader():
     leader.vertices.append(Vector(0, 0, 0))
     assert len(leader.vertices) == 1
     assert leader.vertices[0] == (0, 0, 0)
+
+
+def test_virtual_etities():
+    leader = Leader.new()
+    leader.vertices = [
+        (0, 0, 0),
+        (1, 1, 0),
+        (2, 1, 0),
+    ]
+    result = list(leader.virtual_entities())
+    assert len(result) == 2
