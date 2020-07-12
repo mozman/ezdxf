@@ -115,6 +115,43 @@ def test_add_ellipse():
     assert path.end == (2, 0)
 
 
+def test_from_ellipse():
+    from ezdxf.entities import Ellipse
+    from ezdxf.math import ConstructionEllipse
+    e = ConstructionEllipse(center=(3, 0), major_axis=(1, 0), ratio=0.5,
+                            start_param=0, end_param=math.pi)
+    ellipse = Ellipse.new()
+    ellipse.apply_construction_tool(e)
+    path = Path.from_ellipse(ellipse)
+    assert path.start == (4, 0)
+    assert path.end == (2, 0)
+
+
+def test_from_arc():
+    from ezdxf.entities import Arc
+    arc = Arc.new(dxfattribs={
+        'center': (1, 0, 0),
+        'radius': 1,
+        'start_angle': 0,
+        'end_angle': 180,
+    })
+    path = Path.from_arc(arc)
+    assert path.start == (2, 0)
+    assert path.end == (0, 0)
+
+
+def test_from_circle():
+    from ezdxf.entities import Circle
+    circle = Circle.new(dxfattribs={
+        'center': (1, 0, 0),
+        'radius': 1,
+    })
+    path = Path.from_circle(circle)
+    assert path.start == (2, 0)
+    assert path.end == (2, 0)
+    assert path.is_closed is True
+
+
 def test_lwpolyine_lines():
     from ezdxf.entities import LWPolyline
     pline = LWPolyline()

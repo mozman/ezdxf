@@ -11,7 +11,7 @@ from ezdxf.math import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import LWPolyline, Polyline, Vertex, Spline
+    from ezdxf.eztypes import LWPolyline, Polyline, Vertex, Spline, Ellipse, Arc, Circle
     from ezdxf.entities.hatch import PolylinePath, EdgePath
 
 __all__ = ['Path', 'Command']
@@ -170,6 +170,39 @@ class Path(abc.Sequence):
         """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Spline`. """
         path = cls()
         path.add_spline(spline.construction_tool(), level=level, reset=True)
+        return path
+
+    @classmethod
+    def from_ellipse(cls, ellipse: 'Ellipse', segments: int = 1) -> 'Path':
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Ellipse`. """
+        path = cls()
+        path.add_ellipse(ellipse.construction_tool(), segments=segments, reset=True)
+        return path
+
+    @classmethod
+    def from_arc(cls, arc: 'Arc', segments: int = 1) -> 'Path':
+        """ Returns a :class:`Path` from an :class:`~ezdxf.entities.Arc`. """
+        path = cls()
+        ellipse = ConstructionEllipse.from_arc(
+            center=arc.dxf.center,
+            radius=arc.dxf.radius,
+            extrusion=arc.dxf.extrusion,
+            start_angle=arc.dxf.start_angle,
+            end_angle=arc.dxf.end_angle,
+        )
+        path.add_ellipse(ellipse, segments=segments, reset=True)
+        return path
+
+    @classmethod
+    def from_circle(cls, circle: 'Circle', segments: int = 1) -> 'Path':
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Circle`. """
+        path = cls()
+        ellipse = ConstructionEllipse.from_arc(
+            center=circle.dxf.center,
+            radius=circle.dxf.radius,
+            extrusion=circle.dxf.extrusion,
+        )
+        path.add_ellipse(ellipse, segments=segments, reset=True)
         return path
 
     @classmethod
