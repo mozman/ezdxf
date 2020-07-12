@@ -161,30 +161,18 @@ class Frontend:
         return  # not supported
 
     def draw_elliptic_arc_entity_3d(self, entity: DXFGraphic) -> None:
-        dxf, dxftype = entity.dxf, entity.dxftype()
+        dxftype = entity.dxftype()
         properties = self._resolve_properties(entity)
 
-        if dxftype in {'CIRCLE', 'ARC'}:
-            center = dxf.center  # ocs transformation in .from_arc()
-            radius = dxf.radius
-            if math.isclose(radius, 0):
-                return
-            if dxftype == 'CIRCLE':
-                start_angle = 0
-                end_angle = 360
-            else:
-                start_angle = dxf.start_angle
-                end_angle = dxf.end_angle
-            e = ConstructionEllipse.from_arc(center, radius, dxf.extrusion, start_angle, end_angle)
+        if dxftype == 'CIRCLE':
+            path = Path.from_circle(cast('Circle', entity))
+        elif dxftype == 'ARC':
+            path = Path.from_arc(cast('Arc', entity))
         elif dxftype == 'ELLIPSE':
-            e = cast(Ellipse, entity).construction_tool()
+            path = Path.from_ellipse(cast('Ellipse', entity))
         else:
             raise TypeError(dxftype)
-
-        # Approximate as 3D polyline
-        segments = int((e.end_param - e.start_param) / math.tau * self.circle_approximation_count)
-        points = e.vertices(linspace(e.start_param, e.end_param, max(4, segments + 1)))
-        self.out.draw_path(Path.from_vertices(points), properties)
+        self.out.draw_path(path, properties)
 
     def draw_elliptic_arc_entity_2d(self, entity: DXFGraphic) -> None:
         dxf, dxftype = entity.dxf, entity.dxftype()
