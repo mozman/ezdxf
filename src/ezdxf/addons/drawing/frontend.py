@@ -192,14 +192,20 @@ class Frontend:
         if dxftype == 'CIRCLE':
             center = _get_arc_wcs_center(entity)
             diameter = 2 * dxf.radius
-            self.out.draw_arc(center, diameter, diameter, 0, None, properties)
-
+            self.out.draw_arc(
+                center, width=diameter, height=diameter,
+                base_angle=0, start_angle=None, end_angle=None,
+                properties=properties,
+            )
         elif dxftype == 'ARC':
             center = _get_arc_wcs_center(entity)
             diameter = 2 * dxf.radius
-            draw_angles = get_draw_angles(radians(dxf.start_angle), radians(dxf.end_angle), Vector(dxf.extrusion))
-            self.out.draw_arc(center, diameter, diameter, 0, draw_angles, properties)
-
+            start, end = get_draw_angles(radians(dxf.start_angle), radians(dxf.end_angle), Vector(dxf.extrusion))
+            self.out.draw_arc(
+                center, width=diameter, height=diameter,
+                base_angle=0, start_angle=start, end_angle=end,
+                properties=properties,
+            )
         elif dxftype == 'ELLIPSE':
             # 'param' angles are anticlockwise around the extrusion vector
             # 'param' angles are relative to the major axis angle
@@ -207,8 +213,12 @@ class Frontend:
             major_axis_angle = normalize_angle(math.atan2(dxf.major_axis.y, dxf.major_axis.x))
             width = 2 * dxf.major_axis.magnitude
             height = dxf.ratio * width  # ratio == height / width
-            draw_angles = get_draw_angles(dxf.start_param, dxf.end_param, Vector(dxf.extrusion))
-            self.out.draw_arc(dxf.center, width, height, major_axis_angle, draw_angles, properties)
+            start, end = get_draw_angles(dxf.start_param, dxf.end_param, Vector(dxf.extrusion))
+            self.out.draw_arc(
+                dxf.center, width, height,
+                base_angle=major_axis_angle, start_angle=start, end_angle=end,
+                properties=properties,
+            )
         else:
             raise TypeError(dxftype)
 

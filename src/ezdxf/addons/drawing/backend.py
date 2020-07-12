@@ -78,11 +78,15 @@ class Backend(ABC):
     @abstractmethod
     def get_text_line_width(self, text: str, cap_height: float) -> float:
         """ get the width of a single line of text """
+        # https://stackoverflow.com/questions/32555015/how-to-get-the-visual-length-of-a-text-string-in-python
+        # https://stackoverflow.com/questions/4190667/how-to-get-width-of-a-truetype-font-character-in-1200ths-of-an-inch-with-python
         raise NotImplementedError
 
     @abstractmethod
-    def draw_arc(self, center: Vector, width: float, height: float, angle: Radians,
-                 draw_angles: Optional[Tuple[Radians, Radians]], properties: Properties) -> None:
+    def draw_arc(self, center: Vector, width: float, height: float, base_angle: Radians, start_angle: Optional[Radians],
+                 end_angle: Optional[Radians], properties: Properties) -> None:
+        # Start- and end angle are relative to `base_angle`. The arc is drawn count-clockwise from
+        # start- to end angle.
         raise NotImplementedError
 
     @abstractmethod

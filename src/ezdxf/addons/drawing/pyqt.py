@@ -154,8 +154,8 @@ class PyQtBackend(Backend):
         scale = cap_height / self._font_measurements.cap_height
         return _get_text_rect(self._font, text).right() * scale
 
-    def draw_arc(self, center: Vector, width: float, height: float, angle: Radians,
-                 draw_angles: Optional[Tuple[Radians, Radians]], properties: Properties) -> None:
+    def draw_arc(self, center: Vector, width: float, height: float, base_angle: Radians,
+                 start_angle: Optional[Radians], end_angle: Optional[Radians], properties: Properties) -> None:
         top = center.x - width / 2
         left = center.y - height / 2
         color = properties.color
@@ -163,12 +163,12 @@ class PyQtBackend(Backend):
         ellipse.setBrush(self._no_fill)
         ellipse.setPen(self._get_pen(color))
         ellipse.setTransformOriginPoint(center.x, center.y)
-        ellipse.setRotation(math.degrees(angle))
-        if draw_angles is not None:
-            start, span = _draw_angles_to_start_and_span(draw_angles)
+        ellipse.setRotation(math.degrees(base_angle))
+        if start_angle is not None:
+            start, span = _draw_angles_to_start_and_span(start_angle, end_angle)
             # angles stored as integers in 16ths of a degree units
-            ellipse.setStartAngle(int(round(start * 16)))
-            ellipse.setSpanAngle(int(round(span * 16)))
+            ellipse.setStartAngle(round(start * 16))
+            ellipse.setSpanAngle(round(span * 16))
         self._set_item_data(ellipse)
         self.scene.addItem(ellipse)
 
@@ -211,8 +211,7 @@ def _matrix_to_qtransform(matrix: Matrix44) -> qg.QTransform:
     return qg.QTransform(*matrix.get_2d_transformation())
 
 
-def _draw_angles_to_start_and_span(draw_angles: Tuple[float, float]) -> Tuple[float, float]:
-    a, b = draw_angles
+def _draw_angles_to_start_and_span(a: Radians, b: Radians) -> Tuple[Radians, Radians]:
     if b < a:  # arc crosses the discontinuity at n*360
         b += math.tau
     start_angle = -math.degrees(a)
