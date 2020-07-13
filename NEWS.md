@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.13.1 - dev
+--------------------
+
+- BUGFIX: remove white space from structure tags like "SECTION " 
+
 Version 0.13 - 2020-07-04
 -------------------------
 
