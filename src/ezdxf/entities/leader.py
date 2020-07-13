@@ -152,9 +152,6 @@ class Leader(DXFGraphic, OverrideMixin):
         self.vertices = list(m.transform_vertices(self.vertices))
         self.dxf.normal_vector, _ = transform_extrusion(self.dxf.normal_vector, m)  # ???
         self.dxf.horizontal_direction = m.transform_direction(self.dxf.horizontal_direction)
-        # Transform optional attributes
-        if self.dxf.hasattr('hookline_direction'):
-            self.dxf.hookline_direction = m.transform_direction(self.dxf.hookline_direction)
         return self
 
     def virtual_entities(self) -> Iterable['DXFGraphic']:
