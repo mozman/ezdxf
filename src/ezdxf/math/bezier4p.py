@@ -172,6 +172,12 @@ def cubic_bezier_from_arc(
     if math.isclose(end_angle, 0.0):
         end_angle = math.tau
 
+    if start_angle > end_angle:
+        end_angle += math.tau
+
+    if math.isclose(end_angle - start_angle, 0.0):
+        return
+
     for control_points in cubic_bezier_arc_parameters(start_angle, end_angle, segments):
         defpoints = [center + (p * radius) for p in control_points]
         yield Bezier4P(defpoints)
@@ -215,6 +221,18 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse', segments: int = 1)
         yield Bezier4P(tuple(transform(defpoints)))
 
 
+# Circular arc to Bezier curve:
+# Source: https://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves
+# Optimization: https://spencermortensen.com/articles/bezier-circle/
+# actual c = 0.5522847498307935  = 4.0/3.0*(sqrt(2)-1.0) and max. deviation of ~0.03%
+DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
+# optimal c = 0.551915024494 and max. deviation of ~0.02%
+OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
+# Not sure if this is the correct way to apply this optimization,
+# so i stick to the original version for now:
+TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
+
+
 def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: int = 1) -> Sequence[Vector]:
     """
     Yields cubic Bézier-curve parameters for a circular 2D arc with center at (0, 0) and a radius of 1
@@ -226,7 +244,6 @@ def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: 
         segments: count of Bèzier-curve segments, at least one segment for each quarter (pi/2)
 
     """
-    # Source: https://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves
     if segments < 1:
         raise ValueError('Invalid argument segments (>= 1).')
     delta_angle = end_angle - start_angle
@@ -235,15 +252,8 @@ def cubic_bezier_arc_parameters(start_angle: float, end_angle: float, segments: 
     else:
         raise ValueError('Delta angle from start- to end angle has to be > 0.')
 
-    # optimization: https://spencermortensen.com/articles/bezier-circle/
-    # actual_c = 0.5522847498307935  = 4.0/3.0*(sqrt(2)-1.0)
-    # optimal_c = 0.551915024494
-    factor = 4.0 / 3.0  # original = 1.33333333333
-    # factor = 1.3324407374108935  # optimized
-    # Not sure if this is the correct way to apply this optimization,
-    # so i stick to the original version for now.
     segment_angle = delta_angle / arc_count
-    tangent_length = factor * math.tan(segment_angle / 4.0)
+    tangent_length = TANGENT_FACTOR * math.tan(segment_angle / 4.0)
 
     angle = start_angle
     end_point = None
