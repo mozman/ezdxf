@@ -5,6 +5,9 @@ from typing import Optional
 import logging
 import subprocess
 import os
+import sys
+import uuid
+from shutil import rmtree
 from pathlib import Path
 import ezdxf
 from ezdxf.drawing import Drawing
@@ -12,8 +15,15 @@ from ezdxf.lldxf.validator import is_dxf_file, dxf_info, is_binary_dxf_file, dwg
 
 logger = logging.getLogger('ezdxf')
 
-exec_path = r"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"
-temp_path = os.environ['TMP'] or os.environ['TEMP']
+system_is_windows = sys.platform.startswith('win')
+
+if system_is_windows:
+    exec_path = r"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"
+else:
+    exec_path = '/usr/local/bin/ODAFileConverter'
+
+temp_path = str(uuid.uuid1())
+
 
 
 class ODAFCError(IOError):
@@ -112,7 +122,7 @@ def readfile(filename: str, version: str = None, audit=False) -> Optional[Drawin
 
     if dxf_temp_file.exists():
         doc = ezdxf.readfile(str(dxf_temp_file))
-        dxf_temp_file.unlink()
+        rmtree(tmp_folder.absolute())
         doc.filename = infile.with_suffix('.dxf')
         return doc
     return None
@@ -137,7 +147,9 @@ def export_dwg(doc: Drawing, filename: str, version=None, audit=False) -> None:
     export_version = VERSION_MAP[version]
     dwg_file = Path(filename).absolute()
     dxf_file = Path(temp_path) / dwg_file.with_suffix('.dxf').name
-
+    tmp_folder = Path(temp_path).absolute()
+    if not tmp_folder.exists():
+        tmp_folder.mkdir()
     # Save DXF document
     old_filename = doc.filename
     doc.saveas(dxf_file)
@@ -153,7 +165,7 @@ def export_dwg(doc: Drawing, filename: str, version=None, audit=False) -> None:
             raise FileNotFoundError(f"No such file or directory: '{str(out_folder)}'")
     finally:
         if dxf_file.exists():
-            dxf_file.unlink()
+            rmtree(dxf_file.parent.absolute())
 
 
 def _odafc_cmd(filename: str, in_folder: str, out_folder: str, fmt: str = 'DXF', version='ACAD2013', audit=False):
@@ -164,87 +176,18 @@ def _odafc_cmd(filename: str, in_folder: str, out_folder: str, fmt: str = 'DXF',
 
 def _execute_odafc(cmd) -> bytes:
     logger.debug(f'run="{cmd}"')
-    #add new code here to solve the GUI pop-up problem
-    startupinfo = subprocess.STARTUPINFO()
-    startupinfo.dwFlags = subprocess.CREATE_NEW_CONSOLE | subprocess.STARTF_USESHOWWINDOW
-    startupinfo.wShowWindow = subprocess.SW_HIDE
-    result = subprocess.Popen(args=cmd, stdout=subprocess.PIPE, stderr=None, startupinfo=startupinfo)
-    if result.returncode != 0:
-        msg = f'ODA File Converter returns error code: {result.returncode}'
-        logger.debug(msg)
-        raise ODAFCError(msg)
-    return result.stdout
-
-
-'''
-Before this oda add-on, I came into the same problem of converting dwg and dxf formats.
-Below is what I came up with. It works on my Windows and no GUI pops up.
-I hope this will work. The ezdxf package really helps my a lot. Thanks.
-
-#Windows
-
-import os
-import subprocess
-
-def subprocess_call(*args, **kwargs):
-    startupinfo = subprocess.STARTUPINFO()
-    startupinfo.dwFlags = subprocess.CREATE_NEW_CONSOLE | subprocess.STARTF_USESHOWWINDOW
-    startupinfo.wShowWindow = subprocess.SW_HIDE
-    kwargs['startupinfo'] = startupinfo
-    retcode = subprocess.Popen(*args, **kwargs)
-    return retcode
-
-
-class Converter():    
-    def __init__(self,input_folder,output_folder):
-        self.app_path = '"D:\\Program Files\\ODA\\ODAFileConverter_title 19.12.0\\ODAFileConverter.exe"'
-        self.output_version = 'ACAD2007'
-        self.recurse_input_folder = '"0"'
-        self.audit_file = '"0"'
-        self.input_filter = '""'
-        self.input_folder = input_folder
-        self.output_folder = output_folder
-        
-    def convert(self, output_file_type = 'DXF'):
-        command_list = [self.app_path,
-                        self.input_folder,
-                        self.output_folder,
-                        self.output_version,
-                        output_file_type,
-                        self.recurse_input_folder,
-                        self.audit_file,
-                        self.input_filter
-                       ]
-        command = ' '.join(command_list)
-        sub = subprocess_call(command)
-        sub.wait()
-
-
-
-#Linux-CentOS7.3
-
-import os
-
-class Converter():    
-    def __init__(self,input_folder,output_folder):
-        self.app_path = '/usr/local/bin/ODAFileConverter'
-        self.output_version = 'ACAD2007'
-        self.recurse_input_folder = '0'
-        self.audit_file = '0'
-        self.input_folder = input_folder
-        self.output_folder = output_folder
-        
-    def convert(self, output_file_type = 'DXF',input_filter = '""'):
-        command_list = [self.app_path,
-                        self.input_folder,
-                        self.output_folder,
-                        self.output_version,
-                        output_file_type,
-                        self.recurse_input_folder,
-                        self.audit_file,
-                        input_filter
-                       ]
-        command = ' '.join(command_list)
+    if system_is_windows:
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags = subprocess.CREATE_NEW_CONSOLE | subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+        result = subprocess.Popen(args=cmd, stdout=subprocess.PIPE, stderr=None, startupinfo=startupinfo)
+        result.wait()
+        if result.returncode != 0:
+            msg = f'ODA File Converter returns error code: {result.returncode}'
+            logger.debug(msg)
+            raise ODAFCError(msg)
+        return result.stdout
+    else:
+        cmd = ' '.join(cmd)
         os.environ['QT_QPA_PLATFORM']='offscreen'
-        os.system(command)
-'''
+        os.system(cmd)
