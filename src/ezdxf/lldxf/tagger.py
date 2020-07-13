@@ -5,8 +5,8 @@
 from typing import Iterable, TextIO, Iterator
 import struct
 from .types import DXFTag, DXFVertex, DXFBinaryTag
-from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_DATA
-from .const import DXFStructureError, DXFVersionError
+from .types import BYTES, INT16, INT32, INT64, DOUBLE
+from .const import DXFStructureError
 from .types import POINT_CODES, TYPE_TABLE, BINARY_DATA
 from ezdxf.tools.codepage import toencoding
 
@@ -260,7 +260,11 @@ def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
             else:  # just a single tag
                 try:
                     # fast path!
-                    yield DXFTag(code, TYPE_TABLE.get(code, str)(x.value))
+                    if code == 0:
+                        value = x.value.strip()
+                    else:
+                        value = x.value
+                    yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
                 except ValueError:  # internal exception
                     # slow path
                     if TYPE_TABLE.get(code, str) is int:  # ProE stores int values as floats :((
