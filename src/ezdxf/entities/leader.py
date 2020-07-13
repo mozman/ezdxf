@@ -110,8 +110,8 @@ class Leader(DXFGraphic, OverrideMixin):
                 yield tag
 
     def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
-        if len(self.vertices) < 3:
-            logger.debug(f"Invalid {str(self)}: more than 2 vertices required.")
+        if len(self.vertices) < 2:
+            logger.debug(f"Invalid {str(self)}: more than 1 vertex required.")
             return False
         else:
             return True

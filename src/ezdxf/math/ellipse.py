@@ -62,6 +62,10 @@ class ConstructionEllipse:
              end_angle: end angle in degrees
              ccw: arc curve goes counter clockwise from start to end if ``True``
         """
+        if radius <= 0.0:
+            raise ValueError(f'Invalid radius: {radius}')
+        if NULLVEC.isclose(extrusion):
+            raise ValueError(f'Invalid extrusion: {str(extrusion)}')
         ratio = 1.0
         ocs = OCS(extrusion)
         center = ocs.to_wcs(center)

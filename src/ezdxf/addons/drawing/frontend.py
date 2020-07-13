@@ -15,7 +15,7 @@ from ezdxf.entities import (
 )
 from ezdxf.entities.dxfentity import DXFTagStorage
 from ezdxf.layouts import Layout
-from ezdxf.math import Vector, Z_AXIS
+from ezdxf.math import Vector, Z_AXIS, NULLVEC
 from ezdxf.render import MeshBuilder, TraceBuilder, Path
 
 __all__ = ['Frontend']
@@ -66,6 +66,9 @@ class Frontend:
         # not used yet! Could be used for all curves CIRCLE, ARC, ELLIPSE and SPLINE
         # self.approximation_max_sagitta = 0.01  # for drawing unit = 1m, max sagitta = 1cm
 
+    def skip_entity(self, msg: str):
+        print(msg)
+
     def draw_layout(self, layout: 'Layout', finalize: bool = True) -> None:
         self.parent_stack = []
         self.draw_entities(layout)
@@ -76,7 +79,7 @@ class Frontend:
     def draw_entities(self, entities: Iterable[DXFGraphic]) -> None:
         for entity in entities:
             if isinstance(entity, DXFTagStorage):
-                print(f'ignoring unsupported DXF entity: {str(entity)}')
+                self.skip_entity(f'ignoring unsupported DXF entity: {str(entity)}')
                 # unsupported DXF entity, just tag storage to preserve data
                 continue
             if self.visibility_filter:
@@ -116,7 +119,7 @@ class Frontend:
         elif dxftype == 'VIEWPORT':
             self.draw_viewport_entity(entity)
         else:
-            print(f'ignoring {dxftype} entity')
+            self.skip_entity(f'Unsupported entity: {str(entity)}')
         self.out.set_current_entity(None)
 
     def draw_line_entity(self, entity: DXFGraphic) -> None:
@@ -157,14 +160,27 @@ class Frontend:
     def draw_elliptic_arc_entity(self, entity: DXFGraphic) -> None:
         dxftype = entity.dxftype()
         properties = self._resolve_properties(entity)
+        if NULLVEC.isclose(entity.dxf.extrusion):
+            self.skip_entity(f'Invalid extrusion (0, 0, 0) in entity: {str(entity)}')
+            return
 
         if dxftype == 'CIRCLE':
+            if entity.dxf.radius <= 0:
+                self.skip_entity(f'Invalid radius in entity: {str(entity)}')
+                return
             path = Path.from_circle(cast('Circle', entity))
         elif dxftype == 'ARC':
+            if entity.dxf.radius <= 0:
+                self.skip_entity(f'Invalid radius in entity: {str(entity)}')
+                return
             path = Path.from_arc(cast('Arc', entity))
         elif dxftype == 'ELLIPSE':
+            if NULLVEC.isclose(entity.dxf.major_axis):
+                self.skip_entity(f'Invalid major axis (0, 0, 0) in entity: {str(entity)}')
+                return
+
             path = Path.from_ellipse(cast('Ellipse', entity))
-        else:
+        else:  # API usage error
             raise TypeError(dxftype)
         self.out.draw_path(path, properties)
 
