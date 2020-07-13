@@ -151,7 +151,10 @@ def virtual_block_reference_entities(block_ref: 'Insert',
             except NonUniformScalingError:
                 dxftype = entity.dxftype()
                 if dxftype in {'ARC', 'CIRCLE'}:
-                    yield Ellipse.from_arc(entity).transform(m)
+                    if entity.dxf.radius > 0:
+                        yield Ellipse.from_arc(entity).transform(m)
+                    else:
+                        skipped_entity_callback(entity, f'Invalid radius in entity {str(entity)}.')
                 elif dxftype in {'LWPOLYLINE', 'POLYLINE'}:  # has arcs
                     yield from transform(entity.virtual_entities())
                 else:
@@ -314,13 +317,14 @@ def _virtual_polyline_entities(points, elevation: float, extrusion: Vector, dxfa
         attribs = dict(dxfattribs)
         if prev_bulge != 0:
             center, start_angle, end_angle, radius = bulge_to_arc(prev_point, point, prev_bulge)
-            attribs['center'] = Vector(center.x, center.y, elevation)
-            attribs['radius'] = radius
-            attribs['start_angle'] = math.degrees(start_angle)
-            attribs['end_angle'] = math.degrees(end_angle)
-            if extrusion:
-                attribs['extrusion'] = extrusion
-            yield factory.new(dxftype='ARC', dxfattribs=attribs, doc=doc)
+            if radius > 0:
+                attribs['center'] = Vector(center.x, center.y, elevation)
+                attribs['radius'] = radius
+                attribs['start_angle'] = math.degrees(start_angle)
+                attribs['end_angle'] = math.degrees(end_angle)
+                if extrusion:
+                    attribs['extrusion'] = extrusion
+                yield factory.new(dxftype='ARC', dxfattribs=attribs, doc=doc)
         else:
             attribs['start'] = ocs.to_wcs(prev_point)
             attribs['end'] = ocs.to_wcs(point)
