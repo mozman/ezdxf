@@ -293,6 +293,8 @@ class CurvedTrace(AbstractTrace):
                       less segments, but at least 3
 
         """
+        if arc.radius <= 0:
+            raise ValueError(f'Invalid radius: {arc.radius}.')
         curve_trace = cls()
         count = max(math.ceil(arc.angle_span / 360.0 * segments), 3) + 1
         center = Vec2(arc.center)
@@ -455,21 +457,21 @@ class TraceBuilder(Sequence):
         for point, start_width, end_width, bulge in points:
             if store_bulge:
                 center, start_angle, end_angle, radius = bulge_to_arc(store_point, point, store_bulge)
-                arc = ConstructionArc(
-                    center,
-                    radius,
-                    math.degrees(start_angle),
-                    math.degrees(end_angle),
-                    is_counter_clockwise=True,
-                )
-                if arc.start_point.isclose(point):
-                    sw = store_end_width
-                    ew = store_start_width
-                else:
-                    ew = store_end_width
-                    sw = store_start_width
-
-                trace.append(CurvedTrace.from_arc(arc, sw, ew, segments))
+                if radius > 0:
+                    arc = ConstructionArc(
+                        center,
+                        radius,
+                        math.degrees(start_angle),
+                        math.degrees(end_angle),
+                        is_counter_clockwise=True,
+                    )
+                    if arc.start_point.isclose(point):
+                        sw = store_end_width
+                        ew = store_start_width
+                    else:
+                        ew = store_end_width
+                        sw = store_start_width
+                    trace.append(CurvedTrace.from_arc(arc, sw, ew, segments))
                 store_bulge = None
 
             if bulge != 0:  # arc from prev_point to point
