@@ -13,6 +13,9 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .dimension import OverrideMixin
 from ezdxf.explode import virtual_leader_entities, explode_entity
+import logging
+
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Matrix44, BaseLayout, EntityQuery
@@ -105,6 +108,13 @@ class Leader(DXFGraphic, OverrideMixin):
                 self.vertices.append(tag.value)
             else:
                 yield tag
+
+    def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
+        if len(self.vertices) < 3:
+            logger.debug(f"Invalid {str(self)}: more than 2 vertices required.")
+            return False
+        else:
+            return True
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """

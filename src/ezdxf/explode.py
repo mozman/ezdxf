@@ -435,6 +435,8 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
 
     vertices = Vector.list(leader.vertices)  # WCS
     if len(vertices) < 3:
+        # This LEADER entities should be removed by the auditor if loaded or
+        # ignored at exporting, if created by an ezdxf-user (log).
         raise ValueError('More than 2 vertices required.')
 
     # Set default styling attributes values:

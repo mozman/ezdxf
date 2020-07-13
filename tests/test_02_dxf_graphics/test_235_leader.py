@@ -29,7 +29,19 @@ DIMSTYLE
 41
 1.0
 76
-1
+3
+10
+0.0
+20
+0.0
+30
+0.0
+10
+0.0
+20
+0.0
+30
+0.0
 10
 0.0
 20
@@ -109,7 +121,7 @@ def test_load_from_text(entity):
     assert entity.dxf.horizontal_direction == (1, 0, 0)
     assert entity.dxf.leader_offset_block_ref == (0, 0, 0)
     assert entity.dxf.leader_offset_annotation_placement == (0, 0, 0)
-    assert len(entity.vertices) == 1
+    assert len(entity.vertices) == 3
 
 
 def test_write_dxf():
