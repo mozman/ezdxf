@@ -5,7 +5,7 @@ import math
 from typing import TYPE_CHECKING, Iterable, Union, Callable, Optional, cast
 
 from ezdxf.entities import factory
-from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES, BYBLOCK
+from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES, BYBLOCK, LINEWEIGHT_BYLAYER
 from ezdxf.math import Vector, bulge_to_arc, OCS
 from ezdxf.math.transformtools import NonUniformScalingError, InsertTransformationError
 from ezdxf.query import EntityQuery
@@ -427,29 +427,42 @@ def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
 
 
 def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
+    # Source: https://atlight.github.io/formats/dxf-leader.html
+    # GDAL: DXF LEADER implementation:
+    # https://github.com/OSGeo/gdal/blob/master/gdal/ogr/ogrsf_frmts/dxf/ogrdxf_leader.cpp
     from ezdxf.entities import DimStyleOverride
     assert leader.dxftype() == 'LEADER'
 
     vertices = Vector.list(leader.vertices)  # WCS
-    if len(vertices) > 3:
+    if len(vertices) < 3:
         raise ValueError('More than 2 vertices required.')
 
+    # Set default styling attributes values:
     dimtad = 1
     dimgap = 0.625
     dimscale = 1.0
     dimclrd = leader.dxf.color
+    dimltype = leader.dxf.linetype
+    dimlwd = leader.dxf.lineweight
     override = None
     doc = leader.doc
-    if doc:
+    if doc:  # get styling attributes from associated DIMSTYLE or XDATA override
         override = DimStyleOverride(cast('Dimension', leader))
         dimtad = override.get('dimtad', dimtad)
         dimgap = override.get('dimgap', dimgap)
         dimscale = override.get('dimscale', dimscale)
+        if dimscale == 0.0:  # special but unknown meaning
+            dimscale = 1.0
         dimclrd = override.get('dimclrd', dimclrd)
+        dimltype = override.get('dimltype', dimltype)
+        dimlwd = override.get('dimlwd', dimlwd)
 
     dxf = leader.dxf
     text_width = dxf.text_width
+
+    # todo: How handle the absence of the horizontal direction?
     hook_line_vector = Vector(dxf.horizontal_direction)
+
     if dxf.hookline_direction == 1:
         hook_line_vector = -hook_line_vector
 
@@ -458,10 +471,14 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
 
     dxfattribs = leader.graphic_properties()
     dxfattribs['color'] = dimclrd
+    dxfattribs['linetype'] = dimltype
+    dxfattribs['lineweight'] = dimlwd
+
     if dxfattribs.get('color') == BYBLOCK:
         dxfattribs['color'] = dxf.block_color
+
     if dxf.path_type == 1:  # Spline
-        raise NotImplementedError
+        return  # todo: implement spline LEADER
     else:
         attribs = dict(dxfattribs)
         prev = vertices[0]

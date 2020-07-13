@@ -34,7 +34,7 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimblk1': DXFAttr(6, default=''),  # name is the base data -> handle (DXF2000) is set at export
     'dimblk2': DXFAttr(7, default=''),  # name is the base data -> handle (DXF2000) is set at export
 
-    'dimscale': DXFAttr(40, default=1),
+    'dimscale': DXFAttr(40, default=1),  # 0 has a special but unknown meaning, handle as 1.0
     'dimasz': DXFAttr(41, default=2.5),
     'dimexo': DXFAttr(42, default=0.625),
     'dimdli': DXFAttr(43, default=3.75),

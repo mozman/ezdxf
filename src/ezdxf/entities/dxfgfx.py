@@ -113,13 +113,13 @@ class DXFGraphic(DXFEntity):
 
     def post_new_hook(self):
         """ Post processing and integrity validation after entity creation (internal API) """
-        ns = self.dxf
-        if not is_valid_layer_name(ns.layer):
-            raise DXFInvalidLayerName(ns.layer)
+        dxf = self.dxf
+        if not is_valid_layer_name(dxf.layer):
+            raise DXFInvalidLayerName(dxf.layer)
 
-        if ns.hasattr('linetype'):
-            if ns.linetype not in self.doc.linetypes:
-                raise DXFInvalidLineType('Linetype "{}" not defined.'.format(ns.linetype))
+        if self.doc and dxf.hasattr('linetype'):
+            if dxf.linetype not in self.doc.linetypes:
+                raise DXFInvalidLineType('Linetype "{}" not defined.'.format(dxf.linetype))
 
     @property
     def rgb(self) -> Optional[Tuple[int, int, int]]:
