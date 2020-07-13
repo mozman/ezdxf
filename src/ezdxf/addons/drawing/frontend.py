@@ -296,34 +296,28 @@ class Frontend:
         self.out.draw_path(path, properties)
 
     def draw_composite_entity(self, entity: DXFGraphic) -> None:
+        def set_opaque(entity):
+            for child in entity.virtual_entities():
+                child.transparency = 0.0  # todo: defaults to 1.0 (fully transparent)???
+                yield child
+
         dxftype = entity.dxftype()
         if dxftype == 'INSERT':
             entity = cast(Insert, entity)
             self.ctx.push_state(self._resolve_properties(entity))
             self.parent_stack.append(entity)
-            # visibility check is required:
+            # draw_entities() includes the visibility check:
             self.draw_entities(entity.attribs)
-            try:
-                children = list(entity.virtual_entities())
-            except Exception as e:
-                print(f'Exception {type(e)}({e}) failed to get children of insert entity: {e}')
-                return
-            # visibility check is required:
-            self.draw_entities(children)
+            self.draw_entities(entity.virtual_entities())
             self.parent_stack.pop()
             self.ctx.pop_state()
 
-        # DIMENSION, ARC_DIMENSION, LARGE_RADIAL_DIMENSION and ACAD_TABLE
-        # All these entities have an associated anonymous geometry block.
+        # DIMENSION, ARC_DIMENSION, LARGE_RADIAL_DIMENSION, LEADER
+        # todo: ACAD_TABLE, MLINE, MLEADER
         elif hasattr(entity, 'virtual_entities'):
-            children = []
-            for child in entity.virtual_entities():
-                child.transparency = 0.0  # todo: defaults to 1.0 (fully transparent)???
-                children.append(child)
-
             self.parent_stack.append(entity)
-            # visibility check is required:
-            self.draw_entities(children)
+            # draw_entities() includes the visibility check:
+            self.draw_entities(set_opaque(entity))
             self.parent_stack.pop()
 
         else:
