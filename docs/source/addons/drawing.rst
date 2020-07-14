@@ -37,12 +37,18 @@ Example for the usage of the :mod:`matplotlib` backend:
     doc = ezdxf.readfile('your.dxf')
     msp = doc.modelspace()
 
-    fig = plt.figure()
-    ax = fig.add_axes([0, 0, 1, 1])
-    ctx = RenderContext(doc)
-    out = MatplotlibBackend(ax)
-    Frontend(ctx, out).draw_layout(msp, finalize=True)
-    fig.savefig('your.png', dpi=300)
+    # Recommended: audit & repair DXF document before rendering
+    auditor = doc.audit()
+
+    # The auditor.errors attribute stores severe errors,
+    # which *may* raise exceptions when rendering.
+    if len(auditor.errors) == 0:
+        fig = plt.figure()
+        ax = fig.add_axes([0, 0, 1, 1])
+        ctx = RenderContext(doc)
+        out = MatplotlibBackend(ax)
+        Frontend(ctx, out).draw_layout(msp, finalize=True)
+        fig.savefig('your.png', dpi=300)
 
 Details
 -------

@@ -15,6 +15,7 @@ from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFEntityStack
 from ezdxf.drawing import Drawing
+from ezdxf.lldxf.const import DXFStructureError
 
 
 class CADGraphicsView(qw.QGraphicsView):
@@ -137,9 +138,24 @@ class CadViewer(qw.QMainWindow):
     def _select_doc(self):
         path, _ = qw.QFileDialog.getOpenFileName(self, caption='Select CAD Document', filter='DXF Documents (*.dxf)')
         if path:
-            self.set_document(ezdxf.readfile(path))
+            try:
+                self.set_document(ezdxf.readfile(path))
+            except IOError as e:
+                qw.QMessageBox.critical(self, 'Loading Error', str(e))
+            except DXFStructureError as e:
+                qw.QMessageBox.critical(self, 'DXF Structure Error', f'Invalid DXF file "{path}": {str(e)}')
 
     def set_document(self, document: Drawing):
+        auditor = document.audit()
+        error_count = len(auditor.errors)
+        if error_count > 0:
+            ret = qw.QMessageBox.question(
+                self, 'Found DXF Errors',
+                f'Found {error_count} errors in file "{document.filename}"\nLoad file anyway? '
+            )
+            if ret == qw.QMessageBox.No:
+                auditor.print_error_report(auditor.errors)
+                return
         self.doc = document
         self._render_context = RenderContext(document)
         self._visible_layers = None
@@ -147,6 +163,7 @@ class CadViewer(qw.QMainWindow):
         self._populate_layouts()
         self._populate_layer_list()
         self.draw_layout('Model')
+        self.setWindowTitle('CAD Viewer - ' + document.filename)
 
     def _populate_layer_list(self):
         self.layers.blockSignals(True)
