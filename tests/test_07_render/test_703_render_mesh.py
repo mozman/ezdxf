@@ -169,3 +169,69 @@ def test_from_polyface_type_error(msp):
     line = msp.add_line(start=(0, 0, 0), end=(1, 0, 0))
     with pytest.raises(TypeError):
         MeshBuilder.from_polyface(line)
+
+
+@pytest.fixture
+def polyface_181_1(msp):
+    e = msp.new_entity(
+        'POLYLINE',
+        dxfattribs={
+            'flags': 48,
+            'm_count': 2,
+            'n_count': 6,
+        },
+    )
+    e.append_vertex((25041.94191089287, 29272.95055566061, 0.0), dxfattribs={'flags': 64})
+    e.append_vertex((25020.29127589287, 29285.45055566061, 0.0), dxfattribs={'flags': 64})
+    e.append_vertex((25020.29127589287, 29310.45055566061, 0.0), dxfattribs={'flags': 64})
+    e.append_vertex((25041.94191089287, 29322.95055566061, 0.0), dxfattribs={'flags': 64})
+    e.append_vertex((25063.59254589287, 29310.45055566061, 0.0), dxfattribs={'flags': 64})
+    e.append_vertex((25063.59254589287, 29285.45055566061, 0.0), dxfattribs={'flags': 64})
+    e.append_vertex((25041.94191089287, 29272.95055566061, 50.0), dxfattribs={'flags': 64})
+    e.append_vertex((25020.29127589287, 29285.45055566061, 50.0), dxfattribs={'flags': 64})
+    e.append_vertex((25020.29127589287, 29310.45055566061, 50.0), dxfattribs={'flags': 64})
+    e.append_vertex((25041.94191089287, 29322.95055566061, 50.0), dxfattribs={'flags': 64})
+    e.append_vertex((25063.59254589287, 29310.45055566061, 50.0), dxfattribs={'flags': 64})
+    e.append_vertex((25063.59254589287, 29285.45055566061, 50.0), dxfattribs={'flags': 64})
+    return e
+
+
+def test_from_polyface_182_1(polyface_181_1):
+    mesh = MeshVertexMerger.from_polyface(polyface_181_1)
+    assert len(mesh.vertices) == 12
+
+
+@pytest.fixture
+def polyface_181_2(msp):
+    e = msp.new_entity(
+        'POLYLINE',
+        dxfattribs={
+            'flags': 16,
+            'm_count': 6,
+            'n_count': 3,
+        },
+    )
+    e.append_vertex((16606.65151901649, 81.88147523282441, 2099.9999999999995), dxfattribs={'flags': 64})
+    e.append_vertex((16606.65151901649, 81.88147523282441, 1199.9999999999998), dxfattribs={'flags': 64})
+    e.append_vertex((16606.65151901649, 81.88147523282441, 1199.9999999999998), dxfattribs={'flags': 64})
+    e.append_vertex((16606.65151901649, 1281.8814752328244, 2099.9999999999995), dxfattribs={'flags': 64})
+    e.append_vertex((16606.65151901649, 1281.8814752328244, 1199.9999999999998), dxfattribs={'flags': 64})
+    e.append_vertex((16606.65151901649, 1281.8814752328244, 1199.9999999999998), dxfattribs={'flags': 64})
+    e.append_vertex((16626.65151901649, 1281.8814752328244, 2099.9999999999995), dxfattribs={'flags': 64})
+    e.append_vertex((16626.65151901649, 1281.8814752328244, 1199.9999999999998), dxfattribs={'flags': 64})
+    e.append_vertex((16606.65151901649, 1281.8814752328244, 1199.9999999999998), dxfattribs={'flags': 64})
+    e.append_vertex((16626.65151901649, 81.88147523282441, 2099.9999999999995), dxfattribs={'flags': 64})
+    e.append_vertex((16626.65151901649, 81.88147523282441, 1199.9999999999998), dxfattribs={'flags': 64})
+    e.append_vertex((16606.65151901649, 81.88147523282441, 1199.9999999999998), dxfattribs={'flags': 64})
+    e.append_vertex((16626.65151901649, 81.88147523282441, 2099.9999999999995), dxfattribs={'flags': 64})
+    e.append_vertex((16626.65151901649, 81.88147523282441, 2099.9999999999995), dxfattribs={'flags': 64})
+    e.append_vertex((16606.65151901649, 81.88147523282441, 2099.9999999999995), dxfattribs={'flags': 64})
+    e.append_vertex((16626.65151901649, 1281.8814752328244, 2099.9999999999995), dxfattribs={'flags': 64})
+    e.append_vertex((16626.65151901649, 1281.8814752328244, 2099.9999999999995), dxfattribs={'flags': 64})
+    e.append_vertex((16606.65151901649, 1281.8814752328244, 2099.9999999999995), dxfattribs={'flags': 64})
+    return e
+
+
+def test_from_polyface_182_2(polyface_181_2):
+    mesh = MeshVertexMerger.from_polyface(polyface_181_2)
+    assert len(mesh.vertices) == 8
