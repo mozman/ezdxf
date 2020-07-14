@@ -7,13 +7,14 @@ import math
 from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS, ConstructionEllipse
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
-from ezdxf.math import ellipse
+from ezdxf.math import ellipse, NULLVEC
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
 from .factory import register_entity
+from ezdxf.audit import AuditError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Spline
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Spline, Auditor
 
 __all__ = ['Ellipse']
 
@@ -189,3 +190,17 @@ class Ellipse(DXFGraphic):
         else:
             add_entity(self, spline)
         return spline
+
+    def audit(self, auditor: 'Auditor') -> None:
+        """ Validity check. """
+        super().audit(auditor)
+        if self.dxf.hasattr('major_axis') and NULLVEC.isclose(self.dxf.major_axis):
+            auditor.fixed_error(
+                code=AuditError.INVALID_MAJOR_AXIS,
+                message=f'Deleted entity {str(self)} with invalid major axis.',
+                dxf_entity=self,
+            )
+            if self.doc and self.doc.entitydb:
+                self.entitydb.delete_entity(self)
+            else:
+                self.destroy()

@@ -143,3 +143,11 @@ def test_fix_invalid_radius(dxf, auditor):
     assert circle.is_alive is False
     assert auditor.fixes[-1].code == AuditError.INVALID_RADIUS
 
+
+def test_fix_invalid_major_axis(dxf, auditor):
+    msp = dxf.modelspace()
+    ellipse = msp.add_ellipse((0, 0), major_axis=(0, 0, 0), ratio=0.5)
+    ellipse.audit(auditor)
+    assert ellipse.is_alive is False
+    assert auditor.fixes[-1].code == AuditError.INVALID_MAJOR_AXIS
+
