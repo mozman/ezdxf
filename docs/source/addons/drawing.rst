@@ -41,6 +41,7 @@ Example for the usage of the :mod:`matplotlib` backend:
     ax = fig.add_axes([0, 0, 1, 1])
     ctx = RenderContext(doc)
     out = MatplotlibBackend(ax)
+    layout = ezdxf.layouts.Layout(msp,doc)
     Frontend(ctx, out).draw_layout(layout, finalize=True)
     fig.savefig('your.png', dpi=300)
 
