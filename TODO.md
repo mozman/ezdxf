@@ -46,17 +46,16 @@ DXF Audit & Repair
     - DXF objects in OBJECTS section
     - DXF Entities in a layout (model space, paper space, block)
 - check DIMENSION
-    - dimstyle exist
-    - arrows exist
-    - text style exist
+    - dimstyle exist; repair: set to 'Standard'
+    - arrows exist; repair: set to '' = default open filled arrow
+    - text style exist; repair: set to 'Standard'
 - check TEXT, MTEXT
-    - text style exist
+    - text style exist; repair: set to 'Standard'
 - check required DXF attributes:
     - R12: layer; repair: set to '0' (in ezdxf defaults to '0')
     - R2000+: layer, owner?, handle?
 - VERTEX on same layer as POLYLINE; repair: set VERTEX layer to POLYLINE layer
 - LEADER requires more than 1 vertex; repair: delete LEADER entity
-- CIRCLE, ARC check for radius <=0; repair: delete entity
 - ELLIPSE major_axis == (0, 0, 0); repair: delete entity
 - find INSERT entities without BLOCK definitions; repair: delete
 - find unreferenced objects:

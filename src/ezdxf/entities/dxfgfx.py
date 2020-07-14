@@ -307,7 +307,7 @@ class DXFGraphic(DXFEntity):
         return new_entity
 
     def audit(self, auditor: 'Auditor') -> None:
-        """ Validity check. (internal API) """
+        """ Validity check. """
         assert self.doc is auditor.doc, 'Auditor for different DXF document.'
         super().audit(auditor)
         auditor.check_owner_exist(self)

@@ -10,9 +10,10 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
 from .factory import register_entity
+from ezdxf.audit import AuditError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Ellipse, Spline
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Ellipse, Spline, Auditor
 
 __all__ = ['Circle']
 
@@ -138,3 +139,17 @@ class Circle(DXFGraphic):
         else:
             add_entity(self, spline)
         return spline
+
+    def audit(self, auditor: 'Auditor') -> None:
+        """ Validity check. """
+        super().audit(auditor)
+        if self.dxf.hasattr('radius') and self.dxf.radius <= 0:
+            auditor.fixed_error(
+                code=AuditError.INVALID_RADIUS,
+                message=f'Deleted entity {str(self)} with invalid radius = {self.dxf.radius}.',
+                dxf_entity=self,
+            )
+            if self.doc and self.doc.entitydb:
+                self.entitydb.delete_entity(self)
+            else:
+                self.destroy()
