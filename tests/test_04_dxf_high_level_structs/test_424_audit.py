@@ -164,3 +164,23 @@ def test_fix_invalid_leader(dxf, auditor):
     leader.audit(auditor)
     assert leader.is_alive is False
     assert auditor.fixes[-1].code == AuditError.INVALID_VERTEX_COUNT
+
+
+def test_fix_invalid_insert(dxf, auditor):
+    msp = dxf.modelspace()
+    insert = msp.add_blockref('TEST_INVALID_INSERT', (0, 0))
+    insert.audit(auditor)
+    assert insert.is_alive is False
+    assert auditor.fixes[-1].code == AuditError.UNDEFINED_BLOCK
+
+
+def test_fix_inser_scale(dxf, auditor):
+    msp = dxf.modelspace()
+    test_block = 'TEST_INSERT'
+    if test_block not in dxf.blocks:
+        dxf.blocks.new(test_block)
+    insert = msp.add_blockref(test_block, (0, 0), dxfattribs={'xscale': 0, 'yscale': 0, 'zscale': 0})
+    insert.audit(auditor)
+    assert insert.dxf.xscale == 1.0
+    assert insert.dxf.xscale == 1.0
+    assert insert.dxf.xscale == 1.0

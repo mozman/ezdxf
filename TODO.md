@@ -55,9 +55,11 @@ DXF Audit & Repair
     - R12: layer; repair: set to '0' (in ezdxf defaults to '0')
     - R2000+: layer, owner?, handle?
 - VERTEX on same layer as POLYLINE; repair: set VERTEX layer to POLYLINE layer
-- find INSERT entities without BLOCK definitions; repair: delete
-- find unreferenced objects:
-    - DICTIONARY e.g. orphaned extension dicts; repair: delete
+- find unreferenced entities in the OBJECTS section:
+    - only the root DICTIONARY has no owner (owner='0'), all other objects
+      should have an existing owner; repair delete objects with owner '0' 
+      or not existing owners (orphans) except root DICTIONARY
+
 - find unused BLOCK definitions: has no corresponding INSERT; repair: delete
     - EXCEPTION: layout blocks
     - EXCEPTION: anonymous blocks without explicit INSERT like DIMENSION geometry

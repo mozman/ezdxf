@@ -14,11 +14,12 @@ from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
 from ezdxf.explode import explode_block_reference, virtual_block_reference_entities
 from ezdxf.query import EntityQuery
+from ezdxf.audit import AuditError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef,
-        BlockLayout, BaseLayout
+        BlockLayout, BaseLayout, Auditor
     )
 
 __all__ = ['Insert']
@@ -589,3 +590,27 @@ class Insert(DXFGraphic):
         blockdef = self.block()
         autofill()
         return self
+
+    def audit(self, auditor: 'Auditor') -> None:
+        """ Validity check. """
+        def fix_scale(name):
+            if self.dxf.hasattr(name) and self.dxf.get(name) == 0.0:
+                self.dxf.discard(name)
+
+        super().audit(auditor)
+        if self.doc and self.doc.blocks:
+            if self.dxf.name not in self.doc.blocks:
+                auditor.fixed_error(
+                    code=AuditError.UNDEFINED_BLOCK,
+                    message=f'Deleted entity {str(self)} without required BLOCK definition.',
+                    dxf_entity=self,
+                )
+                if self.doc and self.doc.entitydb:
+                    self.entitydb.delete_entity(self)
+                else:
+                    self.destroy()
+
+        if self.is_alive:
+            fix_scale('xscale')
+            fix_scale('yscale')
+            fix_scale('zscale')
