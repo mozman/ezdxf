@@ -12,6 +12,7 @@ from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext
+from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFEntityStack
 from ezdxf.drawing import Drawing
@@ -163,6 +164,7 @@ class CadViewer(qw.QMainWindow):
         self._populate_layouts()
         self._populate_layer_list()
         self.draw_layout('Model')
+        self.setWindowTitle('CAD Viewer - ' + document.filename)
 
     def _populate_layer_list(self):
         self.layers.blockSignals(True)
@@ -172,6 +174,10 @@ class CadViewer(qw.QMainWindow):
             item = qw.QListWidgetItem(name)
             item.setCheckState(qc.Qt.Checked)
             item.setBackground(qg.QColor(layer.color))
+            if is_dark_color(layer.color, 0.4):
+                item.setForeground(qg.QColor('#FFFFFF'))
+            else:
+                item.setForeground(qg.QColor(qg.QColor('#000000')))
             self.layers.addItem(item)
         self.layers.blockSignals(False)
 
@@ -192,7 +198,9 @@ class CadViewer(qw.QMainWindow):
         try:
             Frontend(self._render_context, self.renderer).draw_layout(layout)
         except DXFStructureError as e:
-            qw.QMessageBox.critical(self, 'DXF Structure Error', f'Layout "{layout_name}": {str(e)}')
+            qw.QMessageBox.critical(self, 'DXF Structure Error', f'Abort rendering of layout "{layout_name}": {str(e)}')
+        finally:
+            self.renderer.finalize()
         self.view.fit_to_scene()
 
     def _update_render_context(self, layout):

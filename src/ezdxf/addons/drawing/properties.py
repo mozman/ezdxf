@@ -24,9 +24,9 @@ VIEWPORT_COLOR = '#aaaaaa'  # arbitrary choice
 CONTINUOUS_PATTERN = tuple()
 
 
-def is_dark_color(color: Color) -> bool:
+def is_dark_color(color: Color, dark: float = 0.2) -> bool:
     luma = luminance(hex_to_rgb(color))
-    return luma <= 0.2
+    return luma <= dark
 
 
 class Properties:
