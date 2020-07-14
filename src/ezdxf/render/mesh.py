@@ -222,10 +222,10 @@ class MeshBuilder:
                 for n in range(other.dxf.n_count - 1):
                     mesh.add_face(
                         (
-                            vertices[n, m],
-                            vertices[n + 1, m],
-                            vertices[n + 1, m + 1],
-                            vertices[n, m + 1],
+                            vertices[m, n],
+                            vertices[m, n + 1],
+                            vertices[m+1, n + 1],
+                            vertices[m + 1, n],
                         )
                     )
         else:
