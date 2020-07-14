@@ -5,7 +5,8 @@ News
 Version 0.13.1 - dev
 --------------------
 
-- BUGFIX: remove white space from structure tags like "SECTION " 
+- BUGFIX: remove white space from structure tags like "SECTION "
+- BUGFIX: MeshBuilder.from_polyface() processing error of POLYMESH entities
 
 Version 0.13 - 2020-07-04
 -------------------------
