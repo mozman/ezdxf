@@ -163,7 +163,6 @@ class CadViewer(qw.QMainWindow):
         self._populate_layouts()
         self._populate_layer_list()
         self.draw_layout('Model')
-        self.setWindowTitle('CAD Viewer - ' + document.filename)
 
     def _populate_layer_list(self):
         self.layers.blockSignals(True)
@@ -190,7 +189,10 @@ class CadViewer(qw.QMainWindow):
         self.view.clear()
         layout = self.doc.layout(layout_name)
         self._update_render_context(layout)
-        Frontend(self._render_context, self.renderer).draw_layout(layout)
+        try:
+            Frontend(self._render_context, self.renderer).draw_layout(layout)
+        except DXFStructureError as e:
+            qw.QMessageBox.critical(self, 'DXF Structure Error', f'Layout "{layout_name}": {str(e)}')
         self.view.fit_to_scene()
 
     def _update_render_context(self, layout):
