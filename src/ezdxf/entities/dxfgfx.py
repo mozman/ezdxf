@@ -11,12 +11,13 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLi
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.validator import is_valid_layer_name
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
-from ezdxf.math import OCS, UCS, Matrix44
+from ezdxf.math import OCS, UCS, Matrix44, NULLVEC
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
 from .factory import register_entity
 from ezdxf import options
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
+from ezdxf.audit import AuditError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex, Drawing
@@ -313,6 +314,13 @@ class DXFGraphic(DXFEntity):
         auditor.check_for_valid_layer_name(self)
         auditor.check_entity_linetype(self)
         auditor.check_entity_color_index(self)
+        if self.dxf.hasattr('extrusion') and NULLVEC.isclose(self.dxf.extrusion):
+            del self.dxf.extrusion
+            auditor.fixed_error(
+                code=AuditError.INVALID_EXTRUSION_VECTOR,
+                message=f'Fixed extrusion vector for entity: {str(self)}.',
+                dxf_entity=self,
+            )
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'DXFGraphic':
         warnings.warn(

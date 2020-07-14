@@ -125,3 +125,13 @@ def test_broken_block_cycle_detector(dxf):
     detector.blocks = data
     assert detector.has_cycle('a') is False
     assert detector.has_cycle('b') is False
+
+
+def test_fix_invalid_extrusion_vector(dxf, auditor):
+    msp = dxf.modelspace()
+    circle = msp.add_circle((0, 0), 1)
+    circle.dxf.extrusion = (0, 0, 0)
+    circle.audit(auditor)
+    assert circle.dxf.extrusion == (0, 0, 1)
+    assert auditor.fixes[-1].code == AuditError.INVALID_EXTRUSION_VECTOR
+

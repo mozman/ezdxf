@@ -58,7 +58,7 @@ DXF Audit & Repair
 - LEADER requires more than 1 vertex; repair: delete LEADER entity
 - CIRCLE, ARC check for radius <=0; repair: delete entity
 - ELLIPSE major_axis == (0, 0, 0); repair: delete entity
-- invalid extrusion vector (0, 0, 0); repair set to (0, 0, 1)
+- find INSERT entities without BLOCK definitions; repair: delete
 - find unreferenced objects:
     - DICTIONARY e.g. orphaned extension dicts; repair: delete
 - find unused BLOCK definitions: has no corresponding INSERT; repair: delete
