@@ -12,6 +12,7 @@ from .dxfobj import DXFObject
 from .dxfgfx import DXFGraphic
 from .factory import register_entity
 from .objectcollection import ObjectCollection
+from ezdxf.audit import AuditError
 
 logger = logging.getLogger('ezdxf')
 
@@ -171,7 +172,10 @@ class DXFGroup(DXFObject):
             return
 
         if not all_entities_on_same_layout(self._data):
-            logger.debug(f'Cleared {str(self)}, not all entities are located in the same layout.')
+            auditor.fixed_error(
+                code=AuditError.GROUP_ENTITIES_IN_DIFFERENT_LAYOUTS,
+                message=f'Cleared {str(self)}, not all entities are located in the same layout.',
+            )
             self.clear()
 
     def has_valid_owner(self, entity) -> bool:
@@ -273,12 +277,15 @@ class GroupCollection(ObjectCollection):
         """ Removes empty groups and invalid handles from all groups. """
         empty_groups = []
         for name, group in self:
-            group.restore_integrity()
+            group.audit(auditor)
             if not len(group):  # remove empty group
                 # do not delete groups while iterating over groups!
                 empty_groups.append(name)
 
         # now delete empty groups
         for name in empty_groups:
-            logger.debug(f'Removed empty group "{name}".')
+            auditor.fixed_error(
+                code=AuditError.REMOVE_EMPTY_GROUP,
+                message=f'Removed empty group "{name}".',
+            )
             self.delete(name)

@@ -36,6 +36,8 @@ class AuditError(IntEnum):
     INVALID_RADIUS = 207
     INVALID_MAJOR_AXIS = 208
     INVALID_VERTEX_COUNT = 209
+    REMOVE_EMPTY_GROUP = 210
+    GROUP_ENTITIES_IN_DIFFERENT_LAYOUTS = 211
 
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
@@ -169,7 +171,7 @@ class Auditor:
 
     def check_database_entities(self) -> None:
         """ Check all entities stored in the entity database. """
-        for entity in self.doc.entitydb.values():
+        for entity in list(self.doc.entitydb.values()):
             entity.audit(self)
 
     def check_entity_linetype(self, entity: 'DXFEntity') -> None:
