@@ -4,6 +4,7 @@ import pytest
 import ezdxf
 from ezdxf.audit import Auditor, AuditError
 from ezdxf.audit.auditor import BlockCycleDetector
+from ezdxf.entities import factory
 
 
 @pytest.fixture(scope='module')
@@ -151,3 +152,15 @@ def test_fix_invalid_major_axis(dxf, auditor):
     assert ellipse.is_alive is False
     assert auditor.fixes[-1].code == AuditError.INVALID_MAJOR_AXIS
 
+
+def test_fix_invalid_leader(dxf, auditor):
+    msp = dxf.modelspace()
+    # no creator interface for LEADER (yet)
+    leader = factory.new('LEADER', doc=dxf)
+    dxf.entitydb.add(leader)
+    msp.add_entity(leader)
+    assert leader.is_alive is True
+
+    leader.audit(auditor)
+    assert leader.is_alive is False
+    assert auditor.fixes[-1].code == AuditError.INVALID_VERTEX_COUNT

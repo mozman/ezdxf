@@ -55,8 +55,6 @@ DXF Audit & Repair
     - R12: layer; repair: set to '0' (in ezdxf defaults to '0')
     - R2000+: layer, owner?, handle?
 - VERTEX on same layer as POLYLINE; repair: set VERTEX layer to POLYLINE layer
-- LEADER requires more than 1 vertex; repair: delete LEADER entity
-- ELLIPSE major_axis == (0, 0, 0); repair: delete entity
 - find INSERT entities without BLOCK definitions; repair: delete
 - find unreferenced objects:
     - DICTIONARY e.g. orphaned extension dicts; repair: delete

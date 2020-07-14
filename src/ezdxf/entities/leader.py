@@ -13,12 +13,13 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .dimension import OverrideMixin
 from ezdxf.explode import virtual_leader_entities, explode_entity
+from ezdxf.audit import AuditError
 import logging
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Matrix44, BaseLayout, EntityQuery
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Matrix44, BaseLayout, EntityQuery, Auditor
 
 __all__ = ['Leader']
 
@@ -180,3 +181,17 @@ class Leader(DXFGraphic, OverrideMixin):
 
         """
         return explode_entity(self, target_layout)
+
+    def audit(self, auditor: 'Auditor') -> None:
+        """ Validity check. """
+        super().audit(auditor)
+        if len(self.vertices) < 2:
+            auditor.fixed_error(
+                code=AuditError.INVALID_VERTEX_COUNT,
+                message=f'Deleted entity {str(self)} with invalid vertex count = {len(self.vertices)}.',
+                dxf_entity=self,
+            )
+            if self.doc and self.doc.entitydb:
+                self.entitydb.delete_entity(self)
+            else:
+                self.destroy()
