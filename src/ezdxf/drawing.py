@@ -851,8 +851,7 @@ class Drawing:
 
         """
         auditor = self.audit()
-        result = list(auditor.filter_zero_pointers(auditor))
-        if len(result):
+        if len(auditor):
             if print_report:
                 auditor.print_error_report()
             return False

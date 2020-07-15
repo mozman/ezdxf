@@ -21,9 +21,8 @@ def run(start):
         doc = ezdxf.readfile(filename, legacy_mode=LEGACY_MODE)
 
         auditor = Auditor(doc)
-        errors = list(auditor.filter_zero_pointers(auditor.run()))
-        if len(errors):
-            auditor.print_error_report(errors)
+        if len(auditor):
+            auditor.print_error_report(auditor.errors)
 
 
 if __name__ == '__main__':

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class AuditError(IntEnum):
     MISSING_REQUIRED_ROOT_DICT_ENTRY = 1
     DUPLICATE_TABLE_ENTRY_NAME = 2
-    POINTER_TARGET_NOT_EXISTS = 3
+    POINTER_TARGET_NOT_EXIST = 3
     TABLE_NOT_FOUND = 4
     UNDEFINED_LINETYPE = 100
     UNDEFINED_DIMENSION_STYLE = 101
@@ -51,23 +51,15 @@ class ErrorEntry:
         self.data = data  # additional data as an arbitrary object
 
 
-def target_pointers(tags: Iterable[DXFTag]) -> Iterable[DXFTag]:
-    for tag in tags:
-        if is_pointer_code(tag.code):
-            yield tag
-
-
 class Auditor:
     def __init__(self, doc: 'Drawing'):
         self.doc = doc
         self.errors = []  # type: List[ErrorEntry]
         self.fixes = []  # type: List[ErrorEntry]
-        self.undefined_targets = set()  # type: Set[str]
 
     def reset(self) -> None:
         self.errors = []
         self.fixes = []
-        self.undefined_targets = set()
 
     def __len__(self) -> int:
         """ Returns count of unfixed errors. """
@@ -121,13 +113,6 @@ class Auditor:
             for count, error in enumerate(self.fixes):
                 stream.write(entity_str(count + 1, error.code, error.entity) + '\n')
                 stream.write('   ' + error.message + '\n\n')
-
-    @staticmethod
-    def filter_zero_pointers(errors: Iterable[ErrorEntry]) -> Iterable[ErrorEntry]:
-        for error in errors:
-            if error.code == AuditError.POINTER_TARGET_NOT_EXISTS and error.data == '0':
-                continue
-            yield error
 
     def add_error(self, code: int, message: str = '', dxf_entity: 'DXFEntity' = None, data: Any = None) -> None:
         self.errors.append(ErrorEntry(code, message, dxf_entity, data))
@@ -272,9 +257,15 @@ class Auditor:
         assert self.doc is entity.doc, 'Entity from different DXF document.'
         if not entity.dxf.hasattr('owner'):
             return
+        doc = self.doc
         owner_handle = entity.dxf.owner
-        if owner_handle not in self.doc.entitydb:
-            # this error can't be fixed here
+        if owner_handle == '0':
+            handle = entity.dxf.get('handle', '0')
+            if handle == doc.rootdict.dxf.handle:
+                return  # valid '0' handle
+
+        if owner_handle not in doc.entitydb:
+            # todo: delete entities without owner
             self.add_error(
                 code=AuditError.INVALID_OWNER_HANDLE,
                 message=f'Invalid owner handle #{owner_handle} in {str(entity)}.',

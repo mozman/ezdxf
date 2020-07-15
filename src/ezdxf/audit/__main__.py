@@ -23,8 +23,6 @@ def audit(filename: str, ignore_zero_pointers: bool = False) -> None:
 
     auditor = dwg.auditor()
     errors = auditor.run()
-    if ignore_zero_pointers:
-        errors = auditor.filter_zero_pointers(errors)
     auditor.print_error_report(errors)
 
 
@@ -41,11 +39,6 @@ def main() -> None:
         metavar='FILE',
         nargs='+',
         help='audit DXF files',
-    )
-    parser.add_argument(
-        '-z', '--ignore_zero_pointers',
-        action='store_true',
-        help='ignore zero pointers',
     )
 
     args = parser.parse_args(sys.argv[1:])
@@ -64,7 +57,7 @@ def main() -> None:
                 print("File '{}' is not a DXF file.".format(filename))
                 continue
             processing_msg(filename)
-            audit(filename, args.ignore_zero_pointers)
+            audit(filename)
 
 
 if __name__ == "__main__":
