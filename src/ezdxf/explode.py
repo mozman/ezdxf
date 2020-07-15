@@ -167,6 +167,9 @@ def virtual_block_reference_entities(block_ref: 'Insert',
             else:
                 yield entity
 
+    if block_ref.is_xref():
+        return
+
     m = block_ref.matrix44()
     block_layout = block_ref.block()
     if block_layout is None:

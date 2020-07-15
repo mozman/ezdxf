@@ -185,6 +185,14 @@ class Insert(DXFGraphic):
         self.dxf.zscale = factor
         return self
 
+    def is_xref(self) -> bool:
+        """ Return ``True`` if XREF or XREF_OVERLAY. """
+        assert self.doc is not None, 'Requires a document object'
+        block_layout = self.doc.blocks.get(self.dxf.name)
+        if block_layout is not None and block_layout.block.dxf.flags & 12:  # XREF(4) & XREF_OVERLAY(8)
+            return True
+        return False
+
     def block(self) -> Optional['BlockLayout']:
         """  Returns associated :class:`~ezdxf.layouts.BlockLayout`.
 
@@ -404,7 +412,7 @@ class Insert(DXFGraphic):
         dxf.xscale = x_scale
         dxf.yscale = y_scale
         dxf.zscale = z_scale
-        
+
         for attrib in self.attribs:
             attrib.transform(m)
         return self
@@ -593,20 +601,21 @@ class Insert(DXFGraphic):
 
     def audit(self, auditor: 'Auditor') -> None:
         """ Validity check. """
+
         def fix_scale(name):
             if self.dxf.hasattr(name) and self.dxf.get(name) == 0.0:
                 self.dxf.discard(name)
 
         super().audit(auditor)
-        if self.doc and self.doc.blocks:
-            if self.dxf.name not in self.doc.blocks:
+        doc = self.doc
+        if doc and doc.blocks:
+            if self.dxf.name not in doc.blocks:
                 auditor.fixed_error(
                     code=AuditError.UNDEFINED_BLOCK,
                     message=f'Deleted entity {str(self)} without required BLOCK definition.',
-                    dxf_entity=self,
                 )
-                if self.doc and self.doc.entitydb:
-                    self.entitydb.delete_entity(self)
+                if doc.entitydb:
+                    doc.entitydb.delete_entity(self)
                 else:
                     self.destroy()
 
