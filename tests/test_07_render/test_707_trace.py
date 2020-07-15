@@ -132,5 +132,22 @@ def test_virtual_entities():
     assert len(msp) == 3
 
 
+def test_issue_191():
+    from ezdxf.entities import factory
+    e = factory.new(
+        'LWPOLYLINE',
+        dxfattribs={
+            'flags': 1,
+        },
+    )
+    e.set_points([
+        (421846.9857097387, -36908.41493252141, 0.0, 50.0, 0.52056705),
+        (421846.9857097387, -36908.41493252139, 0.0, 50.0, 0.52056705),
+    ])
+    trace = TraceBuilder.from_polyline(e, segments=64)
+    assert len(trace) == 1
+    assert len(list(trace.faces())) == 32
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

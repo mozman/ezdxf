@@ -240,6 +240,9 @@ def _normal_offset_points(start: Vec2, end: Vec2, start_width: float, end_width:
     return start + offset_start, end + offset_end, start - offset_start, end - offset_end
 
 
+_NULLVEC2 = Vec2((0, 0))
+
+
 class CurvedTrace(AbstractTrace):
     """ 2D banded curves like arcs or splines with start- and end width.
 
@@ -312,7 +315,10 @@ class CurvedTrace(AbstractTrace):
             width:  width of station
 
         """
-        normal = normal.normalize(width / 2)
+        if _NULLVEC2.isclose(normal):
+            normal = _NULLVEC2
+        else:
+            normal = normal.normalize(width / 2)
         self._stations.append(CurveStation(point + normal, point - normal))
 
     def faces(self) -> Iterable[Face]:
