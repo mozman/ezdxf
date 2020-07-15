@@ -434,6 +434,8 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
     # Source: https://atlight.github.io/formats/dxf-leader.html
     # GDAL: DXF LEADER implementation:
     # https://github.com/OSGeo/gdal/blob/master/gdal/ogr/ogrsf_frmts/dxf/ogrdxf_leader.cpp
+    # LEADER DXF Reference:
+    # http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-396B2369-F89F-47D7-8223-8B7FB794F9F3
     from ezdxf.entities import DimStyleOverride
     assert leader.dxftype() == 'LEADER'
 
@@ -452,7 +454,7 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
     dimlwd = leader.dxf.lineweight
     override = None
     doc = leader.doc
-    if doc:  # get styling attributes from associated DIMSTYLE or XDATA override
+    if doc:  # get styling attributes from associated DIMSTYLE and/or XDATA override
         override = DimStyleOverride(cast('Dimension', leader))
         dimtad = override.get('dimtad', dimtad)
         dimgap = override.get('dimgap', dimgap)
@@ -465,15 +467,13 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
 
     dxf = leader.dxf
     text_width = dxf.text_width
-
-    # todo: How handle the absence of the horizontal direction?
     hook_line_vector = Vector(dxf.horizontal_direction)
 
-    if dxf.hookline_direction == 1:
-        hook_line_vector = -hook_line_vector
-
-    if dimtad != 0 and text_width > 0:
-        vertices.append(vertices[-1] + hook_line_vector * (dimgap * dimscale + text_width))
+    if dxf.has_hookline:
+        if dxf.hookline_direction == 1:
+            hook_line_vector = -hook_line_vector
+        if dimtad != 0 and text_width > 0:
+            vertices.append(vertices[-1] + hook_line_vector * (dimgap * dimscale + text_width))
 
     dxfattribs = leader.graphic_properties()
     dxfattribs['color'] = dimclrd
@@ -512,7 +512,7 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
             # create a virtual block reference
             insert = factory.new('INSERT', dxfattribs=dxfattribs, doc=doc)
             yield from insert.virtual_entities()
-        else:
+        else:  # render standard arrows
             yield from virtual_arrow(
                 arrow_name,
                 vertices[0],

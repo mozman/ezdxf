@@ -40,12 +40,13 @@ acdb_leader = DefSubclass('AcDbLeader', {
     'annotation_type': DXFAttr(73, default=3),  # Leader creation flag:
 
     # Hookline direction flag:
-    # 0 = Hookline (or end of tangent for a splined leader) is the opposite direction from the horizontal vector
-    # 1 = Hookline (or end of tangent for a splined leader) is the same direction as horizontal vector (see code 75)
-    'hookline_direction': DXFAttr(74, default=0, optional=True),
+    # 1 = Hookline (or end of tangent for a splined leader) is the opposite direction from the horizontal vector
+    # 0 = Hookline (or end of tangent for a splined leader) is the same direction as horizontal vector (see code 75)
+    # DXF reference error: swapped meaning of 1/0
+    'hookline_direction': DXFAttr(74, default=1, optional=True),
 
     # Hookline flag: 0/1 = no/yes
-    'has_hookline': DXFAttr(75, default=0, optional=True),
+    'has_hookline': DXFAttr(75, default=1, optional=True),
 
     # Text annotation height
     'text_height': DXFAttr(40, default=1, optional=True),

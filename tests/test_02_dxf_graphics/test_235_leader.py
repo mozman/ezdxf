@@ -91,8 +91,8 @@ def test_default_new():
     assert entity.dxf.has_arrowhead == 1
     assert entity.dxf.path_type == 0
     assert entity.dxf.annotation_type == 3
-    assert entity.dxf.hookline_direction == 0
-    assert entity.dxf.has_hookline == 0
+    assert entity.dxf.hookline_direction == 1
+    assert entity.dxf.has_hookline == 1
     assert entity.dxf.text_height == 1
     assert entity.dxf.text_width == 0
     assert entity.dxf.block_color == 7
@@ -111,8 +111,8 @@ def test_load_from_text(entity):
     assert entity.dxf.has_arrowhead == 1
     assert entity.dxf.path_type == 0
     assert entity.dxf.annotation_type == 3
-    assert entity.dxf.hookline_direction == 0
-    assert entity.dxf.has_hookline == 0
+    assert entity.dxf.hookline_direction == 1
+    assert entity.dxf.has_hookline == 1
     assert entity.dxf.text_height == 1
     assert entity.dxf.text_width == 1
     assert entity.dxf.block_color == 7
