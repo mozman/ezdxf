@@ -52,7 +52,6 @@ class AbstractTrace:
 
         contour = list(merge(forward_contour))
         contour.extend(reversed(list(merge(backward_contour))))
-        # todo: close polygon?
         return contour
 
     def virtual_entities(self, dxftype='TRACE', dxfattribs: Dict = None, doc: 'Drawing' = None) -> Quadrilateral:
@@ -180,6 +179,8 @@ class LinearTrace(AbstractTrace):
         for station in range(count - 1):
             start_vertex, start_width, end_width = stations[station]
             end_vertex = stations[station + 1].vertex
+            # Start- and end vertex are never to close together, close stations will be merged
+            # in method LinearTrace.add_station().
             segments.append(_normal_offset_points(start_vertex, end_vertex, start_width, end_width))
 
         # offset rays:
@@ -190,36 +191,36 @@ class LinearTrace(AbstractTrace):
         prev_offset_ray2 = None
 
         # Store last vertices explicit, they get modified for closed paths.
-        last_up1, last_up2, last_low1, last_low2 = segments[-1]
+        last_up1, last_up2, last_down1, last_down2 = segments[-1]
 
         for i in range(len(segments)):
-            up1, up2, low1, low2 = segments[i]
+            up1, up2, down1, down2 = segments[i]
             if i == 0:
                 # Set first vertices of the first face.
                 if is_closed:
                     # Compute first two vertices as intersection of first and last segment
                     last_offset_ray1, last_offset_ray2 = offset_rays(len(segments) - 1)
                     vtx0 = intersect(last_offset_ray1, offset_ray1, up1)
-                    vtx1 = intersect(last_offset_ray2, offset_ray2, low1)
+                    vtx1 = intersect(last_offset_ray2, offset_ray2, down1)
 
                     # Store last vertices for the closing face.
                     last_up2 = vtx0
-                    last_low2 = vtx1
+                    last_down2 = vtx1
                 else:
                     # Set first two vertices of the first face for an open path.
                     vtx0 = up1
-                    vtx1 = low1
+                    vtx1 = down1
                 prev_offset_ray1 = offset_ray1
                 prev_offset_ray2 = offset_ray2
             else:
                 # Compute first two vertices for the actual face.
                 vtx0 = intersect(prev_offset_ray1, offset_ray1, up1)
-                vtx1 = intersect(prev_offset_ray2, offset_ray2, low1)
+                vtx1 = intersect(prev_offset_ray2, offset_ray2, down1)
 
             if i < len(segments) - 1:
                 # Compute last two vertices for the actual face.
                 next_offset_ray1, next_offset_ray2 = offset_rays(i + 1)
-                vtx2 = intersect(next_offset_ray2, offset_ray2, low2)
+                vtx2 = intersect(next_offset_ray2, offset_ray2, down2)
                 vtx3 = intersect(next_offset_ray1, offset_ray1, up2)
                 prev_offset_ray1 = offset_ray1
                 prev_offset_ray2 = offset_ray2
@@ -227,7 +228,7 @@ class LinearTrace(AbstractTrace):
                 offset_ray2 = next_offset_ray2
             else:
                 # Pickup last two vertices for the last face.
-                vtx2 = last_low2
+                vtx2 = last_down2
                 vtx3 = last_up2
             yield vtx0, vtx1, vtx2, vtx3
 
@@ -274,7 +275,6 @@ class CurvedTrace(AbstractTrace):
             segments: count of segments for approximation
 
         """
-
         curve_trace = cls()
         count = segments + 1
         t = linspace(0, spline.max_t, count)
@@ -294,6 +294,9 @@ class CurvedTrace(AbstractTrace):
             end_width: end width
             segments: count of segments for full circle (360 degree) approximation, partial arcs have proportional
                       less segments, but at least 3
+
+        Raises:
+            ValueError: if arc.radius <= 0
 
         """
         if arc.radius <= 0:
