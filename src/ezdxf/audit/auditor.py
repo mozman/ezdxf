@@ -262,16 +262,14 @@ class Auditor:
         if owner_handle == '0':
             handle = entity.dxf.get('handle', '0')
             if handle == doc.rootdict.dxf.handle:
-                return  # valid '0' handle
+                return  # valid '0' handle as owner
 
         if owner_handle not in doc.entitydb:
-            # todo: delete entities without owner
-            self.add_error(
+            self.fixed_error(
                 code=AuditError.INVALID_OWNER_HANDLE,
-                message=f'Invalid owner handle #{owner_handle} in {str(entity)}.',
-                dxf_entity=entity,
-                data=owner_handle,
+                message=f'Deleted {str(entity)} entity without valid owner handle #{owner_handle}.',
             )
+            self.doc.entitydb.delete_entity(entity)
 
     def check_block_reference_cycles(self) -> None:
         cycle_detector = BlockCycleDetector(self.doc)

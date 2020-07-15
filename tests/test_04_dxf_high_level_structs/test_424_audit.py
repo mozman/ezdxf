@@ -45,8 +45,9 @@ def test_for_valid_layer_name(entity, auditor):
 def test_for_existing_owner(entity, auditor):
     entity.dxf.owner = 'FFFFFF'
     auditor.check_owner_exist(entity)
-    assert len(auditor) == 1
-    assert auditor.errors[0].code == AuditError.INVALID_OWNER_HANDLE
+    assert len(auditor.fixes) == 1
+    assert auditor.fixes[0].code == AuditError.INVALID_OWNER_HANDLE
+    assert entity.is_alive is False, 'delete entity without valid owner'
 
 
 @pytest.fixture
