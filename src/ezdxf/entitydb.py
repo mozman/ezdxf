@@ -152,6 +152,7 @@ class EntityDB:
             if not entity.is_alive:
                 remove_handles.append(handle)
             elif handle != entity.dxf.get('handle'):
+                # database handle != stored entity handle
                 remove_handles.append(handle)
                 add_entities.append(entity)
 
