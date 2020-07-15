@@ -97,10 +97,10 @@ class ConstructionRay:
         """ Returns ``True`` if rays are parallel. """
         if self._is_vertical:
             return other._is_vertical
-
         if other._is_vertical:
             return False
-
+        if self._is_horizontal:
+            return other._is_horizontal
         return math.isclose(self._slope, other._slope, abs_tol=1e-12)
 
     def intersect(self, other: 'ConstructionRay') -> Vec2:
