@@ -5,9 +5,10 @@ import math
 from typing import TYPE_CHECKING, Iterable, Union, Callable, Optional, cast
 
 from ezdxf.entities import factory
-from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES, BYBLOCK, LINEWEIGHT_BYLAYER
+from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES, BYBLOCK
 from ezdxf.math import Vector, bulge_to_arc, OCS
 from ezdxf.math.transformtools import NonUniformScalingError, InsertTransformationError
+from ezdxf.math import fit_points_to_cad_cv
 from ezdxf.query import EntityQuery
 
 logger = logging.getLogger('ezdxf')
@@ -469,7 +470,7 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
     text_width = dxf.text_width
     hook_line_vector = Vector(dxf.horizontal_direction)
 
-    if dxf.has_hookline:
+    if dxf.has_hookline:  # inverted ?
         if dxf.hookline_direction == 1:
             hook_line_vector = -hook_line_vector
         if dimtad != 0 and text_width > 0:
@@ -484,14 +485,19 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
         dxfattribs['color'] = dxf.block_color
 
     if dxf.path_type == 1:  # Spline
-        return  # todo: implement spline LEADER
+        start_tangent = (vertices[1] - vertices[0])
+        end_tangent = (vertices[-1] - vertices[-2])
+        bspline = fit_points_to_cad_cv(vertices, degree=3, tangents=[start_tangent, end_tangent])
+        # noinspection PyUnresolvedReferences
+        spline = factory.new('SPLINE', doc=doc).apply_construction_tool(bspline)
+        yield spline
     else:
         attribs = dict(dxfattribs)
         prev = vertices[0]
         for vertex in vertices[1:]:
             attribs['start'] = prev
             attribs['end'] = vertex
-            yield factory.new(dxftype='LINE', dxfattribs=attribs, doc=leader.doc)
+            yield factory.new(dxftype='LINE', dxfattribs=attribs, doc=doc)
             prev = vertex
 
     if dxf.has_arrowhead and override:

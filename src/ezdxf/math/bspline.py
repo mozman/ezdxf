@@ -153,8 +153,12 @@ def global_bspline_interpolation(
     fit_points = Vector.list(fit_points)
     count = len(fit_points)
     order = degree + 1
-    if order > count:
-        raise DXFValueError(f'More fit points required for degree {degree}')
+
+    if tangents:
+        # two control points for tangents will be added
+        count += 2
+    if order > count and tangents is None:
+        raise ValueError(f'More fit points required for degree {degree}')
 
     t_vector = list(create_t_vector(fit_points, method))
     # natural knot generation for uneven degrees else averaged
