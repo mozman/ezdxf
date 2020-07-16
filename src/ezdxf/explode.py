@@ -445,16 +445,25 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
         # This LEADER entities should be removed by the auditor if loaded or
         # ignored at exporting, if created by an ezdxf-user (log).
         raise ValueError('More than 1 vertex required.')
+    dxf = leader.dxf
+    doc = leader.doc
+
+    # Some default values depend on the measurement system
+    # 0/1 = imperial/metric
+    if doc:
+        measurement = doc.header.get('$MEASUREMENT', 0)
+    else:
+        measurement = 0
 
     # Set default styling attributes values:
     dimtad = 1
-    dimgap = 0.625
+    dimgap = 0.625 if measurement else 0.0625
     dimscale = 1.0
-    dimclrd = leader.dxf.color
-    dimltype = leader.dxf.linetype
-    dimlwd = leader.dxf.lineweight
+    dimclrd = dxf.color
+    dimltype = dxf.linetype
+    dimlwd = dxf.lineweight
     override = None
-    doc = leader.doc
+
     if doc:  # get styling attributes from associated DIMSTYLE and/or XDATA override
         override = DimStyleOverride(cast('Dimension', leader))
         dimtad = override.get('dimtad', dimtad)
@@ -466,11 +475,11 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
         dimltype = override.get('dimltype', dimltype)
         dimlwd = override.get('dimlwd', dimlwd)
 
-    dxf = leader.dxf
     text_width = dxf.text_width
     hook_line_vector = Vector(dxf.horizontal_direction)
+    has_text_annotation = dxf.annotation_type == 0
 
-    if dxf.has_hookline:  # inverted ?
+    if has_text_annotation and dxf.has_hookline:
         if dxf.hookline_direction == 1:
             hook_line_vector = -hook_line_vector
         if dimtad != 0 and text_width > 0:
@@ -504,7 +513,7 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
         arrow_name = override.get('dimldrblk', '')
         if arrow_name is None:
             return
-        size = override.get('dimasz', 0.625) * dimscale
+        size = override.get('dimasz', 2.5 if measurement else 0.1875) * dimscale
         rotation = (vertices[0] - vertices[1]).angle_deg
         if doc and arrow_name in doc.blocks:
             dxfattribs.update({
