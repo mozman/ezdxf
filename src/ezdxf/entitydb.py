@@ -2,7 +2,7 @@
 # Created: 2019-02-14
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import Optional, Iterable, Tuple, TYPE_CHECKING
+from typing import Optional, Iterable, Tuple, TYPE_CHECKING, Dict, Set
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.entities.dxfentity import DXFEntity
@@ -25,7 +25,8 @@ class EntityDB:
     """
 
     def __init__(self):
-        self._database = {}
+        self._database: Dict[str, DXFEntity] = {}
+        self._trashcan: Set[str] = set()  # dxf entities to delete as set of handles
         self.handles = HandleGenerator()
         self.locked = False  # for debugging
 
@@ -140,7 +141,6 @@ class EntityDB:
 
         """
         db = self._database
-        remove_handles = []
         add_entities = []
         for handle, entity in db.items():
             if not is_valid_handle(handle):
@@ -148,16 +148,17 @@ class EntityDB:
                     code=AuditError.INVALID_ENTITY_HANDLE,
                     message=f'Removed entity {entity.dxftype()} with invalid handle "{handle}" from entity database.',
                 )
-                remove_handles.append(handle)
+                self.trash(handle)
             if not entity.is_alive:
-                remove_handles.append(handle)
+                self.trash(handle)
             elif handle != entity.dxf.get('handle'):
                 # database handle != stored entity handle
-                remove_handles.append(handle)
+                # prevent entity from being destroyed:
+                self._database[handle] = None
+                self.trash(handle)
                 add_entities.append(entity)
 
-        for handle in remove_handles:
-            del db[handle]
+        self.empty_trashcan()
 
         for entity in add_entities:
             handle = entity.dxf.get('handle')
@@ -174,6 +175,22 @@ class EntityDB:
                 )
                 continue
             self[handle] = entity
+
+    def trash(self, handle: str) -> None:
+        """ Put handle into trashcan to delete entity later, required while iterating th database. """
+        self._trashcan.add(handle)
+
+    def empty_trashcan(self) -> None:
+        """ Remove handles in trashcan from database and destroy entities if still alive. """
+        for handle in self._trashcan:
+            entity = self.get(handle)
+            if entity and entity.is_alive:
+                self.delete_entity(entity)
+
+            if handle in self:
+                del self[handle]
+
+        self._trashcan.clear()
 
 
 class EntitySpace:
