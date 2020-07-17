@@ -47,6 +47,8 @@ class EntityDB:
 
     def __delitem__(self, handle: str) -> None:
         """ Delete entity by `handle`. Removes entity only from database, does not destroy the entity. """
+        if self.locked:
+            raise DXFInternalEzdxfError('Locked entity database.')
         del self._database[handle]
 
     def __contains__(self, handle: str) -> bool:
@@ -140,6 +142,7 @@ class EntityDB:
         - remove entities with invalid handles
 
         """
+        assert self.locked is False, 'Database is locked!'
         db = self._database
         add_entities = []
         for handle, entity in db.items():

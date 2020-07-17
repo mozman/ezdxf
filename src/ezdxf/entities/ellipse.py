@@ -201,6 +201,6 @@ class Ellipse(DXFGraphic):
                 dxf_entity=self,
             )
             if self.doc and self.doc.entitydb:
-                self.entitydb.delete_entity(self)
+                self.entitydb.trash(self.dxf.handle)
             else:
                 self.destroy()

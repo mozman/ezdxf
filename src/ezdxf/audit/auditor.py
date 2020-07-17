@@ -9,9 +9,10 @@ from enum import IntEnum
 from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict
 
 import sys
-from ezdxf.lldxf.types import is_pointer_code, DXFTag
 from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
 from ezdxf.entities.dxfentity import DXFEntity
+from ezdxf.math import NULLVEC
+from ezdxf.sections.table import table_key
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, Drawing, DXFGraphic, BlocksSection
@@ -54,6 +55,7 @@ class ErrorEntry:
 class Auditor:
     def __init__(self, doc: 'Drawing'):
         self.doc = doc
+        self._rootdict_handle = doc.rootdict.dxf.handle if doc else '0'
         self.errors = []  # type: List[ErrorEntry]
         self.fixes = []  # type: List[ErrorEntry]
 
@@ -128,7 +130,11 @@ class Auditor:
         self.check_database_entities()
         self.doc.groups.audit(self)
         self.check_block_reference_cycles()
+        self.empty_trashcan()
         return self.errors
+
+    def empty_trashcan(self):
+        self.doc.entitydb.empty_trashcan()
 
     def check_root_dict(self) -> None:
         root_dict = self.doc.rootdict
@@ -157,9 +163,13 @@ class Auditor:
     def check_database_entities(self) -> None:
         """ Check all entities stored in the entity database. """
         # deleting of entities can occur, while auditing
-        for entity in list(self.doc.entitydb.values()):
+        db = self.doc.entitydb
+        db.locked = True
+        for entity in db.values():
             if entity.is_alive:
                 entity.audit(self)
+        db.locked = False
+        db.empty_trashcan()
 
     def check_entity_linetype(self, entity: 'DXFEntity') -> None:
         """
@@ -168,8 +178,8 @@ class Auditor:
         assert self.doc is entity.doc, 'Entity from different DXF document.'
         if not entity.dxf.hasattr('linetype'):
             return
-        linetype = entity.dxf.linetype
-        if linetype.lower() in ('bylayer', 'byblock'):  # no table entry in linetypes required
+        linetype = table_key(entity.dxf.linetype)
+        if linetype in ('bylayer', 'byblock'):  # no table entry in linetypes required
             return
 
         if linetype not in self.doc.linetypes:
@@ -222,9 +232,6 @@ class Auditor:
         """
         Check layer names for invalid characters: <>/\":;?*|='
         """
-        assert self.doc is entity.doc, 'Entity from different DXF document.'
-        if not entity.dxf.hasattr('layer'):
-            return
         name = entity.dxf.layer
         if not is_valid_layer_name(name):
             if self.doc.dxfversion > 'AC1009' and is_adsk_special_layer(name):
@@ -238,9 +245,6 @@ class Auditor:
             )
 
     def check_entity_color_index(self, entity: 'DXFGraphic') -> None:
-        if not entity.dxf.hasattr('color'):
-            return
-        # Do not use for LAYER entity
         color = entity.dxf.color
         # 0 == BYBLOCK
         # 256 == BYLAYER
@@ -261,17 +265,33 @@ class Auditor:
             return
         doc = self.doc
         owner_handle = entity.dxf.owner
+        handle = entity.dxf.get('handle', '0')
         if owner_handle == '0':
-            handle = entity.dxf.get('handle', '0')
-            if handle == doc.rootdict.dxf.handle:
+            if handle == self._rootdict_handle:
                 return  # valid '0' handle as owner
 
         if owner_handle not in doc.entitydb:
+            if handle == self._rootdict_handle:
+                entity.dxf.owner = '0'
+                self.fixed_error(
+                    code=AuditError.INVALID_OWNER_HANDLE,
+                    message=f'Fixed invalid owner handle in root {str(self)}.',
+                )
+            else:
+                self.fixed_error(
+                    code=AuditError.INVALID_OWNER_HANDLE,
+                    message=f'Deleted {str(entity)} entity without valid owner handle #{owner_handle}.',
+                )
+                self.doc.entitydb.trash(handle)
+
+    def check_extrusion_vector(self, entity: 'DXFEntity') -> None:
+        if NULLVEC.isclose(entity.dxf.extrusion):
+            entity.dxf.discard('extrusion')
             self.fixed_error(
-                code=AuditError.INVALID_OWNER_HANDLE,
-                message=f'Deleted {str(entity)} entity without valid owner handle #{owner_handle}.',
+                code=AuditError.INVALID_EXTRUSION_VECTOR,
+                message=f'Fixed extrusion vector for entity: {str(self)}.',
+                dxf_entity=entity,
             )
-            self.doc.entitydb.delete_entity(entity)
 
     def check_block_reference_cycles(self) -> None:
         cycle_detector = BlockCycleDetector(self.doc)

@@ -301,18 +301,6 @@ class Dictionary(DXFObject):
                 data=key,
             )
 
-    def check_owner(self, auditor: 'Auditor') -> None:
-        # owner handle of the root dict should be '0', and therefore points to a none existing object
-        if self is not self.doc.rootdict:
-            super().check_owner(auditor)
-        elif self.dxf.owner != '0':
-            self.dxf.owner = '0'
-            auditor.fixed_error(
-                code=AuditError.INVALID_OWNER_HANDLE,
-                message=f'Fixed invalid owner handle in root {str(self)}.',
-                dxf_entity=self,
-            )
-
     def destroy(self) -> None:
         if self.is_hard_owner:
             self._delete_hard_owned_entries()

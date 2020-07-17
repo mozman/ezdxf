@@ -27,10 +27,6 @@ class DXFObject(DXFEntity):
     def audit(self, auditor: 'Auditor') -> None:
         """ Validity check. (internal API) """
         super().audit(auditor)
-        self.check_owner(auditor)
-
-    def check_owner(self, auditor: 'Auditor') -> None:
-        # overridden in DICTIONARY
         auditor.check_owner_exist(self)
 
 

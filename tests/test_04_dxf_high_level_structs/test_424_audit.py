@@ -45,6 +45,7 @@ def test_for_valid_layer_name(entity, auditor):
 def test_for_existing_owner(entity, auditor):
     entity.dxf.owner = 'FFFFFF'
     auditor.check_owner_exist(entity)
+    auditor.empty_trashcan()
     assert len(auditor.fixes) == 1
     assert auditor.fixes[0].code == AuditError.INVALID_OWNER_HANDLE
     assert entity.is_alive is False, 'delete entity without valid owner'
@@ -142,6 +143,7 @@ def test_fix_invalid_radius(dxf, auditor):
     msp = dxf.modelspace()
     circle = msp.add_circle((0, 0), 0)
     circle.audit(auditor)
+    dxf.entitydb.empty_trashcan()  # explicit call required
     assert circle.is_alive is False
     assert auditor.fixes[-1].code == AuditError.INVALID_RADIUS
 
@@ -150,6 +152,7 @@ def test_fix_invalid_major_axis(dxf, auditor):
     msp = dxf.modelspace()
     ellipse = msp.add_ellipse((0, 0), major_axis=(0, 0, 0), ratio=0.5)
     ellipse.audit(auditor)
+    dxf.entitydb.empty_trashcan()  # explicit call required
     assert ellipse.is_alive is False
     assert auditor.fixes[-1].code == AuditError.INVALID_MAJOR_AXIS
 
@@ -171,6 +174,7 @@ def test_fix_invalid_insert(dxf, auditor):
     msp = dxf.modelspace()
     insert = msp.add_blockref('TEST_INVALID_INSERT', (0, 0))
     insert.audit(auditor)
+    dxf.entitydb.empty_trashcan()  # explicit call required
     assert insert.is_alive is False
     assert auditor.fixes[-1].code == AuditError.UNDEFINED_BLOCK
 

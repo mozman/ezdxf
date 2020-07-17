@@ -307,20 +307,24 @@ class DXFGraphic(DXFEntity):
         return new_entity
 
     def audit(self, auditor: 'Auditor') -> None:
-        """ Validity check. """
+        """ Validity check.
+        """
+        # Important for inherited classes:
+        # Do not delete entities while auditing process, this would alter
+        # the entity database while iterating, instead use:
+        # self.doc.entitydb.trash(handle) to delete invalid entities
         assert self.doc is auditor.doc, 'Auditor for different DXF document.'
         super().audit(auditor)
         auditor.check_owner_exist(self)
-        auditor.check_for_valid_layer_name(self)
-        auditor.check_entity_linetype(self)
-        auditor.check_entity_color_index(self)
-        if self.dxf.hasattr('extrusion') and NULLVEC.isclose(self.dxf.extrusion):
-            del self.dxf.extrusion
-            auditor.fixed_error(
-                code=AuditError.INVALID_EXTRUSION_VECTOR,
-                message=f'Fixed extrusion vector for entity: {str(self)}.',
-                dxf_entity=self,
-            )
+        dxf = self.dxf
+        if dxf.hasattr('layer'):
+            auditor.check_for_valid_layer_name(self)
+        if dxf.hasattr('linetype'):
+            auditor.check_entity_linetype(self)
+        if dxf.hasattr('color'):
+            auditor.check_entity_color_index(self)
+        if dxf.hasattr('extrusion'):
+            auditor.check_extrusion_vector(self)
 
     def transform_to_wcs(self, ucs: 'UCS') -> 'DXFGraphic':
         warnings.warn(
