@@ -2,10 +2,12 @@
 News
 ====
 
-Version 0.13.1 - dev
---------------------
+Version 0.13.1 - 2020-07-18
+---------------------------
 
-- BUGFIX: remove white space from structure tags like "SECTION " 
+- Release notes: https://ezdxf.mozman.at/release-v0-13.html
+- BUGFIX: remove white space from structure tags like "SECTION "
+- BUGFIX: MeshBuilder.from_polyface() processing error of POLYMESH entities
 
 Version 0.13 - 2020-07-04
 -------------------------
