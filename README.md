@@ -27,16 +27,18 @@ Quick-Info
 - read/write support for ASCII DXF and Binary DXF
 - preserves third-party DXF content
 
-Included extensions:
+Included Extensions
+-------------------
 
-- `drawing` add-on to visualise and convert DXF files to images which can be saved to various formats such as png, 
-  pdf and svg
+- The `drawing` add-on is a translation layer to send DXF data to a render backend, interfaces to 
+  [matplotlib](https://pypi.org/project/matplotlib/), which can export images as png, pdf or svg, 
+  and [PyQt5](https://pypi.org/project/PyQt5/) are implemented.
 - `r12writer` add-on to write basic DXF entities direct and fast into a DXF R12 file or stream
 - `iterdxf` add-on to iterate over DXF entities of the modelspace of really big (> 5GB) DXF files which
- do not fit into memory
+  do not fit into memory
 - `Importer` add-on to import entities, blocks and table entries from another DXF document
 - `dxf2code` add-on to generate Python code for DXF structures loaded from DXF 
- documents as starting point for parametric DXF entity creation
+  documents as starting point for parametric DXF entity creation
 - Plot Style Files (CTB/STB) read/write add-on
 
 A simple example:
