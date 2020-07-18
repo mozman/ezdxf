@@ -1542,38 +1542,26 @@ EdgeTypes = Union[LineEdge, ArcEdge, EllipseEdge, SplineEdge]
 
 
 class Pattern:
-    def __init__(self, lines=None):
-        self.lines = lines or []
+    def __init__(self, lines: Iterable['PatternLine'] = None):
+        self.lines: List['PatternLine'] = list(lines) if lines else []
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'Pattern':
         grouped_line_tags = group_tags(tags, splitcode=53)
-        return cls([PatternLine.load_tags(line_tags) for line_tags in grouped_line_tags])
+        return cls(PatternLine.load_tags(line_tags) for line_tags in grouped_line_tags)
 
     def clear(self) -> None:
         """ Delete all pattern definition lines. """
         self.lines = []
 
     def add_line(self,
-                 angle: float = 0.,
-                 base_point: Tuple[float, float] = (0., 0.),
-                 offset: Tuple[float, float] = (0., 0.),
-                 dash_length_items: List[float] = None) -> None:
+                 angle: float = 0,
+                 base_point: 'Vertex' = (0, 0),
+                 offset: 'Vertex' = (0, 0),
+                 dash_length_items: Iterable[float] = None) -> None:
         """ Create a new pattern definition line and add the line to the :attr:`Pattern.lines` attribute. """
-        self.lines.append(self.new_line(angle, base_point, offset, dash_length_items))
-
-    @staticmethod
-    def new_line(angle: float = 0.,
-                 base_point: Tuple[float, float] = (0., 0.),
-                 offset: Tuple[float, float] = (0., 0.),
-                 dash_length_items: List[float] = None) -> 'PatternLine':
-        """
-        Create a new pattern definition line, but does not add the line to the :attr:`Pattern.lines` attribute.
-
-        """
-        if dash_length_items is None:
-            raise const.DXFValueError("Parameter 'dash_length_items' must not be None.")
-        return PatternLine(angle, base_point, offset, dash_length_items)
+        assert dash_length_items is not None, "argument 'dash_length_items' is None"
+        self.lines.append(PatternLine(angle, base_point, offset, dash_length_items))
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         if len(self.lines):
@@ -1609,14 +1597,14 @@ class Pattern:
 
 class PatternLine:
     def __init__(self,
-                 angle: float = 0.,
-                 base_point: Tuple[float, float] = (0., 0.),
-                 offset: Tuple[float, float] = (0., 0.),
-                 dash_length_items: List[float] = None):
-        self.angle = angle  # as always in degrees (circle = 360 deg)
-        self.base_point = base_point
-        self.offset = offset
-        self.dash_length_items = [] if dash_length_items is None else dash_length_items  # type: List[float]
+                 angle: float = 0,
+                 base_point: 'Vertex' = (0, 0),
+                 offset: 'Vertex' = (0, 0),
+                 dash_length_items: Iterable[float] = None):
+        self.angle: float = float(angle)  # as always in degrees (circle = 360 deg)
+        self.base_point: Vec2 = Vec2(base_point)
+        self.offset: Vec2 = Vec2(offset)
+        self.dash_length_items: List[float] = [] if dash_length_items is None else list(dash_length_items)
         # dash_length_items = [item0, item1, ...]
         # item > 0 is line, < 0 is gap, 0.0 = dot;
 
@@ -1635,10 +1623,10 @@ class PatternLine:
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         write_tag = tagwriter.write_tag2
         write_tag(53, self.angle)
-        write_tag(43, self.base_point[0])
-        write_tag(44, self.base_point[1])
-        write_tag(45, self.offset[0])
-        write_tag(46, self.offset[1])
+        write_tag(43, self.base_point.x)
+        write_tag(44, self.base_point.y)
+        write_tag(45, self.offset.x)
+        write_tag(46, self.offset.y)
         write_tag(79, len(self.dash_length_items))
         for item in self.dash_length_items:
             write_tag(49, item)
@@ -1652,16 +1640,16 @@ class PatternLine:
 
 class Gradient:
     def __init__(self):
-        self.kind = 1  # 1 for gradient by default, 0 for Solid
-        self.color1 = (0, 0, 0)  # type: RGB
-        self.aci1 = None
-        self.color2 = (255, 255, 255)  # type: RGB
-        self.aci2 = None
-        self.one_color = 0  # if 1 - a fill that uses a smooth transition between color1 and a specified tint
-        self.rotation = 0.  # use grad NOT radians here, because there should be ONE system for all angles
-        self.centered = 0.
-        self.tint = 0.0
-        self.name = 'LINEAR'
+        self.kind: int = 1  # 1 for gradient by default, 0 for Solid
+        self.color1: RGB = (0, 0, 0)
+        self.aci1: Optional[int] = None
+        self.color2: RGB = (255, 255, 255)
+        self.aci2: Optional[int] = None
+        self.one_color: int = 0  # if 1 - a fill that uses a smooth transition between color1 and a specified tint
+        self.rotation: float = 0.  # use grad NOT radians here, because there should be ONE system for all angles
+        self.centered: float = 0.
+        self.tint: float = 0.0
+        self.name: str = 'LINEAR'
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'Gradient':
