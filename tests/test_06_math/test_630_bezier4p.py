@@ -133,8 +133,6 @@ def test_transform_returns_always_3d_curves():
     curve = Bezier4P(DEFPOINTS2D)
     new = curve.transform(Matrix44.translate(1, 2, 3))
     assert len(new.control_points[0]) == 3
-    assert new.control_points[0] == Vector(DEFPOINTS2D[0]) + (1, 2, 3)
-    assert new.control_points[0] != curve.control_points[0], 'expected a new object'
 
 
 POINTS2D = [
