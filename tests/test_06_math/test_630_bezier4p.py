@@ -1,28 +1,35 @@
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
+import pytest
 import math
-from ezdxf.math import ConstructionEllipse
+from ezdxf.math import ConstructionEllipse, Matrix44, Vector
 from ezdxf.math.bezier4p import (
     Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_interpolation, cubic_bezier_from_arc, cubic_bezier_from_ellipse
 )
 
 DEFPOINTS2D = [(0., 0., 0.), (3., 0., 0.), (7., 10., 0.), (10., 10., 0.)]
-DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
+DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.)]
 
 
-def test_bezier4p_points_2d():
+def test_accepts_2d_points():
     bcurve = Bezier4P(DEFPOINTS2D)
     for index, chk in enumerate(POINTS2D):
         assert bcurve.point(index * .1).isclose(chk)
 
 
-def test_bezier4p_tangents_2d():
+def test_objects_are_immutable():
+    curve = Bezier4P(DEFPOINTS3D)
+    with pytest.raises(TypeError):
+        curve.control_points[0] = (1, 2, 3)
+
+
+def test_2d_tangent_compitation():
     dbcurve = Bezier4P(DEFPOINTS2D)
     for index, chk in enumerate(TANGENTS2D):
         assert dbcurve.tangent(index * .1).isclose(chk)
 
 
-def test_cubic_bezier_arc_parameters():
+def test_cubic_bezier_arc_parameters_computation():
     parts = list(cubic_bezier_arc_parameters(0, math.tau))
     assert len(parts) == 4
 
@@ -52,7 +59,7 @@ def test_cubic_bezier_arc_parameters():
     assert ep.isclose((1, 0))
 
 
-def test_bezier_interpolation():
+def test_vertex_interpolation():
     points = [(0, 0), (3, 1), (5, 3), (0, 8)]
     result = list(cubic_bezier_interpolation(points))
     assert len(result) == 3
@@ -76,7 +83,7 @@ def test_bezier_interpolation():
     assert p[3].isclose((0, 8))
 
 
-def test_bezier4p_from_circular_arc():
+def test_from_circular_arc():
     curves = list(cubic_bezier_from_arc(end_angle=90))
     assert len(curves) == 1
 
@@ -113,6 +120,13 @@ def test_reverse():
     rev_curve = curve.reverse()
     rev_vertices = list(rev_curve.approximate(10))
     assert list(reversed(vertices)) == rev_vertices
+
+
+def test_transform_interface():
+    curve = Bezier4P(DEFPOINTS2D)
+    new = curve.transform(Matrix44.translate(1, 2, 3))
+    assert new.control_points[0] == Vector(DEFPOINTS2D[0]) + (1, 2, 3)
+    assert new.control_points[0] != curve.control_points[0], 'expected a new object'
 
 
 POINTS2D = [

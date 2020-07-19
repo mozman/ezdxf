@@ -339,7 +339,7 @@ class UCS:
         return self
 
     def transform(self, m: Matrix44) -> 'UCS':
-        """ General transformation interface, returns `self` (floating interface).
+        """ General inplace transformation interface, returns `self` (floating interface).
 
         Args:
              m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
@@ -347,9 +347,8 @@ class UCS:
         .. versionadded:: 0.14
 
         """
-        new = self.copy()
-        new.matrix = new.matrix * m
-        return new
+        self.matrix *= m
+        return self
 
     @property
     def is_cartesian(self) -> bool:

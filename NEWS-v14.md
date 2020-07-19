@@ -13,10 +13,13 @@ Version 0.14 - dev
 - NEW: `Arc.apply_construction_tool()` apply parameters from `ConstructionArc()`
 - NEW: `Leader.virtual_entities()` yields 'virtual' DXF primitives
 - NEW: `Leader.explode()` explode LEADER as DXF primitives into target layout
-- NEW: `Bezier4P.reverse()` returns object with reversed control point order
 - NEW: `LWPolyline.has_width` property is `True` if any width attribute is set
 - NEW: `Polyline.has_width` property is `True` if any width attribute is set
 - NEW: `DXFVertex.format()` support for user defined point format 
 - NEW: `BSpline.is_clamped` property is `True` for clamped (open) B-spline
-- NEW: `UCS.transform` general transformation interface
+- NEW: `UCS.transform()` general transformation interface
+- NEW: `Bezier4P.transform()` general transformation interface
+- NEW: `Bezier4P.reverse()` returns object with reversed control point order
+- NEW: `Bezier.transform()` general transformation interface
+- NEW: `Bezier.reverse()` returns object with reversed control point order
 - CHANGE: `linspace()` uses Decimal() for precise calculations, but still returns float

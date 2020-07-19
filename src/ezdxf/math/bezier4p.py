@@ -5,7 +5,7 @@
 from typing import List, TYPE_CHECKING, Iterable, Union, Sequence
 import math
 from functools import lru_cache
-from ezdxf.math import Vector, Vec2, tridiagonal_matrix_solver
+from ezdxf.math import Vector, Vec2, tridiagonal_matrix_solver, Matrix44, linspace
 from ezdxf.math.ellipse import ConstructionEllipse
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ def check_if_in_valid_range(t: float):
 # cubic P(t) = (1-t)^3*P0 + 3*(1-t)^2*t*P1 + 3*(1-t)*t^2*P2 + t^3*P3
 # cubic P(t) = a*P0 + b*P1 + c*P2 + d*P3
 # a, b, c, d = bernstein3(t) ... cached
-@lru_cache(maxsize=128)
+@lru_cache(maxsize=300)
 def bernstein3(t: float) -> Sequence[float]:
     """ Bernstein polynom of 3rd degree. """
     t2 = t * t
@@ -39,7 +39,7 @@ def bernstein3(t: float) -> Sequence[float]:
     return a, b, c, d
 
 
-@lru_cache(maxsize=128)
+@lru_cache(maxsize=300)
 def bernstein3_d1(t: float) -> Sequence[float]:
     """ First derivative of Bernstein polynom of 3rd degree. """
     t2 = t * t
@@ -60,6 +60,7 @@ class Bezier4P:
 
         - 2D control points in, returns 2D results as :class:`~ezdxf.math.Vec2` objects
         - 3D control points in, returns 3D results as :class:`~ezdxf.math.Vector` objects
+        - Object is immutable.
 
     Args:
         defpoints: iterable of definition points as :class:`Vec2` or :class:`Vector` compatible objects.
@@ -70,21 +71,13 @@ class Bezier4P:
         if len(defpoints) == 4:
             is3d = any(len(p) > 2 for p in defpoints)
             vector_class = Vector if is3d else Vec2
-            self._control_points = vector_class.list(defpoints)
+            self._control_points = vector_class.tuple(defpoints)
         else:
             raise ValueError("Four control points required.")
 
-    def to3d(self) -> 'Bezier4P':
-        """ Returns the Bèzier-curve with 3d control points. """
-        return self.__class__([Vector(p) for p in self._control_points])
-
-    def to2d(self) -> 'Bezier4P':
-        """ Returns the Bèzier-curve with 2d control points. (discards the z-axis) """
-        return self.__class__([Vec2(p) for p in self._control_points])
-
     @property
-    def control_points(self) -> List[Union[Vector, Vec2]]:
-        """ control points as list of ``(x, y, z)``, z-axis is ``0`` for 2D curves. """
+    def control_points(self) -> Sequence[Union[Vector, Vec2]]:
+        """ Control points as tuple of :class:`~ezdxf.math.Vector` or :class:`~ezdxf.math.Vec2` objects. """
         return self._control_points
 
     def tangent(self, t: float) -> Union[Vector, Vec2]:
@@ -133,7 +126,7 @@ class Bezier4P:
         a, b, c, d = bernstein3_d1(t)
         return b1 * a + b2 * b + b3 * c + b4 * d
 
-    def approximated_length(self, segments: int = 100) -> float:
+    def approximated_length(self, segments: int = 128) -> float:
         """ Returns estimated length of Bèzier-curve as approximation by line `segments`. """
         length = 0.
         prev_point = None
@@ -146,6 +139,18 @@ class Bezier4P:
     def reverse(self) -> 'Bezier4P':
         """ Returns a new Bèzier-curve with reversed control point order. """
         return Bezier4P(list(reversed(self.control_points)))
+
+    def transform(self, m: Matrix44) -> 'Bezier4P':
+        """ General transformation interface, returns a new :class:`Bezier4p` curve.
+
+        Args:
+             m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
+
+        .. versionadded:: 0.14
+
+        """
+        defpoints = tuple(m.transform_vertices(self.control_points))
+        return Bezier4P(defpoints)
 
 
 def cubic_bezier_from_arc(

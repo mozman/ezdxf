@@ -2,10 +2,10 @@
 # Created: 26.03.2010
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable, Tuple, Dict
+from typing import TYPE_CHECKING, List, Iterable, Tuple, Sequence
 from functools import lru_cache
 import math
-from .vector import Vector, NULLVEC
+from ezdxf.math import Vector, NULLVEC, Matrix44
 from .construct2d import linspace
 
 if TYPE_CHECKING:
@@ -76,17 +76,19 @@ class Bezier:
     This is a general implementation which works with any count of definition points greater than ``2``, but it is a
     simple and slow implementation. For more performance look at the specialized :class:`Bezier4P` class.
 
+    Objects are immutable.
+
     Args:
         defpoints: iterable of definition points as :class:`Vector` compatible objects.
 
     """
 
     def __init__(self, defpoints: Iterable['Vertex']):
-        self._defpoints = [Vector(p) for p in defpoints]  # type: List[Vector]
+        self._defpoints: Sequence[Vector] = Vector.tuple(defpoints)
 
     @property
-    def control_points(self) -> List[Vector]:
-        """ Control points as list of :class:`Vector` objects. """
+    def control_points(self) -> Sequence[Vector]:
+        """ Control points as tuple of :class:`Vector` objects. """
         return self._defpoints
 
     def approximate(self, segments: int = 20) -> Iterable[Vector]:
@@ -101,7 +103,7 @@ class Bezier:
         """
         Returns a point for parameter `t` in range [0, 1] as :class:`Vector` object.
         """
-        if t < 0. or t > 1.:
+        if t < 0.0 or t > 1.0:
             raise ValueError('Parameter t not in range [0, 1]')
         if (1.0 - t) < 5e-6:
             t = 1.0
@@ -125,7 +127,7 @@ class Bezier:
         Returns (point, 1st derivative, 2nd derivative) tuple for parameter `t` in range [0, 1]
         as :class:`Vector` objects.
         """
-        if t < 0. or t > 1.:
+        if t < 0.0 or t > 1.0:
             raise ValueError('Parameter t not in range [0, 1]')
 
         if (1.0 - t) < 5e-6:
@@ -161,6 +163,22 @@ class Bezier:
         """
         for u in t:
             yield self.derivative(u)
+
+    def reverse(self) -> 'Bezier':
+        """ Returns a new Bèzier-curve with reversed control point order. """
+        return Bezier(list(reversed(self.control_points)))
+
+    def transform(self, m: Matrix44) -> 'Bezier':
+        """ General transformation interface, returns a new :class:`Bezier` curve.
+
+        Args:
+             m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
+
+        .. versionadded:: 0.14
+
+        """
+        defpoints = tuple(m.transform_vertices(self.control_points))
+        return Bezier(defpoints)
 
 
 def bernstein_basis(n: int, i: int, t: float) -> float:

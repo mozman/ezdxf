@@ -117,6 +117,11 @@ class Vector:
         return list(cls.generate(items))
 
     @classmethod
+    def tuple(cls, items: Iterable['Vertex']) -> Sequence['Vector']:
+        """ Returns a tuple of :class:`Vector` objects. """
+        return tuple(cls.generate(items))
+
+    @classmethod
     def generate(cls, items: Iterable['Vertex']) -> Iterable['Vector']:
         """ Returns an iterable of :class:`Vector` objects. """
         return (cls(item) for item in items)
