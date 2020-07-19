@@ -3,6 +3,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import argparse
+import math
 import os
 import signal
 import sys
@@ -22,11 +23,12 @@ from ezdxf.lldxf.const import DXFStructureError
 
 
 class CADGraphicsView(qw.QGraphicsView):
-    def __init__(self, view_buffer: float = 0.2):
+    def __init__(self, view_buffer: float = 0.2, zoom_per_scroll_notch: float = 0.2):
         super().__init__()
         self._zoom = 1
         self._default_zoom = 1
         self._zoom_limits = (0.5, 100)
+        self._zoom_per_scroll_notch = zoom_per_scroll_notch
         self._view_buffer = view_buffer
 
         self.setTransformationAnchor(qw.QGraphicsView.AnchorUnderMouse)
@@ -53,8 +55,8 @@ class CADGraphicsView(qw.QGraphicsView):
     def wheelEvent(self, event: qg.QWheelEvent) -> None:
         # dividing by 120 gets number of notches on a typical scroll wheel. See QWheelEvent documentation
         delta_notches = event.angleDelta().y() / 120
-        zoom_per_scroll_notch = 0.2
-        factor = 1 + zoom_per_scroll_notch * delta_notches
+        direction = math.copysign(1, delta_notches)
+        factor = (1 + self._zoom_per_scroll_notch * direction) ** abs(delta_notches)
         resulting_zoom = self._zoom * factor
         if resulting_zoom < self._zoom_limits[0]:
             factor = self._zoom_limits[0] / self._zoom
