@@ -179,12 +179,12 @@ class CadViewer(qw.QMainWindow):
         for layer in self._render_context.layers.values():
             name = layer.layer
             item = qw.QListWidgetItem(name)
-            item.setCheckState(qc.Qt.Checked)
+            item.setCheckState(qc.Qt.Checked if layer.is_visible else qc.Qt.Unchecked)
             item.setBackground(qg.QColor(layer.color))
             if is_dark_color(layer.color, 0.4):
                 item.setForeground(qg.QColor('#FFFFFF'))
             else:
-                item.setForeground(qg.QColor(qg.QColor('#000000')))
+                item.setForeground(qg.QColor('#000000'))
             self.layers.addItem(item)
         self.layers.blockSignals(False)
 
