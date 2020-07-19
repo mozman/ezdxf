@@ -21,7 +21,7 @@ import logging
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter, Drawing, EntityDB, EntityFactory, Dictionary, BaseLayout
+    from ezdxf.eztypes import Auditor, TagWriter, Drawing, EntityDB, EntityFactory
 
 __all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor', 'base_class']
 

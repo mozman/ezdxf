@@ -2,24 +2,18 @@
 # Created: 10.03.2017
 # Copyright (c) 2017-2020, Manfred Moitzi
 # License: MIT License
-"""
-audit(drawing, stream): check a DXF drawing for errors.
-"""
 from enum import IntEnum
 from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict
 
 import sys
-import bisect
-from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
-from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHTS
+from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer, fix_lineweight
+from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHT_VALUES
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.math import NULLVEC
 from ezdxf.sections.table import table_key
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, Drawing, DXFGraphic, BlocksSection
-
-VALID_LINEWEIGHTS = set(VALID_DXF_LINEWEIGHTS) | {-1, -2, -3}
 
 
 class AuditError(IntEnum):
@@ -49,6 +43,7 @@ class AuditError(IntEnum):
     INVALID_MAJOR_AXIS = 212
     INVALID_VERTEX_COUNT = 213
     INVALID_DICTIONARY_ENTRY = 214
+
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
 
@@ -269,20 +264,12 @@ class Auditor:
 
     def check_entity_lineweight(self, entity: 'DXFGraphic') -> None:
         weight = entity.dxf.lineweight
-        if weight not in VALID_LINEWEIGHTS:  # including: by layer (-1), by block (-2), default (-3)
-            if weight < 0:
-                weight = -1  # by layer
-            elif weight > 211:
-                weight = 211
-            else:
-                index = bisect.bisect(VALID_DXF_LINEWEIGHTS, weight)
-                weight = VALID_DXF_LINEWEIGHTS[index]
-            entity.dxf.lineweight = weight
+        if weight not in VALID_DXF_LINEWEIGHT_VALUES:
+            entity.dxf.lineweight = fix_lineweight(weight)
             self.fixed_error(
                 code=AuditError.INVALID_LINEWEIGHT,
                 message=f'Fixed invalid lineweight of {str(entity)}.',
                 dxf_entity=entity,
-                data=weight,
             )
 
     def check_owner_exist(self, entity: 'DXFEntity') -> None:

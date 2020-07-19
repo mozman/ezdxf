@@ -8,7 +8,7 @@ import warnings
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXF2013, DXFValueError, DXFKeyError, DXFTableEntryError
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
-from ezdxf.lldxf.const import DXFStructureError
+from ezdxf.lldxf.const import DXFStructureError, VALID_DXF_LINEWEIGHTS
 from ezdxf.lldxf.validator import is_valid_layer_name
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS, UCS, Matrix44

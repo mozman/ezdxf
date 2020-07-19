@@ -4,11 +4,14 @@
 # License: MIT License
 import logging
 import io
+import bisect
 from typing import TextIO, Iterable, List, Optional
 
 from .const import DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError
 from .const import APP_DATA_MARKER, HEADER_VAR_MARKER, XDATA_MARKER
 from .const import INVALID_LAYER_NAME_CHARACTERS, acad_release
+from .const import VALID_DXF_LINEWEIGHT_VALUES, VALID_DXF_LINEWEIGHTS
+
 from .tagger import ascii_tags_loader
 from .types import is_embedded_object_marker, DXFTag, NONE_TAG
 from ezdxf.tools.codepage import toencoding
@@ -254,3 +257,15 @@ is_valid_name = is_valid_layer_name
 
 def is_adsk_special_layer(name: str) -> bool:
     return name.upper().startswith('*ADSK_')  # special Autodesk layers starts with invalid character *
+
+
+def fix_lineweight(lineweight: int) -> int:
+    if lineweight in VALID_DXF_LINEWEIGHT_VALUES:
+        return lineweight
+    if lineweight < -3:
+        return -1  # by layer
+    elif lineweight > 211:
+        return 211
+    else:
+        index = bisect.bisect(VALID_DXF_LINEWEIGHTS, lineweight)
+        return VALID_DXF_LINEWEIGHTS[index]
