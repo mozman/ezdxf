@@ -169,6 +169,8 @@ UCS Class
 
     .. automethod:: to_ocs_angle_deg
 
+    .. automethod:: transform(m: Matrix44) -> UCS
+
     .. automethod:: rotate(axis: Vertex, angle:float) -> UCS
 
     .. automethod:: rotate_local_x(angle:float) -> UCS

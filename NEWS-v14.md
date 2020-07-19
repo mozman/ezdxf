@@ -18,4 +18,5 @@ Version 0.14 - dev
 - NEW: `Polyline.has_width` property is `True` if any width attribute is set
 - NEW: `DXFVertex.format()` support for user defined point format 
 - NEW: `BSpline.is_clamped` property is `True` for clamped (open) B-spline
+- NEW: `UCS.transform` general transformation interface
 - CHANGE: `linspace()` uses Decimal() for precise calculations, but still returns float
