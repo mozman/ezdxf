@@ -23,13 +23,15 @@ from ezdxf.lldxf.const import DXFStructureError
 
 
 class CADGraphicsView(qw.QGraphicsView):
-    def __init__(self, view_buffer: float = 0.2, zoom_per_scroll_notch: float = 0.2):
+    def __init__(self, *, view_buffer: float = 0.2, zoom_per_scroll_notch: float = 0.2, loading_overlay: bool = True):
         super().__init__()
         self._zoom = 1
         self._default_zoom = 1
         self._zoom_limits = (0.5, 100)
         self._zoom_per_scroll_notch = zoom_per_scroll_notch
         self._view_buffer = view_buffer
+        self._loading_overlay = loading_overlay
+        self._is_loading = False
 
         self.setTransformationAnchor(qw.QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(qw.QGraphicsView.AnchorUnderMouse)
@@ -41,6 +43,17 @@ class CADGraphicsView(qw.QGraphicsView):
 
     def clear(self):
         pass
+
+    def begin_loading(self):
+        self._is_loading = True
+        self.scene().invalidate(qc.QRectF(), qw.QGraphicsScene.AllLayers)
+        qw.QApplication.processEvents()
+
+    def end_loading(self, new_scene: qw.QGraphicsScene):
+        self.setScene(new_scene)
+        self._is_loading = False
+        self.buffer_scene_rect()
+        self.scene().invalidate(qc.QRectF(), qw.QGraphicsScene.AllLayers)
 
     def buffer_scene_rect(self):
         scene = self.scene()
@@ -69,12 +82,23 @@ class CADGraphicsView(qw.QGraphicsView):
         self.scale(factor, factor)
         self._zoom *= factor
 
+    def drawForeground(self, painter: qg.QPainter, rect: qc.QRectF) -> None:
+        if self._is_loading and self._loading_overlay:
+            painter.save()
+            painter.fillRect(rect, qg.QColor('#aa000000'))
+            painter.setWorldMatrixEnabled(False)
+            r = self.viewport().rect()
+            painter.setBrush(qc.Qt.NoBrush)
+            painter.setPen(qc.Qt.white)
+            painter.drawText(r.center(), 'Loading...')
+            painter.restore()
+
 
 class CADGraphicsViewWithOverlay(CADGraphicsView):
     element_selected = qc.pyqtSignal(object, qc.QPointF)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self._current_item: Optional[qw.QGraphicsItem] = None
 
     def clear(self):
@@ -82,6 +106,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
         self._current_item = None
 
     def drawForeground(self, painter: qg.QPainter, rect: qc.QRectF) -> None:
+        super().drawForeground(painter, rect)
         if self._current_item is not None:
             r = self._current_item.boundingRect()
             r = self._current_item.sceneTransform().mapRect(r)
@@ -103,14 +128,10 @@ class CadViewer(qw.QMainWindow):
         self._visible_layers = None
         self._current_layout = None
 
-        self.scene = qw.QGraphicsScene()
-
         self.view = CADGraphicsViewWithOverlay()
-        self.view.setScene(self.scene)
+        self.view.setScene(qw.QGraphicsScene())
         self.view.scale(1, -1)  # so that +y is up
         self.view.element_selected.connect(self._on_element_selected)
-
-        self.renderer = PyQtBackend(self.scene)
 
         menu = self.menuBar()
         select_doc_action = qw.QAction('Select Document', self)
@@ -204,16 +225,18 @@ class CadViewer(qw.QMainWindow):
     def draw_layout(self, layout_name: str, reset_view: bool = True):
         print(f'drawing {layout_name}')
         self._current_layout = layout_name
-        self.renderer.clear()
-        self.view.clear()
+        self.view.begin_loading()
+        new_scene = qw.QGraphicsScene()
+        renderer = PyQtBackend(new_scene)
         layout = self.doc.layout(layout_name)
         self._update_render_context(layout)
         try:
-            Frontend(self._render_context, self.renderer).draw_layout(layout)
+            Frontend(self._render_context, renderer).draw_layout(layout)
         except DXFStructureError as e:
             qw.QMessageBox.critical(self, 'DXF Structure Error', f'Abort rendering of layout "{layout_name}": {str(e)}')
         finally:
-            self.renderer.finalize()
+            renderer.finalize()
+        self.view.end_loading(new_scene)
         self.view.buffer_scene_rect()
         if reset_view:
             self.view.fit_to_scene()
