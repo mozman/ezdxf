@@ -5,7 +5,7 @@ from math import tau
 from typing import List
 
 from ezdxf.addons.drawing.type_hints import Radians
-from ezdxf.math import Vector, Z_AXIS, OCS
+from ezdxf.math import Vector
 
 
 def normalize_angle(theta: Radians) -> Radians:
@@ -13,16 +13,6 @@ def normalize_angle(theta: Radians) -> Radians:
     # e.g. (-1e-16 % tau) == tau
     # so (-1e-16 % tau) % tau == 0.0
     return (theta % tau) % tau
-
-
-def get_draw_angles(start: float, end: float, extrusion: Vector):
-    if extrusion.isclose(Z_AXIS):
-        return start, end
-    else:
-        ocs = OCS(extrusion)
-        s = ocs.to_wcs(Vector.from_angle(start))
-        e = ocs.to_wcs(Vector.from_angle(end))
-        return normalize_angle(e.angle), normalize_angle(s.angle)
 
 
 def get_tri_or_quad_points(solid, adjust_order=True) -> List[Vector]:
