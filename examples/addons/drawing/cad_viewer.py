@@ -42,10 +42,14 @@ class CADGraphicsView(qw.QGraphicsView):
     def clear(self):
         pass
 
-    def fit_to_scene(self):
-        r = self.sceneRect()
+    def buffer_scene_rect(self):
+        scene = self.scene()
+        r = scene.sceneRect()
         bx, by = r.width() * self._view_buffer / 2, r.height() * self._view_buffer / 2
-        self.fitInView(self.sceneRect().adjusted(-bx, -by, bx, by), qc.Qt.KeepAspectRatio)
+        scene.setSceneRect(r.adjusted(-bx, by, bx, by))
+
+    def fit_to_scene(self):
+        self.fitInView(self.sceneRect(), qc.Qt.KeepAspectRatio)
         self._default_zoom = _get_x_scale(self.transform())
         self._zoom = 1
 
@@ -197,7 +201,7 @@ class CadViewer(qw.QMainWindow):
             action.triggered.connect(partial(self.draw_layout, layout_name))
             self.select_layout_menu.addAction(action)
 
-    def draw_layout(self, layout_name: str):
+    def draw_layout(self, layout_name: str, reset_view: bool = True):
         print(f'drawing {layout_name}')
         self._current_layout = layout_name
         self.renderer.clear()
@@ -210,7 +214,9 @@ class CadViewer(qw.QMainWindow):
             qw.QMessageBox.critical(self, 'DXF Structure Error', f'Abort rendering of layout "{layout_name}": {str(e)}')
         finally:
             self.renderer.finalize()
-        self.view.fit_to_scene()
+        self.view.buffer_scene_rect()
+        if reset_view:
+            self.view.fit_to_scene()
 
     def _update_render_context(self, layout):
         assert self._render_context
@@ -229,7 +235,7 @@ class CadViewer(qw.QMainWindow):
             layer = self.layers.item(i)
             if layer.checkState() == qc.Qt.Checked:
                 self._visible_layers.add(layer.text())
-        self.draw_layout(self._current_layout)
+        self.draw_layout(self._current_layout, reset_view=False)
 
     @qc.pyqtSlot()
     def _toggle_sidebar(self):
