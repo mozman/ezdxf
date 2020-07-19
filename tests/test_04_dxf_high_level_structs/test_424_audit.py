@@ -35,6 +35,30 @@ def test_color_index(entity, auditor):
     assert auditor.fixes[0].code == AuditError.INVALID_COLOR_INDEX
 
 
+def test_lineweight_too_small(entity, auditor):
+    entity.dxf.lineweight = -5
+    auditor.check_entity_lineweight(entity)
+    assert len(auditor.fixes) == 1
+    assert auditor.fixes[0].code == AuditError.INVALID_LINEWEIGHT
+    assert entity.dxf.lineweight == -1
+
+
+def test_lineweight_too_big(entity, auditor):
+    entity.dxf.lineweight = 212
+    auditor.check_entity_lineweight(entity)
+    assert len(auditor.fixes) == 1
+    assert auditor.fixes[0].code == AuditError.INVALID_LINEWEIGHT
+    assert entity.dxf.lineweight == 211
+
+
+def test_invalid_lineweight(entity, auditor):
+    entity.dxf.lineweight = 10
+    auditor.check_entity_lineweight(entity)
+    assert len(auditor.fixes) == 1
+    assert auditor.fixes[0].code == AuditError.INVALID_LINEWEIGHT
+    assert entity.dxf.lineweight == 13
+
+
 def test_for_valid_layer_name(entity, auditor):
     entity.dxf.layer = 'Invalid/'
     auditor.check_for_valid_layer_name(entity)

@@ -11,13 +11,12 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLi
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.validator import is_valid_layer_name
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
-from ezdxf.math import OCS, UCS, Matrix44, NULLVEC
+from ezdxf.math import OCS, UCS, Matrix44
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
 from .factory import register_entity
 from ezdxf import options
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
-from ezdxf.audit import AuditError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex, Drawing
@@ -323,6 +322,8 @@ class DXFGraphic(DXFEntity):
             auditor.check_entity_linetype(self)
         if dxf.hasattr('color'):
             auditor.check_entity_color_index(self)
+        if dxf.hasattr('lineweight'):
+            auditor.check_entity_lineweight(self)
         if dxf.hasattr('extrusion'):
             auditor.check_extrusion_vector(self)
 

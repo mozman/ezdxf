@@ -9,7 +9,9 @@ from enum import IntEnum
 from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict
 
 import sys
+import bisect
 from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
+from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHTS
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.math import NULLVEC
 from ezdxf.sections.table import table_key
@@ -17,8 +19,11 @@ from ezdxf.sections.table import table_key
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, Drawing, DXFGraphic, BlocksSection
 
+VALID_LINEWEIGHTS = set(VALID_DXF_LINEWEIGHTS) | {-1, -2, -3}
+
 
 class AuditError(IntEnum):
+    # DXF structure errors:
     MISSING_REQUIRED_ROOT_DICT_ENTRY = 1
     DUPLICATE_TABLE_ENTRY_NAME = 2
     POINTER_TARGET_NOT_EXIST = 3
@@ -27,19 +32,23 @@ class AuditError(IntEnum):
     UNDEFINED_DIMENSION_STYLE = 101
     UNDEFINED_TEXT_STYLE = 102
     UNDEFINED_BLOCK = 103
-    INVALID_LAYER_NAME = 200
-    INVALID_COLOR_INDEX = 201
-    INVALID_OWNER_HANDLE = 202
-    INVALID_DICTIONARY_ENTRY = 203
-    INVALID_ENTITY_HANDLE = 204
-    INVALID_BLOCK_REFERENCE_CYCLE = 205
-    INVALID_EXTRUSION_VECTOR = 206
-    INVALID_RADIUS = 207
-    INVALID_MAJOR_AXIS = 208
-    INVALID_VERTEX_COUNT = 209
-    REMOVE_EMPTY_GROUP = 210
-    GROUP_ENTITIES_IN_DIFFERENT_LAYOUTS = 211
+    INVALID_BLOCK_REFERENCE_CYCLE = 104
+    REMOVE_EMPTY_GROUP = 105
+    GROUP_ENTITIES_IN_DIFFERENT_LAYOUTS = 106
 
+    # DXF entity property errors:
+    INVALID_ENTITY_HANDLE = 201
+    INVALID_OWNER_HANDLE = 202
+    INVALID_LAYER_NAME = 203
+    INVALID_COLOR_INDEX = 204
+    INVALID_LINEWEIGHT = 205
+
+    # DXF entity geometry or content errors:
+    INVALID_EXTRUSION_VECTOR = 210
+    INVALID_RADIUS = 211
+    INVALID_MAJOR_AXIS = 212
+    INVALID_VERTEX_COUNT = 213
+    INVALID_DICTIONARY_ENTRY = 214
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
 
@@ -253,9 +262,27 @@ class Auditor:
             entity.dxf.discard('color')
             self.fixed_error(
                 code=AuditError.INVALID_COLOR_INDEX,
-                message=f'Removed invalid color index from {str(entity)}.',
+                message=f'Removed invalid color index of {str(entity)}.',
                 dxf_entity=entity,
                 data=color,
+            )
+
+    def check_entity_lineweight(self, entity: 'DXFGraphic') -> None:
+        weight = entity.dxf.lineweight
+        if weight not in VALID_LINEWEIGHTS:  # including: by layer (-1), by block (-2), default (-3)
+            if weight < 0:
+                weight = -1  # by layer
+            elif weight > 211:
+                weight = 211
+            else:
+                index = bisect.bisect(VALID_DXF_LINEWEIGHTS, weight)
+                weight = VALID_DXF_LINEWEIGHTS[index]
+            entity.dxf.lineweight = weight
+            self.fixed_error(
+                code=AuditError.INVALID_LINEWEIGHT,
+                message=f'Fixed invalid lineweight of {str(entity)}.',
+                dxf_entity=entity,
+                data=weight,
             )
 
     def check_owner_exist(self, entity: 'DXFEntity') -> None:
