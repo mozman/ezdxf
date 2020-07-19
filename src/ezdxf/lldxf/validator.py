@@ -10,7 +10,7 @@ from typing import TextIO, Iterable, List, Optional
 from .const import DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError
 from .const import APP_DATA_MARKER, HEADER_VAR_MARKER, XDATA_MARKER
 from .const import INVALID_LAYER_NAME_CHARACTERS, acad_release
-from .const import VALID_DXF_LINEWEIGHT_VALUES, VALID_DXF_LINEWEIGHTS
+from .const import VALID_DXF_LINEWEIGHT_VALUES, VALID_DXF_LINEWEIGHTS, LINEWEIGHT_BYLAYER
 
 from .tagger import ascii_tags_loader
 from .types import is_embedded_object_marker, DXFTag, NONE_TAG
@@ -263,9 +263,8 @@ def fix_lineweight(lineweight: int) -> int:
     if lineweight in VALID_DXF_LINEWEIGHT_VALUES:
         return lineweight
     if lineweight < -3:
-        return -1  # by layer
-    elif lineweight > 211:
+        return LINEWEIGHT_BYLAYER
+    if lineweight > 211:
         return 211
-    else:
-        index = bisect.bisect(VALID_DXF_LINEWEIGHTS, lineweight)
-        return VALID_DXF_LINEWEIGHTS[index]
+    index = bisect.bisect(VALID_DXF_LINEWEIGHTS, lineweight)
+    return VALID_DXF_LINEWEIGHTS[index]

@@ -8,8 +8,8 @@ import warnings
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXF2013, DXFValueError, DXFKeyError, DXFTableEntryError
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
-from ezdxf.lldxf.const import DXFStructureError, VALID_DXF_LINEWEIGHTS
-from ezdxf.lldxf.validator import is_valid_layer_name
+from ezdxf.lldxf.const import DXFStructureError
+from ezdxf.lldxf.validator import is_valid_layer_name, fix_lineweight
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS, UCS, Matrix44
 from ezdxf.tools.rgb import int2rgb, rgb2int
@@ -220,6 +220,10 @@ class DXFGraphic(DXFEntity):
         not_r12 = tagwriter.dxfversion > DXF12
         if not_r12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_entity.name)
+
+        if self.dxf.hasattr('lineweight'):
+            # AutoCAD does not load DXF documents using invalid lineweights
+            self.dxf.lineweight = fix_lineweight(self.dxf.lineweight)
 
         self.dxf.export_dxf_attribs(tagwriter, [
             'paperspace', 'layer', 'linetype', 'material_handle', 'color', 'lineweight', 'ltscale', 'true_color',
