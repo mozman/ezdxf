@@ -8,7 +8,7 @@ import os
 import signal
 import sys
 from functools import partial
-from typing import Optional
+from typing import Optional, Iterable, Tuple
 
 from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
@@ -145,8 +145,7 @@ class CadViewer(qw.QMainWindow):
 
         self.sidebar = qw.QSplitter(qc.Qt.Vertical)
         self.layers = qw.QListWidget()
-        self.layers.setStyleSheet('font-size: 12pt')
-        self.layers.itemChanged.connect(self._layers_updated)
+        self.layers.setStyleSheet('QListWidget {font-size: 12pt;} QCheckBox {font-size: 12pt; padding-left: 5px;}')
         self.sidebar.addWidget(self.layers)
         self.info = qw.QPlainTextEdit()
         self.info.setReadOnly(True)
@@ -205,14 +204,14 @@ class CadViewer(qw.QMainWindow):
         self.layers.clear()
         for layer in self._render_context.layers.values():
             name = layer.layer
-            item = qw.QListWidgetItem(name)
-            item.setCheckState(qc.Qt.Checked if layer.is_visible else qc.Qt.Unchecked)
-            item.setBackground(qg.QColor(layer.color))
-            if is_dark_color(layer.color, 0.4):
-                item.setForeground(qg.QColor('#FFFFFF'))
-            else:
-                item.setForeground(qg.QColor('#000000'))
+            item = qw.QListWidgetItem()
             self.layers.addItem(item)
+            checkbox = qw.QCheckBox(name)
+            checkbox.setCheckState(qc.Qt.Checked if layer.is_visible else qc.Qt.Unchecked)
+            checkbox.stateChanged.connect(self._layers_updated)
+            text_color = '#FFFFFF' if is_dark_color(layer.color, 0.4) else '#000000'
+            checkbox.setStyleSheet(f'color: {text_color}; background-color: {layer.color}')
+            self.layers.setItemWidget(item, checkbox)
         self.layers.blockSignals(False)
 
     def _populate_layouts(self):
@@ -251,11 +250,22 @@ class CadViewer(qw.QMainWindow):
     def resizeEvent(self, event: qg.QResizeEvent) -> None:
         self.view.fit_to_scene()
 
-    @qc.pyqtSlot(qw.QListWidgetItem)
-    def _layers_updated(self, _item: qw.QListWidgetItem):
-        self._visible_layers = set()
+    def _layer_checkboxes(self) -> Iterable[Tuple[int, qw.QCheckBox]]:
         for i in range(self.layers.count()):
-            layer = self.layers.item(i)
+            item = self.layers.itemWidget(self.layers.item(i))
+            yield i, item
+
+    @qc.pyqtSlot(int)
+    def _layers_updated(self, item_state: qc.Qt.CheckState):
+        shift_held = qw.QApplication.keyboardModifiers() & qc.Qt.ShiftModifier
+        if shift_held:
+            for i, item in self._layer_checkboxes():
+                item.blockSignals(True)
+                item.setCheckState(item_state)
+                item.blockSignals(False)
+
+        self._visible_layers = set()
+        for i, layer in self._layer_checkboxes():
             if layer.checkState() == qc.Qt.Checked:
                 self._visible_layers.add(layer.text())
         self.draw_layout(self._current_layout, reset_view=False)
