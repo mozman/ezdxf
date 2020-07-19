@@ -3,6 +3,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import argparse
+import os
 import signal
 import sys
 from functools import partial
@@ -11,6 +12,7 @@ from typing import Optional
 from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
+from ezdxf.addons import odafc
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
@@ -137,10 +139,15 @@ class CadViewer(qw.QMainWindow):
         self.show()
 
     def _select_doc(self):
-        path, _ = qw.QFileDialog.getOpenFileName(self, caption='Select CAD Document', filter='DXF Documents (*.dxf)')
+        path, _ = qw.QFileDialog.getOpenFileName(self, caption='Select CAD Document',
+                                                 filter='DXF Documents(*.dxf);;DWG Documents(*.dwg)')
         if path:
             try:
-                self.set_document(ezdxf.readfile(path))
+                if os.path.splitext(path)[1].lower() == '.dwg':
+                    doc = odafc.readfile(path)
+                else:
+                    doc = ezdxf.readfile(path)
+                self.set_document(doc)
             except IOError as e:
                 qw.QMessageBox.critical(self, 'Loading Error', str(e))
             except DXFStructureError as e:
