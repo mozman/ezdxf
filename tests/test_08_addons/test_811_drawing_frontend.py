@@ -1,11 +1,13 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Set
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext, Properties
-from ezdxf.addons.drawing.backend import Backend, Radians
+from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.text import FontMeasurements
+from ezdxf.addons.drawing.type_hints import Radians
+from ezdxf.drawing import Drawing
 from ezdxf.render.forms import cube
 from ezdxf.render import Path
 from ezdxf.math import Vector, Matrix44
@@ -31,7 +33,7 @@ class BasicBackend(Backend):
         self.collector.append(('filled_polygon', points, properties))
 
     def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float) -> None:
-        self.collector.append(('text', transform, properties))
+        self.collector.append(('text', text, transform, properties))
 
     def get_font_measurements(self, cap_height: float) -> FontMeasurements:
         return FontMeasurements(baseline=0.0, cap_top=1.0, x_top=0.5, bottom=-0.2)
@@ -260,11 +262,12 @@ def test_3d_ellipse_path(msp, path_backend):
 
 
 def test_2d_text(msp, basic):
-    msp.add_text('test\ntest')  # \n shouldn't be  problem
+    msp.add_text('test\ntest')  # \n shouldn't be  problem. Will be ignored
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 1
     assert result[0][0] == 'text'
+    assert result[0][1] == 'testtest'
 
 
 def test_ignore_3d_text(msp, basic):
@@ -275,12 +278,14 @@ def test_ignore_3d_text(msp, basic):
 
 
 def test_mtext(msp, basic):
-    msp.add_mtext('test\ntest')
+    msp.add_mtext('line1\nline2')
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 2
     assert result[0][0] == 'text'
+    assert result[0][1] == 'line1'
     assert result[1][0] == 'text'
+    assert result[1][1] == 'line2'
 
 
 def test_hatch(msp, basic):
@@ -320,6 +325,79 @@ def test_polyface(msp, basic):
     assert len(result) == 24
     entities = {e[0] for e in result}
     assert entities == {'line'}
+
+
+def _add_text_block(doc: Drawing):
+    doc.layers.new(name='Layer1')
+    doc.layers.new(name='Layer2')
+
+    text_block = doc.blocks.new(name='text-block')
+    text_block.add_text(
+        text="L0",
+        dxfattribs={
+            'layer': "0",
+            'insert': (0, 0, 0),
+            'height': 5.0,
+        },
+    )
+    text_block.add_text(
+        text="L1",
+        dxfattribs={
+            'layer': "Layer1",
+            'insert': (0, 0, 0),
+            'height': 5.0,
+        },
+    )
+
+
+def _get_text_visible_when(doc: Drawing, active_layers: Set[str]) -> List[str]:
+    ctx = RenderContext(doc)
+    all_layers = {l.dxf.name for l in doc.layers}
+    ctx.set_layers_state(all_layers, state=False)
+    ctx.set_layers_state(active_layers, state=True)
+
+    backend = BasicBackend()
+    Frontend(ctx, backend).draw_layout(doc.modelspace())
+    visible_text = [x[1] for x in backend.collector if x[0] == 'text']
+    return visible_text
+
+
+def test_visibility_insert_0():
+    """ see notes/drawing.md 'Layers and Draw Order' """
+    doc = ezdxf.new()
+    _add_text_block(doc)
+    layout = doc.modelspace()
+    layout.add_blockref(
+        name="text-block",
+        insert=(0, 0, 0),
+        dxfattribs={'layer': "0"},
+    )
+    assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0', 'L1']
+    assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
+    assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L0', 'L1']
+    assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L1']
+    assert _get_text_visible_when(doc, {'Layer2'}) == []
+    assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']
+    assert _get_text_visible_when(doc, set()) == []
+
+
+def test_visibility_insert_2():
+    """ see notes/drawing.md 'Layers and Draw Order' """
+    doc = ezdxf.new()
+    _add_text_block(doc)
+    layout = doc.modelspace()
+    layout.add_blockref(
+        name="text-block",
+        insert=(0, 0, 0),
+        dxfattribs={'layer': "Layer2"},
+    )
+    assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0', 'L1']
+    assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
+    assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L1']
+    assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L0', 'L1']
+    assert _get_text_visible_when(doc, {'Layer2'}) == ['L0']
+    assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']
+    assert _get_text_visible_when(doc, set()) == []
 
 
 if __name__ == '__main__':
