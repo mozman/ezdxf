@@ -628,6 +628,11 @@ class Vec2:
         return list(cls.generate(items))
 
     @classmethod
+    def tuple(cls, items: Iterable['Vertex']) -> Sequence['Vec2']:
+        """ Returns a tuple of :class:`Vector` objects. """
+        return tuple(cls.generate(items))
+
+    @classmethod
     def generate(cls, items: Iterable[TVec2]) -> Iterable['Vec2']:
         return (cls(item) for item in items)
 

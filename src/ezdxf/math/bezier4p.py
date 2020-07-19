@@ -141,7 +141,7 @@ class Bezier4P:
         return Bezier4P(list(reversed(self.control_points)))
 
     def transform(self, m: Matrix44) -> 'Bezier4P':
-        """ General transformation interface, returns a new :class:`Bezier4p` curve.
+        """ General transformation interface, returns a new :class:`Bezier4p` curve and it is always a 3D curve.
 
         Args:
              m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
@@ -149,7 +149,12 @@ class Bezier4P:
         .. versionadded:: 0.14
 
         """
-        defpoints = tuple(m.transform_vertices(self.control_points))
+        if len(self._control_points[0]) == 2:
+            defpoints = Vector.generate(self._control_points)
+        else:
+            defpoints = self._control_points
+
+        defpoints = tuple(m.transform_vertices(defpoints))
         return Bezier4P(defpoints)
 
 

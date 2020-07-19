@@ -2,19 +2,19 @@
 # License: MIT License
 import pytest
 import math
-from ezdxf.math import ConstructionEllipse, Matrix44, Vector
+from ezdxf.math import ConstructionEllipse, Matrix44, Vector, Vec2
 from ezdxf.math.bezier4p import (
     Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_interpolation, cubic_bezier_from_arc, cubic_bezier_from_ellipse
 )
 
-DEFPOINTS2D = [(0., 0., 0.), (3., 0., 0.), (7., 10., 0.), (10., 10., 0.)]
+DEFPOINTS2D = [(0., 0.), (3., 0.), (7., 10.), (10., 10.)]
 DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.)]
 
 
 def test_accepts_2d_points():
-    bcurve = Bezier4P(DEFPOINTS2D)
-    for index, chk in enumerate(POINTS2D):
-        assert bcurve.point(index * .1).isclose(chk)
+    curve = Bezier4P(DEFPOINTS2D)
+    for index, chk in enumerate(Vec2.generate(POINTS2D)):
+        assert curve.point(index * .1).isclose(chk)
 
 
 def test_objects_are_immutable():
@@ -23,9 +23,9 @@ def test_objects_are_immutable():
         curve.control_points[0] = (1, 2, 3)
 
 
-def test_2d_tangent_compitation():
+def test_2d_tangent_computation():
     dbcurve = Bezier4P(DEFPOINTS2D)
-    for index, chk in enumerate(TANGENTS2D):
+    for index, chk in enumerate(Vec2.generate(TANGENTS2D)):
         assert dbcurve.tangent(index * .1).isclose(chk)
 
 
@@ -123,8 +123,16 @@ def test_reverse():
 
 
 def test_transform_interface():
+    curve = Bezier4P(DEFPOINTS3D)
+    new = curve.transform(Matrix44.translate(1, 2, 3))
+    assert new.control_points[0] == Vector(DEFPOINTS3D[0]) + (1, 2, 3)
+    assert new.control_points[0] != curve.control_points[0], 'expected a new object'
+
+
+def test_transform_returns_always_3d_curves():
     curve = Bezier4P(DEFPOINTS2D)
     new = curve.transform(Matrix44.translate(1, 2, 3))
+    assert len(new.control_points[0]) == 3
     assert new.control_points[0] == Vector(DEFPOINTS2D[0]) + (1, 2, 3)
     assert new.control_points[0] != curve.control_points[0], 'expected a new object'
 
