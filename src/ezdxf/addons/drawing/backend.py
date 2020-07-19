@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Tuple, TYPE_CHECKING, Iterable
 
 from ezdxf.addons.drawing.properties import Properties
-from ezdxf.addons.drawing.type_hints import Color, Radians
+from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render.path import Path
@@ -37,7 +37,6 @@ class Backend(ABC):
         When the entity is 'real', an empty tuple.
         """
         return self._current_entity_stack
-
 
     @abstractmethod
     def set_background(self, color: Color) -> None:
