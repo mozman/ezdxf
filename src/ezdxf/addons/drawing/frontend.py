@@ -36,22 +36,27 @@ class Frontend:
     Args:
         ctx: actual render context of a DXF document
         out: backend
-        visibility_filter: callback to override entity visibility, signature is ``func(entity: DXFGraphic) -> bool``,
+        visibility_filter: callback to override entity visibility,
+                           signature is ``func(entity: DXFGraphic, properties: Properties) -> bool``,
                            entity enters processing pipeline if this function returns ``True``, independent
-                           from visibility state stored in DXF properties or layer visibility.
-                           Entity property `is_visible` is updated, but the backend can still ignore this decision
-                           and check the visibility of the DXF entity by itself.
+                           from visibility state stored in DXF attributes or layer visibility.
 
     """
 
-    def __init__(self, ctx: RenderContext, out: Backend, visibility_filter: Callable[[DXFGraphic], bool] = None):
+    def __init__(self, ctx: RenderContext, out: Backend, visibility_filter: Callable[[DXFGraphic, Properties], bool] = None):
         # RenderContext contains all information to resolve resources for a specific DXF document.
         self.ctx = ctx
 
         # DrawingBackend is the interface to the render engine
         self.out = out
 
-        # The `visibility_filter` let you override the visibility of an entity independent from the DXF attributes
+        # The `visibility_filter` can override the visibility of an entity
+        # independent from the DXF attributes.
+        #
+        # signature: func(entity: DXFGraphic, properties: Properties) -> bool
+        # Access to the DXF attributes by the `entity` object and access to the
+        # resolved properties by the `properties` object.
+        # The Entity enters the processing pipeline if this function returns `True`.
         self.visibility_filter = visibility_filter
 
         # Parents entities of current entity/sub-entity
@@ -77,57 +82,69 @@ class Frontend:
 
     def draw_entities(self, entities: Iterable[DXFGraphic]) -> None:
         for entity in entities:
+            # Skip unsupported DXF entities - just tag storage to preserve data
             if isinstance(entity, DXFTagStorage):
                 self.skip_entity(f'ignoring unsupported DXF entity: {str(entity)}')
-                # unsupported DXF entity, just tag storage to preserve data
                 continue
-            if entity.dxftype() == 'INSERT':
-                # The content of block references depend only indirectly
-                # on the visibility of the INSERT entity.
-                self.draw_entity(entity)
-            elif self.visibility_filter:
-                # visibility depends only on filter result
-                if self.visibility_filter(entity):
-                    self.draw_entity(entity)
-            # visibility depends only from DXF properties and layer state
-            elif self.ctx.is_visible(entity):
-                self.draw_entity(entity)
 
-    def draw_entity(self, entity: DXFGraphic) -> None:
+            properties = self.ctx.resolve_all(entity)
+            # The content of a block reference does not depend
+            # on the visibility of the INSERT entity.
+            if entity.dxftype() == 'INSERT':
+                self.draw_entity(entity, properties)
+
+            # Filter exist: visibility depends only on filter result:
+            elif self.visibility_filter:
+                if self.visibility_filter(entity, properties):
+                    self.draw_entity(entity, properties)
+
+            # Visibility depends only on DXF properties and layer state, and all
+            # these attributes have been merged into the `is_visible` property:
+            elif properties.is_visible:
+                self.draw_entity(entity, properties)
+
+    def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        """
+        Draw a single DXF entity.
+
+        Args:
+            entity: DXF Entity
+            properties: resolved entity properties
+
+        """
         dxftype = entity.dxftype()
         self.out.set_current_entity(entity, tuple(self.parent_stack))
         if dxftype in {'LINE', 'XLINE', 'RAY'}:
-            self.draw_line_entity(entity)
+            self.draw_line_entity(entity, properties)
         elif dxftype in {'TEXT', 'MTEXT', 'ATTRIB'}:
             if is_spatial(Vector(entity.dxf.extrusion)):
-                self.draw_text_entity_3d(entity)
+                self.draw_text_entity_3d(entity, properties)
             else:
-                self.draw_text_entity_2d(entity)
+                self.draw_text_entity_2d(entity, properties)
         elif dxftype in {'CIRCLE', 'ARC', 'ELLIPSE'}:
-            self.draw_elliptic_arc_entity(entity)
+            self.draw_elliptic_arc_entity(entity, properties)
         elif dxftype == 'SPLINE':
-            self.draw_spline_entity(entity)
+            self.draw_spline_entity(entity, properties)
         elif dxftype == 'POINT':
-            self.draw_point_entity(entity)
+            self.draw_point_entity(entity, properties)
         elif dxftype == 'HATCH':
-            self.draw_hatch_entity(entity)
+            self.draw_hatch_entity(entity, properties)
         elif dxftype == 'MESH':
-            self.draw_mesh_entity(entity)
+            self.draw_mesh_entity(entity, properties)
         elif dxftype in {'3DFACE', 'SOLID', 'TRACE'}:
-            self.draw_solid_entity(entity)
+            self.draw_solid_entity(entity, properties)
         elif dxftype in {'POLYLINE', 'LWPOLYLINE'}:
-            self.draw_polyline_entity(entity)
+            self.draw_polyline_entity(entity, properties)
         elif dxftype in COMPOSITE_ENTITY_TYPES:
-            self.draw_composite_entity(entity)
+            self.draw_composite_entity(entity, properties)
         elif dxftype == 'VIEWPORT':
             self.draw_viewport_entity(entity)
         else:
             self.skip_entity(f'Unsupported entity: {str(entity)}')
         self.out.set_current_entity(None)
 
-    def draw_line_entity(self, entity: DXFGraphic) -> None:
+    def draw_line_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
-        properties = self._resolve_properties(entity)
         if dxftype == 'LINE':
             self.out.draw_line(d.start, d.end, properties)
 
@@ -141,15 +158,8 @@ class Frontend:
         else:
             raise TypeError(dxftype)
 
-    def _resolve_properties(self, entity: DXFGraphic) -> Properties:
-        properties = self.ctx.resolve_all(entity)
-        if self.visibility_filter:  # override visibility by callback
-            properties.is_visible = self.visibility_filter(entity)
-        return properties
-
-    def draw_text_entity_2d(self, entity: DXFGraphic) -> None:
+    def draw_text_entity_2d(self, entity: DXFGraphic, properties: Properties) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
-        properties = self._resolve_properties(entity)
         if dxftype in ('TEXT', 'MTEXT', 'ATTRIB'):
             entity = cast(Union[Text, MText, Attrib], entity)
             for line, transform, cap_height in simplified_text_chunks(entity, self.out):
@@ -157,12 +167,11 @@ class Frontend:
         else:
             raise TypeError(dxftype)
 
-    def draw_text_entity_3d(self, entity: DXFGraphic) -> None:
+    def draw_text_entity_3d(self, entity: DXFGraphic, properties: Properties) -> None:
         return  # not supported
 
-    def draw_elliptic_arc_entity(self, entity: DXFGraphic) -> None:
+    def draw_elliptic_arc_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         dxftype = entity.dxftype()
-        properties = self._resolve_properties(entity)
         if NULLVEC.isclose(entity.dxf.extrusion):
             self.skip_entity(f'Invalid extrusion (0, 0, 0) in entity: {str(entity)}')
             return
@@ -187,19 +196,16 @@ class Frontend:
             raise TypeError(dxftype)
         self.out.draw_path(path, properties)
 
-    def draw_spline_entity(self, entity: DXFGraphic) -> None:
-        properties = self._resolve_properties(entity)
+    def draw_spline_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         path = Path.from_spline(cast(Spline, entity))
         self.out.draw_path(path, properties)
 
-    def draw_point_entity(self, entity: DXFGraphic) -> None:
-        properties = self._resolve_properties(entity)
+    def draw_point_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         self.out.draw_point(entity.dxf.location, properties)
 
-    def draw_solid_entity(self, entity: DXFGraphic) -> None:
+    def draw_solid_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         # Handles SOLID, TRACE and 3DFACE
         dxf, dxftype = entity.dxf, entity.dxftype()
-        properties = self._resolve_properties(entity)
         points = get_tri_or_quad_points(entity, adjust_order=dxftype != '3DFACE')
         # TRACE is an OCS entity
         if dxftype == 'TRACE' and dxf.hasattr('extrusion'):
@@ -210,8 +216,7 @@ class Frontend:
         else:  # SOLID, TRACE
             self.out.draw_filled_polygon(points, properties)
 
-    def draw_hatch_entity(self, entity: DXFGraphic) -> None:
-        properties = self._resolve_properties(entity)
+    def draw_hatch_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         entity = cast(Hatch, entity)
         ocs = entity.ocs()
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z), default (0, 0, 0)
@@ -267,8 +272,7 @@ class Frontend:
         props.color = VIEWPORT_COLOR
         self.out.draw_filled_polygon([Vector(x, y, 0) for x, y in points], props)
 
-    def draw_mesh_entity(self, entity: DXFGraphic) -> None:
-        properties = self._resolve_properties(entity)
+    def draw_mesh_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         builder = MeshBuilder.from_mesh(entity)
         self.draw_mesh_builder_entity(builder, properties)
 
@@ -276,7 +280,7 @@ class Frontend:
         for face in builder.faces_as_vertices():
             self.out.draw_path(Path.from_vertices(face, close=True), properties=properties)
 
-    def draw_polyline_entity(self, entity: DXFGraphic):
+    def draw_polyline_entity(self, entity: DXFGraphic, properties: Properties):
         dxftype = entity.dxftype()
         if dxftype == 'POLYLINE':
             e = cast(Polyface, entity)
@@ -284,13 +288,12 @@ class Frontend:
                 # draw 3D mesh or poly-face entity
                 self.draw_mesh_builder_entity(
                     MeshBuilder.from_polyface(e),
-                    self._resolve_properties(entity),
+                    properties,
                 )
                 return
 
         entity = cast(Union[LWPolyline, Polyline], entity)
         is_lwpolyline = dxftype == 'LWPOLYLINE'
-        properties = self._resolve_properties(entity)
 
         if entity.has_width:  # draw banded 2D polyline
             elevation = 0.0
@@ -314,7 +317,7 @@ class Frontend:
         path = Path.from_lwpolyline(entity) if is_lwpolyline else Path.from_polyline(entity)
         self.out.draw_path(path, properties)
 
-    def draw_composite_entity(self, entity: DXFGraphic) -> None:
+    def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         def set_opaque(entity):
             for child in entity.virtual_entities():
                 child.transparency = 0.0  # todo: defaults to 1.0 (fully transparent)???
@@ -323,7 +326,7 @@ class Frontend:
         dxftype = entity.dxftype()
         if dxftype == 'INSERT':
             entity = cast(Insert, entity)
-            self.ctx.push_state(self._resolve_properties(entity))
+            self.ctx.push_state(properties)
             self.parent_stack.append(entity)
             # draw_entities() includes the visibility check:
             self.draw_entities(entity.attribs)

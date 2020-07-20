@@ -243,16 +243,6 @@ class RenderContext:
     def pop_state(self) -> None:
         self.current_block_reference = self._saved_states.pop()
 
-    def is_visible(self, entity: 'DXFGraphic') -> bool:
-        if entity.dxf.invisible:
-            return False
-        layer_name = layer_key(self.resolve_layer(entity))
-        layer = self.layers.get(layer_name)
-        # todo: should we consider the plot flag too?
-        if layer and not layer.is_visible:
-            return False
-        return True
-
     def resolve_all(self, entity: 'DXFGraphic') -> Properties:
         """ Resolve all properties for DXF `entity`. """
         p = Properties()
@@ -265,8 +255,7 @@ class RenderContext:
         dxf = entity.dxf
         p.linetype_scale = dxf.ltscale
         p.is_visible = not bool(dxf.invisible)
-        layer_name = layer_key(p.layer)
-        layer = self.layers.get(layer_name)
+        layer = self.layers.get(resolved_layer)
         if layer and p.is_visible:
             p.is_visible = layer.is_visible
         return p
