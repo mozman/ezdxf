@@ -3,15 +3,14 @@
 # License: MIT License
 import copy
 import math
-from math import radians
 from typing import Iterable, cast, Union, List, Callable
 
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import RenderContext, VIEWPORT_COLOR, Properties
 from ezdxf.addons.drawing.text import simplified_text_chunks
-from ezdxf.addons.drawing.utils import normalize_angle, get_tri_or_quad_points, get_draw_angles
+from ezdxf.addons.drawing.utils import get_tri_or_quad_points
 from ezdxf.entities import (
-    DXFGraphic, Insert, MText, Polyline, LWPolyline, Spline, Hatch, Attrib, Text, Ellipse, Polyface
+    DXFGraphic, Insert, MText, Polyline, LWPolyline, Spline, Hatch, Attrib, Text, Polyface
 )
 from ezdxf.entities.dxfentity import DXFTagStorage
 from ezdxf.layouts import Layout

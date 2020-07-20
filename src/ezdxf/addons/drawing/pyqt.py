@@ -24,8 +24,7 @@ class _Point(qw.QAbstractGraphicsShapeItem):
         self.setPen(qg.QPen(qc.Qt.NoPen))
         self.setBrush(brush)
 
-    # noinspection PyMethodOverriding
-    def paint(self, painter: qg.QPainter, option: qw.QStyleOptionGraphicsItem, widget: Optional[qw.QWidget]) -> None:
+    def paint(self, painter: qg.QPainter, option: qw.QStyleOptionGraphicsItem, widget: Optional[qw.QWidget] = None) -> None:
         view_scale = _get_x_scale(painter.transform())
         radius = self.radius / view_scale
 
