@@ -118,7 +118,8 @@ def readfile(filename: str, encoding: str = None, legacy_mode: bool = False, fil
     from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
     from ezdxf.tools.codepage import is_supported_encoding
     from ezdxf.lldxf.tagger import binary_tags_loader
-
+    
+    filename = str(filename)  # convert given Path() object to string
     if is_binary_dxf_file(filename):
         with open(filename, 'rb') as fp:
             data = fp.read()
