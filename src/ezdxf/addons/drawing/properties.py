@@ -66,6 +66,11 @@ class Properties:
         self.linetype_scale: float = 1.0
         self.lineweight: float = 0.25  # line weight in mm, default lineweight 0.25?
         self.is_visible = True
+
+        # The 'layer' attribute stores the resolved layer of an entity:
+        # Entities inside of a block references get properties from the layer
+        # of the INSERT entity, if they reside on the layer '0'
+        # To get the "real" layer of an entity, you have to use `entity.dxf.layer`
         self.layer: str = '0'
 
     def __str__(self):
@@ -241,7 +246,7 @@ class RenderContext:
     def is_visible(self, entity: 'DXFGraphic') -> bool:
         if entity.dxf.invisible:
             return False
-        layer_name = layer_key(entity.dxf.layer)
+        layer_name = layer_key(self.resolve_layer(entity))
         layer = self.layers.get(layer_name)
         # todo: should we consider the plot flag too?
         if layer and not layer.is_visible:
@@ -251,30 +256,37 @@ class RenderContext:
     def resolve_all(self, entity: 'DXFGraphic') -> Properties:
         """ Resolve all properties for DXF `entity`. """
         p = Properties()
-        p.color = self.resolve_color(entity)
-        p.linetype_name, p.linetype_pattern = self.resolve_linetype(entity)
-        p.lineweight = self.resolve_lineweight(entity)
+        p.layer = self.resolve_layer(entity)
+        resolved_layer = layer_key(p.layer)
+
+        p.color = self.resolve_color(entity, resolved_layer=resolved_layer)
+        p.linetype_name, p.linetype_pattern = self.resolve_linetype(entity, resolved_layer=resolved_layer)
+        p.lineweight = self.resolve_lineweight(entity, resolved_layer=resolved_layer)
         dxf = entity.dxf
         p.linetype_scale = dxf.ltscale
         p.is_visible = not bool(dxf.invisible)
-        p.layer = dxf.layer
         layer_name = layer_key(p.layer)
         layer = self.layers.get(layer_name)
         if layer and p.is_visible:
             p.is_visible = layer.is_visible
         return p
 
-    def resolve_color(self, entity: 'DXFGraphic', *, default_hatch_transparency: float = 0.8) -> Color:
+    def resolve_layer(self, entity: 'DXFGraphic') -> str:
+        """ Resolve entity layer, this is only relevant for entities inside of block references.
+        """
+        layer = entity.dxf.layer
+        if layer == '0' and self.inside_block_reference:
+            layer = self.current_block_reference.layer
+        return layer
+
+    def resolve_color(self, entity: 'DXFGraphic', *,
+                      default_hatch_transparency: float = 0.8,
+                      resolved_layer: str = None) -> Color:
         """ Resolve color of DXF `entity` """
         aci = entity.dxf.color  # defaults to BYLAYER
         if aci == const.BYLAYER:
-            entity_layer = layer_key(entity.dxf.layer)
-            # AutoCAD appears to treat layer 0 differently to other layers in this case.
-            if self.inside_block_reference and entity_layer == '0':
-                color = self.current_block_reference.color
-            else:
-                color = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).color
-
+            entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
+            color = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).color
         elif aci == const.BYBLOCK:
             if not self.inside_block_reference:
                 color = self.current_layout.default_color
@@ -315,7 +327,7 @@ class RenderContext:
         else:
             return rgb_to_hex(self.plot_styles[aci].color)
 
-    def resolve_linetype(self, entity: 'DXFGraphic'):
+    def resolve_linetype(self, entity: 'DXFGraphic', *, resolved_layer: str = None):
         """ Resolve linetype of DXF `entity` """
         aci = entity.dxf.color
         # Not sure if plotstyle table overrides actual entity setting?
@@ -323,16 +335,10 @@ class RenderContext:
             pass  # todo: return special line types  - overriding linetypes by plotstyle table
         name = entity.dxf.linetype.upper()  # default is 'BYLAYER'
         if name == 'BYLAYER':
-            entity_layer = layer_key(entity.dxf.layer)
-
-            # AutoCAD appears to treat layer 0 differently to other layers in this case.
-            if self.inside_block_reference and entity_layer == '0':
-                name = self.current_block_reference.linetype_name
-                pattern = self.current_block_reference.linetype_pattern
-            else:
-                layer = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES)
-                name = layer.linetype_name
-                pattern = layer.linetype_pattern
+            entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
+            layer = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES)
+            name = layer.linetype_name
+            pattern = layer.linetype_pattern
 
         elif name == 'BYBLOCK':
             if self.inside_block_reference:
@@ -346,7 +352,7 @@ class RenderContext:
             pattern = self.line_pattern.get(name, CONTINUOUS_PATTERN)
         return name, pattern
 
-    def resolve_lineweight(self, entity: 'DXFGraphic'):
+    def resolve_lineweight(self, entity: 'DXFGraphic', *, resolved_layer: str = None):
         # Line weight in mm times 100 (e.g. 0.13mm = 13).
         # Smallest line weight is 0 and biggest line weight is 211
         # The DWG format is limited to a fixed value table: 0, 5, 9, ... 200, 211
@@ -360,13 +366,8 @@ class RenderContext:
             return self.plot_styles.get_lineweight(aci)
         lineweight = entity.dxf.lineweight  # default is BYLAYER
         if lineweight == const.LINEWEIGHT_BYLAYER:
-            entity_layer = layer_key(entity.dxf.layer)
-
-            # AutoCAD appears to treat layer 0 differently to other layers in this case.
-            if self.inside_block_reference and entity_layer == '0':
-                return self.current_block_reference.lineweight
-            else:
-                return self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).lineweight
+            entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
+            return self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).lineweight
 
         elif lineweight == const.LINEWEIGHT_BYBLOCK:
             if self.inside_block_reference:

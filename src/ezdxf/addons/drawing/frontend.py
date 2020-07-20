@@ -81,7 +81,11 @@ class Frontend:
                 self.skip_entity(f'ignoring unsupported DXF entity: {str(entity)}')
                 # unsupported DXF entity, just tag storage to preserve data
                 continue
-            if self.visibility_filter:
+            if entity.dxftype() == 'INSERT':
+                # The content of block references depend only indirectly
+                # on the visibility of the INSERT entity.
+                self.draw_entity(entity)
+            elif self.visibility_filter:
                 # visibility depends only on filter result
                 if self.visibility_filter(entity):
                     self.draw_entity(entity)

@@ -352,8 +352,7 @@ def _add_text_block(doc: Drawing):
 
 def _get_text_visible_when(doc: Drawing, active_layers: Set[str]) -> List[str]:
     ctx = RenderContext(doc)
-    all_layers = {l.dxf.name for l in doc.layers}
-    ctx.set_layers_state(all_layers, state=False)
+    # set given layer to ON, others to OFF
     ctx.set_layers_state(active_layers, state=True)
 
     backend = BasicBackend()
@@ -375,9 +374,12 @@ def test_visibility_insert_0():
     # INSERT on '0'
     # 'L0' on '0'
     # 'L1' on 'Layer1'
+    assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0', 'L1']
+    assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
     assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L0', 'L1']
-    assert _get_text_visible_when(doc, {'0'}) == ['L0']
-    assert _get_text_visible_when(doc, {'Layer1'}) == [], 'INSERT on layer "0" is invisible'
+    assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L1']
+    assert _get_text_visible_when(doc, {'Layer2'}) == []
+    assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']
     assert _get_text_visible_when(doc, set()) == []
 
 
@@ -393,12 +395,13 @@ def test_visibility_insert_2():
     )
     # 'L0' on '0'
     # 'L1' on 'Layer1'
-    # text-block on 'Layer2'
+    # text-block on 'Layer2' -> 'L0' on '0' acts like on 'Layer2'
     assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0', 'L1']
     assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
-    assert _get_text_visible_when(doc, {'0', 'Layer1'}) == [], 'INSERT on layer "Layer2" is invisible'
-    assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L1']
-    assert _get_text_visible_when(doc, {'Layer2'}) == []
+    assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L1']
+    assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L0', 'L1']
+    assert _get_text_visible_when(doc, {'Layer2'}) == ['L0']
+    assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']
     assert _get_text_visible_when(doc, set()) == []
 
 
