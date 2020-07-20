@@ -141,7 +141,7 @@ class RenderContext:
         self._saved_states: List[Properties] = []
         self.line_pattern = _load_line_pattern(doc.linetypes) if doc else dict()
         self.current_layout = LayoutProperties()  # default is 'Model'
-        self.current_block: Optional[Properties] = None
+        self.current_block_reference: Optional[Properties] = None
         self.plot_styles = self._load_plot_style_table(ctb)
         # Always consider: entity layer may not exist
         # Layer name as key is normalized, most likely name.lower(), but may change in the future.
@@ -228,15 +228,15 @@ class RenderContext:
         self.current_layout.set_layout(layout, units=self.units)
 
     @property
-    def is_block_context(self) -> bool:
-        return bool(self.current_block)
+    def inside_block_reference(self) -> bool:
+        return bool(self.current_block_reference)
 
     def push_state(self, block_reference: Properties) -> None:
-        self._saved_states.append(self.current_block)
-        self.current_block = block_reference
+        self._saved_states.append(self.current_block_reference)
+        self.current_block_reference = block_reference
 
     def pop_state(self) -> None:
-        self.current_block = self._saved_states.pop()
+        self.current_block_reference = self._saved_states.pop()
 
     def is_visible(self, entity: 'DXFGraphic') -> bool:
         if entity.dxf.invisible:
@@ -270,16 +270,16 @@ class RenderContext:
         if aci == const.BYLAYER:
             entity_layer = layer_key(entity.dxf.layer)
             # AutoCAD appears to treat layer 0 differently to other layers in this case.
-            if self.is_block_context and entity_layer == '0':
-                color = self.current_block.color
+            if self.inside_block_reference and entity_layer == '0':
+                color = self.current_block_reference.color
             else:
                 color = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).color
 
         elif aci == const.BYBLOCK:
-            if not self.is_block_context:
+            if not self.inside_block_reference:
                 color = self.current_layout.default_color
             else:
-                color = self.current_block.color
+                color = self.current_block_reference.color
 
         else:  # BYOBJECT
             color = self._true_entity_color(entity.rgb, aci)
@@ -326,18 +326,18 @@ class RenderContext:
             entity_layer = layer_key(entity.dxf.layer)
 
             # AutoCAD appears to treat layer 0 differently to other layers in this case.
-            if self.is_block_context and entity_layer == '0':
-                name = self.current_block.linetype_name
-                pattern = self.current_block.linetype_pattern
+            if self.inside_block_reference and entity_layer == '0':
+                name = self.current_block_reference.linetype_name
+                pattern = self.current_block_reference.linetype_pattern
             else:
                 layer = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES)
                 name = layer.linetype_name
                 pattern = layer.linetype_pattern
 
         elif name == 'BYBLOCK':
-            if self.is_block_context:
-                name = self.current_block.linetype_name
-                pattern = self.current_block.linetype_pattern
+            if self.inside_block_reference:
+                name = self.current_block_reference.linetype_name
+                pattern = self.current_block_reference.linetype_pattern
             else:
                 # There is no default layout linetype
                 name = 'STANDARD'
@@ -363,14 +363,14 @@ class RenderContext:
             entity_layer = layer_key(entity.dxf.layer)
 
             # AutoCAD appears to treat layer 0 differently to other layers in this case.
-            if self.is_block_context and entity_layer == '0':
-                return self.current_block.lineweight
+            if self.inside_block_reference and entity_layer == '0':
+                return self.current_block_reference.lineweight
             else:
                 return self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).lineweight
 
         elif lineweight == const.LINEWEIGHT_BYBLOCK:
-            if self.is_block_context:
-                return self.current_block.lineweight
+            if self.inside_block_reference:
+                return self.current_block_reference.lineweight
             else:
                 # There is no default layout lineweight
                 return self.default_lineweight()

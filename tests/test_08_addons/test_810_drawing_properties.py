@@ -106,7 +106,7 @@ def test_resolve_block_entities(doc):
     msp = doc.modelspace()
     blockref = msp.query('INSERT').first
     ctx.push_state(ctx.resolve_all(blockref))
-    assert ctx.is_block_context is True
+    assert ctx.inside_block_reference is True
     lines = list(blockref.virtual_entities())
 
     # properties by block
@@ -131,7 +131,7 @@ def test_resolve_block_entities(doc):
     assert line3.lineweight == 0.70
     
     ctx.pop_state()
-    assert ctx.is_block_context is False
+    assert ctx.inside_block_reference is False
 
 
 def test_compile_pattern():
