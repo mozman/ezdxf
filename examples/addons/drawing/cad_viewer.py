@@ -221,7 +221,7 @@ class CadViewer(qw.QMainWindow):
         self._populate_layouts()
         self._populate_layer_list()
         self.draw_layout('Model')
-        self.setWindowTitle('CAD Viewer - ' + document.filename)
+        self.setWindowTitle('CAD Viewer - ' + str(document.filename))
 
     def _populate_layer_list(self):
         self.layers.blockSignals(True)
