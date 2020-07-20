@@ -372,12 +372,12 @@ def test_visibility_insert_0():
         insert=(0, 0, 0),
         dxfattribs={'layer': "0"},
     )
-    assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0', 'L1']
-    assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
+    # INSERT on '0'
+    # 'L0' on '0'
+    # 'L1' on 'Layer1'
     assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L0', 'L1']
-    assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L1']
-    assert _get_text_visible_when(doc, {'Layer2'}) == []
-    assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']
+    assert _get_text_visible_when(doc, {'0'}) == ['L0']
+    assert _get_text_visible_when(doc, {'Layer1'}) == [], 'INSERT on layer "0" is invisible'
     assert _get_text_visible_when(doc, set()) == []
 
 
@@ -391,12 +391,14 @@ def test_visibility_insert_2():
         insert=(0, 0, 0),
         dxfattribs={'layer': "Layer2"},
     )
+    # 'L0' on '0'
+    # 'L1' on 'Layer1'
+    # text-block on 'Layer2'
     assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0', 'L1']
     assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
-    assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L1']
-    assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L0', 'L1']
-    assert _get_text_visible_when(doc, {'Layer2'}) == ['L0']
-    assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']
+    assert _get_text_visible_when(doc, {'0', 'Layer1'}) == [], 'INSERT on layer "Layer2" is invisible'
+    assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L1']
+    assert _get_text_visible_when(doc, {'Layer2'}) == []
     assert _get_text_visible_when(doc, set()) == []
 
 
