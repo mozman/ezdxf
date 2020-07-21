@@ -487,7 +487,7 @@ class RenderContext:
                         filling.color1 = rgb_to_hex(gradient.color1)
                     else:
                         filling.type = Filling.GRADIENT
-                        filling.name = gradient.name
+                        filling.name = gradient.name.upper()
                         filling.color1 = rgb_to_hex(gradient.color1)
                         # todo: no idea when we should use aci1
                         filling.color2 = rgb_to_hex(gradient.color2)
@@ -502,9 +502,9 @@ class RenderContext:
                 filling.angle = hatch.dxf.pattern_angle
                 if hatch.dxf.pattern_double:  # todo: ???
                     filling.pattern_scale *= 2
-                if filling.name in self._hatch_pattern_cache:
-                    filling.pattern = self._hatch_pattern_cache[filling.name]
-                else:
+
+                filling.pattern = self._hatch_pattern_cache.get(filling.name)
+                if filling.pattern is None:
                     pattern = hatch.pattern
                     if pattern:
                         # DXF stores the hatch pattern already rotated and scaled,
