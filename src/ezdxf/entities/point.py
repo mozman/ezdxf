@@ -15,6 +15,25 @@ if TYPE_CHECKING:
 
 __all__ = ['Point']
 
+# Point styling is a global setting, stored in the HEADER section as:
+# $PDMODE: https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2019/ENU/AutoCAD-Core/files/GUID-82F9BB52-D026-4D6A-ABA6-BF29641F459B-htm.html
+# One of these values
+#   0 = center dot (.)
+#   1 = none ( )
+#   2 = cross (+)
+#   3 = x-cross (x)
+#   4 = tick (')
+# Combined with these bit values
+#  32 = circle
+#  64 = Square
+#
+# e.g. circle + square+center dot = 32 + 64 + 0 = 96
+#
+# $PDSIZE: https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2021/ENU/AutoCAD-Core/files/GUID-826CA91D-704B-400B-B784-7FCC9619AFB9-htm.html?st=$PDSIZE
+#  0 = 5% of draw area height
+# <0 = Specifies a percentage of the viewport size
+# >0 = Specifies an absolute size
+
 acdb_point = DefSubclass('AcDbPoint', {
     'location': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
     'thickness': DXFAttr(39, default=0, optional=True),

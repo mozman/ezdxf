@@ -1645,9 +1645,9 @@ class Gradient:
         self.aci1: Optional[int] = None
         self.color2: RGB = (255, 255, 255)
         self.aci2: Optional[int] = None
-        self.one_color: int = 0  # if 1 - a fill that uses a smooth transition between color1 and a specified tint
-        self.rotation: float = 0.  # use grad NOT radians here, because there should be ONE system for all angles
-        self.centered: float = 0.
+        self.one_color: int = 0  # `1`: use a smooth transition between color1 and a specified tint
+        self.rotation: float = 0.0  # use degree NOT radians here, because there should be ONE system for all angles
+        self.centered: float = 0.0
         self.tint: float = 0.0
         self.name: str = 'LINEAR'
 
@@ -1660,7 +1660,7 @@ class Gradient:
         first_aci_value = True
         for code, value in tags:
             if code == 460:
-                gdata.rotation = math.degrees(value)  # radians to grad
+                gdata.rotation = math.degrees(value)
             elif code == 461:
                 gdata.centered = value
             elif code == 452:

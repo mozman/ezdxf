@@ -8,9 +8,11 @@ from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.addons import acadctb
 from ezdxf.sections.table import table_key as layer_key
 from ezdxf.tools.rgb import luminance, DXF_DEFAULT_COLORS, int2rgb
+from ezdxf.math import Vec2
+from ezdxf.tools.pattern import scale_pattern
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic, Layout, Table, Layer, Linetype, Drawing, Textstyle, Hatch
+    from ezdxf.eztypes import DXFGraphic, Layout, Table, Layer, Linetype, Drawing, Textstyle, Hatch, Vertex
     from ezdxf.entities.ltype import LinetypePattern
 
 __all__ = [
@@ -60,16 +62,36 @@ def is_dark_color(color: Color, dark: float = 0.2) -> bool:
     return luma <= dark
 
 
+class HatchPatternLine:
+    # Similar ot hatch.PatternLine, but line pattern are stored as
+    # simplified linetype pattern.
+    def __init__(self, angle=0.0, base_point: 'Vertex' = (0, 0),
+                 offset: 'Vertex' = (0, 0), pattern: Iterable[float] = None):
+        self.angle: float = float(angle)  # in degrees
+        self.base_point = Vec2(base_point)
+        self.offset = Vec2(offset)
+        # like linetype pattern
+        self.pattern: Tuple[float, ...] = tuple(pattern) if pattern else CONTINUOUS_PATTERN
+
+
 class Filling:
     SOLID = 0
     PATTERN = 1
     GRADIENT = 2
 
     def __init__(self):
-        self.type = Filling.SOLID
         # Solid fill color is stored in Properties.color attribute
-        # todo: pattern properties
-        # todo: gradient properties
+        self.type = Filling.SOLID
+        self.gradient_color1: Optional[Color] = None
+        self.gradient_color2: Optional[Color] = None
+        self.gradient_centered: float = 0.0  # ???
+        self.gradient_tint: float = 0.0  # ???
+        # Gradient- or pattern angle
+        self.angle: float = 0.0  # in degrees
+        # Gradient- or pattern name
+        self.name: str = 'SOLID'
+        self.pattern_scale: float = 1.0
+        self.pattern: Sequence[HatchPatternLine] = []
 
 
 class Properties:
@@ -116,14 +138,14 @@ class Properties:
         # To get the "real" layer of an entity, you have to use `entity.dxf.layer`
         self.layer: str = '0'
 
-        # Font name for text entities
+        # Font name for text entities, `None` is for the default font
         self.font: Optional[str] = None
 
         # Filling properties: Solid, Pattern, Gradient
         self.filling: Optional[Filling] = None
 
     def __str__(self):
-        return f'({self.color}, {self.linetype_name}, {self.lineweight}, {self.layer})'
+        return f'({self.color}, {self.linetype_name}, {self.lineweight}, "{self.layer}")'
 
     @property
     def rgb(self) -> RGB:
@@ -216,6 +238,7 @@ class RenderContext:
                 else:
                     self.units = 1  # 1 in
         self.current_layout.units = self.units
+        self._hatch_pattern_cache: Dict[str, Sequence[HatchPatternLine]] = dict()
 
     def _setup_layers(self, doc: 'Drawing'):
         for layer in doc.layers:  # type: Layer
@@ -455,14 +478,56 @@ class RenderContext:
             hatch = cast('Hatch', entity)
             filling = Filling()
             if hatch.dxf.solid_fill:
-                if hatch.gradient is None:
+                gradient = hatch.gradient
+                if gradient is None:
                     filling.type = Filling.SOLID
                 else:
-                    filling.type = Filling.GRADIENT
-                    # todo: set gradient fill properties
+                    if gradient.kind == 0:  # Solid
+                        filling.type = Filling.SOLID
+                        filling.color1 = rgb_to_hex(gradient.color1)
+                    else:
+                        filling.type = Filling.GRADIENT
+                        filling.name = gradient.name
+                        filling.color1 = rgb_to_hex(gradient.color1)
+                        # todo: no idea when we should use aci1
+                        filling.color2 = rgb_to_hex(gradient.color2)
+                        # todo: no idea when we should use aci2
+                        filling.angle = gradient.rotation
+                        filling.gradient_tint = gradient.tint
+                        filling.gradient_centered = gradient.centered
             else:
                 filling.type = Filling.PATTERN
-                # todo: set pattern fill properties
+                filling.name = hatch.dxf.pattern_name.upper()
+                filling.pattern_scale = hatch.dxf.pattern_scale
+                filling.angle = hatch.dxf.pattern_angle
+                if hatch.dxf.pattern_double:  # todo: ???
+                    filling.pattern_scale *= 2
+                if filling.name in self._hatch_pattern_cache:
+                    filling.pattern = self._hatch_pattern_cache[filling.name]
+                else:
+                    pattern = hatch.pattern
+                    if pattern:
+                        # DXF stores the hatch pattern already rotated and scaled,
+                        # pattern_scale and pattern_rotation are just hints for
+                        # the CAD application, if they wanna change the pattern.
+                        # It's better to revert the scaling and rotation,
+                        # because in general back-ends do not handle pattern that way,
+                        # they need a base-pattern and separated scaling and rotation
+                        # attributes and these base-pattern could be cached by their name.
+                        base_pattern = scale_pattern(pattern.as_list(), 1.0/filling.pattern_scale, -filling.angle)
+                        simplified_pattern = []
+                        for angle, base_point, offset, dash_length_items in base_pattern:
+                            if len(dash_length_items) > 1:
+                                line_pattern = compile_line_pattern(None, dash_length_items)
+                            else:
+                                line_pattern = CONTINUOUS_PATTERN
+                            simplified_pattern.append(
+                                HatchPatternLine(
+                                    angle, base_point, offset, line_pattern,
+                                )
+                            )
+                        filling.pattern = simplified_pattern
+                        self._hatch_pattern_cache[filling.name] = filling.pattern
             return filling
         else:
             return None
@@ -546,14 +611,16 @@ def _compile_line_pattern_from_tags(pattern: 'LinetypePattern') -> Tuple[float, 
     return compile_line_pattern(pattern_length, elements)
 
 
-def compile_line_pattern(total_length: float, elements: Sequence[float]) -> Tuple[float, ...]:
+def compile_line_pattern(total_length: Optional[float], elements: Sequence[float]) -> Tuple[float, ...]:
     """ Returns simplified dash-gap-dash... line pattern and dash is 0 for a point """
     elements = list(_merge_dashes(elements))
-    if len(elements) < 2 or total_length <= 0.0:
+    if total_length is None:
+        pass
+    elif len(elements) < 2 or total_length <= 0.0:
         return CONTINUOUS_PATTERN
 
     sum_elements = sum(abs(e) for e in elements)
-    if total_length > sum_elements:  # append a gap
+    if total_length and total_length > sum_elements:  # append a gap
         elements.append(sum_elements - total_length)
 
     if elements[0] < 0:  # start with a gap
