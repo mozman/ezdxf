@@ -29,6 +29,18 @@ def is_dark_color(color: Color, dark: float = 0.2) -> bool:
     return luma <= dark
 
 
+class Filling:
+    SOLID = 0
+    PATTERN = 1
+    GRADIENT = 2
+
+    def __init__(self):
+        self.type = Filling.SOLID
+        # Solid fill color is stored in Properties() object
+        # todo: pattern properties
+        # todo: gradient properties
+
+
 class Properties:
     """ An implementation agnostic representation of entity properties like color and linetype.
     """
@@ -72,6 +84,12 @@ class Properties:
         # of the INSERT entity, if they reside on the layer '0'
         # To get the "real" layer of an entity, you have to use `entity.dxf.layer`
         self.layer: str = '0'
+
+        # Font name for text entities
+        self.font: Optional[str] = None
+
+        # Filling properties: Solid, Pattern, Gradient
+        self.filling: Optional[Filling] = None
 
     def __str__(self):
         return f'({self.color}, {self.linetype_name}, {self.lineweight}, {self.layer})'

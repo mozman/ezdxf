@@ -11,7 +11,6 @@ from ezdxf.drawing import Drawing
 from ezdxf.render.forms import cube
 from ezdxf.render import Path
 from ezdxf.math import Vector, Matrix44
-from ezdxf.graphicsfactory import VirtualLayout
 
 
 class BasicBackend(Backend):
