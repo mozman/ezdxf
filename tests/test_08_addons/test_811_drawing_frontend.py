@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Optional, Tuple, List, Set
+from typing import Optional, List, Set
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext, Properties
@@ -11,10 +11,12 @@ from ezdxf.drawing import Drawing
 from ezdxf.render.forms import cube
 from ezdxf.render import Path
 from ezdxf.math import Vector, Matrix44
+from ezdxf.graphicsfactory import VirtualLayout
 
 
 class BasicBackend(Backend):
     """ The basic backend has no draw_path() support and approximates all curves by lines. """
+
     def __init__(self):
         super().__init__()
         self.collector = []
@@ -403,6 +405,38 @@ def test_visibility_insert_2():
     assert _get_text_visible_when(doc, {'Layer2'}) == ['L0']
     assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']
     assert _get_text_visible_when(doc, set()) == []
+
+
+def test_override_filter(msp, basic):
+    def override(e, p):
+        if p.layer == 'T1':
+            p.layer = 'Tx'
+        p.color = '#000000'
+        if e.dxf.text == 'T2':
+            p.is_visible = False
+
+    msp.delete_all_entities()
+    basic.override = override
+    msp.add_text('T0', dxfattribs={'layer': 'T0', 'color': 7})
+    msp.add_text('T1', dxfattribs={'layer': 'T1', 'color': 6})
+    msp.add_text('T2', dxfattribs={'layer': 'T2', 'color': 5})
+    basic.draw_entities(msp)
+    basic.override = None
+
+    # can modify color property
+    result = basic.out.collector[0]
+    assert result[0] == 'text'
+    assert result[1] == 'T0'
+    assert result[3].color == '#000000'
+
+    # can modify layer property
+    result = basic.out.collector[1]
+    assert result[0] == 'text'
+    assert result[1] == 'T1'
+    assert result[3].layer == 'Tx'
+
+    # 'T2' is not visible
+    assert len(basic.out.collector) == 2, "T2 should be invisible"
 
 
 if __name__ == '__main__':

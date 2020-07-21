@@ -43,21 +43,22 @@ class Frontend:
 
     """
 
-    def __init__(self, ctx: RenderContext, out: Backend, visibility_filter: Callable[[DXFGraphic, Properties], bool] = None):
+    def __init__(self, ctx: RenderContext, out: Backend, override: Callable[[DXFGraphic, Properties], None] = None):
         # RenderContext contains all information to resolve resources for a specific DXF document.
         self.ctx = ctx
 
         # DrawingBackend is the interface to the render engine
         self.out = out
 
-        # The `visibility_filter` can override the visibility of an entity
+        # The `override` filter can change the properties of an entity
         # independent from the DXF attributes.
         #
-        # signature: func(entity: DXFGraphic, properties: Properties) -> bool
-        # Access to the DXF attributes by the `entity` object and access to the
+        # signature: func(entity: DXFGraphic, properties: Properties) -> None
+        # This filter has access to the DXF attributes by the `entity` object and to the
         # resolved properties by the `properties` object.
-        # The Entity enters the processing pipeline if this function returns `True`.
-        self.visibility_filter = visibility_filter
+        # It is recommended to modify only the `properties` object.
+        # To recreate the previous `visibility_filter`, set `properties.is_visible` to `False`
+        self.override = override
 
         # Parents entities of current entity/sub-entity
         self.parent_stack: List[DXFGraphic] = []
@@ -88,18 +89,13 @@ class Frontend:
                 continue
 
             properties = self.ctx.resolve_all(entity)
+            if self.override:
+                self.override(entity, properties)
+
             # The content of a block reference does not depend
-            # on the visibility of the INSERT entity.
+            # on the visibility state of the INSERT entity:
             if entity.dxftype() == 'INSERT':
                 self.draw_entity(entity, properties)
-
-            # Filter exist: visibility depends only on filter result:
-            elif self.visibility_filter:
-                if self.visibility_filter(entity, properties):
-                    self.draw_entity(entity, properties)
-
-            # Visibility depends only on DXF properties and layer state, and all
-            # these attributes have been merged into the `is_visible` property:
             elif properties.is_visible:
                 self.draw_entity(entity, properties)
 
