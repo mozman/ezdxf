@@ -158,7 +158,7 @@ class Frontend:
         d, dxftype = entity.dxf, entity.dxftype()
         if dxftype in ('TEXT', 'MTEXT', 'ATTRIB'):
             entity = cast(Union[Text, MText, Attrib], entity)
-            for line, transform, cap_height in simplified_text_chunks(entity, self.out):
+            for line, transform, cap_height in simplified_text_chunks(entity, self.out, font=properties.font):
                 self.out.draw_text(line, transform, properties, cap_height)
         else:
             raise TypeError(dxftype)

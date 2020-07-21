@@ -36,13 +36,13 @@ class BasicBackend(Backend):
     def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float) -> None:
         self.collector.append(('text', text, transform, properties))
 
-    def get_font_measurements(self, cap_height: float) -> FontMeasurements:
+    def get_font_measurements(self, cap_height: float, font=None) -> FontMeasurements:
         return FontMeasurements(baseline=0.0, cap_top=1.0, x_top=0.5, bottom=-0.2)
 
     def set_background(self, color: str) -> None:
         self.collector.append(('bgcolor', color))
 
-    def get_text_line_width(self, text: str, cap_height: float) -> float:
+    def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
         return len(text)
 
     def clear(self) -> None:

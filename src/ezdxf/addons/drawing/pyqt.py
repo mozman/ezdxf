@@ -24,7 +24,8 @@ class _Point(qw.QAbstractGraphicsShapeItem):
         self.setPen(qg.QPen(qc.Qt.NoPen))
         self.setBrush(brush)
 
-    def paint(self, painter: qg.QPainter, option: qw.QStyleOptionGraphicsItem, widget: Optional[qw.QWidget] = None) -> None:
+    def paint(self, painter: qg.QPainter, option: qw.QStyleOptionGraphicsItem,
+              widget: Optional[qw.QWidget] = None) -> None:
         view_scale = _get_x_scale(painter.transform())
         radius = self.radius / view_scale
 
@@ -134,10 +135,10 @@ class PyQtBackend(Backend):
         item = self.scene.addPath(path, self._no_line, self._get_color(properties.color))
         self._set_item_data(item)
 
-    def get_font_measurements(self, cap_height: float) -> FontMeasurements:
+    def get_font_measurements(self, cap_height: float, font: str = None) -> FontMeasurements:
         return self._font_measurements.scale_from_baseline(desired_cap_height=cap_height)
 
-    def get_text_line_width(self, text: str, cap_height: float) -> float:
+    def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
         if not text:
             return 0
         assert '\n' not in text

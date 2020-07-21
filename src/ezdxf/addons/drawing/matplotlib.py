@@ -106,10 +106,10 @@ class MatplotlibBackend(Backend):
         transformed_path = _transform_path(path, Matrix44.scale(scale) @ transform)
         self.ax.add_patch(PathPatch(transformed_path, facecolor=properties.color, linewidth=0, zorder=self._get_z()))
 
-    def get_font_measurements(self, cap_height: float) -> FontMeasurements:
+    def get_font_measurements(self, cap_height: float, font: str = None) -> FontMeasurements:
         return self._font_measurements.scale_from_baseline(desired_cap_height=cap_height)
 
-    def get_text_line_width(self, text: str, cap_height: float) -> float:
+    def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
         if not text:
             return 0
         assert '\n' not in text, 'not a single line of text'

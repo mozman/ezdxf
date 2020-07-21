@@ -73,12 +73,12 @@ class Backend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_font_measurements(self, cap_height: float) -> 'FontMeasurements':
+    def get_font_measurements(self, cap_height: float, font: str = None) -> 'FontMeasurements':
         """ note: backends might want to cache the results of these calls """
         raise NotImplementedError
 
     @abstractmethod
-    def get_text_line_width(self, text: str, cap_height: float) -> float:
+    def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
         """ get the width of a single line of text """
         # https://stackoverflow.com/questions/32555015/how-to-get-the-visual-length-of-a-text-string-in-python
         # https://stackoverflow.com/questions/4190667/how-to-get-width-of-a-truetype-font-character-in-1200ths-of-an-inch-with-python
@@ -93,4 +93,3 @@ class Backend(ABC):
 
     def finalize(self) -> None:
         pass
-
