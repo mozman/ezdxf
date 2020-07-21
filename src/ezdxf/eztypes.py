@@ -53,6 +53,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.blockrecord import BlockRecord
     from ezdxf.entities.layer import Layer
     from ezdxf.entities.ltype import Linetype
+    from ezdxf.entities.textstyle import Textstyle
     from ezdxf.entities.dimstyle import DimStyle
     from ezdxf.entities.appid import AppID
     from ezdxf.entities.ucs import UCSTable

@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence, Set
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence, Set, cast
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.addons import acadctb
@@ -10,7 +10,7 @@ from ezdxf.sections.table import table_key as layer_key
 from ezdxf.tools.rgb import luminance, DXF_DEFAULT_COLORS, int2rgb
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic, Layout, Table, Layer, Linetype, Drawing
+    from ezdxf.eztypes import DXFGraphic, Layout, Table, Layer, Linetype, Drawing, Textstyle, Hatch
     from ezdxf.entities.ltype import LinetypePattern
 
 __all__ = [
@@ -18,10 +18,41 @@ __all__ = [
     'MODEL_SPACE_BG_COLOR', 'PAPER_SPACE_BG_COLOR', 'VIEWPORT_COLOR', 'CONTINUOUS_PATTERN',
 ]
 
+table_key = layer_key
 MODEL_SPACE_BG_COLOR = '#212830'
 PAPER_SPACE_BG_COLOR = '#ffffff'
 VIEWPORT_COLOR = '#aaaaaa'  # arbitrary choice
 CONTINUOUS_PATTERN = tuple()
+SHX_FONTS = {
+    # See examples in: CADKitSamples/Shapefont.dxf
+    # Shape file structure is not documented,
+    # therefore replace this fonts by true type fonts.
+    # `None` stands for default font.
+    'AMGDT': None,  # Tolerance symbols
+    'AMGDT.SHX': None,
+    'COMPLEX': None,
+    'COMPLEX.SHX': None,
+    'ISOCP': None,
+    'ISOCP.SHX': None,
+    'ITALIC': None,
+    'ITALIC.SHX': None,
+    'GOTHICG': None,
+    'GOTHICG.SHX': None,
+    'GREEKC': None,
+    'GREEKC.SHX': None,
+    'ROMANS': None,
+    'ROMANS.SHX': None,
+    'SCRIPTS': None,
+    'SCRIPTS.SHX': None,
+    'SCRIPTC': None,
+    'SCRIPTC.SHX': None,
+    'SIMPLEX': None,
+    'SIMPLEX.SHX': None,
+    'SYMATH': None,
+    'SYMATH.SHX': None,
+    'TXT': None,  # Default AutoCAD font
+    'TXT.SHX': None,
+}
 
 
 def is_dark_color(color: Color, dark: float = 0.2) -> bool:
@@ -36,7 +67,7 @@ class Filling:
 
     def __init__(self):
         self.type = Filling.SOLID
-        # Solid fill color is stored in Properties() object
+        # Solid fill color is stored in Properties.color attribute
         # todo: pattern properties
         # todo: gradient properties
 
@@ -169,11 +200,13 @@ class RenderContext:
         # Always consider: entity layer may not exist
         # Layer name as key is normalized, most likely name.lower(), but may change in the future.
         self.layers: Dict[str, LayerProperties] = dict()
+        # Text-style -> font mapping
+        self.fonts: Dict[str, str] = dict()
         self.units = 0  # store modelspace units as enum, see ezdxf/units.py
         self.linetype_scale: float = 1.0  # overall modelspace linetype scaling
         if doc:
-            for layer in doc.layers:  # type: Layer
-                self.add_layer(layer)
+            self._setup_layers(doc)
+            self._setup_text_styles(doc)
             self.linetype_scale = doc.header.get('$LTSCALE', 1.0)
             self.units = doc.header.get('$INSUNITS', 0)
             if self.units == 0:
@@ -183,6 +216,14 @@ class RenderContext:
                 else:
                     self.units = 1  # 1 in
         self.current_layout.units = self.units
+
+    def _setup_layers(self, doc: 'Drawing'):
+        for layer in doc.layers:  # type: Layer
+            self.add_layer(layer)
+
+    def _setup_text_styles(self, doc: 'Drawing'):
+        for text_style in doc.styles:  # type: Textstyle
+            self.add_text_style(text_style)
 
     def add_layer(self, layer: 'Layer') -> None:
         properties = LayerProperties()
@@ -195,6 +236,15 @@ class RenderContext:
         properties.is_visible = layer.is_on()
         properties.plot = bool(layer.dxf.plot)
         self.layers[name] = properties
+
+    def add_text_style(self, text_style: 'Textstyle'):
+        name = table_key(text_style.dxf.name)
+        font = text_style.dxf.font
+
+        # SHX fonts are not supported:
+        if font.upper() in SHX_FONTS:
+            font = SHX_FONTS[font.upper()]
+        self.fonts[name] = font
 
     def _true_layer_color(self, layer: 'Layer') -> Color:
         if layer.dxf.hasattr('true_color'):
@@ -276,6 +326,10 @@ class RenderContext:
         layer = self.layers.get(resolved_layer)
         if layer and p.is_visible:
             p.is_visible = layer.is_visible
+        if dxf.hasattr('style'):
+            p.font = self.resolve_font(entity)
+        if entity.dxftype() == 'HATCH':
+            p.filling = self.resolve_filling(entity)
         return p
 
     def resolve_layer(self, entity: 'DXFGraphic') -> str:
@@ -326,7 +380,7 @@ class RenderContext:
             return self.current_layout.default_color  # unknown / invalid
 
     def _aci_to_true_color(self, aci: int) -> Color:
-        if aci == 7:  # black/white; todo: bypasses plot style table
+        if aci == 7:  # black/white; todo: this bypasses the plot style table
             if self.current_layout.has_dark_background:
                 return '#ffffff'  # white
             else:
@@ -339,7 +393,7 @@ class RenderContext:
         aci = entity.dxf.color
         # Not sure if plotstyle table overrides actual entity setting?
         if (0 < aci < 256) and self.plot_styles[aci].linetype != acadctb.OBJECT_LINETYPE:
-            pass  # todo: return special line types  - overriding linetypes by plotstyle table
+            pass  # todo: return special line types - overriding linetypes by plotstyle table
         name = entity.dxf.linetype.upper()  # default is 'BYLAYER'
         if name == 'BYLAYER':
             entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
@@ -389,6 +443,29 @@ class RenderContext:
 
     def default_lineweight(self):
         return 0.25  # todo: ???
+
+    def resolve_font(self, entity: 'DXFGraphic') -> Optional[str]:
+        if entity.dxf.hasattr('style'):
+            return self.fonts.get(table_key(entity.dxf.style))
+        else:
+            return None
+
+    def resolve_filling(self, entity: 'DXFGraphic') -> Optional[Filling]:
+        if entity.dxftype() == 'HATCH':
+            hatch = cast('Hatch', entity)
+            filling = Filling()
+            if hatch.dxf.solid_fill:
+                if hatch.gradient is None:
+                    filling.type = Filling.SOLID
+                else:
+                    filling.type = Filling.GRADIENT
+                    # todo: set gradient fill properties
+            else:
+                filling.type = Filling.PATTERN
+                # todo: set pattern fill properties
+            return filling
+        else:
+            return None
 
 
 def rgb_to_hex(rgb: Union[Tuple[int, int, int], Tuple[float, float, float]]) -> Color:
