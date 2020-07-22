@@ -1,12 +1,11 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-03-12
 import pytest
-import ezdxf
 from ezdxf.math import Vector
 from ezdxf.entities.leader import Leader
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-
+from ezdxf.layouts import VirtualLayout
 
 LEADER = """0
 LEADER
@@ -132,8 +131,7 @@ def test_write_dxf():
 
 
 def test_add_leader():
-    doc = ezdxf.new()
-    msp = doc.modelspace()
+    msp = VirtualLayout()
     leader = msp.new_entity('LEADER', {})  # type: Leader
     assert leader.dxftype() == 'LEADER'
     assert leader.dxf.annotation_type == 3

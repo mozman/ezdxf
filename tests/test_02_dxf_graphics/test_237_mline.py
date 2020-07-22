@@ -1,23 +1,24 @@
-# Copyright (c) 2018-2019 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
+from ezdxf.layouts import VirtualLayout
 
 
-@pytest.fixture(scope='module')
-def doc():
-    return ezdxf.new('R2007')
+@pytest.fixture
+def msp():
+    return VirtualLayout()
 
 
 # todo: real MLINE tests
-def test_generic_mline(doc):
-    msp = doc.modelspace()
+def test_generic_mline(msp):
     mline = msp.new_entity('MLINE', {})
     assert mline.dxftype() == 'MLINE'
 
 
 # todo: real MLINESTYLE tests
-def test_standard_mline_style(doc):
+def test_standard_mline_style():
+    doc = ezdxf.new()
     mline_style = doc.mline_styles.get('Standard')
     assert mline_style.dxftype() == 'MLINESTYLE'
 
