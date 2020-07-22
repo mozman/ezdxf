@@ -10,6 +10,7 @@ from ezdxf.math import Vector, bulge_to_arc, OCS
 from ezdxf.math.transformtools import NonUniformScalingError, InsertTransformationError
 from ezdxf.math import fit_points_to_cad_cv
 from ezdxf.query import EntityQuery
+from ezdxf.render import ARROWS
 
 logger = logging.getLogger('ezdxf')
 
@@ -528,27 +529,10 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
             insert = factory.new('INSERT', dxfattribs=dxfattribs, doc=doc)
             yield from insert.virtual_entities()
         else:  # render standard arrows
-            yield from virtual_arrow(
+            yield from ARROWS.virtual_entities(
                 arrow_name,
                 vertices[0],
                 size,
                 rotation,
                 dxfattribs,
             )
-
-
-def virtual_arrow(name: str, insert: Vector = Vector(), size: float = 0.625, rotation: float = 0,
-                  dxfattribs=None, doc=None):
-    from ezdxf.graphicsfactory import VirtualLayout
-    from ezdxf.render.arrows import ARROWS
-    if name in ARROWS:
-        layout = VirtualLayout(doc)
-        dxfattribs = dxfattribs or {}
-        ARROWS.render_arrow(
-            layout, name,
-            insert=insert,
-            size=size,
-            rotation=rotation,
-            dxfattribs=dxfattribs,
-        )
-        yield from layout.entities

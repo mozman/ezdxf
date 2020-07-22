@@ -1,8 +1,8 @@
 # created: 2019-01-03
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
-from ezdxf.math import Vec2, Shape2d
+from ezdxf.math import Vec2, Shape2d, Vector, NULLVEC
 from .forms import open_arrow, arrow2
 
 if TYPE_CHECKING:
@@ -447,6 +447,21 @@ class _Arrows:
             size *= .5
         cls = self.CLASSES[name]
         return cls(insert, size, rotation)
+
+    def virtual_entities(self, name: str, insert: Vector = NULLVEC, size: float = 0.625,
+                         rotation: float = 0, dxfattribs=None, doc=None):
+        from ezdxf.graphicsfactory import VirtualLayout
+        if name in self:
+            layout = VirtualLayout(doc)
+            dxfattribs = dxfattribs or {}
+            ARROWS.render_arrow(
+                layout, name,
+                insert=insert,
+                size=size,
+                rotation=rotation,
+                dxfattribs=dxfattribs,
+            )
+            yield from layout.entities
 
 
 def connection_point(arrow_name: str, insert: 'Vertex', scale: float = 1, rotation: float = 0) -> Vec2:
