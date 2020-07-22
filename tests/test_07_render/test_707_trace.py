@@ -103,7 +103,7 @@ def test_linear_trace_polygon():
     assert polygon[-1].isclose(Vec2(0, +0.5))
 
 
-def test_virtual_entities():
+def test_virtual_entities_added_to_entity_database():
     doc = ezdxf.new()
     msp = doc.modelspace()
     t = LinearTrace()

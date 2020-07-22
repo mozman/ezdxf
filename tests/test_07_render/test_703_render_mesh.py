@@ -2,11 +2,11 @@
 # License: MIT License
 import pytest
 from math import radians
-import ezdxf
 from ezdxf.math import Vector, BoundingBox
 from ezdxf.render.forms import cube
 from ezdxf.render.mesh import MeshVertexMerger, MeshBuilder, MeshTransformer, MeshAverageVertexMerger
 from ezdxf.addons import SierpinskyPyramid
+from ezdxf.layouts import VirtualLayout
 
 
 def test_vertex_merger_indices():
@@ -55,11 +55,10 @@ def test_average_vertex_merger_index_of():
         merger.index((7, 8, 9))
 
 
-def test_mesh_builder():
-    dwg = ezdxf.new('R2000')
+def test_mesh_builder(msp):
     pyramid = SierpinskyPyramid(level=4, sides=3)
-    pyramid.render(dwg.modelspace(), merge=False)
-    meshes = dwg.modelspace().query('MESH')
+    pyramid.render(msp, merge=False)
+    meshes = msp.query('MESH')
     assert len(meshes) == 256
 
 
@@ -111,15 +110,15 @@ def test_rotate_x():
     assert bbox.extmax.isclose((1, 0, 1))
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def msp():
-    doc = ezdxf.new()
-    return doc.modelspace()
+    return VirtualLayout()
 
 
 @pytest.fixture(scope='module')
-def cube_polyface(msp):
-    p = msp.add_polyface()
+def cube_polyface():
+    layout = VirtualLayout()
+    p = layout.add_polyface()
     p.append_faces(cube().faces_as_vertices())
     return p
 
@@ -137,9 +136,7 @@ def test_from_cube_polyface(cube_polyface):
     assert len(b.faces) == 6
 
 
-def test_render_polyface(cube_polyface):
-    doc = ezdxf.new()
-    msp = doc.modelspace()
+def test_render_polyface(cube_polyface, msp):
     t = MeshTransformer.from_polyface(cube_polyface)
     assert len(t.vertices) == 24  # unoptimized mesh builder
     assert len(t.faces) == 6
