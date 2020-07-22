@@ -2,14 +2,16 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, cast
-from ezdxf.lldxf.const import DXFValueError, DXFStructureError
+
+from ezdxf.entities import factory
+from ezdxf.lldxf.const import DXFValueError, DXFStructureError, LATEST_DXF_VERSION
 from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
-from ezdxf.entitydb import EntityDB
+from ezdxf.entitydb import EntityDB, EntitySpace
 from ezdxf.graphicsfactory import CreatorInterface
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BlockRecord, DXFGraphic, Dictionary, KeyFunc
+    from ezdxf.eztypes import BlockRecord, DXFGraphic, Dictionary, KeyFunc, Drawing
 
 SUPPORTED_FOREIGN_ENTITY_TYPES = {
     'ARC', 'LINE', 'CIRCLE', 'ELLIPSE', 'POINT', 'LWPOLYLINE', 'SPLINE', '3DFACE', 'SOLID', 'TRACE', 'SHAPE',
@@ -17,7 +19,60 @@ SUPPORTED_FOREIGN_ENTITY_TYPES = {
 }
 
 
-class BaseLayout(CreatorInterface):
+class _AbstractLayout(CreatorInterface):
+    entity_space = None
+
+    @property
+    def entitydb(self) -> 'EntityDB':
+        """ Returns drawing entity database. (internal API) """
+        return self.doc.entitydb
+
+    def rename(self, name) -> None:
+        pass
+
+    def __len__(self) -> int:
+        """ Returns count of entities owned by the layout. """
+        return len(self.entity_space)
+
+    def __iter__(self) -> Iterable['DXFGraphic']:
+        """ Returns iterable of all drawing entities in this layout. """
+        return iter(self.entity_space)
+
+    def __getitem__(self, index):
+        """ Get entity at `index`.
+
+        The underlying data structure for storing entities is organized like a standard Python list, therefore `index`
+        can be any valid list indexing or slicing term, like a single index ``layout[-1]`` to get the last entity, or
+        an index slice ``layout[:10]`` to get the first 10 or less entities as ``List[DXFGraphic]``.
+
+        """
+        return self.entity_space[index]
+
+    def query(self, query: str = '*') -> EntityQuery:
+        """
+        Get all DXF entities matching the :ref:`entity query string`.
+
+        """
+        return EntityQuery(iter(self), query)
+
+    def groupby(self, dxfattrib: str = "", key: 'KeyFunc' = None) -> dict:
+        """
+        Returns a ``dict`` of entity lists, where entities are grouped by a `dxfattrib` or a `key` function.
+
+        Args:
+            dxfattrib: grouping by DXF attribute like ``'layer'``
+            key: key function, which accepts a :class:`DXFGraphic` entity as argument and returns the grouping key of an
+                 entity or ``None`` to ignore the entity. Reason for ignoring: a queried DXF attribute is not
+                 supported by entity.
+
+        """
+        return groupby(iter(self), dxfattrib, key)
+
+    def destroy(self):
+        pass
+
+
+class BaseLayout(_AbstractLayout):
     def __init__(self, block_record: 'BlockRecord'):
         super().__init__(block_record.doc)
         self.entity_space = block_record.entity_space
@@ -37,11 +92,6 @@ class BaseLayout(CreatorInterface):
         (internal API)
         """
         return self.block_record.dxf.handle
-
-    @property
-    def entitydb(self) -> 'EntityDB':
-        """ Returns drawing entity database. (internal API) """
-        return self.doc.entitydb
 
     @property
     def is_alive(self):
@@ -97,27 +147,6 @@ class BaseLayout(CreatorInterface):
 
         """
         return self.block_record.get_extension_dict()
-
-    def __len__(self) -> int:
-        """ Returns count of entities owned by the layout. """
-        return len(self.entity_space)
-
-    def __iter__(self) -> Iterable['DXFGraphic']:
-        """ Returns iterable of all drawing entities in this layout. """
-        return iter(self.entity_space)
-
-    def __getitem__(self, index):
-        """ Get entity at `index`.
-
-        The underlying data structure for storing entities is organized like a standard Python list, therefore `index`
-        can be any valid list indexing or slicing term, like a single index ``layout[-1]`` to get the last entity, or
-        an index slice ``layout[:10]`` to get the first 10 or less entities as ``List[DXFGraphic]``.
-
-        """
-        return self.entity_space[index]
-
-    def rename(self, name) -> None:
-        pass
 
     def add_entity(self, entity: 'DXFGraphic') -> None:
         """
@@ -241,26 +270,6 @@ class BaseLayout(CreatorInterface):
         """
         return self.entitydb[handle]
 
-    def query(self, query: str = '*') -> EntityQuery:
-        """
-        Get all DXF entities matching the :ref:`entity query string`.
-
-        """
-        return EntityQuery(iter(self), query)
-
-    def groupby(self, dxfattrib: str = "", key: 'KeyFunc' = None) -> dict:
-        """
-        Returns a ``dict`` of entity lists, where entities are grouped by a `dxfattrib` or a `key` function.
-
-        Args:
-            dxfattrib: grouping by DXF attribute like ``'layer'``
-            key: key function, which accepts a :class:`DXFGraphic` entity as argument and returns the grouping key of an
-                 entity or ``None`` to ignore the entity. Reason for ignoring: a queried DXF attribute is not
-                 supported by entity.
-
-        """
-        return groupby(iter(self), dxfattrib, key)
-
     def move_to_layout(self, entity: 'DXFGraphic', layout: 'BaseLayout') -> None:
         """
         Move entity to another layout.
@@ -285,3 +294,41 @@ class BaseLayout(CreatorInterface):
         # block_records table is owner of block_record has to delete it
         # the block_record is the owner of the entities and deletes them all
         self.doc.block_records.remove(self.block_record.dxf.name)
+
+
+class VirtualLayout(_AbstractLayout):
+    """
+    Helper class to disassemble complex entities into basic DXF
+    entities by rendering into a virtual layout.
+
+    All entities created by this layout are not stored in the
+    entity database of the associated DXF document.
+
+    """
+    def __init__(self, doc: 'Drawing' = None):
+        super().__init__(doc)
+        self.entity_space = EntitySpace()
+
+    @property
+    def dxfversion(self) -> str:
+        if self.doc:
+            return self.doc.dxfversion
+        else:
+            return LATEST_DXF_VERSION
+
+    def add_entity(self, entity: 'DXFGraphic') -> None:
+        self.entity_space.add(entity)
+
+    def new_entity(self, type_: str, dxfattribs: dict) -> 'DXFGraphic':
+        entity = factory.new(type_, dxfattribs=dxfattribs, doc=self.doc)
+        self.entity_space.add(entity)
+        return entity
+
+    def unlink_entity(self, entity: 'DXFGraphic') -> None:
+        self.entity_space.remove(entity)
+
+    def delete_entity(self, entity: 'DXFGraphic') -> None:
+        self.entity_space.remove(entity)
+
+    def delete_all_entities(self) -> None:
+        self.entity_space.clear()

@@ -37,10 +37,10 @@ def test_closed_arrow_doc_r2000():
 
 
 def test_render_to_virtual_layout():
-    from ezdxf.graphicsfactory import VirtualLayout
+    from ezdxf.layouts.base import VirtualLayout
 
     layout = VirtualLayout()
     ARROWS.render_arrow(layout, ARROWS.closed, insert=(0, 0, 0))
-    assert len(layout.entities) > 0
+    assert len(layout) > 0
 
 

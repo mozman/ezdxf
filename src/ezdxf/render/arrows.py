@@ -450,7 +450,7 @@ class _Arrows:
 
     def virtual_entities(self, name: str, insert: Vector = NULLVEC, size: float = 0.625,
                          rotation: float = 0, dxfattribs=None, doc=None):
-        from ezdxf.graphicsfactory import VirtualLayout
+        from ezdxf.layouts import VirtualLayout
         if name in self:
             layout = VirtualLayout(doc)
             dxfattribs = dxfattribs or {}
