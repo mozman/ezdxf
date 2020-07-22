@@ -12,7 +12,7 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .dimension import OverrideMixin
-from ezdxf.explode import virtual_leader_entities, explode_entity
+from ezdxf.explode import explode_entity
 from ezdxf.audit import AuditError
 import logging
 
@@ -166,6 +166,7 @@ class Leader(DXFGraphic, OverrideMixin):
         .. versionadded:: 0.14
 
         """
+        from ezdxf.render.leader import virtual_leader_entities
         return virtual_leader_entities(self)
 
     def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':

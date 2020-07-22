@@ -1,12 +1,12 @@
 # created: 2019-01-03
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable
-from ezdxf.math import Vec2, Shape2d, Vector, NULLVEC
+from typing import TYPE_CHECKING, Iterable, Dict
+from ezdxf.math import Vec2, Shape2d, NULLVEC
 from .forms import open_arrow, arrow2
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, GenericLayoutType
+    from ezdxf.eztypes import Vertex, GenericLayoutType, DXFGraphic, Drawing
 
 DEFAULT_ARROW_ANGLE = 18.924644
 DEFAULT_BETA = 45.
@@ -412,11 +412,11 @@ class _Arrows:
 
     def insert_arrow(self, layout: 'GenericLayoutType',
                      name: str,
-                     insert: 'Vertex',
-                     size: float = 1.,
-                     rotation: float = 0,
-                     dxfattribs: dict = None) -> Vec2:
-
+                     insert: 'Vertex' = NULLVEC,
+                     size: float = 1.0,
+                     rotation: float = 0, *,
+                     dxfattribs: Dict = None) -> Vec2:
+        """ Insert arrow as block reference into `layout`. """
         block_name = self.create_block(layout.doc.blocks, name)
 
         dxfattribs = dict(dxfattribs) if dxfattribs else {}  # copy attribs
@@ -428,28 +428,24 @@ class _Arrows:
 
     def render_arrow(self, layout: 'GenericLayoutType',
                      name: str,
-                     insert: 'Vertex',
-                     size: float = 1.,
-                     rotation: float = 0,
-                     dxfattribs: dict = None) -> Vec2:
-
+                     insert: 'Vertex' = NULLVEC,
+                     size: float = 1.0,
+                     rotation: float = 0, *,
+                     dxfattribs: Dict = None) -> Vec2:
+        """ Render arrow as basic DXF entities into `layout`. """
         dxfattribs = dxfattribs or {}
         arrow = self.arrow_shape(name, insert, size, rotation)
         arrow.render(layout, dxfattribs)
         return connection_point(name, insert=insert, scale=size, rotation=rotation)
 
-    def arrow_shape(self, name: str, insert: 'Vertex', size: float, rotation: float) -> BaseArrow:
-        # size depending shapes
-        name = name.upper()
-        if name == self.dot_small:
-            size *= .25
-        elif name == self.dot_smallblank:
-            size *= .5
-        cls = self.CLASSES[name]
-        return cls(insert, size, rotation)
-
-    def virtual_entities(self, name: str, insert: Vector = NULLVEC, size: float = 0.625,
-                         rotation: float = 0, dxfattribs=None, doc=None):
+    def virtual_entities(self,
+                         name: str,
+                         insert: 'Vertex' = NULLVEC,
+                         size: float = 0.625,
+                         rotation: float = 0, *,
+                         dxfattribs: Dict = None,
+                         doc: 'Drawing' = None) -> Iterable['DXFGraphic']:
+        """ Yield arrow components as virtual DXF entities. """
         from ezdxf.layouts import VirtualLayout
         if name in self:
             layout = VirtualLayout(doc)
@@ -461,7 +457,17 @@ class _Arrows:
                 rotation=rotation,
                 dxfattribs=dxfattribs,
             )
-            yield from layout.entities
+            yield from iter(layout)
+
+    def arrow_shape(self, name: str, insert: 'Vertex', size: float, rotation: float) -> BaseArrow:
+        # size depending shapes
+        name = name.upper()
+        if name == self.dot_small:
+            size *= .25
+        elif name == self.dot_smallblank:
+            size *= .5
+        cls = self.CLASSES[name]
+        return cls(insert, size, rotation)
 
 
 def connection_point(arrow_name: str, insert: 'Vertex', scale: float = 1, rotation: float = 0) -> Vec2:

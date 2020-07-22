@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     # Entity factories
     from ezdxf.entities.factory import EntityFactory
 
-    from ezdxf.layouts.base import BaseLayout
+    from ezdxf.layouts.base import BaseLayout, VirtualLayout
     from ezdxf.layouts.layout import Layout
     from ezdxf.layouts.blocklayout import BlockLayout
 
@@ -123,5 +123,5 @@ if TYPE_CHECKING:
     FaceType = Sequence[Vertex]
 
     # Type Unions
-    GenericLayoutType = Union[Layout, BlockLayout]
+    GenericLayoutType = Union[Layout, BlockLayout, VirtualLayout]
     SectionType = Union[HeaderSection, TablesSection, BlocksSection, ClassesSection, ObjectsSection, EntitySection]
