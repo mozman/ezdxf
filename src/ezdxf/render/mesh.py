@@ -8,7 +8,7 @@ from ezdxf.math import Matrix44, Vector, NULLVEC
 from ezdxf.math.construct3d import is_planar_face, subdivide_face, normal_vector_3p, subdivide_ngons
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, BaseLayout, UCS, Polyface, Polymesh
+    from ezdxf.eztypes import Vertex, UCS, Polyface, Polymesh, GenericLayoutType
 
 
 class MeshBuilder:
@@ -232,7 +232,7 @@ class MeshBuilder:
             raise TypeError('Not a polymesh or polyface.')
         return mesh
 
-    def render_polyface(self, layout: 'BaseLayout', dxfattribs: dict = None, matrix: 'Matrix44' = None,
+    def render_polyface(self, layout: 'GenericLayoutType', dxfattribs: dict = None, matrix: 'Matrix44' = None,
                         ucs: 'UCS' = None):
         """
         Render mesh as :class:`~ezdxf.entities.Polyface` entity into `layout`.

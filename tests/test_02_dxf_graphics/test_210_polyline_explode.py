@@ -3,8 +3,7 @@
 import pytest
 import math
 import ezdxf
-from ezdxf.entities.polyline import Polyline
-from ezdxf.math import UCS
+from ezdxf.layouts import VirtualLayout
 
 POINTS = [(0, 0), (1, 0, 1), (2, 0), (3, 0)]
 
@@ -77,8 +76,9 @@ def test_polyline2d_elevation(polyline2d):
     assert e.dxf.end == (4, 1, 1)
 
 
-def test_polyline2d_closed(msp):
+def test_polyline2d_closed():
     # Create a circle by 2D POLYLINE:
+    msp = VirtualLayout()
     polyline = msp.add_polyline2d(points=[(0, 0, 1), (1, 0, 1)], format='xyb')
     polyline.close(True)
 
@@ -101,6 +101,7 @@ def test_polyline2d_closed(msp):
 
 
 def test_polyline2d_explode(msp):
+    # explode does not work with VirtualLayout()
     polyline = msp.add_polyline2d(POINTS, format='xyb')
     count = len(msp)
     result = polyline.explode()
@@ -111,7 +112,8 @@ def test_polyline2d_explode(msp):
     assert msp[-3] is result[0]
 
 
-def test_polyline3d_virtual_entities(msp):
+def test_polyline3d_virtual_entities():
+    msp = VirtualLayout()
     polyline3d = msp.add_polyline3d([(0, 0, 0), (1, 0, 0), (2, 2, 2)])
     result = list(polyline3d.virtual_entities())
     assert len(result) == 2
@@ -125,7 +127,8 @@ def test_polyline3d_virtual_entities(msp):
     assert line.dxf.end == (2, 2, 2)
 
 
-def test_polyline3d_closed(msp):
+def test_polyline3d_closed():
+    msp = VirtualLayout()
     polyline3d = msp.add_polyline3d([(0, 0, 0), (1, 0, 0), (2, 2, 2)], dxfattribs={'closed': True})
     assert polyline3d.is_closed is True
     result = list(polyline3d.virtual_entities())
@@ -139,6 +142,7 @@ def test_polyline3d_closed(msp):
 
 
 def test_polyline3d_explode(msp):
+    # explode does not work with VirtualLayout()
     polyline3d = msp.add_polyline3d([(0, 0, 0), (1, 0, 0), (2, 2, 2)])
     count = len(msp)
     result = polyline3d.explode()
@@ -149,7 +153,8 @@ def test_polyline3d_explode(msp):
 
 
 @pytest.fixture()
-def polymesh(msp):
+def polymesh():
+    msp = VirtualLayout()
     polymesh = msp.add_polymesh((3, 3))
     for m in range(3):
         for n in range(3):
@@ -184,9 +189,10 @@ def test_closed_polymesh(polymesh):
     assert len(result) == 9
 
 
-def test_polyface_virtual_entities(msp):
+def test_polyface_virtual_entities():
     from ezdxf.render.forms import cube
 
+    msp = VirtualLayout()
     polyface = cube().render_polyface(msp)
     result = list(polyface.virtual_entities())
 

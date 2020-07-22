@@ -55,11 +55,6 @@ AcDb2dPolyline
 """
 
 
-@pytest.fixture(scope='module')
-def doc():
-    return ezdxf.new()
-
-
 @pytest.fixture(params=[ENTITY_R12, ENTITY_R2000])
 def entity(request):
     return TEST_CLASS.from_text(request.param)
@@ -113,7 +108,8 @@ def test_polygon_mesh():
     assert (100, 'AcDbPolygonMesh') == collector.tags[5]
 
 
-def test_copy_polyline(doc):
+def test_copy_polyline():
+    doc = ezdxf.new()
     msp = doc.modelspace()
     polyline = msp.add_polyline2d([(1, 2), (7, 8), (4, 3)])
     assert isinstance(polyline, Polyline)

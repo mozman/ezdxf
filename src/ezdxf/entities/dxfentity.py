@@ -13,6 +13,7 @@ from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12
 from ezdxf.lldxf.const import ACAD_REACTORS, ACAD_XDICTIONARY
 from ezdxf.lldxf.const import DXFAttributeError, DXFValueError, DXFTypeError, DXFKeyError
 from ezdxf.tools import set_flag_state
+from ezdxf.entities import factory
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors
 from .xdict import ExtensionDict
@@ -892,8 +893,10 @@ class DXFEntity:
         # Don't know if that is also important for the ATTRIB & INSERT entity.
         if 'layer' not in dxfattribs:
             dxfattribs['layer'] = self.dxf.layer
-
-        entity = self.dxffactory.create_db_entry(type_, dxfattribs)
+        if self.doc:
+            entity = self.dxffactory.create_db_entry(type_, dxfattribs)
+        else:
+            entity = factory.new(type_, dxfattribs)
         entity.dxf.owner = self.dxf.owner
         entity.dxf.paperspace = self.dxf.paperspace
         return entity

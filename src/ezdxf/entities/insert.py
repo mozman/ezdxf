@@ -6,7 +6,7 @@ import math
 import warnings
 from ezdxf.math import Vector, X_AXIS, Y_AXIS, Matrix44, OCS, UCS
 from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
-
+from ezdxf.entities import factory
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError, DXFStructureError
 from .dxfentity import base_class, SubclassProcessor
@@ -330,7 +330,10 @@ class Insert(DXFGraphic):
 
     def new_seqend(self):
         """ Create new ENDSEQ. (internal API)"""
-        seqend = self.doc.dxffactory.create_db_entry('SEQEND', dxfattribs={'layer': self.dxf.layer})
+        if self.doc:
+            seqend = self.doc.dxffactory.create_db_entry('SEQEND', dxfattribs={'layer': self.dxf.layer})
+        else:
+            seqend = factory.new('SEQEND', dxfattribs={'layer': self.dxf.layer})
         self.link_seqend(seqend)
 
     def delete_attrib(self, tag: str, ignore=False) -> None:

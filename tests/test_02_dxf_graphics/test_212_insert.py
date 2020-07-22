@@ -146,8 +146,8 @@ def test_write_dxf(txt, ver):
     assert collector.has_all_tags(collector2)
 
 
-def test_add_attribs(doc):
-    insert = Insert(doc)
+def test_add_attribs():
+    insert = Insert()
     assert insert.attribs_follow is False
     insert.add_attrib('T1', 'value1', (0, 0))
     assert len(insert.attribs) == 1
@@ -165,13 +165,13 @@ def test_get_block(doc):
     assert insert.block() is None
 
 
-def test_clone_with_insert(doc):
+def test_clone_with_insert():
     # difference of clone() to copy_entity() is:
     # - clone returns and unassigned entity without handle, owner or reactors
     # - copy_entity clones the entity and assigns the new entity to the same owner as the source and adds the entity
     #   and it linked entities (ATTRIB & VERTEX) to the entity database, but does not adding entity to a layout, setting
     #   owner tag is not enough to assign an entity to a layout, use Layout.add_entity()
-    insert = doc.dxffactory.create_db_entry('INSERT', dxfattribs={})
+    insert = Insert()
     insert.add_attrib('T1', 'value1', (0, 0))
     clone = insert.copy()
     assert clone.dxf.handle is None

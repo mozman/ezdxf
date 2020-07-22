@@ -306,21 +306,19 @@ class VirtualLayout(_AbstractLayout):
 
     """
     def __init__(self, doc: 'Drawing' = None):
+
         super().__init__(doc)
         self.entity_space = EntitySpace()
 
     @property
     def dxfversion(self) -> str:
-        if self.doc:
-            return self.doc.dxfversion
-        else:
-            return LATEST_DXF_VERSION
+        return LATEST_DXF_VERSION
 
     def add_entity(self, entity: 'DXFGraphic') -> None:
         self.entity_space.add(entity)
 
     def new_entity(self, type_: str, dxfattribs: dict) -> 'DXFGraphic':
-        entity = factory.new(type_, dxfattribs=dxfattribs, doc=self.doc)
+        entity = factory.new(type_, dxfattribs=dxfattribs)
         self.entity_space.add(entity)
         return entity
 
