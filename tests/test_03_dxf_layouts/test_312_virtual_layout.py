@@ -3,7 +3,7 @@
 import pytest
 import ezdxf
 from ezdxf.layouts import VirtualLayout
-from ezdxf.audit import Auditor
+from ezdxf import audit
 
 
 @pytest.fixture
@@ -77,25 +77,24 @@ def test_copy_all_sub_entities_to_a_real_layout(layout, doc):
     len_db = len(doc.entitydb)
     layout.copy_all_to_layout(msp)
     copy = msp[-1]
+    # check copied entity
     assert len(layout) == 1, 'do not remove from virtual layout'
-    assert polyline is not copy, 'entity should be copied'
-    assert copy.doc is doc, 'copy should be assigned to DXF document'
-    assert len(doc.entitydb) == len_db + 5, 'copy main- and sub-entities + seqend'
+    assert polyline is not copy, 'POLYLINE  entity should be copied'
+    assert copy.doc is doc, 'copy should be assigned to the DXF document'
+    assert len(doc.entitydb) == len_db + 5, 'add 1x POLYLINE, 3x VERTEX and 1x SEQEND to entity database'
     assert copy.dxf.handle is not None, 'copy should have a handle'
-    assert copy.dxf.owner == msp.layout_key, 'copy should have new layout as owner'
+    assert copy.dxf.owner == msp.layout_key, 'copy should have `msp` as owner'
     assert copy.dxf.handle in doc.entitydb, 'copy should be stored in document entity database'
-    # check sub-entities
+    # check VERTEX entities
     vertex = copy.vertices[0]
-    assert vertex.doc is doc, 'vertices should have document'
+    assert vertex.doc is doc, 'vertices should have a document'
     assert vertex.dxf.handle in doc.entitydb, 'vertices should be stored in the entity database'
-    # check sub-entities
-    assert copy.seqend.doc is doc, 'seqend should have document'
-    assert copy.seqend.dxf.handle in doc.entitydb, 'seqend be stored in the entity database'
+    # check SEQEND
+    assert copy.seqend.doc is doc, 'seqend should have a document'
+    assert copy.seqend.dxf.handle in doc.entitydb, 'seqend should be stored in the entity database'
 
-    auditor = Auditor(doc)
-    copy.audit(auditor)
-    assert len(auditor.errors) == 0
-    assert len(auditor.fixes) == 0
+    # Do any further problems exist?
+    assert audit.is_healthy(copy) is False
 
 
 def test_move_all_sub_entities_to_a_real_layout(layout, doc):
@@ -104,25 +103,24 @@ def test_move_all_sub_entities_to_a_real_layout(layout, doc):
     len_db = len(doc.entitydb)
     layout.move_all_to_layout(msp)
     entity = msp[-1]
+    # check moved entity
     assert len(layout) == 0, 'remove from virtual layout'
     assert polyline is entity
-    assert entity.doc is doc, 'entity should be assigned to DXF document'
-    assert len(doc.entitydb) == len_db + 5, 'add main- and sub-entities + seqend'
+    assert entity.doc is doc, 'entity should be assigned to the DXF document'
+    assert len(doc.entitydb) == len_db + 5, 'add 1x POLYLINE, 3x VERTEX and 1x SEQEND to entity database'
     assert entity.dxf.handle is not None, 'entity should have a handle'
-    assert entity.dxf.owner == msp.layout_key, 'entity should have new layout as owner'
+    assert entity.dxf.owner == msp.layout_key, 'entity should have `msp` as owner'
     assert entity.dxf.handle in doc.entitydb, 'entity should be stored in document entity database'
-    # check sub-entities
+    # check VERTEX entities
     vertex = entity.vertices[0]
-    assert vertex.doc is doc, 'vertices should have document'
+    assert vertex.doc is doc, 'vertices should have a document'
     assert vertex.dxf.handle in doc.entitydb, 'vertices should be stored in the entity database'
-    # check sub-entities
-    assert entity.seqend.doc is doc, 'seqend should have document'
-    assert entity.seqend.dxf.handle in doc.entitydb, 'seqend be stored in the entity database'
+    # check SEQEND
+    assert entity.seqend.doc is doc, 'seqend should have a document'
+    assert entity.seqend.dxf.handle in doc.entitydb, 'seqend should be stored in the entity database'
 
-    auditor = Auditor(doc)
-    entity.audit(auditor)
-    assert len(auditor.errors) == 0
-    assert len(auditor.fixes) == 0
+    # Do any further problems exist?
+    assert audit.is_healthy(entity) is False
 
 
 if __name__ == '__main__':

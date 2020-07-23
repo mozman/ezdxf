@@ -15,6 +15,8 @@ from ezdxf.sections.table import table_key
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, Drawing, DXFGraphic, BlocksSection
 
+__all__ = ['Auditor', 'AuditError', 'is_healthy']
+
 
 class AuditError(IntEnum):
     # DXF structure errors:
@@ -350,3 +352,19 @@ class BlockCycleDetector:
         path = []
         block_name = self.key(block_name)
         return check(block_name)
+
+
+def is_healthy(entity: 'DXFEntity') -> bool:
+    """
+    Returns ``True`` if any error exist or any fixes has been applied.
+
+    A returned ``True`` should show a valid entity state according to
+    the DXF reference as far `ezdxf` can check this state.
+    
+    Intended usage: testing if an DXF entity is in good shape.
+
+    (internal API)
+    """
+    auditor = Auditor(entity.doc)
+    entity.audit(auditor)
+    return len(auditor.errors) > 0 or len(auditor.fixes) > 0
