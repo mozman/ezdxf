@@ -19,7 +19,8 @@ from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing, UCS, Line, Arc, Face3d, BaseLayout,
+        TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing,
+        Line, Arc, Face3d, BaseLayout
     )
 
 __all__ = ['Polyline', 'Polyface', 'Polymesh']
@@ -99,7 +100,8 @@ class Polyline(DXFGraphic):
     def _copy_data(self, entity: 'Polyline') -> None:
         """ Copy vertices, does not store the copies into the entity database. """
         entity.vertices = [vertex.copy() for vertex in self.vertices]
-        entity.seqend = self.seqend.copy()
+        if self.seqend:
+            entity.seqend = self.seqend.copy()
 
     def add_sub_entities_to_entitydb(self):
         """ Called by Entitydb.add(). (internal API) """

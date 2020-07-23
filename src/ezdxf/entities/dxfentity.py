@@ -879,28 +879,6 @@ class DXFEntity:
         # check extension dict
         # check XDATA
 
-    def _new_compound_entity(self, type_: str, dxfattribs: dict) -> 'DXFEntity':
-        """
-        Create new entity with same layout settings as `self`.
-
-        Used by INSERT & POLYLINE to create appended DXF entities, don't use it to create new standalone entities.
-
-        (internal API)
-        """
-        dxfattribs = dxfattribs or {}
-        # if layer is not deliberately set, set same layer as creator entity,
-        # at least VERTEX should have the same layer as the POLYGON entity.
-        # Don't know if that is also important for the ATTRIB & INSERT entity.
-        if 'layer' not in dxfattribs:
-            dxfattribs['layer'] = self.dxf.layer
-        if self.doc:
-            entity = self.dxffactory.create_db_entry(type_, dxfattribs)
-        else:
-            entity = factory.new(type_, dxfattribs)
-        entity.dxf.owner = self.dxf.owner
-        entity.dxf.paperspace = self.dxf.paperspace
-        return entity
-
     def has_extension_dict(self) -> bool:
         """ Returns ``True`` if entity has an attached :class:`~ezdxf.entities.xdict.ExtensionDict`. """
         return self.extension_dict is not None

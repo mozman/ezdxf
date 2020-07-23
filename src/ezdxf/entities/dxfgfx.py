@@ -14,7 +14,7 @@ from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS, UCS, Matrix44
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
-from .factory import register_entity
+from ezdxf.entities import factory
 from ezdxf import options
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
 
@@ -490,8 +490,30 @@ class DXFGraphic(DXFEntity):
         self.dxf.discard('plotstyle_enum')
         self.dxf.discard('plotstyle_handle')
 
+    def _new_compound_entity(self, type_: str, dxfattribs: dict) -> 'DXFGraphic':
+        """
+        Create new entity with same layout settings as `self`.
 
-@register_entity
+        Used by INSERT & POLYLINE to create appended DXF entities, don't use it to create new standalone entities.
+
+        (internal API)
+        """
+        dxfattribs = dxfattribs or {}
+        # if layer is not deliberately set, set same layer as creator entity,
+        # at least VERTEX should have the same layer as the POLYGON entity.
+        # Don't know if that is also important for the ATTRIB & INSERT entity.
+        if 'layer' not in dxfattribs:
+            dxfattribs['layer'] = self.dxf.layer
+        if self.doc:
+            entity = self.dxffactory.create_db_entry(type_, dxfattribs)
+        else:
+            entity = factory.new(type_, dxfattribs)
+        entity.dxf.owner = self.dxf.owner
+        entity.dxf.paperspace = self.dxf.paperspace
+        return entity
+
+
+@factory.register_entity
 class SeqEnd(DXFGraphic):
     DXFTYPE = 'SEQEND'
 

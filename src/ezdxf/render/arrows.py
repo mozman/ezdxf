@@ -443,12 +443,11 @@ class _Arrows:
                          insert: 'Vertex' = NULLVEC,
                          size: float = 0.625,
                          rotation: float = 0, *,
-                         dxfattribs: Dict = None,
-                         doc: 'Drawing' = None) -> Iterable['DXFGraphic']:
+                         dxfattribs: Dict = None) -> Iterable['DXFGraphic']:
         """ Yield arrow components as virtual DXF entities. """
         from ezdxf.layouts import VirtualLayout
         if name in self:
-            layout = VirtualLayout(doc)
+            layout = VirtualLayout()
             dxfattribs = dxfattribs or {}
             ARROWS.render_arrow(
                 layout, name,

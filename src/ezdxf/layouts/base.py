@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING, Iterable, cast
 
 from ezdxf.entities import factory
-from ezdxf.lldxf.const import DXFValueError, DXFStructureError, LATEST_DXF_VERSION
+from ezdxf.lldxf.const import DXFValueError, DXFStructureError, LATEST_DXF_VERSION, DXFTypeError
 from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
 from ezdxf.entitydb import EntityDB, EntitySpace
@@ -301,13 +301,16 @@ class VirtualLayout(_AbstractLayout):
     Helper class to disassemble complex entities into basic DXF
     entities by rendering into a virtual layout.
 
-    All entities created by this layout are not stored in the
-    entity database of the associated DXF document.
+    All entities do not have an assigned DXF document and therefore
+    are not stored in any entity database and can not be added to another
+    layout by :meth:`add_entity`.
+
+    Deleting entities from this layout does not destroy the entity!
 
     """
-    def __init__(self, doc: 'Drawing' = None):
 
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__(None)
         self.entity_space = EntitySpace()
 
     @property
@@ -330,3 +333,26 @@ class VirtualLayout(_AbstractLayout):
 
     def delete_all_entities(self) -> None:
         self.entity_space.clear()
+
+    def copy_all_to_layout(self, layout: BaseLayout) -> None:
+        """ Copy all entities to a real document layout. """
+        doc = layout.doc
+        entitydb = doc.entitydb
+        for entity in self.entity_space:
+            try:
+                clone = entity.copy()
+            except DXFTypeError:
+                continue
+            clone.doc = doc
+            entitydb.add(clone)
+            layout.add_entity(clone)
+
+    def move_all_to_layout(self, layout: BaseLayout) -> None:
+        """ Move all entities to a real document layout. """
+        doc = layout.doc
+        entitydb = doc.entitydb
+        for entity in self.entity_space:
+            entity.doc = doc
+            entitydb.add(entity)
+            layout.add_entity(entity)
+        self.delete_all_entities()
