@@ -310,13 +310,22 @@ class DXFGraphic(DXFEntity):
         return new_entity
 
     def audit(self, auditor: 'Auditor') -> None:
-        """ Validity check.
+        """ Audit and repair graphical DXF entities.
+
+        .. important::
+
+            Do not delete entities while auditing process, because this
+            would alter the entity database while iterating, instead use::
+
+                auditor.trash(entity.dxf.handle)
+
+            to delete invalid entities after auditing automatically.
+
         """
-        # Important for inherited classes:
-        # Do not delete entities while auditing process, this would alter
-        # the entity database while iterating, instead use:
-        # self.doc.entitydb.trash(handle) to delete invalid entities
         assert self.doc is auditor.doc, 'Auditor for different DXF document.'
+        if not self.is_alive:
+            return
+
         super().audit(auditor)
         auditor.check_owner_exist(self)
         dxf = self.dxf

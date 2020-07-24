@@ -149,7 +149,7 @@ class Circle(DXFGraphic):
                 message=f'Deleted entity {str(self)} with invalid radius = {self.dxf.radius}.',
                 dxf_entity=self,
             )
-            if self.doc and self.doc.entitydb:
-                self.entitydb.trash(self.dxf.handle)
+            if auditor.has_trashcan:
+                auditor.trash(self.dxf.handle)
             else:
                 self.destroy()

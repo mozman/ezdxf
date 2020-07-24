@@ -11,8 +11,6 @@ Add-ons
     - MLEADER ???
     - MLINE ???
     - render POINT symbols
-    - resolve fonts and pass them to `draw_text()`, 
-      `get_font_measurements()` and `get_text_line_width()`
     - render proxy graphic, class `ProxyGraphic()` is already 
       implemented but not tested with real world data.
 
@@ -48,7 +46,6 @@ DXF Audit & Repair
     - text style exist; repair: set to 'Standard'
 - check TEXT, MTEXT
     - text style exist; repair: set to 'Standard'
-- VERTEX on same layer as POLYLINE; repair: set VERTEX layer to POLYLINE layer
 - find unused BLOCK definitions: has no corresponding INSERT; repair: delete
     - EXCEPTION: layout blocks
     - EXCEPTION: anonymous blocks without explicit INSERT like DIMENSION geometry

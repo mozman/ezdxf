@@ -31,6 +31,7 @@ class AuditError(IntEnum):
     INVALID_BLOCK_REFERENCE_CYCLE = 104
     REMOVE_EMPTY_GROUP = 105
     GROUP_ENTITIES_IN_DIFFERENT_LAYOUTS = 106
+    MISSING_REQUIRED_SEQEND = 107
 
     # DXF entity property errors:
     INVALID_ENTITY_HANDLE = 201
@@ -80,6 +81,13 @@ class Auditor:
     def __iter__(self) -> Iterable[ErrorEntry]:
         """ Iterate over all unfixed errors. """
         return iter(self.errors)
+
+    @property
+    def entitydb(self):
+        if self.doc:
+            return self.doc.entitydb
+        else:
+            return None
 
     def print_error_report(self, errors: List[ErrorEntry] = None, stream: TextIO = None) -> None:
         def entity_str(count, code, entity):
@@ -140,7 +148,16 @@ class Auditor:
         return self.errors
 
     def empty_trashcan(self):
-        self.doc.entitydb.empty_trashcan()
+        if self.has_trashcan:
+            self.entitydb.empty_trashcan()
+
+    def trash(self, handle: str) -> None:
+        if self.has_trashcan:
+            self.entitydb.trash(handle)
+
+    @property
+    def has_trashcan(self) -> bool:
+        return self.entitydb is not None
 
     def check_root_dict(self) -> None:
         root_dict = self.doc.rootdict
@@ -298,7 +315,7 @@ class Auditor:
                     code=AuditError.INVALID_OWNER_HANDLE,
                     message=f'Deleted {str(entity)} entity without valid owner handle #{owner_handle}.',
                 )
-                self.doc.entitydb.trash(handle)
+                self.trash(handle)
 
     def check_extrusion_vector(self, entity: 'DXFEntity') -> None:
         if NULLVEC.isclose(entity.dxf.extrusion):

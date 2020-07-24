@@ -614,8 +614,8 @@ class Insert(DXFGraphic):
                     code=AuditError.UNDEFINED_BLOCK,
                     message=f'Deleted entity {str(self)} without required BLOCK definition.',
                 )
-                if doc.entitydb:  # move self to trashcan to get destroyed
-                    doc.entitydb.trash(self.dxf.handle)
+                if auditor.has_trashcan:  # move self to trashcan to get destroyed
+                    auditor.trash(self.dxf.handle)
                 else:
                     self.destroy()
 

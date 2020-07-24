@@ -200,7 +200,7 @@ class Ellipse(DXFGraphic):
                 message=f'Deleted entity {str(self)} with invalid major axis.',
                 dxf_entity=self,
             )
-            if self.doc and self.doc.entitydb:
-                self.entitydb.trash(self.dxf.handle)
+            if auditor.has_trashcan:
+                auditor.trash(self.dxf.handle)
             else:
                 self.destroy()

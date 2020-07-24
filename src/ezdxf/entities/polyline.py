@@ -16,11 +16,12 @@ from .lwpolyline import FORMAT_CODES
 from ezdxf.explode import virtual_polyline_entities, explode_entity
 from ezdxf.query import EntityQuery
 from ezdxf.entities import factory
+from ezdxf.audit import AuditError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing,
-        Line, Arc, Face3d, BaseLayout
+        Line, Arc, Face3d, BaseLayout, Auditor,
     )
 
 __all__ = ['Polyline', 'Polyface', 'Polymesh']
@@ -494,6 +495,34 @@ class Polyline(DXFGraphic):
 
         """
         return virtual_polyline_entities(self)
+
+    def audit(self, auditor: 'Auditor') -> None:
+        """ Audit and repair POLYLINE entity. """
+        def audit_sub_entity(entity):
+            entity.doc = doc  # grant same document
+            dxf = entity.dxf
+            if dxf.owner != owner:
+                dxf.owner = owner
+            if dxf.layer != layer:
+                dxf.layer = layer
+
+        doc = self.doc
+        owner = self.dxf.handle
+        layer = self.dxf.layer
+        for vertex in self.vertices:
+            audit_sub_entity(vertex)
+
+        seqend = self.seqend
+        if seqend:
+            audit_sub_entity(seqend)
+        elif doc:
+            # SEQEND is only for POLYLINE in real DXF documents required
+            self.new_seqend()
+            auditor.fixed_error(
+                code=AuditError.MISSING_REQUIRED_SEQEND,
+                message=f'Create required SEQEND entity for {str(self)}.',
+                dxf_entity=self,
+            )
 
 
 class Polyface(Polyline):
