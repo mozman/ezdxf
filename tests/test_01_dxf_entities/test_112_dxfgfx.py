@@ -41,6 +41,7 @@ def test_transparency(entity):
 
 def test_default_attributes():
     entity = DXFGraphic.new()
+    assert entity.priority == 0
     assert entity.dxf.layer == '0'
     assert entity.dxf.hasattr('layer') is True, 'real attribute required'
     assert entity.dxf.color == 256

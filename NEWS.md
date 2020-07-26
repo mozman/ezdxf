@@ -30,7 +30,8 @@ Version 0.14a1 - dev
 - NEW: `Bezier.reverse()` returns object with reversed control point order
 - CHANGE: `linspace()` uses `Decimal()` for precise calculations, but still 
   returns an iterable of `float`
-
+- REMOVE: `DXFEntity.drawing`, replaced by `DXFEntity.doc`
+ 
 Version 0.13.1 - 2020-07-18
 ---------------------------
 

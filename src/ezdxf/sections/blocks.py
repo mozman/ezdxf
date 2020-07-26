@@ -3,7 +3,9 @@
 from typing import TYPE_CHECKING, Iterable, Union, Sequence, List, cast
 import logging
 
-from ezdxf.lldxf.const import DXFStructureError, DXFBlockInUseError, DXFTableEntryError, DXFKeyError
+from ezdxf.lldxf.const import (
+    DXFStructureError, DXFBlockInUseError, DXFTableEntryError, DXFKeyError,
+)
 from ezdxf.lldxf import const
 from ezdxf.entities.dxfgfx import entity_linker
 from ezdxf.layouts.blocklayout import BlockLayout
@@ -12,17 +14,21 @@ from ezdxf.render.arrows import ARROWS
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, EntityDB, DXFEntity, DXFTagStorage, Table
-    from ezdxf.eztypes import EntityFactory, BlockRecord, Block, EndBlk
+    from ezdxf.eztypes import (
+        TagWriter, Drawing, EntityDB, DXFEntity, DXFTagStorage, Table,
+        EntityFactory, BlockRecord, Block, EndBlk,
+    )
 
 
 def is_special_block(name: str) -> bool:
     name = name.upper()
-    # Anonymous dimension, groups and table blocks do not have explicit references by INSERT entity
+    # Anonymous dimension, groups and table blocks do not have explicit
+    # references by an INSERT entity:
     if name.startswith('*D') or name.startswith('*A') or name.startswith('*T'):
         return True
 
-    # Arrow blocks maybe used in LEADER override without INSERT reference.
+    # Arrow blocks maybe used in DIMENSION or LEADER override without an
+    # INSERT reference:
     if ARROWS.is_ezdxf_arrow(name):
         return True
     if name.startswith('_'):
@@ -34,12 +40,13 @@ def is_special_block(name: str) -> bool:
 
 class BlocksSection:
     """
-    Manages BLOCK definitions in a dict(), block names are case insensitive e.g. 'Test' == 'TEST'.
+    Manages BLOCK definitions in a dict(), block names are case insensitive
+    e.g. 'Test' == 'TEST'.
 
     """
 
-    def __init__(self, doc: 'Drawing' = None, entities: List['DXFEntity'] = None):
-        # BlockLayouts stored as block_layout attribute in the BlockRecord object
+    def __init__(self, doc: 'Drawing' = None,
+                 entities: List['DXFEntity'] = None):
         self.doc = doc
         if entities is not None:
             self.load(entities)
@@ -69,38 +76,50 @@ class BlocksSection:
 
     def load(self, entities: List['DXFEntity']) -> None:
         """
-        Load DXF entities into BlockLayouts. `entities` is a stream of entity tags, separated by BLOCK and ENDBLK
-        entities into block layouts.
+        Load DXF entities into BlockLayouts. `entities` is a list of
+        entity tags, separated by BLOCK and ENDBLK entities.
 
         """
 
-        def load_block_record(block_entities: Sequence['DXFEntity']) -> 'BlockRecord':
+        def load_block_record(
+                block_entities: Sequence['DXFEntity']) -> 'BlockRecord':
             block = cast('Block', block_entities[0])
             endblk = cast('EndBlk', block_entities[-1])
 
             try:
-                block_record = cast('BlockRecord', block_records.get(block.dxf.name))
+                block_record = cast('BlockRecord',
+                                    block_records.get(block.dxf.name))
             except DXFTableEntryError:  # special case DXF R12 - not block record exists
-                block_record = cast('BlockRecord', block_records.new(block.dxf.name, dxfattribs={'scale': 0}))
+                block_record = cast('BlockRecord',
+                                    block_records.new(block.dxf.name,
+                                                      dxfattribs={'scale': 0}))
 
-            # block_record stores all the information about a block definition
+            # The BLOCK_RECORD is the central object which stores all the
+            # information about a BLOCK and also owns all the entities of
+            # this block definition.
             block_record.set_block(block, endblk)
             for entity in block_entities[1:-1]:
                 block_record.add_entity(entity)
-                # block_record.add_entity(entity)  # add to block_record?
             return block_record
 
         def link_entities() -> Iterable['DXFEntity']:
             linked = entity_linker()
             for entity in entities:
-                if not linked(entity):  # don't store linked entities (VERTEX, ATTRIB, SEQEND) in block layout
+                # Do not store linked entities (VERTEX, ATTRIB, SEQEND) in
+                # the block layout, linked entities ares stored in their
+                # parent entity e.g. VERTEX -> POLYLINE:
+                if not linked(entity):
                     yield entity
 
         block_records = self.block_records
-        section_head = entities[0]  # type: DXFTagStorage
-        if section_head.dxftype() != 'SECTION' or section_head.base_class[1] != (2, 'BLOCKS'):
-            raise DXFStructureError("Critical structure error in BLOCKS section.")
-        del entities[0]  # remove SECTION entity
+        section_head: 'DXFTagStorage' = cast('DXFTagStorage', entities[0])
+        if section_head.dxftype() != 'SECTION' or \
+                section_head.base_class[1] != (2, 'BLOCKS'):
+            raise DXFStructureError(
+                "Critical structure error in BLOCKS section."
+            )
+        # Remove SECTION entity
+        del entities[0]
         block_entities = []
         for entity in link_entities():
             block_entities.append(entity)
@@ -117,12 +136,15 @@ class BlocksSection:
         """
         for block_record in self.block_records:  # type: BlockRecord
             if block_record.block is None:
-                block = self.doc.dxffactory.create_db_entry('BLOCK', dxfattribs={
-                    'name': block_record.dxf.name,
-                    'name2': block_record.dxf.name,
-                    'base_point': (0, 0, 0),
-                })
-                endblk = self.doc.dxffactory.create_db_entry('ENDBLK', dxfattribs={})
+                block = self.doc.dxffactory.create_db_entry('BLOCK',
+                                                            dxfattribs={
+                                                                'name': block_record.dxf.name,
+                                                                'name2': block_record.dxf.name,
+                                                                'base_point': (
+                                                                    0, 0, 0),
+                                                            })
+                endblk = self.doc.dxffactory.create_db_entry('ENDBLK',
+                                                             dxfattribs={})
                 block_record.set_block(block, endblk)
                 self.add(block_record)
 
@@ -136,7 +158,8 @@ class BlocksSection:
 
     def __iter__(self) -> Iterable['BlockLayout']:
         """ Iterable of all :class:`~ezdxf.layouts.BlockLayout` objects. """
-        return (block_record.block_layout for block_record in self.block_records)
+        return (block_record.block_layout for block_record in
+                self.block_records)
 
     def __contains__(self, name: str) -> bool:
         """ Returns ``True`` if :class:`~ezdxf.layouts.BlockLayout` `name` exist. """
@@ -166,12 +189,14 @@ class BlocksSection:
         except DXFKeyError:
             return default
 
-    def get_block_layout_by_handle(self, block_record_handle: str) -> 'BlockLayout':
+    def get_block_layout_by_handle(self,
+                                   block_record_handle: str) -> 'BlockLayout':
         """ Returns a block layout by block record handle. (internal API)
         """
         return self.doc.entitydb[block_record_handle].block_layout
 
-    def new(self, name: str, base_point: Sequence[float] = (0, 0), dxfattribs: dict = None) -> 'BlockLayout':
+    def new(self, name: str, base_point: Sequence[float] = (0, 0),
+            dxfattribs: dict = None) -> 'BlockLayout':
         """ Create and add a new :class:`~ezdxf.layouts.BlockLayout`, `name` is the BLOCK name, `base_point` is the
         insertion point of the BLOCK.
         """
@@ -183,11 +208,14 @@ class BlocksSection:
         dxfattribs['name2'] = name
         dxfattribs['base_point'] = base_point
         head = self.dxffactory.create_db_entry('BLOCK', dxfattribs)
-        tail = self.dxffactory.create_db_entry('ENDBLK', {'owner': block_record.dxf.handle})
+        tail = self.dxffactory.create_db_entry('ENDBLK', {
+            'owner': block_record.dxf.handle})
         block_record.set_block(head, tail)
         return self.add(block_record)
 
-    def new_anonymous_block(self, type_char: str = 'U', base_point: Sequence[float] = (0, 0)) -> 'BlockLayout':
+    def new_anonymous_block(self, type_char: str = 'U',
+                            base_point: Sequence[float] = (
+                                    0, 0)) -> 'BlockLayout':
         """ Create and add a new anonymous :class:`~ezdxf.layouts.BlockLayout`, `type_char` is the BLOCK type,
         `base_point` is the insertion point of the BLOCK.
 
@@ -249,25 +277,30 @@ class BlocksSection:
         """
         if safe:
             if is_special_block(name):
-                raise DXFBlockInUseError(f'Special block "{name}" maybe used without explicit INSERT entity.')
+                raise DXFBlockInUseError(
+                    f'Special block "{name}" maybe used without explicit INSERT entity.')
 
-            block_refs = self.doc.query(f"INSERT[name=='{name}']i")  # ignore case
+            block_refs = self.doc.query(
+                f"INSERT[name=='{name}']i")  # ignore case
             if len(block_refs):
-                raise DXFBlockInUseError(f'Block "{name}" is still in use and can not deleted.')
+                raise DXFBlockInUseError(
+                    f'Block "{name}" is still in use and can not deleted.')
         self.__delitem__(name)
 
     def delete_all_blocks(self, safe: bool = True) -> None:
         """
-        Delete all blocks except layout blocks (modelspace or paperspace). In safe mode, protected blocks are ignored
-        silently.
+        Delete all blocks except layout blocks (modelspace or paperspace).
+        In safe mode, protected blocks are ignored silently.
 
         Args:
-            safe: check if block is still referenced or special block without explicit references
+            safe: check if block is still referenced or special block without
+            explicit references
 
         """
         if safe:
             # block names are case insensitive
-            references = set(entity.dxf.name.lower() for entity in self.doc.query('INSERT'))
+            references = set(
+                entity.dxf.name.lower() for entity in self.doc.query('INSERT'))
 
         def is_save(name: str) -> bool:
             if safe and is_special_block(name):

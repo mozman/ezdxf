@@ -29,7 +29,6 @@ def test_default_constructor():
     assert entity.dxftype() == 'DXFENTITY'
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
-    assert entity.priority == 0
     assert entity == entity
     assert entity != DXFEntity()
 

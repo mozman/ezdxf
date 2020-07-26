@@ -2,18 +2,22 @@
 # License: MIT License
 # Created 2019-02-13
 # DXFEntity - Root Entity
-from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union, Type, TypeVar, Set
+from typing import (
+    TYPE_CHECKING, List, Dict, Any, Iterable, Optional, Union, Type, TypeVar,
+    Set,
+)
 import copy
 from ezdxf import options
 from ezdxf.lldxf.types import handle_code, dxftag, cast_value
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12
-from ezdxf.lldxf.const import ACAD_REACTORS, ACAD_XDICTIONARY
-from ezdxf.lldxf.const import DXFAttributeError, DXFValueError, DXFTypeError, DXFKeyError
+from ezdxf.lldxf.const import (
+    DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12, ACAD_REACTORS,
+    ACAD_XDICTIONARY, DXFAttributeError, DXFValueError, DXFTypeError,
+    DXFKeyError,
+)
 from ezdxf.tools import set_flag_state
-from ezdxf.entities import factory
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors
 from .xdict import ExtensionDict
@@ -22,9 +26,13 @@ import logging
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter, Drawing, EntityDB, EntityFactory
+    from ezdxf.eztypes import (
+        Auditor, TagWriter, Drawing, EntityDB,
+        EntityFactory,
+    )
 
-__all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor', 'base_class']
+__all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor',
+           'base_class']
 
 """
 DXFEntity() is the base class of **all** DXF entities.
@@ -33,10 +41,11 @@ DXFNamespace() manages ass DXF attributes of an entity
 
 New DXF version handling
 
-By introducing the new entity system ezdxf does not care about DXF versions at usage, the
-latest supported version is used. The DXF version of the document can be changed at runtime,
-but unsupported features of later DXF versions, are just ignored by saving, ezdxf does no
-conversion between different DXF versions, ezdxf is still not a CAD application.
+By introducing the new entity system ezdxf does not care about DXF versions at 
+usage, the latest supported version is used. The DXF version of the document 
+can be changed at runtime, but unsupported features of later DXF versions, are 
+just ignored by saving, ezdxf does no conversion between different DXF versions, 
+ezdxf is still not a CAD application.
 
 """
 
@@ -44,7 +53,8 @@ ERR_INVALID_DXF_ATTRIB = 'Invalid DXF attribute "{}" for entity {}'
 ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute "{}" does not exist'
 
 # supported event handler called by setting DXF attributes
-# for usage, implement a method named like the dict-value, that accepts the new value as argument e.g.:
+# for usage, implement a method named like the dict-value, that accepts the new
+# value as argument e.g.:
 #
 #   Polyline.on_layer_change(name) -> changes also layers of all vertices
 #
@@ -56,19 +66,22 @@ SETTER_EVENTS = {
 
 class DXFNamespace:
     """
-    Uses the Python object itself as attribute storage, only valid Python names can be used as attrib name.
+    Uses the Python object itself as attribute storage, only valid Python names
+    can be used as attrib name.
 
-    The namespace can only contain immutable objects: string, int, float, bool, Vector
-    Because of the immutability, copy and deepcopy are the same.
+    The namespace can only contain immutable objects: string, int, float, bool,
+    Vector. Because of the immutability, copy and deepcopy are the same.
 
     (internal class)
     """
 
-    def __init__(self, processor: 'SubclassProcessor' = None, entity: 'DXFEntity' = None):
+    def __init__(self, processor: 'SubclassProcessor' = None,
+                 entity: 'DXFEntity' = None):
         if processor:
             base_class_ = processor.base_class
             code = handle_code(base_class_[0].value)
-            # CLASS entity has no handle and TABLE also has no handle if loaded from DXF R12 file
+            # CLASS entity has no handle and TABLE also has no handle if
+            # loaded from DXF R12 file
             handle = base_class_.get_first_value(code, None)
             # owner is None if loaded from DXF R12 file
             owner = base_class_.get_first_value(330, None)
@@ -92,7 +105,8 @@ class DXFNamespace:
         self.__dict__['handle'] = None
         self.__dict__['owner'] = None
 
-    def rewire(self, entity: 'DXFEntity', handle: str = None, owner: str = None) -> None:
+    def rewire(self, entity: 'DXFEntity', handle: str = None,
+               owner: str = None) -> None:
         """
         Rewire DXF namespace with parent entity
 
@@ -110,16 +124,20 @@ class DXFNamespace:
             self.__dict__['owner'] = owner
 
     def __getattr__(self, key: str) -> Any:
-        """ called if key does not exist, returns default value or None for unset default values
+        """ Called if key does not exist, returns default value or None for
+        unset default values
         """
         attrib_def = self.dxfattribs.get(key, None)  # type: DXFAttr
         if attrib_def:
             if attrib_def.xtype == XType.callback:
                 return attrib_def.get_callback_value(self._entity)
             else:
-                return attrib_def.default  # returns None for attributes without default value
+                # returns None for attributes without default value
+                return attrib_def.default
         else:
-            raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(key, self.dxftype))
+            raise DXFAttributeError(
+                ERR_INVALID_DXF_ATTRIB.format(key, self.dxftype)
+            )
 
     def __setattr__(self, key: str, value: Any) -> None:
         attrib_def = self.dxfattribs.get(key, None)  # type: DXFAttr
@@ -129,7 +147,8 @@ class DXFNamespace:
             else:
                 self.__dict__[key] = cast_value(attrib_def.code, value)
         else:
-            raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(key, self.dxftype))
+            raise DXFAttributeError(
+                ERR_INVALID_DXF_ATTRIB.format(key, self.dxftype))
 
         if key in SETTER_EVENTS:
             handler = getattr(self._entity, SETTER_EVENTS[key], None)
@@ -143,7 +162,9 @@ class DXFNamespace:
             raise DXFAttributeError(ERR_DXF_ATTRIB_NOT_EXITS.format(key))
 
     def get(self, key: str, default: Any = None) -> Any:
-        """ Returns given `default` value not DXF default value for unset attributes. """
+        """ Returns given `default` value not DXF default value for unset
+        attributes.
+        """
         # callback values should not exist as attribute in __dict__
         if self.hasattr(key):
             # do not return the DXF default value
@@ -155,7 +176,8 @@ class DXFNamespace:
             else:
                 return default  # return give default
         else:
-            raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(key, self.dxftype))
+            raise DXFAttributeError(
+                ERR_INVALID_DXF_ATTRIB.format(key, self.dxftype))
 
     def get_default(self, key: str) -> Any:
         """ Returns DXF default value for unset attributes. """
@@ -184,10 +206,12 @@ class DXFNamespace:
 
     def is_supported(self, key: str) -> bool:
         """
-        Returns True if DXF attribute `key` is supported else False. Does not grant that attribute `key` really exists.
+        Returns True if DXF attribute `key` is supported else False. Does not
+        grant that attribute `key` really exists.
 
-        The new entity system, ignores the DXF version at runtime, unsupported features, are just not saved
-        (no conversion between DXF version is done!).
+        The new entity system, ignores the DXF version at runtime, unsupported
+        features, are just not saved (no conversion between DXF version is
+        done!).
 
         """
 
@@ -197,7 +221,8 @@ class DXFNamespace:
         """
         Returns True if attribute `key` really exists else False.
 
-        Does no check if attribute `key` is supported, but implicit supported if exists.
+        Does no check if attribute `key` is supported, but implicit supported
+        if exists.
 
         """
         return key in self.__dict__
@@ -221,13 +246,13 @@ class DXFNamespace:
         else:
             return None
 
-    def export_dxf_attribs(self, tagwriter: 'TagWriter', attribs: Union[str, Iterable]) -> None:
+    def export_dxf_attribs(self, tagwriter: 'TagWriter',
+                           attribs: Union[str, Iterable]) -> None:
         """
-        Exports DXF attribute `name` by `tagwriter`. Non optional attributes are forced and optional tags are only
-        written if different to default value. DXF version check is always on: does not export DXF attribs which are not
-        supported by tagwriter.dxfversion.
-
-        Replaces export_dxf_attribute() and export_dxf_attribs() in the long run.
+        Exports DXF attribute `name` by `tagwriter`. Non optional attributes
+        are forced and optional tags are only written if different to default
+        value. DXF version check is always on: does not export DXF attribs
+        which are not supported by tagwriter.dxfversion.
 
         Args:
             tagwriter: tag writer object
@@ -240,9 +265,11 @@ class DXFNamespace:
             for name in attribs:
                 self._export_dxf_attribute_optional(tagwriter, name)
 
-    def _export_dxf_attribute_optional(self, tagwriter: 'TagWriter', name: str) -> None:
+    def _export_dxf_attribute_optional(self, tagwriter: 'TagWriter',
+                                       name: str) -> None:
         """
-        Exports DXF attribute `name` by `tagwriter`. Optional tags are only written if different to default value.
+        Exports DXF attribute `name` by `tagwriter`. Optional tags are only
+        written if different to default value.
 
         Args:
             tagwriter: tag writer object
@@ -257,14 +284,22 @@ class DXFNamespace:
             optional = attrib.optional
             default = attrib.default
             value = self.get(name, None)
-            if value is None and not optional:  # force default value e.g. layer
-                value = default  # default value could be None
+            # Force default value e.g. layer
+            if value is None and not optional:
+                # Default value could be None
+                value = default
 
-            if (value is not None) and (export_dxf_version >= attrib.dxfversion):  # do not export None
-                # check optional value == default value
-                if optional and not_force_optional and default is not None and (default == value):
-                    return  # do not write explicit optional attribs if equal to default value
-                # just use x, y for 2d points if value is a 3d point (Vector, tuple)
+                # Do not export None values
+            if ((value is not None) and
+                    (export_dxf_version >= attrib.dxfversion)):
+                # Do not write explicit optional attribs if equal to default
+                # value
+                if (optional
+                        and not_force_optional
+                        and default is not None
+                        and default == value):
+                    return
+                    # Just export x, y for 2D points, if value is a 3D point
                 if attrib.xtype == XType.point2d and len(value) > 2:
                     value = value[:2]
                 if isinstance(value, str):
@@ -273,7 +308,8 @@ class DXFNamespace:
                 tag = dxftag(attrib.code, value)
                 tagwriter.write_tag(tag)
         else:
-            raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(name, self.dxftype))
+            raise DXFAttributeError(
+                ERR_INVALID_DXF_ATTRIB.format(name, self.dxftype))
 
 
 BASE_CLASS_CODES = {0, 5, 102, 330}
@@ -285,11 +321,14 @@ class SubclassProcessor:
     def __init__(self, tags: ExtendedTags, dxfversion=None):
         if len(tags.subclasses) == 0:
             raise ValueError('Invalid tags.')
-        self.subclasses = list(tags.subclasses)  # type: List[Tags] # copy subclasses
+        self.subclasses: List[Tags] = list(tags.subclasses)  # copy subclasses
         self.dxfversion = dxfversion
-        # DXF R12 and prior have no subclass marker system, all tags of an entity in one flat list
-        # Where later DXF versions have at least 2 subclasses base_class and AcDbEntity
-        # Exception CLASS has also only one subclass and no subclass marker, handled as DXF R12 entity
+        # DXF R12 and prior have no subclass marker system, all tags of an
+        # entity in one flat list.
+        # Later DXF versions have at least 2 subclasses base_class and
+        # AcDbEntity.
+        # Exception: CLASS has also only one subclass and no subclass marker,
+        # handled as DXF R12 entity
         self.r12 = (dxfversion == DXF12) or (len(self.subclasses) == 1)
         self.name = tags.dxftype()
         try:
@@ -301,10 +340,12 @@ class SubclassProcessor:
     def base_class(self):
         return self.subclasses[0]
 
-    def log_unprocessed_tags(self, unprocessed_tags: Iterable, subclass='<?>') -> None:
+    def log_unprocessed_tags(self, unprocessed_tags: Iterable,
+                             subclass='<?>') -> None:
         if options.log_unprocessed_tags:
             for tag in unprocessed_tags:
-                logger.info("ignored {} in {}(#{}) {}".format(repr(tag), self.name, self.handle, subclass))
+                logger.info(
+                    f"ignored {repr(tag)} in {str(self)}, {subclass}")
 
     def find_subclass(self, name: str) -> Optional[Tags]:
         for subclass in self.subclasses:
@@ -318,15 +359,17 @@ class SubclassProcessor:
         except IndexError:
             return None
 
-    def load_dxfattribs_into_namespace(self, dxf: DXFNamespace, subclass_definition: DefSubclass,
+    def load_dxfattribs_into_namespace(self, dxf: DXFNamespace,
+                                       subclass_definition: DefSubclass,
                                        index: int = None) -> Tags:
         """
-        Load all existing DXF attribute into DXFNamespace and return unprocessed tags, without leading subclass marker
-        (102, ...).
+        Load all existing DXF attribute into DXFNamespace and return unprocessed
+        tags, without leading subclass marker(102, ...).
 
         Args:
             dxf: target namespace
-            subclass_definition: DXF attribute definitions (name=subclass_name, attribs={key=attribute name, value=DXFAttr})
+            subclass_definition: DXF attribute definitions (name=subclass_name,
+                                 attribs={key=attribute name, value=DXFAttr})
             index: locate subclass by location
 
         Returns:
@@ -334,8 +377,10 @@ class SubclassProcessor:
 
         """
 
-        # r12 has always unprocessed tags, because there are all tags in one subclass and one subclass definition never
-        # covers all tags e.g. handle is processed in main_call, so it is an unprocessed tag in AcDbEntity.
+        # R12 has always unprocessed tags, because there are all tags in one
+        # subclass and one subclass definition never covers all tags e.g.
+        # handle is processed in DXFEntity, so it is an unprocessed tag in
+        # AcDbEntity.
         if self.r12:
             tags = self.subclasses[0]
         else:
@@ -348,15 +393,17 @@ class SubclassProcessor:
         return self.load_tags_into_namespace(dxf, tags[1:], subclass_definition)
 
     @staticmethod
-    def load_tags_into_namespace(dxf: DXFNamespace, tags: Tags, subclass_definition: DefSubclass) -> Tags:
+    def load_tags_into_namespace(dxf: DXFNamespace, tags: Tags,
+                                 subclass_definition: DefSubclass) -> Tags:
         """
-        Load all existing DXF attribute into DXFNamespace and return unprocessed tags, without leading subclass marker
-        (102, ...).
+        Load all existing DXF attribute into DXFNamespace and return unprocessed
+        tags, without leading subclass marker (102, ...).
 
         Args:
             dxf: target namespace
             tags: tags to process
-            subclass_definition: DXF attribute definitions (name=subclass_name, attribs={key=attribute name, value=DXFAttr})
+            subclass_definition: DXF attribute definitions (name=subclass_name,
+                                 attribs={key=attribute name, value=DXFAttr})
 
         Returns:
              Tags: unprocessed tags
@@ -373,7 +420,8 @@ class SubclassProcessor:
             return False
 
         unprocessed_tags = Tags()
-        # do not cache group codes, content of group code will be deleted while processing
+        # Do not cache group codes, content of group code will be deleted while
+        # processing.
         group_codes = dict()
         doublets = []
         for dxfattr in subclass_definition.attribs.values():
@@ -382,12 +430,14 @@ class SubclassProcessor:
             else:
                 group_codes[dxfattr.code] = dxfattr
 
-        # iterate without leading subclass marker or for r12 without leading (0, ...) structure tag
+        # Iterate without leading subclass marker and for R12 without
+        # leading (0, ...) structure tag.
         for tag in tags:
             code, value = tag
             attrib = group_codes.get(code)
             if attrib is not None:
-                if (attrib.xtype != XType.callback) or (attrib.setter is not None):
+                if (attrib.xtype != XType.callback) or (
+                        attrib.setter is not None):
                     dxf.set(attrib.name, value)
 
                 if len(doublets) and replace_attrib(code):
@@ -398,25 +448,28 @@ class SubclassProcessor:
         return unprocessed_tags
 
     def append_base_class_to_acdb_entity(self) -> None:
+        """ It is valid to mix up the base class with AcDbEntity class.
+        This method appends all none base class group codes to the
+        AcDbEntity class.
         """
-        It is valid to mix up the base class with AcDbEntity class. This method appends all none base class group
-        codes to the AcDbEntity class
-        """
-        # This is needed for DXFEntity exclusive, so applying this method automatically
-        # to all entities is waste of runtime -> DXFGraphic.load_dxf_attribs()
+        # This is only needed for DXFEntity, so applying this method
+        # automatically to all entities is waste of runtime
+        # -> DXFGraphic.load_dxf_attribs()
         if self.r12:
             return
 
         acdb_entity_tags = self.subclasses[1]
         if acdb_entity_tags[0] == (100, 'AcDbEntity'):
-            acdb_entity_tags.extend(tag for tag in self.subclasses[0] if tag.code not in BASE_CLASS_CODES)
+            acdb_entity_tags.extend(tag for tag in self.subclasses[0] if
+                                    tag.code not in BASE_CLASS_CODES)
 
 
 base_class = DefSubclass(None, {
     'handle': DXFAttr(5),
 
     # owner: Soft-pointer ID/handle to owner BLOCK_RECORD object
-    # This tag is not supported by DXF R12, but is used intern to unify entity handling between DXF R12 and DXF R2000+
+    # This tag is not supported by DXF R12, but is used intern to unify entity
+    # handling between DXF R12 and DXF R2000+
     # Do not write this tag into DXF R12 files!
     'owner': DXFAttr(330),
 
@@ -434,23 +487,21 @@ class DXFEntity:
     DXFTYPE = 'DXFENTITY'  # storing as class var needs less memory
     DXFATTRIBS = DXFAttributes(base_class)  # DXF attribute definitions
 
-    # Default DXF attributes are set at instantiating a new object, the the difference to attribute default
-    # values is, that this attributes are really set, this means there is an real object in the dxf
-    # namespace defined, where default attribute values get returned on access without an existing object
-    # in the dxf namespace.
-    DEFAULT_ATTRIBS = None  # type: dict
+    # Default DXF attributes are set at instantiating a new object, the the
+    # difference to attribute default values is, that this attributes are
+    # really set, this means there is an real object in the dxf namespace
+    # defined, where default attribute values get returned on access without
+    # an existing object in the dxf namespace.
+    DEFAULT_ATTRIBS: dict = None
     MIN_DXF_VERSION_FOR_EXPORT = DXF12
 
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor. (internal API)"""
-        # public attributes for package users
+        # Public attributes for package users
         self.doc: Drawing = doc
         self.dxf: DXFNamespace = DXFNamespace(entity=self)
-        # priority order: highest value first - 100 (top) before 0 (default) before -100 (bottom)
-        # whole int range allowed
-        self.priority: int = 0
 
-        # none public attributes for package users
+        # None public attributes for package users
         # create extended data only if needed
         self.appdata: Optional[AppData] = None
         self.reactors: Optional[Reactors] = None
@@ -459,16 +510,12 @@ class DXFEntity:
         self.embedded_objects: Optional[EmbeddedObjects] = None
         self.proxy_graphic: Optional[bytes] = None
 
-    # todo: remove compatibility drawing property
-    @property
-    def drawing(self):
-        """ Only for compatibility to ezdxf prior to v0.10 """
-        return self.doc
-
     @classmethod
-    def load(cls: Type[T], tags: Union[ExtendedTags, Tags], doc: 'Drawing' = None) -> T:
+    def load(cls: Type[T], tags: Union[ExtendedTags, Tags],
+             doc: 'Drawing' = None) -> T:
         """
-        Constructor to generate entities loaded from DXF files (untrusted environment)
+        Constructor to generate entities loaded from DXF files (untrusted
+        environment)
 
         Args:
             tags: DXF tags as Tags() or ExtendedTags()
@@ -489,7 +536,9 @@ class DXFEntity:
 
     @classmethod
     def shallow_copy(cls: Type[T], other: 'DXFEntity') -> T:
-        """ Copy constructor for type casting e.g. Polyface and Polymesh. (internal API) """
+        """ Copy constructor for type casting e.g. Polyface and Polymesh.
+        (internal API)
+        """
         entity = cls(other.doc)
         entity.dxf = other.dxf
         entity.extension_dict = other.extension_dict
@@ -500,20 +549,23 @@ class DXFEntity:
         entity.proxy_graphic = other.proxy_graphic
         entity.dxf.rewire(entity)
         if (entity.doc is not None) and (entity.dxf.handle is not None):
-            entity.doc.entitydb[entity.dxf.handle] = entity  # replace entity in entity db, can't call add() here
+            entity.doc.entitydb[
+                entity.dxf.handle] = entity  # replace entity in entity db, can't call add() here
         return entity
 
     def copy(self: T) -> T:
         """
-        Returns a copy of `self` but without handle, owner and reactors. This copy is NOT stored in the entity
-        database and does NOT reside in any layout, block, table or objects section! Extension dictionary and
-        reactors are not copied.
+        Returns a copy of `self` but without handle, owner and reactors.
+        This copy is NOT stored in the entity database and does NOT reside
+        in any layout, block, table or objects section! Extension dictionary
+        and reactors are not copied.
 
-        Don't use this function to duplicate DXF entities in drawing, use :meth:`EntityDB.duplicate_entity`
-        instead for this task.
+        Don't use this function to duplicate DXF entities in drawing,
+        use :meth:`EntityDB.duplicate_entity` instead for this task.
 
-        Copying is not trivial, because of linked resources and the lack of documentation how to handle this
-        linked resources: extension dictionary, handles in appdata, xdata or embedded objects.
+        Copying is not trivial, because of linked resources and the lack of
+        documentation how to handle this linked resources: extension dictionary,
+        handles in appdata, xdata or embedded objects.
 
         (internal API)
         """
@@ -537,11 +589,16 @@ class DXFEntity:
         return entity
 
     def _copy_data(self, entity: 'DXFEntity') -> None:
-        """ Copy entity data like vertices or attribs and store the copies into the entity database. (internal API)"""
+        """ Copy entity data like vertices or attribs and store the copies into
+        the entity database.
+        (internal API)
+        """
         pass
 
     def __deepcopy__(self, memodict: dict = None):
-        """ Some entities maybe linked by more than one entity, to be safe use `memodict` for bookkeeping. (internal API)
+        """ Some entities maybe linked by more than one entity, to be safe use
+        `memodict` for bookkeeping.
+        (internal API)
         """
         memodict = memodict or {}
         try:
@@ -552,14 +609,18 @@ class DXFEntity:
             return copy
 
     def load_tags(self, tags: ExtendedTags) -> None:
-        """ Generic tag loading interface, called if DXF drawing is loaded from a stream or file. (internal API) """
+        """ Generic tag loading interface, called if DXF drawing is loaded from
+        a stream or file.
+        (internal API)
+        """
         if tags:
             if len(tags.appdata):
                 self.setup_app_data(tags.appdata)
             if len(tags.xdata):
-                self.xdata = XData(tags.xdata)  # same process for every entity
+                self.xdata = XData(tags.xdata)
             if tags.embedded_objects:
-                self.embedded_objects = EmbeddedObjects(tags.embedded_objects)  # same process for every entity
+                self.embedded_objects = EmbeddedObjects(
+                    tags.embedded_objects)
             if self.doc:
                 dxfversion = self.doc.dxfversion
             else:  # test cases
@@ -568,9 +629,11 @@ class DXFEntity:
             self.dxf = self.load_dxf_attribs(processor)
 
     @classmethod
-    def new(cls: Type[T], handle: str = None, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> T:
+    def new(cls: Type[T], handle: str = None, owner: str = None,
+            dxfattribs: dict = None, doc: 'Drawing' = None) -> T:
         """
-        Constructor for building new entities from scratch by ezdxf (trusted environment)
+        Constructor for building new entities from scratch by ezdxf
+        (trusted environment).
 
         Args:
             handle: unique DXF entity handle or None
@@ -592,16 +655,21 @@ class DXFEntity:
         return entity
 
     def update_dxf_attribs(self, dxfattribs: dict) -> None:
-        """ Set DXF attributes by a ``dict`` like :code:`{'layer': 'test', 'color': 4}`. """
+        """ Set DXF attributes by a ``dict`` like :code:`{'layer': 'test',
+        'color': 4}`.
+        """
         setter = self.dxf.set
         for key, value in dxfattribs.items():
             setter(key, value)
 
     def post_new_hook(self):
-        """ Post processing and integrity validation after entity creation (internal API) """
+        """ Post processing and integrity validation after entity creation
+        (internal API)
+        """
         pass
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> DXFNamespace:
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> DXFNamespace:
         # inheritance hook (internal API)
         return DXFNamespace(processor, self)
 
@@ -629,14 +697,16 @@ class DXFEntity:
 
     def get_dxf_attrib(self, key: str, default: Any = None) -> Any:
         """
-        Get DXF attribute `key`, returns `default` if key doesn't exist, or raise :class:`DXFValueError` if `default` is
-        :class:`DXFValueError` and no DXF default value is defined::
+        Get DXF attribute `key`, returns `default` if key doesn't exist, or
+        raise :class:`DXFValueError` if `default` is :class:`DXFValueError`
+        and no DXF default value is defined::
 
             layer = entity.get_dxf_attrib("layer")
             # same as
             layer = entity.dxf.layer
 
-        Raises :class:`DXFAttributeError` if `key` is not an supported DXF attribute.
+        Raises :class:`DXFAttributeError` if `key` is not an supported DXF
+        attribute.
 
         """
         return self.dxf.get(key, default)
@@ -649,16 +719,19 @@ class DXFEntity:
            # same as
            entity.dxf.layer = "MyLayer"
 
-        Raises :class:`DXFAttributeError` if `key` is not an supported DXF attribute.
+        Raises :class:`DXFAttributeError` if `key` is not an supported DXF
+        attribute.
 
         """
         self.dxf.set(key, value)
 
     def del_dxf_attrib(self, key: str) -> None:
         """
-        Delete DXF attribute `key`, does not raise an error if attribute is supported but not present.
+        Delete DXF attribute `key`, does not raise an error if attribute is
+        supported but not present.
 
-        Raises :class:`DXFAttributeError` if `key` is not an supported DXF attribute.
+        Raises :class:`DXFAttributeError` if `key` is not an supported DXF
+        attribute.
 
         """
         self.dxf.discard(key)
@@ -667,11 +740,8 @@ class DXFEntity:
         """
         Returns ``True`` if DXF attribute `key` really exist.
 
-        Raises :class:`DXFAttributeError` if `key` is not an supported DXF attribute.
-
-        .. versionchanged:: 0.10
-
-            renamed from ``dxf_attrib_exists()``
+        Raises :class:`DXFAttributeError` if `key` is not an supported DXF
+        attribute.
 
         """
         return self.dxf.hasattr(key)
@@ -680,12 +750,8 @@ class DXFEntity:
 
     def is_supported_dxf_attrib(self, key: str) -> bool:
         """
-        Returns ``True`` if DXF attrib `key` is supported by this entity. Does not grant that attribute
-        `key` really exist.
-
-        .. versionchanged:: 0.10
-
-            renamed from ``supports_dxf_attrib()``
+        Returns ``True`` if DXF attrib `key` is supported by this entity.
+        Does not grant that attribute `key` really exist.
 
         """
         if key in self.DXFATTRIBS:
@@ -711,8 +777,8 @@ class DXFEntity:
         return str(self.__class__) + " " + str(self)
 
     def dxfattribs(self, drop: Set[str] = None) -> dict:
-        """ Returns a ``dict`` with all existing DXF attributes and their values and exclude all DXF attributes
-        listed in set `drop`.
+        """ Returns a ``dict`` with all existing DXF attributes and their
+        values and exclude all DXF attributes listed in set `drop`.
 
         .. versionchanged:: 0.12
             added `drop` argument
@@ -724,18 +790,19 @@ class DXFEntity:
         else:
             return all_attribs
 
-    def set_flag_state(self, flag: int, state: bool = True, name: str = 'flags') -> None:
-        """
-        Set binary coded `flag` of DXF attribute `name` to ``1`` (on) if `state` is ``True``, set `flag` to ``0`` (off)
-        if `state` is ``False``.
+    def set_flag_state(self, flag: int, state: bool = True,
+                       name: str = 'flags') -> None:
+        """ Set binary coded `flag` of DXF attribute `name` to ``1`` (on)
+        if `state` is ``True``, set `flag` to ``0`` (off)
+         if `state` is ``False``.
         """
         flags = self.dxf.get(name, 0)
         self.dxf.set(name, set_flag_state(flags, flag, state=state))
 
     def get_flag_state(self, flag: int, name: str = 'flags') -> bool:
         """
-        Returns ``True`` if any `flag` of DXF attribute is ``1`` (on), else ``False``. Always check only one flag state
-        at the time.
+        Returns ``True`` if any `flag` of DXF attribute is ``1`` (on), else
+        ``False``. Always check only one flag state at the time.
         """
         return bool(self.dxf.get(name, 0) & flag)
 
@@ -745,15 +812,15 @@ class DXFEntity:
         return hasattr(self, 'dxf')
 
     def remove_dependencies(self, other: 'Drawing' = None):
-        """
-        Remove all dependencies from actual document.
+        """ Remove all dependencies from actual document.
 
-        Intended usage is to remove dependencies from the actual document to move or copy the entity to an
-        `other` document.
+        Intended usage is to remove dependencies from the actual document to
+        move or copy the entity to an `other` document.
 
-        An error free call of this method does NOT guarantee that this entity can be moved/copied
-        to the `other` document, some entities like DIMENSION have too much dependencies to a document
-        to move or copy them, but to check this is not the domain of this method!
+        An error free call of this method does NOT guarantee that this entity
+        can be moved/copied to the `other` document, some entities like
+        DIMENSION have too much dependencies to a document to move or copy
+        them, but to check this is not the domain of this method!
 
         (internal API)
         """
@@ -768,10 +835,12 @@ class DXFEntity:
 
     def destroy(self) -> None:
         """
-        Delete all data and references. Does not delete entity from structures like layouts or groups.
+        Delete all data and references. Does not delete entity from structures
+        like layouts or groups.
 
-        This method should not be used to delete entities from a layout/document by the package user,
-        use :meth:`BaseLayout.delete_entity` method for that!
+        This method should not be used to delete entities from a layout/document
+        by the package user, use :meth:`BaseLayout.delete_entity` method for
+        that!
 
         (internal API)
 
@@ -880,11 +949,15 @@ class DXFEntity:
         # check XDATA
 
     def has_extension_dict(self) -> bool:
-        """ Returns ``True`` if entity has an attached :class:`~ezdxf.entities.xdict.ExtensionDict`. """
+        """ Returns ``True`` if entity has an attached
+        :class:`~ezdxf.entities.xdict.ExtensionDict`.
+        """
         return self.extension_dict is not None
 
     def get_extension_dict(self) -> 'ExtensionDict':
-        """ Returns the existing :class:`~ezdxf.entities.xdict.ExtensionDict` or a new created one. """
+        """ Returns the existing :class:`~ezdxf.entities.xdict.ExtensionDict`
+        or a new created one.
+        """
 
         def new_extension_dict():
             self.extension_dict = ExtensionDict.new(self)
@@ -930,7 +1003,9 @@ class DXFEntity:
         self.appdata.add(appid, tags)
 
     def discard_app_data(self, appid: str):
-        """ Discard application defined data for `appid`. Does not raise an exception if no data for `appid` exist. """
+        """ Discard application defined data for `appid`. Does not raise an
+        exception if no data for `appid` exist.
+        """
         if self.appdata:
             self.appdata.discard(appid)
 
@@ -969,12 +1044,16 @@ class DXFEntity:
         self.xdata.add(appid, tags)
 
     def discard_xdata(self, appid: str) -> None:
-        """ Discard extended data for `appid`. Does not raise an exception if no extended data for `appid` exist. """
+        """ Discard extended data for `appid`. Does not raise an exception if
+        no extended data for `appid` exist.
+        """
         if self.xdata:
             self.xdata.discard(appid)
 
     def has_xdata_list(self, appid: str, name: str) -> bool:
-        """ Returns ``True`` if a tag list `name` for extended data `appid` exist. """
+        """ Returns ``True`` if a tag list `name` for extended data `appid`
+        exist.
+        """
         if self.has_xdata(appid):
             return self.xdata.has_xlist(appid, name)
         else:
@@ -1010,17 +1089,18 @@ class DXFEntity:
         self.xdata.set_xlist(appid, name, tags)
 
     def discard_xdata_list(self, appid: str, name: str) -> None:
-        """
-        Discard tag list `name` for extended data `appid`. Does not raise an exception if no extended data for `appid`
-        or no tag list `name` exist.
+        """ Discard tag list `name` for extended data `appid`. Does not raise
+        an exception if no extended data for `appid` or no tag list `name`
+        exist.
         """
         if self.xdata:
             self.xdata.discard_xlist(appid, name)
 
     def replace_xdata_list(self, appid: str, name: str, tags: Iterable) -> None:
         """
-        Replaces tag list `name` for existing extended data `appid` by `tags`. Appends new list if tag list `name` do
-        not exist, but raises :class:`DXFValueError` if extended data `appid` do not exist.
+        Replaces tag list `name` for existing extended data `appid` by `tags`.
+        Appends new list if tag list `name` do not exist, but raises
+        :class:`DXFValueError` if extended data `appid` do not exist.
 
         Args:
              appid: application name as defined in the APPID table.
@@ -1054,7 +1134,9 @@ class DXFEntity:
         self.reactors.add(handle)
 
     def discard_reactor_handle(self, handle: str) -> None:
-        """ Discard `handle` from reactors. Does not raise an exception if `handle` does not exist. """
+        """ Discard `handle` from reactors. Does not raise an exception if
+        `handle` does not exist.
+        """
         if self.reactors:
             self.reactors.discard(handle)
 
@@ -1068,7 +1150,8 @@ class DXFTagStorage(DXFEntity):
         self.xtags = []  # type: ExtendedTags
 
     def copy(self) -> 'DXFEntity':
-        raise DXFTypeError('Cloning of tag storage {} not supported.'.format(self.DXFTYPE))
+        raise DXFTypeError(
+            'Cloning of tag storage {} not supported.'.format(self.DXFTYPE))
 
     @property
     def base_class(self):

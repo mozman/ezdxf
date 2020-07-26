@@ -37,6 +37,15 @@ DXF Entities
 - FIELD
 - ACAD_TABLE
 
+- Blocks.purge(): find unused BLOCK definitions and delete them, 
+    but not as part of the auditing process!
+    Unused BLOCK has no corresponding INSERT except:
+    - LAYOUT blocks
+    - ARROW blocks, could be unused but references could be stored in the 
+      DIMENSION or LEADER override - so better keep them at all
+    - anonymous blocks without explicit INSERT like DIMENSION, ACAD_TABLE 
+      geometry
+
 DXF Audit & Repair
 ------------------
 
@@ -46,9 +55,7 @@ DXF Audit & Repair
     - text style exist; repair: set to 'Standard'
 - check TEXT, MTEXT
     - text style exist; repair: set to 'Standard'
-- find unused BLOCK definitions: has no corresponding INSERT; repair: delete
-    - EXCEPTION: layout blocks
-    - EXCEPTION: anonymous blocks without explicit INSERT like DIMENSION geometry
+
 
 Cython Code
 -----------
