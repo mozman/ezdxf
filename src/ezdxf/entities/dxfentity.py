@@ -27,8 +27,7 @@ logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Auditor, TagWriter, Drawing, EntityDB,
-        EntityFactory,
+        Auditor, TagWriter, Drawing, EntityDB, EntityFactory,
     )
 
 __all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor',
@@ -492,7 +491,7 @@ class DXFEntity:
     # really set, this means there is an real object in the dxf namespace
     # defined, where default attribute values get returned on access without
     # an existing object in the dxf namespace.
-    DEFAULT_ATTRIBS: dict = None
+    DEFAULT_ATTRIBS: Dict = None
     MIN_DXF_VERSION_FOR_EXPORT = DXF12
 
     def __init__(self, doc: 'Drawing' = None):
@@ -549,8 +548,8 @@ class DXFEntity:
         entity.proxy_graphic = other.proxy_graphic
         entity.dxf.rewire(entity)
         if (entity.doc is not None) and (entity.dxf.handle is not None):
-            entity.doc.entitydb[
-                entity.dxf.handle] = entity  # replace entity in entity db, can't call add() here
+            # Replace entity in entity db, can't call add() here.
+            entity.doc.entitydb[entity.dxf.handle] = entity
         return entity
 
     def copy(self: T) -> T:
@@ -595,7 +594,7 @@ class DXFEntity:
         """
         pass
 
-    def __deepcopy__(self, memodict: dict = None):
+    def __deepcopy__(self, memodict: Dict = None):
         """ Some entities maybe linked by more than one entity, to be safe use
         `memodict` for bookkeeping.
         (internal API)
@@ -630,7 +629,7 @@ class DXFEntity:
 
     @classmethod
     def new(cls: Type[T], handle: str = None, owner: str = None,
-            dxfattribs: dict = None, doc: 'Drawing' = None) -> T:
+            dxfattribs: Dict = None, doc: 'Drawing' = None) -> T:
         """
         Constructor for building new entities from scratch by ezdxf
         (trusted environment).
@@ -654,7 +653,7 @@ class DXFEntity:
         entity.post_new_hook()
         return entity
 
-    def update_dxf_attribs(self, dxfattribs: dict) -> None:
+    def update_dxf_attribs(self, dxfattribs: Dict) -> None:
         """ Set DXF attributes by a ``dict`` like :code:`{'layer': 'test',
         'color': 4}`.
         """
@@ -776,7 +775,7 @@ class DXFEntity:
         """ Returns a simple string representation including the class. """
         return str(self.__class__) + " " + str(self)
 
-    def dxfattribs(self, drop: Set[str] = None) -> dict:
+    def dxfattribs(self, drop: Set[str] = None) -> Dict:
         """ Returns a ``dict`` with all existing DXF attributes and their
         values and exclude all DXF attributes listed in set `drop`.
 
@@ -1147,11 +1146,12 @@ class DXFTagStorage(DXFEntity):
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor """
         super().__init__(doc)
-        self.xtags = []  # type: ExtendedTags
+        self.xtags: Optional[ExtendedTags] = None
 
     def copy(self) -> 'DXFEntity':
         raise DXFTypeError(
-            'Cloning of tag storage {} not supported.'.format(self.DXFTYPE))
+            f'Cloning of tag storage {self.dxftype()} not supported.'
+        )
 
     @property
     def base_class(self):
@@ -1189,12 +1189,9 @@ class DXFTagStorage(DXFEntity):
             self.dxf.__dict__['paperspace'] = 0
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Write subclass tags as they are
-        """
-        # base class export is done by parent
+        """ Write subclass tags as they are. """
         for subclass in self.xtags.subclasses[1:]:
             tagwriter.write_tags(subclass)
-        # xdata and embedded objects  export is done by parent
 
     def destroy(self) -> None:
         del self.xtags
