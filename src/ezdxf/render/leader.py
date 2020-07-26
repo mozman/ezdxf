@@ -8,7 +8,7 @@ from ezdxf.lldxf.const import BYBLOCK
 from ezdxf.math import Vector, fit_points_to_cad_cv
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic, Leader
+    from ezdxf.eztypes import DXFGraphic, Leader, Insert, Spline
 
 
 def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
@@ -44,7 +44,8 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
     dimlwd = dxf.lineweight
     override = None
 
-    if doc:  # get styling attributes from associated DIMSTYLE and/or XDATA override
+    if doc:
+        # get styling attributes from associated DIMSTYLE and/or XDATA override
         override = DimStyleOverride(cast('Dimension', leader))
         dimtad = override.get('dimtad', dimtad)
         dimgap = override.get('dimgap', dimgap)
@@ -63,7 +64,8 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
         if dxf.hookline_direction == 1:
             hook_line_vector = -hook_line_vector
         if dimtad != 0 and text_width > 0:
-            vertices.append(vertices[-1] + hook_line_vector * (dimgap * dimscale + text_width))
+            hook_line = hook_line_vector * (dimgap * dimscale + text_width)
+            vertices.append(vertices[-1] + hook_line)
 
     dxfattribs = leader.graphic_properties()
     dxfattribs['color'] = dimclrd
@@ -76,9 +78,13 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
     if dxf.path_type == 1:  # Spline
         start_tangent = (vertices[1] - vertices[0])
         end_tangent = (vertices[-1] - vertices[-2])
-        bspline = fit_points_to_cad_cv(vertices, degree=3, tangents=[start_tangent, end_tangent])
-        # noinspection PyUnresolvedReferences
-        spline = factory.new('SPLINE', doc=doc).apply_construction_tool(bspline)
+        bspline = fit_points_to_cad_cv(
+            vertices,
+            degree=3,
+            tangents=[start_tangent, end_tangent]
+        )
+        spline = cast('Spline', factory.new('SPLINE', doc=doc))
+        spline.apply_construction_tool(bspline)
         yield spline
     else:
         attribs = dict(dxfattribs)
@@ -105,7 +111,8 @@ def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
                 'zscale': size,
             })
             # create a virtual block reference
-            insert = factory.new('INSERT', dxfattribs=dxfattribs, doc=doc)
+            insert = cast('Insert',
+                          factory.new('INSERT', dxfattribs=dxfattribs, doc=doc))
             yield from insert.virtual_entities()
         else:  # render standard arrows
             yield from ARROWS.virtual_entities(
