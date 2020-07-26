@@ -1,7 +1,9 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-16
-from typing import TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict
+from typing import (
+    TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict,
+)
 from itertools import chain
 from ezdxf.math import Vector, Matrix44, NULLVEC
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
@@ -26,35 +28,37 @@ if TYPE_CHECKING:
 
 __all__ = ['Polyline', 'Polyface', 'Polymesh']
 
-acdb_polyline = DefSubclass('AcDbPolylineDummy', {  # AcDbPolylineDummy is a temp solution while importing
-    # 66: obsolete - not read and not written, because POLYLINE without vertices makes no sense
-    # a “dummy” point; the X and Y values are always 0, and the Z value is the polyline's elevation
-    # (in OCS when 2D, WCS when 3D) x, y ALWAYS 0
+acdb_polyline = DefSubclass('AcDbPolylineDummy', {
+    # AcDbPolylineDummy is a temporary solution while loading
+    # 66: obsolete - Vertices follow flag
+    # Elevation is a "dummy" point. The x and y values are always 0,
+    # and the Z value is the polyline elevation:
     'elevation': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
-    # Polyline flag (bit-coded):
-    'flags': DXFAttr(70, default=0),
-    # 1 = This is a closed polyline (or a polygon mesh closed in the M direction)
+    # Polyline flags (bit-coded):
+    # 1 = closed POLYLINE or a POLYMESH closed in the M direction
     # 2 = Curve-fit vertices have been added
     # 4 = Spline-fit vertices have been added
-    # 8 = This is a 3D polyline
-    # 16 = This is a 3D polygon mesh
-    # 32 = The polygon mesh is closed in the N direction
-    # 64 = The polyline is a polyface mesh
-    # 128 = The linetype pattern is generated continuously around the vertices of this polyline
+    # 8 = 3D POLYLINE
+    # 16 = POLYMESH
+    # 32 = POLYMESH is closed in the N direction
+    # 64 = POLYFACE
+    # 128 = linetype pattern is generated continuously around the vertices
+    'flags': DXFAttr(70, default=0),
     'default_start_width': DXFAttr(40, default=0, optional=True),
     'default_end_width': DXFAttr(41, default=0, optional=True),
     'm_count': DXFAttr(71, default=0, optional=True),
     'n_count': DXFAttr(72, default=0, optional=True),
     'm_smooth_density': DXFAttr(73, default=0, optional=True),
     'n_smooth_density': DXFAttr(74, default=0, optional=True),
-    # Curves and smooth surface type; integer codes, not bit-coded:
-    'smooth_type': DXFAttr(75, default=0, optional=True),
+    # Curves and smooth surface type:
     # 0 = No smooth surface fitted
     # 5 = Quadratic B-spline surface
     # 6 = Cubic B-spline surface
     # 8 = Bezier surface
+    'smooth_type': DXFAttr(75, default=0, optional=True),
     'thickness': DXFAttr(39, default=0, optional=True),
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1),
+                         optional=True),
 })
 
 
@@ -99,7 +103,8 @@ class Polyline(DXFGraphic):
         self.seqend = seqend
 
     def _copy_data(self, entity: 'Polyline') -> None:
-        """ Copy vertices, does not store the copies into the entity database. """
+        """ Copy vertices, does not store the copies into the entity database.
+        """
         entity.vertices = [vertex.copy() for vertex in self.vertices]
         if self.seqend:
             entity.seqend = self.seqend.copy()
@@ -116,48 +121,53 @@ class Polyline(DXFGraphic):
             self.new_seqend()
 
     def new_seqend(self):
-        """ Create new ENDSEQ. (internal API)"""
-        seqend = self.doc.dxffactory.create_db_entry('SEQEND', dxfattribs={'layer': self.dxf.layer})
+        """ Create new SEQEND entity. (internal API)"""
+        seqend = self.doc.dxffactory.create_db_entry('SEQEND', dxfattribs={
+            'layer': self.dxf.layer,
+        })
         self.link_seqend(seqend)
 
     def set_owner(self, owner: str, paperspace: int = 0):
-        # At loading from file:
-        # POLYLINE will be added to layout before vertices are linked, so set_owner() of POLYLINE
-        # does not set owner of vertices
+        # Loading from file: POLYLINE will be added to layout before vertices
+        # are linked, so set_owner() of POLYLINE does not set owner of vertices
+        # at loading time.
         super().set_owner(owner, paperspace)
-        # assigning new owner to vertices is done by super class set_owner() method
-        if self.seqend:  # has no paperspace flag
+        if self.seqend:
+            # SEQEND entity has no paperspace attribute and therefore can not
+            # processed like a VERTEX entity in set_owner():
             self.seqend.dxf.owner = owner
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
-        """
-        Adds subclass processing for 'AcDbLine', requires previous base class and 'AcDbEntity' processing by parent
-        class.
-        """
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+        # Base class and 'AcDbEntity' processing by the parent class:
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
         if processor.r12:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_polyline, index=0)
+            processor.load_dxfattribs_into_namespace(
+                dxf, subclass_definition=acdb_polyline, index=0
+            )
         else:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_polyline, index=2)
+            tags = processor.load_dxfattribs_into_namespace(
+                dxf, subclass_definition=acdb_polyline, index=2
+            )
             name = processor.subclasses[2][0].value
             if len(tags):
                 # do not log:
                 # 66: attribs follow, not required
-                processor.log_unprocessed_tags(tags.filter((66,)), subclass=name)
+                processor.log_unprocessed_tags(
+                    unprocessed_tags=tags.filter((66,)), subclass=name
+                )
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
+        # Base class and AcDbEntity export is done by the parent class.
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, self.get_mode())
 
-        tagwriter.write_tag2(66, 1)  # entities follow, required for R12? (sure not for R2000+)
-        # for all DXF versions
+        tagwriter.write_tag2(66, 1)  # Vertices follow
         self.dxf.export_dxf_attribs(tagwriter, [
             'elevation',
             'flags',
@@ -171,8 +181,9 @@ class Polyline(DXFGraphic):
             'thickness',
             'extrusion',
         ])
-        # xdata and embedded objects export will be done by parent class
-        # following VERTEX entities and SEQEND is exported by EntitySpace()
+        # XDATA and embedded objects export will be done by the parent class,
+        # the following VERTEX entities and the SEQEND entity is exported by
+        # EntitySpace().
 
     def export_seqend(self, tagwriter: 'TagWriter'):
         self.seqend.dxf.owner = self.dxf.owner
@@ -180,10 +191,7 @@ class Polyline(DXFGraphic):
         self.seqend.export_dxf(tagwriter)
 
     def destroy(self) -> None:
-        """
-        Delete all data and references.
-
-        """
+        """ Delete all data and references. """
         for v in self.vertices:
             self.entitydb.delete_entity(v)
         del self.vertices
@@ -203,7 +211,8 @@ class Polyline(DXFGraphic):
 
     def on_linetype_change(self, linetype: str):
         """
-        Event handler for linetype change. Changes also the linetype of all vertices.
+        Event handler for linetype change. Changes also the linetype of all
+        vertices.
 
         Args:
             linetype: new linetype as string
@@ -216,8 +225,13 @@ class Polyline(DXFGraphic):
         return const.VERTEX_FLAGS[self.get_mode()]
 
     def get_mode(self) -> str:
-        """ Returns a string: ``'AcDb2dPolyline'``, ``'AcDb3dPolyline'``, ``'AcDbPolygonMesh'`` or
-        ``'AcDbPolyFaceMesh'``
+        """ Returns POLYLINE type as string:
+
+            - 'AcDb2dPolyline'
+            - 'AcDb3dPolyline'
+            - 'AcDbPolygonMesh'
+            - 'AcDbPolyFaceMesh'
+
         """
         if self.is_3d_polyline:
             return 'AcDb3dPolyline'
@@ -255,12 +269,16 @@ class Polyline(DXFGraphic):
 
     @property
     def is_m_closed(self) -> bool:
-        """ ``True`` if POLYLINE (as :class:`Polymesh`) is closed in m direction. """
+        """ ``True`` if POLYLINE (as :class:`Polymesh`) is closed in m
+        direction.
+        """
         return bool(self.dxf.flags & self.MESH_CLOSED_M_DIRECTION)
 
     @property
     def is_n_closed(self) -> bool:
-        """ ``True`` if POLYLINE (as :class:`Polymesh`) is closed in n direction. """
+        """ ``True`` if POLYLINE (as :class:`Polymesh`) is closed in n
+        direction.
+        """
         return bool(self.dxf.flags & self.MESH_CLOSED_N_DIRECTION)
 
     @property
@@ -273,15 +291,18 @@ class Polyline(DXFGraphic):
 
     @property
     def has_width(self) -> bool:
-        """ Returns ``True`` if 2D POLYLINE has default width values or any segment with width attributes.
+        """ Returns ``True`` if 2D POLYLINE has default width values or any
+        segment with width attributes.
 
         .. versionadded:: 0.14
 
         """
         if self.is_2d_polyline:
-            if self.dxf.hasattr('default_start_width') and bool(self.dxf.default_start_width):
+            if self.dxf.hasattr('default_start_width') and bool(
+                    self.dxf.default_start_width):
                 return True
-            if self.dxf.hasattr('default_end_width') and bool(self.dxf.default_end_width):
+            if self.dxf.hasattr('default_end_width') and bool(
+                    self.dxf.default_end_width):
                 return True
             for v in self.vertices:
                 if v.dxf.hasattr('start_width') and bool(v.dxf.start_width):
@@ -291,21 +312,20 @@ class Polyline(DXFGraphic):
         return False
 
     def m_close(self, status=True) -> None:
-        """
-        Close POLYMESH in m direction if `status` is ``True`` (also closes POLYLINE),
-        clears closed state if `status` is ``False``.
+        """ Close POLYMESH in m direction if `status` is ``True`` (also closes
+        POLYLINE), clears closed state if `status` is ``False``.
         """
         self.set_flag_state(self.MESH_CLOSED_M_DIRECTION, status, name='flags')
 
     def n_close(self, status=True) -> None:
-        """
-        Close POLYMESH in n direction if `status` is ``True``, clears closed state if `status` is ``False``.
+        """ Close POLYMESH in n direction if `status` is ``True``, clears closed
+        state if `status` is ``False``.
         """
         self.set_flag_state(self.MESH_CLOSED_N_DIRECTION, status, name='flags')
 
     def close(self, m_close=True, n_close=False) -> None:
-        """ Set closed state of POLYMESH and POLYLINE in m direction and n direction. ``True`` set closed flag,
-        ``False`` clears closed flag.
+        """ Set closed state of POLYMESH and POLYLINE in m direction and n
+        direction. ``True`` set closed flag, ``False`` clears closed flag.
         """
         self.m_close(m_close)
         self.n_close(n_close)
@@ -315,14 +335,19 @@ class Polyline(DXFGraphic):
         return len(self.vertices)
 
     def __getitem__(self, pos) -> 'DXFVertex':
-        """ Get :class:`Vertex` entity at position `pos`, supports ``list`` slicing. """
+        """ Get :class:`Vertex` entity at position `pos`, supports ``list``
+        slicing.
+        """
         return self.vertices[pos]
 
     def points(self) -> Iterable[Vector]:
-        """ Returns iterable of all polyline vertices as ``(x, y, z)`` tuples, not as :class:`Vertex` objects."""
+        """ Returns iterable of all polyline vertices as ``(x, y, z)`` tuples,
+        not as :class:`Vertex` objects.
+        """
         return (vertex.dxf.location for vertex in self.vertices)
 
-    def append_vertices(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> None:
+    def append_vertices(self, points: Iterable['Vertex'],
+                        dxfattribs: Dict = None) -> None:
         """ Append multiple :class:`Vertex` entities at location `points`.
 
         Args:
@@ -333,18 +358,22 @@ class Polyline(DXFGraphic):
         dxfattribs = dxfattribs or {}
         self.vertices.extend(self._build_dxf_vertices(points, dxfattribs))
 
-    def append_formatted_vertices(self, points: Iterable['Vertex'], format: str = 'xy',
-                                  dxfattribs: dict = None) -> None:
+    def append_formatted_vertices(self, points: Iterable['Vertex'],
+                                  format: str = 'xy',
+                                  dxfattribs: Dict = None) -> None:
         """ Append multiple :class:`Vertex` entities at location `points`.
 
         Args:
-            points: iterable of (x, y, [start_width, [end_width, [bulge]]]) tuple
-            format: format: format string, default is ``'xy'``, see: :ref:`format codes`
+            points: iterable of (x, y, [start_width, [end_width, [bulge]]])
+                    tuple
+            format: format string, default is ``'xy'``, see: :ref:`format codes`
             dxfattribs: dict of DXF attributes for :class:`Vertex` class
 
         """
         dxfattribs = dxfattribs or {}
-        dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
+        dxfattribs['flags'] = (
+                dxfattribs.get('flags', 0) | self.get_vertex_flags()
+        )
 
         # same DXF attributes for VERTEX entities as for POLYLINE
         dxfattribs['owner'] = self.dxf.owner
@@ -374,10 +403,11 @@ class Polyline(DXFGraphic):
         dxfattribs = dxfattribs or {}
         self.vertices.extend(self._build_dxf_vertices([point], dxfattribs))
 
-    def insert_vertices(self, pos: int, points: Iterable['Vertex'], dxfattribs: dict = None) -> None:
+    def insert_vertices(self, pos: int, points: Iterable['Vertex'],
+                        dxfattribs: dict = None) -> None:
         """
-        Insert :class:`Vertex` entities at location `points` at insertion position `pos``
-        of list :attr:`Polyline.vertices`.
+        Insert vertices `points` into :attr:`Polyline.vertices` list
+        at insertion location `pos` .
 
         Args:
             pos: insertion position of list :attr:`Polyline.vertices`
@@ -386,16 +416,20 @@ class Polyline(DXFGraphic):
 
         """
         dxfattribs = dxfattribs or {}
-        self.vertices[pos:pos] = list(self._build_dxf_vertices(points, dxfattribs))
+        self.vertices[pos:pos] = list(
+            self._build_dxf_vertices(points, dxfattribs))
 
-    def _build_dxf_vertices(self, points: Iterable['Vertex'], dxfattribs: dict) -> List['DXFVertex']:
+    def _build_dxf_vertices(self, points: Iterable['Vertex'],
+                            dxfattribs: dict) -> List['DXFVertex']:
         """ Converts point (x, y, z)-tuples into DXFVertex objects.
 
         Args:
             points: list of (x, y, z)-tuples
             dxfattribs: dict of DXF attributes
         """
-        dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
+        dxfattribs['flags'] = (
+                dxfattribs.get('flags', 0) | self.get_vertex_flags()
+        )
 
         # same DXF attributes for VERTEX entities as for POLYLINE
         dxfattribs['owner'] = self.dxf.owner
@@ -430,33 +464,36 @@ class Polyline(DXFGraphic):
             for vertex in self.vertices:
                 location = vertex.dxf.location
                 if elevation is not None:
-                    # Older DXF version may not have written the z-axis, which is now 0 by default in ezdxf,
-                    # so replace existing z-axis by elevation value
+                    # Older DXF version may not have written the z-axis, which
+                    # is now 0 by default in ezdxf, so replace existing z-axis
+                    # by elevation value.
                     location = location.replace(z=elevation)
                 yield location
 
         if self.is_2d_polyline:
             dxf = self.dxf
             ocs = OCSTransform(self.dxf.extrusion, m)
-            # Newer DXF versions write 2d polylines always as LWPOLYLINE entities.
-            # No need for optimizations.
-            if not ocs.scale_uniform:
-                raise NonUniformScalingError('2D POLYLINE with arcs does not support non uniform scaling')
-                # Parent function has to catch this Exception and explode this 2D POLYLINE into LINE and ELLIPSE entities.
+            if not ocs.scale_uniform and self.has_arc:
+                # Parent function has to catch this Exception and explode this
+                # 2D POLYLINE into LINE and ELLIPSE entities.
+                raise NonUniformScalingError(
+                    '2D POLYLINE with arcs does not support non uniform scaling'
+                )
 
             if dxf.hasattr('elevation'):
                 z_axis = dxf.elevation.z
             else:
                 z_axis = None
 
-            # transform old OCS locations into new OCS locations by transformation matrix m
-            vertices = [ocs.transform_vertex(vertex) for vertex in _ocs_locations(z_axis)]
+            vertices = [
+                ocs.transform_vertex(vertex) for vertex in
+                _ocs_locations(z_axis)
+            ]
 
-            # set new elevation, all vertices of a 2D polyline must have the same z-axis
+            # All vertices of a 2D polyline have the same z-axis:
             if vertices:
                 dxf.elevation = vertices[0].replace(x=0, y=0)
 
-            # set new vertex locations
             for vertex, location in zip(self.vertices, vertices):
                 vertex.dxf.location = location
 
@@ -471,13 +508,15 @@ class Polyline(DXFGraphic):
 
     def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
         """
-        Explode parts of POLYLINE as LINE, ARC or 3DFACE entities into target layout, if target layout is ``None``,
-        the target layout is the layout of the POLYLINE.
-
-        Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF parts.
+        Explode POLYLINE as DXF LINE, ARC or 3DFACE primitives into target
+        layout, if the target layout is ``None``, the target layout is the
+        layout of the POLYLINE entity .
+        Returns an :class:`~ezdxf.query.EntityQuery` container including all
+        DXF primitives.
 
         Args:
-            target_layout: target layout for DXF parts, ``None`` for same layout as source entity.
+            target_layout: target layout for DXF primitives, ``None`` for same
+            layout as source entity.
 
         .. versionadded:: 0.12
 
@@ -486,10 +525,11 @@ class Polyline(DXFGraphic):
 
     def virtual_entities(self) -> Iterable[Union['Line', 'Arc', 'Face3d']]:
         """
-        Yields 'virtual' parts of POLYLINE as LINE, ARC or 3DFACE entities.
+        Yields 'virtual' parts of POLYLINE as LINE, ARC or 3DFACE primitives.
 
-        This entities are located at the original positions, but are not stored in the entity database, have no handle
-        and are not assigned to any layout.
+        This entities are located at the original positions, but are not stored
+        in the entity database, have no handle and are not assigned to any
+        layout.
 
         .. versionadded:: 0.12
 
@@ -498,6 +538,7 @@ class Polyline(DXFGraphic):
 
     def audit(self, auditor: 'Auditor') -> None:
         """ Audit and repair POLYLINE entity. """
+
         def audit_sub_entity(entity):
             entity.doc = doc  # grant same document
             dxf = entity.dxf
@@ -526,7 +567,6 @@ class Polyline(DXFGraphic):
 
 
 class Polyface(Polyline):
-    pass
     """
     PolyFace structure:
 
@@ -557,7 +597,7 @@ class Polyface(Polyline):
         # do not destroy polyline - all data would be lost
         return polyface
 
-    def append_face(self, face: 'FaceType', dxfattribs: dict = None) -> None:
+    def append_face(self, face: 'FaceType', dxfattribs: Dict = None) -> None:
         """
         Append a single face. A `face` is a list of ``(x, y, z)`` tuples.
 
@@ -568,7 +608,8 @@ class Polyface(Polyline):
         """
         self.append_faces([face], dxfattribs)
 
-    def _points_to_dxf_vertices(self, points: Iterable['Vertex'], dxfattribs: dict) -> List['DXFVertex']:
+    def _points_to_dxf_vertices(self, points: Iterable['Vertex'],
+                                dxfattribs: Dict) -> List['DXFVertex']:
         """ Converts point (x,y, z)-tuples into DXFVertex objects.
 
         Args:
@@ -576,17 +617,26 @@ class Polyface(Polyline):
             dxfattribs: dict of DXF attributes for :class:`Vertex` entity
 
         """
-        dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
-        dxfattribs['layer'] = self.get_dxf_attrib('layer', '0')  # all vertices on the same layer as the POLYLINE entity
-        vertices = []  # type: List[DXFVertex]
+        dxfattribs['flags'] = (
+                dxfattribs.get('flags', 0) | self.get_vertex_flags()
+        )
+
+        # All vertices have to be on the same layer as the POLYLINE entity:
+        dxfattribs['layer'] = self.get_dxf_attrib('layer', '0')
+        vertices: List[DXFVertex] = []
         for point in points:
             dxfattribs['location'] = point
-            vertices.append(cast('DXFVertex', self._new_compound_entity('VERTEX', dxfattribs)))
+            vertices.append(cast(
+                'DXFVertex',
+                self._new_compound_entity('VERTEX', dxfattribs)
+            ))
         return vertices
 
-    def append_faces(self, faces: Iterable['FaceType'], dxfattribs: dict = None) -> None:
+    def append_faces(self, faces: Iterable['FaceType'],
+                     dxfattribs: Dict = None) -> None:
         """
-        Append multiple `faces`. `faces` is a list of single faces and a single face is a list of ``(x, y, z)`` tuples.
+        Append multiple `faces`. `faces` is a list of single faces and a single
+        face is a list of ``(x, y, z)`` tuples.
 
         Args:
             faces: list of List[``(x, y, z)`` tuples]
@@ -603,24 +653,25 @@ class Polyface(Polyline):
         dxfattribs = dxfattribs or {}
 
         existing_vertices, existing_faces = self.indexed_faces()
-        # existing_faces is a generator, can't append new data
-        new_faces = []  # type: List[FaceProxy]
+        new_faces: List[FaceProxy] = []
         for face in faces:
-            # convert face point coordinates to DXF Vertex() objects.
-            face_mesh_vertices = self._points_to_dxf_vertices(face, {})  # type: List[DXFVertex]
-            # index of first new vertex
+            face_mesh_vertices = self._points_to_dxf_vertices(face, {})
+            # Index of first new vertex
             index = len(existing_vertices)
             existing_vertices.extend(face_mesh_vertices)
-            # create a new face_record with all indices set to 0
             face_record = FaceProxy(new_face_record(), existing_vertices)
-            # set correct indices
-            face_record.indices = tuple(range(index, index + len(face_mesh_vertices)))
+
+            # Set VERTEX indices:
+            face_record.indices = tuple(
+                range(index, index + len(face_mesh_vertices))
+            )
             new_faces.append(face_record)
         self._rebuild(chain(existing_faces, new_faces))
 
-    def _rebuild(self, faces: Iterable['FaceProxy'], precision: int = 6) -> None:
+    def _rebuild(self, faces: Iterable['FaceProxy'],
+                 precision: int = 6) -> None:
         """
-        Build a valid Polyface structure out of *faces*.
+        Build a valid POLYFACE structure from `faces`.
 
         Args:
             faces: iterable of FaceProxy objects.
@@ -628,7 +679,6 @@ class Polyface(Polyline):
         """
         polyface_builder = PolyfaceBuilder(faces, precision=precision)
         self.vertices = []
-        # polyline._unlink_all_vertices()  # but don't remove it from database
         self.vertices = polyface_builder.get_vertices()
         self.update_count(polyface_builder.nvertices, polyface_builder.nfaces)
 
@@ -638,11 +688,12 @@ class Polyface(Polyline):
 
     def optimize(self, precision: int = 6) -> None:
         """
-        Rebuilds :class:`Polyface` with vertex optimization. Merges vertices with nearly same vertex locations.
-        Polyfaces created by `ezdxf` are optimized automatically.
+        Rebuilds :class:`Polyface` including vertex optimization by merging
+        vertices with nearly same vertex locations.
 
         Args:
-            precision: decimal precision for determining identical vertex locations
+            precision: floating point precision for determining identical
+                       vertex locations
 
         """
         vertices, faces = self.indexed_faces()
@@ -656,7 +707,7 @@ class Polyface(Polyline):
              list: [vertex, vertex, vertex, [vertex,] face_record]
 
         """
-        _, faces = self.indexed_faces()  # just need the faces generator
+        _, faces = self.indexed_faces()
         for face in faces:
             face_vertices = list(face)
             face_vertices.append(face.face_record)
@@ -671,14 +722,16 @@ class Polyface(Polyline):
         vertices = []
         face_records = []
         for vertex in self.vertices:  # type: DXFVertex
-            (vertices if vertex.is_poly_face_mesh_vertex else face_records).append(vertex)
+            (
+                vertices if vertex.is_poly_face_mesh_vertex else face_records).append(
+                vertex)
 
-        faces = (FaceProxy(face_record, vertices) for face_record in face_records)
+        faces = (FaceProxy(face_record, vertices) for face_record in
+                 face_records)
         return vertices, faces
 
 
 class FaceProxy:
-    __slots__ = ('vertices', 'face_record', 'indices')
     """
     Represents a single face of a polyface structure. (internal class)
 
@@ -688,30 +741,33 @@ class FaceProxy:
 
     face_record:
 
-        The face forming vertex of type ``AcDbFaceRecord``, contains the indices to the face building vertices. Indices
-        of the DXF structure are 1-based and a negative index indicates the beginning of an invisible edge.
+        The face forming vertex of type ``AcDbFaceRecord``, contains the indices
+        to the face building vertices. Indices of the DXF structure are 1-based
+        and a negative index indicates the beginning of an invisible edge.
         Face.face_record.dxf.color determines the color of the face.
 
     indices:
 
-        Indices to the face building vertices as tuple. This indices are 0-base and are used to get vertices from the
-        list *Face.vertices*.
+        Indices to the face building vertices as tuple. This indices are 0-base
+        and are used to get vertices from the list `Face.vertices`.
 
     """
+    __slots__ = ('vertices', 'face_record', 'indices')
 
-    def __init__(self, face_record: 'DXFVertex', vertices: Sequence['DXFVertex']):
-        """ Returns iterable of all face vertices as :class:`Vertex` entities. """
-        self.vertices = vertices  # type: Sequence[DXFVertex]
-        self.face_record = face_record  # type: DXFVertex
-        self.indices = self._indices()  # type: Sequence[int]
+    def __init__(self, face_record: 'DXFVertex',
+                 vertices: Sequence['DXFVertex']):
+        """ Returns iterable of all face vertices as :class:`Vertex` entities.
+        """
+        self.vertices: Sequence[DXFVertex] = vertices
+        self.face_record: DXFVertex = face_record
+        self.indices: Sequence[int] = self._indices()
 
     def __len__(self) -> int:
         """ Returns count of face vertices (without face_record). """
         return len(self.indices)
 
     def __getitem__(self, pos: int) -> 'DXFVertex':
-        """
-        Returns :class:`Vertex` at position `pos`.
+        """ Returns :class:`Vertex` at position `pos`.
 
         Args:
             pos: vertex position 0-based
@@ -723,18 +779,20 @@ class FaceProxy:
         return (self.vertices[index] for index in self.indices)
 
     def points(self) -> Iterable['Vertex']:
-        """ Returns iterable of all face vertex locations as ``(x, y, z)`` tuples. """
+        """ Returns iterable of all face vertex locations as (x, y, z)-tuples.
+        """
         return (vertex.dxf.location for vertex in self)
 
     def _raw_indices(self) -> Iterable[int]:
-        return (self.face_record.get_dxf_attrib(name, 0) for name in const.VERTEXNAMES)
+        return (self.face_record.get_dxf_attrib(name, 0) for name in
+                const.VERTEXNAMES)
 
     def _indices(self) -> Sequence[int]:
-        return tuple(abs(index) - 1 for index in self._raw_indices() if index != 0)
+        return tuple(
+            abs(index) - 1 for index in self._raw_indices() if index != 0)
 
     def is_edge_visible(self, pos: int) -> bool:
-        """
-        Returns ``True`` if edge starting at vertex `pos` is visible.
+        """ Returns ``True`` if edge starting at vertex `pos` is visible.
 
         Args:
             pos: vertex position 0-based
@@ -745,13 +803,13 @@ class FaceProxy:
 
 
 class PolyfaceBuilder:
-    """ Optimized polyface builder. (internal class) """
+    """ Optimized POLYFACE builder. (internal class) """
 
     def __init__(self, faces: Iterable['FaceProxy'], precision: int = 6):
-        self.precision = precision
-        self.faces = []
-        self.vertices = []
-        self.index_mapping = {}
+        self.precision: int = precision
+        self.faces: List[DXFVertex] = []
+        self.vertices: List[DXFVertex] = []
+        self.index_mapping: Dict[Tuple[float, ...], int] = {}
         self.build(faces)
 
     @property
@@ -784,7 +842,7 @@ class PolyfaceBuilder:
         location = key(vertex.dxf.location)
         try:
             return self.index_mapping[location]
-        except KeyError:  # internal exception
+        except KeyError:
             index = len(self.vertices)
             self.index_mapping[location] = index
             self.vertices.append(vertex)
@@ -809,10 +867,10 @@ class Polymesh(Polyline):
         polymesh = cls.shallow_copy(polyline)
         polymesh.vertices = polyline.vertices
         polymesh.seqend = polyline.seqend
-        # do not destroy polyline - all data would be lost
         return polymesh
 
-    def set_mesh_vertex(self, pos: Tuple[int, int], point: 'Vertex', dxfattribs: dict = None):
+    def set_mesh_vertex(self, pos: Tuple[int, int], point: 'Vertex',
+                        dxfattribs: dict = None):
         """
         Set location and DXF attributes of a single mesh vertex.
 
@@ -846,15 +904,15 @@ class Polymesh(Polyline):
 
     def get_mesh_vertex_cache(self) -> 'MeshVertexCache':
         """
-        Get a :class:`MeshVertexCache` object for this polymesh. The caching object provides fast access
-        to the :attr:`location` attribute of mesh vertices.
+        Get a :class:`MeshVertexCache` object for this POLYMESH.
+        The caching object provides fast access to the :attr:`location`
+        attribute of mesh vertices.
 
         """
         return MeshVertexCache(self)
 
 
 class MeshVertexCache:
-    __slots__ = ('vertices',)
     """
     Cache mesh vertices in a dict, keys are 0-based (row, col)-tuples.
 
@@ -862,12 +920,15 @@ class MeshVertexCache:
         Dict of mesh vertices, keys are 0-based (row, col)-tuples. Writing to this dict doesn't change the DXF entity.
 
     """
+    __slots__ = ('vertices',)
 
     def __init__(self, mesh: 'Polyline'):
-        self.vertices = self._setup(mesh, mesh.dxf.m_count, mesh.dxf.n_count)  # type: Dict[Tuple[int, int], DXFVertex]
+        self.vertices: Dict[Tuple[int, int], DXFVertex] = self._setup(
+            mesh, mesh.dxf.m_count, mesh.dxf.n_count
+        )
 
     def _setup(self, mesh: 'Polyline', m_count: int, n_count: int) -> dict:
-        cache = {}  # type: Dict[Tuple[int, int], DXFVertex]
+        cache: Dict[Tuple[int, int], DXFVertex] = {}
         vertices = iter(mesh.vertices)
         for m in range(m_count):
             for n in range(n_count):
@@ -876,10 +937,11 @@ class MeshVertexCache:
 
     def __getitem__(self, pos: Tuple[int, int]) -> 'Vertex':
         """
-        Get mesh vertex location as ``(x, y, z)`` tuple.
+        Get mesh vertex location as (x, y, z)-tuple.
 
         Args:
-            pos: 0-based ``(row, col)`` tuple.
+            pos: 0-based (row, col)-tuple.
+
         """
         try:
             return self.vertices[pos].dxf.location
@@ -888,11 +950,11 @@ class MeshVertexCache:
 
     def __setitem__(self, pos: Tuple[int, int], location: 'Vertex') -> None:
         """
-        Get mesh vertex location as ``(x, y, z)`` tuple.
+        Get mesh vertex location as (x, y, z)-tuple.
 
         Args:
-            pos: 0-based ``(row, col)`` tuple.
-            location: ``(x, y, z)`` tuple
+            pos: 0-based (row, col)-tuple.
+            location: (x, y, z)-tuple
 
         """
         try:
@@ -902,15 +964,18 @@ class MeshVertexCache:
 
 
 acdb_vertex = DefSubclass('AcDbVertex', {  # last subclass index -1
-    'location': DXFAttr(10, xtype=XType.point3d),  # Location point (in OCS when 2D, and WCS when 3D)
-    'start_width': DXFAttr(40, default=0, optional=True),  # Starting width
-    'end_width': DXFAttr(41, default=0, optional=True),  # Ending width
-    # Bulge (optional; default is 0). The bulge is the tangent of one fourth the included angle for an arc segment, made
-    # negative if the arc goes clockwise from the start point to the endpoint. A bulge of 0 indicates a straight
-    # segment, and a bulge of 1 is a semicircle.
+    # Location point in OCS if 2D, and WCS if 3D
+    'location': DXFAttr(10, xtype=XType.point3d),
+    'start_width': DXFAttr(40, default=0, optional=True),
+    'end_width': DXFAttr(41, default=0, optional=True),
+    # Bulge (optional; default is 0). The bulge is the tangent of one fourth
+    # the included angle for an arc segment, made negative if the arc goes
+    # clockwise from the start point to the endpoint. A bulge of 0 indicates
+    # a straight segment, and a bulge of 1 is a semicircle.
     'bulge': DXFAttr(42, default=0, optional=True),
     'flags': DXFAttr(70, default=0),
-    'tangent': DXFAttr(50, optional=True),  # Curve fit tangent direction (in degrees?)
+    # Curve fit tangent direction (in degrees)
+    'tangent': DXFAttr(50, optional=True),
     'vtx0': DXFAttr(71, optional=True),
     'vtx1': DXFAttr(72, optional=True),
     'vtx2': DXFAttr(73, optional=True),
@@ -921,16 +986,21 @@ acdb_vertex = DefSubclass('AcDbVertex', {  # last subclass index -1
 
 @register_entity
 class DXFVertex(DXFGraphic):
-    """ DXF VERTEXE entity """
+    """ DXF VERTEX entity """
     DXFTYPE = 'VERTEX'
 
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_vertex)
-    EXTRA_VERTEX_CREATED = 1  # Extra vertex created by curve-fitting
-    CURVE_FIT_TANGENT = 2  # Curve-fit tangent defined for this vertex.
-    # A curve-fit tangent direction of 0 may be omitted from the DXF output, but is
-    # significant if this bit is set.
+    # Extra vertex created by curve-fitting:
+    EXTRA_VERTEX_CREATED = 1
+
+    # Curve-fit tangent defined for this vertex. A curve-fit tangent direction
+    # of 0 may be omitted from the DXF output, but is significant if this bit
+    # is set:
+    CURVE_FIT_TANGENT = 2
+
     # 4 = unused, never set in dxf files
-    SPLINE_VERTEX_CREATED = 8  # Spline vertex created by spline-fitting
+    # Spline vertex created by spline-fitting
+    SPLINE_VERTEX_CREATED = 8
     SPLINE_FRAME_CONTROL_POINT = 16
     POLYLINE_3D_VERTEX = 32
     POLYGON_MESH_VERTEX = 64
@@ -938,42 +1008,51 @@ class DXFVertex(DXFGraphic):
     FACE_FLAGS = POLYGON_MESH_VERTEX + POLYFACE_MESH_VERTEX
     VTX3D = POLYLINE_3D_VERTEX + POLYGON_MESH_VERTEX + POLYFACE_MESH_VERTEX
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
-        # VERTEX can have 3 subclasses if face record or 4 subclasses if vertex
-        # just last one has data
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_vertex, index=-1)
+        # VERTEX can have 3 subclasses if representing a `face record` or
+        # 4 subclasses if representing a vertex location, just the last
+        # subclass contains data:
+        tags = processor.load_dxfattribs_into_namespace(
+            dxf, acdb_vertex, index=-1
+        )
         if len(tags) and not processor.r12:
             processor.log_unprocessed_tags(tags, subclass=acdb_polyline.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
+        # Base class and AcDbEntity export is done by parent class.
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
-            if self.is_face_record:  # (flags & Vertex.FACE_FLAGS) == const.VTX_3D_POLYFACE_MESH_VERTEX:
+            if self.is_face_record:
                 tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbFaceRecord')
             else:
                 tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbVertex')
-                if self.is_3d_polyline_vertex:  # flags & const.VTX_3D_POLYLINE_VERTEX
-                    tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb3dPolylineVertex')
-                elif self.is_poly_face_mesh_vertex:  # flags & Vertex.FACE_FLAGS == Vertex.FACE_FLAGS:
-                    tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbPolyFaceMeshVertex')
-                elif self.is_polygon_mesh_vertex:  # flags & const.VTX_3D_POLYGON_MESH_VERTEX
-                    tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbPolygonMeshVertex')
+                if self.is_3d_polyline_vertex:
+                    tagwriter.write_tag2(
+                        SUBCLASS_MARKER, 'AcDb3dPolylineVertex'
+                    )
+                elif self.is_poly_face_mesh_vertex:
+                    tagwriter.write_tag2(
+                        SUBCLASS_MARKER, 'AcDbPolyFaceMeshVertex'
+                    )
+                elif self.is_polygon_mesh_vertex:
+                    tagwriter.write_tag2(
+                        SUBCLASS_MARKER, 'AcDbPolygonMeshVertex'
+                    )
                 else:
                     tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb2dVertex')
 
-        # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, [
-            'location', 'start_width', 'end_width', 'bulge', 'flags', 'tangent', 'vtx0', 'vtx1', 'vtx2', 'vtx3',
+            'location', 'start_width', 'end_width', 'bulge', 'flags', 'tangent',
+            'vtx0', 'vtx1', 'vtx2', 'vtx3',
             'vertex_identifier'
         ])
-        # xdata and embedded objects export will be done by parent class
+        # XDATA and embedded objects export will be done by parent class
         # following VERTEX entities and SEQEND is exported by EntitySpace()
 
     @property
