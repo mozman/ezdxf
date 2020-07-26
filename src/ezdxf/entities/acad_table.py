@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 __all__ = ['ACADTable']
 
 acdb_block_reference = DefSubclass('AcDbBlockReference', {
-    'block_name': DXFAttr(2),  # Block name; an anonymous block begins with a *T value
+    'geometry': DXFAttr(2),  # Block name; an anonymous block begins with a *T value
     'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # Insertion point
 })
 
@@ -163,7 +163,7 @@ class ACADTable(DXFGraphic):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_block_reference.name)
-        self.dxf.export_dxf_attribs(tagwriter, ['block_name', 'insert'])
+        self.dxf.export_dxf_attribs(tagwriter, ['geometry', 'insert'])
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_table.name)
         self.dxf.export_dxf_attribs(tagwriter, [
 

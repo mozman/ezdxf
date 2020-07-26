@@ -1,8 +1,6 @@
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Union, Sequence, List, cast
-import logging
-
 from ezdxf.lldxf.const import (
     DXFStructureError, DXFBlockInUseError, DXFTableEntryError, DXFKeyError,
 )
@@ -10,6 +8,9 @@ from ezdxf.lldxf import const
 from ezdxf.entities.dxfgfx import entity_linker
 from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.render.arrows import ARROWS
+from .table import table_key
+import warnings
+import logging
 
 logger = logging.getLogger('ezdxf')
 
@@ -24,7 +25,7 @@ def is_special_block(name: str) -> bool:
     name = name.upper()
     # Anonymous dimension, groups and table blocks do not have explicit
     # references by an INSERT entity:
-    if name.startswith('*D') or name.startswith('*A') or name.startswith('*T'):
+    if is_anonymous_block(name):
         return True
 
     # Arrow blocks maybe used in DIMENSION or LEADER override without an
@@ -36,6 +37,16 @@ def is_special_block(name: str) -> bool:
             return True
 
     return False
+
+
+def is_anonymous_block(name: str) -> bool:
+    # *U### = anonymous BLOCK, require an explicit INSERT to be in use
+    # *E### = anonymous non-uniformly scaled BLOCK, requires INSERT?
+    # *X### = anonymous HATCH graphic, requires INSERT?
+    # *D### = anonymous DIMENSION graphic, has no explicit INSERT
+    # *A### = anonymous GROUP, requires INSERT?
+    # *T### = anonymous block for ACAD_TABLE, has no explicit INSERT
+    return len(name) > 1 and name[0] == '*' and name[1] in 'UEXDAT'
 
 
 class BlocksSection:
@@ -152,6 +163,12 @@ class BlocksSection:
                 )
                 block_record.set_block(block, endblk)
                 self.add(block_record)
+
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
+        for block_record in self.block_records:  # type: BlockRecord
+            block_record.export_block_definition(tagwriter)
+        tagwriter.write_tag2(0, "ENDSEC")
 
     def add(self, block_record: 'BlockRecord') -> 'BlockLayout':
         """ Add or replace a block layout object defined by its block record.
@@ -300,40 +317,94 @@ class BlocksSection:
                 f"INSERT[name=='{name}']i")  # ignore case
             if len(block_refs):
                 raise DXFBlockInUseError(
-                    f'Block "{name}" is still in use and can not deleted.')
+                    f'Block "{name}" is still in use.'
+                )
         self.__delitem__(name)
 
     def delete_all_blocks(self, safe: bool = True) -> None:
         """
-        Delete all blocks except layout blocks (modelspace or paperspace).
-        In safe mode, protected blocks are ignored silently.
+        Delete all blocks except modelspace- or paperspace layout blocks,
+        special arrow- and anonymous blocks (DIMENSION, ACAD_TABLE).
 
-        Args:
-            safe: check if block is still referenced or special block without
-            explicit references
+        .. warning::
+
+            There could exist undiscovered references to blocks which are
+            not documented in the DXF reference, hidden in extended data
+            sections or application defined data, which could produce invalid
+            DXF documents if such referenced blocks will be deleted.
+
+        .. versionchanged:: 0.14
+            removed unsafe mode
 
         """
-        if safe:
-            # Block names are case insensitive
-            references = set(
-                entity.dxf.name.lower() for entity in self.doc.query('INSERT')
+        if safe is False:
+            warnings.warn(
+                'Unsafe deleting of blocks will be removed in v0.16',
+                DeprecationWarning
             )
 
+        acitve_references = set(
+            table_key(entity.dxf.name) for entity in
+            self.doc.query('INSERT')
+        )
+
         def is_safe(name: str) -> bool:
-            if safe and is_special_block(name):
+            if is_special_block(name):
                 return False
-            return name.lower() not in references if safe else True
+            return name not in acitve_references
 
-        # Do not delete blocks defined for layouts
-        layout_keys = set(layout.layout_key for layout in self.doc.layouts)
-        for block in list(self):
+        trash = set()
+        for block in self:
+            name = table_key(block.name)
+            if not block.is_any_layout and is_safe(name):
+                trash.add(name)
+
+        for name in trash:
+            self.__delitem__(name)
+
+    def purge(self):
+        """ Delete all unused blocks like :meth:`delete_all_blocks`, but also
+        removes unused anonymous blocks.
+
+        .. warning::
+
+            There could exist undiscovered references to blocks which are
+            not documented in the DXF reference, hidden in extended data
+            sections or application defined data, which could produce invalid
+            DXF documents if such referenced blocks will be deleted.
+
+        """
+        self.delete_all_blocks()
+        # Check for unused anonymous blocks
+        trash = set()
+        active_references = set()
+        active_anonymous_blocks = set()
+
+        for entity in self.doc.entitydb.values():
+            dxftype = entity.dxftype()
+            if dxftype == 'INSERT':
+                active_references.add(entity.dxf.name)
+            elif entity.dxftype() in {
+                'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION',
+                'ACAD_TABLE',
+            }:
+                active_anonymous_blocks.add(entity.dxf.geometry)
+
+        for block in self:
             name = block.name
-            if block.block_record_handle not in layout_keys and is_safe(name):
-                # Safety check is already done
-                self.delete_block(name, safe=False)
+            if is_anonymous_block(name):
+                code = name[1]
+                if name in active_anonymous_blocks:
+                    continue
+                elif code in 'UEXA':
+                    # require an explicit INSERT to be in use
+                    # todo: not sure for E, X and A
+                    if name not in active_references:
+                        trash.add(name)
+                else:
+                    # No explicit INSERT required but also not an active
+                    # anonymous block:
+                    trash.add(name)
 
-    def export_dxf(self, tagwriter: 'TagWriter') -> None:
-        tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
-        for block_record in self.block_records:  # type: BlockRecord
-            block_record.export_block_definition(tagwriter)
-        tagwriter.write_tag2(0, "ENDSEC")
+        for name in trash:
+            self.__delitem__(name)

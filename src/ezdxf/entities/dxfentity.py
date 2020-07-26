@@ -793,7 +793,7 @@ class DXFEntity:
                        name: str = 'flags') -> None:
         """ Set binary coded `flag` of DXF attribute `name` to ``1`` (on)
         if `state` is ``True``, set `flag` to ``0`` (off)
-         if `state` is ``False``.
+        if `state` is ``False``.
         """
         flags = self.dxf.get(name, 0)
         self.dxf.set(name, set_flag_state(flags, flag, state=state))

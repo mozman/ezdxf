@@ -37,14 +37,14 @@ DXF Entities
 - FIELD
 - ACAD_TABLE
 
-- Blocks.purge(): find unused BLOCK definitions and delete them, 
-    but not as part of the auditing process!
-    Unused BLOCK has no corresponding INSERT except:
-    - LAYOUT blocks
-    - ARROW blocks, could be unused but references could be stored in the 
-      DIMENSION or LEADER override - so better keep them at all
-    - anonymous blocks without explicit INSERT like DIMENSION, ACAD_TABLE 
-      geometry
+- Blocks.purge() search for non-explicit block references in:
+    - All arrows in DIMENSION are no problem, there has to be an explicit 
+      INSERT for each used arrow in the associated geometry block.
+    - user defined arrow blocks in LEADER, MLEADER
+    - LEADER override: 'dimldrblk_handle'
+    - MLEADER: block content
+    - ACAD_TABLE: block content
+
 
 DXF Audit & Repair
 ------------------

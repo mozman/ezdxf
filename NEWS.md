@@ -22,6 +22,10 @@ Version 0.14a1 - dev
 - NEW: `Polyline.has_width` property is `True` if any width attribute is set
 - NEW: `Polyline.audit()` extended verify and repair support
 - NEW: `DXFVertex.format()` support for user defined point format 
+- NEW: `Drawing.blocks.purge()` delete all unused blocks but protect modelspace-
+  and paperspace layouts, special arrow blocks and DIMENSION and ACAD_TABLE 
+  blocks in use, but see also warning in the 
+  [docs](https://ezdxf.mozman.at/docs/sections/blocks.html)
 - NEW: `BSpline.is_clamped` property is `True` for a clamped (open) B-spline
 - NEW: `UCS.transform()` general transformation interface
 - NEW: `Bezier4P.transform()` general transformation interface
@@ -30,6 +34,8 @@ Version 0.14a1 - dev
 - NEW: `Bezier.reverse()` returns object with reversed control point order
 - CHANGE: `linspace()` uses `Decimal()` for precise calculations, but still 
   returns an iterable of `float`
+- CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 
+  argument `safe` is deprecated, will be removed in v0.16
 - REMOVE: `DXFEntity.drawing`, replaced by `DXFEntity.doc`
  
 Version 0.13.1 - 2020-07-18
