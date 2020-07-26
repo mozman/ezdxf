@@ -285,7 +285,10 @@ class Polyline(DXFGraphic):
     def has_arc(self) -> bool:
         """ Returns ``True`` if 2D POLYLINE has an arc segment. """
         if self.is_2d_polyline:
-            return any(bool(v.dxf.bulge) for v in self.vertices)
+            return any(
+                v.dxf.hasattr('bulge') and bool(v.dxf.bulge) for v in
+                self.vertices
+            )
         else:
             return False
 
