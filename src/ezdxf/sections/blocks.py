@@ -323,8 +323,9 @@ class BlocksSection:
 
     def delete_all_blocks(self, safe: bool = True) -> None:
         """
-        Delete all blocks except modelspace- or paperspace layout blocks,
-        special arrow- and anonymous blocks (DIMENSION, ACAD_TABLE).
+        Delete all blocks without references except modelspace- or
+        paperspace layout blocks, special arrow- and anonymous blocks
+        (DIMENSION, ACAD_TABLE).
 
         .. warning::
 
