@@ -59,7 +59,7 @@ class CADGraphicsView(qw.QGraphicsView):
         scene = self.scene()
         r = scene.sceneRect()
         bx, by = r.width() * self._view_buffer / 2, r.height() * self._view_buffer / 2
-        scene.setSceneRect(r.adjusted(-bx, by, bx, by))
+        scene.setSceneRect(r.adjusted(-bx, -by, bx, by))
 
     def fit_to_scene(self):
         self.fitInView(self.sceneRect(), qc.Qt.KeepAspectRatio)
