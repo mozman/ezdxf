@@ -4,6 +4,7 @@ from collections import namedtuple
 from enum import Enum
 from typing import Optional, Dict, Tuple, TYPE_CHECKING, Iterable
 from .const import DXFAttributeError, DXF12
+import copy
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, TagValue
@@ -151,7 +152,10 @@ class DXFAttributes:
                 dxfattrib.name = name
                 self._attribs[name] = dxfattrib
                 if dxfattrib.alias:
-                    self._attribs[dxfattrib.alias] = dxfattrib
+                    alias = copy.copy(dxfattrib)
+                    alias.name = dxfattrib.alias
+                    alias.alias = dxfattrib.name
+                    self._attribs[dxfattrib.alias] = alias
 
     def __contains__(self, name: str) -> bool:
         return name in self._attribs
