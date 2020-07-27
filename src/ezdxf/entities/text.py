@@ -6,9 +6,11 @@ import math
 from ezdxf.math import Vector, Matrix44
 from ezdxf.math.transformtools import OCSTransform
 
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, DXFValueError
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, SPECIAL_CHARS_ENCODING
+from ezdxf.lldxf.const import (
+    DXF12, SUBCLASS_MARKER, SPECIAL_CHARS_ENCODING, DXFValueError
+)
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
