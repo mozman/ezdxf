@@ -96,7 +96,7 @@ def test_from_circular_arc():
     assert cpoints[3].isclose((0, 1, 0))
 
 
-def test_rational_spline_from_elliptic_arc():
+def test_rational_spline_from_simple_elliptic_arc():
     ellipse = ConstructionEllipse(
         center=(1, 1),
         major_axis=(2, 0),
@@ -112,6 +112,20 @@ def test_rational_spline_from_elliptic_arc():
     assert p2.isclose((3.0, 1.5522847498307932, 0))
     assert p3.isclose((2.104569499661587, 2.0, 0))
     assert p4.isclose((1, 2, 0))
+
+
+def test_rational_spline_from_complex_elliptic_arc():
+    ellipse = ConstructionEllipse(
+        center=(49.64089977339618, 36.43095770602131, 0.0),
+        major_axis=(16.69099826506408, 6.96203799241026, 0.0),
+        ratio=0.173450304570581,
+        start_param=5.427509144462117,
+        end_param=7.927025930557775,
+    )
+    curves = list(cubic_bezier_from_ellipse(ellipse))
+
+    assert curves[0].control_points[0].isclose(ellipse.start_point)
+    assert curves[1].control_points[-1].isclose(ellipse.end_point)
 
 
 def test_reverse():

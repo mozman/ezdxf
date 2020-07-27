@@ -36,8 +36,7 @@ COMPOSITE_ENTITY_TYPES = {
 
 
 class Frontend:
-    """
-    Drawing frontend, responsible for decomposing entities into graphic
+    """ Drawing frontend, responsible for decomposing entities into graphic
     primitives and resolving entity properties.
 
     Args:

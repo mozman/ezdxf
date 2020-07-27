@@ -208,9 +208,8 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse', segments: int = 1)
     .. versionadded:: 0.13
 
     """
-    from ezdxf.math import param_to_angle
-    start_angle = param_to_angle(ellipse.ratio, ellipse.start_param) % math.tau
-    end_angle = param_to_angle(ellipse.ratio, ellipse.end_param) % math.tau
+    start_angle = ellipse.start_param % math.tau
+    end_angle = ellipse.end_param % math.tau
     if math.isclose(end_angle, 0.0):
         end_angle = math.tau
 
