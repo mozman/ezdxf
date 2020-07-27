@@ -27,24 +27,26 @@ logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Auditor, TagWriter, Drawing, EntityDB, EntityFactory, DXFAttr
+        Auditor, TagWriter, Drawing, EntityDB, EntityFactory, DXFAttr,
     )
 
 __all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor',
            'base_class']
 
 """
-DXFEntity() is the base class of **all** DXF entities.
+DXFEntity() is the base class of all DXF entities.
 
-DXFNamespace() manages ass DXF attributes of an entity
+DXFNamespace() manages all named DXF attributes of an entity.
 
-New DXF version handling
+The actual entity system of ezdxf uses the latest supported DXF version.
+The stored DXF version of the document is used to warn users if they use 
+unsupported DXF features of the actual DXF version.
 
-By introducing the new entity system ezdxf does not care about DXF versions at 
-usage, the latest supported version is used. The DXF version of the document 
-can be changed at runtime, but unsupported features of later DXF versions, are 
-just ignored by saving, ezdxf does no conversion between different DXF versions, 
-ezdxf is still not a CAD application.
+The DXF version of the document can be changed at runtime or overridden by 
+exporting, but unsupported DXF features are just ignored by exporting.
+
+Ezdxf does no conversion between different DXF versions, this package is 
+still not a CAD application.
 
 """
 
@@ -60,6 +62,8 @@ ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute "{}" does not exist'
 SETTER_EVENTS = {
     'layer': 'on_layer_change',
     'linetype': 'on_linetype_change',
+    'style': 'on_style_change',
+    'dimstyle': 'on_dimstyle_change',
 }
 
 
@@ -491,7 +495,7 @@ class DXFEntity:
     # really set, this means there is an real object in the dxf namespace
     # defined, where default attribute values get returned on access without
     # an existing object in the dxf namespace.
-    DEFAULT_ATTRIBS: Dict = None
+    DEFAULT_ATTRIBS: Dict = {}
     MIN_DXF_VERSION_FOR_EXPORT = DXF12
 
     def __init__(self, doc: 'Drawing' = None):
@@ -636,20 +640,20 @@ class DXFEntity:
 
         Args:
             handle: unique DXF entity handle or None
-            owner: owner handle iof entity has an owner else None or '0'
-            dxfattribs: DXF attributes to initialize
+            owner: owner handle if entity has an owner else None or '0'
+            dxfattribs: DXF attributes
             doc: DXF document
 
         (internal API)
         """
-        entity = cls(doc)  # bare minimum setup
-        if handle is not None:
+        entity = cls(doc)
+        if handle:
             entity.dxf.handle = handle
-        if owner is not None:
-            entity.dxf.owner = owner  # set also for DXF R12 for internal usage
-        default_attribs = dict(cls.DEFAULT_ATTRIBS or {})  # copy
-        default_attribs.update(dxfattribs or {})
-        entity.update_dxf_attribs(default_attribs)
+        if owner:
+            entity.dxf.owner = owner
+        attribs = dict(cls.DEFAULT_ATTRIBS)
+        attribs.update(dxfattribs or {})
+        entity.update_dxf_attribs(attribs)
         entity.post_new_hook()
         return entity
 
@@ -667,9 +671,8 @@ class DXFEntity:
         """
         pass
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> DXFNamespace:
-        # inheritance hook (internal API)
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> DXFNamespace:
         return DXFNamespace(processor, self)
 
     def setup_app_data(self, appdata: List[Tags]) -> None:
