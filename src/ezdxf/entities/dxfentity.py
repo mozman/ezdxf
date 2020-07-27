@@ -27,7 +27,7 @@ logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Auditor, TagWriter, Drawing, EntityDB, EntityFactory,
+        Auditor, TagWriter, Drawing, EntityDB, EntityFactory, DXFAttr
     )
 
 __all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor',
@@ -126,7 +126,7 @@ class DXFNamespace:
         """ Called if key does not exist, returns default value or None for
         unset default values
         """
-        attrib_def = self.dxfattribs.get(key, None)  # type: DXFAttr
+        attrib_def: Optional['DXFAttr'] = self.dxfattribs.get(key)
         if attrib_def:
             if attrib_def.xtype == XType.callback:
                 return attrib_def.get_callback_value(self._entity)
@@ -139,7 +139,7 @@ class DXFNamespace:
             )
 
     def __setattr__(self, key: str, value: Any) -> None:
-        attrib_def = self.dxfattribs.get(key, None)  # type: DXFAttr
+        attrib_def: Optional['DXFAttr'] = self.dxfattribs.get(key)
         if attrib_def:
             if attrib_def.xtype == XType.callback:
                 attrib_def.set_callback_value(self._entity, value)
@@ -168,7 +168,7 @@ class DXFNamespace:
         if self.hasattr(key):
             # do not return the DXF default value
             return self.__dict__[key]
-        attrib_def = self.dxfattribs.get(key, None)  # type: DXFAttr
+        attrib_def: Optional['DXFAttr'] = self.dxfattribs.get(key)
         if attrib_def:
             if attrib_def.xtype == XType.callback:
                 return attrib_def.get_callback_value(self._entity)
@@ -214,7 +214,7 @@ class DXFNamespace:
 
         """
 
-        return self.dxfattribs.get(key, None) is not None
+        return self.dxfattribs.get(key) is not None
 
     def hasattr(self, key: str) -> bool:
         """
@@ -239,7 +239,7 @@ class DXFNamespace:
         Returns the default value as defined in the DXF standard.
 
         """
-        attrib = self.dxfattribs.get(key, None)
+        attrib: Optional['DXFAttr'] = self.dxfattribs.get(key)
         if attrib:
             return attrib.default
         else:
@@ -277,7 +277,7 @@ class DXFNamespace:
         """
         export_dxf_version = tagwriter.dxfversion
         not_force_optional = not tagwriter.force_optional
-        attrib = self.dxfattribs.get(name, None)
+        attrib: Optional['DXFAttr'] = self.dxfattribs.get(name)
 
         if attrib:
             optional = attrib.optional
@@ -754,7 +754,7 @@ class DXFEntity:
 
         """
         if key in self.DXFATTRIBS:
-            return self.doc.dxfversion >= self.DXFATTRIBS[key].dxfversion
+            return self.doc.dxfversion >= self.DXFATTRIBS.get(key).dxfversion
         else:
             return False
 

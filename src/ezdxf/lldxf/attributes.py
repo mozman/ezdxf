@@ -2,7 +2,7 @@
 # License: MIT License
 from collections import namedtuple
 from enum import Enum
-from typing import Any, List, Dict, ItemsView, KeysView, TYPE_CHECKING
+from typing import Optional, Dict, Tuple, TYPE_CHECKING, Iterable
 from .const import DXFAttributeError, DXF12
 
 if TYPE_CHECKING:
@@ -18,11 +18,12 @@ class XType(Enum):
     point2d = 1  # 2D points only
     point3d = 2  # 3D points only
     any_point = 3  # 2D or 3D points
-    callback = 4  #
+    callback = 4  # callback attribute
 
 
 class DXFAttr:
-    """ Defines a DXF attribute, accessible by DXFEntity.dxf.name.
+    """ Represents a DXF attribute for an DXF entity, accessible by the
+    DXF namespace :attr:`DXFEntity.dxf` like ``entity.dxf.color = 7``.
 
     Extended Attribute Types
     ------------------------
@@ -34,14 +35,13 @@ class DXFAttr:
       attribute 'name', and calls set_value(entity, value) to set value
       of DXF attribute 'name'.
 
-    For example definitions see: ezdxf.entities.dxfgfx.acdb_entity.
+    See example definition: ezdxf.entities.dxfgfx.acdb_entity.
 
     """
 
     def __init__(
             self,
             code: int,
-            subclass: int = 0,
             xtype: XType = None,
             default=None,
             optional=False,
@@ -51,14 +51,11 @@ class DXFAttr:
             alias: str = None,
     ):
 
-        # Attribute name set by DXFAttributes._add_subclass_attribs()
+        # Attribute name set by DXFAttributes.__init__()
         self.name: str = ''
 
         # DXF group code
         self.code: int = code
-
-        # Subclass index [0, n-1], n is the count of subclasses
-        self.subclass: int = subclass
 
         # Extended attribute type:
         self.xtype: XType = xtype
@@ -145,40 +142,26 @@ class DXFAttr:
 
 
 class DXFAttributes:
+    __slots__ = ('_attribs',)
+
     def __init__(self, *subclassdefs: DefSubclass):
-        self._subclasses: List[DefSubclass] = []
-        self._attribs: Dict[str, DXFAttr] = {}
+        self._attribs: Dict[str, DXFAttr] = dict()
         for subclass in subclassdefs:
-            self.add_subclass(subclass)
-
-    def add_subclass(self, subclass: DefSubclass) -> None:
-        subclass_index = len(self._subclasses)
-        self._subclasses.append(subclass)
-        self._add_subclass_attribs(subclass, subclass_index)
-
-    def _add_subclass_attribs(self, subclass: DefSubclass,
-                              subclass_index: int) -> None:
-        for name, dxfattrib in subclass.attribs.items():
-            dxfattrib.name = name
-            dxfattrib.subclass = subclass_index
-            self._attribs[name] = dxfattrib
-
-    def __getitem__(self, name: str) -> DXFAttr:
-        return self._attribs[name]
+            for name, dxfattrib in subclass.attribs.items():
+                dxfattrib.name = name
+                self._attribs[name] = dxfattrib
+                if dxfattrib.alias:
+                    self._attribs[dxfattrib.alias] = dxfattrib
 
     def __contains__(self, name: str) -> bool:
         return name in self._attribs
 
-    def get(self, key: str, default: Any = None) -> Any:
-        return self._attribs.get(key, default)
+    def get(self, key: str) -> Optional[DXFAttr]:
+        return self._attribs.get(key)
 
-    def keys(self) -> KeysView[str]:
-        return self._attribs.keys()
-
-    def items(self) -> ItemsView[str, DXFAttr]:
-        return self._attribs.items()
-
-    def build_group_code_items(self, func=lambda x: True):
-        for name, attrib in self.items():
-            if attrib.code > 0 and func(name):  # skip internal tags
+    def build_group_code_items(
+            self, func=lambda x: True) -> Iterable[Tuple[int, str]]:
+        for name, attrib in self._attribs.items():
+            # code < 0 is internal tag
+            if attrib.code > 0 and func(name):
                 yield attrib.code, name
