@@ -8,6 +8,7 @@ from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Radians
 from ezdxf.drawing import Drawing
+from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
 from ezdxf.render import Path
 from ezdxf.math import Vector, Matrix44
@@ -406,36 +407,63 @@ def test_visibility_insert_2():
     assert _get_text_visible_when(doc, set()) == []
 
 
-def test_override_filter(msp, basic):
-    def override(e, p):
-        if p.layer == 'T1':
-            p.layer = 'Tx'
-        p.color = '#000000'
-        if e.dxf.text == 'T2':
-            p.is_visible = False
+def test_override_filter(msp, ctx):
+
+    class FrontendWithOverride(Frontend):
+        def __init__(self, ctx: RenderContext, out: Backend):
+            super().__init__(ctx, out)
+            self.override_enabled = True
+
+        def override_properties(self, entity: DXFGraphic, properties: Properties) -> None:
+            if not self.override_enabled:
+                return
+            if properties.layer == 'T1':
+                properties.layer = 'Tx'
+            properties.color = '#000000'
+            if entity.dxf.text == 'T2':
+                properties.is_visible = False
+
+    backend = BasicBackend()
+    frontend = FrontendWithOverride(ctx, backend)
 
     msp.delete_all_entities()
-    basic.override = override
     msp.add_text('T0', dxfattribs={'layer': 'T0', 'color': 7})
     msp.add_text('T1', dxfattribs={'layer': 'T1', 'color': 6})
     msp.add_text('T2', dxfattribs={'layer': 'T2', 'color': 5})
-    basic.draw_entities(msp)
-    basic.override = None
+    frontend.draw_entities(msp)
+    frontend.override_enabled = False
+    frontend.draw_entities(msp)
+
+    assert len(backend.collector) == 5
 
     # can modify color property
-    result = basic.out.collector[0]
+    result = backend.collector[0]
     assert result[0] == 'text'
     assert result[1] == 'T0'
     assert result[3].color == '#000000'
 
     # can modify layer property
-    result = basic.out.collector[1]
+    result = backend.collector[1]
     assert result[0] == 'text'
     assert result[1] == 'T1'
     assert result[3].layer == 'Tx'
 
-    # 'T2' is not visible
-    assert len(basic.out.collector) == 2, "T2 should be invisible"
+    # with override disabled
+
+    result = backend.collector[2]
+    assert result[0] == 'text'
+    assert result[1] == 'T0'
+    assert result[3].color == '#ffffff'
+
+    result = backend.collector[3]
+    assert result[0] == 'text'
+    assert result[1] == 'T1'
+    assert result[3].layer == 'T1'
+
+    result = backend.collector[4]
+    assert result[0] == 'text'
+    assert result[1] == 'T2'
+    assert result[3].layer == 'T2'
 
 
 if __name__ == '__main__':

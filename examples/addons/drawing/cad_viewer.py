@@ -19,6 +19,7 @@ from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFEntityStack
 from ezdxf.drawing import Drawing
+from ezdxf.entities import DXFGraphic
 from ezdxf.lldxf.const import DXFStructureError
 
 
@@ -59,7 +60,7 @@ class CADGraphicsView(qw.QGraphicsView):
         scene = self.scene()
         r = scene.sceneRect()
         bx, by = r.width() * self._view_buffer / 2, r.height() * self._view_buffer / 2
-        scene.setSceneRect(r.adjusted(-bx, by, bx, by))
+        scene.setSceneRect(r.adjusted(-bx, -by, bx, by))
 
     def fit_to_scene(self):
         self.fitInView(self.sceneRect(), qc.Qt.KeepAspectRatio)
@@ -314,16 +315,23 @@ class CadViewer(qw.QMainWindow):
                 text += 'No data'
             else:
                 text += f'Selected Entity: {dxf_entity}\nLayer: {dxf_entity.dxf.layer}\n\nDXF Attributes:\n'
-                for key, value in dxf_entity.dxf.all_existing_dxf_attribs().items():
-                    text += f'- {key}: {value}\n'
+                text += _entity_attribs_string(dxf_entity)
 
                 dxf_entity_stack = element.data(CorrespondingDXFEntityStack)
                 if dxf_entity_stack:
                     text += '\nParents:\n'
                     for entity in reversed(dxf_entity_stack):
                         text += f'- {entity}\n'
+                        text += _entity_attribs_string(entity, indent='    ')
 
         self.selected_info.setPlainText(text)
+
+
+def _entity_attribs_string(dxf_entity: DXFGraphic, indent: str = '') -> str:
+    text = ''
+    for key, value in dxf_entity.dxf.all_existing_dxf_attribs().items():
+        text += f'{indent}- {key}: {value}\n'
+    return text
 
 
 def _main():

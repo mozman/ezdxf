@@ -363,9 +363,7 @@ class RenderContext:
             layer = self.current_block_reference.layer
         return layer
 
-    def resolve_color(self, entity: 'DXFGraphic', *,
-                      default_hatch_transparency: float = 0.8,
-                      resolved_layer: str = None) -> Color:
+    def resolve_color(self, entity: 'DXFGraphic', *, resolved_layer: str = None) -> Color:
         """ Resolve color of DXF `entity` """
         aci = entity.dxf.color  # defaults to BYLAYER
         if aci == const.BYLAYER:
@@ -380,17 +378,11 @@ class RenderContext:
         else:  # BYOBJECT
             color = self._true_entity_color(entity.rgb, aci)
 
-        if entity.dxftype() == 'HATCH':
-            transparency = default_hatch_transparency
-        else:
-            transparency = entity.transparency
-
-        alpha_float = 1.0 - transparency
-        alpha = int(round(alpha_float * 255))
+        alpha = int(round((1.0 - entity.transparency) * 255))
         if alpha == 255:
             return color
         else:
-            return _rgba(color, alpha)
+            return set_color_alpha(color, alpha)
 
     def _true_entity_color(self,
                            true_color: Optional[Tuple[int, int, int]],
@@ -548,10 +540,11 @@ def hex_to_rgb(hex_string: Color) -> RGB:
     return r, g, b
 
 
-def _rgba(color: Color, alpha: int) -> Color:
+def set_color_alpha(color: Color, alpha: int) -> Color:
     """
     Args:
-        color: may be an RGB or RGBA color
+        color: may be an RGB or RGBA hex color string
+        alpha: the new alpha value (0-255)
     """
     assert color.startswith('#') and len(color) in (7, 9), f'invalid RGB color: "{color}"'
     assert 0 <= alpha < 255, f'alpha out of range: {alpha}'
