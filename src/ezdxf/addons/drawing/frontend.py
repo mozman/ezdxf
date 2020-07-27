@@ -7,7 +7,7 @@ from typing import Iterable, cast, Union, List, Callable
 
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import (
-    RenderContext, VIEWPORT_COLOR, Properties,
+    RenderContext, VIEWPORT_COLOR, Properties, set_color_alpha,
 )
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.utils import get_tri_or_quad_points
@@ -15,7 +15,7 @@ from ezdxf.entities import (
     DXFGraphic, Insert, MText, Polyline, LWPolyline, Spline, Hatch, Attrib,
     Text, Polyface,
 )
-from ezdxf.entities.dxfentity import DXFTagStorage
+from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
 from ezdxf.math import Vector, Z_AXIS, NULLVEC
 from ezdxf.render import MeshBuilder, TraceBuilder, Path
@@ -42,33 +42,16 @@ class Frontend:
     Args:
         ctx: actual render context of a DXF document
         out: backend
-        override: callback to override entity visibility,
-            signature is ``func(entity: DXFGraphic, properties: Properties) -> bool``,
-            entity enters processing pipeline if this function returns ``True``,
-            independent from visibility state stored in DXF attributes or layer
-            visibility.
 
     """
 
-    def __init__(self, ctx: RenderContext, out: Backend,
-                 override: Callable[[DXFGraphic, Properties], None] = None):
+    def __init__(self, ctx: RenderContext, out: Backend):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
         self.ctx = ctx
 
         # DrawingBackend is the interface to the render engine
         self.out = out
-
-        # The `override` filter can change the properties of an entity
-        # independent from the DXF attributes.
-        #
-        # signature: func(entity: DXFGraphic, properties: Properties) -> None
-        # This filter has access to the DXF attributes by the `entity` object
-        # and to the resolved properties by the `properties` object.
-        # It is recommended to modify only the `properties` object.
-        # To recreate the previous `visibility_filter`, set
-        # `properties.is_visible` to `False`
-        self.override = override
 
         # Parents entities of current entity/sub-entity
         self.parent_stack: List[DXFGraphic] = []
@@ -84,8 +67,19 @@ class Frontend:
         # self.approximation_max_sagitta = 0.01  # for drawing unit = 1m, max
         # sagitta = 1cm
 
-    def skip_entity(self, msg: str):
-        print(msg)
+    def skip_entity(self, entity: DXFEntity, msg: str):
+        print(f'skipped entity {str(entity)}. Reason: "{msg}"')
+
+    def override_properties(self, entity: DXFGraphic, properties: Properties) -> None:
+        """ The `override_properties` filter can change the properties of an entity
+        independent from the DXF attributes.
+
+        This filter has access to the DXF attributes by the `entity` object,
+        the current render context, and the resolved properties by the `properties` object.
+        It is recommended to modify only the `properties` object in this filter.
+        """
+        if entity.dxftype() == 'HATCH':
+            properties.color = set_color_alpha(properties.color, 200)
 
     def draw_layout(self, layout: 'Layout', finalize: bool = True) -> None:
         self.parent_stack = []
@@ -98,20 +92,15 @@ class Frontend:
         for entity in entities:
             # Skip unsupported DXF entities - just tag storage to preserve data
             if isinstance(entity, DXFTagStorage):
-                self.skip_entity(
-                    f'Ignoring unsupported DXF entity: {str(entity)}'
-                )
+                self.skip_entity(entity, 'Cannot parse DXF entity')
                 continue
 
             properties = self.ctx.resolve_all(entity)
-            if self.override:
-                self.override(entity, properties)
+            self.override_properties(entity, properties)
 
             # The content of a block reference does not depend
             # on the visibility state of the INSERT entity:
-            if entity.dxftype() == 'INSERT':
-                self.draw_entity(entity, properties)
-            elif properties.is_visible:
+            if properties.is_visible or entity.dxftype() == 'INSERT':
                 self.draw_entity(entity, properties)
 
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
@@ -151,7 +140,7 @@ class Frontend:
         elif dxftype == 'VIEWPORT':
             self.draw_viewport_entity(entity)
         else:
-            self.skip_entity(f'Unsupported entity: {str(entity)}')
+            self.skip_entity(entity, 'Unsupported entity')
         self.out.set_current_entity(None)
 
     def draw_line_entity(self, entity: DXFGraphic,
@@ -162,8 +151,8 @@ class Frontend:
 
         elif dxftype in ('XLINE', 'RAY'):
             start = d.start
-            delta = Vector(d.unit_vector.x, d.unit_vector.y,
-                           0) * INFINITE_LINE_LENGTH
+            delta = (Vector(d.unit_vector.x, d.unit_vector.y, 0)
+                     * INFINITE_LINE_LENGTH)
             if dxftype == 'XLINE':
                 self.out.draw_line(start - delta / 2, start + delta / 2,
                                    properties)
@@ -191,25 +180,21 @@ class Frontend:
                                  properties: Properties) -> None:
         dxftype = entity.dxftype()
         if NULLVEC.isclose(entity.dxf.extrusion):
-            self.skip_entity(
-                f'Invalid extrusion (0, 0, 0) in entity: {str(entity)}'
-            )
+            self.skip_entity(entity, 'Invalid extrusion (0, 0, 0)')
             return
         if dxftype == 'CIRCLE':
             if entity.dxf.radius <= 0:
-                self.skip_entity(f'Invalid radius in entity: {str(entity)}')
+                self.skip_entity(entity, 'Invalid radius')
                 return
             path = Path.from_circle(cast('Circle', entity))
         elif dxftype == 'ARC':
             if entity.dxf.radius <= 0:
-                self.skip_entity(f'Invalid radius in entity: {str(entity)}')
+                self.skip_entity(entity, 'Invalid radius')
                 return
             path = Path.from_arc(cast('Arc', entity))
         elif dxftype == 'ELLIPSE':
             if NULLVEC.isclose(entity.dxf.major_axis):
-                self.skip_entity(
-                    f'Invalid major axis (0, 0, 0) in entity: {str(entity)}'
-                )
+                self.skip_entity(entity, 'Invalid major axis (0, 0, 0)')
                 return
 
             path = Path.from_ellipse(cast('Ellipse', entity))
