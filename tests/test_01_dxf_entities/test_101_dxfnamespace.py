@@ -105,9 +105,9 @@ def test_delete_attribs(entity, processor):
     assert attribs.layer == '0'
     with pytest.raises(DXFAttributeError):
         del attribs.color
-    attribs.discard('color')  # delete silently if not exists
+    attribs.discard('color')  # delete silently if not exist
     with pytest.raises(DXFAttributeError):
-        del attribs.color
+        del attribs.unsupported_attribute
 
 
 def test_is_supported(entity, processor):

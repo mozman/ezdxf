@@ -1,7 +1,22 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-13
-# DXFEntity - Root Entity
+"""
+DXFEntity() is the base class of all DXF entities.
+
+DXFNamespace() manages all named DXF attributes of an entity.
+
+The actual entity system of ezdxf uses the latest supported DXF version.
+The stored DXF version of the document is used to warn users if they use
+unsupported DXF features of the actual DXF version.
+
+The DXF version of the document can be changed at runtime or overridden by
+exporting, but unsupported DXF features are just ignored by exporting.
+
+Ezdxf does no conversion between different DXF versions, this package is
+still not a CAD application.
+
+"""
 from typing import (
     TYPE_CHECKING, List, Dict, Any, Iterable, Optional, Union, Type, TypeVar,
     Set,
@@ -30,25 +45,10 @@ if TYPE_CHECKING:
         Auditor, TagWriter, Drawing, EntityDB, EntityFactory, DXFAttr,
     )
 
-__all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor',
-           'base_class']
-
-"""
-DXFEntity() is the base class of all DXF entities.
-
-DXFNamespace() manages all named DXF attributes of an entity.
-
-The actual entity system of ezdxf uses the latest supported DXF version.
-The stored DXF version of the document is used to warn users if they use 
-unsupported DXF features of the actual DXF version.
-
-The DXF version of the document can be changed at runtime or overridden by 
-exporting, but unsupported DXF features are just ignored by exporting.
-
-Ezdxf does no conversion between different DXF versions, this package is 
-still not a CAD application.
-
-"""
+__all__ = [
+    'DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor',
+    'base_class'
+]
 
 ERR_INVALID_DXF_ATTRIB = 'Invalid DXF attribute "{}" for entity {}'
 ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute "{}" does not exist'
@@ -56,9 +56,8 @@ ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute "{}" does not exist'
 # supported event handler called by setting DXF attributes
 # for usage, implement a method named like the dict-value, that accepts the new
 # value as argument e.g.:
-#
 #   Polyline.on_layer_change(name) -> changes also layers of all vertices
-#
+
 SETTER_EVENTS = {
     'layer': 'on_layer_change',
     'linetype': 'on_linetype_change',
@@ -110,8 +109,7 @@ class DXFNamespace:
 
     def rewire(self, entity: 'DXFEntity', handle: str = None,
                owner: str = None) -> None:
-        """
-        Rewire DXF namespace with parent entity
+        """ Rewire DXF namespace with parent entity
 
         Args:
             entity: new associated entity
@@ -127,15 +125,18 @@ class DXFNamespace:
             self.__dict__['owner'] = owner
 
     def __getattr__(self, key: str) -> Any:
-        """ Called if key does not exist, returns default value or None for
-        unset default values
+        """ Called if DXF attribute `key` does not exist, returns the DXF
+        default value or ``None``.
+
+        Raises:
+            DXFAttributeError: attribute `key` is not supported
+
         """
         attrib_def: Optional['DXFAttr'] = self.dxfattribs.get(key)
         if attrib_def:
             if attrib_def.xtype == XType.callback:
                 return attrib_def.get_callback_value(self._entity)
             else:
-                # returns None for attributes without default value
                 return attrib_def.default
         else:
             raise DXFAttributeError(
@@ -143,6 +144,12 @@ class DXFNamespace:
             )
 
     def __setattr__(self, key: str, value: Any) -> None:
+        """ Set DXF attribute `key` to `value`.
+
+        Raises:
+            DXFAttributeError: attribute `key` is not supported
+
+        """
         attrib_def: Optional['DXFAttr'] = self.dxfattribs.get(key)
         if attrib_def:
             if attrib_def.xtype == XType.callback:
@@ -159,14 +166,24 @@ class DXFNamespace:
                 handler(value)
 
     def __delattr__(self, key: str) -> None:
+        """ Delete DXF attribute `key`.
+
+        Raises:
+            DXFAttributeError: attribute `key` does not exist
+
+        """
         if self.hasattr(key):
             del self.__dict__[key]
         else:
             raise DXFAttributeError(ERR_DXF_ATTRIB_NOT_EXITS.format(key))
 
     def get(self, key: str, default: Any = None) -> Any:
-        """ Returns given `default` value not DXF default value for unset
-        attributes.
+        """ Returns value of DXF attribute `key` or the given `default` value
+        not DXF default value for unset attributes.
+
+        Raises:
+            DXFAttributeError: attribute `key` is not supported
+
         """
         # callback values should not exist as attribute in __dict__
         if self.hasattr(key):
@@ -183,66 +200,58 @@ class DXFNamespace:
                 ERR_INVALID_DXF_ATTRIB.format(key, self.dxftype))
 
     def get_default(self, key: str) -> Any:
-        """ Returns DXF default value for unset attributes. """
+        """ Returns DXF default value for unset DXF attribute `key`. """
         value = self.get(key, None)
         return self.dxf_default_value(key) if value is None else value
 
-    def all_existing_dxf_attribs(self) -> dict:
+    def set(self, key: str, value: Any) -> None:
+        """ Set DXF attribute `key` to `value`.
+
+        Raises:
+            DXFAttributeError: attribute `key` is not supported
+
         """
-        Returns all existing DXF attributes, except DXFEntity parent link.
+        self.__setattr__(key, value)
 
-        Contains only DXF attributes, which are accessible by DXFNamespace.
-
+    def all_existing_dxf_attribs(self) -> dict:
+        """ Returns all existing DXF attributes, except DXFEntity parent link.
         """
         attribs = dict(self.__dict__)
         del attribs['_entity']
         return attribs
 
-    def set(self, key: str, value: Any) -> None:
-        self.__setattr__(key, value)
-
     def discard(self, key: str) -> None:
+        """ Delete DXF attribute `key` silently without any exception. """
         try:
             del self.__dict__[key]
         except KeyError:
             pass
 
     def is_supported(self, key: str) -> bool:
-        """
-        Returns True if DXF attribute `key` is supported else False. Does not
-        grant that attribute `key` really exists.
-
-        The new entity system, ignores the DXF version at runtime, unsupported
-        features, are just not saved (no conversion between DXF version is
-        done!).
+        """ Returns True if DXF attribute `key` is supported else False.
+        Does not grant that attribute `key` really exists and does not
+        check if the actual DXF version of the document supports this
+        attribute, unsupported attributes will be ignored at export.
 
         """
-
-        return self.dxfattribs.get(key) is not None
+        return key in self.dxfattribs
 
     def hasattr(self, key: str) -> bool:
-        """
-        Returns True if attribute `key` really exists else False.
-
-        Does no check if attribute `key` is supported, but implicit supported
-        if exists.
-
-        """
+        """ Returns True if attribute `key` really exists else False. """
         return key in self.__dict__
 
     @property
-    def dxftype(self):
+    def dxftype(self) -> str:
+        """ Returns the DXF entity type. """
         return self._entity.DXFTYPE
 
     @property
-    def dxfattribs(self):
+    def dxfattribs(self) -> DXFAttributes:
+        """ Returns the DXF attribute definition. """
         return self._entity.DXFATTRIBS
 
     def dxf_default_value(self, key: str) -> Any:
-        """
-        Returns the default value as defined in the DXF standard.
-
-        """
+        """ Returns the default value as defined in the DXF standard. """
         attrib: Optional['DXFAttr'] = self.dxfattribs.get(key)
         if attrib:
             return attrib.default
