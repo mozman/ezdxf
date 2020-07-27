@@ -6,11 +6,14 @@ import math
 from typing import Iterable, cast, Union, List, Callable
 
 from ezdxf.addons.drawing.backend import Backend
-from ezdxf.addons.drawing.properties import RenderContext, VIEWPORT_COLOR, Properties
+from ezdxf.addons.drawing.properties import (
+    RenderContext, VIEWPORT_COLOR, Properties,
+)
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.utils import get_tri_or_quad_points
 from ezdxf.entities import (
-    DXFGraphic, Insert, MText, Polyline, LWPolyline, Spline, Hatch, Attrib, Text, Polyface
+    DXFGraphic, Insert, MText, Polyline, LWPolyline, Spline, Hatch, Attrib,
+    Text, Polyface,
 )
 from ezdxf.entities.dxfentity import DXFTagStorage
 from ezdxf.layouts import Layout
@@ -22,29 +25,36 @@ NEG_Z_AXIS = -Z_AXIS
 INFINITE_LINE_LENGTH = 25
 
 COMPOSITE_ENTITY_TYPES = {
-    # Unsupported types, represented as DXFTagStorage(), will sorted out in Frontend.draw_entities().
+    # Unsupported types, represented as DXFTagStorage(), will sorted out in
+    # Frontend.draw_entities().
     'INSERT',
-    # This types have a virtual_entities() method, which returns the content of the associated anonymous block
-    'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'LEADER', 'ACAD_TABLE',
+    # This types have a virtual_entities() method, which returns the content of
+    # the associated anonymous block
+    'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'LEADER',
+    'ACAD_TABLE',
 }
 
 
 class Frontend:
     """
-    Drawing frontend, responsible for decomposing entities into graphic primitives and resolving entity properties.
+    Drawing frontend, responsible for decomposing entities into graphic
+    primitives and resolving entity properties.
 
     Args:
         ctx: actual render context of a DXF document
         out: backend
-        visibility_filter: callback to override entity visibility,
-                           signature is ``func(entity: DXFGraphic, properties: Properties) -> bool``,
-                           entity enters processing pipeline if this function returns ``True``, independent
-                           from visibility state stored in DXF attributes or layer visibility.
+        override: callback to override entity visibility,
+            signature is ``func(entity: DXFGraphic, properties: Properties) -> bool``,
+            entity enters processing pipeline if this function returns ``True``,
+            independent from visibility state stored in DXF attributes or layer
+            visibility.
 
     """
 
-    def __init__(self, ctx: RenderContext, out: Backend, override: Callable[[DXFGraphic, Properties], None] = None):
-        # RenderContext contains all information to resolve resources for a specific DXF document.
+    def __init__(self, ctx: RenderContext, out: Backend,
+                 override: Callable[[DXFGraphic, Properties], None] = None):
+        # RenderContext contains all information to resolve resources for a
+        # specific DXF document.
         self.ctx = ctx
 
         # DrawingBackend is the interface to the render engine
@@ -54,22 +64,26 @@ class Frontend:
         # independent from the DXF attributes.
         #
         # signature: func(entity: DXFGraphic, properties: Properties) -> None
-        # This filter has access to the DXF attributes by the `entity` object and to the
-        # resolved properties by the `properties` object.
+        # This filter has access to the DXF attributes by the `entity` object
+        # and to the resolved properties by the `properties` object.
         # It is recommended to modify only the `properties` object.
-        # To recreate the previous `visibility_filter`, set `properties.is_visible` to `False`
+        # To recreate the previous `visibility_filter`, set
+        # `properties.is_visible` to `False`
         self.override = override
 
         # Parents entities of current entity/sub-entity
         self.parent_stack: List[DXFGraphic] = []
 
-        # Approximate a full circle by `n` segments, arcs have proportional less segments
+        # Approximate a full circle by `n` segments, arcs have proportional
+        # less segments
         self.circle_approximation_count = 128
 
-        # The sagitta (also known as the versine) is a line segment drawn perpendicular to a chord, between the
-        # midpoint of that chord and the arc of the circle. https://en.wikipedia.org/wiki/Circle
-        # not used yet! Could be used for all curves CIRCLE, ARC, ELLIPSE and SPLINE
-        # self.approximation_max_sagitta = 0.01  # for drawing unit = 1m, max sagitta = 1cm
+        # The sagitta (also known as the versine) is a line segment drawn
+        # perpendicular to a chord, between the midpoint of that chord and the
+        # arc of the circle. https://en.wikipedia.org/wiki/Circle not used yet!
+        # Could be used for all curves CIRCLE, ARC, ELLIPSE and SPLINE
+        # self.approximation_max_sagitta = 0.01  # for drawing unit = 1m, max
+        # sagitta = 1cm
 
     def skip_entity(self, msg: str):
         print(msg)
@@ -85,7 +99,9 @@ class Frontend:
         for entity in entities:
             # Skip unsupported DXF entities - just tag storage to preserve data
             if isinstance(entity, DXFTagStorage):
-                self.skip_entity(f'ignoring unsupported DXF entity: {str(entity)}')
+                self.skip_entity(
+                    f'Ignoring unsupported DXF entity: {str(entity)}'
+                )
                 continue
 
             properties = self.ctx.resolve_all(entity)
@@ -139,39 +155,47 @@ class Frontend:
             self.skip_entity(f'Unsupported entity: {str(entity)}')
         self.out.set_current_entity(None)
 
-    def draw_line_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+    def draw_line_entity(self, entity: DXFGraphic,
+                         properties: Properties) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
         if dxftype == 'LINE':
             self.out.draw_line(d.start, d.end, properties)
 
         elif dxftype in ('XLINE', 'RAY'):
             start = d.start
-            delta = Vector(d.unit_vector.x, d.unit_vector.y, 0) * INFINITE_LINE_LENGTH
+            delta = Vector(d.unit_vector.x, d.unit_vector.y,
+                           0) * INFINITE_LINE_LENGTH
             if dxftype == 'XLINE':
-                self.out.draw_line(start - delta / 2, start + delta / 2, properties)
+                self.out.draw_line(start - delta / 2, start + delta / 2,
+                                   properties)
             elif dxftype == 'RAY':
                 self.out.draw_line(start, start + delta, properties)
         else:
             raise TypeError(dxftype)
 
-    def draw_text_entity_2d(self, entity: DXFGraphic, properties: Properties) -> None:
+    def draw_text_entity_2d(self, entity: DXFGraphic,
+                            properties: Properties) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
         if dxftype in ('TEXT', 'MTEXT', 'ATTRIB'):
             entity = cast(Union[Text, MText, Attrib], entity)
-            for line, transform, cap_height in simplified_text_chunks(entity, self.out, font=properties.font):
+            for line, transform, cap_height in simplified_text_chunks(
+                    entity, self.out, font=properties.font):
                 self.out.draw_text(line, transform, properties, cap_height)
         else:
             raise TypeError(dxftype)
 
-    def draw_text_entity_3d(self, entity: DXFGraphic, properties: Properties) -> None:
+    def draw_text_entity_3d(self, entity: DXFGraphic,
+                            properties: Properties) -> None:
         return  # not supported
 
-    def draw_elliptic_arc_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+    def draw_elliptic_arc_entity(self, entity: DXFGraphic,
+                                 properties: Properties) -> None:
         dxftype = entity.dxftype()
         if NULLVEC.isclose(entity.dxf.extrusion):
-            self.skip_entity(f'Invalid extrusion (0, 0, 0) in entity: {str(entity)}')
+            self.skip_entity(
+                f'Invalid extrusion (0, 0, 0) in entity: {str(entity)}'
+            )
             return
-
         if dxftype == 'CIRCLE':
             if entity.dxf.radius <= 0:
                 self.skip_entity(f'Invalid radius in entity: {str(entity)}')
@@ -184,7 +208,9 @@ class Frontend:
             path = Path.from_arc(cast('Arc', entity))
         elif dxftype == 'ELLIPSE':
             if NULLVEC.isclose(entity.dxf.major_axis):
-                self.skip_entity(f'Invalid major axis (0, 0, 0) in entity: {str(entity)}')
+                self.skip_entity(
+                    f'Invalid major axis (0, 0, 0) in entity: {str(entity)}'
+                )
                 return
 
             path = Path.from_ellipse(cast('Ellipse', entity))
@@ -192,30 +218,37 @@ class Frontend:
             raise TypeError(dxftype)
         self.out.draw_path(path, properties)
 
-    def draw_spline_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+    def draw_spline_entity(self, entity: DXFGraphic,
+                           properties: Properties) -> None:
         path = Path.from_spline(cast(Spline, entity))
         self.out.draw_path(path, properties)
 
-    def draw_point_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+    def draw_point_entity(self, entity: DXFGraphic,
+                          properties: Properties) -> None:
         self.out.draw_point(entity.dxf.location, properties)
 
-    def draw_solid_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+    def draw_solid_entity(self, entity: DXFGraphic,
+                          properties: Properties) -> None:
         # Handles SOLID, TRACE and 3DFACE
         dxf, dxftype = entity.dxf, entity.dxftype()
-        points = get_tri_or_quad_points(entity, adjust_order=dxftype != '3DFACE')
+        points = get_tri_or_quad_points(
+            entity, adjust_order=dxftype != '3DFACE')
         # TRACE is an OCS entity
         if dxftype == 'TRACE' and dxf.hasattr('extrusion'):
             ocs = entity.ocs()
             points = list(ocs.points_to_wcs(points))
         if dxftype == '3DFACE':
-            self.out.draw_path(Path.from_vertices(points, close=True), properties)
+            self.out.draw_path(Path.from_vertices(points, close=True),
+                               properties)
         else:  # SOLID, TRACE
             self.out.draw_filled_polygon(points, properties)
 
-    def draw_hatch_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+    def draw_hatch_entity(self, entity: DXFGraphic,
+                          properties: Properties) -> None:
         entity = cast(Hatch, entity)
         ocs = entity.ocs()
-        # all OCS coordinates have the same z-axis stored as vector (0, 0, z), default (0, 0, 0)
+        # all OCS coordinates have the same z-axis stored as vector (0, 0, z),
+        # default (0, 0, 0)
         elevation = entity.dxf.elevation.z
         paths = copy.deepcopy(entity.paths)
         paths.polyline_to_edge_path(just_with_bulge=False)
@@ -235,7 +268,10 @@ class Frontend:
                 if last_vertex is None:
                     vertices.append(start)
                 elif not last_vertex.isclose(start):
-                    print(f'warning: {str(entity)} edges not contiguous: {last_vertex} -> {start}')
+                    print(
+                        f'warning: {str(entity)} edges not contiguous:'
+                        f' {last_vertex} -> {start}'
+                    )
                     vertices.append(start)
                 vertices.append(end)
                 last_vertex = end
@@ -251,11 +287,14 @@ class Frontend:
         view_vector: Vector = dxf.view_direction_vector
         mag = view_vector.magnitude
         if math.isclose(mag, 0.0):
-            print('warning: viewport with null view vector')
+            print('Warning: viewport with null view vector')
             return
         view_vector /= mag
         if not math.isclose(view_vector.dot(Vector(0, 0, 1)), 1.0):
-            print(f'cannot render viewport with non-perpendicular view direction: {dxf.view_direction_vector}')
+            print(
+                f'Cannot render viewport with non-perpendicular view direction:'
+                f' {dxf.view_direction_vector}'
+            )
             return
 
         cx, cy = dxf.center.x, dxf.center.y
@@ -263,18 +302,24 @@ class Frontend:
         dy = dxf.height / 2
         minx, miny = cx - dx, cy - dy
         maxx, maxy = cx + dx, cy + dy
-        points = [(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy), (minx, miny)]
+        points = [
+            (minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy), (minx, miny)
+        ]
         props = Properties()
         props.color = VIEWPORT_COLOR
-        self.out.draw_filled_polygon([Vector(x, y, 0) for x, y in points], props)
+        self.out.draw_filled_polygon([Vector(x, y, 0) for x, y in points],
+                                     props)
 
-    def draw_mesh_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+    def draw_mesh_entity(self, entity: DXFGraphic,
+                         properties: Properties) -> None:
         builder = MeshBuilder.from_mesh(entity)
         self.draw_mesh_builder_entity(builder, properties)
 
-    def draw_mesh_builder_entity(self, builder: MeshBuilder, properties: Properties) -> None:
+    def draw_mesh_builder_entity(self, builder: MeshBuilder,
+                                 properties: Properties) -> None:
         for face in builder.faces_as_vertices():
-            self.out.draw_path(Path.from_vertices(face, close=True), properties=properties)
+            self.out.draw_path(
+                Path.from_vertices(face, close=True), properties=properties)
 
     def draw_polyline_entity(self, entity: DXFGraphic, properties: Properties):
         dxftype = entity.dxftype()
@@ -301,22 +346,29 @@ class Frontend:
                 else:  # stored as vector (0, 0, elevation)
                     elevation = Vector(entity.dxf.elevation).z
 
-            trace = TraceBuilder.from_polyline(entity, segments=self.circle_approximation_count // 2)
+            trace = TraceBuilder.from_polyline(
+                entity, segments=self.circle_approximation_count // 2
+            )
             for polygon in trace.polygons():  # polygon is a sequence of Vec2()
                 if transform:
-                    points = ocs.points_to_wcs(Vector(v.x, v.y, elevation) for v in polygon)
+                    points = ocs.points_to_wcs(
+                        Vector(v.x, v.y, elevation) for v in polygon
+                    )
                 else:
                     points = Vector.generate(polygon)
                 self.out.draw_filled_polygon(points, properties)
             return
 
-        path = Path.from_lwpolyline(entity) if is_lwpolyline else Path.from_polyline(entity)
+        path = Path.from_lwpolyline(entity) \
+            if is_lwpolyline else Path.from_polyline(entity)
         self.out.draw_path(path, properties)
 
-    def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+    def draw_composite_entity(self, entity: DXFGraphic,
+                              properties: Properties) -> None:
         def set_opaque(entity):
             for child in entity.virtual_entities():
-                child.transparency = 0.0  # todo: defaults to 1.0 (fully transparent)???
+                # todo: defaults to 1.0 (fully transparent)???
+                child.transparency = 0.0
                 yield child
 
         dxftype = entity.dxftype()
