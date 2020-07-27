@@ -151,8 +151,7 @@ class Frontend:
 
         elif dxftype in ('XLINE', 'RAY'):
             start = d.start
-            delta = (Vector(d.unit_vector.x, d.unit_vector.y, 0)
-                     * INFINITE_LINE_LENGTH)
+            delta = d.unit_vector * INFINITE_LINE_LENGTH
             if dxftype == 'XLINE':
                 self.out.draw_line(start - delta / 2, start + delta / 2,
                                    properties)
