@@ -378,8 +378,7 @@ class RenderContext:
         else:  # BYOBJECT
             color = self._true_entity_color(entity.rgb, aci)
 
-        alpha_float = 1.0 - entity.transparency
-        alpha = int(round(alpha_float * 255))
+        alpha = int(round((1.0 - entity.transparency) * 255))
         if alpha == 255:
             return color
         else:
