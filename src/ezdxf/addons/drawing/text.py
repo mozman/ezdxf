@@ -8,6 +8,7 @@ from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 
 import ezdxf.lldxf.const as DXFConstants
+from ezdxf.addons.drawing import Properties
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.entities import MText, Text, Attrib
 from ezdxf.math import Matrix44, Vector
@@ -289,5 +290,7 @@ def simplified_text_chunks(text: AnyText, out: Backend,
             width = out.get_text_line_width(line, cap_height)
             ps = list(transform.transform_vertices([Vector(0, 0, 0), Vector(width, 0, 0), Vector(width, cap_height, 0),
                                                     Vector(0, cap_height, 0), Vector(0, 0, 0)]))
+            props = Properties()
+            props.color = '#ff0000'
             for a, b in zip(ps, ps[1:]):
-                out.draw_line(a, b, '#ff0000')
+                out.draw_line(a, b, props)
