@@ -92,7 +92,6 @@ class Filling:
         self.gradient_color1: Optional[Color] = None
         self.gradient_color2: Optional[Color] = None
         self.gradient_centered: float = 0.0  # todo: what's the meaning?
-        self.gradient_tint: float = 0.0  # todo: what's the meaning?
         # Gradient- or pattern angle
         self.angle: float = 0.0  # in degrees
         # Gradient- or pattern name
@@ -274,11 +273,11 @@ class RenderContext:
     def add_layer(self, layer: 'Layer') -> None:
         properties = LayerProperties()
         name = layer_key(layer.dxf.name)
-        # store real layer name (mixed case):
+        # Store real layer name (mixed case):
         properties.layer = layer.dxf.name
         properties.color = self._true_layer_color(layer)
-        properties.linetype_name = str(
-            layer.dxf.linetype).upper()  # normalize linetype names
+        # Normalize linetype names to UPPERCASE:
+        properties.linetype_name = str(layer.dxf.linetype).upper()
         properties.linetype_pattern = self.line_pattern.get(
             properties.linetype_name, CONTINUOUS_PATTERN)
         properties.lineweight = self._true_layer_lineweight(
@@ -291,7 +290,7 @@ class RenderContext:
         name = table_key(text_style.dxf.name)
         font = text_style.dxf.font
 
-        # SHX fonts are not supported:
+        # Map SHX fonts to True Type Fonts:
         if font.upper() in SHX_FONTS:
             font = SHX_FONTS[font.upper()]
         self.fonts[name] = font
@@ -363,7 +362,7 @@ class RenderContext:
         self.current_block_reference = self._saved_states.pop()
 
     def resolve_all(self, entity: 'DXFGraphic') -> Properties:
-        """ Resolve all properties for DXF `entity`. """
+        """ Resolve all properties of `entity`. """
         p = Properties()
         p.layer = self.resolve_layer(entity)
         resolved_layer = layer_key(p.layer)
@@ -513,10 +512,14 @@ class RenderContext:
         def setup_gradient():
             filling.type = Filling.GRADIENT
             filling.name = gradient.name.upper()
+            # todo: no idea when to use aci1 and aci2
             filling.color1 = rgb_to_hex(gradient.color1)
-            # todo: no idea when we should use aci1
-            filling.color2 = rgb_to_hex(gradient.color2)
-            # todo: no idea when we should use aci2
+            if gradient.one_color:
+                c = round(gradient.tint * 255)  # channel value
+                filling.color2 = rgb_to_hex((c, c, c))
+            else:
+                filling.color2 = rgb_to_hex(gradient.color2)
+
             filling.angle = gradient.rotation
             filling.gradient_tint = gradient.tint
             filling.gradient_centered = gradient.centered
@@ -526,8 +529,9 @@ class RenderContext:
             filling.name = hatch.dxf.pattern_name.upper()
             filling.pattern_scale = hatch.dxf.pattern_scale
             filling.angle = hatch.dxf.pattern_angle
-            if hatch.dxf.pattern_double:  # todo: is this correct?
-                filling.pattern_scale *= 2
+            if hatch.dxf.pattern_double:
+                # This value is not editable by CAD-App-GUI:
+                filling.pattern_scale *= 2  # todo: is this correct?
 
             filling.pattern = self._hatch_pattern_cache.get(filling.name)
             if filling.pattern:
@@ -564,24 +568,24 @@ class RenderContext:
             filling.pattern = simplified_pattern
             self._hatch_pattern_cache[filling.name] = filling.pattern
 
-        if entity.dxftype() == 'HATCH':
-            hatch = cast('Hatch', entity)
-            filling = Filling()
-            if hatch.dxf.solid_fill:
-                gradient = hatch.gradient
-                if gradient is None:
-                    filling.type = Filling.SOLID
-                else:
-                    if gradient.kind == 0:  # Solid
-                        filling.type = Filling.SOLID
-                        filling.color1 = rgb_to_hex(gradient.color1)
-                    else:
-                        setup_gradient()
-            else:
-                setup_pattern()
-            return filling
-        else:
+        if entity.dxftype() != 'HATCH':
             return None
+
+        hatch = cast('Hatch', entity)
+        filling = Filling()
+        if hatch.dxf.solid_fill:
+            gradient = hatch.gradient
+            if gradient is None:
+                filling.type = Filling.SOLID
+            else:
+                if gradient.kind == 0:  # Solid
+                    filling.type = Filling.SOLID
+                    filling.color1 = rgb_to_hex(gradient.color1)
+                else:
+                    setup_gradient()
+        else:
+            setup_pattern()
+        return filling
 
 
 def rgb_to_hex(
