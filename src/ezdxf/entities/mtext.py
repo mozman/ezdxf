@@ -496,7 +496,7 @@ def caret_decode(text: str) -> str:
 
      see: <https://en.wikipedia.org/wiki/Caret_notation>
      """
-    def replace_match(match: re.Match) -> str:
+    def replace_match(match: "re.Match") -> str:
         c = ord(match.group(1))
         return chr((c - 64) % 126)
 
