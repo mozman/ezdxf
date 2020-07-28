@@ -3,7 +3,7 @@
 # License: MIT License
 import copy
 import math
-from typing import Iterable, cast, Union, List, Callable
+from typing import Iterable, cast, Union, List
 
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import (
@@ -70,13 +70,15 @@ class Frontend:
     def skip_entity(self, entity: DXFEntity, msg: str):
         print(f'skipped entity {str(entity)}. Reason: "{msg}"')
 
-    def override_properties(self, entity: DXFGraphic, properties: Properties) -> None:
-        """ The `override_properties` filter can change the properties of an entity
-        independent from the DXF attributes.
+    def override_properties(self, entity: DXFGraphic,
+                            properties: Properties) -> None:
+        """ The `override_properties` filter can change the properties of
+        an entity independent from the DXF attributes.
 
         This filter has access to the DXF attributes by the `entity` object,
-        the current render context, and the resolved properties by the `properties` object.
-        It is recommended to modify only the `properties` object in this filter.
+        the current render context, and the resolved properties by the
+        `properties` object. It is recommended to modify only the `properties`
+        object in this filter.
         """
         if entity.dxftype() == 'HATCH':
             properties.color = set_color_alpha(properties.color, 200)

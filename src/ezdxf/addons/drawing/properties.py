@@ -2,7 +2,10 @@
 # Copyright (c) 2020, Matthew Broadway
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence, Set, cast
+from typing import (
+    TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence, Set,
+    cast,
+)
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.addons import acadctb
@@ -12,12 +15,15 @@ from ezdxf.math import Vec2
 from ezdxf.tools.pattern import scale_pattern
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic, Layout, Table, Layer, Linetype, Drawing, Textstyle, Hatch, Vertex
+    from ezdxf.eztypes import (
+        DXFGraphic, Layout, Table, Layer, Linetype, Drawing, Textstyle, Vertex,
+    )
     from ezdxf.entities.ltype import LinetypePattern
 
 __all__ = [
-    'Properties', 'LayerProperties', 'RenderContext', 'layer_key', 'rgb_to_hex', 'hex_to_rgb',
-    'MODEL_SPACE_BG_COLOR', 'PAPER_SPACE_BG_COLOR', 'VIEWPORT_COLOR', 'CONTINUOUS_PATTERN',
+    'Properties', 'LayerProperties', 'RenderContext', 'layer_key', 'rgb_to_hex',
+    'hex_to_rgb', 'MODEL_SPACE_BG_COLOR', 'PAPER_SPACE_BG_COLOR',
+    'VIEWPORT_COLOR', 'CONTINUOUS_PATTERN', 'set_color_alpha',
 ]
 
 table_key = layer_key
@@ -70,8 +76,9 @@ class HatchPatternLine:
         self.angle: float = float(angle)  # in degrees
         self.base_point = Vec2(base_point)
         self.offset = Vec2(offset)
-        # like linetype pattern
-        self.pattern: Tuple[float, ...] = tuple(pattern) if pattern else CONTINUOUS_PATTERN
+        # Same data format as linetype pattern:
+        self.pattern: Tuple[float, ...] = tuple(pattern) \
+            if pattern else CONTINUOUS_PATTERN
 
 
 class Filling:
@@ -102,39 +109,47 @@ class Properties:
         self.color: str = '#ffffff'  # format #RRGGBB or #RRGGBBAA
         # color names should be resolved into a actual color value
 
-        # Store linetype name for backends which don't have the ability to use user-defined linetypes,
-        # but have some predefined linetypes, maybe matching most common AutoCAD linetypes is possible
-        self.linetype_name: str = 'CONTINUOUS'  # default linetype - store in UPPERCASE
+        # Store linetype name for backends which don't have the ability to use
+        # user-defined linetypes, but have some predefined linetypes, maybe
+        # matching most common AutoCAD linetypes is possible.
+        # default linetype - store in UPPERCASE
+        self.linetype_name: str = 'CONTINUOUS'
 
         # Linetypes: Complex DXF linetypes are not supported:
-        # 1. Don't know if there are any backends which can use linetypes including text or shapes
-        # 2. No decoder for SHX files available, which are the source for shapes in linetypes
+        # 1. Don't know if there are any backends which can use linetypes
+        #    including text or shapes
+        # 2. No decoder for SHX files available, which are the source for
+        #    shapes in linetypes
         # 3. SHX files are copyrighted - including in ezdxf not possible
         #
         # Simplified DXF linetype definition:
         # all line elements >= 0.0, 0.0 = point
         # all gap elements > 0.0
-        # Usage as alternating line - gap sequence: line-gap-line-gap .... (line could be a point 0.0)
-        # line-line or gap-gap - makes no sense
+        # Usage as alternating line - gap sequence: line-gap-line-gap ....
+        # (line could be a point 0.0), line-line or gap-gap - makes no sense
         # Examples:
-        # DXF: ("DASHED", "Dashed __ __ __ __ __ __ __ __ __ __ __ __ __ _", [0.6, 0.5, -0.1])
+        # DXF: ("DASHED", "Dashed __ __ __ __ __ __ __ __ __ __ __ __ __ _",
+        #      [0.6, 0.5, -0.1])
         # first entry 0.6 is the total pattern length = sum(linetype_pattern)
         # linetype_pattern: [0.5, 0.1] = line-gap
-        # DXF: ("DASHDOTX2", "Dash dot (2x) ____  .  ____  .  ____  .  ____", [2.4, 2.0, -0.2, 0.0, -0.2])
+        # DXF: ("DASHDOTX2", "Dash dot (2x) ____  .  ____  .  ____  .  ____",
+        #      [2.4, 2.0, -0.2, 0.0, -0.2])
         # linetype_pattern: [2.0, 0.2, 0.0, 0.2] = line-gap-point-gap
         # Stored as tuple, so pattern could be used as key for caching.
-        # SVG dash-pattern does not support points, so a minimal line length (maybe inferred from linewidth?)
-        # has to be used, which alters# the overall line appearance a little bit - but linetype
-        # mapping will never be perfect.
+        # SVG dash-pattern does not support points, so a minimal line length
+        # (maybe inferred from linewidth?) has to be used, which alters# the
+        # overall line appearance a little bit - but linetype mapping will
+        # never be perfect.
         # The continuous pattern is an empty tuple ()
         self.linetype_pattern: Tuple[float, ...] = CONTINUOUS_PATTERN
         self.linetype_scale: float = 1.0
-        self.lineweight: float = 0.25  # line weight in mm, default lineweight 0.25?
+        # line weight in mm, todo: default lineweight is 0.25?
+        self.lineweight: float = 0.25
         self.is_visible = True
 
         # The 'layer' attribute stores the resolved layer of an entity:
         # Entities inside of a block references get properties from the layer
-        # of the INSERT entity, if they reside on the layer '0'
+        # of the INSERT entity, if they reside on the layer '0'.
         # To get the "real" layer of an entity, you have to use `entity.dxf.layer`
         self.layer: str = '0'
 
@@ -145,7 +160,8 @@ class Properties:
         self.filling: Optional[Filling] = None
 
     def __str__(self):
-        return f'({self.color}, {self.linetype_name}, {self.lineweight}, "{self.layer}")'
+        return f'({self.color}, {self.linetype_name}, {self.lineweight}, ' \
+               f'"{self.layer}")'
 
     @property
     def rgb(self) -> RGB:
@@ -154,7 +170,8 @@ class Properties:
 
     @property
     def luminance(self) -> float:
-        """ Returns perceived color luminance in range [0, 1] from dark to light. """
+        """ Returns perceived color luminance in range [0, 1] from dark to light.
+        """
         return luminance(self.rgb)
 
 
@@ -189,7 +206,8 @@ class LayoutProperties:
     def has_dark_background(self) -> bool:
         return self._has_dark_background
 
-    def set_layout(self, layout: 'Layout', bg: Optional[Color] = None, fg: Optional[Color] = None,
+    def set_layout(self, layout: 'Layout', bg: Optional[Color] = None,
+                   fg: Optional[Color] = None,
                    units: Optional[int] = None) -> None:
         self.name = layout.name
         if bg is None:
@@ -209,7 +227,8 @@ class LayoutProperties:
         if fg is not None:
             self._default_color = fg
         else:
-            self._default_color = '#ffffff' if self._has_dark_background else '#000000'
+            self._default_color = '#ffffff' if self._has_dark_background \
+                else '#000000'
 
 
 class RenderContext:
@@ -220,7 +239,8 @@ class RenderContext:
         self.current_block_reference: Optional[Properties] = None
         self.plot_styles = self._load_plot_style_table(ctb)
         # Always consider: entity layer may not exist
-        # Layer name as key is normalized, most likely name.lower(), but may change in the future.
+        # Layer name as key is normalized, most likely name.lower(), but may
+        # change in the future.
         self.layers: Dict[str, LayerProperties] = dict()
         # Text-style -> font mapping
         self.fonts: Dict[str, str] = dict()
@@ -232,13 +252,15 @@ class RenderContext:
             self.linetype_scale = doc.header.get('$LTSCALE', 1.0)
             self.units = doc.header.get('$INSUNITS', 0)
             if self.units == 0:
-                # set default units based on measurement system: imperial (0) / metric (1)
+                # set default units based on measurement system:
+                # imperial (0) / metric (1)
                 if doc.header.get('$MEASUREMENT', 1) == 1:
                     self.units = 6  # 1 m
                 else:
                     self.units = 1  # 1 in
         self.current_layout.units = self.units
-        self._hatch_pattern_cache: Dict[str, Sequence[HatchPatternLine]] = dict()
+        self._hatch_pattern_cache: Dict[
+            str, Sequence[HatchPatternLine]] = dict()
 
     def _setup_layers(self, doc: 'Drawing'):
         for layer in doc.layers:  # type: Layer
@@ -251,11 +273,15 @@ class RenderContext:
     def add_layer(self, layer: 'Layer') -> None:
         properties = LayerProperties()
         name = layer_key(layer.dxf.name)
-        properties.layer = layer.dxf.name  # store real layer name (mixed case)
+        # store real layer name (mixed case):
+        properties.layer = layer.dxf.name
         properties.color = self._true_layer_color(layer)
-        properties.linetype_name = str(layer.dxf.linetype).upper()  # normalize linetype names
-        properties.linetype_pattern = self.line_pattern.get(properties.linetype_name, CONTINUOUS_PATTERN)
-        properties.lineweight = self._true_layer_lineweight(layer.dxf.lineweight)
+        properties.linetype_name = str(
+            layer.dxf.linetype).upper()  # normalize linetype names
+        properties.linetype_pattern = self.line_pattern.get(
+            properties.linetype_name, CONTINUOUS_PATTERN)
+        properties.lineweight = self._true_layer_lineweight(
+            layer.dxf.lineweight)
         properties.is_visible = layer.is_on()
         properties.plot = bool(layer.dxf.plot)
         self.layers[name] = properties
@@ -288,8 +314,9 @@ class RenderContext:
 
     @staticmethod
     def _load_plot_style_table(filename: str):
-        # Each layout can have a different plot style table stored in Layout.dxf.current_style_sheet.
-        # HEADER var $STYLESHEET stores the default ctb-file name
+        # Each layout can have a different plot style table stored in
+        # Layout.dxf.current_style_sheet.
+        # HEADER var $STYLESHEET stores the default ctb-file name.
         try:
             ctb = acadctb.load(filename)
         except IOError:
@@ -341,8 +368,10 @@ class RenderContext:
         resolved_layer = layer_key(p.layer)
 
         p.color = self.resolve_color(entity, resolved_layer=resolved_layer)
-        p.linetype_name, p.linetype_pattern = self.resolve_linetype(entity, resolved_layer=resolved_layer)
-        p.lineweight = self.resolve_lineweight(entity, resolved_layer=resolved_layer)
+        p.linetype_name, p.linetype_pattern = \
+            self.resolve_linetype(entity, resolved_layer=resolved_layer)
+        p.lineweight = self.resolve_lineweight(entity,
+                                               resolved_layer=resolved_layer)
         dxf = entity.dxf
         p.linetype_scale = dxf.ltscale
         p.is_visible = not bool(dxf.invisible)
@@ -356,19 +385,23 @@ class RenderContext:
         return p
 
     def resolve_layer(self, entity: 'DXFGraphic') -> str:
-        """ Resolve entity layer, this is only relevant for entities inside of block references.
+        """ Resolve entity layer, this is only relevant for entities inside of
+        block references.
         """
         layer = entity.dxf.layer
         if layer == '0' and self.inside_block_reference:
             layer = self.current_block_reference.layer
         return layer
 
-    def resolve_color(self, entity: 'DXFGraphic', *, resolved_layer: str = None) -> Color:
+    def resolve_color(self, entity: 'DXFGraphic', *,
+                      resolved_layer: str = None) -> Color:
         """ Resolve color of DXF `entity` """
         aci = entity.dxf.color  # defaults to BYLAYER
         if aci == const.BYLAYER:
-            entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
-            color = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).color
+            entity_layer = resolved_layer or layer_key(
+                self.resolve_layer(entity))
+            color = self.layers.get(entity_layer,
+                                    DEFAULT_LAYER_PROPERTIES).color
         elif aci == const.BYBLOCK:
             if not self.inside_block_reference:
                 color = self.current_layout.default_color
@@ -403,15 +436,20 @@ class RenderContext:
         else:
             return rgb_to_hex(self.plot_styles[aci].color)
 
-    def resolve_linetype(self, entity: 'DXFGraphic', *, resolved_layer: str = None):
+    def resolve_linetype(self, entity: 'DXFGraphic', *,
+                         resolved_layer: str = None):
         """ Resolve linetype of DXF `entity` """
         aci = entity.dxf.color
         # Not sure if plotstyle table overrides actual entity setting?
-        if (0 < aci < 256) and self.plot_styles[aci].linetype != acadctb.OBJECT_LINETYPE:
-            pass  # todo: return special line types - overriding linetypes by plotstyle table
+        if (0 < aci < 256) and \
+                self.plot_styles[aci].linetype != acadctb.OBJECT_LINETYPE:
+            # todo: return special line types - overriding linetypes by
+            #  plotstyle table
+            pass
         name = entity.dxf.linetype.upper()  # default is 'BYLAYER'
         if name == 'BYLAYER':
-            entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
+            entity_layer = resolved_layer or layer_key(
+                self.resolve_layer(entity))
             layer = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES)
             name = layer.linetype_name
             pattern = layer.linetype_pattern
@@ -428,7 +466,8 @@ class RenderContext:
             pattern = self.line_pattern.get(name, CONTINUOUS_PATTERN)
         return name, pattern
 
-    def resolve_lineweight(self, entity: 'DXFGraphic', *, resolved_layer: str = None):
+    def resolve_lineweight(self, entity: 'DXFGraphic', *,
+                           resolved_layer: str = None):
         # Line weight in mm times 100 (e.g. 0.13mm = 13).
         # Smallest line weight is 0 and biggest line weight is 211
         # The DWG format is limited to a fixed value table: 0, 5, 9, ... 200, 211
@@ -437,13 +476,16 @@ class RenderContext:
         # Maybe XDATA or ExtensionDict in any of this entities.
         aci = entity.dxf.color
         # Not sure if plotstyle table overrides actual entity setting?
-        if (0 < aci < 256) and self.plot_styles[aci].lineweight != acadctb.OBJECT_LINEWEIGHT:
+        if (0 < aci < 256) and self.plot_styles[
+            aci].lineweight != acadctb.OBJECT_LINEWEIGHT:
             # overriding lineweight by plotstyle table
             return self.plot_styles.get_lineweight(aci)
         lineweight = entity.dxf.lineweight  # default is BYLAYER
         if lineweight == const.LINEWEIGHT_BYLAYER:
-            entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
-            return self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES).lineweight
+            entity_layer = resolved_layer or layer_key(
+                self.resolve_layer(entity))
+            return self.layers.get(entity_layer,
+                                   DEFAULT_LAYER_PROPERTIES).lineweight
 
         elif lineweight == const.LINEWEIGHT_BYBLOCK:
             if self.inside_block_reference:
@@ -466,6 +508,61 @@ class RenderContext:
             return None
 
     def resolve_filling(self, entity: 'DXFGraphic') -> Optional[Filling]:
+        def setup_gradient():
+            filling.type = Filling.GRADIENT
+            filling.name = gradient.name.upper()
+            filling.color1 = rgb_to_hex(gradient.color1)
+            # todo: no idea when we should use aci1
+            filling.color2 = rgb_to_hex(gradient.color2)
+            # todo: no idea when we should use aci2
+            filling.angle = gradient.rotation
+            filling.gradient_tint = gradient.tint
+            filling.gradient_centered = gradient.centered
+
+        def setup_pattern():
+            filling.type = Filling.PATTERN
+            filling.name = hatch.dxf.pattern_name.upper()
+            filling.pattern_scale = hatch.dxf.pattern_scale
+            filling.angle = hatch.dxf.pattern_angle
+            if hatch.dxf.pattern_double:  # todo: ???
+                filling.pattern_scale *= 2
+
+            filling.pattern = self._hatch_pattern_cache.get(filling.name)
+            if filling.pattern:
+                return
+
+            pattern = hatch.pattern
+            if not pattern:
+                return
+
+            # DXF stores the hatch pattern already rotated and scaled,
+            # pattern_scale and pattern_rotation are just hints for the CAD
+            # application, if they wanna change the pattern.
+            # It's better to revert the scaling and rotation, because in general
+            # back-ends do not handle pattern that way, they need a base-pattern
+            # and separated scaling and rotation attributes and these
+            # base-pattern could be cached by their name.
+            base_pattern = scale_pattern(
+                pattern.as_list(),
+                1.0 / filling.pattern_scale,
+                -filling.angle
+            )
+            simplified_pattern = []
+            for angle, base_point, offset, dash_length_items in base_pattern:
+                if len(dash_length_items) > 1:
+                    line_pattern = compile_line_pattern(
+                        None,
+                        dash_length_items
+                    )
+                else:
+                    line_pattern = CONTINUOUS_PATTERN
+                simplified_pattern.append(
+                    HatchPatternLine(angle, base_point, offset, line_pattern)
+                )
+            filling.pattern = simplified_pattern
+            self._hatch_pattern_cache[
+                filling.name] = filling.pattern
+
         if entity.dxftype() == 'HATCH':
             hatch = cast('Hatch', entity)
             filling = Filling()
@@ -478,54 +575,16 @@ class RenderContext:
                         filling.type = Filling.SOLID
                         filling.color1 = rgb_to_hex(gradient.color1)
                     else:
-                        filling.type = Filling.GRADIENT
-                        filling.name = gradient.name.upper()
-                        filling.color1 = rgb_to_hex(gradient.color1)
-                        # todo: no idea when we should use aci1
-                        filling.color2 = rgb_to_hex(gradient.color2)
-                        # todo: no idea when we should use aci2
-                        filling.angle = gradient.rotation
-                        filling.gradient_tint = gradient.tint
-                        filling.gradient_centered = gradient.centered
+                        setup_gradient()
             else:
-                filling.type = Filling.PATTERN
-                filling.name = hatch.dxf.pattern_name.upper()
-                filling.pattern_scale = hatch.dxf.pattern_scale
-                filling.angle = hatch.dxf.pattern_angle
-                if hatch.dxf.pattern_double:  # todo: ???
-                    filling.pattern_scale *= 2
-
-                filling.pattern = self._hatch_pattern_cache.get(filling.name)
-                if filling.pattern is None:
-                    pattern = hatch.pattern
-                    if pattern:
-                        # DXF stores the hatch pattern already rotated and scaled,
-                        # pattern_scale and pattern_rotation are just hints for
-                        # the CAD application, if they wanna change the pattern.
-                        # It's better to revert the scaling and rotation,
-                        # because in general back-ends do not handle pattern that way,
-                        # they need a base-pattern and separated scaling and rotation
-                        # attributes and these base-pattern could be cached by their name.
-                        base_pattern = scale_pattern(pattern.as_list(), 1.0/filling.pattern_scale, -filling.angle)
-                        simplified_pattern = []
-                        for angle, base_point, offset, dash_length_items in base_pattern:
-                            if len(dash_length_items) > 1:
-                                line_pattern = compile_line_pattern(None, dash_length_items)
-                            else:
-                                line_pattern = CONTINUOUS_PATTERN
-                            simplified_pattern.append(
-                                HatchPatternLine(
-                                    angle, base_point, offset, line_pattern,
-                                )
-                            )
-                        filling.pattern = simplified_pattern
-                        self._hatch_pattern_cache[filling.name] = filling.pattern
+                setup_pattern()
             return filling
         else:
             return None
 
 
-def rgb_to_hex(rgb: Union[Tuple[int, int, int], Tuple[float, float, float]]) -> Color:
+def rgb_to_hex(
+        rgb: Union[Tuple[int, int, int], Tuple[float, float, float]]) -> Color:
     assert all(0 <= x <= 255 for x in rgb), f'invalid RGB color: {rgb}'
     r, g, b = rgb
     return f'#{r:02x}{g:02x}{b:02x}'
@@ -546,7 +605,8 @@ def set_color_alpha(color: Color, alpha: int) -> Color:
         color: may be an RGB or RGBA hex color string
         alpha: the new alpha value (0-255)
     """
-    assert color.startswith('#') and len(color) in (7, 9), f'invalid RGB color: "{color}"'
+    assert color.startswith('#') and len(color) in (
+        7, 9), f'invalid RGB color: "{color}"'
     assert 0 <= alpha < 255, f'alpha out of range: {alpha}'
     return f'{color[:7]}{alpha:02x}'
 
@@ -564,7 +624,8 @@ def _load_line_pattern(linetypes: 'Table') -> Dict[str, Tuple]:
 
 
 def _merge_dashes(elements: Sequence[float]) -> Iterable[float]:
-    """ Merge multiple consecutive lines, gaps or points into a single element. """
+    """ Merge multiple consecutive lines, gaps or points into a single element.
+    """
 
     def sign(v):
         if v < 0:
@@ -585,8 +646,11 @@ def _merge_dashes(elements: Sequence[float]) -> Iterable[float]:
     yield buffer
 
 
-def _compile_line_pattern_from_tags(pattern: 'LinetypePattern') -> Tuple[float, ...]:
-    """ Returns simplified dash-gap-dash... line pattern and dash is 0 for a point. """
+def _compile_line_pattern_from_tags(
+        pattern: 'LinetypePattern') -> Tuple[float, ...]:
+    """ Returns simplified dash-gap-dash... line pattern and dash is 0 for a
+    point.
+    """
     # complex line types with text and shapes are not supported
     if pattern.is_complex_type():
         return CONTINUOUS_PATTERN
@@ -604,8 +668,12 @@ def _compile_line_pattern_from_tags(pattern: 'LinetypePattern') -> Tuple[float, 
     return compile_line_pattern(pattern_length, elements)
 
 
-def compile_line_pattern(total_length: Optional[float], elements: Sequence[float]) -> Tuple[float, ...]:
-    """ Returns simplified dash-gap-dash... line pattern and dash is 0 for a point """
+def compile_line_pattern(
+        total_length: Optional[float],
+        elements: Sequence[float]) -> Tuple[float, ...]:
+    """ Returns simplified dash-gap-dash... line pattern and dash is 0 for
+    a point.
+    """
     elements = list(_merge_dashes(elements))
     if total_length is None:
         pass
@@ -622,7 +690,7 @@ def compile_line_pattern(total_length: Optional[float], elements: Sequence[float
             elements[-1] += e
         else:  # add last gap
             elements.append(e)
-    # dash-gap-point
-    # possible: dash-point or point-dash - just ignore yet
+    # returns dash-gap-point
+    # possible: dash-point or point-dash - ignore this yet
     # never: dash-dash or gap-gap or point-point
     return tuple(abs(e) for e in elements)
