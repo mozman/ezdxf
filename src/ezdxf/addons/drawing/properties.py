@@ -33,9 +33,9 @@ VIEWPORT_COLOR = '#aaaaaa'  # arbitrary choice
 CONTINUOUS_PATTERN = tuple()
 SHX_FONTS = {
     # See examples in: CADKitSamples/Shapefont.dxf
-    # Shape file structure is not documented,
-    # therefore replace this fonts by true type fonts.
-    # `None` stands for default font.
+    # Shape file structure is not documented, therefore replace this fonts by
+    # true type fonts.
+    # `None` is for: use the default font.
     'AMGDT': None,  # Tolerance symbols
     'AMGDT.SHX': None,
     'COMPLEX': None,
@@ -91,8 +91,8 @@ class Filling:
         self.type = Filling.SOLID
         self.gradient_color1: Optional[Color] = None
         self.gradient_color2: Optional[Color] = None
-        self.gradient_centered: float = 0.0  # ???
-        self.gradient_tint: float = 0.0  # ???
+        self.gradient_centered: float = 0.0  # todo: what's the meaning?
+        self.gradient_tint: float = 0.0  # todo: what's the meaning?
         # Gradient- or pattern angle
         self.angle: float = 0.0  # in degrees
         # Gradient- or pattern name
@@ -102,17 +102,18 @@ class Filling:
 
 
 class Properties:
-    """ An implementation agnostic representation of entity properties like color and linetype.
+    """ An implementation agnostic representation of entity properties like
+    color and linetype.
     """
 
     def __init__(self):
         self.color: str = '#ffffff'  # format #RRGGBB or #RRGGBBAA
-        # color names should be resolved into a actual color value
+        # Color names should be resolved into a actual color value
 
         # Store linetype name for backends which don't have the ability to use
         # user-defined linetypes, but have some predefined linetypes, maybe
         # matching most common AutoCAD linetypes is possible.
-        # default linetype - store in UPPERCASE
+        # Store linetype names in UPPERCASE.
         self.linetype_name: str = 'CONTINUOUS'
 
         # Linetypes: Complex DXF linetypes are not supported:
@@ -188,7 +189,7 @@ DEFAULT_LAYER_PROPERTIES = LayerProperties()
 
 class LayoutProperties:
     def __init__(self):
-        self.name: str = 'Model'  # tab/display  name
+        self.name: str = 'Model'  # tab/display name
         self.units = 0  # default is unit less
         self._background_color: Color = MODEL_SPACE_BG_COLOR
         self._default_color: Color = '#ffffff'
@@ -419,7 +420,7 @@ class RenderContext:
 
     def _true_entity_color(self,
                            true_color: Optional[Tuple[int, int, int]],
-                           aci: int) -> Optional[Color]:  # AutoCAD Color Index
+                           aci: int) -> Optional[Color]:
         if true_color is not None:
             return rgb_to_hex(true_color)
         elif 0 < aci < 256:
@@ -430,9 +431,9 @@ class RenderContext:
     def _aci_to_true_color(self, aci: int) -> Color:
         if aci == 7:  # black/white; todo: this bypasses the plot style table
             if self.current_layout.has_dark_background:
-                return '#ffffff'  # white
+                return '#ffffff'
             else:
-                return '#000000'  # black
+                return '#000000'
         else:
             return rgb_to_hex(self.plot_styles[aci].color)
 
@@ -499,7 +500,8 @@ class RenderContext:
             return float(lineweight) / 100.0
 
     def default_lineweight(self):
-        return 0.25  # todo: ???
+        # todo: is this value stored anywhere (e.g. HEADER section)?
+        return 0.25
 
     def resolve_font(self, entity: 'DXFGraphic') -> Optional[str]:
         if entity.dxf.hasattr('style'):
@@ -524,7 +526,7 @@ class RenderContext:
             filling.name = hatch.dxf.pattern_name.upper()
             filling.pattern_scale = hatch.dxf.pattern_scale
             filling.angle = hatch.dxf.pattern_angle
-            if hatch.dxf.pattern_double:  # todo: ???
+            if hatch.dxf.pattern_double:  # todo: is this correct?
                 filling.pattern_scale *= 2
 
             filling.pattern = self._hatch_pattern_cache.get(filling.name)
@@ -560,8 +562,7 @@ class RenderContext:
                     HatchPatternLine(angle, base_point, offset, line_pattern)
                 )
             filling.pattern = simplified_pattern
-            self._hatch_pattern_cache[
-                filling.name] = filling.pattern
+            self._hatch_pattern_cache[filling.name] = filling.pattern
 
         if entity.dxftype() == 'HATCH':
             hatch = cast('Hatch', entity)
