@@ -2,10 +2,11 @@
 # License: MIT License
 # created 2019-03-06
 import pytest
-import ezdxf
-from ezdxf.lldxf import const
 
-from ezdxf.entities.mtext import MText, split_mtext_string, plain_mtext, normalize_line_breaks
+import ezdxf
+from ezdxf.entities.mtext import MText, split_mtext_string, plain_mtext, caret_decode, _dxf_encode_line_endings, \
+    replace_non_printable_characters
+from ezdxf.lldxf import const
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 MTEXT = """0
@@ -120,12 +121,12 @@ def test_write_dxf():
 
 def test_do_not_write_line_endings():
     txt = MText()
-    txt.text = 'test\ntext\r'
+    txt.text = 'test\ntext'
     collector = TagCollector(optional=True)
     txt.export_dxf(collector)
     for tag in collector.tags:
         if tag[0] == 1:
-            assert tag[1] == 'test\\Ptext\\P'
+            assert tag[1] == 'test\\Ptext'
 
 
 @pytest.fixture(scope='module')
@@ -298,8 +299,36 @@ def test_mtext_transform_interface():
     assert mtext.dxf.insert == (2, 2, 3)
 
 
-def test_normalize_line_breaks():
-    assert normalize_line_breaks('1^J2') == '1\\P2'
-    assert normalize_line_breaks('1^M2') == '1\\P2'
-    assert normalize_line_breaks('1^M^J2') == '1\\P2'
-    assert normalize_line_breaks('1^J^M2') == '1\\P\\P2'
+def test_dxf_encode_line_endings():
+    assert _dxf_encode_line_endings('\\P test') == '\\P test'
+    assert _dxf_encode_line_endings('abc\ndef') == 'abc\\Pdef'
+    assert _dxf_encode_line_endings('abc\rdef') == 'abcdef'  # \r on its own is ignored
+    assert _dxf_encode_line_endings('abc\r\ndef') == 'abc\\Pdef'  # only counts as one newline
+
+
+def test_caret_decode():
+    assert caret_decode('') == ''
+    assert caret_decode('^') == '^'  # no match
+    assert caret_decode('^ ') == '^'
+    assert caret_decode('abc') == 'abc'
+    assert caret_decode('ab\\Pc') == 'ab\\Pc'
+    assert caret_decode('1^J\\P2') == '1\n\\P2'
+    assert caret_decode('1^J2') == '1\n2'
+    assert caret_decode('1^M2') == '1\r2'
+    assert caret_decode('1^M^J2') == '1\r\n2'
+    assert caret_decode('1^J^M2') == '1\n\r2'
+    assert caret_decode('abc^ def') == 'abc^def'
+    assert caret_decode('abc^Idef') == 'abc\tdef'
+    assert caret_decode('abc^adef') == 'abc!def'
+    assert caret_decode('abc^ddef') == 'abc$def'
+    assert caret_decode('abc^zdef') == 'abc:def'
+    assert caret_decode('abc^@def') == 'abc\0def'
+    assert caret_decode('abc^^def') == 'abc\x1edef'
+
+
+def test_replace_non_printable():
+    assert replace_non_printable_characters('abc') == 'abc'
+    assert replace_non_printable_characters('abc def') == 'abc def'
+    assert replace_non_printable_characters('abc \tdef') == 'abc \tdef'
+    assert replace_non_printable_characters('abc\0def') == 'abc▯def'
+    assert replace_non_printable_characters('abc\0def', replacement=' ') == 'abc def'

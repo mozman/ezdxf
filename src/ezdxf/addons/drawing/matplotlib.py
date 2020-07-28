@@ -2,20 +2,20 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from math import degrees
-from typing import Optional, Tuple, Iterable
+from typing import Iterable
 
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 from matplotlib.lines import Line2D
-from matplotlib.patches import Arc, Circle, PathPatch
+from matplotlib.patches import Circle, PathPatch
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
 
 from ezdxf.addons.drawing.backend import Backend
-from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.properties import Properties
+from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
+from ezdxf.entities.mtext import replace_non_printable_characters
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Command
 
@@ -97,10 +97,16 @@ class MatplotlibBackend(Backend):
     def draw_filled_polygon(self, points: Iterable[Vector], properties: Properties):
         self.ax.fill(*zip(*((p.x, p.y) for p in points)), color=properties.color, zorder=self._get_z())
 
+    @staticmethod
+    def _process_text(text) -> str:
+        assert '\n' not in text, 'not a single line of text'
+        text = replace_non_printable_characters(text)
+        return text.replace('\t', '        ')  # Matplotlib does not render \t properly
+
     def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float):
         if not text:
             return  # no point rendering empty strings
-        assert '\n' not in text, 'not a single line of text'
+        text = self._process_text(text)
         scale = cap_height / self._font_measurements.cap_height
         path = _text_path(text, self.font)
         transformed_path = _transform_path(path, Matrix44.scale(scale) @ transform)
@@ -112,7 +118,7 @@ class MatplotlibBackend(Backend):
     def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
         if not text:
             return 0
-        assert '\n' not in text, 'not a single line of text'
+        text = self._process_text(text)
         path = _text_path(text, self.font)
         scale = cap_height / self._font_measurements.cap_height
         transformed_xs = _transform_path(path, Matrix44.scale(scale)).vertices[:, 0].tolist()
