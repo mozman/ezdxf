@@ -282,6 +282,8 @@ def test_mtext_plain_text():
     expected = "Das ist eine MText\nZeile mit Formatierung\nänder die Farbe\n1.^INummerierung\n2.^INummerierung\n\n1/2500  ein Bruch"
     assert plain_mtext(raw_text) == expected
 
+    assert plain_mtext('\\:') == '\\:'  # invalid escape code is printed verbatim
+
 
 def test_mtext_plain_text_special_char():
     assert plain_mtext("%%d") == "°"
