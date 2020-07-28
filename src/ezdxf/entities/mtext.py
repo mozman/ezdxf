@@ -377,13 +377,18 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
                     # discard other commands
             else:  # more character commands are terminated by ';'
                 stacking = char == 'S'  # stacking command surrounds user data
+                first_char = char
+                search_chars = raw_chars.copy()
                 try:
                     while char != ';':  # end of format marker
-                        char = raw_chars.pop()
+                        char = search_chars.pop()
                         if stacking and char != ';':
                             chars.append(char)  # append user data of stacking command
+                    raw_chars = search_chars
                 except IndexError:
-                    break  # premature end of text - just ignore
+                    # premature end of text - just ignore
+                    chars.append('\\')
+                    chars.append(first_char)
         elif char in '{}':  # grouping
             pass  # discard group markers
         elif char == '%':  # special characters
