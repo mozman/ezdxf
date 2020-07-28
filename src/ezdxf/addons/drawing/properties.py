@@ -89,13 +89,13 @@ class Filling:
     def __init__(self):
         # Solid fill color is stored in Properties.color attribute
         self.type = Filling.SOLID
+        # Gradient- or pattern name
+        self.name: str = 'SOLID'
+        # Gradient- or pattern angle
+        self.angle: float = 0.0  # in degrees
         self.gradient_color1: Optional[Color] = None
         self.gradient_color2: Optional[Color] = None
         self.gradient_centered: float = 0.0  # todo: what's the meaning?
-        # Gradient- or pattern angle
-        self.angle: float = 0.0  # in degrees
-        # Gradient- or pattern name
-        self.name: str = 'SOLID'
         self.pattern_scale: float = 1.0
         self.pattern: Sequence[HatchPatternLine] = []
 
@@ -521,7 +521,6 @@ class RenderContext:
                 filling.color2 = rgb_to_hex(gradient.color2)
 
             filling.angle = gradient.rotation
-            filling.gradient_tint = gradient.tint
             filling.gradient_centered = gradient.centered
 
         def setup_pattern():
