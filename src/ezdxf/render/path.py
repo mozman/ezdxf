@@ -6,12 +6,16 @@ from collections import abc
 from enum import Enum
 import math
 from ezdxf.math import (
-    Vector, NULLVEC, Bezier4P, Matrix44, bulge_to_arc, cubic_bezier_from_ellipse,
-    ConstructionEllipse, Z_AXIS, BSpline, OCS
+    Vector, NULLVEC, Bezier4P, Matrix44, bulge_to_arc,
+    cubic_bezier_from_ellipse,
+    ConstructionEllipse, Z_AXIS, BSpline, OCS,
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import LWPolyline, Polyline, Vertex, Spline, Ellipse, Arc, Circle
+    from ezdxf.eztypes import (
+        LWPolyline, Polyline, Vertex, Spline, Ellipse,
+        Arc, Circle,
+    )
     from ezdxf.entities.hatch import PolylinePath, EdgePath
 
 __all__ = ['Path', 'Command']
@@ -38,7 +42,9 @@ class Path(abc.Sequence):
 
     @property
     def start(self) -> Vector:
-        """ :class:`Path` start point, resetting the start point of an empty path is possible. """
+        """ :class:`Path` start point, resetting the start point of an empty
+        path is possible.
+        """
         return self._start
 
     @start.setter
@@ -74,8 +80,8 @@ class Path(abc.Sequence):
 
     @classmethod
     def from_lwpolyline(cls, lwpolyline: 'LWPolyline') -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.LWPolyline` entity, all vertices
-        transformed to WCS.
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.LWPolyline`
+        entity, all vertices transformed to WCS.
         """
         assert lwpolyline.dxftype() == 'LWPOLYLINE'
         path = cls()
@@ -89,8 +95,8 @@ class Path(abc.Sequence):
 
     @classmethod
     def from_polyline(cls, polyline: 'Polyline') -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Polyline` entity, all vertices
-        transformed to WCS.
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Polyline`
+        entity, all vertices transformed to WCS.
         """
         assert polyline.dxftype() == 'POLYLINE'
         path = cls()
@@ -117,7 +123,8 @@ class Path(abc.Sequence):
         )
         return path
 
-    def _setup_polyline_2d(self, points: Iterable[Sequence[float]], close: bool, ocs: OCS, elevation: float) -> None:
+    def _setup_polyline_2d(self, points: Iterable[Sequence[float]], close: bool,
+                           ocs: OCS, elevation: float) -> None:
         def bulge_to(p1: Vector, p2: Vector, bulge: float):
             if p1.isclose(p2):
                 return
@@ -162,7 +169,8 @@ class Path(abc.Sequence):
         self._start = ocs.to_wcs(self._start.replace(z=elevation))
         for i, cmd in enumerate(self._commands):
             new_cmd = [cmd[0]]
-            new_cmd.extend(ocs.points_to_wcs(p.replace(z=elevation) for p in cmd[1:]))
+            new_cmd.extend(ocs.points_to_wcs(p.replace(z=elevation)
+                                             for p in cmd[1:]))
             self._commands[i] = tuple(new_cmd)
 
     @classmethod
@@ -176,7 +184,8 @@ class Path(abc.Sequence):
     def from_ellipse(cls, ellipse: 'Ellipse', segments: int = 1) -> 'Path':
         """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Ellipse`. """
         path = cls()
-        path.add_ellipse(ellipse.construction_tool(), segments=segments, reset=True)
+        path.add_ellipse(ellipse.construction_tool(), segments=segments,
+                         reset=True)
         return path
 
     @classmethod
@@ -207,12 +216,16 @@ class Path(abc.Sequence):
 
     @classmethod
     def from_hatch_polyline_path(cls, path: 'PolylinePath') -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch` polyline path. """
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch`
+        polyline path.
+        """
         pass
 
     @classmethod
     def from_hatch_edge_path(cls, path: 'EdgePath') -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch` edge path. """
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch` edge
+        path.
+        """
         pass
 
     def line_to(self, location: 'Vertex') -> None:
@@ -220,23 +233,27 @@ class Path(abc.Sequence):
         """
         self._commands.append((Command.LINE_TO, Vector(location)))
 
-    def curve_to(self, location: 'Vertex', ctrl1: 'Vertex', ctrl2: 'Vertex') -> None:
-        """ Add a cubic Bèzier-curve from actual path end point to `location`, `ctrl1` and
-        `ctrl2` are the control points for the cubic Bèzier-curve.
+    def curve_to(self, location: 'Vertex', ctrl1: 'Vertex',
+                 ctrl2: 'Vertex') -> None:
+        """ Add a cubic Bèzier-curve from actual path end point to `location`,
+        `ctrl1` and `ctrl2` are the control points for the cubic Bèzier-curve.
         """
-        self._commands.append((Command.CURVE_TO, Vector(location), Vector(ctrl1), Vector(ctrl2)))
+        self._commands.append(
+            (Command.CURVE_TO, Vector(location), Vector(ctrl1), Vector(ctrl2)))
 
     def close(self) -> None:
-        """ Close path by adding a line segment from the end point to the start point. """
+        """ Close path by adding a line segment from the end point to the start
+        point.
+        """
         if not self.is_closed:
             self.line_to(self.start)
 
     def add_curves(self, curves: Iterable[Bezier4P]) -> None:
         """ Add multiple cubic Bèzier-curves to the path.
 
-        Auto-detect if the path end point is connected to the start- or end point of the curves,
-        if none of them is close to the path end point a line from the path end point to the
-        curves start point will be added.
+        Auto-detect if the path end point is connected to the start- or
+        end point of the curves, if none of them is close to the path end point
+        a line from the path end point to the curves start point will be added.
 
         """
         curves = list(curves)
@@ -253,21 +270,25 @@ class Path(abc.Sequence):
                 self.line_to(start)
             self.curve_to(end, ctrl1, ctrl2)
 
-    def add_ellipse(self, ellipse: ConstructionEllipse, segments=1, reset=True) -> None:
+    def add_ellipse(self, ellipse: ConstructionEllipse, segments=1,
+                    reset=True) -> None:
         """ Add an elliptical arc as multiple cubic Bèzier-curves, use
         :meth:`~ezdxf.math.ConstructionEllipse.from_arc` constructor of class
         :class:`~ezdxf.math.ConstructionEllipse` to add circular arcs.
 
-        Auto-detect connection point, if none is close a line from the path end point to the
-        ellipse start point will be added (see :meth:`add_curves`).
+        Auto-detect connection point, if none is close a line from the path
+        end point to the ellipse start point will be added
+        (see :meth:`add_curves`).
 
-        By default the start of an **empty** path is set to the start point of the ellipse,
-        setting argument `reset` to ``False`` prevents this behavior.
+        By default the start of an **empty** path is set to the start point of
+        the ellipse, setting argument `reset` to ``False`` prevents this
+        behavior.
 
         Args:
-            ellipse: ellipse parameters as :class:`~ezdxf.math.ConstructionEllipse` object
-            segments: count of Bèzier-curve segments, at least one segment for each quarter (pi/2),
-                      ``1`` for as few as possible.
+            ellipse: ellipse parameters as :class:`~ezdxf.math.ConstructionEllipse`
+                object
+            segments: count of Bèzier-curve segments, at least one segment for
+                each quarter (pi/2), ``1`` for as few as possible.
             reset: set start point to start of ellipse if path is empty
 
         """
@@ -278,15 +299,17 @@ class Path(abc.Sequence):
     def add_spline(self, spline: BSpline, level=4, reset=True) -> None:
         """ Add a B-spline as multiple cubic Bèzier-curves.
 
-        Non-rational B-splines of 3rd degree gets a perfect conversion to cubic bezier
-        curves with a minimal count of curve segments, all other B-spline require much
-        more curve segments for approximation.
+        Non-rational B-splines of 3rd degree gets a perfect conversion to
+        cubic bezier curves with a minimal count of curve segments, all other
+        B-spline require much more curve segments for approximation.
 
-        Auto-detect connection point, if none is close a line from the path end point to the
-        spline start point will be added (see :meth:`add_curves`).
+        Auto-detect connection point, if none is close a line from the path
+        end point to the spline start point will be added
+        (see :meth:`add_curves`).
 
-        By default the start of an **empty** path is set to the start point of the spline,
-        setting argument `reset` to ``False`` prevents this behavior.
+        By default the start of an **empty** path is set to the start point of
+        the spline, setting argument `reset` to ``False`` prevents this
+        behavior.
 
         Args:
             spline: B-spline parameters as :class:`~ezdxf.math.BSpline` object
@@ -297,14 +320,15 @@ class Path(abc.Sequence):
         if len(self) == 0 and reset:
             self.start = spline.point(0)
         if spline.degree == 3 and not spline.is_rational and spline.is_clamped:
-            curves = [Bezier4P(points) for points in spline.bezier_decomposition()]
+            curves = [Bezier4P(points) for points in
+                      spline.bezier_decomposition()]
         else:
             curves = spline.cubic_bezier_approximation(level=level)
         self.add_curves(curves)
 
     def approximate(self, segments: int = 20) -> Iterable[Vector]:
-        """ Approximate path by vertices, `segments` is the count of approximation segments
-        for each cubic bezier curve.
+        """ Approximate path by vertices, `segments` is the count of
+        approximation segments for each cubic bezier curve.
         """
         if not self._commands:
             return
@@ -318,7 +342,9 @@ class Path(abc.Sequence):
             if type_ == Command.LINE_TO:
                 yield end_location
             elif type_ == Command.CURVE_TO:
-                pts = iter(Bezier4P((start, cmd[2], cmd[3], end_location)).approximate(segments))
+                pts = iter(
+                    Bezier4P((start, cmd[2], cmd[3], end_location)).approximate(
+                        segments))
                 next(pts)  # skip first vertex
                 yield from pts
             else:
