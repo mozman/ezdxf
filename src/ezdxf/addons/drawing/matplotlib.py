@@ -11,7 +11,7 @@ from matplotlib.patches import Circle, PathPatch
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
 
-from ezdxf.addons.drawing.backend import Backend
+from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
@@ -97,16 +97,10 @@ class MatplotlibBackend(Backend):
     def draw_filled_polygon(self, points: Iterable[Vector], properties: Properties):
         self.ax.fill(*zip(*((p.x, p.y) for p in points)), color=properties.color, zorder=self._get_z())
 
-    @staticmethod
-    def _process_text(text) -> str:
-        assert '\n' not in text, 'not a single line of text'
-        text = replace_non_printable_characters(text)
-        return text.replace('\t', '        ')  # Matplotlib does not render \t properly
-
     def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float):
         if not text:
             return  # no point rendering empty strings
-        text = self._process_text(text)
+        text = prepare_string_for_rendering(text, self.current_entity.dxftype())
         scale = cap_height / self._font_measurements.cap_height
         path = _text_path(text, self.font)
         transformed_path = _transform_path(path, Matrix44.scale(scale) @ transform)
@@ -118,7 +112,7 @@ class MatplotlibBackend(Backend):
     def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
         if not text:
             return 0
-        text = self._process_text(text)
+        text = prepare_string_for_rendering(text, self.current_entity.dxftype())
         path = _text_path(text, self.font)
         scale = cap_height / self._font_measurements.cap_height
         transformed_xs = _transform_path(path, Matrix44.scale(scale)).vertices[:, 0].tolist()
