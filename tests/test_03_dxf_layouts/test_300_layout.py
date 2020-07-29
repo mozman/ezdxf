@@ -118,7 +118,7 @@ def test_clone_dxfattribs(modelspace):
 
 
 def test_invalid_layer_name(modelspace):
-    with pytest.raises(ezdxf.DXFInvalidLayerName):
+    with pytest.raises(ezdxf.DXFValueError):
         modelspace.add_line((0, 0), (1, 1), dxfattribs={'layer': 'InvalidName*'})
 
 

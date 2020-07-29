@@ -4,12 +4,12 @@
 from typing import TYPE_CHECKING, Optional, Tuple
 import logging
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2004, DXFInvalidLayerName
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2004
 from ezdxf.lldxf.const import INVALID_NAME_CHARACTERS
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.lldxf.validator import is_valid_layer_name
 from ezdxf.tools import rgb2int, int2rgb, transparency2float, float2transparency
-from ezdxf.lldxf.const import DXFValueError, DXFTableEntryError
+from ezdxf.lldxf.const import DXFValueError
 
 from .factory import register_entity
 
@@ -23,20 +23,29 @@ __all__ = ['Layer']
 acdb_symbol_table_record = DefSubclass('AcDbSymbolTableRecord', {})
 
 acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
-    'name': DXFAttr(2),  # layer name
+    # layer name as string
+    'name': DXFAttr(2, validator=is_valid_layer_name),
     'flags': DXFAttr(70, default=0),
-    'color': DXFAttr(62, default=7),  # dxf color index
-    'true_color': DXFAttr(420, dxfversion=DXF2004, optional=True),  # true color
-    'linetype': DXFAttr(6, default='Continuous'),  # linetype name
-    'plot': DXFAttr(290, default=1, dxfversion=DXF2000, optional=True),  # don't plot this layer if 0 else 1
-    'lineweight': DXFAttr(370, default=-3, dxfversion=DXF2000),  # 1/100 mm, min 13 = 0.13mm, max 200 = 2.0mm
+    # ACI color index, color < 0 indicates layer state: off
+    'color': DXFAttr(62, default=7),
+    # true color as 24 bit int value: rrrrrrrrggggggggbbbbbbbb
+    'true_color': DXFAttr(420, dxfversion=DXF2004, optional=True),
+    # linetype name
+    'linetype': DXFAttr(6, default='Continuous'),
+    # Don't plot this layer if 0 else 1
+    'plot': DXFAttr(290, default=1, dxfversion=DXF2000, optional=True),
+    # Default lineweight 1/100 mm, min 0 = 0.0mm, max 211 = 2.11mm
+    'lineweight': DXFAttr(370, default=-3, dxfversion=DXF2000),
 
     # code 390 is required for AutoCAD
     # Pointer/handle to PlotStyleName
     # uses tag(390, ...) from the '0' layer1
-    'plotstyle_handle': DXFAttr(390, dxfversion=DXF2000),  # handle to PlotStyleName object
-    'material_handle': DXFAttr(347, dxfversion=DXF2007),  # handle to Material object
-    'unknown1': DXFAttr(348, dxfversion=DXF2007, optional=True),  # handle to ???
+    # handle to PlotStyleName object
+    'plotstyle_handle': DXFAttr(390, dxfversion=DXF2000),
+    # handle to Material object
+    'material_handle': DXFAttr(347, dxfversion=DXF2007),
+    # handle to ???
+    'unknown1': DXFAttr(348, dxfversion=DXF2007, optional=True),
 
 })
 
@@ -48,38 +57,37 @@ AcCmTransparency = "AcCmTransparency"
 class Layer(DXFEntity):
     """ DXF LAYER entity """
     DXFTYPE = 'LAYER'
-    DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_layer_table_record)
+    DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record,
+                               acdb_layer_table_record)
     DEFAULT_ATTRIBS = {'name': '0'}
     FROZEN = 0b00000001
     THAW = 0b11111110
     LOCK = 0b00000100
     UNLOCK = 0b11111011
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
 
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_layer_table_record)
+        tags = processor.load_dxfattribs_into_namespace(
+            dxf, acdb_layer_table_record)
         if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_layer_table_record.name)
+            processor.log_unprocessed_tags(
+                tags, subclass=acdb_layer_table_record.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_layer_table_record.name)
 
         self.dxf.export_dxf_attribs(tagwriter, [
-            'name', 'flags', 'color', 'true_color', 'linetype', 'plot', 'lineweight', 'plotstyle_handle',
-            'material_handle', 'unknown1',
+            'name', 'flags', 'color', 'true_color', 'linetype', 'plot',
+            'lineweight', 'plotstyle_handle', 'material_handle', 'unknown1',
         ])
-
-    def post_new_hook(self) -> None:
-        if not is_valid_layer_name(self.dxf.name):
-            raise DXFInvalidLayerName("Invalid layer name '{}'".format(self.dxf.name))
 
     def set_required_attributes(self):
         if not self.dxf.hasattr('material'):
@@ -104,11 +112,15 @@ class Layer(DXFEntity):
         return self.dxf.flags & Layer.LOCK > 0
 
     def lock(self) -> None:
-        """ Lock layer, entities on this layer are not editable - just important in CAD applications. """
+        """ Lock layer, entities on this layer are not editable - just important
+        in CAD applications.
+        """
         self.dxf.flags = self.dxf.flags | Layer.LOCK
 
     def unlock(self) -> None:
-        """ Unlock layer, entities on this layer are editable - just important in CAD applications. """
+        """ Unlock layer, entities on this layer are editable - just important
+        in CAD applications.
+        """
         self.dxf.flags = self.dxf.flags & Layer.UNLOCK
 
     def is_off(self) -> bool:
@@ -128,21 +140,23 @@ class Layer(DXFEntity):
         self.dxf.color = -abs(self.dxf.color)
 
     def get_color(self) -> int:
-        """ Get layer color, safe method for getting the layer color, because dxf.color is negative
-        for layer status `off`.
+        """ Get layer color, safe method for getting the layer color, because
+        dxf.color is negative for layer status `off`.
         """
         return abs(self.dxf.color)
 
     def set_color(self, color: int) -> None:
-        """ Set layer color, safe method for setting the layer color, because dxf.color is negative
-        for layer status `off`.
+        """ Set layer color, safe method for setting the layer color, because
+        dxf.color is negative for layer status `off`.
         """
         color = abs(color) if self.is_on() else -abs(color)
         self.dxf.color = color
 
     @property
     def rgb(self) -> Optional[Tuple[int, int, int]]:
-        """ Returns RGB true color as (r, g, b)-tuple or None if attribute dxf.true_color is not set. """
+        """ Returns RGB true color as (r, g, b)-tuple or None if attribute
+        dxf.true_color is not set.
+        """
         if self.dxf.hasattr('true_color'):
             return int2rgb(self.dxf.get('true_color'))
         else:
@@ -155,15 +169,15 @@ class Layer(DXFEntity):
 
     @property
     def color(self) -> int:
-        """ Get layer color, safe method for getting the layer color, because dxf.color is negative
-        for layer status `off`.
+        """ Get layer color, safe method for getting the layer color, because
+        dxf.color is negative for layer status `off`.
         """
         return self.get_color()
 
     @color.setter
     def color(self, value: int) -> None:
-        """ Set layer color, safe method for setting the layer color, because dxf.color is negative
-        for layer status `off`.
+        """ Set layer color, safe method for setting the layer color, because
+        dxf.color is negative for layer status `off`.
         """
         self.set_color(value)
 
@@ -204,7 +218,8 @@ class Layer(DXFEntity):
             self.doc.appids.new(AcCmTransparency)
         if 0 <= value <= 1:
             self.discard_xdata(AcCmTransparency)
-            self.set_xdata(AcCmTransparency, [(1071, float2transparency(value))])
+            self.set_xdata(AcCmTransparency,
+                           [(1071, float2transparency(value))])
         else:
             raise ValueError('Value out of range (0 .. 1).')
 
@@ -222,11 +237,14 @@ class Layer(DXFEntity):
         Raises:
             ValueError: `name` contains invalid characters: <>/\\":;?*|=`
             ValueError: layer `name` already exist
-            ValueError: renaming of layers ``'0'`` and ``'DEFPOINTS'`` not possible
+            ValueError: renaming of layers ``'0'`` and ``'DEFPOINTS'`` not
+                possible
 
         """
         if not is_valid_layer_name(name):
-            raise ValueError(f'Name contains invalid characters: {INVALID_NAME_CHARACTERS}.')
+            raise ValueError(
+                f'Name contains invalid characters: {INVALID_NAME_CHARACTERS}.'
+            )
         layers = self.doc.layers
         if self.dxf.name.lower() in ('0', 'defpoints'):
             raise ValueError(f'Can not rename layer "{self.dxf.name}".')
@@ -247,8 +265,12 @@ class Layer(DXFEntity):
             if entity_type == 'VIEWPORT':
                 e.rename_frozen_layer(old_name, new_name)
             elif entity_type == 'LAYER_FILTER':
-                # todo: if LAYER_FILTER implemented, add support for renaming layers
-                logger.debug('renaming layer "{}" - document contains LAYER_FILTER'.format(old_name))
+                # todo: if LAYER_FILTER implemented, add support for
+                #  renaming layers
+                logger.debug(f'renaming layer "{old_name}" - document contains '
+                             f'LAYER_FILTER')
             elif entity_type == 'LAYER_INDEX':
-                # todo: if LAYER_INDEX implemented, add support for renaming layers
-                logger.debug('renaming layer "{}" - document contains LAYER_INDEX'.format(old_name))
+                # todo: if LAYER_INDEX implemented, add support for
+                #  renaming layers
+                logger.debug(f'renaming layer "{old_name}" - document contains '
+                             f'LAYER_INDEX')

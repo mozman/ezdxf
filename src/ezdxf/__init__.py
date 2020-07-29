@@ -22,7 +22,7 @@ from ezdxf.tools import pattern
 from ezdxf.render.arrows import ARROWS
 from ezdxf.lldxf.const import DXFError
 from ezdxf.lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryError, DXFAppDataError, DXFXDataError
-from ezdxf.lldxf.const import DXFAttributeError, DXFValueError, DXFKeyError, DXFIndexError, DXFTypeError, DXFInvalidLayerName
+from ezdxf.lldxf.const import DXFAttributeError, DXFValueError, DXFKeyError, DXFIndexError, DXFTypeError
 from ezdxf.lldxf.const import DXFBlockInUseError
 from ezdxf.lldxf.const import InsertUnits, ACI
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018

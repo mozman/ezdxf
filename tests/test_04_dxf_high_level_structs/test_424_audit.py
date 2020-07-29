@@ -60,7 +60,7 @@ def test_invalid_lineweight(entity, auditor):
 
 
 def test_for_valid_layer_name(entity, auditor):
-    entity.dxf.layer = 'Invalid/'
+    entity.dxf.__dict__['layer'] = 'Invalid/'  # by pass 'set' validator
     auditor.check_for_valid_layer_name(entity)
     assert len(auditor) == 1
     assert auditor.errors[0].code == AuditError.INVALID_LAYER_NAME

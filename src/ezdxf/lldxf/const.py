@@ -112,10 +112,6 @@ class DXFDecodingError(DXFError):
     pass
 
 
-class DXFInvalidLayerName(DXFValueError):
-    pass
-
-
 class DXFInvalidLineType(DXFValueError):
     pass
 

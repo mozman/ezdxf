@@ -38,7 +38,7 @@ Version 0.14a1 - dev
 - CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 
   argument `safe` is deprecated, will be removed in v0.16
 - REMOVE: `DXFEntity.drawing`, replaced by `DXFEntity.doc`
- 
+- REMOVE: `DXFInvalidLayerName` replaced by `DXFValueError` 
 Version 0.13.1 - 2020-07-18
 ---------------------------
 

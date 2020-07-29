@@ -11,8 +11,7 @@ from ezdxf.lldxf.const import (
     DXFValueError, DXFKeyError, DXFTableEntryError,
 )
 from ezdxf.lldxf.const import (
-    SUBCLASS_MARKER, DXFInvalidLayerName,
-    DXFInvalidLineType,
+    SUBCLASS_MARKER, DXFInvalidLineType,
 )
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.validator import (
@@ -41,8 +40,8 @@ GRAPHIC_PROPERTIES = {'layer', 'linetype', 'color', 'lineweight', 'ltscale',
                       'true_color', 'color_name', }
 
 acdb_entity = DefSubclass('AcDbEntity', {
-    # layername as string
-    'layer': DXFAttr(8, default='0'),
+    # layer name as string, no auto fix for invalid layer names!
+    'layer': DXFAttr(8, default='0', validator=is_valid_layer_name),
     'linetype': DXFAttr(6, default='BYLAYER', optional=True),
     # linetype as string, special names BYLAYER/BYBLOCK
     'color': DXFAttr(62, default=256, optional=True,
@@ -161,9 +160,6 @@ class DXFGraphic(DXFEntity):
         (internal API)
         """
         dxf = self.dxf
-        if not is_valid_table_name(dxf.layer):
-            raise DXFInvalidLayerName(dxf.layer)
-
         if self.doc and dxf.hasattr('linetype'):
             if dxf.linetype not in self.doc.linetypes:
                 raise DXFInvalidLineType(
