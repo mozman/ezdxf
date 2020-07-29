@@ -2,14 +2,14 @@
 # License: MIT License
 # created 2019-03-06
 import pytest
-
-import ezdxf
 from ezdxf.entities.mtext import (
     MText, split_mtext_string, plain_mtext, caret_decode,
     _dxf_encode_line_endings, replace_non_printable_characters,
 )
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.tools.rgb import rgb2int
+from ezdxf.layouts import VirtualLayout
 
 MTEXT = """0
 MTEXT
@@ -131,14 +131,9 @@ def test_do_not_write_line_endings():
             assert tag[1] == 'test\\Ptext'
 
 
-@pytest.fixture(scope='module')
-def doc():
-    return ezdxf.new('R2007')
-
-
-@pytest.fixture(scope='module')
-def layout(doc):
-    return doc.modelspace()
+@pytest.fixture
+def layout():
+    return VirtualLayout()
 
 
 def test_backslashes():
@@ -222,7 +217,7 @@ def test_set_bg_color(layout):
 def test_set_bg_true_color(layout):
     mtext = layout.add_mtext("TEST").set_bg_color((10, 20, 30), scale=2)
     assert mtext.dxf.bg_fill == 1
-    assert mtext.dxf.bg_fill_true_color == ezdxf.rgb2int((10, 20, 30))
+    assert mtext.dxf.bg_fill_true_color == rgb2int((10, 20, 30))
     assert mtext.dxf.box_fill_scale == 2
     assert mtext.dxf.hasattr('bg_fill_color') is True, \
         "bg_fill_color attribute must exists, else AutoCAD complains"
@@ -280,7 +275,7 @@ def test_long_string_2():
     assert TESTSTR * 2 == chunks[1]
 
 
-def test_do_not_split_at_carret():
+def test_do_not_split_at_caret():
     # do not split at '^'
     s = 'a' * 19 + '^Ixxx^'
     chunks = split_mtext_string(s, 20)
@@ -301,7 +296,7 @@ def test_mtext_plain_text():
         "invalid escape code is printed verbatim"
 
 
-def test_mtext_plain_text_special_char():
+def test_mtext_plain_text_special_chars():
     assert plain_mtext("%%d") == "°"
     assert plain_mtext("%%u") == ""
     assert plain_mtext("%%U") == ""
