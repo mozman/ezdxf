@@ -121,22 +121,7 @@ def test_write_dxf():
     assert result == expected
 
 
-def test_do_not_write_line_endings():
-    txt = MText()
-    txt.text = 'test\ntext'
-    collector = TagCollector(optional=True)
-    txt.export_dxf(collector)
-    for tag in collector.tags:
-        if tag[0] == 1:
-            assert tag[1] == 'test\\Ptext'
-
-
-@pytest.fixture
-def layout():
-    return VirtualLayout()
-
-
-def test_backslashes():
+def test_expected_python_backslash_decoding():
     s = r"Swiss 721 (helvetica-like)\P\P\pt7.1875,8.38542;{\H0.6667x;Regular" \
         r"\P\P\pl0.899488,t8.38542;Swiss Light^I\fSwis721 Lt BT|b0|i0|c0|p34" \
         r";\C5;abcdefghijABCDEFGHIJ123456789!@#$%^ &*()\P\Ftxt.shx|c1;\P\C25" \
@@ -144,27 +129,39 @@ def test_backslashes():
     assert len(s) == 253
 
 
-def test_new_short_mtext(layout):
-    mtext = layout.add_mtext("a new mtext")
-    assert "a new mtext" == mtext.text
-    assert "a new mtext" == mtext.plain_text()
+@pytest.fixture
+def layout():
+    return VirtualLayout()
 
 
-def test_new_long_mtext(layout):
-    text = "0123456789" * 25 + "a new mtext"
+@pytest.mark.parametrize('text', [
+    'test\ntext',  # single new line
+    'test\r\ntext',  # single new line
+    'test\ntext\rtext',  # ignore a single '\r'
+])
+def test_required_escaping_of_line_endings(layout, text):
+    txt = layout.add_mtext(text)
+    collector = TagCollector(optional=True)
+    txt.export_dxf(collector)
+    for tag in collector.tags:
+        if tag[0] == 1:
+            assert tag[1].count(r'\P') == 1
+            assert '\n' not in tag[1]
+            assert '\r' not in tag[1]
+
+
+@pytest.mark.parametrize('text', [
+    "a new mtext",
+    "0123456789" * 25 + "a new mtext",
+    "0123456789" * 25 + "abcdefghij" * 25,
+])
+def test_new_long_mtext(layout, text):
     mtext = layout.add_mtext(text)
     assert text == mtext.text
     assert text == mtext.plain_text()
 
 
-def test_new_long_mtext_2(layout):
-    text = "0123456789" * 25 + "abcdefghij" * 25
-    mtext = layout.add_mtext(text)
-    assert text == mtext.text
-
-
 def test_last_text_chunk_mtext(layout):
-    # this tests none public details of MText class
     text = "0123456789" * 25 + "abcdefghij" * 25 + "a new mtext"
     mtext = layout.add_mtext(text)
     collector = TagCollector()
@@ -246,20 +243,20 @@ def test_set_bg_canvas_color(layout):
 TESTSTR = "0123456789"
 
 
-def test_empty_string():
+def test_split_empty_string():
     s = ""
     chunks = split_mtext_string(s, 20)
     assert 0 == len(chunks)
 
 
-def test_short_string():
+def test_split_short_string():
     s = TESTSTR
     chunks = split_mtext_string(s, 20)
     assert 1 == len(chunks)
     assert TESTSTR == chunks[0]
 
 
-def test_long_string():
+def test_split_long_string():
     s = TESTSTR * 3
     chunks = split_mtext_string(s, 20)
     assert 2 == len(chunks)
@@ -267,7 +264,7 @@ def test_long_string():
     assert TESTSTR == chunks[1]
 
 
-def test_long_string_2():
+def test_split_longer_string():
     s = TESTSTR * 4
     chunks = split_mtext_string(s, 20)
     assert 2 == len(chunks)
@@ -284,38 +281,37 @@ def test_do_not_split_at_caret():
     assert chunks[1] == '^Ixxx^'
 
 
-def test_mtext_plain_text():
+def test_plain_text_removes_formatting():
     raw_text = r"\A1;Das ist eine MText\PZeile mit {\LFormat}ierung\Pänder " \
                r"die Farbe\P\pi-7.5,l7.5,t7.5;1.^INummerierung\P2.^INummeri" \
                r"erung\P\pi0,l0,tz;\P{\H0.7x;\S1/2500;}  ein Bruch"
     expected = "Das ist eine MText\nZeile mit Formatierung\nänder die Farbe\n" \
                "1.^INummerierung\n2.^INummerierung\n\n1/2500  ein Bruch"
     assert plain_mtext(raw_text) == expected
-
     assert plain_mtext('\\:') == '\\:', \
         "invalid escape code is printed verbatim"
 
 
-def test_mtext_plain_text_special_chars():
+def test_plain_text_convert_special_chars():
     assert plain_mtext("%%d") == "°"
     assert plain_mtext("%%u") == ""
     assert plain_mtext("%%U") == ""
 
 
-def test_mtext_transform_interface():
+def test_transform_interface():
     mtext = MText()
     mtext.dxf.insert = (1, 0, 0)
     mtext.translate(1, 2, 3)
     assert mtext.dxf.insert == (2, 2, 3)
 
 
-def test_dxf_encode_line_endings():
+def test_dxf_line_ending_encoding():
     assert _dxf_encode_line_endings('\\P test') == '\\P test'
     assert _dxf_encode_line_endings('abc\ndef') == 'abc\\Pdef'
-    assert _dxf_encode_line_endings(
-        'abc\rdef') == 'abcdef'  # \r on its own is ignored
-    assert _dxf_encode_line_endings(
-        'abc\r\ndef') == 'abc\\Pdef'  # only counts as one newline
+    assert _dxf_encode_line_endings('abc\rdef') == 'abcdef', \
+        r"a single '\r' should be ignored"
+    assert _dxf_encode_line_endings('abc\r\ndef') == 'abc\\Pdef', \
+        r"'\r\n' represents a single newline"
 
 
 def test_caret_decode():
