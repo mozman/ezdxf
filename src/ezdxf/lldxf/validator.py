@@ -7,10 +7,12 @@ import io
 import bisect
 from typing import TextIO, Iterable, List, Optional
 
-from .const import DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError
-from .const import APP_DATA_MARKER, HEADER_VAR_MARKER, XDATA_MARKER
-from .const import INVALID_LAYER_NAME_CHARACTERS, acad_release
-from .const import VALID_DXF_LINEWEIGHT_VALUES, VALID_DXF_LINEWEIGHTS, LINEWEIGHT_BYLAYER
+from .const import (
+    DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError,
+    APP_DATA_MARKER, HEADER_VAR_MARKER, XDATA_MARKER,
+    INVALID_LAYER_NAME_CHARACTERS, acad_release, VALID_DXF_LINEWEIGHT_VALUES,
+    VALID_DXF_LINEWEIGHTS, LINEWEIGHT_BYLAYER,
+)
 
 from .tagger import ascii_tags_loader
 from .types import is_embedded_object_marker, DXFTag, NONE_TAG
@@ -42,9 +44,12 @@ class DXFInfo:
 def dxf_info(stream: TextIO) -> DXFInfo:
     info = DXFInfo()
     tagger = ascii_tags_loader(stream)  # filters already comments
-    if next(tagger) != (0, 'SECTION'):  # maybe a DXF structure error, handled by later processing
+    if next(tagger) != (
+            0,
+            'SECTION'):  # maybe a DXF structure error, handled by later processing
         return info
-    if next(tagger) != (2, 'HEADER'):  # no leading HEADER section like DXF R12 with only ENTITIES section
+    if next(tagger) != (2,
+                        'HEADER'):  # no leading HEADER section like DXF R12 with only ENTITIES section
         return info
     tag = NONE_TAG
     found = 0
@@ -80,9 +85,13 @@ def header_validator(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
     for tag in tagger:
         if variable_name_tag:
             if tag.code != HEADER_VAR_MARKER:
-                raise DXFStructureError('Invalid header variable tag ({0.code}, {0.value}).'.format(tag))
+                raise DXFStructureError(
+                    'Invalid header variable tag ({0.code}, {0.value}).'.format(
+                        tag))
             if not tag.value.startswith('$'):
-                raise DXFValueError('Invalid header variable name "{}", missing leading "$".'.format(tag.value))
+                raise DXFValueError(
+                    'Invalid header variable name "{}", missing leading "$".'.format(
+                        tag.value))
             variable_name_tag = False
         else:
             variable_name_tag = True
@@ -146,7 +155,8 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
                     xdata_list_level -= 1
                 else:
                     raise DXFXDataError(
-                        'Invalid XDATA control string (1002, "{}") entity {}(#{}).'.format(value, dxftype, handle))
+                        'Invalid XDATA control string (1002, "{}") entity {}(#{}).'.format(
+                            value, dxftype, handle))
                 if xdata_list_level < 0:  # more closing than opening tags
                     raise DXFXDataError(
                         'Invalid XDATA structure in entity {}(#{}), unbalanced list markers, missing  (1002, "{{").'.format(
@@ -158,8 +168,9 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
             if value.startswith('{'):
                 if app_data:  # already in app data mode
                     raise DXFAppDataError(
-                        'Invalid APP DATA structure in entity {}(#{}), APP DATA can not be nested.'.format(dxftype,
-                                                                                                           handle))
+                        'Invalid APP DATA structure in entity {}(#{}), APP DATA can not be nested.'.format(
+                            dxftype,
+                            handle))
                 app_data = True
                 # 'APPID}' is also a valid closing tag
                 app_data_closing_tag = value[1:] + '}'
@@ -172,7 +183,8 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
                 app_data_closing_tag = '}'
             else:
                 raise DXFAppDataError(
-                    'Invalid APP DATA structure tag (102, "{}") in entity {}(#{}).'.format(value, dxftype, handle))
+                    'Invalid APP DATA structure tag (102, "{}") in entity {}(#{}).'.format(
+                        value, dxftype, handle))
 
         # XDATA section starts with (1001, APPID) and is always at the end of an entity,
         # since AutoCAD 2018, embedded objects may follow XDATA
@@ -180,13 +192,15 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
             xdata = True
             if app_data:
                 raise DXFAppDataError(
-                    'Invalid APP DATA structure in entity {}(#{}), missing closing tag (102, "}}").'.format(dxftype,
-                                                                                                            handle))
+                    'Invalid APP DATA structure in entity {}(#{}), missing closing tag (102, "}}").'.format(
+                        dxftype,
+                        handle))
         yield tag
 
     if app_data:
         raise DXFAppDataError(
-            'Invalid APP DATA structure in entity {}(#{}), missing closing tag (102, "}}").'.format(dxftype, handle))
+            'Invalid APP DATA structure in entity {}(#{}), missing closing tag (102, "}}").'.format(
+                dxftype, handle))
 
     if xdata:
         if xdata_list_level < 0:
@@ -256,7 +270,8 @@ is_valid_name = is_valid_layer_name
 
 
 def is_adsk_special_layer(name: str) -> bool:
-    return name.upper().startswith('*ADSK_')  # special Autodesk layers starts with invalid character *
+    return name.upper().startswith(
+        '*ADSK_')  # special Autodesk layers starts with invalid character *
 
 
 def fix_lineweight(lineweight: int) -> int:
@@ -268,3 +283,7 @@ def fix_lineweight(lineweight: int) -> int:
         return 211
     index = bisect.bisect(VALID_DXF_LINEWEIGHTS, lineweight)
     return VALID_DXF_LINEWEIGHTS[index]
+
+
+def is_valid_aci_color(aci: int) -> bool:
+    return 0 <= aci <= 257

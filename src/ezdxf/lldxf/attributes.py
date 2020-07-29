@@ -2,7 +2,9 @@
 # License: MIT License
 from collections import namedtuple
 from enum import Enum
-from typing import Optional, Dict, Tuple, TYPE_CHECKING, Iterable
+from typing import (
+    Optional, Dict, Tuple, TYPE_CHECKING, Iterable, Callable, Any,
+)
 from .const import DXFAttributeError, DXF12
 import copy
 
@@ -50,6 +52,7 @@ class DXFAttr:
             getter: str = None,
             setter: str = None,
             alias: str = None,
+            validator: Optional[Callable[[Any], bool]] = None,
     ):
 
         # Attribute name set by DXFAttributes.__init__()
@@ -80,6 +83,9 @@ class DXFAttr:
 
         # Alternative name for this attribute
         self.alias: str = alias
+
+        # Returns True if given value is valid
+        self.validator: Optional[Callable[[Any], bool]] = validator
 
     def __str__(self) -> str:
         return f'({self.name}, {self.code})'
@@ -140,6 +146,12 @@ class DXFAttr:
             raise DXFAttributeError(
                 f'DXF attribute {self.name} has no setter.'
             )
+
+    def is_valid_value(self, value: Any) -> bool:
+        if self.validator:
+            return self.validator(value)
+        else:
+            return True
 
 
 class DXFAttributes:
