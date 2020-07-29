@@ -36,7 +36,7 @@ def test_color_index(entity, auditor):
 
 
 def test_lineweight_too_small(entity, auditor):
-    entity.dxf.lineweight = -5
+    entity.dxf.__dict__['lineweight'] = -5  # by pass 'set' validator
     auditor.check_entity_lineweight(entity)
     assert len(auditor.fixes) == 1
     assert auditor.fixes[0].code == AuditError.INVALID_LINEWEIGHT
@@ -44,7 +44,7 @@ def test_lineweight_too_small(entity, auditor):
 
 
 def test_lineweight_too_big(entity, auditor):
-    entity.dxf.lineweight = 212
+    entity.dxf.__dict__['lineweight'] = 212  # by pass 'set' validator
     auditor.check_entity_lineweight(entity)
     assert len(auditor.fixes) == 1
     assert auditor.fixes[0].code == AuditError.INVALID_LINEWEIGHT
@@ -52,7 +52,7 @@ def test_lineweight_too_big(entity, auditor):
 
 
 def test_invalid_lineweight(entity, auditor):
-    entity.dxf.lineweight = 10
+    entity.dxf.__dict__['lineweight'] = 10  # by pass 'set' validator
     auditor.check_entity_lineweight(entity)
     assert len(auditor.fixes) == 1
     assert auditor.fixes[0].code == AuditError.INVALID_LINEWEIGHT

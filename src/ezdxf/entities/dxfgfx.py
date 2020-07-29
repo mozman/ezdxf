@@ -16,7 +16,7 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.validator import (
-    is_valid_table_name, fix_table_name,
+    is_valid_table_name, is_valid_layer_name,
     is_valid_lineweight, fix_lineweight,
     is_valid_aci_color, fix_aci_color_index,
 )
@@ -41,7 +41,8 @@ GRAPHIC_PROPERTIES = {'layer', 'linetype', 'color', 'lineweight', 'ltscale',
                       'true_color', 'color_name', }
 
 acdb_entity = DefSubclass('AcDbEntity', {
-    'layer': DXFAttr(8, default='0'),  # layername as string
+    # layername as string
+    'layer': DXFAttr(8, default='0'),
     'linetype': DXFAttr(6, default='BYLAYER', optional=True),
     # linetype as string, special names BYLAYER/BYBLOCK
     'color': DXFAttr(62, default=256, optional=True,
@@ -53,7 +54,10 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # 0 .. modelspace, 1 .. paperspace
     # thickness and extrusion is defined in Entity specific subclasses
     # Stored and moved around as a 16-bit integer
-    'lineweight': DXFAttr(370, default=-1, dxfversion=DXF2000, optional=True),
+    'lineweight': DXFAttr(370, default=-1, dxfversion=DXF2000, optional=True,
+                          validator=is_valid_lineweight,
+                          fixer=fix_lineweight,
+                          ),
     # Line weight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13 and biggest line weight is 200, values
     # outside this range prevents AutoCAD from loading the file.
     # Special values:

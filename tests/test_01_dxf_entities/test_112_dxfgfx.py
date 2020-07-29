@@ -57,6 +57,15 @@ def test_aci_color_index_fixer(entity):
     assert entity.dxf.color == 256  # fixed as BYLAYER
 
 
+def test_lineweight_fixer(entity):
+    entity.dxf.lineweight = -5
+    assert entity.dxf.lineweight == -1  # fixed as BYLAYER
+    entity.dxf.lineweight = 17
+    assert entity.dxf.lineweight == 18  # fixed as nearest valid lineweight
+    entity.dxf.lineweight = 255
+    assert entity.dxf.lineweight == 211  # fixed as nearest valid lineweight
+
+
 def test_clone_graphical_entity(entity):
     doc = ezdxf.new()
     entity.doc = doc

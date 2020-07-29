@@ -17,8 +17,8 @@ def test_default_settings(msp):
     assert line.dxf.ltscale == 1.0
     assert line.dxf.invisible == 0
     assert line.dxf.extrusion == (0, 0, 1)
-    line.dxf.lineweight = 17  # set line weight
-    assert line.dxf.lineweight == 17  # get line weight
+    line.dxf.lineweight = 18  # set line weight
+    assert line.dxf.lineweight == 18  # get line weight
 
 
 @pytest.fixture
