@@ -1,5 +1,5 @@
 # Created: 17.02.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional, Tuple
 import logging
@@ -7,7 +7,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2004
 from ezdxf.lldxf.const import INVALID_NAME_CHARACTERS
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
-from ezdxf.lldxf.validator import is_valid_layer_name
+from ezdxf.lldxf.validator import is_valid_layer_name, is_valid_table_name
 from ezdxf.tools import rgb2int, int2rgb, transparency2float, float2transparency
 from ezdxf.lldxf.const import DXFValueError
 
@@ -20,6 +20,15 @@ if TYPE_CHECKING:
 
 __all__ = ['Layer']
 
+
+def is_valid_layer_color_index(aci: int) -> bool:
+    return -256 < aci < 256 and aci != 0
+
+
+def layer_color_fixer(aci: int) -> int:
+    return aci if is_valid_layer_color_index(aci) else 7
+
+
 acdb_symbol_table_record = DefSubclass('AcDbSymbolTableRecord', {})
 
 acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
@@ -27,11 +36,14 @@ acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
     'name': DXFAttr(2, validator=is_valid_layer_name),
     'flags': DXFAttr(70, default=0),
     # ACI color index, color < 0 indicates layer state: off
-    'color': DXFAttr(62, default=7),
+    'color': DXFAttr(62, default=7,
+                     validator=is_valid_layer_color_index,
+                     fixer=layer_color_fixer,
+                     ),
     # true color as 24 bit int value: rrrrrrrrggggggggbbbbbbbb
     'true_color': DXFAttr(420, dxfversion=DXF2004, optional=True),
     # linetype name
-    'linetype': DXFAttr(6, default='Continuous'),
+    'linetype': DXFAttr(6, default='Continuous', validator=is_valid_table_name),
     # Don't plot this layer if 0 else 1
     'plot': DXFAttr(290, default=1, dxfversion=DXF2000, optional=True),
     # Default lineweight 1/100 mm, min 0 = 0.0mm, max 211 = 2.11mm

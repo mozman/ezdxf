@@ -42,7 +42,8 @@ GRAPHIC_PROPERTIES = {'layer', 'linetype', 'color', 'lineweight', 'ltscale',
 acdb_entity = DefSubclass('AcDbEntity', {
     # layer name as string, no auto fix for invalid layer names!
     'layer': DXFAttr(8, default='0', validator=is_valid_layer_name),
-    'linetype': DXFAttr(6, default='BYLAYER', optional=True),
+    'linetype': DXFAttr(6, default='BYLAYER', optional=True,
+                        validator=is_valid_table_name),
     # linetype as string, special names BYLAYER/BYBLOCK
     'color': DXFAttr(62, default=256, optional=True,
                      validator=is_valid_aci_color,

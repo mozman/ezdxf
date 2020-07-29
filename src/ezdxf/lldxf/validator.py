@@ -295,8 +295,14 @@ def fix_layer_name(name: str) -> str:
 
 
 def is_adsk_special_layer(name: str) -> bool:
-    return name.upper().startswith(
-        '*ADSK_')  # special Autodesk layers starts with invalid character *
+    if name.startswith('*'):
+        # special Autodesk layers starts with invalid character *
+        name = name.upper()
+        if name.startswith('*ADSK_'):
+            return True
+        if name.startswith('*ACMAP'):
+            return True
+    return False
 
 
 def is_valid_block_name(name: str) -> bool:

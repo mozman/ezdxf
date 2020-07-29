@@ -4,7 +4,7 @@
 import pytest
 import ezdxf
 
-from ezdxf.entities.dxfgfx import DXFGraphic
+from ezdxf.entities.dxfgfx import DXFGraphic, DXFValueError
 from ezdxf.math import Matrix44
 
 
@@ -64,6 +64,16 @@ def test_lineweight_fixer(entity):
     assert entity.dxf.lineweight == 18  # fixed as nearest valid lineweight
     entity.dxf.lineweight = 255
     assert entity.dxf.lineweight == 211  # fixed as nearest valid lineweight
+
+
+def test_is_linetype_validator_active(entity):
+    with pytest.raises(DXFValueError):
+        entity.dxf.linetype = '*Invalid'
+
+
+def test_is_layer_name_validator_active(entity):
+    with pytest.raises(DXFValueError):
+        entity.dxf.layer = '*Invalid'
 
 
 def test_clone_graphical_entity(entity):
