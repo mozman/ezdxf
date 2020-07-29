@@ -1,16 +1,18 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
-from typing import TYPE_CHECKING, Tuple, Union
 import math
-from ezdxf.math import Vector, Matrix44
-from ezdxf.math.transformtools import OCSTransform
+from typing import TYPE_CHECKING, Tuple, Union
 
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.entities.mtext import caret_decode
 from ezdxf.lldxf import const
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, SPECIAL_CHARS_ENCODING, DXFValueError
 )
+from ezdxf.math import Vector, Matrix44
+from ezdxf.math.transformtools import OCSTransform
+
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -109,7 +111,9 @@ class Text(DXFGraphic):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text.name)
         # for all DXF versions
         if self.dxf.hasattr('text'):
-            self.dxf.text = safe_text(self.dxf.text)
+            self.dxf.text = _ignore_line_endings(self.dxf.text)
+            if self.dxf.text.endswith('^'):
+                raise DXFValueError(f'cannot end TEXT entity with unfinished caret escape code')
         self.dxf.export_dxf_attribs(tagwriter, [
             'insert', 'height', 'text', 'thickness', 'rotation', 'oblique', 'style', 'width', 'text_generation_flag',
             'halign', 'align_point', 'extrusion'
@@ -274,7 +278,7 @@ class Text(DXFGraphic):
 
 def plain_text(text: str) -> str:
     chars = []
-    raw_chars = list(reversed(safe_text(text)))
+    raw_chars = list(reversed(_ignore_line_endings(caret_decode(text))))
     while len(raw_chars):
         char = raw_chars.pop()
         if char == '%':  # special characters
@@ -292,6 +296,6 @@ def plain_text(text: str) -> str:
     return "".join(chars)
 
 
-def safe_text(t: str):
-    # Writing '\n' or '\r' into DXF files creates invalid files.
+def _ignore_line_endings(t: str) -> str:
+    # newlines should not appear in TEXT entities but if they do, they are not handled properly so should be ignored
     return t.replace('\n', '').replace('\r', '')

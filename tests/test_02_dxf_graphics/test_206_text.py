@@ -257,3 +257,7 @@ def test_plain_text():
     assert plain_text('%u%d%') == '%u%d%'
     t = Text.new(dxfattribs={'text': '45%%d'})
     assert t.plain_text() == '45°'
+
+    assert plain_text('abc^a') == 'abc!'
+    assert plain_text('abc^Jdef') == 'abcdef'
+    assert plain_text('abc^@def') == 'abc\0def'

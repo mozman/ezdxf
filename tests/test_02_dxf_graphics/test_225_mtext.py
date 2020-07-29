@@ -4,12 +4,12 @@
 import pytest
 from ezdxf.entities.mtext import (
     MText, split_mtext_string, plain_mtext, caret_decode,
-    _dxf_encode_line_endings, replace_non_printable_characters,
+    _dxf_escape_line_endings, replace_non_printable_characters
 )
+from ezdxf.layouts import VirtualLayout
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.tools.rgb import rgb2int
-from ezdxf.layouts import VirtualLayout
 
 MTEXT = """0
 MTEXT
@@ -304,12 +304,12 @@ def test_transform_interface():
     assert mtext.dxf.insert == (2, 2, 3)
 
 
-def test_dxf_line_ending_encoding():
-    assert _dxf_encode_line_endings('\\P test') == '\\P test'
-    assert _dxf_encode_line_endings('abc\ndef') == 'abc\\Pdef'
-    assert _dxf_encode_line_endings('abc\rdef') == 'abcdef', \
+def test_dxf_escape_line_endings():
+    assert _dxf_escape_line_endings('\\P test') == '\\P test'
+    assert _dxf_escape_line_endings('abc\ndef') == 'abc\\Pdef'
+    assert _dxf_escape_line_endings('abc\rdef') == 'abcdef', \
         r"a single '\r' should be ignored"
-    assert _dxf_encode_line_endings('abc\r\ndef') == 'abc\\Pdef', \
+    assert _dxf_escape_line_endings('abc\r\ndef') == 'abc\\Pdef', \
         r"'\r\n' represents a single newline"
 
 
