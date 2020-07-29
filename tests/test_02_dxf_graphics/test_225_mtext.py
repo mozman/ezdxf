@@ -4,8 +4,10 @@
 import pytest
 
 import ezdxf
-from ezdxf.entities.mtext import MText, split_mtext_string, plain_mtext, caret_decode, _dxf_encode_line_endings, \
-    replace_non_printable_characters
+from ezdxf.entities.mtext import (
+    MText, split_mtext_string, plain_mtext, caret_decode,
+    _dxf_encode_line_endings, replace_non_printable_characters,
+)
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
@@ -140,7 +142,10 @@ def layout(doc):
 
 
 def test_backslashes():
-    s = r"Swiss 721 (helvetica-like)\P\P\pt7.1875,8.38542;{\H0.6667x;Regular\P\P\pl0.899488,t8.38542;Swiss Light^I\fSwis721 Lt BT|b0|i0|c0|p34;\C5;abcdefghijABCDEFGHIJ123456789!@#$%^ &*()\P\Ftxt.shx|c1;\P\C256;Swiss Light Italic\Ftxt.shx|c0;^I\fSwis721 Lt BT|b0|i"
+    s = r"Swiss 721 (helvetica-like)\P\P\pt7.1875,8.38542;{\H0.6667x;Regular" \
+        r"\P\P\pl0.899488,t8.38542;Swiss Light^I\fSwis721 Lt BT|b0|i0|c0|p34" \
+        r";\C5;abcdefghijABCDEFGHIJ123456789!@#$%^ &*()\P\Ftxt.shx|c1;\P\C25" \
+        r"6;Swiss Light Italic\Ftxt.shx|c0;^I\fSwis721 Lt BT|b0|i"
     assert len(s) == 253
 
 
@@ -189,7 +194,7 @@ def test_set_rotation(layout):
     mtext.dxf.text_direction = (1, 1, 0)  # 45 deg
     mtext.set_rotation(30)
     assert 30 == mtext.get_rotation()
-    assert mtext.dxf.hasattr('text_direction') is False, "dxfattrib 'text_direction' should be deleted!"
+    assert mtext.dxf.hasattr('text_direction') is False
 
 
 def test_append_text(layout):
@@ -199,7 +204,8 @@ def test_append_text(layout):
 
 
 def test_set_location(layout):
-    mtext = layout.add_mtext("TEST").set_location((3, 4), rotation=15, attachment_point=const.MTEXT_MIDDLE_CENTER)
+    mtext = layout.add_mtext("TEST").set_location(
+        (3, 4), rotation=15, attachment_point=const.MTEXT_MIDDLE_CENTER)
     assert const.MTEXT_MIDDLE_CENTER == mtext.dxf.attachment_point
     assert 15 == mtext.dxf.rotation
     assert (3, 4, 0) == mtext.dxf.insert
@@ -209,7 +215,8 @@ def test_set_bg_color(layout):
     mtext = layout.add_mtext("TEST").set_bg_color(2)
     assert mtext.dxf.bg_fill == 1
     assert mtext.dxf.bg_fill_color == 2
-    assert mtext.dxf.hasattr('box_fill_scale') is True, "box_fill_scale must exists, else AutoCAD complains"
+    assert mtext.dxf.hasattr('box_fill_scale') is True, \
+        "box_fill_scale attribute must exists, else AutoCAD complains"
 
 
 def test_set_bg_true_color(layout):
@@ -217,12 +224,14 @@ def test_set_bg_true_color(layout):
     assert mtext.dxf.bg_fill == 1
     assert mtext.dxf.bg_fill_true_color == ezdxf.rgb2int((10, 20, 30))
     assert mtext.dxf.box_fill_scale == 2
-    assert mtext.dxf.hasattr('bg_fill_color') is True, "bg_fill_color must exists, else AutoCAD complains"
+    assert mtext.dxf.hasattr('bg_fill_color') is True, \
+        "bg_fill_color attribute must exists, else AutoCAD complains"
 
 
 def test_delete_bg_color(layout):
     mtext = layout.add_mtext("TEST").set_bg_color(None)
-    # AutoCAD always complains about anything if bg_fill is set to 0, so I delete all tags
+    # AutoCAD always complains about anything if bg_fill is set to 0,
+    # so I delete all related tags.
     assert mtext.dxf.hasattr('bg_fill') is False
     assert mtext.dxf.hasattr('bg_fill_color') is False
     assert mtext.dxf.hasattr('bg_fill_true_color') is False
@@ -233,8 +242,10 @@ def test_delete_bg_color(layout):
 def test_set_bg_canvas_color(layout):
     mtext = layout.add_mtext("TEST").set_bg_color('canvas')
     assert mtext.dxf.bg_fill == 3
-    assert mtext.has_dxf_attrib('bg_fill_color') is True, "bg_fill_color must exists, else AutoCAD complains"
-    assert mtext.has_dxf_attrib('box_fill_scale') is True, "box_fill_scale must exists, else AutoCAD complains"
+    assert mtext.has_dxf_attrib('bg_fill_color') is True, \
+        "bg_fill_color attribute must exists, else AutoCAD complains"
+    assert mtext.has_dxf_attrib('box_fill_scale') is True, \
+        "box_fill_scale attribute must exists, else AutoCAD complains"
 
 
 TESTSTR = "0123456789"
@@ -279,11 +290,15 @@ def test_do_not_split_at_carret():
 
 
 def test_mtext_plain_text():
-    raw_text = r"\A1;Das ist eine MText\PZeile mit {\LFormat}ierung\Pänder die Farbe\P\pi-7.5,l7.5,t7.5;1.^INummerierung\P2.^INummerierung\P\pi0,l0,tz;\P{\H0.7x;\S1/2500;}  ein Bruch"
-    expected = "Das ist eine MText\nZeile mit Formatierung\nänder die Farbe\n1.^INummerierung\n2.^INummerierung\n\n1/2500  ein Bruch"
+    raw_text = r"\A1;Das ist eine MText\PZeile mit {\LFormat}ierung\Pänder " \
+               r"die Farbe\P\pi-7.5,l7.5,t7.5;1.^INummerierung\P2.^INummeri" \
+               r"erung\P\pi0,l0,tz;\P{\H0.7x;\S1/2500;}  ein Bruch"
+    expected = "Das ist eine MText\nZeile mit Formatierung\nänder die Farbe\n" \
+               "1.^INummerierung\n2.^INummerierung\n\n1/2500  ein Bruch"
     assert plain_mtext(raw_text) == expected
 
-    assert plain_mtext('\\:') == '\\:'  # invalid escape code is printed verbatim
+    assert plain_mtext('\\:') == '\\:', \
+        "invalid escape code is printed verbatim"
 
 
 def test_mtext_plain_text_special_char():
@@ -302,8 +317,10 @@ def test_mtext_transform_interface():
 def test_dxf_encode_line_endings():
     assert _dxf_encode_line_endings('\\P test') == '\\P test'
     assert _dxf_encode_line_endings('abc\ndef') == 'abc\\Pdef'
-    assert _dxf_encode_line_endings('abc\rdef') == 'abcdef'  # \r on its own is ignored
-    assert _dxf_encode_line_endings('abc\r\ndef') == 'abc\\Pdef'  # only counts as one newline
+    assert _dxf_encode_line_endings(
+        'abc\rdef') == 'abcdef'  # \r on its own is ignored
+    assert _dxf_encode_line_endings(
+        'abc\r\ndef') == 'abc\\Pdef'  # only counts as one newline
 
 
 def test_caret_decode():
@@ -331,4 +348,5 @@ def test_replace_non_printable():
     assert replace_non_printable_characters('abc def') == 'abc def'
     assert replace_non_printable_characters('abc \tdef') == 'abc \tdef'
     assert replace_non_printable_characters('abc\0def') == 'abc▯def'
-    assert replace_non_printable_characters('abc\0def', replacement=' ') == 'abc def'
+    assert replace_non_printable_characters(
+        'abc\0def', replacement=' ') == 'abc def'
