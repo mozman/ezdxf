@@ -7,6 +7,7 @@ from typing import Optional, Tuple, TYPE_CHECKING, Iterable
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
+from ezdxf.entities.mtext import replace_non_printable_characters
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render.path import Path
 
@@ -93,3 +94,16 @@ class Backend(ABC):
 
     def finalize(self) -> None:
         pass
+
+
+def prepare_string_for_rendering(text: str, dxftype: str) -> str:
+    assert '\n' not in text, 'not a single line of text'
+    if dxftype == 'TEXT':
+        text = replace_non_printable_characters(text, replacement='?')
+        text = text.replace('\t', '?')
+    elif dxftype == 'MTEXT':
+        text = replace_non_printable_characters(text, replacement='▯')
+        text = text.replace('\t', '        ')
+    else:
+        raise TypeError(dxftype)
+    return text

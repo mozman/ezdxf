@@ -196,11 +196,11 @@ class MText(DXFGraphic):
             if tag.code == 3:
                 parts.append(tag.value)
         parts.append(tail)
-        self.text = _dxf_encode_line_endings(caret_decode("".join(parts)))
+        self.text = _dxf_escape_line_endings(caret_decode("".join(parts)))
         tags.remove_tags((1, 3))
 
     def export_mtext(self, tagwriter: 'TagWriter') -> None:
-        txt = _dxf_encode_line_endings(self.text)
+        txt = _dxf_escape_line_endings(self.text)
         str_chunks = split_mtext_string(txt, size=250)
         if len(str_chunks) == 0:
             str_chunks.append("")
@@ -518,9 +518,10 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
             return chunks
 
 
-def _dxf_encode_line_endings(text: str) -> str:
-    # replacing '\r\n' and '\n' by '\P' is required, else an invalid DXF file
-    # would be created \r on it's own is not counted as a line ending
+def _dxf_escape_line_endings(text: str) -> str:
+    # replacing '\r\n' and '\n' by '\P' is required when exporting, else an
+    # invalid DXF file would be created.
+    # \r on it's own is not counted as a line ending
     return text.replace('\r', '').replace('\n', '\\P')
 
 
