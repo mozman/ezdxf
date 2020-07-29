@@ -1,5 +1,5 @@
 # Created: 17.02.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
 import logging
@@ -7,6 +7,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
+from ezdxf.lldxf.validator import is_valid_table_name
 from .factory import register_entity
 
 logger = logging.getLogger('ezdxf')
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 __all__ = ['AppID']
 
 acdb_appid = DefSubclass('AcDbRegAppTableRecord', {
-    'name': DXFAttr(2),
+    'name': DXFAttr(2, validator=is_valid_table_name),
     'flags': DXFAttr(70, default=0),
 })
 
@@ -28,7 +29,8 @@ class AppID(DXFEntity):
     DXFTYPE = 'APPID'
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_appid)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
@@ -47,4 +49,3 @@ class AppID(DXFEntity):
 
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags'])
-

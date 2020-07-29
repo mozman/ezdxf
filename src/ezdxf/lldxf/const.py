@@ -430,7 +430,8 @@ ATTRIB_CONST = 2  # This is a constant attribute
 ATTRIB_VERIFY = 4  # Verification is required on input of this attribute
 ATTRIB_IS_PRESET = 8  # no prompt during insertion
 
-INVALID_NAME_CHARACTERS = '<>/\\":;?*|=`'
+# '|' is allowed in layer name, as ltype name ...
+INVALID_NAME_CHARACTERS = '<>/\\":;?*=`'
 INVALID_LAYER_NAME_CHARACTERS = set(INVALID_NAME_CHARACTERS)
 
 STD_SCALES = {
