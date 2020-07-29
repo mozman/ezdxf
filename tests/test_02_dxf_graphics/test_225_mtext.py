@@ -167,9 +167,17 @@ def test_default_text_chunk_size_of_250_chars(layout):
     collector = TagCollector()
     mtext.export_dxf(collector)
     first, second, last = [tag for tag in collector.tags if tag[0] in (1, 3)]
-    assert first.code == 3 and len(first.value) == 250
-    assert second.code == 3 and len(second.value) == 250
-    assert last.code == 1 and last.value == "a new mtext"
+
+    assert first.code == 3
+    assert len(first.value) == 250
+    assert text.startswith(first.value)
+
+    assert second.code == 3
+    assert len(second.value) == 250
+    assert text[250:500] == second.value
+
+    assert last.code == 1
+    assert text.endswith(last.value)
 
 
 def test_text_direction_wins_over_rotation(layout):
