@@ -6,7 +6,9 @@ Version 0.14a1 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-14.html
-- NEW: attribute validator for setting/loading DXF entities, fixes minor issues
+- NEW: DXF attribute setter validator, some special and undocumented Autodesk 
+  table names may raise `ValueError()` exceptions, please report this table 
+  names (layers, linetypes, styles, ...). 
 - NEW: `addons.drawing.Frontend()` supports width attributes of LWPOLYLINE and 
   2D POLYLINE entities
 - NEW: `TraceBuilder()` a render tool to generate quadrilaterals (TRACE, SOLID 
@@ -39,6 +41,7 @@ Version 0.14a1 - dev
   argument `safe` is deprecated, will be removed in v0.16
 - REMOVE: `DXFEntity.drawing`, replaced by `DXFEntity.doc`
 - REMOVE: `DXFInvalidLayerName` replaced by `DXFValueError` 
+
 Version 0.13.1 - 2020-07-18
 ---------------------------
 

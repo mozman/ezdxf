@@ -1,11 +1,12 @@
 # Created: 17.02.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
 import logging
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007
+from ezdxf.lldxf.validator import is_valid_vport_name
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 __all__ = ['VPort']
 
 acdb_vport = DefSubclass('AcDbViewportTableRecord', {
-    'name': DXFAttr(2),
+    'name': DXFAttr(2, validator=is_valid_vport_name),
     'flags': DXFAttr(70, default=0),
     'lower_left': DXFAttr(10, xtype=XType.point2d, default=(0, 0)),
     'upper_right': DXFAttr(11, xtype=XType.point2d, default=(1, 1)),

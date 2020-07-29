@@ -266,32 +266,11 @@ def is_valid_table_name(name: str) -> bool:
     return not bool(INVALID_LAYER_NAME_CHARACTERS.intersection(set(name)))
 
 
-def fix_table_name(name: str) -> str:
-    if is_valid_table_name(name):
-        return name
-    else:
-        return replace_invalid_chars(name, INVALID_LAYER_NAME_CHARACTERS)
-
-
-def replace_invalid_chars(name: str, invalid_chars: Set[str],
-                          replace: str = '_') -> str:
-    return ''.join(
-        replace if c in invalid_chars else c for c in name
-    )
-
-
 def is_valid_layer_name(name: str) -> bool:
     if is_adsk_special_layer(name):
         return True
     else:
         return is_valid_table_name(name)
-
-
-def fix_layer_name(name: str) -> str:
-    if is_valid_layer_name(name):
-        return name
-    else:
-        return replace_invalid_chars(name, INVALID_LAYER_NAME_CHARACTERS)
 
 
 def is_adsk_special_layer(name: str) -> bool:
@@ -308,6 +287,13 @@ def is_adsk_special_layer(name: str) -> bool:
 def is_valid_block_name(name: str) -> bool:
     if name.startswith('*'):
         return is_valid_table_name(name[1:])
+    else:
+        return is_valid_table_name(name)
+
+
+def is_valid_vport_name(name: str) -> bool:
+    if name.startswith('*'):
+        return name.upper() == '*ACTIVE'
     else:
         return is_valid_table_name(name)
 

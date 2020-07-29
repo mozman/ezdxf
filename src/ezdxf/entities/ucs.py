@@ -1,11 +1,12 @@
 # Created: 17.02.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
 import logging
 from ezdxf.math import UCS, Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
+from ezdxf.lldxf.validator import is_valid_table_name
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
@@ -17,9 +18,8 @@ if TYPE_CHECKING:
 
 __all__ = ['UCSTable']
 
-
 acdb_ucs = DefSubclass('AcDbUCSTableRecord', {
-    'name': DXFAttr(2),
+    'name': DXFAttr(2, validator=is_valid_table_name),
     'flags': DXFAttr(70, default=0),
     'origin': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
     'xaxis': DXFAttr(11, xtype=XType.point3d, default=Vector(1, 0, 0)),
@@ -33,7 +33,8 @@ class UCSTable(DXFEntity):
     DXFTYPE = 'UCS'
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_ucs)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_ucs)
@@ -49,10 +50,13 @@ class UCSTable(DXFEntity):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_ucs.name)
 
         # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags', 'origin', 'xaxis', 'yaxis'])
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'name', 'flags', 'origin', 'xaxis', 'yaxis'
+        ])
 
     def ucs(self) -> UCS:
-        """ Returns an :class:`ezdxf.math.UCS` object for this UCS table entry. """
+        """ Returns an :class:`ezdxf.math.UCS` object for this UCS table entry.
+        """
         return UCS(
             origin=self.dxf.origin,
             ux=self.dxf.xaxis,

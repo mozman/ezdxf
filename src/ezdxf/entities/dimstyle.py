@@ -1,16 +1,22 @@
 # Created: 17.02.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Tuple
 import logging
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, VIRTUAL_TAG
-from ezdxf.lldxf.const import DXF12, DXF2007, DXF2000, DXF2018
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFKeyError, LINEWEIGHT_BYBLOCK, DXFValueError
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass,
+    VIRTUAL_TAG,
+)
+from ezdxf.lldxf.const import (
+    DXF12, DXF2007, DXF2000, SUBCLASS_MARKER, DXFKeyError, LINEWEIGHT_BYBLOCK,
+    DXFValueError,
+)
+from ezdxf.lldxf import const
+from ezdxf.lldxf.validator import is_valid_table_name
 from ezdxf.entities.dxfentity import SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
-from .factory import register_entity
 from ezdxf.render.arrows import ARROWS
-from ezdxf.lldxf import const
+from .factory import register_entity
 
 logger = logging.getLogger('ezdxf')
 
@@ -25,16 +31,18 @@ base_class = DefSubclass(None, {
 })
 
 acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
-    'name': DXFAttr(2, default='Standard'),
+    'name': DXFAttr(2, default='Standard', validator=is_valid_table_name),
     'flags': DXFAttr(70, default=0),
     'dimpost': DXFAttr(3, default=''),
     'dimapost': DXFAttr(4, default=''),
 
-    'dimblk': DXFAttr(5, default=''),  # name is the base data -> handle (DXF2000) is set at export
-    'dimblk1': DXFAttr(6, default=''),  # name is the base data -> handle (DXF2000) is set at export
-    'dimblk2': DXFAttr(7, default=''),  # name is the base data -> handle (DXF2000) is set at export
+    # Arrow names are the base data -> handle (DXF2000) is set at export
+    'dimblk': DXFAttr(5, default=''),
+    'dimblk1': DXFAttr(6, default=''),
+    'dimblk2': DXFAttr(7, default=''),
 
-    'dimscale': DXFAttr(40, default=1),  # 0 has a special but unknown meaning, handle as 1.0
+    'dimscale': DXFAttr(40, default=1),
+    # 0 has a special but unknown meaning, handle as 1.0
     'dimasz': DXFAttr(41, default=2.5),
     'dimexo': DXFAttr(42, default=0.625),
     'dimdli': DXFAttr(43, default=3.75),
@@ -49,16 +57,20 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     # jog angle, Angle of oblique dimension line segment in jogged radius dimension
     'dimjogang': DXFAttr(50, dxfversion=DXF2007, default=90, optional=True),
     'dimtxt': DXFAttr(140, default=2.5),  # measurement text height
-    'dimcen': DXFAttr(141, default=2.5),  # center marks and center lines; 0 = off, <0 = center line, >0 = center mark
+    'dimcen': DXFAttr(141, default=2.5),
+    # center marks and center lines; 0 = off, <0 = center line, >0 = center mark
     'dimtsz': DXFAttr(142, default=0),
     'dimaltf': DXFAttr(143, default=0.03937007874),
     'dimlfac': DXFAttr(144, default=1),  # length factor
     'dimtvp': DXFAttr(145, default=0),  # text vertical position if dimtad=0
     'dimtfac': DXFAttr(146, default=1),
-    'dimgap': DXFAttr(147, default=.625),  # default gap around the measurement text
+    'dimgap': DXFAttr(147, default=.625),
+    # default gap around the measurement text
     'dimaltrnd': DXFAttr(148, dxfversion=DXF2000, default=0),
-    'dimtfill': DXFAttr(69, dxfversion=DXF2007, default=0),  # 0=None, 1=canvas color, 2=dimtfillclr
-    'dimtfillclr': DXFAttr(70, dxfversion=DXF2007, default=0),  # color index for dimtfill==2
+    'dimtfill': DXFAttr(69, dxfversion=DXF2007, default=0),
+    # 0=None, 1=canvas color, 2=dimtfillclr
+    'dimtfillclr': DXFAttr(70, dxfversion=DXF2007, default=0),
+    # color index for dimtfill==2
     'dimtol': DXFAttr(71, default=0),
     'dimlim': DXFAttr(72, default=0),
     'dimtih': DXFAttr(73, default=0),  # text inside horizontal
@@ -80,7 +92,8 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimclrt': DXFAttr(178, default=0),  # text color
     'dimadec': DXFAttr(179, dxfversion=DXF2000, default=0),
     'dimunit': DXFAttr(270),  # obsolete
-    'dimdec': DXFAttr(271, dxfversion=DXF2000, default=0),  # can appear multiple times ???
+    'dimdec': DXFAttr(271, dxfversion=DXF2000, default=0),
+    # can appear multiple times ???
     'dimtdec': DXFAttr(272, dxfversion=DXF2000, default=2),
     'dimaltu': DXFAttr(273, dxfversion=DXF2000, default=2),
     'dimalttd': DXFAttr(274, dxfversion=DXF2000, default=3),
@@ -94,10 +107,12 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     # 2 = Allows text to be moved freely without a leader
     'dimtmove': DXFAttr(279, dxfversion=DXF2000, default=0),
 
-
-    'dimjust': DXFAttr(280, dxfversion=DXF2000, default=0),  # 0=center; 1=left; 2=right; 3=above ext1; 4=above ext2
-    'dimsd1': DXFAttr(281, dxfversion=DXF2000, default=0),  # suppress first part of the dimension line
-    'dimsd2': DXFAttr(282, dxfversion=DXF2000, default=0),  # suppress second part of the dimension line
+    'dimjust': DXFAttr(280, dxfversion=DXF2000, default=0),
+    # 0=center; 1=left; 2=right; 3=above ext1; 4=above ext2
+    'dimsd1': DXFAttr(281, dxfversion=DXF2000, default=0),
+    # suppress first part of the dimension line
+    'dimsd2': DXFAttr(282, dxfversion=DXF2000, default=0),
+    # suppress second part of the dimension line
     'dimtolj': DXFAttr(283, dxfversion=DXF2000, default=0),
     'dimtzin': DXFAttr(284, dxfversion=DXF2000, default=8),
     'dimaltz': DXFAttr(285, dxfversion=DXF2000, default=0),
@@ -111,7 +126,8 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     # 3 = Moves either text or arrows, whichever fits best
     'dimatfit': DXFAttr(289, dxfversion=DXF2000, default=3),
 
-    'dimfxlon': DXFAttr(290, dxfversion=DXF2007, default=0),  # undocumented: 1 = fixed extension line length
+    'dimfxlon': DXFAttr(290, dxfversion=DXF2007, default=0),
+    # undocumented: 1 = fixed extension line length
 
     # virtual DXF attribute 'dimtxsty': set/get STYLE by name
     'dimtxsty': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2000),
@@ -129,14 +145,22 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimltex1': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2007),
 
     # handles not used internally, handles are set at export
-    'dimtxsty_handle': DXFAttr(340, dxfversion=DXF2000),  # handle of referenced STYLE entry
-    'dimblk_handle': DXFAttr(342, dxfversion=DXF2000),  # handle of referenced BLOCK_RECORD
-    'dimblk1_handle': DXFAttr(343, dxfversion=DXF2000),  # handle of referenced BLOCK_RECORD
-    'dimblk2_handle': DXFAttr(344, dxfversion=DXF2000),  # handle of referenced BLOCK_RECORD
-    'dimldrblk_handle': DXFAttr(341, dxfversion=DXF2000),  # handle of referenced BLOCK_RECORD
-    'dimltype_handle': DXFAttr(345, dxfversion=DXF2007),  # handle of linetype for dimension line
-    'dimltex1_handle': DXFAttr(346, dxfversion=DXF2007),  # handle of linetype for extension line 1
-    'dimltex2_handle': DXFAttr(347, dxfversion=DXF2007),  # handle of linetype for extension line 2
+    'dimtxsty_handle': DXFAttr(340, dxfversion=DXF2000),
+    # handle of referenced STYLE entry
+    'dimblk_handle': DXFAttr(342, dxfversion=DXF2000),
+    # handle of referenced BLOCK_RECORD
+    'dimblk1_handle': DXFAttr(343, dxfversion=DXF2000),
+    # handle of referenced BLOCK_RECORD
+    'dimblk2_handle': DXFAttr(344, dxfversion=DXF2000),
+    # handle of referenced BLOCK_RECORD
+    'dimldrblk_handle': DXFAttr(341, dxfversion=DXF2000),
+    # handle of referenced BLOCK_RECORD
+    'dimltype_handle': DXFAttr(345, dxfversion=DXF2007),
+    # handle of linetype for dimension line
+    'dimltex1_handle': DXFAttr(346, dxfversion=DXF2007),
+    # handle of linetype for extension line 1
+    'dimltex2_handle': DXFAttr(347, dxfversion=DXF2007),
+    # handle of linetype for extension line 2
 
     # dimension line lineweight enum value, default BYBLOCK
     'dimlwd': DXFAttr(371, default=LINEWEIGHT_BYBLOCK, dxfversion=DXF2000),
@@ -147,32 +171,41 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
 })
 
 EXPORT_MAP_R2007 = [
-    'name', 'flags', 'dimscale', 'dimasz', 'dimexo', 'dimdli', 'dimexe', 'dimrnd', 'dimdle', 'dimtp', 'dimtm', 'dimfxl',
-    'dimjogang', 'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac', 'dimtvp', 'dimtfac', 'dimgap', 'dimaltrnd',
-    'dimtfill', 'dimtfillclr', 'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad', 'dimzin',
-    'dimazin', 'unknown1', 'dimalt', 'dimaltd', 'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre',
-    'dimclrt', 'dimadec', 'dimdec', 'dimtdec', 'dimaltu', 'dimalttd', 'dimaunit', 'dimfrac', 'dimlunit', 'dimdsep',
-    'dimtmove', 'dimjust', 'dimsd1', 'dimsd2', 'dimtolj', 'dimtzin', 'dimaltz', 'dimalttz', 'dimupt', 'dimatfit',
-    'dimfxlon', 'dimtxsty_handle', 'dimldrblk_handle', 'dimblk_handle', 'dimblk1_handle', 'dimblk2_handle',
-    'dimltype_handle', 'dimltex1_handle', 'dimltex2_handle', 'dimlwd', 'dimlwe'
+    'name', 'flags', 'dimscale', 'dimasz', 'dimexo', 'dimdli', 'dimexe',
+    'dimrnd', 'dimdle', 'dimtp', 'dimtm', 'dimfxl', 'dimjogang', 'dimtxt',
+    'dimcen', 'dimtsz', 'dimaltf', 'dimlfac', 'dimtvp', 'dimtfac', 'dimgap',
+    'dimaltrnd', 'dimtfill', 'dimtfillclr', 'dimtol', 'dimlim', 'dimtih',
+    'dimtoh', 'dimse1', 'dimse2', 'dimtad', 'dimzin', 'dimazin', 'unknown1',
+    'dimalt', 'dimaltd', 'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd',
+    'dimclre', 'dimclrt', 'dimadec', 'dimdec', 'dimtdec', 'dimaltu', 'dimalttd',
+    'dimaunit', 'dimfrac', 'dimlunit', 'dimdsep', 'dimtmove', 'dimjust',
+    'dimsd1', 'dimsd2', 'dimtolj', 'dimtzin', 'dimaltz', 'dimalttz', 'dimupt',
+    'dimatfit', 'dimfxlon', 'dimtxsty_handle', 'dimldrblk_handle',
+    'dimblk_handle', 'dimblk1_handle', 'dimblk2_handle', 'dimltype_handle',
+    'dimltex1_handle', 'dimltex2_handle', 'dimlwd', 'dimlwe'
 ]
 
 EXPORT_MAP_R2000 = [
-    'name', 'flags', 'dimpost', 'dimapost', 'dimscale', 'dimasz', 'dimexo', 'dimdli', 'dimexe', 'dimrnd', 'dimdle',
-    'dimtp', 'dimtm', 'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac', 'dimtvp', 'dimtfac', 'dimgap', 'dimaltrnd',
-    'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad', 'dimzin', 'dimazin', 'unknown1', 'dimalt',
-    'dimaltd',
-    'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre', 'dimclrt', 'dimadec', 'dimdec', 'dimtdec',
-    'dimaltu', 'dimalttd', 'dimaunit', 'dimfrac', 'dimlunit', 'dimdsep', 'dimtmove', 'dimjust', 'dimsd1', 'dimsd2',
-    'dimtolj', 'dimtzin', 'dimaltz', 'dimalttz', 'dimupt', 'dimatfit', 'dimtxsty_handle', 'dimldrblk_handle',
-    'dimblk_handle', 'dimblk1_handle', 'dimblk2_handle', 'dimlwd', 'dimlwe'
+    'name', 'flags', 'dimpost', 'dimapost', 'dimscale', 'dimasz', 'dimexo',
+    'dimdli', 'dimexe', 'dimrnd', 'dimdle', 'dimtp', 'dimtm', 'dimtxt',
+    'dimcen', 'dimtsz', 'dimaltf', 'dimlfac', 'dimtvp', 'dimtfac', 'dimgap',
+    'dimaltrnd', 'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2',
+    'dimtad', 'dimzin', 'dimazin', 'unknown1', 'dimalt', 'dimaltd', 'dimtofl',
+    'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre', 'dimclrt', 'dimadec',
+    'dimdec', 'dimtdec', 'dimaltu', 'dimalttd', 'dimaunit', 'dimfrac',
+    'dimlunit', 'dimdsep', 'dimtmove', 'dimjust', 'dimsd1', 'dimsd2', 'dimtolj',
+    'dimtzin', 'dimaltz', 'dimalttz', 'dimupt', 'dimatfit', 'dimtxsty_handle',
+    'dimldrblk_handle', 'dimblk_handle', 'dimblk1_handle', 'dimblk2_handle',
+    'dimlwd', 'dimlwe'
 ]
 
 EXPORT_MAP_R12 = [
-    'name', 'flags', 'dimpost', 'dimapost', 'dimblk', 'dimblk1', 'dimblk2', 'dimscale', 'dimasz', 'dimexo', 'dimdli',
-    'dimexe', 'dimrnd', 'dimdle', 'dimtp', 'dimtm', 'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac', 'dimtvp',
-    'dimtfac', 'dimgap', 'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad', 'dimzin', 'dimalt',
-    'dimaltd', 'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre', 'dimclrt'
+    'name', 'flags', 'dimpost', 'dimapost', 'dimblk', 'dimblk1', 'dimblk2',
+    'dimscale', 'dimasz', 'dimexo', 'dimdli', 'dimexe', 'dimrnd', 'dimdle',
+    'dimtp', 'dimtm', 'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac',
+    'dimtvp', 'dimtfac', 'dimgap', 'dimtol', 'dimlim', 'dimtih', 'dimtoh',
+    'dimse1', 'dimse2', 'dimtad', 'dimzin', 'dimalt', 'dimaltd', 'dimtofl',
+    'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre', 'dimclrt'
 ]
 
 
@@ -184,19 +217,22 @@ def dim_filter(name: str) -> bool:
 class DimStyle(DXFEntity):
     """ DXF BLOCK_RECORD table entity """
     DXFTYPE = 'DIMSTYLE'
-    DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_dimstyle)
+    DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record,
+                               acdb_dimstyle)
     CODE_TO_DXF_ATTRIB = dict(DXFATTRIBS.build_group_code_items(dim_filter))
 
     @property
     def dxfversion(self):
         return self.doc.dxfversion
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimstyle)
             if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_dimstyle.name)
+                processor.log_unprocessed_tags(tags,
+                                               subclass=acdb_dimstyle.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -237,7 +273,10 @@ class DimStyle(DXFEntity):
                 self.dxf.set(ltype_name + '_handle', handle)
 
     def discard_handles(self):
-        for attr in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk', 'dimltype', 'dimltex1', 'dimltex2', 'dimtxsty'):
+        for attr in (
+                'dimblk', 'dimblk1', 'dimblk2', 'dimldrblk', 'dimltype',
+                'dimltex1',
+                'dimltex2', 'dimtxsty'):
             self.dxf.discard(attr + '_handle')
 
     def set_blk_handle(self, attr: str, arrow_name: str) -> None:
@@ -268,7 +307,8 @@ class DimStyle(DXFEntity):
             return ARROWS.closed_filled
         else:
             block_name = get_block_name_by_handle(handle, self.doc)
-            return ARROWS.arrow_name(block_name)  # if arrow return standard arrow name else just the block name
+            return ARROWS.arrow_name(
+                block_name)  # if arrow return standard arrow name else just the block name
 
     def set_linetypes(self, dimline=None, ext1=None, ext2=None) -> None:
         if self.dxfversion < DXF2007:
@@ -284,7 +324,8 @@ class DimStyle(DXFEntity):
     # -- legacy --
 
     def dim_attribs(self) -> Iterable[Tuple[str, DXFAttr]]:
-        return ((name, attrib) for name, attrib in self.DXFATTRIBS.items() if name.startswith('dim'))
+        return ((name, attrib) for name, attrib in self.DXFATTRIBS.items() if
+                name.startswith('dim'))
 
     def print_dim_attribs(self) -> None:
         for name, attrib in self.dim_attribs():
@@ -306,7 +347,8 @@ class DimStyle(DXFEntity):
                 except DXFKeyError:
                     logger.debug(f'Unsupported header variable: {header_var}.')
 
-    def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '', ldrblk: str = '') -> None:
+    def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '',
+                   ldrblk: str = '') -> None:
         """
         Set arrows by block names or AutoCAD standard arrow names, set DIMTSZ to ``0`` which disables tick.
 
@@ -331,7 +373,8 @@ class DimStyle(DXFEntity):
                     ARROWS.create_block(blocks, b)
                     continue
                 if b and b not in blocks:
-                    raise DXFValueError('BLOCK "{}" does not exist.'.format(blk))
+                    raise DXFValueError(
+                        'BLOCK "{}" does not exist.'.format(blk))
 
     def set_tick(self, size: float = 1) -> None:
         """
@@ -343,7 +386,8 @@ class DimStyle(DXFEntity):
         """
         self.set_dxf_attrib('dimtsz', size)
 
-    def set_text_align(self, halign: str = None, valign: str = None, vshift: float = None) -> None:
+    def set_text_align(self, halign: str = None, valign: str = None,
+                       vshift: float = None) -> None:
         """
         Set measurement text alignment, `halign` defines the horizontal alignment (requires DXF R2000),
         `valign` defines the vertical  alignment, `above1` and `above2` means above extension line 1 or 2 and aligned
@@ -364,8 +408,10 @@ class DimStyle(DXFEntity):
         if halign:
             self.set_dxf_attrib('dimjust', const.DIMJUST[halign.lower()])
 
-    def set_text_format(self, prefix: str = '', postfix: str = '', rnd: float = None, dec: int = None, sep: str = None,
-                        leading_zeros: bool = True, trailing_zeros: bool = True):
+    def set_text_format(self, prefix: str = '', postfix: str = '',
+                        rnd: float = None, dec: int = None, sep: str = None,
+                        leading_zeros: bool = True,
+                        trailing_zeros: bool = True):
         """
         Set dimension text format, like prefix and postfix string, rounding rule and number of decimal places.
 
@@ -400,8 +446,10 @@ class DimStyle(DXFEntity):
         if sep is not None:
             self.dxf.dimdsep = ord(sep)
 
-    def set_dimline_format(self, color: int = None, linetype: str = None, lineweight: int = None,
-                           extension: float = None, disable1: bool = None, disable2: bool = None):
+    def set_dimline_format(self, color: int = None, linetype: str = None,
+                           lineweight: int = None,
+                           extension: float = None, disable1: bool = None,
+                           disable2: bool = None):
         """
         Set dimension line properties
 
@@ -428,7 +476,8 @@ class DimStyle(DXFEntity):
         if linetype is not None:
             self.dxf.dimltype = linetype
 
-    def set_extline_format(self, color: int = None, lineweight: int = None, extension: float = None,
+    def set_extline_format(self, color: int = None, lineweight: int = None,
+                           extension: float = None,
                            offset: float = None, fixed_length: float = None):
         """
         Set common extension line attributes.
@@ -481,8 +530,10 @@ class DimStyle(DXFEntity):
         if linetype is not None:
             self.dxf.dimltex2 = linetype
 
-    def set_tolerance(self, upper: float, lower: float = None, hfactor: float = 1.0,
-                      align: str = None, dec: int = None, leading_zeros: bool = None,
+    def set_tolerance(self, upper: float, lower: float = None,
+                      hfactor: float = 1.0,
+                      align: str = None, dec: int = None,
+                      leading_zeros: bool = None,
                       trailing_zeros: bool = None) -> None:
         """
         Set tolerance text format, upper and lower value, text height factor, number of decimal places or leading and
@@ -524,7 +575,8 @@ class DimStyle(DXFEntity):
             self.dxf.dimtdec = int(dec)
 
     def set_limits(self, upper: float, lower: float, hfactor: float = 1.0,
-                   dec: int = None, leading_zeros: bool = None, trailing_zeros: bool = None) -> None:
+                   dec: int = None, leading_zeros: bool = None,
+                   trailing_zeros: bool = None) -> None:
         """
         Set limits text format, upper and lower limit values, text height factor, number of decimal places or
         leading and trailing zero suppression.

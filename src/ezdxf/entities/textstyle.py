@@ -1,10 +1,11 @@
 # Created: 17.02.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
 import logging
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
+from ezdxf.lldxf.validator import is_valid_table_name
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 __all__ = ['Textstyle']
 
 acdb_style = DefSubclass('AcDbTextStyleTableRecord', {
-    'name': DXFAttr(2, default='Standard'),
+    'name': DXFAttr(2, default='Standard', validator=is_valid_table_name),
     'flags': DXFAttr(70, default=0),
     'height': DXFAttr(40, default=0),  # fixed height, 0 if not fixed
     'width': DXFAttr(41, default=1),  # width factor
