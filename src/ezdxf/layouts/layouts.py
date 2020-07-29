@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, cast, Optional
 import logging
 from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
 from ezdxf.lldxf.const import MODEL_SPACE_R2000, PAPER_SPACE_R2000, TMP_PAPER_SPACE_NAME
-from ezdxf.lldxf.validator import is_valid_name
+from ezdxf.lldxf.validator import is_valid_table_name
 from .layout import Layout, Modelspace, Paperspace
 from ezdxf.entities import DXFEntity
 
@@ -69,7 +69,7 @@ class Layouts:
 
         """
         assert isinstance(name, str), type(str)
-        if not is_valid_name(name):
+        if not is_valid_table_name(name):
             raise DXFValueError('Layout name contains invalid characters.')
 
         if name in self._layouts:

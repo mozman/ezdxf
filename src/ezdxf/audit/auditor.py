@@ -6,7 +6,7 @@ from enum import IntEnum
 from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict
 
 import sys
-from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer, fix_lineweight
+from ezdxf.lldxf.validator import is_valid_layer_name, fix_lineweight
 from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHT_VALUES
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.math import NULLVEC
@@ -258,8 +258,6 @@ class Auditor:
         """
         name = entity.dxf.layer
         if not is_valid_layer_name(name):
-            if self.doc.dxfversion > 'AC1009' and is_adsk_special_layer(name):
-                return
             # This error can't be fixed !?
             self.add_error(
                 code=AuditError.INVALID_LAYER_NAME,

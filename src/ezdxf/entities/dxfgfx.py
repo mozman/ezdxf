@@ -15,7 +15,11 @@ from ezdxf.lldxf.const import (
     DXFInvalidLineType,
 )
 from ezdxf.lldxf.const import DXFStructureError
-from ezdxf.lldxf.validator import is_valid_layer_name, fix_lineweight
+from ezdxf.lldxf.validator import (
+    is_valid_table_name, fix_table_name,
+    is_valid_lineweight, fix_lineweight,
+    is_valid_aci_color, fix_aci_color_index,
+)
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS, UCS, Matrix44
 from ezdxf.tools.rgb import int2rgb, rgb2int
@@ -40,7 +44,10 @@ acdb_entity = DefSubclass('AcDbEntity', {
     'layer': DXFAttr(8, default='0'),  # layername as string
     'linetype': DXFAttr(6, default='BYLAYER', optional=True),
     # linetype as string, special names BYLAYER/BYBLOCK
-    'color': DXFAttr(62, default=256, optional=True),
+    'color': DXFAttr(62, default=256, optional=True,
+                     validator=is_valid_aci_color,
+                     fixer=fix_aci_color_index,
+                     ),
     # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER
     'paperspace': DXFAttr(67, default=0, optional=True),
     # 0 .. modelspace, 1 .. paperspace
@@ -150,7 +157,7 @@ class DXFGraphic(DXFEntity):
         (internal API)
         """
         dxf = self.dxf
-        if not is_valid_layer_name(dxf.layer):
+        if not is_valid_table_name(dxf.layer):
             raise DXFInvalidLayerName(dxf.layer)
 
         if self.doc and dxf.hasattr('linetype'):

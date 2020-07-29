@@ -50,6 +50,13 @@ def test_default_attributes():
     assert entity.dxf.hasattr('linetype') is False, 'just the default value'
 
 
+def test_aci_color_index_fixer(entity):
+    entity.dxf.color = -1
+    assert entity.dxf.color == 256  # fixed as BYLAYER
+    entity.dxf.color = 258
+    assert entity.dxf.color == 256  # fixed as BYLAYER
+
+
 def test_clone_graphical_entity(entity):
     doc = ezdxf.new()
     entity.doc = doc

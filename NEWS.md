@@ -6,6 +6,7 @@ Version 0.14a1 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-14.html
+- NEW: attribute validator for setting/loading DXF entities, fixes minor issues
 - NEW: `addons.drawing.Frontend()` supports width attributes of LWPOLYLINE and 
   2D POLYLINE entities
 - NEW: `TraceBuilder()` a render tool to generate quadrilaterals (TRACE, SOLID 

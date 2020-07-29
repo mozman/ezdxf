@@ -1,11 +1,11 @@
 # Purpose: validate DXF tag structures
 # Created: 03.01.2018
-# Copyright (C) 2018, Manfred Moitzi
+# Copyright (C) 2018-2020, Manfred Moitzi
 # License: MIT License
 import logging
 import io
 import bisect
-from typing import TextIO, Iterable, List, Optional
+from typing import TextIO, Iterable, List, Optional, Set
 
 from .const import (
     DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError,
@@ -262,16 +262,52 @@ def is_dxf_stream(stream: TextIO) -> bool:
     return False
 
 
-def is_valid_layer_name(name: str) -> bool:
+def is_valid_table_name(name: str) -> bool:
     return not bool(INVALID_LAYER_NAME_CHARACTERS.intersection(set(name)))
 
 
-is_valid_name = is_valid_layer_name
+def fix_table_name(name: str) -> str:
+    if is_valid_table_name(name):
+        return name
+    else:
+        return replace_invalid_chars(name, INVALID_LAYER_NAME_CHARACTERS)
+
+
+def replace_invalid_chars(name: str, invalid_chars: Set[str],
+                          replace: str = '_') -> str:
+    return ''.join(
+        replace if c in invalid_chars else c for c in name
+    )
+
+
+def is_valid_layer_name(name: str) -> bool:
+    if is_adsk_special_layer(name):
+        return True
+    else:
+        return is_valid_table_name(name)
+
+
+def fix_layer_name(name: str) -> str:
+    if is_valid_layer_name(name):
+        return name
+    else:
+        return replace_invalid_chars(name, INVALID_LAYER_NAME_CHARACTERS)
 
 
 def is_adsk_special_layer(name: str) -> bool:
     return name.upper().startswith(
         '*ADSK_')  # special Autodesk layers starts with invalid character *
+
+
+def is_valid_block_name(name: str) -> bool:
+    if name.startswith('*'):
+        return is_valid_table_name(name[1:])
+    else:
+        return is_valid_table_name(name)
+
+
+def is_valid_lineweight(lineweight: int) -> bool:
+    return lineweight in VALID_DXF_LINEWEIGHT_VALUES
 
 
 def fix_lineweight(lineweight: int) -> int:
@@ -287,3 +323,7 @@ def fix_lineweight(lineweight: int) -> int:
 
 def is_valid_aci_color(aci: int) -> bool:
     return 0 <= aci <= 257
+
+
+def fix_aci_color_index(aci: int) -> int:
+    return aci if 0 <= aci <= 257 else 256

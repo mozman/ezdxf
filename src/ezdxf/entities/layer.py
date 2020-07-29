@@ -226,12 +226,12 @@ class Layer(DXFEntity):
 
         """
         if not is_valid_layer_name(name):
-            raise ValueError('Name contains invalid characters: {}.'.format(INVALID_NAME_CHARACTERS))
+            raise ValueError(f'Name contains invalid characters: {INVALID_NAME_CHARACTERS}.')
         layers = self.doc.layers
         if self.dxf.name.lower() in ('0', 'defpoints'):
-            raise ValueError('Can not rename layer "{}".'.format(self.dxf.name))
+            raise ValueError(f'Can not rename layer "{self.dxf.name}".')
         if layers.has_entry(name):
-            raise ValueError('Layer "{}" already exist.'.format(name))
+            raise ValueError(f'Layer "{name}" already exist.')
         old = self.dxf.name
         self.dxf.name = name
         layers.replace(old, self)

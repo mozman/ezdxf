@@ -23,13 +23,13 @@ def entity(dxf):
 
 
 def test_color_index(entity, auditor):
-    entity.dxf.color = -1
+    entity.dxf.__dict__['color'] = -1  # by pass 'set' validator
     auditor.check_entity_color_index(entity)
     assert len(auditor.fixes) == 1
     assert auditor.fixes[0].code == AuditError.INVALID_COLOR_INDEX
 
     auditor.reset()
-    entity.dxf.color = 258
+    entity.dxf.__dict__['color'] = 258  # by pass 'set' validator
     auditor.check_entity_color_index(entity)
     assert len(auditor.fixes) == 1
     assert auditor.fixes[0].code == AuditError.INVALID_COLOR_INDEX

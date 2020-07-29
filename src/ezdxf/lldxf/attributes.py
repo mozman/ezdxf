@@ -53,6 +53,7 @@ class DXFAttr:
             setter: str = None,
             alias: str = None,
             validator: Optional[Callable[[Any], bool]] = None,
+            fixer: Optional[Callable[[Any], Any]] = None,
     ):
 
         # Attribute name set by DXFAttributes.__init__()
@@ -84,8 +85,13 @@ class DXFAttr:
         # Alternative name for this attribute
         self.alias: str = alias
 
-        # Returns True if given value is valid
+        # Returns True if given value is valid - the validator should be as
+        # fast as possible!
         self.validator: Optional[Callable[[Any], bool]] = validator
+
+        # Returns a fixed value for invalid attributes, the fixer is called
+        # only if the validator returns False.
+        self.fixer: Optional[Callable[[Any], Any]] = fixer
 
     def __str__(self) -> str:
         return f'({self.name}, {self.code})'

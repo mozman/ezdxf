@@ -150,18 +150,24 @@ class DXFNamespace:
             DXFAttributeError: attribute `key` is not supported
 
         """
+        def check(value):
+            value = cast_value(attrib_def.code, value)
+            if not attrib_def.is_valid_value(value):
+                if attrib_def.fixer:
+                    value = attrib_def.fixer(value)
+                else:
+                    raise DXFValueError(
+                        f'Invalid value {str(value)} for attribute "{key}" in '
+                        f'entity {str(self._entity)}.'
+                    )
+            return value
+
         attrib_def: Optional['DXFAttr'] = self.dxfattribs.get(key)
         if attrib_def:
             if attrib_def.xtype == XType.callback:
                 attrib_def.set_callback_value(self._entity, value)
             else:
-                value = cast_value(attrib_def.code, value)
-                if attrib_def.is_valid_value(value):
-                    self.__dict__[key] = value
-                else:
-                    raise DXFValueError(
-                        f'Invalid value {str(value)} for attribute "{key}".'
-                    )
+                self.__dict__[key] = check(value)
         else:
             raise DXFAttributeError(
                 ERR_INVALID_DXF_ATTRIB.format(key, self.dxftype))
