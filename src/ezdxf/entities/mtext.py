@@ -1,15 +1,16 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-06
-from typing import TYPE_CHECKING, Union, Tuple, List
 import math
+import re
+from typing import TYPE_CHECKING, Union, Tuple, List
 
-from ezdxf.math import Vector, Matrix44, OCS
-from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, SPECIAL_CHARS_ENCODING
 from ezdxf.lldxf.tags import Tags
+from ezdxf.math import Vector, Matrix44, OCS
+from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.tools.rgb import rgb2int
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -176,12 +177,11 @@ class MText(DXFGraphic):
             if tag.code == 3:
                 parts.append(tag.value)
         parts.append(tail)
-        self.text = normalize_line_breaks("".join(parts))
+        self.text = _dxf_encode_line_endings(caret_decode("".join(parts)))
         tags.remove_tags((1, 3))
 
     def export_mtext(self, tagwriter: 'TagWriter') -> None:
-        # replacing '\n' and '\r' by '\P' is required, else an invalid DXF file would be created
-        txt = self.text.replace('\n', '\\P').replace('\r', '\\P')
+        txt = _dxf_encode_line_endings(self.text)
         str_chunks = split_mtext_string(txt, size=250)
         if len(str_chunks) == 0:
             str_chunks.append("")
@@ -484,9 +484,28 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
             return chunks
 
 
-def normalize_line_breaks(text: str) -> str:
-    """ Replaces '^J', '^M' and '^M^J' by '\\P' """
-    text = text.replace('^M^J', '\\P')
-    text = text.replace('^M', '\\P')
-    text = text.replace('^J', '\\P')
-    return text
+def _dxf_encode_line_endings(text: str) -> str:
+    # replacing '\r\n' and '\n' by '\P' is required, else an invalid DXF file would be created
+    # \r on it's own is not counted as a line ending
+    return text.replace('\r', '').replace('\n', '\\P')
+
+
+def caret_decode(text: str) -> str:
+    """ dxf stores some special characters using caret notation. This function decodes this notation to normalise
+    the representation of special characters in the string
+
+     see: <https://en.wikipedia.org/wiki/Caret_notation>
+     """
+    def replace_match(match: "re.Match") -> str:
+        c = ord(match.group(1))
+        return chr((c - 64) % 126)
+
+    return re.sub(r'\^(.)', replace_match, text)
+
+
+def _is_non_printable(char: str) -> bool:
+    return 0 <= ord(char) < 32 and char != '\t'
+
+
+def replace_non_printable_characters(text: str, replacement: str = '▯') -> str:
+    return ''.join(replacement if _is_non_printable(c) else c for c in text)

@@ -10,6 +10,7 @@ from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
+from ezdxf.entities.mtext import replace_non_printable_characters
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command
 
@@ -121,10 +122,16 @@ class PyQtBackend(Backend):
         item = self.scene.addPolygon(polygon, self._no_line, brush)
         self._set_item_data(item)
 
+    @staticmethod
+    def _process_text(text: str) -> str:
+        assert '\n' not in text, 'not a single line of text'
+        text = replace_non_printable_characters(text)
+        return text.replace('\t', '        ')  # Qt does not render \t properly
+
     def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float) -> None:
         if not text:
             return  # no point rendering empty strings
-        assert '\n' not in text, 'not a single line of text'
+        text = self._process_text(text)
 
         scale = cap_height / self._font_measurements.cap_height
         transform = Matrix44.scale(scale, -scale, 0) @ transform
@@ -141,7 +148,7 @@ class PyQtBackend(Backend):
     def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
         if not text:
             return 0
-        assert '\n' not in text
+        text = self._process_text(text)
         scale = cap_height / self._font_measurements.cap_height
         return _get_text_rect(self._font, text).right() * scale
 
