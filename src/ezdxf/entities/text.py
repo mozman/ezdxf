@@ -8,10 +8,11 @@ from ezdxf.entities.mtext import caret_decode
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import (
-    DXF12, SUBCLASS_MARKER, SPECIAL_CHARS_ENCODING, DXFValueError
+    DXF12, SUBCLASS_MARKER, SPECIAL_CHARS_ENCODING, DXFValueError,
 )
 from ezdxf.math import Vector, Matrix44
 from ezdxf.math.transformtools import OCSTransform
+from ezdxf.audit import Auditor, AuditError
 
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -23,15 +24,21 @@ if TYPE_CHECKING:
 __all__ = ['Text', 'acdb_text', 'plain_text']
 
 acdb_text = DefSubclass('AcDbText', {
-    'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # First alignment point (in OCS)
+    'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    # First alignment point (in OCS)
     'height': DXFAttr(40, default=2.5),  # Text height
     'text': DXFAttr(1, default=''),  # Default value (the string itself)
-    'rotation': DXFAttr(50, default=0, optional=True),  # Text rotation (optional) in degrees (circle = 360deg)
-    'oblique': DXFAttr(51, default=0, optional=True),  # Oblique angle (optional) in degrees, vertical = 0deg
-    'style': DXFAttr(7, default='Standard', optional=True),  # Text style name (optional)
-    'width': DXFAttr(41, default=1, optional=True),  # Relative X scale factor—width (optional)
+    'rotation': DXFAttr(50, default=0, optional=True),
+    # Text rotation (optional) in degrees (circle = 360deg)
+    'oblique': DXFAttr(51, default=0, optional=True),
+    # Oblique angle (optional) in degrees, vertical = 0deg
+    'style': DXFAttr(7, default='Standard', optional=True),
+    # Text style name (optional)
+    'width': DXFAttr(41, default=1, optional=True),
+    # Relative X scale factor—width (optional)
     # This value is also adjusted when fit-type text is used
-    'text_generation_flag': DXFAttr(71, default=0, optional=True),  # Text generation flags (optional)
+    'text_generation_flag': DXFAttr(71, default=0, optional=True),
+    # Text generation flags (optional)
     # 2 = backward (mirror-x),
     # 4 = upside down (mirror-y)
 
@@ -43,16 +50,19 @@ acdb_text = DefSubclass('AcDbText', {
     # 4 = Middle (if vertical alignment = 0)
     # 5 = Fit (if vertical alignment = 0)
 
-    # This value is meaningful only if the value of a 72 or 73 group is nonzero (if the justification is anything other
-    # than baseline/left)
-    'align_point': DXFAttr(11, xtype=XType.point3d, optional=True),  # Second alignment point (in OCS) (optional)
+    # This value is meaningful only if the value of a 72 or 73 group is nonzero
+    # (if the justification is anything other than baseline/left)
+    'align_point': DXFAttr(11, xtype=XType.point3d, optional=True),
+    # Second alignment point (in OCS) (optional)
     'thickness': DXFAttr(39, default=0, optional=True),  # Thickness (optional)
     # Extrusion direction (optional)
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1),
+                         optional=True),
 })
 
 acdb_text2 = DefSubclass('AcDbText', {
-    'valign': DXFAttr(73, default=0, optional=True)  # Vertical text justification type (optional)
+    'valign': DXFAttr(73, default=0, optional=True)
+    # Vertical text justification type (optional)
     # 0 = Baseline
     # 1 = Bottom
     # 2 = Middle
@@ -84,7 +94,8 @@ class Text(DXFGraphic):
     BACKWARD = MIRROR_X
     UPSIDE_DOWN = MIRROR_Y
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
         """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -111,12 +122,12 @@ class Text(DXFGraphic):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text.name)
         # for all DXF versions
         if self.dxf.hasattr('text'):
-            self.dxf.text = _ignore_line_endings(self.dxf.text)
-            if self.dxf.text.endswith('^'):
-                raise DXFValueError(f'cannot end TEXT entity with unfinished caret escape code')
+            self.dxf.text = _ignore_line_endings(self.dxf.text).rstrip('^')
+
         self.dxf.export_dxf_attribs(tagwriter, [
-            'insert', 'height', 'text', 'thickness', 'rotation', 'oblique', 'style', 'width', 'text_generation_flag',
-            'halign', 'align_point', 'extrusion'
+            'insert', 'height', 'text', 'thickness', 'rotation', 'oblique',
+            'style', 'width', 'text_generation_flag', 'halign', 'align_point',
+            'extrusion',
         ])
 
     def export_acdb_text2(self, tagwriter: 'TagWriter') -> None:
@@ -125,7 +136,8 @@ class Text(DXFGraphic):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text2.name)
         self.dxf.export_dxf_attribs(tagwriter, 'valign')
 
-    def set_pos(self, p1: 'Vertex', p2: 'Vertex' = None, align: str = None) -> 'Text':
+    def set_pos(self, p1: 'Vertex', p2: 'Vertex' = None,
+                align: str = None) -> 'Text':
         """
         Set text alignment, valid alignments are:
 
@@ -138,18 +150,23 @@ class Text(DXFGraphic):
         Baseline       LEFT            CENTER            RIGHT
         ============   =============== ================= =====
 
-        Alignments ``'ALIGNED'`` and ``'FIT'`` are special, they require a second alignment point, text is aligned
-        on the virtual line between these two points and has vertical alignment `Baseline`.
+        Alignments ``'ALIGNED'`` and ``'FIT'`` are special, they require a
+        second alignment point, text is aligned on the virtual line between
+        these two points and has vertical alignment `Baseline`.
 
-        - ``'ALIGNED'``: Text is stretched or compressed to fit exactly between `p1` and `p2` and the text height is also
-          adjusted to preserve height/width ratio.
-        - ``'FIT'``: Text is stretched or compressed to fit exactly between `p1` and `p2` but only the text width is
-          adjusted, the text height is fixed by the :attr:`dxf.height` attribute.
-        - ``'MIDDLE'``: also a special adjustment, but the result is the same as for ``'MIDDLE_CENTER'``.
+        - ``'ALIGNED'``: Text is stretched or compressed to fit exactly between
+          `p1` and `p2` and the text height is also adjusted to preserve
+          height/width ratio.
+        - ``'FIT'``: Text is stretched or compressed to fit exactly between `p1`
+          and `p2` but only the text width is adjusted, the text height is fixed
+          by the :attr:`dxf.height` attribute.
+        - ``'MIDDLE'``: also a special adjustment, but the result is the same as
+          for ``'MIDDLE_CENTER'``.
 
         Args:
             p1: first alignment point as (x, y[, z]) tuple
-            p2: second alignment point as (x, y[, z]) tuple, required for ``'ALIGNED'`` and ``'FIT'`` else ignored
+            p2: second alignment point as (x, y[, z]) tuple, required for
+                ``'ALIGNED'`` and ``'FIT'`` else ignored
             align: new alignment, ``None`` for preserve existing alignment.
 
         """
@@ -160,7 +177,9 @@ class Text(DXFGraphic):
         self.set_dxf_attrib('insert', p1)
         if align in ('ALIGNED', 'FIT'):
             if p2 is None:
-                raise DXFValueError("Alignment '{}' requires a second alignment point.".format(align))
+                raise DXFValueError(
+                    f"Alignment '{align}' requires a second alignment point."
+                )
         else:
             p2 = p1
         self.set_dxf_attrib('align_point', p2)
@@ -168,8 +187,9 @@ class Text(DXFGraphic):
 
     def get_pos(self) -> Tuple[str, 'Vertex', Union['Vertex', None]]:
         """
-        Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment method, `p1` is the alignment point, `p2` is
-        only relevant if `align` is ``'ALIGNED'`` or ``'FIT'``, otherwise it is ``None``.
+        Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment method,
+        `p1` is the alignment point, `p2` is only relevant if `align` is
+        ``'ALIGNED'`` or ``'FIT'``, otherwise it is ``None``.
 
         """
         p1 = self.dxf.insert
@@ -183,8 +203,9 @@ class Text(DXFGraphic):
 
     def set_align(self, align: str = 'LEFT') -> 'Text':
         """
-        Just for experts: Sets the text alignment without setting the alignment points, set adjustment points
-        attr:`dxf.insert` and :attr:`dxf.align_point` manually.
+        Just for experts: Sets the text alignment without setting the alignment
+        points, set adjustment points attr:`dxf.insert` and
+        :attr:`dxf.align_point` manually.
 
         Args:
             align: test alignment, see also :meth:`set_pos`
@@ -197,7 +218,8 @@ class Text(DXFGraphic):
         return self
 
     def get_align(self) -> str:
-        """ Returns the actual text alignment as string, see also :meth:`set_pos`. """
+        """ Returns the actual text alignment as string, see also :meth:`set_pos`.
+        """
         halign = self.get_dxf_attrib('halign', 0)
         valign = self.get_dxf_attrib('valign', 0)
         if halign > 2:
@@ -219,11 +241,14 @@ class Text(DXFGraphic):
         old_rotation = dxf.rotation
         new_rotation = ocs.transform_deg_angle(old_rotation)
         x_scale = ocs.transform_length(Vector.from_deg_angle(old_rotation))
-        y_scale = ocs.transform_length(Vector.from_deg_angle(old_rotation + 90.0))
+        y_scale = ocs.transform_length(
+            Vector.from_deg_angle(old_rotation + 90.0))
 
         if not ocs.scale_uniform:
-            oblique_vec = Vector.from_deg_angle(old_rotation + 90.0 - dxf.oblique)
-            new_oblique_deg = new_rotation + 90.0 - ocs.transform_direction(oblique_vec).angle_deg
+            oblique_vec = Vector.from_deg_angle(
+                old_rotation + 90.0 - dxf.oblique)
+            new_oblique_deg = new_rotation + 90.0 - ocs.transform_direction(
+                oblique_vec).angle_deg
             dxf.oblique = new_oblique_deg
             y_scale *= math.cos(math.radians(new_oblique_deg))
 
@@ -232,13 +257,14 @@ class Text(DXFGraphic):
         dxf.rotation = new_rotation
 
         if dxf.hasattr('thickness'):  # can be negative
-            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflection=dxf.thickness)
+            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness),
+                                                 reflection=dxf.thickness)
         dxf.extrusion = ocs.new_extrusion
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> 'Text':
-        """ Optimized TEXT/ATTRIB/ATTDEF translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
-        returns `self` (floating interface).
+        """ Optimized TEXT/ATTRIB/ATTDEF translation about `dx` in x-axis, `dy`
+        in y-axis and `dz` in z-axis, returns `self` (floating interface).
 
         .. versionadded:: 0.13
 
@@ -275,6 +301,31 @@ class Text(DXFGraphic):
         """
         return plain_text(self.dxf.text)
 
+    def audit(self, auditor: Auditor):
+        """ Validity check. """
+        super().audit(auditor)
+        auditor.check_text_style(self)
+        dxf = self.dxf
+        if dxf.hasattr('text'):
+            text = dxf.text
+            if '\n' in text or '\r' in text:
+                text = _ignore_line_endings(text)
+                auditor.fixed_error(
+                    code=AuditError.INVALID_CHARACTER,
+                    message=f'Removed invalid line breaks in entity'
+                            f' {str(self)}.',
+                    dxf_entity=self,
+                )
+            if text.endswith('^'):
+                text = text.rstrip('^')
+                auditor.fixed_error(
+                    code=AuditError.INVALID_CHARACTER,
+                    message=f'Removed invalid char "^" at the end of text in '
+                            f'entity {str(self)}.',
+                    dxf_entity=self,
+                )
+            dxf.text = text
+
 
 def plain_text(text: str) -> str:
     chars = []
@@ -297,5 +348,6 @@ def plain_text(text: str) -> str:
 
 
 def _ignore_line_endings(t: str) -> str:
-    # newlines should not appear in TEXT entities but if they do, they are not handled properly so should be ignored
+    # newlines should not appear in TEXT entities but if they do, they are not
+    # handled properly so should be ignored.
     return t.replace('\n', '').replace('\r', '')

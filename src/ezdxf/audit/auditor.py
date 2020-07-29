@@ -46,6 +46,7 @@ class AuditError(IntEnum):
     INVALID_MAJOR_AXIS = 212
     INVALID_VERTEX_COUNT = 213
     INVALID_DICTIONARY_ENTRY = 214
+    INVALID_CHARACTER = 215
 
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
@@ -63,8 +64,8 @@ class Auditor:
     def __init__(self, doc: 'Drawing'):
         self.doc = doc
         self._rootdict_handle = doc.rootdict.dxf.handle if doc else '0'
-        self.errors = []  # type: List[ErrorEntry]
-        self.fixes = []  # type: List[ErrorEntry]
+        self.errors: List[ErrorEntry] = []
+        self.fixes: List[ErrorEntry] = []
 
     def reset(self) -> None:
         self.errors = []

@@ -4,10 +4,12 @@
 import pytest
 import math
 
+import ezdxf
 from ezdxf.entities.text import Text, plain_text
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vector, Matrix44
+from ezdxf.audit import Auditor
 
 TEST_CLASS = Text
 TEST_TYPE = 'TEXT'
@@ -97,6 +99,11 @@ AcDbText
 """
 
 
+@pytest.fixture(scope='module')
+def doc():
+    return ezdxf.new()
+
+
 @pytest.fixture(params=[ENTITY_R12, ENTITY_R2000])
 def entity(request):
     return TEST_CLASS.from_text(request.param)
@@ -137,7 +144,10 @@ def test_load_from_text(entity):
     assert entity.dxf.insert == (0, 0, 0)
 
 
-@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize("txt,ver", [
+    (ENTITY_R2000, DXF2000),
+    (ENTITY_R12, DXF12),
+])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     attdef = TEST_CLASS.from_text(txt)
@@ -150,14 +160,38 @@ def test_write_dxf(txt, ver):
     assert collector.has_all_tags(collector2)
 
 
-def test_do_not_write_line_endings():
+@pytest.mark.parametrize('invalid_text', [
+    'test\ntext\r',
+    'test\r\ntext',
+    'testtext^',
+    'test\ntext^',
+    'test\ntext^\r',
+])
+def test_do_not_export_invalid_chars(invalid_text):
     txt = Text()
-    txt.dxf.text = 'test\ntext\r'
+    txt.dxf.text = invalid_text
     collector = TagCollector(optional=True)
     txt.export_dxf(collector)
     for tag in collector.tags:
         if tag[0] == 1:
             assert tag[1] == 'testtext'
+
+
+@pytest.mark.parametrize('invalid_text', [
+    'test\ntext\r',
+    'test\r\ntext',
+    'testtext^',
+    'test\ntext^',
+    'test\ntext^\r',
+])
+def test_audit_fixes_invalid_chars(invalid_text, doc):
+    msp = doc.modelspace()
+    txt = msp.add_text(invalid_text)
+    auditor = Auditor(doc)
+    txt.audit(auditor)
+    assert txt.dxf.text == 'testtext'
+    assert len(auditor.fixes) > 0
+
 
 @pytest.fixture
 def text():
