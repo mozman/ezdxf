@@ -139,7 +139,7 @@ def layout():
     'test\r\ntext',  # single new line
     'test\ntext\rtext',  # ignore a single '\r'
 ])
-def test_required_escaping_of_line_endings(layout, text):
+def test_required_escaping_of_line_endings_at_dxf_export(layout, text):
     txt = layout.add_mtext(text)
     collector = TagCollector(optional=True)
     txt.export_dxf(collector)
@@ -161,31 +161,31 @@ def test_new_long_mtext(layout, text):
     assert text == mtext.plain_text()
 
 
-def test_last_text_chunk_mtext(layout):
+def test_default_text_chunk_size_of_250_chars(layout):
     text = "0123456789" * 25 + "abcdefghij" * 25 + "a new mtext"
     mtext = layout.add_mtext(text)
     collector = TagCollector()
     mtext.export_dxf(collector)
-    tags = collector.tags
-    last_text_chunk = ""
-    for tag in tags:
-        if tag[0] == 1:
-            last_text_chunk = tag.value
-    assert last_text_chunk == "a new mtext"
+    first, second, last = [tag for tag in collector.tags if tag[0] in (1, 3)]
+    assert first.code == 3 and len(first.value) == 250
+    assert second.code == 3 and len(second.value) == 250
+    assert last.code == 1 and last.value == "a new mtext"
 
 
-def test_get_rotation(layout):
+def test_text_direction_wins_over_rotation(layout):
     mtext = layout.add_mtext('TEST')
     mtext.dxf.text_direction = (1, 1, 0)  # 45 deg
     mtext.dxf.rotation = 30
-    assert 45 == mtext.get_rotation()
+    assert mtext.get_rotation() == 45, \
+        'Text direction should have higher priority than text rotation,' \
+        'if both are present.'
 
 
-def test_set_rotation(layout):
+def test_set_rotation_replaces_text_direction(layout):
     mtext = layout.add_mtext('TEST')
     mtext.dxf.text_direction = (1, 1, 0)  # 45 deg
     mtext.set_rotation(30)
-    assert 30 == mtext.get_rotation()
+    assert mtext.get_rotation() == 30
     assert mtext.dxf.hasattr('text_direction') is False
 
 
@@ -196,10 +196,14 @@ def test_append_text(layout):
 
 
 def test_set_location(layout):
-    mtext = layout.add_mtext("TEST").set_location(
-        (3, 4), rotation=15, attachment_point=const.MTEXT_MIDDLE_CENTER)
+    mtext = layout.add_mtext("TEST")
+    mtext.set_location(
+        insert=(3, 4),
+        rotation=15,
+        attachment_point=const.MTEXT_MIDDLE_CENTER,
+    )
     assert const.MTEXT_MIDDLE_CENTER == mtext.dxf.attachment_point
-    assert 15 == mtext.dxf.rotation
+    assert mtext.dxf.rotation == 15
     assert (3, 4, 0) == mtext.dxf.insert
 
 
@@ -244,39 +248,34 @@ TESTSTR = "0123456789"
 
 
 def test_split_empty_string():
-    s = ""
-    chunks = split_mtext_string(s, 20)
-    assert 0 == len(chunks)
+    chunks = split_mtext_string('', 20)
+    assert len(chunks) == 0
 
 
 def test_split_short_string():
-    s = TESTSTR
-    chunks = split_mtext_string(s, 20)
-    assert 1 == len(chunks)
+    chunks = split_mtext_string(TESTSTR, 20)
+    assert len(chunks) == 1
     assert TESTSTR == chunks[0]
 
 
 def test_split_long_string():
-    s = TESTSTR * 3
-    chunks = split_mtext_string(s, 20)
-    assert 2 == len(chunks)
+    chunks = split_mtext_string(TESTSTR * 3, 20)
+    assert len(chunks) == 2
     assert TESTSTR * 2 == chunks[0]
     assert TESTSTR == chunks[1]
 
 
 def test_split_longer_string():
-    s = TESTSTR * 4
-    chunks = split_mtext_string(s, 20)
-    assert 2 == len(chunks)
-    assert TESTSTR * 2 == chunks[0]
-    assert TESTSTR * 2 == chunks[1]
+    chunks = split_mtext_string(TESTSTR * 4, 20)
+    assert len(chunks) == 2
+    assert chunks[0] == TESTSTR * 2
+    assert chunks[1] == TESTSTR * 2
 
 
 def test_do_not_split_at_caret():
     # do not split at '^'
-    s = 'a' * 19 + '^Ixxx^'
-    chunks = split_mtext_string(s, 20)
-    assert 2 == len(chunks)
+    chunks = split_mtext_string('a' * 19 + '^Ixxx^', 20)
+    assert len(chunks) == 2
     assert chunks[0] == 'a' * 19
     assert chunks[1] == '^Ixxx^'
 
