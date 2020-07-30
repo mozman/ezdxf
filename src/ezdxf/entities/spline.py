@@ -244,13 +244,13 @@ class Spline(DXFGraphic):
         elif dxftype == 'CIRCLE':
             ellipse = ConstructionEllipse.from_arc(
                 center=entity.dxf.get('center', NULLVEC),
-                radius=entity.dxf.get('radius', 1.0),
+                radius=abs(entity.dxf.get('radius', 1.0)),
                 extrusion=entity.dxf.get('extrusion', Z_AXIS),
             )
         elif dxftype == 'ARC':
             ellipse = ConstructionEllipse.from_arc(
                 center=entity.dxf.get('center', NULLVEC),
-                radius=entity.dxf.get('radius', 1.0),
+                radius=abs(entity.dxf.get('radius', 1.0)),
                 extrusion=entity.dxf.get('extrusion', Z_AXIS),
                 start_angle=entity.dxf.get('start_angle', 0),
                 end_angle=entity.dxf.get('end_angle', 360)

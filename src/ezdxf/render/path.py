@@ -192,26 +192,30 @@ class Path(abc.Sequence):
     def from_arc(cls, arc: 'Arc', segments: int = 1) -> 'Path':
         """ Returns a :class:`Path` from an :class:`~ezdxf.entities.Arc`. """
         path = cls()
-        ellipse = ConstructionEllipse.from_arc(
-            center=arc.dxf.center,
-            radius=arc.dxf.radius,
-            extrusion=arc.dxf.extrusion,
-            start_angle=arc.dxf.start_angle,
-            end_angle=arc.dxf.end_angle,
-        )
-        path.add_ellipse(ellipse, segments=segments, reset=True)
+        radius = abs(arc.dxf.radius)
+        if not math.isclose(radius, 0):
+            ellipse = ConstructionEllipse.from_arc(
+                center=arc.dxf.center,
+                radius=radius,
+                extrusion=arc.dxf.extrusion,
+                start_angle=arc.dxf.start_angle,
+                end_angle=arc.dxf.end_angle,
+            )
+            path.add_ellipse(ellipse, segments=segments, reset=True)
         return path
 
     @classmethod
     def from_circle(cls, circle: 'Circle', segments: int = 1) -> 'Path':
         """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Circle`. """
         path = cls()
-        ellipse = ConstructionEllipse.from_arc(
-            center=circle.dxf.center,
-            radius=circle.dxf.radius,
-            extrusion=circle.dxf.extrusion,
-        )
-        path.add_ellipse(ellipse, segments=segments, reset=True)
+        radius = abs(circle.dxf.radius)
+        if not math.isclose(radius, 0):
+            ellipse = ConstructionEllipse.from_arc(
+                center=circle.dxf.center,
+                radius=radius,
+                extrusion=circle.dxf.extrusion,
+            )
+            path.add_ellipse(ellipse, segments=segments, reset=True)
         return path
 
     @classmethod

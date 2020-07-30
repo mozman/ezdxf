@@ -140,16 +140,27 @@ def test_from_arc():
     assert path.end == (0, 0)
 
 
-def test_from_circle():
+@pytest.mark.parametrize('radius', [1, -1])
+def test_from_circle(radius):
     from ezdxf.entities import Circle
     circle = Circle.new(dxfattribs={
         'center': (1, 0, 0),
-        'radius': 1,
+        'radius': radius,
     })
     path = Path.from_circle(circle)
     assert path.start == (2, 0)
     assert path.end == (2, 0)
     assert path.is_closed is True
+
+
+def test_from_circle_with_zero_radius():
+    from ezdxf.entities import Circle
+    circle = Circle.new(dxfattribs={
+        'center': (1, 0, 0),
+        'radius': 0,
+    })
+    path = Path.from_circle(circle)
+    assert len(path) == 0
 
 
 def test_lwpolyine_lines():

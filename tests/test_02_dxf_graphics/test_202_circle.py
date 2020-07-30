@@ -67,6 +67,16 @@ def test_default_init():
     assert entity.dxf.owner is None
 
 
+def test_negative_radius():
+    circle = Circle.new(dxfattribs={'radius': -1})
+    assert circle.dxf.radius == -1, 'Radius < 0 is valid'
+
+
+def test_zero_radius():
+    circle = Circle.new(dxfattribs={'radius': 0})
+    assert circle.dxf.radius == 0, 'Radius == 0 is valid'
+
+
 def test_default_new():
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
         'color': '7',

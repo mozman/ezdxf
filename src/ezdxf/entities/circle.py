@@ -3,9 +3,12 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 
-from ezdxf.math import Vector, Matrix44
+from ezdxf.lldxf import validator
+from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+)
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
@@ -18,10 +21,14 @@ if TYPE_CHECKING:
 __all__ = ['Circle']
 
 acdb_circle = DefSubclass('AcDbCircle', {
-    'center': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    'center': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
+    # AutCAD/BricsCAD: Radius is <= 0 is valid
     'radius': DXFAttr(40, default=1),
     'thickness': DXFAttr(39, default=0, optional=True),
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0, 0, 1), optional=True),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Z_AXIS,
+                         optional=True, validator=validator.is_not_null_vector,
+                         fixer=RETURN_DEFAULT,
+                         ),
 })
 
 
@@ -31,7 +38,8 @@ class Circle(DXFGraphic):
     DXFTYPE = 'CIRCLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_circle)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_circle)
@@ -47,15 +55,17 @@ class Circle(DXFGraphic):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_circle.name)
         # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['center', 'radius', 'thickness', 'extrusion'])
+        self.dxf.export_dxf_attribs(tagwriter, ['center', 'radius', 'thickness',
+                                                'extrusion'])
 
     def vertices(self, angles: Iterable[float]) -> Iterable[Vector]:
         """
-        Yields vertices of the circle for iterable `angles` in WCS. This method takes into account a local OCS.
+        Yields vertices of the circle for iterable `angles` in WCS. This method
+        takes into account a local OCS.
 
         Args:
-            angles: iterable of angles in OCS as degrees, angle goes counter clockwise around the extrusion vector,
-                    ocs x-axis = 0 deg.
+            angles: iterable of angles in OCS as degrees, angle goes counter
+                clockwise around the extrusion vector, ocs x-axis = 0 deg.
 
         .. versionadded:: 0.11
 
@@ -78,26 +88,33 @@ class Circle(DXFGraphic):
         if ocs.scale_uniform:
             dxf.extrusion = ocs.new_extrusion
             dxf.center = ocs.transform_vertex(dxf.center)
-            # old_ocs has a uniform scaled xy-plane, direction of radius-vector in
-            # the xy-plane is not important, choose x-axis for no reason:
+            # old_ocs has a uniform scaled xy-plane, direction of radius-vector
+            # in the xy-plane is not important, choose x-axis for no reason:
             dxf.radius = ocs.transform_length((dxf.radius, 0, 0))
             if dxf.hasattr('thickness'):
-                # thickness vector points in the z-direction of the old_ocs, thickness can be negative
-                dxf.thickness = ocs.transform_length((0, 0, dxf.thickness), reflection=dxf.thickness)
+                # thickness vector points in the z-direction of the old_ocs,
+                # thickness can be negative
+                dxf.thickness = ocs.transform_length((0, 0, dxf.thickness),
+                                                     reflection=dxf.thickness)
         else:
-            raise NonUniformScalingError('CIRCLE/ARC does not support non uniform scaling')
-            # Parent function has to catch this Exception and convert this CIRCLE/ARC into an ELLIPSE
+            # Caller has to catch this Exception and convert this
+            # CIRCLE/ARC into an ELLIPSE.
+            raise NonUniformScalingError(
+                'CIRCLE/ARC does not support non uniform scaling'
+            )
+
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> 'Circle':
-        """ Optimized CIRCLE/ARC translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
-        returns `self` (floating interface).
+        """ Optimized CIRCLE/ARC translation about `dx` in x-axis, `dy` in
+        y-axis and `dz` in z-axis, returns `self` (floating interface).
 
         .. versionadded:: 0.13
 
         """
         ocs = self.ocs()
-        self.dxf.center = ocs.from_wcs(Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
+        self.dxf.center = ocs.from_wcs(
+            Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
         return self
 
     def to_ellipse(self, replace=True) -> 'Ellipse':
@@ -139,17 +156,3 @@ class Circle(DXFGraphic):
         else:
             add_entity(self, spline)
         return spline
-
-    def audit(self, auditor: 'Auditor') -> None:
-        """ Validity check. """
-        super().audit(auditor)
-        if self.dxf.hasattr('radius') and self.dxf.radius <= 0:
-            auditor.fixed_error(
-                code=AuditError.INVALID_RADIUS,
-                message=f'Deleted entity {str(self)} with invalid radius = {self.dxf.radius}.',
-                dxf_entity=self,
-            )
-            if auditor.has_trashcan:
-                auditor.trash(self.dxf.handle)
-            else:
-                self.destroy()

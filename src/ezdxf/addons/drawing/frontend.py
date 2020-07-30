@@ -186,14 +186,8 @@ class Frontend:
             self.skip_entity(entity, 'Invalid extrusion (0, 0, 0)')
             return
         if dxftype == 'CIRCLE':
-            if entity.dxf.radius <= 0:
-                self.skip_entity(entity, 'Invalid radius')
-                return
             path = Path.from_circle(cast('Circle', entity))
         elif dxftype == 'ARC':
-            if entity.dxf.radius <= 0:
-                self.skip_entity(entity, 'Invalid radius')
-                return
             path = Path.from_arc(cast('Arc', entity))
         elif dxftype == 'ELLIPSE':
             if NULLVEC.isclose(entity.dxf.major_axis):
