@@ -17,7 +17,7 @@ from ezdxf.addons import odafc
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
-    CorrespondingDXFEntityStack
+    CorrespondingDXFParentStack
 from ezdxf.drawing import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.lldxf.const import DXFStructureError
@@ -317,10 +317,10 @@ class CadViewer(qw.QMainWindow):
                 text += f'Selected Entity: {dxf_entity}\nLayer: {dxf_entity.dxf.layer}\n\nDXF Attributes:\n'
                 text += _entity_attribs_string(dxf_entity)
 
-                dxf_entity_stack = element.data(CorrespondingDXFEntityStack)
-                if dxf_entity_stack:
+                dxf_parent_stack = element.data(CorrespondingDXFParentStack)
+                if dxf_parent_stack:
                     text += '\nParents:\n'
-                    for entity in reversed(dxf_entity_stack):
+                    for entity in reversed(dxf_parent_stack):
                         text += f'- {entity}\n'
                         text += _entity_attribs_string(entity, indent='    ')
 

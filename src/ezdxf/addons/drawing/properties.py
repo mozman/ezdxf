@@ -6,6 +6,8 @@ from typing import (
     TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence, Set,
     cast,
 )
+
+from ezdxf.entities import Attrib
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.addons import acadctb
@@ -23,7 +25,8 @@ if TYPE_CHECKING:
 __all__ = [
     'Properties', 'LayerProperties', 'RenderContext', 'layer_key', 'rgb_to_hex',
     'hex_to_rgb', 'MODEL_SPACE_BG_COLOR', 'PAPER_SPACE_BG_COLOR',
-    'VIEWPORT_COLOR', 'CONTINUOUS_PATTERN', 'set_color_alpha',
+    'compile_line_pattern', 'VIEWPORT_COLOR', 'CONTINUOUS_PATTERN',
+    'set_color_alpha',
 ]
 
 table_key = layer_key
@@ -176,11 +179,13 @@ class Properties:
 
 
 class LayerProperties(Properties):
+    """
+    Attributes:
+        is_visible: Whether entities belonging to this layer should be drawn
+        layer: Stores real layer name (mixed case)
+    """
     def __init__(self):
         super().__init__()
-        # LayerProperties.is_visible stores layer on/off state
-        # LayerProperties.layer stores real layer name (mixed case)
-        self.plot = True
 
 
 DEFAULT_LAYER_PROPERTIES = LayerProperties()
@@ -232,12 +237,20 @@ class LayoutProperties:
 
 
 class RenderContext:
-    def __init__(self, doc: Optional['Drawing'] = None, ctb: str = ''):
+    def __init__(self, doc: Optional['Drawing'] = None, *, ctb: str = '', export_mode: bool = False):
+        """
+        Args:
+            doc: The document that is being drawn
+            ctb: A path to a plot style table to use
+            export_mode: Whether to render the document as it would look when exported (plotted) by a CAD application
+              to a file such as pdf, or whether to render the document as it would appear inside a CAD application.
+        """
         self._saved_states: List[Properties] = []
         self.line_pattern = _load_line_pattern(doc.linetypes) if doc else dict()
         self.current_layout = LayoutProperties()  # default is 'Model'
         self.current_block_reference: Optional[Properties] = None
         self.plot_styles = self._load_plot_style_table(ctb)
+        self.export_mode = export_mode
         # Always consider: entity layer may not exist
         # Layer name as key is normalized, most likely name.lower(), but may
         # change in the future.
@@ -282,8 +295,9 @@ class RenderContext:
             properties.linetype_name, CONTINUOUS_PATTERN)
         properties.lineweight = self._true_layer_lineweight(
             layer.dxf.lineweight)
-        properties.is_visible = layer.is_on()
-        properties.plot = bool(layer.dxf.plot)
+        properties.is_visible = layer.is_on() and not layer.is_frozen()
+        if self.export_mode:
+            properties.is_visible &= bool(layer.dxf.plot)
         self.layers[name] = properties
 
     def add_text_style(self, text_style: 'Textstyle'):
@@ -374,15 +388,25 @@ class RenderContext:
                                                resolved_layer=resolved_layer)
         dxf = entity.dxf
         p.linetype_scale = dxf.ltscale
-        p.is_visible = not bool(dxf.invisible)
-        layer = self.layers.get(resolved_layer)
-        if layer and p.is_visible:
-            p.is_visible = layer.is_visible
+        p.is_visible = self.resolve_visible(entity, resolved_layer=resolved_layer)
+
         if dxf.hasattr('style'):
             p.font = self.resolve_font(entity)
         if entity.dxftype() == 'HATCH':
             p.filling = self.resolve_filling(entity)
         return p
+
+    def resolve_visible(self, entity: 'DXFGraphic', *,
+                        resolved_layer: Optional[str] = None) -> bool:
+        entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
+        layer_properties = self.layers.get(entity_layer)
+        if layer_properties and not layer_properties.is_visible:
+            return False
+        elif entity.dxftype() == 'ATTRIB':
+            return (not bool(entity.dxf.invisible) and
+                    not cast(Attrib, entity).is_invisible)
+        else:
+            return not bool(entity.dxf.invisible)
 
     def resolve_layer(self, entity: 'DXFGraphic') -> str:
         """ Resolve entity layer, this is only relevant for entities inside of
@@ -394,7 +418,7 @@ class RenderContext:
         return layer
 
     def resolve_color(self, entity: 'DXFGraphic', *,
-                      resolved_layer: str = None) -> Color:
+                      resolved_layer: Optional[str] = None) -> Color:
         """ Resolve color of DXF `entity` """
         aci = entity.dxf.color  # defaults to BYLAYER
         if aci == const.BYLAYER:

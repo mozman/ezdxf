@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, TYPE_CHECKING, Iterable
+from typing import Optional, Tuple, TYPE_CHECKING, Iterable, List
 
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
@@ -17,27 +17,22 @@ if TYPE_CHECKING:
 
 class Backend(ABC):
     def __init__(self):
-        self._current_entity = None
-        self._current_entity_stack = ()
+        self.entity_stack: List[Tuple[DXFGraphic, Properties]] = []
         # Approximate cubic Bèzier-curves by `n` segments, only used for basic back-ends
         # without draw_path() support.
         self.bezier_approximation_count = 32
 
-    def set_current_entity(self, entity: Optional[DXFGraphic], parent_stack: Tuple[DXFGraphic, ...] = ()) -> None:
-        self._current_entity = entity
-        self._current_entity_stack = parent_stack
+    def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        self.entity_stack.append((entity, properties))
+
+    def exit_entity(self, entity: DXFGraphic) -> None:
+        e, p = self.entity_stack.pop()
+        assert e is entity, 'entity stack mismatch'
 
     @property
     def current_entity(self) -> Optional[DXFGraphic]:
         """ obtain the current entity being drawn """
-        return self._current_entity
-
-    @property
-    def current_entity_stack(self) -> Tuple[DXFGraphic, ...]:
-        """ When the entity is virtual, the stack of entities which were exploded to obtain the entity.
-        When the entity is 'real', an empty tuple.
-        """
-        return self._current_entity_stack
+        return self.entity_stack[-1][0] if self.entity_stack else None
 
     @abstractmethod
     def set_background(self, color: Color) -> None:
