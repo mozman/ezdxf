@@ -24,6 +24,10 @@ class XType(Enum):
     callback = 4  # callback attribute
 
 
+# Dummy function as marker
+RETURN_DEFAULT = object()
+
+
 class DXFAttr:
     """ Represents a DXF attribute for an DXF entity, accessible by the
     DXF namespace :attr:`DXFEntity.dxf` like ``entity.dxf.color = 7``.
@@ -91,7 +95,12 @@ class DXFAttr:
 
         # Returns a fixed value for invalid attributes, the fixer is called
         # only if the validator returns False.
+        if fixer is RETURN_DEFAULT:
+            fixer = self._return_default
         self.fixer: Optional[Callable[[Any], Any]] = fixer
+
+    def _return_default(self, x: Any) -> Any:
+        return self.default
 
     def __str__(self) -> str:
         return f'({self.name}, {self.code})'

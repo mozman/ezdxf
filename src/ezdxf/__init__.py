@@ -17,18 +17,22 @@ from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file, is_dxf_stream
 from ezdxf.filemanagement import readzip, new, read, readfile, decode_base64
-from ezdxf.tools.standards import setup_linetypes, setup_styles, setup_dimstyles, setup_dimstyle
+from ezdxf.tools.standards import (
+    setup_linetypes, setup_styles,
+    setup_dimstyles, setup_dimstyle,
+)
 from ezdxf.tools import pattern
 from ezdxf.render.arrows import ARROWS
-from ezdxf.lldxf.const import DXFError
-from ezdxf.lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryError, DXFAppDataError, DXFXDataError
-from ezdxf.lldxf.const import DXFAttributeError, DXFValueError, DXFKeyError, DXFIndexError, DXFTypeError
-from ezdxf.lldxf.const import DXFBlockInUseError
-from ezdxf.lldxf.const import InsertUnits, ACI
-from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018
+from ezdxf.lldxf.const import (
+    DXFError, DXFStructureError, DXFVersionError, DXFTableEntryError,
+    DXFAppDataError, DXFXDataError, DXFAttributeError, DXFValueError,
+    DXFKeyError, DXFIndexError, DXFTypeError, DXFBlockInUseError, InsertUnits,
+    ACI, DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018,
+)
 # name space imports - do not remove
 
 import codecs
 from ezdxf.lldxf.encoding import dxf_backslash_replace
+
 # setup DXF unicode encoder -> '\U+nnnn'
 codecs.register_error('dxfreplace', dxf_backslash_replace)
