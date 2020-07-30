@@ -104,6 +104,8 @@ class Frontend:
             # on the visibility state of the INSERT entity:
             if properties.is_visible or entity.dxftype() == 'INSERT':
                 self.draw_entity(entity, properties)
+            elif not properties.is_visible:
+                self.skip_entity(entity, 'invisible')
 
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         """
@@ -115,7 +117,7 @@ class Frontend:
 
         """
         dxftype = entity.dxftype()
-        self.out.set_current_entity(entity, tuple(self.parent_stack))
+        self.out.enter_entity(entity, properties)
         if dxftype in {'LINE', 'XLINE', 'RAY'}:
             self.draw_line_entity(entity, properties)
         elif dxftype in {'TEXT', 'MTEXT', 'ATTRIB'}:
@@ -143,7 +145,7 @@ class Frontend:
             self.draw_viewport_entity(entity)
         else:
             self.skip_entity(entity, 'Unsupported entity')
-        self.out.set_current_entity(None)
+        self.out.exit_entity(entity)
 
     def draw_line_entity(self, entity: DXFGraphic,
                          properties: Properties) -> None:
@@ -350,8 +352,8 @@ class Frontend:
 
     def draw_composite_entity(self, entity: DXFGraphic,
                               properties: Properties) -> None:
-        def set_opaque(entity):
-            for child in entity.virtual_entities():
+        def set_opaque(entities: Iterable[DXFGraphic]):
+            for child in entities:
                 # todo: defaults to 1.0 (fully transparent)???
                 child.transparency = 0.0
                 yield child
@@ -360,20 +362,16 @@ class Frontend:
         if dxftype == 'INSERT':
             entity = cast(Insert, entity)
             self.ctx.push_state(properties)
-            self.parent_stack.append(entity)
             # draw_entities() includes the visibility check:
             self.draw_entities(entity.attribs)
             self.draw_entities(entity.virtual_entities())
-            self.parent_stack.pop()
             self.ctx.pop_state()
 
         # DIMENSION, ARC_DIMENSION, LARGE_RADIAL_DIMENSION, LEADER
         # todo: ACAD_TABLE, MLINE, MLEADER
         elif hasattr(entity, 'virtual_entities'):
-            self.parent_stack.append(entity)
             # draw_entities() includes the visibility check:
-            self.draw_entities(set_opaque(entity))
-            self.parent_stack.pop()
+            self.draw_entities(set_opaque(entity.virtual_entities()))
 
         else:
             raise TypeError(dxftype)

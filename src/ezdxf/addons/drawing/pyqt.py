@@ -39,7 +39,7 @@ class _Point(qw.QAbstractGraphicsShapeItem):
 
 
 CorrespondingDXFEntity = 0  # the key used to store the dxf entity corresponding to each graphics element
-CorrespondingDXFEntityStack = 1
+CorrespondingDXFParentStack = 1
 
 
 class PyQtBackend(Backend):
@@ -81,7 +81,8 @@ class PyQtBackend(Backend):
 
     def _set_item_data(self, item: qw.QGraphicsItem) -> None:
         item.setData(CorrespondingDXFEntity, self.current_entity)
-        item.setData(CorrespondingDXFEntityStack, self.current_entity_stack)
+        parent_stack = tuple(e for e, props in self.entity_stack[:-1])
+        item.setData(CorrespondingDXFParentStack, parent_stack)
 
     def set_background(self, color: Color):
         self.scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
