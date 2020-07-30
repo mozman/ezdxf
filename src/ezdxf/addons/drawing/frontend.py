@@ -264,7 +264,7 @@ class Frontend:
                 last_vertex = end
 
             if vertices:
-                if last_vertex.isclose(vertices[0]):
+                if not last_vertex.isclose(vertices[0]):
                     vertices.append(last_vertex)
                 self.out.draw_filled_polygon(vertices, properties)
 
