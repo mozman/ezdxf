@@ -3,14 +3,16 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Optional, Tuple
 import logging
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2004
-from ezdxf.lldxf.const import INVALID_NAME_CHARACTERS
+from ezdxf.lldxf import validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
+)
+from ezdxf.lldxf.const import (
+    DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2004, INVALID_NAME_CHARACTERS,
+    DXFValueError, LINEWEIGHT_BYBLOCK, LINEWEIGHT_BYLAYER, LINEWEIGHT_DEFAULT,
+)
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
-from ezdxf.lldxf.validator import is_valid_layer_name, is_valid_table_name
 from ezdxf.tools import rgb2int, int2rgb, transparency2float, float2transparency
-from ezdxf.lldxf.const import DXFValueError
-
 from .factory import register_entity
 
 logger = logging.getLogger('ezdxf')
@@ -25,30 +27,51 @@ def is_valid_layer_color_index(aci: int) -> bool:
     return -256 < aci < 256 and aci != 0
 
 
-def layer_color_fixer(aci: int) -> int:
+def fix_layer_color(aci: int) -> int:
     return aci if is_valid_layer_color_index(aci) else 7
+
+
+def is_valid_layer_lineweight(lw: int) -> bool:
+    if validator.is_valid_lineweight(lw):
+        if lw not in (LINEWEIGHT_BYLAYER, LINEWEIGHT_BYBLOCK):
+            return True
+    return False
+
+
+def fix_layer_lineweight(lw: int) -> int:
+    if lw in (LINEWEIGHT_BYLAYER, LINEWEIGHT_BYBLOCK):
+        return LINEWEIGHT_DEFAULT
+    else:
+        return validator.fix_lineweight(lw)
 
 
 acdb_symbol_table_record = DefSubclass('AcDbSymbolTableRecord', {})
 
 acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
     # layer name as string
-    'name': DXFAttr(2, validator=is_valid_layer_name),
+    'name': DXFAttr(2, validator=validator.is_valid_layer_name),
     'flags': DXFAttr(70, default=0),
     # ACI color index, color < 0 indicates layer state: off
     'color': DXFAttr(62, default=7,
                      validator=is_valid_layer_color_index,
-                     fixer=layer_color_fixer,
+                     fixer=fix_layer_color,
                      ),
     # true color as 24 bit int value: rrrrrrrrggggggggbbbbbbbb
     'true_color': DXFAttr(420, dxfversion=DXF2004, optional=True),
     # linetype name
-    'linetype': DXFAttr(6, default='Continuous', validator=is_valid_table_name),
+    'linetype': DXFAttr(6, default='Continuous',
+                        validator=validator.is_valid_table_name
+                        ),
     # Don't plot this layer if 0 else 1
-    'plot': DXFAttr(290, default=1, dxfversion=DXF2000, optional=True),
+    'plot': DXFAttr(290, default=1, dxfversion=DXF2000, optional=True,
+                    validator=validator.is_integer_bool,
+                    fixer=RETURN_DEFAULT,
+                    ),
     # Default lineweight 1/100 mm, min 0 = 0.0mm, max 211 = 2.11mm
-    'lineweight': DXFAttr(370, default=-3, dxfversion=DXF2000),
-
+    'lineweight': DXFAttr(370, default=LINEWEIGHT_DEFAULT, dxfversion=DXF2000,
+                          validator=is_valid_layer_lineweight,
+                          fixer=fix_layer_lineweight,
+                          ),
     # code 390 is required for AutoCAD
     # Pointer/handle to PlotStyleName
     # uses tag(390, ...) from the '0' layer1
@@ -253,7 +276,7 @@ class Layer(DXFEntity):
                 possible
 
         """
-        if not is_valid_layer_name(name):
+        if not validator.is_valid_layer_name(name):
             raise ValueError(
                 f'Name contains invalid characters: {INVALID_NAME_CHARACTERS}.'
             )

@@ -5,7 +5,7 @@ import pytest
 from ezdxf.lldxf.validator import (
     is_in_integer_range, is_valid_aci_color, is_valid_layer_name,
     is_valid_lineweight, is_not_null_vector, is_positive_value,
-    fix_lineweight,
+    fix_lineweight, is_integer_bool,
 )
 
 
@@ -77,6 +77,13 @@ def test_is_positive_value():
     assert is_positive_value(0) is False
     assert is_positive_value(0.0) is False
     assert is_positive_value(-1) is False
+
+
+def test_is_integer_bool():
+    assert is_integer_bool(0) is True
+    assert is_integer_bool(1) is True
+    assert is_integer_bool(2) is False
+    assert is_integer_bool(-1) is False
 
 
 if __name__ == '__main__':

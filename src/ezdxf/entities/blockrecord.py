@@ -3,31 +3,48 @@
 # License: MIT License
 from typing import TYPE_CHECKING
 import logging
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2007, DXFInternalEzdxfError
+from ezdxf.lldxf import validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT
+)
+from ezdxf.lldxf.const import (
+    DXF12, SUBCLASS_MARKER, DXF2007,
+    DXFInternalEzdxfError,
+)
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
-from ezdxf.lldxf.validator import is_valid_block_name
 
 from .factory import register_entity
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Block, EndBlk, DXFGraphic, EntitySpace, BlockLayout
+    from ezdxf.eztypes import (
+        TagWriter, DXFNamespace, Drawing, Block, EndBlk, DXFGraphic,
+        EntitySpace, BlockLayout,
+    )
 
 __all__ = ['BlockRecord']
 
 acdb_blockrec = DefSubclass('AcDbBlockTableRecord', {
-    'name': DXFAttr(2, validator=is_valid_block_name),
+    'name': DXFAttr(2, validator=validator.is_valid_block_name),
     # handle to associated DXF LAYOUT object
     'layout': DXFAttr(340, default='0'),
     # 0 = can not explode; 1 = can explode
-    'explode': DXFAttr(280, default=1, dxfversion=DXF2007),
+    'explode': DXFAttr(280, default=1, dxfversion=DXF2007,
+                       validator=validator.is_integer_bool,
+                       fixer=RETURN_DEFAULT
+                       ),
     # 0 = scale non uniformly; 1 = scale uniformly
-    'scale': DXFAttr(281, default=0, dxfversion=DXF2007),
+    'scale': DXFAttr(281, default=0, dxfversion=DXF2007,
+                     validator=validator.is_integer_bool,
+                     fixer=RETURN_DEFAULT,
+                     ),
     # see ezdxf/units.py
-    'units': DXFAttr(70, default=0, dxfversion=DXF2007),
+    'units': DXFAttr(70, default=0, dxfversion=DXF2007,
+                     validator=validator.is_in_integer_range(0, 25),
+                     fixer=RETURN_DEFAULT
+                     ),
     # 310: Binary data for bitmap preview (optional) - removed (ignored) by ezdxf
 })
 
@@ -50,7 +67,8 @@ class BlockRecord(DXFEntity):
 
     """
     DXFTYPE = 'BLOCK_RECORD'
-    DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_blockrec)
+    DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record,
+                               acdb_blockrec)
 
     def __init__(self, doc: 'Drawing' = None):
         from ezdxf.entitydb import EntitySpace
@@ -77,12 +95,14 @@ class BlockRecord(DXFEntity):
         self.block.dxf.name = name
         self.block.dxf.name2 = name
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_blockrec)
             if len(tags) and False:  # deliberately disabled
-                processor.log_unprocessed_tags(tags, subclass=acdb_blockrec.name)
+                processor.log_unprocessed_tags(tags,
+                                               subclass=acdb_blockrec.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

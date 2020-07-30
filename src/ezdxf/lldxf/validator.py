@@ -341,3 +341,7 @@ def is_not_null_vector(v) -> bool:
 
 def is_positive_value(v) -> bool:
     return v > 0
+
+
+def is_integer_bool(v) -> bool:
+    return v in (0, 1)
