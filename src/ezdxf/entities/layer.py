@@ -48,21 +48,23 @@ def fix_layer_lineweight(lw: int) -> int:
 acdb_symbol_table_record = DefSubclass('AcDbSymbolTableRecord', {})
 
 acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
-    # layer name as string
+    # Layer name as string
     'name': DXFAttr(2, validator=validator.is_valid_layer_name),
     'flags': DXFAttr(70, default=0),
-    # ACI color index, color < 0 indicates layer state: off
+
+    # ACI color index, color < 0 indicates layer status: off
     'color': DXFAttr(62, default=7,
                      validator=is_valid_layer_color_index,
                      fixer=fix_layer_color,
                      ),
-    # true color as 24 bit int value: rrrrrrrrggggggggbbbbbbbb
+    # True color as 24 bit int value: 0x00RRGGBB
     'true_color': DXFAttr(420, dxfversion=DXF2004, optional=True),
-    # linetype name
+
+    # Linetype name as string
     'linetype': DXFAttr(6, default='Continuous',
                         validator=validator.is_valid_table_name
                         ),
-    # Don't plot this layer if 0 else 1
+    # 0 = don't plot layer; 1 = plot layer
     'plot': DXFAttr(290, default=1, dxfversion=DXF2000, optional=True,
                     validator=validator.is_integer_bool,
                     fixer=RETURN_DEFAULT,
@@ -72,14 +74,13 @@ acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
                           validator=is_valid_layer_lineweight,
                           fixer=fix_layer_lineweight,
                           ),
-    # code 390 is required for AutoCAD
-    # Pointer/handle to PlotStyleName
-    # uses tag(390, ...) from the '0' layer1
-    # handle to PlotStyleName object
+    # Handle to PlotStyleName, group code 390 is required by AutoCAD
     'plotstyle_handle': DXFAttr(390, dxfversion=DXF2000),
-    # handle to Material object
+
+    # Handle to Material object
     'material_handle': DXFAttr(347, dxfversion=DXF2007),
-    # handle to ???
+    
+    # Handle to ???
     'unknown1': DXFAttr(348, dxfversion=DXF2007, optional=True),
 
 })
