@@ -150,11 +150,16 @@ class DXFNamespace:
             DXFAttributeError: attribute `key` is not supported
 
         """
+
         def check(value):
             value = cast_value(attrib_def.code, value)
             if not attrib_def.is_valid_value(value):
                 if attrib_def.fixer:
                     value = attrib_def.fixer(value)
+                    logger.debug(
+                        f'Fixed invalid value {str(value)} for attribute '
+                        f'"{key}" in entity {str(self._entity)}.'
+                    )
                 else:
                     raise DXFValueError(
                         f'Invalid value {str(value)} for attribute "{key}" in '
