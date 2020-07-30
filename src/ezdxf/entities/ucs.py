@@ -3,10 +3,12 @@
 # License: MIT License
 from typing import TYPE_CHECKING
 import logging
-from ezdxf.math import UCS, Vector
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.math import UCS, NULLVEC, X_AXIS, Y_AXIS
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+)
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
-from ezdxf.lldxf.validator import is_valid_table_name
+from ezdxf.lldxf import validator
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
@@ -19,11 +21,17 @@ if TYPE_CHECKING:
 __all__ = ['UCSTable']
 
 acdb_ucs = DefSubclass('AcDbUCSTableRecord', {
-    'name': DXFAttr(2, validator=is_valid_table_name),
+    'name': DXFAttr(2, validator=validator.is_valid_table_name),
     'flags': DXFAttr(70, default=0),
-    'origin': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
-    'xaxis': DXFAttr(11, xtype=XType.point3d, default=Vector(1, 0, 0)),
-    'yaxis': DXFAttr(12, xtype=XType.point3d, default=Vector(0, 1, 0)),
+    'origin': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
+    'xaxis': DXFAttr(11, xtype=XType.point3d, default=X_AXIS,
+                     validator=validator.is_not_null_vector,
+                     fixer=RETURN_DEFAULT,
+                     ),
+    'yaxis': DXFAttr(12, xtype=XType.point3d, default=Y_AXIS,
+                     validator=validator.is_not_null_vector,
+                     fixer=RETURN_DEFAULT,
+                     ),
 })
 
 
