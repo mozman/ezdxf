@@ -278,15 +278,10 @@ class DXFGraphic(DXFEntity):
         if not_r12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_entity.name)
 
-        if self.dxf.hasattr('lineweight'):
-            # AutoCAD does not load DXF documents using invalid lineweights
-            self.dxf.lineweight = validator.fix_lineweight(self.dxf.lineweight)
-
         self.dxf.export_dxf_attribs(tagwriter, [
             'paperspace', 'layer', 'linetype', 'material_handle', 'color',
-            'lineweight', 'ltscale', 'true_color',
-            'color_name', 'transparency', 'plotstyle_enum', 'plotstyle_handle',
-            'shadow_mode',
+            'lineweight', 'ltscale', 'true_color', 'color_name', 'transparency',
+            'plotstyle_enum', 'plotstyle_handle', 'shadow_mode',
             'visualstyle_handle',
         ])
 
