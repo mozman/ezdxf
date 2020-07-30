@@ -67,8 +67,11 @@ class Frontend:
         # self.approximation_max_sagitta = 0.01  # for drawing unit = 1m, max
         # sagitta = 1cm
 
+    def log_message(self, message: str):
+        print(message)
+
     def skip_entity(self, entity: DXFEntity, msg: str):
-        print(f'skipped entity {str(entity)}. Reason: "{msg}"')
+        self.log_message(f'skipped entity {str(entity)}. Reason: "{msg}"')
 
     def override_properties(self, entity: DXFGraphic,
                             properties: Properties) -> None:
@@ -255,10 +258,10 @@ class Frontend:
                 if last_vertex is None:
                     vertices.append(start)
                 elif not last_vertex.isclose(start):
-                    print(
-                        f'warning: {str(entity)} edges not contiguous:'
-                        f' {last_vertex} -> {start}'
-                    )
+                    # this sometimes happens when a curved section is the
+                    # wrong way round. This should be fixed by moving to
+                    # rendering using Path objects:
+                    # https://github.com/mozman/ezdxf/issues/202
                     vertices.append(start)
                 vertices.append(end)
                 last_vertex = end
@@ -274,11 +277,11 @@ class Frontend:
         view_vector: Vector = dxf.view_direction_vector
         mag = view_vector.magnitude
         if math.isclose(mag, 0.0):
-            print('Warning: viewport with null view vector')
+            self.log_message('Warning: viewport with null view vector')
             return
         view_vector /= mag
         if not math.isclose(view_vector.dot(Vector(0, 0, 1)), 1.0):
-            print(
+            self.log_message(
                 f'Cannot render viewport with non-perpendicular view direction:'
                 f' {dxf.view_direction_vector}'
             )
