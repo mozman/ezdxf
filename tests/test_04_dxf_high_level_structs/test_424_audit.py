@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -103,7 +103,8 @@ def test_block_cycle_detector_setup():
 
     auditor = Auditor(doc)
     auditor.check_block_reference_cycles()
-    assert len(auditor.errors) == 3  # one entry for each involved block: 'a', 'b', 'c'
+    assert len(auditor.errors) == 3, \
+        "one entry for each involved block: 'a', 'b', 'c'"
     assert auditor.errors[0].code == AuditError.INVALID_BLOCK_REFERENCE_CYCLE
     assert auditor.errors[1].code == AuditError.INVALID_BLOCK_REFERENCE_CYCLE
     assert auditor.errors[2].code == AuditError.INVALID_BLOCK_REFERENCE_CYCLE
@@ -154,15 +155,6 @@ def test_broken_block_cycle_detector(dxf):
     assert detector.has_cycle('b') is False
 
 
-def test_fix_invalid_major_axis(dxf, auditor):
-    msp = dxf.modelspace()
-    ellipse = msp.add_ellipse((0, 0), major_axis=(0, 0, 0), ratio=0.5)
-    ellipse.audit(auditor)
-    dxf.entitydb.empty_trashcan()  # explicit call required
-    assert ellipse.is_alive is False
-    assert auditor.fixes[-1].code == AuditError.INVALID_MAJOR_AXIS
-
-
 def test_fix_invalid_leader(dxf, auditor):
     msp = dxf.modelspace()
     # no creator interface for LEADER (yet)
@@ -190,7 +182,9 @@ def test_fix_inser_scale(dxf, auditor):
     test_block = 'TEST_INSERT'
     if test_block not in dxf.blocks:
         dxf.blocks.new(test_block)
-    insert = msp.add_blockref(test_block, (0, 0), dxfattribs={'xscale': 0, 'yscale': 0, 'zscale': 0})
+    insert = msp.add_blockref(test_block, (0, 0), dxfattribs={
+        'xscale': 0, 'yscale': 0, 'zscale': 0
+    })
     insert.audit(auditor)
     assert insert.dxf.xscale == 1.0
     assert insert.dxf.xscale == 1.0

@@ -182,18 +182,11 @@ class Frontend:
     def draw_elliptic_arc_entity(self, entity: DXFGraphic,
                                  properties: Properties) -> None:
         dxftype = entity.dxftype()
-        if NULLVEC.isclose(entity.dxf.extrusion):
-            self.skip_entity(entity, 'Invalid extrusion (0, 0, 0)')
-            return
         if dxftype == 'CIRCLE':
             path = Path.from_circle(cast('Circle', entity))
         elif dxftype == 'ARC':
             path = Path.from_arc(cast('Arc', entity))
         elif dxftype == 'ELLIPSE':
-            if NULLVEC.isclose(entity.dxf.major_axis):
-                self.skip_entity(entity, 'Invalid major axis (0, 0, 0)')
-                return
-
             path = Path.from_ellipse(cast('Ellipse', entity))
         else:  # API usage error
             raise TypeError(dxftype)

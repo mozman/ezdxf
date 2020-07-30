@@ -1,13 +1,11 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 # created 2019-02-15
-import random
-
 import pytest
 import math
 
-from ezdxf.math import Vector, angle_to_param, linspace
-from ezdxf.entities.ellipse import Ellipse
+from ezdxf.math import Vector
+from ezdxf.entities.ellipse import Ellipse, MIN_RATIO, MAX_RATIO
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 ELLIPSE = """0
@@ -63,7 +61,7 @@ def test_default_init():
 def test_default_new():
     entity = Ellipse.new(handle='ABBA', owner='0', dxfattribs={
         'color': 7,
-        'ratio': 2,
+        'ratio': 0.5,
         'center': (1, 2, 3),
         'major_axis': (4, 5, 6),
         'start_param': 10,
@@ -73,9 +71,30 @@ def test_default_new():
     assert entity.dxf.color == 7
     assert entity.dxf.center == (1, 2, 3)
     assert entity.dxf.major_axis == (4, 5, 6)
-    assert entity.dxf.ratio == 2
+    assert entity.dxf.ratio == 0.5
     assert entity.dxf.start_param == 10
     assert entity.dxf.end_param == 20
+
+
+def test_extrusion_can_not_be_a_null_vector():
+    e = Ellipse.new(dxfattribs={'extrusion': (0, 0, 0)})
+    assert e.dxf.extrusion == (0, 0, 1), 'expected default extrusion'
+
+
+def test_major_axis_can_not_be_a_null_vector():
+    pytest.raises(ValueError, Ellipse.new, dxfattribs={'major_axis': (0, 0, 0)})
+
+
+@pytest.mark.parametrize('ratio', [-2, -1, 0, 1, 2])
+def test_ratio_is_always_valid(ratio):
+    e = Ellipse.new(dxfattribs={'ratio': ratio})
+    assert MIN_RATIO <= abs(e.dxf.ratio) <= MAX_RATIO
+
+
+@pytest.mark.parametrize('ratio', [-1, -0.5, -1e-9])
+def test_ratio_can_be_negative(ratio):
+    e = Ellipse.new(dxfattribs={'ratio': ratio})
+    assert e.dxf.ratio < 0
 
 
 def test_load_from_text(entity):
