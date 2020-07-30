@@ -5,6 +5,7 @@ import pytest
 from ezdxf.lldxf.validator import (
     is_in_integer_range, is_valid_aci_color, is_valid_layer_name,
     is_valid_lineweight, is_not_null_vector, is_positive_value,
+    fix_lineweight,
 )
 
 
@@ -40,6 +41,12 @@ def test_is_valid_lineweight():
     assert is_valid_lineweight(-4) is False, 'is too small'
     assert is_valid_lineweight(212) is False, 'is too big'
     assert is_valid_lineweight(10) is False
+
+
+def test_lineweight_fixer():
+    assert fix_lineweight(-4) == -1, 'too small, fix as BYLAYER'
+    assert fix_lineweight(212) == 211, 'too big, fix as biggest lineweight'
+    assert fix_lineweight(10) == 13, 'invalid, fix as next valid lineweight'
 
 
 def test_is_valid_aci_color():

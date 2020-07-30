@@ -24,7 +24,7 @@ class XType(Enum):
     callback = 4  # callback attribute
 
 
-# Dummy function as marker
+# Unique object as marker
 RETURN_DEFAULT = object()
 
 
