@@ -115,8 +115,7 @@ class MatplotlibBackend(Backend):
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
         path = _text_path(text, self.font)
         scale = cap_height / self._font_measurements.cap_height
-        transformed_xs = _transform_path(path, Matrix44.scale(scale)).vertices[:, 0].tolist()
-        return max(transformed_xs)
+        return max(x for x, y in path.vertices) * scale
 
     def clear(self):
         self.ax.clear()
