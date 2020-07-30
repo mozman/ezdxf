@@ -4,6 +4,8 @@
 import pytest
 import ezdxf
 from ezdxf.addons.drawing.properties import RenderContext, compile_line_pattern
+from ezdxf.entities import Layer
+from ezdxf.lldxf import const
 
 
 @pytest.fixture(scope='module')
@@ -55,7 +57,7 @@ def doc():
 
 
 def test_load_default_ctb(doc):
-    ctx = RenderContext(doc, 'color.ctb')
+    ctx = RenderContext(doc, ctb='color.ctb')
     assert bool(ctx.plot_styles) is True
     assert ctx.plot_styles[1].color == (255, 0, 0)
 
@@ -64,6 +66,63 @@ def test_new_ctb(doc):
     ctx = RenderContext(doc)
     assert bool(ctx.plot_styles) is True
     assert ctx.plot_styles[1].color == (255, 0, 0)
+
+
+def test_resolve_entity_visibility():
+    doc = ezdxf.new()
+    layout = doc.modelspace()
+    doc.layers.new(name='visible', dxfattribs={'color': 0})
+    doc.layers.new(name='invisible', dxfattribs={'color': -1})  # color < 0 => invisible
+    doc.layers.new(name='frozen', dxfattribs={'flags': Layer.FROZEN})  # also invisible
+    doc.layers.new(name='noplot', dxfattribs={'plot': 0})  # visible in the CAD application but not when exported
+
+    for export_mode in (False, True):
+        ctx = RenderContext(layout.doc, export_mode=export_mode)
+
+        text = layout.add_text('a', {'invisible': 0, 'layer': 'non_existent'})
+        assert ctx.resolve_visible(text) is True
+
+        text = layout.add_text('a', {'invisible': 0, 'layer': 'visible'})
+        assert ctx.resolve_visible(text) is True
+
+        for layer in ['invisible', 'frozen']:
+            text = layout.add_text('a', {'invisible': 0, 'layer': layer})
+            assert ctx.resolve_visible(text) is False
+
+        for layer in ['non_existent', 'visible', 'invisible', 'frozen', 'noplot']:
+            text = layout.add_text('a', {'invisible': 1, 'layer': layer})
+            assert ctx.resolve_visible(text) is False
+
+    ctx = RenderContext(layout.doc, export_mode=False)
+    text = layout.add_text('a', {'invisible': 0, 'layer': 'noplot'})
+    assert ctx.resolve_visible(text) is True
+
+    ctx = RenderContext(layout.doc, export_mode=True)
+    text = layout.add_text('a', {'invisible': 0, 'layer': 'noplot'})
+    assert ctx.resolve_visible(text) is False
+
+
+def test_resolve_attrib_visibility():
+    doc = ezdxf.new()
+    layout = doc.modelspace()
+    block = doc.blocks.new(name='block')
+    doc.layers.new(name='invisible', dxfattribs={'color': -1})  # color < 0 => invisible
+
+    block.add_attdef('att1', (0, 0), '', {})
+    block.add_attdef('att2', (0, 0), '', {'flags': const.ATTRIB_INVISIBLE})
+    block.add_attdef('att3', (0, 0), '', {'layer': 'invisible'})
+
+    i = layout.add_blockref('block', (0, 0))
+    i.add_auto_attribs({'att1': 'abc', 'att2': 'def', 'att3': 'hij'})
+
+    assert not i.attribs[0].is_invisible
+    assert i.attribs[1].is_invisible
+    assert not i.attribs[2].is_invisible
+
+    ctx = RenderContext(layout.doc)
+    assert ctx.resolve_visible(i.attribs[0]) is True
+    assert ctx.resolve_visible(i.attribs[1]) is False
+    assert ctx.resolve_visible(i.attribs[2]) is False
 
 
 def test_resolve_entity_color(doc):
