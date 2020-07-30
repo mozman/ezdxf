@@ -5,7 +5,7 @@
 import logging
 import io
 import bisect
-from typing import TextIO, Iterable, List, Optional, Set
+from typing import TextIO, Iterable, List, Optional
 
 from .const import (
     DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError,
@@ -17,6 +17,7 @@ from .const import (
 from .tagger import ascii_tags_loader
 from .types import is_embedded_object_marker, DXFTag, NONE_TAG
 from ezdxf.tools.codepage import toencoding
+from ezdxf.math.vector import NULLVEC
 
 logger = logging.getLogger('ezdxf')
 
@@ -327,11 +328,16 @@ def is_valid_aci_color(aci: int) -> bool:
     return 0 <= aci <= 257
 
 
-def fix_aci_color_index(aci: int) -> int:
-    return aci if 0 <= aci <= 257 else 256
-
-
-def is_in_int_range(start: int, end: int):
+def is_in_integer_range(start: int, end: int):
     def _validator(value: int) -> bool:
         return start <= value < end
+
     return _validator
+
+
+def is_not_null_vector(v) -> bool:
+    return not NULLVEC.isclose(v)
+
+
+def is_positive_value(v) -> bool:
+    return v > 0

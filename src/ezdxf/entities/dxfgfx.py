@@ -5,107 +5,103 @@
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
 from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Dict
 import warnings
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import (
-    DXF12, DXF2000, DXF2004, DXF2007, DXF2013,
-    DXFValueError, DXFKeyError, DXFTableEntryError,
+from ezdxf.entities import factory
+from ezdxf import options
+from ezdxf.lldxf import validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import (
-    SUBCLASS_MARKER, DXFInvalidLineType,
+    DXF12, DXF2000, DXF2004, DXF2007, DXF2013, DXFValueError, DXFKeyError,
+    DXFTableEntryError, SUBCLASS_MARKER, DXFInvalidLineType, DXFStructureError,
 )
-from ezdxf.lldxf.const import DXFStructureError
-from ezdxf.lldxf.validator import (
-    is_valid_table_name, is_valid_layer_name,
-    is_valid_lineweight, fix_lineweight,
-    is_valid_aci_color, fix_aci_color_index,
-)
-from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS, UCS, Matrix44
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
-from ezdxf.entities import factory
-from ezdxf import options
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
+from .dxfentity import DXFEntity, base_class, SubclassProcessor
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Auditor, TagWriter, BaseLayout, DXFNamespace,
-        Vertex, Drawing,
+        Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex, Drawing,
     )
 
-__all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd', 'add_entity',
-           'replace_entity']
+__all__ = [
+    'DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd', 'add_entity',
+    'replace_entity'
+]
 
-GRAPHIC_PROPERTIES = {'layer', 'linetype', 'color', 'lineweight', 'ltscale',
-                      'true_color', 'color_name', }
+GRAPHIC_PROPERTIES = {
+    'layer', 'linetype', 'color', 'lineweight', 'ltscale', 'true_color',
+    'color_name',
+}
 
 acdb_entity = DefSubclass('AcDbEntity', {
-    # layer name as string, no auto fix for invalid layer names!
-    'layer': DXFAttr(8, default='0', validator=is_valid_layer_name),
+    # Layer name as string, no auto fix for invalid names!
+    'layer': DXFAttr(8, default='0', validator=validator.is_valid_layer_name),
+
+    # Linetype name as string, no auto fix for invalid names!
     'linetype': DXFAttr(6, default='BYLAYER', optional=True,
-                        validator=is_valid_table_name),
-    # linetype as string, special names BYLAYER/BYBLOCK
+                        validator=validator.is_valid_table_name),
+    # ACI color index, BYBLOCK=0, BYLAYER=256, BYOBJECT=257:
     'color': DXFAttr(62, default=256, optional=True,
-                     validator=is_valid_aci_color,
-                     fixer=fix_aci_color_index,
+                     validator=validator.is_valid_aci_color,
+                     fixer=RETURN_DEFAULT,
                      ),
-    # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER
+    # modelspace=0, paperspace=1
     'paperspace': DXFAttr(67, default=0, optional=True),
-    # 0 .. modelspace, 1 .. paperspace
-    # thickness and extrusion is defined in Entity specific subclasses
-    # Stored and moved around as a 16-bit integer
+
+    # Lineweight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13
+    # and biggest line weight is 200, values outside this range prevents AutoCAD
+    # from loading the file.
+    # Special values: BYLAYER=-1, BYBLOCK=-2, DEFAULT=-3
     'lineweight': DXFAttr(370, default=-1, dxfversion=DXF2000, optional=True,
-                          validator=is_valid_lineweight,
-                          fixer=fix_lineweight,
+                          validator=validator.is_valid_lineweight,
+                          fixer=validator.fix_lineweight,
                           ),
-    # Line weight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13 and biggest line weight is 200, values
-    # outside this range prevents AutoCAD from loading the file.
-    # Special values:
-    # LINEWEIGHT_BYLAYER = -1
-    # LINEWEIGHT_BYBLOCK = -2
-    # LINEWEIGHT_DEFAULT = -3
-    #
-    'ltscale': DXFAttr(48, default=1.0, dxfversion=DXF2000, optional=True),
-    # linetype scale
+    'ltscale': DXFAttr(48, default=1.0, dxfversion=DXF2000, optional=True,
+                       validator=validator.is_positive_value,
+                       fixer=RETURN_DEFAULT,
+                       ),
+    # visible=0, invisible=1
     'invisible': DXFAttr(60, default=0, dxfversion=DXF2000, optional=True),
-    # invisible .. 1, visible .. 0
+
+    # True color as 0x00RRGGBB 24-bit value
     'true_color': DXFAttr(420, dxfversion=DXF2004, optional=True),
-    # true color as 0x00RRGGBB 24-bit value
+
+    # Color name as string. Color books are stored in .stb config files?
     'color_name': DXFAttr(430, dxfversion=DXF2004, optional=True),
-    # color name as string
+
+    # Transparency value 0x020000TT 0 = fully transparent / 255 = opaque
     'transparency': DXFAttr(440, dxfversion=DXF2004, optional=True),
-    # transparency value 0x020000TT 0 = fully transparent / 255 = opaque
-    'shadow_mode': DXFAttr(284, dxfversion=DXF2007, optional=True),
-    # shadow_mode
+
+    # Shadow mode:
     # 0 = Casts and receives shadows
     # 1 = Casts shadows
     # 2 = Receives shadows
     # 3 = Ignores shadows
+    'shadow_mode': DXFAttr(284, dxfversion=DXF2007, optional=True),
     'material_handle': DXFAttr(347, dxfversion=DXF2007, optional=True),
     'visualstyle_handle': DXFAttr(348, dxfversion=DXF2007, optional=True),
 
-    # objects may use the full range, but entity classes only use 381-389 DXF group codes in their representation, for
-    # the same reason as the Lineweight range above
-
-    # PlotStyleName type enum (AcDb::PlotStyleNameType). Stored and moved around as a 16-bit integer. Custom non-entity
+    # PlotStyleName type enum (AcDb::PlotStyleNameType). Stored and moved around
+    # as a 16-bit integer. Custom non-entity
     'plotstyle_enum': DXFAttr(380, dxfversion=DXF2007, default=1,
                               optional=True),
 
-    # Handle value of the PlotStyleName object, basically a hard pointer, but has a different range to make backward
-    # compatibility easier to deal with.
+    # Handle value of the PlotStyleName object, basically a hard pointer, but
+    # has a different range to make backward compatibility easier to deal with.
     'plotstyle_handle': DXFAttr(390, dxfversion=DXF2007, optional=True),
 
-    # 92 or 160?: Number of bytes in the proxy entity graphics represented in the subsequent 310 groups, which are binary
-    # chunk records (optional)
-    # 310: Proxy entity graphics data (multiple lines; 256 characters max. per line) (optional)
-    # Compiled by TagCompiler() to a DXFBinaryTag() objects
-
+    # 92 or 160?: Number of bytes in the proxy entity graphics represented in
+    # the subsequent 310 groups, which are binary chunk records (optional)
+    # 310: Proxy entity graphics data (multiple lines; 256 characters max. per
+    # line) (optional), compiled by TagCompiler() to a DXFBinaryTag() objects
 })
 
 
 class DXFGraphic(DXFEntity):
-    """
-    Common base class for all graphic entities, a subclass of
+    """ Common base class for all graphic entities, a subclass of
     :class:`~ezdxf.entities.dxfentity.DXFEntity`. These entities resides in
     entity spaces like modelspace, paperspace or block.
 
@@ -284,7 +280,7 @@ class DXFGraphic(DXFEntity):
 
         if self.dxf.hasattr('lineweight'):
             # AutoCAD does not load DXF documents using invalid lineweights
-            self.dxf.lineweight = fix_lineweight(self.dxf.lineweight)
+            self.dxf.lineweight = validator.fix_lineweight(self.dxf.lineweight)
 
         self.dxf.export_dxf_attribs(tagwriter, [
             'paperspace', 'layer', 'linetype', 'material_handle', 'color',

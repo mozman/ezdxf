@@ -3,8 +3,8 @@
 import pytest
 
 from ezdxf.lldxf.validator import (
-    is_in_int_range, is_valid_aci_color, is_valid_layer_name,
-    is_valid_lineweight,
+    is_in_integer_range, is_valid_aci_color, is_valid_layer_name,
+    is_valid_lineweight, is_not_null_vector, is_positive_value,
 )
 
 
@@ -42,20 +42,34 @@ def test_is_valid_lineweight():
     assert is_valid_lineweight(10) is False
 
 
-def test_is_valis_aci_color():
+def test_is_valid_aci_color():
     assert is_valid_aci_color(-1) is False
     assert is_valid_aci_color(0) is True
     assert is_valid_aci_color(257) is True
     assert is_valid_aci_color(258) is False
 
 
-def test_is_in_int_range():
-    validator = is_in_int_range(1, 10)
+def test_is_in_integer_range():
+    validator = is_in_integer_range(1, 10)
     assert validator(0) is False
     assert validator(1) is True
     assert validator(9) is True
-    assert validator(10) is False, 'exclude end value , the standard Python ' \
-                                   'behavior expected'
+    assert validator(10) is False, 'exclude end value'
+
+
+def test_is_not_null_vector():
+    assert is_not_null_vector((0, 0, 1)) is True
+    assert is_not_null_vector((0, 1, 0)) is True
+    assert is_not_null_vector((1, 0, 0)) is True
+    assert is_not_null_vector((0, 0, 0)) is False
+
+
+def test_is_positive_value():
+    assert is_positive_value(1) is True
+    assert is_positive_value(0.5) is True
+    assert is_positive_value(0) is False
+    assert is_positive_value(0.0) is False
+    assert is_positive_value(-1) is False
 
 
 if __name__ == '__main__':
