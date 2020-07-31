@@ -93,7 +93,6 @@ class BlockRecord(DXFEntity):
     def rename(self, name: str) -> None:
         self.dxf.name = name
         self.block.dxf.name = name
-        self.block.dxf.name2 = name
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':

@@ -154,7 +154,6 @@ class BlocksSection:
                     'BLOCK',
                     dxfattribs={
                         'name': block_record.dxf.name,
-                        'name2': block_record.dxf.name,
                         'base_point': (0, 0, 0),
                     })
                 endblk = self.doc.dxffactory.create_db_entry(
@@ -234,7 +233,6 @@ class BlocksSection:
         dxfattribs = dxfattribs or {}
         dxfattribs['owner'] = block_record.dxf.handle
         dxfattribs['name'] = name
-        dxfattribs['name2'] = name
         dxfattribs['base_point'] = base_point
         head = self.dxffactory.create_db_entry('BLOCK', dxfattribs)
         tail = self.dxffactory.create_db_entry('ENDBLK', {

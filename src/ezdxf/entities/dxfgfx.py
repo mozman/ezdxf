@@ -41,28 +41,37 @@ acdb_entity = DefSubclass('AcDbEntity', {
     'layer': DXFAttr(8, default='0', validator=validator.is_valid_layer_name),
 
     # Linetype name as string, no auto fix for invalid names!
-    'linetype': DXFAttr(6, default='BYLAYER', optional=True,
-                        validator=validator.is_valid_table_name),
+    'linetype': DXFAttr(
+        6, default='BYLAYER', optional=True,
+        validator=validator.is_valid_table_name,
+    ),
     # ACI color index, BYBLOCK=0, BYLAYER=256, BYOBJECT=257:
-    'color': DXFAttr(62, default=256, optional=True,
-                     validator=validator.is_valid_aci_color,
-                     fixer=RETURN_DEFAULT,
-                     ),
+    'color': DXFAttr(
+        62, default=256, optional=True,
+        validator=validator.is_valid_aci_color,
+        fixer=RETURN_DEFAULT,
+    ),
     # modelspace=0, paperspace=1
-    'paperspace': DXFAttr(67, default=0, optional=True),
+    'paperspace': DXFAttr(
+        67, default=0, optional=True,
+        validator=validator.is_integer_bool,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # Lineweight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13
     # and biggest line weight is 200, values outside this range prevents AutoCAD
     # from loading the file.
     # Special values: BYLAYER=-1, BYBLOCK=-2, DEFAULT=-3
-    'lineweight': DXFAttr(370, default=-1, dxfversion=DXF2000, optional=True,
-                          validator=validator.is_valid_lineweight,
-                          fixer=validator.fix_lineweight,
-                          ),
-    'ltscale': DXFAttr(48, default=1.0, dxfversion=DXF2000, optional=True,
-                       validator=validator.is_positive,
-                       fixer=RETURN_DEFAULT,
-                       ),
+    'lineweight': DXFAttr(
+        370, default=-1, dxfversion=DXF2000, optional=True,
+        validator=validator.is_valid_lineweight,
+        fixer=validator.fix_lineweight,
+    ),
+    'ltscale': DXFAttr(
+        48, default=1.0, dxfversion=DXF2000, optional=True,
+        validator=validator.is_positive,
+        fixer=RETURN_DEFAULT,
+    ),
     # visible=0, invisible=1
     'invisible': DXFAttr(60, default=0, dxfversion=DXF2000, optional=True),
 
