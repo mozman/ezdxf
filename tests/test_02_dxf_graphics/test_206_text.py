@@ -167,30 +167,10 @@ def test_write_dxf(txt, ver):
     'test\ntext^',
     'test\ntext^\r',
 ])
-def test_do_not_export_invalid_chars(invalid_text):
+def test_removing_invalid_chars_at_setting_content(invalid_text):
     txt = Text()
     txt.dxf.text = invalid_text
-    collector = TagCollector(optional=True)
-    txt.export_dxf(collector)
-    for tag in collector.tags:
-        if tag[0] == 1:
-            assert tag[1] == 'testtext'
-
-
-@pytest.mark.parametrize('invalid_text', [
-    'test\ntext\r',
-    'test\r\ntext',
-    'testtext^',
-    'test\ntext^',
-    'test\ntext^\r',
-])
-def test_audit_fixes_invalid_chars(invalid_text, doc):
-    msp = doc.modelspace()
-    txt = msp.add_text(invalid_text)
-    auditor = Auditor(doc)
-    txt.audit(auditor)
     assert txt.dxf.text == 'testtext'
-    assert len(auditor.fixes) > 0
 
 
 @pytest.fixture

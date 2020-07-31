@@ -31,6 +31,7 @@ RETURN_DEFAULT = object()
 class DXFAttr:
     """ Represents a DXF attribute for an DXF entity, accessible by the
     DXF namespace :attr:`DXFEntity.dxf` like ``entity.dxf.color = 7``.
+    This definitions are immutable by design not by implementation.
 
     Extended Attribute Types
     ------------------------

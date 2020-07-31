@@ -5,7 +5,8 @@
 import logging
 import io
 import bisect
-from typing import TextIO, Iterable, List, Optional
+import math
+from typing import TextIO, Iterable, List, Optional, Set
 
 from .const import (
     DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError,
@@ -339,9 +340,41 @@ def is_not_null_vector(v) -> bool:
     return not NULLVEC.isclose(v)
 
 
-def is_positive_value(v) -> bool:
+def is_not_zero(v: float) -> bool:
+    return not math.isclose(v, 0.0, abs_tol=1e-12)
+
+
+def is_not_negative(v) -> bool:
+    return v >= 0
+
+
+def is_positive(v) -> bool:
     return v > 0
 
 
 def is_integer_bool(v) -> bool:
     return v in (0, 1)
+
+
+def is_one_of(values: Set):
+    def _validator(v) -> bool:
+        return v in values
+
+    return _validator
+
+
+def is_valid_one_line_text(text: str) -> bool:
+    has_line_breaks = bool(set(text).intersection({'\n', '\r'}))
+    return not has_line_breaks and not text.endswith('^')
+
+
+def fix_one_line_text(text: str) -> str:
+    return text.replace('\n', '').replace('\r', '').rstrip('^')
+
+
+def is_valid_attrib_tag(tag: str) -> bool:
+    return is_valid_one_line_text(tag)
+
+
+def fix_attrib_tag(tag: str) -> str:
+    return fix_one_line_text(tag)

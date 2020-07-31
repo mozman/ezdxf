@@ -4,15 +4,18 @@
 import math
 from typing import TYPE_CHECKING, Tuple, Union
 
+from ezdxf.lldxf import validator
 from ezdxf.entities.mtext import caret_decode
 from ezdxf.lldxf import const
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+)
 from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, SPECIAL_CHARS_ENCODING, DXFValueError,
 )
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform
-from ezdxf.audit import Auditor, AuditError
+from ezdxf.audit import Auditor
 
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -24,49 +27,85 @@ if TYPE_CHECKING:
 __all__ = ['Text', 'acdb_text', 'plain_text']
 
 acdb_text = DefSubclass('AcDbText', {
-    'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
-    # First alignment point (in OCS)
-    'height': DXFAttr(40, default=2.5),  # Text height
-    'text': DXFAttr(1, default=''),  # Default value (the string itself)
+    # First alignment point (in OCS):
+    'insert': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
+
+    # Text height
+    'height': DXFAttr(40, default=2.5,
+                      validator=validator.is_positive,
+                      fixer=RETURN_DEFAULT,
+                      ),
+
+    # Text content as sting:
+    'text': DXFAttr(1, default='',
+                    validator=validator.is_valid_one_line_text,
+                    fixer=validator.fix_one_line_text,
+                    ),
+
+    # Text rotation in degrees (optional)
     'rotation': DXFAttr(50, default=0, optional=True),
-    # Text rotation (optional) in degrees (circle = 360deg)
+
+    # Oblique angle in degrees, vertical = 0 deg (optional)
     'oblique': DXFAttr(51, default=0, optional=True),
-    # Oblique angle (optional) in degrees, vertical = 0deg
+
+    # Text style name (optional), given text style must have an entry in the
+    # text-styles tables.
     'style': DXFAttr(7, default='Standard', optional=True),
-    # Text style name (optional)
-    'width': DXFAttr(41, default=1, optional=True),
+
     # Relative X scale factor—width (optional)
     # This value is also adjusted when fit-type text is used
-    'text_generation_flag': DXFAttr(71, default=0, optional=True),
+    'width': DXFAttr(41, default=1, optional=True,
+                     validator=validator.is_positive,
+                     fixer=RETURN_DEFAULT,
+                     ),
+
     # Text generation flags (optional)
     # 2 = backward (mirror-x),
     # 4 = upside down (mirror-y)
+    'text_generation_flag': DXFAttr(71, default=0, optional=True,
+                                    validator=validator.is_one_of({0, 2, 4, 6}),
+                                    fixer=RETURN_DEFAULT,
+                                    ),
 
     # Horizontal text justification type (optional) horizontal justification
-    'halign': DXFAttr(72, default=0, optional=True),
     # 0 = Left
+    # 1 = Center
     # 2 = Right
     # 3 = Aligned (if vertical alignment = 0)
     # 4 = Middle (if vertical alignment = 0)
     # 5 = Fit (if vertical alignment = 0)
-
     # This value is meaningful only if the value of a 72 or 73 group is nonzero
     # (if the justification is anything other than baseline/left)
-    'align_point': DXFAttr(11, xtype=XType.point3d, optional=True),
+    'halign': DXFAttr(72, default=0, optional=True,
+                      validator=validator.is_in_integer_range(0, 6),
+                      fixer=RETURN_DEFAULT
+                      ),
+
     # Second alignment point (in OCS) (optional)
-    'thickness': DXFAttr(39, default=0, optional=True),  # Thickness (optional)
+    'align_point': DXFAttr(11, xtype=XType.point3d, optional=True),
+
+    # Thickness in extrusion direction, only supported for SHX font in
+    # AutoCAD/BricsCAD (optional), can be negative
+    'thickness': DXFAttr(39, default=0, optional=True),
+
     # Extrusion direction (optional)
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1),
-                         optional=True),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Z_AXIS,
+                         optional=True,
+                         validator=validator.is_not_null_vector,
+                         fixer=RETURN_DEFAULT
+                         ),
 })
 
 acdb_text2 = DefSubclass('AcDbText', {
-    'valign': DXFAttr(73, default=0, optional=True)
     # Vertical text justification type (optional)
     # 0 = Baseline
     # 1 = Bottom
     # 2 = Middle
     # 3 = Top
+    'valign': DXFAttr(73, default=0, optional=True,
+                      validator=validator.is_in_integer_range(0, 4),
+                      fixer=RETURN_DEFAULT,
+                      )
 })
 
 
@@ -121,9 +160,6 @@ class Text(DXFGraphic):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text.name)
         # for all DXF versions
-        if self.dxf.hasattr('text'):
-            self.dxf.text = _ignore_line_endings(self.dxf.text).rstrip('^')
-
         self.dxf.export_dxf_attribs(tagwriter, [
             'insert', 'height', 'text', 'thickness', 'rotation', 'oblique',
             'style', 'width', 'text_generation_flag', 'halign', 'align_point',
@@ -305,31 +341,11 @@ class Text(DXFGraphic):
         """ Validity check. """
         super().audit(auditor)
         auditor.check_text_style(self)
-        dxf = self.dxf
-        if dxf.hasattr('text'):
-            text = dxf.text
-            if '\n' in text or '\r' in text:
-                text = _ignore_line_endings(text)
-                auditor.fixed_error(
-                    code=AuditError.INVALID_CHARACTER,
-                    message=f'Removed invalid line breaks in entity'
-                            f' {str(self)}.',
-                    dxf_entity=self,
-                )
-            if text.endswith('^'):
-                text = text.rstrip('^')
-                auditor.fixed_error(
-                    code=AuditError.INVALID_CHARACTER,
-                    message=f'Removed invalid char "^" at the end of text in '
-                            f'entity {str(self)}.',
-                    dxf_entity=self,
-                )
-            dxf.text = text
 
 
 def plain_text(text: str) -> str:
     chars = []
-    raw_chars = list(reversed(_ignore_line_endings(caret_decode(text))))
+    raw_chars = list(reversed(validator.fix_one_line_text(caret_decode(text))))
     while len(raw_chars):
         char = raw_chars.pop()
         if char == '%':  # special characters
@@ -345,9 +361,3 @@ def plain_text(text: str) -> str:
             chars.append(char)
 
     return "".join(chars)
-
-
-def _ignore_line_endings(t: str) -> str:
-    # newlines should not appear in TEXT entities but if they do, they are not
-    # handled properly so should be ignored.
-    return t.replace('\n', '').replace('\r', '')

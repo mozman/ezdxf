@@ -60,7 +60,7 @@ acdb_entity = DefSubclass('AcDbEntity', {
                           fixer=validator.fix_lineweight,
                           ),
     'ltscale': DXFAttr(48, default=1.0, dxfversion=DXF2000, optional=True,
-                       validator=validator.is_positive_value,
+                       validator=validator.is_positive,
                        fixer=RETURN_DEFAULT,
                        ),
     # visible=0, invisible=1

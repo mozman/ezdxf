@@ -4,8 +4,9 @@ import pytest
 
 from ezdxf.lldxf.validator import (
     is_in_integer_range, is_valid_aci_color, is_valid_layer_name,
-    is_valid_lineweight, is_not_null_vector, is_positive_value,
-    fix_lineweight, is_integer_bool,
+    is_valid_lineweight, is_not_null_vector, is_positive,
+    fix_lineweight, is_integer_bool, is_valid_one_line_text,
+    fix_one_line_text, is_not_zero, is_not_negative, is_one_of,
 )
 
 
@@ -72,11 +73,11 @@ def test_is_not_null_vector():
 
 
 def test_is_positive_value():
-    assert is_positive_value(1) is True
-    assert is_positive_value(0.5) is True
-    assert is_positive_value(0) is False
-    assert is_positive_value(0.0) is False
-    assert is_positive_value(-1) is False
+    assert is_positive(1) is True
+    assert is_positive(0.5) is True
+    assert is_positive(0) is False
+    assert is_positive(0.0) is False
+    assert is_positive(-1) is False
 
 
 def test_is_integer_bool():
@@ -84,6 +85,57 @@ def test_is_integer_bool():
     assert is_integer_bool(1) is True
     assert is_integer_bool(2) is False
     assert is_integer_bool(-1) is False
+
+
+@pytest.mark.parametrize('invalid_text', [
+    'test\ntext\r',
+    'test\r\ntext',
+    'testtext^',
+    'test\ntext^',
+    'test\ntext^\r',
+])
+def test_is_valid_one_line_text(invalid_text):
+    assert is_valid_one_line_text(invalid_text) is False
+
+
+@pytest.mark.parametrize('invalid_text', [
+    'test\ntext\r',
+    'test\r\ntext',
+    'testtext^',
+    'test\ntext^',
+    'test\ntext^\r',
+])
+def test_fix_invalid_one_line_text(invalid_text):
+    assert fix_one_line_text(invalid_text) == 'testtext'
+
+
+def test_is_not_negative():
+    assert is_not_negative(-1) is False
+    assert is_not_negative(-1e-9) is False
+    assert is_not_negative(0) is True
+    assert is_not_negative(1e-9) is True
+    assert is_not_negative(1) is True
+
+
+def test_is_not_zero():
+    assert is_not_zero(-1) is True
+    assert is_not_zero(-1e-9) is True
+    assert is_not_zero(1e-9) is True
+    assert is_not_zero(1) is True
+    assert is_not_zero(0) is False
+    assert is_not_zero(0.0) is False
+    assert is_not_zero(1e-12) is False
+    assert is_not_zero(-1e-12) is False
+
+
+def test_is_one_of():
+    _validator = is_one_of({1, 3, 5})
+    assert _validator(0) is False
+    assert _validator(2) is False
+    assert _validator(4) is False
+    assert _validator(1) is True
+    assert _validator(3) is True
+    assert _validator(5) is True
 
 
 if __name__ == '__main__':
