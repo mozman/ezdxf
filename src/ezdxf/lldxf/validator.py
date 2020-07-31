@@ -352,6 +352,9 @@ def is_positive(v) -> bool:
     return v > 0
 
 
+is_greater_zero = is_positive
+
+
 def is_integer_bool(v) -> bool:
     return v in (0, 1)
 
