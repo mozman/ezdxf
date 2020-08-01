@@ -11,9 +11,12 @@ from ezdxf.lldxf.const import DXFInternalEzdxfError
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing
 
-__all__ = ['EntityFactory', 'register_entity', 'ENTITY_CLASSES', 'replace_entity', 'new', 'cls']
-
-ENTITY_CLASSES = {}  # registered classes
+__all__ = [
+    'EntityFactory', 'register_entity', 'ENTITY_CLASSES', 'replace_entity',
+    'new', 'cls'
+]
+# Stores all registered classes:
+ENTITY_CLASSES = {}
 DEFAULT_CLASS = DXFTagStorage
 
 
@@ -26,12 +29,13 @@ def replace_entity(cls):
 def register_entity(cls):
     name = cls.DXFTYPE
     if name in ENTITY_CLASSES:
-        raise DXFInternalEzdxfError('Double registration for DXF type {}.'.format(name))
+        raise DXFInternalEzdxfError(f'Double registration for DXF type {name}.')
     ENTITY_CLASSES[name] = cls
     return cls
 
 
-def new(dxftype: str, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
+def new(dxftype: str, dxfattribs: dict = None,
+        doc: 'Drawing' = None) -> 'DXFEntity':
     """ Create a new entity, does not require an instantiated DXF document. """
     class_ = ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
     entity = class_.new(handle=None, owner=None, dxfattribs=dxfattribs, doc=doc)
@@ -59,7 +63,8 @@ class EntityFactory:
         entity = self.new_entity(dxftype=dxftype, dxfattribs=dxfattribs)
         self.doc.entitydb.add(entity)
         if hasattr(entity, 'seqend') and entity.seqend is None:
-            seqend = self.create_db_entry('SEQEND', dxfattribs={'layer': entity.dxf.layer})
+            seqend = self.create_db_entry('SEQEND', dxfattribs={
+                'layer': entity.dxf.layer})
             self.doc.entitydb.add(seqend)
             entity.seqend = seqend
         return entity
@@ -69,7 +74,8 @@ class EntityFactory:
         self.doc.entitydb.add(entity)
         return entity
 
-    def entity_from_tags(self, tags: Union['ExtendedTags', 'Tags']) -> 'DXFEntity':
+    def entity_from_tags(self,
+                         tags: Union['ExtendedTags', 'Tags']) -> 'DXFEntity':
         if not isinstance(tags, ExtendedTags):
             tags = ExtendedTags(tags)
         dxftype = tags.dxftype()
