@@ -5,11 +5,13 @@ import math
 import re
 from typing import TYPE_CHECKING, Union, Tuple, List
 
-from ezdxf.lldxf import const
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf import const, validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+)
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, SPECIAL_CHARS_ENCODING
 from ezdxf.lldxf.tags import Tags
-from ezdxf.math import Vector, Matrix44, OCS
+from ezdxf.math import Vector, Matrix44, OCS, NULLVEC, Z_AXIS, X_AXIS
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.tools.rgb import rgb2int
 from .dxfentity import base_class, SubclassProcessor
@@ -27,59 +29,98 @@ __all__ = [
 ]
 
 acdb_mtext = DefSubclass('AcDbMText', {
-    'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    'insert': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
 
-    # nominal (initial) text height
-    'char_height': DXFAttr(40, default=2.5),
+    # Nominal (initial) text height
+    'char_height': DXFAttr(
+        40, default=2.5,
+        validator=validator.is_greater_zero,
+        fixer=RETURN_DEFAULT,
+    ),
 
-    # reference column width
+    # Reference column width
     'width': DXFAttr(41, optional=True),
 
-    # found in BricsCAD export:
+    # Found in BricsCAD export:
     'defined_height': DXFAttr(46, dxfversion='AC1021'),
 
-    # 1 = Top left; 2 = Top center; 3 = Top right
-    # 4 = Middle left; 5 = Middle center; 6 = Middle right
-    # 7 = Bottom left; 8 = Bottom center; 9 = Bottom right
-    'attachment_point': DXFAttr(71, default=1),
+    # Attachment point:
+    # 1 = Top left
+    # 2 = Top center
+    # 3 = Top right
+    # 4 = Middle left
+    # 5 = Middle center
+    # 6 = Middle right
+    # 7 = Bottom left
+    # 8 = Bottom center
+    # 9 = Bottom right
+    'attachment_point': DXFAttr(
+        71, default=1,
+        validator=validator.is_in_integer_range(0, 10),
+        fixer=RETURN_DEFAULT,
+    ),
 
+    # Flow direction:
     # 1 = Left to right
     # 3 = Top to bottom
     # 5 = By style (the flow direction is inherited from the associated
     #     text style)
-    'flow_direction': DXFAttr(72, default=1, optional=True),
+    'flow_direction': DXFAttr(
+        72, default=1, optional=True,
+        validator=validator.is_one_of({1, 3, 5}),
+        fixer=RETURN_DEFAULT,
+    ),
 
-    # code 1: text
-    # code 3: additional text (optional)
+    # Content text:
+    # group code 1: text
+    # group code 3: additional text (optional)
 
-    'style': DXFAttr(7, default='Standard', optional=True),  # text style name
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1),
-                         optional=True),
+    # Text style name:
+    'style': DXFAttr(
+        7, default='Standard', optional=True,
+        validator=validator.is_valid_table_name,  # do not fix!
+    ),
+    'extrusion': DXFAttr(
+        210, xtype=XType.point3d, default=Z_AXIS, optional=True,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # x-axis direction vector (in WCS)
     # If rotation and text_direction are present, text_direction wins
-    'text_direction': DXFAttr(11, xtype=XType.point3d, default=Vector(1, 0, 0),
-                              optional=True),
+    'text_direction': DXFAttr(
+        11, xtype=XType.point3d, default=X_AXIS, optional=True,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # Horizontal width of the characters that make up the mtext entity.
     # This value will always be equal to or less than the value of *width*,
     # (read-only, ignored if supplied)
     'rect_width': DXFAttr(42, optional=True),
 
-    # vertical height of the mtext entity (read-only, ignored if supplied)
+    # Vertical height of the mtext entity (read-only, ignored if supplied)
     'rect_height': DXFAttr(43, optional=True),
 
-    # in degrees (circle=360 deg) -  error in DXF reference, which says radians
+    # Text rotation in degrees -  Error in DXF reference, which claims radians
     'rotation': DXFAttr(50, default=0, optional=True),
 
-    # line spacing style (optional):
+    # Line spacing style (optional):
     # 1 = At least (taller characters will override)
     # 2 = Exact (taller characters will not override)
-    'line_spacing_style': DXFAttr(73, default=1, optional=True),
+    'line_spacing_style': DXFAttr(
+        73, default=1, optional=True,
+        validator=validator.is_one_of({1, 2}),
+        fixer=RETURN_DEFAULT,
+    ),
 
-    # line spacing factor (optional): Percentage of default (3-on-5) line
+    # Line spacing factor (optional): Percentage of default (3-on-5) line
     # spacing to be applied. Valid values range from 0.25 to 4.00
-    'line_spacing_factor': DXFAttr(44, default=1, optional=True),
+    'line_spacing_factor': DXFAttr(
+        44, default=1, optional=True,
+        validator=validator.is_in_float_range(0.25, 4.00),
+        fixer=validator.fit_into_float_range(0.25, 4.00),
+    ),
 
     # Determines how much border there is around the text.
     # (45) + (90) + (63) all three required, if one of them is used
@@ -90,10 +131,16 @@ acdb_mtext = DefSubclass('AcDbMText', {
     # 1 = color -> (63) < (421) or (431)
     # 2 = drawing window color
     # 3 = use background color
-    'bg_fill': DXFAttr(90, dxfversion='AC1021'),
+    'bg_fill': DXFAttr(
+        90, dxfversion='AC1021',
+        validator=validator.is_in_integer_range(0, 4),
+    ),
 
     # background fill color as ACI, required even true color is used
-    'bg_fill_color': DXFAttr(63, dxfversion='AC1021'),
+    'bg_fill_color': DXFAttr(
+        63, dxfversion='AC1021',
+        validator=validator.is_valid_aci_color,
+    ),
 
     # 420-429? : background fill color as true color value, (63) also required
     # but ignored
@@ -161,8 +208,8 @@ class MText(DXFGraphic):
         """ Copy entity data: text """
         entity.text = self.text
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             self.load_mtext(processor.subclasses[2])
@@ -247,8 +294,7 @@ class MText(DXFGraphic):
 
     def set_bg_color(self, color: Union[int, str, Tuple[int, int, int], None],
                      scale: float = 1.5):
-        """
-        Set background color as :ref:`ACI` value or as name string or as RGB
+        """ Set background color as :ref:`ACI` value or as name string or as RGB
         tuple ``(r, g, b)``.
 
         Use special color name ``canvas``, to set background color to canvas
@@ -521,7 +567,6 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
 def _dxf_escape_line_endings(text: str) -> str:
     # replacing '\r\n' and '\n' by '\P' is required when exporting, else an
     # invalid DXF file would be created.
-    # \r on it's own is not counted as a line ending
     return text.replace('\r', '').replace('\n', '\\P')
 
 
