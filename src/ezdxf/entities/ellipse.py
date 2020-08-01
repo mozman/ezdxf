@@ -40,25 +40,33 @@ def fix_ratio(ratio: float) -> float:
 
 acdb_ellipse = DefSubclass('AcDbEllipse', {
     'center': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
-    'major_axis': DXFAttr(11, xtype=XType.point3d, default=X_AXIS,
-                          validator=validator.is_not_null_vector,
-                          # todo: should this be fixed?
-                          ),
-    # relative to the center
-    # extrusion does not establish an OCS, it is just the normal vector
-    # of the ellipse plane:
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Z_AXIS,
-                         optional=True,
-                         validator=validator.is_not_null_vector,
-                         fixer=RETURN_DEFAULT,
-                         ),
-    # has to be in range 1e-6 to 1, but could be negative
-    'ratio': DXFAttr(40, default=MAX_RATIO, validator=is_valid_ratio,
-                     fixer=fix_ratio),
+
+    # Major axis vector from 'center':
+    'major_axis': DXFAttr(
+        11, xtype=XType.point3d, default=X_AXIS,
+        validator=validator.is_not_null_vector,
+
+    ),
+
+    # The extrusion vector does not establish an OCS, it is just the normal
+    # vector of the ellipse plane:
+    'extrusion': DXFAttr(
+        210, xtype=XType.point3d, default=Z_AXIS,
+        optional=True,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
+    # Ratio has to be in the range from 1e-6 to 1, but could be negative:
+    'ratio': DXFAttr(
+        40, default=MAX_RATIO,
+        validator=is_valid_ratio,
+        fixer=fix_ratio
+    ),
+    # Start of ellipse, this value is 0.0 for a full ellipse:
     'start_param': DXFAttr(41, default=0),
-    # this value is 0.0 for a full ellipse
+
+    # End of ellipse, this value is 2*pi for a full ellipse:
     'end_param': DXFAttr(42, default=math.tau),
-    # this value is 2*pi for a full ellipse
 })
 
 HALF_PI = math.pi / 2.0
@@ -71,8 +79,8 @@ class Ellipse(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_ellipse)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_ellipse)
@@ -106,8 +114,7 @@ class Ellipse(DXFGraphic):
         return list(self.vertices([self.dxf.end_param]))[0]
 
     def construction_tool(self) -> ConstructionEllipse:
-        """
-        Returns construction tool :class:`ezdxf.math.ConstructionEllipse`.
+        """ Returns construction tool :class:`ezdxf.math.ConstructionEllipse`.
 
         .. versionadded:: 0.13
 
@@ -123,8 +130,7 @@ class Ellipse(DXFGraphic):
         )
 
     def apply_construction_tool(self, e: ConstructionEllipse) -> 'Ellipse':
-        """
-        Set ELLIPSE data from construction tool
+        """ Set ELLIPSE data from construction tool
         :class:`ezdxf.math.ConstructionEllipse`.
 
         .. versionadded:: 0.13
@@ -145,15 +151,12 @@ class Ellipse(DXFGraphic):
         yield from ellipse.get_params(start, end, num)
 
     def vertices(self, params: Iterable[float]) -> Iterable[Vector]:
-        """
-        Yields vertices on ellipse for iterable `params` in WCS.
+        """ Yields vertices on ellipse for iterable `params` in WCS.
 
         Args:
             params: param values in the range from ``0`` to ``2*pi`` in radians,
                 param goes counter clockwise around the extrusion vector,
                 major_axis = local x-axis = 0 rad.
-
-        .. versionadded:: 0.11
 
         """
         yield from self.construction_tool().vertices(params)
