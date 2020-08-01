@@ -5,20 +5,22 @@ from typing import (
     TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict,
 )
 from itertools import chain
-from ezdxf.math import Vector, Matrix44, NULLVEC
-from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
-
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf import validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+)
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.lldxf import const
-from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
-from .factory import register_entity
-from .lwpolyline import FORMAT_CODES
+from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.explode import virtual_polyline_entities, explode_entity
 from ezdxf.query import EntityQuery
 from ezdxf.entities import factory
 from ezdxf.audit import AuditError
+from .dxfentity import base_class, SubclassProcessor
+from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
+from .factory import register_entity
+from .lwpolyline import FORMAT_CODES
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -30,10 +32,12 @@ __all__ = ['Polyline', 'Polyface', 'Polymesh']
 
 acdb_polyline = DefSubclass('AcDbPolylineDummy', {
     # AcDbPolylineDummy is a temporary solution while loading
-    # 66: obsolete - Vertices follow flag
+    # Group code 66 is obsolete - Vertices follow flag
+
     # Elevation is a "dummy" point. The x and y values are always 0,
     # and the Z value is the polyline elevation:
     'elevation': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
+
     # Polyline flags (bit-coded):
     # 1 = closed POLYLINE or a POLYMESH closed in the M direction
     # 2 = Curve-fit vertices have been added
@@ -46,19 +50,35 @@ acdb_polyline = DefSubclass('AcDbPolylineDummy', {
     'flags': DXFAttr(70, default=0),
     'default_start_width': DXFAttr(40, default=0, optional=True),
     'default_end_width': DXFAttr(41, default=0, optional=True),
-    'm_count': DXFAttr(71, default=0, optional=True),
-    'n_count': DXFAttr(72, default=0, optional=True),
+    'm_count': DXFAttr(
+        71, default=0, optional=True,
+        validator=validator.is_greater_or_equal_zero,
+        fixer=RETURN_DEFAULT,
+    ),
+    'n_count': DXFAttr(
+        72, default=0, optional=True,
+        validator=validator.is_greater_or_equal_zero,
+        fixer=RETURN_DEFAULT,
+    ),
     'm_smooth_density': DXFAttr(73, default=0, optional=True),
     'n_smooth_density': DXFAttr(74, default=0, optional=True),
+
     # Curves and smooth surface type:
     # 0 = No smooth surface fitted
     # 5 = Quadratic B-spline surface
     # 6 = Cubic B-spline surface
     # 8 = Bezier surface
-    'smooth_type': DXFAttr(75, default=0, optional=True),
+    'smooth_type': DXFAttr(
+        75, default=0, optional=True,
+        validator=validator.is_one_of({0, 5, 6, 8}),
+        fixer=RETURN_DEFAULT,
+    ),
     'thickness': DXFAttr(39, default=0, optional=True),
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1),
-                         optional=True),
+    'extrusion': DXFAttr(
+        210, xtype=XType.point3d, default=Z_AXIS, optional=True,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
 })
 
 
@@ -137,9 +157,8 @@ class Polyline(DXFGraphic):
             # processed like a VERTEX entity in set_owner():
             self.seqend.dxf.owner = owner
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
-        # Base class and 'AcDbEntity' processing by the parent class:
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
@@ -153,8 +172,7 @@ class Polyline(DXFGraphic):
             )
             name = processor.subclasses[2][0].value
             if len(tags):
-                # do not log:
-                # 66: attribs follow, not required
+                # do not log group code 66: attribs follow, not required
                 processor.log_unprocessed_tags(
                     unprocessed_tags=tags.filter((66,)), subclass=name
                 )
@@ -162,27 +180,17 @@ class Polyline(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # Base class and AcDbEntity export is done by the parent class.
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, self.get_mode())
 
         tagwriter.write_tag2(66, 1)  # Vertices follow
         self.dxf.export_dxf_attribs(tagwriter, [
-            'elevation',
-            'flags',
-            'default_start_width',
-            'default_end_width',
-            'm_count',
-            'n_count',
-            'm_smooth_density',
-            'n_smooth_density',
-            'smooth_type',
-            'thickness',
-            'extrusion',
+            'elevation', 'flags', 'default_start_width', 'default_end_width',
+            'm_count', 'n_count', 'm_smooth_density', 'n_smooth_density',
+            'smooth_type', 'thickness', 'extrusion',
         ])
-        # XDATA and embedded objects export will be done by the parent class,
-        # the following VERTEX entities and the SEQEND entity is exported by
+        # The following VERTEX entities and the SEQEND entity is exported by
         # EntitySpace().
 
     def export_seqend(self, tagwriter: 'TagWriter'):
@@ -199,8 +207,7 @@ class Polyline(DXFGraphic):
         super().destroy()
 
     def on_layer_change(self, layer: str):
-        """
-        Event handler for layer change. Changes also the layer of all vertices.
+        """ Event handler for layer change. Changes also the layer of all vertices.
 
         Args:
             layer: new layer as string
@@ -210,8 +217,7 @@ class Polyline(DXFGraphic):
             v.dxf.layer = layer
 
     def on_linetype_change(self, linetype: str):
-        """
-        Event handler for linetype change. Changes also the linetype of all
+        """ Event handler for linetype change. Changes also the linetype of all
         vertices.
 
         Args:
@@ -916,11 +922,11 @@ class Polymesh(Polyline):
 
 
 class MeshVertexCache:
-    """
-    Cache mesh vertices in a dict, keys are 0-based (row, col)-tuples.
+    """ Cache mesh vertices in a dict, keys are 0-based (row, col)-tuples.
 
     vertices:
-        Dict of mesh vertices, keys are 0-based (row, col)-tuples. Writing to this dict doesn't change the DXF entity.
+        Dict of mesh vertices, keys are 0-based (row, col)-tuples. Writing to
+        this dict doesn't change the DXF entity.
 
     """
     __slots__ = ('vertices',)
@@ -971,6 +977,7 @@ acdb_vertex = DefSubclass('AcDbVertex', {  # last subclass index -1
     'location': DXFAttr(10, xtype=XType.point3d),
     'start_width': DXFAttr(40, default=0, optional=True),
     'end_width': DXFAttr(41, default=0, optional=True),
+
     # Bulge (optional; default is 0). The bulge is the tangent of one fourth
     # the included angle for an arc segment, made negative if the arc goes
     # clockwise from the start point to the endpoint. A bulge of 0 indicates
@@ -1011,8 +1018,8 @@ class DXFVertex(DXFGraphic):
     FACE_FLAGS = POLYGON_MESH_VERTEX + POLYFACE_MESH_VERTEX
     VTX3D = POLYLINE_3D_VERTEX + POLYGON_MESH_VERTEX + POLYFACE_MESH_VERTEX
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
@@ -1028,7 +1035,6 @@ class DXFVertex(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # Base class and AcDbEntity export is done by parent class.
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
             if self.is_face_record:
@@ -1052,11 +1058,8 @@ class DXFVertex(DXFGraphic):
 
         self.dxf.export_dxf_attribs(tagwriter, [
             'location', 'start_width', 'end_width', 'bulge', 'flags', 'tangent',
-            'vtx0', 'vtx1', 'vtx2', 'vtx3',
-            'vertex_identifier'
+            'vtx0', 'vtx1', 'vtx2', 'vtx3', 'vertex_identifier'
         ])
-        # XDATA and embedded objects export will be done by parent class
-        # following VERTEX entities and SEQEND is exported by EntitySpace()
 
     @property
     def is_2d_polyline_vertex(self) -> bool:
