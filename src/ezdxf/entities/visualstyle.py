@@ -3,6 +3,7 @@
 # Created: 2019-03-12
 from typing import TYPE_CHECKING
 import copy
+from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from ezdxf.lldxf.attributes import DXFAttributes, DefSubclass, DXFAttr
 from ezdxf.lldxf.tags import Tags
@@ -17,7 +18,7 @@ __all__ = ['VisualStyle']
 
 acdb_visualstyle = DefSubclass('AcDbVisualStyle', {
     'description': DXFAttr(2),
-    'style_type': DXFAttr(70),
+    # Style type:
     # 0 = Flat
     # 1 = FlatWithEdges
     # 2 = Gouraud
@@ -43,16 +44,24 @@ acdb_visualstyle = DefSubclass('AcDbVisualStyle', {
     # 25 = X-Ray
     # 26 = Shaded with edges
     # 27 = Shaded
-    'face_lighting_model': DXFAttr(71),
+    'style_type': DXFAttr(70, validator=validator.is_in_integer_range(0, 28)),
+
+    # Face lighting type:
     # 0 = Invisible
     # 1 = Visible
     # 2 = Phong
     # 3 = Gooch
-    'face_lighting_quality': DXFAttr(72),
+    'face_lighting_model': DXFAttr(
+        71, validator=validator.is_in_integer_range(0, 4)),
+
+    # Face lighting quality:
     # 0 = No lighting
     # 1 = Per face lighting
     # 2 = Per vertex lighting
-    'face_color_mode': DXFAttr(73),
+    'face_lighting_quality': DXFAttr(
+        72, validator=validator.is_in_integer_range(0, 3)),
+
+    # Face color mode:
     # 0 = No color
     # 1 = Object color
     # 2 = Background color
@@ -60,19 +69,29 @@ acdb_visualstyle = DefSubclass('AcDbVisualStyle', {
     # 4 = Mono color
     # 5 = Tinted
     # 6 = Desaturated
-    'face_modifiers': DXFAttr(90),
+    'face_color_mode': DXFAttr(
+        73, validator=validator.is_in_integer_range(0, 6)),
+
+    # Face modifiers:
     # 0 = No modifiers
     # 1 = Opacity
     # 2 = Specular
+    # 3 = Unknown
+    'face_modifiers': DXFAttr(
+        90, validator=validator.is_in_integer_range(0, 4)),
+
     'face_opacity_level': DXFAttr(40),
     'face_specular_level': DXFAttr(41),
     'color1': DXFAttr(62),
     'color2': DXFAttr(63),
     'face_style_mono_color': DXFAttr(421),
-    'edge_style_model': DXFAttr(74),
+
+    # Edge style model:
     # 0 = No edges
     # 1 = Isolines
     # 2 = Facet edges
+    'edge_style_model': DXFAttr(
+        74, validator=validator.is_in_integer_range(0, 3)),
     'edge_style': DXFAttr(91),
     'edge_intersection_color': DXFAttr(64),
     'edge_obscured_color': DXFAttr(65),
@@ -120,7 +139,8 @@ class VisualStyle(DXFObject):
         """ Copy acad internal data. """
         entity.acad_xdata = copy.deepcopy(self.acad_xdata)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             self.acad_xdata = self.store_acad_xdata(processor.subclasses[1])
@@ -145,16 +165,18 @@ class VisualStyle(DXFObject):
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_visualstyle.name)
         self.dxf.export_dxf_attribs(tagwriter, [
-            'description', 'style_type', 'face_lighting_model', 'face_lighting_quality', 'face_color_mode',
-            'face_modifiers', 'face_opacity_level', 'face_specular_level', 'color1', 'color2',
-            'face_style_mono_color',
-            'edge_style_model', 'edge_style', 'edge_intersection_color', 'edge_obscured_color',
-            'edge_obscured_linetype', 'edge_intersection_linetype', 'edge_crease_angle', 'edge_modifiers',
-            'edge_color', 'edge_opacity_level', 'edge_width', 'edge_overhang', 'edge_jitter',
-            'edge_silhouette_color',
-            'edge_silhouette_width', 'edge_halo_gap', 'edge_isoline_count', 'edge_hide_precision',
-            'edge_style_apply',
-            'style_display_settings', 'brightness', 'shadow_type', 'unknown1', 'internal_use_only_flag',
+            'description', 'style_type', 'face_lighting_model',
+            'face_lighting_quality', 'face_color_mode', 'face_modifiers',
+            'face_opacity_level', 'face_specular_level', 'color1', 'color2',
+            'face_style_mono_color', 'edge_style_model', 'edge_style',
+            'edge_intersection_color', 'edge_obscured_color',
+            'edge_obscured_linetype', 'edge_intersection_linetype',
+            'edge_crease_angle', 'edge_modifiers', 'edge_color',
+            'edge_opacity_level', 'edge_width', 'edge_overhang', 'edge_jitter',
+            'edge_silhouette_color', 'edge_silhouette_width', 'edge_halo_gap',
+            'edge_isoline_count', 'edge_hide_precision', 'edge_style_apply',
+            'style_display_settings', 'brightness', 'shadow_type', 'unknown1',
+            'internal_use_only_flag',
         ])
         if self.acad_xdata:
             tagwriter.write_tags(self.acad_xdata)
