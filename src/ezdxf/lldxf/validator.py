@@ -373,6 +373,9 @@ def is_not_negative(v) -> bool:
     return v >= 0
 
 
+is_greater_or_equal_zero = is_not_zero
+
+
 def is_positive(v) -> bool:
     return v > 0
 
