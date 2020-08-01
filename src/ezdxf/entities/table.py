@@ -1,9 +1,12 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12, SUBCLASS_MARKER, DXFInternalEzdxfError
+from ezdxf.lldxf.const import (
+    DXF2000, STRUCTURE_MARKER, OWNER_CODE, SUBCLASS_MARKER,
+    DXFInternalEzdxfError,
+)
 
 from .dxfentity import SubclassProcessor, DXFEntity
 from .factory import register_entity
@@ -26,10 +29,11 @@ acdb_symbol_table = DefSubclass('AcDbSymbolTable', {
 
 @register_entity
 class TableHead(DXFEntity):
-    DXFTYPE = 'TABLE'  # storing as class var needs less memory
+    DXFTYPE = 'TABLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             dxf.name = processor.base_class.get_first_value(2)
@@ -38,7 +42,8 @@ class TableHead(DXFEntity):
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         if self.dxf.handle is None:
-            raise DXFInternalEzdxfError('TABLE needs a handle, maybe loaded from DXF R12 without handle!')
+            raise DXFInternalEzdxfError(
+                'TABLE needs a handle, maybe loaded from DXF R12 without handle!')
         # 1. tag: (0, DXFTYPE)
         tagwriter.write_tag2(STRUCTURE_MARKER, self.DXFTYPE)
         tagwriter.write_tag2(2, self.dxf.name)
@@ -50,9 +55,7 @@ class TableHead(DXFEntity):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table.name)
             tagwriter.write_tag2(70, self.dxf.count)
             if self.dxf.name == 'DIMSTYLE':  # the one exception - typical Autodesk
-                    tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbDimStyleTable')
+                tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbDimStyleTable')
         else:  # DXF R12
             #  TABLE does not need a handle at all
             tagwriter.write_tag2(70, self.dxf.count)
-
-
