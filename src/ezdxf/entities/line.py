@@ -1,11 +1,16 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
-from ezdxf.math import Vector, UCS, Matrix44
-from ezdxf.math.transformtools import transform_thickness_and_extrusion_without_ocs
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf import validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+)
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
+from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math.transformtools import (
+    transform_thickness_and_extrusion_without_ocs,
+)
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -16,10 +21,14 @@ if TYPE_CHECKING:
 __all__ = ['Line']
 
 acdb_line = DefSubclass('AcDbLine', {
-    'start': DXFAttr(10, xtype=XType.point3d, default=(0, 0, 0)),
-    'end': DXFAttr(11, xtype=XType.point3d, default=(0, 0, 0)),
+    'start': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
+    'end': DXFAttr(11, xtype=XType.point3d, default=NULLVEC),
     'thickness': DXFAttr(39, default=0, optional=True),
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0.0, 0.0, 1.0), optional=True),
+    'extrusion': DXFAttr(
+        210, xtype=XType.point3d, default=Z_AXIS, optional=True,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
 })
 
 
@@ -29,10 +38,11 @@ class Line(DXFGraphic):
     DXFTYPE = 'LINE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_line)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
-        """
-        Adds subclass processing for 'AcDbLine', requires previous base class and 'AcDbEntity' processing by parent
-        class. (internal API)
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        """ Adds subclass processing for 'AcDbLine', requires previous base
+        class and 'AcDbEntity' processing by parent class. (internal API)
+
         """
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -43,14 +53,12 @@ class Line(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. (internal API) """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_line.name)
-        # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['start', 'end', 'thickness', 'extrusion'])
-        # xdata and embedded objects export will be done by parent class
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'start', 'end', 'thickness', 'extrusion',
+        ])
 
     def transform(self, m: Matrix44) -> 'Line':
         """ Transform LINE entity by transformation matrix `m` inplace.
@@ -65,8 +73,8 @@ class Line(DXFGraphic):
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> 'Line':
-        """ Optimized LINE translation about `dx` in x-axis, `dy` in y-axis and `dz` in z-axis,
-        returns `self` (floating interface).
+        """ Optimized LINE translation about `dx` in x-axis, `dy` in y-axis and
+        `dz` in z-axis.
 
         .. versionadded:: 0.13
 
