@@ -41,7 +41,8 @@ Version 0.14a1 - dev
   argument `safe` is deprecated, will be removed in v0.16
 - CHANGE: Dictionary raise `DXFValueError` for adding invalid handles
 - REMOVE: Alias `DXFEntity.drawing`, replaced by `DXFEntity.doc`
-- REMOVE: `DXFInvalidLayerName` replaced by `DXFValueError` 
+- REMOVE: `DXFInvalidLayerName`, replaced by `DXFValueError` 
+- REMOVE: `Image.get_boundary_path()`, replaced by property `Image.boundary_path` 
 
 Version 0.13.1 - 2020-07-18
 ---------------------------

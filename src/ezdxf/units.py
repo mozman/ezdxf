@@ -77,7 +77,7 @@ class PaperSpaceUnits:
 # 15 = Decameters = 10m
 # 16 = Hectometers = 100m
 # 17 = Gigameters = 1e+9 m
-# 18 = Astronomical units = 149 597 870 700m = 1.581 250 74 e−5 ly =  4.848 136 81 e−6 Parsec
+# 18 = Astronomical units = 149597870700m = 1.58125074e−5 ly =  4.84813681e−6 Parsec
 # 19 = Light years = 9.46e15 m
 # 20 = Parsecs =  3.09e16 m
 # 21 = US Survey Feet
