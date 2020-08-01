@@ -5,7 +5,7 @@ import pytest
 import ezdxf
 
 from ezdxf.entities.dictionary import Dictionary, DictionaryWithDefault
-from ezdxf import DXFKeyError
+from ezdxf import DXFKeyError, DXFValueError
 from ezdxf.audit import Auditor, AuditError
 
 
@@ -143,7 +143,7 @@ def test_get_entity_invalid_handle(doc):
     assert rootdict['TEST'].dxf.handle == 'FFFF'
     assert rootdict['TEST'].dxf.owner == 'ABBA'
 
-    with pytest.raises(DXFKeyError):
+    with pytest.raises(DXFValueError):
         # just for testing, in production only DXFEntity() objects should be assigned
         rootdict['TEST'] = 'FFFF'
 
