@@ -58,8 +58,9 @@ acdb_visualstyle = DefSubclass('AcDbVisualStyle', {
     # 0 = No lighting
     # 1 = Per face lighting
     # 2 = Per vertex lighting
+    # 3 = Unknown
     'face_lighting_quality': DXFAttr(
-        72, validator=validator.is_in_integer_range(0, 3)),
+        72, validator=validator.is_in_integer_range(0, 4)),
 
     # Face color mode:
     # 0 = No color
