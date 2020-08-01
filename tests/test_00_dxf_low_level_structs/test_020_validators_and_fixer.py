@@ -7,6 +7,8 @@ from ezdxf.lldxf.validator import (
     is_valid_lineweight, is_not_null_vector, is_positive,
     fix_lineweight, is_integer_bool, is_valid_one_line_text,
     fix_one_line_text, is_not_zero, is_not_negative, is_one_of,
+    is_in_float_range, fit_into_float_range, fix_integer_bool,
+    fit_into_integer_range,
 )
 
 
@@ -65,6 +67,31 @@ def test_is_in_integer_range():
     assert validator(10) is False, 'exclude end value'
 
 
+def test_fit_into_integer_range():
+    fixer = fit_into_integer_range(0, 6)
+    assert fixer(-1) == 0
+    assert fixer(0) == 0
+    assert fixer(5) == 5
+    assert fixer(6) == 5, 'exclude end value'
+
+
+def test_is_in_float_range():
+    validator = is_in_float_range(1, 10)
+    assert validator(0) is False
+    assert validator(1) is True
+    assert validator(9) is True
+    assert validator(10) is True, 'include end value'
+
+
+def test_fit_into_float_range():
+    fixer = fit_into_float_range(0.25, 4.00)
+    assert fixer(0.24) == 0.25
+    assert fixer(0.25) == 0.25
+    assert fixer(0.50) == 0.50
+    assert fixer(4.00) == 4.00, 'include end value'
+    assert fixer(4.01) == 4.00
+
+
 def test_is_not_null_vector():
     assert is_not_null_vector((0, 0, 1)) is True
     assert is_not_null_vector((0, 1, 0)) is True
@@ -85,6 +112,16 @@ def test_is_integer_bool():
     assert is_integer_bool(1) is True
     assert is_integer_bool(2) is False
     assert is_integer_bool(-1) is False
+
+
+def test_fix_integer_bool():
+    assert fix_integer_bool(0) == 0
+    assert fix_integer_bool(1) == 1
+    assert fix_integer_bool(None) == 0
+    assert fix_integer_bool('') == 0
+    assert fix_integer_bool('A') == 1
+    assert fix_integer_bool(2) == 1
+    assert fix_integer_bool(-1) == 1
 
 
 @pytest.mark.parametrize('invalid_text', [

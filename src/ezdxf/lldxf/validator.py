@@ -330,8 +330,33 @@ def is_valid_aci_color(aci: int) -> bool:
 
 
 def is_in_integer_range(start: int, end: int):
+    """ Range of integer values, excluding the `end` value. """
+
     def _validator(value: int) -> bool:
         return start <= value < end
+
+    return _validator
+
+
+def fit_into_integer_range(start: int, end: int):
+    def _fixer(value: int) -> int:
+        return min(max(value, start), end - 1)
+
+    return _fixer
+
+
+def fit_into_float_range(start: float, end: float):
+    def _fixer(value: float) -> float:
+        return min(max(value, start), end)
+
+    return _fixer
+
+
+def is_in_float_range(start: float, end: float):
+    """ Range of float values, including the `end` value. """
+
+    def _validator(value: float) -> bool:
+        return start <= value <= end
 
     return _validator
 
@@ -357,6 +382,10 @@ is_greater_zero = is_positive
 
 def is_integer_bool(v) -> bool:
     return v in (0, 1)
+
+
+def fix_integer_bool(v) -> int:
+    return 1 if v else 0
 
 
 def is_one_of(values: Set):
