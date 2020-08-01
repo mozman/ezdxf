@@ -3,12 +3,12 @@
 # License: MIT License
 from typing import TYPE_CHECKING
 import logging
-from ezdxf.math import UCS, NULLVEC, X_AXIS, Y_AXIS
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.lldxf import validator
+from ezdxf.math import UCS, NULLVEC, X_AXIS, Y_AXIS
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
@@ -24,14 +24,16 @@ acdb_ucs = DefSubclass('AcDbUCSTableRecord', {
     'name': DXFAttr(2, validator=validator.is_valid_table_name),
     'flags': DXFAttr(70, default=0),
     'origin': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
-    'xaxis': DXFAttr(11, xtype=XType.point3d, default=X_AXIS,
-                     validator=validator.is_not_null_vector,
-                     fixer=RETURN_DEFAULT,
-                     ),
-    'yaxis': DXFAttr(12, xtype=XType.point3d, default=Y_AXIS,
-                     validator=validator.is_not_null_vector,
-                     fixer=RETURN_DEFAULT,
-                     ),
+    'xaxis': DXFAttr(
+        11, xtype=XType.point3d, default=X_AXIS,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
+    'yaxis': DXFAttr(
+        12, xtype=XType.point3d, default=Y_AXIS,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
 })
 
 
@@ -41,8 +43,8 @@ class UCSTable(DXFEntity):
     DXFTYPE = 'UCS'
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_ucs)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_ucs)
@@ -52,12 +54,10 @@ class UCSTable(DXFEntity):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_ucs.name)
 
-        # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, [
             'name', 'flags', 'origin', 'xaxis', 'yaxis'
         ])
