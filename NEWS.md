@@ -2,11 +2,11 @@
 News
 ====
 
-Version 0.14a1 - dev
+Version 0.14a2 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-14.html
-- NEW: DXF attribute setter validator, some special and undocumented Autodesk 
+- NEW: DXF attribute setter validation, some special and undocumented Autodesk 
   table names may raise `ValueError()` exceptions, please report this table 
   names (layers, linetypes, styles, ...). 
 - NEW: `addons.drawing.Frontend()` supports width attributes of LWPOLYLINE and 
