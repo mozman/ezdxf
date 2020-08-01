@@ -31,16 +31,18 @@ acdb_text = DefSubclass('AcDbText', {
     'insert': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
 
     # Text height
-    'height': DXFAttr(40, default=2.5,
-                      validator=validator.is_positive,
-                      fixer=RETURN_DEFAULT,
-                      ),
+    'height': DXFAttr(
+        40, default=2.5,
+        validator=validator.is_greater_zero,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # Text content as sting:
-    'text': DXFAttr(1, default='',
-                    validator=validator.is_valid_one_line_text,
-                    fixer=validator.fix_one_line_text,
-                    ),
+    'text': DXFAttr(
+        1, default='',
+        validator=validator.is_valid_one_line_text,
+        fixer=validator.fix_one_line_text,
+    ),
 
     # Text rotation in degrees (optional)
     'rotation': DXFAttr(50, default=0, optional=True),
@@ -54,18 +56,20 @@ acdb_text = DefSubclass('AcDbText', {
 
     # Relative X scale factor—width (optional)
     # This value is also adjusted when fit-type text is used
-    'width': DXFAttr(41, default=1, optional=True,
-                     validator=validator.is_positive,
-                     fixer=RETURN_DEFAULT,
-                     ),
+    'width': DXFAttr(
+        41, default=1, optional=True,
+        validator=validator.is_greater_zero,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # Text generation flags (optional)
     # 2 = backward (mirror-x),
     # 4 = upside down (mirror-y)
-    'text_generation_flag': DXFAttr(71, default=0, optional=True,
-                                    validator=validator.is_one_of({0, 2, 4, 6}),
-                                    fixer=RETURN_DEFAULT,
-                                    ),
+    'text_generation_flag': DXFAttr(
+        71, default=0, optional=True,
+        validator=validator.is_one_of({0, 2, 4, 6}),
+        fixer=RETURN_DEFAULT,
+    ),
 
     # Horizontal text justification type (optional) horizontal justification
     # 0 = Left
@@ -76,10 +80,11 @@ acdb_text = DefSubclass('AcDbText', {
     # 5 = Fit (if vertical alignment = 0)
     # This value is meaningful only if the value of a 72 or 73 group is nonzero
     # (if the justification is anything other than baseline/left)
-    'halign': DXFAttr(72, default=0, optional=True,
-                      validator=validator.is_in_integer_range(0, 6),
-                      fixer=RETURN_DEFAULT
-                      ),
+    'halign': DXFAttr(
+        72, default=0, optional=True,
+        validator=validator.is_in_integer_range(0, 6),
+        fixer=RETURN_DEFAULT
+    ),
 
     # Second alignment point (in OCS) (optional)
     'align_point': DXFAttr(11, xtype=XType.point3d, optional=True),
@@ -89,11 +94,12 @@ acdb_text = DefSubclass('AcDbText', {
     'thickness': DXFAttr(39, default=0, optional=True),
 
     # Extrusion direction (optional)
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Z_AXIS,
-                         optional=True,
-                         validator=validator.is_not_null_vector,
-                         fixer=RETURN_DEFAULT
-                         ),
+    'extrusion': DXFAttr(
+        210, xtype=XType.point3d, default=Z_AXIS,
+        optional=True,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT
+    ),
 })
 
 acdb_text2 = DefSubclass('AcDbText', {
@@ -102,10 +108,11 @@ acdb_text2 = DefSubclass('AcDbText', {
     # 1 = Bottom
     # 2 = Middle
     # 3 = Top
-    'valign': DXFAttr(73, default=0, optional=True,
-                      validator=validator.is_in_integer_range(0, 4),
-                      fixer=RETURN_DEFAULT,
-                      )
+    'valign': DXFAttr(
+        73, default=0, optional=True,
+        validator=validator.is_in_integer_range(0, 4),
+        fixer=RETURN_DEFAULT,
+    )
 })
 
 

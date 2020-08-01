@@ -93,7 +93,7 @@ def test_default_new():
     assert entity.dxf.hookline_direction == 1
     assert entity.dxf.has_hookline == 1
     assert entity.dxf.text_height == 1
-    assert entity.dxf.text_width == 0
+    assert entity.dxf.text_width == 1
     assert entity.dxf.block_color == 7
     assert entity.dxf.annotation_handle == '0'
     assert entity.dxf.normal_vector == (0, 0, 1)
