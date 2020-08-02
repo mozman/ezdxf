@@ -47,6 +47,7 @@ class Path(abc.Sequence):
         return iter(self._commands)
 
     def __copy__(self) -> 'Path':
+        """ Returns a new copy of :class:`Path` with shared immutable data. """
         copy = Path(self._start)
         # immutable data
         copy._commands = list(self._commands)

@@ -68,6 +68,8 @@ cubic Bézier-curves, other B-splines will be approximated.
 
     .. automethod:: close
 
+    .. automethod:: clone() -> Path
+
     .. automethod:: reversed() -> Path
 
     .. automethod:: clockwise() -> Path
