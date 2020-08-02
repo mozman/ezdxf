@@ -37,6 +37,10 @@ Version 0.14a2 - dev
 - NEW: `Bezier.reverse()` returns object with reversed control point order
 - NEW: `has_clockwise_orientation(vertices)` returns `True` if the closed 
   polygon of 2D vertices has clockwise orientation
+- NEW: `Path.control_vertices()` returns all control vertices in consecutive 
+  order
+- NEW: `Path.has_clockwise_orientation()` returns `True` if 2D path has 
+  clockwise orientation
 - CHANGE: `linspace()` uses `Decimal()` for precise calculations, but still 
   returns an iterable of `float`
 - CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 

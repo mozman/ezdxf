@@ -58,6 +58,10 @@ cubic Bézier-curves, other B-splines will be approximated.
 
     .. automethod:: from_hatch_edge_path
 
+    .. automethod:: control_vertices
+
+    .. automethod:: has_clockwise_orientation
+
     .. automethod:: line_to(location: Vector)
 
     .. automethod:: close

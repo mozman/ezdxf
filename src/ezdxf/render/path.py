@@ -245,7 +245,9 @@ class Path(abc.Sequence):
                     yield cmd[1]
 
     def has_clockwise_orientation(self) -> bool:
-        """ Returns ``True`` if path has clockwise orientation. """
+        """ Returns ``True`` if 2D path has clockwise orientation, ignores
+        z-axis of all control vertices.
+        """
         return has_clockwise_orientation(self.control_vertices())
 
     def line_to(self, location: 'Vertex') -> None:
