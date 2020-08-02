@@ -4,37 +4,46 @@
 # License: MIT License
 from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 from .construct2d import (
-    is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d, distance_point_line_2d,
-    is_point_on_line_2d, is_point_in_polygon_2d, is_point_left_of_line, point_to_line_relation,
-    linspace, enclosing_angles, reflect_angle_x_deg,
-    reflect_angle_y_deg, sign,
+    is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d,
+    distance_point_line_2d, is_point_on_line_2d, is_point_in_polygon_2d,
+    is_point_left_of_line, point_to_line_relation, linspace, enclosing_angles,
+    reflect_angle_x_deg, reflect_angle_y_deg, sign, has_clockwise_orientation,
 )
 from .construct3d import (
-    is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState, intersection_ray_ray_3d, normal_vector_3p,
+    is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState,
+    intersection_ray_ray_3d, normal_vector_3p,
 )
 from .matrix44 import Matrix44
 from .linalg import (
-    Matrix, LUDecomposition, gauss_jordan_inverse, gauss_jordan_solver, gauss_vector_solver, gauss_matrix_solver,
-    freeze_matrix, tridiagonal_matrix_solver, tridiagonal_vector_solver, detect_banded_matrix, compact_banded_matrix,
-    BandedMatrixLU, banded_matrix,
+    Matrix, LUDecomposition, gauss_jordan_inverse, gauss_jordan_solver,
+    gauss_vector_solver, gauss_matrix_solver, freeze_matrix,
+    tridiagonal_matrix_solver, tridiagonal_vector_solver, detect_banded_matrix,
+    compact_banded_matrix, BandedMatrixLU, banded_matrix,
 )
 from .parametrize import estimate_tangents, estimate_end_tangent_magnitude
 from .bspline import (
     fit_points_to_cad_cv, global_bspline_interpolation,
     rational_spline_from_arc, rational_spline_from_ellipse,
-    uniform_knot_vector, open_uniform_knot_vector, required_knot_values, BSpline, BSplineU, BSplineClosed,
-    local_cubic_bspline_interpolation,
+    uniform_knot_vector, open_uniform_knot_vector, required_knot_values,
+    BSpline, BSplineU, BSplineClosed, local_cubic_bspline_interpolation,
 )
 from .bezier import Bezier
-from .bezier4p import Bezier4P, cubic_bezier_from_arc, cubic_bezier_from_ellipse, cubic_bezier_interpolation
+from .bezier4p import (
+    Bezier4P, cubic_bezier_from_arc, cubic_bezier_from_ellipse,
+    cubic_bezier_interpolation,
+)
 from .surfaces import BezierSurface
 from .eulerspiral import EulerSpiral
 from .ucs import OCS, UCS, PassTroughUCS
-from .bulge import bulge_to_arc, bulge_3_points, bulge_center, bulge_radius, arc_to_bulge
+from .bulge import (
+    bulge_to_arc, bulge_3_points, bulge_center, bulge_radius, arc_to_bulge,
+)
 from .arc import ConstructionArc
 from .line import ConstructionRay, ConstructionLine, ParallelRaysError
 from .circle import ConstructionCircle
-from .ellipse import ConstructionEllipse, angle_to_param, param_to_angle, rytz_axis_construction
+from .ellipse import (
+    ConstructionEllipse, angle_to_param, param_to_angle, rytz_axis_construction,
+)
 from .box import ConstructionBox
 from .shape import Shape2d
 from .bbox import BoundingBox2d, BoundingBox

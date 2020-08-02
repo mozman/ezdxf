@@ -35,6 +35,8 @@ Version 0.14a2 - dev
 - NEW: `Bezier4P.reverse()` returns object with reversed control point order
 - NEW: `Bezier.transform()` general transformation interface
 - NEW: `Bezier.reverse()` returns object with reversed control point order
+- NEW: `has_clockwise_orientation(vertices)` returns `True` if the closed 
+  polygon of 2D vertices has clockwise orientation
 - CHANGE: `linspace()` uses `Decimal()` for precise calculations, but still 
   returns an iterable of `float`
 - CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 
