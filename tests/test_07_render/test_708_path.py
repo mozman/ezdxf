@@ -297,5 +297,29 @@ def test_transform():
     assert p2.end == (5, 1)
 
 
+def test_control_vertices():
+    path = Path()
+    path.line_to((2, 0))
+    path.curve_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
+    vertices = list(path.control_vertices())
+    assert vertices == Vector.list([(0, 0), (2, 0), (2, 1), (4, 1), (4, 0)])
+    path = Path()
+    assert len(list(path.control_vertices())) == 0
+    path = Path.from_vertices([(0, 0), (1, 0)])
+    assert len(list(path.control_vertices())) == 2
+
+
+def test_has_clockwise_orientation():
+    # basic has_clockwise_orientation() function is tested in:
+    # test_617_clockwise_orientation
+    path = Path.from_vertices([(0, 0), (1, 0), (1, 1), (0, 1)])
+    assert path.has_clockwise_orientation() is True
+
+    path = Path()
+    path.line_to((2, 0))
+    path.curve_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
+    assert path.has_clockwise_orientation() is False
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

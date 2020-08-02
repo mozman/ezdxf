@@ -6,9 +6,9 @@ from collections import abc
 from enum import Enum
 import math
 from ezdxf.math import (
-    Vector, NULLVEC, Bezier4P, Matrix44, bulge_to_arc,
-    cubic_bezier_from_ellipse,
-    ConstructionEllipse, Z_AXIS, BSpline, OCS,
+    Vector, Vec2, NULLVEC, Z_AXIS, OCS, Bezier4P, Matrix44, bulge_to_arc,
+    cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
+    has_clockwise_orientation,
 )
 
 if TYPE_CHECKING:
@@ -22,8 +22,8 @@ __all__ = ['Path', 'Command']
 
 
 class Command(Enum):
-    LINE_TO = 1
-    CURVE_TO = 2
+    LINE_TO = 1  # (LINE_TO, end vertex)
+    CURVE_TO = 2  # (CURVE_TO, end vertex, ctrl1, ctrl2)
 
 
 class Path(abc.Sequence):
@@ -231,6 +231,22 @@ class Path(abc.Sequence):
         path.
         """
         pass
+
+    def control_vertices(self):
+        """ Yields all control vertices in consecutive order. """
+        if len(self):
+            yield self.start
+            for cmd in self._commands:
+                if cmd[0] == Command.LINE_TO:
+                    yield cmd[1]
+                elif cmd[0] == Command.CURVE_TO:
+                    yield cmd[2]
+                    yield cmd[3]
+                    yield cmd[1]
+
+    def has_clockwise_orientation(self) -> bool:
+        """ Returns ``True`` if path has clockwise orientation. """
+        return has_clockwise_orientation(self.control_vertices())
 
     def line_to(self, location: 'Vertex') -> None:
         """ Add a line from actual path end point to `location`.
