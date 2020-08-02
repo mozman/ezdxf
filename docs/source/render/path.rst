@@ -64,9 +64,15 @@ cubic Bézier-curves, other B-splines will be approximated.
 
     .. automethod:: line_to(location: Vector)
 
+    .. automethod:: curve_to(location: Vector, ctrl1: Vector, ctrl2: Vector)
+
     .. automethod:: close
 
-    .. automethod:: curve_to(location: Vector, ctrl1: Vector, ctrl2: Vector)
+    .. automethod:: reversed() -> Path
+
+    .. automethod:: clockwise() -> Path
+
+    .. automethod:: counter_clockwise() -> Path
 
     .. automethod:: add_curves(curves: Iterable[Bezier4P])
 

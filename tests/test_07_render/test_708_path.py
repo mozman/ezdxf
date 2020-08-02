@@ -273,22 +273,35 @@ def test_approximate_curves():
     assert vertices[-1] == (2, 0)
 
 
-def test_approximate_line_curves():
+@pytest.fixture
+def p1():
     path = Path()
     path.line_to((2, 0))
-    path.curve_to((4, 0), (2, 1), (4, 1))
-    vertices = list(path.approximate(10))
+    path.curve_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
+    return path
+
+
+def test_path_cloning(p1):
+    p2 = p1.clone()
+    # p1 and p2 share immutable data:
+    for cmd1, cmd2 in zip(p1, p2):
+        assert cmd1 is cmd2
+
+    # but have different command lists:
+    p2.line_to((4, 4))
+    assert len(p2) == len(p1) + 1
+
+
+def test_approximate_line_curves(p1):
+    vertices = list(p1.approximate(10))
     assert len(vertices) == 12
     assert vertices[0] == (0, 0)
     assert vertices[1] == (2, 0)
     assert vertices[-1] == (4, 0)
 
 
-def test_transform():
-    path = Path()
-    path.line_to((2, 0))
-    path.curve_to((4, 0), (2, 1), (4, 1))
-    p2 = path.transform(Matrix44.translate(1, 1, 0))
+def test_transform(p1):
+    p2 = p1.transform(Matrix44.translate(1, 1, 0))
     assert p2.start == (1, 1)
     assert p2[0][1] == (3, 1)  # line to location
     assert p2[1][1] == (5, 1)  # cubic to location
@@ -297,11 +310,8 @@ def test_transform():
     assert p2.end == (5, 1)
 
 
-def test_control_vertices():
-    path = Path()
-    path.line_to((2, 0))
-    path.curve_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
-    vertices = list(path.control_vertices())
+def test_control_vertices(p1):
+    vertices = list(p1.control_vertices())
     assert vertices == Vector.list([(0, 0), (2, 0), (2, 1), (4, 1), (4, 0)])
     path = Path()
     assert len(list(path.control_vertices())) == 0
@@ -319,6 +329,39 @@ def test_has_clockwise_orientation():
     path.line_to((2, 0))
     path.curve_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
     assert path.has_clockwise_orientation() is False
+
+
+def test_reversing_empty_path():
+    p = Path()
+    assert len(p.reversed()) == 0
+
+
+def test_reversing_one_line():
+    p = Path()
+    p.line_to((1, 0))
+    p2 = list(p.reversed().control_vertices())
+    assert p2 == [(1, 0), (0, 0)]
+
+
+def test_reversing_one_curve():
+    p = Path()
+    p.curve_to((3, 0), (1, 1), (2, 1))
+    p2 = list(p.reversed().control_vertices())
+    assert p2 == [(3, 0), (2, 1), (1, 1), (0, 0)]
+
+
+def test_reversing_path(p1):
+    p2 = p1.reversed()
+    assert list(p2.control_vertices()) == list(
+        reversed(list(p1.control_vertices())))
+
+
+def test_clockwise(p1):
+    from ezdxf.math import has_clockwise_orientation
+    cw_path = p1.clockwise()
+    ccw_path = p1.counter_clockwise()
+    assert has_clockwise_orientation(cw_path.control_vertices()) is True
+    assert has_clockwise_orientation(ccw_path.control_vertices()) is False
 
 
 if __name__ == '__main__':

@@ -26,6 +26,12 @@ class Command(Enum):
     CURVE_TO = 2  # (CURVE_TO, end vertex, ctrl1, ctrl2)
 
 
+CMD = 0
+END = 1
+CTRL1 = 2
+CTRL2 = 3
+
+
 class Path(abc.Sequence):
     def __init__(self, start: 'Vertex' = NULLVEC):
         self._start = Vector(start)
@@ -39,6 +45,14 @@ class Path(abc.Sequence):
 
     def __iter__(self):
         return iter(self._commands)
+
+    def __copy__(self) -> 'Path':
+        copy = Path(self._start)
+        # immutable data
+        copy._commands = list(self._commands)
+        return copy
+
+    clone = __copy__
 
     @property
     def start(self) -> Vector:
@@ -58,7 +72,7 @@ class Path(abc.Sequence):
     def end(self) -> Vector:
         """ :class:`Path` end point. """
         if self._commands:
-            return self._commands[-1][1]
+            return self._commands[-1][END]
         else:
             return self._start
 
@@ -233,16 +247,16 @@ class Path(abc.Sequence):
         pass
 
     def control_vertices(self):
-        """ Yields all control vertices in consecutive order. """
+        """ Yields all path control vertices in consecutive order. """
         if len(self):
             yield self.start
             for cmd in self._commands:
                 if cmd[0] == Command.LINE_TO:
-                    yield cmd[1]
+                    yield cmd[END]
                 elif cmd[0] == Command.CURVE_TO:
-                    yield cmd[2]
-                    yield cmd[3]
-                    yield cmd[1]
+                    yield cmd[CTRL1]
+                    yield cmd[CTRL2]
+                    yield cmd[END]
 
     def has_clockwise_orientation(self) -> bool:
         """ Returns ``True`` if 2D path has clockwise orientation, ignores
@@ -269,6 +283,41 @@ class Path(abc.Sequence):
         """
         if not self.is_closed:
             self.line_to(self.start)
+
+    def reversed(self) -> 'Path':
+        """ Returns a new :class:`Path` with reversed segments and control
+        vertices.
+        """
+        if len(self) == 0:
+            return Path()
+
+        path = Path(start=self.end)
+        for index in range(len(self) - 1, -1, -1):
+            cmd = self[index]
+            if index > 0:
+                prev_end = self[index - 1][END]
+            else:
+                prev_end = self.start
+
+            if cmd[CMD] == Command.LINE_TO:
+                path.line_to(prev_end)
+            elif cmd[CMD] == Command.CURVE_TO:
+                path.curve_to(prev_end, cmd[CTRL2], cmd[CTRL1])
+        return path
+
+    def clockwise(self) -> 'Path':
+        """ Returns new :class:`Path` in clockwise orientation. """
+        if self.has_clockwise_orientation():
+            return self.clone()
+        else:
+            return self.reversed()
+
+    def counter_clockwise(self) -> 'Path':
+        """ Returns new :class:`Path` in counter-clockwise orientation. """
+        if self.has_clockwise_orientation():
+            return self.reversed()
+        else:
+            return self.clone()
 
     def add_curves(self, curves: Iterable[Bezier4P]) -> None:
         """ Add multiple cubic Bèzier-curves to the path.

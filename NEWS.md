@@ -41,6 +41,9 @@ Version 0.14a2 - dev
   order
 - NEW: `Path.has_clockwise_orientation()` returns `True` if 2D path has 
   clockwise orientation
+- NEW: `Path.reversed()` returns a new reversed path 
+- NEW: `Path.clockwise()` returns a new clockwise oriented path 
+- NEW: `Path.counter_clockwise()` returns a new counter-clockwise oriented path 
 - CHANGE: `linspace()` uses `Decimal()` for precise calculations, but still 
   returns an iterable of `float`
 - CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 
