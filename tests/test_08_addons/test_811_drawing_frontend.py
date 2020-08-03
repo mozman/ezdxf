@@ -15,7 +15,9 @@ from ezdxf.math import Vector, Matrix44
 
 
 class BasicBackend(Backend):
-    """ The basic backend has no draw_path() support and approximates all curves by lines. """
+    """ The basic backend has no draw_path() support and approximates all curves
+    by lines.
+    """
 
     def __init__(self):
         super().__init__()
@@ -24,26 +26,34 @@ class BasicBackend(Backend):
     def draw_point(self, pos: Vector, properties: Properties) -> None:
         self.collector.append(('point', pos, properties))
 
-    def draw_line(self, start: Vector, end: Vector, properties: Properties) -> None:
+    def draw_line(self, start: Vector, end: Vector,
+                  properties: Properties) -> None:
         self.collector.append(('line', start, end, properties))
 
-    def draw_arc(self, center: Vector, width: float, height: float, base_angle: Radians,
-                 start_angle: Optional[Radians], end_angle: Optional[Radians], properties: Properties) -> None:
+    def draw_arc(self, center: Vector, width: float, height: float,
+                 base_angle: Radians,
+                 start_angle: Optional[Radians], end_angle: Optional[Radians],
+                 properties: Properties) -> None:
         self.collector.append(('arc', center, properties))
 
-    def draw_filled_polygon(self, points: List[Vector], properties: Properties) -> None:
+    def draw_filled_polygon(self, points: List[Vector],
+                            properties: Properties) -> None:
         self.collector.append(('filled_polygon', points, properties))
 
-    def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float) -> None:
+    def draw_text(self, text: str, transform: Matrix44, properties: Properties,
+                  cap_height: float) -> None:
         self.collector.append(('text', text, transform, properties))
 
-    def get_font_measurements(self, cap_height: float, font=None) -> FontMeasurements:
-        return FontMeasurements(baseline=0.0, cap_top=1.0, x_top=0.5, bottom=-0.2)
+    def get_font_measurements(self, cap_height: float,
+                              font=None) -> FontMeasurements:
+        return FontMeasurements(baseline=0.0, cap_top=1.0, x_top=0.5,
+                                bottom=-0.2)
 
     def set_background(self, color: str) -> None:
         self.collector.append(('bgcolor', color))
 
-    def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
+    def get_text_line_width(self, text: str, cap_height: float,
+                            font: str = None) -> float:
         return len(text)
 
     def clear(self) -> None:
@@ -93,7 +103,7 @@ def test_basic_frontend_init(basic):
 def test_backend_default_draw_path():
     backend = BasicBackend()
     path = Path.from_vertices([(0, 0), (1, 0), (2, 0)])
-    backend.draw_path(path, None)
+    backend.draw_path(path, Properties())
     result = backend.collector
     assert len(result) == 2
     assert result[0][0] == 'line'
@@ -159,7 +169,8 @@ def test_lwpolyline_path(msp, path_backend):
 
 
 def test_banded_lwpolyline(msp, basic):
-    msp.add_lwpolyline([(0, 0), (1, 0), (2, 0)], dxfattribs={'const_width': 0.1})
+    msp.add_lwpolyline([(0, 0), (1, 0), (2, 0)],
+                       dxfattribs={'const_width': 0.1})
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 1
@@ -176,7 +187,8 @@ def test_polyline_2d(msp, basic):
 
 
 def test_banded_polyline_2d(msp, basic):
-    msp.add_polyline2d([(0, 0, 0.1, 0.2), (1, 0, 0.2, 0.1), (2, 0, 0.1, 0.5)], format='xyse')
+    msp.add_polyline2d([(0, 0, 0.1, 0.2), (1, 0, 0.2, 0.1), (2, 0, 0.1, 0.5)],
+                       format='xyse')
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 1
@@ -201,8 +213,10 @@ def test_polyline_3d_path(msp, path_backend):
 
 def test_2d_arc_basic(msp, basic):
     msp.add_circle((0, 0), radius=2)
-    msp.add_arc((0, 0), radius=2, start_angle=30, end_angle=60, dxfattribs={'layer': 'Test1'})
-    msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1, end_param=2, dxfattribs={'layer': 'Test1'})
+    msp.add_arc((0, 0), radius=2, start_angle=30, end_angle=60,
+                dxfattribs={'layer': 'Test1'})
+    msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1,
+                    end_param=2, dxfattribs={'layer': 'Test1'})
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) > 3
@@ -246,8 +260,8 @@ def test_3d_arc_path(msp, path_backend):
 
 
 def test_3d_ellipse_basic(msp, basic):
-    msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1, end_param=2,
-                    dxfattribs={'extrusion': (0, 1, 1)})
+    msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1,
+                    end_param=2, dxfattribs={'extrusion': (0, 1, 1)})
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) > 10
@@ -255,7 +269,8 @@ def test_3d_ellipse_basic(msp, basic):
 
 
 def test_3d_ellipse_path(msp, path_backend):
-    msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1, end_param=2,
+    msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1,
+                    end_param=2,
                     dxfattribs={'extrusion': (0, 1, 1)})
     path_backend.draw_entities(msp)
     result = path_backend.out.collector
@@ -290,13 +305,13 @@ def test_mtext(msp, basic):
     assert result[1][1] == 'line2'
 
 
-def test_hatch(msp, basic):
+def test_hatch(msp, path_backend):
     hatch = msp.add_hatch()
     hatch.paths.add_polyline_path([(0, 0), (1, 0), (1, 1), (0, 1)])
-    basic.draw_entities(msp)
-    result = basic.out.collector
+    path_backend.draw_entities(msp)
+    result = path_backend.out.collector
     assert len(result) == 1
-    assert result[0][0] == 'filled_polygon'
+    assert result[0][0] == 'path'
 
 
 def test_basic_spline(msp, basic):
@@ -376,7 +391,8 @@ def test_visibility_insert_0():
     # INSERT on '0'
     # 'L0' on '0'
     # 'L1' on 'Layer1'
-    assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0', 'L1']
+    assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0',
+                                                                      'L1']
     assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
     assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L0', 'L1']
     assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L1']
@@ -398,7 +414,8 @@ def test_visibility_insert_2():
     # 'L0' on '0'
     # 'L1' on 'Layer1'
     # text-block on 'Layer2' -> 'L0' on '0' acts like on 'Layer2'
-    assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0', 'L1']
+    assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0',
+                                                                      'L1']
     assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
     assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L1']
     assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L0', 'L1']
@@ -408,13 +425,13 @@ def test_visibility_insert_2():
 
 
 def test_override_filter(msp, ctx):
-
     class FrontendWithOverride(Frontend):
         def __init__(self, ctx: RenderContext, out: Backend):
             super().__init__(ctx, out)
             self.override_enabled = True
 
-        def override_properties(self, entity: DXFGraphic, properties: Properties) -> None:
+        def override_properties(self, entity: DXFGraphic,
+                                properties: Properties) -> None:
             if not self.override_enabled:
                 return
             if properties.layer == 'T1':

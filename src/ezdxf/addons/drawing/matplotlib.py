@@ -15,7 +15,6 @@ from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
-from ezdxf.entities.mtext import replace_non_printable_characters
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Command
 
@@ -81,7 +80,7 @@ class MatplotlibBackend(Backend):
             Path(vertices, codes),
             linewidth=properties.lineweight * POINTS,
             color=properties.color,
-            fill=False,
+            fill=bool(properties.filling),
             zorder=self._get_z()
         )
         self.ax.add_patch(patch)

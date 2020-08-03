@@ -39,7 +39,8 @@ class Backend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_line(self, start: Vector, end: Vector, properties: Properties) -> None:
+    def draw_line(self, start: Vector, end: Vector,
+                  properties: Properties) -> None:
         raise NotImplementedError
 
     def draw_path(self, path: Path, properties) -> None:
@@ -49,41 +50,56 @@ class Backend(ABC):
 
         """
         if len(path):
-            vertices = iter(path.approximate(segments=self.bezier_approximation_count))
-            prev = next(vertices)
-            for vertex in vertices:
-                self.draw_line(prev, vertex, properties)
-                prev = vertex
+            if properties.filling:
+                self.draw_filled_polygon(
+                    path.approximate(segments=self.bezier_approximation_count),
+                    properties,
+                )
+            else:
+                vertices = iter(
+                    path.approximate(segments=self.bezier_approximation_count)
+                )
+                prev = next(vertices)
+                for vertex in vertices:
+                    self.draw_line(prev, vertex, properties)
+                    prev = vertex
 
     @abstractmethod
     def draw_point(self, pos: Vector, properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def draw_filled_polygon(self, points: Iterable[Vector], properties: Properties) -> None:
+    def draw_filled_polygon(self, points: Iterable[Vector],
+                            properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float) -> None:
-        """ draw a single line of text with the anchor point at the baseline left point """
+    def draw_text(self, text: str, transform: Matrix44, properties: Properties,
+                  cap_height: float) -> None:
+        """ Draw a single line of text with the anchor point at the baseline
+        left point
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def get_font_measurements(self, cap_height: float, font: str = None) -> 'FontMeasurements':
-        """ note: backends might want to cache the results of these calls """
+    def get_font_measurements(self, cap_height: float,
+                              font: str = None) -> 'FontMeasurements':
+        """ Note: backends might want to cache the results of these calls """
         raise NotImplementedError
 
     @abstractmethod
-    def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
-        """ get the width of a single line of text """
+    def get_text_line_width(self, text: str, cap_height: float,
+                            font: str = None) -> float:
+        """ Get the width of a single line of text """
         # https://stackoverflow.com/questions/32555015/how-to-get-the-visual-length-of-a-text-string-in-python
         # https://stackoverflow.com/questions/4190667/how-to-get-width-of-a-truetype-font-character-in-1200ths-of-an-inch-with-python
         raise NotImplementedError
 
     @abstractmethod
     def clear(self) -> None:
-        """ clear the canvas. Does not reset the internal state of the backend. Make sure that the previous drawing
-        is finished before clearing.
+        """ Clear the canvas. Does not reset the internal state of the backend.
+        Make sure that the previous drawing is finished before clearing.
+
         """
         raise NotImplementedError
 

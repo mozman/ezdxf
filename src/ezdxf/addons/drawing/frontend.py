@@ -1,13 +1,12 @@
 # Created: 06.2020
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
-import copy
 import math
 from typing import Iterable, cast, Union, List
-
+from ezdxf.lldxf import const
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import (
-    RenderContext, VIEWPORT_COLOR, Properties, set_color_alpha,
+    RenderContext, VIEWPORT_COLOR, Properties, set_color_alpha, Filling
 )
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.utils import get_tri_or_quad_points
@@ -17,7 +16,7 @@ from ezdxf.entities import (
 )
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
-from ezdxf.math import Vector, Z_AXIS, NULLVEC
+from ezdxf.math import Vector, Z_AXIS
 from ezdxf.render import MeshBuilder, TraceBuilder, Path
 
 __all__ = ['Frontend']
@@ -217,46 +216,27 @@ class Frontend:
         if dxftype == '3DFACE':
             self.out.draw_path(Path.from_vertices(points, close=True),
                                properties)
-        else:  # SOLID, TRACE
+        else:
+            # Set default SOLID filling for SOLID and TRACE
+            properties.filling = Filling()
             self.out.draw_filled_polygon(points, properties)
 
     def draw_hatch_entity(self, entity: DXFGraphic,
                           properties: Properties) -> None:
-        entity = cast(Hatch, entity)
-        ocs = entity.ocs()
+        hatch = cast(Hatch, entity)
+        ocs = hatch.ocs()
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z),
         # default (0, 0, 0)
         elevation = entity.dxf.elevation.z
-        paths = copy.deepcopy(entity.paths)
-        paths.polyline_to_edge_path(just_with_bulge=False)
-
-        # For hatches, the approximation don't have to be that precise.
-        paths.all_to_line_edges(num=64, spline_factor=8)
-        for p in paths:
-            assert p.PATH_TYPE == 'EdgePath'
-            vertices = []
-            last_vertex = None
-            for e in p.edges:
-                assert e.EDGE_TYPE == 'LineEdge'
-                start, end = ocs.points_to_wcs([
-                    Vector(e.start[0], e.start[1], elevation),
-                    Vector(e.end[0], e.end[1], elevation),
-                ])
-                if last_vertex is None:
-                    vertices.append(start)
-                elif not last_vertex.isclose(start):
-                    # this sometimes happens when a curved section is the
-                    # wrong way round. This should be fixed by moving to
-                    # rendering using Path objects:
-                    # https://github.com/mozman/ezdxf/issues/202
-                    vertices.append(start)
-                vertices.append(end)
-                last_vertex = end
-
-            if vertices:
-                if not last_vertex.isclose(vertices[0]):
-                    vertices.append(last_vertex)
-                self.out.draw_filled_polygon(vertices, properties)
+        for p in hatch.paths:
+            if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
+                # todo: implement support for inner paths
+                if p.PATH_TYPE == 'EdgePath':
+                    path = Path.from_hatch_edge_path(p, ocs, elevation)
+                else:
+                    path = Path.from_hatch_polyline_path(p, ocs, elevation)
+                path.close()
+                self.out.draw_path(path, properties)
 
     def draw_viewport_entity(self, entity: DXFGraphic) -> None:
         assert entity.dxftype() == 'VIEWPORT'
@@ -284,6 +264,8 @@ class Frontend:
         ]
         props = Properties()
         props.color = VIEWPORT_COLOR
+        # Set default SOLID filling for VIEWPORT
+        props.filling = Filling()
         self.out.draw_filled_polygon([Vector(x, y, 0) for x, y in points],
                                      props)
 
@@ -333,6 +315,8 @@ class Frontend:
                     )
                 else:
                     points = Vector.generate(polygon)
+                # Set default SOLID filling for LWPOLYLINE
+                properties.filling = Filling()
                 self.out.draw_filled_polygon(points, properties)
             return
 
@@ -362,7 +346,6 @@ class Frontend:
         elif hasattr(entity, 'virtual_entities'):
             # draw_entities() includes the visibility check:
             self.draw_entities(set_opaque(entity.virtual_entities()))
-
         else:
             raise TypeError(dxftype)
 

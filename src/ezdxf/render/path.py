@@ -110,6 +110,8 @@ class Path(abc.Sequence):
     def from_vertices(cls, vertices: Iterable['Vertex'], close=False) -> 'Path':
         """ Returns a :class:`Path` from vertices.  """
         vertices = Vector.list(vertices)
+        if len(vertices) < 2:
+            return cls()
         path = cls(start=vertices[0])
         for vertex in vertices[1:]:
             path.line_to(vertex)
@@ -355,8 +357,8 @@ class Path(abc.Sequence):
             )
 
         def wcs(vertex):
-            if ocs:
-                ocs.to_wcs((vertex.x, vertex.y, elevation))
+            if ocs and ocs.transform:
+                return ocs.to_wcs((vertex.x, vertex.y, elevation))
             else:
                 return Vector(vertex)
 
