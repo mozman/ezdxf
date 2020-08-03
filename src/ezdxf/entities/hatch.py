@@ -749,7 +749,7 @@ class BoundaryPaths:
         """ Remove all boundary paths. """
         self.paths = []
 
-    def add_polyline_path(self, path_vertices: Sequence[Tuple[float, float]],
+    def add_polyline_path(self, path_vertices: Sequence[Tuple[float, ...]],
                           is_closed: bool = True,
                           flags: int = 1) -> 'PolylinePath':
         """ Create and add a new :class:`PolylinePath` object.

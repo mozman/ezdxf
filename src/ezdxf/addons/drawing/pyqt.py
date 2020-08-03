@@ -37,7 +37,8 @@ class _Point(qw.QAbstractGraphicsShapeItem):
         return qc.QRectF(self.pos, qc.QSizeF(1, 1))
 
 
-CorrespondingDXFEntity = 0  # the key used to store the dxf entity corresponding to each graphics element
+# The key used to store the dxf entity corresponding to each graphics element
+CorrespondingDXFEntity = 0
 CorrespondingDXFParentStack = 1
 
 
@@ -78,6 +79,15 @@ class PyQtBackend(Backend):
         pen.setJoinStyle(qc.Qt.RoundJoin)
         return pen
 
+    def _get_brush(self, properties: Properties) -> qg.QBrush:
+        if properties.filling:
+            return qg.QBrush(
+                self._get_color(properties.color),
+                qc.Qt.SolidPattern
+            )
+        else:
+            return self._no_fill
+
     def _set_item_data(self, item: qw.QGraphicsItem) -> None:
         item.setData(CorrespondingDXFEntity, self.current_entity)
         parent_stack = tuple(e for e, props in self.entity_stack[:-1])
@@ -86,9 +96,13 @@ class PyQtBackend(Backend):
     def set_background(self, color: Color):
         self.scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
 
-    def draw_line(self, start: Vector, end: Vector, properties: Properties) -> None:
+    def draw_line(self, start: Vector, end: Vector,
+                  properties: Properties) -> None:
         color = properties.color
-        item = self.scene.addLine(start.x, start.y, end.x, end.y, self._get_pen(color))
+        item = self.scene.addLine(
+            start.x, start.y, end.x, end.y,
+            self._get_pen(color)
+        )
         self._set_item_data(item)
 
     def draw_path(self, path: Path, properties) -> None:
@@ -96,16 +110,23 @@ class PyQtBackend(Backend):
         start = path.start
         qt_path.moveTo(start.x, start.y)
         for cmd in path:
-            type_ = cmd[0]
-            if type_ == Command.LINE_TO:
-                end = cmd[1]
+            if cmd.type == Command.LINE_TO:
+                end = cmd.end
                 qt_path.lineTo(end.x, end.y)
-            elif type_ == Command.CURVE_TO:
-                _, end, ctrl1, ctrl2 = cmd
-                qt_path.cubicTo(ctrl1.x, ctrl1.y, ctrl2.x, ctrl2.y, end.x, end.y)
+            elif cmd.type == Command.CURVE_TO:
+                end = cmd.end
+                ctrl1 = cmd.ctrl1
+                ctrl2 = cmd.ctrl2
+                qt_path.cubicTo(
+                    ctrl1.x, ctrl1.y, ctrl2.x, ctrl2.y, end.x, end.y
+                )
             else:
-                raise ValueError(f'Unknown path command: {type_}')
-        item = self.scene.addPath(qt_path, self._get_pen(properties.color), self._no_fill)
+                raise ValueError(f'Unknown path command: {cmd.type}')
+        item = self.scene.addPath(
+            qt_path,
+            self._get_pen(properties.color),
+            self._get_brush(properties),
+        )
         self._set_item_data(item)
 
     def draw_point(self, pos: Vector, properties: Properties) -> None:
@@ -114,15 +135,17 @@ class PyQtBackend(Backend):
         self._set_item_data(item)
         self.scene.addItem(item)
 
-    def draw_filled_polygon(self, points: Iterable[Vector], properties: Properties) -> None:
-        brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
+    def draw_filled_polygon(self, points: Iterable[Vector],
+                            properties: Properties) -> None:
+        brush = self._get_brush(properties)
         polygon = qg.QPolygonF()
         for p in points:
             polygon.append(qc.QPointF(p.x, p.y))
         item = self.scene.addPolygon(polygon, self._no_line, brush)
         self._set_item_data(item)
 
-    def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float) -> None:
+    def draw_text(self, text: str, transform: Matrix44, properties: Properties,
+                  cap_height: float) -> None:
         if not text:
             return  # no point rendering empty strings
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
@@ -133,13 +156,17 @@ class PyQtBackend(Backend):
         path = qg.QPainterPath()
         path.addText(0, 0, self._font, text)
         path = _matrix_to_qtransform(transform).map(path)
-        item = self.scene.addPath(path, self._no_line, self._get_color(properties.color))
+        item = self.scene.addPath(path, self._no_line,
+                                  self._get_color(properties.color))
         self._set_item_data(item)
 
-    def get_font_measurements(self, cap_height: float, font: str = None) -> FontMeasurements:
-        return self._font_measurements.scale_from_baseline(desired_cap_height=cap_height)
+    def get_font_measurements(self, cap_height: float,
+                              font: str = None) -> FontMeasurements:
+        return self._font_measurements.scale_from_baseline(
+            desired_cap_height=cap_height)
 
-    def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
+    def get_text_line_width(self, text: str, cap_height: float,
+                            font: str = None) -> float:
         if not text:
             return 0
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
@@ -153,7 +180,8 @@ class PyQtBackend(Backend):
         super().finalize()
         self.scene.setSceneRect(self.scene.itemsBoundingRect())
         if self._debug_draw_rect:
-            self.scene.addRect(self.scene.sceneRect(), self._get_pen('#000000'), self._no_fill)
+            self.scene.addRect(self.scene.sceneRect(), self._get_pen('#000000'),
+                               self._no_fill)
 
 
 def _get_x_scale(t: qg.QTransform) -> float:
@@ -161,10 +189,11 @@ def _get_x_scale(t: qg.QTransform) -> float:
 
 
 def _matrix_to_qtransform(matrix: Matrix44) -> qg.QTransform:
-    """ Qt also uses row-vectors so the translation elements are placed in the bottom row
+    """ Qt also uses row-vectors so the translation elements are placed in the
+    bottom row.
 
-    This is only a simple conversion which assumes that although the transformation is 4x4,
-    it does not involve the z axis.
+    This is only a simple conversion which assumes that although the
+    transformation is 4x4,it does not involve the z axis.
 
     A more correct transformation could be implemented like so:
     https://stackoverflow.com/questions/10629737/convert-3d-4x4-rotation-matrix-into-2d

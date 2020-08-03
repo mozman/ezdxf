@@ -1,16 +1,15 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 # Created: 2020-07-10
-from typing import TYPE_CHECKING, List, Tuple, Iterable, Sequence
+from typing import TYPE_CHECKING, List, Iterable, Sequence, NamedTuple, Union
 from collections import abc
 from enum import Enum
 import math
 from ezdxf.math import (
-    Vector, Vec2, NULLVEC, Z_AXIS, OCS, Bezier4P, Matrix44, bulge_to_arc,
+    Vector, NULLVEC, Z_AXIS, OCS, Bezier4P, Matrix44, bulge_to_arc,
     cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
-    has_clockwise_orientation,
+    has_clockwise_orientation, global_bspline_interpolation,
 )
-
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         LWPolyline, Polyline, Vertex, Spline, Ellipse,
@@ -26,16 +25,41 @@ class Command(Enum):
     CURVE_TO = 2  # (CURVE_TO, end vertex, ctrl1, ctrl2)
 
 
-CMD = 0
-END = 1
-CTRL1 = 2
-CTRL2 = 3
+class LineTo(NamedTuple):
+    end: Vector
+
+    @property
+    def type(self):
+        return Command.LINE_TO
+
+    def to_wcs(self, ocs: OCS, elevation: float):
+        return LineTo(end=ocs.to_wcs(self.end.replace(z=elevation)))
+
+
+class CurveTo(NamedTuple):
+    end: Vector
+    ctrl1: Vector
+    ctrl2: Vector
+
+    @property
+    def type(self):
+        return Command.CURVE_TO
+
+    def to_wcs(self, ocs: OCS, elevation: float):
+        return CurveTo(
+            end=ocs.to_wcs(self.end.replace(z=elevation)),
+            ctrl1=ocs.to_wcs(self.ctrl1.replace(z=elevation)),
+            ctrl2=ocs.to_wcs(self.ctrl2.replace(z=elevation)),
+        )
+
+
+PathElements = Union[LineTo, CurveTo]
 
 
 class Path(abc.Sequence):
     def __init__(self, start: 'Vertex' = NULLVEC):
         self._start = Vector(start)
-        self._commands: List[Tuple] = []
+        self._commands: List[PathElements] = []
 
     def __len__(self):
         return len(self._commands)
@@ -73,7 +97,7 @@ class Path(abc.Sequence):
     def end(self) -> Vector:
         """ :class:`Path` end point. """
         if self._commands:
-            return self._commands[-1][END]
+            return self._commands[-1].end
         else:
             return self._start
 
@@ -183,10 +207,7 @@ class Path(abc.Sequence):
     def _to_wcs(self, ocs: OCS, elevation: float):
         self._start = ocs.to_wcs(self._start.replace(z=elevation))
         for i, cmd in enumerate(self._commands):
-            new_cmd = [cmd[0]]
-            new_cmd.extend(ocs.points_to_wcs(p.replace(z=elevation)
-                                             for p in cmd[1:]))
-            self._commands[i] = tuple(new_cmd)
+            self._commands[i] = cmd.to_wcs(ocs, elevation)
 
     @classmethod
     def from_spline(cls, spline: 'Spline', level: int = 4) -> 'Path':
@@ -234,30 +255,138 @@ class Path(abc.Sequence):
         return path
 
     @classmethod
-    def from_hatch_polyline_path(cls, path: 'PolylinePath') -> 'Path':
+    def from_hatch_polyline_path(cls, polyline: 'PolylinePath', ocs: OCS = None,
+                                 elevation: float = 0) -> 'Path':
         """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch`
         polyline path.
         """
-        pass
+        path = cls()
+        path._setup_polyline_2d(
+            polyline.vertices,  # List[(x, y, bulge)]
+            close=polyline.is_closed,
+            ocs=ocs or OCS(),
+            elevation=elevation,
+        )
+        return path
 
     @classmethod
-    def from_hatch_edge_path(cls, path: 'EdgePath') -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch` edge
-        path.
+    def from_hatch_edge_path(cls, edges: 'EdgePath', ocs: OCS = None,
+                             elevation: float = 0) -> 'Path':
         """
-        pass
+        Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch` edge path.
+        """
+
+        def add_line_edge(edge):
+            start = wcs(edge.start)
+            end = wcs(edge.end)
+            if len(path):
+                if path.end.isclose(start):
+                    # path-end -> line-end
+                    path.line_to(end)
+                elif path.end.isclose(end):
+                    # path-end (==line-end) -> line-start
+                    path.line_to(start)
+                else:
+                    # path-end -> edge-start -> edge-end
+                    path.line_to(start)
+                    path.line_to(end)
+            else:  # start path
+                path.start = start
+                path.line_to(end)
+
+        def add_arc_edge(edge):
+            x, y, *_ = edge.center
+            # from_arc() requires OCS data:
+            ellipse = ConstructionEllipse.from_arc(
+                center=(x, y, elevation),
+                radius=edge.radius,
+                extrusion=extrusion,
+                start_angle=edge.start_angle,
+                end_angle=edge.end_angle,
+            )
+            path.add_ellipse(ellipse, reset=not bool(path))
+
+        def add_ellipse_edge(edge):
+            ocs_ellipse = edge.construction_tool()
+            # ConstructionEllipse has WCS representation:
+            ellipse = ConstructionEllipse(
+                center=wcs(ocs_ellipse.center.replace(z=elevation)),
+                major_axis=wcs(ocs_ellipse.major_axis),
+                ratio=ocs_ellipse.ratio,
+                extrusion=extrusion,
+                start_param=ocs_ellipse.start_param,
+                end_param=ocs_ellipse.end_param,
+            )
+            path.add_ellipse(ellipse, reset=not bool(path))
+
+        def add_spline_edge(edge):
+            control_points = [wcs(p) for p in edge.control_points]
+            if len(control_points) == 0:
+                fit_points = [wcs(p) for p in edge.fit_points]
+                if len(fit_points):
+                    bspline = from_fit_points(edge, fit_points)
+                else:
+                    # No control points and no fit points:
+                    # DXF structure error
+                    return
+            else:
+                bspline = from_control_points(edge, control_points)
+            path.add_spline(bspline, reset=not bool(path))
+
+        def from_fit_points(edge, fit_points):
+            tangents = None
+            if edge.start_tangent and edge.end_tangent:
+                tangents = (
+                    wcs(edge.start_tangent),
+                    wcs(edge.end_tangent)
+                )
+            return global_bspline_interpolation(
+                fit_points,
+                degree=edge.degree,
+                tangents=tangents,
+            )
+
+        def from_control_points(edge, control_points):
+            return BSpline(
+                control_points=control_points,
+                order=edge.degree + 1,
+                knots=edge.knot_values,
+                weights=edge.weights if edge.weights else None
+            )
+
+        def wcs(vertex):
+            if ocs:
+                ocs.to_wcs((vertex.x, vertex.y, elevation))
+            else:
+                return Vector(vertex)
+
+        extrusion = ocs.uz if ocs else Z_AXIS
+        path = Path()
+        for edge in edges:
+            if edge.EDGE_TYPE == "LineEdge":
+                add_line_edge(edge)
+            elif edge.EDGE_TYPE == "ArcEdge":
+                if not math.isclose(edge.radius, 0):
+                    add_arc_edge(edge)
+            elif edge.EDGE_TYPE == "EllipseEdge":
+                if not NULLVEC.isclose(edge.major_axis):
+                    add_ellipse_edge(edge)
+            elif edge.EDGE_TYPE == "SplineEdge":
+                add_spline_edge(edge)
+
+        return path
 
     def control_vertices(self):
         """ Yields all path control vertices in consecutive order. """
         if len(self):
             yield self.start
             for cmd in self._commands:
-                if cmd[0] == Command.LINE_TO:
-                    yield cmd[END]
-                elif cmd[0] == Command.CURVE_TO:
-                    yield cmd[CTRL1]
-                    yield cmd[CTRL2]
-                    yield cmd[END]
+                if cmd.type == Command.LINE_TO:
+                    yield cmd.end
+                elif cmd.type == Command.CURVE_TO:
+                    yield cmd.ctrl1
+                    yield cmd.ctrl2
+                    yield cmd.end
 
     def has_clockwise_orientation(self) -> bool:
         """ Returns ``True`` if 2D path has clockwise orientation, ignores
@@ -268,15 +397,16 @@ class Path(abc.Sequence):
     def line_to(self, location: 'Vertex') -> None:
         """ Add a line from actual path end point to `location`.
         """
-        self._commands.append((Command.LINE_TO, Vector(location)))
+        self._commands.append(LineTo(end=Vector(location)))
 
     def curve_to(self, location: 'Vertex', ctrl1: 'Vertex',
                  ctrl2: 'Vertex') -> None:
         """ Add a cubic Bèzier-curve from actual path end point to `location`,
         `ctrl1` and `ctrl2` are the control points for the cubic Bèzier-curve.
         """
-        self._commands.append(
-            (Command.CURVE_TO, Vector(location), Vector(ctrl1), Vector(ctrl2)))
+        self._commands.append(CurveTo(
+            end=Vector(location), ctrl1=Vector(ctrl1), ctrl2=Vector(ctrl2))
+        )
 
     def close(self) -> None:
         """ Close path by adding a line segment from the end point to the start
@@ -296,14 +426,14 @@ class Path(abc.Sequence):
         for index in range(len(self) - 1, -1, -1):
             cmd = self[index]
             if index > 0:
-                prev_end = self[index - 1][END]
+                prev_end = self[index - 1].end
             else:
                 prev_end = self.start
 
-            if cmd[CMD] == Command.LINE_TO:
+            if cmd.type == Command.LINE_TO:
                 path.line_to(prev_end)
-            elif cmd[CMD] == Command.CURVE_TO:
-                path.curve_to(prev_end, cmd[CTRL2], cmd[CTRL1])
+            elif cmd.type == Command.CURVE_TO:
+                path.curve_to(prev_end, cmd.ctrl2, cmd.ctrl1)
         return path
 
     def clockwise(self) -> 'Path':
@@ -409,18 +539,18 @@ class Path(abc.Sequence):
         yield start
 
         for cmd in self._commands:
-            type_ = cmd[0]
-            end_location = cmd[1]
-            if type_ == Command.LINE_TO:
+            end_location = cmd.end
+            if cmd.type == Command.LINE_TO:
                 yield end_location
-            elif type_ == Command.CURVE_TO:
+            elif cmd.type == Command.CURVE_TO:
                 pts = iter(
-                    Bezier4P((start, cmd[2], cmd[3], end_location)).approximate(
+                    Bezier4P((start, cmd.ctrl1, cmd.ctrl2,
+                              end_location)).approximate(
                         segments))
                 next(pts)  # skip first vertex
                 yield from pts
             else:
-                raise ValueError(f'Invalid command: {type_}')
+                raise ValueError(f'Invalid command: {cmd.type}')
             start = end_location
 
     def transform(self, m: 'Matrix44') -> 'Path':
@@ -432,14 +562,16 @@ class Path(abc.Sequence):
         """
         new_path = self.__class__(m.transform(self.start))
         for cmd in self._commands:
-            type_ = cmd[0]
-            if type_ == Command.LINE_TO:
-                new_path.line_to(m.transform(cmd[1]))
-            elif type_ == Command.CURVE_TO:
-                loc, ctrl1, ctrl2 = m.transform_vertices(cmd[1:])
+
+            if cmd.type == Command.LINE_TO:
+                new_path.line_to(m.transform(cmd.end))
+            elif cmd.type == Command.CURVE_TO:
+                loc, ctrl1, ctrl2 = m.transform_vertices(
+                    (cmd.end, cmd.ctrl1, cmd.ctrl2)
+                )
                 new_path.curve_to(loc, ctrl1, ctrl2)
             else:
-                raise ValueError(f'Invalid command: {type_}')
+                raise ValueError(f'Invalid command: {cmd.type}')
 
         return new_path
 

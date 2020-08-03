@@ -175,7 +175,7 @@ def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
         ValueError: less than 3 vertices
 
     """
-    vertices = Vec2.list(vertices)
+    vertices = Vector.list(vertices)
     if len(vertices) < 3:
         raise ValueError('At least 3 vertices required.')
 

@@ -157,14 +157,12 @@ def _get_path_patch_data(path):
     codes = [Path.MOVETO]
     vertices = [path.start]
     for cmd in path:
-        type_ = cmd[0]
-        if type_ == Command.LINE_TO:
+        if cmd.type == Command.LINE_TO:
             codes.append(Path.LINETO)
-            vertices.append(cmd[1])
-        elif type_ == Command.CURVE_TO:
-            _, end, ctrl1, ctrl2 = cmd
+            vertices.append(cmd.end)
+        elif cmd.type == Command.CURVE_TO:
             codes.extend(CURVE4x3)
-            vertices.extend((ctrl1, ctrl2, end))
+            vertices.extend((cmd.ctrl1, cmd.ctrl2, cmd.end))
         else:
-            raise ValueError(f'Invalid command: {type_}')
+            raise ValueError(f'Invalid command: {cmd.type}')
     return [(p.x, p.y) for p in vertices], codes
