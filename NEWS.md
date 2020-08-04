@@ -29,6 +29,11 @@ Version 0.14a2 - dev
   and paperspace layouts, special arrow blocks and DIMENSION and ACAD_TABLE 
   blocks in use, but see also warning in the 
   [docs](https://ezdxf.mozman.at/docs/sections/blocks.html)
+- NEW: `Insert.explode()` support for MINSERT (multi insert)
+- NEW: `Insert.virtual_entities()` support for MINSERT (multi insert)
+- NEW: `Insert.mcount` property returns multi insert count
+- NEW: `Insert.multi_insert()` yields a virtual INSERT entity for each grid 
+  element of a MINSERT entity
 - NEW: `BSpline.is_clamped` property is `True` for a clamped (open) B-spline
 - NEW: `UCS.transform()` general transformation interface
 - NEW: `Bezier4P.transform()` general transformation interface

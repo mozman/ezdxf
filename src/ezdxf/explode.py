@@ -22,6 +22,11 @@ if TYPE_CHECKING:
     )
 
 
+def default_logging_callback(entity, reason):
+    logger.debug(
+        f'(Virtual Block Reference Entities) Ignoring {str(entity)}: "{reason}"')
+
+
 def explode_block_reference(block_ref: 'Insert',
                             target_layout: 'BaseLayout') -> EntityQuery:
     """ Explode a block reference into single DXF entities.
@@ -133,17 +138,13 @@ def virtual_block_reference_entities(
     """
     assert block_ref.dxftype() == 'INSERT'
     Ellipse = cast('Ellipse', factory.cls('ELLIPSE'))
-    if skipped_entity_callback is None:
-        def skipped_entity_callback(entity, reason):
-            logger.debug(
-                f'(Virtual Block Reference Entities) Ignoring {str(entity)}: "{reason}"')
+    skipped_entity_callback = skipped_entity_callback or default_logging_callback
 
     def disassemble(layout) -> Iterable['DXFGraphic']:
         for entity in layout:
             # Do not explode ATTDEF entities. Already available in Insert.attribs
             if entity.dxftype() == 'ATTDEF':
                 continue
-
             try:
                 copy = entity.copy()
             except DXFTypeError:

@@ -265,27 +265,30 @@ class Insert(DXFGraphic):
                 ``(row_spacing, column_spacing)`` tuple
 
         """
-        if len(size) != 2:
+        try:
+            rows, cols = size
+        except ValueError:
             raise DXFValueError(
-                "Parameter size has to be a (row_count, column_count)-tuple."
+                "Size has to be a 2-tuple: (row_count, column_count)."
             )
-        if len(spacing) != 2:
+        self.dxf.row_count = rows
+        self.dxf.column_count = cols
+        try:
+            row_spacing, col_spacing = spacing
+        except ValueError:
             raise DXFValueError(
-                "Parameter spacing has to be a (row_spacing, column_spacing)-tuple."
+                "Spacing has to be a 2-tuple: (row_spacing, column_spacing)."
             )
-        self.dxf.row_count = size[0]
-        self.dxf.column_count = size[1]
-        self.dxf.row_spacing = spacing[0]
-        self.dxf.column_spacing = spacing[1]
+        self.dxf.row_spacing = row_spacing
+        self.dxf.column_spacing = col_spacing
         return self
 
     def get_attrib(self, tag: str, search_const: bool = False) -> Optional[
         Union['Attrib', 'AttDef']]:
-        """
-        Get attached :class:`Attrib` entity with :code:`dxf.tag == tag`, returns
-        ``None`` if not found. Some applications may not attach constant ATTRIB
-        entities, set `search_const` to ``True``, to get at least the associated
-        :class:`AttDef` entity.
+        """ Get attached :class:`Attrib` entity with :code:`dxf.tag == tag`,
+        returns ``None`` if not found. Some applications may not attach constant
+        ATTRIB entities, set `search_const` to ``True``, to get at least the
+        associated :class:`AttDef` entity.
 
         Args:
             tag: tag name
@@ -305,8 +308,7 @@ class Insert(DXFGraphic):
 
     def get_attrib_text(self, tag: str, default: str = None,
                         search_const: bool = False) -> str:
-        """
-        Get content text of attached :class:`Attrib` entity with
+        """ Get content text of attached :class:`Attrib` entity with
         :code:`dxf.tag == tag`, returns `default` if not found.
         Some applications may not attach constant ATTRIB entities, set
         `search_const` to ``True``, to get content text of the
@@ -324,8 +326,7 @@ class Insert(DXFGraphic):
         return attrib.dxf.text
 
     def has_attrib(self, tag: str, search_const: bool = False) -> bool:
-        """
-        Returns ``True`` if ATTRIB `tag` exist, for `search_const` doc see
+        """ Returns ``True`` if ATTRIB `tag` exist, for `search_const` doc see
         :meth:`get_attrib`.
 
         Args:
@@ -337,8 +338,7 @@ class Insert(DXFGraphic):
 
     def add_attrib(self, tag: str, text: str, insert: 'Vertex' = (0, 0),
                    dxfattribs: dict = None) -> 'Attrib':
-        """
-        Attach an :class:`Attrib` entity to the block reference.
+        """ Attach an :class:`Attrib` entity to the block reference.
 
         Example for appending an attribute to an INSERT entity with none
         standard alignment::
@@ -377,10 +377,9 @@ class Insert(DXFGraphic):
         self.link_seqend(seqend)
 
     def delete_attrib(self, tag: str, ignore=False) -> None:
-        """
-        Delete an attached :class:`Attrib` entity from INSERT. If `ignore` is
-        ``False``, an :class:`DXFKeyError` exception is raised, if ATTRIB `tag`
-        does not exist.
+        """ Delete an attached :class:`Attrib` entity from INSERT. If `ignore`
+        is ``False``, an :class:`DXFKeyError` exception is raised, if
+        ATTRIB `tag` does not exist.
 
         Args:
             tag: ATTRIB name
@@ -534,7 +533,6 @@ class Insert(DXFGraphic):
         Transforms the block entities into the required :ref:`WCS` location by
         applying the block reference attributes `insert`, `extrusion`,
         `rotation` and the scaling values `xscale`, `yscale` and `zscale`.
-        Multiple inserts by row and column attributes is not supported.
 
         Attached ATTRIB entities are converted to TEXT entities, this is the
         behavior of the BURST command of the AutoCAD Express Tools.
@@ -545,8 +543,7 @@ class Insert(DXFGraphic):
         .. warning::
 
             **Non uniform scaling** may lead to incorrect results for text
-            entities (TEXT, MTEXT, ATTRIB) and some other entities like HATCH
-            with arc or ellipse path segments.
+            entities (TEXT, MTEXT, ATTRIB) and maybe some other entities.
 
         Args:
             target_layout: target layout for exploded entities, ``None`` for
@@ -597,8 +594,7 @@ class Insert(DXFGraphic):
         .. warning::
 
             **Non uniform scaling** may return incorrect results for text
-            entities (TEXT, MTEXT, ATTRIB) and some other entities like HATCH
-            with arc or ellipse path segments.
+            entities (TEXT, MTEXT, ATTRIB) and maybe some other entities.
 
         Args:
             skipped_entity_callback: called whenever the transformation of an
@@ -614,9 +610,49 @@ class Insert(DXFGraphic):
                 ' deprecated (removed in v0.15).',
                 DeprecationWarning
             )
-
         return virtual_block_reference_entities(
             self, skipped_entity_callback=skipped_entity_callback)
+
+    @property
+    def mcount(self):
+        """ Returns the multi-insert count, the INSERT entity is a MINSERT
+        if :attr:`Insert.mcount` > 1.
+        """
+        return (self.dxf.row_count if self.dxf.row_spacing else 1) * (
+            self.dxf.column_count if self.dxf.column_spacing else 1)
+
+    def multi_insert(self) -> Iterable['Insert']:
+        """ Yields a virtual INSERT entity for each grid element. """
+        def transform_attached_attrib_entities(insert, offset):
+            for attrib in insert.attribs:
+                attrib.dxf.insert += offset
+
+        def adjust_dxf_attribs(insert, offset):
+            dxf = insert.dxf
+            dxf.insert += offset
+            dxf.discard('row_count')
+            dxf.discard('column_count')
+            dxf.discard('row_spacing')
+            dxf.discard('column_spacing')
+
+        done = set()
+        row_spacing = self.dxf.row_spacing
+        col_spacing = self.dxf.column_spacing
+        rotation = self.dxf.rotation
+        for row in range(self.dxf.row_count):
+            for col in range(self.dxf.column_count):
+                # All transformations in OCS:
+                offset = Vector(col * col_spacing, row * row_spacing)
+                # If any spacing is 0, yield only unique locations:
+                if offset not in done:
+                    done.add(offset)
+                    if rotation:  # Apply rotation to the grid.
+                        offset = offset.rotate_deg(rotation)
+                    # Do not apply scaling to the grid!
+                    insert = self.copy()
+                    adjust_dxf_attribs(insert, offset)
+                    transform_attached_attrib_entities(insert, offset)
+                    yield insert
 
     def add_auto_attribs(self, values: Dict[str, str]) -> 'Insert':
         """
