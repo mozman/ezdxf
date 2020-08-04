@@ -8,8 +8,7 @@ from ezdxf.entities import factory
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
 from ezdxf.math import Vector, bulge_to_arc, OCS
 from ezdxf.math.transformtools import (
-    NonUniformScalingError,
-    InsertTransformationError,
+    NonUniformScalingError, InsertTransformationError,
 )
 from ezdxf.query import EntityQuery
 
@@ -29,12 +28,11 @@ def default_logging_callback(entity, reason):
 
 def explode_block_reference(block_ref: 'Insert',
                             target_layout: 'BaseLayout') -> EntityQuery:
-    """ Explode a block reference into single DXF entities.
+    """ Explode a block reference into DXF primitives.
 
     Transforms the block entities into the required WCS location by applying the
     block reference attributes `insert`, `extrusion`, `rotation` and the scaling
-    values `xscale`, `yscale` and `zscale`. Multiple inserts by row and column
-    attributes is not supported.
+    values `xscale`, `yscale` and `zscale`.
 
     Returns an EntityQuery() container with all exploded DXF entities.
 
@@ -60,30 +58,39 @@ def explode_block_reference(block_ref: 'Insert',
         raise DXFStructureError(
             'Block reference has to be assigned to a DXF document.')
 
+    def _explode_single_block_ref(block_ref):
+        for entity in virtual_block_reference_entities(block_ref):
+            dxftype = entity.dxftype()
+            entitydb.add(entity)
+            target_layout.add_entity(entity)
+            if dxftype == 'DIMENSION':
+                # Render a graphical representation for each exploded DIMENSION
+                # entity as anonymous block.
+                cast('Dimension', entity).render()
+            entities.append(entity)
+
+        # Convert attached ATTRIB entities to TEXT entities:
+        # This is the behavior of the BURST command of the AutoCAD Express Tools
+        for attrib in block_ref.attribs:
+            # Attached ATTRIB entities are already located in the WCS
+            text = attrib_to_text(attrib, dxffactory)
+            target_layout.add_entity(text)
+            entities.append(text)
+
     entitydb = block_ref.doc.entitydb
-    assert entitydb is not None, 'Exploding a block reference requires an entity database.'
+    assert entitydb is not None, \
+        'Exploding a block reference requires an entity database.'
 
     dxffactory = block_ref.doc.dxffactory
-    assert dxffactory is not None, 'Exploding a block reference requires a DXF entity factory.'
+    assert dxffactory is not None, \
+        'Exploding a block reference requires a DXF entity factory.'
 
     entities = []
-
-    for entity in virtual_block_reference_entities(block_ref):
-        dxftype = entity.dxftype()
-        entitydb.add(entity)
-        target_layout.add_entity(entity)
-        if dxftype == 'DIMENSION':
-            # Render a graphical representation for each exploded DIMENSION entity as anonymous block.
-            cast('Dimension', entity).render()
-        entities.append(entity)
-
-    # Convert attached ATTRIB entities to TEXT entities:
-    # This is the behavior of the BURST command of the AutoCAD Express Tools
-    for attrib in block_ref.attribs:
-        # Attached ATTRIB entities are already located in the WCS
-        text = attrib_to_text(attrib, dxffactory)
-        target_layout.add_entity(text)
-        entities.append(text)
+    if block_ref.mcount > 1:
+        for virtual_insert in block_ref.multi_insert():
+            _explode_single_block_ref(virtual_insert)
+    else:
+        _explode_single_block_ref(block_ref)
 
     source_layout = block_ref.get_layout()
     if source_layout is not None:
@@ -94,15 +101,18 @@ def explode_block_reference(block_ref: 'Insert',
     return EntityQuery(entities)
 
 
-IGNORE_FROM_ATTRIB = {'version', 'prompt', 'tag', 'flags', 'field_length',
-                      'lock_position'}
+IGNORE_FROM_ATTRIB = {
+    'version', 'prompt', 'tag', 'flags', 'field_length', 'lock_position'
+}
 
 
 def attrib_to_text(attrib: 'Attrib', dxffactory) -> 'Text':
     dxfattribs = attrib.dxfattribs(drop=IGNORE_FROM_ATTRIB)
     # ATTRIB has same owner as INSERT but does not reside in any EntitySpace()
     # and must not deleted from any layout.
-    dxffactory.doc.entitydb.delete_entity(attrib)
+    if attrib.dxf.handle is not None:
+        # not a virtual ATTRIB
+        dxffactory.doc.entitydb.delete_entity(attrib)
     # New TEXT entity has same handle as the deleted ATTRIB entity and replaces
     # the ATTRIB entity in the database.
     return dxffactory.create_db_entry('TEXT', dxfattribs=dxfattribs)

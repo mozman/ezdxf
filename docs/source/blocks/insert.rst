@@ -55,19 +55,19 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. attribute:: dxf.row_count
 
-        Count of repeated insertions in row direction (int)
+        Count of repeated insertions in row direction, MINSERT entity if > 1 (int)
 
     .. attribute:: dxf.row_spacing
 
-        Distance between two insert points in row direction (float)
+        Distance between two insert points (MINSERT) in row direction (float)
 
     .. attribute:: dxf.column_count
 
-        Count of repeated insertions in column direction (int)
+        Count of repeated insertions in column direction, MINSERT entity if > 1 (int)
 
     .. attribute:: dxf.column_spacing
 
-        Distance between two insert points in column direction (float)
+        Distance between two insert points (MINSERT) in column direction (float)
 
     .. attribute:: attribs
 
@@ -76,6 +76,8 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
     .. autoattribute:: has_scaling
 
     .. autoattribute:: has_uniform_scaling
+
+    .. autoattribute:: mcount
 
     .. automethod:: set_scale
 
@@ -106,6 +108,8 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Insert
 
     .. automethod:: virtual_entities(skipped_entity_callback: Callable[[DXFGraphic, str], None] = None) -> Iterable[DXFGraphic]
+
+    .. automethod:: multi_insert() -> Iterable[Insert]
 
     .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
 

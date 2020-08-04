@@ -1,8 +1,9 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
+from typing import cast
 import pytest
 import ezdxf
-from ezdxf.entities import Insert
+from ezdxf.entities import Insert, Point, Attrib
 
 
 def test_mcount_property():
@@ -23,10 +24,14 @@ def test_mcount_property():
 class TestSimpleBlock:
     # without ATTRIB, no rotation, no extrusion
     @pytest.fixture(scope='class')
-    def insert(self):
+    def doc(self):
         doc = ezdxf.new()
         blk = doc.blocks.new('POINT')
         blk.add_point(location=(0, 0))
+        return doc
+
+    @pytest.fixture
+    def insert(self, doc):
         msp = doc.modelspace()
         return msp.add_blockref('POINT', (0, 0))
 
@@ -61,13 +66,29 @@ class TestSimpleBlock:
         assert minsert[0].dxf.insert == (0, 0)
         assert minsert[1].dxf.insert == (10, 0)
 
+    def test_explode(self, insert, doc):
+        handle = insert.dxf.handle
+        insert.grid(size=(2, 2), spacing=(10, 10))
+        points = insert.explode()
+        assert insert.is_alive is False
+        assert handle not in doc.entitydb
+        assert len(points) == 4
+        point = cast(Point, points[3])
+        assert point.dxf.owner is not None, 'not assigned to a layout'
+        assert point.get_layout().name == 'Model'
+        assert point.dxf.location == (10, 10)
+
 
 class TestInsertAttributes:
     @pytest.fixture(scope='class')
-    def insert(self):
+    def doc(self):
         doc = ezdxf.new()
         blk = doc.blocks.new('POINT')
         blk.add_point(location=(0, 0))
+        return doc
+
+    @pytest.fixture(scope='class')
+    def insert(self, doc):
         msp = doc.modelspace()
         insert = msp.add_blockref('POINT', (0, 0))
         insert.add_attrib('TEST', text='text', insert=(0, 0))
@@ -83,6 +104,19 @@ class TestInsertAttributes:
         assert attribs[1].dxf.insert == (10, 0)
         assert attribs[2].dxf.insert == (0, 10)
         assert attribs[3].dxf.insert == (10, 10)
+
+    def test_explode(self, insert, doc):
+        handle = insert.dxf.handle
+        insert.grid(size=(2, 2), spacing=(10, 10))
+        entities = insert.explode()
+        assert insert.is_alive is False
+        assert handle not in doc.entitydb
+        assert len(entities) == 8
+        # ATTRIB -> TEXT
+        attrib = cast(Attrib, entities.query('TEXT')[3])
+        assert attrib.dxf.owner is not None, 'not assigned to a layout'
+        assert attrib.get_layout().name == 'Model'
+        assert attrib.dxf.insert == (10, 10)
 
 
 class TestRotatedInsert:

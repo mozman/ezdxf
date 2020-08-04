@@ -591,6 +591,12 @@ class Insert(DXFGraphic):
             msp = doc.modelspace()
             msp.add_entity(entity)
 
+        This method does not resolve the MINSERT attributes, only the
+        sub-entities of the base INSERT will be returned. To resolve MINSERT
+        entities check if multi insert processing is required, that's the case
+        if property :attr:`Insert.mcount` > 1, use the :meth:`Insert.multi_insert`
+        method to resolve the MINSERT entity into single INSERT entities.
+
         .. warning::
 
             **Non uniform scaling** may return incorrect results for text
@@ -615,14 +621,22 @@ class Insert(DXFGraphic):
 
     @property
     def mcount(self):
-        """ Returns the multi-insert count, the INSERT entity is a MINSERT
-        if :attr:`Insert.mcount` > 1.
+        """ Returns the multi-insert count, MINSERT (multi-insert) processing
+        is required if :attr:`mcount` > 1.
+
+        .. versionadded:: 0.14
+
         """
         return (self.dxf.row_count if self.dxf.row_spacing else 1) * (
             self.dxf.column_count if self.dxf.column_spacing else 1)
 
     def multi_insert(self) -> Iterable['Insert']:
-        """ Yields a virtual INSERT entity for each grid element. """
+        """ Yields a virtual INSERT entity for each grid element of a MINSERT
+        entity (multi-insert).
+
+        .. versionadded:: 0.14
+
+        """
         def transform_attached_attrib_entities(insert, offset):
             for attrib in insert.attribs:
                 attrib.dxf.insert += offset
