@@ -9,7 +9,7 @@ from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
-from ezdxf.addons.drawing.properties import Properties, Filling
+from ezdxf.addons.drawing.properties import Properties
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command
 
