@@ -169,7 +169,9 @@ class PyQtBackend(Backend):
                             font: str = None) -> float:
         if not text:
             return 0
-        text = prepare_string_for_rendering(text, self.current_entity.dxftype())
+
+        dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
+        text = prepare_string_for_rendering(text, dxftype)
         scale = cap_height / self._font_measurements.cap_height
         return _get_text_rect(self._font, text).right() * scale
 

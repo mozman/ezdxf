@@ -111,7 +111,8 @@ class MatplotlibBackend(Backend):
     def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
         if not text:
             return 0
-        text = prepare_string_for_rendering(text, self.current_entity.dxftype())
+        dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
+        text = prepare_string_for_rendering(text, dxftype)
         path = _text_path(text, self.font)
         scale = cap_height / self._font_measurements.cap_height
         return max(x for x, y in path.vertices) * scale
