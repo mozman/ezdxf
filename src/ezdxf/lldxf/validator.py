@@ -293,6 +293,8 @@ def is_adsk_special_layer(name: str) -> bool:
             return True
         if name.startswith('*ACMAP'):
             return True
+        if name.startswith('*TEMPORARY'):
+            return True
     return False
 
 
