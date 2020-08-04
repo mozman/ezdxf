@@ -131,9 +131,10 @@ acdb_mtext = DefSubclass('AcDbMText', {
     # 1 = color -> (63) < (421) or (431)
     # 2 = drawing window color
     # 3 = use background color
+    # see issue #207: 17 is an undocumented but valid value
     'bg_fill': DXFAttr(
         90, dxfversion='AC1021',
-        validator=validator.is_in_integer_range(0, 4),
+        validator=validator.is_greater_or_equal_zero,
     ),
 
     # background fill color as ACI, required even true color is used
