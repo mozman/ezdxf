@@ -28,6 +28,8 @@ __all__ = [
     'replace_non_printable_characters'
 ]
 
+BG_FILL_MASK = 1 + 2 + 16
+
 acdb_mtext = DefSubclass('AcDbMText', {
     'insert': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
 
@@ -126,15 +128,16 @@ acdb_mtext = DefSubclass('AcDbMText', {
     # (45) + (90) + (63) all three required, if one of them is used
     'box_fill_scale': DXFAttr(45, dxfversion='AC1021'),
 
-    # background fill type:
+    # background fill type flags:
     # 0 = off
     # 1 = color -> (63) < (421) or (431)
     # 2 = drawing window color
-    # 3 = use background color
-    # see issue #207: 17 is an undocumented but valid value
+    # 3 = use background color (1 & 2)
+    # 16 = text frame ODA specification 20.4.46
     'bg_fill': DXFAttr(
         90, dxfversion='AC1021',
-        validator=validator.is_greater_or_equal_zero,
+        validator=validator.is_valid_bitmask(BG_FILL_MASK),
+        fixer=validator.fix_bitmask(BG_FILL_MASK)
     ),
 
     # background fill color as ACI, required even true color is used

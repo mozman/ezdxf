@@ -348,3 +348,20 @@ def test_replace_non_printable():
     assert replace_non_printable_characters('abc\0def') == 'abc▯def'
     assert replace_non_printable_characters(
         'abc\0def', replacement=' ') == 'abc def'
+
+
+def test_bg_fill_flags():
+    mtext = MText.new()
+    mtext.dxf.bg_fill = 0  # bg fill off
+    mtext.dxf.bg_fill = 1  # bg fill as color
+    assert mtext.dxf.bg_fill == 1
+    mtext.dxf.bg_fill = 2  # bg fill as window color
+    assert mtext.dxf.bg_fill == 2
+    mtext.dxf.bg_fill = 3  # bg fill as background color
+    assert mtext.dxf.bg_fill == 3
+    mtext.dxf.bg_fill = 0x10  # text frame?
+    assert mtext.dxf.bg_fill == 0x10
+    mtext.dxf.bg_fill = 4  # invalid flag
+    assert mtext.dxf.bg_fill == 0
+    mtext.dxf.bg_fill = 0x20  # invalid flag
+    assert mtext.dxf.bg_fill == 0

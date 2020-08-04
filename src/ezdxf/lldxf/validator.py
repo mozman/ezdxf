@@ -373,7 +373,7 @@ def is_not_negative(v) -> bool:
     return v >= 0
 
 
-is_greater_or_equal_zero = is_not_zero
+is_greater_or_equal_zero = is_not_negative
 
 
 def is_positive(v) -> bool:
@@ -381,6 +381,20 @@ def is_positive(v) -> bool:
 
 
 is_greater_zero = is_positive
+
+
+def is_valid_bitmask(mask: int):
+    def _validator(value: int) -> bool:
+        return not bool(~mask & value)
+
+    return _validator
+
+
+def fix_bitmask(mask: int):
+    def _fixer(value: int) -> int:
+        return mask & value
+
+    return _fixer
 
 
 def is_integer_bool(v) -> bool:

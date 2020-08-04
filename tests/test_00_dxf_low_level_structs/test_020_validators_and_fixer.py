@@ -8,7 +8,8 @@ from ezdxf.lldxf.validator import (
     fix_lineweight, is_integer_bool, is_valid_one_line_text,
     fix_one_line_text, is_not_zero, is_not_negative, is_one_of,
     is_in_float_range, fit_into_float_range, fix_integer_bool,
-    fit_into_integer_range,
+    fit_into_integer_range, is_valid_bitmask, fix_bitmask,
+    is_greater_or_equal_zero,
 )
 
 
@@ -173,6 +174,31 @@ def test_is_one_of():
     assert _validator(1) is True
     assert _validator(3) is True
     assert _validator(5) is True
+
+
+def test_is_greater_or_equal_zero():
+    assert is_greater_or_equal_zero(-1) is False
+    assert is_greater_or_equal_zero(0) is True
+    assert is_greater_or_equal_zero(1) is True
+
+
+def test_is_valid_bitmask():
+    validator = is_valid_bitmask(3)
+    assert validator(0) is True
+    assert validator(1) is True
+    assert validator(2) is True
+    assert validator(3) is True
+    assert validator(4) is False
+
+
+def test_fix_bitmask():
+    fixer = fix_bitmask(3)
+    assert fixer(0) == 0
+    assert fixer(1) == 1
+    assert fixer(2) == 2
+    assert fixer(3) == 3
+    assert fixer(4) == 0
+    assert fixer(5) == 1
 
 
 if __name__ == '__main__':
