@@ -34,8 +34,8 @@ values = {
 
 block_ref = modelspace.add_blockref('FLAG', location, dxfattribs={
     'layer': 'FLAGS',
-    'extrusion': (-1, 0, 1),
 }).grid(size=(5, 5), spacing=(10, 10))
+block_ref.dxf.rotation = 15
 block_ref.add_auto_attribs(values)
 
 filename = DIR / 'multi_insert_with_attribs.dxf'

@@ -332,13 +332,20 @@ class Frontend:
                 child.transparency = 0.0
                 yield child
 
+        def draw_insert(insert: Insert):
+            self.draw_entities(insert.attribs)
+            # draw_entities() includes the visibility check:
+            self.draw_entities(insert.virtual_entities())
+
         dxftype = entity.dxftype()
         if dxftype == 'INSERT':
             entity = cast(Insert, entity)
             self.ctx.push_state(properties)
-            # draw_entities() includes the visibility check:
-            self.draw_entities(entity.attribs)
-            self.draw_entities(entity.virtual_entities())
+            if entity.mcount > 1:
+                for virtual_insert in entity.multi_insert():
+                    draw_insert(virtual_insert)
+            else:
+                draw_insert(entity)
             self.ctx.pop_state()
 
         # DIMENSION, ARC_DIMENSION, LARGE_RADIAL_DIMENSION, LEADER
