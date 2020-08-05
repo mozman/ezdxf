@@ -21,6 +21,7 @@ if TYPE_CHECKING:
         LWPolyline, Ellipse, MText, XLine, Ray, Spline, Leader, AttDef, Mesh,
         Hatch, Image, ImageDef, Underlay, UnderlayDef, Body, Region, Solid3d,
         LoftedSurface, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface,
+        Wipeout,
     )
 
 
@@ -932,6 +933,23 @@ class CreatorInterface:
         # Creating an ImageReactor and linking it to the Image and the ImageDef
         # entity is done by adding the new Image to a layout.
         return cast('Image', self.new_entity('IMAGE', dxfattribs))
+
+    def add_wipeout(self, vertices: Iterable['Vertex'],
+                    dxfattribs: dict = None) -> 'Wipeout':
+        """ Add a :class:`ezdxf.entities.Wipeout` entity, the masking area is
+        defined by WCS `vertices`.
+
+        This method creates only a 2D entity in the xy-plane of the layout,
+        the z-axis of the input vertices are ignored.
+
+        """
+        wipeout = cast('Wipeout',
+                       self.new_entity('WIPEOUT', dxfattribs=dxfattribs))
+        wipeout.set_wipeout_area(vertices)
+        doc = self.doc
+        if doc and ('ACAD_WIPEOUT_VARS' not in doc.rootdict):
+            doc.set_wipeout_variables(frame=0)
+        return wipeout
 
     def add_underlay(self, underlay_def: 'UnderlayDef',
                      insert: 'Vertex' = (0, 0, 0),

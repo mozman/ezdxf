@@ -789,6 +789,8 @@ class Drawing:
 
         """
         self.objects.set_wipeout_variables(frame=frame)
+        var_dict = self.rootdict.get_required_dict('AcDbVariableDictionary')
+        var_dict.set_or_add_dict_var('WIPEOUTFRAME', str(frame))
 
     def add_underlay_def(self, filename: str, format: str = 'ext', name: str = None):
         """

@@ -41,4 +41,5 @@ DXF Entities
     trace
     underlay
     viewport
+    wipeout
     xline

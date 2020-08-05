@@ -315,6 +315,25 @@ class Dictionary(DXFObject):
         self.add(key, new_var)
         return new_var
 
+    def set_or_add_dict_var(self, key: str, value: str) -> 'DictionaryVar':
+        """ Set or add new :class:`DictionaryVar`.
+
+        Args:
+             key: entry name as string
+             value: entry value as string
+
+        """
+        if key not in self:
+            dict_var = self.doc.objects.add_dictionary_var(
+                owner=self.dxf.handle,
+                value=value
+            )
+            self.add(key, dict_var)
+        else:
+            dict_var = self.get(key)
+            dict_var.dxf.value = str(value)
+        return dict_var
+
     def get_required_dict(self, key: str) -> 'Dictionary':
         """ Get entry `key` or create a new :class:`Dictionary`,
         if `Key` not exit.

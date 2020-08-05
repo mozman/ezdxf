@@ -170,17 +170,6 @@ def test_create_and_copy_image(new_doc):
     assert reactor_handle_of_copy in image_def.reactors
 
 
-def test_generic_wipeout(doc):
-    msp = doc.modelspace()
-    wipeout = msp.new_entity('WIPEOUT', {'insert': (0, 0, 0)})
-    assert wipeout.dxftype() == 'WIPEOUT'
-    assert wipeout.dxf.insert == (0, 0, 0)
-
-    doc.set_wipeout_variables(frame=1)
-    wipeout_variables = doc.rootdict['ACAD_WIPEOUT_VARS']
-    assert wipeout_variables.dxf.frame == 1
-
-
 IMAGE_DEF = """  0
 IMAGEDEF
   5

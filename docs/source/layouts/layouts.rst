@@ -138,6 +138,8 @@ BaseLayout
 
     .. automethod:: add_image
 
+    .. automethod:: add_wipeout
+
     .. automethod:: add_underlay
 
     .. automethod:: add_linear_dim

@@ -6,8 +6,8 @@ from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2010, DXFTypeError
-from ezdxf.math import Vector, Vec2
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2010
+from ezdxf.math import Vector, Vec2, BoundingBox2d
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
@@ -15,8 +15,8 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-    TagWriter, DXFNamespace, Drawing, Vertex, DXFTag, Matrix44, BaseLayout,
-)
+        TagWriter, DXFNamespace, Drawing, Vertex, DXFTag, Matrix44, BaseLayout,
+    )
 
 __all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables', 'Wipeout']
 
@@ -284,15 +284,41 @@ class Wipeout(Image):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_wipeout)
     DEFAULT_ATTRIBS = {
         'layer': '0',
-        'flags': 3,
+        'flags': 7,
+        'clipping': 1,
+        'brightness': 50,
+        'contrast': 50,
+        'fade': 0,
         'image_size': (1, 1),
         'image_def_handle': '0',
         'image_def_reactor_handle': '0',
+        'clip_mode': 0
     }
     _CLS_ATTRIBS = acdb_wipeout
 
     def added_to_layout(self, layout: 'BaseLayout') -> None:
         pass  # nothing to do for WIPEOUT
+
+    def set_wipeout_area(self, vertices: Iterable['Vertex']) -> None:
+        """ Set a new WIPEOUT area, the area is placed in the global xy-plane.
+        """
+        self.update_dxf_attribs(self.DEFAULT_ATTRIBS)
+        vertices = Vec2.list(vertices)
+        bounds = BoundingBox2d(vertices)
+        x_size, y_size = bounds.size
+
+        dxf = self.dxf
+        dxf.insert = Vector(bounds.extmin)
+        dxf.u_pixel = Vector(x_size, 0, 0)
+        dxf.v_pixel = Vector(0, y_size, 0)
+
+        def boundary_path():
+            extmin = bounds.extmin
+            for vertex in vertices:
+                v = (vertex - extmin)
+                yield Vec2(v.x / x_size - 0.5, 0.5 - v.y / y_size)
+
+        self.set_boundary_path(boundary_path())
 
 
 acdb_image_def = DefSubclass('AcDbRasterImageDef', {
