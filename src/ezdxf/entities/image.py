@@ -15,8 +15,8 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, Drawing, Vertex, DXFTag, Matrix44,
-    )
+    TagWriter, DXFNamespace, Drawing, Vertex, DXFTag, Matrix44, BaseLayout,
+)
 
 __all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables', 'Wipeout']
 
@@ -119,8 +119,21 @@ class Image(DXFGraphic):
         super().__init__(doc)
         self._boundary_path: List[Vec2] = []
 
-    def copy(self):
-        raise DXFTypeError('Copying of IMAGE not supported.')
+    def _copy_data(self, entity: 'Image') -> None:
+        self._boundary_path = list(entity._boundary_path)
+
+    def added_to_layout(self, layout: 'BaseLayout') -> None:
+        if self.doc is None:
+            return
+        # Create a new ImageDefReactor object for the image copy:
+        image_def_reactor = self.doc.objects.add_image_def_reactor(
+            self.dxf.handle)
+        reactor_handle = image_def_reactor.dxf.handle
+        # Link reactor object to the image:
+        self.dxf.image_def_reactor_handle = reactor_handle
+        image_def = self.get_image_def()
+        # Link reactor object to the image definition:
+        image_def.append_reactor_handle(reactor_handle)
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -277,6 +290,9 @@ class Wipeout(Image):
         'image_def_reactor_handle': '0',
     }
     _CLS_ATTRIBS = acdb_wipeout
+
+    def added_to_layout(self, layout: 'BaseLayout') -> None:
+        pass  # nothing to do for WIPEOUT
 
 
 acdb_image_def = DefSubclass('AcDbRasterImageDef', {

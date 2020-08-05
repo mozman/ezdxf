@@ -929,15 +929,9 @@ class CreatorInterface:
         dxfattribs['v_pixel'] = to_vector(y_units_per_pixel, y_angle_rad)
         dxfattribs['image_def_handle'] = image_def.dxf.handle
         dxfattribs['image_size'] = image_def.dxf.image_size
-
-        image = cast('Image', self.new_entity('IMAGE', dxfattribs))
-        if self.doc is not None:
-            image_def_reactor = self.doc.objects.add_image_def_reactor(
-                image.dxf.handle)
-            reactor_handle = image_def_reactor.dxf.handle
-            image.dxf.image_def_reactor_handle = reactor_handle
-            image_def.append_reactor_handle(reactor_handle)
-        return image
+        # Creating an ImageReactor and linking it to the Image and the ImageDef
+        # entity is done by adding the new Image to a layout.
+        return cast('Image', self.new_entity('IMAGE', dxfattribs))
 
     def add_underlay(self, underlay_def: 'UnderlayDef',
                      insert: 'Vertex' = (0, 0, 0),

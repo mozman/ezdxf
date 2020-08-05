@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2019, Manfred Moitzi
+# Copyright (c) 2016-2020, Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -147,6 +147,27 @@ def test_create_and_delete_image(new_doc):
     assert reactor_handle not in new_doc.objects, "IMAGEDEF_REACTOR not deleted for objects section"
     assert reactor_handle not in new_doc.entitydb, "IMAGEDEF_REACTOR not deleted for entity database"
     assert reactor_handle not in image_def2.get_reactors(), "Reactor handle not deleted from IMAGE_DEF reactors."
+
+
+def test_create_and_copy_image(new_doc):
+    msp = new_doc.modelspace()
+    entitydb = new_doc.entitydb
+    image_def = new_doc.add_image_def('mycat.jpg', size_in_pixel=(640, 360))
+    image = msp.add_image(image_def=image_def, insert=(0, 0), size_in_units=(3.2, 1.8))
+    reactor_handle = image.dxf.image_def_reactor_handle
+    copy = image.copy()
+    entitydb.add(copy)
+    msp.add_entity(copy)
+    reactor_handle_of_copy = copy.dxf.image_def_reactor_handle
+
+    # Each image has it's own ImageDefReactor
+    assert reactor_handle in entitydb
+    assert reactor_handle_of_copy in entitydb
+    assert reactor_handle != reactor_handle_of_copy
+
+    # Both images are linked to ImageDef
+    assert reactor_handle in image_def.reactors
+    assert reactor_handle_of_copy in image_def.reactors
 
 
 def test_generic_wipeout(doc):
