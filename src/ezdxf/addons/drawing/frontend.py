@@ -69,7 +69,7 @@ class Frontend:
     def log_message(self, message: str):
         print(message)
 
-    def skip_entity(self, entity: DXFEntity, msg: str):
+    def skip_entity(self, entity: DXFEntity, msg: str) -> None:
         self.log_message(f'skipped entity {str(entity)}. Reason: "{msg}"')
 
     def override_properties(self, entity: DXFGraphic,
