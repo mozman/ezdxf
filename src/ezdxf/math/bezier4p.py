@@ -110,6 +110,8 @@ class Bezier4P:
             segments: count of segments for approximation
 
         """
+        if segments < 1:
+            raise ValueError(segments)
         delta_t = 1. / segments
         yield self._control_points[0]
         for segment in range(1, segments):

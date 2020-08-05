@@ -266,7 +266,7 @@ class GroupCollection(ObjectCollection):
 
     def new(self, name: str = None, description: str = "",
             selectable: bool = True) -> DXFGroup:
-        """ Creates a new group. If `name` is ``None`` an unnamed group is
+        r""" Creates a new group. If `name` is ``None`` an unnamed group is
         created, which has an automatically generated name like "\*Annnn".
 
         Args:

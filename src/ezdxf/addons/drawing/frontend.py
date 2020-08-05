@@ -69,7 +69,7 @@ class Frontend:
     def log_message(self, message: str):
         print(message)
 
-    def skip_entity(self, entity: DXFEntity, msg: str):
+    def skip_entity(self, entity: DXFEntity, msg: str) -> None:
         self.log_message(f'skipped entity {str(entity)}. Reason: "{msg}"')
 
     def override_properties(self, entity: DXFGraphic,
@@ -344,7 +344,7 @@ class Frontend:
         def draw_insert(insert: Insert):
             self.draw_entities(insert.attribs)
             # draw_entities() includes the visibility check:
-            self.draw_entities(insert.virtual_entities())
+            self.draw_entities(insert.virtual_entities(skipped_entity_callback=self.skip_entity))
 
         dxftype = entity.dxftype()
         if dxftype == 'INSERT':

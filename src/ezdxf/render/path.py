@@ -53,21 +53,21 @@ class CurveTo(NamedTuple):
         )
 
 
-PathElements = Union[LineTo, CurveTo]
+PathElement = Union[LineTo, CurveTo]
 
 
 class Path(abc.Sequence):
     def __init__(self, start: 'Vertex' = NULLVEC):
         self._start = Vector(start)
-        self._commands: List[PathElements] = []
+        self._commands: List[PathElement] = []
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._commands)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> PathElement:
         return self._commands[item]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[PathElement]:
         return iter(self._commands)
 
     def __copy__(self) -> 'Path':

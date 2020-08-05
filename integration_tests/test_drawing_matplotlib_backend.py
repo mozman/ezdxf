@@ -16,3 +16,6 @@ def backend():
 
 def test_get_text_width(backend):
     assert backend.get_text_line_width('   abc', 100) > backend.get_text_line_width('abc', 100)
+    assert backend.get_text_line_width('  abc ', 100) == backend.get_text_line_width('  abc', 100)
+    assert backend.get_text_line_width('   ', 100) == 0
+    assert backend.get_text_line_width('  ', 100) == 0

@@ -43,11 +43,13 @@ class Backend(ABC):
                   properties: Properties) -> None:
         raise NotImplementedError
 
-    def draw_path(self, path: Path, properties) -> None:
-        """ Fall-back implementation, approximate path by line segments.
+    def draw_path(self, path: Path, properties: Properties) -> None:
+        """ draw or fill a path (connected string of line segments and bezier curves)
 
-        Override in inherited back-end for a more efficient implementation.
-
+        The Backend.draw_path implementation is a fall-back implementation
+        which approximates the path using line segments.
+        Backends can override this method if better path drawing functionality
+        is available for that backend.
         """
         if len(path):
             if properties.filling:
@@ -71,6 +73,10 @@ class Backend(ABC):
     @abstractmethod
     def draw_filled_polygon(self, points: Iterable[Vector],
                             properties: Properties) -> None:
+        """ fill a polygon whose outline is defined by the given points.
+        Used to draw entities with simple outlines where draw_path may
+        be an inefficient way to draw such a polygon.
+        """
         raise NotImplementedError
 
     @abstractmethod
