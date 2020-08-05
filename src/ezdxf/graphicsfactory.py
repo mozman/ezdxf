@@ -945,7 +945,7 @@ class CreatorInterface:
         """
         wipeout = cast('Wipeout',
                        self.new_entity('WIPEOUT', dxfattribs=dxfattribs))
-        wipeout.set_wipeout_area(vertices)
+        wipeout.set_masking_area(vertices)
         doc = self.doc
         if doc and ('ACAD_WIPEOUT_VARS' not in doc.rootdict):
             doc.set_wipeout_variables(frame=0)

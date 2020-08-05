@@ -37,7 +37,7 @@ Version 0.14a2 - dev
 - NEW: `Layout.add_wipeout()` interface to create WIPEOUT entities
 - NEW: `Image.boundary_path_wcs()`, returns boundary path in WCS coordinates
 - NEW: `Wipeout.boundary_path_wcs()`, returns boundary path in WCS coordinates
-- NEW: `Wipeout.set_wipeout_area()`
+- NEW: `Wipeout.set_masking_area()`
 - NEW: `BSpline.is_clamped` property is `True` for a clamped (open) B-spline
 - NEW: `UCS.transform()` general transformation interface
 - NEW: `Bezier4P.transform()` general transformation interface

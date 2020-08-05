@@ -23,6 +23,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
 .. class:: Wipeout
 
-    .. automethod:: set_wipeout_area
+    .. automethod:: set_masking_area
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-2229F9C4-3C80-4C67-9EDA-45ED684808DC

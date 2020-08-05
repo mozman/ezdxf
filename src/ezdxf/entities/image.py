@@ -299,8 +299,8 @@ class Wipeout(Image):
     def added_to_layout(self, layout: 'BaseLayout') -> None:
         pass  # nothing to do for WIPEOUT
 
-    def set_wipeout_area(self, vertices: Iterable['Vertex']) -> None:
-        """ Set a new WIPEOUT area, the area is placed in the global xy-plane.
+    def set_masking_area(self, vertices: Iterable['Vertex']) -> None:
+        """ Set a new masking area, the area is placed in the layout xy-plane.
         """
         self.update_dxf_attribs(self.DEFAULT_ATTRIBS)
         vertices = Vec2.list(vertices)
