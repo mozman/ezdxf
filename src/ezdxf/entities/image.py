@@ -119,17 +119,25 @@ class Image(DXFGraphic):
         super().__init__(doc)
         self._boundary_path: List[Vec2] = []
 
+    def copy(self) -> 'Image':
+        image_copy = cast('Image', super().copy())
+        # Each image has its own ImageDefReactor object:
+        image_copy.dxf.image_def_reactor_handle = '0'
+        return image_copy
+
     def _copy_data(self, entity: 'Image') -> None:
-        self._boundary_path = list(entity._boundary_path)
+        entity._boundary_path = list(self._boundary_path)
 
     def added_to_layout(self, layout: 'BaseLayout') -> None:
         if self.doc is None:
             return
-        # Create a new ImageDefReactor object for the image copy:
+        if self.dxf.get('image_def_reactor_handle', '0') != '0':
+            return
+        # Create a new ImageDefReactor object for this image copy:
         image_def_reactor = self.doc.objects.add_image_def_reactor(
             self.dxf.handle)
         reactor_handle = image_def_reactor.dxf.handle
-        # Link reactor object to the image:
+        # Link reactor object to this image:
         self.dxf.image_def_reactor_handle = reactor_handle
         image_def = self.get_image_def()
         # Link reactor object to the image definition:

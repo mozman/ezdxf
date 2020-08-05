@@ -65,7 +65,7 @@ def test_image_dxf_attribs(image):
     assert 1 == image.dxf.clipping_boundary_type
     assert 2 == image.dxf.count_boundary_points
     x, y = image.dxf.image_size[:2]
-    assert [(-.5, -.5), (x-.5, y-.5)] == image.boundary_path
+    assert [(-.5, -.5), (x - .5, y - .5)] == image.boundary_path
 
 
 def test_boundary_path(image):
@@ -78,11 +78,12 @@ def test_reset_boundary_path(image):
     assert image.get_flag_state(image.USE_CLIPPING_BOUNDARY) is False
     assert image.dxf.clipping == 0
     x, y = image.dxf.image_size[:2]
-    assert [(-.5, -.5), (x-.5, y-.5)] == image.boundary_path
+    assert [(-.5, -.5), (x - .5, y - .5)] == image.boundary_path
 
 
 def test_set_boundary_path(image):
-    image.set_boundary_path([(0, 0), (640, 180), (320, 360)])  # 3 vertices triangle
+    image.set_boundary_path(
+        [(0, 0), (640, 180), (320, 360)])  # 3 vertices triangle
     assert 4 == image.dxf.count_boundary_points
     assert 2 == image.dxf.clipping_boundary_type
     # auto close
@@ -117,7 +118,8 @@ def test_new_image_def(new_doc):
 def test_create_and_delete_image(new_doc):
     msp = new_doc.modelspace()
     image_def = new_doc.add_image_def('mycat.jpg', size_in_pixel=(640, 360))
-    image = msp.add_image(image_def=image_def, insert=(0, 0), size_in_units=(3.2, 1.8))
+    image = msp.add_image(image_def=image_def, insert=(0, 0),
+                          size_in_units=(3.2, 1.8))
     assert (0, 0, 0) == image.dxf.insert
     assert (0.005, 0, 0) == image.dxf.u_pixel
     assert (0., 0.005, 0) == image.dxf.v_pixel
@@ -127,7 +129,7 @@ def test_create_and_delete_image(new_doc):
     assert 0 == image.dxf.clipping
     assert 2 == image.dxf.count_boundary_points
     x, y = image.dxf.image_size.vec2
-    assert [(-.5, -.5), (x-.5, y-.5)] == image.boundary_path
+    assert [(-.5, -.5), (x - .5, y - .5)] == image.boundary_path
 
     image_def2 = image.get_image_def()
     assert image_def.dxf.handle, image_def2.dxf.handle
@@ -149,11 +151,19 @@ def test_create_and_delete_image(new_doc):
     assert reactor_handle not in image_def2.get_reactors(), "Reactor handle not deleted from IMAGE_DEF reactors."
 
 
+def create_image(doc):
+    msp = doc.modelspace()
+    image_def = doc.add_image_def('mycat.jpg', size_in_pixel=(640, 360))
+    image = msp.add_image(image_def=image_def, insert=(0, 0),
+                          size_in_units=(3.2, 1.8))
+    image.boundary_path = [(0, 0), (1, 1), (2, 2), (3, 3)]
+    return image_def, image
+
+
 def test_create_and_copy_image(new_doc):
     msp = new_doc.modelspace()
     entitydb = new_doc.entitydb
-    image_def = new_doc.add_image_def('mycat.jpg', size_in_pixel=(640, 360))
-    image = msp.add_image(image_def=image_def, insert=(0, 0), size_in_units=(3.2, 1.8))
+    image_def, image = create_image(new_doc)
     reactor_handle = image.dxf.image_def_reactor_handle
     copy = image.copy()
     entitydb.add(copy)
@@ -161,13 +171,61 @@ def test_create_and_copy_image(new_doc):
     reactor_handle_of_copy = copy.dxf.image_def_reactor_handle
 
     # Each image has it's own ImageDefReactor
-    assert reactor_handle in entitydb
-    assert reactor_handle_of_copy in entitydb
-    assert reactor_handle != reactor_handle_of_copy
+    assert reactor_handle in entitydb, \
+        'ImageDefReactor of source image not stored in EntityDB.'
+    assert reactor_handle_of_copy in entitydb, \
+        'ImageDefReactor of copy not stored in EntityDB.'
+    assert reactor_handle != reactor_handle_of_copy, \
+        'Source image and copy must not have the same ImageDefReactor.'
 
-    # Both images are linked to ImageDef
-    assert reactor_handle in image_def.reactors
-    assert reactor_handle_of_copy in image_def.reactors
+    # Both images are linked to same ImageDef object.
+    assert reactor_handle in image_def.reactors, \
+        'ImageDefReactor of source image not stored in ImageDef object.'
+    assert reactor_handle_of_copy in image_def.reactors, \
+        'ImageDefReactor of copied image not stored in ImageDef object.'
+    assert image.boundary_path == copy.boundary_path, \
+        'Invalid copy of boundary path.'
+    assert image.boundary_path is not copy.boundary_path, \
+        'Copied image needs an independent copy of the boundary path.'
+
+
+def test_moving_to_another_layout(new_doc):
+    msp = new_doc.modelspace()
+    image_def, image = create_image(new_doc)
+    old_reactor_handle = image.dxf.image_def_reactor_handle
+    blk = new_doc.blocks.new('TEST')
+    msp.move_to_layout(image, blk)
+    # Moving between layouts should not alter the ImageDefReactor
+    assert image.dxf.image_def_reactor_handle == old_reactor_handle, \
+        'Moved image got a new ImageDefReactor without necessity.'
+
+
+def test_copying_to_another_layout(new_doc):
+    image_def, image = create_image(new_doc)
+    old_reactor_handle = image.dxf.image_def_reactor_handle
+    blk = new_doc.blocks.new('TEST')
+    copy = new_doc.entitydb.duplicate_entity(image)
+
+    assert copy.dxf.image_def_reactor_handle == '0', \
+        'Handle of source reactor was not removed.'
+    blk.add_entity(copy)
+
+    # Adding to a layout creates a new ImageDefReactor
+    copy_reactor_handle = copy.dxf.image_def_reactor_handle
+    assert copy_reactor_handle != '0', \
+        'Image copy did not get a new ImageDefReactor'
+    assert copy_reactor_handle != old_reactor_handle, \
+        'Image copy has the same ImageDefReactor as the source image.'
+
+    # unlinking an image, does not remove the ImageDefReactor
+    blk.unlink_entity(copy)
+    assert copy.dxf.image_def_reactor_handle == copy_reactor_handle, \
+        'Removed ImageDefReactor from unlinked image.'
+
+    # Keep reactor if adding an image with existing ImageDefReactor
+    blk.add_entity(copy)
+    assert copy.dxf.image_def_reactor_handle == copy_reactor_handle, \
+        'Relinked image got new ImageDefReactor without necessity.'
 
 
 IMAGE_DEF = """  0
