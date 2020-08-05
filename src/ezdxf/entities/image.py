@@ -7,7 +7,7 @@ from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2010, DXFTypeError
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Vec2
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
@@ -117,7 +117,7 @@ class Image(DXFGraphic):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        self._boundary_path = []  # type: List[Vertex]
+        self._boundary_path: List[Vec2] = []
 
     def copy(self):
         raise DXFTypeError('Copying of IMAGE not supported.')
@@ -139,7 +139,9 @@ class Image(DXFGraphic):
         return dxf
 
     def load_boundary_path(self, tags: Iterable['DXFTag']):
-        self._boundary_path = [value for code, value in tags if code == 14]
+        self._boundary_path = [
+            Vec2(value) for code, value in tags if code == 14
+        ]
 
     @property
     def boundary_path(self):
@@ -172,7 +174,7 @@ class Image(DXFGraphic):
 
     def export_boundary_path(self, tagwriter: 'TagWriter'):
         for vertex in self.boundary_path:
-            tagwriter.write_vertex(14, vertex[:2])
+            tagwriter.write_vertex(14, vertex)
 
     def post_new_hook(self) -> None:
         self.reset_boundary_path()
@@ -183,9 +185,9 @@ class Image(DXFGraphic):
         as clipping path.
 
         """
-        vertices = list(vertices)
+        vertices = Vec2.list(vertices)
         if len(vertices):
-            if len(vertices) > 2 and vertices[-1] != vertices[0]:
+            if len(vertices) > 2 and not vertices[-1].isclose(vertices[0]):
                 # Close path, otherwise AutoCAD crashes
                 vertices.append(vertices[0])
             self._boundary_path = vertices
@@ -201,9 +203,9 @@ class Image(DXFGraphic):
         (ImageSizeX-0.5, ImageSizeY-0.5)].
 
         """
-        lower_left_corner = (-.5, -.5)
-        upper_right_corner = Vector(self.dxf.image_size) + lower_left_corner
-        self._boundary_path = [lower_left_corner, upper_right_corner[:2]]
+        lower_left_corner = Vec2(-.5, -.5)
+        upper_right_corner = Vec2(self.dxf.image_size) + lower_left_corner
+        self._boundary_path = [lower_left_corner, upper_right_corner]
         self.set_flag_state(Image.USE_CLIPPING_BOUNDARY, state=False)
         self.dxf.clipping = 0
         self.dxf.clipping_boundary_type = 1
@@ -234,6 +236,32 @@ class Image(DXFGraphic):
         self.dxf.u_pixel = m.transform_direction(self.dxf.u_pixel)
         self.dxf.v_pixel = m.transform_direction(self.dxf.v_pixel)
         return self
+
+    def boundary_path_wcs(self) -> List[Vector]:
+        """ Returns the boundary/clipping path in WCS coordinates.
+
+        .. versionadded:: 0.14
+
+        """
+
+        u = Vector(self.dxf.u_pixel)
+        v = Vector(self.dxf.v_pixel)
+
+        # todo: temp solution - shift origin a 1/2 pixel
+        origin = Vector(self.dxf.insert) + u * 0.5 + v * 0.5
+        
+        boundary_path = self.boundary_path
+        if len(boundary_path) == 2:
+            # Rectangle
+            p0, p1 = boundary_path
+            boundary_path = [p0, Vec2(p0.y, p1.x), p1, Vec2(p0.x, p1.y)]
+
+        vertices = [
+            origin + u * p.x + v * p.y for p in boundary_path
+        ]
+        if not vertices[0].isclose(vertices[-1]):
+            vertices.append(vertices[0])
+        return vertices
 
 
 acdb_wipeout = DefSubclass('AcDbWipeout', dict(acdb_image.attribs))

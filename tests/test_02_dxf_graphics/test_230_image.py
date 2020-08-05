@@ -1,6 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # created 2019-02-15
+from typing import cast
 import pytest
 
 from ezdxf.entities.image import Image, Wipeout
@@ -226,6 +227,45 @@ def test_wipeout_write_dxf():
     result = TagCollector.dxftags(entity)
     expected = basic_tags_from_text(WIPEOUT)
     assert result == expected
+
+
+def test_bounardy_path_wcs():
+    from ezdxf.layouts import VirtualLayout
+    layout = VirtualLayout()
+    e = cast(Wipeout, layout.new_entity(
+        'WIPEOUT',
+        dxfattribs={
+            'layer': "0",
+            'class_version': 0,
+            'insert': (150.0, 100.0, 0.0),
+            'u_pixel': (100.0, 0.0, 0.0),
+            'v_pixel': (0.0, 100.0, 0.0),
+            'image_size': (1.0, 1.0, 0.0),
+            'image_def_handle': "0",
+            'flags': 7,
+            'clipping': 1,
+            'brightness': 50,
+            'contrast': 50,
+            'fade': 0,
+            'image_def_reactor_handle': "0",
+            'clipping_boundary_type': 2,
+            'count_boundary_points': 5,
+            'clip_mode': 0,
+        },
+    ))
+    e.set_boundary_path([
+        (-0.5, 0.5),
+        (0.5, 0.5),
+        (0.5, -0.5),
+        (-0.5, -0.5),
+        (-0.5, 0.5),
+    ])
+    path = e.boundary_path_wcs()
+    assert path[0] == (150, 200)
+    assert path[1] == (250, 200)
+    assert path[2] == (250, 100)
+    assert path[3] == (150, 100)
+    assert path[0] == path[-1]
 
 
 WIPEOUT = """0

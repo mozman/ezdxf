@@ -34,6 +34,8 @@ Version 0.14a2 - dev
 - NEW: `Insert.mcount` property returns multi insert count
 - NEW: `Insert.multi_insert()` yields a virtual INSERT entity for each grid 
   element of a MINSERT entity
+- NEW: `Image.boundary_path_wcs()`, returns boundary path in WCS coordinates
+- NEW: `Wipeout.boundary_path_wcs()`, returns boundary path in WCS coordinates
 - NEW: `BSpline.is_clamped` property is `True` for a clamped (open) B-spline
 - NEW: `UCS.transform()` general transformation interface
 - NEW: `Bezier4P.transform()` general transformation interface
