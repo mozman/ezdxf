@@ -97,7 +97,7 @@ class MatplotlibBackend(Backend):
         self.ax.fill(*zip(*((p.x, p.y) for p in points)), color=properties.color, zorder=self._get_z())
 
     def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float):
-        if not text:
+        if not text.strip():
             return  # no point rendering empty strings
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
         scale = cap_height / self._font_measurements.cap_height
@@ -109,7 +109,7 @@ class MatplotlibBackend(Backend):
         return self._font_measurements.scale_from_baseline(desired_cap_height=cap_height)
 
     def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
-        if not text:
+        if not text.strip():
             return 0
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
         text = prepare_string_for_rendering(text, dxftype)
