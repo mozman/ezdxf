@@ -97,7 +97,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.spline import Spline
     from ezdxf.entities.mesh import Mesh
     from ezdxf.entities.hatch import Hatch
-    from ezdxf.entities.image import Image, ImageDef, ImageDefReactor, RasterVariables
+    from ezdxf.entities.image import Image, ImageDef, ImageDefReactor, RasterVariables, Wipeout
     from ezdxf.entities.underlay import PdfUnderlay, DwfUnderlay, DgnUnderlay, Underlay
     from ezdxf.entities.underlay import PdfDefinition, DwfDefinition, DgnDefinition, UnderlayDefinition
     from ezdxf.entities.acis import Body, Region, Solid3d
