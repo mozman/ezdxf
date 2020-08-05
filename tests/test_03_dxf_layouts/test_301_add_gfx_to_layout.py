@@ -3,6 +3,7 @@
 # License: MIT License
 import pytest
 import ezdxf
+from ezdxf.entities.dxfgfx import DXFGraphic
 
 
 @pytest.fixture(scope='module')
@@ -15,8 +16,10 @@ def test_delete_polyline3d(msp):
     entity_count = len(msp)
     db_count = len(msp.entitydb)
     pline = msp.add_polyline3d([(0, 0, 0), (1, 2, 3), (4, 5, 6)])
-    assert entity_count + 1 == len(msp), 'vertices should be linked to the POLYLINE entity'
-    assert db_count+5 == len(msp.entitydb), 'database should get 4 vertices and 1 seqend'
+    assert entity_count + 1 == len(
+        msp), 'vertices should be linked to the POLYLINE entity'
+    assert db_count + 5 == len(
+        msp.entitydb), 'database should get 4 vertices and 1 seqend'
 
     assert pline.seqend.dxf.owner == pline.dxf.owner
     assert pline.seqend.dxf.handle is not None
@@ -100,3 +103,13 @@ def test_create_shape(msp):
     assert shape.dxf.oblique == 0
 
 
+class Checker(DXFGraphic):
+    def added_to_layout(self, layout) -> None:
+        self._mark_added_to_layout = True
+
+
+def test_added_to_layout_call(msp):
+    checker = Checker()
+    checker.doc = msp.doc
+    msp.add_entity(checker)
+    assert checker._mark_added_to_layout is True
