@@ -128,6 +128,14 @@ def test_rational_spline_from_complex_elliptic_arc():
     assert curves[1].control_points[-1].isclose(ellipse.end_point)
 
 
+def test_approximate():
+    curve = Bezier4P([(0, 0), (0, 1), (1, 1), (1, 0)])
+    with pytest.raises(ValueError):
+        list(curve.approximate(0))
+    assert list(curve.approximate(1)) == [(0, 0), (1, 0)]
+    assert list(curve.approximate(2)) == [(0, 0), (0.5, 0.75), (1, 0)]
+
+
 def test_reverse():
     curve = Bezier4P(DEFPOINTS2D)
     vertices = list(curve.approximate(10))
