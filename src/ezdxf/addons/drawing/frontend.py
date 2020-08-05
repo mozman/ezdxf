@@ -344,7 +344,7 @@ class Frontend:
         def draw_insert(insert: Insert):
             self.draw_entities(insert.attribs)
             # draw_entities() includes the visibility check:
-            self.draw_entities(insert.virtual_entities())
+            self.draw_entities(insert.virtual_entities(skipped_entity_callback=self.skip_entity))
 
         dxftype = entity.dxftype()
         if dxftype == 'INSERT':
