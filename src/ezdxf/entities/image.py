@@ -246,18 +246,15 @@ class Image(DXFGraphic):
 
         u = Vector(self.dxf.u_pixel)
         v = Vector(self.dxf.v_pixel)
-
-        # todo: temp solution - shift origin a 1/2 pixel
-        origin = Vector(self.dxf.insert) + u * 0.5 + v * 0.5
-        
+        origin = Vector(self.dxf.insert)
+        origin += (u * 0.5 + v * 0.5)
         boundary_path = self.boundary_path
-        if len(boundary_path) == 2:
-            # Rectangle
+        if len(boundary_path) == 2:  # rectangle
             p0, p1 = boundary_path
             boundary_path = [p0, Vec2(p0.y, p1.x), p1, Vec2(p0.x, p1.y)]
 
         vertices = [
-            origin + u * p.x + v * p.y for p in boundary_path
+            origin + u * p.x - v * p.y for p in boundary_path
         ]
         if not vertices[0].isclose(vertices[-1]):
             vertices.append(vertices[0])

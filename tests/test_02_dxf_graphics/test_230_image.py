@@ -261,10 +261,10 @@ def test_bounardy_path_wcs():
         (-0.5, 0.5),
     ])
     path = e.boundary_path_wcs()
-    assert path[0] == (150, 200)
-    assert path[1] == (250, 200)
-    assert path[2] == (250, 100)
-    assert path[3] == (150, 100)
+    assert path[0] == (150, 100)
+    assert path[1] == (250, 100)
+    assert path[2] == (250, 200)
+    assert path[3] == (150, 200)
     assert path[0] == path[-1]
 
 

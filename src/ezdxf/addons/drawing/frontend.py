@@ -12,7 +12,7 @@ from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.utils import get_tri_or_quad_points
 from ezdxf.entities import (
     DXFGraphic, Insert, MText, Polyline, LWPolyline, Spline, Hatch, Attrib,
-    Text, Polyface,
+    Text, Polyface, Wipeout,
 )
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
@@ -143,6 +143,8 @@ class Frontend:
             self.draw_polyline_entity(entity, properties)
         elif dxftype in COMPOSITE_ENTITY_TYPES:
             self.draw_composite_entity(entity, properties)
+        elif dxftype == 'WIPEOUT':
+            self.draw_wipeout_entity(entity, properties)
         elif dxftype == 'VIEWPORT':
             self.draw_viewport_entity(entity)
         else:
@@ -237,6 +239,13 @@ class Frontend:
                     path = Path.from_hatch_polyline_path(p, ocs, elevation)
                 path.close()
                 self.out.draw_path(path, properties)
+
+    def draw_wipeout_entity(self, entity: DXFGraphic, properties: Properties):
+        wipeout = cast(Wipeout, entity)
+        properties.filling = Filling()
+        properties.color = self.ctx.current_layout.background_color
+        path = wipeout.boundary_path_wcs()
+        self.out.draw_filled_polygon(path, properties)
 
     def draw_viewport_entity(self, entity: DXFGraphic) -> None:
         assert entity.dxftype() == 'VIEWPORT'
