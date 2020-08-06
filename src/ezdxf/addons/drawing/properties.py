@@ -140,9 +140,8 @@ class Properties:
         # linetype_pattern: [2.0, 0.2, 0.0, 0.2] = line-gap-point-gap
         # Stored as tuple, so pattern could be used as key for caching.
         # SVG dash-pattern does not support points, so a minimal line length
-        # (maybe inferred from linewidth?) has to be used, which alters# the
-        # overall line appearance a little bit - but linetype mapping will
-        # never be perfect.
+        # (maybe inferred from linewidth?) has to be used, which may alter the
+        # overall line appearance - but linetype mapping will never be perfect.
         # The continuous pattern is an empty tuple ()
         self.linetype_pattern: Tuple[float, ...] = CONTINUOUS_PATTERN
         self.linetype_scale: float = 1.0
@@ -179,11 +178,13 @@ class Properties:
 
 
 class LayerProperties(Properties):
-    """
-    Attributes:
+    """ Modified attribute meaning:
+
         is_visible: Whether entities belonging to this layer should be drawn
         layer: Stores real layer name (mixed case)
+
     """
+
     def __init__(self):
         super().__init__()
 
@@ -201,19 +202,23 @@ class LayoutProperties:
 
     @property
     def background_color(self) -> Color:
+        """ Returns the default layout background color. """
         return self._background_color
 
     @property
     def default_color(self) -> Color:
+        """ Returns the default layout foreground color. """
         return self._default_color
 
     @property
     def has_dark_background(self) -> bool:
+        """ Returns ``True`` if the actual background-color is "dark". """
         return self._has_dark_background
 
     def set_layout(self, layout: 'Layout', bg: Optional[Color] = None,
                    fg: Optional[Color] = None,
                    units: Optional[int] = None) -> None:
+        """ Setup default layout properties. """
         self.name = layout.name
         if bg is None:
             if self.name == 'Model':
@@ -227,6 +232,7 @@ class LayoutProperties:
             self.units = int(units)
 
     def set_colors(self, bg: Color, fg: Color = None) -> None:
+        """ Setup default layout colors. """
         self._background_color = bg
         self._has_dark_background = is_dark_color(bg)
         if fg is not None:
@@ -237,13 +243,18 @@ class LayoutProperties:
 
 
 class RenderContext:
-    def __init__(self, doc: Optional['Drawing'] = None, *, ctb: str = '', export_mode: bool = False):
-        """
+    def __init__(self, doc: Optional['Drawing'] = None, *, ctb: str = '',
+                 export_mode: bool = False):
+        """ Represents the render context for the DXF document `doc`.
+        A given `ctb` file (plot style file)  overrides the default properties.
+
         Args:
             doc: The document that is being drawn
             ctb: A path to a plot style table to use
-            export_mode: Whether to render the document as it would look when exported (plotted) by a CAD application
-              to a file such as pdf, or whether to render the document as it would appear inside a CAD application.
+            export_mode: Whether to render the document as it would look when
+                exported (plotted) by a CAD application to a file such as pdf,
+                or whether to render the document as it would appear inside a
+                CAD application.
         """
         self._saved_states: List[Properties] = []
         self.line_pattern = _load_line_pattern(doc.linetypes) if doc else dict()
@@ -284,6 +295,7 @@ class RenderContext:
             self.add_text_style(text_style)
 
     def add_layer(self, layer: 'Layer') -> None:
+        """ Setup layer properties. """
         properties = LayerProperties()
         name = layer_key(layer.dxf.name)
         # Store real layer name (mixed case):
@@ -301,6 +313,7 @@ class RenderContext:
         self.layers[name] = properties
 
     def add_text_style(self, text_style: 'Textstyle'):
+        """ Setup text style properties. """
         name = table_key(text_style.dxf.name)
         font = text_style.dxf.font
 
@@ -337,7 +350,7 @@ class RenderContext:
             ctb = acadctb.new_ctb()
 
         # Colors in CTB files can be RGB colors but don't have to,
-        # therefor initialize color without RGB values by the
+        # therefore initialize color without RGB values by the
         # default AutoCAD palette:
         for aci in range(1, 256):
             entry = ctb[aci]
@@ -366,6 +379,9 @@ class RenderContext:
 
     @property
     def inside_block_reference(self) -> bool:
+        """ Returns ``True`` if current processing state is inside of a block
+        reference (INSERT).
+        """
         return bool(self.current_block_reference)
 
     def push_state(self, block_reference: Properties) -> None:
@@ -388,7 +404,8 @@ class RenderContext:
                                                resolved_layer=resolved_layer)
         dxf = entity.dxf
         p.linetype_scale = dxf.ltscale
-        p.is_visible = self.resolve_visible(entity, resolved_layer=resolved_layer)
+        p.is_visible = self.resolve_visible(entity,
+                                            resolved_layer=resolved_layer)
 
         if dxf.hasattr('style'):
             p.font = self.resolve_font(entity)
@@ -398,6 +415,9 @@ class RenderContext:
 
     def resolve_visible(self, entity: 'DXFGraphic', *,
                         resolved_layer: Optional[str] = None) -> bool:
+        """ Resolve the visibility state of `entity`.
+        Returns ``True`` if `entity` is visible.
+        """
         entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
         layer_properties = self.layers.get(entity_layer)
         if layer_properties and not layer_properties.is_visible:
@@ -409,8 +429,8 @@ class RenderContext:
             return not bool(entity.dxf.invisible)
 
     def resolve_layer(self, entity: 'DXFGraphic') -> str:
-        """ Resolve entity layer, this is only relevant for entities inside of
-        block references.
+        """ Resolve the layer of `entity`, this is only relevant for entities
+        inside of block references.
         """
         layer = entity.dxf.layer
         if layer == '0' and self.inside_block_reference:
@@ -419,7 +439,9 @@ class RenderContext:
 
     def resolve_color(self, entity: 'DXFGraphic', *,
                       resolved_layer: Optional[str] = None) -> Color:
-        """ Resolve color of DXF `entity` """
+        """ Resolve the rgb-color of `entity` as hex color string:
+        "#RRGGBB" or "#RRGGBBAA".
+        """
         aci = entity.dxf.color  # defaults to BYLAYER
         if aci == const.BYLAYER:
             entity_layer = resolved_layer or layer_key(
@@ -443,7 +465,11 @@ class RenderContext:
 
     def _true_entity_color(self,
                            true_color: Optional[Tuple[int, int, int]],
-                           aci: int) -> Optional[Color]:
+                           aci: int) -> Color:
+        """ Returns rgb color in hex format: "#RRGGBB".
+
+        `true_color` has higher priority than `aci`.
+        """
         if true_color is not None:
             return rgb_to_hex(true_color)
         elif 0 < aci < 256:
@@ -452,6 +478,9 @@ class RenderContext:
             return self.current_layout.default_color  # unknown / invalid
 
     def _aci_to_true_color(self, aci: int) -> Color:
+        """ Returns the `aci` value (AutoCAD Color Index) as rgb value in
+        hex format: "#RRGGBB".
+        """
         if aci == 7:  # black/white; todo: this bypasses the plot style table
             if self.current_layout.has_dark_background:
                 return '#ffffff'
@@ -462,7 +491,7 @@ class RenderContext:
 
     def resolve_linetype(self, entity: 'DXFGraphic', *,
                          resolved_layer: str = None):
-        """ Resolve linetype of DXF `entity` """
+        """ Resolve the linetype of `entity`. """
         aci = entity.dxf.color
         # Not sure if plotstyle table overrides actual entity setting?
         if (0 < aci < 256) and \
@@ -491,13 +520,17 @@ class RenderContext:
         return name, pattern
 
     def resolve_lineweight(self, entity: 'DXFGraphic', *,
-                           resolved_layer: str = None):
-        # Line weight in mm times 100 (e.g. 0.13mm = 13).
-        # Smallest line weight is 0 and biggest line weight is 211
-        # The DWG format is limited to a fixed value table: 0, 5, 9, ... 200, 211
+                           resolved_layer: str = None) -> float:
+        """ Resolve the lineweight of `entity` in mm.
+
+        DXF stores the lineweight in mm times 100 (e.g. 0.13mm = 13).
+        The smallest line weight is 0 and the biggest line weight is 211.
+        The DXF/DWG format is limited to a fixed value table,
+        see: :attr:`ezdxf.lldxf.const.VALID_DXF_LINEWEIGHTS`
+
+        """
         # DEFAULT: The LAYOUT entity has no explicit graphic properties.
         # BLOCK and BLOCK_RECORD entities also have no graphic properties.
-        # Maybe XDATA or ExtensionDict in any of this entities.
         aci = entity.dxf.color
         # Not sure if plotstyle table overrides actual entity setting?
         if (0 < aci < 256) and self.plot_styles[
@@ -523,16 +556,23 @@ class RenderContext:
             return float(lineweight) / 100.0
 
     def default_lineweight(self):
+        """ Returns the default lineweight of the document. """
         # todo: is this value stored anywhere (e.g. HEADER section)?
         return 0.25
 
     def resolve_font(self, entity: 'DXFGraphic') -> Optional[str]:
+        """ Resolve the text style of `entity` to a font name.
+        Returns ``None`` for the default font.
+        """
         if entity.dxf.hasattr('style'):
             return self.fonts.get(table_key(entity.dxf.style))
         else:
             return None
 
     def resolve_filling(self, entity: 'DXFGraphic') -> Optional[Filling]:
+        """ Resolve filling properties (SOLID, GRADIENT, PATTERN) of `entity`.
+        """
+
         def setup_gradient():
             filling.type = Filling.GRADIENT
             filling.name = gradient.name.upper()
@@ -566,7 +606,7 @@ class RenderContext:
 
             # DXF stores the hatch pattern already rotated and scaled,
             # pattern_scale and pattern_rotation are just hints for the CAD
-            # application, if they wanna change the pattern.
+            # application to modify the pattern if required.
             # It's better to revert the scaling and rotation, because in general
             # back-ends do not handle pattern that way, they need a base-pattern
             # and separated scaling and rotation attributes and these
@@ -613,12 +653,14 @@ class RenderContext:
 
 def rgb_to_hex(
         rgb: Union[Tuple[int, int, int], Tuple[float, float, float]]) -> Color:
+    """ Returns color in hex format: "#RRGGBB". """
     assert all(0 <= x <= 255 for x in rgb), f'invalid RGB color: {rgb}'
     r, g, b = rgb
     return f'#{r:02x}{g:02x}{b:02x}'
 
 
 def hex_to_rgb(hex_string: Color) -> RGB:
+    """ Returns hex string color as (r, g, b) tuple. """
     hex_string = hex_string.lstrip('#')
     assert len(hex_string) == 6
     r = int(hex_string[0:2], 16)
@@ -628,21 +670,23 @@ def hex_to_rgb(hex_string: Color) -> RGB:
 
 
 def set_color_alpha(color: Color, alpha: int) -> Color:
-    """
+    """ Returns `color` including the new `alpha` channel in hex format:
+    "#RRGGBBAA".
+
     Args:
         color: may be an RGB or RGBA hex color string
         alpha: the new alpha value (0-255)
     """
     assert color.startswith('#') and len(color) in (
         7, 9), f'invalid RGB color: "{color}"'
-    assert 0 <= alpha < 255, f'alpha out of range: {alpha}'
+    assert 0 <= alpha < 256, f'alpha out of range: {alpha}'
     return f'{color[:7]}{alpha:02x}'
 
 
 def _load_line_pattern(linetypes: 'Table') -> Dict[str, Tuple]:
     """ Load linetypes defined in a DXF document into  as dictionary,
     key is the upper case linetype name, value is the simplified line pattern,
-    see compile_line_pattern().
+    see :func:`compile_line_pattern`.
     """
     pattern = dict()
     for linetype in linetypes:  # type: Linetype

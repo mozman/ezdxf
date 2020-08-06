@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 class Backend(ABC):
     def __init__(self):
         self.entity_stack: List[Tuple[DXFGraphic, Properties]] = []
-        # Approximate cubic Bèzier-curves by `n` segments, only used for basic back-ends
-        # without draw_path() support.
+        # Approximate cubic Bèzier-curves by `n` segments, only used for basic
+        # back-ends without draw_path() support.
         self.bezier_approximation_count = 32
 
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
@@ -31,7 +31,7 @@ class Backend(ABC):
 
     @property
     def current_entity(self) -> Optional[DXFGraphic]:
-        """ obtain the current entity being drawn """
+        """ Obtain the current entity being drawn """
         return self.entity_stack[-1][0] if self.entity_stack else None
 
     @abstractmethod
@@ -44,12 +44,14 @@ class Backend(ABC):
         raise NotImplementedError
 
     def draw_path(self, path: Path, properties: Properties) -> None:
-        """ draw or fill a path (connected string of line segments and bezier curves)
+        """ Draw or fill a path (connected string of line segments and Bezier
+        curves)
 
-        The Backend.draw_path implementation is a fall-back implementation
+        The :meth:`draw_path` implementation is a fall-back implementation
         which approximates the path using line segments.
         Backends can override this method if better path drawing functionality
         is available for that backend.
+
         """
         if len(path):
             if properties.filling:
@@ -73,7 +75,7 @@ class Backend(ABC):
     @abstractmethod
     def draw_filled_polygon(self, points: Iterable[Vector],
                             properties: Properties) -> None:
-        """ fill a polygon whose outline is defined by the given points.
+        """ Fill a polygon whose outline is defined by the given points.
         Used to draw entities with simple outlines where draw_path may
         be an inefficient way to draw such a polygon.
         """
@@ -83,7 +85,7 @@ class Backend(ABC):
     def draw_text(self, text: str, transform: Matrix44, properties: Properties,
                   cap_height: float) -> None:
         """ Draw a single line of text with the anchor point at the baseline
-        left point
+        left point.
         """
         raise NotImplementedError
 
@@ -96,7 +98,7 @@ class Backend(ABC):
     @abstractmethod
     def get_text_line_width(self, text: str, cap_height: float,
                             font: str = None) -> float:
-        """ Get the width of a single line of text """
+        """ Get the width of a single line of text. """
         # https://stackoverflow.com/questions/32555015/how-to-get-the-visual-length-of-a-text-string-in-python
         # https://stackoverflow.com/questions/4190667/how-to-get-width-of-a-truetype-font-character-in-1200ths-of-an-inch-with-python
         raise NotImplementedError

@@ -74,7 +74,7 @@ class Frontend:
 
     def override_properties(self, entity: DXFGraphic,
                             properties: Properties) -> None:
-        """ The `override_properties` filter can change the properties of
+        """ The :meth:`override_properties` filter can change the properties of
         an entity independent from the DXF attributes.
 
         This filter has access to the DXF attributes by the `entity` object,
@@ -110,8 +110,7 @@ class Frontend:
                 self.skip_entity(entity, 'invisible')
 
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
-        """
-        Draw a single DXF entity.
+        """ Draw a single DXF entity.
 
         Args:
             entity: DXF Entity
@@ -344,7 +343,9 @@ class Frontend:
         def draw_insert(insert: Insert):
             self.draw_entities(insert.attribs)
             # draw_entities() includes the visibility check:
-            self.draw_entities(insert.virtual_entities(skipped_entity_callback=self.skip_entity))
+            self.draw_entities(insert.virtual_entities(
+                skipped_entity_callback=self.skip_entity)
+            )
 
         dxftype = entity.dxftype()
         if dxftype == 'INSERT':
