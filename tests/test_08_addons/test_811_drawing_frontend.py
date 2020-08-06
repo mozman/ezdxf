@@ -30,12 +30,6 @@ class BasicBackend(Backend):
                   properties: Properties) -> None:
         self.collector.append(('line', start, end, properties))
 
-    def draw_arc(self, center: Vector, width: float, height: float,
-                 base_angle: Radians,
-                 start_angle: Optional[Radians], end_angle: Optional[Radians],
-                 properties: Properties) -> None:
-        self.collector.append(('arc', center, properties))
-
     def draw_filled_polygon(self, points: List[Vector],
                             properties: Properties) -> None:
         self.collector.append(('filled_polygon', points, properties))

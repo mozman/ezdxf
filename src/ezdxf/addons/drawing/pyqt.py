@@ -146,7 +146,7 @@ class PyQtBackend(Backend):
 
     def draw_text(self, text: str, transform: Matrix44, properties: Properties,
                   cap_height: float) -> None:
-        if not text:
+        if not text.strip():
             return  # no point rendering empty strings
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
 
@@ -167,7 +167,7 @@ class PyQtBackend(Backend):
 
     def get_text_line_width(self, text: str, cap_height: float,
                             font: str = None) -> float:
-        if not text:
+        if not text.strip():
             return 0
 
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
