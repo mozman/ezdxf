@@ -184,15 +184,15 @@ class LayerProperties(Properties):
         layer: Stores real layer name (mixed case)
 
     """
-
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 DEFAULT_LAYER_PROPERTIES = LayerProperties()
 
 
 class LayoutProperties:
+    # The LAYOUT, BLOCK and BLOCK_RECORD entities do not have
+    # explicit graphic properties.
     def __init__(self):
         self.name: str = 'Model'  # tab/display name
         self.units = 0  # default is unit less
@@ -490,8 +490,12 @@ class RenderContext:
             return rgb_to_hex(self.plot_styles[aci].color)
 
     def resolve_linetype(self, entity: 'DXFGraphic', *,
-                         resolved_layer: str = None):
-        """ Resolve the linetype of `entity`. """
+                         resolved_layer: str = None
+                         ) -> Tuple[str, Tuple[float, ...]]:
+        """ Resolve the linetype of `entity`. Returns a tuple of the linetype
+        name as upper-case string and the simplified linetype pattern as tuple
+        of floats.
+        """
         aci = entity.dxf.color
         # Not sure if plotstyle table overrides actual entity setting?
         if (0 < aci < 256) and \
@@ -529,8 +533,6 @@ class RenderContext:
         see: :attr:`ezdxf.lldxf.const.VALID_DXF_LINEWEIGHTS`
 
         """
-        # DEFAULT: The LAYOUT entity has no explicit graphic properties.
-        # BLOCK and BLOCK_RECORD entities also have no graphic properties.
         aci = entity.dxf.color
         # Not sure if plotstyle table overrides actual entity setting?
         if (0 < aci < 256) and self.plot_styles[
@@ -720,8 +722,8 @@ def _merge_dashes(elements: Sequence[float]) -> Iterable[float]:
 
 def _compile_line_pattern_from_tags(
         pattern: 'LinetypePattern') -> Tuple[float, ...]:
-    """ Returns simplified dash-gap-dash... line pattern and dash is 0 for a
-    point.
+    """ Returns the simplified dash-gap-dash... line pattern,
+    a dash-length of 0 represents a point.
     """
     # complex line types with text and shapes are not supported
     if pattern.is_complex_type():
@@ -743,8 +745,8 @@ def _compile_line_pattern_from_tags(
 def compile_line_pattern(
         total_length: Optional[float],
         elements: Sequence[float]) -> Tuple[float, ...]:
-    """ Returns simplified dash-gap-dash... line pattern and dash is 0 for
-    a point.
+    """ Returns the simplified dash-gap-dash... line pattern,
+    a dash-length of 0 represents a point.
     """
     elements = list(_merge_dashes(elements))
     if total_length is None:
