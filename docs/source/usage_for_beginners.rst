@@ -176,6 +176,7 @@ attribute is not present, for DXF attributes without a default value you can
 check in the attribute really exist::
 
     entity.dxf.hasattr('true_color')
+
 or use the :meth:`get` method and a default value::
 
     entity.dxf.get('true_color', 0)
@@ -288,4 +289,4 @@ Further Information
 -------------------
 
 - :ref:`reference` documentation
-- Documentation of package internals: :ref:`arch-dev`.
+- Documentation of package internals: :ref:`Developer Guides`.
