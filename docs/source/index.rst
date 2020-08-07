@@ -68,9 +68,9 @@ Contents
    :maxdepth: 2
 
    introduction
-   tutorials/index
-   concepts/index
    usage_for_beginners
+   concepts/index
+   tutorials/index
    reference
    howto/index
    faq

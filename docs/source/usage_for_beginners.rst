@@ -60,7 +60,7 @@ Create new file for the latest supported DXF version::
 
     doc = ezdxf.new()
 
-Create a new DXF file with a specific version, e.g for DXF R12::
+Create a new DXF file for a specific DXF version, e.g for DXF R12::
 
     doc = ezdxf.new('R12')
 
@@ -92,7 +92,8 @@ Getting the modelspace of a DXF document::
 
     msp = doc.modelspace()
 
-Getting a paperspace layout by the name shown in the tabs of a CAD application::
+Getting a paperspace layout by the name as shown in the tab of a
+CAD application::
 
     psp = doc.layout('Layout1')
 
@@ -114,8 +115,7 @@ Create New Blocks
 -----------------
 
 The block definitions of a DXF document are managed by the
-:class:`~ezdxf.sections.blocks.BlocksSection` objects, stored in the DXF document
-attribute :attr:`doc.blocks`::
+:class:`~ezdxf.sections.blocks.BlocksSection` object::
 
     my_block = doc.blocks.new('MyBlock')
 
@@ -126,7 +126,7 @@ attribute :attr:`doc.blocks`::
 Query DXF Entities
 ------------------
 
-As said in the `Layouts and blocks`_ section, all graphical DXF entities are
+As said in the `Layouts and Blocks`_ section, all graphical DXF entities are
 stored in layouts, all these layouts can be iterated and support the index
 operator e.g. :code:`layout[-1]` returns the last entity.
 
@@ -136,12 +136,27 @@ until these entities are purged by :code:`layout.purge()` more about this topic
 in section: `Delete Entities`_.
 
 There are two advanced query methods: :meth:`~ezdxf.layouts.BaseLayout.query`
-and :meth:`~ezdxf.layouts.BaseLayout.groupby` for more information see:
-:ref:`tut_getting_data`.
+and :meth:`~ezdxf.layouts.BaseLayout.groupby`.
+
+Get all lines of layer ``'MyLayer'``::
+
+    lines = msp.query('LINE[layer=="MyLayer"]')
+
+This returns an :class:`~ezdxf.query.EntityQuery` container, which alse provides
+the same :meth:`query` an :meth:`groupby` methods.
+
+Get all lines categorized by a DXF attribute like color::
+
+    all_lines_by_color = msp.query('LINE').groupby('color')
+    lines_with_color_1 = all_lines_by_color.get(1, [])
+
+The :meth:`groupby` method returns a regular Python :class:`dict` with colors as
+key and a regular Python :class:`list` of entities as values
+(not an :class:`~ezdxf.query.EntityQuery` container).
 
 .. seealso::
 
-    :ref:`tut_getting_data`
+    For more information go to the :ref:`tut_getting_data`
 
 Examine DXF Entities
 --------------------
@@ -150,6 +165,24 @@ Each DXF entity has a :attr:`dxf` namespace attribute, which stores the named
 DXF attributes, some DXF attributes are only indirect available like the
 vertices in the LWPOLYLINE entity. More information about the DXF attributes of
 each entity can found in the documentation of the :mod:`ezdxf.entities` module.
+
+Get some basic DXF attributes::
+
+    layer = entity.dxf.layer  # default is '0'
+    color = entity.dxf.color  # default is 256 = BYLAYER
+
+Most DXF attributes have a default value, which will be returned if the DXF
+attribute is not present, for DXF attributes without a default value you can
+check in the attribute really exist::
+
+    entity.dxf.hasattr('true_color')
+or use the :meth:`get` method and a default value::
+
+    entity.dxf.get('true_color', 0)
+
+.. seealso::
+
+    :ref:`Common graphical DXF attributes`
 
 Create New DXF Entities
 -----------------------
