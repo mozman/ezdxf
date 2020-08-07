@@ -3,6 +3,20 @@ Developer Guides
 
 Information about `ezdxf` internals.
 
+Architecture for Developers
+---------------------------
+
+The :ref:`arch-dev` section show the structure of the `ezdxf` package for
+developers with more experience, which want to have more insight into the
+package an maybe want to develop add-ons or want contribute to the `ezdxf`
+package.
+
+.. toctree::
+    :maxdepth: 2
+
+    architecture
+
+
 Internal Data Structures
 ------------------------
 

@@ -70,6 +70,7 @@ Contents
    introduction
    tutorials/index
    concepts/index
+   usage_for_beginners
    reference
    howto/index
    faq

@@ -261,15 +261,18 @@ class Layouts:
             name (str): layout name as shown in tabs
 
         Raises:
-            KeyError: if layout `name` do not exists
-            ValueError: if `name` is ``'Model'``, deleting modelspace is not possible
+            DXFKeyError: if layout `name` do not exists
+            DXFValueError: deleting modelspace layout is not possible
+            DXFValueError: deleting last paperspace layout is not possible
 
         """
         assert isinstance(name, str), type(name)
         if name == 'Model':
-            raise DXFValueError("Can not delete model space layout.")
+            raise DXFValueError("Can not delete modelspace layout.")
 
         layout = self._layouts[name]
+        if len(self) < 3:
+            raise DXFValueError("Can not delete last paperspace layout.")
         if layout.layout_key == self.get_active_layout_key():  # name is the active layout
             for layout_name in self.names():
                 if layout_name not in (name, 'Model'):  # set any other layout as active layout
