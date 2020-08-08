@@ -68,20 +68,17 @@ def dxf_info(stream: TextIO) -> DXFInfo:
 
 
 def header_validator(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
-    """
-    Checks the tag structure of the content of the header section.
+    """ Checks the tag structure of the content of the header section.
 
     Do not feed (0, 'SECTION') (2, 'HEADER') and (0, 'ENDSEC') tags!
 
     Args:
         tagger: generator/iterator of low level tags or compiled tags
 
-    Yields:
-        DXFTag()
-
     Raises:
         DXFStructureError() -> invalid group codes
         DXFValueError() -> invalid header variable name
+
     """
     variable_name_tag = True
     for tag in tagger:
@@ -102,8 +99,7 @@ def header_validator(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
 
 def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
-    """
-    Checks for valid DXF entity tag structure.
+    """ Checks for valid DXF entity tag structure.
 
     - APP DATA can not be nested and every opening tag (102, '{...') needs a
       closing tag (102, '}')
@@ -119,12 +115,10 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
     Args:
         tags: list of DXFTag()
 
-    Yields:
-        DXFTag()
-
     Raises:
         DXFAppDataError: for invalid APP DATA
         DXFXDataError: for invalid XDATA
+
     """
     assert isinstance(tags, list)
     dxftype = tags[0].value  # type: str

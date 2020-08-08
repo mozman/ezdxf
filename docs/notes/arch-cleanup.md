@@ -1,29 +1,24 @@
-New Setup Process
-=================
-
-The actual setup process of DXF structures for new documents or for loading 
-DXF files is not well designed, because of the lack of understanding of this 
-structures and dependencies between all the DXF types in the beginning of 
-the development and the DXF reference is also not very helpful for this topic.
+Setup Process
+=============
 
 The idea is to create a new setup design:
 
 1. There are two basic scenarios:
     - Load structures from file: `LOAD`
     - Create new structures by ezdxf: `CREATE`
-1. The default constructor for entities do not get a reference to the actual 
-    DXF document. The new entity is a virtual entity.
+1. CHANGE: The default constructor for entities do not get a reference to the 
+   actual DXF document, new entities are always virtual entities.
 1. Binding a virtual entity to a DXF document is different for the 2 scenarios:
     - `LOAD`: all required resources should be loaded at the time of binding the
       entity, als handles are set and can be validated
     - `CREATE`: some resources should be present (e.g. linetypes, text-styles)
-      and some required resources should be created (e.g. ImageDef Reactor, 
+      and some required resources should be created (e.g. ImageDefReactor, 
       SEQEND)
 
 The new setup process should also consider the following loading scenarios:
 
-- DWG loader add-on
-- iterdxf add-on
+- `dwg` loader add-on
+- `iterdxf` add-on
 
 Which means the `factory` module should provide the necessary functions to 
 create/load entities for these add-ons.
@@ -32,26 +27,25 @@ create/load entities for these add-ons.
 
 ### Virtual Entity
 
-- not stored in the entity database of a document: DXF attribute `handle` is `None`
-- not linked to a layout/owner: DXF attribute `owner` is `None`
+- `UNBOUND`: not stored in the entity database of a document: 
+   DXF attribute `handle` is `None`
+- `UNLINKED`: not linked to a layout/owner: 
+  DXF attribute `owner` is `None`
 
 ### Unlinked Entity
 
-- stored in an entity database = bound to a document
-- not linked to a layout/owner: DXF attribute `owner` is `None`
-
-```
-    Virtual Entity == Unlinked Entity
-    Unlinked Entity != Virtual Entity
-```
+- `BOUND`: stored in an entity database, which means bound to a document:
+  DXF attribute `handle` is not `None`
+- `UNLINKED`: not linked to a layout/owner: 
+  DXF attribute `owner` is `None`
 
 ## DXFEntity Design
 
-Remove dependency of DXF entities from DXF document:
+CHANGE: remove dependency to the DXF document from DXF entities:
 
-- Remove `doc` attribute 
-- Remove `dxffactory` attribute 
-- Remove `entitydb` attribute
+- remove `doc` attribute 
+- remove `dxffactory` attribute 
+- remove `entitydb` attribute
 
 ## LOAD
 
@@ -59,38 +53,41 @@ The loading process has two stages:
 
 ### First Stage
 
-Load content from file/stream and store them in a DXF structure database. 
+- `LOAD` content from file/stream into a DXF structure database: 
+  `loader.load_dxf_structure()`
+- Convert tag structures into DXFEntity objects: `loader.load_dxf_entities()`
+- `BIND` entities to an EntityDB: `fill_database()`
+
+Because of the missing DXF document structures, a complete validation is not 
+possible at this stage, only validation at DXF-Tag level is already done.
 
 ### Second Stage
 
 Parse DXF structure database:
 
-- Create sections: HEADER, CLASSES, TABLES, BLOCKS and OBJECTS, the ENTITIES 
-  section is a relict from older DXF versions and has to be exported including 
-  the modelspace and active paperspace entities, but all entities reside in a 
-  BLOCK definition, even modelspace and paperspace layouts are only BLOCK 
-  definitions and ezdxf has no explicit ENTITIES section.
+- Create sections: HEADER, CLASSES, TABLES, BLOCKS and OBJECTS
 - Create layouts: Blocks, Layouts
-    - Bind entities to the document: `factory.bind_loaded()`
-    - Link entities to a layout: `Layout.link()`
+    - `LINK` entities to a layout
+
+The ENTITIES section is a relict from older DXF versions and has to be exported 
+including the modelspace and active paperspace entities, but all entities 
+reside in a BLOCK definition, even modelspace and paperspace layouts are only 
+BLOCK definitions and ezdxf has no explicit ENTITIES section.
 
 ## CREATE
 
-A new entity is always a unbounded and virtual entity after instantiation:
+A new entity is always a virtual entity after instantiation:
 
 - DXF owner is `None`
 - DXF handle is `None`
 
 ## BIND
 
-Binding the entity to a document does:
+Binding the entity to a document means:
 
-- store entity in the document entity database and set DXF attribute `handle` 
-- DXF attribute `owner` is still `None`, ia not linked to any layout
-
-Without an assigned layout or parent entity the entity is an unlinked entity, 
-but bound to a document, this means it is possible to check or create required 
-resources.
+- `BOUND`: entity is stored in the document entity database, `handle`is set 
+- Check or create required resources
+- `UNLINKED`: `owner` is still `None`
 
 ## LINK
 
@@ -100,14 +97,16 @@ entity like DICTIONARY or BLOCK_RECORD.
 
 DXF Objects:
 
-- link to OBJECTS section by adding entity to a parent entity in the OBJECTS 
+- `LINK` to OBJECTS section by adding entity to a parent entity in the OBJECTS 
   section, most likely a DICTIONARY object and store entity in the entity 
-  space of the OBJECTS section
-- Extension dictionaries can also own entities in the OBJECTS section  
+  space of the OBJECTS section, the root-dict is the only entity in the objects 
+  section with an invalid owner handle "0".
+- Extension dictionaries of graphical- or table entities can also own entities 
+  in the OBJECTS section.  
 
 DXF Entities:
 
-- link entity to a layout by `BlockRecord.link(entity)`, which set the `owner`
+- `LINK` entity to a layout by `BlockRecord.link(entity)`, which set the `owner`
   handle to BLOCK_RECORD handle (= layout key) and store entity in entity space 
   of the BLOCK_RECORD
 - set paperspace flag
