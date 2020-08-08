@@ -53,31 +53,3 @@ def test_remove(space):
     assert len(space) == 0
 
 
-def test_order_of_appearance(space):
-    assert list(e.priority for e in space) == NUMBERS
-
-
-def test_supports_priority_order(space):
-    assert list(e.priority for e in priority(space)) == sorted(NUMBERS, reverse=True), 'highest priority first'
-
-
-def test_supports_zorder(space):
-    assert list(e.priority for e in zorder(space)) == sorted(NUMBERS), 'lowest priority first'
-
-
-def test_reorder_no_order(space):
-    space.reorder(order=0)
-    assert list(e.priority for e in space) == NUMBERS
-
-
-def test_reorder_zorder(space):
-    space.reorder(order=2)
-    assert list(e.priority for e in space) == sorted(NUMBERS), 'lowest priority first'
-
-
-def test_reorder_priority(space):
-    space.reorder(order=1)
-    assert list(e.priority for e in space) == sorted(NUMBERS, reverse=True), 'highest priority first'
-
-
-

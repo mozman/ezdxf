@@ -121,12 +121,6 @@ class DXFGraphic(DXFEntity):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        # priority order: highest value first - 100 (top) before 0 (default)
-        # before -100 (bottom) whole int range is allowed.
-        # Has no meaning yet, entity order depends on handle order or DXF entity
-        # SORTENTSTABLE, stored in the extension dictionary of the BLOCK_RECORD
-        # of the associated layout.
-        self.priority: int = 0
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -268,18 +262,6 @@ class DXFGraphic(DXFEntity):
         (internal API)
         """
         pass
-
-    @property
-    def zorder(self):
-        """ Inverted priority order (lowest value first) """
-        # Has no meaning yet, entity order depends on handle order or DXF entity
-        # SORTENTSTABLE, stored in the extension dictionary of the BLOCK_RECORD
-        # of the associated layout.
-        return -self.priority
-
-    @zorder.setter
-    def zorder(self, value):
-        self.priority = -value
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. (internal API)"""

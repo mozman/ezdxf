@@ -42,11 +42,6 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
         This attribute requires DXF R2004 or later, returns ``0`` for prior DXF versions
         and raises :class:`DXFAttributeError` for setting `transparency` in older DXF versions.
 
-    .. attribute:: zorder
-
-        Inverted :attr:`~ezdxf.entities.DXFEntity.priority` order (lowest value first), :attr:`zorder` support
-        not implemented yet, setting :attr:`zorder` has no effect.
-
     .. automethod:: ocs() -> OCS
 
     .. automethod:: get_layout() -> BaseLayout
