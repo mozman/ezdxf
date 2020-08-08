@@ -4,17 +4,17 @@ import pytest
 from io import StringIO
 import ezdxf
 from ezdxf.lldxf.tags import internal_tag_compiler
+from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.sections.classes import ClassesSection
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.tools.test import load_section
-from ezdxf.drawing import Drawing
+from ezdxf.entities import factory
 
 
 @pytest.fixture(scope='module')
 def section():
-    doc = Drawing()
     sec = load_section(TESTCLASSES, 'CLASSES')
-    cls_entities = [doc.dxffactory.entity_from_tags(e) for e in sec]
+    cls_entities = [factory.load(ExtendedTags(e)) for e in sec]
     return ClassesSection(None, iter(cls_entities))
 
 
@@ -29,9 +29,8 @@ def test_write(section):
 
 
 def test_empty_section():
-    doc = Drawing()
     sec = load_section(EMPTYSEC, 'CLASSES')
-    cls_entities = [doc.dxffactory.entity_from_tags(e) for e in sec]
+    cls_entities = [factory.load(ExtendedTags(e)) for e in sec]
 
     section = ClassesSection(None, iter(cls_entities))
     stream = StringIO()

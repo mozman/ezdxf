@@ -11,7 +11,7 @@ from ezdxf.filemanagement import dxf_file_info
 from ezdxf.lldxf import fileindex
 
 from ezdxf.entities import DXFGraphic, DXFEntity
-from ezdxf.entities.factory import EntityFactory
+from ezdxf.entities import factory
 from ezdxf.entities.dxfgfx import entity_linker
 from ezdxf.tools.codepage import toencoding
 
@@ -129,7 +129,6 @@ class IterDXF:
         def to_str(data: bytes) -> str:
             return data.decode(self.encoding).replace('\r\n', '\n')
 
-        factory = EntityFactory()
         index = start
         entry = self.structure.index[index]
         self.file.seek(entry.location)
@@ -140,7 +139,7 @@ class IterDXF:
             data = self.file.read(size)
             if entry.value in requested_types:
                 xtags = ExtendedTags.from_text(to_str(data))
-                yield factory.entity_from_tags(xtags)
+                yield factory.load(xtags)
             entry = next_entry
 
     def close(self):
@@ -242,15 +241,15 @@ def modelspace(filename: Filename, types: Iterable[str] = None) -> Iterable[DXFG
         tagger = ascii_tags_loader(fp)
         queued: Optional[DXFEntity] = None
         tags: List[DXFTag] = []
-        factory = EntityFactory()
         linked_entity = entity_linker()
+
         for tag in tag_compiler(tagger):
             code = tag.code
             value = tag.value
             if entities:
                 if code == 0:
                     if len(tags) and tags[0].value in requested_types:
-                        entity = factory.entity_from_tags(ExtendedTags(tags))
+                        entity = factory.load(ExtendedTags(tags))
                         if not linked_entity(entity) and entity.dxf.paperspace == 0:
                             if queued:  # queue one entity for collecting linked entities (VERTEX, ATTRIB)
                                 yield queued
@@ -315,7 +314,6 @@ def single_pass_modelspace(stream: BinaryIO, types: Iterable[str] = None) -> Ite
 
     queued: Optional[DXFEntity] = None
     tags: List[DXFTag] = []
-    factory = EntityFactory()
     linked_entity = entity_linker()
 
     for tag in tag_compiler(binary_tagger(stream, encoding)):
@@ -328,7 +326,7 @@ def single_pass_modelspace(stream: BinaryIO, types: Iterable[str] = None) -> Ite
                 return
             if code == 0:
                 if len(tags) and tags[0].value in requested_types:
-                    entity = factory.entity_from_tags(ExtendedTags(tags))
+                    entity = factory.load(ExtendedTags(tags))
                     if not linked_entity(entity) and entity.dxf.paperspace == 0:
                         if queued:  # queue one entity for collecting linked entities (VERTEX, ATTRIB)
                             yield queued

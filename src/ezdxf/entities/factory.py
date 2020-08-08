@@ -109,10 +109,3 @@ class EntityFactory:
         entity = load(tags)
         bind(entity, self.doc)
         return entity
-
-    def entity_from_tags(self,
-                         tags: Union['ExtendedTags', 'Tags']) -> 'DXFEntity':
-        if not isinstance(tags, ExtendedTags):
-            tags = ExtendedTags(tags)
-        entity = cls(tags.dxftype()).load(tags, self.doc)
-        return entity.cast() if hasattr(entity, 'cast') else entity
