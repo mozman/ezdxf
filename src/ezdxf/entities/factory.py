@@ -2,7 +2,6 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Union
-from ezdxf.tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
@@ -87,8 +86,6 @@ def is_bound(entity: 'DXFEntity', doc: 'Drawing') -> bool:
 class EntityFactory:
     def __init__(self, doc: 'Drawing' = None):
         self.doc = doc
-        self.image_key_generator = ImageKeyGenerator()
-        self.underlay_key_generator = UnderlayKeyGenerator()
 
     def new_entity(self, dxftype: str, dxfattribs: dict = None) -> 'DXFEntity':
         """ Create a new entity, requires an instantiated DXF document. """
@@ -119,15 +116,3 @@ class EntityFactory:
             tags = ExtendedTags(tags)
         entity = cls(tags.dxftype()).load(tags, self.doc)
         return entity.cast() if hasattr(entity, 'cast') else entity
-
-    def next_image_key(self, checkfunc=lambda k: True) -> str:
-        while True:
-            key = self.image_key_generator.next()
-            if checkfunc(key):
-                return key
-
-    def next_underlay_key(self, checkfunc=lambda k: True) -> str:
-        while True:
-            key = self.underlay_key_generator.next()
-            if checkfunc(key):
-                return key

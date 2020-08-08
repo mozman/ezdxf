@@ -8,6 +8,7 @@ from ezdxf.entities.dictionary import Dictionary
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
 from ezdxf.entitydb import EntitySpace
 from ezdxf.query import EntityQuery
+from ezdxf.tools.handle import UnderlayKeyGenerator
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GeoData, DictionaryVar
@@ -20,6 +21,7 @@ logger = logging.getLogger('ezdxf')
 class ObjectsSection:
     def __init__(self, doc: 'Drawing', entities: Iterable['DXFObject'] = None):
         self.doc = doc
+        self.underlay_key_generator = UnderlayKeyGenerator()
         self._entity_space = EntitySpace()
         if entities is not None:
             self._build(iter(entities))
@@ -37,6 +39,12 @@ class ObjectsSection:
     def get_entity_space(self) -> 'EntitySpace':
         """ Returns entity space. (internal API) """
         return self._entity_space
+
+    def next_underlay_key(self, checkfunc=lambda k: True) -> str:
+        while True:
+            key = self.underlay_key_generator.next()
+            if checkfunc(key):
+                return key
 
     def _build(self, entities: Iterator['DXFObject']) -> None:
         section_head = next(entities)  # type: DXFTagStorage
@@ -364,7 +372,7 @@ class ObjectsSection:
         })
 
         # auto-generated underlay key
-        key = self.dxffactory.next_underlay_key(lambda k: k not in underlay_dict)
+        key = self.next_underlay_key(lambda k: k not in underlay_dict)
         underlay_dict[key] = underlay_def.dxf.handle
         return cast('UnderlayDef', underlay_def)
 

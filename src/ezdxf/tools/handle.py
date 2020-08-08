@@ -1,6 +1,6 @@
 # Purpose: handle module
 # Created: 11.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 
 
@@ -19,11 +19,6 @@ class HandleGenerator:
         return next_handle
 
     __next__ = next
-
-
-class ImageKeyGenerator(HandleGenerator):
-    def __str__(self):
-        return "Image%05d" % self._handle
 
 
 class UnderlayKeyGenerator(HandleGenerator):
