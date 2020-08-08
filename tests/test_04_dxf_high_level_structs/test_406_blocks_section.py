@@ -8,7 +8,6 @@ from ezdxf.sections.blocks import BlocksSection
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.entities import factory
 
-
 @pytest.fixture
 def dxf12():
     return ezdxf.new('R12')
@@ -16,8 +15,15 @@ def dxf12():
 
 @pytest.fixture
 def blocks(dxf12):
-    return BlocksSection(dxf12,
-                         list(load_entities(TESTBLOCKS, 'BLOCKS', dxf12)))
+    return BlocksSection(dxf12, list(load_entities(TESTBLOCKS, 'BLOCKS')))
+
+
+@pytest.fixture
+def bounded_blocks(dxf12):
+    entities = list(load_entities(TESTBLOCKS, 'BLOCKS'))
+    for entity in entities:
+        factory.bind(entity, dxf12)
+    return BlocksSection(dxf12, entities)
 
 
 @pytest.fixture
@@ -30,7 +36,7 @@ def doc():
 
 def test_empty_section(dxf12):
     blocks = BlocksSection(dxf12,
-                           list(load_entities(EMPTYSEC, 'BLOCKS', dxf12)))
+                           list(load_entities(EMPTYSEC, 'BLOCKS')))
     # the NES creates automatically *Model_Space and *Paper_Space blocks
     assert '*Model_Space' in blocks
     assert '*Paper_Space' in blocks
@@ -111,16 +117,14 @@ def test_block_content_entity_drawing_attribute(blocks, dxf12):
     archtick = blocks['_ARCHTICK']
     entities = list(archtick)
     assert 1 == len(entities)  # VERTEX & SEQEND doesn't count
-    e = entities[0]
-    assert dxf12 == e.doc
 
 
-def test_delete_block(blocks, dxf12):
-    archtick = blocks['_ARCHTICK']
+def test_delete_block(bounded_blocks, dxf12):
+    archtick = bounded_blocks['_ARCHTICK']
     entities = list(archtick)
     archtick_name = archtick.name
-    blocks.delete_block(archtick_name, safe=False)
-    assert archtick_name not in blocks
+    bounded_blocks.delete_block(archtick_name, safe=False)
+    assert archtick_name not in bounded_blocks
     assert archtick.is_alive is False
     for entity in entities:
         assert entity.is_alive is False

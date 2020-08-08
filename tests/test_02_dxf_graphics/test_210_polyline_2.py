@@ -281,7 +281,7 @@ def test_internals_polyface(layout):
 
 def test_new_style_polyface_face_count():
     doc = ezdxf.new()
-    section = EntitySection(doc, load_entities(NEW_STYLE_POLYFACE, 'ENTITIES', doc))
+    section = EntitySection(doc, load_entities(NEW_STYLE_POLYFACE, 'ENTITIES'))
     entities = list(section)
     polyface = entities[0]
     faces = list(polyface.faces())

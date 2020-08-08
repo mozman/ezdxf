@@ -57,7 +57,7 @@ def test_export_dxf():
 
 def test_load_section():
     doc = ezdxf.new()
-    entities = load_entities(TEST_CLASSES, 'CLASSES', doc)
+    entities = load_entities(TEST_CLASSES, 'CLASSES')
     classes = ClassesSection(doc, entities)
     assert len(classes.classes) == 3
 

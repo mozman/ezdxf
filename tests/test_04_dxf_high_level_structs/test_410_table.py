@@ -16,7 +16,7 @@ def table():
 
 def test_ac1009_load_table():
     doc = ezdxf.new('R12')
-    entities = list(load_entities(AC1009TABLE, 'TABLES', doc))
+    entities = list(load_entities(AC1009TABLE, 'TABLES'))
     table = Table(doc, entities[1:-1])  # without SECTION tags and ENDTAB
     assert 10 == len(table)
 
@@ -33,7 +33,7 @@ def test_ac1009_write(table):
 
 def test_ac1024_load_table():
     doc = ezdxf.new('R2010')
-    entities = list(load_entities(AC1024TABLE, 'TABLES', doc))
+    entities = list(load_entities(AC1024TABLE, 'TABLES'))
     table = Table(doc, entities[1:-1])  # without SECTION tags and ENDTAB
     assert 10 == len(table)
 

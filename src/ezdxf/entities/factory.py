@@ -68,7 +68,6 @@ def bind(entity: 'DXFEntity', doc: 'Drawing') -> None:
     entity.doc = doc  # todo: remove dependency
     doc.entitydb.add(entity)
     doc.tracker.add(entity.dxftype())
-    entity.post_bind_hook(doc)
 
 
 def is_bound(entity: 'DXFEntity', doc: 'Drawing') -> bool:

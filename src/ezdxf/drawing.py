@@ -323,7 +323,7 @@ class Drawing:
         # setup handles
         self.entitydb.handles.reset(seed)
         # store all necessary DXF entities in the drawing database
-        fill_database(sections, self.dxffactory)
+        fill_database(sections, self)
         # all handles used in the DXF file are known at this point
         # -----------------------------------------------------------------------------------
         # create sections:

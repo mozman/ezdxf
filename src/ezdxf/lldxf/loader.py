@@ -1,6 +1,6 @@
 # Purpose: DXF structure loader and validator
 # Created: 25.01.2018
-# Copyright (c) 2018-2019, Manfred Moitzi
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 import logging
 from typing import Callable, Dict, Iterable, List, Union, TYPE_CHECKING
@@ -10,12 +10,11 @@ from .const import DXFStructureError
 from .tags import group_tags, DXFTag, Tags
 from .extendedtags import ExtendedTags
 from .validator import entity_structure_validator
-
+from ezdxf.entities import factory
 from ezdxf.options import options
 
 if TYPE_CHECKING:
-    from ezdxf.entities.factory import EntityFactory
-    from ezdxf.entities.dxfentity import DXFEntity
+    from ezdxf.eztypes import DXFEntity, Drawing
 
 logger = logging.getLogger('ezdxf')
 
@@ -143,13 +142,12 @@ EXCLUDE_STRUCTURE_CHECK = {
 }
 
 
-def load_dxf_entities(
-        entities: Iterable[Tags],
-        factory: 'EntityFactory') -> Iterable['DXFEntity']:
+def load_dxf_entities(entities: Iterable[Tags]) -> Iterable['DXFEntity']:
     check_tag_structure = options.check_entity_tag_structures
     for entity in entities:
         if len(entity) == 0:
-            raise DXFStructureError('Invalid empty DXF entity.')
+            logger.debug('Ignore empty DXF entity.')
+            continue
         code, dxftype = entity[0]
         if code != 0:
             raise DXFStructureError(
@@ -157,16 +155,16 @@ def load_dxf_entities(
 
         if check_tag_structure and (dxftype not in EXCLUDE_STRUCTURE_CHECK):
             entity = entity_structure_validator(entity)
-        yield factory.load(entity)
+        yield factory.load(ExtendedTags(entity))
 
 
-def fill_database(sections: Dict, factory: 'EntityFactory') -> None:
-    # CLASSES and HEADER have no EntityDB entries.
+def fill_database(sections: Dict, doc: 'Drawing') -> None:
+    # HEADER has no database entries.
     for name in ['TABLES', 'CLASSES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
         if name in sections:
             section = sections[name]
-            # Convert entities from Tags() to ExtendedTags() to store them
-            # into the structure database.
-            for index, entity in enumerate(load_dxf_entities(section, factory)):
-                # All entities are DXFEntity or inherited
+            for index, entity in enumerate(load_dxf_entities(section)):
+                # Replace Tags() by DXFEntity() objects
                 section[index] = entity
+                # Bind entities to the DXF document:
+                factory.bind(entity, doc)

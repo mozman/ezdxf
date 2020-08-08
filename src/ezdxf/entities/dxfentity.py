@@ -691,16 +691,6 @@ class DXFEntity:
         for key, value in dxfattribs.items():
             setter(key, value)
 
-    def post_bind_hook(self, doc: 'Drawing') -> None:
-        """ Binding hook: called after an entity was bound to DXF document `doc`
-
-        Create additional required DXF structures like SEQEND or ImageDefReactor
-        entities.
-
-        (internal API)
-        """
-        pass
-
     def post_new_hook(self):
         """ Post processing and integrity validation after entity creation
         (internal API)
