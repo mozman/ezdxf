@@ -125,13 +125,8 @@ class Dictionary(DXFObject):
             elif code == KEY_CODE:
                 dict_key = value
             if dict_key and entry_handle:
-                try:
-                    entity = self.entitydb[entry_handle]
-                except KeyError:
-                    # Store entity as handle string:
-                    entity = entry_handle
-
-                self._data[dict_key] = entity
+                # Store entity as handle string:
+                self._data[dict_key] = entry_handle
                 entry_handle = None
                 dict_key = None
         # Use same value code as loaded:

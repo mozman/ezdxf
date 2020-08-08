@@ -65,11 +65,11 @@ def bind(entity: 'DXFEntity', doc: 'Drawing') -> None:
 
     """
     assert entity.is_alive, 'Can not bind destroyed entity.'
-    assert doc.entitydb, 'Missing entity database.'
+    assert doc.entitydb is not None, 'Missing entity database.'
     entity.doc = doc  # todo: remove dependency
     doc.entitydb.add(entity)
-    entity.post_bind_hook(doc)
     doc.tracker.add(entity.dxftype())
+    entity.post_bind_hook(doc)
 
 
 def is_bound(entity: 'DXFEntity', doc: 'Drawing') -> bool:
@@ -97,8 +97,8 @@ class EntityFactory:
 
     def create_db_entry(self, dxftype: str, dxfattribs: dict) -> 'DXFEntity':
         """ Create new entity and add to drawing-database. """
-        entity = self.new_entity(dxftype=dxftype, dxfattribs=dxfattribs)
-        self.doc.entitydb.add(entity)
+        entity = new(dxftype=dxftype, dxfattribs=dxfattribs)
+        bind(entity, self.doc)
         if hasattr(entity, 'seqend') and entity.seqend is None:
             seqend = self.create_db_entry('SEQEND', dxfattribs={
                 'layer': entity.dxf.layer})
@@ -107,12 +107,10 @@ class EntityFactory:
         return entity
 
     def load(self, tags: Union['ExtendedTags', 'Tags']) -> 'DXFEntity':
-        entity = self.entity_from_tags(tags)
-        self.doc.entitydb.add(entity)
-        # if not isinstance(tags, ExtendedTags):
-        #     tags = ExtendedTags(tags)
-        # entity = load(tags)
-        # bind(entity, self.doc)
+        if not isinstance(tags, ExtendedTags):
+            tags = ExtendedTags(tags)
+        entity = load(tags)
+        bind(entity, self.doc)
         return entity
 
     def entity_from_tags(self,
