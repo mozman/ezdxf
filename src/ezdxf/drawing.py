@@ -534,7 +534,7 @@ class Drawing:
             self.appids.new(name, {'flags': flags})
 
     def _create_appids(self):
-        if 'HATCH' in self.tracker.dxftypes:
+        if 'HATCH' in self.tracker:
             self._create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
 
     @property

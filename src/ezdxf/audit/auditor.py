@@ -7,15 +7,16 @@ from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict
 
 import sys
 from ezdxf.lldxf.validator import is_valid_layer_name, fix_lineweight
-from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHT_VALUES
+from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHT_VALUES, DXFStructureError
 from ezdxf.entities.dxfentity import DXFEntity
+from ezdxf.entities import factory
 from ezdxf.math import NULLVEC
 from ezdxf.sections.table import table_key
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, Drawing, DXFGraphic, BlocksSection
 
-__all__ = ['Auditor', 'AuditError', 'is_healthy']
+__all__ = ['Auditor', 'AuditError', 'audit']
 
 
 class AuditError(IntEnum):
@@ -52,7 +53,8 @@ REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
 
 
 class ErrorEntry:
-    def __init__(self, code: int, message: str = '', dxf_entity: 'DXFEntity' = None, data: Any = None):
+    def __init__(self, code: int, message: str = '',
+                 dxf_entity: 'DXFEntity' = None, data: Any = None):
         self.code = code  # error code AuditError()
         self.entity = dxf_entity  # source entity of error
         self.message = message  # error message
@@ -89,7 +91,16 @@ class Auditor:
         else:
             return None
 
-    def print_error_report(self, errors: List[ErrorEntry] = None, stream: TextIO = None) -> None:
+    @property
+    def has_errors(self) -> bool:
+        return bool(self.errors)
+
+    @property
+    def has_fixes(self) -> bool:
+        return bool(self.fixes)
+
+    def print_error_report(self, errors: List[ErrorEntry] = None,
+                           stream: TextIO = None) -> None:
         def entity_str(count, code, entity):
             if entity is not None:
                 return f"{count:4d}. Issue [{code}] in {str(entity)}."
@@ -109,7 +120,8 @@ class Auditor:
         else:
             stream.write(f'{len(errors)} issues found.\n\n')
             for count, error in enumerate(errors):
-                stream.write(entity_str(count + 1, error.code, error.entity) + '\n')
+                stream.write(
+                    entity_str(count + 1, error.code, error.entity) + '\n')
                 stream.write('   ' + error.message + '\n\n')
 
     def print_fixed_errors(self, stream: TextIO = None) -> None:
@@ -127,13 +139,16 @@ class Auditor:
         else:
             stream.write(f'{len(self.fixes)} issues fixed.\n\n')
             for count, error in enumerate(self.fixes):
-                stream.write(entity_str(count + 1, error.code, error.entity) + '\n')
+                stream.write(
+                    entity_str(count + 1, error.code, error.entity) + '\n')
                 stream.write('   ' + error.message + '\n\n')
 
-    def add_error(self, code: int, message: str = '', dxf_entity: 'DXFEntity' = None, data: Any = None) -> None:
+    def add_error(self, code: int, message: str = '',
+                  dxf_entity: 'DXFEntity' = None, data: Any = None) -> None:
         self.errors.append(ErrorEntry(code, message, dxf_entity, data))
 
-    def fixed_error(self, code: int, message: str = '', dxf_entity: 'DXFEntity' = None, data: Any = None) -> None:
+    def fixed_error(self, code: int, message: str = '',
+                    dxf_entity: 'DXFEntity' = None, data: Any = None) -> None:
         self.fixes.append(ErrorEntry(code, message, dxf_entity, data))
 
     def run(self) -> List[ErrorEntry]:
@@ -202,7 +217,8 @@ class Auditor:
         if not entity.dxf.hasattr('linetype'):
             return
         linetype = table_key(entity.dxf.linetype)
-        if linetype in ('bylayer', 'byblock'):  # no table entry in linetypes required
+        if linetype in (
+        'bylayer', 'byblock'):  # no table entry in linetypes required
             return
 
         if linetype not in self.doc.linetypes:
@@ -340,10 +356,12 @@ class BlockCycleDetector:
         self.key = doc.blocks.key
         self.blocks = self._build_block_ledger(doc.blocks)
 
-    def _build_block_ledger(self, blocks: 'BlocksSection') -> Dict[str, Set[str]]:
+    def _build_block_ledger(self, blocks: 'BlocksSection') -> Dict[
+        str, Set[str]]:
         ledger = dict()
         for block in blocks:
-            inserts = {self.key(insert.dxf.name) for insert in block.query('INSERT')}
+            inserts = {self.key(insert.dxf.name) for insert in
+                       block.query('INSERT')}
             ledger[self.key(block.name)] = inserts
         return ledger
 
@@ -369,17 +387,23 @@ class BlockCycleDetector:
         return check(block_name)
 
 
-def is_healthy(entity: 'DXFEntity') -> bool:
-    """
-    Returns ``True`` if any error exist or any fixes has been applied.
+def audit(entity: 'DXFEntity', doc: 'Drawing') -> Auditor:
+    """ Setup an :class:`Auditor` object, run the audit process for `entity`
+    and return result as :class:`Auditor` object.
 
-    A returned ``True`` should show a valid entity state according to
-    the DXF reference as far `ezdxf` can check this state.
-    
-    Intended usage: testing if an DXF entity is in good shape.
+    Args:
+        entity: DXF entity to validate
+        doc: bounded DXF document of `entity`
 
-    (internal API)
     """
-    auditor = Auditor(entity.doc)
+    if not entity.is_alive:
+        raise TypeError('Entity is destroyed.')
+
+    # Validation of unbound entities is possible, but it is not useful
+    # to validate entities against a different DXF document:
+    if entity.dxf.handle is not None and not factory.is_bound(entity, doc):
+        raise ValueError('Entity is bound to different DXF document.')
+
+    auditor = Auditor(doc)
     entity.audit(auditor)
-    return len(auditor.errors) > 0 or len(auditor.fixes) > 0
+    return auditor

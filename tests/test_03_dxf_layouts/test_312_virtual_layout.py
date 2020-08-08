@@ -94,7 +94,8 @@ def test_copy_all_sub_entities_to_a_real_layout(layout, doc):
     assert copy.seqend.dxf.handle in doc.entitydb, 'seqend should be stored in the entity database'
 
     # Do any further problems exist?
-    assert audit.is_healthy(copy) is False
+    auditor = audit.audit(copy, doc)
+    assert auditor.has_errors is False and auditor.has_fixes is False
 
 
 def test_move_all_sub_entities_to_a_real_layout(layout, doc):
@@ -120,7 +121,8 @@ def test_move_all_sub_entities_to_a_real_layout(layout, doc):
     assert entity.seqend.dxf.handle in doc.entitydb, 'seqend should be stored in the entity database'
 
     # Do any further problems exist?
-    assert audit.is_healthy(entity) is False
+    auditor = audit.audit(entity, doc)
+    assert auditor.has_errors is False and auditor.has_fixes is False
 
 
 if __name__ == '__main__':

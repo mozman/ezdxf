@@ -159,34 +159,34 @@ class ClassesSection:
         if self.doc is None:  # testing environment
             return
 
-        dxftypes = self.doc.tracker.dxftypes
-        if 'IMAGE' in dxftypes:
+        tracker = self.doc.tracker
+        if 'IMAGE' in tracker:
             self.add_class('IMAGE')
             self.add_class('IMAGEDEF')
             self.add_class('IMAGEDEF_REACTOR')
-        if 'PDFUNDERLAY' in dxftypes:
+        if 'PDFUNDERLAY' in tracker:
             self.add_class('PDFDEFINITION')
             self.add_class('PDFUNDERLAY')
-        if 'DWFUNDERLAY' in dxftypes:
+        if 'DWFUNDERLAY' in tracker:
             self.add_class('DWFDEFINITION')
             self.add_class('DWFUNDERLAY')
-        if 'DGNUNDERLAY' in dxftypes:
+        if 'DGNUNDERLAY' in tracker:
             self.add_class('DGNDEFINITION')
             self.add_class('DGNUNDERLAY')
-        if 'EXTRUDEDSURFACE' in dxftypes:
+        if 'EXTRUDEDSURFACE' in tracker:
             self.add_class('EXTRUDEDSURFACE')
             self.add_class('ACDBASSOCEXTRUDEDSURFACEACTIONBODY')
-        if 'LOFTEDSURFACE' in dxftypes:
+        if 'LOFTEDSURFACE' in tracker:
             self.add_class('LOFTEDSURFACE')
             self.add_class('ACDBASSOCLOFTEDSURFACEACTIONBODY')
-        if 'REVOLVEDSURFACE' in dxftypes:
+        if 'REVOLVEDSURFACE' in tracker:
             self.add_class('REVOLVEDSURFACE')
             self.add_class('ACDBASSOCREVOLVEDSURFACEACTIONBODY')
-        if 'SWEPTSURFACE' in dxftypes:
+        if 'SWEPTSURFACE' in tracker:
             self.add_class('SWEPTSURFACE')
             self.add_class('ACDBASSOCSWEPTSURFACEACTIONBODY')
 
-        for dxftype in dxftypes:
+        for dxftype in tracker:
             self.add_class(dxftype)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
