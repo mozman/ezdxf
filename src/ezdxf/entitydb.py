@@ -77,6 +77,15 @@ class EntityDB:
         """
         return self.keys()
 
+    def load_resources(self):
+        """ Load additional resources for entity database into DXF entities.
+
+        e.g. convert handles into DXFEntity() objects
+
+        """
+        for entity in self.values():
+            entity.load_resources(self)
+
     def get(self, handle: str) -> Optional[DXFEntity]:
         """ Returns entity for `handle` or ``None`` if no entry for `handle`
         exist, does not filter destroyed entities nor entities in the trashcan.

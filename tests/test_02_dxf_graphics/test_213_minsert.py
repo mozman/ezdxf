@@ -35,6 +35,10 @@ class TestSimpleBlock:
         msp = doc.modelspace()
         return msp.add_blockref('POINT', (0, 0))
 
+    @pytest.fixture
+    def db(self, doc):
+        return doc.entitydb
+
     def test_minsert_normal_spacing(self, insert):
         insert.grid(size=(2, 2), spacing=(10, 10))
         minsert = list(insert.multi_insert())
@@ -66,12 +70,14 @@ class TestSimpleBlock:
         assert minsert[0].dxf.insert == (0, 0)
         assert minsert[1].dxf.insert == (10, 0)
 
-    def test_explode(self, insert, doc):
+    def test_explode(self, insert, db):
         handle = insert.dxf.handle
         insert.grid(size=(2, 2), spacing=(10, 10))
         points = insert.explode()
+        db.purge()
+
         assert insert.is_alive is False
-        assert handle not in doc.entitydb
+        assert handle not in db
         assert len(points) == 4
         point = cast(Point, points[3])
         assert point.dxf.owner is not None, 'not assigned to a layout'
@@ -106,11 +112,14 @@ class TestInsertAttributes:
         assert attribs[3].dxf.insert == (10, 10)
 
     def test_explode(self, insert, doc):
+        db = doc.entitydb
         handle = insert.dxf.handle
         insert.grid(size=(2, 2), spacing=(10, 10))
         entities = insert.explode()
+        db.purge()
+
         assert insert.is_alive is False
-        assert handle not in doc.entitydb
+        assert handle not in db
         assert len(entities) == 8
         # ATTRIB -> TEXT
         attrib = cast(Attrib, entities.query('TEXT')[3])

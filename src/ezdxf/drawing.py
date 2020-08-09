@@ -337,7 +337,7 @@ class Drawing:
         self.objects = ObjectsSection(self, sections.get('OBJECTS', None))
         # only valid for DXF R2013 and later
         self.acdsdata = AcDsDataSection(self, sections.get('ACDSDATA', None))
-
+        self.entitydb.load_resources()
         for name, data in sections.items():
             if name not in MANAGED_SECTIONS:
                 self.stored_sections.append(StoredSection(data))

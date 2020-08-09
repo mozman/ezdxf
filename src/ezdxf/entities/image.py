@@ -16,6 +16,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter, DXFNamespace, Drawing, Vertex, DXFTag, Matrix44, BaseLayout,
+        EntityDB,
     )
 
 __all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables', 'Wipeout']
@@ -118,11 +119,18 @@ class Image(DXFGraphic):
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
         self._boundary_path: List[Vec2] = []
+        self._image_def = None
+        self._image_def_reactor = None
+
+    def load_resources(self, db: 'EntityDB') -> None:
+        self._image_def = db.get(self.dxf.get('image_def_handle', None))
+        self._image_def_reactor = db.get(self.dxf.get('image_def_reactor_handle', None))
 
     def copy(self) -> 'Image':
         image_copy = cast('Image', super().copy())
         # Each image has its own ImageDefReactor object:
         image_copy.dxf.image_def_reactor_handle = '0'
+        image_copy._image_def = self._image_def
         return image_copy
 
     def _copy_data(self, entity: 'Image') -> None:
@@ -134,11 +142,12 @@ class Image(DXFGraphic):
         if self.dxf.get('image_def_reactor_handle', '0') != '0':
             return
         # Create a new ImageDefReactor object for this image copy:
-        image_def_reactor = self.doc.objects.add_image_def_reactor(
+        image_def_reactor = layout.doc.objects.add_image_def_reactor(
             self.dxf.handle)
         reactor_handle = image_def_reactor.dxf.handle
         # Link reactor object to this image:
         self.dxf.image_def_reactor_handle = reactor_handle
+        self._image_def_reactor = image_def_reactor
         image_def = self.get_image_def()
         # Link reactor object to the image definition:
         image_def.append_reactor_handle(reactor_handle)
@@ -232,18 +241,19 @@ class Image(DXFGraphic):
         self.dxf.clipping_boundary_type = 1
         self.dxf.count_boundary_points = 2
 
+    def set_image_def(self, image_def: 'ImageDef')->None:
+        self._image_def = image_def
+
     def get_image_def(self) -> 'ImageDef':
         """ Returns the associated IMAGEDEF entity. see :class:`ImageDef`."""
-        return cast('ImageDef', self.entitydb[self.dxf.image_def_handle])
+        return self._image_def
 
     def destroy(self) -> None:
-        image_def = self.get_image_def()
-        reactor_handle = self.dxf.get('image_def_reactor_handle', None)
-        if reactor_handle:
-            # remove rectors
-            image_def.discard_reactor_handle(reactor_handle)
-            reactor = self.entitydb[reactor_handle]
-            self.doc.objects.delete_entity(reactor)
+        reactor = self._image_def_reactor
+        if reactor and reactor.is_alive:
+            image_def = self.get_image_def()
+            image_def.discard_reactor_handle(reactor.dxf.handle)
+            reactor.destroy()
         del self._boundary_path
         super().destroy()
 

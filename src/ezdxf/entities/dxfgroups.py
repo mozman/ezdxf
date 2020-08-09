@@ -19,8 +19,8 @@ logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-    TagWriter, Drawing, DXFNamespace, Auditor, EntityDB,
-)
+        TagWriter, Drawing, DXFNamespace, Auditor, EntityDB,
+    )
 
 __all__ = ['DXFGroup', 'GroupCollection']
 
@@ -125,7 +125,7 @@ class DXFGroup(DXFObject):
         """ Iterable of handles of all DXF entities in :class:`DXFGroup`. """
         return (entity.dxf.handle for entity in self)
 
-    def convert_handles_to_entities(self, db: 'EntityDB') -> None:
+    def load_resources(self, db: 'EntityDB') -> None:
         assert db is not None
 
         def entities():
@@ -239,7 +239,6 @@ class GroupCollection(ObjectCollection):
     def __init__(self, doc: 'Drawing'):
         super().__init__(doc, dict_name='ACAD_GROUP', object_type='GROUP')
         self._next_unnamed_number = 0
-        self._convert_handles_to_entities(doc.entitydb)
 
     def groups(self) -> Iterable[DXFGroup]:
         """ Iterable of all existing groups. """
@@ -317,13 +316,6 @@ class GroupCollection(ObjectCollection):
                 message=f'Removed empty group "{name}".',
             )
             self.delete(name)
-
-    def _convert_handles_to_entities(self, db: 'EntityDB') -> None:
-        """ Convert handle strings to :class:`DXFGraphic` entities in all groups.
-        """
-        assert db is not None
-        for group in self.groups():
-            group.convert_handles_to_entities(db)
 
 
 def get_group_name(group: DXFGroup, db: 'EntityDB') -> str:

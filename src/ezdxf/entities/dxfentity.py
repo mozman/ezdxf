@@ -651,6 +651,13 @@ class DXFEntity:
             processor = SubclassProcessor(tags, dxfversion=dxfversion)
             self.dxf = self.load_dxf_attribs(processor)
 
+    def load_resources(self, db: 'EntityDB')->None:
+        """ Load additional resources from entity database.
+
+        e.g. convert handles into DXFEntity() objects
+        """
+        pass
+
     @classmethod
     def new(cls: Type[T], handle: str = None, owner: str = None,
             dxfattribs: Dict = None, doc: 'Drawing' = None) -> T:

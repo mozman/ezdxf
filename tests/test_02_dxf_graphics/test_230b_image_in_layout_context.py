@@ -145,6 +145,7 @@ def test_create_and_delete_image(new_doc):
 
     # delete image
     msp.delete_entity(image)
+    new_doc.entitydb.purge()
     assert reactor.is_alive is False
     assert reactor_handle not in new_doc.objects, "IMAGEDEF_REACTOR not deleted for objects section"
     assert reactor_handle not in new_doc.entitydb, "IMAGEDEF_REACTOR not deleted for entity database"

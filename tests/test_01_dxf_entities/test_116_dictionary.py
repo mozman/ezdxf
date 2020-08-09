@@ -5,6 +5,7 @@ import pytest
 import ezdxf
 
 from ezdxf.entities.dictionary import Dictionary, DictionaryWithDefault
+from ezdxf.entities import DXFEntity
 from ezdxf import DXFKeyError, DXFValueError
 from ezdxf.audit import Auditor, AuditError
 
@@ -106,22 +107,22 @@ class TestEmptyDXFDict:
         assert 0 == len(dxfdict)
 
     def test_add_first_item(self, dxfdict):
-        dxfdict['TEST'] = "HANDLE"
+        dxfdict['TEST'] = "ABBA"
         assert 1 == len(dxfdict)
-        assert "HANDLE" == dxfdict['TEST']
+        assert "ABBA" == dxfdict['TEST']
 
     def test_add_first_item_2(self, dxfdict):
-        dxfdict.add(key='TEST', value="HANDLE")
+        dxfdict.add(key='TEST', value="ABBA")
         assert 1 == len(dxfdict)
-        assert "HANDLE" == dxfdict['TEST']
+        assert "ABBA" == dxfdict['TEST']
 
     def test_add_and_replace_first_item(self, dxfdict):
-        dxfdict['TEST'] = "HANDLE"
+        dxfdict['TEST'] = "ABBA"
         assert 1 == len(dxfdict)
-        assert "HANDLE" == dxfdict['TEST']
-        dxfdict['TEST'] = "HANDLE2"
+        assert "ABBA" == dxfdict['TEST']
+        dxfdict['TEST'] = "FEFE"
         assert 1 == len(dxfdict)
-        assert "HANDLE2" == dxfdict['TEST']
+        assert "FEFE" == dxfdict['TEST']
 
     def test_clear(self, dxfdict):
         assert 0 == len(dxfdict)
@@ -144,8 +145,7 @@ def test_get_entity_invalid_handle(doc):
     assert rootdict['TEST'].dxf.owner == 'ABBA'
 
     with pytest.raises(DXFValueError):
-        # just for testing, in production only DXFEntity() objects should be assigned
-        rootdict['TEST'] = 'FFFF'
+        rootdict['TEST'] = 'XXX'
 
     with pytest.raises(DXFKeyError):
         _ = rootdict['MOZMAN']
@@ -231,20 +231,26 @@ def test_audit_fix_invalid_pointer():
 class TestDXFDictWithDefault:
     @pytest.fixture
     def dxfdict(self):
-        return DictionaryWithDefault.from_text(DEFAULT_DICT, doc=MockDoc())
+        d = DictionaryWithDefault.from_text(DEFAULT_DICT, doc=MockDoc())
+        d._default = DXFEntity()
+        d._default.dxf.handle = 'FEFE'
+        return d
 
     def test_get_existing_value(self, dxfdict):
         assert 'F' == dxfdict['Normal']
 
     def test_get_not_existing_value(self, dxfdict):
-        assert 'F' == dxfdict['Mozman']
+        assert dxfdict['Mozman'].dxf.handle == 'FEFE'
 
     def test_get_default_value(self, dxfdict):
         assert 'F' == dxfdict.dxf.default
 
     def test_set_default_value(self, dxfdict):
-        dxfdict.dxf.default = "MOZMAN"
-        assert 'MOZMAN' == dxfdict['Mozman']
+        e = DXFEntity()
+        e.dxf.handle = 'ABBA'
+
+        dxfdict.set_default(e)
+        assert dxfdict['Mozman'].dxf.handle == 'ABBA'
 
 
 ROOTDICT = """0

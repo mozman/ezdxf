@@ -4,7 +4,10 @@
 from typing import TYPE_CHECKING, Dict, Iterable, List, cast, Optional
 import logging
 from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
-from ezdxf.lldxf.const import MODEL_SPACE_R2000, PAPER_SPACE_R2000, TMP_PAPER_SPACE_NAME
+from ezdxf.lldxf.const import (
+    MODEL_SPACE_R2000, PAPER_SPACE_R2000,
+    TMP_PAPER_SPACE_NAME,
+)
 from ezdxf.lldxf.validator import is_valid_table_name
 from .layout import Layout, Modelspace, Paperspace
 from ezdxf.entities import DXFEntity
@@ -19,8 +22,9 @@ class Layouts:
     def __init__(self, doc: 'Drawing'):
         """ Default constructor. (internal API) """
         self.doc = doc
-        self._layouts = {}  # type: Dict[str, Layout]
-        self._dxf_layouts = self.doc.rootdict['ACAD_LAYOUT']  # type: Dictionary # key: layout name; value: Layout()
+        self._layouts: Dict[str, Layout] = {}
+        # key: layout name; value: DXFLayout()
+        self._dxf_layouts: 'Dictionary' = self.doc.rootdict['ACAD_LAYOUT']
 
     @classmethod
     def setup(cls, doc: 'Drawing'):
@@ -32,13 +36,16 @@ class Layouts:
 
     def setup_modelspace(self):
         """ Modelspace setup. (internal API) """
-        self._new_special(Modelspace, 'Model', MODEL_SPACE_R2000, dxfattribs={'taborder': 0})
+        self._new_special(Modelspace, 'Model', MODEL_SPACE_R2000,
+                          dxfattribs={'taborder': 0})
 
     def setup_paperspace(self):
         """ First layout setup. (internal API) """
-        self._new_special(Paperspace, 'Layout1', PAPER_SPACE_R2000, dxfattribs={'taborder': 1})
+        self._new_special(Paperspace, 'Layout1', PAPER_SPACE_R2000,
+                          dxfattribs={'taborder': 1})
 
-    def _new_special(self, cls, name: str, block_name: str, dxfattribs: dict) -> 'Layout':
+    def _new_special(self, cls, name: str, block_name: str,
+                     dxfattribs: dict) -> 'Layout':
         if name in self._layouts:
             raise DXFValueError(f'Layout "{name}" already exists')
         dxfattribs['owner'] = self._dxf_layouts.dxf.handle
@@ -79,7 +86,8 @@ class Layouts:
         dxfattribs['owner'] = self._dxf_layouts.dxf.handle
         dxfattribs.setdefault('taborder', len(self._layouts) + 1)
         block_name = self.unique_paperspace_name()
-        layout = Paperspace.new(name, block_name, self.doc, dxfattribs=dxfattribs)
+        layout = Paperspace.new(name, block_name, self.doc,
+                                dxfattribs=dxfattribs)
 
         self._dxf_layouts[name] = layout.dxf_layout
         self._layouts[name] = layout
@@ -98,21 +106,25 @@ class Layouts:
             layouts.restore('Layout1', PAPER_SPACE_R2000, taborder=1)
 
         # find orphaned LAYOUTS
-        layout_names = (o.dxf.name for o in doc.objects if o.dxftype == 'LAYOUT')
+        layout_names = (o.dxf.name for o in doc.objects if
+                        o.dxftype == 'LAYOUT')
         for layout_name in layout_names:
             if layout_name not in layouts:
                 logger.debug(f'Found orphaned LAYOUT "{layout_name}"')
 
         # find orphaned BLOCK_RECORD *Paper_Space? entries
         psp_br_handles = {
-            br.dxf.handle for br in doc.block_records if br.dxf.name.lower().startswith('*paper_space')
+            br.dxf.handle for br in doc.block_records if
+            br.dxf.name.lower().startswith('*paper_space')
         }
         psp_layout_br_handles = {
-            layout.dxf.block_record_handle for layout in layouts._layouts.values() if layout.dxf.name != 'Model'
+            layout.dxf.block_record_handle for layout in
+            layouts._layouts.values() if layout.dxf.name != 'Model'
         }
         mismatch = psp_br_handles.difference(psp_layout_br_handles)
         if len(mismatch):
-            logger.debug(f'Found {len(mismatch)} layout(s) defined by BLOCK_RECORD entries without LAYOUT entity.')
+            logger.debug(
+                f'Found {len(mismatch)} layout(s) defined by BLOCK_RECORD entries without LAYOUT entity.')
 
         return layouts
 
@@ -123,14 +135,16 @@ class Layouts:
         block_layout = self.doc.blocks.get(block_record_name)
         self._new_from_block_layout(name, block_layout, taborder)
 
-    def _new_from_block_layout(self, name, block_layout, taborder: int) -> 'Layout':
+    def _new_from_block_layout(self, name, block_layout,
+                               taborder: int) -> 'Layout':
         dxfattribs = {
             'owner': self._dxf_layouts.dxf.handle,
             'name': name,
             'block_record_handle': block_layout.block_record_handle,
             'taborder': taborder,
         }
-        dxf_layout = cast('DXFLayout', self.doc.objects.new_entity('LAYOUT', dxfattribs=dxfattribs))
+        dxf_layout = cast('DXFLayout', self.doc.objects.new_entity('LAYOUT',
+                                                                   dxfattribs=dxfattribs))
         if name == 'Model':
             layout = Modelspace.load(dxf_layout, self.doc)
         else:
@@ -212,7 +226,8 @@ class Layouts:
 
     def names_in_taborder(self) -> List[str]:
         """ Returns all layout names in tab order as shown in :term:`CAD` applications. """
-        names = [(layout.dxf.taborder, name) for name, layout in self._layouts.items()]
+        names = [(layout.dxf.taborder, name) for name, layout in
+                 self._layouts.items()]
         return [name for order, name in sorted(names)]
 
     def get_layout_for_entity(self, entity: 'DXFEntity') -> 'Layout':
@@ -234,7 +249,8 @@ class Layouts:
 
     def get_active_layout_key(self):
         """ Returns layout kay for the active paperspace layout. (internal API) """
-        active_layout_block_record = self.doc.block_records.get(PAPER_SPACE_R2000)
+        active_layout_block_record = self.doc.block_records.get(
+            PAPER_SPACE_R2000)
         return active_layout_block_record.dxf.handle
 
     def set_active_layout(self, name: str) -> None:
@@ -242,7 +258,8 @@ class Layouts:
         assert isinstance(name, str), type(name)
         if name == 'Model':  # reserved layout name
             raise DXFValueError('Can not set model space as active layout')
-        new_active_layout = self.get(name)  # raises KeyError if no layout 'name' exists
+        new_active_layout = self.get(
+            name)  # raises KeyError if no layout 'name' exists
         old_active_layout_key = self.get_active_layout_key()
         if old_active_layout_key == new_active_layout.layout_key:
             return  # layout 'name' is already the active layout
@@ -275,7 +292,8 @@ class Layouts:
             raise DXFValueError("Can not delete last paperspace layout.")
         if layout.layout_key == self.get_active_layout_key():  # name is the active layout
             for layout_name in self.names():
-                if layout_name not in (name, 'Model'):  # set any other layout as active layout
+                if layout_name not in (
+                name, 'Model'):  # set any other layout as active layout
                     self.set_active_layout(layout_name)
                     break
         self._dxf_layouts.remove(layout.name)

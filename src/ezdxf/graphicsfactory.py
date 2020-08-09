@@ -9,6 +9,7 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
 from ezdxf.math import Vector, global_bspline_interpolation
 from ezdxf.render.arrows import ARROWS
+from ezdxf.entities import factory
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
 
@@ -940,7 +941,10 @@ class CreatorInterface:
         dxfattribs['image_size'] = image_def.dxf.image_size
         # Creating an ImageReactor and linking it to the Image and the ImageDef
         # entity is done by adding the new Image to a layout.
-        return cast('Image', self.new_entity('IMAGE', dxfattribs))
+        image = factory.create_db_entry('IMAGE', dxfattribs, self.doc)
+        image.set_image_def(image_def)
+        self.add_entity(image)
+        return image
 
     def add_wipeout(self, vertices: Iterable['Vertex'],
                     dxfattribs: dict = None) -> 'Wipeout':

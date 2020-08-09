@@ -216,9 +216,9 @@ class Polyline(DXFGraphic):
     def destroy(self) -> None:
         """ Delete all data and references. """
         for v in self.vertices:
-            self.entitydb.delete_entity(v)
+            v.destroy()
         del self.vertices
-        self.entitydb.delete_entity(self.seqend)
+        self.seqend.destroy()
         super().destroy()
 
     def on_layer_change(self, layer: str):

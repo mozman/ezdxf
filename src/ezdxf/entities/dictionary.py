@@ -1,13 +1,16 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
 # Created: 2019-02-18
-from typing import TYPE_CHECKING, KeysView, ItemsView, Any, Union, Dict
+from typing import (
+    TYPE_CHECKING, KeysView, ItemsView, Any, Union, Dict, Optional,
+)
 import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFKeyError, DXFValueError
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
 )
+from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
@@ -16,7 +19,9 @@ from .factory import register_entity
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, Auditor
+    from ezdxf.eztypes import (
+        TagWriter, Drawing, DXFNamespace, Auditor, EntityDB,
+    )
 
 __all__ = ['Dictionary', 'DictionaryWithDefault', 'DictionaryVar']
 
@@ -216,26 +221,30 @@ class Dictionary(DXFObject):
 
         """
         try:
-            entity = self._data[key]
+            return self._data[key]
         except KeyError:
             if default is DXFKeyError:
                 raise DXFKeyError(f"KeyError: '{key}'")
             else:
                 return default
-        else:
-            if isinstance(entity, str):
-                # Entity is still a handle:
-                entity = self.entitydb[entity]
-                # and replace handle by DXFEntity object:
-                self._data[key] = entity
-            return entity
+
+    def load_resources(self, db: 'EntityDB') -> None:
+        assert db is not None
+
+        def items():
+            for key, handle in self.items():
+                entity = db.get(handle)
+                if entity is not None and entity.is_alive:
+                    yield key, entity
+
+        if len(self):
+            for k, v in list(items()):
+                self.__setitem__(k, v)
 
     def add(self, key: str, value: 'DXFEntity') -> None:
         """ Add entry ``(key, value)``. """
         if isinstance(value, str):
-            try:
-                value = self.entitydb[value]
-            except KeyError:
+            if not is_valid_handle(value):
                 raise DXFValueError(
                     f'Invalid entity handle #{value} for key {key}')
         self._data[key] = value
@@ -346,7 +355,7 @@ class Dictionary(DXFObject):
     def _check_invalid_entries(self, auditor: 'Auditor'):
         trash = []  # do not delete content while iterating
         append = trash.append
-        db = self.entitydb
+        db = auditor.entitydb
         for key, entry in self._data.items():
             if isinstance(entry, str):
                 if entry not in db:
@@ -383,7 +392,11 @@ class DictionaryWithDefault(Dictionary):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        self._default = None  # type: DXFEntity
+        self._default: Optional[DXFEntity] = None
+
+    def load_resources(self, db: 'EntityDB') -> None:
+        self._default = db.get(self.dxf.default)
+        super(DictionaryWithDefault, self).load_resources(db)
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -405,21 +418,17 @@ class DictionaryWithDefault(Dictionary):
         wide :attr:`dxf.default` entity if `key` does not exist.
 
         """
-        if self._default is None:
-            self._default = self.entitydb[self.dxf.default]
+        assert self._default is not None and self._default.is_alive
         return super().get(key, default=self._default)
 
-    def set_default(self, default) -> None:
+    def set_default(self, default: DXFEntity) -> None:
         """ Set dictionary wide default entry.
 
         Args:
-            default: default entry as hex string or as :class:`DXFEntity`
+            default: default entry as :class:`DXFEntity`
 
         """
-        if isinstance(default, str):
-            self._default = self.entitydb[default]
-        else:
-            self._default = default
+        self._default = default
         self.dxf.default = self._default.dxf.handle
 
 

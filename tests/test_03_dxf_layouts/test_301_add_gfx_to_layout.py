@@ -14,7 +14,8 @@ def msp():
 
 def test_delete_polyline3d(msp):
     entity_count = len(msp)
-    db_count = len(msp.entitydb)
+    db = msp.entitydb
+    db_count = len(db)
     pline = msp.add_polyline3d([(0, 0, 0), (1, 2, 3), (4, 5, 6)])
     assert entity_count + 1 == len(
         msp), 'vertices should be linked to the POLYLINE entity'
@@ -36,7 +37,9 @@ def test_delete_polyline3d(msp):
     assert list(pline.points()) == [(0, 0, 0), (1, 2, 3), (4, 5, 6)]
     msp.delete_entity(pline)
     assert entity_count == len(msp)
-    assert len(msp.entitydb) == db_count
+
+    db.purge()
+    assert len(db) == db_count
 
 
 def test_create_line(msp):

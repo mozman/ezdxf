@@ -269,7 +269,7 @@ class ObjectsSection:
                 'quality': quality,
                 'units': units,
             })
-            self.rootdict['ACAD_IMAGE_VARS'] = raster_vars.dxf.handle
+            self.rootdict['ACAD_IMAGE_VARS'] = raster_vars
         else:
             raster_vars.dxf.frame = frame
             raster_vars.dxf.quality = quality
@@ -292,7 +292,7 @@ class ObjectsSection:
                 'owner': self.rootdict.dxf.handle,
                 'frame': int(frame),
             })
-            self.rootdict['ACAD_WIPEOUT_VARS'] = wipeout_vars.dxf.handle
+            self.rootdict['ACAD_WIPEOUT_VARS'] = wipeout_vars
         else:
             wipeout_vars.dxf.frame = int(frame)
 

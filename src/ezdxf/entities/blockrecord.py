@@ -218,4 +218,4 @@ class BlockRecord(DXFEntity):
 
         """
         self.unlink_entity(entity)  # 1. unlink from entity space
-        self.entitydb.delete_entity(entity)  # 2. delete from drawing database
+        entity.destroy()
