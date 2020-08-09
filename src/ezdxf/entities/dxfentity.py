@@ -555,7 +555,8 @@ class DXFEntity:
         if not isinstance(tags, ExtendedTags):
             tags = ExtendedTags(tags)
         entity = cls(doc)  # bare minimum setup
-        entity.load_tags(tags)
+        dxfversion = doc.dxfversion if doc else None
+        entity.load_tags(tags, dxfversion=dxfversion)
         return entity
 
     @classmethod
@@ -637,7 +638,7 @@ class DXFEntity:
             memodict[id(self)] = copy
             return copy
 
-    def load_tags(self, tags: ExtendedTags) -> None:
+    def load_tags(self, tags: ExtendedTags, dxfversion: str = None) -> None:
         """ Generic tag loading interface, called if DXF drawing is loaded from
         a stream or file.
         (internal API)
@@ -650,10 +651,6 @@ class DXFEntity:
             if tags.embedded_objects:
                 self.embedded_objects = EmbeddedObjects(
                     tags.embedded_objects)
-            if self.doc:
-                dxfversion = self.doc.dxfversion
-            else:  # test cases
-                dxfversion = None
             processor = SubclassProcessor(tags, dxfversion=dxfversion)
             self.dxf = self.load_dxf_attribs(processor)
 
@@ -1192,7 +1189,8 @@ class DXFTagStorage(DXFEntity):
     def load(cls, tags: ExtendedTags, doc: 'Drawing' = None) -> 'DXFTagStorage':
         assert isinstance(tags, ExtendedTags)
         entity = cls(doc)
-        entity.load_tags(tags)
+        dxfversion = doc.dxfversion if doc else None
+        entity.load_tags(tags, dxfversion=dxfversion)
         entity.store_tags(tags)
         if options.load_proxy_graphics:
             entity.load_proxy_graphic()

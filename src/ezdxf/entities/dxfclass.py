@@ -59,7 +59,7 @@ class DXFClass(DXFEntity):
         dxf_class.update_dxf_attribs(dxfattribs)
         return dxf_class
 
-    def load_tags(self, tags: 'ExtendedTags') -> None:
+    def load_tags(self, tags: 'ExtendedTags', dxfversion=None) -> None:
         """ Called by load constructor. CLASS is special. """
         if tags:
             # do not process base class!!!
