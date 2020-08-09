@@ -715,11 +715,6 @@ class DXFEntity:
         if self.extension_dict:
             self.extension_dict.update_owner(self)
 
-    @property
-    def dxffactory(self) -> 'EntityFactory':
-        """ Get the associated DXF factory. (internal API) """
-        return self.doc.dxffactory
-
     def get_dxf_attrib(self, key: str, default: Any = None) -> Any:
         """
         Get DXF attribute `key`, returns `default` if key doesn't exist, or

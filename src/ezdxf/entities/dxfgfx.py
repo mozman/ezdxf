@@ -590,7 +590,7 @@ class DXFGraphic(DXFEntity):
         if 'layer' not in dxfattribs:
             dxfattribs['layer'] = self.dxf.layer
         if self.doc:
-            entity = self.dxffactory.create_db_entry(type_, dxfattribs)
+            entity = factory.create_db_entry(type_, dxfattribs, self.doc)
         else:
             entity = factory.new(type_, dxfattribs)
         entity.dxf.owner = self.dxf.owner

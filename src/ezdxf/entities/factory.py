@@ -45,6 +45,18 @@ def new(dxftype: str, dxfattribs: dict = None,
     return entity.cast() if hasattr(entity, 'cast') else entity
 
 
+def create_db_entry(dxftype, dxfattribs: dict, doc: 'Drawing') -> 'DXFEntity':
+    entity = new(dxftype=dxftype, dxfattribs=dxfattribs)
+    bind(entity, doc)
+    if hasattr(entity, 'seqend') and entity.seqend is None:
+        seqend = new('SEQEND',
+                     dxfattribs={'layer': entity.dxf.layer},
+                     )
+        bind(seqend, doc)
+        entity.seqend = seqend
+    return entity
+
+
 def load(tags: ExtendedTags) -> 'DXFEntity':
     assert isinstance(tags, ExtendedTags)
     entity = cls(tags.dxftype()).load(tags)
@@ -93,14 +105,7 @@ class EntityFactory:
 
     def create_db_entry(self, dxftype: str, dxfattribs: dict) -> 'DXFEntity':
         """ Create new entity and add to drawing-database. """
-        entity = new(dxftype=dxftype, dxfattribs=dxfattribs)
-        bind(entity, self.doc)
-        if hasattr(entity, 'seqend') and entity.seqend is None:
-            seqend = self.create_db_entry('SEQEND', dxfattribs={
-                'layer': entity.dxf.layer})
-            self.doc.entitydb.add(seqend)
-            entity.seqend = seqend
-        return entity
+        return create_db_entry(dxftype, dxfattribs, self.doc)
 
     def load(self, tags: Union['ExtendedTags', 'Tags']) -> 'DXFEntity':
         if not isinstance(tags, ExtendedTags):

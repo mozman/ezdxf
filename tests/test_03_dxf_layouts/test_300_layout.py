@@ -20,11 +20,6 @@ def paperspace(doc):
     return doc.layout()
 
 
-def test_dxffactory_property(doc, modelspace):
-    line = modelspace.add_line((0, 0), (1, 1))
-    assert doc.dxffactory is line.dxffactory
-
-
 def test_default_properties(modelspace):
     assert modelspace.units == 0
 
