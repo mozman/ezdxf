@@ -589,10 +589,7 @@ class DXFGraphic(DXFEntity):
         # Don't know if that is also important for the ATTRIB & INSERT entity.
         if 'layer' not in dxfattribs:
             dxfattribs['layer'] = self.dxf.layer
-        if doc:
-            entity = factory.create_db_entry(type_, dxfattribs, doc)
-        else:
-            entity = factory.new(type_, dxfattribs)
+        entity = factory.new(type_, dxfattribs)
         entity.dxf.owner = self.dxf.owner
         entity.dxf.paperspace = self.dxf.paperspace
         return entity

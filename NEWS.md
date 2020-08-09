@@ -64,6 +64,9 @@ Version 0.14a2 - dev
 - CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 
   argument `safe` is deprecated, will be removed in v0.16
 - CHANGE: Dictionary raise `DXFValueError` for adding invalid handles
+- CHANGE: New sub-entities of INSERT and POLYLINE are not automatically added 
+  to the entity database, this is done before the DXF export by calling 
+  `doc.entitydb.refresh()` or a manual method call of `doc.entitydb.refresh()`.
 - REMOVE: Alias `DXFEntity.drawing`
 - REMOVE: `DXFEntity.doc`
 - REMOVE: `DXFEntity.entitydb`

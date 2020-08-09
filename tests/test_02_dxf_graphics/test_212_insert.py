@@ -192,7 +192,8 @@ def test_clone_with_insert():
 def test_copy_with_insert(doc):
     msp = doc.modelspace()
     msp_count = len(msp)
-    db_count = len(doc.entitydb)
+    db = doc.entitydb
+    db_len = len(doc.entitydb)
 
     insert = msp.add_blockref('Test', insert=(0, 0))
     assert insert.seqend.dxf.owner == insert.dxf.owner
@@ -203,15 +204,17 @@ def test_copy_with_insert(doc):
 
     # linked attribs not stored in the entity space
     assert len(msp) == msp_count + 1
-    # attribs stored in the entity database + SEQEND
-    assert len(doc.entitydb) == db_count + 3
+    # added INSERT + SEQEND
+    assert len(db) == db_len + 2, 'ATTRIBs not automatically stored in db'
+    db.refresh()
+    assert len(db) == db_len + 3, 'db.refresh() should add new ATTRIBs in db'
 
     copy = doc.entitydb.duplicate_entity(insert)
 
     # not duplicated in entity space
     assert len(msp) == msp_count + 1
     # duplicated in entity database (2x SEQEND)
-    assert len(doc.entitydb) == db_count + 6
+    assert len(doc.entitydb) == db_len + 6
 
     # get 1. paperspace in tab order
     psp = doc.layout()

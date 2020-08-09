@@ -353,6 +353,10 @@ class Insert(DXFGraphic):
                 (3, 7), align='MIDDLE_CENTER'
             )
 
+        New ATTRIB entities are not automatically added to the entity database,
+        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
+        or a manual method call of :meth:`EntityDB.refresh()`.
+
         Args:
             tag: tag name as string
             text: content text as string

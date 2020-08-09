@@ -6,16 +6,16 @@ from ezdxf.lldxf.const import VTX_3D_POLYLINE_VERTEX
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.tools.test import load_entities
 from ezdxf.sections.entities import EntitySection
-
+from ezdxf.entities import factory
 
 @pytest.fixture(scope='module')
-def dwg():
+def doc():
     return ezdxf.new('R2000')
 
 
 @pytest.fixture(scope='module')
-def layout(dwg):
-    return dwg.modelspace()
+def layout(doc):
+    return doc.modelspace()
 
 
 def test_create_polyline2D(layout):
@@ -31,6 +31,26 @@ def test_create_polyline3D(layout):
     assert (4., 5., 6.) == polyline[1].dxf.location
     assert VTX_3D_POLYLINE_VERTEX == polyline[0].dxf.flags
     assert 'AcDb3dPolyline' == polyline.get_mode()
+
+
+def test_add_new_sub_entities_to_entity_database(layout, doc):
+    db = doc.entitydb
+    db.refresh()
+    db_len = len(db)
+
+    polyline = layout.add_polyline2d([(0, 0), (1, 1)])
+    assert len(db) == db_len + 4  # POLYLINE-VERTEX-VERTEX-SEQEND
+    assert polyline.seqend.is_alive is True
+
+    db_len = len(db)
+    polyline.append_vertices([(2, 2), (3, 3)])
+    assert len(polyline) == 4
+    assert polyline.vertices[-1].dxf.handle is None
+    assert len(db) == db_len, 'new VERTEX entities should not be added to db'
+
+    db.refresh()
+    assert polyline.vertices[-1].dxf.handle is not None
+    assert len(db) == db_len + 2, 'refresh should add new VERTEX entities to db'
 
 
 def test_vertex_layer(layout):

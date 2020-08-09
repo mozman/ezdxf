@@ -355,12 +355,14 @@ class CreatorInterface:
         """
         dxfattribs = dict(dxfattribs or {})
         closed = dxfattribs.pop('closed', False)
-        polyline = self.new_entity('POLYLINE', dxfattribs)  # type: Polyline
+        polyline: 'Polyline' = self.new_entity('POLYLINE', dxfattribs)
         polyline.close(closed)
         if format is not None:
             polyline.append_formatted_vertices(points, format=format)
         else:
             polyline.append_vertices(points)
+        if self.doc:
+            polyline.add_sub_entities_to_entitydb(self.doc.entitydb)
         return polyline
 
     def add_polyline3d(self, points: Iterable['Vertex'],
@@ -406,6 +408,9 @@ class CreatorInterface:
         points = [(0, 0, 0)] * (m_size * n_size)
         polymesh.append_vertices(points)  # init mesh vertices
         polymesh.close(m_close, n_close)
+        if self.doc:
+            polymesh.add_sub_entities_to_entitydb(self.doc.entitydb)
+
         return polymesh
 
     def add_polyface(self, dxfattribs: dict = None) -> 'Polyface':
@@ -424,6 +429,9 @@ class CreatorInterface:
         n_close = dxfattribs.pop('n_close', False)
         polyface = self.new_entity('POLYLINE', dxfattribs)  # type: Polyface
         polyface.close(m_close, n_close)
+        if self.doc:
+            polyface.add_sub_entities_to_entitydb(self.doc.entitydb)
+
         return polyface
 
     def _add_quadrilateral(self, type_: str, points: Iterable['Vertex'],

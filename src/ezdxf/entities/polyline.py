@@ -378,6 +378,10 @@ class Polyline(DXFGraphic):
                         dxfattribs: Dict = None) -> None:
         """ Append multiple :class:`Vertex` entities at location `points`.
 
+        New VERTEX entities are not automatically added to the entity database,
+        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
+        or a manual method call of :meth:`EntityDB.refresh()`.
+
         Args:
             points: iterable of ``(x, y[, z])`` tuples
             dxfattribs: dict of DXF attributes for :class:`Vertex` class
@@ -391,6 +395,10 @@ class Polyline(DXFGraphic):
                                   format: str = 'xy',
                                   dxfattribs: Dict = None) -> None:
         """ Append multiple :class:`Vertex` entities at location `points`.
+
+        New VERTEX entities are not automatically added to the entity database,
+        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
+        or a manual method call of :meth:`EntityDB.refresh()`.
 
         Args:
             points: iterable of (x, y, [start_width, [end_width, [bulge]]])
@@ -421,8 +429,11 @@ class Polyline(DXFGraphic):
             self._append_vertex(create_vertex('VERTEX', attribs))
 
     def append_vertex(self, point: 'Vertex', dxfattribs: dict = None) -> None:
-        """
-        Append single :class:`Vertex` entity at location `point`.
+        """ Append a single :class:`Vertex` entity at location `point`.
+
+        New VERTEX entities are not automatically added to the entity database,
+        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
+        or a manual method call of :meth:`EntityDB.refresh()`.
 
         Args:
             point: as ``(x, y[, z])`` tuple
@@ -438,6 +449,10 @@ class Polyline(DXFGraphic):
         """
         Insert vertices `points` into :attr:`Polyline.vertices` list
         at insertion location `pos` .
+
+        New VERTEX entities are not automatically added to the entity database,
+        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
+        or a manual method call of :meth:`EntityDB.refresh()`.
 
         Args:
             pos: insertion position of list :attr:`Polyline.vertices`
@@ -467,13 +482,9 @@ class Polyline(DXFGraphic):
         dxfattribs['layer'] = self.dxf.layer
         if self.dxf.hasattr('linetype'):
             dxfattribs['linetype'] = self.dxf.linetype
-        if self.doc:
-            create_vertex = self.doc.dxffactory.create_db_entry
-        else:
-            create_vertex = factory.new
         for point in points:
             dxfattribs['location'] = Vector(point)
-            yield create_vertex('VERTEX', dxfattribs)
+            yield self._new_compound_entity('VERTEX', dxfattribs)
 
     def cast(self) -> Union['Polyline', 'Polymesh', 'Polyface']:
         mode = self.get_mode()
@@ -538,8 +549,7 @@ class Polyline(DXFGraphic):
         return self
 
     def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
-        """
-        Explode POLYLINE as DXF LINE, ARC or 3DFACE primitives into target
+        """ Explode POLYLINE as DXF LINE, ARC or 3DFACE primitives into target
         layout, if the target layout is ``None``, the target layout is the
         layout of the POLYLINE entity .
         Returns an :class:`~ezdxf.query.EntityQuery` container including all
@@ -632,6 +642,10 @@ class Polyface(Polyline):
         """
         Append a single face. A `face` is a list of ``(x, y, z)`` tuples.
 
+        New VERTEX entities are not automatically added to the entity database,
+        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
+        or a manual method call of :meth:`EntityDB.refresh()`.
+
         Args:
             face: List[``(x, y, z)`` tuples]
             dxfattribs: dict of DXF attributes for :class:`Vertex` entity
@@ -668,6 +682,10 @@ class Polyface(Polyline):
         """
         Append multiple `faces`. `faces` is a list of single faces and a single
         face is a list of ``(x, y, z)`` tuples.
+
+        New VERTEX entities are not automatically added to the entity database,
+        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
+        or a manual method call of :meth:`EntityDB.refresh()`.
 
         Args:
             faces: list of List[``(x, y, z)`` tuples]

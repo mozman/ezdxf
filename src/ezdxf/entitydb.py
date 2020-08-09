@@ -144,7 +144,7 @@ class EntityDB:
     def duplicate_entity(self, entity: DXFEntity) -> DXFEntity:
         """
         Duplicates `entity` and its sub entities (VERTEX, ATTRIB, SEQEND) and
-        store them with new handles in the drawing database. Graphical entities
+        store them with new handles in the entity database. Graphical entities
         have to be added to a layout by :meth:`~ezdxf.layouts.BaseLayout.add_entity`,
         for other DXF entities: DON'T DUPLICATE THEM.
 
@@ -158,12 +158,8 @@ class EntityDB:
         This is not a deep copy in the meaning of Python, because handles and
         links are changed.
 
-        .. versionchanged:: 0.14
-
-            obsolete, removed in v0.14
-
         """
-        new_entity = entity.copy()  # type: DXFEntity
+        new_entity: DXFEntity = entity.copy()
         new_entity.dxf.handle = self.next_handle()
         self.add(new_entity)
         return new_entity
@@ -257,12 +253,14 @@ class EntityDB:
         return set(entity.dxftype() for entity in self.values())
 
     def refresh(self) -> None:
-        """ Update sub-entities in POLYLINE and INSERT.
-        """
+        """ Add new sub-entities in POLYLINE and INSERT. """
         self.empty_trashcan()
-        for entity in self.values():
-            if hasattr(entity, 'add_sub_entities_to_entitydb'):
-                entity.add_sub_entities_to_entitydb(self)
+        entities = [
+            entity for entity in self.values()
+            if hasattr(entity, 'add_sub_entities_to_entitydb')
+        ]
+        for entity in entities:
+            entity.add_sub_entities_to_entitydb(self)
 
 
 class EntitySpace:

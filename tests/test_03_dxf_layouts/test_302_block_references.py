@@ -49,11 +49,17 @@ def test_blockref_attrib_set_flags(msp):
 
 def test_blockref_add_new_attribs(msp):
     entity_count = len(msp)
-    db_count = len(msp.entitydb)
+    db = msp.entitydb
+    db.refresh()
+    db_count = len(db)
     blockref = msp.add_blockref("TESTBLOCK", (0, 0))
     blockref.add_attrib('TEST', 'text', (0, 0))
     assert len(msp) == entity_count+1
-    assert len(msp.entitydb) == db_count+3  # insert + attrib + seqend
+    assert len(msp.entitydb) == db_count+2, \
+        'expected only INSERT and SEQEND in db'
+    db.refresh()
+    assert len(msp.entitydb) == db_count+3, \
+        'expected INSERT, ATTRIB and SEQEND in db'
 
     assert blockref.attribs_follow == 1
     attrib = blockref.get_attrib('TEST')
