@@ -578,9 +578,6 @@ class DXFEntity:
         entity.embedded_objects = other.embedded_objects
         entity.proxy_graphic = other.proxy_graphic
         entity.dxf.rewire(entity)
-        if (entity.doc is not None) and (entity.dxf.handle is not None):
-            # Replace entity in entity db, can't call add() here.
-            entity.doc.entitydb[entity.dxf.handle] = entity
         return entity
 
     def copy(self: T) -> T:
