@@ -693,35 +693,31 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
     return entity_linker_
 
 
-def add_entity(source: 'DXFGraphic', target: 'DXFGraphic') -> None:
-    """ Add `target` entity to the entity database and to the same layout as
-    the `source` entity.
+def add_entity(entity: 'DXFGraphic', layout: 'BaseLayout') -> None:
+    """ Add `entity` entity to the entity database and to the given `layout`.
+    """
+    assert entity.dxf.handle is None
+    assert layout is not None
+    if layout.doc:
+        factory.bind(entity, layout.doc)
+    layout.add_entity(entity)
+
+
+def replace_entity(source: 'DXFGraphic', target: 'DXFGraphic',
+                   layout: 'BaseLayout') -> None:
+    """ Add `target` entity to the entity database and to the given `layout`
+    and replace the `source` entity by the `target` entity.
+
     """
     assert target.dxf.handle is None
-    source.entitydb.add(target)
-    layout = source.get_layout()
-    if layout is not None:
-        layout.add_entity(target)
-
-
-def replace_entity(source: 'DXFGraphic', target: 'DXFGraphic') -> None:
-    """ Add `target` entity to the entity database and to the same layout
-    as the `source` entity and replace the `source` entity by the
-    `target` entity.
-
-    """
-    assert target.dxf.handle is None
+    assert layout is not None
     target.dxf.handle = source.dxf.handle
-    layout = source.get_layout()
-    entitydb = source.entitydb
-
-    if layout is not None:
-        # replace in layout and entity database
+    if source in layout:
         layout.delete_entity(source)
-    else:
-        # replace just in entity database
-        source.entitydb.delete_entity(source)
-
-    entitydb.add(target)
-    if layout is not None:
+        if layout.doc:
+            factory.bind(target, layout.doc)
         layout.add_entity(target)
+    else:
+        source.destroy()
+
+

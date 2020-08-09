@@ -33,8 +33,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Circle
 
-    .. automethod:: to_ellipse(replace=True) -> Ellipse
+    .. automethod:: to_ellipse(layout, replace=True) -> Ellipse
 
-    .. automethod:: to_spline(replace=True) -> Spline
+    .. automethod:: to_spline(layout, replace=True) -> Spline
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-8663262B-222C-414D-B133-4A8506A27C18

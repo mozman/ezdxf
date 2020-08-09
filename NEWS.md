@@ -67,6 +67,8 @@ Version 0.14a2 - dev
 - CHANGE: New sub-entities of INSERT and POLYLINE are not automatically added 
   to the entity database, this is done before the DXF export by calling 
   `doc.entitydb.refresh()` or a manual method call of `doc.entitydb.refresh()`.
+- CHANGE: `to_spline()` and `to_ellipse()` methods of CIRCLE, ARC and ELLIPSE 
+  require an explicit `layout` argument.
 - REMOVE: Alias `DXFEntity.drawing`
 - REMOVE: `DXFEntity.doc`
 - REMOVE: `DXFEntity.entitydb`

@@ -46,9 +46,9 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: transform(m: Matrix44) -> Arc
 
-    .. automethod:: to_ellipse(replace=True) -> Ellipse
+    .. automethod:: to_ellipse(layout, replace=True) -> Ellipse
 
-    .. automethod:: to_spline(replace=True) -> Spline
+    .. automethod:: to_spline(layout, replace=True) -> Spline
 
     .. automethod:: construction_tool() -> ConstructionArc
 

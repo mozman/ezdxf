@@ -16,7 +16,10 @@ from .factory import register_entity
 from ezdxf.audit import AuditError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Ellipse, Spline, Auditor
+    from ezdxf.eztypes import (
+        TagWriter, DXFNamespace, Ellipse, Spline, Auditor,
+        BaseLayout,
+    )
 
 __all__ = ['Circle']
 
@@ -117,42 +120,47 @@ class Circle(DXFGraphic):
             Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
         return self
 
-    def to_ellipse(self, replace=True) -> 'Ellipse':
+    def to_ellipse(self, layout: 'BaseLayout', replace=True) -> 'Ellipse':
         """ Convert CIRCLE/ARC to an :class:`~ezdxf.entities.Ellipse` entity.
 
         Adds the new ELLIPSE entity to the entity database and to the
         same layout as the source entity.
 
         Args:
+            layout: modelspace- , paperspace- or block layout
             replace: replace (delete) source entity by ELLIPSE entity if ``True``
 
         .. versionadded:: 0.13
 
         """
+        assert layout is not None, 'Argument layout must not None.'
         from ezdxf.entities import Ellipse
         ellipse = Ellipse.from_arc(self)
         if replace:
-            replace_entity(self, ellipse)
+            replace_entity(self, ellipse, layout)
         else:
-            add_entity(self, ellipse)
+            add_entity(ellipse, layout)
         return ellipse
 
-    def to_spline(self, replace=True) -> 'Spline':
+    def to_spline(self, layout: 'BaseLayout', replace=True) -> 'Spline':
         """ Convert CIRCLE/ARC to a :class:`~ezdxf.entities.Spline` entity.
 
         Adds the new SPLINE entity to the entity database and to the
         same layout as the source entity.
 
         Args:
+            layout: modelspace- , paperspace- or block layout
             replace: replace (delete) source entity by SPLINE entity if ``True``
 
         .. versionadded:: 0.13
 
         """
+        assert layout is not None, 'Argument layout must not None.'
         from ezdxf.entities import Spline
         spline = Spline.from_arc(self)
+
         if replace:
-            replace_entity(self, spline)
+            replace_entity(self, spline, layout)
         else:
-            add_entity(self, spline)
+            add_entity(spline, layout)
         return spline

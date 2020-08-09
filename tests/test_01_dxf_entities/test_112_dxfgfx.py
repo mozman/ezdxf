@@ -76,17 +76,13 @@ def test_is_layer_name_validator_active(entity):
 
 
 def test_clone_graphical_entity(entity):
-    doc = ezdxf.new()
-    entity.doc = doc
-    msp = doc.modelspace()
-    msp.add_entity(entity)
-
     entity.dxf.handle = 'EFEF'
     entity.dxf.owner = 'ABBA'
     entity.dxf.layer = 'Layer1'
     entity.dxf.color = 13
     entity.set_reactors(['A', 'F'])
     entity.set_xdata('MOZMAN', [(1000, 'extended data')])
+
     clone = entity.copy()
     assert clone.dxf is not entity.dxf, 'should be different objects'
     assert clone.dxf.handle is None, 'should not have a handle'

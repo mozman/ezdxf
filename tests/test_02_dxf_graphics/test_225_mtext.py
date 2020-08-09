@@ -42,7 +42,8 @@ AcDbMText
 
 @pytest.fixture
 def entity():
-    return MText.from_text(MTEXT)
+    e = MText.from_text(MTEXT)
+    return e
 
 
 def test_registered():

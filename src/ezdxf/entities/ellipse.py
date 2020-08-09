@@ -16,7 +16,7 @@ from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Spline
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Spline, BaseLayout
 
 __all__ = ['Ellipse']
 
@@ -211,22 +211,27 @@ class Ellipse(DXFGraphic):
         self.dxf.center = Vector(dx, dy, dz) + self.dxf.center
         return self
 
-    def to_spline(self, replace=True) -> 'Spline':
+    def to_spline(self, layout: 'BaseLayout', replace=True) -> 'Spline':
         """ Convert ELLIPSE to a :class:`~ezdxf.entities.Spline` entity.
 
         Adds the new SPLINE entity to the entity database and to the
         same layout as the source entity.
 
         Args:
+            layout: modelspace- , paperspace- or block layout
             replace: replace (delete) source entity by SPLINE entity if ``True``
 
         .. versionadded:: 0.13
 
         """
+        assert layout is not None, 'Argument layout must not None.'
         from ezdxf.entities import Spline
         spline = Spline.from_arc(self)
+        if layout is None:
+            layout = self.get_layout()
+
         if replace:
-            replace_entity(self, spline)
+            replace_entity(self, spline, layout)
         else:
-            add_entity(self, spline)
+            add_entity(spline, layout)
         return spline

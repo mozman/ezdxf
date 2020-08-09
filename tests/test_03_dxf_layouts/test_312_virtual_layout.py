@@ -38,11 +38,12 @@ def test_removing_entiy_does_not_destroy_entity(layout):
     assert point.is_alive
 
 
-def test_can_not_add_entity_to_a_real_layout(layout, doc):
+def test_can_add_entity_to_a_real_layout(layout, doc):
     msp = doc.modelspace()
     point = layout.add_point(location=(0, 0))
-    with pytest.raises(ezdxf.DXFStructureError):
-        msp.add_entity(point)
+    msp.add_entity(point)
+    assert point in msp
+    assert point.dxf.handle is not None
 
 
 def test_copy_all_entities_to_a_real_layout(layout, doc):

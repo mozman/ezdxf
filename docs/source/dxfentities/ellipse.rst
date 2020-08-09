@@ -73,7 +73,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: translate(dx: float, dy: float, dz: float) -> Ellipse
 
-    .. automethod:: to_spline(replace=True) -> Spline
+    .. automethod:: to_spline(layout, replace=True) -> Spline
 
     .. automethod:: from_arc(entity: DXFGraphic) -> Ellipse
 

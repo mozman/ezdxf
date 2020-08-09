@@ -62,6 +62,8 @@ class EntityDB:
 
     def __contains__(self, handle: str) -> bool:
         """ ``True`` if database contains `handle`. """
+        if handle is None:
+            return False
         assert isinstance(handle, str), type(handle)
         return handle in self._database
 

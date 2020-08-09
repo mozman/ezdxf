@@ -166,11 +166,15 @@ class BaseLayout(_AbstractLayout):
         owner layout. Adding entities from a different DXF drawing is not
         supported.
         """
-        if entity.doc != self.doc:
+        # bind virtual entities to the DXF document:
+        if entity.dxf.handle is None and self.doc:
+            factory.bind(entity, self.doc)
+
+        handle = entity.dxf.handle
+        if handle is None or handle not in self.doc.entitydb:
             raise DXFStructureError(
                 'Adding entities from a different DXF drawing is not supported.'
             )
-
         self.block_record.add_entity(entity)
         entity.added_to_layout(self)
 
