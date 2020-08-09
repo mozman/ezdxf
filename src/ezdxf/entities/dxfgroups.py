@@ -1,7 +1,7 @@
 # Created: 2019-02-19
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
-from typing import TYPE_CHECKING, Iterable, cast, Union, List
+from typing import TYPE_CHECKING, Iterable, cast, Union, List, Set
 from contextlib import contextmanager
 import logging
 from ezdxf.lldxf import validator
@@ -10,16 +10,17 @@ from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
 )
 from ezdxf.audit import AuditError
-from .dxfentity import base_class, SubclassProcessor
+from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
-from .dxfgfx import DXFGraphic
 from .factory import register_entity
 from .objectcollection import ObjectCollection
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, Auditor
+    from ezdxf.eztypes import (
+    TagWriter, Drawing, DXFNamespace, Auditor, EntityDB,
+)
 
 __all__ = ['DXFGroup', 'GroupCollection']
 
@@ -59,7 +60,8 @@ class DXFGroup(DXFObject):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        self._data = list()  # type: List[Union[str, DXFGraphic]]
+        self._handles: Set[str] = set()
+        self._data: List[DXFEntity] = []
 
     def copy(self):
         raise DXFTypeError('Copying of GROUP not supported.')
@@ -76,15 +78,9 @@ class DXFGroup(DXFObject):
     def load_group(self, tags):
         for code, value in tags:
             if code == GROUP_ITEM_CODE:
-                # First store handles, because at this point, not all objects
-                # are stored in the EntityDB, at access convert the handle to
-                # DXFEntity:
-                try:
-                    entity = self.entitydb[value]
-                except KeyError:
-                    # Store entity as handle string
-                    entity = value
-                self._data.append(entity)
+                # First store handles, because at this point, objects
+                # are not stored in the EntityDB:
+                self._handles.add(value)
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
@@ -102,17 +98,12 @@ class DXFGroup(DXFObject):
                 handle = entity.dxf.handle
             tagwriter.write_tag2(GROUP_ITEM_CODE, handle)
 
-    def __iter__(self) -> Iterable['DXFGraphic']:
+    def __iter__(self) -> Iterable[DXFEntity]:
         """ Iterate over all DXF entities in :class:`DXFGroup` as instances of
         :class:`DXFGraphic` or inherited (LINE, CIRCLE, ...).
 
         """
-        for index, entity in enumerate(self._data):
-            if isinstance(entity, str):
-                # replace handle string by DXFEntity
-                entity = self.entitydb[entity]
-                self._data[index] = entity
-            yield entity
+        return (e for e in self._data if e.is_alive)
 
     def __len__(self) -> int:
         """ Returns the count of DXF entities in :class:`DXFGroup`. """
@@ -122,9 +113,9 @@ class DXFGroup(DXFObject):
         """ Returns entities by standard Python indexing and slicing. """
         return self._data[item]
 
-    def __contains__(self, item: Union[str, 'DXFGraphic']) -> bool:
+    def __contains__(self, item: Union[str, DXFEntity]) -> bool:
         """ Returns ``True`` if item is in :class:`DXFGroup`. `item` has to be
-        a handle string or an object of type :class:`DXFGraphic` or inherited.
+        a handle string or an object of type :class:`DXFEntity` or inherited.
 
         """
         handle = item if isinstance(item, str) else item.dxf.handle
@@ -134,15 +125,21 @@ class DXFGroup(DXFObject):
         """ Iterable of handles of all DXF entities in :class:`DXFGroup`. """
         return (entity.dxf.handle for entity in self)
 
-    def get_name(self) -> str:
-        """ Get name of :class:`DXFGroup`. """
-        group_table = cast('Dictionary', self.entitydb[self.dxf.owner])
-        for name, entity in group_table.items():
-            if entity is self:
-                return name
+    def convert_handles_to_entities(self, db: 'EntityDB') -> None:
+        assert db is not None
+
+        def entities():
+            for handle in self._handles:
+                entity = db.get(handle)
+                if entity and entity.is_alive:
+                    yield entity
+
+        if len(self._handles):
+            self.set_data(entities())
+            self._handles = set()
 
     @contextmanager
-    def edit_data(self) -> List['DXFGraphic']:
+    def edit_data(self) -> List['DXFEntity']:
         """ Context manager which yields all the group entities as
         standard Python list::
 
@@ -157,7 +154,7 @@ class DXFGroup(DXFObject):
         yield data
         self.set_data(data)
 
-    def set_data(self, entities: Iterable['DXFGraphic']) -> None:
+    def set_data(self, entities: Iterable['DXFEntity']) -> None:
         """  Set `entities` as new group content, entities should be an iterable
         :class:`DXFGraphic` or inherited (LINE, CIRCLE, ...).
         Raises :class:`DXFValueError` if not all entities be on the same layout
@@ -173,7 +170,7 @@ class DXFGroup(DXFObject):
         self.clear()
         self._data = entities
 
-    def extend(self, entities: Iterable['DXFGraphic']) -> None:
+    def extend(self, entities: Iterable['DXFEntity']) -> None:
         """ Add `entities` to :class:`DXFGroup`. """
         self._data.extend(entities)
 
@@ -192,10 +189,8 @@ class DXFGroup(DXFObject):
 
         """
         # Remove destroyed or invalid entities:
-        self._data = list(self.filter_invalid_entities())
-        if len(self._data) == 0:
-            return
-
+        db = auditor.entitydb
+        self._data = list(self._filter_invalid_entities(db))
         if not all_entities_on_same_layout(self._data):
             auditor.fixed_error(
                 code=AuditError.GROUP_ENTITIES_IN_DIFFERENT_LAYOUTS,
@@ -204,11 +199,11 @@ class DXFGroup(DXFObject):
             )
             self.clear()
 
-    def has_valid_owner(self, entity) -> bool:
+    def _has_valid_owner(self, entity, db: 'EntityDB') -> bool:
         # no owner -> no layout association
         if entity.dxf.owner is None:
             return False
-        owner = self.entitydb.get(entity.dxf.owner)
+        owner = db.get(entity.dxf.owner)
         # owner does not exist or is destroyed -> no layout association
         if owner is None or not owner.is_alive:
             return False
@@ -221,20 +216,16 @@ class DXFGroup(DXFObject):
                 f'located in a block layout.')
         return valid
 
-    def filter_invalid_entities(self) -> Iterable['DXFGraphic']:
-        db = self.entitydb
+    def _filter_invalid_entities(self, db: 'EntityDB') -> Iterable['DXFEntity']:
+        assert db is not None
         for e in self._data:
             if e is None:
                 continue
-            if isinstance(e, str):
-                e = db.get(e)  # returns None for not existing entities
-            if isinstance(e, DXFGraphic) and \
-                    e.is_alive and \
-                    self.has_valid_owner(e):
+            if e.is_alive and self._has_valid_owner(e, db):
                 yield e
 
 
-def all_entities_on_same_layout(entities: Iterable['DXFGraphic']):
+def all_entities_on_same_layout(entities: Iterable['DXFEntity']):
     """ Check if all entities are on the same layout (model space or any paper
     layout but not block).
 
@@ -248,6 +239,7 @@ class GroupCollection(ObjectCollection):
     def __init__(self, doc: 'Drawing'):
         super().__init__(doc, dict_name='ACAD_GROUP', object_type='GROUP')
         self._next_unnamed_number = 0
+        self._convert_handles_to_entities(doc.entitydb)
 
     def groups(self) -> Iterable[DXFGroup]:
         """ Iterable of all existing groups. """
@@ -300,9 +292,9 @@ class GroupCollection(ObjectCollection):
         if isinstance(group, str):
             name = group
         elif group.dxftype() == 'GROUP':
-            name = group.get_name()
+            name = get_group_name(group, self.entitydb)
         else:
-            raise DXFTypeError(group.dxftype())
+            raise TypeError(group.dxftype())
 
         if name in self:
             super().delete(name)
@@ -325,3 +317,18 @@ class GroupCollection(ObjectCollection):
                 message=f'Removed empty group "{name}".',
             )
             self.delete(name)
+
+    def _convert_handles_to_entities(self, db: 'EntityDB') -> None:
+        """ Convert handle strings to :class:`DXFGraphic` entities in all groups.
+        """
+        assert db is not None
+        for group in self.groups():
+            group.convert_handles_to_entities(db)
+
+
+def get_group_name(group: DXFGroup, db: 'EntityDB') -> str:
+    """ Get name of `group`. """
+    group_table = cast('Dictionary', db[group.dxf.owner])
+    for name, entity in group_table.items():
+        if entity is group:
+            return name

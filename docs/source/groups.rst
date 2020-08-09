@@ -45,8 +45,6 @@ DXFGroup
 
     .. automethod:: handles
 
-    .. automethod:: get_name
-
     .. automethod:: edit_data
 
     .. automethod:: set_data

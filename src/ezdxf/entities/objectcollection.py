@@ -4,7 +4,9 @@ from typing import TYPE_CHECKING, Iterable, cast
 from ezdxf.lldxf.const import DXFValueError, DXFKeyError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFObject, Dictionary, Drawing, ObjectsSection
+    from ezdxf.eztypes import (
+        DXFObject, Dictionary, Drawing, ObjectsSection, EntityDB,
+    )
 
 
 class ObjectCollection:
@@ -18,6 +20,10 @@ class ObjectCollection:
     @property
     def objects(self) -> 'ObjectsSection':
         return self.doc.objects
+
+    @property
+    def entitydb(self) -> 'EntityDB':
+        return self.doc.entitydb
 
     def __iter__(self) -> Iterable['DXFObject']:
         return self.object_dict.items()
