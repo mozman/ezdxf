@@ -215,7 +215,7 @@ class Layout(BaseLayout):
 
         """
         empty = []
-        if self.block_record.has_extension_dict():
+        if self.block_record.has_extension_dict:
             xdict = self.get_extension_dict()
         else:
             return empty
@@ -380,7 +380,7 @@ class Modelspace(Layout):
         """
         try:
             xdict = self.block_record.get_extension_dict()
-        except DXFValueError:
+        except AttributeError:
             return None
         try:
             return xdict['ACAD_GEOGRAPHICDATA']

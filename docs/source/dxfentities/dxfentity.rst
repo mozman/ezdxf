@@ -76,9 +76,11 @@ Common base class for all DXF entities and objects.
 
     .. automethod:: get_flag_state
 
-    .. automethod:: has_extension_dict
+    .. autoattribute:: has_extension_dict
 
     .. automethod:: get_extension_dict() -> ExtensionDict
+
+    .. automethod:: new_extension_dict(doc: Drawing) -> ExtensionDict
 
     .. automethod:: has_app_data
 

@@ -12,7 +12,9 @@ from ezdxf.entitydb import EntityDB, EntitySpace
 from ezdxf.graphicsfactory import CreatorInterface
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BlockRecord, DXFGraphic, Dictionary, KeyFunc
+    from ezdxf.eztypes import (
+        BlockRecord, DXFGraphic, Dictionary, KeyFunc, ExtensionDict,
+    )
 
 SUPPORTED_FOREIGN_ENTITY_TYPES = {
     'ARC', 'LINE', 'CIRCLE', 'ELLIPSE', 'POINT', 'LWPOLYLINE', 'SPLINE',
@@ -148,11 +150,15 @@ class BaseLayout(_AbstractLayout):
         """ Set layout/block drawing units as enum. """
         self.block_record.dxf.units = value  # has a DXF validator
 
-    def get_extension_dict(self) -> 'Dictionary':
+    def get_extension_dict(self) -> 'ExtensionDict':
         """ Returns the associated extension dictionary, creates a new one if
         necessary.
         """
-        return self.block_record.get_extension_dict()
+        block_record = self.block_record
+        if block_record.has_extension_dict:
+            return block_record.get_extension_dict()
+        else:
+            return block_record.new_extension_dict(self.doc)
 
     def add_entity(self, entity: 'DXFGraphic') -> None:
         """ Add an existing :class:`DXFGraphic` entity to a layout, but be sure

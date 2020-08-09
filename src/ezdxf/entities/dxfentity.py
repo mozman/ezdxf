@@ -840,10 +840,10 @@ class DXFEntity:
         return hasattr(self, 'dxf')
 
     def remove_dependencies(self, other: 'Drawing' = None):
-        """ Remove all dependencies from actual document.
+        """ Remove all dependencies from current document.
 
-        Intended usage is to remove dependencies from the actual document to
-        move or copy the entity to an `other` document.
+        Intended usage is to remove dependencies from the current document to
+        move or copy the entity to `other` DXF document.
 
         An error free call of this method does NOT guarantee that this entity
         can be moved/copied to the `other` document, some entities like
@@ -862,13 +862,11 @@ class DXFEntity:
             self.embedded_objects = None
 
     def destroy(self) -> None:
-        """
-        Delete all data and references. Does not delete entity from structures
-        like layouts or groups.
+        """ Delete all data and references. Does not delete entity from
+        structures like layouts or groups.
 
-        This method should not be used to delete entities from a layout/document
-        by the package user, use :meth:`BaseLayout.delete_entity` method for
-        that!
+        Starting with `ezdxf` v0.14 this method could be used to delete
+        entities.
 
         (internal API)
 
@@ -976,6 +974,7 @@ class DXFEntity:
         # check extension dict
         # check XDATA
 
+    @property
     def has_extension_dict(self) -> bool:
         """ Returns ``True`` if entity has an attached
         :class:`~ezdxf.entities.xdict.ExtensionDict`.
@@ -983,18 +982,21 @@ class DXFEntity:
         return self.extension_dict is not None
 
     def get_extension_dict(self) -> 'ExtensionDict':
-        """ Returns the existing :class:`~ezdxf.entities.xdict.ExtensionDict`
-        or a new created one.
+        """ Returns the existing :class:`~ezdxf.entities.xdict.ExtensionDict`.
+
+        Raises:
+            AttributeError: extension dict does not exist
+
         """
 
-        def new_extension_dict():
-            self.extension_dict = ExtensionDict.new(self)
-            return self.extension_dict
-
-        if self.has_extension_dict():
+        if self.has_extension_dict:
             return self.extension_dict
         else:
-            return new_extension_dict()
+            raise AttributeError('Entity has no extension dictionary.')
+
+    def new_extension_dict(self, doc: 'Drawing') -> 'ExtensionDict':
+        self.extension_dict = ExtensionDict.new(self, doc)
+        return self.extension_dict
 
     def has_app_data(self, appid: str) -> bool:
         """ Returns ``True`` if application defined data for `appid` exist. """

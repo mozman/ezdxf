@@ -26,7 +26,7 @@ class ExtensionDict:
 
     def __init__(self, owner: 'DXFEntity', xdict: Union[str, 'Dictionary']):
         # back link owner, so __clone__() necessary
-        self.owner = owner
+        self.owner: DXFEntity = owner
         # _xdict as string -> handle to dict
         # _xdict as DXF Dictionary
         self._xdict = xdict
@@ -56,8 +56,8 @@ class ExtensionDict:
         return self.dictionary.dxf
 
     @classmethod
-    def new(cls, owner: 'DXFEntity'):
-        xdict = owner.doc.objects.add_dictionary(
+    def new(cls, owner: 'DXFEntity', doc: 'Drawing'):
+        xdict = doc.objects.add_dictionary(
             owner=owner.dxf.handle,
             hard_owned=True,
             # All data in the extension dictionary belongs only to the owner

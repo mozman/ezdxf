@@ -26,6 +26,8 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import TagWriter
     from ezdxf.tools.complex_ltype import ComplexLineTypePart
     from ezdxf.query import EntityQuery
+    from ezdxf.entities.xdict import ExtensionDict
+    from ezdxf.entities.appdata import AppData
 
     # Entity factories
     from ezdxf.entities.factory import EntityFactory

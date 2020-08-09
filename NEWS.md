@@ -53,12 +53,19 @@ Version 0.14a2 - dev
 - NEW: `Path.reversed()` returns a new reversed path 
 - NEW: `Path.clockwise()` returns a new clockwise oriented path 
 - NEW: `Path.counter_clockwise()` returns a new counter-clockwise oriented path 
+- NEW: `DXFEntity.new_extension_dict(doc)`, create a new extension dictionary
+- CHANGE: `DXFEntity.get_extension_dict()`, raises `AttributeError` if entity
+  has no extension dictionary 
+- CHANGE: `DXFEntity.has_extension_dict` is now a property not a method
 - CHANGE: `linspace()` uses `Decimal()` for precise calculations, but still 
   returns an iterable of `float`
 - CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 
   argument `safe` is deprecated, will be removed in v0.16
 - CHANGE: Dictionary raise `DXFValueError` for adding invalid handles
-- REMOVE: Alias `DXFEntity.drawing`, replaced by `DXFEntity.doc`
+- REMOVE: Alias `DXFEntity.drawing`
+- REMOVE: `DXFEntity.doc`
+- REMOVE: `DXFEntity.entitydb`
+- REMOVE: `DXFEntity.dxffactory`
 - REMOVE: `DXFInvalidLayerName`, replaced by `DXFValueError` 
 - REMOVE: `Image.get_boundary_path()`, replaced by property `Image.boundary_path` 
 
