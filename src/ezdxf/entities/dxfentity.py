@@ -30,7 +30,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import (
     DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12, ACAD_REACTORS,
     ACAD_XDICTIONARY, DXFAttributeError, DXFValueError, DXFTypeError,
-    DXFKeyError,
+    DXFKeyError, LATEST_DXF_VERSION,
 )
 from ezdxf.tools import set_flag_state
 from .xdata import XData, EmbeddedObjects
@@ -773,14 +773,14 @@ class DXFEntity:
 
     dxf_attrib_exists = has_dxf_attrib
 
-    def is_supported_dxf_attrib(self, key: str) -> bool:
-        """
-        Returns ``True`` if DXF attrib `key` is supported by this entity.
+    def is_supported_dxf_attrib(self, key: str,
+                                dxfversion=LATEST_DXF_VERSION) -> bool:
+        """ Returns ``True`` if DXF attrib `key` is supported by this entity.
         Does not grant that attribute `key` really exist.
 
         """
         if key in self.DXFATTRIBS:
-            return self.doc.dxfversion >= self.DXFATTRIBS.get(key).dxfversion
+            return dxfversion >= self.DXFATTRIBS.get(key).dxfversion
         else:
             return False
 

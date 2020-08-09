@@ -57,6 +57,8 @@ Version 0.14a2 - dev
 - CHANGE: `DXFEntity.get_extension_dict()`, raises `AttributeError` if entity
   has no extension dictionary 
 - CHANGE: `DXFEntity.has_extension_dict` is now a property not a method
+- CHANGE: `DXFEntity.is_supported_dxf_attrib(key, dxfversion)` needs argument 
+  dxfversion for complete validation, default is the latest supported DXF version
 - CHANGE: `linspace()` uses `Decimal()` for precise calculations, but still 
   returns an iterable of `float`
 - CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 
