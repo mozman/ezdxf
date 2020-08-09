@@ -110,7 +110,9 @@ class EntityDB:
 
     def add(self, entity: DXFEntity) -> None:
         """ Add `entity` to database, assigns a new handle to the `entity`
-        if :attr:`entity.dxf.handle` is ``None``.
+        if :attr:`entity.dxf.handle` is ``None``. Adding the same entity
+        multiple times is possible, but creates only a single entry.
+
         """
         if entity.dxftype() in DATABASE_EXCLUDE:
             if entity.dxf.handle is not None:
@@ -131,7 +133,7 @@ class EntityDB:
         # add sub entities like ATTRIB, VERTEX and SEQEND to database
         # only INSERT and POLYLINE using this feature
         if hasattr(entity, 'add_sub_entities_to_entitydb'):
-            entity.add_sub_entities_to_entitydb()
+            entity.add_sub_entities_to_entitydb(self)
 
     def delete_entity(self, entity: DXFEntity) -> None:
         """ Removes `entity` from database and destroys the `entity`. """
@@ -253,6 +255,14 @@ class EntityDB:
 
     def dxf_types_in_use(self) -> Set[str]:
         return set(entity.dxftype() for entity in self.values())
+
+    def refresh(self) -> None:
+        """ Update sub-entities in POLYLINE and INSERT.
+        """
+        self.empty_trashcan()
+        for entity in self.values():
+            if hasattr(entity, 'add_sub_entities_to_entitydb'):
+                entity.add_sub_entities_to_entitydb(self)
 
 
 class EntitySpace:

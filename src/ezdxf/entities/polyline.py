@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-16
 from typing import (
-    TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict,
+    TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict, Optional,
 )
 from itertools import chain
 from ezdxf.lldxf import validator
@@ -25,7 +25,7 @@ from .lwpolyline import FORMAT_CODES
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing,
-        Line, Arc, Face3d, BaseLayout, Auditor,
+        Line, Arc, Face3d, BaseLayout, Auditor, EntityDB,
     )
 
 __all__ = ['Polyline', 'Polyface', 'Polymesh']
@@ -106,8 +106,9 @@ class Polyline(DXFGraphic):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        self.vertices = []  # type: List[DXFVertex]
-        self.seqend = None  # type: SeqEnd
+        self.vertices: List[DXFVertex] = []
+        self.seqend: Optional['SeqEnd'] = None
+        self._has_new_sub_entities = True
 
     def linked_entities(self) -> Iterable['DXFVertex']:
         # don't yield SEQEND here, because it is not a DXFGraphic entity
@@ -129,23 +130,36 @@ class Polyline(DXFGraphic):
         if self.seqend:
             entity.seqend = self.seqend.copy()
 
-    def add_sub_entities_to_entitydb(self):
-        """ Called by Entitydb.add(). (internal API) """
+    def add_sub_entities_to_entitydb(self, db: 'EntityDB') -> None:
+        """ Add sub-entities (VERTEX, SEQEND) to entity database `db`,
+        called from EntityDB.
+
+        (internal API)
+        """
+        if not self._has_new_sub_entities:
+            return
+
         for vertex in self.vertices:
-            vertex.doc = self.doc  # grant same document
-            self.entitydb.add(vertex)
-        if self.seqend:
+            if vertex.is_alive:
+                vertex.doc = self.doc  # grant same document
+                db.add(vertex)
+
+        if self.seqend and self.seqend.is_alive:
             self.seqend.doc = self.doc  # grant same document
-            self.entitydb.add(self.seqend)
+            db.add(self.seqend)
         else:
             self.new_seqend()
+        self._has_new_sub_entities = False
 
     def new_seqend(self):
         """ Create new SEQEND entity. (internal API)"""
-        seqend = self.doc.dxffactory.create_db_entry('SEQEND', dxfattribs={
-            'layer': self.dxf.layer,
-        })
+        seqend = factory.create_db_entry(
+            'SEQEND',
+            dxfattribs={'layer': self.dxf.layer},
+            doc=self.doc,
+        )
         self.link_seqend(seqend)
+        self._has_new_sub_entities = True
 
     def set_owner(self, owner: str, paperspace: int = 0):
         # Loading from file: POLYLINE will be added to layout before vertices
@@ -192,6 +206,7 @@ class Polyline(DXFGraphic):
         ])
         # The following VERTEX entities and the SEQEND entity is exported by
         # EntitySpace().
+        # todo: export ATTRIB and SEQEND
 
     def export_seqend(self, tagwriter: 'TagWriter'):
         self.seqend.dxf.owner = self.dxf.owner
@@ -355,6 +370,10 @@ class Polyline(DXFGraphic):
         """
         return (vertex.dxf.location for vertex in self.vertices)
 
+    def _append_vertex(self, vertex: 'DXFVertex')->None:
+        self.vertices.append(vertex)
+        self._has_new_sub_entities = True
+
     def append_vertices(self, points: Iterable['Vertex'],
                         dxfattribs: Dict = None) -> None:
         """ Append multiple :class:`Vertex` entities at location `points`.
@@ -365,7 +384,8 @@ class Polyline(DXFGraphic):
 
         """
         dxfattribs = dxfattribs or {}
-        self.vertices.extend(self._build_dxf_vertices(points, dxfattribs))
+        for vertex in self._build_dxf_vertices(points, dxfattribs):
+            self._append_vertex(vertex)
 
     def append_formatted_vertices(self, points: Iterable['Vertex'],
                                   format: str = 'xy',
@@ -398,7 +418,7 @@ class Polyline(DXFGraphic):
         for point in points:
             attribs = vertex_attribs(point, format)
             attribs.update(dxfattribs)
-            self.vertices.append(create_vertex('VERTEX', attribs))
+            self._append_vertex(create_vertex('VERTEX', attribs))
 
     def append_vertex(self, point: 'Vertex', dxfattribs: dict = None) -> None:
         """
@@ -410,7 +430,8 @@ class Polyline(DXFGraphic):
 
         """
         dxfattribs = dxfattribs or {}
-        self.vertices.extend(self._build_dxf_vertices([point], dxfattribs))
+        for vertex in self._build_dxf_vertices([point], dxfattribs):
+            self._append_vertex(vertex)
 
     def insert_vertices(self, pos: int, points: Iterable['Vertex'],
                         dxfattribs: dict = None) -> None:
@@ -427,6 +448,7 @@ class Polyline(DXFGraphic):
         dxfattribs = dxfattribs or {}
         self.vertices[pos:pos] = list(
             self._build_dxf_vertices(points, dxfattribs))
+        self._has_new_sub_entities = True
 
     def _build_dxf_vertices(self, points: Iterable['Vertex'],
                             dxfattribs: dict) -> List['DXFVertex']:
@@ -676,6 +698,7 @@ class Polyface(Polyline):
             )
             new_faces.append(face_record)
         self._rebuild(chain(existing_faces, new_faces))
+        self._has_new_sub_entities = True
 
     def _rebuild(self, faces: Iterable['FaceProxy'],
                  precision: int = 6) -> None:

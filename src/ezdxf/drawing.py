@@ -441,6 +441,8 @@ class Drawing:
             stream: output text stream or binary stream
             fmt: ``'asc'`` for ASCII DXF (default) or ``'bin'`` for binary DXF
         """
+        # Update sub-entities of POLYLINE and INSERT
+        self.entitydb.refresh()
         dxfversion = self.dxfversion
         if dxfversion == DXF12:
             handles = bool(self.header.get('$HANDLING', 0))

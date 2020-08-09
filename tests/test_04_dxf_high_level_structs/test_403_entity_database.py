@@ -133,3 +133,15 @@ def test_restore_integrity_remove_invalid_handle():
     e.dxf.handle = 'XFFF'
     db.audit(auditor)
     assert len(db) == 0
+
+
+def test_add_entity_multiple_times():
+    db = EntityDB()
+    e = DXFEntity()
+    db.add(e)
+    handle = e.dxf.handle
+    assert len(db) == 1
+
+    db.add(e)
+    assert e.dxf.handle == handle, 'handle must not change'
+    assert len(db) == 1, 'do not store same entity multiple times'

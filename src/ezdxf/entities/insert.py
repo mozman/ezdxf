@@ -30,9 +30,9 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef,
-        BlockLayout, BaseLayout, Auditor,
-    )
+    TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef,
+    BlockLayout, BaseLayout, Auditor, EntityDB,
+)
 
 __all__ = ['Insert']
 
@@ -88,8 +88,9 @@ class Insert(DXFGraphic):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        self.attribs = []  # type: List[Attrib]
-        self.seqend = None  # type: SeqEnd
+        self.attribs: List['Attrib'] = []
+        self.seqend: Optional['SeqEnd'] = None
+        self._has_new_sub_entities = True
 
     def linked_entities(self) -> Iterable['DXFEntity']:
         # Don't yield seqend here, because it is not a DXFGraphic entity
@@ -114,17 +115,26 @@ class Insert(DXFGraphic):
             # If is None for INSERTS loaded from file with attached ATTRIBS
             entity.seqend = self.seqend.copy()
 
-    def add_sub_entities_to_entitydb(self):
-        """ Called by EntityDB.add() """
+    def add_sub_entities_to_entitydb(self, db: 'EntityDB') -> None:
+        """ Add sub-entities (ATTRIB, SEQEND) to entity database `db`,
+        called from EntityDB.
+
+        (internal API)
+        """
+        if not self._has_new_sub_entities:
+            return
         for attrib in self.attribs:
-            attrib.doc = self.doc  # grant same document
-            self.entitydb.add(attrib)
-        if self.seqend:
+            if attrib.is_alive:
+                attrib.doc = self.doc  # grant same document
+                db.add(attrib)
+
+        if self.seqend and self.seqend.is_alive:
             self.seqend.doc = self.doc  # grant same document
-            self.entitydb.add(self.seqend)
+            db.add(self.seqend)
+        self._has_new_sub_entities = False
 
     def set_owner(self, owner: str, paperspace: int = 0):
-        # At loading form file, INSERT will be added to layout before attribs
+        # At loading from file, INSERT will be added to layout before attribs
         # are linked, so set_owner() of INSERT does not set owner of attribs.
         super().set_owner(owner, paperspace)
         # attribs handled by super class by linked_entities() interface
@@ -133,11 +143,6 @@ class Insert(DXFGraphic):
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
-        """
-        Adds subclass processing for 'AcDbLine', requires previous base class
-        and 'AcDbEntity' processing by parent class.
-
-        """
         dxf = super().load_dxf_attribs(processor)
         if processor:
             # Always use the 2nd subclass, could be AcDbBlockReference or
@@ -164,6 +169,7 @@ class Insert(DXFGraphic):
             'column_count', 'row_count', 'column_spacing', 'row_spacing',
             'extrusion',
         ])
+        # todo: export ATTRIB and SEQEND
 
     def export_seqend(self, tagwriter: 'TagWriter'):
         # Export at same layer, don't know if ATTRIB entities must have the
@@ -358,23 +364,29 @@ class Insert(DXFGraphic):
         dxfattribs['tag'] = tag
         dxfattribs['text'] = text
         dxfattribs['insert'] = insert
-        attrib = cast('Attrib', self._new_compound_entity('ATTRIB', dxfattribs))
+        attrib = cast('Attrib',
+                      self._new_compound_entity('ATTRIB', dxfattribs))
         self.attribs.append(attrib)
 
         # This case is only possible if INSERT is read from file without
         # attached ATTRIBS:
         if self.seqend is None:
             self.new_seqend()
+        self._has_new_sub_entities = True
         return attrib
 
     def new_seqend(self):
         """ Create new ENDSEQ. (internal API)"""
         if self.doc:
-            seqend = self.doc.dxffactory.create_db_entry('SEQEND', dxfattribs={
-                'layer': self.dxf.layer})
+            seqend = factory.create_db_entry(
+                'SEQEND',
+                dxfattribs={'layer': self.dxf.layer},
+                doc=self.doc,
+            )
         else:
             seqend = factory.new('SEQEND', dxfattribs={'layer': self.dxf.layer})
         self.link_seqend(seqend)
+        self._has_new_sub_entities = True
 
     def delete_attrib(self, tag: str, ignore=False) -> None:
         """ Delete an attached :class:`Attrib` entity from INSERT. If `ignore`
@@ -393,16 +405,17 @@ class Insert(DXFGraphic):
         for index, attrib in enumerate(self.attribs):
             if attrib.dxf.tag == tag:
                 del self.attribs[index]
-                self.entitydb.delete_entity(attrib)
+                attrib.destroy()
                 return
         if not ignore:
             raise DXFKeyError(tag)
 
     def delete_all_attribs(self) -> None:
-        """ Delete all :class:`Attrib` entities attached to the INSERT entity. """
-        db = self.entitydb
+        """ Delete all :class:`Attrib` entities attached to the INSERT entity.
+        """
         for attrib in self.attribs:
-            db.delete_entity(attrib)
+            if attrib.is_alive:
+                attrib.destroy()
         self.attribs = []
 
     def transform(self, m: 'Matrix44') -> 'Insert':
@@ -637,6 +650,7 @@ class Insert(DXFGraphic):
         .. versionadded:: 0.14
 
         """
+
         def transform_attached_attrib_entities(insert, offset):
             for attrib in insert.attribs:
                 attrib.dxf.insert += offset
