@@ -1,21 +1,14 @@
 # Created: 2019-02-15
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 import pytest
 from ezdxf.entitydb import EntitySpace
-from ezdxf.order import priority, zorder
 
 
 class Entity:
-    def __init__(self, priority):
-        self.priority = priority
+    def __init__(self, value):
+        self.value = value
         self.is_alive = True
-
-    def __priority__(self):
-        return self.priority
-
-
-NUMBERS = [1, 4, 5, 6, 76, -4, 7]
 
 
 @pytest.fixture
@@ -51,5 +44,3 @@ def test_remove(space):
 
     space.clear()
     assert len(space) == 0
-
-

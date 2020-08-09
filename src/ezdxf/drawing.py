@@ -25,7 +25,6 @@ from ezdxf.tools.juliandate import juliandate
 from ezdxf.options import options
 
 from ezdxf.tools import guid
-from ezdxf.tracker import Tracker
 from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
 from ezdxf.render.dimension import DimensionRenderer
@@ -62,7 +61,6 @@ class Drawing:
     def __init__(self, dxfversion=DXF2013):
         self.entitydb = EntityDB()
         self.dxffactory = EntityFactory(self)
-        self.tracker = Tracker()
         target_dxfversion = dxfversion.upper()
         self._dxfversion: str = acad_release_to_dxf_version.get(target_dxfversion, target_dxfversion)
         if self._dxfversion not in versions_supported_by_new:
@@ -534,8 +532,7 @@ class Drawing:
             self.appids.new(name, {'flags': flags})
 
     def _create_appids(self):
-        if 'HATCH' in self.tracker:
-            self._create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
+        self._create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
 
     @property
     def acad_release(self) -> str:

@@ -159,34 +159,34 @@ class ClassesSection:
         if self.doc is None:  # testing environment
             return
 
-        tracker = self.doc.tracker
-        if 'IMAGE' in tracker:
+        dxf_types_in_use = self.doc.entitydb.dxf_types_in_use()
+        if 'IMAGE' in dxf_types_in_use:
             self.add_class('IMAGE')
             self.add_class('IMAGEDEF')
             self.add_class('IMAGEDEF_REACTOR')
-        if 'PDFUNDERLAY' in tracker:
+        if 'PDFUNDERLAY' in dxf_types_in_use:
             self.add_class('PDFDEFINITION')
             self.add_class('PDFUNDERLAY')
-        if 'DWFUNDERLAY' in tracker:
+        if 'DWFUNDERLAY' in dxf_types_in_use:
             self.add_class('DWFDEFINITION')
             self.add_class('DWFUNDERLAY')
-        if 'DGNUNDERLAY' in tracker:
+        if 'DGNUNDERLAY' in dxf_types_in_use:
             self.add_class('DGNDEFINITION')
             self.add_class('DGNUNDERLAY')
-        if 'EXTRUDEDSURFACE' in tracker:
+        if 'EXTRUDEDSURFACE' in dxf_types_in_use:
             self.add_class('EXTRUDEDSURFACE')
             self.add_class('ACDBASSOCEXTRUDEDSURFACEACTIONBODY')
-        if 'LOFTEDSURFACE' in tracker:
+        if 'LOFTEDSURFACE' in dxf_types_in_use:
             self.add_class('LOFTEDSURFACE')
             self.add_class('ACDBASSOCLOFTEDSURFACEACTIONBODY')
-        if 'REVOLVEDSURFACE' in tracker:
+        if 'REVOLVEDSURFACE' in dxf_types_in_use:
             self.add_class('REVOLVEDSURFACE')
             self.add_class('ACDBASSOCREVOLVEDSURFACEACTIONBODY')
-        if 'SWEPTSURFACE' in tracker:
+        if 'SWEPTSURFACE' in dxf_types_in_use:
             self.add_class('SWEPTSURFACE')
             self.add_class('ACDBASSOCSWEPTSURFACEACTIONBODY')
 
-        for dxftype in tracker:
+        for dxftype in dxf_types_in_use:
             self.add_class(dxftype)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:

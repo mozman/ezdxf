@@ -6,7 +6,6 @@ from typing import Optional, Iterable, Tuple, TYPE_CHECKING, Dict, Set
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.entities.dxfentity import DXFEntity
-from ezdxf.order import priority, zorder
 from ezdxf.audit import AuditError, Auditor
 from ezdxf.lldxf.const import DXFInternalEzdxfError
 
@@ -115,15 +114,17 @@ class EntityDB:
         """
         if entity.dxftype() in DATABASE_EXCLUDE:
             if entity.dxf.handle is not None:
-                # store entities with handles (TABLE, maybe others) to avoid reassigning of its handle
+                # store entities with handles (TABLE, maybe others) to avoid
+                # reassigning of its handle
                 self[entity.dxf.handle] = entity
             return
-        handle = entity.dxf.handle  # type: str
+        handle: str = entity.dxf.handle
         if handle is None:
             handle = self.next_handle()
-            # update_handle() requires the objects section to update the owner handle of the extension dictionary,
-            # but this is no problem at file loading, all entities have handles, and DXF R12 (without handles) have no
-            # extension dictionaries.
+            # update_handle() requires the objects section to update the owner
+            # handle of the extension dictionary, but this is no problem at
+            # file loading, all entities have handles, and DXF R12 (without handles)
+            # have no extension dictionaries.
             entity.update_handle(handle)
         self[handle] = entity
 
@@ -249,6 +250,9 @@ class EntityDB:
         ]
         for handle in dead_handles:
             del db[handle]
+
+    def dxf_types_in_use(self) -> Set[str]:
+        return set(entity.dxftype() for entity in self.values())
 
 
 class EntitySpace:

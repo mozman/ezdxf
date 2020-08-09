@@ -79,7 +79,6 @@ def bind(entity: 'DXFEntity', doc: 'Drawing') -> None:
     assert doc.entitydb is not None, 'Missing entity database.'
     entity.doc = doc  # todo: remove dependency
     doc.entitydb.add(entity)
-    doc.tracker.add(entity.dxftype())
 
 
 def is_bound(entity: 'DXFEntity', doc: 'Drawing') -> bool:
@@ -100,7 +99,6 @@ class EntityFactory:
 
     def new_entity(self, dxftype: str, dxfattribs: dict = None) -> 'DXFEntity':
         """ Create a new entity, requires an instantiated DXF document. """
-        self.doc.tracker.add(dxftype)
         return new(dxftype, dxfattribs, self.doc)
 
     def create_db_entry(self, dxftype: str, dxfattribs: dict) -> 'DXFEntity':
