@@ -249,6 +249,9 @@ class Image(DXFGraphic):
         return self._image_def
 
     def destroy(self) -> None:
+        if not self.is_alive:
+            return
+
         reactor = self._image_def_reactor
         if reactor and reactor.is_alive:
             image_def = self.get_image_def()

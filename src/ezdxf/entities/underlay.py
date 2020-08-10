@@ -199,6 +199,9 @@ class Underlay(DXFGraphic):
         self.clipping = False
 
     def destroy(self) -> None:
+        if not self.is_alive:
+            return
+
         if self._underlay_def:
             self._underlay_def.discard_reactor_handle(self.dxf.handle)
         del self._boundary_path

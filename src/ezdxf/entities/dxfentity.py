@@ -873,6 +873,9 @@ class DXFEntity:
         (internal API)
 
         """
+        if not self.is_alive:
+            return
+
         if self.extension_dict is not None:
             self.extension_dict.destroy(self.doc)
             del self.extension_dict
@@ -1228,5 +1231,8 @@ class DXFTagStorage(DXFEntity):
             tagwriter.write_tags(subclass)
 
     def destroy(self) -> None:
+        if not self.is_alive:
+            return
+
         del self.xtags
         super().destroy()

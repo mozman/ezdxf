@@ -38,7 +38,8 @@ def test_init_with_tags(entity):
     assert entity.dxf.handle == 'FFFF'
     assert entity.dxf.owner == 'ABBA'
     assert str(entity) == 'DXFENTITY(#FFFF)'
-    assert repr(entity) == "<class 'ezdxf.entities.dxfentity.DXFEntity'> DXFENTITY(#FFFF)"
+    assert repr(
+        entity) == "<class 'ezdxf.entities.dxfentity.DXFEntity'> DXFENTITY(#FFFF)"
 
 
 def test_invalid_dxf_attrib(entity):
@@ -82,6 +83,13 @@ def test_write_latest_dxf(entity):
 def test_is_alive(entity):
     assert entity.is_alive is True
     entity.destroy()
+    assert entity.is_alive is False
+
+
+def test_calling_destroy_multiple_times(entity):
+    entity.destroy()
+    entity.destroy(), '2nd call should do nothing'
+    entity.destroy(), '3rd call should do nothing'
     assert entity.is_alive is False
 
 
@@ -275,7 +283,8 @@ class TestXData:
             (1000, 'String'),
             (1002, '}'),
         ]
-        entity.set_xdata_list('ACAD', 'DSTYLE', [(1070, 2), (1000, 'mozman'), (1000, 'data')])
+        entity.set_xdata_list('ACAD', 'DSTYLE',
+                              [(1070, 2), (1000, 'mozman'), (1000, 'data')])
         xdata_list = entity.get_xdata_list('ACAD', 'DSTYLE')
         assert len(xdata_list) == 6
         assert xdata_list == [
@@ -298,7 +307,7 @@ class TestXData:
             (1002, '}'),
         ]
         xdata = entity.get_xdata('ACAD')
-        assert len(xdata) == 6+5
+        assert len(xdata) == 6 + 5
 
 
 class TestReactors:
@@ -326,12 +335,15 @@ class TestReactors:
 
         entity.append_reactor_handle('B000')  # same handle again
         assert 'B000' in entity.get_reactors()
-        assert 2 == len(entity.get_reactors()), 'handle entries should be unique'
+        assert 2 == len(
+            entity.get_reactors()), 'handle entries should be unique'
 
-        entity.append_reactor_handle('FF')  # smallest handle, should be first handle in reactors
+        entity.append_reactor_handle(
+            'FF')  # smallest handle, should be first handle in reactors
         assert entity.get_reactors()[0] == 'FF'
 
-        entity.append_reactor_handle('FFFF')  # biggest handle, should be last handle in reactors
+        entity.append_reactor_handle(
+            'FFFF')  # biggest handle, should be last handle in reactors
         assert 'FFFF' == entity.get_reactors()[-1]
 
     def test_discard_handle(self, entity):

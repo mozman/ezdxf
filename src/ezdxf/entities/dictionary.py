@@ -375,6 +375,9 @@ class Dictionary(DXFObject):
             )
 
     def destroy(self) -> None:
+        if not self.is_alive:
+            return
+
         if self.is_hard_owner:
             self._delete_hard_owned_entries()
 

@@ -215,6 +215,9 @@ class Polyline(DXFGraphic):
 
     def destroy(self) -> None:
         """ Delete all data and references. """
+        if not self.is_alive:
+            return
+
         for v in self.vertices:
             v.destroy()
         del self.vertices

@@ -179,6 +179,9 @@ class Insert(DXFGraphic):
 
     def destroy(self) -> None:
         """ Delete all data and references. """
+        if not self.is_alive:
+            return
+
         self.delete_all_attribs()
         if self.seqend is not None:
             self.seqend.destroy()
@@ -417,9 +420,11 @@ class Insert(DXFGraphic):
     def delete_all_attribs(self) -> None:
         """ Delete all :class:`Attrib` entities attached to the INSERT entity.
         """
+        if not self.is_alive:
+            return
+
         for attrib in self.attribs:
-            if attrib.is_alive:
-                attrib.destroy()
+            attrib.destroy()
         self.attribs = []
 
     def transform(self, m: 'Matrix44') -> 'Insert':

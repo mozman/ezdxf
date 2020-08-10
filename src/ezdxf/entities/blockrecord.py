@@ -140,6 +140,8 @@ class BlockRecord(DXFEntity):
         'this' BLOCK_RECORD.
 
         """
+        if not self.is_alive:
+            return
 
         self.block.destroy()
         self.endblk.destroy()
