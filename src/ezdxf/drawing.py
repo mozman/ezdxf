@@ -284,23 +284,14 @@ class Drawing:
         doc._load(tagger=compiled_tags)
         return doc
 
-    @classmethod
-    def from_section_dict(cls, sections: SectionDict) -> 'Drawing':
-        """ Create new drawing from a SectionDict. (internal API)"""
-        doc = cls()
-        doc._load(sections=sections)
-        return doc
+    def _load(self, tagger: Optional[Iterable['DXFTag']]):
+        assert tagger is not None, 'DXF tagger or SectionDict required.'
 
-    def _load(self, tagger: Optional[Iterable['DXFTag']] = None, sections: Optional[SectionDict] = None):
-        if tagger is None and sections is None:
-            raise ValueError('DXF tagger or SectionDict required.')
-
-        if sections is None:
-            sections = load_dxf_structure(tagger)  # load complete DXF entity structure
-        try:  # discard section THUMBNAILIMAGE
+        # 1st Loading stage: load complete DXF entity structure
+        sections = load_dxf_structure(tagger)
+        if 'THUMBNAILIMAGE' in sections:
             del sections['THUMBNAILIMAGE']
-        except KeyError:
-            pass
+
         # -----------------------------------------------------------------------------------
         # create header section:
         # all header tags are the first DXF structure entity
@@ -337,7 +328,6 @@ class Drawing:
         self.objects = ObjectsSection(self, sections.get('OBJECTS', None))
         # only valid for DXF R2013 and later
         self.acdsdata = AcDsDataSection(self, sections.get('ACDSDATA', None))
-        self.entitydb.load_resources()
         for name, data in sections.items():
             if name not in MANAGED_SECTIONS:
                 self.stored_sections.append(StoredSection(data))
@@ -347,9 +337,8 @@ class Drawing:
             logger.info('Upgrading drawing to DXF R12.')
             self.dxfversion = DXF12
 
-        # DIMSTYLE: ezdxf uses names for blocks, linetypes and text style as internal data, handles are set at export
-        # requires BLOCKS and TABLES section!
-        self.tables.resolve_dimstyle_names()
+        # 2nd Loading stage
+        self._load_resources()
 
         if self.dxfversion == DXF12:
             # TABLE requires in DXF12 no handle and has no owner tag, but DXF R2000+, requires a TABLE with handle
@@ -366,6 +355,16 @@ class Drawing:
 
         self.layouts = Layouts.load(self)
         self._finalize_setup()
+
+    def _load_resources(self):
+        """ Load additional resources from entity database into DXF entities.
+
+        e.g. convert handles into DXFEntity() objects
+
+        """
+        db = self.entitydb
+        for entity in db.values():
+            entity.load_resources(self)
 
     def create_all_arrow_blocks(self):
         """

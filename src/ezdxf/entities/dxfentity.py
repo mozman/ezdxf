@@ -638,6 +638,11 @@ class DXFEntity:
     def load_tags(self, tags: ExtendedTags, dxfversion: str = None) -> None:
         """ Generic tag loading interface, called if DXF drawing is loaded from
         a stream or file.
+        1. Loading stage which set the basic DXF attributes, additional
+        resources (DXF objects) are not loaded yet. References to these
+        resources have to be stored as handles and can be resolved in the
+        2. loading stage: :meth:`load_resources`.
+
         (internal API)
         """
         if tags:
@@ -651,10 +656,18 @@ class DXFEntity:
             processor = SubclassProcessor(tags, dxfversion=dxfversion)
             self.dxf = self.load_dxf_attribs(processor)
 
-    def load_resources(self, db: 'EntityDB')->None:
+    def load_resources(self, doc: 'Drawing') -> None:
         """ Load additional resources from entity database.
 
-        e.g. convert handles into DXFEntity() objects
+        This is the 2. loading stage when loading DXF documents, for the
+        1. loading stage see :meth:`load_tags`.
+
+        This stage is meant to convert resource handles into DXFEntity()
+        objects.
+
+        Examples for 2 stage loading:
+        Image, Underlay, DXFGroup, Dictionary, Dimstyle
+
         """
         pass
 

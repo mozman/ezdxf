@@ -130,47 +130,9 @@ class TablesSection:
         tagwriter.write_tag2(0, 'ENDSEC')
 
     def create_table_handles(self):
-        # TABLE requires in DXF12 no handle and has no owner tag, but DXF R2000+, requires a TABLE with handle
-        # and each table entry has an owner tag, pointing to the TABLE entry
+        # DXF R12: TABLE does not require a handle and owner tag
+        # DXF R2000+: TABLE requires a handle and an owner tag
         for name in TABLENAMES.values():
             table = getattr(self, name.lower())
             handle = self.doc.entitydb.next_handle()
             table.set_handle(handle)
-
-    def resolve_dimstyle_names(self):
-        # Handles can't be resolved to names at loading stage.
-        db = self.doc.entitydb
-        for dimstyle in self.dimstyles:  # type: DimStyle
-            for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
-                if dimstyle.dxf.hasattr(attrib_name):
-                    continue
-                blkrec_handle = dimstyle.dxf.get(attrib_name + '_handle')
-                if blkrec_handle and blkrec_handle != '0':
-                    try:
-                        name = db[blkrec_handle].dxf.name
-                    except KeyError:
-                        logger.info('Replacing non existing block referenced by handle #{}, by default arrow.'.format(blkrec_handle))
-                        name = ''
-                else:
-                    name = ''  # default arrow
-                dimstyle.dxf.set(attrib_name, name)
-
-            style_handle = dimstyle.dxf.get('dimtxsty', None)
-            if style_handle and style_handle != '0':
-                try:
-                    dimstyle.dxf.dimtxsty = db[style_handle].dxf.name
-                except KeyError:
-                    logger.info('Ignoring non existing text style referenced by handle #{}.'.format(style_handle))
-
-            for attrib_name in ('dimltype', 'dimltex1', 'dimltex2'):
-                lt_handle = dimstyle.dxf.get(attrib_name + '_handle', None)
-                if lt_handle and lt_handle != '0':
-                    try:
-                        name = db[lt_handle].dxf.name
-                    except KeyError:
-                        logger.info('Ignoring non existing line type referenced by handle #{}.'.format(lt_handle))
-                    else:
-                        dimstyle.dxf.set(attrib_name, name)
-
-            # remove all handles, to be sure setting handles for actual names at export
-            dimstyle.discard_handles()

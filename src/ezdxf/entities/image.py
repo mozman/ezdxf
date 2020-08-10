@@ -16,7 +16,6 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter, DXFNamespace, Drawing, Vertex, DXFTag, Matrix44, BaseLayout,
-        EntityDB,
     )
 
 __all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables', 'Wipeout']
@@ -122,7 +121,8 @@ class Image(DXFGraphic):
         self._image_def = None
         self._image_def_reactor = None
 
-    def load_resources(self, db: 'EntityDB') -> None:
+    def load_resources(self, doc: 'Drawing') -> None:
+        db = doc.entitydb
         self._image_def = db.get(self.dxf.get('image_def_handle', None))
         self._image_def_reactor = db.get(self.dxf.get('image_def_reactor_handle', None))
 

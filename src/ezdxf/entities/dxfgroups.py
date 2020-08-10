@@ -125,8 +125,8 @@ class DXFGroup(DXFObject):
         """ Iterable of handles of all DXF entities in :class:`DXFGroup`. """
         return (entity.dxf.handle for entity in self)
 
-    def load_resources(self, db: 'EntityDB') -> None:
-        assert db is not None
+    def load_resources(self, doc: 'Drawing') -> None:
+        db = doc.entitydb
 
         def entities():
             for handle in self._handles:

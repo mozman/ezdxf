@@ -228,8 +228,8 @@ class Dictionary(DXFObject):
             else:
                 return default
 
-    def load_resources(self, db: 'EntityDB') -> None:
-        assert db is not None
+    def load_resources(self, doc: 'Drawing') -> None:
+        db = doc.entitydb
 
         def items():
             for key, handle in self.items():
@@ -394,9 +394,9 @@ class DictionaryWithDefault(Dictionary):
         super().__init__(doc)
         self._default: Optional[DXFEntity] = None
 
-    def load_resources(self, db: 'EntityDB') -> None:
-        self._default = db.get(self.dxf.default)
-        super(DictionaryWithDefault, self).load_resources(db)
+    def load_resources(self, doc: 'Drawing') -> None:
+        self._default = doc.entitydb.get(self.dxf.default)
+        super(DictionaryWithDefault, self).load_resources(doc)
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':

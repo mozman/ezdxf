@@ -235,6 +235,48 @@ class DimStyle(DXFEntity):
                                                subclass=acdb_dimstyle.name)
         return dxf
 
+    def load_resources(self, doc: 'Drawing'):
+        # 2nd Loading stage: resolve handles to names.
+        # ezdxf uses names for blocks, linetypes and text style as internal
+        # data, handles are set at export.
+        db = doc.entitydb
+        for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
+            if self.dxf.hasattr(attrib_name):
+                continue
+            blkrec_handle = self.dxf.get(attrib_name + '_handle')
+            if blkrec_handle and blkrec_handle != '0':
+                try:
+                    name = db[blkrec_handle].dxf.name
+                except KeyError:
+                    logger.info(f'Replace undefined block referenced by '
+                                f'handle #{blkrec_handle}, by default arrow.')
+                    name = ''  # default arrow name
+            else:
+                name = ''  # default arrow name
+            self.dxf.set(attrib_name, name)
+
+        style_handle = self.dxf.get('dimtxsty', None)
+        if style_handle and style_handle != '0':
+            try:
+                self.dxf.dimtxsty = db[style_handle].dxf.name
+            except KeyError:
+                logger.info(f'Ignore undefined text style referenced '
+                            f'by handle #{style_handle}.')
+                
+        for attrib_name in ('dimltype', 'dimltex1', 'dimltex2'):
+            lt_handle = self.dxf.get(attrib_name + '_handle', None)
+            if lt_handle and lt_handle != '0':
+                try:
+                    name = db[lt_handle].dxf.name
+                except KeyError:
+                    logger.info(f'Ignore undefined line type referenced '
+                                f'by handle #{lt_handle}.')
+                else:
+                    self.dxf.set(attrib_name, name)
+        # Remove all handles, to be sure setting handles for resource names
+        # at export.
+        self.discard_handles()
+
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
