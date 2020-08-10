@@ -262,7 +262,7 @@ class DimStyle(DXFEntity):
             except KeyError:
                 logger.info(f'Ignore undefined text style referenced '
                             f'by handle #{style_handle}.')
-                
+
         for attrib_name in ('dimltype', 'dimltex1', 'dimltex2'):
             lt_handle = self.dxf.get(attrib_name + '_handle', None)
             if lt_handle and lt_handle != '0':

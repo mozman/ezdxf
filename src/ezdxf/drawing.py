@@ -292,68 +292,78 @@ class Drawing:
         if 'THUMBNAILIMAGE' in sections:
             del sections['THUMBNAILIMAGE']
 
-        # -----------------------------------------------------------------------------------
-        # create header section:
-        # all header tags are the first DXF structure entity
+        # Create header section:
+        # All header tags are the first DXF structure entity
         header_entities = sections.get('HEADER', [None])[0]
         if header_entities is None:
-            # create default header, files without header are by default DXF R12
+            # Create default header, files without header are by default DXF R12
             self.header = HeaderSection.new(dxfversion=DXF12)
         else:
             self.header = HeaderSection.load(header_entities)
-        # -----------------------------------------------------------------------------------
-        # Missing $ACADVER defaults to DXF R12
+
         self._dxfversion: str = self.header.get('$ACADVER', DXF12)
+
         # Store original DXF version of loaded file.
         self._loaded_dxfversion = self._dxfversion
+
+        # Content encoding:
         self.encoding = toencoding(self.header.get('$DWGCODEPAGE', 'ANSI_1252'))
-        # get handle seed
+
+        # Set handle seed:
         seed: str = self.header.get('$HANDSEED', str(self.entitydb.handles))
-        # setup handles
         self.entitydb.handles.reset(seed)
-        # store all necessary DXF entities in the drawing database
+
+        # Store all necessary DXF entities in the entity database:
         fill_database(sections, self)
-        # all handles used in the DXF file are known at this point
-        # -----------------------------------------------------------------------------------
-        # create sections:
+
+        # End of 1. loading stage, all entities of the DXF file are
+        # stored in the entity database.
+
+        # Create sections:
         self.classes = ClassesSection(self, sections.get('CLASSES', None))
         self.tables = TablesSection(self, sections.get('TABLES', None))
-        # create *Model_Space and *Paper_Space BLOCK_RECORDS
-        # BlockSection setup takes care about the rest
-        self._create_required_block_records()
-        # table records available
-        self.blocks = BlocksSection(self, sections.get('BLOCKS', None))
 
+        # Create *Model_Space and *Paper_Space BLOCK_RECORDS
+        # BlockSection setup takes care about the rest:
+        self._create_required_block_records()
+
+        # At this point all table entries are required:
+        self.blocks = BlocksSection(self, sections.get('BLOCKS', None))
         self.entities = EntitySection(self, sections.get('ENTITIES', None))
         self.objects = ObjectsSection(self, sections.get('OBJECTS', None))
-        # only valid for DXF R2013 and later
+
+        # only DXF R2013+
         self.acdsdata = AcDsDataSection(self, sections.get('ACDSDATA', None))
+
+        # Store unmanaged sections as raw tags:
         for name, data in sections.items():
             if name not in MANAGED_SECTIONS:
                 self.stored_sections.append(StoredSection(data))
-        # -----------------------------------------------------------------------------------
-        if self.dxfversion < DXF12:
-            # upgrade to DXF R12
-            logger.info('Upgrading drawing to DXF R12.')
-            self.dxfversion = DXF12
 
-        # 2nd Loading stage
+        # 2nd Loading stage, objects section is not setup!
         self._load_resources()
 
+        # DXF version upgrades:
+        if self.dxfversion < DXF12:
+            logger.info('DXF version upgrade to DXF R12.')
+            self.dxfversion = DXF12
+
         if self.dxfversion == DXF12:
-            # TABLE requires in DXF12 no handle and has no owner tag, but DXF R2000+, requires a TABLE with handle
-            # and each table entry has an owner tag, pointing to the TABLE entry
             self.tables.create_table_handles()
 
         if self.dxfversion in (DXF13, DXF14):
-            # upgrade to DXF R2000
+            logger.info('DXF version upgrade to DXF R2000.')
             self.dxfversion = DXF2000
             self.create_all_arrow_blocks()
 
+        # Objects section setup:
         self.rootdict = self.objects.rootdict
-        self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
+        # Create missing management tables (DICTIONARY):
+        self.objects.setup_objects_management_tables(self.rootdict)
 
+        # Setup modelspace- and paperspace layouts:
         self.layouts = Layouts.load(self)
+
         self._finalize_setup()
 
     def _load_resources(self):
