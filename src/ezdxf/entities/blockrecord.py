@@ -140,11 +140,12 @@ class BlockRecord(DXFEntity):
         'this' BLOCK_RECORD.
 
         """
-        db = self.entitydb
-        db.delete_entity(self.block)
-        db.delete_entity(self.endblk)
+
+        self.block.destroy()
+        self.endblk.destroy()
         for entity in self.entity_space:
-            db.delete_entity(entity)
+            entity.destroy()
+
         # remove attributes to find invalid access after death
         del self.block
         del self.endblk

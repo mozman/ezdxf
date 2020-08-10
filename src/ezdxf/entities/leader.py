@@ -259,7 +259,4 @@ class Leader(DXFGraphic, OverrideMixin):
                         f'= {len(self.vertices)}.',
                 dxf_entity=self,
             )
-            if self.doc and self.doc.entitydb:
-                self.entitydb.delete_entity(self)
-            else:
-                self.destroy()
+            self.destroy()

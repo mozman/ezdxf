@@ -41,9 +41,7 @@ import logging
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        Auditor, TagWriter, Drawing, EntityDB, EntityFactory, DXFAttr,
-    )
+    from ezdxf.eztypes import  Auditor, TagWriter, Drawing, DXFAttr
 
 __all__ = [
     'DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor',
@@ -795,11 +793,6 @@ class DXFEntity:
             return dxfversion >= self.DXFATTRIBS.get(key).dxfversion
         else:
             return False
-
-    @property
-    def entitydb(self) -> 'EntityDB':
-        """ Returns associated entity database. (internal API)"""
-        return self.doc.entitydb
 
     def dxftype(self) -> str:
         """ Get DXF type as string, like ``LINE`` for the line entity. """

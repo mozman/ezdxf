@@ -369,8 +369,8 @@ class DXFGraphic(DXFEntity):
             raise DXFStructureError(
                 'Copying between different DXF drawings is not supported.'
             )
+
         new_entity = self.copy()
-        self.entitydb.add(new_entity)
         layout.add_entity(new_entity)
         return new_entity
 

@@ -21,9 +21,9 @@ def test_add_entity(msp, db):
     new_point = Point.new(dxfattribs={'location': (3, 3)})
     add_entity(new_point, msp)
     assert point in msp
-    assert point.dxf.handle in point.entitydb
+    assert point.dxf.handle in db
     assert new_point in msp
-    assert new_point.dxf.handle in new_point.entitydb
+    assert new_point.dxf.handle in db
     assert point.dxf.handle != new_point.dxf.handle
 
 
