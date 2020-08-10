@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-27
-from typing import TYPE_CHECKING, Union, Optional
+from typing import TYPE_CHECKING, Union
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.const import (
@@ -26,8 +26,8 @@ class ExtensionDict:
     __slots__ = ('_xdict', )
 
     def __init__(self, xdict: Union[str, 'Dictionary']):
-        # 1st loading stage: _xdict as string -> handle to dict
-        # 2nd loading stage: _xdict as DXF Dictionary
+        # 1st loading stage: xdict as string -> handle to dict
+        # 2nd loading stage: xdict as DXF Dictionary
         self._xdict = xdict
 
     @property
@@ -54,13 +54,6 @@ class ExtensionDict:
             hard_owned=True,
         )
         return cls(xdict)
-
-    def copy(self) -> Optional['ExtensionDict']:
-        """ Create a shallow copy of the extension dictionary. """
-        assert self._xdict is not None
-        copy = self.dictionary.copy()
-        copy.dxf.owner = None
-        return self.__class__(copy)
 
     @property
     def is_alive(self):
