@@ -1,7 +1,7 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-09
-from typing import TYPE_CHECKING, Union, Tuple, Iterable, List, cast
+from typing import TYPE_CHECKING, Union, Tuple, Iterable, List, cast, Optional
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -81,7 +81,8 @@ class Underlay(DXFGraphic):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        self._boundary_path = []  # type: List[Vertex]
+        self._boundary_path: List['Vertex'] = []
+        self._underlay_def: Optional['UnderlayDefinition'] = None
 
     def copy(self):
         raise DXFTypeError('Copying of underlay not supported.')
@@ -103,6 +104,10 @@ class Underlay(DXFGraphic):
     def load_boundary_path(self, tags: 'Tags'):
         self._boundary_path = [value for code, value in tags if code == 11]
 
+    def load_resources(self, doc: 'Drawing') -> None:
+        db = doc.entitydb
+        self._underlay_def = db.get(self.dxf.get('underlay_def_handle', None))
+
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
         super().export_entity(tagwriter)
@@ -117,10 +122,13 @@ class Underlay(DXFGraphic):
         for vertex in self.boundary_path:
             tagwriter.write_vertex(11, vertex[:2])
 
-    @property
-    def underlay_def(self) -> 'UnderlayDefinition':
-        return cast('UnderlayDefinition',
-                    self.entitydb[self.dxf.underlay_def_handle])
+    def set_underlay_def(self, underlay_def: 'UnderlayDefinition') -> None:
+        self._underlay_def = underlay_def
+        self.dxf.underlay_def_handle = underlay_def.dxf.handle
+        underlay_def.append_reactor_handle(self.dxf.handle)
+
+    def get_underlay_def(self) -> 'UnderlayDefinition':
+        return self._underlay_def
 
     @property
     def boundary_path(self):
@@ -191,8 +199,8 @@ class Underlay(DXFGraphic):
         self.clipping = False
 
     def destroy(self) -> None:
-        underlay_def = self.underlay_def
-        underlay_def.discard_reactor_handle(self.dxf.handle)
+        if self._underlay_def:
+            self._underlay_def.discard_reactor_handle(self.dxf.handle)
         del self._boundary_path
         super().destroy()
 

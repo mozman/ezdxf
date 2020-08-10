@@ -98,7 +98,7 @@ def test_new_pdf(new_doc):
     msp = new_doc.modelspace()
     underlay_def = new_doc.add_underlay_def('underlay.pdf')
     underlay = msp.add_underlay(underlay_def, insert=(0, 0, 0), scale=2)
-    assert underlay.dxf.insert  == (0, 0, 0)
+    assert underlay.dxf.insert == (0, 0, 0)
     assert underlay.dxf.scale_x == 2
     assert underlay.dxf.scale_y == 2
     assert underlay.dxf.scale_z == 2
@@ -109,7 +109,7 @@ def test_new_pdf(new_doc):
     assert underlay.adjust_for_background is False
     assert underlay.dxf.flags == 2
 
-    underlay_def2 = underlay.underlay_def
+    underlay_def2 = underlay.get_underlay_def()
     assert underlay_def.dxf.handle == underlay_def2.dxf.handle
 
 

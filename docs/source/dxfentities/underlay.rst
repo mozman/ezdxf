@@ -51,7 +51,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         extrusion vector, default = ``(0, 0, 1)``
 
-    .. attribute:: dxf.underlay_def
+    .. attribute:: dxf.underlay_def_handle
 
         Handle to the underlay definition entity, see :class:`UnderlayDefinition`
 
@@ -102,9 +102,13 @@ Required DXF version     DXF R2000 (``'AC1015'``)
         Two vertices describe a rectangle (lower left and upper right corner), more than two vertices
         is a polygon as clipping path.
 
-    .. attribute:: underlay_def
+    .. method:: get_underlay_def() -> UnderlayDefinition
 
-        Associated DEFINITION entity. see :class:`UnderlayDefinition`.
+        Returns the associated DEFINITION entity. see :class:`UnderlayDefinition`.
+
+    .. method:: set_underlay_def(underlay_def: UnderlayDefinition) -> None
+
+        Set the associated DEFINITION entity. see :class:`UnderlayDefinition`.
 
     .. automethod:: reset_boundary_path()
 

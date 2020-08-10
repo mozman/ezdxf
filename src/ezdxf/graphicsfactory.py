@@ -993,7 +993,7 @@ class CreatorInterface:
             underlay_def.entity_name, dxfattribs
         ))
         underlay.scaling = scale
-        underlay_def.append_reactor_handle(underlay.dxf.handle)
+        underlay.set_underlay_def(underlay_def)
         return underlay
 
     def _save_dimstyle(self, name: str) -> str:
