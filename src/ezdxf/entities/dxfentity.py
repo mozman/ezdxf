@@ -941,7 +941,7 @@ class DXFEntity:
             tagwriter.write_tag2(_handle_code, self.dxf.handle)
             if self.appdata:
                 self.appdata.export_dxf(tagwriter)
-            if self.extension_dict:
+            if self.has_extension_dict:
                 self.extension_dict.export_dxf(tagwriter)
             if self.reactors:
                 self.reactors.export_dxf(tagwriter)
@@ -990,7 +990,11 @@ class DXFEntity:
         """ Returns ``True`` if entity has an attached
         :class:`~ezdxf.entities.xdict.ExtensionDict`.
         """
-        return self.extension_dict is not None
+        xdict = self.extension_dict
+        if xdict is not None and xdict.is_alive:
+            return True
+        self.extension_dict = None
+        return False
 
     def get_extension_dict(self) -> 'ExtensionDict':
         """ Returns the existing :class:`~ezdxf.entities.xdict.ExtensionDict`.
@@ -999,7 +1003,6 @@ class DXFEntity:
             AttributeError: extension dict does not exist
 
         """
-
         if self.has_extension_dict:
             return self.extension_dict
         else:

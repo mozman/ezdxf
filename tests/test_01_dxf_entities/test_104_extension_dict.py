@@ -4,7 +4,6 @@
 import pytest
 import ezdxf
 
-
 @pytest.fixture(scope='module')
 def doc():
     return ezdxf.new()
@@ -78,3 +77,11 @@ def test_del_entity_with_ext_dict(doc):
     doc.objects.purge()
     assert xdict.is_alive is False
     assert store_xdict not in objects
+
+
+def test_multiple_destroy_calls(doc, entity):
+    xdict = entity.new_extension_dict(doc)
+    xdict.destroy()
+    xdict.destroy(), '2nd call should not raise an exception'
+    assert xdict.is_alive is False
+    assert entity.has_extension_dict is False

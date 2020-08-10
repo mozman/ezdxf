@@ -86,10 +86,9 @@ class ExtensionDict:
         tagwriter.write_tag2(APP_DATA_MARKER, '}')
 
     def destroy(self) -> None:
-        if not self.is_alive:
-            return
-        self._xdict.destroy()
-        self._xdict = None
+        if self._xdict is not None:
+            self._xdict.destroy()
+            self._xdict = None
 
     def add_dictionary(self, name: str, doc: 'Drawing',
                        hard_owned: bool = False) -> 'DXFEntity':
