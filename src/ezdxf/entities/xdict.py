@@ -23,22 +23,21 @@ class ExtensionDict:
     is deleted from database.
 
     """
+    __slots__ = ('_xdict', )
 
-    def __init__(self, owner: 'DXFEntity', xdict: Union[str, 'Dictionary']):
-        # back link owner, so __clone__() necessary
-        self.owner: DXFEntity = owner
+    def __init__(self, xdict: Union[str, 'Dictionary']):
         # 1st loading stage: _xdict as string -> handle to dict
         # 2nd loading stage: _xdict as DXF Dictionary
         self._xdict = xdict
 
     @property
     def dictionary(self) -> 'Dictionary':
-        """ Get associated extension dictionary as Dictionary() object. """
+        """ Get associated extension dictionary as :class:`Dictionary` object.
+        """
         assert self._xdict is not None
         return self._xdict
 
     def __getitem__(self, key: str):
-
         return self.dictionary[key]
 
     def __setitem__(self, key: str, value):
@@ -47,54 +46,38 @@ class ExtensionDict:
     def __contains__(self, key: str):
         return key in self.dictionary
 
-    @property
-    def dxf(self):
-        return self.dictionary.dxf
-
     @classmethod
-    def new(cls, owner: 'DXFEntity', doc: 'Drawing'):
+    def new(cls, owner_handle: str, doc: 'Drawing'):
         xdict = doc.objects.add_dictionary(
-            owner=owner.dxf.handle,
-            hard_owned=True,
+            owner=owner_handle,
             # All data in the extension dictionary belongs only to the owner
+            hard_owned=True,
         )
-        return cls(owner, xdict)
+        return cls(xdict)
 
-    def copy(self, owner: 'DXFEntity') -> Optional['ExtensionDict']:
-        """ Create a copy of the extension dictionary with new `owner`. """
+    def copy(self) -> Optional['ExtensionDict']:
+        """ Create a shallow copy of the extension dictionary. """
         assert self._xdict is not None
         copy = self.dictionary.copy()
-        # the copy is not added to objects section nor to the entity database!
-        # The copy of an extension dictionary can not have the same owner as
-        # the source dictionary.
-        return self.__class__(owner, copy)
+        copy.dxf.owner = None
+        return self.__class__(copy)
 
     @property
     def is_alive(self):
         return self._xdict is not None
 
-    def update_owner(self, owner: 'DXFEntity') -> None:
-        """ Update owner attribute, but also owner tag of contained DXF Dictionary.
-        """
-        assert self._xdict is not None
-        self.owner = owner
-        self.dictionary.dxf.owner = self.owner.dxf.handle
-
-    def __deepcopy__(self, memodict: dict = None):
-        """ Extension dict is owned by just one entity, multiple references are
-        not (should not?) possible.
-        """
-        return self.copy(self.owner)  # use current owner as temporary solution
+    def update_owner(self, handle: str) -> None:
+        """ Update owner tag of contained DXF Dictionary. """
+        self.dictionary.dxf.owner = handle
 
     @classmethod
-    def from_tags(cls, entity: 'DXFEntity', tags: Tags):
+    def from_tags(cls, tags: Tags):
         assert tags is not None
         # Expected DXF structure:
         # [(102, '{ACAD_XDICTIONARY', (360, handle), (102, '}')]
         if len(tags) != 3 or tags[1].code != XDICT_HANDLE_CODE:
-            raise DXFStructureError(
-                f"ACAD_XDICTIONARY error in entity: {str(entity)}")
-        return cls(entity, tags[1].value)
+            raise DXFStructureError("ACAD_XDICTIONARY error.")
+        return cls(tags[1].value)
 
     def load_resources(self, doc: 'Drawing') -> None:
         handle = self._xdict

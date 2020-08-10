@@ -598,8 +598,13 @@ class DXFEntity:
         # copy and bind dxf namespace to new entity
         entity.dxf = self.dxf.copy(entity)
         entity.dxf.reset_handles()
+
+        # Do not copy extension dict: if the extension dict should be copied
+        # in the future - a deep copy is maybe required!
         entity.extension_dict = None
+        # Do not copy reactors:
         entity.reactors = None
+
         entity.proxy_graphic = self.proxy_graphic  # immutable bytes
 
         # if appdata contains handles, they are treated as shared resources
@@ -721,7 +726,7 @@ class DXFEntity:
             if appid == ACAD_REACTORS:
                 self.reactors = Reactors.from_tags(data)
             elif appid == ACAD_XDICTIONARY:
-                self.extension_dict = ExtensionDict.from_tags(self, data)
+                self.extension_dict = ExtensionDict.from_tags(data)
             else:
                 self.set_app_data(appid, data)
 
@@ -729,7 +734,7 @@ class DXFEntity:
         """ Update entity handle. (internal API) """
         self.dxf.handle = handle
         if self.extension_dict:
-            self.extension_dict.update_owner(self)
+            self.extension_dict.update_owner(handle)
 
     def get_dxf_attrib(self, key: str, default: Any = None) -> Any:
         """
@@ -1001,7 +1006,7 @@ class DXFEntity:
             raise AttributeError('Entity has no extension dictionary.')
 
     def new_extension_dict(self, doc: 'Drawing') -> 'ExtensionDict':
-        self.extension_dict = ExtensionDict.new(self, doc)
+        self.extension_dict = ExtensionDict.new(self.dxf.handle, doc)
         return self.extension_dict
 
     def has_app_data(self, appid: str) -> bool:
