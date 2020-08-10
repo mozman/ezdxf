@@ -122,6 +122,7 @@ class Image(DXFGraphic):
         self._image_def_reactor = None
 
     def load_resources(self, doc: 'Drawing') -> None:
+        super().load_resources(doc)
         db = doc.entitydb
         self._image_def = db.get(self.dxf.get('image_def_handle', None))
         self._image_def_reactor = db.get(self.dxf.get('image_def_reactor_handle', None))

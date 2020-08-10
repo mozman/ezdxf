@@ -126,6 +126,7 @@ class DXFGroup(DXFObject):
         return (entity.dxf.handle for entity in self)
 
     def load_resources(self, doc: 'Drawing') -> None:
+        super().load_resources(doc)
         db = doc.entitydb
 
         def entities():

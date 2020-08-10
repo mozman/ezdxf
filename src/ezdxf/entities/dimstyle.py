@@ -239,6 +239,7 @@ class DimStyle(DXFEntity):
         # 2nd Loading stage: resolve handles to names.
         # ezdxf uses names for blocks, linetypes and text style as internal
         # data, handles are set at export.
+        super().load_resources(doc)
         db = doc.entitydb
         for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
             if self.dxf.hasattr(attrib_name):
