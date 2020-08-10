@@ -380,6 +380,7 @@ class Dictionary(DXFObject):
 
         if self.is_hard_owner:
             self._delete_hard_owned_entries()
+        super().destroy()
 
 
 acdb_dict_with_default = DefSubclass('AcDbDictionaryWithDefault', {

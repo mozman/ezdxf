@@ -123,13 +123,16 @@ class ObjectsSection:
         dxfobject.set_reactors([dxfattribs['owner']])
         return dxfobject
 
+    def purge(self):
+        self._entity_space.purge()
+
     # start of public interface
 
     @property
     def rootdict(self) -> Dictionary:
         """ Root dictionary. """
         if len(self):
-            return self._entity_space[0]  # type: Dictionary
+            return self._entity_space[0]
         else:
             return self.setup_rootdict()
 

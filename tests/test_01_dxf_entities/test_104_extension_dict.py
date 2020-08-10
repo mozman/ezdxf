@@ -21,7 +21,8 @@ def test_new_extension_dict(doc, entity):
     xdict = entity.new_extension_dict(doc)
     assert xdict.dictionary.dxftype() == 'DICTIONARY'
     assert len(xdict.dictionary) == 0
-    placeholder = xdict.add_placeholder('TEST')
+
+    placeholder = xdict.add_placeholder('TEST', doc)
     assert len(xdict.dictionary) == 1
     assert placeholder.dxf.owner == xdict.dictionary.dxf.handle
     assert 'TEST' in xdict.dictionary
@@ -29,7 +30,7 @@ def test_new_extension_dict(doc, entity):
 
 def test_direct_interface(doc, entity):
     xdict = entity.new_extension_dict(doc)
-    placeholder = xdict.add_placeholder('TEST')
+    placeholder = xdict.add_placeholder('TEST', doc)
     assert 'TEST' in xdict
     placeholder2 = xdict['TEST']
     assert placeholder is placeholder2
@@ -42,7 +43,7 @@ def test_copy_entity(doc, entity):
     except AttributeError:
         xdict = entity.new_extension_dict(doc)
 
-    xdict.add_placeholder('Test')
+    xdict.add_placeholder('Test', doc)
 
     new_entity = entity.copy()
     # copying of extension dict is not supported
@@ -74,5 +75,6 @@ def test_del_entity_with_ext_dict(doc):
     assert xdict.dictionary in objects
     store_xdict = xdict.dictionary
     msp.delete_entity(entity)
+    doc.objects.purge()
     assert xdict.is_alive is False
     assert store_xdict not in objects

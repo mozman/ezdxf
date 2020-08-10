@@ -667,7 +667,8 @@ class DXFEntity:
         Image, Underlay, DXFGroup, Dictionary, Dimstyle
 
         """
-        pass
+        if self.extension_dict is not None:
+            self.extension_dict.load_resources(doc)
 
     @classmethod
     def new(cls: Type[T], handle: str = None, owner: str = None,
@@ -877,7 +878,7 @@ class DXFEntity:
             return
 
         if self.extension_dict is not None:
-            self.extension_dict.destroy(self.doc)
+            self.extension_dict.destroy()
             del self.extension_dict
         del self.appdata
         del self.reactors
