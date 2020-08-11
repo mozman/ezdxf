@@ -248,12 +248,6 @@ class DXFGraphic(DXFEntity):
         """
         return []
 
-    def attached_entities(self) -> Iterable['DXFEntity']:
-        """ Yield attached entities: MTEXT,  different handling than linked
-        entities. (internal API)
-        """
-        return []
-
     def link_entity(self, entity: 'DXFEntity') -> None:
         """ Store linked or attached entities. Same API for both types of
         appended data, because entities with linked entities (POLYLINE, INSERT)

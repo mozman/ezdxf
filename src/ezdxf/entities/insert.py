@@ -27,12 +27,13 @@ from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
+from .subentity import LinkedEntitiesMixin
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-    TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef,
-    BlockLayout, BaseLayout, Auditor, EntityDB,
-)
+        TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef,
+        BlockLayout, BaseLayout, Auditor, EntityDB,
+    )
 
 __all__ = ['Insert']
 
@@ -81,7 +82,7 @@ NON_ORTHO_MSG = 'INSERT entity can not represent a non-orthogonal target ' \
 
 
 @register_entity
-class Insert(DXFGraphic):
+class Insert(LinkedEntitiesMixin, DXFGraphic):
     """ DXF INSERT entity """
     DXFTYPE = 'INSERT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_block_reference)
@@ -92,6 +93,11 @@ class Insert(DXFGraphic):
         self.seqend: Optional['SeqEnd'] = None
         self._has_new_sub_entities = True
 
+    def all_sub_entities(self) -> Iterable['DXFEntity']:
+        yield from self.attribs
+        if self.seqend:
+            yield self.seqend
+
     def linked_entities(self) -> Iterable['DXFEntity']:
         # Don't yield seqend here, because it is not a DXFGraphic entity
         return self.attribs
@@ -99,10 +105,6 @@ class Insert(DXFGraphic):
     def link_entity(self, entity: 'DXFGraphic') -> None:
         entity.set_owner(self.dxf.owner, self.dxf.paperspace)
         self.attribs.append(entity)
-
-    def link_seqend(self, seqend: 'DXFEntity') -> None:
-        seqend.dxf.owner = self.dxf.owner
-        self.seqend = seqend
 
     @property
     def attribs_follow(self) -> bool:
@@ -114,32 +116,6 @@ class Insert(DXFGraphic):
         if self.seqend:
             # If is None for INSERTS loaded from file with attached ATTRIBS
             entity.seqend = self.seqend.copy()
-
-    def add_sub_entities_to_entitydb(self, db: 'EntityDB') -> None:
-        """ Add sub-entities (ATTRIB, SEQEND) to entity database `db`,
-        called from EntityDB.
-
-        (internal API)
-        """
-        if not self._has_new_sub_entities:
-            return
-        for attrib in self.attribs:
-            if attrib.is_alive:
-                attrib.doc = self.doc  # grant same document
-                db.add(attrib)
-
-        if self.seqend and self.seqend.is_alive:
-            self.seqend.doc = self.doc  # grant same document
-            db.add(self.seqend)
-        self._has_new_sub_entities = False
-
-    def set_owner(self, owner: str, paperspace: int = 0):
-        # At loading from file, INSERT will be added to layout before attribs
-        # are linked, so set_owner() of INSERT does not set owner of attribs.
-        super().set_owner(owner, paperspace)
-        # attribs handled by super class by linked_entities() interface
-        if self.seqend:  # has no paperspace flag
-            self.seqend.dxf.owner = owner
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -171,20 +147,13 @@ class Insert(DXFGraphic):
         ])
         # todo: export ATTRIB and SEQEND
 
-    def export_seqend(self, tagwriter: 'TagWriter'):
-        # Export at same layer, don't know if ATTRIB entities must have the
-        # same layer:
-        self.seqend.dxf.layer = self.dxf.layer
-        self.seqend.export_dxf(tagwriter)
-
     def destroy(self) -> None:
         """ Delete all data and references. """
         if not self.is_alive:
             return
 
-        self.delete_all_attribs()
-        if self.seqend is not None:
-            self.seqend.destroy()
+        self.process_sub_entities(func=lambda e: e.destroy())
+        del self.attribs
         super().destroy()
 
     @property

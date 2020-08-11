@@ -3,6 +3,7 @@
 # Created 2019-02-16
 from typing import (
     TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict, Optional,
+    Callable,
 )
 from itertools import chain
 from ezdxf.lldxf import validator
@@ -21,6 +22,7 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
 from .lwpolyline import FORMAT_CODES
+from .subentity import LinkedEntitiesMixin
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -83,7 +85,7 @@ acdb_polyline = DefSubclass('AcDbPolylineDummy', {
 
 
 @register_entity
-class Polyline(DXFGraphic):
+class Polyline(LinkedEntitiesMixin, DXFGraphic):
     """ DXF POLYLINE entity """
     DXFTYPE = 'POLYLINE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_polyline)
@@ -110,6 +112,11 @@ class Polyline(DXFGraphic):
         self.seqend: Optional['SeqEnd'] = None
         self._has_new_sub_entities = True
 
+    def all_sub_entities(self) -> Iterable['DXFEntity']:
+        yield from self.vertices
+        if self.seqend:
+            yield self.seqend
+
     def linked_entities(self) -> Iterable['DXFVertex']:
         # don't yield SEQEND here, because it is not a DXFGraphic entity
         return self.vertices
@@ -119,57 +126,12 @@ class Polyline(DXFGraphic):
         entity.set_owner(self.dxf.owner, self.dxf.paperspace)
         self.vertices.append(entity)
 
-    def link_seqend(self, seqend: 'DXFEntity') -> None:
-        seqend.dxf.owner = self.dxf.owner
-        self.seqend = seqend
-
     def _copy_data(self, entity: 'Polyline') -> None:
         """ Copy vertices, does not store the copies into the entity database.
         """
         entity.vertices = [vertex.copy() for vertex in self.vertices]
         if self.seqend:
             entity.seqend = self.seqend.copy()
-
-    def add_sub_entities_to_entitydb(self, db: 'EntityDB') -> None:
-        """ Add sub-entities (VERTEX, SEQEND) to entity database `db`,
-        called from EntityDB.
-
-        (internal API)
-        """
-        if not self._has_new_sub_entities:
-            return
-
-        for vertex in self.vertices:
-            if vertex.is_alive:
-                vertex.doc = self.doc  # grant same document
-                db.add(vertex)
-
-        if self.seqend and self.seqend.is_alive:
-            self.seqend.doc = self.doc  # grant same document
-            db.add(self.seqend)
-        else:
-            self.new_seqend()
-        self._has_new_sub_entities = False
-
-    def new_seqend(self):
-        """ Create new SEQEND entity. (internal API)"""
-        seqend = factory.create_db_entry(
-            'SEQEND',
-            dxfattribs={'layer': self.dxf.layer},
-            doc=self.doc,
-        )
-        self.link_seqend(seqend)
-        self._has_new_sub_entities = True
-
-    def set_owner(self, owner: str, paperspace: int = 0):
-        # Loading from file: POLYLINE will be added to layout before vertices
-        # are linked, so set_owner() of POLYLINE does not set owner of vertices
-        # at loading time.
-        super().set_owner(owner, paperspace)
-        if self.seqend:
-            # SEQEND entity has no paperspace attribute and therefore can not
-            # processed like a VERTEX entity in set_owner():
-            self.seqend.dxf.owner = owner
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -208,20 +170,13 @@ class Polyline(DXFGraphic):
         # EntitySpace().
         # todo: export ATTRIB and SEQEND
 
-    def export_seqend(self, tagwriter: 'TagWriter'):
-        self.seqend.dxf.owner = self.dxf.owner
-        self.seqend.dxf.layer = self.dxf.layer
-        self.seqend.export_dxf(tagwriter)
-
     def destroy(self) -> None:
         """ Delete all data and references. """
         if not self.is_alive:
             return
 
-        for v in self.vertices:
-            v.destroy()
+        self.process_sub_entities(func=lambda e: e.destroy())
         del self.vertices
-        self.seqend.destroy()
         super().destroy()
 
     def on_layer_change(self, layer: str):
@@ -373,7 +328,7 @@ class Polyline(DXFGraphic):
         """
         return (vertex.dxf.location for vertex in self.vertices)
 
-    def _append_vertex(self, vertex: 'DXFVertex')->None:
+    def _append_vertex(self, vertex: 'DXFVertex') -> None:
         self.vertices.append(vertex)
         self._has_new_sub_entities = True
 
