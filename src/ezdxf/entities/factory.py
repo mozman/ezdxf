@@ -77,20 +77,19 @@ def bind(entity: 'DXFEntity', doc: 'Drawing') -> None:
     """
     assert entity.is_alive, 'Can not bind destroyed entity.'
     assert doc.entitydb is not None, 'Missing entity database.'
-    entity.doc = doc  # todo: remove dependency
+    entity.doc = doc
     doc.entitydb.add(entity)
 
 
 def is_bound(entity: 'DXFEntity', doc: 'Drawing') -> bool:
-    """ Returns ``True`` if `entity`is bound to (stored in) DXF document `doc`.
+    """ Returns ``True`` if `entity`is bound to DXF document `doc`.
     """
-    if not entity.is_alive:
+    if not entity.is_alive or \
+            entity.is_virtual or \
+            entity.doc is not doc:
         return False
     assert doc.entitydb, 'Missing entity database.'
-    handle = entity.dxf.handle
-    if handle:
-        return handle in doc.entitydb
-    return False
+    return entity.dxf.handle in doc.entitydb
 
 
 class EntityFactory:

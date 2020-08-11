@@ -6,8 +6,6 @@ The idea is to create a new setup design:
 1. There are two basic scenarios:
     - Load structures from file: `LOAD`
     - Create new structures by ezdxf: `CREATE`
-1. CHANGE: The default constructor for entities do not get a reference to the 
-   actual DXF document, new entities are always virtual entities.
 1. Binding a virtual entity to a DXF document is different for the 2 scenarios:
     - `LOAD`: all required resources should be loaded at the time of binding the
       entity, als handles are set and can be validated
@@ -31,11 +29,13 @@ create/load entities for these add-ons.
    DXF attribute `handle` is `None`
 - `UNLINKED`: not linked to a layout/owner: 
   DXF attribute `owner` is `None`
+- `doc` can be `None`
 
 ### Unlinked Entity
 
 - `BOUND`: stored in an entity database, which means bound to a document:
-  DXF attribute `handle` is not `None`
+  DXF attribute `handle` is not `None` and `doc` has a reference to the 
+  DXF document
 - `UNLINKED`: not linked to a layout/owner: 
   DXF attribute `owner` is `None`
 
@@ -46,9 +46,9 @@ CHANGE: remove dependency to the DXF document from DXF entities:
 - remove `dxffactory` attribute 
 - remove `entitydb` attribute
 
-I also tried to remove the `doc` attribitue of DXFEntity, but this was not a 
-great success, this just added additional `doc` arguments to many mathods, and
-in the worst case changed also top level interfaces (INSERT) to be unusable in
+I also tried to remove the `doc` attribute of `DXFEntity`, but this was not a 
+great success, this just added additional `doc` arguments to many methods, and
+in the worst case changed also top level interfaces (INSERT) to be unusable
 by the current design, so I reverted everything. 
 
 But nonetheless could reduce at least some dependencies.
@@ -86,14 +86,14 @@ A new entity is always a virtual entity after instantiation:
 
 - DXF owner is `None`
 - DXF handle is `None`
-- `doc` is `None`
+- `doc` attribute is maybe `None`
 
 ## BIND
 
 Binding the entity to a document means:
 
-- `BOUND`: entity is stored in the document entity database, `handle`is set, 
-  `doc` is set
+- `BOUND`: entity is stored in the document entity database, `handle`is set
+  and `doc` attribute is set
 - Check or create required resources
 - `UNLINKED`: `owner` is still `None`
 
@@ -121,11 +121,8 @@ DXF Entities:
 
 # Factory module
 
-Decouple `EntityFactory()` from a specific document, this is a relict from the 
-older ezdxf design until v0.9, where each DXF version had its own factory class.
-In fact the `EntityFactory()` object is obsolete, `next_underlay_key()` should 
-be moved to ..., `next_image_key()` is not used. The property `dxffactory` 
-should be removed from all objects.
+Removed `EntityFactory()`, this was a relict from the older ezdxf design until 
+v0.9, where each DXF version had its own factory class.
 
 ## Factory functions
 

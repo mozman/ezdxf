@@ -30,12 +30,13 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import (
     DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12, ACAD_REACTORS,
     ACAD_XDICTIONARY, DXFAttributeError, DXFValueError, DXFTypeError,
-    DXFKeyError, 
+    DXFKeyError,
 )
 from ezdxf.tools import set_flag_state
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors
 from .xdict import ExtensionDict
+from . import factory
 import logging
 
 logger = logging.getLogger('ezdxf')
@@ -733,6 +734,23 @@ class DXFEntity:
         if self.extension_dict:
             self.extension_dict.update_owner(handle)
 
+    @property
+    def is_alive(self):
+        """ Returns ``False`` if entity has been deleted. """
+        return hasattr(self, 'dxf')
+
+    @property
+    def is_virtual(self):
+        """ Returns ``True`` if entity is a virtual entity. """
+        return self.doc is None or self.dxf.handle is None
+
+    @property
+    def is_bound(self):
+        """ Returns ``True`` if entity is bound to DXF document. """
+        if not self.is_virtual:
+            return factory.is_bound(self, self.doc)
+        return False
+
     def get_dxf_attrib(self, key: str, default: Any = None) -> Any:
         """
         Get DXF attribute `key`, returns `default` if key doesn't exist, or
@@ -841,10 +859,6 @@ class DXFEntity:
         """
         return bool(self.dxf.get(name, 0) & flag)
 
-    @property
-    def is_alive(self):
-        """ Returns ``False`` if entity has been deleted. """
-        return hasattr(self, 'dxf')
 
     def remove_dependencies(self, other: 'Drawing' = None):
         """ Remove all dependencies from current document.
