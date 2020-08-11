@@ -164,6 +164,9 @@ v0.9, where each DXF version had its own factory class.
    means `entity.is_alive` returns False. All entity iterators like 
    `EntitySpace`, `EntityQuery`,  and `EntityDB` must filter (ignore) "dead" 
    entities. Calling `DXFEntity.destroy()` is the normal way to delete entities.
+1. `UNBIND` interface to remove an entity from a document and set state 
+   to a virtual entity, which should also `UNLINK` the entity, because an 
+   layout can not store a virtual entity.
 
 ```Python
 from ezdxf.entities.dxfentity import DXFNamespace
@@ -200,8 +203,12 @@ class DXFEntity:
         """ STATE interface """
         return self.dxf.owner is not None
 
+    def unbind(self):
+        """ UNBIND interface """
+
     def destroy(self):
         """ DESTROY interface """
+
 ```
 
 ### Layouts
@@ -212,8 +219,6 @@ class DXFEntity:
 1. Support for a virtual layout, which can store virtual entities
 1. It is not possible to move or copy layouts between documents, 
    maybe use `importer` add-on
-1. `copy_to_layout(entity, layout)` module function to copy an entity to another layout 
-1. `move_to_layout(entity, layout)` module function to move an entity to another layout 
 
 ```Python
 from ezdxf.entities import factory
@@ -224,8 +229,6 @@ class Layout:
 
     def add_entity(self, entity):
         """ LINK interface """
-    # cleanup interface:
-    link = add_entity
 
     def unlink(self, entity):
         """ UNLINK interface """
@@ -236,25 +239,15 @@ class Layout:
         if not auditor.has_errors:
             factory.bind(entity, self.doc)
             self.add_entity(entity)
-    # cleanup interface:
-    link_foreign = add_foreign_entity
     
-    def purge(self):
+    def refresh(self):
         """ Remove dead entities. """
-
-    def move_to_layout(self, entity, layout):
-        """ deprecated """
-        # replacement: module function
-        move_to_layout(entity, layout)
 
 ```
 
 ### Database
 
-1. `BIND` interface to bind entity to the database and document
-1. `UNBIND` interface to remove an entity from the database and set the entity 
-   state to a virtual entity, which should also `UNLINK` the process, because an 
-   layout can not store a virtual entity.
+1. `BIND` interface to add an entity to the database of a document
 1. remove/deprecate `delete_entity()` interface, which is the same as `UNBIND` 
    and `DESTROY` entity
 
@@ -262,17 +255,12 @@ class Layout:
 class EntityDB:
     def add(self, entity):
         """ BIND interface """
-    # cleanup interface:
-    bind = add
-
-    def unbind(self, entity):
-        """ UNBIND interface """
 
     def delete_entity(self, entity):
         """ deprecated """
         entity.destroy()  # replacement
 
-    def purge(self):
+    def refresh(self):
         """ Remove dead entities. """
 
 ```
