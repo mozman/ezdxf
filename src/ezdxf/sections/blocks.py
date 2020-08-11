@@ -18,7 +18,7 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter, Drawing, EntityDB, DXFEntity, DXFTagStorage, Table,
-        EntityFactory, BlockRecord, Block, EndBlk,
+        BlockRecord
     )
 
 

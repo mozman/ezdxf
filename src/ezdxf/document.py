@@ -13,12 +13,11 @@ from ezdxf.lldxf.const import acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueErro
 from ezdxf.lldxf.const import DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013, \
     versions_supported_by_save, versions_supported_by_new
 from ezdxf.lldxf.const import DXFVersionError
-from ezdxf.lldxf.loader import load_dxf_structure, fill_database, SectionDict
+from ezdxf.lldxf.loader import load_dxf_structure, fill_database
 from ezdxf.lldxf import repair
 from ezdxf.lldxf.tagwriter import TagWriter, BinaryTagWriter
 
 from ezdxf.entitydb import EntityDB
-from ezdxf.entities.factory import EntityFactory
 from ezdxf.layouts.layouts import Layouts
 from ezdxf.tools.codepage import tocodepage, toencoding
 from ezdxf.tools.juliandate import juliandate

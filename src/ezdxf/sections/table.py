@@ -1,8 +1,8 @@
 # Purpose: tables contained in tables sections
 # Created: 13.03.2011
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Iterator, Union, Optional, List
+from typing import TYPE_CHECKING, Iterable, Iterator, Optional, List
 from collections import OrderedDict
 
 from ezdxf.lldxf.const import DXFTableEntryError, DXFStructureError, DXFTypeError
@@ -10,12 +10,9 @@ from ezdxf.entities.table import TableHead
 from ezdxf.entities import factory
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Auditor
-    from ezdxf.entities.factory import EntityFactory
-    from ezdxf.entitydb import EntityDB
-    from ezdxf.document import Drawing
-    from ezdxf.entities.dxfentity import DXFEntity
-    from ezdxf.entities.layer import Layer
+    from ezdxf.eztypes import (
+        TagWriter, Auditor, EntityDB, Drawing, DXFEntity, Layer
+    )
 
 TABLENAMES = {
     'LAYER': 'LAYERS',

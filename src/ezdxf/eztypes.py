@@ -29,9 +29,6 @@ if TYPE_CHECKING:
     from ezdxf.entities.xdict import ExtensionDict
     from ezdxf.entities.appdata import AppData
 
-    # Entity factories
-    from ezdxf.entities.factory import EntityFactory
-
     from ezdxf.layouts.base import BaseLayout, VirtualLayout
     from ezdxf.layouts.layout import Layout
     from ezdxf.layouts.blocklayout import BlockLayout

@@ -1,8 +1,7 @@
 # Created: 2019-02-15
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union
-from ezdxf.lldxf.tags import Tags
+from typing import TYPE_CHECKING
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
 from ezdxf.lldxf.const import DXFInternalEzdxfError
@@ -11,8 +10,8 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing
 
 __all__ = [
-    'EntityFactory', 'register_entity', 'ENTITY_CLASSES', 'replace_entity',
-    'new', 'cls', 'is_bound'
+    'register_entity', 'ENTITY_CLASSES', 'replace_entity',
+    'new', 'cls', 'is_bound', 'create_db_entry', 'load', 'bind'
 ]
 # Stores all registered classes:
 ENTITY_CLASSES = {}
@@ -90,23 +89,3 @@ def is_bound(entity: 'DXFEntity', doc: 'Drawing') -> bool:
         return False
     assert doc.entitydb, 'Missing entity database.'
     return entity.dxf.handle in doc.entitydb
-
-
-class EntityFactory:
-    def __init__(self, doc: 'Drawing' = None):
-        self.doc = doc
-
-    def new_entity(self, dxftype: str, dxfattribs: dict = None) -> 'DXFEntity':
-        """ Create a new entity, requires an instantiated DXF document. """
-        return new(dxftype, dxfattribs, self.doc)
-
-    def create_db_entry(self, dxftype: str, dxfattribs: dict) -> 'DXFEntity':
-        """ Create new entity and add to drawing-database. """
-        return create_db_entry(dxftype, dxfattribs, self.doc)
-
-    def load(self, tags: Union['ExtendedTags', 'Tags']) -> 'DXFEntity':
-        if not isinstance(tags, ExtendedTags):
-            tags = ExtendedTags(tags)
-        entity = load(tags)
-        bind(entity, self.doc)
-        return entity
