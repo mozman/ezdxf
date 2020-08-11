@@ -3,7 +3,7 @@
 # created: 2019-02-18
 import pytest
 
-from ezdxf.drawing import Drawing
+from ezdxf.document import Drawing
 from ezdxf.sections.objects import _OBJECT_TABLE_NAMES
 
 

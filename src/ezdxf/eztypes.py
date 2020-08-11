@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
     # Entities manager
     from ezdxf.entitydb import EntitySpace
-    from ezdxf.drawing import Drawing
+    from ezdxf.document import Drawing
     from ezdxf.entitydb import EntityDB
 
     # Sections and Tables

@@ -8,7 +8,7 @@ import base64
 import io
 from ezdxf.tools.standards import setup_drawing
 from ezdxf.lldxf.const import DXF12, DXF2013
-from ezdxf.drawing import Drawing
+from ezdxf.document import Drawing
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFInfo
@@ -80,7 +80,7 @@ def read(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Drawi
         DXFStructureError: for invalid DXF structure
 
     """
-    from ezdxf.drawing import Drawing
+    from ezdxf.document import Drawing
 
     return Drawing.read(stream, legacy_mode=legacy_mode, filter_stack=filter_stack)
 

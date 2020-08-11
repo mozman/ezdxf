@@ -3,7 +3,7 @@
 # Created: 2020-04-01
 from typing import Dict
 
-from ezdxf.drawing import Drawing
+from ezdxf.document import Drawing
 from ezdxf.tools import codepage
 
 from ezdxf.sections.header import HeaderSection

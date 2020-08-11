@@ -7,7 +7,7 @@ from ezdxf.addons.drawing import Frontend, RenderContext, Properties
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Radians
-from ezdxf.drawing import Drawing
+from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
 from ezdxf.render import Path

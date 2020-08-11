@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 from ezdxf.lldxf.tagger import internal_tag_compiler
-from ezdxf.drawing import Drawing
+from ezdxf.document import Drawing
 from ezdxf import DXFValueError, decode_base64
 
 

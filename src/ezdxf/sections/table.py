@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Auditor
     from ezdxf.entities.factory import EntityFactory
     from ezdxf.entitydb import EntityDB
-    from ezdxf.drawing import Drawing
+    from ezdxf.document import Drawing
     from ezdxf.entities.dxfentity import DXFEntity
     from ezdxf.entities.layer import Layer
 

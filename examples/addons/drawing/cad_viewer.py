@@ -18,7 +18,7 @@ from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFParentStack
-from ezdxf.drawing import Drawing
+from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.lldxf.const import DXFStructureError
 

@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Optional, List
 
 import ezdxf
-from ezdxf.drawing import Drawing
+from ezdxf.document import Drawing
 from ezdxf.lldxf.validator import is_dxf_file, dxf_info, is_binary_dxf_file, dwg_version
 
 logger = logging.getLogger('ezdxf')
