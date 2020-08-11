@@ -209,8 +209,7 @@ class BlockRecord(DXFEntity):
 
         """
         self.entity_space.remove(entity)
-        entity.dxf.paperspace = -1  # set invalid paper space
-        entity.dxf.owner = None
+        entity.set_owner(None)
 
     def delete_entity(self, entity: 'DXFGraphic') -> None:
         """

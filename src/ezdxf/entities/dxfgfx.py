@@ -239,8 +239,6 @@ class DXFGraphic(DXFEntity):
             self.dxf.paperspace = paperspace
         else:
             self.dxf.discard('paperspace')
-        for e in self.linked_entities():  # type: DXFGraphic
-            e.set_owner(owner, paperspace)
 
     def linked_entities(self) -> Iterable['DXFEntity']:
         """ Yield linked entities: VERTEX or ATTRIB, different handling than

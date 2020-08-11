@@ -10,10 +10,11 @@ from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
 from ezdxf.entitydb import EntityDB, EntitySpace
 from ezdxf.graphicsfactory import CreatorInterface
+from ezdxf.entities import LinkedEntitiesMixin
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        BlockRecord, DXFGraphic, Dictionary, KeyFunc, ExtensionDict,
+        BlockRecord, DXFGraphic, KeyFunc, ExtensionDict,
     )
 
 SUPPORTED_FOREIGN_ENTITY_TYPES = {
@@ -239,8 +240,9 @@ class BaseLayout(_AbstractLayout):
             else:
                 # unlink entity from other database without destroying
                 del foreign_doc.entitydb[entity.dxf.handle]
-                for e in entity.linked_entities():
-                    del foreign_doc.entitydb[e.dxf.handle]
+                if isinstance(entity, LinkedEntitiesMixin):
+                    for e in entity.all_sub_entities():
+                        del foreign_doc.entitydb[e.dxf.handle]
 
                 # unlink from layout
                 layout = entity.get_layout()

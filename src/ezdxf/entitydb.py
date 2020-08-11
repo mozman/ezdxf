@@ -8,6 +8,7 @@ from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.audit import AuditError, Auditor
 from ezdxf.lldxf.const import DXFInternalEzdxfError
+from ezdxf.entities.subentity import LinkedEntitiesMixin
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -147,6 +148,10 @@ class EntityDB:
         """ Discard entity from database without destroying the entity.
         """
         if entity.is_alive:
+            if isinstance(entity, LinkedEntitiesMixin):
+                for sub_entity in entity.all_sub_entities():
+                    self.discard(sub_entity)
+
             handle = entity.dxf.handle
             try:
                 del self._database[handle]
@@ -270,7 +275,7 @@ class EntityDB:
         self.empty_trashcan()
         entities = [
             entity for entity in self.values()
-            if hasattr(entity, 'add_sub_entities_to_entitydb')
+            if isinstance(entity, LinkedEntitiesMixin)
         ]
         for entity in entities:
             entity.add_sub_entities_to_entitydb(self)

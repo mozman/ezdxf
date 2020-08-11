@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Callable
 from abc import abstractmethod
-from ezdxf.entities import factory
+from ezdxf.entities import factory, DXFGraphic
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, TagWriter, EntityDB
 
@@ -68,7 +68,8 @@ class LinkedEntitiesMixin:
         # vertices/attrib entities are linked, so set_owner() of POLYLINE does
         # not set owner of vertices at loading time.
         super().set_owner(owner, paperspace)
-        if self.seqend:
-            # SEQEND entity has no paperspace attribute and therefore can not
-            # processed like a VERTEX entity in set_owner():
-            self.seqend.dxf.owner = owner
+        for entity in self.all_sub_entities():
+            if isinstance(entity, DXFGraphic):
+                entity.set_owner(owner, paperspace)
+            else:  # SEQEND
+                entity.dxf.owner = owner
