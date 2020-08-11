@@ -8,6 +8,7 @@ from ezdxf.sections.blocks import BlocksSection
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.entities import factory
 
+
 @pytest.fixture
 def dxf12():
     return ezdxf.new('R12')
@@ -171,9 +172,10 @@ def test_do_not_purge_referenced_special_blocks(name, doc):
 def test_do_not_purge_used_dimension(doc):
     # DIMENSION (and ACAD_TABLE) block are not referenced by explicit INSERT
     # entity.
-    dimension = doc.dxffactory.create_db_entry(
+    dimension = factory.create_db_entry(
         'DIMENSION',
         dxfattribs={'geometry': '*D01'},
+        doc=doc,
     )
     msp = doc.modelspace()
     msp.add_entity(dimension)

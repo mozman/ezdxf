@@ -5,7 +5,7 @@ import pytest
 import ezdxf
 
 from ezdxf.entities.dictionary import Dictionary, DictionaryWithDefault
-from ezdxf.entities import DXFEntity
+from ezdxf.entities import DXFEntity, factory
 from ezdxf import DXFKeyError, DXFValueError
 from ezdxf.audit import Auditor, AuditError
 
@@ -137,7 +137,7 @@ def doc():
 
 def test_get_entity_invalid_handle(doc):
     rootdict = doc.rootdict
-    e = doc.dxffactory.new_entity('ACDBPLACEHOLDER', {})
+    e = factory.new('ACDBPLACEHOLDER', {})
     e.dxf.handle = 'FFFF'
     e.dxf.owner = 'ABBA'
     rootdict['TEST'] = e

@@ -30,18 +30,9 @@ class CreatorInterface:
     def __init__(self, doc: 'Drawing'):
         self.doc = doc
 
-    # todo: for compatibility
-    @property
-    def drawing(self):
-        return self.doc
-
     @property
     def dxfversion(self) -> str:
         return self.doc.dxfversion
-
-    @property
-    def dxffactory(self):
-        return self.doc.dxffactory
 
     @property
     def is_active_paperspace(self):
@@ -57,7 +48,7 @@ class CreatorInterface:
             dxfattribs: DXF attributes for the new entity
 
         """
-        entity = self.dxffactory.create_db_entry(type_, dxfattribs)
+        entity = factory.create_db_entry(type_, dxfattribs, self.doc)
         self.add_entity(entity)
         return entity
 
