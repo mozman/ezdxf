@@ -1,23 +1,38 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Callable
-from abc import abstractmethod
-from ezdxf.entities import factory, DXFGraphic
+from typing import TYPE_CHECKING, Iterable, Callable, List, Optional
+from ezdxf.entities import factory, DXFGraphic, SeqEnd
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity, TagWriter, EntityDB
+    from ezdxf.eztypes import DXFEntity, TagWriter, EntityDB, Drawing
 
 
-class LinkedEntitiesMixin:
-    """ Mixin for common features of the INSERT and the POLYLINE entity.
+class LinkedEntities(DXFGraphic):
+    """ Base class for common features of the INSERT and the POLYLINE entity.
 
     Both have linked entities.
     """
 
-    @abstractmethod
+    def __init__(self, doc: 'Drawing' = None):
+        super().__init__(doc)
+        self._sub_entities: List[DXFGraphic] = []
+        self.seqend: Optional['SeqEnd'] = None
+        self._has_new_sub_entities = True
+
     def all_sub_entities(self) -> Iterable['DXFEntity']:
-        """ Yield ALL entities."""
-        pass
+        yield from self._sub_entities
+        if self.seqend:
+            yield self.seqend
+
+    def link_entity(self, entity: 'DXFGraphic') -> None:
+        entity.set_owner(self.dxf.owner, self.dxf.paperspace)
+        self._sub_entities.append(entity)
+
+    def _copy_data(self, entity: 'LinkedEntities') -> None:
+        """ Copy ATTRIB entities, does not store the copies into database. """
+        entity._sub_entities = [e.copy() for e in self._sub_entities]
+        if self.seqend:
+            entity.seqend = self.seqend.copy()
 
     def process_sub_entities(self, func: Callable[['DXFEntity'], None]):
         """ Call `func` for each sub-entity (VERTEX, SEQEND).
@@ -74,3 +89,13 @@ class LinkedEntitiesMixin:
     def export_dxf_sub_entities(self, tagwriter: 'TagWriter'):
         for entity in self.all_sub_entities():
             entity.export_dxf(tagwriter)
+
+    def destroy(self) -> None:
+        """ Delete all data and references. """
+        if not self.is_alive:
+            return
+
+        self.process_sub_entities(func=lambda e: e.destroy())
+        del self._sub_entities
+        del self.seqend
+        super().destroy()

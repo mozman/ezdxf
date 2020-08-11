@@ -82,7 +82,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.shape import Shape
     from ezdxf.entities.solid import Solid, Trace, Face3d
 
-    from ezdxf.entities.subentity import LinkedEntitiesMixin
+    from ezdxf.entities.subentity import LinkedEntities
     from ezdxf.entities.polyline import Polyline, Polyface, Polymesh, DXFVertex
     from ezdxf.entities.insert import Insert
     from ezdxf.entities.attrib import AttDef, Attrib

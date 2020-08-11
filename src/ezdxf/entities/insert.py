@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-16
 from typing import (
-    TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional, List,
+    TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional,
     Callable, Dict,
 )
 import math
@@ -24,14 +24,15 @@ from ezdxf.explode import (
 from ezdxf.query import EntityQuery
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
+from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
-from .subentity import LinkedEntitiesMixin
+from .subentity import LinkedEntities
 from .attrib import Attrib
+
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, AttDef,
-        BlockLayout, BaseLayout, Auditor,
+        TagWriter, Vertex, DXFNamespace, AttDef, BlockLayout, BaseLayout,
+        Auditor,
     )
 
 __all__ = ['Insert']
@@ -81,36 +82,18 @@ NON_ORTHO_MSG = 'INSERT entity can not represent a non-orthogonal target ' \
 
 
 @register_entity
-class Insert(LinkedEntitiesMixin, DXFGraphic):
+class Insert(LinkedEntities):
     """ DXF INSERT entity """
     DXFTYPE = 'INSERT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_block_reference)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
-        self.attribs: List['Attrib'] = []
-        self.seqend: Optional['SeqEnd'] = None
-        self._has_new_sub_entities = True
-
-    def all_sub_entities(self) -> Iterable['DXFEntity']:
-        yield from self.attribs
-        if self.seqend:
-            yield self.seqend
-
-    def link_entity(self, entity: 'DXFGraphic') -> None:
-        assert isinstance(entity, Attrib)
-        entity.set_owner(self.dxf.owner, self.dxf.paperspace)
-        self.attribs.append(entity)
+    @property
+    def attribs(self):
+        return self._sub_entities
 
     @property
     def attribs_follow(self) -> bool:
         return bool(len(self.attribs))
-
-    def _copy_data(self, entity: 'Insert') -> None:
-        """ Copy ATTRIB entities, does not store the copies into database. """
-        entity.attribs = [attrib.copy() for attrib in self.attribs]
-        if self.seqend:
-            entity.seqend = self.seqend.copy()
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -145,15 +128,6 @@ class Insert(LinkedEntitiesMixin, DXFGraphic):
         # Do no export SEQEND if no ATTRIBS attached:
         if self.attribs_follow:
             super().export_dxf_sub_entities(tagwriter)
-
-    def destroy(self) -> None:
-        """ Delete all data and references. """
-        if not self.is_alive:
-            return
-
-        self.process_sub_entities(func=lambda e: e.destroy())
-        del self.attribs
-        super().destroy()
 
     @property
     def has_scaling(self) -> bool:
@@ -380,7 +354,7 @@ class Insert(LinkedEntitiesMixin, DXFGraphic):
 
         for attrib in self.attribs:
             attrib.destroy()
-        self.attribs = []
+        self._sub_entities = []
 
     def transform(self, m: 'Matrix44') -> 'Insert':
         """ Transform INSERT entity by transformation matrix `m` inplace.

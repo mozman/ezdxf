@@ -10,7 +10,7 @@ from .xdict import ExtensionDict
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors
 from .dxfentity import DXFEntity
-from .dxfgfx import DXFGraphic
+from .dxfgfx import DXFGraphic, SeqEnd
 from .dxfobj import DXFObject
 
 # register management structures
@@ -47,7 +47,7 @@ from .arc import Arc
 from .shape import Shape
 from .solid import Solid, Face3d, Trace
 from .text import Text
-from .subentity import LinkedEntitiesMixin
+from .subentity import LinkedEntities
 from .insert import Insert
 from .block import Block, EndBlk
 from .polyline import Polyline, Polyface, Polymesh, MeshVertexCache

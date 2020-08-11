@@ -2,8 +2,7 @@
 # License: MIT License
 # Created 2019-02-16
 from typing import (
-    TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict, Optional,
-    Callable,
+    TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict
 )
 from itertools import chain
 from ezdxf.lldxf import validator
@@ -19,15 +18,15 @@ from ezdxf.query import EntityQuery
 from ezdxf.entities import factory
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
+from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .lwpolyline import FORMAT_CODES
-from .subentity import LinkedEntitiesMixin
+from .subentity import LinkedEntities
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing,
-        Line, Arc, Face3d, BaseLayout, Auditor, EntityDB,
+        TagWriter, Vertex, FaceType, DXFNamespace, Line, Arc, Face3d,
+        BaseLayout, Auditor,
     )
 
 __all__ = ['Polyline', 'Polyface', 'Polymesh']
@@ -85,7 +84,7 @@ acdb_polyline = DefSubclass('AcDbPolylineDummy', {
 
 
 @register_entity
-class Polyline(LinkedEntitiesMixin, DXFGraphic):
+class Polyline(LinkedEntities):
     """ DXF POLYLINE entity """
     DXFTYPE = 'POLYLINE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_polyline)
@@ -106,28 +105,9 @@ class Polyline(LinkedEntitiesMixin, DXFGraphic):
     BEZIER_SURFACE = 8
     ANY3D = POLYLINE_3D | POLYMESH | POLYFACE
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
-        self.vertices: List[DXFVertex] = []
-        self.seqend: Optional['SeqEnd'] = None
-        self._has_new_sub_entities = True
-
-    def all_sub_entities(self) -> Iterable['DXFEntity']:
-        yield from self.vertices
-        if self.seqend:
-            yield self.seqend
-
-    def link_entity(self, entity: 'DXFEntity') -> None:
-        assert isinstance(entity, DXFVertex)
-        entity.set_owner(self.dxf.owner, self.dxf.paperspace)
-        self.vertices.append(entity)
-
-    def _copy_data(self, entity: 'Polyline') -> None:
-        """ Copy vertices, does not store the copies into the entity database.
-        """
-        entity.vertices = [vertex.copy() for vertex in self.vertices]
-        if self.seqend:
-            entity.seqend = self.seqend.copy()
+    @property
+    def vertices(self):
+        return self._sub_entities
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -164,15 +144,6 @@ class Polyline(LinkedEntitiesMixin, DXFGraphic):
         ])
         # The following VERTEX entities and the SEQEND entity is exported by
         # EntitySpace().
-
-    def destroy(self) -> None:
-        """ Delete all data and references. """
-        if not self.is_alive:
-            return
-
-        self.process_sub_entities(func=lambda e: e.destroy())
-        del self.vertices
-        super().destroy()
 
     def on_layer_change(self, layer: str):
         """ Event handler for layer change. Changes also the layer of all vertices.
@@ -581,7 +552,7 @@ class Polyface(Polyline):
     @classmethod
     def from_polyline(cls, polyline: Polyline) -> 'Polyface':
         polyface = cls.shallow_copy(polyline)
-        polyface.vertices = polyline.vertices
+        polyface._sub_entities = polyline._sub_entities
         polyface.seqend = polyline.seqend
         # do not destroy polyline - all data would be lost
         return polyface
@@ -676,8 +647,8 @@ class Polyface(Polyline):
 
         """
         polyface_builder = PolyfaceBuilder(faces, precision=precision)
-        self.vertices = []
-        self.vertices = polyface_builder.get_vertices()
+        self._sub_entities = []
+        self._sub_entities = polyface_builder.get_vertices()
         self.update_count(polyface_builder.nvertices, polyface_builder.nfaces)
 
     def update_count(self, nvertices: int, nfaces: int) -> None:
@@ -863,7 +834,7 @@ class Polymesh(Polyline):
     @classmethod
     def from_polyline(cls, polyline: Polyline) -> 'Polymesh':
         polymesh = cls.shallow_copy(polyline)
-        polymesh.vertices = polyline.vertices
+        polymesh._sub_entities = polyline._sub_entities
         polymesh.seqend = polyline.seqend
         return polymesh
 

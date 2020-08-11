@@ -8,7 +8,7 @@ from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.audit import AuditError, Auditor
 from ezdxf.lldxf.const import DXFInternalEzdxfError
-from ezdxf.entities.subentity import LinkedEntitiesMixin
+from ezdxf.entities.subentity import LinkedEntities
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -135,7 +135,7 @@ class EntityDB:
 
         # add sub entities like ATTRIB, VERTEX and SEQEND to database
         # only INSERT and POLYLINE using this feature
-        if isinstance(entity, LinkedEntitiesMixin):
+        if isinstance(entity, LinkedEntities):
             entity.add_sub_entities_to_entitydb(self)
 
     def delete_entity(self, entity: DXFEntity) -> None:
@@ -148,7 +148,7 @@ class EntityDB:
         """ Discard entity from database without destroying the entity.
         """
         if entity.is_alive:
-            if isinstance(entity, LinkedEntitiesMixin):
+            if isinstance(entity, LinkedEntities):
                 for sub_entity in entity.all_sub_entities():
                     self.discard(sub_entity)
 
@@ -275,7 +275,7 @@ class EntityDB:
         self.empty_trashcan()
         entities = [
             entity for entity in self.values()
-            if isinstance(entity, LinkedEntitiesMixin)
+            if isinstance(entity, LinkedEntities)
         ]
         for entity in entities:
             entity.add_sub_entities_to_entitydb(self)
@@ -343,7 +343,7 @@ class EntitySpace:
         """
         for entity in iter(self):
             entity.export_dxf(tagwriter)
-            if isinstance(entity, LinkedEntitiesMixin):
+            if isinstance(entity, LinkedEntities):
                 entity.export_dxf_sub_entities(tagwriter)
 
     def remove(self, entity: 'DXFEntity') -> None:

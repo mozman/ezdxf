@@ -10,7 +10,7 @@ from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
 from ezdxf.entitydb import EntityDB, EntitySpace
 from ezdxf.graphicsfactory import CreatorInterface
-from ezdxf.entities import LinkedEntitiesMixin
+from ezdxf.entities import LinkedEntities
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -240,12 +240,12 @@ class BaseLayout(_AbstractLayout):
             else:
                 # Unbind entity from other document without destruction.
                 factory.unbind(entity)
-                if isinstance(entity, LinkedEntitiesMixin):
+                if isinstance(entity, LinkedEntities):
                     for e in entity.all_sub_entities():
                         factory.unbind(e)
 
         entity.remove_dependencies(self.doc)
-        if isinstance(entity, LinkedEntitiesMixin):
+        if isinstance(entity, LinkedEntities):
             entity.process_sub_entities(
                 lambda e: e.remove_dependencies(self.doc)
             )
