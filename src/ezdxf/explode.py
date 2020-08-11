@@ -73,17 +73,13 @@ def explode_block_reference(block_ref: 'Insert',
         # This is the behavior of the BURST command of the AutoCAD Express Tools
         for attrib in block_ref.attribs:
             # Attached ATTRIB entities are already located in the WCS
-            text = attrib_to_text(attrib, dxffactory)
+            text = attrib_to_text(attrib)
             target_layout.add_entity(text)
             entities.append(text)
 
     entitydb = block_ref.doc.entitydb
     assert entitydb is not None, \
         'Exploding a block reference requires an entity database.'
-
-    dxffactory = block_ref.doc.dxffactory
-    assert dxffactory is not None, \
-        'Exploding a block reference requires a DXF entity factory.'
 
     entities = []
     if block_ref.mcount > 1:
@@ -106,16 +102,15 @@ IGNORE_FROM_ATTRIB = {
 }
 
 
-def attrib_to_text(attrib: 'Attrib', dxffactory) -> 'Text':
+def attrib_to_text(attrib: 'Attrib') -> 'Text':
     dxfattribs = attrib.dxfattribs(drop=IGNORE_FROM_ATTRIB)
     # ATTRIB has same owner as INSERT but does not reside in any EntitySpace()
     # and must not deleted from any layout.
     if attrib.dxf.handle is not None:
-        # not a virtual ATTRIB
-        dxffactory.doc.entitydb.delete_entity(attrib)
+        attrib.destroy()
     # New TEXT entity has same handle as the deleted ATTRIB entity and replaces
     # the ATTRIB entity in the database.
-    return dxffactory.create_db_entry('TEXT', dxfattribs=dxfattribs)
+    return factory.new('TEXT', dxfattribs=dxfattribs)
 
 
 def virtual_block_reference_entities(

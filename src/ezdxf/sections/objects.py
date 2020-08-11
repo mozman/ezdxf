@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Iterable, Tuple, cast, Iterator, Union
 import logging
 
 from ezdxf.entities.dictionary import Dictionary
+from ezdxf.entities import factory
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
 from ezdxf.entitydb import EntitySpace
 from ezdxf.query import EntityQuery
@@ -12,7 +13,7 @@ from ezdxf.tools.handle import UnderlayKeyGenerator
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GeoData, DictionaryVar
-    from ezdxf.eztypes import Drawing, DXFEntity, EntityFactory, TagWriter, EntityDB, DXFTagStorage, DXFObject
+    from ezdxf.eztypes import Drawing, TagWriter, EntityDB, DXFTagStorage, DXFObject
     from ezdxf.eztypes import ImageDefReactor, ImageDef, UnderlayDef, DictionaryWithDefault, XRecord, Placeholder
 
 logger = logging.getLogger('ezdxf')
@@ -25,11 +26,6 @@ class ObjectsSection:
         self._entity_space = EntitySpace()
         if entities is not None:
             self._build(iter(entities))
-
-    @property
-    def dxffactory(self) -> 'EntityFactory':
-        """ Returns drawing DXF entity factory. (internal API) """
-        return self.doc.dxffactory
 
     @property
     def entitydb(self) -> 'EntityDB':
@@ -70,8 +66,8 @@ class ObjectsSection:
 
         (internal API)
         """
-        dxf_entity = self.dxffactory.create_db_entry(_type, dxfattribs)
-        self._entity_space.add(dxf_entity)  # type: DXFObject
+        dxf_entity = factory.create_db_entry(_type, dxfattribs, self.doc)
+        self._entity_space.add(dxf_entity)
         return dxf_entity
 
     def delete_entity(self, entity: 'DXFObject') -> None:

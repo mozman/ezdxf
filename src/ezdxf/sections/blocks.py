@@ -5,6 +5,7 @@ from ezdxf.lldxf.const import (
     DXFStructureError, DXFBlockInUseError, DXFTableEntryError, DXFKeyError,
 )
 from ezdxf.lldxf import const
+from ezdxf.entities import factory
 from ezdxf.entities.dxfgfx import entity_linker
 from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.render.arrows import ARROWS
@@ -81,10 +82,6 @@ class BlocksSection:
     def entitydb(self) -> 'EntityDB':
         return self.doc.entitydb
 
-    @property
-    def dxffactory(self) -> 'EntityFactory':
-        return self.doc.dxffactory
-
     def load(self, entities: List['DXFEntity']) -> None:
         """
         Load DXF entities into BlockLayouts. `entities` is a list of
@@ -150,15 +147,18 @@ class BlocksSection:
         """
         for block_record in self.block_records:  # type: BlockRecord
             if block_record.block is None:
-                block = self.doc.dxffactory.create_db_entry(
+                block = factory.create_db_entry(
                     'BLOCK',
                     dxfattribs={
                         'name': block_record.dxf.name,
                         'base_point': (0, 0, 0),
-                    })
-                endblk = self.doc.dxffactory.create_db_entry(
+                    },
+                    doc=self.doc,
+                )
+                endblk = factory.create_db_entry(
                     'ENDBLK',
-                    dxfattribs={}
+                    dxfattribs={},
+                    doc = self.doc,
                 )
                 block_record.set_block(block, endblk)
                 self.add(block_record)
@@ -234,9 +234,9 @@ class BlocksSection:
         dxfattribs['owner'] = block_record.dxf.handle
         dxfattribs['name'] = name
         dxfattribs['base_point'] = base_point
-        head = self.dxffactory.create_db_entry('BLOCK', dxfattribs)
-        tail = self.dxffactory.create_db_entry('ENDBLK', {
-            'owner': block_record.dxf.handle})
+        head = factory.create_db_entry('BLOCK', dxfattribs, self.doc)
+        tail = factory.create_db_entry('ENDBLK', {
+            'owner': block_record.dxf.handle}, doc=self.doc)
         block_record.set_block(head, tail)
         return self.add(block_record)
 

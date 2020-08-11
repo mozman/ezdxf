@@ -60,7 +60,6 @@ TFilterStack = Sequence[Sequence[Callable[[Iterable['DXFTag']], Iterable['DXFTag
 class Drawing:
     def __init__(self, dxfversion=DXF2013):
         self.entitydb = EntityDB()
-        self.dxffactory = EntityFactory(self)
         target_dxfversion = dxfversion.upper()
         self._dxfversion: str = acad_release_to_dxf_version.get(target_dxfversion, target_dxfversion)
         if self._dxfversion not in versions_supported_by_new:

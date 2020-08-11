@@ -92,7 +92,7 @@ BY_BLOCK = 0xFFFFFFFE
 class ProxyGraphic:
     def __init__(self, data: bytes, doc: 'Drawing' = None):
         self._doc = doc
-        self._factory = doc.dxffactory.new_entity if doc else factory.new
+        self._factory = factory.new
         self._buffer: bytes = data
         self._index: int = 8
         self.dxfversion = doc.dxfversion if doc else 'AC1015'

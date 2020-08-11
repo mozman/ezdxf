@@ -7,6 +7,7 @@ from collections import OrderedDict
 
 from ezdxf.lldxf.const import DXFTableEntryError, DXFStructureError, DXFTypeError
 from ezdxf.entities.table import TableHead
+from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Auditor
@@ -167,10 +168,6 @@ class Table:
     def entitydb(self) -> 'EntityDB':
         return self.doc.entitydb
 
-    @property
-    def dxffactory(self) -> 'EntityFactory':
-        return self.doc.dxffactory
-
     def new_entry(self, dxfattribs: dict) -> 'DXFEntity':
         """ Create new table-entry of type 'self._dxfname', and add new entry
         to table.
@@ -178,7 +175,7 @@ class Table:
         Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
-        entry = self.dxffactory.create_db_entry(self._head.dxf.name, dxfattribs)
+        entry = factory.create_db_entry(self._head.dxf.name, dxfattribs, self.doc)
         self._append(entry)
         return entry
 
@@ -326,7 +323,7 @@ class ViewportTable(Table):
         Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
-        entry = self.dxffactory.create_db_entry(self._head.dxf.name, dxfattribs)
+        entry = factory.create_db_entry(self._head.dxf.name, dxfattribs, self.doc)
         self._append(entry)
         return entry
 

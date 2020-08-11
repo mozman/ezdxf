@@ -421,15 +421,10 @@ class Polyline(DXFGraphic):
         if self.dxf.hasattr('linetype'):
             dxfattribs['linetype'] = self.dxf.linetype
 
-        if self.doc:
-            create_vertex = self.doc.dxffactory.create_db_entry
-        else:
-            create_vertex = factory.new
-
         for point in points:
             attribs = vertex_attribs(point, format)
             attribs.update(dxfattribs)
-            self._append_vertex(create_vertex('VERTEX', attribs))
+            self._append_vertex(factory.new('VERTEX', attribs))
 
     def append_vertex(self, point: 'Vertex', dxfattribs: dict = None) -> None:
         """ Append a single :class:`Vertex` entity at location `point`.
