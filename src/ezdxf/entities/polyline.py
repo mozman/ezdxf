@@ -19,7 +19,6 @@ from ezdxf.entities import factory
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
-from .factory import register_entity
 from .lwpolyline import FORMAT_CODES
 from .subentity import LinkedEntities
 
@@ -83,7 +82,7 @@ acdb_polyline = DefSubclass('AcDbPolylineDummy', {
 })
 
 
-@register_entity
+@factory.register_entity
 class Polyline(LinkedEntities):
     """ DXF POLYLINE entity """
     DXFTYPE = 'POLYLINE'
@@ -954,7 +953,7 @@ acdb_vertex = DefSubclass('AcDbVertex', {  # last subclass index -1
 })
 
 
-@register_entity
+@factory.register_entity
 class DXFVertex(DXFGraphic):
     """ DXF VERTEX entity """
     DXFTYPE = 'VERTEX'

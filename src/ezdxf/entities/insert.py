@@ -21,11 +21,11 @@ from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
 from ezdxf.explode import (
     explode_block_reference, virtual_block_reference_entities,
 )
+from ezdxf.entities import factory
 from ezdxf.query import EntityQuery
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
-from .factory import register_entity
 from .subentity import LinkedEntities
 from .attrib import Attrib
 
@@ -81,7 +81,7 @@ NON_ORTHO_MSG = 'INSERT entity can not represent a non-orthogonal target ' \
                 'coordinate system.'
 
 
-@register_entity
+@factory.register_entity
 class Insert(LinkedEntities):
     """ DXF INSERT entity """
     DXFTYPE = 'INSERT'
