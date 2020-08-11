@@ -343,18 +343,8 @@ class EntitySpace:
         """
         for entity in iter(self):
             entity.export_dxf(tagwriter)
-            seqend = False
-            # todo: Export of linked entities should be done by the main entity
-            # only POLYLINE & INSERT can have linked entities
-            if hasattr(entity, 'linked_entities'):
-                for linked in entity.linked_entities():
-                    # INSERT: entity.seqend can be present, without attached
-                    # ATTRIBS, if ATTRIBS were deleted.
-                    seqend = True
-                    linked.export_dxf(tagwriter)
-
-            if seqend:
-                entity.export_seqend(tagwriter)
+            if isinstance(entity, LinkedEntitiesMixin):
+                entity.export_dxf_sub_entities(tagwriter)
 
     def remove(self, entity: 'DXFEntity') -> None:
         """ Remove `entity`. """

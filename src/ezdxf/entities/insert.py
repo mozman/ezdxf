@@ -98,10 +98,6 @@ class Insert(LinkedEntitiesMixin, DXFGraphic):
         if self.seqend:
             yield self.seqend
 
-    def linked_entities(self) -> Iterable['DXFEntity']:
-        # Don't yield seqend here, because it is not a DXFGraphic entity
-        return self.attribs
-
     def link_entity(self, entity: 'DXFGraphic') -> None:
         entity.set_owner(self.dxf.owner, self.dxf.paperspace)
         self.attribs.append(entity)
@@ -145,7 +141,11 @@ class Insert(LinkedEntitiesMixin, DXFGraphic):
             'column_count', 'row_count', 'column_spacing', 'row_spacing',
             'extrusion',
         ])
-        # todo: export ATTRIB and SEQEND
+
+    def export_dxf_sub_entities(self, tagwriter: 'TagWriter'):
+        # Do no export SEQEND if no ATTRIBS attached:
+        if self.attribs_follow:
+            super().export_dxf_sub_entities(tagwriter)
 
     def destroy(self) -> None:
         """ Delete all data and references. """
@@ -350,19 +350,6 @@ class Insert(LinkedEntitiesMixin, DXFGraphic):
             self.new_seqend()
         self._has_new_sub_entities = True
         return attrib
-
-    def new_seqend(self):
-        """ Create new ENDSEQ. (internal API)"""
-        if self.doc:
-            seqend = factory.create_db_entry(
-                'SEQEND',
-                dxfattribs={'layer': self.dxf.layer},
-                doc=self.doc,
-            )
-        else:
-            seqend = factory.new('SEQEND', dxfattribs={'layer': self.dxf.layer})
-        self.link_seqend(seqend)
-        self._has_new_sub_entities = True
 
     def delete_attrib(self, tag: str, ignore=False) -> None:
         """ Delete an attached :class:`Attrib` entity from INSERT. If `ignore`

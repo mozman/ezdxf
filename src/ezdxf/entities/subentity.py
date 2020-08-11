@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING, Iterable, Callable
 from abc import abstractmethod
 from ezdxf.entities import factory, DXFGraphic
+
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, TagWriter, EntityDB
 
@@ -12,6 +13,7 @@ class LinkedEntitiesMixin:
 
     Both have linked entities.
     """
+
     @abstractmethod
     def all_sub_entities(self) -> Iterable['DXFEntity']:
         """ Yield ALL entities."""
@@ -39,29 +41,30 @@ class LinkedEntitiesMixin:
             entity.doc = self.doc  # grant same document
             db.add(entity)
 
-        self.process_sub_entities(add)
         if not self.seqend or not self.seqend.is_alive:
             self.new_seqend()
+        self.process_sub_entities(add)
         self._has_new_sub_entities = False
 
     def new_seqend(self):
-        """ Create new ENDSEQ. (internal API)"""
-        seqend = factory.create_db_entry(
-            'SEQEND',
-            dxfattribs={'layer': self.dxf.layer},
-            doc=self.doc,
-        )
+        """ Create new SEQEND. (internal API)"""
+        if self.doc:
+            seqend = factory.create_db_entry(
+                'SEQEND',
+                dxfattribs={'layer': self.dxf.layer},
+                doc=self.doc,
+            )
+        else:
+            seqend = factory.new(
+                'SEQEND',
+                dxfattribs={'layer': self.dxf.layer},
+            )
         self.link_seqend(seqend)
         self._has_new_sub_entities = True
 
     def link_seqend(self, seqend: 'DXFEntity') -> None:
         seqend.dxf.owner = self.dxf.owner
         self.seqend = seqend
-
-    def export_seqend(self, tagwriter: 'TagWriter'):
-        self.seqend.dxf.owner = self.dxf.owner
-        self.seqend.dxf.layer = self.dxf.layer
-        self.seqend.export_dxf(tagwriter)
 
     def set_owner(self, owner: str, paperspace: int = 0):
         # Loading from file: POLYLINE/INSERT will be added to layout before
@@ -73,3 +76,7 @@ class LinkedEntitiesMixin:
                 entity.set_owner(owner, paperspace)
             else:  # SEQEND
                 entity.dxf.owner = owner
+
+    def export_dxf_sub_entities(self, tagwriter: 'TagWriter'):
+        for entity in self.all_sub_entities():
+            entity.export_dxf(tagwriter)

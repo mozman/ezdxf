@@ -133,7 +133,8 @@ def test_load_from_text(entity):
     assert entity.has_scaling is False
 
 
-@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize("txt,ver",
+                         [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     vertex = TEST_CLASS.from_text(txt)
@@ -189,10 +190,35 @@ def test_clone_with_insert():
     assert insert.attribs[0].dxf.text == 'value1'
 
 
+def test_export_without_sub_entities_to_dxf(doc):
+    from ezdxf.lldxf.tagwriter import TagCollector
+    blk = doc.blocks.new('INSERT_WITHOUT_ATTRIBS')
+    blk.add_blockref('TEST', (0, 0))
+    writer = TagCollector()
+    blk.entity_space.export_dxf(tagwriter=writer)
+    structure_tags = [tag for tag in writer.tags if tag[0] == 0]
+    assert len(structure_tags) == 1
+    assert structure_tags[0] == (0, 'INSERT')
+
+
+def test_export_with_sub_entities_to_dxf(doc):
+    from ezdxf.lldxf.tagwriter import TagCollector
+    blk = doc.blocks.new('INSERT_WITH_ATTRIBS')
+    insert = blk.add_blockref('TEST', (0, 0))
+    insert.add_attrib('TAG', 'TEXT', (0, 0))
+    writer = TagCollector()
+    blk.entity_space.export_dxf(tagwriter=writer)
+    structure_tags = [tag for tag in writer.tags if tag[0] == 0]
+    assert structure_tags[0] == (0, 'INSERT')
+    assert structure_tags[1] == (0, 'ATTRIB')
+    assert structure_tags[2] == (0, 'SEQEND')
+
+
 def test_copy_with_insert(doc):
     msp = doc.modelspace()
     msp_count = len(msp)
     db = doc.entitydb
+    db.refresh()
     db_len = len(doc.entitydb)
 
     insert = msp.add_blockref('Test', insert=(0, 0))
@@ -257,7 +283,8 @@ def test_matrix44_rotation():
         'rotation': 90,
     })
     m = insert.matrix44()
-    assert list(m.transform_vertices([(1, 0, 0), (0, 0, 1)])) == [(0, 1, 0), (0, 0, 1)]
+    assert list(m.transform_vertices([(1, 0, 0), (0, 0, 1)])) == [(0, 1, 0),
+                                                                  (0, 0, 1)]
     assert m.transform_direction((1, 0, 0)) == (0, 1, 0)
 
 
@@ -269,7 +296,8 @@ def test_matrix44_scaled():
     })
     m = insert.matrix44()
     assert m.transform((1, 1, 1)) == (2, 3, 4)
-    assert m.transform_direction((1, 0, 0)) == (2, 0, 0), 'scaling has to be applied for directions'
+    assert m.transform_direction((1, 0, 0)) == (
+    2, 0, 0), 'scaling has to be applied for directions'
 
 
 def test_matrix44_direction():
@@ -279,7 +307,8 @@ def test_matrix44_direction():
     })
     m = insert.matrix44()
     assert m.transform((1, 0, 0)) == (3, 2, 3)
-    assert m.transform_direction((1, 0, 0)) == (2, 0, 0), 'only scaling has to be applied for directions'
+    assert m.transform_direction((1, 0, 0)) == (2, 0, 0), \
+        'only scaling has to be applied for directions'
 
 
 def test_insert_transform_interface():

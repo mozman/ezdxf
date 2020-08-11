@@ -53,6 +53,18 @@ def test_add_new_sub_entities_to_entity_database(layout, doc):
     assert len(db) == db_len + 2, 'refresh should add new VERTEX entities to db'
 
 
+def test_export_sub_entities_to_dxf(layout, doc):
+    from ezdxf.lldxf.tagwriter import TagCollector
+    layout.add_polyline2d([(0, 0), (1, 1)])
+    writer = TagCollector()
+    layout.entity_space.export_dxf(tagwriter=writer)
+    structure_tags = [tag for tag in writer.tags if tag[0] == 0]
+    assert structure_tags[0] == (0, 'POLYLINE')
+    assert structure_tags[1] == (0, 'VERTEX')
+    assert structure_tags[2] == (0, 'VERTEX')
+    assert structure_tags[3] == (0, 'SEQEND')
+
+
 def test_vertex_layer(layout):
     attribs = {'layer': 'polyline_layer'}
     polyline = layout.add_polyline3d([(1, 2, 3), (4, 5, 6)], dxfattribs=attribs)

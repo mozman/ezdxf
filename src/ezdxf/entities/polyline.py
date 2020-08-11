@@ -117,10 +117,6 @@ class Polyline(LinkedEntitiesMixin, DXFGraphic):
         if self.seqend:
             yield self.seqend
 
-    def linked_entities(self) -> Iterable['DXFVertex']:
-        # don't yield SEQEND here, because it is not a DXFGraphic entity
-        return self.vertices
-
     def link_entity(self, entity: 'DXFEntity') -> None:
         assert isinstance(entity, DXFVertex)
         entity.set_owner(self.dxf.owner, self.dxf.paperspace)
@@ -168,7 +164,6 @@ class Polyline(LinkedEntitiesMixin, DXFGraphic):
         ])
         # The following VERTEX entities and the SEQEND entity is exported by
         # EntitySpace().
-        # todo: export ATTRIB and SEQEND
 
     def destroy(self) -> None:
         """ Delete all data and references. """
