@@ -238,31 +238,18 @@ class BaseLayout(_AbstractLayout):
             if copy:
                 entity = entity.copy()
             else:
-                # unlink entity from other database without destroying
-                del foreign_doc.entitydb[entity.dxf.handle]
+                # Unbind entity from other document without destruction.
+                factory.unbind(entity)
                 if isinstance(entity, LinkedEntitiesMixin):
                     for e in entity.all_sub_entities():
-                        del foreign_doc.entitydb[e.dxf.handle]
-
-                # unlink from layout
-                layout = entity.get_layout()
-                if layout is not None:
-                    layout.unlink_entity(entity)
+                        factory.unbind(e)
 
         entity.remove_dependencies(self.doc)
-        if dxftype == 'POLYLINE':
-            entity = cast('Polyline', entity)
-            for v in entity.vertices:
-                v.remove_dependencies(self.doc)
-
-            if entity.seqend:
-                entity.seqend.remove_dependencies(self.doc)
-
-        # add to this document
-        entity.doc = self.doc
-        self.entitydb.add(entity)
-
-        # add to this layout
+        if isinstance(entity, LinkedEntitiesMixin):
+            entity.process_sub_entities(
+                lambda e: e.remove_dependencies(self.doc)
+            )
+        # add to this layout & bind to document
         self.add_entity(entity)
 
     def unlink_entity(self, entity: 'DXFGraphic') -> None:
@@ -278,20 +265,13 @@ class BaseLayout(_AbstractLayout):
         self.block_record.delete_entity(entity)
 
     def delete_all_entities(self) -> None:
-        """ Delete all entities from layout entity space and from entity database,
+        """ Delete all entities from this layout and from entity database,
         this destroys all entities in this layout.
         """
         # Create list, because delete modifies the base data structure of
         # the iterator:
         for entity in list(self):
             self.delete_entity(entity)
-
-    def get_entity_by_handle(self, handle: str) -> 'DXFGraphic':
-        """ Get entity by handle.
-
-        (internal API)
-        """
-        return self.entitydb[handle]
 
     def move_to_layout(self, entity: 'DXFGraphic',
                        layout: 'BaseLayout') -> None:

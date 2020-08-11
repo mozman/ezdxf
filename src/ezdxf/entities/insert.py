@@ -21,18 +21,17 @@ from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
 from ezdxf.explode import (
     explode_block_reference, virtual_block_reference_entities,
 )
-from ezdxf.entities import factory
 from ezdxf.query import EntityQuery
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
 from .subentity import LinkedEntitiesMixin
-
+from .attrib import Attrib
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef,
-        BlockLayout, BaseLayout, Auditor, EntityDB,
+        TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, AttDef,
+        BlockLayout, BaseLayout, Auditor,
     )
 
 __all__ = ['Insert']
@@ -99,6 +98,7 @@ class Insert(LinkedEntitiesMixin, DXFGraphic):
             yield self.seqend
 
     def link_entity(self, entity: 'DXFGraphic') -> None:
+        assert isinstance(entity, Attrib)
         entity.set_owner(self.dxf.owner, self.dxf.paperspace)
         self.attribs.append(entity)
 
@@ -110,7 +110,6 @@ class Insert(LinkedEntitiesMixin, DXFGraphic):
         """ Copy ATTRIB entities, does not store the copies into database. """
         entity.attribs = [attrib.copy() for attrib in self.attribs]
         if self.seqend:
-            # If is None for INSERTS loaded from file with attached ATTRIBS
             entity.seqend = self.seqend.copy()
 
     def load_dxf_attribs(self,
@@ -507,6 +506,7 @@ class Insert(LinkedEntitiesMixin, DXFGraphic):
         """
         Explode block reference entities into target layout, if target layout is
         ``None``, the target layout is the layout of the block reference.
+        This method destroys the source block reference entity.
 
         Transforms the block entities into the required :ref:`WCS` location by
         applying the block reference attributes `insert`, `extrusion`,

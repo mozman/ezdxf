@@ -135,7 +135,7 @@ class EntityDB:
 
         # add sub entities like ATTRIB, VERTEX and SEQEND to database
         # only INSERT and POLYLINE using this feature
-        if hasattr(entity, 'add_sub_entities_to_entitydb'):
+        if isinstance(entity, LinkedEntitiesMixin):
             entity.add_sub_entities_to_entitydb(self)
 
     def delete_entity(self, entity: DXFEntity) -> None:
