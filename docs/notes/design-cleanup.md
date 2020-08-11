@@ -150,6 +150,9 @@ v0.9, where each DXF version had its own factory class.
   section! Can't use `Auditor()` to repair this objects, because the DXF 
   document is not fully initialized.
 - `is_bound(entity, doc)` returns True if `entity` is bound to document `doc`
+- `unbind(entity)` function to remove an entity from a document and set state 
+   to a virtual entity, which should also `UNLINK` the entity from layout, 
+   because an layout can not store a virtual entity.
 - `cls(dxftype)`, returns the class
 - `register_entity()`, registration decorator  
 - `replace_entity()`, registration decorator
@@ -164,9 +167,7 @@ v0.9, where each DXF version had its own factory class.
    means `entity.is_alive` returns False. All entity iterators like 
    `EntitySpace`, `EntityQuery`,  and `EntityDB` must filter (ignore) "dead" 
    entities. Calling `DXFEntity.destroy()` is the normal way to delete entities.
-1. `UNBIND` interface to remove an entity from a document and set state 
-   to a virtual entity, which should also `UNLINK` the entity, because an 
-   layout can not store a virtual entity.
+
 
 ```Python
 from ezdxf.entities.dxfentity import DXFNamespace
@@ -202,9 +203,6 @@ class DXFEntity:
     def is_linked(self):
         """ STATE interface """
         return self.dxf.owner is not None
-
-    def unbind(self):
-        """ UNBIND interface """
 
     def destroy(self):
         """ DESTROY interface """

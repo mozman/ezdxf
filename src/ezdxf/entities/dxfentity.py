@@ -747,7 +747,7 @@ class DXFEntity:
     @property
     def is_bound(self):
         """ Returns ``True`` if entity is bound to DXF document. """
-        if not self.is_virtual:
+        if self.is_alive and not self.is_virtual:
             return factory.is_bound(self, self.doc)
         return False
 

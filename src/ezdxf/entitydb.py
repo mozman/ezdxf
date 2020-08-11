@@ -143,6 +143,17 @@ class EntityDB:
             del self[entity.dxf.handle]
             entity.destroy()
 
+    def discard(self, entity: 'DXFEntity') -> None:
+        """ Discard entity from database without destroying the entity.
+        """
+        if entity.is_alive:
+            handle = entity.dxf.handle
+            try:
+                del self._database[handle]
+                entity.dxf.handle = None
+            except KeyError:
+                pass
+
     def duplicate_entity(self, entity: DXFEntity) -> DXFEntity:
         """
         Duplicates `entity` and its sub entities (VERTEX, ATTRIB, SEQEND) and

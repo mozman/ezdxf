@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
-from ezdxf.lldxf.const import DXFInternalEzdxfError
+from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFKeyError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing
@@ -80,12 +80,31 @@ def bind(entity: 'DXFEntity', doc: 'Drawing') -> None:
     doc.entitydb.add(entity)
 
 
+def unbind(entity: 'DXFEntity'):
+    """ Unbind `entity` from document and layout, but does not destroy the
+    entity.
+
+    Turns `entity` into a virtual entity: no handle, no owner, no document.
+    """
+    if entity.is_alive and not entity.is_virtual:
+        doc = entity.doc
+        try:
+            layout = doc.layouts.get_layout_for_entity(entity)
+        except DXFKeyError:
+            pass
+        else:
+            layout.unlink_entity(entity)
+
+        doc.entitydb.discard(entity)
+        entity.doc = None
+
+
 def is_bound(entity: 'DXFEntity', doc: 'Drawing') -> bool:
     """ Returns ``True`` if `entity`is bound to DXF document `doc`.
     """
-    if not entity.is_alive or \
-            entity.is_virtual or \
-            entity.doc is not doc:
+    if not entity.is_alive:
+        return False
+    if entity.is_virtual or entity.doc is not doc:
         return False
     assert doc.entitydb, 'Missing entity database.'
     return entity.dxf.handle in doc.entitydb
