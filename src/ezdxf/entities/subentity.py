@@ -48,17 +48,11 @@ class LinkedEntitiesMixin:
 
     def new_seqend(self):
         """ Create new SEQEND. (internal API)"""
+        attribs = {'layer': self.dxf.layer}
         if self.doc:
-            seqend = factory.create_db_entry(
-                'SEQEND',
-                dxfattribs={'layer': self.dxf.layer},
-                doc=self.doc,
-            )
+            seqend = factory.create_db_entry('SEQEND', attribs, self.doc)
         else:
-            seqend = factory.new(
-                'SEQEND',
-                dxfattribs={'layer': self.dxf.layer},
-            )
+            seqend = factory.new('SEQEND', attribs)
         self.link_seqend(seqend)
         self._has_new_sub_entities = True
 
