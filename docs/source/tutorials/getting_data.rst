@@ -93,7 +93,7 @@ Getting a paperspace layout
 Retrieves the paperspace named ``layout0``, the usage of the :class:`~ezdxf.layouts.Layout` object is the same as of
 the modelspace object. DXF R12 provides only one paperspace, therefore the paperspace name in the method call
 :code:`doc.layout('layout0')` is ignored or can be left off. For the later DXF versions you get a list of the names
-of the available layouts by :meth:`~ezdxf.drawing.Drawing.layout_names`.
+of the available layouts by :meth:`~ezdxf.document.Drawing.layout_names`.
 
 .. _entity queries:
 

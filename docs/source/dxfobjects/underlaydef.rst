@@ -9,7 +9,7 @@ UnderlayDefinition
 ======================== ==============================================================
 Subclass of              :class:`ezdxf.entities.DXFObject`
 DXF type                 internal base class
-Factory function (1)     :meth:`ezdxf.drawing.Drawing.add_underlay_def`
+Factory function (1)     :meth:`ezdxf.document.Drawing.add_underlay_def`
 Factory function (2)     :meth:`ezdxf.sections.objects.ObjectsSection.add_underlay_def`
 ======================== ==============================================================
 
@@ -43,7 +43,7 @@ PdfDefinition
 ======================== ==============================================================
 Subclass of              :class:`ezdxf.entities.UnderlayDefinition`
 DXF type                 ``'PDFDEFINITION'``
-Factory function (1)     :meth:`ezdxf.drawing.Drawing.add_underlay_def`
+Factory function (1)     :meth:`ezdxf.document.Drawing.add_underlay_def`
 Factory function (2)     :meth:`ezdxf.sections.objects.ObjectsSection.add_underlay_def`
 ======================== ==============================================================
 
@@ -57,7 +57,7 @@ DwfDefinition
 ======================== ==============================================================
 Subclass of              :class:`ezdxf.entities.UnderlayDefinition`
 DXF type                 ``'DWFDEFINITION'``
-Factory function (1)     :meth:`ezdxf.drawing.Drawing.add_underlay_def`
+Factory function (1)     :meth:`ezdxf.document.Drawing.add_underlay_def`
 Factory function (2)     :meth:`ezdxf.sections.objects.ObjectsSection.add_underlay_def`
 ======================== ==============================================================
 
@@ -71,7 +71,7 @@ DgnDefinition
 ======================== ==============================================================
 Subclass of              :class:`ezdxf.entities.UnderlayDefinition`
 DXF type                 ``'DGNDEFINITION'``
-Factory function (1)     :meth:`ezdxf.drawing.Drawing.add_underlay_def`
+Factory function (1)     :meth:`ezdxf.document.Drawing.add_underlay_def`
 Factory function (2)     :meth:`ezdxf.sections.objects.ObjectsSection.add_underlay_def`
 ======================== ==============================================================
 

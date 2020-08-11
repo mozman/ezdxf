@@ -49,8 +49,8 @@ or with the same name as loaded::
 
 .. seealso::
 
-    Documentation for :func:`ezdxf.drawing.Drawing.save` and
-    :func:`ezdxf.drawing.Drawing.saveas`, for more information about file
+    Documentation for :func:`ezdxf.document.Drawing.save` and
+    :func:`ezdxf.document.Drawing.saveas`, for more information about file
     management go to the :ref:`dwgmanagement` section.
 
 Create a New DXF File

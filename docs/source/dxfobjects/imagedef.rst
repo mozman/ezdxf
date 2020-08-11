@@ -9,7 +9,7 @@ ImageDef
 ======================== ===========================================================
 Subclass of              :class:`ezdxf.entities.DXFObject`
 DXF type                 ``'IMAGEDEF'``
-Factory function (1)     :meth:`ezdxf.drawing.Drawing.add_image_def`
+Factory function (1)     :meth:`ezdxf.document.Drawing.add_image_def`
 Factory function (2)     :meth:`ezdxf.sections.objects.ObjectsSection.add_image_def`
 ======================== ===========================================================
 

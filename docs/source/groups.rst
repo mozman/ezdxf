@@ -9,7 +9,7 @@ has to be on the same layout (modelspace or any paper layout but not block).
 Groups can be named or unnamed, but in reality an unnamed groups has just a
 special name like "\*Annnn". The name of a group has to be unique in the drawing.
 Groups are organized in the main group table, which is stored as attribute
-:attr:`~ezdxf.drawing.Drawing.groups` in the :class:`~ezdxf.drawing.Drawing`
+:attr:`~ezdxf.document.Drawing.groups` in the :class:`~ezdxf.document.Drawing`
 object.
 
 Group entities have to be in modelspace or any paperspace layout but not in a
@@ -58,12 +58,12 @@ DXFGroup
 GroupCollection
 ---------------
 
-Each :class:`~ezdxf.drawing.Drawing` has one group table, which is accessible
-by the attribute :attr:`~ezdxf.drawing.Drawing.groups`.
+Each :class:`~ezdxf.document.Drawing` has one group table, which is accessible
+by the attribute :attr:`~ezdxf.document.Drawing.groups`.
 
 .. class:: GroupCollection
 
-    Manages all :class:`DXFGroup` objects of a :class:`~ezdxf.drawing.Drawing`.
+    Manages all :class:`DXFGroup` objects of a :class:`~ezdxf.document.Drawing`.
 
     .. method:: __len__() -> int
 

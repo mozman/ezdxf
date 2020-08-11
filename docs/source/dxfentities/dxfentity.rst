@@ -39,7 +39,7 @@ Common base class for all DXF entities and objects.
 
     .. attribute:: doc
 
-        Get the associated :class:`~ezdxf.drawing.Drawing` instance.
+        Get the associated :class:`~ezdxf.document.Drawing` instance.
 
     .. autoattribute:: is_alive
 

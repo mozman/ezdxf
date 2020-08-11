@@ -1,7 +1,7 @@
 Drawing Object
 ==============
 
-.. module:: ezdxf.drawing
+.. module:: ezdxf.document
 
 .. class:: Drawing
 

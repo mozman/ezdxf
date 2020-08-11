@@ -47,15 +47,15 @@ AC1032      R2018      UTF-8          AutoCAD R2018
 Save Drawings
 -------------
 
-Save the drawing to the file system by :class:`~ezdxf.drawing.Drawing` methods :meth:`~ezdxf.drawing.Drawing.save`
-or :meth:`~ezdxf.drawing.Drawing.saveas`.
-Write the :class:`~ezdxf.drawing.Drawing` to a text stream with :meth:`~ezdxf.drawing.Drawing.write`, the
+Save the drawing to the file system by :class:`~ezdxf.document.Drawing` methods :meth:`~ezdxf.document.Drawing.save`
+or :meth:`~ezdxf.document.Drawing.saveas`.
+Write the :class:`~ezdxf.document.Drawing` to a text stream with :meth:`~ezdxf.document.Drawing.write`, the
 text stream requires at least a :meth:`write` method.
 
 .. versionadded:: 0.11
 
-    Get required output encoding for text streams by :class:`~ezdxf.drawing.Drawing` property
-    :attr:`~ezdxf.drawing.Drawing.output_encoding`
+    Get required output encoding for text streams by :class:`~ezdxf.document.Drawing` property
+    :attr:`~ezdxf.document.Drawing.output_encoding`
 
 .. _globaloptions:
 

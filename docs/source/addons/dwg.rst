@@ -4,11 +4,11 @@ DWG Loader
 ==========
 
 Load a DXF file from a DWG file, which means this add-on convert DWG data into DXF tags and load this data into
-an :class:`~ezdxf.drawing.Drawing` object. This add-on can not export :term:`DWG` files and support for this feature is not
+an :class:`~ezdxf.document.Drawing` object. This add-on can not export :term:`DWG` files and support for this feature is not
 planned.
 
 Load DXF structures from a :term:`DWG` file, which means this add-on convert data stored in a DWG file into
-:term:`DXF` tags and load this tags into a regular class:`~ezdxf.drawing.Drawing` object. This process is not
+:term:`DXF` tags and load this tags into a regular class:`~ezdxf.document.Drawing` object. This process is not
 perfect and much data from the DWG file will be lost by saving the document as DXF file,
 **don’t use this add-on as DWG to DXF converter**,
 there are much better tools available for free like the `ODA File Converter`_.

@@ -5,8 +5,8 @@ Entity Database
 
 The :class:`EntityDB` is a simple key/value database to store
 :class:`~ezdxf.entities.DXFEntity` objects by it's handle,
-every :class:`~ezdxf.drawing.Drawing` has its own :class:`EntityDB`, stored in
-the :class:`Drawing` attribute :attr:`~ezdxf.drawing.Drawing.entitydb`.
+every :class:`~ezdxf.document.Drawing` has its own :class:`EntityDB`, stored in
+the :class:`Drawing` attribute :attr:`~ezdxf.document.Drawing.entitydb`.
 
 Every DXF entity/object, except tables and sections, are represented as
 :class:`DXFEntity` or inherited types, this entities are stored in the

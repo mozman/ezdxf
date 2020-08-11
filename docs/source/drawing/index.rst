@@ -1,7 +1,7 @@
 Drawing
 =======
 
-The :class:`~ezdxf.drawing.Drawing` class manages all entities and tables related to a DXF drawing.
+The :class:`~ezdxf.document.Drawing` class manages all entities and tables related to a DXF drawing.
 You can read/write DXF drawings from/to file-system or from/to a text-stream.
 
 
