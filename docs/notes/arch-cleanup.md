@@ -43,10 +43,16 @@ create/load entities for these add-ons.
 
 CHANGE: remove dependency to the DXF document from DXF entities:
 
-- remove `doc` attribute 
 - remove `dxffactory` attribute 
 - remove `entitydb` attribute
 
+I also tried to remove the `doc` attribitue of DXFEntity, but this was not a 
+great success, this just added additional `doc` arguments to many mathods, and
+in the worst case changed also top level interfaces (INSERT) to be unusable in
+by the current design, so I reverted everything. 
+
+But nonetheless could reduce at least some dependencies.
+ 
 ## LOAD
 
 The loading process has two stages:
@@ -80,12 +86,14 @@ A new entity is always a virtual entity after instantiation:
 
 - DXF owner is `None`
 - DXF handle is `None`
+- `doc` is `None`
 
 ## BIND
 
 Binding the entity to a document means:
 
-- `BOUND`: entity is stored in the document entity database, `handle`is set 
+- `BOUND`: entity is stored in the document entity database, `handle`is set, 
+  `doc` is set
 - Check or create required resources
 - `UNLINKED`: `owner` is still `None`
 

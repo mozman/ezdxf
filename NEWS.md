@@ -57,20 +57,13 @@ Version 0.14a2 - dev
 - CHANGE: `DXFEntity.get_extension_dict()`, raises `AttributeError` if entity
   has no extension dictionary 
 - CHANGE: `DXFEntity.has_extension_dict` is now a property not a method
-- CHANGE: `DXFEntity.is_supported_dxf_attrib(key, dxfversion)` needs argument 
-  dxfversion for complete validation, default is the latest supported DXF version
 - CHANGE: `linspace()` uses `Decimal()` for precise calculations, but still 
   returns an iterable of `float`
 - CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 
   argument `safe` is deprecated, will be removed in v0.16
 - CHANGE: Dictionary raise `DXFValueError` for adding invalid handles
-- CHANGE: New sub-entities of INSERT and POLYLINE are not automatically added 
-  to the entity database, this is done before the DXF export by calling 
-  `doc.entitydb.refresh()` or a manual method call of `doc.entitydb.refresh()`.
-- CHANGE: `to_spline()` and `to_ellipse()` methods of CIRCLE, ARC and ELLIPSE 
   require an explicit `layout` argument.
 - REMOVE: Alias `DXFEntity.drawing`
-- REMOVE: `DXFEntity.doc`
 - REMOVE: `DXFEntity.entitydb`
 - REMOVE: `DXFEntity.dxffactory`
 - REMOVE: `DXFInvalidLayerName`, replaced by `DXFValueError` 

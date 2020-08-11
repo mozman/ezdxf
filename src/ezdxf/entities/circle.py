@@ -28,10 +28,11 @@ acdb_circle = DefSubclass('AcDbCircle', {
     # AutCAD/BricsCAD: Radius is <= 0 is valid
     'radius': DXFAttr(40, default=1),
     'thickness': DXFAttr(39, default=0, optional=True),
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Z_AXIS,
-                         optional=True, validator=validator.is_not_null_vector,
-                         fixer=RETURN_DEFAULT,
-                         ),
+    'extrusion': DXFAttr(
+        210, xtype=XType.point3d, default=Z_AXIS,
+        optional=True, validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
 })
 
 
@@ -120,21 +121,20 @@ class Circle(DXFGraphic):
             Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
         return self
 
-    def to_ellipse(self, layout: 'BaseLayout', replace=True) -> 'Ellipse':
+    def to_ellipse(self, replace=True) -> 'Ellipse':
         """ Convert CIRCLE/ARC to an :class:`~ezdxf.entities.Ellipse` entity.
 
         Adds the new ELLIPSE entity to the entity database and to the
         same layout as the source entity.
 
         Args:
-            layout: modelspace- , paperspace- or block layout
             replace: replace (delete) source entity by ELLIPSE entity if ``True``
 
         .. versionadded:: 0.13
 
         """
-        assert layout is not None, 'Argument layout must not None.'
         from ezdxf.entities import Ellipse
+        layout = self.get_layout()
         ellipse = Ellipse.from_arc(self)
         if replace:
             replace_entity(self, ellipse, layout)
@@ -142,23 +142,21 @@ class Circle(DXFGraphic):
             add_entity(ellipse, layout)
         return ellipse
 
-    def to_spline(self, layout: 'BaseLayout', replace=True) -> 'Spline':
+    def to_spline(self, replace=True) -> 'Spline':
         """ Convert CIRCLE/ARC to a :class:`~ezdxf.entities.Spline` entity.
 
         Adds the new SPLINE entity to the entity database and to the
         same layout as the source entity.
 
         Args:
-            layout: modelspace- , paperspace- or block layout
             replace: replace (delete) source entity by SPLINE entity if ``True``
 
         .. versionadded:: 0.13
 
         """
-        assert layout is not None, 'Argument layout must not None.'
         from ezdxf.entities import Spline
+        layout = self.get_layout()
         spline = Spline.from_arc(self)
-
         if replace:
             replace_entity(self, spline, layout)
         else:

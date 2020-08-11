@@ -30,7 +30,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import (
     DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12, ACAD_REACTORS,
     ACAD_XDICTIONARY, DXFAttributeError, DXFValueError, DXFTypeError,
-    DXFKeyError, LATEST_DXF_VERSION,
+    DXFKeyError, 
 )
 from ezdxf.tools import set_flag_state
 from .xdata import XData, EmbeddedObjects
@@ -529,7 +529,7 @@ class DXFEntity:
         self.dxf: DXFNamespace = DXFNamespace(entity=self)
 
         # None public attributes for package users
-        # create extended data only if needed
+        # create extended data only if needed:
         self.appdata: Optional[AppData] = None
         self.reactors: Optional[Reactors] = None
         self.extension_dict: Optional[ExtensionDict] = None
@@ -538,21 +538,18 @@ class DXFEntity:
         self.proxy_graphic: Optional[bytes] = None
 
     @classmethod
-    def load(cls: Type[T], tags: Union[ExtendedTags, Tags],
-             doc: 'Drawing' = None) -> T:
+    def load(cls: Type[T], tags: ExtendedTags, doc: 'Drawing' = None) -> T:
         """
         Constructor to generate entities loaded from DXF files (untrusted
         environment)
 
         Args:
-            tags: DXF tags as Tags() or ExtendedTags()
+            tags: DXF tags as :class:`ExtendedTags`
             doc: DXF Document
 
         (internal API)
         """
-        if not isinstance(tags, ExtendedTags):
-            tags = ExtendedTags(tags)
-        entity = cls(doc)  # bare minimum setup
+        entity = cls(doc)
         dxfversion = doc.dxfversion if doc else None
         entity.load_tags(tags, dxfversion=dxfversion)
         return entity
@@ -789,14 +786,16 @@ class DXFEntity:
 
     dxf_attrib_exists = has_dxf_attrib
 
-    def is_supported_dxf_attrib(self, key: str,
-                                dxfversion=LATEST_DXF_VERSION) -> bool:
+    def is_supported_dxf_attrib(self, key: str) -> bool:
         """ Returns ``True`` if DXF attrib `key` is supported by this entity.
         Does not grant that attribute `key` really exist.
 
         """
         if key in self.DXFATTRIBS:
-            return dxfversion >= self.DXFATTRIBS.get(key).dxfversion
+            if self.doc:
+                return self.doc.dxfversion >= self.DXFATTRIBS.get(key).dxfversion
+            else:
+                return True
         else:
             return False
 

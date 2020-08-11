@@ -57,7 +57,7 @@ def test_replace_entity_without_layout(msp, db):
 
 def test_convert_circle_to_ellipse(msp, db):
     circle = msp.add_circle(center=(3, 3), radius=2)
-    ellipse = circle.to_ellipse(msp, replace=False)
+    ellipse = circle.to_ellipse(replace=False)
     assert circle.dxf.handle in db
     assert ellipse.dxftype() == 'ELLIPSE'
     assert ellipse.dxf.handle in db
@@ -68,7 +68,7 @@ def test_convert_circle_to_ellipse(msp, db):
 def test_replace_circle_by_ellipse(msp, db):
     circle = msp.add_circle(center=(3, 3), radius=2)
     circle_handle = circle.dxf.handle
-    ellipse = circle.to_ellipse(msp, replace=True)
+    ellipse = circle.to_ellipse(replace=True)
     assert circle.is_alive is False
     assert ellipse.dxftype() == 'ELLIPSE'
     assert ellipse.dxf.handle in db
@@ -78,7 +78,7 @@ def test_replace_circle_by_ellipse(msp, db):
 
 def test_convert_circle_to_spline(msp, db):
     circle = msp.add_circle(center=(3, 3), radius=2)
-    spline = circle.to_spline(msp, replace=False)
+    spline = circle.to_spline(replace=False)
     assert circle.dxf.handle in db
     assert spline.dxftype() == 'SPLINE'
     assert spline.dxf.handle in db
@@ -89,7 +89,7 @@ def test_convert_circle_to_spline(msp, db):
 def test_replace_circle_by_spline(msp, db):
     circle = msp.add_circle(center=(3, 3), radius=2)
     circle_handle = circle.dxf.handle
-    spline = circle.to_spline(msp, replace=True)
+    spline = circle.to_spline(replace=True)
     assert circle.is_alive is False
     assert spline.dxftype() == 'SPLINE'
     assert spline.dxf.handle in db
@@ -99,7 +99,7 @@ def test_replace_circle_by_spline(msp, db):
 
 def test_convert_ellipse_to_spline(msp, db):
     ellipse = msp.add_ellipse(center=(3, 3), major_axis=(2, 0), ratio=0.5)
-    spline = ellipse.to_spline(msp, replace=False)
+    spline = ellipse.to_spline(replace=False)
     assert ellipse.dxf.handle in db
     assert spline.dxftype() == 'SPLINE'
     assert spline.dxf.handle in db
@@ -110,7 +110,7 @@ def test_convert_ellipse_to_spline(msp, db):
 def test_replace_ellipse_by_spline(msp, db):
     ellipse = msp.add_ellipse(center=(3, 3), major_axis=(2, 0), ratio=0.5)
     ellipse_handle = ellipse.dxf.handle
-    spline = ellipse.to_spline(msp, replace=True)
+    spline = ellipse.to_spline(replace=True)
     assert ellipse.is_alive is False
     assert spline.dxftype() == 'SPLINE'
     assert spline.dxf.handle in db

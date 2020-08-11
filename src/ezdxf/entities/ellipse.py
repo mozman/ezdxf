@@ -211,7 +211,7 @@ class Ellipse(DXFGraphic):
         self.dxf.center = Vector(dx, dy, dz) + self.dxf.center
         return self
 
-    def to_spline(self, layout: 'BaseLayout', replace=True) -> 'Spline':
+    def to_spline(self, replace=True) -> 'Spline':
         """ Convert ELLIPSE to a :class:`~ezdxf.entities.Spline` entity.
 
         Adds the new SPLINE entity to the entity database and to the
@@ -224,11 +224,9 @@ class Ellipse(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        assert layout is not None, 'Argument layout must not None.'
         from ezdxf.entities import Spline
         spline = Spline.from_arc(self)
-        if layout is None:
-            layout = self.get_layout()
+        layout = self.get_layout()
 
         if replace:
             replace_entity(self, spline, layout)
