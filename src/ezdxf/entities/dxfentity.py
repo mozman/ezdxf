@@ -544,10 +544,10 @@ class DXFEntity:
         :class:`~ezdxf.entities.xdict.ExtensionDict`.
         """
         xdict = self.extension_dict
-        if xdict is not None and xdict.is_alive:
-            return True
-        self.extension_dict = None
-        return False
+        # is None check: bool(xdict) for an empty extension dict is also False
+        if xdict is None:
+            return False
+        return xdict.is_alive
 
     def get_extension_dict(self) -> 'ExtensionDict':
         """ Returns the existing :class:`~ezdxf.entities.xdict.ExtensionDict`.
@@ -561,8 +561,8 @@ class DXFEntity:
         else:
             raise AttributeError('Entity has no extension dictionary.')
 
-    def new_extension_dict(self, doc: 'Drawing') -> 'ExtensionDict':
-        self.extension_dict = ExtensionDict.new(self.dxf.handle, doc)
+    def new_extension_dict(self) -> 'ExtensionDict':
+        self.extension_dict = ExtensionDict.new(self.dxf.handle, self.doc)
         return self.extension_dict
 
     def has_app_data(self, appid: str) -> bool:

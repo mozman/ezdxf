@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.14a2 - dev
+Version 0.14a3 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-14.html
@@ -53,7 +53,7 @@ Version 0.14a2 - dev
 - NEW: `Path.reversed()` returns a new reversed path 
 - NEW: `Path.clockwise()` returns a new clockwise oriented path 
 - NEW: `Path.counter_clockwise()` returns a new counter-clockwise oriented path 
-- NEW: `DXFEntity.new_extension_dict(doc)`, create a new extension dictionary
+- NEW: `DXFEntity.new_extension_dict()`, create explicit a new extension dictionary
 - CHANGE: `DXFEntity.get_extension_dict()`, raises `AttributeError` if entity
   has no extension dictionary 
 - CHANGE: `DXFEntity.has_extension_dict` is now a property not a method
@@ -62,7 +62,6 @@ Version 0.14a2 - dev
 - CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 
   argument `safe` is deprecated, will be removed in v0.16
 - CHANGE: Dictionary raise `DXFValueError` for adding invalid handles
-  require an explicit `layout` argument.
 - REMOVE: Alias `DXFEntity.drawing`
 - REMOVE: `DXFEntity.entitydb`
 - REMOVE: `DXFEntity.dxffactory`

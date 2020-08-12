@@ -158,7 +158,7 @@ class BaseLayout(_AbstractLayout):
         if block_record.has_extension_dict:
             return block_record.get_extension_dict()
         else:
-            return block_record.new_extension_dict(self.doc)
+            return block_record.new_extension_dict()
 
     def add_entity(self, entity: 'DXFGraphic') -> None:
         """ Add an existing :class:`DXFGraphic` entity to a layout, but be sure

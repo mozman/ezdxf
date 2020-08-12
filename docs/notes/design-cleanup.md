@@ -41,7 +41,8 @@ create/load entities for these add-ons.
 
 ## DXFEntity Design
 
-CHANGE: remove dependency to the DXF document from DXF entities:
+CHANGE: remove dependency to the DXF document from DXF entities as much 
+as possible, but `doc` will be still available:
 
 - remove `dxffactory` attribute 
 - remove `entitydb` attribute
@@ -51,8 +52,8 @@ great success, this just added additional `doc` arguments to many methods, and
 in the worst case changed also top level interfaces (INSERT) to be unusable
 by the current design, so I reverted everything. 
 
-But nonetheless could reduce at least some dependencies.
- 
+But nonetheless I could reduce at least some dependencies.
+
 ## LOAD
 
 The loading process has two stages:
@@ -80,13 +81,33 @@ including the modelspace and active paperspace entities, but all entities
 reside in a BLOCK definition, even modelspace and paperspace layouts are only 
 BLOCK definitions and ezdxf has no explicit ENTITIES section.
 
-## CREATE
+## CONSTRUCT
 
-A new entity is always a virtual entity after instantiation:
+The default constructor `DXFEntity()` should construct a virtual entity 
+without, `doc` is None, `owner` is None and `handle` is None. 
 
 - DXF owner is `None`
 - DXF handle is `None`
 - `doc` attribute is maybe `None`
+ 
+The `DXFEntity.new()`, can construct entities with given `owner`, `handle` and 
+`doc` attributes, if `doc` is not `None` and entity is not already bound to 
+`doc`, the `new()` constructor should automatically bind the entity to `doc`.
+
+If `doc` is None`:
+
+- set values of `handle` and `owner` as they are given.
+
+If `doc` is not `None`:
+
+- `handle` is `None`: `BIND` entity to `doc`
+- `handle` is not `None`: `handle` has to be in `doc.entitydb`
+
+There should be no situation where `doc` is not `None` and `handle` is `None` 
+or `doc` is `None` and `handle` is not `None`:
+
+1. `UNBOUND`: doc is None __and__ handle is None 
+2. `BOUND`: doc is not None __and__ handle is not None 
 
 ## BIND
 
