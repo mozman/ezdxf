@@ -99,3 +99,7 @@ class LinkedEntities(DXFGraphic):
         del self._sub_entities
         del self.seqend
         super().destroy()
+
+    def remove_dependencies(self, other: 'Drawing' = None):
+        self.process_sub_entities(lambda e: e.remove_dependencies(other))
+        super().remove_dependencies(other)

@@ -1,7 +1,7 @@
 # Created: 2019-02-18
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, cast
+from typing import TYPE_CHECKING, Iterable
 from ezdxf.entities import factory
 from ezdxf.lldxf.const import (
     DXFValueError, DXFStructureError, LATEST_DXF_VERSION, DXFTypeError,
@@ -10,7 +10,6 @@ from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
 from ezdxf.entitydb import EntityDB, EntitySpace
 from ezdxf.graphicsfactory import CreatorInterface
-from ezdxf.entities import LinkedEntities
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -240,15 +239,8 @@ class BaseLayout(_AbstractLayout):
             else:
                 # Unbind entity from other document without destruction.
                 factory.unbind(entity)
-                if isinstance(entity, LinkedEntities):
-                    for e in entity.all_sub_entities():
-                        factory.unbind(e)
 
         entity.remove_dependencies(self.doc)
-        if isinstance(entity, LinkedEntities):
-            entity.process_sub_entities(
-                lambda e: e.remove_dependencies(self.doc)
-            )
         # add to this layout & bind to document
         self.add_entity(entity)
 

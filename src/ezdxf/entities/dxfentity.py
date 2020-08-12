@@ -738,6 +738,7 @@ class DXFEntity:
             self.reactors.discard(handle)
 
 
+@factory.set_default_class
 class DXFTagStorage(DXFEntity):
     """ Just store all the tags as they are. (internal class) """
 

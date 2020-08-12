@@ -2,12 +2,9 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
-from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
-from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFKeyError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing
+    from ezdxf.eztypes import Drawing, DXFEntity, ExtendedTags
 
 __all__ = [
     'register_entity', 'ENTITY_CLASSES', 'replace_entity',
@@ -15,7 +12,14 @@ __all__ = [
 ]
 # Stores all registered classes:
 ENTITY_CLASSES = {}
-DEFAULT_CLASS = DXFTagStorage
+# use @set_default_class to register the default entity class:
+DEFAULT_CLASS = None
+
+
+def set_default_class(cls):
+    global DEFAULT_CLASS
+    DEFAULT_CLASS = cls
+    return cls
 
 
 def replace_entity(cls):
@@ -27,7 +31,7 @@ def replace_entity(cls):
 def register_entity(cls):
     name = cls.DXFTYPE
     if name in ENTITY_CLASSES:
-        raise DXFInternalEzdxfError(f'Double registration for DXF type {name}.')
+        raise TypeError(f'Double registration for DXF type {name}.')
     ENTITY_CLASSES[name] = cls
     return cls
 
@@ -56,8 +60,7 @@ def create_db_entry(dxftype, dxfattribs: dict, doc: 'Drawing') -> 'DXFEntity':
     return entity
 
 
-def load(tags: ExtendedTags) -> 'DXFEntity':
-    assert isinstance(tags, ExtendedTags)
+def load(tags: 'ExtendedTags') -> 'DXFEntity':
     entity = cls(tags.dxftype()).load(tags)
     return entity.cast() if hasattr(entity, 'cast') else entity
 
@@ -90,10 +93,13 @@ def unbind(entity: 'DXFEntity'):
         doc = entity.doc
         try:
             layout = doc.layouts.get_layout_for_entity(entity)
-        except DXFKeyError:
+        except KeyError:
             pass
         else:
             layout.unlink_entity(entity)
+        process_sub_entities = getattr(entity, 'process_sub_entities', None)
+        if process_sub_entities:
+            process_sub_entities(lambda e: unbind(e))
 
         doc.entitydb.discard(entity)
         entity.doc = None

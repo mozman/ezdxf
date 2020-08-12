@@ -149,8 +149,7 @@ class EntityDB:
         """
         if entity.is_alive:
             if isinstance(entity, LinkedEntities):
-                for sub_entity in entity.all_sub_entities():
-                    self.discard(sub_entity)
+                entity.process_sub_entities(lambda e: self.discard(e))
 
             handle = entity.dxf.handle
             try:
