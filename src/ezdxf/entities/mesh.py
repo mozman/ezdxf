@@ -21,7 +21,7 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, Drawing, Vertex, Tags, Matrix44,
+        TagWriter, DXFNamespace, Vertex, Tags, Matrix44,
     )
 
 __all__ = ['Mesh', 'MeshData']
@@ -180,8 +180,8 @@ class Mesh(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mesh)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self._vertices = VertexArray()  # vertices stored as array.array('d')
         self._faces = FaceList()  # face lists data
         self._edges = EdgeArray()  # edge indices stored as array.array('L')

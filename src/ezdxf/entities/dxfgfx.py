@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-13
 #
-# DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
+# DXFGraphic - graphical DXF entities stored in LAYOUTS and BLOCKS
 from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable, Dict
 import warnings
 from ezdxf.entities import factory
@@ -118,9 +118,6 @@ class DXFGraphic(DXFEntity):
     DXFTYPE = 'DXFGFX'
     DEFAULT_ATTRIBS = {'layer': '0'}
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)
-
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':

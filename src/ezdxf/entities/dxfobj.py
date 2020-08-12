@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-13
 #
-# DXFObject - non graphical entities stored in OBJECTS section
+# DXFObject - non graphical entities stored in the OBJECTS section
 from typing import TYPE_CHECKING, Iterable, Dict, Tuple
 import logging
 import array
@@ -19,7 +19,7 @@ from .factory import register_entity
 
 logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, Drawing, DXFNamespace, TagWriter
+    from ezdxf.eztypes import Auditor, DXFNamespace, TagWriter
 
 __all__ = [
     'DXFObject', 'Placeholder', 'XRecord', 'VBAProject', 'SortEntsTable',
@@ -70,8 +70,8 @@ class XRecord(DXFObject):
     DXFTYPE = 'XRECORD'
     DXFATTRIBS = DXFAttributes(base_class, acdb_xrecord)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.tags = Tags()
 
     def _copy_data(self, entity: 'XRecord') -> None:
@@ -125,8 +125,8 @@ class VBAProject(DXFObject):
     DXFTYPE = 'VBA_PROJECT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_vba_project)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.data = b''
 
     def _copy_data(self, entity: 'VBAProject') -> None:
@@ -200,9 +200,9 @@ class SortEntsTable(DXFObject):
     DXFTYPE = 'SORTENTSTABLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_sort_ents_table)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
-        self.table = dict()  # type: Dict[str, str]
+    def __init__(self):
+        super().__init__()
+        self.table: Dict[str, str] = dict()
 
     def _copy_data(self, entity: 'SortEntsTable') -> None:
         entity.tags = dict(entity.table)

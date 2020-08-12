@@ -11,14 +11,14 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.packedtags import VertexArray
 from ezdxf.lldxf.tags import Tags, DXFTag
-from ezdxf.math.vector import Vector, NULLVEC, Z_AXIS, Y_AXIS
+from ezdxf.math.vector import NULLVEC, Z_AXIS, Y_AXIS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
 from .mtext import split_mtext_string
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace
 
 __all__ = ['GeoData']
 
@@ -148,8 +148,8 @@ class GeoData(DXFObject):
     GRID_SCALE = 3
     PRISMOIDEAL = 4
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.source_vertices = MeshVertices()
         self.target_vertices = MeshVertices()
         self.faces: List[Sequence[int]] = []

@@ -23,7 +23,7 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, Drawing, Vertex, Tags,
+        TagWriter, DXFNamespace, Vertex, Tags,
     )
 
 __all__ = ['Spline']
@@ -93,8 +93,8 @@ class Spline(DXFGraphic):
     PLANAR = 8  # all spline points in a plane, don't read or set this bit, just ignore like AutoCAD
     LINEAR = 16  # always set with PLANAR, don't read or set this bit, just ignore like AutoCAD
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.fit_points = VertexArray()  # data stored as array.array('d')
         self.control_points = VertexArray()  # data stored as array.array('d')
         self.knots = []  # data stored as array.array('d')

@@ -12,7 +12,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
+    from ezdxf.eztypes import TagWriter, DXFNamespace
 
 __all__ = ['VisualStyle']
 
@@ -132,8 +132,8 @@ class VisualStyle(DXFObject):
     DXFATTRIBS = DXFAttributes(base_class, acdb_visualstyle)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000  # official supported in R2007
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.acad_xdata = None  # to preserve AutoCAD xdata
 
     def _copy_data(self, entity: 'VisualStyle') -> None:

@@ -8,10 +8,8 @@ from ezdxf.lldxf.const import DXFStructureError, DXF2004, DXF2000, DXFKeyError
 from ezdxf.entities.dxfclass import DXFClass
 from ezdxf.entities.dxfentity import DXFEntity
 
-if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
-    from ezdxf.document import Drawing
-    from ezdxf.eztypes import TagWriter
+if TYPE_CHECKING:
+    from ezdxf.eztypes import TagWriter, Drawing, DXFEntity, DXFTagStorage
 
 # name: cpp_class_name (2), app_name (3), flags(90), was_a_proxy (280), is_an_entity (281)
 # multiple entries for 'name' possible
@@ -126,7 +124,7 @@ class ClassesSection:
         if name not in CLASS_DEFINITIONS:
             return
         cls_data = CLASS_DEFINITIONS[name]
-        cls = DXFClass(self.doc)
+        cls = DXFClass.new(doc=self.doc)
         cpp, app, flags, proxy, entity = cls_data
         cls.update_dxf_attribs({
             'name': name,

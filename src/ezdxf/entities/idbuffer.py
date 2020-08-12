@@ -9,7 +9,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, Tags
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Tags
 
 __all__ = ['IDBuffer', 'FieldList', 'LayerFilter']
 
@@ -22,9 +22,9 @@ class IDBuffer(DXFObject):
     DXFTYPE = 'IDBUFFER'
     DXFATTRIBS = DXFAttributes(base_class, acdb_id_buffer)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
-        self.handles = []  # type: List[str]
+    def __init__(self):
+        super().__init__()
+        self.handles: List[str] = []
 
     def _copy_data(self, entity: 'IDBuffer') -> None:
         """ Copy handles """

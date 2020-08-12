@@ -1,7 +1,7 @@
 # Created: 17.02.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -20,7 +20,7 @@ logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, Drawing, Block, EndBlk, DXFGraphic,
+        TagWriter, DXFNamespace, Block, EndBlk, DXFGraphic,
         EntitySpace, BlockLayout,
     )
 
@@ -70,16 +70,16 @@ class BlockRecord(DXFEntity):
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record,
                                acdb_blockrec)
 
-    def __init__(self, doc: 'Drawing' = None):
+    def __init__(self):
         from ezdxf.entitydb import EntitySpace
-        super().__init__(doc)
+        super().__init__()
         # Store entities in the block_record instead of BlockLayout and Layout,
         # because BLOCK_RECORD is also the hard owner of all the entities.
         self.entity_space = EntitySpace()
-        self.block = None  # type: Block
-        self.endblk = None  # type: EndBlk
+        self.block: Optional[Block] = None
+        self.endblk: Optional[EndBlk] = None
         # stores also the block layout structure
-        self.block_layout = None  # type: BlockLayout
+        self.block_layout: Optional[BlockLayout] = None
 
     def set_block(self, block: 'Block', endblk: 'EndBlk'):
         self.block = block

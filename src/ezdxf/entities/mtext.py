@@ -203,10 +203,10 @@ class MText(DXFGraphic):
     GROUP = GROUP_START + '%s' + GROUP_END
     NBSP = r'\~'  # non breaking space
 
-    def __init__(self, doc: 'Drawing' = None):
+    def __init__(self):
         """ Default constructor """
-        super().__init__(doc)
-        self.text = ""  # type: str
+        super().__init__()
+        self.text: str = ""
 
     def _copy_data(self, entity: 'DXFEntity') -> None:
         """ Copy entity data: text """

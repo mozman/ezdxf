@@ -62,6 +62,7 @@ Version 0.14a3 - dev
 - CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 
   argument `safe` is deprecated, will be removed in v0.16
 - CHANGE: Dictionary raise `DXFValueError` for adding invalid handles
+- CHANGE: `BaseLayout.add_entity()` will bind entity automatically to doc/db if possible
 - REMOVE: Alias `DXFEntity.drawing`
 - REMOVE: `DXFEntity.entitydb`
 - REMOVE: `DXFEntity.dxffactory`

@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-09
-from typing import TYPE_CHECKING, Iterable, List, cast
+from typing import TYPE_CHECKING, Iterable, List, cast, Optional
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -115,11 +115,11 @@ class Image(DXFGraphic):
     USE_CLIPPING_BOUNDARY = 4
     USE_TRANSPARENCY = 8
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self._boundary_path: List[Vec2] = []
-        self._image_def = None
-        self._image_def_reactor = None
+        self._image_def: Optional[ImageDef] = None
+        self._image_def_reactor: Optional[ImageDefReactor] = None
 
     def load_resources(self, doc: 'Drawing') -> None:
         super().load_resources(doc)

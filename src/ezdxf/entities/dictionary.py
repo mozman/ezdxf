@@ -19,9 +19,7 @@ from .factory import register_entity
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter, Drawing, DXFNamespace, Auditor, EntityDB,
-    )
+    from ezdxf.eztypes import  TagWriter, Drawing, DXFNamespace, Auditor
 
 __all__ = ['Dictionary', 'DictionaryWithDefault', 'DictionaryVar']
 
@@ -74,8 +72,8 @@ class Dictionary(DXFObject):
     DXFTYPE = 'DICTIONARY'
     DXFATTRIBS = DXFAttributes(base_class, acdb_dictionary)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self._data: Dict[str, Union[str, DXFEntity]] = dict()
         self._value_code = VALUE_CODE
 
@@ -395,8 +393,8 @@ class DictionaryWithDefault(Dictionary):
     DXFATTRIBS = DXFAttributes(base_class, acdb_dictionary,
                                acdb_dict_with_default)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self._default: Optional[DXFEntity] = None
 
     def load_resources(self, doc: 'Drawing') -> None:

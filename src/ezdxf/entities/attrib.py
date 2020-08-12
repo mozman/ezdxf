@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import copy
 from ezdxf.lldxf import validator
 from ezdxf.math import NULLVEC
@@ -17,7 +17,7 @@ from .text import Text, acdb_text
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Tags, Drawing, DXFNamespace, DXFEntity
+    from ezdxf.eztypes import TagWriter, Tags, DXFNamespace, DXFEntity
 
 __all__ = ['AttDef', 'Attrib']
 
@@ -126,11 +126,11 @@ acdb_attdef_xrecord = DefSubclass('AcDbXrecord', [
 class BaseAttrib(Text):
     XRECORD_DEF = acdb_attdef_xrecord
 
-    def __init__(self, doc: 'Drawing' = None):
+    def __init__(self):
         """ Default constructor """
-        super().__init__(doc)
-        self.xrecord = None  # type: Tags
-        self.attached_mtext = None  # type: DXFEntity
+        super().__init__()
+        self.xrecord: Optional['Tags'] = None
+        self.attached_mtext: Optional['DXFEntity'] = None
 
     def _copy_data(self, entity: 'BaseAttrib') -> None:
         """ Copy entity data, xrecord data and attached MTEXT are not stored

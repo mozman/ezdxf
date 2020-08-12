@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-12
 from typing import TYPE_CHECKING
@@ -138,8 +138,8 @@ class ACADTable(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_block_reference, acdb_table)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2007
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.data = None
 
     def _copy_data(self, entity: 'ACADTable') -> None:

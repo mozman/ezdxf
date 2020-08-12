@@ -79,8 +79,8 @@ class Underlay(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_underlay)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self._boundary_path: List['Vertex'] = []
         self._underlay_def: Optional['UnderlayDefinition'] = None
 

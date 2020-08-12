@@ -15,11 +15,14 @@ __all__ = ['DXFClass']
 class_def = DefSubclass(None, {
     # Class DXF record name; always unique
     'name': DXFAttr(1),
-    # C++ class name. Used to bind with software that defines object class behavior; always unique
+    # C++ class name. Used to bind with software that defines object class
+    # behavior; always unique
     'cpp_class_name': DXFAttr(2),
-    # Application name. Posted in Alert box when a class definition listed in this section is not currently loaded
+    # Application name. Posted in Alert box when a class definition listed in
+    # this section is not currently loaded
     'app_name': DXFAttr(3),
-    # Proxy capabilities flag. Bit-coded value that indicates the capabilities of this object as a proxy:
+    # Proxy capabilities flag. Bit-coded value that indicates the capabilities
+    # of this object as a proxy:
     # 0 = No operations allowed (0)
     # 1 = Erase allowed (0x1)
     # 2 = Transform allowed (0x2)
@@ -38,10 +41,12 @@ class_def = DefSubclass(None, {
     'flags': DXFAttr(90, default=0),
     # Instance count for a custom class
     'instance_count': DXFAttr(91, dxfversion=DXF2004, default=0),
-    # Was-a-proxy flag. Set to 1 if class was not loaded when this DXF file was created, and 0 otherwise
+    # Was-a-proxy flag. Set to 1 if class was not loaded when this DXF file was
+    # created, and 0 otherwise
     'was_a_proxy': DXFAttr(280, default=0),
-    # Is-an-entity flag. Set to 1 if class was derived from the AcDbEntity class and can reside in the BLOCKS or
-    # ENTITIES section. If 0, instances may appear only in the OBJECTS section
+    # Is-an-entity flag. Set to 1 if class was derived from the AcDbEntity class
+    # and can reside in the BLOCKS or ENTITIES section. If 0, instances may
+    # appear only in the OBJECTS section
     'is_an_entity': DXFAttr(281, default=0),
 })
 
@@ -53,9 +58,14 @@ class DXFClass(DXFEntity):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     @classmethod
-    def new(cls, handle: str = None, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFClass':
-        """ New CLASS constructor - has no handle, no owner and do not need document reference """
+    def new(cls, handle: str = None, owner: str = None, dxfattribs: dict = None,
+            doc: 'Drawing' = None) -> 'DXFClass':
+        """ New CLASS constructor - has no handle, no owner and do not need
+        document reference .
+        """
         dxf_class = cls()
+        dxf_class.doc = doc
+        dxfattribs = dxfattribs or {}
         dxf_class.update_dxf_attribs(dxfattribs)
         return dxf_class
 
@@ -75,7 +85,8 @@ class DXFClass(DXFEntity):
         attribs = self.dxf
         tagwriter.write_tag2(0, self.DXFTYPE)
         attribs.export_dxf_attribs(tagwriter, [
-            'name', 'cpp_class_name', 'app_name', 'flags', 'instance_count', 'was_a_proxy', 'is_an_entity',
+            'name', 'cpp_class_name', 'app_name', 'flags', 'instance_count',
+            'was_a_proxy', 'is_an_entity',
         ])
 
     @property

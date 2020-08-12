@@ -70,10 +70,10 @@ class DXFEntity:
     DEFAULT_ATTRIBS: Dict = {}
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF12
 
-    def __init__(self, doc: 'Drawing' = None):
+    def __init__(self):
         """ Default constructor. (internal API)"""
         # Public attributes for package users
-        self.doc: Drawing = doc
+        self.doc: Optional[Drawing] = None
         self.dxf: DXFNamespace = DXFNamespace(entity=self)
 
         # None public attributes for package users
@@ -96,7 +96,8 @@ class DXFEntity:
 
         (internal API)
         """
-        entity = cls(doc)
+        entity = cls()
+        entity.doc = doc
         dxfversion = doc.dxfversion if doc else None
         entity.load_tags(tags, dxfversion=dxfversion)
         return entity
@@ -111,7 +112,8 @@ class DXFEntity:
         """ Copy constructor for type casting e.g. Polyface and Polymesh.
         (internal API)
         """
-        entity = cls(other.doc)
+        entity = cls()
+        entity.doc = other.doc
         entity.dxf = other.dxf
         entity.extension_dict = other.extension_dict
         entity.reactors = other.reactors
@@ -137,7 +139,8 @@ class DXFEntity:
 
         (internal API)
         """
-        entity = self.__class__(doc=self.doc)
+        entity = self.__class__()
+        entity.doc = self.doc
         # copy and bind dxf namespace to new entity
         entity.dxf = self.dxf.copy(entity)
         entity.dxf.reset_handles()
@@ -233,7 +236,8 @@ class DXFEntity:
 
         (internal API)
         """
-        entity = cls(doc)
+        entity = cls()
+        entity.doc = doc
         if handle:
             entity.dxf.handle = handle
         if owner:
@@ -742,9 +746,9 @@ class DXFEntity:
 class DXFTagStorage(DXFEntity):
     """ Just store all the tags as they are. (internal class) """
 
-    def __init__(self, doc: 'Drawing' = None):
+    def __init__(self):
         """ Default constructor """
-        super().__init__(doc)
+        super().__init__()
         self.xtags: Optional[ExtendedTags] = None
 
     def copy(self) -> 'DXFEntity':
@@ -759,7 +763,7 @@ class DXFTagStorage(DXFEntity):
     @classmethod
     def load(cls, tags: ExtendedTags, doc: 'Drawing' = None) -> 'DXFTagStorage':
         assert isinstance(tags, ExtendedTags)
-        entity = cls(doc)
+        entity = cls.new(doc=doc)
         dxfversion = doc.dxfversion if doc else None
         entity.load_tags(tags, dxfversion=dxfversion)
         entity.store_tags(tags)

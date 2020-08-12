@@ -1,8 +1,7 @@
 # Created: 08.04.2018
-# Copyright (c) 2018-2019, Manfred Moitzi
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
-from collections import OrderedDict
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2004, DXFTypeError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.tags import Tags
@@ -33,8 +32,8 @@ class MLeader(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mleader)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2004
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         # todo: MLEADER implementation
         self.tags = Tags()
 

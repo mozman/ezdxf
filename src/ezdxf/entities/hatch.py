@@ -219,8 +219,8 @@ class Hatch(DXFGraphic):
     DEFAULT_ATTRIBS = {'color': 1, 'layer': '0'}
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.paths = BoundaryPaths()
         self.pattern: Optional[Pattern] = None
         self.gradient: Optional[Gradient] = None

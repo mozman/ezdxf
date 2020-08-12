@@ -1,5 +1,5 @@
 # Created: 08.04.2018
-# Copyright (c) 2018-2019, Manfred Moitzi
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Iterable, List
 from collections import OrderedDict, namedtuple
@@ -91,8 +91,8 @@ class MLine(DXFGraphic):
     DXFTYPE = 'MLINE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mline)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         # todo: MLINE implementation
         self.vertices = MLineVertices([])
 
@@ -189,8 +189,8 @@ class MLineStyle(DXFObject):
     DXFTYPE = 'MLINESTYLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_mline_style)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.elements = MLineStyleElements()
 
     def copy(self):

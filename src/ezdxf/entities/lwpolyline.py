@@ -23,7 +23,7 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Drawing, Vertex, DXFNamespace, Line, Arc, BaseLayout,
+        TagWriter, Vertex, DXFNamespace, Line, Arc, BaseLayout,
     )
 
 __all__ = ['LWPolyline']
@@ -73,8 +73,8 @@ class LWPolyline(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_lwpolyline)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.lwpoints = LWPolylinePoints()
 
     def _copy_data(self, entity: 'LWPolyline') -> None:

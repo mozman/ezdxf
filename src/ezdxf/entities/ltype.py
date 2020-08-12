@@ -60,9 +60,9 @@ class Linetype(DXFEntity):
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record,
                                acdb_linetype)
 
-    def __init__(self, doc: 'Drawing' = None):
+    def __init__(self):
         """ Default constructor """
-        super().__init__(doc)
+        super().__init__()
         self.pattern_tags = LinetypePattern(Tags())
 
     def _copy_data(self, entity: 'Linetype') -> None:
@@ -86,7 +86,7 @@ class Linetype(DXFEntity):
         dxfattribs = dxfattribs or {}
         pattern = dxfattribs.pop('pattern', [0.0])
         length = dxfattribs.pop('length', 0)  # required for complex types
-        ltype = super().new(handle, owner, dxfattribs, doc)  # type: Linetype
+        ltype: 'LineType' = super().new(handle, owner, dxfattribs, doc)
         ltype._setup_pattern(pattern, length)
         return ltype
 

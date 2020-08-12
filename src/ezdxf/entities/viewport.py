@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-22
 from typing import TYPE_CHECKING, List, Iterable
@@ -20,7 +20,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace
 
 __all__ = ['Viewport']
 
@@ -221,10 +221,10 @@ class Viewport(DXFGraphic):
         Viewport.viewport_id += 1
         return current_id
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
-        self._frozen_layers = []  # type: List[str]
-        self._frozen_layers_content_type = 'names'
+    def __init__(self):
+        super().__init__()
+        self._frozen_layers: List[str] = []
+        self._frozen_layers_content_type: str = 'names'
 
     def _copy_data(self, entity: 'Viewport') -> None:
         entity.frozen_layers = self.frozen_layers
@@ -232,6 +232,7 @@ class Viewport(DXFGraphic):
     @property
     def frozen_layers(self) -> List[str]:
         """ Set/get frozen layers as list of layer names. """
+        # todo: add 2nd stage loader - load_resources()
         type_ = self._frozen_layers_content_type
         if type_ == 'names':
             return self._frozen_layers
