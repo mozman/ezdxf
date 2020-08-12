@@ -52,6 +52,7 @@ class LinkedEntities(DXFGraphic):
         """ Add sub-entities (VERTEX, ATTRIB, SEQEND) to entity database `db`,
         called from EntityDB. (internal API)
         """
+
         def add(entity: 'DXFEntity'):
             entity.doc = self.doc  # grant same document
             db.add(entity)
@@ -75,18 +76,18 @@ class LinkedEntities(DXFGraphic):
         # vertices/attrib entities are linked, so set_owner() of POLYLINE does
         # not set owner of vertices at loading time.
         super().set_owner(owner, paperspace)
-        for entity in self.all_sub_entities():
-            if not entity.is_alive:
-                continue
+
+        def set_owner(entity):
             if isinstance(entity, DXFGraphic):
                 entity.set_owner(owner, paperspace)
             else:  # SEQEND
                 entity.dxf.owner = owner
 
+        self.process_sub_entities(set_owner)
+
     def export_dxf_sub_entities(self, tagwriter: 'TagWriter'):
         """ Export all sub-entities and SEQEND as DXF. """
-        for entity in self.all_sub_entities():
-            entity.export_dxf(tagwriter)
+        self.process_sub_entities(lambda e: e.export_dxf(tagwriter))
 
     def remove_dependencies(self, other: 'Drawing' = None):
         """ Remove all dependencies from current document to bind entity to
