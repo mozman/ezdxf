@@ -18,7 +18,6 @@ class LinkedEntities(DXFGraphic):
         super().__init__()
         self._sub_entities: List[DXFGraphic] = []
         self.seqend: Optional['SeqEnd'] = None
-        self._has_new_sub_entities = True
 
     def _copy_data(self, entity: 'LinkedEntities') -> None:
         """ Copy all sub-entities ands SEQEND. (internal API) """
@@ -53,9 +52,6 @@ class LinkedEntities(DXFGraphic):
         """ Add sub-entities (VERTEX, ATTRIB, SEQEND) to entity database `db`,
         called from EntityDB. (internal API)
         """
-        if not self._has_new_sub_entities:
-            return
-
         def add(entity: 'DXFEntity'):
             entity.doc = self.doc  # grant same document
             db.add(entity)
@@ -63,17 +59,15 @@ class LinkedEntities(DXFGraphic):
         if not self.seqend or not self.seqend.is_alive:
             self.new_seqend()
         self.process_sub_entities(add)
-        self._has_new_sub_entities = False
 
     def new_seqend(self):
-        """ Create new SEQEND. (internal API) """
+        """ Create and bind new SEQEND. (internal API) """
         attribs = {'layer': self.dxf.layer}
         if self.doc:
             seqend = factory.create_db_entry('SEQEND', attribs, self.doc)
         else:
             seqend = factory.new('SEQEND', attribs)
         self.link_seqend(seqend)
-        self._has_new_sub_entities = True
 
     def set_owner(self, owner: str, paperspace: int = 0):
         """ Set owner of all sub-entities and SEQEND. (internal API) """
@@ -82,6 +76,8 @@ class LinkedEntities(DXFGraphic):
         # not set owner of vertices at loading time.
         super().set_owner(owner, paperspace)
         for entity in self.all_sub_entities():
+            if not entity.is_alive:
+                continue
             if isinstance(entity, DXFGraphic):
                 entity.set_owner(owner, paperspace)
             else:  # SEQEND

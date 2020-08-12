@@ -208,8 +208,9 @@ class BlockRecord(DXFEntity):
             entity: :class:`DXFGraphic`
 
         """
-        self.entity_space.remove(entity)
-        entity.set_owner(None)
+        if entity.is_alive:
+            self.entity_space.remove(entity)
+            entity.set_owner(None)
 
     def delete_entity(self, entity: 'DXFGraphic') -> None:
         """

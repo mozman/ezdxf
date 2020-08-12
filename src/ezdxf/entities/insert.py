@@ -321,7 +321,6 @@ class Insert(LinkedEntities):
         # attached ATTRIBS:
         if self.seqend is None:
             self.new_seqend()
-        self._has_new_sub_entities = True
         return attrib
 
     def delete_attrib(self, tag: str, ignore=False) -> None:
@@ -663,7 +662,7 @@ class Insert(LinkedEntities):
     def audit(self, auditor: 'Auditor') -> None:
         """ Validity check. """
         super().audit(auditor)
-        doc = self.doc
+        doc = auditor.doc
         if doc and doc.blocks:
             if self.dxf.name not in doc.blocks:
                 auditor.fixed_error(

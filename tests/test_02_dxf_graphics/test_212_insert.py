@@ -218,7 +218,6 @@ def test_copy_with_insert(doc):
     msp = doc.modelspace()
     msp_count = len(msp)
     db = doc.entitydb
-    db.refresh()
     db_len = len(doc.entitydb)
 
     insert = msp.add_blockref('Test', insert=(0, 0))
@@ -231,9 +230,7 @@ def test_copy_with_insert(doc):
     # linked attribs not stored in the entity space
     assert len(msp) == msp_count + 1
     # added INSERT + SEQEND
-    assert len(db) == db_len + 2, 'ATTRIBs not automatically stored in db'
-    db.refresh()
-    assert len(db) == db_len + 3, 'db.refresh() should add new ATTRIBs in db'
+    assert len(db) == db_len + 3, 'New ATTRIBS automatically stored in db'
 
     copy = doc.entitydb.duplicate_entity(insert)
 

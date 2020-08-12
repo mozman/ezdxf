@@ -35,7 +35,6 @@ def test_create_polyline3D(layout):
 
 def test_add_new_sub_entities_to_entity_database(layout, doc):
     db = doc.entitydb
-    db.refresh()
     db_len = len(db)
 
     polyline = layout.add_polyline2d([(0, 0), (1, 1)])
@@ -45,12 +44,8 @@ def test_add_new_sub_entities_to_entity_database(layout, doc):
     db_len = len(db)
     polyline.append_vertices([(2, 2), (3, 3)])
     assert len(polyline) == 4
-    assert polyline.vertices[-1].dxf.handle is None
-    assert len(db) == db_len, 'new VERTEX entities should not be added to db'
-
-    db.refresh()
     assert polyline.vertices[-1].dxf.handle is not None
-    assert len(db) == db_len + 2, 'refresh should add new VERTEX entities to db'
+    assert len(db) == db_len + 2, 'new VERTEX entities should be added to db'
 
 
 def test_export_sub_entities_to_dxf(layout, doc):

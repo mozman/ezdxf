@@ -61,7 +61,6 @@ def explode_block_reference(block_ref: 'Insert',
     def _explode_single_block_ref(block_ref):
         for entity in virtual_block_reference_entities(block_ref):
             dxftype = entity.dxftype()
-            entitydb.add(entity)
             target_layout.add_entity(entity)
             if dxftype == 'DIMENSION':
                 # Render a graphical representation for each exploded DIMENSION
@@ -106,11 +105,12 @@ def attrib_to_text(attrib: 'Attrib') -> 'Text':
     dxfattribs = attrib.dxfattribs(drop=IGNORE_FROM_ATTRIB)
     # ATTRIB has same owner as INSERT but does not reside in any EntitySpace()
     # and must not deleted from any layout.
-    if attrib.dxf.handle is not None:
-        attrib.destroy()
-    # New TEXT entity has same handle as the deleted ATTRIB entity and replaces
+    # New TEXT entity has same handle as the replaced ATTRIB entity and replaces
     # the ATTRIB entity in the database.
-    return factory.new('TEXT', dxfattribs=dxfattribs)
+    text = factory.new('TEXT', dxfattribs=dxfattribs)
+    if attrib.doc:
+        factory.bind(text, attrib.doc)
+    return text
 
 
 def virtual_block_reference_entities(
@@ -238,7 +238,6 @@ def explode_entity(
     entities = []
 
     for e in entity.virtual_entities():
-        entitydb.add(e)
         target_layout.add_entity(e)
         entities.append(e)
 

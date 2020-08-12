@@ -134,7 +134,6 @@ class EntityDB:
         self[handle] = entity
 
         # add sub entities like ATTRIB, VERTEX and SEQEND to database
-        # only INSERT and POLYLINE using this feature
         if isinstance(entity, LinkedEntities):
             entity.add_sub_entities_to_entitydb(self)
 
@@ -268,16 +267,6 @@ class EntityDB:
 
     def dxf_types_in_use(self) -> Set[str]:
         return set(entity.dxftype() for entity in self.values())
-
-    def refresh(self) -> None:
-        """ Add new sub-entities in POLYLINE and INSERT. """
-        self.empty_trashcan()
-        entities = [
-            entity for entity in self.values()
-            if isinstance(entity, LinkedEntities)
-        ]
-        for entity in entities:
-            entity.add_sub_entities_to_entitydb(self)
 
 
 class EntitySpace:

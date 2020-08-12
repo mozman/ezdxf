@@ -564,7 +564,7 @@ class DXFGraphic(DXFEntity):
 
     def _new_compound_entity(self, type_: str,
                              dxfattribs: dict) -> 'DXFGraphic':
-        """ Create new entity with same layout settings as `self`.
+        """ Create and bind  new entity with same layout settings as `self`.
 
         Used by INSERT & POLYLINE to create appended DXF entities, don't use it
         to create new standalone entities.
@@ -572,13 +572,16 @@ class DXFGraphic(DXFEntity):
         (internal API)
         """
         dxfattribs = dxfattribs or {}
-        doc = self.doc
+
         # if layer is not deliberately set, set same layer as creator entity,
         # at least VERTEX should have the same layer as the POLYGON entity.
         # Don't know if that is also important for the ATTRIB & INSERT entity.
         if 'layer' not in dxfattribs:
             dxfattribs['layer'] = self.dxf.layer
-        entity = factory.new(type_, dxfattribs)
+        if self.doc:
+            entity = factory.create_db_entry(type_, dxfattribs, self.doc)
+        else:
+            entity = factory.new(type_, dxfattribs)
         entity.dxf.owner = self.dxf.owner
         entity.dxf.paperspace = self.dxf.paperspace
         return entity

@@ -295,7 +295,6 @@ class Polyline(LinkedEntities):
 
     def _append_vertex(self, vertex: 'DXFVertex') -> None:
         self.vertices.append(vertex)
-        self._has_new_sub_entities = True
 
     def append_vertices(self, points: Iterable['Vertex'],
                         dxfattribs: Dict = None) -> None:
@@ -344,7 +343,8 @@ class Polyline(LinkedEntities):
         for point in points:
             attribs = vertex_attribs(point, format)
             attribs.update(dxfattribs)
-            self._append_vertex(factory.new('VERTEX', attribs))
+            vertex = self._new_compound_entity('VERTEX', attribs)
+            self._append_vertex(vertex)
 
     def append_vertex(self, point: 'Vertex', dxfattribs: dict = None) -> None:
         """ Append a single :class:`Vertex` entity at location `point`.
@@ -381,7 +381,6 @@ class Polyline(LinkedEntities):
         dxfattribs = dxfattribs or {}
         self.vertices[pos:pos] = list(
             self._build_dxf_vertices(points, dxfattribs))
-        self._has_new_sub_entities = True
 
     def _build_dxf_vertices(self, points: Iterable['Vertex'],
                             dxfattribs: dict) -> List['DXFVertex']:
