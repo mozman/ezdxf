@@ -91,12 +91,14 @@ def unbind(entity: 'DXFEntity'):
     """
     if entity.is_alive and not entity.is_virtual:
         doc = entity.doc
-        try:
-            layout = doc.layouts.get_layout_for_entity(entity)
-        except KeyError:
-            pass
-        else:
-            layout.unlink_entity(entity)
+        if entity.dxf.owner is not None:
+            try:
+                layout = doc.layouts.get_layout_for_entity(entity)
+            except KeyError:
+                pass
+            else:
+                layout.unlink_entity(entity)
+                
         process_sub_entities = getattr(entity, 'process_sub_entities', None)
         if process_sub_entities:
             process_sub_entities(lambda e: unbind(e))
