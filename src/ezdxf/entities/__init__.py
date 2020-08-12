@@ -12,6 +12,7 @@ from .appdata import AppData, Reactors
 from .dxfentity import DXFEntity
 from .dxfgfx import DXFGraphic, SeqEnd
 from .dxfobj import DXFObject
+from .dxfns import DXFNamespace, SubclassProcessor
 
 # register management structures
 from .dxfclass import DXFClass

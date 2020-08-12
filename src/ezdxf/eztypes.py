@@ -73,6 +73,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.idbuffer import IDBuffer, FieldList, LayerFilter
 
     # DXF entities
+    from ezdxf.entities.dxfns import DXFNamespace, SubclassProcessor
     from ezdxf.entities.dxfentity import DXFEntity, DXFNamespace, DXFTagStorage
     from ezdxf.entities.dxfgfx import DXFGraphic
     from ezdxf.entities.line import Line
