@@ -257,7 +257,19 @@ class DXFEntity:
             setter(key, value)
 
     def post_new_hook(self):
-        """ Post processing and integrity validation after entity creation
+        """ Post processing and integrity validation after entity creation.
+
+        Called only if created by ezdxf (see :meth:`DXFEntity.new`),
+        not if loaded from a DXF file.
+
+        (internal API)
+        """
+        pass
+
+    def post_bind_hook(self):
+        """ Post processing and integrity validation after binding entity to a
+        DXF Document.
+
         (internal API)
         """
         pass

@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -6,7 +6,8 @@ from ezdxf.lldxf.const import VTX_3D_POLYLINE_VERTEX
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.tools.test import load_entities
 from ezdxf.sections.entities import EntitySection
-from ezdxf.entities import factory
+from ezdxf.entities import factory, Polyline
+
 
 @pytest.fixture(scope='module')
 def doc():
@@ -313,6 +314,20 @@ def test_new_style_polyface_face_count():
     polyface = entities[0]
     faces = list(polyface.faces())
     assert 6 == len(faces)
+
+
+def test_add_virtual_polyline_to_layout(doc, layout):
+    polyline = Polyline()
+    polyline.append_vertex((0, 0))
+    layout.add_entity(polyline)
+    assert factory.is_bound(polyline, doc) is True, \
+        'POLYLINE must be bound to document'
+    assert factory.is_bound(polyline.seqend, doc) is True, \
+        'SEQEND must be bound to document'
+
+    assert len(polyline) == 1
+    assert factory.is_bound(polyline.vertices[0], doc) is True, \
+        'VERTEX must be bound to document'
 
 
 NEW_STYLE_POLYFACE = """  0

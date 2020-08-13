@@ -8,9 +8,7 @@ from ezdxf.entities.insert import Insert
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Matrix44, InsertTransformationError
-
-TEST_CLASS = Insert
-TEST_TYPE = 'INSERT'
+from ezdxf.entities import factory
 
 ENTITY_R12 = """0
 INSERT
@@ -72,53 +70,61 @@ def doc():
     return ezdxf.new()
 
 
+@pytest.fixture(scope='module')
+def layout(doc):
+    return doc.modelspace()
+
+
 @pytest.fixture(params=[ENTITY_R12, ENTITY_R2000])
 def entity(request):
-    return TEST_CLASS.from_text(request.param)
+    return Insert.from_text(request.param)
 
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert TEST_TYPE in ENTITY_CLASSES
+    assert 'INSERT' in ENTITY_CLASSES
 
 
-def test_default_init():
-    entity = TEST_CLASS()
-    assert entity.dxftype() == TEST_TYPE
+def test_default_constructor():
+    insert = Insert()
+    assert insert.dxftype() == 'INSERT'
+    assert insert.is_virtual
+    assert insert.seqend is None, 'SEQEND must not exist'
 
 
-def test_default_new():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+def test_new_constructor():
+    insert = Insert.new(handle='ABBA', owner='0', dxfattribs={
         'color': '7',
         'insert': (1, 2, 3),
     })
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 7
-    assert entity.dxf.linetype == 'BYLAYER'
-    assert entity.dxf.insert == (1, 2, 3)
-    assert entity.dxf.insert.x == 1, 'is not Vector compatible'
-    assert entity.dxf.insert.y == 2, 'is not Vector compatible'
-    assert entity.dxf.insert.z == 3, 'is not Vector compatible'
-    assert entity.has_scaling is False
-    assert entity.has_uniform_scaling is True
+    assert insert.is_virtual is True, 'Has no assigned document'
+    assert insert.dxf.layer == '0'
+    assert insert.dxf.color == 7
+    assert insert.dxf.linetype == 'BYLAYER'
+    assert insert.dxf.insert == (1, 2, 3)
+    assert insert.dxf.insert.x == 1, 'is not Vector compatible'
+    assert insert.dxf.insert.y == 2, 'is not Vector compatible'
+    assert insert.dxf.insert.z == 3, 'is not Vector compatible'
+    assert insert.has_scaling is False
+    assert insert.has_uniform_scaling is True
     # can set DXF R2007 value
-    entity.dxf.shadow_mode = 1
-    assert entity.dxf.shadow_mode == 1
+    insert.dxf.shadow_mode = 1
+    assert insert.dxf.shadow_mode == 1
 
 
 def test_has_scaling():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={'xscale': 2})
+    entity = Insert.new(handle='ABBA', owner='0', dxfattribs={'xscale': 2})
     assert entity.has_scaling is True
     assert entity.has_uniform_scaling is False
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={'yscale': 2})
+    entity = Insert.new(handle='ABBA', owner='0', dxfattribs={'yscale': 2})
     assert entity.has_scaling is True
     assert entity.has_uniform_scaling is False
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={'zscale': 2})
+    entity = Insert.new(handle='ABBA', owner='0', dxfattribs={'zscale': 2})
     assert entity.has_scaling is True
     assert entity.has_uniform_scaling is False
 
     # reflections are under control, so (-2, 2, 2) is a uniform scaling
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+    entity = Insert.new(handle='ABBA', owner='0', dxfattribs={
         'xscale': -2,
         'yscale': 2,
         'zscale': 2,
@@ -137,7 +143,7 @@ def test_load_from_text(entity):
                          [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
-    vertex = TEST_CLASS.from_text(txt)
+    vertex = Insert.from_text(txt)
     collector = TagCollector(dxfversion=ver, optional=True)
     vertex.export_dxf(collector)
     assert collector.tags == expected
@@ -251,14 +257,14 @@ def test_copy_with_insert(doc):
 
 
 def test_matrix44_no_transform():
-    insert = TEST_CLASS.new(handle='ABBA', owner='0')
+    insert = Insert.new(handle='ABBA', owner='0')
     m = insert.matrix44()
     assert m.transform((0, 0, 0)) == (0, 0, 0)
     assert m.transform_direction((1, 0, 0)) == (1, 0, 0)
 
 
 def test_matrix44_insert():
-    insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+    insert = Insert.new(handle='ABBA', owner='0', dxfattribs={
         'insert': (1, 2, 3),
     })
     m = insert.matrix44()
@@ -275,7 +281,7 @@ def test_matrix44_insert_and_base_point(doc):
 
 
 def test_matrix44_rotation():
-    insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+    insert = Insert.new(handle='ABBA', owner='0', dxfattribs={
         'insert': (0, 0, 0),
         'rotation': 90,
     })
@@ -286,7 +292,7 @@ def test_matrix44_rotation():
 
 
 def test_matrix44_scaled():
-    insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+    insert = Insert.new(handle='ABBA', owner='0', dxfattribs={
         'xscale': 2,
         'yscale': 3,
         'zscale': 4,
@@ -298,7 +304,7 @@ def test_matrix44_scaled():
 
 
 def test_matrix44_direction():
-    insert = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+    insert = Insert.new(handle='ABBA', owner='0', dxfattribs={
         'insert': (1, 2, 3),
         'xscale': 2,
     })
@@ -357,3 +363,20 @@ def test_insert_scaling():
     assert abs(insert.dxf.xscale) == 4
     assert abs(insert.dxf.yscale) == 6
     assert abs(insert.dxf.zscale) == 8
+
+
+def test_add_virtual_insert_with_attribs_to_layout(doc):
+    doc.blocks.new('TestAddVirtualInsert')
+    msp = doc.modelspace()
+    insert = Insert.new(dxfattribs={'name': 'TestAddVirtualInsert'})
+    insert.add_attrib('TAG', 'TEXT', (0, 0))
+    msp.add_entity(insert)
+
+    assert factory.is_bound(insert, doc) is True
+    assert factory.is_bound(insert.seqend, doc) is True, \
+        'SEQEND must be bound to document'
+
+    assert insert.attribs_follow is True
+    assert factory.is_bound(insert.attribs[0], doc) is True, \
+        'ATTRIB must be bound to document'
+

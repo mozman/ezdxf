@@ -39,6 +39,11 @@ class LinkedEntities(DXFGraphic):
         seqend.dxf.owner = self.dxf.owner
         self.seqend = seqend
 
+    def post_bind_hook(self):
+        """ Create always a SEQEND entity. """
+        if self.seqend is None:
+            self.new_seqend()
+
     def all_sub_entities(self) -> Iterable['DXFEntity']:
         """ Yields all sub-entities ans SEQEND. (internal API) """
         yield from self._sub_entities

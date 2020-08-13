@@ -81,6 +81,18 @@ NON_ORTHO_MSG = 'INSERT entity can not represent a non-orthogonal target ' \
                 'coordinate system.'
 
 
+# Notes to SEQEND:
+#
+# The INSERT entity requires only a SEQEND if ATTRIB entities are attached.
+#  So a loaded INSERT could have a missing SEQEND.
+#
+# A bounded INSERT needs a SEQEND to be valid at export if there are attached
+# ATTRIB entities, but the LinkedEntities.post_bind_hook() method creates
+# always a new SEQEND after binding the INSERT entity to a document.
+#
+# Nonetheless the Insert.add_attrib() method also creates a requires SEQEND if
+# necessary.
+
 @factory.register_entity
 class Insert(LinkedEntities):
     """ DXF INSERT entity """
@@ -251,8 +263,7 @@ class Insert(LinkedEntities):
             if tag == attrib.dxf.tag:
                 return attrib
         if search_const and self.doc is not None:
-            block = self.doc.blocks[
-                self.dxf.name]  # raises KeyError() if not found
+            block = self.doc.blocks[self.dxf.name]
             for attdef in block.get_const_attdefs():
                 if tag == attdef.dxf.tag:
                     return attdef
@@ -298,10 +309,6 @@ class Insert(LinkedEntities):
             e.add_attrib('EXAMPLETAG', 'example text').set_pos(
                 (3, 7), align='MIDDLE_CENTER'
             )
-
-        New ATTRIB entities are not automatically added to the entity database,
-        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
-        or a manual method call of :meth:`EntityDB.refresh()`.
 
         Args:
             tag: tag name as string

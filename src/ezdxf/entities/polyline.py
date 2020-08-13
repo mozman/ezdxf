@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-16
 from typing import (
-    TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict
+    TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict,
 )
 from itertools import chain
 from ezdxf.lldxf import validator
@@ -82,6 +82,19 @@ acdb_polyline = DefSubclass('AcDbPolylineDummy', {
 })
 
 
+# Notes to SEQEND:
+# todo: A loaded entity should have a valid SEQEND, a POLYLINE without vertices
+#  makes no sense - has to be tested
+#
+# A virtual POLYLINE does not need a SEQEND, because it can not be exported,
+# therefore the SEQEND entity should not be created in the
+# DXFEntity.post_new_hook() method.
+#
+# A bounded POLYLINE needs a SEQEND to valid at export, therefore the
+# LinkedEntities.post_bind_hook() method creates a new SEQEND after binding
+# the entity to a document if needed.
+
+
 @factory.register_entity
 class Polyline(LinkedEntities):
     """ DXF POLYLINE entity """
@@ -130,12 +143,14 @@ class Polyline(LinkedEntities):
         return dxf
 
     def export_dxf(self, tagwriter: 'TagWriter'):
+        """ Export POLYLINE entity and all linked entities: VERTEX, SEQEND.
+        """
         super().export_dxf(tagwriter)
         # export sub-entities
         self.process_sub_entities(lambda e: e.export_dxf(tagwriter))
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+        """ Export POLYLINE specific data as DXF tags. """
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, self.get_mode())
@@ -305,10 +320,6 @@ class Polyline(LinkedEntities):
                         dxfattribs: Dict = None) -> None:
         """ Append multiple :class:`Vertex` entities at location `points`.
 
-        New VERTEX entities are not automatically added to the entity database,
-        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
-        or a manual method call of :meth:`EntityDB.refresh()`.
-
         Args:
             points: iterable of ``(x, y[, z])`` tuples
             dxfattribs: dict of DXF attributes for :class:`Vertex` class
@@ -322,10 +333,6 @@ class Polyline(LinkedEntities):
                                   format: str = 'xy',
                                   dxfattribs: Dict = None) -> None:
         """ Append multiple :class:`Vertex` entities at location `points`.
-
-        New VERTEX entities are not automatically added to the entity database,
-        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
-        or a manual method call of :meth:`EntityDB.refresh()`.
 
         Args:
             points: iterable of (x, y, [start_width, [end_width, [bulge]]])
@@ -354,10 +361,6 @@ class Polyline(LinkedEntities):
     def append_vertex(self, point: 'Vertex', dxfattribs: dict = None) -> None:
         """ Append a single :class:`Vertex` entity at location `point`.
 
-        New VERTEX entities are not automatically added to the entity database,
-        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
-        or a manual method call of :meth:`EntityDB.refresh()`.
-
         Args:
             point: as ``(x, y[, z])`` tuple
             dxfattribs: dict of DXF attributes for :class:`Vertex` class
@@ -372,10 +375,6 @@ class Polyline(LinkedEntities):
         """
         Insert vertices `points` into :attr:`Polyline.vertices` list
         at insertion location `pos` .
-
-        New VERTEX entities are not automatically added to the entity database,
-        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
-        or a manual method call of :meth:`EntityDB.refresh()`.
 
         Args:
             pos: insertion position of list :attr:`Polyline.vertices`
@@ -520,7 +519,6 @@ class Polyline(LinkedEntities):
         if seqend:
             audit_sub_entity(seqend)
         elif doc:
-            # SEQEND is only for POLYLINE in real DXF documents required
             self.new_seqend()
             auditor.fixed_error(
                 code=AuditError.MISSING_REQUIRED_SEQEND,
@@ -564,10 +562,6 @@ class Polyface(Polyline):
         """
         Append a single face. A `face` is a list of ``(x, y, z)`` tuples.
 
-        New VERTEX entities are not automatically added to the entity database,
-        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
-        or a manual method call of :meth:`EntityDB.refresh()`.
-
         Args:
             face: List[``(x, y, z)`` tuples]
             dxfattribs: dict of DXF attributes for :class:`Vertex` entity
@@ -605,10 +599,6 @@ class Polyface(Polyline):
         Append multiple `faces`. `faces` is a list of single faces and a single
         face is a list of ``(x, y, z)`` tuples.
 
-        New VERTEX entities are not automatically added to the entity database,
-        this is done before the DXF export by calling :meth:`EntityDB.refresh()`
-        or a manual method call of :meth:`EntityDB.refresh()`.
-
         Args:
             faces: list of List[``(x, y, z)`` tuples]
             dxfattribs: dict of DXF attributes for :class:`Vertex` entity
@@ -638,7 +628,6 @@ class Polyface(Polyline):
             )
             new_faces.append(face_record)
         self._rebuild(chain(existing_faces, new_faces))
-        self._has_new_sub_entities = True
 
     def _rebuild(self, faces: Iterable['FaceProxy'],
                  precision: int = 6) -> None:

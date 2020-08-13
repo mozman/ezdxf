@@ -9,8 +9,6 @@ from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vector
 
-TEST_CLASS = Polyline
-TEST_TYPE = 'POLYLINE'
 
 ENTITY_R12 = """0
 POLYLINE
@@ -57,21 +55,23 @@ AcDb2dPolyline
 
 @pytest.fixture(params=[ENTITY_R12, ENTITY_R2000])
 def entity(request):
-    return TEST_CLASS.from_text(request.param)
+    return Polyline.from_text(request.param)
 
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert TEST_TYPE in ENTITY_CLASSES
+    assert 'POLYLINE' in ENTITY_CLASSES
 
 
-def test_default_init():
-    entity = TEST_CLASS()
-    assert entity.dxftype() == TEST_TYPE
+def test_default_constructor():
+    entity = Polyline()
+    assert entity.dxftype() == 'POLYLINE'
+    assert entity.is_virtual is True
+    assert entity.seqend is None, 'SEQEND must not exist'
 
 
 def test_default_new():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+    entity = Polyline.new(handle='ABBA', owner='0', dxfattribs={
         'color': '7',
     })
     assert entity.dxf.layer == '0'
@@ -139,7 +139,7 @@ def test_copy_polyline():
 @pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
-    polyline = TEST_CLASS.from_text(txt)
+    polyline = Polyline.from_text(txt)
     collector = TagCollector(dxfversion=ver, optional=True)
     polyline.export_dxf(collector)
     assert collector.tags == expected

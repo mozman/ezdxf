@@ -51,12 +51,6 @@ def new(dxftype: str, dxfattribs: dict = None,
 def create_db_entry(dxftype, dxfattribs: dict, doc: 'Drawing') -> 'DXFEntity':
     entity = new(dxftype=dxftype, dxfattribs=dxfattribs)
     bind(entity, doc)
-    if hasattr(entity, 'seqend') and entity.seqend is None:
-        seqend = new('SEQEND',
-                     dxfattribs={'layer': entity.dxf.layer},
-                     )
-        bind(seqend, doc)
-        entity.seqend = seqend
     return entity
 
 
@@ -81,6 +75,7 @@ def bind(entity: 'DXFEntity', doc: 'Drawing') -> None:
     assert doc.entitydb is not None, 'Missing entity database.'
     entity.doc = doc
     doc.entitydb.add(entity)
+    entity.post_bind_hook()
 
 
 def unbind(entity: 'DXFEntity'):
