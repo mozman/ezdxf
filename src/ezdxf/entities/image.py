@@ -145,8 +145,9 @@ class Image(DXFGraphic):
         self.reset_boundary_path()
 
     def post_bind_hook(self) -> None:
-        # The loading process calls bind() before load_resources(), but a
-        # handle to a ImageDefReactor already exist:
+        # The loading process calls bind() before load_resources(), therefore
+        # the required self._image_def is not set, but a handle to a
+        # ImageDefReactor must exist:
         if self.dxf.hasattr('image_def_reactor_handle'):
             return
         # The new Image was created by ezdxf and the ImageDefReactor
