@@ -508,7 +508,6 @@ class DXFEntity:
                 tagwriter.write_tag2(_handle_code, self.dxf.handle)
                 # do not write owner handle - not supported by DXF R12
 
-    # interface definition
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export DXF entity specific data by `tagwriter`.
 

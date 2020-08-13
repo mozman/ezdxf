@@ -116,10 +116,9 @@ acdb_attdef_xrecord = DefSubclass('AcDbXrecord', [
 # as a usual DXF entity with (0, 'MTEXT'), so processing can't be done here,
 # because for ezdxf is this a separated Entity.
 #
-# Differentiation of this special MTEXT and a usual MTEXT entity could be done
-# by handle and owner tag, the special tag has both set to None. One approach
-# could be to link this MTEXT entity to the ATTDEF or ATTRIB entity, for now I
-# don't have seen this combination of entities in real world examples and is
+# The attached MTEXT entity: owner is None and handle is None
+# Linked as attribute `attached_mtext`.
+# I don't have seen this combination of entities in real world examples and is
 # ignored by ezdxf for now.
 
 
@@ -146,9 +145,15 @@ class BaseAttrib(Text):
     def link_entity(self, entity: 'DXFEntity'):
         self.attached_mtext = entity
 
-    def export_attached_mtext(self, tagwriter: 'TagWriter') -> None:
-        # todo: attached mtext dxf export
-        raise NotImplementedError()
+    def export_dxf(self, tagwriter: 'TagWriter'):
+        """ Export attached MTEXT entity. """
+        super().export_dxf(tagwriter)
+        if self.attached_mtext:
+            # todo: export MTEXT attached to ATTRIB
+            # Attached MTEXT has no handle and owner and can not exported
+            # by the usual export process:
+            # self.attached_mtext.export_dxf(tagwriter)
+            raise NotImplemented('Attached MTEXT export')
 
     @property
     def is_const(self) -> bool:
@@ -230,8 +235,6 @@ class AttDef(BaseAttrib):
         self.export_acdb_attdef(tagwriter)
         if self.xrecord:
             tagwriter.write_tags(self.xrecord)
-        if self.attached_mtext:
-            self.export_attached_mtext(tagwriter)
 
     def export_acdb_attdef(self, tagwriter: 'TagWriter') -> None:
         if tagwriter.dxfversion > DXF12:
@@ -272,9 +275,6 @@ class Attrib(BaseAttrib):
         self.export_acdb_attrib(tagwriter)
         if self.xrecord:
             tagwriter.write_tags(self.xrecord)
-        if self.attached_mtext:
-            # todo: attached mtext dxf export
-            self.export_attached_mtext(tagwriter)
 
     def export_acdb_attrib_text(self, tagwriter: 'TagWriter') -> None:
         # Despite the similarities to TEXT, it is different to

@@ -129,6 +129,11 @@ class Polyline(LinkedEntities):
                 )
         return dxf
 
+    def export_dxf(self, tagwriter: 'TagWriter'):
+        super().export_dxf(tagwriter)
+        # export sub-entities
+        self.process_sub_entities(lambda e: e.export_dxf(tagwriter))
+
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
         super().export_entity(tagwriter)

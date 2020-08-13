@@ -89,10 +89,6 @@ class LinkedEntities(DXFGraphic):
 
         self.process_sub_entities(set_owner)
 
-    def export_dxf_sub_entities(self, tagwriter: 'TagWriter'):
-        """ Export all sub-entities and SEQEND as DXF. """
-        self.process_sub_entities(lambda e: e.export_dxf(tagwriter))
-
     def remove_dependencies(self, other: 'Drawing' = None):
         """ Remove all dependencies from current document to bind entity to
         `other` document. (internal API)

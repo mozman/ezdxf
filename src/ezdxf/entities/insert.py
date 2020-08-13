@@ -124,10 +124,11 @@ class Insert(LinkedEntities):
             'extrusion',
         ])
 
-    def export_dxf_sub_entities(self, tagwriter: 'TagWriter'):
+    def export_dxf(self, tagwriter: 'TagWriter'):
+        super().export_dxf(tagwriter)
         # Do no export SEQEND if no ATTRIBS attached:
         if self.attribs_follow:
-            super().export_dxf_sub_entities(tagwriter)
+            self.process_sub_entities(lambda e: e.export_dxf(tagwriter))
 
     @property
     def has_scaling(self) -> bool:

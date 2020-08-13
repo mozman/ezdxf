@@ -331,8 +331,6 @@ class EntitySpace:
         """
         for entity in iter(self):
             entity.export_dxf(tagwriter)
-            if isinstance(entity, LinkedEntities):
-                entity.export_dxf_sub_entities(tagwriter)
 
     def remove(self, entity: 'DXFEntity') -> None:
         """ Remove `entity`. """
