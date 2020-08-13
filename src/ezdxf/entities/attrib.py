@@ -147,6 +147,7 @@ class BaseAttrib(Text):
         self.attached_mtext = entity
 
     def export_attached_mtext(self, tagwriter: 'TagWriter') -> None:
+        # todo: attached mtext dxf export
         raise NotImplementedError()
 
     @property
@@ -272,6 +273,7 @@ class Attrib(BaseAttrib):
         if self.xrecord:
             tagwriter.write_tags(self.xrecord)
         if self.attached_mtext:
+            # todo: attached mtext dxf export
             self.export_attached_mtext(tagwriter)
 
     def export_acdb_attrib_text(self, tagwriter: 'TagWriter') -> None:

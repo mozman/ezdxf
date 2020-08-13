@@ -1,10 +1,14 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Callable, List, Optional
-from ezdxf.entities import factory, DXFGraphic, SeqEnd
+
+from ezdxf.entities import factory, DXFGraphic, SeqEnd, DXFEntity
+from ezdxf.lldxf import const
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, TagWriter, EntityDB, Drawing
+
+__all__ = ['entity_linker', 'LinkedEntities']
 
 
 class LinkedEntities(DXFGraphic):
@@ -105,3 +109,95 @@ class LinkedEntities(DXFGraphic):
         del self._sub_entities
         del self.seqend
         super().destroy()
+
+
+# This attached MTEXT is a limited MTEXT entity, starting with (0, 'MTEXT')
+# therefore separated entity, but without the base class: no handle, no owner
+# nor AppData, and a limited AcDbEntity subclass.
+# Detect attached entities (more than MTEXT?) by required but missing handle and
+# owner tags use DXFEntity.link_entity() for linking to preceding entity,
+# INSERT & POLYLINE do not have attached entities, so reuse of API for
+# ATTRIB & ATTDEF should be safe.
+
+LINKED_ENTITIES = {
+    'INSERT': 'ATTRIB',
+    'POLYLINE': 'VERTEX'
+}
+
+
+def entity_linker() -> Callable[[DXFEntity], bool]:
+    """ Create an DXF entities linker. """
+    main_entity: Optional[DXFEntity] = None
+    prev: Optional[DXFEntity] = None
+    expected_dxftype = ""
+
+    def entity_linker_(entity: DXFEntity) -> bool:
+        """ Collect and link entities which are linked to a parent entity:
+
+        - VERTEX -> POLYLINE
+        - ATTRIB -> INSERT
+        - attached MTEXT entity
+
+        Args:
+             entity: examined DXF entity
+
+        Returns:
+             True if `entity` is linked to a parent entity
+
+        """
+        nonlocal main_entity, expected_dxftype, prev
+        dxftype: str = entity.dxftype()
+        # INSERT & POLYLINE are not linked entities, they are stored in the
+        # entity space.
+        are_linked_entities = False
+        if main_entity is not None:
+            # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in
+            # the entity space.
+            are_linked_entities = True
+            if dxftype == 'SEQEND':
+                main_entity.link_seqend(entity)
+                # Marks also the end of the main entity
+                main_entity = None
+            # Check for valid DXF structure:
+            #   VERTEX follows POLYLINE
+            #   ATTRIB follows INSERT
+            elif dxftype == expected_dxftype:
+                main_entity.link_entity(entity)
+            else:
+                raise const.DXFStructureError(
+                    f"Expected DXF entity {dxftype} or SEQEND"
+                )
+
+        elif dxftype in LINKED_ENTITIES:
+            # Only INSERT and POLYLINE have a linked entities structure:
+            if dxftype == 'INSERT' and not entity.dxf.get('attribs_follow', 0):
+                # INSERT must not have following ATTRIBS, ATTRIB can be a stand
+                # alone entity:
+                #
+                #   INSERT with no ATTRIBS, attribs_follow == 0
+                #   ATTRIB as stand alone entity
+                #   ....
+                #   INSERT with ATTRIBS, attribs_follow == 1
+                #   ATTRIB as connected entity
+                #   SEQEND
+                #
+                # Therefore a ATTRIB following an INSERT doesn't mean that
+                # these entities are linked.
+                pass
+            else:
+                main_entity = entity
+                expected_dxftype = LINKED_ENTITIES[dxftype]
+
+        # Attached MTEXT entity:
+        elif (dxftype == 'MTEXT') and (entity.dxf.handle is None):
+            if prev:
+                prev.link_entity(entity)
+                are_linked_entities = True
+            else:
+                raise const.DXFStructureError(
+                    "Found attached MTEXT entity without a preceding entity."
+                )
+        prev = entity
+        return are_linked_entities
+
+    return entity_linker_

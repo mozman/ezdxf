@@ -5,8 +5,7 @@ from ezdxf.lldxf.const import (
     DXFStructureError, DXFBlockInUseError, DXFTableEntryError, DXFKeyError,
 )
 from ezdxf.lldxf import const
-from ezdxf.entities import factory
-from ezdxf.entities.dxfgfx import entity_linker
+from ezdxf.entities import factory, entity_linker
 from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.render.arrows import ARROWS
 from .table import table_key

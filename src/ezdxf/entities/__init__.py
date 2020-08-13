@@ -48,7 +48,7 @@ from .arc import Arc
 from .shape import Shape
 from .solid import Solid, Face3d, Trace
 from .text import Text
-from .subentity import LinkedEntities
+from .subentity import LinkedEntities, entity_linker
 from .insert import Insert
 from .block import Block, EndBlk
 from .polyline import Polyline, Polyface, Polymesh, MeshVertexCache

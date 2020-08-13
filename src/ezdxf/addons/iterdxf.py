@@ -12,7 +12,7 @@ from ezdxf.lldxf import fileindex
 
 from ezdxf.entities import DXFGraphic, DXFEntity
 from ezdxf.entities import factory
-from ezdxf.entities.dxfgfx import entity_linker
+from ezdxf.entities.subentity import entity_linker
 from ezdxf.tools.codepage import toencoding
 
 __all__ = ['opendxf', 'single_pass_modelspace', 'modelspace']
