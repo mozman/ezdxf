@@ -176,7 +176,6 @@ class BaseLayout(_AbstractLayout):
                 'Adding entities from a different DXF drawing is not supported.'
             )
         self.block_record.add_entity(entity)
-        entity.added_to_layout(self)
 
     def add_foreign_entity(self, entity: 'DXFGraphic', copy=True) -> None:
         """

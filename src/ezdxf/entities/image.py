@@ -131,19 +131,21 @@ class Image(DXFGraphic):
         image_copy = cast('Image', super().copy())
         # Each image has its own ImageDefReactor object:
         image_copy.dxf.image_def_reactor_handle = '0'
+        image_copy._image_def_reactor = None
         image_copy._image_def = self._image_def
         return image_copy
 
     def _copy_data(self, entity: 'Image') -> None:
         entity._boundary_path = list(self._boundary_path)
 
-    def added_to_layout(self, layout: 'BaseLayout') -> None:
-        if self.doc is None:
+    def post_bind_hook(self) -> None:
+        doc = self.doc
+        if doc is None:
             return
         if self.dxf.get('image_def_reactor_handle', '0') != '0':
             return
-        # Create a new ImageDefReactor object for this image copy:
-        image_def_reactor = layout.doc.objects.add_image_def_reactor(
+        # Create a new ImageDefReactor object for this image:
+        image_def_reactor = doc.objects.add_image_def_reactor(
             self.dxf.handle)
         reactor_handle = image_def_reactor.dxf.handle
         # Link reactor object to this image:
@@ -318,7 +320,7 @@ class Wipeout(Image):
     }
     _CLS_ATTRIBS = acdb_wipeout
 
-    def added_to_layout(self, layout: 'BaseLayout') -> None:
+    def post_bind_hook(self) -> None:
         pass  # nothing to do for WIPEOUT
 
     def set_masking_area(self, vertices: Iterable['Vertex']) -> None:

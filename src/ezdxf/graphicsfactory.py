@@ -930,10 +930,11 @@ class CreatorInterface:
         dxfattribs['v_pixel'] = to_vector(y_units_per_pixel, y_angle_rad)
         dxfattribs['image_def_handle'] = image_def.dxf.handle
         dxfattribs['image_size'] = image_def.dxf.image_size
-        # Creating an ImageReactor and linking it to the Image and the ImageDef
-        # entity is done by adding the new Image to a layout.
-        image = factory.create_db_entry('IMAGE', dxfattribs, self.doc)
+        # a initialized self._image_def is required in the post_bind_hook():
+        # Don't call factory.create_db_entry() which calls post_bind_hook():
+        image = factory.new('IMAGE', dxfattribs, self.doc)
         image.set_image_def(image_def)
+        # add_entity() also binds the entity to the document if required:
         self.add_entity(image)
         return image
 

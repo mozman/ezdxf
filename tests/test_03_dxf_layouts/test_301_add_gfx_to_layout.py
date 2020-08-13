@@ -107,12 +107,12 @@ def test_create_shape(msp):
 
 
 class Checker(DXFGraphic):
-    def added_to_layout(self, layout) -> None:
-        self._mark_added_to_layout = True
+    def post_bind_hook(self) -> None:
+        self._post_bind_hook = True
 
 
-def test_added_to_layout_call(msp):
+def test_post_bind_hook_call(msp):
     checker = Checker()
     checker.doc = msp.doc
     msp.add_entity(checker)
-    assert checker._mark_added_to_layout is True
+    assert checker._post_bind_hook is True

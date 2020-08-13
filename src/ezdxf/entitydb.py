@@ -9,6 +9,7 @@ from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.audit import AuditError, Auditor
 from ezdxf.lldxf.const import DXFInternalEzdxfError
 from ezdxf.entities.subentity import LinkedEntities
+from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -177,7 +178,7 @@ class EntityDB:
         """
         new_entity: DXFEntity = entity.copy()
         new_entity.dxf.handle = self.next_handle()
-        self.add(new_entity)
+        factory.bind(new_entity, entity.doc)
         return new_entity
 
     def audit(self, auditor: 'Auditor'):

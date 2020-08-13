@@ -167,7 +167,6 @@ def test_create_and_copy_image(new_doc):
     image_def, image = create_image(new_doc)
     reactor_handle = image.dxf.image_def_reactor_handle
     copy = image.copy()
-    entitydb.add(copy)
     msp.add_entity(copy)
     reactor_handle_of_copy = copy.dxf.image_def_reactor_handle
 
@@ -207,16 +206,15 @@ def test_copying_to_another_layout(new_doc):
     blk = new_doc.blocks.new('TEST')
     copy = new_doc.entitydb.duplicate_entity(image)
 
-    assert copy.dxf.image_def_reactor_handle == '0', \
-        'Handle of source reactor was not removed.'
-    blk.add_entity(copy)
-
-    # Adding to a layout creates a new ImageDefReactor
+    # duplicate_entity() binds entity to document and triggers the
+    # post_bind_hook() to create a new ImageDefReactor:
     copy_reactor_handle = copy.dxf.image_def_reactor_handle
     assert copy_reactor_handle != '0', \
         'Image copy did not get a new ImageDefReactor'
     assert copy_reactor_handle != old_reactor_handle, \
         'Image copy has the same ImageDefReactor as the source image.'
+
+    blk.add_entity(copy)
 
     # unlinking an image, does not remove the ImageDefReactor
     blk.unlink_entity(copy)

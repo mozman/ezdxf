@@ -163,13 +163,6 @@ class DXFGraphic(DXFEntity):
                     f'Linetype "{dxf.linetype}" not defined.'
                 )
 
-    def added_to_layout(self, layout: 'BaseLayout') -> None:
-        """ Called from `layout` after an entity (e.g. a virtual copy) was added
-        to that `layout`.
-        (internal API)
-        """
-        pass
-
     @property
     def rgb(self) -> Optional[Tuple[int, int, int]]:
         """ Returns RGB true color as (r, g, b) tuple or None if true_color is
