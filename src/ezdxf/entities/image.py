@@ -125,12 +125,15 @@ class Image(DXFGraphic):
         super().load_resources(doc)
         db = doc.entitydb
         self._image_def = db.get(self.dxf.get('image_def_handle', None))
-        self._image_def_reactor = db.get(self.dxf.get('image_def_reactor_handle', None))
+        self._image_def_reactor = db.get(
+            self.dxf.get('image_def_reactor_handle', None))
 
     def copy(self) -> 'Image':
         image_copy = cast('Image', super().copy())
-        # Each image has its own ImageDefReactor object:
-        image_copy.dxf.image_def_reactor_handle = '0'
+        # Each Image has its own ImageDefReactor object,
+        # which will be created by binding the copy to the
+        # document.
+        image_copy.dxf.discard('image_def_reactor_handle')
         image_copy._image_def_reactor = None
         image_copy._image_def = self._image_def
         return image_copy
@@ -138,14 +141,19 @@ class Image(DXFGraphic):
     def _copy_data(self, entity: 'Image') -> None:
         entity._boundary_path = list(self._boundary_path)
 
+    def post_new_hook(self) -> None:
+        self.reset_boundary_path()
+
     def post_bind_hook(self) -> None:
-        doc = self.doc
-        if doc is None:
+        # The loading process calls bind() before load_resources(), but a
+        # handle to a ImageDefReactor already exist:
+        if self.dxf.hasattr('image_def_reactor_handle'):
             return
-        if self.dxf.get('image_def_reactor_handle', '0') != '0':
-            return
+        # The new Image was created by ezdxf and the ImageDefReactor
+        # handle does not exist.
+
         # Create a new ImageDefReactor object for this image:
-        image_def_reactor = doc.objects.add_image_def_reactor(
+        image_def_reactor = self.doc.objects.add_image_def_reactor(
             self.dxf.handle)
         reactor_handle = image_def_reactor.dxf.handle
         # Link reactor object to this image:
@@ -209,9 +217,6 @@ class Image(DXFGraphic):
         for vertex in self.boundary_path:
             tagwriter.write_vertex(14, vertex)
 
-    def post_new_hook(self) -> None:
-        self.reset_boundary_path()
-
     def set_boundary_path(self, vertices: Iterable['Vertex']) -> None:
         """ Set boundary path to `vertices`. Two vertices describe a rectangle
         (lower left and upper right corner), more than two vertices is a polygon
@@ -244,7 +249,7 @@ class Image(DXFGraphic):
         self.dxf.clipping_boundary_type = 1
         self.dxf.count_boundary_points = 2
 
-    def set_image_def(self, image_def: 'ImageDef')->None:
+    def set_image_def(self, image_def: 'ImageDef') -> None:
         self._image_def = image_def
 
     def get_image_def(self) -> 'ImageDef':
