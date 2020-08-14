@@ -55,7 +55,9 @@ acdb_vport = DefSubclass('AcDbViewportTableRecord', {
     'snap_style': DXFAttr(77, default=0),  # removed in R2007
     'snap_isopair': DXFAttr(78, default=0),  # removed in R2007
     # R2000: 331 or 441 (optional) - ignored by ezdxf
-    # Soft or hard-pointer ID/handle to frozen layer objects; repeats for each frozen layers
+    # Soft or hard-pointer ID/handle to frozen layer objects;
+    # repeats for each frozen layers
+
     # 70: Bit flags and perspective mode
 
     # CTB-File?
@@ -69,8 +71,9 @@ acdb_vport = DefSubclass('AcDbViewportTableRecord', {
     # 4 = Gouraud shaded
     # 5 = Flat shaded with wireframe
     # 6 = Gouraud shaded with wireframe
-    # All rendering modes other than 2D Optimized engage the new 3D graphics pipeline. These values directly correspond
-    # to the SHADEMODE command and the AcDbAbstractViewTableRecord::RenderMode enum
+    # All rendering modes other than 2D Optimized engage the new 3D graphics
+    # pipeline. These values directly correspond to the SHADEMODE command and
+    # the AcDbAbstractViewTableRecord::RenderMode enum
     'render_mode': DXFAttr(
         281, default=0, dxfversion=DXF2000,
         validator=validator.is_in_integer_range(0, 7),
