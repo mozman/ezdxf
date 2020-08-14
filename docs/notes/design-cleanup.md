@@ -63,7 +63,7 @@ The loading process has two stages:
 - `LOAD` content from file/stream into a DXF structure database: 
   `loader.load_dxf_structure()`
 - Convert tag structures into DXFEntity objects: `loader.load_dxf_entities()`
-- `BIND` entities to an EntityDB: `fill_database()`
+- `BIND` entities to an EntityDB: `load_and_bind_dxf_content()`
 
 Because of the missing DXF document structures, a complete validation is not 
 possible at this stage, only validation at DXF-Tag level is already done.

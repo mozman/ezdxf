@@ -158,7 +158,7 @@ def load_dxf_entities(entities: Iterable[Tags]) -> Iterable['DXFEntity']:
         yield factory.load(ExtendedTags(entity))
 
 
-def fill_database(sections: Dict, doc: 'Drawing') -> None:
+def load_and_bind_dxf_content(sections: Dict, doc: 'Drawing') -> None:
     # HEADER has no database entries.
     for name in ['TABLES', 'CLASSES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
         if name in sections:

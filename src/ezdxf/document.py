@@ -13,7 +13,7 @@ from ezdxf.lldxf.const import acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueErro
 from ezdxf.lldxf.const import DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013, \
     versions_supported_by_save, versions_supported_by_new
 from ezdxf.lldxf.const import DXFVersionError
-from ezdxf.lldxf.loader import load_dxf_structure, fill_database
+from ezdxf.lldxf.loader import load_dxf_structure, load_and_bind_dxf_content
 from ezdxf.lldxf import repair
 from ezdxf.lldxf.tagwriter import TagWriter, BinaryTagWriter
 
@@ -65,6 +65,9 @@ class Drawing:
             raise DXFVersionError(f'Unsupported DXF version "{self.dxfversion}".')
         # Store original dxf version if loaded (and maybe converted R13/14) from file.
         self._loaded_dxfversion: Optional[str] = None
+
+        # Status flag which is True while loading content from a DXF file:
+        self.is_loading = False
         self.encoding: str = 'cp1252'  # read/write
         self.filename: Optional[str] = None
 
@@ -286,6 +289,7 @@ class Drawing:
         assert tagger is not None, 'DXF tagger or SectionDict required.'
 
         # 1st Loading stage: load complete DXF entity structure
+        self.is_loading = True
         sections = load_dxf_structure(tagger)
         if 'THUMBNAILIMAGE' in sections:
             del sections['THUMBNAILIMAGE']
@@ -312,7 +316,7 @@ class Drawing:
         self.entitydb.handles.reset(seed)
 
         # Store all necessary DXF entities in the entity database:
-        fill_database(sections, self)
+        load_and_bind_dxf_content(sections, self)
 
         # End of 1. loading stage, all entities of the DXF file are
         # stored in the entity database.
@@ -338,8 +342,8 @@ class Drawing:
             if name not in MANAGED_SECTIONS:
                 self.stored_sections.append(StoredSection(data))
 
-        # 2nd Loading stage, objects section is not setup!
-        self._load_resources()
+        # Objects section is not initialized!
+        self._2nd_loading_stage()
 
         # DXF version upgrades:
         if self.dxfversion < DXF12:
@@ -362,9 +366,11 @@ class Drawing:
         # Setup modelspace- and paperspace layouts:
         self.layouts = Layouts.load(self)
 
+        # Additional work is common to the new and load process:
+        self.is_loading = False
         self._finalize_setup()
 
-    def _load_resources(self):
+    def _2nd_loading_stage(self):
         """ Load additional resources from entity database into DXF entities.
 
         e.g. convert handles into DXFEntity() objects
