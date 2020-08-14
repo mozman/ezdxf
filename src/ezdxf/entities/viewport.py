@@ -77,16 +77,20 @@ acdb_viewport = DefSubclass('AcDbViewport', {
     # 512 (0x200) = Enables grid mode
     # 1024 (0x400) = Enables isometric snap style
     # 2048 (0x800) = Enables hide plot mode
-    # 4096 (0x1000) = kIsoPairTop. If set and kIsoPairRight is not set, then isopair top is enabled. If both kIsoPairTop
-    #                 and kIsoPairRight are set, then isopair left is enabled
-    # 8192 (0x2000) = kIsoPairRight. If set and kIsoPairTop is not set, then isopair right is enabled
+    # 4096 (0x1000) = kIsoPairTop. If set and kIsoPairRight is not set, then
+    #   isopair top is enabled. If both kIsoPairTop and kIsoPairRight are set,
+    #   then isopair left is enabled
+    # 8192 (0x2000) = kIsoPairRight. If set and kIsoPairTop is not set, then
+    #   isopair right is enabled
     # 16384 (0x4000) = Enables viewport zoom locking
     # 32768 (0x8000) = Currently always enabled
     # 65536 (0x10000) = Enables non-rectangular clipping
     # 131072 (0x20000) = Turns the viewport off
-    # 262144 (0x40000) = Enables the display of the grid beyond the drawing limits
+    # 262144 (0x40000) = Enables the display of the grid beyond the drawing
+    #   limits
     # 524288 (0x80000) = Enable adaptive grid display
-    # 1048576 (0x100000) = Enables subdivision of the grid below the set grid spacing when the grid display is adaptive
+    # 1048576 (0x100000) = Enables subdivision of the grid below the set grid
+    #   spacing when the grid display is adaptive
     # 2097152 (0x200000) = Enables grid follows workplane switching
     'flags': DXFAttr(90, default=0),
 

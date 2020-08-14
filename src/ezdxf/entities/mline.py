@@ -156,7 +156,7 @@ class MLine(DXFGraphic):
 
 acdb_mline_style = DefSubclass('AcDbMlineStyle', {
     'name': DXFAttr(2, default='Standard'),
-    
+
     # Flags (bit-coded):
     # 1 =Fill on
     # 2 = Display miters
