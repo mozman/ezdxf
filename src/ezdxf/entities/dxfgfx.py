@@ -156,11 +156,10 @@ class DXFGraphic(DXFEntity):
         """ Post processing and integrity validation after entity creation
         (internal API)
         """
-        dxf = self.dxf
-        if self.doc and dxf.hasattr('linetype'):
-            if dxf.linetype not in self.doc.linetypes:
+        if self.doc:
+            if self.dxf.linetype not in self.doc.linetypes:
                 raise DXFInvalidLineType(
-                    f'Linetype "{dxf.linetype}" not defined.'
+                    f'Linetype "{self.dxf.linetype}" not defined.'
                 )
 
     @property

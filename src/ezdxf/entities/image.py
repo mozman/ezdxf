@@ -121,13 +121,6 @@ class Image(DXFGraphic):
         self._image_def: Optional[ImageDef] = None
         self._image_def_reactor: Optional[ImageDefReactor] = None
 
-    def post_load_hook(self, doc: 'Drawing') -> None:
-        super().post_load_hook(doc)
-        db = doc.entitydb
-        self._image_def = db.get(self.dxf.get('image_def_handle', None))
-        self._image_def_reactor = db.get(
-            self.dxf.get('image_def_reactor_handle', None))
-
     def copy(self) -> 'Image':
         image_copy = cast('Image', super().copy())
         # Each Image has its own ImageDefReactor object,
@@ -142,27 +135,47 @@ class Image(DXFGraphic):
         entity._boundary_path = list(self._boundary_path)
 
     def post_new_hook(self) -> None:
+        super().post_new_hook()
         self.reset_boundary_path()
 
     def post_bind_hook(self) -> None:
-        # The loading process calls bind() before post_load_hook(), therefore
-        # the required self._image_def is not set, but a handle to a
-        # ImageDefReactor must exist:
-        if self.dxf.hasattr('image_def_reactor_handle'):
+        # Document in LOAD process -> post_load_hook()
+        if self.doc.is_loading:
+            return
+        if self._image_def_reactor:  # ImageDefReactor already exist
             return
         # The new Image was created by ezdxf and the ImageDefReactor
-        # handle does not exist.
+        # object does not exist:
+        self._create_image_def_reactor()
 
-        # Create a new ImageDefReactor object for this image:
+    def post_load_hook(self, doc: 'Drawing') -> None:
+        super().post_load_hook(doc)
+        db = doc.entitydb
+        self._image_def = db.get(self.dxf.get('image_def_handle', None))
+        if self._image_def is None:
+            pass  # todo: unrecoverable error, destroy entity?
+
+        self._image_def_reactor = db.get(self.dxf.get(
+            'image_def_reactor_handle', None))
+        if self._image_def_reactor is None:
+            # todo: Image and ImageDef exist - this is recoverable by creating
+            #  an ImageDefReactor, but the objects section does not exist yet!
+            #  This is a job for the Auditor() and could be signaled to caller
+            #  by a returning a POST_LOAD_CODE:
+            #   0 or None = do nothing
+            #   1 = call auditor for this entity when document is fully loaded
+            pass
+
+    def _create_image_def_reactor(self):
+        # ImageDef -> ImageDefReactor -> Image
         image_def_reactor = self.doc.objects.add_image_def_reactor(
             self.dxf.handle)
         reactor_handle = image_def_reactor.dxf.handle
-        # Link reactor object to this image:
+        # Link Image to ImageDefReactor:
         self.dxf.image_def_reactor_handle = reactor_handle
         self._image_def_reactor = image_def_reactor
-        image_def = self.get_image_def()
-        # Link reactor object to the image definition:
-        image_def.append_reactor_handle(reactor_handle)
+        # Link ImageDef to ImageDefReactor:
+        self._image_def.append_reactor_handle(reactor_handle)
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
