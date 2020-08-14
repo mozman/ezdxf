@@ -5,11 +5,11 @@ The idea is to create a new setup design:
 
 1. There are two basic scenarios:
     - Load structures from file: `LOAD`
-    - Create new structures by ezdxf: `CREATE`
+    - Create new structures by ezdxf: `NEW`
 1. Binding a virtual entity to a DXF document is different for the 2 scenarios:
     - `LOAD`: all required resources should be loaded at the time of binding the
       entity, als handles are set and can be validated
-    - `CREATE`: some resources should be present (e.g. linetypes, text-styles)
+    - `NEW`: some resources should be present (e.g. linetypes, text-styles)
       and some required resources should be created (e.g. ImageDefReactor, 
       SEQEND)
 
@@ -182,7 +182,7 @@ v0.9, where each DXF version had its own factory class.
 
 ### Entities
 
-1. `CREATE` interface as class method
+1. `NEW` interface as class method
 1. `LOAD` interface as class method
 1. `DESTROY` interface to kill an entity, set entity `STATE` to "dead", which 
    means `entity.is_alive` returns False. All entity iterators like 

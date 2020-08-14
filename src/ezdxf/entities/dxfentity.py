@@ -86,9 +86,81 @@ class DXFEntity:
         self.proxy_graphic: Optional[bytes] = None
 
     @classmethod
+    def new(cls: Type[T], handle: str = None, owner: str = None,
+            dxfattribs: Dict = None, doc: 'Drawing' = None) -> T:
+        """ Constructor for building new entities from scratch by ezdxf.
+
+        NEW process:
+
+        This is a trusted environment where everything is under control of
+        ezdxf respectively the package-user, it is okay to raise exception
+        to show implementation errors in ezdxf or usage errors of the
+        package-user.
+
+        The :attr:`Drawing.is_loading` flag can be checked to distinguish the
+        NEW and the LOAD process.
+
+        Args:
+            handle: unique DXF entity handle or None
+            owner: owner handle if entity has an owner else None or '0'
+            dxfattribs: DXF attributes
+            doc: DXF document
+
+        (internal API)
+        """
+        entity = cls()
+        entity.doc = doc
+        entity.dxf.handle = handle
+        entity.dxf.owner = owner
+        attribs = dict(cls.DEFAULT_ATTRIBS)
+        attribs.update(dxfattribs or {})
+        entity.update_dxf_attribs(attribs)
+        # Only this method triggers the post_new_hook()
+        entity.post_new_hook()
+        return entity
+
+    def post_new_hook(self):
+        """ Post processing and integrity validation after entity creation.
+
+        Called only if created by ezdxf (see :meth:`DXFEntity.new`),
+        not if loaded from an external source.
+
+        (internal API)
+        """
+        pass
+
+    def post_bind_hook(self):
+        """ Post processing and integrity validation after binding entity to a
+        DXF Document. This method is triggered by the :func:`factory.bind`
+        function only when the entity was created by ezdxf.
+
+        If the entity was loaded in the 1st loading stage, the
+        :func:`factory.load` functions also calls the :func:`factory.bind`
+        to bind entities to the loaded document, but not all entities are
+        loaded at this time. To avoid problems this method will not be called
+        when loading content from DXF file, but :meth:`post_load_hook` will be
+        triggered for loaded entities at a later and safer point in time.
+
+        (internal API)
+        """
+        pass
+
+    @classmethod
     def load(cls: Type[T], tags: ExtendedTags, doc: 'Drawing' = None) -> T:
-        """ Constructor to generate entities loaded from DXF files (untrusted
-        environment)
+        """ Constructor to generate entities loaded from an external source.
+
+        LOAD process:
+
+        This is an untrusted environment where valid structure are not
+        guaranteed and errors should be fixed, because the package-user is not
+        responsible for the problems and also can't fix them, raising
+        exceptions should only be done for unrecoverable issues.
+        Log fixes for debugging!
+
+            Be more like BricsCAD and not as mean as AutoCAD!
+
+        The :attr:`Drawing.is_loading` flag can be checked to distinguish the
+        NEW and the LOAD process.
 
         Args:
             tags: DXF tags as :class:`ExtendedTags`
@@ -96,11 +168,57 @@ class DXFEntity:
 
         (internal API)
         """
+        # This method does not trigger the post_new_hook()
         entity = cls()
         entity.doc = doc
         dxfversion = doc.dxfversion if doc else None
         entity.load_tags(tags, dxfversion=dxfversion)
         return entity
+
+    def load_tags(self, tags: ExtendedTags, dxfversion: str = None) -> None:
+        """ Generic tag loading interface, called if DXF document is loaded
+        from external sources.
+
+        1. Loading stage which set the basic DXF attributes, additional
+           resources (DXF objects) are not loaded yet. References to these
+           resources have to be stored as handles and can be resolved in the
+        2. Loading stage: :meth:`post_load_hook`.
+
+        (internal API)
+        """
+        if tags:
+            if len(tags.appdata):
+                self.setup_app_data(tags.appdata)
+            if len(tags.xdata):
+                self.xdata = XData(tags.xdata)
+            if tags.embedded_objects:
+                self.embedded_objects = EmbeddedObjects(
+                    tags.embedded_objects)
+            processor = SubclassProcessor(tags, dxfversion=dxfversion)
+            self.dxf = self.load_dxf_attribs(processor)
+
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> DXFNamespace:
+        """ Load DXF attributes into DXF namespace. """
+        return DXFNamespace(processor, self)
+
+    def post_load_hook(self, doc: 'Drawing') -> None:
+        """ The 2nd loading stage when loading DXF documents from an external
+        source, for the 1st loading stage see :meth:`load_tags`.
+
+        This stage is meant to convert resource handles into :class:`DXFEntity`
+        objects. This is an untrusted environment where valid structure are not
+        guaranteed, raise exceptions only for unrecoverable structure errors
+        and fix everything else. Log fixes for debugging!
+
+        Triggered in method: :meth:`Drawing._2nd_loading_stage`
+
+        Examples for two stage loading:
+        Image, Underlay, DXFGroup, Dictionary, Dimstyle
+
+        """
+        if self.extension_dict is not None:
+            self.extension_dict.load_resources(doc)
 
     @classmethod
     def from_text(cls: Type[T], text: str, doc: 'Drawing' = None) -> T:
@@ -184,72 +302,6 @@ class DXFEntity:
             memodict[id(self)] = copy
             return copy
 
-    def load_tags(self, tags: ExtendedTags, dxfversion: str = None) -> None:
-        """ Generic tag loading interface, called if DXF drawing is loaded from
-        a stream or file.
-
-        1. Loading stage which set the basic DXF attributes, additional
-           resources (DXF objects) are not loaded yet. References to these
-           resources have to be stored as handles and can be resolved in the
-        2. loading stage: :meth:`post_load_hook`.
-
-        (internal API)
-        """
-        if tags:
-            if len(tags.appdata):
-                self.setup_app_data(tags.appdata)
-            if len(tags.xdata):
-                self.xdata = XData(tags.xdata)
-            if tags.embedded_objects:
-                self.embedded_objects = EmbeddedObjects(
-                    tags.embedded_objects)
-            processor = SubclassProcessor(tags, dxfversion=dxfversion)
-            self.dxf = self.load_dxf_attribs(processor)
-
-    def post_load_hook(self, doc: 'Drawing') -> None:
-        """ Load additional resources from entity database.
-
-        This is the 2. loading stage when loading DXF documents, for the
-        1. loading stage see :meth:`load_tags`.
-
-        This stage is meant to convert resource handles into DXFEntity()
-        objects.
-
-        Triggered in method: :meth:`Drawing._2nd_loading_stage`
-
-        Examples for two stage loading:
-        Image, Underlay, DXFGroup, Dictionary, Dimstyle
-
-        """
-        if self.extension_dict is not None:
-            self.extension_dict.load_resources(doc)
-
-    @classmethod
-    def new(cls: Type[T], handle: str = None, owner: str = None,
-            dxfattribs: Dict = None, doc: 'Drawing' = None) -> T:
-        """ Constructor for building new entities from scratch by ezdxf
-        (trusted environment).
-
-        Args:
-            handle: unique DXF entity handle or None
-            owner: owner handle if entity has an owner else None or '0'
-            dxfattribs: DXF attributes
-            doc: DXF document
-
-        (internal API)
-        """
-        entity = cls()
-        entity.doc = doc
-        if handle:
-            entity.dxf.handle = handle
-        if owner:
-            entity.dxf.owner = owner
-        attribs = dict(cls.DEFAULT_ATTRIBS)
-        attribs.update(dxfattribs or {})
-        entity.update_dxf_attribs(attribs)
-        entity.post_new_hook()
-        return entity
-
     def update_dxf_attribs(self, dxfattribs: Dict) -> None:
         """ Set DXF attributes by a ``dict`` like :code:`{'layer': 'test',
         'color': 4}`.
@@ -257,28 +309,6 @@ class DXFEntity:
         setter = self.dxf.set
         for key, value in dxfattribs.items():
             setter(key, value)
-
-    def post_new_hook(self):
-        """ Post processing and integrity validation after entity creation.
-
-        Called only if created by ezdxf (see :meth:`DXFEntity.new`),
-        not if loaded from a DXF file.
-
-        (internal API)
-        """
-        pass
-
-    def post_bind_hook(self):
-        """ Post processing and integrity validation after binding entity to a
-        DXF Document.
-
-        (internal API)
-        """
-        pass
-
-    def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> DXFNamespace:
-        return DXFNamespace(processor, self)
 
     def setup_app_data(self, appdata: List[Tags]) -> None:
         """ Setup data structures from APP data. (internal API) """

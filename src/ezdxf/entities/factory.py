@@ -75,7 +75,11 @@ def bind(entity: 'DXFEntity', doc: 'Drawing') -> None:
     assert doc.entitydb is not None, 'Missing entity database.'
     entity.doc = doc
     doc.entitydb.add(entity)
-    entity.post_bind_hook()
+
+    # Do not call the post_bind_hook() while loading from external sources,
+    # not all entities and resources are loaded at this point of time!
+    if not doc.is_loading:
+        entity.post_bind_hook()
 
 
 def unbind(entity: 'DXFEntity'):
