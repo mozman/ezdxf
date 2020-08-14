@@ -92,6 +92,42 @@ def test_set_boundary_path(image):
     assert image.get_flag_state(image.USE_CLIPPING_BOUNDARY) is True
 
 
+def test_post_load_hook_creates_image_def_reactor(doc):
+    image_def = doc.add_image_def('test.jpg', (1, 1))
+    msp = doc.modelspace()
+    image = msp.add_image(image_def, (0, 0), (1, 1))
+    old_reactor_handle = image.dxf.image_def_reactor_handle
+
+    # Hack to unlink Image from ImageDefReactor!
+    image.dxf.image_def_reactor_handle = None
+    command = image.post_load_hook(doc)
+
+    assert command is not None, 'must return a fixer as callable object'
+    command()  # execute fix
+    handle = image.dxf.image_def_reactor_handle
+    reactor = doc.entitydb[handle]
+
+    assert handle is not None, 'must have a ImageDefReactor'
+    assert handle != old_reactor_handle, 'must have a new ImageDefReactor'
+    assert handle in image_def.reactors, \
+        'ImageDef must be linked to ImageDefReactor'
+    assert reactor.dxf.image_handle == image.dxf.handle, \
+        'ImageDefReactor must be linked to Image'
+
+
+def test_post_load_hook_destroys_image_without_valid_image_def(doc):
+    image_def = doc.add_image_def('test.jpg', (1, 1))
+    msp = doc.modelspace()
+    image = msp.add_image(image_def, (0, 0), (1, 1))
+
+    # Hack to unlink Image from ImageDef!
+    image.dxf.image_def_handle = None
+    image.post_load_hook(doc)
+
+    assert image.is_alive is False, \
+        'Image with invalid ImageDef must be destroyed'
+
+
 @pytest.fixture
 def new_doc():
     return ezdxf.new('R2000')

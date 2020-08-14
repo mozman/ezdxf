@@ -17,6 +17,7 @@ still not a CAD application.
 """
 from typing import (
     TYPE_CHECKING, List, Dict, Any, Iterable, Optional, Type, TypeVar, Set,
+    Callable
 )
 import copy
 import logging
@@ -202,7 +203,7 @@ class DXFEntity:
         """ Load DXF attributes into DXF namespace. """
         return DXFNamespace(processor, self)
 
-    def post_load_hook(self, doc: 'Drawing') -> None:
+    def post_load_hook(self, doc: 'Drawing') -> Optional[Callable]:
         """ The 2nd loading stage when loading DXF documents from an external
         source, for the 1st loading stage see :meth:`load_tags`.
 
@@ -210,6 +211,11 @@ class DXFEntity:
         objects. This is an untrusted environment where valid structure are not
         guaranteed, raise exceptions only for unrecoverable structure errors
         and fix everything else. Log fixes for debugging!
+
+        Some fixes can not be applied at this stage, because some structures
+        like the OBJECTS section are not initialized, in this case return a
+        callable, which will be executed after the DXF document is fully
+        initialized, for an example see :class:`Image`.
 
         Triggered in method: :meth:`Drawing._2nd_loading_stage`
 
@@ -219,6 +225,7 @@ class DXFEntity:
         """
         if self.extension_dict is not None:
             self.extension_dict.load_resources(doc)
+        return None
 
     @classmethod
     def from_text(cls: Type[T], text: str, doc: 'Drawing' = None) -> T:

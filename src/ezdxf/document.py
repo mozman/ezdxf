@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import (
     TYPE_CHECKING, TextIO, BinaryIO, Iterable, Union, Sequence, Tuple, Callable,
-    cast, Optional,
+    cast, Optional, List
 )
 from datetime import datetime
 import io
@@ -108,7 +108,7 @@ class Drawing:
 
         # Some fixes can't be applied while the DXF document is not fully
         # initialized, store this fixes as callable object:
-        self._post_init_commands: Sequence[Callable] = []
+        self._post_init_commands: List[Callable] = []
         # Don't create any new entities here:
         # New created handles could collide with handles loaded from DXF file.
         assert len(self.entitydb) == 0
@@ -422,7 +422,11 @@ class Drawing:
         """
         db = self.entitydb
         for entity in db.values():
-            entity.post_load_hook(self)
+            # The post_load_hook() can return a callable, which should be
+            # executed, when the DXF document is fully initialized.
+            cmd = entity.post_load_hook(self)
+            if cmd is not None:
+                self._post_init_commands.append(cmd)
 
     def create_all_arrow_blocks(self):
         """ For upgrading DXF R12/13/14 files to R2000, it is necessary to

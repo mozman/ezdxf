@@ -1,7 +1,8 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-09
-from typing import TYPE_CHECKING, Iterable, List, cast, Optional
+from typing import TYPE_CHECKING, Iterable, List, cast, Optional, Callable
+import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -12,6 +13,8 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
 from .factory import register_entity
+
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -148,23 +151,26 @@ class Image(DXFGraphic):
         # object does not exist:
         self._create_image_def_reactor()
 
-    def post_load_hook(self, doc: 'Drawing') -> None:
+    def post_load_hook(self, doc: 'Drawing') -> Optional[Callable]:
         super().post_load_hook(doc)
         db = doc.entitydb
         self._image_def = db.get(self.dxf.get('image_def_handle', None))
         if self._image_def is None:
-            pass  # todo: unrecoverable error, destroy entity?
+            # unrecoverable structure error
+            self.destroy()
+            return
 
         self._image_def_reactor = db.get(self.dxf.get(
             'image_def_reactor_handle', None))
         if self._image_def_reactor is None:
-            # todo: Image and ImageDef exist - this is recoverable by creating
-            #  an ImageDefReactor, but the objects section does not exist yet!
-            #  This is a job for the Auditor() and could be signaled to caller
-            #  by a returning a POST_LOAD_CODE:
-            #   0 or None = do nothing
-            #   1 = call auditor for this entity when document is fully loaded
-            pass
+            # Image and ImageDef exist - this is recoverable by creating
+            # an ImageDefReactor, but the objects section does not exist yet!
+            # Return a post init command:
+            return self._fix_missing_image_def_reactor
+
+    def _fix_missing_image_def_reactor(self):
+        self._create_image_def_reactor()
+        logger.info(f'Created missing ImageDefReactor for {str(self)}')
 
     def _create_image_def_reactor(self):
         # ImageDef -> ImageDefReactor -> Image
@@ -277,7 +283,8 @@ class Image(DXFGraphic):
         reactor = self._image_def_reactor
         if reactor and reactor.is_alive:
             image_def = self.get_image_def()
-            image_def.discard_reactor_handle(reactor.dxf.handle)
+            if image_def and image_def.is_alive:
+                image_def.discard_reactor_handle(reactor.dxf.handle)
             reactor.destroy()
         del self._boundary_path
         super().destroy()
