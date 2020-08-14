@@ -1,20 +1,20 @@
 # Created: 11.03.2011
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, TextIO, BinaryIO, Iterable, Union, Sequence, Tuple, Callable, cast
-from typing import Optional
+from typing import (
+    TYPE_CHECKING, TextIO, BinaryIO, Iterable, Union, Sequence, Tuple, Callable,
+    cast, Optional,
+)
 from datetime import datetime
 import io
 import base64
 import logging
 from itertools import chain
-
-from ezdxf.lldxf.const import acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError, acad_release_to_dxf_version
-from ezdxf.lldxf.const import DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013, \
-    versions_supported_by_save, versions_supported_by_new
-from ezdxf.lldxf.const import DXFVersionError
-from ezdxf.lldxf.loader import load_dxf_structure, load_and_bind_dxf_content
-from ezdxf.lldxf import repair
+from ezdxf.lldxf import const
+from ezdxf.lldxf.const import (
+    BLK_XREF, BLK_EXTERNAL, DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013,
+)
+from ezdxf.lldxf import repair, loader
 from ezdxf.lldxf.tagwriter import TagWriter, BinaryTagWriter
 
 from ezdxf.entitydb import EntityDB
@@ -42,16 +42,18 @@ from ezdxf.entities.mleader import MLeaderStyleCollection
 from ezdxf.entities.mline import MLineStyleCollection
 
 logger = logging.getLogger('ezdxf')
-MANAGED_SECTIONS = {'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'}
+MANAGED_SECTIONS = {
+    'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'
+}
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFTag, Table, ViewportTable, VPort
-    from ezdxf.eztypes import Dictionary, BlockLayout, Layout
-    from ezdxf.eztypes import DXFEntity, Layer, Auditor
+    from ezdxf.eztypes import (
+        DXFTag, Table, ViewportTable, VPort, Dictionary, Layout,
+        DXFEntity, Layer, Auditor, GenericLayoutType
+    )
 
-    LayoutType = Union[Layout, BlockLayout]
-
-TFilterStack = Sequence[Sequence[Callable[[Iterable['DXFTag']], Iterable['DXFTag']]]]
+TFilterStack = Sequence[
+    Sequence[Callable[[Iterable['DXFTag']], Iterable['DXFTag']]]]
 
 
 # [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
@@ -60,10 +62,13 @@ class Drawing:
     def __init__(self, dxfversion=DXF2013):
         self.entitydb = EntityDB()
         target_dxfversion = dxfversion.upper()
-        self._dxfversion: str = acad_release_to_dxf_version.get(target_dxfversion, target_dxfversion)
-        if self._dxfversion not in versions_supported_by_new:
-            raise DXFVersionError(f'Unsupported DXF version "{self.dxfversion}".')
-        # Store original dxf version if loaded (and maybe converted R13/14) from file.
+        self._dxfversion: str = const.acad_release_to_dxf_version.get(
+            target_dxfversion, target_dxfversion)
+        if self._dxfversion not in const.versions_supported_by_new:
+            raise const.DXFVersionError(
+                f'Unsupported DXF version "{self.dxfversion}".')
+        # Store original dxf version if loaded (and maybe converted R13/14)
+        # from file.
         self._loaded_dxfversion: Optional[str] = None
 
         # Status flag which is True while loading content from a DXF file:
@@ -91,17 +96,27 @@ class Drawing:
         self.materials: MaterialCollection = None
         self.mleader_styles: MLeaderStyleCollection = None
         self.mline_styles: MLineStyleCollection = None
-        self._acad_compatible = True  # will generated DXF file compatible with AutoCAD
-        self._dimension_renderer = DimensionRenderer()  # set DIMENSION rendering engine
-        self._acad_incompatibility_reason = set()  # avoid multiple warnings for same reason
+
+        # Set to False if the generated DXF file will be incompatible to AutoCAD
+        self._acad_compatible = True
+        # Store reasons for AutoCAD incompatibility:
+        self._acad_incompatibility_reason = set()
+
+        # DIMENSION rendering engine can be replaced by a custom Dimension
+        # render: see property Drawing.dimension_renderer
+        self._dimension_renderer = DimensionRenderer()
+
+        # Some fixes can't be applied while the DXF document is not fully
+        # initialized, store this fixes as callable object:
+        self._post_init_commands: Sequence[Callable] = []
         # Don't create any new entities here:
         # New created handles could collide with handles loaded from DXF file.
         assert len(self.entitydb) == 0
 
     @classmethod
     def new(cls, dxfversion: str = DXF2013) -> 'Drawing':
-        """ Create new drawing. Package users should use the factory function :func:`ezdxf.new`.
-        (internal API)
+        """ Create new drawing. Package users should use the factory function
+        :func:`ezdxf.new`. (internal API)
         """
         doc = cls(dxfversion)
         doc._setup()
@@ -114,9 +129,11 @@ class Drawing:
         self.blocks = BlocksSection(self)
         self.entities = EntitySection(self)
         self.objects = ObjectsSection(self)
-        self.acdsdata = AcDsDataSection(self)  # AcDSData section is not supported for new drawings
+        # AcDSData section is not supported for new drawings
+        self.acdsdata = AcDsDataSection(self)
         self.rootdict = self.objects.rootdict
-        self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
+        # Create missing tables:
+        self.objects.setup_objects_management_tables(self.rootdict)
         self.layouts = Layouts.setup(self)
         self._finalize_setup()
 
@@ -134,6 +151,12 @@ class Drawing:
         self.mleader_styles = MLeaderStyleCollection(self)
         self._set_required_layer_attributes()
         self._setup_metadata()
+        self._execute_post_init_commands()
+
+    def _execute_post_init_commands(self):
+        for cmd in self._post_init_commands:
+            cmd()
+        del self._post_init_commands
 
     def _create_required_table_entries(self):
         self._create_required_vports()
@@ -198,54 +221,74 @@ class Drawing:
 
     @property
     def output_encoding(self):
-        """ Returns required output encoding for writing document to a text streams. """
+        """ Returns required output encoding for writing document to a text
+        streams.
+        """
         return 'utf-8' if self.dxfversion >= DXF2007 else self.encoding
 
     def _validate_dxf_version(self, version: str) -> str:
         version = version.upper()
-        version = acad_release_to_dxf_version.get(version, version)  # translates 'R12' -> 'AC1009'
-        if version not in versions_supported_by_save:
-            raise DXFVersionError(f'Unsupported DXF version "{version}".')
+        # translates 'R12' -> 'AC1009'
+        version = const.acad_release_to_dxf_version.get(version, version)
+        if version not in const.versions_supported_by_save:
+            raise const.DXFVersionError(f'Unsupported DXF version "{version}".')
         if version == DXF12:
             if self._dxfversion > DXF12:
-                logger.warning(f'Downgrade from DXF {self.acad_release} to R12 may create an invalid DXF file.')
+                logger.warning(
+                    f'Downgrade from DXF {self.acad_release} to R12 may create '
+                    f'an invalid DXF file.')
         elif version < self._dxfversion:
-            logger.info(f'Downgrade from DXF {self.acad_release} to {acad_release[version]} can cause lost of features.')
+            logger.info(
+                f'Downgrade from DXF {self.acad_release} to '
+                f'{const.acad_release[version]} can cause lost of features.')
         return version
 
     @classmethod
-    def read(cls, stream: TextIO, legacy_mode: bool = False, filter_stack: TFilterStack = None) -> 'Drawing':
-        """ Open an existing drawing. Package users should use the factory function :func:`ezdxf.read`.
+    def read(cls, stream: TextIO,
+             legacy_mode: bool = False,
+             filter_stack: TFilterStack = None) -> 'Drawing':
+        """ Open an existing drawing. Package users should use the factory
+        function :func:`ezdxf.read`.
 
         Args:
              stream: text stream yielding text (unicode) strings by readline()
-             legacy_mode: apply some low level filters to correct some quirks allowed in legacy (R12) files
-             filter_stack: interface to put filters between reading layers, list of callable filters, for now
-                           two levels are supported, after low level tagging (DXFVertex) and after compiling tags to
-                           DXFVertex and DXFBinaryTag.
+             legacy_mode: apply some low level filters to correct some quirks
+                allowed in legacy (R12) files
+             filter_stack: interface to put filters between reading layers,
+                list of callable filters, for now two levels are supported,
+                after low level tagging (DXFVertex) and after compiling tags to
+                DXFVertex and DXFBinaryTag.
 
-                TFilterStack: Sequence[Sequence[Callable[[Iterable[DXFTag]], Iterable[DXFTag]]]]
-                e.g. [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
+        TFilterStack: Sequence[Sequence[Callable[[Iterable[DXFTag]], Iterable[DXFTag]]]]
+        e.g. [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
 
         """
         from .lldxf.tagger import ascii_tags_loader
         tag_loader = ascii_tags_loader(stream)
-        return cls.load(tag_loader, legacy_mode=legacy_mode, filter_stack=filter_stack)
+        return cls.load(
+            tag_loader,
+            legacy_mode=legacy_mode,
+            filter_stack=filter_stack,
+        )
 
     @classmethod
-    def load(cls, tag_loader: Iterable['DXFTag'], legacy_mode: bool = False,
+    def load(cls, tag_loader: Iterable['DXFTag'],
+             legacy_mode: bool = False,
              filter_stack: TFilterStack = None) -> 'Drawing':
-        """ Load DXF document from DXF tag loader.
+        """ Load DXF document from a DXF tag loader, in general an external
+        untrusted source.
 
         Args:
-             tag_loader: DXF tag loader
-             legacy_mode: apply some low level filters to correct some quirks allowed in legacy (R12) files
-             filter_stack: interface to put filters between reading layers, list of callable filters, for now
-                           two levels are supported, after low level tagging (DXFVertex) and after compiling tags to
-                           DXFVertex and DXFBinaryTag.
+            tag_loader: DXF tag loader
+            legacy_mode: apply some low level filters to correct some quirks
+                allowed in legacy (R12) files
+            filter_stack: interface to put filters between reading layers,
+                list of callable filters, for now two levels are supported,
+                after low level tagging (DXFVertex) and after compiling tags to
+                DXFVertex and DXFBinaryTag.
 
-                TFilterStack: Sequence[Sequence[Callable[[Iterable[DXFTag]], Iterable[DXFTag]]]]
-                e.g. [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
+        TFilterStack: Sequence[Sequence[Callable[[Iterable[DXFTag]], Iterable[DXFTag]]]]
+        e.g. [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
 
         """
         from .lldxf.tagger import tag_compiler
@@ -253,15 +296,16 @@ class Drawing:
         compiled_tag_filters = []
 
         if filter_stack:
-            # maybe more levels in the future
             raw_tag_filters, compiled_tag_filters, *_ = filter_stack
 
         # legacy mode overrides filter_stack
         if legacy_mode:
-            raw_tag_filters = [repair.tag_reorder_layer, repair.filter_invalid_yz_point_codes]
+            raw_tag_filters = [repair.tag_reorder_layer,
+                               repair.filter_invalid_yz_point_codes]
             compiled_tag_filters = []
 
-        # low level tag compiler, creates simple tuple like tags DXFTag(group code, value)
+        # low level tag compiler, creates simple tuple like tags DXFTag
+        # (group code, value)
 
         # apply low level filters
         for _filter in raw_tag_filters:
@@ -290,7 +334,7 @@ class Drawing:
 
         # 1st Loading stage: load complete DXF entity structure
         self.is_loading = True
-        sections = load_dxf_structure(tagger)
+        sections = loader.load_dxf_structure(tagger)
         if 'THUMBNAILIMAGE' in sections:
             del sections['THUMBNAILIMAGE']
 
@@ -316,7 +360,7 @@ class Drawing:
         self.entitydb.handles.reset(seed)
 
         # Store all necessary DXF entities in the entity database:
-        load_and_bind_dxf_content(sections, self)
+        loader.load_and_bind_dxf_content(sections, self)
 
         # End of 1. loading stage, all entities of the DXF file are
         # stored in the entity database.
@@ -381,11 +425,12 @@ class Drawing:
             entity.post_load_hook(self)
 
     def create_all_arrow_blocks(self):
-        """
-        For upgrading DXF R12/13/14 files to R2000, it is necessary to create all used arrow blocks before saving the
-        DXF file, else $HANDSEED is not the next available handle, which is a problem for AutoCAD.
-        To be save create all known AutoCAD arrows, because references to arrow blocks can be in DIMSTYLE,
-        DIMENSION override, LEADER override and maybe other places.
+        """ For upgrading DXF R12/13/14 files to R2000, it is necessary to
+        create all used arrow blocks before saving the DXF file, else $HANDSEED
+        is not the next available handle, which is a problem for AutoCAD.
+        To be save create all known AutoCAD arrows, because references to arrow
+        blocks can be in DIMSTYLE, DIMENSION override, LEADER override and maybe
+        other places.
 
         """
         from ezdxf.render.arrows import ARROWS
@@ -398,11 +443,13 @@ class Drawing:
         if '*Paper_Space' not in self.block_records:
             self.block_records.new('*Paper_Space')
 
-    def saveas(self, filename: str, encoding: str = None, fmt: str = 'asc') -> None:
-        """
-        Set :class:`Drawing` attribute :attr:`filename` to `filename` and write drawing to the file system.
-        Override file encoding by argument `encoding`, handle with care, but this option allows you to create
-        DXF files for applications that handles file encoding different than AutoCAD.
+    def saveas(self, filename: str, encoding: str = None,
+               fmt: str = 'asc') -> None:
+        """ Set :class:`Drawing` attribute :attr:`filename` to `filename` and
+        write drawing to the file system. Override file encoding by argument
+        `encoding`, handle with care, but this option allows you to create DXF
+        files for applications that handles file encoding different than
+        AutoCAD.
 
         Args:
             filename: file name as string
@@ -414,26 +461,31 @@ class Drawing:
         self.save(encoding=encoding, fmt=fmt)
 
     def save(self, encoding: str = None, fmt: str = 'asc') -> None:
-        """
-        Write drawing to file-system by using the :attr:`filename` attribute as filename.
-        Override file encoding by argument `encoding`, handle with care, but this option allows you to create
-        DXF files for applications that handles file encoding different than AutoCAD.
+        """ Write drawing to file-system by using the :attr:`filename` attribute
+        as filename. Override file encoding by argument `encoding`, handle with
+        care, but this option allows you to create DXF files for applications
+        that handles file encoding different than AutoCAD.
 
         Args:
             encoding: override default encoding as Python encoding string like ``'utf-8'``
             fmt: ``'asc'`` for ASCII DXF (default) or ``'bin'`` for Binary DXF
+
         """
         # DXF R12, R2000, R2004 - ASCII encoding
         # DXF R2007 and newer - UTF-8 encoding
-        # in ASCII mode, unknown characters will be escaped as \U+nnnn unicode characters.
+        # in ASCII mode, unknown characters will be escaped as \U+nnnn unicode
+        # characters.
 
         if encoding is None:
             enc = self.output_encoding
-        else:  # override default encoding, for applications that handle encoding different than AutoCAD
+        else:
+            # override default encoding, for applications that handle encoding
+            # different than AutoCAD
             enc = encoding
 
         if fmt.startswith('asc'):
-            fp = io.open(self.filename, mode='wt', encoding=enc, errors='dxfreplace')
+            fp = io.open(self.filename, mode='wt', encoding=enc,
+                         errors='dxfreplace')
         elif fmt.startswith('bin'):
             fp = open(self.filename, 'wb')
         else:
@@ -444,15 +496,17 @@ class Drawing:
             fp.close()
 
     def write(self, stream: Union[TextIO, BinaryIO], fmt: str = 'asc') -> None:
-        """
-        Write drawing as ASCII DXF to a text stream or as Binary DXF to a binary stream.
-        For DXF R2004 (AC1018) and prior open stream with drawing :attr:`encoding` and :code:`mode='wt'`.
-        For DXF R2007 (AC1021) and later use :code:`encoding='utf-8'`, or better use the later added :class:`Drawing`
-        property :attr:`output_encoding` which returns the correct encoding automatically.
+        """ Write drawing as ASCII DXF to a text stream or as Binary DXF to a
+        binary stream. For DXF R2004 (AC1018) and prior open stream with
+        drawing :attr:`encoding` and :code:`mode='wt'`. For DXF R2007 (AC1021)
+        and later use :code:`encoding='utf-8'`, or better use the later added
+        :class:`Drawing` property :attr:`output_encoding` which returns the
+        correct encoding automatically.
 
         Args:
             stream: output text stream or binary stream
             fmt: ``'asc'`` for ASCII DXF (default) or ``'bin'`` for binary DXF
+
         """
         dxfversion = self.dxfversion
         if dxfversion == DXF12:
@@ -467,10 +521,12 @@ class Drawing:
         self._update_metadata()
 
         if fmt.startswith('asc'):
-            tagwriter = TagWriter(stream, write_handles=handles, dxfversion=dxfversion)
+            tagwriter = TagWriter(stream, write_handles=handles,
+                                  dxfversion=dxfversion)
         elif fmt.startswith('bin'):
             tagwriter = BinaryTagWriter(
-                stream, write_handles=handles, dxfversion=dxfversion, encoding=self.output_encoding,
+                stream, write_handles=handles, dxfversion=dxfversion,
+                encoding=self.output_encoding,
             )
             tagwriter.write_signature()
         else:
@@ -488,7 +544,8 @@ class Drawing:
         stream = io.StringIO()
         self.write(stream)
         # create binary data with windows line ending
-        binary_data = stream.getvalue().encode(self.output_encoding).replace(b'\n', b'\r\n')
+        binary_data = stream.getvalue().encode(self.output_encoding).replace(
+            b'\n', b'\r\n')
         return base64.encodebytes(binary_data)
 
     def export_sections(self, tagwriter: 'TagWriter') -> None:
@@ -516,7 +573,8 @@ class Drawing:
         material = self.entitydb.get(self.header.get('$CMATERIAL', None))
         if material is None or material.dxftype() != 'MATERIAL':
             if 'ByLayer' in self.materials:
-                self.header['$CMATERIAL'] = self.materials.get('ByLayer').dxf.handle
+                self.header['$CMATERIAL'] = self.materials.get(
+                    'ByLayer').dxf.handle
             else:  # set any handle, except '0' which crashes BricsCAD
                 self.header['$CMATERIAL'] = '45'
 
@@ -531,7 +589,8 @@ class Drawing:
             self.header['$TDUPDATE'] = fixed_date
             self.header['$TDUUPDATE'] = fixed_date
             self.header['$VERSIONGUID'] = '00000000-0000-0000-0000-000000000000'
-            self.header['$FINGERPRINTGUID'] = '00000000-0000-0000-0000-000000000000'
+            self.header[
+                '$FINGERPRINTGUID'] = '00000000-0000-0000-0000-000000000000'
         else:
             now = datetime.now()
             self.header['$TDUPDATE'] = juliandate(now)
@@ -549,8 +608,9 @@ class Drawing:
 
     @property
     def acad_release(self) -> str:
-        """ Returns the AutoCAD release number like ``'R12'`` or ``'R2000'``. """
-        return acad_release.get(self.dxfversion, "unknown")
+        """ Returns the AutoCAD release number like ``'R12'`` or ``'R2000'``.
+        """
+        return const.acad_release.get(self.dxfversion, "unknown")
 
     @property
     def layers(self) -> 'Table':
@@ -607,25 +667,33 @@ class Drawing:
         self._dimension_renderer = renderer
 
     def modelspace(self) -> 'Layout':
-        """ Returns the modelspace layout, displayed as ``'Model'`` tab in CAD applications, defined by block record
-        named ``'*Model_Space'``.
+        """ Returns the modelspace layout, displayed as ``'Model'`` tab in CAD
+        applications, defined by block record named ``'*Model_Space'``.
         """
         return self.layouts.modelspace()
 
     def layout(self, name: str = None) -> 'Layout':
-        """ Returns paperspace layout `name` or returns first layout in tab order if `name` is ``None``. """
+        """ Returns paperspace layout `name` or returns first layout in tab
+        order if `name` is ``None``.
+        """
         return self.layouts.get(name)
 
     def active_layout(self) -> 'Layout':
-        """ Returns the active paperspace layout, defined by block record name ``'*Paper_Space'``. """
+        """ Returns the active paperspace layout, defined by block record
+        name ``'*Paper_Space'``.
+        """
         return self.layouts.active_layout()
 
     def layout_names(self) -> Iterable[str]:
-        """ Returns all layout names (modelspace ``'Model'`` included) in arbitrary order. """
+        """ Returns all layout names (modelspace ``'Model'`` included) in
+        arbitrary order.
+        """
         return list(self.layouts.names())
 
     def layout_names_in_taborder(self) -> Iterable[str]:
-        """ Returns all layout names (modelspace included, always first name) in tab order. """
+        """ Returns all layout names (modelspace included, always first name)
+        in tab order.
+        """
         return list(self.layouts.names_in_taborder())
 
     def reset_fingerprint_guid(self):
@@ -646,7 +714,8 @@ class Drawing:
         self._acad_compatible = False
         if msg not in self._acad_incompatibility_reason:
             self._acad_incompatibility_reason.add(msg)
-            logger.warning(f'Drawing is incompatible to AutoCAD, because {msg}.')
+            logger.warning(
+                f'Drawing is incompatible to AutoCAD, because {msg}.')
 
     def query(self, query: str = '*') -> EntityQuery:
         """
@@ -663,14 +732,14 @@ class Drawing:
         return EntityQuery(self.chain_layouts_and_blocks(), query)
 
     def groupby(self, dxfattrib="", key=None) -> dict:
-        """
-        Groups DXF entities of all layouts and blocks (excluding the OBJECTS section) by a DXF attribute or a key
-        function.
+        """ Groups DXF entities of all layouts and blocks (excluding the
+        OBJECTS section) by a DXF attribute or a key function.
 
         Args:
             dxfattrib: grouping DXF attribute like ``'layer'``
-            key: key function, which accepts a :class:`DXFEntity` as argument and returns a hashable grouping key
-                 or ``None`` to ignore this entity.
+            key: key function, which accepts a :class:`DXFEntity` as argument
+                and returns a hashable grouping key or ``None`` to ignore
+                this entity.
 
         .. seealso::
 
@@ -680,80 +749,87 @@ class Drawing:
         return groupby(self.chain_layouts_and_blocks(), dxfattrib, key)
 
     def chain_layouts_and_blocks(self) -> Iterable['DXFEntity']:
-        """
-        Chain entity spaces of all layouts and blocks. Yields an iterator for all entities in all layouts and blocks.
+        """ Chain entity spaces of all layouts and blocks. Yields an iterator
+        for all entities in all layouts and blocks.
 
         """
         layouts = list(self.layouts_and_blocks())
         return chain.from_iterable(layouts)
 
-    def layouts_and_blocks(self) -> Iterable['LayoutType']:
-        """
-        Iterate over all layouts (modelspace and paperspace) and all block definitions.
+    def layouts_and_blocks(self) -> Iterable['GenericLayoutType']:
+        """ Iterate over all layouts (modelspace and paperspace) and all
+        block definitions.
 
         """
         return iter(self.blocks)
 
     def delete_layout(self, name: str) -> None:
         """
-        Delete paper space layout `name` and all entities owned by this layout. Available only for DXF R2000 or later,
-        DXF R12 supports only one paperspace and it can't be deleted.
+        Delete paper space layout `name` and all entities owned by this layout.
+        Available only for DXF R2000 or later, DXF R12 supports only one
+        paperspace and it can't be deleted.
 
         """
         if name not in self.layouts:
-            raise DXFValueError(f"Layout '{name}' does not exist.")
+            raise const.DXFValueError(f"Layout '{name}' does not exist.")
         else:
             self.layouts.delete(name)
 
     def new_layout(self, name, dxfattribs=None) -> 'Layout':
         """
-        Create a new paperspace layout `name`. Returns a :class:`~ezdxf.layouts.Layout` object.
-        DXF R12 (AC1009) supports only one paperspace layout, only the active paperspace layout is saved, other layouts
-        are dismissed.
+        Create a new paperspace layout `name`. Returns a
+        :class:`~ezdxf.layouts.Layout` object.
+        DXF R12 (AC1009) supports only one paperspace layout, only the active
+        paperspace layout is saved, other layouts are dismissed.
 
         Args:
             name: unique layout name
-            dxfattribs: additional DXF attributes for the :class:`~ezdxf.entities.layout.DXFLayout` entity
+            dxfattribs: additional DXF attributes for the
+                :class:`~ezdxf.entities.layout.DXFLayout` entity
 
         Raises:
             DXFValueError: :class:`~ezdxf.layouts.Layout` `name` already exist
 
         """
         if name in self.layouts:
-            raise DXFValueError(f"Layout '{name}' already exists.")
+            raise const.DXFValueError(f"Layout '{name}' already exists.")
         else:
             return self.layouts.new(name, dxfattribs)
 
     def acquire_arrow(self, name: str):
-        """
-        For standard AutoCAD and ezdxf arrows create block definitions if required, otherwise check if block `name`
-        exist. (internal API)
+        """ For standard AutoCAD and ezdxf arrows create block definitions if
+        required, otherwise check if block `name` exist. (internal API)
 
         """
         from ezdxf.render.arrows import ARROWS
         if ARROWS.is_acad_arrow(name) or ARROWS.is_ezdxf_arrow(name):
             ARROWS.create_block(self.blocks, name)
         elif name not in self.blocks:
-            raise DXFValueError(f'Arrow block "{name}" does not exist.')
+            raise const.DXFValueError(f'Arrow block "{name}" does not exist.')
 
-    def add_image_def(self, filename: str, size_in_pixel: Tuple[int, int], name=None):
-        """
-        Add an image definition to the objects section.
+    def add_image_def(self, filename: str, size_in_pixel: Tuple[int, int],
+                      name=None):
+        """ Add an image definition to the objects section.
 
-        Add an :class:`~ezdxf.entities.image.ImageDef` entity to the drawing (objects section). `filename` is the image
-        file name as relative or absolute path and `size_in_pixel` is the image size in pixel as (x, y) tuple. To avoid
-        dependencies to external packages, `ezdxf` can not determine the image size by itself. Returns a
-        :class:`~ezdxf.entities.image.ImageDef` entity which is needed to create an image reference. `name` is the
-        internal image name, if set to ``None``, name is auto-generated.
+        Add an :class:`~ezdxf.entities.image.ImageDef` entity to the drawing
+        (objects section). `filename` is the image file name as relative or
+        absolute path and `size_in_pixel` is the image size in pixel as (x, y)
+        tuple. To avoid dependencies to external packages, `ezdxf` can not
+        determine the image size by itself. Returns a
+        :class:`~ezdxf.entities.image.ImageDef` entity which is needed to
+        create an image reference. `name` is the internal image name, if set to
+        ``None``, name is auto-generated.
 
-        Absolute image paths works best for AutoCAD but not really good, you have to update external references manually
-        in AutoCAD, which is not possible in TrueView. If the drawing units differ from 1 meter, you also have to use:
-        :meth:`set_raster_variables`.
+        Absolute image paths works best for AutoCAD but not really good, you
+        have to update external references manually in AutoCAD, which is not
+        possible in TrueView. If the drawing units differ from 1 meter, you
+        also have to use: :meth:`set_raster_variables`.
 
         Args:
             filename: image file name (absolute path works best for AutoCAD)
             size_in_pixel: image size in pixel as (x, y) tuple
-            name: image name for internal use, None for using filename as name (best for AutoCAD)
+            name: image name for internal use, None for using filename as name
+                (best for AutoCAD)
 
         .. seealso::
 
@@ -766,29 +842,32 @@ class Drawing:
             name = filename
         return self.objects.add_image_def(filename, size_in_pixel, name)
 
-    def set_raster_variables(self, frame: int = 0, quality: int = 1, units: str = 'm'):
+    def set_raster_variables(self, frame: int = 0, quality: int = 1,
+                             units: str = 'm'):
         """
         Set raster variables.
 
         Args:
             frame: ``0`` = do not show image frame; ``1`` = show image frame
             quality: ``0`` = draft; ``1`` = high
-            units: units for inserting images. This defines the real world unit for one drawing unit for the purpose of
-                   inserting and scaling images with an associated resolution.
+            units: units for inserting images. This defines the real world unit
+                for one drawing unit for the purpose of inserting and scaling
+                images with an associated resolution.
 
-                   ===== ===========================
-                   mm    Millimeter
-                   cm    Centimeter
-                   m     Meter (ezdxf default)
-                   km    Kilometer
-                   in    Inch
-                   ft    Foot
-                   yd    Yard
-                   mi    Mile
-                   ===== ===========================
+                ===== ===========================
+                mm    Millimeter
+                cm    Centimeter
+                m     Meter (ezdxf default)
+                km    Kilometer
+                in    Inch
+                ft    Foot
+                yd    Yard
+                mi    Mile
+                ===== ===========================
 
         """
-        self.objects.set_raster_variables(frame=frame, quality=quality, units=units)
+        self.objects.set_raster_variables(frame=frame, quality=quality,
+                                          units=units)
 
     def set_wipeout_variables(self, frame=0):
         """
@@ -802,16 +881,20 @@ class Drawing:
         var_dict = self.rootdict.get_required_dict('AcDbVariableDictionary')
         var_dict.set_or_add_dict_var('WIPEOUTFRAME', str(frame))
 
-    def add_underlay_def(self, filename: str, format: str = 'ext', name: str = None):
-        """
-        Add an :class:`~ezdxf.entities.underlay.UnderlayDef` entity to the drawing (OBJECTS section).
-        `filename` is the underlay file name as relative or absolute path and `format` as string (pdf, dwf, dgn).
+    def add_underlay_def(self, filename: str, format: str = 'ext',
+                         name: str = None):
+        """ Add an :class:`~ezdxf.entities.underlay.UnderlayDef` entity to the
+        drawing (OBJECTS section).
+        `filename` is the underlay file name as relative or absolute path and
+        `format` as string (pdf, dwf, dgn).
         The underlay definition is required to create an underlay reference.
 
         Args:
             filename: underlay file name
-            format: file format as string ``'pdf'|'dwf'|'dgn'`` or ``'ext'`` for getting file format from filename extension
-            name: pdf format = page number to display; dgn format = ``'default'``; dwf: ????
+            format: file format as string ``'pdf'|'dwf'|'dgn'`` or ``'ext'``
+                for getting file format from filename extension
+            name: pdf format = page number to display; dgn format =
+                ``'default'``; dwf: ????
 
         .. seealso::
 
@@ -822,7 +905,8 @@ class Drawing:
             format = filename[-3:]
         return self.objects.add_underlay_def(filename, format, name)
 
-    def add_xref_def(self, filename: str, name: str, flags: int = BLK_XREF | BLK_EXTERNAL):
+    def add_xref_def(self, filename: str, name: str,
+                     flags: int = BLK_XREF | BLK_EXTERNAL):
         """
         Add an external reference (xref) definition to the blocks section.
 
@@ -838,12 +922,12 @@ class Drawing:
         })
 
     def audit(self) -> 'Auditor':
-        """
-        Checks document integrity and fixes all fixable problems, not fixable problems are stored in
-        :attr:`Auditor.errors`.
+        """ Checks document integrity and fixes all fixable problems, not
+        fixable problems are stored in :attr:`Auditor.errors`.
 
-        If you are messing around with internal structures, call this method before saving to be sure to export valid
-        DXF documents, but be aware this is a long running task.
+        If you are messing around with internal structures, call this method
+        before saving to be sure to export valid DXF documents, but be aware
+        this is a long running task.
 
         """
         from ezdxf.audit.auditor import Auditor
@@ -852,9 +936,9 @@ class Drawing:
         return auditor
 
     def validate(self, print_report=True) -> bool:
-        """
-        Simple way to run an audit process. Fixes all fixable problems, return ``False`` if not fixable errors
-        occurs, to get more information about not fixable errors use :meth:`audit` method instead.
+        """ Simple way to run an audit process. Fixes all fixable problems,
+        return ``False`` if not fixable errors occurs, to get more information
+        about not fixable errors use :meth:`audit` method instead.
 
         Args:
             print_report: print report to stdout
@@ -871,14 +955,13 @@ class Drawing:
             return True
 
     def set_modelspace_vport(self, height, center=(0, 0)) -> 'VPort':
-        """ Set initial view/zoom location for the modelspace, this replaces the actual
-        ``'*Active'`` viewport configuration.
+        """ Set initial view/zoom location for the modelspace, this replaces
+        the current``'*Active'`` viewport configuration.
 
         Args:
              height: modelspace area to view
-             center: modelspace location to view in the center of the CAD application window.
-
-        .. versionadded:: 0.11
+             center: modelspace location to view in the center of the CAD
+                application window.
 
         """
         self.viewports.delete_config('*Active')
