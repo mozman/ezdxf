@@ -104,8 +104,8 @@ class Underlay(DXFGraphic):
     def load_boundary_path(self, tags: 'Tags'):
         self._boundary_path = [value for code, value in tags if code == 11]
 
-    def load_resources(self, doc: 'Drawing') -> None:
-        super().load_resources(doc)
+    def post_load_hook(self, doc: 'Drawing') -> None:
+        super().post_load_hook(doc)
         db = doc.entitydb
         self._underlay_def = db.get(self.dxf.get('underlay_def_handle', None))
 

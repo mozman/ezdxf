@@ -121,8 +121,8 @@ class Image(DXFGraphic):
         self._image_def: Optional[ImageDef] = None
         self._image_def_reactor: Optional[ImageDefReactor] = None
 
-    def load_resources(self, doc: 'Drawing') -> None:
-        super().load_resources(doc)
+    def post_load_hook(self, doc: 'Drawing') -> None:
+        super().post_load_hook(doc)
         db = doc.entitydb
         self._image_def = db.get(self.dxf.get('image_def_handle', None))
         self._image_def_reactor = db.get(
@@ -145,7 +145,7 @@ class Image(DXFGraphic):
         self.reset_boundary_path()
 
     def post_bind_hook(self) -> None:
-        # The loading process calls bind() before load_resources(), therefore
+        # The loading process calls bind() before post_load_hook(), therefore
         # the required self._image_def is not set, but a handle to a
         # ImageDefReactor must exist:
         if self.dxf.hasattr('image_def_reactor_handle'):

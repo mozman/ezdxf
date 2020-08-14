@@ -235,11 +235,11 @@ class DimStyle(DXFEntity):
                                                subclass=acdb_dimstyle.name)
         return dxf
 
-    def load_resources(self, doc: 'Drawing'):
+    def post_load_hook(self, doc: 'Drawing'):
         # 2nd Loading stage: resolve handles to names.
         # ezdxf uses names for blocks, linetypes and text style as internal
         # data, handles are set at export.
-        super().load_resources(doc)
+        super().post_load_hook(doc)
         db = doc.entitydb
         for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
             if self.dxf.hasattr(attrib_name):

@@ -378,7 +378,7 @@ class Drawing:
         """
         db = self.entitydb
         for entity in db.values():
-            entity.load_resources(self)
+            entity.post_load_hook(self)
 
     def create_all_arrow_blocks(self):
         """

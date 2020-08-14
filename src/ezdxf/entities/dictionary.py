@@ -226,8 +226,8 @@ class Dictionary(DXFObject):
             else:
                 return default
 
-    def load_resources(self, doc: 'Drawing') -> None:
-        super().load_resources(doc)
+    def post_load_hook(self, doc: 'Drawing') -> None:
+        super().post_load_hook(doc)
         db = doc.entitydb
 
         def items():
@@ -397,9 +397,9 @@ class DictionaryWithDefault(Dictionary):
         super().__init__()
         self._default: Optional[DXFEntity] = None
 
-    def load_resources(self, doc: 'Drawing') -> None:
+    def post_load_hook(self, doc: 'Drawing') -> None:
         self._default = doc.entitydb.get(self.dxf.default)
-        super(DictionaryWithDefault, self).load_resources(doc)
+        super(DictionaryWithDefault, self).post_load_hook(doc)
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':

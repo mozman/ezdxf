@@ -191,7 +191,7 @@ class DXFEntity:
         1. Loading stage which set the basic DXF attributes, additional
            resources (DXF objects) are not loaded yet. References to these
            resources have to be stored as handles and can be resolved in the
-        2. loading stage: :meth:`load_resources`.
+        2. loading stage: :meth:`post_load_hook`.
 
         (internal API)
         """
@@ -206,7 +206,7 @@ class DXFEntity:
             processor = SubclassProcessor(tags, dxfversion=dxfversion)
             self.dxf = self.load_dxf_attribs(processor)
 
-    def load_resources(self, doc: 'Drawing') -> None:
+    def post_load_hook(self, doc: 'Drawing') -> None:
         """ Load additional resources from entity database.
 
         This is the 2. loading stage when loading DXF documents, for the
@@ -215,7 +215,9 @@ class DXFEntity:
         This stage is meant to convert resource handles into DXFEntity()
         objects.
 
-        Examples for 2 stage loading:
+        Triggered in method: :meth:`Drawing._2nd_loading_stage`
+
+        Examples for two stage loading:
         Image, Underlay, DXFGroup, Dictionary, Dimstyle
 
         """

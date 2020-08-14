@@ -232,7 +232,7 @@ class Viewport(DXFGraphic):
     @property
     def frozen_layers(self) -> List[str]:
         """ Set/get frozen layers as list of layer names. """
-        # todo: add 2nd stage loader - load_resources()
+        # todo: add 2nd stage loader - post_load_hook()
         type_ = self._frozen_layers_content_type
         if type_ == 'names':
             return self._frozen_layers
