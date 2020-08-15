@@ -20,7 +20,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
 
 __all__ = ['Viewport']
 
@@ -228,38 +228,18 @@ class Viewport(DXFGraphic):
     def __init__(self):
         super().__init__()
         self._frozen_layers: List[str] = []
-        self._frozen_layers_content_type: str = 'names'
 
     def _copy_data(self, entity: 'Viewport') -> None:
-        entity.frozen_layers = self.frozen_layers
+        entity._frozen_layers = self._frozen_layers
 
     @property
     def frozen_layers(self) -> List[str]:
         """ Set/get frozen layers as list of layer names. """
-        # todo: add 2nd stage loader - post_load_hook()
-        type_ = self._frozen_layers_content_type
-        if type_ == 'names':
-            return self._frozen_layers
-
-        bag: List[str] = []
-        entitydb = self.doc.entitydb
-        if type_ == 'handles':
-            for handle in self._frozen_layers:
-                try:
-                    bag.append(entitydb[handle].dxf.name)
-                except KeyError:  # ignore non-existing layers
-                    pass
-        else:
-            raise DXFInternalEzdxfError(
-                f'invalid frozen_layer_content_type: "{type_}"')
-        self._frozen_layers = bag
-        self._frozen_layers_content_type = 'names'
-        return bag
+        return self._frozen_layers
 
     @frozen_layers.setter
     def frozen_layers(self, names: Iterable[str]):
         self._frozen_layers = list(names)
-        self._frozen_layers_content_type = 'names'
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -276,6 +256,17 @@ class Viewport(DXFGraphic):
                         tags, subclass=acdb_viewport.name)
         return dxf
 
+    def post_load_hook(self, doc: 'Drawing'):
+        super().post_load_hook(doc)
+        bag: List[str] = []
+        db = doc.entitydb
+        for handle in self._frozen_layers:
+            try:
+                bag.append(db[handle].dxf.name)
+            except KeyError:  # ignore non-existing layers
+                pass
+        self._frozen_layers = bag
+
     def load_frozen_layer_handles(self, tags: Tags) -> Tags:
         unprocessed_tags = Tags()
         for tag in tags:
@@ -283,7 +274,6 @@ class Viewport(DXFGraphic):
                 self._frozen_layers.append(tag.value)
             else:
                 unprocessed_tags.append(tag)
-        self._frozen_layers_content_type = 'handles'
         return unprocessed_tags
 
     def load_xdata_into_dxf_namespace(self) -> None:
@@ -326,7 +316,6 @@ class Viewport(DXFGraphic):
             raise DXFStructureError("Invalid viewport entity - missing data")
         dxf.flags = flags
         self._frozen_layers = tags[26:]
-        self._frozen_layers_content_type = 'names'
         self.xdata.discard('ACAD')
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

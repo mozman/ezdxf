@@ -3,6 +3,7 @@
 # created 2019-02-15
 import pytest
 
+import ezdxf
 from ezdxf.entities.viewport import Viewport
 from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
 from ezdxf.lldxf.const import DXF12, DXF2000
@@ -284,3 +285,17 @@ def test_viewport_set_frozen_layer_names():
     layer_names = ['bricks', 'steel', 'glass']
     viewport.frozen_layers = layer_names
     assert layer_names == viewport.frozen_layers
+
+
+def test_post_load_hook_resolves_frozen_layer_handles_into_names():
+    doc = ezdxf.new('R2000')
+    l1 = doc.layers.new('Layer1')
+    l2 = doc.layers.new('Layer2')
+    handles = [l1.dxf.handle, l2.dxf.handle]
+    viewport = Viewport.from_text(ENTITY_R2000)
+    # implant some handles
+    viewport.frozen_layers = handles
+    result = viewport.post_load_hook(doc)
+    assert result is None
+    assert viewport.frozen_layers == ['Layer1', 'Layer2'], \
+        'Layer handles must be resolved'
