@@ -79,11 +79,10 @@ class Dictionary(DXFObject):
     def _copy_data(self, entity: 'Dictionary') -> None:
         """ Copy hard owned entities but do not store the copies in the entity
         database, this is a second step, this is just real copying.
-
         """
-        # todo: what about reactors of cloned DXF objects?
         entity._value_code = self._value_code
         if self.dxf.hard_owned:
+            # Reactors are removed from the cloned DXF objects.
             entity._data = {key: entity.copy() for key, entity in self.items()}
         else:
             entity._data = {key: entity for key, entity in self.items()}
