@@ -959,8 +959,8 @@ class Drawing:
             return True
 
     def set_modelspace_vport(self, height, center=(0, 0)) -> 'VPort':
-        """ Set initial view/zoom location for the modelspace, this replaces
-        the current``'*Active'`` viewport configuration.
+        r""" Set initial view/zoom location for the modelspace, this replaces
+        the current "\*Active" viewport configuration.
 
         Args:
              height: modelspace area to view

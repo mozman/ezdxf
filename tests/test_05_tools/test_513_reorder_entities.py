@@ -1,6 +1,5 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
-
 import pytest
 from ezdxf.entities import DXFEntity
 from ezdxf import reorder
@@ -22,7 +21,8 @@ def test_default_sort_structure(entities):
 
 
 def test_mapped_sort_structure(entities):
-    int_handles = [k for k, i, e in reorder.sort_structure(entities, {'D': 'FF'})]
+    int_handles = [k for k, i, e in
+                   reorder.sort_structure(entities, {'D': 'FF'})]
     assert int_handles == [10, 255, 11, 12]
 
 
