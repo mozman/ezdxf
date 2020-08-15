@@ -68,6 +68,7 @@ Version 0.14a3 - dev
 - REMOVE: `DXFEntity.dxffactory`
 - REMOVE: `DXFInvalidLayerName`, replaced by `DXFValueError` 
 - REMOVE: `Image.get_boundary_path()`, replaced by property `Image.boundary_path` 
+- REMOVE: `Image.get_image_def()`, replaced by property `Image.image_def` 
 
 Version 0.13.1 - 2020-07-18
 ---------------------------

@@ -7,6 +7,9 @@ Add-ons
 - DWG loader (work in progress)
 - Simple SVG exporter
 - drawing
+    - support for SORTENTSTABLE - change redraw order of entities in model- 
+      and paperspace, see example wipeout_door.dxf, lines below the WIPEOUT of 
+      the exploded block are not wiped out without applying SORTENTSTABLE
     - ACAD_TABLE
     - MLEADER ???
     - MLINE ???

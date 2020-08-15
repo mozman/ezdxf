@@ -5,9 +5,11 @@ Wipeout
     :noindex:
 
 THE WIPEOUT (`DXF Reference`_) entity is a polygonal area that masks underlying
-objects with the current background color. The WIPEOUT entity is base on the
+objects with the current background color. The WIPEOUT entity is based on the
 IMAGE entity, but usage does not require any knowledge about the IMAGE entity.
 
+The handles to the support entities :class:`ImageDef` and :class:`ImageDefReactor`
+are always "0", both are not needed by the WIPEOUT entity.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Image`

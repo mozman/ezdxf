@@ -205,7 +205,7 @@ def test_create_and_delete_image(new_doc):
     x, y = image.dxf.image_size.vec2
     assert [(-.5, -.5), (x - .5, y - .5)] == image.boundary_path
 
-    image_def2 = image.get_image_def()
+    image_def2 = image.image_def
     assert image_def.dxf.handle, image_def2.dxf.handle
 
     # does image def reactor exists

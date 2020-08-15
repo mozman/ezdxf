@@ -928,15 +928,8 @@ class CreatorInterface:
         dxfattribs['insert'] = Vector(insert)
         dxfattribs['u_pixel'] = to_vector(x_units_per_pixel, x_angle_rad)
         dxfattribs['v_pixel'] = to_vector(y_units_per_pixel, y_angle_rad)
-        dxfattribs['image_def_handle'] = image_def.dxf.handle
-        dxfattribs['image_size'] = image_def.dxf.image_size
-        # a initialized self._image_def is required in the post_bind_hook():
-        # Don't call factory.create_db_entry() which calls post_bind_hook():
-        image = factory.new('IMAGE', dxfattribs, self.doc)
-        image.set_image_def(image_def)
-        # add_entity() also binds the entity to the document if required:
-        self.add_entity(image)
-        return image
+        dxfattribs['image_def'] = image_def  # is not a real DXF attrib
+        return cast('Image', self.new_entity('IMAGE', dxfattribs))
 
     def add_wipeout(self, vertices: Iterable['Vertex'],
                     dxfattribs: dict = None) -> 'Wipeout':

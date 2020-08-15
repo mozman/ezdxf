@@ -102,13 +102,13 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. autoattribute:: boundary_path
 
+    .. autoattribute:: image_def
+
     .. automethod:: reset_boundary_path
 
     .. automethod:: set_boundary_path
 
     .. automethod:: boundary_path_wcs() -> List[Vector]
-
-    .. automethod:: get_image_def() -> ImageDef
 
     .. automethod:: transform(m: Matrix44) -> Image
 
