@@ -1,9 +1,12 @@
 # Copyright (c) 2016-2020, Manfred Moitzi
 # License: MIT License
 import pytest
+import logging
 
 import ezdxf
 from ezdxf.entities.image import ImageDef, Image
+
+logger = logging.getLogger('ezdxf')
 
 
 @pytest.fixture(scope='module')
@@ -113,6 +116,41 @@ def test_post_load_hook_creates_image_def_reactor(doc):
         'ImageDef must be linked to ImageDefReactor'
     assert reactor.dxf.image_handle == image.dxf.handle, \
         'ImageDefReactor must be linked to Image'
+
+
+def test_exception_while_fixing_image_def_reactor(doc):
+    from io import StringIO
+    stream = StringIO()
+    logging_handler = logging.StreamHandler(stream)
+    logger.addHandler(logging_handler)
+
+    image_def = doc.add_image_def('test.jpg', (1, 1))
+    msp = doc.modelspace()
+    image = msp.add_image(image_def, (0, 0), (1, 1))
+
+    # Hack to unlink Image from ImageDefReactor!
+    image.dxf.image_def_reactor_handle = None
+    command = image.post_load_hook(doc)
+
+    # Sabotage execution:
+    image.doc = None
+    try:
+        command()
+        msg = stream.getvalue()
+    finally:
+        logger.removeHandler(logging_handler)
+
+    assert image.is_alive is False, 'Exception while fixing must destroy IMAGE'
+    assert 'AttributeError' in msg
+    # Example logging message:
+    # ------------------------
+    # An exception occurred while executing fixing command for IMAGE(#30), destroying entity.
+    # Traceback (most recent call last):
+    #   File "D:\Source\ezdxf.git\src\ezdxf\entities\image.py", line 173, in _fix_missing_image_def_reactor
+    #     self._create_image_def_reactor()
+    #   File "D:\Source\ezdxf.git\src\ezdxf\entities\image.py", line 186, in _create_image_def_reactor
+    #     image_def_reactor = self.doc.objects.add_image_def_reactor(
+    # AttributeError: 'NoneType' object has no attribute 'objects'
 
 
 def test_post_load_hook_destroys_image_without_valid_image_def(doc):

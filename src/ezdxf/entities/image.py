@@ -169,8 +169,17 @@ class Image(DXFGraphic):
             return self._fix_missing_image_def_reactor
 
     def _fix_missing_image_def_reactor(self):
-        self._create_image_def_reactor()
-        logger.info(f'Created missing ImageDefReactor for {str(self)}')
+        try:
+            self._create_image_def_reactor()
+        except Exception as e:
+            logger.exception(
+                f'An exception occurred while executing fixing command for '
+                f'{str(self)}, destroying entity.',
+                exc_info=e,
+            )
+            self.destroy()
+            return
+        logger.debug(f'Created missing ImageDefReactor for {str(self)}')
 
     def _create_image_def_reactor(self):
         # ImageDef -> ImageDefReactor -> Image
