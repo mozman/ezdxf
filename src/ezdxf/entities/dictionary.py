@@ -12,9 +12,9 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.audit import AuditError
+from ezdxf.entities import factory
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
-from .factory import register_entity
 
 logger = logging.getLogger('ezdxf')
 
@@ -56,10 +56,9 @@ VALUE_CODE = 350
 SEARCH_CODES = (VALUE_CODE, 360)
 
 
-@register_entity
+@factory.register_entity
 class Dictionary(DXFObject):
-    """
-    AutoCAD maintains items such as mline styles and group definitions as
+    """ AutoCAD maintains items such as mline styles and group definitions as
     objects in dictionaries. Other applications are free to create and use
     their own dictionaries as they see fit. The prefix "ACAD_" is reserved
     for use by AutoCAD applications.
@@ -89,20 +88,21 @@ class Dictionary(DXFObject):
         else:
             entity._data = {key: entity for key, entity in self.items()}
 
-    def _add_data_to_db(self) -> None:
-        """ Add hard owned and therefore copied entities into database and the
+    def post_bind_hook(self) -> None:
+        """ Called by binding a new or copied dictionary to the document,
+        bind hard owned sub-entities to the same document and add them to the
         objects section.
         """
-        # todo: don't know how to proceed with reactors of cloned objects?
-        if self.dxf.hard_owned:
-            my_handle = self.dxf.handle
-            for _, entity in self.items():
-                entity.dxf.owner = my_handle
-                entity.dxf.handle = None
-                self.entitydb.add(entity)
-                # Add sub-entities also to the objects section, else they
-                # wouldn't be exported to DXF:
-                self.doc.objects.add_object(entity)
+        if not self.dxf.hard_owned:
+            return
+        # copied or new dictionary:
+        doc = self.doc
+        owner_handle = self.dxf.handle
+        for _, entity in self.items():
+            entity.dxf.owner = owner_handle
+            factory.bind(entity, doc)
+            # For a correct DXF export add entities to the objects section:
+            doc.objects.add_object(entity)
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -135,6 +135,20 @@ class Dictionary(DXFObject):
         # Use same value code as loaded:
         self._value_code = value_code
 
+    def post_load_hook(self, doc: 'Drawing') -> None:
+        super().post_load_hook(doc)
+        db = doc.entitydb
+
+        def items():
+            for key, handle in self.items():
+                entity = db.get(handle)
+                if entity is not None and entity.is_alive:
+                    yield key, entity
+
+        if len(self):
+            for k, v in list(items()):
+                self.__setitem__(k, v)
+
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
         super().export_entity(tagwriter)
@@ -166,9 +180,8 @@ class Dictionary(DXFObject):
 
     @property
     def is_hard_owner(self) -> bool:
-        """ ``True`` if :class:`Dictionary` is hard owner of entities. Hard
-        owned entities will be deleted by deleting the dictionary.
-
+        """ Returns ``True`` if :class:`Dictionary` is hard owner of entities.
+        Hard owned entities will be destroyed by deleting the dictionary.
         """
         return bool(self.dxf.hard_owned)
 
@@ -213,10 +226,9 @@ class Dictionary(DXFObject):
     count = __len__
 
     def get(self, key: str, default: Any = DXFKeyError) -> 'DXFEntity':
-        """
-        Returns :class:`DXFEntity` for `key`, if `key` exist, else `default` or
-        raises a :class:`DXFKeyError` for `default` = :class:`DXFKeyError`.
-
+        """ Returns :class:`DXFEntity` for `key`, if `key` exist,
+        else `default` or raises a :class:`DXFKeyError` for
+        `default` = :class:`DXFKeyError`.
         """
         try:
             return self._data[key]
@@ -225,20 +237,6 @@ class Dictionary(DXFObject):
                 raise DXFKeyError(f"KeyError: '{key}'")
             else:
                 return default
-
-    def post_load_hook(self, doc: 'Drawing') -> None:
-        super().post_load_hook(doc)
-        db = doc.entitydb
-
-        def items():
-            for key, handle in self.items():
-                entity = db.get(handle)
-                if entity is not None and entity.is_alive:
-                    yield key, entity
-
-        if len(self):
-            for k, v in list(items()):
-                self.__setitem__(k, v)
 
     def add(self, key: str, value: 'DXFEntity') -> None:
         """ Add entry ``(key, value)``. """
@@ -251,7 +249,6 @@ class Dictionary(DXFObject):
     def remove(self, key: str) -> None:
         """ Delete entry `key`. Raises :class:`DXFKeyError`, if `key` does not
         exist. Deletes also hard owned DXF objects from OBJECTS section.
-
         """
         data = self._data
         if key not in data:
@@ -267,7 +264,6 @@ class Dictionary(DXFObject):
     def discard(self, key: str) -> None:
         """ Delete entry `key` if exists. Does NOT raise an exception if `key`
         not exist and does not delete hard owned DXF objects.
-
         """
         try:
             del self._data[key]
@@ -277,7 +273,6 @@ class Dictionary(DXFObject):
     def clear(self) -> None:
         """  Delete all entries from :class:`Dictionary`, deletes hard owned
         DXF objects from OBJECTS section.
-
         """
         if self.is_hard_owner:
             self._delete_hard_owned_entries()
@@ -290,8 +285,7 @@ class Dictionary(DXFObject):
             objects.delete_entity(entity)
 
     def add_new_dict(self, key: str, hard_owned: bool = False) -> 'Dictionary':
-        """
-        Create a new sub :class:`Dictionary`.
+        """ Create a new sub :class:`Dictionary`.
 
         Args:
             key: name of the sub dictionary
@@ -339,7 +333,7 @@ class Dictionary(DXFObject):
 
     def get_required_dict(self, key: str) -> 'Dictionary':
         """ Get entry `key` or create a new :class:`Dictionary`,
-        if `Key` not exit.
+        if `Key` not exist.
         """
         try:
             dxf_dict = self.get(key)
@@ -387,7 +381,7 @@ acdb_dict_with_default = DefSubclass('AcDbDictionaryWithDefault', {
 })
 
 
-@register_entity
+@factory.register_entity
 class DictionaryWithDefault(Dictionary):
     DXFTYPE = 'ACDBDICTIONARYWDFLT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_dictionary,
@@ -397,9 +391,12 @@ class DictionaryWithDefault(Dictionary):
         super().__init__()
         self._default: Optional[DXFEntity] = None
 
+    def _copy_data(self, entity: 'Dictionary') -> None:
+        entity._default = self._default
+
     def post_load_hook(self, doc: 'Drawing') -> None:
         self._default = doc.entitydb.get(self.dxf.default)
-        super(DictionaryWithDefault, self).post_load_hook(doc)
+        super().post_load_hook(doc)
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -442,7 +439,7 @@ acdb_dict_var = DefSubclass('DictionaryVariables', {
 })
 
 
-@register_entity
+@factory.register_entity
 class DictionaryVar(DXFObject):
     """
     DICTIONARYVAR objects are used by AutoCAD as a means to store named values
@@ -487,7 +484,6 @@ class DictionaryVar(DXFObject):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dict_var.name)
         self.dxf.export_dxf_attribs(tagwriter, ['schema', 'value'])
