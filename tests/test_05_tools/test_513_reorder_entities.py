@@ -37,6 +37,11 @@ def test_mapped_ascending_sort_order(entities):
     assert handles == ['A', 'C', 'D', 'B']
 
 
+def test_mapping_to_0_ascending_sort_order(entities):
+    handles = [e.dxf.handle for e in reorder.ascending(entities, {'A': '0'})]
+    assert handles == ['B', 'C', 'D', 'A'], 'Expected "A" mapped to "0" at last'
+
+
 def test_full_mapped_ascending_sort_order(entities):
     handles = [e.dxf.handle for e in reorder.ascending(entities, {
         'A': 'A',
@@ -50,6 +55,12 @@ def test_full_mapped_ascending_sort_order(entities):
 def test_descending_sort_order(entities):
     handles = [e.dxf.handle for e in reorder.descending(entities)]
     assert handles == ['D', 'C', 'B', 'A']
+
+
+def test_mapping_to_0_descending_sort_order(entities):
+    handles = [e.dxf.handle for e in reorder.descending(entities, {'A': '0'})]
+    assert handles == ['A', 'D', 'C', 'B'], \
+        'Expected "A" mapped to "0" as first'
 
 
 def test_full_mapped_descending_sort_order(entities):

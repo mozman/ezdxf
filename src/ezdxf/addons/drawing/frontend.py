@@ -18,6 +18,7 @@ from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
 from ezdxf.math import Vector, Z_AXIS
 from ezdxf.render import MeshBuilder, TraceBuilder, Path
+from ezdxf import reorder
 
 __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
@@ -87,7 +88,11 @@ class Frontend:
 
     def draw_layout(self, layout: 'Layout', finalize: bool = True) -> None:
         self.parent_stack = []
-        self.draw_entities(layout)
+        handle_mapping = list(layout.get_redraw_order())
+        if handle_mapping:
+            self.draw_entities(reorder.ascending(layout, handle_mapping))
+        else:
+            self.draw_entities(layout)
         self.out.set_background(self.ctx.current_layout.background_color)
         if finalize:
             self.out.finalize()
