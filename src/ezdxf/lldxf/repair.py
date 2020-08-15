@@ -1,7 +1,7 @@
 # Created: 05.03.2016
-# Copyright (c) 2016-2019, Manfred Moitzi
+# Copyright (c) 2016-2020, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Optional, List, TYPE_CHECKING
+from typing import Iterable, Optional, List, TYPE_CHECKING, Sequence
 from functools import partial
 import logging
 from .tags import DXFTag
@@ -24,21 +24,24 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
     """
     logger.debug('Reordering coordinate tags for LINE entity.')
-    collector = None  # type: Optional[List]
+    collector: Optional[List] = None
     for tag in tagger:
         if tag.code == 0:
-            if collector is not None:  # stop collecting if inside of an supported entity
+            if collector is not None:
+                # stop collecting if inside of an supported entity
                 entity = collector[0].value
                 yield from COORDINATE_FIXING_TOOLBOX[entity](collector)
                 collector = None
 
             if tag.value in COORDINATE_FIXING_TOOLBOX:
                 collector = [tag]
-                tag = None  # do not yield collected tag yet
+                # do not yield collected tag yet
+                tag = None
         else:  # tag.code != 0
             if collector is not None:
                 collector.append(tag)
-                tag = None  # do not yield collected tag yet
+                # do not yield collected tag yet
+                tag = None
         if tag is not None:
             yield tag
 
@@ -80,14 +83,14 @@ def filter_invalid_yz_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
         yield tag
 
 
-def fix_coordinate_order(tags, codes=(10, 11)):
+def fix_coordinate_order(tags: 'Tags', codes: Sequence[int] = (10, 11)):
     def extend_codes():
         for code in codes:
             yield code  # x tag
             yield code + 10  # y tag
             yield code + 20  # z tag
 
-    def get_coords(code):
+    def get_coords(code: int):
         # if x or y coordinate is missing, it is a DXFStructureError
         # but here is not the location to validate the DXF structure
         try:
@@ -136,7 +139,8 @@ COORDINATE_FIXING_TOOLBOX = {
 VALID_XDATA_CODES = set(range(1000, 1019)) | set(range(1040, 1072))
 
 
-def filter_invalid_xdata_group_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
+def filter_invalid_xdata_group_codes(
+        tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
     for tag in tagger:
         if tag.code < 1000 or tag.code in VALID_XDATA_CODES:
             yield tag
