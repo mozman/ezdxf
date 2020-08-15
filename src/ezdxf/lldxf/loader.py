@@ -27,10 +27,9 @@ SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
 
 def load_dxf_structure(tagger: Iterable[DXFTag],
                        ignore_missing_eof: bool = False) -> SectionDict:
-    """
-    Divide input tag stream from tagger into DXF structure entities. Each DXF
-    structure entity starts with a DXF structure (0, ...) tag, and ends before
-    the next DXF structure tag.
+    """ Divide input tag stream from tagger into DXF structure entities.
+    Each DXF structure entity starts with a DXF structure (0, ...) tag,
+    and ends before the next DXF structure tag.
 
     Generated structure:
 
@@ -88,17 +87,17 @@ def load_dxf_structure(tagger: Iterable[DXFTag],
             return section[0][0] != (0, 'SECTION')  # first entity, first tag
         return True
 
-    sections = OrderedDict()  # type: SectionDict
-    section = []  # type: List[Tags]
+    sections: SectionDict = OrderedDict()
+    section: List[Tags] = []
     eof = False
-    # todo: possible improvement - ignore all end of structure tags
-    # A (0, SECTION) tag could start a new section even without a
-    # preceding (0, ENDSEC) tag.
+    # The structure checking here should not be changed, ezdxf expect a valid
+    # DXF file, to load messy DXF files exist an (future) add-on
+    # called 'recover'.
+
     for entity in group_tags(tagger):
         tag = entity[0]
         if tag == (0, 'SECTION'):
             if inside_section():
-                # todo: just log - end actual section and start a new one
                 raise DXFStructureError(
                     "DXFStructureError: missing ENDSEC tag.")
             if len(section):
@@ -106,22 +105,24 @@ def load_dxf_structure(tagger: Iterable[DXFTag],
                     'DXF Structure Warning: found tags outside a SECTION, '
                     'ignored by ezdxf.')
             section = [entity]
-        elif tag == (0, 'ENDSEC'):  # not collected
+        elif tag == (0, 'ENDSEC'):
+            # ENDSEC tag is not collected.
             if outside_section():
-                # todo: just log
                 raise DXFStructureError(
                     "DXFStructureError: found ENDSEC tag without previous "
                     "SECTION tag.")
             section_header = section[0]
-            if len(section_header) < 2 or section_header[
-                1].code != 2:  # this is important
+
+            if len(section_header) < 2 or section_header[1].code != 2:
                 raise DXFStructureError(
                     'DXFStructureError: missing required section NAME tag '
                     '(2, name) at start of section.')
             name_tag = section_header[1]
             sections[name_tag.value] = section
-            section = []  # collect tags outside of sections, but ignore it
-        elif tag == (0, 'EOF'):  # not collected
+            # Collect tags outside of sections, but ignore it.
+            section = []
+        elif tag == (0, 'EOF'):
+            # EOF tag is not collected.
             if eof:
                 logger.warning(
                     'DXF Structure Warning: found more than one EOF tags.')
@@ -129,7 +130,6 @@ def load_dxf_structure(tagger: Iterable[DXFTag],
         else:
             section.append(entity)
     if inside_section():
-        # todo: just log
         raise DXFStructureError("DXFStructureError: missing ENDSEC tag.")
     if not eof and not ignore_missing_eof:
         raise DXFStructureError('DXFStructureError: missing EOF tag.')
