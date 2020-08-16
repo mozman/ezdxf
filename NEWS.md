@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.14a3 - dev
+Version 0.14a4 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-14.html
@@ -54,6 +54,7 @@ Version 0.14a3 - dev
 - NEW: `Path.clockwise()` returns a new clockwise oriented path 
 - NEW: `Path.counter_clockwise()` returns a new counter-clockwise oriented path 
 - NEW: `DXFEntity.new_extension_dict()`, create explicit a new extension dictionary
+- NEW: `ezdxf.reorder`, support module to implement modified entities redraw order
 - CHANGE: `DXFEntity.get_extension_dict()`, raises `AttributeError` if entity
   has no extension dictionary 
 - CHANGE: `DXFEntity.has_extension_dict` is now a property not a method
