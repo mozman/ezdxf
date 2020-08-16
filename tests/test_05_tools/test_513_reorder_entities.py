@@ -15,17 +15,6 @@ def entities():
     ]
 
 
-def test_default_sort_structure(entities):
-    int_handles = [k for k, i, e in reorder.sort_structure(entities, {})]
-    assert int_handles == [10, 13, 11, 12]
-
-
-def test_mapped_sort_structure(entities):
-    int_handles = [k for k, i, e in
-                   reorder.sort_structure(entities, {'D': 'FF'})]
-    assert int_handles == [10, 255, 11, 12]
-
-
 def test_ascending_sort_order(entities):
     handles = [e.dxf.handle for e in reorder.ascending(entities)]
     assert handles == ['A', 'B', 'C', 'D']
@@ -39,7 +28,8 @@ def test_mapped_ascending_sort_order(entities):
 
 def test_mapping_to_0_ascending_sort_order(entities):
     handles = [e.dxf.handle for e in reorder.ascending(entities, {'A': '0'})]
-    assert handles == ['B', 'C', 'D', 'A'], 'Expected "A" mapped to "0" at last'
+    assert handles == ['B', 'C', 'D', 'A'], \
+        'Expected "A" mapped to "0" as last element'
 
 
 def test_full_mapped_ascending_sort_order(entities):
@@ -60,7 +50,7 @@ def test_descending_sort_order(entities):
 def test_mapping_to_0_descending_sort_order(entities):
     handles = [e.dxf.handle for e in reorder.descending(entities, {'A': '0'})]
     assert handles == ['A', 'D', 'C', 'B'], \
-        'Expected "A" mapped to "0" as first'
+        'Expected "A" mapped to "0" as first element'
 
 
 def test_full_mapped_descending_sort_order(entities):

@@ -1,11 +1,14 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Tuple, Dict, Union
+from typing import TYPE_CHECKING, Iterable, Tuple, Dict, Union, List
+import heapq
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic
 
 __all__ = ['ascending', 'descending']
+
+MAX_HANDLE = 'FFFFFFFF'
 
 
 def ascending(entities: Iterable['DXFGraphic'],
@@ -25,14 +28,8 @@ def ascending(entities: Iterable['DXFGraphic'],
 
     """
     mapping = dict(mapping) if mapping else {}
-    # Entities with sort handle "0" will be draw at last - so defined by AutoCAD
-    at_last = []
-    for sort_handle, _, entity in sorted(sort_structure(entities, mapping)):
-        if sort_handle == 0:
-            at_last.append(entity)
-        else:
-            yield entity
-    yield from at_last
+    heap = _build(entities, mapping, +1)
+    return _sorted(heap)
 
 
 def descending(entities: Iterable['DXFGraphic'],
@@ -51,14 +48,42 @@ def descending(entities: Iterable['DXFGraphic'],
         mapping: iterable of 2-tuples (entity_handle, sort_handle)
 
     """
-    return reversed(list(ascending(entities, mapping)))
+    mapping = dict(mapping) if mapping else {}
+    heap = _build(entities, mapping, -1)
+    return _sorted(heap)
 
 
-def sort_structure(entities: Iterable['DXFGraphic'], mapping: Dict):
+def _sorted(heap) -> Iterable['DXFGraphic']:
+    """ Yields heap content in order. """
+    while heap:
+        yield heapq.heappop(heap)[-1]
+
+
+def _build(entities: Iterable['DXFGraphic'], mapping: Dict, order: int) -> List:
+    """ Returns a heap structure.
+
+    Args:
+        entities: DXF entities to order
+        mapping: handle remapping
+        order: +1 for ascending, -1 for descending
+
+    """
+
     def sort_handle(entity: 'DXFGraphic') -> int:
         handle = entity.dxf.handle
         sort_handle_ = mapping.get(handle, handle)
+        if sort_handle_ == '0':
+            sort_handle_ = MAX_HANDLE
         return int(sort_handle_, 16)
-    # DXFGraphic is not sortable, using the index as second value avoids a key
-    # function and preserves explicit the source order of equal sort handles.
-    return [(sort_handle(entity), index, entity) for index, entity in enumerate(entities)]
+
+    heap = []
+    for index, entity in enumerate(entities):
+        # DXFGraphic is not sortable, using the index as second value avoids
+        # a key function and preserves explicit the source order of
+        # equal sort handles.
+        heapq.heappush(heap, (
+            sort_handle(entity) * order,
+            index * order,
+            entity,
+        ))
+    return heap
