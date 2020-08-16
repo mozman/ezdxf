@@ -8,7 +8,11 @@ if TYPE_CHECKING:
 
 __all__ = ['ascending', 'descending']
 
-MAX_HANDLE = 'FFFFFFFF'
+# ODA DWG Specs: 2.13. Handle References
+# COUNTER is 4 bits, which allows handles up to 16 * 1 byte = 128-bit
+# Example for 128-bit handles: "CADKitSamples\AEC Plan Elev Sample.dxf"
+MAX_HANDLE = 'FFFFFFFFFFFFFFFF'
+NULL_HANDLE = '0'
 
 
 def ascending(entities: Iterable['DXFGraphic'],
@@ -19,12 +23,13 @@ def ascending(entities: Iterable['DXFGraphic'],
     The sort handle doesn't have to be the entity handle, every entity handle
     in `mapping` will be replaced by the given sort handle, `mapping` is an
     iterable of 2-tuples (entity_handle, sort_handle) or a
-    dict[entity_handle, sort_handle]. Entities with equal sort handles show
+    dict (entity_handle, sort_handle). Entities with equal sort handles show
     up in source entities order.
 
     Args:
         entities: iterable of :class:`DXFGraphic` objects
-        mapping: iterable of 2-tuples (entity_handle, sort_handle)
+        mapping: iterable of 2-tuples (entity_handle, sort_handle) or a
+            handle mapping as dict.
 
     """
     mapping = dict(mapping) if mapping else {}
@@ -40,12 +45,13 @@ def descending(entities: Iterable['DXFGraphic'],
     The sort handle doesn't have to be the entity handle, every entity handle
     in `mapping` will be replaced by the given sort handle, `mapping` is an
     iterable of 2-tuples (entity_handle, sort_handle) or a
-    dict[entity_handle, sort_handle]. Entities with equal sort handles show
+    dict (entity_handle, sort_handle). Entities with equal sort handles show
     up in reversed source entities order.
 
     Args:
         entities: iterable of :class:`DXFGraphic` objects
-        mapping: iterable of 2-tuples (entity_handle, sort_handle)
+        mapping: iterable of 2-tuples (entity_handle, sort_handle) or a
+            handle mapping as dict.
 
     """
     mapping = dict(mapping) if mapping else {}
@@ -72,7 +78,9 @@ def _build(entities: Iterable['DXFGraphic'], mapping: Dict, order: int) -> List:
     def sort_handle(entity: 'DXFGraphic') -> int:
         handle = entity.dxf.handle
         sort_handle_ = mapping.get(handle, handle)
-        if sort_handle_ == '0':
+        if sort_handle_ == NULL_HANDLE:
+            # This behavior is defined by AutoCAD but not documented in the
+            # DXF reference.
             sort_handle_ = MAX_HANDLE
         return int(sort_handle_, 16)
 
