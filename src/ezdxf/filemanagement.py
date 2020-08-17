@@ -68,7 +68,7 @@ def read(stream: TextIO, legacy_mode: bool = False) -> 'Drawing':
 
     If this function struggles to load the DXF document and raises a
     :class:`DXFStructureError` exception, try the :func:`ezdxf.recover.read`
-    function to load the corrupt DXF document.
+    function to load this corrupt DXF document.
 
     Args:
         stream: input text stream opened with correct encoding
@@ -108,12 +108,12 @@ def readfile(filename: str, encoding: str = None,
 
     If this function struggles to load the DXF document and raises a
     :class:`DXFStructureError` exception, try the :func:`ezdxf.recover.readfile`
-    function to load the corrupt DXF document.
+    function to load this corrupt DXF document.
 
     Args:
         filename: filename of the ASCII- or Binary DXF document
         encoding: use ``None`` for auto detect (default), or set a specific
-            encoding like "utf-8", ignored for Binary DXF files
+            encoding like "utf-8", argument is ignored for Binary DXF files
         legacy_mode: adds an extra trouble shooting import layer if ``True``
             (deprecated)
 

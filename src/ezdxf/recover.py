@@ -26,10 +26,7 @@ def read(stream: BinaryIO) -> 'Drawing':
     """ Read a DXF document from a binary-stream similar to :func:`ezdxf.read`,
     But this function will detect the text encoding automatically and repair
     as much flaws as possible to take the document to a state, where the
-    `~ezdxf.audit.Auditor` could start his journey to repair further issues.
-
-    This efforts cost some time, loading the DXF document with :func:`ezdxf.read`
-    maybe is faster.
+    :class:`~ezdxf.audit.Auditor` could start his journey to repair further issues.
 
     Args:
         stream: data stream to load in binary read mode
@@ -40,13 +37,9 @@ def read(stream: BinaryIO) -> 'Drawing':
 
 def readfile(filename: str) -> 'Drawing':
     """ Read a DXF document from file system similar to :func:`ezdxf.readfile`,
-    but this function will detect the encoding automatically and repair as much
-    flaws as possible to take the document to a state, where the
-    `~ezdxf.audit.Auditor` could start his journey t o repair further issues
-    and it is not required to detect the text encoding in advance.
-
-    This efforts cost some time, opening the DXF document with :func:`ezdxf.read`
-    will be faster.
+    but this function will repair as much flaws as possible to take the document
+    to a state, where the :class:`~ezdxf.audit.Auditor` could start his journey
+    to repair further issues.
 
     Args:
         filename: file-system name of the DXF document to load
