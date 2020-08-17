@@ -5,6 +5,9 @@ from typing import TYPE_CHECKING, BinaryIO
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing
 
+__all__ = ['read', 'readfile']
+
+
 # TODO: recover
 #  Mimic the CAD "RECOVER" command, try to read messy DXF files,
 #  needs only as much work until the regular ezdxf loader can handle
@@ -45,4 +48,9 @@ def readfile(filename: str) -> 'Drawing':
         filename: file-system name of the DXF document to load
 
     """
+    pass
+
+
+class SoftTagLoader:
+    """ An error tolerant DXF tag loader. """
     pass
