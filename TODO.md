@@ -1,6 +1,9 @@
 TODO
 ====
 
+- remove the "legacy mode" in regular read and readfile function, use recover 
+  functions instead
+
 Add-ons
 -------
 
@@ -13,22 +16,7 @@ Add-ons
     - render POINT symbols
     - render proxy graphic, class `ProxyGraphic()` is already 
       implemented but not tested with real world data.
-      
-- recover
-
-    Mimic the CAD "RECOVER" command, try to read messy DXF files,
-    needs only as much work until the regular ezdxf loader can handle 
-    and audit the DXF file:
-    
-    - recover missing ENDSEC and EOF tags
-    - merge multiple sections with same name
-    - reorder sections
-    - merge multiple tables with same name
-    - reorder vertex tags for all possible vertices, 
-      use repair.fix_coordinate_order()
-    - recover tags "outside" of sections
-    - move header variable tags (9, "$...") into HEADER section 
-     
+         
 
 Render Tools
 ------------
