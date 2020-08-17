@@ -5,6 +5,7 @@
 from typing import TextIO, TYPE_CHECKING, Union, Sequence
 import base64
 import io
+import warnings
 from ezdxf.tools.standards import setup_drawing
 from ezdxf.lldxf.const import DXF2013
 from ezdxf.document import Drawing
@@ -36,12 +37,9 @@ def new(dxfversion: str = DXF2013,
     Args:
         dxfversion: DXF version specifier as string, default is "AC1027"
             respectively "R2013"
-        setup: setup drawing standard styles
-
-            - ``False`` for no setup
-            - ``True`` to setup everything
-            - a list of topics as strings, e.g. ["linetypes", "styles"]
-              to setup only linetypes and text styles:
+        setup: setup default styles, ``False`` for no setup,
+            ``True`` to setup everything or a list of topics as strings,
+            e.g. ["linetypes", "styles"] to setup only some topics:
 
             ================== ========================================
             Topic              Description
@@ -59,8 +57,7 @@ def new(dxfversion: str = DXF2013,
     return doc
 
 
-def read(stream: TextIO, legacy_mode: bool = False,
-         filter_stack=None) -> 'Drawing':
+def read(stream: TextIO, legacy_mode: bool = False) -> 'Drawing':
     """ Read a DXF document from a text-stream. Open stream in text mode
     (``mode='rt'``) and set correct text encoding, the stream requires at least
     a :meth:`readline` method.
@@ -69,11 +66,6 @@ def read(stream: TextIO, legacy_mode: bool = False,
     use the helper function :func:`dxf_stream_info` to detect the required
     text encoding for prior DXF versions.
 
-    If argument `legacy_mode` is ``True``, `ezdxf` tries to reorder the
-    coordinates of the LINE entity in files from CAD applications which wrote
-    the coordinates in the order: x1, x2, y1, y2. Additional fixes may be
-    added later. The legacy mode has a speed penalty of around 5%.
-
     If this function struggles to load the DXF document and raises a
     :class:`DXFStructureError` exception, try the :func:`ezdxf.recover.read`
     function to load the corrupt DXF document.
@@ -81,20 +73,29 @@ def read(stream: TextIO, legacy_mode: bool = False,
     Args:
         stream: input text stream opened with correct encoding
         legacy_mode: adds an extra trouble shooting import layer if ``True``
-        filter_stack: interface to put filters between reading layers
+            (deprecated)
 
     Raises:
         DXFStructureError: for invalid DXF structure
 
+    .. deprecated:: v0.14
+
+        argument `legacy_mode`, use module :mod:`ezdxf.recover`
+        to load DXF documents with structural flaws.
+
     """
     from ezdxf.document import Drawing
+    if legacy_mode:
+        warnings.warn(
+            '"legacy_mode" is deprecated (removed in v0.16), replace call by '
+            'ezdxf.recover.readfile().',
+            DeprecationWarning
+        )
+    return Drawing.read(stream, legacy_mode=legacy_mode)
 
-    return Drawing.read(stream, legacy_mode=legacy_mode,
-                        filter_stack=filter_stack)
 
-
-def readfile(filename: str, encoding: str = None, legacy_mode: bool = False,
-             filter_stack=None) -> 'Drawing':
+def readfile(filename: str, encoding: str = None,
+             legacy_mode: bool = False) -> 'Drawing':
     """  Read the DXF document `filename` from the file-system.
 
     This is the preferred method to load existing ASCII or Binary DXF files,
@@ -105,16 +106,6 @@ def readfile(filename: str, encoding: str = None, legacy_mode: bool = False,
     estimated encoding. (use Python encoding names like in the :func:`open`
     function).
 
-    If argument `legacy_mode` is ``True``, `ezdxf` tries to reorder the
-    coordinates of the LINE entity in files from CAD applications which wrote
-    the coordinates in the order: x1, x2, y1, y2. Additional fixes may be added
-    later. The legacy mode has a speed penalty of around 5%.
-
-    .. hint::
-
-        Try argument legacy_mode=True if error "Missing required y
-        coordinate near line: ..." occurs.
-
     If this function struggles to load the DXF document and raises a
     :class:`DXFStructureError` exception, try the :func:`ezdxf.recover.readfile`
     function to load the corrupt DXF document.
@@ -122,27 +113,35 @@ def readfile(filename: str, encoding: str = None, legacy_mode: bool = False,
     Args:
         filename: filename of the ASCII- or Binary DXF document
         encoding: use ``None`` for auto detect (default), or set a specific
-                  encoding like "utf-8", ignored for Binary DXF files
+            encoding like "utf-8", ignored for Binary DXF files
         legacy_mode: adds an extra trouble shooting import layer if ``True``
-        filter_stack: interface to put filters between reading layers
+            (deprecated)
 
     Raises:
         IOError: File `filename` is not a DXF file or does not exist.
         DXFStructureError: for invalid DXF structure
 
+    .. deprecated:: v0.14
+
+        argument `legacy_mode`, use module :mod:`ezdxf.recover`
+        to load DXF documents with structural flaws.
+
     """
-    # for argument filter_stack see :class:`~ezdxf.drawing.Drawing.read`
-    # for more information
     from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
     from ezdxf.tools.codepage import is_supported_encoding
     from ezdxf.lldxf.tagger import binary_tags_loader
+    if legacy_mode:
+        warnings.warn(
+            '"legacy_mode" is deprecated (removed in v0.16), replace call by '
+            'ezdxf.recover.read().', DeprecationWarning
+        )
 
     filename = str(filename)
     if is_binary_dxf_file(filename):
         with open(filename, 'rb') as fp:
             data = fp.read()
             loader = binary_tags_loader(data)
-            return Drawing.load(loader, legacy_mode, filter_stack)
+            return Drawing.load(loader, legacy_mode)
 
     if not is_dxf_file(filename):
         raise IOError("File '{}' is not a DXF file.".format(filename))
@@ -153,7 +152,7 @@ def readfile(filename: str, encoding: str = None, legacy_mode: bool = False,
         info.encoding = encoding
     with open(filename, mode='rt', encoding=info.encoding,
               errors='ignore') as fp:
-        doc = read(fp, legacy_mode=legacy_mode, filter_stack=filter_stack)
+        doc = read(fp, legacy_mode=legacy_mode)
 
     doc.filename = filename
     if encoding is not None and is_supported_encoding(encoding):

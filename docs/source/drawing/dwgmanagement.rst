@@ -35,9 +35,9 @@ AC1027      R2013      UTF-8          AutoCAD R2013
 AC1032      R2018      UTF-8          AutoCAD R2018
 =========== ========== ============== ===================================
 
-.. autofunction:: readfile(filename: str, encoding: str = None, legacy_mode: bool = False, filter_stack=None) -> Drawing
+.. autofunction:: readfile(filename: str, encoding: str = None) -> Drawing
 
-.. autofunction:: read(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> Drawing
+.. autofunction:: read(stream: TextIO) -> Drawing
 
 .. autofunction:: readzip(zipfile: str, filename: str = None) -> Drawing
 

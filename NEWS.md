@@ -55,6 +55,7 @@ Version 0.14a4 - dev
 - NEW: `Path.counter_clockwise()` returns a new counter-clockwise oriented path 
 - NEW: `DXFEntity.new_extension_dict()`, create explicit a new extension dictionary
 - NEW: `ezdxf.reorder`, support module to implement modified entities redraw order
+- NEW: `ezdxf.recover`, module to load DXF Documents with structural flaws
 - CHANGE: `DXFEntity.get_extension_dict()`, raises `AttributeError` if entity
   has no extension dictionary 
 - CHANGE: `DXFEntity.has_extension_dict` is now a property not a method
@@ -64,12 +65,15 @@ Version 0.14a4 - dev
   argument `safe` is deprecated, will be removed in v0.16
 - CHANGE: Dictionary raise `DXFValueError` for adding invalid handles
 - CHANGE: `BaseLayout.add_entity()` will bind entity automatically to doc/db if possible
+- DEPRECATED: `legacy_mode` in `ezdxf.read()` and `ezdxf.readfile()`, use the 
+  `ezdxf.recover` module to load DXF Documents with structural flaws
 - REMOVE: Alias `DXFEntity.drawing`
 - REMOVE: `DXFEntity.entitydb`
 - REMOVE: `DXFEntity.dxffactory`
 - REMOVE: `DXFInvalidLayerName`, replaced by `DXFValueError` 
 - REMOVE: `Image.get_boundary_path()`, replaced by property `Image.boundary_path` 
 - REMOVE: `Image.get_image_def()`, replaced by property `Image.image_def` 
+- REMOVE: `filter_stack` argument in `ezdxf.read()` and `ezdxf.readfile()` 
 
 Version 0.13.1 - 2020-07-18
 ---------------------------
