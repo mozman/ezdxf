@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import (
     TYPE_CHECKING, TextIO, BinaryIO, Iterable, Union, Sequence, Tuple, Callable,
-    cast, Optional, List
+    cast, Optional, List,
 )
 from datetime import datetime
 import io
@@ -48,9 +48,9 @@ MANAGED_SECTIONS = {
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        DXFTag, Table, ViewportTable, VPort, Dictionary, Layout,
-        DXFEntity, Layer, Auditor, GenericLayoutType
-    )
+    DXFTag, Table, ViewportTable, VPort, Dictionary, Layout,
+    DXFEntity, Layer, Auditor, GenericLayoutType,
+)
 
 TFilterStack = Sequence[
     Sequence[Callable[[Iterable['DXFTag']], Iterable['DXFTag']]]]
@@ -329,7 +329,7 @@ class Drawing:
         doc._load(tagger=compiled_tags)
         return doc
 
-    def _load(self, tagger: Optional[Iterable['DXFTag']]):
+    def _load(self, tagger: Optional[Iterable['DXFTag']]) -> None:
         assert tagger is not None, 'DXF tagger or SectionDict required.'
 
         # 1st Loading stage: load complete DXF entity structure
@@ -337,7 +337,10 @@ class Drawing:
         sections = loader.load_dxf_structure(tagger)
         if 'THUMBNAILIMAGE' in sections:
             del sections['THUMBNAILIMAGE']
+        self._load_section_dict(sections)
 
+    def _load_section_dict(self, sections: loader.SectionDict) -> None:
+        self.is_loading = True
         # Create header section:
         # All header tags are the first DXF structure entity
         header_entities = sections.get('HEADER', [None])[0]

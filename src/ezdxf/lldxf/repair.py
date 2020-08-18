@@ -23,17 +23,23 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
         tagger: low level tagger
 
     """
+    def value(v) -> str:
+        if type(v) is bytes:
+            return v.decode('ascii', errors='ignore')
+        else:
+            return v
+
     logger.debug('Reordering coordinate tags for LINE entity.')
     collector: Optional[List] = None
     for tag in tagger:
         if tag.code == 0:
             if collector is not None:
                 # stop collecting if inside of an supported entity
-                entity = collector[0].value
+                entity = value(collector[0].value)
                 yield from COORDINATE_FIXING_TOOLBOX[entity](collector)
                 collector = None
 
-            if tag.value in COORDINATE_FIXING_TOOLBOX:
+            if value(tag.value) in COORDINATE_FIXING_TOOLBOX:
                 collector = [tag]
                 # do not yield collected tag yet
                 tag = None

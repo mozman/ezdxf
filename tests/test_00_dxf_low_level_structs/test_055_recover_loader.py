@@ -1,8 +1,9 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 import pytest
+import itertools
 from io import BytesIO
-from ezdxf.recover import BytesLoader, encoding_detector
+from ezdxf.recover import bytes_loader, detect_encoding
 
 HEADER = """  0
 SECTION
@@ -32,20 +33,11 @@ def data():
     return BytesIO(HEADER.encode('latin1'))
 
 
-@pytest.fixture
-def data2():
-    return BytesIO(HEADER.encode('utf8'))
-
-
 def test_bytes_loader(data):
-    result = list(BytesLoader(data))
+    result = list(bytes_loader(data))
     assert len(result) == 10
-    assert result[-1] == (1, 'ÄÖÜ')
+    assert result[-1] == (1, b'\xc4\xd6\xdc')
 
 
-def test_enconding_detector(data2):
-    loader = BytesLoader(data2)
-    result = list(encoding_detector(loader))
-    assert len(result) == 10
-    assert loader.encoding == 'utf8'
-    assert result[-1] == (1, 'ÄÖÜ')
+def test_encoding_detector(data):
+    assert detect_encoding(bytes_loader(data)) == 'utf8'
