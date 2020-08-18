@@ -116,7 +116,7 @@ if TYPE_CHECKING:
     # Type compositions
     Vertex = Union[Sequence[float], Vector, Vec2]
     VecXY = Union[Vec2, Vector]  # Vector with x and y attributes
-    TagValue = Union[str, int, float, Sequence[float], Vector]
+    TagValue = Union[str, bytes, int, float, Sequence[float], Vector]
     RGB = Tuple[int, int, int]
     IterableTags = Iterable[Tuple[int, TagValue]]
     SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
