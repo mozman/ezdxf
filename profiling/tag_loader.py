@@ -4,9 +4,9 @@ import os
 import time
 from ezdxf.lldxf.tagger import ascii_tags_loader
 from ezdxf.recover import bytes_loader
+from ezdxf import EZDXF_TEST_FILES
 
-DXF_TEST_FILES_DIR = os.environ.get('EZDXF_TEST_FILES', r'D:\Source\dxftest')
-BIG_FILE = os.path.join(DXF_TEST_FILES_DIR, 'CADKitSamples', 'torso_uniform.dxf')
+BIG_FILE = os.path.join(EZDXF_TEST_FILES, 'CADKitSamples', 'torso_uniform.dxf')
 
 
 def load_ascii():
@@ -33,5 +33,3 @@ def run(func):
 if __name__ == '__main__':
     print_result(run(load_ascii), 'ascii_tags_loader()')
     print_result(run(load_bytes), 'bytes_loader()')
-
-

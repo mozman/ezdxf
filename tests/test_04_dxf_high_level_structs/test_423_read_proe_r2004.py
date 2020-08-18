@@ -1,13 +1,16 @@
-# Copyright (c) 2014-2019, Manfred Moitzi
+# Copyright (c) 2014-2020, Manfred Moitzi
 # License: MIT-License
 import pytest
 
 import ezdxf
 import os
-FILE = r"D:\Source\dxftest\ProE_AC1018.dxf"
+
+FILE = os.path.join(ezdxf.EZDXF_TEST_FILES, 'ProE_AC1018.dxf')
 
 
-@pytest.mark.skipif(not os.path.exists(FILE), reason="Skip reading ProE AC1018: test file '{}' not available.".format(FILE))
+@pytest.mark.skipif(
+    not os.path.exists(FILE),
+    reason=f"Skip reading ProE AC1018: test file '{FILE}' not available.")
 def test_open_proe_ac1018():
     doc = ezdxf.readfile(FILE)
     modelspace = doc.modelspace()

@@ -16,3 +16,4 @@ examples/**/*.dxf
 issues/**/*.dxf
 issues/**/*.html
 newctb.ctb
+tox.ini

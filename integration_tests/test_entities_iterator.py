@@ -29,7 +29,6 @@ POINTS = [(323380.91750022338, 5184999.7255775109, 0.0),
 
 def test_entities_iterator(dxfversion, tmpdir):
     filename = tmpdir.join('polyline_{}.dxf'.format(dxfversion))
-    #  filename = r'C:\Users\manfred\Desktop\Now\polyline_{}.dxf'.format(dxfversion)
     filename = str(filename)
     drawing = ezdxf.new(dxfversion)
     modelspace = drawing.modelspace()

@@ -2,6 +2,7 @@
 # Copyright (C) 2011-2020, Manfred Moitzi
 # License: MIT License
 import sys
+import os
 from .version import version, __version__
 
 VERSION = __version__
@@ -9,6 +10,8 @@ __author__ = "mozman <me@mozman.at>"
 
 PYPY = hasattr(sys, 'pypy_version_info')
 PYPY_ON_WINDOWS = sys.platform.startswith('win') and PYPY
+EZDXF_TEST_FILES = os.getenv('EZDXF_TEST_FILES', '')
+
 
 # name space imports - do not remove
 from ezdxf.options import options

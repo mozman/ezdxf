@@ -1,20 +1,23 @@
 import pytest
+
+import os
 import glob
 import ezdxf
-from ezdxf import options
+from ezdxf import options, EZDXF_TEST_FILES
 from itertools import chain
 
 DIRS = [
-    r"D:\Source\dxftest\AutodeskSamples\*.dxf",
-    r"D:\Source\dxftest\AutodeskProducts\*.dxf",
-    r"D:\Source\dxftest\CADKitSamples\*.dxf",
-    r"D:\Source\dxftest\*.dxf",
+    "AutodeskSamples/*.dxf",
+    "AutodeskProducts/*.dxf",
+    "CADKitSamples/*.dxf",
+    "dxftest/*.dxf",
 ]
 LEGACY_MODE = False
 options.check_entity_tag_structures = True
 
 
-@pytest.fixture(params=chain(*[glob.glob(d) for d in DIRS]))
+@pytest.fixture(
+    params=chain(*[glob.glob(os.path.join(EZDXF_TEST_FILES, d)) for d in DIRS]))
 def filename(request):
     return request.param
 
