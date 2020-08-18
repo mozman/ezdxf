@@ -20,39 +20,7 @@ __all__ = ['read', 'readfile']
 # TODO: recover
 #  Mimic the CAD "RECOVER" command, try to read messy DXF files,
 #  needs only as much work until the regular ezdxf loader can handle
-#  and audit the DXF file:
-#
-# - recover missing ENDSEC and EOF tags
-# - merge multiple sections with same name
-# - reorder sections
-# - merge multiple tables with same name
-# - apply repair layers to replace legacy_mode from read/readfile:
-#       - repair.fix_coordinate_order()
-#       - repair.tag_reorder_layer
-#       - repair.filter_invalid_yz_point_codes
-# - recover tags "outside" of sections
-# - move header variable tags (9, "$...") into HEADER section
-
-
-def read(stream: BinaryIO) -> 'Drawing':
-    """ Read a DXF document from a binary-stream similar to :func:`ezdxf.read`,
-    But this function will detect the text encoding automatically and repair
-    as much flaws as possible to take the document to a state, where the
-    :class:`~ezdxf.audit.Auditor` could start his journey to repair further issues.
-
-    Args:
-        stream: data stream to load in binary read mode
-
-    """
-    from ezdxf.document import Drawing
-    tags = safe_tag_loader(stream)
-    sections = collect_sections(tags)
-    sections = merge_sections(sections)
-    sections = build_section_dict(sections)
-    doc = Drawing()
-    doc._load_section_dict(sections)
-    return doc
-
+#  and audit the DXF file.
 
 def readfile(filename: str) -> 'Drawing':
     """ Read a DXF document from file system similar to :func:`ezdxf.readfile`,
@@ -68,15 +36,61 @@ def readfile(filename: str) -> 'Drawing':
         return read(fp)
 
 
-def collect_sections(tags: Iterable[DXFTag]) -> List:
+def read(stream: BinaryIO) -> 'Drawing':
+    """ Read a DXF document from a binary-stream similar to :func:`ezdxf.read`,
+    But this function will detect the text encoding automatically and repair
+    as much flaws as possible to take the document to a state, where the
+    :class:`~ezdxf.audit.Auditor` could start his journey to repair further issues.
+
+    Args:
+        stream: data stream to load in binary read mode
+
+    """
+    from ezdxf.document import Drawing
+    tags = safe_tag_loader(stream)
+    sections = _rebuild_sections(tags)
+    _merge_sections(sections)
+    sections_dict = _build_section_dict(sections)
+    tables = sections_dict['TABLES']
+    _rebuild_tables(tables)
+    _merge_tables(tables)
+    doc = Drawing()
+    doc._load_section_dict(sections_dict)
+    return doc
+
+
+def _rebuild_sections(tags: Iterable[DXFTag]) -> List:
+    """ Rebuild sections:
+
+    - move header variable tags (9, "$...") "outside" of sections into the
+      HEADER section
+    - remove other tags "outside" of sections
+    - recover missing ENDSEC and EOF tags
+
+    """
     return []
 
 
-def merge_sections(sections: List) -> List:
-    return sections
+def _merge_sections(sections: List):
+    """ Merge sections of same type. """
+    pass
 
 
-def build_section_dict(sections: List) -> SectionDict:
+def _build_section_dict(sections: List) -> SectionDict:
+    pass
+
+
+def _rebuild_tables(tables: List):
+    """ Rebuild TABLES section:
+
+    - remove tags "outside" of tables
+
+    """
+    pass
+
+
+def _merge_tables(tables: List):
+    """ Merge TABLES of same type. """
     pass
 
 
