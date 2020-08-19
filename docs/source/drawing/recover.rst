@@ -5,19 +5,23 @@
 Recover
 =======
 
+.. versionadded:: v0.14
+
 This module provides function to "recover" ASCII DXF documents with structural
 flaws, which prevents the regular :func:`ezdxf.read` and :func:`ezdxf.readfile`
 functions to load the document.
 
-The :func:`auto_read` and :func:`auto_readfile` will repair as much flaws as
-possible and run the required audit process automatically afterwards and return
-the result of this audit process. These functions are the recommended usage of
-this module.
+The :func:`auto_read` and :func:`auto_readfile` functions will repair as much
+flaws as possible and run the required audit process automatically
+afterwards and return the result of this audit process. These functions are the
+recommended usage of this module.
 
-The :func:`read` and :func:`readfile` will repair as much flaws as possible to
-take the document to a state, where the :class:`~ezdxf.audit.Auditor` could
-start his journey to repair further issues, but the audit process has to be
-started manually::
+The :func:`read` and :func:`readfile` functions will repair as much flaws
+as possible to take the document to a state, where the
+:class:`~ezdxf.audit.Auditor` could start his journey to repair further issues,
+but the audit process has to be started manually:
+
+.. code-block:: Python
 
     doc = ezdxf.recover.readfile("messy.dxf")
     auditor = doc.audit()
@@ -27,8 +31,6 @@ started manually::
 
 This efforts cost some time, loading the DXF document with :func:`ezdxf.read` or
 :func:`ezdxf.readfile` will be faster.
-
-.. versionadded:: v0.14
 
 Some loading scenarios as examples:
 -----------------------------------
