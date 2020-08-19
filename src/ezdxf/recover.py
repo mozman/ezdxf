@@ -1,7 +1,10 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
-from typing import TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple
+from typing import (
+    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple, Dict
+)
 import itertools
+import logging
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf import repair
@@ -9,8 +12,10 @@ from ezdxf.lldxf.types import (
     DXFTag, DXFVertex, DXFBinaryTag, POINT_CODES, BINARY_DATA, TYPE_TABLE,
     MAX_GROUP_CODE,
 )
-from ezdxf.lldxf.loader import SectionDict
+from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.tools.codepage import toencoding
+
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, Auditor
@@ -78,9 +83,8 @@ def read(stream: BinaryIO) -> 'Drawing':
     from ezdxf.document import Drawing
     tags = safe_tag_loader(stream)
     sections = _rebuild_sections(tags)
-    _merge_sections(sections)
     sections_dict = _build_section_dict(sections)
-    tables = sections_dict['TABLES']
+    tables = sections_dict.get('TABLES')
     _rebuild_tables(tables)
     _merge_tables(tables)
     doc = Drawing()
@@ -97,16 +101,111 @@ def _rebuild_sections(tags: Iterable[DXFTag]) -> List:
     - recover missing ENDSEC and EOF tags
 
     """
-    return []
+
+    def close_section():
+        # ENDSEC tag is not collected
+        nonlocal collector, inside_section
+        if inside_section:
+            sections.append(collector)
+        else:  # missing SECTION
+            # ignore this tag, it is even not an orphan
+            logger.warning(
+                'DXF structure error: ENDSEC with preceding SECTION.')
+        collector = []
+        inside_section = False
+
+    def open_section():
+        nonlocal inside_section
+        if inside_section:  # missing ENDSEC
+            logger.warning('DXF structure error: missing ENDSEC.')
+            close_section()
+        collector.append(tag)
+        inside_section = True
+
+    def process_structure_tag():
+        if value == 'SECTION':
+            open_section()
+        elif value == 'ENDSEC':
+            close_section()
+        elif value == 'EOF':
+            if inside_section:
+                logger.warning('DXF structure error: missing ENDSEC.')
+                close_section()
+        else:
+            collect()
+
+    def collect():
+        if inside_section:
+            collector.append(tag)
+        else:
+            logger.warning(
+                f'DXF structure error: found tag outside section: '
+                f'({code}, {value}')
+            orphans.append(tag)
+
+    orphans = []
+    sections = []
+    collector = []
+    inside_section = False
+    for tag in tags:
+        code, value = tag
+        if code == 0:
+            process_structure_tag()
+        else:
+            collect()
+
+    sections.append(orphans)
+    return sections
 
 
-def _merge_sections(sections: List):
+MANAGED_SECTIONS = {
+    'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'
+}
+
+
+def _build_section_dict(sections: List) -> Dict[str, List[Tags]]:
     """ Merge sections of same type. """
-    pass
+
+    def add_section(name: str, tags):
+        if name in section_dict:
+            section_dict[name].extend(tags[2:])
+        else:
+            section_dict[name] = tags
+
+    orphans = sections.pop()
+    section_dict = dict()
+    for section in sections:
+        code, name = section[1]
+        if code == 2:
+            add_section(name, section)
+        else:  # invalid section name tag e.g. (2, "HEADER")
+            logger.warning(
+                'DXF structure error: missing section name tag, ignore whole '
+                'section.')
+
+    header = section_dict.setdefault('HEADER', [
+        DXFTag(0, 'SECTION'),
+        DXFTag(2, 'HEADER'),
+    ])
+    _rescue_orphaned_header_vars(header, orphans)
+    for name, section in section_dict.items():
+        if name in MANAGED_SECTIONS:
+            section_dict[name] = list(group_tags(sections, 0))
+    return section_dict
 
 
-def _build_section_dict(sections: List) -> SectionDict:
-    pass
+def _rescue_orphaned_header_vars(
+        header: List[DXFTag],
+        orphans: Iterable[DXFTag]):
+    var_name = None
+    for tag in orphans:
+        code, value = tag
+        if code == 9:
+            var_name = tag
+        elif var_name is not None:
+            header.append(var_name)
+            header.append(tag)
+            var_name = None
 
 
 def _rebuild_tables(tables: List):
