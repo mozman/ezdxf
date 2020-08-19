@@ -11,7 +11,9 @@ a DXFStructureError.
 The recover process is __much slower__ than the loading process for well 
 formed DXF files.
 
-### It will work
+Some loading scenarios as examples:
+
+### 1. It will work
 
 Mostly DXF files from AutoCAD or BricsCAD (e.g. for In-house solutions)
 
@@ -22,7 +24,7 @@ except ezdxf.DXFStructureError:
     print(f'Invalid or corrupted DXF file: {name}.')
 ```
     
-### Try Hard 
+### 2. Try Hard 
 
 From trusted and untrusted sources but with good hopes, the worst case works 
 like a cache miss, you pay for the first try and pay the extra fee for the 
@@ -38,7 +40,7 @@ except ezdxf.DXFStructureError:
         print(f'Invalid or corrupted DXF file: {name}.')
 ```
         
-### Just pay the extra fee
+### 3. Just pay the extra fee
 
 Untrusted sources and expecting many invalid DXF files, you always pay an 
 extra fee for the recover mode:
