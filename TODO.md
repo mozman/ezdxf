@@ -31,11 +31,14 @@ like a cache miss, you pay for the first try and pay the extra fee for the
 recover mode:
 
 ```
-try:  # fast path
+try:  # fast path:
     doc = ezdxf.readfile(name)  
 except ezdxf.DXFStructureError:
-    try:  # slow path with repair
-        doc = ezdxf.recover.readfile(name)
+    try:  # slow path with low level structure repair:
+        doc, auditor = ezdxf.recover.auto_readfile(name)
+        if auditor.has_errors:
+            print(f'Found unrecoverable errors in DXF file: {name}.')
+            auditor.print_error_report()
     except ezdxf.DXFStructureError:
         print(f'Invalid or corrupted DXF file: {name}.')
 ```
@@ -46,10 +49,14 @@ Untrusted sources and expecting many invalid DXF files, you always pay an
 extra fee for the recover mode:
 
 ```
-try:
-    doc = ezdxf.recover.readfile(name)
+try:  # low level structure repair:
+    doc, auditor = ezdxf.recover.auto_readfile(name)
+    if auditor.has_errors:
+        print(f'Found unrecoverable errors in DXF file: {name}.')
+        auditor.print_error_report()
 except ezdxf.DXFStructureError:
     print(f'Invalid or corrupted DXF file: {name}.')
+
 ```
 
    
