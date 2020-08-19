@@ -1,12 +1,13 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
-from typing import TYPE_CHECKING, BinaryIO, Iterable, List
+from typing import TYPE_CHECKING, BinaryIO, Iterable, List, Callable
 import itertools
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf import repair
 from ezdxf.lldxf.types import (
     DXFTag, DXFVertex, DXFBinaryTag, POINT_CODES, BINARY_DATA, TYPE_TABLE,
+    MAX_GROUP_CODE,
 )
 from ezdxf.lldxf.loader import SectionDict
 from ezdxf.tools.codepage import toencoding
@@ -97,8 +98,23 @@ def _merge_tables(tables: List):
 DEFAULT_ENCODING = 'cp1252'
 
 
-def safe_tag_loader(stream: BinaryIO) -> Iterable[DXFTag]:
-    tags, detector_stream = itertools.tee(bytes_loader(stream), 2)
+def safe_tag_loader(stream: BinaryIO,
+                    loader: Callable = None) -> Iterable[DXFTag]:
+    """ Yields :class:``DXFTag`` objects from a bytes `stream`
+    (untrusted external  source), skips all comment tags (group code == 999).
+
+    - Fixes unordered and invalid vertex tags.
+    - Pass :func:`synced_bytes_loader` as argument `loader` to brute force
+      load invalid tag structure.
+
+    Args:
+        stream: input data stream as bytes
+        loader: low level tag loader, default loader is :func:`bytes_loader`
+
+    """
+    if loader is None:
+        loader = bytes_loader
+    tags, detector_stream = itertools.tee(loader(stream), 2)
     encoding = detect_encoding(detector_stream)
 
     # Apply repair filter:
@@ -108,16 +124,12 @@ def safe_tag_loader(stream: BinaryIO) -> Iterable[DXFTag]:
 
 
 def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
-    """
-    Yields :class:``DXFTag`` objects from a bytes `stream` (untrusted external
-    source), skips all comment tags (group code == 999).
+    """ Yields :class:``DXFTag`` objects from a bytes `stream`
+    (untrusted external  source), skips all comment tags (group code == 999).
 
     ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is always a
     raw bytes value without line endings. Works with file system streams and
     :class:`BytesIO` streams.
-
-    Args:
-        stream: byte stream
 
     Raises:
         DXFStructureError: Found invalid group code.
@@ -147,6 +159,45 @@ def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
                 line += 2
         else:
             return
+
+
+def synced_bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
+    """ Yields :class:``DXFTag`` objects from a bytes `stream`
+    (untrusted external source), skips all comment tags (group code == 999).
+
+    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is always a
+    raw bytes value without line endings. Works with file system streams and
+    :class:`BytesIO` streams.
+
+    Does not raise DXFStructureError on invalid group codes, instead skips
+    lines until a valid group code or EOF is found.
+
+    This can remove invalid lines before group codes, but can not
+    detect invalid lines between group code and tag value.
+
+    """
+    upper_boundary = MAX_GROUP_CODE + 1
+    while True:
+        seeking_valid_group_code = True
+        try:
+            while seeking_valid_group_code:
+                code = stream.readline()
+                if code:
+                    try:
+                        code = int(code)
+                    except ValueError:
+                        pass
+                    else:
+                        if 0 <= code < upper_boundary:
+                            seeking_valid_group_code = False
+                else:
+                    return  # total empty result is EOF
+            value = stream.readline()
+        except EOFError:
+            return
+
+        if code != 999:
+            yield DXFTag(code, value.rstrip(b'\r\n'))
 
 
 DWGCODEPAGE = b'$DWGCODEPAGE'
@@ -197,17 +248,11 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
     Raises DXFStructureError() for invalid float values and invalid coordinate
     values.
 
-    Expects DXF coordinates written in x, y[, z] order, this is not required
-    by the DXF standard, but nearly all CAD applications write DXF coordinates
-    that (sane) way, there are older CAD applications (namely an older
-    QCAD version) that write LINE coordinates in x1, x2, y1, y2 order, which
-    does not work with tag_compiler(). For this cases use tag_reorder_layer()
-    from the repair module to reorder the LINE coordinates.
-
-        tag_compiler(tag_reorder_layer(bytes_loader(stream)))
+    Expects DXF coordinates written in x, y[, z] order, see function
+    :func:`safe_tag_loader` for usage with applied repair filters.
 
     Args:
-        tags: DXF tag generator of type bytes_loader()
+        tags: DXF tag generator, yielding tag values as bytes like bytes_loader()
         encoding: text encoding
 
     Raises:
