@@ -25,8 +25,8 @@ __all__ = ['read', 'auto_read', 'readfile', 'auto_readfile']
 
 def auto_readfile(filename: str) -> Tuple['Drawing', 'Auditor']:
     """ Read a DXF document from file system similar to :func:`ezdxf.readfile`,
-    but this function will repair as much flaws as possible, runs and returns
-    an auditor automatically.
+    but this function will repair as much flaws as possible,  runs the required
+    audit process automatically and returns the result.
 
     Args:
         filename: file-system name of the DXF document to load
@@ -54,8 +54,8 @@ def readfile(filename: str) -> 'Drawing':
 def auto_read(stream: BinaryIO) -> Tuple['Drawing', 'Auditor']:
     """ Read a DXF document from a binary-stream similar to :func:`ezdxf.read`,
     But this function will detect the text encoding automatically and repair
-    as much flaws as possible to take the document, runs and returns
-    an auditor automatically.
+    as much flaws as possible, runs the required audit process automatically
+    and returns the result.
 
     Args:
         stream: data stream to load in binary read mode

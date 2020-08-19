@@ -9,9 +9,15 @@ This module provides function to "recover" ASCII DXF documents with structural
 flaws, which prevents the regular :func:`ezdxf.read` and :func:`ezdxf.readfile`
 functions to load the document.
 
-This function will repair as much flaws as possible to take the document
-to a state, where the :class:`~ezdxf.audit.Auditor` could start his journey
-to repair further issues, but the audit process has to be started manually::
+The :func:`auto_read` and :func:`auto_readfile` will repair as much flaws as
+possible and run the required audit process automatically afterwards and return
+the result of this audit process. These functions are the recommended usage of
+this module.
+
+The :func:`read` and :func:`readfile` will repair as much flaws as possible to
+take the document to a state, where the :class:`~ezdxf.audit.Auditor` could
+start his journey to repair further issues, but the audit process has to be
+started manually::
 
     doc = ezdxf.recover.readfile("messy.dxf")
     auditor = doc.audit()
@@ -24,12 +30,69 @@ This efforts cost some time, loading the DXF document with :func:`ezdxf.read` or
 
 .. versionadded:: v0.14
 
+Some loading scenarios as examples:
+-----------------------------------
+
+1. It will work
+~~~~~~~~~~~~~~~
+
+Mostly DXF files from AutoCAD or BricsCAD (e.g. for In-house solutions)
+
+.. code-block:: Python
+
+    try:
+        doc = ezdxf.readfile(name)
+    except ezdxf.DXFStructureError:
+        print(f'Invalid or corrupted DXF file: {name}.')
+
+2. Try Hard
+~~~~~~~~~~~
+
+From trusted and untrusted sources but with good hopes, the worst case works
+like a cache miss, you pay for the first try and pay the extra fee for the
+recover mode:
+
+.. code-block:: Python
+
+    try:  # fast path:
+        doc = ezdxf.readfile(name)
+    except ezdxf.DXFStructureError:
+        try:  # slow path with low level structure repair:
+            doc, auditor = ezdxf.recover.auto_readfile(name)
+            if auditor.has_errors:
+                print(f'Found unrecoverable errors in DXF file: {name}.')
+                auditor.print_error_report()
+        except ezdxf.DXFStructureError:
+            print(f'Invalid or corrupted DXF file: {name}.')
+
+3. Just pay the extra fee
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Untrusted sources and expecting many invalid DXF files, you always pay an
+extra fee for the recover mode:
+
+.. code-block:: Python
+
+    try:  # low level structure repair:
+        doc, auditor = ezdxf.recover.auto_readfile(name)
+        if auditor.has_errors:
+            print(f'Found unrecoverable errors in DXF file: {name}.')
+            auditor.print_error_report()
+    except ezdxf.DXFStructureError:
+        print(f'Invalid or corrupted DXF file: {name}.')
+
+
 .. hint::
 
     This functions can handle only ASCII DXF files!
 
-.. autofunction:: read
+.. autofunction:: auto_readfile
+
+.. autofunction:: auto_read
 
 .. autofunction:: readfile
+
+.. autofunction:: read
+
 
 
