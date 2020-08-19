@@ -1,9 +1,56 @@
 TODO
 ====
 
-- remove the "legacy mode" in regular read and readfile function, use recover 
-  functions instead
+## Loading strategies
 
+Remove the "legacy mode" in regular read and readfile function, use recover 
+functions instead. Using a separated recover mode can help to optimize the 
+loading process for well formed DXF files, malformed DXF files will raise 
+a DXFStructureError. 
+
+The recover process is __much slower__ than the loading process for well 
+formed DXF files.
+
+### It will work
+
+Mostly DXF files from AutoCAD or BricsCAD (e.g. for In-house solutions)
+
+```
+try:
+    doc = ezdxf.readfile(name)  
+except ezdxf.DXFStructureError:
+    print(f'Invalid or corrupted DXF file: {name}.')
+```
+    
+### Try Hard 
+
+From trusted and untrusted sources but with good hopes, the worst case works 
+like a cache miss, you pay for the first try and pay the extra fee for the 
+recover mode:
+
+```
+try:  # fast path
+    doc = ezdxf.readfile(name)  
+except ezdxf.DXFStructureError:
+    try:  # slow path with repair
+        doc = ezdxf.recover.readfile(name)
+    except ezdxf.DXFStructureError:
+        print(f'Invalid or corrupted DXF file: {name}.')
+```
+        
+### Just pay the extra fee
+
+Untrusted sources and expecting many invalid DXF files, you always pay an 
+extra fee for the recover mode:
+
+```
+try:
+    doc = ezdxf.recover.readfile(name)
+except ezdxf.DXFStructureError:
+    print(f'Invalid or corrupted DXF file: {name}.')
+```
+
+   
 Add-ons
 -------
 
