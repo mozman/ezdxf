@@ -1,7 +1,7 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
 from typing import (
-    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple, Dict
+    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple, Dict,
 )
 import itertools
 import logging
@@ -158,11 +158,6 @@ def _rebuild_sections(tags: Iterable[DXFTag]) -> List:
     return sections
 
 
-MANAGED_SECTIONS = {
-    'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'
-}
-
-
 def _build_section_dict(sections: List) -> Dict[str, List[Tags]]:
     """ Merge sections of same type. """
 
@@ -189,7 +184,7 @@ def _build_section_dict(sections: List) -> Dict[str, List[Tags]]:
     ])
     _rescue_orphaned_header_vars(header, orphans)
     for name, section in section_dict.items():
-        if name in MANAGED_SECTIONS:
+        if name in const.MANAGED_SECTIONS:
             section_dict[name] = list(group_tags(section, 0))
     return section_dict
 

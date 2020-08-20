@@ -123,6 +123,9 @@ class DXFBlockInUseError(DXFValueError):
 class DXFUndefinedBlockError(DXFKeyError):
     pass
 
+MANAGED_SECTIONS = {
+    'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'
+}
 
 APP_DATA_MARKER = 102
 SUBCLASS_MARKER = 100

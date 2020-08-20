@@ -42,9 +42,6 @@ from ezdxf.entities.mleader import MLeaderStyleCollection
 from ezdxf.entities.mline import MLineStyleCollection
 
 logger = logging.getLogger('ezdxf')
-MANAGED_SECTIONS = {
-    'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'
-}
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -386,7 +383,7 @@ class Drawing:
 
         # Store unmanaged sections as raw tags:
         for name, data in sections.items():
-            if name not in MANAGED_SECTIONS:
+            if name not in const.MANAGED_SECTIONS:
                 self.stored_sections.append(StoredSection(data))
 
         # Objects section is not initialized!
