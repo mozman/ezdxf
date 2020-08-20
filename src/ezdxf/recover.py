@@ -110,7 +110,7 @@ def _rebuild_sections(tags: Iterable[DXFTag]) -> List:
         else:  # missing SECTION
             # ignore this tag, it is even not an orphan
             logger.warning(
-                'DXF structure error: ENDSEC with preceding SECTION.')
+                'DXF structure error: ENDSEC without preceding SECTION.')
         collector = []
         inside_section = False
 
@@ -140,7 +140,7 @@ def _rebuild_sections(tags: Iterable[DXFTag]) -> List:
         else:
             logger.warning(
                 f'DXF structure error: found tag outside section: '
-                f'({code}, {value}')
+                f'({code}, {value})')
             orphans.append(tag)
 
     orphans = []
@@ -159,7 +159,7 @@ def _rebuild_sections(tags: Iterable[DXFTag]) -> List:
 
 
 MANAGED_SECTIONS = {
-    'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'
+    'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'
 }
 
 
@@ -190,7 +190,7 @@ def _build_section_dict(sections: List) -> Dict[str, List[Tags]]:
     _rescue_orphaned_header_vars(header, orphans)
     for name, section in section_dict.items():
         if name in MANAGED_SECTIONS:
-            section_dict[name] = list(group_tags(sections, 0))
+            section_dict[name] = list(group_tags(section, 0))
     return section_dict
 
 

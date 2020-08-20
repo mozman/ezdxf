@@ -46,3 +46,21 @@ def test_rebuild_sections(tags01):
     orphans = sections.pop()
     assert len(sections) == expected
     assert len(orphans) == 4
+
+
+def test_build_section_dict(tags01):
+    sections = recover._rebuild_sections(tags01)
+    section_dict = recover._build_section_dict(sections)
+    assert len(section_dict) == 2
+    header = section_dict['HEADER'][0]
+    assert len(header) == 6
+    assert header[0] == (0, 'SECTION')
+    assert header[1] == (2, 'HEADER')
+    assert len(section_dict['ENTITIES']) == 1505
+
+
+def test_readfile_01(filename01):
+    doc = recover.readfile(filename01)
+    assert doc.dxfversion == 'AC1009'
+    auditor = doc.audit()
+    assert auditor.has_errors is False
