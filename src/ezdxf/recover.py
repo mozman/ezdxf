@@ -90,7 +90,7 @@ def read(stream: BinaryIO) -> 'Drawing':
 class Recover:
     """ Loose coupled recovering tools. """
     def __init__(self, loader: Callable = None):
-        # difernt tag loading strategies can be used:
+        # different tag loading strategies can be used:
         #  - bytes_loader(): expects a valid low level structure
         #  - synced_bytes_loader(): loads everything which looks like a tag
         #    and skip other content (dangerous!)
@@ -133,14 +133,14 @@ class Recover:
             else:  # missing SECTION
                 # ignore this tag, it is even not an orphan
                 logger.warning(
-                    'DXF structure error: ENDSEC without preceding SECTION.')
+                    'DXF structure error: missing SECTION tag.')
             collector = []
             inside_section = False
 
         def open_section():
             nonlocal inside_section
             if inside_section:  # missing ENDSEC
-                logger.warning('DXF structure error: missing ENDSEC.')
+                logger.warning('DXF structure error: missing ENDSEC tag.')
                 close_section()
             collector.append(tag)
             inside_section = True
@@ -152,7 +152,7 @@ class Recover:
                 close_section()
             elif value == 'EOF':
                 if inside_section:
-                    logger.warning('DXF structure error: missing ENDSEC.')
+                    logger.warning('DXF structure error: missing ENDSEC tag.')
                     close_section()
             else:
                 collect()
@@ -202,7 +202,7 @@ class Recover:
                 add_section(name, section)
             else:  # invalid section name tag e.g. (2, "HEADER")
                 logger.warning(
-                    'DXF structure error: missing section name tag, ignore whole '
+                    'DXF structure error: missing section name tag, ignore '
                     'section.')
 
         header = section_dict.setdefault('HEADER', [
@@ -404,7 +404,7 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
     def error_msg(tag):
         code = tag.code
         value = tag.value.decode(encoding)
-        return f'Invalid tag (code={code}, value="{value}") near line: {line}.'
+        return f'Invalid tag ({code}, "{value}") near line: {line}.'
 
     tags = iter(tags)
     undo_tag = None
@@ -424,7 +424,7 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                 # e.g. y-code for x-code=10 is 20
                 if y.code != code + 10:
                     raise const.DXFStructureError(
-                        f"Missing required y coordinate near line: {line}.")
+                        f"Missing required y-coordinate near line: {line}.")
                 # optional z coordinate
                 z = next(tags)
                 line += 2
