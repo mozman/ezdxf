@@ -18,7 +18,7 @@ from ezdxf.tools.codepage import toencoding
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, Auditor
+    from ezdxf.eztypes import Drawing, Auditor, SectionDict
 
 __all__ = ['read', 'auto_read', 'readfile', 'auto_readfile']
 
@@ -81,143 +81,162 @@ def read(stream: BinaryIO) -> 'Drawing':
 
     """
     from ezdxf.document import Drawing
-    tags = safe_tag_loader(stream)
-    sections = _rebuild_sections(tags)
-    sections_dict = _build_section_dict(sections)
-    tables = sections_dict.get('TABLES')
-    _rebuild_tables(tables)
-    _merge_tables(tables)
+    recover_tool = Recover.run(stream)
     doc = Drawing()
-    doc._load_section_dict(sections_dict)
+    doc._load_section_dict(recover_tool.section_dict)
     return doc
 
 
-def _rebuild_sections(tags: Iterable[DXFTag]) -> List:
-    """ Rebuild sections:
+class Recover:
+    """ Loose coupled recovering tools. """
+    def __init__(self, loader: Callable = None):
+        # difernt tag loading strategies can be used:
+        #  - bytes_loader(): expects a valid low level structure
+        #  - synced_bytes_loader(): loads everything which looks like a tag
+        #    and skip other content (dangerous!)
+        self.tag_loader = loader or bytes_loader
 
-    - move header variable tags (9, "$...") "outside" of sections into the
-      HEADER section
-    - remove other tags "outside" of sections
-    - recover missing ENDSEC and EOF tags
+        # The main goal of all efforts, a Drawing compatible dict of sections:
+        self.section_dict: 'SectionDict' = dict()
 
-    """
+    @classmethod
+    def run(cls, stream: BinaryIO, loader: Callable = None) -> 'Recover':
+        """ Execute the recover process. """
+        recover_tool = Recover(loader)
+        tags = recover_tool.load_tags(stream)
+        sections = recover_tool.rebuild_sections(tags)
+        recover_tool.load_section_dict(sections)
+        tables = recover_tool.section_dict.get('TABLES')
+        recover_tool.rebuild_tables(tables)
+        recover_tool.merge_tables(tables)
+        return recover_tool
 
-    def close_section():
-        # ENDSEC tag is not collected
-        nonlocal collector, inside_section
-        if inside_section:
-            sections.append(collector)
-        else:  # missing SECTION
-            # ignore this tag, it is even not an orphan
-            logger.warning(
-                'DXF structure error: ENDSEC without preceding SECTION.')
-        collector = []
-        inside_section = False
+    def load_tags(self, stream: BinaryIO) -> Iterable[DXFTag]:
+        return safe_tag_loader(stream, self.tag_loader)
 
-    def open_section():
-        nonlocal inside_section
-        if inside_section:  # missing ENDSEC
-            logger.warning('DXF structure error: missing ENDSEC.')
-            close_section()
-        collector.append(tag)
-        inside_section = True
+    def rebuild_sections(self, tags: Iterable[DXFTag]) -> List[List[DXFTag]]:
+        """ Collect tags between SECTION and ENDSEC or next SECTION tags as
+        sections as list of DXFTag objects, collects tags outside of sections
+        as an extra section.
 
-    def process_structure_tag():
-        if value == 'SECTION':
-            open_section()
-        elif value == 'ENDSEC':
-            close_section()
-        elif value == 'EOF':
+        Returns:
+            List of sections as list of DXFTag() objects, the last section
+            contains orphaned tags found outside of sections
+
+        """
+
+        def close_section():
+            # ENDSEC tag is not collected
+            nonlocal collector, inside_section
             if inside_section:
+                sections.append(collector)
+            else:  # missing SECTION
+                # ignore this tag, it is even not an orphan
+                logger.warning(
+                    'DXF structure error: ENDSEC without preceding SECTION.')
+            collector = []
+            inside_section = False
+
+        def open_section():
+            nonlocal inside_section
+            if inside_section:  # missing ENDSEC
                 logger.warning('DXF structure error: missing ENDSEC.')
                 close_section()
-        else:
-            collect()
-
-    def collect():
-        if inside_section:
             collector.append(tag)
-        else:
-            logger.warning(
-                f'DXF structure error: found tag outside section: '
-                f'({code}, {value})')
-            orphans.append(tag)
+            inside_section = True
 
-    orphans = []
-    sections = []
-    collector = []
-    inside_section = False
-    for tag in tags:
-        code, value = tag
-        if code == 0:
-            process_structure_tag()
-        else:
-            collect()
+        def process_structure_tag():
+            if value == 'SECTION':
+                open_section()
+            elif value == 'ENDSEC':
+                close_section()
+            elif value == 'EOF':
+                if inside_section:
+                    logger.warning('DXF structure error: missing ENDSEC.')
+                    close_section()
+            else:
+                collect()
 
-    sections.append(orphans)
-    return sections
+        def collect():
+            if inside_section:
+                collector.append(tag)
+            else:
+                logger.warning(
+                    f'DXF structure error: found tag outside section: '
+                    f'({code}, {value})')
+                orphans.append(tag)
 
+        orphans = []
+        sections = []
+        collector = []
+        inside_section = False
+        for tag in tags:
+            code, value = tag
+            if code == 0:
+                process_structure_tag()
+            else:
+                collect()
 
-def _build_section_dict(sections: List) -> Dict[str, List[Tags]]:
-    """ Merge sections of same type. """
+        sections.append(orphans)
+        return sections
 
-    def add_section(name: str, tags):
-        if name in section_dict:
-            section_dict[name].extend(tags[2:])
-        else:
-            section_dict[name] = tags
+    def load_section_dict(self, sections: List[List[DXFTag]]) -> None:
+        """ Merge sections of same type. """
 
-    orphans = sections.pop()
-    section_dict = dict()
-    for section in sections:
-        code, name = section[1]
-        if code == 2:
-            add_section(name, section)
-        else:  # invalid section name tag e.g. (2, "HEADER")
-            logger.warning(
-                'DXF structure error: missing section name tag, ignore whole '
-                'section.')
+        def add_section(name: str, tags) -> None:
+            if name in section_dict:
+                section_dict[name].extend(tags[2:])
+            else:
+                section_dict[name] = tags
 
-    header = section_dict.setdefault('HEADER', [
-        DXFTag(0, 'SECTION'),
-        DXFTag(2, 'HEADER'),
-    ])
-    _rescue_orphaned_header_vars(header, orphans)
-    for name, section in section_dict.items():
-        if name in const.MANAGED_SECTIONS:
-            section_dict[name] = list(group_tags(section, 0))
-    return section_dict
+        def _build_section_dict(d: dict) -> None:
+            for name, section in d.items():
+                if name in const.MANAGED_SECTIONS:
+                    self.section_dict[name] = list(group_tags(section, 0))
 
+        orphans = sections.pop()
+        section_dict = dict()
+        for section in sections:
+            code, name = section[1]
+            if code == 2:
+                add_section(name, section)
+            else:  # invalid section name tag e.g. (2, "HEADER")
+                logger.warning(
+                    'DXF structure error: missing section name tag, ignore whole '
+                    'section.')
 
-def _rescue_orphaned_header_vars(
-        header: List[DXFTag],
-        orphans: Iterable[DXFTag]):
-    var_name = None
-    for tag in orphans:
-        code, value = tag
-        if code == 9:
-            var_name = tag
-        elif var_name is not None:
-            header.append(var_name)
-            header.append(tag)
-            var_name = None
+        header = section_dict.setdefault('HEADER', [
+            DXFTag(0, 'SECTION'),
+            DXFTag(2, 'HEADER'),
+        ])
+        self.rescue_orphaned_header_vars(header, orphans)
+        _build_section_dict(section_dict)
 
+    def rebuild_tables(self, tables: List) -> None:
+        """ Rebuild TABLES section:
 
-def _rebuild_tables(tables: List):
-    """ Rebuild TABLES section:
+        - remove tags "outside" of tables
 
-    - remove tags "outside" of tables
+        """
+        pass
 
-    """
-    pass
+    def merge_tables(self, tables: List) -> None:
+        """ Merge TABLES of same type. """
+        pass
 
-
-def _merge_tables(tables: List):
-    """ Merge TABLES of same type. """
-    pass
-
-
-DEFAULT_ENCODING = 'cp1252'
+    def rescue_orphaned_header_vars(
+            self,
+            header: List[DXFTag],
+            orphans: Iterable[DXFTag]) -> None:
+        var_name = None
+        for tag in orphans:
+            code, value = tag
+            if code == 9:
+                var_name = tag
+            elif var_name is not None:
+                header.append(var_name)
+                header.append(tag)
+                var_name = None
 
 
 def safe_tag_loader(stream: BinaryIO,
@@ -272,7 +291,7 @@ def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
             try:
                 code = int(code)
             except ValueError:
-                code = code.decode(DEFAULT_ENCODING)
+                code = code.decode(const.DEFAULT_ENCODING)
                 raise const.DXFStructureError(
                     f'Invalid group code "{code}" at line {line}.')
             else:
@@ -351,20 +370,20 @@ def detect_encoding(tags: Iterable[DXFTag]) -> str:
             elif value == ACADVER:
                 next_tag = ACADVER  # e.g. (1, "AC1012")
         elif code == 3 and next_tag == DWGCODEPAGE:
-            encoding = toencoding(value.decode(DEFAULT_ENCODING))
+            encoding = toencoding(value.decode(const.DEFAULT_ENCODING))
             next_tag = None
         elif code == 1 and next_tag == ACADVER:
-            dxfversion = value.decode(DEFAULT_ENCODING)
+            dxfversion = value.decode(const.DEFAULT_ENCODING)
             next_tag = None
 
         if encoding and dxfversion:
             return 'utf8' if dxfversion >= const.DXF2007 else encoding
 
-    return DEFAULT_ENCODING
+    return const.DEFAULT_ENCODING
 
 
 def byte_tag_compiler(tags: Iterable[DXFTag],
-                      encoding=DEFAULT_ENCODING) -> Iterable[DXFTag]:
+                      encoding=const.DEFAULT_ENCODING) -> Iterable[DXFTag]:
     """ Compiles DXF tag values imported by bytes_loader() into Python types.
 
     Raises DXFStructureError() for invalid float values and invalid coordinate

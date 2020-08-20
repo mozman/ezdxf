@@ -559,3 +559,6 @@ class InsertUnits(IntEnum):
     USSurveyInch = 22
     USSurveyYard = 23
     USSurveyMile = 24
+
+
+DEFAULT_ENCODING = 'cp1252'

@@ -19,8 +19,9 @@ def filename01(request):
 
 @pytest.fixture
 def tags01(filename01):
+    tool = recover.Recover()
     with open(filename01, 'rb') as fp:
-        return list(recover.safe_tag_loader(fp))
+        return list(tool.load_tags(fp))
 
 
 def test_bytes_loader(filename01):
@@ -41,7 +42,8 @@ def test_safe_tag_loader(filename01):
 
 
 def test_rebuild_sections(tags01):
-    sections = recover._rebuild_sections(tags01)
+    tool = recover.Recover()
+    sections = tool.rebuild_sections(tags01)
     expected = sum(int(tag == (0, 'SECTION')) for tag in tags01)
     orphans = sections.pop()
     assert len(sections) == expected
@@ -49,14 +51,15 @@ def test_rebuild_sections(tags01):
 
 
 def test_build_section_dict(tags01):
-    sections = recover._rebuild_sections(tags01)
-    section_dict = recover._build_section_dict(sections)
-    assert len(section_dict) == 2
-    header = section_dict['HEADER'][0]
+    tool = recover.Recover()
+    sections = tool.rebuild_sections(tags01)
+    tool.load_section_dict(sections)
+    assert len(tool.section_dict) == 2
+    header = tool.section_dict['HEADER'][0]
     assert len(header) == 6
     assert header[0] == (0, 'SECTION')
     assert header[1] == (2, 'HEADER')
-    assert len(section_dict['ENTITIES']) == 1505
+    assert len(tool.section_dict['ENTITIES']) == 1505
 
 
 def test_readfile_01(filename01):
