@@ -1,9 +1,14 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
+import math
+import os
+
 import pytest
+
 import ezdxf
-from ezdxf.entities.geodata import GeoData
+from ezdxf.entities.geodata import GeoData, InvalidGeoDataException
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.math import Vector, Matrix44
 
 GEODATA = """0
 GEODATA
@@ -350,3 +355,54 @@ DUMMY_OTT
 96
 0
 """
+
+
+@pytest.fixture
+def georeferenced_test_file_path() -> str:
+    return os.path.join(os.path.dirname(__file__), 'houses_of_parliament_georeferenced.dxf')
+
+
+def test_interpreting_geodata(georeferenced_test_file_path):
+    # it is unclear how to create a georeferenced file from scratch. Copying every GeoData attribute and document
+    # header value across was not enough for AutoCAD to correctly interpret the coordinates
+    doc = ezdxf.readfile(georeferenced_test_file_path)
+    geodata = doc.modelspace().get_geodata()
+
+    assert geodata.decoded_units() == ('in', 'in')  # inches
+
+    coordinate_system_definition = geodata.coordinate_system_definition
+    geodata.coordinate_system_definition = ''
+    with pytest.raises(InvalidGeoDataException):
+        geodata.get_crs()
+    geodata.coordinate_system_definition = coordinate_system_definition
+
+    assert geodata.get_crs() == (27700, True)
+
+    # the outline of the Houses of Parliament in London, WCS coordinates are meaningless, but the cad file is
+    # georeferenced as epsg:27700
+    expected_geo_points = [
+        (530207.5677217417, 179366.7895852687), (530304.7243275082, 179354.44795162012),
+        (530337.0722795193, 179620.5081263125), (530285.502052045, 179626.77810356658),
+        (530288.2604343889, 179649.46565077276), (530260.6778594478, 179652.81917713786),
+        (530256.9625486559, 179629.5648430319), (530266.9241695277, 179627.97328950214),
+        (530259.8925073204, 179577.1375901363), (530179.7793595218, 179598.3848030573),
+        (530174.8000936891, 179519.37903558338), (530189.905505017, 179515.41460442453),
+        (530184.6203071928, 179495.27676273056), (530217.9628916974, 179486.52596620753),
+        (530223.1861964873, 179485.42147930583), (530207.5677217417, 179366.7895852687)
+    ]
+    expected_transformation = Matrix44(
+        (0.02154042164237322, -0.013459949311523403, 0.0, 0.0),
+        (0.013459949311523403, 0.02154042164237322, 0.0, 0.0),
+        (0.0, 0.0, 1.0, 0.0),
+        (529635.6280343985, 179575.4070305015, 0.0, 1.0)
+    )
+
+    transformation, epsg = geodata.get_crs_transformation()
+    assert epsg == 27700
+    assert all(math.isclose(x1, x2) for x1, x2 in zip(transformation, expected_transformation))
+
+    entity = list(doc.modelspace().query('LWPOLYLINE'))[0]
+    georeferenced_entity = entity.transform(transformation)
+    transformed_points = georeferenced_entity.get_points(format='xy')
+    assert len(transformed_points) == len(expected_geo_points)
+    assert all(Vector(x1).isclose(Vector(x2)) for x1, x2 in zip(transformed_points, expected_geo_points))

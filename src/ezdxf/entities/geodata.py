@@ -1,13 +1,18 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
 # Created: 2019-03-11
+import math
+import re
 from typing import TYPE_CHECKING, List, Sequence, Iterable
+from typing import Tuple, Optional
+from xml.etree import ElementTree
+
 from ezdxf.lldxf import validator
-from ezdxf.lldxf.const import (
-    SUBCLASS_MARKER, DXFStructureError, DXF2010, DXFTypeError,
-)
 from ezdxf.lldxf.attributes import (
     DXFAttributes, DefSubclass, DXFAttr, XType, RETURN_DEFAULT,
+)
+from ezdxf.lldxf.const import (
+    SUBCLASS_MARKER, DXFStructureError, DXF2010, DXFTypeError,
 )
 from ezdxf.lldxf.packedtags import VertexArray
 from ezdxf.lldxf.tags import Tags, DXFTag
@@ -16,11 +21,13 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
 from .mtext import split_mtext_string
+from .. import units
+from ..math import Matrix44
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace
 
-__all__ = ['GeoData']
+__all__ = ['GeoData', 'MeshVertices', 'InvalidGeoDataException']
 
 acdb_geo_data = DefSubclass('AcDbGeoData', {
     # 1 = R2009, but this release has no DXF version,
@@ -123,6 +130,10 @@ acdb_geo_data = DefSubclass('AcDbGeoData', {
     # face index 99 repeat, faces_count
 
 })
+
+
+class InvalidGeoDataException(Exception):
+    pass
 
 
 class MeshVertices(VertexArray):
@@ -252,3 +263,110 @@ class GeoData(DXFObject):
         while len(chunks) > 1:
             tagwriter.write_tag2(303, chunks.pop(0))
         tagwriter.write_tag2(301, chunks[0])
+
+    def decoded_units(self) -> Tuple[Optional[str], Optional[str]]:
+        return units.decode(self.dxf.horizontal_units), units.decode(self.dxf.vertical_units)
+
+    def get_crs(self) -> Tuple[int, bool]:
+        """
+
+        The EPSG number is stored in a tag like:
+
+        <Alias id="27700" type="CoordinateSystem">
+          <ObjectId>OSGB1936.NationalGrid</ObjectId>
+          <Namespace>EPSG Code</Namespace>
+        </Alias>
+
+        The axis-ordering is stored in a tag like:
+
+        <Axis uom="METER">
+          <CoordinateSystemAxis>
+            <AxisOrder>1</AxisOrder>
+            <AxisName>Easting</AxisName>
+            <AxisAbbreviation>E</AxisAbbreviation>
+            <AxisDirection>east</AxisDirection>
+          </CoordinateSystemAxis>
+          <CoordinateSystemAxis>
+            <AxisOrder>2</AxisOrder>
+            <AxisName>Northing</AxisName>
+            <AxisAbbreviation>N</AxisAbbreviation>
+            <AxisDirection>north</AxisDirection>
+          </CoordinateSystemAxis>
+        </Axis>
+
+        """
+        definition = self.coordinate_system_definition
+        try:
+            # remove namespaces so that tags can be searched without prefixing their namespace
+            definition = _remove_xml_namespaces(definition)
+            root = ElementTree.fromstring(definition)
+        except ElementTree.ParseError:
+            raise InvalidGeoDataException('failed to parse coordinate_system_definition as xml')
+
+        crs = None
+        for alias in root.findall('Alias'):
+            if alias.get('type') == 'CoordinateSystem' and alias.find('Namespace').text == 'EPSG Code':
+                try:
+                    crs = int(alias.get('id'))
+                except ValueError:
+                    raise InvalidGeoDataException(f'invalid epsg number: {alias.get("id")}')
+                break
+
+        xy_ordering = None
+        for axis in root.findall('.//CoordinateSystemAxis'):
+            if axis.find('AxisOrder').text == '1':
+                first_axis = axis.find('AxisAbbreviation').text
+                if first_axis in ('E', 'W'):
+                    xy_ordering = True
+                elif first_axis in ('N', 'S'):
+                    xy_ordering = False
+                else:
+                    raise InvalidGeoDataException(f'unknown first axis: {first_axis}')
+                break
+
+        if crs is None:
+            raise InvalidGeoDataException('no EPSG code associated with CRS')
+        elif xy_ordering is None:
+            raise InvalidGeoDataException('could not determine axis ordering')
+        else:
+            return crs, xy_ordering
+
+    def get_crs_transformation(self, *, no_checks: bool = False) -> Tuple[Matrix44, int]:
+        epsg, xy_ordering = self.get_crs()
+
+        if not no_checks:
+            if (self.dxf.coordinate_type != GeoData.LOCAL_GRID or
+                    self.dxf.scale_estimation_method != GeoData.NONE or
+                    not math.isclose(self.dxf.user_scale_factor, 1.0) or
+                    self.dxf.sea_level_correction != 0 or
+                    not math.isclose(self.dxf.sea_level_elevation, 0) or
+                    self.faces or
+                    not self.dxf.up_direction.isclose((0, 0, 1)) or
+                    self.dxf.observation_coverage_tag != '' or
+                    self.dxf.observation_from_tag != '' or
+                    self.dxf.observation_to_tag != '' or
+                    not xy_ordering):
+                raise InvalidGeoDataException(
+                    f'Untested geodata configuration: '
+                    f'{self.dxf.all_existing_dxf_attribs()}.\n'
+                    f'You can try with no_checks=True but the '
+                    f'results may be incorrect.'
+                )
+
+        source = self.dxf.design_point  # in CAD WCS coordinates
+        target = self.dxf.reference_point  # in the CRS of the geodata
+        north = self.dxf.north_direction
+
+        # -pi/2 because north is at pi/2 so if the given north is at pi/2, no rotation is necessary
+        theta = -(math.atan2(north.y, north.x) - math.pi / 2)
+
+        transformation = (Matrix44.translate(-source.x, -source.y, 0) @
+                          Matrix44.scale(self.dxf.horizontal_unit_scale, self.dxf.vertical_unit_scale, 1) @
+                          Matrix44.z_rotate(theta) @
+                          Matrix44.translate(target.x, target.y, 0))
+
+        return transformation, epsg
+
+
+def _remove_xml_namespaces(xml_string: str) -> str:
+    return re.sub('xmlns=\"[^\"]*\"', '', xml_string)

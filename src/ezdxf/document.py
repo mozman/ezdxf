@@ -10,6 +10,8 @@ import io
 import base64
 import logging
 from itertools import chain
+
+from ezdxf.layouts import Modelspace
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import (
     BLK_XREF, BLK_EXTERNAL, DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013,
@@ -670,7 +672,7 @@ class Drawing:
         """
         self._dimension_renderer = renderer
 
-    def modelspace(self) -> 'Layout':
+    def modelspace(self) -> 'Modelspace':
         """ Returns the modelspace layout, displayed as ``'Model'`` tab in CAD
         applications, defined by block record named ``'*Model_Space'``.
         """

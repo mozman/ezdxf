@@ -55,11 +55,14 @@ Required DXF version     R2010 (``'AC1024'``)
 
     .. attribute:: dxf.reference_point
 
-        Reference point in coordinate system coordinates, valid only when coordinate type is `local grid`.
+        Reference point in geo coordinates, valid only when coordinate type is `local grid`.
+        The difference between `dxf.design_point` and `dxf.reference_point` defines the translation
+        from WCS coordinates to geo-coordinates.
 
     .. attribute:: dxf.north_direction
 
-        North direction as 2D vector.
+        North direction as 2D vector. Defines the rotation (about the `dxf.design_point`) to transform
+        from WCS coordinates to geo-coordinates
 
     .. attribute:: dxf.horizontal_unit_scale
 
@@ -71,13 +74,13 @@ Required DXF version     R2010 (``'AC1024'``)
 
     .. attribute:: dxf.horizontal_units
 
-        Horizontal units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by horizontal
-        unit scale is not supported by AutoCAD enumeration.
+        Horizontal units (see  :class:`~ezdxf.entities.BlockRecord`). Will be 0 (Unitless) if units specified
+        by horizontal unit scale is not supported by AutoCAD enumeration.
 
     .. attribute:: dxf.vertical_units
 
-        Vertical units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by vertical unit scale
-        is not supported by AutoCAD enumeration.
+        Vertical units (see :class:`~ezdxf.entities.BlockRecord`). Will be 0 (Unitless) if units specified by
+        vertical unit scale is not supported by AutoCAD enumeration.
 
     .. attribute:: dxf.up_direction
 
@@ -112,11 +115,13 @@ Required DXF version     R2010 (``'AC1024'``)
 
     .. attribute:: source_vertices
 
-        2D source vertices as :class:`~ezdxf.lldxf.packedtags.VertexArray`.
+        2D source vertices in the CRS of the GeoData as :class:`~ezdxf.lldxf.packedtags.VertexArray`.
+        Used together with `target_vertices` to define the transformation from the CRS of the GeoData to WGS84.
 
     .. attribute:: target_vertices
 
-        2D target vertices as :class:`~ezdxf.lldxf.packedtags.VertexArray`.
+        2D target vertices in WGS84 (EPSG:4326) as :class:`~ezdxf.lldxf.packedtags.VertexArray`.
+        Used together with `source_vertices` to define the transformation from the CRS of the geoData to WGS84.
 
     .. attribute:: faces
 
@@ -124,6 +129,7 @@ Required DXF version     R2010 (``'AC1024'``)
 
     .. attribute:: coordinate_system_definition
 
-        The coordinate system definition string. (Always a XML string?)
+        The coordinate system definition string. Stored as XML. Defines the CRS used by the GeoData.
+        The EPSG number and other details like the axis-ordering of the CRS is stored.
 
 
