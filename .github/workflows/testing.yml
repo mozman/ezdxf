@@ -26,4 +26,4 @@ jobs:
     - name: Install Tox and any other packages
       run: pip install tox
     - name: Run Tox
-      run: tox -e py  # Run tox using the version of Python in `PATH`
+      run: tox -c tox-template.ini -e py  # Run tox using the version of Python in `PATH`
