@@ -355,9 +355,10 @@ class GeoData(DXFObject):
 
         source = self.dxf.design_point  # in CAD WCS coordinates
         target = self.dxf.reference_point  # in the CRS of the geodata
+        north = self.dxf.north_direction
 
         # -pi/2 because north is at pi/2 so if the given north is at pi/2, no rotation is necessary
-        theta = -(math.atan2(self.dxf.north_direction.y, self.dxf.north_direction.x) - math.pi / 2)
+        theta = -(math.atan2(north.y, north.x) - math.pi / 2)
 
         transformation = (Matrix44.translate(-source.x, -source.y, 0) @
                           Matrix44.scale(self.dxf.horizontal_unit_scale, self.dxf.vertical_unit_scale, 1) @

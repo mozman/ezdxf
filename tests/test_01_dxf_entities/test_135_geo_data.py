@@ -1,6 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import math
+import os
 
 import pytest
 
@@ -356,10 +357,15 @@ DUMMY_OTT
 """
 
 
-def test_interpreting_geodata():
+@pytest.fixture
+def georeferenced_test_file_path() -> str:
+    return os.path.join(os.path.dirname(__file__), 'houses_of_parliament_georeferenced.dxf')
+
+
+def test_interpreting_geodata(georeferenced_test_file_path):
     # it is unclear how to create a georeferenced file from scratch. Copying every GeoData attribute and document
     # header value across was not enough for AutoCAD to correctly interpret the coordinates
-    doc = ezdxf.readfile('houses_of_parliament_georeferenced.dxf')
+    doc = ezdxf.readfile(georeferenced_test_file_path)
     geodata = doc.modelspace().get_geodata()
 
     assert geodata.decoded_units() == ('in', 'in')  # inches
