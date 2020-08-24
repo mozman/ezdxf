@@ -14,7 +14,15 @@ functions to load the document.
 The :func:`auto_read` and :func:`auto_readfile` functions will repair as much
 flaws as possible and run the required audit process automatically
 afterwards and return the result of this audit process. These functions are the
-recommended usage of this module.
+recommended usage of this module:
+
+.. code-block:: Python
+
+    from ezdxf import recover
+
+    doc, auditor = recover.auto_readfile("messy.dxf")
+    if auditor.has_errors:
+        auditor.print_error_report()
 
 The :func:`read` and :func:`readfile` functions will repair as much flaws
 as possible to take the document to a state, where the
@@ -23,7 +31,9 @@ but the audit process has to be started manually:
 
 .. code-block:: Python
 
-    doc = ezdxf.recover.readfile("messy.dxf")
+    from ezdxf import recover
+
+    doc = recover.readfile("messy.dxf")
     auditor = doc.audit()
     if auditor.has_errors:
         auditor.print_error_report()
@@ -60,7 +70,7 @@ recover mode:
         doc = ezdxf.readfile(name)
     except ezdxf.DXFStructureError:
         try:  # slow path with low level structure repair:
-            doc, auditor = ezdxf.recover.auto_readfile(name)
+            doc, auditor = recover.auto_readfile(name)
             if auditor.has_errors:
                 print(f'Found unrecoverable errors in DXF file: {name}.')
                 auditor.print_error_report()
@@ -76,7 +86,7 @@ extra fee for the recover mode:
 .. code-block:: Python
 
     try:  # low level structure repair:
-        doc, auditor = ezdxf.recover.auto_readfile(name)
+        doc, auditor = recover.auto_readfile(name)
         if auditor.has_errors:
             print(f'Found unrecoverable errors in DXF file: {name}.')
             auditor.print_error_report()

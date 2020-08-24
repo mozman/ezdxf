@@ -28,6 +28,6 @@ def filename(request):
 
 
 def test_leica_disto_r12(filename):
-    doc = ezdxf.readfile(filename, legacy_mode=True)
+    doc = ezdxf.readfile(filename)
     auditor = doc.audit()
     assert len(auditor) == 0

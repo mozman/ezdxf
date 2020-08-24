@@ -1,9 +1,9 @@
-# Copyright (c) 2018-2019, Manfred Moitzi
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 import os
 import pytest
 import ezdxf
-
+from ezdxf import recover
 
 BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
 DATADIR = 'data'
@@ -19,10 +19,10 @@ def filename(request):
 
 def test_coordinate_order_problem(filename):
     try:
-        dwg = ezdxf.readfile(filename, legacy_mode=True)
+        doc, auditor = recover.auto_readfile(filename)
     except ezdxf.DXFError as e:
         pytest.fail(str(e))
     else:
-        msp = dwg.modelspace()
+        msp = doc.modelspace()
         lines = msp.query('LINE')
         assert lines[0].dxf.start == (1.5, 0, 0)

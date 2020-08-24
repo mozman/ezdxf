@@ -12,7 +12,6 @@ DIRS = [
     "CADKitSamples/*.dxf",
     "dxftest/*.dxf",
 ]
-LEGACY_MODE = False
 options.check_entity_tag_structures = True
 
 
@@ -24,7 +23,7 @@ def filename(request):
 
 def test_readfile(filename):
     try:
-        ezdxf.readfile(filename, legacy_mode=LEGACY_MODE)
+        ezdxf.readfile(filename)
     except Exception:
         assert False
     else:

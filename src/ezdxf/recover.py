@@ -259,8 +259,8 @@ def safe_tag_loader(stream: BinaryIO,
     encoding = detect_encoding(detector_stream)
 
     # Apply repair filter:
-    tags = repair.filter_invalid_yz_point_codes(tags)
     tags = repair.tag_reorder_layer(tags)
+    tags = repair.filter_invalid_yz_point_codes(tags)
     return byte_tag_compiler(tags, encoding)
 
 
