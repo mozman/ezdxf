@@ -145,7 +145,9 @@ class Layouts:
         }
         dxf_layout = cast('DXFLayout', self.doc.objects.new_entity('LAYOUT',
                                                                    dxfattribs=dxfattribs))
-        if name == 'Model':
+        if name.upper() == 'MODEL':
+            name = 'Model'
+            dxf_layout.dxf.name = name
             layout = Modelspace.load(dxf_layout, self.doc)
         else:
             layout = Paperspace.load(dxf_layout, self.doc)
@@ -157,7 +159,9 @@ class Layouts:
     def setup_from_rootdict(self) -> None:
         """ Setup layout manger from root dictionary. (internal API) """
         for name, dxf_layout in self._dxf_layouts.items():
-            if name == 'Model':
+            if name.upper() == 'MODEL':
+                name = 'Model'
+                dxf_layout.dxf.name = name
                 layout = Modelspace(dxf_layout, self.doc)
             else:
                 layout = Paperspace(dxf_layout, self.doc)
