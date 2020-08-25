@@ -1,5 +1,5 @@
-# Copyright (c) 2018-2019, Manfred Moitzi
-# License: MIT License
+#  Copyright (c) 2020, Manfred Moitzi
+#  License: MIT License
 import pytest
 import os
 import ezdxf

@@ -1,11 +1,11 @@
-# Copyright (c) 2020, Manfred Moitzi
-# License: MIT License
+#  Copyright (c) 2020, Manfred Moitzi
+#  License: MIT License
 import os
 import pytest
 from ezdxf import recover
 from ezdxf.lldxf.tagger import tag_compiler, ascii_tags_loader
 
-BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
+BASEDIR = os.path.dirname(__file__)
 DATADIR = 'data'
 
 

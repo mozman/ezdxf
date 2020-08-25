@@ -1,10 +1,10 @@
-# Copyright (c) 2018, Manfred Moitzi
-# License: MIT License
+#  Copyright (c) 2020, Manfred Moitzi
+#  License: MIT License
 import pytest
 import os
 import ezdxf
 
-BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
+BASEDIR = os.path.dirname(__file__)
 DATADIR = 'data'
 COLDFIRE = os.path.join(
     ezdxf.EZDXF_TEST_FILES,

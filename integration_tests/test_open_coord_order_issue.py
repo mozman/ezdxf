@@ -1,11 +1,11 @@
-# Copyright (c) 2018-2020, Manfred Moitzi
-# License: MIT License
+#  Copyright (c) 2020, Manfred Moitzi
+#  License: MIT License
 import os
 import pytest
 import ezdxf
 from ezdxf import recover
 
-BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
+BASEDIR = os.path.dirname(__file__)
 DATADIR = 'data'
 
 
