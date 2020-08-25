@@ -8,18 +8,18 @@ from ezdxf.entities import factory
 
 
 @pytest.fixture(scope='module')
-def dxf():
+def doc():
     return ezdxf.new('R2000')
 
 
 @pytest.fixture
-def auditor(dxf):
-    return Auditor(dxf)
+def auditor(doc):
+    return Auditor(doc)
 
 
 @pytest.fixture
-def entity(dxf):
-    return dxf.modelspace().add_line((0, 0), (100, 0))
+def entity(doc):
+    return doc.modelspace().add_line((0, 0), (100, 0))
 
 
 def test_color_index(entity, auditor):
@@ -75,15 +75,13 @@ def test_for_existing_owner(entity, auditor):
     assert entity.is_alive is False, 'delete entity without valid owner'
 
 
-@pytest.fixture
-def text(dxf):
-    return dxf.modelspace().add_text('TEXT', dxfattribs={'style': 'UNDEFINED'})
-
-
-def test_for_existing_text_style(text, auditor):
+@pytest.mark.parametrize('TYPE', ('TEXT', 'MTEXT', 'ATTRIB', 'ATTDEF'))
+def test_for_existing_text_style(TYPE, auditor, doc):
+    text = factory.new(TYPE, dxfattribs={'style': 'UNDEFINED'}, doc=doc)
     auditor.check_text_style(text)
     assert len(auditor.fixes) == 1
     assert auditor.fixes[0].code == AuditError.UNDEFINED_TEXT_STYLE
+    assert text.dxf.style == 'Standard'
 
 
 def test_block_cycle_detector_setup():
@@ -110,8 +108,8 @@ def test_block_cycle_detector_setup():
     assert auditor.errors[2].code == AuditError.INVALID_BLOCK_REFERENCE_CYCLE
 
 
-def test_block_cycle_detector(dxf):
-    detector = BlockCycleDetector(dxf)
+def test_block_cycle_detector(doc):
+    detector = BlockCycleDetector(doc)
     data = {
         'a': set('bcd'),  # no cycle
         'b': set(),
@@ -143,8 +141,8 @@ def test_block_cycle_detector(dxf):
     assert detector.has_cycle('y') is False
 
 
-def test_broken_block_cycle_detector(dxf):
-    detector = BlockCycleDetector(dxf)
+def test_broken_block_cycle_detector(doc):
+    detector = BlockCycleDetector(doc)
     data = {
         'a': set('bcd'),  # 'd' does not exist
         'b': set(),
@@ -155,11 +153,11 @@ def test_broken_block_cycle_detector(dxf):
     assert detector.has_cycle('b') is False
 
 
-def test_fix_invalid_leader(dxf, auditor):
-    msp = dxf.modelspace()
+def test_fix_invalid_leader(doc, auditor):
+    msp = doc.modelspace()
     # no creator interface for LEADER (yet)
-    leader = factory.new('LEADER', doc=dxf)
-    dxf.entitydb.add(leader)
+    leader = factory.new('LEADER', doc=doc)
+    doc.entitydb.add(leader)
     msp.add_entity(leader)
     assert leader.is_alive is True
 
@@ -168,20 +166,20 @@ def test_fix_invalid_leader(dxf, auditor):
     assert auditor.fixes[-1].code == AuditError.INVALID_VERTEX_COUNT
 
 
-def test_fix_invalid_insert(dxf, auditor):
-    msp = dxf.modelspace()
+def test_fix_invalid_insert(doc, auditor):
+    msp = doc.modelspace()
     insert = msp.add_blockref('TEST_INVALID_INSERT', (0, 0))
     insert.audit(auditor)
-    dxf.entitydb.empty_trashcan()  # explicit call required
+    doc.entitydb.empty_trashcan()  # explicit call required
     assert insert.is_alive is False
     assert auditor.fixes[-1].code == AuditError.UNDEFINED_BLOCK
 
 
-def test_fix_inser_scale(dxf, auditor):
-    msp = dxf.modelspace()
+def test_fix_inser_scale(doc, auditor):
+    msp = doc.modelspace()
     test_block = 'TEST_INSERT'
-    if test_block not in dxf.blocks:
-        dxf.blocks.new(test_block)
+    if test_block not in doc.blocks:
+        doc.blocks.new(test_block)
     insert = msp.add_blockref(test_block, (0, 0), dxfattribs={
         'xscale': 0, 'yscale': 0, 'zscale': 0
     })

@@ -53,9 +53,6 @@ DXF Audit & Repair
     - dimstyle exist; repair: set to 'Standard'
     - arrows exist; repair: set to '' = default open filled arrow
     - text style exist; repair: set to 'Standard'
-- check TEXT, MTEXT
-    - text style exist; repair: set to 'Standard'
-
 
 Cython Code
 -----------

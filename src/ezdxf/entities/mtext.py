@@ -20,7 +20,7 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex,
+        TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex, Auditor
     )
 
 __all__ = [
@@ -437,6 +437,11 @@ class MText(DXFGraphic):
 
         """
         return plain_mtext(self.text, split=split)
+
+    def audit(self, auditor: 'Auditor'):
+        """ Validity check. """
+        super().audit(auditor)
+        auditor.check_text_style(self)
 
 
 def plain_mtext(text: str, split=False) -> Union[List[str], str]:
