@@ -1,70 +1,9 @@
 TODO
 ====
-
-## Loading strategies
-
-Remove the "legacy mode" in regular read and readfile function, use recover 
-functions instead. Using a separated recover mode can help to optimize the 
-loading process for well formed DXF files, malformed DXF files will raise 
-a DXFStructureError. 
-
-The recover process is __much slower__ than the loading process for well 
-formed DXF files.
-
-Some loading scenarios as examples:
-
-### 1. It will work
-
-Mostly DXF files from AutoCAD or BricsCAD (e.g. for In-house solutions)
-
-```
-try:
-    doc = ezdxf.readfile(name)  
-except ezdxf.DXFStructureError:
-    print(f'Invalid or corrupted DXF file: {name}.')
-```
-    
-### 2. Try Hard 
-
-From trusted and untrusted sources but with good hopes, the worst case works 
-like a cache miss, you pay for the first try and pay the extra fee for the 
-recover mode:
-
-```
-try:  # fast path:
-    doc = ezdxf.readfile(name)  
-except ezdxf.DXFStructureError:
-    try:  # slow path with low level structure repair:
-        doc, auditor = ezdxf.recover.auto_readfile(name)
-        if auditor.has_errors:
-            print(f'Found unrecoverable errors in DXF file: {name}.')
-            auditor.print_error_report()
-    except ezdxf.DXFStructureError:
-        print(f'Invalid or corrupted DXF file: {name}.')
-```
-        
-### 3. Just pay the extra fee
-
-Untrusted sources and expecting many invalid DXF files, you always pay an 
-extra fee for the recover mode:
-
-```
-try:  # low level structure repair:
-    doc, auditor = ezdxf.recover.auto_readfile(name)
-    if auditor.has_errors:
-        print(f'Found unrecoverable errors in DXF file: {name}.')
-        auditor.print_error_report()
-except ezdxf.DXFStructureError:
-    print(f'Invalid or corrupted DXF file: {name}.')
-
-```
-
-   
+ 
 Add-ons
 -------
 
-- DWG loader (work in progress)
-- Simple SVG exporter
 - drawing
     - ACAD_TABLE
     - MLEADER ???
@@ -72,7 +11,8 @@ Add-ons
     - render POINT symbols
     - render proxy graphic, class `ProxyGraphic()` is already 
       implemented but not tested with real world data.
-         
+- Simple SVG exporter
+- DWG loader (work in progress)         
 
 Render Tools
 ------------
