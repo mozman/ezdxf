@@ -1,13 +1,11 @@
-# Purpose: auditor module
 # Created: 10.03.2017
 # Copyright (c) 2017-2020, Manfred Moitzi
 # License: MIT License
-from enum import IntEnum
 from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict
-
 import sys
+from enum import IntEnum
 from ezdxf.lldxf.validator import is_valid_layer_name, fix_lineweight
-from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHT_VALUES, DXFStructureError
+from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHT_VALUES
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.entities import factory
 from ezdxf.math import NULLVEC
@@ -57,10 +55,10 @@ REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
 class ErrorEntry:
     def __init__(self, code: int, message: str = '',
                  dxf_entity: 'DXFEntity' = None, data: Any = None):
-        self.code = code  # error code AuditError()
-        self.entity = dxf_entity  # source entity of error
-        self.message = message  # error message
-        self.data = data  # additional data as an arbitrary object
+        self.code: int = code  # error code AuditError()
+        self.entity: 'DXFEntity' = dxf_entity  # source entity of error
+        self.message: str = message  # error message
+        self.data: Any = data  # additional data as an arbitrary object
 
 
 class Auditor:
@@ -155,10 +153,11 @@ class Auditor:
 
     def run(self) -> List[ErrorEntry]:
         self.reset()
+        # Check database integrity:
         self.doc.entitydb.audit(self)
         self.check_root_dict()
         self.check_table_structures()
-        self.check_database_entities()
+        self.audit_all_database_entities()
         self.doc.groups.audit(self)
         self.check_block_reference_cycles()
         self.doc.layouts.audit(self)
@@ -189,7 +188,8 @@ class Auditor:
 
     def check_table_structures(self) -> None:
         """ Check table structures. """
-        # Tables or more precise the 'table head' is not stored in the entity database
+        # Tables or more precise the 'table head' is not stored in the
+        # entity database.
         # Table entries are checked as database entities
         tables = self.doc.tables
         tables.linetypes.audit(self)
@@ -201,8 +201,8 @@ class Auditor:
         tables.views.audit(self)
         tables.block_records.audit(self)
 
-    def check_database_entities(self) -> None:
-        """ Check all entities stored in the entity database. """
+    def audit_all_database_entities(self) -> None:
+        """ Audit all entities stored in the entity database. """
         # deleting of entities can occur, while auditing
         db = self.doc.entitydb
         db.locked = True
@@ -213,15 +213,15 @@ class Auditor:
         db.empty_trashcan()
 
     def check_entity_linetype(self, entity: 'DXFEntity') -> None:
-        """
-        Check for usage of undefined line types. AutoCAD does not load DXF files with undefined line types.
+        """ Check for usage of undefined line types. AutoCAD does not load
+        DXF files with undefined line types.
         """
         assert self.doc is entity.doc, 'Entity from different DXF document.'
         if not entity.dxf.hasattr('linetype'):
             return
         linetype = table_key(entity.dxf.linetype)
-        if linetype in (
-        'bylayer', 'byblock'):  # no table entry in linetypes required
+        # no table entry in linetypes required
+        if linetype in ('bylayer', 'byblock'):
             return
 
         if linetype not in self.doc.linetypes:
@@ -235,9 +235,7 @@ class Auditor:
             )
 
     def check_text_style(self, entity: 'DXFEntity') -> None:
-        """
-        Check for usage of undefined text styles.
-        """
+        """ Check for usage of undefined text styles. """
         assert self.doc is entity.doc, 'Entity from different DXF document.'
         if not entity.dxf.hasattr('style'):
             return
@@ -253,9 +251,7 @@ class Auditor:
             )
 
     def check_dimension_style(self, entity: 'DXFGraphic') -> None:
-        """
-        Check for usage of undefined dimension styles.
-        """
+        """  Check for usage of undefined dimension styles. """
         assert self.doc is entity.doc, 'Entity from different DXF document.'
         if not entity.dxf.hasattr('dimstyle'):
             return
@@ -265,15 +261,14 @@ class Auditor:
             entity.dxf.dimstyle = 'Standard'
             self.fixed_error(
                 code=AuditError.UNDEFINED_DIMENSION_STYLE,
-                message=f'Replaced undefined dimstyle "{dimstyle}" in {str(entity)} by "Standard".',
+                message=f'Replaced undefined dimstyle "{dimstyle}" in '
+                        f'{str(entity)} by "Standard".',
                 dxf_entity=entity,
                 data=dimstyle,
             )
 
     def check_for_valid_layer_name(self, entity: 'DXFEntity') -> None:
-        """
-        Check layer names for invalid characters: <>/\":;?*|='
-        """
+        """ Check layer names for invalid characters: <>/\":;?*|=' """
         name = entity.dxf.layer
         if not is_valid_layer_name(name):
             # This error can't be fixed !?
@@ -330,7 +325,8 @@ class Auditor:
             else:
                 self.fixed_error(
                     code=AuditError.INVALID_OWNER_HANDLE,
-                    message=f'Deleted {str(entity)} entity without valid owner handle #{owner_handle}.',
+                    message=f'Deleted {str(entity)} entity without valid owner '
+                            f'handle #{owner_handle}.',
                 )
                 self.trash(handle)
 
@@ -349,7 +345,8 @@ class Auditor:
             if cycle_detector.has_cycle(block.name):
                 self.add_error(
                     code=AuditError.INVALID_BLOCK_REFERENCE_CYCLE,
-                    message=f'Invalid block reference cycle detected in block "{block.name}".',
+                    message=f'Invalid block reference cycle detected in '
+                            f'block "{block.name}".',
                     dxf_entity=block.block_record,
                 )
 
