@@ -305,6 +305,9 @@ class DXFLayout(PlotSettings):
             return dxf
 
         processor.load_dxfattribs_into_namespace(dxf, acdb_layout)
+        # normalize modelspace name to 'Model'
+        if dxf.get('name', '').upper() == 'MODEL':
+            self.dxf.name = 'Model'
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

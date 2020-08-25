@@ -13,7 +13,7 @@ from .layout import Layout, Modelspace, Paperspace
 from ezdxf.entities import DXFEntity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dictionary, Drawing
+    from ezdxf.eztypes import Dictionary, Drawing, Auditor
 
 logger = logging.getLogger('ezdxf')
 
@@ -68,7 +68,8 @@ class Layouts:
 
         Args:
             name: layout name as shown in tabs in :term:`CAD` applications
-            dxfattribs: additional DXF attributes for the :class:`~ezdxf.entities.layout.DXFLayout` entity
+            dxfattribs: additional DXF attributes for the
+                :class:`~ezdxf.entities.layout.DXFLayout` entity
 
         Raises:
             DXFValueError: Invalid characters in layout name.
@@ -100,32 +101,11 @@ class Layouts:
         layouts = cls(doc)
         layouts.setup_from_rootdict()
 
-        # DXF R12: block/block_record for *Model_Space and *Paper_Space already exists
+        # DXF R12: block/block_record for *Model_Space and *Paper_Space
+        # already exist:
         if len(layouts) < 2:  # restore missing DXF Layouts
             layouts.restore('Model', MODEL_SPACE_R2000, taborder=0)
             layouts.restore('Layout1', PAPER_SPACE_R2000, taborder=1)
-
-        # find orphaned LAYOUTS
-        layout_names = (o.dxf.name for o in doc.objects if
-                        o.dxftype == 'LAYOUT')
-        for layout_name in layout_names:
-            if layout_name not in layouts:
-                logger.debug(f'Found orphaned LAYOUT "{layout_name}"')
-
-        # find orphaned BLOCK_RECORD *Paper_Space? entries
-        psp_br_handles = {
-            br.dxf.handle for br in doc.block_records if
-            br.dxf.name.lower().startswith('*paper_space')
-        }
-        psp_layout_br_handles = {
-            layout.dxf.block_record_handle for layout in
-            layouts._layouts.values() if layout.dxf.name != 'Model'
-        }
-        mismatch = psp_br_handles.difference(psp_layout_br_handles)
-        if len(mismatch):
-            logger.debug(
-                f'Found {len(mismatch)} layout(s) defined by BLOCK_RECORD entries without LAYOUT entity.')
-
         return layouts
 
     def restore(self, name: str, block_record_name: str, taborder: int) -> None:
@@ -145,9 +125,7 @@ class Layouts:
         }
         dxf_layout = cast('DXFLayout', self.doc.objects.new_entity('LAYOUT',
                                                                    dxfattribs=dxfattribs))
-        if name.upper() == 'MODEL':
-            name = 'Model'
-            dxf_layout.dxf.name = name
+        if name == 'Model':
             layout = Modelspace.load(dxf_layout, self.doc)
         else:
             layout = Paperspace.load(dxf_layout, self.doc)
@@ -159,9 +137,7 @@ class Layouts:
     def setup_from_rootdict(self) -> None:
         """ Setup layout manger from root dictionary. (internal API) """
         for name, dxf_layout in self._dxf_layouts.items():
-            if name.upper() == 'MODEL':
-                name = 'Model'
-                dxf_layout.dxf.name = name
+            if name == 'Model':
                 layout = Modelspace(dxf_layout, self.doc)
             else:
                 layout = Paperspace(dxf_layout, self.doc)
@@ -205,7 +181,8 @@ class Layouts:
 
     def rename(self, old_name: str, new_name: str) -> None:
         """ Rename a layout from `old_name` to `new_name`.
-        Can not rename layout ``'Model'`` and the new name of a layout must not exist.
+        Can not rename layout ``'Model'`` and the new name of a layout must
+        not exist.
 
         Args:
             old_name: actual layout name
@@ -229,7 +206,8 @@ class Layouts:
         self._layouts[new_name] = layout
 
     def names_in_taborder(self) -> List[str]:
-        """ Returns all layout names in tab order as shown in :term:`CAD` applications. """
+        """ Returns all layout names in tab order as shown in :term:`CAD`
+        applications. """
         names = [(layout.dxf.taborder, name) for name, layout in
                  self._layouts.items()]
         return [name for order, name in sorted(names)]
@@ -252,7 +230,8 @@ class Layouts:
         return self.get(dxf_layout.dxf.name)
 
     def get_active_layout_key(self):
-        """ Returns layout kay for the active paperspace layout. (internal API) """
+        """ Returns layout kay for the active paperspace layout.
+        (internal API) """
         active_layout_block_record = self.doc.block_records.get(
             PAPER_SPACE_R2000)
         return active_layout_block_record.dxf.handle
@@ -294,10 +273,11 @@ class Layouts:
         layout = self._layouts[name]
         if len(self) < 3:
             raise DXFValueError("Can not delete last paperspace layout.")
-        if layout.layout_key == self.get_active_layout_key():  # name is the active layout
+        if layout.layout_key == self.get_active_layout_key():
+            # Layout `name` is the active layout:
             for layout_name in self.names():
-                if layout_name not in (
-                name, 'Model'):  # set any other layout as active layout
+                # Set any other paperspace layout as active layout
+                if layout_name not in (name, 'Model'):
                     self.set_active_layout(layout_name)
                     break
         self._dxf_layouts.remove(layout.name)
@@ -305,11 +285,30 @@ class Layouts:
         layout.destroy()
 
     def active_layout(self) -> Paperspace:
-        """
-        Returns the active paperspace layout.
-
-        """
+        """ Returns the active paperspace layout. """
         for layout in self:
             if layout.is_active_paperspace:
                 return cast(Paperspace, layout)
         raise DXFInternalEzdxfError('No active paperspace layout found.')
+
+    def audit(self, auditor: 'Auditor'):
+        doc = auditor.doc
+        # find orphaned LAYOUTS
+        layout_names = (o.dxf.name for o in doc.objects if
+                        o.dxftype == 'LAYOUT')
+        for layout_name in layout_names:
+            if layout_name not in self:
+                logger.debug(f'Found orphaned LAYOUT "{layout_name}"')
+        # find orphaned BLOCK_RECORD *Paper_Space? entries
+        psp_br_handles = {
+            br.dxf.handle for br in doc.block_records if
+            br.dxf.name.lower().startswith('*paper_space')
+        }
+        psp_layout_br_handles = {
+            layout.dxf.block_record_handle for layout in
+            self._layouts.values() if layout.dxf.name.upper() != 'MODEL'
+        }
+        mismatch = psp_br_handles.difference(psp_layout_br_handles)
+        if len(mismatch):
+            logger.debug(
+                f'Found {len(mismatch)} layout(s) defined by BLOCK_RECORD entries without LAYOUT entity.')
