@@ -109,7 +109,8 @@ class Layouts:
         return layouts
 
     def restore(self, name: str, block_record_name: str, taborder: int) -> None:
-        """ Restore layout from block if DXFLayout do not exist. (internal API) """
+        """ Restore layout from block if DXFLayout do not exist.
+        (internal API) """
         if name in self._layouts:
             return
         block_layout = self.doc.blocks.get(block_record_name)
@@ -123,8 +124,8 @@ class Layouts:
             'block_record_handle': block_layout.block_record_handle,
             'taborder': taborder,
         }
-        dxf_layout = cast('DXFLayout', self.doc.objects.new_entity('LAYOUT',
-                                                                   dxfattribs=dxfattribs))
+        dxf_layout = cast('DXFLayout', self.doc.objects.new_entity(
+            'LAYOUT', dxfattribs=dxfattribs))
         if name == 'Model':
             layout = Modelspace.load(dxf_layout, self.doc)
         else:
@@ -144,7 +145,8 @@ class Layouts:
             self._layouts[name] = layout
 
     def __len__(self) -> int:
-        """ Returns count of existing layouts, including the modelspace layout. """
+        """ Returns count of existing layouts, including the modelspace
+        layout. """
         return len(self._layouts)
 
     def __contains__(self, name: str) -> bool:
@@ -153,7 +155,8 @@ class Layouts:
         return name in self._layouts
 
     def __iter__(self) -> Iterable['Layout']:
-        """ Returns iterable of all layouts as :class:`~ezdxf.layouts.Layout` objects, including the modelspace layout.
+        """ Returns iterable of all layouts as :class:`~ezdxf.layouts.Layout`
+        objects, including the modelspace layout.
         """
         return iter(self._layouts.values())
 
@@ -166,8 +169,7 @@ class Layouts:
         return self._layouts.keys()
 
     def get(self, name: Optional[str]) -> 'Layout':
-        """
-        Returns :class:`~ezdxf.layouts.Layout` by `name`.
+        """ Returns :class:`~ezdxf.layouts.Layout` by `name`.
 
         Args:
             name: layout name as shown in tab, e.g. ``'Model'`` for modelspace
@@ -292,14 +294,21 @@ class Layouts:
         raise DXFInternalEzdxfError('No active paperspace layout found.')
 
     def audit(self, auditor: 'Auditor'):
+        from ezdxf.audit import AuditError
         doc = auditor.doc
-        # find orphaned LAYOUTS
-        layout_names = (o.dxf.name for o in doc.objects if
-                        o.dxftype == 'LAYOUT')
-        for layout_name in layout_names:
-            if layout_name not in self:
-                logger.debug(f'Found orphaned LAYOUT "{layout_name}"')
-        # find orphaned BLOCK_RECORD *Paper_Space? entries
+
+        # Find/remove orphaned LAYOUT objects:
+        layouts = (o for o in doc.objects if o.dxftype() == 'LAYOUT')
+        for layout in layouts:
+            name = layout.dxf.get('name')
+            if name not in self:
+                auditor.fixed_error(
+                    code=AuditError.ORPHANED_LAYOUT_ENTITY,
+                    message=f'Removed orphaned {str(layout)} "{name}"'
+                )
+                doc.objects.delete_entity(layout)
+
+        # Find/remove orphaned paperspace BLOCK_RECORDS named: *Paper_Space...
         psp_br_handles = {
             br.dxf.handle for br in doc.block_records if
             br.dxf.name.lower().startswith('*paper_space')
@@ -310,5 +319,14 @@ class Layouts:
         }
         mismatch = psp_br_handles.difference(psp_layout_br_handles)
         if len(mismatch):
-            logger.debug(
-                f'Found {len(mismatch)} layout(s) defined by BLOCK_RECORD entries without LAYOUT entity.')
+            for handle in mismatch:
+                br = doc.entitydb.get(handle)
+                name = br.dxf.get('name')
+                auditor.fixed_error(
+                    code=AuditError.ORPHANED_PAPER_SPACE_BLOCK_RECORD_ENTITY,
+                    message=f'Removed orphaned layout {str(br)} "{name}"'
+                )
+                if name in doc.blocks:
+                    doc.blocks.delete_block(name)
+                else:
+                    doc.block_records.remove(name)

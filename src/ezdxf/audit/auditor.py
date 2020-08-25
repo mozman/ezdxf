@@ -33,6 +33,8 @@ class AuditError(IntEnum):
     REMOVE_EMPTY_GROUP = 105
     GROUP_ENTITIES_IN_DIFFERENT_LAYOUTS = 106
     MISSING_REQUIRED_SEQEND = 107
+    ORPHANED_LAYOUT_ENTITY = 108
+    ORPHANED_PAPER_SPACE_BLOCK_RECORD_ENTITY = 109
 
     # DXF entity property errors:
     INVALID_ENTITY_HANDLE = 201
@@ -159,6 +161,7 @@ class Auditor:
         self.check_database_entities()
         self.doc.groups.audit(self)
         self.check_block_reference_cycles()
+        self.doc.layouts.audit(self)
         self.empty_trashcan()
         return self.errors
 
