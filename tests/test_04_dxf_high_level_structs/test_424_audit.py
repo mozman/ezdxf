@@ -170,7 +170,7 @@ def test_fix_invalid_insert(doc, auditor):
     msp = doc.modelspace()
     insert = msp.add_blockref('TEST_INVALID_INSERT', (0, 0))
     insert.audit(auditor)
-    doc.entitydb.empty_trashcan()  # explicit call required
+    auditor.empty_trashcan()  # explicit call required
     assert insert.is_alive is False
     assert auditor.fixes[-1].code == AuditError.UNDEFINED_BLOCK
 

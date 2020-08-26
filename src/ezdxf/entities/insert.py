@@ -678,7 +678,4 @@ class Insert(LinkedEntities):
                     message=f'Deleted entity {str(self)} without required BLOCK'
                             f' definition.',
                 )
-                if auditor.has_trashcan:
-                    auditor.trash(self.dxf.handle)
-                else:
-                    self.destroy()
+                auditor.trash(self)

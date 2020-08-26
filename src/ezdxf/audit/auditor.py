@@ -1,7 +1,9 @@
 # Created: 10.03.2017
 # Copyright (c) 2017-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict
+from typing import (
+    TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict, Optional,
+)
 import sys
 from enum import IntEnum
 from ezdxf.lldxf.validator import is_valid_layer_name, fix_lineweight
@@ -12,7 +14,9 @@ from ezdxf.math import NULLVEC
 from ezdxf.sections.table import table_key
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity, Drawing, DXFGraphic, BlocksSection
+    from ezdxf.eztypes import (
+        DXFEntity, Drawing, DXFGraphic, BlocksSection, EntityDB,
+    )
 
 __all__ = ['Auditor', 'AuditError', 'audit']
 
@@ -62,15 +66,18 @@ class ErrorEntry:
 
 
 class Auditor:
-    def __init__(self, doc: 'Drawing'):
-        self.doc = doc
+    def __init__(self, doc: Optional['Drawing']):
+        self.doc: Optional['Drawing'] = doc
         self._rootdict_handle = doc.rootdict.dxf.handle if doc else '0'
         self.errors: List[ErrorEntry] = []
         self.fixes: List[ErrorEntry] = []
+        self._trashcan: Optional['EntityDB.Trashcan'] = \
+            doc.entitydb.new_trashcan() if doc else None
 
     def reset(self) -> None:
         self.errors = []
         self.fixes = []
+        self.empty_trashcan()
 
     def __len__(self) -> int:
         """ Returns count of unfixed errors. """
@@ -166,15 +173,19 @@ class Auditor:
 
     def empty_trashcan(self):
         if self.has_trashcan:
-            self.entitydb.empty_trashcan()
+            self._trashcan.clear()
 
-    def trash(self, handle: str) -> None:
+    def trash(self, entity: 'DXFEntity') -> None:
+        if entity is None or not entity.is_alive:
+            return
         if self.has_trashcan:
-            self.entitydb.trash(handle)
+            self._trashcan.add(entity.dxf.handle)
+        else:
+            entity.destroy()
 
     @property
     def has_trashcan(self) -> bool:
-        return self.entitydb is not None
+        return self._trashcan is not None
 
     def check_root_dict(self) -> None:
         root_dict = self.doc.rootdict
@@ -210,7 +221,7 @@ class Auditor:
             if entity.is_alive:
                 entity.audit(self)
         db.locked = False
-        db.empty_trashcan()
+        self.empty_trashcan()
 
     def check_entity_linetype(self, entity: 'DXFEntity') -> None:
         """ Check for usage of undefined line types. AutoCAD does not load
@@ -328,7 +339,7 @@ class Auditor:
                     message=f'Deleted {str(entity)} entity without valid owner '
                             f'handle #{owner_handle}.',
                 )
-                self.trash(handle)
+                self.trash(doc.entitydb.get(handle))
 
     def check_extrusion_vector(self, entity: 'DXFEntity') -> None:
         if NULLVEC.isclose(entity.dxf.extrusion):

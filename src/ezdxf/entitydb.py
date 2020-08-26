@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import Optional, Iterable, Tuple, TYPE_CHECKING, Dict, Set
+from contextlib import contextmanager
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.entities.dxfentity import DXFEntity
@@ -27,10 +28,37 @@ class EntityDB:
 
     """
 
+    class Trashcan:
+        """ Store handles to entities which should be deleted later. """
+
+        def __init__(self, db: 'EntityDB'):
+            self._database = db._database
+            self._handles: Set[str] = set()
+
+        def add(self, handle: str):
+            """ Put handle into trashcan to delete the entity later, this is
+            required for deleting entities while iterating the database.
+            """
+            self._handles.add(handle)
+
+        def clear(self):
+            """ Remove handles in trashcan from database and destroy entities if
+            still alive.
+            """
+            db = self._database
+            for handle in self._handles:
+                entity = db.get(handle)
+                if entity and entity.is_alive:
+                    entity.destroy()
+
+                if handle in db:
+                    del db[handle]
+
+            self._handles.clear()
+
     def __init__(self):
         self._database: Dict[str, DXFEntity] = {}
         # DXF handles of entities to delete later:
-        self._trashcan: Set[str] = set()
         self.handles = HandleGenerator()
         self.locked: bool = False  # used only for debugging
 
@@ -79,7 +107,7 @@ class EntityDB:
 
     def get(self, handle: str) -> Optional[DXFEntity]:
         """ Returns entity for `handle` or ``None`` if no entry exist, does
-        not filter destroyed entities nor entities in the trashcan.
+        not filter destroyed entities.
         """
         return self._database.get(handle)
 
@@ -91,20 +119,18 @@ class EntityDB:
                 return handle
 
     def keys(self) -> Iterable[str]:
-        """ Iterable of all handles, does filter destroyed entities but not
-        entities in the trashcan.
+        """ Iterable of all handles, does filter destroyed entities.
         """
         return (handle for handle, entity in self.items())
 
     def values(self) -> Iterable[DXFEntity]:
-        """ Iterable of all entities, does filter destroyed entities but not
-        entities in the trashcan.
+        """ Iterable of all entities, does filter destroyed entities.
         """
         return (entity for handle, entity in self.items())
 
     def items(self) -> Iterable[Tuple[str, DXFEntity]]:
         """ Iterable of all (handle, entities) pairs, does filter destroyed
-        entities but not entities in the trashcan.
+        entities.
         """
         return (
             (handle, entity) for handle, entity in self._database.items()
@@ -181,24 +207,24 @@ class EntityDB:
         """
         assert self.locked is False, 'Database is locked!'
         add_entities = []
-        # Destroyed entities already filtered in self.items()!
-        for handle, entity in self.items():
-            if not is_valid_handle(handle):
-                auditor.fixed_error(
-                    code=AuditError.INVALID_ENTITY_HANDLE,
-                    message=f'Removed entity {entity.dxftype()} with invalid '
-                            f'handle "{handle}" from entity database.',
-                )
-                self.trash(handle)
-            if handle != entity.dxf.get('handle'):
-                # database handle != stored entity handle
-                # prevent entity from being destroyed:
-                self._database[handle] = None
-                self.trash(handle)
-                add_entities.append(entity)
 
-        # Destroy entities in trashcan:
-        self.empty_trashcan()
+        with self.trashcan() as trash:
+            for handle, entity in self.items():
+                # Destroyed entities are already filtered!
+                if not is_valid_handle(handle):
+                    auditor.fixed_error(
+                        code=AuditError.INVALID_ENTITY_HANDLE,
+                        message=f'Removed entity {entity.dxftype()} with invalid '
+                                f'handle "{handle}" from entity database.',
+                    )
+                    trash.add(handle)
+                if handle != entity.dxf.get('handle'):
+                    # database handle != stored entity handle
+                    # prevent entity from being destroyed:
+                    self._database[handle] = None
+                    trash.add(handle)
+                    add_entities.append(entity)
+
         # Remove all destroyed entities from database:
         self.purge()
 
@@ -220,27 +246,22 @@ class EntityDB:
                 continue
             self[handle] = entity
 
-    def trash(self, handle: str) -> None:
-        """ Put handle into trashcan to delete the entity later, this is
-        required for deleting entities while iterating the database.
+    def new_trashcan(self) -> 'EntityDB.Trashcan':
+        """ Returns a new trashcan, empty trashcan manually by: :
+        func:`Trashcan.clear()`.
         """
-        self._trashcan.add(handle)
+        return EntityDB.Trashcan(self)
 
-    def empty_trashcan(self) -> None:
-        """ Remove handles in trashcan from database and destroy entities if
-        still alive.
+    @contextmanager
+    def trashcan(self) -> 'EntityDB.Trashcan':
+        """ Returns a new trashcan in context manager mode, trashcan will be
+        emptied when leaving context.
         """
-        # Important: operate on underlying data structure:
-        db = self._database
-        for handle in self._trashcan:
-            entity = db.get(handle)
-            if entity and entity.is_alive:
-                entity.destroy()
-
-            if handle in db:
-                del db[handle]
-
-        self._trashcan.clear()
+        trashcan_ = self.new_trashcan()
+        yield trashcan_
+        # try ... finally is not required, in case of an exception the database
+        # is maybe already in an unreliable state.
+        trashcan_.clear()
 
     def purge(self) -> None:
         """ Remove all destroyed entities from database, but does not empty the

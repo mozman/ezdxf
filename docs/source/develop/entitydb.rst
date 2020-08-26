@@ -14,8 +14,7 @@ Every DXF entity/object, except tables and sections, are represented as
 string.
 
 All iterators like :meth:`keys`, :meth:`values`, :meth:`items` and :meth:`__iter__`
-do not yield destroyed entities, but still entities from the trashcan until you
-explicit call :meth:`empty_trashcan`.
+do not yield destroyed entities.
 
 .. warning::
 
@@ -48,9 +47,9 @@ explicit call :meth:`empty_trashcan`.
 
     .. automethod:: add(entity: DXFEntity) -> None
 
-    .. automethod:: trash
+    .. automethod:: new_trashcan
 
-    .. automethod:: empty_trashcan
+    .. automethod:: trashcan
 
     .. automethod:: purge
 

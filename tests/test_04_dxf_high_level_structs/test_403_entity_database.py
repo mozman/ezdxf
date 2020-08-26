@@ -179,3 +179,17 @@ def test_discard_entity_with_handle_not_in_database():
     assert e.dxf.handle is 'ABBA', \
         'set handle to None, only if entity was removed'
 
+
+def test_trashcan_context_manager():
+    db = EntityDB()
+    entities = [DXFEntity() for _ in range(5)]
+    for e in entities:
+        db.add(e)
+    handles = list(db.keys())
+    with db.trashcan() as trashcan:
+        trashcan.add(handles[0])
+        trashcan.add(handles[1])
+
+    assert len(db) == 3
+    assert entities[0].is_alive is False
+    assert entities[1].is_alive is False
