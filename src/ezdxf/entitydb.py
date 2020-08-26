@@ -1,5 +1,3 @@
-# Purpose: new entity database, replaces module ezdxf.database
-# Created: 2019-02-14
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import Optional, Iterable, Tuple, TYPE_CHECKING, Dict, Set
@@ -31,10 +29,10 @@ class EntityDB:
 
     def __init__(self):
         self._database: Dict[str, DXFEntity] = {}
-        # dxf entities to delete as set of handles
+        # DXF handles of entities to delete later:
         self._trashcan: Set[str] = set()
         self.handles = HandleGenerator()
-        self.locked = False  # for debugging
+        self.locked: bool = False  # used only for debugging
 
     def __getitem__(self, handle: str) -> DXFEntity:
         """ Get entity by `handle`, does not filter destroyed entities nor
@@ -80,8 +78,8 @@ class EntityDB:
         return self.keys()
 
     def get(self, handle: str) -> Optional[DXFEntity]:
-        """ Returns entity for `handle` or ``None`` if no entry for `handle`
-        exist, does not filter destroyed entities nor entities in the trashcan.
+        """ Returns entity for `handle` or ``None`` if no entry exist, does
+        not filter destroyed entities nor entities in the trashcan.
         """
         return self._database.get(handle)
 
@@ -89,7 +87,7 @@ class EntityDB:
         """ Returns next unique handle."""
         while True:
             handle = self.handles.next()
-            if handle not in self._database:  # you can not trust $HANDSEED value
+            if handle not in self._database:
                 return handle
 
     def keys(self) -> Iterable[str]:
@@ -106,7 +104,8 @@ class EntityDB:
 
     def items(self) -> Iterable[Tuple[str, DXFEntity]]:
         """ Iterable of all (handle, entities) pairs, does filter destroyed
-        entities but not entities in the trashcan.  """
+        entities but not entities in the trashcan.
+        """
         return (
             (handle, entity) for handle, entity in self._database.items()
             if entity.is_alive
@@ -115,38 +114,33 @@ class EntityDB:
     def add(self, entity: DXFEntity) -> None:
         """ Add `entity` to database, assigns a new handle to the `entity`
         if :attr:`entity.dxf.handle` is ``None``. Adding the same entity
-        multiple times is possible, but creates only a single entry.
+        multiple times is possible and creates only a single database entry.
 
         """
         if entity.dxftype() in DATABASE_EXCLUDE:
             if entity.dxf.handle is not None:
-                # store entities with handles (TABLE, maybe others) to avoid
-                # reassigning of its handle
+                # Mark existing entity handle as used to avoid
+                # reassigning the same handle again.
                 self[entity.dxf.handle] = entity
             return
         handle: str = entity.dxf.handle
         if handle is None:
             handle = self.next_handle()
-            # update_handle() requires the objects section to update the owner
-            # handle of the extension dictionary, but this is no problem at
-            # file loading, all entities have handles, and DXF R12 (without handles)
-            # have no extension dictionaries.
             entity.update_handle(handle)
         self[handle] = entity
 
-        # add sub entities like ATTRIB, VERTEX and SEQEND to database
+        # Add sub entities ATTRIB, VERTEX and SEQEND to database.
         if isinstance(entity, LinkedEntities):
             entity.add_sub_entities_to_entitydb(self)
 
     def delete_entity(self, entity: DXFEntity) -> None:
-        """ Removes `entity` from database and destroys the `entity`. """
+        """ Remove `entity` from database and destroy the `entity`. """
         if entity.is_alive:
             del self[entity.dxf.handle]
             entity.destroy()
 
     def discard(self, entity: 'DXFEntity') -> None:
-        """ Discard entity from database without destroying the entity.
-        """
+        """ Discard entity from database without destroying the entity. """
         if entity.is_alive:
             if isinstance(entity, LinkedEntities):
                 entity.process_sub_entities(lambda e: self.discard(e))
@@ -159,21 +153,16 @@ class EntityDB:
                 pass
 
     def duplicate_entity(self, entity: DXFEntity) -> DXFEntity:
-        """
-        Duplicates `entity` and its sub entities (VERTEX, ATTRIB, SEQEND) and
-        store them with new handles in the entity database. Graphical entities
-        have to be added to a layout by :meth:`~ezdxf.layouts.BaseLayout.add_entity`,
-        for other DXF entities: DON'T DUPLICATE THEM.
+        """ Duplicates `entity` and its sub entities (VERTEX, ATTRIB, SEQEND)
+        and store them with new handles in the entity database.
+        Graphical entities have to be added to a layout by
+        :meth:`~ezdxf.layouts.BaseLayout.add_entity`.
 
-        To import DXF entities into another drawing use the
+        To import DXF entities from another drawing use the
         :class:`~ezdxf.addons.importer.Importer` add-on.
 
-        An existing owner tag is not changed because this is not the domain of
-        the :class:`EntityDB` class, will be set by adding the duplicated entity
-        to a layout.
-
-        This is not a deep copy in the meaning of Python, because handles and
-        links are changed.
+        A new owner handle will be set by adding the duplicated entity to a
+        layout.
 
         """
         new_entity: DXFEntity = entity.copy()
@@ -232,8 +221,8 @@ class EntityDB:
             self[handle] = entity
 
     def trash(self, handle: str) -> None:
-        """ Put handle into trashcan to delete an entity later, required while
-        iterating the database.
+        """ Put handle into trashcan to delete the entity later, this is
+        required for deleting entities while iterating the database.
         """
         self._trashcan.add(handle)
 
