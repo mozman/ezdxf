@@ -304,14 +304,11 @@ class DXFLayout(PlotSettings):
             return dxf
 
         processor.load_dxfattribs_into_namespace(dxf, acdb_layout)
-        # normalize modelspace name to 'Model'
-        if dxf.get('name', '').upper() == 'MODEL':
-            dxf.name = 'Model'
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         # Set correct Model Type flag
-        self.set_flag_state(1024, self.dxf.name == 'Model', 'plot_layout_flags')
+        self.set_flag_state(1024, self.dxf.name.upper() == 'MODEL', 'plot_layout_flags')
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_layout.name)
         self.dxf.export_dxf_attribs(tagwriter, [

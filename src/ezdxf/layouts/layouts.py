@@ -1,7 +1,7 @@
 # Created: 21.03.2011
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, List, cast, Optional
+from typing import TYPE_CHECKING, Dict, Iterable, List, cast, Optional, Set
 import logging
 from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
 from ezdxf.lldxf.const import (
@@ -80,7 +80,7 @@ class Layouts:
         if not is_valid_table_name(name):
             raise DXFValueError('Layout name contains invalid characters.')
 
-        if name in self._layouts:
+        if name.upper() in self.upper_names():
             raise DXFValueError(f'Layout "{name}" already exists')
 
         dxfattribs = dict(dxfattribs or {})  # copy attribs
@@ -138,8 +138,9 @@ class Layouts:
     def setup_from_rootdict(self) -> None:
         """ Setup layout manger from root dictionary. (internal API) """
         for name, dxf_layout in self._dxf_layouts.items():
-            if name == 'Model':
+            if name.upper() == 'MODEL':
                 layout = Modelspace(dxf_layout, self.doc)
+                name = 'Model'
             else:
                 layout = Paperspace(dxf_layout, self.doc)
             self._layouts[name] = layout
@@ -167,6 +168,9 @@ class Layouts:
     def names(self) -> Iterable[str]:
         """ Returns iterable of all layout names. """
         return self._layouts.keys()
+
+    def upper_names(self) -> Set[str]:
+        return {name.upper() for name in self.names()}
 
     def get(self, name: Optional[str]) -> 'Layout':
         """ Returns :class:`~ezdxf.layouts.Layout` by `name`.
@@ -197,9 +201,9 @@ class Layouts:
         """
         assert isinstance(old_name, str), type(old_name)
         assert isinstance(new_name, str), type(new_name)
-        if old_name == 'Model':
+        if old_name.upper() == 'MODEL':
             raise DXFValueError('Can not rename model space.')
-        if new_name in self._layouts:
+        if new_name.upper() in self.upper_names():
             raise DXFValueError(f'Layout "{new_name}" already exist.')
 
         layout = self._layouts[old_name]
@@ -241,10 +245,10 @@ class Layouts:
     def set_active_layout(self, name: str) -> None:
         """ Set layout `name` as active paperspace layout. """
         assert isinstance(name, str), type(name)
-        if name == 'Model':  # reserved layout name
+        if name.upper() == 'MODEL':  # reserved layout name
             raise DXFValueError('Can not set model space as active layout')
-        new_active_layout = self.get(
-            name)  # raises KeyError if no layout 'name' exists
+        # raises KeyError if layout 'name' does not exist
+        new_active_layout = self.get(name)
         old_active_layout_key = self.get_active_layout_key()
         if old_active_layout_key == new_active_layout.layout_key:
             return  # layout 'name' is already the active layout
@@ -269,7 +273,7 @@ class Layouts:
 
         """
         assert isinstance(name, str), type(name)
-        if name == 'Model':
+        if name.upper() == 'MODEL':
             raise DXFValueError("Can not delete modelspace layout.")
 
         layout = self._layouts[name]

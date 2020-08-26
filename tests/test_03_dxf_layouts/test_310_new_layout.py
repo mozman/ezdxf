@@ -19,9 +19,23 @@ def test_create_new_layout(doc):
     assert new_layout.block_record.dxf.name in doc.blocks
 
 
-def test_error_creating_layout_with_existing_name(doc):
+def test_reserved_model_space_name(doc):
     with pytest.raises(ezdxf.DXFValueError):
         doc.new_layout('Model')
+    with pytest.raises(ezdxf.DXFValueError):
+        doc.new_layout('MODEL')
+    with pytest.raises(ezdxf.DXFValueError):
+        doc.layouts.delete('Model')
+    with pytest.raises(ezdxf.DXFValueError):
+        doc.layouts.delete('MODEL')
+    with pytest.raises(ezdxf.DXFValueError):
+        doc.layouts.rename('Model', 'xxx')
+    with pytest.raises(ezdxf.DXFValueError):
+        doc.layouts.rename('MODEL', 'xxx')
+    with pytest.raises(ezdxf.DXFValueError):
+        doc.layouts.rename('XXX', 'Model')
+    with pytest.raises(ezdxf.DXFValueError):
+        doc.layouts.rename('XXX', 'MODEL')
 
 
 def test_create_and_delete_new_layout(doc):
