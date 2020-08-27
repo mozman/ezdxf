@@ -130,16 +130,3 @@ def test_create_layout(doc):
 
     layout.page_setup()  # default paper setup
     assert len(layout) == 1, "missing 'main' viewport entity"
-
-
-def test_rename_layout(doc):
-    layouts = doc.layouts
-    with pytest.raises(ValueError):
-        layouts.rename('Model', 'XXX')
-
-    with pytest.raises(KeyError):
-        layouts.rename('mozman', 'XXX')
-
-    layouts.rename('Layout1', 'ezdxf-new')
-    layout = layouts.get('ezdxf-new')
-    assert layout.name == 'ezdxf-new'

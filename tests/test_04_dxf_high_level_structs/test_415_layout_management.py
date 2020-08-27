@@ -77,3 +77,9 @@ def test_rename_layout(doc):
     dxf_layouts = doc.rootdict.get('ACAD_LAYOUT')
     assert RENAME_ME not in dxf_layouts
     assert THE_NEW_NAME in dxf_layouts
+
+
+def test_rename_no_existing_layout(doc):
+    with pytest.raises(KeyError):
+        doc.layouts.rename('LayoutDoesNotExist', 'XXX')
+

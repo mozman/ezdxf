@@ -29,7 +29,7 @@ class Layouts:
         self.doc = doc
         # Store layout names case insensitive, key(name):
         self._layouts: Dict[str, Layout] = {}
-        # key: layout name; value: DXFLayout()
+        # key: layout name as case sensitive string; value: DXFLayout()
         self._dxf_layouts: 'Dictionary' = cast('Dictionary',
                                                self.doc.rootdict['ACAD_LAYOUT'])
 
@@ -59,13 +59,13 @@ class Layouts:
 
     def _add_layout(self, name: str, layout: Layout):
         layout.dxf.name = name
-        self._layouts[name] = layout
+        self._layouts[key(name)] = layout
         self._dxf_layouts[name] = layout.dxf_layout
 
     def _discard(self, layout: 'Layout'):
         name = layout.name
         self._dxf_layouts.remove(name)
-        del self._layouts[name]
+        del self._layouts[key(name)]
 
     def setup_modelspace(self):
         """ Modelspace setup. (internal API) """
@@ -169,14 +169,15 @@ class Layouts:
             else:
                 layout = Paperspace(dxf_layout, self.doc)
             # assert name == layout.dxf.name
-            self._layouts[name] = layout
+            self._layouts[key(name)] = layout
 
     def modelspace(self) -> Modelspace:
         """ Returns the :class:`~ezdxf.layouts.Modelspace` layout. """
         return cast(Modelspace, self.get('Model'))
 
     def names(self) -> List[str]:
-        """ Returns a list of all layout names. """
+        """ Returns a list of all layout names, all names in original case
+        sensitive form. """
         return [layout.name for layout in self._layouts.values()]
 
     def keys(self) -> Set[str]:
@@ -184,7 +185,8 @@ class Layouts:
         return {key(name) for name in self.names()}
 
     def get(self, name: Optional[str]) -> 'Layout':
-        """ Returns :class:`~ezdxf.layouts.Layout` by `name`.
+        """ Returns :class:`~ezdxf.layouts.Layout` by `name`, case insensitive
+        "Model" == "MODEL".
 
         Args:
             name: layout name as shown in tab, e.g. ``'Model'`` for modelspace
@@ -192,7 +194,7 @@ class Layouts:
         """
         if name is None:
             first_layout_name = self.names_in_taborder()[1]
-            return self._layouts[first_layout_name]
+            return self._layouts[key(first_layout_name)]
         else:
             name = key(name)
             for layout in self._layouts.values():
@@ -206,8 +208,8 @@ class Layouts:
         not exist.
 
         Args:
-            old_name: actual layout name
-            new_name: new layout name
+            old_name: actual layout name, case insensitive
+            new_name: new layout name, case insensitive
 
         Raises:
             DXFValueError: try to rename ``'Model'``
@@ -221,7 +223,7 @@ class Layouts:
         if key(new_name) in self.keys():
             raise DXFValueError(f'Layout "{new_name}" already exist.')
 
-        layout = self._layouts[old_name]
+        layout = self._layouts[key(old_name)]
         self._discard(layout)
         layout.rename(new_name)
         self._add_layout(new_name, layout)
@@ -276,7 +278,7 @@ class Layouts:
         blocks.rename_block(TMP_PAPER_SPACE_NAME, new_active_paper_space_name)
 
     def delete(self, name: str) -> None:
-        """ Delete layout `name` and all entities owned by it.
+        """ Delete layout `name` and destroy all entities in that layout.
 
         Args:
             name (str): layout name as shown in tabs
@@ -291,14 +293,14 @@ class Layouts:
         if key(name) == key('Model'):
             raise DXFValueError("Can not delete modelspace layout.")
 
-        layout = self._layouts[name]
+        layout = self.get(name)
         if len(self) < 3:
             raise DXFValueError("Can not delete last paperspace layout.")
         if layout.layout_key == self.get_active_layout_key():
             # Layout `name` is the active layout:
-            for layout_name in self.names():
+            for layout_name in self.keys():
                 # Set any other paperspace layout as active layout
-                if layout_name not in (name, 'Model'):
+                if layout_name not in (key(name), key('Model')):
                     self.set_active_layout(layout_name)
                     break
         self._discard(layout)
