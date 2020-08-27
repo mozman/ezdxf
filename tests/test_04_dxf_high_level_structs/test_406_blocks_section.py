@@ -103,6 +103,20 @@ def test_getitem(blocks):
     assert 'TEST' == block.name
 
 
+def test_new_block_layout(doc):
+    block = doc.blocks.new('NewBlockLayout')
+    block.add_point((0, 0, 0))
+    assert len(block) == 1
+    assert block.can_explode is True
+    assert block.scale_uniformly is False
+
+    block.can_explode = False
+    block.scale_uniformly = True
+
+    assert block.block_record.dxf.explode == 0
+    assert block.block_record.dxf.scale == 1
+
+
 def test_case_insensitivity(blocks):
     blocks.new('TEST')
     assert 'TEST' in blocks

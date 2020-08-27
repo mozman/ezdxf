@@ -67,6 +67,7 @@ Version 0.14b0 - dev
   argument `safe` is deprecated, will be removed in v0.16
 - CHANGE: Dictionary raise `DXFValueError` for adding invalid handles
 - CHANGE: `BaseLayout.add_entity()` will bind entity automatically to doc/db if possible
+- CHANGE: handle all layout names as case insensitive strings: `Model == MODEL`
 - DEPRECATED: `legacy_mode` in `ezdxf.read()` and `ezdxf.readfile()`, use the 
   `ezdxf.recover` module to load DXF Documents with structural flaws
 - REMOVE: Alias `DXFEntity.drawing`
