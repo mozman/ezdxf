@@ -1,8 +1,6 @@
-# Created: 11.12.2018
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
-"""
-ezdxf typing collection
+""" ezdxf typing hints
 
 Only usable in type checking mode:
 
@@ -14,10 +12,10 @@ from typing import *
 
 if TYPE_CHECKING:
     # Low level stuff
-    from ezdxf.math.vector import Vector, Vec2, Vertex, VecXY
-    from ezdxf.math.matrix44 import Matrix44
-    from ezdxf.math.bbox import BoundingBox, BoundingBox2d
-    from ezdxf.math.ucs import UCS, OCS
+    from ezdxf.math import (
+        Vector, Vec2, Vertex, VecXY, Matrix44, BoundingBox, BoundingBox2d ,UCS,
+        OCS
+    )
     from ezdxf.tools.handle import HandleGenerator
     from ezdxf.lldxf.types import DXFTag, DXFBinaryTag, DXFVertex
     from ezdxf.lldxf.attributes import XType, DXFAttr
@@ -39,7 +37,9 @@ if TYPE_CHECKING:
     from ezdxf.entitydb import EntityDB
 
     # Sections and Tables
-    from ezdxf.sections.table import Table, ViewportTable, LayerTable, StyleTable
+    from ezdxf.sections.table import (
+        Table, ViewportTable, LayerTable, StyleTable
+    )
     from ezdxf.sections.blocks import BlocksSection
     from ezdxf.sections.header import HeaderSection
     from ezdxf.sections.tables import TablesSection
@@ -67,9 +67,13 @@ if TYPE_CHECKING:
     from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
     # DXF objects
-    from ezdxf.entities.dxfobj import DXFObject, Placeholder, XRecord, VBAProject, SortEntsTable
+    from ezdxf.entities.dxfobj import (
+        DXFObject, Placeholder, XRecord, VBAProject, SortEntsTable
+    )
     from ezdxf.entities.layout import DXFLayout
-    from ezdxf.entities.dictionary import Dictionary, DictionaryWithDefault, DictionaryVar
+    from ezdxf.entities.dictionary import (
+        Dictionary, DictionaryWithDefault, DictionaryVar
+    )
     from ezdxf.entities.idbuffer import IDBuffer, FieldList, LayerFilter
 
     # DXF entities
@@ -98,11 +102,19 @@ if TYPE_CHECKING:
     from ezdxf.entities.spline import Spline
     from ezdxf.entities.mesh import Mesh
     from ezdxf.entities.hatch import Hatch
-    from ezdxf.entities.image import Image, ImageDef, ImageDefReactor, RasterVariables, Wipeout
-    from ezdxf.entities.underlay import PdfUnderlay, DwfUnderlay, DgnUnderlay, Underlay
-    from ezdxf.entities.underlay import PdfDefinition, DwfDefinition, DgnDefinition, UnderlayDefinition
+    from ezdxf.entities.image import (
+        Image, ImageDef, ImageDefReactor, RasterVariables, Wipeout
+    )
+    from ezdxf.entities.underlay import (
+        PdfUnderlay, DwfUnderlay, DgnUnderlay, Underlay
+    )
+    from ezdxf.entities.underlay import (
+        PdfDefinition, DwfDefinition, DgnDefinition, UnderlayDefinition
+    )
     from ezdxf.entities.acis import Body, Region, Solid3d
-    from ezdxf.entities.acis import Surface, ExtrudedSurface, LoftedSurface, RevolvedSurface, SweptSurface
+    from ezdxf.entities.acis import (
+        Surface, ExtrudedSurface, LoftedSurface, RevolvedSurface, SweptSurface
+    )
     from ezdxf.entities.sun import Sun
     from ezdxf.entities.geodata import GeoData
     from ezdxf.entities.light import Light
@@ -123,4 +135,7 @@ if TYPE_CHECKING:
 
     # Type Unions
     GenericLayoutType = Union[Layout, BlockLayout, VirtualLayout]
-    SectionType = Union[HeaderSection, TablesSection, BlocksSection, ClassesSection, ObjectsSection, EntitySection]
+    SectionType = Union[
+        HeaderSection, TablesSection, BlocksSection, ClassesSection,
+        ObjectsSection, EntitySection
+    ]

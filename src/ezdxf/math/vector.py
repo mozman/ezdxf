@@ -1,4 +1,3 @@
-# Purpose: General purpose 2d/3d Vector() class and special 2d vector Vec2() class for more speed.
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import Tuple, List, Iterable, Any, Union, Sequence, TYPE_CHECKING
