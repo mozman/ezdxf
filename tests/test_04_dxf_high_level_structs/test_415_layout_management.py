@@ -11,11 +11,11 @@ def doc():
 
 def test_create_new_layout(doc):
     new_layout = doc.new_layout('mozman_layout')
-    assert 'mozman_layout' == new_layout.name
-    assert new_layout.dxf_layout in doc.objects
-    assert new_layout.name in doc.rootdict['ACAD_LAYOUT']
-    assert new_layout.block_record.dxf.name in doc.block_records
-    assert new_layout.block_record.dxf.name in doc.blocks
+    assert 'mozman_layout' == new_layout.name, 'Has incorrect name'
+    assert new_layout.dxf_layout in doc.objects, 'Is not stored in OBJECTS section'
+    assert new_layout.name in doc.rootdict['ACAD_LAYOUT'], 'Not stored in LAYOUT dict'
+    assert new_layout.block_record.dxf.name in doc.block_records, 'Missing required BLOCK_RECORD'
+    assert new_layout.block_record.dxf.name in doc.blocks, 'Missing required BLockLayout'
 
 
 @pytest.mark.parametrize('name', ['Model', 'MODEL', 'model'])
@@ -28,6 +28,14 @@ def test_reserved_model_space_name(doc, name):
         doc.layouts.rename(name, 'xxx')
     with pytest.raises(ezdxf.DXFValueError):
         doc.layouts.rename('XXX', name)
+
+
+def test_case_insensitive_layout_names(doc):
+    NAME = 'CaseInSensitive'
+    layout = doc.layouts.new(NAME)
+    assert layout.name == NAME, 'Expected original case sensitive name'
+    assert NAME.upper() in doc.layouts, 'Test for containment should be case insensitive'
+    assert layout is doc.layouts.get(NAME.upper()), 'get() should be case insensitive'
 
 
 def test_create_and_delete_new_layout(doc):
@@ -55,15 +63,17 @@ def test_set_active_layout(doc):
     assert new_layout.layout_key == doc.block_records.get('*Paper_Space').dxf.handle
 
 
-def test_new_block_layout(doc):
-    block = doc.blocks.new('Test01')
-    block.add_point((0, 0, 0))
-    assert len(block) == 1
-    assert block.can_explode is True
-    assert block.scale_uniformly is False
+def test_rename_layout(doc):
+    THE_NEW_NAME = 'TheNewName'
+    RENAME_ME = 'RenameMe'
+    layout = doc.layouts.new(RENAME_ME)
+    doc.layouts.rename(RENAME_ME, THE_NEW_NAME)
 
-    block.can_explode = False
-    block.scale_uniformly = True
+    assert RENAME_ME not in doc.layouts, 'Old name not removed'
+    assert THE_NEW_NAME in doc.layouts, 'New name not stored'
+    assert layout.name == THE_NEW_NAME, 'Layout not renamed'
 
-    assert block.block_record.dxf.explode == 0
-    assert block.block_record.dxf.scale == 1
+    # Check if management dict ACAD_LAYOUT is maintained:
+    dxf_layouts = doc.rootdict.get('ACAD_LAYOUT')
+    assert RENAME_ME not in dxf_layouts
+    assert THE_NEW_NAME in dxf_layouts

@@ -40,7 +40,9 @@ def test_load_MODEL(MODEL_path):
     doc = ezdxf.readfile(MODEL_path)
     msp = doc.modelspace()
     assert msp.dxf.name == 'MODEL', 'Keep original uppercase name.'
-    assert 'MODEL' not in doc.layouts
+    assert 'MODEL' in doc.rootdict['ACAD_LAYOUT']
+    assert 'MODEL' in doc.layouts, 'Check name as case insensitive string'
+    assert 'Model' in doc.layouts, 'Check name as case insensitive string'
 
 
 if __name__ == '__main__':
