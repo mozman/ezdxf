@@ -1,5 +1,4 @@
-# Created: 25.04.2014, 2018 rewritten for pytest
-# Copyright (c) 2014-2019, Manfred Moitzi
+# Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -19,23 +18,16 @@ def test_create_new_layout(doc):
     assert new_layout.block_record.dxf.name in doc.blocks
 
 
-def test_reserved_model_space_name(doc):
+@pytest.mark.parametrize('name', ['Model', 'MODEL', 'model'])
+def test_reserved_model_space_name(doc, name):
     with pytest.raises(ezdxf.DXFValueError):
-        doc.new_layout('Model')
+        doc.new_layout(name)
     with pytest.raises(ezdxf.DXFValueError):
-        doc.new_layout('MODEL')
+        doc.layouts.delete(name)
     with pytest.raises(ezdxf.DXFValueError):
-        doc.layouts.delete('Model')
+        doc.layouts.rename(name, 'xxx')
     with pytest.raises(ezdxf.DXFValueError):
-        doc.layouts.delete('MODEL')
-    with pytest.raises(ezdxf.DXFValueError):
-        doc.layouts.rename('Model', 'xxx')
-    with pytest.raises(ezdxf.DXFValueError):
-        doc.layouts.rename('MODEL', 'xxx')
-    with pytest.raises(ezdxf.DXFValueError):
-        doc.layouts.rename('XXX', 'Model')
-    with pytest.raises(ezdxf.DXFValueError):
-        doc.layouts.rename('XXX', 'MODEL')
+        doc.layouts.rename('XXX', name)
 
 
 def test_create_and_delete_new_layout(doc):
