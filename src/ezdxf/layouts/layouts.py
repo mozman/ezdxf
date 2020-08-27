@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, List, cast, Optional, Set
+from typing import TYPE_CHECKING, Dict, Iterable, List, cast, Optional
 import logging
 from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
 from ezdxf.lldxf.const import (
@@ -23,13 +23,16 @@ def key(name: str) -> str:
     return name.upper()
 
 
+MODEL = key('Model')
+
+
 class Layouts:
     def __init__(self, doc: 'Drawing'):
         """ Default constructor. (internal API) """
         self.doc = doc
-        # Store layout names case insensitive, key(name):
+        # Store layout names in normalized form: key(name)
         self._layouts: Dict[str, Layout] = {}
-        # key: layout name as case sensitive string; value: DXFLayout()
+        # key: layout name as original case sensitive string; value: DXFLayout()
         self._dxf_layouts: 'Dictionary' = cast('Dictionary',
                                                self.doc.rootdict['ACAD_LAYOUT'])
 
@@ -49,7 +52,7 @@ class Layouts:
     def __contains__(self, name: str) -> bool:
         """ Returns ``True`` if layout `name` exist. """
         assert isinstance(name, str), type(str)
-        return key(name) in self.keys()
+        return key(name) in self._layouts
 
     def __iter__(self) -> Iterable['Layout']:
         """ Returns iterable of all layouts as :class:`~ezdxf.layouts.Layout`
@@ -64,7 +67,7 @@ class Layouts:
 
     def _discard(self, layout: 'Layout'):
         name = layout.name
-        self._dxf_layouts.remove(name)
+        self._dxf_layouts.discard(name)
         del self._layouts[key(name)]
 
     def setup_modelspace(self):
@@ -111,8 +114,8 @@ class Layouts:
         if not is_valid_table_name(name):
             raise DXFValueError('Layout name contains invalid characters.')
 
-        if key(name) in self.keys():
-            raise DXFValueError(f'Layout "{name}" already exists')
+        if name in self:
+            raise DXFValueError(f'Layout "{name}" already exist.')
 
         dxfattribs = dict(dxfattribs or {})  # copy attribs
         dxfattribs['owner'] = self._dxf_layouts.dxf.handle
@@ -137,9 +140,9 @@ class Layouts:
         return layouts
 
     def restore(self, name: str, block_record_name: str, taborder: int) -> None:
-        """ Restore layout from block if DXFLayout do not exist.
+        """ Restore layout from block if DXFLayout does not exist.
         (internal API) """
-        if name in self._layouts:
+        if name in self:
             return
         block_layout = self.doc.blocks.get(block_record_name)
         self._new_from_block_layout(name, block_layout, taborder)
@@ -154,7 +157,7 @@ class Layouts:
         }
         dxf_layout = cast('DXFLayout', self.doc.objects.new_entity(
             'LAYOUT', dxfattribs=dxfattribs))
-        if name == 'Model':
+        if key(name) == MODEL:
             layout = Modelspace.load(dxf_layout, self.doc)
         else:
             layout = Paperspace.load(dxf_layout, self.doc)
@@ -164,7 +167,7 @@ class Layouts:
     def setup_from_rootdict(self) -> None:
         """ Setup layout manger from root dictionary. (internal API) """
         for name, dxf_layout in self._dxf_layouts.items():
-            if key(name) == key('Model'):
+            if key(name) == MODEL:
                 layout = Modelspace(dxf_layout, self.doc)
             else:
                 layout = Paperspace(dxf_layout, self.doc)
@@ -180,10 +183,6 @@ class Layouts:
         sensitive form. """
         return [layout.name for layout in self._layouts.values()]
 
-    def keys(self) -> Set[str]:
-        """ Returns a set of all normalized layout names. """
-        return {key(name) for name in self.names()}
-
     def get(self, name: Optional[str]) -> 'Layout':
         """ Returns :class:`~ezdxf.layouts.Layout` by `name`, case insensitive
         "Model" == "MODEL".
@@ -192,15 +191,8 @@ class Layouts:
             name: layout name as shown in tab, e.g. ``'Model'`` for modelspace
 
         """
-        if name is None:
-            first_layout_name = self.names_in_taborder()[1]
-            return self._layouts[key(first_layout_name)]
-        else:
-            name = key(name)
-            for layout in self._layouts.values():
-                if name == key(layout.name):
-                    return layout
-            raise KeyError(name)
+        name = name or self.names_in_taborder()[1]  # first paperspace layout
+        return self._layouts[key(name)]
 
     def rename(self, old_name: str, new_name: str) -> None:
         """ Rename a layout from `old_name` to `new_name`.
@@ -218,12 +210,14 @@ class Layouts:
         """
         assert isinstance(old_name, str), type(old_name)
         assert isinstance(new_name, str), type(new_name)
-        if key(old_name) == key('Model'):
+        if key(old_name) == MODEL:
             raise DXFValueError('Can not rename model space.')
-        if key(new_name) in self.keys():
+        if new_name in self:
             raise DXFValueError(f'Layout "{new_name}" already exist.')
+        if old_name not in self:
+            raise DXFValueError(f'Layout "{old_name}" does not exist.')
 
-        layout = self._layouts[key(old_name)]
+        layout = self.get(old_name)
         self._discard(layout)
         layout.rename(new_name)
         self._add_layout(new_name, layout)
@@ -262,7 +256,7 @@ class Layouts:
     def set_active_layout(self, name: str) -> None:
         """ Set layout `name` as active paperspace layout. """
         assert isinstance(name, str), type(name)
-        if key(name) == key('Model'):  # reserved layout name
+        if key(name) == MODEL:  # reserved layout name
             raise DXFValueError('Can not set model space as active layout')
         # raises KeyError if layout 'name' does not exist
         new_active_layout = self.get(name)
@@ -290,7 +284,7 @@ class Layouts:
 
         """
         assert isinstance(name, str), type(name)
-        if key(name) == key('Model'):
+        if key(name) == MODEL:
             raise DXFValueError("Can not delete modelspace layout.")
 
         layout = self.get(name)
@@ -298,9 +292,9 @@ class Layouts:
             raise DXFValueError("Can not delete last paperspace layout.")
         if layout.layout_key == self.get_active_layout_key():
             # Layout `name` is the active layout:
-            for layout_name in self.keys():
+            for layout_name in self._layouts:
                 # Set any other paperspace layout as active layout
-                if layout_name not in (key(name), key('Model')):
+                if layout_name not in (key(name), MODEL):
                     self.set_active_layout(layout_name)
                     break
         self._discard(layout)
@@ -335,7 +329,7 @@ class Layouts:
         }
         psp_layout_br_handles = {
             layout.dxf.block_record_handle for layout in
-            self._layouts.values() if key(layout.name) != key('Model')
+            self._layouts.values() if key(layout.name) != MODEL
         }
         mismatch = psp_br_handles.difference(psp_layout_br_handles)
         if len(mismatch):
