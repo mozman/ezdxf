@@ -14,13 +14,13 @@ def test_layout_dict_is_not_hard_owner(doc):
 
 
 def test_create_new_layout(doc):
-    NAME = 'mozman_layout'
+    NAME = 'CreateNewLayout'
 
     new_layout = doc.new_layout(NAME)
     with pytest.raises(ezdxf.DXFValueError):
         doc.new_layout(NAME), 'Same name for another layout is invalid.'
 
-    assert 'mozman_layout' == new_layout.name, 'Has incorrect name'
+    assert NAME == new_layout.name, 'Has incorrect name'
     assert new_layout.dxf_layout in doc.objects, 'Is not stored in OBJECTS section'
     assert new_layout.name in doc.rootdict['ACAD_LAYOUT'], 'Not stored in LAYOUT dict'
     assert new_layout.block_record.dxf.name in doc.block_records, 'Missing required BLOCK_RECORD'
@@ -34,7 +34,7 @@ def test_reserved_model_space_name(doc, name):
     with pytest.raises(ezdxf.DXFValueError):
         doc.layouts.delete(name), f'Deleting "{name}" is not allowed'
     with pytest.raises(ezdxf.DXFValueError):
-        doc.layouts.rename(name, 'xxx'), f'Renaming layout "{name}" is not allowed'
+        doc.layouts.rename(name, 'XXX'), f'Renaming layout "{name}" is not allowed'
     with pytest.raises(ezdxf.DXFValueError):
         doc.layouts.rename('XXX', name), f'Renaming a layout to "{name}" is not allowed'
 
@@ -60,7 +60,7 @@ def test_case_insensitive_layout_names(doc):
 
 
 def test_create_and_delete_new_layout(doc):
-    NAME = 'mozman_layout_2'
+    NAME = 'CreateAndDeleteNewLayout'
     new_layout = doc.new_layout(NAME)
     assert NAME == new_layout.name, 'Expected original case sensitive name'
     assert new_layout.dxf_layout in doc.objects
@@ -79,8 +79,9 @@ def test_create_and_delete_new_layout(doc):
 
 
 def test_set_active_layout(doc):
-    new_layout = doc.new_layout('mozman_layout_3')
-    doc.layouts.set_active_layout('mozman_layout_3')
+    NAME = 'SetActiveLayout'
+    new_layout = doc.new_layout(NAME)
+    doc.layouts.set_active_layout(NAME)
     assert '*Paper_Space' == new_layout.block_record_name
     assert new_layout.layout_key == doc.block_records.get('*Paper_Space').dxf.handle
 
@@ -103,7 +104,7 @@ def test_rename_layout(doc):
     assert THE_NEW_NAME in dxf_layouts
 
 
-def test_rename_no_existing_layout(doc):
+def test_rename_not_existing_layout(doc):
     with pytest.raises(ezdxf.DXFValueError):
         doc.layouts.rename('LayoutDoesNotExist', 'XXX')
 
