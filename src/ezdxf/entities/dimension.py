@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-22
 import math
 from typing import TYPE_CHECKING, Optional, Union, Iterable
 import logging
@@ -10,7 +9,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007, DXF2004,
-    DXFInternalEzdxfError, DXFValueError, DXFTableEntryError, DXFTypeError,
+    DXFValueError, DXFTableEntryError, DXFTypeError,
 )
 from ezdxf.lldxf.types import get_xcode_for
 from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
@@ -31,7 +30,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger('ezdxf')
 
-__all__ = ['Dimension', 'OverrideMixin']
+__all__ = [
+    'Dimension', 'ArcDimension', 'RadialDimensionLarge',
+    'OverrideMixin'
+]
 
 acdb_dimension = DefSubclass('AcDbDimension', {
     # Version number: 0 = 2010
@@ -195,12 +197,11 @@ acdb_dimension_dummy = DefSubclass('AcDbDimensionDummy', {
 class OverrideMixin:
     def get_dim_style(self) -> 'DimStyle':
         """ Returns the associated :class:`DimStyle` entity. """
-        if self.doc is None:
-            raise DXFInternalEzdxfError(
-                'Dimension.drawing attribute not initialized.')
+        assert self.doc, 'Dimension.doc attribute not initialized.'
 
         dim_style_name = self.dxf.dimstyle
-        # raises ValueError if not exists, but all used dim styles should exists!
+        # raises ValueError if not exist, but all dim styles in use should
+        # exist!
         return self.doc.dimstyles.get(dim_style_name)
 
     def dim_style_attributes(self) -> 'DXFAttributes':
@@ -291,10 +292,7 @@ class OverrideMixin:
         (internal API)
 
         """
-        if self.doc is None:
-            raise DXFInternalEzdxfError(
-                'Dimension.doc attribute not initialized.')
-
+        assert self.doc, 'Dimension.doc attribute not initialized.'
         # ezdxf uses internally only resource names for arrows, line types and
         # text styles, but DXF 2000 and later requires handles for these
         # resources:
@@ -333,7 +331,8 @@ class OverrideMixin:
         (e.g. 'dimtxsty_handle', <handle of FancyStyle> -> 'dimtxsty': 'FancyStyle')
 
         Args:
-            data: dictionary of overridden DimStyle attributes as handles (DXF2000)
+            data: dictionary of overridden DimStyle attributes as handles,
+                requires DXF R2000+
 
         Returns: dictionary with resource as handles replaced by names
 
@@ -652,7 +651,8 @@ class Dimension(DXFGraphic, OverrideMixin):
         into target layout, if target layout is ``None``, the target layout is
         the layout of the DIMENSION.
 
-        Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF parts.
+        Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF
+        primitives.
 
         Args:
             target_layout: target layout for DXF parts, ``None`` for same layout
@@ -744,7 +744,8 @@ acdb_radial_dimension_large = DefSubclass('AcDbRadialDimensionLarge', {
 })
 
 
-# Undocumented DXF entity - OpenDesignAlliance DWG Specification: chapter 20.4.30
+# Undocumented DXF entity - OpenDesignAlliance DWG Specification:
+# chapter 20.4.30
 @register_entity
 class RadialDimensionLarge(Dimension):
     """ DXF LARGE_RADIAL_DIMENSION entity """
@@ -755,7 +756,7 @@ class RadialDimensionLarge(Dimension):
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
-        # skip Dimension loader
+        # Skip Dimension loader:
         dxf = super(Dimension, self).load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
