@@ -142,8 +142,8 @@ Get all lines of layer ``'MyLayer'``::
 
     lines = msp.query('LINE[layer=="MyLayer"]')
 
-This returns an :class:`~ezdxf.query.EntityQuery` container, which alse provides
-the same :meth:`query` an :meth:`groupby` methods.
+This returns an :class:`~ezdxf.query.EntityQuery` container, which also provides
+the same :meth:`query` and :meth:`groupby` methods.
 
 Get all lines categorized by a DXF attribute like color::
 
@@ -211,7 +211,7 @@ The supported DXF attributes can be found in the documentation of the
 
     Do not instantiate DXF entities by yourself and add them to layouts, always
     use the provided factory function to create new graphical entities, this is
-    the intended way to use the `ezdxf`.
+    the intended way to use `ezdxf`.
 
 Create Block References
 -----------------------
@@ -239,14 +239,14 @@ stored in the entity and this entity can inherit some properties from this
 Layer objects are stored in the layer table which is available as
 attribute :code:`doc.layers`.
 
-You can create your own layers that way::
+You can create your own layers::
 
     my_layer = doc.layer.new('MyLayer')
 
 The layer object also controls the visibility of entities which references this
-layer, the on/off state of the layer is unfortunately stored as positive of
-negative color value which make the raw DXFv attribute of layer useless, to
-change the color of a layer use the property :attr:`color` ::
+layer, the on/off state of the layer is unfortunately stored as positive or
+negative color value which make the raw DXF attribute of layers useless, to
+change the color of a layer use the property :attr:`Layer.color` ::
 
     my_layer.color = 1
 
@@ -264,22 +264,28 @@ To change the state of a layer use the provided methods of the
 Delete Entities
 ---------------
 
-The current version of `ezdxf` supports direct deletion of entities by method:
-:meth:`~ezdxf.entities.DXFEntity.destroy`::
+The safest way to delete entities is to delete the entity from the layout
+containing that entity::
 
     line = msp.add_line((0, 0), (1, 0))
-    line.destroy()
+    msp.delete_entity(line)
 
+This removes the entity immediately from the layout and destroys the entity.
 The property :attr:`~ezdxf.entities.DXFEntity.is_alive` returns ``False`` for a
 destroyed entity and all Python attributes are deleted, so
 :code:`line.dxf.color` will raise an :class:`AttributeError` exception,
 because ``line`` does not have a :attr:`~ezdxf.entities.DXFEntity.dxf`
 attribute anymore.
 
-An important fact is that destroyed entities are not removed immediately from
-entities containers like :class:`Modelspace` or :class:`EntityQuery`,
-but iterating such a container will filter destroyed entities automatically,
-so a :code:`for e in msp: ...` loop
+The current version of `ezdxf` also supports also destruction of entities
+by calling method :meth:`~ezdxf.entities.DXFEntity.destroy` manually::
+
+    line.destroy()
+
+Manually destroyed entities are not removed
+immediately from entities containers like :class:`Modelspace` or
+:class:`EntityQuery`, but iterating such a container will filter destroyed
+entities automatically, so a :code:`for e in msp: ...` loop
 will never yield destroyed entities. The index operator and the :func:`len`
 function do **not** filter deleted entities, to avoid getting deleted entities
 call the :func:`purge` method of the container manually  to remove deleted
