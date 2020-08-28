@@ -57,6 +57,7 @@ class ExtensionDict:
 
     @property
     def is_alive(self):
+        # Can not check if _xdict (as handle or Dictionary) really exist:
         return self._xdict is not None
 
     def update_owner(self, handle: str) -> None:

@@ -163,7 +163,6 @@ class Auditor:
         # Check database integrity:
         self.doc.entitydb.audit(self)
         self.check_root_dict()
-        self.check_table_structures()
         self.audit_all_database_entities()
         self.doc.groups.audit(self)
         self.check_block_reference_cycles()
@@ -196,21 +195,6 @@ class Auditor:
                     message=f'Missing root dict entry: {name}',
                     dxf_entity=root_dict,
                 )
-
-    def check_table_structures(self) -> None:
-        """ Check table structures. """
-        # Tables or more precise the 'table head' is not stored in the
-        # entity database.
-        # Table entries are checked as database entities
-        tables = self.doc.tables
-        tables.linetypes.audit(self)
-        tables.layers.audit(self)
-        tables.styles.audit(self)
-        tables.dimstyles.audit(self)
-        tables.ucs.audit(self)
-        tables.appids.audit(self)
-        tables.views.audit(self)
-        tables.block_records.audit(self)
 
     def audit_all_database_entities(self) -> None:
         """ Audit all entities stored in the entity database. """

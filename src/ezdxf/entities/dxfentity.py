@@ -598,10 +598,16 @@ class DXFEntity:
         :class:`~ezdxf.entities.xdict.ExtensionDict`.
         """
         xdict = self.extension_dict
-        # is None check: bool(xdict) for an empty extension dict is also False
-        if xdict is None:
-            return False
-        return xdict.is_alive
+        # Don't use None check: bool(xdict) for an empty extension dict is False
+        if xdict is not None and xdict.is_alive:
+            # Check the associated Dictionary object
+            dictionary = xdict.dictionary
+            if isinstance(dictionary, str):
+                # just a handle string - SUT
+                return True
+            else:
+                return dictionary.is_alive
+        return False
 
     def get_extension_dict(self) -> 'ExtensionDict':
         """ Returns the existing :class:`~ezdxf.entities.xdict.ExtensionDict`.

@@ -9,7 +9,7 @@ from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Auditor, EntityDB, Drawing, DXFEntity, Layer
+        TagWriter, EntityDB, Drawing, DXFEntity, Layer
     )
 
 TABLENAMES = {
@@ -205,6 +205,8 @@ class Table:
 
         def prologue():
             self._update_owner_handles()
+            # The table head itself has no owner and is therefore always '0':
+            self._head.dxf.owner = '0'
             self._head.dxf.count = len(self)
             self._head.export_dxf(tagwriter)
 
@@ -236,16 +238,6 @@ class Table:
         if self._head.dxf.handle is None:
             self._head.dxf.handle = handle
             self._update_owner_handles()
-
-    def audit(self, auditor: 'Auditor'):
-        # audit the table structure itself not the entries!
-        # Table entries itself will be checked as database entities.
-        # 1. Check table head handle is not None; fix: assign next entity database handle by self.set_handle()
-        # 2. Check table head owner is not '0'; fix: set to '0'
-        # 3. Check all table entries owner handle is table head handle; fix: call self._update_owner_handles()
-        # 4. Check Extension Dictionary
-        # Tables don't support APP data, XDATA, Reactors or embedded objects; fix: set to None
-        pass
 
 
 class LayerTable(Table):
