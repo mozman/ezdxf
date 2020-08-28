@@ -1,11 +1,9 @@
-# Purpose: tables contained in tables sections
-# Created: 13.03.2011
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Iterator, Optional, List
 from collections import OrderedDict
 
-from ezdxf.lldxf.const import DXFTableEntryError, DXFStructureError, DXFTypeError
+from ezdxf.lldxf import const
 from ezdxf.entities.table import TableHead
 from ezdxf.entities import factory
 
@@ -43,7 +41,8 @@ def table_key(name: str) -> str:
 
 
 class Table:
-    def __init__(self, doc: 'Drawing' = None, entities: Iterable['DXFEntity'] = None):
+    def __init__(self, doc: 'Drawing' = None,
+                 entities: Iterable['DXFEntity'] = None):
         self.doc = doc
         self.entries = OrderedDict()
         self._head = None
@@ -54,7 +53,8 @@ class Table:
         """ Loading interface. (internal API)"""
         self._head = next(entities)
         if self._head.dxftype() != 'TABLE':
-            raise DXFStructureError("Critical structure error in TABLES section.")
+            raise const.DXFStructureError(
+                "Critical structure error in TABLES section.")
         for table_entry in entities:
             self._append(table_entry)
 
@@ -66,14 +66,13 @@ class Table:
         return table
 
     def _set_head(self, name: str, handle: str = None) -> None:
-        self._head = TableHead.new(handle, owner='0', dxfattribs={'name': name}, doc=self.doc)
+        self._head = TableHead.new(
+            handle, owner='0', dxfattribs={'name': name}, doc=self.doc)
 
     @property
     def head(self):
         """ Returns table head entry. """
         return self._head
-
-    # start public interface
 
     @staticmethod
     def key(name: str) -> str:
@@ -102,8 +101,7 @@ class Table:
                 yield e
 
     def new(self, name: str, dxfattribs: dict = None) -> 'DXFEntity':
-        """
-        Create a new table entry `name`.
+        """ Create a new table entry `name`.
 
         Args:
             name: name of table entry, case insensitive
@@ -111,30 +109,36 @@ class Table:
 
         """
         if self.has_entry(name):
-            raise DXFTableEntryError('{} {} already exists!'.format(self._head.dxf.name, name))
+            raise const.DXFTableEntryError(
+                f'{self._head.dxf.name} {name} already exists!')
         dxfattribs = dxfattribs or {}
         dxfattribs['name'] = name
         dxfattribs['owner'] = self._head.dxf.handle
         return self.new_entry(dxfattribs)
 
     def get(self, name: str) -> 'DXFEntity':
-        """ Get table entry `name` (case insensitive). Raises :class:`DXFValueError` if table entry does not exist. """
+        """ Get table entry `name` (case insensitive).
+        Raises :class:`DXFValueError` if table entry does not exist.
+        """
         key = self.key(name)
         entry = self.entries.get(key, None)
         if entry:
             return entry
         else:
-            raise DXFTableEntryError(name)
+            raise const.DXFTableEntryError(name)
 
     def remove(self, name: str) -> None:
-        """ Removes table entry `name`. Raises :class:`DXFValueError` if table-entry does not exist. """
+        """ Removes table entry `name`. Raises :class:`DXFValueError`
+        if table-entry does not exist.
+        """
         key = self.key(name)
         entry = self.get(name)
         self.entitydb.delete_entity(entry)
         self.discard(key)
 
     def duplicate_entry(self, name: str, new_name: str) -> 'DXFEntity':
-        """ Returns a new table entry `new_name` as copy of `name`, replaces entry `new_name` if already exist.
+        """ Returns a new table entry `new_name` as copy of `name`,
+        replaces entry `new_name` if already exist.
 
         Raises:
              DXFValueError: `name` does not exist
@@ -149,8 +153,6 @@ class Table:
         new_entry.dxf.name = new_name
         self._append(new_entry)
         return new_entry
-
-    # end public interface
 
     def discard(self, name: str) -> None:
         """ Remove table entry without destroying object. (internal API) """
@@ -177,16 +179,23 @@ class Table:
         return entry
 
     def _append(self, entry: 'DXFEntity') -> None:
-        """ Add a table entry, replaces existing entries with same name. (internal API). """
+        """ Add a table entry, replaces existing entries with same name.
+        (internal API).
+        """
         self.entries[self.key(entry.dxf.name)] = entry
 
     def add_entry(self, entry: 'DXFEntity') -> None:
-        """ Add a table `entry`, created by other object than this table. (internal API) """
+        """ Add a table `entry`, created by other object than this table.
+        (internal API)
+        """
         if entry.dxftype() != self._head.dxf.name:
-            raise DXFTypeError('Invalid table entry type {} for table {}'.format(entry.dxftype(), self.name))
+            raise const.DXFTypeError(
+                f'Invalid table entry type {entry.dxftype()} '
+                f'for table {self.name}')
         name = entry.dxf.name
         if self.has_entry(name):
-            raise DXFTableEntryError('{} {} already exists!'.format(self._head.dxf.name, name))
+            raise const.DXFTableEntryError(
+                f'{self._head.dxf.name} {name} already exists!')
         entry.doc = self.doc
         entry.owner = self._head.dxf.handle
         self._append(entry)
@@ -221,7 +230,9 @@ class Table:
             entry.dxf.owner = owner_handle
 
     def set_handle(self, handle: str):
-        """ Set new `handle` for table, updates also :attr:`owner` tag of table entries. (internal API)"""
+        """ Set new `handle` for table, updates also :attr:`owner` tag of table
+        entries. (internal API)
+        """
         if self._head.dxf.handle is None:
             self._head.dxf.handle = handle
             self._update_owner_handles()
@@ -230,7 +241,7 @@ class Table:
         # audit the table structure itself not the entries!
         # Table entries itself will be checked as database entities.
         # 1. Check table head handle is not None; fix: assign next entity database handle by self.set_handle()
-        # 2. Check table head owner is '0'; fix: set to '0'
+        # 2. Check table head owner is not '0'; fix: set to '0'
         # 3. Check all table entries owner handle is table head handle; fix: call self._update_owner_handles()
         # 4. Check Extension Dictionary
         # Tables don't support APP data, XDATA, Reactors or embedded objects; fix: set to None
@@ -239,7 +250,7 @@ class Table:
 
 class LayerTable(Table):
     def new_entry(self, dxfattribs: dict) -> 'DXFEntity':
-        layer = super().new_entry(dxfattribs)  # type: Layer
+        layer: 'Layer' = super().new_entry(dxfattribs)
         if self.doc:
             layer.set_required_attributes()
         return layer
@@ -247,8 +258,7 @@ class LayerTable(Table):
 
 class StyleTable(Table):
     def get_shx(self, shxname: str) -> 'DXFEntity':
-        """
-        Get existing shx entry, or create a new entry.
+        """ Get existing shx entry, or create a new entry.
 
         Args:
             shxname: shape file name like 'ltypeshp.lin'
@@ -267,10 +277,10 @@ class StyleTable(Table):
             return shape_file
 
     def find_shx(self, shxname: str) -> Optional['DXFEntity']:
-        """
-        Find .shx shape file table entry, by a case insensitive search.
+        """ Find .shx shape file table entry, by a case insensitive search.
 
-        A .shx shape file table entry has no name, so you have to search by the font attribute.
+        A .shx shape file table entry has no name, so you have to search by the
+        font attribute.
 
         Args:
             shxname: .shx shape file name
@@ -296,7 +306,7 @@ class ViewportTable(Table):
     def remove(self, name: str) -> None:
         """ Remove table-entry from table and entitydb by name. """
         key = self.key(name)
-        entries = self.get(name)  # type: List[DXFEntity]
+        entries: List['DXFEntity'] = self.get(name)
         for entry in entries:
             self.entitydb.delete_entity(entry)
         del self.entries[key]
@@ -320,7 +330,8 @@ class ViewportTable(Table):
         Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
-        entry = factory.create_db_entry(self._head.dxf.name, dxfattribs, self.doc)
+        entry = factory.create_db_entry(self._head.dxf.name, dxfattribs,
+                                        self.doc)
         self._append(entry)
         return entry
 
@@ -341,13 +352,16 @@ class ViewportTable(Table):
                 entry.dxf.owner = owner_handle
 
     def get_config(self, name: str) -> List['DXFEntity']:
-        """ Returns a list of :class:`~ezdxf.entities.Viewport` objects, for the multi-viewport configuration `name`.
+        """ Returns a list of :class:`~ezdxf.entities.Viewport` objects, for
+        the multi-viewport configuration `name`.
         """
         try:
             return self.entries[self.key(name)]
         except KeyError:
-            raise DXFTableEntryError(name)
+            raise const.DXFTableEntryError(name)
 
     def delete_config(self, name: str) -> None:
-        """ Delete all :class:`~ezdxf.entities.Viewport` objects of the multi-viewport configuration `name`. """
+        """ Delete all :class:`~ezdxf.entities.Viewport` objects of the
+        multi-viewport configuration `name`.
+        """
         self.remove(name)
