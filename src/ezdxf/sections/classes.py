@@ -12,79 +12,120 @@ if TYPE_CHECKING:
 
 # name: cpp_class_name (2), app_name (3), flags(90), was_a_proxy (280),
 # is_an_entity (281)
-# Multiple entries for 'name' possible, but ignored by ezdxf (dict),
-# last entry is used.
+# Multiple entries for 'name' are possible and supported, ClassSection stores
+# entries with key: (name, cpp_class_name).
+
 CLASS_DEFINITIONS = {
-    'ACDBDICTIONARYWDFLT': ['AcDbDictionaryWithDefault',
-                            'ObjectDBX Classes', 0, 0, 0],
-    'SUN': ['AcDbSun', 'SCENEOE', 1153, 0, 0],
-    'DICTIONARYVAR': ['AcDbDictionaryVar', 'ObjectDBX Classes', 0, 0, 0],
-    'TABLESTYLE': ['AcDbTableStyle', 'ObjectDBX Classes', 4095, 0, 0],
-    'MATERIAL': ['AcDbMaterial', 'ObjectDBX Classes', 1153, 0, 0],
-    'VISUALSTYLE': ['AcDbVisualStyle', 'ObjectDBX Classes', 4095, 0, 0],
-    'SCALE': ['AcDbScale', 'ObjectDBX Classes', 1153, 0, 0],
-    'MLEADERSTYLE': ['AcDbMLeaderStyle', 'ACDB_MLEADERSTYLE_CLASS', 4095, 0, 0],
-    'MLEADER': ['AcDbMLeader', 'ACDB_MLEADER_CLASS', 1025, 0, 1],
-    'CELLSTYLEMAP': ['AcDbCellStyleMap', 'ObjectDBX Classes', 1152, 0, 0],
-    'EXACXREFPANELOBJECT': ['ExAcXREFPanelObject', 'EXAC_ESW', 1025, 0, 0],
-    'NPOCOLLECTION': ['AcDbImpNonPersistentObjectsCollection',
-                      'ObjectDBX Classes', 1153, 0, 0],
-    'LAYER_INDEX': ['AcDbLayerIndex', 'ObjectDBX Classes', 0, 0, 0],
-    'SPATIAL_INDEX': ['AcDbSpatialIndex', 'ObjectDBX Classes', 0, 0, 0],
-    'IDBUFFER': ['AcDbIdBuffer', 'ObjectDBX Classes', 0, 0, 0],
-    'DIMASSOC': ['AcDbDimAssoc',
-                 '"AcDbDimAssoc|Product Desc:     AcDim ARX App For Dimension'
-                 '|Company:          Autodesk, Inc.'
-                 '|WEB Address:      www.autodesk.com"',
-                 0, 0, 0],
-    'ACDBSECTIONVIEWSTYLE': ['AcDbSectionViewStyle',
-                             'ObjectDBX Classes', 1025, 0, 0],
-    'ACDBDETAILVIEWSTYLE': ['AcDbDetailViewStyle',
-                            'ObjectDBX Classes', 1025, 0, 0],
-    'IMAGEDEF': ['AcDbRasterImageDef', 'ISM', 0, 0, 0],
-    'RASTERVARIABLES': ['AcDbRasterVariables', 'ISM', 0, 0, 0],
-    'IMAGEDEF_REACTOR': ['AcDbRasterImageDefReactor', 'ISM', 1, 0, 0],
-    'IMAGE': ['AcDbRasterImage', 'ISM', 2175, 0, 1],
-    'PDFDEFINITION': ['AcDbPdfDefinition', 'ObjectDBX Classes', 1153, 0, 0],
-    'PDFUNDERLAY': ['AcDbPdfReference', 'ObjectDBX Classes', 4095, 0, 1],
-    'DWFDEFINITION': ['AcDbDwfDefinition', 'ObjectDBX Classes', 1153, 0, 0],
-    'DWFUNDERLAY': ['AcDbDwfReference', 'ObjectDBX Classes', 1153, 0, 1],
-    'DGNDEFINITION': ['AcDbDgnDefinition', 'ObjectDBX Classes', 1153, 0, 0],
-    'DGNUNDERLAY': ['AcDbDgnReference', 'ObjectDBX Classes', 1153, 0, 1],
-    'MENTALRAYRENDERSETTINGS': ['AcDbMentalRayRenderSettings',
-                                'SCENEOE', 1024, 0, 0],
-    'ACDBPLACEHOLDER': ['AcDbPlaceHolder', 'ObjectDBX Classes', 0, 0, 0],
-    'LAYOUT': ['AcDbLayout', 'ObjectDBX Classes', 0, 0, 0],
-    'SURFACE': ['AcDbSurface', 'ObjectDBX Classes', 4095, 0, 1],
-    'EXTRUDEDSURFACE': ['AcDbExtrudedSurface', 'ObjectDBX Classes', 4095, 0, 1],
-    'LOFTEDSURFACE': ['AcDbLoftedSurface', 'ObjectDBX Classes', 0, 0, 1],
-    'REVOLVEDSURFACE': ['AcDbRevolvedSurface', 'ObjectDBX Classes', 0, 0, 1],
-    'SWEPTSURFACE': ['AcDbSweptSurface', 'ObjectDBX Classes', 0, 0, 1],
-    'PLANESURFACE': ['AcDbPlaneSurface', 'ObjectDBX Classes', 4095, 0, 1],
-    'NURBSSURFACE': ['AcDbNurbSurface', 'ObjectDBX Classes', 4095, 0, 1],
-    'ACDBASSOCEXTRUDEDSURFACEACTIONBODY': ['AcDbAssocExtrudedSurfaceActionBody',
-                                           'ObjectDBX Classes', 1025, 0, 0],
-    'ACDBASSOCLOFTEDSURFACEACTIONBODY': ['AcDbAssocLoftedSurfaceActionBody',
-                                         'ObjectDBX Classes', 1025, 0, 0],
-    'ACDBASSOCREVOLVEDSURFACEACTIONBODY': ['AcDbAssocRevolvedSurfaceActionBody',
-                                           'ObjectDBX Classes', 1025, 0, 0],
-    'ACDBASSOCSWEPTSURFACEACTIONBODY': ['AcDbAssocSweptSurfaceActionBody',
-                                        'ObjectDBX Classes', 1025, 0, 0],
-    'HELIX': ['AcDbHelix', 'ObjectDBX Classes', 4095, 0, 1],
-    'WIPEOUT': ['AcDbWipeout',
-                'WipeOut|AutoCAD Express Tool|expresstools@autodesk.com',
-                127, 0, 1],
-    'WIPEOUTVARIABLES': ['AcDbWipeoutVariables',
-                         'WipeOut|AutoCAD Express Tool|'
-                         'expresstools@autodesk.com',
-                         0, 0, 0],
-    'FIELDLIST': ['AcDbFieldList', 'ObjectDBX Classes', 1152, 0, 0],
-    'GEODATA': ['AcDbGeoData', 'ObjectDBX Classes', 4095, 0, 0],
-    'SORTENTSTABLE': ['AcDbSortentsTable', 'ObjectDBX Classes', 0, 0, 0],
-    'ACAD_TABLE': ['AcDbTable', 'ObjectDBX Classes', 1025, 0, 1],
-    'ARC_DIMENSION': ['AcDbArcDimension', 'ObjectDBX Classes', 1025, 0, 1],
-    'LARGE_RADIAL_DIMENSION': ['AcDbRadialDimensionLarge',
-                               'ObjectDBX Classes', 1025, 0, 1],
+    'ACDBDICTIONARYWDFLT': [
+        'AcDbDictionaryWithDefault', 'ObjectDBX Classes', 0, 0, 0],
+    'SUN': [
+        'AcDbSun', 'SCENEOE', 1153, 0, 0],
+    'DICTIONARYVAR': [
+        'AcDbDictionaryVar', 'ObjectDBX Classes', 0, 0, 0],
+    'TABLESTYLE': [
+        'AcDbTableStyle', 'ObjectDBX Classes', 4095, 0, 0],
+    'MATERIAL': [
+        'AcDbMaterial', 'ObjectDBX Classes', 1153, 0, 0],
+    'VISUALSTYLE': [
+        'AcDbVisualStyle', 'ObjectDBX Classes', 4095, 0, 0],
+    'SCALE': [
+        'AcDbScale', 'ObjectDBX Classes', 1153, 0, 0],
+    'MLEADERSTYLE': [
+        'AcDbMLeaderStyle', 'ACDB_MLEADERSTYLE_CLASS', 4095, 0, 0],
+    'MLEADER': [
+        'AcDbMLeader', 'ACDB_MLEADER_CLASS', 1025, 0, 1],
+    'CELLSTYLEMAP': [
+        'AcDbCellStyleMap', 'ObjectDBX Classes', 1152, 0, 0],
+    'EXACXREFPANELOBJECT': [
+        'ExAcXREFPanelObject', 'EXAC_ESW', 1025, 0, 0],
+    'NPOCOLLECTION': [
+        'AcDbImpNonPersistentObjectsCollection',
+        'ObjectDBX Classes', 1153, 0, 0],
+    'LAYER_INDEX': [
+        'AcDbLayerIndex', 'ObjectDBX Classes', 0, 0, 0],
+    'SPATIAL_INDEX': [
+        'AcDbSpatialIndex', 'ObjectDBX Classes', 0, 0, 0],
+    'IDBUFFER': [
+        'AcDbIdBuffer', 'ObjectDBX Classes', 0, 0, 0],
+    'DIMASSOC': [
+        'AcDbDimAssoc',
+        '"AcDbDimAssoc|Product Desc:     AcDim ARX App For Dimension'
+        '|Company:          Autodesk, Inc.'
+        '|WEB Address:      www.autodesk.com"',
+        0, 0, 0],
+    'ACDBSECTIONVIEWSTYLE': [
+        'AcDbSectionViewStyle', 'ObjectDBX Classes', 1025, 0, 0],
+    'ACDBDETAILVIEWSTYLE': [
+        'AcDbDetailViewStyle', 'ObjectDBX Classes', 1025, 0, 0],
+    'IMAGEDEF': [
+        'AcDbRasterImageDef', 'ISM', 0, 0, 0],
+    'RASTERVARIABLES': [
+        'AcDbRasterVariables', 'ISM', 0, 0, 0],
+    'IMAGEDEF_REACTOR': [
+        'AcDbRasterImageDefReactor', 'ISM', 1, 0, 0],
+    'IMAGE': [
+        'AcDbRasterImage', 'ISM', 2175, 0, 1],
+    'PDFDEFINITION': [
+        'AcDbPdfDefinition', 'ObjectDBX Classes', 1153, 0, 0],
+    'PDFUNDERLAY': [
+        'AcDbPdfReference', 'ObjectDBX Classes', 4095, 0, 1],
+    'DWFDEFINITION': [
+        'AcDbDwfDefinition', 'ObjectDBX Classes', 1153, 0, 0],
+    'DWFUNDERLAY': [
+        'AcDbDwfReference', 'ObjectDBX Classes', 1153, 0, 1],
+    'DGNDEFINITION': [
+        'AcDbDgnDefinition', 'ObjectDBX Classes', 1153, 0, 0],
+    'DGNUNDERLAY': [
+        'AcDbDgnReference', 'ObjectDBX Classes', 1153, 0, 1],
+    'MENTALRAYRENDERSETTINGS': [
+        'AcDbMentalRayRenderSettings', 'SCENEOE', 1024, 0, 0],
+    'ACDBPLACEHOLDER': [
+        'AcDbPlaceHolder', 'ObjectDBX Classes', 0, 0, 0],
+    'LAYOUT': [
+        'AcDbLayout', 'ObjectDBX Classes', 0, 0, 0],
+    'SURFACE': [
+        'AcDbSurface', 'ObjectDBX Classes', 4095, 0, 1],
+    'EXTRUDEDSURFACE': [
+        'AcDbExtrudedSurface', 'ObjectDBX Classes', 4095, 0, 1],
+    'LOFTEDSURFACE': [
+        'AcDbLoftedSurface', 'ObjectDBX Classes', 0, 0, 1],
+    'REVOLVEDSURFACE': [
+        'AcDbRevolvedSurface', 'ObjectDBX Classes', 0, 0, 1],
+    'SWEPTSURFACE': [
+        'AcDbSweptSurface', 'ObjectDBX Classes', 0, 0, 1],
+    'PLANESURFACE': [
+        'AcDbPlaneSurface', 'ObjectDBX Classes', 4095, 0, 1],
+    'NURBSSURFACE': [
+        'AcDbNurbSurface', 'ObjectDBX Classes', 4095, 0, 1],
+    'ACDBASSOCEXTRUDEDSURFACEACTIONBODY': [
+        'AcDbAssocExtrudedSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
+    'ACDBASSOCLOFTEDSURFACEACTIONBODY': [
+        'AcDbAssocLoftedSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
+    'ACDBASSOCREVOLVEDSURFACEACTIONBODY': [
+        'AcDbAssocRevolvedSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
+    'ACDBASSOCSWEPTSURFACEACTIONBODY': [
+        'AcDbAssocSweptSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
+    'HELIX': [
+        'AcDbHelix', 'ObjectDBX Classes', 4095, 0, 1],
+    'WIPEOUT': [
+        'AcDbWipeout', 'WipeOut|AutoCAD Express Tool|expresstools@autodesk.com',
+        127, 0, 1],
+    'WIPEOUTVARIABLES': [
+        'AcDbWipeoutVariables',
+        'WipeOut|AutoCAD Express Tool|expresstools@autodesk.com',
+        0, 0, 0],
+    'FIELDLIST': [
+        'AcDbFieldList', 'ObjectDBX Classes', 1152, 0, 0],
+    'GEODATA': [
+        'AcDbGeoData', 'ObjectDBX Classes', 4095, 0, 0],
+    'SORTENTSTABLE': [
+        'AcDbSortentsTable', 'ObjectDBX Classes', 0, 0, 0],
+    'ACAD_TABLE': [
+        'AcDbTable', 'ObjectDBX Classes', 1025, 0, 1],
+    'ARC_DIMENSION': [
+        'AcDbArcDimension', 'ObjectDBX Classes', 1025, 0, 1],
+    'LARGE_RADIAL_DIMENSION': [
+        'AcDbRadialDimensionLarge', 'ObjectDBX Classes', 1025, 0, 1],
 }
 
 REQ_R2000 = [
