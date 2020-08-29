@@ -681,7 +681,7 @@ Version 0.8.0 - 2017-03-28
 - removed deprecated Layouts.create() -> Layout.new()
 - removed deprecated Table.create() -> Table.new()
 - removed deprecated DXFGroupTable.add() -> DXFGroupTable.new()
-- BUFIX in EntityQuery.extend()
+- BUGFIX in EntityQuery.extend()
 
 Version 0.7.9 - 2017-01-31
 --------------------------
@@ -885,8 +885,9 @@ Version 0.5.1 - 2014-04-14
 
 * Beta status
 * Supported Python versions: CPython 2.7, 3.3, 3.4 and pypy 2.2.1
-* BUGFIX: restore Python 2 compatibility (has no list.clear() method); test launcher did not run tests in subfolders,
-  because of missing __init__.py files
+* BUGFIX: restore Python 2 compatibility (has no list.clear() method); 
+  test launcher did not run tests in sub-folders, because of missing 
+  __init__.py files
 
 Version 0.5.0 - 2014-04-13
 --------------------------
