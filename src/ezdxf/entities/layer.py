@@ -20,7 +20,7 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace
 
-__all__ = ['Layer']
+__all__ = ['Layer', 'acdb_symbol_table_record']
 
 
 def is_valid_layer_color_index(aci: int) -> bool:
@@ -79,7 +79,7 @@ acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
 
     # Handle to Material object
     'material_handle': DXFAttr(347, dxfversion=DXF2007),
-    
+
     # Handle to ???
     'unknown1': DXFAttr(348, dxfversion=DXF2007, optional=True),
 

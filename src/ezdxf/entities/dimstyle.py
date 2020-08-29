@@ -3,18 +3,14 @@
 from typing import TYPE_CHECKING
 import logging
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass,
-    VIRTUAL_TAG,
-)
-from ezdxf.lldxf.const import (
-    DXF12, DXF2007, DXF2000, SUBCLASS_MARKER, DXFKeyError, LINEWEIGHT_BYBLOCK,
-    DXFValueError,
+    DXFAttr, DXFAttributes, DefSubclass, VIRTUAL_TAG,
 )
 from ezdxf.lldxf import const
+from ezdxf.lldxf.const import DXF12, DXF2007, DXF2000
 from ezdxf.lldxf.validator import is_valid_table_name
-from ezdxf.entities.dxfentity import SubclassProcessor, DXFEntity
-from ezdxf.entities.layer import acdb_symbol_table_record
 from ezdxf.render.arrows import ARROWS
+from . import SubclassProcessor, DXFEntity
+from .layer import acdb_symbol_table_record
 from .factory import register_entity
 
 logger = logging.getLogger('ezdxf')
@@ -137,10 +133,12 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     # virtual DXF attribute 'dimltype': set/get LINETYPE by name
     'dimltype': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2007),
 
-    # virtual DXF attribute 'dimltex1': set/get referenced LINETYPE by name as callback
+    # virtual DXF attribute 'dimltex1': set/get referenced LINETYPE by name
+    # as callback
     'dimltex2': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2007),
 
-    # virtual DXF attribute 'dimltex1': set/get referenced LINETYPE by name as callback
+    # virtual DXF attribute 'dimltex1': set/get referenced LINETYPE by name
+    # as callback
     'dimltex1': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2007),
 
     # handles not used internally, handles are set at export
@@ -162,10 +160,12 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     # handle of linetype for extension line 2
 
     # dimension line lineweight enum value, default BYBLOCK
-    'dimlwd': DXFAttr(371, default=LINEWEIGHT_BYBLOCK, dxfversion=DXF2000),
+    'dimlwd': DXFAttr(371, default=const.LINEWEIGHT_BYBLOCK,
+                      dxfversion=DXF2000),
 
     # extension line lineweight enum value, default BYBLOCK
-    'dimlwe': DXFAttr(372, default=LINEWEIGHT_BYBLOCK, dxfversion=DXF2000),
+    'dimlwe': DXFAttr(372, default=const.LINEWEIGHT_BYBLOCK,
+                      dxfversion=DXF2000),
 
 })
 
@@ -248,8 +248,8 @@ class DimStyle(DXFEntity):
                 try:
                     name = db[block_record_handle].dxf.name
                 except KeyError:
-                    logger.info(f'Replace undefined block referenced by '
-                                f'handle #{block_record_handle}, by default arrow.')
+                    logger.info(f'Replace undefined block reference '
+                                f'#{block_record_handle} by default arrow.')
                     name = ''  # default arrow name
             else:
                 name = ''  # default arrow name
@@ -260,8 +260,7 @@ class DimStyle(DXFEntity):
             try:
                 self.dxf.dimtxsty = db[style_handle].dxf.name
             except KeyError:
-                logger.info(f'Ignore undefined text style referenced '
-                            f'by handle #{style_handle}.')
+                logger.info(f'Ignore undefined text style #{style_handle}.')
 
         for attrib_name in ('dimltype', 'dimltex1', 'dimltex2'):
             lt_handle = self.dxf.get(attrib_name + '_handle', None)
@@ -269,8 +268,7 @@ class DimStyle(DXFEntity):
                 try:
                     name = db[lt_handle].dxf.name
                 except KeyError:
-                    logger.info(f'Ignore undefined line type referenced '
-                                f'by handle #{lt_handle}.')
+                    logger.info(f'Ignore undefined line type #{lt_handle}.')
                 else:
                     self.dxf.set(attrib_name, name)
         # Remove all handles, to be sure setting handles for resource names
@@ -281,8 +279,10 @@ class DimStyle(DXFEntity):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
-            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
-            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dimstyle.name)
+            tagwriter.write_tag2(const.SUBCLASS_MARKER,
+                                 acdb_symbol_table_record.name)
+            tagwriter.write_tag2(const.SUBCLASS_MARKER,
+                                 acdb_dimstyle.name)
 
         if tagwriter.dxfversion > DXF12:
             # set handles from dimblk names
@@ -340,7 +340,7 @@ class DimStyle(DXFEntity):
         if blk is not None:
             self.set_dxf_attrib(attr, blk.block_record_handle)
         else:
-            raise DXFValueError(f'Block {arrow_name} does not exist.')
+            raise const.DXFValueError(f'Block "{arrow_name}" does not exist.')
 
     def get_arrow_block_name(self, name: str) -> str:
         handle = self.get_dxf_attrib(name, None)
@@ -349,12 +349,12 @@ class DimStyle(DXFEntity):
             return ARROWS.closed_filled
         else:
             block_name = get_block_name_by_handle(handle, self.doc)
-            return ARROWS.arrow_name(
-                block_name)  # if arrow return standard arrow name else just the block name
+            # Returns standard arrow name or the user defined block name:
+            return ARROWS.arrow_name(block_name)
 
     def set_linetypes(self, dimline=None, ext1=None, ext2=None) -> None:
         if self.dxfversion < DXF2007:
-            logger.debug('Linetype support requires DXF R2007 or later.')
+            logger.debug('Linetype support requires DXF R2007+.')
 
         if dimline is not None:
             self.dxf.dimltype = dimline
@@ -369,28 +369,28 @@ class DimStyle(DXFEntity):
             if name.startswith('dim'):
                 print(f"{name} ({attdef(name).code}) = {value}")
 
-    def copy_to_header(self, dwg: 'Drawing'):
-        """ Copy all dimension style variables to HEADER section of `dwg`. """
+    def copy_to_header(self, doc: 'Drawing'):
+        """ Copy all dimension style variables to HEADER section of `doc`. """
         attribs = self.dxfattribs()
-        header = dwg.header
+        header = doc.header
         header['$DIMSTYLE'] = self.dxf.name
         for name, value in attribs.items():
             if name.startswith('dim'):
                 header_var = '$' + name.upper()
                 try:
                     header[header_var] = value
-                except DXFKeyError:
+                except const.DXFKeyError:
                     logger.debug(f'Unsupported header variable: {header_var}.')
 
     def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '',
                    ldrblk: str = '') -> None:
-        """
-        Set arrows by block names or AutoCAD standard arrow names, set DIMTSZ to ``0`` which disables tick.
+        """ Set arrows by block names or AutoCAD standard arrow names, set
+        DIMTSZ to ``0`` which disables tick.
 
         Args:
-            blk: block/arrow name for both arrows, if DIMSAH is ``0``
-            blk1: block/arrow name for first arrow, if DIMSAH is ``1``
-            blk2: block/arrow name for second arrow, if DIMSAH is ``1``
+            blk: block/arrow name for both arrows, if DIMSAH is 0
+            blk1: block/arrow name for first arrow, if DIMSAH is 1
+            blk2: block/arrow name for second arrow, if DIMSAH is 1
             ldrblk: block/arrow name for leader
 
         """
@@ -408,12 +408,12 @@ class DimStyle(DXFEntity):
                     ARROWS.create_block(blocks, b)
                     continue
                 if b and b not in blocks:
-                    raise DXFValueError(
+                    raise const.DXFValueError(
                         'BLOCK "{}" does not exist.'.format(blk))
 
     def set_tick(self, size: float = 1) -> None:
-        """
-        Set tick `size`, which also disables arrows, a tick is just an oblique stroke as marker.
+        """ Set tick `size`, which also disables arrows, a tick is just an
+        oblique stroke as marker.
 
         Args:
             size: arrow size in drawing units
@@ -423,15 +423,18 @@ class DimStyle(DXFEntity):
 
     def set_text_align(self, halign: str = None, valign: str = None,
                        vshift: float = None) -> None:
-        """
-        Set measurement text alignment, `halign` defines the horizontal alignment (requires DXF R2000),
-        `valign` defines the vertical  alignment, `above1` and `above2` means above extension line 1 or 2 and aligned
-        with extension line.
+        """ Set measurement text alignment, `halign` defines the horizontal
+        alignment (requires DXF R2000+), `valign` defines the vertical
+        alignment, `above1` and `above2` means above extension line 1 or 2 and
+        aligned with extension line.
 
         Args:
-            halign: ``left``, ``right``, ``center`, `above1``, ``above2`` (requires DXF R2000)
-            valign: ``above``, ``center``, ``below``
-            vshift: vertical text shift, if `valign` is ``center``; >0 shift upward, <0 shift downwards
+            halign: "left", "right", "center", "above1", "above2",
+                requires DXF R2000+
+            valign: "above", "center", "below"
+            vshift: vertical text shift, if `valign` is "center";
+                >0 shift upward,
+                <0 shift downwards
 
         """
         if valign:
@@ -447,19 +450,23 @@ class DimStyle(DXFEntity):
                         rnd: float = None, dec: int = None, sep: str = None,
                         leading_zeros: bool = True,
                         trailing_zeros: bool = True):
-        """
-        Set dimension text format, like prefix and postfix string, rounding rule and number of decimal places.
+        """ Set dimension text format, like prefix and postfix string, rounding
+        rule and number of decimal places.
 
         Args:
             prefix: Dimension text prefix text as string
             postfix: Dimension text postfix text as string
-            rnd: Rounds all dimensioning distances to the specified value, for instance, if DIMRND is set to ``0.25``,
-                 all distances round to the nearest ``0.25`` unit. If you set DIMRND to ``1.0``, all distances round to
-                 the nearest integer.
-            dec: Sets the number of decimal places displayed for the primary units of a dimension. (requires DXF R2000)
-            sep: ``'.'`` or ``','`` as decimal separator (requires DXF R2000)
-            leading_zeros: suppress leading zeros for decimal dimensions if ``False``
-            trailing_zeros: suppress trailing zeros for decimal dimensions if ``False``
+            rnd: Rounds all dimensioning distances to the specified value, for
+                instance, if DIMRND is set to 0.25, all distances round to the
+                nearest 0.25 unit. If you set DIMRND to 1.0, all distances round
+                to the nearest integer.
+            dec: Sets the number of decimal places displayed for the primary
+                units of a dimension, requires DXF R2000+
+            sep: "." or "," as decimal separator, requires DXF R2000+
+            leading_zeros: Suppress leading zeros for decimal dimensions
+                if ``False``
+            trailing_zeros: Suppress trailing zeros for decimal dimensions
+                if ``False``
 
         """
         if prefix or postfix:
@@ -485,16 +492,18 @@ class DimStyle(DXFEntity):
                            lineweight: int = None,
                            extension: float = None, disable1: bool = None,
                            disable2: bool = None):
-        """
-        Set dimension line properties
+        """ Set dimension line properties
 
         Args:
             color: color index
-            linetype: linetype as string (requires DXF R2007)
-            lineweight: line weight as int, ``13`` = 0.13mm, ``200`` = 2.00mm (requires DXF R2000)
+            linetype: linetype as string, requires DXF R2007+
+            lineweight: line weight as int, 13 = 0.13mm, 200 = 2.00mm,
+                requires DXF R2000+
             extension: extension length
-            disable1: ``True`` to suppress first part of dimension line (requires DXF R2000)
-            disable2: ``True`` to suppress second part of dimension line (requires DXF R2000)
+            disable1: ``True`` to suppress first part of dimension line,
+                requires DXF R2000+
+            disable2: ``True`` to suppress second part of dimension line,
+                requires DXF R2000+
 
         """
         if color is not None:
@@ -512,17 +521,17 @@ class DimStyle(DXFEntity):
             self.dxf.dimltype = linetype
 
     def set_extline_format(self, color: int = None, lineweight: int = None,
-                           extension: float = None,
-                           offset: float = None, fixed_length: float = None):
-        """
-        Set common extension line attributes.
+                           extension: float = None, offset: float = None,
+                           fixed_length: float = None):
+        """ Set common extension line attributes.
 
         Args:
             color: color index
-            lineweight: line weight as int, ``13`` = 0.13mm, ``200`` = 2.00mm
+            lineweight: line weight as int, 13 = 0.13mm, 200 = 2.00mm
             extension: extension length above dimension line
             offset: offset from measurement point
-            fixed_length: set fixed length extension line, length below the dimension line
+            fixed_length: set fixed length extension line, length below the
+                dimension line
 
         """
         if color is not None:
@@ -538,11 +547,10 @@ class DimStyle(DXFEntity):
             self.dxf.dimfxl = fixed_length
 
     def set_extline1(self, linetype: str = None, disable=False):
-        """
-        Set extension line 1 attributes.
+        """ Set extension line 1 attributes.
 
         Args:
-            linetype: linetype for extension line 1 (requires DXF R2007)
+            linetype: linetype for extension line 1, requires DXF R2007+
             disable: disable extension line 1 if ``True``
 
         """
@@ -552,11 +560,10 @@ class DimStyle(DXFEntity):
             self.dxf.dimltex1 = linetype
 
     def set_extline2(self, linetype: str = None, disable=False):
-        """
-        Set extension line 2 attributes.
+        """ Set extension line 2 attributes.
 
         Args:
-            linetype: linetype for extension line 2 (requires DXF R2007)
+            linetype: linetype for extension line 2, requires DXF R2007+
             disable: disable extension line 2 if ``True``
 
         """
@@ -567,24 +574,30 @@ class DimStyle(DXFEntity):
 
     def set_tolerance(self, upper: float, lower: float = None,
                       hfactor: float = 1.0,
-                      align: str = None, dec: int = None,
+                      align: str = None,
+                      dec: int = None,
                       leading_zeros: bool = None,
                       trailing_zeros: bool = None) -> None:
-        """
-        Set tolerance text format, upper and lower value, text height factor, number of decimal places or leading and
-        trailing zero suppression.
+        """ Set tolerance text format, upper and lower value, text height
+        factor, number of decimal places or leading and trailing zero
+        suppression.
 
         Args:
             upper: upper tolerance value
             lower: lower tolerance value, if ``None`` same as upper
-            hfactor: tolerance text height factor in relation to the dimension text height
-            align: tolerance text alignment ``'TOP'``, ``'MIDDLE'``, ``'BOTTOM'`` (requires DXF R2000)
-            dec: Sets the number of decimal places displayed (requires DXF R2000)
-            leading_zeros: suppress leading zeros for decimal dimensions if ``False`` (requires DXF R2000)
-            trailing_zeros: suppress trailing zeros for decimal dimensions if ``False`` (requires DXF R2000)
+            hfactor: tolerance text height factor in relation to the dimension
+                text height
+            align: tolerance text alignment "TOP", "MIDDLE", "BOTTOM",
+                requires DXF R2000+
+            dec: Sets the number of decimal places displayed,
+                requires DXF R2000+
+            leading_zeros: suppress leading zeros for decimal dimensions
+                if ``False``, requires DXF R2000+
+            trailing_zeros: suppress trailing zeros for decimal dimensions
+                if ``False``, requires DXF R2000+
 
         """
-        # exclusive tolerances
+        # Exclusive tolerances mode, disable limits
         self.dxf.dimtol = 1
         self.dxf.dimlim = 0
         self.dxf.dimtp = float(upper)
@@ -595,7 +608,8 @@ class DimStyle(DXFEntity):
         if hfactor is not None:
             self.dxf.dimtfac = float(hfactor)
 
-        # works only with decimal dimensions not inch and feet, US user set dimzin directly
+        # Works only with decimal dimensions not inch and feet, US user set
+        # dimzin directly.
         if leading_zeros is not None or trailing_zeros is not None:
             dimtzin = 0
             if leading_zeros is False:
@@ -612,27 +626,32 @@ class DimStyle(DXFEntity):
     def set_limits(self, upper: float, lower: float, hfactor: float = 1.0,
                    dec: int = None, leading_zeros: bool = None,
                    trailing_zeros: bool = None) -> None:
-        """
-        Set limits text format, upper and lower limit values, text height factor, number of decimal places or
-        leading and trailing zero suppression.
+        """ Set limits text format, upper and lower limit values, text height
+        factor, number of decimal places or leading and trailing zero
+        suppression.
 
         Args:
             upper: upper limit value added to measurement value
             lower: lower lower value subtracted from measurement value
-            hfactor: limit text height factor in relation to the dimension text height
-            dec: Sets the number of decimal places displayed (requires DXF R2000)
-            leading_zeros: suppress leading zeros for decimal dimensions if ``False`` (requires DXF R2000)
-            trailing_zeros: suppress trailing zeros for decimal dimensions if ``False`` (requires DXF R2000)
+            hfactor: limit text height factor in relation to the dimension
+                text height
+            dec: Sets the number of decimal places displayed,
+                requires DXF R2000+
+            leading_zeros: suppress leading zeros for decimal dimensions
+                if ``False``, requires DXF R2000+
+            trailing_zeros: suppress trailing zeros for decimal dimensions
+                if ``False``, requires DXF R2000+
 
         """
-        # exclusive limits
+        # Exclusive limits mode, disable tolerances
         self.dxf.dimlim = 1
         self.dxf.dimtol = 0
         self.dxf.dimtp = float(upper)
         self.dxf.dimtm = float(lower)
         self.dxf.dimtfac = float(hfactor)
 
-        # works only with decimal dimensions not inch and feet, US user set dimzin directly
+        # Works only with decimal dimensions not inch and feet, US user set
+        # dimzin directly.
         if leading_zeros is not None or trailing_zeros is not None:
             dimtzin = 0
             if leading_zeros is False:
@@ -648,7 +667,7 @@ class DimStyle(DXFEntity):
 def get_block_name_by_handle(handle, doc: 'Drawing', default='') -> str:
     try:
         entry = doc.entitydb[handle]
-    except DXFKeyError:
+    except const.DXFKeyError:
         block_name = default
     else:
         block_name = entry.dxf.name
