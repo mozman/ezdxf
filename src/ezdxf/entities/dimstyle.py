@@ -1,7 +1,6 @@
-# Created: 17.02.2019
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Tuple
+from typing import TYPE_CHECKING
 import logging
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass,
@@ -244,13 +243,13 @@ class DimStyle(DXFEntity):
         for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
             if self.dxf.hasattr(attrib_name):
                 continue
-            blkrec_handle = self.dxf.get(attrib_name + '_handle')
-            if blkrec_handle and blkrec_handle != '0':
+            block_record_handle = self.dxf.get(attrib_name + '_handle')
+            if block_record_handle and block_record_handle != '0':
                 try:
-                    name = db[blkrec_handle].dxf.name
+                    name = db[block_record_handle].dxf.name
                 except KeyError:
                     logger.info(f'Replace undefined block referenced by '
-                                f'handle #{blkrec_handle}, by default arrow.')
+                                f'handle #{block_record_handle}, by default arrow.')
                     name = ''  # default arrow name
             else:
                 name = ''  # default arrow name
@@ -364,18 +363,11 @@ class DimStyle(DXFEntity):
         if ext2 is not None:
             self.dxf.dimltex2 = ext2
 
-    # -- legacy --
-
-    def dim_attribs(self) -> Iterable[Tuple[str, DXFAttr]]:
-        return ((name, attrib) for name, attrib in self.DXFATTRIBS.items() if
-                name.startswith('dim'))
-
     def print_dim_attribs(self) -> None:
-        for name, attrib in self.dim_attribs():
-            code = attrib.code
-            value = self.get_dxf_attrib(name, None)
-            if value is not None:
-                print(f"{name} ({code}) = {value}")
+        attdef = self.DXFATTRIBS.get
+        for name, value in self.dxfattribs():
+            if name.startswith('dim'):
+                print(f"{name} ({attdef(name).code}) = {value}")
 
     def copy_to_header(self, dwg: 'Drawing'):
         """ Copy all dimension style variables to HEADER section of `dwg`. """
