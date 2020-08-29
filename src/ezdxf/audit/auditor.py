@@ -1,4 +1,3 @@
-# Created: 10.03.2017
 # Copyright (c) 2017-2020, Manfred Moitzi
 # License: MIT License
 from typing import (
@@ -351,8 +350,8 @@ class BlockCycleDetector:
         self.key = doc.blocks.key
         self.blocks = self._build_block_ledger(doc.blocks)
 
-    def _build_block_ledger(self, blocks: 'BlocksSection') -> Dict[
-        str, Set[str]]:
+    def _build_block_ledger(
+            self, blocks: 'BlocksSection') -> Dict[str, Set[str]]:
         ledger = dict()
         for block in blocks:
             inserts = {self.key(insert.dxf.name) for insert in
