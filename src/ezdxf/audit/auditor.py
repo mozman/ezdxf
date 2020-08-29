@@ -5,10 +5,8 @@ from typing import (
 )
 import sys
 from enum import IntEnum
-from ezdxf.lldxf.validator import is_valid_layer_name, fix_lineweight
-from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHT_VALUES
-from ezdxf.entities.dxfentity import DXFEntity
-from ezdxf.entities import factory
+from ezdxf.lldxf import const, validator
+from ezdxf.entities import factory, DXFEntity
 from ezdxf.math import NULLVEC
 from ezdxf.sections.table import table_key
 
@@ -264,7 +262,7 @@ class Auditor:
     def check_for_valid_layer_name(self, entity: 'DXFEntity') -> None:
         """ Check layer names for invalid characters: <>/\":;?*|=' """
         name = entity.dxf.layer
-        if not is_valid_layer_name(name):
+        if not validator.is_valid_layer_name(name):
             # This error can't be fixed !?
             self.add_error(
                 code=AuditError.INVALID_LAYER_NAME,
@@ -289,8 +287,8 @@ class Auditor:
 
     def check_entity_lineweight(self, entity: 'DXFGraphic') -> None:
         weight = entity.dxf.lineweight
-        if weight not in VALID_DXF_LINEWEIGHT_VALUES:
-            entity.dxf.lineweight = fix_lineweight(weight)
+        if weight not in const.VALID_DXF_LINEWEIGHT_VALUES:
+            entity.dxf.lineweight = validator.fix_lineweight(weight)
             self.fixed_error(
                 code=AuditError.INVALID_LINEWEIGHT,
                 message=f'Fixed invalid lineweight of {str(entity)}.',
