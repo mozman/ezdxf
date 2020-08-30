@@ -20,6 +20,7 @@ class ConstructionCircle:
         radius: circle radius > `0`
 
     """
+
     def __init__(self, center: 'Vertex', radius: float = 1.0):
         self.center = Vec2(center)
         self.radius = float(radius)
