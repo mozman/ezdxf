@@ -4,7 +4,7 @@
 import ezdxf
 import math
 from ezdxf.math import ConstructionArc, Vector, UCS, Vec2
-from ezdxf.math.arc import required_approximation_vertices
+from ezdxf.math.arc import required_approximation_segments
 from math import isclose
 
 
@@ -176,10 +176,10 @@ def test_angle_span():
                            is_counter_clockwise=False).angle_span == 240
 
 
-def test_required_approximation_vertices():
+def test_required_approximation_segments():
     radius = 100
     max_sagitta = 2
-    assert required_approximation_vertices(radius, math.tau, max_sagitta) == 17
+    assert required_approximation_segments(radius, math.tau, max_sagitta) == 16
     alpha = math.tau / 16
     l2 = math.sin(alpha / 2) * radius
     sagitta = radius - math.sqrt(radius ** 2 - l2 ** 2)

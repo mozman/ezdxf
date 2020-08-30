@@ -328,11 +328,11 @@ def arc_chord_length(radius: float, sagitta: float) -> float:
     return 2.0 * math.sqrt(2.0 * radius * sagitta - sagitta * sagitta)
 
 
-def required_approximation_vertices(radius: float, angle: float,
+def required_approximation_segments(radius: float, angle: float,
                                     sagitta: float) -> int:
-    """ Returns the count of required vertices for the approximation
+    """ Returns the count of required segments for the approximation
     of an arc for a given maximum sagitta.
     """
     chord_length = arc_chord_length(radius, sagitta)
     alpha = math.asin(chord_length / 2.0 / radius) * 2.0
-    return math.ceil(angle / alpha) + 1
+    return math.ceil(angle / alpha)
