@@ -43,6 +43,10 @@ Bulge Related Functions
 2D Functions
 ============
 
+.. autofunction:: arc_segment_count
+
+.. autofunction:: arc_chord_length
+
 .. autofunction:: distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float
 
 .. autofunction:: point_to_line_relation(point: Vec2, start: Vec2, end: Vec2, abs_tol=1e-10) -> int
@@ -1073,3 +1077,4 @@ BandedMatrixLU Class
 .. _Gauss-Jordan: https://en.wikipedia.org/wiki/Gaussian_elimination
 .. _Gauss-Elimination: https://en.wikipedia.org/wiki/Gaussian_elimination
 .. _LU Decomposition: https://en.wikipedia.org/wiki/LU_decomposition
+.. _sagitta: https://en.wikipedia.org/wiki/Sagitta_(geometry)

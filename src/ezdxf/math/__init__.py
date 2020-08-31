@@ -39,7 +39,7 @@ from .ucs import OCS, UCS, PassTroughUCS
 from .bulge import (
     bulge_to_arc, bulge_3_points, bulge_center, bulge_radius, arc_to_bulge,
 )
-from .arc import ConstructionArc
+from .arc import ConstructionArc, arc_segment_count, arc_chord_length
 from .line import ConstructionRay, ConstructionLine, ParallelRaysError
 from .circle import ConstructionCircle
 from .ellipse import (

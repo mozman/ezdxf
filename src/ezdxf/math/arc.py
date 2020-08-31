@@ -12,6 +12,8 @@ from .ucs import UCS
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout, Arc
 
+__all__ = ['ConstructionArc', 'arc_chord_length', 'arc_segment_count']
+
 QUARTER_ANGLES = [0, math.pi * .5, math.pi, math.pi * 1.5]
 
 
@@ -180,7 +182,8 @@ class ConstructionArc:
         return start_point, end_point
 
     @classmethod
-    def from_2p_angle(cls, start_point: 'Vertex', end_point: 'Vertex', angle: float,
+    def from_2p_angle(cls, start_point: 'Vertex', end_point: 'Vertex',
+                      angle: float,
                       ccw: bool = True) -> 'ConstructionArc':
         """ Create arc from two points and enclosing angle. Additional
         precondition: arc goes by default in counter clockwise orientation from
@@ -193,7 +196,8 @@ class ConstructionArc:
             ccw: counter clockwise direction if ``True``
 
         """
-        start_point, end_point = cls.validate_start_and_end_point(start_point, end_point)
+        start_point, end_point = cls.validate_start_and_end_point(start_point,
+                                                                  end_point)
         angle = math.radians(angle)
         if angle == 0:
             raise ValueError("Angle can not be 0.")
@@ -265,7 +269,8 @@ class ConstructionArc:
         )
 
     @classmethod
-    def from_3p(cls, start_point: 'Vertex', end_point: 'Vertex', def_point: 'Vertex',
+    def from_3p(cls, start_point: 'Vertex', end_point: 'Vertex',
+                def_point: 'Vertex',
                 ccw: bool = True) -> 'ConstructionArc':
         """ Create arc from three points.
         Additional precondition: arc goes in counter clockwise
@@ -323,15 +328,31 @@ class ConstructionArc:
 
 
 def arc_chord_length(radius: float, sagitta: float) -> float:
-    """ Returns the chord length for an arc defined by radius and the sagitta.
+    """ Returns the chord length for an arc defined by `radius` and
+    the `sagitta`_.
+
+    Args:
+        radius: arc radius
+        sagitta: distance from the center of the arc to the center of its base
+
+    .. versionadded:: 0.14
+
     """
     return 2.0 * math.sqrt(2.0 * radius * sagitta - sagitta * sagitta)
 
 
-def required_approximation_segments(radius: float, angle: float,
-                                    sagitta: float) -> int:
+def arc_segment_count(radius: float, angle: float, sagitta: float) -> int:
     """ Returns the count of required segments for the approximation
-    of an arc for a given maximum sagitta.
+    of an arc for a given maximum `sagitta`_.
+
+    Args:
+        radius: arc radius
+        angle: angle span of the arc in radians
+        sagitta: max. distance from the center of the arc to the center of its
+            base
+
+    .. versionadded:: 0.14
+
     """
     chord_length = arc_chord_length(radius, sagitta)
     alpha = math.asin(chord_length / 2.0 / radius) * 2.0

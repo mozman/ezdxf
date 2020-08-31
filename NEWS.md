@@ -58,6 +58,8 @@ Version 0.14b1 - dev
 - NEW: `ezdxf.recover`, module to load DXF Documents with structural flaws
 - NEW: get DXF test file path from environment variable `EZDXF_TEST_FILES`, 
   imported automatically as `ezdxf.EZDXF_TEST_FILES`
+- NEW: `arc_chord_length()` and `arc_segment_count()` tool functions in 
+  `ezdxf.math`
 - CHANGE: `DXFEntity.get_extension_dict()`, raises `AttributeError` if entity
   has no extension dictionary 
 - CHANGE: `DXFEntity.has_extension_dict` is now a property not a method
