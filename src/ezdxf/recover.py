@@ -1,7 +1,7 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
 from typing import (
-    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple, Dict,
+    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple
 )
 import itertools
 from collections import defaultdict
@@ -21,33 +21,13 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, Auditor, SectionDict
 
-__all__ = ['read', 'auto_read', 'readfile', 'auto_readfile']
+__all__ = ['read', 'readfile']
 
 
-# TODO: recover
-#  Mimic the CAD "RECOVER" command, try to read messy DXF files,
-#  needs only as much work until the regular ezdxf loader can handle
-#  and audit the DXF file.
-
-def auto_readfile(filename: str) -> Tuple['Drawing', 'Auditor']:
+def readfile(filename: str) -> Tuple['Drawing', 'Auditor']:
     """ Read a DXF document from file system similar to :func:`ezdxf.readfile`,
-    but this function will repair as much flaws as possible,  runs the required
-    audit process automatically and returns the result.
-
-    Args:
-        filename: file-system name of the DXF document to load
-
-    """
-
-    with open(filename, mode='rb') as fp:
-        return auto_read(fp)
-
-
-def readfile(filename: str) -> 'Drawing':
-    """ Read a DXF document from file system similar to :func:`ezdxf.readfile`,
-    but this function will repair as much flaws as possible to take the document
-    to a state, where the :class:`~ezdxf.audit.Auditor` could start his journey
-    to repair further issues.
+    but this function will repair as much flaws as possible, runs the required
+    audit process automatically the DXF document and the :class:`Auditor`.
 
     Args:
         filename: file-system name of the DXF document to load
@@ -57,25 +37,11 @@ def readfile(filename: str) -> 'Drawing':
         return read(fp)
 
 
-def auto_read(stream: BinaryIO) -> Tuple['Drawing', 'Auditor']:
+def read(stream: BinaryIO) -> Tuple['Drawing', 'Auditor']:
     """ Read a DXF document from a binary-stream similar to :func:`ezdxf.read`,
-    But this function will detect the text encoding automatically and repair
-    as much flaws as possible, runs the required audit process automatically
-    and returns the result.
-
-    Args:
-        stream: data stream to load in binary read mode
-
-    """
-    doc = read(stream)
-    return doc, doc.audit()
-
-
-def read(stream: BinaryIO) -> 'Drawing':
-    """ Read a DXF document from a binary-stream similar to :func:`ezdxf.read`,
-    But this function will detect the text encoding automatically and repair
-    as much flaws as possible to take the document to a state, where the
-    :class:`~ezdxf.audit.Auditor` could start his journey to repair further issues.
+    but this function will detect the text encoding automatically and repair
+    as much flaws as possible, runs the required audit process afterwards
+    and returns the DXF document and the :class:`Auditor`.
 
     Args:
         stream: data stream to load in binary read mode
@@ -85,7 +51,7 @@ def read(stream: BinaryIO) -> 'Drawing':
     recover_tool = Recover.run(stream)
     doc = Drawing()
     doc._load_section_dict(recover_tool.section_dict)
-    return doc
+    return doc, doc.audit()
 
 
 class Recover:

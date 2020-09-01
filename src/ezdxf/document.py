@@ -339,6 +339,7 @@ class Drawing:
         self._load_section_dict(sections)
 
     def _load_section_dict(self, sections: loader.SectionDict) -> None:
+        """ Internal API to load a DXF document from a section dict. """
         self.is_loading = True
         # Create header section:
         # All header tags are the first DXF structure entity

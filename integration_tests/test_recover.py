@@ -68,9 +68,8 @@ def test_build_section_dict(tags01):
 
 
 def test_readfile_recover01_dxf():
-    doc = recover.readfile(fullpath(RECOVER1))
+    doc, auditor = recover.readfile(fullpath(RECOVER1))
     assert doc.dxfversion == 'AC1009'
-    auditor = doc.audit()
     assert auditor.has_errors is False
 
 
@@ -108,9 +107,8 @@ def test_rebuild_tables(tags02):
 
 
 def test_readfile_recover02_dxf():
-    doc = recover.readfile(fullpath(RECOVER2))
+    doc, auditor = recover.readfile(fullpath(RECOVER2))
     assert doc.dxfversion == 'AC1032'
-    auditor = doc.audit()
     assert auditor.has_errors is False
 
     table_head = doc.block_records.head

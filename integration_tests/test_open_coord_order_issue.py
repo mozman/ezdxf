@@ -19,7 +19,7 @@ def filename(request):
 
 def test_coordinate_order_problem(filename):
     try:
-        doc, auditor = recover.auto_readfile(filename)
+        doc, auditor = recover.readfile(filename)
     except ezdxf.DXFError as e:
         pytest.fail(str(e))
     else:
