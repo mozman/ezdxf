@@ -1,4 +1,3 @@
-# Created: 17.02.2019
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
@@ -117,12 +116,13 @@ class BlockRecord(DXFEntity):
         ])
 
     def export_block_definition(self, tagwriter: 'TagWriter') -> None:
-        """
-        Exports BLOCK, than all DXF entities and at last the ENDBLK entity,
+        """ Exports BLOCK, than all DXF entities and at last the ENDBLK entity,
         except for *Model_space and *Paper_Pacer, their entities are stored
         in the entities section.
 
         """
+        if self.block_layout is not None:
+            self.block_layout.update_block_flags()
         self.block.export_dxf(tagwriter)
         if not (self.is_modelspace or self.is_active_paperspace):
             self.entity_space.export_dxf(tagwriter)
@@ -182,8 +182,7 @@ class BlockRecord(DXFEntity):
         return not self.is_any_layout
 
     def add_entity(self, entity: 'DXFGraphic') -> None:
-        """
-        Add an existing DXF entity to BLOCK_RECORD.
+        """ Add an existing DXF entity to BLOCK_RECORD.
 
         Args:
             entity: :class:`DXFGraphic`
@@ -198,8 +197,7 @@ class BlockRecord(DXFEntity):
         self.entity_space.add(entity)
 
     def unlink_entity(self, entity: 'DXFGraphic') -> None:
-        """
-        Unlink `entity` from BLOCK_RECORD.
+        """ Unlink `entity` from BLOCK_RECORD.
 
         Removes `entity` just from  entity space but not from the drawing
         database.
@@ -213,8 +211,7 @@ class BlockRecord(DXFEntity):
             entity.set_owner(None)
 
     def delete_entity(self, entity: 'DXFGraphic') -> None:
-        """
-        Delete `entity` from BLOCK_RECORD entity space and drawing database.
+        """ Delete `entity` from BLOCK_RECORD entity space and drawing database.
 
         Args:
             entity: :class:`DXFGraphic`

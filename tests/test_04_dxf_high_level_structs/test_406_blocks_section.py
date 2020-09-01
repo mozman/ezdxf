@@ -7,6 +7,7 @@ from ezdxf.tools.test import load_entities
 from ezdxf.sections.blocks import BlocksSection
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.entities import factory
+from ezdxf.lldxf.const import BLK_NON_CONSTANT_ATTRIBUTES
 
 
 @pytest.fixture
@@ -282,6 +283,14 @@ def test_dxf2000_rename_block(dxf2000_blocks):
 
     dxf2000_blocks.rename_block('RENAME_ME', 'NEW_NAME')
     assert 'NEW_NAME' in dxf2000_blocks
+
+
+def test_update_block_flags(doc):
+    blk = doc.blocks.new('UPDATE_BLOCK_FLAGS')
+    blk.add_attdef('TEST', (0, 0))
+    assert blk.block.get_flag_state(BLK_NON_CONSTANT_ATTRIBUTES) is False
+    blk.update_block_flags()
+    assert blk.block.get_flag_state(BLK_NON_CONSTANT_ATTRIBUTES) is True
 
 
 EMPTYSEC = """  0

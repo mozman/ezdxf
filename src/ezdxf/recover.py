@@ -192,7 +192,7 @@ class Recover:
             if head:
                 tables.append(head)
             else:
-                # todo: new table head needs a valid handle
+                # The new table head gets a valid handle from Auditor.
                 tables.append(Tags([DXFTag(0, 'TABLE'), DXFTag(2, name)]))
             tables.extend(content[name])
             tables.append(Tags([DXFTag(0, 'ENDTAB')]))

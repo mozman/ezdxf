@@ -79,6 +79,8 @@ Version 0.14b1 - dev
 - REMOVE: `Image.get_boundary_path()`, replaced by property `Image.boundary_path` 
 - REMOVE: `Image.get_image_def()`, replaced by property `Image.image_def` 
 - REMOVE: `filter_stack` argument in `ezdxf.read()` and `ezdxf.readfile()` 
+- BUGFIX: Set `non-constant-attribs` flag (2) in BLOCK at DXF export if non 
+  constant ATTDEF entities are present.
 
 Version 0.13.1 - 2020-07-18
 ---------------------------
