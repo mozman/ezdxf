@@ -15,6 +15,9 @@ if TYPE_CHECKING:
 __all__ = ['ExtensionDict']
 
 
+# Example for table head and -entries with extension dicts:
+# AutodeskSamples\lineweights.dxf
+
 class ExtensionDict:
     """ Stores extended data of entities in app data 'ACAD_XDICTIONARY', app
     data contains just one entry to a hard-owned DICTIONARY objects, which is
@@ -23,7 +26,7 @@ class ExtensionDict:
     is deleted from database.
 
     """
-    __slots__ = ('_xdict', )
+    __slots__ = ('_xdict',)
 
     def __init__(self, xdict: Union[str, 'Dictionary']):
         # 1st loading stage: xdict as string -> handle to dict

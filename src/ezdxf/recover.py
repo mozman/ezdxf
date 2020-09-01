@@ -4,6 +4,7 @@ from typing import (
     TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple, Dict,
 )
 import itertools
+from collections import defaultdict
 import logging
 
 from ezdxf.lldxf import const
@@ -89,6 +90,7 @@ def read(stream: BinaryIO) -> 'Drawing':
 
 class Recover:
     """ Loose coupled recovering tools. """
+
     def __init__(self, loader: Callable = None):
         # different tag loading strategies can be used:
         #  - bytes_loader(): expects a valid low level structure
@@ -107,8 +109,9 @@ class Recover:
         sections = recover_tool.rebuild_sections(tags)
         recover_tool.load_section_dict(sections)
         tables = recover_tool.section_dict.get('TABLES')
-        recover_tool.rebuild_tables(tables)
-        recover_tool.merge_tables(tables)
+        if tables:
+            tables = recover_tool.rebuild_tables(tables)
+            recover_tool.section_dict['TABLES'] = tables
         return recover_tool
 
     def load_tags(self, stream: BinaryIO) -> Iterable[DXFTag]:
@@ -212,17 +215,41 @@ class Recover:
         self.rescue_orphaned_header_vars(header, orphans)
         _build_section_dict(section_dict)
 
-    def rebuild_tables(self, tables: List) -> None:
-        """ Rebuild TABLES section:
+    def rebuild_tables(self, tables: List[Tags]) -> List[Tags]:
+        """ Rebuild TABLES section. """
 
-        - remove tags "outside" of tables
+        def append_table(name: str):
+            if name not in content:
+                return
 
-        """
-        pass
+            head = heads.get(name)
+            if head:
+                tables.append(head)
+            else:
+                # todo: new table head needs a valid handle
+                tables.append(Tags([DXFTag(0, 'TABLE'), DXFTag(2, name)]))
+            tables.extend(content[name])
+            tables.append(Tags([DXFTag(0, 'ENDTAB')]))
 
-    def merge_tables(self, tables: List) -> None:
-        """ Merge TABLES of same type. """
-        pass
+        heads = dict()
+        content = defaultdict(list)
+        valid_tables = set(table_order)
+
+        for entry in tables:
+            name = entry[0].value.upper()
+            if name == 'TABLE':
+                try:
+                    table_name = entry[1].value.upper()
+                except (IndexError, AttributeError):
+                    pass
+                else:
+                    heads[table_name] = entry
+            elif name in valid_tables:
+                content[name].append(entry)
+        tables = [Tags([DXFTag(0, 'SECTION'), DXFTag(2, 'TABLES')])]
+        for name in table_order:
+            append_table(name)
+        return tables
 
     def rescue_orphaned_header_vars(
             self,
@@ -237,6 +264,19 @@ class Recover:
                 header.append(var_name)
                 header.append(tag)
                 var_name = None
+
+
+table_order = [
+    'VPORT',
+    'LTYPE',
+    'LAYER',
+    'STYLE',
+    'VIEW',
+    'UCS',
+    'APPID',
+    'DIMSTYLE',
+    'BLOCK_RECORD',
+]
 
 
 def safe_tag_loader(stream: BinaryIO,

@@ -2,39 +2,44 @@
 #  License: MIT License
 import os
 import pytest
+import random
 from ezdxf import recover
 from ezdxf.lldxf.tagger import tag_compiler, ascii_tags_loader
 
 BASEDIR = os.path.dirname(__file__)
 DATADIR = 'data'
+RECOVER1 = 'recover01.dxf'
+RECOVER2 = 'recover02.dxf'
 
 
-@pytest.fixture(params=['recover01.dxf'])
-def filename01(request):
-    filename = os.path.join(BASEDIR, DATADIR, request.param)
+def fullpath(name):
+    filename = os.path.join(BASEDIR, DATADIR, name)
     if not os.path.exists(filename):
-        pytest.skip('File {} not found.'.format(filename))
+        pytest.skip(f'File {filename} not found.')
     return filename
 
 
 @pytest.fixture
-def tags01(filename01):
+def tags01():
+    filename = fullpath(RECOVER1)
     tool = recover.Recover()
-    with open(filename01, 'rb') as fp:
+    with open(filename, 'rb') as fp:
         return list(tool.load_tags(fp))
 
 
-def test_bytes_loader(filename01):
-    with open(filename01, 'rb') as fp:
+def test_bytes_loader():
+    filename = fullpath(RECOVER1)
+    with open(filename, 'rb') as fp:
         tags = list(recover.bytes_loader(fp))
     assert len(tags) == 14736
 
 
-def test_safe_tag_loader(filename01):
-    with open(filename01, 'rt', encoding='cp1252') as fp:
+def test_safe_tag_loader():
+    filename = fullpath(RECOVER1)
+    with open(filename, 'rt', encoding='cp1252') as fp:
         expected = list(tag_compiler(iter(ascii_tags_loader(fp))))
 
-    with open(filename01, 'rb') as fp:
+    with open(filename, 'rb') as fp:
         tags = list(recover.safe_tag_loader(fp))
 
     assert len(tags) == len(expected)
@@ -62,8 +67,52 @@ def test_build_section_dict(tags01):
     assert len(tool.section_dict['ENTITIES']) == 1505
 
 
-def test_readfile_01(filename01):
-    doc = recover.readfile(filename01)
+def test_readfile_recover01_dxf():
+    doc = recover.readfile(fullpath(RECOVER1))
     assert doc.dxfversion == 'AC1009'
     auditor = doc.audit()
     assert auditor.has_errors is False
+
+
+@pytest.fixture
+def tags02():
+    filename = fullpath(RECOVER2)
+    tool = recover.Recover()
+    with open(filename, 'rb') as fp:
+        return list(tool.load_tags(fp))
+
+
+def test_rebuild_tables(tags02):
+    recover_tool = recover.Recover()
+    sections = recover_tool.rebuild_sections(tags02)
+    recover_tool.load_section_dict(sections)
+    tables = recover_tool.section_dict.get('TABLES')
+    random.shuffle(tables)
+
+    tables = recover_tool.rebuild_tables(tables)
+    assert tables[0] == [(0, 'SECTION'), (2, 'TABLES')]
+    assert tables[1][0] == (0, 'TABLE')
+    assert tables[1][1] == (2, 'VPORT')
+    assert tables[2][0] == (0, 'VPORT')
+    assert tables[3][0] == (0, 'ENDTAB')
+
+    assert tables[4][0] == (0, 'TABLE')
+    assert tables[4][1] == (2, 'LTYPE')
+    assert tables[5][0] == (0, 'LTYPE')
+    assert tables[8][0] == (0, 'ENDTAB')
+
+    assert tables[-5][0] == (0, 'TABLE')
+    assert tables[-5][1] == (2, 'BLOCK_RECORD')
+    assert tables[-4][0] == (0, 'BLOCK_RECORD')
+    assert tables[-1][0] == (0, 'ENDTAB')
+
+
+def test_readfile_recover02_dxf():
+    doc = recover.readfile(fullpath(RECOVER2))
+    assert doc.dxfversion == 'AC1032'
+    auditor = doc.audit()
+    assert auditor.has_errors is False
+
+    table_head = doc.block_records.head
+    assert table_head.dxf.handle is not None
+    assert table_head.dxf.handle in doc.entitydb

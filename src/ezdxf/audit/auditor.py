@@ -34,6 +34,7 @@ class AuditError(IntEnum):
     MISSING_REQUIRED_SEQEND = 107
     ORPHANED_LAYOUT_ENTITY = 108
     ORPHANED_PAPER_SPACE_BLOCK_RECORD_ENTITY = 109
+    INVALID_TABLE_HANDLE = 110
 
     # DXF entity property errors:
     INVALID_ENTITY_HANDLE = 201
@@ -160,6 +161,7 @@ class Auditor:
         # Check database integrity:
         self.doc.entitydb.audit(self)
         self.check_root_dict()
+        self.check_table_heads()
         self.audit_all_database_entities()
         self.doc.groups.audit(self)
         self.check_block_reference_cycles()
@@ -192,6 +194,31 @@ class Auditor:
                     message=f'Missing root dict entry: {name}',
                     dxf_entity=root_dict,
                 )
+
+    def check_table_heads(self) -> None:
+        def fix_table_head(table):
+            head = table.head
+            head.dxf.owner = '0'
+            handle = head.dxf.handle
+            if handle is None or handle == '0':
+                # Entity database does not assign new handle:
+                head.dxf.handle = self.entitydb.next_handle()
+                self.entitydb.add(head)
+                self.fixed_error(
+                    code=AuditError.INVALID_TABLE_HANDLE,
+                    message=f'Fixed invalid table handle in {table.name}',
+                )
+
+        table_section = self.doc.tables
+        fix_table_head(table_section.viewports)
+        fix_table_head(table_section.linetypes)
+        fix_table_head(table_section.layers)
+        fix_table_head(table_section.styles)
+        fix_table_head(table_section.views)
+        fix_table_head(table_section.ucs)
+        fix_table_head(table_section.appids)
+        fix_table_head(table_section.dimstyles)
+        fix_table_head(table_section.block_records)
 
     def audit_all_database_entities(self) -> None:
         """ Audit all entities stored in the entity database. """
