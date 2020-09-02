@@ -1,7 +1,7 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
 from typing import (
-    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple
+    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple,
 )
 import itertools
 from collections import defaultdict
@@ -54,6 +54,7 @@ def read(stream: BinaryIO) -> Tuple['Drawing', 'Auditor']:
     return doc, doc.audit()
 
 
+# noinspection PyMethodMayBeStatic
 class Recover:
     """ Loose coupled recovering tools. """
 
@@ -101,8 +102,7 @@ class Recover:
                 sections.append(collector)
             else:  # missing SECTION
                 # ignore this tag, it is even not an orphan
-                logger.warning(
-                    'DXF structure error: missing SECTION tag.')
+                logger.warning('DXF structure error: missing SECTION tag.')
             collector = []
             inside_section = False
 
@@ -163,7 +163,13 @@ class Recover:
                 if name in const.MANAGED_SECTIONS:
                     self.section_dict[name] = list(group_tags(section, 0))
 
+        # Last section could be orphaned tags:
         orphans = sections.pop()
+        if orphans and orphans[0] == (0, 'SECTION'):
+            # The last section contains not the orphaned tags:
+            sections.append(orphans)
+            orphans = []
+
         section_dict = dict()
         for section in sections:
             code, name = section[1]
@@ -199,7 +205,7 @@ class Recover:
 
         heads = dict()
         content = defaultdict(list)
-        valid_tables = set(table_order)
+        valid_tables = set(const.TABLE_NAMES_ACAD_ORDER)
 
         for entry in tables:
             name = entry[0].value.upper()
@@ -213,7 +219,7 @@ class Recover:
             elif name in valid_tables:
                 content[name].append(entry)
         tables = [Tags([DXFTag(0, 'SECTION'), DXFTag(2, 'TABLES')])]
-        for name in table_order:
+        for name in const.TABLE_NAMES_ACAD_ORDER:
             append_table(name)
         return tables
 
@@ -230,19 +236,6 @@ class Recover:
                 header.append(var_name)
                 header.append(tag)
                 var_name = None
-
-
-table_order = [
-    'VPORT',
-    'LTYPE',
-    'LAYER',
-    'STYLE',
-    'VIEW',
-    'UCS',
-    'APPID',
-    'DIMSTYLE',
-    'BLOCK_RECORD',
-]
 
 
 def safe_tag_loader(stream: BinaryIO,
@@ -323,6 +316,7 @@ def synced_bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
     detect invalid lines between group code and tag value.
 
     """
+    code = 999
     upper_boundary = MAX_GROUP_CODE + 1
     while True:
         seeking_valid_group_code = True
