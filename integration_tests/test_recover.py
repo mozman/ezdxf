@@ -111,6 +111,22 @@ def test_readfile_recover02_dxf():
     assert doc.dxfversion == 'AC1032'
     assert auditor.has_errors is False
 
-    table_head = doc.block_records.head
-    assert table_head.dxf.handle is not None
-    assert table_head.dxf.handle in doc.entitydb
+    # Auditor should restore deleted BLOCK-RECORD table head:
+    blkrec_head = doc.block_records.head
+    assert blkrec_head.dxf.handle is not None
+    assert blkrec_head.dxf.handle in doc.entitydb
+
+    # Auditor should update/fix BLOCK_RECORD entries owner handle:
+    for entry in doc.block_records:
+        assert entry.dxf.owner == blkrec_head.dxf.handle, \
+            'Auditor() should update table-entry owner handle.'
+
+    # Auditor should restore invalid VPORT table-head owner handle:
+    vport_head = doc.viewports.head
+    assert vport_head.dxf.owner == '0', \
+        'Auditor() should repair invalid table-head owner handle.'
+
+    # Auditor should fix invalid VPORT table-entry owner handle:
+    vport = doc.viewports.get('*Active')[0]
+    assert vport.dxf.owner == vport_head.dxf.handle, \
+        'Auditor() should update table-entry owner handle.'

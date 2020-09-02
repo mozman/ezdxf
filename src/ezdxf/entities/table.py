@@ -30,9 +30,6 @@ class TableHead(DXFEntity):
     """ The table head structure is only maintained for export and not for
     internal usage, ezdxf ignores an inconsistent table head at runtime.
 
-    A table integrity check (audit) is not necessary, because ezdxf (should)
-    export only valid table structures (table head).
-
     """
     DXFTYPE = 'TABLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table)

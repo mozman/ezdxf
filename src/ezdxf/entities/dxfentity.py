@@ -585,7 +585,7 @@ class DXFEntity:
 
     def audit(self, auditor: 'Auditor') -> None:
         """ Validity check. (internal API) """
-        # do not check owner -> DXFGraphic(), DXFObject()
+        # Important: do not check owner handle! -> DXFGraphic(), DXFObject()
         # check app data
         # check reactors
         # check extension dict

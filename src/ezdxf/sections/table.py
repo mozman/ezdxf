@@ -204,7 +204,7 @@ class Table:
         """ Export DXF representation. (internal API) """
 
         def prologue():
-            self._update_owner_handles()
+            self.update_owner_handles()
             # The table head itself has no owner and is therefore always '0':
             self._head.dxf.owner = '0'
             self._head.dxf.count = len(self)
@@ -226,7 +226,7 @@ class Table:
         content()
         epilogue()
 
-    def _update_owner_handles(self) -> None:
+    def update_owner_handles(self) -> None:
         owner_handle = self._head.dxf.handle
         for entry in self.entries.values():
             entry.dxf.owner = owner_handle
@@ -237,7 +237,7 @@ class Table:
         """
         if self._head.dxf.handle is None:
             self._head.dxf.handle = handle
-            self._update_owner_handles()
+            self.update_owner_handles()
 
 
 class LayerTable(Table):
@@ -337,7 +337,7 @@ class ViewportTable(Table):
         else:
             self.entries[key] = [entry]  # store list of VPORT
 
-    def _update_owner_handles(self) -> None:
+    def update_owner_handles(self) -> None:
         owner_handle = self._head.dxf.handle
         for entries in self.entries.values():
             for entry in entries:

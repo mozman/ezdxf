@@ -161,7 +161,7 @@ class Auditor:
         # Check database integrity:
         self.doc.entitydb.audit(self)
         self.check_root_dict()
-        self.check_table_heads()
+        self.check_tables()
         self.audit_all_database_entities()
         self.doc.groups.audit(self)
         self.check_block_reference_cycles()
@@ -195,9 +195,11 @@ class Auditor:
                     dxf_entity=root_dict,
                 )
 
-    def check_table_heads(self) -> None:
+    def check_tables(self) -> None:
         def fix_table_head(table):
             head = table.head
+            # Another exception for an invalid owner tag, but this usage is
+            # covered in Auditor.check_owner_exist():
             head.dxf.owner = '0'
             handle = head.dxf.handle
             if handle is None or handle == '0':
@@ -208,6 +210,8 @@ class Auditor:
                     code=AuditError.INVALID_TABLE_HANDLE,
                     message=f'Fixed invalid table handle in {table.name}',
                 )
+            # Just to be sure owner handle is valid in every circumstance:
+            table.update_owner_handles()
 
         table_section = self.doc.tables
         fix_table_head(table_section.viewports)
@@ -222,7 +226,9 @@ class Auditor:
 
     def audit_all_database_entities(self) -> None:
         """ Audit all entities stored in the entity database. """
-        # deleting of entities can occur, while auditing
+        # Destruction of entities can occur while auditing.
+        # Best practice to delete entities is to move them into the trashcan:
+        # Auditor.trash(entity)
         db = self.doc.entitydb
         db.locked = True
         for entity in db.values():
@@ -239,12 +245,12 @@ class Auditor:
         if not entity.dxf.hasattr('linetype'):
             return
         linetype = table_key(entity.dxf.linetype)
-        # no table entry in linetypes required
+        # No table entry in linetypes required:
         if linetype in ('bylayer', 'byblock'):
             return
 
         if linetype not in self.doc.linetypes:
-            # linetype is optional so discarding resets to 'BYLAYER'
+            # Defaults to 'BYLAYER'
             entity.dxf.discard('linetype')
             self.fixed_error(
                 code=AuditError.UNDEFINED_LINETYPE,
@@ -260,7 +266,7 @@ class Auditor:
             return
         style = entity.dxf.style
         if style not in self.doc.styles:
-            # text style is optional in TEXT and MTEXT
+            # Defaults to 'Standard'
             entity.dxf.discard('style')
             self.fixed_error(
                 code=AuditError.UNDEFINED_TEXT_STYLE,
@@ -276,7 +282,7 @@ class Auditor:
             return
         dimstyle = entity.dxf.dimstyle
         if dimstyle not in self.doc.dimstyles:
-            # dimstyle attribute is not optional
+            # The dimstyle attribute is not optional:
             entity.dxf.dimstyle = 'Standard'
             self.fixed_error(
                 code=AuditError.UNDEFINED_DIMENSION_STYLE,
@@ -323,7 +329,6 @@ class Auditor:
             )
 
     def check_owner_exist(self, entity: 'DXFEntity') -> None:
-        # tables - owner of table entries - are not stored in the entitydb
         assert self.doc is entity.doc, 'Entity from different DXF document.'
         if not entity.dxf.hasattr('owner'):
             return
@@ -331,15 +336,22 @@ class Auditor:
         owner_handle = entity.dxf.owner
         handle = entity.dxf.get('handle', '0')
         if owner_handle == '0':
-            if handle == self._rootdict_handle:
-                return  # valid '0' handle as owner
-
+            # Root-Dictionary or Table-Head:
+            if handle == self._rootdict_handle or entity.dxftype() == 'TABLE':
+                return  # '0' handle as owner is valid
         if owner_handle not in doc.entitydb:
             if handle == self._rootdict_handle:
                 entity.dxf.owner = '0'
                 self.fixed_error(
                     code=AuditError.INVALID_OWNER_HANDLE,
                     message=f'Fixed invalid owner handle in root {str(self)}.',
+                )
+            elif entity.dxftype() == 'TABLE':
+                name = entity.dxf.get('name', 'UNKNOWN')
+                entity.dxf.owner = '0'
+                self.fixed_error(
+                    code=AuditError.INVALID_OWNER_HANDLE,
+                    message=f'Fixed invalid owner handle for {name} table.',
                 )
             else:
                 self.fixed_error(

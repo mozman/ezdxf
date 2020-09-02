@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.14b1 - dev
+Version 0.14b2 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-14.html
