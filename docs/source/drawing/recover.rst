@@ -27,6 +27,18 @@ afterwards and return the result of this audit process:
 This efforts cost some time, loading the DXF document with :func:`ezdxf.read` or
 :func:`ezdxf.readfile` will be faster.
 
+.. warning::
+
+    This module will load DXF files which have decoding errors, most likely binary
+    data stored in XRECORD entities, these errors are logged as unrecoverable
+    ``AuditError.DECODE_ERRORS`` in the :attr:`Auditor.errors` attribute, but no
+    :class:`DXFStructureError` exception will be raised, because for many use
+    cases this errors can be ignored.
+
+    Despite this are valid DXF files, writing such files back with `ezdxf`
+    may create **invalid** DXF files, or at least some **information will be lost**
+    - handle with care!
+
 Some loading scenarios as examples:
 -----------------------------------
 

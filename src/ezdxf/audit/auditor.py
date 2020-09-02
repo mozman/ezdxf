@@ -35,6 +35,7 @@ class AuditError(IntEnum):
     ORPHANED_LAYOUT_ENTITY = 108
     ORPHANED_PAPER_SPACE_BLOCK_RECORD_ENTITY = 109
     INVALID_TABLE_HANDLE = 110
+    DECODING_ERROR = 111
 
     # DXF entity property errors:
     INVALID_ENTITY_HANDLE = 201
@@ -156,8 +157,16 @@ class Auditor:
                     dxf_entity: 'DXFEntity' = None, data: Any = None) -> None:
         self.fixes.append(ErrorEntry(code, message, dxf_entity, data))
 
+    def purge(self, codes: Set[int]):
+        """ Remove error messages defined by integer error `codes`.
+
+        This is useful to remove errors which are not important for a specific
+        file usage.
+
+        """
+        self.errors = [err for err in self.errors if err.code in codes]
+
     def run(self) -> List[ErrorEntry]:
-        self.reset()
         # Check database integrity:
         self.doc.entitydb.audit(self)
         self.check_root_dict()

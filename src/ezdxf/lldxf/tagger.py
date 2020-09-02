@@ -75,9 +75,15 @@ def ascii_tags_loader(stream: TextIO, skip_comments: bool = True) -> Iterable[DX
     while True:
         try:
             code = stream.readline()
-            value = stream.readline()  # if throws EOFError -> DXFStructureError, but should be handled in higher layers
+            # if throws EOFError -> DXFStructureError, but should be handled in
+            # higher layers
+            value = stream.readline()
         except EOFError:
             return
+        except UnicodeDecodeError:
+            raise DXFStructureError(
+                f'Decoding error in line {line}, try recover module to load '
+                f'DXF document.')
         if code and value:  # StringIO(): empty strings indicates EOF
             try:
                 code = int(code)

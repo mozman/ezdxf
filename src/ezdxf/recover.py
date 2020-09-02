@@ -3,7 +3,6 @@
 from typing import (
     TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple,
 )
-import sys
 import itertools
 from collections import defaultdict
 import logging
@@ -16,11 +15,12 @@ from ezdxf.lldxf.types import (
 )
 from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.tools.codepage import toencoding
+from ezdxf.audit import Auditor, AuditError
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, Auditor, SectionDict
+    from ezdxf.eztypes import Drawing, SectionDict
 
 __all__ = ['read', 'readfile']
 
@@ -35,7 +35,9 @@ def readfile(filename: str) -> Tuple['Drawing', 'Auditor']:
 
     """
     with open(filename, mode='rb') as fp:
-        return read(fp)
+        doc, auditor = read(fp)
+    doc.filename = filename
+    return doc, auditor
 
 
 def read(stream: BinaryIO) -> Tuple['Drawing', 'Auditor']:
@@ -52,7 +54,12 @@ def read(stream: BinaryIO) -> Tuple['Drawing', 'Auditor']:
     recover_tool = Recover.run(stream)
     doc = Drawing()
     doc._load_section_dict(recover_tool.section_dict)
-    return doc, doc.audit()
+
+    auditor = Auditor(doc)
+    for code, msg in recover_tool.errors:
+        auditor.add_error(code, msg)
+    auditor.run()
+    return doc, auditor
 
 
 # noinspection PyMethodMayBeStatic
@@ -69,6 +76,9 @@ class Recover:
         # The main goal of all efforts, a Drawing compatible dict of sections:
         self.section_dict: 'SectionDict' = dict()
 
+        # Store error messages from low level processes
+        self.errors = []
+
     @classmethod
     def run(cls, stream: BinaryIO, loader: Callable = None) -> 'Recover':
         """ Execute the recover process. """
@@ -83,7 +93,7 @@ class Recover:
         return recover_tool
 
     def load_tags(self, stream: BinaryIO) -> Iterable[DXFTag]:
-        return safe_tag_loader(stream, self.tag_loader)
+        return safe_tag_loader(stream, self.tag_loader, self.errors)
 
     def rebuild_sections(self, tags: Iterable[DXFTag]) -> List[List[DXFTag]]:
         """ Collect tags between SECTION and ENDSEC or next SECTION tags as
@@ -240,7 +250,8 @@ class Recover:
 
 
 def safe_tag_loader(stream: BinaryIO,
-                    loader: Callable = None) -> Iterable[DXFTag]:
+                    loader: Callable = None,
+                    errors: List = None) -> Iterable[DXFTag]:
     """ Yields :class:``DXFTag`` objects from a bytes `stream`
     (untrusted external  source), skips all comment tags (group code == 999).
 
@@ -251,6 +262,7 @@ def safe_tag_loader(stream: BinaryIO,
     Args:
         stream: input data stream as bytes
         loader: low level tag loader, default loader is :func:`bytes_loader`
+        errors: list to store error messages
 
     """
     if loader is None:
@@ -261,7 +273,7 @@ def safe_tag_loader(stream: BinaryIO,
     # Apply repair filter:
     tags = repair.tag_reorder_layer(tags)
     tags = repair.filter_invalid_yz_point_codes(tags)
-    return byte_tag_compiler(tags, encoding)
+    return byte_tag_compiler(tags, encoding, errors)
 
 
 def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
@@ -384,7 +396,8 @@ def detect_encoding(tags: Iterable[DXFTag]) -> str:
 
 
 def byte_tag_compiler(tags: Iterable[DXFTag],
-                      encoding=const.DEFAULT_ENCODING) -> Iterable[DXFTag]:
+                      encoding=const.DEFAULT_ENCODING,
+                      errors: List = None) -> Iterable[DXFTag]:
     """ Compiles DXF tag values imported by bytes_loader() into Python types.
 
     Raises DXFStructureError() for invalid float values and invalid coordinate
@@ -396,6 +409,7 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
     Args:
         tags: DXF tag generator, yielding tag values as bytes like bytes_loader()
         encoding: text encoding
+        errors: list to store error messages
 
     Raises:
         DXFStructureError: Found invalid DXF tag or unexpected coordinate order.
@@ -407,10 +421,11 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
         value = tag.value.decode(encoding)
         return f'Invalid tag ({code}, "{value}") near line: {line}.'
 
+    if errors is None:
+        errors = []
     tags = iter(tags)
     undo_tag = None
     line = 0
-    decoding_errors = []
     while True:
         try:
             if undo_tag is not None:
@@ -462,7 +477,10 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                     try:
                         str_ = value.decode(encoding)
                     except UnicodeDecodeError:
-                        decoding_errors.append(line)
+                        errors.append((
+                            AuditError.DECODING_ERROR,
+                            f'Ignore decoding error in line {line}.'
+                        ))
                         str_ = value.decode(encoding, errors='ignore')
                     yield DXFTag(code, str_)
                 else:
@@ -479,7 +497,4 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                         else:
                             raise const.DXFStructureError(error_msg(x))
         except StopIteration:
-            if len(decoding_errors):
-                print(f'{len(decoding_errors)} decoding errors starting at '
-                      f'line: {decoding_errors[0]}')
             return

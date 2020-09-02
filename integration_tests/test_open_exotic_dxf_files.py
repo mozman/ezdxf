@@ -2,6 +2,8 @@
 # License: MIT License
 import pytest
 import ezdxf
+from ezdxf import recover
+from ezdxf.audit import AuditError
 import os
 
 CP936_FILE = os.path.join(ezdxf.EZDXF_TEST_FILES,
@@ -48,9 +50,12 @@ FILE_CIVIL_3D = os.path.join(ezdxf.EZDXF_TEST_FILES,
 @pytest.mark.skipif(not os.path.exists(FILE_CIVIL_3D),
                     reason=f'File {FILE_CIVIL_3D} not found')
 def test_read_civil_3d():
-    doc = ezdxf.readfile(FILE_CIVIL_3D)
+    doc, auditor = recover.readfile(FILE_CIVIL_3D)
     assert doc.filename == FILE_CIVIL_3D
     assert doc.dxfversion == 'AC1032'
+    assert auditor.has_errors is True
+    assert len(auditor.errors) == 238
+    assert auditor.errors[0].code == AuditError.DECODING_ERROR
 
 
 FILE_MAP_3D = os.path.join(ezdxf.EZDXF_TEST_FILES,
