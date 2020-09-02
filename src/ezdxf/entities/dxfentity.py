@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-13
 """ :class:`DXFEntity` is the super class of all DXF entities.
 
 The current entity system uses the features of the latest supported DXF version.
@@ -38,7 +37,7 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes import Auditor, TagWriter, Drawing, DXFAttr
 
-__all__ = ['DXFEntity', 'DXFTagStorage', 'base_class']
+__all__ = ['DXFEntity', 'DXFTagStorage', 'base_class', 'SubclassProcessor']
 
 base_class = DefSubclass(None, {
     'handle': DXFAttr(5),

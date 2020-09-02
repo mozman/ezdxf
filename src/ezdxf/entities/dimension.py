@@ -194,6 +194,7 @@ acdb_dimension_dummy = DefSubclass('AcDbDimensionDummy', {
 })
 
 
+# noinspection PyUnresolvedReferences
 class OverrideMixin:
     def get_dim_style(self) -> 'DimStyle':
         """ Returns the associated :class:`DimStyle` entity. """
@@ -247,7 +248,7 @@ class OverrideMixin:
             try:
                 ltype = self.doc.linetypes.get(linetype_name)
             except DXFTableEntryError:
-                logger.info(
+                logger.warning(
                     f'Required line type "{linetype_name}" does not exist.')
             else:
                 data[attrib_name + '_handle'] = ltype.dxf.handle
@@ -302,13 +303,13 @@ class OverrideMixin:
         dim_style_attributes = self.dim_style_attributes()
         for key, value in data.items():
             if key not in dim_style_attributes:
-                # Ignore unknown attributes
-                logging.debug(f'Ignore unknown DIMSTYLE attribute: "{key}"')
+                logging.warning(f'Ignore unknown DIMSTYLE attribute: "{key}"')
                 continue
             dxf_attr = dim_style_attributes.get(key)
-            if dxf_attr and dxf_attr.code > 0:  # skip internal and virtual tags
+            # Skip internal and virtual tags:
+            if dxf_attr and dxf_attr.code > 0:
                 if dxf_attr.dxfversion > actual_dxfversion:
-                    logging.debug(
+                    logging.warning(
                         f'Unsupported DIMSTYLE attribute "{key}" for '
                         f'DXF version {self.doc.acad_release}'
                     )
@@ -355,7 +356,7 @@ class OverrideMixin:
             try:
                 block_record = db[handle]
             except KeyError:
-                logger.info(
+                logger.warning(
                     f'Required arrow block #{handle} does not exist, '
                     f'ignoring {attrib_name.upper()} override.'
                 )
@@ -372,7 +373,7 @@ class OverrideMixin:
             try:
                 ltype = db[handle]
             except KeyError:
-                logger.info(
+                logger.warning(
                     f'Required line type #{handle} does not exist, '
                     f'ignoring {attrib_name.upper()} override.'
                 )
@@ -381,23 +382,17 @@ class OverrideMixin:
 
         # transform block record handles into block names
         for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
-            try:
-                blkrec_handle = data.pop(attrib_name + '_handle')
-            except KeyError:
-                pass
-            else:
+            blkrec_handle = data.pop(attrib_name + '_handle', None)
+            if blkrec_handle:
                 set_arrow_name(attrib_name, blkrec_handle)
 
-        # replace 'dimtxsty_handle' attribute by 'dimtxsty_handle'
-        try:
-            dimtxsty_handle = data.pop('dimtxsty_handle')
-        except KeyError:
-            pass
-        else:
+        # replace 'dimtxsty_handle' attribute by 'dimtxsty'
+        dimtxsty_handle = data.pop('dimtxsty_handle', None)
+        if dimtxsty_handle:
             try:
                 txtstyle = db[dimtxsty_handle]
             except KeyError:
-                logger.info(
+                logger.warning(
                     f'Required text style #{dimtxsty_handle} does not exist, '
                     f'ignoring DIMTXSTY override.'
                 )
@@ -406,11 +401,8 @@ class OverrideMixin:
 
         # transform linetype handles into LTYPE entry names
         for attrib_name in ('dimltype', 'dimltex1', 'dimltex2'):
-            try:
-                handle = data.pop(attrib_name + '_handle')
-            except KeyError:
-                pass
-            else:
+            handle = data.pop(attrib_name + '_handle', None)
+            if handle:
                 set_ltype_name(attrib_name, handle)
         return data
 
@@ -586,9 +578,8 @@ class Dimension(DXFGraphic, OverrideMixin):
             feature_location = Vector(self.dxf.defpoint2)
             return feature_location - origin
         else:
-            logger.debug(
-                f"get_measurement() - unknown DIMENSION type {self.dimtype}.")
-            return 0
+            # todo: add ARC_DIMENSION dimtype=8 support
+            raise TypeError(f"Unknown DIMENSION type {self.dimtype}.")
 
     def override(self) -> 'DimStyleOverride':
         """ Returns the :class:`~ezdxf.entities.DimStyleOverride` object. """
