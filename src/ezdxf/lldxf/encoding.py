@@ -17,7 +17,7 @@ def dxf_backslash_replace(exc: Exception):
                 s += "\\U+%08x" % ord(c)
         return s, exc.end
     else:
-        raise TypeError("can't handle %s" % exc.__name__)
+        raise TypeError("Can't handle %s" % exc.__class__.__name__)
 
 
 def encode(unicode: str, encoding: str = 'cp1252', ignore_error: bool = False):

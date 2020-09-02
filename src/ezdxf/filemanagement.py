@@ -88,7 +88,7 @@ def read(stream: TextIO, legacy_mode: bool = False) -> 'Drawing':
     if legacy_mode:
         warnings.warn(
             '"legacy_mode" is deprecated (removed in v0.16), replace call by '
-            'ezdxf.recover.readfile().',
+            'recover.read().',
             DeprecationWarning
         )
     return Drawing.read(stream, legacy_mode=legacy_mode)
@@ -133,7 +133,7 @@ def readfile(filename: str, encoding: str = None,
     if legacy_mode:
         warnings.warn(
             '"legacy_mode" is deprecated (removed in v0.16), replace call by '
-            'ezdxf.recover.read().', DeprecationWarning
+            'recover.readfile().', DeprecationWarning
         )
 
     filename = str(filename)
@@ -144,7 +144,7 @@ def readfile(filename: str, encoding: str = None,
             return Drawing.load(loader, legacy_mode)
 
     if not is_dxf_file(filename):
-        raise IOError("File '{}' is not a DXF file.".format(filename))
+        raise IOError(f"File '{filename}' is not a DXF file.")
 
     info = dxf_file_info(filename)
     if encoding is not None:

@@ -356,7 +356,7 @@ class Auditor:
             else:
                 self.fixed_error(
                     code=AuditError.INVALID_OWNER_HANDLE,
-                    message=f'Deleted {str(entity)} entity without valid owner '
+                    message=f'Deleted {str(entity)} entity with invalid owner '
                             f'handle #{owner_handle}.',
                 )
                 self.trash(doc.entitydb.get(handle))

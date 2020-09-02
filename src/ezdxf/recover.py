@@ -3,6 +3,7 @@
 from typing import (
     TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple,
 )
+import sys
 import itertools
 from collections import defaultdict
 import logging
@@ -409,6 +410,7 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
     tags = iter(tags)
     undo_tag = None
     line = 0
+    decoding_errors = []
     while True:
         try:
             if undo_tag is not None:
@@ -457,7 +459,12 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                     if code == 0:
                         # remove white space from structure tags
                         value = x.value.strip()
-                    yield DXFTag(code, value.decode(encoding))
+                    try:
+                        str_ = value.decode(encoding)
+                    except UnicodeDecodeError:
+                        decoding_errors.append(line)
+                        str_ = value.decode(encoding, errors='ignore')
+                    yield DXFTag(code, str_)
                 else:
                     try:
                         # fast path for int and float
@@ -472,4 +479,7 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                         else:
                             raise const.DXFStructureError(error_msg(x))
         except StopIteration:
+            if len(decoding_errors):
+                print(f'{len(decoding_errors)} decoding errors starting at '
+                      f'line: {decoding_errors[0]}')
             return
