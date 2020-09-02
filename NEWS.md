@@ -81,6 +81,7 @@ Version 0.14b2 - dev
 - REMOVE: `filter_stack` argument in `ezdxf.read()` and `ezdxf.readfile()` 
 - BUGFIX: Set `non-constant-attribs` flag (2) in BLOCK at DXF export if non 
   constant ATTDEF entities are present.
+- BUGFIX: DXF R2018 - `HATCH` extrusion vector (210) is mandatory?
 
 Version 0.13.1 - 2020-07-18
 ---------------------------

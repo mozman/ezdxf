@@ -49,7 +49,7 @@ acdb_hatch = DefSubclass('AcDbHatch', {
     'elevation': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
 
     'extrusion': DXFAttr(
-        210, xtype=XType.point3d, default=Z_AXIS, optional=True,
+        210, xtype=XType.point3d, default=Z_AXIS,
         validator=validator.is_not_null_vector,
         fixer=RETURN_DEFAULT,
     ),
