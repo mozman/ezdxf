@@ -5,7 +5,6 @@ from typing import (
 )
 import itertools
 from collections import defaultdict
-import logging
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf import repair
@@ -20,8 +19,6 @@ from ezdxf.lldxf.types import (
 from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.tools.codepage import toencoding
 from ezdxf.audit import Auditor, AuditError
-
-logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, SectionDict
@@ -62,6 +59,8 @@ def read(stream: BinaryIO) -> Tuple['Drawing', 'Auditor']:
     auditor = Auditor(doc)
     for code, msg in recover_tool.errors:
         auditor.add_error(code, msg)
+    for code, msg in recover_tool.fixes:
+        auditor.fixed_error(code, msg)
     auditor.run()
     return doc, auditor
 
@@ -82,6 +81,7 @@ class Recover:
 
         # Store error messages from low level processes
         self.errors = []
+        self.fixes = []
 
     @classmethod
     def run(cls, stream: BinaryIO, loader: Callable = None) -> 'Recover':
@@ -117,14 +117,20 @@ class Recover:
                 sections.append(collector)
             else:  # missing SECTION
                 # ignore this tag, it is even not an orphan
-                logger.warning('DXF structure error: missing SECTION tag.')
+                self.fixes.append((
+                    AuditError.MISSING_SECTION_TAG,
+                    'DXF structure error: missing SECTION tag.'
+                ))
             collector = []
             inside_section = False
 
         def open_section():
             nonlocal inside_section
             if inside_section:  # missing ENDSEC
-                logger.warning('DXF structure error: missing ENDSEC tag.')
+                self.fixes.append((
+                    AuditError.MISSING_ENDSEC_TAG,
+                    'DXF structure error: missing ENDSEC tag.'
+                ))
                 close_section()
             collector.append(tag)
             inside_section = True
@@ -136,7 +142,10 @@ class Recover:
                 close_section()
             elif value == 'EOF':
                 if inside_section:
-                    logger.warning('DXF structure error: missing ENDSEC tag.')
+                    self.fixes.append((
+                        AuditError.MISSING_ENDSEC_TAG,
+                        'DXF structure error: missing ENDSEC tag.'
+                    ))
                     close_section()
             else:
                 collect()
@@ -145,9 +154,11 @@ class Recover:
             if inside_section:
                 collector.append(tag)
             else:
-                logger.warning(
+                self.fixes.append((
+                    AuditError.FOUND_TAG_OUTSIDE_SECTION,
                     f'DXF structure error: found tag outside section: '
-                    f'({code}, {value})')
+                    f'({code}, {value})'
+                ))
                 orphans.append(tag)
 
         orphans = []
@@ -191,9 +202,10 @@ class Recover:
             if code == 2:
                 add_section(name, section)
             else:  # invalid section name tag e.g. (2, "HEADER")
-                logger.warning(
-                    'DXF structure error: missing section name tag, ignore '
-                    'section.')
+                self.fixes.append((
+                    AuditError.MISSING_SECTION_NAME_TAG,
+                    'DXF structure error: missing section name tag, ignore section.'
+                ))
 
         header = section_dict.setdefault('HEADER', [
             DXFTag(0, 'SECTION'),
