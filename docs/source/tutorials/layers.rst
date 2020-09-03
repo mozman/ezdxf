@@ -95,7 +95,7 @@ Delete a layer definition:
 
     doc.layers.remove('MyLines')
 
-This just deletes the layer definition, all DXF entity with the DXF attribute layer set to ``'MyLines'`` are still there,
+This just deletes the layer definition, all DXF entities with the DXF attribute layer set to ``'MyLines'`` are still there,
 but if they inherit color and/or linetype from the layer definition they will be drawn now with linetype ``'Continuous'``
 and color ``1``.
 
