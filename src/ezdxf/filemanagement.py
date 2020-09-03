@@ -57,7 +57,7 @@ def new(dxfversion: str = DXF2013,
     return doc
 
 
-def read(stream: TextIO, legacy_mode: bool = False) -> 'Drawing':
+def read(stream: TextIO) -> 'Drawing':
     """ Read a DXF document from a text-stream. Open stream in text mode
     (``mode='rt'``) and set correct text encoding, the stream requires at least
     a :meth:`readline` method.
@@ -72,8 +72,6 @@ def read(stream: TextIO, legacy_mode: bool = False) -> 'Drawing':
 
     Args:
         stream: input text stream opened with correct encoding
-        legacy_mode: adds an extra trouble shooting import layer if ``True``
-            (deprecated)
 
     Raises:
         DXFStructureError: for invalid DXF structure
@@ -85,17 +83,10 @@ def read(stream: TextIO, legacy_mode: bool = False) -> 'Drawing':
 
     """
     from ezdxf.document import Drawing
-    if legacy_mode:
-        warnings.warn(
-            '"legacy_mode" is deprecated (removed in v0.16), replace call by '
-            'recover.read().',
-            DeprecationWarning
-        )
-    return Drawing.read(stream, legacy_mode=legacy_mode)
+    return Drawing.read(stream)
 
 
-def readfile(filename: str, encoding: str = None,
-             legacy_mode: bool = False) -> 'Drawing':
+def readfile(filename: str, encoding: str = None) -> 'Drawing':
     """  Read the DXF document `filename` from the file-system.
 
     This is the preferred method to load existing ASCII or Binary DXF files,
@@ -114,8 +105,6 @@ def readfile(filename: str, encoding: str = None,
         filename: filename of the ASCII- or Binary DXF document
         encoding: use ``None`` for auto detect (default), or set a specific
             encoding like "utf-8", argument is ignored for Binary DXF files
-        legacy_mode: adds an extra trouble shooting import layer if ``True``
-            (deprecated)
 
     Raises:
         IOError: File `filename` is not a DXF file or does not exist.
@@ -130,18 +119,13 @@ def readfile(filename: str, encoding: str = None,
     from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
     from ezdxf.tools.codepage import is_supported_encoding
     from ezdxf.lldxf.tagger import binary_tags_loader
-    if legacy_mode:
-        warnings.warn(
-            '"legacy_mode" is deprecated (removed in v0.16), replace call by '
-            'recover.readfile().', DeprecationWarning
-        )
 
     filename = str(filename)
     if is_binary_dxf_file(filename):
         with open(filename, 'rb') as fp:
             data = fp.read()
             loader = binary_tags_loader(data)
-            return Drawing.load(loader, legacy_mode)
+            return Drawing.load(loader)
 
     if not is_dxf_file(filename):
         raise IOError(f"File '{filename}' is not a DXF file.")
@@ -151,7 +135,7 @@ def readfile(filename: str, encoding: str = None,
         # override default encodings if absolute necessary
         info.encoding = encoding
     with open(filename, mode='rt', encoding=info.encoding) as fp:
-        doc = read(fp, legacy_mode=legacy_mode)
+        doc = read(fp)
 
     doc.filename = filename
     if encoding is not None and is_supported_encoding(encoding):

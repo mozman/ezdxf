@@ -1,5 +1,4 @@
 # Purpose: DXF Pretty Printer
-# Created: 16.07.2015
 # Copyright (c) 2015-2020, Manfred Moitzi
 # License: MIT License
 from typing import Iterable
@@ -20,7 +19,8 @@ from ezdxf.lldxf.repair import tag_reorder_layer
 import webbrowser
 
 
-def readfile(filename: str, legacy_mode: bool = False, compile_tags=True, is_binary_dxf=False) -> Iterable[DXFTag]:
+def readfile(filename: str, legacy_mode: bool = False, compile_tags=True,
+             is_binary_dxf=False) -> Iterable[DXFTag]:
     if is_binary_dxf:
         with open(filename, mode='rb') as fp:
             data = fp.read()
@@ -33,7 +33,7 @@ def readfile(filename: str, legacy_mode: bool = False, compile_tags=True, is_bin
     if legacy_mode:
         tagger = tag_reorder_layer(tagger)
     if compile_tags:
-        tagger = tag_compiler(tagger)
+        tagger = tag_compiler(iter(tagger))
     return tagger
 
 
@@ -41,7 +41,7 @@ def pretty_print(filename: Path, is_binary_dxf=False):
     try:
         tagger = readfile(str(filename), legacy_mode=True, is_binary_dxf=is_binary_dxf)
     except IOError:
-        print("Unable to read DXF file '{}'.".format(filename))
+        print(f"Unable to read DXF file '{filename}'.")
         sys.exit(1)
     except DXFError as e:
         print(str(e))
@@ -52,15 +52,21 @@ def pretty_print(filename: Path, is_binary_dxf=False):
         with io.open(html_filename, mode='wt', encoding='utf-8') as fp:
             fp.write(dxfpp(tagger, filename.name))
     except IOError:
-        print("IOError: can not write file '{}'.".format(html_filename))
+        print(f"IOError: can not write file '{html_filename}'.")
     return html_filename
 
 
-def raw_pretty_print(filename: Path, compile_tags=True, legacy_mode=False, is_binary_dxf=False):
+def raw_pretty_print(filename: Path, compile_tags=True, legacy_mode=False,
+                     is_binary_dxf=False):
     try:
-        tagger = readfile(str(filename), legacy_mode=legacy_mode, compile_tags=compile_tags, is_binary_dxf=is_binary_dxf)
+        tagger = readfile(
+            str(filename),
+            legacy_mode=legacy_mode,
+            compile_tags=compile_tags,
+            is_binary_dxf=is_binary_dxf
+        )
     except IOError:
-        print("Unable to read DXF file '{}'.".format(filename))
+        print(f"Unable to read DXF file '{filename}'.")
         sys.exit(1)
     except DXFError as e:
         print(str(e))
@@ -71,9 +77,9 @@ def raw_pretty_print(filename: Path, compile_tags=True, legacy_mode=False, is_bi
         with io.open(html_filename, mode='wt', encoding='utf-8') as html:
             html.write(rawpp(tagger, str(filename), binary=is_binary_dxf))
     except IOError:
-        print("IOError: can not write file '{}'.".format(html_filename))
+        print(f"IOError: can not write file '{filename}'.")
     except DXFStructureError as e:
-        print("DXFStructureError: {}".format(str(e)))
+        print(f"DXFStructureError: {str(e)}")
     return html_filename
 
 
@@ -98,7 +104,8 @@ def main():
     parser.add_argument(
         '-x', '--nocompile',
         action='store_true',
-        help="don't compile points coordinates into single tags (only in raw mode)",
+        help="don't compile points coordinates into single tags "
+             "(only in raw mode)",
     )
     parser.add_argument(
         '-l', '--legacy',
@@ -109,7 +116,8 @@ def main():
         '-s', '--sections',
         action='store',
         default='hctbeo',
-        help="choose sections to include and their order, h=HEADER, c=CLASSES, t=TABLES, b=BLOCKS, e=ENTITIES, o=OBJECTS",
+        help="choose sections to include and their order, h=HEADER, c=CLASSES, "
+             "t=TABLES, b=BLOCKS, e=ENTITIES, o=OBJECTS",
     )
     args = parser.parse_args(sys.argv[1:])
 
@@ -117,7 +125,7 @@ def main():
     options.check_entity_tag_structures = False
     for filename in args.files:
         if not Path(filename).exists():
-            print("File '{}' not found.".format(filename))
+            print(f"File '{filename}' not found.")
             continue
 
         if is_binary_dxf_file(filename):
@@ -129,13 +137,21 @@ def main():
                 continue
 
         if args.raw:
-            html_path = raw_pretty_print(Path(filename), compile_tags=not args.nocompile, legacy_mode=args.legacy, is_binary_dxf=binary_dxf)
+            html_path = raw_pretty_print(
+                Path(filename),
+                compile_tags=not args.nocompile,
+                legacy_mode=args.legacy,
+                is_binary_dxf=binary_dxf
+            )
         else:
-            html_path = pretty_print(Path(filename), is_binary_dxf=binary_dxf)  # legacy mode is always used
+            html_path = pretty_print(
+                Path(filename),
+                is_binary_dxf=binary_dxf
+            )  # legacy mode is always used
 
-        print("dxfpp created '{}'".format(html_path))
+        print(f"dxfpp created '{html_path}'")
         if args.open:
-            webbrowser.open(html_path)
+            webbrowser.open(str(html_path))
 
 
 if __name__ == "__main__":

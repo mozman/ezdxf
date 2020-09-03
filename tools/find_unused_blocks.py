@@ -1,10 +1,9 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 
 import ezdxf
+from ezdxf import recover
 from pathlib import Path
-
-BASE_DXF_FOLDER = r'D:\source\dxftest'
 
 
 def _find_unused_blocks(doc):
@@ -12,7 +11,8 @@ def _find_unused_blocks(doc):
     # block names are case insensitive!
     used_block_names = set(entity.dxf.name.lower() for entity in references)
     # exclude layout blocks, they are not referenced by any DXF entity
-    existing_blocks = set(block.name.lower() for block in doc.blocks if not block.is_layout_block)
+    existing_blocks = set(block.name.lower() for block in doc.blocks
+                          if not block.is_layout_block)
     not_referenced_blocks = existing_blocks - used_block_names
     references_without_definition = used_block_names - existing_blocks
 
@@ -27,25 +27,27 @@ def _find_unused_blocks(doc):
 
 def find_unused_blocks(filename):
     try:
-        doc = ezdxf.readfile(filename, legacy_mode=True)
+        doc = ezdxf.readfile(filename)
     except IOError:
-        pass
-    except ezdxf.DXFError as e:
-        print('\n' + '*' * 40)
-        print('FOUND DXF ERROR: {}'.format(str(e)))
-        print('*' * 40 + '\n')
-    else:
-        _find_unused_blocks(doc)
+        return
+    except ezdxf.DXFStructureError:
+        try:
+            print('Using recover mode.')
+            doc, auditor = recover.readfile(filename)
+        except ezdxf.DXFStructureError:
+            print(f'DXF structure error!')
+            return
+    _find_unused_blocks(doc)
 
 
-def process_dir(folder):
+def process_dir(folder: Path):
     for filename in folder.iterdir():
-        if filename.is_dir():
+        if filename.is_dir() and filename.stem != 'BigFiles':
             process_dir(filename)
         elif filename.match('*.dxf'):
-            print("processing: {}".format(filename))
+            print(f"processing: {filename}")
             find_unused_blocks(filename)
 
 
-process_dir(Path(BASE_DXF_FOLDER))
+process_dir(Path(ezdxf.EZDXF_TEST_FILES))
 

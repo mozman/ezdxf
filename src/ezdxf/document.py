@@ -243,80 +243,29 @@ class Drawing:
         return version
 
     @classmethod
-    def read(cls, stream: TextIO,
-             legacy_mode: bool = False,
-             filter_stack: TFilterStack = None) -> 'Drawing':
+    def read(cls, stream: TextIO) -> 'Drawing':
         """ Open an existing drawing. Package users should use the factory
         function :func:`ezdxf.read`.
 
         Args:
              stream: text stream yielding text (unicode) strings by readline()
-             legacy_mode: apply some low level filters to correct some quirks
-                allowed in legacy (R12) files
-             filter_stack: interface to put filters between reading layers,
-                list of callable filters, for now two levels are supported,
-                after low level tagging (DXFVertex) and after compiling tags to
-                DXFVertex and DXFBinaryTag.
-
-        TFilterStack: Sequence[Sequence[Callable[[Iterable[DXFTag]], Iterable[DXFTag]]]]
-        e.g. [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
 
         """
         from .lldxf.tagger import ascii_tags_loader
         tag_loader = ascii_tags_loader(stream)
-        return cls.load(
-            tag_loader,
-            legacy_mode=legacy_mode,
-            filter_stack=filter_stack,
-        )
+        return cls.load(tag_loader)
 
     @classmethod
-    def load(cls, tag_loader: Iterable['DXFTag'],
-             legacy_mode: bool = False,
-             filter_stack: TFilterStack = None) -> 'Drawing':
+    def load(cls, tag_loader: Iterable['DXFTag']) -> 'Drawing':
         """ Load DXF document from a DXF tag loader, in general an external
         untrusted source.
 
         Args:
             tag_loader: DXF tag loader
-            legacy_mode: apply some low level filters to correct some quirks
-                allowed in legacy (R12) files
-            filter_stack: interface to put filters between reading layers,
-                list of callable filters, for now two levels are supported,
-                after low level tagging (DXFVertex) and after compiling tags to
-                DXFVertex and DXFBinaryTag.
-
-        TFilterStack: Sequence[Sequence[Callable[[Iterable[DXFTag]], Iterable[DXFTag]]]]
-        e.g. [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
 
         """
         from .lldxf.tagger import tag_compiler
-        raw_tag_filters = []
-        compiled_tag_filters = []
-
-        if filter_stack:
-            raw_tag_filters, compiled_tag_filters, *_ = filter_stack
-
-        # legacy mode overrides filter_stack
-        if legacy_mode:
-            raw_tag_filters = [repair.tag_reorder_layer,
-                               repair.filter_invalid_yz_point_codes]
-            compiled_tag_filters = []
-
-        # low level tag compiler, creates simple tuple like tags DXFTag
-        # (group code, value)
-
-        # apply low level filters
-        for _filter in raw_tag_filters:
-            tag_loader = _filter(tag_loader)
-
-        # compiles vertices and binary tags into DXFVertex() or DXFBinaryTag()
         tag_loader = tag_compiler(tag_loader)
-
-        # apply compiled tags filter
-        for _filter in compiled_tag_filters:
-            tag_loader = _filter(tag_loader)
-
         doc = cls()
         doc._load(tag_loader)
         return doc

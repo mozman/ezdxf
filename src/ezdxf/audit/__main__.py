@@ -15,7 +15,7 @@ def audit(filename: str, safe=False) -> None:
             print('Running in recover mode.')
             doc, auditor = recover.readfile(filename)
         else:
-            doc = ezdxf.readfile(filename, legacy_mode=True)
+            doc = ezdxf.readfile(filename)
             auditor = doc.audit()
     except IOError:
         print(f"Unable to read DXF file '{filename}'.")
