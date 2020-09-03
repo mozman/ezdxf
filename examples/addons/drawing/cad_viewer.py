@@ -8,17 +8,19 @@ import os
 import signal
 import sys
 from functools import partial
-from typing import Optional, Iterable, Tuple, List
+from typing import Iterable, Tuple, List
 
 from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
+from ezdxf import recover
 from ezdxf.addons import odafc
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFParentStack
 from ezdxf.document import Drawing
+from ezdxf.audit import Auditor
 from ezdxf.entities import DXFGraphic
 from ezdxf.lldxf.const import DXFStructureError
 
@@ -196,16 +198,21 @@ class CadViewer(qw.QMainWindow):
             try:
                 if os.path.splitext(path)[1].lower() == '.dwg':
                     doc = odafc.readfile(path)
+                    auditor = doc.audit()
                 else:
-                    doc = ezdxf.readfile(path)
-                self.set_document(doc)
+                    try:
+                        doc = ezdxf.readfile(path)
+                    except ezdxf.DXFError:
+                        doc, auditor = recover.readfile(path)
+                    else:
+                        auditor = doc.audit()
+                self.set_document(doc, auditor)
             except IOError as e:
                 qw.QMessageBox.critical(self, 'Loading Error', str(e))
             except DXFStructureError as e:
                 qw.QMessageBox.critical(self, 'DXF Structure Error', f'Invalid DXF file "{path}": {str(e)}')
 
-    def set_document(self, document: Drawing):
-        auditor = document.audit()
+    def set_document(self, document: Drawing, auditor: Auditor):
         error_count = len(auditor.errors)
         if error_count > 0:
             ret = qw.QMessageBox.question(
@@ -345,12 +352,21 @@ def _main():
 
     v = CadViewer()
     if args.cad_file is not None:
-        v.set_document(ezdxf.readfile(args.cad_file))
+        try:
+            doc, auditor = recover.readfile(args.cad_file)
+        except IOError:
+            print(f'Not a DXF file or a generic I/O error: {args.cad_file}')
+            sys.exit(1)
+        except ezdxf.DXFStructureError:
+            print(f'Invalid or corrupted DXF file: {args.cad_file}')
+            sys.exit(2)
+
+        v.set_document(doc, auditor)
         try:
             v.draw_layout(args.layout)
         except KeyError:
             print(f'could not find layout "{args.layout}". Valid layouts: {[l.name for l in v.doc.layouts]}')
-            sys.exit(1)
+            sys.exit(3)
     sys.exit(app.exec_())
 
 
