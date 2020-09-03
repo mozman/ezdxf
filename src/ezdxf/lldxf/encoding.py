@@ -41,5 +41,9 @@ def _decode(s: str) -> str:
         return s
 
 
-def decode_dxf_backslash_unicode(s: str):
+def has_dxf_backslash_encoding(s: str) -> bool:
+    return bool(re.search(BACKSLASH_UNICODE, s))
+
+
+def decode_dxf_backslash_encoding(s: str):
     return ''.join(_decode(part) for part in re.split(BACKSLASH_UNICODE, s))

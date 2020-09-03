@@ -9,6 +9,10 @@ import logging
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf import repair
+from ezdxf.lldxf.encoding import (
+    has_dxf_backslash_encoding,
+    decode_dxf_backslash_encoding,
+)
 from ezdxf.lldxf.types import (
     DXFTag, DXFVertex, DXFBinaryTag, POINT_CODES, BINARY_DATA, TYPE_TABLE,
     MAX_GROUP_CODE,
@@ -473,7 +477,7 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                 if type_ is str:
                     if code == 0:
                         # remove white space from structure tags
-                        value = x.value.strip()
+                        value = x.value.strip().upper()
                     try:
                         str_ = value.decode(encoding)
                     except UnicodeDecodeError:
@@ -482,6 +486,12 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                             f'Ignore decoding error in line {line}.'
                         ))
                         str_ = value.decode(encoding, errors='ignore')
+
+                    # Convert DXF unicode notation "\U+xxxx" to unicode,
+                    # but exclude structure tags (code>0):
+                    if code and has_dxf_backslash_encoding(str_):
+                        str_ = decode_dxf_backslash_encoding(str_)
+
                     yield DXFTag(code, str_)
                 else:
                     try:

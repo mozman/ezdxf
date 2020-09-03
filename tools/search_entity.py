@@ -13,7 +13,7 @@ def has_dxf_entity(filename, entity_name):
         doc = ezdxf.readfile(filename)
     except IOError:
         return False
-    except ezdxf.DXFStructureError:
+    except ezdxf.DXFError:
         try:
             print('Using recover mode.')
             doc, auditor = recover.readfile(filename)

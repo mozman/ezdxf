@@ -8,7 +8,9 @@ Version 0.14b2 - dev
 - Release notes: https://ezdxf.mozman.at/release-v0-14.html
 - NEW: DXF attribute setter validation, some special and undocumented Autodesk 
   table names may raise `ValueError()` exceptions, please report this table 
-  names (layers, linetypes, styles, ...). 
+  names (layers, linetypes, styles, ...). DXF unicode notation "\U+xxxx" raises
+  a `ValueError()` if used as resource names like layer name or text style names, 
+  such files can only be loaded by the new `recover` module.
 - NEW: `addons.drawing.Frontend()` supports width attributes of LWPOLYLINE and 
   2D POLYLINE entities
 - NEW: `TraceBuilder()` a render tool to generate quadrilaterals (TRACE, SOLID 
