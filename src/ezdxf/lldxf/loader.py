@@ -1,27 +1,18 @@
-# Purpose: DXF structure loader and validator
-# Created: 25.01.2018
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 import logging
-from typing import Callable, Dict, Iterable, List, Union, TYPE_CHECKING
+from typing import Dict, Iterable, List, Union, TYPE_CHECKING
 from collections import OrderedDict
 
 from .const import DXFStructureError
 from .tags import group_tags, DXFTag, Tags
 from .extendedtags import ExtendedTags
-from .validator import entity_structure_validator
 from ezdxf.entities import factory
-from ezdxf.options import options
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, Drawing
 
 logger = logging.getLogger('ezdxf')
-
-TagProcessor = Callable[[ExtendedTags], ExtendedTags]
-modern_post_load_tag_processors: Dict[str, TagProcessor] = {}
-legacy_post_load_tag_processors: Dict[str, TagProcessor] = {}
-
 SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
 
 
@@ -136,25 +127,8 @@ def load_dxf_structure(tagger: Iterable[DXFTag],
     return sections
 
 
-EXCLUDE_STRUCTURE_CHECK = {
-    'SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'CLASS', 'ACDSRECORD',
-    'ACDSSCHEMA'
-}
-
-
 def load_dxf_entities(entities: Iterable[Tags]) -> Iterable['DXFEntity']:
-    check_tag_structure = options.check_entity_tag_structures
     for entity in entities:
-        if len(entity) == 0:
-            logger.debug('Ignore empty DXF entity.')
-            continue
-        code, dxftype = entity[0]
-        if code != 0:
-            raise DXFStructureError(
-                f'Invalid first tag in DXF entity, group code={code}.')
-
-        if check_tag_structure and (dxftype not in EXCLUDE_STRUCTURE_CHECK):
-            entity = entity_structure_validator(entity)
         yield factory.load(ExtendedTags(entity))
 
 

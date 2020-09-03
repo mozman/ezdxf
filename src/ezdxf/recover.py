@@ -17,15 +17,18 @@ from ezdxf.lldxf.types import (
     MAX_GROUP_CODE,
 )
 from ezdxf.lldxf.tags import group_tags, Tags
+from ezdxf.lldxf.validator import entity_structure_validator
 from ezdxf.tools.codepage import toencoding
 from ezdxf.audit import Auditor, AuditError
-from ezdxf import options
-
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, SectionDict
 
 __all__ = ['read', 'readfile']
+
+EXCLUDE_STRUCTURE_CHECK = {
+    'SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'ENDBLK', 'SEQEND'
+}
 
 
 def readfile(filename: str) -> Tuple['Drawing', 'Auditor']:
@@ -56,11 +59,7 @@ def read(stream: BinaryIO) -> Tuple['Drawing', 'Auditor']:
     from ezdxf.document import Drawing
     recover_tool = Recover.run(stream)
     doc = Drawing()
-
-    save_check_state = options.check_entity_tag_structures
-    options.check_entity_tag_structures = True
     doc._load_section_dict(recover_tool.section_dict)
-    options.check_entity_tag_structures = save_check_state
 
     auditor = Auditor(doc)
     for code, msg in recover_tool.errors:
@@ -100,6 +99,12 @@ class Recover:
         if tables:
             tables = recover_tool.rebuild_tables(tables)
             recover_tool.section_dict['TABLES'] = tables
+
+        section_dict = recover_tool.section_dict
+        for name, entities in section_dict.items():
+            if name in {'TABLES', 'BLOCKS', 'OBJECTS', 'ENTITIES'}:
+                section_dict[name] = list(recover_tool.check_entities(entities))
+
         return recover_tool
 
     def load_tags(self, stream: BinaryIO) -> Iterable[DXFTag]:
@@ -269,6 +274,15 @@ class Recover:
                 header.append(var_name)
                 header.append(tag)
                 var_name = None
+
+    def check_entities(self, entities: List[Tags]) -> Iterable[Tags]:
+        for entity in entities:
+            _, dxftype = entity[0]
+            if dxftype in EXCLUDE_STRUCTURE_CHECK:
+                yield entity
+            else:
+                # raises DXFStructureError() for invalid entities
+                yield Tags(entity_structure_validator(entity))
 
 
 def safe_tag_loader(stream: BinaryIO,

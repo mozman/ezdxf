@@ -13,7 +13,7 @@ DIRS = [
     "CADKitSamples/*.dxf",
     "dxftest/*.dxf",
 ]
-options.check_entity_tag_structures = True
+
 files = list(chain(*[glob.glob(os.path.join(EZDXF_TEST_FILES, d)) for d in DIRS]))
 
 

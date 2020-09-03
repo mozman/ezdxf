@@ -191,7 +191,7 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
                 )
 
         # XDATA section starts with (1001, APPID) and is always at the end of
-        # an entity, since AutoCAD 2018, embedded objects may follow XDATA
+        # an entity.
         if tag.code == XDATA_MARKER and xdata is False:
             xdata = True
             if app_data:
