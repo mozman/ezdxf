@@ -81,7 +81,7 @@ The layers object supports some standard Python protocols:
             layer.off()  # switch all layers off except layer '0'
 
     # check for existing layer definition
-    if 'MyLines' in doc.layers::
+    if 'MyLines' in doc.layers:
         layer = doc.layers.get('MyLines')
 
     layer_count = len(doc.layers) # total count of layer definitions
