@@ -8,6 +8,7 @@ import sys
 import matplotlib.pyplot as plt
 
 import ezdxf
+from ezdxf import recover
 from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 
@@ -31,12 +32,31 @@ def _main():
         print('no CAD file specified')
         sys.exit(1)
 
-    doc = ezdxf.readfile(args.cad_file)
+    try:
+        doc = ezdxf.readfile(args.cad_file)
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(2)
+    except ezdxf.DXFError:
+        try:
+            doc, auditor = recover.readfile(args.cad_file)
+        except ezdxf.DXFStructureError:
+            print(f'Invalid or corrupted DXF file: {args.cad_file}')
+            sys.exit(3)
+    else:
+        auditor = doc.audit()
+
+    if auditor.has_errors:
+        # But is most likely good enough for rendering.
+        print(f'Found {len(auditor.errors)} unrecoverable errors.')
+    if auditor.has_fixes:
+        print(f'Fixed {len(auditor.fixes)} errors.')
+
     try:
         layout = doc.layouts.get(args.layout)
     except KeyError:
-        print(f'could not find layout "{args.layout}". Valid layouts: {[l.name for l in doc.layouts]}')
-        sys.exit(1)
+        print(f'Could not find layout "{args.layout}". Valid layouts: {[l.name for l in doc.layouts]}')
+        sys.exit(4)
 
     fig: plt.Figure = plt.figure()
     ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
