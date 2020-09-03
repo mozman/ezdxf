@@ -1,13 +1,55 @@
 General Document
 ================
 
+
 General preconditions:
 
 .. code-block:: python
 
+    import sys
     import ezdxf
-    doc = ezdxf.readfile("your_dxf_file.dxf")
+
+    try:
+        doc = ezdxf.readfile("your_dxf_file.dxf")
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(1)
+    except ezdxf.DXFStructureError:
+        print(f'Invalid or corrupted DXF file.')
+        sys.exit(2)
     msp = doc.modelspace()
+
+This works well with DXF files from trusted sources like AutoCAD or BricsCAD,
+for loading DXF files with minor or major flaws look at the
+:mod:`ezdxf.recover` module.
+
+Load DXF Files with Structure Errors
+------------------------------------
+
+If you know the files you will process have most likely minor or major flaws,
+use the :mod:`ezdxf.recover` module:
+
+.. code-block:: Python
+
+    import sys
+    from ezdxf import recover
+
+    try:  # low level structure repair:
+        doc, auditor = recover.readfile(name)
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(1)
+    except ezdxf.DXFStructureError:
+        print(f'Invalid or corrupted DXF file: {name}.')
+        sys.exit(2)
+
+    # DXF file can still have unrecoverable errors, but this is maybe
+    # just a problem when saving the recovered DXF file.
+    if auditor.has_errors:
+        print(f'Found unrecoverable errors in DXF file: {name}.')
+        auditor.print_error_report()
+
+For more loading scenarios follow the link: :mod:`ezdxf.recover`
 
 .. _set/get header variables:
 

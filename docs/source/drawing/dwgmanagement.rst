@@ -43,6 +43,11 @@ AC1032      R2018      UTF-8          AutoCAD R2018
 
 .. autofunction:: decode_base64(data: bytes) -> Drawing
 
+.. hint::
+
+    This works well with DXF files from trusted sources like AutoCAD or BricsCAD,
+    for loading DXF files with minor or major flaws look at the
+    :mod:`ezdxf.recover` module.
 
 Save Drawings
 -------------

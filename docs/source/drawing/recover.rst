@@ -17,9 +17,21 @@ afterwards and return the result of this audit process:
 
 .. code-block:: Python
 
+    import sys
+    import ezdxf
     from ezdxf import recover
 
-    doc, auditor = recover.readfile("messy.dxf")
+    try:
+        doc, auditor = recover.readfile("messy.dxf")
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(1)
+    except ezdxf.DXFStructureError:
+        print(f'Invalid or corrupted Not a DXF file.')
+        sys.exit(2)
+
+    # DXF file can still have unrecoverable errors, but this is maybe just
+    # a problem when saving the recovered DXF file.
     if auditor.has_errors:
         auditor.print_error_report()
 
@@ -51,10 +63,36 @@ Mostly DXF files from AutoCAD or BricsCAD (e.g. for In-house solutions)
 
     try:
         doc = ezdxf.readfile(name)
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(1)
     except ezdxf.DXFStructureError:
         print(f'Invalid or corrupted DXF file: {name}.')
+        sys.exit(2)
 
-2. Try Hard
+2. DXF file with minor flaws
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+DXF files has only minor flaws, like undefined resources.
+
+.. code-block:: Python
+
+    try:
+        doc = ezdxf.readfile(name)
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(1)
+    except ezdxf.DXFStructureError:
+        print(f'Invalid or corrupted DXF file: {name}.')
+        sys.exit(2)
+
+    auditor = doc.audit()
+    if auditor.has_errors:
+        auditor.print_error_report()
+
+
+
+3. Try Hard
 ~~~~~~~~~~~
 
 From trusted and untrusted sources but with good hopes, the worst case works
@@ -63,33 +101,47 @@ recover mode:
 
 .. code-block:: Python
 
-    try:  # fast path:
+    try:  # Fast path:
         doc = ezdxf.readfile(name)
-    except ezdxf.DXFStructureError:
-        try:  # slow path with low level structure repair:
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(1)
+    # Catch all DXF errors:
+    except ezdxf.DXFError:
+        try:  # Slow path with low level structure repair:
             doc, auditor = recover.readfile(name)
-            if auditor.has_errors:
-                print(f'Found unrecoverable errors in DXF file: {name}.')
-                auditor.print_error_report()
         except ezdxf.DXFStructureError:
             print(f'Invalid or corrupted DXF file: {name}.')
+            sys.exit(2)
 
-3. Just pay the extra fee
-~~~~~~~~~~~~~~~~~~~~~~~~~
+    # DXF file can still have unrecoverable errors, but this is maybe
+    # just a problem when saving the recovered DXF file.
+    if auditor.has_errors:
+        print(f'Found unrecoverable errors in DXF file: {name}.')
+        auditor.print_error_report()
 
-Untrusted sources and expecting many invalid DXF files, you always pay an
-extra fee for the recover mode:
+4. Just use the slow recover module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Untrusted sources and expecting many invalid or corrupted  DXF files, you
+always pay an extra fee for the recover mode:
 
 .. code-block:: Python
 
     try:  # low level structure repair:
         doc, auditor = recover.readfile(name)
-        if auditor.has_errors:
-            print(f'Found unrecoverable errors in DXF file: {name}.')
-            auditor.print_error_report()
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(1)
     except ezdxf.DXFStructureError:
         print(f'Invalid or corrupted DXF file: {name}.')
+        sys.exit(2)
 
+    # DXF file can still have unrecoverable errors, but this is maybe
+    # just a problem when saving the recovered DXF file.
+    if auditor.has_errors:
+        print(f'Found unrecoverable errors in DXF file: {name}.')
+        auditor.print_error_report()
 
 .. hint::
 

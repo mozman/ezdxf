@@ -9,10 +9,21 @@ Loading the DXF file:
 
 .. code-block:: Python
 
+    import sys
     import ezdxf
 
-    doc = ezdxf.readfile("your_dxf_file.dxf")
+    try:
+        doc = ezdxf.readfile("your_dxf_file.dxf")
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(1)
+    except ezdxf.DXFStructureError:
+        print(f'Invalid or corrupted DXF file.')
+        sys.exit(2)
 
+This works well with DXF files from trusted sources like AutoCAD or BricsCAD,
+for loading DXF files with minor or major flaws look at the
+:mod:`ezdxf.recover` module.
 
 .. seealso::
 
