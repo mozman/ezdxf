@@ -11,6 +11,7 @@ Version 0.14b2 - dev
   names (layers, linetypes, styles, ...). DXF unicode notation "\U+xxxx" raises
   a `ValueError()` if used as resource names like layer name or text style names, 
   such files can only be loaded by the new `recover` module.
+- NEW: `ezdxf.recover`, module to load DXF Documents with structural flaws
 - NEW: `addons.drawing.Frontend()` supports width attributes of LWPOLYLINE and 
   2D POLYLINE entities
 - NEW: `TraceBuilder()` a render tool to generate quadrilaterals (TRACE, SOLID 
@@ -57,7 +58,6 @@ Version 0.14b2 - dev
 - NEW: `Path.counter_clockwise()` returns a new counter-clockwise oriented path 
 - NEW: `DXFEntity.new_extension_dict()`, create explicit a new extension dictionary
 - NEW: `ezdxf.reorder`, support module to implement modified entities redraw order
-- NEW: `ezdxf.recover`, module to load DXF Documents with structural flaws
 - NEW: get DXF test file path from environment variable `EZDXF_TEST_FILES`, 
   imported automatically as `ezdxf.EZDXF_TEST_FILES`
 - NEW: `arc_chord_length()` and `arc_segment_count()` tool functions in 

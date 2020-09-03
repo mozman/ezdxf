@@ -111,8 +111,8 @@ class Recover:
         return safe_tag_loader(stream, self.tag_loader, self.errors)
 
     def rebuild_sections(self, tags: Iterable[DXFTag]) -> List[List[DXFTag]]:
-        """ Collect tags between SECTION and ENDSEC or next SECTION tags as
-        sections as list of DXFTag objects, collects tags outside of sections
+        """ Collect tags between SECTION and ENDSEC or next SECTION tag
+        as list of DXFTag objects, collects tags outside of sections
         as an extra section.
 
         Returns:
