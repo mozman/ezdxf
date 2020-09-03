@@ -1,8 +1,7 @@
-# Created: 11.03.2011
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, TextIO, BinaryIO, Iterable, Union, Sequence, Tuple, Callable,
+    TYPE_CHECKING, TextIO, BinaryIO, Iterable, Union, Tuple, Callable,
     cast, Optional, List,
 )
 from datetime import datetime
@@ -47,15 +46,10 @@ logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-    DXFTag, Table, ViewportTable, VPort, Dictionary, Layout,
-    DXFEntity, Layer, Auditor, GenericLayoutType,
-)
+        DXFTag, Table, ViewportTable, VPort, Dictionary, Layout,
+        DXFEntity, Layer, Auditor, GenericLayoutType,
+    )
 
-TFilterStack = Sequence[
-    Sequence[Callable[[Iterable['DXFTag']], Iterable['DXFTag']]]]
-
-
-# [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
 
 class Drawing:
     def __init__(self, dxfversion=DXF2013):
@@ -278,8 +272,6 @@ class Drawing:
         return doc
 
     def _load(self, tagger: Optional[Iterable['DXFTag']]) -> None:
-        assert tagger is not None, 'DXF tagger or SectionDict required.'
-
         # 1st Loading stage: load complete DXF entity structure
         self.is_loading = True
         sections = loader.load_dxf_structure(tagger)

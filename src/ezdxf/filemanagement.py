@@ -1,11 +1,8 @@
-# Created: 05.01.2018
 # Copyright (C) 2018-2020, Manfred Moitzi
 # License: MIT License
-# Local imports to avoid cyclic import errors
 from typing import TextIO, TYPE_CHECKING, Union, Sequence
 import base64
 import io
-import warnings
 from ezdxf.tools.standards import setup_drawing
 from ezdxf.lldxf.const import DXF2013
 from ezdxf.document import Drawing
