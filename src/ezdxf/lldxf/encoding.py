@@ -1,7 +1,6 @@
-# Purpose: low level DXF data encoding/decoding module
-# Created: 26.03.2016
-# Copyright (c) 2016-2018, Manfred Moitzi
+# Copyright (c) 2016-2020, Manfred Moitzi
 # License: MIT License
+import re
 from .const import DXFEncodingError
 
 
@@ -17,7 +16,7 @@ def dxf_backslash_replace(exc: Exception):
                 s += "\\U+%08x" % ord(c)
         return s, exc.end
     else:
-        raise TypeError("Can't handle %s" % exc.__class__.__name__)
+        raise TypeError(f"Can't handle {exc.__class__.__name__}")
 
 
 def encode(unicode: str, encoding: str = 'cp1252', ignore_error: bool = False):
@@ -27,4 +26,20 @@ def encode(unicode: str, encoding: str = 'cp1252', ignore_error: bool = False):
         if ignore_error:  # encode string with the default unicode encoding
             return bytes(unicode, 'utf-8')
         else:
-            raise DXFEncodingError("Can not encode string '{}' with given encoding '{}'".format(unicode, encoding))
+            raise DXFEncodingError(
+                f"Can not encode string '{unicode}' with given "
+                f"encoding '{encoding}'")
+
+
+BACKSLASH_UNICODE = re.compile(r'(\\U\+[A-F0-9]{4})')
+
+
+def _decode(s: str) -> str:
+    if s.startswith(r'\U+'):
+        return chr(int(s[3:], 16))
+    else:
+        return s
+
+
+def decode_dxf_backslash_unicode(s: str):
+    return ''.join(_decode(part) for part in re.split(BACKSLASH_UNICODE, s))
