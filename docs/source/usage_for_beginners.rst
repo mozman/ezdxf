@@ -30,11 +30,16 @@ It is also possible to read a DXF file from a stream by the :func:`ezdxf.read`
 function, but this is a more advanced feature, because this requires detection
 of the file encoding in advance.
 
+This works well with DXF files from trusted sources like AutoCAD or BricsCAD,
+for loading DXF files with minor or major flaws look at the
+:mod:`ezdxf.recover` module.
+
 .. seealso::
 
     Documentation for :func:`ezdxf.readfile`, :func:`ezdxf.readzip` and
     :func:`ezdxf.read`, for more information about file
-    management go to the :ref:`dwgmanagement` section.
+    management go to the :ref:`dwgmanagement` section. For loading DXF files
+    with structural errors look at the :mod:`ezdxf.recover` module.
 
 Saving DXF Files
 ----------------

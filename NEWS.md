@@ -11,7 +11,8 @@ Version 0.14b3 - dev
   names (layers, linetypes, styles, ...). DXF unicode notation "\U+xxxx" raises
   a `ValueError()` if used as resource names like layer name or text style names, 
   such files can only be loaded by the new `recover` module.
-- NEW: `ezdxf.recover`, module to load DXF Documents with structural flaws
+- NEW: `ezdxf.recover`, module to load DXF Documents with structural flaws, see 
+  [docs](file:///D:/Source/ezdxf.git/docs/build/html/drawing/recover.html)
 - NEW: `addons.drawing.Frontend()` supports width attributes of LWPOLYLINE and 
   2D POLYLINE entities
 - NEW: `TraceBuilder()` a render tool to generate quadrilaterals (TRACE, SOLID 

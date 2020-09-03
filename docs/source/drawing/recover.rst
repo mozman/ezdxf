@@ -7,7 +7,7 @@ Recover
 
 .. versionadded:: v0.14
 
-This module provides function to "recover" ASCII DXF documents with structural
+This module provides functions to "recover" ASCII DXF documents with structural
 flaws, which prevents the regular :func:`ezdxf.read` and :func:`ezdxf.readfile`
 functions to load the document.
 
@@ -57,7 +57,7 @@ Some loading scenarios as examples:
 1. It will work
 ~~~~~~~~~~~~~~~
 
-Mostly DXF files from AutoCAD or BricsCAD (e.g. for In-house solutions)
+Mostly DXF files from AutoCAD or BricsCAD (e.g. for In-house solutions):
 
 .. code-block:: Python
 
@@ -73,7 +73,7 @@ Mostly DXF files from AutoCAD or BricsCAD (e.g. for In-house solutions)
 2. DXF file with minor flaws
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-DXF files has only minor flaws, like undefined resources.
+DXF files have only minor flaws, like undefined resources:
 
 .. code-block:: Python
 
@@ -108,7 +108,7 @@ recover mode:
         sys.exit(1)
     # Catch all DXF errors:
     except ezdxf.DXFError:
-        try:  # Slow path with low level structure repair:
+        try:  # Slow path including fixing low level structures:
             doc, auditor = recover.readfile(name)
         except ezdxf.DXFStructureError:
             print(f'Invalid or corrupted DXF file: {name}.')
@@ -128,7 +128,7 @@ always pay an extra fee for the recover mode:
 
 .. code-block:: Python
 
-    try:  # low level structure repair:
+    try:  # Slow path including fixing low level structures:
         doc, auditor = recover.readfile(name)
     except IOError:
         print(f'Not a DXF file or a generic I/O error.')
