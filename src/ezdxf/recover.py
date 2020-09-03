@@ -19,6 +19,8 @@ from ezdxf.lldxf.types import (
 from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.tools.codepage import toencoding
 from ezdxf.audit import Auditor, AuditError
+from ezdxf import options
+
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, SectionDict
@@ -54,7 +56,11 @@ def read(stream: BinaryIO) -> Tuple['Drawing', 'Auditor']:
     from ezdxf.document import Drawing
     recover_tool = Recover.run(stream)
     doc = Drawing()
+
+    save_check_state = options.check_entity_tag_structures
+    options.check_entity_tag_structures = True
     doc._load_section_dict(recover_tool.section_dict)
+    options.check_entity_tag_structures = save_check_state
 
     auditor = Auditor(doc)
     for code, msg in recover_tool.errors:

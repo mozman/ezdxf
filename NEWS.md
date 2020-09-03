@@ -76,6 +76,8 @@ Version 0.14b2 - dev
   this will show existing problems with some files, which were ignored silently 
   in previous versions, but this files can still be loaded by the new `recover` 
   module.
+- CHANGE: `option.check_entity_tag_structure` if `False` by default, activated 
+  in recover mode.
 - REMOVE: `legacy_mode` in `ezdxf.read()` and `ezdxf.readfile()`, use the 
   `ezdxf.recover` module to load DXF Documents with structural flaws
 - REMOVE: Alias `DXFEntity.drawing`
