@@ -4,7 +4,7 @@ Layer Concept
 =============
 
 Every object has a layer as one of its properties. You may be familiar with layers - independent drawing spaces that
-stack on top of each other to create an overall image - from using drawing programs. Most CAD programs, uses layers as
+stack on top of each other to create an overall image - from using drawing programs. Most CAD programs use layers as
 the primary organizing principle for all the objects that you draw. You use layers to organize objects into logical
 groups of things that belong together; for example, walls, furniture, and text notes usually belong on three separate
 layers, for a couple of reasons:
