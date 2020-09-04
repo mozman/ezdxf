@@ -5,8 +5,8 @@ Developer Guides
 
 Information about `ezdxf` internals.
 
-Architecture for Developers
----------------------------
+Package Design for Developers
+-----------------------------
 
 The :ref:`pkg-design` section shows the structure of the `ezdxf` package for
 developers with more experience, which want to have more insight into the
