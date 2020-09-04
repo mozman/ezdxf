@@ -1,4 +1,3 @@
-# Created: 13.01.2018
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import Any, TextIO, TYPE_CHECKING, Union, List, Iterable, BinaryIO
@@ -12,7 +11,10 @@ import struct
 if TYPE_CHECKING:
     from ezdxf.eztypes import ExtendedTags, DXFEntity
 
-__all__ = ['TagWriter', 'BinaryTagWriter', 'TagCollector', 'basic_tags_from_text']
+__all__ = [
+    'TagWriter', 'BinaryTagWriter', 'TagCollector', 'basic_tags_from_text'
+]
+CRLF = b'\r\n'
 
 
 class TagWriter:
@@ -21,15 +23,17 @@ class TagWriter:
 
     Args:
         stream: text stream
-        write_handles: if False don't write handles (5, 105), use only for DXF R12 format
+        write_handles: if False don't write handles (5, 105), use only for
+            DXF R12 format
 
     """
 
-    def __init__(self, stream: TextIO, dxfversion=LATEST_DXF_VERSION, write_handles: bool = True):
+    def __init__(self, stream: TextIO, dxfversion=LATEST_DXF_VERSION,
+                 write_handles: bool = True):
         self._stream = stream
         # this are just options for export functions
         self.dxfversion = dxfversion
-        self.write_handles = write_handles  # flag is needed for new new entity structure!
+        self.write_handles = write_handles
         # force writing optional values if equal to default value when set
         # True is only used for testing
         self.force_optional = False
@@ -51,6 +55,18 @@ class TagWriter:
     def write_str(self, s: str) -> None:
         self._stream.write(s)
 
+    def write_raw_bytes(self, code: int, data: bytes) -> None:
+        """ Required for writing binary data stored in group code 300 in
+        XRECORDS. Group code 300 should be a string according to the
+        DXF reference!
+
+        """
+        # Using low level BytesIOBuffer() to write raw bytes
+        buffer = self._stream.buffer
+        buffer.flush()
+        buffer.write(bytes(str(code), 'latin1') + CRLF)
+        buffer.write(data + CRLF)
+
 
 class BinaryTagWriter(TagWriter):
     """
@@ -58,17 +74,21 @@ class BinaryTagWriter(TagWriter):
 
     Args:
         stream: binary IO stream
-        write_handles: if ``False`` don't write handles (5, 105), use only for DXF R12 format
+        write_handles: if ``False`` don't write handles (5, 105), use only for
+            DXF R12 format
 
     .. warning::
 
-        DXF files containing ``ACSH_SWEEP_CLASS`` entities and saved as Binary DXF by `ezdxf` can not be opened
-        with AutoCAD, this is maybe also true for other 3rd party entities. BricsCAD opens this binary DXF files
-        without complaining, but saves the ``ACSH_SWEEP_CLASS`` entities as ``ACAD_PROXY_OBJECT`` when writing back,
-        so error analyzing is not possible without the full version of AutoCAD.
+        DXF files containing ``ACSH_SWEEP_CLASS`` entities and saved as Binary
+        DXF by `ezdxf` can not be opened with AutoCAD, this is maybe also true
+        for other 3rd party entities. BricsCAD opens this binary DXF files
+        without complaining, but saves the ``ACSH_SWEEP_CLASS`` entities as
+        ``ACAD_PROXY_OBJECT`` when writing back, so error analyzing is not
+        possible without the full version of AutoCAD.
 
-        I have no clue why, because converting this DXF files from binary format back to ASCII format by
-        `ezdxf` produces a valid DXF for AutoCAD - so all required information is preserved.
+        I have no clue why, because converting this DXF files from binary
+        format back to ASCII format by `ezdxf` produces a valid DXF for
+        AutoCAD - so all required information is preserved.
 
         Two examples available:
 
@@ -77,7 +97,8 @@ class BinaryTagWriter(TagWriter):
 
     """
 
-    def __init__(self, stream: BinaryIO, dxfversion=LATEST_DXF_VERSION, write_handles: bool = True, encoding='utf8'):
+    def __init__(self, stream: BinaryIO, dxfversion=LATEST_DXF_VERSION,
+                 write_handles: bool = True, encoding='utf8'):
         super().__init__(None, dxfversion, write_handles)
         self._stream = stream
         self._encoding = encoding  # output encoding
@@ -101,6 +122,16 @@ class BinaryTagWriter(TagWriter):
         data = s.split('\n')
         for code, value in take2(data):
             self.write_tag2(int(code), value)
+
+    def write_raw_bytes(self, code: int, data: bytes) -> None:
+        """ Write as unencoded data but with \0 termination.
+        Required for writing binary data stored in group code 300 in XRECORDS.
+        """
+        # todo: is this correct?
+        stream = self._stream
+        stream.write(code.to_bytes(2, 'little'))
+        stream.write(data)
+        stream.write(b'\x00')
 
     def write_tag2(self, code: int, value: Any) -> None:
         # Binary DXF files do not support comments!
@@ -166,10 +197,11 @@ class TagCollector:
 
     """
 
-    def __init__(self, dxfversion=LATEST_DXF_VERSION, write_handles: bool = True, optional: bool = True):
+    def __init__(self, dxfversion=LATEST_DXF_VERSION,
+                 write_handles: bool = True, optional: bool = True):
         self.tags = []
         self.dxfversion = dxfversion
-        self.write_handles = write_handles  # flag is needed for new new entity structure!
+        self.write_handles = write_handles
         # force writing optional values if equal to default value when set
         # True is only used for testing
         self.force_optional = optional
@@ -194,6 +226,12 @@ class TagCollector:
     def write_str(self, s: str) -> None:
         self.write_tags(Tags.from_text(s))
 
+    def write_raw_bytes(self, code: int, data: bytes) -> None:
+        """ Required for writing binary data stored in group code 300 in
+        XRECORDS.
+        """
+        self.tags.append(DXFTag(code, data))
+
     def has_all_tags(self, other: 'TagCollector'):
         return all(tag in self.tags for tag in other.tags)
 
@@ -208,9 +246,9 @@ class TagCollector:
 
 
 def basic_tags_from_text(text: str) -> List[DXFTag]:
-    """
-    Returns all tags from `text` as basic DXFTags(). All complex tags are resolved into basic (code, value) tags
-    (e.g. DXFVertex(10, (1, 2, 3)) -> DXFTag(10, 1), DXFTag(20, 2), DXFTag(30, 3).
+    """ Returns all tags from `text` as basic DXFTags(). All complex tags are
+    resolved into basic (code, value) tags (e.g. DXFVertex(10, (1, 2, 3)) ->
+    DXFTag(10, 1), DXFTag(20, 2), DXFTag(30, 3).
 
     Args:
         text: DXF data as string

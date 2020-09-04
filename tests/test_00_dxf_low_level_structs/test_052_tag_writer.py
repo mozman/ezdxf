@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2019 Manfred Moitzi
+# Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
 import pytest
 from io import StringIO
@@ -72,3 +72,7 @@ class TestTagCollector:
         assert t.tags[0] == (10, 7.)
         assert t.tags[1] == (20, 8.)
         assert t.tags[2] == (30, 9.)
+
+    def test_write_raw_bytes(self, t):
+        t.write_raw_bytes(300, b'bytes\x01\x02')
+        assert t.tags[0] == (300, b'bytes\x01\x02')
