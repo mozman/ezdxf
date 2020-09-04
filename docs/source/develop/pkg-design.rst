@@ -1,71 +1,124 @@
+**!!! UNDER CONSTRUCTION !!!**
+
 .. _pkg-design:
 
 Package Design for Developers
 =============================
 
-The complete DXF document is stored in a :class:`~ezdxf.drawing.Drawing` object.
-For each section of the DXF document exist a corresponding attribute in the
-:class:`Drawing` object.
-Resource entities are stored in tables in the TABLES section.
-All graphical entities are stored in layouts.
-All non-graphical entities are stored in the OBJECTS section.
-All entities are stored in the entities database.
+The DXF document is managed by the :class:`~ezdxf.drawing.Drawing` object.
+
+.. Overall Design:
+
+    For each section of the DXF document exist a corresponding attribute in the
+    :class:`Drawing` object.
+    Resource entities are stored in tables in the TABLES section.
+    All graphical entities are stored in layouts.
+    All non-graphical entities are stored in the OBJECTS section.
+    All entities are stored in the entities database.
 
 Terminology
 +++++++++++
 
-Virtual Entity
---------------
+States
+------
 
-- UNBOUND: not stored in the entity database of a document; DXF attribute `handle` is ``None``
-- UNLINKED: not linked to a layout/owner; DXF attribute `owner` is ``None``
-- Attribute `doc` can be ``None``
+UNBOUND
+    Entity is not stored in the :class:`Drawing` entity database and
+    DXF attribute :attr:`handle` is ``None`` and
+    attribute :attr:`doc` can be ``None``
+
+BOUND
+    Entity is stored in the :class:`Drawing` entity database,
+    attribute :attr:`doc` has a reference to :class:`Drawing` and
+    DXF attribute :attr:`handle` is not ``None``
+
+UNLINKED
+    Entity is not linked to a layout/owner,
+    DXF attribute :attr:`owner` is ``None``
+
+LINKED
+    Entity is linked to a layout/owner,
+    DXF attribute :attr:`owner` is not ``None``
+
+Virtual Entity
+    State: UNBOUND & UNLINKED
 
 Unlinked Entity
----------------
-
-- BOUND: stored in an entity database, which means bound to a document:
-  DXF attribute `handle` is not ``None`` and `doc` has a reference to the
-  DXF document
-- UNLINKED: not linked to a layout/owner: DXF attribute `owner` is ``None``
+    State: BOUND & UNLINKED
 
 Bound Entity
-------------
+    State: BOUND & LINKED
 
-- BOUND: stored in an entity database, which means bound to a document:
-  DXF attribute `handle` is not ``None`` and `doc` has a reference to the
-  DXF document
-- LINKED: linked to a layout/owner: DXF attribute `owner` is not ``None``
+Actions
+-------
 
-Loading DXF Documents
-+++++++++++++++++++++
+NEW
+    Create a new DXF document
 
-The loading process has two stages:
+LOAD
+    Load a DXF document from an external source
+
+CREATE
+    Create DXF structures from NEW or LOAD data
+
+DESTROY
+    Delete DXF structures
+
+BIND
+    Bind an entity to a :class:`Drawing`, set entity state to BOUND &
+    UNLINKED and check or create required resources
+
+UNBIND
+    unbind ...
+
+LINK
+    Link an entity to an owner/layout.
+    This makes an entity to a real DXF entity, which will be exported
+    at the saving process. Any DXF entity can only be linked to **one** parent
+    entity like DICTIONARY or BLOCK_RECORD.
+
+UNLINK
+    unlink ...
+
+
+Loading a DXF Document
+++++++++++++++++++++++
+
+Loading a DXF document from an external source, creates a new
+:class:`Drawing` object. This loading process has two stages:
 
 First Loading Stage
 -------------------
 
-- LOAD content from file/stream into a DXF structure database:
+- LOAD content from external source as :class:`SectionDict`:
   :func:`loader.load_dxf_structure`
-- Convert tag structures into DXFEntity objects: :func:`loader.load_dxf_entities`
-- BIND entities to an EntityDB: :func:`load_and_bind_dxf_content`
-
-Because of the missing DXF document structures, a complete validation is not
-possible at this stage, only validation at the tag level is already done.
+- LOAD tag structures as :class:`DXFEntity` objects:
+  :func:`loader.load_dxf_entities`
+- BIND entities: :func:`loader.load_and_bind_dxf_content`;
+  Special handling of the BIND process, because the :class:`Drawing` is not full
+  initialized, a complete validation is not possible at this stage.
 
 Second Loading Stage
 --------------------
 
-Parse DXF structure database:
+Parse :class:`SectionDict`:
 
-- Create sections: HEADER, CLASSES, TABLES, BLOCKS and OBJECTS
-- Create layouts: Blocks, Layouts
-    - LINK entities to a layout
+- CREATE sections: HEADER, CLASSES, TABLES, BLOCKS and OBJECTS
+- CREATE layouts: Blocks, Layouts
+- LINK entities to a owner/layout
 
 The ENTITIES section is a relict from older DXF versions and has to be exported
 including the modelspace and active paperspace entities, but all entities
 reside in a BLOCK definition, even modelspace and paperspace layouts are only
 BLOCK definitions and ezdxf has no explicit ENTITIES section.
+
+Source Code: as developer start your journey at :meth:`ezdxf.document.Drawing.read`,
+which has no public documentation, because package-user should use
+:func:`ezdxf.read` and :func:`ezdxf.readfile`.
+
+New DXF Document
+++++++++++++++++
+
 
 Creating New DXF Entities
 +++++++++++++++++++++++++
@@ -85,23 +138,6 @@ There exist only two scenarios:
 
 1. UNBOUND: `doc` is ``None`` and `handle` is ``None``
 2. BOUND: `doc` is not ``None`` and `handle` is not ``None``
-
-BIND
-----
-
-Binding the entity to a document means:
-
-- BOUND: entity is stored in the document entity database, `handle`is set
-  and `doc` attribute is set
-- Check or create required resources
-- UNLINKED: `owner` is still ``None``
-
-LINK
-----
-
-This makes an entity to a real DXF entity, which will be exported
-at the saving process. Any DXF entity can only be linked to **one** parent
-entity like DICTIONARY or BLOCK_RECORD.
 
 DXF Objects
 -----------
