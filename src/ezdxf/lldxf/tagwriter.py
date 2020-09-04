@@ -60,12 +60,18 @@ class TagWriter:
         XRECORDS. Group code 300 should be a string according to the
         DXF reference!
 
+        Uses "surrogaeecspe" for StringIO() streams.
+
         """
         # Using low level BytesIOBuffer() to write raw bytes
-        buffer = self._stream.buffer
-        buffer.flush()
-        buffer.write(bytes(str(code), 'latin1') + CRLF)
-        buffer.write(data + CRLF)
+        try:
+            buffer = self._stream.buffer
+        except AttributeError:
+            self.write_tag2(code, data.decode('utf8', errors='surrogateescape'))
+        else:
+            buffer.flush()
+            buffer.write(bytes(str(code), 'latin1') + CRLF)
+            buffer.write(data + CRLF)
 
 
 class BinaryTagWriter(TagWriter):
