@@ -19,15 +19,6 @@ def test_write_tag2():
     assert result == '  0\nSECTION\n'
 
 
-def test_write_raw_bytes():
-    s, t = setup_stream()
-    t.write_raw_bytes(300, b'\xb7\x9e\xff')
-    result = s.getvalue()
-    assert result == '300\n\udcb7\udc9e\udcff\n', "expected surrogate escape"
-    assert result.encode('utf8', errors='surrogateescape') == \
-           b'300\n\xb7\x9e\xff\n'
-
-
 def test_write_tag():
     s, t = setup_stream()
     t.write_tag(DXFTag(0, 'SECTION'))
@@ -81,7 +72,3 @@ class TestTagCollector:
         assert t.tags[0] == (10, 7.)
         assert t.tags[1] == (20, 8.)
         assert t.tags[2] == (30, 9.)
-
-    def test_write_raw_bytes(self, t):
-        t.write_raw_bytes(300, b'bytes\x01\x02')
-        assert t.tags[0] == (300, b'bytes\x01\x02')

@@ -194,7 +194,7 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
                 end_index = data.index(b'\x00', start_index)
                 s = data[start_index:end_index]
                 index = end_index + 1
-                value = s.decode(encoding, errors='ignore')
+                value = s.decode(encoding, errors='surrogateescape')
             yield DXFTag(code, value)
 
 

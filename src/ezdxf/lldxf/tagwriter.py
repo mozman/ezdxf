@@ -55,24 +55,6 @@ class TagWriter:
     def write_str(self, s: str) -> None:
         self._stream.write(s)
 
-    def write_raw_bytes(self, code: int, data: bytes) -> None:
-        """ Required for writing binary data stored in group code 300 in
-        XRECORDS. Group code 300 should be a string according to the
-        DXF reference!
-
-        Uses "surrogaeecspe" for StringIO() streams.
-
-        """
-        # Using low level BytesIOBuffer() to write raw bytes
-        try:
-            buffer = self._stream.buffer
-        except AttributeError:
-            self.write_tag2(code, data.decode('utf8', errors='surrogateescape'))
-        else:
-            buffer.flush()
-            buffer.write(bytes(str(code), 'latin1') + CRLF)
-            buffer.write(data + CRLF)
-
 
 class BinaryTagWriter(TagWriter):
     """
@@ -128,16 +110,6 @@ class BinaryTagWriter(TagWriter):
         data = s.split('\n')
         for code, value in take2(data):
             self.write_tag2(int(code), value)
-
-    def write_raw_bytes(self, code: int, data: bytes) -> None:
-        """ Write as unencoded data but with \0 termination.
-        Required for writing binary data stored in group code 300 in XRECORDS.
-        """
-        # todo: is this correct?
-        stream = self._stream
-        stream.write(code.to_bytes(2, 'little'))
-        stream.write(data)
-        stream.write(b'\x00')
 
     def write_tag2(self, code: int, value: Any) -> None:
         # Binary DXF files do not support comments!
@@ -231,12 +203,6 @@ class TagCollector:
 
     def write_str(self, s: str) -> None:
         self.write_tags(Tags.from_text(s))
-
-    def write_raw_bytes(self, code: int, data: bytes) -> None:
-        """ Required for writing binary data stored in group code 300 in
-        XRECORDS.
-        """
-        self.tags.append(DXFTag(code, data))
 
     def has_all_tags(self, other: 'TagCollector'):
         return all(tag in self.tags for tag in other.tags)

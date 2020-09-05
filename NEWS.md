@@ -93,6 +93,10 @@ Version 0.14b3 - dev
 - BUGFIX: Set `non-constant-attribs` flag (2) in BLOCK at DXF export if non 
   constant ATTDEF entities are present.
 - BUGFIX: DXF R2018 - `HATCH` extrusion vector (210) is mandatory?
+- BUGFIX: Treat layout names case insensitive; "MODEL" == "Model" 
+- BUGFIX: Using "surrogateescape" error handler to preserve binary data in 
+  ASCII DXF files. Prior versions of ezdxf corrupted this data by using the 
+  "ignore" error handler 
 
 Version 0.13.1 - 2020-07-18
 ---------------------------
