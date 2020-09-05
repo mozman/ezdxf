@@ -3,7 +3,6 @@
 import pytest
 import ezdxf
 from ezdxf import recover
-from ezdxf.audit import AuditError
 import os
 
 CP936_FILE = os.path.join(ezdxf.EZDXF_TEST_FILES,
@@ -37,10 +36,20 @@ PROE_FILE = os.path.join(ezdxf.EZDXF_TEST_FILES, "ProE_AC1018.dxf")
 
 @pytest.mark.skipif(not os.path.exists(PROE_FILE),
                     reason=f'File {PROE_FILE} not found')
-def test_read_crappy_ProE():
+def test_read_ProE_file():
     doc = ezdxf.readfile(PROE_FILE)
     assert doc.filename is not None
     assert doc.dxfversion is not None
+
+
+@pytest.mark.skipif(not os.path.exists(PROE_FILE),
+                    reason=f'File {PROE_FILE} not found')
+def test_recover_ProE_file():
+    doc, auditor = recover.readfile(PROE_FILE)
+    assert doc.filename is not None
+    assert doc.dxfversion is not None
+    assert len(auditor.errors) == 0
+    assert len(auditor.fixes) == 0
 
 
 FILE_CIVIL_3D = os.path.join(ezdxf.EZDXF_TEST_FILES,
@@ -50,10 +59,19 @@ FILE_CIVIL_3D = os.path.join(ezdxf.EZDXF_TEST_FILES,
 @pytest.mark.skipif(not os.path.exists(FILE_CIVIL_3D),
                     reason=f'File {FILE_CIVIL_3D} not found')
 def test_read_civil_3d():
+    doc = ezdxf.readfile(FILE_CIVIL_3D)
+    assert doc.filename == FILE_CIVIL_3D
+    assert doc.dxfversion == 'AC1032'
+
+
+@pytest.mark.skipif(not os.path.exists(FILE_CIVIL_3D),
+                    reason=f'File {FILE_CIVIL_3D} not found')
+def test_recover_civil_3d():
     doc, auditor = recover.readfile(FILE_CIVIL_3D)
     assert doc.filename == FILE_CIVIL_3D
     assert doc.dxfversion == 'AC1032'
     assert auditor.has_errors is False
+    assert len(auditor.fixes) == 536
 
 
 FILE_MAP_3D = os.path.join(ezdxf.EZDXF_TEST_FILES,
