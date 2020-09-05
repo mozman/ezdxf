@@ -1,19 +1,18 @@
-# Purpose: untrusted stream tag reader, tag compiler for trusted and untrusted sources
-# Created: 10.04.2016
 # Copyright (c) 2016-2020, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, TextIO, Iterator
 import struct
-from .types import DXFTag, DXFVertex, DXFBinaryTag
-from .types import BYTES, INT16, INT32, INT64, DOUBLE
+from .types import (
+    DXFTag, DXFVertex, DXFBinaryTag, BYTES, INT16, INT32, INT64, DOUBLE,
+    POINT_CODES, TYPE_TABLE, BINARY_DATA,
+)
 from .const import DXFStructureError
-from .types import POINT_CODES, TYPE_TABLE, BINARY_DATA
+from . import encoding
 from ezdxf.tools.codepage import toencoding
 
 
 def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
-    """
-    Yields DXFTag() from trusted (internal) source - relies on
+    """ Yields DXFTag() from trusted (internal) source - relies on
     well formed and error free DXF format. Does not skip comment
     tags (group code == 999).
 
@@ -34,7 +33,8 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
         value = lines[pos + 1]
         pos += 2
         if code in POINT_CODES:
-            # next tag; y coordinate is mandatory - internal_tag_compiler relies on well formed DXF strings
+            # next tag; y-axis is mandatory - internal_tag_compiler relies on
+            # well formed DXF strings:
             y = lines[pos + 1]
             pos += 2
             if pos < count:
@@ -55,13 +55,15 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
             yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
 
 
-def ascii_tags_loader(stream: TextIO, skip_comments: bool = True) -> Iterable[DXFTag]:
-    """
-    Yields :class:``DXFTag`` objects from a text `stream` (untrusted external source) and does not
-    optimize coordinates. Comment tags (group code == 999) will be skipped if argument `skip_comments` is `True`.
-    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is always an unicode string without a trailing '\n'.
-    Works with file system streams and :class:`StringIO` streams, only required feature is the :meth:`readline`
-    method.
+def ascii_tags_loader(stream: TextIO,
+                      skip_comments: bool = True) -> Iterable[DXFTag]:
+    """ Yields :class:``DXFTag`` objects from a text `stream` (untrusted
+    external source) and does not optimize coordinates. Comment tags (group
+    code == 999) will be skipped if argument `skip_comments` is `True`.
+    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is always an
+    unicode string without a trailing '\n'.
+    Works with file system streams and :class:`StringIO` streams, only required
+    feature is the :meth:`readline` method.
 
     Args:
         stream: text stream
@@ -88,7 +90,8 @@ def ascii_tags_loader(stream: TextIO, skip_comments: bool = True) -> Iterable[DX
             try:
                 code = int(code)
             except ValueError:
-                raise DXFStructureError('Invalid group code "{}" at line {}.'.format(code, line))
+                raise DXFStructureError(
+                    f'Invalid group code "{code}" at line {line}.')
             else:
                 if code != 999 or skip_comments is False:
                     yield DXFTag(code, value.rstrip('\n'))
@@ -98,11 +101,10 @@ def ascii_tags_loader(stream: TextIO, skip_comments: bool = True) -> Iterable[DX
 
 
 def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
-    """
-    Yields :class:`DXFTag` or :class:`DXFBinaryTag` objects from binary DXF `data` (untrusted external source) and
-    does not optimize coordinates.
-    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is either an unicode string,``float``,
-    ``int`` or ``bytes`` for binary chunks.
+    """ Yields :class:`DXFTag` or :class:`DXFBinaryTag` objects from binary DXF
+    `data` (untrusted external source) and does not optimize coordinates.
+    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is either an
+    unicode string,``float``, ``int`` or ``bytes`` for binary chunks.
 
     Args:
         data: binary DXF data
@@ -119,8 +121,9 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
         dxfversion = 'AC1009'
         encoding = 'cp1252'
         try:
-            # limit search to first 1024 bytes - an arbitrary number
-            start = data.index(b'$ACADVER', 22, 1024) + 10  # start index for 1-byte group code
+            # Limit search to first 1024 bytes - an arbitrary number
+            # start index for 1-byte group code
+            start = data.index(b'$ACADVER', 22, 1024) + 10
         except ValueError:
             pass  # HEADER var $ACADVER not present
         else:
@@ -132,8 +135,9 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
             encoding = 'utf8'
         else:
             try:
-                # limit search to first 1024 bytes - an arbitrary number
-                start = data.index(b'$DWGCODEPAGE', 22, 1024) + 14  # start index for 1-byte group code
+                # Limit search to first 1024 bytes - an arbitrary number
+                # start index for 1-byte group code
+                start = data.index(b'$DWGCODEPAGE', 22, 1024) + 14
             except ValueError:
                 pass  # HEADER var $DWGCODEPAGE not present
             else:  # name schema is 'ANSI_xxxx'
@@ -202,21 +206,24 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
 INVALID_POINT_CODES = {1020, 1021, 1022, 1023, 1030, 1031, 1032, 1033}
 
 
-def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
-    """
-    Compiles DXF tag values imported by ascii_tags_loader() into Python types.
+def tag_compiler(tags: Iterator[DXFTag]) -> Iterable[DXFTag]:
+    """ Compiles DXF tag values imported by ascii_tags_loader() into Python
+    types.
 
-    Raises DXFStructureError() for invalid float values and invalid coordinate values.
+    Raises DXFStructureError() for invalid float values and invalid coordinate
+    values.
 
-    Expects DXF coordinates written in x, y[, z] order, this is not required by the DXF standard, but nearly all CAD
-    applications write DXF coordinates that (sane) way, there are older CAD applications (namely an older QCAD version)
-    that write LINE coordinates in x1, x2, y1, y2 order, which does not work with tag_compiler(). For this cases use
-    tag_reorder_layer() from the repair module to reorder the LINE coordinates::
+    Expects DXF coordinates written in x, y[, z] order, this is not required by
+    the DXF standard, but nearly all CAD applications write DXF coordinates that
+    (sane) way, there are older CAD applications (namely an older QCAD version)
+    that write LINE coordinates in x1, x2, y1, y2 order, which does not work
+    with tag_compiler(). For this cases use tag_reorder_layer() from the repair
+    module to reorder the LINE coordinates::
 
         tag_compiler(tag_reorder_layer(ascii_tags_loader(stream)))
 
     Args:
-        tagger: DXF tag generator e.g. ascii_tags_loader()
+        tags: DXF tag generator e.g. ascii_tags_loader()
 
     Raises:
         DXFStructureError: Found invalid DXF tag or unexpected coordinate order.
@@ -224,8 +231,8 @@ def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
     """
 
     def error_msg(tag):
-        return 'Invalid tag (code={code}, value="{value}") near line: {line}.'.format(line=line, code=tag.code,
-                                                                                      value=tag.value)
+        return f'Invalid tag (code={tag.code}, value="{tag.value}") ' \
+               f'near line: {line}.'
 
     undo_tag = None
     line = 0
@@ -235,45 +242,52 @@ def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
                 x = undo_tag
                 undo_tag = None
             else:
-                x = next(tagger)
+                x = next(tags)
                 line += 2
             code = x.code
             if code in POINT_CODES:
-                y = next(tagger)  # y coordinate is mandatory
+                # y-axis is mandatory
+                y = next(tags)
                 line += 2
                 if y.code != code + 10:  # like 20 for base x-code 10
-                    raise DXFStructureError("Missing required y coordinate near line: {}.".format(line))
-                z = next(tagger)  # z coordinate just for 3d points
+                    raise DXFStructureError(
+                        f"Missing required y coordinate near line: {line}.")
+                # z-axis just for 3d points
+                z = next(tags)
                 line += 2
                 try:
-                    if z.code == code + 20:  # it is a z-coordinate like (30, 0.0) for base x-code 10
+                    # z-axis like (30, 0.0) for base x-code 10
+                    if z.code == code + 20:
                         point = (float(x.value), float(y.value), float(z.value))
                     else:
                         point = (float(x.value), float(y.value))
                         undo_tag = z
-                except ValueError:  # internal exception
-                    raise DXFStructureError('Invalid floating point values near line: {}.'.format(line))
+                except ValueError:
+                    raise DXFStructureError(
+                        f'Invalid floating point values near line: {line}.')
                 yield DXFVertex(code, point)
             elif code in BINARY_DATA:
-                if isinstance(x, DXFBinaryTag):  # maybe pre compiled in low level tagger (binary DXF)
+                # Maybe pre compiled in low level tagger (binary DXF):
+                if isinstance(x, DXFBinaryTag):
                     tag = x
                 else:
                     try:
                         tag = DXFBinaryTag.from_string(code, x.value)
                     except ValueError:
-                        raise DXFStructureError('Invalid binary data near line: {}.'.format(line))
+                        raise DXFStructureError(
+                            f'Invalid binary data near line: {line}.')
                 yield tag
-            else:  # just a single tag
+            else:  # Just a single tag
                 try:
-                    # fast path!
+                    # Fast path!
                     if code == 0:
                         value = x.value.strip()
                     else:
                         value = x.value
                     yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
-                except ValueError:  # internal exception
-                    # slow path
-                    if TYPE_TABLE.get(code, str) is int:  # ProE stores int values as floats :((
+                except ValueError:
+                    # ProE stores int values as floats :((
+                    if TYPE_TABLE.get(code, str) is int:
                         try:
                             yield DXFTag(code, int(float(x.value)))
                         except ValueError:
