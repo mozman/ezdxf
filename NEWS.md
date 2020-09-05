@@ -96,7 +96,8 @@ Version 0.14b3 - dev
 - BUGFIX: Treat layout names case insensitive; "MODEL" == "Model" 
 - BUGFIX: Using "surrogateescape" error handler to preserve binary data in 
   ASCII DXF files. Prior versions of ezdxf corrupted this data by using the 
-  "ignore" error handler 
+  "ignore" error handler; Example file with binary data in XRECORD is not valid 
+  for TrueView 2020 - so binary data is maybe not allowed.
 
 Version 0.13.1 - 2020-07-18
 ---------------------------
