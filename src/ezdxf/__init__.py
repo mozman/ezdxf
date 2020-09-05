@@ -11,7 +11,6 @@ PYPY = hasattr(sys, 'pypy_version_info')
 PYPY_ON_WINDOWS = sys.platform.startswith('win') and PYPY
 EZDXF_TEST_FILES = os.getenv('EZDXF_TEST_FILES', '')
 
-
 # name space imports - do not remove
 from ezdxf.options import options
 from ezdxf.tools import transparency2float, float2transparency
@@ -34,7 +33,9 @@ from ezdxf.lldxf.const import (
 # name space imports - do not remove
 
 import codecs
-from ezdxf.lldxf.encoding import dxf_backslash_replace
+from ezdxf.lldxf.encoding import (
+    dxf_backslash_replace, has_dxf_unicode, decode_dxf_unicode,
+)
 
 # setup DXF unicode encoder -> '\U+nnnn'
 codecs.register_error('dxfreplace', dxf_backslash_replace)

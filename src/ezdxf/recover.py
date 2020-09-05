@@ -9,8 +9,8 @@ from collections import defaultdict
 from ezdxf.lldxf import const
 from ezdxf.lldxf import repair
 from ezdxf.lldxf.encoding import (
-    has_dxf_backslash_encoding,
-    decode_dxf_backslash_encoding,
+    has_dxf_unicode,
+    decode_dxf_unicode,
 )
 from ezdxf.lldxf.types import (
     DXFTag, DXFVertex, DXFBinaryTag, POINT_CODES, BINARY_DATA, TYPE_TABLE,
@@ -513,8 +513,8 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                     str_ = value.decode(encoding, errors='surrogateescape')
                     # Convert DXF unicode notation "\U+xxxx" to unicode,
                     # but exclude structure tags (code>0):
-                    if code and has_dxf_backslash_encoding(str_):
-                        str_ = decode_dxf_backslash_encoding(str_)
+                    if code and has_dxf_unicode(str_):
+                        str_ = decode_dxf_unicode(str_)
 
                     yield DXFTag(code, str_)
                 else:

@@ -11,7 +11,7 @@ Version 0.14b3 - dev
   names (layers, linetypes, styles, ...). DXF unicode notation "\U+xxxx" raises
   a `ValueError()` if used as resource names like layer name or text style names, 
   such files can only be loaded by the new `recover` module.
-- NEW: `ezdxf.recover`, module to load DXF Documents with structural flaws, see 
+- NEW: `ezdxf.recover` module to load DXF Documents with structural flaws, see 
   [docs](file:///D:/Source/ezdxf.git/docs/build/html/drawing/recover.html)
 - NEW: `addons.drawing.Frontend()` supports width attributes of LWPOLYLINE and 
   2D POLYLINE entities
@@ -65,6 +65,10 @@ Version 0.14b3 - dev
   `ezdxf.math`
 - NEW: `Drawing.encode` to encode unicode strings with correct encoding and 
   error handler
+- NEW: `ezdxf.has_dxf_unicode()` to detect "\U+xxxx" encoded chars
+- NEW: `ezdxf.decode_dxf_unicode()` to decode strings containing  
+  "\U+xxxx" encoded chars, the new `recover` module decodes such strings 
+  automatically.
 - CHANGE: `DXFEntity.get_extension_dict()`, raises `AttributeError` if entity
   has no extension dictionary 
 - CHANGE: `DXFEntity.has_extension_dict` is now a property not a method
@@ -93,7 +97,7 @@ Version 0.14b3 - dev
 - BUGFIX: Set `non-constant-attribs` flag (2) in BLOCK at DXF export if non 
   constant ATTDEF entities are present.
 - BUGFIX: DXF R2018 - `HATCH` extrusion vector (210) is mandatory?
-- BUGFIX: Treat layout names case insensitive; "MODEL" == "Model" 
+- BUGFIX: Layout names are case insensitive; "MODEL" == "Model" 
 - BUGFIX: Using "surrogateescape" error handler to preserve binary data in 
   ASCII DXF files. Prior versions of ezdxf corrupted this data by using the 
   "ignore" error handler; Example file with binary data in XRECORD is not valid 

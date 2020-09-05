@@ -38,9 +38,13 @@ def _decode(s: str) -> str:
         return s
 
 
-def has_dxf_backslash_encoding(s: str) -> bool:
+def has_dxf_unicode(s: str) -> bool:
+    r""" Detect if string `s` contains encoded DXF unicode characters "\\U+xxxx".
+    """
     return bool(re.search(BACKSLASH_UNICODE, s))
 
 
-def decode_dxf_backslash_encoding(s: str):
+def decode_dxf_unicode(s: str) -> str:
+    r""" Decode DXF unicode characters "\\U+xxxx" in string `s`. """
+
     return ''.join(_decode(part) for part in re.split(BACKSLASH_UNICODE, s))
