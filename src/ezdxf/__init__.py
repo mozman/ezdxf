@@ -34,7 +34,7 @@ from ezdxf.lldxf.const import (
 # name space imports - do not remove
 
 import codecs
-from ezdxf.lldxf.encoding import dxf_backslash_replace, encode
+from ezdxf.lldxf.encoding import dxf_backslash_replace
 
 # setup DXF unicode encoder -> '\U+nnnn'
 codecs.register_error('dxfreplace', dxf_backslash_replace)

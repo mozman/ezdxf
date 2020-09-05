@@ -17,7 +17,6 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.lldxf import loader
 from ezdxf.lldxf.tagwriter import TagWriter, BinaryTagWriter
-from ezdxf.lldxf.encoding import encode
 
 from ezdxf.entitydb import EntityDB
 from ezdxf.layouts.layouts import Layouts
@@ -444,13 +443,23 @@ class Drawing:
         finally:
             fp.close()
 
+    def encode(self, s: str) -> bytes:
+        """ Encode string `s` with correct encoding and error handler. """
+        return s.encode(encoding=self.output_encoding, errors='dxfreplace')
+
     def write(self, stream: Union[TextIO, BinaryIO], fmt: str = 'asc') -> None:
         """ Write drawing as ASCII DXF to a text stream or as Binary DXF to a
         binary stream. For DXF R2004 (AC1018) and prior open stream with
         drawing :attr:`encoding` and :code:`mode='wt'`. For DXF R2007 (AC1021)
         and later use :code:`encoding='utf-8'`, or better use the later added
         :class:`Drawing` property :attr:`output_encoding` which returns the
-        correct encoding automatically.
+        correct encoding automatically. The correct and required error handler
+        is :code:`errors='dxfreplace'`!
+
+        If writing to a :class:`StringIO` stream, use :meth:`Drawing.encode` to
+        encode the result string from :meth:`StringIO.get_value`::
+
+            binary = doc.encode(stream.get_value())
 
         Args:
             stream: output text stream or binary stream
@@ -484,16 +493,12 @@ class Drawing:
         self.export_sections(tagwriter)
 
     def encode_base64(self) -> bytes:
-        """ Returns DXF document as base64 encoded binary data.
-
-        .. versionadded:: 0.12
-            Thanks to Joseph Flack
-
-        """
+        """ Returns DXF document as base64 encoded binary data. """
         stream = io.StringIO()
         self.write(stream)
-        # create binary data with windows line ending
-        binary_data = encode(stream.getvalue(), self.output_encoding)
+        # Create binary data:
+        binary_data = self.encode(stream.getvalue())
+        # Create Windows line endings and do base64 encoding:
         return base64.encodebytes(binary_data.replace(b'\n', b'\r\n'))
 
     def export_sections(self, tagwriter: 'TagWriter') -> None:

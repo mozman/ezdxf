@@ -63,6 +63,8 @@ Version 0.14b3 - dev
   imported automatically as `ezdxf.EZDXF_TEST_FILES`
 - NEW: `arc_chord_length()` and `arc_segment_count()` tool functions in 
   `ezdxf.math`
+- NEW: `Drawing.encode` to encode unicode strings with correct encoding and 
+  error handler
 - CHANGE: `DXFEntity.get_extension_dict()`, raises `AttributeError` if entity
   has no extension dictionary 
 - CHANGE: `DXFEntity.has_extension_dict` is now a property not a method
