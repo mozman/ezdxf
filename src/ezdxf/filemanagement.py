@@ -61,7 +61,9 @@ def read(stream: TextIO) -> 'Drawing':
 
     Since DXF version R2007 (AC1021) file encoding is always "utf-8",
     use the helper function :func:`dxf_stream_info` to detect the required
-    text encoding for prior DXF versions.
+    text encoding for prior DXF versions. To preserve possible binary data in
+    XRECORD entities use :code:`errors='surrogateescape'` as error handler
+    for the import stream.
 
     If this function struggles to load the DXF document and raises a
     :class:`DXFStructureError` exception, try the :func:`ezdxf.recover.read`
@@ -131,7 +133,8 @@ def readfile(filename: str, encoding: str = None) -> 'Drawing':
     if encoding is not None:
         # override default encodings if absolute necessary
         info.encoding = encoding
-    with open(filename, mode='rt', encoding=info.encoding) as fp:
+    with open(filename, mode='rt', encoding=info.encoding,
+              errors='surrogateescape') as fp:
         doc = read(fp)
 
     doc.filename = filename

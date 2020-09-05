@@ -1,6 +1,5 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Important assumption: ezdxf can already write correct DXF files
 import pytest
 import ezdxf
 
@@ -18,7 +17,6 @@ def dxf(request, tmpdir_factory):
     return filename
 
 
-@pytest.mark.skipif(ezdxf.PYPY_ON_WINDOWS, reason='Does not work on Windows with PyPy 3.5.3')
 def test_load_dxf(dxf):
     doc = ezdxf.readfile(dxf)
 

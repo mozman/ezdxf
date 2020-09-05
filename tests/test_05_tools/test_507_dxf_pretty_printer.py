@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -7,7 +7,6 @@ from ezdxf.pp.__main__ import readfile, dxfpp
 from ezdxf.pp.rawpp import rawpp
 
 
-@pytest.mark.skipif(ezdxf.PYPY_ON_WINDOWS, reason='Does not work on Windows with PyPy 3.5.3')
 def test_dxf_drawing_to_html(tmpdir):
     name = tmpdir.join('test.dxf')
     doc = ezdxf.new()

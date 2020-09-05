@@ -239,7 +239,9 @@ class Drawing:
     @classmethod
     def read(cls, stream: TextIO) -> 'Drawing':
         """ Open an existing drawing. Package users should use the factory
-        function :func:`ezdxf.read`.
+        function :func:`ezdxf.read`. To preserve possible binary data in
+        XRECORD entities use :code:`errors='surrogateescape'` as error handler
+        for the import stream.
 
         Args:
              stream: text stream yielding text (unicode) strings by readline()

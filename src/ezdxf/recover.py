@@ -510,15 +510,7 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                     if code == 0:
                         # remove white space from structure tags
                         value = x.value.strip().upper()
-                    try:
-                        str_ = value.decode(encoding)
-                    except UnicodeDecodeError:
-                        errors.append((
-                            AuditError.DECODING_ERROR,
-                            f'Ignore decoding error in line {line}.'
-                        ))
-                        str_ = value.decode(encoding, errors='ignore')
-
+                    str_ = value.decode(encoding, errors='surrogateescape')
                     # Convert DXF unicode notation "\U+xxxx" to unicode,
                     # but exclude structure tags (code>0):
                     if code and has_dxf_backslash_encoding(str_):

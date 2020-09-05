@@ -53,9 +53,7 @@ def test_read_civil_3d():
     doc, auditor = recover.readfile(FILE_CIVIL_3D)
     assert doc.filename == FILE_CIVIL_3D
     assert doc.dxfversion == 'AC1032'
-    assert auditor.has_errors is True
-    assert len(auditor.errors) == 238
-    assert auditor.errors[0].code == AuditError.DECODING_ERROR
+    assert auditor.has_errors is False
 
 
 FILE_MAP_3D = os.path.join(ezdxf.EZDXF_TEST_FILES,
