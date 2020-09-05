@@ -1,4 +1,3 @@
-# Created: 10.03.2011
 # Copyright (C) 2011-2020, Manfred Moitzi
 # License: MIT License
 import sys
@@ -35,7 +34,7 @@ from ezdxf.lldxf.const import (
 # name space imports - do not remove
 
 import codecs
-from ezdxf.lldxf.encoding import dxf_backslash_replace
+from ezdxf.lldxf.encoding import dxf_backslash_replace, encode
 
 # setup DXF unicode encoder -> '\U+nnnn'
 codecs.register_error('dxfreplace', dxf_backslash_replace)

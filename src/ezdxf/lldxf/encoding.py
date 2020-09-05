@@ -26,6 +26,11 @@ def dxf_backslash_replace(exc: Exception):
         raise TypeError(f"Can't handle {exc.__class__.__name__}")
 
 
+def encode(s: str, encoding='utf8') -> bytes:
+    """ Shortcut to use the correct error handler """
+    return s.encode(encoding, errors='dxfreplace')
+
+
 def _decode(s: str) -> str:
     if s.startswith(r'\U+'):
         return chr(int(s[3:], 16))

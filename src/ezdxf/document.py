@@ -15,8 +15,9 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf.const import (
     BLK_XREF, BLK_EXTERNAL, DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013,
 )
-from ezdxf.lldxf import repair, loader
+from ezdxf.lldxf import loader
 from ezdxf.lldxf.tagwriter import TagWriter, BinaryTagWriter
+from ezdxf.lldxf.encoding import encode
 
 from ezdxf.entitydb import EntityDB
 from ezdxf.layouts.layouts import Layouts
@@ -492,9 +493,8 @@ class Drawing:
         stream = io.StringIO()
         self.write(stream)
         # create binary data with windows line ending
-        binary_data = stream.getvalue().encode(self.output_encoding).replace(
-            b'\n', b'\r\n')
-        return base64.encodebytes(binary_data)
+        binary_data = encode(stream.getvalue(), self.output_encoding)
+        return base64.encodebytes(binary_data.replace(b'\n', b'\r\n'))
 
     def export_sections(self, tagwriter: 'TagWriter') -> None:
         """ DXF export sections. (internal API) """

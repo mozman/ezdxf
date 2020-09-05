@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 import codecs
-from ezdxf.lldxf.encoding import dxf_backslash_replace
+from ezdxf.lldxf.encoding import dxf_backslash_replace, encode
 from pathlib import Path
 
 # setup DXF unicode encoder -> '\U+nnnn'
@@ -10,7 +10,7 @@ codecs.register_error('dxfreplace', dxf_backslash_replace)
 
 
 def test_ascii_encoding():
-    assert b'123\\U+6539' == u'123改'.encode('ascii', errors='dxfreplace')
+    assert b'123\\U+6539' == encode('123改', 'ascii')
 
 
 @pytest.mark.parametrize(['s', 'e'], [
@@ -18,7 +18,7 @@ def test_ascii_encoding():
     ('123改', b'123\\U+6539')
 ])
 def test_surrogate_escape_support_in_dxf_replace_encoder(s, e):
-    assert e == s.encode('ascii', errors='dxfreplace')
+    assert e == encode(s, 'ascii')
 
 
 @pytest.mark.parametrize('n', [0, 1, 2])
@@ -27,5 +27,5 @@ def test_XRECORD_handling_of_dxf_replace_encoder(n):
     with open(XRECORD, 'rb') as f:
         data = f.read()
     s = data.decode('utf8', errors='surrogateescape')
-    result = s.encode('utf8', errors='dxfreplace')
+    result = encode(s, encoding='utf8')
     assert data == result
