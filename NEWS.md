@@ -79,15 +79,11 @@ Version 0.14b3 - dev
 - CHANGE: Dictionary raise `DXFValueError` for adding invalid handles
 - CHANGE: `BaseLayout.add_entity()` will bind entity automatically to doc/db if possible
 - CHANGE: handle all layout names as case insensitive strings: `Model == MODEL`
-- CHANGE: removed `errors='ignore'` from the `open` command in `ezdxf.readfile()`, 
-  this will show existing problems with some files, which were ignored silently 
-  in previous versions, but this files can still be loaded by the new `recover` 
-  module.
 - REMOVE: `option.check_entity_tag_structure`, entity check is done only in 
   recover mode
 - REMOVE: `legacy_mode` in `ezdxf.read()` and `ezdxf.readfile()`, use the 
   `ezdxf.recover` module to load DXF Documents with structural flaws
-- REMOVE: Alias `DXFEntity.drawing`
+- REMOVE: Alias `DXFEntity.drawing` use `DXFEntity.doc`
 - REMOVE: `DXFEntity.entitydb`
 - REMOVE: `DXFEntity.dxffactory`
 - REMOVE: `DXFInvalidLayerName`, replaced by `DXFValueError` 
