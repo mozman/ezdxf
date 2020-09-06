@@ -31,22 +31,33 @@ EXCLUDE_STRUCTURE_CHECK = {
 }
 
 
-def readfile(filename: str) -> Tuple['Drawing', 'Auditor']:
+def readfile(filename: str,
+             errors: str = 'surrogateescape') -> Tuple['Drawing', 'Auditor']:
     """ Read a DXF document from file system similar to :func:`ezdxf.readfile`,
     but this function will repair as much flaws as possible, runs the required
     audit process automatically the DXF document and the :class:`Auditor`.
 
     Args:
         filename: file-system name of the DXF document to load
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError` exception for invalid data
+
+    Raises:
+        DXFStructureError: for invalid or corrupted DXF structures
+        UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
     with open(filename, mode='rb') as fp:
-        doc, auditor = read(fp)
+        doc, auditor = read(fp, errors=errors)
     doc.filename = filename
     return doc, auditor
 
 
-def read(stream: BinaryIO) -> Tuple['Drawing', 'Auditor']:
+def read(stream: BinaryIO,
+         errors: str = 'surrogateescape') -> Tuple['Drawing', 'Auditor']:
     """ Read a DXF document from a binary-stream similar to :func:`ezdxf.read`,
     but this function will detect the text encoding automatically and repair
     as much flaws as possible, runs the required audit process afterwards
@@ -54,10 +65,19 @@ def read(stream: BinaryIO) -> Tuple['Drawing', 'Auditor']:
 
     Args:
         stream: data stream to load in binary read mode
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError` exception for invalid data
+
+    Raises:
+        DXFStructureError: for invalid or corrupted DXF structures
+        UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
     from ezdxf.document import Drawing
-    recover_tool = Recover.run(stream)
+    recover_tool = Recover.run(stream, errors=errors)
     doc = Drawing()
     doc._load_section_dict(recover_tool.section_dict)
 
@@ -89,10 +109,11 @@ class Recover:
         self.fixes = []
 
     @classmethod
-    def run(cls, stream: BinaryIO, loader: Callable = None) -> 'Recover':
+    def run(cls, stream: BinaryIO, loader: Callable = None,
+            errors: str = 'surrogateescape') -> 'Recover':
         """ Execute the recover process. """
         recover_tool = Recover(loader)
-        tags = recover_tool.load_tags(stream)
+        tags = recover_tool.load_tags(stream, errors)
         sections = recover_tool.rebuild_sections(tags)
         recover_tool.load_section_dict(sections)
         tables = recover_tool.section_dict.get('TABLES')
@@ -107,8 +128,9 @@ class Recover:
 
         return recover_tool
 
-    def load_tags(self, stream: BinaryIO) -> Iterable[DXFTag]:
-        return safe_tag_loader(stream, self.tag_loader, self.errors)
+    def load_tags(self, stream: BinaryIO, errors: str) -> Iterable[DXFTag]:
+        return safe_tag_loader(stream, self.tag_loader,
+                               messages=self.errors, errors=errors)
 
     def rebuild_sections(self, tags: Iterable[DXFTag]) -> List[List[DXFTag]]:
         """ Collect tags between SECTION and ENDSEC or next SECTION tag
@@ -287,7 +309,9 @@ class Recover:
 
 def safe_tag_loader(stream: BinaryIO,
                     loader: Callable = None,
-                    errors: List = None) -> Iterable[DXFTag]:
+                    messages: List = None,
+                    errors: str = 'surrogateescape',
+                    ) -> Iterable[DXFTag]:
     """ Yields :class:``DXFTag`` objects from a bytes `stream`
     (untrusted external  source), skips all comment tags (group code == 999).
 
@@ -298,7 +322,12 @@ def safe_tag_loader(stream: BinaryIO,
     Args:
         stream: input data stream as bytes
         loader: low level tag loader, default loader is :func:`bytes_loader`
-        errors: list to store error messages
+        messages: list to store error messages
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError` exception for invalid data
 
     """
     if loader is None:
@@ -309,7 +338,7 @@ def safe_tag_loader(stream: BinaryIO,
     # Apply repair filter:
     tags = repair.tag_reorder_layer(tags)
     tags = repair.filter_invalid_yz_point_codes(tags)
-    return byte_tag_compiler(tags, encoding, errors)
+    return byte_tag_compiler(tags, encoding, messages=messages, errors=errors)
 
 
 def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
@@ -433,7 +462,9 @@ def detect_encoding(tags: Iterable[DXFTag]) -> str:
 
 def byte_tag_compiler(tags: Iterable[DXFTag],
                       encoding=const.DEFAULT_ENCODING,
-                      errors: List = None) -> Iterable[DXFTag]:
+                      messages: List = None,
+                      errors: str = 'surrogateescape',
+                      ) -> Iterable[DXFTag]:
     """ Compiles DXF tag values imported by bytes_loader() into Python types.
 
     Raises DXFStructureError() for invalid float values and invalid coordinate
@@ -445,7 +476,12 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
     Args:
         tags: DXF tag generator, yielding tag values as bytes like bytes_loader()
         encoding: text encoding
-        errors: list to store error messages
+        messages: list to store error messages
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError` exception for invalid data
 
     Raises:
         DXFStructureError: Found invalid DXF tag or unexpected coordinate order.
@@ -457,8 +493,8 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
         value = tag.value.decode(encoding)
         return f'Invalid tag ({code}, "{value}") near line: {line}.'
 
-    if errors is None:
-        errors = []
+    if messages is None:
+        messages = []
     tags = iter(tags)
     undo_tag = None
     line = 0
@@ -510,7 +546,15 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                     if code == 0:
                         # remove white space from structure tags
                         value = x.value.strip().upper()
-                    str_ = value.decode(encoding, errors='surrogateescape')
+                    try:  # 2 stages to document decoding errors
+                        str_ = value.decode(encoding, errors='strict')
+                    except UnicodeDecodeError:
+                        str_ = value.decode(encoding, errors=errors)
+                        messages.append((
+                            AuditError.DECODING_ERROR,
+                            f'Fixed unicode decoding error near line {line}'
+                        ))
+
                     # Convert DXF unicode notation "\U+xxxx" to unicode,
                     # but exclude structure tags (code>0):
                     if code and has_dxf_unicode(str_):

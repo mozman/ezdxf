@@ -12,7 +12,10 @@ Version 0.14b3 - dev
   a `ValueError()` if used as resource names like layer name or text style names, 
   such files can only be loaded by the new `recover` module.
 - NEW: `ezdxf.recover` module to load DXF Documents with structural flaws, see 
-  [docs](file:///D:/Source/ezdxf.git/docs/build/html/drawing/recover.html)
+  [docs](https://ezdxf.mozman.at/docs/drawing/recover.html)
+- NEW: All DXF loading functions accept an unicode decoding error handler: 
+  "surrogateescape", "ignore" or "strict", see [docs](https://ezdxf.mozman.at/docs/drawing/recover.html) 
+  of the `recover` module for more information.
 - NEW: `addons.drawing.Frontend()` supports width attributes of LWPOLYLINE and 
   2D POLYLINE entities
 - NEW: `TraceBuilder()` a render tool to generate quadrilaterals (TRACE, SOLID 
@@ -63,7 +66,7 @@ Version 0.14b3 - dev
   imported automatically as `ezdxf.EZDXF_TEST_FILES`
 - NEW: `arc_chord_length()` and `arc_segment_count()` tool functions in 
   `ezdxf.math`
-- NEW: `Drawing.encode` to encode unicode strings with correct encoding and 
+- NEW: `Drawing.encode()` to encode unicode strings with correct encoding and 
   error handler
 - NEW: `ezdxf.has_dxf_unicode()` to detect "\U+xxxx" encoded chars
 - NEW: `ezdxf.decode_dxf_unicode()` to decode strings containing  

@@ -33,15 +33,22 @@ class IterDXF:
     """ Iterator for DXF entities stored in the modelspace.
 
     Args:
-         name: filename, has to be a seekable file.
+        name: filename, has to be a seekable file.
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError`exception  for invalid data
 
     Raises:
-        DXFStructureError: Invalid or incomplete DXF file
+        DXFStructureError: invalid or incomplete DXF file
+        UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
 
-    def __init__(self, name: Filename):
+    def __init__(self, name: Filename, errors: str = 'surrogateescape'):
         self.structure, self.sections = self._load_index(name)
+        self.errors = errors
         self.file: BinaryIO = open(name, mode='rb')
         if 'ENTITIES' not in self.sections:
             raise DXFStructureError('ENTITIES section not found.')
@@ -139,7 +146,7 @@ class IterDXF:
         DXFGraphic]:
         def to_str(data: bytes) -> str:
             return data.decode(
-                self.encoding, errors='surrogatereplace').replace('\r\n', '\n')
+                self.encoding, errors=self.errors).replace('\r\n', '\n')
 
         index = start
         entry = self.structure.index[index]
@@ -220,7 +227,7 @@ class IterDXFWriter:
         self.file.close()
 
 
-def opendxf(filename: Filename) -> IterDXF:
+def opendxf(filename: Filename, errors: str = 'surrogateescape') -> IterDXF:
     """ Open DXF file for iterating, be sure to open valid DXF files, no DXF
     structure checks will be applied.
 
@@ -228,23 +235,42 @@ def opendxf(filename: Filename) -> IterDXF:
 
     Args:
         filename: DXF filename of a seekable DXF file.
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError` exception for invalid data
+
+    Raises:
+        DXFStructureError: invalid or incomplete DXF file
+        UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
-    return IterDXF(filename)
+    return IterDXF(filename, errors=errors)
 
 
 def modelspace(filename: Filename,
-               types: Iterable[str] = None) -> Iterable[DXFGraphic]:
+               types: Iterable[str] = None,
+               errors: str = 'surrogateescape') -> Iterable[DXFGraphic]:
     """ Iterate over all modelspace entities as :class:`DXFGraphic` objects of
     a seekable file.
 
-    Use this function to 'quick' iterate over modelspace entities of a DXF file,
+    Use this function to iterate "quick" over modelspace entities of a DXF file,
     filtering DXF types may speed up things if many entity types will be skipped.
 
     Args:
         filename: filename of a seekable DXF file
         types: DXF types like ``['LINE', '3DFACE']`` which should be returned,
             ``None`` returns all supported types.
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError` exception for invalid data
+
+    Raises:
+        DXFStructureError: invalid or incomplete DXF file
+        UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
     info = dxf_file_info(filename)
@@ -253,7 +279,7 @@ def modelspace(filename: Filename,
     entities = False
     requested_types = _requested_types(types)
 
-    with open(filename, mode='rt', encoding=info.encoding) as fp:
+    with open(filename, mode='rt', encoding=info.encoding, errors=errors) as fp:
         tagger = ascii_tags_loader(fp)
         queued: Optional[DXFEntity] = None
         tags: List[DXFTag] = []
@@ -288,8 +314,10 @@ def modelspace(filename: Filename,
             prev_value = value
 
 
-def single_pass_modelspace(stream: BinaryIO, types: Iterable[str] = None) -> \
-        Iterable[DXFGraphic]:
+def single_pass_modelspace(
+        stream: BinaryIO,
+        types: Iterable[str] = None,
+        errors: str = 'surrogateescape') -> Iterable[DXFGraphic]:
     """ Iterate over all modelspace entities as :class:`DXFGraphic` objects in
     one single pass.
 
@@ -301,6 +329,15 @@ def single_pass_modelspace(stream: BinaryIO, types: Iterable[str] = None) -> \
         stream: (not seekable) binary DXF stream
         types: DXF types like ``['LINE', '3DFACE']`` which should be returned,
             ``None`` returns all supported types.
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError` exception for invalid data
+
+    Raises:
+        DXFStructureError: Invalid or incomplete DXF file
+        UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
     fetch_header_var: Optional[str] = None
@@ -338,7 +375,7 @@ def single_pass_modelspace(stream: BinaryIO, types: Iterable[str] = None) -> \
     tags: List[DXFTag] = []
     linked_entity = entity_linker()
 
-    for tag in tag_compiler(binary_tagger(stream, encoding)):
+    for tag in tag_compiler(binary_tagger(stream, encoding, errors)):
         code = tag.code
         value = tag.value
         if entities:
@@ -366,7 +403,8 @@ def single_pass_modelspace(stream: BinaryIO, types: Iterable[str] = None) -> \
         prev_value = value
 
 
-def binary_tagger(file: BinaryIO, encoding: str = None) -> DXFTag:
+def binary_tagger(file: BinaryIO, encoding: str = None,
+                  errors: str = 'surrogateescape') -> DXFTag:
     while True:
         try:
             try:
@@ -376,7 +414,7 @@ def binary_tagger(file: BinaryIO, encoding: str = None) -> DXFTag:
             value = file.readline().rstrip(b'\r\n')
             yield DXFTag(
                 code,
-                value.decode(encoding, errors='surrogatereplace')
+                value.decode(encoding, errors=errors)
                 if encoding else value)
         except IOError:
             return

@@ -1,7 +1,7 @@
 .. _dwgmanagement:
 
-Drawing Management
-==================
+Document Management
+===================
 
 .. module:: ezdxf
 
@@ -35,13 +35,13 @@ AC1027      R2013      UTF-8          AutoCAD R2013
 AC1032      R2018      UTF-8          AutoCAD R2018
 =========== ========== ============== ===================================
 
-.. autofunction:: readfile(filename: str, encoding: str = None) -> Drawing
+.. autofunction:: readfile(filename: str, encoding: str = None, errors: str="surrogateescape") -> Drawing
 
 .. autofunction:: read(stream: TextIO) -> Drawing
 
-.. autofunction:: readzip(zipfile: str, filename: str = None) -> Drawing
+.. autofunction:: readzip(zipfile: str, filename: str = None, errors: str="surrogateescape") -> Drawing
 
-.. autofunction:: decode_base64(data: bytes) -> Drawing
+.. autofunction:: decode_base64(data: bytes, errors: str="surrogateescape") -> Drawing
 
 .. hint::
 

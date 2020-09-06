@@ -24,7 +24,7 @@ def tags01():
     filename = fullpath(RECOVER1)
     tool = recover.Recover()
     with open(filename, 'rb') as fp:
-        return list(tool.load_tags(fp))
+        return list(tool.load_tags(fp, errors='ignore'))
 
 
 def test_bytes_loader():
@@ -78,7 +78,7 @@ def tags02():
     filename = fullpath(RECOVER2)
     tool = recover.Recover()
     with open(filename, 'rb') as fp:
-        return list(tool.load_tags(fp))
+        return list(tool.load_tags(fp, errors='ignore'))
 
 
 def test_rebuild_tables(tags02):

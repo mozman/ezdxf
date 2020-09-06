@@ -62,8 +62,7 @@ def read(stream: TextIO) -> 'Drawing':
     Since DXF version R2007 (AC1021) file encoding is always "utf-8",
     use the helper function :func:`dxf_stream_info` to detect the required
     text encoding for prior DXF versions. To preserve possible binary data in
-    XRECORD entities use :code:`errors='surrogateescape'` as error handler
-    for the import stream.
+    use :code:`errors='surrogateescape'` as error handler for the import stream.
 
     If this function struggles to load the DXF document and raises a
     :class:`DXFStructureError` exception, try the :func:`ezdxf.recover.read`
@@ -73,7 +72,7 @@ def read(stream: TextIO) -> 'Drawing':
         stream: input text stream opened with correct encoding
 
     Raises:
-        DXFStructureError: for invalid DXF structure
+        DXFStructureError: for invalid or corrupted DXF structures
 
     .. deprecated:: v0.14
 
@@ -85,7 +84,8 @@ def read(stream: TextIO) -> 'Drawing':
     return Drawing.read(stream)
 
 
-def readfile(filename: str, encoding: str = None) -> 'Drawing':
+def readfile(filename: str, encoding: str = None,
+             errors: str = 'surrogateescape') -> 'Drawing':
     """  Read the DXF document `filename` from the file-system.
 
     This is the preferred method to load existing ASCII or Binary DXF files,
@@ -104,10 +104,16 @@ def readfile(filename: str, encoding: str = None) -> 'Drawing':
         filename: filename of the ASCII- or Binary DXF document
         encoding: use ``None`` for auto detect (default), or set a specific
             encoding like "utf-8", argument is ignored for Binary DXF files
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError` exception for invalid data
 
     Raises:
-        IOError: File `filename` is not a DXF file or does not exist.
-        DXFStructureError: for invalid DXF structure
+        IOError: not a DXF file or file does not exist
+        DXFStructureError: for invalid or corrupted DXF structures
+        UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     .. deprecated:: v0.14
 
@@ -123,7 +129,7 @@ def readfile(filename: str, encoding: str = None) -> 'Drawing':
     if is_binary_dxf_file(filename):
         with open(filename, 'rb') as fp:
             data = fp.read()
-            loader = binary_tags_loader(data)
+            loader = binary_tags_loader(data, errors=errors)
             return Drawing.load(loader)
 
     if not is_dxf_file(filename):
@@ -134,7 +140,7 @@ def readfile(filename: str, encoding: str = None) -> 'Drawing':
         # override default encodings if absolute necessary
         info.encoding = encoding
     with open(filename, mode='rt', encoding=info.encoding,
-              errors='surrogateescape') as fp:
+              errors=errors) as fp:
         doc = read(fp)
 
     doc.filename = filename
@@ -169,7 +175,8 @@ def dxf_stream_info(stream: TextIO) -> 'DXFInfo':
     return info
 
 
-def readzip(zipfile: str, filename: str = None) -> 'Drawing':
+def readzip(zipfile: str, filename: str = None,
+            errors: str = 'surrogateescape') -> 'Drawing':
     """ Load a DXF document specified by `filename` from a zip archive, or if
     `filename` is ``None`` the first DXF document in the zip archive.
 
@@ -177,22 +184,42 @@ def readzip(zipfile: str, filename: str = None) -> 'Drawing':
         zipfile: name of the zip archive
         filename: filename of DXF file, or ``None`` to load the first DXF
             document from the zip archive.
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError` exception for invalid data
+
+    Raises:
+        IOError: not a DXF file or file does not exist or
+            if `filename` is ``None`` - no DXF file found
+        DXFStructureError: for invalid or corrupted DXF structures
+        UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
     from ezdxf.tools.zipmanager import ctxZipReader
 
-    with ctxZipReader(zipfile, filename) as zipstream:
+    with ctxZipReader(zipfile, filename, errors=errors) as zipstream:
         doc = read(zipstream)
         doc.filename = zipstream.dxf_file_name
     return doc
 
 
-def decode_base64(data: bytes) -> 'Drawing':
+def decode_base64(data: bytes, errors: str = 'surrogateescape') -> 'Drawing':
     """ Load a DXF document from base64 encoded binary data, like uploaded data
     to web applications.
 
     Args:
         data: DXF document base64 encoded binary data
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError` exception for invalid data
+
+    Raises:
+        DXFStructureError: for invalid or corrupted DXF structures
+        UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
     # Copyright (c) 2020, Joseph Flack
@@ -212,7 +239,7 @@ def decode_base64(data: bytes) -> 'Drawing':
     stream.close()
 
     # Use encoding info to create correct decoded text input stream for ezdxf
-    text = binary_data.decode(info.encoding, errors='ignore')
+    text = binary_data.decode(info.encoding, errors=errors)
     stream = io.StringIO(text)
 
     # Load DXF document from data stream

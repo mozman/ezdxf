@@ -47,12 +47,15 @@ This efforts cost some time, loading the DXF document with :func:`ezdxf.read` or
     :class:`DXFStructureError` exception will be raised, because for many use
     cases this errors can be ignored.
 
-    Despite this are valid DXF files, writing such files back with `ezdxf`
-    may create **invalid** DXF files, or at least some **information will be lost**
-    - handle with care!
+    Writing such files back with `ezdxf` may create **invalid** DXF files, or
+    at least some **information will be lost** - handle with care!
 
-Some loading scenarios as examples:
------------------------------------
+    To avoid this problem use :code:`recover.readfile(filename, errors='strict')`
+    which raises an :class:`UnicodeDecodeError` exception for such binary data.
+    Catch the exception and handle this DXF files as unrecoverable.
+
+Loading Scenarios
+-----------------
 
 1. It will work
 ~~~~~~~~~~~~~~~
@@ -142,6 +145,52 @@ always pay an extra fee for the recover mode:
     if auditor.has_errors:
         print(f'Found unrecoverable errors in DXF file: {name}.')
         auditor.print_error_report()
+
+5. Unrecoverable Decoding Errors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If files contain binary data which can not be decoded by the document encoding,
+it is maybe the best to ignore this files, this works in normal and recover
+mode:
+
+.. code-block:: Python
+
+    try:
+        doc, auditor = recover.readfile(name, errors='strict')
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(1)
+    except ezdxf.DXFStructureError:
+        print(f'Invalid or corrupted DXF file: {name}.')
+        sys.exit(2)
+    except UnicodeDecodeError:
+        print(f'Decoding error in DXF file: {name}.')
+        sys.exit(3)
+
+6. Ignore/Locate Decoding Errors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes ignoring decoding errors can recover DXF files or at least
+you can detect where the decoding errors occur:
+
+.. code-block:: Python
+
+    try:
+        doc, auditor = recover.readfile(name, errors='ignore')
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(1)
+    except ezdxf.DXFStructureError:
+        print(f'Invalid or corrupted DXF file: {name}.')
+        sys.exit(2)
+    if auditor.has_errors:
+        auditor.print_report()
+
+The error messages with code :attr:`AuditError.DECODING_ERROR` shows the
+approximate line number of the decoding error:
+"Fixed unicode decoding error near line: xxx."
+
+
 
 .. hint::
 

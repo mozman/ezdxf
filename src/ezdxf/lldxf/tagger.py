@@ -82,10 +82,6 @@ def ascii_tags_loader(stream: TextIO,
             value = stream.readline()
         except EOFError:
             return
-        except UnicodeDecodeError:
-            raise DXFStructureError(
-                f'Decoding error in line {line}, try recover module to load '
-                f'DXF document.')
         if code and value:  # StringIO(): empty strings indicates EOF
             try:
                 code = int(code)
@@ -100,7 +96,8 @@ def ascii_tags_loader(stream: TextIO,
             return
 
 
-def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
+def binary_tags_loader(data: bytes,
+                       errors: str = 'surrogateescape') -> Iterable[DXFTag]:
     """ Yields :class:`DXFTag` or :class:`DXFBinaryTag` objects from binary DXF
     `data` (untrusted external source) and does not optimize coordinates.
     ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is either an
@@ -108,10 +105,16 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
 
     Args:
         data: binary DXF data
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD: "\ufffd"
+            - "strict" to raise an :class:`UnicodeDecodeError`
 
     Raises:
         DXFStructureError: Not a binary DXF file
         DXFVersionError: Unsupported DXF version
+        UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
     if data[:22] != b'AutoCAD Binary DXF\r\n\x1a\x00':
@@ -198,7 +201,7 @@ def binary_tags_loader(data: bytes) -> Iterable[DXFTag]:
                 end_index = data.index(b'\x00', start_index)
                 s = data[start_index:end_index]
                 index = end_index + 1
-                value = s.decode(encoding, errors='surrogateescape')
+                value = s.decode(encoding, errors=errors)
             yield DXFTag(code, value)
 
 

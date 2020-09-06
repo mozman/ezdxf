@@ -1,39 +1,41 @@
-# Purpose: read DXF files from zip archive
-# Created: 02.05.2014
-# Copyright (c) 2014-2018, Manfred Moitzi
+# Copyright (c) 2014-2020, Manfred Moitzi
 # License: MIT License
-from typing import BinaryIO, cast, TextIO, List
+from typing import BinaryIO, cast, TextIO, List, Optional
 import zipfile
 from contextlib import contextmanager
 
 from ezdxf.lldxf.validator import is_dxf_stream, dxf_info
 
-WIN_NEW_LINE = b'\r\n'
-NEW_LINE = b'\n'
+CRLF = b'\r\n'
+LF = b'\n'
 
 
 class ZipReader:
-    def __init__(self, zip_archive_name: str):
+    def __init__(self, zip_archive_name: str, errors='surrogateescape'):
         if not zipfile.is_zipfile(zip_archive_name):
-            raise IOError("'{}' is not a zip archive.".format(zip_archive_name))
+            raise IOError(f"'{zip_archive_name}' is not a zip archive.")
         self.zip_archive_name = zip_archive_name
-        self.zip_archive = None  # type: zipfile.ZipFile
-        self.dxf_file_name = None  # type: str
-        self.dxf_file = None  # type: BinaryIO
+        self.zip_archive: Optional[zipfile.ZipFile] = None
+        self.dxf_file_name: Optional[str] = None
+        self.dxf_file: Optional[BinaryIO] = None
         self.encoding = 'cp1252'
+        self.errors = errors
         self.dxfversion = 'AC1009'
 
     def open(self, dxf_file_name: str = None) -> None:
         def open_dxf_file() -> BinaryIO:
-            return self.zip_archive.open(self.dxf_file_name)  # open always in binary mode
+            # Open always in binary mode:
+            return cast(BinaryIO, self.zip_archive.open(self.dxf_file_name))
 
         self.zip_archive = zipfile.ZipFile(self.zip_archive_name)
-        self.dxf_file_name = dxf_file_name if dxf_file_name is not None else self.get_first_dxf_file_name()
+        self.dxf_file_name = dxf_file_name if dxf_file_name is not None \
+            else self.get_first_dxf_file_name()
         self.dxf_file = open_dxf_file()
 
-        # reading with standard encoding 'cp1252' - readline() fails if leading comments contain none ascii characters
+        # Reading with standard encoding 'cp1252' - readline() fails if leading
+        # comments contain none ASCII characters.
         if not is_dxf_stream(cast(TextIO, self)):
-            raise IOError("'{}' is not a DXF file.".format(self.dxf_file_name))
+            raise IOError(f"'{self.dxf_file_name}' is not a DXF file.")
         self.dxf_file = open_dxf_file()  # restart
         self.get_dxf_info()
         self.dxf_file = open_dxf_file()  # restart
@@ -43,29 +45,31 @@ class ZipReader:
         if len(dxf_file_names) > 0:
             return dxf_file_names[0]
         else:
-            raise IOError("'{}' has no DXF files.")
+            raise IOError("No DXF files found.")
 
     def get_dxf_file_names(self) -> List[str]:
-        return [name for name in self.zip_archive.namelist() if name.lower().endswith('.dxf')]
+        return [name for name in self.zip_archive.namelist()
+                if name.lower().endswith('.dxf')]
 
     def get_dxf_info(self) -> None:
         info = dxf_info(cast(TextIO, self))
-        # since DXF R2007 (AC1021) file encoding is always 'utf-8'
+        # Since DXF R2007 (AC1021) file encoding is always 'utf-8'
         self.encoding = info.encoding if info.version < 'AC1021' else 'utf-8'
         self.dxfversion = info.version
 
-    # required TextIO interface
+    # Required TextIO interface
     def readline(self) -> str:
-        next_line = self.dxf_file.readline().replace(WIN_NEW_LINE, NEW_LINE)
-        return str(next_line, self.encoding)
+        next_line = self.dxf_file.readline().replace(CRLF, LF)
+        return str(next_line, self.encoding, self.errors)
 
     def close(self) -> None:
         self.zip_archive.close()
 
 
 @contextmanager
-def ctxZipReader(zipfilename: str, filename: str = None) -> ZipReader:
-    zip_reader = ZipReader(zipfilename)
+def ctxZipReader(zipfilename: str, filename: str = None,
+                 errors: str = 'surrogateescape') -> ZipReader:
+    zip_reader = ZipReader(zipfilename, errors=errors)
     zip_reader.open(filename)
     yield zip_reader
     zip_reader.close()
