@@ -532,6 +532,10 @@ class RenderContext:
         The DXF/DWG format is limited to a fixed value table,
         see: :attr:`ezdxf.lldxf.const.VALID_DXF_LINEWEIGHTS`
 
+        CAD applications draw lineweight 0mm as an undefined small value, to
+        prevent backends to draw nothing for lineweight 0mm the smallest
+        return value is 0.01mm.
+
         """
 
         def lineweight():
@@ -559,10 +563,7 @@ class RenderContext:
             else:
                 return float(lineweight) / 100.0
 
-        # A line weight of 0mm is resolved as 0.02mm, this prevents backends
-        # to draw nothing if line weight is 0mm.
-        # Valid DXF line weights are fixed values: 0mm, 0.05mm, 0.09mm...
-        return max(0.02, lineweight())
+        return max(0.01, lineweight())
 
     def default_lineweight(self):
         """ Returns the default lineweight of the document. """
