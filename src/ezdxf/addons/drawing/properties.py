@@ -533,7 +533,8 @@ class RenderContext:
         see: :attr:`ezdxf.lldxf.const.VALID_DXF_LINEWEIGHTS`
 
         """
-        def lineweigth():
+
+        def lineweight():
             aci = entity.dxf.color
             # Not sure if plotstyle table overrides actual entity setting?
             if (0 < aci < 256) and self.plot_styles[
@@ -561,8 +562,7 @@ class RenderContext:
         # A line weight of 0mm is resolved as 0.02mm, this prevents backends
         # to draw nothing if line weight is 0mm.
         # Valid DXF line weights are fixed values: 0mm, 0.05mm, 0.09mm...
-        return max(0.02, lineweigth())
-
+        return max(0.02, lineweight())
 
     def default_lineweight(self):
         """ Returns the default lineweight of the document. """
