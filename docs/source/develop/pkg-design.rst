@@ -11,25 +11,25 @@ A DXF document is divided into several sections, this sections are managed by
 the :class:`~ezdxf.drawing.Drawing` object. For each section exist a
 corresponding attribute in the :class:`Drawing` object:
 
--------- -------------------
+======== ==========================
 Section  Attribute
--------- -------------------
+======== ==========================
 HEADER   :attr:`Drawing.header`
 CLASSES  :attr:`Drawing.classes`
 TABLES   :attr:`Drawing.tables`
 BLOCKS   :attr:`Drawing.blocks`
 ENTITIES :attr:`Drawing.entities`
 OBJECTS  :attr:`Drawing.objects`
--------- -------------------
+======== ==========================
 
 Resource entities (LAYER, STYLE, LTYPE, ...) are stored in tables in the
 TABLES section. A table owns the table entries, the owner handle of table
 entry is the handle of the table. Each table has a shortcut in the
 :class:`Drawing` object:
 
------------- ------------------------
+============ ==========================
 Table        Attribute
------------- ------------------------
+============ ==========================
 APPID        :attr:`Drawing.appids`
 BLOCK_RECORD :attr:`Drawing.block_records`
 DIMSTYLE     :attr:`Drawing.dimstyles`
@@ -39,11 +39,14 @@ STYLE        :attr:`Drawing.styles`
 UCS          :attr:`Drawing.ucs`
 VIEW         :attr:`Drawing.views`
 VPORT        :attr:`Drawing.viewports`
------------- ------------------------
+============ ==========================
 
-Graphical entities are stored in layouts. Layouts are the modelspace,
-paperspace layouts or block layouts. The core management object of this layouts
-is the BLOCK_RECORD entity, the BLOCK_RECORD is the real owner of the entities,
+Graphical entities are stored in layouts:
+:class:`~ezdxf.layouts.Modelspace`, :class:`~ezdxf.layouts.Paperspace` layouts
+and :class:`~ezdxf.layouts.BlockLayout`.
+The core management object of this layouts is the BLOCK_RECORD entity
+(:class:`~ezdxf.entities.BlockRecord`),
+the BLOCK_RECORD is the real owner of the entities,
 the owner handle of the entities is the handle of the BLOCK_RECORD and the
 BLOCK_RECORD also owns and manages the entity space of the layout which
 contains all entities of the layout.

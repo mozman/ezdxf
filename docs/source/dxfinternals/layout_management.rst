@@ -21,15 +21,15 @@ BLOCKS section.
     Information about :ref:`Block Management Structures`
 
 
-The name of the modelspace BLOCK is "*Model_Space" (DXF R12: "$MODEL_SPACE")
-and the name of the `active` paperspace BLOCK is "*Paper_Space"
+The name of the modelspace BLOCK is "\*Model_Space" (DXF R12: "$MODEL_SPACE")
+and the name of the `active` paperspace BLOCK is "\*Paper_Space"
 (DXF R12: "$PAPER_SPACE"), the entities of these two layouts are
 stored in the ENTITIES section, DXF R12 supports just one paperspace layout.
 
 DXF R13+ supports multiple paperspace layouts, the `active` layout is still
-called "*Paper_Space", the additional `inactive` paperspace layouts are named
-by the scheme "*Paper_Spacennnn", where the first inactive paper space is
-called "*Paper_Space0", the second "*Paper_Space1" and so on.
+called "\*Paper_Space", the additional `inactive` paperspace layouts are named
+by the scheme "\*Paper_Spacennnn", where the first inactive paper space is
+called "\*Paper_Space0", the second "\*Paper_Space1" and so on.
 A none consecutive numbering is tolerated by AutoCAD. The content of the
 inactive paperspace layouts are stored as BLOCK content in the BLOCKS section.
 These names are just the DXF internal layout names, each layout has an
@@ -230,8 +230,8 @@ Main VIEWPORT Entity for LAYOUT
 -------------------------------
 
 The "main" viewport for layout "Layout1" shown above. This viewport is located
-in the associated BLOCK definition called "*Paper_Space0". Group code 330 in
-subclass AcDbLayout points to the BLOCK_RECORD of "*Paper_Space0".
+in the associated BLOCK definition called "\*Paper_Space0". Group code 330 in
+subclass AcDbLayout points to the BLOCK_RECORD of "\*Paper_Space0".
 
 Remember: the entities of the `active` paperspace layout are located in the
 ENTITIES section, therefore "Layout1" is not the active paperspace layout.

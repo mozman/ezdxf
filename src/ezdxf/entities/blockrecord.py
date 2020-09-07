@@ -156,27 +156,27 @@ class BlockRecord(DXFEntity):
 
     @property
     def is_active_paperspace(self) -> bool:
-        """ True if is "active" layout. """
+        """ ``True`` if is "active" paperspace layout. """
         return self.dxf.name.lower() == '*paper_space'
 
     @property
     def is_any_paperspace(self) -> bool:
-        """ True if is any kind of paperspace layout. """
+        """ ``True`` if is any kind of paperspace layout. """
         return self.dxf.name.lower().startswith('*paper_space')
 
     @property
     def is_modelspace(self) -> bool:
-        """ True if is modelspace layout. """
+        """ ``True`` if is the modelspace layout. """
         return self.dxf.name.lower() == '*model_space'
 
     @property
     def is_any_layout(self) -> bool:
-        """ True if is any kind of modelspace or paperspace layout. """
+        """ ``True`` if is any kind of modelspace or paperspace layout. """
         return self.is_modelspace or self.is_any_paperspace
 
     @property
     def is_block_layout(self) -> bool:
-        """ True if not any kind of modelspace or paperspace layout, just a
+        """ ``True`` if not any kind of modelspace or paperspace layout, just a
         regular block definition.
         """
         return not self.is_any_layout
