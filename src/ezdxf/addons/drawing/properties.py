@@ -533,29 +533,36 @@ class RenderContext:
         see: :attr:`ezdxf.lldxf.const.VALID_DXF_LINEWEIGHTS`
 
         """
-        aci = entity.dxf.color
-        # Not sure if plotstyle table overrides actual entity setting?
-        if (0 < aci < 256) and self.plot_styles[
-            aci].lineweight != acadctb.OBJECT_LINEWEIGHT:
-            # overriding lineweight by plotstyle table
-            return self.plot_styles.get_lineweight(aci)
-        lineweight = entity.dxf.lineweight  # default is BYLAYER
-        if lineweight == const.LINEWEIGHT_BYLAYER:
-            entity_layer = resolved_layer or layer_key(
-                self.resolve_layer(entity))
-            return self.layers.get(entity_layer,
-                                   DEFAULT_LAYER_PROPERTIES).lineweight
+        def lineweigth():
+            aci = entity.dxf.color
+            # Not sure if plotstyle table overrides actual entity setting?
+            if (0 < aci < 256) and self.plot_styles[
+                aci].lineweight != acadctb.OBJECT_LINEWEIGHT:
+                # overriding lineweight by plotstyle table
+                return self.plot_styles.get_lineweight(aci)
+            lineweight = entity.dxf.lineweight  # default is BYLAYER
+            if lineweight == const.LINEWEIGHT_BYLAYER:
+                entity_layer = resolved_layer or layer_key(
+                    self.resolve_layer(entity))
+                return self.layers.get(entity_layer,
+                                       DEFAULT_LAYER_PROPERTIES).lineweight
 
-        elif lineweight == const.LINEWEIGHT_BYBLOCK:
-            if self.inside_block_reference:
-                return self.current_block_reference.lineweight
-            else:
-                # There is no default layout lineweight
+            elif lineweight == const.LINEWEIGHT_BYBLOCK:
+                if self.inside_block_reference:
+                    return self.current_block_reference.lineweight
+                else:
+                    # There is no default layout lineweight
+                    return self.default_lineweight()
+            elif lineweight == const.LINEWEIGHT_DEFAULT:
                 return self.default_lineweight()
-        elif lineweight == const.LINEWEIGHT_DEFAULT:
-            return self.default_lineweight()
-        else:
-            return float(lineweight) / 100.0
+            else:
+                return float(lineweight) / 100.0
+
+        # A line weight of 0mm is resolved as 0.02mm, this prevents backends
+        # to draw nothing if line weight is 0mm.
+        # Valid DXF line weights are fixed values: 0mm, 0.05mm, 0.09mm...
+        return max(0.02, lineweigth())
+
 
     def default_lineweight(self):
         """ Returns the default lineweight of the document. """
