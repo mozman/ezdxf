@@ -31,6 +31,13 @@ POINTS = 1.0 / 0.3527  # mm -> points
 CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
 
 
+def _linewidth(lineweight: float) -> float:
+    if math.isclose(lineweight, 0):
+        return 0.05
+    else:
+        return lineweight * POINTS
+
+
 class MatplotlibBackend(Backend):
     def __init__(self, ax: plt.Axes,
                  *,
@@ -69,7 +76,7 @@ class MatplotlibBackend(Backend):
         self.ax.add_line(
             Line2D(
                 (start.x, end.x), (start.y, end.y),
-                linewidth=properties.lineweight * POINTS,
+                linewidth=_linewidth(properties.lineweight),
                 color=properties.color,
                 zorder=self._get_z()
             ))
@@ -78,7 +85,7 @@ class MatplotlibBackend(Backend):
         vertices, codes = _get_path_patch_data(path)
         patch = PathPatch(
             Path(vertices, codes),
-            linewidth=properties.lineweight * POINTS,
+            linewidth=_linewidth(properties.lineweight),
             color=properties.color,
             fill=bool(properties.filling),
             zorder=self._get_z()
