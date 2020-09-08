@@ -10,7 +10,7 @@ BASEDIR = os.path.dirname(__file__)
 DATADIR = 'data'
 
 
-@pytest.fixture(params=["POLI-ALL210_12.dxf"])
+@pytest.fixture(params=["POLI-ALL210_12.DXF"])
 def filename(request):
     filename = os.path.join(BASEDIR, DATADIR, request.param)
     if not os.path.exists(filename):
