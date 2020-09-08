@@ -29,26 +29,44 @@ Example for the usage of the :mod:`matplotlib` backend:
 
 .. code-block:: Python
 
+    import sys
     import matplotlib.pyplot as plt
-    import ezdxf
+    from ezdxf import recover
     from ezdxf.addons.drawing import RenderContext, Frontend
     from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 
-    doc = ezdxf.readfile('your.dxf')
-    msp = doc.modelspace()
-
-    # Recommended: audit & repair DXF document before rendering
-    auditor = doc.audit()
+    # Safe loading procedure (requires ezdxf v0.14):
+    try:
+        doc, auditor = recover.readfile('your.dxf')
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(1)
+    except ezdxf.DXFStructureError:
+        print(f'Invalid or corrupted DXF file.')
+        sys.exit(2)
 
     # The auditor.errors attribute stores severe errors,
-    # which *may* raise exceptions when rendering.
-    if len(auditor.errors) == 0:
+    # which may raise exceptions when rendering.
+    if not auditor.has_errors:
         fig = plt.figure()
         ax = fig.add_axes([0, 0, 1, 1])
         ctx = RenderContext(doc)
         out = MatplotlibBackend(ax)
-        Frontend(ctx, out).draw_layout(msp, finalize=True)
+        Frontend(ctx, out).draw_layout(doc.modelspace(), finalize=True)
         fig.savefig('your.png', dpi=300)
+
+Simplified render workflow but with less control:
+
+.. code-block:: Python
+
+    from ezdxf import recover
+    from ezdxf.addons.drawing import matplotlib
+
+    # Exception handling left out for compactness:
+    doc, auditor = recover.readfile('your.dxf')
+    if not auditor.has_errors:
+        matplotlib.qsave(msp, 'your.png')
+
 
 Details
 -------

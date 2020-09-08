@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable
+from typing import Iterable, TYPE_CHECKING, Sequence
 
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
@@ -17,6 +17,9 @@ from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Command
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Layout
 
 # matplotlib docs: https://matplotlib.org/index.html
 
@@ -88,27 +91,38 @@ class MatplotlibBackend(Backend):
     def draw_point(self, pos: Vector, properties: Properties):
         color = properties.color
         if self.point_size_relative:
-            self.ax.scatter([pos.x], [pos.y], s=self.point_size, c=color, zorder=self._get_z())
+            self.ax.scatter([pos.x], [pos.y], s=self.point_size, c=color,
+                            zorder=self._get_z())
         else:
             self.ax.add_patch(Circle((pos.x, pos.y), radius=self.point_size,
-                                     facecolor=color, edgecolor=None, zorder=self._get_z()))
+                                     facecolor=color, edgecolor=None,
+                                     zorder=self._get_z()))
 
-    def draw_filled_polygon(self, points: Iterable[Vector], properties: Properties):
-        self.ax.fill(*zip(*((p.x, p.y) for p in points)), color=properties.color, zorder=self._get_z())
+    def draw_filled_polygon(self, points: Iterable[Vector],
+                            properties: Properties):
+        self.ax.fill(*zip(*((p.x, p.y) for p in points)),
+                     color=properties.color, zorder=self._get_z())
 
-    def draw_text(self, text: str, transform: Matrix44, properties: Properties, cap_height: float):
+    def draw_text(self, text: str, transform: Matrix44, properties: Properties,
+                  cap_height: float):
         if not text.strip():
             return  # no point rendering empty strings
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
         scale = cap_height / self._font_measurements.cap_height
         path = _text_path(text, self.font)
-        transformed_path = _transform_path(path, Matrix44.scale(scale) @ transform)
-        self.ax.add_patch(PathPatch(transformed_path, facecolor=properties.color, linewidth=0, zorder=self._get_z()))
+        transformed_path = _transform_path(path,
+                                           Matrix44.scale(scale) @ transform)
+        self.ax.add_patch(
+            PathPatch(transformed_path, facecolor=properties.color, linewidth=0,
+                      zorder=self._get_z()))
 
-    def get_font_measurements(self, cap_height: float, font: str = None) -> FontMeasurements:
-        return self._font_measurements.scale_from_baseline(desired_cap_height=cap_height)
+    def get_font_measurements(self, cap_height: float,
+                              font: str = None) -> FontMeasurements:
+        return self._font_measurements.scale_from_baseline(
+            desired_cap_height=cap_height)
 
-    def get_text_line_width(self, text: str, cap_height: float, font: str = None) -> float:
+    def get_text_line_width(self, text: str, cap_height: float,
+                            font: str = None) -> float:
         if not text.strip():
             return 0
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
@@ -129,11 +143,13 @@ class MatplotlibBackend(Backend):
             data_width, data_height = maxx - minx, maxy - miny
             if not math.isclose(data_width, 0):
                 width, height = plt.figaspect(data_height / data_width)
-                self.ax.get_figure().set_size_inches(width, height, forward=True)
+                self.ax.get_figure().set_size_inches(width, height,
+                                                     forward=True)
 
 
 def _transform_path(path: Path, transform: Matrix44) -> Path:
-    vertices = transform.transform_vertices([Vector(x, y) for x, y in path.vertices])
+    vertices = transform.transform_vertices(
+        [Vector(x, y) for x, y in path.vertices])
     return Path([(v.x, v.y) for v in vertices], path.codes)
 
 
@@ -141,7 +157,8 @@ def _text_path(text: str, font: FontProperties) -> TextPath:
     return TextPath((0, 0), text, size=1, prop=font)
 
 
-def _get_font_measurements(font: FontProperties = FontProperties()) -> "FontMeasurements":
+def _get_font_measurements(
+        font: FontProperties = FontProperties()) -> "FontMeasurements":
     upper_x = _text_path('X', font).vertices[:, 1].tolist()
     lower_x = _text_path('x', font).vertices[:, 1].tolist()
     lower_p = _text_path('p', font).vertices[:, 1].tolist()
@@ -166,3 +183,28 @@ def _get_path_patch_data(path):
         else:
             raise ValueError(f'Invalid command: {cmd.type}')
     return [(p.x, p.y) for p in vertices], codes
+
+
+def qsave(layout: 'Layout', filename: str, axis: Sequence[int] = (0, 0, 1, 1),
+          dpi: int = 300) -> None:
+    """ Quick and simplified render export by matplotlib.
+
+    Args:
+        layout: modelspace or paperspace layout to export
+        filename: export filename, file extension determines the format e.g.
+            "image.png" to save in PNG format.
+        axis: matplotlib axis
+        dpi: image resolution
+
+    .. versionadded:: 0.14
+
+    """
+    from .properties import RenderContext
+    from .frontend import Frontend
+    fig: plt.Figure = plt.figure()
+    ax: plt.Axes = fig.add_axes(axis)
+    ctx = RenderContext(layout.doc)
+    out = MatplotlibBackend(ax)
+    Frontend(ctx, out).draw_layout(layout, finalize=True)
+    fig.savefig(filename, dpi=dpi)
+    plt.close(fig)

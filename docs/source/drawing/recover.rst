@@ -27,7 +27,7 @@ afterwards and return the result of this audit process:
         print(f'Not a DXF file or a generic I/O error.')
         sys.exit(1)
     except ezdxf.DXFStructureError:
-        print(f'Invalid or corrupted Not a DXF file.')
+        print(f'Invalid or corrupted DXF file.')
         sys.exit(2)
 
     # DXF file can still have unrecoverable errors, but this is maybe just

@@ -23,7 +23,8 @@ Version 0.14b3 - dev
   see [docs](https://ezdxf.mozman.at/docs/render/trace.html)
 - NEW: `Path()` a render tool for paths build of lines and cubic Bezier curves, 
   used for faster rendering of LWPOLYLINE, POLYLINE and SPLINE entities for 
-  render back-ends, see [docs](https://ezdxf.mozman.at/docs/render/path.html)  
+  render back-ends, see [docs](https://ezdxf.mozman.at/docs/render/path.html)
+- NEW: `drawing.matplotlib.qsave()` function, a simplified matplotlib export interface
 - NEW: `Arc.construction_tool()` returns the 2D `ConstructionArc()`
 - NEW: `Arc.apply_construction_tool()` apply parameters from `ConstructionArc()`
 - NEW: `Leader.virtual_entities()` yields 'virtual' DXF primitives
