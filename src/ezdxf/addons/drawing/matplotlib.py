@@ -186,7 +186,7 @@ def _get_path_patch_data(path):
 
 
 def qsave(layout: 'Layout', filename: str, *,
-          axis: Sequence[float] = (0, 0, 1, 1),
+          rect: Sequence[float] = (0, 0, 1, 1),
           dpi: int = 300) -> None:
     """ Quick and simplified render export by matplotlib.
 
@@ -194,7 +194,8 @@ def qsave(layout: 'Layout', filename: str, *,
         layout: modelspace or paperspace layout to export
         filename: export filename, file extension determines the format e.g.
             "image.png" to save in PNG format.
-        axis: matplotlib axis
+        rect: the dimensions [left, bottom, width, height] of the axes.
+            All quantities are in fractions of figure width and height.
         dpi: image resolution
 
     .. versionadded:: 0.14
@@ -203,7 +204,7 @@ def qsave(layout: 'Layout', filename: str, *,
     from .properties import RenderContext
     from .frontend import Frontend
     fig: plt.Figure = plt.figure()
-    ax: plt.Axes = fig.add_axes(axis)
+    ax: plt.Axes = fig.add_axes(rect)
     ctx = RenderContext(layout.doc)
     out = MatplotlibBackend(ax)
     Frontend(ctx, out).draw_layout(layout, finalize=True)
