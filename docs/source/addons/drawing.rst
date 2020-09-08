@@ -65,7 +65,7 @@ Simplified render workflow but with less control:
     # Exception handling left out for compactness:
     doc, auditor = recover.readfile('your.dxf')
     if not auditor.has_errors:
-        matplotlib.qsave(msp, 'your.png')
+        matplotlib.qsave(doc.modelspace(), 'your.png')
 
 
 Details
