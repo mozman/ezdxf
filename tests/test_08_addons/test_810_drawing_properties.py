@@ -4,7 +4,7 @@
 import pytest
 import ezdxf
 from ezdxf.addons.drawing.properties import RenderContext, compile_line_pattern
-from ezdxf.entities import Layer
+from ezdxf.entities import Layer, factory
 from ezdxf.lldxf import const
 
 
@@ -72,9 +72,12 @@ def test_resolve_entity_visibility():
     doc = ezdxf.new()
     layout = doc.modelspace()
     doc.layers.new(name='visible', dxfattribs={'color': 0})
-    doc.layers.new(name='invisible', dxfattribs={'color': -1})  # color < 0 => invisible
-    doc.layers.new(name='frozen', dxfattribs={'flags': Layer.FROZEN})  # also invisible
-    doc.layers.new(name='noplot', dxfattribs={'plot': 0})  # visible in the CAD application but not when exported
+    doc.layers.new(name='invisible',
+                   dxfattribs={'color': -1})  # color < 0 => invisible
+    doc.layers.new(name='frozen',
+                   dxfattribs={'flags': Layer.FROZEN})  # also invisible
+    doc.layers.new(name='noplot', dxfattribs={
+        'plot': 0})  # visible in the CAD application but not when exported
 
     for export_mode in (False, True):
         ctx = RenderContext(layout.doc, export_mode=export_mode)
@@ -89,7 +92,8 @@ def test_resolve_entity_visibility():
             text = layout.add_text('a', {'invisible': 0, 'layer': layer})
             assert ctx.resolve_visible(text) is False
 
-        for layer in ['non_existent', 'visible', 'invisible', 'frozen', 'noplot']:
+        for layer in ['non_existent', 'visible', 'invisible', 'frozen',
+                      'noplot']:
             text = layout.add_text('a', {'invisible': 1, 'layer': layer})
             assert ctx.resolve_visible(text) is False
 
@@ -106,7 +110,8 @@ def test_resolve_attrib_visibility():
     doc = ezdxf.new()
     layout = doc.modelspace()
     block = doc.blocks.new(name='block')
-    doc.layers.new(name='invisible', dxfattribs={'color': -1})  # color < 0 => invisible
+    doc.layers.new(name='invisible',
+                   dxfattribs={'color': -1})  # color < 0 => invisible
 
     block.add_attdef('att1', (0, 0), '', {})
     block.add_attdef('att2', (0, 0), '', {'flags': const.ATTRIB_INVISIBLE})
@@ -188,18 +193,65 @@ def test_resolve_block_entities(doc):
     assert line3.color == '#0000ff'
     assert line3.linetype_name == 'DOT'
     assert line3.lineweight == 0.70
-    
+
     ctx.pop_state()
     assert ctx.inside_block_reference is False
 
 
 def test_compile_pattern():
     assert compile_line_pattern(0, [0.0]) == tuple()
-    assert compile_line_pattern(2.0, [1.25, -0.25, 0.25, -0.25]) == (1.25, 0.25, 0.25, 0.25)
-    assert compile_line_pattern(3.5, [2.5, -0.25, 0.5, -0.25]) == (2.5, 0.25, 0.5, 0.25)
-    assert compile_line_pattern(1.4, [1.0, -0.2, 0.0, -0.2]) == (1.0, 0.2, 0.0, 0.2)
+    assert compile_line_pattern(2.0, [1.25, -0.25, 0.25, -0.25]) == (
+    1.25, 0.25, 0.25, 0.25)
+    assert compile_line_pattern(3.5, [2.5, -0.25, 0.5, -0.25]) == (
+    2.5, 0.25, 0.5, 0.25)
+    assert compile_line_pattern(1.4, [1.0, -0.2, 0.0, -0.2]) == (
+    1.0, 0.2, 0.0, 0.2)
     assert compile_line_pattern(0.2, [0.0, -0.2]) == (0.0, 0.2)
-    assert compile_line_pattern(2.6, [2.0, -0.2, 0.0, -0.2, 0.0, -0.2]) == (2.0, 0.2, 0.0, 0.2, 0.0, 0.2)
+    assert compile_line_pattern(2.6, [2.0, -0.2, 0.0, -0.2, 0.0, -0.2]) == (
+    2.0, 0.2, 0.0, 0.2, 0.0, 0.2)
+
+
+class TestResolveLayerACIColor7:
+    @pytest.fixture
+    def entity(self):
+        # Default layer is '0' with default ACI color 7
+        # Default entity color is BYLAYER
+        return factory.new('LINE')
+
+    @pytest.fixture(scope='class')
+    def ctx(self):
+        doc = ezdxf.new()
+        layer = doc.layers.new('TrueColor', dxfattribs={
+            'true_color': ezdxf.rgb2int((0xB0, 0xB0, 0xB0))
+        })
+        context = RenderContext(doc)
+        context.set_current_layout(doc.modelspace())
+        return context
+
+    def test_dark_background(self, ctx, entity):
+        ctx.current_layout.set_colors(bg='#000000')
+        assert ctx.resolve_color(entity).upper() == '#FFFFFF'
+
+    def test_light_background(self, ctx, entity):
+        ctx.current_layout.set_colors(bg='#FFFFFF')
+        assert ctx.resolve_color(entity) == '#000000'
+
+    def test_switch_layout_colors(self, ctx, entity):
+        ctx.current_layout.set_colors(bg='#FFFFFF', fg='#A0A0A0')
+        assert ctx.resolve_color(entity) == '#A0A0A0'
+        ctx.current_layout.set_colors(bg='#EEEEEE', fg='#010101')
+        assert ctx.resolve_color(entity) == '#010101'
+
+    def test_color_from_true_color_layer(self, ctx, entity):
+        entity.dxf.layer = 'TrueColor'
+        assert ctx.resolve_color(entity).upper() == '#B0B0B0'
+
+        # Entity ACI color is BYLAYER by default:
+        assert entity.dxf.color == const.BYLAYER
+
+        ctx.current_layout.set_colors(bg='#EEEEEE', fg='#010101')
+        # But has no meaning if true color is set:
+        assert ctx.resolve_color(entity).upper() == '#B0B0B0'
 
 
 if __name__ == '__main__':

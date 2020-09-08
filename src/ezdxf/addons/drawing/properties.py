@@ -184,7 +184,19 @@ class LayerProperties(Properties):
         layer: Stores real layer name (mixed case)
 
     """
-    pass
+
+    def __init__(self):
+        super().__init__()
+        self.has_aci_color_7 = False
+
+    def get_entity_color_from_layer(self, fg: Color) -> Color:
+        """ Returns the layer color or if layer color is ACI color 7 the
+        given layout default foreground color `fg`.
+        """
+        if self.has_aci_color_7:
+            return fg
+        else:
+            return self.color
 
 
 DEFAULT_LAYER_PROPERTIES = LayerProperties()
@@ -301,6 +313,13 @@ class RenderContext:
         # Store real layer name (mixed case):
         properties.layer = layer.dxf.name
         properties.color = self._true_layer_color(layer)
+
+        # Depend layer ACI color from layout background color?
+        # True color overrides ACI color and layers with only true color set
+        # have default ACI color 7!
+        if not layer.has_dxf_attrib('true_color'):
+            properties.has_aci_color_7 = layer.dxf.color == 7
+
         # Normalize linetype names to UPPERCASE:
         properties.linetype_name = str(layer.dxf.linetype).upper()
         properties.linetype_pattern = self.line_pattern.get(
@@ -446,8 +465,10 @@ class RenderContext:
         if aci == const.BYLAYER:
             entity_layer = resolved_layer or layer_key(
                 self.resolve_layer(entity))
-            color = self.layers.get(entity_layer,
-                                    DEFAULT_LAYER_PROPERTIES).color
+            layer = self.layers.get(
+                entity_layer, DEFAULT_LAYER_PROPERTIES)
+            color = layer.get_entity_color_from_layer(
+                self.current_layout.default_color)
         elif aci == const.BYBLOCK:
             if not self.inside_block_reference:
                 color = self.current_layout.default_color
