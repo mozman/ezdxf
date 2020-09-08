@@ -185,7 +185,8 @@ def _get_path_patch_data(path):
     return [(p.x, p.y) for p in vertices], codes
 
 
-def qsave(layout: 'Layout', filename: str, axis: Sequence[int] = (0, 0, 1, 1),
+def qsave(layout: 'Layout', filename: str, *,
+          axis: Sequence[float] = (0, 0, 1, 1),
           dpi: int = 300) -> None:
     """ Quick and simplified render export by matplotlib.
 
