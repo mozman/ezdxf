@@ -214,16 +214,18 @@ def qsave(layout: 'Layout', filename: str, *,
     # other than the main thread
     old_backend = matplotlib.get_backend()
     matplotlib.use('Agg')
-    fig: plt.Figure = plt.figure()
-    ax: plt.Axes = fig.add_axes((0, 0, 1, 1))
-    ctx = RenderContext(layout.doc)
-    ctx.set_current_layout(layout)
-    if bg is not None:
-        ctx.current_layout.set_colors(bg, fg)
-    out = MatplotlibBackend(ax)
-    Frontend(ctx, out).draw_layout(layout, finalize=True)
-    fig.savefig(filename, dpi=dpi,
-                facecolor=ax.get_facecolor(), transparent=True)
-    plt.close(fig)
-    matplotlib.use(old_backend)
+    try:
+        fig: plt.Figure = plt.figure()
+        ax: plt.Axes = fig.add_axes((0, 0, 1, 1))
+        ctx = RenderContext(layout.doc)
+        ctx.set_current_layout(layout)
+        if bg is not None:
+            ctx.current_layout.set_colors(bg, fg)
+        out = MatplotlibBackend(ax)
+        Frontend(ctx, out).draw_layout(layout, finalize=True)
+        fig.savefig(filename, dpi=dpi,
+                    facecolor=ax.get_facecolor(), transparent=True)
+        plt.close(fig)
+    finally:
+        matplotlib.use(old_backend)
 
