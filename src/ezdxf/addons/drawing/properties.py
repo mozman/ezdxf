@@ -692,14 +692,14 @@ class RenderContext:
         return filling
 
 
-COLOR_PATTERN = re.compile(r'#[0-9A-F]{6,8}')
+COLOR_PATTERN = re.compile('#[0-9A-Fa-f]{6,8}')
 
 
 def is_valid_color(color: Color) -> bool:
     if type(color) is not Color:
         raise TypeError(f'Invalid argument type: {type(color)}.')
     if len(color) in (7, 9):
-        return bool(COLOR_PATTERN.fullmatch(color.upper()))
+        return bool(COLOR_PATTERN.fullmatch(color))
     return False
 
 
