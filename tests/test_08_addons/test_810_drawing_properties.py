@@ -3,7 +3,9 @@
 
 import pytest
 import ezdxf
-from ezdxf.addons.drawing.properties import RenderContext, compile_line_pattern
+from ezdxf.addons.drawing.properties import (
+    RenderContext, compile_line_pattern, is_valid_color,
+)
 from ezdxf.entities import Layer, factory
 from ezdxf.lldxf import const
 
@@ -201,14 +203,14 @@ def test_resolve_block_entities(doc):
 def test_compile_pattern():
     assert compile_line_pattern(0, [0.0]) == tuple()
     assert compile_line_pattern(2.0, [1.25, -0.25, 0.25, -0.25]) == (
-    1.25, 0.25, 0.25, 0.25)
+        1.25, 0.25, 0.25, 0.25)
     assert compile_line_pattern(3.5, [2.5, -0.25, 0.5, -0.25]) == (
-    2.5, 0.25, 0.5, 0.25)
+        2.5, 0.25, 0.5, 0.25)
     assert compile_line_pattern(1.4, [1.0, -0.2, 0.0, -0.2]) == (
-    1.0, 0.2, 0.0, 0.2)
+        1.0, 0.2, 0.0, 0.2)
     assert compile_line_pattern(0.2, [0.0, -0.2]) == (0.0, 0.2)
     assert compile_line_pattern(2.6, [2.0, -0.2, 0.0, -0.2, 0.0, -0.2]) == (
-    2.0, 0.2, 0.0, 0.2, 0.0, 0.2)
+        2.0, 0.2, 0.0, 0.2, 0.0, 0.2)
 
 
 class TestResolveLayerACIColor7:
@@ -221,7 +223,7 @@ class TestResolveLayerACIColor7:
     @pytest.fixture(scope='class')
     def ctx(self):
         doc = ezdxf.new()
-        layer = doc.layers.new('TrueColor', dxfattribs={
+        doc.layers.new('TrueColor', dxfattribs={
             'true_color': ezdxf.rgb2int((0xB0, 0xB0, 0xB0))
         })
         context = RenderContext(doc)
@@ -252,6 +254,54 @@ class TestResolveLayerACIColor7:
         ctx.current_layout.set_colors(bg='#EEEEEE', fg='#010101')
         # But has no meaning if true color is set:
         assert ctx.resolve_color(entity).upper() == '#B0B0B0'
+
+
+@pytest.mark.parametrize('color, result', [
+    ('#012345', True),
+    ('#456789', True),
+    ('#ABCDEF', True),
+    ('#abcdef', True),
+    ('#ghijkl', False),
+    ('000000', False),
+    ('ABCDEF', False),
+])
+def test_is_valid_color(color, result):
+    assert is_valid_color(color) is result
+
+
+@pytest.mark.parametrize('color', [0, 1.0, (1, 2, 3)])
+def test_invalid_color_value_type(color):
+    with pytest.raises(TypeError):
+        is_valid_color(color)
+
+
+@pytest.mark.parametrize('color, result', [
+    ('#00000000', True),
+    ('#000000FF', True),
+    ('#000000ff', True),
+    ('#000000gh', False),
+])
+def test_is_valid_transparent_color(color, result):
+    assert is_valid_color(color) is result
+
+
+@pytest.mark.parametrize('color, result', [
+    ('', False),
+    ('#', False),
+    ('#0', False),
+    ('#00', False),
+    ('#000', False),
+    ('#0000', False),
+    ('#00000', False),
+    ('#000000', True),  # RGB color format
+    ('#0000000', False),
+    ('#00000000', True),  # RGB color format including alpha transparency
+    ('#000000000', False),
+    ('  #0000', False),
+    ('  #000000', False),
+])
+def test_is_valid_color_value_length(color, result):
+    assert is_valid_color(color) is result
 
 
 if __name__ == '__main__':

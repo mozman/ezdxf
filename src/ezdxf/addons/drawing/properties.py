@@ -6,7 +6,7 @@ from typing import (
     TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence, Set,
     cast,
 )
-
+import re
 from ezdxf.entities import Attrib
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.type_hints import Color, RGB
@@ -244,10 +244,20 @@ class LayoutProperties:
             self.units = int(units)
 
     def set_colors(self, bg: Color, fg: Color = None) -> None:
-        """ Setup default layout colors. """
+        """ Setup default layout colors.
+
+        Required color format "#RRGGBB" or including alpha transparency
+        "#RRGGBBAA".
+        """
+        if not is_valid_color(bg):
+            raise ValueError(f'Invalid background color: {bg}')
         self._background_color = bg
+        if len(bg) == 9:  # including transparency
+            bg = bg[:7]
         self._has_dark_background = is_dark_color(bg)
         if fg is not None:
+            if not is_valid_color(fg):
+                raise ValueError(f'Invalid foreground color: {fg}')
             self._default_color = fg
         else:
             self._default_color = '#ffffff' if self._has_dark_background \
@@ -680,6 +690,17 @@ class RenderContext:
         else:
             setup_pattern()
         return filling
+
+
+COLOR_PATTERN = re.compile(r'#[0-9A-F]{6,8}')
+
+
+def is_valid_color(color: Color) -> bool:
+    if type(color) is not Color:
+        raise TypeError(f'Invalid argument type: {type(color)}.')
+    if len(color) in (7, 9):
+        return bool(COLOR_PATTERN.fullmatch(color.upper()))
+    return False
 
 
 def rgb_to_hex(
