@@ -189,7 +189,9 @@ def qsave(layout: 'Layout', filename: str, *,
           bg: Optional[Color] = None,
           fg: Optional[Color] = None,
           rect: Sequence[float] = (0, 0, 1, 1),
-          dpi: int = 300) -> None:
+          dpi: int = 300,
+          transparent: bool = False,
+          ) -> None:
     """ Quick and simplified render export by matplotlib.
 
     Args:
@@ -198,10 +200,15 @@ def qsave(layout: 'Layout', filename: str, *,
             "image.png" to save in PNG format.
         bg: override default background color in hex format #RRGGBB
         fg: override default foreground color in hex format #RRGGBB,
-            requires also `bg` argument
+            requires also `bg` argument. There is no explicit foreground color
+            in DXF defined (also not a background color), but the ACI color 7
+            has already a variable color value (black/white) and ezdxf let you
+            override this ACI color.
         rect: the dimensions [left, bottom, width, height] of the axes.
             All quantities are in fractions of figure width and height.
         dpi: image resolution
+        transparent: if ``True`` use transparent background if supported
+            by the output format
 
     .. versionadded:: 0.14
 
@@ -216,5 +223,5 @@ def qsave(layout: 'Layout', filename: str, *,
         ctx.current_layout.set_colors(bg, fg)
     out = MatplotlibBackend(ax)
     Frontend(ctx, out).draw_layout(layout, finalize=True)
-    fig.savefig(filename, dpi=dpi)
+    fig.savefig(filename, dpi=dpi, transparent=transparent)
     plt.close(fig)
