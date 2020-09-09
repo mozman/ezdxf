@@ -223,8 +223,7 @@ def qsave(layout: 'Layout', filename: str, *,
             ctx.current_layout.set_colors(bg, fg)
         out = MatplotlibBackend(ax)
         Frontend(ctx, out).draw_layout(layout, finalize=True)
-        fig.savefig(filename, dpi=dpi,
-                    facecolor=ax.get_facecolor(), transparent=True)
+        fig.savefig(filename, dpi=dpi, facecolor=ax.get_facecolor())
         plt.close(fig)
     finally:
         matplotlib.use(old_backend)
