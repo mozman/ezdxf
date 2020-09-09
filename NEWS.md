@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.14b4 - dev
---------------------
+Version 0.14 - 2020-09-12
+-------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-14.html
 - NEW: DXF attribute setter validation, some special and undocumented Autodesk 
