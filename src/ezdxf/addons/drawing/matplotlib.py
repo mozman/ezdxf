@@ -189,6 +189,7 @@ def qsave(layout: 'Layout', filename: str, *,
           bg: Optional[Color] = None,
           fg: Optional[Color] = None,
           dpi: int = 300,
+          matplotlib_backend: str = 'agg',
           ) -> None:
     """ Quick and simplified render export by matplotlib.
 
@@ -203,6 +204,8 @@ def qsave(layout: 'Layout', filename: str, *,
             has already a variable color value (black/white) and ezdxf let you
             override this ACI color.
         dpi: image resolution (dots per inches).
+        matplotlib_backend: the rendering backend to use (agg, cairo, svg etc)
+          (see documentation for matplotlib.use() for a complete list of backends)
 
     .. versionadded:: 0.14
 
@@ -213,7 +216,7 @@ def qsave(layout: 'Layout', filename: str, *,
     # set the backend to prevent warnings about GUIs being opened from a thread
     # other than the main thread
     old_backend = matplotlib.get_backend()
-    matplotlib.use('Agg')
+    matplotlib.use(matplotlib_backend)
     try:
         fig: plt.Figure = plt.figure()
         ax: plt.Axes = fig.add_axes((0, 0, 1, 1))
