@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, TYPE_CHECKING, Sequence, Optional
+from typing import Iterable, TYPE_CHECKING, Optional
 
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
@@ -189,7 +189,7 @@ def qsave(layout: 'Layout', filename: str, *,
           bg: Optional[Color] = None,
           fg: Optional[Color] = None,
           dpi: int = 300,
-          matplotlib_backend: str = 'agg',
+          backend: str = 'agg',
           ) -> None:
     """ Quick and simplified render export by matplotlib.
 
@@ -197,15 +197,19 @@ def qsave(layout: 'Layout', filename: str, *,
         layout: modelspace or paperspace layout to export
         filename: export filename, file extension determines the format e.g.
             "image.png" to save in PNG format.
-        bg: override default background color in hex format #RRGGBB or #RRGGBBAA
+        bg: override default background color in hex format #RRGGBB or #RRGGBBAA,
+            e.g. use "#ffffff00" to get a transparent background and a black
+            foreground color (ACI=7), or "#00000000" for a transparent bg and a
+            white fg
         fg: override default foreground color in hex format #RRGGBB or #RRGGBBAA,
             requires also `bg` argument. There is no explicit foreground color
             in DXF defined (also not a background color), but the ACI color 7
-            has already a variable color value (black/white) and ezdxf let you
-            override this ACI color.
+            has already a variable color value (black/white) and this argument
+            overrides this (ACI=7) color value.
         dpi: image resolution (dots per inches).
-        matplotlib_backend: the rendering backend to use (agg, cairo, svg etc)
-          (see documentation for matplotlib.use() for a complete list of backends)
+        backend: the matplotlib rendering backend to use (agg, cairo, svg etc)
+            (see documentation for `matplotlib.use() <https://matplotlib.org/3.1.1/api/matplotlib_configuration_api.html?highlight=matplotlib%20use#matplotlib.use>`_
+            for a complete list of backends)
 
     .. versionadded:: 0.14
 
@@ -216,7 +220,7 @@ def qsave(layout: 'Layout', filename: str, *,
     # set the backend to prevent warnings about GUIs being opened from a thread
     # other than the main thread
     old_backend = matplotlib.get_backend()
-    matplotlib.use(matplotlib_backend)
+    matplotlib.use(backend)
     try:
         fig: plt.Figure = plt.figure()
         ax: plt.Axes = fig.add_axes((0, 0, 1, 1))
