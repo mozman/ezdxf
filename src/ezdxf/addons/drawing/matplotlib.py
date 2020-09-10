@@ -198,14 +198,16 @@ def qsave(layout: 'Layout', filename: str, *,
         filename: export filename, file extension determines the format e.g.
             "image.png" to save in PNG format.
         bg: override default background color in hex format #RRGGBB or #RRGGBBAA,
-            e.g. use "#ffffff00" to get a transparent background and a black
-            foreground color (ACI=7), or "#00000000" for a transparent bg and a
-            white fg
+            e.g. use bg="#FFFFFF00" to get a transparent background and a black
+            foreground color (ACI=7), because a white background #FFFFFF gets a
+            black foreground color or vice versa bg="#00000000" for a transparent
+            (black) background and a white foreground color.
         fg: override default foreground color in hex format #RRGGBB or #RRGGBBAA,
             requires also `bg` argument. There is no explicit foreground color
             in DXF defined (also not a background color), but the ACI color 7
-            has already a variable color value (black/white) and this argument
-            overrides this (ACI=7) color value.
+            has already a variable color value, black on a light background and
+            white on a dark background, this argument overrides this (ACI=7)
+            default color value.
         dpi: image resolution (dots per inches).
         backend: the matplotlib rendering backend to use (agg, cairo, svg etc)
             (see documentation for `matplotlib.use() <https://matplotlib.org/3.1.1/api/matplotlib_configuration_api.html?highlight=matplotlib%20use#matplotlib.use>`_
