@@ -188,9 +188,8 @@ def _get_path_patch_data(path):
 def qsave(layout: 'Layout', filename: str, *,
           bg: Optional[Color] = None,
           fg: Optional[Color] = None,
-          rect: Sequence[float] = (0, 0, 1, 1),
           dpi: int = 300,
-          transparent: bool = False,
+          matplotlib_backend: str = 'agg',
           ) -> None:
     """ Quick and simplified render export by matplotlib.
 
@@ -198,30 +197,42 @@ def qsave(layout: 'Layout', filename: str, *,
         layout: modelspace or paperspace layout to export
         filename: export filename, file extension determines the format e.g.
             "image.png" to save in PNG format.
-        bg: override default background color in hex format #RRGGBB
-        fg: override default foreground color in hex format #RRGGBB,
+        bg: override default background color in hex format #RRGGBB or #RRGGBBAA
+        fg: override default foreground color in hex format #RRGGBB or #RRGGBBAA,
             requires also `bg` argument. There is no explicit foreground color
             in DXF defined (also not a background color), but the ACI color 7
             has already a variable color value (black/white) and ezdxf let you
             override this ACI color.
-        rect: the dimensions [left, bottom, width, height] of the axes.
-            All quantities are in fractions of figure width and height.
-        dpi: image resolution
-        transparent: if ``True`` use transparent background if supported
-            by the output format
+        dpi: image resolution (dots per inches).
+        matplotlib_backend: the rendering backend to use (agg, cairo, svg etc)
+          (see documentation for matplotlib.use() for a complete list of backends)
 
     .. versionadded:: 0.14
 
     """
     from .properties import RenderContext
     from .frontend import Frontend
-    fig: plt.Figure = plt.figure()
-    ax: plt.Axes = fig.add_axes(rect)
-    ctx = RenderContext(layout.doc)
-    ctx.set_current_layout(layout)
-    if bg is not None:
-        ctx.current_layout.set_colors(bg, fg)
-    out = MatplotlibBackend(ax)
-    Frontend(ctx, out).draw_layout(layout, finalize=True)
-    fig.savefig(filename, dpi=dpi, transparent=transparent)
-    plt.close(fig)
+    import matplotlib
+    # set the backend to prevent warnings about GUIs being opened from a thread
+    # other than the main thread
+    old_backend = matplotlib.get_backend()
+    matplotlib.use(matplotlib_backend)
+    try:
+        fig: plt.Figure = plt.figure()
+        ax: plt.Axes = fig.add_axes((0, 0, 1, 1))
+        ctx = RenderContext(layout.doc)
+        ctx.set_current_layout(layout)
+        if bg is not None:
+            ctx.current_layout.set_colors(bg, fg)
+        out = MatplotlibBackend(ax)
+        Frontend(ctx, out).draw_layout(layout, finalize=True)
+        # transparent=True sets the axes color to fully transparent
+        # facecolor sets the figure color
+        # (semi-)transparent axes colors do not produce transparent outputs
+        # but (semi-)transparent figure colors do.
+        fig.savefig(filename, dpi=dpi,
+                    facecolor=ax.get_facecolor(), transparent=True)
+        plt.close(fig)
+    finally:
+        matplotlib.use(old_backend)
+
