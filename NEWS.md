@@ -54,13 +54,6 @@ Version 0.14 - 2020-09-12
 - NEW: `Bezier.reverse()` returns object with reversed control point order
 - NEW: `has_clockwise_orientation(vertices)` returns `True` if the closed 
   polygon of 2D vertices has clockwise orientation
-- NEW: `Path.control_vertices()` returns all control vertices in consecutive 
-  order
-- NEW: `Path.has_clockwise_orientation()` returns `True` if 2D path has 
-  clockwise orientation
-- NEW: `Path.reversed()` returns a new reversed path 
-- NEW: `Path.clockwise()` returns a new clockwise oriented path 
-- NEW: `Path.counter_clockwise()` returns a new counter-clockwise oriented path 
 - NEW: `DXFEntity.new_extension_dict()`, create explicit a new extension dictionary
 - NEW: `ezdxf.reorder`, support module to implement modified entities redraw order
 - NEW: get DXF test file path from environment variable `EZDXF_TEST_FILES`, 
