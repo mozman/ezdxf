@@ -32,6 +32,7 @@ Version 0.14 - 2020-09-12
 - NEW: `LWPolyline.has_width` property is `True` if any width attribute is set
 - NEW: `Polyline.has_width` property is `True` if any width attribute is set
 - NEW: `Polyline.audit()` extended verify and repair support
+- NEW: `Polyline.append_formatted_vertices()`, support for user defined point format
 - NEW: `DXFVertex.format()` support for user defined point format 
 - NEW: `Drawing.blocks.purge()` delete all unused blocks but protect modelspace-
   and paperspace layouts, special arrow blocks and DIMENSION and ACAD_TABLE 
