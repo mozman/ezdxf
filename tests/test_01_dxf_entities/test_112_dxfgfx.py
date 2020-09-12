@@ -4,7 +4,7 @@
 import pytest
 import ezdxf
 
-from ezdxf.entities.dxfgfx import DXFGraphic
+from ezdxf.entities.dxfgfx import DXFGraphic, DXFValueError
 from ezdxf.math import Matrix44
 
 
@@ -49,18 +49,40 @@ def test_default_attributes():
     assert entity.dxf.hasattr('linetype') is False, 'just the default value'
 
 
-def test_clone_graphical_entity(entity):
-    doc = ezdxf.new()
-    entity.doc = doc
-    msp = doc.modelspace()
-    msp.add_entity(entity)
+def test_aci_color_index_fixer(entity):
+    entity.dxf.color = -1
+    assert entity.dxf.color == 256  # fixed as BYLAYER
+    entity.dxf.color = 258
+    assert entity.dxf.color == 256  # fixed as BYLAYER
 
+
+def test_lineweight_fixer(entity):
+    entity.dxf.lineweight = -5
+    assert entity.dxf.lineweight == -1  # fixed as BYLAYER
+    entity.dxf.lineweight = 17
+    assert entity.dxf.lineweight == 18  # fixed as nearest valid lineweight
+    entity.dxf.lineweight = 255
+    assert entity.dxf.lineweight == 211  # fixed as nearest valid lineweight
+
+
+def test_is_linetype_validator_active(entity):
+    with pytest.raises(DXFValueError):
+        entity.dxf.linetype = '*Invalid'
+
+
+def test_is_layer_name_validator_active(entity):
+    with pytest.raises(DXFValueError):
+        entity.dxf.layer = '*Invalid'
+
+
+def test_clone_graphical_entity(entity):
     entity.dxf.handle = 'EFEF'
     entity.dxf.owner = 'ABBA'
     entity.dxf.layer = 'Layer1'
     entity.dxf.color = 13
     entity.set_reactors(['A', 'F'])
     entity.set_xdata('MOZMAN', [(1000, 'extended data')])
+
     clone = entity.copy()
     assert clone.dxf is not entity.dxf, 'should be different objects'
     assert clone.dxf.handle is None, 'should not have a handle'

@@ -7,12 +7,12 @@ The OBJECTS section is the home of all none graphical objects of a DXF document.
 The OBJECTS section is accessible by :attr:`Drawing.objects`.
 
 
-Convenience methods of the :class:`~ezdxf.drawing.Drawing` object to create required structures in the OBJECTS section:
+Convenience methods of the :class:`~ezdxf.document.Drawing` object to create required structures in the OBJECTS section:
 
-    - IMAGEDEF: :meth:`~ezdxf.drawing.Drawing.add_image_def`
-    - UNDERLAYDEF: :meth:`~ezdxf.drawing.Drawing.add_underlay_def`
-    - RASTERVARIABLES: :meth:`~ezdxf.drawing.Drawing.set_raster_variables`
-    - WIPEOUTVARIABLES: :meth:`~ezdxf.drawing.Drawing.set_wipeout_variables`
+    - IMAGEDEF: :meth:`~ezdxf.document.Drawing.add_image_def`
+    - UNDERLAYDEF: :meth:`~ezdxf.document.Drawing.add_underlay_def`
+    - RASTERVARIABLES: :meth:`~ezdxf.document.Drawing.set_raster_variables`
+    - WIPEOUTVARIABLES: :meth:`~ezdxf.document.Drawing.set_wipeout_variables`
 
 .. seealso::
 

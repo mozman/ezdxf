@@ -22,6 +22,6 @@ Since `ezdxf` can do all the things that `dxfwrite` and `dxfgrabber` can do, I f
 `ezdxf`, `dxfwrite` and `dxfgrabber` are in maintenance mode only and will not get any new features, just bugfixes.
 
 There are no advantages of `dxfwrite` over `ezdxf`, `dxfwrite` has the smaller memory footprint, but the
-:ref:`r12writer` add-on does the same job as `dxfwrite` without any in memory structures by writing direct to a stream
+:mod:`r12writer` add-on does the same job as `dxfwrite` without any in memory structures by writing direct to a stream
 or file and there is also no advantage of `dxfgrabber` over `ezdxf` for normal DXF files the smaller memory footprint
-of `dxfgrabber` is not noticeable and for really big files the :ref:`iterdxf` add-on does a better job.
+of `dxfgrabber` is not noticeable and for really big files the :mod:`iterdxf` add-on does a better job.

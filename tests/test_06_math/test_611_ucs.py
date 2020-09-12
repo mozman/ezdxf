@@ -72,6 +72,23 @@ def test_matrix44_rotation():
     assert m.ucs_vertex_from_wcs(v) == (1, 2, 3)
 
 
+def test_transformation():
+    axis = Vector.random()
+    angle = 1.5
+    ucs = UCS(origin=(3, 4, 5))
+    m = Matrix44.axis_rotate(axis, angle)
+    expected_origin = m.transform(ucs.origin)
+    expected_ux = m.transform(ucs.ux)
+    expected_uy = m.transform(ucs.uy)
+    expected_uz = m.transform(ucs.uz)
+    new = ucs.transform(m)
+
+    assert new.origin.isclose(expected_origin)
+    assert new.ux.isclose(expected_ux)
+    assert new.uy.isclose(expected_uy)
+    assert new.uz.isclose(expected_uz)
+
+
 def test_none_cartesian():
     ucs = UCS(ux=(1, 2), uy=(0, 2))
     assert ucs.is_cartesian is False

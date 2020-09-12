@@ -4,7 +4,7 @@
 import pytest
 
 from ezdxf.entities.dimstyle import DimStyle
-from ezdxf.drawing import Drawing
+from ezdxf.document import Drawing
 from ezdxf.lldxf.const import DXF12
 
 

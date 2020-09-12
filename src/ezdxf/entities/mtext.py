@@ -1,86 +1,157 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-06
-from typing import TYPE_CHECKING, Union, Tuple, List
 import math
+import re
+from typing import TYPE_CHECKING, Union, Tuple, List
 
-from ezdxf.math import Vector, Matrix44, OCS
-from ezdxf.math.transformtools import transform_extrusion
-from ezdxf.lldxf import const
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf import const, validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+)
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, SPECIAL_CHARS_ENCODING
 from ezdxf.lldxf.tags import Tags
+from ezdxf.math import Vector, Matrix44, OCS, NULLVEC, Z_AXIS, X_AXIS
+from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.tools.rgb import rgb2int
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex
+    from ezdxf.eztypes import (
+        TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex, Auditor
+    )
 
-__all__ = ['MText', 'plain_mtext']
+__all__ = [
+    'MText', 'plain_mtext', 'caret_decode', 'split_mtext_string',
+    'replace_non_printable_characters'
+]
+
+BG_FILL_MASK = 1 + 2 + 16
 
 acdb_mtext = DefSubclass('AcDbMText', {
-    'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
-    'char_height': DXFAttr(40, default=2.5),  # nominal (initial) text height
-    'width': DXFAttr(41, optional=True),  # reference column width
-    'defined_height': DXFAttr(46, dxfversion='AC1021'),  # found in BricsCAD export
+    'insert': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
 
-    # 1 = Top left; 2 = Top center; 3 = Top right
-    # 4 = Middle left; 5 = Middle center; 6 = Middle right
-    # 7 = Bottom left; 8 = Bottom center; 9 = Bottom right
-    'attachment_point': DXFAttr(71, default=1),
+    # Nominal (initial) text height
+    'char_height': DXFAttr(
+        40, default=2.5,
+        validator=validator.is_greater_zero,
+        fixer=RETURN_DEFAULT,
+    ),
 
+    # Reference column width
+    'width': DXFAttr(41, optional=True),
+
+    # Found in BricsCAD export:
+    'defined_height': DXFAttr(46, dxfversion='AC1021'),
+
+    # Attachment point:
+    # 1 = Top left
+    # 2 = Top center
+    # 3 = Top right
+    # 4 = Middle left
+    # 5 = Middle center
+    # 6 = Middle right
+    # 7 = Bottom left
+    # 8 = Bottom center
+    # 9 = Bottom right
+    'attachment_point': DXFAttr(
+        71, default=1,
+        validator=validator.is_in_integer_range(0, 10),
+        fixer=RETURN_DEFAULT,
+    ),
+
+    # Flow direction:
     # 1 = Left to right
     # 3 = Top to bottom
-    # 5 = By style (the flow direction is inherited from the associated text style)
-    'flow_direction': DXFAttr(72, default=1, optional=True),
+    # 5 = By style (the flow direction is inherited from the associated
+    #     text style)
+    'flow_direction': DXFAttr(
+        72, default=1, optional=True,
+        validator=validator.is_one_of({1, 3, 5}),
+        fixer=RETURN_DEFAULT,
+    ),
 
-    # code 1: text
-    # code 3: additional text (optional)
+    # Content text:
+    # group code 1: text
+    # group code 3: additional text (optional)
 
-    'style': DXFAttr(7, default='Standard', optional=True),  # text style name
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
+    # Text style name:
+    'style': DXFAttr(
+        7, default='Standard', optional=True,
+        validator=validator.is_valid_table_name,  # do not fix!
+    ),
+    'extrusion': DXFAttr(
+        210, xtype=XType.point3d, default=Z_AXIS, optional=True,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # x-axis direction vector (in WCS)
     # If rotation and text_direction are present, text_direction wins
-    'text_direction': DXFAttr(11, xtype=XType.point3d, default=Vector(1, 0, 0), optional=True),
+    'text_direction': DXFAttr(
+        11, xtype=XType.point3d, default=X_AXIS, optional=True,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # Horizontal width of the characters that make up the mtext entity.
-    # This value will always be equal to or less than the value of *width*, (read-only, ignored if supplied)
+    # This value will always be equal to or less than the value of *width*,
+    # (read-only, ignored if supplied)
     'rect_width': DXFAttr(42, optional=True),
 
-    # vertical height of the mtext entity (read-only, ignored if supplied)
+    # Vertical height of the mtext entity (read-only, ignored if supplied)
     'rect_height': DXFAttr(43, optional=True),
 
-    # in degrees (circle=360 deg) -  error in DXF reference, which says radians
+    # Text rotation in degrees -  Error in DXF reference, which claims radians
     'rotation': DXFAttr(50, default=0, optional=True),
 
+    # Line spacing style (optional):
     # 1 = At least (taller characters will override)
     # 2 = Exact (taller characters will not override)
-    'line_spacing_style': DXFAttr(73, default=1, optional=True),  # line spacing style (optional):
+    'line_spacing_style': DXFAttr(
+        73, default=1, optional=True,
+        validator=validator.is_one_of({1, 2}),
+        fixer=RETURN_DEFAULT,
+    ),
 
-    # Percentage of default (3-on-5) line spacing to be applied. Valid values
-    # range from 0.25 to 4.00
-    'line_spacing_factor': DXFAttr(44, default=1, optional=True),  # line spacing factor (optional):
+    # Line spacing factor (optional): Percentage of default (3-on-5) line
+    # spacing to be applied. Valid values range from 0.25 to 4.00
+    'line_spacing_factor': DXFAttr(
+        44, default=1, optional=True,
+        validator=validator.is_in_float_range(0.25, 4.00),
+        fixer=validator.fit_into_float_range(0.25, 4.00),
+    ),
 
     # Determines how much border there is around the text.
     # (45) + (90) + (63) all three required, if one of them is used
     'box_fill_scale': DXFAttr(45, dxfversion='AC1021'),
 
-    # background fill type:
+    # background fill type flags:
     # 0 = off
     # 1 = color -> (63) < (421) or (431)
     # 2 = drawing window color
-    # 3 = use background color
-    'bg_fill': DXFAttr(90, dxfversion='AC1021'),
+    # 3 = use background color (1 & 2)
+    # 16 = text frame ODA specification 20.4.46
+    'bg_fill': DXFAttr(
+        90, dxfversion='AC1021',
+        validator=validator.is_valid_bitmask(BG_FILL_MASK),
+        fixer=validator.fix_bitmask(BG_FILL_MASK)
+    ),
 
-    'bg_fill_color': DXFAttr(63, dxfversion='AC1021'),  # background fill color as ACI, required even true color is used
+    # background fill color as ACI, required even true color is used
+    'bg_fill_color': DXFAttr(
+        63, dxfversion='AC1021',
+        validator=validator.is_valid_aci_color,
+    ),
 
-    # 420-429? : background fill color as true color value, (63) also required but ignored
+    # 420-429? : background fill color as true color value, (63) also required
+    # but ignored
     'bg_fill_true_color': DXFAttr(421, dxfversion='AC1021'),
 
-    # 430-439? : background fill color as color name ???, (63) also required but ignored
+    # 430-439? : background fill color as color name ???, (63) also required
+    # but ignored
     'bg_fill_color_name': DXFAttr(431, dxfversion='AC1021'),
 
     # background fill color transparency - not used by AutoCAD/BricsCAD
@@ -132,16 +203,17 @@ class MText(DXFGraphic):
     GROUP = GROUP_START + '%s' + GROUP_END
     NBSP = r'\~'  # non breaking space
 
-    def __init__(self, doc: 'Drawing' = None):
+    def __init__(self):
         """ Default constructor """
-        super().__init__(doc)
-        self.text = ""  # type: str
+        super().__init__()
+        self.text: str = ""
 
     def _copy_data(self, entity: 'DXFEntity') -> None:
         """ Copy entity data: text """
         entity.text = self.text
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             self.load_mtext(processor.subclasses[2])
@@ -152,20 +224,19 @@ class MText(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mtext.name)
         self.dxf.export_dxf_attribs(tagwriter, [
-            'insert', 'char_height', 'width', 'defined_height', 'attachment_point', 'flow_direction'
+            'insert', 'char_height', 'width', 'defined_height',
+            'attachment_point', 'flow_direction',
         ])
         self.export_mtext(tagwriter)
         self.dxf.export_dxf_attribs(tagwriter, [
-            'style', 'extrusion', 'text_direction', 'rect_width', 'rect_height', 'rotation', 'line_spacing_style',
-            'line_spacing_factor', 'box_fill_scale', 'bg_fill', 'bg_fill_color', 'bg_fill_true_color',
-            'bg_fill_color_name', 'bg_fill_transparency'
+            'style', 'extrusion', 'text_direction', 'rect_width', 'rect_height',
+            'rotation', 'line_spacing_style', 'line_spacing_factor',
+            'box_fill_scale', 'bg_fill', 'bg_fill_color', 'bg_fill_true_color',
+            'bg_fill_color_name', 'bg_fill_transparency',
         ])
-        # xdata and embedded_object export by parent class
 
     def load_mtext(self, tags: Tags) -> None:
         tail = ""
@@ -176,12 +247,11 @@ class MText(DXFGraphic):
             if tag.code == 3:
                 parts.append(tag.value)
         parts.append(tail)
-        self.text = normalize_line_breaks("".join(parts))
+        self.text = _dxf_escape_line_endings(caret_decode("".join(parts)))
         tags.remove_tags((1, 3))
 
     def export_mtext(self, tagwriter: 'TagWriter') -> None:
-        # replacing '\n' and '\r' by '\P' is required, else an invalid DXF file would be created
-        txt = self.text.replace('\n', '\\P').replace('\r', '\\P')
+        txt = _dxf_escape_line_endings(self.text)
         str_chunks = split_mtext_string(txt, size=250)
         if len(str_chunks) == 0:
             str_chunks.append("")
@@ -190,8 +260,9 @@ class MText(DXFGraphic):
         tagwriter.write_tag2(1, str_chunks[0])
 
     def get_rotation(self) -> float:
-        """ Get text rotation in degrees, independent if it is defined by :attr:`dxf.rotation` or
-        :attr:`dxf.text_direction`.
+        """ Get text rotation in degrees, independent if it is defined by
+        :attr:`dxf.rotation` or :attr:`dxf.text_direction`.
+
         """
         if self.dxf.hasattr('text_direction'):
             vector = self.dxf.text_direction
@@ -202,16 +273,21 @@ class MText(DXFGraphic):
         return rotation
 
     def set_rotation(self, angle: float) -> 'MText':
-        """ Set attribute :attr:`rotation` to `angle` (in degrees) and deletes :attr:`dxf.text_direction` if present.
+        """ Set attribute :attr:`rotation` to `angle` (in degrees) and deletes
+        :attr:`dxf.text_direction` if present.
+
         """
         # text_direction has higher priority than rotation, therefore delete it
         self.dxf.discard('text_direction')
         self.dxf.rotation = angle
         return self  # fluent interface
 
-    def set_location(self, insert: 'Vertex', rotation: float = None, attachment_point: int = None) -> 'MText':
-        """ Set attributes :attr:`dxf.insert`, :attr:`dxf.rotation` and :attr:`dxf.attachment_point`,
-        ``None`` for :attr:`dxf.rotation` or :attr:`dxf.attachment_point` preserves the existing value.
+    def set_location(self, insert: 'Vertex', rotation: float = None,
+                     attachment_point: int = None) -> 'MText':
+        """ Set attributes :attr:`dxf.insert`, :attr:`dxf.rotation` and
+        :attr:`dxf.attachment_point`, ``None`` for :attr:`dxf.rotation` or
+        :attr:`dxf.attachment_point` preserves the existing value.
+
         """
         self.dxf.insert = Vector(insert)
         if rotation is not None:
@@ -220,16 +296,19 @@ class MText(DXFGraphic):
             self.dxf.attachment_point = attachment_point
         return self  # fluent interface
 
-    def set_bg_color(self, color: Union[int, str, Tuple[int, int, int], None], scale: float = 1.5):
-        """
-        Set background color as :ref:`ACI` value or as name string or as RGB tuple ``(r, g, b)``.
+    def set_bg_color(self, color: Union[int, str, Tuple[int, int, int], None],
+                     scale: float = 1.5):
+        """ Set background color as :ref:`ACI` value or as name string or as RGB
+        tuple ``(r, g, b)``.
 
-        Use special color name ``canvas``, to set background color to canvas background color.
+        Use special color name ``canvas``, to set background color to canvas
+        background color.
 
         Args:
             color: color as :ref:`ACI`, string or RGB tuple
-            scale: determines how much border there is around the text, the value is based on the text height,
-                   and should be in the range of ``1`` - ``5``, where ``1`` fits exact the MText entity.
+            scale: determines how much border there is around the text, the
+                value is based on the text height, and should be in the range
+                of [1, 5], where 1 fits exact the MText entity.
 
         """
         if 1 <= scale <= 5:
@@ -264,9 +343,10 @@ class MText(DXFGraphic):
 
     append = __iadd__
 
-    def set_font(self, name: str, bold: bool = False, italic: bool = False, codepage: int = 1252,
-                 pitch: int = 0) -> None:
-        """ Append font change (e.g. ``'\\Fkroeger|b0|i0|c238|p10'`` ) to existing content (:attr:`.text` attribute).
+    def set_font(self, name: str, bold: bool = False, italic: bool = False,
+                 codepage: int = 1252, pitch: int = 0) -> None:
+        """ Append font change (e.g. ``'\\Fkroeger|b0|i0|c238|p10'`` ) to
+        existing content (:attr:`.text` attribute).
 
         Args:
             name: font name
@@ -276,14 +356,14 @@ class MText(DXFGraphic):
             pitch: font size
 
         """
-        bold_flag = 1 if bold else 0
-        italic_flag = 1 if italic else 0
-        s = r"\F{}|b{}|i{}|c{}|p{};".format(name, bold_flag, italic_flag, codepage, pitch)
+        s = rf"\F{name}|b{int(bold)}|i{int(italic)}|c{codepage}|p{pitch};"
         self.append(s)
 
     def set_color(self, color_name: str) -> None:
-        """ Append text color change to existing content, `color_name` as ``red``, ``yellow``, ``green``, ``cyan``,
-        ``blue``, ``magenta`` or ``white``.
+        """ Append text color change to existing content, `color_name` as
+        ``red``, ``yellow``, ``green``, ``cyan``, ``blue``, ``magenta`` or
+        ``white``.
+
         """
         self.append(r"\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
 
@@ -331,7 +411,8 @@ class MText(DXFGraphic):
         old_text_direction = Vector(dxf.text_direction)
         new_text_direction = m.transform_direction(old_text_direction)
 
-        old_char_height_vec = old_extrusion.cross(old_text_direction).normalize(dxf.char_height)
+        old_char_height_vec = old_extrusion.cross(old_text_direction).normalize(
+            dxf.char_height)
         new_char_height_vec = m.transform_direction(old_char_height_vec)
         oblique = new_text_direction.angle_between(new_char_height_vec)
         dxf.char_height = new_char_height_vec.magnitude * math.sin(oblique)
@@ -346,21 +427,27 @@ class MText(DXFGraphic):
         return self
 
     def plain_text(self, split=False) -> Union[List[str], str]:
-        """
-        Returns text content without formatting codes.
+        """ Returns text content without formatting codes.
 
         Args:
-            split: returns list of strings splitted at line breaks if ``True`` else returns a single string.
+            split: returns list of strings splitted at line breaks if ``True``
+                else returns a single string.
 
         .. versionadded:: 0.11.1
 
         """
         return plain_mtext(self.text, split=split)
 
+    def audit(self, auditor: 'Auditor'):
+        """ Validity check. """
+        super().audit(auditor)
+        auditor.check_text_style(self)
+
 
 def plain_mtext(text: str, split=False) -> Union[List[str], str]:
     chars = []
-    raw_chars = list(reversed(text))  # text splitted into chars, in reversed order for efficient pop()
+    # split text into chars, in reversed order for efficient pop()
+    raw_chars = list(reversed(text))
     while len(raw_chars):
         char = raw_chars.pop()
         if char == '\\':  # is a formatting command
@@ -377,13 +464,19 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
                     # discard other commands
             else:  # more character commands are terminated by ';'
                 stacking = char == 'S'  # stacking command surrounds user data
+                first_char = char
+                search_chars = raw_chars.copy()
                 try:
                     while char != ';':  # end of format marker
-                        char = raw_chars.pop()
+                        char = search_chars.pop()
                         if stacking and char != ';':
-                            chars.append(char)  # append user data of stacking command
+                            # append user data of stacking command
+                            chars.append(char)
+                    raw_chars = search_chars
                 except IndexError:
-                    break  # premature end of text - just ignore
+                    # premature end of text - just ignore
+                    chars.append('\\')
+                    chars.append(first_char)
         elif char in '{}':  # grouping
             pass  # discard group markers
         elif char == '%':  # special characters
@@ -422,7 +515,8 @@ ONE_CHAR_COMMANDS = "PLlOoKkX"
 # \F	Font selection
 #
 #     e.g. \Fgdt;o - GDT-tolerance
-#     e.g. \Fkroeger|b0|i0|c238|p10 - font Kroeger, non-bold, non-italic, codepage 238, pitch 10
+#     e.g. \Fkroeger|b0|i0|c238|p10 - font Kroeger, non-bold, non-italic,
+#     codepage 238, pitch 10
 #
 # \S	Stacking, fractions
 #
@@ -479,9 +573,31 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
             return chunks
 
 
-def normalize_line_breaks(text: str) -> str:
-    """ Replaces '^J', '^M' and '^M^J' by '\\P' """
-    text = text.replace('^M^J', '\\P')
-    text = text.replace('^M', '\\P')
-    text = text.replace('^J', '\\P')
-    return text
+def _dxf_escape_line_endings(text: str) -> str:
+    # replacing '\r\n' and '\n' by '\P' is required when exporting, else an
+    # invalid DXF file would be created.
+    return text.replace('\r', '').replace('\n', '\\P')
+
+
+def caret_decode(text: str) -> str:
+    """ DXF stores some special characters using caret notation. This function
+    decodes this notation to normalise the representation of special characters
+    in the string.
+
+    see: <https://en.wikipedia.org/wiki/Caret_notation>
+
+    """
+
+    def replace_match(match: "re.Match") -> str:
+        c = ord(match.group(1))
+        return chr((c - 64) % 126)
+
+    return re.sub(r'\^(.)', replace_match, text)
+
+
+def _is_non_printable(char: str) -> bool:
+    return 0 <= ord(char) < 32 and char != '\t'
+
+
+def replace_non_printable_characters(text: str, replacement: str = '▯') -> str:
+    return ''.join(replacement if _is_non_printable(c) else c for c in text)

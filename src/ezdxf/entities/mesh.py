@@ -5,26 +5,41 @@ from typing import TYPE_CHECKING, Iterable, Sequence, Tuple, Union, List, Dict
 import array
 import copy
 from itertools import chain
-
 from contextlib import contextmanager
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError, DXFStructureError
+from ezdxf.lldxf import validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
+)
+from ezdxf.lldxf.const import (
+    SUBCLASS_MARKER, DXF2000, DXFValueError, DXFStructureError,
+)
 from ezdxf.lldxf.packedtags import VertexArray, TagArray, TagList
 from ezdxf.tools import take2
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
-
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags, UCS, Matrix44
+    from ezdxf.eztypes import (
+        TagWriter, DXFNamespace, Vertex, Tags, Matrix44,
+    )
 
 __all__ = ['Mesh', 'MeshData']
 
 acdb_mesh = DefSubclass('AcDbSubDMesh', {
     'version': DXFAttr(71, default=2),
-    'blend_crease': DXFAttr(72, default=0),  # 0 = off, 1 = on
-    'subdivision_levels': DXFAttr(91, default=0),  # int >= 0, 0 is no smoothing
+    'blend_crease': DXFAttr(
+        72, default=0,
+        validator=validator.is_integer_bool,
+        fixer=RETURN_DEFAULT,
+    ),
+
+    # 0 is no smoothing
+    'subdivision_levels': DXFAttr(
+        91, default=0,
+        validator=validator.is_greater_or_equal_zero,
+        fixer=RETURN_DEFAULT,
+    ),
     # 92: Vertex count of level 0
     # 10: Vertex position, multiple entries
     # 93: Size of face list of level 0
@@ -139,16 +154,20 @@ def create_face_list(tags: 'Tags', start_index: int) -> 'FaceList':
 
 
 def create_edge_array(tags: 'Tags', start_index: int) -> 'EdgeArray':
-    return EdgeArray(data=collect_values(tags, start_index, code=90))  # int values
+    return EdgeArray(data=collect_values(
+        tags, start_index, code=90))  # int values
 
 
-def collect_values(tags: 'Tags', start_index: int, code: int) -> Iterable[Union[float, int]]:
+def collect_values(tags: 'Tags',
+                   start_index: int,
+                   code: int) -> Iterable[Union[float, int]]:
     values = tags.collect_consecutive_tags(codes=(code,), start=start_index)
     return (t.value for t in values)
 
 
 def create_crease_array(tags: 'Tags', start_index: int) -> 'array.array':
-    return array.array('f', collect_values(tags, start_index, code=140))  # float values
+    return array.array('f', collect_values(
+        tags, start_index, code=140))  # float values
 
 
 COUNT_ERROR_MSG = "'MESH (#{}) without {} count.'"
@@ -161,8 +180,8 @@ class Mesh(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mesh)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self._vertices = VertexArray()  # vertices stored as array.array('d')
         self._faces = FaceList()  # face lists data
         self._edges = EdgeArray()  # edge indices stored as array.array('L')
@@ -175,15 +194,16 @@ class Mesh(DXFGraphic):
         entity._edges = copy.deepcopy(self._edges)
         entity._creases = copy.deepcopy(self._creases)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.find_subclass(acdb_mesh.name)
-            # load spline data (fit points, control points, weights, knots) and remove their tags from subclass
+            # Load mesh data and remove their tags from subclass
             self.load_mesh_data(tags, dxf.handle)
-            # load remaining data into name space
+            # Load remaining data into name space
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_mesh)
-            if len(tags):  # override data
+            if len(tags):  # mesh override data
                 processor.log_unprocessed_tags(tags, subclass=acdb_mesh.name)
         return dxf
 
@@ -192,9 +212,10 @@ class Mesh(DXFGraphic):
             try:
                 vertex_count_index = mesh_tags.tag_index(92)
             except DXFValueError:
-                raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'vertex'))
+                raise DXFStructureError(
+                    COUNT_ERROR_MSG.format(handle, 'vertex'))
             vertices = create_vertex_array(mesh_tags, vertex_count_index + 1)
-            # remove vertex count tag and all vertex tags
+            # Remove vertex count tag and all vertex tags
             end_index = vertex_count_index + 1 + len(vertices)
             del mesh_tags[vertex_count_index:end_index]
             return vertices
@@ -205,7 +226,7 @@ class Mesh(DXFGraphic):
             except DXFValueError:
                 raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'face'))
             else:
-                # remove face count tag and all face tags
+                # Remove face count tag and all face tags
                 faces = create_face_list(mesh_tags, face_count_index + 1)
                 end_index = face_count_index + 1 + faces.tag_count()
                 del mesh_tags[face_count_index:end_index]
@@ -218,7 +239,7 @@ class Mesh(DXFGraphic):
                 raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'edge'))
             else:
                 edges = create_edge_array(mesh_tags, edge_count_index + 1)
-                # remove edge count tag and all edge tags
+                # Remove edge count tag and all edge tags
                 end_index = edge_count_index + 1 + len(edges.values)
                 del mesh_tags[edge_count_index:end_index]
                 return edges
@@ -227,10 +248,11 @@ class Mesh(DXFGraphic):
             try:
                 crease_count_index = mesh_tags.tag_index(95)
             except DXFValueError:
-                raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'crease'))
+                raise DXFStructureError(
+                    COUNT_ERROR_MSG.format(handle, 'crease'))
             else:
                 creases = create_crease_array(mesh_tags, crease_count_index + 1)
-                # remove crease count tag and all crease tags
+                # Remove crease count tag and all crease tags
                 end_index = crease_count_index + 1 + len(creases)
                 del mesh_tags[crease_count_index:end_index]
                 return creases
@@ -242,11 +264,11 @@ class Mesh(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mesh.name)
-        self.dxf.export_dxf_attribs(tagwriter, ['version', 'blend_crease', 'subdivision_levels'])
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'version', 'blend_crease', 'subdivision_levels'
+        ])
         self.export_mesh_data(tagwriter)
         self.export_override_data(tagwriter)
 
@@ -264,7 +286,7 @@ class Mesh(DXFGraphic):
         tagwriter.write_tag2(90, 0)
 
     @property
-    def creases(self) -> 'array.array':  # group code 40
+    def creases(self) -> 'array.array':
         """ Creases as :class:`array.array`. (read/write)"""
         return self._creases
 
@@ -274,7 +296,9 @@ class Mesh(DXFGraphic):
 
     @property
     def vertices(self):
-        """ Vertices as list like :class:`~ezdxf.lldxf.packedtags.VertexArray`. (read/write)"""
+        """ Vertices as list like :class:`~ezdxf.lldxf.packedtags.VertexArray`.
+        (read/write)
+        """
         return self._vertices
 
     @vertices.setter
@@ -283,7 +307,9 @@ class Mesh(DXFGraphic):
 
     @property
     def edges(self):
-        """ Edges as list like :class:`~ezdxf.lldxf.packedtags.TagArray`. (read/write)"""
+        """ Edges as list like :class:`~ezdxf.lldxf.packedtags.TagArray`.
+        (read/write)
+        """
         return self._edges
 
     @edges.setter
@@ -292,7 +318,9 @@ class Mesh(DXFGraphic):
 
     @property
     def faces(self):
-        """ Faces as list like :class:`~ezdxf.lldxf.packedtags.TagList`. (read/write)"""
+        """ Faces as list like :class:`~ezdxf.lldxf.packedtags.TagList`.
+        (read/write)
+        """
         return self._faces
 
     @faces.setter
@@ -312,8 +340,9 @@ class Mesh(DXFGraphic):
     def edit_data(self) -> 'MeshData':
         """ Context manager various mesh data, returns :class:`MeshData`.
 
-        Despite that vertices, edge and faces since `ezdxf` v0.8.9 are accessible as packed data types, the usage
-        of :class:`MeshData` by context manager :meth:`edit_data` is still recommended.
+        Despite that vertices, edge and faces since `ezdxf` v0.8.9 are
+        accessible as packed data types, the usage of :class:`MeshData`
+        by context manager :meth:`edit_data` is still recommended.
 
         """
         data = self.get_data()
@@ -332,56 +361,69 @@ class Mesh(DXFGraphic):
 
 class MeshData:
     def __init__(self, mesh):
-        self.vertices = list(mesh.vertices)  # type: List[Tuple[float, float, float]]
-        self.faces = list(mesh.faces)  # type: List[array.array]
-        self.edges = list(mesh.edges)  # type: List[Tuple[int, int]]
-        self.edge_crease_values = mesh.creases  # type: array.array
+        self.vertices: List[Tuple[float, float, float]] = list(mesh.vertices)
+        self.faces: List[array.array] = list(mesh.faces)
+        self.edges: List[Tuple[int, int]] = list(mesh.edges)
+        self.edge_crease_values: array.array = mesh.creases
 
     def add_face(self, vertices: Iterable[Sequence[float]]) -> Sequence[int]:
-        """ Add a face by coordinates, vertices is a list of ``(x, y, z)`` tuples. """
+        """ Add a face by coordinates, vertices is a list of ``(x, y, z)``
+        tuples.
+        """
         return self.add_entity(vertices, self.faces)
 
     def add_edge(self, vertices: Sequence[Sequence[float]]) -> Sequence[int]:
-        """ Add an edge by coordinates, vertices is a list of two ``(x, y, z)`` tuples. """
+        """ Add an edge by coordinates, vertices is a list of two ``(x, y, z)``
+        tuples.
+        """
         if len(vertices) != 2:
-            raise DXFValueError("Parameter vertices has to be a list/tuple of 2 vertices [(x1, y1, z1), (x2, y2, z2)].")
+            raise DXFValueError(
+                "Parameter vertices has to be a list/tuple of 2 vertices "
+                "[(x1, y1, z1), (x2, y2, z2)].")
         return self.add_entity(vertices, self.edges)
 
-    def add_entity(self, vertices: Iterable[Sequence[float]], entity_list: List) -> Sequence[int]:
+    def add_entity(self, vertices: Iterable[Sequence[float]],
+                   entity_list: List) -> Sequence[int]:
         indices = [self.add_vertex(vertex) for vertex in vertices]
         entity_list.append(indices)
         return indices
 
     def add_vertex(self, vertex: Sequence[float]) -> int:
         if len(vertex) != 3:
-            raise DXFValueError('Parameter vertex has to be a 3-tuple (x, y, z).')
+            raise DXFValueError(
+                'Parameter vertex has to be a 3-tuple (x, y, z).')
         index = len(self.vertices)
         self.vertices.append(vertex)
         return index
 
     def optimize(self, precision: int = 6):
         """
-        Tries to reduce vertex count by merging near vertices. `precision` defines the decimal places for coordinate
-        be equal to merge two vertices.
+        Try to reduce vertex count by merging near vertices. `precision`
+        defines the decimal places for coordinate be equal to merge two vertices.
 
         """
+
         def remove_doublette_vertices() -> Dict[int, int]:
             def prepare_vertices() -> Iterable[Tuple[float, float, float]]:
                 for index, vertex in enumerate(self.vertices):
                     x, y, z = vertex
-                    yield round(x, precision), round(y, precision), round(z, precision), index
+                    yield (round(x, precision),
+                           round(y, precision),
+                           round(z, precision),
+                           index)
 
             sorted_vertex_list = list(sorted(prepare_vertices()))
             original_vertices = self.vertices
             self.vertices = []
-            index_map = {}  # type: Dict[int, int]
+            index_map: Dict[int, int] = {}
             cmp_vertex = None
             index = 0
             while len(sorted_vertex_list):
                 vertex_entry = sorted_vertex_list.pop()
                 original_index = vertex_entry[3]
                 vertex = original_vertices[original_index]
-                if vertex != cmp_vertex:  # this is not a doublette
+                if vertex != cmp_vertex:
+                    # this is not a doublette
                     index = len(self.vertices)
                     self.vertices.append(vertex)
                     index_map[original_index] = index

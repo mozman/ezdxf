@@ -64,7 +64,8 @@ Factory function         :meth:`Drawing.layers.new`
 
     .. attribute:: dxf.plot
 
-        Plot flag (int)
+        Plot flag (int). Whether entities belonging to this layer should be drawn when the document is exported
+        (plotted) to pdf. Does not affect visibility inside the CAD application itself.
 
         === ============================
         1   plot layer (default value)

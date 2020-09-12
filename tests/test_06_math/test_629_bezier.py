@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math.bezier import Bezier
+from ezdxf.math import Bezier, Matrix44
 
 DEFPOINTS2D = [(0., 0., 0.), (3., 0., 0.), (7., 10., 0.), (10., 10., 0.)]
 DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
@@ -11,6 +11,12 @@ def test_points_2d():
     bcurve = Bezier(DEFPOINTS2D)
     for index, chk in enumerate(POINTS2D):
         assert bcurve.point(index * .1).isclose(chk)
+
+
+def test_bezier_objects_are_immutable():
+    curve = Bezier(DEFPOINTS3D)
+    with pytest.raises(TypeError):
+        curve.control_points[0] = (1, 2, 3)
 
 
 def test_point_and_tangent_2d():
@@ -56,6 +62,18 @@ def test_derivative_1(dbezier):
 def test_derivative_2(dbezier):
     for point, chk in iter_data(dbezier, 2):
         assert point.isclose(chk)
+
+
+def test_reverse():
+    curve = Bezier(DEFPOINTS3D)
+    new = curve.reverse()
+    assert curve.control_points[0] == new.control_points[-1]
+
+
+def test_transform_interface():
+    curve = Bezier(DEFPOINTS3D)
+    new = curve.transform(Matrix44.translate(1, 2, 3))
+    assert new.control_points[0] == curve.control_points[0] + (1, 2, 3)
 
 
 POINTS2D = [

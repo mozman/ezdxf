@@ -36,10 +36,6 @@ Factory function         :meth:`Drawing.blocks.new` (returns a :class:`~ezdxf.la
 
         BLOCK name as string. (case insensitive)
 
-    .. attribute:: Block.dxf.name2
-
-        The same :attr:`dxf.name` a second time (meaning?)
-
     .. attribute:: dxf.base_point
 
         BLOCK base point as ``(x, y, z)`` tuple, default value is ``(0, 0, 0)``

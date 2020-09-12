@@ -6,8 +6,6 @@ from itertools import chain
 
 DIR1 = r"D:\Source\dxftest\CADKitSamples\*.dxf"
 DIR2 = r"D:\Source\dxftest\*.dxf"
-LEGACY_MODE = False
-
 
 def run(start):
     if start > 0:
@@ -18,12 +16,11 @@ def run(start):
     for filename in names:
         count += 1
         print("processing: {}/{} file: {}".format(count+start, len(names)+start, filename))
-        doc = ezdxf.readfile(filename, legacy_mode=LEGACY_MODE)
+        doc = ezdxf.readfile(filename)
 
         auditor = Auditor(doc)
-        errors = list(auditor.filter_zero_pointers(auditor.run()))
-        if len(errors):
-            auditor.print_error_report(errors)
+        if len(auditor):
+            auditor.print_error_report(auditor.errors)
 
 
 if __name__ == '__main__':

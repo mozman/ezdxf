@@ -3,10 +3,11 @@
 # created 2019-02-15
 import pytest
 
+import ezdxf
 from ezdxf.entities.attrib import Attrib
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-
+from ezdxf.audit import Auditor
 
 TEST_CLASS = Attrib
 TEST_TYPE = 'ATTRIB'
@@ -106,6 +107,11 @@ TAG
 """
 
 
+@pytest.fixture(scope='module')
+def doc():
+    return ezdxf.new()
+
+
 @pytest.fixture(params=[ENTITY_R12, ENTITY_R2000])
 def entity(request):
     return TEST_CLASS.from_text(request.param)
@@ -146,7 +152,8 @@ def test_load_from_text(entity):
     assert entity.dxf.insert == (0, 0, 0)
 
 
-@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize("txt,ver",
+                         [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     attdef = TEST_CLASS.from_text(txt)
@@ -157,4 +164,17 @@ def test_write_dxf(txt, ver):
     collector2 = TagCollector(dxfversion=ver, optional=False)
     attdef.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
+
+
+@pytest.mark.parametrize('invalid_text', [
+    'test\ntext\r',
+    'test\r\ntext',
+    'testtext^',
+    'test\ntext^',
+    'test\ntext^\r',
+])
+def test_removing_invalid_chars_at_setting_content(invalid_text):
+    txt = Attrib()
+    txt.dxf.text = invalid_text
+    assert txt.dxf.text == 'testtext'
 

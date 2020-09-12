@@ -43,6 +43,10 @@ Bulge Related Functions
 2D Functions
 ============
 
+.. autofunction:: arc_segment_count
+
+.. autofunction:: arc_chord_length
+
 .. autofunction:: distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float
 
 .. autofunction:: point_to_line_relation(point: Vec2, start: Vec2, end: Vec2, abs_tol=1e-10) -> int
@@ -168,6 +172,8 @@ UCS Class
     .. automethod:: points_to_ocs
 
     .. automethod:: to_ocs_angle_deg
+
+    .. automethod:: transform(m: Matrix44) -> UCS
 
     .. automethod:: rotate(axis: Vertex, angle:float) -> UCS
 
@@ -332,6 +338,8 @@ Vector
     .. automethod:: generate(items: Iterable[Vertex]) -> Iterable[Vector]
 
     .. automethod:: list(items: Iterable[Vertex]) -> List[Vector]
+
+    .. automethod:: tuple(items: Iterable[Vertex]) -> Sequence[Vector]
 
     .. automethod:: from_angle(angle: float, length: float = 1.) -> Vector
 
@@ -590,6 +598,8 @@ ConstructionArc
 
         end angle in degrees
 
+    .. autoattribute:: angle_span
+
     .. autoattribute:: start_angle_rad
 
     .. autoattribute:: end_angle_rad
@@ -793,6 +803,10 @@ BSpline
 
     .. automethod:: reverse() -> BSpline
 
+    .. automethod:: transform(m: Matrix44) -> BSpline
+
+    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
+
     .. automethod:: point(t: float) -> Vector
 
     .. automethod:: points(t: float) -> List[Vector]
@@ -803,19 +817,15 @@ BSpline
 
     .. automethod:: insert_knot
 
-    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
-
     .. automethod:: from_ellipse(ellipse: ConstructionEllipse) -> BSpline
 
     .. automethod:: from_arc(arc: ConstructionArc) -> BSpline
 
     .. automethod:: from_fit_points(points: Iterable[Vertex], degree:int=3, method='chord') -> BSpline
 
-    .. automethod:: ellipse_approximation(ellipse: ConstructionEllipse, num:int=16) -> BSpline
-
     .. automethod:: arc_approximation(arc: ConstructionArc, num:int=16) -> BSpline
 
-    .. automethod:: transform(m: Matrix44) -> BSpline
+    .. automethod:: ellipse_approximation(ellipse: ConstructionEllipse, num:int=16) -> BSpline
 
     .. automethod:: bezier_decomposition() -> Iterable[List[Vector]]
 
@@ -841,6 +851,10 @@ Bezier
 
     .. automethod:: params
 
+    .. automethod:: reverse() -> Bezier
+
+    .. automethod:: transform(m: Matrix44) -> Bezier
+
     .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
 
     .. automethod:: point(t: float) -> Vector
@@ -859,17 +873,19 @@ Bezier4P
 
     .. autoattribute:: control_points
 
-    .. automethod:: to2d() -> Bezier4P
+    .. automethod:: reverse() -> Bezier4P
 
-    .. automethod:: to3d() -> Bezier4P
+    .. automethod:: transform(m: Matrix44) -> Bezier4P
+
+    .. automethod:: approximate(segments: int) -> Iterable[Union[Vector, Vec2]]
+
+    .. automethod:: approximated_length
 
     .. automethod:: point(t: float) -> Union[Vector, Vec2]
 
     .. automethod:: tangent(t: float) -> Union[Vector, Vec2]
 
-    .. automethod:: approximate(segments: int) -> Iterable[Union[Vector, Vec2]]
 
-    .. automethod:: approximated_length
 
 BezierSurface
 -------------
@@ -1061,3 +1077,4 @@ BandedMatrixLU Class
 .. _Gauss-Jordan: https://en.wikipedia.org/wiki/Gaussian_elimination
 .. _Gauss-Elimination: https://en.wikipedia.org/wiki/Gaussian_elimination
 .. _LU Decomposition: https://en.wikipedia.org/wiki/LU_decomposition
+.. _sagitta: https://en.wikipedia.org/wiki/Sagitta_(geometry)

@@ -374,8 +374,6 @@ Hatch Pattern Definition Helper Classes
 
     .. automethod:: add_line
 
-    .. automethod:: new_line
-
     .. automethod:: clear
 
     .. automethod:: scale

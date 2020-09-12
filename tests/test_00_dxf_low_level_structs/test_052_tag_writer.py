@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2019 Manfred Moitzi
+# Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
 import pytest
 from io import StringIO

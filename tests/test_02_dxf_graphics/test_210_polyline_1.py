@@ -9,8 +9,6 @@ from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vector
 
-TEST_CLASS = Polyline
-TEST_TYPE = 'POLYLINE'
 
 ENTITY_R12 = """0
 POLYLINE
@@ -55,28 +53,25 @@ AcDb2dPolyline
 """
 
 
-@pytest.fixture(scope='module')
-def doc():
-    return ezdxf.new()
-
-
 @pytest.fixture(params=[ENTITY_R12, ENTITY_R2000])
 def entity(request):
-    return TEST_CLASS.from_text(request.param)
+    return Polyline.from_text(request.param)
 
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert TEST_TYPE in ENTITY_CLASSES
+    assert 'POLYLINE' in ENTITY_CLASSES
 
 
-def test_default_init():
-    entity = TEST_CLASS()
-    assert entity.dxftype() == TEST_TYPE
+def test_default_constructor():
+    entity = Polyline()
+    assert entity.dxftype() == 'POLYLINE'
+    assert entity.is_virtual is True
+    assert entity.seqend is None, 'SEQEND must not exist'
 
 
 def test_default_new():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+    entity = Polyline.new(handle='ABBA', owner='0', dxfattribs={
         'color': '7',
     })
     assert entity.dxf.layer == '0'
@@ -113,7 +108,8 @@ def test_polygon_mesh():
     assert (100, 'AcDbPolygonMesh') == collector.tags[5]
 
 
-def test_copy_polyline(doc):
+def test_copy_polyline():
+    doc = ezdxf.new()
     msp = doc.modelspace()
     polyline = msp.add_polyline2d([(1, 2), (7, 8), (4, 3)])
     assert isinstance(polyline, Polyline)
@@ -143,7 +139,7 @@ def test_copy_polyline(doc):
 @pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
-    polyline = TEST_CLASS.from_text(txt)
+    polyline = Polyline.from_text(txt)
     collector = TagCollector(dxfversion=ver, optional=True)
     polyline.export_dxf(collector)
     assert collector.tags == expected
@@ -175,3 +171,28 @@ def test_polyline3d_transform_interface():
     assert vertices[0] == (1, 1, 1)
     assert vertices[1] == (3, 1, 1)
     assert vertices[2] == (2, 2, 1)
+
+
+def test_2d_polyline_has_default_width():
+    assert Polyline().has_width is False
+    assert Polyline.new(dxfattribs={'default_start_width': .1}).has_width is True
+    assert Polyline.new(dxfattribs={'default_end_width': .1}).has_width is True
+
+
+def test_2d_polyline_has_any_start_width():
+    pline = Polyline()
+    pline.append_formatted_vertices([(0, 0, .1)], format='xys')
+    assert pline.has_width is True
+
+
+def test_2d_polyline_has_any_end_width():
+    pline = Polyline()
+    pline.append_formatted_vertices([(0, 0, .1)], format='xye')
+    assert pline.has_width is True
+
+
+def test_2d_polyline_has_any_arc():
+    pline = Polyline()
+    assert pline.has_arc is False
+    pline.append_formatted_vertices([(0, 0, 1.0)], format='xyb')
+    assert pline.has_arc is True

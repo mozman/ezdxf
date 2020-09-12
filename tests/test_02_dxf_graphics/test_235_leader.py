@@ -1,12 +1,11 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-03-12
 import pytest
-import ezdxf
 from ezdxf.math import Vector
 from ezdxf.entities.leader import Leader
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-
+from ezdxf.layouts import VirtualLayout
 
 LEADER = """0
 LEADER
@@ -29,7 +28,19 @@ DIMSTYLE
 41
 1.0
 76
-1
+3
+10
+0.0
+20
+0.0
+30
+0.0
+10
+0.0
+20
+0.0
+30
+0.0
 10
 0.0
 20
@@ -79,8 +90,8 @@ def test_default_new():
     assert entity.dxf.has_arrowhead == 1
     assert entity.dxf.path_type == 0
     assert entity.dxf.annotation_type == 3
-    assert entity.dxf.hookline_direction == 0
-    assert entity.dxf.has_hookline == 0
+    assert entity.dxf.hookline_direction == 1
+    assert entity.dxf.has_hookline == 1
     assert entity.dxf.text_height == 1
     assert entity.dxf.text_width == 1
     assert entity.dxf.block_color == 7
@@ -99,8 +110,8 @@ def test_load_from_text(entity):
     assert entity.dxf.has_arrowhead == 1
     assert entity.dxf.path_type == 0
     assert entity.dxf.annotation_type == 3
-    assert entity.dxf.hookline_direction == 0
-    assert entity.dxf.has_hookline == 0
+    assert entity.dxf.hookline_direction == 1
+    assert entity.dxf.has_hookline == 1
     assert entity.dxf.text_height == 1
     assert entity.dxf.text_width == 1
     assert entity.dxf.block_color == 7
@@ -109,7 +120,7 @@ def test_load_from_text(entity):
     assert entity.dxf.horizontal_direction == (1, 0, 0)
     assert entity.dxf.leader_offset_block_ref == (0, 0, 0)
     assert entity.dxf.leader_offset_annotation_placement == (0, 0, 0)
-    assert len(entity.vertices) == 1
+    assert len(entity.vertices) == 3
 
 
 def test_write_dxf():
@@ -120,11 +131,21 @@ def test_write_dxf():
 
 
 def test_add_leader():
-    doc = ezdxf.new()
-    msp = doc.modelspace()
+    msp = VirtualLayout()
     leader = msp.new_entity('LEADER', {})  # type: Leader
     assert leader.dxftype() == 'LEADER'
     assert leader.dxf.annotation_type == 3
     leader.vertices.append(Vector(0, 0, 0))
     assert len(leader.vertices) == 1
     assert leader.vertices[0] == (0, 0, 0)
+
+
+def test_virtual_etities():
+    leader = Leader.new()
+    leader.vertices = [
+        (0, 0, 0),
+        (1, 1, 0),
+        (2, 1, 0),
+    ]
+    result = list(leader.virtual_entities())
+    assert len(result) == 2

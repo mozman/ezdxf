@@ -20,9 +20,16 @@ def paperspace(doc):
     return doc.layout()
 
 
-def test_dxffactory_property(doc, modelspace):
-    line = modelspace.add_line((0, 0), (1, 1))
-    assert doc.dxffactory is line.dxffactory
+def test_default_properties(modelspace):
+    assert modelspace.units == 0
+
+
+def test_set_units(modelspace):
+    assert modelspace.units == 0
+    modelspace.units = 6
+    assert modelspace.units == 6
+    # reset - because module scope
+    modelspace.units = 0
 
 
 def test_delete_entity():
@@ -106,7 +113,7 @@ def test_clone_dxfattribs(modelspace):
 
 
 def test_invalid_layer_name(modelspace):
-    with pytest.raises(ezdxf.DXFInvalidLayerName):
+    with pytest.raises(ezdxf.DXFValueError):
         modelspace.add_line((0, 0), (1, 1), dxfattribs={'layer': 'InvalidName*'})
 
 
@@ -123,16 +130,3 @@ def test_create_layout(doc):
 
     layout.page_setup()  # default paper setup
     assert len(layout) == 1, "missing 'main' viewport entity"
-
-
-def test_rename_layout(doc):
-    layouts = doc.layouts
-    with pytest.raises(ValueError):
-        layouts.rename('Model', 'XXX')
-
-    with pytest.raises(KeyError):
-        layouts.rename('mozman', 'XXX')
-
-    layouts.rename('Layout1', 'ezdxf-new')
-    layout = layouts.get('ezdxf-new')
-    assert layout.name == 'ezdxf-new'

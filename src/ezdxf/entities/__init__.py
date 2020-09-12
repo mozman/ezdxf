@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-13
 
@@ -10,8 +10,9 @@ from .xdict import ExtensionDict
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors
 from .dxfentity import DXFEntity
-from .dxfgfx import DXFGraphic
+from .dxfgfx import DXFGraphic, SeqEnd
 from .dxfobj import DXFObject
+from .dxfns import DXFNamespace, SubclassProcessor
 
 # register management structures
 from .dxfclass import DXFClass
@@ -47,6 +48,7 @@ from .arc import Arc
 from .shape import Shape
 from .solid import Solid, Face3d, Trace
 from .text import Text
+from .subentity import LinkedEntities, entity_linker
 from .insert import Insert
 from .block import Block, EndBlk
 from .polyline import Polyline, Polyface, Polymesh, MeshVertexCache
@@ -55,7 +57,6 @@ from .dimension import Dimension, ArcDimension
 from .dimstyleoverride import DimStyleOverride
 from .viewport import Viewport
 
-
 # register graphical entities R2000
 from .lwpolyline import LWPolyline
 from .ellipse import Ellipse
@@ -63,13 +64,22 @@ from .xline import XLine, Ray
 from .mtext import MText
 from .spline import Spline
 from .mesh import Mesh, MeshData
-from .hatch import Hatch, BoundaryPaths, PolylinePath, EdgePath, LineEdge, ArcEdge, EllipseEdge, SplineEdge, Pattern, PatternLine, Gradient
-from .image import Image, ImageDef
-from .underlay import Underlay, UnderlayDefinition, PdfUnderlay, DgnUnderlay, DwfUnderlay
+from .hatch import (
+    Hatch, BoundaryPaths, PolylinePath, EdgePath, LineEdge,
+    ArcEdge, EllipseEdge, SplineEdge, Pattern, PatternLine, Gradient,
+)
+from .image import Image, ImageDef, Wipeout
+from .underlay import (
+    Underlay, UnderlayDefinition, PdfUnderlay, DgnUnderlay,
+    DwfUnderlay,
+)
 from .leader import Leader
 from .tolerance import Tolerance
 from .helix import Helix
-from .acis import Body, Solid3d, Region, Surface, ExtrudedSurface, LoftedSurface, RevolvedSurface, SweptSurface
+from .acis import (
+    Body, Solid3d, Region, Surface, ExtrudedSurface,
+    LoftedSurface, RevolvedSurface, SweptSurface,
+)
 from .mline import MLine, MLineStyle, MLineStyleCollection
 from .mleader import MLeader, MLeaderStyle, MLeaderStyleCollection
 
@@ -86,5 +96,3 @@ from .geodata import GeoData
 # register graphical entities R2013
 
 # register graphical entities R2018
-
-

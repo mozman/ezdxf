@@ -1,20 +1,25 @@
 # Created: 2019-02-15
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union
-from ezdxf.tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
-from ezdxf.lldxf.tags import Tags
-from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
-from ezdxf.lldxf.const import DXFInternalEzdxfError
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing
+    from ezdxf.eztypes import Drawing, DXFEntity, ExtendedTags
 
-__all__ = ['EntityFactory', 'register_entity', 'ENTITY_CLASSES', 'replace_entity', 'new', 'cls']
+__all__ = [
+    'register_entity', 'ENTITY_CLASSES', 'replace_entity',
+    'new', 'cls', 'is_bound', 'create_db_entry', 'load', 'bind'
+]
+# Stores all registered classes:
+ENTITY_CLASSES = {}
+# use @set_default_class to register the default entity class:
+DEFAULT_CLASS = None
 
-ENTITY_CLASSES = {}  # registered classes
-DEFAULT_CLASS = DXFTagStorage
+
+def set_default_class(cls):
+    global DEFAULT_CLASS
+    DEFAULT_CLASS = cls
+    return cls
 
 
 def replace_entity(cls):
@@ -26,15 +31,31 @@ def replace_entity(cls):
 def register_entity(cls):
     name = cls.DXFTYPE
     if name in ENTITY_CLASSES:
-        raise DXFInternalEzdxfError('Double registration for DXF type {}.'.format(name))
+        raise TypeError(f'Double registration for DXF type {name}.')
     ENTITY_CLASSES[name] = cls
     return cls
 
 
-def new(dxftype: str, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
+def new(dxftype: str, dxfattribs: dict = None,
+        doc: 'Drawing' = None) -> 'DXFEntity':
     """ Create a new entity, does not require an instantiated DXF document. """
-    class_ = ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
-    entity = class_.new(handle=None, owner=None, dxfattribs=dxfattribs, doc=doc)
+    entity = cls(dxftype).new(
+        handle=None,
+        owner=None,
+        dxfattribs=dxfattribs,
+        doc=doc,
+    )
+    return entity.cast() if hasattr(entity, 'cast') else entity
+
+
+def create_db_entry(dxftype, dxfattribs: dict, doc: 'Drawing') -> 'DXFEntity':
+    entity = new(dxftype=dxftype, dxfattribs=dxfattribs)
+    bind(entity, doc)
+    return entity
+
+
+def load(tags: 'ExtendedTags') -> 'DXFEntity':
+    entity = cls(tags.dxftype()).load(tags)
     return entity.cast() if hasattr(entity, 'cast') else entity
 
 
@@ -43,48 +64,54 @@ def cls(dxftype: str) -> 'DXFEntity':
     return ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
 
 
-class EntityFactory:
-    def __init__(self, doc: 'Drawing' = None):
-        self.doc = doc
-        self.image_key_generator = ImageKeyGenerator()
-        self.underlay_key_generator = UnderlayKeyGenerator()
+def bind(entity: 'DXFEntity', doc: 'Drawing') -> None:
+    """ Bind `entity` to the DXF document `doc`.
 
-    def new_entity(self, dxftype: str, dxfattribs: dict = None) -> 'DXFEntity':
-        """ Create a new entity, requires an instantiated DXF document. """
-        self.doc.tracker.dxftypes.add(dxftype)
-        return new(dxftype, dxfattribs, self.doc)
+    The bind process stores the DXF `entity` in the entity database of the DXF
+    document.
 
-    def create_db_entry(self, dxftype: str, dxfattribs: dict) -> 'DXFEntity':
-        """ Create new entity and add to drawing-database. """
-        entity = self.new_entity(dxftype=dxftype, dxfattribs=dxfattribs)
-        self.doc.entitydb.add(entity)
-        if hasattr(entity, 'seqend') and entity.seqend is None:
-            seqend = self.create_db_entry('SEQEND', dxfattribs={'layer': entity.dxf.layer})
-            self.doc.entitydb.add(seqend)
-            entity.seqend = seqend
-        return entity
+    """
+    assert entity.is_alive, 'Can not bind destroyed entity.'
+    assert doc.entitydb is not None, 'Missing entity database.'
+    entity.doc = doc
+    doc.entitydb.add(entity)
 
-    def load(self, tags: Union['ExtendedTags', 'Tags']) -> 'DXFEntity':
-        entity = self.entity_from_tags(tags)
-        self.doc.entitydb.add(entity)
-        return entity
+    # Do not call the post_bind_hook() while loading from external sources,
+    # not all entities and resources are loaded at this point of time!
+    if not doc.is_loading:
+        entity.post_bind_hook()
 
-    def entity_from_tags(self, tags: Union['ExtendedTags', 'Tags']) -> 'DXFEntity':
-        if not isinstance(tags, ExtendedTags):
-            tags = ExtendedTags(tags)
-        dxftype = tags.dxftype()
-        class_ = ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
-        entity = class_.load(tags, self.doc)
-        return entity.cast() if hasattr(entity, 'cast') else entity
 
-    def next_image_key(self, checkfunc=lambda k: True) -> str:
-        while True:
-            key = self.image_key_generator.next()
-            if checkfunc(key):
-                return key
+def unbind(entity: 'DXFEntity'):
+    """ Unbind `entity` from document and layout, but does not destroy the
+    entity.
 
-    def next_underlay_key(self, checkfunc=lambda k: True) -> str:
-        while True:
-            key = self.underlay_key_generator.next()
-            if checkfunc(key):
-                return key
+    Turns `entity` into a virtual entity: no handle, no owner, no document.
+    """
+    if entity.is_alive and not entity.is_virtual:
+        doc = entity.doc
+        if entity.dxf.owner is not None:
+            try:
+                layout = doc.layouts.get_layout_for_entity(entity)
+            except KeyError:
+                pass
+            else:
+                layout.unlink_entity(entity)
+
+        process_sub_entities = getattr(entity, 'process_sub_entities', None)
+        if process_sub_entities:
+            process_sub_entities(lambda e: unbind(e))
+
+        doc.entitydb.discard(entity)
+        entity.doc = None
+
+
+def is_bound(entity: 'DXFEntity', doc: 'Drawing') -> bool:
+    """ Returns ``True`` if `entity`is bound to DXF document `doc`.
+    """
+    if not entity.is_alive:
+        return False
+    if entity.is_virtual or entity.doc is not doc:
+        return False
+    assert doc.entitydb, 'Missing entity database.'
+    return entity.dxf.handle in doc.entitydb

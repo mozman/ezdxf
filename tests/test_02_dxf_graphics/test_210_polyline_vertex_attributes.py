@@ -4,9 +4,9 @@
 import pytest
 import ezdxf
 
-from ezdxf.entities.polyline import vertex_attribs
+from ezdxf.entities.polyline import vertex_attribs, DXFVertex
 from ezdxf.math import Vector
-
+from ezdxf.layouts import VirtualLayout
 
 def test_vertext_attribs_xy():
     result = vertex_attribs((1, 2), format='xy')
@@ -29,8 +29,7 @@ def test_vertext_attribs_vseb():
 
 
 def test_append_formatted_vertices():
-    doc = ezdxf.new('R2000')
-    msp = doc.modelspace()
+    msp = VirtualLayout()
     p = msp.add_polyline2d([(1, 2, .5), (3, 4, .7)], format='xyb')
     assert len(p) == 2
     v1 = p.vertices[0]
@@ -39,6 +38,14 @@ def test_append_formatted_vertices():
     v2 = p.vertices[1]
     assert v2.dxf.location == (3, 4)
     assert v2.dxf.bulge == 0.7
+
+
+def test_vertex_format():
+    v = DXFVertex.new(dxfattribs={'location': (1, 2, 3), 'bulge': 5, 'end_width': 7, 'start_width': 6})
+    assert v.format('xyz') == (1, 2, 3)
+    assert v.format('xyb') == (1, 2, 5)
+    assert v.format('vb') == ((1, 2, 3), 5)
+    assert v.format('se') == (6, 7)
 
 
 if __name__ == '__main__':

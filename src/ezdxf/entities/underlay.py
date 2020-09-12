@@ -1,11 +1,14 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-09
-from typing import TYPE_CHECKING, Union, Tuple, Iterable, List, cast
-from ezdxf.math import Vector
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from typing import TYPE_CHECKING, Union, Tuple, Iterable, List, cast, Optional
+from ezdxf.lldxf import validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+)
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFTypeError
 from ezdxf.lldxf import const
+from ezdxf.math import NULLVEC, Z_AXIS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
@@ -14,24 +17,59 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Vertex, Drawing, Tags
 
-__all__ = ['PdfUnderlay', 'DwfUnderlay', 'DgnUnderlay', 'PdfDefinition', 'DgnDefinition', 'DwfDefinition', 'Underlay',
-           'UnderlayDefinition']
+__all__ = [
+    'PdfUnderlay', 'DwfUnderlay', 'DgnUnderlay', 'PdfDefinition',
+    'DgnDefinition', 'DwfDefinition', 'Underlay', 'UnderlayDefinition'
+]
 
 acdb_underlay = DefSubclass('AcDbUnderlayReference', {
-    'underlay_def_handle': DXFAttr(340),  # Hard reference to underlay definition object
-    'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
-    'scale_x': DXFAttr(41, default=1),  # scale x factor
-    'scale_y': DXFAttr(42, default=1),  # scale y factor
-    'scale_z': DXFAttr(43, default=1),  # scale z factor
-    'rotation': DXFAttr(50, default=0),  # rotation angle in degrees?
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
-    'flags': DXFAttr(280, default=2),  # Underlay display properties:
+    # Hard reference to underlay definition object
+    'underlay_def_handle': DXFAttr(340),
+    'insert': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
+    # Scale x factor:
+    'scale_x': DXFAttr(
+        41, default=1,
+        validator=validator.is_not_zero,
+        fixer=RETURN_DEFAULT,
+    ),
+    # Scale y factor:
+    'scale_y': DXFAttr(
+        42, default=1,
+        validator=validator.is_not_zero,
+        fixer=RETURN_DEFAULT,
+    ),
+    # Scale z factor:
+    'scale_z': DXFAttr(
+        43, default=1,
+        validator=validator.is_not_zero,
+        fixer=RETURN_DEFAULT,
+    ),
+    # Rotation angle in degrees:
+    'rotation': DXFAttr(50, default=0),
+    'extrusion': DXFAttr(
+        210, xtype=XType.point3d, default=Z_AXIS, optional=True,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
+    # Underlay display properties:
     # 1 = Clipping is on
     # 2 = Underlay is on
     # 4 = Monochrome
     # 8 = Adjust for background
-    'contrast': DXFAttr(281, default=100),  # Contrast value (20-100; default = 100)
-    'fade': DXFAttr(282, default=0),  # Fade value (0-80; default = 0)
+    'flags': DXFAttr(280, default=2),
+
+    # Contrast value (20-100; default = 100)
+    'contrast': DXFAttr(
+        281, default=100,
+        validator=validator.is_in_integer_range(20, 101),
+        fixer=validator.fit_into_integer_range(20, 101),
+    ),
+    # Fade value (0-80; default = 0)
+    'fade': DXFAttr(
+        282, default=0,
+        validator=validator.is_in_integer_range(0, 81),
+        fixer=validator.fit_into_integer_range(0, 81),
+    ),
 })
 
 
@@ -41,20 +79,23 @@ class Underlay(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_underlay)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
-        self._boundary_path = []  # type: List[Vertex]
+    def __init__(self):
+        super().__init__()
+        self._boundary_path: List['Vertex'] = []
+        self._underlay_def: Optional['UnderlayDefinition'] = None
 
     def copy(self):
         raise DXFTypeError('Copying of underlay not supported.')
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             self.load_boundary_path(processor.subclasses[2])
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_underlay)
             if len(tags):
-                processor.log_unprocessed_tags(tags, subclass=acdb_underlay.name)
+                processor.log_unprocessed_tags(
+                    tags, subclass=acdb_underlay.name)
             if len(self.boundary_path) < 2:
                 self.dxf = dxf
                 self.reset_boundary_path()
@@ -63,15 +104,18 @@ class Underlay(DXFGraphic):
     def load_boundary_path(self, tags: 'Tags'):
         self._boundary_path = [value for code, value in tags if code == 11]
 
+    def post_load_hook(self, doc: 'Drawing') -> None:
+        super().post_load_hook(doc)
+        db = doc.entitydb
+        self._underlay_def = db.get(self.dxf.get('underlay_def_handle', None))
+
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_underlay.name)
         self.dxf.export_dxf_attribs(tagwriter, [
-            'underlay_def_handle', 'insert', 'scale_x', 'scale_y', 'scale_z', 'rotation', 'extrusion', 'flags',
-            'contrast', 'fade'
+            'underlay_def_handle', 'insert', 'scale_x', 'scale_y', 'scale_z',
+            'rotation', 'extrusion', 'flags', 'contrast', 'fade'
         ])
         self.export_boundary_path(tagwriter)
 
@@ -79,9 +123,13 @@ class Underlay(DXFGraphic):
         for vertex in self.boundary_path:
             tagwriter.write_vertex(11, vertex[:2])
 
-    @property
-    def underlay_def(self) -> 'UnderlayDef':
-        return cast('UnderlayDef', self.entitydb[self.dxf.underlay_def_handle])
+    def set_underlay_def(self, underlay_def: 'UnderlayDefinition') -> None:
+        self._underlay_def = underlay_def
+        self.dxf.underlay_def_handle = underlay_def.dxf.handle
+        underlay_def.append_reactor_handle(self.dxf.handle)
+
+    def get_underlay_def(self) -> 'UnderlayDefinition':
+        return self._underlay_def
 
     @property
     def boundary_path(self):
@@ -152,8 +200,11 @@ class Underlay(DXFGraphic):
         self.clipping = False
 
     def destroy(self) -> None:
-        underlay_def = self.get_underlay_def()
-        underlay_def.remove_reactor_handle(self.dxf.handle)
+        if not self.is_alive:
+            return
+
+        if self._underlay_def:
+            self._underlay_def.discard_reactor_handle(self.dxf.handle)
         del self._boundary_path
         super().destroy()
 
@@ -178,7 +229,8 @@ class DgnUnderlay(Underlay):
 
 acdb_underlay_def = DefSubclass('AcDbUnderlayDefinition', {
     'filename': DXFAttr(1),  # File name of underlay
-    'name': DXFAttr(2),  # underlay name - pdf=page number to display; dgn=default; dwf=????
+    'name': DXFAttr(2),
+    # underlay name - pdf=page number to display; dgn=default; dwf=????
 })
 
 
@@ -190,17 +242,19 @@ class UnderlayDefinition(DXFObject):
     DXFATTRIBS = DXFAttributes(base_class, acdb_underlay_def)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_underlay_def)
+            tags = processor.load_dxfattribs_into_namespace(
+                dxf, acdb_underlay_def)
             if len(tags):
-                processor.log_unprocessed_tags(tags, subclass=acdb_underlay_def.name)
+                processor.log_unprocessed_tags(
+                    tags, subclass=acdb_underlay_def.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_underlay_def.name)
         self.dxf.export_dxf_attribs(tagwriter, ['filename', 'name'])

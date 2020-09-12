@@ -1,16 +1,15 @@
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
 import pytest
-import ezdxf
+from ezdxf.layouts import VirtualLayout
 
 
-@pytest.fixture(scope='module')
-def doc():
-    return ezdxf.new('R2007')
+@pytest.fixture
+def msp():
+    return VirtualLayout()
 
 
-def test_default_settings(doc):
-    msp = doc.modelspace()
+def test_default_settings(msp):
     line = msp.add_line((0, 0), (1, 1))
     assert line.dxf.layer == '0'
     assert line.dxf.color == 256
@@ -18,13 +17,12 @@ def test_default_settings(doc):
     assert line.dxf.ltscale == 1.0
     assert line.dxf.invisible == 0
     assert line.dxf.extrusion == (0, 0, 1)
-    line.dxf.lineweight = 17  # set line weight
-    assert line.dxf.lineweight == 17  # get line weight
+    line.dxf.lineweight = 18  # set line weight
+    assert line.dxf.lineweight == 18  # get line weight
 
 
 @pytest.fixture
-def line(doc):
-    msp = doc.modelspace()
+def line(msp):
     return msp.add_line((0, 0), (1, 1))
 
 
@@ -62,15 +60,11 @@ def test_ac1021_default_settings(line):
 
 
 @pytest.fixture(scope='module')
-def layout(doc):
+def layout():
+    # Do not test VirtualLayout() here
+    import ezdxf
+    doc = ezdxf.new()
     return doc.modelspace()
-
-
-def test_iter_layout(layout):
-    entity_count = len(list(layout))
-    layout.add_line((0, 0), (1, 1))
-    layout.add_line((0, 0), (1, 1))
-    assert entity_count+2 == len(list(layout))
 
 
 def test_create_line(layout):

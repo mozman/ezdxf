@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, List
+from typing import TYPE_CHECKING, Tuple, Sequence, Iterable
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 from .matrix44 import Matrix44
 
@@ -24,6 +24,7 @@ class OCS:
         extrusion: extrusion vector.
 
     """
+
     def __init__(self, extrusion: 'Vertex' = Z_AXIS):
         Az = Vector(extrusion).normalize()
         self.transform = not Az.isclose(Z_AXIS)
@@ -335,6 +336,18 @@ class UCS:
 
         """
         self.origin = Vector(location)
+        return self
+
+    def transform(self, m: Matrix44) -> 'UCS':
+        """ General inplace transformation interface, returns `self` (floating interface).
+
+        Args:
+             m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
+
+        .. versionadded:: 0.14
+
+        """
+        self.matrix *= m
         return self
 
     @property

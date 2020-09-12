@@ -6,17 +6,20 @@ Tutorial for Blocks
 What are Blocks?
 ----------------
 
-Blocks are collections of DXF entities which can be placed multiply times at different layouts and blocks as
-references to the block definition. The block reference (:class:`~ezdxf.entities.Insert`) can be rotated, scaled,
-placed in 3D by :ref:`OCS` and arranged in a grid like manner, each :class:`~ezdxf.entities.Insert` entity can
-have individual attributes (:class:`~ezdxf.entities.Attrib`) attached.
+Blocks are collections of DXF entities which can be placed multiply times as
+block references in different layouts and other block definitions.
+The block reference (:class:`~ezdxf.entities.Insert`) can be rotated, scaled,
+placed in 3D by :ref:`OCS` and arranged in a grid like manner, each
+:class:`~ezdxf.entities.Insert` entity can have individual attributes
+(:class:`~ezdxf.entities.Attrib`) attached.
 
 
 Create a Block
 --------------
 
-Blocks are managed as :class:`~ezdxf.layouts.BlockLayout` by the :class:`~ezdxf.sections.blocks.BlocksSection` class
-and every drawing has only one blocks section: :attr:`Drawing.blocks`.
+Blocks are managed as :class:`~ezdxf.layouts.BlockLayout` by a
+:class:`~ezdxf.sections.blocks.BlocksSection` object, every drawing has only
+one blocks section stored in the attribute: :attr:`Drawing.blocks`.
 
 .. literalinclude:: src/blocks.py
     :lines: 1-21

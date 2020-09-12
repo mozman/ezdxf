@@ -67,6 +67,21 @@ def test_default_init():
     assert entity.dxf.owner is None
 
 
+def test_negative_radius():
+    circle = Circle.new(dxfattribs={'radius': -1})
+    assert circle.dxf.radius == -1, 'Radius < 0 is valid'
+
+
+def test_zero_radius():
+    circle = Circle.new(dxfattribs={'radius': 0})
+    assert circle.dxf.radius == 0, 'Radius == 0 is valid'
+
+
+def test_extrusion_can_not_be_a_null_vector():
+    circle = Circle.new(dxfattribs={'extrusion': (0, 0, 0)})
+    assert circle.dxf.extrusion == (0, 0, 1), 'expected default extrusion'
+
+
 def test_default_new():
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
         'color': '7',
@@ -118,7 +133,8 @@ def test_get_point_with_ocs():
     assert vertices[1].isclose(Vector(1.5, 2, -3), abs_tol=1e-6)
 
 
-@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize("txt,ver",
+                         [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     circle = TEST_CLASS.from_text(txt)
@@ -135,7 +151,8 @@ def test_circle_default_ocs():
     circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'thickness': 2})
     # 1. rotation - 2. scaling - 3. translation
     m = Matrix44.chain(Matrix44.scale(2, 2, 3), Matrix44.translate(1, 1, 1))
-    # default extrusion is (0, 0, 1), therefore scale(2, 2, ..) is a uniform scaling in the xy-play of the OCS
+    # default extrusion is (0, 0, 1), therefore scale(2, 2, ..) is a uniform
+    # scaling in the xy-play of the OCS
     circle.transform(m)
 
     assert circle.dxf.center == (5, 7, 13)
@@ -144,7 +161,8 @@ def test_circle_default_ocs():
 
 
 def test_circle_fast_translation():
-    circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'extrusion': Vector.random()})
+    circle = Circle.new(
+        dxfattribs={'center': (2, 3, 4), 'extrusion': Vector.random()})
     ocs = circle.ocs()
     offset = Vector(1, 2, 3)
     center = ocs.to_wcs(circle.dxf.center) + offset
@@ -153,9 +171,10 @@ def test_circle_fast_translation():
 
 
 def test_circle_non_uniform_scaling():
-    circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'extrusion': (0, 1, 0), 'thickness': 2})
-    # extrusion in WCS y-axis, therefore scale(2, ..., 3) is a non uniform scaling in the xy-play of the OCS
-    # which is the xz-plane of the WCS
+    circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'extrusion': (0, 1, 0),
+                                    'thickness': 2})
+    # extrusion in WCS y-axis, therefore scale(2, ..., 3) is a non uniform
+    # scaling in the xy-play of the OCS which is the xz-plane of the WCS
     with pytest.raises(NonUniformScalingError):
         circle.transform(Matrix44.scale(2, 2, 3))
 
@@ -169,7 +188,8 @@ def test_circle_user_ocs():
     center = (2, 3, 4)
     extrusion = (0, 1, 0)
 
-    circle = Circle.new(dxfattribs={'center': center, 'extrusion': extrusion, 'thickness': 2})
+    circle = Circle.new(
+        dxfattribs={'center': center, 'extrusion': extrusion, 'thickness': 2})
     ocs = OCS(extrusion)
     v = ocs.to_wcs(center)  # (-2, 4, 3)
     v = Vector(v.x * 2, v.y * 4, v.z * 2)

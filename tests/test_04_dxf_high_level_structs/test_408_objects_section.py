@@ -7,7 +7,7 @@ from ezdxf.sections.objects import ObjectsSection
 
 def test_load_section():
     doc = ezdxf.new('R2000')
-    ent = load_entities(TESTOBJECTS, 'OBJECTS', doc)
+    ent = load_entities(TESTOBJECTS, 'OBJECTS')
 
     section = ObjectsSection(doc, ent)
     assert len(section) == 6

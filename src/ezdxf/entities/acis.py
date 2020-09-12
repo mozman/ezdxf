@@ -1,10 +1,10 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-09
 from typing import TYPE_CHECKING, Iterable, List, Union
 from contextlib import contextmanager
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFTypeError, DXF2013, DXFStructureError, DXFValueError
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFTypeError, DXF2013, DXFStructureError
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.math.matrix44 import Matrix44
 from ezdxf.tools import crypt
@@ -13,10 +13,11 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
+    from ezdxf.eztypes import TagWriter, DXFNamespace
 
 __all__ = [
-    'Body', 'Solid3d', 'Region', 'Surface', 'ExtrudedSurface', 'LoftedSurface', 'RevolvedSurface', 'SweptSurface',
+    'Body', 'Solid3d', 'Region', 'Surface', 'ExtrudedSurface', 'LoftedSurface',
+    'RevolvedSurface', 'SweptSurface',
 ]
 
 acdb_modeler_geometry = DefSubclass('AcDbModelerGeometry', {
@@ -26,8 +27,8 @@ acdb_modeler_geometry = DefSubclass('AcDbModelerGeometry', {
 })
 
 
-# with R2013/AC1027 Modeler Geometry of ACIS data is stored in the ACDSDATA section as binary encoded information
-# detection:
+# with R2013/AC1027 Modeler Geometry of ACIS data is stored in the ACDSDATA
+# section as binary encoded information detection:
 # group code 70, 1, 3 is missing
 # group code 290, 2 present
 #
@@ -58,9 +59,9 @@ class Body(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
-        self._acis_data = []  # type: List[Union[str, bytes]]
+    def __init__(self):
+        super().__init__()
+        self._acis_data: List[Union[str, bytes]] = []
 
     @property
     def acis_data(self) -> List[Union[str, bytes]]:
@@ -313,8 +314,8 @@ class ExtrudedSurface(Surface):
     DXFTYPE = 'EXTRUDEDSURFACE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry, acdb_surface, acdb_extruded_surface)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.transformation_matrix_extruded_entity = Matrix44()
         self.sweep_entity_transformation_matrix = Matrix44()
         self.path_entity_transformation_matrix = Matrix44()
@@ -376,8 +377,8 @@ class LoftedSurface(Surface):
     DXFTYPE = 'LOFTEDSURFACE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry, acdb_surface, acdb_lofted_surface)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.transformation_matrix_lofted_entity = Matrix44()
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -423,8 +424,8 @@ class RevolvedSurface(Surface):
     DXFTYPE = 'REVOLVEDSURFACE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry, acdb_surface, acdb_revolved_surface)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.transformation_matrix_revolved_entity = Matrix44()
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -493,8 +494,8 @@ class SweptSurface(Surface):
     DXFTYPE = 'SWEPTSURFACE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry, acdb_surface, acdb_swept_surface)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.transformation_matrix_sweep_entity = Matrix44()
         self.transformation_matrix_path_entity = Matrix44()
         self.sweep_entity_transformation_matrix = Matrix44()

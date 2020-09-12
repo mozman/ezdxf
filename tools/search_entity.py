@@ -1,43 +1,44 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 
 import ezdxf
+from ezdxf import recover
 from pathlib import Path
 
-BASE_DXF_FOLDER = r'D:\source\dxftest'
 DXF_ENTITY = 'SUNSTUDY'
 
 
 def has_dxf_entity(filename, entity_name):
     try:
-        dwg = ezdxf.readfile(filename, legacy_mode=True)
+        doc = ezdxf.readfile(filename)
     except IOError:
         return False
-    except ezdxf.DXFError as e:
-        print('\n' + '*' * 40)
-        print('FOUND DXF ERROR: {}'.format(str(e)))
-        print('*' * 40 + '\n')
-        return False
-    else:
-        entities = dwg.modelspace().query(entity_name)
-        if len(entities):
-            return True
-        if 'objects' in dwg.sections:
-            entities = dwg.objects.query(entity_name)
-        return bool(len(entities))
+    except ezdxf.DXFError:
+        try:
+            print('Using recover mode.')
+            doc, auditor = recover.readfile(filename)
+        except ezdxf.DXFStructureError:
+            print(f'DXF structure error!')
+            return False
+
+    entities = doc.modelspace().query(entity_name)
+    if len(entities):
+        return True
+    entities = doc.objects.query(entity_name)
+    return bool(len(entities))
 
 
-def process_dir(folder):
+def process_dir(folder: Path):
     for filename in folder.iterdir():
-        if filename.is_dir():
+        if filename.is_dir() and filename.stem != 'BigFiles':
             process_dir(filename)
         elif filename.match('*.dxf'):
-            print("processing: {}".format(filename))
+            print(f"processing: {filename}")
             if has_dxf_entity(filename, DXF_ENTITY):
                 print('\n' + '*'*40)
-                print('FOUND: {}'.format(DXF_ENTITY))
+                print(f'FOUND: {DXF_ENTITY}')
                 print('*' * 40 + '\n')
 
 
-process_dir(Path(BASE_DXF_FOLDER))
+process_dir(Path(ezdxf.EZDXF_TEST_FILES))
 

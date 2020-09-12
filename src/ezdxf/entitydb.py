@@ -1,42 +1,78 @@
-# Purpose: new entity database, replaces module ezdxf.database
-# Created: 2019-02-14
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import Optional, Iterable, Tuple, TYPE_CHECKING
+from typing import Optional, Iterable, Tuple, TYPE_CHECKING, Dict, Set
+from contextlib import contextmanager
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.entities.dxfentity import DXFEntity
-from ezdxf.order import priority, zorder
 from ezdxf.audit import AuditError, Auditor
 from ezdxf.lldxf.const import DXFInternalEzdxfError
+from ezdxf.entities.subentity import LinkedEntities
+from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
 
-DATABASE_EXCLUDE = {'SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'CLASS', 'ACDSRECORD', 'ACDSSCHEMA'}
+DATABASE_EXCLUDE = {
+    'SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'CLASS', 'ACDSRECORD',
+    'ACDSSCHEMA'
+}
 
 
 class EntityDB:
     """ A simple key/entity database.
 
-    Every entity/object, except tables and sections, are represented as DXFEntity or inherited types, this entities are
-    stored in the drawing-associated database, database-key is the `handle` as string (group code == 5 or 105).
+    Every entity/object, except tables and sections, are represented as
+    DXFEntity or inherited types, this entities are stored in the
+    DXF document database, database-key is the `handle` as string.
 
     """
 
+    class Trashcan:
+        """ Store handles to entities which should be deleted later. """
+
+        def __init__(self, db: 'EntityDB'):
+            self._database = db._database
+            self._handles: Set[str] = set()
+
+        def add(self, handle: str):
+            """ Put handle into trashcan to delete the entity later, this is
+            required for deleting entities while iterating the database.
+            """
+            self._handles.add(handle)
+
+        def clear(self):
+            """ Remove handles in trashcan from database and destroy entities if
+            still alive.
+            """
+            db = self._database
+            for handle in self._handles:
+                entity = db.get(handle)
+                if entity and entity.is_alive:
+                    entity.destroy()
+
+                if handle in db:
+                    del db[handle]
+
+            self._handles.clear()
+
     def __init__(self):
-        self._database = {}
+        self._database: Dict[str, DXFEntity] = {}
+        # DXF handles of entities to delete later:
         self.handles = HandleGenerator()
-        self.locked = False  # for debugging
+        self.locked: bool = False  # used only for debugging
 
     def __getitem__(self, handle: str) -> DXFEntity:
-        """ Get entity by `handle`. """
+        """ Get entity by `handle`, does not filter destroyed entities nor
+        entities in the trashcan.
+        """
         return self._database[handle]
 
     def __setitem__(self, handle: str, entity: DXFEntity) -> None:
         """ Set `entity` for `handle`. """
         assert isinstance(handle, str), type(handle)
         assert isinstance(entity, DXFEntity), type(entity)
+        assert entity.is_alive, 'Can not store destroyed entity.'
         if self.locked:
             raise DXFInternalEzdxfError('Locked entity database.')
 
@@ -45,11 +81,17 @@ class EntityDB:
         self._database[handle] = entity
 
     def __delitem__(self, handle: str) -> None:
-        """ Delete entity by `handle`. Removes entity only from database, does not destroy the entity. """
+        """ Delete entity by `handle`. Removes entity only from database, does
+        not destroy the entity.
+        """
+        if self.locked:
+            raise DXFInternalEzdxfError('Locked entity database.')
         del self._database[handle]
 
     def __contains__(self, handle: str) -> bool:
         """ ``True`` if database contains `handle`. """
+        if handle is None:
+            return False
         assert isinstance(handle, str), type(handle)
         return handle in self._database
 
@@ -58,130 +100,194 @@ class EntityDB:
         return len(self._database)
 
     def __iter__(self) -> Iterable[str]:
-        """ Iterable of all handles. """
-        return iter(self._database.keys())
+        """ Iterable of all handles, does filter destroyed entities but not
+        entities in the trashcan.
+        """
+        return self.keys()
 
     def get(self, handle: str) -> Optional[DXFEntity]:
-        """ Returns entity for `handle` or ``None`` if no entry for `handle` exist. """
+        """ Returns entity for `handle` or ``None`` if no entry exist, does
+        not filter destroyed entities.
+        """
         return self._database.get(handle)
 
     def next_handle(self) -> str:
         """ Returns next unique handle."""
         while True:
             handle = self.handles.next()
-            if handle not in self._database:  # you can not trust $HANDSEED value
+            if handle not in self._database:
                 return handle
 
     def keys(self) -> Iterable[str]:
-        """ Iterable of all handles. """
-        return self._database.keys()
+        """ Iterable of all handles, does filter destroyed entities.
+        """
+        return (handle for handle, entity in self.items())
 
     def values(self) -> Iterable[DXFEntity]:
-        """ Iterable of all entities. """
-        return self._database.values()
+        """ Iterable of all entities, does filter destroyed entities.
+        """
+        return (entity for handle, entity in self.items())
 
     def items(self) -> Iterable[Tuple[str, DXFEntity]]:
-        """ Iterable of all (handle, entities) pairs. """
-        return self._database.items()
+        """ Iterable of all (handle, entities) pairs, does filter destroyed
+        entities.
+        """
+        return (
+            (handle, entity) for handle, entity in self._database.items()
+            if entity.is_alive
+        )
 
     def add(self, entity: DXFEntity) -> None:
-        """ Add `entity` to database, assigns a new handle to the `entity` if :attr:`entity.dxf.handle` is ``None``. """
+        """ Add `entity` to database, assigns a new handle to the `entity`
+        if :attr:`entity.dxf.handle` is ``None``. Adding the same entity
+        multiple times is possible and creates only a single database entry.
+
+        """
         if entity.dxftype() in DATABASE_EXCLUDE:
             if entity.dxf.handle is not None:
-                # store entities with handles (TABLE, maybe others) to avoid reassigning of its handle
+                # Mark existing entity handle as used to avoid
+                # reassigning the same handle again.
                 self[entity.dxf.handle] = entity
             return
-        handle = entity.dxf.handle  # type: str
+        handle: str = entity.dxf.handle
         if handle is None:
             handle = self.next_handle()
-            # update_handle() requires the objects section to update the owner handle of the extension dictionary,
-            # but this is no problem at file loading, all entities have handles, and DXF R12 (without handles) have no
-            # extension dictionaries.
             entity.update_handle(handle)
         self[handle] = entity
 
-        # add sub entities like ATTRIB, VERTEX and SEQEND to database
-        # only INSERT and POLYLINE using this feature
-        if hasattr(entity, 'add_sub_entities_to_entitydb'):
-            entity.add_sub_entities_to_entitydb()
+        # Add sub entities ATTRIB, VERTEX and SEQEND to database.
+        if isinstance(entity, LinkedEntities):
+            entity.add_sub_entities_to_entitydb(self)
 
     def delete_entity(self, entity: DXFEntity) -> None:
-        """ Removes `entity` from database and destroys the `entity`. """
+        """ Remove `entity` from database and destroy the `entity`. """
         if entity.is_alive:
             del self[entity.dxf.handle]
             entity.destroy()
 
+    def discard(self, entity: 'DXFEntity') -> None:
+        """ Discard entity from database without destroying the entity. """
+        if entity.is_alive:
+            if isinstance(entity, LinkedEntities):
+                entity.process_sub_entities(lambda e: self.discard(e))
+
+            handle = entity.dxf.handle
+            try:
+                del self._database[handle]
+                entity.dxf.handle = None
+            except KeyError:
+                pass
+
     def duplicate_entity(self, entity: DXFEntity) -> DXFEntity:
-        """
-        Duplicates `entity` and its sub entities (VERTEX, ATTRIB, SEQEND) and store them with new handles in the
-        drawing database. This is the recommend method to duplicate DXF entities in a drawing. Graphical entities
-        have to be added to a layout by :meth:`~ezdxf.layouts.BaseLayout.add_entity`, for other DXF entities:
-        DON'T DUPLICATE THEM.
+        """ Duplicates `entity` and its sub entities (VERTEX, ATTRIB, SEQEND)
+        and store them with new handles in the entity database.
+        Graphical entities have to be added to a layout by
+        :meth:`~ezdxf.layouts.BaseLayout.add_entity`.
 
-        To import DXF entities into another drawing use the :class:`~ezdxf.addons.importer.Importer` add-on.
+        To import DXF entities from another drawing use the
+        :class:`~ezdxf.addons.importer.Importer` add-on.
 
-        An existing owner tag is not changed because this is not the domain of the :class:`EntityDB` class, will be set
-        by adding the duplicated entity to a layout.
-
-        This is not a deep copy in the meaning of Python, because handles and links are changed.
+        A new owner handle will be set by adding the duplicated entity to a
+        layout.
 
         """
-        new_entity = entity.copy()  # type: DXFEntity
+        new_entity: DXFEntity = entity.copy()
         new_entity.dxf.handle = self.next_handle()
-        self.add(new_entity)
+        factory.bind(new_entity, entity.doc)
         return new_entity
 
     def audit(self, auditor: 'Auditor'):
         """ Restore database integrity:
 
-        - removes deleted database entries (purge)
         - restore database entries with modified handles (key != entity.dxf.handle)
         - remove entities with invalid handles
+        - empty trashcan - destroy all entities in the trashcan
+        - removes destroyed database entries (purge)
 
         """
-        db = self._database
-        remove_handles = []
+        assert self.locked is False, 'Database is locked!'
         add_entities = []
-        for handle, entity in db.items():
-            if not is_valid_handle(handle):
-                auditor.fixed_error(
-                    code=AuditError.INVALID_ENTITY_HANDLE,
-                    message=f'Removed entity {entity.dxftype()} with invalid handle "{handle}" from entity database.',
-                )
-                remove_handles.append(handle)
-            if not entity.is_alive:
-                remove_handles.append(handle)
-            elif handle != entity.dxf.get('handle'):
-                remove_handles.append(handle)
-                add_entities.append(entity)
 
-        for handle in remove_handles:
-            del db[handle]
+        with self.trashcan() as trash:
+            for handle, entity in self.items():
+                # Destroyed entities are already filtered!
+                if not is_valid_handle(handle):
+                    auditor.fixed_error(
+                        code=AuditError.INVALID_ENTITY_HANDLE,
+                        message=f'Removed entity {entity.dxftype()} with invalid '
+                                f'handle "{handle}" from entity database.',
+                    )
+                    trash.add(handle)
+                if handle != entity.dxf.get('handle'):
+                    # database handle != stored entity handle
+                    # prevent entity from being destroyed:
+                    self._database[handle] = None
+                    trash.add(handle)
+                    add_entities.append(entity)
+
+        # Remove all destroyed entities from database:
+        self.purge()
 
         for entity in add_entities:
             handle = entity.dxf.get('handle')
             if handle is None:
                 auditor.fixed_error(
                     code=AuditError.INVALID_ENTITY_HANDLE,
-                    message=f'Removed entity {entity.dxftype()} without handle from entity database.',
+                    message=f'Removed entity {entity.dxftype()} without handle '
+                            f'from entity database.',
                 )
                 continue
             if not is_valid_handle(handle) or handle == '0':
                 auditor.fixed_error(
                     code=AuditError.INVALID_ENTITY_HANDLE,
-                    message=f'Removed entity {entity.dxftype()} with invalid handle "{handle}" from entity database.',
+                    message=f'Removed entity {entity.dxftype()} with invalid '
+                            f'handle "{handle}" from entity database.',
                 )
                 continue
             self[handle] = entity
 
+    def new_trashcan(self) -> 'EntityDB.Trashcan':
+        """ Returns a new trashcan, empty trashcan manually by: :
+        func:`Trashcan.clear()`.
+        """
+        return EntityDB.Trashcan(self)
+
+    @contextmanager
+    def trashcan(self) -> 'EntityDB.Trashcan':
+        """ Returns a new trashcan in context manager mode, trashcan will be
+        emptied when leaving context.
+        """
+        trashcan_ = self.new_trashcan()
+        yield trashcan_
+        # try ... finally is not required, in case of an exception the database
+        # is maybe already in an unreliable state.
+        trashcan_.clear()
+
+    def purge(self) -> None:
+        """ Remove all destroyed entities from database, but does not empty the
+        trashcan.
+        """
+        # Important: operate on underlying data structure:
+        db = self._database
+        dead_handles = [
+            handle for handle, entity in db.items()
+            if not entity.is_alive
+        ]
+        for handle in dead_handles:
+            del db[handle]
+
+    def dxf_types_in_use(self) -> Set[str]:
+        return set(entity.dxftype() for entity in self.values())
+
 
 class EntitySpace:
     """
-    An :class:`EntitySpace` is a collection of :class:`~ezdxf.entities.dxfentity.DXFEntity` objects, that stores only
-    references to :class:`~ezdxf.entities.dxfentity.DXFEntity` objects.
+    An :class:`EntitySpace` is a collection of :class:`~ezdxf.entities.DXFEntity`
+    objects, that stores only  references to :class:`DXFEntity` objects.
 
-    The :class:`~ezdxf.layouts.Modelspace`, any :class:`~ezdxf.layouts.Paperspace` layout and
-    :class:`~ezdxf.layouts.BlockLayout` objects have an :class:`EntitySpace` container to store their entities.
+    The :class:`~ezdxf.layouts.Modelspace`, any :class:`~ezdxf.layouts.Paperspace`
+    layout and :class:`~ezdxf.layouts.BlockLayout` objects have an
+    :class:`EntitySpace` container to store their entities.
 
     """
 
@@ -190,51 +296,38 @@ class EntitySpace:
         self.entities = list(e for e in entities if e.is_alive)
 
     def __iter__(self) -> Iterable['DXFEntity']:
-        """ Iterable of all entities. """
+        """ Iterable of all entities, filters destroyed entities. """
         return (e for e in self.entities if e.is_alive)
 
     def __getitem__(self, index) -> 'DXFEntity':
         """ Get entity at index `item`
 
-        :class:`EntitySpace` has a standard Python list like interface, therefore `index`
-        can be any valid list indexing or slicing term, like a single index ``layout[-1]`` to get the last entity, or
-        an index slice ``layout[:10]`` to get the first 10 or less entities as ``List[DXFEntity]``.
+        :class:`EntitySpace` has a standard Python list like interface,
+        therefore `index` can be any valid list indexing or slicing term, like
+        a single index ``layout[-1]`` to get the last entity, or an index slice
+        ``layout[:10]`` to get the first 10 or less entities as
+        ``List[DXFEntity]``. Does not filter destroyed entities.
 
         """
         return self.entities[index]
 
     def __len__(self) -> int:
-        """ Count of entities. """
+        """ Count of entities inluding destroyed entities. """
         return len(self.entities)
 
     def has_handle(self, handle: str) -> bool:
-        """ ``True`` if `handle` is present. """
+        """ ``True`` if `handle` is present, does filter destroyed entities. """
         assert isinstance(handle, str), type(handle)
         return any(e.dxf.handle == handle for e in self)
 
     def purge(self):
-        """ Remove deleted entities. """
+        """ Remove all destroyed entities from entity space. """
         self.entities = list(self)
-
-    def reorder(self, order: int = 1) -> None:
-        """ Reorder entities in place.
-
-        Args:
-             order: ``1`` = priority order (highest first), ``2`` = z-order (inverted priority, lowest first)
-
-        """
-        if order == 1:
-            reverse = True
-        elif order == 2:
-            reverse = False
-        else:
-            return  # do nothing
-
-        self.entities.sort(key=lambda e: e.priority, reverse=reverse)
 
     def add(self, entity: 'DXFEntity') -> None:
         """ Add `entity`. """
         assert isinstance(entity, DXFEntity), type(entity)
+        assert entity.is_alive, 'Can not store destroyed entities'
         self.entities.append(entity)
 
     def extend(self, entities: Iterable['DXFEntity']) -> None:
@@ -242,37 +335,13 @@ class EntitySpace:
         for entity in entities:
             self.add(entity)
 
-    def export_dxf(self, tagwriter: 'TagWriter', order=0) -> None:
-        """
-        Export all entities into DXF file by `tagwriter` in given `order`.
-
-        Args:
-            tagwriter: TagWriter()
-            order: 0 = order of appearance, 1 = priority order (highest first), 2 = z-order (inverted priority,
-                   lowest first)
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        """ Export all entities into DXF file by `tagwriter`.
 
         (internal API)
         """
-        if order == 0:
-            entities = iter(self)
-        elif order == 1:
-            entities = priority(self)
-        elif order == 2:
-            entities = zorder(self)
-        else:
-            raise ValueError('invalid order: 0, 1 or 2')
-
-        for entity in entities:
+        for entity in iter(self):
             entity.export_dxf(tagwriter)
-            seqend = False
-            if hasattr(entity, 'linked_entities'):  # only POLYLINE & INSERT can have linked entities
-                for linked in entity.linked_entities():
-                    # INSERT: entity.seqend can be present, without attached ATTRIBS, if ATTRIBS were deleted
-                    seqend = True
-                    linked.export_dxf(tagwriter)
-
-            if seqend:
-                entity.export_seqend(tagwriter)
 
     def remove(self, entity: 'DXFEntity') -> None:
         """ Remove `entity`. """
@@ -280,5 +349,5 @@ class EntitySpace:
 
     def clear(self) -> None:
         """ Remove all entities. """
-        # do not delete database objects - entity space just manage handles
+        # Do not destroy entities!
         self.entities = list()

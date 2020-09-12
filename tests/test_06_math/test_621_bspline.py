@@ -1,11 +1,11 @@
 # Created: 06.01.2012
 # Copyright (c) 2012-2020 Manfred Moitzi
 # License: MIT License
+import pytest
 from math import isclose
 import random
 from ezdxf.math.bspline import BSpline, Vector
 from ezdxf.math.bspline import bspline_basis_vector, Basis, open_uniform_knot_vector, normalize_knots, subdivide_params
-import bisect
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 
@@ -28,20 +28,6 @@ def random_derivatives_comparision_to_nurbs_python(spline: BSpline, count: int =
         assert p1.isclose(p2)
         assert d1_1.isclose(d1_2)
         assert d2_1.isclose(d2_2)
-
-
-def _bisect():
-    def find_span(u: float):
-        low = spline.degree
-        high = spline.basis.count
-        knots = spline.basis.knots
-        span = bisect.bisect_right(knots, u, low, high) - 1
-        return span
-
-    spline = BSpline(DEFPOINTS)
-    for t in (0, .1, .2, .8, .9, 1):
-        expected = spline.basis.find_span(t)
-        assert find_span(t) == expected
 
 
 def test_if_nurbs_python_is_reliable():
@@ -83,6 +69,12 @@ def iter_points(values, n):
 def test_bspine_points_random():
     spline = BSpline(DEFPOINTS, order=3)
     random_point_comparision_to_nurbs_python(spline)
+
+
+def test_is_clamped(weired_spline1):
+    spline = BSpline(DEFPOINTS, order=3)
+    assert spline.is_clamped is True
+    assert weired_spline1.is_clamped is False
 
 
 def test_bspine_derivatives_random():
@@ -155,7 +147,8 @@ def test_subdivide_params():
     assert list(subdivide_params([0.0, 0.5, 1.0])) == [0.0, 0.25, 0.5, 0.75, 1.0]
 
 
-def test_weired_closed_spline():
+@pytest.fixture
+def weired_spline1():
     # test spline from: 'CADKitSamples\Tamiya TT-01.dxf'
     control_points = [
         (-52.08772752271847, 158.6939842216689, 0.0),
@@ -229,8 +222,18 @@ def test_weired_closed_spline():
         1.0625,
         1.0625,
     ]
-    spline = BSpline(control_points, order=4, knots=knots)
-    first = spline.point(0)
-    last = spline.point(spline.max_t)
+    return BSpline(control_points, order=4, knots=knots)
+
+
+def test_weired_closed_spline(weired_spline1):
+    first = weired_spline1.point(0)
+    last = weired_spline1.point(weired_spline1.max_t)
     assert first.isclose(last, 1e-9) is False, 'The loaded SPLINE is not a correct closed B-spline.'
-    random_point_comparision_to_nurbs_python(spline)
+    random_point_comparision_to_nurbs_python(weired_spline1)
+
+
+def test_bezier_decomposition_issue(weired_spline1):
+    assert weired_spline1.is_rational is False
+    assert weired_spline1.is_clamped is False
+    with pytest.raises(TypeError):
+        list(weired_spline1.bezier_decomposition())

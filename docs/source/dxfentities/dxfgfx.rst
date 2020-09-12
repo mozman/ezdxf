@@ -42,11 +42,6 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
         This attribute requires DXF R2004 or later, returns ``0`` for prior DXF versions
         and raises :class:`DXFAttributeError` for setting `transparency` in older DXF versions.
 
-    .. attribute:: zorder
-
-        Inverted :attr:`~ezdxf.entities.DXFEntity.priority` order (lowest value first), :attr:`zorder` support
-        not implemented yet, setting :attr:`zorder` has no effect.
-
     .. automethod:: ocs() -> OCS
 
     .. automethod:: get_layout() -> BaseLayout
@@ -108,8 +103,8 @@ Common graphical DXF attributes
 
     .. attribute:: DXFGraphic.dxf.lineweight
 
-        Line weight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13 and biggest line weight is 200, values
-        outside this range prevents AutoCAD from loading the file. (requires DXF R2000)
+        Line weight in mm times 100 (e.g. 0.13mm = 13). There are fixed valid lineweights which are accepted by AutoCAD,
+        other values prevents AutoCAD from loading the DXF document, BricsCAD isn't that picky. (requires DXF R2000)
 
         Constants defined in :mod:`ezdxf.lldxf.const`
 
@@ -118,6 +113,9 @@ Common graphical DXF attributes
         -2  LINEWEIGHT_BYBLOCK
         -3  LINEWEIGHT_DEFAULT
         === ==================
+
+        Valid DXF lineweights stored in ``VALID_DXF_LINEWEIGHTS``:
+        0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50, 53, 60, 70, 80, 90, 100, 106, 120, 140, 158, 200, 211
 
     .. attribute:: DXFGraphic.dxf.ltscale
 

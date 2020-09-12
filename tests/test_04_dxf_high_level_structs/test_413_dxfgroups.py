@@ -45,9 +45,5 @@ def test_modify_group(doc):
     assert len(group) == 4
 
 
-def test_remove_invalid_handles(doc):
-    pass
-
-
 if __name__ == '__main__':
     pytest.main([__file__])

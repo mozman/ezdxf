@@ -12,7 +12,7 @@ def view():
         'height': 1.0,
         'width': 1.0,
         'center': (0, 0),
-        'direction': (0, 0, 0),
+        'direction': (0, 0, -1),
         'target': (0, 0, 0),
         'focal_length': 1.0,
         'front_clipping': 0.0,
@@ -28,7 +28,7 @@ def test_view_attribute_access(view):
     assert view.dxf.height == 1.0
     assert view.dxf.width == 1.0
     assert view.dxf.center == (0, 0)
-    assert view.dxf.direction == (0, 0, 0)
+    assert view.dxf.direction == (0, 0, -1)
     assert view.dxf.target == (0, 0, 0)
     assert view.dxf.focal_length == 1.0
     assert view.dxf.front_clipping == 0

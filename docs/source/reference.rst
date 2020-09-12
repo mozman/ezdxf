@@ -16,6 +16,15 @@ Quoted from the original DXF 12 Reference which is not available on the web:
    of AutoCAD accept this format and are able to convert it to and from
    their internal drawing file representation.
 
+DXF Document
+------------
+
+.. toctree::
+    :maxdepth: 2
+
+    drawing/management
+    drawing/drawing
+    drawing/recover
 
 DXF Structures
 --------------
@@ -23,7 +32,6 @@ DXF Structures
 .. toctree::
     :maxdepth: 2
 
-    drawing/index
     sections/index
     tables/index
     blocks/index
@@ -58,6 +66,7 @@ Miscellaneous
     options
     comments
     tools
+    reorder
 
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301
 .. _Autodesk: http://usa.autodesk.com/

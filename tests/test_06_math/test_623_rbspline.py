@@ -1,11 +1,13 @@
 # Created: 06.01.2012
 # Copyright (c) 2012-2020 Manfred Moitzi
 # License: MIT License
+import pytest
 import math
 from math import isclose
 from ezdxf.math import BSpline, BSplineU
 from ezdxf.math.bspline import nurbs_arc_parameters, required_knot_values
-from ezdxf.math import rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse, ConstructionArc, linspace
+from ezdxf.math import rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse, ConstructionArc, \
+    linspace
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 DEFWEIGHTS = [1, 10, 10, 10, 1]
@@ -57,6 +59,31 @@ def test_rational_splines_from_circular_arc():
     # as BSpline constructor()
     s2 = BSpline.from_arc(arc)
     assert spline.control_points == s2.control_points
+
+
+def test_rational_splines_points_with_nurbs_python():
+    arc = ConstructionArc(end_angle=90)
+    spline = rational_spline_from_arc(end_angle=arc.end_angle)
+    curve = spline.to_nurbs_python_curve()
+
+    t = list(linspace(0, 1, 10))
+    points = list(spline.points(t))
+    expected = list(curve.evaluate_list(t))
+    for p, e in zip(points, expected):
+        assert p.isclose(e)
+
+
+def test_rational_splines_derivatives_with_nurbs_python():
+    arc = ConstructionArc(end_angle=90)
+    spline = rational_spline_from_arc(end_angle=arc.end_angle)
+    curve = spline.to_nurbs_python_curve()
+
+    t = list(linspace(0, 1, 10))
+    derivatives = list(spline.derivatives(t, n=1))
+    expected = [curve.derivatives(u, 1) for u in t]
+    for (p, d1), (e, ed1) in zip(derivatives, expected):
+        assert p.isclose(e)
+        assert d1.isclose(ed1)
 
 
 def test_rational_spline_from_elliptic_arc():

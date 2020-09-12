@@ -17,7 +17,7 @@ arc = msp.add_arc(
     dxfattribs={'layer': 'arc'},
 )
 
-spline = arc.to_spline(replace=False)
+spline = arc.to_spline(msp, replace=False)
 spline.dxf.layer = 'B-spline'
 spline.dxf.color = 1
 

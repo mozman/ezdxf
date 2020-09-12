@@ -19,7 +19,7 @@ ellipse = msp.add_ellipse(
     dxfattribs={'layer': 'ellipse'},
 )
 
-spline = ellipse.to_spline(replace=False)
+spline = ellipse.to_spline(replace=False, layout=msp)
 spline.dxf.layer = 'B-spline'
 spline.dxf.color = 1
 doc.set_modelspace_vport(2)

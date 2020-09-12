@@ -6,6 +6,8 @@ import ezdxf
 from ezdxf.tools.test import load_entities
 from ezdxf.sections.blocks import BlocksSection
 from ezdxf.lldxf.tagwriter import TagCollector
+from ezdxf.entities import factory
+from ezdxf.lldxf.const import BLK_NON_CONSTANT_ATTRIBUTES
 
 
 @pytest.fixture
@@ -15,11 +17,28 @@ def dxf12():
 
 @pytest.fixture
 def blocks(dxf12):
-    return BlocksSection(dxf12, list(load_entities(TESTBLOCKS, 'BLOCKS', dxf12)))
+    return BlocksSection(dxf12, list(load_entities(TESTBLOCKS, 'BLOCKS')))
+
+
+@pytest.fixture
+def bounded_blocks(dxf12):
+    entities = list(load_entities(TESTBLOCKS, 'BLOCKS'))
+    for entity in entities:
+        factory.bind(entity, dxf12)
+    return BlocksSection(dxf12, entities)
+
+
+@pytest.fixture
+def doc():
+    doc = ezdxf.new()
+    doc.blocks.new('_ARCHTICK')
+    doc.blocks.new('_OPEN30')
+    return doc
 
 
 def test_empty_section(dxf12):
-    blocks = BlocksSection(dxf12, list(load_entities(EMPTYSEC, 'BLOCKS', dxf12)))
+    blocks = BlocksSection(dxf12,
+                           list(load_entities(EMPTYSEC, 'BLOCKS')))
     # the NES creates automatically *Model_Space and *Paper_Space blocks
     assert '*Model_Space' in blocks
     assert '*Paper_Space' in blocks
@@ -33,7 +52,8 @@ def test_empty_section(dxf12):
     # tag[3] is a arbitrary handle
     assert collector.tags[3][0] == 5
     assert collector.tags[4] == (8, '0')  # default layer '0'
-    assert collector.tags[5] == (2, '$Model_Space')  # export modelspace with leading '$' for R12
+    assert collector.tags[5] == (
+        2, '$Model_Space')  # export modelspace with leading '$' for R12
     assert collector.tags[-1] == (0, 'ENDSEC')
 
 
@@ -84,6 +104,20 @@ def test_getitem(blocks):
     assert 'TEST' == block.name
 
 
+def test_new_block_layout(doc):
+    block = doc.blocks.new('NewBlockLayout')
+    block.add_point((0, 0, 0))
+    assert len(block) == 1
+    assert block.can_explode is True
+    assert block.scale_uniformly is False
+
+    block.can_explode = False
+    block.scale_uniformly = True
+
+    assert block.block_record.dxf.explode == 0
+    assert block.block_record.dxf.scale == 1
+
+
 def test_case_insensitivity(blocks):
     blocks.new('TEST')
     assert 'TEST' in blocks
@@ -99,16 +133,14 @@ def test_block_content_entity_drawing_attribute(blocks, dxf12):
     archtick = blocks['_ARCHTICK']
     entities = list(archtick)
     assert 1 == len(entities)  # VERTEX & SEQEND doesn't count
-    e = entities[0]
-    assert dxf12 == e.doc
 
 
-def test_delete_block(blocks, dxf12):
-    archtick = blocks['_ARCHTICK']
+def test_delete_block(bounded_blocks, dxf12):
+    archtick = bounded_blocks['_ARCHTICK']
     entities = list(archtick)
     archtick_name = archtick.name
-    blocks.delete_block(archtick_name, safe=False)
-    assert archtick_name not in blocks
+    bounded_blocks.delete_block(archtick_name, safe=False)
+    assert archtick_name not in bounded_blocks
     assert archtick.is_alive is False
     for entity in entities:
         assert entity.is_alive is False
@@ -120,24 +152,51 @@ def test_safe_delete_block(blocks, dxf12):
         blocks.delete_block('_ArchTick', safe=True)
 
 
-def test_delete_all_blocks(blocks):
-    blocks.delete_all_blocks(safe=False)
-    blocks = list(blocks)
-    # assure not deleting layout blocks
-    assert len(blocks) == 2
-    block_names = [block.name for block in blocks]
-    block_names.sort()
-    assert ['*Model_Space', '*Paper_Space'] == block_names
+def test_do_not_delete_layouts_and_special_arrow_blocks(doc):
+    doc.blocks.delete_all_blocks()
+    assert len(doc.blocks) == 4
+    block_names = set(block.name for block in doc.blocks)
+    assert block_names == {'*Model_Space', '*Paper_Space', '_ARCHTICK',
+                           '_OPEN30'}
 
 
-def test_safe_delete_all_blocks(blocks):
-    blocks.delete_all_blocks(safe=True)
-    blocks = list(blocks)
-    # assure not deleting layout blocks
-    assert len(blocks) == 4
-    block_names = [block.name for block in blocks]
-    block_names.sort()
-    assert ['*Model_Space', '*Paper_Space', '_ARCHTICK', '_OPEN30'] == block_names
+def test_do_not_purge_layout_and_special_arrow_blocks(doc):
+    doc.blocks.purge()
+    assert len(doc.blocks) == 4
+    block_names = set(block.name for block in doc.blocks)
+    assert block_names == {'*Model_Space', '*Paper_Space', '_ARCHTICK',
+                           '_OPEN30'}
+
+
+@pytest.mark.parametrize('name', ['*D1', '*T1', '*U1', '*X1', '*E1', '*A1'])
+def test_do_purge_unused_special_blocks(name, doc):
+    doc.blocks.new(name)
+    doc.blocks.purge()
+    assert name not in doc.blocks
+
+
+@pytest.mark.parametrize('name', ['*U1', '*X1', '*E1', '*A1'])
+def test_do_not_purge_referenced_special_blocks(name, doc):
+    doc.blocks.new(name)
+    msp = doc.modelspace()
+    msp.add_blockref(name, (0, 0))
+    doc.blocks.purge()
+    assert name in doc.blocks
+
+
+def test_do_not_purge_used_dimension(doc):
+    # DIMENSION (and ACAD_TABLE) block are not referenced by explicit INSERT
+    # entity.
+    dimension = factory.create_db_entry(
+        'DIMENSION',
+        dxfattribs={'geometry': '*D01'},
+        doc=doc,
+    )
+    msp = doc.modelspace()
+    msp.add_entity(dimension)
+    doc.blocks.new('*D01')
+    doc.blocks.purge()
+    assert '*D01' in doc.blocks
 
 
 def test_rename_block(blocks):
@@ -224,6 +283,14 @@ def test_dxf2000_rename_block(dxf2000_blocks):
 
     dxf2000_blocks.rename_block('RENAME_ME', 'NEW_NAME')
     assert 'NEW_NAME' in dxf2000_blocks
+
+
+def test_update_block_flags(doc):
+    blk = doc.blocks.new('UPDATE_BLOCK_FLAGS')
+    blk.add_attdef('TEST', (0, 0))
+    assert blk.block.get_flag_state(BLK_NON_CONSTANT_ATTRIBUTES) is False
+    blk.update_block_flags()
+    assert blk.block.get_flag_state(BLK_NON_CONSTANT_ATTRIBUTES) is True
 
 
 EMPTYSEC = """  0

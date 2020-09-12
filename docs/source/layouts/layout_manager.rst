@@ -6,8 +6,8 @@ Layout Manager
 .. module:: ezdxf.layouts
     :noindex:
 
-The layout manager is unique to each DXF drawing, access the layout manager as :attr:`~ezdxf.drawing.Drawing.layouts`
-attribute of the :class:`~ezdxf.drawing.Drawing` object.
+The layout manager is unique to each DXF drawing, access the layout manager as :attr:`~ezdxf.document.Drawing.layouts`
+attribute of the :class:`~ezdxf.document.Drawing` object.
 
 .. class:: Layouts
 

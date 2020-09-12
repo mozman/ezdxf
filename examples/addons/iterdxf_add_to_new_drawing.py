@@ -7,8 +7,8 @@ import ezdxf
 from ezdxf.addons import iterdxf
 
 DIR = Path('~/Desktop/Outbox').expanduser()
-BIGFILE = Path(r'D:\Source\dxftest\GKB-R2010.dxf')
-# BIGFILE = Path(r'D:\Source\dxftest\ACAD_R2000.dxf')
+BIGFILE = Path(ezdxf.EZDXF_TEST_FILES) / 'GKB-R2010.dxf'
+# BIGFILE = Path(ezdxf.EZDXF_TEST_FILES) / 'ACAD_R2000.dxf'
 
 doc = ezdxf.new()
 msp = doc.modelspace()

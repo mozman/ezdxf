@@ -1,7 +1,6 @@
 .. _iterdxf:
 
 .. module:: ezdxf.addons.iterdxf
-    :noindex:
 
 iterdxf
 =======
@@ -83,11 +82,11 @@ the :class:`MeshTransformer` class:
 Another way to import entities from a big source file into new DXF documents is to split the big file into
 smaller parts and use the :class:`~ezdxf.addons.importer.Importer` add-on for a more safe entity import.
 
-.. autofunction:: opendxf(filename: str) -> IterDXF
+.. autofunction:: opendxf(filename: str, errors: str='surrogateescape') -> IterDXF
 
-.. autofunction:: modelspace(filename: str, types:Iterable[str]=None) -> Iterable[DXFGraphic]
+.. autofunction:: modelspace(filename: str, types:Iterable[str]=None, errors: str='surrogateescape') -> Iterable[DXFGraphic]
 
-.. autofunction:: single_pass_modelspace(stream: BinaryIO, types:Iterable[str]=None) -> Iterable[DXFGraphic]
+.. autofunction:: single_pass_modelspace(stream: BinaryIO, types:Iterable[str]=None, errors: str='surrogateescape') -> Iterable[DXFGraphic]
 
 .. class:: IterDXF
 

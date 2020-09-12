@@ -3,7 +3,7 @@
 # License: MIT License
 import pytest
 from ezdxf.entities.layer import Layer
-from ezdxf.lldxf.const import DXFInvalidLayerName
+from ezdxf.lldxf.const import DXFValueError
 
 
 @pytest.fixture
@@ -97,7 +97,7 @@ def test_thaw(layer):
 
 
 def test_invald_layer_name():
-    with pytest.raises(DXFInvalidLayerName):
+    with pytest.raises(DXFValueError):
         Layer.new('FFFF', dxfattribs={'name': 'Layer/'})
 
 

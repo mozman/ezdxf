@@ -1,9 +1,12 @@
 # Created: 17.02.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
 import logging
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf import validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
+)
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
@@ -17,24 +20,40 @@ if TYPE_CHECKING:
 __all__ = ['Textstyle']
 
 acdb_style = DefSubclass('AcDbTextStyleTableRecord', {
-    'name': DXFAttr(2, default='Standard'),
+    'name': DXFAttr(
+        2, default='Standard',
+        validator=validator.is_valid_table_name,
+    ),
     'flags': DXFAttr(70, default=0),
-    # 1 = If set, this entry describes a shape (ODA 4 bit)
-    # 4 = Vertical text (ODA 1 bit)
-    # 16 = If set, table entry is externally dependent on an xref
-    # 32 = If both this bit and bit 16 are set, the externally dependent xref has
-    # been successfully resolved
-    # 64 = If set, the table entry was referenced by at least one entity in the
-    # drawing the last time the drawing was edited. (This flag is for the benefit of
-    # AutoCAD commands. It can be ignored by most programs that read DXF files and
-    # need not be set by programs that write DXF files)
-    'height': DXFAttr(40, default=0),  # fixed height, 0 if not fixed
-    'width': DXFAttr(41, default=1),  # width factor
-    'oblique': DXFAttr(50, default=0),  # oblique angle in degree, 0 = vertical
-    'generation_flags': DXFAttr(71, default=0),  # 2 = backward, 4 = mirrored in Y
-    'last_height': DXFAttr(42, default=2.5),  # last height used
-    'font': DXFAttr(3, default='txt'),  # primary font file name
-    'bigfont': DXFAttr(4, default=''),  # big font name, blank if none
+
+    # Fixed height, 0 if not fixed
+    'height': DXFAttr(
+        40, default=0,
+        validator=validator.is_greater_or_equal_zero,
+        fixer=RETURN_DEFAULT,
+    ),
+    # Width factor:
+    'width': DXFAttr(
+        41, default=1,
+        validator=validator.is_greater_zero,
+        fixer=RETURN_DEFAULT,
+    ),
+    # Oblique angle in degree, 0 = vertical
+    'oblique': DXFAttr(50, default=0),
+
+    # Generation flags:
+    # 2 = backward
+    # 4 = mirrored in Y
+    'generation_flags': DXFAttr(71, default=0),
+
+    # Last height used:
+    'last_height': DXFAttr(42, default=2.5),
+
+    # Primary font file name:
+    'font': DXFAttr(3, default='txt'),
+
+    # Big font name, blank if none
+    'bigfont': DXFAttr(4, default=''),
 })
 
 
@@ -44,7 +63,8 @@ class Textstyle(DXFEntity):
     DXFTYPE = 'STYLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_style)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_style)
@@ -54,13 +74,11 @@ class Textstyle(DXFEntity):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_style.name)
 
-        # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, [
-            'name', 'flags', 'height', 'width', 'oblique', 'generation_flags', 'last_height', 'font', 'bigfont'
+            'name', 'flags', 'height', 'width', 'oblique', 'generation_flags',
+            'last_height', 'font', 'bigfont'
         ])
-

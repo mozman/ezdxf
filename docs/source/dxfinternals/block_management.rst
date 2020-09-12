@@ -3,22 +3,26 @@
 Block Management Structures
 ===========================
 
-A BLOCK is a kind of layout like the modelspace or a paperspace layout, with the similarity that all these layouts
-are containers for other graphical DXF entities. This block definition can be referenced in other layouts by the
-INSERT entity. By using block references, the same set of graphical entities can be located multiple times at
-different layouts, this block references can be stretched and rotated without modifying the original entities. A
-block is referenced only by its name defined by the DXF tag :code:`(2, name)`, there is a second DXF tag
-:code:`(3, name2)` for the block name, which is not further documented by Autodesk, and I haven't tested what happens I
-the second name is different to the first block name.
+A BLOCK is a layout like the modelspace or a paperspace layout, with the
+similarity that all these layouts are containers for graphical DXF entities.
+This block definition can be referenced in other layouts by the INSERT entity.
+By using block references, the same set of graphical entities can be located
+multiple times at different layouts, this block references can be stretched and
+rotated without modifying the original entities. A block is referenced only by
+its name defined by the DXF tag :code:`(2, name)`, there is a second DXF tag
+:code:`(3, name2)` for the block name, which is not further documented by
+Autodesk, just ignore it.
 
-The :code:`(10, base_point)` tag (in BLOCK defines a insertion point of the block, by 'inserting' a block by
-the INSERT entity, this point of the block is placed at the location defined by the :code:`(10, insert)` tag in
+The :code:`(10, base_point)` tag (in BLOCK defines a insertion point of the
+block, by 'inserting' a block by the INSERT entity, this point of the block is
+placed at the location defined by the :code:`(10, insert)` tag in
 the INSERT entity, and it is also the base point for stretching and rotation.
 
-A block definition can contain INSERT entities, and it is possible to create cyclic block definitions (a
-BLOCK contains a INSERT of itself), but this should be avoided, CAD applications will not load the DXF file at all or
-maybe just crash. This is also the case for all other kinds of cyclic definitions like: BLOCK 'A' -> INSERT BLOCK 'B'
-and BLOCK 'B' -> INSERT BLOCK 'A'.
+A block definition can contain INSERT entities, and it is possible to create
+cyclic block definitions (a BLOCK contains a INSERT of itself), but this should
+be avoided, CAD applications will not load the DXF file at all or maybe just
+crash. This is also the case for all other kinds of cyclic definitions like:
+BLOCK "A" -> INSERT BLOCK "B" and BLOCK "B" -> INSERT BLOCK "A".
 
 
 .. seealso::
@@ -32,20 +36,25 @@ and BLOCK 'B' -> INSERT BLOCK 'A'.
 Block Names
 -----------
 
-Block names has to be unique and they are case insensitive ('Test' == 'TEST'). If there are two or more block
-definitions with the same name, AutoCAD (LT 2018) merges these blocks into a single block with unpredictable properties
-of all these blocks. In my test with two blocks, the final block has the name of the first block and the base-point of
-the second block, and contains all entities of both blocks.
+Block names has to be unique and they are case insensitive ("Test" == "TEST").
+If there are two or more block definitions with the same name, AutoCAD
+merges these blocks into a single block with unpredictable properties
+of all these blocks. In my test with two blocks, the final block has the name
+of the first block and the base-point of the second block, and contains all
+entities of both blocks.
 
 Block Definitions in DXF R12
 ----------------------------
 
-In DXF R12 the definition of a block is located in the BLOCKS section, no additional structures are needed.
-The definition starts with a BLOCK entity and ends with a ENDBLK entity. All entities between this
-two entities are the content of the block, the block is the owner of this entities like any layout.
+In DXF R12 the definition of a block is located in the BLOCKS section, no
+additional structures are needed.
+The definition starts with a BLOCK entity and ends with a ENDBLK entity.
+All entities between this two entities are the content of the block, the block
+is the owner of this entities like any layout.
 
-As shown in the DXF file below (created by AutoCAD LT 2018), the BLOCK entity has no handle, but ezdxf writes
-also handles for the BLOCK entity and AutoCAD doesn't complain.
+As shown in the DXF file below (created by AutoCAD LT 2018), the BLOCK entity
+has no handle, but ezdxf writes also handles for the BLOCK entity and AutoCAD
+doesn't complain.
 
 DXF R12 BLOCKS structure:
 
@@ -60,7 +69,7 @@ DXF R12 BLOCKS structure:
     ...
     0           <<< start of a BLOCK definition
     BLOCK
-    8           <<< layer, what this layer definition does is another fact, I don't know (now)
+    8           <<< layer
     0
     2           <<< block name
     ArchTick
@@ -114,18 +123,24 @@ DXF R12 BLOCKS structure:
     0           <<< end of BLOCKS section
     ENDSEC
 
-Block Definitions in DXF R2000 and later
-----------------------------------------
+Block Definitions in DXF R2000+
+-------------------------------
 
-The overall organization in the BLOCKS sections remains the same, but additional tags in the BLOCK entity, have to be
-maintained.
+The overall organization in the BLOCKS sections remains the same, but additional
+tags in the BLOCK entity, have to be maintained.
 
-Especially the concept of ownership is important. Since DXF R13 every graphic entity is associated to a specific layout,
-and a BLOCK definition is a kind of layout. So all entities in the BLOCK definition, including the BLOCK and the ENDBLK
-entities, have an owner tag :code:`(330, ...)`, which points to a BLOCK_RECORD entry in the BLOCK_RECORD table.
-As you can see in the chapter about :ref:`Layout Management Structures`, this concept is also valid for modelspace
-and paperspace layouts, because these layouts are also BLOCKS, with the special difference, that entities of the model
-space and the `active` paperspace are stored in the ENTITIES section.
+Especially the concept of ownership is important. Since DXF R13 every graphic
+entity is associated to a specific layout and a BLOCK definition is also a
+layout. So all entities in the BLOCK definition, including the BLOCK and the
+ENDBLK entities, have an owner tag :code:`(330, ...)`, which points to a
+BLOCK_RECORD entry in the BLOCK_RECORD table. This BLOCK_RECORD is the main
+management structure for all layouts and is the real owner of the layout
+entities.
+
+As you can see in the chapter about :ref:`Layout Management Structures`, this
+concept is also valid for modelspace and paperspace layouts, because these
+layouts are also BLOCKS, with the special difference, that the entities of the
+modelspace and the `active` paperspace layout are stored in the ENTITIES section.
 
 .. image:: gfx/block_definition.png
     :align: center
@@ -152,7 +167,8 @@ DXF R13 BLOCKS structure:
     BLOCK
     5           <<< even BLOCK gets a handle now ;)
     23A
-    330         <<< owner tag, the owner of a BLOCK is a BLOCK_RECORD in the BLOCK_RECORD table
+    330         <<< owner tag, the owner of a BLOCK is a BLOCK_RECORD in the
+    ...         BLOCK_RECORD table
     238
     100         <<< subclass marker
     AcDbEntity
@@ -212,7 +228,7 @@ DXF R13 BLOCKS structure:
     238
     100         <<< subclass marker
     AcDbEntity
-    8           <<< as every entity, also ENDBLK requires a layer (same as BLOCK entity!)
+    8           <<< ENDBLK requires the same layer as the BLOCK entity!
     0
     100         <<< subclass marker
     AcDbBlockEnd
@@ -238,7 +254,7 @@ DXF R13 BLOCK_RECORD structure:
     TABLE
     2           <<< start of the BLOCK_RECORD table
     BLOCK_RECORD
-    5           <<< handle of the table (INFO: ezdxf doesn't store tables in the entities database)
+    5           <<< handle of the table
     1
     330         <<< owner tag of the table
     0           <<< is always #0
@@ -248,7 +264,7 @@ DXF R13 BLOCK_RECORD structure:
     4
     0           <<< start of first BLOCK_RECORD entry
     BLOCK_RECORD
-    5           <<< handle of BLOCK_RECORD, in ezdxf often referred to as 'layout key'
+    5           <<< handle of BLOCK_RECORD, in ezdxf often referred to as "layout key"
     1F
     330         <<< owner of the BLOCK_RECORD is the BLOCK_RECORD table
     1
@@ -271,7 +287,7 @@ DXF R13 BLOCK_RECORD structure:
     ...
     0           <<< next BLOCK_RECORD
     BLOCK_RECORD
-    5           <<< handle of BLOCK_RECORD, in ezdxf often referred to as 'layout key'
+    5           <<< handle of BLOCK_RECORD, in ezdxf often referred to as "layout key"
     238
     330         <<< owner of the BLOCK_RECORD is the BLOCK_RECORD table
     1

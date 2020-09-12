@@ -3,14 +3,23 @@
 Entity Database
 ===============
 
-The :class:`EntityDB` is a simple key/value database to store :class:`~ezdxf.entities.DXFEntity` objects by it's handle,
-every :class:`~ezdxf.drawing.Drawing` has its own :class:`EntityDB`, stored in the :class:`~ezdxf.drawing.Drawing`
-attribute :attr:`~ezdxf.drawing.Drawing.entitydb`.
+The :class:`EntityDB` is a simple key/value database to store
+:class:`~ezdxf.entities.DXFEntity` objects by it's handle,
+every :class:`~ezdxf.document.Drawing` has its own :class:`EntityDB`, stored in
+the :class:`Drawing` attribute :attr:`~ezdxf.document.Drawing.entitydb`.
 
-Every DXF entity/object, except tables and sections, are represented as :class:`~ezdxf.entities.dxfentity.DXFEntity` or
-inherited types, this entities are stored in the :class:`EntityDB`, database-key is the :attr:`dxf.handle` as plain hex
-string (group code 5 or 105).
+Every DXF entity/object, except tables and sections, are represented as
+:class:`DXFEntity` or inherited types, this entities are stored in the
+:class:`EntityDB`, database-key is the :attr:`dxf.handle` as plain hex
+string.
 
+All iterators like :meth:`keys`, :meth:`values`, :meth:`items` and :meth:`__iter__`
+do not yield destroyed entities.
+
+.. warning::
+
+    The :meth:`get` method and the index operator ``[]``, return destroyed
+    entities and entities from the trashcan.
 
 .. class:: EntityDB
 
@@ -38,9 +47,11 @@ string (group code 5 or 105).
 
     .. automethod:: add(entity: DXFEntity) -> None
 
-    .. automethod:: delete_entity(entity: DXFEntity) -> None
+    .. automethod:: new_trashcan
 
-    .. automethod:: duplicate_entity(entity: DXFEntity) -> DXFEntity
+    .. automethod:: trashcan
+
+    .. automethod:: purge
 
 Entity Space
 ============
@@ -56,8 +67,6 @@ Entity Space
     .. automethod:: has_handle
 
     .. automethod:: purge
-
-    .. automethod:: reorder
 
     .. automethod:: add(entity: DXFEntity) -> None
 

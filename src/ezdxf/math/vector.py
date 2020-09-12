@@ -1,4 +1,3 @@
-# Purpose: General purpose 2d/3d Vector() class and special 2d vector Vec2() class for more speed.
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import Tuple, List, Iterable, Any, Union, Sequence, TYPE_CHECKING
@@ -115,6 +114,11 @@ class Vector:
     def list(cls, items: Iterable['Vertex']) -> List['Vector']:
         """ Returns a list of :class:`Vector` objects. """
         return list(cls.generate(items))
+
+    @classmethod
+    def tuple(cls, items: Iterable['Vertex']) -> Sequence['Vector']:
+        """ Returns a tuple of :class:`Vector` objects. """
+        return tuple(cls.generate(items))
 
     @classmethod
     def generate(cls, items: Iterable['Vertex']) -> Iterable['Vector']:
@@ -621,6 +625,11 @@ class Vec2:
     @classmethod
     def list(cls, items: Iterable[TVec2]) -> List['Vec2']:
         return list(cls.generate(items))
+
+    @classmethod
+    def tuple(cls, items: Iterable['Vertex']) -> Sequence['Vec2']:
+        """ Returns a tuple of :class:`Vector` objects. """
+        return tuple(cls.generate(items))
 
     @classmethod
     def generate(cls, items: Iterable[TVec2]) -> Iterable['Vec2']:

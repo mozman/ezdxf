@@ -39,18 +39,13 @@ Common base class for all DXF entities and objects.
 
     .. attribute:: doc
 
-        Get the associated :class:`~ezdxf.drawing.Drawing` instance.
-
-        .. versionchanged:: 0.10
-
-            renamed from ``drawing``
-
-    .. attribute:: priority
-
-        Integer value defining order of entities: highest value first ``100`` (top) before ``0`` (default) before
-        ``-100`` (bottom), priority support not implemented yet, setting :attr:`priority` has no effect.
+        Get the associated :class:`~ezdxf.document.Drawing` instance.
 
     .. autoattribute:: is_alive
+
+    .. autoattribute:: is_virtual
+
+    .. autoattribute:: is_bound
 
     .. automethod:: dxftype
 
@@ -76,9 +71,11 @@ Common base class for all DXF entities and objects.
 
     .. automethod:: get_flag_state
 
-    .. automethod:: has_extension_dict
+    .. autoattribute:: has_extension_dict
 
     .. automethod:: get_extension_dict() -> ExtensionDict
+
+    .. automethod:: new_extension_dict() -> ExtensionDict
 
     .. automethod:: has_app_data
 

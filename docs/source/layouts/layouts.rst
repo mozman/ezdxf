@@ -50,6 +50,8 @@ BaseLayout
 
     .. autoattribute:: is_block_layout
 
+    .. autoattribute:: units
+
     .. automethod:: __len__
 
     .. automethod:: __iter__
@@ -135,6 +137,8 @@ BaseLayout
     .. automethod:: add_mesh
 
     .. automethod:: add_image
+
+    .. automethod:: add_wipeout
 
     .. automethod:: add_underlay
 

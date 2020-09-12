@@ -1,15 +1,18 @@
-# Copyright (c) 2018, Manfred Moitzi
-# License: MIT License
+#  Copyright (c) 2020, Manfred Moitzi
+#  License: MIT License
 import pytest
 import os
 import ezdxf
 
-BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
+BASEDIR = os.path.dirname(__file__)
 DATADIR = 'data'
-COLDFIRE = r"D:\Source\dxftest\CADKitSamples\kit-dev-coldfire-xilinx_5213.dxf"
+COLDFIRE = os.path.join(
+    ezdxf.EZDXF_TEST_FILES,
+    "CADKitSamples/kit-dev-coldfire-xilinx_5213.dxf")
 
 
-@pytest.mark.skipif(not os.path.exists(COLDFIRE), reason='test data not present')
+@pytest.mark.skipif(not os.path.exists(COLDFIRE),
+                    reason='test data not present')
 def test_kit_dev_coldfire():
     doc = ezdxf.readfile(COLDFIRE)
     auditor = doc.audit()
@@ -25,6 +28,6 @@ def filename(request):
 
 
 def test_leica_disto_r12(filename):
-    doc = ezdxf.readfile(filename, legacy_mode=True)
+    doc = ezdxf.readfile(filename)
     auditor = doc.audit()
     assert len(auditor) == 0

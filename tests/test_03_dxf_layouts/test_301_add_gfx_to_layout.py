@@ -3,6 +3,7 @@
 # License: MIT License
 import pytest
 import ezdxf
+from ezdxf.entities.dxfgfx import DXFGraphic
 
 
 @pytest.fixture(scope='module')
@@ -13,10 +14,13 @@ def msp():
 
 def test_delete_polyline3d(msp):
     entity_count = len(msp)
-    db_count = len(msp.entitydb)
+    db = msp.entitydb
+    db_count = len(db)
     pline = msp.add_polyline3d([(0, 0, 0), (1, 2, 3), (4, 5, 6)])
-    assert entity_count + 1 == len(msp), 'vertices should be linked to the POLYLINE entity'
-    assert db_count+5 == len(msp.entitydb), 'database should get 4 vertices and 1 seqend'
+    assert entity_count + 1 == len(
+        msp), 'vertices should be linked to the POLYLINE entity'
+    assert db_count + 5 == len(
+        msp.entitydb), 'database should get 4 vertices and 1 seqend'
 
     assert pline.seqend.dxf.owner == pline.dxf.owner
     assert pline.seqend.dxf.handle is not None
@@ -33,7 +37,9 @@ def test_delete_polyline3d(msp):
     assert list(pline.points()) == [(0, 0, 0), (1, 2, 3), (4, 5, 6)]
     msp.delete_entity(pline)
     assert entity_count == len(msp)
-    assert len(msp.entitydb) == db_count
+
+    db.purge()
+    assert len(db) == db_count
 
 
 def test_create_line(msp):
@@ -100,3 +106,13 @@ def test_create_shape(msp):
     assert shape.dxf.oblique == 0
 
 
+class Checker(DXFGraphic):
+    def post_bind_hook(self) -> None:
+        self._post_bind_hook = True
+
+
+def test_post_bind_hook_call(msp):
+    checker = Checker()
+    checker.doc = msp.doc
+    msp.add_entity(checker)
+    assert checker._post_bind_hook is True

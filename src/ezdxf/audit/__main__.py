@@ -1,31 +1,33 @@
-# Purpose: audit runner
-# Created: 21.01.2018
-# Copyright (C) 2018, Manfred Moitzi
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 import sys
 import argparse
 import os
 import glob
-from ezdxf import readfile, options
-from ezdxf.lldxf.const import DXFError
+import ezdxf
+from ezdxf import recover
 from ezdxf.lldxf.validator import is_dxf_file
 
 
-def audit(filename: str, ignore_zero_pointers: bool = False) -> None:
+def audit(filename: str, safe=False) -> None:
     try:
-        dwg = readfile(filename, legacy_mode=True)
+        if safe:
+            print('Running in recover mode.')
+            doc, auditor = recover.readfile(filename)
+        else:
+            doc = ezdxf.readfile(filename)
+            auditor = doc.audit()
     except IOError:
-        print("Unable to read DXF file '{}'.".format(filename))
+        print(f"Unable to read DXF file '{filename}'.")
         sys.exit(1)
-    except DXFError as e:
+    except ezdxf.DXFStructureError as e:
         print(str(e))
         sys.exit(2)
 
-    auditor = dwg.auditor()
-    errors = auditor.run()
-    if ignore_zero_pointers:
-        errors = auditor.filter_zero_pointers(errors)
-    auditor.print_error_report(errors)
+    if auditor.has_errors:
+        auditor.print_error_report()
+    if auditor.has_fixes:
+        auditor.print_fixed_errors()
 
 
 def processing_msg(text: str) -> None:
@@ -37,34 +39,35 @@ def main() -> None:
     print()
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        '-r', '--recover',
+        dest='recover',
+        action='store_true',
+        help='use recover mode to load files with DXF structure errors'
+    )
+    parser.add_argument(
         'files',
         metavar='FILE',
         nargs='+',
         help='audit DXF files',
     )
-    parser.add_argument(
-        '-z', '--ignore_zero_pointers',
-        action='store_true',
-        help='ignore zero pointers',
-    )
 
     args = parser.parse_args(sys.argv[1:])
 
-    options.compress_binary_data = True
+    ezdxf.options.compress_binary_data = True
     for pattern in args.files:
         names = list(glob.glob(pattern))
         if len(names) == 0:
-            print("File(s) '{}' not found.".format(pattern))
+            print(f"File(s) '{pattern}' not found.")
             continue
         for filename in names:
             if not os.path.exists(filename):
-                print("File '{}' not found.".format(filename))
+                print(f"File '{filename}' not found.")
                 continue
             if not is_dxf_file(filename):
-                print("File '{}' is not a DXF file.".format(filename))
+                print(f"File '{filename}' is not a DXF file.")
                 continue
             processing_msg(filename)
-            audit(filename, args.ignore_zero_pointers)
+            audit(filename, safe=args.recover)
 
 
 if __name__ == "__main__":

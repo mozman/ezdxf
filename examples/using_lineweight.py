@@ -7,8 +7,8 @@ import ezdxf
 LAYER_NAME = 'Lines'
 
 # line weight im mm times 100, e.g. 0.13mm = 13
-# minimum line weight 13
-# maximum line width 200
+# minimum line weight 0
+# maximum line width 211
 WEIGHTS = [13, 18, 20, 25, 35, 50, 70, 100, 200, -1, -3]
 
 
@@ -44,4 +44,4 @@ lines_layer.dxf.lineweight = 35
 lines_with_lineweight(msp, x1=0, x2=100)
 lines_with_default_weight(msp, x1=150, x2=250)
 
-doc.saveas("using_lineweight.dxf")
+doc.saveas('using_lineweight.dxf')

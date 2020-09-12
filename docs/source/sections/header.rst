@@ -3,8 +3,8 @@ Header Section
 
 .. module:: ezdxf.sections.header
 
-The drawing settings are stored in the HEADER section, which is accessible by the :attr:`~ezdxf.drawing.Drawing.header`
-attribute of the :class:`~ezdxf.drawing.Drawing` object. See the online documentation from Autodesk for available
+The drawing settings are stored in the HEADER section, which is accessible by the :attr:`~ezdxf.document.Drawing.header`
+attribute of the :class:`~ezdxf.document.Drawing` object. See the online documentation from Autodesk for available
 `header variables`_.
 
 .. seealso::

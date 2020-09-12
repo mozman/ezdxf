@@ -5,40 +5,49 @@ Layout Management Structures
 
 Layouts are separated entity spaces, there are three different Layout types:
 
-    1. modelspace contains the 'real' world representation of the drawing subjects in real world units.
-    2. paperspace layouts are used to create different drawing sheets of the modelspace subjects for printing or PDF export
-    3. Blocks are reusable sets of graphical entities, inserted by the INSERT entity.
+    1. modelspace contains the 'real' world representation of the drawing
+       subjects in real world units.
+    2. paperspace layouts are used to create different drawing sheets of the
+       modelspace subjects for printing or PDF export
+    3. Blocks are reusable sets of graphical entities, inserted/referenced
+       by the INSERT entity.
 
-All layouts have at least a BLOCK definition in the BLOCKS section and since DXF R13 exists the BLOCK_RECORD table with
-an entry for every BLOCK in the BLOCKS section.
+All layouts have at least a BLOCK definition in the BLOCKS section and since
+DXF R13 exist the BLOCK_RECORD table with an entry for every BLOCK in the
+BLOCKS section.
 
 .. seealso::
 
     Information about :ref:`Block Management Structures`
 
 
-The name of the modelspace BLOCK is ``*Model_Space`` (DXF R12: ``$MODEL_SPACE``) and the name of the `active` paper
-space BLOCK is ``*Paper_Space`` (DXF R12: ``$PAPER_SPACE``), the entities of these two layouts are
+The name of the modelspace BLOCK is "\*Model_Space" (DXF R12: "$MODEL_SPACE")
+and the name of the `active` paperspace BLOCK is "\*Paper_Space"
+(DXF R12: "$PAPER_SPACE"), the entities of these two layouts are
 stored in the ENTITIES section, DXF R12 supports just one paperspace layout.
 
-DXF R13 and later supports multiple paperspace layouts, the `active` layout is still called ``*Paper_Space``, the
-additional `inactive` paperspace layouts are named by the scheme ``*Paper_Spacennnn``, where the first inactive paper
-space is called ``*Paper_Space0``, the second ``*Paper_Space1`` and so on.
-A none consecutive numbering is tolerated by AutoCAD. The content of the inactive paperspace layouts are stored
-as BLOCK content in the BLOCKS section. These names are just the DXF internal layout names, each layout has an
+DXF R13+ supports multiple paperspace layouts, the `active` layout is still
+called "\*Paper_Space", the additional `inactive` paperspace layouts are named
+by the scheme "\*Paper_Spacennnn", where the first inactive paper space is
+called "\*Paper_Space0", the second "\*Paper_Space1" and so on.
+A none consecutive numbering is tolerated by AutoCAD. The content of the
+inactive paperspace layouts are stored as BLOCK content in the BLOCKS section.
+These names are just the DXF internal layout names, each layout has an
 additional layout name which is displayed to the user by the CAD application.
 
-A BLOCK definition and a BLOCK_RECORD is not enough for a proper layout setup, an LAYOUT entity in the OBJECTS section
-is also required. All LAYOUT entities are managed by a DICTIONARY entity, which is referenced as ``ACAD_LAYOUT`` entity
-in the root DICTIONARY of the DXF file.
+A BLOCK definition and a BLOCK_RECORD is not enough for a proper layout setup,
+an LAYOUT entity in the OBJECTS section is also required. All LAYOUT entities
+are managed by a DICTIONARY entity, which is referenced as "ACAD_LAYOUT"
+entity in the root DICTIONARY of the DXF file.
 
 .. note::
 
-    All floating point values are rounded to 2 decimal places for better readability.
+    All floating point values are rounded to 2 decimal places for better
+    readability.
 
 
-LAYOUT Entiy
-------------
+LAYOUT Entity
+-------------
 
 Since DXF R2000 modelspace and paperspace layouts require the DXF
 `LAYOUT <http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-433D25BF-655D-4697-834E-C666EDFD956D>`_ entity.
@@ -69,13 +78,17 @@ Since DXF R2000 modelspace and paperspace layouts require the DXF
 
     2       <<< name of system printer or plot configuration file
     none_device
-    4       <<< paper size, part in braces should follow the schema (width_x_height_unit) unit is 'Inches' or 'MM'
-    Letter_(8.50_x_11.00_Inches)  # the part in front of the braces is ignored by AutoCAD
+    4       <<< paper size, part in braces should follow the schema
+    ...     (width_x_height_unit) unit is 'Inches' or 'MM'
+    ...     Letter\_(8.50_x_11.00_Inches)  the part in front of the braces is
+    ...     ignored by AutoCAD
     6       <<< plot view name
 
-    40      <<< size of unprintable margin on left side of paper in millimeters, defines also the plot origin-x
+    40      <<< size of unprintable margin on left side of paper in millimeters,
+    ...     defines also the plot origin-x
     6.35
-    41      <<< size of unprintable margin on bottom of paper in millimeters, defines also the plot origin-y
+    41      <<< size of unprintable margin on bottom of paper in millimeters,
+    ...     defines also the plot origin-y
     6.35
     42      <<< size of unprintable margin on right side of paper in millimeters
     6.35
@@ -97,13 +110,17 @@ Since DXF R2000 modelspace and paperspace layouts require the DXF
     0.0
     141     <<< plot window area: Y value of upper-right window corner
     0.0
-    142     <<< numerator of custom print scale: real world (paper) units, 1.0 for scale 1:50
+    142     <<< numerator of custom print scale: real world (paper) units, 1.0
+    ...     for scale 1:50
     1.0
-    143     <<< denominator of custom print scale: drawing units, 50.0 for scale 1:50
+    143     <<< denominator of custom print scale: drawing units, 50.0
+    ...     for scale 1:50
     1.0
     70      <<< plot layout flags, bit-coded (... too many options)
-    688     <<< b1010110000 = UseStandardScale(16)/PlotPlotStyle(32)/PrintLineweights(128)/DrawViewportsFirst(512)
-    72      <<< plot paper units (0/1/2 for inches/millimeters/pixels), are pixels really supported?
+    688     <<< b1010110000 = UseStandardScale(16)/PlotPlotStyle(32)
+    ...     PrintLineweights(128)/DrawViewportsFirst(512)
+    72      <<< plot paper units (0/1/2 for inches/millimeters/pixels), are
+    ...     pixels really supported?
     0
     73      <<< plot rotation (0/1/2/3 for 0deg/90deg counter-cw/upside-down/90deg cw)
     1       <<< 90deg clockwise
@@ -114,12 +131,14 @@ Since DXF R2000 modelspace and paperspace layouts require the DXF
     75      <<< standard scale type 0-31 (... too many options)
     16      <<< 16 = 1:1, also 16 if user scale type is used
     147     <<< unit conversion factor
-    1.0     <<< for plot paper units in mm, else  0.03937... (1/25.4) for inches as plot paper units
+    1.0     <<< for plot paper units in mm, else  0.03937... (1/25.4) for inches
+    ...     as plot paper units
     76      <<< shade plot mode (0/1/2/3 for as displayed/wireframe/hidden/rendered)
     0       <<< as displayed
     77      <<< shade plot resolution level 1-5 (... too many options)
     2       <<< normal
-    78      <<< shade plot custom DPI: 100-32767, Only applied when shade plot resolution level is set to 5 (Custom)
+    78      <<< shade plot custom DPI: 100-32767, Only applied when shade plot
+    ...     resolution level is set to 5 (Custom)
     300
     148     <<< paper image origin: X value
     0.0
@@ -130,30 +149,41 @@ Since DXF R2000 modelspace and paperspace layouts require the DXF
     1       <<< layout name
     Layout1
     70      <<< flags bit-coded
-    1       <<< 1 = Indicates the PSLTSCALE value for this layout when this layout is current
-    71      <<< Tab order ("Model" tab always appears as the first tab regardless of its tab order)
+    1       <<< 1 = Indicates the PSLTSCALE value for this layout when this
+    ...     layout is current
+    71      <<< Tab order ("Model" tab always appears as the first tab
+    ...     regardless of its tab order)
     1
-    10      <<< minimum limits for this layout (defined by LIMMIN while this layout is current)
-    -0.25   <<<     x value, distance of the left paper margin from the plot origin-x, in plot paper units and by scale (e.g. x50 for 1:50)
+    10      <<< minimum limits for this layout (defined by LIMMIN while this
+    ...     layout is current)
+    -0.25   <<<     x value, distance of the left paper margin from the plot
+    ...     origin-x, in plot paper units and by scale (e.g. x50 for 1:50)
     20      <<<     group code for y value
-    -0.25   <<<     y value, distance of the bottom paper margin from the plot origin-y, in plot paper units and by scale (e.g. x50 for 1:50)
-    11      <<< maximum limits for this layout (defined by LIMMAX while this layout is current)
-    10.75   <<<     x value, distance of the right paper margin from the plot origin-x, in plot paper units and by scale (e.g. x50 for 1:50)
+    -0.25   <<<     y value, distance of the bottom paper margin from the plot
+    ...     origin-y, in plot paper units and by scale (e.g. x50 for 1:50)
+    11      <<< maximum limits for this layout (defined by LIMMAX while this
+    ...     layout is current)
+    10.75   <<<     x value, distance of the right paper margin from the plot
+    ...     origin-x, in plot paper units and by scale (e.g. x50 for 1:50)
     21      <<<     group code for y value
-    8.25    <<<     y value, distance of the top paper margin from the plot origin-y, in plot paper units and by scale (e.g. x50 for 1:50)
-    12      <<< insertion base point for this layout (defined by INSBASE while this layout is current)
+    8.25    <<<     y value, distance of the top paper margin from the plot
+    ...     origin-y, in plot paper units and by scale (e.g. x50 for 1:50)
+    12      <<< insertion base point for this layout (defined by INSBASE while
+    ...     this layout is current)
     0.0     <<<     x value
     22      <<<     group code for y value
     0.0     <<<     y value
     32      <<<     group code for z value
     0.0     <<<     z value
-    14      <<< minimum extents for this layout (defined by EXTMIN while this layout is current), AutoCAD default is (1e20, 1e20, 1e20)
+    14      <<< minimum extents for this layout (defined by EXTMIN while this
+    ...     layout is current), AutoCAD default is (1e20, 1e20, 1e20)
     1.05    <<<     x value
     24      <<<     group code for y value
     0.80    <<<     y value
     34      <<<     group code for z value
     0.0     <<<     z value
-    15      <<< maximum extents for this layout (defined by EXTMAX while this layout is current), AutoCAD default is (-1e20, -1e20, -1e20)
+    15      <<< maximum extents for this layout (defined by EXTMAX while this
+    ...     layout is current), AutoCAD default is (-1e20, -1e20, -1e20)
     9.45    <<<     x value
     25      <<<     group code for y value
     7.20    <<<     y value
@@ -183,26 +213,31 @@ Since DXF R2000 modelspace and paperspace layouts require the DXF
     0       <<< 0 = UCS is not orthographic ???
     330     <<< ID/handle of required block table record
     58
-    331     <<< ID/handle to the viewport that was last active in this layout when the layout was current
+    331     <<< ID/handle to the viewport that was last active in this layout
+    ...     when the layout was current
     1B9
     1001    <<< extended data (ignore)
     ...
 
-And as it seems this is also not enough for a well defined LAYOUT, at least a "main" VIEWPORT entity with ID=1 is
-required for paperspace layouts, located in the entity space of the layout.
+And as it seems this is also not enough for a well defined LAYOUT, at least a
+"main" VIEWPORT entity with ID=1 is required for paperspace layouts, located in
+the entity space of the layout.
 
-The modelspace layout requires (?) a VPORT entity in the VPORT table (group code 331 in the AcDbLayout subclass).
+The modelspace layout requires (?) a VPORT entity in the VPORT table (group code
+331 in the AcDbLayout subclass).
 
 Main VIEWPORT Entity for LAYOUT
 -------------------------------
 
-The "main" viewport for layout ``Layout1`` shown above. This viewport is located in the associated BLOCK definition called
-``*Paper_Space0``. Group code 330 in subclass AcDbLayout points to the BLOCK_RECORD of ``*Paper_Space0``.
-Remember: the entities of the `active` paperspace layout are located in the ENTITIES section, therefore ``Layout1`` is not
-the active paperspace layout.
+The "main" viewport for layout "Layout1" shown above. This viewport is located
+in the associated BLOCK definition called "\*Paper_Space0". Group code 330 in
+subclass AcDbLayout points to the BLOCK_RECORD of "\*Paper_Space0".
 
-The "main" VIEWPORT describes, how the application shows the paperspace layout on the screen, and I guess only AutoCAD
-needs this values. And the most values
+Remember: the entities of the `active` paperspace layout are located in the
+ENTITIES section, therefore "Layout1" is not the active paperspace layout.
+
+The "main" VIEWPORT describes, how the application shows the paperspace layout
+on the screen, and I guess only AutoCAD needs this values.
 
 .. image:: gfx/main_viewport.jpg
     :align: center
@@ -220,7 +255,8 @@ needs this values. And the most values
     102
     }
     330     <<< owner handle
-    58      <<< points to BLOCK_RECORD (same as group code 330 in AcDbLayout of "Layout1")
+    58      <<< points to BLOCK_RECORD (same as group code 330 in AcDbLayout of
+    ...     "Layout1")
     100
     AcDbEntity
     67      <<< paperspace flag
@@ -240,10 +276,12 @@ needs this values. And the most values
     41      <<< height in paperspace units
     9.00    <<< VIEW size in AutoCAD, depends on the workstation configuration
     68      <<< viewport status field -1/0/n
-    2       <<< >0  On and active. The value indicates the order of stacking for the viewports, where 1 is the active viewport, 2 is the next, and so forth
+    2       <<< >0  On and active. The value indicates the order of stacking for
+    ...     the viewports, where 1 is the active viewport, 2 is the next, and so forth
     69      <<< viewport ID
     1       <<< "main" viewport has always ID=1
-    12      <<< view center point in Drawing Coordinate System (DCS), defines the center point of the VIEW in relation to the LAYOUT origin
+    12      <<< view center point in Drawing Coordinate System (DCS), defines
+    ...     the center point of the VIEW in relation to the LAYOUT origin
     5.25    <<<     x value
     22      <<<     group code for y value
     4.00    <<<     y value
@@ -292,9 +330,11 @@ needs this values. And the most values
     281     <<< render mode (... too many options)
     0       <<< 0 = 2D optimized (classic 2D)
     71      <<< UCS per viewport flag
-    1       <<< 1 = This viewport stores its own UCS which will become the current UCS whenever the viewport is activated
+    1       <<< 1 = This viewport stores its own UCS which will become the
+    ...     current UCS whenever the viewport is activated
     74      <<< Display UCS icon at UCS origin flag
-    0       <<< this field is currently being ignored and the icon always represents the viewport UCS
+    0       <<< this field is currently being ignored and the icon always
+    ...     represents the viewport UCS
     110     <<< UCS origin (3D point)
     0.0     <<<     x value
     120     <<<     group code for y value

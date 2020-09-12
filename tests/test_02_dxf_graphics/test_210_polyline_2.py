@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -6,16 +6,17 @@ from ezdxf.lldxf.const import VTX_3D_POLYLINE_VERTEX
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.tools.test import load_entities
 from ezdxf.sections.entities import EntitySection
+from ezdxf.entities import factory, Polyline
 
 
 @pytest.fixture(scope='module')
-def dwg():
+def doc():
     return ezdxf.new('R2000')
 
 
 @pytest.fixture(scope='module')
-def layout(dwg):
-    return dwg.modelspace()
+def layout(doc):
+    return doc.modelspace()
 
 
 def test_create_polyline2D(layout):
@@ -31,6 +32,33 @@ def test_create_polyline3D(layout):
     assert (4., 5., 6.) == polyline[1].dxf.location
     assert VTX_3D_POLYLINE_VERTEX == polyline[0].dxf.flags
     assert 'AcDb3dPolyline' == polyline.get_mode()
+
+
+def test_add_new_sub_entities_to_entity_database(layout, doc):
+    db = doc.entitydb
+    db_len = len(db)
+
+    polyline = layout.add_polyline2d([(0, 0), (1, 1)])
+    assert len(db) == db_len + 4  # POLYLINE-VERTEX-VERTEX-SEQEND
+    assert polyline.seqend.is_alive is True
+
+    db_len = len(db)
+    polyline.append_vertices([(2, 2), (3, 3)])
+    assert len(polyline) == 4
+    assert polyline.vertices[-1].dxf.handle is not None
+    assert len(db) == db_len + 2, 'new VERTEX entities should be added to db'
+
+
+def test_export_sub_entities_to_dxf(layout, doc):
+    from ezdxf.lldxf.tagwriter import TagCollector
+    layout.add_polyline2d([(0, 0), (1, 1)])
+    writer = TagCollector()
+    layout.entity_space.export_dxf(tagwriter=writer)
+    structure_tags = [tag for tag in writer.tags if tag[0] == 0]
+    assert structure_tags[0] == (0, 'POLYLINE')
+    assert structure_tags[1] == (0, 'VERTEX')
+    assert structure_tags[2] == (0, 'VERTEX')
+    assert structure_tags[3] == (0, 'SEQEND')
 
 
 def test_vertex_layer(layout):
@@ -281,11 +309,25 @@ def test_internals_polyface(layout):
 
 def test_new_style_polyface_face_count():
     doc = ezdxf.new()
-    section = EntitySection(doc, load_entities(NEW_STYLE_POLYFACE, 'ENTITIES', doc))
+    section = EntitySection(doc, load_entities(NEW_STYLE_POLYFACE, 'ENTITIES'))
     entities = list(section)
     polyface = entities[0]
     faces = list(polyface.faces())
     assert 6 == len(faces)
+
+
+def test_add_virtual_polyline_to_layout(doc, layout):
+    polyline = Polyline()
+    polyline.append_vertex((0, 0))
+    layout.add_entity(polyline)
+    assert factory.is_bound(polyline, doc) is True, \
+        'POLYLINE must be bound to document'
+    assert factory.is_bound(polyline.seqend, doc) is True, \
+        'SEQEND must be bound to document'
+
+    assert len(polyline) == 1
+    assert factory.is_bound(polyline.vertices[0], doc) is True, \
+        'VERTEX must be bound to document'
 
 
 NEW_STYLE_POLYFACE = """  0

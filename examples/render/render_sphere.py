@@ -18,7 +18,7 @@ msp = doc.modelspace()
 
 sphere1 = sphere(count=32, stacks=16, radius=1, quads=True)
 
-sphere1.render(msp, dxfattribs={'layer': 'form'})
+sphere1.render_polyface(msp, dxfattribs={'layer': 'form'})
 sphere1.render_normals(msp, dxfattribs={'layer': 'normals'})
 
 doc.saveas(DIR / 'sphere.dxf')

@@ -24,7 +24,7 @@ from .vector import Vector, NULLVEC
 from .parametrize import create_t_vector, estimate_tangents, estimate_end_tangent_magnitude
 from .linalg import (
     LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix, detect_banded_matrix,
-    quadratic_equation,
+    quadratic_equation, binomial_coefficient,
 )
 from .construct2d import linspace
 from ezdxf.lldxf.const import DXFValueError
@@ -153,8 +153,12 @@ def global_bspline_interpolation(
     fit_points = Vector.list(fit_points)
     count = len(fit_points)
     order = degree + 1
-    if order > count:
-        raise DXFValueError(f'More fit points required for degree {degree}')
+
+    if tangents:
+        # two control points for tangents will be added
+        count += 2
+    if order > count and tangents is None:
+        raise ValueError(f'More fit points required for degree {degree}')
 
     t_vector = list(create_t_vector(fit_points, method))
     # natural knot generation for uneven degrees else averaged
@@ -723,6 +727,12 @@ class Basis:
         else:
             return N
 
+    def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
+        weights = self.weights[span - self.order + 1: span + 1]
+        products = [nb * w for nb, w in zip(nbasis, weights)]
+        s = sum(products)
+        return [0.0] * self.order if s == 0.0 else [p / s for p in products]
+
     def basis_funcs_derivatives(self, span: int, u: float, n: int = 1):
         # Source: The NURBS Book: Algorithm A2.3
         order = self.order
@@ -793,39 +803,50 @@ class Basis:
             for j in range(order):
                 derivatives[k][j] *= r
             r *= (p - k)
-
-        if self.is_rational:
-            derivatives = [self.span_weighting(d, span) for d in derivatives]
         return derivatives[:n + 1]
-
-    def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
-        p = self.order - 1
-        weights = self.weights[span - p: span - p + self.order]
-        products = [nb * w for nb, w in zip(nbasis, weights)]
-        s = sum(products)
-        return [0.0] * self.order if s == 0.0 else [p / s for p in products]
 
     def curve_point(self, u: float, control_points: Sequence[Vector]) -> Vector:
         # Source: The NURBS Book: Algorithm A3.1
         p = self.order - 1
         span = self.find_span(u)
         N = self.basis_funcs(span, u)
-        point = Vector()
-        for i in range(p + 1):
-            point += N[i] * control_points[span - p + i]
-        return point
+        return sum(N[i] * control_points[span - p + i] for i in range(p + 1))
 
     def curve_derivatives(self, u: float, control_points: Sequence[Vector], n: int = 1) -> List[Vector]:
         # Source: The NURBS Book: Algorithm A3.2
         p = self.order - 1
         span = self.find_span(u)
-        nders = self.basis_funcs_derivatives(span, u, n)
-        CK = []
-        for k in range(n + 1):
-            deriv = Vector()
-            for j in range(p + 1):
-                deriv += nders[k][j] * control_points[span - p + j]
-            CK.append(deriv)
+        basis_funcs_derivatives = self.basis_funcs_derivatives(span, u, n)
+        if self.is_rational:
+            # Homogeneous point representation required:
+            # (x*w, y*w, z*w, w)
+            CKw = []
+            wders = []
+            for k in range(n + 1):
+                v = NULLVEC
+                wder = 0.0
+                for j in range(p + 1):
+                    index = span - p + j
+                    bas_func_weight = basis_funcs_derivatives[k][j] * self.weights[index]
+                    # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
+                    v += control_points[index] * bas_func_weight
+                    wder += bas_func_weight
+                CKw.append(v)
+                wders.append(wder)
+
+            # Source: The NURBS Book: Algorithm A4.2
+            CK = []
+            for k in range(n + 1):
+                v = CKw[k]
+                for i in range(1, k + 1):
+                    v -= binomial_coefficient(k, i) * wders[i] * CK[k - i]
+                CK.append(v / wders[0])
+        else:
+            CK = [
+                sum(basis_funcs_derivatives[k][j] * control_points[span - p + j]
+                    for j in range(p + 1))
+                for k in range(n + 1)
+            ]
         return CK
 
 
@@ -905,7 +926,7 @@ class BSpline:
         )
 
     def reverse(self) -> 'BSpline':
-        """ Returns a new BSpline with revered control point order. """
+        """ Returns a new BSpline with reversed control point order. """
 
         def reverse_knots():
             for k in reversed(normalize_knots(self.knots())):
@@ -915,7 +936,7 @@ class BSpline:
             control_points=reversed(self.control_points),
             order=self.order,
             knots=reverse_knots(),
-            weights=reversed(self.weights()),
+            weights=list(reversed(self.weights())),
         )
 
     def normalize_knots(self):
@@ -942,6 +963,11 @@ class BSpline:
     def is_rational(self):
         """ Returns ``True`` if curve is a rational B-spline. (has weights) """
         return self.basis.is_rational
+
+    @property
+    def is_clamped(self):
+        """ Returns ``True`` if curve is a clamped (open) B-spline. """
+        return not any(self.basis.knots[:self.order])
 
     def knots(self) -> List[float]:
         """ Returns a list of `knot`_ values as floats, the knot vector **always** has order + count values
@@ -1110,6 +1136,8 @@ class BSpline:
         # Source: "The NURBS Book": Algorithm A5.6
         if self.basis.is_rational:
             raise TypeError('Rational B-splines not supported.')
+        if not self.is_clamped:
+            raise TypeError('Clamped B-Spline required.')
 
         n = self.count - 1
         p = self.degree
@@ -1156,7 +1184,7 @@ class BSpline:
         of this curves by many render backends. For cubic non-rational B-splines, which is maybe the
         most common used B-spline, is :meth:`bezier_decomposition` the better choice.
 
-        1. approximation by `level`: an educated guess for the first level of approximation
+        1. approximation by `level`: an educated guess, the first level of approximation
         segments is based on the count of control points and their distribution along the
         B-spline, every additional level is a subdivision of the previous level.
         E.g. a B-Spline of 8 control points has 7 segments at the first level, 14 at the 2nd level
@@ -1172,19 +1200,28 @@ class BSpline:
             Yields control points of cubic Bézier curves as :class:`Bezier4P` objects
 
         """
-
-        def parametrization():
-            params = list(create_t_vector(self.control_points, 'chord'))
-            for _ in range(level - 1):
-                params = list(subdivide_params(params))
-            return [self.point(t) for t in params]
-
         if segments is None:
-            points = parametrization()
+            points = list(self.points(self.approximation_params(level)))
         else:
             points = list(self.approximate(segments))
         from .bezier4p import cubic_bezier_interpolation
         return cubic_bezier_interpolation(points)
+
+    def approximation_params(self, level: int = 3) -> List[float]:
+        """ Returns an educated guess, the first level of approximation
+        segments is based on the count of control points and their distribution along the
+        B-spline, every additional level is a subdivision of the previous level.
+        E.g. a B-Spline of 8 control points has 7 segments at the first level, 14 at the 2nd level
+        and 28 at the 3rd level.
+
+        """
+        params = list(create_t_vector(self.control_points, 'chord'))
+        if self.max_t != 1.0:
+            max_t = self.max_t
+            params = [p * max_t for p in params]
+        for _ in range(level - 1):
+            params = list(subdivide_params(params))
+        return params
 
 
 def subdivide_params(p: List[float]) -> Iterable[float]:
@@ -1255,6 +1292,8 @@ def rational_spline_from_arc(
     radius = float(radius)
     start_angle = math.radians(start_angle) % math.tau
     end_angle = math.radians(end_angle) % math.tau
+    if end_angle == 0:
+        end_angle = math.tau
     control_points, weights, knots = nurbs_arc_parameters(start_angle, end_angle, segments)
     return BSpline(
         control_points=(center + (p * radius) for p in control_points),
@@ -1412,24 +1451,3 @@ def bspline_basis_vector(u: float, count: int, degree: int, knots: Sequence[floa
     if math.isclose(u, knots[-1]):  # pick up last point ??? why is this necessary ???
         basis[-1] = 1.
     return basis
-
-
-def bspline_vertex(u: float, degree: int, control_points: Sequence['Vertex'], knots: Sequence[float]) -> Vector:
-    """
-    Calculate B-spline vertex at parameter u.
-
-    Used with the bspline_basis_vector() for testing and comparison.
-
-    Args:
-        u:  curve parameter in range [0 .. max(knots)]
-        degree: degree of B-spline (order = degree + 1)
-        control_points: control points as list of (x, y[,z]) tuples
-        knots: knot vector as list of floats, len(knots) == (count + order)
-
-    """
-    basis_vector = bspline_basis_vector(u, count=len(control_points), degree=degree, knots=knots)
-
-    vertex = Vector()
-    for basis, point in zip(basis_vector, control_points):
-        vertex += Vector(point) * basis
-    return vertex

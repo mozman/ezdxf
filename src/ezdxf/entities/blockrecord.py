@@ -1,10 +1,15 @@
-# Created: 17.02.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import logging
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2007, DXFInternalEzdxfError
+from ezdxf.lldxf import validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT
+)
+from ezdxf.lldxf.const import (
+    DXF12, SUBCLASS_MARKER, DXF2007,
+    DXFInternalEzdxfError,
+)
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 
@@ -13,42 +18,32 @@ from .factory import register_entity
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Block, EndBlk, DXFGraphic, EntitySpace, BlockLayout
+    from ezdxf.eztypes import (
+        TagWriter, DXFNamespace, Block, EndBlk, DXFGraphic,
+        EntitySpace, BlockLayout,
+    )
 
 __all__ = ['BlockRecord']
 
 acdb_blockrec = DefSubclass('AcDbBlockTableRecord', {
-    'name': DXFAttr(2),
-    'layout': DXFAttr(340, default='0'),  # handle to associated DXF LAYOUT object
-    'explode': DXFAttr(280, default=1, dxfversion=DXF2007),  # 0 = can not explode; 1 = can explode
-    'scale': DXFAttr(281, default=0, dxfversion=DXF2007),  # 0 = scale non uniformly; 1 = scale uniformly
-    'units': DXFAttr(70, default=0, dxfversion=DXF2007),  # ezdxf.InsertUnits
-    # 0 = Unitless
-    # 1 = Inches
-    # 2 = Feet
-    # 3 = Miles
-    # 4 = Millimeters
-    # 5 = Centimeters
-    # 6 = Meters
-    # 7 = Kilometers
-    # 8 = Microinches
-    # 9 = Mils
-    # 10 = Yards
-    # 11 = Angstroms
-    # 12 = Nanometers
-    # 13 = Microns
-    # 14 = Decimeters
-    # 15 = Decameters
-    # 16 = Hectometers
-    # 17 = Gigameters
-    # 18 = Astronomical units
-    # 19 = Light years
-    # 20 = Parsecs
-    # 21 = US Survey Feet
-    # 22 = US Survey Inch
-    # 23 = US Survey Yard
-    # 24 = US Survey Mile
-    # ---------------------
+    'name': DXFAttr(2, validator=validator.is_valid_block_name),
+    # handle to associated DXF LAYOUT object
+    'layout': DXFAttr(340, default='0'),
+    # 0 = can not explode; 1 = can explode
+    'explode': DXFAttr(280, default=1, dxfversion=DXF2007,
+                       validator=validator.is_integer_bool,
+                       fixer=RETURN_DEFAULT
+                       ),
+    # 0 = scale non uniformly; 1 = scale uniformly
+    'scale': DXFAttr(281, default=0, dxfversion=DXF2007,
+                     validator=validator.is_integer_bool,
+                     fixer=RETURN_DEFAULT,
+                     ),
+    # see ezdxf/units.py
+    'units': DXFAttr(70, default=0, dxfversion=DXF2007,
+                     validator=validator.is_in_integer_range(0, 25),
+                     fixer=RETURN_DEFAULT
+                     ),
     # 310: Binary data for bitmap preview (optional) - removed (ignored) by ezdxf
 })
 
@@ -66,23 +61,24 @@ acdb_blockrec = DefSubclass('AcDbBlockTableRecord', {
 class BlockRecord(DXFEntity):
     """ DXF BLOCK_RECORD table entity
 
-    BLOCK_RECORD is the hard owner of all entities in BLOCK definitions, this means owner tag of entities is handle of
-    BLOCK_RECORD.
+    BLOCK_RECORD is the hard owner of all entities in BLOCK definitions, this
+    means owner tag of entities is handle of BLOCK_RECORD.
 
     """
     DXFTYPE = 'BLOCK_RECORD'
-    DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_blockrec)
+    DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record,
+                               acdb_blockrec)
 
-    def __init__(self, doc: 'Drawing' = None):
+    def __init__(self):
         from ezdxf.entitydb import EntitySpace
-        super().__init__(doc)
-        # Store entities in the block_record instead of BlockLayout and Layout, because BLOCK_RECORD is also the hard
-        # owner of all the entities.
+        super().__init__()
+        # Store entities in the block_record instead of BlockLayout and Layout,
+        # because BLOCK_RECORD is also the hard owner of all the entities.
         self.entity_space = EntitySpace()
-        self.block = None  # type: Block
-        self.endblk = None  # type: EndBlk
+        self.block: Optional[Block] = None
+        self.endblk: Optional[EndBlk] = None
         # stores also the block layout structure
-        self.block_layout = None  # type: BlockLayout
+        self.block_layout: Optional[BlockLayout] = None
 
     def set_block(self, block: 'Block', endblk: 'EndBlk'):
         self.block = block
@@ -96,14 +92,15 @@ class BlockRecord(DXFEntity):
     def rename(self, name: str) -> None:
         self.dxf.name = name
         self.block.dxf.name = name
-        self.block.dxf.name2 = name
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_blockrec)
             if len(tags) and False:  # deliberately disabled
-                processor.log_unprocessed_tags(tags, subclass=acdb_blockrec.name)
+                processor.log_unprocessed_tags(tags,
+                                               subclass=acdb_blockrec.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -114,14 +111,18 @@ class BlockRecord(DXFEntity):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_blockrec.name)
 
-        self.dxf.export_dxf_attribs(tagwriter, ['name', 'layout', 'units', 'explode', 'scale'])
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'name', 'layout', 'units', 'explode', 'scale',
+        ])
 
     def export_block_definition(self, tagwriter: 'TagWriter') -> None:
-        """
-        Exports BLOCK, than all DXF entities and at last the ENDBLK entity, except for *Model_space and *Paper_Pacer,
-        their entities are stored in the entities section.
+        """ Exports BLOCK, than all DXF entities and at last the ENDBLK entity,
+        except for *Model_space and *Paper_Pacer, their entities are stored
+        in the entities section.
 
         """
+        if self.block_layout is not None:
+            self.block_layout.update_block_flags()
         self.block.export_dxf(tagwriter)
         if not (self.is_modelspace or self.is_active_paperspace):
             self.entity_space.export_dxf(tagwriter)
@@ -134,15 +135,19 @@ class BlockRecord(DXFEntity):
             - ENDBLK
             - all entities stored in this block definition
 
-        Does not destroy the linked LAYOUT entity, this is the domain of the :class:`Layouts` object, which also should
-        initiate the destruction of 'this' BLOCK_RECORD.
+        Does not destroy the linked LAYOUT entity, this is the domain of the
+        :class:`Layouts` object, which also should initiate the destruction of
+        'this' BLOCK_RECORD.
 
         """
-        db = self.entitydb
-        db.delete_entity(self.block)
-        db.delete_entity(self.endblk)
+        if not self.is_alive:
+            return
+
+        self.block.destroy()
+        self.endblk.destroy()
         for entity in self.entity_space:
-            db.delete_entity(entity)
+            entity.destroy()
+
         # remove attributes to find invalid access after death
         del self.block
         del self.endblk
@@ -151,32 +156,33 @@ class BlockRecord(DXFEntity):
 
     @property
     def is_active_paperspace(self) -> bool:
-        """ True if is "active" layout. """
+        """ ``True`` if is "active" paperspace layout. """
         return self.dxf.name.lower() == '*paper_space'
 
     @property
     def is_any_paperspace(self) -> bool:
-        """ True if is any kind of paperspace layout. """
+        """ ``True`` if is any kind of paperspace layout. """
         return self.dxf.name.lower().startswith('*paper_space')
 
     @property
     def is_modelspace(self) -> bool:
-        """ True if is modelspace layout. """
+        """ ``True`` if is the modelspace layout. """
         return self.dxf.name.lower() == '*model_space'
 
     @property
     def is_any_layout(self) -> bool:
-        """ True if is any kind of modelspace or paperspace layout. """
+        """ ``True`` if is any kind of modelspace or paperspace layout. """
         return self.is_modelspace or self.is_any_paperspace
 
     @property
     def is_block_layout(self) -> bool:
-        """ True if not any kind of modelspace or paperspace layout, just a regular block definition. """
+        """ ``True`` if not any kind of modelspace or paperspace layout, just a
+        regular block definition.
+        """
         return not self.is_any_layout
 
     def add_entity(self, entity: 'DXFGraphic') -> None:
-        """
-        Add an existing DXF entity to BLOCK_RECORD.
+        """ Add an existing DXF entity to BLOCK_RECORD.
 
         Args:
             entity: :class:`DXFGraphic`
@@ -184,32 +190,32 @@ class BlockRecord(DXFEntity):
         """
         # assign layout
         if hasattr(entity, 'set_owner'):
-            entity.set_owner(self.dxf.handle, paperspace=int(self.is_any_paperspace))
+            entity.set_owner(self.dxf.handle,
+                             paperspace=int(self.is_any_paperspace))
         else:
             logger.debug('Unexpected entity {}'.format(entity))
         self.entity_space.add(entity)
 
     def unlink_entity(self, entity: 'DXFGraphic') -> None:
-        """
-        Unlink `entity` from BLOCK_RECORD.
+        """ Unlink `entity` from BLOCK_RECORD.
 
-        Removes `entity` just from  entity space but not from the drawing database.
+        Removes `entity` just from  entity space but not from the drawing
+        database.
 
         Args:
             entity: :class:`DXFGraphic`
 
         """
-        self.entity_space.remove(entity)
-        entity.dxf.paperspace = -1  # set invalid paper space
-        entity.dxf.owner = None
+        if entity.is_alive:
+            self.entity_space.remove(entity)
+            entity.set_owner(None)
 
     def delete_entity(self, entity: 'DXFGraphic') -> None:
-        """
-        Delete `entity` from BLOCK_RECORD entity space and drawing database.
+        """ Delete `entity` from BLOCK_RECORD entity space and drawing database.
 
         Args:
             entity: :class:`DXFGraphic`
 
         """
         self.unlink_entity(entity)  # 1. unlink from entity space
-        self.entitydb.delete_entity(entity)  # 2. delete from drawing database
+        entity.destroy()

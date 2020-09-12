@@ -66,6 +66,8 @@ def groupby(entities: Iterable['DXFEntity'], dxfattrib: str = '', key: 'KeyFunc'
 
     result = dict()
     for dxf_entity in entities:
+        if not dxf_entity.is_alive:
+            continue
         try:
             group_key = key(dxf_entity)
         except DXFAttributeError:  # ignore DXF entities, which do not support all query attributes

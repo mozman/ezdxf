@@ -1,109 +1,170 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-08
-from typing import TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable, Optional
+from typing import (
+    TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable,
+    Optional,
+)
 from contextlib import contextmanager
 import math
 import copy
 import warnings
-from ezdxf.math import Vector, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline, open_uniform_knot_vector
-from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
+from ezdxf.lldxf import const
+from ezdxf.lldxf import validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+)
+from ezdxf.lldxf.tags import Tags, group_tags
+from ezdxf.lldxf.const import (
+    SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010,
+    DXFStructureError,
+)
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.tools import pattern
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.tags import Tags, group_tags
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010, DXFStructureError
-from ezdxf.lldxf import const
+from ezdxf.math import (
+    Vector, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline,
+    open_uniform_knot_vector, ConstructionEllipse, NULLVEC, Z_AXIS,
+)
 from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math.bulge import bulge_to_arc
-from ezdxf.math import ConstructionEllipse, NULLVEC, Z_AXIS
+from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, RGB, DXFEntity, Vertex
+    from ezdxf.eztypes import (
+        TagWriter, DXFNamespace, Drawing, RGB, DXFEntity, Vertex,
+    )
 
 TPath = Union['PolylinePath', 'EdgePath']
 
-__all__ = ['Hatch', 'Gradient', 'Pattern']
+__all__ = ['Hatch', 'Gradient', 'Pattern', 'PolylinePath', 'EdgePath']
 
 acdb_hatch = DefSubclass('AcDbHatch', {
-    # 3D point (X and Y always equal 0, Z represents the elevation)
-    'elevation': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),  # OCS
+    # This subclass can also represent a MPolygon, whatever this is, never seen
+    # such a MPolygon in the wild.
 
-    # Extrusion direction (optional; default = 0, 0, 1)
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Z_AXIS),
+    # x- and y-axis always equal 0, z-axis represents the elevation:
+    'elevation': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
 
-    # Hatch pattern name
-    'pattern_name': DXFAttr(2, default='SOLID'),  # for solid fill
+    'extrusion': DXFAttr(
+        210, xtype=XType.point3d, default=Z_AXIS,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
 
-    # HATCH: Solid fill flag (0 = pattern fill; 1 = solid fill)
+    # Hatch pattern name:
+    'pattern_name': DXFAttr(2, default='SOLID'),
+
+    # HATCH: Solid fill flag:
+    # 0 = pattern fill
+    # 1 = solid fill
     # MPolygon: the version of MPolygon
-    'solid_fill': DXFAttr(70, default=1, alias='mp_version'),
+    'solid_fill': DXFAttr(
+        70, default=1, alias='mp_version',
+        validator=validator.is_integer_bool,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # MPolygon: pattern fill color as the ACI
     'mp_pattern_fill_color': DXFAttr(63, default=1, optional=True),
 
-    # HATCH: Associativity flag (0 = non-associative; 1 = associative)
-    # MPolygon: solid-fill flag (0 = lacks solid fill; 1 = has solid fill)
-    'associative': DXFAttr(71, default=0, alias='mp_solid_fill'),
+    # HATCH: associativity flag
+    # 0 = non-associative
+    # 1 = associative
+    # MPolygon: solid-fill flag
+    # 0 = lacks solid fill
+    # 1 = has solid fill
+    'associative': DXFAttr(
+        71, default=0, alias='mp_solid_fill',
+        validator=validator.is_integer_bool,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # 91: Number of boundary paths (loops)
-    # following: Boundary path data. Repeats number of times specified by code 91. See Boundary Path Data
+    # following: Boundary path data. Repeats number of times specified by
+    # code 91. See Boundary Path Data
 
     # Hatch style:
     # 0 = Hatch “odd parity” area (Normal style)
     # 1 = Hatch outermost area only (Outer style)
     # 2 = Hatch through entire area (Ignore style)
-    'hatch_style': DXFAttr(75, default=const.HATCH_STYLE_NESTED),
+    'hatch_style': DXFAttr(
+        75, default=const.HATCH_STYLE_NESTED,
+        validator=validator.is_in_integer_range(0, 3),
+        fixer=RETURN_DEFAULT,
+    ),
 
     # Hatch pattern type:
     # 0 = User-defined
     # 1 = Predefined
     # 2 = Custom
-    'pattern_type': DXFAttr(76, default=const.HATCH_TYPE_PREDEFINED),
+    'pattern_type': DXFAttr(
+        76, default=const.HATCH_TYPE_PREDEFINED,
+        validator=validator.is_in_integer_range(0, 3),
+        fixer=RETURN_DEFAULT,
+    ),
 
-    # Hatch pattern angle (pattern fill only) in degrees
+    # Hatch pattern angle (pattern fill only) in degrees:
     'pattern_angle': DXFAttr(52, default=0),
 
-    # Hatch pattern scale or spacing (pattern fill only)
-    'pattern_scale': DXFAttr(41, default=1),
+    # Hatch pattern scale or spacing (pattern fill only):
+    'pattern_scale': DXFAttr(
+        41, default=1,
+        validator=validator.is_not_zero,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # For MPolygon, boundary annotation flag:
     # 0 = boundary is not an annotated boundary
     # 1 = boundary is an annotated boundary
-    'mp_annotated_boundary': DXFAttr(73, default=0, optional=True),
+    'mp_annotated_boundary': DXFAttr(
+        73, default=0, optional=True,
+        validator=validator.is_integer_bool,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # Hatch pattern double flag (pattern fill only):
     # 0 = not double
     # 1 = double
-    'pattern_double': DXFAttr(77, default=0),  # 0=not double; 1= double
+    'pattern_double': DXFAttr(
+        77, default=0,
+        validator=validator.is_integer_bool,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # 78: Number of pattern definition lines
-    # following: Pattern line data. Repeats number of times specified by code 78. See Pattern Data
+    # following: Pattern line data. Repeats number of times specified by
+    # code 78. See Pattern Data
 
-    # Pixel size used to determine the density to perform various intersection and ray casting operations in hatch
-    # pattern computation for associative hatches and hatches created with the Flood method of hatching
-    # removed tag (code=47, 0.0442352806926743) from Template: pixel size - caused problems in AutoCAD
+    # Pixel size used to determine the density to perform various intersection
+    # and ray casting operations in hatch pattern computation for associative
+    # hatches and hatches created with the Flood method of hatching
     'pixel_size': DXFAttr(47, optional=True),
 
     # Number of seed points
-    'n_seed_points': DXFAttr(98, default=0),  # number of seed points
+    'n_seed_points': DXFAttr(
+        98, default=0,
+        validator=validator.is_greater_or_equal_zero,
+        fixer=RETURN_DEFAULT,
+    ),
     # 10, 20: Seed point (in OCS) 2D point (multiple entries)
 
-    # For MPolygon, offset vector
-    'mp_offset_vector': DXFAttr(11, xtype=XType.point3d, optional=True),  # OCS
+    # For MPolygon, offset vector in OCS
+    'mp_offset_vector': DXFAttr(11, xtype=XType.point3d, optional=True),
 
-    # For MPolygon, number of degenerate boundary paths (loops), where a degenerate boundary path is a border that is
-    # ignored by the hatch
+    # For MPolygon, number of degenerate boundary paths (loops), where a
+    # degenerate boundary path is a border that is ignored by the hatch:
     'mp_degenerated_loops': DXFAttr(99, optional=True),
 
-    # 450 Indicates solid hatch or gradient; if solid hatch, the values for the remaining codes are ignored but must be
-    #     present. Optional;
+    # 450 Indicates solid hatch or gradient; if solid hatch, the values for the
+    # remaining codes are ignored but must be present. Optional;
     #
-    # if code 450 is in the file, then the following codes must be in the file: 451, 452, 453, 460, 461, 462, and 470.
-    # If code 450 is not in the file, then the following codes must not be in the file: 451, 452, 453, 460, 461, 462, and 470
+    # if code 450 is in the file, then the following codes must be in the
+    # file: 451, 452, 453, 460, 461, 462, and 470.
+    # If code 450 is not in the file, then the following codes must not be
+    # in the file: 451, 452, 453, 460, 461, 462, and 470
     #
     #   0 = Solid hatch
     #   1 = Gradient
@@ -120,13 +181,16 @@ acdb_hatch = DefSubclass('AcDbHatch', {
     #   2 = Gradient
     #
     # 460 Rotation angle in radians for gradients (default = 0, 0)
-    # 461 Gradient definition; corresponds to the Centered option on the Gradient Tab of the Boundary Hatch and Fill
-    #     dialog box. Each gradient has two definitions, shifted and non-shifted. A Shift value describes the blend of
-    #     the two definitions that should be used. A value of 0.0 means only the non-shifted version should be used, and
-    #     a value of 1.0 means that only the shifted version should be used.
+    # 461 Gradient definition; corresponds to the Centered option on the
+    #     Gradient Tab of the Boundary Hatch and Fill dialog box. Each gradient
+    #     has two definitions, shifted and non-shifted. A Shift value describes
+    #     the blend of the two definitions that should be used. A value of 0.0
+    #     means only the non-shifted version should be used, and a value of 1.0
+    #     means that only the shifted version should be used.
     #
-    # 462 Color tint value used by dialog code (default = 0, 0; range is 0.0 to 1.0). The color tint value is a gradient
-    #     color and controls the degree of tint in the dialog when the Hatch group code 452 is set to 1.
+    # 462 Color tint value used by dialog code (default = 0, 0; range is 0.0 to
+    #     1.0). The color tint value is a gradient color and controls the degree
+    #     of tint in the dialog when the Hatch group code 452 is set to 1.
     #
     # 463 Reserved for future use:
     #
@@ -136,9 +200,15 @@ acdb_hatch = DefSubclass('AcDbHatch', {
     # 470 String (default = LINEAR)
 })
 
-GRADIENT_CODES = {450, 451, 452, 453, 460, 461, 462, 463, 470, 421, 63}
-PATH_CODES = {10, 11, 12, 13, 40, 42, 50, 51, 42, 72, 73, 74, 92, 93, 94, 95, 96, 97, 330}
-PATTERN_DEFINITION_LINE_CODES = {53, 43, 44, 45, 46, 79, 49}
+GRADIENT_CODES = {
+    450, 451, 452, 453, 460, 461, 462, 463, 470, 421, 63
+}
+PATH_CODES = {
+    10, 11, 12, 13, 40, 42, 50, 51, 42, 72, 73, 74, 92, 93, 94, 95, 96, 97, 330
+}
+PATTERN_DEFINITION_LINE_CODES = {
+    53, 43, 44, 45, 46, 79, 49
+}
 
 
 @register_entity
@@ -149,8 +219,8 @@ class Hatch(DXFGraphic):
     DEFAULT_ATTRIBS = {'color': 1, 'layer': '0'}
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
+    def __init__(self):
+        super().__init__()
         self.paths = BoundaryPaths()
         self.pattern: Optional[Pattern] = None
         self.gradient: Optional[Gradient] = None
@@ -164,11 +234,7 @@ class Hatch(DXFGraphic):
         entity.seeds = copy.deepcopy(self.seeds)
 
     def remove_dependencies(self, other: 'Drawing' = None) -> None:
-        """
-        Remove all dependencies from actual document.
-        (internal API)
-
-        """
+        """ Remove all dependencies from actual document. (internal API) """
         if not self.is_alive:
             return
 
@@ -186,30 +252,40 @@ class Hatch(DXFGraphic):
             for path in self.paths:
                 path.source_boundary_objects = []
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = Tags(processor.subclasses[2][1:])  # copy without subclass marker
-            tags = self.load_paths(tags)  # removes boundary path data from tags
-            tags = self.load_gradient(tags)  # removes gradient data
-            tags = self.load_pattern(tags)  # removes pattern tags
-            tags = self.load_seeds(tags)  # removes seed tags
+            # Copy without subclass marker:
+            tags = Tags(processor.subclasses[2][1:])
+            # Removes boundary path data from tags:
+            tags = self.load_paths(tags)
+            # Removes gradient data from tags:
+            tags = self.load_gradient(tags)
+            # Removes pattern from tags:
+            tags = self.load_pattern(tags)
+            # Removes seeds from tags:
+            tags = self.load_seeds(tags)
 
-            # load HATCH DXF attributes from remaining tags
+            # Load HATCH DXF attributes from remaining tags:
             tags = processor.load_tags_into_namespace(dxf, tags, acdb_hatch)
             if len(tags):
                 processor.log_unprocessed_tags(tags, subclass=acdb_hatch.name)
         return dxf
 
     def load_paths(self, tags: Tags) -> Tags:
-        # find first group code 91 = count of loops, Spline data also contains group code 91!
+        # Find first group code 91 = count of loops, Spline data also contains
+        # group code 91!
         try:
             start_index = tags.tag_index(91)
         except const.DXFValueError:
             raise const.DXFStructureError(
-                "HATCH: Missing required DXF tag 'Number of boundary paths (loops)' (code=91).")
+                "HATCH: Missing required DXF tag 'Number of boundary paths "
+                "(loops)' (code=91)."
+            )
 
-        path_tags = tags.collect_consecutive_tags(PATH_CODES, start=start_index + 1)
+        path_tags = tags.collect_consecutive_tags(
+            PATH_CODES, start=start_index + 1)
         if len(path_tags):
             self.paths = BoundaryPaths.load_tags(path_tags)
         end_index = start_index + len(path_tags) + 1
@@ -218,14 +294,17 @@ class Hatch(DXFGraphic):
 
     def load_pattern(self, tags: Tags) -> Tags:
         try:
-            index = tags.tag_index(78)  # code 78=Number of patter definition lines
-        except const.DXFValueError:  # no pattern definition lines found
+            # Group code 78 = Number of patter definition lines
+            index = tags.tag_index(78)
+        except const.DXFValueError:
+            # No pattern definition lines found.
             return tags
 
-        pattern_tags = tags.collect_consecutive_tags(PATTERN_DEFINITION_LINE_CODES, start=index + 1)
+        pattern_tags = tags.collect_consecutive_tags(
+            PATTERN_DEFINITION_LINE_CODES, start=index + 1)
         self.pattern = Pattern.load_tags(pattern_tags)
 
-        # delete pattern data including length tag 78
+        # Delete pattern data including length tag 78
         del tags[index: index + len(pattern_tags) + 1]
         return tags
 
@@ -233,12 +312,12 @@ class Hatch(DXFGraphic):
         try:
             index = tags.tag_index(450)
         except const.DXFValueError:
-            # no gradient data present
+            # No gradient data present
             return tags
 
-        # gradient data is always at the end of the AcDbHatch subclass
+        # Gradient data is always at the end of the AcDbHatch subclass.
         self.gradient = Gradient.load_tags(tags[index:])
-        # remove gradient data
+        # Remove gradient data from tags
         del tags[index:]
         return tags
 
@@ -247,33 +326,35 @@ class Hatch(DXFGraphic):
             start_index = tags.tag_index(98)
         except const.DXFValueError:
             return tags
-        seed_data = tags.collect_consecutive_tags({98, 10, 20}, start=start_index)
+        seed_data = tags.collect_consecutive_tags(
+            {98, 10, 20}, start=start_index)
 
-        # remove seed data from tags
+        # Remove seed data from tags:
         del tags[start_index: start_index + len(seed_data) + 1]
 
-        # just process vertices with group code 10
+        # Just process vertices with group code 10
         self.seeds = [value for code, value in seed_data if code == 10]
-
         return tags
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_hatch.name)
         self.dxf.export_dxf_attribs(tagwriter, [
-            'elevation', 'extrusion', 'pattern_name', 'solid_fill', 'mp_pattern_fill_color', 'associative',
+            'elevation', 'extrusion', 'pattern_name', 'solid_fill',
+            'mp_pattern_fill_color', 'associative',
         ])
         self.paths.export_dxf(tagwriter)
         self.dxf.export_dxf_attribs(tagwriter, ['hatch_style', 'pattern_type'])
         if self.pattern:
-            self.dxf.export_dxf_attribs(tagwriter, ['pattern_angle', 'pattern_scale', 'pattern_double'])
+            self.dxf.export_dxf_attribs(tagwriter, [
+                'pattern_angle', 'pattern_scale', 'pattern_double'])
             self.pattern.export_dxf(tagwriter)
-        self.dxf.export_dxf_attribs(tagwriter, ['mp_annotated_boundary', 'pixel_size'])
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'mp_annotated_boundary', 'pixel_size'])
         self.export_seeds(tagwriter)
-        self.dxf.export_dxf_attribs(tagwriter, ['mp_offset_vector', 'mp_degenerated_loops'])
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'mp_offset_vector', 'mp_degenerated_loops'])
         if self.gradient:
             self.gradient.export_dxf(tagwriter)
 
@@ -294,20 +375,22 @@ class Hatch(DXFGraphic):
 
     @property
     def has_gradient_data(self) -> bool:
-        """ ``True`` if hatch has a gradient fill. A hatch with gradient fill has also a solid fill. (read only) """
+        """ ``True`` if hatch has a gradient fill. A hatch with gradient fill
+        has also a solid fill. (read only)
+        """
         return bool(self.gradient)
 
     @property
     def bgcolor(self) -> Optional['RGB']:
         """
-        Property background color as ``(r, g, b)`` tuple, rgb values in range 0..255 (read/write/del)
+        Property background color as ``(r, g, b)`` tuple, rgb values in the
+        range [0, 255] (read/write/del)
 
         usage::
 
             color = hatch.bgcolor  # get background color as (r, g, b) tuple
             hatch.bgcolor = (10, 20, 30)  # set background color
             del hatch.bgcolor  # delete background color
-
 
         """
         try:
@@ -319,7 +402,8 @@ class Hatch(DXFGraphic):
 
     @bgcolor.setter
     def bgcolor(self, rgb: 'RGB') -> None:
-        color_value = rgb2int(rgb) | -0b111110000000000000000000000000  # it's magic
+        color_value = rgb2int(
+            rgb) | -0b111110000000000000000000000000  # it's magic
 
         self.discard_xdata('HATCHBACKGROUNDCOLOR')
         self.set_xdata('HATCHBACKGROUNDCOLOR', [(1071, color_value)])
@@ -331,7 +415,10 @@ class Hatch(DXFGraphic):
     # just for compatibility
     @contextmanager
     def edit_boundary(self) -> 'BoundaryPaths':
-        """ Context manager to edit hatch boundary data, yields a :class:`BoundaryPaths` object. """
+        """ Context manager to edit hatch boundary data, yields a
+        :class:`BoundaryPaths` object.
+
+        """
         warnings.warn(
             'Hatch.edit_boundaries() is deprecated (removed in v0.15).',
             DeprecationWarning
@@ -339,14 +426,14 @@ class Hatch(DXFGraphic):
         yield self.paths
 
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: 'RGB' = None):
-        """
-        Set :class:`Hatch` to solid fill mode and removes all gradient and pattern fill related data.
+        """ Set :class:`Hatch` to solid fill mode and removes all gradient and
+        pattern fill related data.
 
         Args:
             color: :ref:`ACI`, (``0`` = BYBLOCK; ``256`` = BYLAYER)
             style: hatch style (``0`` = normal; ``1`` = outer; ``2`` = ignore)
-            rgb: true color value as ``(r, g, b)`` tuple - has higher priority than `color``.
-                 True color support requires DXF R2000.
+            rgb: true color value as ``(r, g, b)`` tuple - has higher priority
+                than `color``. True color support requires DXF R2000.
 
         """
         self.gradient = None
@@ -354,12 +441,13 @@ class Hatch(DXFGraphic):
             self.pattern = None
             self.dxf.solid_fill = 1
 
-        self.dxf.color = color  # if a rgb value is present, the color value is ignored by AutoCAD
+        # If a true color value is present, the color value is ignored by AutoCAD
+        self.dxf.color = color
         self.dxf.hatch_style = style
         self.dxf.pattern_name = 'SOLID'
         self.dxf.pattern_type = const.HATCH_TYPE_PREDEFINED
-        if rgb is not None:  # if a rgb value is present, the color value is ignored by AutoCAD
-            self.rgb = rgb  # rgb should be a (r, g, b) tuple
+        if rgb is not None:
+            self.rgb: 'RGB' = rgb
 
     def get_gradient(self):
         """ Returns gradient data as :class:`GradientData` object. """
@@ -377,12 +465,11 @@ class Hatch(DXFGraphic):
                      one_color: int = 0,
                      tint: float = 0.,
                      name: str = 'LINEAR') -> None:
-        """
-        Set :class:`Hatch` to gradient fill mode and removes all pattern fill related data. Gradient support requires
-        DXF DXF R2004. A gradient filled hatch is also a solid filled hatch.
+        """ Set :class:`Hatch` to gradient fill mode and removes all pattern
+        fill related data. Gradient support requires DXF DXF R2004.
+        A gradient filled hatch is also a solid filled hatch.
 
         Valid gradient type names are:
-
 
             - ``'LINEAR'``
             - ``'CYLINDER'``
@@ -395,19 +482,22 @@ class Hatch(DXFGraphic):
             - ``'INVCURVED'``
 
         Args:
-            color1: ``(r, g, b)`` tuple for first color, rgb values as int in range 0..255
-            color2: ``(r, g, b)`` tuple for second color, rgb values as int in range 0..255
-            rotation: rotation in degrees
+            color1: ``(r, g, b)`` tuple for first color, rgb values as int in
+                the range [0, 255]
+            color2: ``(r, g, b)`` tuple for second color, rgb values as int in
+                the range [0, 255]
+            rotation: rotation angle in degrees
             centered: determines whether the gradient is centered or not
             one_color: ``1`` for gradient from `color1` to tinted `color1``
-            tint: determines the tinted target `color1` for a one color gradient. (valid range ``0.0`` to ``1.0``)
+            tint: determines the tinted target `color1` for a one color
+                gradient. (valid range ``0.0`` to ``1.0``)
             name: name of gradient type, default ``'LINEAR'``
 
         """
         if self.doc is not None and self.drawing.dxfversion < DXF2004:
             raise const.DXFVersionError("Gradient support requires DXF R2004")
         if name not in const.GRADIENT_TYPES:
-            raise const.DXFValueError('Invalid gradient type name: %s' % name)
+            raise const.DXFValueError(f'Invalid gradient type name: {name}')
 
         self.pattern = None
         self.dxf.solid_fill = 1
@@ -426,7 +516,10 @@ class Hatch(DXFGraphic):
 
     @contextmanager
     def edit_gradient(self) -> 'Gradient':
-        """ Context manager to edit hatch gradient data, yields a :class:`GradientData` object. """
+        """ Context manager to edit hatch gradient data, yields a
+        :class:`GradientData` object.
+
+        """
         warnings.warn(
             'Hatch.edit_gradient() is deprecated (removed in v0.15).',
             DeprecationWarning
@@ -435,11 +528,13 @@ class Hatch(DXFGraphic):
             raise const.DXFValueError('HATCH has no gradient data.')
         yield self.gradient
 
-    def set_pattern_fill(self, name: str, color: int = 7, angle: float = 0., scale: float = 1., double: int = 0,
-                         style: int = 1, pattern_type: int = 1, definition=None) -> None:
-        """
-        Set :class:`Hatch` to pattern fill mode. Removes all gradient related data. The pattern definition
-        should be designed for scaling factor 1.
+    def set_pattern_fill(self, name: str, color: int = 7, angle: float = 0.,
+                         scale: float = 1., double: int = 0,
+                         style: int = 1, pattern_type: int = 1,
+                         definition=None) -> None:
+        """ Set :class:`Hatch` to pattern fill mode. Removes all gradient
+        related data. The pattern definition should be designed for scaling
+        factor 1.
 
         Args:
             name: pattern name as string
@@ -448,9 +543,11 @@ class Hatch(DXFGraphic):
             scale: pattern scaling as float
             double: double size flag
             style: hatch style (``0`` = normal; ``1`` = outer; ``2`` = ignore)
-            pattern_type: pattern type (``0`` = user-defined; ``1`` = predefined; ``2`` = custom) ???
-            definition: list of definition lines and a definition line is a 4-tuple [angle, base_point,
-                        offset, dash_length_items], see :meth:`set_pattern_definition`
+            pattern_type: pattern type (``0`` = user-defined;
+                ``1`` = predefined; ``2`` = custom)
+            definition: list of definition lines and a definition line is a
+                4-tuple [angle, base_point, offset, dash_length_items],
+                see :meth:`set_pattern_definition`
 
         """
         self.gradient = None
@@ -465,12 +562,20 @@ class Hatch(DXFGraphic):
 
         if definition is None:
             predefined_pattern = pattern.load()
-            definition = predefined_pattern.get(name, predefined_pattern['ANSI31'])
-        self.set_pattern_definition(definition, factor=self.dxf.pattern_scale, angle=self.dxf.pattern_angle)
+            definition = predefined_pattern.get(
+                name, predefined_pattern['ANSI31'])
+        self.set_pattern_definition(
+            definition,
+            factor=self.dxf.pattern_scale,
+            angle=self.dxf.pattern_angle,
+        )
 
     @contextmanager
     def edit_pattern(self) -> 'Pattern':
-        """ Context manager to edit hatch pattern data, yields a :class:`PatternData` object. """
+        """ Context manager to edit hatch pattern data, yields a
+        :class:`PatternData` object.
+
+        """
         warnings.warn(
             'Hatch.edit_pattern() is deprecated (removed in v0.15).',
             DeprecationWarning
@@ -479,16 +584,19 @@ class Hatch(DXFGraphic):
             raise const.DXFValueError('Solid fill HATCH has no pattern data.')
         yield self.pattern
 
-    def set_pattern_definition(self, lines: Sequence, factor: float = 1, angle: float = 0) -> None:
+    def set_pattern_definition(self, lines: Sequence, factor: float = 1,
+                               angle: float = 0) -> None:
         """
-        Setup hatch patten definition by a list of definition lines and  a definition line is a 4-tuple [angle,
-        base_point, offset, dash_length_items], the pattern definition should be designed for scaling factor
-        ``1`` and angle ``0``.
+        Setup hatch patten definition by a list of definition lines and  a
+        definition line is a 4-tuple [angle, base_point, offset, dash_length_items],
+        the pattern definition should be designed for scaling factor``1`` and
+        angle ``0``.
 
             - angle: line angle in degrees
             - base-point: 2-tuple (x, y)
             - offset: 2-tuple (dx, dy)
-            - dash_length_items: list of dash items (item > 0 is a line, item < 0 is a gap and item == 0.0 is a point)
+            - dash_length_items: list of dash items (item > 0 is a line,
+              item < 0 is a gap and item == 0.0 is a point)
 
         Args:
             lines: list of definition lines
@@ -501,16 +609,18 @@ class Hatch(DXFGraphic):
         """
         if factor != 1 or angle:
             lines = pattern.scale_pattern(lines, factor=factor, angle=angle)
-        self.pattern = Pattern([PatternLine(line[0], line[1], line[2], line[3]) for line in lines])
+        self.pattern = Pattern(
+            [PatternLine(line[0], line[1], line[2], line[3]) for line in lines])
 
     def set_pattern_scale(self, scale: float) -> None:
-        """
-        Set scaling of pattern definition to `scale`.
+        """ Set scaling of pattern definition to `scale`.
 
         Starts always from the original base scaling, :code:`set_pattern_scale(1)`
-        reset the pattern scaling to the original appearance as defined by the pattern designer, but only if the
-        the pattern attribute :attr:`dxf.pattern_scale` represents the actual scaling, it is not possible to recreate
-        the original pattern scaling from the pattern definition itself.
+        reset the pattern scaling to the original appearance as defined by the
+        pattern designer, but only if the the pattern attribute
+        :attr:`dxf.pattern_scale` represents the actual scaling, it is not
+        possible to recreate the original pattern scaling from the pattern
+        definition itself.
 
         Args:
             scale: pattern scaling factor
@@ -528,10 +638,12 @@ class Hatch(DXFGraphic):
         """
         Set rotation of pattern definition to `angle` in degrees.
 
-        Starts always from the original base rotation ``0``, :code:`set_pattern_angle(0)`
-        reset the pattern rotation to the original appearance as defined by the pattern designer, but only if the
-        the pattern attribute :attr:`dxf.pattern_angle` represents the actual rotation, it is not possible to
-        recreate the original rotation from the pattern definition itself.
+        Starts always from the original base rotation ``0``,
+        :code:`set_pattern_angle(0)` reset the pattern rotation to the original
+        appearance as defined by the pattern designer, but only if the the
+        pattern attribute :attr:`dxf.pattern_angle` represents the actual
+        rotation, it is not possible to recreate the original rotation from the
+        pattern definition itself.
 
         Args:
             angle: rotation angle in degrees
@@ -546,9 +658,10 @@ class Hatch(DXFGraphic):
         dxf.pattern_angle = angle % 360.0
 
     def get_seed_points(self) -> List:
-        """
-        Returns seed points as list of ``(x, y)`` points, I don't know why there can be more than one seed point.
+        """ Returns seed points as list of ``(x, y)`` points.
+        I don't know why there can be more than one seed point.
         All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value).
+
         """
         warnings.warn(
             'Hatch.get_seed_points() is deprecated (removed in v0.15).',
@@ -556,23 +669,24 @@ class Hatch(DXFGraphic):
         )
         return self.seeds
 
-    def set_seed_points(self, points: Sequence[Tuple[float, float]]) -> None:
+    def set_seed_points(self, points: Iterable[Tuple[float, float]]) -> None:
         """
-        Set seed points, `points` is a list of ``(x, y)`` tuples, I don't know why there can be more than one
-        seed point. All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value)
+        Set seed points, `points` is an iterable of ``(x, y)`` tuples.
+        I don't know why there can be more than one seed point.
+        All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value)
+
         """
+        points = list(points)
         if len(points) < 1:
             raise const.DXFValueError(
-                "Param points should be a collection of 2D points and requires at least one point.")
+                "Param points should be an iterable of 2D points and requires at "
+                "least one point."
+            )
         self.seeds = list(points)
         self.dxf.n_seed_points = len(self.seeds)
 
     def transform(self, m: 'Matrix44') -> 'Hatch':
-        """
-        Transform HATCH entity by transformation matrix `m` inplace.
-
-        Non uniform scaling for hatches containing arc- or ellipse edges is not correct,
-        but at least do not produce invalid DXF files.
+        """ Transform HATCH entity by transformation matrix `m` inplace.
 
         .. versionadded:: 0.13
 
@@ -582,7 +696,8 @@ class Hatch(DXFGraphic):
 
         elevation = Vector(dxf.elevation).z
         self.paths.transform(ocs, elevation=elevation)
-        dxf.elevation = ocs.transform_vertex(Vector(0, 0, elevation)).replace(x=0, y=0)
+        dxf.elevation = ocs.transform_vertex(Vector(0, 0, elevation)).replace(
+            x=0, y=0)
         dxf.extrusion = ocs.new_extrusion
         # todo scale pattern
         return self
@@ -590,12 +705,12 @@ class Hatch(DXFGraphic):
     def associate(self, path: TPath, entities: Iterable['DXFEntity']):
         """ Set association from hatch boundary `path` to DXF geometry `entities`.
 
-        A HATCH entity can be associative to a base geometry, this association is **not** maintained nor
-        verified by `ezdxf`, so if you modify the base geometry the geometry of the boundary
-        path is not updated and no verification is done to check if the associated geometry matches
-        the boundary path, this opens many possibilities to create invalid DXF files: USE WITH CARE!
-
-        .. versionadded:: 0.11
+        A HATCH entity can be associative to a base geometry, this association
+        is **not** maintained nor verified by `ezdxf`, so if you modify the base
+        geometry the geometry of the boundary path is not updated and no
+        verification is done to check if the associated geometry matches
+        the boundary path, this opens many possibilities to create
+        invalid DXF files: USE WITH CARE!
 
         """
         self.dxf.associative = 1
@@ -607,7 +722,7 @@ class Hatch(DXFGraphic):
 
 class BoundaryPaths:
     def __init__(self, paths: List[TPath] = None):
-        self.paths = paths or []  # type: List[TPath]
+        self.paths: List[TPath] = paths or []
 
     def __len__(self):
         return len(self.paths)
@@ -623,7 +738,9 @@ class BoundaryPaths:
         for path_tags in grouped_path_tags:
             path_type_flags = path_tags[0].value
             is_polyline_path = bool(path_type_flags & 2)
-            path = PolylinePath.load_tags(path_tags) if is_polyline_path else EdgePath.load_tags(path_tags)
+            path = PolylinePath.load_tags(
+                path_tags) if is_polyline_path else EdgePath.load_tags(
+                path_tags)
             path.path_type_flags = path_type_flags
             paths.append(path)
         return cls(paths)
@@ -632,13 +749,14 @@ class BoundaryPaths:
         """ Remove all boundary paths. """
         self.paths = []
 
-    def add_polyline_path(self, path_vertices: Sequence[Tuple[float, float]], is_closed: bool = True,
+    def add_polyline_path(self, path_vertices: Sequence[Tuple[float, ...]],
+                          is_closed: bool = True,
                           flags: int = 1) -> 'PolylinePath':
-        """
-        Create and add a new :class:`PolylinePath` object.
+        """ Create and add a new :class:`PolylinePath` object.
 
         Args:
-            path_vertices: list of polyline vertices as ``(x, y)`` or ``(x, y, bulge)`` tuples.
+            path_vertices: list of polyline vertices as ``(x, y)`` or
+                ``(x, y, bulge)`` tuples.
             is_closed: ``1`` for a closed polyline else ``0``
             flags: external(``1``) or outermost(``16``) or default (``0``)
 
@@ -650,8 +768,7 @@ class BoundaryPaths:
         return new_path
 
     def add_edge_path(self, flags: int = 1) -> 'EdgePath':
-        """
-        Create and add a new :class:`EdgePath` object.
+        """ Create and add a new :class:`EdgePath` object.
 
         Args:
             flags: external(``1``) or outermost(``16``) or default (``0``)
@@ -681,11 +798,11 @@ class BoundaryPaths:
             path.transform(ocs, elevation=elevation)
 
     def polyline_to_edge_path(self, just_with_bulge=True) -> None:
-        """
-        Convert polyline paths including bulge values to line- and arc edges.
+        """ Convert polyline paths including bulge values to line- and arc edges.
 
         Args:
-            just_with_bulge: convert only polyline paths including bulge values if ``True``
+            just_with_bulge: convert only polyline paths including bulge
+                values if ``True``
 
         """
 
@@ -701,12 +818,16 @@ class BoundaryPaths:
 
                 if prev_bulge != 0:
                     arc = ArcEdge()
-                    arc.center, start_angle, end_angle, arc.radius = bulge_to_arc(prev_point, point, prev_bulge)
-                    chk_point = arc.center + Vec2.from_angle(start_angle, arc.radius)
+                    arc.center, start_angle, end_angle, arc.radius = bulge_to_arc(
+                        prev_point, point, prev_bulge)
+                    chk_point = arc.center + Vec2.from_angle(start_angle,
+                                                             arc.radius)
                     arc.ccw = chk_point.isclose(prev_point, abs_tol=1e-9)
                     arc.start_angle = math.degrees(start_angle) % 360.0
                     arc.end_angle = math.degrees(end_angle) % 360.0
-                    if math.isclose(arc.start_angle, arc.end_angle) and math.isclose(arc.start_angle, 0):
+                    if math.isclose(arc.start_angle,
+                                    arc.end_angle) and math.isclose(
+                        arc.start_angle, 0):
                         arc.end_angle = 360.0
                     yield arc
                 else:
@@ -757,15 +878,17 @@ class BoundaryPaths:
         Convert all ellipse edges to spline edges (approximation).
 
         Args:
-            num: count of control points for a **full** ellipse, partial ellipses have proportional fewer control points
-                 but at least 3.
+            num: count of control points for a **full** ellipse, partial
+                ellipses have proportional fewer control points but at least 3.
 
         """
 
         def to_spline_edge(e: EllipseEdge) -> SplineEdge:
-            # No OCS transformation needed, source ellipse and target spline reside in the same OCS.
+            # No OCS transformation needed, source ellipse and target spline
+            # reside in the same OCS.
             # ezdxf stores angles always in counter-clockwise orientation.
-            # DXF conversion is done at export, see also ArcEdge.load_tags() for explanation
+            # DXF conversion is done at export, see also ArcEdge.load_tags()
+            # for explanation.
 
             ellipse = ConstructionEllipse(
                 center=e.center, major_axis=e.major_axis, ratio=e.ratio,
@@ -794,7 +917,8 @@ class BoundaryPaths:
         """ Convert all spline edges to line edges (approximation).
 
         Args:
-            factor: count of approximation segments = count of control points x factor
+            factor: count of approximation segments = count of control
+                points x factor
 
         """
 
@@ -808,9 +932,11 @@ class BoundaryPaths:
                     weights=weights if len(weights) else None,
                 )
             elif len(spline_edge.fit_points):
-                bspline = BSpline.from_fit_points(spline_edge.fit_points, spline_edge.degree)
+                bspline = BSpline.from_fit_points(spline_edge.fit_points,
+                                                  spline_edge.degree)
             else:
-                raise DXFStructureError('SplineEdge() without control points or fit points.')
+                raise DXFStructureError(
+                    'SplineEdge() without control points or fit points.')
             segment_count = (max(len(bspline.control_points), 3) - 1) * factor
             vertices = list(bspline.approximate(segment_count))
             for v1, v2 in zip(vertices[:-1], vertices[1:]):
@@ -833,8 +959,8 @@ class BoundaryPaths:
         """ Convert all ellipse edges to line edges (approximation).
 
         Args:
-            num: count of control points for a **full** ellipse, partial ellipses have proportional fewer control points
-                 but at least 3.
+            num: count of control points for a **full** ellipse, partial
+                ellipses have proportional fewer control points but at least 3.
 
         """
 
@@ -846,7 +972,8 @@ class BoundaryPaths:
                 start_param=edge.start_param,
                 end_param=edge.end_param,
             )
-            segment_count = max(int(float(num) * ellipse.param_span / math.tau), 3)
+            segment_count = max(int(float(num) * ellipse.param_span / math.tau),
+                                3)
             params = ellipse.params(segment_count + 1)
             if not edge.ccw:
                 params = reversed(list(params))
@@ -868,11 +995,13 @@ class BoundaryPaths:
                 path.edges = new_edges
 
     def all_to_spline_edges(self, num: int = 64) -> None:
-        """ Convert all bulge, arc and ellipse edges to spline edges (approximation).
+        """ Convert all bulge, arc and ellipse edges to spline edges
+        (approximation).
 
         Args:
-            num: count of control points for a **full** circle/ellipse, partial circles/ellipses have
-                 proportional fewer control points but at least 3.
+            num: count of control points for a **full** circle/ellipse, partial
+                circles/ellipses have proportional fewer control points but at
+                least 3.
 
         """
         self.polyline_to_edge_path(just_with_bulge=True)
@@ -880,13 +1009,15 @@ class BoundaryPaths:
         self.ellipse_edges_to_spline_edges(num)
 
     def all_to_line_edges(self, num: int = 64, spline_factor: int = 8) -> None:
-        """ Convert all bulge, arc and ellipse edges to spline edges and approximate this splines by
-        line edges.
+        """ Convert all bulge, arc and ellipse edges to spline edges and
+        approximate this splines by line edges.
 
         Args:
-            num: count of control points for a **full** circle/ellipse, partial circles/ellipses have
-                 proportional fewer control points but at least 3.
-            spline_factor: count of spline approximation segments = count of control points x spline_factor
+            num: count of control points for a **full** circle/ellipse, partial
+                circles/ellipses have proportional fewer control points but at
+                least 3.
+            spline_factor: count of spline approximation segments = count of
+                control points x spline_factor
 
         """
         self.polyline_to_edge_path(just_with_bulge=True)
@@ -895,7 +1026,10 @@ class BoundaryPaths:
         self.spline_edges_to_line_edges(spline_factor)
 
     def has_critical_elements(self) -> bool:
-        """ Returns ``True`` if any boundary path has bulge values or arc edges or ellipse edges. """
+        """ Returns ``True`` if any boundary path has bulge values or arc edges
+        or ellipse edges.
+
+        """
         for path in self.paths:
             if path.PATH_TYPE == 'PolylinePath':
                 return path.has_bulge()
@@ -918,10 +1052,12 @@ def pop_source_boundary_objects_tags(path_tags: Tags) -> List[str]:
                 source_boundary_object_tags.reverse()
                 return source_boundary_object_tags
         else:
-            return []  # no source boundary objects found - entity is not valid for AutoCAD
+            # No source boundary objects found - entity is not valid for AutoCAD
+            return []
 
 
-def export_source_boundary_objects(tagwriter: 'TagWriter', handles: Sequence[str]):
+def export_source_boundary_objects(tagwriter: 'TagWriter',
+                                   handles: Sequence[str]):
     tagwriter.write_tag2(97, len(handles))
     for handle in handles:
         tagwriter.write_tag2(330, handle)
@@ -933,7 +1069,8 @@ class PolylinePath:
     def __init__(self):
         self.path_type_flags: int = const.BOUNDARY_PATH_POLYLINE
         self.is_closed = False
-        # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
+        # List of 2D coordinates with bulge values (x, y, bulge);
+        # bulge default = 0.0
         self.vertices: List[Tuple[float, float, float]] = []
         self.source_boundary_objects: List[str] = []  # (330, handle) tags
 
@@ -944,10 +1081,12 @@ class PolylinePath:
         for tag in tags:
             code, value = tag
             if code == 10:  # vertex coordinates
-                path.vertices.append((value[0], value[1], 0.0))  # (x, y, bulge); bulge default = 0.0
+                # (x, y, bulge); bulge default = 0.0
+                path.vertices.append((value[0], value[1], 0.0))
             elif code == 42:  # bulge value
-                x, y, bulge = path.vertices.pop()  # last value
-                path.vertices.append((x, y, value))  # last coordinates with new bulge value
+                x, y, bulge = path.vertices.pop()
+                # Last coordinates with new bulge value
+                path.vertices.append((x, y, value))
             elif code == 72:
                 pass  # ignore this value
             elif code == 73:
@@ -958,8 +1097,11 @@ class PolylinePath:
                 pass  # ignore this value
         return path
 
-    def set_vertices(self, vertices: Sequence[Sequence[float]], is_closed: bool = True) -> None:
-        """ Set new `vertices` as new polyline path, a vertex has to be a ``(x, y)`` or a ``(x, y, bulge)`` tuple.
+    def set_vertices(self, vertices: Sequence[Sequence[float]],
+                     is_closed: bool = True) -> None:
+        """ Set new `vertices` as new polyline path, a vertex has to be a
+        ``(x, y)`` or a ``(x, y, bulge)`` tuple.
+
         """
         new_vertices = []
         for vertex in vertices:
@@ -969,13 +1111,16 @@ class PolylinePath:
             elif len(vertex) == 3:
                 x, y, bulge = vertex
             else:
-                raise const.DXFValueError("Invalid vertex format, expected (x, y) or (x, y, bulge)")
+                raise const.DXFValueError(
+                    "Invalid vertex format, expected (x, y) or (x, y, bulge)")
             new_vertices.append((x, y, bulge))
         self.vertices = new_vertices
         self.is_closed = is_closed
 
     def clear(self) -> None:
-        """ Removes all vertices and all handles to associated DXF objects (:attr:`source_boundary_objects`). """
+        """ Removes all vertices and all handles to associated DXF objects
+        (:attr:`source_boundary_objects`).
+        """
         self.vertices = []
         self.is_closed = False
         self.source_boundary_objects = []
@@ -1005,9 +1150,11 @@ class PolylinePath:
 
         def _transform():
             for x, y, bulge in self.vertices:
-                # PolylinePaths() with arcs should be converted to EdgePath (in BoundaryPath.transform()).
+                # PolylinePaths() with arcs should be converted to
+                # EdgePath(in BoundaryPath.transform()).
                 if bulge and has_non_uniform_scaling:
-                    raise NonUniformScalingError('Polyline path with arcs does not support non uniform scaling')
+                    raise NonUniformScalingError(
+                        'Polyline path with arcs does not support non-uniform scaling')
                 v = ocs.transform_vertex(Vector(x, y, elevation))
                 yield v.x, v.y, bulge
 
@@ -1029,7 +1176,8 @@ class EdgePath:
     @classmethod
     def load_tags(cls, tags: Tags) -> 'EdgePath':
         edge_path = cls()
-        edge_path.source_boundary_objects = pop_source_boundary_objects_tags(tags)
+        edge_path.source_boundary_objects = pop_source_boundary_objects_tags(
+            tags)
         edge_groups = group_tags(tags, splitcode=72)
         for edge_tags in edge_groups:
             edge_path.edges.append(edge_path.load_edge(edge_tags))
@@ -1041,17 +1189,17 @@ class EdgePath:
         if 0 < edge_type < 5:
             return EDGE_CLASSES[edge_type].load_tags(tags[1:])
         else:
-            raise const.DXFStructureError("HATCH: unknown edge type: {}".format(edge_type))
+            raise const.DXFStructureError(
+                f"HATCH: unknown edge type: {edge_type}")
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
-        """ Transform edge boundary paths.
-        """
+        """ Transform edge boundary paths. """
         for edge in self.edges:
             edge.transform(ocs, elevation=elevation)
 
-    def add_line(self, start: Sequence[float], end: Sequence[float]) -> 'LineEdge':
-        """
-        Add a :class:`LineEdge` from `start` to `end`.
+    def add_line(self, start: Sequence[float],
+                 end: Sequence[float]) -> 'LineEdge':
+        """ Add a :class:`LineEdge` from `start` to `end`.
 
         Args:
             start: start point of line, ``(x, y)`` tuple
@@ -1069,15 +1217,15 @@ class EdgePath:
                 start_angle: float = 0.,
                 end_angle: float = 360.,
                 ccw: bool = True) -> 'ArcEdge':
-        """
-        Add an :class:`ArcEdge`.
+        """ Add an :class:`ArcEdge`.
 
         Args:
             center: center point of arc, ``(x, y)`` tuple
             radius: radius of circle
             start_angle: start angle of arc in degrees
             end_angle: end angle of arc in degrees
-            ccw: ``True`` for counter clockwise ``False`` for clockwise orientation
+            ccw: ``True`` for counter clockwise ``False`` for
+                clockwise orientation
 
         """
         arc = ArcEdge()
@@ -1095,8 +1243,7 @@ class EdgePath:
                     start_angle: float = 0.,
                     end_angle: float = 360.,
                     ccw: bool = True) -> 'EllipseEdge':
-        """
-        Add an :class:`EllipseEdge`.
+        """ Add an :class:`EllipseEdge`.
 
         Args:
             center: center point of ellipse, ``(x, y)`` tuple
@@ -1104,7 +1251,8 @@ class EdgePath:
             ratio: ratio of minor axis to major axis as float
             start_angle: start angle of arc in degrees
             end_angle: end angle of arc in degrees
-            ccw: ``True`` for counter clockwise ``False`` for clockwise orientation
+            ccw: ``True`` for counter clockwise ``False`` for
+                clockwise orientation
 
         """
         if ratio > 1.:
@@ -1128,18 +1276,17 @@ class EdgePath:
                    start_tangent: 'Vertex' = None,
                    end_tangent: 'Vertex' = None,
                    ) -> 'SplineEdge':
-        """
-        Add a :class:`SplineEdge`.
+        """ Add a :class:`SplineEdge`.
 
         Args:
-            fit_points: points through which the spline must go, at least 3 fit points are required.
-                        list of ``(x, y)`` tuples
-            control_points: affects the shape of the spline, mandatory and AutoCAD crashes on invalid data.
-                            list of ``(x, y)`` tuples
-            knot_values: (knot vector) mandatory and AutoCAD crashes on invalid data. list of floats;
-                         `ezdxf` provides two tool functions to calculate valid knot values:
-                         :func:`ezdxf.math.uniform_knot_vector`,
-                         :func:`ezdxf.math.open_uniform_knot_vector` (default if ``None``)
+            fit_points: points through which the spline must go, at least 3 fit
+                points are required. list of ``(x, y)`` tuples
+            control_points: affects the shape of the spline, mandatory and
+                AutoCAD crashes on invalid data. list of ``(x, y)`` tuples
+            knot_values: (knot vector) mandatory and AutoCAD crashes on invalid
+                data. list of floats; `ezdxf` provides two tool functions to
+                calculate valid knot values: :func:`ezdxf.math.uniform_knot_vector`,
+                :func:`ezdxf.math.open_uniform_knot_vector` (default if ``None``)
             weights: weight of control point, not mandatory, list of floats.
             degree: degree of spline (int)
             periodic: ``1`` for periodic spline, ``0`` for none periodic spline
@@ -1148,8 +1295,9 @@ class EdgePath:
 
         .. warning::
 
-            Unlike for the spline entity AutoCAD does not calculate the necessary `knot_values` for the spline edge
-            itself. On the contrary, if the `knot_values` in the spline edge are missing or invalid
+            Unlike for the spline entity AutoCAD does not calculate the
+            necessary `knot_values` for the spline edge itself. On the contrary,
+            if the `knot_values` in the spline edge are missing or invalid
             AutoCAD **crashes**.
 
         """
@@ -1161,7 +1309,9 @@ class EdgePath:
         if knot_values is not None:
             spline.knot_values = list(knot_values)
         else:
-            spline.knot_values = list(open_uniform_knot_vector(len(spline.control_points), degree + 1))
+            spline.knot_values = list(
+                open_uniform_knot_vector(len(spline.control_points),
+                                         degree + 1))
         if weights is not None:
             spline.weights = list(weights)
         spline.degree = degree
@@ -1174,10 +1324,12 @@ class EdgePath:
         self.edges.append(spline)
         return spline
 
-    def add_spline_control_frame(self, fit_points: Iterable[Tuple[float, float]],
+    def add_spline_control_frame(self,
+                                 fit_points: Iterable[Tuple[float, float]],
                                  degree: int = 3,
                                  method: str = 'distance') -> 'SplineEdge':
-        bspline = global_bspline_interpolation(fit_points=fit_points, degree=degree, method=method)
+        bspline = global_bspline_interpolation(fit_points=fit_points,
+                                               degree=degree, method=method)
         return self.add_spline(
             fit_points=fit_points,
             control_points=bspline.control_points,
@@ -1196,9 +1348,11 @@ class EdgePath:
         export_source_boundary_objects(tagwriter, self.source_boundary_objects)
 
 
-def _transform_2d_ocs_vertices(ucs, vertices, elevation, extrusion) -> List[Tuple[float, float]]:
+def _transform_2d_ocs_vertices(ucs, vertices, elevation, extrusion) -> List[
+    Tuple[float, float]]:
     ocs_vertices = (Vector(x, y, elevation) for x, y in vertices)
-    return [(v.x, v.y) for v in ucs.ocs_points_to_ocs(ocs_vertices, extrusion=extrusion)]
+    return [(v.x, v.y) for v in
+            ucs.ocs_points_to_ocs(ocs_vertices, extrusion=extrusion)]
 
 
 class LineEdge:
@@ -1284,7 +1438,8 @@ class ArcEdge:
             start = self.start_angle
             end = self.end_angle
         else:
-            # swap and convert to complementary angles: see ArcEdge.load_tags() for explanation
+            # swap and convert to complementary angles: see ArcEdge.load_tags()
+            # for explanation
             start = 360.0 - self.end_angle
             end = 360.0 - self.start_angle
         tagwriter.write_tag2(10, float(x))
@@ -1352,7 +1507,8 @@ class EllipseEdge:
             edge.start_angle = start
             edge.end_angle = end
         else:
-            # swap and convert to complementary angles: see ArcEdge.load_tags() for explanation
+            # swap and convert to complementary angles: see ArcEdge.load_tags()
+            # for explanation
             edge.start_angle = 360.0 - end
             edge.end_angle = 360.0 - start
 
@@ -1371,7 +1527,8 @@ class EllipseEdge:
             start = self.start_angle
             end = self.end_angle
         else:
-            # swap and convert to complementary angles: see ArcEdge.load_tags() for explanation
+            # swap and convert to complementary angles: see ArcEdge.load_tags()
+            # for explanation
             start = 360.0 - self.end_angle
             end = 360.0 - self.start_angle
 
@@ -1420,7 +1577,8 @@ class EllipseEdge:
             # ellipse extrusion is opposite to new hatch extrusion
             self.start_angle, self.end_angle = -self.end_angle, -self.start_angle
         else:
-            raise ArithmeticError('Invalid EllipseEdge() transformation, please send bug report.')
+            raise ArithmeticError(
+                'Invalid EllipseEdge() transformation, please send bug report.')
 
         # normalize angles in range 0 to 360 degrees
         self.start_angle = self.start_angle % 360.0
@@ -1474,7 +1632,8 @@ class SplineEdge:
             if len(self.weights) == len(self.control_points):
                 self.rational = 1
             else:
-                raise const.DXFValueError("SplineEdge: count of control points and count of weights mismatch")
+                raise const.DXFValueError(
+                    "SplineEdge: count of control points and count of weights mismatch")
         else:
             self.rational = 0
 
@@ -1491,7 +1650,8 @@ class SplineEdge:
             for value in self.knot_values:
                 write_tag(40, float(value))
         else:
-            raise const.DXFValueError("SplineEdge: missing required knot values")
+            raise const.DXFValueError(
+                "SplineEdge: missing required knot values")
 
         # build control points
         # control points have to be present and valid, otherwise AutoCAD crashes
@@ -1527,8 +1687,10 @@ class SplineEdge:
             write_tag(23, float(y))
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
-        self.control_points = list(ocs.transform_2d_vertex(v, elevation) for v in self.control_points)
-        self.fit_points = list(ocs.transform_2d_vertex(v, elevation) for v in self.fit_points)
+        self.control_points = list(
+            ocs.transform_2d_vertex(v, elevation) for v in self.control_points)
+        self.fit_points = list(
+            ocs.transform_2d_vertex(v, elevation) for v in self.fit_points)
         if self.start_tangent is not None:
             t = Vector(self.start_tangent).replace(z=elevation)
             self.start_tangent = ocs.transform_direction(t).vec2
@@ -1542,38 +1704,31 @@ EdgeTypes = Union[LineEdge, ArcEdge, EllipseEdge, SplineEdge]
 
 
 class Pattern:
-    def __init__(self, lines=None):
-        self.lines = lines or []
+    def __init__(self, lines: Iterable['PatternLine'] = None):
+        self.lines: List['PatternLine'] = list(lines) if lines else []
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'Pattern':
         grouped_line_tags = group_tags(tags, splitcode=53)
-        return cls([PatternLine.load_tags(line_tags) for line_tags in grouped_line_tags])
+        return cls(
+            PatternLine.load_tags(line_tags) for line_tags in grouped_line_tags)
 
     def clear(self) -> None:
         """ Delete all pattern definition lines. """
         self.lines = []
 
     def add_line(self,
-                 angle: float = 0.,
-                 base_point: Tuple[float, float] = (0., 0.),
-                 offset: Tuple[float, float] = (0., 0.),
-                 dash_length_items: List[float] = None) -> None:
-        """ Create a new pattern definition line and add the line to the :attr:`Pattern.lines` attribute. """
-        self.lines.append(self.new_line(angle, base_point, offset, dash_length_items))
-
-    @staticmethod
-    def new_line(angle: float = 0.,
-                 base_point: Tuple[float, float] = (0., 0.),
-                 offset: Tuple[float, float] = (0., 0.),
-                 dash_length_items: List[float] = None) -> 'PatternLine':
-        """
-        Create a new pattern definition line, but does not add the line to the :attr:`Pattern.lines` attribute.
+                 angle: float = 0,
+                 base_point: 'Vertex' = (0, 0),
+                 offset: 'Vertex' = (0, 0),
+                 dash_length_items: Iterable[float] = None) -> None:
+        """ Create a new pattern definition line and add the line to the
+        :attr:`Pattern.lines` attribute.
 
         """
-        if dash_length_items is None:
-            raise const.DXFValueError("Parameter 'dash_length_items' must not be None.")
-        return PatternLine(angle, base_point, offset, dash_length_items)
+        assert dash_length_items is not None, "argument 'dash_length_items' is None"
+        self.lines.append(
+            PatternLine(angle, base_point, offset, dash_length_items))
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         if len(self.lines):
@@ -1588,11 +1743,10 @@ class Pattern:
         return [line.as_list() for line in self.lines]
 
     def scale(self, factor: float = 1, angle: float = 0) -> None:
-        """
-        Scale and rotate pattern.
+        """ Scale and rotate pattern.
 
-        Be careful, this changes the base pattern definition, maybe better use :meth:`Hatch.set_pattern_scale` or
-        :meth:`Hatch.set_pattern_angle`.
+        Be careful, this changes the base pattern definition, maybe better use
+        :meth:`Hatch.set_pattern_scale` or :meth:`Hatch.set_pattern_angle`.
 
         Args:
             factor: scaling factor
@@ -1601,7 +1755,8 @@ class Pattern:
         .. versionadded:: 0.13
 
         """
-        scaled_pattern = pattern.scale_pattern(self.as_list(), factor=factor, angle=angle)
+        scaled_pattern = pattern.scale_pattern(self.as_list(), factor=factor,
+                                               angle=angle)
         self.clear()
         for line in scaled_pattern:
             self.add_line(*line)
@@ -1609,14 +1764,16 @@ class Pattern:
 
 class PatternLine:
     def __init__(self,
-                 angle: float = 0.,
-                 base_point: Tuple[float, float] = (0., 0.),
-                 offset: Tuple[float, float] = (0., 0.),
-                 dash_length_items: List[float] = None):
-        self.angle = angle  # as always in degrees (circle = 360 deg)
-        self.base_point = base_point
-        self.offset = offset
-        self.dash_length_items = [] if dash_length_items is None else dash_length_items  # type: List[float]
+                 angle: float = 0,
+                 base_point: 'Vertex' = (0, 0),
+                 offset: 'Vertex' = (0, 0),
+                 dash_length_items: Iterable[float] = None):
+        self.angle: float = float(angle)  # in degrees
+        self.base_point: Vec2 = Vec2(base_point)
+        self.offset: Vec2 = Vec2(offset)
+        self.dash_length_items: List[
+            float] = [] if dash_length_items is None else list(
+            dash_length_items)
         # dash_length_items = [item0, item1, ...]
         # item > 0 is line, < 0 is gap, 0.0 = dot;
 
@@ -1630,49 +1787,58 @@ class PatternLine:
                 dash_length_items.append(value)
             else:
                 p[code] = value
-        return PatternLine(p[53], (p[43], p[44]), (p[45], p[46]), dash_length_items)
+        return PatternLine(p[53], (p[43], p[44]), (p[45], p[46]),
+                           dash_length_items)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         write_tag = tagwriter.write_tag2
         write_tag(53, self.angle)
-        write_tag(43, self.base_point[0])
-        write_tag(44, self.base_point[1])
-        write_tag(45, self.offset[0])
-        write_tag(46, self.offset[1])
+        write_tag(43, self.base_point.x)
+        write_tag(44, self.base_point.y)
+        write_tag(45, self.offset.x)
+        write_tag(46, self.offset.y)
         write_tag(79, len(self.dash_length_items))
         for item in self.dash_length_items:
             write_tag(49, item)
 
     def __str__(self):
-        return "[{0.angle}, {0.base_point}, {0.offset}, {0.dash_length_items}]".format(self)
+        return "[{0.angle}, {0.base_point}, {0.offset}, {0.dash_length_items}]".format(
+            self)
 
     def as_list(self) -> List:
-        return [self.angle, self.base_point, self.offset, self.dash_length_items]
+        return [self.angle, self.base_point, self.offset,
+                self.dash_length_items]
 
 
 class Gradient:
     def __init__(self):
-        self.kind = 1  # 1 for gradient by default, 0 for Solid
-        self.color1 = (0, 0, 0)  # type: RGB
-        self.aci1 = None
-        self.color2 = (255, 255, 255)  # type: RGB
-        self.aci2 = None
-        self.one_color = 0  # if 1 - a fill that uses a smooth transition between color1 and a specified tint
-        self.rotation = 0.  # use grad NOT radians here, because there should be ONE system for all angles
-        self.centered = 0.
-        self.tint = 0.0
-        self.name = 'LINEAR'
+        # 1 for gradient by default, 0 for Solid
+        self.kind: int = 1
+        self.color1: RGB = (0, 0, 0)
+        self.aci1: Optional[int] = None
+        self.color2: RGB = (255, 255, 255)
+        self.aci2: Optional[int] = None
+
+        # 1 = use a smooth transition between color1 and a specified tint
+        self.one_color: int = 0
+
+        # Use degree NOT radians for rotation, because there should be one
+        # system for all angles:
+        self.rotation: float = 0.0
+        self.centered: float = 0.0
+        self.tint: float = 0.0
+        self.name: str = 'LINEAR'
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'Gradient':
         gdata = cls()
         assert tags[0].code == 450
-        gdata.kind = tags[0].value  # 0 for solid - 1 for gradient
+        gdata.kind = tags[0].value  # 0 = solid; 1 = gradient
         first_color_value = True
         first_aci_value = True
         for code, value in tags:
             if code == 460:
-                gdata.rotation = math.degrees(value)  # radians to grad
+                gdata.rotation = math.degrees(value)
             elif code == 461:
                 gdata.centered = value
             elif code == 452:
@@ -1696,14 +1862,16 @@ class Gradient:
         return gdata
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
-        # order matters!
+        # Tag order matters!
         write_tag = tagwriter.write_tag2
         write_tag(450, self.kind)  # gradient or solid
         write_tag(451, 0)  # reserved for the future
-        write_tag(460, math.radians(self.rotation))  # rotation angle in radians
-        write_tag(461, self.centered)  # see DXF standard
-        write_tag(452, self.one_color)  # one (1) or two (0) color gradient
-        write_tag(462, self.tint)  # see DXF standard
+
+        # rotation angle in radians:
+        write_tag(460, math.radians(self.rotation))
+        write_tag(461, self.centered)
+        write_tag(452, self.one_color)
+        write_tag(462, self.tint)
         write_tag(453, 2)  # number of colors
         write_tag(463, 0)  # first value, see DXF standard
         if self.aci1 is not None:

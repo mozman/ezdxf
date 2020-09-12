@@ -1,5 +1,4 @@
 .. module:: ezdxf.addons.dxf2code
-    :noindex:
 
 .. _dxf2code:
 

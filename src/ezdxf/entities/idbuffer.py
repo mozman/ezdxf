@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
 # Created: 2019-03-11
 from typing import TYPE_CHECKING, List
@@ -9,7 +9,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, Tags
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Tags
 
 __all__ = ['IDBuffer', 'FieldList', 'LayerFilter']
 
@@ -22,19 +22,21 @@ class IDBuffer(DXFObject):
     DXFTYPE = 'IDBUFFER'
     DXFATTRIBS = DXFAttributes(base_class, acdb_id_buffer)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
-        self.handles = []  # type: List[str]
+    def __init__(self):
+        super().__init__()
+        self.handles: List[str] = []
 
     def _copy_data(self, entity: 'IDBuffer') -> None:
         """ Copy handles """
         entity.handles = list(self.handles)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             if len(processor.subclasses) < 2:
-                raise DXFStructureError('Missing required subclass in IDBUFFER(#{})'.format(dxf.handle))
+                raise DXFStructureError(
+                    f'Missing required subclass in IDBUFFER(#{dxf.handle})')
             self.load_handles(processor.subclasses[1])
         return dxf
 
@@ -43,7 +45,6 @@ class IDBuffer(DXFObject):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_id_buffer.name)
         self.export_handles(tagwriter)
@@ -65,18 +66,19 @@ class FieldList(IDBuffer):
     DXFTYPE = 'FIELDLIST'
     DXFATTRIBS = DXFAttributes(base_class, acdb_id_set, acdb_field_list)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super(DXFObject, self).load_dxf_attribs(processor)
         if processor:
             if len(processor.subclasses) < 3:
-                raise DXFStructureError('Missing required subclass in FIELDLIST(#{})'.format(dxf.handle))
+                raise DXFStructureError(
+                    f'Missing required subclass in FIELDLIST(#{dxf.handle})')
             processor.load_dxfattribs_into_namespace(dxf, acdb_id_set)
             self.load_handles(processor.subclasses[2])
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super(DXFObject, self).export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_id_set.name)
         self.dxf.export_dxf_attribs(tagwriter, 'flags')
@@ -94,17 +96,18 @@ class LayerFilter(IDBuffer):
     DXFTYPE = 'LAYER_FILTER'
     DXFATTRIBS = DXFAttributes(base_class, acdb_filter, acdb_layer_filter)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super(DXFObject, self).load_dxf_attribs(processor)
         if processor:
             if len(processor.subclasses) < 3:
-                raise DXFStructureError('Missing required subclass in LAYER_FILTER(#{})'.format(dxf.handle))
+                raise DXFStructureError(
+                    f'Missing required subclass in LAYER_FILTER(#{dxf.handle})')
             self.load_handles(processor.subclasses[2])
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super(DXFObject, self).export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_filter.name)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_layer_filter.name)

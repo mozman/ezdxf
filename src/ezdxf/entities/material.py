@@ -1,8 +1,8 @@
 # Created: 06.04.2018
-# Copyright (c) 2018-2019, Manfred Moitzi
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Optional
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFTypeError
+from ezdxf.lldxf.const import SUBCLASS_MARKER
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
@@ -179,16 +179,15 @@ class Material(DXFObject):
     }
     DXFATTRIBS = DXFAttributes(base_class, acdb_material)
 
-    def __init__(self, doc: 'Drawing' = None):
-        super().__init__(doc)
-
-        self.diffuse_mapper_matrix = None  # type: Matrix44  # group code 43
-        self.specular_mapper_matrix = None  # type: Matrix44  # group code 47
-        self.reflexion_mapper_matrix = None  # type: Matrix44  # group code 49
-        self.opacity_mapper_matrix = None  # type: Matrix44  # group code 142
-        self.bump_mapper_matrix = None  # type: Matrix44  # group code 144
-        self.refraction_mapper_matrix = None  # type: Matrix44  # group code 147
-        self.normal_mapper_matrix = None  # type: Matrix44  # group code 43 ???
+    def __init__(self):
+        super().__init__()
+        self.diffuse_mapper_matrix: Optional[Matrix44] = None  # code 43
+        self.specular_mapper_matrix: Optional[Matrix44] = None  # code 47
+        self.reflexion_mapper_matrix: Optional[Matrix44] = None  # code 49
+        self.opacity_mapper_matrix: Optional[Matrix44] = None  # group 142
+        self.bump_mapper_matrix: Optional[Matrix44] = None  # group 144
+        self.refraction_mapper_matrix: Optional[Matrix44] = None  # code 147
+        self.normal_mapper_matrix: Optional[Matrix44] = None  # code 43 ???
 
     def _copy_data(self, entity: 'Material') -> None:
         """ Copy material mapper matrices """

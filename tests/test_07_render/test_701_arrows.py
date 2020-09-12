@@ -1,8 +1,8 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-import pytest
 import ezdxf
 from ezdxf.render.arrows import ARROWS
+from ezdxf.layouts import VirtualLayout
 
 
 def test_filled_solid_arrow():
@@ -36,3 +36,12 @@ def test_closed_arrow_doc_r2000():
     assert arrow_entities[0].dxftype() == 'LWPOLYLINE'
 
 
+def test_render_arrow():
+    layout = VirtualLayout()
+    ARROWS.render_arrow(layout, ARROWS.closed, insert=(0, 0, 0))
+    assert len(layout) > 0
+
+
+def test_virtual_entities():
+    entities = list(ARROWS.virtual_entities(ARROWS.closed, insert=(0, 0, 0)))
+    assert len(entities) > 0

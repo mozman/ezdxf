@@ -50,7 +50,7 @@ class TestConstructionRay:
         assert point.isclose(Vector(10., -4.4074), abs_tol=1e-4)
         with pytest.raises(ArithmeticError):
             _ = ray1.yof(1)
-            
+
     def test_ray2d_intersect_with_horizontal(self):
         ray1 = ConstructionRay((-10, 10), (10, 10))
         ray2 = ConstructionRay((-10, 20), (10, 0))
@@ -122,3 +122,15 @@ class TestConstructionRay:
         assert math.isclose(a.yof(7), 12.80385, abs_tol=1e-4)
         with pytest.raises(ParallelRaysError):
             _ = ray1.bisectrix(ray3)
+
+    def test_two_close_horizontal_rays(self):
+        p1 = (39340.75302672016, 32489.73349764998)
+        p2 = (39037.75302672119, 32489.73349764978)
+        p3 = (38490.75302672015, 32489.73349764997)
+
+        ray1 = ConstructionRay(p1, p2)
+        ray2 = ConstructionRay(p2, p3)
+        assert ray1.is_horizontal is True
+        assert ray2.is_horizontal is True
+        assert ray1.is_parallel(ray2) is True
+        assert math.isclose(ray1.slope, ray2.slope) is False, 'Only slope testing is not sufficient'

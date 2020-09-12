@@ -1,11 +1,11 @@
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 import pytest
 from ezdxf.entitydb import EntityDB
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.audit import Auditor
 
-ENTITY = DXFEntity.from_text("0\nTEST\n5\nFFFF\n")
+ENTITY = DXFEntity.new(handle='FFFF')
 auditor = Auditor(None)
 
 
@@ -21,7 +21,7 @@ def test_get_value(db):
 
 
 def test_set_value(db):
-    new_entity = DXFEntity.from_text("0\nTEST\n5\nFFFF\n")
+    new_entity = DXFEntity.new(handle='FEFE')
     db['FEFE'] = new_entity
     assert new_entity is db['FEFE']
 
@@ -35,7 +35,7 @@ def test_del_value(db):
 
 def test_delete_entity():
     db = EntityDB()
-    entity = DXFEntity.from_text("0\nTEST\n5\nFFFF\n")
+    entity = DXFEntity()
     db.add(entity)
     assert len(db) == 1
     db.delete_entity(entity)
@@ -44,14 +44,14 @@ def test_delete_entity():
 
 def test_delete_dead_entity_entity():
     db = EntityDB()
-    entity = DXFEntity.from_text("0\nTEST\n5\nFFFF\n")
+    entity = DXFEntity.new(handle='FEFE')
     db.add(entity)
     assert len(db) == 1
     entity.destroy()
     # delete_entity() should not raise an error if entity is not alive!
     db.delete_entity(entity)
     # but entity.destroy() does not remove entity from EntityDB!
-    assert 'FFFF' in db
+    assert 'FEFE' in db
     assert len(db) == 1
     # Auditor() removes such dead entities from database see test_restore_integrity_purge()
 
@@ -84,7 +84,7 @@ def test_len(db):
 
 def test_restore_integrity_purge():
     db = EntityDB()
-    e = DXFEntity.from_text("0\nTEST\n5\nABBA\n")
+    e = DXFEntity.new()
     db.add(e)
     assert len(db) == 1
     db.audit(auditor)
@@ -96,7 +96,7 @@ def test_restore_integrity_purge():
 
 def test_restore_integrity_recover():
     db = EntityDB()
-    e = DXFEntity.from_text("0\nTEST\n5\nABBA\n")
+    e = DXFEntity.new(handle='ABBA')
     db.add(e)
     assert len(db) == 1
 
@@ -113,7 +113,7 @@ def test_restore_integrity_recover():
 
 def test_restore_integrity_remove_invalid_None():
     db = EntityDB()
-    e = DXFEntity.from_text("0\nTEST\n5\nABBA\n")
+    e = DXFEntity.new()
     db.add(e)
     assert len(db) == 1
 
@@ -125,7 +125,7 @@ def test_restore_integrity_remove_invalid_None():
 
 def test_restore_integrity_remove_invalid_handle():
     db = EntityDB()
-    e = DXFEntity.from_text("0\nTEST\n5\nABBA\n")
+    e = DXFEntity.new(handle='ABBA')
     db.add(e)
     assert len(db) == 1
 
@@ -133,3 +133,63 @@ def test_restore_integrity_remove_invalid_handle():
     e.dxf.handle = 'XFFF'
     db.audit(auditor)
     assert len(db) == 0
+
+
+def test_add_entity_multiple_times():
+    db = EntityDB()
+    e = DXFEntity()
+    db.add(e)
+    handle = e.dxf.handle
+    assert len(db) == 1
+
+    db.add(e)
+    assert e.dxf.handle == handle, 'handle must not change'
+    assert len(db) == 1, 'do not store same entity multiple times'
+
+
+def test_discard_contained_entity():
+    db = EntityDB()
+    e = DXFEntity()
+    db.add(e)
+    assert len(db) == 1
+    db.discard(e)
+    assert len(db) == 0
+    assert e.dxf.handle is None
+
+
+def test_discard_entity_with_none_handle():
+    db = EntityDB()
+    e = DXFEntity()
+    assert e.dxf.handle is None
+    # call should not raise any Exception
+    db.discard(e)
+    # 2rd call should not raise any Exception
+    db.discard(e)
+
+
+def test_discard_entity_with_handle_not_in_database():
+    db = EntityDB()
+    e = DXFEntity()
+    e.dxf.handle = 'ABBA'
+    assert e.dxf.handle not in db
+    # call should not raise any Exception
+    db.discard(e)
+    # 2rd call should not raise any Exception
+    db.discard(e)
+    assert e.dxf.handle is 'ABBA', \
+        'set handle to None, only if entity was removed'
+
+
+def test_trashcan_context_manager():
+    db = EntityDB()
+    entities = [DXFEntity() for _ in range(5)]
+    for e in entities:
+        db.add(e)
+    handles = list(db.keys())
+    with db.trashcan() as trashcan:
+        trashcan.add(handles[0])
+        trashcan.add(handles[1])
+
+    assert len(db) == 3
+    assert entities[0].is_alive is False
+    assert entities[1].is_alive is False

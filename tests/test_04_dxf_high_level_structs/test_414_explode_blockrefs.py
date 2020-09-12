@@ -339,5 +339,14 @@ def test_08_rotated_and_reflected_and_stretched_curves(stretch, is_arc):
     _check_curve(ellipse, Vector(0, 1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
 
 
+def test_explode_xref(doc, msp):
+    doc.add_xref_def('test.dxf', 'xref_test')
+    xref = msp.add_blockref('xref_test', (0, 0))
+    assert xref.is_xref() is True
+    
+    result = xref.explode()
+    assert len(result) == 0
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

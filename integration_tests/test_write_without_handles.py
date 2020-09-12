@@ -1,20 +1,20 @@
-# Copyright (c) 2018-2019, Manfred Moitzi
-# License: MIT License
+#  Copyright (c) 2020, Manfred Moitzi
+#  License: MIT License
 import os
 import pytest
 import ezdxf
 from ezdxf.lldxf.tagger import ascii_tags_loader
 from ezdxf.lldxf.loader import load_dxf_structure
 
-BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
+BASEDIR = os.path.dirname(__file__)
 DATADIR = 'data'
 
 
-@pytest.fixture(params=["POLI-ALL210_12.dxf"])
+@pytest.fixture(params=["POLI-ALL210_12.DXF"])
 def filename(request):
     filename = os.path.join(BASEDIR, DATADIR, request.param)
     if not os.path.exists(filename):
-        pytest.skip('File {} not found.'.format(filename))
+        pytest.skip(f'File {filename} not found.')
     return filename
 
 
@@ -44,5 +44,7 @@ def test_write_R12_without_handles(filename, tmpdir):
                 with pytest.raises(ezdxf.DXFValueError):  # has no handles
                     entity.get_handle()
             else:  # special DIMSTYLE entity
-                assert len(entity.find_all(105)) == 0, 'remove handle group code 105'
-                assert len(entity.find_all(5)) == 1, 'do not remove group code 5'
+                assert len(
+                    entity.find_all(105)) == 0, 'remove handle group code 105'
+                assert len(
+                    entity.find_all(5)) == 1, 'do not remove group code 5'

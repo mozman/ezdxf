@@ -2,9 +2,10 @@
 # License: MIT License
 import time
 from pathlib import Path
+import ezdxf
 from ezdxf.addons import iterdxf
-BIGFILE = Path(r'D:\Source\dxftest\GKB-R2010.dxf')
-BIGFILE = Path(r'D:\Source\dxftest\ACAD_R2000.dxf')
+BIGFILE = Path(ezdxf.EZDXF_TEST_FILES) / 'GKB-R2010.dxf'
+# BIGFILE = Path(ezdxf.EZDXF_TEST_FILES) / 'ACAD_R2000.dxf'
 OUTDIR = Path('~/Desktop/Outbox').expanduser()
 
 t0 = time.perf_counter()

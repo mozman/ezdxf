@@ -5,13 +5,15 @@ from typing import TYPE_CHECKING, Iterable, Tuple, cast, Iterator, Union
 import logging
 
 from ezdxf.entities.dictionary import Dictionary
+from ezdxf.entities import factory
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
 from ezdxf.entitydb import EntitySpace
 from ezdxf.query import EntityQuery
+from ezdxf.tools.handle import UnderlayKeyGenerator
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GeoData, DictionaryVar
-    from ezdxf.eztypes import Drawing, DXFEntity, EntityFactory, TagWriter, EntityDB, DXFTagStorage, DXFObject
+    from ezdxf.eztypes import Drawing, TagWriter, EntityDB, DXFTagStorage, DXFObject
     from ezdxf.eztypes import ImageDefReactor, ImageDef, UnderlayDef, DictionaryWithDefault, XRecord, Placeholder
 
 logger = logging.getLogger('ezdxf')
@@ -20,14 +22,10 @@ logger = logging.getLogger('ezdxf')
 class ObjectsSection:
     def __init__(self, doc: 'Drawing', entities: Iterable['DXFObject'] = None):
         self.doc = doc
+        self.underlay_key_generator = UnderlayKeyGenerator()
         self._entity_space = EntitySpace()
         if entities is not None:
             self._build(iter(entities))
-
-    @property
-    def dxffactory(self) -> 'EntityFactory':
-        """ Returns drawing DXF entity factory. (internal API) """
-        return self.doc.dxffactory
 
     @property
     def entitydb(self) -> 'EntityDB':
@@ -37,6 +35,12 @@ class ObjectsSection:
     def get_entity_space(self) -> 'EntitySpace':
         """ Returns entity space. (internal API) """
         return self._entity_space
+
+    def next_underlay_key(self, checkfunc=lambda k: True) -> str:
+        while True:
+            key = self.underlay_key_generator.next()
+            if checkfunc(key):
+                return key
 
     def _build(self, entities: Iterator['DXFObject']) -> None:
         section_head = next(entities)  # type: DXFTagStorage
@@ -62,8 +66,8 @@ class ObjectsSection:
 
         (internal API)
         """
-        dxf_entity = self.dxffactory.create_db_entry(_type, dxfattribs)
-        self._entity_space.add(dxf_entity)  # type: DXFObject
+        dxf_entity = factory.create_db_entry(_type, dxfattribs, self.doc)
+        self._entity_space.add(dxf_entity)
         return dxf_entity
 
     def delete_entity(self, entity: 'DXFObject') -> None:
@@ -115,13 +119,16 @@ class ObjectsSection:
         dxfobject.set_reactors([dxfattribs['owner']])
         return dxfobject
 
+    def purge(self):
+        self._entity_space.purge()
+
     # start of public interface
 
     @property
     def rootdict(self) -> Dictionary:
         """ Root dictionary. """
         if len(self):
-            return self._entity_space[0]  # type: Dictionary
+            return self._entity_space[0]
         else:
             return self.setup_rootdict()
 
@@ -261,7 +268,7 @@ class ObjectsSection:
                 'quality': quality,
                 'units': units,
             })
-            self.rootdict['ACAD_IMAGE_VARS'] = raster_vars.dxf.handle
+            self.rootdict['ACAD_IMAGE_VARS'] = raster_vars
         else:
             raster_vars.dxf.frame = frame
             raster_vars.dxf.quality = quality
@@ -284,7 +291,7 @@ class ObjectsSection:
                 'owner': self.rootdict.dxf.handle,
                 'frame': int(frame),
             })
-            self.rootdict['ACAD_WIPEOUT_VARS'] = wipeout_vars.dxf.handle
+            self.rootdict['ACAD_WIPEOUT_VARS'] = wipeout_vars
         else:
             wipeout_vars.dxf.frame = int(frame)
 
@@ -364,7 +371,7 @@ class ObjectsSection:
         })
 
         # auto-generated underlay key
-        key = self.dxffactory.next_underlay_key(lambda k: k not in underlay_dict)
+        key = self.next_underlay_key(lambda k: k not in underlay_dict)
         underlay_dict[key] = underlay_def.dxf.handle
         return cast('UnderlayDef', underlay_def)
 

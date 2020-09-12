@@ -8,7 +8,8 @@ from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 
 import ezdxf.lldxf.const as DXFConstants
-from ezdxf.addons.drawing.backend_interface import DrawingBackend
+from ezdxf.addons.drawing.backend import Backend
+from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.entities import MText, Text, Attrib
 from ezdxf.math import Matrix44, Vector
 
@@ -40,7 +41,6 @@ AnyText = Union[Text, MText, Attrib]
 
 # multiple of cap_height between the baseline of the previous line and the baseline of the next line
 DEFAULT_LINE_SPACING = 5 / 3
-
 
 DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT: Dict[int, Alignment] = {
     DXFConstants.MTEXT_TOP_LEFT: (HAlignment.LEFT, VAlignment.TOP),
@@ -253,8 +253,9 @@ def _get_wcs_insert(text: AnyText) -> Vector:
         return text.dxf.insert
 
 
-def simplified_text_chunks(text: AnyText, out: DrawingBackend,
+def simplified_text_chunks(text: AnyText, out: Backend,
                            *,
+                           font: str = None,
                            debug_draw_rect: bool = False) -> Iterable[Tuple[str, Matrix44, float]]:
     """
     Splits a complex text entity into simple chunks of text which can all be rendered the same way:
@@ -265,10 +266,10 @@ def simplified_text_chunks(text: AnyText, out: DrawingBackend,
     box_width = _get_text_width(text)
 
     cap_height = _get_cap_height(text)
-    lines = _split_into_lines(text, box_width, lambda s: out.get_text_line_width(s, cap_height))
+    lines = _split_into_lines(text, box_width, lambda s: out.get_text_line_width(s, cap_height, font=font))
     line_spacing = _get_line_spacing(text, cap_height)
-    line_widths = [out.get_text_line_width(line, cap_height) for line in lines]
-    font_measurements = out.get_font_measurements(cap_height)
+    line_widths = [out.get_text_line_width(line, cap_height, font=font) for line in lines]
+    font_measurements = out.get_font_measurements(cap_height, font=font)
     anchor, line_xs, line_ys = \
         _apply_alignment(alignment, line_widths, cap_height, line_spacing, box_width, font_measurements)
     rotation = _get_rotation(text)
@@ -276,10 +277,10 @@ def simplified_text_chunks(text: AnyText, out: DrawingBackend,
     insert = _get_wcs_insert(text)
 
     whole_text_transform = (
-        Matrix44.translate(-anchor[0], -anchor[1], 0) @
-        extra_transform @
-        rotation @
-        Matrix44.translate(*insert.xyz)
+            Matrix44.translate(-anchor[0], -anchor[1], 0) @
+            extra_transform @
+            rotation @
+            Matrix44.translate(*insert.xyz)
     )
     for i, (line, line_x, line_y) in enumerate(zip(lines, line_xs, line_ys)):
         transform = Matrix44.translate(line_x, line_y, 0) @ whole_text_transform
@@ -289,7 +290,4 @@ def simplified_text_chunks(text: AnyText, out: DrawingBackend,
             width = out.get_text_line_width(line, cap_height)
             ps = list(transform.transform_vertices([Vector(0, 0, 0), Vector(width, 0, 0), Vector(width, cap_height, 0),
                                                     Vector(0, cap_height, 0), Vector(0, 0, 0)]))
-            for a, b in zip(ps, ps[1:]):
-                out.draw_line(a, b, '#ff0000')
-
-
+            draw_rect(ps, '#ff0000', out)

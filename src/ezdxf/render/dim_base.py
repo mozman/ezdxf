@@ -12,7 +12,9 @@ from ezdxf.render.arrows import ARROWS
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, Vertex, Drawing, GenericLayoutType, Style
+    from ezdxf.eztypes import (
+        Dimension, Vertex, Drawing, GenericLayoutType, Style,
+    )
 
 
 class TextBox(ConstructionBox):
@@ -81,18 +83,15 @@ class BaseDimensionRenderer:
 
     """
 
-    def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None, override: DimStyleOverride = None):
-        # DXF document
-        self.drawing = dimension.drawing  # type: Drawing
-
-        # DIMENSION entity
-        self.dimension = dimension  # type: Dimension
-
-        self.dxfversion = self.drawing.dxfversion  # type: str
-        self.supports_dxf_r2000 = self.dxfversion >= 'AC1015'  # type: bool
-        self.supports_dxf_r2007 = self.dxfversion >= 'AC1021'  # type: bool
+    def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None,
+                 override: DimStyleOverride = None):
+        self.doc: 'Drawing' = dimension.doc
+        self.dimension: 'Dimension' = dimension
+        self.dxfversion: str = self.doc.dxfversion
+        self.supports_dxf_r2000: bool = self.dxfversion >= 'AC1015'
+        self.supports_dxf_r2007: bool = self.dxfversion >= 'AC1021'
         # Target BLOCK of the graphical representation of the DIMENSION entity
-        self.block = None  # type: GenericLayoutType
+        self.block: Optional['GenericLayoutType'] = None
 
         # DimStyleOverride object, manages dimension style overriding
         if override:
@@ -156,10 +155,10 @@ class BaseDimensionRenderer:
         # TEXT
         # ---------------------------------------------
         # dimension measurement factor
-        self.dim_measurement_factor = get('dimlfac', 1)  # type: float
-        self.text_style_name = get('dimtxsty', self.default_text_style())  # type: str
+        self.dim_measurement_factor: float = get('dimlfac', 1)
+        self.text_style_name: str = get('dimtxsty', self.default_text_style())
 
-        self.text_style = self.drawing.styles.get(self.text_style_name)  # type: Style
+        self.text_style = self.doc.styles.get(self.text_style_name)  # type: Style
         self.text_height = self.char_height * self.dim_scale  # type: float
         self.text_width_factor = self.text_style.get_dxf_attrib('width', 1.)  # type: float
         # text_gap: gap between dimension line an dimension text
@@ -395,7 +394,7 @@ class BaseDimensionRenderer:
 
     def default_text_style(self):
         style = options.default_dimension_text_style
-        if style not in self.drawing.styles:
+        if style not in self.doc.styles:
             style = 'Standard'
         return style
 

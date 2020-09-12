@@ -2,7 +2,109 @@
 News
 ====
 
-Version 0.13 - 2020-07-05
+Version 0.14 - 2020-09-12
+-------------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v0-14.html
+- NEW: DXF attribute setter validation, some special and undocumented Autodesk 
+  table names may raise `ValueError()` exceptions, please report this table 
+  names (layers, linetypes, styles, ...). DXF unicode notation "\U+xxxx" raises
+  a `ValueError()` if used as resource names like layer name or text style names, 
+  such files can only be loaded by the new `recover` module.
+- NEW: `ezdxf.recover` module to load DXF Documents with structural flaws, see 
+  [docs](https://ezdxf.mozman.at/docs/drawing/recover.html)
+- NEW: All DXF loading functions accept an unicode decoding error handler: 
+  "surrogateescape", "ignore" or "strict", see [docs](https://ezdxf.mozman.at/docs/drawing/recover.html) 
+  of the `recover` module for more information.
+- NEW: `addons.drawing.Frontend()` supports width attributes of LWPOLYLINE and 
+  2D POLYLINE entities
+- NEW: `TraceBuilder()` a render tool to generate quadrilaterals (TRACE, SOLID 
+  or 3DFACE), from LWPOLYLINE or 2D POLYLINE with width information,
+  see [docs](https://ezdxf.mozman.at/docs/render/trace.html)
+- NEW: `Path()` a render tool for paths build of lines and cubic Bezier curves, 
+  used for faster rendering of LWPOLYLINE, POLYLINE and SPLINE entities for 
+  render back-ends, see [docs](https://ezdxf.mozman.at/docs/render/path.html)
+- NEW: `drawing.matplotlib.qsave()` function, a simplified matplotlib export interface
+- NEW: `Arc.construction_tool()` returns the 2D `ConstructionArc()`
+- NEW: `Arc.apply_construction_tool()` apply parameters from `ConstructionArc()`
+- NEW: `Leader.virtual_entities()` yields 'virtual' DXF primitives
+- NEW: `Leader.explode()` explode LEADER as DXF primitives into target layout
+- NEW: `LWPolyline.has_width` property is `True` if any width attribute is set
+- NEW: `Polyline.has_width` property is `True` if any width attribute is set
+- NEW: `Polyline.audit()` extended verify and repair support
+- NEW: `Polyline.append_formatted_vertices()`, support for user defined point format
+- NEW: `DXFVertex.format()` support for user defined point format 
+- NEW: `Drawing.blocks.purge()` delete all unused blocks but protect modelspace-
+  and paperspace layouts, special arrow blocks and DIMENSION and ACAD_TABLE 
+  blocks in use, but see also warning in the 
+  [docs](https://ezdxf.mozman.at/docs/sections/blocks.html)
+- NEW: `Insert.explode()` support for MINSERT (multi insert)
+- NEW: `Insert.virtual_entities()` support for MINSERT (multi insert)
+- NEW: `Insert.mcount` property returns multi insert count
+- NEW: `Insert.multi_insert()` yields a virtual INSERT entity for each grid 
+  element of a MINSERT entity
+- NEW: `Layout.add_wipeout()` interface to create WIPEOUT entities
+- NEW: `Image.boundary_path_wcs()`, returns boundary path in WCS coordinates
+- NEW: `Wipeout.boundary_path_wcs()`, returns boundary path in WCS coordinates
+- NEW: `Wipeout.set_masking_area()`
+- NEW: `BSpline.is_clamped` property is `True` for a clamped (open) B-spline
+- NEW: `UCS.transform()` general transformation interface
+- NEW: `Bezier4P.transform()` general transformation interface
+- NEW: `Bezier4P.reverse()` returns object with reversed control point order
+- NEW: `Bezier.transform()` general transformation interface
+- NEW: `Bezier.reverse()` returns object with reversed control point order
+- NEW: `has_clockwise_orientation(vertices)` returns `True` if the closed 
+  polygon of 2D vertices has clockwise orientation
+- NEW: `DXFEntity.new_extension_dict()`, create explicit a new extension dictionary
+- NEW: `ezdxf.reorder`, support module to implement modified entities redraw order
+- NEW: get DXF test file path from environment variable `EZDXF_TEST_FILES`, 
+  imported automatically as `ezdxf.EZDXF_TEST_FILES`
+- NEW: `arc_chord_length()` and `arc_segment_count()` tool functions in 
+  `ezdxf.math`
+- NEW: `Drawing.encode()` to encode unicode strings with correct encoding and 
+  error handler
+- NEW: `ezdxf.has_dxf_unicode()` to detect "\U+xxxx" encoded chars
+- NEW: `ezdxf.decode_dxf_unicode()` to decode strings containing  
+  "\U+xxxx" encoded chars, the new `recover` module decodes such strings 
+  automatically.
+- CHANGE: `DXFEntity.get_extension_dict()`, raises `AttributeError` if entity
+  has no extension dictionary 
+- CHANGE: `DXFEntity.has_extension_dict` is now a property not a method
+- CHANGE: `linspace()` uses `Decimal()` for precise calculations, but still 
+  returns an iterable of `float`
+- CHANGE: `Drawing.blocks.delete_all_blocks()`, unsafe mode is disabled and 
+  argument `safe` is deprecated, will be removed in v0.16
+- CHANGE: Dictionary raise `DXFValueError` for adding invalid handles
+- CHANGE: `BaseLayout.add_entity()` will bind entity automatically to doc/db if possible
+- CHANGE: handle all layout names as case insensitive strings: `Model == MODEL`
+- REMOVE: `option.check_entity_tag_structure`, entity check is done only in 
+  recover mode
+- REMOVE: `legacy_mode` in `ezdxf.read()` and `ezdxf.readfile()`, use the 
+  `ezdxf.recover` module to load DXF Documents with structural flaws
+- REMOVE: Alias `DXFEntity.drawing` use `DXFEntity.doc`
+- REMOVE: `DXFEntity.entitydb`
+- REMOVE: `DXFEntity.dxffactory`
+- REMOVE: `DXFInvalidLayerName`, replaced by `DXFValueError` 
+- REMOVE: `Image.get_boundary_path()`, replaced by property `Image.boundary_path` 
+- REMOVE: `Image.get_image_def()`, replaced by property `Image.image_def` 
+- REMOVE: `filter_stack` argument in `ezdxf.read()` and `ezdxf.readfile()` 
+- BUGFIX: Set `non-constant-attribs` flag (2) in BLOCK at DXF export if non 
+  constant ATTDEF entities are present.
+- BUGFIX: DXF R2018 - `HATCH` extrusion vector (210) is mandatory?
+- BUGFIX: Layout names are case insensitive; "MODEL" == "Model" 
+- BUGFIX: Using "surrogateescape" error handler to preserve binary data in 
+  ASCII DXF files. Prior versions of ezdxf corrupted this data by using the 
+  "ignore" error handler; Example file with binary data in XRECORD is not valid 
+  for TrueView 2020 - so binary data is maybe not allowed.
+
+Version 0.13.1 - 2020-07-18
+---------------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v0-13.html
+- BUGFIX: remove white space from structure tags like `"SECTION "`
+- BUGFIX: `MeshBuilder.from_polyface()` processing error of POLYMESH entities
+
+Version 0.13 - 2020-07-04
 -------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-13.html
@@ -598,7 +700,7 @@ Version 0.8.0 - 2017-03-28
 - removed deprecated Layouts.create() -> Layout.new()
 - removed deprecated Table.create() -> Table.new()
 - removed deprecated DXFGroupTable.add() -> DXFGroupTable.new()
-- BUFIX in EntityQuery.extend()
+- BUGFIX in EntityQuery.extend()
 
 Version 0.7.9 - 2017-01-31
 --------------------------
@@ -802,8 +904,9 @@ Version 0.5.1 - 2014-04-14
 
 * Beta status
 * Supported Python versions: CPython 2.7, 3.3, 3.4 and pypy 2.2.1
-* BUGFIX: restore Python 2 compatibility (has no list.clear() method); test launcher did not run tests in subfolders,
-  because of missing __init__.py files
+* BUGFIX: restore Python 2 compatibility (has no list.clear() method); 
+  test launcher did not run tests in sub-folders, because of missing 
+  __init__.py files
 
 Version 0.5.0 - 2014-04-13
 --------------------------

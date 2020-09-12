@@ -131,6 +131,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. autoattribute:: has_arc
 
+    .. autoattribute:: has_width
+
     .. automethod:: get_mode
 
     .. automethod:: m_close
@@ -240,6 +242,25 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
     .. attribute:: is_poly_face_mesh_vertex
 
     .. attribute:: is_face_record
+
+    .. method:: format(format='xyz') -> Sequence
+
+        Return formatted vertex components as tuple.
+
+        Format codes:
+
+            - "x" = x-coordinate
+            - "y" = y-coordinate
+            - "z" = z-coordinate
+            - "s" = start width
+            - "e" = end width
+            - "b" = bulge value
+            - "v" = (x, y, z) as tuple
+
+        Args:
+            format: format string, default is "xyz"
+
+        .. versionadded:: 0.14
 
 
 Polymesh

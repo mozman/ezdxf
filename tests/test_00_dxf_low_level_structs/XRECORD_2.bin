@@ -1,0 +1,106 @@
+0
+XRECORD
+5
+22C7
+102
+{ACAD_REACTORS
+330
+22C6
+102
+}
+330
+22C6
+100
+AcDbXrecord
+280
+     1
+300
+<Material id="{E328BBE4-A917-4D7E-8A86-5B6D38D5E8FD}" app="3DSVIZ" thumbnail=".\images\973b7bbf.png">^M^J^I<LinearUnits unitType="m" unitScale="1.0"/>^M^J^I<ArchitecturalMaterial name="Sitework.Planting.Grass.Short">^M^J^I^I<ArchTemplateParameters name="Ideal Diffu
+300
+dal"/ȑ>0.ȑȑȑpuȑanȑd>^I^I<ȑ1ȑlinȑNoiseȑArchLȑ^J^I^I^I^Iȑ^I^I^I^I^IȑtMTexȑ/NoisȑrchTtȑds>^M췍ȑanspaȑrt>oȑȑantinȑtureCȑ^I^I^I^I^Iȑ</Bluȑ"noneȑ^I^I^I^I^Iȑters>ȑ췍﷽﷽������ȱ췍﷽﷽hTȱse" classid_A="1304583271" classid_B="613231372">^M^J^I^I^I<ArchShaderType type="Phong"/>^M^J^I^I^I<ArchReflectivity>^M^J^I^I
+300
+^I^I<RGB<Aȑ^M^Jȑf r="0^I^I^I^I^Iȑ.7" g=2d>^I^Iȑ"0.7" ffsetȑb="0.7^I^I^I^I^Iȑ"/>^M^J^Iters>ȑ^I^I</AroordsȑchRefl</UCoȑectivio^I^I^I^Iȑty>^M^J^I.0</Nȑ^I^I<ArcLerȑeȑhMinReflectirds>^Mȑvity>0pȑpAmȑ.05</A1.0</ȑrchMinȑ^J^I^I^Iȑpid_AȑReflec^Iȑ>1.ȑtivity^I^I^I<Oȑ>^M^J^I^I^IseLeMȑ<ArchM^I^I<OuȑaxRefl0</RGȑect
+300
+ivi^I^I<RGȑ耀Қ耀s>0.0ȑ^Aty>0.9췍﷽﷽������ȑt onȑȱ</Arch췍﷽﷽RCor.0<ȑPMaxReflectipȑpAȑȑvity>^M^J^I^I^I<Agle>0ȑe1έÑ^IȑrchShininess0.0</ȑ>0.0</ArchSh^I^I^I췍﷽ȑininess>^M^J^I^Ids>-Aȑ^I<ArchMinShie>^M^J^Iȑniness>0.0</ranȑoȑArchMinShini>1.onȑness>^M.0<ȑeȑ^J^I^I^I<ArchMaxgles>ȑShinness>1.0Cooȑrȑ</A
+300
+rchMaxShi69D01ȑnness>^M^J^I^I^I<ingCoȑArc^IȑȑRGȑhTrȑ9ranȑansparencs>^M^J^Iȑy>^Mtuȑy>0ling>ȑ.0</ArchT9^I^I^I^Iȑranp=ȑ^I<ȑsparency>MapCoȑ^M^J^Ieflffsetȑeȑȑ^I^I<ArchMinTrap TA530ȑnaȑansparency>0���ȱ9^I^I^I<rȑ1-ȑ.0</ArchMinTA53⏩ȱ^I^I^Iȑ0Eȑ9ransparency>^M^J^I<VCrȑ^I^I췍﷽﷽������ȱ^I<ArchMax췍nseCsȑ﷽﷽T
+300
+raCoordȑnsparenȑ^Jȑnoȑcy>1.0</ArchArcnsȑMax>^M^J^I^IȑTransparency>^M^Jset>^Mȑ^I^I^I^I^I^I^I<ȑ<ArchTitmapȑranslucen^I^I</Tȑȑ</Biȑcy>^I^I^I췍﷽ȑ0.0</ArchTransl砼耤砮xTȑuceiseSiȑncy>^M^J^I^I^I<Ar���MaptȑchMȑ TilȑinTranslucency>one"/ȑ0.0</ArchMinTra﷽﷽�⏩ȱȑnsl-A917ȑucency>^M^J^I^I^I<Ar^J^I^I^I^IȑchMȑȱ<
+300
+/AȑaxTranslucency>^I^I^I^I<ȑareeringȑncȑ1.0</ArchMax0</OuȑTransl^I^I^Iut="aȑ^I<ȑucency>^M^J^I^I^I>^M^J^I^Iȑ<ArchI>^M^J^I^I^I^I^Iȑ^I^IȑndexOfRefractione="uȑn>1mountȑ<UCooȑ.0</AWCropȑrchI^I^I^I^I^Iȑndenȑ^M^J^IȑxOfRefracti췍﷽﷽�⏩ȱo/Blurȑn>^MngCooȑ^J^I^I^I<A췍﷽﷽RGȑrc췍﷽﷽hMinIntenȑIndex^I^I^I^I<ȑOfReme="Sȑ
+300
+fraction>^I^I^I^I^IȑExpliȑ1.0</ArchMinIndur>^M^JȑexOfRefraame^M^J^I^I^Iȑ="ȑction>^M^J^I^I^I<ArchMaxIndexOfR^I^I^I^J^I^I^I<utAȑ^Iȑȑ^I^Iȑefractg="tiȑion>1.0</ArchMaxInfRe^M^J>^M^Jȑȑ^IȑdexOfRma췍﷽﷽ȑefraction>^M^J^I^I^I<AriplutAmoȑieȑchSetPỖỖarameters>1<ureTiȑ/AroiseLȑchSetParailingȑmeters>^M^J^I^I<
+300
+^I^I^I^I^Iȑ^I^I^ITeȑ^I<ȑ^I^Iȑ/ArchTemplateParameters>^M^J^I^I<Aing=ȑReȑȑCoȑrch8BȑooȑMat^M^J^I^I^IȑiffusȑParameters>^I^I^I^I^Iȑ^M^J^I^Ip>^M^I^Iȑ^I<ArchDif3g=0.ȑfuseColor>^M췍﷽﷽������ȱ^J^I^I^I^I<RGBfBI췍﷽﷽ȑ r=vels>ȑ"0췍﷽﷽.506994" g="0.5^I^I^I^I^Iȑ6^I^I^I^I^Iȑ301unitTȑ2" b="0.3534"0" Cȑ48"/>^M^J^I^I^I</ArcLib>^MȑhDiffu
+300
+seColor>^M^I^I^I^I^Iȑ^J^I^I^I<Archng="tȑIndexOfRefraction>1.0.0</Oȑ</A28BȑlȑrchInd328BȑȑexOfRe/Ti>0.0<ȑliȑfraction>^M^J^I^I^I^Iȑȑȑ^I^I<ArchTwoSiCoordȑded>0</ArchTwoSided>^M^J^I^IClamȑȑ^I<ArchEmitLuminancensitȑe>0</ArchEmi</WAnȑtLuminnance>^M^J^I^I^I<utAmoȑArchCo^I^I^I^I<ȑlorBleedScale>1
+300
+.0</ArchC췍﷽﷽�⏩ȱolorBleedScale>^M^J^I^I^I^I^I<ȑ췍﷽﷽^I^I<^I^IȑePȑArchRefleBluArȑ>^M^J^I^IȑctanceSca Sourȑle>1.0haAsGȑng>^M^Jȑ</ArchReflectanoMinȑȑceSArchDȑcale>^M^J^I^I^I<ArchIndme="SȑirectBumpAmount>1.amp>ȑȑ0</ArchIndirect</BitȑBumpAmount>^MitMapȑ^J^I^I^I<ArchultipȑTransmittF4-62ȑanc
+300
+eSc﷽ngleȑale>1.0</ArchTransmitaxȑrtȑtanceScale>^M^J^I^I</Noiȑ^ImapFiȑ<ArchUseTilinȑTex Cropȑturty>^MtȑeSize>1</nnel=ȑArchUseTextureSize>^M^Jlie췍﷽ȑ^I^I^Ie Souȑ<ArseAmoȑchText/Noisȑure췍﷽﷽������ȱ^I^I^I<rȑWidth>0.6096</ArchTex췍﷽﷽turwork.ȑeWidthunt>1ȑ>^M^J^I^I^I<Ar/JuseȑchTexturetpu
+300
+tAȑHeiápSQght>0.609^I^IseAmoȑ^I<Rȑ6</ArchTextexMaȑȑureHeight>^M^J^I^I^I<ArchTextureUOf<ȑȑtuȑfset>0.0</ArchT5extaramȑtureUOffs⏩ȱ^I<Jȑet>^M^J^I^I^I<ArchTextureVntensȑOffset>0.0^I^I<Blȑ</Map>^MȑArchTeetersȑxtu</ClaȑreVOffset>^M^J^I^I^I<ArchDiffuseAmount>15B6DfRseLȑ3ȑ.02dtmapMȑ>^M^J
+300
+ȑ</ArchDiffuseAmount>^M^J^I^I^I<ArcMap0"ȑhShininesop>1.ȑs>췍﷽^I^I<e>ȑ﷽������ȱ0.0</ArchShinineȑt>e>E32ȑ^M^Jȑss>^M^J^I^I^I췍itmapȑ﷽﷽<ArchTrop>0.ȑansparen^I^I^I^I^Iȑcy>0.0</ArchTraety"ount>ȑ/>ȑ Mapȑnsp"" id=ȑ Amoȑarency>^M^J^I^I^I<</VCrȑArchTranslucency>0.0ng Tyȑ<^M^J^I^I^Iȑ/ArchTran^I^I^I^I^Iȑslu
+300
+cency>^M^J^I^I^I<A^M^J/>^M^J^Iȑ^I^I^IȑrchLuminanceoȑrasȑ>0.0</ArchLumiCrop>ȑnance>^M^J^I^I^I<ingCȑȑAr=^I^I^I<IȑureCoȑ"uv"ȑchBumpMapAmo9u^I^I^I^I^IȑntelNumȑ>0.1</ArchBunsityȑmpMapAmount>.jpyMapIȑ"100uȑg"ȑ^M^J^I9)]>^I^I<ArchCutoutMartParamȑ.jpȑpAmount>1.0</A^I^I﷽﷽���ȑrchCutoutse>0ȑȑMapAmount
+300
+>췍﷽﷽������t>^M^J^Iȑȱ^M^J^I^I^I530E8ȑ<ArchDisBal>^M^Jȑlur>ȑplayMapInViewp췍﷽﷽>00.195ȑ.0<ȑort>E328Bȑ0</ArchDisplayMapInViewport>^M^J^I^I</ArchMatPa0.0</ȑrg.Graȑamensitȑetarameȑers>^M^J^I^Iutputȑ<MapSet>^M^J^I^I^I<MapLib>^M^J^I^I^I^I<TextexMNoiȑ^Jȑapȑure>^MȑviȑMap췍﷽������ȱȑ name="Sitewon="0ȑork.ro
+300
+p>1ȑPlanting.G<VCooȑrass.Short.diȑoordȑffuse" id Coorȑ="{D64326F4-62D3Jitteȑ-4405-B1ȑumpAȑE7-236E69D013DC75940ȑ}">^M^J^IsetCoȑ^I^I^I^I<DisplayMapInViewpyramiȑort>0</evel.ShoeȑsȑDispl췍﷽﷽������ȱayMapInV^I^I^I^I^Iȑiewport>^I</Arȑ^M^J^I^I^I^I^I<Bitmapdȑittȑ췍﷽﷽Map>^M^J^I^I^I^I^I^I^Iȑ^I^I^I^I<TexM
+300
+apCoords2d>^Mffsetȑ^J^I^I^I^I^I^I^Iet>^M^Jȑ<TextureCoce Soȑords>^M^J^I^I^I^I^I^I^I<ling>ȑ/Texȑ^I<Explicsity"ȑitMapChaefleȑȑnnel CȑReȑ^IȑoordPlane="uv">^M^J^I^I^I^I^I^I^I^I^I<MapCh^Ie>^M^J^Iȑ^I^I<ȑ1B11ȑ^Bȑannnel>1﷽ngleȑn<<UCroȑ/MapChannel>^M^J^I^I^I^I^I^I^I^I^I<UCoordsȑ</Biȑ>^M</WCrȑ^J^I^I.6nveȑ^I^I^I^I^I^I^I^I<Offset
+300
+Coord>-0.19g o^Iȑȑ52</OffsetCoord>^M^J^I^I^I^I^I^I^I^I^I^I</ȑ"/>ȑTing.Grȑlii�⏩ȱ^I<ȑstngCo췍﷽﷽������ȱordD013Dȑ>1.6nvertȑ40rop>1ȑ/Alphȑ42</TilingCort.jpȑord>^M^J^I^I^I>ȑAlpȑ^I^I^I췍﷽﷽^I^I^I^I<TextureTint="1ȑling Tiling="tileȑrAmȑitȑt>0ȑ"/>^M^J^I^I^I^I^I^I^I^I^I</UCooMart.ȑrds>^M^J1.0"/ȑ^I^I^I^I^I^I^I^I^I<VC^I^I^I
+300
+<Aȑoords>^M^J^I^I^I^I^I^I^I^I^I^I<OffsetCo<Iȑ"uȑiseȑoȑoOutpuȑrd>-0.1^I^Ifset>ȑ^I^I<ȑ95ffsetȑ2</OffsetCogbIntȑorArchTȑd>^M^J^I^I^I^J^I^I^I^Iȑ^I^I^I^I^I^I^I<TilingCoorlane=ȑd>1.6ppingȑ4042<^I^I^I<Aȑ/TilingCoorClampȑd>^M.chm^J^I^I^I^I^I^I^I^I^I^I<Text^I^I^I<put OȑBȑureTiling Tiling="tg"ȑ</ȑile"/>^M^J^I^I^I^I^I75940
+300
+ȑ^I^I^I췍﷽﷽������ȱ^I</VC^I^I^I^I^Iȑoords>^M^J^I^Irop>1ȑ^I^I^I^I^I^I^I<Ang6A530^I^I<Buȑȑles>^M^J^I^I^I^I췍﷽Tilinȑ﷽^I^I^I^I^I^I<UAngle>0.0</UA^I^I0.0ȑngle>a>^MxMapȑȑ^J췍ȑ^M^J^I^I^I^I^I^I^I^Ippingȑ^I^I<^B΀^B\VAngle0use"ȑ>0.0</VAnMap nȑgle>^M^J^ItureTȑ^I^I^I^I^I^I^I^I^I<WAnglount>ȑe>0^I^I^I^I^Iȑrametȑ.0</WAng0.0</^M^J^I^I^Iȑȑle>^M^J^I^I^I^I^I^I^I^I
+300
+^I</Angles>^M^Js.Shoȑ^I^I^I^I^I^Iremulȑ^I^I^I^I^IinSȑ<Blur>1.0</Blur>^M^J^I^I^I^I^I^I^I^I^I<BlurOffse^I^I0.0ȑt>0^I^I^I^Ieȑ.0</BlurOffset>^M^J^I^I^I^I^I^I^I^I</ExntensȑplicitMapChanne^I^I^I^I^Iȑl>^M^J^I^I^I췍﷽﷽�⏩ȱ^I^I^I^I</Te.png"ȑxtureCoord/Ou^I^I^I^I<ȑtpȑs>^M^J^I^I^I^I^I^I</TexMapCoort.dȑreTilȑngle>ȑo췍﷽﷽rds2d>^M^J^I^I^I^I^I^I<Te
+300
+xMapNoise>^M^J^I^I^I^I^I^I^IinShiȑ<NoiseAsk\Aue=">1.0<ȑSiȑȑm<ngleȑount>1.0</NoiseAmorop>^Mȑunt>^M^J^I^I�⏩췍﷽﷽���ȑȑȱolȑ^I^I^I^I^I<e>^M^J^IȑNoiseLery=1Mon^I^I^I^I^IȑoCȑve>^M^J^I^Iȑls>1.png"ȑ</NoiBitmaȑseLevels>^M^J^I^I^I^I^I0.0</ȑ^I^I<^I^I^I^I^IȑNoiseSize>1.0</NoiseSize>^M^J^I^I^I^I^I^I^I<Nois2d>^M^Jȑo^I^I^I^IȑePhas^I^I^I
+300
+^Irȑe>0.^Iann^Iȑ0</NoisePhase>^M^J^I^I^I^I^I^I</TexMapNoise>>^M^J^I<nglop>0.ȑe>ȑȑ^M^J^I^I^I^I^I^I<B췍﷽﷽���itmapParameters>han^I�⏩췍﷽ȑneȑ^M^J^I^I^I^I^I^I^I<Bi^J^I^I^I^IȑtmapFile filen췍﷽﷽ame="Sitework.Plan/Archȑting.Gr^I^I^I^I^Iȑass.Short.jpg"/>1</nnȑ^M^J^I^I^Ize>^M^Jȑ^I^I^IRefleȑ^I<CroppintBumpȑg on="0/Archȑ" Cr
+300
+op>ȑCropType=lamp>ȑ"cseAmoȑrisePhȑop">^M^J^I^I^In^I^I^I^I^I^I^I^I^I^Iȑ<UCrop>0.0</ion]UCrȑrd>-eerinȑȑop>^M^J^I^I^I^I^I^I^I^I<VCrop>0.inessȑ0</VCrop>^M^J^I^I^I^I^I^I^I^I<WCile fȑrop>1.0</WCrop>^M^J^I^I^I^I^Iȑ^I^I7nViewȑ5940ȑ^I</ȑ"ȑ^I^I^I^I^I^I<HCrop>1^I^I^I<Wȑ.0</HCrop>^M^J^I^I^I^I^Ianspaȑ^I^I췍﷽﷽n^I^I^I^Iȑ�⏩ȱ^I<JchTȑdrop>ȑ
+300
+acingȑȑȑitterPlacement on="0">1.0</JuseAmȑitterPlacement췍﷽^I^I^I^Iȑȑ Cooȑȑ﷽>^M^J^I^I^I^I^I^Iiseȑoȑ^I</Cropping>^M^J^I^Ie^I^I^Iȑȑȑ filȑ^I^I^I^I^ITextuȑ<﷽ngleȑFiltering Type="pyramidapa.0</Vȑrenȑl"/>^M^J^I^I^I^I^I^I^I<Mo^J^I^I^I^IȑnNȑn</MȑoiseȑoChannelOutput Outpt>^M^J^Iȑut="rgbInteh/WCrȑȑTȑd>ȑnsit
+300
+y"/>^M^J^I^I</Vȑ^I^I^I^I^I^I^I<RGBChannelOutput Output=utMap0">1.ȑȑ"alphaArs>^I^IȑsGrayile"/ȑ"/>^M^J^I^I^I^I^Ip"" iȑ^I^I<ount>ȑAlphaSource Source="none"/>t="1ȑȑv"ȑchȑ^M<RGBfȑ^J^I^I^I췍﷽﷽/Bitmȑnglesȑ������ȱ^I^I^I^I<PexMapȑremultiplird>^M^JȑedAlpha>1</PremultiplCoordȑiedAlpha>^M^J췍﷽﷽^I^I^I0.0^M^J^I^Irds
+300
+>^Mȑ^Iȑngȑ^I^I^I</BitmapParameters>^M^J^I^I^I^I^I^I<Tex^I췍itmȑMapOutpule0usȑt>^M^J^I^I^I^I^I^I^I<InvechMoȑrasȑaxȑrt>0</៏Invert>^M^I^IClaȑ^J^I^I^I^I^I^I^I<</A^I^IȑCl3Jittȑamp>ingCoȑ0</Clamp>^M^J^I^I^I^I^I^I^I<AlphaFromRGBIntensity>0</AlphaFr^I^I^I^I^Iȑo013DCȑmRGBIgȑ404ȑntensity>^MtureTexMaȑMȑ^J^I^I^I^I^I^I^I<Outpu
+300
+tAmngle>ȑtg"ȑ<ȑount>1.0</OutputAmounCȑvelȑt>^M췍﷽������ȱAȑ﷽﷽������ȱ^J^I^I^I^I^I^I^Ietyȑmpȑtersȑ<RGBOffset>0.0</RGBOffset>^M^Jtaramȑ^I^I^I^I^I^I^I<RGBLeve췍﷽﷽l>1.0</RGBLevel.0</Vȑ>^M^JBum"0ȑorȑpAȑ^I^I^I^I^I^I^I<BumpApChanȑmount>1.0</BumpAmount>^Mn^J^I^I^I^I^I^I</TexM0</ArȑapOu0</VAȑtput>^M^J^I^I^I^I^I</Bitm
+300
+apMap>^M^J^I^I^I^I</Texture0</^M^JȑMap>^Mffsetȑ^J^I^I^I^Iann^I^I^I^I^Iȑelȑ<TexthanneȑureMap name="Sitework.Pl^Iutpuȑanting.Grass.Shoexȑ>^Mȑrt.bump" id="{DD97DC88-1333-46췍﷽﷽������ȱ91-97C2-96A530E8DA29}">^I^I^IexMapȑ^IRetputAȑfraȑ^Iȑ^M^J^I^I^I^I^I<DisplayMmeȑerȑapInViewptaramȑort>0e.pngȑ<췍﷽﷽/D
+300
+i="tilȑspE328Bȑl.0"/ȑȑayMapInViewport>^M^J^I^I^I^I^I<BitmapMap>^M^J^I^I^I^I^I^I<TexMapCoords2d>^I^I<ȑ9ȑ^M^J^I^I^I^I^I^I^IBumpAȑ<TMap>^MȑextureCochEmiȑord耀Қ耀^As>^Moord>ȑ^J^I^Iȱ^I<Arȑ^I^I^I^I^I^I<Expliciase>0ȑtMapChannel CoordPlane="uv">^M^J^I^I^I^I^I^I^I^I^Iinineȑ<MapChannel>1</MapCha-A917ȑn^I^I<-5ȑnel>^M^J^I^I
+300
+^I^I^I^I^I^I^I<UCoorrchTrȑds>^M췍^I^I^I>^M^Jȑȑȑ<Tȑ﷽﷽������0^I^I<Bȑȱ^IȑNoiȑ^J^I^I^I^I^I^I^I^I^I^I<OffsetCoor.0</Aȑd>-0.1952</OffsetCoord>^M^J^I^IHCropȑ^I^I^Iclassȑ^I^I^I^I^I췍ittF4ȑ﷽﷽<TilingCoUAnglȑord/Ang Tyȑrchȑ>^M^J^I^Iȑ>1.64Transȑ042</TilingCE328Bȑoord>^M^J^I^I^I^I^I^I^I^I^I^I<TextureTili<Iȑ"uȑng Tiling="tile"/>
+300
+^M^J���ȱ^J^I^Iȑ^I^I^I^I^I^I^Iop>0.ȑ^I^I</UCoords>.5069ȑ^M^J^I^I^I^I^IArchLȑ^I^I^I^I<VCoojpȑpAȑrds>^M^J^I^I^I^I^I^I^I^I^I^I<OffsetCoometerȑrd>-0.1952</OffsetCoord>^M^J^Iinessȑ^I^I^I^I^I^I^I^I^IMaȑȑuȑ<Ti^Iȑ^I<AȑlingCoord>1.6-A917ȑ4042췍﷽﷽������ȱ</TilingCoord>^M^J^I^I^I^I^I^I^I^I^IpArchDȑhaSaxInfȑoȑ^I<Tex^I^I^I<ȑȑtureTiling>0.0<ȑ
+300
+ Tiling="tile"/>^M^J^Iȱse" ȑ^I췍﷽﷽^I^I^Ispareȑ^I^I^I^I</VnnancȑCoords>-A917ȑ^M^J^I^I^I^I9^I^I^I^I<ȑloȑ^I^I<Angles>^M^J^I^I^I^I^I﷽﷽���MaptewonȑInȑ���ȱȑ^I^I^I^I^I<UAwoSidȑngle>0.0</UAngle>^M^J^I^Iap TAȑnVropȑ^I^I^Ipȑ﷽﷽<ȑ^I^I^I^I app=ȑ^I<VAngle>0.0</VAngle>^M^J^I^I^I^I^I^I^I^I^I^I<WAngle>0.0</WAngle>E328Bȑ^M^J^I^I^I^I^I^I^I^I^I</58
+300
+3g=0.0</ȑ"0.ȑ27ȑF4-62ȑAngles>^M^J^I^I^I^I^I^I^I^I^I<BluArchE328BȑDȑrchultȑ>1.0</Blur>^M^J^I^I^I^I^I췍﷽﷽�⏩ȱ^I^I^I^I<B^I<OutȑlurOffset></RGȑȑ0.0</BlurOffset>^M^J^I^I^I^I^I^I^I^I<retpuȑ/ExplicitMTnt>Textuȑ^MiȑextuȑapCh>onhBunsȑe"ȑanneMapInȑ" claȑl>췍﷽﷽^M^J^I^I^I^I^I^I^I</TextureCoords>^M^J^I^I^I^I^I^I</TexMapC
+300
+oords2d>^M^J^I^I^I^I^I^I<TexMapNo^I^I^I^I^Iȑiseflecȑe>^M^J^I^I^I^I^I^I^I<NoiseAmoun^I<utAseAtAȑHeȑmoȑȑt>1.0</NoiseAmount>^M^J^IApaȑrtȑrchTȑ^I^I^I^I^I^I<ropid_A=ȑȑȱ</AArchEȑrȑrȑNoiseLevels>1</NoiseLeve^I^I^I^Iȑȑls>^M^J^I^I^I^I^I^I^I<NoiseSize>1.0</s>췍﷽^IhTentenȑȑxtȑȑNoiseSize^I<Arcȑ>^M^J^I^I^I-A917ȑ^I^I췍﷽﷽������ȱ
+300
+^I^I<NoisePhaiffusȑse>0.0</NoisePhase>^M^J^I^I^I^I^I^I</TexPMaxRȑMapchMinth>0.ȑȑNoise>^M^J^I^I^I<ArcMȑ^I^I^IArcMaȑ<Bitma췍﷽﷽pParameters>^M^J^I^I^I^IxOfRseLerȑeȑ^I^I^I<Bit-A>^Mȑviȑ917ȑmapFile filename="Swork.ȑitework.Plannting.Grass.Sho05rt.bump.jpg"/>^M^J^I^I^I^I^Iȑ^I^I^Iȑ^I^I^I<Crȑ9ranȑoppi^Iȑnt>
+300
+ȑn^Aty>0ȑg o^Iȑ^M^J^Iȑn="0" CropTnoneȑȑype="crop">^M^J^I^I^I^I^I^I^Ia-A917ȑnsluȑ^I<UCrop>0.0</chLumȑUCrop>^M^J^I^I^Iceoȑrȑ^I^I^I^I^I<VCrop>0.0</VCrop>^M^J^Intinȑȑ^I췍﷽﷽������ȱ^I^I^I^I^I^I<WCr-A917ȑop>1.ini>1ȑon>^M^Jȑ-A917ȑ0</췍﷽﷽������ȑWCrop>^M^I^I^I^Iȑȑ^J^I^I^I^I^I^I^I^I<H^I^I^I^IȑȑCrop>1tBumpȑ.0</HCrop>^M^J^I^I^I^I^I^I^Ip; Su
+300
+ȑ^I<Jitter췍﷽﷽PlacemeE328BȑnseCset>0ȑolȑt on="0">1.0</JitterPlacemity^I^Iȑent>^M^J^I^I^I^I^I^I^I</CrdexOfȑE328Bȑopping>^M^J^Iȑ^I^I^I^Iȑ^I^I^I^I^I^I<TA530ȑFiltering Type=ȑReȑ^IȑȑA΂΂rchȑ"pyramidal"/>^M^J^I^I^I^I^I^I^I<s>^M췍ȑȑM/Bluȑax췍nsȑȑoMinȑ^JȑnoChannelOutput Output="r>0ȑe1ȑgranslȑ^I^I^IseȑbInte
+300
+nsity"/>^M^J^I췍﷽﷽.E328Bȑ5ȑ^I^I^I^I^I^I<>^M^J^IȑȑRGBChann-A917ȑ0</AWȑelOutput Output="a췍﷽﷽������ȱlphaAsGray"/>^M^J^I^I^I^Iȑteȑ^I^Iexȑ/Nȑ^I^I^I<Alp<ingCȑhaSource So^I^I^I-A917ȑ^Iȑȑurce="none"/耀Қ耀^A>^M^J^I^I^I^I^I^I^I<P^I^I^I<Aȑ^M^J^I^I^IArcLeȑȑremultiplie췍﷽﷽dAlpha>1emplaȑ</PremultipliedAlphhMaxTȑa>^MinTraȑ
+300
+^J^I^I^I^I^I^Iȑndexȑ</BitmapParamete>^M^J^I^Iȑrs>^M^J^I^I^I^I^ITtȑdsȑ^I<TeȑanspȑxMaize>1ȑpOutput>^M^J^I^I^I^I^Ier^I^I<Invert>0</Invert>oȑArcȑ^M^J>^Mivio^Iȑ^J^I^Iȑ^I^I^I^I^I^I^I<Clamp>0</Cl^M^J^I^I^Iȑamp>^M^J^I^I^I^It>oȑȑȑ^I^I^I</Archefl</ȑȑAlphaFros>0.0ȑmRGBIntensity>0</AlphaFromRGBI췍﷽﷽������ȱntensity>^M^J^I^Iparenȑ^I^I
+300
+^I^I^I<OutputAm.0</Aȑount>1.0</OutputAmount>^M^J^I^I^I^I^I^I^I<RGBOffseount>ȑtureCȑȑ>0.0</췍﷽﷽RGBOffsecencyȑt>^M^J^I^I^I-A917ȑȑTemplȑ^M^J^I^I^I^I^I^I^I<RGBLȑ^I<Arȑevel>91.0</RGBLevel>^M^J^I^I^I^I^I^I^I<BumpAmount>1.0</Bumpn>^MȑviȑsmitȑAnTA53ȑmount>^M^J^Iie>^M^Jȑ^I^I^I^Il_Tooȑ^J^Iȑypȑ^I</Teȑ^I</TexMapOutpu
+300
+t>^M^J^I^I^I^I^I</BitmapMap>^M^J^I^I^I^I</Tme="SȑextureMap>^M^J^I^I^I<Mȑ Tiȑ/MapLib>^M^J^I^Ie Souȑ^I<Map on="1"췍﷽﷽�⏩ȱ TexMapChannelNum="1" TexMapChannel=-A917ȑ"R_Aȑ^I^I<rȑȑReȑGBChȑDi^I^I^I<ȑȑffus"Sȑfrȑe ^M^J^I^I^IȑMap" Amount="100use" ȑ"﷽﷽�⏩ȱȑ TexMa^M.0<ȑȑpRef="{D64췍﷽﷽326F4-62ȱ^I<ArȑD3-440
+300
+5-B1E7-236E69D013DC}"/>^M^J^I^I^I<Map on="1" TexMapChannelNum="ry=18" TexMapChannel="Bumlp Map" Amount="1ractiȑensitȑ0"SȑfromRGȑrȑ" TexMapRef="{DD97DC88-1333-ne"/ȑȑ4691-97C2-96A530E8DA29}"/>^M^J^I^I</Map췍﷽﷽������ȱSet>^M^J^I</Ar�⏩ȱ Tȑchiteȑ.0</ȑseCsȑȑctura<ClamȑlMa05teria
+300
+l>^M^J</Materingȑncȑal>췍﷽﷽췍﷽﷽������^I^I峠砼耤砮xTraá-1⅀ᜏaᜡűƁỈűـTrǁ^J^I^I^I^Iȑ¡/췍﷽﷽RGBƱ<Arc±et>^M^J^I<Ɓᅬ་蛼ᝁqᅸ┄ᅸ┄ā̑MapOuƱȠDišMaxIndÁȑ^I</Tǡncġchⷅⷅš
