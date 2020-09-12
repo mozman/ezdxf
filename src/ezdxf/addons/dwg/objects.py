@@ -1,12 +1,13 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Dict, List, Tuple, Optional, Any, TYPE_CHECKING, List, cast
+from typing import Dict, Tuple, Optional, Any, TYPE_CHECKING, List, cast
 import struct
 import logging
 from abc import abstractmethod
 
 from ezdxf.tools.binarydata import BitStream
 from ezdxf.lldxf.tags import Tags, DXFTag
+from ezdxf.entities import factory
 from .const import *
 from .crc import crc8
 from .fileheader import FileHeader
@@ -14,7 +15,7 @@ from .fileheader import FileHeader
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import EntityFactory, Layer
+    from ezdxf.eztypes import Drawing
 
 TYPE_TO_DXF_NAME = {
     0x01: 'TEXT',
@@ -406,8 +407,8 @@ class DwgRootObject:
         else:
             raise DwgObjectError(f'Invalid/unknown object type: {object_type}.')
 
-    def dxf(self, factory: 'EntityFactory'):
-        entity = factory.new_entity(self.dxfname, self.dxfattribs)
+    def dxf(self):
+        entity = factory.new(self.dxfname, self.dxfattribs)
         entity.set_reactors(self.persistent_reactors)
 
         for handle, tags in self.xdata.items():
@@ -615,8 +616,8 @@ class DwgLayer(DwgTableEntry):
             dxfattribs['material_handle'] = bs.read_hex_handle()
         self.dxfattribs['linetype'] = bs.read_hex_handle()
 
-    def dxf(self, factory: 'EntityFactory'):
-        layer = cast('Layer', super().dxf(factory))
+    def dxf(self):
+        layer = cast('Layer', super().dxf())
         get_dwg_data = self.dwg_data.get
 
         color_handle = get_dwg_data('color_handle')

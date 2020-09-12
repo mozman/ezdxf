@@ -5,7 +5,7 @@ from typing import Dict, Any, Iterable, Callable
 import logging
 import warnings
 from collections import OrderedDict
-from ezdxf.drawing import Drawing
+from ezdxf.document import Drawing
 from ezdxf.tools import codepage
 
 from ezdxf.sections.header import HeaderSection
@@ -133,14 +133,13 @@ class DwgDocument:
         except KeyError:
             raise DwgCorruptedTableSection(f'{name} table handle not present.')
         else:
-            dxf_table.init_table_head(name, handle)
+            dxf_table._set_head(name, handle)
             add_to_entitydb(dxf_table.head)
             for entry in self.load_table_entries(handle, name=name, entry_factory=entry_factory):
                 add_to_entitydb(entry)
                 add_to_table(entry)
 
     def load_table_entries(self, handle: str, name: str, entry_factory: Callable) -> Iterable:
-        dxffactory = self.doc.dxffactory
         objects = self.objects_directory
         try:  # load table control object
             data = objects[handle]
@@ -155,7 +154,7 @@ class DwgDocument:
                 else:
                     dwg_object = entry_factory(self.specs, data, handle)
                     dwg_object.update_dxfname(self.dxf_object_types)
-                    yield dwg_object.dxf(dxffactory)
+                    yield dwg_object.dxf()
 
     def set_dxf_header_vars(self):
         dxf_header = self.doc.header

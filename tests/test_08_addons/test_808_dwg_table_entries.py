@@ -6,13 +6,6 @@ import ezdxf
 from ezdxf.addons.dwg import FileHeader
 from ezdxf.addons.dwg.const import *
 from ezdxf.addons.dwg.objects import DwgAppID, DwgTextStyle, DwgLayer
-from ezdxf.entities.factory import EntityFactory
-
-
-@pytest.fixture(scope='module')
-def factory():
-    doc = ezdxf.new('R2000')
-    return EntityFactory(doc)
 
 
 @pytest.fixture(scope='module')
@@ -30,13 +23,13 @@ def test_specs(specs):
 OBJECT_12 = "UN0AAAAARKkEQUNBRMAEEJMFAA=="
 
 
-def test_appid_12(specs, factory):
+def test_appid_12(specs):
     data = base64.b64decode(OBJECT_12)
     dwg_obj = DwgAppID(specs, data, handle='12')
     assert dwg_obj.object_type == 67
     dwg_obj.update_dxfname({})
 
-    dxf_obj = dwg_obj.dxf(factory)
+    dxf_obj = dwg_obj.dxf()
     assert dxf_obj.dxf.name == 'ACAD'
 
 
@@ -46,13 +39,13 @@ OBJECT_11 = (
 )
 
 
-def test_style_11(specs, factory):
+def test_style_11(specs):
     data = base64.b64decode(OBJECT_11)
     dwg_obj = DwgTextStyle(specs, data, handle='11')
     assert dwg_obj.object_type == 53
     dwg_obj.update_dxfname({})
 
-    dxf_obj = dwg_obj.dxf(factory)
+    dxf_obj = dwg_obj.dxf()
     assert dxf_obj.dxf.name == 'Standard'
     assert dxf_obj.dxf.flags == 0
     assert dxf_obj.dxf.height == 0
@@ -71,13 +64,13 @@ def test_style_11(specs, factory):
 OBJECT_10 = "TNwAAAAARCkBMMPADQdBAjGaUFEPURY="
 
 
-def test_layer_10(specs, factory):
+def test_layer_10(specs):
     data = base64.b64decode(OBJECT_10)
     dwg_obj = DwgLayer(specs, data, handle='10')
     assert dwg_obj.object_type == 51
     dwg_obj.update_dxfname({})
 
-    dxf_obj = dwg_obj.dxf(factory)
+    dxf_obj = dwg_obj.dxf()
     assert dxf_obj.dxf.name == '0'
     assert dxf_obj.dxf.flags == 0
     assert dxf_obj.dxf.color == 7
