@@ -1,7 +1,4 @@
-# 2018-11-29: future consistent version numbers
-# ---------------------------------------------
-#
-# version scheme for version: (major, minor, micro, release_level)
+# version scheme: (major, minor, micro, release_level)
 #
 # major:
 #   0 .. not all planned features done
@@ -27,5 +24,5 @@
 #   1. bug fix release beta0: VERSION = "0.9.1b0"; version = (0, 9, 1, 'b0')
 #   2. bug fix release: VERSION = "0.9.2"; version = (0, 9, 2, 'release')
 
-version = (0, 14, 0, 'release')
-__version__ = "0.14"
+version = (0, 15, 0, 'a0')
+__version__ = "0.15a0"

@@ -5,10 +5,17 @@ Add-ons
 -------
 
 - drawing
+    - HATCH island support (v0.15)
+    - matplotlib back-end support for: (v0.15)
+        - linetype
+        - hatch pattern
+        - hatch gradient
+        - fonts
+    - pyqt5 back-end: implement features of matplotlib back-end
     - ACAD_TABLE
     - MLEADER ???
     - MLINE ???
-    - render POINT symbols
+    - render POINT symbols (v0.15)
     - render proxy graphic, class `ProxyGraphic()` is already 
       implemented but not tested with real world data.
 - Simple SVG exporter
