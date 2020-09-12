@@ -2,7 +2,6 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING, Union, Dict
-import warnings
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.math import Matrix44, Vector, NULLVEC
 from ezdxf.math.construct3d import is_planar_face, subdivide_face, normal_vector_3p, subdivide_ngons
@@ -405,14 +404,6 @@ class MeshTransformer(MeshBuilder):
         """
         self.vertices = list(Matrix44.axis_rotate(axis, angle).transform_vertices(self.vertices))
         return self
-
-    def transform_to_wcs(self, ucs: 'UCS') -> 'MeshTransformer':
-        warnings.warn(
-            'MeshTransformer.transform_to_wcs(ucs) is deprecated, use transform(ucs.matrix). (removed in v0.15)',
-            DeprecationWarning
-        )
-        return self.transform(ucs.matrix)
-
 
 def _subdivide(mesh, quads=True, edges=False) -> 'MeshVertexMerger':
     """ Returns a new :class:`MeshVertexMerger` object with subdivided faces and edges.

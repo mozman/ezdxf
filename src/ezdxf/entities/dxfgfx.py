@@ -4,7 +4,6 @@
 #
 # DXFGraphic - graphical DXF entities stored in LAYOUTS and BLOCKS
 from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Dict
-import warnings
 from ezdxf.entities import factory
 from ezdxf import options
 from ezdxf.lldxf import validator
@@ -385,14 +384,6 @@ class DXFGraphic(DXFEntity):
             auditor.check_entity_lineweight(self)
         if dxf.hasattr('extrusion'):
             auditor.check_extrusion_vector(self)
-
-    def transform_to_wcs(self, ucs: 'UCS') -> 'DXFGraphic':
-        warnings.warn(
-            'DXFGraphic.transform_to_wcs(ucs) is deprecated, '
-            'use transform(ucs.matrix). (removed in v0.15)',
-            DeprecationWarning
-        )
-        return self.transform(ucs.matrix)
 
     def transform(self, m: 'Matrix44') -> 'DXFGraphic':
         """ Inplace transformation interface, returns `self`

@@ -6,7 +6,6 @@ from typing import (
     Callable, Dict,
 )
 import math
-import warnings
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -478,12 +477,10 @@ class Insert(LinkedEntities):
         self.dxf.discard('rotation')
         self.dxf.discard('extrusion')
 
-    def explode(self, target_layout: 'BaseLayout' = None,
-                non_uniform_scaling=None) -> 'EntityQuery':
-        """
-        Explode block reference entities into target layout, if target layout is
-        ``None``, the target layout is the layout of the block reference.
-        This method destroys the source block reference entity.
+    def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
+        """ Explode block reference entities into target layout, if target
+        layout is ``None``, the target layout is the layout of the block
+        reference. This method destroys the source block reference entity.
 
         Transforms the block entities into the required :ref:`WCS` location by
         applying the block reference attributes `insert`, `extrusion`,
@@ -502,10 +499,7 @@ class Insert(LinkedEntities):
 
         Args:
             target_layout: target layout for exploded entities, ``None`` for
-            same layout as source entity.
-
-        .. versionchanged:: 0.13
-            deprecated `non_uniform_scaling` argument
+                same layout as source entity.
 
         """
         if target_layout is None:
@@ -514,16 +508,9 @@ class Insert(LinkedEntities):
                 raise DXFStructureError(
                     'INSERT without layout assigment, specify target layout.'
                 )
-        if non_uniform_scaling is not None:
-            warnings.warn(
-                'Insert.explode() argument `non_uniform_scaling` is deprecated'
-                ' (removed in v0.15).',
-                DeprecationWarning
-            )
         return explode_block_reference(self, target_layout=target_layout)
 
     def virtual_entities(self,
-                         non_uniform_scaling=None,
                          skipped_entity_callback: Optional[
                              Callable[[DXFGraphic, str], None]] = None
                          ) -> Iterable[DXFGraphic]:
@@ -561,16 +548,7 @@ class Insert(LinkedEntities):
             skipped_entity_callback: called whenever the transformation of an
                 entity is not supported and so was skipped
 
-        .. versionchanged:: 0.13
-            deprecated `non_uniform_scaling` argument
-
         """
-        if non_uniform_scaling is not None:
-            warnings.warn(
-                'Insert.virtual_entities() argument `non_uniform_scaling` is'
-                ' deprecated (removed in v0.15).',
-                DeprecationWarning
-            )
         return virtual_block_reference_entities(
             self, skipped_entity_callback=skipped_entity_callback)
 

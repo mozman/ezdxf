@@ -2,6 +2,28 @@
 News
 ====
 
+Version 0.15a0 - dev
+--------------------
+
+- REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
+  use `DXFEntity.transform(ucs.matrix)`
+- REMOVED: deprecated `Hatch.edit_boundary()` context manager, 
+  use `Hatch.paths` attribute
+- REMOVED: deprecated `Hatch.get_gradient()` method,
+  use `Hatch.gradient` attribute
+- REMOVED: deprecated `Hatch.edit_gradient()` context manager,
+  use `Hatch.gradient` attribute
+- REMOVED: deprecated `Hatch.edit_pattern()` context manager,
+  use `Hatch.pattern` attribute
+- REMOVED: deprecated `Hatch.get_seed_points()` method,
+  use `Hatch.seeds` attribute
+- REMOVED: unnecessary argument `non_uniform_scaling` from `Insert.explode()`
+- REMOVED: unnecessary argument `non_uniform_scaling` from 
+  `Insert.virtual_entities()`
+- REMOVED: deprecated `Spline.edit_data()` context manager,
+  use `fit_points`, `control_points`, `knots`  and `weights` attributes
+
+
 Version 0.14 - 2020-09-12
 -------------------------
 

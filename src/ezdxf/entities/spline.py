@@ -384,26 +384,6 @@ class Spline(DXFGraphic):
                 'Control point count must be equal to weights count.')
         self.weights = weights
 
-    @contextmanager
-    def edit_data(self) -> 'SplineData':
-        """ Context manager for all spline data, returns :class:`SplineData`.
-        """
-        warnings.warn('Spline.edit_data() is deprecated (removed in v0.15).',
-                      DeprecationWarning)
-        data = SplineData(self)
-        yield data
-        if data.fit_points is not self.fit_points:
-            self.fit_points = data.fit_points
-
-        if data.control_points is not self.control_points:
-            self.control_points = data.control_points
-
-        if data.knots is not self.knots:
-            self.knots = data.knots
-
-        if data.weights is not self.weights:
-            self.weights = data.weights
-
     def transform(self, m: 'Matrix44') -> 'Spline':
         """ Transform SPLINE entity by transformation matrix `m` inplace.
 

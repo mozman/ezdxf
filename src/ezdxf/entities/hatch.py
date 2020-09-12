@@ -5,10 +5,8 @@ from typing import (
     TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable,
     Optional,
 )
-from contextlib import contextmanager
 import math
 import copy
-import warnings
 from ezdxf.lldxf import const
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -412,19 +410,6 @@ class Hatch(DXFGraphic):
     def bgcolor(self) -> None:
         self.discard_xdata('HATCHBACKGROUNDCOLOR')
 
-    # just for compatibility
-    @contextmanager
-    def edit_boundary(self) -> 'BoundaryPaths':
-        """ Context manager to edit hatch boundary data, yields a
-        :class:`BoundaryPaths` object.
-
-        """
-        warnings.warn(
-            'Hatch.edit_boundaries() is deprecated (removed in v0.15).',
-            DeprecationWarning
-        )
-        yield self.paths
-
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: 'RGB' = None):
         """ Set :class:`Hatch` to solid fill mode and removes all gradient and
         pattern fill related data.
@@ -448,14 +433,6 @@ class Hatch(DXFGraphic):
         self.dxf.pattern_type = const.HATCH_TYPE_PREDEFINED
         if rgb is not None:
             self.rgb: 'RGB' = rgb
-
-    def get_gradient(self):
-        """ Returns gradient data as :class:`GradientData` object. """
-        warnings.warn(
-            'Hatch.get_gradient() is deprecated (removed in v0.15).',
-            DeprecationWarning
-        )
-        return self.gradient
 
     def set_gradient(self,
                      color1: 'RGB' = (0, 0, 0),
@@ -514,20 +491,6 @@ class Hatch(DXFGraphic):
         gradient.name = name
         self.gradient = gradient
 
-    @contextmanager
-    def edit_gradient(self) -> 'Gradient':
-        """ Context manager to edit hatch gradient data, yields a
-        :class:`GradientData` object.
-
-        """
-        warnings.warn(
-            'Hatch.edit_gradient() is deprecated (removed in v0.15).',
-            DeprecationWarning
-        )
-        if not self.gradient:
-            raise const.DXFValueError('HATCH has no gradient data.')
-        yield self.gradient
-
     def set_pattern_fill(self, name: str, color: int = 7, angle: float = 0.,
                          scale: float = 1., double: int = 0,
                          style: int = 1, pattern_type: int = 1,
@@ -569,20 +532,6 @@ class Hatch(DXFGraphic):
             factor=self.dxf.pattern_scale,
             angle=self.dxf.pattern_angle,
         )
-
-    @contextmanager
-    def edit_pattern(self) -> 'Pattern':
-        """ Context manager to edit hatch pattern data, yields a
-        :class:`PatternData` object.
-
-        """
-        warnings.warn(
-            'Hatch.edit_pattern() is deprecated (removed in v0.15).',
-            DeprecationWarning
-        )
-        if not self.pattern:
-            raise const.DXFValueError('Solid fill HATCH has no pattern data.')
-        yield self.pattern
 
     def set_pattern_definition(self, lines: Sequence, factor: float = 1,
                                angle: float = 0) -> None:
@@ -656,18 +605,6 @@ class Hatch(DXFGraphic):
         dxf = self.dxf
         self.pattern.scale(angle=angle - dxf.pattern_angle)
         dxf.pattern_angle = angle % 360.0
-
-    def get_seed_points(self) -> List:
-        """ Returns seed points as list of ``(x, y)`` points.
-        I don't know why there can be more than one seed point.
-        All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value).
-
-        """
-        warnings.warn(
-            'Hatch.get_seed_points() is deprecated (removed in v0.15).',
-            DeprecationWarning
-        )
-        return self.seeds
 
     def set_seed_points(self, points: Iterable[Tuple[float, float]]) -> None:
         """
