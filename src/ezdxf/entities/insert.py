@@ -144,11 +144,7 @@ class Insert(LinkedEntities):
 
     @property
     def has_scaling(self) -> bool:
-        """ Returns ``True`` if any axis scaling is applied.
-
-        .. versionadded:: 0.12
-
-        """
+        """ Returns ``True`` if any axis scaling is applied. """
         if self.dxf.hasattr('xscale') and self.dxf.xscale != 1:
             return True
         if self.dxf.hasattr('yscale') and self.dxf.yscale != 1:

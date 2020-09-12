@@ -53,6 +53,4 @@ specifies the area of the modelspace to view. Shortcut function:
 
     doc.set_modelspace_vport(height=10, center=(10, 10))
 
-.. versionadded:: 0.11
-
 .. _A360: https://a360.autodesk.com/viewer/

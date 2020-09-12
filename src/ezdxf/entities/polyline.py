@@ -480,20 +480,16 @@ class Polyline(LinkedEntities):
             target_layout: target layout for DXF primitives, ``None`` for same
             layout as source entity.
 
-        .. versionadded:: 0.12
-
         """
         return explode_entity(self, target_layout)
 
     def virtual_entities(self) -> Iterable[Union['Line', 'Arc', 'Face3d']]:
-        """
-        Yields 'virtual' parts of POLYLINE as LINE, ARC or 3DFACE primitives.
+        """  Yields 'virtual' parts of POLYLINE as LINE, ARC or 3DFACE
+        primitives.
 
         This entities are located at the original positions, but are not stored
         in the entity database, have no handle and are not assigned to any
         layout.
-
-        .. versionadded:: 0.12
 
         """
         return virtual_polyline_entities(self)

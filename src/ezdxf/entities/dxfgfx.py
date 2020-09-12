@@ -486,20 +486,12 @@ class DXFGraphic(DXFEntity):
         return self.transform(Matrix44.z_rotate(angle))
 
     def has_hyperlink(self) -> bool:
-        """ Returns ``True`` if entity has an attached hyperlink.
-
-        .. versionadded:: 0.12
-
-        """
+        """ Returns ``True`` if entity has an attached hyperlink. """
         return bool(self.xdata) and ('PE_URL' in self.xdata)
 
     def set_hyperlink(self, link: str, description: str = None,
                       location: str = None):
-        """ Set hyperlink of an entity.
-
-        .. versionadded:: 0.12
-
-        """
+        """ Set hyperlink of an entity. """
         xdata = [(1001, 'PE_URL'), (1000, str(link))]
         if description:
             xdata.append((1002, '{'))
@@ -515,11 +507,7 @@ class DXFGraphic(DXFEntity):
         return self
 
     def get_hyperlink(self) -> Tuple[str, str, str]:
-        """ Returns hyperlink, description and location.
-
-        .. versionadded:: 0.12
-
-        """
+        """ Returns hyperlink, description and location. """
         link = ""
         description = ""
         location = ""

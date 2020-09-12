@@ -20,8 +20,6 @@ def is_planar_face(face: Sequence[Vector], abs_tol=1e-9) -> bool:
          face: sequence of :class:`~ezdxf.math.Vector` objects
          abs_tol: tolerance for normals check
 
-    .. versionadded:: 0.11
-
     """
     if len(face) < 3:
         return False
@@ -46,8 +44,6 @@ def subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[
         face: a sequence of vertices, :class:`Vec2` and :class:`Vector` objects supported.
         quads: create quad faces if ``True`` else create triangles
 
-    .. versionadded:: 0.11
-
     """
     if len(face) < 3:
         raise ValueError('3 or more vertices required.')
@@ -64,13 +60,11 @@ def subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[
 
 
 def subdivide_ngons(faces: Iterable[Sequence[Union[Vector, Vec2]]]) -> Iterable[List[Vector]]:
-    """
-    Yields only triangles or quad faces, subdivides ngons into triangles.
+    """ Yields only triangles or quad faces, subdivides ngons into triangles.
 
     Args:
-        faces: iterable of faces as sequence of :class:`Vec2` and :class:`Vector` objects
-
-    .. versionadded:: 0.12
+        faces: iterable of faces as sequence of :class:`Vec2` and
+            :class:`Vector` objects
 
     """
     for face in faces:
@@ -83,10 +77,8 @@ def subdivide_ngons(faces: Iterable[Sequence[Union[Vector, Vec2]]]) -> Iterable[
 
 
 def normal_vector_3p(a: Vector, b: Vector, c: Vector) -> Vector:
-    """ Returns normal vector for 3 points, which is the normalized cross product for: :code:`a->b x a->c`.
-
-    .. versionadded:: 0.11
-
+    """ Returns normal vector for 3 points, which is the normalized cross
+    product for: :code:`a->b x a->c`.
     """
     return (b - a).cross(c - a).normalize()
 
@@ -112,8 +104,6 @@ def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vec
         ray1: first ray as tuple of two points on the ray as :class:`Vector` objects
         ray2: second ray as tuple of two points on the ray as :class:`Vector` objects
         abs_tol: absolute tolerance for comparisons
-
-    .. versionadded:: 0.11
 
     """
     # source: http://www.realtimerendering.com/intersections.html#I304
@@ -142,10 +132,8 @@ def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vec
 
 
 class Plane:
-    """ Represents a plane in 3D space as normal vector and the perpendicular distance from origin.
-
-    .. versionadded:: 0.11
-
+    """ Represents a plane in 3D space as normal vector and the perpendicular
+    distance from origin.
     """
     __slots__ = ('_normal', '_distance_from_origin')
 

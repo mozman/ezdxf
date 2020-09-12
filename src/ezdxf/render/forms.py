@@ -520,8 +520,6 @@ def cylinder_2p(count: int = 16, radius: float = 1, base_center=(0, 0, 0), top_c
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
-    .. versionadded:: 0.11
-
     """
     # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
     # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
@@ -722,8 +720,6 @@ def cone_2p(count: int = 16, radius: float = 1.0, base_center=(0, 0, 0), apex=(0
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
-    .. versionadded:: 0.11
-
     """
     # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
     # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
@@ -804,8 +800,6 @@ def sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads=True) -> M
         quads: use quads for body faces if ``True`` else triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
-
-    .. versionadded:: 0.11
 
     """
     radius = float(radius)

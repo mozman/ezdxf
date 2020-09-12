@@ -51,9 +51,6 @@ class Arc(Circle):
     @property
     def start_point(self) -> 'Vector':
         """  Returns the start point of the arc in WCS, takes OCS into account.
-
-        .. versionadded:: 0.11
-
         """
         v = list(self.vertices([self.dxf.start_angle]))
         return v[0]
@@ -61,9 +58,6 @@ class Arc(Circle):
     @property
     def end_point(self) -> 'Vector':
         """ Returns the end point of the arc in WCS, takes OCS into account.
-
-        .. versionadded:: 0.11
-
         """
         v = list(self.vertices([self.dxf.end_angle]))
         return v[0]

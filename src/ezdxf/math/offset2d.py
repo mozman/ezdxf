@@ -23,8 +23,6 @@ def offset_vertices_2d(vertices: Iterable['Vertex'], offset: float, closed: bool
         Adjacent collinear segments in `opposite` directions, same as a turn by 180 degree (U-turn), leads to
         unexpected results.
 
-    .. versionadded:: 0.11
-
     Args:
         vertices: source shape defined by vertices
         offset: line offset perpendicular to direction of shape segments defined by vertices order, offset > ``0`` is

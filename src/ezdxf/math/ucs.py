@@ -166,11 +166,7 @@ class UCS:
         self.matrix.origin = v
 
     def copy(self) -> 'UCS':
-        """ Returns a copy of this UCS.
-
-        .. versionadded:: 0.11
-
-        """
+        """ Returns a copy of this UCS. """
         return UCS(self.origin, self.ux, self.uy, self.uz)
 
     def to_wcs(self, point: 'Vertex') -> 'Vector':
@@ -254,12 +250,9 @@ class UCS:
         return OCS(self.uz).from_wcs(self.direction_to_wcs(direction))
 
     def rotate(self, axis: 'Vertex', angle: float) -> 'UCS':
-        """
-        Returns a new rotated UCS, with the same origin as the source UCS.
-        The rotation vector is located in the origin and has :ref:`WCS` coordinates e.g. (0, 0, 1) is the WCS z-axis
-        as rotation vector.
-
-        .. versionadded:: 0.11
+        """ Returns a new rotated UCS, with the same origin as the source UCS.
+        The rotation vector is located in the origin and has :ref:`WCS`
+        coordinates e.g. (0, 0, 1) is the WCS z-axis as rotation vector.
 
         Args:
             axis: arbitrary rotation axis as vector in :ref:`WCS`
@@ -271,10 +264,7 @@ class UCS:
         return UCS(origin=self.origin, ux=ux, uy=uy, uz=uz)
 
     def rotate_local_x(self, angle: float) -> 'UCS':
-        """
-        Returns a new rotated UCS, rotation axis is the local x-axis.
-
-        .. versionadded:: 0.11
+        """ Returns a new rotated UCS, rotation axis is the local x-axis.
 
         Args:
              angle: rotation angle in radians
@@ -285,10 +275,7 @@ class UCS:
         return UCS(origin=self.origin, ux=self.ux, uy=uy, uz=uz)
 
     def rotate_local_y(self, angle: float) -> 'UCS':
-        """
-        Returns a new rotated UCS, rotation axis is the local y-axis.
-
-        .. versionadded:: 0.11
+        """ Returns a new rotated UCS, rotation axis is the local y-axis.
 
         Args:
              angle: rotation angle in radians
@@ -299,10 +286,7 @@ class UCS:
         return UCS(origin=self.origin, ux=ux, uy=self.uy, uz=uz)
 
     def rotate_local_z(self, angle: float) -> 'UCS':
-        """
-        Returns a new rotated UCS, rotation axis is the local z-axis.
-
-        .. versionadded:: 0.11
+        """ Returns a new rotated UCS, rotation axis is the local z-axis.
 
         Args:
              angle: rotation angle in radians
@@ -313,10 +297,7 @@ class UCS:
         return UCS(origin=self.origin, ux=ux, uy=uy, uz=self.uz)
 
     def shift(self, delta: 'Vertex') -> 'UCS':
-        """
-        Shifts current UCS by `delta` vector and returns `self`.
-
-        .. versionadded:: 0.11
+        """ Shifts current UCS by `delta` vector and returns `self`.
 
         Args:
             delta: shifting vector
@@ -326,10 +307,7 @@ class UCS:
         return self
 
     def moveto(self, location: 'Vertex') -> 'UCS':
-        """
-        Place current UCS at new origin `location` and returns `self`.
-
-        .. versionadded:: 0.11
+        """ Place current UCS at new origin `location` and returns `self`.
 
         Args:
             location: new origin in WCS

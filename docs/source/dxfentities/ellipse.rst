@@ -47,13 +47,9 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         Returns the start point of the ellipse in WCS.
 
-        .. versionadded:: 0.11
-
     .. attribute:: end_point
 
         Returns the end point of the ellipse in WCS.
-
-        .. versionadded:: 0.11
 
     .. attribute:: minor_axis
 

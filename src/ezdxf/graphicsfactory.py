@@ -340,10 +340,6 @@ class CreatorInterface:
             format: user defined point format like :meth:`add_lwpolyline`,
                 default is ``None``
 
-        .. versionadded:: 0.11
-
-            user defined point format
-
         """
         dxfattribs = dict(dxfattribs or {})
         closed = dxfattribs.pop('closed', False)

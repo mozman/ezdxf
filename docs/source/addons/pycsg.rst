@@ -12,8 +12,6 @@ and is meant to serve as an easily understandable implementation of the
 algorithm. All edge cases involving overlapping coplanar polygons in both
 solids are correctly handled.
 
-.. versionadded:: 0.11
-
 Example for usage:
 
 .. code-block:: Python

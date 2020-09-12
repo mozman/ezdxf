@@ -433,8 +433,6 @@ class MText(DXFGraphic):
             split: returns list of strings splitted at line breaks if ``True``
                 else returns a single string.
 
-        .. versionadded:: 0.11.1
-
         """
         return plain_mtext(self.text, split=split)
 

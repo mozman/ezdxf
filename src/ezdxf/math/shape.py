@@ -57,13 +57,13 @@ class Shape2d:
 
     def offset(self, offset: float, closed: bool = False) -> 'Shape2d':
         """
-        Returns a new offset shape, for more information see also :func:`ezdxf.math.offset_vertices_2d` function.
-
-        .. versionadded:: 0.11
+        Returns a new offset shape, for more information see also
+        :func:`ezdxf.math.offset_vertices_2d` function.
 
         Args:
-            offset: line offset perpendicular to direction of shape segments defined by vertices order,
-                    offset > ``0`` is 'left' of line segment, offset < ``0`` is 'right' of line segment
+            offset: line offset perpendicular to direction of shape segments
+                defined by vertices order, offset > ``0`` is 'left' of line
+                segment, offset < ``0`` is 'right' of line segment
             closed: ``True`` to handle as closed shape
 
         """

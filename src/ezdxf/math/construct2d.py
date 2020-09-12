@@ -49,8 +49,6 @@ def linspace(start: float, stop: float, num: int,
     Returns `num` evenly spaced samples, calculated over the interval
     [start, stop]. The endpoint of the interval can optionally be excluded.
 
-    .. versionadded:: 0.12.3
-
     """
     if num < 0:
         raise ValueError(f'Number of samples, {num}, must be non-negative.')
@@ -394,8 +392,6 @@ def is_point_in_polygon_2d(point: Union[Vec2, Vector], polygon: Iterable[Vec2],
 
     Returns:
         ``+1`` for inside, ``0`` for on boundary line, ``-1`` for outside
-
-    .. versionadded:: 0.11
 
     """
     # Source: http://www.faqs.org/faqs/graphics/algorithms-faq/

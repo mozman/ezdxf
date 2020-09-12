@@ -204,6 +204,4 @@ specifies the area of the modelspace to view. Shortcut function:
 
     doc.set_modelspace_vport(height=10, center=(10, 10))
 
-.. versionadded:: 0.11
-
 .. _header variables: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A

@@ -71,8 +71,6 @@ class Circle(DXFGraphic):
             angles: iterable of angles in OCS as degrees, angle goes counter
                 clockwise around the extrusion vector, ocs x-axis = 0 deg.
 
-        .. versionadded:: 0.11
-
         """
         ocs = self.ocs()
         for angle in angles:
