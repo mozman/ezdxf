@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, TYPE_CHECKING, Optional
+from typing import Iterable, TYPE_CHECKING, Optional, Tuple
 
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
@@ -73,6 +73,7 @@ class MatplotlibBackend(Backend):
             Line2D(
                 (start.x, end.x), (start.y, end.y),
                 linewidth=properties.lineweight * POINTS,
+                linestyle=_get_line_style_pattern(properties),
                 color=properties.color,
                 zorder=self._get_z()
             ))
@@ -82,6 +83,7 @@ class MatplotlibBackend(Backend):
         patch = PathPatch(
             Path(vertices, codes),
             linewidth=properties.lineweight * POINTS,
+            linestyle=_get_line_style_pattern(properties),
             color=properties.color,
             fill=bool(properties.filling),
             zorder=self._get_z()
@@ -170,6 +172,24 @@ def _get_font_measurements(
     )
 
 
+def _get_line_style_pattern(properties: Properties, scale: float = 1):
+    """ Return matplotlib line style tuple: (offset, on_off_sequence)
+
+    See examples: https://matplotlib.org/gallery/lines_bars_and_markers/linestyles.html
+
+    """
+
+    if len(properties.linetype_pattern) < 2:
+        return 'solid'
+    else:
+        pattern = tuple(
+            max(round(element), 1) for element in
+            properties.scaled_linestype_pattern(scale * POINTS))
+        if len(pattern) % 2:
+            pattern = pattern[:-1]
+        return 0, pattern
+
+
 def _get_path_patch_data(path):
     codes = [Path.MOVETO]
     vertices = [path.start]
@@ -241,4 +261,3 @@ def qsave(layout: 'Layout', filename: str, *,
         plt.close(fig)
     finally:
         matplotlib.use(old_backend)
-
