@@ -10,6 +10,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Circle, PathPatch
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
+import numpy as np
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
@@ -182,11 +183,11 @@ def _get_line_style_pattern(properties: Properties, scale: float = 10):
     if len(properties.linetype_pattern) < 2:
         return 'solid'
     else:
-        pattern = tuple(
-            max(round(element), 1) for element in
-            properties.scaled_linestype_pattern(scale * POINTS))
+        scale = scale * properties.linetype_scale * POINTS
+        pattern = np.round(np.array(properties.linetype_pattern) * scale)
+        pattern = [max(element, 1) for element in pattern]
         if len(pattern) % 2:
-            pattern = pattern[:-1]
+            pattern.pop()
         return 0, pattern
 
 
