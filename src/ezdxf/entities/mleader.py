@@ -2,7 +2,7 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2004, DXFTypeError
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFTypeError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
@@ -30,7 +30,7 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
 class MLeader(DXFGraphic):
     DXFTYPE = 'MLEADER'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mleader)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2004
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def __init__(self):
         super().__init__()
@@ -116,7 +116,7 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
 class MLeaderStyle(DXFObject):
     DXFTYPE = 'MLEADERSTYLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_mleader_style)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2004
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def copy(self):
         raise DXFTypeError('Copying of {} not supported.'.format(self.DXFTYPE))

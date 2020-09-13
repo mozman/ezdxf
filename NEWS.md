@@ -4,7 +4,7 @@ News
 
 Version 0.15a0 - dev
 --------------------
-
+- NEW: linetype support for matplotlib drawing backend
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
   use `DXFEntity.transform(ucs.matrix)`
 - REMOVED: deprecated `Hatch.edit_boundary()` context manager, 

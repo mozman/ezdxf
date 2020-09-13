@@ -172,7 +172,7 @@ def _get_font_measurements(
     )
 
 
-def _get_line_style_pattern(properties: Properties, scale: float = 1):
+def _get_line_style_pattern(properties: Properties, scale: float = 10):
     """ Return matplotlib line style tuple: (offset, on_off_sequence)
 
     See examples: https://matplotlib.org/gallery/lines_bars_and_markers/linestyles.html
