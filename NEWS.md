@@ -23,6 +23,10 @@ Version 0.15a0 - dev
 - REMOVED: deprecated `Spline.edit_data()` context manager,
   use `fit_points`, `control_points`, `knots`  and `weights` attributes
 
+Version 0.14.1 - dev
+--------------------
+
+- BUGFIX: MLEADER and MLEADERSTYLE min DXF version changed to R2000
 
 Version 0.14 - 2020-09-12
 -------------------------
