@@ -127,9 +127,19 @@ class Layer(DXFEntity):
 
     def set_required_attributes(self):
         if not self.dxf.hasattr('material'):
-            self.dxf.material_handle = self.doc.materials['Global'].dxf.handle
+            global_ = self.doc.materials['Global']
+            if isinstance(global_, DXFEntity):
+                handle = global_.dxf.handle
+            else:
+                handle = global_
+            self.dxf.material_handle = handle
         if not self.dxf.hasattr('plotstyle_handle'):
-            self.dxf.plotstyle_handle = self.doc.plotstyles['Normal'].dxf.handle
+            normal = self.doc.plotstyles['Normal']
+            if isinstance(normal, DXFEntity):
+                handle = normal.dxf.handle
+            else:
+                handle = normal
+            self.dxf.plotstyle_handle = handle
 
     def is_frozen(self) -> bool:
         """ Returns ``True`` if layer is frozen. """
