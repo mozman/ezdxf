@@ -1,12 +1,13 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
-# Created: 2019-02-18
 from typing import (
     TYPE_CHECKING, KeysView, ItemsView, Any, Union, Dict, Optional,
 )
 import logging
 from ezdxf.lldxf import validator
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFKeyError, DXFValueError
+from ezdxf.lldxf.const import (
+    SUBCLASS_MARKER, DXFKeyError, DXFValueError, DXFStructureError,
+)
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
 )
@@ -19,7 +20,7 @@ from .dxfobj import DXFObject
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import  TagWriter, Drawing, DXFNamespace, Auditor
+    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, Auditor
 
 __all__ = ['Dictionary', 'DictionaryWithDefault', 'DictionaryVar']
 
@@ -394,6 +395,9 @@ class DictionaryWithDefault(Dictionary):
         entity._default = self._default
 
     def post_load_hook(self, doc: 'Drawing') -> None:
+        # Set _default to None if default object not exist - audit() replaces
+        # a not existing default object by a place holder object.
+        # AutoCAD ignores not existing default objects!
         self._default = doc.entitydb.get(self.dxf.default)
         super().post_load_hook(doc)
 
@@ -414,10 +418,10 @@ class DictionaryWithDefault(Dictionary):
     def get(self, key: str, default: Any = DXFKeyError) -> DXFEntity:
         # `default` argument is ignored, exist only for API compatibility,
         """ Returns :class:`DXFEntity` for `key` or the predefined dictionary
-        wide :attr:`dxf.default` entity if `key` does not exist.
+        wide :attr:`dxf.default` entity if `key` does not exist or ``None``
+        if default value also not exist.
 
         """
-        assert self._default is not None and self._default.is_alive
         return super().get(key, default=self._default)
 
     def set_default(self, default: DXFEntity) -> None:
@@ -429,6 +433,19 @@ class DictionaryWithDefault(Dictionary):
         """
         self._default = default
         self.dxf.default = self._default.dxf.handle
+
+    def _create_missing_default_object(self):
+        placeholder = self.doc.objects.add_placeholder(owner=self.dxf.handle)
+        self.set_default(placeholder)
+
+    def audit(self, auditor: 'Auditor') -> None:
+        if self._default is None or not self._default.is_alive:
+            self._create_missing_default_object()
+            auditor.fixed_error(
+                code=AuditError.CREATED_MISSING_OBJECT,
+                message=f'Created missing default object in {str(self)}.'
+            )
+        super().audit(auditor)
 
 
 acdb_dict_var = DefSubclass('DictionaryVariables', {
