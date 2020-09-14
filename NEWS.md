@@ -6,6 +6,9 @@ Version 0.14.1 - dev
 --------------------
 
 - BUGFIX: MLEADER and MLEADERSTYLE min DXF version changed to R2000
+- BUGFIX: AutoCAD ignores not existing default objects in ACDBDICTIONARYWDFLT
+  and so ezdxf have to. `Auditor()` creates a place holder object as default 
+  value.
 
 Version 0.14 - 2020-09-12
 -------------------------

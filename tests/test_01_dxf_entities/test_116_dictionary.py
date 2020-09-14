@@ -252,6 +252,16 @@ class TestDXFDictWithDefault:
         dxfdict.set_default(e)
         assert dxfdict['Mozman'].dxf.handle == 'ABBA'
 
+    def test_create_place_holder_for_invalid_default_vaue(self):
+        doc = ezdxf.new()
+        d = doc.objects.add_dictionary_with_default(
+            owner=doc.rootdict.dxf.handle, default='0')
+        auditor = Auditor(doc)
+        d.audit(auditor)
+        default = d.get('xxx')
+        assert default.is_alive is True
+        assert default.dxftype() == 'ACDBPLACEHOLDER'
+
 
 ROOTDICT = """0
 DICTIONARY
