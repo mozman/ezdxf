@@ -10,6 +10,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Circle, PathPatch
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
+import numpy as np
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
@@ -62,6 +63,7 @@ class MatplotlibBackend(Backend):
         self.point_size_relative = point_size_relative
         self.font = font
         self._font_measurements = _get_font_measurements(font)
+        self._line_style_pattern_cache = dict()
 
     def _get_z(self) -> int:
         z = self._current_z
@@ -76,7 +78,7 @@ class MatplotlibBackend(Backend):
             Line2D(
                 (start.x, end.x), (start.y, end.y),
                 linewidth=properties.lineweight * POINTS,
-                linestyle=_get_line_style_pattern(properties),
+                linestyle=self.get_line_style_pattern(properties),
                 color=properties.color,
                 zorder=self._get_z()
             ))
@@ -86,7 +88,7 @@ class MatplotlibBackend(Backend):
         patch = PathPatch(
             Path(vertices, codes),
             linewidth=properties.lineweight * POINTS,
-            linestyle=_get_line_style_pattern(properties),
+            linestyle=self.get_line_style_pattern(properties),
             color=properties.color,
             fill=bool(properties.filling),
             zorder=self._get_z()
@@ -136,6 +138,14 @@ class MatplotlibBackend(Backend):
         scale = cap_height / self._font_measurements.cap_height
         return max(x for x, y in path.vertices) * scale
 
+    def get_line_style_pattern(self, properties: Properties, scale: float = 10):
+        key = (properties.linetype_name, properties.linetype_scale * scale)
+        pattern = self._line_style_pattern_cache.get(key)
+        if pattern is None:
+            pattern = _get_line_style_pattern(properties, scale)
+            self._line_style_pattern_cache[key] = pattern
+        return pattern
+
     def clear(self):
         self.ax.clear()
 
@@ -176,7 +186,7 @@ def _get_font_measurements(
     )
 
 
-def _get_line_style_pattern(properties: Properties, scale: float = 10):
+def _get_line_style_pattern(properties: Properties, scale: float):
     """ Return matplotlib line style tuple: (offset, on_off_sequence)
 
     See examples: https://matplotlib.org/gallery/lines_bars_and_markers/linestyles.html
@@ -186,11 +196,11 @@ def _get_line_style_pattern(properties: Properties, scale: float = 10):
     if len(properties.linetype_pattern) < 2:
         return 'solid'
     else:
-        pattern = tuple(
-            max(round(element), 1) for element in
-            properties.scaled_linestype_pattern(scale * POINTS))
+        scale = scale * properties.linetype_scale * POINTS
+        pattern = np.round(np.array(properties.linetype_pattern) * scale)
+        pattern = [max(element, 1) for element in pattern]
         if len(pattern) % 2:
-            pattern = pattern[:-1]
+            pattern.pop()
         return 0, pattern
 
 

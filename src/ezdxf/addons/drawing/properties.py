@@ -176,14 +176,6 @@ class Properties:
         """
         return luminance(self.rgb)
 
-    def scaled_linestype_pattern(self, scale: float = 1.0) -> Iterable[float]:
-        """ Return scaled linetype pattern in mm. """
-        if self.linetype_pattern == CONTINUOUS_PATTERN:
-            return CONTINUOUS_PATTERN
-
-        scale *= self.linetype_scale
-        return (element * scale for element in self.linetype_pattern)
-
 
 class LayerProperties(Properties):
     """ Modified attribute meaning:

@@ -29,5 +29,5 @@ def test_get_text_width(backend):
 def test_get_line_style(backend):
     p = Properties()
     p.linetype_pattern = (1, 1)
-    assert _get_line_style_pattern(p, 2) == (0, (6, 6))  # in points!
+    assert _get_line_style_pattern(p, 2) == (0, [6, 6])  # in points!
     assert _get_line_style_pattern(Properties(), 2) == 'solid'
