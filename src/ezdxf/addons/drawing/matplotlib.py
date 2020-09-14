@@ -45,6 +45,9 @@ class MatplotlibBackend(Backend):
         super().__init__()
         self.ax = ax
         self._adjust_figure = adjust_figure
+        self._scale_dashes_backup = plt.rcParams['lines.scale_dashes']
+        # Disable internal line style scaling by matplotlib
+        plt.rcParams['lines.scale_dashes'] = False
 
         # like set_axis_off, except that the face_color can still be set
         self.ax.xaxis.set_visible(False)
@@ -147,6 +150,7 @@ class MatplotlibBackend(Backend):
                 width, height = plt.figaspect(data_height / data_width)
                 self.ax.get_figure().set_size_inches(width, height,
                                                      forward=True)
+        plt.rcParams['lines.scale_dashes'] = self._scale_dashes_backup
 
 
 def _transform_path(path: Path, transform: Matrix44) -> Path:

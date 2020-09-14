@@ -7,7 +7,6 @@ Add-ons
 - drawing
     - HATCH island support (v0.15)
     - matplotlib back-end support for: (v0.15)
-        - linetype
         - hatch pattern
         - hatch gradient
         - fonts
