@@ -434,20 +434,20 @@ class DictionaryWithDefault(Dictionary):
         self._default = default
         self.dxf.default = self._default.dxf.handle
 
-    def _create_missing_default_object(self):
-        placeholder = self.doc.objects.add_placeholder(owner=self.dxf.handle)
-        self.set_default(placeholder)
-
     def audit(self, auditor: 'Auditor') -> None:
-        if self._default is None or not self._default.is_alive:
-            if auditor.entitydb.locked:
-                auditor.add_post_audit_job(self._create_missing_default_object)
-            else:
-                self._create_missing_default_object()
+        def create_missing_default_object():
+            placeholder = self.doc.objects.add_placeholder(
+                owner=self.dxf.handle)
+            self.set_default(placeholder)
             auditor.fixed_error(
                 code=AuditError.CREATED_MISSING_OBJECT,
                 message=f'Created missing default object in {str(self)}.'
             )
+        if self._default is None or not self._default.is_alive:
+            if auditor.entitydb.locked:
+                auditor.add_post_audit_job(create_missing_default_object)
+            else:
+                create_missing_default_object()
         super().audit(auditor)
 
 
