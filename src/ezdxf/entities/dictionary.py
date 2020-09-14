@@ -440,7 +440,10 @@ class DictionaryWithDefault(Dictionary):
 
     def audit(self, auditor: 'Auditor') -> None:
         if self._default is None or not self._default.is_alive:
-            self._create_missing_default_object()
+            if auditor.entitydb.locked:
+                auditor.add_post_audit_job(self._create_missing_default_object)
+            else:
+                self._create_missing_default_object()
             auditor.fixed_error(
                 code=AuditError.CREATED_MISSING_OBJECT,
                 message=f'Created missing default object in {str(self)}.'
