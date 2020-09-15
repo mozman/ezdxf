@@ -14,6 +14,7 @@ from ezdxf.lldxf.const import (
     DXF12, DXF2000, DXF2004, DXF2007, DXF2013, DXFValueError, DXFKeyError,
     DXFTableEntryError, SUBCLASS_MARKER, DXFInvalidLineType, DXFStructureError,
 )
+from ezdxf.lldxf.tags import Tags
 from ezdxf.math import OCS, UCS, Matrix44
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
@@ -22,7 +23,7 @@ from .dxfentity import DXFEntity, base_class, SubclassProcessor
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex, Drawing,
+        Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex, Drawing
     )
 
 __all__ = [
@@ -107,6 +108,10 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # line) (optional), compiled by TagCompiler() to a DXFBinaryTag() objects
 })
 
+GRAPHIC_ATTRIBUTES_TO_RECOVER = {
+    attrib.code: name for name, attrib in acdb_entity.attribs
+}
+
 
 class DXFGraphic(DXFEntity):
     """ Common base class for all graphic entities, a subclass of
@@ -150,6 +155,19 @@ class DXFGraphic(DXFEntity):
         if len(tags) and not r12:
             processor.log_unprocessed_tags(tags, subclass=acdb_entity.name)
         return dxf
+
+    @staticmethod
+    def recover_graphic_attributes(tags: Tags, dxf: 'DXFNamespace') -> Tags:
+        unprocessed_tags = Tags()
+        for tag in tags:
+            attrib_name = GRAPHIC_ATTRIBUTES_TO_RECOVER.get(tag.code)
+            # Don't know if the unprocessed tag is really a misplaced tag,
+            # so check if the attribute already exist!
+            if attrib_name and attrib_name not in dxf:
+                dxf.set(attrib_name, tag.value)
+            else:
+                unprocessed_tags.append(tag)
+        return unprocessed_tags
 
     def post_new_hook(self):
         """ Post processing and integrity validation after entity creation
@@ -589,5 +607,3 @@ def replace_entity(source: 'DXFGraphic', target: 'DXFGraphic',
         layout.add_entity(target)
     else:
         source.destroy()
-
-
