@@ -20,6 +20,7 @@ def _main():
     parser.add_argument('--layout', default='Model')
     parser.add_argument('--out', required=False)
     parser.add_argument('--dpi', type=int, default=300)
+    parser.add_argument('--ltype', default='internal')
     args = parser.parse_args()
 
     if args.supported_formats:
@@ -61,7 +62,7 @@ def _main():
     fig: plt.Figure = plt.figure()
     ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
     ctx = RenderContext(doc)
-    out = MatplotlibBackend(ax)
+    out = MatplotlibBackend(ax, linetype_rendering=args.ltype)
     Frontend(ctx, out).draw_layout(layout, finalize=True)
     if args.out is not None:
         print(f'saving to "{args.out}"')

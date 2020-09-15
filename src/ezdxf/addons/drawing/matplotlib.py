@@ -2,8 +2,8 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, TYPE_CHECKING, Optional, Tuple
-
+from typing import Iterable, TYPE_CHECKING, Optional
+from enum import Enum
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 from matplotlib.lines import Line2D
@@ -18,6 +18,7 @@ from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Command
+from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Layout
@@ -35,6 +36,20 @@ POINTS = 1.0 / 0.3527  # mm -> points
 CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
 
 
+class LineTypeRendering(Enum):
+    # matplotlib internal linetype rendering, which is oriented on the output
+    # medium and dpi:
+    # This method is simpler and faster but may not replicate the results of
+    # CAD applications.
+    internal = 1
+
+    # Replicate AutoCAD linetype rendering oriented on drawing units and
+    # various ltscale factors:
+    # Warning: this rendering method break lines into small segments which
+    # requires a longer runtime and memory!
+    ezdxf = 2
+
+
 class MatplotlibBackend(Backend):
     def __init__(self, ax: plt.Axes,
                  *,
@@ -42,6 +57,8 @@ class MatplotlibBackend(Backend):
                  point_size: float = 2.0,
                  point_size_relative: bool = True,
                  font: FontProperties = FontProperties(),
+                 linetype_rendering: str = 'internal',
+                 linetype_scaling: float = None,
                  ):
         super().__init__()
         self.ax = ax
@@ -62,6 +79,32 @@ class MatplotlibBackend(Backend):
         self.point_size = point_size
         self.point_size_relative = point_size_relative
         self.font = font
+
+        # Set linetype rendering type:
+        try:
+            self.linetype_rendering = LineTypeRendering[
+                linetype_rendering.lower()]
+        except KeyError:
+            raise ValueError(
+                f'Unknown linetype rendering type: {linetype_rendering}')
+
+        # Setup line and path rendering methods:
+        if self.linetype_rendering == LineTypeRendering.internal:
+            self._line_renderer = self._internal_draw_line
+            self._path_renderer = self.draw_path
+        elif self.linetype_rendering == LineTypeRendering.ezdxf:
+            self._line_renderer = self._ezdxf_draw_line
+            self._path_renderer = self.draw_path
+
+        # Adjust overall linetype scaling
+        if linetype_scaling is None:
+            if self.linetype_rendering == LineTypeRendering.internal:
+                # Arbitrary value and may change in the future:
+                self.linetype_scaling = 10.0 * POINTS
+            elif self.linetype_rendering == LineTypeRendering.ezdxf:
+                self.linetype_scaling = 1.0
+        else:
+            self.linetype_scaling = float(linetype_scaling)
         self._font_measurements = _get_font_measurements(font)
         self._line_style_pattern_cache = dict()
 
@@ -74,14 +117,33 @@ class MatplotlibBackend(Backend):
         self.ax.set_facecolor(color)
 
     def draw_line(self, start: Vector, end: Vector, properties: Properties):
+        pattern = self.get_line_style_pattern(properties)
+        if pattern == 'solid':
+            self._internal_draw_line(start, end, properties, pattern)
+        else:
+            self._line_renderer(start, end, properties, pattern)
+
+    def _internal_draw_line(
+            self, start: Vector, end: Vector, properties: Properties, pattern):
         self.ax.add_line(
             Line2D(
                 (start.x, end.x), (start.y, end.y),
                 linewidth=properties.lineweight * POINTS,
-                linestyle=self.get_line_style_pattern(properties),
+                linestyle=pattern,
                 color=properties.color,
                 zorder=self._get_z()
             ))
+
+    def _ezdxf_draw_line(
+            self, start: Vector, end: Vector, properties: Properties, pattern):
+        renderer = EzdxfLineTypeRenderer(pattern[1])
+        lineweight = properties.lineweight * POINTS
+        color = properties.color
+        z = self._get_z()
+        for s, e in renderer.line_segment(start, end):
+            self.ax.add_line(
+                Line2D((s.x, e.x), (s.y, e.y), linewidth=lineweight,
+                       color=color, zorder=z))
 
     def draw_path(self, path, properties: Properties):
         vertices, codes = _get_path_patch_data(path)
@@ -138,11 +200,15 @@ class MatplotlibBackend(Backend):
         scale = cap_height / self._font_measurements.cap_height
         return max(x for x, y in path.vertices) * scale
 
-    def get_line_style_pattern(self, properties: Properties, scale: float = 10):
-        key = (properties.linetype_name, properties.linetype_scale * scale)
+    def get_line_style_pattern(self, properties: Properties):
+        scale = self.linetype_scaling
+        key = (properties.linetype_name, scale * properties.linetype_scale)
         pattern = self._line_style_pattern_cache.get(key)
         if pattern is None:
-            pattern = _get_line_style_pattern(properties, scale)
+            if self.linetype_rendering == LineTypeRendering.ezdxf:
+                pattern = _get_acad_line_style_pattern(properties, scale)
+            else:
+                pattern = _get_line_style_pattern(properties, scale)
             self._line_style_pattern_cache[key] = pattern
         return pattern
 
@@ -192,13 +258,25 @@ def _get_line_style_pattern(properties: Properties, scale: float):
     See examples: https://matplotlib.org/gallery/lines_bars_and_markers/linestyles.html
 
     """
-
     if len(properties.linetype_pattern) < 2:
         return 'solid'
     else:
-        scale = scale * properties.linetype_scale * POINTS
+        scale = scale * properties.linetype_scale
         pattern = np.round(np.array(properties.linetype_pattern) * scale)
         pattern = [max(element, 1) for element in pattern]
+        if len(pattern) % 2:
+            pattern.pop()
+        return 0, pattern
+
+
+def _get_acad_line_style_pattern(properties: Properties, scale: float):
+    """ Return acad line type tuple: on_off_sequence
+    """
+    if len(properties.linetype_pattern) < 2:
+        return 'solid'
+    else:
+        scale = scale * properties.linetype_scale
+        pattern = [max(e * scale, 0.1) for e in properties.linetype_pattern]
         if len(pattern) % 2:
             pattern.pop()
         return 0, pattern
