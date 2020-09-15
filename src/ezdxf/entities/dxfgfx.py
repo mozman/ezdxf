@@ -109,7 +109,7 @@ acdb_entity = DefSubclass('AcDbEntity', {
 })
 
 GRAPHIC_ATTRIBUTES_TO_RECOVER = {
-    attrib.code: name for name, attrib in acdb_entity.attribs
+    attrib.code: name for name, attrib in acdb_entity.attribs.items()
 }
 
 
