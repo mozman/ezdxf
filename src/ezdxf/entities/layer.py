@@ -24,7 +24,7 @@ __all__ = ['Layer', 'acdb_symbol_table_record']
 
 
 def is_valid_layer_color_index(aci: int) -> bool:
-    return -256 < aci < 256 and aci != 0
+    return (-256 < aci < 256) and aci != 0
 
 
 def fix_layer_color(aci: int) -> int:
