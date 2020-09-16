@@ -134,7 +134,7 @@ class Face3d(_Base):
         """ Returns True if edge `num` is an invisible edge. """
         return bool(self.dxf.invisible & (1 << num))
 
-    def set_edge_visibilty(self, num, status=False):
+    def set_edge_visibility(self, num, status=False):
         """ Set visibility of edge `num`, status `True` for visible, status
         `False` for invisible.
         """
