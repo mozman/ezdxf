@@ -163,7 +163,7 @@ class DXFGraphic(DXFEntity):
             attrib_name = GRAPHIC_ATTRIBUTES_TO_RECOVER.get(tag.code)
             # Don't know if the unprocessed tag is really a misplaced tag,
             # so check if the attribute already exist!
-            if attrib_name and attrib_name not in dxf:
+            if attrib_name and not dxf.hasattr(attrib_name):
                 dxf.set(attrib_name, tag.value)
             else:
                 unprocessed_tags.append(tag)

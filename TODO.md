@@ -20,15 +20,6 @@ Add-ons
 - Simple SVG exporter
 - DWG loader (work in progress)         
 
-Recover Mode
-------------
-
-`SubclassProcessor.log_unprocessed_tag()` could recover tags
-placed in wrong subclasses like the color tag 62 in DXF files created
-by `ogr2ogr`. This requires an option to use different Subclass processors
-in `DXFEntity.load_tags()` called in `DXFEntity.load()` which is not 
-possible yet. See also `loader.load_dxf_entities()`.
-
 Render Tools
 ------------
 
