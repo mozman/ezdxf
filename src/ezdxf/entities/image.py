@@ -54,11 +54,7 @@ class ImageBase(DXFGraphic):
         if processor:
             path_tags = processor.subclasses[2].pop_tags(codes=(14,))
             self.load_boundary_path(path_tags)
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, self._CLS_ATTRIBS)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=self._CLS_ATTRIBS.name)
+            processor.load_and_recover_dxfattribs(dxf, self._CLS_ATTRIBS)
             if len(self.boundary_path) < 2:  # something is wrong
                 self.dxf = dxf
                 self.reset_boundary_path()

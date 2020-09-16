@@ -266,9 +266,12 @@ class Hatch(DXFGraphic):
             tags = self.load_seeds(tags)
 
             # Load HATCH DXF attributes from remaining tags:
-            tags = processor.load_tags_into_namespace(dxf, tags, acdb_hatch)
+            processor.load_tags_into_namespace(dxf, tags, acdb_hatch)
             if len(tags):
-                processor.log_unprocessed_tags(tags, subclass=acdb_hatch.name)
+                tags = processor.recover_graphic_attributes(tags, dxf)
+                if len(tags):
+                    processor.log_unprocessed_tags(
+                        tags, subclass=acdb_hatch.name)
         return dxf
 
     def load_paths(self, tags: Tags) -> Tags:

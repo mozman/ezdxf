@@ -93,8 +93,10 @@ class LWPolyline(DXFGraphic):
                 dxf, acdb_lwpolyline)
             tags = self.load_vertices(tags)
             if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_lwpolyline.name)
+                tags = processor.recover_graphic_attributes(tags, dxf)
+                if len(tags):
+                    processor.log_unprocessed_tags(
+                        tags, subclass=acdb_lwpolyline.name)
         return dxf
 
     def load_vertices(self, tags: 'Tags') -> Tags:

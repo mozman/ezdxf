@@ -217,9 +217,7 @@ class MText(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             self.load_mtext(processor.subclasses[2])
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_mtext)
-            if len(tags):
-                processor.log_unprocessed_tags(tags, subclass=acdb_mtext.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_mtext)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

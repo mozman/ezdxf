@@ -54,10 +54,7 @@ class Tolerance(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_tolerance)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_tolerance.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_tolerance)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

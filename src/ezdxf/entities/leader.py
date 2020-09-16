@@ -159,9 +159,11 @@ class Leader(DXFGraphic, OverrideMixin):
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_leader)
             tags = Tags(self.load_vertices(tags))
             if len(tags):
-                # 76: Number of vertices in leader (ignored for OPEN)
-                processor.log_unprocessed_tags(
-                    tags.filter((76,)), subclass=acdb_leader.name)
+                tags = processor.recover_graphic_attributes(tags, dxf)
+                if len(tags):
+                    # 76: Number of vertices in leader (ignored for OPEN)
+                    processor.log_unprocessed_tags(
+                        tags.filter((76,)), subclass=acdb_leader.name)
         return dxf
 
     def load_vertices(self, tags: Tags) -> Iterable[DXFTag]:

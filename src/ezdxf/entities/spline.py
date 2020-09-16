@@ -115,9 +115,7 @@ class Spline(DXFGraphic):
             # load spline data (fit points, control points, weights, knots) and remove their tags from subclass
             self.load_spline_data(tags)
             # load remaining data into name space
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_spline)
-            if len(tags):
-                processor.log_unprocessed_tags(tags, subclass=acdb_spline.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_spline)
         return dxf
 
     def load_spline_data(self, spline_tags: 'Tags') -> None:

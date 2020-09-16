@@ -218,13 +218,8 @@ class AttDef(BaseAttrib):
         dxf = super(Text, self).load_dxf_attribs(processor)
         # do not call Text loader
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_text.name)
-
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_attdef)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_attdef.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_text)
+            processor.load_and_recover_dxfattribs(dxf, acdb_attdef)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
         return dxf
 

@@ -202,9 +202,7 @@ class Mesh(DXFGraphic):
             # Load mesh data and remove their tags from subclass
             self.load_mesh_data(tags, dxf.handle)
             # Load remaining data into name space
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_mesh)
-            if len(tags):  # mesh override data
-                processor.log_unprocessed_tags(tags, subclass=acdb_mesh.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_mesh)
         return dxf
 
     def load_mesh_data(self, mesh_tags: 'Tags', handle: str) -> None:

@@ -453,3 +453,46 @@ class SubclassProcessor:
         if acdb_entity_tags[0] == (100, 'AcDbEntity'):
             acdb_entity_tags.extend(tag for tag in self.subclasses[0] if
                                     tag.code not in BASE_CLASS_CODES)
+
+    @staticmethod
+    def recover_graphic_attributes(tags: Tags, dxf: DXFNamespace) -> Tags:
+        return recover_graphic_attributes(tags, dxf)
+
+    def load_and_recover_dxfattribs(self, dxf, subclass, index=None):
+        tags = self.load_dxfattribs_into_namespace(dxf, subclass, index)
+        if len(tags) and not self.r12:
+            tags = recover_graphic_attributes(tags, dxf)
+            if len(tags):
+                self.log_unprocessed_tags(tags, subclass=subclass.name)
+
+
+GRAPHIC_ATTRIBUTES_TO_RECOVER = {
+    8: 'layer',
+    6: 'linetype',
+    62: 'color',
+    67: 'paperspace',
+    370: 'lineweight',
+    48: 'ltscale',
+    60: 'invisible',
+    420: 'true_color',
+    430: 'color_name',
+    440: 'transparency',
+    284: 'shadow_mode',
+    347: 'material_handle',
+    348: 'visualstyle_handle',
+    380: 'plotstyle_enum',
+    390: 'plotstyle_handle'
+}
+
+
+def recover_graphic_attributes(tags: Tags, dxf: DXFNamespace) -> Tags:
+    unprocessed_tags = Tags()
+    for tag in tags:
+        attrib_name = GRAPHIC_ATTRIBUTES_TO_RECOVER.get(tag.code)
+        # Don't know if the unprocessed tag is really a misplaced tag,
+        # so check if the attribute already exist!
+        if attrib_name and not dxf.hasattr(attrib_name):
+            dxf.set(attrib_name, tag.value)
+        else:
+            unprocessed_tags.append(tag)
+    return unprocessed_tags

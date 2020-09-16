@@ -112,11 +112,7 @@ class Insert(LinkedEntities):
         if processor:
             # Always use the 2nd subclass, could be AcDbBlockReference or
             # AcDbMInsertBlock:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_block_reference, 2)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_block_reference.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_block_reference, 2)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

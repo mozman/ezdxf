@@ -136,10 +136,12 @@ class Polyline(LinkedEntities):
             )
             name = processor.subclasses[2][0].value
             if len(tags):
-                # do not log group code 66: attribs follow, not required
-                processor.log_unprocessed_tags(
-                    unprocessed_tags=tags.filter((66,)), subclass=name
-                )
+                tags = processor.recover_graphic_attributes(tags, dxf)
+                if len(tags):
+                    # do not log group code 66: attribs follow, not required
+                    processor.log_unprocessed_tags(
+                        unprocessed_tags=tags.filter((66,)), subclass=name
+                    )
         return dxf
 
     def export_dxf(self, tagwriter: 'TagWriter'):
@@ -974,11 +976,7 @@ class DXFVertex(DXFGraphic):
         # VERTEX can have 3 subclasses if representing a `face record` or
         # 4 subclasses if representing a vertex location, just the last
         # subclass contains data:
-        tags = processor.load_dxfattribs_into_namespace(
-            dxf, acdb_vertex, index=-1
-        )
-        if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_polyline.name)
+        processor.load_and_recover_dxfattribs(dxf, acdb_vertex, index=-1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

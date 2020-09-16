@@ -32,9 +32,7 @@ class Arc(Circle):
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_arc)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_arc.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_arc)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

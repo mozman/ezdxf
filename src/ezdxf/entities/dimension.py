@@ -452,18 +452,11 @@ class Dimension(DXFGraphic, OverrideMixin):
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_dimension.name)
-            tags = processor.load_dxfattribs_into_namespace(
+            processor.load_and_recover_dxfattribs(dxf, acdb_dimension)
+            processor.load_and_recover_dxfattribs(
                 dxf, acdb_dimension_dummy, index=3)
             # Ignore possible 5. subclass AcDbRotatedDimension, which has no
             # content.
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_dimension_dummy.name)
-
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -679,15 +672,9 @@ class ArcDimension(Dimension):
         # skip Dimension loader
         dxf = super(Dimension, self).load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags,
-                                               subclass=acdb_dimension.name)
-            tags = processor.load_dxfattribs_into_namespace(
+            processor.load_and_recover_dxfattribs(dxf, acdb_dimension)
+            processor.load_and_recover_dxfattribs(
                 dxf, acdb_arc_dimension, index=3)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_arc_dimension.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -752,13 +739,17 @@ class RadialDimensionLarge(Dimension):
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
             if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_dimension.name)
+                tags = processor.recover_graphic_attributes(tags, dxf)
+                if len(tags):
+                    processor.log_unprocessed_tags(
+                        tags, subclass=acdb_dimension.name)
             tags = processor.load_dxfattribs_into_namespace(
                 dxf, acdb_radial_dimension_large, index=3)
             if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_arc_dimension.name)
+                tags = processor.recover_graphic_attributes(tags, dxf)
+                if len(tags):
+                    processor.log_unprocessed_tags(
+                        tags, subclass=acdb_arc_dimension.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

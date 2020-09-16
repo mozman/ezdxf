@@ -61,9 +61,7 @@ class Solid(_Base):
         """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_trace)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, acdb_trace.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_trace)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -149,9 +147,7 @@ class Face3d(_Base):
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_face)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, acdb_face.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_face)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

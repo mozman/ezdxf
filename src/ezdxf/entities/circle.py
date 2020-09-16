@@ -46,9 +46,7 @@ class Circle(DXFGraphic):
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_circle)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_circle.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_circle)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

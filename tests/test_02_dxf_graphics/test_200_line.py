@@ -161,3 +161,41 @@ def test_scaling():
     assert line.dxf.end == (2, 0, 0)
     assert line.dxf.extrusion == (0, 1, 0)
     assert line.dxf.thickness == 4
+
+
+ERR_LINE = """0
+LINE
+5
+0
+330
+0
+100
+AcDbEntity
+100
+AcDbLine
+8
+0
+62
+1
+6
+Linetype
+10
+0.0
+20
+0.0
+30
+0.0
+11
+1.0
+21
+1.0
+31
+1.0
+"""
+
+
+def test_recover_acdb_entity_tags():
+    line = Line.from_text(ERR_LINE)
+    assert line.dxf.layer == '0'
+    assert line.dxf.color == 1
+    assert line.dxf.linetype == 'Linetype'
