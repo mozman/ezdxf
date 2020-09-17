@@ -4,11 +4,13 @@ import pytest
 import math
 from ezdxf.math import ConstructionEllipse, Matrix44, Vector, Vec2
 from ezdxf.math.bezier4p import (
-    Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_interpolation, cubic_bezier_from_arc, cubic_bezier_from_ellipse
+    Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_interpolation,
+    cubic_bezier_from_arc, cubic_bezier_from_ellipse
 )
 
 DEFPOINTS2D = [(0., 0.), (3., 0.), (7., 10.), (10., 10.)]
-DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.)]
+DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.),
+               (40., 10., 25.)]
 
 
 def test_accepts_2d_points():
@@ -148,13 +150,20 @@ def test_transform_interface():
     curve = Bezier4P(DEFPOINTS3D)
     new = curve.transform(Matrix44.translate(1, 2, 3))
     assert new.control_points[0] == Vector(DEFPOINTS3D[0]) + (1, 2, 3)
-    assert new.control_points[0] != curve.control_points[0], 'expected a new object'
+    assert new.control_points[0] != curve.control_points[
+        0], 'expected a new object'
 
 
 def test_transform_returns_always_3d_curves():
     curve = Bezier4P(DEFPOINTS2D)
     new = curve.transform(Matrix44.translate(1, 2, 3))
     assert len(new.control_points[0]) == 3
+
+
+def test_flattening():
+    curve = Bezier4P([(0, 0), (1, 1), (2, -1), (3, 0)])
+    assert len(list(curve.flattening(1.0, segments=4))) == 5
+    assert len(list(curve.flattening(0.1, segments=4))) == 7
 
 
 POINTS2D = [
