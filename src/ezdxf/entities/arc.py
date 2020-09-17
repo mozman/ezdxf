@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 from ezdxf.math import Vector, Matrix44, linspace, ConstructionArc
 from ezdxf.math.transformtools import OCSTransform
@@ -13,7 +12,7 @@ from .circle import acdb_circle, Circle
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Vector, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Vector
 
 __all__ = ['Arc']
 
@@ -29,7 +28,8 @@ class Arc(Circle):
     DXFTYPE = 'ARC'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_circle, acdb_arc)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.load_and_recover_dxfattribs(dxf, acdb_arc)
@@ -37,13 +37,11 @@ class Arc(Circle):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         # AcDbCircle export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_arc.name)
-        # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['start_angle', 'end_angle'])
 
     @property
@@ -61,7 +59,8 @@ class Arc(Circle):
         return v[0]
 
     def angles(self, num: int) -> Iterable[float]:
-        """ Returns `num` angles from start- to end angle in degrees in counter clockwise order.
+        """ Returns `num` angles from start- to end angle in degrees in counter
+        clockwise order.
 
         All angles are normalized in the range from [0, 360).
 
@@ -91,8 +90,8 @@ class Arc(Circle):
 
     def construction_tool(self) -> ConstructionArc:
         """
-        Returns 2D construction tool :class:`ezdxf.math.ConstructionArc`, ignoring the
-        extrusion vector.
+        Returns 2D construction tool :class:`ezdxf.math.ConstructionArc`,
+        ignoring the extrusion vector.
 
         .. versionadded:: 0.14
 

@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-03-12
 from typing import TYPE_CHECKING
 import copy
 from ezdxf.math import Vector
@@ -10,7 +9,6 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
 from .objectcollection import ObjectCollection
-from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Tags, Drawing
@@ -131,7 +129,6 @@ acdb_table = DefSubclass('AcDbTable', {
 
 
 # todo: implement ACAD_TABLE
-# @register_entity - register when implemented
 class ACADTable(DXFGraphic):
     """ DXF ACAD_TABLE entity """
     DXFTYPE = 'ACAD_TABLE'
@@ -159,15 +156,10 @@ class ACADTable(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_block_reference.name)
         self.dxf.export_dxf_attribs(tagwriter, ['geometry', 'insert'])
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_table.name)
-        self.dxf.export_dxf_attribs(tagwriter, [
-
-        ])
         self.export_table(tagwriter)
 
     def export_table(self, tagwriter: 'TagWriter'):

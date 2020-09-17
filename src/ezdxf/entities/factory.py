@@ -1,4 +1,3 @@
-# Created: 2019-02-15
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING

@@ -1,4 +1,3 @@
-# Created: 17.02.2019
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Union, Iterable, cast
@@ -101,7 +100,7 @@ class Linetype(DXFEntity):
     def preprocess_export(self, tagwriter: 'TagWriter'):
         if len(self.pattern_tags) == 0:
             return False
-        # do not export complex linetypes for DXF12
+        # Do not export complex linetypes for DXF12
         if tagwriter.dxfversion == DXF12:
             return not self.pattern_tags.is_complex_type()
         return True

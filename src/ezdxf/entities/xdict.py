@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-27
 from typing import TYPE_CHECKING, Union
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import DXFStructureError

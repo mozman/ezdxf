@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-16
 from typing import (
     TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional,
     Callable, Dict,

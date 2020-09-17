@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 
 from ezdxf.lldxf import validator
@@ -13,13 +12,9 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
 from .factory import register_entity
-from ezdxf.audit import AuditError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, Ellipse, Spline, Auditor,
-        BaseLayout,
-    )
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Ellipse, Spline
 
 __all__ = ['Circle']
 
@@ -42,8 +37,8 @@ class Circle(DXFGraphic):
     DXFTYPE = 'CIRCLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_circle)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.load_and_recover_dxfattribs(dxf, acdb_circle)
@@ -51,14 +46,12 @@ class Circle(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_circle.name)
-        # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['center', 'radius', 'thickness',
-                                                'extrusion'])
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'center', 'radius', 'thickness', 'extrusion'
+        ])
 
     def vertices(self, angles: Iterable[float]) -> Iterable[Vector]:
         """

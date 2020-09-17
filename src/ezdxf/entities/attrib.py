@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
 from typing import TYPE_CHECKING, Optional
 import copy
 from ezdxf.lldxf import validator
@@ -213,10 +212,10 @@ class AttDef(BaseAttrib):
     # Don't add acdb_attdef_xrecord here:
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_text, acdb_attdef)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super(Text, self).load_dxf_attribs(processor)
-        # do not call Text loader
+        # Do not call Text loader.
         if processor:
             processor.load_and_recover_dxfattribs(dxf, acdb_text)
             processor.load_and_recover_dxfattribs(dxf, acdb_attdef)
@@ -248,18 +247,13 @@ class Attrib(BaseAttrib):
     # Don't add acdb_attdef_xrecord here:
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_text, acdb_attrib)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super(Text, self).load_dxf_attribs(processor)
-        # Do not call Text loader!
+        # Do not call Text loader.
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_text.name)
-
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_attrib)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_attrib.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_text)
+            processor.load_and_recover_dxfattribs(dxf, acdb_attrib)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
         return dxf
 

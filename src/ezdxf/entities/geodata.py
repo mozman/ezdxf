@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
-# Created: 2019-03-11
 import math
 import re
 from typing import TYPE_CHECKING, List, Sequence, Iterable
@@ -265,12 +264,11 @@ class GeoData(DXFObject):
         tagwriter.write_tag2(301, chunks[0])
 
     def decoded_units(self) -> Tuple[Optional[str], Optional[str]]:
-        return units.decode(self.dxf.horizontal_units), units.decode(self.dxf.vertical_units)
+        return units.decode(self.dxf.horizontal_units), \
+               units.decode(self.dxf.vertical_units)
 
     def get_crs(self) -> Tuple[int, bool]:
-        """
-
-        The EPSG number is stored in a tag like:
+        """ The EPSG number is stored in a tag like:
 
         <Alias id="27700" type="CoordinateSystem">
           <ObjectId>OSGB1936.NationalGrid</ObjectId>
@@ -297,19 +295,23 @@ class GeoData(DXFObject):
         """
         definition = self.coordinate_system_definition
         try:
-            # remove namespaces so that tags can be searched without prefixing their namespace
+            # Remove namespaces so that tags can be searched without prefixing
+            # their namespace:
             definition = _remove_xml_namespaces(definition)
             root = ElementTree.fromstring(definition)
         except ElementTree.ParseError:
-            raise InvalidGeoDataException('failed to parse coordinate_system_definition as xml')
+            raise InvalidGeoDataException(
+                'failed to parse coordinate_system_definition as xml')
 
         crs = None
         for alias in root.findall('Alias'):
-            if alias.get('type') == 'CoordinateSystem' and alias.find('Namespace').text == 'EPSG Code':
+            if alias.get('type') == 'CoordinateSystem' and \
+                    alias.find('Namespace').text == 'EPSG Code':
                 try:
                     crs = int(alias.get('id'))
                 except ValueError:
-                    raise InvalidGeoDataException(f'invalid epsg number: {alias.get("id")}')
+                    raise InvalidGeoDataException(
+                        f'invalid epsg number: {alias.get("id")}')
                 break
 
         xy_ordering = None
@@ -321,7 +323,8 @@ class GeoData(DXFObject):
                 elif first_axis in ('N', 'S'):
                     xy_ordering = False
                 else:
-                    raise InvalidGeoDataException(f'unknown first axis: {first_axis}')
+                    raise InvalidGeoDataException(
+                        f'unknown first axis: {first_axis}')
                 break
 
         if crs is None:
@@ -331,7 +334,8 @@ class GeoData(DXFObject):
         else:
             return crs, xy_ordering
 
-    def get_crs_transformation(self, *, no_checks: bool = False) -> Tuple[Matrix44, int]:
+    def get_crs_transformation(
+            self, *, no_checks: bool = False) -> Tuple[Matrix44, int]:
         epsg, xy_ordering = self.get_crs()
 
         if not no_checks:
@@ -357,14 +361,15 @@ class GeoData(DXFObject):
         target = self.dxf.reference_point  # in the CRS of the geodata
         north = self.dxf.north_direction
 
-        # -pi/2 because north is at pi/2 so if the given north is at pi/2, no rotation is necessary
+        # -pi/2 because north is at pi/2 so if the given north is at pi/2, no
+        # rotation is necessary:
         theta = -(math.atan2(north.y, north.x) - math.pi / 2)
-
-        transformation = (Matrix44.translate(-source.x, -source.y, 0) @
-                          Matrix44.scale(self.dxf.horizontal_unit_scale, self.dxf.vertical_unit_scale, 1) @
-                          Matrix44.z_rotate(theta) @
-                          Matrix44.translate(target.x, target.y, 0))
-
+        transformation = (
+                Matrix44.translate(-source.x, -source.y, 0) @
+                Matrix44.scale(self.dxf.horizontal_unit_scale,
+                               self.dxf.vertical_unit_scale, 1) @
+                Matrix44.z_rotate(theta) @
+                Matrix44.translate(target.x, target.y, 0))
         return transformation, epsg
 
 

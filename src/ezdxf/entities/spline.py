@@ -1,12 +1,9 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-03-06
 from typing import TYPE_CHECKING, Iterable, Sequence, cast
 import array
 import copy
-import warnings
 from itertools import chain
-from contextlib import contextmanager
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -112,9 +109,9 @@ class Spline(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.find_subclass(acdb_spline.name)
-            # load spline data (fit points, control points, weights, knots) and remove their tags from subclass
+            # load spline data (fit points, control points, weights, knots) and
+            # remove their tags from subclass:
             self.load_spline_data(tags)
-            # load remaining data into name space
             processor.load_and_recover_dxfattribs(dxf, acdb_spline)
         return dxf
 

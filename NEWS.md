@@ -4,6 +4,8 @@ News
 
 Version 0.15a0 - dev
 --------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v0-15.html
 - NEW: linetype support for matplotlib drawing backend
 - NEW: recover misplaced tags of the `AcDbEntity` subclass (color, layer, 
   linetype, ...), supported by all loading modes

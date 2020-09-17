@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
 import math
 from typing import TYPE_CHECKING, Tuple, Union
 
@@ -140,8 +139,8 @@ class Text(DXFGraphic):
     BACKWARD = MIRROR_X
     UPSIDE_DOWN = MIRROR_Y
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -151,9 +150,7 @@ class Text(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. (internal API) """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         self.export_acdb_text(tagwriter)
         self.export_acdb_text2(tagwriter)
 
@@ -161,7 +158,6 @@ class Text(DXFGraphic):
         """ Export TEXT data as DXF tags. (internal API) """
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text.name)
-        # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, [
             'insert', 'height', 'text', 'thickness', 'rotation', 'oblique',
             'style', 'width', 'text_generation_flag', 'halign', 'align_point',

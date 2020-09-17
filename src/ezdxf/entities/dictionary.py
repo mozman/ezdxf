@@ -6,7 +6,7 @@ from typing import (
 import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import (
-    SUBCLASS_MARKER, DXFKeyError, DXFValueError, DXFStructureError,
+    SUBCLASS_MARKER, DXFKeyError, DXFValueError,
 )
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
@@ -104,8 +104,8 @@ class Dictionary(DXFObject):
             # For a correct DXF export add entities to the objects section:
             doc.objects.add_object(entity)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(
@@ -152,7 +152,6 @@ class Dictionary(DXFObject):
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
         super().export_entity(tagwriter)
-
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dictionary.name)
         self.dxf.export_dxf_attribs(tagwriter, ['hard_owned', 'cloning'])
         self.export_dict(tagwriter)
@@ -443,6 +442,7 @@ class DictionaryWithDefault(Dictionary):
                 code=AuditError.CREATED_MISSING_OBJECT,
                 message=f'Created missing default object in {str(self)}.'
             )
+
         if self._default is None or not self._default.is_alive:
             if auditor.entitydb.locked:
                 auditor.add_post_audit_job(create_missing_default_object)

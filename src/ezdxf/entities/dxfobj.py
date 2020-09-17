@@ -1,8 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-13
-#
-# DXFObject - non graphical entities stored in the OBJECTS section
 from typing import TYPE_CHECKING, Iterable, Dict, Tuple
 import logging
 import array
@@ -28,6 +25,7 @@ __all__ = [
 
 
 class DXFObject(DXFEntity):
+    """ Non graphical entities stored in the OBJECTS section. """
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def audit(self, auditor: 'Auditor') -> None:
@@ -77,8 +75,8 @@ class XRecord(DXFObject):
     def _copy_data(self, entity: 'XRecord') -> None:
         entity.tags = Tags(entity.tags)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             try:
@@ -88,8 +86,8 @@ class XRecord(DXFObject):
                     f'Missing subclass AcDbXrecord in XRecord (#{dxf.handle})')
             start_index = 1
             if len(tags) > 1:
-                # First tag is group code 280, but not for DXF R13/R14
-                # for testing doc may be None, but then doc also can not
+                # First tag is group code 280, but not for DXF R13/R14.
+                # SUT: doc may be None, but then doc also can not
                 # be R13/R14 - ezdxf does not create R13/R14
                 if self.doc is None or self.doc.dxfversion >= DXF2000:
                     code, value = tags[1]
@@ -132,8 +130,8 @@ class VBAProject(DXFObject):
     def _copy_data(self, entity: 'VBAProject') -> None:
         entity.tags = Tags(entity.tags)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             self.load_byte_data(processor.subclasses[1])
@@ -141,6 +139,7 @@ class VBAProject(DXFObject):
 
     def load_byte_data(self, tags: 'Tags') -> None:
         byte_array = array.array('B')
+        # Translation from String to binary data happens in tag_compiler():
         for byte_data in (tag.value for tag in tags if tag.code == 310):
             byte_array.extend(byte_data)
         self.data = byte_array.tobytes()

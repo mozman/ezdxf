@@ -1,4 +1,3 @@
-# Created: 08.04.2018
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Iterable, List
@@ -131,10 +130,10 @@ class MLine(DXFGraphic):
         self.vertices = MLineVertices([])
 
     def copy(self):
-        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
+        raise DXFTypeError(f'Cloning of {self.DXFTYPE} not supported.')
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_mline)
@@ -142,13 +141,11 @@ class MLine(DXFGraphic):
         return dxf
 
     def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
-        # do not export MLines without vertices
-        return bool(len(self.vertices))
+        # Do not export MLines without vertices
+        return len(self.vertices) > 0
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mline.name)
         self.dxf.export_dxf_attribs(tagwriter, acdb_mline.attribs.keys())
         self.vertices.export_dxf(tagwriter)
@@ -247,8 +244,8 @@ class MLineStyle(DXFObject):
     def copy(self):
         raise DXFTypeError('Copying of MLINESTYLE not supported.')
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
@@ -258,9 +255,7 @@ class MLineStyle(DXFObject):
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mline_style.name)
         self.dxf.export_dxf_attribs(tagwriter, acdb_mline_style.attribs.keys())
         self.elements.export_dxf(tagwriter)

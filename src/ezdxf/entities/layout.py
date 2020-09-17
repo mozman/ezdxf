@@ -190,10 +190,8 @@ class PlotSettings(DXFObject):
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        processor.load_dxfattribs_into_namespace(dxf, acdb_plot_settings)
+        if processor:
+            processor.load_dxfattribs_into_namespace(dxf, acdb_plot_settings)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -300,10 +298,8 @@ class DXFLayout(PlotSettings):
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        processor.load_dxfattribs_into_namespace(dxf, acdb_layout)
+        if processor:
+            processor.load_dxfattribs_into_namespace(dxf, acdb_layout)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

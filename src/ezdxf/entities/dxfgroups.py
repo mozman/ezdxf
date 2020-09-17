@@ -1,4 +1,3 @@
-# Created: 2019-02-19
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
 from typing import TYPE_CHECKING, Iterable, cast, Union, List, Set

@@ -1,4 +1,3 @@
-# Created: 06.04.2018
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Optional

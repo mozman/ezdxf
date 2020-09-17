@@ -224,14 +224,14 @@ class DimStyle(DXFEntity):
     def dxfversion(self):
         return self.doc.dxfversion
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimstyle)
             if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags,
-                                               subclass=acdb_dimstyle.name)
+                processor.log_unprocessed_tags(
+                    tags, subclass=acdb_dimstyle.name)
         return dxf
 
     def post_load_hook(self, doc: 'Drawing') -> None:
@@ -277,7 +277,6 @@ class DimStyle(DXFEntity):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(const.SUBCLASS_MARKER,
                                  acdb_symbol_table_record.name)
@@ -285,10 +284,9 @@ class DimStyle(DXFEntity):
                                  acdb_dimstyle.name)
 
         if tagwriter.dxfversion > DXF12:
-            # set handles from dimblk names
+            # Set handles from dimblk names:
             self.set_handles()
 
-        # for all DXF versions
         if tagwriter.dxfversion == DXF12:
             attribs = EXPORT_MAP_R12
         elif tagwriter.dxfversion < DXF2007:

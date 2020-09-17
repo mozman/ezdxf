@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-03-06
 import math
 import re
 from typing import TYPE_CHECKING, Union, Tuple, List

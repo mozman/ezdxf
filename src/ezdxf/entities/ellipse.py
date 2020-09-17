@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
 import math
 from ezdxf.lldxf import validator
@@ -16,7 +15,7 @@ from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Spline, BaseLayout
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Spline
 
 __all__ = ['Ellipse']
 

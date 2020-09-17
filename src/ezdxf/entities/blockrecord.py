@@ -93,10 +93,11 @@ class BlockRecord(DXFEntity):
         self.dxf.name = name
         self.block.dxf.name = name
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
+            # Do not use load_and_recover_dxfattribs(), not a DXFGraphic entity
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_blockrec)
             if len(tags) and False:  # deliberately disabled
                 processor.log_unprocessed_tags(tags,
@@ -105,7 +106,6 @@ class BlockRecord(DXFEntity):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         if tagwriter.dxfversion == DXF12:
             raise DXFInternalEzdxfError('Exporting BLOCK_RECORDS for DXF R12.')
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)

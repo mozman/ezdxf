@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-16
 from typing import (
     TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict,
 )
@@ -163,8 +162,6 @@ class Polyline(LinkedEntities):
             'm_count', 'n_count', 'm_smooth_density', 'n_smooth_density',
             'smooth_type', 'thickness', 'extrusion',
         ])
-        # The following VERTEX entities and the SEQEND entity is exported by
-        # EntitySpace().
 
     def on_layer_change(self, layer: str):
         """ Event handler for layer change. Changes also the layer of all vertices.

@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-22
 from typing import TYPE_CHECKING, List, Iterable
 from ezdxf.lldxf import validator
 from ezdxf.lldxf import const
@@ -215,11 +214,12 @@ class Viewport(DXFGraphic):
     """ DXF VIEWPORT entity """
     DXFTYPE = 'VIEWPORT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_viewport)
-    viewport_id = 2  # notes to id:
-
+    viewport_id = 2
+    # Notes to vieport_id:
     # The id of the first viewport has to be 1, which is the definition of
     # paper space. For the following viewports it seems only important, that
     # the id is greater than 1.
+
     def get_next_viewport_id(self) -> int:
         current_id = Viewport.viewport_id
         Viewport.viewport_id += 1
