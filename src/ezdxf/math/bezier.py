@@ -1,8 +1,6 @@
-# Purpose: general bezier curve
-# Created: 26.03.2010
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable, Tuple, Sequence
+from typing import TYPE_CHECKING, Iterable, Tuple, Sequence
 from functools import lru_cache
 import math
 from ezdxf.math import Vector, NULLVEC, Matrix44
@@ -18,11 +16,11 @@ Bezier curves
 
 https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node3.html
 
-A Bezier curve is a weighted sum of n+1 control points,  P0, P1, ..., Pn, where the weights are the Bernstein 
-polynomials. 
+A Bezier curve is a weighted sum of n+1 control points,  P0, P1, ..., Pn, where 
+the weights are the Bernstein polynomials. 
 
-The Bezier curve of order n+1 (degree n) has n+1 control points. These are the first three orders of Bezier curve 
-definitions. 
+The Bezier curve of order n+1 (degree n) has n+1 control points. These are the 
+first three orders of Bezier curve definitions. 
 
 (75) linear P(t) = (1-t)*P0 + t*P1
 (76) quadratic P(t) = (1-t)^2*P0 + 2*(t-1)*t*P1 + t^2*P2
@@ -31,50 +29,58 @@ definitions.
 Ways of thinking about Bezier curves
 ------------------------------------
 
-There are several useful ways in which you can think about Bezier curves. Here are the ones that I use.
+There are several useful ways in which you can think about Bezier curves. 
+Here are the ones that I use.
 
 Linear interpolation
 ~~~~~~~~~~~~~~~~~~~~
 
-Equation (75) is obviously a linear interpolation between two points. Equation (76) can be rewritten as a linear 
-interpolation between linear interpolations between points.
+Equation (75) is obviously a linear interpolation between two points. Equation 
+(76) can be rewritten as a linear interpolation between linear interpolations 
+between points.
 
 Weighted average
 ~~~~~~~~~~~~~~~~
 
-A Bezier curve can be seen as a weighted average of all of its control points. Because all of the weights are 
-positive, and because the weights sum to one, the Bezier curve is guaranteed to lie within the convex hull of its 
-control points.
+A Bezier curve can be seen as a weighted average of all of its control points. 
+Because all of the weights are positive, and because the weights sum to one, the 
+Bezier curve is guaranteed to lie within the convex hull of its control points.
     
 Refinement of the control polygon
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A Bezier curve can be seen as some sort of refinement of the polygon made by connecting its control points in order. 
-The Bezier curve starts and ends at the two end points and its shape is determined by the relative positions of the 
-n-1 other control points, although it will generally not pass through these other control points. The tangent vectors 
-at the start and end of the curve pass through the end point and the immediately adjacent point.
+A Bezier curve can be seen as some sort of refinement of the polygon made by 
+connecting its control points in order. The Bezier curve starts and ends at the 
+two end points and its shape is determined by the relative positions of the n-1 
+other control points, although it will generally not pass through these other 
+control points. The tangent vectors at the start and end of the curve pass 
+through the end point and the immediately adjacent point.
 
 Continuity
 ----------
 
-You should note that each Bezier curve is independent of any other Bezier curve. If we wish two Bezier curves to join 
-with any type of continuity, then we must explicitly position the control points of the second curve so that they bear 
+You should note that each Bezier curve is independent of any other Bezier curve. 
+If we wish two Bezier curves to join with any type of continuity, then we must 
+explicitly position the control points of the second curve so that they bear 
 the appropriate relationship with the control points in the first curve.
 
-Any Bezier curve is infinitely differentiable within itself, and is therefore continuous to any degree.
+Any Bezier curve is infinitely differentiable within itself, and is therefore 
+continuous to any degree.
 
 """
 
 
 class Bezier:
-    """
-    A `Bézier curve`_ is a parametric curve used in computer graphics and related fields. Bézier curves are used to
-    model smooth curves that can be scaled indefinitely. "Paths", as they are commonly referred to in image
-    manipulation programs, are combinations of linked Bézier curves. Paths are not bound by the limits of
-    rasterized images and are intuitive to modify. (Source: Wikipedia)
+    """ A `Bézier curve`_ is a parametric curve used in computer graphics and
+    related fields. Bézier curves are used to model smooth curves that can be
+    scaled indefinitely. "Paths", as they are commonly referred to in image
+    manipulation programs, are combinations of linked Bézier curves.
+    Paths are not bound by the limits of rasterized images and are intuitive to
+    modify. (Source: Wikipedia)
 
-    This is a general implementation which works with any count of definition points greater than ``2``, but it is a
-    simple and slow implementation. For more performance look at the specialized :class:`Bezier4P` class.
+    This is a generic implementation which works with any count of definition
+    points greater than 2, but it is a simple and slow implementation. For more
+    performance look at the specialized :class:`Bezier4P` class.
 
     Objects are immutable.
 
@@ -92,8 +98,52 @@ class Bezier:
         return self._defpoints
 
     def approximate(self, segments: int = 20) -> Iterable[Vector]:
-        """ Approximates curve by vertices as :class:`Vector` objects, vertices count = segments + 1. """
+        """ Approximates curve by vertices as :class:`Vector` objects, vertices
+        count = segments + 1.
+        """
         return self.points(self.params(segments))
+
+    def flattening(self, distance: float,
+                   segments: int = 4) -> Iterable[Vector]:
+        """ Adaptive recursive flattening. The argument `segments` is the
+        minimum count of approximation segments, if the distance from the center
+        of the approximation segment to the curve is bigger than `distance` the
+        segment will be subdivided.
+
+        Args:
+            distance: maximum distance from the center of the curve (Cn)
+                to the center of the linear (C1) curve between two
+                approximation points to determine if a segment should be
+                subdivided.
+            segments: minimum segment count
+        """
+
+        def subdiv(start_point, end_point, start_t: float, end_t: float):
+            mid_t = (start_t + end_t) * 0.5
+            mid_point = self.point(mid_t)
+            chk_point = start_point.lerp(end_point)
+            # center point point is faster than projecting mid point onto
+            # vector start -> end:
+            if chk_point.distance(mid_point) < distance:
+                yield end_point
+            else:
+                yield from subdiv(start_point, mid_point, start_t, mid_t)
+                yield from subdiv(mid_point, end_point, mid_t, end_t)
+
+        dt = 1.0 / segments
+        t0 = 0.0
+        start_point = self._defpoints[0]
+        yield start_point
+        while t0 < 1.0:
+            t1 = t0 + dt
+            if math.isclose(t1, 1.0):
+                end_point = self._defpoints[-1]
+                t1 = 1.0
+            else:
+                end_point = self.point(t1)
+            yield from subdiv(start_point, end_point, t0, t1)
+            t0 = t1
+            start_point = end_point
 
     def params(self, segments: int) -> Iterable[float]:
         """ Yield evenly spaced parameters from 0 to 1 for given segment count. """

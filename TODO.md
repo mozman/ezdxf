@@ -28,7 +28,10 @@ Render Tools
 - `MLine.virtual_entities()` ???
 - LWPOLYLINE and 2D POLYLINE the `virtual_entities(dxftype='ARC')` method
   could return bulges as ARC, ELLIPSE or SPLINE entities
-  
+- SPLINE - adaptive recursive flattening like for cubic bezier curves, but for
+  B-splines the distance calculation has to be more precise
+- ELLIPSE - adaptive recursive flattening like for cubic bezier curves
+- CIRCLE, ARC - flattening determined by a max sagitta value
 
 DXF Entities
 ------------

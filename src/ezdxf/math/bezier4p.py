@@ -150,7 +150,7 @@ class Bezier4P:
 
         dt = 1.0 / segments
         t0 = 0.0
-        start_point = self.control_points[0]
+        start_point = self._control_points[0]
         yield start_point
         while t0 < 1.0:
             t1 = t0 + dt
