@@ -10,6 +10,7 @@ Version 0.15a0 - dev
 - NEW: recover misplaced tags of the `AcDbEntity` subclass (color, layer, 
   linetype, ...), supported by all loading modes
 - NEW: `Bezier.flattening()` adaptive recursive flattening (approximation)
+- NEW: `Bezier4P.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Path.flattening()` adaptive recursive flattening (approximation)
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
   use `DXFEntity.transform(ucs.matrix)`
