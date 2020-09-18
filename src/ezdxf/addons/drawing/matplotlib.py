@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, TYPE_CHECKING, Optional, Sequence
+from typing import Iterable, TYPE_CHECKING, Optional
 from enum import Enum
 import abc
 
@@ -94,10 +94,13 @@ class MatplotlibBackend(Backend):
         if linetype_rendering == LineTypeRendering.internal:
             self._line_renderer = InternalLineRenderer(linetype_scaling)
         elif linetype_rendering == LineTypeRendering.ezdxf:
-            # Todo: get min length for point rendering from matplotlib shortest
-            #  line length which is displayed
+            # This linetype renderer should only be used by "hardcopy" backends!
+            # It is just too slow for interactive backends, and the result of
+            # the matplotlib line rendering is optimized for displays.
             self._line_renderer = EzdxfLineRenderer(
-                linetype_scaling, min_length=0.1, max_distance=0.01)
+                # The `min_length` and `max_distance` arguments should be based
+                # on the output dpi setting.
+                linetype_scaling, min_length=0.01, max_distance=0.01)
         self._font_measurements = _get_font_measurements(font)
 
     def _get_z(self) -> int:
@@ -235,6 +238,7 @@ def qsave(layout: 'Layout', filename: str, *,
           fg: Optional[Color] = None,
           dpi: int = 300,
           backend: str = 'agg',
+          ltype: str = 'internal',
           ) -> None:
     """ Quick and simplified render export by matplotlib.
 
@@ -257,6 +261,8 @@ def qsave(layout: 'Layout', filename: str, *,
         backend: the matplotlib rendering backend to use (agg, cairo, svg etc)
             (see documentation for `matplotlib.use() <https://matplotlib.org/3.1.1/api/matplotlib_configuration_api.html?highlight=matplotlib%20use#matplotlib.use>`_
             for a complete list of backends)
+        ltype: "internal" to use the matplotlib dpi based linetype rendering,
+            "ezdxf" to use a drawing unit base linetype rendering.
 
     .. versionadded:: 0.14
 
@@ -275,7 +281,7 @@ def qsave(layout: 'Layout', filename: str, *,
         ctx.set_current_layout(layout)
         if bg is not None:
             ctx.current_layout.set_colors(bg, fg)
-        out = MatplotlibBackend(ax)
+        out = MatplotlibBackend(ax, linetype_rendering=ltype)
         Frontend(ctx, out).draw_layout(layout, finalize=True)
         # transparent=True sets the axes color to fully transparent
         # facecolor sets the figure color

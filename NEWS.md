@@ -12,6 +12,9 @@ Version 0.15a0 - dev
 - NEW: `Bezier.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Bezier4P.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Path.flattening()` adaptive recursive flattening (approximation)
+- NEW: `matplotlib.qsave()`, `ltype` argument to switch between matplotlib dpi 
+  based linetype rendering and AutoCAD like drawing units based linetype 
+  rendering
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
   use `DXFEntity.transform(ucs.matrix)`
 - REMOVED: deprecated `Hatch.edit_boundary()` context manager, 
