@@ -123,13 +123,17 @@ class Bezier4P:
 
     def flattening(self, distance: float,
                    segments: int = 4) -> Iterable[Union[Vector, Vec2]]:
-        """ Adaptive recursive flattening.
+        """ Adaptive recursive flattening. The argument `segments` is the
+        minimum count of approximation segments, if the distance from the center
+        of the approximation segment to the curve is bigger than `distance` the
+        segment will be subdivided.
+
         Args:
             distance: maximum distance from the center of the cubic (C3)
-                curve to the center of the linear(C1) curve between two
-                approximation points to determine if an segment should be
-                split.
-            segments: base segment count or minimum approximation count.
+                curve to the center of the linear (C1) curve between two
+                approximation points to determine if a segment should be
+                subdivided.
+            segments: minimum segment count
         """
 
         def subdiv(start_point, end_point, start_t: float, end_t: float):

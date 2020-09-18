@@ -879,6 +879,8 @@ Bezier4P
 
     .. automethod:: approximate(segments: int) -> Iterable[Union[Vector, Vec2]]
 
+    .. automethod:: flattening(distance: float, segments: int=4) -> Iterable[Union[Vector, Vec2]]
+
     .. automethod:: approximated_length
 
     .. automethod:: point(t: float) -> Union[Vector, Vec2]

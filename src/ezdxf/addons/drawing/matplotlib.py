@@ -96,8 +96,8 @@ class MatplotlibBackend(Backend):
         elif linetype_rendering == LineTypeRendering.ezdxf:
             # Todo: get min length for point rendering from matplotlib shortest
             #  line length which is displayed
-            self._line_renderer = EzdxfLineRenderer(linetype_scaling,
-                                                    min_length=0.1)
+            self._line_renderer = EzdxfLineRenderer(
+                linetype_scaling, min_length=0.1, max_distance=0.01)
         self._font_measurements = _get_font_measurements(font)
 
     def _get_z(self) -> int:
@@ -365,12 +365,16 @@ class InternalLineRenderer(AbstractLineRenderer):
 
 
 class EzdxfLineRenderer(AbstractLineRenderer):
-    def __init__(self, scale: Optional[float] = None, min_length: float = 1.0):
+    def __init__(self, scale: Optional[float] = None,
+                 min_length: float = 0.1,
+                 max_distance: float = 0.01):
         if scale is None:
             scale = 1.0
         super().__init__(scale)
-        # minimum dash length to be displayed by matplotlib
+        # Minimum dash length to be displayed by matplotlib
         self._min_dash_length = min_length
+        # Maximum distance for adaptive recursive curve flattening
+        self._max_distance = max_distance
 
     def draw_line(self, ax: plt.Axes, start: Vector, end: Vector,
                   properties: Properties, z: float):
@@ -412,7 +416,8 @@ class EzdxfLineRenderer(AbstractLineRenderer):
             ax.add_patch(patch)
         else:
             renderer = EzdxfLineTypeRenderer(pattern)
-            for s, e in renderer.line_segments(path.approximate(segments=16)):
+            for s, e in renderer.line_segments(
+                    path.flattening(self._max_distance, segments=16)):
                 ax.add_line(
                     Line2D(
                         (s.x, e.x), (s.y, e.y),

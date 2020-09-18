@@ -10,6 +10,7 @@ from ezdxf.math import (
     cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
     has_clockwise_orientation, global_bspline_interpolation,
 )
+
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         LWPolyline, Polyline, Vertex, Spline, Ellipse,
@@ -534,6 +535,32 @@ class Path(abc.Sequence):
         """ Approximate path by vertices, `segments` is the count of
         approximation segments for each cubic bezier curve.
         """
+
+        def approx_curve(s, c1, c2, e) -> Iterable[Vector]:
+            return Bezier4P((s, c1, c2, e)).approximate(segments)
+        yield from self._approximate(approx_curve)
+
+    def flattening(self, distance: float,
+                   segments: int = 16) -> Iterable[Vector]:
+        """ Approximate path by vertices and use adaptive recursive flattening
+        to approximate cubic Bèzier curves. The argument `segments` is the
+        minimum count of approximation segments for each curve, if the distance
+        from the center of the approximation segment to the curve is bigger than
+        `distance` the segment will be subdivided.
+
+        Args:
+            distance: maximum distance from the center of the cubic (C3)
+                curve to the center of the linear (C1) curve between two
+                approximation points to determine if a segment should be
+                subdivided.
+            segments: minimum segment count
+
+        """
+        def approx_curve(s, c1, c2, e) -> Iterable[Vector]:
+            return Bezier4P((s, c1, c2, e)).flattening(distance, segments)
+        yield from self._approximate(approx_curve)
+
+    def _approximate(self, approx_curve) -> Iterable[Vector]:
         if not self._commands:
             return
 
@@ -546,9 +573,8 @@ class Path(abc.Sequence):
                 yield end_location
             elif cmd.type == Command.CURVE_TO:
                 pts = iter(
-                    Bezier4P((start, cmd.ctrl1, cmd.ctrl2,
-                              end_location)).approximate(
-                        segments))
+                    approx_curve(start, cmd.ctrl1, cmd.ctrl2, end_location)
+                )
                 next(pts)  # skip first vertex
                 yield from pts
             else:
