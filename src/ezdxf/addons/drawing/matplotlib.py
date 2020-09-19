@@ -7,6 +7,7 @@ from enum import Enum
 import abc
 
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 from matplotlib.font_manager import FontProperties
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle, PathPatch
@@ -397,14 +398,13 @@ class EzdxfLineRenderer(AbstractLineRenderer):
                 ))
         else:
             renderer = EzdxfLineTypeRenderer(pattern)
-            for s, e in renderer.line_segment(start, end):
-                ax.add_line(
-                    Line2D(
-                        (s.x, e.x), (s.y, e.y),
-                        linewidth=lineweight,
-                        color=color,
-                        zorder=z,
-                    ))
+            lines = LineCollection(
+                [((s.x, s.y), (e.x, e.y))
+                 for s, e in renderer.line_segment(start, end)],
+                linewidths=lineweight, color=color, zorder=z
+            )
+            lines.set_capstyle('butt')
+            ax.add_collection(lines)
 
     def draw_path(self, ax: plt.Axes, path, properties: Properties, z: float):
         pattern = self.pattern(properties)
@@ -422,15 +422,14 @@ class EzdxfLineRenderer(AbstractLineRenderer):
             ax.add_patch(patch)
         else:
             renderer = EzdxfLineTypeRenderer(pattern)
-            for s, e in renderer.line_segments(
-                    path.flattening(self._max_distance, segments=16)):
-                ax.add_line(
-                    Line2D(
-                        (s.x, e.x), (s.y, e.y),
-                        linewidth=lineweight,
-                        color=color,
-                        zorder=z,
-                    ))
+            segments = renderer.line_segments(path.flattening(
+                self._max_distance, segments=16))
+            lines = LineCollection(
+                [((s.x, s.y), (e.x, e.y)) for s, e in segments],
+                linewidths=lineweight, color=color, zorder=z
+            )
+            lines.set_capstyle('butt')
+            ax.add_collection(lines)
 
     def create_pattern(self, properties: Properties, scale: float):
         """ Returns simplified linetype tuple: on_off_sequence """
