@@ -7,6 +7,7 @@ import math
 import os
 import signal
 import sys
+import time
 from functools import partial
 from typing import Iterable, Tuple, List
 
@@ -146,6 +147,7 @@ class CadViewer(qw.QMainWindow):
         self._render_context = None
         self._visible_layers = None
         self._current_layout = None
+        self._renderer = PyQtBackend(use_text_cache=True)
 
         self.view = CADGraphicsViewWithOverlay()
         self.view.setScene(qw.QGraphicsScene())
@@ -193,7 +195,7 @@ class CadViewer(qw.QMainWindow):
 
     def _select_doc(self):
         path, _ = qw.QFileDialog.getOpenFileName(self, caption='Select CAD Document',
-                                                 filter='DXF Documents(*.dxf);;DWG Documents(*.dwg)')
+                                                 filter='CAD Documents (*.dxf *.DXF *.dwg *.DWG)')
         if path:
             try:
                 if os.path.splitext(path)[1].lower() == '.dwg':
@@ -258,15 +260,18 @@ class CadViewer(qw.QMainWindow):
         self._current_layout = layout_name
         self.view.begin_loading()
         new_scene = qw.QGraphicsScene()
-        renderer = PyQtBackend(new_scene)
+        self._renderer.set_scene(new_scene)
         layout = self.doc.layout(layout_name)
         self._update_render_context(layout)
         try:
-            Frontend(self._render_context, renderer).draw_layout(layout)
+            start = time.perf_counter()
+            Frontend(self._render_context, self._renderer).draw_layout(layout)
+            duration = time.perf_counter() - start
+            print(f'took {duration:.4f} seconds')
         except DXFStructureError as e:
             qw.QMessageBox.critical(self, 'DXF Structure Error', f'Abort rendering of layout "{layout_name}": {str(e)}')
         finally:
-            renderer.finalize()
+            self._renderer.finalize()
         self.view.end_loading(new_scene)
         self.view.buffer_scene_rect()
         if reset_view:
