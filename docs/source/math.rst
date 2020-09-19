@@ -92,6 +92,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: subdivide_ngons(faces: Iterable[Sequence[Union[Vector, Vec2]]]) -> Iterable[List[Vector]]
 
+.. autofunction:: distance_point_line_3d(point: Vector, start: Vector, end: Vector) -> float
+
 .. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-10) -> Sequence[Vector]
 
 .. autofunction:: estimate_tangents(points: List[Vector], method: str = '5-points', normalize = True) -> List[Vector]

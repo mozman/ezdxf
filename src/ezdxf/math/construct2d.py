@@ -366,14 +366,8 @@ def is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2,
 
 
 def distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float:
-    """ Returns distance from `point` to line defined by `start-` and
-    `end` point.
-
-    Args:
-        point: 2D point to test as :class:`Vec2` or tuple of float
-        start: line definition point as :class:`Vec2` or tuple of float
-        end: line definition point as :class:`Vec2` or tuple of float
-
+    """ Returns the normal distance from `point` to 2D line defined by `start-`
+    and `end` point.
     """
     # wikipedia: https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line.
     if start.isclose(end):

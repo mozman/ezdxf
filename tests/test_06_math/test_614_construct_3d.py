@@ -2,13 +2,18 @@
 # License: MIT License
 import pytest
 
-from ezdxf.math import is_planar_face, Vector, Vec2, subdivide_face, intersection_ray_ray_3d, normal_vector_3p
-from ezdxf.math import X_AXIS, Y_AXIS, Z_AXIS, subdivide_ngons
+from ezdxf.math import (
+    is_planar_face, Vector, Vec2, subdivide_face, intersection_ray_ray_3d,
+    normal_vector_3p, X_AXIS, Y_AXIS, Z_AXIS, subdivide_ngons,
+    distance_point_line_3d,
+)
+
 from ezdxf.render.forms import square, circle
 
 REGULAR_FACE = Vector.list([(0, 0, 0), (1, 0, 1), (1, 1, 1), (0, 1, 0)])
 IRREGULAR_FACE = Vector.list([(0, 0, 0), (1, 0, 1), (1, 1, 0), (0, 1, 0)])
-REGULAR_FACE_WRONG_ORDER = Vector.list([(0, 0, 0), (1, 1, 1), (1, 0, 1), (0, 1, 0)])
+REGULAR_FACE_WRONG_ORDER = Vector.list(
+    [(0, 0, 0), (1, 1, 1), (1, 0, 1), (0, 1, 0)])
 
 
 def test_face_count():
@@ -116,6 +121,18 @@ def test_normal_vector_for_3_points():
     assert normal_vector_3p(o, X_AXIS, Z_AXIS) == -Y_AXIS
     assert normal_vector_3p(o, Y_AXIS, Z_AXIS) == X_AXIS
     assert normal_vector_3p(o, Z_AXIS, Y_AXIS) == -X_AXIS
+
+
+@pytest.mark.parametrize('points, expected', [
+    ([(10, 3), (0, 0), (1, 0)], 3),  # left of line
+    ([(-10, 0), (0, 0), (1, 0)], 0),  # on line
+    ([(2, -4), (0, 0), (1, 0)], 4),  # right of line
+    ([(5, 0), (0, 5), (0, 2)], 5),
+    ([(1, 0, 1), (1, 1, 1), (0, 0, 0)], 0.8164965809277259),
+])
+def test_distance_point_line_3d(points, expected):
+    p, a, b = Vector.generate(points)
+    assert distance_point_line_3d(p, a, b) == pytest.approx(expected)
 
 
 if __name__ == '__main__':

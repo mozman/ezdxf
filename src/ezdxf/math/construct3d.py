@@ -36,7 +36,8 @@ def is_planar_face(face: Sequence[Vector], abs_tol=1e-9) -> bool:
     return True
 
 
-def subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[List[Vector]]:
+def subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[
+    List[Vector]]:
     """ Yields new subdivided faces. Creates new faces from subdivided edges and the face midpoint by linear
     interpolation.
 
@@ -49,17 +50,20 @@ def subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[
         raise ValueError('3 or more vertices required.')
     len_face = len(face)
     mid_pos = sum(face) / len_face
-    subdiv_location = [face[i].lerp(face[(i + 1) % len_face]) for i in range(len_face)]
+    subdiv_location = [face[i].lerp(face[(i + 1) % len_face]) for i in
+                       range(len_face)]
 
     for index, vertex in enumerate(face):
         if quads:
-            yield vertex, subdiv_location[index], mid_pos, subdiv_location[index - 1]
+            yield vertex, subdiv_location[index], mid_pos, subdiv_location[
+                index - 1]
         else:
             yield subdiv_location[index - 1], vertex, mid_pos
             yield vertex, subdiv_location[index], mid_pos
 
 
-def subdivide_ngons(faces: Iterable[Sequence[Union[Vector, Vec2]]]) -> Iterable[List[Vector]]:
+def subdivide_ngons(faces: Iterable[Sequence[Union[Vector, Vec2]]]) -> Iterable[
+    List[Vector]]:
     """ Yields only triangles or quad faces, subdivides ngons into triangles.
 
     Args:
@@ -94,7 +98,9 @@ def _determinant(v1, v2, v3) -> float:
            e11 * e23 * e32 - e12 * e21 * e33
 
 
-def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-10) -> Sequence[
+def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector],
+                            ray2: Tuple[Vector, Vector], abs_tol=1e-10) -> \
+Sequence[
     Vector]:
     """
     Calculate intersection of two rays, returns a 0-tuple for parallel rays, a 1-tuple for intersecting rays and a
@@ -129,6 +135,19 @@ def intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vec
             # ray1 and ray2 do not have an intersection point,
             # p1 and p2 are the points of closest approach on each ray
             return p1, p2
+
+
+def distance_point_line_3d(point: Vector, start: Vector, end: Vector) -> float:
+    """ Returns the normal distance from `point` to 3D line defined by `start-`
+    and `end` point.
+    """
+    if start.isclose(end):
+        raise ZeroDivisionError('Not a line.')
+    v1 = point - start
+    # point projected onto line start to end:
+    v2 = (end - start).project(v1)
+    # Pythagoras:
+    return math.sqrt(v1.magnitude_square - v2.magnitude_square)
 
 
 class Plane:

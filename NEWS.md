@@ -18,6 +18,7 @@ Version 0.15a0 - dev
 - NEW: `matplotlib.qsave()`, `ltype` argument to switch between matplotlib dpi 
   based linetype rendering and AutoCAD like drawing units based linetype 
   rendering
+- NEW: `ezdxf.math.distance_point_line_3d()`
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
   use `DXFEntity.transform(ucs.matrix)`
 - REMOVED: deprecated `Hatch.edit_boundary()` context manager, 

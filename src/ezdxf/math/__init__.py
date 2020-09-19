@@ -12,7 +12,7 @@ from .construct2d import (
 )
 from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState,
-    intersection_ray_ray_3d, normal_vector_3p,
+    intersection_ray_ray_3d, normal_vector_3p, distance_point_line_3d,
 )
 from .matrix44 import Matrix44
 from .linalg import (
