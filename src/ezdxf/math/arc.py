@@ -348,8 +348,8 @@ def arc_segment_count(radius: float, angle: float, sagitta: float) -> int:
     Args:
         radius: arc radius
         angle: angle span of the arc in radians
-        sagitta: max. distance from the center of the arc to the center of its
-            base
+        sagitta: max. distance from the center of an arc segment to the
+            center of its chord
 
     .. versionadded:: 0.14
 

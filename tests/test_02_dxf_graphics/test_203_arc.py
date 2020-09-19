@@ -177,3 +177,20 @@ def test_arc_default_ocs():
     arc.transform(Matrix44.z_rotate(math.radians(30)))
     assert math.isclose(arc.dxf.start_angle, 60, abs_tol=1e-9)
     assert math.isclose(arc.dxf.end_angle, 90, abs_tol=1e-9)
+
+
+@pytest.mark.parametrize('r, s, e, sagitta, count', [
+    (1, 0, 180, 0.35, 3),
+    (1, 0, 180, 0.10, 5),
+    (0, 0, 360, 0.10, 0),  # radius 0 works but yields nothing
+    (-1, 0, 180, 0.35, 3),  # negative radius same as positive radius
+    (1, 270, 90, 0.10, 5),  # start angle > end angle
+    (1, 90, -90, 0.10, 5),
+    (1, 0, 0, 0.10, 0),  # angle span 0 works but yields nothing
+    (1, -45, -45, 0.10, 0),
+])
+def test_circle_flattening(r, s, e, sagitta, count):
+    arc = Arc.new(dxfattribs={
+        'radius': r, 'start_angle': s, 'end_angle': e,
+    })
+    assert len(list(arc.flattening(sagitta))) == count

@@ -1,9 +1,12 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
+import math
 
 from ezdxf.lldxf import validator
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import (
+    Vector, Matrix44, NULLVEC, Z_AXIS, arc_segment_count, linspace
+)
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -54,9 +57,7 @@ class Circle(DXFGraphic):
         ])
 
     def vertices(self, angles: Iterable[float]) -> Iterable[Vector]:
-        """
-        Yields vertices of the circle for iterable `angles` in WCS. This method
-        takes into account a local OCS.
+        """ Yields vertices of the circle for iterable `angles` in WCS.
 
         Args:
             angles: iterable of angles in OCS as degrees, angle goes counter
@@ -67,6 +68,17 @@ class Circle(DXFGraphic):
         for angle in angles:
             v = Vector.from_deg_angle(angle, self.dxf.radius) + self.dxf.center
             yield ocs.to_wcs(v)
+
+    def flattening(self, sagitta: float) -> Iterable[Vector]:
+        """ Approximate the circle by vertices in WCS, argument `segment` is the
+        max. distance from the center of an arc segment to the center of its
+        chord. Returns an open polygon: start vertex != end vertex!
+
+        """
+        radius = abs(self.dxf.radius)
+        if radius > 0.0:
+            count = arc_segment_count(radius, math.tau, sagitta)
+            yield from self.vertices(linspace(0.0, 360.0, count, endpoint=False))
 
     def transform(self, m: Matrix44) -> 'Circle':
         """ Transform CIRCLE entity by transformation matrix `m` inplace.

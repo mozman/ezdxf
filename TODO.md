@@ -28,7 +28,6 @@ Render Tools
 - SPLINE - adaptive recursive flattening like for cubic bezier curves, but for
   B-splines the distance calculation has to be more precise
 - ELLIPSE - adaptive recursive flattening like for cubic bezier curves
-- CIRCLE, ARC - flattening determined by a max sagitta value
 - `ACADTable.virtual_entities()` ??? -> requires basic ACAD_TABLE support
 - `MLeader.virtual_entities()` ??? -> requires complete MLEADER implementation
 - `MLine.virtual_entities()` ??? -> requires complete MLINE implementation

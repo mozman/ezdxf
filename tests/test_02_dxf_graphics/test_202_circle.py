@@ -202,3 +202,13 @@ def test_circle_user_ocs():
     assert circle.dxf.center == result
     assert circle.dxf.extrusion == (0, 1, 0)
     assert circle.dxf.thickness == 8  # in WCS y-axis
+
+
+@pytest.mark.parametrize('radius, sagitta, count', [
+    (1, 0.35, 4), (1, 0.10, 7),
+    (0, 0.35, 0), (0, 0.10, 0),  # radius 0 works but yields nothing
+    (-1, 0.35, 4), (-1, 0.10, 7),  # negative radius same as positive radius
+])
+def test_circle_flattening(radius, sagitta, count):
+    circle = Circle.new(dxfattribs={'radius': radius})
+    assert len(list(circle.flattening(sagitta))) == count
