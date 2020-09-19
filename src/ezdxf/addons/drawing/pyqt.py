@@ -153,8 +153,7 @@ class PyQtBackend(Backend):
         scale = cap_height / self._font_measurements.cap_height
         transform = Matrix44.scale(scale, -scale, 0) @ transform
 
-        path = qg.QPainterPath()
-        path.addText(0, 0, self._font, text)
+        path = _get_text_path(self._font, text)
         path = _matrix_to_qtransform(transform).map(path)
         item = self.scene.addPath(path, self._no_line,
                                   self._get_color(properties.color))
@@ -203,10 +202,14 @@ def _matrix_to_qtransform(matrix: Matrix44) -> qg.QTransform:
     return qg.QTransform(*matrix.get_2d_transformation())
 
 
-def _get_text_rect(font: qg.QFont, text: str) -> qc.QRectF:
+def _get_text_path(font: qg.QFont, text: str) -> qc.QRectF:
     path = qg.QPainterPath()
     path.addText(0, 0, font, text)
-    return path.boundingRect()
+    return path
+
+
+def _get_text_rect(font: qg.QFont, text: str) -> qc.QRectF:
+    return _get_text_path(font, text).boundingRect()
 
 
 def _get_font_measurements(font: qg.QFont) -> FontMeasurements:
