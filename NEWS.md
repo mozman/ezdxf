@@ -36,8 +36,8 @@ Version 0.15a0 - dev
 - REMOVED: deprecated `Spline.edit_data()` context manager,
   use `fit_points`, `control_points`, `knots`  and `weights` attributes
 
-Version 0.14.1b0 - 2020-09-17
------------------------------
+Version 0.14.1 - 2020-09-19
+---------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-14.html
 - BUGFIX: MLEADER and MLEADERSTYLE min DXF version changed to R2000

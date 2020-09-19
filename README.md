@@ -140,8 +140,10 @@ http://github.com/mozman/ezdxf/issues
 Contact
 -------
 
-Please post questions at the [forum](https://groups.google.com/d/forum/python-ezdxf) or 
-[stack overflow](https://stackoverflow.com/) to make answers available to other users as well.
+Please __always__ post questions at the [forum](https://groups.google.com/d/forum/python-ezdxf) 
+or [stack overflow](https://stackoverflow.com/) or open an 
+[issue](https://github.com/mozman/ezdxf/issues) at github to make answers 
+available to other users as well. 
 
 ezdxf@mozman.at
 
