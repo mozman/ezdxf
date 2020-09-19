@@ -63,6 +63,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: vertices(params:Iterable[float]) -> Iterable[Vector]
 
+    .. automethod:: flattening(distance: float, segments: int = 8) -> Iterable[Vector]
+
     .. automethod:: params
 
     .. automethod:: transform(m: Matrix44) -> Ellipse

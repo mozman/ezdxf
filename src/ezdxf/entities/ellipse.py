@@ -158,6 +158,23 @@ class Ellipse(DXFGraphic):
         """
         yield from self.construction_tool().vertices(params)
 
+    def flattening(self, distance: float, segments: int = 8) -> Iterable[Vector]:
+        """ Adaptive recursive flattening. The argument `segments` is the
+        minimum count of approximation segments, if the distance from the center
+        of the approximation segment to the curve is bigger than `distance` the
+        segment will be subdivided. Returns a closed polygon for a full ellipse:
+        start vertex == end vertex.
+
+        Args:
+            distance: maximum distance from the projected curve point onto the
+                segment chord.
+            segments: minimum segment count
+
+        .. versionadded:: 0.15
+
+        """
+        return self.construction_tool().flattening(distance, segments)
+
     def swap_axis(self):
         """ Swap axis and adjust start- and end parameter. """
         e = self.construction_tool()

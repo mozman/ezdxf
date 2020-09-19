@@ -134,6 +134,9 @@ class Bezier4P:
                 approximation points to determine if a segment should be
                 subdivided.
             segments: minimum segment count
+
+        .. versionadded:: 0.15
+
         """
 
         def subdiv(start_point, end_point, start_t: float, end_t: float):

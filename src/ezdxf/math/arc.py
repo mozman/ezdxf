@@ -112,6 +112,9 @@ class ConstructionArc:
         """ Approximate the arc by vertices in WCS, argument `segment` is the
         max. distance from the center of an arc segment to the center of its
         chord.
+
+        .. versionadded:: 0.15
+
         """
         radius = abs(self.radius)
         if radius > 0:

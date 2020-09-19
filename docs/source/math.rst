@@ -676,6 +676,8 @@ ConstructionEllipse
 
     .. automethod:: vertices
 
+    .. automethod:: flattening
+
     .. automethod:: params_from_vertices
 
     .. automethod:: dxfattribs

@@ -234,3 +234,27 @@ def test_params_from_vertices_random():
 def test_to_ocs():
     e = ConstructionEllipse().to_ocs()
     assert e.center == (0, 0)
+
+
+@pytest.mark.parametrize('s, e, distance, count', [
+    # known tests from ARC
+    (0, 180, 0.35, 3),
+    (0, 180, 0.10, 5),
+    (270, 90, 0.10, 5),  # start angle > end angle
+    (90, -90, 0.10, 5),
+    (0, 0, 0.10, 0),  # angle span 0 works but yields nothing
+    (-45, -45, 0.10, 0),
+])
+def test_flattening(s, e, distance, count):
+    ellipse = ConstructionEllipse(
+        start_param=math.radians(s),
+        end_param=math.radians(e),
+    )
+    assert len(list(ellipse.flattening(distance, segments=2))) == count
+
+
+def test_flattening_ellipse():
+    # Visually checked in BricsCAD:
+    e = ConstructionEllipse(major_axis=(3, 0), ratio=0.25)
+    assert len(list(e.flattening(0.1))) == 13
+    assert len(list(e.flattening(0.01))) == 37

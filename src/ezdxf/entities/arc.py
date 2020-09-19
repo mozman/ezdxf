@@ -80,6 +80,8 @@ class Arc(Circle):
         chord. Yields :class:`~ezdxf.math.Vec2` objects for 2D arcs and
         :class:`~ezdxf.math.Vector` objects for 3D arcs.
 
+        .. versionadded:: 0.15
+
         """
         arc = self.construction_tool()
         to_wcs = self.ocs().points_to_wcs

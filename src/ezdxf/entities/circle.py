@@ -76,6 +76,8 @@ class Circle(DXFGraphic):
 
         Yields always :class:`~ezdxf.math.Vector` objects.
 
+        .. versionadded:: 0.15
+
         """
         radius = abs(self.dxf.radius)
         if radius > 0.0:

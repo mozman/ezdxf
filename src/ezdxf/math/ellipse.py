@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING, Iterable, Dict, Tuple
 import math
 from .vector import Vector, NULLVEC, X_AXIS, Z_AXIS
+from .construct3d import distance_point_line_3d
 from .matrix44 import Matrix44
 from .ucs import OCS
 from .construct2d import enclosing_angles, linspace
@@ -236,6 +237,64 @@ class ConstructionEllipse:
             x = math.cos(param) * radius_x * x_axis
             y = math.sin(param) * radius_y * y_axis
             yield center + x + y
+
+    def flattening(self, distance: float, segments: int = 4) -> Iterable[Vector]:
+        """ Adaptive recursive flattening. The argument `segments` is the
+        minimum count of approximation segments, if the distance from the center
+        of the approximation segment to the curve is bigger than `distance` the
+        segment will be subdivided. Returns a closed polygon for a full ellipse:
+        start vertex == end vertex.
+
+        Args:
+            distance: maximum distance from the projected curve point onto the
+                segment chord.
+            segments: minimum segment count
+
+        .. versionadded:: 0.15
+
+        """
+
+        def vertex_(p: float) -> Vector:
+            x = math.cos(p) * radius_x * x_axis
+            y = math.sin(p) * radius_y * y_axis
+            return self.center + x + y
+
+        def subdiv(s: Vector, e: Vector, s_param: float, e_param: float):
+            m_param = (s_param + e_param) * 0.5
+            m = vertex_(m_param)
+            if distance_point_line_3d(m, s, e) < distance:
+                yield e
+            else:
+                yield from subdiv(s, m, s_param, m_param)
+                yield from subdiv(m, e, m_param, e_param)
+
+        x_axis = self.major_axis.normalize()
+        y_axis = self.minor_axis.normalize()
+        radius_x = self.major_axis.magnitude
+        radius_y = radius_x * self.ratio
+
+        delta = self.param_span / segments
+        param = self.start_param % math.tau
+        if math.isclose(self.end_param, math.tau):
+            end_param = math.tau
+        else:
+            end_param = self.end_param % math.tau
+
+        if math.isclose(param, end_param):
+            return
+        elif param > end_param:
+            end_param += math.tau
+
+        start_point = vertex_(param)
+        yield start_point
+        while param < end_param:
+            next_end_param = param + delta
+            if math.isclose(next_end_param, end_param):
+                next_end_param = end_param
+            end_point = vertex_(next_end_param)
+            yield from subdiv(start_point, end_point, param, next_end_param)
+            param = next_end_param
+            start_point = end_point
 
     def params_from_vertices(self, vertices: Iterable['Vertex']) -> Iterable[float]:
         """
