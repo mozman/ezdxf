@@ -14,6 +14,7 @@ Version 0.15a0 - dev
 - NEW: `Path.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Circle.flattening()` approximation determined by a max. sagitta value
 - NEW: `Arc.flattening()` approximation determined by a max. sagitta value
+- NEW: `ConstructionArc.flattening()` approximation determined by a max. sagitta value
 - NEW: `matplotlib.qsave()`, `ltype` argument to switch between matplotlib dpi 
   based linetype rendering and AutoCAD like drawing units based linetype 
   rendering

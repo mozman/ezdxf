@@ -44,7 +44,7 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: angles
 
-    .. automethod:: flattening(sagitta: float) -> Iterable[Vector]
+    .. automethod:: flattening(sagitta: float) -> Iterable[Vertex]
 
     .. automethod:: transform(m: Matrix44) -> Arc
 

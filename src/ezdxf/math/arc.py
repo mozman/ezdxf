@@ -108,6 +108,25 @@ class ConstructionArc:
         for angle in a:
             yield center + Vec2.from_deg_angle(angle, radius)
 
+    def flattening(self, sagitta: float) -> Iterable[Vec2]:
+        """ Approximate the arc by vertices in WCS, argument `segment` is the
+        max. distance from the center of an arc segment to the center of its
+        chord.
+        """
+        radius = abs(self.radius)
+        if radius > 0:
+            start = self.start_angle
+            stop = self.end_angle
+            if math.isclose(start, stop):
+                return
+            start %= 360
+            stop %= 360
+            if stop <= start:
+                stop += 360
+            angle_span = math.radians(stop - start)
+            count = arc_segment_count(radius, angle_span, sagitta)
+            yield from self.vertices(linspace(start, stop, count + 1))
+
     def tangents(self, a: Iterable[float]) -> Iterable[Vec2]:
         """ Yields tangents on arc for angles in iterable `a` in WCS as
         direction vectors.

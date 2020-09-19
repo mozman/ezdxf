@@ -1,10 +1,7 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
-import math
-from ezdxf.math import (
-    Vector, Matrix44, linspace, ConstructionArc, arc_segment_count,
-)
+from ezdxf.math import Vector, Matrix44, linspace, ConstructionArc, Vertex
 from ezdxf.math.transformtools import OCSTransform
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -77,24 +74,16 @@ class Arc(Circle):
         for angle in linspace(start, stop, num=num, endpoint=True):
             yield angle % 360
 
-    def flattening(self, sagitta: float) -> Iterable[Vector]:
+    def flattening(self, sagitta: float) -> Iterable[Vertex]:
         """ Approximate the arc by vertices in WCS, argument `segment` is the
         max. distance from the center of an arc segment to the center of its
-        chord.
+        chord. Yields :class:`~ezdxf.math.Vec2` objects for 2D arcs and
+        :class:`~ezdxf.math.Vector` objects for 3D arcs.
+
         """
-        radius = abs(self.dxf.radius)
-        if radius > 0:
-            start = self.dxf.start_angle
-            stop = self.dxf.end_angle
-            if math.isclose(start, stop):
-                return
-            start %= 360
-            stop %= 360
-            if stop <= start:
-                stop += 360
-            angle_span = math.radians(stop - start)
-            count = arc_segment_count(radius, angle_span, sagitta)
-            yield from self.vertices(linspace(start, stop, count + 1))
+        arc = self.construction_tool()
+        to_wcs = self.ocs().points_to_wcs
+        yield from to_wcs(arc.flattening(sagitta))
 
     def transform(self, m: Matrix44) -> 'Arc':
         """ Transform ARC entity by transformation matrix `m` inplace.

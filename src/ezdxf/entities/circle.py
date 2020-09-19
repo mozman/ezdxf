@@ -74,6 +74,8 @@ class Circle(DXFGraphic):
         max. distance from the center of an arc segment to the center of its
         chord. Returns an open polygon: start vertex != end vertex!
 
+        Yields always :class:`~ezdxf.math.Vector` objects.
+
         """
         radius = abs(self.dxf.radius)
         if radius > 0.0:

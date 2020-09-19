@@ -1,6 +1,7 @@
 # (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 
+import pytest
 import ezdxf
 import math
 from ezdxf.math import ConstructionArc, Vector, UCS, Vec2
@@ -184,3 +185,18 @@ def test_arc_segment_count():
     l2 = math.sin(alpha / 2) * radius
     sagitta = radius - math.sqrt(radius ** 2 - l2 ** 2)
     assert max_sagitta / 2 < sagitta < max_sagitta
+
+
+@pytest.mark.parametrize('r, s, e, sagitta, count', [
+    (1, 0, 180, 0.35, 3),
+    (1, 0, 180, 0.10, 5),
+    (0, 0, 360, 0.10, 0),  # radius 0 works but yields nothing
+    (-1, 0, 180, 0.35, 3),  # negative radius same as positive radius
+    (1, 270, 90, 0.10, 5),  # start angle > end angle
+    (1, 90, -90, 0.10, 5),
+    (1, 0, 0, 0.10, 0),  # angle span 0 works but yields nothing
+    (1, -45, -45, 0.10, 0),
+])
+def test_flattening(r, s, e, sagitta, count):
+    arc = ConstructionArc((0, 0), r, s, e)
+    assert len(list(arc.flattening(sagitta))) == count

@@ -179,15 +179,12 @@ def test_arc_default_ocs():
     assert math.isclose(arc.dxf.end_angle, 90, abs_tol=1e-9)
 
 
+# See also ConstructionArc(): test suite 645 - test_flattening()
 @pytest.mark.parametrize('r, s, e, sagitta, count', [
-    (1, 0, 180, 0.35, 3),
     (1, 0, 180, 0.10, 5),
     (0, 0, 360, 0.10, 0),  # radius 0 works but yields nothing
     (-1, 0, 180, 0.35, 3),  # negative radius same as positive radius
     (1, 270, 90, 0.10, 5),  # start angle > end angle
-    (1, 90, -90, 0.10, 5),
-    (1, 0, 0, 0.10, 0),  # angle span 0 works but yields nothing
-    (1, -45, -45, 0.10, 0),
 ])
 def test_circle_flattening(r, s, e, sagitta, count):
     arc = Arc.new(dxfattribs={
