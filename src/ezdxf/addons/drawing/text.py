@@ -63,6 +63,13 @@ class FontMeasurements:
         self.x_top = x_top
         self.bottom = bottom
 
+    def __eq__(self, other):
+        return (isinstance(other, FontMeasurements) and
+                self.baseline == other.baseline and
+                self.cap_top == other.cap_top and
+                self.x_top == other.x_top and
+                self.bottom == other.bottom)
+
     def scale_from_baseline(self, desired_cap_height: float) -> "FontMeasurements":
         scale = desired_cap_height / self.cap_height
         assert math.isclose(self.baseline, 0.0)

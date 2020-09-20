@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, TYPE_CHECKING, Optional
+from typing import Iterable, TYPE_CHECKING, Optional, Dict
 from enum import Enum
 import abc
 
@@ -59,6 +59,7 @@ class MatplotlibBackend(Backend):
                  point_size: float = 2.0,
                  point_size_relative: bool = True,
                  font: FontProperties = FontProperties(),
+                 use_text_cache: bool = True,
                  linetype_rendering: str = 'internal',
                  linetype_scaling: float = None,
                  ):
@@ -80,7 +81,7 @@ class MatplotlibBackend(Backend):
         self._current_z = 0
         self.point_size = point_size
         self.point_size_relative = point_size_relative
-        self.font = font
+        self._text = TextRenderer(font, use_text_cache)
 
         # Detect linetype rendering type:
         try:
@@ -101,7 +102,9 @@ class MatplotlibBackend(Backend):
                 # The `min_length` and `max_distance` arguments should be based
                 # on the output dpi setting.
                 linetype_scaling, min_length=0.01, max_distance=0.01)
-        self._font_measurements = _get_font_measurements(font)
+
+    def clear_text_cache(self):
+        self._text.clear_cache()
 
     def _get_z(self) -> int:
         z = self._current_z
@@ -138,17 +141,17 @@ class MatplotlibBackend(Backend):
         if not text.strip():
             return  # no point rendering empty strings
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
-        scale = cap_height / self._font_measurements.cap_height
-        path = _text_path(text, self.font)
-        transformed_path = _transform_path(path,
-                                           Matrix44.scale(scale) @ transform)
+        transformed_path = _transform_path(
+            self._text.get_text_path(text),
+            Matrix44.scale(self._text.get_scale(cap_height)) @ transform
+        )
         self.ax.add_patch(
             PathPatch(transformed_path, facecolor=properties.color, linewidth=0,
                       zorder=self._get_z()))
 
     def get_font_measurements(self, cap_height: float,
                               font: str = None) -> FontMeasurements:
-        return self._font_measurements.scale_from_baseline(
+        return self._text.font_measurements.scale_from_baseline(
             desired_cap_height=cap_height)
 
     def get_text_line_width(self, text: str, cap_height: float,
@@ -157,9 +160,8 @@ class MatplotlibBackend(Backend):
             return 0
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
         text = prepare_string_for_rendering(text, dxftype)
-        path = _text_path(text, self.font)
-        scale = cap_height / self._font_measurements.cap_height
-        return max(x for x, y in path.vertices) * scale
+        path = self._text.get_text_path(text)
+        return max(x for x, y in path.vertices) * self._text.get_scale(cap_height)
 
     def clear(self):
         self.ax.clear()
@@ -184,21 +186,42 @@ def _transform_path(path: Path, transform: Matrix44) -> Path:
     return Path([(v.x, v.y) for v in vertices], path.codes)
 
 
-def _text_path(text: str, font: FontProperties) -> TextPath:
-    return TextPath((0, 0), text, size=1, prop=font)
+class TextRenderer:
+    def __init__(self, font: FontProperties, use_cache: bool):
+        self._font = font
+        self._use_cache = use_cache
+        self._cache: Dict[str, TextPath] = {}
+        self._font_measurements = self._get_font_measurements()
 
+    def clear_cache(self):
+        self._cache.clear()
 
-def _get_font_measurements(
-        font: FontProperties = FontProperties()) -> "FontMeasurements":
-    upper_x = _text_path('X', font).vertices[:, 1].tolist()
-    lower_x = _text_path('x', font).vertices[:, 1].tolist()
-    lower_p = _text_path('p', font).vertices[:, 1].tolist()
-    return FontMeasurements(
-        baseline=min(lower_x),
-        cap_top=max(upper_x),
-        x_top=max(lower_x),
-        bottom=min(lower_p)
-    )
+    @property
+    def font_measurements(self) -> FontMeasurements:
+        return self._font_measurements
+
+    def get_scale(self, desired_cap_height: float) -> float:
+        return desired_cap_height / self._font_measurements.cap_height
+
+    def _get_font_measurements(self) -> FontMeasurements:
+        upper_x = self.get_text_path('X').vertices[:, 1].tolist()
+        lower_x = self.get_text_path('x').vertices[:, 1].tolist()
+        lower_p = self.get_text_path('p').vertices[:, 1].tolist()
+        return FontMeasurements(
+            baseline=min(lower_x),
+            cap_top=max(upper_x),
+            x_top=max(lower_x),
+            bottom=min(lower_p)
+        )
+
+    def get_text_path(self, text: str) -> TextPath:
+        path = self._cache.get(text, None)
+        if path is None:
+            # must replace $ with \$ to avoid matplotlib interpreting it as math text
+            path = TextPath((0, 0), text.replace('$', '\\$'), size=1, prop=self._font, usetex=False)
+            if self._use_cache:
+                self._cache[text] = path
+        return path
 
 
 def _get_line_style_pattern(properties: Properties, scale: float):

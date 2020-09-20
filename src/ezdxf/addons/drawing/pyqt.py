@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Dict
 
 from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 
@@ -44,19 +44,25 @@ CorrespondingDXFParentStack = 1
 
 class PyQtBackend(Backend):
     def __init__(self,
-                 scene: qw.QGraphicsScene,
+                 scene: Optional[qw.QGraphicsScene] = None,
                  point_radius: float = 0.5,
                  *,
+                 use_text_cache: bool = True,
                  debug_draw_rect: bool = False):
         super().__init__()
-        self.scene = scene
+        self._scene = scene
         self._color_cache = {}
         self.point_radius = point_radius
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
-        self._font = qg.QFont()
-        self._font_measurements = _get_font_measurements(self._font)
+        self._text = TextRenderer(qg.QFont(), use_text_cache)
         self._debug_draw_rect = debug_draw_rect
+
+    def set_scene(self, scene: qw.QGraphicsScene):
+        self._scene = scene
+
+    def clear_text_cache(self):
+        self._text.clear_cache()
 
     def _get_color(self, color: Color) -> qg.QColor:
         qt_color = self._color_cache.get(color, None)
@@ -94,12 +100,12 @@ class PyQtBackend(Backend):
         item.setData(CorrespondingDXFParentStack, parent_stack)
 
     def set_background(self, color: Color):
-        self.scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
+        self._scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
 
     def draw_line(self, start: Vector, end: Vector,
                   properties: Properties) -> None:
         color = properties.color
-        item = self.scene.addLine(
+        item = self._scene.addLine(
             start.x, start.y, end.x, end.y,
             self._get_pen(color)
         )
@@ -122,7 +128,7 @@ class PyQtBackend(Backend):
                 )
             else:
                 raise ValueError(f'Unknown path command: {cmd.type}')
-        item = self.scene.addPath(
+        item = self._scene.addPath(
             qt_path,
             self._get_pen(properties.color),
             self._get_brush(properties),
@@ -133,7 +139,7 @@ class PyQtBackend(Backend):
         brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
         item = _Point(pos.x, pos.y, self.point_radius, brush)
         self._set_item_data(item)
-        self.scene.addItem(item)
+        self._scene.addItem(item)
 
     def draw_filled_polygon(self, points: Iterable[Vector],
                             properties: Properties) -> None:
@@ -141,7 +147,7 @@ class PyQtBackend(Backend):
         polygon = qg.QPolygonF()
         for p in points:
             polygon.append(qc.QPointF(p.x, p.y))
-        item = self.scene.addPolygon(polygon, self._no_line, brush)
+        item = self._scene.addPolygon(polygon, self._no_line, brush)
         self._set_item_data(item)
 
     def draw_text(self, text: str, transform: Matrix44, properties: Properties,
@@ -150,19 +156,18 @@ class PyQtBackend(Backend):
             return  # no point rendering empty strings
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
 
-        scale = cap_height / self._font_measurements.cap_height
+        scale = self._text.get_scale(cap_height)
         transform = Matrix44.scale(scale, -scale, 0) @ transform
 
-        path = qg.QPainterPath()
-        path.addText(0, 0, self._font, text)
+        path = self._text.get_text_path(text)
         path = _matrix_to_qtransform(transform).map(path)
-        item = self.scene.addPath(path, self._no_line,
-                                  self._get_color(properties.color))
+        item = self._scene.addPath(path, self._no_line,
+                                   self._get_color(properties.color))
         self._set_item_data(item)
 
     def get_font_measurements(self, cap_height: float,
                               font: str = None) -> FontMeasurements:
-        return self._font_measurements.scale_from_baseline(
+        return self._text.font_measurements.scale_from_baseline(
             desired_cap_height=cap_height)
 
     def get_text_line_width(self, text: str, cap_height: float,
@@ -172,18 +177,17 @@ class PyQtBackend(Backend):
 
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
         text = prepare_string_for_rendering(text, dxftype)
-        scale = cap_height / self._font_measurements.cap_height
-        return _get_text_rect(self._font, text).right() * scale
+        return self._text.get_text_rect(text).right() * self._text.get_scale(cap_height)
 
     def clear(self) -> None:
-        self.scene.clear()
+        self._scene.clear()
 
     def finalize(self) -> None:
         super().finalize()
-        self.scene.setSceneRect(self.scene.itemsBoundingRect())
+        self._scene.setSceneRect(self._scene.itemsBoundingRect())
         if self._debug_draw_rect:
-            self.scene.addRect(self.scene.sceneRect(), self._get_pen('#000000'),
-                               self._no_fill)
+            self._scene.addRect(self._scene.sceneRect(),
+                                self._get_pen('#000000'), self._no_fill)
 
 
 def _get_x_scale(t: qg.QTransform) -> float:
@@ -203,19 +207,43 @@ def _matrix_to_qtransform(matrix: Matrix44) -> qg.QTransform:
     return qg.QTransform(*matrix.get_2d_transformation())
 
 
-def _get_text_rect(font: qg.QFont, text: str) -> qc.QRectF:
-    path = qg.QPainterPath()
-    path.addText(0, 0, font, text)
-    return path.boundingRect()
+class TextRenderer:
+    def __init__(self, font: qg.QFont, use_cache: bool):
+        self._font = font
+        self._use_cache = use_cache
+        self._cache: Dict[str, qg.QPainterPath] = {}
+        self._font_measurements = self._get_font_measurements()
 
+    def clear_cache(self):
+        self._cache.clear()
 
-def _get_font_measurements(font: qg.QFont) -> FontMeasurements:
-    upper_x = _get_text_rect(font, 'X')
-    lower_x = _get_text_rect(font, 'x')
-    lower_p = _get_text_rect(font, 'p')
-    return FontMeasurements(
-        baseline=lower_x.bottom(),
-        cap_top=upper_x.top(),
-        x_top=lower_x.top(),
-        bottom=lower_p.bottom(),
-    )
+    @property
+    def font_measurements(self) -> FontMeasurements:
+        return self._font_measurements
+
+    def get_scale(self, desired_cap_height: float) -> float:
+        return desired_cap_height / self._font_measurements.cap_height
+
+    def _get_font_measurements(self) -> FontMeasurements:
+        upper_x = self.get_text_rect('X')
+        lower_x = self.get_text_rect('x')
+        lower_p = self.get_text_rect('p')
+        return FontMeasurements(
+            baseline=lower_x.bottom(),
+            cap_top=upper_x.top(),
+            x_top=lower_x.top(),
+            bottom=lower_p.bottom(),
+        )
+
+    def get_text_path(self, text: str) -> qg.QPainterPath:
+        path = self._cache.get(text, None)
+        if path is None:
+            path = qg.QPainterPath()
+            path.addText(0, 0, self._font, text)
+            if self._use_cache:
+                self._cache[text] = path
+        return path
+
+    def get_text_rect(self, text: str) -> qc.QRectF:
+        # no point caching the bounding rect calculation, it is very cheap
+        return self.get_text_path(text).boundingRect()
