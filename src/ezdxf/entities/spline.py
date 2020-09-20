@@ -256,6 +256,23 @@ class Spline(DXFGraphic):
         self.set_flag_state(Spline.RATIONAL, state=bool(len(self.weights)))
         return self  # floating interface
 
+    def flattening(self, distance: float,
+                   segments: int = 4) -> Iterable[Vector]:
+        """ Adaptive recursive flattening. The argument `segments` is the
+        minimum count of approximation segments between two knots, if the
+        distance from the center of the approximation segment to the curve is
+        bigger than `distance` the segment will be subdivided.
+
+        Args:
+            distance: maximum distance from the projected curve point onto the
+                segment chord.
+            segments: minimum segment count between two knots
+
+        .. versionadded:: 0.15
+
+        """
+        return self.construction_tool().flattening(distance, segments)
+
     @classmethod
     def from_arc(cls, entity: 'DXFGraphic') -> 'Spline':
         """ Create a new SPLINE entity from CIRCLE, ARC or ELLIPSE entity.

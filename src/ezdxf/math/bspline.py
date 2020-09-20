@@ -27,6 +27,7 @@ from .linalg import (
     quadratic_equation, binomial_coefficient,
 )
 from .construct2d import linspace
+from .construct3d import distance_point_line_3d
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf import PYPY
 
@@ -991,6 +992,46 @@ class BSpline:
     def approximate(self, segments: int = 20) -> Iterable[Vector]:
         """ Approximates curve by vertices as :class:`Vector` objects, vertices count = segments + 1. """
         yield from self.points(self.params(segments))
+
+    def flattening(self, distance: float,
+                   segments: int = 4) -> Iterable[Vector]:
+        """ Adaptive recursive flattening. The argument `segments` is the
+        minimum count of approximation segments between two knots, if the
+        distance from the center of the approximation segment to the curve is
+        bigger than `distance` the segment will be subdivided.
+
+        Args:
+            distance: maximum distance from the projected curve point onto the
+                segment chord.
+            segments: minimum segment count between two knots
+
+        .. versionadded:: 0.15
+
+        """
+
+        def subdiv(s: Vector, e: Vector, start_t: float, end_t: float):
+            mid_t = (start_t + end_t) * 0.5
+            m = self.point(mid_t)
+            if distance_point_line_3d(m, s, e) < distance:
+                yield e
+            else:
+                yield from subdiv(s, m, start_t, mid_t)
+                yield from subdiv(m, e, mid_t, end_t)
+
+        knots = sorted(set(self.knots()))
+        t = 0.0
+        start_point = self.point(t)
+        yield start_point
+        for t1 in knots[1:]:
+            delta = (t1 - t) / segments
+            while t < t1:
+                next_t = t + delta
+                if math.isclose(next_t, t1):
+                    next_t = t1
+                end_point = self.point(next_t)
+                yield from subdiv(start_point, end_point, t, next_t)
+                t = next_t
+                start_point = end_point
 
     def params(self, segments: int) -> Iterable[float]:
         """ Yield evenly spaced parameters from 0 to max_t for given segment count. """

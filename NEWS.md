@@ -18,6 +18,8 @@ Version 0.15a0 - dev
 - NEW: `ezdxf.math.distance_point_line_3d()`
 - NEW: `ConstructionEllipse.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Ellipse.flattening()` adaptive recursive flattening (approximation)
+- NEW: `BSpline.flattening()` adaptive recursive flattening (approximation)
+- NEW: `Spline.flattening()` adaptive recursive flattening (approximation)
 - NEW: `matplotlib.qsave()`, `ltype` argument to switch between matplotlib dpi 
   based linetype rendering and AutoCAD like drawing units based linetype 
   rendering

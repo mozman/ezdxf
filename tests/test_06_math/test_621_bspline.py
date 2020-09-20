@@ -5,9 +5,13 @@ import pytest
 from math import isclose
 import random
 from ezdxf.math.bspline import BSpline, Vector
-from ezdxf.math.bspline import bspline_basis_vector, Basis, open_uniform_knot_vector, normalize_knots, subdivide_params
+from ezdxf.math.bspline import (
+    bspline_basis_vector, Basis,
+    open_uniform_knot_vector, normalize_knots, subdivide_params,
+)
 
-DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
+DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.),
+             (50., 0., 30.)]
 
 
 def random_point_comparision_to_nurbs_python(spline: BSpline, count: int = 10):
@@ -19,7 +23,8 @@ def random_point_comparision_to_nurbs_python(spline: BSpline, count: int = 10):
         assert p1.isclose(p2)
 
 
-def random_derivatives_comparision_to_nurbs_python(spline: BSpline, count: int = 10):
+def random_derivatives_comparision_to_nurbs_python(spline: BSpline,
+                                                   count: int = 10):
     curve = spline.to_nurbs_python_curve()
     for _ in range(count):
         t = random.random()
@@ -83,7 +88,8 @@ def test_bspine_derivatives_random():
 
 
 def test_normalize_knots():
-    assert normalize_knots([0, 0.25, 0.5, 0.75, 1.0]) == [0, 0.25, 0.5, 0.75, 1.0]
+    assert normalize_knots([0, 0.25, 0.5, 0.75, 1.0]) == [0, 0.25, 0.5, 0.75,
+                                                          1.0]
     assert normalize_knots([0, 1, 2, 3, 4]) == [0, 0.25, 0.5, 0.75, 1.0]
     assert normalize_knots([2, 3, 4, 5, 6]) == [0, 0.25, 0.5, 0.75, 1.0]
 
@@ -99,7 +105,9 @@ def test_normalize_knots_if_needed():
 
 
 def test_bspline_insert_knot():
-    bspline = BSpline([(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50), (80, 70)])
+    bspline = BSpline(
+        [(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50),
+         (80, 70)])
     t = bspline.max_t / 2
     assert len(bspline.control_points) == 8
     bspline.insert_knot(t)
@@ -114,7 +122,9 @@ def test_transform_interface():
 
 
 def test_bezier_decomposition():
-    bspline = BSpline.from_fit_points([(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50), (80, 70)])
+    bspline = BSpline.from_fit_points(
+        [(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50),
+         (80, 70)])
     bezier_segments = list(bspline.bezier_decomposition())
     assert len(bezier_segments) == 5
     # results visually checked to be correct
@@ -133,7 +143,9 @@ def test_bezier_decomposition():
 
 
 def test_cubic_bezier_approximation():
-    bspline = BSpline.from_fit_points([(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50), (80, 70)])
+    bspline = BSpline.from_fit_points(
+        [(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50),
+         (80, 70)])
     bezier_segments = list(bspline.cubic_bezier_approximation(level=3))
     assert len(bezier_segments) == 28
     bezier_segments = list(bspline.cubic_bezier_approximation(segments=40))
@@ -144,7 +156,8 @@ def test_cubic_bezier_approximation():
 
 def test_subdivide_params():
     assert list(subdivide_params([0.0, 1.0])) == [0.0, 0.5, 1.0]
-    assert list(subdivide_params([0.0, 0.5, 1.0])) == [0.0, 0.25, 0.5, 0.75, 1.0]
+    assert list(subdivide_params([0.0, 0.5, 1.0])) == [0.0, 0.25, 0.5, 0.75,
+                                                       1.0]
 
 
 @pytest.fixture
@@ -228,7 +241,8 @@ def weired_spline1():
 def test_weired_closed_spline(weired_spline1):
     first = weired_spline1.point(0)
     last = weired_spline1.point(weired_spline1.max_t)
-    assert first.isclose(last, 1e-9) is False, 'The loaded SPLINE is not a correct closed B-spline.'
+    assert first.isclose(last,
+                         1e-9) is False, 'The loaded SPLINE is not a correct closed B-spline.'
     random_point_comparision_to_nurbs_python(weired_spline1)
 
 
@@ -237,3 +251,43 @@ def test_bezier_decomposition_issue(weired_spline1):
     assert weired_spline1.is_clamped is False
     with pytest.raises(TypeError):
         list(weired_spline1.bezier_decomposition())
+
+
+# visually checked:
+EXPECTED_FLATTENING = [
+    Vector(0.0, 0.0, 0.0),
+    Vector(0.1875, 1.5717773437500002, 0.0),
+    Vector(0.28125, 2.1450805664062504, 0.0),
+    Vector(0.375, 2.5898437500000004, 0.0),
+    Vector(0.46874999999999994, 2.9159545898437504, 0.0),
+    Vector(0.5625, 3.1333007812500004, 0.0),
+    Vector(0.6562499999999999, 3.251770019531251, 0.0),
+    Vector(0.7031249999999999, 3.277015686035157, 0.0),
+    Vector(0.7499999999999999, 3.281250000000001, 0.0),
+    Vector(0.8437499999999999, 3.231628417968751, 0.0),
+    Vector(0.9374999999999999, 3.1127929687500013, 0.0),
+    Vector(1.0312499999999998, 2.9346313476562513, 0.0),
+    Vector(1.1249999999999998, 2.7070312500000013, 0.0),
+    Vector(1.3124999999999998, 2.1430664062500013, 0.0),
+    Vector(1.4999999999999998, 1.5000000000000018, 0.0),
+    Vector(1.6874999999999998, 0.8569335937500013, 0.0),
+    Vector(1.8749999999999996, 0.29296875000000133, 0.0),
+    Vector(1.9687499999999996, 0.06536865234375133, 0.0),
+    Vector(2.0624999999999996, -0.11279296874999867, 0.0),
+    Vector(2.1562499999999996, -0.2316284179687489, 0.0),
+    Vector(2.2499999999999996, -0.2812499999999989, 0.0),
+    Vector(2.296875, -0.27701568603515514, 0.0),
+    Vector(2.34375, -0.2517700195312489, 0.0),
+    Vector(2.4375, -0.13330078124999956, 0.0),
+    Vector(2.53125, 0.08404541015625044, 0.0),
+    Vector(2.625, 0.41015625000000044, 0.0),
+    Vector(2.71875, 0.8549194335937504, 0.0),
+    Vector(2.8125, 1.4282226562500002, 0.0),
+    Vector(3.0, 3.0, 0.0)
+]
+
+
+def test_flattening():
+    fitpoints = [(0, 0), (1, 3), (2, 0), (3, 3)]
+    bspline = BSpline.from_fit_points(fitpoints)
+    assert list(bspline.flattening(0.01)) == EXPECTED_FLATTENING

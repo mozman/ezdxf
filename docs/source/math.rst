@@ -811,6 +811,8 @@ BSpline
 
     .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
 
+    .. automethod:: flattening(distance: float, segments: int = 4) -> Iterable[Vector]
+
     .. automethod:: point(t: float) -> Vector
 
     .. automethod:: points(t: float) -> List[Vector]
