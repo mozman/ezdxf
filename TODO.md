@@ -29,6 +29,31 @@ Render Tools
 - `MLeader.virtual_entities()` ??? -> requires complete MLEADER implementation
 - `MLine.virtual_entities()` ??? -> requires complete MLINE implementation
 
+Geo Interface
+-------------
+
+- https://gist.github.com/sgillies/2217756
+- First: study existing implementations! 
+- Shapely is a good start: https://pypi.org/project/Shapely/
+- load by a function `geo_interface()`, like 
+  `entity = ezdxf.geo_interface(shape)`, which returns:
+  - POINT for Point
+  - LWPOLYLINE for LineString
+  - multiple LWPOLYLINE entities and/or one HATCH entity for Polygon
+- these entities can be added to a layout by the `msp.add_entity()` method
+- export by the `__geo_interface__` for:
+  - POINT as Point
+  - LINE as LineString
+  - LWPOLYLINE as LineString
+  - SOLID, TRACE and 3DFACE as LineString
+  - POLYLINE as LineString (no support for mesh or poly-face-mesh)
+  - ARC, CIRCLE, ELLIPSE and SPLINE as flattened LineString
+  - HATCH as Polygon
+  - all 3D entities drop the z-axis, also OCS entities with extrusion 
+    vector != (0, 0, 1), projection into the xy-plane.
+  - layout filter: `for e in geo_entities_filter(msp): ...`, 
+    to filter just entities with `__geo_interface__` support
+  
 DXF Entities
 ------------
 
