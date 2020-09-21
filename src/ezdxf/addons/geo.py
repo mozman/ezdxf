@@ -9,12 +9,10 @@ Type definitions see GeoJson Standard: https://tools.ietf.org/html/rfc7946
 and examples : https://tools.ietf.org/html/rfc7946#appendix-A
 
 """
-from typing import TYPE_CHECKING, Dict, Iterable, List, Union
+from typing import Dict, Iterable, List, Union, cast
 from ezdxf.math import Vector, Vertex
+from ezdxf.render import Path
 from ezdxf.entities import DXFEntity
-
-if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity
 
 TYPE = 'type'
 COORDINATES = 'coordinates'
@@ -34,7 +32,14 @@ SUPPORTED_DXF_TYPES = {
 
 
 def gfilter(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
-    return (e for e in entities if e.dxftype() in SUPPORTED_DXF_TYPES)
+    for e in entities:
+        dxftype = e.dxftype()
+        if dxftype == 'POLYLINE':
+            e = cast('Polyline', e)
+            if e.is_2d_polyline or e.is_3d_polyline:
+                yield e
+        elif dxftype in SUPPORTED_DXF_TYPES:
+            yield e
 
 
 def mapping(entity: DXFEntity,
@@ -52,11 +57,40 @@ def mapping(entity: DXFEntity,
             will be returned as LineString objects.
 
     """
+
+    def _lines_mapping(points):
+        len_ = len(points)
+        if len_ < 2:
+            raise ValueError(f'Invalid vertex count in {str(entity)}')
+        if len_ == 2 or force_line_string:
+            return line_string_mapping(points)
+        else:
+            if is_linear_ring(points):
+                return polygon_mapping(points)
+            else:
+                return line_string_mapping(points)
+
     dxftype = entity.dxftype()
     if dxftype == 'POINT':
         return point_mapping(Vector(entity.dxf.location))
     elif dxftype == 'LINE':
         return line_string_mapping([entity.dxf.start, entity.dxf.end])
+    elif dxftype == 'POLYLINE':
+        entity = cast('Polyline', entity)
+        if entity.is_3d_polyline or entity.is_2d_polyline:
+            # May contain arcs as bulge values:
+            path = Path.from_polyline(entity)
+            points = list(path.flattening(distance))
+            return _lines_mapping(points)
+        else:
+            raise TypeError('Polymesh and Polyface not supported.')
+    elif dxftype == 'LWPOLYLINE':
+        # May contain arcs as bulge values:
+        path = Path.from_lwpolyline(cast('LWPolyline', entity))
+        points = list(path.flattening(distance))
+        return _lines_mapping(points)
+    elif dxftype in {'CIRCLE', 'ARC', 'ELLIPSE', 'SPLINE'}:
+        return _lines_mapping(list(entity.flattening(distance)))
     else:
         raise TypeError(dxftype)
 
@@ -117,6 +151,10 @@ def line_string_mapping(points: Iterable[Vertex]) -> Dict:
         TYPE: LINE_STRING,
         COORDINATES: [(v.x, v.y) for v in Vector.generate(points)]
     }
+
+
+def is_linear_ring(points: List[Vertex]):
+    return Vector(points[0]).isclose(points[-1])
 
 
 def linear_ring(points: Iterable[Vertex]) -> List[Vector]:
