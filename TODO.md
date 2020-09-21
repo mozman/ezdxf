@@ -29,6 +29,68 @@ Render Tools
 - `MLeader.virtual_entities()` ??? -> requires complete MLEADER implementation
 - `MLine.virtual_entities()` ??? -> requires complete MLINE implementation
 
+Geo/Shapely Interface
+---------------------
+
+- https://gist.github.com/sgillies/2217756
+
+Shapely: https://pypi.org/project/Shapely/
+
+Many entities must be approximated and the `__geo_interface__` does not 
+provide any options for approximation precision, therefore a direct 
+implementation of the interface in DXF entities is not the best way.
+
+Implementation as `geo` add-on:
+
+Load geo/shapely objects by function `geo.load()`: 
+```
+from ezdxf.addons import geo
+
+entity = geo.load(shape, polygon=1) # Polygon as LWPOLYLINE
+entity = geo.load(shape, polygon=2) # Polygon as HATCH - has no outline
+entity = geo.load(shape, polygon=3) # Polygon as LWPOLYLINE and HATCH
+```
+
+which returns:
+
+- POINT for Point
+- Iterable of POINT for MultiPoint
+- LWPOLYLINE for LineString
+- Iterable of LWPOLYLINE for MultiLineString
+- List of LWPOLYLINE entities and/or one HATCH entity for Polygon
+- Iterable of Polygon objects for MultiPolygon
+- GeometryCollection?
+
+The returned objects can be added to a layout by the `geo.append(msp, ret_obj)` 
+function.
+
+Export by dict:
+
+`d = geo.mapping(entity, distance=0.1)`
+
+Returns a dict like `{'type': 'Point', 'coordinates': (0.0, 0.0)}`, argument
+`distance` defines the maximum flattening distance for entity approximation.
+
+Export by a proxy object:
+
+`proxy = geo.proxy(entity, distance=0.1)`
+
+Returns an object of type `GeoProxy()`, which provides the `__geo_interface__`
+attribute.
+
+- POINT as Point
+- LINE as LineString
+- LWPOLYLINE as LineString
+- SOLID, TRACE and 3DFACE as LineString
+- POLYLINE as LineString (no support for mesh or poly-face-mesh)
+- ARC, CIRCLE, ELLIPSE and SPLINE as flattened LineString
+- HATCH as Polygon
+- all 3D entities drop the z-axis, also OCS entities with extrusion 
+  vector != (0, 0, 1), projection into the xy-plane.
+
+Layout entity filter: `for e in geo.filter(msp): ...`, to filter just entities 
+with `__geo_interface__` support.
+  
 DXF Entities
 ------------
 
