@@ -1,12 +1,12 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Iterable
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
-from ezdxf.math import Matrix44, Z_AXIS, NULLVEC
+from ezdxf.math import Matrix44, Z_AXIS, NULLVEC, Vector
 from ezdxf.math.transformtools import OCSTransform
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -92,6 +92,39 @@ class Solid(_Base):
         dxf.extrusion = ocs.new_extrusion
         return self
 
+    def wcs_vertices(self, close: bool = False) -> List[Vector]:
+        """ Returns WCS vertices in correct order,
+        if argument `close` is ``True``, last vertex == first vertex.
+        Does **not** return duplicated last vertex if represents a triangle.
+
+        .. versionadded:: 0.15
+
+        """
+        ocs = self.ocs()
+        return list(ocs.points_to_wcs(self.vertices(close)))
+
+    def vertices(self, close: bool = False) -> List[Vector]:
+        """ Returns OCS vertices in correct order,
+        if argument `close` is ``True``, last vertex == first vertex.
+        Does **not** return duplicated last vertex if represents a triangle.
+
+        .. versionadded:: 0.15
+
+        """
+        d = self.dxf
+        vertices = [d.vtx0, d.vtx1, d.vtx2]
+        if d.vtx3 != d.vtx2:  # when the face is a triangle, vtx2 == vtx3
+            vertices.append(d.vtx3)
+
+        # adjust weird vertex order of SOLID and TRACE:
+        # 0, 1, 2, 3 -> 0, 1, 3, 2
+        if len(vertices) > 3:
+            vertices[2], vertices[3] = vertices[3], vertices[2]
+
+        if close and not vertices[0].isclose(vertices[-1]):
+            vertices.append(vertices[0])
+        return vertices
+
 
 @register_entity
 class Trace(Solid):
@@ -170,3 +203,23 @@ class Face3d(_Base):
         dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3 = m.transform_vertices(
             (dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3))
         return self
+
+    def wcs_vertices(self, close: bool = False) -> List[Vector]:
+        """ Returns WCS vertices, if argument `close` is
+        ``True``, last vertex == first vertex.
+        Does **not** return duplicated last vertex if represents a triangle.
+
+        Compatibility interface to SOLID and TRACE, 3DFACE vertices are
+        already WCS vertices.
+
+        .. versionadded:: 0.15
+
+        """
+        dxf = self.dxf
+        vertices = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
+        if dxf.vtx3 != dxf.vtx2:  # when the face is a triangle, vtx2 == vtx3
+            vertices.append(dxf.vtx3)
+
+        if close and not vertices[0].isclose(vertices[-1]):
+            vertices.append(vertices[0])
+        return vertices

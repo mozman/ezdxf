@@ -40,4 +40,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: transform(m: Matrix44) -> Trace
 
+    .. automethod:: vertices(close: bool=False) -> List[Vector]
+
+    .. automethod:: wcs_vertices(close: bool=False) -> List[Vector]
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-EA6FBCA8-1AD6-4FB2-B149-770313E93511
