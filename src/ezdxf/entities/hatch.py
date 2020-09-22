@@ -688,6 +688,40 @@ class BoundaryPaths:
         """ Remove all boundary paths. """
         self.paths = []
 
+    @property
+    def has_external_path(self) -> bool:
+        """ Returns ``True`` if an external boundary path is defined. """
+        flag = const.BOUNDARY_PATH_EXTERNAL
+        return any(p.path_type_flags & flag for p in self.paths)
+
+    def external_path(self) -> Optional[TPath]:
+        """ Returns the external path or ``None`` is none is defined. """
+        # TODO: could there more than one external path?
+        for b in self.paths:
+            if b.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
+                return b
+        return None
+
+    @property
+    def has_outer_most_path(self) -> bool:
+        """ Returns ``True`` if at least one outer most boundary path is defined.
+        """
+        flag = const.BOUNDARY_PATH_OUTERMOST
+        return any(p.path_type_flags & flag for p in self.paths)
+
+    def outer_most_paths(self) -> Iterable[TPath]:
+        """ Iterable of outer most paths, could be empty. """
+        for b in self.paths:
+            if b.path_type_flags & const.BOUNDARY_PATH_OUTERMOST:
+                yield b
+
+    def default_paths(self) -> Iterable[TPath]:
+        """ Iterable of default paths, could be empty. """
+        not_default = const.BOUNDARY_PATH_OUTERMOST + const.BOUNDARY_PATH_EXTERNAL
+        for b in self.paths:
+            if bool(b.path_type_flags & not_default) is False:
+                yield b
+
     def add_polyline_path(self, path_vertices: Sequence[Tuple[float, ...]],
                           is_closed: bool = True,
                           flags: int = 1) -> 'PolylinePath':

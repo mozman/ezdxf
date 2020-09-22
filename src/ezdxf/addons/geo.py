@@ -9,10 +9,14 @@ Type definitions see GeoJson Standard: https://tools.ietf.org/html/rfc7946
 and examples : https://tools.ietf.org/html/rfc7946#appendix-A
 
 """
-from typing import Dict, Iterable, List, Union, cast
-from ezdxf.math import Vector, Vertex
+from typing import Dict, Iterable, List, Union, cast, TYPE_CHECKING
+from ezdxf.math import Vector, Vertex, has_clockwise_orientation
 from ezdxf.render import Path
 from ezdxf.entities import DXFEntity
+from ezdxf.lldxf import const
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Hatch
 
 TYPE = 'type'
 COORDINATES = 'coordinates'
@@ -58,18 +62,6 @@ def mapping(entity: DXFEntity,
 
     """
 
-    def _lines_mapping(points):
-        len_ = len(points)
-        if len_ < 2:
-            raise ValueError(f'Invalid vertex count in {str(entity)}')
-        if len_ == 2 or force_line_string:
-            return line_string_mapping(points)
-        else:
-            if is_linear_ring(points):
-                return polygon_mapping(points)
-            else:
-                return line_string_mapping(points)
-
     dxftype = entity.dxftype()
     if dxftype == 'POINT':
         return point_mapping(Vector(entity.dxf.location))
@@ -81,18 +73,107 @@ def mapping(entity: DXFEntity,
             # May contain arcs as bulge values:
             path = Path.from_polyline(entity)
             points = list(path.flattening(distance))
-            return _lines_mapping(points)
+            return _line_string_or_polygon_mapping(points, force_line_string)
         else:
             raise TypeError('Polymesh and Polyface not supported.')
     elif dxftype == 'LWPOLYLINE':
         # May contain arcs as bulge values:
         path = Path.from_lwpolyline(cast('LWPolyline', entity))
         points = list(path.flattening(distance))
-        return _lines_mapping(points)
+        return _line_string_or_polygon_mapping(points, force_line_string)
     elif dxftype in {'CIRCLE', 'ARC', 'ELLIPSE', 'SPLINE'}:
-        return _lines_mapping(list(entity.flattening(distance)))
+        return _line_string_or_polygon_mapping(
+            list(entity.flattening(distance)), force_line_string)
+    elif dxftype in {'SOLID', 'TRACE', '3DFACE'}:
+        return _line_string_or_polygon_mapping(
+            entity.wcs_vertices(close=True), force_line_string)
+    elif dxftype == 'HATCH':
+        return _hatch_as_polygon(entity, distance, force_line_string)
     else:
         raise TypeError(dxftype)
+
+
+def _line_string_or_polygon_mapping(points, force_line_string: bool):
+    len_ = len(points)
+    if len_ < 2:
+        raise ValueError('Invalid vertex count.')
+    if len_ == 2 or force_line_string:
+        return line_string_mapping(points)
+    else:
+        if is_linear_ring(points):
+            return polygon_mapping(points)
+        else:
+            return line_string_mapping(points)
+
+
+def _hatch_as_polygon(hatch: 'Hatch', distance: float,
+                      force_line_string: bool) -> Dict:
+    def boundary_to_vertices(boundary) -> List[Vector]:
+        if boundary.PATH_TYPE == 'PolylinePath':
+            path = Path.from_hatch_polyline_path(boundary, ocs, elevation)
+        else:
+            path = Path.from_hatch_edge_path(boundary, ocs, elevation)
+
+        vertices = list(path.flattening(distance))
+        if not vertices[0].isclose(vertices[-1]):
+            vertices.append(vertices[0])
+        return vertices
+
+    def filter_external(paths):
+        if not has_explicit_external:
+            external_id = id(external)
+            paths = [p for p in paths if id(p) != external_id]
+        return paths
+
+    # Path vertex winding order can be ignored here, validation and
+    # correction is done in polygon_mapping().
+
+    elevation = hatch.dxf.elevation.z
+    ocs = hatch.ocs()
+    hatch_style = hatch.dxf.hath_style
+    boundaries = hatch.paths
+    count = len(boundaries)
+    if count == 0:
+        raise ValueError('HATCH without any boundary path.')
+
+    has_explicit_external = True
+    external = boundaries.external_path()
+    if external is None:
+        # This could be a male formed DXF file or just another lack of
+        # information in the DXf reference.
+        has_explicit_external = False
+        external = boundaries[0]
+
+    if count == 1 or hatch_style == const.HATCH_STYLE_IGNORE:
+        points = boundary_to_vertices(external)
+        return _line_string_or_polygon_mapping(points, force_line_string)
+    else:
+        # Result may be empty if no outer most boundaries are defined:
+        holes = list(filter_external(boundaries.outer_most_paths()))
+        if hatch_style == const.HATCH_STYLE_OUTERMOST and len(holes) == 0:
+            # Hatch style is outer most, but no out most paths defined:
+            hatch_style = const.HATCH_STYLE_NESTED
+        if hatch_style == const.HATCH_STYLE_NESTED:
+            # Nested style is not defined in GeoJSON Polygon type,
+            # just add paths as additional holes and pray:
+            holes.extend(filter_external(boundaries.default_paths()))
+
+        if force_line_string:
+            # Build a MultiString collection:
+            points = boundary_to_vertices(external)
+            geometries = [
+                _line_string_or_polygon_mapping(points, force_line_string)
+            ]
+            for hole in holes:
+                points = boundary_to_vertices(hole)
+                geometries.append(
+                    _line_string_or_polygon_mapping(points, force_line_string))
+            return join_multi_single_type_mappings(geometries)
+        else:
+            points = boundary_to_vertices(external)
+            return polygon_mapping(points, [
+                boundary_to_vertices(h) for h in holes
+            ])
 
 
 def collection(entities: Iterable[DXFEntity],
@@ -157,22 +238,33 @@ def is_linear_ring(points: List[Vertex]):
     return Vector(points[0]).isclose(points[-1])
 
 
-def linear_ring(points: Iterable[Vertex]) -> List[Vector]:
+# GeoJSON : A linear ring MUST follow the right-hand rule with respect
+# to the area it bounds, i.e., exterior rings are counterclockwise, and
+# holes are clockwise.
+def linear_ring(points: Iterable[Vertex], ccw=True) -> List[Vector]:
     points = Vector.list(points)
     if len(points) < 3:
         raise ValueError(f'Invalid vertex count: {len(points)}')
     if not points[0].isclose(points[-1]):
         points.append(points[0])
+
+    if has_clockwise_orientation(points):
+        if ccw:
+            points.reverse()
+    else:
+        if not ccw:
+            points.reverse()
+
     return points
 
 
 def polygon_mapping(points: Iterable[Vertex],
                     holes: Iterable[Iterable[Vertex]] = None) -> Dict:
-    exterior = linear_ring(points)
+    exterior = linear_ring(points, ccw=True)
     if holes:
         rings = [exterior]
         for hole in holes:
-            rings.append(linear_ring(hole))
+            rings.append(linear_ring(hole, ccw=False))
     else:
         rings = exterior
     return {

@@ -354,12 +354,12 @@ def test_has_clockwise_orientation():
     # basic has_clockwise_orientation() function is tested in:
     # test_617_clockwise_orientation
     path = Path.from_vertices([(0, 0), (1, 0), (1, 1), (0, 1)])
-    assert path.has_clockwise_orientation() is True
+    assert path.has_clockwise_orientation() is False
 
     path = Path()
     path.line_to((2, 0))
     path.curve_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
-    assert path.has_clockwise_orientation() is False
+    assert path.has_clockwise_orientation() is True
 
 
 def test_reversing_empty_path():

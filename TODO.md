@@ -54,16 +54,6 @@ which returns:
 The returned objects can be added to a layout by the `geo.append(msp, ret_obj)` 
 function.
 
-Export as dict mapping: `d = geo.mapping(entity, distance=0.1)`
-Export as proxy object: `proxy = geo.proxy(entity, distance=0.1)`
-
-
-- LWPOLYLINE as LineString
-- SOLID, TRACE and 3DFACE as LineString
-- POLYLINE as LineString (no support for mesh or poly-face-mesh)
-- ARC, CIRCLE, ELLIPSE and SPLINE as flattened LineString
-- HATCH as Polygon
-
 DXF Entities
 ------------
 

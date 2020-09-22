@@ -25,8 +25,12 @@ Version 0.15a0 - dev
   rendering
 - NEW: `Solid.vertices()` returns OCS vertices in correct order (also `Trace`)
 - NEW: `Solid.wcs_vertices()` returns WCS vertices in correct order (also `Trace`)
-- NEW: `Face3D.wcs_vertices()` returns WCS vertices, compatibility interface to 
-  SOLID and TRACE 
+- NEW: `Face3D.wcs_vertices()` compatibility interface to SOLID and TRACE
+- NEW: `Hatch.paths.has_external_path` property
+- NEW: `Hatch.paths.has_outer_most_path` property
+- NEW: `Hatch.paths.external_path()` returns external boundary path
+- NEW: `Hatch.paths.outer_most_paths()` returns iterable of outer most boundary paths
+- NEW: `Hatch.paths.default_paths()` returns iterable of default boundary paths
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
   use `DXFEntity.transform(ucs.matrix)`
 - REMOVED: deprecated `Hatch.edit_boundary()` context manager, 
@@ -44,6 +48,8 @@ Version 0.15a0 - dev
   `Insert.virtual_entities()`
 - REMOVED: deprecated `Spline.edit_data()` context manager,
   use `fit_points`, `control_points`, `knots`  and `weights` attributes
+- BUGFIX: `ezdxf.math.has_clockwise_orientation()` returns `True` for 
+  counter-clock wise and vice versa
 
 Version 0.14.1 - 2020-09-19
 ---------------------------

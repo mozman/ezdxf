@@ -28,12 +28,12 @@ def test_polygon_without_holes_mapping():
 
 
 def test_polygon_with_holes_mapping():
-    assert geo.polygon_mapping([(0, 0), (1, 0), (2, 0)],
-                               holes=[[(2, 0), (1, 0), (0, 0)]]) == {
+    assert geo.polygon_mapping([(0, 0), (10, 0), (10, 10)],
+                               holes=[[(0, 0), (2, 0), (2, 2)]]) == {
                'type': 'Polygon',
                'coordinates': [
-                   [(0, 0), (1, 0), (2, 0), (0, 0)],
-                   [(2, 0), (1, 0), (0, 0), (2, 0)],
+                   [(0, 0), (10, 0), (10, 10), (0, 0)],
+                   [(0, 0), (2, 2), (2, 0), (0, 0)],
                ]
            }
 

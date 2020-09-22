@@ -184,7 +184,7 @@ def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
     return sum(
         (p2.x - p1.x) * (p2.y + p1.y)
         for p1, p2 in zip(vertices, vertices[1:])
-    ) < 0
+    ) > 0
 
 
 def enclosing_angles(angle, start_angle, end_angle, ccw=True,
