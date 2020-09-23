@@ -2,13 +2,16 @@
 News
 ====
 
-Version 0.15a0 - dev
+Version 0.15a1 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-15.html
 - NEW: linetype support for matplotlib drawing backend
 - NEW: recover misplaced tags of the `AcDbEntity` subclass (color, layer, 
   linetype, ...), supported by all loading modes
+- NEW: `ezdxf.addons.geo` module, support for the 
+  [`__geo_interface__`](https://gist.github.com/sgillies/2217756),
+  see [docs](https://ezdxf.mozman.at/docs/addons/geo.html)
 - NEW: `Bezier.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Bezier4P.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Path.flattening()` adaptive recursive flattening (approximation)

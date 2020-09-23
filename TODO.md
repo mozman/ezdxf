@@ -29,31 +29,6 @@ Render Tools
 - `MLeader.virtual_entities()` ??? -> requires complete MLEADER implementation
 - `MLine.virtual_entities()` ??? -> requires complete MLINE implementation
 
-Geo/Shapely Interface
----------------------
-
-Load geo/shapely objects by function `geo.load()`: 
-```
-from ezdxf.addons import geo
-
-entity = geo.load(shape, polygon=1) # Polygon as LWPOLYLINE
-entity = geo.load(shape, polygon=2) # Polygon as HATCH - has no outline
-entity = geo.load(shape, polygon=3) # Polygon as LWPOLYLINE and HATCH
-```
-
-which returns:
-
-- POINT for Point
-- Iterable of POINT for MultiPoint
-- LWPOLYLINE for LineString
-- Iterable of LWPOLYLINE for MultiLineString
-- List of LWPOLYLINE entities and/or one HATCH entity for Polygon
-- Iterable of Polygon objects for MultiPolygon
-- GeometryCollection?
-
-The returned objects can be added to a layout by the `geo.append(msp, ret_obj)` 
-function.
-
 DXF Entities
 ------------
 
