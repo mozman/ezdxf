@@ -270,7 +270,7 @@ class GeoData(DXFObject):
         labeled "N" or "S".
 
         If axis-ordering is ``False`` the CRS is not compatible with the
-        ``__geo_reference__`` interface or GeoJSON (see chapter 3.1.1).
+        ``__geo_interface__`` or GeoJSON (see chapter 3.1.1).
 
         Raises:
             InvalidGeoDataException: for invalid or unknown XML data

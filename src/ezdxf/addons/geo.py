@@ -39,6 +39,9 @@ SUPPORTED_DXF_TYPES = {
 
 
 def gfilter(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
+    """ Filter DXF entities from iterable `entities`, which are incompatible to
+    the ``__geo_reference__`` interface.
+    """
     for e in entities:
         dxftype = e.dxftype()
         if dxftype == 'POLYLINE':
@@ -182,6 +185,21 @@ def _hatch_as_polygon(hatch: 'Hatch', distance: float,
 def collection(entities: Iterable[DXFEntity],
                distance: float = MAX_FLATTENING_DISTANCE,
                force_line_string: bool = False) -> Dict:
+    """ Create the ``__geo_interface__`` mapping as :class:`dict` for the
+    given DXF `entities`, see https://gist.github.com/sgillies/2217756
+
+    Returns a MultiPoint, MultiLineString or MultiPolygon collection if all
+    entities return the same GeoJSON type (Point, LineString, Polygon)
+    else a GeometryCollection.
+
+    Args:
+        entities: iterable of DXF entities
+        distance: maximum flattening distance for curve approximations
+        force_line_string: by default this function returns Polygon objects for
+            closed geometries like CIRCLE, SOLID, closed POLYLINE and so on,
+            by setting argument `force_line_string` to ``True``, this entities
+            will be returned as LineString objects.
+    """
     m = mappings(entities, distance, force_line_string)
     types = set(g[TYPE] for g in m)
     if len(types) > 1:
@@ -228,7 +246,7 @@ def transform_wcs_to_crs(geo_mapping: Dict, m: 'Matrix44') -> Dict:
             matrix, axis_ordering = geodata.get_crs_transformation()
 
     If `axis_ordering` is ``False`` the CRS is not compatible with the
-    ``__geo_reference__`` interface or GeoJSON (see chapter 3.1.1).
+    ``__geo_interface__`` or GeoJSON (see chapter 3.1.1).
 
     Args:
         geo_mapping: geo reference mapping as dict like object.
@@ -284,6 +302,18 @@ class GeoProxy:
 def proxy(entity: Union[DXFEntity, Iterable[DXFEntity]],
           distance: float = MAX_FLATTENING_DISTANCE,
           force_line_string: bool = False) -> GeoProxy:
+    """ Returns a :class:`GeoProxy` object, which has an
+    :attr:`GeoProxy.__geo_interface__` attribute.
+
+    Args:
+        entity: a single DXF entity or iterable of DXF entities
+        distance: maximum flattening distance for curve approximations
+        force_line_string: by default this function returns Polygon objects for
+            closed geometries like CIRCLE, SOLID, closed POLYLINE and so on,
+            by setting argument `force_line_string` to ``True``, this entities
+            will be returned as LineString objects.
+
+    """
     if isinstance(entity, DXFEntity):
         m = mapping(entity, distance, force_line_string)
     else:
@@ -292,6 +322,16 @@ def proxy(entity: Union[DXFEntity, Iterable[DXFEntity]],
 
 
 def point_mapping(point: Vertex) -> Dict:
+    """ Returns a Point mapping.
+
+    .. code::
+
+        {
+            "type": "Point",
+            "coordinates": (100.0, 0.0)
+        }
+
+    """
     return {
         TYPE: POINT,
         COORDINATES: (point[0], point[1])
@@ -299,6 +339,19 @@ def point_mapping(point: Vertex) -> Dict:
 
 
 def line_string_mapping(points: Iterable[Vertex]) -> Dict:
+    """ Returns a LineString mapping.
+
+    .. code::
+
+        {
+            "type": "LineString",
+            "coordinates": [
+                (100.0, 0.0),
+                (101.0, 1.0)
+            ]
+        }
+    """
+
     return {
         TYPE: LINE_STRING,
         COORDINATES: [(v.x, v.y) for v in Vector.generate(points)]
@@ -313,6 +366,11 @@ def is_linear_ring(points: List[Vertex]):
 # to the area it bounds, i.e., exterior rings are counterclockwise, and
 # holes are clockwise.
 def linear_ring(points: Iterable[Vertex], ccw=True) -> List[Vector]:
+    """ Return `points` as linear ring (last vertex == first vertex),
+    argument `ccw` defines the winding orientation, ``True`` for counter-clock
+    wise and ``False`` for clock wise.
+
+    """
     points = Vector.list(points)
     if len(points) < 3:
         raise ValueError(f'Invalid vertex count: {len(points)}')
@@ -331,6 +389,31 @@ def linear_ring(points: Iterable[Vertex], ccw=True) -> List[Vector]:
 
 def polygon_mapping(points: Iterable[Vertex],
                     holes: Iterable[Iterable[Vertex]] = None) -> Dict:
+    """ Returns a Polygon mapping.
+
+    .. code::
+
+        {
+            "type": "Polygon",
+            "coordinates": [
+                 [
+                     (100.0, 0.0),
+                     (101.0, 0.0),
+                     (101.0, 1.0),
+                     (100.0, 1.0),
+                     (100.0, 0.0)
+                 ],
+                 [
+                     (100.8, 0.8),
+                     (100.8, 0.2),
+                     (100.2, 0.2),
+                     (100.2, 0.8),
+                     (100.8, 0.8)
+                 ]
+            ]
+        }
+    """
+
     exterior = linear_ring(points, ccw=True)
     if holes:
         rings = [exterior]
@@ -345,6 +428,9 @@ def polygon_mapping(points: Iterable[Vertex],
 
 
 def join_multi_single_type_mappings(geometries: Iterable[Dict]) -> Dict:
+    """ Returns multiple geometries as a MultiPoint, MultiLineString or
+    MultiPolygon mapping.
+    """
     types = set()
     data = list()
     for g in geometries:
@@ -363,6 +449,8 @@ def join_multi_single_type_mappings(geometries: Iterable[Dict]) -> Dict:
 
 
 def geometry_collection_mapping(geometries: Iterable[Dict]) -> Dict:
+    """ Returns multiple geometries as a GeometryCollection mapping.
+    """
     return {
         TYPE: GEOMETRY_COLLECTION,
         GEOMETRIES: list(geometries)
