@@ -19,6 +19,11 @@ High Level Interface
 
 .. autofunction:: gfilter
 
+.. autofunction:: transform_wcs_to_crs
+
+.. autofunction:: transform_crs_to_wcs
+
+
 Low Level Interface
 -------------------
 

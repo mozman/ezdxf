@@ -27,7 +27,8 @@ from ezdxf.render.arrows import ARROWS
 from ezdxf.lldxf.const import (
     DXFError, DXFStructureError, DXFVersionError, DXFTableEntryError,
     DXFAppDataError, DXFXDataError, DXFAttributeError, DXFValueError,
-    DXFKeyError, DXFIndexError, DXFTypeError, DXFBlockInUseError, InsertUnits,
+    DXFKeyError, DXFIndexError, DXFTypeError, DXFBlockInUseError,
+    InvalidGeoDataException, InsertUnits,
     ACI, DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018,
 )
 # name space imports - do not remove

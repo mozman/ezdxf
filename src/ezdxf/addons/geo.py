@@ -9,14 +9,17 @@ Type definitions see GeoJson Standard: https://tools.ietf.org/html/rfc7946
 and examples : https://tools.ietf.org/html/rfc7946#appendix-A
 
 """
-from typing import Dict, Iterable, List, Union, cast, TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING, Dict, Iterable, List, Union, cast, Callable, Sequence,
+)
+import numbers
 from ezdxf.math import Vector, Vertex, has_clockwise_orientation
 from ezdxf.render import Path
 from ezdxf.entities import DXFEntity
 from ezdxf.lldxf import const
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Hatch
+    from ezdxf.eztypes import Hatch, Matrix44
 
 TYPE = 'type'
 COORDINATES = 'coordinates'
@@ -203,6 +206,74 @@ def mappings(entities: Iterable[DXFEntity],
 
     """
     return [mapping(e, distance, force_line_string) for e in entities]
+
+
+def transform_wcs_to_crs(geo_mapping: Dict, m: 'Matrix44') -> Dict:
+    """ Transform all coordinates in `geo_mapping` recursive from :ref:`WCS`
+    coordinates into Coordinate Reference System (CRS) by transformation matrix
+    `crs`.
+
+    The CRS is defined by the :class:`~ezdxf.entities.GeoData` entity,
+    get the :class:`GeoData` entity from the modelspace by method
+    :meth:`~ezdxf.layouts.Modelspace.get_geodata`.
+    The CRS transformation matrix can be acquired form the :class:`GeoData`
+    object by :meth:`~ezdxf.entities.GeoData.get_crs_transformation` method:
+
+    .. code:: Python
+
+        doc = ezdxf.readfile('file.dxf')
+        msp = doc.modelspace()
+        geodata = msp.get_geodata()
+        if geodata:
+            matrix, axis_ordering = geodata.get_crs_transformation()
+
+    If `axis_ordering` is ``False`` the CRS is not compatible with the
+    ``__geo_reference__`` interface or GeoJSON (see chapter 3.1.1).
+
+    Args:
+        geo_mapping: geo reference mapping as dict like object.
+        m: transformation matrix of type :class:`~ezdxf.math.Matrix44`
+
+    Returns:
+        New geo mapping as :class:`dict`.
+
+    """
+    return _transform_mapping(geo_mapping, m.ucs_vertex_from_wcs)
+
+
+def transform_crs_to_wcs(geo_mapping: Dict, m: 'Matrix44') -> Dict:
+    """ Transform all coordinates in `geo_mapping` recursive from CRS into
+    :ref:`WCS` coordinates by transformation matrix `crs`,
+    see also :func:`transform_wcs_to_crs`.
+
+    Args:
+        geo_mapping: geo reference mapping as dict like object.
+        m: transformation matrix of type :class:`~ezdxf.math.Matrix44`
+
+    Returns:
+        New geo mapping as :class:`dict`.
+
+    """
+    return _transform_mapping(geo_mapping, m.transform)
+
+
+def _transform_mapping(geo_mapping: Dict, tfunc: Callable) -> Dict:
+    def _transform_coordinates(coordinates: Sequence):
+        if isinstance(coordinates[0], numbers.Real):
+            point = tfunc(Vector(coordinates))
+            return point.x, point.y
+        else:
+            return [_transform_coordinates(c) for c in coordinates]
+
+    new_mapping = dict()
+    for key, value in geo_mapping.items():
+        if key == GEOMETRIES:
+            new_mapping[GEOMETRIES] = _transform_mapping(value, tfunc)
+        elif key == COORDINATES:
+            new_mapping[COORDINATES] = _transform_coordinates(value)
+        else:
+            new_mapping[key] = value
+    return new_mapping
 
 
 class GeoProxy:

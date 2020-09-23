@@ -6,7 +6,7 @@ import os
 import pytest
 
 import ezdxf
-from ezdxf.entities.geodata import GeoData, InvalidGeoDataException
+from ezdxf.entities.geodata import GeoData
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vector, Matrix44
 
@@ -372,7 +372,7 @@ def test_interpreting_geodata(georeferenced_test_file_path):
 
     coordinate_system_definition = geodata.coordinate_system_definition
     geodata.coordinate_system_definition = ''
-    with pytest.raises(InvalidGeoDataException):
+    with pytest.raises(ezdxf.InvalidGeoDataException):
         geodata.get_crs()
     geodata.coordinate_system_definition = coordinate_system_definition
 
