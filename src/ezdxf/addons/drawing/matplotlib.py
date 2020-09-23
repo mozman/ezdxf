@@ -53,18 +53,38 @@ class LineTypeRendering(Enum):
     ezdxf = 2
 
 
+DEFAULT_PARAMS = {
+    "point_size": 2.0,
+    "point_size_relative": True,
+    "linetype_renderer": 'internal',
+    "linetype_scaling": None,
+
+    # lineweight_scaling: 0.0 to disable lineweights at all - the current
+    # result is correct, in SVG the line width is 0.7 points for 0.25mm as
+    # required, but it often looks too thick
+    "lineweight_scaling": 1.0,
+    "min_lineweight": 0.24,  # 1/300 inch
+    "min_dash_length": 0.1,  # just guessing
+    "max_flattening_distance": 0.01,  # just guessing
+}
+
+
 class MatplotlibBackend(Backend):
     def __init__(self, ax: plt.Axes,
                  *,
                  adjust_figure: bool = True,
-                 point_size: float = 2.0,
-                 point_size_relative: bool = True,
                  font: FontProperties = FontProperties(),
                  use_text_cache: bool = True,
-                 linetype_rendering: str = 'internal',
-                 linetype_scaling: float = None,
+                 params: Dict = None,
                  ):
         super().__init__()
+        self.params = dict(DEFAULT_PARAMS)
+        # Pass only values different to default values:
+        if params:
+            err = set(params.keys()) - set(DEFAULT_PARAMS.keys())
+            if err:
+                raise ValueError(f'Invalid parameter(s): {str(err)}')
+            self.params.update(params)
         self.ax = ax
         self._adjust_figure = adjust_figure
         self._scale_dashes_backup = plt.rcParams['lines.scale_dashes']
@@ -80,21 +100,26 @@ class MatplotlibBackend(Backend):
         self.ax.autoscale(False)
         self.ax.set_aspect('equal', 'datalim')
         self._current_z = 0
-        self.point_size = point_size
-        self.point_size_relative = point_size_relative
         self._text = TextRenderer(font, use_text_cache)
 
         # Detect linetype rendering type:
+        linetype_renderer = self.params['linetype_renderer'].lower()
         try:
-            linetype_rendering = LineTypeRendering[
-                linetype_rendering.lower()]
+            linetype_rendering = LineTypeRendering[linetype_renderer]
         except KeyError:
             raise ValueError(
-                f'Unknown linetype rendering type: {linetype_rendering}')
+                f'Unknown linetype rendering type: {linetype_renderer}')
 
+        linetype_scaling = self.params['linetype_scaling']
+        lineweight_scaling = self.params['lineweight_scaling']
+        min_lineweight = self.params['min_lineweight']
         # Setup line rendering component:
         if linetype_rendering == LineTypeRendering.internal:
-            self._line_renderer = InternalLineRenderer(linetype_scaling)
+            self._line_renderer = InternalLineRenderer(
+                linetype_scaling,
+                lineweight_scaling,
+                min_lineweight,
+            )
         elif linetype_rendering == LineTypeRendering.ezdxf:
             # This linetype renderer should only be used by "hardcopy" backends!
             # It is just too slow for interactive backends, and the result of
@@ -102,7 +127,12 @@ class MatplotlibBackend(Backend):
             self._line_renderer = EzdxfLineRenderer(
                 # The `min_length` and `max_distance` arguments should be based
                 # on the output dpi setting.
-                linetype_scaling, min_length=0.01, max_distance=0.01)
+                linetype_scaling,
+                lineweight_scaling,
+                min_lineweight,
+                min_length=self.params['min_dash_length'],
+                max_distance=self.params['max_flattening_distance'],
+            )
 
     def clear_text_cache(self):
         self._text.clear_cache()
@@ -124,11 +154,12 @@ class MatplotlibBackend(Backend):
 
     def draw_point(self, pos: Vector, properties: Properties):
         color = properties.color
-        if self.point_size_relative:
-            self.ax.scatter([pos.x], [pos.y], s=self.point_size, c=color,
+        point_size = self.params['point_size']
+        if self.params['point_size_relative']:
+            self.ax.scatter([pos.x], [pos.y], s=point_size, c=color,
                             zorder=self._get_z())
         else:
-            self.ax.add_patch(Circle((pos.x, pos.y), radius=self.point_size,
+            self.ax.add_patch(Circle((pos.x, pos.y), radius=point_size,
                                      facecolor=color, edgecolor=None,
                                      zorder=self._get_z()))
 
@@ -162,7 +193,8 @@ class MatplotlibBackend(Backend):
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
         text = prepare_string_for_rendering(text, dxftype)
         path = self._text.get_text_path(text)
-        return max(x for x, y in path.vertices) * self._text.get_scale(cap_height)
+        return max(x for x, y in path.vertices) * self._text.get_scale(
+            cap_height)
 
     def clear(self):
         self.ax.clear()
@@ -219,7 +251,8 @@ class TextRenderer:
         path = self._cache.get(text, None)
         if path is None:
             # must replace $ with \$ to avoid matplotlib interpreting it as math text
-            path = TextPath((0, 0), text.replace('$', '\\$'), size=1, prop=self._font, usetex=False)
+            path = TextPath((0, 0), text.replace('$', '\\$'), size=1,
+                            prop=self._font, usetex=False)
             if self._use_cache:
                 self._cache[text] = path
         return path
@@ -263,6 +296,7 @@ def qsave(layout: 'Layout', filename: str, *,
           dpi: int = 300,
           backend: str = 'agg',
           ltype: str = 'internal',
+          lineweight_scaling: float = 1.0,
           ) -> None:
     """ Quick and simplified render export by matplotlib.
 
@@ -287,6 +321,8 @@ def qsave(layout: 'Layout', filename: str, *,
             for a complete list of backends)
         ltype: "internal" to use the matplotlib dpi based linetype rendering,
             "ezdxf" to use a drawing unit base linetype rendering.
+        lineweight_scaling: scale lineweights or set to 0 to disable lineweights
+            at all.
 
     .. versionadded:: 0.14
 
@@ -305,7 +341,11 @@ def qsave(layout: 'Layout', filename: str, *,
         ctx.set_current_layout(layout)
         if bg is not None:
             ctx.current_layout.set_colors(bg, fg)
-        out = MatplotlibBackend(ax, linetype_rendering=ltype)
+        out = MatplotlibBackend(ax, params={
+            'linetype_renderer': ltype,
+            'lineweight_scaling': lineweight_scaling,
+            'min_lineweight': 72 / dpi,
+        })
         Frontend(ctx, out).draw_layout(layout, finalize=True)
         # transparent=True sets the axes color to fully transparent
         # facecolor sets the figure color
@@ -319,9 +359,15 @@ def qsave(layout: 'Layout', filename: str, *,
 
 
 class AbstractLineRenderer:
-    def __init__(self, scale: Optional[float] = None):
+    def __init__(self, scale: Optional[float] = None,
+                 lineweight_scaling: float = 1.0,
+                 min_lineweight=0.24,  # 1/300 inch
+                 ):
         self._pattern_cache = dict()
         self._scale = scale
+        self._lineweight_scaling = lineweight_scaling * POINTS
+        self._min_lineweight = min_lineweight
+
 
     @abc.abstractmethod
     def draw_line(self, ax: plt.Axes, start: Vector, end: Vector,
@@ -346,20 +392,35 @@ class AbstractLineRenderer:
             self._pattern_cache[key] = pattern_
         return pattern_
 
+    def lineweight(self, properties: Properties) -> float:
+        if self._lineweight_scaling:
+            # Should we use _min_lineweight here too?
+            # return max(
+            #     self._min_lineweight,
+            #     properties.lineweight * self._lineweight_scaling
+            # )
+            # no 'if' required
+            return properties.lineweight * self._lineweight_scaling
+        else:
+            return self._min_lineweight
+
 
 class InternalLineRenderer(AbstractLineRenderer):
-    def __init__(self, scale: Optional[float] = None):
+    def __init__(self, scale: Optional[float] = None,
+                 lineweight_scale: float = 1.0,
+                 min_lineweight: float = 0.24,
+                 ):
         if scale is None:
             # Arbitrary choice, may change in the future!
             scale = 10.0 * POINTS
-        super().__init__(scale)
+        super().__init__(scale, lineweight_scale, min_lineweight)
 
     def draw_line(self, ax: plt.Axes, start: Vector, end: Vector,
                   properties: Properties, z: float):
         ax.add_line(
             Line2D(
                 (start.x, end.x), (start.y, end.y),
-                linewidth=properties.lineweight * POINTS,
+                linewidth=self.lineweight(properties),
                 linestyle=self.pattern(properties),
                 color=properties.color,
                 zorder=z,
@@ -369,7 +430,7 @@ class InternalLineRenderer(AbstractLineRenderer):
         vertices, codes = _get_path_patch_data(path)
         patch = PathPatch(
             Path(vertices, codes),
-            linewidth=properties.lineweight * POINTS,
+            linewidth=self.lineweight(properties),
             linestyle=self.pattern(properties),
             color=properties.color,
             fill=bool(properties.filling),
@@ -396,20 +457,23 @@ class InternalLineRenderer(AbstractLineRenderer):
 
 class EzdxfLineRenderer(AbstractLineRenderer):
     def __init__(self, scale: Optional[float] = None,
+                 lineweight_scaling: float = 1.0,
+                 min_lineweight: float = 0.24,
                  min_length: float = 0.1,
-                 max_distance: float = 0.01):
+                 max_distance: float = 0.01,
+                 ):
         if scale is None:
             scale = 1.0
-        super().__init__(scale)
+        super().__init__(scale, lineweight_scaling, min_lineweight)
         # Minimum dash length to be displayed by matplotlib
         self._min_dash_length = min_length
         # Maximum distance for adaptive recursive curve flattening
         self._max_distance = max_distance
 
     def draw_line(self, ax: plt.Axes, start: Vector, end: Vector,
-                  properties: Properties, z: float):
+                  properties: Properties, z: int):
         pattern = self.pattern(properties)
-        lineweight = properties.lineweight * POINTS
+        lineweight = self.lineweight(properties)
         color = properties.color
         if len(pattern) < 2:
             ax.add_line(
@@ -429,9 +493,9 @@ class EzdxfLineRenderer(AbstractLineRenderer):
             lines.set_capstyle('butt')
             ax.add_collection(lines)
 
-    def draw_path(self, ax: plt.Axes, path, properties: Properties, z: float):
+    def draw_path(self, ax: plt.Axes, path, properties: Properties, z: int):
         pattern = self.pattern(properties)
-        lineweight = properties.lineweight * POINTS
+        lineweight = self.lineweight(properties)
         color = properties.color
         if len(pattern) < 2:
             vertices, codes = _get_path_patch_data(path)
