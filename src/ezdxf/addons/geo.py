@@ -277,6 +277,11 @@ def transform_crs_to_wcs(geo_mapping: Dict, m: 'Matrix44') -> Dict:
 
 def _transform_mapping(geo_mapping: Dict, tfunc: Callable) -> Dict:
     def _transform_coordinates(coordinates: Sequence):
+        if len(coordinates) == 0:
+            # I am sure an empty coordinates list is not valid, but
+            # for robustness return an empty list, a proper validator
+            # should take care about it.
+            return list()
         if isinstance(coordinates[0], numbers.Real):
             point = tfunc(Vector(coordinates))
             return point.x, point.y
