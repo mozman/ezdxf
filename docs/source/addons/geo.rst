@@ -11,20 +11,18 @@ https://gist.github.com/sgillies/2217756
 Which is also supported by `Shapely`_, for supported types see the `GeoJSON`_
 Standard and examples in `Appendix-A`_.
 
-The module can load ``__geo_interface__`` mappings as DXF entities by the
-:func:`load` function from :class:`dict` like objects or Python objects with
-``__geo_interface__`` support.
-
-"Point" is loaded as :class:`~ezdxf.entities.Point` entity,  "LineString" is
-loaded as :class:`~ezdxf.entities.LWPolyline` entity and "Polygon" is loaded as
-:class:`~ezdxf.entities.Hatch` entity or as sparated
+The :class:`GeoProxy` represents a ``__geo_interface__`` mapping,
+:meth:`GeoProxy.to_dxf_entities` returns new DXF entities from this mapping.
+Returns "Point" as :class:`~ezdxf.entities.Point` entity,  "LineString" as
+:class:`~ezdxf.entities.LWPolyline` entity and "Polygon" as
+:class:`~ezdxf.entities.Hatch` entity or as separated
 :class:`~ezdxf.entities.LWPolyline` entities (or both).
-Loads geometries from"MultiPoint", "MultiLineString", "MultiPolygon",
-"GeometryCollection", "Feature"  and from "FeatureCollection" objects.
+Supports "MultiPoint", "MultiLineString", "MultiPolygon",
+"GeometryCollection", "Feature"  and "FeatureCollection".
+Add new DXF entities to a layout by the :meth:`Layout.add_entity` method.
 
-The module creates ``__geo_interface__`` mappings by the :func:`mappings`
-function or proxy objects with ``__geo_interface__`` support by the
-:func:`proxy` function.
+The :func:`proxy` function or the constructor :meth:`GeoProxy.from_dxf_entities`
+creates a new :class:`GeoProxy` object.
 
 Supported DXF entities are:
 
@@ -46,40 +44,25 @@ Supported DXF entities are:
     It is recommended to check critical objects by a sophisticated geometry
     library like `Shapely`_.
 
-High Level Interface
---------------------
-
-.. autofunction:: load(geo_mapping, polygon=1, dxfattribs: Dict = None, crs: Matrix44 = None) -> Iterable[DXFGraphic]
-
 .. autofunction:: proxy(entity: Union[DXFGraphic, Iterable[DXFGraphic]], distance=0.1, force_line_string=False) -> GeoProxy
-
-.. autofunction:: mapping(entity: DXFGraphic, distance=0.1, force_line_string=False) -> Dict
-
-.. autofunction:: collection(entities: Iterable[DXFGraphic], distance=0.1, force_line_string=False) -> Dict
 
 .. autofunction:: gfilter(entities: Iterable[DXFGraphic]) -> Iterable[DXFGraphic]
 
-.. autofunction:: transform_wcs_to_crs
+.. autoclass:: GeoProxy
 
-.. autofunction:: transform_crs_to_wcs
+    .. autoattribute:: __geo_interface__
 
+    .. automethod:: from_dxf_entities(entity: Union[DXFGraphic, Iterable[DXFGraphic]], distance=0.1, force_line_string=False) -> GeoProxy
 
-Low Level Interface
--------------------
+    .. automethod:: to_dxf_entities(polygon=1, dxfattribs: Dict = None) -> Iterable[DXFGraphic]
 
-.. autofunction:: mappings(entities: Iterable[DXFGraphic], distance=0.1, force_line_string=False) -> List[Dict]
+    .. automethod:: copy
 
-.. autofunction:: point_mapping(point: Vertex) -> Dict
+    .. automethod:: __iter__
 
-.. autofunction:: line_string_mapping(points: Iterable[Vertex]) -> Dict
+    .. automethod:: wcs_to_crs
 
-.. autofunction:: polygon_mapping(points: Iterable[Vertex], holes: Iterable[Iterable[Vertex]] = None) -> Dict
-
-.. autofunction:: join_multi_single_type_mappings
-
-.. autofunction:: geometry_collection_mapping
-
-.. autofunction:: linear_ring(points: Iterable[Vertex], ccw = True) -> List[Vector]
+    .. automethod:: crs_to_wcs
 
 .. _Shapely: https://pypi.org/project/Shapely/
 

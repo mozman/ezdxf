@@ -6,38 +6,6 @@ from ezdxf.entities import factory
 from ezdxf.addons import geo
 
 
-def test_point_mapping():
-    assert geo.point_mapping((0, 0)) == {
-        'type': 'Point',
-        'coordinates': (0, 0)
-    }
-
-
-def test_line_string_mapping():
-    assert geo.line_string_mapping([(0, 0), (1, 0), (2, 0)]) == {
-        'type': 'LineString',
-        'coordinates': [(0, 0), (1, 0), (2, 0)]
-    }
-
-
-def test_polygon_without_holes_mapping():
-    assert geo.polygon_mapping([(0, 0), (1, 0), (2, 0)]) == {
-        'type': 'Polygon',
-        'coordinates': [(0, 0), (1, 0), (2, 0), (0, 0)]
-    }
-
-
-def test_polygon_with_holes_mapping():
-    assert geo.polygon_mapping([(0, 0), (10, 0), (10, 10)],
-                               holes=[[(0, 0), (2, 0), (2, 2)]]) == {
-               'type': 'Polygon',
-               'coordinates': [
-                   [(0, 0), (10, 0), (10, 10), (0, 0)],
-                   [(0, 0), (2, 2), (2, 0), (0, 0)],
-               ]
-           }
-
-
 @pytest.mark.parametrize('points', [
     [],
     [(0, 0)],
