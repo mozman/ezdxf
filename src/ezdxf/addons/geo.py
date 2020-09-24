@@ -250,9 +250,9 @@ class GeoProxy:
 
         def polygon_(exterior: List,
                      holes: List) -> Iterable[Union[Hatch, LWPolyline]]:
-            if polygon & 2:  # hatches first
+            if polygon & 1:  # hatches first
                 yield hatch_(exterior, holes)
-            if polygon & 1:
+            if polygon & 2:
                 for path in [exterior] + holes:
                     yield lwpolyline(path)
 

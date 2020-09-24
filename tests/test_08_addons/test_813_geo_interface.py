@@ -3,7 +3,7 @@
 from typing import cast
 import pytest
 from ezdxf.math import Vector
-from ezdxf.entities import factory
+from ezdxf.entities import factory, Hatch, LWPolyline
 from ezdxf.addons import geo
 
 
@@ -119,6 +119,49 @@ def test_parse_polygon_with_holes():
             [(0.5, 0.5), (0.7, 0.5), (0.7, 0.7), (0.5, .7), (0.5, 0.5)]
         ]
     )
+
+
+def test_point_to_dxf_entity():
+    proxy = geo.GeoProxy.parse({'type': 'Point', 'coordinates': (0, 0)})
+    point = list(proxy.to_dxf_entities())[0]
+    assert point.dxftype() == 'POINT'
+    assert point.dxf.location == (0, 0)
+
+
+def test_line_string_to_dxf_entity():
+    proxy = geo.GeoProxy.parse({
+        'type': 'LineString',
+        'coordinates': [(0, 0), (1, 0)]
+    })
+    res = cast(LWPolyline, list(proxy.to_dxf_entities())[0])
+    assert res.dxftype() == 'LWPOLYLINE'
+    assert list(res.vertices()) == [(0, 0), (1, 0)]
+
+
+def test_polygon_without_holes_to_dxf_entity():
+    proxy = geo.GeoProxy.parse({
+        'type': 'Polygon',
+        'coordinates': [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
+    })
+    res = cast(Hatch, list(proxy.to_dxf_entities())[0])
+    assert res.dxftype() == 'HATCH'
+    assert len(res.paths) == 1
+    p = res.paths[0]
+    assert p.PATH_TYPE == 'PolylinePath'
+    assert p.vertices == Vector.list(
+        [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)])
+
+
+def test_polygon_with_hole_to_dxf_entity():
+    proxy = geo.GeoProxy.parse({
+        'type': 'Polygon',
+        'coordinates': [
+            [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)],
+            [(.5, .5), (.7, .5), (.7, .7), (.5, .7), (.5, .5)],
+        ]
+    })
+    res = cast(Hatch, list(proxy.to_dxf_entities())[0])
+    assert len(res.paths) == 2
 
 
 if __name__ == '__main__':
