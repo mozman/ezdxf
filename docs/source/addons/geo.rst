@@ -11,7 +11,11 @@ https://gist.github.com/sgillies/2217756
 Which is also supported by `Shapely`_, for supported types see the `GeoJSON`_
 Standard and examples in `Appendix-A`_.
 
-The :class:`GeoProxy` represents a ``__geo_interface__`` mapping,
+Proxy From Mapping
+------------------
+
+The :class:`GeoProxy` represents a ``__geo_interface__`` mapping, create a new
+proxy by :meth:`GeoProxy.parse` from an external ``__geo_interface__`` mapping.
 :meth:`GeoProxy.to_dxf_entities` returns new DXF entities from this mapping.
 Returns "Point" as :class:`~ezdxf.entities.Point` entity,  "LineString" as
 :class:`~ezdxf.entities.LWPolyline` entity and "Polygon" as
@@ -21,8 +25,13 @@ Supports "MultiPoint", "MultiLineString", "MultiPolygon",
 "GeometryCollection", "Feature"  and "FeatureCollection".
 Add new DXF entities to a layout by the :meth:`Layout.add_entity` method.
 
+Proxy From DXF Entity
+---------------------
+
 The :func:`proxy` function or the constructor :meth:`GeoProxy.from_dxf_entities`
-creates a new :class:`GeoProxy` object.
+creates a new :class:`GeoProxy` object from a single DXF entity or from an
+iterable of DXF entities, entities without a coresponding representation will be
+approximated.
 
 Supported DXF entities are:
 
@@ -44,13 +53,21 @@ Supported DXF entities are:
     It is recommended to check critical objects by a sophisticated geometry
     library like `Shapely`_.
 
+Module Functions
+----------------
+
 .. autofunction:: proxy(entity: Union[DXFGraphic, Iterable[DXFGraphic]], distance=0.1, force_line_string=False) -> GeoProxy
 
 .. autofunction:: gfilter(entities: Iterable[DXFGraphic]) -> Iterable[DXFGraphic]
 
+GeoProxy Class
+--------------
+
 .. autoclass:: GeoProxy
 
     .. autoattribute:: __geo_interface__
+
+    .. automethod:: parse
 
     .. automethod:: from_dxf_entities(entity: Union[DXFGraphic, Iterable[DXFGraphic]], distance=0.1, force_line_string=False) -> GeoProxy
 

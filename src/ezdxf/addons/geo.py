@@ -76,17 +76,31 @@ def gfilter(entities: Iterable[DXFGraphic]) -> Iterable[DXFGraphic]:
 
 
 class GeoProxy:
-    """ Stores the ``__geo_interface__`` mapping in a compiled form, does some
-    basic syntax checks, converts all coordinates into :class:`Vector` objects,
-    represents "Polygon" always as tuple (exterior, holes) even without holes.
+    """ Stores the ``__geo_interface__`` mapping in a parsed and compiled form.
+
+    Stores coordinates as :class:`Vector` objects and represents "Polygon"
+    always as tuple (exterior, holes) even without holes.
 
     Args:
-        geo_mapping: ``__geo_interface__`` mapping
+        geo_mapping: parsed and compiled ``__geo_interface__`` mapping
 
     """
 
     def __init__(self, geo_mapping: Dict):
-        self._root = parse(geo_mapping)
+        self._root = geo_mapping
+
+    @classmethod
+    def parse(cls, geo_mapping: Dict) -> 'GeoProxy':
+        """ Parse and compile a ``__geo_interface__`` mapping as :class:`dict`
+        or a Python object with a ``__geo_interface__`` property, does some
+        basic syntax checks, converts all coordinates into :class:`Vector`
+        objects, represents "Polygon" always as tuple (exterior, holes) even
+        without holes.
+
+        """
+        if hasattr(geo_mapping, '__geo_interface__'):
+            geo_mapping = geo_mapping.__geo_interface__
+        return cls(parse(geo_mapping))
 
     @property
     def root(self) -> Dict:
@@ -100,11 +114,18 @@ class GeoProxy:
 
     @property
     def __geo_interface__(self) -> Dict:
-        """ Returns the ``__geo_interface__`` mapping. """
+        """ Returns the ``__geo_interface__`` mapping as :class:`dict`. """
         return _rebuild(self._root)
 
     def __iter__(self) -> Iterable[Dict]:
-        """ Iterate over all compiled geo content objects. """
+        """ Iterate over all geo content objects.
+
+        Yields only "Point", "LineString", "Polygon", "MultiPoint",
+        "MultiLineString" and "MultiPolygon" objects, returns the content of
+        "GeometryCollection", "FeatureCollection" and "Feature" as geometry
+        objects ("Point", ...).
+
+        """
 
         def _iter(root):
             type_ = root[TYPE]
@@ -191,7 +212,9 @@ class GeoProxy:
             m = mapping(entity, distance, force_line_string)
         else:
             m = collection(entity, distance)
-        return cls(m)
+        proxy_ = cls()
+        proxy_._root = m
+        return proxy_
 
     def to_dxf_entities(self, polygon: int = 1,
                         dxfattribs: Dict = None) -> Iterable[DXFGraphic]:
@@ -383,8 +406,9 @@ def _rebuild(geo_mapping: Dict) -> Dict:
 def mapping(entity: DXFGraphic,
             distance: float = MAX_FLATTENING_DISTANCE,
             force_line_string: bool = False) -> Dict:
-    """ Create the ``__geo_interface__`` mapping as :class:`dict` for the
-    given DXF `entity`, see https://gist.github.com/sgillies/2217756
+    """ Create the compiled ``__geo_interface__`` mapping as :class:`dict`
+    for the given DXF `entity`, all coordinates are :class:`Vector` objects and
+    represents "Polygon" always as tuple (exterior, holes) even without holes.
 
     Args:
         entity: DXF entity
@@ -436,7 +460,7 @@ def _line_string_or_polygon_mapping(points: List[Vector],
         return line_string_mapping(points)
     else:
         if is_linear_ring(points):
-            return polygon_mapping(points)
+            return polygon_mapping(points, [])
         else:
             return line_string_mapping(points)
 
@@ -585,8 +609,7 @@ def linear_ring(points: List[Vector], ccw=True) -> List[Vector]:
     return points
 
 
-def polygon_mapping(points: Iterable[Vertex],
-                    holes: Iterable[Iterable[Vertex]] = None) -> Dict:
+def polygon_mapping(points: List[Vector], holes: List[List[Vector]]) -> Dict:
     """ Returns a "Polygon" mapping.
 
     .. code::
@@ -612,13 +635,12 @@ def polygon_mapping(points: Iterable[Vertex],
         }
     """
 
-    exterior = linear_ring(Vector.list(points), ccw=True)
+    exterior = linear_ring(points, ccw=True)
     if holes:
-        rings = [exterior]
-        for hole in holes:
-            rings.append(linear_ring(Vector.list(hole), ccw=False))
+        holes = [linear_ring(hole, ccw=False) for hole in holes]
+        rings = exterior, holes
     else:
-        rings = exterior
+        rings = exterior, []
     return {
         TYPE: POLYGON,
         COORDINATES: rings,
