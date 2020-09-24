@@ -56,5 +56,70 @@ def test_map_circle():
     assert m['type'] == 'LineString'
 
 
+@pytest.mark.parametrize('entity', [
+    {'type': 'Point', 'coordinates': (0, 0)},
+    {'type': 'LineString', 'coordinates': [(0, 0), (1, 0)]},
+    {'type': 'MultiPoint', 'coordinates': [(0, 0), (1, 0)]},
+    {'type': 'MultiLineString',
+     'coordinates': [[(0, 0), (1, 0)], [(0, 0), (1, 0)]]},
+    {'type': 'Feature',
+     'geometry': {'type': 'Point', 'coordinates': (0, 0)}},
+    {'type': 'GeometryCollection',
+     'geometries': [{'type': 'Point', 'coordinates': (0, 0)}]},
+    {'type': 'FeatureCollection',
+     'features': [
+         {'type': 'Feature',
+          'geometry': {'type': 'Point', 'coordinates': (0, 0)}}
+     ]},
+])
+def test_parse_types(entity):
+    # Parser does basic structure validation and converts all coordinates into
+    # Vector objects.
+    assert geo.parse(entity) == entity
+
+
+def test_parsing_type_error():
+    with pytest.raises(TypeError):
+        geo.parse({'type': 'XXX'})
+
+
+@pytest.mark.parametrize('entity', [
+    {'type': 'Point'},  # no coordinates key
+    {'type': 'Point', 'coordinates': None},  # no coordinates
+    {'type': 'Feature'},  # no geometry key
+    {'type': 'GeometryCollection'},  # no geometries key
+    {'type': 'FeatureCollection'},  # no features key
+])
+def test_parsing_value_error(entity):
+    with pytest.raises(ValueError):
+        geo.parse(entity)
+
+
+def test_parse_polygon_without_holes():
+    polygon = geo.parse({
+        'type': 'Polygon',
+        'coordinates': [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
+    })
+    assert polygon['coordinates'] == (
+        [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)], []
+    )
+
+
+def test_parse_polygon_with_holes():
+    polygon = geo.parse({
+        'type': 'Polygon',
+        'coordinates': [
+            [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)],
+            [(0.5, 0.5), (0.7, 0.5), (0.7, 0.7), (0.5, .7), (0.5, 0.5)],
+        ]
+    })
+    assert polygon['coordinates'] == (
+        [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)],
+        [
+            [(0.5, 0.5), (0.7, 0.5), (0.7, 0.7), (0.5, .7), (0.5, 0.5)]
+        ]
+    )
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

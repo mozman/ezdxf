@@ -325,8 +325,8 @@ def parse(geo_mapping: Dict) -> Dict:
         else:
             raise ValueError(
                 f'Missing key "{GEOMETRY}" in Feature.')
-    elif type in {POINT, LINE_STRING, POLYGON, MULTI_POINT,
-                  MULTI_LINE_STRING, MULTI_POLYGON}:
+    elif type_ in {POINT, LINE_STRING, POLYGON, MULTI_POINT,
+                   MULTI_LINE_STRING, MULTI_POLYGON}:
         coordinates = geo_mapping.get(COORDINATES)
         if coordinates is None:
             raise ValueError(
@@ -341,7 +341,7 @@ def parse(geo_mapping: Dict) -> Dict:
             coordinates = [Vector.list(v) for v in coordinates]
         elif type_ == MULTI_POLYGON:
             coordinates = [_parse_polygon(v) for v in coordinates]
-        geo_mapping[coordinates] = coordinates
+        geo_mapping[COORDINATES] = coordinates
     else:
         raise TypeError(f'Invalid type "{type_}".')
     return geo_mapping
