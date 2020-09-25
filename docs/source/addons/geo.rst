@@ -69,13 +69,13 @@ GeoProxy Class
 
     .. autoattribute:: __geo_interface__
 
-    .. automethod:: parse
+    .. automethod:: parse(geo_mapping: Dict) -> GeoProxy
 
     .. automethod:: from_dxf_entities(entity: Union[DXFGraphic, Iterable[DXFGraphic]], distance=0.1, force_line_string=False) -> GeoProxy
 
     .. automethod:: to_dxf_entities(polygon=1, dxfattribs: Dict = None) -> Iterable[DXFGraphic]
 
-    .. automethod:: copy
+    .. automethod:: copy() -> GeoProxy
 
     .. automethod:: __iter__
 

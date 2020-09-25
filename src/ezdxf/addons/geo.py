@@ -133,7 +133,7 @@ class GeoProxy:
     def root(self) -> Dict:
         return self._root
 
-    def __copy__(self):
+    def __copy__(self) -> 'GeoProxy':
         """ Returns a deep copy. """
         return copy.deepcopy(self)
 
@@ -182,7 +182,7 @@ class GeoProxy:
         """
         self._transform(crs.transform)
 
-    def wcs_to_crs(self, crs: 'Matrix44'):
+    def wcs_to_crs(self, crs: 'Matrix44') -> None:
         """ Transform all coordinates recursive from :ref:`WCS` coordinates into
         Coordinate Reference System (CRS) by transformation matrix `crs`
         inplace.
