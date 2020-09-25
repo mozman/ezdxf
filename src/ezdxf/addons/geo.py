@@ -14,7 +14,7 @@ from typing import (
 )
 import numbers
 import copy
-from ezdxf.math import Vector, Vertex, has_clockwise_orientation
+from ezdxf.math import Vector, has_clockwise_orientation
 from ezdxf.render import Path
 from ezdxf.entities import DXFGraphic, LWPolyline, Hatch, Point
 from ezdxf.lldxf import const
@@ -22,6 +22,8 @@ from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Matrix44
+
+__all__ = ['proxy', 'dxf_entities', 'gfilter', 'GeoProxy']
 
 TYPE = 'type'
 COORDINATES = 'coordinates'
@@ -59,6 +61,31 @@ def proxy(entity: Union[DXFGraphic, Iterable[DXFGraphic]],
 
     """
     return GeoProxy.from_dxf_entities(entity, distance, force_line_string)
+
+
+def dxf_entities(geo_mapping, polygon: int = 1,
+                 dxfattribs: Dict = None) -> Iterable[DXFGraphic]:
+    """ Returns ``__geo_interface__`` mappings as DXF entities.
+
+    The `polygon` argument determines the method to convert polygons,
+    use 1 for :class:`~ezdxf.entities.Hatch` entity, 2 for
+    :class:`~ezdxf.entities.LWPolyline` or 3 for both.
+    Option 2 returns for the exterior path and each hole a separated
+    :class:`LWPolyline` entity. The :class:`Hatch` entity supports holes,
+    but has no explicit border line.
+
+    Yields :class:`Hatch` always before :class:`LWPolyline` entities.
+
+    The returned DXF entities can be added to a layout by the
+    :meth:`Layout.add_entity` method.
+
+    Args:
+        geo_mapping: ``__geo__interface__`` mapping as :class:`dict` or a Python
+            object with a :attr:`__geo__interface__` property
+        polygon: method to convert polygons (1-2-3)
+        dxfattribs: dict with additional DXF attributes
+    """
+    return GeoProxy.parse(geo_mapping).to_dxf_entities(polygon, dxfattribs)
 
 
 def gfilter(entities: Iterable[DXFGraphic]) -> Iterable[DXFGraphic]:
@@ -114,7 +141,9 @@ class GeoProxy:
 
     @property
     def __geo_interface__(self) -> Dict:
-        """ Returns the ``__geo_interface__`` mapping as :class:`dict`. """
+        """ Returns the ``__geo_interface__`` compatible mapping as
+        :class:`dict`.
+        """
         return _rebuild(self._root)
 
     def __iter__(self) -> Iterable[Dict]:
@@ -130,9 +159,11 @@ class GeoProxy:
         def _iter(root):
             type_ = root[TYPE]
             if type_ == FEATURE_COLLECTION:
-                yield from _iter(root[FEATURES])
+                for feature in root[FEATURES]:
+                    yield from _iter(feature)
             elif type_ == GEOMETRY_COLLECTION:
-                yield from _iter(root[GEOMETRIES])
+                for geometry in root[GEOMETRIES]:
+                    yield from _iter(geometry)
             elif type_ == FEATURE:
                 yield root[GEOMETRY]
             else:
@@ -212,9 +243,7 @@ class GeoProxy:
             m = mapping(entity, distance, force_line_string)
         else:
             m = collection(entity, distance)
-        proxy_ = cls()
-        proxy_._root = m
-        return proxy_
+        return cls(m)
 
     def to_dxf_entities(self, polygon: int = 1,
                         dxfattribs: Dict = None) -> Iterable[DXFGraphic]:
@@ -223,7 +252,7 @@ class GeoProxy:
         The `polygon` argument determines the method to convert polygons,
         use 1 for :class:`~ezdxf.entities.Hatch` entity, 2 for
         :class:`~ezdxf.entities.LWPolyline` or 3 for both.
-        Option 2 returns for the exterior path and each hole as a separated
+        Option 2 returns for the exterior path and each hole a separated
         :class:`LWPolyline` entity. The :class:`Hatch` entity supports holes,
         but has no explicit border line.
 
@@ -364,6 +393,7 @@ def _is_coordinate_sequence(coordinates: Sequence) -> bool:
 
 
 def _parse_polygon(coordinates: Sequence) -> Sequence:
+    """ Returns polygon definition as tuple (exterior, [holes]). """
     if _is_coordinate_sequence(coordinates):
         exterior = coordinates
         holes = []
@@ -374,6 +404,18 @@ def _parse_polygon(coordinates: Sequence) -> Sequence:
 
 
 def _rebuild(geo_mapping: Dict) -> Dict:
+    """ Returns ``__geo_interface__`` compatible mapping as :class:`dict` from
+    compiled internal representation.
+
+    """
+
+    def _polygon(exterior, holes):
+        coordinates = [(v.x, v.y) for v in exterior]
+        if holes:
+            coordinates = [coordinates]
+            coordinates.extend([(v.x, v.y) for v in hole] for hole in holes)
+        return coordinates
+
     geo_interface = dict(geo_mapping)
     type_ = geo_interface[TYPE]
     if type_ == FEATURE_COLLECTION:
@@ -391,16 +433,16 @@ def _rebuild(geo_mapping: Dict) -> Dict:
         coordinates = geo_interface[COORDINATES]
         geo_interface[COORDINATES] = [(v.x, v.y) for v in coordinates]
     elif type_ == MULTI_LINE_STRING:
-        coordinates = geo_interface[COORDINATES]
-        geo_interface[COORDINATES] = [
-            (v.x, v.y) for v in (line for line in coordinates)]
+        coordinates = []
+        for line in geo_interface[COORDINATES]:
+            coordinates.append([(v.x, v.y) for v in line])
     elif type_ == POLYGON:
-        extrior, holes = geo_interface[COORDINATES]
-        coordinates = [(v.x, v.y) for v in extrior]
-        if holes:
-            coordinates = [coordinates]
-            coordinates.extend([(v.x, v.y) for v in hole] for hole in holes)
-        geo_interface[COORDINATES] = coordinates
+        geo_interface[COORDINATES] = _polygon(*geo_interface[COORDINATES])
+    elif type_ == MULTI_POLYGON:
+        geo_interface[COORDINATES] = [
+            _polygon(exterior, holes)
+            for exterior, holes in geo_interface[COORDINATES]
+        ]
     return geo_interface
 
 
@@ -410,6 +452,9 @@ def mapping(entity: DXFGraphic,
     """ Create the compiled ``__geo_interface__`` mapping as :class:`dict`
     for the given DXF `entity`, all coordinates are :class:`Vector` objects and
     represents "Polygon" always as tuple (exterior, holes) even without holes.
+
+
+    Internal API - result is **not** a valid ``_geo_interface__`` mapping!
 
     Args:
         entity: DXF entity
@@ -545,6 +590,8 @@ def collection(entities: Iterable[DXFGraphic],
     Returns a "MultiPoint", "MultiLineString" or "MultiPolygon" collection if
     all entities return the same GeoJSON type ("Point", "LineString", "Polygon")
     else a "GeometryCollection".
+
+    Internal API - result is **not** a valid ``_geo_interface__`` mapping!
 
     Args:
         entities: iterable of DXF entities

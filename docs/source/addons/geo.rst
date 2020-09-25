@@ -58,6 +58,8 @@ Module Functions
 
 .. autofunction:: proxy(entity: Union[DXFGraphic, Iterable[DXFGraphic]], distance=0.1, force_line_string=False) -> GeoProxy
 
+.. autofunction:: dxf_entities(geo_mapping, polygon=1, dxfattribs: Dict = None) -> Iterable[DXFGraphic]
+
 .. autofunction:: gfilter(entities: Iterable[DXFGraphic]) -> Iterable[DXFGraphic]
 
 GeoProxy Class

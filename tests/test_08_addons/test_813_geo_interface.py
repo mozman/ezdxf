@@ -30,6 +30,40 @@ POLYGON_2 = {
     'type': 'Polygon',
     'coordinates': [EXTERIOR, HOLE1, HOLE2]
 }
+MULTI_POINT = {
+    'type': 'MultiPoint',
+    'coordinates': EXTERIOR,
+}
+MULTI_LINE_STRING = {
+    'type': 'MultiLineString',
+    'coordinates': [EXTERIOR, HOLE1, HOLE2]
+}
+MULTI_POLYGON = {
+    'type': 'MultiPolygon',
+    'coordinates': [
+        EXTERIOR,
+        [EXTERIOR, HOLE1],
+        [EXTERIOR, HOLE1, HOLE2],
+    ]
+}
+
+GEOMETRY_COLLECTION = {
+    'type': 'GeometryCollection',
+    'geometries': [
+        POINT,
+        LINE_STRING,
+        POLYGON_0,
+    ]
+}
+FEATURE = {
+    'type': 'Feature',
+    'prop0': 'property',
+    'geometry': LINE_STRING,
+}
+FEATURE_COLLECTION = {
+    'type': 'FeatureCollection',
+    'features': [FEATURE, FEATURE]
+}
 
 
 @pytest.mark.parametrize('points', [
@@ -136,23 +170,43 @@ def test_parse_polygon_2_holes():
     assert polygon['coordinates'] == (EXTERIOR, [HOLE1, HOLE2])
 
 
+def test_parse_geometry_collection():
+    geometry_collection = geo.parse(GEOMETRY_COLLECTION)
+    assert len(geometry_collection['geometries']) == 3
+
+
+def test_parse_feature():
+    feature = geo.parse(FEATURE)
+    assert feature['geometry'] == LINE_STRING
+
+
+def test_parse_feature_collection():
+    feature_collection = geo.parse(FEATURE_COLLECTION)
+    assert len(feature_collection['features']) == 2
+
+
+@pytest.mark.parametrize('entity', [
+    POINT, LINE_STRING, POLYGON_0, POLYGON_1, POLYGON_2, GEOMETRY_COLLECTION,
+    FEATURE, FEATURE_COLLECTION, MULTI_POINT, MULTI_LINE_STRING, MULTI_POLYGON,
+])
+def test_geo_interface_builder(entity):
+    assert geo.GeoProxy.parse(entity).__geo_interface__ == entity
+
+
 def test_point_to_dxf_entity():
-    proxy = geo.GeoProxy.parse(POINT)
-    point = list(proxy.to_dxf_entities())[0]
+    point = list(geo.dxf_entities(POINT))[0]
     assert point.dxftype() == 'POINT'
     assert point.dxf.location == (0, 0)
 
 
 def test_line_string_to_dxf_entity():
-    proxy = geo.GeoProxy.parse(LINE_STRING)
-    res = cast(LWPolyline, list(proxy.to_dxf_entities())[0])
+    res = cast(LWPolyline, list(geo.dxf_entities(LINE_STRING))[0])
     assert res.dxftype() == 'LWPOLYLINE'
     assert list(res.vertices()) == Vector.list(EXTERIOR)
 
 
 def test_polygon_without_holes_to_dxf_entity():
-    proxy = geo.GeoProxy.parse(POLYGON_0)
-    res = cast(Hatch, list(proxy.to_dxf_entities())[0])
+    res = cast(Hatch, list(geo.dxf_entities(POLYGON_0))[0])
     assert res.dxftype() == 'HATCH'
     assert len(res.paths) == 1
     p = res.paths[0]
@@ -161,8 +215,7 @@ def test_polygon_without_holes_to_dxf_entity():
 
 
 def test_polygon_with_holes_to_dxf_entity():
-    proxy = geo.GeoProxy.parse(POLYGON_2)
-    res = cast(Hatch, list(proxy.to_dxf_entities())[0])
+    res = cast(Hatch, list(geo.dxf_entities(POLYGON_2))[0])
     assert len(res.paths) == 3
     p = res.paths[1]
     assert p.PATH_TYPE == 'PolylinePath'
@@ -170,6 +223,22 @@ def test_polygon_with_holes_to_dxf_entity():
     p = res.paths[2]
     assert p.PATH_TYPE == 'PolylinePath'
     assert p.vertices == Vector.list(HOLE2)
+
+
+def test_geometry_collection_to_dxf_entities():
+    collection = list(geo.dxf_entities(GEOMETRY_COLLECTION))
+    assert len(collection) == 3
+
+
+def test_feature_to_dxf_entities():
+    entities = list(geo.dxf_entities(FEATURE))
+    assert entities[0].dxftype() == 'LWPOLYLINE'
+
+
+def test_feature_collection_to_dxf_entities():
+    collection = list(geo.dxf_entities(FEATURE_COLLECTION))
+    assert len(collection) == 2
+    assert collection[0].dxftype() == 'LWPOLYLINE'
 
 
 if __name__ == '__main__':
