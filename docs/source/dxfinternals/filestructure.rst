@@ -177,6 +177,6 @@ The OBJECTS section requires following entities:
 
 - DICTONARY ACAD_GROUP can be empty
 
-Minimal DXF to download: https://bitbucket.org/mozman/ezdxf/downloads/Minimal_DXF_AC1021.dxf
+Minimal DXF to download: https://github.com/mozman/ezdxf/tree/master/examples_dxf
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3
