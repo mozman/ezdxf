@@ -223,7 +223,7 @@ class GeoProxy:
         The `polygon` argument determines the method to convert polygons,
         use 1 for :class:`~ezdxf.entities.Hatch` entity, 2 for
         :class:`~ezdxf.entities.LWPolyline` or 3 for both.
-        Option 2 returns for the exterior path and each hole a separated
+        Option 2 returns for the exterior path and each hole as a separated
         :class:`LWPolyline` entity. The :class:`Hatch` entity supports holes,
         but has no explicit border line.
 
@@ -296,6 +296,7 @@ def parse(geo_mapping: Dict) -> Dict:
     tuple (exterior, holes), holes maybe an empty list.
 
     """
+    geo_mapping = copy.deepcopy(geo_mapping)
     type_ = geo_mapping.get(TYPE)
     if type_ is None:
         raise ValueError(f'Required key "{TYPE}" not found.')

@@ -6,6 +6,31 @@ from ezdxf.math import Vector
 from ezdxf.entities import factory, Hatch, LWPolyline
 from ezdxf.addons import geo
 
+EXTERIOR = [(0, 0), (10, 0), (10, 10), (0, 10), (0, 0)]
+HOLE1 = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
+HOLE2 = [(3, 3), (3, 4), (4, 4), (4, 3), (3, 3)]
+
+POINT = {
+    'type': 'Point',
+    'coordinates': (0, 0)
+}
+LINE_STRING = {
+    'type': 'LineString',
+    'coordinates': EXTERIOR
+}
+POLYGON_0 = {
+    'type': 'Polygon',
+    'coordinates': EXTERIOR
+}
+POLYGON_1 = {
+    'type': 'Polygon',
+    'coordinates': [EXTERIOR, HOLE1]
+}
+POLYGON_2 = {
+    'type': 'Polygon',
+    'coordinates': [EXTERIOR, HOLE1, HOLE2]
+}
+
 
 @pytest.mark.parametrize('points', [
     [],
@@ -96,72 +121,55 @@ def test_parsing_value_error(entity):
 
 
 def test_parse_polygon_without_holes():
-    polygon = geo.parse({
-        'type': 'Polygon',
-        'coordinates': [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
-    })
-    assert polygon['coordinates'] == (
-        [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)], []
-    )
+    polygon = geo.parse(POLYGON_0)
+    assert polygon['coordinates'] == (EXTERIOR, []
+                                      )
 
 
-def test_parse_polygon_with_holes():
-    polygon = geo.parse({
-        'type': 'Polygon',
-        'coordinates': [
-            [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)],
-            [(0.5, 0.5), (0.7, 0.5), (0.7, 0.7), (0.5, .7), (0.5, 0.5)],
-        ]
-    })
-    assert polygon['coordinates'] == (
-        [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)],
-        [
-            [(0.5, 0.5), (0.7, 0.5), (0.7, 0.7), (0.5, .7), (0.5, 0.5)]
-        ]
-    )
+def test_parse_polygon_1_hole():
+    polygon = geo.parse(POLYGON_1)
+    assert polygon['coordinates'] == (EXTERIOR, [HOLE1])
+
+
+def test_parse_polygon_2_holes():
+    polygon = geo.parse(POLYGON_2)
+    assert polygon['coordinates'] == (EXTERIOR, [HOLE1, HOLE2])
 
 
 def test_point_to_dxf_entity():
-    proxy = geo.GeoProxy.parse({'type': 'Point', 'coordinates': (0, 0)})
+    proxy = geo.GeoProxy.parse(POINT)
     point = list(proxy.to_dxf_entities())[0]
     assert point.dxftype() == 'POINT'
     assert point.dxf.location == (0, 0)
 
 
 def test_line_string_to_dxf_entity():
-    proxy = geo.GeoProxy.parse({
-        'type': 'LineString',
-        'coordinates': [(0, 0), (1, 0)]
-    })
+    proxy = geo.GeoProxy.parse(LINE_STRING)
     res = cast(LWPolyline, list(proxy.to_dxf_entities())[0])
     assert res.dxftype() == 'LWPOLYLINE'
-    assert list(res.vertices()) == [(0, 0), (1, 0)]
+    assert list(res.vertices()) == Vector.list(EXTERIOR)
 
 
 def test_polygon_without_holes_to_dxf_entity():
-    proxy = geo.GeoProxy.parse({
-        'type': 'Polygon',
-        'coordinates': [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
-    })
+    proxy = geo.GeoProxy.parse(POLYGON_0)
     res = cast(Hatch, list(proxy.to_dxf_entities())[0])
     assert res.dxftype() == 'HATCH'
     assert len(res.paths) == 1
     p = res.paths[0]
     assert p.PATH_TYPE == 'PolylinePath'
-    assert p.vertices == Vector.list(
-        [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)])
+    assert p.vertices == Vector.list(EXTERIOR)
 
 
-def test_polygon_with_hole_to_dxf_entity():
-    proxy = geo.GeoProxy.parse({
-        'type': 'Polygon',
-        'coordinates': [
-            [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)],
-            [(.5, .5), (.7, .5), (.7, .7), (.5, .7), (.5, .5)],
-        ]
-    })
+def test_polygon_with_holes_to_dxf_entity():
+    proxy = geo.GeoProxy.parse(POLYGON_2)
     res = cast(Hatch, list(proxy.to_dxf_entities())[0])
-    assert len(res.paths) == 2
+    assert len(res.paths) == 3
+    p = res.paths[1]
+    assert p.PATH_TYPE == 'PolylinePath'
+    assert p.vertices == Vector.list(HOLE1)
+    p = res.paths[2]
+    assert p.PATH_TYPE == 'PolylinePath'
+    assert p.vertices == Vector.list(HOLE2)
 
 
 if __name__ == '__main__':
