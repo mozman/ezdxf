@@ -10,10 +10,11 @@ and examples : https://tools.ietf.org/html/rfc7946#appendix-A
 
 """
 from typing import (
-    TYPE_CHECKING, Dict, Iterable, List, Union, cast, Callable, Sequence,
+    TYPE_CHECKING, Dict, Iterable, List, Union, cast, Callable, Sequence, Tuple,
 )
 import numbers
 import copy
+import math
 from ezdxf.math import Vector, has_clockwise_orientation
 from ezdxf.render import Path
 from ezdxf.entities import DXFGraphic, LWPolyline, Hatch, Point
@@ -102,6 +103,9 @@ def gfilter(entities: Iterable[DXFGraphic]) -> Iterable[DXFGraphic]:
             yield e
 
 
+TFunc = Callable[[Vector], Vector]
+
+
 class GeoProxy:
     """ Stores the ``__geo_interface__`` mapping in a parsed and compiled form.
 
@@ -115,6 +119,8 @@ class GeoProxy:
 
     def __init__(self, geo_mapping: Dict):
         self._root = geo_mapping
+        self._project_geoid_to_map: TFunc = wgs84_4326_to_3395
+        self._project_map_to_geoid: TFunc = wgs84_3395_to_4326
 
     @classmethod
     def parse(cls, geo_mapping: Dict) -> 'GeoProxy':
@@ -132,6 +138,10 @@ class GeoProxy:
     @property
     def root(self) -> Dict:
         return self._root
+
+    def set_projection(self, geoid_to_map: TFunc, map_to_geoid: TFunc) -> None:
+        self._project_geoid_to_map = geoid_to_map
+        self._project_map_to_geoid = map_to_geoid
 
     def __copy__(self) -> 'GeoProxy':
         """ Returns a deep copy. """
@@ -170,6 +180,35 @@ class GeoProxy:
                 yield root
 
         yield from _iter(self._root)
+
+    def geoid_to_map(self, func: TFunc = None) -> None:
+        """ Transform all coordinates recursive from decimal degree
+        representation in latitude, longitude into 2D coordinate representation.
+
+        Default is WGS84 EPSG:4326 (GPS) to WGS84 World Mercator EPSG:3395.
+
+        Args:
+            func: custom transformation function
+
+        """
+        if func is None:
+            func = self._project_geoid_to_map
+        self._transform(func)
+
+    def map_to_geoid(self, func: TFunc = None) -> None:
+        """ Transform all coordinates recursive from 2D coordinate
+        representation into decimal degree representation as latitude,
+        longitude.
+
+        Default is WGS84 World Mercator EPSG:3395 to WGS84 EPSG:4326 (GPS).
+
+        Args:
+            func: custom transformation function
+
+        """
+        if func is None:
+            func = self._project_map_to_geoid
+        self._transform(func)
 
     def crs_to_wcs(self, crs: 'Matrix44') -> None:
         """ Transform all coordinates recursive from CRS into
@@ -211,7 +250,7 @@ class GeoProxy:
 
         self._transform(crs.ucs_vertex_from_wcs)
 
-    def _transform(self, func: Callable):
+    def _transform(self, func: TFunc):
         def process(entity: Dict):
             def convert(coords):
                 if isinstance(coords, Vector):
@@ -723,3 +762,78 @@ def geometry_collection_mapping(geometries: Iterable[Dict]) -> Dict:
         TYPE: GEOMETRY_COLLECTION,
         GEOMETRIES: list(geometries)
     }
+
+
+# Values stored in GeoData RSS tag are not precise enough to match
+# control calculation at epsg.io:
+# Semi Major Axis: 6.37814e+06
+# Semi Minor Axis: 6.35675e+06
+
+WGS84_SEMI_MAJOR_AXIS = 6378137
+WGS84_SEMI_MINOR_AXIS = 6356752.3142
+WGS84_ELLIPSOID_ECCENTRIC = math.sqrt(
+    1.0 - WGS84_SEMI_MINOR_AXIS ** 2 / WGS84_SEMI_MAJOR_AXIS ** 2)
+CONST_E2 = math.e / 2.0
+CONST_PI_2 = math.pi / 2.0
+CONST_PI_4 = math.pi / 4.0
+
+
+def wgs84_4326_to_3395(location: Vector) -> Vector:
+    """ Transform WGS84 location given as latitude and longitude in decimal
+    degrees into world mercator cartesian 2D coordinates.
+    """
+    # From: https://epsg.io/4326
+    # EPSG:4326 WGS84 - World Geodetic System 1984, used in GPS
+    # To: https://epsg.io/3395
+    # EPSG:3395 - World Mercator
+    # Source: https://gis.stackexchange.com/questions/259121/transformation-functions-for-epsg3395-projection-vs-epsg3857
+    longitude = math.radians(location.x)  # east
+    latitude = math.radians(location.y)  # north
+    a = WGS84_SEMI_MAJOR_AXIS
+    e = WGS84_ELLIPSOID_ECCENTRIC
+    e_sin_lat = math.sin(latitude) * e
+    c = math.pow((1.0 - e_sin_lat) / (1.0 + e_sin_lat), e / 2.0)  # 7-7 p.44
+    y = a * math.log(math.tan(CONST_PI_4 + latitude / 2.0) * c)  # 7-7 p.44
+    x = a * longitude
+    return Vector(x, y)
+
+
+def wgs84_3395_to_4326(location: Vector, tol: float = 1e-6) -> Vector:
+    """ Transform WGS84 world mercator location given as cartesian 2D
+    coordinates x, y into WGS84 decimal degrees as longitude and latitude.
+    """
+    # From: https://epsg.io/3395
+    # EPSG:3395 - World Mercator
+    # To: https://epsg.io/4326
+    # EPSG:4326 WGS84 - World Geodetic System 1984, used in GPS
+    # Source: Map Projections - A Working manual page:
+    a = WGS84_SEMI_MAJOR_AXIS
+    e = WGS84_ELLIPSOID_ECCENTRIC
+    e2 = e / 2.0
+    pi2 = CONST_PI_2
+    x, y, _ = location
+    t = math.e ** (-y / a)  # 7-10 p.44
+    latitude_ = pi2 - 2 * math.atan(t)  # 7-11 p.45
+    while True:
+        e_sin_lat = math.sin(latitude_) * e
+        latitude = pi2 - 2.0 * math.atan(
+            t * ((1.0 - e_sin_lat) / (1.0 + e_sin_lat)) ** e2)  # 7-9 p.44
+        if abs(latitude - latitude_) < tol:
+            break
+        latitude_ = latitude
+
+    longitude = x / a  # 7-12 p.45
+    return Vector(math.degrees(longitude), math.degrees(latitude))
+
+
+def dms2dd(d: float, m: float = 0, s: float = 0):
+    """Convert degree, minutes, seconds into decimal degrees. """
+    dd = d + float(m) / 60 + float(s) / 3600
+    return dd
+
+
+def dd2dms(dd):
+    """Convert decimal degrees into degree, minutes, seconds. """
+    m, s = divmod(dd * 3600, 60)
+    d, m = divmod(m, 60)
+    return d, m, s

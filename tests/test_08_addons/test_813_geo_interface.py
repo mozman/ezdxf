@@ -241,5 +241,19 @@ def test_feature_collection_to_dxf_entities():
     assert collection[0].dxftype() == 'LWPOLYLINE'
 
 
+@pytest.mark.parametrize('deg, coords', [
+    [(15, 47), (1669792.36, 5910809.62)],
+    [(-15, 47), (-1669792.36, 5910809.62)],
+    [(15, -47), (1669792.36, -5910809.62)],
+    [(-15, -47), (-1669792.36, -5910809.62)],
+    [(0, 0), (0, 0)],
+])
+def test_common_WGS84_projection(deg, coords):
+    projected = geo.wgs84_4326_to_3395(Vector(deg))
+    assert projected.round(2).isclose(coords)
+    # inverse projection
+    assert geo.wgs84_3395_to_4326(projected).isclose(deg)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
