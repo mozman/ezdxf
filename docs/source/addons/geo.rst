@@ -92,7 +92,7 @@ Helper Functions
 
 .. autofunction:: wgs84_4326_to_3395(location: Vector) -> Vector
 
-.. autofunction:: wgs84_3395_to_4326(location: Vector) -> Vector
+.. autofunction:: wgs84_3395_to_4326(location: Vector, tol=1e-6) -> Vector
 
 .. autofunction:: dms2dd
 

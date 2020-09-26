@@ -177,14 +177,20 @@ class GeoProxy:
 
     def globe_to_map(self, func: TFunc = None) -> None:
         """ Transform all coordinates recursive from globe representation
-        in longitude and latitude in decimal degrees into 2D map representation.
+        in longitude and latitude in decimal degrees into 2D map representation
+        in meters.
 
         Default is WGS84 `EPSG:4326 <https://epsg.io/4326>`_ (GPS) to WGS84
         `EPSG:3395 <https://epsg.io/3395>`_ World Mercator function
         :func:`wgs84_4326_to_3395`.
 
-        Use the `pyproj <https://pypi.org/project/pyproj/>`_ package to write
-        your own projection function as needed.
+        To use different output units than meters, create a custom
+        transformation function::
+
+            my_proxy.globe_to_map(lambda x: geo.wgs84_4326_to_3395(x) * 39.37)
+
+        or use the `pyproj <https://pypi.org/project/pyproj/>`_ package to write
+        a complete custom projection function as needed.
 
         Args:
             func: custom transformation function, which takes one
@@ -197,15 +203,21 @@ class GeoProxy:
         self._transform(func)
 
     def map_to_globe(self, func: TFunc = None) -> None:
-        """ Transform all coordinates recursive from 2D map representation into
-        globe representation as longitude and latitude in decimal degrees.
+        """ Transform all coordinates recursive from 2D map representation in
+        meters into globe representation as longitude and latitude in decimal
+        degrees.
 
         Default is WGS84 `EPSG:3395 <https://epsg.io/3395>`_ World Mercator
         to WGS84 `EPSG:4326 <https://epsg.io/4326>`_ GPS function
         :func:`wgs84_3395_to_4326`.
 
-        Use the `pyproj <https://pypi.org/project/pyproj/>`_ package to write
-        your own projection function as needed.
+        To use different input units than meters, create a custom transformation
+        function::
+
+            my_proxy.map_to_globe(lambda x: geo.wgs84_3395_to_4326(x * 0.0254))
+
+        or use the `pyproj <https://pypi.org/project/pyproj/>`_ package to write
+        a complete custom projection function as needed.
 
         Args:
             func: custom transformation function, which takes one
@@ -788,13 +800,12 @@ CONST_PI_4 = math.pi / 4.0
 def wgs84_4326_to_3395(location: Vector) -> Vector:
     """ Transform WGS84 `EPSG:4326 <https://epsg.io/4326>`_ location given as
     latitude and longitude in decimal degrees as used by GPS into World Mercator
-    cartesian 2D coordinates `EPSG:3395 <https://epsg.io/3395>`_.
+    cartesian 2D coordinates in meters `EPSG:3395 <https://epsg.io/3395>`_.
 
     Args:
         location: :class:`Vector` object, x-attribute represents the longitude
             value (East-West) in decimal degrees and the y-attribute
             represents the latitude value (North-South) in decimal degrees.
-
     """
     # From: https://epsg.io/4326
     # EPSG:4326 WGS84 - World Geodetic System 1984, used in GPS
@@ -814,9 +825,14 @@ def wgs84_4326_to_3395(location: Vector) -> Vector:
 
 def wgs84_3395_to_4326(location: Vector, tol: float = 1e-6) -> Vector:
     """ Transform WGS84 World Mercator `EPSG:3395 <https://epsg.io/3395>`_
-    location given as cartesian 2D coordinates x, y into WGS84 decimal degrees
-    as longitude and latitude `EPSG:4326 <https://epsg.io/4326>`_ as used
-    by GPS.
+    location given as cartesian 2D coordinates x, y in meters into WGS84 decimal
+    degrees as longitude and latitude `EPSG:4326 <https://epsg.io/4326>`_ as
+    used by GPS.
+
+    Args:
+        location: :class:`Vector` object, z-axis is ignored
+        tol: accuracy for latitude calculation
+
     """
     # From: https://epsg.io/3395
     # EPSG:3395 - World Mercator
