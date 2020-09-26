@@ -806,7 +806,8 @@ def wgs84_3395_to_4326(location: Vector, tol: float = 1e-6) -> Vector:
     # EPSG:3395 - World Mercator
     # To: https://epsg.io/4326
     # EPSG:4326 WGS84 - World Geodetic System 1984, used in GPS
-    # Source: Map Projections - A Working manual page:
+    # Source: Map Projections - A Working Manual
+    # https://pubs.usgs.gov/pp/1395/report.pdf
     a = WGS84_SEMI_MAJOR_AXIS
     e = WGS84_ELLIPSOID_ECCENTRIC
     e2 = e / 2.0
