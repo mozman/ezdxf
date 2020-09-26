@@ -258,23 +258,6 @@ class TextRenderer:
         return path
 
 
-def _get_line_style_pattern(properties: Properties, scale: float):
-    """ Return matplotlib line style tuple: (offset, on_off_sequence)
-
-    See examples: https://matplotlib.org/gallery/lines_bars_and_markers/linestyles.html
-
-    """
-    if len(properties.linetype_pattern) < 2:
-        return 'solid'
-    else:
-        scale = scale * properties.linetype_scale
-        pattern = np.round(np.array(properties.linetype_pattern) * scale)
-        pattern = [max(element, 1) for element in pattern]
-        if len(pattern) % 2:
-            pattern.pop()
-        return 0, pattern
-
-
 def _get_path_patch_data(path):
     codes = [Path.MOVETO]
     vertices = [path.start]
