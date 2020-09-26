@@ -83,6 +83,22 @@ GeoProxy Class
 
     .. automethod:: crs_to_wcs
 
+    .. automethod:: globe_to_map(func: Callable[[Vector], Vector] = None)->None
+
+    .. automethod:: map_to_globe(func: Callable[[Vector], Vector] = None)->None
+
+Helper Functions
+----------------
+
+.. autofunction:: wgs84_4326_to_3395(location: Vector) -> Vector
+
+.. autofunction:: wgs84_3395_to_4326(location: Vector) -> Vector
+
+.. autofunction:: dms2dd
+
+.. autofunction:: dd2dms
+
+
 .. _Shapely: https://pypi.org/project/Shapely/
 
 .. _GeoJSON: https://tools.ietf.org/html/rfc7946
