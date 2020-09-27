@@ -33,6 +33,7 @@ Included Extensions
 - The `drawing` add-on is a translation layer to send DXF data to a render backend, interfaces to 
   [matplotlib](https://pypi.org/project/matplotlib/), which can export images as png, pdf or svg, 
   and [PyQt5](https://pypi.org/project/PyQt5/) are implemented.
+- `geo` add-on to support the [`__geo_interface__`](https://gist.github.com/sgillies/2217756)
 - `r12writer` add-on to write basic DXF entities direct and fast into a DXF R12 file or stream
 - `iterdxf` add-on to iterate over DXF entities of the modelspace of really big (> 5GB) DXF files which
   do not fit into memory

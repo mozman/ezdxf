@@ -12,7 +12,7 @@ Intended Usage
 
 The intended usage of the :mod:`ezdxf.addons.geo` module is as tool to work with
 geospatial data in conjunction with dedicated geospatial applications and
-libraries and can not and should not replicate their functionality.
+libraries and the module can not and should not replicate their functionality.
 
 The only reimplemented feature is the most common WSG84 EPSG:3395 World
 Mercator projection, for everything else use the dedicated packages like:
