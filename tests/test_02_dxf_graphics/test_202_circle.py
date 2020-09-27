@@ -205,9 +205,9 @@ def test_circle_user_ocs():
 
 
 @pytest.mark.parametrize('radius, sagitta, count', [
-    (1, 0.35, 4), (1, 0.10, 7),
+    (1, 0.35, 5), (1, 0.10, 8),
     (0, 0.35, 0), (0, 0.10, 0),  # radius 0 works but yields nothing
-    (-1, 0.35, 4), (-1, 0.10, 7),  # negative radius same as positive radius
+    (-1, 0.35, 5), (-1, 0.10, 8),  # negative radius same as positive radius
 ])
 def test_circle_flattening(radius, sagitta, count):
     circle = Circle.new(dxfattribs={'radius': radius})

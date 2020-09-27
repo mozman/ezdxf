@@ -52,6 +52,10 @@ class DXFError(Exception):
     pass
 
 
+class InvalidGeoDataException(DXFError):
+    pass
+
+
 class DXFStructureError(DXFError):
     pass
 

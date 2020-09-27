@@ -2,13 +2,17 @@
 News
 ====
 
-Version 0.15a0 - dev
+Version 0.15a1 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-15.html
 - NEW: linetype support for matplotlib drawing backend
 - NEW: recover misplaced tags of the `AcDbEntity` subclass (color, layer, 
   linetype, ...), supported by all loading modes
+- NEW: `ezdxf.addons.geo` module, support for the 
+  [`__geo_interface__`](https://gist.github.com/sgillies/2217756),
+  see [docs](https://ezdxf.mozman.at/docs/addons/geo.html) and 
+  [tutorial](https://ezdxf.mozman.at/docs/tutorials/geo.html)
 - NEW: `Bezier.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Bezier4P.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Path.flattening()` adaptive recursive flattening (approximation)
@@ -23,6 +27,14 @@ Version 0.15a0 - dev
 - NEW: `matplotlib.qsave()`, `ltype` argument to switch between matplotlib dpi 
   based linetype rendering and AutoCAD like drawing units based linetype 
   rendering
+- NEW: `Solid.vertices()` returns OCS vertices in correct order (also `Trace`)
+- NEW: `Solid.wcs_vertices()` returns WCS vertices in correct order (also `Trace`)
+- NEW: `Face3D.wcs_vertices()` compatibility interface to SOLID and TRACE
+- NEW: `Hatch.paths.has_external_path` property
+- NEW: `Hatch.paths.has_outer_most_path` property
+- NEW: `Hatch.paths.external_path()` returns external boundary path
+- NEW: `Hatch.paths.outer_most_paths()` returns iterable of outer most boundary paths
+- NEW: `Hatch.paths.default_paths()` returns iterable of default boundary paths
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
   use `DXFEntity.transform(ucs.matrix)`
 - REMOVED: deprecated `Hatch.edit_boundary()` context manager, 
@@ -40,6 +52,8 @@ Version 0.15a0 - dev
   `Insert.virtual_entities()`
 - REMOVED: deprecated `Spline.edit_data()` context manager,
   use `fit_points`, `control_points`, `knots`  and `weights` attributes
+- BUGFIX: `ezdxf.math.has_clockwise_orientation()` returns `True` for 
+  counter-clock wise and vice versa
 
 Version 0.14.1 - 2020-09-19
 ---------------------------

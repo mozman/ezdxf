@@ -72,7 +72,7 @@ class Circle(DXFGraphic):
     def flattening(self, sagitta: float) -> Iterable[Vector]:
         """ Approximate the circle by vertices in WCS, argument `segment` is the
         max. distance from the center of an arc segment to the center of its
-        chord. Returns an open polygon: start vertex != end vertex!
+        chord. Returns a closed polygon: start vertex == end vertex!
 
         Yields always :class:`~ezdxf.math.Vector` objects.
 
@@ -82,7 +82,7 @@ class Circle(DXFGraphic):
         radius = abs(self.dxf.radius)
         if radius > 0.0:
             count = arc_segment_count(radius, math.tau, sagitta)
-            yield from self.vertices(linspace(0.0, 360.0, count, endpoint=False))
+            yield from self.vertices(linspace(0.0, 360.0, count+1))
 
     def transform(self, m: Matrix44) -> 'Circle':
         """ Transform CIRCLE entity by transformation matrix `m` inplace.

@@ -12,6 +12,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.const import (
     SUBCLASS_MARKER, DXFStructureError, DXF2010, DXFTypeError,
+    InvalidGeoDataException
 )
 from ezdxf.lldxf.packedtags import VertexArray
 from ezdxf.lldxf.tags import Tags, DXFTag
@@ -26,7 +27,7 @@ from ..math import Matrix44
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace
 
-__all__ = ['GeoData', 'MeshVertices', 'InvalidGeoDataException']
+__all__ = ['GeoData', 'MeshVertices']
 
 acdb_geo_data = DefSubclass('AcDbGeoData', {
     # 1 = R2009, but this release has no DXF version,
@@ -129,10 +130,6 @@ acdb_geo_data = DefSubclass('AcDbGeoData', {
     # face index 99 repeat, faces_count
 
 })
-
-
-class InvalidGeoDataException(Exception):
-    pass
 
 
 class MeshVertices(VertexArray):
@@ -268,29 +265,43 @@ class GeoData(DXFObject):
                units.decode(self.dxf.vertical_units)
 
     def get_crs(self) -> Tuple[int, bool]:
-        """ The EPSG number is stored in a tag like:
+        """ Returns the EPSG index and axis-ordering, axis-ordering is ``True``
+        if fist axis is labeled "E" or "W" and ``False`` if first axis is
+        labeled "N" or "S".
 
-        <Alias id="27700" type="CoordinateSystem">
-          <ObjectId>OSGB1936.NationalGrid</ObjectId>
-          <Namespace>EPSG Code</Namespace>
-        </Alias>
+        If axis-ordering is ``False`` the CRS is not compatible with the
+        ``__geo_interface__`` or GeoJSON (see chapter 3.1.1).
+
+        Raises:
+            InvalidGeoDataException: for invalid or unknown XML data
+
+        The EPSG number is stored in a tag like:
+
+        .. code::
+
+            <Alias id="27700" type="CoordinateSystem">
+              <ObjectId>OSGB1936.NationalGrid</ObjectId>
+              <Namespace>EPSG Code</Namespace>
+            </Alias>
 
         The axis-ordering is stored in a tag like:
 
-        <Axis uom="METER">
-          <CoordinateSystemAxis>
-            <AxisOrder>1</AxisOrder>
-            <AxisName>Easting</AxisName>
-            <AxisAbbreviation>E</AxisAbbreviation>
-            <AxisDirection>east</AxisDirection>
-          </CoordinateSystemAxis>
-          <CoordinateSystemAxis>
-            <AxisOrder>2</AxisOrder>
-            <AxisName>Northing</AxisName>
-            <AxisAbbreviation>N</AxisAbbreviation>
-            <AxisDirection>north</AxisDirection>
-          </CoordinateSystemAxis>
-        </Axis>
+        .. code::
+
+            <Axis uom="METER">
+              <CoordinateSystemAxis>
+                <AxisOrder>1</AxisOrder>
+                <AxisName>Easting</AxisName>
+                <AxisAbbreviation>E</AxisAbbreviation>
+                <AxisDirection>east</AxisDirection>
+              </CoordinateSystemAxis>
+              <CoordinateSystemAxis>
+                <AxisOrder>2</AxisOrder>
+                <AxisName>Northing</AxisName>
+                <AxisAbbreviation>N</AxisAbbreviation>
+                <AxisDirection>north</AxisDirection>
+              </CoordinateSystemAxis>
+            </Axis>
 
         """
         definition = self.coordinate_system_definition
@@ -336,6 +347,18 @@ class GeoData(DXFObject):
 
     def get_crs_transformation(
             self, *, no_checks: bool = False) -> Tuple[Matrix44, int]:
+        """ Returns the transformation matrix and the EPSG index to transform
+        WCS coordinates into CRS coordinates. Because of the lack of proper
+        documentation this method works only for tested configurations, set
+        argument `no_checks` to ``True`` to use the method for untested geodata
+        configurations, but the results may be incorrect.
+
+        Supports only "Local Grid" transformation!
+
+        Raises:
+            InvalidGeoDataException: for untested geodata configurations
+
+        """
         epsg, xy_ordering = self.get_crs()
 
         if not no_checks:

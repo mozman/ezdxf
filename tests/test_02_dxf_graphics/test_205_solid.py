@@ -121,7 +121,8 @@ def test_load_from_text(entity):
     assert entity.dxf.vtx3 == (0, 0, 0)
 
 
-@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize("txt,ver",
+                         [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     solid = TEST_CLASS.from_text(txt)
@@ -157,7 +158,7 @@ def test_trace():
 
 def test_3dface():
     face = Face3d()
-    face.dxf.invisible = 2+8
+    face.dxf.invisible = 2 + 8
     assert face.is_invisible_edge(0) is False
     assert face.is_invisible_edge(1) is True
     assert face.is_invisible_edge(2) is False
@@ -189,3 +190,59 @@ def test_trace_translate():
     face.dxf.vtx1 = (3, 3, 0)
     face.translate(1, 1, 0)
     assert face.dxf.vtx1 == (4, 4, 0)
+
+
+def test_solid_reorder_quad_ocs_vertices():
+    solid = Solid()
+    for index, vertex in enumerate([(0, 0), (1, 0), (0, 1), (1, 1)]):
+        solid[index] = vertex
+
+    # reorder weird vertex order:
+    assert solid.vertices() == [(0, 0), (1, 0), (1, 1), (0, 1)]
+
+
+def test_solid_triangle_ocs_vertices():
+    solid = Solid()
+    for index, vertex in enumerate([(0, 0), (1, 0), (0, 1), (0, 1)]):
+        solid[index] = vertex
+    assert solid.vertices() == [(0, 0), (1, 0), (0, 1)]
+
+
+def test_solid_close_triangle_ocs_vertices():
+    solid = Solid()
+    for index, vertex in enumerate([(0, 0), (1, 0), (0, 1), (0, 1)]):
+        solid[index] = vertex
+    assert solid.vertices(close=True) == [(0, 0), (1, 0), (0, 1), (0, 0)]
+
+
+def test_solid_close_quad_ocs_vertices():
+    solid = Solid()
+    for index, vertex in enumerate([(0, 0), (1, 0), (1, 1), (0, 1)]):
+        solid[index] = vertex
+    assert solid.vertices(close=True) == [
+        (0, 0), (1, 0), (0, 1), (1, 1), (0, 0)]
+
+
+def test_solid_wcs_vertices():
+    solid = Solid()
+    for index, vertex in enumerate([(0, 0), (1, 0), (0, 1), (1, 1)]):
+        solid[index] = vertex
+    # reorder weird vertex order:
+    assert solid.wcs_vertices() == [(0, 0), (1, 0), (1, 1), (0, 1)]
+
+
+def test_3dface_quad_vertices():
+    face = Face3d()
+    for index, vertex in enumerate([(0, 0), (1, 0), (1, 1), (0, 1)]):
+        face[index] = vertex
+    # no weird vertex order:
+    assert face.wcs_vertices() == [(0, 0), (1, 0), (1, 1), (0, 1)]
+    assert face.wcs_vertices(close=True) == [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
+
+
+def test_3dface_triangle_vertices():
+    face = Face3d()
+    for index, vertex in enumerate([(0, 0), (1, 0), (1, 1), (1, 1)]):
+        face[index] = vertex
+    assert face.wcs_vertices() == [(0, 0), (1, 0), (1, 1)]
+    assert face.wcs_vertices(close=True) == [(0, 0), (1, 0), (1, 1), (0, 0)]

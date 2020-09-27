@@ -8,15 +8,17 @@ Add-ons
 .. toctree::
     :maxdepth: 1
 
-    r12writer
-    iterdxf
-    importer
+
     drawing
+    geo
+    importer
     dxf2code
-    acadctb
-    pycsg
-    forms
+    iterdxf
+    r12writer
     odafc
+    pycsg
+    acadctb
+    forms
 
 
 
