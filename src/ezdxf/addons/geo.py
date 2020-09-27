@@ -112,13 +112,20 @@ class GeoProxy:
     Stores coordinates as :class:`Vector` objects and represents "Polygon"
     always as tuple (exterior, holes) even without holes.
 
+    The GeoJSON specification recommends 6 decimal places for latitude and
+    longitude which equates to roughly 10cm of precision. You may need
+    slightly more for certain applications, 9 decimal places would be
+    sufficient for professional survey-grade GPS coordinates.
+
     Args:
         geo_mapping: parsed and compiled ``__geo_interface__`` mapping
+        places: decimal places to round for ``__geo_interface__`` export
 
     """
 
-    def __init__(self, geo_mapping: Dict):
+    def __init__(self, geo_mapping: Dict, places: int = 6):
         self._root = geo_mapping
+        self.places = places
 
     @classmethod
     def parse(cls, geo_mapping: Dict) -> 'GeoProxy':
@@ -148,7 +155,7 @@ class GeoProxy:
         """ Returns the ``__geo_interface__`` compatible mapping as
         :class:`dict`.
         """
-        return _rebuild(self._root)
+        return _rebuild(self._root, self.places)
 
     def __iter__(self) -> Iterable[Dict]:
         """ Iterate over all geo content objects.
@@ -238,7 +245,7 @@ class GeoProxy:
             crs: transformation matrix of type :class:`~ezdxf.math.Matrix44`
 
         """
-        self._transform(crs.transform)
+        self._transform(crs.ucs_vertex_from_wcs)
 
     def wcs_to_crs(self, crs: 'Matrix44') -> None:
         """ Transform all coordinates recursive from :ref:`WCS` coordinates into
@@ -267,7 +274,7 @@ class GeoProxy:
 
         """
 
-        self._transform(crs.ucs_vertex_from_wcs)
+        self._transform(crs.transform)
 
     def _transform(self, func: TFunc):
         def process(entity: Dict):
@@ -461,17 +468,20 @@ def _parse_polygon(coordinates: Sequence) -> Sequence:
     return Vector.list(exterior), [Vector.list(h) for h in holes]
 
 
-def _rebuild(geo_mapping: Dict) -> Dict:
+def _rebuild(geo_mapping: Dict, places: int = 6) -> Dict:
     """ Returns ``__geo_interface__`` compatible mapping as :class:`dict` from
     compiled internal representation.
 
     """
 
+    def pnt(v: Vector) -> Tuple[float, float]:
+        return round(v.x, places), round(v.y, places)
+
     def _polygon(exterior, holes):
-        coordinates = [(v.x, v.y) for v in exterior]
+        coordinates = [pnt(v) for v in exterior]
         if holes:
             coordinates = [coordinates]
-            coordinates.extend([(v.x, v.y) for v in hole] for hole in holes)
+            coordinates.extend([pnt(v) for v in hole] for hole in holes)
         return coordinates
 
     geo_interface = dict(geo_mapping)
@@ -486,14 +496,14 @@ def _rebuild(geo_mapping: Dict) -> Dict:
         geo_interface[GEOMETRY] = _rebuild(geo_interface[GEOMETRY])
     elif type_ == POINT:
         v = geo_interface[COORDINATES]
-        geo_interface[COORDINATES] = v.x, v.y
+        geo_interface[COORDINATES] = pnt(v)
     elif type_ in (LINE_STRING, MULTI_POINT):
         coordinates = geo_interface[COORDINATES]
-        geo_interface[COORDINATES] = [(v.x, v.y) for v in coordinates]
+        geo_interface[COORDINATES] = [pnt(v) for v in coordinates]
     elif type_ == MULTI_LINE_STRING:
         coordinates = []
         for line in geo_interface[COORDINATES]:
-            coordinates.append([(v.x, v.y) for v in line])
+            coordinates.append([pnt(v) for v in line])
     elif type_ == POLYGON:
         geo_interface[COORDINATES] = _polygon(*geo_interface[COORDINATES])
     elif type_ == MULTI_POLYGON:
