@@ -207,7 +207,7 @@ class GeoProxy:
         """
         if func is None:
             func = wgs84_4326_to_3395
-        self._transform(func)
+        self.apply(func)
 
     def map_to_globe(self, func: TFunc = None) -> None:
         """ Transform all coordinates recursive from 2D map representation in
@@ -234,7 +234,7 @@ class GeoProxy:
         """
         if func is None:
             func = wgs84_3395_to_4326
-        self._transform(func)
+        self.apply(func)
 
     def crs_to_wcs(self, crs: 'Matrix44') -> None:
         """ Transform all coordinates recursive from CRS into
@@ -245,7 +245,7 @@ class GeoProxy:
             crs: transformation matrix of type :class:`~ezdxf.math.Matrix44`
 
         """
-        self._transform(crs.ucs_vertex_from_wcs)
+        self.apply(crs.ucs_vertex_from_wcs)
 
     def wcs_to_crs(self, crs: 'Matrix44') -> None:
         """ Transform all coordinates recursive from :ref:`WCS` coordinates into
@@ -274,17 +274,24 @@ class GeoProxy:
 
         """
 
-        self._transform(crs.transform)
+        self.apply(crs.transform)
 
-    def _transform(self, func: TFunc):
+    def apply(self, func: TFunc) -> None:
+        """ Apply the transformation function `func` recursive to all
+        coordinates.
+
+        Args:
+            func: transformation function as Callable[[Vector], Vector]
+
+        """
         def process(entity: Dict):
-            def convert(coords):
+            def transform(coords):
                 if isinstance(coords, Vector):
                     return func(coords)
                 else:
-                    return [convert(c) for c in coords]
+                    return [transform(c) for c in coords]
 
-            entity[COORDINATES] = convert(entity[COORDINATES])
+            entity[COORDINATES] = transform(entity[COORDINATES])
 
         for entity in self.__iter__():
             process(entity)

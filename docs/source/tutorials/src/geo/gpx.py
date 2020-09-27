@@ -42,7 +42,7 @@ def add_gpx_track(msp, track_data, layer: str):
         # Identity matrix for DXF files without a geo location reference:
         m = Matrix44()
         epsg = 3395
-    # Check if for compatible projection:
+    # Check for compatible projection:
     if epsg == 3395:
         # Transform CRS coordinates into DXF WCS:
         geo_track.crs_to_wcs(m)

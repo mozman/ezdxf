@@ -113,6 +113,8 @@ GeoProxy Class
 
     .. automethod:: map_to_globe(func: Callable[[Vector], Vector] = None)->None
 
+    .. automethod:: apply(func: Callable[[Vector], Vector])->None
+
 Helper Functions
 ----------------
 
