@@ -17,3 +17,4 @@ the :ref:`Howto` section.
     linetypes
     coordinates
     ocs
+    units

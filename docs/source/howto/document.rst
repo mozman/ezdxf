@@ -70,86 +70,23 @@ Set/Get Header Variables
 Set DXF Drawing Units
 ---------------------
 
-Use this HEADER variables to setup the default units for CAD applications opening the DXF file.
-This settings are not relevant for `ezdxf` API calls, which are unitless for length values and coordinates
-and decimal degrees for angles (in most cases).
+The header variable $INSUNITS defines the drawing units for the modelspace and
+therefore for the DXF document if no further settings are applied. The most
+common units are 6 for meters and 1 for inches.
+
+Use this HEADER variables to setup the default units for CAD applications
+opening the DXF file. This setting is not relevant for `ezdxf` API calls,
+which are unitless for length values and coordinates and decimal degrees for
+angles (in most cases).
 
 Sets drawing units:
-
-$MEASUREMENT controls whether the current drawing uses imperial or metric hatch pattern and linetype files:
-
-.. code-block:: python
-
-
-    doc.header['$MEASUREMENT'] = 1
-
-=== ===============
-0   English
-1   Metric
-=== ===============
-
-$LUNITS sets the linear units format for creating objects:
-
-.. code-block:: python
-
-
-    doc.header['$LUNITS'] = 2
-
-=== ===============
-1   Scientific
-2   Decimal (default)
-3   Engineering
-4   Architectural
-5   Fractional
-=== ===============
-
-$AUNITS set units format for angles:
-
-.. code-block:: python
-
-    doc.header['$AUNITS'] = 0
-
-=== ===============
-0   Decimal degrees
-1   Degrees/minutes/seconds
-2   Grad
-3   Radians
-=== ===============
-
-$INSUNITS set default drawing units for AutoCAD DesignCenter blocks:
 
 .. code-block:: python
 
 
     doc.header['$INSUNITS'] = 6
 
-=== ===============
-0   Unitless
-1   Inches
-2   Feet
-3   Miles
-4   Millimeters
-5   Centimeters
-6   Meters
-7   Kilometers
-8   Microinches
-9   Mils
-10  Yards
-11  Angstroms
-12  Nanometers
-13  Microns
-14  Decimeters
-15  Decameters
-16  Hectometers
-17  Gigameters
-18  Astronomical units
-19  Light years
-20  Parsecs
-21  US Survey Feet
-22  US Survey Inch
-23  US Survey Yard
-24  US Survey Mile
-=== ===============
+For more information see section :ref:`DXF Units`.
 
 Create More Readable DXF Files (DXF Pretty Printer)
 ---------------------------------------------------
