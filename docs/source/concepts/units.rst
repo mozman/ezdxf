@@ -20,10 +20,10 @@ context where a DXF entity is used. The modelspace get the unit information from
 the header variable $INSUNITS, paperspace and block layouts get their unit
 information form the attribute :attr:`~ezdxf.layouts.BaseLayout.units`.
 
-Inserting a block reference into the modelspace or another block layout, should
-apply a scaling if the units of the block reference and the target layout are
-different, this behavior is not implemented yet for the :meth:`Insert.virtual_entities`
-and :meth:`Insert.explode` methods, this will be added in the future.
+When inserting a block reference into the modelspace or another block layout
+with different units, the scaling factor between these units should be applied
+as scaling DXF attributes (:attr:`xscale`, ...) of the block reference (e.g.
+modelspace in meters and block in centimeters, :attr:`xscale` has to be 0.01).
 
 Angle Units
 -----------

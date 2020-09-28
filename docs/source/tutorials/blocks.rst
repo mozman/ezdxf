@@ -43,6 +43,12 @@ Query all block references of block ``FLAG``:
     for flag_ref in msp.query('INSERT[name=="FLAG"]'):
         print(str(flag_ref))
 
+When inserting a block reference into the modelspace or another block
+layout with different units, the scaling factor between these units
+should be applied as scaling attributes (:attr:`xscale`, ...) e.g.
+modelspace in meters and block in centimeters, :attr:`xscale` has to
+be 0.01.
+
 What are Attributes?
 --------------------
 

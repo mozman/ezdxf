@@ -222,6 +222,12 @@ class CreatorInterface:
         """
         Add an :class:`~ezdxf.entities.Insert` entity.
 
+        When inserting a block reference into the modelspace or another block
+        layout with different units, the scaling factor between these units
+        should be applied as scaling attributes (:attr:`xscale`, ...) e.g.
+        modelspace in meters and block in centimeters, :attr:`xscale` has to
+        be 0.01.
+
         Args:
             name: block name as str
             insert: insert location as 2D/3D point in :ref:`WCS`
