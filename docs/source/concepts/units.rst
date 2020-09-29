@@ -69,6 +69,13 @@ scaling factor between units:
     # scaling factor = 1 / factor
     block_ref.set_scale(1.0/factor)
 
+.. hint::
+
+    It is never a good idea to use different measurement system in one
+    document, ask the NASA about their Mars Climate Orbiter from 1999.
+    The same applies for units of the same measurement system, just use one unit
+    like meters or inches.
+
 
 Angle Units
 -----------
