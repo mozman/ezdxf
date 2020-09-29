@@ -29,11 +29,14 @@ Get and set  document/modelspace units as enum by the
 
 .. code-block:: python
 
+    import ezdxf
+    from ezdxf import units
+
     doc = ezdxf.new()
     # Set centimeter as document/modelspace units
-    doc.units = 5
+    doc.units = units.CM
     # which is a shortcut (including validation) for
-    doc.header['$INSUNITS'] = 5
+    doc.header['$INSUNITS'] = units.CM
 
 Block Units
 -----------
@@ -49,9 +52,9 @@ centimeters, x-, y- and z-scaling has to be 0.01:
 
 .. code-block:: python
 
-    doc.units = 6 # meters
+    doc.units = units.M
     my_block = doc.blocks.new('MYBLOCK')
-    my_block.units = 5  # centimeters
+    my_block.units = units.CM
     block_ref = msp.add_block_ref('MYBLOCK')
     # Set uniform scaling for x-, y- and z-axis
     block_ref.set_scale(0.01)
@@ -61,9 +64,7 @@ scaling factor between units:
 
 .. code-block:: python
 
-    from ezdxf.units import conversion_factor
-
-    factor = conversion_factor(doc.units, my_block.units)
+    factor = units.conversion_factor(doc.units, my_block.units)
     # factor = 100 for 1m is 100cm
     # scaling factor = 1 / factor
     block_ref.set_scale(1.0/factor)
@@ -101,20 +102,20 @@ The most common units are 6 for meters and 1 for inches.
 
 === ===============
 0   Unitless
-1   Inches
-2   Feet
-3   Miles
-4   Millimeters
-5   Centimeters
-6   Meters
-7   Kilometers
+1   Inches, :attr:`units.IN`
+2   Feet, :attr:`units.FT`
+3   Miles, :attr:`units.MI`
+4   Millimeters, :attr:`units.MM`
+5   Centimeters, :attr:`units.CM`
+6   Meters, :attr:`units.M`
+7   Kilometers, :attr:`units.KM`
 8   Microinches
 9   Mils
-10  Yards
+10  Yards, :attr:`units.YD`
 11  Angstroms
 12  Nanometers
 13  Microns
-14  Decimeters
+14  Decimeters, :attr:`units.DM`
 15  Decameters
 16  Hectometers
 17  Gigameters

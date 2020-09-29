@@ -16,6 +16,16 @@ MSP_METRIC_UNITS_FACTORS = {
     'mi': 0.00062137119,
 }
 
+IN = 1
+FT = 2
+MI = 3
+MM = 4
+CM = 5
+M = 6
+KM = 7
+YD = 10
+DM = 14
+
 # Conversion factor from meters to unit
 # 1 meter is ... [unit]
 TO_METER_FACTOR = [
@@ -133,7 +143,7 @@ def conversion_factor(source_units: int, target_units: int) -> float:
     """ Returns the conversion factor to represent `source_units` in
     `target_units`.
 
-    E.g. millimeter in centimeter :code:`conversion_factor(4, 5)` returns 0.1,
+    E.g. millimeter in centimeter :code:`conversion_factor(MM, CM)` returns 0.1,
     because 1 mm = 0.1 cm
 
     """
