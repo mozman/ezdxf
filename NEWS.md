@@ -35,6 +35,7 @@ Version 0.15a1 - dev
 - NEW: `Hatch.paths.external_path()` returns external boundary path
 - NEW: `Hatch.paths.outer_most_paths()` returns iterable of outer most boundary paths
 - NEW: `Hatch.paths.default_paths()` returns iterable of default boundary paths
+- NEW: `Drawing.units` property to get/set document/modelspace units
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
   use `DXFEntity.transform(ucs.matrix)`
 - REMOVED: deprecated `Hatch.edit_boundary()` context manager, 

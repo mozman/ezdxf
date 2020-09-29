@@ -1,5 +1,7 @@
 .. _dxf units:
 
+.. module:: ezdxf.units
+
 DXF Units
 =========
 
@@ -16,14 +18,56 @@ Length Units
 
 Any length or coordinate value in DXF is unitless in the first place, there is
 no unit information attached to the value. The unit information comes from the
-context where a DXF entity is used. The modelspace get the unit information from
-the header variable $INSUNITS, paperspace and block layouts get their unit
-information form the attribute :attr:`~ezdxf.layouts.BaseLayout.units`.
+context where a DXF entity is used. The document/modelspace get the unit
+information from the header variable $INSUNITS, paperspace and block layouts get
+their unit information form the attribute :attr:`~ezdxf.layouts.BaseLayout.units`.
+The modelspace object has also a :attr:`units` property, but this value do not
+represent the modelspace units, this value is always set to 0 "unitless".
 
-When inserting a block reference into the modelspace or another block layout
-with different units, the scaling factor between these units should be applied
-as scaling DXF attributes (:attr:`xscale`, ...) of the block reference (e.g.
-modelspace in meters and block in centimeters, :attr:`xscale` has to be 0.01).
+Get and set  document/modelspace units as enum by the
+:class:`~ezdxf.document.Drawing` property :attr:`units`:
+
+.. code-block:: python
+
+    doc = ezdxf.new()
+    # Set centimeter as document/modelspace units
+    doc.units = 5
+    # which is a shortcut (including validation) for
+    doc.header['$INSUNITS'] = 5
+
+Block Units
+-----------
+
+As said each block definition can have independent units, but there is no
+implicit unit conversion applied, not in CAD applications and not in ezdxf.
+
+When inserting a block reference (INSERT) into the modelspace or another block
+layout with different units, the scaling factor between these units **must** be
+applied explicit as scaling DXF attributes (:attr:`xscale`, ...) of the
+:class:`~ezdxf.entities.Insert` entity, e.g. modelspace in meters and block in
+centimeters, x-, y- and z-scaling has to be 0.01:
+
+.. code-block:: python
+
+    doc.units = 6 # meters
+    my_block = doc.blocks.new('MYBLOCK')
+    my_block.units = 5  # centimeters
+    block_ref = msp.add_block_ref('MYBLOCK')
+    # Set uniform scaling for x-, y- and z-axis
+    block_ref.set_scale(0.01)
+
+Use helper function :func:`conversion_factor` to calculate the
+scaling factor between units:
+
+.. code-block:: python
+
+    from ezdxf.units import conversion_factor
+
+    factor = conversion_factor(doc.units, my_block.units)
+    # factor = 100 for 1m is 100cm
+    # scaling factor = 1 / factor
+    block_ref.set_scale(1.0/factor)
+
 
 Angle Units
 -----------
@@ -140,6 +184,10 @@ counter-clockwise orientation, unless stated explicit otherwise:
 3   Radians
 === ===============
 
+Helper Tools
+------------
+
+.. autofunction:: conversion_factor
 
 .. _github: https://github.com/mozman/ezdxf/issues
 .. _DXF reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3

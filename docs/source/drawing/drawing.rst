@@ -56,6 +56,7 @@ Drawing Object
 
         Reference to the root dictionary of the OBJECTS section.
 
+
     .. attribute:: header
 
         Reference to the :class:`~ezdxf.sections.header.HeaderSection`, get/set drawing settings as header variables.
@@ -152,6 +153,8 @@ Drawing Object
     .. attribute:: mleader_styles
 
         :class:`~ezdxf.entities.MLeaderStyleCollection` of all :class:`~ezdxf.entities.MLeaderStyle` objects.
+
+    .. autoattribute:: units
 
     .. automethod:: save
 

@@ -219,6 +219,21 @@ class Drawing:
         """
         return 'utf-8' if self.dxfversion >= DXF2007 else self.encoding
 
+    @property
+    def units(self) -> int:
+        """ Get and set the document/modelspace base units as enum, for more
+        information read this: :ref:`dxf units`.
+
+        """
+        return self.header.get('$INSUNITS', 0)
+
+    @units.setter
+    def units(self, unit_enum: int) -> None:
+        if 0 <= unit_enum < 25:
+            self.header['$INSUNITS'] = unit_enum
+        else:
+            raise ValueError(f'Invalid units enum: {unit_enum}')
+
     def _validate_dxf_version(self, version: str) -> str:
         version = version.upper()
         # translates 'R12' -> 'AC1009'
