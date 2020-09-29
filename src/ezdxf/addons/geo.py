@@ -191,13 +191,8 @@ class GeoProxy:
         `EPSG:3395 <https://epsg.io/3395>`_ World Mercator function
         :func:`wgs84_4326_to_3395`.
 
-        To use different output units than meters, create a custom
-        transformation function::
-
-            my_proxy.globe_to_map(lambda x: geo.wgs84_4326_to_3395(x) * 39.37)
-
-        or use the `pyproj <https://pypi.org/project/pyproj/>`_ package to write
-        a complete custom projection function as needed.
+        Use the `GDAL <https://pypi.org/project/GDAL/>`_ package to write
+        a custom projection function as needed.
 
         Args:
             func: custom transformation function, which takes one
@@ -218,13 +213,8 @@ class GeoProxy:
         to WGS84 `EPSG:4326 <https://epsg.io/4326>`_ GPS function
         :func:`wgs84_3395_to_4326`.
 
-        To use different input units than meters, create a custom transformation
-        function::
-
-            my_proxy.map_to_globe(lambda x: geo.wgs84_3395_to_4326(x * 0.0254))
-
-        or use the `pyproj <https://pypi.org/project/pyproj/>`_ package to write
-        a complete custom projection function as needed.
+        Use the `GDAL <https://pypi.org/project/GDAL/>`_ package to write
+        a custom projection function as needed.
 
         Args:
             func: custom transformation function, which takes one
