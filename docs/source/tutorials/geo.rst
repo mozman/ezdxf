@@ -181,3 +181,25 @@ WGS84 coordinates to 2D map coordinates EPSG:3395 "World Mercator":
 
     # Apply a custom transformation function to all coordinates:
     geo_proxy.apply(lambda v: Vector(ct.TransformPoint(v.x, v.y)))
+
+The same example with the pyproj package:
+
+.. code-block:: python
+
+    from pyproj import Transformer
+    from ezdxf.math import Vector
+
+    # GPS track in WGS84, load_gpx_track() code see above
+    gpx_points = list(load_gpx_track('track1.gpx'))
+
+    # Create transformation object:
+    ct = Transformer.from_crs('EPSG:4326', 'EPSG:3395)
+
+    # Create GeoProxy() object:
+    geo_proxy = GeoProxy.parse({
+        'type': 'LineString',
+        'coordinates': gpx_points
+    })
+
+    # Apply a custom transformation function to all coordinates:
+    geo_proxy.apply(lambda v: Vector(ct.transform(v.x, v.y)))

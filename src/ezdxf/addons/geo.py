@@ -191,7 +191,7 @@ class GeoProxy:
         `EPSG:3395 <https://epsg.io/3395>`_ World Mercator function
         :func:`wgs84_4326_to_3395`.
 
-        Use the `GDAL <https://pypi.org/project/GDAL/>`_ package to write
+        Use the `pyproj <https://pypi.org/project/pyproj/>`_ package to write
         a custom projection function as needed.
 
         Args:
@@ -213,7 +213,7 @@ class GeoProxy:
         to WGS84 `EPSG:4326 <https://epsg.io/4326>`_ GPS function
         :func:`wgs84_3395_to_4326`.
 
-        Use the `GDAL <https://pypi.org/project/GDAL/>`_ package to write
+        Use the `pyproj <https://pypi.org/project/pyproj/>`_ package to write
         a custom projection function as needed.
 
         Args:
