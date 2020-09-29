@@ -12,7 +12,8 @@ if TYPE_CHECKING:
 
 
 def new(dxfversion: str = DXF2013,
-        setup: Union[str, bool, Sequence[str]] = False) -> 'Drawing':
+        setup: Union[str, bool, Sequence[str]] = False,
+        units: int = 6) -> 'Drawing':
     """ Create a new :class:`~ezdxf.drawing.Drawing` from scratch, `dxfversion`
     can be either "AC1009" the official DXF version name or "R12" the
     AutoCAD release name.
@@ -31,6 +32,11 @@ def new(dxfversion: str = DXF2013,
     AC1032  AutoCAD R2018
     ======= ========================
 
+    The `units` argument defines th document and modelspace units. The header
+    variable $MEASUREMENT will be set according to the given `units`, 0 for
+    inch, feet, miles, ... and 1 for metric units. For more information go to
+    module :mod:`ezdxf.units`
+
     Args:
         dxfversion: DXF version specifier as string, default is "AC1027"
             respectively "R2013"
@@ -46,9 +52,12 @@ def new(dxfversion: str = DXF2013,
             dimstyles          setup default `ezdxf` dimension styles
             visualstyles       setup 25 standard visual styles
             ================== ========================================
+        units: document and modelspace units, default is 6 for meters
 
     """
     doc = Drawing.new(dxfversion)
+    doc.units = units
+    doc.header['$MEASUREMENT'] = 0 if units in (1, 2, 3, 8, 9, 10) else 1
     if setup:
         setup_drawing(doc, topics=setup)
     return doc
