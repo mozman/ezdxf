@@ -37,8 +37,10 @@ def load(measurement: int = 1, factor: float = None):
 
 
 def scale_pattern(pattern, factor: float = 1, angle: float = 0):
+    ndigits = 10
+
     def _scale(iterable):
-        return [i * factor for i in iterable]
+        return [round(i * factor, ndigits) for i in iterable]
 
     def _scale_line(line):
         angle0, base_point, offset, dash_length_items = line
@@ -48,7 +50,7 @@ def scale_pattern(pattern, factor: float = 1, angle: float = 0):
             angle0 = (angle0 + angle) % 360.0
 
         return [
-            angle0,
+            round(angle0, ndigits),
             tuple(_scale(base_point)),
             tuple(_scale(offset)),
             _scale(dash_length_items)
