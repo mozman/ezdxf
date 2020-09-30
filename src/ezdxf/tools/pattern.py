@@ -478,15 +478,18 @@ PATTERN_OLD = scale_all(PATTERN_NEW, factor=0.03906836964688205)
 
 
 def parse(pattern: str) -> Dict:
-    comp = PatFileCompiler(pattern)
-    return comp.compile_pattern()
+    try:
+        comp = PatternFileCompiler(pattern)
+        return comp.compile_pattern()
+    except Exception:
+        raise ValueError('Incompatible pattern definition.')
 
 
 def _tokenize_pattern_line(line: str) -> List:
     return line.split(',', maxsplit=1 if line.startswith('*') else -1)
 
 
-class PatFileCompiler:
+class PatternFileCompiler:
     def __init__(self, content: str):
         self._lines = [
             _tokenize_pattern_line(line) for line in (
