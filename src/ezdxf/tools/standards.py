@@ -240,7 +240,7 @@ def setup_dimstyle(doc: 'Drawing', fmt: str, style: str = None, blk: str = None,
 def linetypes() -> List[Tuple[str, str, Sequence[float]]]:
     """ Creates a list of standard line types.
     """
-    # dxf linetype definition
+    # DXF linetype definition for meters
     # name, description, elements:
     # elements = [total_pattern_length, elem1, elem2, ...]
     # total_pattern_length = sum(abs(elem))

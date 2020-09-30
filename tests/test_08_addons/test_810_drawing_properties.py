@@ -3,9 +3,7 @@
 
 import pytest
 import ezdxf
-from ezdxf.addons.drawing.properties import (
-    RenderContext, compile_line_pattern, is_valid_color,
-)
+from ezdxf.addons.drawing.properties import RenderContext, is_valid_color
 from ezdxf.entities import Layer, factory
 from ezdxf.lldxf import const
 
@@ -198,19 +196,6 @@ def test_resolve_block_entities(doc):
 
     ctx.pop_state()
     assert ctx.inside_block_reference is False
-
-
-def test_compile_pattern():
-    assert compile_line_pattern(0, [0.0]) == tuple()
-    assert compile_line_pattern(2.0, [1.25, -0.25, 0.25, -0.25]) == (
-        1.25, 0.25, 0.25, 0.25)
-    assert compile_line_pattern(3.5, [2.5, -0.25, 0.5, -0.25]) == (
-        2.5, 0.25, 0.5, 0.25)
-    assert compile_line_pattern(1.4, [1.0, -0.2, 0.0, -0.2]) == (
-        1.0, 0.2, 0.0, 0.2)
-    assert compile_line_pattern(0.2, [0.0, -0.2]) == (0.0, 0.2)
-    assert compile_line_pattern(2.6, [2.0, -0.2, 0.0, -0.2, 0.0, -0.2]) == (
-        2.0, 0.2, 0.0, 0.2, 0.0, 0.2)
 
 
 class TestResolveLayerACIColor7:
