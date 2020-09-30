@@ -98,7 +98,7 @@ class PatternFileCompiler:
         if pattern:
             yield pattern
 
-    def compile_pattern(self, ndigits: int = 4) -> Dict:
+    def compile_pattern(self, ndigits: int = 10) -> Dict:
         pattern = dict()
         for p in self._parse_pattern():
             pat = []
