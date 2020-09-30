@@ -92,7 +92,7 @@ Path manager: :class:`BoundaryPaths`
 
     .. attribute:: dxf.pattern_double
 
-        ``1`` = double pattern size else ``0``. (int)
+        1 = double pattern size else 0. (int)
 
     .. attribute:: dxf.n_seed_points
 
@@ -216,7 +216,7 @@ Hatch Boundary Helper Classes
 
     .. attribute:: vertices
 
-        List of path vertices as ``(x, y, bulge)`` tuples. (read/write)
+        List of path vertices as (x, y, bulge)-tuples. (read/write)
 
     .. attribute:: source_boundary_objects
 
@@ -271,11 +271,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: start
 
-        Start point as ``(x, y)`` tuple. (read/write)
+        Start point as (x, y)-tuple. (read/write)
 
     .. attribute:: end
 
-        End point as ``(x, y)`` tuple. (read/write)
+        End point as (x, y)-tuple. (read/write)
 
 
 .. class:: ArcEdge
@@ -284,7 +284,7 @@ Hatch Boundary Helper Classes
 
     .. attribute:: center
 
-        Center point of arc as ``(x, y)`` tuple. (read/write)
+        Center point of arc as (x, y)-tuple. (read/write)
 
     .. attribute:: radius
 
@@ -309,7 +309,7 @@ Hatch Boundary Helper Classes
 
     .. attribute:: major_axis_vector
 
-        Ellipse major axis vector as ``(x, y)`` tuple. (read/write)
+        Ellipse major axis vector as (x, y)-tuple. (read/write)
 
     .. attribute:: minor_axis_length
 
@@ -342,11 +342,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: rational
 
-        ``1`` for rational spline else ``0``. (read/write)
+        1 for rational spline else 0. (read/write)
 
     .. attribute:: periodic
 
-        ``1`` for periodic spline else ``0``. (read/write)
+        1 for periodic spline else 0. (read/write)
 
     .. attribute:: knot_values
 
@@ -354,11 +354,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: control_points
 
-        List of control points as ``(x, y)`` tuples. (read/write)
+        List of control points as (x, y)-tuples. (read/write)
 
     .. attribute:: fit_points
 
-        List of fit points as ``(x, y)`` tuples. (read/write)
+        List of fit points as (x, y)-tuples. (read/write)
 
     .. attribute:: weights
 
@@ -366,11 +366,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: start_tangent
 
-        Spline start tangent (vector) as ``(x, y)`` tuple. (read/write)
+        Spline start tangent (vector) as (x, y)-tuple. (read/write)
 
     .. attribute:: end_tangent
 
-        Spline end tangent (vector)  as ``(x, y)`` tuple. (read/write)
+        Spline end tangent (vector)  as (x, y)-tuple. (read/write)
 
 
 Hatch Pattern Definition Helper Classes
@@ -400,15 +400,15 @@ Hatch Pattern Definition Helper Classes
 
     .. attribute:: base_point
 
-        Base point as ``(x, y)`` tuple. (read/write)
+        Base point as (x, y)-tuple. (read/write)
 
     .. attribute:: offset
 
-        Offset as ``(x, y)`` tuple. (read/write)
+        Offset as (x, y)-tuple. (read/write)
 
     .. attribute:: dash_length_items
 
-        List of dash length items (item > ``0`` is line, < ``0`` is gap, ``0.0`` = dot). (read/write)
+        List of dash length items (item > 0 is line, < 0 is gap, 0.0 = dot). (read/write)
 
 Hatch Gradient Fill Helper Classes
 ----------------------------------
@@ -417,15 +417,15 @@ Hatch Gradient Fill Helper Classes
 
     .. attribute:: color1
 
-        First rgb color as ``(r, g, b)`` tuple, rgb values in range 0 to 255. (read/write)
+        First rgb color as (r, g, b)-tuple, rgb values in range 0 to 255. (read/write)
 
     .. attribute:: color2
 
-        Second rgb color as ``(r, g, b)`` tuple, rgb values in range 0 to 255. (read/write)
+        Second rgb color as (r, g, b)-tuple, rgb values in range 0 to 255. (read/write)
 
     .. attribute:: one_color
 
-        If :attr:`one_color` is ``1`` - the hatch is filled with a smooth transition between
+        If :attr:`one_color` is 1 - the hatch is filled with a smooth transition between
         :attr:`color1` and a specified :attr:`tint` of :attr:`color1`. (read/write)
 
     .. attribute:: rotation

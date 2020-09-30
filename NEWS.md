@@ -38,6 +38,9 @@ Version 0.15a1 - dev
 - NEW: `Drawing.units` property to get/set document/modelspace units
 - NEW: `ezdxf.new()` argument `units` to setup document and modelspace units and
   $MEASUREMENT setting 
+- NEW: `pattern.load(measurement, factor)` load scaled hatch pattern
+- CHANGE: `Hatch.set_pattern_fill()` uses HEADER variable $MEASUREMENT to 
+  determine the default scaling of predefined hatch pattern. 
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
   use `DXFEntity.transform(ucs.matrix)`
 - REMOVED: deprecated `Hatch.edit_boundary()` context manager, 

@@ -5,29 +5,35 @@ import pytest
 from ezdxf.tools import pattern
 
 
-def test_load():
-    old_pattern = pattern.load(old_pattern=True)
-    assert 'ANSI31' in old_pattern
+def test_load_iso_pattern():
+    p = pattern.load()
+    assert p['ANSI31'][0] == [45.0, (0.0, 0.0), (0.0, 3.175), []]
 
-    p = pattern.load(old_pattern=False)
-    assert 'ANSI31' in p
 
-    l1 = p['ANSI31'][0]
-    l2 = old_pattern['ANSI31'][0]
+def test_load_scaled_iso_pattern():
+    p = pattern.load(factor=2)
+    assert p['ANSI31'][0] == [45.0, (0.0, 0.0), (0.0, 6.35), []]
 
-    assert l1[2] == (-2.2627, 2.2627)
-    assert l2[2] == (-0.0884, 0.0884)
+
+def test_load_imperial_pattern():
+    p = pattern.load(measurement=0)
+    assert p['ANSI31'][0] == [45.0, (0.0, 0.0), (0.0, 0.125), []]
 
 
 def test_scale_pattern():
-    p = pattern.load(old_pattern=False)
+    p = pattern.load()
     ansi31 = p['ANSI31']
     s = pattern.scale_pattern(ansi31, 2, angle=90)
 
     angle, base, offset, lines = s[0]
     assert angle == 135
     assert base == (0, 0)
-    assert offset == (-4.5254, -4.5254)
+    assert offset == (-6.35, 0)
+
+
+def test_scale_all_pattern():
+    r = pattern.scale_all(pattern.ISO_PATTERN)
+    assert len(r) == len(pattern.ISO_PATTERN)
 
 
 TEST_PATTERN = """; Hatch Patterns adapted to ISO scaling
@@ -69,7 +75,7 @@ def test_parse_pattern_file():
     assert result['SOLID'] == [[45, (0, 0), (0, 0.125), []]]
     assert result['ANSI33'] == [
         [45, (0, 0), (0, 6.35), []],
-        [45, (4.490128053, 0), (0, 6.35), [(3.175, -1.5875)]],
+        [45, (4.4901, 0), (0, 6.35), [3.175, -1.5875]],
     ]
 
 

@@ -383,7 +383,7 @@ class Hatch(DXFGraphic):
     @property
     def bgcolor(self) -> Optional['RGB']:
         """
-        Property background color as ``(r, g, b)`` tuple, rgb values in the
+        Property background color as (r, g, b)-tuple, rgb values in the
         range [0, 255] (read/write/del)
 
         usage::
@@ -417,10 +417,10 @@ class Hatch(DXFGraphic):
         pattern fill related data.
 
         Args:
-            color: :ref:`ACI`, (``0`` = BYBLOCK; ``256`` = BYLAYER)
-            style: hatch style (``0`` = normal; ``1`` = outer; ``2`` = ignore)
-            rgb: true color value as ``(r, g, b)`` tuple - has higher priority
-                than `color``. True color support requires DXF R2000.
+            color: :ref:`ACI`, (0 = BYBLOCK; 256 = BYLAYER)
+            style: hatch style (0 = normal; 1 = outer; 2 = ignore)
+            rgb: true color value as (r, g, b)-tuple - has higher priority
+                than `color`. True color support requires DXF R2000.
 
         """
         self.gradient = None
@@ -461,16 +461,16 @@ class Hatch(DXFGraphic):
             - ``'INVCURVED'``
 
         Args:
-            color1: ``(r, g, b)`` tuple for first color, rgb values as int in
+            color1: (r, g, b)-tuple for first color, rgb values as int in
                 the range [0, 255]
-            color2: ``(r, g, b)`` tuple for second color, rgb values as int in
+            color2: (r, g, b)-tuple for second color, rgb values as int in
                 the range [0, 255]
             rotation: rotation angle in degrees
             centered: determines whether the gradient is centered or not
-            one_color: ``1`` for gradient from `color1` to tinted `color1``
+            one_color: 1 for gradient from `color1` to tinted `color1`
             tint: determines the tinted target `color1` for a one color
-                gradient. (valid range ``0.0`` to ``1.0``)
-            name: name of gradient type, default ``'LINEAR'``
+                gradient. (valid range 0.0 to 1.0)
+            name: name of gradient type, default "LINEAR"
 
         """
         if self.doc is not None and self.drawing.dxfversion < DXF2004:
@@ -499,7 +499,10 @@ class Hatch(DXFGraphic):
                          definition=None) -> None:
         """ Set :class:`Hatch` to pattern fill mode. Removes all gradient
         related data. The pattern definition should be designed for scaling
-        factor 1.
+        factor 1. Predefined hatch pattern like "ANSI33" are scaled according
+        to the HEADER variable $MEASUREMENT for ISO measurement (m, cm, ... ),
+        or imperial units (in, ft, ...), this replicates the behavior of
+        BricsCAD.
 
         Args:
             name: pattern name as string
@@ -507,9 +510,9 @@ class Hatch(DXFGraphic):
             angle: angle of pattern fill in degrees
             scale: pattern scaling as float
             double: double size flag
-            style: hatch style (``0`` = normal; ``1`` = outer; ``2`` = ignore)
-            pattern_type: pattern type (``0`` = user-defined;
-                ``1`` = predefined; ``2`` = custom)
+            style: hatch style (0 = normal; 1 = outer; 2 = ignore)
+            pattern_type: pattern type (0 = user-defined;
+                1 = predefined; 2 = custom)
             definition: list of definition lines and a definition line is a
                 4-tuple [angle, base_point, offset, dash_length_items],
                 see :meth:`set_pattern_definition`
@@ -526,7 +529,10 @@ class Hatch(DXFGraphic):
         self.dxf.pattern_type = pattern_type
 
         if definition is None:
-            predefined_pattern = pattern.load()
+            measurement = 1
+            if self.doc:
+                measurement = self.doc.header.get('$MEASUREMENT', measurement)
+            predefined_pattern = pattern.ISO_PATTERN if measurement else pattern.IMPERIAL_PATTERN
             definition = predefined_pattern.get(
                 name, predefined_pattern['ANSI31'])
         self.set_pattern_definition(
@@ -537,11 +543,10 @@ class Hatch(DXFGraphic):
 
     def set_pattern_definition(self, lines: Sequence, factor: float = 1,
                                angle: float = 0) -> None:
-        """
-        Setup hatch patten definition by a list of definition lines and  a
+        """ Setup hatch patten definition by a list of definition lines and  a
         definition line is a 4-tuple [angle, base_point, offset, dash_length_items],
-        the pattern definition should be designed for scaling factor``1`` and
-        angle ``0``.
+        the pattern definition should be designed for scaling factor 1 and
+        angle 0.
 
             - angle: line angle in degrees
             - base-point: 2-tuple (x, y)
@@ -586,10 +591,9 @@ class Hatch(DXFGraphic):
         dxf.pattern_scale = scale
 
     def set_pattern_angle(self, angle: float) -> None:
-        """
-        Set rotation of pattern definition to `angle` in degrees.
+        """ Set rotation of pattern definition to `angle` in degrees.
 
-        Starts always from the original base rotation ``0``,
+        Starts always from the original base rotation 0,
         :code:`set_pattern_angle(0)` reset the pattern rotation to the original
         appearance as defined by the pattern designer, but only if the the
         pattern attribute :attr:`dxf.pattern_angle` represents the actual
@@ -609,8 +613,7 @@ class Hatch(DXFGraphic):
         dxf.pattern_angle = angle % 360.0
 
     def set_seed_points(self, points: Iterable[Tuple[float, float]]) -> None:
-        """
-        Set seed points, `points` is an iterable of ``(x, y)`` tuples.
+        """ Set seed points, `points` is an iterable of (x, y)-tuples.
         I don't know why there can be more than one seed point.
         All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value)
 
@@ -728,10 +731,10 @@ class BoundaryPaths:
         """ Create and add a new :class:`PolylinePath` object.
 
         Args:
-            path_vertices: list of polyline vertices as ``(x, y)`` or
-                ``(x, y, bulge)`` tuples.
-            is_closed: ``1`` for a closed polyline else ``0``
-            flags: external(``1``) or outermost(``16``) or default (``0``)
+            path_vertices: list of polyline vertices as (x, y) or
+                (x, y, bulge)-tuples.
+            is_closed: 1 for a closed polyline else 0
+            flags: external(1) or outermost(16) or default (0)
 
         """
         new_path = PolylinePath()
@@ -744,7 +747,7 @@ class BoundaryPaths:
         """ Create and add a new :class:`EdgePath` object.
 
         Args:
-            flags: external(``1``) or outermost(``16``) or default (``0``)
+            flags: external(1) or outermost(16) or default (0)
 
         """
         new_path = EdgePath()
@@ -1073,7 +1076,7 @@ class PolylinePath:
     def set_vertices(self, vertices: Sequence[Sequence[float]],
                      is_closed: bool = True) -> None:
         """ Set new `vertices` as new polyline path, a vertex has to be a
-        ``(x, y)`` or a ``(x, y, bulge)`` tuple.
+        (x, y) or a (x, y, bulge)-tuple.
 
         """
         new_vertices = []
@@ -1175,8 +1178,8 @@ class EdgePath:
         """ Add a :class:`LineEdge` from `start` to `end`.
 
         Args:
-            start: start point of line, ``(x, y)`` tuple
-            end: end point of line, ``(x, y)`` tuple
+            start: start point of line, (x, y)-tuple
+            end: end point of line, (x, y)-tuple
 
         """
         line = LineEdge()
@@ -1193,7 +1196,7 @@ class EdgePath:
         """ Add an :class:`ArcEdge`.
 
         Args:
-            center: center point of arc, ``(x, y)`` tuple
+            center: center point of arc, (x, y)-tuple
             radius: radius of circle
             start_angle: start angle of arc in degrees
             end_angle: end angle of arc in degrees
@@ -1219,8 +1222,8 @@ class EdgePath:
         """ Add an :class:`EllipseEdge`.
 
         Args:
-            center: center point of ellipse, ``(x, y)`` tuple
-            major_axis: vector of major axis as ``(x, y)`` tuple
+            center: center point of ellipse, (x, y)-tuple
+            major_axis: vector of major axis as (x, y)-tuple
             ratio: ratio of minor axis to major axis as float
             start_angle: start angle of arc in degrees
             end_angle: end angle of arc in degrees
@@ -1253,16 +1256,16 @@ class EdgePath:
 
         Args:
             fit_points: points through which the spline must go, at least 3 fit
-                points are required. list of ``(x, y)`` tuples
+                points are required. list of (x, y)-tuples
             control_points: affects the shape of the spline, mandatory and
-                AutoCAD crashes on invalid data. list of ``(x, y)`` tuples
+                AutoCAD crashes on invalid data. list of (x, y)-tuples
             knot_values: (knot vector) mandatory and AutoCAD crashes on invalid
                 data. list of floats; `ezdxf` provides two tool functions to
                 calculate valid knot values: :func:`ezdxf.math.uniform_knot_vector`,
                 :func:`ezdxf.math.open_uniform_knot_vector` (default if ``None``)
             weights: weight of control point, not mandatory, list of floats.
             degree: degree of spline (int)
-            periodic: ``1`` for periodic spline, ``0`` for none periodic spline
+            periodic: 1 for periodic spline, 0 for none periodic spline
             start_tangent: start_tangent as 2d vector, optional
             end_tangent: end_tangent as 2d vector, optional
 
