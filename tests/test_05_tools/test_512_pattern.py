@@ -13,12 +13,12 @@ def test_load_iso_pattern():
 
 def test_load_scaled_iso_pattern():
     p = pattern.load(factor=2)
-    assert p['ANSI31'][0] == [45.0, (0.0, 0.0), (-4.4901, 4.4901), []]
+    assert p['ANSI31'][0] == [45.0, (0.0, 0.0), (-4.4901280606, 4.4901280606), []]
 
 
 def test_load_imperial_pattern():
     p = pattern.load(measurement=0)
-    assert p['ANSI31'][0] == [45.0, (0.0, 0.0), (-0.0884, 0.0884), []]
+    assert p['ANSI31'][0] == [45.0, (0.0, 0.0), (-0.0883883476496063, 0.0883883476496063), []]
 
 
 def test_scale_pattern():
@@ -29,7 +29,7 @@ def test_scale_pattern():
     angle, base, offset, lines = s[0]
     assert angle == 135
     assert base == (0, 0)
-    assert offset == (-4.4901, -4.4901)
+    assert offset == (-4.490128060600002, -4.4901280606)
 
 
 def test_scale_all_pattern():

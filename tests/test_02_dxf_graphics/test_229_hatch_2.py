@@ -469,10 +469,10 @@ def test_pattern_rotation(hatch, pattern):
     line1, line2 = hatch.pattern.lines
     assert line1.angle == 90
     assert line1.base_point == (0, 0)
-    assert line1.offset == (-0.7071, 0.7071)
+    assert line1.offset == (-0.7071067811865475, 0.7071067811865476)
     assert line2.angle == 90
-    assert line2.base_point == (-0.3536, 0.3536)
-    assert line2.offset == (-0.7071, 0.7071)
+    assert line2.base_point == (-0.35355339059327373, 0.3535533905932738)
+    assert line2.offset == (-0.7071067811865475, 0.7071067811865476)
 
 
 def test_pattern_rotation_add_angle(hatch, pattern):
