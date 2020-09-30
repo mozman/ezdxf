@@ -25,10 +25,6 @@ github repository:
 
 https://github.com/mozman/ezdxf/tree/master/docs/source/tutorials/src/geo
 
-The next assumption is, that we work with meters as drawing units, anything else
-needs custom transformation functions, which for simplicity will not be
-explained in this tutorial.
-
 Setup Geo Location Reference
 ----------------------------
 
@@ -68,8 +64,8 @@ transformation function:
 
 The data is now transformed into 2D cartesian coordinates in meters and most
 likely far away from origin (0, 0), the data stored in the GEODATA entity helps
-to transform the data into the DXF WCS, if the DXF file has no geo location
-reference you have to stick with the large coordinates:
+to transform the data into the DXF WCS in modelspace units, if the DXF file has
+no geo location reference you have to stick with the large coordinates:
 
 .. literalinclude:: src/geo/gpx.py
     :lines: 36-54
@@ -107,8 +103,8 @@ Create a :class:`GeoProxy` object from the DXF entity:
 .. literalinclude:: src/geo/gpx.py
     :lines: 57-59
 
-Transform DXF WCS coordinates into the CRS coordinate system by the
-transformation matrix `m`:
+Transform DXF WCS coordinates in modelspace units into the CRS coordinate system
+by the transformation matrix `m`:
 
 .. literalinclude:: src/geo/gpx.py
     :lines: 60-61
@@ -151,7 +147,59 @@ The content of the GeoJSON file looks like this:
         ...
     }
 
+Custom Transformation Function
+------------------------------
 
+This sections shows how to use the GDAL package to write a custom transformation
+function. The example reimplements the builtin transformation from unprojected
+WGS84 coordinates to 2D map coordinates EPSG:3395 "World Mercator":
 
+.. code-block:: python
 
+    from osgeo import osr
+    from ezdxf.math import Vector
 
+    # GPS track in WGS84, load_gpx_track() code see above
+    gpx_points = list(load_gpx_track('track1.gpx'))
+
+    # Create source coordinate system:
+    src_datum = osr.SpatialReference()
+    src_datum.SetWellKnownGeoCS('WGS84')
+
+    # Create target coordinate system:
+    target_datum = osr.SpatialReference()
+    target_datum.SetWellKnownGeoCS('EPSG:3395')
+
+    # Create transformation object:
+    ct = osr.CoordinateTransform(src_datum, target_datum)
+
+    # Create GeoProxy() object:
+    geo_proxy = GeoProxy.parse({
+        'type': 'LineString',
+        'coordinates': gpx_points
+    })
+
+    # Apply a custom transformation function to all coordinates:
+    geo_proxy.apply(lambda v: Vector(ct.TransformPoint(v.x, v.y)))
+
+The same example with the pyproj package:
+
+.. code-block:: python
+
+    from pyproj import Transformer
+    from ezdxf.math import Vector
+
+    # GPS track in WGS84, load_gpx_track() code see above
+    gpx_points = list(load_gpx_track('track1.gpx'))
+
+    # Create transformation object:
+    ct = Transformer.from_crs('EPSG:4326', 'EPSG:3395)
+
+    # Create GeoProxy() object:
+    geo_proxy = GeoProxy.parse({
+        'type': 'LineString',
+        'coordinates': gpx_points
+    })
+
+    # Apply a custom transformation function to all coordinates:
+    geo_proxy.apply(lambda v: Vector(ct.transform(v.x, v.y)))

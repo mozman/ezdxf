@@ -56,7 +56,7 @@ Proxy From DXF Entity
 
 The :func:`proxy` function or the constructor :meth:`GeoProxy.from_dxf_entities`
 creates a new :class:`GeoProxy` object from a single DXF entity or from an
-iterable of DXF entities, entities without a coresponding representation will be
+iterable of DXF entities, entities without a corresponding representation will be
 approximated.
 
 Supported DXF entities are:

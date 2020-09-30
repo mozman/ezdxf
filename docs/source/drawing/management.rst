@@ -8,7 +8,7 @@ Document Management
 Create New Drawings
 -------------------
 
-.. autofunction:: new(dxfversion='AC1027', setup=False) -> Drawing
+.. autofunction:: new(dxfversion='AC1027', setup=False, units=6) -> Drawing
 
 Open Drawings
 -------------
