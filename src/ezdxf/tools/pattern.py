@@ -518,7 +518,7 @@ class PatternFileCompiler:
             for line in p[1:]:
                 pat_line = []
                 pat_line.append(line[0])
-                data = [Vec2(coords) for coords in take2(line[1:])]
+                data = [coords for coords in take2(line[1:])]
                 pat_line.append(data[0])
                 pat_line.append(data[1])
                 pat_line.append(data[2:])
