@@ -146,8 +146,8 @@ This setting is independent from $INSUNITS, it is possible to set the drawing
 units to inch and use metric linetypes and hatch pattern.
 
 In BricsCAD the base scaling of the linetypes is only depending from the
-$MEASUREMENT value, is is not relevant if the unit is meter, centimeter,
-millimeter, ... and so on.
+$MEASUREMENT value, is not relevant if $INSUNITS is meter, centimeter,
+millimeter, ... and so on and the same is valid for hatch pattern.
 
 .. code-block:: python
 
