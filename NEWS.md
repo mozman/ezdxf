@@ -37,7 +37,8 @@ Version 0.15a1 - dev
 - NEW: `Hatch.paths.default_paths()` returns iterable of default boundary paths
 - NEW: `Drawing.units` property to get/set document/modelspace units
 - NEW: `ezdxf.new()` argument `units` to setup document and modelspace units and
-  $MEASUREMENT setting 
+  $MEASUREMENT setting and the linetype setup is based on this $MEASUREMENT 
+  setting.
 - NEW: `pattern.load(measurement, factor)` load scaled hatch pattern
 - CHANGE: `Hatch.set_pattern_fill()` uses HEADER variable $MEASUREMENT to 
   determine the default scaling of predefined hatch pattern. 

@@ -4,10 +4,30 @@ Hatch
 .. module:: ezdxf.entities
     :noindex:
 
-The HATCH entity (`DXF Reference`_) fills an enclosed area defined by one or more boundary paths with a
-hatch pattern, solid fill, or gradient fill.
+The HATCH entity (`DXF Reference`_) fills an enclosed area defined by one or
+more boundary paths with a hatch pattern, solid fill, or gradient fill.
 
-All points in :ref:`OCS` as (x, y) tuples (:attr:`Hatch.dxf.elevation` is the z-axis value).
+All points in :ref:`OCS` as (x, y) tuples (:attr:`Hatch.dxf.elevation` is the
+z-axis value).
+
+There are two different hatch pattern default scaling, depending on the HEADER
+variable $MEASUREMENT, one for ISO measurement (m, cm, mm, ...) and one for
+imperial measurement (in, ft, yd, ...).
+
+Starting with `ezdxf` v0.15 the default scaling for predefined hatch pattern
+will be chosen according this measurement setting in the HEADER section, this
+replicates the behavior of BricsCAD and other CAD applications. `ezdxf` uses
+the ISO pattern definitions as a base line and scales this pattern down by
+factor 1/25.6 for imperial measurement usage.
+The pattern scaling is independent from the drawing units of the document
+defined by the HEADER variable $INSUNITS.
+
+Prior to `ezdxf` v0.15 the default scaling was always the ISO
+measurement scaling, no matter which value $MEASUREMENT had.
+
+.. seealso::
+
+    :ref:`tut_hatch` and :ref:`DXF Units`
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -16,10 +36,6 @@ Factory function         :meth:`ezdxf.layouts.BaseLayout.add_hatch`
 Inherited DXF attributes :ref:`Common graphical DXF attributes`
 Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
-
-.. seealso::
-
-    :ref:`tut_hatch`
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-C6C71CED-CE0F-4184-82A5-07AD6241F15B
 

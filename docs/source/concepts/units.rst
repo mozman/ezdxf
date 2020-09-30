@@ -1,6 +1,6 @@
-.. _dxf units:
-
 .. module:: ezdxf.units
+
+.. _dxf units:
 
 DXF Units
 =========

@@ -103,14 +103,25 @@ class PatternFileCompiler:
         for p in self._parse_pattern():
             pat = []
             for line in p[1:]:
+                # offset before rounding:
+                offset = Vec2(line[3], line[4])
+
+                # round all values:
                 line = [round(e, ndigits) for e in line]
                 pat_line = []
-                # angle
-                pat_line.append(line[0])
-                # base point
+
+                angle = line[0]
+                pat_line.append(angle)
+
+                # base point:
                 pat_line.append((line[1], line[2]))
-                # offset
-                pat_line.append((line[3], line[4]))
+
+                # rotate offset:
+                offset = offset.rotate_deg(angle)
+                pat_line.append((
+                    round(offset.x, ndigits), round(offset.y, ndigits)
+                ))
+
                 # line dash pattern
                 pat_line.append(line[5:])
                 pat.append(pat_line)

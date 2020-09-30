@@ -63,7 +63,11 @@ def setup_drawing(doc: 'Drawing', topics: Union[str, bool, Sequence] = 'all'):
 
 
 def setup_linetypes(doc: 'Drawing') -> None:
-    for name, desc, pattern in linetypes():
+    measurement = 1
+    if doc:
+        measurement = doc.header.get('$MEASUREMENT', measurement)
+    factor = 1.0 if measurement else IMPERIAL_LTYPE_FACTOR
+    for name, desc, pattern in linetypes(scale=factor):
         if name in doc.linetypes:
             continue
         doc.linetypes.new(name, dxfattribs={
