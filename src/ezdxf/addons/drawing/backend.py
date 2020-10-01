@@ -18,13 +18,13 @@ if TYPE_CHECKING:
 class Backend(ABC):
     def __init__(self):
         self.entity_stack: List[Tuple[DXFGraphic, Properties]] = []
-        # Approximate cubic Bèzier-curves by `n` segments, only used for basic
-        # back-ends without draw_path() support.
-        self.bezier_approximation_count = 32
+        # Deprecated: instead use Path.flattening() for approximation
+        self.bezier_approximation_count: int = 32
+
         # Max flattening distance in drawing units: the backend implementation
         # should calculate an appropriate value, like 1 screen- or paper pixel
-        # on the output medium, but converted this value into drawing units.
-        self.max_flattening_distance = 0.01
+        # on the output medium, but converted into drawing units.
+        self.max_flattening_distance: float = 0.01
 
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         self.entity_stack.append((entity, properties))

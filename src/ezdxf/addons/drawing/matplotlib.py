@@ -102,6 +102,9 @@ class MatplotlibBackend(Backend):
         self._current_z = 0
         self._text = TextRenderer(font, use_text_cache)
 
+        # Set Path() approximation accuracy:
+        self.max_flattening_distance = self.params['max_flattening_distance']
+
         # Detect linetype rendering type:
         linetype_renderer = self.params['linetype_renderer'].lower()
         try:
@@ -131,7 +134,7 @@ class MatplotlibBackend(Backend):
                 lineweight_scaling,
                 min_lineweight,
                 min_length=self.params['min_dash_length'],
-                max_distance=self.params['max_flattening_distance'],
+                max_distance=self.max_flattening_distance,
             )
 
     def clear_text_cache(self):
@@ -363,7 +366,6 @@ class AbstractLineRenderer:
         self._lineweight_scaling = lineweight_scaling * POINTS
         self._min_lineweight = min_lineweight
 
-
     @abc.abstractmethod
     def draw_line(self, ax: plt.Axes, start: Vector, end: Vector,
                   properties: Properties, z: float):
@@ -427,6 +429,7 @@ class InternalLineRenderer(AbstractLineRenderer):
             Path(vertices, codes),
             linewidth=self.lineweight(properties),
             linestyle=self.pattern(properties),
+            fill=False,
             color=properties.color,
             zorder=z
         )
@@ -497,6 +500,7 @@ class EzdxfLineRenderer(AbstractLineRenderer):
                 Path(vertices, codes),
                 linewidth=lineweight,
                 color=color,
+                fill=False,
                 zorder=z
             )
             ax.add_patch(patch)
