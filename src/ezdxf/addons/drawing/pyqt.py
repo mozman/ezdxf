@@ -2,13 +2,13 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Optional, Iterable, Dict
+from typing import Optional, Iterable, Dict, Sequence
 
 from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.text import FontMeasurements
-from ezdxf.addons.drawing.type_hints import Color
+from ezdxf.addons.drawing.type_hints import Color, THole
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command
@@ -102,6 +102,12 @@ class PyQtBackend(Backend):
     def set_background(self, color: Color):
         self._scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
 
+    def draw_point(self, pos: Vector, properties: Properties) -> None:
+        brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
+        item = _Point(pos.x, pos.y, self.point_radius, brush)
+        self._set_item_data(item)
+        self._scene.addItem(item)
+
     def draw_line(self, start: Vector, end: Vector,
                   properties: Properties) -> None:
         color = properties.color
@@ -111,7 +117,7 @@ class PyQtBackend(Backend):
         )
         self._set_item_data(item)
 
-    def draw_path(self, path: Path, properties) -> None:
+    def draw_path(self, path: Path, properties: Properties) -> None:
         qt_path = qg.QPainterPath()
         start = path.start
         qt_path.moveTo(start.x, start.y)
@@ -135,11 +141,10 @@ class PyQtBackend(Backend):
         )
         self._set_item_data(item)
 
-    def draw_point(self, pos: Vector, properties: Properties) -> None:
-        brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
-        item = _Point(pos.x, pos.y, self.point_radius, brush)
-        self._set_item_data(item)
-        self._scene.addItem(item)
+    def draw_filled_path(self, path: Path, holes: Sequence[THole],
+                         properties: Properties) -> None:
+        # todo: hole support
+        self.draw_path(path, properties)
 
     def draw_filled_polygon(self, points: Iterable[Vector],
                             properties: Properties) -> None:

@@ -242,7 +242,7 @@ class Frontend:
                 else:
                     path = Path.from_hatch_polyline_path(p, ocs, elevation)
                 path.close()
-                self.out.draw_path(path, properties)
+                self.out.draw_filled_path(path, [], properties)
 
     def draw_wipeout_entity(self, entity: DXFGraphic, properties: Properties):
         wipeout = cast(Wipeout, entity)

@@ -2,10 +2,10 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, TYPE_CHECKING, Iterable, List
+from typing import Optional, Tuple, TYPE_CHECKING, Iterable, List, Sequence
 
 from ezdxf.addons.drawing.properties import Properties
-from ezdxf.addons.drawing.type_hints import Color
+from ezdxf.addons.drawing.type_hints import Color, THole
 from ezdxf.entities import DXFGraphic
 from ezdxf.entities.mtext import replace_non_printable_characters
 from ezdxf.math import Vector, Matrix44
@@ -21,6 +21,10 @@ class Backend(ABC):
         # Approximate cubic Bèzier-curves by `n` segments, only used for basic
         # back-ends without draw_path() support.
         self.bezier_approximation_count = 32
+        # Max flattening distance in drawing units: the backend implementation
+        # should calculate an appropriate value, like 1 screen- or paper pixel
+        # on the output medium, but converted this value into drawing units.
+        self.max_flattening_distance = 0.01
 
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         self.entity_stack.append((entity, properties))
@@ -39,44 +43,64 @@ class Backend(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def draw_point(self, pos: Vector, properties: Properties) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def draw_line(self, start: Vector, end: Vector,
                   properties: Properties) -> None:
         raise NotImplementedError
 
     def draw_path(self, path: Path, properties: Properties) -> None:
-        """ Draw or fill a path (connected string of line segments and Bezier
-        curves)
+        """ Draw an outline path (connected string of line segments and Bezier
+        curves).
 
         The :meth:`draw_path` implementation is a fall-back implementation
-        which approximates the path using line segments.
+        which approximates Bezier curves by flattening as line segments.
         Backends can override this method if better path drawing functionality
         is available for that backend.
 
         """
         if len(path):
-            if properties.filling:
-                self.draw_filled_polygon(
-                    path.approximate(segments=self.bezier_approximation_count),
-                    properties,
-                )
-            else:
-                vertices = iter(
-                    path.approximate(segments=self.bezier_approximation_count)
-                )
-                prev = next(vertices)
-                for vertex in vertices:
-                    self.draw_line(prev, vertex, properties)
-                    prev = vertex
+            vertices = iter(
+                path.flattening(distance=self.max_flattening_distance)
+            )
+            prev = next(vertices)
+            for vertex in vertices:
+                self.draw_line(prev, vertex, properties)
+                prev = vertex
 
-    @abstractmethod
-    def draw_point(self, pos: Vector, properties: Properties) -> None:
-        raise NotImplementedError
+    def draw_filled_path(self, path: Path, holes: Sequence[THole],
+                         properties: Properties) -> None:
+        """ Draw a filled path (connected string of line segments and Bezier
+        curves) with holes.
+
+        The default implementation draws a filled polygon without holes by the
+        :meth:`draw_filled_polygon` method. Backends can override this method if
+        filled polygon with hole support is available.
+
+        The HATCH fill strategies ("ignore", "outermost", "ignore") are resolved
+        by the frontend e.g. the holes sequence is empty for the "ignore"
+        strategy and for the "outermost" strategy, holes do not contain nested
+        holes.
+
+        Args:
+            path: the exterior (outline) boundary path
+            holes: holes as sequence THole objects, each hole can contain
+                nested holes.
+            properties: HATCH properties
+
+        """
+        self.draw_filled_polygon(
+            path.flattening(distance=self.max_flattening_distance),
+            properties
+        )
 
     @abstractmethod
     def draw_filled_polygon(self, points: Iterable[Vector],
                             properties: Properties) -> None:
         """ Fill a polygon whose outline is defined by the given points.
-        Used to draw entities with simple outlines where draw_path may
+        Used to draw entities with simple outlines where :meth:`draw_path` may
         be an inefficient way to draw such a polygon.
         """
         raise NotImplementedError

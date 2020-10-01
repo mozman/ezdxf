@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, TYPE_CHECKING, Optional, Dict
+from typing import Iterable, TYPE_CHECKING, Optional, Dict, Sequence
 from enum import Enum
 import abc
 
@@ -18,7 +18,7 @@ import numpy as np
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.text import FontMeasurements
-from ezdxf.addons.drawing.type_hints import Color
+from ezdxf.addons.drawing.type_hints import Color, THole
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
@@ -145,13 +145,6 @@ class MatplotlibBackend(Backend):
     def set_background(self, color: Color):
         self.ax.set_facecolor(color)
 
-    def draw_line(self, start: Vector, end: Vector, properties: Properties):
-        self._line_renderer.draw_line(
-            self.ax, start, end, properties, self._get_z())
-
-    def draw_path(self, path, properties: Properties):
-        self._line_renderer.draw_path(self.ax, path, properties, self._get_z())
-
     def draw_point(self, pos: Vector, properties: Properties):
         color = properties.color
         point_size = self.params['point_size']
@@ -162,6 +155,25 @@ class MatplotlibBackend(Backend):
             self.ax.add_patch(Circle((pos.x, pos.y), radius=point_size,
                                      facecolor=color, edgecolor=None,
                                      zorder=self._get_z()))
+
+    def draw_line(self, start: Vector, end: Vector, properties: Properties):
+        self._line_renderer.draw_line(
+            self.ax, start, end, properties, self._get_z())
+
+    def draw_path(self, path, properties: Properties):
+        self._line_renderer.draw_path(self.ax, path, properties, self._get_z())
+
+    def draw_filled_path(self, path, holes: Sequence[THole],
+                         properties: Properties):
+        vertices, codes = _get_path_patch_data(path)
+        # todo: support for holes
+        patch = PathPatch(
+            Path(vertices, codes),
+            color=properties.color,
+            fill=True,
+            zorder=self._get_z()
+        )
+        self.ax.add_patch(patch)
 
     def draw_filled_polygon(self, points: Iterable[Vector],
                             properties: Properties):
@@ -416,7 +428,6 @@ class InternalLineRenderer(AbstractLineRenderer):
             linewidth=self.lineweight(properties),
             linestyle=self.pattern(properties),
             color=properties.color,
-            fill=bool(properties.filling),
             zorder=z
         )
         ax.add_patch(patch)
@@ -486,7 +497,6 @@ class EzdxfLineRenderer(AbstractLineRenderer):
                 Path(vertices, codes),
                 linewidth=lineweight,
                 color=color,
-                fill=bool(properties.filling),
                 zorder=z
             )
             ax.add_patch(patch)
