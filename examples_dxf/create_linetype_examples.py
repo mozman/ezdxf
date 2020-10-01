@@ -10,7 +10,7 @@ msp = doc.modelspace()
 for y, ltype in enumerate(standards.linetypes()):
     msp.add_line((0, y), (20, y), dxfattribs={'linetype': ltype[0]})
 doc.set_modelspace_vport(25, center=(10, 10))
-doc.saveas('linetypes.dxf')
+doc.saveas('linetypes_lines.dxf')
 
 doc = ezdxf.new('R2000', setup=True)
 msp = doc.modelspace()

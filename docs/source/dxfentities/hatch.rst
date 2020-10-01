@@ -162,6 +162,40 @@ Path manager: :class:`BoundaryPaths`
 
     .. automethod:: remove_association
 
+Boundary Paths
+--------------
+
+The hatch entity is build by different functional path types, this are
+filter flags for the :attr:`Hatch.dxf.hatch_style`:
+
+- EXTERNAL: defines the outer boundary of the hatch
+- OUTERMOST: defines the first tier of inner hatch boundaries
+- DEFAULT: default boundary path
+
+As you will learn in the next sections, these are more the recommended
+usage type for the flags, but the fill algorithm doesn't care much about that,
+for instance an OUTERMOST path doesn't have to be inside the EXTERNAL path.
+
+Island Detection
+----------------
+
+In general the island detection algorithm works always from outside to inside
+and alternates filled and unfilled areas. The area between then 1st and the 2nd
+boundary is filled, the area between the 2nd and the 3rd boundary is unfilled
+and so on. The different hatch styles defined by the :attr:`Hatch.dxf.hatch_style`
+attribute are created by filtering some boundary path types.
+
+Hatch Style
+-----------
+
+- HATCH_STYLE_IGNORE: Ignores all paths except the paths marked as EXTERNAL, if
+  there are more than one path marked as EXTERNAL, they are filled in NESTED
+  style. Creates no hatch if no path is marked as EXTERNAL.
+- HATCH_STYLE_OUTERMOST: Ignores all paths marked as DEFAULT, remaining EXTERNAL
+  and OUTERMOST paths are filled in NESTED style. Creates no hatch if no path is
+  marked as EXTERNAL or OUTERMOST.
+- HATCH_STYLE_NESTED: Use all existing paths.
+
 Hatch Boundary Helper Classes
 -----------------------------
 

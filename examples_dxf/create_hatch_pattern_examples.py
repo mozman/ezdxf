@@ -1,12 +1,10 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
 
-from pathlib import Path
 import ezdxf
 from ezdxf.tools import pattern
 from ezdxf.render.forms import square, translate
 
-OUTBOX = Path('~/Desktop/Outbox').expanduser()
 HEIGHT = 300
 
 
@@ -30,11 +28,11 @@ if __name__ == '__main__':
     add_predefined_hatch_pattern(
         doc.modelspace(), cols=10, size=10, gap=1, scale=4)
     doc.set_modelspace_vport(HEIGHT, (30, HEIGHT / 2))
-    doc.saveas(OUTBOX / 'hatch_pattern_imperial.dxf')
+    doc.saveas('hatch_pattern_imperial.dxf')
 
     # ISO: Meter
     doc = ezdxf.new(units=6)
     add_predefined_hatch_pattern(
         doc.modelspace(), cols=10, size=10, gap=1, scale=0.25)
     doc.set_modelspace_vport(HEIGHT, (30, HEIGHT / 2))
-    doc.saveas(OUTBOX / 'hatch_pattern_iso.dxf')
+    doc.saveas('hatch_pattern_iso.dxf')
