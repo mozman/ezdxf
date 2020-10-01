@@ -691,29 +691,14 @@ class BoundaryPaths:
         """ Remove all boundary paths. """
         self.paths = []
 
-    @property
-    def has_external_path(self) -> bool:
-        """ Returns ``True`` if an external boundary path is defined. """
-        flag = const.BOUNDARY_PATH_EXTERNAL
-        return any(p.path_type_flags & flag for p in self.paths)
-
-    def external_path(self) -> Optional[TPath]:
-        """ Returns the external path or ``None`` is none is defined. """
-        # TODO: could there more than one external path?
+    def external_paths(self) -> Iterable[TPath]:
+        """ Iterable of external paths, could be empty. """
         for b in self.paths:
             if b.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
-                return b
-        return None
+                yield b
 
-    @property
-    def has_outer_most_path(self) -> bool:
-        """ Returns ``True`` if at least one outer most boundary path is defined.
-        """
-        flag = const.BOUNDARY_PATH_OUTERMOST
-        return any(p.path_type_flags & flag for p in self.paths)
-
-    def outer_most_paths(self) -> Iterable[TPath]:
-        """ Iterable of outer most paths, could be empty. """
+    def outermost_paths(self) -> Iterable[TPath]:
+        """ Iterable of outermost paths, could be empty. """
         for b in self.paths:
             if b.path_type_flags & const.BOUNDARY_PATH_OUTERMOST:
                 yield b
@@ -724,6 +709,37 @@ class BoundaryPaths:
         for b in self.paths:
             if bool(b.path_type_flags & not_default) is False:
                 yield b
+
+    def process_paths(self, hatch_style: int = const.HATCH_STYLE_NESTED
+                      ) -> Iterable[TPath]:
+        """ Iterable of paths to process for rendering, filters unused
+        boundary paths according to the given hatch style:
+
+        - NESTED: use all boundary paths
+        - OUTERMOST: use EXTERNAL and OUTERMOST boundary paths
+        - IGNORE: ignore all paths except EXTERNAL boundary paths
+
+        Yields paths in order of EXTERNAL, OUTERMOST and DEFAULT.
+
+        """
+
+        def path_type_enum(flags) -> int:
+            if flags & const.BOUNDARY_PATH_EXTERNAL:
+                return 0
+            elif flags & const.BOUNDARY_PATH_OUTERMOST:
+                return 1
+            return 2
+
+        paths = sorted(
+            (path_type_enum(p.path_type_flags), i, p)
+            for i, p in enumerate(self.paths)
+        )
+        ignore = 1  # EXTERNAL only
+        if hatch_style == const.HATCH_STYLE_NESTED:
+            ignore = 3
+        elif hatch_style == const.HATCH_STYLE_OUTERMOST:
+            ignore = 2
+        return (p for path_type, _, p in paths if path_type < ignore)
 
     def add_polyline_path(self, path_vertices: Sequence[Tuple[float, ...]],
                           is_closed: bool = True,

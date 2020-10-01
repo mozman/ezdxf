@@ -106,6 +106,22 @@ def test_map_polyline():
     }
 
 
+def test_map_hatch():
+    hatch = cast(Hatch, factory.new('HATCH', dxfattribs={
+        'hatch_style': 0,
+    }))
+    hatch.paths.add_polyline_path(EXTERIOR, flags=1)  # EXTERNAL
+    hatch.paths.add_polyline_path(HOLE1, flags=0)  # DEFAULT
+    hatch.paths.add_polyline_path(HOLE2, flags=0)  # DEFAULT
+    m = geo.mapping(hatch)
+    assert m['type'] == 'Polygon'
+    exterior, holes = m['coordinates']
+    assert len(exterior) == 5  # vertices
+    assert len(holes) == 2
+    assert len(holes[0]) == 5  # vertices
+    assert len(holes[1]) == 5  # vertices
+
+
 def test_map_circle():
     circle = factory.new('CIRCLE')
     m = geo.mapping(circle)

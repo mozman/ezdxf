@@ -589,48 +589,31 @@ def _hatch_as_polygon(hatch: Hatch, distance: float,
             vertices.append(vertices[0])
         return vertices
 
-    def filter_external(paths):
-        if not has_explicit_external:
-            external_id = id(external)
-            paths = [p for p in paths if id(p) != external_id]
-        return paths
-
     # Path vertex winding order can be ignored here, validation and
     # correction is done in polygon_mapping().
 
     elevation = hatch.dxf.elevation.z
     ocs = hatch.ocs()
-    hatch_style = hatch.dxf.hath_style
-    boundaries = hatch.paths
+    hatch_style = hatch.dxf.hatch_style
+
+    # Returns boundaries in EXTERNAL, OUTERMOST and DEFAULT order and filters
+    # unused boundaries according the hatch style:
+    boundaries = list(hatch.paths.process_paths(hatch_style))
     count = len(boundaries)
     if count == 0:
         raise ValueError('HATCH without any boundary path.')
 
-    has_explicit_external = True
-    external = boundaries.external_path()
-    if external is None:
-        # This could be a male formed DXF file or just another lack of
-        # information in the DXf reference.
-        has_explicit_external = False
-        external = boundaries[0]
-
+    # Take first path as exterior path, multiple EXTERNAL paths are possible
+    exterior = boundaries[0]
     if count == 1 or hatch_style == const.HATCH_STYLE_IGNORE:
-        points = boundary_to_vertices(external)
+        points = boundary_to_vertices(exterior)
         return _line_string_or_polygon_mapping(points, force_line_string)
     else:
-        # Result may be empty if no outer most boundaries are defined:
-        holes = list(filter_external(boundaries.outer_most_paths()))
-        if hatch_style == const.HATCH_STYLE_OUTERMOST and len(holes) == 0:
-            # Hatch style is outer most, but no out most paths defined:
-            hatch_style = const.HATCH_STYLE_NESTED
-        if hatch_style == const.HATCH_STYLE_NESTED:
-            # Nested style is not defined in GeoJSON Polygon type,
-            # just add paths as additional holes and pray:
-            holes.extend(filter_external(boundaries.default_paths()))
-
+        # All other boundary paths are treated as holes
+        holes = boundaries[1:]
         if force_line_string:
             # Build a MultiString collection:
-            points = boundary_to_vertices(external)
+            points = boundary_to_vertices(exterior)
             geometries = [
                 _line_string_or_polygon_mapping(points, force_line_string)
             ]
@@ -640,9 +623,9 @@ def _hatch_as_polygon(hatch: Hatch, distance: float,
                     _line_string_or_polygon_mapping(points, force_line_string))
             return join_multi_single_type_mappings(geometries)
         else:
-            points = boundary_to_vertices(external)
+            points = boundary_to_vertices(exterior)
             return polygon_mapping(points, [
-                boundary_to_vertices(h) for h in holes
+                boundary_to_vertices(hole) for hole in holes
             ])
 
 

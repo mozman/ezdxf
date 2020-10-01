@@ -207,15 +207,13 @@ Hatch Boundary Helper Classes
 
         List of all boundary paths. Contains :class:`PolylinePath` and :class:`EdgePath` objects. (read/write)
 
-    .. autoattribute:: has_external_path
+    .. automethod:: external_paths() -> Iterable[Union[PolylinePath, EdgePath]]
 
-    .. autoattribute:: has_outer_most_path
-
-    .. automethod:: external_path() -> Optional[Union[PolylinePath, EdgePath]]
-
-    .. automethod:: outer_most_paths() -> Iterable[Union[PolylinePath, EdgePath]]
+    .. automethod:: outermost_paths() -> Iterable[Union[PolylinePath, EdgePath]]
 
     .. automethod:: default_paths() -> Iterable[Union[PolylinePath, EdgePath]]
+
+    .. automethod:: process_paths(hatch_style: int) -> Iterable[Union[PolylinePath, EdgePath]]
 
     .. automethod:: add_polyline_path(path_vertices, is_closed=1, flags=1) -> PolylinePath
 
