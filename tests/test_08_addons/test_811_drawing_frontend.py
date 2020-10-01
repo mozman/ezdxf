@@ -305,7 +305,7 @@ def test_hatch(msp, path_backend):
     path_backend.draw_entities(msp)
     result = path_backend.out.collector
     assert len(result) == 1
-    assert result[0][0] == 'path'
+    assert result[0][0] == 'filled_polygon'  # default implementation
 
 
 def test_basic_spline(msp, basic):

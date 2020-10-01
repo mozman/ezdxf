@@ -1,0 +1,20 @@
+Source of precompiled libraries: https://www.lfd.uci.edu/~gohlke/pythonlibs/
+
+Unofficial Windows Binaries for Python Extension Packages
+by Christoph Gohlke, Laboratory for Fluorescence Dynamics, University of California, Irvine.
+
+This page provides 32- and 64-bit Windows binaries of many scientific 
+open-source extension packages for the official CPython distribution 
+of the Python programming language. A few binaries are available for 
+the PyPy distribution.
+
+The files are unofficial (meaning: informal, unrecognized, personal, 
+unsupported, no warranty, no liability, provided "as is") and made 
+available for testing and evaluation purposes.
+
+Most binaries are built from source code found on PyPI or in the projects 
+public revision control systems. Source code changes, if any, have been 
+submitted to the project maintainers or are included in the packages.
+
+Refer to the documentation of the individual packages for license restrictions 
+and dependencies.
