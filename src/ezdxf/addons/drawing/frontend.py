@@ -16,7 +16,7 @@ from ezdxf.entities import (
 )
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
-from ezdxf.math import Vector, Z_AXIS, BoundingBox
+from ezdxf.math import Vector, Z_AXIS
 from ezdxf.render import MeshBuilder, TraceBuilder, Path
 from ezdxf import reorder
 
@@ -242,11 +242,10 @@ class Frontend:
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z),
         # default (0, 0, 0)
         elevation = entity.dxf.elevation.z
-        paths = list(hatch.paths.rendering_paths(hatch.dxf.hatch_style))
 
         external_paths = []
         holes = []
-        for p in paths:
+        for p in hatch.paths.rendering_paths(hatch.dxf.hatch_style):
             if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
                 external_paths.append(to_path(p))
             else:
@@ -255,7 +254,7 @@ class Frontend:
         if external_paths:
             self.out.draw_filled_paths(external_paths, holes, properties)
         elif holes:
-            # First path is exterior path, everything else is a  hole
+            # First path is the exterior path, everything else is a hole
             self.out.draw_filled_paths([holes[0]], holes[1:], properties)
 
     def draw_wipeout_entity(self, entity: DXFGraphic, properties: Properties):
@@ -388,10 +387,3 @@ class Frontend:
 
 def is_spatial(v: Vector) -> bool:
     return not v.isclose(Z_AXIS) and not v.isclose(NEG_Z_AXIS)
-
-
-def get_paths_inside_bbox(bbox: BoundingBox, holes: Iterable[Path]):
-    def is_inside(hole: Path):
-        bbox2 = BoundingBox(hole.control_vertices())
-        return bbox.inside(bbox2.center)
-    return filter(is_inside, holes)
