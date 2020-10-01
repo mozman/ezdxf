@@ -710,8 +710,8 @@ class BoundaryPaths:
             if bool(b.path_type_flags & not_default) is False:
                 yield b
 
-    def process_paths(self, hatch_style: int = const.HATCH_STYLE_NESTED
-                      ) -> Iterable[TPath]:
+    def rendering_paths(self, hatch_style: int = const.HATCH_STYLE_NESTED
+                        ) -> Iterable[TPath]:
         """ Iterable of paths to process for rendering, filters unused
         boundary paths according to the given hatch style:
 

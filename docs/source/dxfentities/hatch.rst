@@ -213,7 +213,7 @@ Hatch Boundary Helper Classes
 
     .. automethod:: default_paths() -> Iterable[Union[PolylinePath, EdgePath]]
 
-    .. automethod:: process_paths(hatch_style: int) -> Iterable[Union[PolylinePath, EdgePath]]
+    .. automethod:: rendering_paths(hatch_style: int) -> Iterable[Union[PolylinePath, EdgePath]]
 
     .. automethod:: add_polyline_path(path_vertices, is_closed=1, flags=1) -> PolylinePath
 

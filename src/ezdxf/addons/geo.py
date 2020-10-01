@@ -598,7 +598,7 @@ def _hatch_as_polygon(hatch: Hatch, distance: float,
 
     # Returns boundaries in EXTERNAL, OUTERMOST and DEFAULT order and filters
     # unused boundaries according the hatch style:
-    boundaries = list(hatch.paths.process_paths(hatch_style))
+    boundaries = list(hatch.paths.rendering_paths(hatch_style))
     count = len(boundaries)
     if count == 0:
         raise ValueError('HATCH without any boundary path.')

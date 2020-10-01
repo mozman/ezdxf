@@ -33,7 +33,7 @@ Version 0.15a1 - dev
 - NEW: `Hatch.paths.external_paths()` returns iterable of external boundary paths
 - NEW: `Hatch.paths.outermost_paths()` returns iterable of outer most boundary paths
 - NEW: `Hatch.paths.default_paths()` returns iterable of default boundary paths
-- NEW: `Hatch.paths.process_paths()` returns iterable of paths to process for rendering
+- NEW: `Hatch.paths.rendering_paths()` returns iterable of paths to process for rendering
 - NEW: `Drawing.units` property to get/set document/modelspace units
 - NEW: `ezdxf.new()` argument `units` to setup document and modelspace units and
   $MEASUREMENT setting and the linetype setup is based on this $MEASUREMENT 
