@@ -8,7 +8,7 @@ from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.text import FontMeasurements
-from ezdxf.addons.drawing.type_hints import Color, THole
+from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command
@@ -141,10 +141,11 @@ class PyQtBackend(Backend):
         )
         self._set_item_data(item)
 
-    def draw_filled_path(self, path: Path, holes: Sequence[THole],
-                         properties: Properties) -> None:
+    def draw_filled_paths(self, paths: Sequence[Path], holes: Sequence[Path],
+                          properties: Properties) -> None:
         # todo: hole support
-        self.draw_path(path, properties)
+        for path in paths:
+            self.draw_path(path, properties)
 
     def draw_filled_polygon(self, points: Iterable[Vector],
                             properties: Properties) -> None:
@@ -182,7 +183,8 @@ class PyQtBackend(Backend):
 
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
         text = prepare_string_for_rendering(text, dxftype)
-        return self._text.get_text_rect(text).right() * self._text.get_scale(cap_height)
+        return self._text.get_text_rect(text).right() * self._text.get_scale(
+            cap_height)
 
     def clear(self) -> None:
         self._scene.clear()

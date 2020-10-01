@@ -18,7 +18,7 @@ import numpy as np
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.text import FontMeasurements
-from ezdxf.addons.drawing.type_hints import Color, THole
+from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
@@ -166,10 +166,20 @@ class MatplotlibBackend(Backend):
     def draw_path(self, path, properties: Properties):
         self._line_renderer.draw_path(self.ax, path, properties, self._get_z())
 
-    def draw_filled_path(self, path, holes: Sequence[THole],
-                         properties: Properties):
-        vertices, codes = _get_path_patch_data(path)
-        # todo: support for holes
+    def draw_filled_paths(self, paths: Sequence,
+                          holes: Sequence, properties: Properties):
+        vertices = []
+        codes = []
+        for path in paths:
+            v1, c1 = _get_path_patch_data(path.counter_clockwise())
+            vertices.extend(v1)
+            codes.extend(c1)
+
+        for hole in holes:
+            v1, c1 = _get_path_patch_data(hole.clockwise())
+            vertices.extend(v1)
+            codes.extend(c1)
+
         patch = PathPatch(
             Path(vertices, codes),
             color=properties.color,

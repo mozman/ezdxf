@@ -2,10 +2,10 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, TYPE_CHECKING, Iterable, List, Sequence
+from typing import Optional, Tuple, TYPE_CHECKING, Iterable, List
 
 from ezdxf.addons.drawing.properties import Properties
-from ezdxf.addons.drawing.type_hints import Color, THole
+from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.entities.mtext import replace_non_printable_characters
 from ezdxf.math import Vector, Matrix44
@@ -70,31 +70,39 @@ class Backend(ABC):
                 self.draw_line(prev, vertex, properties)
                 prev = vertex
 
-    def draw_filled_path(self, path: Path, holes: Sequence[THole],
-                         properties: Properties) -> None:
-        """ Draw a filled path (connected string of line segments and Bezier
-        curves) with holes.
+    def draw_filled_paths(self, paths: Iterable[Path], holes: Iterable[Path],
+                          properties: Properties) -> None:
+        """ Draw multiple filled paths (connected string of line segments and
+        Bezier curves) with holes.
 
-        The default implementation draws a filled polygon without holes by the
-        :meth:`draw_filled_polygon` method. Backends can override this method if
-        filled polygon with hole support is available.
+        The strategy to draw multiple paths at once was chosen, because a HATCH
+        entity can contain multiple unconnected areas and the holes are not easy
+        to assign to an external path.
+
+        The idea is to put all filled areas into `paths` (counter-clockwise
+        winding) and all holes into `holes` (clockwise winding) and look what
+        the backend does with this information.
 
         The HATCH fill strategies ("ignore", "outermost", "ignore") are resolved
         by the frontend e.g. the holes sequence is empty for the "ignore"
         strategy and for the "outermost" strategy, holes do not contain nested
         holes.
 
+        The default implementation draws all paths as filled polygon without
+        holes by the :meth:`draw_filled_polygon` method. Backends can override
+        this method if filled polygon with hole support is available.
+
         Args:
-            path: the exterior (outline) boundary path
-            holes: holes as sequence THole objects, each hole can contain
-                nested holes.
+            paths: sequence of exterior paths (counter-clockwise winding)
+            holes: sequence of holes (clockwise winding)
             properties: HATCH properties
 
         """
-        self.draw_filled_polygon(
-            path.flattening(distance=self.max_flattening_distance),
-            properties
-        )
+        for path in paths:
+            self.draw_filled_polygon(
+                path.flattening(distance=self.max_flattening_distance),
+                properties
+            )
 
     @abstractmethod
     def draw_filled_polygon(self, points: Iterable[Vector],
