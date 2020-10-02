@@ -19,6 +19,8 @@ from ezdxf.layouts import Layout
 from ezdxf.math import Vector, Z_AXIS
 from ezdxf.render import MeshBuilder, TraceBuilder, Path
 from ezdxf import reorder
+from ezdxf.render import nesting
+
 
 __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
@@ -33,7 +35,6 @@ COMPOSITE_ENTITY_TYPES = {
     'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'LEADER',
     'ACAD_TABLE',
 }
-
 
 class Frontend:
     """ Drawing frontend, responsible for decomposing entities into graphic
@@ -66,6 +67,9 @@ class Frontend:
         # Could be used for all curves CIRCLE, ARC, ELLIPSE and SPLINE
         # self.approximation_max_sagitta = 0.01  # for drawing unit = 1m, max
         # sagitta = 1cm
+
+        # set to None to disable nested polygon detection:
+        self.nested_polygon_detection = nesting.fast_bbox_detection
 
     def log_message(self, message: str):
         print(message)
@@ -242,11 +246,16 @@ class Frontend:
 
         external_paths = []
         holes = []
-        for p in hatch.paths.rendering_paths(hatch.dxf.hatch_style):
-            if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
-                external_paths.append(to_path(p))
-            else:
-                holes.append(to_path(p))
+        paths = hatch.paths.rendering_paths(hatch.dxf.hatch_style)
+        if self.nested_polygon_detection:
+            polygons = self.nested_polygon_detection(map(to_path, paths))
+            external_paths, holes = nesting.winding_deconstruction(polygons)
+        else:
+            for p in paths:
+                if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
+                    external_paths.append(to_path(p))
+                else:
+                    holes.append(to_path(p))
 
         if external_paths:
             self.out.draw_filled_paths(external_paths, holes, properties)
