@@ -6,56 +6,80 @@ from ezdxf.render.forms import square, translate
 from ezdxf.render import Path, nesting
 
 EXTERIOR = list(translate(square(10), (-5, -5)))
+EXT1_PATH = Path.from_vertices(EXTERIOR)
+EXT2_PATH = Path.from_vertices(translate(EXTERIOR, (11, 0)))
+
 CENTER_HOLE1 = list(translate(square(8), (-4, -4)))
+CH1_PATH = Path.from_vertices(CENTER_HOLE1)
+
 CENTER_HOLE2 = list(translate(square(6), (-3, -3)))
+CH2_PATH = Path.from_vertices(CENTER_HOLE2)
+
 LEFT_HOLE = list(translate(square(2.1), (-3, -1)))
+LH_PATH = Path.from_vertices(LEFT_HOLE)
+
 RIGHT_HOLE = list(translate(square(2.0), (3, -1)))
+RH_PATH = Path.from_vertices(RIGHT_HOLE)
+
+DETECTION_DATA = [
+    pytest.param(
+        # Each polygon is a list of paths
+        [EXT1_PATH], [[EXT1_PATH]],
+        id='1 path'),
+    pytest.param(
+        # returns the path sorted by area, and reversed if equal sized
+        [EXT1_PATH, EXT2_PATH], [[EXT2_PATH], [EXT1_PATH]],
+        id='2 separated paths'),
+    pytest.param(
+        [CH1_PATH, EXT1_PATH], [[EXT1_PATH, [CH1_PATH]]],
+        id='1 nested sub-path'),
+    pytest.param(
+        [CH1_PATH, EXT1_PATH, CH2_PATH], [[EXT1_PATH, [CH1_PATH, [CH2_PATH]]]],
+        id='2 nested sub-path'),
+    pytest.param(
+        [RH_PATH, LH_PATH, EXT1_PATH], [[EXT1_PATH, [LH_PATH], [RH_PATH]]],
+        id='2 separated sub-paths'),
+]
 
 
-def test_one_path():
-    square1 = Path.from_vertices(EXTERIOR)
-    result = nesting.fast_bbox_detection([square1])
-    assert len(result) == 1
-    assert result == [[square1]], \
-        "List of polygons and each polygon is a list of paths"
+@pytest.mark.parametrize('paths,polygons', DETECTION_DATA)
+def test_fast_bbox_detection(paths, polygons):
+    assert nesting.fast_bbox_detection(paths) == polygons
 
 
-def test_two_separated_paths():
-    square1 = Path.from_vertices(EXTERIOR)
-    square2 = Path.from_vertices(translate(EXTERIOR, (11, 0)))
-
-    result = nesting.fast_bbox_detection([square1, square2])
-    assert len(result) == 2
-    # returns the path sorted by area, and reversed if equal sized
-    assert result == [[square2], [square1]]
-
-
-def test_two_nested_patch():
-    exterior = Path.from_vertices(EXTERIOR)
-    hole = Path.from_vertices(CENTER_HOLE1)
-
-    result = nesting.fast_bbox_detection([hole, exterior])
-    assert result[0] == [exterior, [hole]]
-
-
-def test_three_nested_paths():
-    exterior = Path.from_vertices(EXTERIOR)
-    hole_level1 = Path.from_vertices(CENTER_HOLE1)
-    # hole in the hole
-    hole_level2 = Path.from_vertices(CENTER_HOLE2)
-
-    # input order does not matter:
-    result = nesting.fast_bbox_detection([hole_level1, exterior, hole_level2])
-    assert result[0] == [exterior, [hole_level1, [hole_level2]]]
-
-
-def test_two_nested_but_separated_paths():
-    exterior = Path.from_vertices(EXTERIOR)
-    left_hole = Path.from_vertices(LEFT_HOLE)
-    right_hole = Path.from_vertices(RIGHT_HOLE)
-
-    result = nesting.fast_bbox_detection([right_hole,left_hole, exterior])
-    assert result[0] == [exterior, [left_hole], [right_hole]]
+@pytest.mark.parametrize('polygons,exp_ccw,exp_cw', [
+    pytest.param(
+        [[EXT1_PATH]],
+        [EXT1_PATH],  # ccw paths
+        [],  # cw paths
+        id='1 polygon'),
+    pytest.param(
+        [[EXT1_PATH], [EXT1_PATH]],
+        [EXT1_PATH, EXT1_PATH],  # ccw paths
+        [],  # cw paths
+        id='2 polygons'),
+    pytest.param(
+        [[EXT1_PATH, [CH1_PATH]]],
+        [EXT1_PATH],  # ccw paths
+        [CH1_PATH],  # cw paths
+        id='1 polygon 1 nested sub-polygon'),
+    pytest.param(
+        [[EXT1_PATH, [CH1_PATH, [CH1_PATH]]]],
+        [EXT1_PATH, CH1_PATH],  # ccw paths
+        [CH1_PATH],  # cw paths
+        id='1 polygon 2 nested sub-polygons'
+    ),
+    pytest.param(
+        [[EXT1_PATH, [CH1_PATH], [CH1_PATH]]],
+        [EXT1_PATH],  # ccw paths
+        [CH1_PATH, CH1_PATH],  # cw paths
+        id='1 polygon 2 separated sub-polygons'
+    ),
+])
+def test_winding_deconstruction(polygons, exp_ccw, exp_cw):
+    ccw, cw = nesting.winding_deconstruction(polygons)
+    assert ccw == exp_ccw
+    assert cw == exp_cw
 
 
 if __name__ == '__main__':

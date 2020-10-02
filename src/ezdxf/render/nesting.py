@@ -139,3 +139,27 @@ def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
     ]
     boxed_paths.sort(key=area)
     return as_nested_paths(polygon_structure(boxed_paths))
+
+
+def winding_deconstruction(polygons: List[Polygon]
+                           ) -> Tuple[List[Path], List[Path]]:
+    """ Flatten the nested polygon structure in a tuple of two lists,
+    the first list contains the paths which should be counter-clockwise oriented
+    and the second list contains the paths which should be clockwise oriented.
+
+    The paths are not converted to this orientation.
+
+    """
+    def deconstruct(polygons_, level):
+        for polygon in polygons_:
+            if isinstance(polygon, Path):
+                # level 0 is the list of polygons
+                # level 1 = ccw, 2 = cw, ...
+                (ccw_paths if (level % 2) else cw_paths).append(polygon)
+            else:
+                deconstruct(polygon, level+1)
+
+    cw_paths = []
+    ccw_paths = []
+    deconstruct(polygons, 0)
+    return ccw_paths, cw_paths
