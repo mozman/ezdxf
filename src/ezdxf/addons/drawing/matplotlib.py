@@ -68,9 +68,14 @@ DEFAULT_PARAMS = {
     "min_dash_length": 0.1,  # just guessing
     "max_flattening_distance": 0.01,  # just guessing
 
-    # Set option "use_hatch_pattern" to False to draw hatch pattern as solid
-    # fillings:
-    "use_hatch_pattern": True,
+    # 0 .. disable HATCH entities
+    # 1 .. show HATCH entities
+    "show_hatch": 1,
+
+    # 0 .. disable hatch pattern
+    # 1 .. use predefined matplotlib pattern by pattern-name matching
+    # 2 .. draw as solid fillings
+    "hatch_pattern": 1,
 }
 
 
@@ -110,6 +115,10 @@ class MatplotlibBackend(Backend):
         # Set Path() approximation accuracy:
         self.max_flattening_distance = self.params['max_flattening_distance']
 
+        # Hatch settings:
+        self.show_hatch = self.params['show_hatch']
+        self.hatch_pattern = self.params['hatch_pattern']
+
         # Detect linetype rendering type:
         linetype_renderer = self.params['linetype_renderer'].lower()
         try:
@@ -117,7 +126,7 @@ class MatplotlibBackend(Backend):
         except KeyError:
             raise ValueError(
                 f'Unknown linetype rendering type: {linetype_renderer}')
-        self.use_hatch_pattern = self.params['use_hatch_pattern']
+
         linetype_scaling = self.params['linetype_scaling']
         lineweight_scaling = self.params['lineweight_scaling']
         min_lineweight = self.params['min_lineweight']
@@ -173,6 +182,13 @@ class MatplotlibBackend(Backend):
 
     def draw_filled_paths(self, paths: Sequence,
                           holes: Sequence, properties: Properties):
+
+        if self.show_hatch == 0:
+            return
+        fill, hatch = self._get_filling(properties)
+        if fill is False and hatch is None:
+            return
+
         vertices = []
         codes = []
         for path in paths:
@@ -184,7 +200,7 @@ class MatplotlibBackend(Backend):
             v1, c1 = _get_path_patch_data(hole.clockwise())
             vertices.extend(v1)
             codes.extend(c1)
-        fill, hatch = self._get_filling(properties)
+
         patch = PathPatch(
             Path(vertices, codes),
             color=properties.color,
@@ -247,11 +263,19 @@ class MatplotlibBackend(Backend):
         fill = True
         hatch = None
         name = properties.filling.name.upper()
-        if properties.filling.type == 1 \
-                and name != 'SOLID' and \
-                self.use_hatch_pattern:
-            fill = False
-            hatch = HATCH_NAME_MAPPING.get(name, r'\\\\')
+        if properties.filling.type == 1 and name != 'SOLID':
+            if self.hatch_pattern == 0:
+                # Disable hatch patterns
+                fill = False
+                hatch = False
+            elif self.hatch_pattern == 1:
+                # Use predefined hatch pattern by name matching:
+                fill = False
+                hatch = HATCH_NAME_MAPPING.get(name, r'\\\\')
+            else:
+                # Draw hatch pattern as solid filling
+                fill = True
+                hatch = False
         return fill, hatch
 
 
