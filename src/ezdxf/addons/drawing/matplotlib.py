@@ -22,6 +22,7 @@ from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
+from .matplotlib_hatch import HATCH_NAME_MAPPING
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Layout
@@ -66,6 +67,10 @@ DEFAULT_PARAMS = {
     "min_lineweight": 0.24,  # 1/300 inch
     "min_dash_length": 0.1,  # just guessing
     "max_flattening_distance": 0.01,  # just guessing
+
+    # Set option "use_hatch_pattern" to False to draw hatch pattern as solid
+    # fillings:
+    "use_hatch_pattern": True,
 }
 
 
@@ -112,7 +117,7 @@ class MatplotlibBackend(Backend):
         except KeyError:
             raise ValueError(
                 f'Unknown linetype rendering type: {linetype_renderer}')
-
+        self.use_hatch_pattern = self.params['use_hatch_pattern']
         linetype_scaling = self.params['linetype_scaling']
         lineweight_scaling = self.params['lineweight_scaling']
         min_lineweight = self.params['min_lineweight']
@@ -179,11 +184,12 @@ class MatplotlibBackend(Backend):
             v1, c1 = _get_path_patch_data(hole.clockwise())
             vertices.extend(v1)
             codes.extend(c1)
-
+        fill, hatch = self._get_filling(properties)
         patch = PathPatch(
             Path(vertices, codes),
             color=properties.color,
-            fill=True,
+            fill=fill,
+            hatch=hatch,
             zorder=self._get_z()
         )
         self.ax.add_patch(patch)
@@ -236,6 +242,17 @@ class MatplotlibBackend(Backend):
                 self.ax.get_figure().set_size_inches(width, height,
                                                      forward=True)
         plt.rcParams['lines.scale_dashes'] = self._scale_dashes_backup
+
+    def _get_filling(self, properties: Properties):
+        fill = True
+        hatch = None
+        name = properties.filling.name.upper()
+        if properties.filling.type == 1 \
+                and name != 'SOLID' and \
+                self.use_hatch_pattern:
+            fill = False
+            hatch = HATCH_NAME_MAPPING.get(name, r'\\\\')
+        return fill, hatch
 
 
 def _transform_path(path: Path, transform: Matrix44) -> Path:
