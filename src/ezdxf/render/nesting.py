@@ -28,8 +28,9 @@ The result is a list of polygons:
 1 polygon returns: [[ext-path]]
 2 separated polygons returns: [[ext-path], [ext-path, [hole-path]]]
 
-A hole is just another polygon, but for a correct visualisation in
-matplotlib the windings have to change:
+A hole is just another polygon, for a correct visualisation in
+matplotlib the winding of the nested paths have to follow the alternating
+order ccw-cw-ccw-cw... :
 
 [Exterior-ccw,
     [Hole-Exterior-cw,
@@ -41,9 +42,8 @@ matplotlib the windings have to change:
 ]
 
 The implementation has to do some expensive tests, like check if a path is
-inside another path or if paths do overlap.
-
-A goal is to reduce this costs by using proxy objects:
+inside of another path or if paths do overlap. A goal is to reduce this costs
+by using proxy objects:
 
 Bounding Box Proxy
 ------------------
@@ -53,14 +53,14 @@ most of the real world scenarios, in the assumption that most HATCHES are
 created from non-overlapping boundary paths.
 Overlap detection and resolving is not possible.
 
-Bounding Box:
+Bounding Box Construction:
 - Fast: use bounding box from control vertices
 - Accurate: use bounding box from flattened curve
 
-Inside check:
+Inside Check:
+- Fast: center point of the bounding box
 - Slow: use all corner points of the bounding box
-- Fast: center point of the bounding box, calculating the center point is
-maybe not much faster than checking all corner points
+
 
 Convex Hull Proxy
 -----------------
@@ -68,13 +68,14 @@ Convex Hull Proxy
 Use the convex hull of the path, this is more accurate but also
 much slower. Overlap detection and resolving is not possible.
 
-Convex hull:
+Convex Hull construction:
 - Fast: use convex hull from control vertices
 - Accurate: use convex hull from flattened curve
 
-Inside check:
-- Slow: use all points of the convex hull
+Inside Check:
 - Fast: center point of convex hull
+- Slow: use all points of the convex hull
+
 
 Flattened Curve
 ---------------
@@ -103,13 +104,13 @@ BoxStruct = namedtuple('BoxStruct', 'bbox, path')
 
 
 def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
-    """ Create a nested polygon structure from iterable `paths`, use bounding
-    boxes as fast detection objects.
+    """ Create a nested polygon structure from iterable `paths`, using 2D
+    bounding boxes as fast detection objects.
 
     """
-
+    # Implements fast bounding box construction and fast inside check.
     def area(item: BoxStruct) -> float:
-        width, height = item[0].size
+        width, height = item.bbox.size
         return width * height
 
     def separate(exterior: BoundingBox2d, candidates: List[BoxStruct]
@@ -117,6 +118,7 @@ def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
         holes = []
         outside = []
         for candidate in candidates:
+            # Fast inside check:
             (holes if exterior.inside(candidate.bbox.center)
              else outside).append(candidate)
         return holes, outside
@@ -144,6 +146,7 @@ def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
         ]
 
     boxed_paths = [
+        # Fast bounding box construction:
         BoxStruct(BoundingBox2d(path.control_vertices()), path)
         for path in paths
     ]
@@ -164,7 +167,7 @@ def winding_deconstruction(polygons: List[Polygon]
         for polygon in polygons_:
             if isinstance(polygon, Path):
                 # level 0 is the list of polygons
-                # level 1 = ccw, 2 = cw, ...
+                # level 1 = ccw, 2 = cw, 3 = ccw, 4 = cw, ...
                 (ccw_paths if (level % 2) else cw_paths).append(polygon)
             else:
                 deconstruct(polygon, level+1)
