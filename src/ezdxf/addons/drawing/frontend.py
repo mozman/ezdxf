@@ -230,10 +230,7 @@ class Frontend:
     def draw_hatch_entity(self, entity: DXFGraphic,
                           properties: Properties) -> None:
         def to_path(p):
-            if p.PATH_TYPE == 'EdgePath':
-                path = Path.from_hatch_edge_path(p, ocs, elevation)
-            else:
-                path = Path.from_hatch_polyline_path(p, ocs, elevation)
+            path = Path.from_hatch_boundary_path(p, ocs, elevation)
             path.close()
             return path
 

@@ -39,6 +39,7 @@ Version 0.15a1 - dev
   $MEASUREMENT setting and the linetype setup is based on this $MEASUREMENT 
   setting.
 - NEW: `pattern.load(measurement, factor)` load scaled hatch pattern
+- NEW: `Path.from_hatch_boundary_path()`
 - CHANGE: `Hatch.set_pattern_fill()` uses HEADER variable $MEASUREMENT to 
   determine the default scaling of predefined hatch pattern. 
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 

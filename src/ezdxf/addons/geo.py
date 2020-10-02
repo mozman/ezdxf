@@ -579,15 +579,9 @@ def _line_string_or_polygon_mapping(points: List[Vector],
 def _hatch_as_polygon(hatch: Hatch, distance: float,
                       force_line_string: bool) -> Dict:
     def boundary_to_vertices(boundary) -> List[Vector]:
-        if boundary.PATH_TYPE == 'PolylinePath':
-            path = Path.from_hatch_polyline_path(boundary, ocs, elevation)
-        else:
-            path = Path.from_hatch_edge_path(boundary, ocs, elevation)
-
-        vertices = list(path.flattening(distance))
-        if not vertices[0].isclose(vertices[-1]):
-            vertices.append(vertices[0])
-        return vertices
+        path = Path.from_hatch_boundary_path(boundary, ocs, elevation)
+        path.close()
+        return list(path.flattening(distance))
 
     # Path vertex winding order can be ignored here, validation and
     # correction is done in polygon_mapping().

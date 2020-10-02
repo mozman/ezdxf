@@ -16,7 +16,7 @@ if TYPE_CHECKING:
         LWPolyline, Polyline, Vertex, Spline, Ellipse,
         Arc, Circle,
     )
-    from ezdxf.entities.hatch import PolylinePath, EdgePath
+    from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
 __all__ = ['Path', 'Command']
 
@@ -256,6 +256,17 @@ class Path(abc.Sequence):
             )
             path.add_ellipse(ellipse, segments=segments, reset=True)
         return path
+
+    @classmethod
+    def from_hatch_boundary_path(cls, boundary: 'TPath', ocs: OCS = None,
+                                 elevation: float = 0) -> 'Path':
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch`
+        polyline- or edge path.
+        """
+        if boundary.PATH_TYPE == 'EdgePath':
+            return cls.from_hatch_edge_path(boundary, ocs, elevation)
+        else:
+            return cls.from_hatch_polyline_path(boundary, ocs, elevation)
 
     @classmethod
     def from_hatch_polyline_path(cls, polyline: 'PolylinePath', ocs: OCS = None,
@@ -538,6 +549,7 @@ class Path(abc.Sequence):
 
         def approx_curve(s, c1, c2, e) -> Iterable[Vector]:
             return Bezier4P((s, c1, c2, e)).approximate(segments)
+
         yield from self._approximate(approx_curve)
 
     def flattening(self, distance: float,
@@ -556,8 +568,10 @@ class Path(abc.Sequence):
             segments: minimum segment count
 
         """
+
         def approx_curve(s, c1, c2, e) -> Iterable[Vector]:
             return Bezier4P((s, c1, c2, e)).flattening(distance, segments)
+
         yield from self._approximate(approx_curve)
 
     def _approximate(self, approx_curve) -> Iterable[Vector]:

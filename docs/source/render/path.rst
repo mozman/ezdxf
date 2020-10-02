@@ -54,9 +54,11 @@ cubic Bézier-curves, other B-splines will be approximated.
 
     .. automethod:: from_circle
 
-    .. automethod:: from_hatch_polyline_path
+    .. automethod:: from_hatch_boundary_path(boundary: Union[PolylinePath, EdgePath], ocs: OCS = None, elevation: float = 0) -> Path
 
-    .. automethod:: from_hatch_edge_path
+    .. automethod:: from_hatch_polyline_path(polyline: PolylinePath, ocs: OCS = None, elevation: float = 0) -> Path
+
+    .. automethod:: from_hatch_edge_path(edge: EdgePath, ocs: OCS = None, elevation: float = 0) -> Path
 
     .. automethod:: control_vertices
 
