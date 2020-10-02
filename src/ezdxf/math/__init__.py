@@ -9,6 +9,7 @@ from .construct2d import (
     distance_point_line_2d, is_point_on_line_2d, is_point_in_polygon_2d,
     is_point_left_of_line, point_to_line_relation, linspace, enclosing_angles,
     reflect_angle_x_deg, reflect_angle_y_deg, sign, has_clockwise_orientation,
+    area,
 )
 from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState,

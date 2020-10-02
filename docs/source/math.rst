@@ -21,6 +21,8 @@ Functions
 
 .. autofunction:: linspace
 
+.. autofunction:: area
+
 .. _bulge_related_functions:
 
 Bulge Related Functions

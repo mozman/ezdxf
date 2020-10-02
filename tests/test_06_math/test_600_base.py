@@ -138,3 +138,7 @@ def test_reflect_angle_y_deg():
     for a, expected in [(0, 0), (45, 315), (90, 270), (135, 225), (180, 180),
                         (225, 135), (270, 90), (315, 45), (360, 0), ]:
         assert isclose(reflect_angle_y_deg(a), expected)
+
+
+def test_area():
+    assert area([(4, 6), (4, -4), (8, -4), (8, -8), (-4, -8), (-4, 6)]) == 128

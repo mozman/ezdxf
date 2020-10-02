@@ -427,3 +427,20 @@ def circle_radius_3p(a: Vector, b: Vector, c: Vector) -> float:
     upper = ba.magnitude * ca.magnitude * cb.magnitude
     lower = ba.cross(ca).magnitude * 2.0
     return upper / lower
+
+
+def area(vertices: Iterable['Vertex']) -> float:
+    """ Returns the area of a polygon, returns the projected area in the
+    xy-plane for 3D vertices.
+    """
+    vertices = Vector.list(vertices)
+    if len(vertices) < 3:
+        raise ValueError('At least 3 vertices required.')
+
+    # Close polygon:
+    if not vertices[0].isclose(vertices[-1]):
+        vertices.append(vertices[0])
+
+    return abs(sum(
+        (p1.x * p2.y - p1.y * p2.x) for p1, p2 in zip(vertices, vertices[1:])
+    ) / 2)
