@@ -5,10 +5,9 @@ Add-ons
 -------
 
 - drawing
-    - HATCH island support (v0.15)
     - matplotlib back-end support for: (v0.15)
-        - hatch pattern
-        - hatch gradient
+        - hatch pattern, only limited support possible
+        - hatch gradient, did not find a usable solution yet
         - fonts
     - pyqt5 back-end: implement features of matplotlib back-end
     - ACAD_TABLE
