@@ -1,8 +1,10 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
-""" This module provides "nested Polygon" detection for multiple paths.
+"""
+This module provides "nested Polygon" detection for multiple paths.
 
-Terminology:
+Terminology
+-----------
 
 exterior
     creates a filled area, has counter-clockwise (ccw) winding in matplotlib
@@ -21,61 +23,69 @@ polygon
 
     polygon := [exterior, hole*]
 
-Result:
+The result is a list of polygons:
 
-    The result is a list of polygons:
+1 polygon returns: [[ext-path]]
+2 separated polygons returns: [[ext-path], [ext-path, [hole-path]]]
 
-    1 polygon returns: [[ext-path]]
-    2 separated polygons returns: [[ext-path], [ext-path, [hole-path]]]
+A hole is just another polygon, but for a correct visualisation in
+matplotlib the windings have to change:
 
-    A hole is just another polygon, but for a correct visualisation in
-    matplotlib the windings have to change:
-
-    [Exterior-ccw,
-        [Hole-Exterior-cw,
-            [Sub-Hole-ccw],
-            [Sub-Hole-ccw],
-        ],
-        [Hole-Exterior-cw],
-        [Hole-Exterior-cw],
-    ]
+[Exterior-ccw,
+    [Hole-Exterior-cw,
+        [Sub-Hole-ccw],
+        [Sub-Hole-ccw],
+    ],
+    [Hole-Exterior-cw],
+    [Hole-Exterior-cw],
+]
 
 The implementation has to do some expensive tests, like check if a path is
 inside another path or if paths do overlap.
 
 A goal is to reduce this costs by using proxy objects:
 
-- use the bounding box, this is very fast but not accurate, but could handle
-  most of the real world scenarios, in the assumption that most HATCHES are
-  created from non-overlapping boundary paths.
-  Overlap detection and resolving is not possible.
+Bounding Box Proxy
+------------------
 
-  Bounding Box:
-  - Fast: use bounding box from control vertices
-  - Accurate: use bounding box from flattened curve
+Use the bounding box, this is very fast but not accurate, but could handle
+most of the real world scenarios, in the assumption that most HATCHES are
+created from non-overlapping boundary paths.
+Overlap detection and resolving is not possible.
 
-  Inside check:
-  - Slow: use all corner points of the bounding box
-  - Fast: center point of the bounding box, calculating the center point is
-    maybe not much faster than checking all corner points
+Bounding Box:
+- Fast: use bounding box from control vertices
+- Accurate: use bounding box from flattened curve
 
-- use the convex hull of the path, this is more accurate but also
-  much slower. Overlap detection and resolving is not possible.
+Inside check:
+- Slow: use all corner points of the bounding box
+- Fast: center point of the bounding box, calculating the center point is
+maybe not much faster than checking all corner points
 
-  Convex hull:
-  - Fast: use convex hull from control vertices
-  - Accurate: use convex hull from flattened curve
+Convex Hull Proxy
+-----------------
 
-  Inside check:
-  - Slow: use all points of the convex hull
-  - Fast: center point of convex hull
+Use the convex hull of the path, this is more accurate but also
+much slower. Overlap detection and resolving is not possible.
 
-- use the flattened curve vertices, this is the most accurate solution and also
-  the slowest. Overlap detection and resolving is possible: exterior is the
-  union of two overlapping paths, hole is the intersection of this two paths,
-  the hole vertices have to be subtracted from the exterior vertices.
+Convex hull:
+- Fast: use convex hull from control vertices
+- Accurate: use convex hull from flattened curve
 
-Sort by Area:
+Inside check:
+- Slow: use all points of the convex hull
+- Fast: center point of convex hull
+
+Flattened Curve
+---------------
+
+Use the flattened curve vertices, this is the most accurate solution and also
+the slowest. Overlap detection and resolving is possible: exterior is the
+union of two overlapping paths, hole is the intersection of this two paths,
+the hole vertices have to be subtracted from the exterior vertices.
+
+Sort by Area
+------------
 
 It is not possible for a path to contain another path with a larger area.
 
