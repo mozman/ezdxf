@@ -50,14 +50,17 @@ class LineTypeRendering(Enum):
     # Replicate AutoCAD linetype rendering oriented on drawing units and
     # various ltscale factors:
     # Warning: this rendering method break lines into small segments which
-    # requires a longer runtime and memory!
+    # causes a longer rendering time!
     ezdxf = 2
 
 
 DEFAULT_PARAMS = {
     "point_size": 2.0,
     "point_size_relative": True,
-    "linetype_renderer": 'internal',
+
+    # linetype render:
+    # "internal" or "ezdxf", see class LineTypeRenderer()
+    "linetype_renderer": "internal",
     "linetype_scaling": None,
 
     # lineweight_scaling: 0.0 to disable lineweights at all - the current
@@ -68,13 +71,13 @@ DEFAULT_PARAMS = {
     "min_dash_length": 0.1,  # just guessing
     "max_flattening_distance": 0.01,  # just guessing
 
-    # 0 .. disable HATCH entities
-    # 1 .. show HATCH entities
+    # 0 = disable HATCH entities
+    # 1 = show HATCH entities
     "show_hatch": 1,
 
-    # 0 .. disable hatch pattern
-    # 1 .. use predefined matplotlib pattern by pattern-name matching
-    # 2 .. draw as solid fillings
+    # 0 = disable hatch pattern
+    # 1 = use predefined matplotlib pattern by pattern-name matching
+    # 2 = draw as solid fillings
     "hatch_pattern": 1,
 }
 
