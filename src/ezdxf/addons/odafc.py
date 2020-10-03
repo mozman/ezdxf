@@ -85,7 +85,8 @@ def readfile(filename: str, version: Optional[str] = None, audit: bool = False) 
     raise ODAFCError('Failed to convert file: Unknown Error')
 
 
-def export_dwg(doc: Drawing, filename: str, version: Optional[str] = None, audit: bool = False) -> None:
+def export_dwg(doc: Drawing, filename: str, version: Optional[str] = None,
+               audit: bool = False, replace: bool = False) -> None:
     """
     Use an installed `ODA File Converter`_ to export a DXF document `doc` as a DWG file.
 
@@ -97,6 +98,7 @@ def export_dwg(doc: Drawing, filename: str, version: Optional[str] = None, audit
         filename: export filename of DWG file, extension will be changed to ``'.dwg'``
         version: export file as specific version, by default the same version as the source document.
         audit: audit source file by ODA File Converter at exporting
+        replace: replace existing DWG file
 
     """
     if version is None:
@@ -105,10 +107,12 @@ def export_dwg(doc: Drawing, filename: str, version: Optional[str] = None, audit
     dwg_file = Path(filename).absolute()
     out_folder = Path(dwg_file.parent)
     if dwg_file.exists():
-        raise FileExistsError(f'file already exists: {dwg_file}')
+        if replace:
+            dwg_file.unlink()
+        else:
+            raise FileExistsError(f'File already exists: {dwg_file}')
     if out_folder.exists():
         with tempfile.TemporaryDirectory(prefix='odafc_') as tmp_dir:
-
             dxf_file = Path(tmp_dir) / dwg_file.with_suffix('.dxf').name
 
             # Save DXF document
@@ -116,8 +120,9 @@ def export_dwg(doc: Drawing, filename: str, version: Optional[str] = None, audit
             doc.saveas(dxf_file)
             doc.filename = old_filename
 
-            arguments = _odafc_arguments(dxf_file.name, tmp_dir, str(out_folder),
-                                         output_format='DWG', version=export_version, audit=audit)
+            arguments = _odafc_arguments(
+                dxf_file.name, tmp_dir, str(out_folder),
+                output_format='DWG', version=export_version, audit=audit)
             _execute_odafc(arguments)
     else:
         raise FileNotFoundError(f"No such file or directory: '{str(out_folder)}'")

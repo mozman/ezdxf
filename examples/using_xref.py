@@ -16,13 +16,20 @@ ref_doc.saveas(OUTBOX / "xref.dxf")
 
 # AutoCAD can reference DXF files (>DXF12), but is unwilling to resolve the DXF
 # created by ezdxf, which opened for itself is a total valid DXF document.
-# The much more friendly BricsCAD has no problem to resolve the xref.
+# The much more friendly BricsCAD has no problem to resolve the DXF xref.
 
-# Convert DXF to DWG by the odafc addon, for more information see the docs:
-# https://ezdxf.mozman.at/docs/addons/odafc.html
-# At least this DWG is accepted by AutoCAD.
+# Export the DXF document as DWG file by the odafc addon, for more information
+# see the docs: https://ezdxf.mozman.at/docs/addons/odafc.html
+# At least this DWG file is accepted by AutoCAD.
+
+# The odafc addon does not overwrite existing files:
+# new in ezdxf v0.15a2: replace existing DWG files
+# odafc.export_dwg(ref_doc, dwg, replace=True)
+dwg = OUTBOX / 'xref.dwg'
+if dwg.exists():
+    dwg.unlink()
 try:
-    odafc.export_dwg(ref_doc, OUTBOX / 'xref.dwg')
+    odafc.export_dwg(ref_doc, dwg)
 except odafc.ODAFCError as e:
     print(str(e))
 
