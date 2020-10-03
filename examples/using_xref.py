@@ -4,7 +4,10 @@ from pathlib import Path
 import ezdxf
 from ezdxf.addons import odafc
 
+# Setup your preferred output folder:
 OUTBOX = Path('~/Desktop/Outbox').expanduser()
+if not OUTBOX.exists():
+    OUTBOX = Path('.')
 
 # AutoCAD can not resolve XREFS in DXF R12 Format :-(,
 ref_doc = ezdxf.new('R2013')
