@@ -1,17 +1,20 @@
+#  Copyright (c) 2020, Manfred Moitzi
+#  License: MIT License
+
 import pytest
 
 import os
 import glob
 import ezdxf
 from ezdxf import recover
-from ezdxf import options, EZDXF_TEST_FILES
+from ezdxf import EZDXF_TEST_FILES
 from itertools import chain
 
 DIRS = [
     "AutodeskSamples/*.dxf",
     "AutodeskProducts/*.dxf",
     "CADKitSamples/*.dxf",
-    "dxftest/*.dxf",
+    "*.dxf",
 ]
 
 files = list(chain(*[glob.glob(os.path.join(EZDXF_TEST_FILES, d)) for d in DIRS]))

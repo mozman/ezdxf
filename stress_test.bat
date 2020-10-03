@@ -1,1 +1,0 @@
-@pytest -v integration_tests/stress.py
