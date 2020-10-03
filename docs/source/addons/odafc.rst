@@ -68,6 +68,6 @@ Usage:
 
 .. autofunction:: readfile(filename: str, version: str = None, audit=False) -> Drawing
 
-.. autofunction:: export_dwg(doc: Drawing, filename: str, version: str = None, audit=False)
+.. autofunction:: export_dwg(doc: Drawing, filename: str, version: str = None, audit=False, replace=False) -> None
 
 .. _ODA File Converter: https://www.opendesign.com/guestfiles/oda_file_converter

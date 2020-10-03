@@ -105,7 +105,11 @@ def export_dwg(doc: Drawing, filename: str, version: Optional[str] = None, *,
         version: export file as specific version, by default the same version as
             the source document.
         audit: audit source file by ODA File Converter at exporting
-        replace: replace existing DWG file
+        replace: replace existing DWG file if ``True``
+
+    .. versionchanged:: 0.15
+
+        added `replace` option
 
     """
     if version is None:
