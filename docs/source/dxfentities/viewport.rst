@@ -21,7 +21,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.center
 
-        Center point of the viewport in modelspace (3D point in :ref:`WCS`).
+        Center point of the viewport located in the paper space layout in paper
+        space units stored as 3D point. (Error in the DXF reference)
 
     .. attribute:: dxf.width
 
@@ -49,7 +50,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.view_center_point
 
-        View center point in :ref:`DCS`.
+        View center point in modelspace stored as 2D point, but represents a
+        :ref:`WCS` point. (Error in the DXF reference)
 
     .. attribute:: dxf.snap_base_point
 

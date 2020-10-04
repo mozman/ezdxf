@@ -596,7 +596,8 @@ def _hatch_as_polygon(hatch: Hatch, distance: float,
     count = len(boundaries)
     if count == 0:
         raise ValueError('HATCH without any boundary path.')
-
+    # Todo: use fast_bbox_detection() to split the Hatch entity into multiple
+    #  polygons and filter holes below the 1. level.
     # Take first path as exterior path, multiple EXTERNAL paths are possible
     exterior = boundaries[0]
     if count == 1 or hatch_style == const.HATCH_STYLE_IGNORE:

@@ -24,7 +24,10 @@ if TYPE_CHECKING:
 __all__ = ['Viewport']
 
 acdb_viewport = DefSubclass('AcDbViewport', {
-    # Center point (in WCS)
+    # DXF reference: Center point (in WCS)
+    # Correction to the DXF reference:
+    # This point represents the center of the viewport in paper space units
+    # (DCS), but is stored as 3D point inclusive z-axis!
     'center': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
 
     # Width in paper space units:
@@ -43,7 +46,10 @@ acdb_viewport = DefSubclass('AcDbViewport', {
     'status': DXFAttr(68, default=0),
     'id': DXFAttr(69, default=2),
 
-    # View center point (in DCS):
+    # DXF reference: View center point (in DCS):
+    # Correction to the DXF reference:
+    # This point represents the center point in model space (WCS) stored as
+    # 2D point!
     'view_center_point': DXFAttr(12, xtype=XType.point2d, default=NULLVEC),
     'snap_base_point': DXFAttr(13, xtype=XType.point2d, default=NULLVEC),
     'snap_spacing': DXFAttr(14, xtype=XType.point2d, default=Vector(10, 10)),
