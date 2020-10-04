@@ -16,7 +16,7 @@ import numbers
 import copy
 import math
 from ezdxf.math import Vector, has_clockwise_orientation
-from ezdxf.render import Path
+from ezdxf.render import Path, nesting
 from ezdxf.entities import DXFGraphic, LWPolyline, Hatch, Point
 from ezdxf.lldxf import const
 from ezdxf.entities import factory
@@ -629,6 +629,9 @@ def _hatch_as_polygon(hatch: Hatch, distance: float,
                       force_line_string: bool) -> Dict:
     def boundary_to_vertices(boundary) -> List[Vector]:
         path = Path.from_hatch_boundary_path(boundary, ocs, elevation)
+        return path_to_vertices(path)
+
+    def path_to_vertices(path) -> List[Vector]:
         path.close()
         return list(path.flattening(distance))
 
@@ -645,32 +648,45 @@ def _hatch_as_polygon(hatch: Hatch, distance: float,
     count = len(boundaries)
     if count == 0:
         raise ValueError('HATCH without any boundary path.')
-    # Todo: use fast_bbox_detection() to split the Hatch entity into multiple
-    #  polygons and filter holes below the 1. level.
     # Take first path as exterior path, multiple EXTERNAL paths are possible
     exterior = boundaries[0]
     if count == 1 or hatch_style == const.HATCH_STYLE_IGNORE:
         points = boundary_to_vertices(exterior)
         return _line_string_or_polygon_mapping(points, force_line_string)
     else:
-        # All other boundary paths are treated as holes
-        holes = boundaries[1:]
         if force_line_string:
             # Build a MultiString collection:
             points = boundary_to_vertices(exterior)
             geometries = [
                 _line_string_or_polygon_mapping(points, force_line_string)
             ]
-            for hole in holes:
+            # All other boundary paths are treated as holes
+            for hole in boundaries[1:]:
                 points = boundary_to_vertices(hole)
                 geometries.append(
                     _line_string_or_polygon_mapping(points, force_line_string))
             return join_multi_single_type_mappings(geometries)
         else:
-            points = boundary_to_vertices(exterior)
-            return polygon_mapping(points, [
-                boundary_to_vertices(hole) for hole in holes
-            ])
+            # Multiple separated polygons are possible in one HATCH entity:
+            polygons = []
+            for exterior, holes in _boundaries_to_polygons(
+                    boundaries, ocs, elevation):
+                points = path_to_vertices(exterior)
+                polygons.append(polygon_mapping(points, [
+                    path_to_vertices(hole) for hole in holes
+                ]))
+            if len(polygons) > 1:
+                return join_multi_single_type_mappings(polygons)
+            return polygons[0]
+
+
+def _boundaries_to_polygons(boundaries, ocs, elevation):
+    paths = (Path.from_hatch_boundary_path(boundary, ocs, elevation)
+             for boundary in boundaries)
+    for polygon in nesting.fast_bbox_detection(paths):
+        exterior = polygon[0]
+        # only take exterior path of level 1 holes, nested holes are ignored
+        yield exterior, [hole[0] for hole in polygon[1:]]
 
 
 def collection(entities: Iterable[DXFGraphic],

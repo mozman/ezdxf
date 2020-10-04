@@ -6,6 +6,7 @@ import copy
 from ezdxf.math import Vector
 from ezdxf.entities import factory, Hatch, LWPolyline
 from ezdxf.addons import geo
+from ezdxf.render.forms import square, translate
 
 EXTERIOR = [(0, 0), (10, 0), (10, 10), (0, 10), (0, 0)]
 HOLE1 = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
@@ -210,7 +211,8 @@ def test_parse_feature_collection():
 
 @pytest.mark.parametrize('entity', [
     POINT, LINE_STRING, POLYGON_0, POLYGON_1, POLYGON_2, GEOMETRY_COLLECTION,
-    FEATURE_1, FEATURE_COLLECTION, MULTI_POINT, MULTI_LINE_STRING, MULTI_POLYGON,
+    FEATURE_1, FEATURE_COLLECTION, MULTI_POINT, MULTI_LINE_STRING,
+    MULTI_POLYGON,
 ])
 def test_geo_interface_builder(entity):
     assert geo.GeoProxy.parse(entity).__geo_interface__ == entity
@@ -323,6 +325,32 @@ def test_filter_function_feature_collection():
     p = geo.GeoProxy(copy.deepcopy(FEATURE_COLLECTION))
     p.filter(validate)
     assert p.geotype is None
+
+
+def test_polygon_from_hatch_hole_in_hole():
+    hatch = factory.new('HATCH')
+    paths = hatch.paths
+    paths.add_polyline_path(square(10), flags=1)
+    paths.add_polyline_path(translate(square(8), (1, 1)), flags=0)
+    paths.add_polyline_path(translate(square(6), (2, 2)), flags=0)
+    mapping = geo.proxy(hatch).__geo_interface__
+    assert mapping['type'] == 'Polygon'
+    assert len(mapping['coordinates']) == 2, 'inner hole should be removed'
+
+    mapping = geo.proxy(hatch, force_line_string=True).__geo_interface__
+    assert mapping['type'] == 'MultiLineString'
+    assert len(mapping['coordinates']) == 3, 'inner hole should not be removed'
+
+
+def test_three_polygons_from_one_hatch():
+    hatch = factory.new('HATCH')
+    paths = hatch.paths
+    paths.add_polyline_path(square(1), flags=1)
+    paths.add_polyline_path(translate(square(1), (3, 1)), flags=1)
+    paths.add_polyline_path(translate(square(1), (6, 2)), flags=1)
+    mapping = geo.proxy(hatch).__geo_interface__
+    assert mapping['type'] == 'MultiPolygon'
+    assert len(mapping['coordinates']) == 3
 
 
 if __name__ == '__main__':
