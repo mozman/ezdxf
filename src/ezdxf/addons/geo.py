@@ -144,6 +144,11 @@ class GeoProxy:
     def root(self) -> Dict:
         return self._root
 
+    @property
+    def geotype(self):
+        """ Property returns the top level entity type or ``None``. """
+        return self._root.get('type')
+
     def __copy__(self) -> 'GeoProxy':
         """ Returns a deep copy. """
         return copy.deepcopy(self)
@@ -181,6 +186,49 @@ class GeoProxy:
                 yield root
 
         yield from _iter(self._root)
+
+    def filter(self, func: Callable[['GeoProxy'], bool]) -> None:
+        """ Removes all mappings for which `func()` returns ``False``.
+        The function only has to handle Point, LineString and Polygon entities,
+        other entities like MultiPolygon are divided into separate entities
+        also any collection.
+
+        """
+
+        def multi_entity(root, type_) -> bool:
+            coordinates = []
+            for entity in root[COORDINATES]:
+                if func(GeoProxy({TYPE: type_, COORDINATES: entity})):
+                    coordinates.append(entity)
+            root[COORDINATES] = coordinates
+            return bool(len(coordinates))
+
+        def check(root) -> bool:
+            type_ = root[TYPE]
+            if type_ == FEATURE_COLLECTION:
+                root[FEATURES] = [
+                    feature for feature in root[FEATURES] if check(feature)
+                ]
+                return bool(len(root[FEATURES]))
+            elif type_ == GEOMETRY_COLLECTION:
+                root[GEOMETRIES] = [
+                    geometry for geometry in root[GEOMETRIES] if check(geometry)
+                ]
+                return bool(len(root[GEOMETRIES]))
+            elif type_ == FEATURE:
+                root[GEOMETRY] = root[GEOMETRY] if check(root[GEOMETRY]) else {}
+                return bool(root[GEOMETRY])
+            elif type_ == MULTI_POINT:
+                return multi_entity(root, POINT)
+            elif type_ == MULTI_LINE_STRING:
+                return multi_entity(root, LINE_STRING)
+            elif type_ == MULTI_POLYGON:
+                return multi_entity(root, POLYGON)
+            else:
+                return func(GeoProxy(root))
+
+        if not check(self._root):
+            self._root = {}
 
     def globe_to_map(self, func: TFunc = None) -> None:
         """ Transform all coordinates recursive from globe representation
@@ -274,6 +322,7 @@ class GeoProxy:
             func: transformation function as Callable[[Vector], Vector]
 
         """
+
         def process(entity: Dict):
             def transform(coords):
                 if isinstance(coords, Vector):

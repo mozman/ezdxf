@@ -203,3 +203,50 @@ The same example with the pyproj package:
 
     # Apply a custom transformation function to all coordinates:
     geo_proxy.apply(lambda v: Vector(ct.transform(v.x, v.y)))
+
+Polygon Validation by Shapely
+-----------------------------
+
+Ezdxf tries to avoid to create invalid polygons from HATCH entities like a hole
+in another hole, but not all problems are detected by ezdxf, especially
+overlapping polygons. For a reliable and robust result use the Shapely package
+to check for valid polygons:
+
+.. code-block:: python
+
+    import ezdxf
+    from ezdxf.addons import geo
+    from shapley.geometry import shape
+
+    # Load DXF document including HATCH entities.
+    doc = ezdxf.readfile('hatch.dxf')
+    msp = doc.modelspace()
+
+    # Test a single entity
+    # Get the first DXF hatch entity:
+    hatch_entity = msp.query('HATCH').first
+
+    # Create GeoProxy() object:
+    hatch_proxy = geo.proxy(hatch_entity)
+
+    # Shapely supports the __geo_interface__
+    shapley_polygon = shape(hatch_proxy)
+
+    if shapely_polygon.is_valid:
+        ...
+    else:
+        print(f'Invalid Polygon from {str(hatch_entity)}.')
+
+    # Remove invalid entities by a filter function
+    def validate(geo_proxy: geo.GeoProxy) -> bool:
+        # Multi-entities are divided into single entities:
+        # e.g. MultiPolygon is verified as multiple single Polygon entities.
+        if geo_proxy.geotype == 'Polygon':
+            return shape(geo_proxy).is_valid
+        return True
+
+    # The gfilter() function let only pass compatible DXF entities
+    msp_proxy = geo.GeoProxy.from_dxf_entities(geo.gfilter(msp))
+
+    # remove all mappings for which validate() returns False
+    msp_proxy.filter(validate)

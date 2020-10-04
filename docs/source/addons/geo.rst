@@ -95,6 +95,8 @@ GeoProxy Class
 
     .. autoattribute:: __geo_interface__
 
+    .. autoattribute:: geotype
+
     .. automethod:: parse(geo_mapping: Dict) -> GeoProxy
 
     .. automethod:: from_dxf_entities(entity: Union[DXFGraphic, Iterable[DXFGraphic]], distance=0.1, force_line_string=False) -> GeoProxy
@@ -114,6 +116,8 @@ GeoProxy Class
     .. automethod:: map_to_globe(func: Callable[[Vector], Vector] = None)->None
 
     .. automethod:: apply(func: Callable[[Vector], Vector])->None
+
+    .. automethod:: filter(func: Callable[[GeoProxy], bool])->None
 
 Helper Functions
 ----------------

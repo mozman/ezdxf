@@ -2,6 +2,7 @@
 #  License: MIT License
 from typing import cast
 import pytest
+import copy
 from ezdxf.math import Vector
 from ezdxf.entities import factory, Hatch, LWPolyline
 from ezdxf.addons import geo
@@ -55,14 +56,20 @@ GEOMETRY_COLLECTION = {
         POLYGON_0,
     ]
 }
-FEATURE = {
+FEATURE_1 = {
     'type': 'Feature',
     'prop0': 'property',
     'geometry': LINE_STRING,
 }
+FEATURE_2 = {
+    'type': 'Feature',
+    'prop0': 'property',
+    'geometry': LINE_STRING,
+}
+
 FEATURE_COLLECTION = {
     'type': 'FeatureCollection',
-    'features': [FEATURE, FEATURE]
+    'features': [FEATURE_1, FEATURE_2]
 }
 
 
@@ -192,7 +199,7 @@ def test_parse_geometry_collection():
 
 
 def test_parse_feature():
-    feature = geo.parse(FEATURE)
+    feature = geo.parse(FEATURE_1)
     assert feature['geometry'] == LINE_STRING
 
 
@@ -203,7 +210,7 @@ def test_parse_feature_collection():
 
 @pytest.mark.parametrize('entity', [
     POINT, LINE_STRING, POLYGON_0, POLYGON_1, POLYGON_2, GEOMETRY_COLLECTION,
-    FEATURE, FEATURE_COLLECTION, MULTI_POINT, MULTI_LINE_STRING, MULTI_POLYGON,
+    FEATURE_1, FEATURE_COLLECTION, MULTI_POINT, MULTI_LINE_STRING, MULTI_POLYGON,
 ])
 def test_geo_interface_builder(entity):
     assert geo.GeoProxy.parse(entity).__geo_interface__ == entity
@@ -247,7 +254,7 @@ def test_geometry_collection_to_dxf_entities():
 
 
 def test_feature_to_dxf_entities():
-    entities = list(geo.dxf_entities(FEATURE))
+    entities = list(geo.dxf_entities(FEATURE_1))
     assert entities[0].dxftype() == 'LWPOLYLINE'
 
 
@@ -269,6 +276,53 @@ def test_common_WGS84_projection(deg, coords):
     assert projected.round(2).isclose(coords)
     # inverse projection
     assert geo.wgs84_3395_to_4326(projected).isclose(deg)
+
+
+def validate(p: geo.GeoProxy):
+    return p.geotype == 'Point'
+
+
+@pytest.mark.parametrize('entity,type_', [
+    [POINT, 'Point'],
+    [LINE_STRING, None],
+    [POLYGON_0, None],
+    [MULTI_POINT, 'MultiPoint'],
+    [MULTI_LINE_STRING, None],
+    [MULTI_POLYGON, None],
+    [FEATURE_1, None],
+])
+def test_filter_function_single_entity(entity, type_):
+    p = geo.GeoProxy(copy.deepcopy(entity))
+    p.filter(validate)
+    assert p.geotype == type_
+
+
+def test_filter_function_geometrie_collection():
+    p = geo.GeoProxy(copy.deepcopy(GEOMETRY_COLLECTION))
+    p.filter(validate)
+    assert p.geotype == 'GeometryCollection'
+    assert p.root['geometries'] == [POINT]
+
+    gc2 = copy.deepcopy(GEOMETRY_COLLECTION)
+    gc2['geometries'] = [LINE_STRING, POLYGON_0]
+    p = geo.GeoProxy(gc2)
+    p.filter(validate)
+    assert p.geotype is None
+
+
+def test_filter_function_feature_collection():
+    fc1 = copy.deepcopy(FEATURE_COLLECTION)
+    point_feature = copy.deepcopy(FEATURE_1)
+    point_feature['geometry'] = POINT
+    fc1['features'].append(point_feature)
+    p = geo.GeoProxy(fc1)
+    p.filter(validate)
+    assert p.geotype == 'FeatureCollection'
+    assert p.root['features'] == [point_feature]
+
+    p = geo.GeoProxy(copy.deepcopy(FEATURE_COLLECTION))
+    p.filter(validate)
+    assert p.geotype is None
 
 
 if __name__ == '__main__':
