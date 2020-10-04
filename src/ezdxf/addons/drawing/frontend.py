@@ -21,7 +21,6 @@ from ezdxf.render import MeshBuilder, TraceBuilder, Path
 from ezdxf import reorder
 from ezdxf.render import nesting
 
-
 __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
 INFINITE_LINE_LENGTH = 25
@@ -35,6 +34,7 @@ COMPOSITE_ENTITY_TYPES = {
     'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'LEADER',
     'ACAD_TABLE',
 }
+
 
 class Frontend:
     """ Drawing frontend, responsible for decomposing entities into graphic

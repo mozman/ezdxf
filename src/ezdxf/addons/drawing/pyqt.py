@@ -1,8 +1,8 @@
-# Created: 06.2020
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
 from typing import Optional, Iterable, Dict, Sequence
+import warnings
 
 from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 
@@ -41,18 +41,31 @@ class _Point(qw.QAbstractGraphicsShapeItem):
 CorrespondingDXFEntity = 0
 CorrespondingDXFParentStack = 1
 
+PYQT_DEFAULT_PARAMS = {
+    'point_size':  1.0
+}
+
 
 class PyQtBackend(Backend):
     def __init__(self,
                  scene: Optional[qw.QGraphicsScene] = None,
-                 point_radius: float = 0.5,
+                 point_radius=None,  # deprecated
                  *,
                  use_text_cache: bool = True,
-                 debug_draw_rect: bool = False):
-        super().__init__()
+                 debug_draw_rect: bool = False,
+                 params: Dict = None):
+        params_ = dict(PYQT_DEFAULT_PARAMS)
+        params_.update(params or {})
+        super().__init__(params_)
+        if point_radius is not None:
+            self.point_size = point_radius * 2.0
+            warnings.warn(
+                'The "point_radius" argument is deprecated use the params  dict '
+                'to pass arguments to the PyQtBackend, '
+                'will be removed in v0.16.', DeprecationWarning)
+
         self._scene = scene
         self._color_cache = {}
-        self.point_radius = point_radius
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
         self._text = TextRenderer(qg.QFont(), use_text_cache)
@@ -104,7 +117,7 @@ class PyQtBackend(Backend):
 
     def draw_point(self, pos: Vector, properties: Properties) -> None:
         brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
-        item = _Point(pos.x, pos.y, self.point_radius, brush)
+        item = _Point(pos.x, pos.y, self.point_size * 0.5, brush)
         self._set_item_data(item)
         self._scene.addItem(item)
 
@@ -144,6 +157,8 @@ class PyQtBackend(Backend):
     def draw_filled_paths(self, paths: Sequence[Path], holes: Sequence[Path],
                           properties: Properties) -> None:
         # todo: hole support
+        if self.show_hatch == 0:
+            return
         for path in paths:
             self.draw_path(path, properties)
 

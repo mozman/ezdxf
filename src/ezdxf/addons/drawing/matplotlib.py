@@ -1,10 +1,9 @@
-# Created: 06.2020
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
 from typing import Iterable, TYPE_CHECKING, Optional, Dict, Sequence
-from enum import Enum
 import abc
+import warnings
 
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
@@ -38,48 +37,7 @@ if TYPE_CHECKING:
 # points unit (pt), 1pt = 1/72 inch, 1pt = 0.3527mm
 POINTS = 1.0 / 0.3527  # mm -> points
 CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
-
-
-class LineTypeRendering(Enum):
-    # matplotlib internal linetype rendering, which is oriented on the output
-    # medium and dpi:
-    # This method is simpler and faster but may not replicate the results of
-    # CAD applications.
-    internal = 1
-
-    # Replicate AutoCAD linetype rendering oriented on drawing units and
-    # various ltscale factors:
-    # Warning: this rendering method break lines into small segments which
-    # causes a longer rendering time!
-    ezdxf = 2
-
-
-DEFAULT_PARAMS = {
-    "point_size": 2.0,
-    "point_size_relative": True,
-
-    # linetype render:
-    # "internal" or "ezdxf", see class LineTypeRenderer()
-    "linetype_renderer": "internal",
-    "linetype_scaling": None,
-
-    # lineweight_scaling: 0.0 to disable lineweights at all - the current
-    # result is correct, in SVG the line width is 0.7 points for 0.25mm as
-    # required, but it often looks too thick
-    "lineweight_scaling": 1.0,
-    "min_lineweight": 0.24,  # 1/300 inch
-    "min_dash_length": 0.1,  # just guessing
-    "max_flattening_distance": 0.01,  # just guessing
-
-    # 0 = disable HATCH entities
-    # 1 = show HATCH entities
-    "show_hatch": 1,
-
-    # 0 = disable hatch pattern
-    # 1 = use predefined matplotlib pattern by pattern-name matching
-    # 2 = draw as solid fillings
-    "hatch_pattern": 1,
-}
+MATPLOTLIB_DEFAULT_PARAMS = {}
 
 
 class MatplotlibBackend(Backend):
@@ -90,14 +48,9 @@ class MatplotlibBackend(Backend):
                  use_text_cache: bool = True,
                  params: Dict = None,
                  ):
-        super().__init__()
-        self.params = dict(DEFAULT_PARAMS)
-        # Pass only values different to default values:
-        if params:
-            err = set(params.keys()) - set(DEFAULT_PARAMS.keys())
-            if err:
-                raise ValueError(f'Invalid parameter(s): {str(err)}')
-            self.params.update(params)
+        params_ = dict(MATPLOTLIB_DEFAULT_PARAMS)
+        params_.update(params or {})
+        super().__init__(params_)
         self.ax = ax
         self._adjust_figure = adjust_figure
         self._scale_dashes_backup = plt.rcParams['lines.scale_dashes']
@@ -115,42 +68,24 @@ class MatplotlibBackend(Backend):
         self._current_z = 0
         self._text = TextRenderer(font, use_text_cache)
 
-        # Set Path() approximation accuracy:
-        self.max_flattening_distance = self.params['max_flattening_distance']
-
-        # Hatch settings:
-        self.show_hatch = self.params['show_hatch']
-        self.hatch_pattern = self.params['hatch_pattern']
-
-        # Detect linetype rendering type:
-        linetype_renderer = self.params['linetype_renderer'].lower()
-        try:
-            linetype_rendering = LineTypeRendering[linetype_renderer]
-        except KeyError:
-            raise ValueError(
-                f'Unknown linetype rendering type: {linetype_renderer}')
-
-        linetype_scaling = self.params['linetype_scaling']
-        lineweight_scaling = self.params['lineweight_scaling']
-        min_lineweight = self.params['min_lineweight']
         # Setup line rendering component:
-        if linetype_rendering == LineTypeRendering.internal:
+        if self.linetype_renderer == "internal":
             self._line_renderer = InternalLineRenderer(
-                linetype_scaling,
-                lineweight_scaling,
-                min_lineweight,
+                self.linetype_scaling,
+                self.lineweight_scaling,
+                self.min_lineweight,
             )
-        elif linetype_rendering == LineTypeRendering.ezdxf:
+        elif self.linetype_renderer == "ezdxf":
             # This linetype renderer should only be used by "hardcopy" backends!
             # It is just too slow for interactive backends, and the result of
             # the matplotlib line rendering is optimized for displays.
             self._line_renderer = EzdxfLineRenderer(
                 # The `min_length` and `max_distance` arguments should be based
                 # on the output dpi setting.
-                linetype_scaling,
-                lineweight_scaling,
-                min_lineweight,
-                min_length=self.params['min_dash_length'],
+                self.linetype_scaling,
+                self.lineweight_scaling,
+                self.min_lineweight,
+                min_length=self.min_dash_length,
                 max_distance=self.max_flattening_distance,
             )
 
@@ -167,8 +102,8 @@ class MatplotlibBackend(Backend):
 
     def draw_point(self, pos: Vector, properties: Properties):
         color = properties.color
-        point_size = self.params['point_size']
-        if self.params['point_size_relative']:
+        point_size = self.point_size
+        if self.point_size_relative:
             self.ax.scatter([pos.x], [pos.y], s=point_size, c=color,
                             zorder=self._get_z())
         else:
@@ -347,8 +282,9 @@ def qsave(layout: 'Layout', filename: str, *,
           fg: Optional[Color] = None,
           dpi: int = 300,
           backend: str = 'agg',
-          ltype: str = 'internal',
-          lineweight_scaling: float = 1.0,
+          ltype=None,  # deprecated
+          lineweight_scaling=None,  # deprecated
+          params: dict = None,
           ) -> None:
     """ Quick and simplified render export by matplotlib.
 
@@ -371,21 +307,47 @@ def qsave(layout: 'Layout', filename: str, *,
         backend: the matplotlib rendering backend to use (agg, cairo, svg etc)
             (see documentation for `matplotlib.use() <https://matplotlib.org/3.1.1/api/matplotlib_configuration_api.html?highlight=matplotlib%20use#matplotlib.use>`_
             for a complete list of backends)
-        ltype: "internal" to use the matplotlib dpi based linetype rendering,
-            "ezdxf" to use a drawing unit base linetype rendering.
-        lineweight_scaling: scale lineweights or set to 0 to disable lineweights
-            at all.
+        ltype: deprecated, use :code:`params={"linetype_renderer": "ezdxf"}`
+        lineweight_scaling: deprecated, use :code:`params={"lineweight_scaling": 0}`
+        params: matplotlib backend parameters
 
     .. versionadded:: 0.14
+
+    .. versionchanged:: 0.15
+
+        deprecated arguments `ltype` and `lineweight_scaling` will be removed in
+        v0.16, added argument `params` to pass parameters to the matplotlib
+        backend.
 
     """
     from .properties import RenderContext
     from .frontend import Frontend
     import matplotlib
-    # set the backend to prevent warnings about GUIs being opened from a thread
-    # other than the main thread
+
+    # Set the backend to prevent warnings about GUIs being opened from a thread
+    # other than the main thread.
     old_backend = matplotlib.get_backend()
     matplotlib.use(backend)
+    params = params or {}
+
+    # Let the user choose a minimum lineweight:
+    if 'min_lineweight' not in params:
+        # If not set by user, use ~1 pixel
+        params['min_lineweight'] = 72 / dpi
+
+    if ltype is not None:
+        params['linetype_renderer'] = ltype
+        warnings.warn(
+            'The "ltype" argument is deprecated use the "params" dict '
+            'to pass arguments to the MatplotlibBackend, '
+            'will be removed in v0.16.', DeprecationWarning)
+    if lineweight_scaling is not None:
+        params['lineweight_scaling'] = lineweight_scaling
+        warnings.warn(
+            'The "lineweight_scaling" argument is deprecated use the '
+            '"params" dict to pass arguments to the MatplotlibBackend, '
+            'will be removed in v0.16.', DeprecationWarning)
+
     try:
         fig: plt.Figure = plt.figure()
         ax: plt.Axes = fig.add_axes((0, 0, 1, 1))
@@ -393,11 +355,7 @@ def qsave(layout: 'Layout', filename: str, *,
         ctx.set_current_layout(layout)
         if bg is not None:
             ctx.current_layout.set_colors(bg, fg)
-        out = MatplotlibBackend(ax, params={
-            'linetype_renderer': ltype,
-            'lineweight_scaling': lineweight_scaling,
-            'min_lineweight': 72 / dpi,
-        })
+        out = MatplotlibBackend(ax, params=params)
         Frontend(ctx, out).draw_layout(layout, finalize=True)
         # transparent=True sets the axes color to fully transparent
         # facecolor sets the figure color
@@ -457,6 +415,10 @@ class AbstractLineRenderer:
 
 
 class InternalLineRenderer(AbstractLineRenderer):
+    """ matplotlib internal linetype rendering, which is oriented on the output
+    medium and dpi: This method is simpler and faster but may not replicate the
+    results of CAD applications.
+    """
     def __init__(self, scale: Optional[float] = None,
                  lineweight_scale: float = 1.0,
                  min_lineweight: float = 0.24,
@@ -507,6 +469,10 @@ class InternalLineRenderer(AbstractLineRenderer):
 
 
 class EzdxfLineRenderer(AbstractLineRenderer):
+    """ Replicate AutoCAD linetype rendering oriented on drawing units and
+    various ltscale factors. This rendering method break lines into small
+    segments which causes a longer rendering time!
+    """
     def __init__(self, scale: Optional[float] = None,
                  lineweight_scaling: float = 1.0,
                  min_lineweight: float = 0.24,

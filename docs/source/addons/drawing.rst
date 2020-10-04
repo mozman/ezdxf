@@ -69,43 +69,158 @@ Simplified render workflow but with less control:
 
 .. autofunction:: ezdxf.addons.drawing.matplotlib.qsave
 
+MatplotlibBackend
+-----------------
+
+.. class:: ezdxf.addons.drawing.matplotlib.MatplotlibBackend
+
+    .. method:: __init__(ax: plt.Axes, *, adjust_figure: bool = True, font: FontProperties,  use_text_cache: bool = True, params: Dict = None)
+
+PyQtBackend
+-----------
+
+.. class:: ezdxf.addons.drawing.pyqt.PyQtBackend
+
+    .. method:: __init__(scene: qw.QGraphicsScene = None, *, use_text_cache: bool = True, debug_draw_rect: bool = False, params: Dict = None)
+
+Backend Options `params`
+------------------------
+
+Additional options for a backend can be passed by the `params` argument of the
+backend constructor :meth:`__init__()`. Not every option will be supported by
+all backends and currently most options are only supported by the matplotlib
+backend.
+
+
+point_size
+    size for the POINT entity
+
+point_size_relative
+    POINT entity size is relative to the viewport (screen) if ``True``
+
+linetype_renderer
+    - "internal" uses the matplotlib linetype renderer which is oriented on the
+      output medium and dpi setting, This method is simpler and faster but may
+      not replicate the results of CAD applications.
+    - "ezdxf" replicate AutoCAD linetype rendering oriented on drawing units and
+      various ltscale factors.This rendering method break lines into small
+      segments which causes a longer rendering time!
+
+linetype_scaling
+    Overall linetype scaling factor.
+
+lineweight_scaling
+    overall lineweight scaling factor, set to 0 to disable lineweight support
+    at all - the current result is correct, in SVG the line width is 0.7 points
+    for 0.25mm as required, but it often looks too thick.
+
+min_lineweight
+    Minimum lineweight.
+
+min_dash_length
+    Minimum dash length.
+
+max_flattening_distance
+    Maximum flattening distance in drawing units for curve approximations.
+
+show_hatch
+    - 0 to disable HATCH entities
+    - 1 to show HATCH entities
+
+hatch_pattern
+    - 0 to disable hatch pattern
+    - 1 to use predefined matplotlib pattern by pattern-name matching
+    - 2 to draw HATCH pattern as solid fillings.
+
+Default Values
+++++++++++++++
+
+=========================== =================== ===================
+Backend Option              MatplotlibBackend   PyQtBackend
+=========================== =================== ===================
+point_size                  2.0                 1.0
+point_size_relative         ``True``            not supported
+linetype_renderer           "internal"          not supported
+linetype_scaling            ``None``            not supported
+lineweight_scaling          1.0                 not supported
+min_lineweight              0.24                not supported
+min_dash_length             0.1                 not supported
+max_flattening_distance     0.01                0.01
+show_hatch                  1                   1
+hatch_pattern               1                   not supported
+=========================== =================== ===================
+
+Properties
+----------
+
+.. class:: ezdxf.addons.drawing.properties.Properties
+
+LayerProperties
+---------------
+
+.. class:: ezdxf.addons.drawing.properties.LayerProperties
+
+RenderContext
+-------------
+
+.. class:: ezdxf.addons.drawing.properties.RenderContext
+
+Frontend
+--------
+
+.. class:: ezdxf.addons.drawing.frontend.Frontend
+
+Backend
+--------
+
+.. class:: ezdxf.addons.drawing.backend.Backend
+
 Details
 -------
 
-The rendering is performed in two stages. The front-end traverses the DXF document structure, converting each
-encountered entity into primitive drawing commands. These commands are fed to a back-end which implements the interface:
+The rendering is performed in two stages. The front-end traverses the DXF document
+structure, converting each encountered entity into primitive drawing commands.
+These commands are fed to a back-end which implements the interface:
 :class:`~ezdxf.addons.drawing.backend.Backend`.
-Currently a PyQt5 (QGraphicsScene based) and Matplotlib backend are implemented.
 
-Although the resulting images will not be pixel-perfect with AutoCAD (which was taken as the ground truth when
-developing this add-on) great care has been taken to achieve similar behavior in some areas:
+Currently a :class:`PyQtBackend` (QGraphicsScene based) and a
+:class:`MatplotlibBackend` are implemented.
 
-- The algorithm for determining color should match AutoCAD. However, the color palette is not stored in the dxf file,
-  so the chosen colors may be different to what is expected. The :class:`~ezdxf.addons.drawing.properties.RenderContext`
-  class supports passing a plot style table (:term:`CTB`-file) as custom color palette but uses the same palette as AutoCAD
-  by default.
-- Text rendering is quite accurate, text positioning, alignment and word wrapping are very faithful. Differences may
-  occur if a different font from what was used by the CAD application but even in that case, for supported backends,
+Although the resulting images will not be pixel-perfect with AutoCAD (which was
+taken as the ground truth when developing this add-on) great care has been taken
+to achieve similar behavior in some areas:
+
+- The algorithm for determining color should match AutoCAD. However, the color
+  palette is not stored in the dxf file, so the chosen colors may be different
+  to what is expected. The :class:`~ezdxf.addons.drawing.properties.RenderContext`
+  class supports passing a plot style table (:term:`CTB`-file) as custom color
+  palette but uses the same palette as AutoCAD by default.
+- Text rendering is quite accurate, text positioning, alignment and word wrapping
+  are very faithful. Differences may occur if a different font from what was
+  used by the CAD application but even in that case, for supported backends,
   measurements are taken of the font being used to match text as closely as possible.
 - Visibility determination (based on which layers are visible) should match AutoCAD
 
-see ``examples/addons/drawing/cad_viewer.py`` for an advanced use of the module. See ``examples/addons/drawing/draw_cad.py``
-for a simple use of the module.
+See ``examples/addons/drawing/cad_viewer.py`` for an advanced use of the module.
 
-see `drawing.md` in the ezdxf repository for additional behaviours documented during the development of this add-on.
+See ``examples/addons/drawing/draw_cad.py`` for a simple use of the module.
+
+See ``drawing.md`` in the ezdxf repository for additional behaviours documented
+during the development of this add-on.
 
 Limitations
 -----------
 
-- Line types and hatch patterns/gradients are ignored
-- rich text formatting is ignored (drawn as plain text)
-- If the backend does not match the font then the exact text placement and wrapping may appear slightly different
+- Line types and hatch patterns/gradients are ignored by the :class:`PyQtBackend`
+- Rich text formatting is ignored (drawn as plain text)
+- If the backend does not match the font then the exact text placement and
+  wrapping may appear slightly different
 - No support for MULTILEADER
-- The style which POINT entities are drawn in are not stored in the dxf file and so cannot be replicated exactly
+- The style which POINT entities are drawn in are not stored in the dxf file and
+  so cannot be replicated exactly
 - only basic support for:
 
   - infinite lines (rendered as lines with a finite length)
-  - hatches with holes (holes are rendered filled)
   - viewports (rendered as rectangles)
   - 3D (some entities may not display correctly in 3D (see possible improvements below))
     however many things should already work in 3D.
@@ -117,13 +232,8 @@ Future Possible Improvements
 ----------------------------
 
 - pass the font to backend if available
-- deal with nested polygons/hatches by triangulating them: Triangulation_
-- both the matplotlib and pyqt backends have built-in support for rendering hatched patterns
-  (see MatplotlibHatch_ and QtBrushHatch_) so the interface could pass that information through or query the backend
-  to determine whether it automatically supports complex drawing commands such as hatching, or whether the frontend
-  should break the shape into simpler commands (i.e. calculate and draw each line of a hatch)
-- text formatting commands could be interpreted and broken into text chunks which can be drawn with a single font
-  weight or modification such as italics
+- text formatting commands could be interpreted and broken into text chunks
+  which can be drawn with a single font weight or modification such as italics
 
 .. _Triangulation: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 .. _MatplotlibHatch: https://matplotlib.org/3.2.1/gallery/shapes_and_collections/hatch_demo.html

@@ -1,8 +1,7 @@
-# Created: 06.2020
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, TYPE_CHECKING, Iterable, List
+from typing import Optional, Tuple, TYPE_CHECKING, Iterable, List, Dict
 
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
@@ -14,17 +13,61 @@ from ezdxf.render.path import Path
 if TYPE_CHECKING:
     from ezdxf.addons.drawing.text import FontMeasurements
 
+DEFAULT_PARAMS = {
+    "point_size": 2.0,
+    "point_size_relative": True,
+
+    # linetype render:
+    # "internal" or "ezdxf"
+    "linetype_renderer": "internal",
+    "linetype_scaling": None,
+
+    # lineweight_scaling: 0.0 to disable lineweights at all - the current
+    # result is correct, in SVG the line width is 0.7 points for 0.25mm as
+    # required, but it often looks too thick
+    "lineweight_scaling": 1.0,
+    "min_lineweight": 0.24,  # 1/300 inch
+    "min_dash_length": 0.1,  # just guessing
+    "max_flattening_distance": 0.01,  # just guessing
+
+    # 0 = disable HATCH entities
+    # 1 = show HATCH entities
+    "show_hatch": 1,
+
+    # 0 = disable hatch pattern
+    # 1 = use predefined matplotlib pattern by pattern-name matching
+    # 2 = draw as solid fillings
+    "hatch_pattern": 1,
+}
+
 
 class Backend(ABC):
-    def __init__(self):
+    def __init__(self, params: Dict = None):
+        params_ = dict(DEFAULT_PARAMS)
+        if params:
+            err = set(params.keys()) - set(DEFAULT_PARAMS.keys())
+            if err:
+                raise ValueError(f'Invalid parameter(s): {str(err)}')
+            params_.update(params)
         self.entity_stack: List[Tuple[DXFGraphic, Properties]] = []
+        self.point_size = params_['point_size']
+        self.point_size_relative = params_['point_size_relative']
+        self.show_hatch = params_['show_hatch']
+        self.hatch_pattern = params_['hatch_pattern']
+        self.linetype_renderer = params_['linetype_renderer'].lower()
+        self.linetype_scaling = params_['linetype_scaling']
+        self.lineweight_scaling = params_['lineweight_scaling']
+        self.min_lineweight = params_['min_lineweight']
+        self.min_dash_length = params_['min_dash_length']
+
         # Deprecated: instead use Path.flattening() for approximation
         self.bezier_approximation_count: int = 32
 
         # Max flattening distance in drawing units: the backend implementation
         # should calculate an appropriate value, like 1 screen- or paper pixel
         # on the output medium, but converted into drawing units.
-        self.max_flattening_distance: float = 0.01
+        # Set Path() approximation accuracy:
+        self.max_flattening_distance = params_['max_flattening_distance']
 
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         self.entity_stack.append((entity, properties))
