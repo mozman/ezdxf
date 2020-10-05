@@ -45,20 +45,13 @@ MATPLOTLIB_DEFAULT_PARAMS = {}
 
 class FontFinder:
     def __init__(self):
-        self.font_directories = self._get_all_font_directories()
-
-    @staticmethod
-    def _get_all_font_directories():
-        import pathlib
         fm = FontManager()
-        return list({pathlib.Path(font.fname).parent for font in fm.ttflist})
+        self.absolut_font_paths: Dict[str, str] = {
+           os.path.basename(f.fname).lower(): f.fname for f in fm.ttflist
+        }
 
     def absolute_font_path(self, name: str) -> Optional[str]:
-        for folder in self.font_directories:
-            abs_path = folder / name
-            if abs_path.exists():
-                return str(abs_path)
-        return None
+        return self.absolut_font_paths.get(name.lower())
 
 
 font_finder = FontFinder()
