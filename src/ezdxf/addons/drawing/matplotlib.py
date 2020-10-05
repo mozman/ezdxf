@@ -43,6 +43,27 @@ CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
 MATPLOTLIB_DEFAULT_PARAMS = {}
 
 
+class FontFinder:
+    def __init__(self):
+        self.font_directories = self._get_all_font_directories()
+
+    @staticmethod
+    def _get_all_font_directories():
+        import pathlib
+        fm = FontManager()
+        return list({pathlib.Path(font.fname).parent for font in fm.ttflist})
+
+    def absolute_font_path(self, name: str) -> Optional[str]:
+        for folder in self.font_directories:
+            abs_path = folder / name
+            if abs_path.exists():
+                return str(abs_path)
+        return None
+
+
+font_finder = FontFinder()
+
+
 class MatplotlibBackend(Backend):
     def __init__(self, ax: plt.Axes,
                  *,
@@ -176,7 +197,7 @@ class MatplotlibBackend(Backend):
     def get_font_properties(self, name: str) -> FontProperties:
         font_properties = self._text_renderer.default_font
         if name is not None:
-            font_path = _get_absolute_ttf_path(name)
+            font_path = font_finder.absolute_font_path(name)
             if font_path:
                 font_properties = FontProperties(fname=font_path)
         return font_properties
@@ -184,7 +205,7 @@ class MatplotlibBackend(Backend):
     def get_font_measurements(self, cap_height: float,
                               font: str = None) -> FontMeasurements:
         return self._text_renderer.get_font_measurements(
-            font).scale_from_baseline(
+            self.get_font_properties(font)).scale_from_baseline(
             desired_cap_height=cap_height)
 
     def get_text_line_width(self, text: str, cap_height: float,
@@ -313,17 +334,6 @@ def _get_path_patch_data(path):
         else:
             raise ValueError(f'Invalid command: {cmd.type}')
     return [(p.x, p.y) for p in vertices], codes
-
-
-def _get_absolute_ttf_path(name: str) -> Optional[str]:
-    import pathlib
-    fm = FontManager()
-    font_folders = {pathlib.Path(font.fname).parent for font in fm.ttflist}
-    for folder in font_folders:
-        abs_path = folder / name
-        if abs_path.exists():
-            return str(abs_path)
-    return None
 
 
 def qsave(layout: 'Layout', filename: str, *,

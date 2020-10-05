@@ -72,7 +72,8 @@ class FontMeasurements:
 
     def scale_from_baseline(self, desired_cap_height: float) -> "FontMeasurements":
         scale = desired_cap_height / self.cap_height
-        assert math.isclose(self.baseline, 0.0)
+        # Is the following assertion important?
+        # assert math.isclose(self.baseline, 0.0)
         return FontMeasurements(
             baseline=self.baseline,
             cap_top=desired_cap_height,
