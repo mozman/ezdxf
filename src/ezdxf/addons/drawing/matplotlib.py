@@ -283,7 +283,7 @@ class TextRenderer:
         return measurements
 
     def get_text_path(
-            self, text: str, font: Optional[FontProperties] = None) -> TextPath:
+            self, text: str, font: FontProperties = None) -> TextPath:
         # None is the default font
         cache = self._text_path_cache[hash(font)]  # defaultdict(dict)
         path = cache.get(text, None)
