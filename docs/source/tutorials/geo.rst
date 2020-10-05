@@ -250,3 +250,25 @@ to check for valid polygons:
 
     # remove all mappings for which validate() returns False
     msp_proxy.filter(validate)
+
+Interface to GDAL/OGR
+---------------------
+
+The GDAL/OGR package has no direct support for the ``__geo_interface__``, but
+has builtin support for the GeoJSON format:
+
+.. code-block:: python
+
+    from osgeo import ogr
+    from ezdxf.addons import geo
+    from ezdxf.render import random_2d_path
+    import json
+
+    p = geo.GeoProxy({'type': 'LineString', 'coordinates': list(random_2d_path(20))})
+    # Create a GeoJSON string from the __geo_interface__ object by the json
+    # module and feed the result into ogr:
+    line_string = ogr.CreateGeometryFromJson(json.dumps(p.__geo_interface__))
+
+    # Parse the GeoJSON string from ogr by the json module and feed the result
+    # into a GeoProxy() object:
+    p2 = geo.GeoProxy.parse(json.loads(line_string.ExportToJson()))
