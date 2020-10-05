@@ -244,11 +244,12 @@ class TextRenderer:
         upper_x = self.get_text_path('X').vertices[:, 1].tolist()
         lower_x = self.get_text_path('x').vertices[:, 1].tolist()
         lower_p = self.get_text_path('p').vertices[:, 1].tolist()
+        baseline = min(lower_x)
         return FontMeasurements(
-            baseline=min(lower_x),
-            cap_top=max(upper_x),
-            x_top=max(lower_x),
-            bottom=min(lower_p)
+            baseline=baseline,
+            cap_height=max(upper_x) - baseline,
+            x_height=max(lower_x) - baseline,
+            descender_height=baseline - min(lower_p)
         )
 
     def get_text_path(self, text: str) -> TextPath:
