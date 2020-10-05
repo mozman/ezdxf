@@ -345,8 +345,12 @@ class RenderContext:
         font = text_style.dxf.font
 
         # Map SHX fonts to True Type Fonts:
-        if font.upper() in SHX_FONTS:
-            font = SHX_FONTS[font.upper()]
+        font_upper = font.upper()
+        if font_upper in SHX_FONTS:
+            font = SHX_FONTS[font_upper]
+        # Only ttf-fonts are supported
+        elif not font_upper.endswith('.TTF'):
+            font = None  # use default font
         self.fonts[name] = font
 
     def _true_layer_color(self, layer: 'Layer') -> Color:
