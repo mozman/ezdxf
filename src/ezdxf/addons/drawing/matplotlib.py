@@ -10,7 +10,7 @@ from functools import lru_cache
 
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-from matplotlib.font_manager import FontProperties
+from matplotlib.font_manager import FontProperties, FontManager
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle, PathPatch
 from matplotlib.path import Path
@@ -165,7 +165,8 @@ class MatplotlibBackend(Backend):
         transformed_path = _transform_path(
             self._text_renderer.get_text_path(text, font_properties),
             Matrix44.scale(
-                self._text_renderer.get_scale(cap_height, font_properties)) @ transform
+                self._text_renderer.get_scale(cap_height,
+                                              font_properties)) @ transform
         )
         self.ax.add_patch(
             PathPatch(transformed_path, facecolor=properties.color, linewidth=0,
@@ -175,8 +176,9 @@ class MatplotlibBackend(Backend):
     def get_font_properties(self, name: str) -> FontProperties:
         font_properties = self._text_renderer.default_font
         if name is not None:
-            font_name = _get_absolute_ttf_path(name)
-            font_properties = FontProperties(fname=font_name)
+            font_path = _get_absolute_ttf_path(name)
+            if font_path:
+                font_properties = FontProperties(fname=font_path)
         return font_properties
 
     def get_font_measurements(self, cap_height: float,
@@ -313,9 +315,15 @@ def _get_path_patch_data(path):
     return [(p.x, p.y) for p in vertices], codes
 
 
-def _get_absolute_ttf_path(name: str) -> str:
-    # todo: remove Windows hack by portable implementation
-    return os.path.join(r"C:\Windows\Fonts", name)
+def _get_absolute_ttf_path(name: str) -> Optional[str]:
+    import pathlib
+    fm = FontManager()
+    font_folders = {pathlib.Path(font.fname).parent for font in fm.ttflist}
+    for folder in font_folders:
+        abs_path = folder / name
+        if abs_path.exists():
+            return str(abs_path)
+    return None
 
 
 def qsave(layout: 'Layout', filename: str, *,
