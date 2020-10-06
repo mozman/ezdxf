@@ -204,6 +204,8 @@ class PyQtBackend(Backend):
                 else:
                     font_families = font_db.applicationFontFamilies(font_id)
                     qfont = qg.QFont(font_families[0])
+            else:
+                print(f'Font "{name}" replaced by default font.')
         return qfont
 
     def get_font_measurements(self, cap_height: float,

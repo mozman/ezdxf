@@ -193,6 +193,8 @@ class MatplotlibBackend(Backend):
             font_path = font_finder.absolute_font_path(name)
             if font_path:
                 font_properties = FontProperties(fname=font_path)
+            else:
+                print(f'Font "{name}" replaced by default font.')
         return font_properties
 
     def get_font_measurements(self, cap_height: float,
