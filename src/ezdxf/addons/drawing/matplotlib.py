@@ -3,11 +3,14 @@
 import math
 from typing import Iterable, TYPE_CHECKING, Optional, Dict, Sequence
 import abc
+import os
 import warnings
+from collections import defaultdict
+from functools import lru_cache
 
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-from matplotlib.font_manager import FontProperties
+from matplotlib.font_manager import FontProperties, FontManager
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle, PathPatch
 from matplotlib.path import Path
@@ -40,6 +43,20 @@ CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
 MATPLOTLIB_DEFAULT_PARAMS = {}
 
 
+class FontFinder:
+    def __init__(self):
+        fm = FontManager()
+        self.absolut_font_paths: Dict[str, str] = {
+           os.path.basename(f.fname).lower(): f.fname for f in fm.ttflist
+        }
+
+    def absolute_font_path(self, name: str) -> Optional[str]:
+        return self.absolut_font_paths.get(name.lower())
+
+
+font_finder = FontFinder()
+
+
 class MatplotlibBackend(Backend):
     def __init__(self, ax: plt.Axes,
                  *,
@@ -66,7 +83,7 @@ class MatplotlibBackend(Backend):
         self.ax.autoscale(False)
         self.ax.set_aspect('equal', 'datalim')
         self._current_z = 0
-        self._text = TextRenderer(font, use_text_cache)
+        self._text_renderer = TextRenderer(font, use_text_cache)
 
         # Setup line rendering component:
         if self.linetype_renderer == "internal":
@@ -90,7 +107,7 @@ class MatplotlibBackend(Backend):
             )
 
     def clear_text_cache(self):
-        self._text.clear_cache()
+        self._text_renderer.clear_cache()
 
     def _get_z(self) -> int:
         z = self._current_z
@@ -157,18 +174,31 @@ class MatplotlibBackend(Backend):
                   cap_height: float):
         if not text.strip():
             return  # no point rendering empty strings
+        font_properties = self.get_font_properties(properties.font)
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
         transformed_path = _transform_path(
-            self._text.get_text_path(text),
-            Matrix44.scale(self._text.get_scale(cap_height)) @ transform
+            self._text_renderer.get_text_path(text, font_properties),
+            Matrix44.scale(
+                self._text_renderer.get_scale(cap_height,
+                                              font_properties)) @ transform
         )
         self.ax.add_patch(
             PathPatch(transformed_path, facecolor=properties.color, linewidth=0,
                       zorder=self._get_z()))
 
+    @lru_cache(maxsize=256)
+    def get_font_properties(self, name: str) -> FontProperties:
+        font_properties = self._text_renderer.default_font
+        if name is not None:
+            font_path = font_finder.absolute_font_path(name)
+            if font_path:
+                font_properties = FontProperties(fname=font_path)
+        return font_properties
+
     def get_font_measurements(self, cap_height: float,
                               font: str = None) -> FontMeasurements:
-        return self._text.font_measurements.scale_from_baseline(
+        return self._text_renderer.get_font_measurements(
+            self.get_font_properties(font)).scale_from_baseline(
             desired_cap_height=cap_height)
 
     def get_text_line_width(self, text: str, cap_height: float,
@@ -177,9 +207,10 @@ class MatplotlibBackend(Backend):
             return 0
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
         text = prepare_string_for_rendering(text, dxftype)
-        path = self._text.get_text_path(text)
-        return max(x for x, y in path.vertices) * self._text.get_scale(
-            cap_height)
+        font_properties = self.get_font_properties(font)
+        path = self._text_renderer.get_text_path(text, font_properties)
+        return max(x for x, y in path.vertices) * self._text_renderer.get_scale(
+            cap_height, font_properties)
 
     def clear(self):
         self.ax.clear()
@@ -225,41 +256,62 @@ def _transform_path(path: Path, transform: Matrix44) -> Path:
 
 class TextRenderer:
     def __init__(self, font: FontProperties, use_cache: bool):
-        self._font = font
+        self._default_font = font
         self._use_cache = use_cache
-        self._cache: Dict[str, TextPath] = {}
-        self._font_measurements = self._get_font_measurements()
 
-    def clear_cache(self):
-        self._cache.clear()
+        # Each font has its own text path cache
+        # key is hash(FontProperties)
+        self._text_path_cache: Dict[
+            int, Dict[str, TextPath]] = defaultdict(dict)
+
+        # Each font has its own font measurements cache
+        # key is hash(FontProperties)
+        self._font_measurement_cache: Dict[
+            int, FontMeasurements] = {}
 
     @property
-    def font_measurements(self) -> FontMeasurements:
-        return self._font_measurements
+    def default_font(self) -> FontProperties:
+        return self._default_font
 
-    def get_scale(self, desired_cap_height: float) -> float:
-        return desired_cap_height / self._font_measurements.cap_height
+    def clear_cache(self):
+        self._text_path_cache.clear()
 
-    def _get_font_measurements(self) -> FontMeasurements:
-        upper_x = self.get_text_path('X').vertices[:, 1].tolist()
-        lower_x = self.get_text_path('x').vertices[:, 1].tolist()
-        lower_p = self.get_text_path('p').vertices[:, 1].tolist()
-        baseline = min(lower_x)
-        return FontMeasurements(
-            baseline=baseline,
-            cap_height=max(upper_x) - baseline,
-            x_height=max(lower_x) - baseline,
-            descender_height=baseline - min(lower_p)
-        )
+    def get_scale(self, desired_cap_height: float,
+                  font: FontProperties) -> float:
+        return desired_cap_height / self.get_font_measurements(font).cap_height
 
-    def get_text_path(self, text: str) -> TextPath:
-        path = self._cache.get(text, None)
+    def get_font_measurements(
+            self, font: FontProperties = None) -> FontMeasurements:
+        # None is the default font.
+        key = hash(font)
+        measurements = self._font_measurement_cache.get(key)
+        if measurements is None:
+            upper_x = self.get_text_path('X', font).vertices[:, 1].tolist()
+            lower_x = self.get_text_path('x', font).vertices[:, 1].tolist()
+            lower_p = self.get_text_path('p', font).vertices[:, 1].tolist()
+            baseline = min(lower_x)
+            measurements = FontMeasurements(
+                baseline=baseline,
+                cap_height=max(upper_x) - baseline,
+                x_height=max(lower_x) - baseline,
+                descender_height=baseline - min(lower_p)
+            )
+            self._font_measurement_cache[key] = measurements
+        return measurements
+
+    def get_text_path(
+            self, text: str, font: FontProperties = None) -> TextPath:
+        # None is the default font
+        cache = self._text_path_cache[hash(font)]  # defaultdict(dict)
+        path = cache.get(text, None)
         if path is None:
+            if font is None:
+                font = self._default_font
             # must replace $ with \$ to avoid matplotlib interpreting it as math text
             path = TextPath((0, 0), text.replace('$', '\\$'), size=1,
-                            prop=self._font, usetex=False)
+                            prop=font, usetex=False)
             if self._use_cache:
-                self._cache[text] = path
+                cache[text] = path
         return path
 
 
@@ -420,6 +472,7 @@ class InternalLineRenderer(AbstractLineRenderer):
     medium and dpi: This method is simpler and faster but may not replicate the
     results of CAD applications.
     """
+
     def __init__(self, scale: Optional[float] = None,
                  lineweight_scale: float = 1.0,
                  min_lineweight: float = 0.24,
@@ -474,6 +527,7 @@ class EzdxfLineRenderer(AbstractLineRenderer):
     various ltscale factors. This rendering method break lines into small
     segments which causes a longer rendering time!
     """
+
     def __init__(self, scale: Optional[float] = None,
                  lineweight_scaling: float = 1.0,
                  min_lineweight: float = 0.24,

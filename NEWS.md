@@ -8,6 +8,7 @@ Version 0.15a3 - dev
 - Release notes: https://ezdxf.mozman.at/release-v0-15.html
 - NEW: linetype support for matplotlib drawing backend
 - NEW: HATCH island and basic pattern support for matplotlib drawing backend
+- NEW: Font support for matplotlib drawing backend
 - NEW: recover misplaced tags of the `AcDbEntity` subclass (color, layer, 
   linetype, ...), supported by all loading modes
 - NEW: `ezdxf.addons.geo` module, support for the 

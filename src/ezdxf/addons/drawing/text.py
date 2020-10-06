@@ -294,7 +294,7 @@ def simplified_text_chunks(text: AnyText, out: Backend,
         yield line, transform, cap_height
 
         if debug_draw_rect:
-            width = out.get_text_line_width(line, cap_height)
+            width = out.get_text_line_width(line, cap_height, font)
             ps = list(transform.transform_vertices([Vector(0, 0, 0), Vector(width, 0, 0), Vector(width, cap_height, 0),
                                                     Vector(0, cap_height, 0), Vector(0, 0, 0)]))
             draw_rect(ps, '#ff0000', out)

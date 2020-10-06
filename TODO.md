@@ -5,10 +5,8 @@ Add-ons
 -------
 
 - drawing
-    - matplotlib back-end support for: (v0.15)
-        - hatch pattern, only limited support possible
-        - hatch gradient, did not find a usable solution yet
-        - fonts
+    - matplotlib back-end support for:
+        - hatch gradient, did not find an usable solution yet
     - pyqt5 back-end: implement features of matplotlib back-end
     - ACAD_TABLE
     - MLEADER ???
