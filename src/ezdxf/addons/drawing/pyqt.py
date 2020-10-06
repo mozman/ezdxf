@@ -6,6 +6,8 @@ import warnings
 from collections import defaultdict
 from functools import lru_cache
 from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
+# temp solution!
+from .matplotlib import font_finder
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.text import FontMeasurements
@@ -191,13 +193,17 @@ class PyQtBackend(Backend):
     def get_qfont(self, name: str) -> qg.QFont:
         qfont = self._text_renderer.default_font
         if name is not None:
-            pass
             # Is there a PyQt solution to find the absolute font path?
             # Reusing matplotlib solution:
-            # font_path = font_finder.absolute_font_path(name)
-            # if font_path:
-            # todo: how to load ttf fonts in PyQt?
-            # qfont = qg.QFont(fname=font_path)
+            font_path = font_finder.absolute_font_path(name)
+            if font_path:
+                font_db = qg.QFontDatabase()
+                font_id = font_db.addApplicationFont(font_path)
+                if font_id == -1:
+                    print(f'Error loading font: "{font_path}"')
+                else:
+                    font_families = font_db.applicationFontFamilies(font_id)
+                    qfont = qg.QFont(font_families[0])
         return qfont
 
     def get_font_measurements(self, cap_height: float,
