@@ -191,13 +191,12 @@ class PyQtBackend(Backend):
     def get_qfont(self, name: str) -> qg.QFont:
         qfont = self._text_renderer.default_font
         if name is not None:
-            font_path = None
-            # Is there a PyQt solution to find the font path, if PyQt needs
-            # the the absolute path.
+            pass
+            # Is there a PyQt solution to find the absolute font path?
+            # Reusing matplotlib solution:
             # font_path = font_finder.absolute_font_path(name)
-            if font_path:
-                pass
-                # todo: how to load ttf fonts in PyQT?
+            # if font_path:
+                # todo: how to load ttf fonts in PyQt?
                 # qfont = qg.QFont(fname=font_path)
         return qfont
 
@@ -214,9 +213,9 @@ class PyQtBackend(Backend):
 
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
         text = prepare_string_for_rendering(text, dxftype)
-        return self._text_renderer.get_text_rect(
-            text).right() * self._text_renderer.get_scale(
-            cap_height, self.get_qfont(font))
+        font = self.get_qfont(font)
+        scale = self._text_renderer.get_scale(cap_height, font)
+        return self._text_renderer.get_text_rect(text, font).right() * scale
 
     def clear(self) -> None:
         self._scene.clear()
@@ -274,12 +273,12 @@ class TextRenderer:
 
     def get_font_measurements(self, font: qg.QFont = None) -> FontMeasurements:
         # None is the default font.
-        key = hash(font)
+        key = hash(font)  # good hash?
         measurements = self._font_measurement_cache.get(key)
         if measurements is None:
-            upper_x = self.get_text_rect('X')
-            lower_x = self.get_text_rect('x')
-            lower_p = self.get_text_rect('p')
+            upper_x = self.get_text_rect('X', font)
+            lower_x = self.get_text_rect('x', font)
+            lower_p = self.get_text_rect('p', font)
             baseline = lower_x.bottom()
             measurements = FontMeasurements(
                 baseline=baseline,
@@ -287,6 +286,7 @@ class TextRenderer:
                 x_height=lower_x.top() - baseline,
                 descender_height=baseline - lower_p.bottom(),
             )
+            self._font_measurement_cache[key] = measurements
         return measurements
 
     def get_text_path(self, text: str, font: qg.QFont) -> qg.QPainterPath:
