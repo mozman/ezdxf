@@ -39,8 +39,8 @@ class BasicBackend(Backend):
 
     def get_font_measurements(self, cap_height: float,
                               font=None) -> FontMeasurements:
-        return FontMeasurements(baseline=0.0, cap_top=1.0, x_top=0.5,
-                                bottom=-0.2)
+        return FontMeasurements(baseline=0.0, cap_height=1.0, x_height=0.5,
+                                descender_height=0.2)
 
     def set_background(self, color: str) -> None:
         self.collector.append(('bgcolor', color))

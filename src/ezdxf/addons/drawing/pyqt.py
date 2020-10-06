@@ -250,11 +250,12 @@ class TextRenderer:
         upper_x = self.get_text_rect('X')
         lower_x = self.get_text_rect('x')
         lower_p = self.get_text_rect('p')
+        baseline = lower_x.bottom()
         return FontMeasurements(
-            baseline=lower_x.bottom(),
-            cap_top=upper_x.top(),
-            x_top=lower_x.top(),
-            bottom=lower_p.bottom(),
+            baseline=baseline,
+            cap_height=upper_x.top() - baseline,
+            x_height=lower_x.top() - baseline,
+            descender_height=baseline - lower_p.bottom(),
         )
 
     def get_text_path(self, text: str) -> qg.QPainterPath:
