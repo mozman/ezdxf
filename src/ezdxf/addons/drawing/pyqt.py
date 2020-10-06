@@ -203,7 +203,9 @@ class PyQtBackend(Backend):
                     print(f'Error loading font: "{font_path}"')
                 else:
                     font_families = font_db.applicationFontFamilies(font_id)
-                    qfont = qg.QFont(font_families[0])
+                    # todo: remove font-style hack
+                    italic = 'italic' in name.lower()
+                    qfont = qg.QFont(font_families[0], italic=italic)
             else:
                 print(f'Font "{name}" replaced by default font.')
         return qfont
