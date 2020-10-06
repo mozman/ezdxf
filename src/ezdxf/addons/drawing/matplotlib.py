@@ -280,8 +280,7 @@ class TextRenderer:
                   font: FontProperties) -> float:
         return desired_cap_height / self.get_font_measurements(font).cap_height
 
-    def get_font_measurements(
-            self, font: FontProperties = None) -> FontMeasurements:
+    def get_font_measurements(self, font: FontProperties) -> FontMeasurements:
         # None is the default font.
         key = hash(font)
         measurements = self._font_measurement_cache.get(key)
@@ -299,8 +298,7 @@ class TextRenderer:
             self._font_measurement_cache[key] = measurements
         return measurements
 
-    def get_text_path(
-            self, text: str, font: FontProperties = None) -> TextPath:
+    def get_text_path(self, text: str, font: FontProperties) -> TextPath:
         # None is the default font
         cache = self._text_path_cache[hash(font)]  # defaultdict(dict)
         path = cache.get(text, None)

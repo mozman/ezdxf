@@ -177,11 +177,11 @@ class PyQtBackend(Backend):
         if not text.strip():
             return  # no point rendering empty strings
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
-        font = self.get_qfont(properties.font)
-        scale = self._text_renderer.get_scale(cap_height, font)
+        qfont = self.get_qfont(properties.font)
+        scale = self._text_renderer.get_scale(cap_height, qfont)
         transform = Matrix44.scale(scale, -scale, 0) @ transform
 
-        path = self._text_renderer.get_text_path(text, font)
+        path = self._text_renderer.get_text_path(text, qfont)
         path = _matrix_to_qtransform(transform).map(path)
         item = self._scene.addPath(path, self._no_line,
                                    self._get_color(properties.color))
@@ -196,15 +196,15 @@ class PyQtBackend(Backend):
             # Reusing matplotlib solution:
             # font_path = font_finder.absolute_font_path(name)
             # if font_path:
-                # todo: how to load ttf fonts in PyQt?
-                # qfont = qg.QFont(fname=font_path)
+            # todo: how to load ttf fonts in PyQt?
+            # qfont = qg.QFont(fname=font_path)
         return qfont
 
     def get_font_measurements(self, cap_height: float,
                               font: str = None) -> FontMeasurements:
+        qfont = self.get_qfont(font)
         return self._text_renderer.get_font_measurements(
-            self.get_qfont(font)).scale_from_baseline(
-            desired_cap_height=cap_height)
+            qfont).scale_from_baseline(desired_cap_height=cap_height)
 
     def get_text_line_width(self, text: str, cap_height: float,
                             font: str = None) -> float:
@@ -213,9 +213,9 @@ class PyQtBackend(Backend):
 
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
         text = prepare_string_for_rendering(text, dxftype)
-        font = self.get_qfont(font)
-        scale = self._text_renderer.get_scale(cap_height, font)
-        return self._text_renderer.get_text_rect(text, font).right() * scale
+        qfont = self.get_qfont(font)
+        scale = self._text_renderer.get_scale(cap_height, qfont)
+        return self._text_renderer.get_text_rect(text, qfont).right() * scale
 
     def clear(self) -> None:
         self._scene.clear()
@@ -251,12 +251,12 @@ class TextRenderer:
         self._use_cache = use_cache
 
         # Each font has its own text path cache
-        # key is hash(FontProperties)
+        # key is hash(QFont)
         self._text_path_cache: Dict[
             int, Dict[str, qg.QPainterPath]] = defaultdict(dict)
 
         # Each font has its own font measurements cache
-        # key is hash(FontProperties)
+        # key is hash(QFont)
         self._font_measurement_cache: Dict[
             int, FontMeasurements] = {}
 
@@ -271,7 +271,7 @@ class TextRenderer:
         measurements = self.get_font_measurements(font)
         return desired_cap_height / measurements.cap_height
 
-    def get_font_measurements(self, font: qg.QFont = None) -> FontMeasurements:
+    def get_font_measurements(self, font: qg.QFont) -> FontMeasurements:
         # None is the default font.
         key = hash(font)  # good hash?
         measurements = self._font_measurement_cache.get(key)
@@ -302,6 +302,6 @@ class TextRenderer:
                 cache[text] = path
         return path
 
-    def get_text_rect(self, text: str, font: qg.QFont = None) -> qc.QRectF:
+    def get_text_rect(self, text: str, font: qg.QFont) -> qc.QRectF:
         # no point caching the bounding rect calculation, it is very cheap
         return self.get_text_path(text, font).boundingRect()
