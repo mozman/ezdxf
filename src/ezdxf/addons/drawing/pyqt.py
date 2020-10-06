@@ -282,9 +282,9 @@ class TextRenderer:
             baseline = lower_x.bottom()
             measurements = FontMeasurements(
                 baseline=baseline,
-                cap_height=upper_x.top() - baseline,
-                x_height=lower_x.top() - baseline,
-                descender_height=baseline - lower_p.bottom(),
+                cap_height=baseline - upper_x.top(),
+                x_height=baseline - lower_x.top(),
+                descender_height=lower_p.bottom() - baseline,
             )
             self._font_measurement_cache[key] = measurements
         return measurements
