@@ -43,6 +43,7 @@ Version 0.15a3 - dev
 - NEW: `pattern.load(measurement, factor)` load scaled hatch pattern
 - NEW: `Path.from_hatch_boundary_path()`
 - NEW: `odafc.export_dwg()` new replace option to delete existing DWG files
+- NEW `Style` table entry supports extended font data
 - CHANGE: `Hatch.set_pattern_fill()` uses HEADER variable $MEASUREMENT to 
   determine the default scaling of predefined hatch pattern. 
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 

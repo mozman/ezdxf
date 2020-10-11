@@ -9,7 +9,7 @@ properties, this list shows the matplotlib properties:
 - family: List of font names in decreasing order of priority.
     The items may include a generic font family name, either
     'serif', 'sans-serif', 'cursive', 'fantasy', or 'monospace'.
-- style: 'normal', 'italic' or 'oblique'
+- style: 'normal' ('regular'), 'italic' or 'oblique'
 - stretch: A numeric value in the range 0-1000 or one of
     'ultra-condensed', 'extra-condensed', 'condensed',
     'semi-condensed', 'normal', 'semi-expanded', 'expanded',
@@ -25,16 +25,53 @@ available.
 Select fonts in different backends:
 
 - matplotlib: FontProperties(family, style, stretch, weight)
-- pyqt:
+- pyqt: QFont(family: str, pointSize: int (ignore), weight: int, italic: bool)
+- SVG: font-family; font-style; font-stretch; font-weight;
+
+Weight Values: https://developer.mozilla.org/de/docs/Web/CSS/font-weight
+
+Supported by matplotlib, pyqt, SVG
+
+=========== =====
+Thin        100
+Hairline    100
+ExtraLight  200
+UltraLight  200
+Light       300
+Normal      400
+Medium      500
+DemiBold    600
+SemiBold    600
+Bold        700
+ExtraBold   800
+UltraBold   800
+Black       900
+Heavy       900
+ExtraBlack  950
+UltraBlack  950
+=========== =====
+
+Stretch Values: https://developer.mozilla.org/en-US/docs/Web/CSS/font-stretch
+
+Supported by matplotlib, SVG
+
+=============== ======
+ultra-condensed 50%
+extra-condensed 62.5%
+condensed       75%
+semi-condensed  87.5%
+normal          100%
+semi-expanded   112.5%
+expanded        125%
+extra-expanded  150%
+ultra-expanded  200%
+=============== ======
+
 
 This module manages as backend agnostic font database.
 The properties of many common fonts are stored in a data file "fonts.json",
 therefore for basic usage no additional dependency is required.
 Advanced features uses the optional matplotlib font manager tools.
-
-Install matplotlib::
-
-    pip install matplotlib
 
 The :func:`add_system_fonts` function adds all available fonts for the current
 system to the font database.
