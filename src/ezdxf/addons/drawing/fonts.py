@@ -91,6 +91,29 @@ Font = namedtuple('Font', "ttf family style stretch weight")
 # Key is TTF font file name without path in lowercase like "arial.ttf":
 fonts: Dict[str, Font] = dict()
 
+WEIGHT_TO_VALUE = {
+    "thin": 100,
+    "hairline": 100,
+    "extralight": 200,
+    "UltraLight": 200,
+    "light": 300,
+    "normal": 400,
+    "medium": 500,
+    "demibold": 600,
+    "semibold": 600,
+    "bold": 700,
+    "extrabold": 800,
+    "ultrabold": 800,
+    "black": 900,
+    "heavy": 900,
+    "extrablack": 950,
+    "ultrablack": 950,
+}
+
+
+def weight_name_to_value(name: str) -> int:
+    return WEIGHT_TO_VALUE.get(name.lower(), 400)
+
 
 def db_key(name: str) -> str:
     return Path(name).name.lower()

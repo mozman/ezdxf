@@ -187,10 +187,10 @@ class MatplotlibBackend(Backend):
             PathPatch(transformed_path, facecolor=properties.color, linewidth=0,
                       zorder=self._get_z()))
 
-    @lru_cache(maxsize=256)
+    @lru_cache(maxsize=256)  # fonts.Font is a named tuple
     def get_font_properties(self, font: fonts.Font) -> FontProperties:
         font_properties = self._text_renderer.default_font
-        if font is not None:
+        if font:
             # Font-definitions are created by the matplotlib FontManger(),
             # but stored as json file and could be altered by an user:
             try:

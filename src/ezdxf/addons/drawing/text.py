@@ -2,7 +2,6 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import enum
-import math
 import re
 from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
@@ -10,6 +9,7 @@ from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 import ezdxf.lldxf.const as DXFConstants
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_utils import draw_rect
+from ezdxf.addons.drawing import fonts
 from ezdxf.entities import MText, Text, Attrib
 from ezdxf.math import Matrix44, Vector
 
@@ -262,7 +262,7 @@ def _get_wcs_insert(text: AnyText) -> Vector:
 
 def simplified_text_chunks(text: AnyText, out: Backend,
                            *,
-                           font: str = None,
+                           font: fonts.Font = None,
                            debug_draw_rect: bool = False) -> Iterable[Tuple[str, Matrix44, float]]:
     """
     Splits a complex text entity into simple chunks of text which can all be rendered the same way:

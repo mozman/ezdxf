@@ -1,18 +1,17 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Optional, Iterable, Dict, Sequence
+from typing import Optional, Iterable, Dict, Sequence, Union
 import warnings
 from collections import defaultdict
 from functools import lru_cache
 from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
-# temp solution!
-from .matplotlib import font_finder
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
+from ezdxf.addons.drawing import fonts
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command
 
@@ -189,35 +188,24 @@ class PyQtBackend(Backend):
                                    self._get_color(properties.color))
         self._set_item_data(item)
 
-    @lru_cache(maxsize=256)
-    def get_qfont(self, name: str) -> qg.QFont:
+    @lru_cache(maxsize=256)  # fonts.Font is a named tuple
+    def get_qfont(self, font: fonts.Font) -> qg.QFont:
         qfont = self._text_renderer.default_font
-        if name is not None:
-            # Is there a PyQt solution to find the absolute font path?
-            # Reusing matplotlib solution:
-            font_path = font_finder.absolute_font_path(name)
-            if font_path:
-                font_db = qg.QFontDatabase()
-                font_id = font_db.addApplicationFont(font_path)
-                if font_id == -1:
-                    print(f'Error loading font: "{font_path}"')
-                else:
-                    font_families = font_db.applicationFontFamilies(font_id)
-                    # todo: remove font-style hack
-                    italic = 'italic' in name.lower()
-                    qfont = qg.QFont(font_families[0], italic=italic)
-            else:
-                print(f'Font "{name}" replaced by default font.')
+        if font:
+            family = font.family
+            italic = "italic" in font.style.lower()
+            weight = _map_weight(font.weight)
+            qfont = qg.QFont(family, weight=weight, italic=italic)
         return qfont
 
     def get_font_measurements(self, cap_height: float,
-                              font: str = None) -> FontMeasurements:
+                              font: fonts.Font = None) -> FontMeasurements:
         qfont = self.get_qfont(font)
         return self._text_renderer.get_font_measurements(
             qfont).scale_from_baseline(desired_cap_height=cap_height)
 
     def get_text_line_width(self, text: str, cap_height: float,
-                            font: str = None) -> float:
+                            font: fonts.Font = None) -> float:
         if not text.strip():
             return 0
 
@@ -236,6 +224,23 @@ class PyQtBackend(Backend):
         if self._debug_draw_rect:
             self._scene.addRect(self._scene.sceneRect(),
                                 self._get_pen('#000000'), self._no_fill)
+
+
+# https://doc.qt.io/qt-5/qfont.html#Weight-enum
+# QFont::Thin	0	0
+# QFont::ExtraLight	12	12
+# QFont::Light	25	25
+# QFont::Normal	50	50
+# QFont::Medium	57	57
+# QFont::DemiBold	63	63
+# QFont::Bold	75	75
+# QFont::ExtraBold	81	81
+# QFont::Black	87	87
+def _map_weight(weight: Union[str, int]) -> int:
+    if isinstance(weight, str):
+        weight = fonts.weight_name_to_value(weight)
+    value = int((weight / 10) + 10)  # normal: 400 -> 50
+    return min(max(0, value), 99)
 
 
 def _get_x_scale(t: qg.QTransform) -> float:
