@@ -10,6 +10,7 @@ import re
 from ezdxf.entities import Attrib
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.type_hints import Color, RGB
+from ezdxf.addons.drawing import fonts
 from ezdxf.addons import acadctb
 from ezdxf.sections.table import table_key as layer_key
 from ezdxf.tools.rgb import luminance, DXF_DEFAULT_COLORS, int2rgb
@@ -153,8 +154,9 @@ class Properties:
         # To get the "real" layer of an entity, you have to use `entity.dxf.layer`
         self.layer: str = '0'
 
-        # Font name for text entities, `None` is for the default font
-        self.font: Optional[str] = None
+        # Font definition object for text entities:
+        # `None` is for the default font
+        self.font: Optional[fonts.Font] = None
 
         # Filling properties: Solid, Pattern, Gradient
         self.filling: Optional[Filling] = None
@@ -287,7 +289,7 @@ class RenderContext:
         # change in the future.
         self.layers: Dict[str, LayerProperties] = dict()
         # Text-style -> font mapping
-        self.fonts: Dict[str, str] = dict()
+        self.fonts: Dict[str, fonts.Font] = dict()
         self.units = 0  # store modelspace units as enum, see ezdxf/units.py
         self.linetype_scale: float = 1.0  # overall modelspace linetype scaling
         if doc:
@@ -342,15 +344,21 @@ class RenderContext:
     def add_text_style(self, text_style: 'Textstyle'):
         """ Setup text style properties. """
         name = table_key(text_style.dxf.name)
-        font = text_style.dxf.font
+        ttf = text_style.dxf.font
 
         # Map SHX fonts to True Type Fonts:
-        font_upper = font.upper()
+        font_upper = ttf.upper()
         if font_upper in SHX_FONTS:
-            font = SHX_FONTS[font_upper]
+            ttf = SHX_FONTS[font_upper]
         # Only ttf-fonts are supported
         elif not font_upper.endswith('.TTF'):
-            font = None  # use default font
+            ttf = None  # use default font
+
+        if ttf:
+            font = fonts.get(ttf)
+        else:  # default font
+            font = fonts.Font(
+                'arial.ttf', 'Arial', 'normal', 'normal', 'normal')
         self.fonts[name] = font
 
     def _true_layer_color(self, layer: 'Layer') -> Color:
@@ -603,11 +611,12 @@ class RenderContext:
         # todo: is this value stored anywhere (e.g. HEADER section)?
         return 0.25
 
-    def resolve_font(self, entity: 'DXFGraphic') -> Optional[str]:
+    def resolve_font(self, entity: 'DXFGraphic') -> Optional[fonts.Font]:
         """ Resolve the text style of `entity` to a font name.
         Returns ``None`` for the default font.
         """
         if entity.dxf.hasattr('style'):
+            # todo: extended font data
             return self.fonts.get(table_key(entity.dxf.style))
         else:
             return None

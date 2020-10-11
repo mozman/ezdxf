@@ -21,6 +21,7 @@ from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
+from ezdxf.addons.drawing import fonts
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
@@ -47,7 +48,7 @@ class FontFinder:
     def __init__(self):
         fm = FontManager()
         self.absolut_font_paths: Dict[str, str] = {
-           os.path.basename(f.fname).lower(): f.fname for f in fm.ttflist
+            os.path.basename(f.fname).lower(): f.fname for f in fm.ttflist
         }
 
     def absolute_font_path(self, name: str) -> Optional[str]:
@@ -187,14 +188,20 @@ class MatplotlibBackend(Backend):
                       zorder=self._get_z()))
 
     @lru_cache(maxsize=256)
-    def get_font_properties(self, name: str) -> FontProperties:
+    def get_font_properties(self, font: fonts.Font) -> FontProperties:
         font_properties = self._text_renderer.default_font
-        if name is not None:
-            font_path = font_finder.absolute_font_path(name)
-            if font_path:
-                font_properties = FontProperties(fname=font_path)
-            else:
-                print(f'Font "{name}" replaced by default font.')
+        if font is not None:
+            # Font-definitions are created by the matplotlib FontManger(),
+            # but stored as json file and could be altered by an user:
+            try:
+                font_properties = FontProperties(
+                    family=font.family,
+                    style=font.style,
+                    stretch=font.stretch,
+                    weight=font.weight,
+                )
+            except ValueError:
+                pass
         return font_properties
 
     def get_font_measurements(self, cap_height: float,

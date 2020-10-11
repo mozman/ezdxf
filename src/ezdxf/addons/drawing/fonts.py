@@ -86,10 +86,10 @@ import json
 FONT_DATA_FILE = 'fonts.json'
 logger = logging.getLogger('ezdxf')
 
-FontEntry = namedtuple('FontEntry', "family style stretch weight")
+Font = namedtuple('Font', "ttf family style stretch weight")
 
 # Key is TTF font file name without path in lowercase like "arial.ttf":
-fonts: Dict[str, FontEntry] = dict()
+fonts: Dict[str, Font] = dict()
 
 
 def db_key(name: str) -> str:
@@ -104,7 +104,8 @@ def add_system_fonts() -> None:
         return
     for entry in FontManager().ttflist:
         ttf = db_key(entry.fname)
-        fonts[ttf] = FontEntry(
+        fonts[ttf] = Font(
+            ttf,
             entry.name,
             entry.style,
             entry.stretch,
@@ -112,8 +113,25 @@ def add_system_fonts() -> None:
         )
 
 
-def find(ttf_path: str) -> Optional[FontEntry]:
-    return fonts.get(db_key(ttf_path))
+def find(ttf_path: Optional[str]) -> Optional[Font]:
+    if ttf_path:
+        return fonts.get(db_key(ttf_path))
+    else:
+        return None
+
+
+def get(ttf_path: str) -> Font:
+    font = find(ttf_path)
+    if font is None:
+        # Create a pseudo entry:
+        name = db_key(ttf_path)
+        return Font(
+            name,
+            Path(ttf_path).stem,
+            "normal", "normal", "normal",
+        )
+    else:
+        return font
 
 
 def load(path=None):
@@ -124,13 +142,12 @@ def load(path=None):
     with open(path, 'rt') as fp:
         data = json.load(fp)
     if data:
-        fonts.update(data)
+        for font in data:
+            key = font[0]
+            fonts[key] = Font(*font)
 
 
 def save(path=None):
     path = Path(path) if path else Path(__file__).parent / FONT_DATA_FILE
     with open(path, 'wt') as fp:
-        json.dump(fonts, fp, indent=2)
-
-
-load()
+        json.dump(list(fonts.values()), fp, indent=2)

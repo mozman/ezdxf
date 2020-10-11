@@ -16,7 +16,7 @@ from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 import ezdxf
 from ezdxf import recover
 from ezdxf.addons import odafc
-from ezdxf.addons.drawing import Frontend, RenderContext
+from ezdxf.addons.drawing import Frontend, RenderContext, fonts
 from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFParentStack
@@ -24,6 +24,13 @@ from ezdxf.document import Drawing
 from ezdxf.audit import Auditor
 from ezdxf.entities import DXFGraphic
 from ezdxf.lldxf.const import DXFStructureError
+
+# Setup fonts - this is not done automatically, because this may take a long
+# time and is not important for every user.
+# Load default font definitions, included in ezdxf:
+fonts.load()
+# Add font definitions available at the running system, requires matplotlib:
+fonts.add_system_fonts()
 
 
 class CADGraphicsView(qw.QGraphicsView):

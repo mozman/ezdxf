@@ -11,6 +11,14 @@ import ezdxf
 from ezdxf import recover
 from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
+from ezdxf.addons.drawing import fonts
+
+# Setup fonts - this is not done automatically, because this may take a long
+# time and is not important for every user.
+# Load default font definitions, included in ezdxf:
+fonts.load()
+# Add font definitions available at the running system, requires matplotlib:
+fonts.add_system_fonts()
 
 
 def _main():
