@@ -134,21 +134,7 @@ class PyQtBackend(Backend):
 
     def draw_path(self, path: Path, properties: Properties) -> None:
         qt_path = qg.QPainterPath()
-        start = path.start
-        qt_path.moveTo(start.x, start.y)
-        for cmd in path:
-            if cmd.type == Command.LINE_TO:
-                end = cmd.end
-                qt_path.lineTo(end.x, end.y)
-            elif cmd.type == Command.CURVE_TO:
-                end = cmd.end
-                ctrl1 = cmd.ctrl1
-                ctrl2 = cmd.ctrl2
-                qt_path.cubicTo(
-                    ctrl1.x, ctrl1.y, ctrl2.x, ctrl2.y, end.x, end.y
-                )
-            else:
-                raise ValueError(f'Unknown path command: {cmd.type}')
+        _extend_qt_path(qt_path, path)
         item = self._scene.addPath(
             qt_path,
             self._get_pen(properties.color),
@@ -158,11 +144,19 @@ class PyQtBackend(Backend):
 
     def draw_filled_paths(self, paths: Sequence[Path], holes: Sequence[Path],
                           properties: Properties) -> None:
-        # todo: hole support
         if self.show_hatch == 0:
             return
+        qt_path = qg.QPainterPath()
         for path in paths:
-            self.draw_path(path, properties)
+            _extend_qt_path(qt_path, path.counter_clockwise())
+        for path in holes:
+            _extend_qt_path(qt_path, path.clockwise())
+        item = self._scene.addPath(
+            qt_path,
+            self._get_pen(properties.color),
+            self._get_brush(properties),
+        )
+        self._set_item_data(item)
 
     def draw_filled_polygon(self, points: Iterable[Vector],
                             properties: Properties) -> None:
@@ -224,6 +218,24 @@ class PyQtBackend(Backend):
         if self._debug_draw_rect:
             self._scene.addRect(self._scene.sceneRect(),
                                 self._get_pen('#000000'), self._no_fill)
+
+
+def _extend_qt_path(qt_path: qg.QPainterPath, path: Path) -> None:
+    start = path.start
+    qt_path.moveTo(start.x, start.y)
+    for cmd in path:
+        if cmd.type == Command.LINE_TO:
+            end = cmd.end
+            qt_path.lineTo(end.x, end.y)
+        elif cmd.type == Command.CURVE_TO:
+            end = cmd.end
+            ctrl1 = cmd.ctrl1
+            ctrl2 = cmd.ctrl2
+            qt_path.cubicTo(
+                ctrl1.x, ctrl1.y, ctrl2.x, ctrl2.y, end.x, end.y
+            )
+        else:
+            raise ValueError(f'Unknown path command: {cmd.type}')
 
 
 # https://doc.qt.io/qt-5/qfont.html#Weight-enum
