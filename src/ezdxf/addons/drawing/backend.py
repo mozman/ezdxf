@@ -20,6 +20,10 @@ DEFAULT_PARAMS = {
     # linetype render:
     # "internal" or "ezdxf"
     "linetype_renderer": "internal",
+
+    # overall linetype scaling: None as default is important!
+    # 0.0 = disable line types at all, only supported by PyQt backend yet!
+    # None = The line type renderer choose as value
     "linetype_scaling": None,
 
     # lineweight_scaling: 0.0 to disable lineweights at all - the current

@@ -1,7 +1,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Optional, Iterable, Dict, Sequence, Union
+from typing import Optional, Iterable, Dict, Sequence, Union, Tuple
 import warnings
 from collections import defaultdict
 from functools import lru_cache
@@ -14,6 +14,7 @@ from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing import fonts
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command
+from ezdxf.units import IMPERIAL_UNITS
 
 
 class _Point(qw.QAbstractGraphicsShapeItem):
@@ -44,7 +45,7 @@ CorrespondingDXFEntity = 0
 CorrespondingDXFParentStack = 1
 
 PYQT_DEFAULT_PARAMS = {
-    'point_size': 1.0
+    'point_size': 1.0,
 }
 
 
@@ -72,6 +73,7 @@ class PyQtBackend(Backend):
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
         self._text_renderer = TextRenderer(qg.QFont(), use_text_cache)
         self._debug_draw_rect = debug_draw_rect
+        self._dash_pattern_cache: Dict[int: Tuple[float, ...]] = dict()
 
     def set_scene(self, scene: qw.QGraphicsScene):
         self._scene = scene
@@ -96,18 +98,54 @@ class PyQtBackend(Backend):
 
     def _get_pen(self, properties: Properties) -> qg.QPen:
         # properties.lineweight is in mm like 0.25mm (default lineweight)
-        # 1px = 1/72 inch = 1pt = 0.3527mm
-        # lineweight 1mm = 1/0.3572 = 2,8px
-        px = properties.lineweight / 0.3572 * self.lineweight_scaling
-        if px > 0:
-            px = max(px, self.min_lineweight)
-        # else lineweight_scaling is 0:
+        # PyQt uses drawing units as line width units, to calculate the correct
+        # line weight the drawing scale 1:x is required but not available.
+        # px = properties.lineweight * self.lineweight_scaling
+        # if lineweight_scaling is 0:
         # A line width of zero indicates a cosmetic pen. This means that the
         # pen width is always drawn one pixel wide.
 
-        pen = qg.QPen(self._get_color(properties.color), px)
+        pen = qg.QPen(self._get_color(properties.color), 1)
+        # Line width support without scale information is not possible:
+        pen.setCosmetic(True)
         pen.setJoinStyle(qc.Qt.RoundJoin)
+        if len(properties.linetype_pattern) > 1 and self.linetype_scaling != 0:
+            # The dash pattern is specified in units of the pens width; e.g. a
+            # dash of length 5 in width 10 is 50 pixels long. Note that a pen
+            # with zero width is equivalent to a cosmetic pen with a width of 1
+            # pixel.
+            pattern_factor = self._get_line_pattern_factor(properties.units)
+            pen.setDashPattern(
+                self._get_dash_pattern(
+                    properties.linetype_pattern,
+                    properties.linetype_scale * pattern_factor
+                ))
         return pen
+
+    def _get_line_pattern_factor(self, units: int) -> float:
+        """ Returns factor to convert line pattern definitions. """
+        # do not cache!
+        scale = self.linetype_scaling or 1.0
+        # just guessing: this values assume a cosmetic pen!
+        return (750 if units in IMPERIAL_UNITS else 30) * scale
+
+    def _get_dash_pattern(self, pattern: Tuple[float, ...],
+                          scale: float) -> Tuple[float, ...]:
+        hash_key = hash((pattern, scale))
+        try:
+            dashes = self._dash_pattern_cache[hash_key]
+        except KeyError:
+            end = len(pattern)
+            if end % 2:  # grant even number, last dash is ignored
+                end = -1
+            min_length = self.min_dash_length
+            if self.linetype_scaling:
+                scale *= self.linetype_scaling
+            dashes = tuple(
+                max(dash * scale, min_length) for dash in pattern[:end]
+            )
+            self._dash_pattern_cache[hash_key] = dashes
+        return dashes
 
     def _get_brush(self, properties: Properties) -> qg.QBrush:
         if properties.filling:

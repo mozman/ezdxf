@@ -165,6 +165,9 @@ class Properties:
         # Filling properties: Solid, Pattern, Gradient
         self.filling: Optional[Filling] = None
 
+        # default is unit less
+        self.units = 0
+
     def __str__(self):
         return f'({self.color}, {self.linetype_name}, {self.lineweight}, ' \
                f'"{self.layer}")'
@@ -439,22 +442,26 @@ class RenderContext:
         p = Properties()
         p.layer = self.resolve_layer(entity)
         resolved_layer = layer_key(p.layer)
-
+        p.units = self.resolve_units()
         p.color = self.resolve_color(entity, resolved_layer=resolved_layer)
         p.linetype_name, p.linetype_pattern = \
             self.resolve_linetype(entity, resolved_layer=resolved_layer)
         p.lineweight = self.resolve_lineweight(entity,
                                                resolved_layer=resolved_layer)
-        dxf = entity.dxf
-        p.linetype_scale = dxf.ltscale
+        p.linetype_scale = self.resolve_linetype_scale(entity)
         p.is_visible = self.resolve_visible(entity,
                                             resolved_layer=resolved_layer)
-
-        if dxf.hasattr('style'):
+        if entity.dxf.hasattr('style'):
             p.font = self.resolve_font(entity)
         if entity.dxftype() == 'HATCH':
             p.filling = self.resolve_filling(entity)
         return p
+
+    def resolve_units(self) -> int:
+        return self.current_layout.units
+
+    def resolve_linetype_scale(self, entity: 'DXFGraphic') -> float:
+        return entity.dxf.ltscale * self.linetype_scale
 
     def resolve_visible(self, entity: 'DXFGraphic', *,
                         resolved_layer: Optional[str] = None) -> bool:
