@@ -94,9 +94,18 @@ class PyQtBackend(Backend):
             self._color_cache[color] = qt_color
         return qt_color
 
-    def _get_pen(self, color: Color) -> qg.QPen:
-        pen = qg.QPen(self._get_color(color), 1)
-        pen.setCosmetic(True)  # changes width depending on zoom
+    def _get_pen(self, properties: Properties) -> qg.QPen:
+        # properties.lineweight is in mm like 0.25mm (default lineweight)
+        # 1px = 1/72 inch = 1pt = 0.3527mm
+        # lineweight 1mm = 1/0.3572 = 2,8px
+        px = properties.lineweight / 0.3572 * self.lineweight_scaling
+        if px > 0:
+            px = max(px, self.min_lineweight)
+        # else lineweight_scaling is 0:
+        # A line width of zero indicates a cosmetic pen. This means that the
+        # pen width is always drawn one pixel wide.
+
+        pen = qg.QPen(self._get_color(properties.color), px)
         pen.setJoinStyle(qc.Qt.RoundJoin)
         return pen
 
@@ -125,10 +134,9 @@ class PyQtBackend(Backend):
 
     def draw_line(self, start: Vector, end: Vector,
                   properties: Properties) -> None:
-        color = properties.color
         item = self._scene.addLine(
             start.x, start.y, end.x, end.y,
-            self._get_pen(color)
+            self._get_pen(properties)
         )
         self._set_item_data(item)
 
@@ -137,8 +145,8 @@ class PyQtBackend(Backend):
         _extend_qt_path(qt_path, path)
         item = self._scene.addPath(
             qt_path,
-            self._get_pen(properties.color),
-            self._get_brush(properties),
+            self._get_pen(properties),
+            self._no_fill,
         )
         self._set_item_data(item)
 
@@ -153,7 +161,7 @@ class PyQtBackend(Backend):
             _extend_qt_path(qt_path, path.clockwise())
         item = self._scene.addPath(
             qt_path,
-            self._get_pen(properties.color),
+            self._get_pen(properties),
             self._get_brush(properties),
         )
         self._set_item_data(item)
@@ -216,8 +224,13 @@ class PyQtBackend(Backend):
         super().finalize()
         self._scene.setSceneRect(self._scene.itemsBoundingRect())
         if self._debug_draw_rect:
-            self._scene.addRect(self._scene.sceneRect(),
-                                self._get_pen('#000000'), self._no_fill)
+            properties = Properties()
+            properties.color = '#000000'
+            self._scene.addRect(
+                self._scene.sceneRect(),
+                self._get_pen(properties),
+                self._no_fill
+            )
 
 
 def _extend_qt_path(qt_path: qg.QPainterPath, path: Path) -> None:
