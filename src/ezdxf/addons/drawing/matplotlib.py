@@ -44,20 +44,6 @@ CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
 MATPLOTLIB_DEFAULT_PARAMS = {}
 
 
-class FontFinder:
-    def __init__(self):
-        fm = FontManager()
-        self.absolut_font_paths: Dict[str, str] = {
-            os.path.basename(f.fname).lower(): f.fname for f in fm.ttflist
-        }
-
-    def absolute_font_path(self, name: str) -> Optional[str]:
-        return self.absolut_font_paths.get(name.lower())
-
-
-font_finder = FontFinder()
-
-
 class MatplotlibBackend(Backend):
     def __init__(self, ax: plt.Axes,
                  *,
