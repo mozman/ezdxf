@@ -26,7 +26,7 @@ KM = 7
 YD = 10
 DM = 14
 
-IMPERIAL_UNITS = {0, 1, 2, 3, 8, 9, 10}
+IMPERIAL_UNITS = {1, 2, 3, 8, 9, 10, 21, 22, 23, 24}
 
 # Conversion factor from meters to unit
 # 1 meter is ... [unit]

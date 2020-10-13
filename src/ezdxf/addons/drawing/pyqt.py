@@ -46,6 +46,8 @@ CorrespondingDXFParentStack = 1
 
 PYQT_DEFAULT_PARAMS = {
     'point_size': 1.0,
+    # For my taste without scaling the default line width looks to thin:
+    'lineweight_scaling': 2.0,
 }
 
 
@@ -98,22 +100,17 @@ class PyQtBackend(Backend):
 
     def _get_pen(self, properties: Properties) -> qg.QPen:
         # properties.lineweight is in mm like 0.25mm (default lineweight)
-        # PyQt uses drawing units as line width units, to calculate the correct
-        # line weight the drawing scale 1:x is required but not available.
-        # px = properties.lineweight * self.lineweight_scaling
-        # if lineweight_scaling is 0:
-        # A line width of zero indicates a cosmetic pen. This means that the
-        # pen width is always drawn one pixel wide.
-
-        pen = qg.QPen(self._get_color(properties.color), 1)
-        # Line width support without scale information is not possible:
+        # mm to pixel for 72 dpi: 1px is 0.3527 mm
+        # Note that a pen with zero width is equivalent to a cosmetic pen with a
+        # width of 1 pixel (lineweight_scaling=0).
+        px = properties.lineweight / 0.3527 * self.lineweight_scaling
+        pen = qg.QPen(self._get_color(properties.color), px)
+        # Use constant width in pixel:
         pen.setCosmetic(True)
         pen.setJoinStyle(qc.Qt.RoundJoin)
         if len(properties.linetype_pattern) > 1 and self.linetype_scaling != 0:
             # The dash pattern is specified in units of the pens width; e.g. a
-            # dash of length 5 in width 10 is 50 pixels long. Note that a pen
-            # with zero width is equivalent to a cosmetic pen with a width of 1
-            # pixel.
+            # dash of length 5 in width 10 is 50 pixels long.
             pattern_factor = self._get_line_pattern_factor(properties.units)
             pen.setDashPattern(
                 self._get_dash_pattern(
@@ -123,7 +120,6 @@ class PyQtBackend(Backend):
         return pen
 
     def _get_line_pattern_factor(self, units: int) -> float:
-        """ Returns factor to convert line pattern definitions. """
         # do not cache!
         scale = self.linetype_scaling or 1.0
         # just guessing: this values assume a cosmetic pen!
@@ -139,8 +135,6 @@ class PyQtBackend(Backend):
             if end % 2:  # grant even number, last dash is ignored
                 end = -1
             min_length = self.min_dash_length
-            if self.linetype_scaling:
-                scale *= self.linetype_scaling
             dashes = tuple(
                 max(dash * scale, min_length) for dash in pattern[:end]
             )
