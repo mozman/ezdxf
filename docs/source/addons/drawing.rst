@@ -107,12 +107,13 @@ linetype_renderer
       segments which causes a longer rendering time!
 
 linetype_scaling
-    Overall linetype scaling factor.
+    Overall linetype scaling factor. Set to 0 to disable linetype support at
+    all.
 
 lineweight_scaling
-    overall lineweight scaling factor, set to 0 to disable lineweight support
-    at all - the current result is correct, in SVG the line width is 0.7 points
-    for 0.25mm as required, but it often looks too thick.
+    Overall lineweight scaling factor. Set to 0 to disable lineweight support
+    at all. The current result is correct, in SVG the line width is 0.7 points
+    for 0.25mm as required, but this often looks too thick.
 
 min_lineweight
     Minimum lineweight.
@@ -135,20 +136,20 @@ hatch_pattern
 Default Values
 ++++++++++++++
 
-=========================== =================== ===================
-Backend Option              MatplotlibBackend   PyQtBackend
-=========================== =================== ===================
-point_size                  2.0                 1.0
-point_size_relative         ``True``            not supported
-linetype_renderer           "internal"          not supported
-linetype_scaling            ``None``            not supported
-lineweight_scaling          1.0                 not supported
-min_lineweight              0.24                not supported
-min_dash_length             0.1                 not supported
-max_flattening_distance     0.01                0.01
-show_hatch                  1                   1
-hatch_pattern               1                   not supported
-=========================== =================== ===================
+=========================== ======================= ===================
+Backend Option              MatplotlibBackend       PyQtBackend
+=========================== ======================= ===================
+point_size                  2.0                     1.0
+point_size_relative         ``True``                not supported
+linetype_renderer           "internal"              "internal"
+linetype_scaling            3.527, 1.0 for "ezdxf"  1.0
+lineweight_scaling          1.0                     2.0
+min_lineweight              0.24                    not used yet
+min_dash_length             0.1                     not used yet
+max_flattening_distance     0.01                    0.01
+show_hatch                  1                       1
+hatch_pattern               1                       not supported
+=========================== ======================= ===================
 
 Properties
 ----------

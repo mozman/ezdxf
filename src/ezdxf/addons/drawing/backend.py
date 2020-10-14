@@ -23,8 +23,7 @@ DEFAULT_PARAMS = {
 
     # overall linetype scaling: None as default is important!
     # 0.0 = disable line types at all, only supported by PyQt backend yet!
-    # None = The line type renderer choose as value
-    "linetype_scaling": None,
+    "linetype_scaling": 1.0,
 
     # lineweight_scaling: 0.0 to disable lineweights at all - the current
     # result is correct, in SVG the line width is 0.7 points for 0.25mm as

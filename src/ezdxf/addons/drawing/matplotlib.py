@@ -2,15 +2,13 @@
 # License: MIT License
 import math
 from typing import Iterable, TYPE_CHECKING, Optional, Dict, Sequence
-import abc
-import os
 import warnings
 from collections import defaultdict
 from functools import lru_cache
 
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-from matplotlib.font_manager import FontProperties, FontManager
+from matplotlib.font_manager import FontProperties
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle, PathPatch
 from matplotlib.path import Path
@@ -26,6 +24,7 @@ from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
 from .matplotlib_hatch import HATCH_NAME_MAPPING
+from .line_renderer import AbstractLineRenderer
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Layout
@@ -44,6 +43,18 @@ CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
 MATPLOTLIB_DEFAULT_PARAMS = {}
 
 
+def get_params(params: Optional[Dict]) -> Dict:
+    params = params or {}
+    default_params = dict(MATPLOTLIB_DEFAULT_PARAMS)
+    if params.get('linetype_renderer') == 'ezdxf':
+        default_params['linetype_scaling'] = 1.0
+    else:
+        # Arbitrary choice, may change in the future!
+        default_params['linetype_scaling'] = 10 * POINTS
+    default_params.update(params)
+    return default_params
+
+
 class MatplotlibBackend(Backend):
     def __init__(self, ax: plt.Axes,
                  *,
@@ -52,9 +63,7 @@ class MatplotlibBackend(Backend):
                  use_text_cache: bool = True,
                  params: Dict = None,
                  ):
-        params_ = dict(MATPLOTLIB_DEFAULT_PARAMS)
-        params_.update(params or {})
-        super().__init__(params_)
+        super().__init__(get_params(params))
         self.ax = ax
         self._adjust_figure = adjust_figure
         self._scale_dashes_backup = plt.rcParams['lines.scale_dashes']
@@ -74,24 +83,12 @@ class MatplotlibBackend(Backend):
 
         # Setup line rendering component:
         if self.linetype_renderer == "internal":
-            self._line_renderer = InternalLineRenderer(
-                self.linetype_scaling,
-                self.lineweight_scaling,
-                self.min_lineweight,
-            )
+            self._line_renderer = InternalLineRenderer(self)
         elif self.linetype_renderer == "ezdxf":
             # This linetype renderer should only be used by "hardcopy" backends!
             # It is just too slow for interactive backends, and the result of
             # the matplotlib line rendering is optimized for displays.
-            self._line_renderer = EzdxfLineRenderer(
-                # The `min_length` and `max_distance` arguments should be based
-                # on the output dpi setting.
-                self.linetype_scaling,
-                self.lineweight_scaling,
-                self.min_lineweight,
-                min_length=self.min_dash_length,
-                max_distance=self.max_flattening_distance,
-            )
+            self._line_renderer = EzdxfLineRenderer(self)
 
     def clear_text_cache(self):
         self._text_renderer.clear_cache()
@@ -116,11 +113,10 @@ class MatplotlibBackend(Backend):
                                      zorder=self._get_z()))
 
     def draw_line(self, start: Vector, end: Vector, properties: Properties):
-        self._line_renderer.draw_line(
-            self.ax, start, end, properties, self._get_z())
+        self._line_renderer.draw_line(start, end, properties, self._get_z())
 
     def draw_path(self, path, properties: Properties):
-        self._line_renderer.draw_path(self.ax, path, properties, self._get_z())
+        self._line_renderer.draw_path(path, properties, self._get_z())
 
     def draw_filled_paths(self, paths: Sequence,
                           holes: Sequence, properties: Properties):
@@ -414,89 +410,45 @@ def qsave(layout: 'Layout', filename: str, *,
         matplotlib.use(old_backend)
 
 
-class AbstractLineRenderer:
-    def __init__(self, scale: Optional[float] = None,
-                 lineweight_scaling: float = 1.0,
-                 min_lineweight=0.24,  # 1/300 inch
-                 ):
-        self._pattern_cache = dict()
-        self._scale = scale
-        self._lineweight_scaling = lineweight_scaling * POINTS
-        self._min_lineweight = min_lineweight
+class MatplotlibLineRenderer(AbstractLineRenderer):
+    @property
+    def lineweight_scaling(self) -> float:
+        return self._backend.lineweight_scaling * POINTS
 
-    @abc.abstractmethod
-    def draw_line(self, ax: plt.Axes, start: Vector, end: Vector,
-                  properties: Properties, z: float):
-        ...
-
-    @abc.abstractmethod
-    def draw_path(self, ax: plt.Axes, path, properties: Properties, z: float):
-        ...
-
-    @abc.abstractmethod
-    def create_pattern(self, properties: Properties, scale: float):
-        ...
-
-    def pattern(self, properties: Properties):
-        """ Get pattern - implements pattern caching. """
-        scale = self._scale * properties.linetype_scale
-        key = (properties.linetype_name, scale)
-        pattern_ = self._pattern_cache.get(key)
-        if pattern_ is None:
-            pattern_ = self.create_pattern(properties, scale)
-            self._pattern_cache[key] = pattern_
-        return pattern_
-
-    def lineweight(self, properties: Properties) -> float:
-        if self._lineweight_scaling:
-            # Should we use _min_lineweight here too?
-            # return max(
-            #     self._min_lineweight,
-            #     properties.lineweight * self._lineweight_scaling
-            # )
-            # no 'if' required
-            return properties.lineweight * self._lineweight_scaling
-        else:
-            return self._min_lineweight
+    # noinspection PyUnresolvedReferences
+    @property
+    def ax(self) -> plt.Axes:
+        return self._backend.ax  # MatplotlibBackend
 
 
-class InternalLineRenderer(AbstractLineRenderer):
+class InternalLineRenderer(MatplotlibLineRenderer):
     """ matplotlib internal linetype rendering, which is oriented on the output
     medium and dpi: This method is simpler and faster but may not replicate the
     results of CAD applications.
     """
 
-    def __init__(self, scale: Optional[float] = None,
-                 lineweight_scale: float = 1.0,
-                 min_lineweight: float = 0.24,
-                 ):
-        if scale is None:
-            # Arbitrary choice, may change in the future!
-            scale = 10.0 * POINTS
-        super().__init__(scale, lineweight_scale, min_lineweight)
-
-    def draw_line(self, ax: plt.Axes, start: Vector, end: Vector,
-                  properties: Properties, z: float):
-        ax.add_line(
+    def draw_line(self, start: Vector,
+                  end: Vector, properties: Properties, z: float):
+        self.ax.add_line(
             Line2D(
                 (start.x, end.x), (start.y, end.y),
                 linewidth=self.lineweight(properties),
-                linestyle=self.pattern(properties),
+                linestyle=self.linetype(properties),
                 color=properties.color,
                 zorder=z,
             ))
 
-    def draw_path(self, ax: plt.Axes, path, properties: Properties, z: float):
+    def draw_path(self, path, properties: Properties, z: float):
         vertices, codes = _get_path_patch_data(path)
         patch = PathPatch(
             Path(vertices, codes),
             linewidth=self.lineweight(properties),
-            linestyle=self.pattern(properties),
+            linestyle=self.linetype(properties),
             fill=False,
             color=properties.color,
             zorder=z
         )
-        ax.add_patch(patch)
+        self.ax.add_patch(patch)
 
     def create_pattern(self, properties: Properties, scale: float):
         """ Return matplotlib line style tuple: (offset, on_off_sequence) or
@@ -515,33 +467,20 @@ class InternalLineRenderer(AbstractLineRenderer):
             return 0, pattern
 
 
-class EzdxfLineRenderer(AbstractLineRenderer):
+class EzdxfLineRenderer(MatplotlibLineRenderer):
     """ Replicate AutoCAD linetype rendering oriented on drawing units and
     various ltscale factors. This rendering method break lines into small
     segments which causes a longer rendering time!
     """
 
-    def __init__(self, scale: Optional[float] = None,
-                 lineweight_scaling: float = 1.0,
-                 min_lineweight: float = 0.24,
-                 min_length: float = 0.1,
-                 max_distance: float = 0.01,
-                 ):
-        if scale is None:
-            scale = 1.0
-        super().__init__(scale, lineweight_scaling, min_lineweight)
-        # Minimum dash length to be displayed by matplotlib
-        self._min_dash_length = min_length
-        # Maximum distance for adaptive recursive curve flattening
-        self._max_distance = max_distance
-
-    def draw_line(self, ax: plt.Axes, start: Vector, end: Vector,
+    def draw_line(self, start: Vector, end: Vector,
                   properties: Properties, z: int):
         pattern = self.pattern(properties)
         lineweight = self.lineweight(properties)
+        render_linetypes = bool(self.linetype_scaling)
         color = properties.color
-        if len(pattern) < 2:
-            ax.add_line(
+        if len(pattern) < 2 or not render_linetypes:
+            self.ax.add_line(
                 Line2D(
                     (start.x, end.x), (start.y, end.y),
                     linewidth=lineweight,
@@ -556,13 +495,14 @@ class EzdxfLineRenderer(AbstractLineRenderer):
                 linewidths=lineweight, color=color, zorder=z
             )
             lines.set_capstyle('butt')
-            ax.add_collection(lines)
+            self.ax.add_collection(lines)
 
-    def draw_path(self, ax: plt.Axes, path, properties: Properties, z: int):
+    def draw_path(self, path, properties: Properties, z: int):
         pattern = self.pattern(properties)
         lineweight = self.lineweight(properties)
+        render_linetypes = bool(self.linetype_scaling)
         color = properties.color
-        if len(pattern) < 2:
+        if len(pattern) < 2 or not render_linetypes:
             vertices, codes = _get_path_patch_data(path)
             patch = PathPatch(
                 Path(vertices, codes),
@@ -571,24 +511,24 @@ class EzdxfLineRenderer(AbstractLineRenderer):
                 fill=False,
                 zorder=z
             )
-            ax.add_patch(patch)
+            self.ax.add_patch(patch)
         else:
             renderer = EzdxfLineTypeRenderer(pattern)
             segments = renderer.line_segments(path.flattening(
-                self._max_distance, segments=16))
+                self.max_flattening_distance, segments=16))
             lines = LineCollection(
                 [((s.x, s.y), (e.x, e.y)) for s, e in segments],
                 linewidths=lineweight, color=color, zorder=z
             )
             lines.set_capstyle('butt')
-            ax.add_collection(lines)
+            self.ax.add_collection(lines)
 
     def create_pattern(self, properties: Properties, scale: float):
         """ Returns simplified linetype tuple: on_off_sequence """
         if len(properties.linetype_pattern) < 2:
             return tuple()
         else:
-            pattern = [max(e * scale, self._min_dash_length) for e in
+            pattern = [max(e * scale, self.min_dash_length) for e in
                        properties.linetype_pattern]
             if len(pattern) % 2:
                 pattern.pop()
