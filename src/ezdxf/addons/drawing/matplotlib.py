@@ -82,13 +82,13 @@ class MatplotlibBackend(Backend):
         self._text_renderer = TextRenderer(font, use_text_cache)
 
         # Setup line rendering component:
-        if self.linetype_renderer == "internal":
-            self._line_renderer = InternalLineRenderer(self)
-        elif self.linetype_renderer == "ezdxf":
+        if self.linetype_renderer == "ezdxf":
             # This linetype renderer should only be used by "hardcopy" backends!
             # It is just too slow for interactive backends, and the result of
             # the matplotlib line rendering is optimized for displays.
             self._line_renderer = EzdxfLineRenderer(self)
+        else:
+            self._line_renderer = InternalLineRenderer(self)
 
     def clear_text_cache(self):
         self._text_renderer.clear_cache()

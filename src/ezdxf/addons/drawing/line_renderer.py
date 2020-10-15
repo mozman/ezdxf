@@ -69,7 +69,7 @@ class AbstractLineRenderer:
     def linetype(self, properties: Properties):
         """ Set linetype_scaling=0 to disable linetype rendering.
 
-        Returns ``None`` to disable linetzype rendering.
+        Returns ``None`` to disable linetype rendering.
 
         """
         if self.linetype_scaling:

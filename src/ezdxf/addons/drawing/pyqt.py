@@ -11,6 +11,7 @@ from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
+from ezdxf.addons.drawing.line_renderer import AbstractLineRenderer
 from ezdxf.addons.drawing import fonts
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command
@@ -74,8 +75,11 @@ class PyQtBackend(Backend):
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
         self._text_renderer = TextRenderer(qg.QFont(), use_text_cache)
+        if self.linetype_renderer == "ezdxf":
+            self._line_renderer = EzdxfLineRenderer(self)
+        else:
+            self._line_renderer = InternalLineRenderer(self)
         self._debug_draw_rect = debug_draw_rect
-        self._dash_pattern_cache: Dict[int: Tuple[float, ...]] = dict()
 
     def set_scene(self, scene: qw.QGraphicsScene):
         self._scene = scene
@@ -99,47 +103,15 @@ class PyQtBackend(Backend):
         return qt_color
 
     def _get_pen(self, properties: Properties) -> qg.QPen:
-        # properties.lineweight is in mm like 0.25mm (default lineweight)
-        # mm to pixel for 72 dpi: 1px is 0.3527 mm
-        # Note that a pen with zero width is equivalent to a cosmetic pen with a
-        # width of 1 pixel (lineweight_scaling=0).
+        """ Returns a cosmetic pen with applied lineweight but without line type
+        support.
+        """
         px = properties.lineweight / 0.3527 * self.lineweight_scaling
         pen = qg.QPen(self._get_color(properties.color), px)
         # Use constant width in pixel:
         pen.setCosmetic(True)
         pen.setJoinStyle(qc.Qt.RoundJoin)
-        if len(properties.linetype_pattern) > 1 and self.linetype_scaling != 0:
-            # The dash pattern is specified in units of the pens width; e.g. a
-            # dash of length 5 in width 10 is 50 pixels long.
-            pattern_factor = self._get_line_pattern_factor(properties.units)
-            pen.setDashPattern(
-                self._get_dash_pattern(
-                    properties.linetype_pattern,
-                    properties.linetype_scale * pattern_factor
-                ))
         return pen
-
-    def _get_line_pattern_factor(self, units: int) -> float:
-        # do not cache!
-        scale = self.linetype_scaling or 1.0
-        # just guessing: this values assume a cosmetic pen!
-        return (750 if units in IMPERIAL_UNITS else 30) * scale
-
-    def _get_dash_pattern(self, pattern: Tuple[float, ...],
-                          scale: float) -> Tuple[float, ...]:
-        hash_key = hash((pattern, scale))
-        try:
-            dashes = self._dash_pattern_cache[hash_key]
-        except KeyError:
-            end = len(pattern)
-            if end % 2:  # grant even number, last dash is ignored
-                end = -1
-            min_length = self.min_dash_length
-            dashes = tuple(
-                max(dash * scale, min_length) for dash in pattern[:end]
-            )
-            self._dash_pattern_cache[hash_key] = dashes
-        return dashes
 
     def _get_brush(self, properties: Properties) -> qg.QBrush:
         if properties.filling:
@@ -166,20 +138,11 @@ class PyQtBackend(Backend):
 
     def draw_line(self, start: Vector, end: Vector,
                   properties: Properties) -> None:
-        item = self._scene.addLine(
-            start.x, start.y, end.x, end.y,
-            self._get_pen(properties)
-        )
+        item = self._line_renderer.draw_line(start, end, properties)
         self._set_item_data(item)
 
     def draw_path(self, path: Path, properties: Properties) -> None:
-        qt_path = qg.QPainterPath()
-        _extend_qt_path(qt_path, path)
-        item = self._scene.addPath(
-            qt_path,
-            self._get_pen(properties),
-            self._no_fill,
-        )
+        item = self._line_renderer.draw_path(path, properties)
         self._set_item_data(item)
 
     def draw_filled_paths(self, paths: Sequence[Path], holes: Sequence[Path],
@@ -377,3 +340,69 @@ class TextRenderer:
     def get_text_rect(self, text: str, font: qg.QFont) -> qc.QRectF:
         # no point caching the bounding rect calculation, it is very cheap
         return self.get_text_path(text, font).boundingRect()
+
+
+class PyQtLineRenderer(AbstractLineRenderer):
+
+    @property
+    def scene(self) -> qw.QGraphicsScene:
+        return self._backend._scene
+
+    @property
+    def no_fill(self):
+        return self._backend._no_fill
+
+    def get_color(self, color: Color) -> qg.QColor:
+        return self._backend._get_color(color)
+
+    def get_pen(self, properties: Properties) -> qg.QPen:
+        return self._backend._get_pen(properties)
+
+
+class InternalLineRenderer(PyQtLineRenderer):
+    """ PyQt internal linetype rendering """
+
+    def get_pen(self, properties: Properties) -> qg.QPen:
+        pen = super().get_pen(properties)
+        if len(properties.linetype_pattern) > 1 and self.linetype_scaling != 0:
+            # The dash pattern is specified in units of the pens width; e.g. a
+            # dash of length 5 in width 10 is 50 pixels long.
+
+            # Just guessing here: this values assume a cosmetic pen!
+            pattern_factor = (750 if properties.units in IMPERIAL_UNITS else 30)
+
+            properties.linetype_scale *= pattern_factor
+            pen.setDashPattern(self.pattern(properties))
+        return pen
+
+    def draw_line(self, start: Vector, end: Vector,
+                  properties: Properties, z=0):
+        return self.scene.addLine(
+            start.x, start.y, end.x, end.y,
+            self.get_pen(properties)
+        )
+
+    def draw_path(self, path: Path, properties: Properties, z=0):
+        qt_path = qg.QPainterPath()
+        _extend_qt_path(qt_path, path)
+        return self.scene.addPath(
+            qt_path,
+            self.get_pen(properties),
+            self.no_fill,
+        )
+
+    def create_pattern(self, properties: Properties, scale: float):
+        pattern = properties.linetype_pattern
+        if len(pattern) < 2:
+            return None
+        else:
+            end = len(pattern)
+            if end % 2:  # grant even number, last dash is ignored
+                end = -1
+            min_length = self.min_dash_length
+            return tuple(
+                max(dash * scale, min_length) for dash in pattern[:end]
+            )
+
+
+EzdxfLineRenderer = InternalLineRenderer
