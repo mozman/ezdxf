@@ -522,14 +522,3 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
             )
             lines.set_capstyle('butt')
             self.ax.add_collection(lines)
-
-    def create_pattern(self, properties: Properties, scale: float):
-        """ Returns simplified linetype tuple: on_off_sequence """
-        if len(properties.linetype_pattern) < 2:
-            return tuple()
-        else:
-            pattern = [max(e * scale, self.min_dash_length) for e in
-                       properties.linetype_pattern]
-            if len(pattern) % 2:
-                pattern.pop()
-            return pattern

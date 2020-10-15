@@ -1,5 +1,6 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
+from typing import Sequence, Optional
 import abc
 from ezdxf.math import Vector
 from .backend import Backend
@@ -25,10 +26,6 @@ class AbstractLineRenderer:
     def draw_path(self, path, properties: Properties, z: float):
         ...
 
-    @abc.abstractmethod
-    def create_pattern(self, properties: Properties, scale: float):
-        ...
-
     @property
     def linetype_scaling(self) -> float:
         return self._backend.linetype_scaling
@@ -49,7 +46,7 @@ class AbstractLineRenderer:
     def max_flattening_distance(self) -> float:
         return self._backend.max_flattening_distance
 
-    def pattern(self, properties: Properties):
+    def pattern(self, properties: Properties) -> Sequence[float]:
         """ Get pattern - implements pattern caching. """
         scale = self.linetype_scaling * properties.linetype_scale
         key = (properties.linetype_name, scale)
@@ -59,6 +56,21 @@ class AbstractLineRenderer:
             self._pattern_cache[key] = pattern_
         return pattern_
 
+    def create_pattern(self, properties: Properties,
+                       scale: float) -> Sequence[float]:
+        """ Returns simplified linetype tuple: on_off_sequence """
+        # only matplotlib needs a different pattern definition
+        if len(properties.linetype_pattern) < 2:
+            # Do not return None -> None indicates: "not cached"
+            return tuple()
+        else:
+            min_dash_length = self.min_dash_length
+            pattern = [max(e * scale, min_dash_length) for e in
+                       properties.linetype_pattern]
+            if len(pattern) % 2:
+                pattern.pop()
+            return pattern
+
     def lineweight(self, properties: Properties) -> float:
         """ Set lineweight_scaling=0 to use a constant minimal lineweight. """
         return max(
@@ -66,7 +78,7 @@ class AbstractLineRenderer:
             self.min_lineweight
         )
 
-    def linetype(self, properties: Properties):
+    def linetype(self, properties: Properties) -> Optional[Sequence[float]]:
         """ Set linetype_scaling=0 to disable linetype rendering.
 
         Returns ``None`` to disable linetype rendering.

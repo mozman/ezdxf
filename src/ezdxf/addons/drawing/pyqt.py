@@ -342,6 +342,7 @@ class TextRenderer:
         return self.get_text_path(text, font).boundingRect()
 
 
+# noinspection PyUnresolvedReferences,PyProtectedMember
 class PyQtLineRenderer(AbstractLineRenderer):
 
     @property
@@ -372,7 +373,9 @@ class InternalLineRenderer(PyQtLineRenderer):
             pattern_factor = (750 if properties.units in IMPERIAL_UNITS else 30)
 
             properties.linetype_scale *= pattern_factor
-            pen.setDashPattern(self.pattern(properties))
+            pattern = self.pattern(properties)
+            if len(pattern):
+                pen.setDashPattern(pattern)
         return pen
 
     def draw_line(self, start: Vector, end: Vector,
@@ -390,19 +393,6 @@ class InternalLineRenderer(PyQtLineRenderer):
             self.get_pen(properties),
             self.no_fill,
         )
-
-    def create_pattern(self, properties: Properties, scale: float):
-        pattern = properties.linetype_pattern
-        if len(pattern) < 2:
-            return None
-        else:
-            end = len(pattern)
-            if end % 2:  # grant even number, last dash is ignored
-                end = -1
-            min_length = self.min_dash_length
-            return tuple(
-                max(dash * scale, min_length) for dash in pattern[:end]
-            )
 
 
 EzdxfLineRenderer = InternalLineRenderer
