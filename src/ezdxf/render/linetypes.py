@@ -8,7 +8,7 @@ LineSegment = Tuple[Vector, Vector]
 
 
 class LineTypeRenderer:
-    def __init__(self, dashes: Tuple[float, ...]):
+    def __init__(self, dashes: Iterable[float]):
         # Simplified dash pattern: line-gap-line-gap
         # Dash pattern should end with a gap (even count).
         # Dash length in drawing units.
