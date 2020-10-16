@@ -15,6 +15,7 @@ from ezdxf.addons.drawing.line_renderer import AbstractLineRenderer
 from ezdxf.addons.drawing import fonts
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command
+from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
 from ezdxf.units import IMPERIAL_UNITS
 
 
@@ -123,9 +124,15 @@ class PyQtBackend(Backend):
             return self._no_fill
 
     def _set_item_data(self, item: qw.QGraphicsItem) -> None:
-        item.setData(CorrespondingDXFEntity, self.current_entity)
         parent_stack = tuple(e for e, props in self.entity_stack[:-1])
-        item.setData(CorrespondingDXFParentStack, parent_stack)
+        current_entity = self.current_entity
+        if isinstance(item, list):
+            for item_ in item:
+                item_.setData(CorrespondingDXFEntity, current_entity)
+                item_.setData(CorrespondingDXFParentStack, parent_stack)
+        else:
+            item.setData(CorrespondingDXFEntity, current_entity)
+            item.setData(CorrespondingDXFParentStack, parent_stack)
 
     def set_background(self, color: Color):
         self._scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
@@ -395,4 +402,41 @@ class InternalLineRenderer(PyQtLineRenderer):
         )
 
 
-EzdxfLineRenderer = InternalLineRenderer
+class EzdxfLineRenderer(PyQtLineRenderer):
+    """ Replicate AutoCAD linetype rendering oriented on drawing units and
+    various ltscale factors. This rendering method break lines into small
+    segments which causes a longer rendering time!
+    """
+
+    def draw_line(self, start: Vector, end: Vector,
+                  properties: Properties, z=0):
+        pattern = self.pattern(properties)
+        render_linetypes = bool(self.linetype_scaling)
+        pen = self.get_pen(properties)
+        if len(pattern) < 2 or not render_linetypes:
+            return self.scene.addLine(start.x, start.y, end.x, end.y, pen)
+        else:
+            add_line = self.scene.addLine
+            renderer = EzdxfLineTypeRenderer(pattern)
+            return [
+                add_line(s.x, s.y, e.x, e.y, pen)
+                for s, e in renderer.line_segment(start, end)
+            ]
+
+    def draw_path(self, path, properties: Properties, z=0):
+        pattern = self.pattern(properties)
+        pen = self.get_pen(properties)
+        render_linetypes = bool(self.linetype_scaling)
+        if len(pattern) < 2 or not render_linetypes:
+            qt_path = qg.QPainterPath()
+            _extend_qt_path(qt_path, path)
+            return self.scene.addPath(qt_path, pen, self.no_fill)
+        else:
+            add_line = self.scene.addLine
+            renderer = EzdxfLineTypeRenderer(pattern)
+            segments = renderer.line_segments(path.flattening(
+                self.max_flattening_distance, segments=16))
+            return [
+                add_line(s.x, s.y, e.x, e.y, pen)
+                for s, e in segments
+            ]

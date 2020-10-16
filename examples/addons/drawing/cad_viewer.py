@@ -9,7 +9,7 @@ import signal
 import sys
 import time
 from functools import partial
-from typing import Iterable, Tuple, List
+from typing import Iterable, Tuple, List, Dict
 
 from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
@@ -148,13 +148,13 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
 
 
 class CadViewer(qw.QMainWindow):
-    def __init__(self):
+    def __init__(self, params: Dict):
         super().__init__()
         self.doc = None
         self._render_context = None
         self._visible_layers = None
         self._current_layout = None
-        self._renderer = PyQtBackend(use_text_cache=True)
+        self._renderer = PyQtBackend(use_text_cache=True, params=params)
 
         self.view = CADGraphicsViewWithOverlay()
         self.view.setScene(qw.QGraphicsScene())
@@ -357,12 +357,15 @@ def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--cad_file')
     parser.add_argument('--layout', default='Model')
+    parser.add_argument('--ltype', default='internal',
+                        choices=['internal', 'ezdxf'])
     args = parser.parse_args()
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
     app = qw.QApplication(sys.argv)
-
-    v = CadViewer()
+    v = CadViewer(params={
+        'linetype_renderer': args.ltype
+    })
     if args.cad_file is not None:
         try:
             doc, auditor = recover.readfile(args.cad_file)

@@ -144,8 +144,8 @@ point_size_relative         ``True``                not supported
 linetype_renderer           "internal"              "internal"
 linetype_scaling            3.527, 1.0 for "ezdxf"  1.0
 lineweight_scaling          1.0                     2.0
-min_lineweight              0.24                    not used yet
-min_dash_length             0.1                     not used yet
+min_lineweight              0.24                    0.24
+min_dash_length             0.1                     0.1
 max_flattening_distance     0.01                    0.01
 show_hatch                  1                       1
 hatch_pattern               1                       not supported
