@@ -125,7 +125,7 @@ class PyQtBackend(Backend):
             qt_pattern = qc.Qt.SolidPattern
             if filling.type == filling.PATTERN:
                 if self.hatch_pattern == 1:
-                    # Pattern scaling is not supported by the PyQt:
+                    # Default pattern scaling is not supported by PyQt:
                     key = (filling.name, filling.angle)
                     qt_pattern = self._pattern_cache.get(key)
                     if qt_pattern is None:

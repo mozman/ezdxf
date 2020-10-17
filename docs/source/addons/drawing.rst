@@ -133,7 +133,7 @@ hatch_pattern
     - 1 to use predefined matplotlib pattern by pattern-name matching, or a
       simplified pattern in the PyQt backend. The PyQt support for hatch pattern
       is not good, it is often better to turn hatch pattern support off and
-      disable HATCHES by setting show_hatch to 0.
+      disable HATCHES by setting **show_hatch** to 0 or use a solid filling.
     - 2 to draw HATCH pattern as solid fillings.
 
 Default Values
