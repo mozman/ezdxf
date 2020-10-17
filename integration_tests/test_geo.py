@@ -21,7 +21,7 @@ def validate(geo_proxy: geo.GeoProxy) -> bool:
     return shapely_geometry.shape(geo_proxy).is_valid
 
 
-def test_invalid_hatch_with_intersecting_holes():
+def test_resolved_hatch_with_intersecting_holes():
     hatch = factory.new('HATCH')
     paths = hatch.paths
     paths.add_polyline_path(square(10),
@@ -31,11 +31,13 @@ def test_invalid_hatch_with_intersecting_holes():
     paths.add_polyline_path(translate(square(3), (2, 2)),
                             flags=const.BOUNDARY_PATH_DEFAULT)
     p = geo.proxy(hatch)
+    # Overlapping holes already resolved by fast_bbox_detection()
     polygon = shapely_geometry.shape(p)
-    assert polygon.is_valid is False
+    assert polygon.is_valid is True
 
     p.filter(validate)
-    assert p.root == {}
+    assert p.root['type'] == 'Polygon'
+    assert len(p.root['coordinates']) == 2
 
 
 def test_valid_hatch():
