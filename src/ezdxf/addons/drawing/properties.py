@@ -168,6 +168,9 @@ class Properties:
         # default is unit less
         self.units = 0
 
+        # DXF document header var $MEASUREMENT: 0=Imperial; 1=ISO meter
+        self.measurement = 0
+
     def __str__(self):
         return f'({self.color}, {self.linetype_name}, {self.lineweight}, ' \
                f'"{self.layer}")'
@@ -299,15 +302,17 @@ class RenderContext:
         self.fonts: Dict[str, fonts.Font] = dict()
         self.units = 0  # store modelspace units as enum, see ezdxf/units.py
         self.linetype_scale: float = 1.0  # overall modelspace linetype scaling
+        self.measurement: int = 0
         if doc:
-            self._setup_layers(doc)
-            self._setup_text_styles(doc)
             self.linetype_scale = doc.header.get('$LTSCALE', 1.0)
             self.units = doc.header.get('$INSUNITS', 0)
+            self.measurement = doc.header.get('$MEASUREMENT', 0)
+            self._setup_layers(doc)
+            self._setup_text_styles(doc)
             if self.units == 0:
                 # set default units based on measurement system:
                 # imperial (0) / metric (1)
-                if doc.header.get('$MEASUREMENT', 1) == 1:
+                if self.measurement == 1:
                     self.units = 6  # 1 m
                 else:
                     self.units = 1  # 1 in
@@ -326,6 +331,7 @@ class RenderContext:
     def add_layer(self, layer: 'Layer') -> None:
         """ Setup layer properties. """
         properties = LayerProperties()
+        properties.measurement = self.measurement
         name = layer_key(layer.dxf.name)
         # Store real layer name (mixed case):
         properties.layer = layer.dxf.name
@@ -440,6 +446,7 @@ class RenderContext:
     def resolve_all(self, entity: 'DXFGraphic') -> Properties:
         """ Resolve all properties of `entity`. """
         p = Properties()
+        p.measurement = self.measurement
         p.layer = self.resolve_layer(entity)
         resolved_layer = layer_key(p.layer)
         p.units = self.resolve_units()

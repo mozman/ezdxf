@@ -23,7 +23,6 @@ from ezdxf.addons.drawing import fonts
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
-from ezdxf.units import IMPERIAL_UNITS
 from .matplotlib_hatch import HATCH_NAME_MAPPING
 from .line_renderer import AbstractLineRenderer
 
@@ -43,20 +42,10 @@ POINTS = 1.0 / 0.3527  # mm -> points
 CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
 MATPLOTLIB_DEFAULT_PARAMS = {}
 
-# Just guessing here:
-ISO_LIN_PATTERN_FACTOR = 3
-ANSI_LIN_PATTERN_FACTOR = ISO_LIN_PATTERN_FACTOR * 2.54
-
 
 def get_params(params: Optional[Dict]) -> Dict:
-    params = params or {}
     default_params = dict(MATPLOTLIB_DEFAULT_PARAMS)
-    if params.get('linetype_renderer') == 'ezdxf':
-        default_params['linetype_scaling'] = 1.0
-    else:
-        # Arbitrary choice, may change in the future!
-        default_params['linetype_scaling'] = POINTS
-    default_params.update(params)
+    default_params.update(params or {})
     return default_params
 
 
@@ -426,6 +415,11 @@ class MatplotlibLineRenderer(AbstractLineRenderer):
         return self._backend.ax  # MatplotlibBackend
 
 
+# Scaling factor for internal renderer, just guessing here:
+ISO_LIN_PATTERN_FACTOR = 3.0 * POINTS
+ANSI_LIN_PATTERN_FACTOR = ISO_LIN_PATTERN_FACTOR * 2.54
+
+
 class InternalLineRenderer(MatplotlibLineRenderer):
     """ matplotlib internal linetype rendering, which is oriented on the output
     medium and dpi: This method is simpler and faster but may not replicate the
@@ -455,20 +449,8 @@ class InternalLineRenderer(MatplotlibLineRenderer):
         )
         self.ax.add_patch(patch)
 
-    def linetype(self, properties: Properties) -> Optional[Sequence[float]]:
-        """ Set linetype_scaling=0 to disable linetype rendering.
-
-        Returns ``None`` to disable linetype rendering.
-
-        """
-        if self.linetype_scaling:
-            properties.linetype_scale *= (
-                ANSI_LIN_PATTERN_FACTOR if properties.units in IMPERIAL_UNITS
-                else ISO_LIN_PATTERN_FACTOR
-            )
-            return self.pattern(properties)
-        else:
-            return None
+    def measurement_scale(self, properties: Properties) -> float:
+        return ISO_LIN_PATTERN_FACTOR if properties.measurement else ANSI_LIN_PATTERN_FACTOR
 
     def create_pattern(self, properties: Properties, scale: float):
         """ Return matplotlib line style tuple: (offset, on_off_sequence) or

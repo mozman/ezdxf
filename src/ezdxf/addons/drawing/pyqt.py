@@ -16,7 +16,6 @@ from ezdxf.addons.drawing import fonts
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
-from ezdxf.units import IMPERIAL_UNITS
 
 
 class _Point(qw.QAbstractGraphicsShapeItem):
@@ -53,6 +52,12 @@ PYQT_DEFAULT_PARAMS = {
 }
 
 
+def get_params(params: Optional[Dict]) -> Dict:
+    default_params = dict(PYQT_DEFAULT_PARAMS)
+    default_params.update(params or {})
+    return default_params
+
+
 class PyQtBackend(Backend):
     def __init__(self,
                  scene: Optional[qw.QGraphicsScene] = None,
@@ -61,9 +66,7 @@ class PyQtBackend(Backend):
                  use_text_cache: bool = True,
                  debug_draw_rect: bool = False,
                  params: Dict = None):
-        params_ = dict(PYQT_DEFAULT_PARAMS)
-        params_.update(params or {})
-        super().__init__(params_)
+        super().__init__(get_params(params))
         if point_radius is not None:
             self.point_size = point_radius * 2.0
             warnings.warn(
@@ -375,16 +378,14 @@ ANSI_LIN_PATTERN_FACTOR = ISO_LIN_PATTERN_FACTOR * 2.54
 class InternalLineRenderer(PyQtLineRenderer):
     """ PyQt internal linetype rendering """
 
+    def measurement_scale(self, properties: Properties) -> float:
+        return ISO_LIN_PATTERN_FACTOR if properties.measurement else ISO_LIN_PATTERN_FACTOR
+
     def get_pen(self, properties: Properties) -> qg.QPen:
         pen = super().get_pen(properties)
         if len(properties.linetype_pattern) > 1 and self.linetype_scaling != 0:
             # The dash pattern is specified in units of the pens width; e.g. a
             # dash of length 5 in width 10 is 50 pixels long.
-            pattern_factor = (
-                ANSI_LIN_PATTERN_FACTOR if properties.units in IMPERIAL_UNITS
-                else ISO_LIN_PATTERN_FACTOR
-            )
-            properties.linetype_scale *= pattern_factor
             pattern = self.pattern(properties)
             if len(pattern):
                 pen.setDashPattern(pattern)

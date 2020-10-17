@@ -151,10 +151,11 @@ class CadViewer(qw.QMainWindow):
     def __init__(self, params: Dict):
         super().__init__()
         self.doc = None
+        self._render_params = params
         self._render_context = None
         self._visible_layers = None
         self._current_layout = None
-        self._renderer = PyQtBackend(use_text_cache=True, params=params)
+        self._reset_backend()
 
         self.view = CADGraphicsViewWithOverlay()
         self.view.setScene(qw.QGraphicsScene())
@@ -200,9 +201,16 @@ class CadViewer(qw.QMainWindow):
         self.resize(1600, 900)
         self.show()
 
+    def _reset_backend(self):
+        # clear caches
+        self._renderer = PyQtBackend(use_text_cache=True,
+                                     params=self._render_params)
+
     def _select_doc(self):
-        path, _ = qw.QFileDialog.getOpenFileName(self, caption='Select CAD Document',
-                                                 filter='CAD Documents (*.dxf *.DXF *.dwg *.DWG)')
+        path, _ = qw.QFileDialog.getOpenFileName(
+            self, caption='Select CAD Document',
+            filter='CAD Documents (*.dxf *.DXF *.dwg *.DWG)'
+        )
         if path:
             try:
                 if os.path.splitext(path)[1].lower() == '.dwg':
@@ -219,7 +227,8 @@ class CadViewer(qw.QMainWindow):
             except IOError as e:
                 qw.QMessageBox.critical(self, 'Loading Error', str(e))
             except DXFStructureError as e:
-                qw.QMessageBox.critical(self, 'DXF Structure Error', f'Invalid DXF file "{path}": {str(e)}')
+                qw.QMessageBox.critical(self, 'DXF Structure Error',
+                                        f'Invalid DXF file "{path}": {str(e)}')
 
     def set_document(self, document: Drawing, auditor: Auditor):
         error_count = len(auditor.errors)
@@ -233,6 +242,7 @@ class CadViewer(qw.QMainWindow):
                 return
         self.doc = document
         self._render_context = RenderContext(document)
+        self._reset_backend()  # clear caches
         self._visible_layers = None
         self._current_layout = None
         self._populate_layouts()
