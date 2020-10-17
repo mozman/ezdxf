@@ -421,6 +421,8 @@ class EzdxfLineRenderer(PyQtLineRenderer):
             return [
                 add_line(s.x, s.y, e.x, e.y, pen)
                 for s, e in renderer.line_segment(start, end)
+                # PyQt has problems with very short lines:
+                if not s.isclose(e)
             ]
 
     def draw_path(self, path, properties: Properties, z=0):
@@ -439,4 +441,6 @@ class EzdxfLineRenderer(PyQtLineRenderer):
             return [
                 add_line(s.x, s.y, e.x, e.y, pen)
                 for s, e in segments
+                # PyQt has problems with very short lines:
+                if not s.isclose(e)
             ]

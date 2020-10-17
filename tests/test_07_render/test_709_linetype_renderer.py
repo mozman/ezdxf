@@ -32,5 +32,14 @@ def test_dashed_line_4():
     assert result[1] == ((2, 0), (3, 0))
 
 
+def test_dash_dot_2x_render_issue():
+    # DASHDOTX2 (0, 0) -> (20, 0)
+    ltr = LineTypeRenderer(dashes=(2.0, 0.2, 0.1, 0.2))
+    result = list(ltr.line_segment((0, 0), (20, 0)))
+    last_segment = result[-1]
+    # Last segment is very very short:
+    assert last_segment[0].isclose(last_segment[1])
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
