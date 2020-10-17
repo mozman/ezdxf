@@ -2,6 +2,12 @@
 # License: MIT License
 # Scaled for $MEASUREMENT=1 (m, cm, mm, ...)
 # Collected, extracted and scaled from various DXF files ...
+# format: [angle, origin, offset, line_pattern]
+# line_pattern: [element, element, ...] where:
+#   element > 0 is dash
+#   element == 0 is a point
+#   element < 0 is a gap
+
 ISO_PATTERN = {
     "ACAD_ISO02W100": [[0.0, (0.0, 0.0), (0.0, 5.0), [12.0, -3.0]]],
     "ACAD_ISO03W100": [[0.0, (0.0, 0.0), (0.0, 5.0), [12.0, -18.0]]],

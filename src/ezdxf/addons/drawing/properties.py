@@ -14,13 +14,12 @@ from ezdxf.addons.drawing import fonts
 from ezdxf.addons import acadctb
 from ezdxf.sections.table import table_key as layer_key
 from ezdxf.tools.rgb import luminance, DXF_DEFAULT_COLORS, int2rgb
-from ezdxf.math import Vec2
-from ezdxf.tools.pattern import scale_pattern
-from ezdxf.entities.ltype import compile_line_pattern, CONTINUOUS_PATTERN
+from ezdxf.tools.pattern import scale_pattern, HatchPatternType
+from ezdxf.entities.ltype import CONTINUOUS_PATTERN
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        DXFGraphic, Layout, Table, Layer, Linetype, Drawing, Textstyle, Vertex,
+        DXFGraphic, Layout, Table, Layer, Linetype, Drawing, Textstyle,
     )
 
 __all__ = [
@@ -74,18 +73,6 @@ def is_dark_color(color: Color, dark: float = 0.2) -> bool:
     return luma <= dark
 
 
-class HatchPatternLine:
-    # Similar ot hatch.PatternLine, but line pattern are stored as
-    # simplified linetype pattern.
-    def __init__(self, angle=0.0, base_point: 'Vertex' = (0, 0),
-                 offset: 'Vertex' = (0, 0), pattern: Iterable[float] = None):
-        self.angle: float = float(angle)  # in degrees
-        self.base_point = Vec2(base_point)
-        self.offset = Vec2(offset)
-        # Same data format as linetype pattern:
-        self.pattern: Tuple[float, ...] = tuple(pattern) \
-            if pattern else CONTINUOUS_PATTERN
-
 
 class Filling:
     SOLID = 0
@@ -103,7 +90,8 @@ class Filling:
         self.gradient_color2: Optional[Color] = None
         self.gradient_centered: float = 0.0  # todo: what's the meaning?
         self.pattern_scale: float = 1.0
-        self.pattern: Sequence[HatchPatternLine] = []
+        # Regular HATCH pattern definition:
+        self.pattern: HatchPatternType = []
 
 
 class Properties:
@@ -317,8 +305,7 @@ class RenderContext:
                 else:
                     self.units = 1  # 1 in
         self.current_layout.units = self.units
-        self._hatch_pattern_cache: Dict[
-            str, Sequence[HatchPatternLine]] = dict()
+        self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
 
     def _setup_layers(self, doc: 'Drawing'):
         for layer in doc.layers:  # type: Layer
@@ -681,24 +668,14 @@ class RenderContext:
             # back-ends do not handle pattern that way, they need a base-pattern
             # and separated scaling and rotation attributes and these
             # base-pattern could be cached by their name.
-            base_pattern = scale_pattern(
+            #
+            # There is no advantage of simplifying the hatch line pattern and
+            # this format is required by the PatternAnalyser():
+            filling.pattern = scale_pattern(
                 pattern.as_list(),
                 1.0 / filling.pattern_scale,
                 -filling.angle
             )
-            simplified_pattern = []
-            for angle, base_point, offset, dash_length_items in base_pattern:
-                if len(dash_length_items) > 1:
-                    line_pattern = compile_line_pattern(
-                        None,
-                        dash_length_items
-                    )
-                else:
-                    line_pattern = CONTINUOUS_PATTERN
-                simplified_pattern.append(
-                    HatchPatternLine(angle, base_point, offset, line_pattern)
-                )
-            filling.pattern = simplified_pattern
             self._hatch_pattern_cache[filling.name] = filling.pattern
 
         if entity.dxftype() != 'HATCH':

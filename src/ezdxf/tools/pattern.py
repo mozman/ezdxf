@@ -1,6 +1,6 @@
 # Copyright (c) 2015-2020, Manfred Moitzi
 # License: MIT License
-from typing import Dict, List
+from typing import Dict, List, Sequence, Tuple
 from ezdxf.math import Vec2
 from ._iso_pattern import ISO_PATTERN
 
@@ -13,6 +13,9 @@ __all__ = [
     'IMPERIAL_PATTERN'
 ]
 IMPERIAL_SCALE_FACTOR = 1.0 / 25.4
+HatchPatternLineType = Tuple[
+    float, Sequence[float], Sequence[float], Sequence[float]]
+HatchPatternType = Sequence[HatchPatternLineType]
 
 
 def load(measurement: int = 1, factor: float = None):
@@ -36,19 +39,21 @@ def load(measurement: int = 1, factor: float = None):
     return pattern
 
 
-def scale_pattern(pattern, factor: float = 1, angle: float = 0):
+def scale_pattern(pattern: HatchPatternType,
+                  factor: float = 1, angle: float = 0) -> HatchPatternType:
     ndigits = 10
 
-    def _scale(iterable):
+    def _scale(iterable) -> Sequence[float]:
         return [round(i * factor, ndigits) for i in iterable]
 
-    def _scale_line(line):
+    def _scale_line(line) -> HatchPatternLineType:
         angle0, base_point, offset, dash_length_items = line
         if angle:
             base_point = Vec2(base_point).rotate_deg(angle)
             offset = Vec2(offset).rotate_deg(angle)
             angle0 = (angle0 + angle) % 360.0
 
+        # noinspection PyTypeChecker
         return [
             round(angle0, ndigits),
             tuple(_scale(base_point)),
@@ -130,3 +135,47 @@ class PatternFileCompiler:
 
 
 IMPERIAL_PATTERN = load(measurement=0)
+
+
+def is_solid(pattern: Sequence[float]) -> bool:
+    return not bool(len(pattern))
+
+
+def round_angle_15_deg(angle: float) -> int:
+    return round((angle % 180) / 15) * 15
+
+
+class PatternAnalyser:
+    def __init__(self, pattern: HatchPatternType):
+        # List of 2-tuples: (angle, is solid line pattern)
+        # angle is rounded to a multiple of 15° in the range [0, 180)
+        self._lines: List[Tuple[int, bool]] = [
+            (round_angle_15_deg(angle), is_solid(line_pattern))
+            for angle, _, _, line_pattern in pattern
+        ]
+
+    def has_angle(self, angle: int) -> bool:
+        return any(angle_ == angle for angle_, _ in self._lines)
+
+    def all_angles(self, angle: int) -> bool:
+        return all(angle_ == angle for angle_, _ in self._lines)
+
+    def has_line(self, angle: int, solid: bool) -> bool:
+        return any(angle_ == angle and solid_ == solid
+                   for angle_, solid_ in self._lines)
+
+    def all_lines(self, angle: int, solid: bool) -> bool:
+        return all(angle_ == angle and solid_ == solid
+                   for angle_, solid_ in self._lines)
+
+    def has_solid_line(self) -> bool:
+        return any(solid for _, solid in self._lines)
+
+    def has_dashed_line(self) -> bool:
+        return any(not solid for _, solid in self._lines)
+
+    def all_solid_lines(self) -> bool:
+        return all(solid for _, solid in self._lines)
+
+    def all_dashed_lines(self) -> bool:
+        return all(not solid for _, solid in self._lines)
