@@ -367,6 +367,11 @@ class PyQtLineRenderer(AbstractLineRenderer):
         return self._backend._get_pen(properties)
 
 
+# Just guessing here: this values assume a cosmetic pen!
+ISO_LIN_PATTERN_FACTOR = 15
+ANSI_LIN_PATTERN_FACTOR = ISO_LIN_PATTERN_FACTOR * 2.54
+
+
 class InternalLineRenderer(PyQtLineRenderer):
     """ PyQt internal linetype rendering """
 
@@ -375,10 +380,10 @@ class InternalLineRenderer(PyQtLineRenderer):
         if len(properties.linetype_pattern) > 1 and self.linetype_scaling != 0:
             # The dash pattern is specified in units of the pens width; e.g. a
             # dash of length 5 in width 10 is 50 pixels long.
-
-            # Just guessing here: this values assume a cosmetic pen!
-            pattern_factor = (750 if properties.units in IMPERIAL_UNITS else 30)
-
+            pattern_factor = (
+                ANSI_LIN_PATTERN_FACTOR if properties.units in IMPERIAL_UNITS
+                else ISO_LIN_PATTERN_FACTOR
+            )
             properties.linetype_scale *= pattern_factor
             pattern = self.pattern(properties)
             if len(pattern):

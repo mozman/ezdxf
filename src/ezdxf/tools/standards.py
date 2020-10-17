@@ -66,7 +66,7 @@ def setup_linetypes(doc: 'Drawing') -> None:
     measurement = 1
     if doc:
         measurement = doc.header.get('$MEASUREMENT', measurement)
-    factor = 1.0 if measurement else IMPERIAL_LTYPE_FACTOR
+    factor = ISO_LTYPE_FACTOR if measurement else 1.0
     for name, desc, pattern in linetypes(scale=factor):
         if name in doc.linetypes:
             continue
@@ -255,13 +255,13 @@ def setup_dimstyle(doc: 'Drawing', fmt: str, style: str = None, blk: str = None,
     return dimstyle
 
 
-IMPERIAL_LTYPE_FACTOR = 0.03937  # 1 / 2.54
-# DXF linetype definition for $MEASUREMENT=1 (ISO meters)
+ISO_LTYPE_FACTOR = 2.54
+# DXF linetype definition for $MEASUREMENT=0 (imperial)
 # name, description, elements:
 # elements = [total_pattern_length, elem1, elem2, ...]
 # total_pattern_length = sum(abs(elem))
 # elem > 0 is line, < 0 is gap, 0.0 = dot;
-ISO_LINE_TYPES = [
+ANSI_LINE_TYPES = [
     ("CONTINUOUS", "Solid", [0.0]),
     ("CENTER", "Center ____ _ ____ _ ____ _ ____ _ ____ _ ____",
      [2.0, 1.25, -0.25, 0.25, -0.25]),
@@ -305,12 +305,12 @@ ISO_LINE_TYPES = [
 
 def linetypes(scale: float = 1.0) -> List[LTypeDef]:
     """ Creates a list of standard line types.
-    ISO units (m, cm, mm, ...) have a scale factor of 1.0, imperial units (in,
-    ft, yd, ...) have a scale factor of 1/2.54 (~0.03937), available as constant
-    :attr:`ezdxf.tools.standards.IMPERIAL_LTYPE_FACTOR`.
+    Imperial units (in, ft, yd, ...) have a scale factor of 1.0, ISO units (m,
+    cm, mm, ...) have a scale factor of 2.54, available as constant
+    :attr:`ezdxf.tools.standards.ISO_LTYPE_FACTOR`.
 
     """
-    return [scale_linetype(ltype, scale) for ltype in ISO_LINE_TYPES]
+    return [scale_linetype(ltype, scale) for ltype in ANSI_LINE_TYPES]
 
 
 def scale_linetype(ltype: LTypeDef, scale: float) -> LTypeDef:

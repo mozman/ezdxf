@@ -47,6 +47,8 @@ Version 0.15a3 - dev
 - NEW `Style` table entry supports extended font data
 - CHANGE: `Hatch.set_pattern_fill()` uses HEADER variable $MEASUREMENT to 
   determine the default scaling of predefined hatch pattern. 
+- CHANGE: fix invalid linetype setup - new linetype scaling like common CAD 
+  applications
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
   use `DXFEntity.transform(ucs.matrix)`
 - REMOVED: deprecated `Hatch.edit_boundary()` context manager, 

@@ -61,10 +61,7 @@ class Backend(ABC):
         self.linetype_scaling = params_['linetype_scaling']
         self.lineweight_scaling = params_['lineweight_scaling']
         self.min_lineweight = params_['min_lineweight']
-        if self.linetype_renderer == 'ezdxf':
-            self.min_dash_length = 0.01
-        else:
-            self.min_dash_length = params_['min_dash_length']
+        self.min_dash_length = params_['min_dash_length']
 
         # Deprecated: instead use Path.flattening() for approximation
         self.bezier_approximation_count: int = 32
