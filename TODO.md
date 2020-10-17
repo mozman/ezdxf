@@ -5,11 +5,6 @@ Add-ons
 -------
 
 - drawing
-    - matplotlib back-end support for:
-        - hatch gradient: didn't find an usable solution yet
-    - pyqt back-end:
-        - hatch gradient
-        - hatch pattern
     - ACAD_TABLE
     - MLEADER ???
     - MLINE ???

@@ -1,7 +1,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Optional, Iterable, Dict, Sequence, Union, Tuple
+from typing import Optional, Iterable, Dict, Sequence, Union
 import warnings
 from collections import defaultdict
 from functools import lru_cache
@@ -16,6 +16,7 @@ from ezdxf.addons.drawing import fonts
 from ezdxf.math import Vector, Matrix44
 from ezdxf.render import Path, Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
+from ezdxf.tools.pattern import PatternAnalyser
 
 
 class _Point(qw.QAbstractGraphicsShapeItem):
@@ -76,6 +77,7 @@ class PyQtBackend(Backend):
 
         self._scene = scene
         self._color_cache = {}
+        self._pattern_cache = {}
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
         self._text_renderer = TextRenderer(qg.QFont(), use_text_cache)
@@ -118,13 +120,44 @@ class PyQtBackend(Backend):
         return pen
 
     def _get_brush(self, properties: Properties) -> qg.QBrush:
-        if properties.filling:
+        filling = properties.filling
+        if filling:
+            qt_pattern = qc.Qt.SolidPattern
+            if filling.type == filling.PATTERN:
+                if self.hatch_pattern == 1:
+                    # Pattern scaling is not supported by the PyQt:
+                    key = (filling.name, filling.angle)
+                    qt_pattern = self._pattern_cache.get(key)
+                    if qt_pattern is None:
+                        qt_pattern = self._get_qt_pattern(filling.pattern)
+                        self._pattern_cache[key] = qt_pattern
+                elif self.hatch_pattern == 0:
+                    return self._no_fill
             return qg.QBrush(
                 self._get_color(properties.color),
-                qc.Qt.SolidPattern
+                qt_pattern
             )
         else:
             return self._no_fill
+
+    @staticmethod
+    def _get_qt_pattern(pattern) -> int:
+        pattern = PatternAnalyser(pattern)
+        # knowledge of dark or light background would by handy:
+        qt_pattern = qc.Qt.Dense4Pattern
+        if pattern.all_angles(0):
+            qt_pattern = qc.Qt.HorPattern
+        elif pattern.all_angles(90):
+            qt_pattern = qc.Qt.VerPattern
+        elif pattern.has_angle(0) and pattern.has_angle(90):
+            qt_pattern = qc.Qt.CrossPattern
+        if pattern.all_angles(45):
+            qt_pattern = qc.Qt.BDiagPattern
+        elif pattern.all_angles(135):
+            qt_pattern = qc.Qt.FDiagPattern
+        elif pattern.has_angle(45) and pattern.has_angle(135):
+            qt_pattern = qc.Qt.DiagCrossPattern
+        return qt_pattern
 
     def _set_item_data(self, item: qw.QGraphicsItem) -> None:
         parent_stack = tuple(e for e, props in self.entity_stack[:-1])
