@@ -62,8 +62,6 @@ class Backend(ABC):
         self.lineweight_scaling = params_['lineweight_scaling']
         self.min_lineweight = params_['min_lineweight']
         self.min_dash_length = params_['min_dash_length']
-        # DXF header var $MEASUREMENT: 0=Imperial; 1=ISO meter
-        self._measurement = 0
 
         # Deprecated: instead use Path.flattening() for approximation
         self.bezier_approximation_count: int = 32
@@ -98,9 +96,6 @@ class Backend(ABC):
     def draw_line(self, start: Vector, end: Vector,
                   properties: Properties) -> None:
         raise NotImplementedError
-
-    def set_measurement(self, value: int) -> None:
-        self._measurement = int(value)
 
     def draw_path(self, path: Path, properties: Properties) -> None:
         """ Draw an outline path (connected string of line segments and Bezier

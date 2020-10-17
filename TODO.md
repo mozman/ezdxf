@@ -8,7 +8,6 @@ Add-ons
     - matplotlib back-end support for:
         - hatch gradient: didn't find an usable solution yet
     - pyqt back-end:
-        - line types
         - hatch gradient
         - hatch pattern
     - ACAD_TABLE

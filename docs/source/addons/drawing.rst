@@ -142,7 +142,7 @@ Backend Option              MatplotlibBackend       PyQtBackend
 point_size                  2.0                     1.0
 point_size_relative         ``True``                not supported
 linetype_renderer           "internal"              "internal"
-linetype_scaling            3.527, 1.0 for "ezdxf"  1.0
+linetype_scaling            1.0                     1.0
 lineweight_scaling          1.0                     2.0
 min_lineweight              0.24                    0.24
 min_dash_length             0.1                     0.1
