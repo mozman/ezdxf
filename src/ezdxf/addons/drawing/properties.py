@@ -155,9 +155,6 @@ class Properties:
         # default is unit less
         self.units = 0
 
-        # DXF document header var $MEASUREMENT: 0=Imperial; 1=ISO meter
-        self.measurement = 0
-
     def __str__(self):
         return f'({self.color}, {self.linetype_name}, {self.lineweight}, ' \
                f'"{self.layer}")'
@@ -310,6 +307,21 @@ class RenderContext:
         self.current_layout.units = self.units
         self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
 
+    def update_backend_configuration(self, backend):
+        """ Configuration parameters are stored in the backend and may be
+        changed by the backend at runtime. Some parameters are stored globally
+        in the header section of the DXF document. This method must be called
+        if a new DXF document was loaded.
+
+        """
+        # This DXF document parameters are not accessible by the backend
+        # in a direct way:
+        if backend.pdsize is None:
+            backend.pdsize = self.pdsize
+        if backend.pdmode is None:
+            backend.pdmode = self.pdmode
+        backend.measurement = self.measurement
+
     def _setup_layers(self, doc: 'Drawing'):
         for layer in doc.layers:  # type: Layer
             self.add_layer(layer)
@@ -321,7 +333,6 @@ class RenderContext:
     def add_layer(self, layer: 'Layer') -> None:
         """ Setup layer properties. """
         properties = LayerProperties()
-        properties.measurement = self.measurement
         name = layer_key(layer.dxf.name)
         # Store real layer name (mixed case):
         properties.layer = layer.dxf.name
@@ -436,7 +447,6 @@ class RenderContext:
     def resolve_all(self, entity: 'DXFGraphic') -> Properties:
         """ Resolve all properties of `entity`. """
         p = Properties()
-        p.measurement = self.measurement
         p.layer = self.resolve_layer(entity)
         resolved_layer = layer_key(p.layer)
         p.units = self.resolve_units()

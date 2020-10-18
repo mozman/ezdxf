@@ -79,6 +79,10 @@ class Backend(ABC):
         self.min_lineweight = params_['min_lineweight']
         self.min_dash_length = params_['min_dash_length']
 
+        # Real document measurement value will be updated by the Frontend():
+        # 0=Imperial (in, ft, yd, ...); 1=ISO meters
+        self.measurement = 0
+
         # Deprecated: instead use Path.flattening() for approximation
         self.bezier_approximation_count: int = 32
 

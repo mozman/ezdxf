@@ -414,8 +414,10 @@ ANSI_LIN_PATTERN_FACTOR = ISO_LIN_PATTERN_FACTOR * 2.54
 class InternalLineRenderer(PyQtLineRenderer):
     """ PyQt internal linetype rendering """
 
-    def measurement_scale(self, properties: Properties) -> float:
-        return ISO_LIN_PATTERN_FACTOR if properties.measurement else ISO_LIN_PATTERN_FACTOR
+    @property
+    def measurement_scale(self) -> float:
+        return ISO_LIN_PATTERN_FACTOR if self.measurement \
+            else ISO_LIN_PATTERN_FACTOR
 
     def get_pen(self, properties: Properties) -> qg.QPen:
         pen = super().get_pen(properties)

@@ -46,14 +46,19 @@ class AbstractLineRenderer:
     def max_flattening_distance(self) -> float:
         return self._backend.max_flattening_distance
 
-    def measurement_scale(self, properties: Properties) -> float:
+    @property
+    def measurement(self) -> float:
+        return self._backend.measurement
+
+    @property
+    def measurement_scale(self) -> float:
         """ Returns internal linetype scaling factor. """
         return 1.0
 
     def pattern(self, properties: Properties) -> Sequence[float]:
         """ Get pattern - implements pattern caching. """
-        scale = self.measurement_scale(
-            properties) * self.linetype_scaling * properties.linetype_scale
+        scale = (self.measurement_scale * self.linetype_scaling *
+                 properties.linetype_scale)
         key = (properties.linetype_name, scale)
         pattern_ = self._pattern_cache.get(key)
         if pattern_ is None:

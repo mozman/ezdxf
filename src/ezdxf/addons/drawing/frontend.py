@@ -54,7 +54,9 @@ class Frontend:
 
         # DrawingBackend is the interface to the render engine
         self.out = out
-        self.update_backend_configuration()
+
+        # Transfer render context info to backend:
+        ctx.update_backend_configuration(out)
 
         # Parents entities of current entity/sub-entity
         self.parent_stack: List[DXFGraphic] = []
@@ -72,16 +74,6 @@ class Frontend:
 
         # set to None to disable nested polygon detection:
         self.nested_polygon_detection = nesting.fast_bbox_detection
-
-    def update_backend_configuration(self):
-        # Configuration parameters are stored in the backend and may be changed
-        # by the backend at runtime, so don't copy them into the frontend.
-        # This DXF document parameters are not accessible by the backend
-        # in a direct way:
-        if self.out.pdsize is None:
-            self.out.pdsize = self.ctx.pdsize
-        if self.out.pdmode is None:
-            self.out.pdmode = self.ctx.pdmode
 
     def log_message(self, message: str):
         print(message)

@@ -444,8 +444,10 @@ class InternalLineRenderer(MatplotlibLineRenderer):
         )
         self.ax.add_patch(patch)
 
-    def measurement_scale(self, properties: Properties) -> float:
-        return ISO_LIN_PATTERN_FACTOR if properties.measurement else ANSI_LIN_PATTERN_FACTOR
+    @property
+    def measurement_scale(self) -> float:
+        return ISO_LIN_PATTERN_FACTOR if self.measurement \
+            else ANSI_LIN_PATTERN_FACTOR
 
     def create_pattern(self, properties: Properties, scale: float):
         """ Return matplotlib line style tuple: (offset, on_off_sequence) or

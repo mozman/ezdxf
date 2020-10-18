@@ -203,8 +203,8 @@ class CadViewer(qw.QMainWindow):
 
     def _reset_backend(self):
         # clear caches
-        self._renderer = PyQtBackend(use_text_cache=True,
-                                     params=self._render_params)
+        self._backend = PyQtBackend(use_text_cache=True,
+                                    params=self._render_params)
 
     def _select_doc(self):
         path, _ = qw.QFileDialog.getOpenFileName(
@@ -277,18 +277,20 @@ class CadViewer(qw.QMainWindow):
         self._current_layout = layout_name
         self.view.begin_loading()
         new_scene = qw.QGraphicsScene()
-        self._renderer.set_scene(new_scene)
+        self._backend.set_scene(new_scene)
         layout = self.doc.layout(layout_name)
         self._update_render_context(layout)
         try:
             start = time.perf_counter()
-            Frontend(self._render_context, self._renderer).draw_layout(layout)
+            Frontend(self._render_context, self._backend).draw_layout(layout)
             duration = time.perf_counter() - start
             print(f'took {duration:.4f} seconds')
         except DXFStructureError as e:
-            qw.QMessageBox.critical(self, 'DXF Structure Error', f'Abort rendering of layout "{layout_name}": {str(e)}')
+            qw.QMessageBox.critical(
+                self, 'DXF Structure Error',
+                f'Abort rendering of layout "{layout_name}": {str(e)}')
         finally:
-            self._renderer.finalize()
+            self._backend.finalize()
         self.view.end_loading(new_scene)
         self.view.buffer_scene_rect()
         if reset_view:
