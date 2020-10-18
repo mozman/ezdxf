@@ -92,11 +92,16 @@ all backends and currently most options are only supported by the matplotlib
 backend.
 
 
-point_size
-    size for the POINT entity
+pdsize
+    size for the POINT entity:
 
-point_size_relative
-    POINT entity size is relative to the viewport (screen) if ``True``
+    - 0 for 5% of draw area height
+    - < 0 specifies a percentage of the viewport size
+    - > 0 specifies an absolute size
+
+
+pdmode
+    see :class:`~ezdxf.entities.Point` class documentation
 
 linetype_renderer
     - "internal" uses the matplotlib linetype renderer which is oriented on the
@@ -123,6 +128,10 @@ min_dash_length
 
 max_flattening_distance
     Maximum flattening distance in drawing units for curve approximations.
+
+show_defpoints
+    - 0 to disable defpoints (default)
+    - 1 to show defpoints
 
 show_hatch
     - 0 to disable HATCH entities

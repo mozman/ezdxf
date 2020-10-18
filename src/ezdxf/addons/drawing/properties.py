@@ -73,7 +73,6 @@ def is_dark_color(color: Color, dark: float = 0.2) -> bool:
     return luma <= dark
 
 
-
 class Filling:
     SOLID = 0
     PATTERN = 1
@@ -291,10 +290,14 @@ class RenderContext:
         self.units = 0  # store modelspace units as enum, see ezdxf/units.py
         self.linetype_scale: float = 1.0  # overall modelspace linetype scaling
         self.measurement: int = 0
+        self.pdsize = 0
+        self.pdmode = 0
         if doc:
             self.linetype_scale = doc.header.get('$LTSCALE', 1.0)
             self.units = doc.header.get('$INSUNITS', 0)
             self.measurement = doc.header.get('$MEASUREMENT', 0)
+            self.pdsize = doc.header.get('$PDSIZE', 1.0)
+            self.pdmode = doc.header.get('$PDMODE', 0)
             self._setup_layers(doc)
             self._setup_text_styles(doc)
             if self.units == 0:

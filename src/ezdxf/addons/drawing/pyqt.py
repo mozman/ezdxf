@@ -20,12 +20,14 @@ from ezdxf.tools.pattern import PatternAnalyser
 
 
 class _Point(qw.QAbstractGraphicsShapeItem):
-    """ a point which is drawn 'cosmetically' (scale depends on view) """
+    """ A dimensionless point which is drawn 'cosmetically' (scale depends on
+    view)
+    """
 
-    def __init__(self, x: float, y: float, radius: float, brush: qg.QBrush):
+    def __init__(self, x: float, y: float, brush: qg.QBrush):
         super().__init__()
         self.pos = qc.QPointF(x, y)
-        self.radius = radius
+        self.radius = 1.0
         self.setPen(qg.QPen(qc.Qt.NoPen))
         self.setBrush(brush)
 
@@ -33,7 +35,6 @@ class _Point(qw.QAbstractGraphicsShapeItem):
               widget: Optional[qw.QWidget] = None) -> None:
         view_scale = _get_x_scale(painter.transform())
         radius = self.radius / view_scale
-
         painter.setBrush(self.brush())
         painter.setPen(qc.Qt.NoPen)
         painter.drawEllipse(self.pos, radius, radius)
@@ -47,7 +48,6 @@ CorrespondingDXFEntity = 0
 CorrespondingDXFParentStack = 1
 
 PYQT_DEFAULT_PARAMS = {
-    'point_size': 1.0,
     # For my taste without scaling the default line width looks to thin:
     'lineweight_scaling': 2.0,
 }
@@ -174,15 +174,20 @@ class PyQtBackend(Backend):
         self._scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
 
     def draw_point(self, pos: Vector, properties: Properties) -> None:
+        """ Draw a real dimensionless point. """
         brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
-        item = _Point(pos.x, pos.y, self.point_size * 0.5, brush)
+        item = _Point(pos.x, pos.y, brush)
         self._set_item_data(item)
         self._scene.addItem(item)
 
     def draw_line(self, start: Vector, end: Vector,
                   properties: Properties) -> None:
-        item = self._line_renderer.draw_line(start, end, properties)
-        self._set_item_data(item)
+        # PyQt draws a long line for a zero-length line:
+        if start.isclose(end):
+            self.draw_point(start, properties)
+        else:
+            item = self._line_renderer.draw_line(start, end, properties)
+            self._set_item_data(item)
 
     def draw_path(self, path: Path, properties: Properties) -> None:
         item = self._line_renderer.draw_path(path, properties)

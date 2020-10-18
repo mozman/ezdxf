@@ -14,8 +14,17 @@ if TYPE_CHECKING:
     from ezdxf.addons.drawing.text import FontMeasurements
 
 DEFAULT_PARAMS = {
-    "point_size": 2.0,
-    "point_size_relative": True,
+    # Updated by Frontend() class, if not set by user:
+    "pdsize": None,
+    # 0   5% of draw area height
+    # <0  Specifies a percentage of the viewport size
+    # >0  Specifies an absolute size
+
+    # See POINT docs:
+    "pdmode": None,
+
+    # Do not show defpoints by default
+    "show_defpoints": 0,
 
     # linetype render:
     # "internal" or "ezdxf"
@@ -53,8 +62,9 @@ class Backend(ABC):
                 raise ValueError(f'Invalid parameter(s): {str(err)}')
             params_.update(params)
         self.entity_stack: List[Tuple[DXFGraphic, Properties]] = []
-        self.point_size = params_['point_size']
-        self.point_size_relative = params_['point_size_relative']
+        self.pdsize = params_['pdsize']
+        self.pdmode = params_['pdmode']
+        self.show_defpoints = params_['show_defpoints']
         self.show_hatch = params_['show_hatch']
         self.hatch_pattern = params_['hatch_pattern']
         self.linetype_renderer = params_['linetype_renderer'].lower()
@@ -90,6 +100,9 @@ class Backend(ABC):
 
     @abstractmethod
     def draw_point(self, pos: Vector, properties: Properties) -> None:
+        """ Draw a real dimensionless point, because not all backends support
+        zero-length lines!
+        """
         raise NotImplementedError
 
     @abstractmethod

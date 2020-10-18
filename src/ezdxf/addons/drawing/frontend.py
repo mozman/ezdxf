@@ -53,6 +53,7 @@ class Frontend:
 
         # DrawingBackend is the interface to the render engine
         self.out = out
+        self.update_backend()
 
         # Parents entities of current entity/sub-entity
         self.parent_stack: List[DXFGraphic] = []
@@ -70,6 +71,12 @@ class Frontend:
 
         # set to None to disable nested polygon detection:
         self.nested_polygon_detection = nesting.fast_bbox_detection
+
+    def update_backend(self):
+        if self.out.pdsize is None:
+            self.out.pdsize = self.ctx.pdsize
+        if self.out.pdmode is None:
+            self.out.pdmode = self.ctx.pdmode
 
     def log_message(self, message: str):
         print(message)
@@ -211,7 +218,33 @@ class Frontend:
 
     def draw_point_entity(self, entity: DXFGraphic,
                           properties: Properties) -> None:
-        self.out.draw_point(entity.dxf.location, properties)
+        point = cast('Point', entity)
+        pdmode = self.out.pdmode
+        pdsize = self.out.pdsize
+        if pdsize <= 0:  # relative points size is not supported
+            pdsize = 1
+
+        # Defpoints are always just points
+        if properties.layer.lower() == 'defpoints':
+            if not self.out.show_defpoints:
+                return
+            else:
+                pdmode = 0
+
+        if pdmode == 0:
+            self.out.draw_point(entity.dxf.location, properties)
+        else:
+            for entity in point.virtual_entities(pdsize, pdmode):
+                if entity.dxftype() == 'LINE':
+                    start = Vector(entity.dxf.start)
+                    end = entity.dxf.end
+                    if start.isclose(end):
+                        self.out.draw_point(start, properties)
+                    else:
+                        self.out.draw_line(start, end, properties)
+                    pass
+                else:  # CIRCLE
+                    self.draw_elliptic_arc_entity(entity, properties)
 
     def draw_solid_entity(self, entity: DXFGraphic,
                           properties: Properties) -> None:

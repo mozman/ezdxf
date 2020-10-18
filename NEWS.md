@@ -10,6 +10,8 @@ Version 0.15a3 - dev
 - NEW: HATCH island support for matplotlib- and pyqt drawing backend
 - NEW: basic HATCH pattern support for matplotlib- and pyqt drawing backend
 - NEW: Font support for matplotlib- and pyqt drawing backend
+- NEW: POINT mode support for matplotlib- and pyqt drawing backend, relative 
+  point size is not supported
 - NEW: recover misplaced tags of the `AcDbEntity` subclass (color, layer, 
   linetype, ...), supported by all loading modes
 - NEW: `ezdxf.addons.geo` module, support for the 
@@ -46,7 +48,7 @@ Version 0.15a3 - dev
 - NEW: `odafc.export_dwg()` new replace option to delete existing DWG files
 - NEW `Style` table entry supports extended font data
 - NEW: `Point.virtual_entities()`, yield POINT entities as DXF primitives
-- NEW: `ezdxf.render.point`, support module for `Point.virtual_entities()` 
+- NEW: `ezdxf.render.point`, support module for `Point.virtual_entities()`
 - CHANGE: `Hatch.set_pattern_fill()` uses HEADER variable $MEASUREMENT to 
   determine the default scaling of predefined hatch pattern. 
 - CHANGE: fix invalid linetype setup - new linetype scaling like common CAD 

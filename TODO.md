@@ -8,7 +8,6 @@ Add-ons
     - ACAD_TABLE
     - MLEADER ???
     - MLINE ???
-    - render POINT symbols (v0.15)
     - render proxy graphic, class `ProxyGraphic()` is already 
       implemented but not tested with real world data.
 - Simple SVG exporter

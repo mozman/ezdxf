@@ -96,18 +96,16 @@ class MatplotlibBackend(Backend):
         self.ax.set_facecolor(color)
 
     def draw_point(self, pos: Vector, properties: Properties):
+        """ Draw a real dimensionless point. """
         color = properties.color
-        point_size = self.point_size
-        if self.point_size_relative:
-            self.ax.scatter([pos.x], [pos.y], s=point_size, c=color,
-                            zorder=self._get_z())
-        else:
-            self.ax.add_patch(Circle((pos.x, pos.y), radius=point_size,
-                                     facecolor=color, edgecolor=None,
-                                     zorder=self._get_z()))
+        self.ax.scatter([pos.x], [pos.y], s=0.1, c=color, zorder=self._get_z())
 
     def draw_line(self, start: Vector, end: Vector, properties: Properties):
-        self._line_renderer.draw_line(start, end, properties, self._get_z())
+        # matplotlib draws nothing for a zero-length line:
+        if start.isclose(end):
+            self.draw_point(start, properties)
+        else:
+            self._line_renderer.draw_line(start, end, properties, self._get_z())
 
     def draw_path(self, path, properties: Properties):
         self._line_renderer.draw_path(path, properties, self._get_z())
