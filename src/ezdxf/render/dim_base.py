@@ -1,4 +1,3 @@
-# Created: 28.12.2018
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable, Optional
@@ -13,17 +12,15 @@ from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Dimension, Vertex, Drawing, GenericLayoutType, Style,
+        Dimension, Vertex, Drawing, GenericLayoutType, Textstyle,
     )
 
 
 class TextBox(ConstructionBox):
-    """
-    Text boundaries representation.
+    """ Text boundaries representation. """
 
-    """
-
-    def __init__(self, center: 'Vertex', width: float, height: float, angle: float, gap: float = 0):
+    def __init__(self, center: 'Vertex', width: float, height: float,
+                 angle: float, gap: float = 0):
         height += (2 * gap)
         super().__init__(center, width, height, angle)
 
@@ -51,14 +48,17 @@ def sign_char(value: float) -> str:
         return ' '
 
 
-def format_text(value: float, dimrnd: float = None, dimdec: int = None, dimzin: int = 0, dimdsep: str = '.',
+def format_text(value: float, dimrnd: float = None, dimdec: int = None,
+                dimzin: int = 0, dimdsep: str = '.',
                 dimpost: str = '<>') -> str:
     if dimrnd is not None:
         value = xround(value, dimrnd)
 
     if dimdec is None:
         fmt = "{:f}"
-        dimzin = dimzin | 8  # remove pending zeros for undefined decimal places, '{:f}'.format(0) -> '0.000000'
+        # Remove pending zeros for undefined decimal places:
+        # '{:f}'.format(0) -> '0.000000'
+        dimzin = dimzin | 8
     else:
         fmt = "{:." + str(dimdec) + "f}"
     text = fmt.format(value)
@@ -73,15 +73,12 @@ def format_text(value: float, dimrnd: float = None, dimdec: int = None, dimzin: 
             fmt = dimpost.replace('<>', '{}', 1)
             text = fmt.format(text)
         else:
-            raise DXFValueError('Invalid dimpost string: "{}"'.format(dimpost))
+            raise DXFValueError(f'Invalid dimpost string: "{dimpost}"')
     return text
 
 
 class BaseDimensionRenderer:
-    """
-    Base rendering class for DIMENSION entities.
-
-    """
+    """ Base rendering class for DIMENSION entities. """
 
     def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None,
                  override: DimStyleOverride = None):
@@ -101,231 +98,290 @@ class BaseDimensionRenderer:
 
         # User defined coordinate system for DIMENSION entity
         self.ucs = ucs or PassTroughUCS()
-        self.requires_extrusion = not self.ucs.uz.isclose(Z_AXIS)  # type: bool
+        self.requires_extrusion: bool = not self.ucs.uz.isclose(Z_AXIS)
 
-        # ezdxf specific attributes beyond DXF reference, therefore not stored in the DXF file (DSTYLE)
-        # Some of these are just an rendering effect, which will be ignored by CAD applications if they modify the
-        # DIMENSION entity
+        # ezdxf specific attributes beyond DXF reference, therefore not stored
+        # in the DXF file (DSTYLE).
+        # Some of these are just an rendering effect, which will be ignored by
+        # CAD applications if they modify the DIMENSION entity
 
-        # user location override as UCS coordinates, stored as text_midpoint in the DIMENSION entity
-        self.user_location = OptionalVec2(self.dim_style.pop('user_location', None))
+        # User location override as UCS coordinates, stored as text_midpoint in
+        # the DIMENSION entity
+        self.user_location: Optional[Vec2] = OptionalVec2(
+            self.dim_style.pop('user_location', None))
 
-        # user location override relative to dimline center if True
-        self.relative_user_location = self.dim_style.pop('relative_user_location', False)  # type: bool
+        # User location override relative to dimline center if True
+        self.relative_user_location: bool = self.dim_style.pop(
+            'relative_user_location', False)
 
-        # shift text away from default text location - implemented as user location override without leader
-        # shift text along in text direction
-        self.text_shift_h = self.dim_style.pop('text_shift_h', 0.)  # type: float
-        # shift text perpendicular to text direction
-        self.text_shift_v = self.dim_style.pop('text_shift_v', 0.)  # type: float
+        # Shift text away from default text location - implemented as user
+        # location override without leader
+        # Shift text along in text direction:
+        self.text_shift_h: float = self.dim_style.pop('text_shift_h', 0.)
+        # Shift text perpendicular to text direction:
+        self.text_shift_v: float = self.dim_style.pop('text_shift_v', 0.)
 
-        # suppress arrow rendering - only rendering is suppressed (rendering effect), all placing related calculations
-        # are done without this settings. Used for multi point linear dimensions to avoid double rendering of non arrow
-        # ticks.
-        self.suppress_arrow1 = self.dim_style.pop('suppress_arrow1', False)  # type: bool
-        self.suppress_arrow2 = self.dim_style.pop('suppress_arrow2', False)  # type: bool
-        # end of ezdxf specific attributes
+        # Suppress arrow rendering - only rendering is suppressed (rendering
+        # effect).
+        # All placing related calculations are done without this settings.
+        # Used for multi point linear dimensions to avoid double rendering of
+        # non arrow ticks.
+        self.suppress_arrow1: bool = self.dim_style.pop(
+            'suppress_arrow1', False)
+        self.suppress_arrow2: bool = self.dim_style.pop(
+            'suppress_arrow2', False)
+        # End of ezdxf specific attributes
 
         # ---------------------------------------------
         # GENERAL PROPERTIES
         # ---------------------------------------------
-        self.default_color = self.dimension.dxf.color  # type: int
-        self.default_layer = self.dimension.dxf.layer  # type: str
+        self.default_color: int = self.dimension.dxf.color  # ACI
+        self.default_layer: str = self.dimension.dxf.layer
 
         # ezdxf locates attachment points always in the text center.
-        self.text_attachment_point = 5  # type: int # fixed for ezdxf rendering
+        # Fixed predefined value for ezdxf rendering:
+        self.text_attachment_point: int = 5
 
-        # ignored by ezdxf
-        self.horizontal_direction = self.dimension.get_dxf_attrib('horizontal_direction', None)  # type: bool
+        # Ignored by ezdxf:
+        self.horizontal_direction: Optional[
+            float] = self.dimension.get_dxf_attrib('horizontal_direction', None)
 
         get = self.dim_style.get
-        # overall scaling of DIMENSION entity
-        self.dim_scale = get('dimscale', 1)  # type: float
+        # Overall scaling of DIMENSION entity:
+        self.dim_scale: float = get('dimscale', 1)
         if self.dim_scale == 0:
             self.dim_scale = 1
 
-        # Controls drawing of circle or arc center marks and centerlines, for DIMDIAMETER and DIMRADIUS, the center
-        # mark is drawn only if you place the dimension line outside the circle or arc.
+        # Controls drawing of circle or arc center marks and center lines, for
+        # DIMDIAMETER and DIMRADIUS, the center mark is drawn only if you place
+        # the dimension line outside the circle or arc.
         # 0 = No center marks or lines are drawn
         # <0 = Center lines are drawn
         # >0 = Center marks are drawn
-        self.dim_center_marks = get('dimcen', 0)  # type: int  # not supported yet
+        self.dim_center_marks: int = get('dimcen', 0)
 
         # ---------------------------------------------
         # TEXT
         # ---------------------------------------------
-        # dimension measurement factor
+        # Dimension measurement factor:
         self.dim_measurement_factor: float = get('dimlfac', 1)
         self.text_style_name: str = get('dimtxsty', self.default_text_style())
 
-        self.text_style = self.doc.styles.get(self.text_style_name)  # type: Style
-        self.text_height = self.char_height * self.dim_scale  # type: float
-        self.text_width_factor = self.text_style.get_dxf_attrib('width', 1.)  # type: float
+        self.text_style: 'Textstyle' = self.doc.styles.get(self.text_style_name)
+        self.text_height: float = self.char_height * self.dim_scale
+        self.text_width_factor: float = self.text_style.get_dxf_attrib(
+            'width', 1.)
         # text_gap: gap between dimension line an dimension text
-        self.text_gap = get('dimgap', 0.625) * self.dim_scale  # type: float
-        # user defined text rotation - overrides everything
-        self.user_text_rotation = self.dimension.get_dxf_attrib('text_rotation', None)  # type: float
+        self.text_gap: float = get('dimgap', 0.625) * self.dim_scale
+        # User defined text rotation - overrides everything:
+        self.user_text_rotation: float = self.dimension.get_dxf_attrib(
+            'text_rotation', None)
         # calculated text rotation
-        self.text_rotation = self.user_text_rotation  # type: float
-        self.text_color = get('dimclrt', self.default_color)  # type: int
-        self.text_round = get('dimrnd', None)  # type: float
-        self.text_decimal_places = get('dimdec', None)  # type: int
+        self.text_rotation: float = self.user_text_rotation
+        self.text_color: int = get('dimclrt', self.default_color)  # ACI
+        self.text_round: Optional[float] = get('dimrnd', None)
+        self.text_decimal_places: Optional[int] = get('dimdec', None)
 
         # Controls the suppression of zeros in the primary unit value.
         # Values 0-3 affect feet-and-inch dimensions only and are not supported
-        # 4 (Bit 3) = Suppresses leading zeros in decimal dimensions (for example, 0.5000 becomes .5000)
-        # 8 (Bit 4) = Suppresses trailing zeros in decimal dimensions (for example, 12.5000 becomes 12.5)
-        # 12 (Bit 3+4) = Suppresses both leading and trailing zeros (for example, 0.5000 becomes .5)
-        self.text_suppress_zeros = get('dimzin', 0)  # type: int
+        # 4 (Bit 3) = Suppresses leading zeros in decimal dimensions,
+        #   e.g. 0.5000 becomes .5000
+        # 8 (Bit 4) = Suppresses trailing zeros in decimal dimensions,
+        #   e.g. 12.5000 becomes 12.5
+        # 12 (Bit 3+4) = Suppresses both leading and trailing zeros,
+        #   e.g. 0.5000 becomes .5)
+        self.text_suppress_zeros: int = get('dimzin', 0)
 
-        dimdsep = self.dim_style.get('dimdsep', 0)
-        self.text_decimal_separator = ',' if dimdsep == 0 else chr(dimdsep)  # type: str
-        self.text_format = self.dim_style.get('dimpost', '<>')  # type: str
-        self.text_fill = self.dim_style.get('dimtfill', 0)  # type: int # 0= None, 1=Background, 2=DIMTFILLCLR
-        self.text_fill_color = self.dim_style.get('dimtfillclr', 1)  # type: int
+        dimdsep: int = self.dim_style.get('dimdsep', 0)
+        self.text_decimal_separator: str = ',' if dimdsep == 0 else chr(dimdsep)
+
+        self.text_format: str = self.dim_style.get('dimpost', '<>')
+        # text_fill:
+        # 0 = None
+        # 1 = Background
+        # 2 = DIMTFILLCLR
+        self.text_fill: int = self.dim_style.get('dimtfill', 0)
+        self.text_fill_color: int = self.dim_style.get('dimtfillclr', 1)  # ACI
         self.text_box_fill_scale = 1.1
 
-        # text_halign = 0: center; 1: left; 2: right; 3: above ext1; 4: above ext2
-        self.text_halign = get('dimjust', 0)  # type: int
+        # text_halign:
+        # 0 = center
+        # 1 = left
+        # 2 = right
+        # 3 = above ext1
+        # 4 = above ext2
+        self.text_halign: int = get('dimjust', 0)
 
-        # text_valign = 0: center; 1: above; 2: farthest away?; 3: JIS?; 4: below (2, 3 ignored by ezdxf)
-        self.text_valign = get('dimtad', 0)  # type: int
+        # text_valign:
+        # 0 = center
+        # 1 = above
+        # 2 = farthest away?
+        # 3 = JIS;
+        # 4 = below
+        # Options 2, 3 are ignored by ezdxf
+        self.text_valign: int = get('dimtad', 0)
 
-        # Controls the vertical position of dimension text above or below the dimension line, when DIMTAD = 0.
-        # The magnitude of the vertical offset of text is the product of the text height (+gap?) and DIMTVP.
+        # Controls the vertical position of dimension text above or below the
+        # dimension line, when DIMTAD = 0.
+        # The magnitude of the vertical offset of text is the product of the
+        # text height (+gap?) and DIMTVP.
         # Setting DIMTVP to 1.0 is equivalent to setting DIMTAD = 1.
-        self.text_vertical_position = get('dimtvp', 0.)  # type: float  # not supported yet
+        self.text_vertical_position: float = get('dimtvp', 0.)
 
-        self.text_movement_rule = get('dimtmove', 2)  # type: int # move text freely
+        # Move text freely:
+        self.text_movement_rule: int = get('dimtmove', 2)
 
-        # requires a leader?
-        self.text_has_leader = self.user_location is not None and self.text_movement_rule == 1  # type: bool
+        self.text_has_leader: bool = (self.user_location is not None
+                                      and self.text_movement_rule == 1)
 
-        # text_rotation=0 if dimension text is 'inside', ezdxf defines 'inside' as at the default text location
-        self.text_inside_horizontal = get('dimtih', 0)  # type: bool
+        # text_rotation is 0 if dimension text is 'inside', ezdxf defines
+        # 'inside' as at the default text location:
+        self.text_inside_horizontal: int = get('dimtih', 0)
 
-        # text_rotation=0 if dimension text is 'outside', ezdxf defines 'outside' as NOT at the default text location
-        self.text_outside_horizontal = get('dimtoh', 0)  # type: bool
+        # text_rotation is 0 if dimension text is 'outside', ezdxf defines
+        # 'outside' as NOT at the default text location:
+        self.text_outside_horizontal: int = get('dimtoh', 0)
 
-        # force text location 'inside', even if the text should be moved 'outside'
-        self.force_text_inside = bool(get('dimtix', 0))  # type: bool
+        # Force text location 'inside', even if the text should be moved
+        # 'outside':
+        self.force_text_inside: int = bool(get('dimtix', 0))
 
-        # how dimension text and arrows are arranged when space is not sufficient to place both 'inside'
+        # How dimension text and arrows are arranged when space is not
+        # sufficient to place both 'inside':
         # 0 = Places both text and arrows outside extension lines
         # 1 = Moves arrows first, then text
         # 2 = Moves text first, then arrows
         # 3 = Moves either text or arrows, whichever fits best
-        self.text_fitting_rule = get('dimatfit', 2)  # type: int  # not supported yet - ezdxf behaves like 2
+        # not supported - ezdxf behaves like 2
+        self.text_fitting_rule: int = get('dimatfit', 2)
 
-        # units for all dimension types except Angular.
+        # Units for all dimension types except Angular.
         # 1 = Scientific
         # 2 = Decimal
         # 3 = Engineering
         # 4 = Architectural (always displayed stacked)
         # 5 = Fractional (always displayed stacked)
-        self.text_length_unit = get('dimlunit', 2)  # type: int  # not supported yet - ezdxf behaves like 2
+        # not supported - ezdxf behaves like 2
+        self.text_length_unit: int = get('dimlunit', 2)
 
-        # fraction format when DIMLUNIT is set to 4 (Architectural) or 5 (Fractional).
+        # Fraction format when DIMLUNIT is set to 4 (Architectural) or
+        # 5 (Fractional).
         # 0 = Horizontal stacking
         # 1 = Diagonal stacking
         # 2 = Not stacked (for example, 1/2)
-        self.text_fraction_format = get('dimfrac', 0)  # type: int  # not supported
+        self.text_fraction_format: int = get('dimfrac', 0)  # not supported
 
-        # units format for angular dimensions
+        # Units format for angular dimensions
         # 0 = Decimal degrees
         # 1 = Degrees/minutes/seconds (not supported) same as 0
         # 2 = Grad
         # 3 = Radians
-        self.text_angle_unit = get('dimaunit', 0)  # type: int
+        self.text_angle_unit: int = get('dimaunit', 0)
 
-        # text_outside is only True if really placed outside of default text location
-        # remark: user defined text location is always outside per definition (not by real location)
-        self.text_outside = False
+        # Text_outside is only True if really placed outside of default text
+        # location
+        # remark: user defined text location is always outside per definition
+        # (not by real location)
+        self.text_outside: bool = False
 
-        # calculated or overridden dimension text location
-        self.text_location = None  # type: Vec2
+        # Calculated or overridden dimension text location
+        self.text_location: Optional[Vec2] = None
 
-        # bounding box of dimension text including border space
-        self.text_box = None  # type: TextBox
+        # Bounding box of dimension text including border space
+        self.text_box: Optional[TextBox] = None
 
-        # formatted dimension text
-        self.text = ""
+        # Formatted dimension text
+        self.text: str = ""
 
         # True if dimension text doesn't fit between extension lines
-        self.is_wide_text = False
+        self.is_wide_text: bool = False
 
         # ---------------------------------------------
         # ARROWS & TICKS
         # ---------------------------------------------
-        self.tick_size = get('dimtsz', 0) * self.dim_scale
-        if self.tick_size > 0:
-            # use oblique strokes as 'arrows', disables usual 'arrows' and user defined blocks
-            self.arrow1_name, self.arrow2_name = None, None  # type: str
-            # tick size is per definition double the size of arrow size
-            # adjust arrow size to reuse the 'oblique' arrow block
-            self.arrow_size = self.tick_size * 2  # type: float
-        else:
-            # arrow name or block name if user defined arrow
-            self.arrow1_name, self.arrow2_name = self.dim_style.get_arrow_names()  # type: str
-            self.arrow_size = get('dimasz', 0.25) * self.dim_scale  # type: float
+        self.tick_size: float = get('dimtsz', 0) * self.dim_scale
+        self.arrow1_name: Optional[str] = None
+        self.arrow2_name: Optional[str] = None
+        self.arrow_size: float = 0.25
 
-        # Suppresses arrowheads if not enough space is available inside the extension lines.
+        if self.tick_size > 0:
+            # Use oblique strokes as 'arrows', disables usual 'arrows' and user
+            # defined blocks tick size is per definition double the size of
+            # arrow size adjust arrow size to reuse the 'oblique' arrow block
+            self.arrow_size = self.tick_size * 2
+        else:
+            # Arrow name or block name if user defined arrow
+            self.arrow1_name, self.arrow2_name = self.dim_style.get_arrow_names()
+            self.arrow_size = get('dimasz', 0.25) * self.dim_scale
+
+        # Suppresses arrowheads if not enough space is available inside the
+        # extension lines.
         # Only if force_text_inside is True
-        self.suppress_arrow_heads = get('dimsoxd', 0)  # type: bool # not supported yet
+        self.suppress_arrow_heads: int = get('dimsoxd', 0)  # not supported yet
 
         # ---------------------------------------------
         # DIMENSION LINE
         # ---------------------------------------------
-        self.dim_line_color = get('dimclrd', self.default_color)  # type: int
+        self.dim_line_color: int = get('dimclrd', self.default_color)
 
-        # dimension line extension, along the dimension line direction ('left' and 'right')
-        self.dim_line_extension = get('dimdle', 0.) * self.dim_scale  # type: float
-        self.dim_linetype = get('dimltype', None)  # type: str
-        self.dim_lineweight = get('dimlwd', const.LINEWEIGHT_BYBLOCK)  # type: int
+        # Dimension line extension, along the dimension line direction ('left'
+        # and 'right')
+        self.dim_line_extension: float = get('dimdle', 0.) * self.dim_scale
+        self.dim_linetype: Optional[str] = get('dimltype', None)
+        self.dim_lineweight: int = get('dimlwd', const.LINEWEIGHT_BYBLOCK)
 
-        # suppress first part of the dimension line
-        self.suppress_dim1_line = get('dimsd1', 0)  # type: bool
+        # Suppress first part of the dimension line
+        self.suppress_dim1_line: int = get('dimsd1', 0)
 
-        # suppress second part of the dimension line
-        self.suppress_dim2_line = get('dimsd2', 0)  # type: bool
+        # Suppress second part of the dimension line
+        self.suppress_dim2_line: int = get('dimsd2', 0)
 
-        # Controls whether a dimension line is drawn between the extension lines even when the text is placed outside.
-        # For radius and diameter dimensions (when DIMTIX is off), draws a dimension line inside the circle or arc and
-        # places the text, arrowheads, and leader outside.
+        # Controls whether a dimension line is drawn between the extension lines
+        # even when the text is placed outside.
+        # For radius and diameter dimensions (when DIMTIX is off), draws a
+        # dimension line inside the circle or arc and places the text,
+        # arrowheads, and leader outside.
         # 0 = no dimension line
         # 1 = draw dimension line
-        self.dim_line_if_text_outside = get('dimtofl', 1)  # type: int  # not supported yet - ezdxf behaves like 1
+        # not supported yet - ezdxf behaves like option 1
+        self.dim_line_if_text_outside: int = get('dimtofl', 1)
 
         # ---------------------------------------------
         # EXTENSION LINES
         # ---------------------------------------------
-        self.ext_line_color = get('dimclre', self.default_color)
-        self.ext1_linetype_name = get('dimltex1', None)  # type: str
-        self.ext2_linetype_name = get('dimltex2', None)  # type: str
-        self.ext_lineweight = get('dimlwe', const.LINEWEIGHT_BYBLOCK)
-        self.suppress_ext1_line = get('dimse1', 0)  # type: bool
-        self.suppress_ext2_line = get('dimse2', 0)  # type: bool
+        self.ext_line_color: int = get('dimclre', self.default_color)
+        self.ext1_linetype_name: Optional[str] = get('dimltex1', None)
+        self.ext2_linetype_name: Optional[str] = get('dimltex2', None)
+        self.ext_lineweight: int = get('dimlwe', const.LINEWEIGHT_BYBLOCK)
+        self.suppress_ext1_line: int = get('dimse1', 0)
+        self.suppress_ext2_line: int = get('dimse2', 0)
 
-        # extension of extension line above the dimension line, in extension line direction
-        # in most cases perpendicular to dimension line (oblique!)
-        self.ext_line_extension = get('dimexe', 0.) * self.dim_scale  # type: float
+        # Extension of extension line above the dimension line, in extension
+        # line direction in most cases perpendicular to dimension line
+        # (oblique!)
+        self.ext_line_extension: float = get('dimexe', 0.) * self.dim_scale
 
-        # distance of extension line from the measurement point in extension line direction
-        self.ext_line_offset = get('dimexo', 0.) * self.dim_scale  # type: float
+        # Distance of extension line from the measurement point in extension
+        # line direction
+        self.ext_line_offset: float = get('dimexo', 0.) * self.dim_scale
 
-        # fixed length extension line, leenght above dimension line is still self.ext_line_extension
-        self.ext_line_fixed = get('dimfxlon', 0)  # type: bool
+        # Fixed length extension line, leenght above dimension line is still
+        # self.ext_line_extension
+        self.ext_line_fixed: int = get('dimfxlon', 0)
 
-        # length below the dimension line:
-        self.ext_line_length = get('dimfxl', self.ext_line_extension) * self.dim_scale  # type: float
+        # Length below the dimension line:
+        self.ext_line_length: float = get(
+            'dimfxl', self.ext_line_extension) * self.dim_scale
 
         # ---------------------------------------------
         # TOLERANCES & LIMITS
         # ---------------------------------------------
-        # appends tolerances to dimension text. Setting DIMTOL to on turns DIMLIM off.
-        self.dim_tolerance = get('dimtol', 0)  # type: bool
-        # generates dimension limits as the default text. Setting DIMLIM to On turns DIMTOL off.
-        self.dim_limits = get('dimlim', 0)  # type: bool
+        # Appends tolerances to dimension text. Setting DIMTOL to on turns
+        # DIMLIM off.
+        self.dim_tolerance: int = get('dimtol', 0)
+        # Generates dimension limits as the default text. Setting DIMLIM to On
+        # turns DIMTOL off.
+        self.dim_limits: int = get('dimlim', 0)
 
         if self.dim_tolerance:
             self.dim_limits = 0
@@ -333,62 +389,87 @@ class BaseDimensionRenderer:
         if self.dim_limits:
             self.dim_tolerance = 0
 
-        # scale factor for the text height of fractions and tolerance values relative to the dimension text height
+        # Scale factor for the text height of fractions and tolerance values
+        # relative to the dimension text height
         self.tol_text_scale_factor = get('dimtfac', .5)
-        self.tol_line_spacing = 1.35  # default MTEXT line spacing for tolerances (BricsCAD)
-        # sets the minimum (or lower) tolerance limit for dimension text when DIMTOL or DIMLIM is on.
-        # DIMTM accepts signed values. If DIMTOL is on and DIMTP and DIMTM are set to the same value, a tolerance value
-        # is drawn. If DIMTM and DIMTP values differ, the upper tolerance is drawn above the lower, and a plus sign is
-        # added to the DIMTP value if it is positive. For DIMTM, the program uses the negative of the value you enter
-        # (adding a minus sign if you specify a positive number and a plus sign if you specify a negative number).
-        self.tol_minimum = get('dimtm', 0)  # type: float
 
-        # Sets the maximum (or upper) tolerance limit for dimension text when DIMTOL or DIMLIM is on. DIMTP accepts
-        # signed values. If DIMTOL is on and DIMTP and DIMTM are set to the same value, a tolerance value is drawn.
-        # If DIMTM and DIMTP values differ, the upper tolerance is drawn above the lower and a plus sign is added to
-        # the DIMTP value if it is positive.
-        self.tol_maximum = get('dimtp', 0)  # type: float
+        # Default MTEXT line spacing for tolerances (BricsCAD)
+        self.tol_line_spacing = 1.35
 
-        # number of decimal places to display in tolerance values
-        self.tol_decimal_places = get('dimtdec', 4)  # type: int
+        # Sets the minimum (or lower) tolerance limit for dimension text when
+        # DIMTOL or DIMLIM is on.
+        # DIMTM accepts signed values.
+        # If DIMTOL is on and DIMTP and DIMTM are set to the same value, a
+        # tolerance value is drawn.
+        # If DIMTM and DIMTP values differ, the upper tolerance is drawn above
+        # the lower, and a plus sign is added to the DIMTP value if it is
+        # positive.
+        # For DIMTM, the program uses the negative of the value you enter
+        # (adding a minus sign if you specify a positive number and a plus sign
+        # if you specify a negative number).
+        self.tol_minimum: float = get('dimtm', 0)
 
-        # vertical justification for tolerance values relative to the nominal dimension text
+        # Sets the maximum (or upper) tolerance limit for dimension text when
+        # DIMTOL or DIMLIM is on.
+        # DIMTP accepts signed values.
+        # If DIMTOL is on and DIMTP and DIMTM are set to the same value, a
+        # tolerance value is drawn.
+        # If DIMTM and DIMTP values differ, the upper tolerance is drawn above
+        # the lower and a plus sign is added to the DIMTP value if it is
+        # positive.
+        self.tol_maximum: float = get('dimtp', 0)
+
+        # Number of decimal places to display in tolerance values
+        self.tol_decimal_places: int = get('dimtdec', 4)
+
+        # Vertical justification for tolerance values relative to the nominal dimension text
         # 0 = Bottom
         # 1 = Middle
         # 2 = Top
-        self.tol_valign = get('dimtolj', 0)  # type: int
+        self.tol_valign: int = get('dimtolj', 0)
 
-        # same as DIMZIN for tolerances (self.text_suppress_zeros)
-        self.tol_suppress_zeros = get('dimtzin', 0)  # type: int
-        self.tol_text = None
-        self.tol_text_height = 0.
-        self.tol_text_upper = None
-        self.tol_text_lower = None
-        self.tol_char_height = self.char_height * self.tol_text_scale_factor * self.dim_scale
-        # tolerances
+        # Same as DIMZIN for tolerances (self.text_suppress_zeros)
+        self.tol_suppress_zeros: int = get('dimtzin', 0)
+        self.tol_text: Optional[str] = None
+        self.tol_text_height: float = 0
+        self.tol_text_upper: Optional[str] = None
+        self.tol_text_lower: Optional[str] = None
+        self.tol_char_height: float = (
+                self.char_height * self.tol_text_scale_factor * self.dim_scale
+        )
+        # Tolerances
         if self.dim_tolerance:
-            # single tolerance value +/- value
+            # Single tolerance value +/- value
             if self.tol_minimum == self.tol_maximum:
-                self.tol_text = PLUS_MINUS + self.format_tolerance_text(abs(self.tol_maximum))
-                self.tol_text_height = self.tol_char_height
-                self.tol_text_width = self.tolerance_text_width(len(self.tol_text))
-            else:  # 2 stacked values: +upper tolerance <above> -lower tolerance
-                self.tol_text_upper = sign_char(self.tol_maximum) + self.format_tolerance_text(
+                self.tol_text = PLUS_MINUS + self.format_tolerance_text(
                     abs(self.tol_maximum))
-                self.tol_text_lower = sign_char(self.tol_minimum * -1) + self.format_tolerance_text(
+                self.tol_text_height = self.tol_char_height
+                self.tol_text_width = self.tolerance_text_width(
+                    len(self.tol_text))
+            else:  # 2 stacked values: +upper tolerance <above> -lower tolerance
+                self.tol_text_upper = sign_char(
+                    self.tol_maximum) + self.format_tolerance_text(
+                    abs(self.tol_maximum))
+                self.tol_text_lower = sign_char(
+                    self.tol_minimum * -1) + self.format_tolerance_text(
                     abs(self.tol_minimum))
                 # requires 2 text lines
-                self.tol_text_height = self.tol_char_height + (self.tol_text_height * self.tol_line_spacing)
-                self.tol_text_width = self.tolerance_text_width(max(len(self.tol_text_upper), len(self.tol_text_lower)))
-            # reset text height
+                self.tol_text_height = self.tol_char_height + (
+                        self.tol_text_height * self.tol_line_spacing)
+                self.tol_text_width = self.tolerance_text_width(
+                    max(len(self.tol_text_upper), len(self.tol_text_lower)))
+            # Reset text height
             self.text_height = max(self.text_height, self.tol_text_height)
 
         elif self.dim_limits:
-            self.tol_text = None  # always None for limits
-            # limits text is always 2 stacked numbers and requires actual measurement
+            # Always None for limits:
+            self.tol_text = None
+            # Limits text is always 2 stacked numbers and requires actual
+            # measurement:
             self.tol_text_upper = None  # text for upper limit
             self.tol_text_lower = None  # text for lower limit
-            self.tol_text_height = self.tol_char_height + (self.tol_text_height * self.tol_line_spacing)
+            self.tol_text_height = self.tol_char_height + (
+                    self.tol_text_height * self.tol_line_spacing)
             self.tol_text_width = None  # requires actual measurement
             self.text_height = max(self.text_height, self.tol_text_height)
 
@@ -402,23 +483,25 @@ class BaseDimensionRenderer:
     def text_inside(self):
         return not self.text_outside
 
-    def render(self, block: 'GenericLayoutType'):  # interface definition
-        # Block entities are located in the OCS defined by the extrusion vector of the DIMENSION entity
-        # and the z-axis of the OCS point 'text_midpoint' (group code 11).
+    def render(self, block: 'GenericLayoutType'):
+        # Block entities are located in the OCS defined by the extrusion vector
+        # of the DIMENSION entity and the z-axis of the OCS point
+        # 'text_midpoint' (group code 11).
         self.block = block
-        # tolerance requires MTEXT support, switch off rendering of tolerances and limits
+        # Tolerance requires MTEXT support, switch off rendering of tolerances
+        # and limits
         if not self.supports_dxf_r2000:
             self.dim_tolerance = 0
             self.dim_limits = 0
 
     @property
     def char_height(self) -> float:
-        """
-        Unscaled (self.dim_scale) character height defined by text style or DIMTXT.
-        Hint: Use self.text_height for proper scaled text height in drawing units.
+        """ Unscaled (self.dim_scale) character height defined by text style or
+        DIMTXT. Hint: Use self.text_height for proper scaled text height in
+        drawing units.
 
         """
-        height = self.text_style.get_dxf_attrib('height', 0)  # type: float
+        height: float = self.text_style.get_dxf_attrib('height', 0)
         if height == 0:  # variable text height (not fixed)
             height = self.dim_style.get('dimtxt', 1.)
         return height
@@ -428,31 +511,22 @@ class BaseDimensionRenderer:
         Return width of `text` in drawing units.
 
         """
-        char_width = self.text_height * self.text_width_factor  # type: float
+        char_width = self.text_height * self.text_width_factor
         return len(text) * char_width
 
     def tolerance_text_width(self, count: int) -> float:
-        """
-        Return width of `count` characters in drawing units.
-
-        """
+        """ Return width of `count` characters in drawing units. """
         return self.tol_text_height * self.text_width_factor * count
 
     def default_attributes(self) -> dict:
-        """
-        Returns default DXF attributes as dict.
-
-        """
+        """ Returns default DXF attributes as dict. """
         return {
             'layer': self.default_layer,  # type: str
             'color': self.default_color,  # type: int
         }
 
     def dim_line_attributes(self) -> dict:
-        """
-        Returns default dimension line DXF attributes as dict.
-
-        """
+        """ Returns default dimension line DXF attributes as dict. """
         attribs = {
             'color': self.dim_line_color
         }
@@ -464,11 +538,11 @@ class BaseDimensionRenderer:
         return attribs
 
     def text_override(self, measurement: float) -> str:
-        """
-        Create dimension text for `measurement` in drawing units and applies text overriding properties.
+        """ Create dimension text for `measurement` in drawing units and applies
+        text overriding properties.
 
         """
-        text = self.dimension.dxf.text  # type: str
+        text = self.dimension.dxf.text
         if text == ' ':  # suppress text
             return ''
         elif text == '' or text == '<>':  # measured distance
@@ -477,8 +551,8 @@ class BaseDimensionRenderer:
             return text
 
     def format_text(self, value: float) -> str:
-        """
-        Rounding and text formatting of `value`, removes leading and trailing zeros if necessary.
+        """ Rounding and text formatting of `value`, removes leading and
+        trailing zeros if necessary.
 
         """
         return format_text(
@@ -519,8 +593,8 @@ class BaseDimensionRenderer:
         return text
 
     def format_tolerance_text(self, value: float) -> str:
-        """
-        Rounding and text formatting of tolerance `value`, removes leading and trailing zeros if necessary.
+        """ Rounding and text formatting of tolerance `value`, removes leading
+        and trailing zeros if necessary.
 
         """
         return format_text(
@@ -531,14 +605,16 @@ class BaseDimensionRenderer:
             dimdsep=self.text_decimal_separator,
         )
 
-    def location_override(self, location: 'Vertex', leader=False, relative=False) -> None:
-        """
-        Set user defined dimension text location. ezdxf defines a user defined location per definition as 'outside'.
+    def location_override(self, location: 'Vertex', leader=False,
+                          relative=False) -> None:
+        """ Set user defined dimension text location. ezdxf defines a user
+        defined location per definition as 'outside'.
 
         Args:
             location: text midpoint
             leader: use leader or not (movement rules)
-            relative: is location absolute (in UCS) or relative to dimension line center.
+            relative: is location absolute (in UCS) or relative to dimension
+                line center.
 
         """
         self.dim_style.set_location(location, leader, relative)
@@ -547,21 +623,23 @@ class BaseDimensionRenderer:
         self.relative_user_location = relative
         self.text_outside = True
 
-    def add_line(self, start: 'Vertex', end: 'Vertex', dxfattribs: dict = None, remove_hidden_lines=False) -> None:
-        """
-        Add a LINE entity to the dimension BLOCK. Removes parts of the line hidden by dimension text if
-        `remove_hidden_lines` is True.
+    def add_line(self, start: 'Vertex', end: 'Vertex', dxfattribs: dict = None,
+                 remove_hidden_lines=False) -> None:
+        """ Add a LINE entity to the dimension BLOCK. Removes parts of the line
+        hidden by dimension text if `remove_hidden_lines` is True.
 
         Args:
             start: start point of line
             end: end point of line
             dxfattribs: additional or overridden DXF attributes
-            remove_hidden_lines: removes parts of the line hidden by dimension text if True
+            remove_hidden_lines: removes parts of the line hidden by dimension
+                text if ``True``
 
         """
 
         def add_line_to_block(start, end):
-            self.block.add_line(to_ocs(start).vec2, to_ocs(end).vec2, dxfattribs=dxfattribs)
+            self.block.add_line(to_ocs(start).vec2, to_ocs(end).vec2,
+                                dxfattribs=dxfattribs)
 
         def order(a: Vec2, b: Vec2) -> Tuple[Vec2, Vec2]:
             if (start - a).magnitude < (start - b).magnitude:
@@ -581,7 +659,8 @@ class BaseDimensionRenderer:
             if inside == 2:  # start and end inside text_box
                 return  # do not draw line
             elif inside == 1:  # one point inside text_box or on a border line
-                intersection_points = text_box.intersect(ConstructionLine(start, end))
+                intersection_points = text_box.intersect(
+                    ConstructionLine(start, end))
                 if len(intersection_points) == 1:
                     # one point inside one point outside -> one intersection point
                     p1 = intersection_points[0]
@@ -592,10 +671,12 @@ class BaseDimensionRenderer:
                 add_line_to_block(p1, p2)
                 return
             else:
-                intersection_points = text_box.intersect(ConstructionLine(start, end))
+                intersection_points = text_box.intersect(
+                    ConstructionLine(start, end))
                 if len(intersection_points) == 2:
                     # sort intersection points by distance to start point
-                    p1, p2 = order(intersection_points[0], intersection_points[1])
+                    p1, p2 = order(intersection_points[0],
+                                   intersection_points[1])
                     # line[start-p1] - gap - line[p2-end]
                     add_line_to_block(start, p1)
                     add_line_to_block(p2, end)
@@ -620,13 +701,15 @@ class BaseDimensionRenderer:
         rotation = self.ucs.to_ocs_angle_deg(rotation)
 
         attribs = self.default_attributes()
-        if name in ARROWS:  # generates automatically BLOCK definitions for arrows if needed
+        # Generates automatically BLOCK definitions for arrows if needed:
+        if name in ARROWS:
             if dxfattribs:
                 attribs.update(dxfattribs)
-            self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, dxfattribs=attribs)
+            self.block.add_arrow_blockref(name, insert=insert, size=scale,
+                                          rotation=rotation, dxfattribs=attribs)
         else:
-            if name is None or name not in self.drawing.blocks:
-                raise DXFUndefinedBlockError('Undefined block: "{}"'.format(name))
+            if name is None or name not in self.doc.blocks:
+                raise DXFUndefinedBlockError(f'Undefined block: "{name}"')
             attribs['rotation'] = rotation
             if scale != 1.:
                 attribs['xscale'] = scale
@@ -635,7 +718,8 @@ class BaseDimensionRenderer:
                 attribs.update(dxfattribs)
             self.block.add_blockref(name, insert=insert, dxfattribs=attribs)
 
-    def add_text(self, text: str, pos: Vector, rotation: float, dxfattribs: dict = None) -> None:
+    def add_text(self, text: str, pos: Vector, rotation: float,
+                 dxfattribs: dict = None) -> None:
         """
         Add TEXT (DXF R12) or MTEXT (DXF R2000+) entity to the dimension BLOCK.
 
@@ -707,8 +791,8 @@ class BaseDimensionRenderer:
 
     @property
     def vertical_placement(self) -> float:
-        """
-        Returns vertical placement of dimension text as 1 for above, 0 for center and -1 for below dimension line.
+        """ Returns vertical placement of dimension text as 1 for above, 0 for
+        center and -1 for below dimension line.
 
         """
         if self.text_valign == 0:
@@ -719,15 +803,15 @@ class BaseDimensionRenderer:
             return 1
 
     def text_vertical_distance(self) -> float:
-        """
-        Returns the vertical distance for dimension line to text midpoint. Positive values are above the line, negative
-        values are below the line.
+        """ Returns the vertical distance for dimension line to text midpoint.
+        Positive values are above the line, negative values are below the line.
 
         """
         if self.text_valign == 0:
             return self.text_height * self.text_vertical_position
         else:
-            return (self.text_height / 2. + self.text_gap) * self.vertical_placement
+            return (
+                           self.text_height / 2. + self.text_gap) * self.vertical_placement
 
     def finalize(self) -> None:
         self.transform_ucs_to_wcs()

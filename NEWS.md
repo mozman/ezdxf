@@ -68,6 +68,11 @@ Version 0.15a3 - dev
   use `fit_points`, `control_points`, `knots`  and `weights` attributes
 - BUGFIX: `ezdxf.math.has_clockwise_orientation()` returns `True` for 
   counter-clock wise and vice versa
+  
+Version 0.14.2 - 2020-10-18
+---------------------------
+
+- BUGFIX: fix invalid attribute reference `self.drawing`
 
 Version 0.14.1 - 2020-09-19
 ---------------------------
