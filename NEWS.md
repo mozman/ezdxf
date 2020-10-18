@@ -72,6 +72,7 @@ Version 0.15a3 - dev
 Version 0.14.2 - 2020-10-18
 ---------------------------
 
+- Release notes: https://ezdxf.mozman.at/release-v0-14.html
 - BUGFIX: fix invalid attribute reference `self.drawing`
 
 Version 0.14.1 - 2020-09-19

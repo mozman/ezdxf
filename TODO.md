@@ -17,8 +17,6 @@ Add-ons
 Render Tools
 ------------
 
-- LWPOLYLINE and 2D POLYLINE the `virtual_entities(dxftype='ARC')` method
-  could return bulges as ARC, ELLIPSE or SPLINE entities
 - `ACADTable.virtual_entities()` ??? -> requires basic ACAD_TABLE support
 - `MLeader.virtual_entities()` ??? -> requires complete MLEADER implementation
 - `MLine.virtual_entities()` ??? -> requires complete MLINE implementation

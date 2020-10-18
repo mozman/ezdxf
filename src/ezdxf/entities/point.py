@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -10,12 +10,13 @@ from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import (
     transform_thickness_and_extrusion_without_ocs
 )
+from ezdxf.render import point
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, DXFEntity
 
 __all__ = ['Point']
 
@@ -99,3 +100,19 @@ class Point(DXFGraphic):
         """
         self.dxf.location = Vector(dx, dy, dz) + self.dxf.location
         return self
+
+    def virtual_entities(self, pdsize: float = 1,
+                         pdmode: int = 0) -> List['DXFEntity']:
+        """ Yields point graphic as DXF primitives LINE and CIRCLE entities.
+        The dimensionless point is rendered a line with start == end vertex!
+
+        Check for this condition::
+
+            e.dxftype() == 'LINE' and e.dxf.start.isclose(e.dxf.end)
+
+        if the rendering engine can't handle zero-length lines.
+
+        .. versionadded:: 0.15
+
+        """
+        return point.render(self, pdsize, pdmode)
