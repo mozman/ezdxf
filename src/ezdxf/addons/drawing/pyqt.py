@@ -195,8 +195,6 @@ class PyQtBackend(Backend):
 
     def draw_filled_paths(self, paths: Sequence[Path], holes: Sequence[Path],
                           properties: Properties) -> None:
-        if self.show_hatch == 0:
-            return
         qt_path = qg.QPainterPath()
         for path in paths:
             _extend_qt_path(qt_path, path.counter_clockwise())

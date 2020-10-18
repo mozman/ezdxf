@@ -13,6 +13,10 @@ from ezdxf.render.path import Path
 if TYPE_CHECKING:
     from ezdxf.addons.drawing.text import FontMeasurements
 
+# Some params are also used by the Frontend() which has access to the backend
+# attributes:
+# show_defpoints: frontend filters defpoints if option is 0
+# show_hatch: frontend filters all HATCH entities if option is 0
 DEFAULT_PARAMS = {
     # Updated by Frontend() class, if not set by user:
     "pdsize": None,
@@ -23,7 +27,8 @@ DEFAULT_PARAMS = {
     # See POINT docs:
     "pdmode": None,
 
-    # Do not show defpoints by default
+    # Do not show defpoints by default.
+    # Filtering is handled by the Frontend().
     "show_defpoints": 0,
 
     # linetype render:
@@ -44,6 +49,7 @@ DEFAULT_PARAMS = {
 
     # 0 = disable HATCH entities
     # 1 = show HATCH entities
+    # Filtering is  handled by the Frontend().
     "show_hatch": 1,
 
     # 0 = disable hatch pattern

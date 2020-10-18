@@ -24,6 +24,7 @@ from ezdxf.render import nesting
 __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
 INFINITE_LINE_LENGTH = 25
+DEFAULT_PDSIZE = 1
 
 COMPOSITE_ENTITY_TYPES = {
     # Unsupported types, represented as DXFTagStorage(), will sorted out in
@@ -53,7 +54,7 @@ class Frontend:
 
         # DrawingBackend is the interface to the render engine
         self.out = out
-        self.update_backend()
+        self.update_backend_configuration()
 
         # Parents entities of current entity/sub-entity
         self.parent_stack: List[DXFGraphic] = []
@@ -72,7 +73,11 @@ class Frontend:
         # set to None to disable nested polygon detection:
         self.nested_polygon_detection = nesting.fast_bbox_detection
 
-    def update_backend(self):
+    def update_backend_configuration(self):
+        # Configuration parameters are stored in the backend and may be changed
+        # by the backend at runtime, so don't copy them into the frontend.
+        # This DXF document parameters are not accessible by the backend
+        # in a direct way:
         if self.out.pdsize is None:
             self.out.pdsize = self.ctx.pdsize
         if self.out.pdmode is None:
@@ -220,16 +225,17 @@ class Frontend:
                           properties: Properties) -> None:
         point = cast('Point', entity)
         pdmode = self.out.pdmode
-        pdsize = self.out.pdsize
-        if pdsize <= 0:  # relative points size is not supported
-            pdsize = 1
 
-        # Defpoints are always just points
+        # Defpoints are regular POINT entities located at the "defpoints" layer:
         if properties.layer.lower() == 'defpoints':
             if not self.out.show_defpoints:
                 return
-            else:
+            else:  # Render defpoints as dimensionless points:
                 pdmode = 0
+
+        pdsize = self.out.pdsize
+        if pdsize <= 0:  # relative points size is not supported
+            pdsize = DEFAULT_PDSIZE
 
         if pdmode == 0:
             self.out.draw_point(entity.dxf.location, properties)
@@ -270,6 +276,8 @@ class Frontend:
             path = Path.from_hatch_boundary_path(p, ocs, elevation)
             path.close()
             return path
+        if not self.out.show_hatch:
+            return
 
         hatch = cast(Hatch, entity)
         ocs = hatch.ocs()

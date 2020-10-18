@@ -112,9 +112,6 @@ class MatplotlibBackend(Backend):
 
     def draw_filled_paths(self, paths: Sequence,
                           holes: Sequence, properties: Properties):
-
-        if self.show_hatch == 0:
-            return
         fill, hatch = self._get_filling(properties)
         if fill is False and hatch is None:
             return
