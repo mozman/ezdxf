@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Leader, Insert, Spline
 
 
-def virtual_leader_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
+def virtual_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
     # Source: https://atlight.github.io/formats/dxf-leader.html
     # GDAL: DXF LEADER implementation:
     # https://github.com/OSGeo/gdal/blob/master/gdal/ogr/ogrsf_frmts/dxf/ogrdxf_leader.cpp

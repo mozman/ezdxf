@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 def virtual_entities(point: 'Point', pdsize: float = 1,
                      pdmode: int = 0) -> List['DXFGraphic']:
     """ Yields point graphic as DXF primitives LINE and CIRCLE entities.
-    The dimensionless point is rendered as line with start vertex is end vertex!
+    The dimensionless point is rendered as zero-length line!
 
     Check for this condition::
 
@@ -30,9 +30,9 @@ def virtual_entities(point: 'Point', pdsize: float = 1,
 
     """
 
-    def add_line_symmetrical(delta: Vector):
-        dxfattribs['start'] = ucs.to_wcs(-delta)
-        dxfattribs['end'] = ucs.to_wcs(delta)
+    def add_line_symmetrical(offset: Vector):
+        dxfattribs['start'] = ucs.to_wcs(-offset)
+        dxfattribs['end'] = ucs.to_wcs(offset)
         entities.append(factory.new('LINE', dxfattribs))
 
     def add_line(s: Vector, e: Vector):
@@ -45,43 +45,47 @@ def virtual_entities(point: 'Point', pdsize: float = 1,
     # location is in WCS!
     ocs = point.ocs()
     ucs = UCS(origin=center, ux=ocs.ux, uz=ocs.uz)
+
+    # The point angle is clockwise oriented:
     ucs = ucs.rotate_local_z(math.radians(-point.dxf.angle))
 
     entities = []
     gfx = point.graphic_properties()
 
-    size2 = pdsize * 0.5
-    size3 = pdsize
-    circle = bool(pdmode & 32)
-    square = bool(pdmode & 64)
+    radius = pdsize * 0.5
+    has_circle = bool(pdmode & 32)
+    has_square = bool(pdmode & 64)
     style = pdmode & 7
 
     dxfattribs = dict(gfx)
-    if style == 0:
+    if style == 0:  # . dimensionless point as zero-length line
         add_line_symmetrical(NULLVEC)
-    elif style == 2:
-        add_line_symmetrical(Vector(size3, 0))
-        add_line_symmetrical(Vector(0, size3))
-    elif style == 3:
-        add_line_symmetrical(Vector(size3, size3))
-        add_line_symmetrical(Vector(size3, -size3))
-    elif style == 4:
-        add_line(NULLVEC, Vector(0, size2))
-    if square:
-        x1 = -size2
-        x2 = size2
-        y1 = -size2
-        y2 = size2
+    # style == 1: no point symbol
+    elif style == 2:  # + cross
+        add_line_symmetrical(Vector(pdsize, 0))
+        add_line_symmetrical(Vector(0, pdsize))
+    elif style == 3:  # x cross
+        add_line_symmetrical(Vector(pdsize, pdsize))
+        add_line_symmetrical(Vector(pdsize, -pdsize))
+    elif style == 4:  # ' tick
+        add_line(NULLVEC, Vector(0, radius))
+    if has_square:
+        x1 = -radius
+        x2 = radius
+        y1 = -radius
+        y2 = radius
         add_line(Vector(x1, y1), Vector(x2, y1))
         add_line(Vector(x2, y1), Vector(x2, y2))
         add_line(Vector(x2, y2), Vector(x1, y2))
         add_line(Vector(x1, y2), Vector(x1, y1))
-    if circle:
+    if has_circle:
         dxfattribs = dict(gfx)
         if point.dxf.hasattr('extrusion'):
-            dxfattribs['extrusion'] = point.dxf.extrusion
-        dxfattribs['center'] = point.dxf.location
-        dxfattribs['radius'] = size2
+            dxfattribs['extrusion'] = ocs.uz
+            dxfattribs['center'] = ocs.from_wcs(center)
+        else:
+            dxfattribs['center'] = center
+        dxfattribs['radius'] = radius
         entities.append(factory.new('CIRCLE', dxfattribs))
 
     # noinspection PyTypeChecker

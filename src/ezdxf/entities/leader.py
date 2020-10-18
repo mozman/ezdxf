@@ -230,8 +230,8 @@ class Leader(DXFGraphic, OverrideMixin):
         .. versionadded:: 0.14
 
         """
-        from ezdxf.render.leader import virtual_leader_entities
-        return virtual_leader_entities(self)
+        from ezdxf.render.leader import virtual_entities
+        return virtual_entities(self)
 
     def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
         """
