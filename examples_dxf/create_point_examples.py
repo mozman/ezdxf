@@ -1,7 +1,6 @@
 # Copyright (c) 2020 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.render import point
 
 
 def new_doc(pdmode: int, pdsize: float = 1):
@@ -21,12 +20,12 @@ MODES = [
 
 
 def add_point(x, angle: float, color: int):
-    pnt = msp.add_point((x, 3), dxfattribs={
+    point = msp.add_point((x, 3), dxfattribs={
         'color': color,
         'angle': angle,
     })
     for entity in [e.translate(0, -2, 0) for e in
-                   point.virtual_entities(pnt, PDSIZE, pdmode)]:
+                   point.virtual_entities(PDSIZE, pdmode)]:
         msp.add_entity(entity)
 
 

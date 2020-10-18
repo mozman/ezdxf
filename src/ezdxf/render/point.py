@@ -6,11 +6,11 @@ from ezdxf.entities import factory
 from ezdxf.math import Vector, UCS, NULLVEC
 
 if TYPE_CHECKING:
-    from ezdxf.entities import Point, DXFEntity
+    from ezdxf.entities import Point, DXFGraphic
 
 
 def virtual_entities(point: 'Point', pdsize: float = 1,
-                     pdmode: int = 0) -> List['DXFEntity']:
+                     pdmode: int = 0) -> List['DXFGraphic']:
     """ Yields point graphic as DXF primitives LINE and CIRCLE entities.
     The dimensionless point is rendered as line with start vertex is end vertex!
 
@@ -84,4 +84,5 @@ def virtual_entities(point: 'Point', pdsize: float = 1,
         dxfattribs['radius'] = size2
         entities.append(factory.new('CIRCLE', dxfattribs))
 
+    # noinspection PyTypeChecker
     return entities

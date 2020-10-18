@@ -102,7 +102,7 @@ class Point(DXFGraphic):
         return self
 
     def virtual_entities(self, pdsize: float = 1,
-                         pdmode: int = 0) -> List['DXFEntity']:
+                         pdmode: int = 0) -> List['DXFGraphic']:
         """ Yields point graphic as DXF primitives LINE and CIRCLE entities.
         The dimensionless point is rendered as line with start vertex is end
         vertex!
