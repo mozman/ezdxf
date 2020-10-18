@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.14.2 - 2020-10-18
+---------------------------
+
+- BUGFIX: fix invalid attribute reference `self.drawing`
+
 Version 0.14.1 - 2020-09-19
 ---------------------------
 
