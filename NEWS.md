@@ -45,6 +45,8 @@ Version 0.15a3 - dev
 - NEW: `Path.from_hatch_boundary_path()`
 - NEW: `odafc.export_dwg()` new replace option to delete existing DWG files
 - NEW `Style` table entry supports extended font data
+- NEW: `Point.virtual_entities()`, yield POINT entities as DXF primitives
+- NEW: `ezdxf.render.point`, support module for `Point.virtual_entities()` 
 - CHANGE: `Hatch.set_pattern_fill()` uses HEADER variable $MEASUREMENT to 
   determine the default scaling of predefined hatch pattern. 
 - CHANGE: fix invalid linetype setup - new linetype scaling like common CAD 

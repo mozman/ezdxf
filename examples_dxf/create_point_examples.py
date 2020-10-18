@@ -26,7 +26,7 @@ def add_point(x, angle: float, color: int):
         'angle': angle,
     })
     for entity in [e.translate(0, -2, 0) for e in
-                   point.render(pnt, PDSIZE, pdmode)]:
+                   point.virtual_entities(pnt, PDSIZE, pdmode)]:
         msp.add_entity(entity)
 
 

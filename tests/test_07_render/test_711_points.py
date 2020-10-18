@@ -6,6 +6,7 @@ from ezdxf.render import point
 from ezdxf.entities import Point
 from ezdxf.math.shape import Shape2d
 
+
 def pnt(location=(0, 0), angle: float = 0):
     return Point.new(dxfattribs={
         'angle': angle,
@@ -16,7 +17,7 @@ def pnt(location=(0, 0), angle: float = 0):
 def test_dimensionless_point():
     loc = (2, 3)
     p = pnt(location=loc)
-    result = point.render(p, pdmode=0)
+    result = point.virtual_entities(p, pdmode=0)
     line = result[0]
     assert line.dxftype() == 'LINE'
     assert line.dxf.start.isclose(loc)
@@ -25,13 +26,13 @@ def test_dimensionless_point():
 
 def test_none_point():
     p = pnt()
-    result = point.render(p, pdmode=1)
+    result = point.virtual_entities(p, pdmode=1)
     assert len(result) == 0
 
 
 def test_cross_point():
     p = pnt()
-    result = point.render(p, pdmode=2)
+    result = point.virtual_entities(p, pdmode=2)
     line1, line2 = result
     assert line1.dxf.start == (-1, 0)
     assert line1.dxf.end == (+1, 0)
@@ -41,7 +42,7 @@ def test_cross_point():
 
 def test_x_cross_point():
     p = pnt()
-    result = point.render(p, pdmode=3)
+    result = point.virtual_entities(p, pdmode=3)
     line1, line2 = result
     assert line1.dxf.start == (-1, -1)
     assert line1.dxf.end == (+1, +1)
@@ -51,7 +52,7 @@ def test_x_cross_point():
 
 def test_tick_point():
     p = pnt()
-    result = point.render(p, pdmode=4)
+    result = point.virtual_entities(p, pdmode=4)
     line1 = result[0]
     assert line1.dxf.start == (0, 0)
     assert line1.dxf.end == (0, 0.5)
@@ -59,7 +60,7 @@ def test_tick_point():
 
 def test_square_point():
     p = pnt()
-    result = point.render(p, pdmode=65)
+    result = point.virtual_entities(p, pdmode=65)
     line1, line2, line3, line4 = result
     lower_left = (-0.5, -0.5)
     assert line1.dxf.start == lower_left
@@ -77,7 +78,7 @@ def test_square_point():
 
 def test_circle_point():
     p = pnt()
-    result = point.render(p, pdmode=33)
+    result = point.virtual_entities(p, pdmode=33)
     circle = result[0]
     assert circle.dxf.center == (0, 0)
     assert circle.dxf.radius == 0.5
@@ -89,7 +90,7 @@ def test_rotated_cross_point():
     s1, e1, s2, e2 = expected.vertices
 
     p = pnt(angle=30)  # clockwise angle!!
-    result = point.render(p, pdmode=2)
+    result = point.virtual_entities(p, pdmode=2)
     line1, line2 = result
     assert line1.dxf.start.isclose(s1)
     assert line1.dxf.end.isclose(e1)

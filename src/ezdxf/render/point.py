@@ -9,12 +9,25 @@ if TYPE_CHECKING:
     from ezdxf.entities import Point, DXFEntity
 
 
-def render(point: 'Point', pdsize: float = 1,
-           pdmode: int = 0) -> List['DXFEntity']:
+def virtual_entities(point: 'Point', pdsize: float = 1,
+                     pdmode: int = 0) -> List['DXFEntity']:
     """ Yields point graphic as DXF primitives LINE and CIRCLE entities.
-    The dimensionless point is rendered a line with start == end vertex!
-    Check for condition :code:`(line.dxf.start.isclose(line.dxf.end)` if
-    the rendering engine can't handle zero-length lines.
+    The dimensionless point is rendered as line with start vertex is end vertex!
+
+    Check for this condition::
+
+        e.dxftype() == 'LINE' and e.dxf.start.isclose(e.dxf.end)
+
+    if the rendering engine can't handle zero-length lines.
+
+
+    Args:
+        point: DXF POINT entity
+        pdsize: point size in drawing units
+        pdmode: point styling mode, see :class:`~ezdxf.entities.Point` class
+
+    .. versionadded:: 0.15
+
     """
 
     def add_line_symmetrical(delta: Vector):
