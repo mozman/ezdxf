@@ -30,7 +30,7 @@ IMPERIAL_UNITS = {1, 2, 3, 8, 9, 10, 21, 22, 23, 24}
 
 # Conversion factor from meters to unit
 # 1 meter is ... [unit]
-TO_METER_FACTOR = [
+METER_FACTOR = [
     None,  # 0 = Unitless - not supported
     39.37007874,  # 1 = Inches
     3.280839895,  # 2 = Feet
@@ -150,8 +150,8 @@ def conversion_factor(source_units: int, target_units: int) -> float:
 
     """
     try:
-        source_factor = TO_METER_FACTOR[source_units]
-        target_factor = TO_METER_FACTOR[target_units]
+        source_factor = METER_FACTOR[source_units]
+        target_factor = METER_FACTOR[target_units]
         if source_factor is None or target_factor is None:
             raise TypeError('Unsupported conversion.')
         return target_factor / source_factor
