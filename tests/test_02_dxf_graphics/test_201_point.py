@@ -8,6 +8,7 @@ from ezdxf.entities.point import Point
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Matrix44
+from ezdxf.explode import explode_entity
 
 TEST_CLASS = Point
 TEST_TYPE = 'POINT'
@@ -119,3 +120,9 @@ def test_fast_translation():
     point = Point.new(dxfattribs={'location': (2, 3, 4), 'extrusion': (0, 1, 0), 'thickness': 2})
     point.translate(1, 2, 3)
     assert point.dxf.location == (3, 5, 7)
+
+
+def test_do_not_explode_point_entity():
+    point = Point()
+    with pytest.raises(TypeError):
+        explode_entity(point)

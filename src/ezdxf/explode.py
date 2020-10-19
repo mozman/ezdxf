@@ -116,7 +116,7 @@ def attrib_to_text(attrib: 'Attrib') -> 'Text':
 def virtual_block_reference_entities(
         block_ref: 'Insert', skipped_entity_callback: Optional[
             Callable[['DXFGraphic', str], None]] = None) -> Iterable[
-            'DXFGraphic']:
+    'DXFGraphic']:
     """ Yields 'virtual' parts of block reference `block_ref`. This method is meant
     to examine the the block reference entities without the need to explode the
     block reference. The `skipped_entity_callback()` will be called for all
@@ -198,6 +198,9 @@ def virtual_block_reference_entities(
     yield from transform(disassemble(block_layout))
 
 
+EXCLUDE_FROM_EXPLODE = {'POINT'}
+
+
 def explode_entity(
         entity: 'DXFGraphic',
         target_layout: 'BaseLayout' = None) -> 'EntityQuery':
@@ -217,7 +220,8 @@ def explode_entity(
     """
     dxftype = entity.dxftype()
 
-    if not hasattr(entity, 'virtual_entities'):
+    if not hasattr(entity, 'virtual_entities') or \
+            dxftype in EXCLUDE_FROM_EXPLODE:
         raise DXFTypeError(f'Can not explode entity {dxftype}.')
 
     if entity.doc is None:
