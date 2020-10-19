@@ -18,6 +18,8 @@ Version 0.15a3 - dev
   [`__geo_interface__`](https://gist.github.com/sgillies/2217756),
   see [docs](https://ezdxf.mozman.at/docs/addons/geo.html) and 
   [tutorial](https://ezdxf.mozman.at/docs/tutorials/geo.html)
+- NEW: `GeoData.setup_local_grid()` setup geo data for CRS similar to EPSG:3395 
+  World Mercator
 - NEW: `Bezier.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Bezier4P.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Path.flattening()` adaptive recursive flattening (approximation)

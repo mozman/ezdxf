@@ -11,12 +11,12 @@ from ezdxf.lldxf.attributes import (
     DXFAttributes, DefSubclass, DXFAttr, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import (
-    SUBCLASS_MARKER, DXFStructureError, DXF2010, DXFTypeError,
-    InvalidGeoDataException
+    SUBCLASS_MARKER, DXFStructureError, DXF2010, DXFTypeError, DXFValueError,
+    InvalidGeoDataException,
 )
 from ezdxf.lldxf.packedtags import VertexArray
 from ezdxf.lldxf.tags import Tags, DXFTag
-from ezdxf.math.vector import NULLVEC, Z_AXIS, Y_AXIS
+from ezdxf.math import NULLVEC, Z_AXIS, Y_AXIS, Vertex, Vector, Vec2
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
@@ -130,6 +130,85 @@ acdb_geo_data = DefSubclass('AcDbGeoData', {
     # face index 99 repeat, faces_count
 
 })
+
+EPSG_3395 = """<?xml version="1.0" encoding="UTF-16" standalone="no" ?>
+<Dictionary version="1.0" xmlns="http://www.osgeo.org/mapguide/coordinatesystem">
+
+<ProjectedCoordinateSystem id="WORLD-MERCATOR">
+<Name>WORLD-MERCATOR</Name>
+<AdditionalInformation>
+<ParameterItem type="CsMap">
+<Key>CSQuadrantSimplified</Key>
+<IntegerValue>1</IntegerValue>
+</ParameterItem>
+</AdditionalInformation>
+<DomainOfValidity>
+<Extent>
+<GeographicElement>
+<GeographicBoundingBox>
+<WestBoundLongitude>-180.75</WestBoundLongitude>
+<EastBoundLongitude>180.75</EastBoundLongitude>
+<SouthBoundLatitude>-80.75</SouthBoundLatitude>
+<NorthBoundLatitude>84.75</NorthBoundLatitude>
+</GeographicBoundingBox>
+</GeographicElement>
+</Extent>
+</DomainOfValidity>
+<DatumId>WGS84</DatumId>
+<Axis uom="Meter">
+<CoordinateSystemAxis>
+<AxisOrder>1</AxisOrder>
+<AxisName>Easting</AxisName>
+<AxisAbbreviation>E</AxisAbbreviation>
+<AxisDirection>East</AxisDirection>
+</CoordinateSystemAxis>
+<CoordinateSystemAxis>
+<AxisOrder>2</AxisOrder>
+<AxisName>Northing</AxisName>
+<AxisAbbreviation>N</AxisAbbreviation>
+<AxisDirection>North</AxisDirection>
+</CoordinateSystemAxis>
+</Axis>
+<Conversion>
+<Projection>
+<OperationMethodId>Mercator (variant B)</OperationMethodId>
+<ParameterValue><OperationParameterId>Longitude of natural origin</OperationParameterId><Value uom="degree">0</Value></ParameterValue>
+<ParameterValue><OperationParameterId>Standard Parallel</OperationParameterId><Value uom="degree">0</Value></ParameterValue>
+<ParameterValue><OperationParameterId>Scaling factor for coord differences</OperationParameterId><Value uom="unity">1</Value></ParameterValue>
+<ParameterValue><OperationParameterId>False easting</OperationParameterId><Value uom="Meter">0</Value></ParameterValue>
+<ParameterValue><OperationParameterId>False northing</OperationParameterId><Value uom="Meter">0</Value></ParameterValue>
+</Projection>
+</Conversion>
+</ProjectedCoordinateSystem>
+<Alias id="3395" type="CoordinateSystem">
+<ObjectId>WORLD-MERCATOR</ObjectId>
+<Namespace>EPSG Code</Namespace>
+</Alias>
+
+<GeodeticDatum id="WGS84">
+<Name>WGS84</Name>
+<PrimeMeridianId>Greenwich</PrimeMeridianId>
+<EllipsoidId>WGS84</EllipsoidId>
+</GeodeticDatum>
+<Alias id="6326" type="Datum">
+<ObjectId>WGS84</ObjectId>
+<Namespace>EPSG Code</Namespace>
+</Alias>
+
+<Ellipsoid id="WGS84">
+<Name>WGS84</Name>
+<SemiMajorAxis uom="meter">6.37814e+06</SemiMajorAxis>
+<SecondDefiningParameter>
+<SemiMinorAxis uom="meter">6.35675e+06</SemiMinorAxis>
+</SecondDefiningParameter>
+</Ellipsoid>
+<Alias id="7030" type="Ellipsoid">
+<ObjectId>WGS84</ObjectId>
+<Namespace>EPSG Code</Namespace>
+</Alias>
+
+</Dictionary>
+"""
 
 
 class MeshVertices(VertexArray):
@@ -394,6 +473,64 @@ class GeoData(DXFObject):
                 Matrix44.z_rotate(theta) @
                 Matrix44.translate(target.x, target.y, 0))
         return transformation, epsg
+
+    def setup_local_grid(self, *,
+                         design_point: Vertex,
+                         reference_point: Vertex,
+                         north_direction: Vertex = (0, 1),
+                         crs: str = EPSG_3395,
+                         ) -> None:
+        """ Setup local grid coordinate system. This method is designed to setup
+        CRS similar to `EPSG:3395 World Mercator`, the basic features of the
+        CRS should fulfill this assumptions:
+
+            - base unit of reference coordinates is 1 meter
+            - right-handed coordinate system: +Y=north/+X=east/+Z=up
+
+        The CRS string is not validated nor interpreted!
+
+        .. hint::
+
+            The reference point must be a 2D cartesian map coordinate and not
+            a globe (lon/lat) coordinate like stored in GeoJSON or GPS data.
+
+        Args:
+            design_point: WCS coordinates of the CRS reference point
+            reference_point: CRS reference point in 2D cartesian coordinates
+            north_direction: north direction a 2D vertex, default is (0, 1)
+            crs: Coordinate Reference System definition XML string, default is
+                the definition string for `EPSG:3395 World Mercator`
+
+        """
+        doc = self.doc
+        if doc is None:
+            raise DXFValueError('Valid DXF document required.')
+        wcs_units = doc.units
+        if units == 0:
+            raise DXFValueError('DXF document requires units to be set, '
+                                'current state is "unitless".')
+        unit_factor = units.TO_METER_FACTOR[wcs_units]
+        if unit_factor is None:
+            raise DXFValueError(f'Unsupported document units: {wcs_units}')
+
+        # Default settings:
+        self.dxf.up_direction = Z_AXIS
+        self.dxf.observation_coverage_tag = ''
+        self.dxf.observation_from_tag = ''
+        self.dxf.observation_to_tag = ''
+        self.dxf.scale_estimation_method = GeoData.NONE
+        self.dxf.coordinate_type = GeoData.LOCAL_GRID
+        self.dxf.sea_level_correction = 0
+        self.dxf.horizontal_units = wcs_units
+        self.dxf.horizontal_unit_scale = unit_factor
+        self.dxf.vertical_units = wcs_units
+        self.dxf.vertical_unit_scale = unit_factor
+
+        # User settings:
+        self.dxf.design_point = Vector(design_point)
+        self.dxf.reference_point = Vector(reference_point)
+        self.dxf.north_direction = Vec2(north_direction)
+        self.coordinate_system_definition = str(crs)
 
 
 def _remove_xml_namespaces(xml_string: str) -> str:
