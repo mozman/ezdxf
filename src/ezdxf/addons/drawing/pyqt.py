@@ -44,8 +44,8 @@ class _Point(qw.QAbstractGraphicsShapeItem):
 
 
 # The key used to store the dxf entity corresponding to each graphics element
-CorrespondingDXFEntity = 0
-CorrespondingDXFParentStack = 1
+CorrespondingDXFEntity = qc.Qt.UserRole + 0
+CorrespondingDXFParentStack = qc.Qt.UserRole + 1
 
 PYQT_DEFAULT_PARAMS = {
     # For my taste without scaling the default line width looks to thin:
