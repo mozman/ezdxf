@@ -509,10 +509,10 @@ class GeoData(DXFObject):
         if units == 0:
             raise DXFValueError('DXF document requires units to be set, '
                                 'current state is "unitless".')
-        unit_factor = units.TO_METER_FACTOR[wcs_units]
-        if unit_factor is None:
+        meter_factor = units.METER_FACTOR[wcs_units]
+        if meter_factor is None:
             raise DXFValueError(f'Unsupported document units: {wcs_units}')
-
+        unit_factor = 1.0 / meter_factor
         # Default settings:
         self.dxf.up_direction = Z_AXIS
         self.dxf.observation_coverage_tag = ''
@@ -522,6 +522,8 @@ class GeoData(DXFObject):
         self.dxf.coordinate_type = GeoData.LOCAL_GRID
         self.dxf.sea_level_correction = 0
         self.dxf.horizontal_units = wcs_units
+        # Factor from WCS -> CRS (m) e.g. 0.01 for horizontal_units==5 (cm),
+        # 1cm = 0.01m
         self.dxf.horizontal_unit_scale = unit_factor
         self.dxf.vertical_units = wcs_units
         self.dxf.vertical_unit_scale = unit_factor
