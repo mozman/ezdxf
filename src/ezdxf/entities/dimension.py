@@ -525,7 +525,10 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         """
         block_name = self.get_dxf_attrib('geometry', None)
-        return self.doc.blocks.get(block_name)
+        if block_name is None:
+            return None
+        else:
+            return self.doc.blocks.get(block_name)
 
     def get_measurement(self) -> Union[float, Vector]:
         """ Returns the actual dimension measurement in :ref:`WCS` units, no

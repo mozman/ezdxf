@@ -181,6 +181,11 @@ def test_write_dxf(txt, ver):
     assert collector.has_all_tags(collector2)
 
 
+def test_non_existing_block_name_should_return_none():
+    dim = Dimension()
+    assert dim.get_geometry_block() is None
+
+
 def test_format_text():
     assert format_text(0, dimrnd=0, dimdec=1, dimzin=0, dimpost='<>') == '0.0'
     assert format_text(0, dimrnd=0, dimdec=1, dimzin=4, dimpost='<>') == '0'
