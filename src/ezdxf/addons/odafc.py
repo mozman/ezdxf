@@ -251,18 +251,30 @@ def _run_with_no_gui(system: str, command: str,
     return proc
 
 
+def _odafc_failed(system: str, proc: subprocess.Popen, stderr: str) -> bool:
+    if proc.returncode != 0:
+        # note: currently, ODAFileConverter does not set the return code
+        return True
+
+    stderr = stderr.strip()
+    if system == 'Linux':
+        # ODAFileConverter *always* crashes on Linux even if the output was successful
+        return stderr != '' and stderr != 'Quit (core dumped)'
+    else:
+        return stderr != ''
+
+
 def _execute_odafc(arguments: List[str]) -> Optional[bytes]:
     logger.debug(f'Running ODAFileConverter with arguments: {arguments}')
     system = platform.system()
     oda_fc = _get_odafc_path(system)
-    result = _run_with_no_gui(system, oda_fc, arguments)
-    stdout = result.stdout.read().decode('utf-8')
-    stderr = result.stderr.read().decode('utf-8')
+    proc = _run_with_no_gui(system, oda_fc, arguments)
+    stdout = proc.stdout.read().decode('utf-8')
+    stderr = proc.stderr.read().decode('utf-8')
 
-    if result.returncode != 0 or stderr:
-        # currently, ODAFileConverter does not set the return code
-        msg = f'ODA File Converter failed: return code = {result.returncode}.\n' \
+    if _odafc_failed(system, proc, stderr):
+        msg = f'ODA File Converter failed: return code = {proc.returncode}.\n' \
               f'stdout: {stdout}\nstderr: {stderr}'
         logger.debug(msg)
         raise ODAFCError(msg)
-    return result.stdout
+    return proc.stdout
