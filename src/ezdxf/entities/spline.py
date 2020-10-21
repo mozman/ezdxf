@@ -112,6 +112,7 @@ class Spline(DXFGraphic):
             # load spline data (fit points, control points, weights, knots) and
             # remove their tags from subclass:
             self.load_spline_data(tags)
+            self.remove_invalid_data(tags)
             processor.load_and_recover_dxfattribs(dxf, acdb_spline)
         return dxf
 
@@ -122,6 +123,19 @@ class Spline(DXFGraphic):
         self.knots = (value for code, value in spline_tags if code == 40)
         self.weights = (value for code, value in spline_tags if code == 41)
         spline_tags.remove_tags(codes=REMOVE_CODES)
+
+    @staticmethod
+    def remove_invalid_data(spline_tags: 'Tags') -> None:
+        # The loading function use the regular validator/fixer
+        # infrastructure and I don't want to ignore (0, 0, 0) as tangent values
+        # silently, so I remove invalid start- and end tangent values at the
+        # DXF loadings stage:
+        codes = [
+            code for code, value in spline_tags
+            if code in (12, 13) and NULLVEC.isclose(value)
+        ]
+        if codes:
+            spline_tags.remove_tags(codes=codes)
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
