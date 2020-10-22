@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     )
 
 logger = logging.getLogger('ezdxf')
+ADSK_CONSTRAINTS = "*ADSK_CONSTRAINTS"
 
 __all__ = [
     'Dimension', 'ArcDimension', 'RadialDimensionLarge',
@@ -40,7 +41,8 @@ acdb_dimension = DefSubclass('AcDbDimension', {
     'version': DXFAttr(280, default=0, dxfversion=DXF2010),
 
     # Name of the block that contains the entities that make up the dimension
-    # picture:
+    # picture
+    # Important: DIMENSION constraints do no have this group code 2:
     'geometry': DXFAttr(2, validator=validator.is_valid_block_name),
 
     # Dimension style name:
@@ -61,6 +63,7 @@ acdb_dimension = DefSubclass('AcDbDimension', {
     'insert': DXFAttr(12, xtype=XType.point3d, default=NULLVEC, optional=True),
 
     # Dimension type:
+    # Important: Dimensional constraints do not have group code 70
     # Values 0–6 are integer values that represent the dimension type.
     # Values 32, 64, and 128 are bit values, which are added to the integer
     # values (value 32 is always set in R13 and later releases)
@@ -517,6 +520,22 @@ class Dimension(DXFGraphic, OverrideMixin):
         # undocumented ARC_DIMENSION = 8
         return self.dxf.dimtype & 15
 
+    # Special DIMENSION - Dimensional constraints
+    # No information in the DXF reference:
+    # layer name is "*ADSK_CONSTRAINTS"
+    # missing group code 2 - geometry block name
+    # missing group code 70 - dimension type
+    # has reactor to ACDBASSOCDEPENDENCY object
+    # Autodesk example: architectural_example-imperial.dxf
+    @property
+    def is_dimensional_constraint(self) -> bool:
+        """ Returns ``True`` if the DIMENSION entity is a dimensional
+        constrains object.
+        """
+        dxf = self.dxf
+        return not dxf.hasattr('dimtype') and \
+               dxf.layer == ADSK_CONSTRAINTS
+
     def get_geometry_block(self) -> Optional['BlockLayout']:
         """ Returns :class:`~ezdxf.layouts.BlockLayout` of associated anonymous
         dimension block, which contains the entities that make up the dimension
@@ -524,11 +543,8 @@ class Dimension(DXFGraphic, OverrideMixin):
         does not exist
 
         """
-        block_name = self.get_dxf_attrib('geometry', None)
-        if block_name is None:
-            return None
-        else:
-            return self.doc.blocks.get(block_name)
+        block_name = self.get_dxf_attrib('geometry', '*')
+        return self.doc.blocks.get(block_name)
 
     def get_measurement(self) -> Union[float, Vector]:
         """ Returns the actual dimension measurement in :ref:`WCS` units, no

@@ -3,8 +3,9 @@
 # created 2019-02-15
 import pytest
 import math
-from ezdxf.math import Vector, Matrix44
 
+import ezdxf
+from ezdxf.math import Vector, Matrix44
 from ezdxf.entities.dimension import Dimension, linear_measurement
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
@@ -181,8 +182,9 @@ def test_write_dxf(txt, ver):
     assert collector.has_all_tags(collector2)
 
 
-def test_non_existing_block_name_should_return_none():
-    dim = Dimension()
+def test_missing_block_geometry_name():
+    doc = ezdxf.new()
+    dim = Dimension.new(doc=doc)
     assert dim.get_geometry_block() is None
 
 

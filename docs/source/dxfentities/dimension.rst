@@ -4,10 +4,21 @@ Dimension
 .. module:: ezdxf.entities
     :noindex:
 
-The DIMENSION entity (`DXF Reference`_) represents several types of dimensions in many orientations and alignments.
-The basic types of dimensioning are linear, radial, angular, ordinate, and arc length.
+The DIMENSION entity (`DXF Reference`_) represents several types of dimensions
+in many orientations and alignments. The basic types of dimensioning are linear,
+radial, angular, ordinate, and arc length.
 
-For more information about dimensions see the online help from AutoDesk: `About the Types of Dimensions`_
+For more information about dimensions see the online help from AutoDesk:
+`About the Types of Dimensions`_
+
+.. important::
+
+    The DIMENSION entity is reused to create dimensional constraints, such
+    entities do not have an associated geometrical block nor a dimension type
+    group code (2) and reside on layer ``*ADSK_CONSTRAINTS``.
+    Use property :attr:`Dimension.is_dimensional_constraint` to check for this
+    objects. Dimensional constraints are not documented in the DXF reference and
+    not supported by `ezdxf`.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -193,7 +204,9 @@ Factory Functions
         rotated linear dimensions. This value is the negative of the angle in the OCS xy-plane between the dimension
         line and the OCS x-axis.
 
-    .. autoattribute:: dimtype
+    .. autoproperty:: dimtype
+
+    .. autoproperty:: is_dimensional_constraint
 
     .. automethod:: get_dim_style
 
