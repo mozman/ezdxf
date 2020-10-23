@@ -125,13 +125,19 @@ class ConstructionEllipse:
         old_end_param = end_param = self.end_param % math.tau
         old_minor_axis = minor_axis(self.major_axis, self.extrusion, self.ratio)
         new_major_axis, new_minor_axis = m.transform_directions((self.major_axis, old_minor_axis))
-
         # Original ellipse parameters stay untouched until end of transformation
-        if not math.isclose(new_major_axis.dot(new_minor_axis), 0, abs_tol=1e-9):
+        dot_product = new_major_axis.normalize().dot(new_minor_axis.normalize())
+        if abs(dot_product) > 1e-6:
             new_major_axis, new_minor_axis, new_ratio = rytz_axis_construction(new_major_axis, new_minor_axis)
+            new_extrusion = new_major_axis.cross(new_minor_axis).normalize()
             adjust_params = True
         else:
+            # New axis are nearly orthogonal:
             new_ratio = new_minor_axis.magnitude / new_major_axis.magnitude
+            # New normal vector:
+            new_extrusion = new_major_axis.cross(new_minor_axis).normalize()
+            # Calculate exact minor axis:
+            new_minor_axis = minor_axis(new_major_axis, new_extrusion, new_ratio)
             adjust_params = False
 
         if adjust_params and not math.isclose(start_param, end_param, abs_tol=1e-9):
@@ -177,7 +183,6 @@ class ConstructionEllipse:
                 if not old_chk_point.isclose(new_chk_point, abs_tol=1e-9):
                     start_param, end_param = end_param, start_param
 
-        new_extrusion = new_major_axis.cross(new_minor_axis).normalize()
         if new_ratio > 1:
             new_major_axis = minor_axis(new_major_axis, new_extrusion, new_ratio)
             new_ratio = 1.0 / new_ratio
