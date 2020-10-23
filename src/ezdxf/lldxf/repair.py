@@ -58,33 +58,50 @@ INVALID_CODES = INVALID_Y_CODES | INVALID_Z_CODES
 X_CODES = POINT_CODES
 
 
-def filter_invalid_yz_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
-    """ Filter point group codes if out of order e.g. 10, 20, 30, 20!
+def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
+    """ Filter invalid and misplaced point group codes.
 
-    Input Raw tag filter
+    - removes x-axis without following y-axis
+    - removes y- and z-axis without leading x-axis
 
     Args:
         tagger: low level tagger
 
     """
-    logger.info('Filter "out of order" vertex codes.')
+    logger.info('Filter invalid point codes.')
     expected_code = 0
-    point = 0
-
+    z_code = 0
+    point = []
     for tag in tagger:
         code = tag[0]
-        if point and code == expected_code:
+        if point and code != expected_code:
+            # at least x, y axis is required else ignore point
+            if len(point) > 1:
+                yield from point
+            else:
+                logger.debug(f'remove invalid x-axis tag: {str(point[0])}')
+            point.clear()
+
+        if code in X_CODES:
+            expected_code = code + 10
+            z_code = code + 20
+            point.append(tag)
+        elif code == expected_code:
+            point.append(tag)
             expected_code += 10
-            if expected_code - point > 20:
-                point = 0
+            if expected_code > z_code:
+                expected_code = 0
         else:
-            point = 0
-            if code in INVALID_CODES:
-                continue
-            if code in X_CODES:
-                point = code
-                expected_code = point + 10
-        yield tag
+            # ignore point group codes without leading x-axis
+            if code not in INVALID_CODES:
+                yield tag
+            else:
+                logger.debug(f'remove misplaced axis tag: {str(tag)}')
+
+    if len(point) == 1:
+        logger.debug(f'remove invalid x-axis tag: {str(point[0])}')
+    elif len(point) > 1:
+        yield from point
 
 
 def fix_coordinate_order(tags: 'Tags', codes: Sequence[int] = (10, 11)):

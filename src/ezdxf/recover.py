@@ -337,7 +337,7 @@ def safe_tag_loader(stream: BinaryIO,
 
     # Apply repair filter:
     tags = repair.tag_reorder_layer(tags)
-    tags = repair.filter_invalid_yz_point_codes(tags)
+    tags = repair.filter_invalid_point_codes(tags)
     return byte_tag_compiler(tags, encoding, messages=messages, errors=errors)
 
 
