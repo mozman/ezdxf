@@ -117,6 +117,15 @@ class DXFNamespace:
 
         """
 
+        def entity() -> str:
+            # DXFNamespace is maybe not assigned to the entity yet:
+            handle = self.get('handle')
+            _entity = self._entity
+            if _entity:
+                return _entity.dxftype() + f'(#{handle})'
+            else:
+                return f'#{handle}'
+
         def check(value):
             value = cast_value(attrib_def.code, value)
             if not attrib_def.is_valid_value(value):
@@ -124,12 +133,12 @@ class DXFNamespace:
                     value = attrib_def.fixer(value)
                     logger.debug(
                         f'Fixed invalid attribute "{key}" in entity'
-                        f' {str(self._entity)} to "{str(value)}".'
+                        f' {entity()} to "{str(value)}".'
                     )
                 else:
                     raise const.DXFValueError(
                         f'Invalid value {str(value)} for attribute "{key}" in '
-                        f'entity {str(self._entity)}.'
+                        f'entity {entity()}.'
                     )
             return value
 
@@ -334,11 +343,14 @@ class SubclassProcessor:
         return self.subclasses[0]
 
     def log_unprocessed_tags(self, unprocessed_tags: Iterable,
-                             subclass='<?>') -> None:
+                             subclass='<?>', handle=None) -> None:
         if options.log_unprocessed_tags:
             for tag in unprocessed_tags:
+                entity = ""
+                if handle:
+                    entity = f" in entity #{handle}"
                 logger.info(
-                    f"ignored {repr(tag)} in subclass {subclass}")
+                    f"ignored {repr(tag)} in subclass {subclass}" + entity)
 
     def find_subclass(self, name: str) -> Optional[Tags]:
         for subclass in self.subclasses:
@@ -463,7 +475,9 @@ class SubclassProcessor:
         if len(tags) and not self.r12:
             tags = recover_graphic_attributes(tags, dxf)
             if len(tags):
-                self.log_unprocessed_tags(tags, subclass=subclass.name)
+                handle = dxf.get('handle')
+                self.log_unprocessed_tags(tags, subclass=subclass.name,
+                                          handle=handle)
 
 
 GRAPHIC_ATTRIBUTES_TO_RECOVER = {

@@ -20,7 +20,7 @@ from .dxfentity import DXFEntity, base_class, SubclassProcessor
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         Auditor, TagWriter, BaseLayout, DXFNamespace, Vertex, Drawing,
-)
+    )
 
 __all__ = [
     'DXFGraphic', 'acdb_entity', 'SeqEnd', 'add_entity',
@@ -145,7 +145,9 @@ class DXFGraphic(DXFEntity):
         tags = processor.load_dxfattribs_into_namespace(dxf, acdb_entity,
                                                         index=1)
         if len(tags) and not r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_entity.name)
+            processor.log_unprocessed_tags(
+                tags, subclass=acdb_entity.name, handle=dxf.get('handle')
+            )
         return dxf
 
     def post_new_hook(self):

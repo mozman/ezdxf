@@ -22,6 +22,7 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
         tagger: low level tagger
 
     """
+
     def value(v) -> str:
         if type(v) is bytes:
             return v.decode('ascii', errors='ignore')
@@ -67,17 +68,29 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
         tagger: low level tagger
 
     """
+
+    def entity() -> str:
+        if handle_tag:
+            handle = handle_tag[1].decode(errors='ignore')
+            return f"in entity #{handle}"
+        else:
+            return ""
+
     expected_code = -1
     z_code = 0
     point = []
+    handle_tag = None
     for tag in tagger:
         code = tag[0]
+        if code == 5:  # ignore DIMSTYLE entity
+            handle_tag = tag
         if point and code != expected_code:
             # at least x, y axis is required else ignore point
             if len(point) > 1:
                 yield from point
             else:
-                logger.info(f'remove misplaced x-axis tag: {str(point[0])}')
+                logger.info(
+                    f'remove misplaced x-axis tag: {str(point[0])}' + entity())
             point.clear()
 
         if code in X_CODES:
@@ -95,10 +108,11 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
                 yield tag
             else:
                 axis = 'y-axis' if code in INVALID_Y_CODES else 'z-axis'
-                logger.info(f'remove misplaced {axis} tag: {str(tag)}')
+                logger.info(
+                    f'remove misplaced {axis} tag: {str(tag)}' + entity())
 
     if len(point) == 1:
-        logger.info(f'remove misplaced x-axis tag: {str(point[0])}')
+        logger.info(f'remove misplaced x-axis tag: {str(point[0])}' + entity())
     elif len(point) > 1:
         yield from point
 
