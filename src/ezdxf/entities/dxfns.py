@@ -338,7 +338,7 @@ class SubclassProcessor:
         if options.log_unprocessed_tags:
             for tag in unprocessed_tags:
                 logger.info(
-                    f"ignored {repr(tag)} in {str(self)}, {subclass}")
+                    f"ignored {repr(tag)} in subclass {subclass}")
 
     def find_subclass(self, name: str) -> Optional[Tags]:
         for subclass in self.subclasses:

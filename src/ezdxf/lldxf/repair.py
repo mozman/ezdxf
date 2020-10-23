@@ -79,7 +79,7 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
             if len(point) > 1:
                 yield from point
             else:
-                logger.debug(f'remove invalid x-axis tag: {str(point[0])}')
+                logger.debug(f'remove misplaced x-axis tag: {str(point[0])}')
             point.clear()
 
         if code in X_CODES:
@@ -96,10 +96,11 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
             if code not in INVALID_CODES:
                 yield tag
             else:
-                logger.debug(f'remove misplaced axis tag: {str(tag)}')
+                axis = 'y-axis' if code in INVALID_Y_CODES else 'z-axis'
+                logger.debug(f'remove misplaced {axis} tag: {str(tag)}')
 
     if len(point) == 1:
-        logger.debug(f'remove invalid x-axis tag: {str(point[0])}')
+        logger.debug(f'remove misplaced x-axis tag: {str(point[0])}')
     elif len(point) > 1:
         yield from point
 
