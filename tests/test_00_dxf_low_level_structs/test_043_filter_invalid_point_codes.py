@@ -47,3 +47,10 @@ def test_invalid_single_x_axis():
     assert result == [(10, 1), (20, 2)]
 
 
+def test_preserve_leading_0_tag():
+    result = list(filter_invalid_point_codes(
+        [(0, 'SECTION'), (10, 1), (20, 2)]
+    ))
+    assert result == [(0, 'SECTION'), (10, 1), (20, 2)]
+
+

@@ -69,7 +69,7 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
     """
     logger.info('Filter invalid point codes.')
-    expected_code = 0
+    expected_code = -1
     z_code = 0
     point = []
     for tag in tagger:
@@ -90,7 +90,7 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
             point.append(tag)
             expected_code += 10
             if expected_code > z_code:
-                expected_code = 0
+                expected_code = -1
         else:
             # ignore point group codes without leading x-axis
             if code not in INVALID_CODES:
