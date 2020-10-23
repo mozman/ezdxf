@@ -28,7 +28,6 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
         else:
             return v
 
-    logger.info('Reordering coordinate tags for LINE entity.')
     collector: Optional[List] = None
     for tag in tagger:
         if tag.code == 0:
@@ -68,7 +67,6 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
         tagger: low level tagger
 
     """
-    logger.info('Filter invalid point codes.')
     expected_code = -1
     z_code = 0
     point = []
