@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable
+from typing import TYPE_CHECKING, List
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -31,8 +31,12 @@ acdb_trace = DefSubclass('AcDbTrace', {
     # If only three corners are entered to define the SOLID, then the fourth
     # corner coordinate is the same as the third.
     'vtx3': DXFAttr(13, xtype=XType.point3d, default=NULLVEC),
-    # Elevation is not document by the DXF reference, but works
+
+    # Elevation is not document by the DXF reference, but works.
+    # Legacy feature do not use this attribute, store the entity
+    # elevation in the z-axis of the vertices.
     'elevation': DXFAttr(38, default=0, optional=True),
+
     # Thickness could be negative:
     'thickness': DXFAttr(39, default=0, optional=True),
     'extrusion': DXFAttr(
@@ -63,6 +67,14 @@ class Solid(_Base):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.load_and_recover_dxfattribs(dxf, acdb_trace)
+            # transform elevation tag into z-axis values
+            if dxf.hasattr('elevation'):
+                elevation = dxf.elevation
+                for name in ('vtx0', 'vtx1', 'vtx2', 'vtx3'):
+                    v = dxf.get(name)
+                    if v is not None:
+                        dxf.set(name, v.replace(z=elevation))
+                dxf.discard('elevation')
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -72,8 +84,9 @@ class Solid(_Base):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_trace.name)
         if not self.dxf.hasattr('vtx3'):
             self.dxf.vtx3 = self.dxf.vtx2
+        # elevation is stored in the z-axis of the vertices
         self.dxf.export_dxf_attribs(tagwriter, [
-            'vtx0', 'vtx1', 'vtx2', 'vtx3', 'elevation', 'thickness',
+            'vtx0', 'vtx1', 'vtx2', 'vtx3', 'thickness',
             'extrusion',
         ])
 
@@ -118,10 +131,6 @@ class Solid(_Base):
         vertices = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
         if dxf.vtx3 != dxf.vtx2:  # when the face is a triangle, vtx2 == vtx3
             vertices.append(dxf.vtx3)
-
-        if dxf.hasattr('elevation'):  # undocumented feature
-            elevation = self.dxf.elevation
-            vertices = [v.replace(z=elevation) for v in vertices]
 
         # adjust weird vertex order of SOLID and TRACE:
         # 0, 1, 2, 3 -> 0, 1, 3, 2

@@ -280,14 +280,15 @@ def test_3dface_triangle_vertices():
 
 def test_elevation_group_code_support():
     solid = Solid.from_text(ELEVATION)
-    assert solid.dxf.elevation == 2.0
+    # elevation data is copied to z-axis of vertices:
+    assert solid.dxf.hasattr('elevation') is False
     vertices = solid.vertices()
     assert vertices[0] == (0, 0, 2)
 
 
-def test_write_elevation_group_code():
+def test_do_not_write_elevation_group_code():
     solid = Solid.from_text(ELEVATION)
     collector = TagCollector(dxfversion=DXF12)
     solid.export_dxf(collector)
     # Elevation tag should be written:
-    assert any(tag[0] == 38 for tag in collector.tags) is True
+    assert any(tag[0] == 38 for tag in collector.tags) is False
