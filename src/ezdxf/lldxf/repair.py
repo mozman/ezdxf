@@ -54,6 +54,9 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 # invalid point codes if not part of a point started with 1010, 1011, 1012, 1013
 INVALID_Y_CODES = {code + 10 for code in POINT_CODES}
 INVALID_Z_CODES = {code + 20 for code in POINT_CODES}
+# A single group code 38 is an elevation tag (e.g. LWPOLYLINE)
+# Is (18, 28, 38?) is a valid point code?
+INVALID_Z_CODES.remove(38)
 INVALID_CODES = INVALID_Y_CODES | INVALID_Z_CODES
 X_CODES = POINT_CODES
 
