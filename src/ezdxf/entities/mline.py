@@ -3,9 +3,10 @@
 from typing import TYPE_CHECKING, Dict, Iterable, List
 from collections import OrderedDict, namedtuple
 
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFTypeError
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFTypeError, DXFValueError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags
+from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Vertex, Vector
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -45,10 +46,10 @@ acdb_mline = DefSubclass('AcDbMline', OrderedDict({
     'n_style_elements': DXFAttr(73, default=1),
 
     # start point in WCS!
-    'start_point': DXFAttr(10, xtype=XType.point3d, default=(0, 0, 0)),
+    'start_point': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
 
     # Normal vector of the entity, but all vertices in WCS!
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0, 0, 1)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Z_AXIS),
 
     # MLine data:
     # 11: vertex coordinates
@@ -57,7 +58,7 @@ acdb_mline = DefSubclass('AcDbMline', OrderedDict({
     #     Multiple entries; one for each vertex.
     # 13: Direction vector of miter at this vertex
     #     Multiple entries: one for each vertex.
-    # 73: Number of parameters for this element,
+    # 74: Number of parameters for this element,
     #     repeats for each element in segment
     # 41: Element parameters,
     #     repeats based on previous code 74
@@ -105,11 +106,83 @@ acdb_mline = DefSubclass('AcDbMline', OrderedDict({
 # The 3 group value in the MLINESTYLE dictionary, which precedes the 350 group
 # that has the handle or entity name of
 # the current mlinestyle.
+class MLineVertex:
+    def __init__(self):
+        self.start = NULLVEC
+        self.line_direction = X_AXIS
+        self.miter_direction = Y_AXIS
+        self.line_params = []
+        self.fill_params = []
+
+    @classmethod
+    def load(cls, tags: Tags) -> 'MLineVertex':
+        vtx = MLineVertex()
+        line_params = []
+        line_params_count = 0
+        fill_params = []
+        fill_params_count = 0
+        for code, value in tags:
+            if code == 11:
+                vtx.start = value
+            elif code == 12:
+                vtx.line_direction = value
+            elif code == 13:
+                vtx.miter_direction = value
+            elif code == 74:
+                line_params_count = value
+                if line_params_count == 0:
+                    vtx.line_params.append(tuple())
+                else:
+                    line_params = []
+            elif code == 41:
+                line_params.append(value)
+                line_params_count -= 1
+                if line_params_count == 0:
+                    vtx.line_params.append(tuple(line_params))
+                    line_params = []
+            elif code == 75:
+                fill_params_count = value
+                if fill_params_count == 0:
+                    vtx.fill_params.append(tuple())
+                else:
+                    fill_params = []
+            elif code == 42:
+                fill_params.append(value)
+                fill_params_count -= 1
+                if fill_params_count == 0:
+                    vtx.fill_params.append(tuple(fill_params))
+        return vtx
+
+    def export_dxf(self, tagwriter: 'TagWriter'):
+        tagwriter.write_vertex(11, self.start)
+        tagwriter.write_vertex(12, self.line_direction)
+        tagwriter.write_vertex(13, self.miter_direction)
+        for line_params, fill_params in zip(self.line_params, self.fill_params):
+            tagwriter.write_tag2(74, len(line_params))
+            for param in line_params:
+                tagwriter.write_tag2(41, param)
+            tagwriter.write_tag2(75, len(fill_params))
+            for param in fill_params:
+                tagwriter.write_tag2(42, param)
+
+    @classmethod
+    def new(cls, start: Vertex, line_direction: Vertex, miter_direction: Vertex,
+            line_params: Iterable, fill_params: Iterable) -> 'MLineVertex':
+        vtx = MLineVertex()
+        vtx.start = Vector(start)
+        vtx.line_direction = Vector(line_direction)
+        vtx.miter_direction = Vector(miter_direction)
+        vtx.line_params = list(line_params)
+        vtx.fill_params = list(fill_params)
+        if len(vtx.line_params) != len(vtx.fill_params):
+            raise DXFValueError('Count mismatch of line- and fill parameters')
+        return vtx
+
 
 class MLineVertices:
     """ For now just store tags """
 
-    def __init__(self, tags):
+    def __init__(self, tags: Tags):
         self.tags = tags
 
     def __len__(self):
