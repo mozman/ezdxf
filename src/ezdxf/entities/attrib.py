@@ -11,7 +11,7 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010
 from ezdxf.lldxf import const
 from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import acdb_entity
+from .dxfgfx import acdb_entity, elevation_to_z_axis
 from .text import Text, acdb_text
 from .factory import register_entity
 
@@ -220,6 +220,10 @@ class AttDef(BaseAttrib):
             processor.load_and_recover_dxfattribs(dxf, acdb_text)
             processor.load_and_recover_dxfattribs(dxf, acdb_attdef)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, ('insert', 'align_point'))
+
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -255,6 +259,9 @@ class Attrib(BaseAttrib):
             processor.load_and_recover_dxfattribs(dxf, acdb_text)
             processor.load_and_recover_dxfattribs(dxf, acdb_attrib)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, ('insert', 'align_point'))
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

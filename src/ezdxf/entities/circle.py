@@ -5,7 +5,7 @@ import math
 
 from ezdxf.lldxf import validator
 from ezdxf.math import (
-    Vector, Matrix44, NULLVEC, Z_AXIS, arc_segment_count, linspace
+    Vector, Matrix44, NULLVEC, Z_AXIS, arc_segment_count, linspace,
 )
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf.attributes import (
@@ -13,7 +13,10 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
+from .dxfgfx import (
+    DXFGraphic, acdb_entity, add_entity, replace_entity,
+    elevation_to_z_axis,
+)
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -25,6 +28,11 @@ acdb_circle = DefSubclass('AcDbCircle', {
     'center': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
     # AutCAD/BricsCAD: Radius is <= 0 is valid
     'radius': DXFAttr(40, default=1),
+
+    # Elevation is a legacy feature from R11 and prior, do not use this
+    # attribute, store the entity elevation in the z-axis of the vertices.
+    'elevation': DXFAttr(38, default=0, optional=True),
+
     'thickness': DXFAttr(39, default=0, optional=True),
     'extrusion': DXFAttr(
         210, xtype=XType.point3d, default=Z_AXIS,
@@ -45,6 +53,10 @@ class Circle(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.load_and_recover_dxfattribs(dxf, acdb_circle)
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, ('center', ))
+
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -82,7 +94,7 @@ class Circle(DXFGraphic):
         radius = abs(self.dxf.radius)
         if radius > 0.0:
             count = arc_segment_count(radius, math.tau, sagitta)
-            yield from self.vertices(linspace(0.0, 360.0, count+1))
+            yield from self.vertices(linspace(0.0, 360.0, count + 1))
 
     def transform(self, m: Matrix44) -> 'Circle':
         """ Transform CIRCLE entity by transformation matrix `m` inplace.

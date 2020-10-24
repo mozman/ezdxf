@@ -17,7 +17,7 @@ from ezdxf.math.transformtools import OCSTransform
 from ezdxf.audit import Auditor
 
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, elevation_to_z_axis
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -88,6 +88,10 @@ acdb_text = DefSubclass('AcDbText', {
     # Second alignment point (in OCS) (optional)
     'align_point': DXFAttr(11, xtype=XType.point3d, optional=True),
 
+    # Elevation is a legacy feature from R11 and prior, do not use this
+    # attribute, store the entity elevation in the z-axis of the vertices.
+    'elevation': DXFAttr(38, default=0, optional=True),
+
     # Thickness in extrusion direction, only supported for SHX font in
     # AutoCAD/BricsCAD (optional), can be negative
     'thickness': DXFAttr(39, default=0, optional=True),
@@ -146,6 +150,9 @@ class Text(DXFGraphic):
         if processor:
             processor.load_and_recover_dxfattribs(dxf, acdb_text, 2)
             processor.load_and_recover_dxfattribs(dxf, acdb_text2, 3)
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, ('insert', 'align_point'))
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

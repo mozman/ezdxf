@@ -23,7 +23,7 @@ from ezdxf.entities import factory
 from ezdxf.query import EntityQuery
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, elevation_to_z_axis
 from .subentity import LinkedEntities
 from .attrib import Attrib
 
@@ -40,6 +40,11 @@ acdb_block_reference = DefSubclass('AcDbBlockReference', {
     'attribs_follow': DXFAttr(66, default=0, optional=True),
     'name': DXFAttr(2, validator=validator.is_valid_block_name),
     'insert': DXFAttr(10, xtype=XType.any_point),
+
+    # Elevation is a legacy feature from R11 and prior, do not use this
+    # attribute, store the entity elevation in the z-axis of the vertices.
+    'elevation': DXFAttr(38, default=0, optional=True),
+
     'xscale': DXFAttr(
         41, default=1, optional=True,
         validator=validator.is_not_zero,
@@ -112,6 +117,9 @@ class Insert(LinkedEntities):
             # Always use the 2nd subclass, could be AcDbBlockReference or
             # AcDbMInsertBlock:
             processor.load_and_recover_dxfattribs(dxf, acdb_block_reference, 2)
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, ('insert', ))
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

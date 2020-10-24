@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     'DXFGraphic', 'acdb_entity', 'SeqEnd', 'add_entity',
-    'replace_entity'
+    'replace_entity', 'elevation_to_z_axis',
 ]
 
 GRAPHIC_PROPERTIES = {
@@ -103,6 +103,34 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # 310: Proxy entity graphics data (multiple lines; 256 characters max. per
     # line) (optional), compiled by TagCompiler() to a DXFBinaryTag() objects
 })
+
+
+def elevation_to_z_axis(dxf: 'DXFNamespace', names: Iterable[str]):
+    # The elevation group code (38) is only used for DXF R11 and prior and
+    # ignored for DXF R2000 and later.
+    # DXF R12 and later store the entity elevation in the z-axis of the
+    # vertices, but AutoCAD supports elevation for R12 if no z-axis is present.
+    # DXF types with legacy elevation support:
+    # SOLID, TRACE, TEXT, CIRCLE, ARC, TEXT, ATTRIB, ATTDEF, INSERT, SHAPE
+
+    # The elevation is only used for DXF R12 if no z-axis is stored in the DXF
+    # file. This is a problem because ezdxf loads the vertices always as 3D
+    # vertex including a z-axis even if no z-axis is present in DXF file.
+    if dxf.hasattr('elevation'):
+        elevation = dxf.elevation
+        # ezdxf does not export the elevation attribute for any DXF version
+        dxf.discard('elevation')
+        if elevation == 0:
+            return
+
+        for name in names:
+            v = dxf.get(name)
+            # Only use elevation value if z-axis is 0, this will not work for
+            # situations where an elevation and a z-axis=0 is present, but let's
+            # assume if the elevation group code is used the z-axis is not
+            # present if z-axis is 0.
+            if v is not None and v.z == 0:
+                dxf.set(name, v.replace(z=elevation))
 
 
 class DXFGraphic(DXFEntity):

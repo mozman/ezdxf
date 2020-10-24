@@ -9,7 +9,7 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.math import Matrix44, Z_AXIS, NULLVEC, Vector
 from ezdxf.math.transformtools import OCSTransform
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, elevation_to_z_axis
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -32,9 +32,8 @@ acdb_trace = DefSubclass('AcDbTrace', {
     # corner coordinate is the same as the third.
     'vtx3': DXFAttr(13, xtype=XType.point3d, default=NULLVEC),
 
-    # Elevation is not document by the DXF reference, but works.
-    # Legacy feature do not use this attribute, store the entity
-    # elevation in the z-axis of the vertices.
+    # Elevation is a legacy feature from R11 and prior, do not use this
+    # attribute, store the entity elevation in the z-axis of the vertices.
     'elevation': DXFAttr(38, default=0, optional=True),
 
     # Thickness could be negative:
@@ -67,14 +66,9 @@ class Solid(_Base):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.load_and_recover_dxfattribs(dxf, acdb_trace)
-            # transform elevation tag into z-axis values
-            if dxf.hasattr('elevation'):
-                elevation = dxf.elevation
-                for name in ('vtx0', 'vtx1', 'vtx2', 'vtx3'):
-                    v = dxf.get(name)
-                    if v is not None:
-                        dxf.set(name, v.replace(z=elevation))
-                dxf.discard('elevation')
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, VERTEXNAMES)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -84,7 +78,6 @@ class Solid(_Base):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_trace.name)
         if not self.dxf.hasattr('vtx3'):
             self.dxf.vtx3 = self.dxf.vtx2
-        # elevation is stored in the z-axis of the vertices
         self.dxf.export_dxf_attribs(tagwriter, [
             'vtx0', 'vtx1', 'vtx2', 'vtx3', 'thickness',
             'extrusion',
