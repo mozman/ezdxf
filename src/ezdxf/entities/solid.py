@@ -31,6 +31,8 @@ acdb_trace = DefSubclass('AcDbTrace', {
     # If only three corners are entered to define the SOLID, then the fourth
     # corner coordinate is the same as the third.
     'vtx3': DXFAttr(13, xtype=XType.point3d, default=NULLVEC),
+    # Elevation is not document by the DXF reference, but works
+    'elevation': DXFAttr(38, default=0, optional=True),
     # Thickness could be negative:
     'thickness': DXFAttr(39, default=0, optional=True),
     'extrusion': DXFAttr(
@@ -71,7 +73,8 @@ class Solid(_Base):
         if not self.dxf.hasattr('vtx3'):
             self.dxf.vtx3 = self.dxf.vtx2
         self.dxf.export_dxf_attribs(tagwriter, [
-            'vtx0', 'vtx1', 'vtx2', 'vtx3', 'thickness', 'extrusion',
+            'vtx0', 'vtx1', 'vtx2', 'vtx3', 'elevation', 'thickness',
+            'extrusion',
         ])
 
     def transform(self, m: Matrix44) -> 'Solid':
@@ -111,10 +114,14 @@ class Solid(_Base):
         .. versionadded:: 0.15
 
         """
-        d = self.dxf
-        vertices = [d.vtx0, d.vtx1, d.vtx2]
-        if d.vtx3 != d.vtx2:  # when the face is a triangle, vtx2 == vtx3
-            vertices.append(d.vtx3)
+        dxf = self.dxf
+        vertices = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
+        if dxf.vtx3 != dxf.vtx2:  # when the face is a triangle, vtx2 == vtx3
+            vertices.append(dxf.vtx3)
+
+        if dxf.hasattr('elevation'):  # undocumented feature
+            elevation = self.dxf.elevation
+            vertices = [v.replace(z=elevation) for v in vertices]
 
         # adjust weird vertex order of SOLID and TRACE:
         # 0, 1, 2, 3 -> 0, 1, 3, 2

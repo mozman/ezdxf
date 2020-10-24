@@ -80,6 +80,32 @@ AcDbTrace
 0.0
 """
 
+ELEVATION = """0
+SOLID
+5
+0
+8
+0
+38
+2.0
+10
+0.0
+20
+0.0
+11
+0.0
+21
+0.0
+12
+0.0
+22
+0.0
+13
+0.0
+23
+0.0
+"""
+
 
 @pytest.fixture(params=[ENTITY_R12, ENTITY_R2000])
 def entity(request):
@@ -154,6 +180,9 @@ def test_trace():
     trace.export_dxf(collector)
     assert collector.tags[0] == (0, 'TRACE')
     assert collector.tags[5] == (100, 'AcDbTrace')
+
+    # Elevation tag should not be written by default
+    assert any(tag[0] == 38 for tag in collector.tags) is False
 
 
 def test_3dface():
@@ -237,7 +266,8 @@ def test_3dface_quad_vertices():
         face[index] = vertex
     # no weird vertex order:
     assert face.wcs_vertices() == [(0, 0), (1, 0), (1, 1), (0, 1)]
-    assert face.wcs_vertices(close=True) == [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
+    assert face.wcs_vertices(close=True) == [(0, 0), (1, 0), (1, 1), (0, 1),
+                                             (0, 0)]
 
 
 def test_3dface_triangle_vertices():
@@ -246,3 +276,18 @@ def test_3dface_triangle_vertices():
         face[index] = vertex
     assert face.wcs_vertices() == [(0, 0), (1, 0), (1, 1)]
     assert face.wcs_vertices(close=True) == [(0, 0), (1, 0), (1, 1), (0, 0)]
+
+
+def test_elevation_group_code_support():
+    solid = Solid.from_text(ELEVATION)
+    assert solid.dxf.elevation == 2.0
+    vertices = solid.vertices()
+    assert vertices[0] == (0, 0, 2)
+
+
+def test_write_elevation_group_code():
+    solid = Solid.from_text(ELEVATION)
+    collector = TagCollector(dxfversion=DXF12)
+    solid.export_dxf(collector)
+    # Elevation tag should be written:
+    assert any(tag[0] == 38 for tag in collector.tags) is True
