@@ -54,3 +54,10 @@ def test_preserve_leading_0_tag():
     assert result == [(0, 'SECTION'), (10, 1), (20, 2)]
 
 
+def test_preserve_elevation_group_code_38():
+    result = list(filter_invalid_point_codes(
+        [(10, 1), (20, 2), (38, 0)]
+    ))
+    assert result == [(10, 1), (20, 2), (38, 0)]
+
+
