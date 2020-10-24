@@ -34,6 +34,7 @@ acdb_trace = DefSubclass('AcDbTrace', {
 
     # Elevation is a legacy feature from R11 and prior, do not use this
     # attribute, store the entity elevation in the z-axis of the vertices.
+    # ezdxf does not export the elevation attribute!
     'elevation': DXFAttr(38, default=0, optional=True),
 
     # Thickness could be negative:
