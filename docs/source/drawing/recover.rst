@@ -200,5 +200,7 @@ approximate line number of the decoding error:
 
 .. autofunction:: read
 
+.. autofunction:: explore
+
 
 
