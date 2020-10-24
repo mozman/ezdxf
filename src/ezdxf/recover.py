@@ -76,22 +76,12 @@ def read(stream: BinaryIO,
         UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
-    from ezdxf.document import Drawing
     recover_tool = Recover.run(stream, errors=errors)
-    doc = Drawing()
-    doc._load_section_dict(recover_tool.section_dict)
-
-    auditor = Auditor(doc)
-    for code, msg in recover_tool.errors:
-        auditor.add_error(code, msg)
-    for code, msg in recover_tool.fixes:
-        auditor.fixed_error(code, msg)
-    auditor.run()
-    return doc, auditor
+    return _load_and_audit_document(recover_tool)
 
 
 def explore(filename: str,
-             errors: str = 'ignore') -> Tuple['Drawing', 'Auditor']:
+            errors: str = 'ignore') -> Tuple['Drawing', 'Auditor']:
     """ Read a DXF document from file system similar to :func:`readfile`,
     but this function will use a special tag loader, which synchronise the tag
     stream if invalid tags occur. This function is intended to load corrupted
@@ -113,22 +103,28 @@ def explore(filename: str,
     .. versionadded: 0.15
 
     """
-    from ezdxf.document import Drawing
-
     with open(filename, mode='rb') as fp:
-        recover_tool = Recover.run(fp, errors=errors, loader=synced_bytes_loader)
-        doc = Drawing()
-        doc._load_section_dict(recover_tool.section_dict)
-
-        auditor = Auditor(doc)
-        for code, msg in recover_tool.errors:
-            auditor.add_error(code, msg)
-        for code, msg in recover_tool.fixes:
-            auditor.fixed_error(code, msg)
-        auditor.run()
-
+        recover_tool = Recover.run(fp, errors=errors,
+                                   loader=synced_bytes_loader)
+        doc, auditor = _load_and_audit_document(recover_tool)
     doc.filename = filename
     return doc, auditor
+
+
+def _load_and_audit_document(recover_tool) -> Tuple['Drawing', 'Auditor']:
+    from ezdxf.document import Drawing
+
+    doc = Drawing()
+    doc._load_section_dict(recover_tool.section_dict)
+
+    auditor = Auditor(doc)
+    for code, msg in recover_tool.errors:
+        auditor.add_error(code, msg)
+    for code, msg in recover_tool.fixes:
+        auditor.fixed_error(code, msg)
+    auditor.run()
+    return doc, auditor
+
 
 # noinspection PyMethodMayBeStatic
 class Recover:
