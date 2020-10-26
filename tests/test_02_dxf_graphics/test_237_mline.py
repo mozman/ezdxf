@@ -2,14 +2,16 @@
 # License: MIT License
 from typing import cast
 import pytest
+import math
 from unittest.mock import MagicMock
 
 import ezdxf
 
 from ezdxf.lldxf import const
-from ezdxf.lldxf.tags import Tags
-from ezdxf.entities.mline import MLineVertex, MLine, MLineStyle
 from ezdxf.lldxf.tagwriter import TagCollector
+from ezdxf.lldxf.tags import Tags
+from ezdxf.entities.mline import MLineVertex, MLine
+from ezdxf.math import Matrix44
 
 
 # noinspection PyUnresolvedReferences
@@ -79,6 +81,35 @@ class TestMLine:
         assert mline.vertices[1].line_direction.isclose((1, 0)), \
             'continue last line segment'
         assert mline.vertices[1].miter_direction.isclose((0, 1))
+
+    def test_x_rotation(self, msp):
+        mline = msp.add_mline([(0, 5), (10, 5)])
+        m = Matrix44.x_rotate(math.pi/2)
+        mline.transform(m)
+        assert mline.start_location().isclose((0, 0, 5))
+        assert mline.dxf.extrusion == (0, -1, 0)
+        assert mline.dxf.scale_factor == 1
+
+    def test_translate(self, msp):
+        mline = msp.add_mline([(0, 5), (10, 5)])
+        m = Matrix44.translate(1, 1, 1)
+        mline.transform(m)
+        assert mline.start_location().isclose((1, 6, 1))
+        assert mline.dxf.scale_factor == 1
+
+    def test_uniform_scale(self, msp):
+        mline = msp.add_mline([(0, 5), (10, 5)])
+        m = Matrix44.scale(2, 2, 2)
+        mline.transform(m)
+        assert mline.start_location().isclose((0, 10, 0))
+        assert mline.dxf.scale_factor == 2
+
+    def test_non_uniform_scale(self, msp):
+        mline = msp.add_mline([(1, 2, 3), (3, 4, 3)])
+        m = Matrix44.scale(2, 1, 3)
+        mline.transform(m)
+        assert mline.start_location().isclose((2, 2, 9))
+        assert mline.dxf.scale_factor == 1, 'ignore non-uniform scaling'
 
 
 class TestMLineStyle:

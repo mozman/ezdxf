@@ -7,7 +7,7 @@ import math
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags, group_tags
-from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Vertex, Vector
+from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Vertex, Vector, UCS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -25,6 +25,20 @@ __all__ = ['MLine', 'MLineVertex', 'MLineStyle', 'MLineStyleCollection']
 # Usage example: CADKitSamples\Lock-Off.dxf
 
 logger = logging.getLogger('ezdxf')
+
+
+def filter_close_vertices(vertices: Iterable[Vector],
+                          abs_tol: float = 1e-12) -> Iterable[Vector]:
+    prev = None
+    for vertex in vertices:
+        if prev is None:
+            yield vertex
+            prev = vertex
+        else:
+            if not vertex.isclose(prev, abs_tol=abs_tol):
+                yield vertex
+                prev = vertex
+
 
 acdb_mline = DefSubclass('AcDbMline', OrderedDict({
     'style_name': DXFAttr(2, default='Standard'),
@@ -238,6 +252,13 @@ class MLineVertex:
                 'Count mismatch of line- and fill parameters')
         return vtx
 
+    def transform(self, m: 'Matrix44') -> 'MLineVertex':
+        """ Transform MLineVertex by transformation matrix `m` inplace. """
+        self.location = m.transform(self.location)
+        self.line_direction = m.transform_direction(self.line_direction)
+        self.miter_direction = m.transform_direction(self.miter_direction)
+        return self
+
 
 @register_entity
 class MLine(DXFGraphic):
@@ -404,7 +425,13 @@ class MLine(DXFGraphic):
         return [v.location for v in self.vertices]
 
     def extend(self, vertices: Iterable['Vertex']) -> None:
-        """ Append multiple vertices to the reference line. """
+        """ Append multiple vertices to the reference line.
+
+        It is possible to work with 3D vertices, but all vertices have to be in
+        the same plane and the normal vector of this plan is stored as
+        extrusion vector in the MLINE entity.
+
+        """
         vertices = Vector.list(vertices)
         if not vertices:
             return
@@ -422,7 +449,7 @@ class MLine(DXFGraphic):
         """ Regenerate the MLINE geometry for new reference line defined by
         `vertices`.
         """
-        # This first implementation works only in the xy-plane!
+        vertices = list(filter_close_vertices(vertices, abs_tol=1e-6))
         if len(vertices) == 0:
             self.clear()
             return
@@ -433,6 +460,14 @@ class MLine(DXFGraphic):
         def miter(dir1: Vector, dir2: Vector):
             return ((dir1 + dir2) * 0.5).normalize().orthogonal()
 
+        ucs = UCS.from_z_axis_and_point_in_xz(
+            origin=vertices[0],
+            point=vertices[1],
+            axis=self.dxf.extrusion,
+        )
+        # Transform given vertices into UCS and project them into the
+        # UCS-xy-plane by setting the z-axis to 0:
+        vertices = [v.replace(z=0) for v in ucs.points_from_wcs(vertices)]
         style = self.style
         start_angle = style.dxf.start_angle
         end_angle = style.dxf.end_angle
@@ -465,6 +500,10 @@ class MLine(DXFGraphic):
             for v, d, m in zip(vertices, line_directions, miter_directions)
         ]
         self._update_parametrization()
+
+        # reverse transformation into WCS
+        for v in self.vertices:
+            v.transform(ucs.matrix)
 
     def _update_parametrization(self):
         scale = self.dxf.scale_factor
@@ -516,7 +555,17 @@ class MLine(DXFGraphic):
     def transform(self, m: 'Matrix44') -> 'DXFGraphic':
         """ Transform MLINE entity by transformation matrix `m` inplace.
         """
-        raise NotImplemented()
+        for vertex in self.vertices:
+            vertex.transform(m)
+        self.dxf.extrusion = m.transform_direction(self.dxf.extrusion)
+        scale = self.dxf.scale_factor
+        scale_vec = m.transform_direction(Vector(scale, scale, scale))
+        if math.isclose(scale_vec.x, scale_vec.y, abs_tol=1e-6) and \
+                math.isclose(scale_vec.y, scale_vec.z, abs_tol=1e-6):
+            self.dxf.scale_factor = sum(scale_vec) / 3  # average error
+        # None uniform scaling will not be applied to the scale_factor!
+        self.update_geometry()
+        return self
 
     def virtual_entities(self) -> Iterable[DXFGraphic]:
         """ Yields 'virtual' parts of MLINE as LINE, ARC and HATCH entities.
