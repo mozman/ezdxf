@@ -17,7 +17,7 @@ import logging
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Drawing, DXFNamespace, EntityQuery, BaseLayout, Matrix44
+        TagWriter, Drawing, DXFNamespace, EntityQuery, BaseLayout, Matrix44,
     )
 
 __all__ = ['MLine', 'MLineVertex', 'MLineStyle', 'MLineStyleCollection']
@@ -295,7 +295,7 @@ class MLine(DXFGraphic):
         self.export_vertices(tagwriter)
 
     def export_vertices(self, tagwriter: 'TagWriter') -> None:
-        for vertex in self._vertices:
+        for vertex in self.vertices:
             vertex.export_dxf(tagwriter)
 
     @property
@@ -430,8 +430,8 @@ class MLine(DXFGraphic):
             self.vertices = [MLineVertex.new(vertices[0], X_AXIS, Y_AXIS)]
             return
 
-        def rotate(miter_dir: Vector, deg_angle: float) -> Vector:
-            return Vector.from_deg_angle(miter_dir.angle_deg + (deg_angle - 90))
+        def miter(dir1: Vector, dir2: Vector):
+            return ((dir1 + dir2) * 0.5).normalize().orthogonal()
 
         style = self.style
         start_angle = style.dxf.start_angle
@@ -441,21 +441,32 @@ class MLine(DXFGraphic):
             (v2 - v1).normalize() for v1, v2 in
             zip(vertices, vertices[1:])
         ]
-        miter_directions = [
-            rotate(line_directions[0].orthogonal(), start_angle)]
+
+        if self.is_closed:
+            line_directions.append((vertices[0] - vertices[-1]).normalize())
+            closing_miter = miter(line_directions[0], line_directions[-1])
+            miter_directions = [closing_miter]
+        else:
+            closing_miter = None
+            line_directions.append(line_directions[-1])
+            miter_directions = [line_directions[0].rotate_deg(start_angle)]
+
         for d1, d2 in zip(line_directions, line_directions[1:]):
-            miter_directions.append(((d1 + d2) * 0.5).normalize())
-        miter_directions.append(
-            rotate(line_directions[-1].orthogonal(), end_angle))
-        line_directions.append(line_directions[-1])
+            miter_directions.append(miter(d1, d2))
+
+        if closing_miter is None:
+            miter_directions.pop()
+            miter_directions.append(line_directions[-1].rotate_deg(end_angle))
+        else:
+            miter_directions.append(closing_miter)
+
         self.vertices = [
             MLineVertex.new(v, d, m)
             for v, d, m in zip(vertices, line_directions, miter_directions)
         ]
-        self._update_line_parametrization()
+        self._update_parametrization()
 
-    def _update_line_parametrization(self):
-        # calculate intersections of miter and line elements
+    def _update_parametrization(self):
         scale = self.dxf.scale_factor
         style = self.style
 
@@ -465,18 +476,21 @@ class MLine(DXFGraphic):
         max_offset = max(offsets)
         shift = 0
         if justification == self.TOP:
-            shift = abs(min_offset)
+            shift = -max_offset
         elif justification == self.BOTTOM:
-            shift = -abs(max_offset)
+            shift = -min_offset
 
         for vertex in self.vertices:
-            normal_vector = vertex.line_direction.orthogonal()
-            stretch = vertex.miter_direction.project(
-                normal_vector).magnitude * scale
+            angle = vertex.line_direction.angle_between(vertex.miter_direction)
+            try:
+                stretch = scale / math.sin(angle)
+            except ZeroDivisionError:
+                stretch = 1.0
             vertex.line_params = [
-                ((element.offset * stretch) + shift, 0.0) for element in
+                ((element.offset + shift) * stretch, 0.0) for element in
                 style.elements
             ]
+            vertex.fill_params = [tuple() for _ in style.elements]
 
     def clear(self) -> None:
         """ Remove all MLINE vertices. """
