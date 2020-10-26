@@ -97,11 +97,15 @@ User Defined Point Format Codes
 
         Count of polyline points (read only), same as :code:`len(polyline)`
 
-    .. autoattribute:: closed
+    .. autoproperty:: closed
 
-    .. autoattribute:: has_arc
+    .. autoproperty:: is_closed
 
-    .. autoattribute:: has_width
+    .. automethod:: close
+
+    .. autoproperty:: has_arc
+
+    .. autoproperty:: has_width
 
     .. automethod:: __len__
 
@@ -112,8 +116,6 @@ User Defined Point Format Codes
     .. automethod:: __delitem__
 
     .. automethod:: __iter__
-
-    .. automethod:: close
 
     .. automethod:: vertices
 

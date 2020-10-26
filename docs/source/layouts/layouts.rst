@@ -120,6 +120,8 @@ BaseLayout
 
     .. automethod:: add_xline
 
+    .. automethod:: add_mline
+
     .. automethod:: add_spline
 
     .. automethod:: add_spline_control_frame

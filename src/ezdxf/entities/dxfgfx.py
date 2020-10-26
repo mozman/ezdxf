@@ -541,7 +541,7 @@ class DXFGraphic(DXFEntity):
         return link, description, location
 
     def remove_dependencies(self, other: 'Drawing' = None) -> None:
-        """ Remove all dependencies from actual document.
+        """ Remove all dependencies from current document.
 
         (internal API)
         """

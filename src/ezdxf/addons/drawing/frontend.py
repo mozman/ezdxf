@@ -32,7 +32,7 @@ COMPOSITE_ENTITY_TYPES = {
     'INSERT',
     # This types have a virtual_entities() method, which returns the content of
     # the associated anonymous block
-    'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'LEADER',
+    'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'LEADER', 'MLINE',
     'ACAD_TABLE',
 }
 
@@ -415,8 +415,6 @@ class Frontend:
                 draw_insert(entity)
             self.ctx.pop_state()
 
-        # DIMENSION, ARC_DIMENSION, LARGE_RADIAL_DIMENSION, LEADER
-        # todo: ACAD_TABLE, MLINE, MLEADER
         elif hasattr(entity, 'virtual_entities'):
             # draw_entities() includes the visibility check:
             self.draw_entities(set_opaque(entity.virtual_entities()))

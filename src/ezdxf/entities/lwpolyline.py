@@ -119,17 +119,27 @@ class LWPolyline(DXFGraphic):
 
     @property
     def closed(self) -> bool:
-        """ ``True`` if polyline is closed. A closed polyline has a connection
-        from the last vertex to the first vertex. (read/write)
+        """ Get/set closed state of polyline.
+        A closed polyline has a connection from the last vertex to the first
+        vertex.
         """
-        return self.get_flag_state(LWPOLYLINE_CLOSED, name='flags')
+        return self.get_flag_state(LWPOLYLINE_CLOSED)
 
     @closed.setter
     def closed(self, status: bool) -> None:
-        self.set_flag_state(LWPOLYLINE_CLOSED, status, name='flags')
+        self.set_flag_state(LWPOLYLINE_CLOSED, status)
+
+    @property
+    def is_closed(self) -> bool:
+        """ Returns ``True`` if LWPOLYLINE is closed.
+        Compatibility interface to :class:`Polyline`
+        """
+        return self.get_flag_state(LWPOLYLINE_CLOSED)
 
     def close(self, state: bool = True) -> None:
-        """ Compatibility interface to :class:`Polyline`. """
+        """ Get/set closed state of LWPOLYLINE.
+        Compatibility interface to :class:`Polyline`
+        """
         self.closed = state
 
     @property
@@ -349,8 +359,7 @@ class LWPolyline(DXFGraphic):
         return virtual_lwpolyline_entities(self)
 
     def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
-        """
-        Explode parts of LWPOLYLINE as LINE or ARC entities into target layout,
+        """ Explode parts of LWPOLYLINE as LINE or ARC entities into target layout,
         if target layout is ``None``, the target layout is the layout of the
         LWPOLYLINE.
 
@@ -358,7 +367,7 @@ class LWPolyline(DXFGraphic):
 
         Args:
             target_layout: target layout for DXF parts, ``None`` for same layout
-            as source entity.
+                as source entity.
 
         """
         return explode_entity(self, target_layout)
