@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, cast
 from collections import OrderedDict, namedtuple
 import math
 
@@ -246,9 +246,6 @@ class MLine(DXFGraphic):
     TOP = const.MLINE_TOP
     ZERO = const.MLINE_ZERO
     BOTTOM = const.MLINE_BOTTOM
-    LEFT = const.MLINE_LEFT
-    CENTER = const.MLINE_CENTER
-    RIGHT = const.MLINE_RIGHT
     HAS_VERTICES = const.MLINE_HAS_VERTICES
     CLOSED = const.MLINE_CLOSED
     SUPPRESS_START_CAPS = const.MLINE_SUPPRESS_START_CAPS
@@ -256,6 +253,10 @@ class MLine(DXFGraphic):
 
     def __init__(self):
         super().__init__()
+        # The MLINE geometry stored in vertices, is the final geometry,
+        # scaling factor, justification and MLineStyle settings are already
+        # applied. This is why the geometry has to be updated every time a
+        # change is applied.
         self.vertices: List[MLineVertex] = []
 
     def __len__(self):
@@ -387,9 +388,7 @@ class MLine(DXFGraphic):
         self.dxf.style_handle = style.dxf.handle
         self.dxf.style_element_count = new_element_count
         if reset:
-            locations = self.get_locations()
-            self.clear()
-            self.extend(locations)
+            self.update_geometry()
 
     def start_location(self) -> Vector:
         """ Returns the start location of the reference line. Callback function
@@ -461,17 +460,13 @@ class MLine(DXFGraphic):
         style = self.style
 
         justification = self.dxf.justification
-        # 0 = Top
-        # 1 = Zero
-        # 2 = Bottom
         offsets = [e.offset for e in style.elements]
         min_offset = min(offsets)
         max_offset = max(offsets)
-        if justification == 0:
+        shift = 0
+        if justification == self.TOP:
             shift = abs(min_offset)
-        elif justification == 1:
-            shift = (max_offset - min_offset) / 2 - max_offset
-        else:
+        elif justification == self.BOTTOM:
             shift = -abs(max_offset)
 
         for vertex in self.vertices:
@@ -601,9 +596,9 @@ class MLineStyleElements:
         """ Append a new line element.
 
         Args:
-            offset: normal offset from an imaginary base line, not to be
-                confused with the MLINE reference line, positive and negative
-                offsets are valid.
+            offset: normal offset from the reference line: if justification is
+                ``MLINE_ZERO``, positive values are above and negative values
+                are below the reference line.
             color: :ref:`ACI` value
             linetype: linetype name
 
@@ -662,6 +657,23 @@ class MLineStyle(DXFObject):
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_mline_style.name)
         self.dxf.export_dxf_attribs(tagwriter, acdb_mline_style.attribs.keys())
         self.elements.export_dxf(tagwriter)
+
+    def update_all(self):
+        """ Update all MLINE entities using this MLINESTYLE.
+
+        The update is required if elements were added or removed or the offset
+        of any element was changed.
+
+        """
+        if self.doc:
+            handle = self.dxf.handle
+            mlines = (
+                e for e in self.doc.entitydb.values()
+                if e.dxftype() == 'MLINE'
+            )
+            for mline in mlines:
+                if mline.dxf.style_handle == handle:
+                    mline.update_geometry()
 
 
 class MLineStyleCollection(ObjectCollection):

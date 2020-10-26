@@ -167,7 +167,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
         taken as a whole for all line elements in the mline segment, they
         define the boundary of the fill area for the mline segment.
 
-.. class:: MlineStyle
+.. class:: MLineStyle
 
     The :class:`MLineStyle` stores the style properties for the MLINE entity.
 
@@ -189,6 +189,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         :class:`~ezdxf.entities.mline.MLineStyleElements` object
 
+    .. automethod:: update_all
+
 .. class:: ezdxf.entities.mline.MLineStyleElements
 
     .. attribute:: elements
@@ -208,8 +210,9 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: offset
 
-        Normal offset from an imaginary base line, not to be confused with the
-        MLINE reference line, positive and negative offsets are valid.
+        Normal offset from the reference line: if justification is ``MLINE_ZERO``,
+        positive values are above and negative values are below the reference
+        line.
 
     .. attribute:: color
 

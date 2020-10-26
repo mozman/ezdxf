@@ -1789,7 +1789,7 @@ class CreatorInterface:
         closed = dxfattribs.pop('closed', False)
         mline = cast('MLine', self.new_entity('MLINE', dxfattribs))
         # close() method regenerates geometry!
-        mline.set_flag_state(2, closed)
+        mline.set_flag_state(mline.CLOSED, closed)
         mline.set_style(style_name)
         if vertices:
             mline.extend(vertices)
