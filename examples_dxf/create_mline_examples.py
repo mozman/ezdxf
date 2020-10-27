@@ -73,10 +73,18 @@ def setup_styles(doc):
     style.dxf.end_angle = 45
     style.elements.append(0.5, 6)
     style.elements.append(-0.5, 5)
+    style = doc.mline_styles.new('everything')
+    style.dxf.flags = 0xffff
+    style.dxf.fill_color = 5
+    style.elements.append(1.0, 1)
+    style.elements.append(0.25, 6)
+    style.elements.append(0.0, 3)
+    style.elements.append(-0.25, 4)
+    style.elements.append(-0.5, 2)
 
 
 if __name__ == '__main__':
-    for style in ('Standard', 'above', 'below', 'angle'):
+    for style in ('Standard', 'above', 'below', 'angle', 'everything'):
         create_simple_mline(style)
         create_3seg_mline(style)
         create_square_mline(style)

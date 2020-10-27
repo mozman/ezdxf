@@ -59,6 +59,40 @@ def virtual_entities(mline: 'MLine') -> List['DXFGraphic']:
             prev = miter
         return _lines
 
+    def display_miter():
+        _lines = []
+        skip = set()
+        skip.add(len(miter_points) - 1)
+        if not closed:
+            skip.add(0)
+
+        attribs = _dxfattribs(mline)
+        for index, miter in enumerate(miter_points):
+            if index not in skip:
+                _lines.extend(create_miter(miter, attribs))
+        return _lines
+
+    def create_miter(miter, attribs):
+        _lines = []
+        top = miter[top_index]
+        bottom = miter[bottom_index]
+        zero = bottom.lerp(top)
+        element = style.elements[top_index]
+        attribs['start'] = top
+        attribs['end'] = zero
+        attribs['color'] = element.color
+        attribs['linetype'] = element.linetype
+        _lines.append(factory.new(
+            'LINE', dxfattribs=attribs, doc=doc))
+        element = style.elements[bottom_index]
+        attribs['start'] = bottom
+        attribs['end'] = zero
+        attribs['color'] = element.color
+        attribs['linetype'] = element.linetype
+        _lines.append(factory.new(
+            'LINE', dxfattribs=attribs, doc=doc))
+        return _lines
+
     def end_cap():
         return []
 
@@ -104,9 +138,17 @@ def virtual_entities(mline: 'MLine') -> List['DXFGraphic']:
         top_border.append(top_border[0])
         bottom_border.append(bottom_border[0])
 
-    entities.extend(start_cap())
+    if not closed:
+        entities.extend(start_cap())
+
     entities.extend(lines())
-    entities.extend(end_cap())
+
+    if style.get_flag_state(style.MITER):
+        entities.extend(display_miter())
+
+    if not closed:
+        entities.extend(end_cap())
+
     if style.get_flag_state(style.FILL):
         entities.insert(0, filling())
 
