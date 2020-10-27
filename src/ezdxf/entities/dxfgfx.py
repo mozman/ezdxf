@@ -29,7 +29,7 @@ __all__ = [
 
 GRAPHIC_PROPERTIES = {
     'layer', 'linetype', 'color', 'lineweight', 'ltscale', 'true_color',
-    'color_name',
+    'color_name', 'transparency',
 }
 
 acdb_entity = DefSubclass('AcDbEntity', {
@@ -541,7 +541,7 @@ class DXFGraphic(DXFEntity):
         return link, description, location
 
     def remove_dependencies(self, other: 'Drawing' = None) -> None:
-        """ Remove all dependencies from actual document.
+        """ Remove all dependencies from current document.
 
         (internal API)
         """

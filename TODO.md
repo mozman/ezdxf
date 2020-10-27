@@ -29,7 +29,6 @@ DXF Entities
     - ordinate dim
     - arc dim
 - MLEADER
-- MLINE
 - FIELD
 - ACAD_TABLE
 

@@ -80,7 +80,7 @@ from .acis import (
     Body, Solid3d, Region, Surface, ExtrudedSurface,
     LoftedSurface, RevolvedSurface, SweptSurface,
 )
-from .mline import MLine, MLineStyle, MLineStyleCollection
+from .mline import MLine, MLineVertex, MLineStyle, MLineStyleCollection
 from .mleader import MLeader, MLeaderStyle, MLeaderStyleCollection
 
 # register graphical entities R2004

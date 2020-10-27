@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.15a3 - dev
+Version 0.15a4 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-15.html
@@ -20,6 +20,7 @@ Version 0.15a3 - dev
   [tutorial](https://ezdxf.mozman.at/docs/tutorials/geo.html)
 - NEW: `GeoData.setup_local_grid()` setup geo data for CRS similar to EPSG:3395 
   World Mercator
+- NEW: MLINE support but without line break and fill break (gaps) features
 - NEW: `Bezier.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Bezier4P.flattening()` adaptive recursive flattening (approximation)
 - NEW: `Path.flattening()` adaptive recursive flattening (approximation)
