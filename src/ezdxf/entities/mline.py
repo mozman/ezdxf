@@ -690,11 +690,9 @@ class MLineStyleElements:
         if collector is not None:
             yield collector
 
-    def border_indices(self) -> Tuple[int, int]:
+    def ordered_indices(self) -> List[int]:
         offsets = [e.offset for e in self.elements]
-        bottom = min(offsets)
-        top = max(offsets)
-        return offsets.index(bottom), offsets.index(top)
+        return [offsets.index(value) for value in sorted(offsets)]
 
 
 @register_entity
@@ -750,8 +748,8 @@ class MLineStyle(DXFObject):
                 if mline.dxf.style_handle == handle:
                     mline.update_geometry()
 
-    def border_indices(self) -> Tuple[int, int]:
-        return self.elements.border_indices()
+    def ordered_indices(self) -> List[int]:
+        return self.elements.ordered_indices()
 
 
 class MLineStyleCollection(ObjectCollection):

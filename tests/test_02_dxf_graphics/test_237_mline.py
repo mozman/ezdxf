@@ -142,13 +142,13 @@ class TestMLineStyle:
         with pytest.raises(const.DXFValueError):
             mline.set_style('UndefinedStyle')
 
-    def test_border_indices(self):
+    def test_ordered_indices(self):
         style = MLineStyle()
         style.elements.append(5)  # top order
         style.elements.append(-5)  # bottom border
         style.elements.append(0)
         style.elements.append(1)
-        assert style.border_indices() == (1, 0)
+        assert style.ordered_indices() == [1, 2, 3, 0]
 
 
 class TestMLineVertex:

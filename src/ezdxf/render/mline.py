@@ -1,13 +1,13 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
-
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, cast
+from itertools import chain
 from ezdxf.entities import factory
-from ezdxf.math import Vector
+from ezdxf.math import Vector, OCS
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.entities import MLine, DXFGraphic
+    from ezdxf.entities import MLine, DXFGraphic, Hatch, LWPolyline
 
 __all__ = ['virtual_entities']
 
@@ -35,12 +35,76 @@ def virtual_entities(mline: 'MLine') -> List['DXFGraphic']:
     """
 
     def filling():
-        hatch = factory.new('HATCH')
-        hatch.dxf.color = style.dxf.fill_color
+        attribs = _dxfattribs(mline)
+        attribs['color'] = style.dxf.fill_color
+        attribs['elevation'] = ocs.from_wcs(bottom_border[0]).replace(x=0, y=0)
+        attribs['extrusion'] = mline.dxf.extrusion
+        hatch = cast('Hatch', factory.new('HATCH', dxfattribs=attribs, doc=doc))
+        bulges: List[float] = [0.0] * (len(bottom_border) * 2)
+        points = chain(
+            ocs.points_from_wcs(bottom_border),
+            ocs.points_from_wcs(reversed(top_border))
+        )
+        if not closed:
+            if style.get_flag_state(style.END_ROUND):
+                bulges[len(bottom_border) - 1] = 1.0
+            if style.get_flag_state(style.START_ROUND):
+                bulges[-1] = 1.0
+        lwpoints = ((v.x, v.y, bulge) for v, bulge in zip(points, bulges))
+        hatch.paths.add_polyline_path(lwpoints, is_closed=True)
         return hatch
 
     def start_cap():
-        return []
+        entities = []
+        if style.get_flag_state(style.START_SQUARE):
+            entities.extend(create_miter(miter_points[0]))
+        if style.get_flag_state(style.START_ROUND):
+            entities.extend(round_caps(0, top_index, bottom_index))
+        if style.get_flag_state(style.START_INNER_ARC) and \
+                len(style.elements) > 3:
+            start_index = ordered_indices[-2]
+            end_index = ordered_indices[1]
+            entities.extend(round_caps(0, start_index, end_index))
+        return entities
+
+    def end_cap():
+        entities = []
+        if style.get_flag_state(style.END_SQUARE):
+            entities.extend(create_miter(miter_points[-1]))
+        if style.get_flag_state(style.END_ROUND):
+            entities.extend(round_caps(-1, bottom_index, top_index))
+        if style.get_flag_state(style.END_INNER_ARC) and \
+                len(style.elements) > 3:
+            start_index = ordered_indices[1]
+            end_index = ordered_indices[-2]
+            entities.extend(round_caps(-1, start_index, end_index))
+        return entities
+
+    def round_caps(miter_index: int, start_index: int, end_index:int):
+        color1 = style.elements[start_index].color
+        color2 = style.elements[end_index].color
+        start = ocs.from_wcs(miter_points[miter_index][start_index])
+        end = ocs.from_wcs(miter_points[miter_index][end_index])
+        return _arc_caps(start, end, color1, color2)
+
+    def _arc_caps(start: Vector, end: Vector, color1: int, color2: int):
+        attribs = _dxfattribs(mline)
+        center = start.lerp(end)
+        radius = (end - start).magnitude / 2.0
+        angle = (start - center).angle_deg
+        attribs['center'] = center
+        attribs['radius'] = radius
+        attribs['color'] = color1
+        attribs['start_angle'] = angle
+        attribs['end_angle'] = angle + (180 if color1 == color2 else 90)
+        arc1 = factory.new('ARC', dxfattribs=attribs, doc=doc)
+        if color1 == color2:
+            return arc1,
+        attribs['start_angle'] = angle + 90
+        attribs['end_angle'] = angle + 180
+        attribs['color'] = color2
+        arc2 = factory.new('ARC', dxfattribs=attribs, doc=doc)
+        return arc1, arc2
 
     def lines():
         prev = None
@@ -65,15 +129,14 @@ def virtual_entities(mline: 'MLine') -> List['DXFGraphic']:
         skip.add(len(miter_points) - 1)
         if not closed:
             skip.add(0)
-
-        attribs = _dxfattribs(mline)
         for index, miter in enumerate(miter_points):
             if index not in skip:
-                _lines.extend(create_miter(miter, attribs))
+                _lines.extend(create_miter(miter))
         return _lines
 
-    def create_miter(miter, attribs):
+    def create_miter(miter):
         _lines = []
+        attribs = _dxfattribs(mline)
         top = miter[top_index]
         bottom = miter[bottom_index]
         zero = bottom.lerp(top)
@@ -93,9 +156,6 @@ def virtual_entities(mline: 'MLine') -> List['DXFGraphic']:
             'LINE', dxfattribs=attribs, doc=doc))
         return _lines
 
-    def end_cap():
-        return []
-
     entities = []
     if not mline.is_alive or mline.doc is None or len(mline.vertices) < 2:
         return entities
@@ -105,9 +165,12 @@ def virtual_entities(mline: 'MLine') -> List['DXFGraphic']:
         return entities
 
     doc = mline.doc
+    ocs = OCS(mline.dxf.extrusion)
     element_count = len(style.elements)
     closed = mline.is_closed
-    bottom_index, top_index = style.border_indices()
+    ordered_indices = style.ordered_indices()
+    bottom_index = ordered_indices[0]
+    top_index = ordered_indices[-1]
     bottom_border: List[Vector] = []
     top_border: List[Vector] = []
     miter_points: List[List[Vector]] = []
