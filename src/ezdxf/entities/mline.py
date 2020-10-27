@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, cast
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple
 from collections import OrderedDict, namedtuple
 import math
 
@@ -149,8 +149,11 @@ class MLineVertex:
         # the line element in this segment of the mline.
         # Linetypes do not affect the line parametrization.
         #
-        # [miter-offset, line-start-offset, dash-length, gap-length, dash-length, ...]
-        self.line_params: List[float] = []
+        #
+        # 1. line element: [miter-offset, line-start-offset, dash, gap, dash, ...]
+        # 2. line element: [...]
+        # ...
+        self.line_params: List[List[float]] = []
         """ The line parameterization is a list of float values.
         The list may contain zero or more items.
         """
@@ -173,7 +176,7 @@ class MLineVertex:
         # start.
         #
         # [dash-length, gap-length, ...]?
-        self.fill_params: List[float] = []
+        self.fill_params: List[List[float]] = []
 
     def __copy__(self) -> 'MLineVertex':
         vtx = self.__class__()
@@ -195,11 +198,11 @@ class MLineVertex:
         fill_params_count = 0
         for code, value in tags:
             if code == 11:
-                vtx.location = value
+                vtx.location = Vector(value)
             elif code == 12:
-                vtx.line_direction = value
+                vtx.line_direction = Vector(value)
             elif code == 13:
-                vtx.miter_direction = value
+                vtx.miter_direction = Vector(value)
             elif code == 74:
                 line_params_count = value
                 if line_params_count == 0:
@@ -646,6 +649,9 @@ class MLineStyleElements:
     def __getitem__(self, item):
         return self.elements[item]
 
+    def __iter__(self):
+        return iter(self.elements)
+
     def export_dxf(self, tagwriter: 'TagWriter'):
         write_tag = tagwriter.write_tag2
         write_tag(71, len(self.elements))
@@ -683,6 +689,12 @@ class MLineStyleElements:
                 collector['linetype'] = value
         if collector is not None:
             yield collector
+
+    def border_indices(self) -> Tuple[int, int]:
+        offsets = [e.offset for e in self.elements]
+        bottom = min(offsets)
+        top = max(offsets)
+        return offsets.index(bottom), offsets.index(top)
 
 
 @register_entity
@@ -737,6 +749,9 @@ class MLineStyle(DXFObject):
             for mline in mlines:
                 if mline.dxf.style_handle == handle:
                     mline.update_geometry()
+
+    def border_indices(self) -> Tuple[int, int]:
+        return self.elements.border_indices()
 
 
 class MLineStyleCollection(ObjectCollection):

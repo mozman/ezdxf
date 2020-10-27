@@ -10,8 +10,8 @@ import ezdxf
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.lldxf.tags import Tags
-from ezdxf.entities.mline import MLineVertex, MLine
-from ezdxf.math import Matrix44
+from ezdxf.entities.mline import MLineVertex, MLine, MLineStyle
+from ezdxf.math import Matrix44, Vector
 
 
 # noinspection PyUnresolvedReferences
@@ -84,7 +84,7 @@ class TestMLine:
 
     def test_x_rotation(self, msp):
         mline = msp.add_mline([(0, 5), (10, 5)])
-        m = Matrix44.x_rotate(math.pi/2)
+        m = Matrix44.x_rotate(math.pi / 2)
         mline.transform(m)
         assert mline.start_location().isclose((0, 0, 5))
         assert mline.dxf.extrusion == (0, -1, 0)
@@ -142,11 +142,20 @@ class TestMLineStyle:
         with pytest.raises(const.DXFValueError):
             mline.set_style('UndefinedStyle')
 
+    def test_border_indices(self):
+        style = MLineStyle()
+        style.elements.append(5)  # top order
+        style.elements.append(-5)  # bottom border
+        style.elements.append(0)
+        style.elements.append(1)
+        assert style.border_indices() == (1, 0)
+
 
 class TestMLineVertex:
     def test_load_tags(self):
         tags = Tags.from_text(VTX_1)
         vtx = MLineVertex.load(tags)
+        assert isinstance(vtx.location, Vector)
         assert vtx.location == (0, 0, 0)
         assert vtx.line_direction == (1, 0, 0)
         assert vtx.miter_direction == (0, 1, 0)
