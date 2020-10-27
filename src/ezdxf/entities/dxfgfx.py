@@ -29,7 +29,7 @@ __all__ = [
 
 GRAPHIC_PROPERTIES = {
     'layer', 'linetype', 'color', 'lineweight', 'ltscale', 'true_color',
-    'color_name',
+    'color_name', 'transparency',
 }
 
 acdb_entity = DefSubclass('AcDbEntity', {
