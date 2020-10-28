@@ -50,6 +50,7 @@ class AuditError(IntEnum):
     INVALID_LAYER_NAME = 203
     INVALID_COLOR_INDEX = 204
     INVALID_LINEWEIGHT = 205
+    INVALID_MLINESTYLE_HANDLE = 206
 
     # DXF entity geometry or content errors:
     INVALID_EXTRUSION_VECTOR = 210

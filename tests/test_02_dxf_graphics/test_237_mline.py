@@ -262,7 +262,7 @@ class TestMLineAudit:
         mline1.audit(auditor)
         assert mline1.dxf.style_name == new_style.dxf.name
         assert mline1.dxf.style_handle == new_style.dxf.handle
-        assert auditor.has_fixes is False, 'fix silently'
+        assert auditor.has_fixes is True
 
     def test_fix_invalid_line_direction(self, mline1, auditor):
         mline1.vertices[0].line_direction = (0, 0, 0)

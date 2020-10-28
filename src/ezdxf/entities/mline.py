@@ -642,8 +642,12 @@ class MLine(DXFGraphic):
             style = doc.mline_styles.get(self.dxf.style_name, None)
             if style is None:
                 reset_mline_style()
-            else:  # update MLINESTYLE handle silently
-                logger.debug(f'Update invalid style handle in {str(self)}.')
+            else:  # fix MLINESTYLE handle:
+                auditor.fixed_error(
+                    code=AuditError.INVALID_MLINESTYLE_HANDLE,
+                    message=f'Fixed invalid style handle in {str(self)}.',
+                    dxf_entity=self,
+                )
                 self.dxf.style_handle = style.dxf.handle
         else:  # update MLINESTYLE name silently
             self.dxf.style_name = style.dxf.name
