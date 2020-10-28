@@ -643,6 +643,7 @@ class MLine(DXFGraphic):
             if style is None:
                 reset_mline_style()
             else:  # update MLINESTYLE handle silently
+                logger.debug(f'Update invalid style handle in {str(self)}.')
                 self.dxf.style_handle = style.dxf.handle
         else:  # update MLINESTYLE name silently
             self.dxf.style_name = style.dxf.name
