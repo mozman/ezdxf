@@ -14,7 +14,8 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.packedtags import VertexArray
-from ezdxf.explode import virtual_lwpolyline_entities, explode_entity
+from ezdxf.render.polyline import virtual_lwpolyline_entities
+from ezdxf.explode import explode_entity
 from ezdxf.query import EntityQuery
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
