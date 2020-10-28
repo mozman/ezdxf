@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import ezdxf
 
+from ezdxf.audit import Auditor
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.lldxf.tags import Tags
@@ -150,6 +151,13 @@ class TestMLineStyle:
         style.elements.append(1)
         assert style.ordered_indices() == [1, 2, 3, 0]
 
+    def test_invalid_element_count(self, doc):
+        style = doc.mline_styles.new('InvalidMLineStyle')
+        assert len(style.elements) == 0
+        auditor = Auditor(doc)
+        style.audit(auditor)
+        assert auditor.has_errors is True, 'invalid element count'
+
 
 class TestMLineVertex:
     def test_load_tags(self):
@@ -204,6 +212,72 @@ class TestMLineVertex:
 
         # line- and fill parameters
         assert tags[9:] == t[3:]
+
+
+class TestMLineAudit:
+    @pytest.fixture(scope='class')
+    def doc(self):
+        d = ezdxf.new()
+        new_style = d.mline_styles.new('NewStyle1')
+        new_style.elements.append(0.5)
+        new_style.elements.append(0)
+        return d
+
+    @pytest.fixture(scope='class')
+    def msp(self, doc):
+        return doc.modelspace()
+
+    @pytest.fixture
+    def auditor(self, doc):
+        return Auditor(doc)
+
+    @pytest.fixture
+    def mline1(self, msp):
+        return msp.add_mline([(0, 0), (1, 1)])
+
+    def test_valid_mline(self, mline1, auditor):
+        mline1.audit(auditor)
+        assert auditor.has_errors is False
+        assert auditor.has_fixes is False
+
+    def test_fix_invalid_style_name(self, mline1, auditor):
+        mline1.dxf.style_name = 'test'
+        mline1.audit(auditor)
+        assert mline1.dxf.style_name == 'Standard'
+        assert auditor.has_fixes is False, 'silent fix'
+
+    def test_fix_invalid_style_handle(self, mline1, auditor):
+        mline1.dxf.style_name = 'test'
+        mline1.dxf.style_handle = '0'
+        mline1.audit(auditor)
+        assert mline1.dxf.style_name == 'Standard'
+        assert mline1.dxf.style_handle == auditor.doc.mline_styles[
+            'Standard'].dxf.handle
+        assert auditor.has_fixes is True
+
+    def test_fix_invalid_style_handle_by_name(self, mline1, doc, auditor):
+        new_style = doc.mline_styles.get('NewStyle1')
+        mline1.dxf.style_name = 'NewStyle1'
+        mline1.dxf.style_handle = '0'
+        mline1.audit(auditor)
+        assert mline1.dxf.style_name == new_style.dxf.name
+        assert mline1.dxf.style_handle == new_style.dxf.handle
+        assert auditor.has_fixes is False, 'fix silently'
+
+    def test_fix_invalid_line_direction(self, mline1, auditor):
+        mline1.vertices[0].line_direction = (0, 0, 0)
+        mline1.audit(auditor)
+        assert auditor.has_fixes is True
+
+    def test_fix_invalid_miter_direction(self, mline1, auditor):
+        mline1.vertices[0].miter_direction = (0, 0, 0)
+        mline1.audit(auditor)
+        assert auditor.has_fixes is True
+
+    def test_fix_invalid_line_parameters(self, mline1, auditor):
+        mline1.vertices[0].line_params = []
+        mline1.audit(auditor)
+        assert auditor.has_fixes is True
 
 
 VTX_1 = """11

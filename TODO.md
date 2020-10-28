@@ -7,7 +7,6 @@ Add-ons
 - drawing
     - ACAD_TABLE
     - MLEADER ???
-    - MLINE ???
     - render proxy graphic, class `ProxyGraphic()` is already 
       implemented but not tested with real world data.
 - Simple SVG exporter
@@ -18,7 +17,6 @@ Render Tools
 
 - `ACADTable.virtual_entities()` ??? -> requires basic ACAD_TABLE support
 - `MLeader.virtual_entities()` ??? -> requires complete MLEADER implementation
-- `MLine.virtual_entities()` ??? -> requires complete MLINE implementation
 
 DXF Entities
 ------------

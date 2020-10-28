@@ -4,20 +4,27 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple
 from collections import OrderedDict, namedtuple
 import math
 
-from ezdxf.lldxf import const
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.audit import AuditError
+from ezdxf.entities.factory import register_entity
+from ezdxf.lldxf import const, validator
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType,
+    RETURN_DEFAULT,
+)
 from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Vertex, Vector, UCS
+
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .dxfgfx import DXFGraphic, acdb_entity
 from .objectcollection import ObjectCollection
-from ezdxf.entities.factory import register_entity
+
 import logging
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter, Drawing, DXFNamespace, EntityQuery, BaseLayout, Matrix44,
+        Auditor,
     )
 
 __all__ = ['MLine', 'MLineVertex', 'MLineStyle', 'MLineStyleCollection']
@@ -43,13 +50,21 @@ def filter_close_vertices(vertices: Iterable[Vector],
 acdb_mline = DefSubclass('AcDbMline', OrderedDict({
     'style_name': DXFAttr(2, default='Standard'),
     'style_handle': DXFAttr(340),
-    'scale_factor': DXFAttr(40, default=1),
+    'scale_factor': DXFAttr(
+        40, default=1,
+        validator=validator.is_not_zero,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # Justification
     # 0 = Top (Right)
     # 1 = Zero (Center)
     # 2 = Bottom (Left)
-    'justification': DXFAttr(70, default=0),
+    'justification': DXFAttr(
+        70, default=0,
+        validator=validator.is_in_integer_range(0, 3),
+        fixer=RETURN_DEFAULT,
+    ),
 
     # Flags (bit-coded values):
     # 1 = Has at least one vertex (code 72 is greater than 0)
@@ -69,7 +84,11 @@ acdb_mline = DefSubclass('AcDbMline', OrderedDict({
                               getter='start_location'),
 
     # Normal vector of the entity plane, but all vertices in WCS!
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Z_AXIS),
+    'extrusion': DXFAttr(
+        210, xtype=XType.point3d, default=Z_AXIS,
+        validator=validator.is_not_null_vector,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # MLine data:
     # 11: vertex coordinates
@@ -460,6 +479,11 @@ class MLine(DXFGraphic):
             self.vertices = [MLineVertex.new(vertices[0], X_AXIS, Y_AXIS)]
             return
 
+        style = self.style
+        if len(style.elements) == 0:
+            raise const.DXFStructureError(
+                f'No line elements defined in {str(style)}.')
+
         def miter(dir1: Vector, dir2: Vector):
             return ((dir1 + dir2) * 0.5).normalize().orthogonal()
 
@@ -471,7 +495,6 @@ class MLine(DXFGraphic):
         # Transform given vertices into UCS and project them into the
         # UCS-xy-plane by setting the z-axis to 0:
         vertices = [v.replace(z=0) for v in ucs.points_from_wcs(vertices)]
-        style = self.style
         start_angle = style.dxf.start_angle
         end_angle = style.dxf.end_angle
 
@@ -595,6 +618,62 @@ class MLine(DXFGraphic):
         from ezdxf.explode import explode_entity
         return explode_entity(self, target_layout)
 
+    def audit(self, auditor: 'Auditor') -> None:
+        """ Validity check. """
+
+        def reset_mline_style(name='Standard'):
+            auditor.fixed_error(
+                code=AuditError.RESET_MLINE_STYLE,
+                message=f'Reset MLINESTYLE to "{name}" in {str(self)}.',
+                dxf_entity=self,
+            )
+            self.dxf.style_name = name
+            style = doc.mline_styles.get(name)
+            self.dxf.style_handle = style.dxf.handle
+
+        super().audit(auditor)
+        doc = auditor.doc
+        if doc is None:
+            return
+
+        # Audit associated MLINESTYLE name and handle:
+        style = doc.entitydb.get(self.dxf.style_handle)
+        if style is None:  # handle is invalid, get style by name
+            style = doc.mline_styles.get(self.dxf.style_name, None)
+            if style is None:
+                reset_mline_style()
+            else:  # update MLINESTYLE handle silently
+                self.dxf.style_handle = style.dxf.handle
+        else:  # update MLINESTYLE name silently
+            self.dxf.style_name = style.dxf.name
+
+        # Get current (maybe fixed) MLINESTYLE:
+        style = self.style
+
+        # Update style element count silently:
+        element_count = len(style.elements)
+        self.dxf.style_element_count = element_count
+
+        # Audit vertices:
+        for vertex in self.vertices:
+            if NULLVEC.isclose(vertex.line_direction):
+                break
+            if NULLVEC.isclose(vertex.miter_direction):
+                break
+            if len(vertex.line_params) != element_count:
+                break
+            # Ignore fill parameters.
+        else:  # no break
+            return
+
+        # Invalid vertices found:
+        auditor.fixed_error(
+            code=AuditError.INVALID_MLINE_VERTEX,
+            message=f'Execute geometry update for {str(self)}.',
+            dxf_entity=self,
+        )
+        self.update_geometry()
+
 
 acdb_mline_style = DefSubclass('AcDbMlineStyle', {
     'name': DXFAttr(2, default='Standard'),
@@ -614,7 +693,11 @@ acdb_mline_style = DefSubclass('AcDbMlineStyle', {
     'description': DXFAttr(3, default=''),
 
     # Fill color (integer, default = 256):
-    'fill_color': DXFAttr(62, default=256),
+    'fill_color': DXFAttr(
+        62, default=256,
+        validator=validator.is_valid_aci_color,
+        fixer=RETURN_DEFAULT,
+    ),
 
     # Start angle (real, default is 90 degrees):
     'start_angle': DXFAttr(51, default=90),
@@ -750,6 +833,15 @@ class MLineStyle(DXFObject):
 
     def ordered_indices(self) -> List[int]:
         return self.elements.ordered_indices()
+
+    def audit(self, auditor: 'Auditor') -> None:
+        super().audit(auditor)
+        if len(self.elements) == 0:
+            auditor.add_error(
+                code=AuditError.INVALID_MLINESTYLE_ELEMENT_COUNT,
+                message=f"No line elements defined in {str(self)}.",
+                dxf_entity=self
+            )
 
 
 class MLineStyleCollection(ObjectCollection):
