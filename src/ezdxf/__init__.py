@@ -13,8 +13,9 @@ EZDXF_TEST_FILES = os.getenv('EZDXF_TEST_FILES', '')
 
 # name space imports - do not remove
 from ezdxf.options import options
-from ezdxf.tools import transparency2float, float2transparency
-from ezdxf.tools.rgb import int2rgb, rgb2int
+from ezdxf.colors import (
+    int2rgb, rgb2int, transparency2float, float2transparency
+)
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file, is_dxf_stream
 from ezdxf.filemanagement import readzip, new, read, readfile, decode_base64

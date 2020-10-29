@@ -3,8 +3,7 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence, Set,
-    cast,
+    TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Set, cast,
 )
 import re
 from ezdxf.entities import Attrib
@@ -13,7 +12,7 @@ from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.addons.drawing import fonts
 from ezdxf.addons import acadctb
 from ezdxf.sections.table import table_key as layer_key
-from ezdxf.tools.rgb import luminance, DXF_DEFAULT_COLORS, int2rgb
+from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
 from ezdxf.tools.pattern import scale_pattern, HatchPatternType
 from ezdxf.entities.ltype import CONTINUOUS_PATTERN
 

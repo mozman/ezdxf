@@ -55,7 +55,7 @@ translation table is included in `ezdxf`:
 
 .. code-block:: python
 
-    from ezdxf.tools.rgb import DXF_DEFAULT_COLORS, int2rgb
+    from ezdxf.colors import DXF_DEFAULT_COLORS, int2rgb
 
     # 24 bit value RRRRRRRRGGGGGGGGBBBBBBBB
     rgb24 = DXF_DEFAULT_COLORS[aci]

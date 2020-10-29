@@ -16,7 +16,7 @@ from ezdxf.lldxf.const import (
     SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010,
     DXFStructureError,
 )
-from ezdxf.tools.rgb import rgb2int, int2rgb
+from ezdxf import colors as clr
 from ezdxf.tools import pattern
 from ezdxf.math import (
     Vector, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline,
@@ -398,11 +398,11 @@ class Hatch(DXFGraphic):
         except const.DXFValueError:
             return None
         color = xdata_bgcolor.get_first_value(1071, 0)
-        return int2rgb(color)
+        return clr.int2rgb(color)
 
     @bgcolor.setter
     def bgcolor(self, rgb: 'RGB') -> None:
-        color_value = rgb2int(
+        color_value = clr.rgb2int(
             rgb) | -0b111110000000000000000000000000  # it's magic
 
         self.discard_xdata('HATCHBACKGROUNDCOLOR')
@@ -1847,10 +1847,10 @@ class Gradient:
                     gdata.aci2 = value
             elif code == 421:
                 if first_color_value:
-                    gdata.color1 = int2rgb(value)
+                    gdata.color1 = clr.int2rgb(value)
                     first_color_value = False
                 else:
-                    gdata.color2 = int2rgb(value)
+                    gdata.color2 = clr.int2rgb(value)
         return gdata
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
@@ -1869,9 +1869,9 @@ class Gradient:
         if self.aci1 is not None:
             write_tag(63, self.aci1)
         # code == 63 "color as ACI" can be left off
-        write_tag(421, rgb2int(self.color1))  # first color
+        write_tag(421, clr.rgb2int(self.color1))  # first color
         write_tag(463, 1)  # second value, see DXF standard
         if self.aci2 is not None:
             write_tag(63, self.aci2)  # code 63 "color as ACI" could be left off
-        write_tag(421, rgb2int(self.color2))  # second color
+        write_tag(421, clr.rgb2int(self.color2))  # second color
         write_tag(470, self.name)

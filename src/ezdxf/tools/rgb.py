@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
-from typing import Tuple, Union
+from typing import Tuple
 import math
 
 RGB = Tuple[int, int, int]
@@ -35,53 +35,6 @@ def luminance(color: RGB) -> float:
     g = float(g) / 255.0
     b = float(b) / 255.0
     return round(math.sqrt(0.299 * r ** 2 + 0.587 * g ** 2 + 0.114 * b ** 2), 3)
-
-
-# Flags for raw color int values:
-# Take color from layer, ignore other bytes.
-COLOR_BY_LAYER = 0xc0
-# Take color from insertion, ignore other bytes
-COLOR_BY_BLOCK = 0xc1
-# RGB value, other bytes are R,G,B.
-COLOR_RGB = 0xc2
-# ACI, AutoCAD color index, other bytes are 0,0,index ???
-COLOR_ACI = 0xc3
-BYBLOCK = 0
-BYLAYER = 256
-BYOBJECT = 257
-
-
-def decode_raw_color(value: int) -> Tuple[int, Union[int, RGB]]:
-    """ Returns tuple(type, Union[aci, (r, g, b)]. """
-    flags = (value >> 24) & 0xff
-    if flags == COLOR_BY_BLOCK:
-        return COLOR_BY_BLOCK, BYBLOCK
-    elif flags == COLOR_BY_LAYER:
-        return COLOR_BY_LAYER, BYLAYER
-    elif flags == COLOR_ACI:
-        return COLOR_ACI, value & 0xff
-    elif flags == COLOR_RGB:
-        return COLOR_RGB, int2rgb(value)
-    else:
-        raise ValueError(f'Unknown color type: 0x{flags:02x}')
-
-
-RAW_COLOR_BY_LAYER = -1073741824  # -(-(0xc0 << 24) & 0xffffffff)
-RAW_COLOR_BY_BLOCK = -1056964608  # -(-(0xc1 << 24) & 0xffffffff)
-
-
-def encode_raw_color(value: Union[int, RGB]) -> int:
-    if isinstance(value, int):
-        if value == BYBLOCK:
-            return RAW_COLOR_BY_BLOCK
-        elif value == BYLAYER:
-            return RAW_COLOR_BY_LAYER
-        elif 0 < value < 256:
-            return -(-(COLOR_ACI << 24) & 0xffffffff) | value
-        else:  # BYOBJECT (257) -> resolve to object color
-            raise ValueError(f'Invalid color index: {value}')
-    else:
-        return -(-((COLOR_RGB << 24) + rgb2int(value)) & 0xffffffff)
 
 
 DXF_DEFAULT_COLORS = [

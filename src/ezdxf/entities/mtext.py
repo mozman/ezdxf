@@ -12,7 +12,7 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, SPECIAL_CHARS_ENCODING
 from ezdxf.lldxf.tags import Tags
 from ezdxf.math import Vector, Matrix44, OCS, NULLVEC, Z_AXIS, X_AXIS
 from ezdxf.math.transformtools import transform_extrusion
-from ezdxf.tools.rgb import rgb2int
+from ezdxf.colors import rgb2int
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity

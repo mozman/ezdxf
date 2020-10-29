@@ -39,6 +39,10 @@ Some handy tool functions used internally by ``ezdxf``.
 
 .. autofunction:: ezdxf.transparency2float
 
+.. autofunction:: ezdxf.colors.aci2rgb
+
+.. autofunction:: ezdxf.colors.luminance
+
 .. autofunction:: ezdxf.tools.juliandate
 
 .. autofunction:: ezdxf.tools.calendardate
@@ -50,9 +54,6 @@ Some handy tool functions used internally by ``ezdxf``.
 .. autofunction:: ezdxf.tools.bytes_to_hexstr
 
 .. autofunction:: ezdxf.tools.suppress_zeros
-
-
-.. autofunction:: ezdxf.tools.aci2rgb
 
 .. autofunction:: ezdxf.tools.normalize_text_angle
 

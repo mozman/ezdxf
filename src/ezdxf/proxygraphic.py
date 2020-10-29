@@ -7,7 +7,7 @@ from enum import IntEnum
 from itertools import repeat
 from ezdxf.lldxf import const
 from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream, BitStream
-from ezdxf.tools import rgb2int
+from ezdxf.colors import rgb2int
 from ezdxf.math import Vector
 from ezdxf.entities import factory
 from ezdxf.math import ConstructionCircle, ConstructionArc

@@ -9,7 +9,7 @@ from ezdxf.entities.mtext import (
 from ezdxf.layouts import VirtualLayout
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.tools.rgb import rgb2int
+from ezdxf.colors import rgb2int
 
 MTEXT = """0
 MTEXT

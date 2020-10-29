@@ -56,6 +56,9 @@ Version 0.15a4 - dev
   determine the default scaling of predefined hatch pattern. 
 - CHANGE: fix invalid linetype setup - new linetype scaling like common CAD 
   applications
+- CHANGE: `ezdxf.colors` module will consolidate all color/transparency related 
+  features
+- DEPRECATED: `ezdxf.tools.rgb` module replaced by `ezdxf.colors`
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
   use `DXFEntity.transform(ucs.matrix)`
 - REMOVED: deprecated `Hatch.edit_boundary()` context manager, 

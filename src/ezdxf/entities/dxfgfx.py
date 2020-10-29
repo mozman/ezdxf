@@ -7,13 +7,12 @@ from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
 )
+from ezdxf import colors as clr
 from ezdxf.lldxf.const import (
     DXF12, DXF2000, DXF2004, DXF2007, DXF2013, DXFValueError, DXFKeyError,
     DXFTableEntryError, SUBCLASS_MARKER, DXFInvalidLineType, DXFStructureError,
 )
 from ezdxf.math import OCS, Matrix44
-from ezdxf.tools.rgb import int2rgb, rgb2int
-from ezdxf.tools import float2transparency, transparency2float
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 
@@ -194,14 +193,14 @@ class DXFGraphic(DXFEntity):
         not set.
         """
         if self.dxf.hasattr('true_color'):
-            return int2rgb(self.dxf.get('true_color'))
+            return clr.int2rgb(self.dxf.get('true_color'))
         else:
             return None
 
     @rgb.setter
     def rgb(self, rgb: Tuple[int, int, int]) -> None:
         """ Set RGB true color as (r, g , b) tuple e.g. (12, 34, 56). """
-        self.dxf.set('true_color', rgb2int(rgb))
+        self.dxf.set('true_color', clr.rgb2int(rgb))
 
     @property
     def transparency(self) -> float:
@@ -209,7 +208,7 @@ class DXFGraphic(DXFEntity):
         is 100% transparent (invisible).
         """
         if self.dxf.hasattr('transparency'):
-            return transparency2float(self.dxf.get('transparency'))
+            return clr.transparency2float(self.dxf.get('transparency'))
         else:
             return 0.
 
@@ -218,7 +217,7 @@ class DXFGraphic(DXFEntity):
         """ Set transparency as float value between 0 and 1, 0 is opaque and 1
         is 100% transparent (invisible).
         """
-        self.dxf.set('transparency', float2transparency(transparency))
+        self.dxf.set('transparency', clr.float2transparency(transparency))
 
     def graphic_properties(self) -> Dict:
         """ Returns the important common properties layer, color, linetype,
