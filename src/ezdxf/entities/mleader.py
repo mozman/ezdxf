@@ -95,7 +95,7 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
     'block_content_handle': DXFAttr(343),
     'block_content_color': DXFAttr(94, default=-1056964608),
     'block_content_scale_x': DXFAttr(47, default=1),
-    'block_content_scale_y': DXFAttr(49, default=0),
+    'block_content_scale_y': DXFAttr(49, default=1),
     'block_content_scale_z': DXFAttr(140, default=1),
     'enable_block_content_rotation': DXFAttr(294, default=1),
     'block_content_rotation': DXFAttr(141, default=0),
@@ -124,9 +124,6 @@ class MLeaderStyle(DXFObject):
     DXFTYPE = 'MLEADERSTYLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_mleader_style)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
-
-    def copy(self):
-        raise DXFTypeError(f'Copying of {self.DXFTYPE} not supported.')
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
