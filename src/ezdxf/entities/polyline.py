@@ -12,7 +12,8 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.lldxf import const
 from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
-from ezdxf.explode import virtual_polyline_entities, explode_entity
+from ezdxf.render.polyline import virtual_polyline_entities
+from ezdxf.explode import explode_entity
 from ezdxf.query import EntityQuery
 from ezdxf.entities import factory
 from ezdxf.audit import AuditError
