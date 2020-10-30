@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -14,13 +14,13 @@ def msp():
 def test_generic_mleader(msp):
     mleader = msp.new_entity('MLEADER', {})
     assert mleader.dxftype() == 'MLEADER'
-    assert mleader.dxf.leader_style_handle == '0'
+    assert mleader.dxf.style_handle == '0'
 
 
 def test_synonym_multileader(msp):
     mleader = msp.new_entity('MULTILEADER', {})
     assert mleader.dxftype() == 'MULTILEADER'
-    assert mleader.dxf.leader_style_handle == '0'
+    assert mleader.dxf.style_handle == '0'
 
 
 # todo: real MLEADERSTYLE tests
