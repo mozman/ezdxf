@@ -1,10 +1,11 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFTypeError
+from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags
 from ezdxf.math import Vector
+from ezdxf import colors
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -24,7 +25,8 @@ __all__ = ['MLeader', 'MLeaderStyle', 'MLeaderStyleCollection']
 
 
 acdb_mleader = DefSubclass('AcDbMLeader', {
-    'style_handle': DXFAttr(340, default='0'),
+    'version': DXFAttr(270, default=2),
+    'style_handle': DXFAttr(340),
 
     # Theory: Take properties for MLEADERSTYLE, except explicit overridden here:
     'property_override_flags': DXFAttr(90),
@@ -60,66 +62,114 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
     # 1 << 28 = text_top_attachment_type (of MTEXT)
     # 1 << 29 = Text_bottom_attachment_type (of MTEXT)
 
-    'leader_type': DXFAttr(170),
-    'leader_line_color': DXFAttr(91),
+    'leader_type': DXFAttr(170, default=1),
+    'leader_line_color': DXFAttr(91, default=colors.BY_BLOCK_RAW_VALUE),
     'leader_linetype_handle': DXFAttr(341),
-    'leader_lineweight': DXFAttr(171),
-
-    # Landing Flag: 0=disable; 1=enable
-    'landing_flag': DXFAttr(290),
-
-    # Dogleg Flag: 0=disable; 1=enable
-    'dogleg_flag': DXFAttr(291),
-
-    'dogleg_length': DXFAttr(41),
+    'leader_lineweight': DXFAttr(171, default=const.LINEWEIGHT_BYBLOCK),
+    'has_landing': DXFAttr(290, default=1),
+    'has_dogleg': DXFAttr(291, default=1),
+    'dogleg_length': DXFAttr(41),  # depend on $MEASUREMENT?
 
     # no handle is default arrow 'closed filled':
     'arrow_head_handle': DXFAttr(342),
-    'arrow_head_size': DXFAttr(42),
+    'arrow_head_size': DXFAttr(42),  # depend on $MEASUREMENT?
 
-    'content_type': DXFAttr(172),
+    'content_type': DXFAttr(172, default=2),
+    # 0 = None
+    # 1 = Block content
+    # 2 = MTEXT content
+    # 3 = TOLERANCE content
 
     # Text Content:
     'text_style_handle': DXFAttr(343),
-    'text_left_attachment_type': DXFAttr(173),
-    'text_right_attachment_type': DXFAttr(95),
-    'text_angle_type': DXFAttr(174),
-    'text_alignment_type': DXFAttr(175),
-    'text_color': DXFAttr(92),
+    'text_left_attachment_type': DXFAttr(173, default=1),
+    # Values 0-8 are used for the left/right attachment
+    # point (attachment direction is horizontal), values 9-10 are used for the
+    # top/bottom attachment points (attachment direction is vertical).
+    # Attachment point is:
+    # 0 = top of top text line,
+    # 1 = middle of top text line,
+    # 2 = middle of text,
+    # 3 = middle of bottom text line,
+    # 4 = bottom of bottom text line,
+    # 5 = bottom text line,
+    # 6 = bottom of top text line. Underline bottom line
+    # 7 = bottom of top text line. Underline top line,
+    # 8 = bottom of top text line. Underline all content,
+    # 9 = center of text (y-coordinate only),
+    # 10 = center of text (y-coordinate only), and overline top/underline
+    # bottom content.
+    'text_right_attachment_type': DXFAttr(95),  # like 173
 
-    # Frame Text Flag: 0=disable; 1=enable
-    'frame_text_flag': DXFAttr(292),
+    'text_angle_type': DXFAttr(174, default=1),
+    # 0 = text angle is equal to last leader line segment angle
+    # 1 = text is horizontal
+    # 2 = text angle is equal to last leader line segment angle, but potentially
+    #     rotated by 180 degrees so the right side is up for readability.
+
+    'text_alignment_type': DXFAttr(175, default=2),
+    'text_color': DXFAttr(92, default=colors.BY_BLOCK_RAW_VALUE),
+    'has_frame_text': DXFAttr(292, default=0),
 
     # Block Content:
     'block_record_handle': DXFAttr(344),
-    'block_color': DXFAttr(93),
+    'block_color': DXFAttr(93, default=colors.BY_BLOCK_RAW_VALUE),  # raw color
     'block_scale_vector': DXFAttr(10, xtype=XType.point3d,
                                   default=Vector(1, 1, 1)),
-    'block_rotation': DXFAttr(43),
+    'block_rotation': DXFAttr(43),  # in radians!!!
     'block_connection_type': DXFAttr(176),
+    # 0 = center extents
+    # 1 = insertion point
 
-    # Annotation Scale Flag: 0=disable; 1=enable
-    'annotation_scale_flag': DXFAttr(293),
-    'arrow_head2_index': DXFAttr(94),
-    'arrow_head2_handle': DXFAttr(345),
+    'is_annotative': DXFAttr(293, default=0),
+    # REPEAT "arrow_heads":
+    'arrow_head2_index': DXFAttr(94, dxfversion=const.DXF2007),
+    'arrow_head2_handle': DXFAttr(345, dxfversion=const.DXF2007),
+    # END "arrow heads"
 
-    # Block Attribute (ATTDEF)
-    'attrib_handle': DXFAttr(340),
-    'attrib_index': DXFAttr(177),
-    'attrib_width': DXFAttr(44),
-    'attrib_text': DXFAttr(302),
+    #  Block Attribute (ATTDEF)
+    # REPEAT "block labels":
+    'attrib_handle': DXFAttr(330, dxfversion=const.DXF2007),
+    # attrib_index:  UI index (sequential index of the label in the collection)
+    'attrib_index': DXFAttr(177, dxfversion=const.DXF2007),
+    'attrib_width': DXFAttr(44, dxfversion=const.DXF2007),
+    'attrib_text': DXFAttr(302, dxfversion=const.DXF2007),
+    # END "block labels"
 
     # Text Content:
-    'negative_text_direction_flag': DXFAttr(294),
-    'text_align_in_IPE': DXFAttr(178),
-    'text_attachment_point': DXFAttr(179),
+    'is_text_direction_negative': DXFAttr(294, default=0,
+                                          dxfversion=const.DXF2007),
+    'text_IPE_align': DXFAttr(178, default=0, dxfversion=const.DXF2007),
+    'text_attachment_point': DXFAttr(179, default=1, dxfversion=const.DXF2007),
+    # 1 = left
+    # 2 = center
+    # 3 = right
 
-    # 0=horizontal; 1=vertical
-    'text_attachment_direction': DXFAttr(271),
-    # 9=center; 10=underline and center
-    'text_bottom_attachment_direction': DXFAttr(272),
-    # 9=center; 10=overline and center
-    'text_top_attachment_direction': DXFAttr(273),
+    'scale': DXFAttr(45, default=1, dxfversion=const.DXF2007),
+    # 0 = horizontal
+    # 1 = vertical
+
+    'text_attachment_direction': DXFAttr(
+        271, default=0, dxfversion=const.DXF2010),
+    # This defines whether the leaders attach to the left/right of the content
+    # block/text, or attach to the top/bottom:
+    # 0 = horizontal
+    # 1 = vertical
+
+    'text_bottom_attachment_direction': DXFAttr(
+        272, default=9, dxfversion=const.DXF2010),
+    # like 173, but
+    # 9 = center
+    # 10= underline and center
+
+    'text_top_attachment_direction': DXFAttr(
+        273, default=9, dxfversion=const.DXF2010),
+    # like 173, but
+    # 9 = center
+    # 10= overline and center
+
+    'leader_extend_to_text': DXFAttr(
+        295, default=0, dxfversion=const.DXF2013),
 
 })
 
@@ -128,7 +178,7 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
 class MLeader(DXFGraphic):
     DXFTYPE = 'MLEADER'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mleader)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
+    MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
 
     def __init__(self):
         super().__init__()
@@ -136,7 +186,7 @@ class MLeader(DXFGraphic):
         self._tags = Tags()
 
     def copy(self):
-        raise DXFTypeError(f'Cloning of {self.DXFTYPE} not supported.')
+        raise const.DXFTypeError(f'Cloning of {self.DXFTYPE} not supported.')
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -167,13 +217,13 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
     'first_segment_angle_constraint': DXFAttr(40, default=0.0),
     'second_segment_angle_constraint': DXFAttr(41, default=0.0),
     'leader_type': DXFAttr(173, default=1),
-    'leader_line_color': DXFAttr(91, default=-1056964608),  # raw color: BY_BLOCK
+    'leader_line_color': DXFAttr(91, default=-1056964608),
+    # raw color: BY_BLOCK
     'leader_linetype_handle': DXFAttr(340),
     'leader_lineweight': DXFAttr(92, default=-2),
-    'landing_flag': DXFAttr(290, default=1),
+    'has_landing': DXFAttr(290, default=1),
     'landing_gap': DXFAttr(42, default=2.0),
-    # Dogleg Flag: 0=disable; 1=enable
-    'dogleg_flag': DXFAttr(291, default=1),
+    'has_dogleg': DXFAttr(291, default=1),
     'dogleg_length': DXFAttr(43, default=8),
     'name': DXFAttr(3, default='Standard'),
 
@@ -188,18 +238,16 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
     'text_right_attachment_type': DXFAttr(178, default=1),
     'text_color': DXFAttr(93, default=-1056964608),  # raw color: BY_BLOCK
     'text_height': DXFAttr(45, default=4),
-
-    # Frame Text Flag: 0=disable; 1=enable
-    'frame_text_flag': DXFAttr(292, default=0),
+    'has_frame_text': DXFAttr(292, default=0),
     'text_align_always_left': DXFAttr(297, default=0),
     'align_space': DXFAttr(46, default=4),
-    'block_scale_flag': DXFAttr(293),
+    'has_block_scaling': DXFAttr(293),
     'block_record_handle': DXFAttr(343),
     'block_color': DXFAttr(94, default=-1056964608),  # raw color: BY_BLOCK
     'block_scale_x': DXFAttr(47, default=1),
     'block_scale_y': DXFAttr(49, default=1),
     'block_scale_z': DXFAttr(140, default=1),
-    'block_rotation_flag': DXFAttr(294, default=1),
+    'has_block_rotation': DXFAttr(294, default=1),
     'block_rotation': DXFAttr(141, default=0),
     'block_connection_type': DXFAttr(177, default=0),
     'scale': DXFAttr(142, default=1),
@@ -224,7 +272,7 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
 class MLeaderStyle(DXFObject):
     DXFTYPE = 'MLEADERSTYLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_mleader_style)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
+    MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -239,7 +287,7 @@ class MLeaderStyle(DXFObject):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mleader_style.name)
+        tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_mleader_style.name)
         self.dxf.export_dxf_attribs(
             tagwriter, acdb_mleader_style.attribs.keys())
 

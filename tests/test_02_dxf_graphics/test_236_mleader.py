@@ -14,13 +14,13 @@ def msp():
 def test_generic_mleader(msp):
     mleader = msp.new_entity('MLEADER', {})
     assert mleader.dxftype() == 'MLEADER'
-    assert mleader.dxf.style_handle == '0'
+    assert mleader.dxf.style_handle is None
 
 
 def test_synonym_multileader(msp):
     mleader = msp.new_entity('MULTILEADER', {})
     assert mleader.dxftype() == 'MULTILEADER'
-    assert mleader.dxf.style_handle == '0'
+    assert mleader.dxf.style_handle is None
 
 
 # todo: real MLEADERSTYLE tests
