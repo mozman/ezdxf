@@ -33,8 +33,8 @@ class MLeader(DXFGraphic):
 
     def __init__(self):
         super().__init__()
-        # todo: MLEADER implementation
-        self.tags = Tags()
+        # preserve original data until load/export is implemented
+        self._tags = Tags()
 
     def copy(self):
         raise DXFTypeError(f'Cloning of {self.DXFTYPE} not supported.')
@@ -46,12 +46,12 @@ class MLeader(DXFGraphic):
             return dxf
 
         processor.load_dxfattribs_into_namespace(dxf, acdb_mleader)
-        self.tags = processor.subclasses[2]
+        self._tags = processor.subclasses[2].clone()
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
-        tagwriter.write_tags(self.tags)
+        tagwriter.write_tags(self._tags)
 
 
 @register_entity

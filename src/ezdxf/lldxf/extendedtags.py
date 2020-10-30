@@ -3,8 +3,8 @@
 from typing import TYPE_CHECKING, Iterable, Optional, List
 from itertools import chain
 import logging
-from .types import tuples_to_tags
-from .tags import Tags, DXFTag, NONE_TAG
+from .types import tuples_to_tags, NONE_TAG
+from .tags import Tags, DXFTag
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from .types import (
     APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER, EMBEDDED_OBJ_MARKER,
@@ -163,12 +163,10 @@ class ExtendedTags:
             SUBCLASS_MARKER, XDATA_MARKER or EMBEDDED_OBJ_MARKER.
             """
             # All subclasses begin with (100, subclass name) EXCEPT DIMASSOC
-            # has tne subclass starting with: (1, AcDbOsnapPointRef)
+            # has a subclass starting with: (1, AcDbOsnapPointRef)
             # This special subclass is ignored by ezdxf, content is included in
             # the preceding subclass: (100, AcDbDimAssoc)
             # TEXT contains 2x the (100, AcDbText).
-            #
-            #   Well done, Autodesk!
             #
             # Therefore it is not possible to use an (ordered) dict with
             # the subclass name as key, but usual use case is access by
