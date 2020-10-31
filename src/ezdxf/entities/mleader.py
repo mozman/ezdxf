@@ -1,6 +1,9 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Union, Optional
+import copy
+import logging
+
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags
@@ -14,9 +17,11 @@ from .factory import register_entity
 from .objectcollection import ObjectCollection
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace
+    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, DXFTag
 
-__all__ = ['MLeader', 'MLeaderStyle', 'MLeaderStyleCollection']
+__all__ = ['MultiLeader', 'MLeaderStyle', 'MLeaderStyleCollection']
+
+logger = logging.getLogger('ezdxf')
 
 # DXF Examples:
 # "D:\source\dxftest\CADKitSamples\house design for two family with common staircasedwg.dxf"
@@ -173,10 +178,20 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
 
 })
 
+CONTEXT_STR = 'CONTEXT_DATA{'
+LEADER_STR = 'LEADER{'
+LEADER_LINE_STR = 'LEADER_LINE{'
+START_CONTEXT_DATA = 300
+END_CONTEXT_DATA = 301
+START_LEADER = 302
+END_LEADER = 303
+START_LEADER_LINE = 304
+END_LEADER_LINE = 305
+
 
 @register_entity
-class MLeader(DXFGraphic):
-    DXFTYPE = 'MLEADER'
+class MultiLeader(DXFGraphic):
+    DXFTYPE = 'MULTILEADER'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mleader)
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
 
@@ -184,28 +199,197 @@ class MLeader(DXFGraphic):
         super().__init__()
         # preserve original data until load/export is implemented
         self._tags = Tags()
+        self.context = MultiLeaderContext()
 
     def copy(self):
         raise const.DXFTypeError(f'Cloning of {self.DXFTYPE} not supported.')
+
+    def _copy_data(self, entity: 'MultiLeader') -> None:
+        """ Copy leaders """
+        entity.context = copy.deepcopy(self.context)
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
+
+        # _tags is just a temporarily solution
         self._tags = processor.subclasses[2]
+
+        context = self.extract_context_data(processor.subclasses[2])
+        if context:
+            try:
+                self.context = self.load_context(context)
+            except const.DXFStructureError:
+                logger.info(
+                    f'Context structure error in entity MULTILEADER(#{dxf.handle})')
+
         tags = processor.load_dxfattribs_into_namespace(
             dxf, acdb_mleader, index=2)
+        if len(tags):
+            processor.log_unprocessed_tags(tags, subclass=acdb_mleader.name)
         return dxf
+
+    @staticmethod
+    def extract_context_data(tags) -> List['DXFTag']:
+        start, end = None, None
+        context_data = []
+        for index, tag in enumerate(tags):
+            if tag.code == START_CONTEXT_DATA:
+                start = index
+            elif tag.code == END_CONTEXT_DATA:
+                end = index + 1
+
+        if start and end:
+            context_data = tags[start:end]
+            # Remove context data!
+            del tags[start: end]
+        return context_data
+
+    @staticmethod
+    def load_context(data: List['DXFTag']) -> 'MultiLeaderContext':
+        def build_structure(tag: 'DXFTag',
+                            stop: int) -> List[Union['DXFTag', List]]:
+            collector = [tag]
+            while tag.code != stop:
+                if tag.code == START_LEADER:
+                    collector.append(build_structure(tag, END_LEADER))
+                elif tag.code == START_LEADER_LINE:
+                    collector.append(build_structure(tag, END_LEADER_LINE))
+                collector.append(tag)
+                tag = next(tags)
+            return collector
+
+        tags = iter(data)
+        try:
+            context = build_structure(next(tags), END_CONTEXT_DATA)
+        except StopIteration:
+            raise const.DXFStructureError
+        else:
+            return MultiLeaderContext.load(context)
+
+    def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
+        if self.context.is_valid:
+            return True
+        else:
+            logger.debug(
+                f'Ignore {str(self)} at DXF export, invalid context data.')
+            return False
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tags(self._tags)
 
 
+class MultiLeaderContext:
+    def __init__(self):
+        self.leaders: List['Leader'] = []
+        pass
+
+    @classmethod
+    def load(cls, context: List[Union['DXFTag', List]]) -> 'MultiLeaderContext':
+        assert context[0] == (START_CONTEXT_DATA, CONTEXT_STR)
+        ctx = cls()
+        for tag in context:
+            if isinstance(tag, list):  # Leader()
+                ctx.leaders.append(Leader.load(tag))
+                continue
+            # parse context tags
+            code, value = tag
+            if code == 0:
+                pass
+        return ctx
+
+    @property
+    def is_valid(self) -> bool:
+        return True
+
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        tagwriter.write_tag2(START_CONTEXT_DATA, CONTEXT_STR)
+        for leader in self.leaders:
+            leader.export_dxf(tagwriter)
+        tagwriter.write_tag2(END_CONTEXT_DATA, '}')
+
+
+class Leader:
+    def __init__(self):
+        self.lines: List['LeaderLine'] = []
+
+    @classmethod
+    def load(cls, context: List[Union['DXFTag', List]]):
+        assert context[0] == (START_LEADER, LEADER_STR)
+        leader = cls()
+        for tag in context:
+            if isinstance(tag, list):  # LeaderLine()
+                leader.lines.append(LeaderLine.load(tag))
+                continue
+            # parse leader tags
+            code, value = tag
+            if code == 0:
+                pass
+
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        tagwriter.write_tag2(START_LEADER, LEADER_STR)
+        for line in self.lines:
+            line.export_dxf(tagwriter)
+        tagwriter.write_tag2(END_LEADER, '}')
+
+
+class LeaderLine:
+    def __init__(self):
+        self.vertices: List[Vector] = []
+        self.breaks: Optional[List[Union[int, Vector]]] = None
+        # Breaks: 90, 11, 12, [11, 12, ...] [, 90, 11, 12 [11, 12, ...]]
+        # group code 90 = break index
+        # group code 11 = start vertex of break
+        # group code 12 = end vertex of break
+        # multiple breaks per index possible
+        self.index: int = 0  # group code 91
+        self.color: int = colors.BY_BLOCK_RAW_VALUE  # group code 92
+
+    @classmethod
+    def load(cls, tags: List['DXFTag']):
+        assert tags[0] == (START_LEADER_LINE, LEADER_LINE_STR)
+        line = LeaderLine()
+        vertices = line.vertices
+        breaks = []
+        for code, value in tags:
+            if code == 10:
+                vertices.append(value)
+            elif code in (90, 11, 12):
+                breaks.append(value)
+            elif code == 91:
+                line.index = value
+            elif code == 92:
+                line.color = value
+        if breaks:
+            line.breaks = breaks
+        return line
+
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        tagwriter.write_tag2(START_LEADER_LINE, LEADER_LINE_STR)
+        for vertex in self.vertices:
+            tagwriter.write_vertex(10, vertex)
+        if self.breaks:
+            code = 0
+            for value in self.breaks:
+                if isinstance(value, int):
+                    # break index
+                    tagwriter.write_tag2(90, value)
+                else:
+                    # 11 .. start vertex of break
+                    # 12 .. end vertex of break
+                    tagwriter.write_vertex(11 + code, value)
+                    code = 1 - code
+        tagwriter.write_tag2(91, self.index)
+        tagwriter.write_tag2(92, self.color)
+        tagwriter.write_tag2(END_LEADER_LINE, '}')
+
+
 @register_entity
-class MultiLeader(MLeader):
-    DXFTYPE = 'MULTILEADER'
+class MLeader(MultiLeader):
+    DXFTYPE = 'MLEADER'
 
 
 acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
