@@ -9,6 +9,7 @@ Add-ons
     - MLEADER ???
     - render proxy graphic, class `ProxyGraphic()` is already 
       implemented but not tested with real world data.
+    - add support for ATTRIB with embedded MTEXT
 - Simple SVG exporter
 - DWG loader (work in progress)         
 
@@ -29,6 +30,11 @@ DXF Entities
 - MLEADER
 - FIELD
 - ACAD_TABLE
+- ATTRIB/ATTDEF support for embedded MTEXT entity,
+  example: `dxftest/attrib_attdef_with_embedded_mtext.dxf`
+- Remove generic "Embedded Object" support in DXFEntity because this is always 
+  a special case which should be handled by DXF load/export procedure and it is 
+  used only by ATTRIB/ATTDEF yet.
 
 - Blocks.purge() search for non-explicit block references in:
     - All arrows in DIMENSION are no problem, there has to be an explicit 
