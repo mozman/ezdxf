@@ -7,7 +7,7 @@ import logging
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags
-from ezdxf.math import Vector
+from ezdxf.math import Vector, NULLVEC, X_AXIS
 from ezdxf import colors
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -26,8 +26,10 @@ logger = logging.getLogger('ezdxf')
 # DXF Examples:
 # "D:\source\dxftest\CADKitSamples\house design for two family with common staircasedwg.dxf"
 # "D:\source\dxftest\CADKitSamples\house design.dxf"
-# How to render MLEADER: https://atlight.github.io/formats/dxf-leader.html
 
+# How to render MLEADER: https://atlight.github.io/formats/dxf-leader.html
+# DXF reference:
+# http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-72D20B8C-0F5E-4993-BEB7-0FCF94F32BE0
 
 acdb_mleader = DefSubclass('AcDbMLeader', {
     'version': DXFAttr(270, default=2),
@@ -189,6 +191,25 @@ START_LEADER_LINE = 304
 END_LEADER_LINE = 305
 
 
+def compile_context_tags(data: List['DXFTag'],
+                         stop_code: int) -> List[Union['DXFTag', List]]:
+    def build_structure(tag: 'DXFTag',
+                        stop: int) -> List[Union['DXFTag', List]]:
+        collector = [tag]
+        tag = next(tags)
+        while tag.code != stop:
+            if tag.code == START_LEADER:
+                collector.append(build_structure(tag, END_LEADER))
+            elif tag.code == START_LEADER_LINE:
+                collector.append(build_structure(tag, END_LEADER_LINE))
+            collector.append(tag)
+            tag = next(tags)
+        return collector
+
+    tags = iter(data)
+    return build_structure(next(tags), stop_code)
+
+
 @register_entity
 class MultiLeader(DXFGraphic):
     DXFTYPE = 'MULTILEADER'
@@ -249,21 +270,8 @@ class MultiLeader(DXFGraphic):
 
     @staticmethod
     def load_context(data: List['DXFTag']) -> 'MultiLeaderContext':
-        def build_structure(tag: 'DXFTag',
-                            stop: int) -> List[Union['DXFTag', List]]:
-            collector = [tag]
-            while tag.code != stop:
-                if tag.code == START_LEADER:
-                    collector.append(build_structure(tag, END_LEADER))
-                elif tag.code == START_LEADER_LINE:
-                    collector.append(build_structure(tag, END_LEADER_LINE))
-                collector.append(tag)
-                tag = next(tags)
-            return collector
-
-        tags = iter(data)
         try:
-            context = build_structure(next(tags), END_CONTEXT_DATA)
+            context = compile_context_tags(data, END_CONTEXT_DATA)
         except StopIteration:
             raise const.DXFStructureError
         else:
@@ -315,6 +323,13 @@ class MultiLeaderContext:
 class Leader:
     def __init__(self):
         self.lines: List['LeaderLine'] = []
+        self.has_last_leader_line = False  # group code 290
+        self.has_dogleg_vector = False  # group code 291
+        self.last_leader_point: Vector = NULLVEC  # group code (10, 20, 30)
+        self.dogleg_vector: Vector = X_AXIS  # group code (11, 21, 31)
+        self.dogleg_length: float = 1.0  # group code 40
+        self.index: int = 0  # group code 90
+        self.breaks = []  # group code 12, 13 - multiple breaks possible?
 
     @classmethod
     def load(cls, context: List[Union['DXFTag', List]]):
@@ -324,15 +339,51 @@ class Leader:
             if isinstance(tag, list):  # LeaderLine()
                 leader.lines.append(LeaderLine.load(tag))
                 continue
-            # parse leader tags
+
             code, value = tag
-            if code == 0:
-                pass
+            if code == 290:
+                leader.has_last_leader_line = bool(value)
+            elif code == 291:
+                leader.has_dogleg_vector = bool(value)
+            elif code == 10:
+                leader.last_leader_point = value
+            elif code == 11:
+                leader.dogleg_vector = value
+            elif code == 40:
+                leader.dogleg_length = float(value)
+            elif code == 90:
+                leader.index = int(value)
+            elif code in (12, 13):
+                leader.breaks.append(value)
+            # Ignore undocumented group code 271:
+            # override MultiLeader.dxf.text_attachment_direction ?
+
+        return leader
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_tag2(START_LEADER, LEADER_STR)
+        tagwriter.write_tag2(290, int(self.has_last_leader_line))
+        tagwriter.write_tag2(291, int(self.has_dogleg_vector))
+        if self.has_last_leader_line:
+            tagwriter.write_vertex(10, self.last_leader_point)
+        if self.has_dogleg_vector:
+            tagwriter.write_vertex(11, self.dogleg_vector)
+
+        # Multiple breaks in last leader line possible?
+        code = 0
+        for vertex in self.breaks:
+            # write alternate group code 12 and 13
+            tagwriter.write_vertex(12 + code, vertex)
+            code = 1 - code
+        tagwriter.write_tag2(90, self.index)
+        tagwriter.write_tag2(40, self.dogleg_length)
+
+        # Export leader lines:
         for line in self.lines:
             line.export_dxf(tagwriter)
+
+        # Ignore undocumented group code 271:
+        # tagwriter.write_tag2(271, 0)
         tagwriter.write_tag2(END_LEADER, '}')
 
 
