@@ -129,19 +129,18 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
     # 1 = insertion point
 
     'is_annotative': DXFAttr(293, default=0),
-    # REPEAT "arrow_heads":
-    'arrow_head2_index': DXFAttr(94, dxfversion=const.DXF2007),
-    'arrow_head2_handle': DXFAttr(345, dxfversion=const.DXF2007),
+
+    # REPEAT "arrow_heads": DXF R2007+
+    # arrow_head_index: 94, ???
+    # arrow_head_handle: 345
     # END "arrow heads"
 
-    #  Block Attribute (ATTDEF)
-    # REPEAT "block labels":
-    'attrib_handle': DXFAttr(330, dxfversion=const.DXF2007),
-    # attrib_index:  UI index (sequential index of the label in the collection)
-    'attrib_index': DXFAttr(177, dxfversion=const.DXF2007),
-    'attrib_width': DXFAttr(44, dxfversion=const.DXF2007),
-    'attrib_text': DXFAttr(302, dxfversion=const.DXF2007),
-    # END "block labels"
+    # REPEAT "block attribs" (ATTDEF): DXF R2007+
+    # attrib_handle: 330
+    # attrib_index: 177, sequential index of the label in the collection
+    # attrib_width: 44
+    # attrib_text: 302, collision with group code (302, "LEADER{") in context data
+    # END "block attribs"
 
     # Text Content:
     'is_text_direction_negative': DXFAttr(294, default=0,
@@ -221,6 +220,8 @@ class MultiLeader(DXFGraphic):
         # preserve original data until load/export is implemented
         self._tags = Tags()
         self.context = MultiLeaderContext()
+        self.arrow_heads = []
+        self.block_attribs = []
 
     def copy(self):
         raise const.DXFTypeError(f'Cloning of {self.DXFTYPE} not supported.')
@@ -228,6 +229,8 @@ class MultiLeader(DXFGraphic):
     def _copy_data(self, entity: 'MultiLeader') -> None:
         """ Copy leaders """
         entity.context = copy.deepcopy(self.context)
+        entity.arrow_heads = copy.deepcopy(self.arrow_heads)
+        entity.block_attribs = copy.deepcopy(self.block_attribs)
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -245,6 +248,8 @@ class MultiLeader(DXFGraphic):
             except const.DXFStructureError:
                 logger.info(
                     f'Context structure error in entity MULTILEADER(#{dxf.handle})')
+        self.arrow_heads = self.load_arrow_heads(processor.subclasses[2])
+        self.block_attribs = self.load_block_attribs(processor.subclasses[2])
 
         tags = processor.load_dxfattribs_into_namespace(
             dxf, acdb_mleader, index=2)
@@ -277,6 +282,14 @@ class MultiLeader(DXFGraphic):
         else:
             return MultiLeaderContext.load(context)
 
+    @staticmethod
+    def load_arrow_heads(data: List['DXFTag']) -> List:
+        return []
+
+    @staticmethod
+    def load_block_attribs(data: List['DXFTag']) -> List:
+        return []
+
     def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
         if self.context.is_valid:
             return True
@@ -288,6 +301,151 @@ class MultiLeader(DXFGraphic):
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tags(self._tags)
+
+# Example BricsCAD MultiLeaderContext:
+# 300 <str> CONTEXT_DATA{
+# 40 <float> 1.0    <<< content scale
+# 10 <point> (x, y, z)      <<< content base point
+# 41 <float> 4.0    <<< text height
+# 140 <float> 4.0   <<< arrowhead size
+# 145 <float> 2.0   <<< landing gap size
+# 174 <int> 1       <<< doc missing
+# 175 <int> 1       <<< doc missing
+# 176 <int> 0       <<< doc missing
+# 177 <int> 0       <<< doc missing
+
+# 290 <int> 1       <<< has_mtext_content
+# START MText Content tags:
+# 304 <str> MLEADER
+# 11 <point> (0.0, 0.0, 1.0)    <<< text normal direction
+# 340 <hex> #A0                 <<< text style as handle
+# 12 <point> (x, y, z)          <<< text location
+# 13 <point> (1.0, 0.0, 0.0)    <<< text direction
+# 42 <float> 0.0        <<< text rotation
+# 43 <float> 0.0        <<< text width
+# 44 <float> 0.0        <<< text height
+# 45 <float> 1.0        <<< text line space factor
+# 170 <int> 1           <<< text line space style
+# 90 <int> -1056964608  <<< text raw color
+# 171 <int> 1           <<< text attachment
+# 172 <int> 1           <<< text flow direction
+# 91 <int> -939524096   <<< text raw background color
+# 141 <float> 1.5       <<< text background scale factor
+# 92 <int> 0            <<< text background transparency
+# 291 <int> 0           <<< has_text_bg_color
+# 292 <int> 0           <<< has_text_bg_fill
+# 173 <int> 0           <<< text column type
+# 293 <int> 0           <<< use text auto height
+# 142 <float> 0.0       <<< text column width
+# 143 <float> 0.0       <<< text column gutter width
+# 294 <int> 0           <<< text column flow reversed
+# 144 <float> missing   <<< text column height (optional?)
+# 295 <int> 0           <<< text use word break
+# END MText Content tags:
+
+# 296 <int> 0       <<< has_block_content
+# START Block content tags
+# END Block content tags
+
+# 110 <point> (0.0, 0.0, 0.0)       <<< MLEADER plane origin point
+# 111 <point> (1.0, 0.0, 0.0)       <<< MLEADER plane x-axis direction
+# 112 <point> (0.0, 1.0, 0.0)       <<< MLEADER plane y-axis direction
+# 297 <int> 0                       <<< MLEADER normal reversed
+# 302 <str> LEADER{
+# ...
+# 303 <str> }
+# 302 <str> LEADER{
+# ...
+# 303 <str> }
+# 272 <int> 9       <<< doc missing
+# 273 <int> 9       <<< doc missing
+# 301 <str> }
+
+# Example BricsCAD for block content:
+# 300 <str> CONTEXT_DATA{
+# 40 <float> 1.0
+# 10 <point> (x, y, z)
+# 41 <float> 4.0
+# 140 <float> 4.0
+# 145 <float> 2.0
+# 174 <int> 1
+# 175 <int> 1
+# 176 <int> 0
+# 177 <int> 0
+# 290 <int> 0       <<< has_mtext_content
+# 296 <int> 1       <<< has_block_content
+
+# START Block content tags
+# 341 <hex> #94                 <<< dxf.block_record_handle
+# 14 <point> (0.0, 0.0, 1.0)    <<< Block normal direction
+# 15 <point> (x, y, z)          <<< Block location
+# 16 <point> (1.0, 1.0, 1.0)    <<< Block scale
+# 46 <float> 0.0                <<< Block rotation
+# 93 <int> -1056964608          <<< Block color (raw)
+# 47 <float> 1.0                <<< start of transformation matrix (16x47)
+# 47 <float> 0.0
+# 47 <float> 0.0
+# 47 <float> 18.427396871473
+# 47 <float> 0.0
+# 47 <float> 1.0
+# 47 <float> 0.0
+# 47 <float> 0.702618780008
+# 47 <float> 0.0
+# 47 <float> 0.0
+# 47 <float> 1.0
+# 47 <float> 0.0
+# 47 <float> 0.0
+# 47 <float> 0.0
+# 47 <float> 0.0
+# 47 <float> 1.0                <<< end of transformation matrix
+# END Block content tags
+
+# 110 <point> (0.0, 0.0, 0.0)       <<< MLEADER plane origin point
+# 111 <point> (1.0, 0.0, 0.0)       <<< MLEADER plane x-axis direction
+# 112 <point> (0.0, 1.0, 0.0)       <<< MLEADER plane y-axis direction
+# 297 <int> 0                       <<< MLEADER normal reversed
+
+# 302 <str> LEADER{
+# ...
+# 303 <str> }
+
+# 272 <int> 9
+# 273 <int> 9
+# 301 <str> }
+
+# Attribute content and other redundant block data is stored in the AcDbMLeader
+# subclass:
+#
+# 100 <ctrl> AcDbMLeader
+# 270 <int> 2                   <<< dxf.version
+# 300 <str> CONTEXT_DATA{       <<< start context data
+# ...
+# 301 <str> }                   <<< end context data
+# 340 <hex> #6D                 <<< dxf.style_handle
+# 90 <int> 6816768              <<< dxf.property_override_flags
+# ...                           <<< property overrides
+# 292 <int> 0                   <<< dxf.has_frame_text
+#
+# Redundant block data or context data overrides?:
+#
+# 344 <hex> #94                 <<< dxf.block_record_handle
+# 93 <int> -1056964608          <<< dxf.block_color
+# 10 <point> (1.0, 1.0, 1.0)    <<< dxf.block_scale_factor
+# 43 <float> 0.0                <<< dxf.block_rotation  (in radians?!)
+# 176 <int> 0                   <<< dxf.block_connection_type
+# 293 <int> 0                   <<< dxf.is_annotative
+
+# REPEAT: (optional)
+# 94 <int>                      <<< arrow head index?
+# 345 <hex>                     <<< arrow head handle
+
+# REPEAT: (optional)
+# 330 <hex> #A3                 <<< ATTDEF handle
+# 177 <int> 1                   <<< ATTDEF index
+# 44 <float> 0.0                <<< ATTDEF width
+# 302 <str> B                   <<< ATTDEF text (reused group code)
+
+# ...  common group codes 294, 178, 179, ...
 
 
 class MultiLeaderContext:
@@ -315,8 +473,15 @@ class MultiLeaderContext:
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_tag2(START_CONTEXT_DATA, CONTEXT_STR)
+        # All MultiLeaderContext tags:
+
+        # Export Leader and LiederLine objects:
         for leader in self.leaders:
             leader.export_dxf(tagwriter)
+
+        # Additional MultiLeaderContext tags:
+        # group code 272
+        # group code 273
         tagwriter.write_tag2(END_CONTEXT_DATA, '}')
 
 
