@@ -111,7 +111,9 @@ unset, to be sure delete it:
 The curved segment is drawn from the point which defines the `bulge` value to the following point, the curved segment
 is always aa arc, The bulge value defines the ratio of the arc sagitta (segment height `h`) to half line segment length
 (point distance), a bulge value of ``1`` defines a semicircle. `bulge` > ``0`` the curve is on the right side of
-the vertex connection line, `bulge` < ``0`` the curve is on the left side.
+the vertex connection line, `bulge` < ``0`` the curve is on the left side. Radius of the curve member can be calculated with
+following formula 
+    - ``r = dist(p[i],p[i+1])*(1+b^2) / 2*b``
 
 `ezdxf` v0.8.9 supports a user defined points format, default is ``xyseb``:
 
