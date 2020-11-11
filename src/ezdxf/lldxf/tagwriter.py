@@ -49,8 +49,9 @@ class TagWriter:
         self._stream.write(TAG_STRING_FORMAT % (code, value))
 
     def write_vertex(self, code: int, vertex: Iterable[float]) -> None:
+        write = self._stream.write
         for index, value in enumerate(vertex):
-            self.write_tag2(code + index * 10, value)
+            write(TAG_STRING_FORMAT % (code + index * 10, value))
 
     def write_str(self, s: str) -> None:
         self._stream.write(s)
