@@ -38,6 +38,7 @@ DXF Entities
     - MLEADER: block content
     - ACAD_TABLE: block content
 
+- Optimize DXF loading: SubclassProcessor.load_tags_into_namespace()
 
 DXF Audit & Repair
 ------------------

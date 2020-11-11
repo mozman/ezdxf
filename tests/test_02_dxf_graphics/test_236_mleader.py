@@ -95,8 +95,8 @@ class TestLeader:
         ctx = compile_context_tags(tags, 303)
         leader = Leader.load(ctx)
         assert len(leader.lines) == 1
-        assert leader.has_last_leader_line is True
-        assert leader.has_dogleg_vector is True
+        assert leader.has_last_leader_line == 1
+        assert leader.has_dogleg_vector == 1
         assert leader.last_leader_point == (213.9, 199.1, 0)
         assert leader.dogleg_vector == (1, 0, 0)
         assert len(leader.breaks) == 2
@@ -160,6 +160,8 @@ LEADER_LINE{
 -1056964608
 305
 }
+271
+0
 303
 }
 """
