@@ -198,9 +198,12 @@ def compile_context_tags(data: List['DXFTag'],
         while tag.code != stop:
             if tag.code == START_LEADER:
                 collector.append(build_structure(tag, END_LEADER))
-            elif tag.code == START_LEADER_LINE:
+            # Group code 304 is used also for MTEXT content, therefore always
+            # test for group code AND and value string:
+            elif tag.code == START_LEADER_LINE and tag.value == LEADER_LINE_STR:
                 collector.append(build_structure(tag, END_LEADER_LINE))
-            collector.append(tag)
+            else:
+                collector.append(tag)
             tag = next(tags)
         return collector
 
@@ -587,10 +590,10 @@ class MTextData:
     def __init__(self):
         self.default_content: str = ''
         self.normal_direction: Vector = Z_AXIS
-        self.style_handle = None
+        self.style_handle = None  # handle of TextStyle() table entry
         self.location: Vector = NULLVEC
         self.direction: Vector = X_AXIS  # text direction
-        self.rotation: float = 0.
+        self.rotation: float = 0.  # in radians!
         self.boundary_width: float = 0.
         self.boundary_height: float = 0.
         self.line_space_factor: float = 1.0
@@ -603,7 +606,7 @@ class MTextData:
         self.bg_transparency: int = 0
         self.has_bg_color: int = 0
         self.has_bg_fill: int = 0
-        self.column_type: int = 0
+        self.column_type: int = 0  # unknown values
         self.use_auto_height: int = 0
         self.column_width: float = 0.
         self.column_gutter_width: float = 0.
@@ -756,7 +759,7 @@ class MultiLeaderContext:
             # parse context tags
             code, value = tag
             if content:
-                if content.parse(code, tag):
+                if content.parse(code, value):
                     continue
                 else:
                     content = None
