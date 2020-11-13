@@ -30,16 +30,21 @@ DXF Entities
 - FIELD
 - ACAD_TABLE
 
-- Blocks.purge() search for non-explicit block references in:
-    - All arrows in DIMENSION are no problem, there has to be an explicit 
-      INSERT for each used arrow in the associated geometry block.
-    - user defined arrow blocks in LEADER, MLEADER
-    - LEADER override: 'dimldrblk_handle'
-    - MLEADER: block content
-    - ACAD_TABLE: block content
+- Blocks.purge(): remove purge() - it is just too dangerous! The method name 
+  suggests a functionality and quality similar to that of a CAD application, 
+  which can not be delivered!
 
-- Optimize DXF loading: SubclassProcessor.load_tags_into_namespace()
-
+- Optimize DXF loading (>1.0): SubclassProcessor.load_tags_into_namespace()
+- Optimize DXF export (>1.0): write tags direct in export_entity() 
+  without any indirections, but this requires some additional tag writing 
+  function in the Tagwriter() class, these additional functions should only use 
+  methods from AbstractTagwriter():
+  - write_tag2_skip_default(code, value, default)
+  - write_vertex_2d(code, value, default) write explicit 2D vertices and 
+    skip default value if given
+  - a check function for tags containing user strings (line breaks!)
+  
+      
 DXF Audit & Repair
 ------------------
 
@@ -48,8 +53,8 @@ DXF Audit & Repair
     - arrows exist; repair: set to '' = default open filled arrow
     - text style exist; repair: set to 'Standard'
 
-Cython Code
------------
+Cython Code (>1.0)
+------------------
 
 - optional for install, testing and development
 - profiling required!!!

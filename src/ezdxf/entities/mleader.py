@@ -491,7 +491,7 @@ class MultiLeader(DXFGraphic):
 # 14 <point> (0.0, 0.0, 1.0)    <<< Block normal direction
 # 15 <point> (x, y, z)          <<< Block location
 # 16 <point> (1.0, 1.0, 1.0)    <<< Block scale
-# 46 <float> 0.0                <<< Block rotation
+# 46 <float> 0.0                <<< Block rotation in radians!
 # 93 <int> -1056964608          <<< Block color (raw)
 # 47 <float> 1.0                <<< start of transformation matrix (16x47)
 # 47 <float> 0.0
@@ -542,7 +542,7 @@ class MultiLeader(DXFGraphic):
 # 344 <hex> #94                 <<< dxf.block_record_handle
 # 93 <int> -1056964608          <<< dxf.block_color
 # 10 <point> (1.0, 1.0, 1.0)    <<< dxf.block_scale_factor
-# 43 <float> 0.0                <<< dxf.block_rotation  (in radians?!)
+# 43 <float> 0.0                <<< dxf.block_rotation in radians!
 # 176 <int> 0                   <<< dxf.block_connection_type
 # 293 <int> 0                   <<< dxf.is_annotative
 

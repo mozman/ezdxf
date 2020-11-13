@@ -1,6 +1,7 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import Any, TextIO, TYPE_CHECKING, Union, List, Iterable, BinaryIO
+import abc
 from .types import TAG_STRING_FORMAT, cast_tag_value, DXFVertex
 from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_DATA
 from .tags import DXFTag, Tags
@@ -17,54 +18,68 @@ __all__ = [
 CRLF = b'\r\n'
 
 
-class TagWriter:
-    """
-    Writes DXF tags into a stream.
+class AbstractTagwriter:
+    # Options for functions using an inherited class for DXF export:
+    dxfversion = LATEST_DXF_VERSION
+    write_handles = True
+    # Force writing optional values if equal to default value when True.
+    # True is only used for testing scenarios!
+    force_optional = False
 
-    Args:
-        stream: text stream
-        write_handles: if False don't write handles (5, 105), use only for
-            DXF R12 format
+    # Start of low level interface:
+    @abc.abstractmethod
+    def write_tag(self, tag: DXFTag) -> None:
+        ...
 
-    """
+    @abc.abstractmethod
+    def write_tag2(self, code: int, value: Any) -> None:
+        ...
 
-    def __init__(self, stream: TextIO, dxfversion=LATEST_DXF_VERSION,
-                 write_handles: bool = True):
-        self._stream = stream
-        # this are just options for export functions
-        self.dxfversion = dxfversion
-        self.write_handles = write_handles
-        # force writing optional values if equal to default value when set
-        # True is only used for testing
-        self.force_optional = False
+    @abc.abstractmethod
+    def write_str(self, s: str) -> None:
+        ...
+    # End of low level interface
 
+    # Tag export based on low level tag export:
     def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
         for tag in tags:
             self.write_tag(tag)
 
+    def write_vertex(self, code: int, vertex: Iterable[float]) -> None:
+        for index, value in enumerate(vertex):
+            self.write_tag2(code + index * 10, value)
+
+
+class TagWriter(AbstractTagwriter):
+    """ Writes DXF tags into a text stream. """
+
+    def __init__(self, stream: TextIO, dxfversion=LATEST_DXF_VERSION,
+                 write_handles: bool = True):
+        self._stream = stream
+        self.dxfversion = dxfversion
+        self.write_handles = write_handles
+        self.force_optional = False
+
+    # Start of low level interface:
     def write_tag(self, tag: DXFTag) -> None:
         self._stream.write(tag.dxfstr())
 
     def write_tag2(self, code: int, value: Any) -> None:
         self._stream.write(TAG_STRING_FORMAT % (code, value))
 
+    def write_str(self, s: str) -> None:
+        self._stream.write(s)
+    # End of low level interface
+
     def write_vertex(self, code: int, vertex: Iterable[float]) -> None:
+        """ Optimized vertex export. """
         write = self._stream.write
         for index, value in enumerate(vertex):
             write(TAG_STRING_FORMAT % (code + index * 10, value))
 
-    def write_str(self, s: str) -> None:
-        self._stream.write(s)
 
-
-class BinaryTagWriter(TagWriter):
-    """
-    Writes binary encoded DXF tags into a binary stream.
-
-    Args:
-        stream: binary IO stream
-        write_handles: if ``False`` don't write handles (5, 105), use only for
-            DXF R12 format
+class BinaryTagWriter(AbstractTagwriter):
+    """ Write binary encoded DXF tags into a binary stream.
 
     .. warning::
 
@@ -88,18 +103,16 @@ class BinaryTagWriter(TagWriter):
 
     def __init__(self, stream: BinaryIO, dxfversion=LATEST_DXF_VERSION,
                  write_handles: bool = True, encoding='utf8'):
-        super().__init__(None, dxfversion, write_handles)
         self._stream = stream
+        self.dxfversion = dxfversion
+        self.write_handles = write_handles
         self._encoding = encoding  # output encoding
         self._r12 = self.dxfversion <= 'AC1009'
 
     def write_signature(self) -> None:
         self._stream.write(b'AutoCAD Binary DXF\r\n\x1a\x00')
 
-    def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
-        for tag in tags:
-            self.write_tag(tag)
-
+    # Start of low level interface:
     def write_tag(self, tag: DXFTag) -> None:
         if isinstance(tag, DXFVertex):
             for code, value in tag.dxftags():
@@ -145,6 +158,7 @@ class BinaryTagWriter(TagWriter):
         else:  # write zero terminated string
             stream.write(str(value).encode(self._encoding, errors='dxfreplace'))
             stream.write(b'\x00')
+    # End of low level interface
 
     def _write_binary_chunks(self, code: int, data: bytes) -> None:
         # Split binary data into small chunks, 127 bytes is the
@@ -170,25 +184,17 @@ class BinaryTagWriter(TagWriter):
             index += CHUNK_SIZE
 
 
-class TagCollector:
-    """
-    Collects DXF tags as DXFTag() entities for testing.
-
-    """
+class TagCollector(AbstractTagwriter):
+    """ Collect DXF tags as DXFTag() entities for testing. """
 
     def __init__(self, dxfversion=LATEST_DXF_VERSION,
                  write_handles: bool = True, optional: bool = True):
         self.tags = []
         self.dxfversion = dxfversion
         self.write_handles = write_handles
-        # force writing optional values if equal to default value when set
-        # True is only used for testing
         self.force_optional = optional
 
-    def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
-        for tag in tags:
-            self.write_tag(tag)
-
+    # Start of low level interface:
     def write_tag(self, tag: DXFTag) -> None:
         if hasattr(tag, 'dxftags'):
             self.tags.extend(tag.dxftags())
@@ -198,12 +204,9 @@ class TagCollector:
     def write_tag2(self, code: int, value: Any) -> None:
         self.tags.append(DXFTag(code, cast_tag_value(int(code), value)))
 
-    def write_vertex(self, code: int, vertex: Iterable[float]) -> None:
-        for index, value in enumerate(vertex):
-            self.write_tag2(code + index * 10, value)
-
     def write_str(self, s: str) -> None:
         self.write_tags(Tags.from_text(s))
+    # End of low level interface
 
     def has_all_tags(self, other: 'TagCollector'):
         return all(tag in self.tags for tag in other.tags)
