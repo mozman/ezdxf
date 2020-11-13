@@ -8,7 +8,7 @@ from collections import namedtuple
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags
-from ezdxf.math import Vector, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS
+from ezdxf.math import Vector, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 from ezdxf import colors
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -675,16 +675,30 @@ class BlockData:
         self.normal_direction: Vector = Z_AXIS
         self.location: Vector = NULLVEC
         self.scale: Vector = Vector(1, 1, 1)
-        self.rotation: float = 0
+        self.rotation: float = 0  # in radians!
         self.color: int = colors.BY_BLOCK_RAW_VALUE
-        self.matrix: List[float] = []  # group code 47 x 16
+        # The transformation matrix is stored in transposed order
+        # of ezdxf.math.Matrix44()!
+        self._matrix: List[float] = []  # group code 47 x 16
+
+    @property
+    def matrix44(self) -> Matrix44:
+        m = Matrix44(self._matrix)
+        m.transpose()
+        return m
+
+    @matrix44.setter
+    def matrix44(self, m: Matrix44) -> None:
+        m = m.copy()
+        m.transpose()
+        self._matrix = m.matrix
 
     def parse(self, code: int, value) -> bool:
         attrib = BlockData.ATTRIBS.get(code)
         if attrib:
             self.__setattr__(attrib, value)
         elif code == 47:
-            self.matrix.append(value)
+            self._matrix.append(value)
         else:
             return False
         # return True if data belongs to block else False (end of block section)
@@ -704,7 +718,7 @@ class BlockData:
         write_vertex(16, self.scale)
         write_tag2(46, self.rotation)
         write_tag2(93, self.color)
-        for value in self.matrix:
+        for value in self._matrix:
             write_tag2(47, value)
 
 
@@ -962,7 +976,8 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
     'first_segment_angle_constraint': DXFAttr(40, default=0.0),
     'second_segment_angle_constraint': DXFAttr(41, default=0.0),
     'leader_type': DXFAttr(173, default=1),
-    'leader_line_color': DXFAttr(91, default=-1056964608),  # raw color: BY_BLOCK
+    'leader_line_color': DXFAttr(91, default=-1056964608),
+    # raw color: BY_BLOCK
     # raw color: BY_BLOCK
     'leader_linetype_handle': DXFAttr(340),
     'leader_lineweight': DXFAttr(92, default=-2),
