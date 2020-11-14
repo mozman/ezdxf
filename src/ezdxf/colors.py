@@ -17,6 +17,10 @@ COLOR_TYPE_RGB = 0xc2
 # ACI, AutoCAD color index, other bytes are 0,0,index ???
 COLOR_TYPE_ACI = 0xc3
 
+# Found in MLEADER text background color (group code 91) = -939524096
+# guess: use window background color
+COLOR_TYPE_WINDOW_BG = 0xc8
+
 
 def decode_raw_color(value: int) -> Tuple[int, Union[int, RGB]]:
     """ Returns tuple(type, Union[aci, (r, g, b)]. """
@@ -29,6 +33,8 @@ def decode_raw_color(value: int) -> Tuple[int, Union[int, RGB]]:
         return COLOR_TYPE_ACI, value & 0xff
     elif flags == COLOR_TYPE_RGB:
         return COLOR_TYPE_RGB, int2rgb(value)
+    elif flags == COLOR_TYPE_WINDOW_BG:
+        return COLOR_TYPE_WINDOW_BG, 0
     else:
         raise ValueError(f'Unknown color type: 0x{flags:02x}')
 

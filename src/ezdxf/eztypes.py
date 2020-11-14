@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.attributes import XType, DXFAttr
     from ezdxf.lldxf.tags import Tags
     from ezdxf.lldxf.extendedtags import ExtendedTags
-    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter as TagWriter
     from ezdxf.tools.complex_ltype import ComplexLineTypePart
     from ezdxf.query import EntityQuery
     from ezdxf.entities.xdict import ExtensionDict
