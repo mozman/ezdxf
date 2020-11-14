@@ -36,7 +36,8 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
     'version': DXFAttr(270, default=2),
     'style_handle': DXFAttr(340),
 
-    # Theory: Take properties for MLEADERSTYLE, except explicit overridden here:
+    # Theory: Take properties from MLEADERSTYLE,
+    # except explicit overridden here:
     'property_override_flags': DXFAttr(90),
     # Bit coded flags:
     # 1 << 0 = leader_type
@@ -129,7 +130,7 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
     # 0 = center extents
     # 1 = insertion point
 
-    'is_annoative': DXFAttr(293, default=0),
+    'is_annotative': DXFAttr(293, default=0),
 
     # REPEAT "arrow_heads": DXF R2007+
     # arrow_head_index: 94, ???
@@ -381,7 +382,7 @@ class MultiLeader(DXFGraphic):
         tagwriter.write_vertex(10, dxf.block_scale_vector)
         write_tag2(43, dxf.block_rotation)
         write_tag2(176, dxf.block_connection_type)
-        write_tag2(293, dxf.is_annoative)
+        write_tag2(293, dxf.is_annotative)
         if version >= const.DXF2007:
             self.export_arrow_heads(tagwriter)
             self.export_block_attribs(tagwriter)
