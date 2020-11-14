@@ -13,12 +13,13 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import ExtendedTags, DXFEntity
 
 __all__ = [
-    'TagWriter', 'BinaryTagWriter', 'TagCollector', 'basic_tags_from_text'
+    'TagWriter', 'BinaryTagWriter', 'TagCollector', 'basic_tags_from_text',
+    'AbstractTagWriter',
 ]
 CRLF = b'\r\n'
 
 
-class AbstractTagwriter:
+class AbstractTagWriter:
     # Options for functions using an inherited class for DXF export:
     dxfversion = LATEST_DXF_VERSION
     write_handles = True
@@ -50,7 +51,7 @@ class AbstractTagwriter:
             self.write_tag2(code + index * 10, value)
 
 
-class TagWriter(AbstractTagwriter):
+class TagWriter(AbstractTagWriter):
     """ Writes DXF tags into a text stream. """
 
     def __init__(self, stream: TextIO, dxfversion=LATEST_DXF_VERSION,
@@ -78,7 +79,7 @@ class TagWriter(AbstractTagwriter):
             write(TAG_STRING_FORMAT % (code + index * 10, value))
 
 
-class BinaryTagWriter(AbstractTagwriter):
+class BinaryTagWriter(AbstractTagWriter):
     """ Write binary encoded DXF tags into a binary stream.
 
     .. warning::
@@ -184,7 +185,7 @@ class BinaryTagWriter(AbstractTagwriter):
             index += CHUNK_SIZE
 
 
-class TagCollector(AbstractTagwriter):
+class TagCollector(AbstractTagWriter):
     """ Collect DXF tags as DXFTag() entities for testing. """
 
     def __init__(self, dxfversion=LATEST_DXF_VERSION,

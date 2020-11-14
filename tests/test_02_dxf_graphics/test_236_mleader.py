@@ -4,6 +4,7 @@ import pytest
 import ezdxf
 from ezdxf.layouts import VirtualLayout
 from ezdxf import colors
+from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.math import Matrix44
@@ -176,23 +177,33 @@ LEADER_LINE{
 
 class MLeaderTesting:
     @pytest.fixture(scope='class')
+    def tags(self, text):
+        tags = Tags.from_text(text)
+        return MultiLeader.extract_context_data(tags)
+
+    @pytest.fixture(scope='class')
     def ctx(self, tags):
         return MultiLeaderContext.load(compile_context_tags(tags, 301))
 
     @pytest.fixture(scope='class')
-    def mleader(self, tags):
-        return MultiLeader.load(ExtendedTags(tags))
+    def mleader(self, text):
+        return MultiLeader.load(ExtendedTags.from_text(text))
 
     def test_context_attribs_definition(self, ctx):
         for name in ctx.ATTRIBS.values():
             assert hasattr(ctx, name) is True
 
+    def test_mleader_export_dxf(self, text, mleader):
+        expected = basic_tags_from_text(text)
+        collector = TagCollector(dxfversion=const.DXF2010)
+        mleader.export_dxf(collector)
+        assert collector.tags == expected
+
 
 class TestMTextContext(MLeaderTesting):
     @pytest.fixture(scope='class')
-    def tags(self):
-        tags = Tags.from_text(MTEXT_MLEADER_R2010)
-        return MultiLeader.extract_context_data(tags)
+    def text(self):
+        return MTEXT_MLEADER_R2010
 
     def test_mtext_data_attribs_definition(self, ctx):
         mtext = ctx.mtext
@@ -524,9 +535,8 @@ LEADER_LINE{
 
 class TestBlockContext(MLeaderTesting):
     @pytest.fixture(scope='class')
-    def tags(self):
-        tags = Tags.from_text(BLOCK_MLEADER_R2010)
-        return MultiLeader.extract_context_data(tags)
+    def text(self):
+        return BLOCK_MLEADER_R2010
 
     def test_block_data_attribs_definition(self, ctx):
         block = ctx.block

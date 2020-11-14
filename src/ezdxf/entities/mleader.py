@@ -129,7 +129,7 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
     # 0 = center extents
     # 1 = insertion point
 
-    'is_annotative': DXFAttr(293, default=0),
+    'is_annoative': DXFAttr(293, default=0),
 
     # REPEAT "arrow_heads": DXF R2007+
     # arrow_head_index: 94, ???
@@ -223,14 +223,9 @@ class MultiLeader(DXFGraphic):
 
     def __init__(self):
         super().__init__()
-        # preserve original data until load/export is implemented
-        self._tags = Tags()
         self.context = MultiLeaderContext()
         self.arrow_heads: List[ArrowHeadData] = []
         self.block_attribs: List[AttribData] = []
-
-    def copy(self):
-        raise const.DXFTypeError(f'Cloning of {self.DXFTYPE} not supported.')
 
     def _copy_data(self, entity: 'MultiLeader') -> None:
         """ Copy leaders """
@@ -244,10 +239,6 @@ class MultiLeader(DXFGraphic):
         if processor is None:
             return dxf
         mleader_subclass = processor.subclasses[2]
-
-        # _tags is just a temporarily solution
-        self._tags = mleader_subclass.copy()
-
         context = self.extract_context_data(mleader_subclass)
         if context:
             try:
@@ -293,14 +284,19 @@ class MultiLeader(DXFGraphic):
     def load_arrow_heads(data: Tags) -> List[ArrowHeadData]:
         def store_head():
             heads.append(ArrowHeadData(
-                collector.get(94, 0),  # arrow head index or None
+                collector.get(94, 0),  # arrow head index
                 collector.get(345, '0'),  # arrow head handle
             ))
             collector.clear()
 
         heads = []
+        try:
+            start = data.tag_index(94)
+        except const.DXFValueError:
+            return heads
+
         collector = dict()
-        for code, value in data.collect_consecutive_tags({94, 345}):
+        for code, value in data.collect_consecutive_tags({94, 345}, start):
             collector[code] = value
             if code == 345:
                 store_head()
@@ -318,8 +314,14 @@ class MultiLeader(DXFGraphic):
             collector.clear()
 
         attribs = []
+        try:
+            start = data.tag_index(330)
+        except const.DXFValueError:
+            return attribs
+
         collector = dict()
-        for code, value in data.collect_consecutive_tags({330, 177, 44, 302}):
+        for code, value in data.collect_consecutive_tags(
+                {330, 177, 44, 302}, start):
             if code == 330 and len(collector):
                 store_attrib()
             collector[code] = value
@@ -336,10 +338,6 @@ class MultiLeader(DXFGraphic):
             return False
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        super().export_entity(tagwriter)
-        tagwriter.write_tags(self._tags)
-
-    def export_entity2(self, tagwriter: 'TagWriter') -> None:
         def write_handle_if_exist(code: int, name: str):
             handle = dxf.get(name)
             if handle is not None:
@@ -413,150 +411,120 @@ class MultiLeader(DXFGraphic):
             tagwriter.write_tag2(302, attrib.text)
 
 
-# Example BricsCAD MultiLeaderContext:
-# 300 <str> CONTEXT_DATA{
-# 40 <float> 1.0    <<< content scale
-# 10 <point> (x, y, z)      <<< content base point
-# 41 <float> 4.0    <<< text height
-# 140 <float> 4.0   <<< arrowhead size
-# 145 <float> 2.0   <<< landing gap size
-# 174 <int> 1       <<< doc missing
-# 175 <int> 1       <<< doc missing
-# 176 <int> 0       <<< doc missing
-# 177 <int> 0       <<< doc missing
+class MultiLeaderContext:
+    ATTRIBS = {
+        40: 'scale',
+        10: 'base_point',
+        41: 'text_height',
+        140: 'arrowhead_size',
+        145: 'landing_gap_size',
+        174: 'left_attachment',
+        175: 'right_attachment',
+        176: 'text_align_type',
+        177: 'attachment_type',
+        110: 'plane_origin',
+        111: 'plane_x_axis',
+        112: 'plane_y_axis',
+        297: 'plane_normal_reversed',
+        272: 'top_attachment',
+        273: 'bottom_attachment',
+    }
 
-# 290 <int> 1       <<< has_mtext_content
-# START MText Content tags:
-# 304 <str> MLEADER
-# 11 <point> (0.0, 0.0, 1.0)    <<< text normal direction
-# 340 <hex> #A0                 <<< text style as handle
-# 12 <point> (x, y, z)          <<< text location
-# 13 <point> (1.0, 0.0, 0.0)    <<< text direction
-# 42 <float> 0.0        <<< text rotation
-# 43 <float> 0.0        <<< text width
-# 44 <float> 0.0        <<< text height
-# 45 <float> 1.0        <<< text line space factor
-# 170 <int> 1           <<< text line space style
-# 90 <int> -1056964608  <<< text raw color
-# 171 <int> 1           <<< text attachment
-# 172 <int> 1           <<< text flow direction
-# 91 <int> -939524096   <<< text raw background color
-# 141 <float> 1.5       <<< text background scale factor
-# 92 <int> 0            <<< text background transparency
-# 291 <int> 0           <<< has_text_bg_color
-# 292 <int> 0           <<< has_text_bg_fill
-# 173 <int> 0           <<< text column type
-# 293 <int> 0           <<< use text auto height
-# 142 <float> 0.0       <<< text column width
-# 143 <float> 0.0       <<< text column gutter width
-# 294 <int> 0           <<< text column flow reversed
-# 144 <float> missing   <<< text column height (optional?)
-# 295 <int> 0           <<< text use word break
-# END MText Content tags:
+    def __init__(self):
+        self.leaders: List['Leader'] = []
+        self.scale: float = 1.0  # overall scale
+        self.base_point: Vector = NULLVEC
+        self.text_height = 4.0
+        self.arrowhead_size = 4.0
+        self.landing_gap_size = 2.0
+        self.left_attachment = 1
+        self.right_attachment = 1
+        self.text_align_type = 0  # 0=left, 1=center, 2=right
+        self.attachment_type = 0  # 0=content extents, 1=insertion point
+        self.mtext: Optional[MTextData] = None
+        self.block: Optional[BlockData] = None
+        self.plane_origin: Vector = NULLVEC
+        self.plane_x_axis: Vector = X_AXIS
+        self.plane_y_axis: Vector = Y_AXIS
+        self.plane_normal_reversed: int = 0
+        self.top_attachment = 9
+        self.bottom_attachment = 9
 
-# 296 <int> 0       <<< has_block_content
-# START Block content tags
-# END Block content tags
+    @classmethod
+    def load(cls, context: List[Union['DXFTag', List]]) -> 'MultiLeaderContext':
+        assert context[0] == (START_CONTEXT_DATA, CONTEXT_STR)
+        ctx = cls()
+        content = None
+        for tag in context:
+            if isinstance(tag, list):  # Leader()
+                ctx.leaders.append(Leader.load(tag))
+                continue
+            # parse context tags
+            code, value = tag
+            if content:
+                if content.parse(code, value):
+                    continue
+                else:
+                    content = None
 
-# 110 <point> (0.0, 0.0, 0.0)       <<< MLEADER plane origin point
-# 111 <point> (1.0, 0.0, 0.0)       <<< MLEADER plane x-axis direction
-# 112 <point> (0.0, 1.0, 0.0)       <<< MLEADER plane y-axis direction
-# 297 <int> 0                       <<< MLEADER normal reversed
-# 302 <str> LEADER{
-# ...
-# 303 <str> }
-# 302 <str> LEADER{
-# ...
-# 303 <str> }
-# 272 <int> 9       <<< doc missing
-# 273 <int> 9       <<< doc missing
-# 301 <str> }
+            if code == 290 and value == 1:
+                content = MTextData()
+                ctx.mtext = content
+            elif code == 296 and value == 1:
+                content = BlockData()
+                ctx.block = content
+            else:
+                name = MultiLeaderContext.ATTRIBS.get(code)
+                if name:
+                    ctx.__setattr__(name, value)
+        return ctx
 
-# Example BricsCAD for block content:
-# 300 <str> CONTEXT_DATA{
-# 40 <float> 1.0
-# 10 <point> (x, y, z)
-# 41 <float> 4.0
-# 140 <float> 4.0
-# 145 <float> 2.0
-# 174 <int> 1
-# 175 <int> 1
-# 176 <int> 0
-# 177 <int> 0
-# 290 <int> 0       <<< has_mtext_content
-# 296 <int> 1       <<< has_block_content
+    @property
+    def is_valid(self) -> bool:
+        return True
 
-# START Block content tags
-# 341 <hex> #94                 <<< dxf.block_record_handle
-# 14 <point> (0.0, 0.0, 1.0)    <<< Block normal direction
-# 15 <point> (x, y, z)          <<< Block location
-# 16 <point> (1.0, 1.0, 1.0)    <<< Block scale
-# 46 <float> 0.0                <<< Block rotation in radians!
-# 93 <int> -1056964608          <<< Block color (raw)
-# 47 <float> 1.0                <<< start of transformation matrix (16x47)
-# 47 <float> 0.0
-# 47 <float> 0.0
-# 47 <float> 18.427396871473
-# 47 <float> 0.0
-# 47 <float> 1.0
-# 47 <float> 0.0
-# 47 <float> 0.702618780008
-# 47 <float> 0.0
-# 47 <float> 0.0
-# 47 <float> 1.0
-# 47 <float> 0.0
-# 47 <float> 0.0
-# 47 <float> 0.0
-# 47 <float> 0.0
-# 47 <float> 1.0                <<< end of transformation matrix
-# END Block content tags
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        write_tag2 = tagwriter.write_tag2
+        write_vertex = tagwriter.write_vertex
+        write_tag2(START_CONTEXT_DATA, CONTEXT_STR)
+        # All MultiLeaderContext tags:
+        write_tag2(40, self.scale)
+        write_vertex(10, self.base_point)
+        write_tag2(41, self.text_height)
+        write_tag2(140, self.arrowhead_size)
+        write_tag2(145, self.landing_gap_size)
+        write_tag2(174, self.left_attachment)
+        write_tag2(175, self.right_attachment)
+        write_tag2(176, self.text_align_type)
+        write_tag2(177, self.attachment_type)
 
-# 110 <point> (0.0, 0.0, 0.0)       <<< MLEADER plane origin point
-# 111 <point> (1.0, 0.0, 0.0)       <<< MLEADER plane x-axis direction
-# 112 <point> (0.0, 1.0, 0.0)       <<< MLEADER plane y-axis direction
-# 297 <int> 0                       <<< MLEADER normal reversed
+        if self.mtext:
+            write_tag2(290, 1)  # has mtext content
+            self.mtext.export_dxf(tagwriter)
+        else:
+            write_tag2(290, 0)
 
-# 302 <str> LEADER{
-# ...
-# 303 <str> }
+        if self.block:
+            write_tag2(296, 1)  # has block content
+            self.block.export_dxf(tagwriter)
+        else:
+            write_tag2(296, 0)
 
-# 272 <int> 9
-# 273 <int> 9
-# 301 <str> }
+        write_vertex(110, self.plane_origin)
+        write_vertex(111, self.plane_x_axis)
+        write_vertex(112, self.plane_y_axis)
+        write_tag2(297, self.plane_normal_reversed)
 
-# Attribute content and other redundant block data is stored in the AcDbMLeader
-# subclass:
-#
-# 100 <ctrl> AcDbMLeader
-# 270 <int> 2                   <<< dxf.version
-# 300 <str> CONTEXT_DATA{       <<< start context data
-# ...
-# 301 <str> }                   <<< end context data
-# 340 <hex> #6D                 <<< dxf.style_handle
-# 90 <int> 6816768              <<< dxf.property_override_flags
-# ...                           <<< property overrides
-# 292 <int> 0                   <<< dxf.has_frame_text
-#
-# Redundant block data or context data overrides?:
-#
-# 344 <hex> #94                 <<< dxf.block_record_handle
-# 93 <int> -1056964608          <<< dxf.block_color
-# 10 <point> (1.0, 1.0, 1.0)    <<< dxf.block_scale_factor
-# 43 <float> 0.0                <<< dxf.block_rotation in radians!
-# 176 <int> 0                   <<< dxf.block_connection_type
-# 293 <int> 0                   <<< dxf.is_annotative
+        # Export Leader and LiederLine objects:
+        for leader in self.leaders:
+            leader.export_dxf(tagwriter)
 
-# REPEAT: (optional)
-# 94 <int>                      <<< arrow head index?
-# 345 <hex>                     <<< arrow head handle
+        # Additional MultiLeaderContext tags:
+        if tagwriter.dxfversion >= const.DXF2010:
+            write_tag2(272, self.top_attachment)
+            write_tag2(273, self.bottom_attachment)
+        write_tag2(END_CONTEXT_DATA, '}')
 
-# REPEAT: (optional)
-# 330 <hex> #A3                 <<< ATTDEF handle
-# 177 <int> 1                   <<< ATTDEF index
-# 44 <float> 0.0                <<< ATTDEF width
-# 302 <str> B                   <<< ATTDEF text (reused group code)
-
-# ...  common group codes 294, 178, 179, ...
 
 class MTextData:
     ATTRIBS = {
@@ -720,121 +688,6 @@ class BlockData:
         write_tag2(93, self.color)
         for value in self._matrix:
             write_tag2(47, value)
-
-
-class MultiLeaderContext:
-    ATTRIBS = {
-        40: 'scale',
-        10: 'base_point',
-        41: 'text_height',
-        140: 'arrowhead_size',
-        145: 'landing_gap_size',
-        174: 'left_attachment',
-        175: 'right_attachment',
-        176: 'text_align_type',
-        177: 'attachment_type',
-        110: 'plane_origin',
-        111: 'plane_x_axis',
-        112: 'plane_y_axis',
-        297: 'plane_normal_reversed',
-        272: 'top_attachment',
-        273: 'bottom_attachment',
-    }
-
-    def __init__(self):
-        self.leaders: List['Leader'] = []
-        self.scale: float = 1.0  # overall scale
-        self.base_point: Vector = NULLVEC
-        self.text_height = 4.0
-        self.arrowhead_size = 4.0
-        self.landing_gap_size = 2.0
-        self.left_attachment = 1
-        self.right_attachment = 1
-        self.text_align_type = 0  # 0=left, 1=center, 2=right
-        self.attachment_type = 0  # 0=content extents, 1=insertion point
-        self.mtext: Optional[MTextData] = None
-        self.block: Optional[BlockData] = None
-        self.plane_origin: Vector = NULLVEC
-        self.plane_x_axis: Vector = X_AXIS
-        self.plane_y_axis: Vector = Y_AXIS
-        self.plane_normal_reversed: int = 0
-        self.top_attachment = 9
-        self.bottom_attachment = 9
-
-    @classmethod
-    def load(cls, context: List[Union['DXFTag', List]]) -> 'MultiLeaderContext':
-        assert context[0] == (START_CONTEXT_DATA, CONTEXT_STR)
-        ctx = cls()
-        content = None
-        for tag in context:
-            if isinstance(tag, list):  # Leader()
-                ctx.leaders.append(Leader.load(tag))
-                continue
-            # parse context tags
-            code, value = tag
-            if content:
-                if content.parse(code, value):
-                    continue
-                else:
-                    content = None
-
-            if code == 290 and value == 1:
-                content = MTextData()
-                ctx.mtext = content
-            elif code == 296 and value == 1:
-                content = BlockData()
-                ctx.block = content
-            else:
-                name = MultiLeaderContext.ATTRIBS.get(code)
-                if name:
-                    ctx.__setattr__(name, value)
-        return ctx
-
-    @property
-    def is_valid(self) -> bool:
-        return True
-
-    def export_dxf(self, tagwriter: 'TagWriter') -> None:
-        write_tag2 = tagwriter.write_tag2
-        write_vertex = tagwriter.write_vertex
-        write_tag2(START_CONTEXT_DATA, CONTEXT_STR)
-        # All MultiLeaderContext tags:
-        write_tag2(40, self.scale)
-        write_vertex(10, self.base_point)
-        write_tag2(41, self.text_height)
-        write_tag2(140, self.arrowhead_size)
-        write_tag2(145, self.landing_gap_size)
-        write_tag2(174, self.left_attachment)
-        write_tag2(175, self.right_attachment)
-        write_tag2(176, self.text_align_type)
-        write_tag2(177, self.attachment_type)
-
-        if self.mtext:
-            write_tag2(290, 1)  # has mtext content
-            self.mtext.export_dxf(tagwriter)
-        else:
-            write_tag2(290, 0)
-
-        if self.block:
-            write_tag2(296, 1)  # has block content
-            self.block.export_dxf(tagwriter)
-        else:
-            write_tag2(296, 0)
-
-        write_vertex(110, self.plane_origin)
-        write_vertex(111, self.plane_x_axis)
-        write_vertex(112, self.plane_y_axis)
-        write_tag2(297, self.plane_normal_reversed)
-
-        # Export Leader and LiederLine objects:
-        for leader in self.leaders:
-            leader.export_dxf(tagwriter)
-
-        # Additional MultiLeaderContext tags:
-        if tagwriter.dxfversion > const.DXF2010:
-            write_tag2(272, self.top_attachment)
-            write_tag2(273, self.bottom_attachment)
-        write_tag2(END_CONTEXT_DATA, '}')
 
 
 class Leader:
