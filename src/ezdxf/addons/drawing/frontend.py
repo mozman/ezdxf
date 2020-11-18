@@ -20,6 +20,7 @@ from ezdxf.math import Vector, Z_AXIS
 from ezdxf.render import MeshBuilder, TraceBuilder, Path
 from ezdxf import reorder
 from ezdxf.render import nesting
+from ezdxf.proxygraphic import ProxyGraphic
 
 __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
@@ -159,6 +160,8 @@ class Frontend:
             self.draw_wipeout_entity(entity, properties)
         elif dxftype == 'VIEWPORT':
             self.draw_viewport_entity(entity)
+        elif entity.proxy_graphic is not None:
+            self.draw_proxy_graphic(entity)
         else:
             self.skip_entity(entity, 'Unsupported entity')
         self.out.exit_entity(entity)
@@ -420,6 +423,11 @@ class Frontend:
             self.draw_entities(set_opaque(entity.virtual_entities()))
         else:
             raise TypeError(dxftype)
+
+    def draw_proxy_graphic(self, entity: DXFGraphic) -> None:
+        if entity.proxy_graphic:
+            gfx = ProxyGraphic(entity.proxy_graphic, entity.doc)
+            self.draw_entities(gfx.virtual_entities())
 
 
 def is_spatial(v: Vector) -> bool:

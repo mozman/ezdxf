@@ -8,7 +8,7 @@ from itertools import repeat
 from ezdxf.lldxf import const
 from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream, BitStream
 from ezdxf.colors import rgb2int
-from ezdxf.math import Vector
+from ezdxf.math import Vector, Matrix44
 from ezdxf.entities import factory
 from ezdxf.math import ConstructionCircle, ConstructionArc
 import logging
@@ -87,6 +87,7 @@ COLOR_BY_LAYER = 256
 
 BY_LAYER = 0xFFFFFFFF
 BY_BLOCK = 0xFFFFFFFE
+LW_DEFAULT = 0xFFFFFFFD
 
 
 class ProxyGraphic:
@@ -112,6 +113,7 @@ class ProxyGraphic:
         # List of text styles, with font name as key
         self.textstyles = dict()
         self.required_fonts = set()
+        self.matrices = []
 
         if self._doc:
             self.layers = list(layer.dxf.name for layer in self._doc.layers)
@@ -131,6 +133,12 @@ class ProxyGraphic:
             index += size
 
     def virtual_entities(self):
+        def transform(entity):
+            if self.matrices:
+                return entity.transform(self.matrices[-1])
+            else:
+                return entity
+
         index = self._index
         buffer = self._buffer
         while index < len(buffer):
@@ -145,12 +153,23 @@ class ProxyGraphic:
             if method:
                 result = method(self._buffer[index + 8: index + size])
                 if isinstance(result, tuple):
-                    yield from result
+                    for entity in result:
+                        yield transform(entity)
                 elif result:
-                    yield result
+                    yield transform(result)
             else:
                 logger.debug(f'Unsupported feature ProxyGraphic.{name}()')
             index += size
+
+    def push_matrix(self, data: bytes):
+        values = struct.unpack('<16d', data)
+        m = Matrix44(values)
+        m.transpose()
+        self.matrices.append(m)
+
+    def pop_matrix(self, data: bytes):
+        if self.matrices:
+            self.matrices.pop()
 
     def attribute_color(self, data: bytes):
         self.color = struct.unpack('<L', data)[0]
@@ -183,8 +202,10 @@ class ProxyGraphic:
         self.lineweight = struct.unpack('<L', data)[0]
         if self.lineweight == BY_LAYER:
             self.lineweight = const.LINEWEIGHT_BYLAYER
-        if self.lineweight == BY_BLOCK:
+        elif self.lineweight == BY_BLOCK:
             self.lineweight = const.LINEWEIGHT_BYBLOCK
+        elif self.lineweight == LW_DEFAULT:
+            self.lineweight = const.LINEWEIGHT_DEFAULT
 
     def attribute_ltscale(self, data: bytes):
         self.ltscale = struct.unpack('<d', data)[0]

@@ -25,6 +25,9 @@ from ezdxf.audit import Auditor
 from ezdxf.entities import DXFGraphic
 from ezdxf.lldxf.const import DXFStructureError
 
+# Load and draw proxy graphic:
+ezdxf.options.load_proxy_graphics = True
+
 # Setup fonts - this is not done automatically, because this may take a long
 # time and is not important for every user.
 # Load default font definitions, included in ezdxf:

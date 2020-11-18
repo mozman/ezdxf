@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.15a4 - dev
+Version 0.15b0 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-15.html
@@ -12,6 +12,7 @@ Version 0.15a4 - dev
 - NEW: Font support for matplotlib- and pyqt drawing backend
 - NEW: POINT mode support for matplotlib- and pyqt drawing backend, relative 
   point size is not supported
+- NEW: Proxy graphic support for matplotlib- and pyqt drawing backend
 - NEW: recover misplaced tags of the `AcDbEntity` subclass (color, layer, 
   linetype, ...), supported by all loading modes
 - NEW: `ezdxf.addons.geo` module, support for the 

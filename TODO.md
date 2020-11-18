@@ -7,8 +7,6 @@ Add-ons
 - drawing
     - MLEADER support (v0.16)
     - add support for ATTRIB with embedded MTEXT (v0.16)
-    - render proxy graphic, class `ProxyGraphic()` is already 
-      implemented but not tested with real world data.
     - ACAD_TABLE
 
 - Simple SVG exporter, planned after the matplotlib backend supports all the 
