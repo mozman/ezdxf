@@ -69,7 +69,7 @@ class TestProxyGraphic:
         assert text.dxf.layer == '0'  # no DXF document available
         assert text.dxf.color == 256  # by layer
         assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
-        assert text.rgb == (0, 0, 192)  # ???
+        assert text.dxf.true_color is None
 
         polyline = entities[1]  # POLYGON
         assert polyline.dxftype() == 'POLYLINE'

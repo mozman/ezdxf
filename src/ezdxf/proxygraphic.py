@@ -7,7 +7,7 @@ from enum import IntEnum
 from itertools import repeat
 from ezdxf.lldxf import const
 from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream, BitStream
-from ezdxf.colors import rgb2int
+from ezdxf import colors
 from ezdxf.math import Vector, Matrix44
 from ezdxf.entities import factory
 from ezdxf.math import ConstructionCircle, ConstructionArc
@@ -195,8 +195,11 @@ class ProxyGraphic:
         self.fill = bool(struct.unpack('<L', data)[0])
 
     def attribute_true_color(self, data: bytes):
-        # todo check byte order!
-        self.true_color = rgb2int((data[1], data[2], data[3]))
+        code, value = colors.decode_raw_color(struct.unpack('<L', data)[0])
+        if code == colors.COLOR_TYPE_RGB:
+            self.true_color = colors.rgb2int(value)
+        else:  # ACI colors, BYLAYER, BYBLOCK
+            self.color = value
 
     def attribute_lineweight(self, data: bytes):
         self.lineweight = struct.unpack('<L', data)[0]
@@ -243,7 +246,6 @@ class ProxyGraphic:
         start_vec = Vector(bs.read_vertex())
         sweep_angle = bs.read_float()
         arc_type = bs.read_struct('L')[0]
-        attribs = self._build_dxf_attribs()
         # just do 2D for now
         start_angle = start_vec.angle_deg
         end_angle = start_angle + math.degrees(sweep_angle)

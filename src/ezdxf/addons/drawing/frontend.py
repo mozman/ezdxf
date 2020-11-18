@@ -37,6 +37,10 @@ COMPOSITE_ENTITY_TYPES = {
     'ACAD_TABLE',
 }
 
+IGNORE_PROXY_GRAPHICS = 0
+USE_PROXY_GRAPHICS = 1
+PREFER_PROXY_GRAPHICS = 2
+
 
 class Frontend:
     """ Drawing frontend, responsible for decomposing entities into graphic
@@ -48,13 +52,22 @@ class Frontend:
 
     """
 
-    def __init__(self, ctx: RenderContext, out: Backend):
+    def __init__(self, ctx: RenderContext, out: Backend,
+                 proxy_graphics: int = USE_PROXY_GRAPHICS):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
         self.ctx = ctx
 
         # DrawingBackend is the interface to the render engine
         self.out = out
+
+        # To get proxy graphics support proxy graphics have to be loaded:
+        # Set the global option ezdxf.options.load_proxy_graphics to True.
+        # How to handle proxy graphics:
+        # 0 = ignore proxy graphics
+        # 1 = use proxy graphics if no rendering support by ezdxf exist
+        # 2 = prefer proxy graphics over ezdxf rendering
+        self.proxy_graphics = proxy_graphics
 
         # Transfer render context info to backend:
         ctx.update_backend_configuration(out)
@@ -133,7 +146,9 @@ class Frontend:
         """
         dxftype = entity.dxftype()
         self.out.enter_entity(entity, properties)
-        if dxftype in {'LINE', 'XLINE', 'RAY'}:
+        if entity.proxy_graphic and self.proxy_graphics == PREFER_PROXY_GRAPHICS:
+            self.draw_proxy_graphic(entity)
+        elif dxftype in {'LINE', 'XLINE', 'RAY'}:
             self.draw_line_entity(entity, properties)
         elif dxftype in {'TEXT', 'MTEXT', 'ATTRIB'}:
             if is_spatial(Vector(entity.dxf.extrusion)):
@@ -160,7 +175,7 @@ class Frontend:
             self.draw_wipeout_entity(entity, properties)
         elif dxftype == 'VIEWPORT':
             self.draw_viewport_entity(entity)
-        elif entity.proxy_graphic is not None:
+        elif entity.proxy_graphic and self.proxy_graphics == USE_PROXY_GRAPHICS:
             self.draw_proxy_graphic(entity)
         else:
             self.skip_entity(entity, 'Unsupported entity')
@@ -271,6 +286,7 @@ class Frontend:
             path = Path.from_hatch_boundary_path(p, ocs, elevation)
             path.close()
             return path
+
         if not self.out.show_hatch:
             return
 

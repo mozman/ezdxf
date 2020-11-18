@@ -32,12 +32,15 @@ ezdxf.options.load_proxy_graphics = True
 # time and is not important for every user.
 # Load default font definitions, included in ezdxf:
 fonts.load()
+
 # Add font definitions available at the running system, requires matplotlib:
 fonts.add_system_fonts()
 
 
 class CADGraphicsView(qw.QGraphicsView):
-    def __init__(self, *, view_buffer: float = 0.2, zoom_per_scroll_notch: float = 0.2, loading_overlay: bool = True):
+    def __init__(self, *, view_buffer: float = 0.2,
+                 zoom_per_scroll_notch: float = 0.2,
+                 loading_overlay: bool = True):
         super().__init__()
         self._zoom = 1
         self._default_zoom = 1
