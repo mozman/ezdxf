@@ -37,7 +37,7 @@ def hatch_pattern():
 
 def test_default_settings(hatch):
     assert hatch.dxf.layer == '0'
-    assert hatch.dxf.color == 1
+    assert hatch.dxf.color == 256  # by layer
     assert hatch.dxf.linetype == 'BYLAYER'
     assert hatch.dxf.ltscale == 1.0
     assert hatch.dxf.invisible == 0

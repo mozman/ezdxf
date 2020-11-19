@@ -65,7 +65,7 @@ acdb_hatch = DefSubclass('AcDbHatch', {
     ),
 
     # MPolygon: pattern fill color as the ACI
-    'mp_pattern_fill_color': DXFAttr(63, default=1, optional=True),
+    'mp_pattern_fill_color': DXFAttr(63, default=const.BYLAYER, optional=True),
 
     # HATCH: associativity flag
     # 0 = non-associative
@@ -213,7 +213,6 @@ class Hatch(DXFGraphic):
     """ DXF HATCH entity """
     DXFTYPE = 'HATCH'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_hatch)
-    DEFAULT_ATTRIBS = {'color': 1, 'layer': '0'}
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def __init__(self):
