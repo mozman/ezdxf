@@ -279,28 +279,30 @@ class ProxyGraphic:
         hatch.paths.add_polyline_path(vertices, is_closed=True)
         return hatch
 
-    def _polyline(self, vertices, normal=Z_AXIS):
+    def _polyline(self, vertices, *, close=False, normal=Z_AXIS):
         # Polyline without bulge values!
         # Current implementation ignores the normal vector!
         attribs = self._build_dxf_attribs()
-
-        if len(vertices) < 3 and vertices[0].isclose(vertices[1]):
+        count = len(vertices)
+        if count == 1 or (count == 2 and vertices[0].isclose(vertices[1])):
             attribs['location'] = vertices[0]
             return self._factory('POINT', dxfattribs=attribs)
 
-        if self.fill and len(vertices) > 2:
+        if self.fill and count > 2:
             polyline = self._filled_polygon(vertices, attribs)
         else:
             attribs['flags'] = const.POLYLINE_3D_POLYLINE
             polyline = cast('Polyline',
                             self._factory('POLYLINE', dxfattribs=attribs))
             polyline.append_vertices(vertices)
+            if close:
+                polyline.close()
         return polyline
 
     def polyline_with_normals(self, data: bytes):
         # Polyline without bulge values!
         vertices, normal = self._load_vertices(data, load_normal=True)
-        return self._polyline(vertices)
+        return self._polyline(vertices, normal=normal)
 
     def polyline(self, data: bytes):
         # Polyline without bulge values!
@@ -310,10 +312,7 @@ class ProxyGraphic:
     def polygon(self, data: bytes):
         # Polyline without bulge values!
         vertices, normal = self._load_vertices(data, load_normal=False)
-        polygon = self._polyline(vertices)
-        if polygon.dxftype() == 'POLYLINE':
-            polygon.close()
-        return polygon
+        return self._polyline(vertices, close=True)
 
     def lwpolyline(self, data: bytes):
         # OpenDesign Specs LWPLINE: 20.4.85 Page 211
