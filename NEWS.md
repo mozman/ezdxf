@@ -12,7 +12,7 @@ Version 0.15b0 - dev
 - NEW: Font support for matplotlib- and pyqt drawing backend
 - NEW: POINT mode support for matplotlib- and pyqt drawing backend, relative 
   point size is not supported
-- NEW: Proxy graphic support for matplotlib- and pyqt drawing backend
+- NEW: Proxy graphic support for the drawing add-on
 - NEW: recover misplaced tags of the `AcDbEntity` subclass (color, layer, 
   linetype, ...), supported by all loading modes
 - NEW: `ezdxf.addons.geo` module, support for the 
