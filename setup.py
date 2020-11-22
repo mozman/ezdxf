@@ -4,7 +4,20 @@
 # License: MIT License
 import os
 from setuptools import setup, find_packages
+from setuptools import Extension
 # setuptools docs: https://setuptools.readthedocs.io/en/latest/setuptools.html
+
+# Cython accelerated modules are optional:
+try:
+    from Cython.Distutils import build_ext
+
+    ext_modules = [
+        Extension("ezdxf.acc.fastmath", ["src/ezdxf/acc/fastmath.pyx"]),
+    ]
+    commands = {'build_ext': build_ext}
+except ImportError:
+    ext_modules = []
+    commands = {}
 
 
 def get_version():
@@ -55,6 +68,8 @@ setup(
         ]
     },
     provides=['ezdxf'],
+    cmdclass=commands,
+    ext_modules=ext_modules,
     install_requires=['pyparsing>=2.0.1'],
     setup_requires=['wheel'],
     tests_require=['pytest', 'geomdl'],
