@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, List, cast
 from itertools import chain
 from ezdxf.entities import factory
-from ezdxf.math import Vector, OCS
+from ezdxf.math import Vec3, OCS
 import logging
 
 if TYPE_CHECKING:
@@ -87,7 +87,7 @@ def virtual_entities(mline: 'MLine') -> List['DXFGraphic']:
         end = ocs.from_wcs(miter_points[miter_index][end_index])
         return _arc_caps(start, end, color1, color2)
 
-    def _arc_caps(start: Vector, end: Vector, color1: int, color2: int):
+    def _arc_caps(start: Vec3, end: Vec3, color1: int, color2: int):
         attribs = _dxfattribs(mline)
         center = start.lerp(end)
         radius = (end - start).magnitude / 2.0
@@ -171,9 +171,9 @@ def virtual_entities(mline: 'MLine') -> List['DXFGraphic']:
     ordered_indices = style.ordered_indices()
     bottom_index = ordered_indices[0]
     top_index = ordered_indices[-1]
-    bottom_border: List[Vector] = []
-    top_border: List[Vector] = []
-    miter_points: List[List[Vector]] = []
+    bottom_border: List[Vec3] = []
+    top_border: List[Vec3] = []
+    miter_points: List[List[Vec3]] = []
 
     for vertex in mline.vertices:
         offsets = vertex.line_params

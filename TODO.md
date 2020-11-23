@@ -64,6 +64,6 @@ Cython Code (>1.0)
 
 - optional for install, testing and development
 - profiling required!!!
-- optimized Vec2(), Vector() and Matrix44() classes
+- optimized Vec2(), Vec3() and Matrix44() classes
 - optimized math & construction tools
 - optimized tag loader

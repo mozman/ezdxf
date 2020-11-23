@@ -20,7 +20,7 @@ from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing import fonts
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vec3, Matrix44
 from ezdxf.render import Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
 from .matplotlib_hatch import HATCH_NAME_MAPPING
@@ -95,12 +95,12 @@ class MatplotlibBackend(Backend):
     def set_background(self, color: Color):
         self.ax.set_facecolor(color)
 
-    def draw_point(self, pos: Vector, properties: Properties):
+    def draw_point(self, pos: Vec3, properties: Properties):
         """ Draw a real dimensionless point. """
         color = properties.color
         self.ax.scatter([pos.x], [pos.y], s=0.1, c=color, zorder=self._get_z())
 
-    def draw_line(self, start: Vector, end: Vector, properties: Properties):
+    def draw_line(self, start: Vec3, end: Vec3, properties: Properties):
         # matplotlib draws nothing for a zero-length line:
         if start.isclose(end):
             self.draw_point(start, properties)
@@ -137,7 +137,7 @@ class MatplotlibBackend(Backend):
         )
         self.ax.add_patch(patch)
 
-    def draw_filled_polygon(self, points: Iterable[Vector],
+    def draw_filled_polygon(self, points: Iterable[Vec3],
                             properties: Properties):
         self.ax.fill(*zip(*((p.x, p.y) for p in points)),
                      color=properties.color, zorder=self._get_z())
@@ -230,7 +230,7 @@ class MatplotlibBackend(Backend):
 
 def _transform_path(path: Path, transform: Matrix44) -> Path:
     vertices = transform.transform_vertices(
-        [Vector(x, y) for x, y in path.vertices])
+        [Vec3(x, y) for x, y in path.vertices])
     return Path([(v.x, v.y) for v in vertices], path.codes)
 
 
@@ -421,8 +421,8 @@ class InternalLineRenderer(MatplotlibLineRenderer):
     results of CAD applications.
     """
 
-    def draw_line(self, start: Vector,
-                  end: Vector, properties: Properties, z: float):
+    def draw_line(self, start: Vec3,
+                  end: Vec3, properties: Properties, z: float):
         self.ax.add_line(
             Line2D(
                 (start.x, end.x), (start.y, end.y),
@@ -472,7 +472,7 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
     segments which causes a longer rendering time!
     """
 
-    def draw_line(self, start: Vector, end: Vector,
+    def draw_line(self, start: Vec3, end: Vec3,
                   properties: Properties, z: int):
         pattern = self.pattern(properties)
         lineweight = self.lineweight(properties)

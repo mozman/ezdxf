@@ -13,7 +13,7 @@ from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.line_renderer import AbstractLineRenderer
 from ezdxf.addons.drawing import fonts
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vec3, Matrix44
 from ezdxf.render import Path, Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
 from ezdxf.tools.pattern import PatternAnalyser
@@ -173,14 +173,14 @@ class PyQtBackend(Backend):
     def set_background(self, color: Color):
         self._scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
 
-    def draw_point(self, pos: Vector, properties: Properties) -> None:
+    def draw_point(self, pos: Vec3, properties: Properties) -> None:
         """ Draw a real dimensionless point. """
         brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
         item = _Point(pos.x, pos.y, brush)
         self._set_item_data(item)
         self._scene.addItem(item)
 
-    def draw_line(self, start: Vector, end: Vector,
+    def draw_line(self, start: Vec3, end: Vec3,
                   properties: Properties) -> None:
         # PyQt draws a long line for a zero-length line:
         if start.isclose(end):
@@ -207,7 +207,7 @@ class PyQtBackend(Backend):
         )
         self._set_item_data(item)
 
-    def draw_filled_polygon(self, points: Iterable[Vector],
+    def draw_filled_polygon(self, points: Iterable[Vec3],
                             properties: Properties) -> None:
         brush = self._get_brush(properties)
         polygon = qg.QPolygonF()
@@ -429,7 +429,7 @@ class InternalLineRenderer(PyQtLineRenderer):
                 pen.setDashPattern(pattern)
         return pen
 
-    def draw_line(self, start: Vector, end: Vector,
+    def draw_line(self, start: Vec3, end: Vec3,
                   properties: Properties, z=0):
         return self.scene.addLine(
             start.x, start.y, end.x, end.y,
@@ -452,7 +452,7 @@ class EzdxfLineRenderer(PyQtLineRenderer):
     segments which causes a longer rendering time!
     """
 
-    def draw_line(self, start: Vector, end: Vector,
+    def draw_line(self, start: Vec3, end: Vec3,
                   properties: Properties, z=0):
         pattern = self.pattern(properties)
         render_linetypes = bool(self.linetype_scaling)
