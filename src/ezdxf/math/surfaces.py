@@ -1,4 +1,4 @@
-# Copyright (c) 2012 Manfred Moitzi
+# Copyright (c) 2012-2020, Manfred Moitzi
 # License: MIT License
 from typing import List, Sequence
 from .bezier import bernstein_basis

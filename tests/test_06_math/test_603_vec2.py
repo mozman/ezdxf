@@ -2,12 +2,13 @@
 # License: MIT License
 import pytest
 import math
-from ezdxf.math.vector import Vec2, Vector
+# Import from 'ezdxf.math.vector' to test Python implementation
+from ezdxf.math.vector import Vec2, Vec3
 
 
-# Vec2 is a sub set of Vector, Vector can do everything Vec2 can do, but not every
+# Vec2 is a sub set of Vec3, Vec3 can do everything Vec2 can do, but not every
 # operation has the same result for 2D and 3D.
-@pytest.fixture(params=[Vec2, Vector])
+@pytest.fixture(params=[Vec2, Vec3])
 def vcls(request):
     return request.param
 
@@ -25,10 +26,10 @@ def test_init_vec2(vcls):
 
 
 def test_compatible_to_vector():
-    v = Vector(Vec2((1, 2)))
+    v = Vec3(Vec2((1, 2)))
     assert v == (1, 2, 0)
 
-    v = Vec2(Vector(1, 2, 3))
+    v = Vec2(Vec3(1, 2, 3))
     assert v.x == 1
     assert v.y == 2
 
@@ -196,7 +197,7 @@ def test_add_vector(vcls):
 
 
 def test_iadd_vector():
-    # Vector supports this operation but is immutable
+    # Vec3 supports this operation but is immutable
     v = Vec2((2, 3))
     v1 = v
     v += Vec2((7, 7))
@@ -219,7 +220,7 @@ def test_sub_vector(vcls):
 
 
 def test_isub_vector():
-    # Vector supports this operation but is immutable
+    # Vec3 supports this operation but is immutable
     v = Vec2((2, 3))
     v1 = v
     v -= Vec2((7, 7))
@@ -242,7 +243,7 @@ def test_mul_scalar(vcls):
 
 
 def test_imul_scalar():
-    # Vector supports this operation but is immutable
+    # Vec3 supports this operation but is immutable
     v = Vec2((2, 3))
     v1 = v
     v *= 2
@@ -262,7 +263,7 @@ def test_div_scalar(vcls):
 
 
 def test_idiv_scalar():
-    # Vector supports this operation but is immutable
+    # Vec3 supports this operation but is immutable
     v = Vec2((2, 3))
     v1 = v
     v /= 2
@@ -272,7 +273,7 @@ def test_idiv_scalar():
 
 
 def test_rdiv_scalar():
-    # Vector => div by 0
+    # Vec3 => div by 0
     v = Vec2((2, 3))
     assert 2 / v == (1, 0.66666666667)
 
@@ -301,8 +302,8 @@ def test_angle_between(vcls):
 
 
 def test_angle_between_outside_domain():
-    v1 = Vector(721.046967113573, 721.0469671135688, 0.0)
-    v2 = Vector(-721.0469671135725, -721.0469671135688, 0.0)
+    v1 = Vec3(721.046967113573, 721.0469671135688, 0.0)
+    v2 = Vec3(-721.0469671135725, -721.0469671135688, 0.0)
     angle = v1.angle_between(v2)
     assert math.isclose(angle, math.pi)
     # reverse order, same result

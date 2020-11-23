@@ -59,6 +59,7 @@ Version 0.15b0 - dev
   applications
 - CHANGE: `ezdxf.colors` module will consolidate all color/transparency related 
   features
+- CHANGE: renamed `ezdxf.math.Vector` to `Vec3`, but `Vector` remains as synonym
 - DEPRECATED: `ezdxf.tools.rgb` module replaced by `ezdxf.colors`
 - REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
   use `DXFEntity.transform(ucs.matrix)`

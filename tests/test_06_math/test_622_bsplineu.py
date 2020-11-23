@@ -1,10 +1,8 @@
-# Purpose: test BSplineU and DBSplineU
-# Created: 06.01.2012
 # Copyright (c) 2012-2018 Manfred Moitzi
 # License: MIT License
 import pytest
 from math import isclose
-from ezdxf.math.bspline import BSplineU
+from ezdxf.math import BSplineU
 
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]

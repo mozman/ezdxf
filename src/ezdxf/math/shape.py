@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import Union, Iterable, List, TYPE_CHECKING
 import math
-from .vector import Vec2
+from ezdxf.math import Vec2
 from .construct2d import convex_hull_2d
 from .offset2d import offset_vertices_2d
 from .bbox import BoundingBox2d

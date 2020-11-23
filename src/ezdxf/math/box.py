@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import List, Sequence, TYPE_CHECKING, Iterable, Tuple
 import math
-from .vector import Vec2
+from ezdxf.math import Vec2
 from .bbox import BoundingBox2d
 from .line import ConstructionLine
 from .construct2d import point_to_line_relation

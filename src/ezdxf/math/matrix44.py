@@ -2,14 +2,13 @@
 # Home-page: http://code.google.com/p/gameobjects/
 # Author: Will McGugan
 # Download-URL: http://code.google.com/p/gameobjects/downloads/list
-# Created: 19.04.2010
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
 from typing import Sequence, Iterable, List, Tuple, TYPE_CHECKING
 import math
 from math import sin, cos, tan
 from itertools import chain
-from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
+from ezdxf.math import Vec3, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -155,26 +154,26 @@ class Matrix44:
     __copy__ = copy
 
     @property
-    def origin(self) -> Vector:
+    def origin(self) -> Vec3:
         m = self.matrix
-        return Vector(m[12], m[13], m[14])
+        return Vec3(m[12], m[13], m[14])
 
     @origin.setter
     def origin(self, v: 'Vertex') -> None:
         m = self.matrix
-        m[12], m[13], m[14] = Vector(v)
+        m[12], m[13], m[14] = Vec3(v)
 
     @property
-    def ux(self) -> Vector:
-        return Vector(self.matrix[0:3])
+    def ux(self) -> Vec3:
+        return Vec3(self.matrix[0:3])
 
     @property
-    def uy(self) -> Vector:
-        return Vector(self.matrix[4:7])
+    def uy(self) -> Vec3:
+        return Vec3(self.matrix[4:7])
 
     @property
-    def uz(self) -> Vector:
-        return Vector(self.matrix[8:11])
+    def uz(self) -> Vec3:
+        return Vec3(self.matrix[8:11])
 
     @property
     def is_cartesian(self) -> bool:
@@ -284,7 +283,7 @@ class Matrix44:
         Returns a rotation matrix about an arbitrary `axis`.
 
         Args:
-            axis: rotation axis as ``(x, y, z)`` tuple or :class:`Vector` object
+            axis: rotation axis as ``(x, y, z)`` tuple or :class:`Vec3` object
             angle: rotation angle in radians
 
         """
@@ -496,37 +495,37 @@ class Matrix44:
         """ Iterate over columns as 4-tuples. """
         return (self.get_col(index) for index in (0, 1, 2, 3))
 
-    def transform(self, vector: 'Vertex') -> Vector:
+    def transform(self, vector: 'Vertex') -> Vec3:
         """ Returns a transformed vertex. """
         m = self.matrix
         x, y, z = vector
-        return Vector(x * m[0] + y * m[4] + z * m[8] + m[12],
+        return Vec3(x * m[0] + y * m[4] + z * m[8] + m[12],
                       x * m[1] + y * m[5] + z * m[9] + m[13],
                       x * m[2] + y * m[6] + z * m[10] + m[14])
 
-    def transform_direction(self, vector: 'Vertex', normalize=False) -> Vector:
+    def transform_direction(self, vector: 'Vertex', normalize=False) -> Vec3:
         """ Returns a transformed direction vector without translation. """
         m = self.matrix
         x, y, z = vector
-        v = Vector(x * m[0] + y * m[4] + z * m[8],
+        v = Vec3(x * m[0] + y * m[4] + z * m[8],
                    x * m[1] + y * m[5] + z * m[9],
                    x * m[2] + y * m[6] + z * m[10])
         return v.normalize() if normalize else v
 
     ocs_to_wcs = transform_direction
 
-    def transform_vertices(self, vectors: Iterable['Vertex']) -> Iterable[Vector]:
+    def transform_vertices(self, vectors: Iterable['Vertex']) -> Iterable[Vec3]:
         """ Returns an iterable of transformed vertices. """
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 = self.matrix
         for vector in vectors:
             x, y, z = vector
-            yield Vector(
+            yield Vec3(
                 x * m0 + y * m4 + z * m8 + m12,
                 x * m1 + y * m5 + z * m9 + m13,
                 x * m2 + y * m6 + z * m10 + m14
             )
 
-    def transform_directions(self, vectors: Iterable['Vertex'], normalize=False) -> Iterable[Vector]:
+    def transform_directions(self, vectors: Iterable['Vertex'], normalize=False) -> Iterable[Vec3]:
         """
         Returns an iterable of transformed direction vectors without translation.
 
@@ -534,14 +533,14 @@ class Matrix44:
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self.matrix
         for vector in vectors:
             x, y, z = vector
-            v = Vector(
+            v = Vec3(
                 x * m0 + y * m4 + z * m8,
                 x * m1 + y * m5 + z * m9,
                 x * m2 + y * m6 + z * m10
             )
             yield v.normalize() if normalize else v
 
-    def ucs_vertex_from_wcs(self, wcs: Vector) -> Vector:
+    def ucs_vertex_from_wcs(self, wcs: Vec3) -> Vec3:
         """
         Returns an UCS vector from WCS vertex.
 
@@ -552,7 +551,7 @@ class Matrix44:
         """
         return self.ucs_direction_from_wcs(wcs - self.origin)
 
-    def ucs_direction_from_wcs(self, wcs: Vector) -> Vector:
+    def ucs_direction_from_wcs(self, wcs: Vec3) -> Vec3:
         """
         Returns UCS direction vector from WCS direction.
 
@@ -563,7 +562,7 @@ class Matrix44:
         """
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self.matrix
         x, y, z = wcs
-        return Vector(
+        return Vec3(
             x * m0 + y * m1 + z * m2,
             x * m4 + y * m5 + z * m6,
             x * m8 + y * m9 + z * m10,

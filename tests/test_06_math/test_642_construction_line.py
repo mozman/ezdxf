@@ -1,8 +1,6 @@
-# Purpose: test ConstructionLine
-# Created: 27.01.2019
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from ezdxf.math.line import ConstructionLine, Vec2
+from ezdxf.math import ConstructionLine, Vec2
 
 
 class TestConstructionLine:

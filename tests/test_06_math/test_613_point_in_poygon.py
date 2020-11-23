@@ -1,7 +1,7 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math.construct2d import is_point_in_polygon_2d, Vec2
+from ezdxf.math import is_point_in_polygon_2d, Vec2
 
 
 def test_inside_horiz_box():

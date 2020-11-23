@@ -4,7 +4,7 @@ from typing import List, TYPE_CHECKING, Iterable, Union, Sequence
 import math
 from functools import lru_cache
 from ezdxf.math import (
-    Vector, Vec2, tridiagonal_matrix_solver, Matrix44, linspace
+    Vec3, Vec2, tridiagonal_matrix_solver, Matrix44
 )
 from ezdxf.math.ellipse import ConstructionEllipse
 
@@ -60,31 +60,31 @@ class Bezier4P:
     Special behavior:
 
         - 2D control points in, returns 2D results as :class:`~ezdxf.math.Vec2` objects
-        - 3D control points in, returns 3D results as :class:`~ezdxf.math.Vector` objects
+        - 3D control points in, returns 3D results as :class:`~ezdxf.math.Vec3` objects
         - Object is immutable.
 
     Args:
         defpoints: iterable of definition points as :class:`Vec2` or
-            :class:`Vector` compatible objects.
+            :class:`Vec3` compatible objects.
 
     """
 
     def __init__(self, defpoints: Sequence['Vertex']):
         if len(defpoints) == 4:
             is3d = any(len(p) > 2 for p in defpoints)
-            vector_class = Vector if is3d else Vec2
+            vector_class = Vec3 if is3d else Vec2
             self._control_points = vector_class.tuple(defpoints)
         else:
             raise ValueError("Four control points required.")
 
     @property
-    def control_points(self) -> Sequence[Union[Vector, Vec2]]:
-        """ Control points as tuple of :class:`~ezdxf.math.Vector` or
+    def control_points(self) -> Sequence[Union[Vec3, Vec2]]:
+        """ Control points as tuple of :class:`~ezdxf.math.Vec3` or
         :class:`~ezdxf.math.Vec2` objects.
         """
         return self._control_points
 
-    def tangent(self, t: float) -> Union[Vector, Vec2]:
+    def tangent(self, t: float) -> Union[Vec3, Vec2]:
         """ Returns direction vector of tangent for location `t` at the
         Bèzier-curve.
 
@@ -95,7 +95,7 @@ class Bezier4P:
         check_if_in_valid_range(t)
         return self._get_curve_tangent(t)
 
-    def point(self, t: float) -> Union[Vector, Vec2]:
+    def point(self, t: float) -> Union[Vec3, Vec2]:
         """ Returns point for location `t`` at the Bèzier-curve.
 
         Args:
@@ -105,7 +105,7 @@ class Bezier4P:
         check_if_in_valid_range(t)
         return self._get_curve_point(t)
 
-    def approximate(self, segments: int) -> Iterable[Union[Vector, Vec2]]:
+    def approximate(self, segments: int) -> Iterable[Union[Vec3, Vec2]]:
         """ Approximate `Bézier curve`_ by vertices, yields `segments` + 1
         vertices as ``(x, y[, z])`` tuples.
 
@@ -122,7 +122,7 @@ class Bezier4P:
         yield self._control_points[3]
 
     def flattening(self, distance: float,
-                   segments: int = 4) -> Iterable[Union[Vector, Vec2]]:
+                   segments: int = 4) -> Iterable[Union[Vec3, Vec2]]:
         """ Adaptive recursive flattening. The argument `segments` is the
         minimum count of approximation segments, if the distance from the center
         of the approximation segment to the curve is bigger than `distance` the
@@ -166,12 +166,12 @@ class Bezier4P:
             t0 = t1
             start_point = end_point
 
-    def _get_curve_point(self, t: float) -> Union[Vector, Vec2]:
+    def _get_curve_point(self, t: float) -> Union[Vec3, Vec2]:
         b1, b2, b3, b4 = self._control_points
         a, b, c, d = bernstein3(t)
         return b1 * a + b2 * b + b3 * c + b4 * d
 
-    def _get_curve_tangent(self, t: float) -> Union[Vector, Vec2]:
+    def _get_curve_tangent(self, t: float) -> Union[Vec3, Vec2]:
         b1, b2, b3, b4 = self._control_points
         a, b, c, d = bernstein3_d1(t)
         return b1 * a + b2 * b + b3 * c + b4 * d
@@ -203,7 +203,7 @@ class Bezier4P:
 
         """
         if len(self._control_points[0]) == 2:
-            defpoints = Vector.generate(self._control_points)
+            defpoints = Vec3.generate(self._control_points)
         else:
             defpoints = self._control_points
 
@@ -212,14 +212,14 @@ class Bezier4P:
 
 
 def cubic_bezier_from_arc(
-        center: Vector = (0, 0), radius: float = 1, start_angle: float = 0,
+        center: Vec3 = (0, 0), radius: float = 1, start_angle: float = 0,
         end_angle: float = 360,
         segments: int = 1) -> Iterable[Bezier4P]:
     """ Returns an approximation for a circular 2D arc by multiple cubic
     Bézier-curves.
 
     Args:
-        center: circle center as :class:`Vector` compatible object
+        center: circle center as :class:`Vec3` compatible object
         radius: circle radius
         start_angle: start angle in degrees
         end_angle: end angle in degrees
@@ -229,7 +229,7 @@ def cubic_bezier_from_arc(
     .. versionadded:: 0.13
 
     """
-    center = Vector(center)
+    center = Vec3(center)
     radius = float(radius)
     start_angle = math.radians(start_angle) % math.tau
     end_angle = math.radians(end_angle) % math.tau
@@ -277,8 +277,8 @@ def cubic_bezier_from_ellipse(
     if math.isclose(end_angle - start_angle, 0.0):
         return
 
-    def transform(points: Iterable[Vector]) -> Iterable[Vector]:
-        center = Vector(ellipse.center)
+    def transform(points: Iterable[Vec3]) -> Iterable[Vec3]:
+        center = Vec3(ellipse.center)
         x_axis = ellipse.major_axis
         y_axis = ellipse.minor_axis
         for p in points:
@@ -303,7 +303,7 @@ TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
 
 def cubic_bezier_arc_parameters(
         start_angle: float, end_angle: float,
-        segments: int = 1) -> Sequence[Vector]:
+        segments: int = 1) -> Sequence[Vec3]:
     """ Yields cubic Bézier-curve parameters for a circular 2D arc with center
     at (0, 0) and a radius of 1 in the form of [start point, 1. control point,
     2. control point, end point].
@@ -329,10 +329,10 @@ def cubic_bezier_arc_parameters(
     angle = start_angle
     end_point = None
     for _ in range(arc_count):
-        start_point = Vector.from_angle(
+        start_point = Vec3.from_angle(
             angle) if end_point is None else end_point
         angle += segment_angle
-        end_point = Vector.from_angle(angle)
+        end_point = Vec3.from_angle(angle)
         control_point_1 = start_point + (
             -start_point.y * tangent_length, start_point.x * tangent_length)
         control_point_2 = end_point + (
@@ -353,7 +353,7 @@ def cubic_bezier_interpolation(
 
     """
     # Source: https://towardsdatascience.com/b%C3%A9zier-interpolation-8033e9a262c2
-    points = Vector.list(points)
+    points = Vec3.list(points)
     if len(points) < 3:
         raise ValueError('At least 3 points required.')
 
@@ -375,7 +375,7 @@ def cubic_bezier_interpolation(
 
     # solve tri-diagonal linear equation system
     solution = tridiagonal_matrix_solver((a, b, c), points_vector)
-    control_points_1 = Vector.list(solution.rows())
+    control_points_1 = Vec3.list(solution.rows())
     control_points_2 = [p * 2.0 - cp for p, cp in
                         zip(points[1:], control_points_1[1:])]
     control_points_2.append((control_points_1[num - 1] + points[num]) / 2.0)
@@ -386,7 +386,7 @@ def cubic_bezier_interpolation(
 
 
 def tangents_cubic_bezier_interpolation(
-        fit_points: List[Vector], normalize=True) -> List[Vector]:
+        fit_points: List[Vec3], normalize=True) -> List[Vec3]:
     if len(fit_points) < 3:
         raise ValueError('At least 3 points required')
 

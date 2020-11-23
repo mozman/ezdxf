@@ -2,8 +2,8 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Sequence
 import math
+from ezdxf.math import Vec2
 from .line import ConstructionRay
-from .vector import Vec2
 from .bbox import BoundingBox2d
 
 if TYPE_CHECKING:

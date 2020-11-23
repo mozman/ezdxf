@@ -1,8 +1,6 @@
-# Created: 28.03.2010
-# Copyright (C) 2010, Manfred Moitzi
+# Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
-from ezdxf.math.eulerspiral import EulerSpiral
-from ezdxf.math import is_close_points, Vector
+from ezdxf.math import is_close_points, Vec3, EulerSpiral
 from math import isclose
 
 expected_points = [
@@ -24,7 +22,7 @@ def test_approximate():
     spiral = EulerSpiral(2.0)
     results = spiral.approximate(5, 10)
     for expected, result in zip(expected_points, results):
-        assert is_close_points(Vector(expected), result)
+        assert is_close_points(Vec3(expected), result)
 
 
 def test_radius():
@@ -56,4 +54,4 @@ def test_as_bspline():
     assert spline.max_t == 5
     results = spline.approximate(10)
     for expected, result in zip(expected_points, results):
-        assert is_close_points(Vector(expected), result)
+        assert is_close_points(Vec3(expected), result)

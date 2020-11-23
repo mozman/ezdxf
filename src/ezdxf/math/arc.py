@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, Tuple, Iterable
 import math
 
-from .vector import Vec2
+from ezdxf.math import Vec2
 from .bbox import BoundingBox2d
 from .construct2d import enclosing_angles, linspace
 from .circle import ConstructionCircle

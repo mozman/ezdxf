@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, Iterable, Tuple, Sequence
 from functools import lru_cache
 import math
-from ezdxf.math import Vector, NULLVEC, Matrix44
+from ezdxf.math import Vec3, NULLVEC, Matrix44
 from .construct2d import linspace
 
 if TYPE_CHECKING:
@@ -85,26 +85,26 @@ class Bezier:
     Objects are immutable.
 
     Args:
-        defpoints: iterable of definition points as :class:`Vector` compatible objects.
+        defpoints: iterable of definition points as :class:`Vec3` compatible objects.
 
     """
 
     def __init__(self, defpoints: Iterable['Vertex']):
-        self._defpoints: Sequence[Vector] = Vector.tuple(defpoints)
+        self._defpoints: Sequence[Vec3] = Vec3.tuple(defpoints)
 
     @property
-    def control_points(self) -> Sequence[Vector]:
-        """ Control points as tuple of :class:`Vector` objects. """
+    def control_points(self) -> Sequence[Vec3]:
+        """ Control points as tuple of :class:`Vec3` objects. """
         return self._defpoints
 
-    def approximate(self, segments: int = 20) -> Iterable[Vector]:
-        """ Approximates curve by vertices as :class:`Vector` objects, vertices
+    def approximate(self, segments: int = 20) -> Iterable[Vec3]:
+        """ Approximates curve by vertices as :class:`Vec3` objects, vertices
         count = segments + 1.
         """
         return self.points(self.params(segments))
 
     def flattening(self, distance: float,
-                   segments: int = 4) -> Iterable[Vector]:
+                   segments: int = 4) -> Iterable[Vec3]:
         """ Adaptive recursive flattening. The argument `segments` is the
         minimum count of approximation segments, if the distance from the center
         of the approximation segment to the curve is bigger than `distance` the
@@ -152,9 +152,9 @@ class Bezier:
         """ Yield evenly spaced parameters from 0 to 1 for given segment count. """
         yield from linspace(0.0, 1.0, segments + 1)
 
-    def point(self, t: float) -> Vector:
+    def point(self, t: float) -> Vec3:
         """
-        Returns a point for parameter `t` in range [0, 1] as :class:`Vector` object.
+        Returns a point for parameter `t` in range [0, 1] as :class:`Vec3` object.
         """
         if t < 0.0 or t > 1.0:
             raise ValueError('Parameter t not in range [0, 1]')
@@ -168,17 +168,17 @@ class Bezier:
             point += bernstein_basis(n - 1, i, t) * pts[i]
         return point
 
-    def points(self, t: Iterable[float]) -> Iterable[Vector]:
-        """ Yields multiple points for parameters in vector `t` as :class:`Vector` objects.
+    def points(self, t: Iterable[float]) -> Iterable[Vec3]:
+        """ Yields multiple points for parameters in vector `t` as :class:`Vec3` objects.
         Parameters have to be in range [0, 1].
         """
         for u in t:
             yield self.point(u)
 
-    def derivative(self, t: float) -> Tuple[Vector, Vector, Vector]:
+    def derivative(self, t: float) -> Tuple[Vec3, Vec3, Vec3]:
         """
         Returns (point, 1st derivative, 2nd derivative) tuple for parameter `t` in range [0, 1]
-        as :class:`Vector` objects.
+        as :class:`Vec3` objects.
         """
         if t < 0.0 or t > 1.0:
             raise ValueError('Parameter t not in range [0, 1]')
@@ -209,9 +209,9 @@ class Bezier:
                 d2 = n0 * n0_1 * (pts[n0] - 2 * pts[n0_1] + pts[n0 - 2])
         return point, d1, d2
 
-    def derivatives(self, t: Iterable[float]) -> Iterable[Tuple[Vector, Vector, Vector]]:
+    def derivatives(self, t: Iterable[float]) -> Iterable[Tuple[Vec3, Vec3, Vec3]]:
         """
-        Returns multiple (point, 1st derivative, 2nd derivative) tuples for parameter vector  `t` as :class:`Vector` objects.
+        Returns multiple (point, 1st derivative, 2nd derivative) tuples for parameter vector  `t` as :class:`Vec3` objects.
         Parameters in range [0, 1]
         """
         for u in t:

@@ -1,7 +1,7 @@
-# Created: 26.03.2010
+# Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 from typing import Dict, Iterable
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 from ezdxf.math.bspline import global_bspline_interpolation, BSpline
 
 
@@ -19,7 +19,7 @@ class EulerSpiral:
     def __init__(self, curvature: float = 1.0):
         self.curvature = curvature  # Radius of curvature
         self.curvature_powers = [curvature ** power for power in range(19)]
-        self._cache = {}  # type: Dict[float, Vector] # coordinates cache
+        self._cache = {}  # type: Dict[float, Vec3] # coordinates cache
 
     def radius(self, t: float) -> float:
         """
@@ -31,13 +31,13 @@ class EulerSpiral:
         else:
             return 0.  # radius = infinite
 
-    def tangent(self, t: float) -> Vector:
+    def tangent(self, t: float) -> Vec3:
         """
-        Get tangent at distance `t` as :class.`Vector` object.
+        Get tangent at distance `t` as :class.`Vec3` object.
 
         """
         angle = t ** 2 / (2. * self.curvature_powers[2])
-        return Vector.from_angle(angle)
+        return Vec3.from_angle(angle)
 
     def distance(self, radius: float) -> float:
         """
@@ -46,9 +46,9 @@ class EulerSpiral:
         """
         return self.curvature_powers[2] / float(radius)
 
-    def point(self, t: float) -> Vector:
+    def point(self, t: float) -> Vec3:
         """
-        Get point at distance `t` as :class.`Vector`.
+        Get point at distance `t` as :class.`Vec3`.
 
         """
 
@@ -60,22 +60,22 @@ class EulerSpiral:
                 term(15, 14, 9676800.) + term(19, 18, 3530096640.)
             x = t - term(5, 4, 40.) + term(9, 8, 3456.) - term(13, 12, 599040.) + \
                 term(17, 16, 175472640.)
-            self._cache[t] = Vector(x, y)
+            self._cache[t] = Vec3(x, y)
         return self._cache[t]
 
-    def approximate(self, length: float, segments: int) -> Iterable[Vector]:
+    def approximate(self, length: float, segments: int) -> Iterable[Vec3]:
         """
         Approximate curve of length with line segments.
 
-        Generates segments+1 vertices as :class:`Vector` objects.
+        Generates segments+1 vertices as :class:`Vec3` objects.
 
         """
         delta_l = float(length) / float(segments)
-        yield Vector(0, 0)
+        yield Vec3(0, 0)
         for index in range(1, segments + 1):
             yield self.point(delta_l * index)
 
-    def circle_center(self, t: float) -> Vector:
+    def circle_center(self, t: float) -> Vec3:
         """
         Get circle center at distance `t`.
 

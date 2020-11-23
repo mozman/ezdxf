@@ -1,20 +1,22 @@
 from typing import List
 import pytest
 import ezdxf
-from math import isclose
 import math
-from ezdxf.math import Vector
-from ezdxf.math.bspline import global_bspline_interpolation
-from ezdxf.math.parametrize import uniform_t_vector, distance_t_vector, centripetal_t_vector, arc_t_vector, \
-    arc_distances, estimate_tangents
+from math import isclose
+from ezdxf.math import Vec3, global_bspline_interpolation
+from ezdxf.math.parametrize import (
+    uniform_t_vector, distance_t_vector, centripetal_t_vector, arc_t_vector,
+    arc_distances, estimate_tangents,
+)
 from ezdxf.math.bspline import (
-    knots_from_parametrization, required_knot_values, averaged_knots_unconstrained, natural_knots_constrained,
+    knots_from_parametrization, required_knot_values,
+    averaged_knots_unconstrained, natural_knots_constrained,
     averaged_knots_constrained,
     natural_knots_unconstrained, double_knots,
 )
 
-POINTS1 = Vector.list([(1, 1), (2, 4), (4, 1), (7, 6)])
-POINTS2 = Vector.list([(1, 1), (2, 4), (4, 1), (7, 6), (5, 8), (3, 3), (1, 7)])
+POINTS1 = Vec3.list([(1, 1), (2, 4), (4, 1), (7, 6)])
+POINTS2 = Vec3.list([(1, 1), (2, 4), (4, 1), (7, 6), (5, 8), (3, 3), (1, 7)])
 
 
 @pytest.fixture(params=[POINTS1, POINTS2])
@@ -50,7 +52,7 @@ def test_centripetal_length_t_array(fit_points):
 
 
 def test_arc_distances():
-    p = Vector.list([(0, 0), (2, 2), (4, 0), (6, -2), (8, 0)])
+    p = Vec3.list([(0, 0), (2, 2), (4, 0), (6, -2), (8, 0)])
     # p[1]..p[3] are a straight line, radius calculation fails and
     # a straight line from p[1] to p[2] is used as replacement
     # for the second arc
@@ -94,7 +96,9 @@ def check_knots(count: int, order: int, knots: List[float]):
 @pytest.mark.parametrize('p', (2, 3, 4))
 @pytest.mark.parametrize('method', ('average', 'natural'))
 def test_knot_generation(p, method):
-    fit_points = Vector.list([(0, 0), (0, 10), (10, 10), (20, 10), (20, 0), (30, 0), (30, 10), (40, 10), (40, 0)])
+    fit_points = Vec3.list(
+        [(0, 0), (0, 10), (10, 10), (20, 10), (20, 0), (30, 0), (30, 10),
+         (40, 10), (40, 0)])
     count = len(fit_points)
     n = count - 1
     order = p + 1
@@ -105,7 +109,9 @@ def test_knot_generation(p, method):
 
 @pytest.fixture
 def fit_points_2():
-    return Vector.list([(0, 0), (0, 10), (10, 10), (20, 10), (20, 0), (30, 0), (30, 10), (40, 10), (40, 0)])
+    return Vec3.list(
+        [(0, 0), (0, 10), (10, 10), (20, 10), (20, 0), (30, 0), (30, 10),
+         (40, 10), (40, 0)])
 
 
 @pytest.mark.parametrize('p', (2, 3, 4, 5))
@@ -171,7 +177,8 @@ def test_bspline_interpolation(fit_points):
 
 def test_bspline_interpolation_first_derivatives(fit_points):
     tangents = estimate_tangents(fit_points)
-    spline = global_bspline_interpolation(fit_points, degree=3, tangents=tangents)
+    spline = global_bspline_interpolation(fit_points, degree=3,
+                                          tangents=tangents)
     assert len(spline.control_points) == 2 * len(fit_points)
 
 
@@ -231,7 +238,8 @@ expected = [
 
 def test_check_values():
     test_points = [(0., 0.), (1., 2.), (3., 1.), (5., 3.)]
-    spline = global_bspline_interpolation(test_points, degree=3, method='distance')
+    spline = global_bspline_interpolation(test_points, degree=3,
+                                          method='distance')
     result = list(spline.approximate(49))
     assert len(result) == 50
     for p1, p2 in zip(result, expected):

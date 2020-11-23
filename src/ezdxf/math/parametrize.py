@@ -2,12 +2,12 @@
 # License: MIT License
 from typing import List, Iterable, Sequence, Tuple
 import math
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 from .bezier4p import tangents_cubic_bezier_interpolation, cubic_bezier_interpolation
 from .construct2d import circle_radius_3p
 
 
-def create_t_vector(fit_points: List[Vector], method: str) -> Iterable[float]:
+def create_t_vector(fit_points: List[Vec3], method: str) -> Iterable[float]:
     if method == 'uniform':
         return uniform_t_vector(len(fit_points))  # equally spaced 0 .. 1
     elif method in ('distance', 'chord'):
@@ -26,11 +26,11 @@ def uniform_t_vector(length: int) -> Iterable[float]:
         yield float(t) / n
 
 
-def distance_t_vector(fit_points: List[Vector]) -> Iterable[float]:
+def distance_t_vector(fit_points: List[Vec3]) -> Iterable[float]:
     yield from _normalize_distances(list(linear_distances(fit_points)))
 
 
-def centripetal_t_vector(fit_points: List[Vector]) -> Iterable[float]:
+def centripetal_t_vector(fit_points: List[Vec3]) -> Iterable[float]:
     distances = [math.sqrt(p1.distance(p2)) for p1, p2 in zip(fit_points, fit_points[1:])]
     yield from _normalize_distances(distances)
 
@@ -44,7 +44,7 @@ def _normalize_distances(distances: Sequence[float]) -> Iterable[float]:
         yield s / total_length
 
 
-def linear_distances(points: Iterable[Vector]) -> Iterable[float]:
+def linear_distances(points: Iterable[Vec3]) -> Iterable[float]:
     prev = None
     for p in points:
         if prev is None:
@@ -54,12 +54,12 @@ def linear_distances(points: Iterable[Vector]) -> Iterable[float]:
         prev = p
 
 
-def arc_t_vector(fit_points: List[Vector]) -> Iterable[float]:
+def arc_t_vector(fit_points: List[Vec3]) -> Iterable[float]:
     distances = list(arc_distances(fit_points))
     yield from _normalize_distances(distances)
 
 
-def arc_distances(fit_points: List[Vector]) -> Iterable[float]:
+def arc_distances(fit_points: List[Vec3]) -> Iterable[float]:
     p = fit_points
 
     def _radii() -> List[float]:
@@ -81,7 +81,7 @@ def arc_distances(fit_points: List[Vector]) -> Iterable[float]:
             yield math.asin(distance / 2.0 / rk) * 2.0 * rk
 
 
-def estimate_tangents(points: List[Vector], method: str = '5-points', normalize=True) -> List[Vector]:
+def estimate_tangents(points: List[Vec3], method: str = '5-points', normalize=True) -> List[Vec3]:
     """
     Estimate tangents for curve defined by given fit points.
     Calculated tangents are normalized (unit-vectors).
@@ -99,7 +99,7 @@ def estimate_tangents(points: List[Vector], method: str = '5-points', normalize=
         normalize: normalize tangents if ``True``
 
     Returns:
-        tangents as list of :class:`Vector` objects
+        tangents as list of :class:`Vec3` objects
 
     """
     if method == 'bezier':
@@ -114,7 +114,7 @@ def estimate_tangents(points: List[Vector], method: str = '5-points', normalize=
         raise ValueError(f'Unknown method: {method}')
 
 
-def estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') -> Tuple[float, float]:
+def estimate_end_tangent_magnitude(points: List[Vec3], method: str = 'chord') -> Tuple[float, float]:
     """ Estimate tangent magnitude of start- and end tangents.
 
     Available estimation methods:
@@ -144,7 +144,7 @@ def estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') 
         raise ValueError(f'Unknown tangent magnitude calculation method: {method}')
 
 
-def tangents_3_point_interpolation(fit_points: List[Vector], method: str = 'chord', normalize=True) -> List[Vector]:
+def tangents_3_point_interpolation(fit_points: List[Vec3], method: str = 'chord', normalize=True) -> List[Vec3]:
     """ Returns from 3 points interpolated and optional normalized tangent vectors. """
     q = [Q1 - Q0 for Q0, Q1 in zip(fit_points, fit_points[1:])]
     t = list(create_t_vector(fit_points, method))
@@ -160,7 +160,7 @@ def tangents_3_point_interpolation(fit_points: List[Vector], method: str = 'chor
     return tangents
 
 
-def tangents_5_point_interpolation(fit_points: List[Vector], normalize=True) -> List[Vector]:
+def tangents_5_point_interpolation(fit_points: List[Vec3], normalize=True) -> List[Vec3]:
     """ Returns from 5 points interpolated and optional normalized tangent vectors. """
     n = len(fit_points)
     q = _delta_q(fit_points)
@@ -180,7 +180,7 @@ def tangents_5_point_interpolation(fit_points: List[Vector], normalize=True) -> 
     return tangents
 
 
-def _delta_q(points: List[Vector]) -> List[Vector]:
+def _delta_q(points: List[Vec3]) -> List[Vec3]:
     n = len(points)
     q = [0.0]  # placeholder
     q.extend([points[k + 1] - points[k] for k in range(n - 1)])
@@ -191,7 +191,7 @@ def _delta_q(points: List[Vector]) -> List[Vector]:
     return q
 
 
-def finite_difference_interpolation(fit_points: List[Vector], normalize=True) -> List[Vector]:
+def finite_difference_interpolation(fit_points: List[Vec3], normalize=True) -> List[Vec3]:
     f = 2.0
     p = fit_points
 
@@ -204,7 +204,7 @@ def finite_difference_interpolation(fit_points: List[Vector], normalize=True) ->
     return t
 
 
-def cardinal_interpolation(fit_points: List[Vector], tension: float) -> List[Vector]:
+def cardinal_interpolation(fit_points: List[Vec3], tension: float) -> List[Vec3]:
     # https://en.wikipedia.org/wiki/Cubic_Hermite_spline
     def tangent(p0, p1):
         return (p0 - p1).normalize(1.0 - tension)
