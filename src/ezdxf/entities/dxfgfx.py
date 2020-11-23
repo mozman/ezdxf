@@ -458,7 +458,7 @@ class DXFGraphic(DXFEntity):
         (floating interface).
 
         Args:
-            axis: rotation axis as tuple or :class:`Vector`
+            axis: rotation axis as tuple or :class:`Vec3`
             angle: rotation angle in radians
 
         .. versionadded:: 0.13

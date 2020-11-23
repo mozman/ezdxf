@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 from geomdl.fitting import interpolate_curve
-from ezdxf.math import BSpline, global_bspline_interpolation, rational_spline_from_arc, Vector
+from ezdxf.math import BSpline, global_bspline_interpolation, rational_spline_from_arc, Vec3
 
 
 def test_from_nurbs_python_curve_to_ezdxf_bspline():
@@ -31,7 +31,7 @@ def test_from_ezdxf_bspline_to_nurbs_python_curve_non_rational():
 
 
 def test_from_ezdxf_bspline_to_nurbs_python_curve_rational():
-    bspline = rational_spline_from_arc(center=Vector(0, 0), radius=2, start_angle=0, end_angle=90)
+    bspline = rational_spline_from_arc(center=Vec3(0, 0), radius=2, start_angle=0, end_angle=90)
 
     # to NURBS-Python
     curve = bspline.to_nurbs_python_curve()

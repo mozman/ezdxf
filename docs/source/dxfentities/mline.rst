@@ -110,11 +110,11 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: __len__
 
-    .. automethod:: start_location() -> Vector
+    .. automethod:: start_location() -> Vec3
 
-    .. automethod:: get_locations() -> List[Vector]
+    .. automethod:: get_locations() -> List[Vec3]
 
-    .. automethod:: extend(vertices: Iterable[Vector]) -> None
+    .. automethod:: extend(vertices: Iterable[Vec3]) -> None
 
     .. automethod:: clear
 

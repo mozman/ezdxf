@@ -27,9 +27,9 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         Radius of circle (float)
 
-    .. automethod:: vertices(angle:Iterable[float]) -> Iterable[Vector]
+    .. automethod:: vertices(angle:Iterable[float]) -> Iterable[Vec3]
 
-    .. automethod:: flattening(sagitta: float) -> Iterable[Vector]
+    .. automethod:: flattening(sagitta: float) -> Iterable[Vec3]
 
     .. automethod:: transform(m: Matrix44) -> Circle
 

@@ -6,7 +6,7 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
-from ezdxf.math import Vector, NULLVEC, X_AXIS, Y_AXIS
+from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
@@ -230,22 +230,22 @@ acdb_layout = DefSubclass('AcDbLayout', {
 
     # Minimum limits:
     'limmin': DXFAttr(10, xtype=XType.point2d,
-                      default=Vector(-3.175, -3.175)),
+                      default=Vec3(-3.175, -3.175)),
 
     # Maximum limits:
     'limmax': DXFAttr(11, xtype=XType.point2d,
-                      default=Vector(293.857, 206.735)),
+                      default=Vec3(293.857, 206.735)),
 
     # Insertion base point for this layout:
     'insert_base': DXFAttr(12, xtype=XType.point3d, default=NULLVEC),
 
     # Minimum extents for this layout:
     'extmin': DXFAttr(14, xtype=XType.point3d,
-                      default=Vector(29.068, 20.356, 0)),
+                      default=Vec3(29.068, 20.356, 0)),
 
     # Maximum extents for this layout:
     'extmax': DXFAttr(15, xtype=XType.point3d,
-                      default=Vector(261.614, 183.204, 0)),
+                      default=Vec3(261.614, 183.204, 0)),
 
     'elevation': DXFAttr(146, default=0.0),
     'ucs_origin': DXFAttr(13, xtype=XType.point3d, default=NULLVEC),

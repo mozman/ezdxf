@@ -16,7 +16,7 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.lldxf.packedtags import VertexArray
 from ezdxf.lldxf.tags import Tags, DXFTag
-from ezdxf.math import NULLVEC, Z_AXIS, Y_AXIS, Vertex, Vector, Vec2
+from ezdxf.math import NULLVEC, Z_AXIS, Y_AXIS, Vertex, Vec3, Vec2
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
@@ -529,8 +529,8 @@ class GeoData(DXFObject):
         self.dxf.vertical_unit_scale = unit_factor
 
         # User settings:
-        self.dxf.design_point = Vector(design_point)
-        self.dxf.reference_point = Vector(reference_point)
+        self.dxf.design_point = Vec3(design_point)
+        self.dxf.reference_point = Vec3(reference_point)
         self.dxf.north_direction = Vec2(north_direction)
         self.coordinate_system_definition = str(crs)
 

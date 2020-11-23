@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Iterable, Union, cast
 
 from ezdxf.entities import factory
 from ezdxf.lldxf.const import VERTEXNAMES
-from ezdxf.math import Vector, bulge_to_arc, OCS
+from ezdxf.math import Vec3, bulge_to_arc, OCS
 
 logger = logging.getLogger('ezdxf')
 
@@ -88,7 +88,7 @@ def virtual_polyline2d_entities(
 
     yield from _virtual_polyline_entities(
         points=points,
-        elevation=Vector(polyline.dxf.get('elevation', (0, 0, 0))).z,
+        elevation=Vec3(polyline.dxf.get('elevation', (0, 0, 0))).z,
         extrusion=polyline.dxf.get('extrusion', None),
         dxfattribs=polyline.graphic_properties(),
         doc=polyline.doc,
@@ -96,14 +96,14 @@ def virtual_polyline2d_entities(
 
 
 def _virtual_polyline_entities(
-        points, elevation: float, extrusion: Vector,
+        points, elevation: float, extrusion: Vec3,
         dxfattribs: dict, doc) -> Iterable[Union['Line', 'Arc']]:
     ocs = OCS(extrusion) if extrusion else OCS()
     prev_point = None
     prev_bulge = None
 
     for x, y, bulge in points:
-        point = Vector(x, y, elevation)
+        point = Vec3(x, y, elevation)
         if prev_point is None:
             prev_point = point
             prev_bulge = bulge
@@ -114,7 +114,7 @@ def _virtual_polyline_entities(
             center, start_angle, end_angle, radius = bulge_to_arc(
                 prev_point, point, prev_bulge)
             if radius > 0:
-                attribs['center'] = Vector(center.x, center.y, elevation)
+                attribs['center'] = Vec3(center.x, center.y, elevation)
                 attribs['radius'] = radius
                 attribs['start_angle'] = math.degrees(start_angle)
                 attribs['end_angle'] = math.degrees(end_angle)

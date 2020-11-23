@@ -3,7 +3,7 @@
 from typing import Any, TYPE_CHECKING, Tuple, Dict
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 import logging
 
 logger = logging.getLogger('ezdxf')
@@ -23,7 +23,7 @@ class DimStyleOverride:
         # Special ezdxf attributes beyond the DXF reference, therefore not
         # stored in the DSTYLE data.
         # This are only rendering effects or data transfer objects
-        # user_location: Vector - user location override if not None
+        # user_location: Vec3 - user location override if not None
         # relative_user_location: bool - user location override relative to
         #   dimline center if True
         # text_shift_h: float - shift text in text direction, relative to
@@ -449,7 +449,7 @@ class DimStyleOverride:
         """
         self.dimension.set_flag_state(self.dimension.USER_LOCATION_OVERRIDE,
                                       state=True, name='dimtype')
-        self.dimstyle_attribs['user_location'] = Vector(location)
+        self.dimstyle_attribs['user_location'] = Vec3(location)
 
     def get_renderer(self, ucs: 'UCS' = None):
         """ Get designated DIMENSION renderer. (internal API) """

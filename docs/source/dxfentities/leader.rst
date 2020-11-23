@@ -107,7 +107,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: vertices
 
-        List of :class:`~ezdxf.math.Vector` objects, representing the vertices of the leader (3D Point in :ref:`WCS`).
+        List of :class:`~ezdxf.math.Vec3` objects, representing the vertices of the leader (3D Point in :ref:`WCS`).
 
     .. automethod:: set_vertices
 

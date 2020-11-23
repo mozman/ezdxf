@@ -6,7 +6,7 @@ from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import (
     transform_thickness_and_extrusion_without_ocs,
 )
@@ -76,7 +76,7 @@ class Line(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        vec = Vector(dx, dy, dz)
+        vec = Vec3(dx, dy, dz)
         self.dxf.start = vec + self.dxf.start
         self.dxf.end = vec + self.dxf.end
         return self

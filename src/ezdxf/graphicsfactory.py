@@ -6,7 +6,7 @@ import logging
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
-from ezdxf.math import Vector, global_bspline_interpolation
+from ezdxf.math import Vec3, global_bspline_interpolation
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities import factory
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
@@ -64,7 +64,7 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['location'] = Vector(location)
+        dxfattribs['location'] = Vec3(location)
         return self.new_entity('POINT', dxfattribs)
 
     def add_line(self, start: 'Vertex', end: 'Vertex',
@@ -79,8 +79,8 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['start'] = Vector(start)
-        dxfattribs['end'] = Vector(end)
+        dxfattribs['start'] = Vec3(start)
+        dxfattribs['end'] = Vec3(end)
         return self.new_entity('LINE', dxfattribs)
 
     def add_circle(self, center: 'Vertex', radius: float,
@@ -96,7 +96,7 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['center'] = Vector(center)
+        dxfattribs['center'] = Vec3(center)
         dxfattribs['radius'] = float(radius)
         return self.new_entity('CIRCLE', dxfattribs)
 
@@ -123,8 +123,8 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError('ELLIPSE requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['center'] = Vector(center)
-        dxfattribs['major_axis'] = Vector(major_axis)
+        dxfattribs['center'] = Vec3(center)
+        dxfattribs['major_axis'] = Vec3(major_axis)
         dxfattribs['ratio'] = float(ratio)
         dxfattribs['start_param'] = float(start_param)
         dxfattribs['end_param'] = float(end_param)
@@ -149,7 +149,7 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['center'] = Vector(center)
+        dxfattribs['center'] = Vec3(center)
         dxfattribs['radius'] = float(radius)
         if is_counter_clockwise:
             dxfattribs['start_angle'] = float(start_angle)
@@ -213,7 +213,7 @@ class CreatorInterface:
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['text'] = str(text)
-        dxfattribs.setdefault('insert', Vector())
+        dxfattribs.setdefault('insert', Vec3())
         return self.new_entity('TEXT', dxfattribs)
 
     def add_blockref(self, name: str, insert: 'Vertex',
@@ -238,7 +238,7 @@ class CreatorInterface:
 
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['name'] = name
-        dxfattribs['insert'] = Vector(insert)
+        dxfattribs['insert'] = Vec3(insert)
         blockref = self.new_entity('INSERT', dxfattribs)  # type: Insert
         return blockref
 
@@ -308,7 +308,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['tag'] = str(tag)
         dxfattribs['text'] = str(text)
-        dxfattribs['insert'] = Vector(insert)
+        dxfattribs['insert'] = Vec3(insert)
         return self.new_entity('ATTRIB', dxfattribs)
 
     def add_attdef(self, tag: str, insert: 'Vertex' = (0, 0), text: str = '',
@@ -329,7 +329,7 @@ class CreatorInterface:
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['tag'] = str(tag)
-        dxfattribs['insert'] = Vector(insert)
+        dxfattribs['insert'] = Vec3(insert)
         dxfattribs['text'] = str(text)
         return self.new_entity('ATTDEF', dxfattribs)
 
@@ -432,7 +432,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         entity = self.new_entity(type_, dxfattribs)
         for x, point in enumerate(self._four_points(points)):
-            entity[x] = Vector(point)
+            entity[x] = Vec3(point)
         return entity
 
     @staticmethod
@@ -459,7 +459,7 @@ class CreatorInterface:
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['name'] = str(name)
-        dxfattribs['insert'] = Vector(insert)
+        dxfattribs['insert'] = Vec3(insert)
         dxfattribs['size'] = float(size)
         return self.new_entity('SHAPE', dxfattribs)
 
@@ -535,8 +535,8 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError('RAY requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['start'] = Vector(start)
-        dxfattribs['unit_vector'] = Vector(unit_vector).normalize()
+        dxfattribs['start'] = Vec3(start)
+        dxfattribs['unit_vector'] = Vec3(unit_vector).normalize()
         return self.new_entity('RAY', dxfattribs)
 
     def add_xline(self, start: 'Vertex', unit_vector: 'Vertex',
@@ -554,8 +554,8 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError('XLINE requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['start'] = Vector(start)
-        dxfattribs['unit_vector'] = Vector(unit_vector).normalize()
+        dxfattribs['start'] = Vec3(start)
+        dxfattribs['unit_vector'] = Vec3(unit_vector).normalize()
         return self.new_entity('XLINE', dxfattribs)
 
     def add_spline(self, fit_points: Iterable['Vertex'] = None, degree: int = 3,
@@ -585,7 +585,7 @@ class CreatorInterface:
         dxfattribs['degree'] = int(degree)
         spline = self.new_entity('SPLINE', dxfattribs)  # type: Spline
         if fit_points is not None:
-            spline.fit_points = Vector.generate(fit_points)
+            spline.fit_points = Vec3.generate(fit_points)
         return spline
 
     def add_spline_control_frame(self, fit_points: Iterable['Vertex'],
@@ -914,7 +914,7 @@ class CreatorInterface:
             x = math.cos(angle_in_rad) * units_per_pixel
             y = math.sin(angle_in_rad) * units_per_pixel
             # supports only images in the xy-plane:
-            return Vector(round(x, 6), round(y, 6), 0)
+            return Vec3(round(x, 6), round(y, 6), 0)
 
         if self.dxfversion < DXF2000:
             raise DXFVersionError('IMAGE requires DXF R2000')
@@ -926,7 +926,7 @@ class CreatorInterface:
         x_angle_rad = math.radians(rotation)
         y_angle_rad = x_angle_rad + (math.pi / 2.)
 
-        dxfattribs['insert'] = Vector(insert)
+        dxfattribs['insert'] = Vec3(insert)
         dxfattribs['u_pixel'] = to_vector(x_units_per_pixel, x_angle_rad)
         dxfattribs['v_pixel'] = to_vector(y_units_per_pixel, y_angle_rad)
         dxfattribs['image_def'] = image_def  # is not a real DXF attrib
@@ -971,7 +971,7 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError('UNDERLAY requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs['insert'] = Vector(insert)
+        dxfattribs['insert'] = Vec3(insert)
         dxfattribs['underlay_def_handle'] = underlay_def.dxf.handle
         dxfattribs['rotation'] = float(rotation)
 
@@ -1046,10 +1046,10 @@ class CreatorInterface:
                        self.new_entity('DIMENSION', dxfattribs=type_))
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
-        dxfattribs['defpoint'] = Vector(base)  # group code 10
+        dxfattribs['defpoint'] = Vec3(base)  # group code 10
         dxfattribs['text'] = str(text)
-        dxfattribs['defpoint2'] = Vector(p1)  # group code 13
-        dxfattribs['defpoint3'] = Vector(p2)  # group code 14
+        dxfattribs['defpoint2'] = Vec3(p1)  # group code 13
+        dxfattribs['defpoint3'] = Vec3(p2)  # group code 14
         dxfattribs['angle'] = float(angle)
 
         # text_rotation ALWAYS overrides implicit angles as absolute angle
@@ -1167,8 +1167,8 @@ class CreatorInterface:
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
         """
-        p1 = Vector(p1)
-        p2 = Vector(p2)
+        p1 = Vec3(p1)
+        p2 = Vec3(p2)
         direction = p2 - p1
         angle = direction.angle_deg
         base = direction.orthogonal().normalize(distance) + p1
@@ -1243,11 +1243,11 @@ class CreatorInterface:
         dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs['text'] = str(text)
 
-        dxfattribs['defpoint2'] = Vector(line1[0])  # group code 13
-        dxfattribs['defpoint3'] = Vector(line1[1])  # group code 14
-        dxfattribs['defpoint4'] = Vector(line2[0])  # group code 15
-        dxfattribs['defpoint'] = Vector(line2[1])  # group code 10
-        dxfattribs['defpoint5'] = Vector(base)  # group code 16
+        dxfattribs['defpoint2'] = Vec3(line1[0])  # group code 13
+        dxfattribs['defpoint3'] = Vec3(line1[1])  # group code 14
+        dxfattribs['defpoint4'] = Vec3(line2[0])  # group code 15
+        dxfattribs['defpoint'] = Vec3(line2[1])  # group code 10
+        dxfattribs['defpoint5'] = Vec3(base)  # group code 16
 
         # text_rotation ALWAYS overrides implicit angles as absolute angle (x-axis=0, y-axis=90)!
         if text_rotation is not None:
@@ -1320,10 +1320,10 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
         dxfattribs['text'] = str(text)
-        dxfattribs['defpoint'] = Vector(base)
-        dxfattribs['defpoint2'] = Vector(p1)
-        dxfattribs['defpoint3'] = Vector(p2)
-        dxfattribs['defpoint4'] = Vector(center)
+        dxfattribs['defpoint'] = Vec3(base)
+        dxfattribs['defpoint2'] = Vec3(p1)
+        dxfattribs['defpoint3'] = Vec3(p2)
+        dxfattribs['defpoint4'] = Vec3(center)
 
         # text_rotation ALWAYS overrides implicit angles as absolute angle
         # (x-axis=0, y-axis=90)!
@@ -1392,11 +1392,11 @@ class CreatorInterface:
         type_ = {'dimtype': const.DIM_DIAMETER | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension',
                        self.new_entity('DIMENSION', dxfattribs=type_))
-        center = Vector(center)
+        center = Vec3(center)
         if location is not None:
             if radius is None:
                 raise ValueError("Argument radius is required.")
-            location = Vector(location)
+            location = Vec3(location)
 
             # (center - location) just works as expected, but in my
             # understanding it should be: (location - center)
@@ -1407,16 +1407,16 @@ class CreatorInterface:
                     raise ValueError("Argument angle or mpoint required.")
                 if radius is None:
                     raise ValueError("Argument radius or mpoint required.")
-                radius_vec = Vector.from_deg_angle(angle, radius)
+                radius_vec = Vec3.from_deg_angle(angle, radius)
             else:
-                radius_vec = Vector(mpoint) - center
+                radius_vec = Vec3(mpoint) - center
 
         p1 = center + radius_vec
         p2 = center - radius_vec
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
-        dxfattribs['defpoint'] = Vector(p1)  # group code 10
-        dxfattribs['defpoint4'] = Vector(p2)  # group code 15
+        dxfattribs['defpoint'] = Vec3(p1)  # group code 10
+        dxfattribs['defpoint4'] = Vec3(p2)  # group code 15
         dxfattribs['text'] = str(text)
 
         dimline.update_dxf_attribs(dxfattribs)
@@ -1459,7 +1459,7 @@ class CreatorInterface:
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
         """
-        mpoint = Vector(p1)
+        mpoint = Vec3(p1)
         center = mpoint.lerp(p2)
         return self.add_diameter_dim(center, mpoint, text=text,
                                      dimstyle=dimstyle,
@@ -1544,11 +1544,11 @@ class CreatorInterface:
         type_ = {'dimtype': const.DIM_RADIUS | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension',
                        self.new_entity('DIMENSION', dxfattribs=type_))
-        center = Vector(center)
+        center = Vec3(center)
         if location is not None:
             if radius is None:
                 raise ValueError("Argument radius is required.")
-            location = Vector(location)
+            location = Vec3(location)
             radius_vec = (location - center).normalize(length=radius)
             mpoint = center + radius_vec
         else:  # defined by mpoint = measurement point on circle
@@ -1557,12 +1557,12 @@ class CreatorInterface:
                     raise ValueError("Argument angle or mpoint required.")
                 if radius is None:
                     raise ValueError("Argument radius or mpoint required.")
-                mpoint = center + Vector.from_deg_angle(angle, radius)
+                mpoint = center + Vec3.from_deg_angle(angle, radius)
 
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
-        dxfattribs['defpoint4'] = Vector(mpoint)  # group code 15
-        dxfattribs['defpoint'] = Vector(center)  # group code 10
+        dxfattribs['defpoint4'] = Vec3(mpoint)  # group code 15
+        dxfattribs['defpoint'] = Vec3(center)  # group code 10
         dxfattribs['text'] = str(text)
 
         dimline.update_dxf_attribs(dxfattribs)
@@ -1696,9 +1696,9 @@ class CreatorInterface:
                        self.new_entity('DIMENSION', dxfattribs=type_))
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = self._save_dimstyle(dimstyle)
-        dxfattribs['defpoint'] = Vector(origin)  # group code 10
-        dxfattribs['defpoint2'] = Vector(feature_location)  # group code 13
-        dxfattribs['defpoint3'] = Vector(leader_endpoint)  # group code 14
+        dxfattribs['defpoint'] = Vec3(origin)  # group code 10
+        dxfattribs['defpoint2'] = Vec3(feature_location)  # group code 13
+        dxfattribs['defpoint3'] = Vec3(leader_endpoint)  # group code 14
         dxfattribs['text'] = str(text)
         dimline.update_dxf_attribs(dxfattribs)
 
@@ -1709,13 +1709,13 @@ class CreatorInterface:
 
     def add_arrow(self, name: str, insert: 'Vertex', size: float = 1.,
                   rotation: float = 0,
-                  dxfattribs: Dict = None) -> Vector:
+                  dxfattribs: Dict = None) -> Vec3:
         return ARROWS.render_arrow(self, name=name, insert=insert, size=size,
                                    rotation=rotation, dxfattribs=dxfattribs)
 
     def add_arrow_blockref(self, name: str, insert: 'Vertex', size: float = 1.,
                            rotation: float = 0,
-                           dxfattribs: Dict = None) -> Vector:
+                           dxfattribs: Dict = None) -> Vec3:
         return ARROWS.insert_arrow(self, name=name, insert=insert, size=size,
                                    rotation=rotation, dxfattribs=dxfattribs)
 

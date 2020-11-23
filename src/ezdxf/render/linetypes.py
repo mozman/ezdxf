@@ -2,9 +2,9 @@
 #  License: MIT License
 from typing import Tuple, Iterable
 import math
-from ezdxf.math import Vector, Vertex
+from ezdxf.math import Vec3, Vertex
 
-LineSegment = Tuple[Vector, Vector]
+LineSegment = Tuple[Vec3, Vec3]
 
 
 class LineTypeRenderer:
@@ -25,8 +25,8 @@ class LineTypeRenderer:
 
     def line_segment(
             self, start: Vertex, end: Vertex) -> Iterable[LineSegment]:
-        start = Vector(start)
-        end = Vector(end)
+        start = Vec3(start)
+        end = Vec3(end)
         if self.is_solid or start.isclose(end):
             yield start, end
             return

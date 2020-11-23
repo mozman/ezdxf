@@ -38,7 +38,7 @@ class DXFNamespace:
     valid Python names can be used as attrib name.
 
     The namespace can only contain immutable objects: string, int, float, bool,
-    Vector. Because of the immutability, copy and deepcopy are the same.
+    Vec3. Because of the immutability, copy and deepcopy are the same.
 
     (internal class)
     """

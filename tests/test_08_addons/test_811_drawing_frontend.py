@@ -10,7 +10,7 @@ from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
 from ezdxf.render import Path
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vec3, Matrix44
 
 
 class BasicBackend(Backend):
@@ -22,14 +22,14 @@ class BasicBackend(Backend):
         super().__init__()
         self.collector = []
 
-    def draw_point(self, pos: Vector, properties: Properties) -> None:
+    def draw_point(self, pos: Vec3, properties: Properties) -> None:
         self.collector.append(('point', pos, properties))
 
-    def draw_line(self, start: Vector, end: Vector,
+    def draw_line(self, start: Vec3, end: Vec3,
                   properties: Properties) -> None:
         self.collector.append(('line', start, end, properties))
 
-    def draw_filled_polygon(self, points: List[Vector],
+    def draw_filled_polygon(self, points: List[Vec3],
                             properties: Properties) -> None:
         self.collector.append(('filled_polygon', points, properties))
 

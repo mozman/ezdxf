@@ -1,3 +1,5 @@
+# Copyright (c) 2020, Manfred Moitzi
+# License: MIT License
 import pytest
 from ezdxf.math.shape import Shape2d
 
@@ -12,7 +14,7 @@ def test_init(square):
     # shape is list like
     assert len(square) == 4
 
-    # elements are Vectors?
+    # elements are Vec3s?
     assert square[0].x == 0
     assert square[0].y == 0
     assert square[2].x == 1

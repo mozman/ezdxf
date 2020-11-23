@@ -10,7 +10,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
 from ezdxf.lldxf.packedtags import VertexArray
-from ezdxf.math import Vector, Matrix44, ConstructionEllipse, Z_AXIS, NULLVEC
+from ezdxf.math import Vec3, Matrix44, ConstructionEllipse, Z_AXIS, NULLVEC
 from ezdxf.math.bspline import (
     uniform_knot_vector, open_uniform_knot_vector, BSpline,
 )
@@ -207,7 +207,7 @@ class Spline(DXFGraphic):
     @control_points.setter
     def control_points(self, points: Iterable['Vertex']) -> None:
         self._control_points = VertexArray(
-            chain.from_iterable(Vector.generate(points)))
+            chain.from_iterable(Vec3.generate(points)))
 
     # DXF callback attribute Spline.dxf.n_control_points
     def control_point_count(self) -> int:
@@ -224,7 +224,7 @@ class Spline(DXFGraphic):
     @fit_points.setter
     def fit_points(self, points: Iterable['Vertex']) -> None:
         self._fit_points = VertexArray(
-            chain.from_iterable(Vector.generate(points)))
+            chain.from_iterable(Vec3.generate(points)))
 
     # DXF callback attribute Spline.dxf.n_fit_points
     def fit_point_count(self) -> int:
@@ -271,7 +271,7 @@ class Spline(DXFGraphic):
         return self  # floating interface
 
     def flattening(self, distance: float,
-                   segments: int = 4) -> Iterable[Vector]:
+                   segments: int = 4) -> Iterable[Vec3]:
         """ Adaptive recursive flattening. The argument `segments` is the
         minimum count of approximation segments between two knots, if the
         distance from the center of the approximation segment to the curve is

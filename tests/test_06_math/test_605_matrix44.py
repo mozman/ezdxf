@@ -3,6 +3,7 @@
 # License: MIT License
 import pytest
 from math import radians, sin, cos, pi, isclose
+# Import from 'ezdxf.math.matrix44' to test Python implementation
 from ezdxf.math.matrix44 import Matrix44
 
 

@@ -1,10 +1,10 @@
-# (c) 2018-2020, Manfred Moitzi
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 
 import pytest
 import ezdxf
 import math
-from ezdxf.math import ConstructionArc, Vector, UCS, Vec2
+from ezdxf.math import ConstructionArc, Vec3, UCS, Vec2
 from ezdxf.math import arc_segment_count
 from math import isclose
 
@@ -63,7 +63,7 @@ def test_arc_from_2p_radius():
 
     arc = ConstructionArc.from_2p_radius(start_point=p2, end_point=p1,
                                          radius=radius)
-    assert arc.center == Vector(2, 3)
+    assert arc.center == Vec3(2, 3)
     assert isclose(arc.radius, radius)
     assert isclose(arc.start_angle, 180)
     assert isclose(arc.end_angle, -90)
@@ -89,16 +89,16 @@ def test_arc_from_3p():
 
 
 def test_spatial_arc_from_3p():
-    start_point_wcs = Vector(0, 1, 0)
-    end_point_wcs = Vector(1, 0, 0)
-    def_point_wcs = Vector(0, 0, 1)
+    start_point_wcs = Vec3(0, 1, 0)
+    end_point_wcs = Vec3(1, 0, 0)
+    def_point_wcs = Vec3(0, 0, 1)
 
     ucs = UCS.from_x_axis_and_point_in_xy(origin=def_point_wcs,
                                           axis=end_point_wcs - def_point_wcs,
                                           point=start_point_wcs)
     start_point_ucs = ucs.from_wcs(start_point_wcs)
     end_point_ucs = ucs.from_wcs(end_point_wcs)
-    def_point_ucs = Vector(0, 0)
+    def_point_ucs = Vec3(0, 0)
 
     arc = ConstructionArc.from_3p(start_point_ucs, end_point_ucs, def_point_ucs)
     dwg = ezdxf.new('R12')

@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 from math import radians
-from ezdxf.math import Vector, BoundingBox
+from ezdxf.math import Vec3, BoundingBox
 from ezdxf.render.forms import cube
 from ezdxf.render.mesh import MeshVertexMerger, MeshBuilder, MeshTransformer, MeshAverageVertexMerger
 from ezdxf.addons import SierpinskyPyramid
@@ -82,8 +82,8 @@ def test_average_vertex_merger():
     assert len(mesh.faces) == 1024
 
 
-REGULAR_FACE = Vector.list([(0, 0, 0), (1, 0, 1), (1, 1, 1), (0, 1, 0)])
-IRREGULAR_FACE = Vector.list([(0, 0, 0), (1, 0, 1), (1, 1, 0), (0, 1, 0)])
+REGULAR_FACE = Vec3.list([(0, 0, 0), (1, 0, 1), (1, 1, 1), (0, 1, 0)])
+IRREGULAR_FACE = Vec3.list([(0, 0, 0), (1, 0, 1), (1, 1, 0), (0, 1, 0)])
 
 
 def test_has_none_planar_faces():

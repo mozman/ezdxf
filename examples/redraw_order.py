@@ -2,7 +2,7 @@
 # License: MIT License
 import random
 import ezdxf
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 from ezdxf.lldxf.const import SortEntities
 
 
@@ -15,7 +15,7 @@ def random_pos(lower_left=(0, 0), upper_right=(100, 100)):
     x1, y1 = upper_right
     x = random_in_range(x0, x1)
     y = random_in_range(y0, y1)
-    return Vector(x, y)
+    return Vec3(x, y)
 
 
 def add_solids(msp, count=20, min_size=1, max_size=5, color=None, layer='SOLIDS'):

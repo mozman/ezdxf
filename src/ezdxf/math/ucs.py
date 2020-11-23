@@ -1,8 +1,8 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Sequence, Iterable
-from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
-from .matrix44 import Matrix44
+from ezdxf.math import Vec3, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
+
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout
@@ -26,7 +26,7 @@ class OCS:
     """
 
     def __init__(self, extrusion: 'Vertex' = Z_AXIS):
-        Az = Vector(extrusion).normalize()
+        Az = Vec3(extrusion).normalize()
         self.transform = not Az.isclose(Z_AXIS)
         if self.transform:
             if (abs(Az.x) < 1 / 64.) and (abs(Az.y) < 1 / 64.):
@@ -38,17 +38,17 @@ class OCS:
             self.matrix = Matrix44.ucs(Ax, Ay, Az)
 
     @property
-    def ux(self) -> Vector:
+    def ux(self) -> Vec3:
         """ x-axis unit vector """
         return self.matrix.ux if self.transform else X_AXIS
 
     @property
-    def uy(self) -> Vector:
+    def uy(self) -> Vec3:
         """ y-axis unit vector """
         return self.matrix.uy if self.transform else Y_AXIS
 
     @property
-    def uz(self) -> Vector:
+    def uz(self) -> Vec3:
         """ z-axis unit vector """
         return self.matrix.uz if self.transform else Z_AXIS
 
@@ -122,41 +122,41 @@ class UCS:
             uy = Y_AXIS
             uz = Z_AXIS
         elif ux is None:
-            uy = Vector(uy).normalize()
-            uz = Vector(uz).normalize()
-            ux = Vector(uy).cross(uz).normalize()
+            uy = Vec3(uy).normalize()
+            uz = Vec3(uz).normalize()
+            ux = Vec3(uy).cross(uz).normalize()
         elif uy is None:
-            ux = Vector(ux).normalize()
-            uz = Vector(uz).normalize()
-            uy = Vector(uz).cross(ux).normalize()
+            ux = Vec3(ux).normalize()
+            uz = Vec3(uz).normalize()
+            uy = Vec3(uz).cross(ux).normalize()
         elif uz is None:
-            ux = Vector(ux).normalize()
-            uy = Vector(uy).normalize()
-            uz = Vector(ux).cross(uy).normalize()
+            ux = Vec3(ux).normalize()
+            uy = Vec3(uy).normalize()
+            uz = Vec3(ux).cross(uy).normalize()
         else:  # all axis are given
-            ux = Vector(ux).normalize()
-            uy = Vector(uy).normalize()
-            uz = Vector(uz).normalize()
+            ux = Vec3(ux).normalize()
+            uy = Vec3(uy).normalize()
+            uz = Vec3(uz).normalize()
 
         self.matrix: Matrix44 = Matrix44.ucs(ux, uy, uz, origin)
 
     @property
-    def ux(self) -> Vector:
+    def ux(self) -> Vec3:
         """ x-axis unit vector """
         return self.matrix.ux
 
     @property
-    def uy(self) -> Vector:
+    def uy(self) -> Vec3:
         """ y-axis unit vector """
         return self.matrix.uy
 
     @property
-    def uz(self) -> Vector:
+    def uz(self) -> Vec3:
         """ z-axis unit vector """
         return self.matrix.uz
 
     @property
-    def origin(self) -> Vector:
+    def origin(self) -> Vec3:
         """ Returns the origin """
         return self.matrix.origin
 
@@ -169,33 +169,33 @@ class UCS:
         """ Returns a copy of this UCS. """
         return UCS(self.origin, self.ux, self.uy, self.uz)
 
-    def to_wcs(self, point: 'Vertex') -> 'Vector':
+    def to_wcs(self, point: 'Vertex') -> 'Vec3':
         """ Returns WCS point for UCS `point`. """
         return self.matrix.transform(point)
 
-    def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
+    def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vec3']:
         """ Returns iterable of WCS vectors for UCS `points`. """
         return self.matrix.transform_vertices(points)
 
-    def direction_to_wcs(self, vector: 'Vertex') -> 'Vector':
+    def direction_to_wcs(self, vector: 'Vertex') -> 'Vec3':
         """ Returns WCS direction for UCS `vector` without origin adjustment. """
         return self.matrix.transform_direction(vector)
 
-    def from_wcs(self, point: 'Vertex') -> 'Vector':
+    def from_wcs(self, point: 'Vertex') -> 'Vec3':
         """ Returns UCS point for WCS `point`. """
         return self.matrix.ucs_vertex_from_wcs(point)
 
-    def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
+    def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vec3']:
         """ Returns iterable of UCS vectors from WCS `points`. """
         from_wcs = self.from_wcs
         for point in points:
             yield from_wcs(point)
 
-    def direction_from_wcs(self, vector: 'Vertex') -> 'Vector':
+    def direction_from_wcs(self, vector: 'Vertex') -> 'Vec3':
         """ Returns UCS vector for WCS `vector` without origin adjustment. """
         return self.matrix.ucs_direction_from_wcs(vector)
 
-    def to_ocs(self, point: 'Vertex') -> 'Vector':
+    def to_ocs(self, point: 'Vertex') -> 'Vec3':
         """
         Returns OCS vector for UCS `point`.
 
@@ -205,7 +205,7 @@ class UCS:
         wpoint = self.to_wcs(point)
         return OCS(self.uz).from_wcs(wpoint)
 
-    def points_to_ocs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
+    def points_to_ocs(self, points: Iterable['Vertex']) -> Iterable['Vec3']:
         """
         Returns iterable of OCS vectors for UCS `points`.
 
@@ -229,7 +229,7 @@ class UCS:
             angle: in UCS in degrees
 
         """
-        return self.ucs_direction_to_ocs_direction(Vector.from_deg_angle(angle)).angle_deg
+        return self.ucs_direction_to_ocs_direction(Vec3.from_deg_angle(angle)).angle_deg
 
     def to_ocs_angle_rad(self, angle: float) -> float:
         """
@@ -240,9 +240,9 @@ class UCS:
             angle: in UCS in radians
 
         """
-        return self.ucs_direction_to_ocs_direction(Vector.from_angle(angle)).angle
+        return self.ucs_direction_to_ocs_direction(Vec3.from_angle(angle)).angle
 
-    def ucs_direction_to_ocs_direction(self, direction: Vector) -> Vector:
+    def ucs_direction_to_ocs_direction(self, direction: Vec3) -> Vec3:
         """
         Transforms UCS `direction` vector into OCS direction vector of the parent coordinate system (most likely
         the WCS), target OCS is defined by the UCS z-axis.
@@ -259,7 +259,7 @@ class UCS:
             angle: rotation angle in radians
 
         """
-        t = Matrix44.axis_rotate(Vector(axis), angle)
+        t = Matrix44.axis_rotate(Vec3(axis), angle)
         ux, uy, uz = t.transform_vertices([self.ux, self.uy, self.uz])
         return UCS(origin=self.origin, ux=ux, uy=uy, uz=uz)
 
@@ -303,7 +303,7 @@ class UCS:
             delta: shifting vector
 
         """
-        self.origin += Vector(delta)
+        self.origin += Vec3(delta)
         return self
 
     def moveto(self, location: 'Vertex') -> 'UCS':
@@ -313,7 +313,7 @@ class UCS:
             location: new origin in WCS
 
         """
-        self.origin = Vector(location)
+        self.origin = Vec3(location)
         return self
 
     def transform(self, m: Matrix44) -> 'UCS':
@@ -344,8 +344,8 @@ class UCS:
             point: arbitrary point unlike the origin in the xy-plane as (x, y, z) tuple in :ref:`WCS`
 
         """
-        x_axis = Vector(axis)
-        z_axis = x_axis.cross(Vector(point) - origin)
+        x_axis = Vec3(axis)
+        z_axis = x_axis.cross(Vec3(point) - origin)
         return UCS(origin=origin, ux=x_axis, uz=z_axis)
 
     @staticmethod
@@ -359,8 +359,8 @@ class UCS:
             point: arbitrary point unlike the origin in the xz-plane as (x, y, z) tuple in :ref:`WCS`
 
         """
-        x_axis = Vector(axis)
-        xz_vector = Vector(point) - origin
+        x_axis = Vec3(axis)
+        xz_vector = Vec3(point) - origin
         y_axis = xz_vector.cross(x_axis)
         return UCS(origin=origin, ux=x_axis, uy=y_axis)
 
@@ -375,8 +375,8 @@ class UCS:
             point: arbitrary point unlike the origin in the xy-plane as (x, y, z) tuple in :ref:`WCS`
 
         """
-        y_axis = Vector(axis)
-        xy_vector = Vector(point) - origin
+        y_axis = Vec3(axis)
+        xy_vector = Vec3(point) - origin
         z_axis = xy_vector.cross(y_axis)
         return UCS(origin=origin, uy=y_axis, uz=z_axis)
 
@@ -391,8 +391,8 @@ class UCS:
             point: arbitrary point unlike the origin in the yz-plane as (x, y, z) tuple in :ref:`WCS`
 
         """
-        y_axis = Vector(axis)
-        yz_vector = Vector(point) - origin
+        y_axis = Vec3(axis)
+        yz_vector = Vec3(point) - origin
         x_axis = yz_vector.cross(y_axis)
         return UCS(origin=origin, ux=x_axis, uy=y_axis)
 
@@ -407,8 +407,8 @@ class UCS:
             point: arbitrary point unlike the origin in the xz-plane as (x, y, z) tuple in :ref:`WCS`
 
         """
-        z_axis = Vector(axis)
-        y_axis = z_axis.cross(Vector(point) - origin)
+        z_axis = Vec3(axis)
+        y_axis = z_axis.cross(Vec3(point) - origin)
         return UCS(origin=origin, uy=y_axis, uz=z_axis)
 
     @staticmethod
@@ -422,8 +422,8 @@ class UCS:
             point: arbitrary point unlike the origin in the yz-plane as (x, y, z) tuple in :ref:`WCS`
 
         """
-        z_axis = Vector(axis)
-        yz_vector = Vector(point) - origin
+        z_axis = Vec3(axis)
+        yz_vector = Vec3(point) - origin
         x_axis = yz_vector.cross(z_axis)
         return UCS(origin=origin, ux=x_axis, uz=z_axis)
 
@@ -447,19 +447,19 @@ class PassTroughUCS(UCS):
     def __init__(self):
         super().__init__()
 
-    def to_wcs(self, point: 'Vertex') -> Vector:
-        return Vector(point)
+    def to_wcs(self, point: 'Vertex') -> Vec3:
+        return Vec3(point)
 
-    def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable[Vector]:
+    def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable[Vec3]:
         for point in points:
-            yield Vector(point)
+            yield Vec3(point)
 
     def to_ocs(self, point: 'Vertex') -> 'Vertex':
-        return Vector(point)
+        return Vec3(point)
 
     def points_to_ocs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
         for point in points:
-            yield Vector(point)
+            yield Vec3(point)
 
     def to_ocs_angle_deg(self, angle: float) -> float:
         return angle
@@ -467,9 +467,9 @@ class PassTroughUCS(UCS):
     def to_ocs_angle_rad(self, angle: float) -> float:
         return angle
 
-    def from_wcs(self, point: 'Vertex') -> Vector:
-        return Vector(point)
+    def from_wcs(self, point: 'Vertex') -> Vec3:
+        return Vec3(point)
 
-    def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable[Vector]:
+    def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable[Vec3]:
         for point in points:
-            yield Vector(point)
+            yield Vec3(point)

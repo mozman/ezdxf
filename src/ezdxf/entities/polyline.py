@@ -10,7 +10,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.lldxf import const
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.render.polyline import virtual_polyline_entities
 from ezdxf.explode import explode_entity
@@ -307,7 +307,7 @@ class Polyline(LinkedEntities):
         """
         return self.vertices[pos]
 
-    def points(self) -> Iterable[Vector]:
+    def points(self) -> Iterable[Vec3]:
         """ Returns iterable of all polyline vertices as ``(x, y, z)`` tuples,
         not as :class:`Vertex` objects.
         """
@@ -404,7 +404,7 @@ class Polyline(LinkedEntities):
         if self.dxf.hasattr('linetype'):
             dxfattribs['linetype'] = self.dxf.linetype
         for point in points:
-            dxfattribs['location'] = Vector(point)
+            dxfattribs['location'] = Vec3(point)
             yield self._new_compound_entity('VERTEX', dxfattribs)
 
     def cast(self) -> Union['Polyline', 'Polymesh', 'Polyface']:
@@ -604,7 +604,7 @@ class Polyface(Polyline):
         def new_face_record() -> 'DXFVertex':
             dxfattribs['flags'] = const.VTX_3D_POLYFACE_MESH_VERTEX
             # location of face record vertex is always (0, 0, 0)
-            dxfattribs['location'] = Vector()
+            dxfattribs['location'] = Vec3()
             return self._new_compound_entity('VERTEX', dxfattribs)
 
         dxfattribs = dxfattribs or {}
@@ -1056,7 +1056,7 @@ class DXFVertex(DXFGraphic):
 
         """
         dxf = self.dxf
-        v = Vector(dxf.location)
+        v = Vec3(dxf.location)
         x, y, z = v.xyz
         b = dxf.bulge
         s = dxf.start_width
@@ -1088,12 +1088,12 @@ def vertex_attribs(data: Sequence[float], format='xyseb') -> dict:
     """
     attribs = dict()
     format = [code for code in format.lower() if code in FORMAT_CODES]
-    location = Vector()
+    location = Vec3()
     for code, value in zip(format, data):
         if code not in FORMAT_CODES:
             continue
         if code == 'v':
-            location = Vector(value)
+            location = Vec3(value)
         elif code == 'b':
             attribs['bulge'] = value
         elif code == 's':

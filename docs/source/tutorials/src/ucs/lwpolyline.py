@@ -5,7 +5,7 @@ OUT_DIR = Path('~/Desktop/Outbox').expanduser()
 
 import math
 import ezdxf
-from ezdxf.math import Vector, UCS
+from ezdxf.math import Vec3, UCS
 
 doc = ezdxf.new('R2010')
 msp = doc.modelspace()
@@ -16,7 +16,7 @@ ucs = UCS(origin=(0, 2, 2)).rotate_local_x(math.radians(-45))
 
 msp.add_lwpolyline(
     # calculating corner points in UCS coordinates
-    points=(Vector.from_deg_angle((360 / 5) * n) for n in range(5)),
+    points=(Vec3.from_deg_angle((360 / 5) * n) for n in range(5)),
     format='xy',  # ignore z-axis
     dxfattribs={
         'closed': True,

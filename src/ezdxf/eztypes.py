@@ -13,8 +13,8 @@ from typing import *
 if TYPE_CHECKING:
     # Low level stuff
     from ezdxf.math import (
-        Vector, Vec2, Vertex, VecXY, Matrix44, BoundingBox, BoundingBox2d ,UCS,
-        OCS
+        Vec3, Vec2, Vertex, VecXY, Matrix44, BoundingBox, BoundingBox2d ,UCS,
+        OCS, Vector
     )
     from ezdxf.tools.handle import HandleGenerator
     from ezdxf.lldxf.types import DXFTag, DXFBinaryTag, DXFVertex
@@ -126,7 +126,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.validator import DXFInfo
 
     # Type compositions
-    TagValue = Union[str, bytes, int, float, Sequence[float], Vector]
+    TagValue = Union[str, bytes, int, float, Sequence[float], Vec3]
     RGB = Tuple[int, int, int]
     IterableTags = Iterable[Tuple[int, TagValue]]
     SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]

@@ -8,7 +8,7 @@ from collections import namedtuple
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags
-from ezdxf.math import Vector, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
+from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 from ezdxf import colors
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -124,7 +124,7 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
     'block_record_handle': DXFAttr(344),
     'block_color': DXFAttr(93, default=colors.BY_BLOCK_RAW_VALUE),  # raw color
     'block_scale_vector': DXFAttr(10, xtype=XType.point3d,
-                                  default=Vector(1, 1, 1)),
+                                  default=Vec3(1, 1, 1)),
     'block_rotation': DXFAttr(43, default=0),  # in radians!!!
     'block_connection_type': DXFAttr(176, default=0),
     # 0 = center extents
@@ -434,7 +434,7 @@ class MultiLeaderContext:
     def __init__(self):
         self.leaders: List['Leader'] = []
         self.scale: float = 1.0  # overall scale
-        self.base_point: Vector = NULLVEC
+        self.base_point: Vec3 = NULLVEC
         self.text_height = 4.0
         self.arrowhead_size = 4.0
         self.landing_gap_size = 2.0
@@ -444,9 +444,9 @@ class MultiLeaderContext:
         self.attachment_type = 0  # 0=content extents, 1=insertion point
         self.mtext: Optional[MTextData] = None
         self.block: Optional[BlockData] = None
-        self.plane_origin: Vector = NULLVEC
-        self.plane_x_axis: Vector = X_AXIS
-        self.plane_y_axis: Vector = Y_AXIS
+        self.plane_origin: Vec3 = NULLVEC
+        self.plane_x_axis: Vec3 = X_AXIS
+        self.plane_y_axis: Vec3 = Y_AXIS
         self.plane_normal_reversed: int = 0
         self.top_attachment = 9
         self.bottom_attachment = 9
@@ -558,10 +558,10 @@ class MTextData:
 
     def __init__(self):
         self.default_content: str = ''
-        self.normal_direction: Vector = Z_AXIS
+        self.normal_direction: Vec3 = Z_AXIS
         self.style_handle = None  # handle of TextStyle() table entry
-        self.location: Vector = NULLVEC
-        self.direction: Vector = X_AXIS  # text direction
+        self.location: Vec3 = NULLVEC
+        self.direction: Vec3 = X_AXIS  # text direction
         self.rotation: float = 0.  # in radians!
         self.boundary_width: float = 0.
         self.boundary_height: float = 0.
@@ -641,9 +641,9 @@ class BlockData:
 
     def __init__(self):
         self.block_record_handle = None
-        self.normal_direction: Vector = Z_AXIS
-        self.location: Vector = NULLVEC
-        self.scale: Vector = Vector(1, 1, 1)
+        self.normal_direction: Vec3 = Z_AXIS
+        self.location: Vec3 = NULLVEC
+        self.scale: Vec3 = Vec3(1, 1, 1)
         self.rotation: float = 0  # in radians!
         self.color: int = colors.BY_BLOCK_RAW_VALUE
         # The transformation matrix is stored in transposed order
@@ -696,8 +696,8 @@ class Leader:
         self.lines: List['LeaderLine'] = []
         self.has_last_leader_line: int = 0  # group code 290
         self.has_dogleg_vector: int = 0  # group code 291
-        self.last_leader_point: Vector = NULLVEC  # group code (10, 20, 30)
-        self.dogleg_vector: Vector = X_AXIS  # group code (11, 21, 31)
+        self.last_leader_point: Vec3 = NULLVEC  # group code (10, 20, 30)
+        self.dogleg_vector: Vec3 = X_AXIS  # group code (11, 21, 31)
         self.dogleg_length: float = 1.0  # group code 40
         self.index: int = 0  # group code 90
         self.attachment_direction: int = 0  # group code 271, R21010+
@@ -763,8 +763,8 @@ class Leader:
 
 class LeaderLine:
     def __init__(self):
-        self.vertices: List[Vector] = []
-        self.breaks: Optional[List[Union[int, Vector]]] = None
+        self.vertices: List[Vec3] = []
+        self.breaks: Optional[List[Union[int, Vec3]]] = None
         # Breaks: 90, 11, 12, [11, 12, ...] [, 90, 11, 12 [11, 12, ...]]
         # group code 90 = break index
         # group code 11 = start vertex of break

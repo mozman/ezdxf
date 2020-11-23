@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING
 import copy
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007
 from .dxfentity import base_class, SubclassProcessor
@@ -17,7 +17,7 @@ __all__ = ['ACADTable']
 
 acdb_block_reference = DefSubclass('AcDbBlockReference', {
     'geometry': DXFAttr(2),  # Block name; an anonymous block begins with a *T value
-    'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # Insertion point
+    'insert': DXFAttr(10, xtype=XType.point3d, default=Vec3(0, 0, 0)),  # Insertion point
 })
 
 acdb_table = DefSubclass('AcDbTable', {

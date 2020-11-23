@@ -1,13 +1,12 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import pytest
 import ezdxf
 
 from ezdxf.entities.polyline import Polyline
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 
 
 ENTITY_R12 = """0
@@ -159,7 +158,7 @@ def test_polyline2d_transform_interface():
     assert vertices[1] == (3, 1, 1)
     assert vertices[2] == (2, 2, 1)
     assert pline.dxf.elevation == (0, 0, 1)
-    assert Vector(0, 0, 1).isclose(pline.dxf.extrusion)
+    assert Vec3(0, 0, 1).isclose(pline.dxf.extrusion)
 
 
 def test_polyline3d_transform_interface():

@@ -2,7 +2,7 @@
 #  License: MIT License
 from typing import Sequence, Optional
 import abc
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 from .backend import Backend
 from .properties import Properties
 
@@ -18,7 +18,7 @@ class AbstractLineRenderer:
         self._backend = backend
 
     @abc.abstractmethod
-    def draw_line(self, start: Vector, end: Vector,
+    def draw_line(self, start: Vec3, end: Vec3,
                   properties: Properties, z: float):
         ...
 

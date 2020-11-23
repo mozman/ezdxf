@@ -7,7 +7,7 @@ from pathlib import Path
 OUT_DIR = Path('~/Desktop/Outbox').expanduser()
 
 from ezdxf.lldxf.const import MIRROR_X
-from ezdxf.math import UCS, Vector, Matrix44, Y_AXIS, X_AXIS, Z_AXIS
+from ezdxf.math import UCS, Vec3, Matrix44, Y_AXIS, X_AXIS, Z_AXIS
 
 RED = 1
 GREEN = 3
@@ -45,7 +45,7 @@ def setup_csys(blk, size=3):
 
 
 # rotate UCS around an arbitrary axis:
-def ucs_rotation(ucs: UCS, axis: Vector, angle: float):
+def ucs_rotation(ucs: UCS, axis: Vec3, angle: float):
     # new in ezdxf v0.11: UCS.rotate(axis, angle)
     t = Matrix44.axis_rotate(axis, math.radians(angle))
     ux, uy, uz = t.transform_vertices([ucs.ux, ucs.uy, ucs.uz])
@@ -74,7 +74,7 @@ msp.add_blockref('CSYS', insert, dxfattribs={
 # t is a transformation matrix to rotate 15 degree around the x-axis
 t = Matrix44.axis_rotate(axis=X_AXIS, angle=math.radians(15))
 # transform block z-axis into new UCS z-axis (= extrusion vector)
-uz = Vector(t.transform(Z_AXIS))
+uz = Vec3(t.transform(Z_AXIS))
 # create new UCS at the insertion point, because we are rotating around the x-axis,
 # ux is the same as the WCS x-axis and uz is the rotated z-axis.
 ucs = UCS(origin=(1, 2, 0), ux=X_AXIS, uz=uz)
@@ -88,7 +88,7 @@ blockref = msp.add_blockref('CSYS', insert, dxfattribs={
 })
 
 # translate a block references with an established OCS
-translation = Vector(-3, -1, 1)
+translation = Vec3(-3, -1, 1)
 # get established OCS
 ocs = blockref.ocs()
 # get insert location in WCS

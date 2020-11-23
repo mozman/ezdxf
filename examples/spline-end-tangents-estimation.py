@@ -4,16 +4,16 @@ from pathlib import Path
 import math
 import ezdxf
 from ezdxf.math import (
-    Vector, estimate_tangents, estimate_end_tangent_magnitude, global_bspline_interpolation, linspace
+    Vec3, estimate_tangents, estimate_end_tangent_magnitude, global_bspline_interpolation, linspace
 )
 
 DIR = Path('~/Desktop/Outbox').expanduser()
-points = Vector.list([(0, 0), (0, 10), (10, 10), (20, 10), (20, 0)])
+points = Vec3.list([(0, 0), (0, 10), (10, 10), (20, 10), (20, 0)])
 
 
 def sine_wave(count: int, scale: float = 1.0):
     for t in linspace(0, math.tau, count):
-        yield Vector(t * scale, math.sin(t) * scale)
+        yield Vec3(t * scale, math.sin(t) * scale)
 
 
 def setup():
@@ -41,16 +41,16 @@ doc, msp = setup()
 # returns sum of chords for m1 and m2
 m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
 # Multiply tangent vectors by total chord length for global interpolation:
-start_tangent = Vector.from_deg_angle(100) * m1
-end_tangent = Vector.from_deg_angle(-100) * m2
+start_tangent = Vec3.from_deg_angle(100) * m1
+end_tangent = Vec3.from_deg_angle(-100) * m2
 # Interpolate control vertices from fit points and end derivatives as constraints
 s = global_bspline_interpolation(points, degree=3, tangents=(start_tangent, end_tangent))
 msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_construction_tool(s)
 # Result matches the BricsCAD interpolation if fit points, start- and end
 # tangents are stored explicit in the DXF file.
 spline = msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
-spline.dxf.start_tangent = Vector.from_deg_angle(100)
-spline.dxf.end_tangent = Vector.from_deg_angle(-100)
+spline.dxf.start_tangent = Vec3.from_deg_angle(100)
+spline.dxf.end_tangent = Vec3.from_deg_angle(-100)
 doc.saveas(DIR / 'fit-points-and-tangents.dxf')
 
 # 3. Need control vertices to render the B-spline but start- and
@@ -79,8 +79,8 @@ m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
 # tangent vector = 2nd control vertex - 1st control vertex
 required_angle = 101.0035408517495  # angle of tangent vector in degrees
 required_magnitude = m1 * 1.3097943444804256  # magnitude of tangent vector
-start_tangent = Vector.from_deg_angle(required_angle, required_magnitude)
-end_tangent = Vector.from_deg_angle(-required_angle, required_magnitude)
+start_tangent = Vec3.from_deg_angle(required_angle, required_magnitude)
+end_tangent = Vec3.from_deg_angle(-required_angle, required_magnitude)
 s = global_bspline_interpolation(points, degree=3, tangents=(start_tangent, end_tangent))
 msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_construction_tool(s)
 # Now result matches the BricsCAD interpolation - but only in this case

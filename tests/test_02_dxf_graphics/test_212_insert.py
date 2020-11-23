@@ -1,6 +1,5 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import pytest
 import ezdxf
 
@@ -102,9 +101,9 @@ def test_new_constructor():
     assert insert.dxf.color == 7
     assert insert.dxf.linetype == 'BYLAYER'
     assert insert.dxf.insert == (1, 2, 3)
-    assert insert.dxf.insert.x == 1, 'is not Vector compatible'
-    assert insert.dxf.insert.y == 2, 'is not Vector compatible'
-    assert insert.dxf.insert.z == 3, 'is not Vector compatible'
+    assert insert.dxf.insert.x == 1, 'is not Vec3 compatible'
+    assert insert.dxf.insert.y == 2, 'is not Vec3 compatible'
+    assert insert.dxf.insert.z == 3, 'is not Vec3 compatible'
     assert insert.has_scaling is False
     assert insert.has_uniform_scaling is True
     # can set DXF R2007 value

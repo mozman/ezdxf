@@ -1,12 +1,11 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Union
 from typing import TYPE_CHECKING
 import pytest
 import random
 import math
 from ezdxf.entities import Circle, Arc, Ellipse, Insert
-from ezdxf.math import Matrix44, Vector, linspace, X_AXIS, Y_AXIS, Z_AXIS
+from ezdxf.math import Matrix44, Vec3, linspace, X_AXIS, Y_AXIS, Z_AXIS
 import ezdxf
 
 if TYPE_CHECKING:
@@ -55,7 +54,7 @@ def test_random_circle_transformation(sx, sy, sz):
         circle = Circle()
         vertices = list(circle.vertices(linspace(0, 360, vertex_count, endpoint=False)))
         m = Matrix44.chain(
-            Matrix44.axis_rotate(axis=Vector.random(), angle=random.uniform(0, math.tau)),
+            Matrix44.axis_rotate(axis=Vec3.random(), angle=random.uniform(0, math.tau)),
             Matrix44.translate(dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2)),
         )
         return synced_transformation(circle, vertices, m)
@@ -99,7 +98,7 @@ def test_random_arc_transformation(sx, sy, sz):
         })
         vertices = list(arc.vertices(arc.angles(vertex_count)))
         m = Matrix44.chain(
-            Matrix44.axis_rotate(axis=Vector.random(), angle=random.uniform(0, math.tau)),
+            Matrix44.axis_rotate(axis=Vec3.random(), angle=random.uniform(0, math.tau)),
             Matrix44.translate(dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2)),
         )
         return synced_transformation(arc, vertices, m)
@@ -134,7 +133,7 @@ def test_random_ellipse_transformation(sx, sy, sz, start, end):
         })
         vertices = list(ellipse.vertices(ellipse.params(vertex_count)))
         m = Matrix44.chain(
-            Matrix44.axis_rotate(axis=Vector.random(), angle=random.uniform(0, math.tau)),
+            Matrix44.axis_rotate(axis=Vec3.random(), angle=random.uniform(0, math.tau)),
             Matrix44.translate(dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2)),
         )
         return synced_transformation(ellipse, vertices, m)
@@ -175,7 +174,7 @@ def test_random_block_reference_transformation(sx, sy, sz, doc1: 'Drawing'):
             'zscale': 1,
             'rotation': 0,
             'layer': 'insert',
-        }, doc=doc1), [Vector(0, 0, 0), X_AXIS, Y_AXIS, Z_AXIS]
+        }, doc=doc1), [Vec3(0, 0, 0), X_AXIS, Y_AXIS, Z_AXIS]
 
     def check(lines, chk):
         origin, x, y, z = chk
@@ -196,7 +195,7 @@ def test_random_block_reference_transformation(sx, sy, sz, doc1: 'Drawing'):
         # coordinate system, which can not represented by the
         # INSERT entity.
         Matrix44.scale(sx, sy, sz),
-        Matrix44.axis_rotate(axis=Vector.random(), angle=random.uniform(0, math.tau)),
+        Matrix44.axis_rotate(axis=Vec3.random(), angle=random.uniform(0, math.tau)),
         Matrix44.translate(dx=random.uniform(-2, 2), dy=random.uniform(-2, 2), dz=random.uniform(-2, 2)),
     )
     entity, vertices = synced_transformation(entity0, vertices0, m)

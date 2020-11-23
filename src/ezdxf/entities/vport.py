@@ -8,7 +8,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007
 from ezdxf.lldxf.validator import is_valid_vport_name
-from ezdxf.math import Vector, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, NULLVEC, Z_AXIS
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
@@ -23,12 +23,12 @@ __all__ = ['VPort']
 acdb_vport = DefSubclass('AcDbViewportTableRecord', {
     'name': DXFAttr(2, validator=is_valid_vport_name),
     'flags': DXFAttr(70, default=0),
-    'lower_left': DXFAttr(10, xtype=XType.point2d, default=Vector(0, 0)),
-    'upper_right': DXFAttr(11, xtype=XType.point2d, default=Vector(1, 1)),
-    'center': DXFAttr(12, xtype=XType.point2d, default=Vector(70, 50)),
+    'lower_left': DXFAttr(10, xtype=XType.point2d, default=Vec3(0, 0)),
+    'upper_right': DXFAttr(11, xtype=XType.point2d, default=Vec3(1, 1)),
+    'center': DXFAttr(12, xtype=XType.point2d, default=Vec3(70, 50)),
     'snap_base': DXFAttr(13, xtype=XType.point2d, default=NULLVEC),
-    'snap_spacing': DXFAttr(14, xtype=XType.point2d, default=Vector(.5, .5)),
-    'grid_spacing': DXFAttr(15, xtype=XType.point2d, default=Vector(.5, .5)),
+    'snap_spacing': DXFAttr(14, xtype=XType.point2d, default=Vec3(.5, .5)),
+    'grid_spacing': DXFAttr(15, xtype=XType.point2d, default=Vec3(.5, .5)),
     'direction': DXFAttr(
         16, xtype=XType.point3d, default=Z_AXIS,
         validator=validator.is_not_null_vector,

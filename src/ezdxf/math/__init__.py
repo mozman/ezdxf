@@ -1,9 +1,9 @@
-# Purpose: math and construction tools
-# Created: 27.03.2010, 2018 integrated into ezdxf
 # Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 from typing import Union, Sequence
-from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
+from .vector import (
+    Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
+)
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d,
     distance_point_line_2d, is_point_on_line_2d, is_point_in_polygon_2d,
@@ -52,8 +52,8 @@ from .bbox import BoundingBox2d, BoundingBox
 from .offset2d import offset_vertices_2d
 from .transformtools import NonUniformScalingError, InsertTransformationError
 
-Vertex = Union[Sequence[float], Vector, Vec2]
-VecXY = Union[Vec2, Vector]  # Vector with x and y attributes
+Vertex = Union[Sequence[float], Vec3, Vec2]
+VecXY = Union[Vec2, Vec3]  # Vector with x and y attributes
 
 
 def xround(value: float, rounding: float = 0.) -> float:

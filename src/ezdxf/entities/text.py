@@ -12,7 +12,7 @@ from ezdxf.lldxf.attributes import (
 from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, SPECIAL_CHARS_ENCODING, DXFValueError,
 )
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform
 from ezdxf.audit import Auditor
 
@@ -282,12 +282,12 @@ class Text(DXFGraphic):
         dxf.align_point = ocs.transform_vertex(dxf.align_point)
         old_rotation = dxf.rotation
         new_rotation = ocs.transform_deg_angle(old_rotation)
-        x_scale = ocs.transform_length(Vector.from_deg_angle(old_rotation))
+        x_scale = ocs.transform_length(Vec3.from_deg_angle(old_rotation))
         y_scale = ocs.transform_length(
-            Vector.from_deg_angle(old_rotation + 90.0))
+            Vec3.from_deg_angle(old_rotation + 90.0))
 
         if not ocs.scale_uniform:
-            oblique_vec = Vector.from_deg_angle(
+            oblique_vec = Vec3.from_deg_angle(
                 old_rotation + 90.0 - dxf.oblique)
             new_oblique_deg = new_rotation + 90.0 - ocs.transform_direction(
                 oblique_vec).angle_deg
@@ -313,7 +313,7 @@ class Text(DXFGraphic):
         """
         ocs = self.ocs()
         dxf = self.dxf
-        vec = Vector(dx, dy, dz)
+        vec = Vec3(dx, dy, dz)
 
         dxf.insert = ocs.from_wcs(vec + ocs.to_wcs(dxf.insert))
         if dxf.hasattr('align_point'):

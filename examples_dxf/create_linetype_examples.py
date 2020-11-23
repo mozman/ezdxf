@@ -2,7 +2,7 @@
 # License: MIT License
 import ezdxf
 from ezdxf.tools import standards
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 from ezdxf import units
 
 for unit in (1, 6):
@@ -26,7 +26,7 @@ for unit in (1, 6):
     doc = ezdxf.new('R2000', setup=True, units=unit)
     msp = doc.modelspace()
 
-    points = Vector.list([(0, 0), (4, 9), (6, 9), (11, 0), (16, 9)])
+    points = Vec3.list([(0, 0), (4, 9), (6, 9), (11, 0), (16, 9)])
     for y, ltype in enumerate(standards.linetypes()):
         fitpoints = [p + (0, y) for p in points]
         msp.add_spline(fitpoints, dxfattribs={'linetype': ltype[0]})

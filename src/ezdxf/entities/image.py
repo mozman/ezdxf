@@ -9,7 +9,7 @@ from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2010
-from ezdxf.math import Vector, Vec2, BoundingBox2d
+from ezdxf.math import Vec3, Vec2, BoundingBox2d
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
@@ -140,16 +140,16 @@ class ImageBase(DXFGraphic):
         self.dxf.v_pixel = m.transform_direction(self.dxf.v_pixel)
         return self
 
-    def boundary_path_wcs(self) -> List[Vector]:
+    def boundary_path_wcs(self) -> List[Vec3]:
         """ Returns the boundary/clipping path in WCS coordinates.
 
         .. versionadded:: 0.14
 
         """
 
-        u = Vector(self.dxf.u_pixel)
-        v = Vector(self.dxf.v_pixel)
-        origin = Vector(self.dxf.insert)
+        u = Vec3(self.dxf.u_pixel)
+        v = Vec3(self.dxf.v_pixel)
+        origin = Vec3(self.dxf.insert)
         origin += (u * 0.5 + v * 0.5)
         boundary_path = self.boundary_path
         if len(boundary_path) == 2:  # rectangle
@@ -404,9 +404,9 @@ class Wipeout(ImageBase):
         x_size, y_size = bounds.size
 
         dxf = self.dxf
-        dxf.insert = Vector(bounds.extmin)
-        dxf.u_pixel = Vector(x_size, 0, 0)
-        dxf.v_pixel = Vector(0, y_size, 0)
+        dxf.insert = Vec3(bounds.extmin)
+        dxf.u_pixel = Vec3(x_size, 0, 0)
+        dxf.v_pixel = Vec3(0, y_size, 0)
 
         def boundary_path():
             extmin = bounds.extmin

@@ -1,14 +1,13 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import pytest
 import math
 
-from ezdxf.math import Vector
+from ezdxf.math import Vec3, Matrix44
 from ezdxf.entities.arc import Arc
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Matrix44
+
 
 TEST_CLASS = Arc
 TEST_TYPE = 'ARC'
@@ -92,9 +91,9 @@ def test_default_new():
     assert entity.dxf.linetype == 'BYLAYER'
 
     assert entity.dxf.center == (1, 2, 3)
-    assert entity.dxf.center.x == 1, 'is not Vector compatible'
-    assert entity.dxf.center.y == 2, 'is not Vector compatible'
-    assert entity.dxf.center.z == 3, 'is not Vector compatible'
+    assert entity.dxf.center.x == 1, 'is not Vec3 compatible'
+    assert entity.dxf.center.y == 2, 'is not Vec3 compatible'
+    assert entity.dxf.center.z == 3, 'is not Vec3 compatible'
     assert entity.dxf.radius == 2.5
     assert entity.dxf.start_angle == 30
     assert entity.dxf.end_angle == 290
@@ -114,13 +113,13 @@ def test_get_start_and_end_vertices_with_ocs():
         'extrusion': (0, 0, -1),
     })
     # convenient properties
-    assert arc.start_point.isclose(Vector(-1, 4.5, -3), abs_tol=1e-6)
-    assert arc.end_point.isclose(Vector(1.5, 2, -3), abs_tol=1e-6)
+    assert arc.start_point.isclose(Vec3(-1, 4.5, -3), abs_tol=1e-6)
+    assert arc.end_point.isclose(Vec3(1.5, 2, -3), abs_tol=1e-6)
 
     # more efficient method:
     start, end = list(arc.vertices([arc.dxf.start_angle, arc.dxf.end_angle]))
-    assert start.isclose(Vector(-1, 4.5, -3), abs_tol=1e-6)
-    assert end.isclose(Vector(1.5, 2, -3), abs_tol=1e-6)
+    assert start.isclose(Vec3(-1, 4.5, -3), abs_tol=1e-6)
+    assert end.isclose(Vec3(1.5, 2, -3), abs_tol=1e-6)
 
 
 def test_load_from_text(entity):

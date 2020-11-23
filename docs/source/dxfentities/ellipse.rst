@@ -28,7 +28,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.major_axis
 
-        Endpoint of major axis, relative to the :attr:`dxf.center` (Vector), default value is ``(1, 0, 0)``.
+        Endpoint of major axis, relative to the :attr:`dxf.center` (Vec3), default value is ``(1, 0, 0)``.
 
     .. attribute:: dxf.ratio
 
@@ -53,7 +53,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: minor_axis
 
-        Returns the minor axis of the ellipse as :class:`Vector` in WCS.
+        Returns the minor axis of the ellipse as :class:`Vec3` in WCS.
 
         .. versionadded:: 0.12
 
@@ -61,9 +61,9 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: apply_construction_tool(e: ConstructionEllipse) -> Ellipse
 
-    .. automethod:: vertices(params:Iterable[float]) -> Iterable[Vector]
+    .. automethod:: vertices(params:Iterable[float]) -> Iterable[Vec3]
 
-    .. automethod:: flattening(distance: float, segments: int = 8) -> Iterable[Vector]
+    .. automethod:: flattening(distance: float, segments: int = 8) -> Iterable[Vec3]
 
     .. automethod:: params
 

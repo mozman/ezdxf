@@ -10,7 +10,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, SPECIAL_CHARS_ENCODING
 from ezdxf.lldxf.tags import Tags
-from ezdxf.math import Vector, Matrix44, OCS, NULLVEC, Z_AXIS, X_AXIS
+from ezdxf.math import Vec3, Matrix44, OCS, NULLVEC, Z_AXIS, X_AXIS
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.colors import rgb2int
 from .dxfentity import base_class, SubclassProcessor
@@ -286,7 +286,7 @@ class MText(DXFGraphic):
         :attr:`dxf.attachment_point` preserves the existing value.
 
         """
-        self.dxf.insert = Vector(insert)
+        self.dxf.insert = Vec3(insert)
         if rotation is not None:
             self.set_rotation(rotation)
         if attachment_point is not None:
@@ -393,7 +393,7 @@ class MText(DXFGraphic):
 
         """
         dxf = self.dxf
-        old_extrusion = Vector(dxf.extrusion)
+        old_extrusion = Vec3(dxf.extrusion)
         new_extrusion, _ = transform_extrusion(old_extrusion, m)
 
         if dxf.hasattr('rotation') and not dxf.hasattr('text_direction'):
@@ -401,11 +401,11 @@ class MText(DXFGraphic):
             # a rotation angle for an entity just defined by an extrusion vector.
             # It's correct for the most common case: extrusion=(0, 0, 1)
             ocs = OCS(old_extrusion)
-            dxf.text_direction = ocs.to_wcs(Vector.from_deg_angle(dxf.rotation))
+            dxf.text_direction = ocs.to_wcs(Vec3.from_deg_angle(dxf.rotation))
 
         dxf.discard('rotation')
 
-        old_text_direction = Vector(dxf.text_direction)
+        old_text_direction = Vec3(dxf.text_direction)
         new_text_direction = m.transform_direction(old_text_direction)
 
         old_char_height_vec = old_extrusion.cross(old_text_direction).normalize(

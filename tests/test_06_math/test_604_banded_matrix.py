@@ -3,8 +3,9 @@
 from typing import Iterable
 import pytest
 import math
-from ezdxf.math.linalg import (
-    Matrix, detect_banded_matrix, compact_banded_matrix, BandedMatrixLU, gauss_vector_solver, banded_matrix
+from ezdxf.math import (
+    Matrix, detect_banded_matrix, compact_banded_matrix, BandedMatrixLU,
+    gauss_vector_solver, banded_matrix,
 )
 
 BANDED_MATRIX = Matrix(matrix=[
@@ -27,7 +28,8 @@ TRICKY = Matrix(matrix=[
 ])
 
 
-def are_close_vectors(v1: Iterable[float], v2: Iterable[float], abs_tol: float = 1e-12):
+def are_close_vectors(v1: Iterable[float], v2: Iterable[float],
+                      abs_tol: float = 1e-12):
     for i, j in zip(v1, v2):
         assert math.isclose(i, j, abs_tol=abs_tol)
 
@@ -43,7 +45,7 @@ def test_detect_banded_matrix():
     assert (m1, m2) == (5, 6)
 
     assert detect_banded_matrix(Matrix(shape=(10, 10))) == (0, 0)
-    
+
     identity = Matrix.identity(shape=(10, 10))
     assert detect_banded_matrix(identity) == (0, 0)
 

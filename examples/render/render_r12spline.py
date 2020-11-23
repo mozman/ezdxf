@@ -2,7 +2,7 @@
 # License: MIT License
 import ezdxf
 from ezdxf.render import R12Spline
-from ezdxf.math import Vector, Matrix44, UCS, OCS
+from ezdxf.math import Vec3, Matrix44, UCS, OCS
 
 next_frame = Matrix44.translate(0, 7, 0)
 
@@ -23,7 +23,7 @@ def draw(points, extrusion=None):
         msp.add_circle(radius=0.1, center=point, dxfattribs=dxfattribs)
 
 
-spline_points = Vector.list([
+spline_points = Vec3.list([
     (8.55, 2.96), (8.55, -.03), (2.75, -.03), (2.76, 3.05), (4.29, 1.78),
     (6.79, 3.05)
 ])
@@ -70,7 +70,7 @@ msp.add_text(
     dxfattribs={
         'height': .1,
         'extrusion': ucs.uz,
-    }).set_pos(ucs.to_ocs(Vector(spline_points[0])))
+    }).set_pos(ucs.to_ocs(Vec3(spline_points[0])))
 R12Spline(spline_points, degree=3, closed=False).render(
     msp, segments=SEGMENTS, ucs=ucs, dxfattribs={'color': 3})
 

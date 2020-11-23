@@ -2,10 +2,10 @@
 # Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 import pytest
-
+from math import isclose, radians
 from ezdxf.math import xround
 from ezdxf.math.construct2d import *
-from math import isclose, radians
+
 
 
 def test_left_of_line():

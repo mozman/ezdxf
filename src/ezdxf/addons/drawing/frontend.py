@@ -16,7 +16,7 @@ from ezdxf.entities import (
 )
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
-from ezdxf.math import Vector, Z_AXIS
+from ezdxf.math import Vec3, Z_AXIS
 from ezdxf.render import MeshBuilder, TraceBuilder, Path
 from ezdxf import reorder
 from ezdxf.render import nesting
@@ -151,7 +151,7 @@ class Frontend:
         elif dxftype in {'LINE', 'XLINE', 'RAY'}:
             self.draw_line_entity(entity, properties)
         elif dxftype in {'TEXT', 'MTEXT', 'ATTRIB'}:
-            if is_spatial(Vector(entity.dxf.extrusion)):
+            if is_spatial(Vec3(entity.dxf.extrusion)):
                 self.draw_text_entity_3d(entity, properties)
             else:
                 self.draw_text_entity_2d(entity, properties)
@@ -252,7 +252,7 @@ class Frontend:
         else:
             for entity in point.virtual_entities(pdsize, pdmode):
                 if entity.dxftype() == 'LINE':
-                    start = Vector(entity.dxf.start)
+                    start = Vec3(entity.dxf.start)
                     end = entity.dxf.end
                     if start.isclose(end):
                         self.out.draw_point(start, properties)
@@ -325,13 +325,13 @@ class Frontend:
     def draw_viewport_entity(self, entity: DXFGraphic) -> None:
         assert entity.dxftype() == 'VIEWPORT'
         dxf = entity.dxf
-        view_vector: Vector = dxf.view_direction_vector
+        view_vector: Vec3 = dxf.view_direction_vector
         mag = view_vector.magnitude
         if math.isclose(mag, 0.0):
             self.log_message('Warning: viewport with null view vector')
             return
         view_vector /= mag
-        if not math.isclose(view_vector.dot(Vector(0, 0, 1)), 1.0):
+        if not math.isclose(view_vector.dot(Vec3(0, 0, 1)), 1.0):
             self.log_message(
                 f'Cannot render viewport with non-perpendicular view direction:'
                 f' {dxf.view_direction_vector}'
@@ -350,7 +350,7 @@ class Frontend:
         props.color = VIEWPORT_COLOR
         # Set default SOLID filling for VIEWPORT
         props.filling = Filling()
-        self.out.draw_filled_polygon([Vector(x, y, 0) for x, y in points],
+        self.out.draw_filled_polygon([Vec3(x, y, 0) for x, y in points],
                                      props)
 
     def draw_mesh_entity(self, entity: DXFGraphic,
@@ -387,7 +387,7 @@ class Frontend:
                 if is_lwpolyline:  # stored as float
                     elevation = entity.dxf.elevation
                 else:  # stored as vector (0, 0, elevation)
-                    elevation = Vector(entity.dxf.elevation).z
+                    elevation = Vec3(entity.dxf.elevation).z
 
             trace = TraceBuilder.from_polyline(
                 entity, segments=self.circle_approximation_count // 2
@@ -395,10 +395,10 @@ class Frontend:
             for polygon in trace.polygons():  # polygon is a sequence of Vec2()
                 if transform:
                     points = ocs.points_to_wcs(
-                        Vector(v.x, v.y, elevation) for v in polygon
+                        Vec3(v.x, v.y, elevation) for v in polygon
                     )
                 else:
-                    points = Vector.generate(polygon)
+                    points = Vec3.generate(polygon)
                 # Set default SOLID filling for LWPOLYLINE
                 properties.filling = Filling()
                 self.out.draw_filled_polygon(points, properties)
@@ -446,5 +446,5 @@ class Frontend:
             self.draw_entities(gfx.virtual_entities())
 
 
-def is_spatial(v: Vector) -> bool:
+def is_spatial(v: Vec3) -> bool:
     return not v.isclose(Z_AXIS) and not v.isclose(NEG_Z_AXIS)

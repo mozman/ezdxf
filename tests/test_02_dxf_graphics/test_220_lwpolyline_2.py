@@ -1,11 +1,10 @@
-# Created: 2011-05-01, 2018 rewritten for pytest
 # Copyright (C) 2011-2020, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities.lwpolyline import format_point, compile_array, LWPolylinePoints, LWPolyline
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 
 
 def lwpolyline(points, dxfattribs=None):
@@ -223,7 +222,7 @@ def test_lwpolyline_transform_interface():
     assert vertices[1] == (3, 1)
     assert vertices[2] == (2, 2)
     assert pline.dxf.elevation == 1
-    assert Vector(0, 0, 1).isclose(pline.dxf.extrusion)
+    assert Vec3(0, 0, 1).isclose(pline.dxf.extrusion)
 
 
 LWPOLYLINE1 = """0

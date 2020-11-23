@@ -6,7 +6,7 @@ from collections import abc
 from enum import Enum
 import math
 from ezdxf.math import (
-    Vector, NULLVEC, Z_AXIS, OCS, Bezier4P, Matrix44, bulge_to_arc,
+    Vec3, NULLVEC, Z_AXIS, OCS, Bezier4P, Matrix44, bulge_to_arc,
     cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
     has_clockwise_orientation, global_bspline_interpolation,
 )
@@ -27,7 +27,7 @@ class Command(Enum):
 
 
 class LineTo(NamedTuple):
-    end: Vector
+    end: Vec3
 
     @property
     def type(self):
@@ -38,9 +38,9 @@ class LineTo(NamedTuple):
 
 
 class CurveTo(NamedTuple):
-    end: Vector
-    ctrl1: Vector
-    ctrl2: Vector
+    end: Vec3
+    ctrl1: Vec3
+    ctrl2: Vec3
 
     @property
     def type(self):
@@ -59,7 +59,7 @@ PathElement = Union[LineTo, CurveTo]
 
 class Path(abc.Sequence):
     def __init__(self, start: 'Vertex' = NULLVEC):
-        self._start = Vector(start)
+        self._start = Vec3(start)
         self._commands: List[PathElement] = []
 
     def __len__(self) -> int:
@@ -81,7 +81,7 @@ class Path(abc.Sequence):
     clone = __copy__
 
     @property
-    def start(self) -> Vector:
+    def start(self) -> Vec3:
         """ :class:`Path` start point, resetting the start point of an empty
         path is possible.
         """
@@ -92,10 +92,10 @@ class Path(abc.Sequence):
         if len(self._commands):
             raise ValueError('Requires an empty path.')
         else:
-            self._start = Vector(location)
+            self._start = Vec3(location)
 
     @property
-    def end(self) -> Vector:
+    def end(self) -> Vec3:
         """ :class:`Path` end point. """
         if self._commands:
             return self._commands[-1].end
@@ -110,7 +110,7 @@ class Path(abc.Sequence):
     @classmethod
     def from_vertices(cls, vertices: Iterable['Vertex'], close=False) -> 'Path':
         """ Returns a :class:`Path` from vertices.  """
-        vertices = Vector.list(vertices)
+        vertices = Vec3.list(vertices)
         if len(vertices) < 2:
             return cls()
         path = cls(start=vertices[0])
@@ -152,11 +152,11 @@ class Path(abc.Sequence):
         points = [vertex.format('xyb') for vertex in polyline.vertices]
         ocs = polyline.ocs()
         if polyline.dxf.hasattr('elevation'):
-            elevation = Vector(polyline.dxf.elevation).z
+            elevation = Vec3(polyline.dxf.elevation).z
         else:
             # Elevation attribute is mandatory, but you never know,
             # take elevation from first vertex.
-            elevation = Vector(polyline.vertices[0].dxf.location).z
+            elevation = Vec3(polyline.vertices[0].dxf.location).z
         path._setup_polyline_2d(
             points,
             close=polyline.is_closed,
@@ -167,7 +167,7 @@ class Path(abc.Sequence):
 
     def _setup_polyline_2d(self, points: Iterable[Sequence[float]], close: bool,
                            ocs: OCS, elevation: float) -> None:
-        def bulge_to(p1: Vector, p2: Vector, bulge: float):
+        def bulge_to(p1: Vec3, p2: Vec3, bulge: float):
             if p1.isclose(p2):
                 return
             center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
@@ -184,7 +184,7 @@ class Path(abc.Sequence):
         prev_point = None
         prev_bulge = 0
         for x, y, bulge in points:
-            point = Vector(x, y)
+            point = Vec3(x, y)
             if prev_point is None:
                 self._start = point
                 prev_point = point
@@ -372,7 +372,7 @@ class Path(abc.Sequence):
             if ocs and ocs.transform:
                 return ocs.to_wcs((vertex.x, vertex.y, elevation))
             else:
-                return Vector(vertex)
+                return Vec3(vertex)
 
         extrusion = ocs.uz if ocs else Z_AXIS
         path = Path()
@@ -411,7 +411,7 @@ class Path(abc.Sequence):
     def line_to(self, location: 'Vertex') -> None:
         """ Add a line from actual path end point to `location`.
         """
-        self._commands.append(LineTo(end=Vector(location)))
+        self._commands.append(LineTo(end=Vec3(location)))
 
     def curve_to(self, location: 'Vertex', ctrl1: 'Vertex',
                  ctrl2: 'Vertex') -> None:
@@ -419,7 +419,7 @@ class Path(abc.Sequence):
         `ctrl1` and `ctrl2` are the control points for the cubic Bèzier-curve.
         """
         self._commands.append(CurveTo(
-            end=Vector(location), ctrl1=Vector(ctrl1), ctrl2=Vector(ctrl2))
+            end=Vec3(location), ctrl1=Vec3(ctrl1), ctrl2=Vec3(ctrl2))
         )
 
     def close(self) -> None:
@@ -542,18 +542,18 @@ class Path(abc.Sequence):
             curves = spline.cubic_bezier_approximation(level=level)
         self.add_curves(curves)
 
-    def approximate(self, segments: int = 20) -> Iterable[Vector]:
+    def approximate(self, segments: int = 20) -> Iterable[Vec3]:
         """ Approximate path by vertices, `segments` is the count of
         approximation segments for each cubic bezier curve.
         """
 
-        def approx_curve(s, c1, c2, e) -> Iterable[Vector]:
+        def approx_curve(s, c1, c2, e) -> Iterable[Vec3]:
             return Bezier4P((s, c1, c2, e)).approximate(segments)
 
         yield from self._approximate(approx_curve)
 
     def flattening(self, distance: float,
-                   segments: int = 16) -> Iterable[Vector]:
+                   segments: int = 16) -> Iterable[Vec3]:
         """ Approximate path by vertices and use adaptive recursive flattening
         to approximate cubic Bèzier curves. The argument `segments` is the
         minimum count of approximation segments for each curve, if the distance
@@ -569,12 +569,12 @@ class Path(abc.Sequence):
 
         """
 
-        def approx_curve(s, c1, c2, e) -> Iterable[Vector]:
+        def approx_curve(s, c1, c2, e) -> Iterable[Vec3]:
             return Bezier4P((s, c1, c2, e)).flattening(distance, segments)
 
         yield from self._approximate(approx_curve)
 
-    def _approximate(self, approx_curve) -> Iterable[Vector]:
+    def _approximate(self, approx_curve) -> Iterable[Vec3]:
         if not self._commands:
             return
 

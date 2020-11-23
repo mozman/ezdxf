@@ -157,7 +157,7 @@ WGS84 coordinates to 2D map coordinates EPSG:3395 "World Mercator":
 .. code-block:: python
 
     from osgeo import osr
-    from ezdxf.math import Vector
+    from ezdxf.math import Vec3
 
     # GPS track in WGS84, load_gpx_track() code see above
     gpx_points = list(load_gpx_track('track1.gpx'))
@@ -180,14 +180,14 @@ WGS84 coordinates to 2D map coordinates EPSG:3395 "World Mercator":
     })
 
     # Apply a custom transformation function to all coordinates:
-    geo_proxy.apply(lambda v: Vector(ct.TransformPoint(v.x, v.y)))
+    geo_proxy.apply(lambda v: Vec3(ct.TransformPoint(v.x, v.y)))
 
 The same example with the pyproj package:
 
 .. code-block:: python
 
     from pyproj import Transformer
-    from ezdxf.math import Vector
+    from ezdxf.math import Vec3
 
     # GPS track in WGS84, load_gpx_track() code see above
     gpx_points = list(load_gpx_track('track1.gpx'))
@@ -202,7 +202,7 @@ The same example with the pyproj package:
     })
 
     # Apply a custom transformation function to all coordinates:
-    geo_proxy.apply(lambda v: Vector(ct.transform(v.x, v.y)))
+    geo_proxy.apply(lambda v: Vec3(ct.transform(v.x, v.y)))
 
 Polygon Validation by Shapely
 -----------------------------

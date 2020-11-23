@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.math import Vector, UCS
+from ezdxf.math import Vec3, UCS
 from pathlib import Path
 
 OUT_DIR = Path('~/Desktop/Outbox').expanduser()
@@ -18,7 +18,7 @@ ucs = UCS(
     uz=(0, 1, 1),  # z-axis
 )
 # calculating corner points in local (UCS) coordinates
-points = [Vector.from_deg_angle((360 / 5) * n) for n in range(5)]
+points = [Vec3.from_deg_angle((360 / 5) * n) for n in range(5)]
 # converting UCS into OCS coordinates
 ocs_points = list(ucs.points_to_ocs(points))
 

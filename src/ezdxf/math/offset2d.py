@@ -1,5 +1,4 @@
-# Created: 15.12.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
 from ezdxf.math import Vec2

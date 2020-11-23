@@ -134,9 +134,9 @@ def test_default_new():
     assert entity.dxf.color == 7
     assert entity.dxf.linetype == 'BYLAYER'
     assert entity.dxf.insert == (1, 2, 3)
-    assert entity.dxf.insert.x == 1, 'is not Vector compatible'
-    assert entity.dxf.insert.y == 2, 'is not Vector compatible'
-    assert entity.dxf.insert.z == 3, 'is not Vector compatible'
+    assert entity.dxf.insert.x == 1, 'is not Vec3 compatible'
+    assert entity.dxf.insert.y == 2, 'is not Vec3 compatible'
+    assert entity.dxf.insert.z == 3, 'is not Vec3 compatible'
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1

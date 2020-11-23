@@ -111,7 +111,7 @@ class R12Spline:
     def __init__(self, control_points: Iterable['Vertex'], degree: int = 2, closed: bool = True):
         """
         Args:
-            control_points: B-spline control frame vertices as ``(x, y)`` tuples or :class:`~ezdxf.math.Vector` objects
+            control_points: B-spline control frame vertices as ``(x, y)`` tuples or :class:`~ezdxf.math.Vec3` objects
             degree: degree of B-spline, ``2`` or ``3`` are valid values
             closed: ``True`` for closed curve
         """
@@ -132,7 +132,7 @@ class R12Spline:
             ucs: :class:`~ezdxf.math.UCS` definition, control points in ucs coordinates.
 
         Returns:
-            list of vertices in :class:`~ezdxf.math.OCS` as :class:`~ezdxf.math.Vector` objects
+            list of vertices in :class:`~ezdxf.math.OCS` as :class:`~ezdxf.math.Vec3` objects
 
         """
         if self.closed:

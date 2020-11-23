@@ -11,7 +11,7 @@ from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.addons.drawing import fonts
 from ezdxf.entities import MText, Text, Attrib
-from ezdxf.math import Matrix44, Vector
+from ezdxf.math import Matrix44, Vec3
 
 """
 Search google for 'typography' or 'font anatomy' for explanations of terms like 'baseline' and 'x-height'
@@ -253,7 +253,7 @@ def _apply_alignment(alignment: Alignment,
     return (anchor_x, anchor_y), line_xs, line_ys
 
 
-def _get_wcs_insert(text: AnyText) -> Vector:
+def _get_wcs_insert(text: AnyText) -> Vec3:
     if isinstance(text, Text):
         return text.ocs().to_wcs(text.dxf.insert)
     else:
@@ -295,6 +295,6 @@ def simplified_text_chunks(text: AnyText, out: Backend,
 
         if debug_draw_rect:
             width = out.get_text_line_width(line, cap_height, font)
-            ps = list(transform.transform_vertices([Vector(0, 0, 0), Vector(width, 0, 0), Vector(width, cap_height, 0),
-                                                    Vector(0, cap_height, 0), Vector(0, 0, 0)]))
+            ps = list(transform.transform_vertices([Vec3(0, 0, 0), Vec3(width, 0, 0), Vec3(width, cap_height, 0),
+                                                    Vec3(0, cap_height, 0), Vec3(0, 0, 0)]))
             draw_rect(ps, '#ff0000', out)

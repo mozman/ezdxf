@@ -1,8 +1,7 @@
-# Created: 27.01.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Tuple
-from .vector import Vector, Vec2
+from ezdxf.math import Vec3, Vec2
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -12,7 +11,7 @@ class BoundingBox:
     """ 3D bounding box.
 
     Args:
-        vertices: iterable of ``(x, y, z)`` tuples or :class:`Vector` objects
+        vertices: iterable of ``(x, y, z)`` tuples or :class:`Vec3` objects
 
     """
 
@@ -30,7 +29,7 @@ class BoundingBox:
 
     def inside(self, vertex: 'Vertex') -> bool:
         """ Returns ``True`` if `vertex` is inside bounding box. """
-        x, y, z = Vector(vertex).xyz
+        x, y, z = Vec3(vertex).xyz
         xmin, ymin, zmin = self.extmin.xyz
         xmax, ymax, zmax = self.extmax.xyz
         return (xmin <= x <= xmax) and (ymin <= y <= ymax) and (zmin <= z <= zmax)
@@ -39,7 +38,7 @@ class BoundingBox:
         """ Extend bounds by `vertices`.
 
         Args:
-            vertices: iterable of ``(x, y, z)`` tuples or :class:`Vector` objects
+            vertices: iterable of ``(x, y, z)`` tuples or :class:`Vec3` objects
 
         """
         v = list(vertices)
@@ -48,21 +47,21 @@ class BoundingBox:
         self.extmin, self.extmax = extends(v)
 
     @property
-    def size(self) -> Vector:
+    def size(self) -> Vec3:
         """ Returns size of bounding box. """
         return self.extmax - self.extmin
 
     @property
-    def center(self) -> Vector:
+    def center(self) -> Vec3:
         """ Returns center of bounding box. """
         return self.extmin.lerp(self.extmax)
 
 
-def extends(vertices: Iterable['Vertex']) -> Tuple[Vector, Vector]:
+def extends(vertices: Iterable['Vertex']) -> Tuple[Vec3, Vec3]:
     minx, miny, minz = None, None, None
     maxx, maxy, maxz = None, None, None
     for v in vertices:
-        v = Vector(v)
+        v = Vec3(v)
         if minx is None:
             minx, miny, minz = v.xyz
             maxx, maxy, maxz = v.xyz
@@ -80,14 +79,14 @@ def extends(vertices: Iterable['Vertex']) -> Tuple[Vector, Vector]:
                 minz = z
             elif z > maxz:
                 maxz = z
-    return Vector(minx, miny, minz), Vector(maxx, maxy, maxz)
+    return Vec3(minx, miny, minz), Vec3(maxx, maxy, maxz)
 
 
 class BoundingBox2d:
     """ Optimized 2D bounding box.
 
     Args:
-        vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vector` objects
+        vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vec3` objects
 
     """
 
@@ -114,7 +113,7 @@ class BoundingBox2d:
         """ Extend bounds by `vertices`.
 
         Args:
-            vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vector` objects
+            vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vec3` objects
 
         """
         v = list(vertices)

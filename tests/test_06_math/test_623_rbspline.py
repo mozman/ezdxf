@@ -1,15 +1,16 @@
-# Created: 06.01.2012
 # Copyright (c) 2012-2020 Manfred Moitzi
 # License: MIT License
-import pytest
+
 import math
 from math import isclose
-from ezdxf.math import BSpline, BSplineU
+from ezdxf.math import (
+    rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse,
+    ConstructionArc, linspace, BSpline, BSplineU,
+)
 from ezdxf.math.bspline import nurbs_arc_parameters, required_knot_values
-from ezdxf.math import rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse, ConstructionArc, \
-    linspace
 
-DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
+DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.),
+             (50., 0., 30.)]
 DEFWEIGHTS = [1, 10, 10, 10, 1]
 
 
@@ -115,7 +116,9 @@ def test_rational_spline_from_elliptic_arc():
 
 
 def test_nurbs_arc_parameter_quarter_arc_1_segment():
-    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=math.pi / 2, segments=1)
+    control_points, weights, knots = nurbs_arc_parameters(start_angle=0,
+                                                          end_angle=math.pi / 2,
+                                                          segments=1)
 
     assert len(control_points) == 3
     assert len(weights) == len(control_points)
@@ -131,17 +134,23 @@ def test_nurbs_arc_parameter_quarter_arc_1_segment():
 
 
 def test_nurbs_arc_parameter_quarter_arc_4_segments():
-    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=math.pi / 2, segments=4)
+    control_points, weights, knots = nurbs_arc_parameters(start_angle=0,
+                                                          end_angle=math.pi / 2,
+                                                          segments=4)
     assert len(control_points) == 9
     assert len(weights) == len(control_points)
     assert len(knots) == required_knot_values(len(control_points), order=3)
 
 
 def test_nurbs_arc_parameter_full_circle():
-    control_points, weights, knots = nurbs_arc_parameters(start_angle=0, end_angle=2 * math.pi, segments=4)
+    control_points, weights, knots = nurbs_arc_parameters(start_angle=0,
+                                                          end_angle=2 * math.pi,
+                                                          segments=4)
     cos_pi_4 = math.cos(math.pi / 4)
-    assert knots == [0.0, 0.0, 0.0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1.0, 1.0, 1.0]
-    assert weights == [1.0, cos_pi_4, 1.0, cos_pi_4, 1.0, cos_pi_4, 1.0, cos_pi_4, 1.0]
+    assert knots == [0.0, 0.0, 0.0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1.0, 1.0,
+                     1.0]
+    assert weights == [1.0, cos_pi_4, 1.0, cos_pi_4, 1.0, cos_pi_4, 1.0,
+                       cos_pi_4, 1.0]
 
 
 RBSPLINE = [
