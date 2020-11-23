@@ -7,7 +7,7 @@ from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.entities.mtext import replace_non_printable_characters
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vec3, Matrix44
 from ezdxf.render.path import Path
 
 if TYPE_CHECKING:
@@ -109,14 +109,14 @@ class Backend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_point(self, pos: Vector, properties: Properties) -> None:
+    def draw_point(self, pos: Vec3, properties: Properties) -> None:
         """ Draw a real dimensionless point, because not all backends support
         zero-length lines!
         """
         raise NotImplementedError
 
     @abstractmethod
-    def draw_line(self, start: Vector, end: Vector,
+    def draw_line(self, start: Vec3, end: Vec3,
                   properties: Properties) -> None:
         raise NotImplementedError
 
@@ -174,7 +174,7 @@ class Backend(ABC):
             )
 
     @abstractmethod
-    def draw_filled_polygon(self, points: Iterable[Vector],
+    def draw_filled_polygon(self, points: Iterable[Vec3],
                             properties: Properties) -> None:
         """ Fill a polygon whose outline is defined by the given points.
         Used to draw entities with simple outlines where :meth:`draw_path` may

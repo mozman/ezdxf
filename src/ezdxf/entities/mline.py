@@ -12,7 +12,7 @@ from ezdxf.lldxf.attributes import (
     RETURN_DEFAULT,
 )
 from ezdxf.lldxf.tags import Tags, group_tags
-from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Vertex, Vector, UCS
+from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Vertex, Vec3, UCS
 
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -34,8 +34,8 @@ __all__ = ['MLine', 'MLineVertex', 'MLineStyle', 'MLineStyleCollection']
 logger = logging.getLogger('ezdxf')
 
 
-def filter_close_vertices(vertices: Iterable[Vector],
-                          abs_tol: float = 1e-12) -> Iterable[Vector]:
+def filter_close_vertices(vertices: Iterable[Vec3],
+                          abs_tol: float = 1e-12) -> Iterable[Vec3]:
     prev = None
     for vertex in vertices:
         if prev is None:
@@ -145,9 +145,9 @@ acdb_mline = DefSubclass('AcDbMline', OrderedDict({
 
 class MLineVertex:
     def __init__(self):
-        self.location: Vector = NULLVEC
-        self.line_direction: Vector = X_AXIS
-        self.miter_direction: Vector = Y_AXIS
+        self.location: Vec3 = NULLVEC
+        self.line_direction: Vec3 = X_AXIS
+        self.miter_direction: Vec3 = Y_AXIS
 
         # Line parametrization (74/41)
         # ----------------------------
@@ -217,11 +217,11 @@ class MLineVertex:
         fill_params_count = 0
         for code, value in tags:
             if code == 11:
-                vtx.location = Vector(value)
+                vtx.location = Vec3(value)
             elif code == 12:
-                vtx.line_direction = Vector(value)
+                vtx.line_direction = Vec3(value)
             elif code == 13:
-                vtx.miter_direction = Vector(value)
+                vtx.miter_direction = Vec3(value)
             elif code == 74:
                 line_params_count = value
                 if line_params_count == 0:
@@ -264,9 +264,9 @@ class MLineVertex:
             line_params: Iterable = None,
             fill_params: Iterable = None) -> 'MLineVertex':
         vtx = MLineVertex()
-        vtx.location = Vector(start)
-        vtx.line_direction = Vector(line_direction)
-        vtx.miter_direction = Vector(miter_direction)
+        vtx.location = Vec3(start)
+        vtx.line_direction = Vec3(line_direction)
+        vtx.miter_direction = Vec3(miter_direction)
         vtx.line_params = list(line_params or [])
         vtx.fill_params = list(fill_params or [])
         if len(vtx.line_params) != len(vtx.fill_params):
@@ -433,7 +433,7 @@ class MLine(DXFGraphic):
         if reset:
             self.update_geometry()
 
-    def start_location(self) -> Vector:
+    def start_location(self) -> Vec3:
         """ Returns the start location of the reference line. Callback function
         for :attr:`dxf.start_location`.
         """
@@ -442,7 +442,7 @@ class MLine(DXFGraphic):
         else:
             return NULLVEC
 
-    def get_locations(self) -> List[Vector]:
+    def get_locations(self) -> List[Vec3]:
         """ Returns the vertices of the reference line. """
         return [v.location for v in self.vertices]
 
@@ -454,7 +454,7 @@ class MLine(DXFGraphic):
         extrusion vector in the MLINE entity.
 
         """
-        vertices = Vector.list(vertices)
+        vertices = Vec3.list(vertices)
         if not vertices:
             return
         all_vertices = []
@@ -467,7 +467,7 @@ class MLine(DXFGraphic):
         """ Regenerate the MLINE geometry based on current settings. """
         self.generate_geometry(self.get_locations())
 
-    def generate_geometry(self, vertices: List[Vector]) -> None:
+    def generate_geometry(self, vertices: List[Vec3]) -> None:
         """ Regenerate the MLINE geometry for new reference line defined by
         `vertices`.
         """
@@ -484,7 +484,7 @@ class MLine(DXFGraphic):
             raise const.DXFStructureError(
                 f'No line elements defined in {str(style)}.')
 
-        def miter(dir1: Vector, dir2: Vector):
+        def miter(dir1: Vec3, dir2: Vec3):
             return ((dir1 + dir2) * 0.5).normalize().orthogonal()
 
         ucs = UCS.from_z_axis_and_point_in_xz(
@@ -585,7 +585,7 @@ class MLine(DXFGraphic):
             vertex.transform(m)
         self.dxf.extrusion = m.transform_direction(self.dxf.extrusion)
         scale = self.dxf.scale_factor
-        scale_vec = m.transform_direction(Vector(scale, scale, scale))
+        scale_vec = m.transform_direction(Vec3(scale, scale, scale))
         if math.isclose(scale_vec.x, scale_vec.y, abs_tol=1e-6) and \
                 math.isclose(scale_vec.y, scale_vec.z, abs_tol=1e-6):
             self.dxf.scale_factor = sum(scale_vec) / 3  # average error

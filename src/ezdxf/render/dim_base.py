@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable, Optional
-from ezdxf.math import Vector, Vec2, ConstructionLine, ConstructionBox
+from ezdxf.math import Vec3, Vec2, ConstructionLine, ConstructionBox
 from ezdxf.math import UCS, PassTroughUCS, xround, Z_AXIS
 from ezdxf.lldxf import const
 from ezdxf.options import options
@@ -718,7 +718,7 @@ class BaseDimensionRenderer:
                 attribs.update(dxfattribs)
             self.block.add_blockref(name, insert=insert, dxfattribs=attribs)
 
-    def add_text(self, text: str, pos: Vector, rotation: float,
+    def add_text(self, text: str, pos: Vec3, rotation: float,
                  dxfattribs: dict = None) -> None:
         """
         Add TEXT (DXF R12) or MTEXT (DXF R2000+) entity to the dimension BLOCK.

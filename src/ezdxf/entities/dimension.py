@@ -12,7 +12,7 @@ from ezdxf.lldxf.const import (
     DXFValueError, DXFTableEntryError, DXFTypeError,
 )
 from ezdxf.lldxf.types import get_xcode_for
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform
 from ezdxf.tools import take2
 from ezdxf.render.arrows import ARROWS
@@ -546,7 +546,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         block_name = self.get_dxf_attrib('geometry', '*')
         return self.doc.blocks.get(block_name)
 
-    def get_measurement(self) -> Union[float, Vector]:
+    def get_measurement(self) -> Union[float, Vec3]:
         """ Returns the actual dimension measurement in :ref:`WCS` units, no
         scaling applied for linear dimensions. Returns angle in degrees for
         angular dimension from 2 lines and angular dimension from 3 points.
@@ -554,7 +554,7 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         """
 
-        def angle_between(v1: Vector, v2: Vector) -> float:
+        def angle_between(v1: Vec3, v2: Vec3) -> float:
             angle = v2.angle_deg - v1.angle_deg
             return angle + 360 if angle < 0 else angle
 
@@ -566,27 +566,27 @@ class Dimension(DXFGraphic, OverrideMixin):
                 self.ocs(),
             )
         elif self.dimtype in (3, 4):  # diameter, radius
-            p1 = Vector(self.dxf.defpoint)
-            p2 = Vector(self.dxf.defpoint4)
+            p1 = Vec3(self.dxf.defpoint)
+            p2 = Vec3(self.dxf.defpoint4)
             return (p2 - p1).magnitude
         elif self.dimtype == 2:  # angular from 2 lines
-            p1 = Vector(self.dxf.defpoint2)  # 1. point of 1. extension line
-            p2 = Vector(self.dxf.defpoint3)  # 2. point of 1. extension line
-            p3 = Vector(self.dxf.defpoint4)  # 1. point of 2. extension line
-            p4 = Vector(self.dxf.defpoint)  # 2. point of 2. extension line
+            p1 = Vec3(self.dxf.defpoint2)  # 1. point of 1. extension line
+            p2 = Vec3(self.dxf.defpoint3)  # 2. point of 1. extension line
+            p3 = Vec3(self.dxf.defpoint4)  # 1. point of 2. extension line
+            p4 = Vec3(self.dxf.defpoint)  # 2. point of 2. extension line
             dir1 = p2 - p1  # direction of 1. extension line
             dir2 = p4 - p3  # direction of 2. extension line
             return angle_between(dir1, dir2)
         elif self.dimtype == 5:  # angular from 2 lines
-            p1 = Vector(self.dxf.defpoint4)  # center
-            p2 = Vector(self.dxf.defpoint2)  # 1. extension line
-            p3 = Vector(self.dxf.defpoint3)  # 2. extension line
+            p1 = Vec3(self.dxf.defpoint4)  # center
+            p2 = Vec3(self.dxf.defpoint2)  # 1. extension line
+            p3 = Vec3(self.dxf.defpoint3)  # 2. extension line
             dir1 = p2 - p1  # direction of 1. extension line
             dir2 = p3 - p1  # direction of 2. extension line
             return angle_between(dir1, dir2)
         elif self.dimtype == 6:  # ordinate
-            origin = Vector(self.dxf.defpoint)
-            feature_location = Vector(self.dxf.defpoint2)
+            origin = Vec3(self.dxf.defpoint)
+            feature_location = Vec3(self.dxf.defpoint2)
             return feature_location - origin
         else:
             # todo: add ARC_DIMENSION dimtype=8 support
@@ -882,7 +882,7 @@ acdb_dim_assoc = DefSubclass('AcDbDimAssoc', {
 })
 
 
-def linear_measurement(p1: Vector, p2: Vector, angle: float = 0,
+def linear_measurement(p1: Vec3, p2: Vec3, angle: float = 0,
                        ocs: 'OCS' = None) -> float:
     """ Returns distance from `p1` to `p2` projected onto ray defined by
     `angle`, `angle` in radians in the xy-plane.
@@ -892,11 +892,11 @@ def linear_measurement(p1: Vector, p2: Vector, angle: float = 0,
         p1 = ocs.to_wcs(p1)
         p2 = ocs.to_wcs(p2)
         # angle in OCS xy-plane
-        ocs_direction = Vector.from_angle(angle)
+        ocs_direction = Vec3.from_angle(angle)
         measurement_direction = ocs.to_wcs(ocs_direction)
     else:
         # angle in WCS xy-plane
-        measurement_direction = Vector.from_angle(angle)
+        measurement_direction = Vec3.from_angle(angle)
 
     t1 = measurement_direction.project(p1)
     t2 = measurement_direction.project(p2)

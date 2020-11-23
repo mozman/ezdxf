@@ -6,7 +6,7 @@ from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -65,7 +65,7 @@ class XLine(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        self.dxf.start = Vector(dx, dy, dz) + self.dxf.start
+        self.dxf.start = Vec3(dx, dy, dz) + self.dxf.start
         return self
 
 

@@ -6,7 +6,7 @@ from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
-from ezdxf.math import Matrix44, Z_AXIS, NULLVEC, Vector
+from ezdxf.math import Matrix44, Z_AXIS, NULLVEC, Vec3
 from ezdxf.math.transformtools import OCSTransform
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, elevation_to_z_axis
@@ -102,7 +102,7 @@ class Solid(_Base):
         dxf.extrusion = ocs.new_extrusion
         return self
 
-    def wcs_vertices(self, close: bool = False) -> List[Vector]:
+    def wcs_vertices(self, close: bool = False) -> List[Vec3]:
         """ Returns WCS vertices in correct order,
         if argument `close` is ``True``, last vertex == first vertex.
         Does **not** return duplicated last vertex if represents a triangle.
@@ -113,7 +113,7 @@ class Solid(_Base):
         ocs = self.ocs()
         return list(ocs.points_to_wcs(self.vertices(close)))
 
-    def vertices(self, close: bool = False) -> List[Vector]:
+    def vertices(self, close: bool = False) -> List[Vec3]:
         """ Returns OCS vertices in correct order,
         if argument `close` is ``True``, last vertex == first vertex.
         Does **not** return duplicated last vertex if represents a triangle.
@@ -214,7 +214,7 @@ class Face3d(_Base):
             (dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3))
         return self
 
-    def wcs_vertices(self, close: bool = False) -> List[Vector]:
+    def wcs_vertices(self, close: bool = False) -> List[Vec3]:
         """ Returns WCS vertices, if argument `close` is
         ``True``, last vertex == first vertex.
         Does **not** return duplicated last vertex if represents a triangle.

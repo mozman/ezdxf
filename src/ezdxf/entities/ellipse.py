@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Iterable
 import math
 from ezdxf.lldxf import validator
 from ezdxf.math import (
-    Vector, Matrix44, NULLVEC, X_AXIS, Z_AXIS, ellipse, ConstructionEllipse,
+    Vec3, Matrix44, NULLVEC, X_AXIS, Z_AXIS, ellipse, ConstructionEllipse,
 )
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -97,17 +97,17 @@ class Ellipse(DXFGraphic):
         ])
 
     @property
-    def minor_axis(self) -> Vector:
+    def minor_axis(self) -> Vec3:
         dxf = self.dxf
-        return ellipse.minor_axis(Vector(dxf.major_axis), Vector(dxf.extrusion),
+        return ellipse.minor_axis(Vec3(dxf.major_axis), Vec3(dxf.extrusion),
                                   dxf.ratio)
 
     @property
-    def start_point(self) -> 'Vector':
+    def start_point(self) -> 'Vec3':
         return list(self.vertices([self.dxf.start_param]))[0]
 
     @property
-    def end_point(self) -> 'Vector':
+    def end_point(self) -> 'Vec3':
         return list(self.vertices([self.dxf.end_param]))[0]
 
     def construction_tool(self) -> ConstructionEllipse:
@@ -147,7 +147,7 @@ class Ellipse(DXFGraphic):
         end = self.dxf.end_param % math.tau
         yield from ellipse.get_params(start, end, num)
 
-    def vertices(self, params: Iterable[float]) -> Iterable[Vector]:
+    def vertices(self, params: Iterable[float]) -> Iterable[Vec3]:
         """ Yields vertices on ellipse for iterable `params` in WCS.
 
         Args:
@@ -158,7 +158,7 @@ class Ellipse(DXFGraphic):
         """
         yield from self.construction_tool().vertices(params)
 
-    def flattening(self, distance: float, segments: int = 8) -> Iterable[Vector]:
+    def flattening(self, distance: float, segments: int = 8) -> Iterable[Vec3]:
         """ Adaptive recursive flattening. The argument `segments` is the
         minimum count of approximation segments, if the distance from the center
         of the approximation segment to the curve is bigger than `distance` the
@@ -222,7 +222,7 @@ class Ellipse(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        self.dxf.center = Vector(dx, dy, dz) + self.dxf.center
+        self.dxf.center = Vec3(dx, dy, dz) + self.dxf.center
         return self
 
     def to_spline(self, replace=True) -> 'Spline':

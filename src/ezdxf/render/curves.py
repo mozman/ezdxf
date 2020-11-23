@@ -184,7 +184,7 @@ class Spline:
     def __init__(self, points: Iterable['Vertex'] = None, segments: int = 100):
         """
         Args:
-            points: spline definition points as :class:`~ezdxf.math.Vector` or ``(x, y, z)`` tuple
+            points: spline definition points as :class:`~ezdxf.math.Vec3` or ``(x, y, z)`` tuple
             segments: count of line segments for approximation, vertex count is `segments` + 1
         """
         if points is None:

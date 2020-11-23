@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, cast, List, Union
 import array
 import copy
 from contextlib import contextmanager
-from ezdxf.math import Vector, Matrix44, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -212,7 +212,7 @@ class LWPolyline(DXFGraphic):
             yield point[0], point[1]
 
     def vertices_in_wcs(self) -> Iterable['Vertex']:
-        """ Returns iterable of all polyline points as Vector(x, y, z) in :ref:`WCS`.
+        """ Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`WCS`.
         """
         ocs = self.ocs()
         elevation = self.get_dxf_attrib('elevation', default=0.)
@@ -220,11 +220,11 @@ class LWPolyline(DXFGraphic):
             yield ocs.to_wcs((x, y, elevation))
 
     def vertices_in_ocs(self) -> Iterable['Vertex']:
-        """ Returns iterable of all polyline points as Vector(x, y, z) in :ref:`OCS`.
+        """ Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`OCS`.
         """
         elevation = self.get_dxf_attrib('elevation', default=0.)
         for x, y in self.vertices():
-            yield Vector(x, y, elevation)
+            yield Vec3(x, y, elevation)
 
     def append(self, point: Sequence[float],
                format: str = DEFAULT_FORMAT) -> None:

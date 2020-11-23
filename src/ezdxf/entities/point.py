@@ -6,7 +6,7 @@ from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import (
     transform_thickness_and_extrusion_without_ocs
 )
@@ -98,7 +98,7 @@ class Point(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        self.dxf.location = Vector(dx, dy, dz) + self.dxf.location
+        self.dxf.location = Vec3(dx, dy, dz) + self.dxf.location
         return self
 
     def virtual_entities(self, pdsize: float = 1,

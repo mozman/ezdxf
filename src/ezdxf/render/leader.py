@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Iterable, cast
 from ezdxf import ARROWS
 from ezdxf.entities import factory
 from ezdxf.lldxf.const import BYBLOCK
-from ezdxf.math import Vector, fit_points_to_cad_cv
+from ezdxf.math import Vec3, fit_points_to_cad_cv
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Leader, Insert, Spline
@@ -20,7 +20,7 @@ def virtual_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
     from ezdxf.entities import DimStyleOverride
     assert leader.dxftype() == 'LEADER'
 
-    vertices = Vector.list(leader.vertices)  # WCS
+    vertices = Vec3.list(leader.vertices)  # WCS
     if len(vertices) < 2:
         # This LEADER entities should be removed by the auditor if loaded or
         # ignored at exporting, if created by an ezdxf-user (log).
@@ -57,7 +57,7 @@ def virtual_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
         dimlwd = override.get('dimlwd', dimlwd)
 
     text_width = dxf.text_width
-    hook_line_vector = Vector(dxf.horizontal_direction)
+    hook_line_vector = Vec3(dxf.horizontal_direction)
     has_text_annotation = dxf.annotation_type == 0
 
     if has_text_annotation and dxf.has_hookline:

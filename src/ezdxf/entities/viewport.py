@@ -12,7 +12,7 @@ from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, DXFStructureError, DXFInternalEzdxfError,
     DXFValueError, DXFTableEntryError,
 )
-from ezdxf.math import Vector, NULLVEC, X_AXIS, Y_AXIS
+from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS
 from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -52,8 +52,8 @@ acdb_viewport = DefSubclass('AcDbViewport', {
     # 2D point!
     'view_center_point': DXFAttr(12, xtype=XType.point2d, default=NULLVEC),
     'snap_base_point': DXFAttr(13, xtype=XType.point2d, default=NULLVEC),
-    'snap_spacing': DXFAttr(14, xtype=XType.point2d, default=Vector(10, 10)),
-    'grid_spacing': DXFAttr(15, xtype=XType.point2d, default=Vector(10, 10)),
+    'snap_spacing': DXFAttr(14, xtype=XType.point2d, default=Vec3(10, 10)),
+    'grid_spacing': DXFAttr(15, xtype=XType.point2d, default=Vec3(10, 10)),
     # View direction vector (WCS):
     'view_direction_vector': DXFAttr(16, xtype=XType.point3d, default=NULLVEC),
     # View target point (in WCS):

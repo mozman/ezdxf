@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
-from ezdxf.math import Vector, Matrix44, linspace, ConstructionArc, Vertex
+from ezdxf.math import Vec3, Matrix44, linspace, ConstructionArc, Vertex
 from ezdxf.math.transformtools import OCSTransform
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -12,7 +12,7 @@ from .circle import acdb_circle, Circle
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Vector
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Vec3
 
 __all__ = ['Arc']
 
@@ -45,14 +45,14 @@ class Arc(Circle):
         self.dxf.export_dxf_attribs(tagwriter, ['start_angle', 'end_angle'])
 
     @property
-    def start_point(self) -> 'Vector':
+    def start_point(self) -> 'Vec3':
         """  Returns the start point of the arc in WCS, takes OCS into account.
         """
         v = list(self.vertices([self.dxf.start_angle]))
         return v[0]
 
     @property
-    def end_point(self) -> 'Vector':
+    def end_point(self) -> 'Vec3':
         """ Returns the end point of the arc in WCS, takes OCS into account.
         """
         v = list(self.vertices([self.dxf.end_angle]))
@@ -78,7 +78,7 @@ class Arc(Circle):
         """ Approximate the arc by vertices in WCS, argument `segment` is the
         max. distance from the center of an arc segment to the center of its
         chord. Yields :class:`~ezdxf.math.Vec2` objects for 2D arcs and
-        :class:`~ezdxf.math.Vector` objects for 3D arcs.
+        :class:`~ezdxf.math.Vec3` objects for 3D arcs.
 
         .. versionadded:: 0.15
 
@@ -126,7 +126,7 @@ class Arc(Circle):
 
         """
         dxf = self.dxf
-        dxf.center = Vector(arc.center)
+        dxf.center = Vec3(arc.center)
         dxf.radius = arc.radius
         dxf.start_angle = arc.start_angle
         dxf.end_angle = arc.end_angle

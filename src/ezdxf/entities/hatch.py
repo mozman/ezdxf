@@ -19,7 +19,7 @@ from ezdxf.lldxf.const import (
 from ezdxf import colors as clr
 from ezdxf.tools import pattern
 from ezdxf.math import (
-    Vector, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline,
+    Vec3, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline,
     open_uniform_knot_vector, ConstructionEllipse, NULLVEC, Z_AXIS,
 )
 from ezdxf.math.bspline import global_bspline_interpolation
@@ -635,9 +635,9 @@ class Hatch(DXFGraphic):
         dxf = self.dxf
         ocs = OCSTransform(dxf.extrusion, m)
 
-        elevation = Vector(dxf.elevation).z
+        elevation = Vec3(dxf.elevation).z
         self.paths.transform(ocs, elevation=elevation)
-        dxf.elevation = ocs.transform_vertex(Vector(0, 0, elevation)).replace(
+        dxf.elevation = ocs.transform_vertex(Vec3(0, 0, elevation)).replace(
             x=0, y=0)
         dxf.extrusion = ocs.new_extrusion
         # todo scale pattern
@@ -801,7 +801,7 @@ class BoundaryPaths:
             prev_point = None
             prev_bulge = None
             for x, y, bulge in points:
-                point = Vector(x, y)
+                point = Vec3(x, y)
                 if prev_point is None:
                     prev_point = point
                     prev_bulge = bulge
@@ -1146,7 +1146,7 @@ class PolylinePath:
                 if bulge and has_non_uniform_scaling:
                     raise NonUniformScalingError(
                         'Polyline path with arcs does not support non-uniform scaling')
-                v = ocs.transform_vertex(Vector(x, y, elevation))
+                v = ocs.transform_vertex(Vec3(x, y, elevation))
                 yield v.x, v.y, bulge
 
         if self.vertices:
@@ -1341,7 +1341,7 @@ class EdgePath:
 
 def _transform_2d_ocs_vertices(ucs, vertices, elevation, extrusion) -> List[
     Tuple[float, float]]:
-    ocs_vertices = (Vector(x, y, elevation) for x, y in vertices)
+    ocs_vertices = (Vec3(x, y, elevation) for x, y in vertices)
     return [(v.x, v.y) for v in
             ucs.ocs_points_to_ocs(ocs_vertices, extrusion=extrusion)]
 
@@ -1530,9 +1530,9 @@ class EllipseEdge:
     def construction_tool(self):
         """ Returns ConstructionEllipse() for the OCS representation. """
         return ConstructionEllipse(
-            center=Vector(self.center),
-            major_axis=Vector(self.major_axis),
-            extrusion=Vector(0, 0, 1),
+            center=Vec3(self.center),
+            major_axis=Vec3(self.major_axis),
+            extrusion=Vec3(0, 0, 1),
             ratio=self.ratio,
             # ConstructionEllipse() is always in ccw orientation
             start_param=self.start_param if self.ccw else self.end_param,
@@ -1683,10 +1683,10 @@ class SplineEdge:
         self.fit_points = list(
             ocs.transform_2d_vertex(v, elevation) for v in self.fit_points)
         if self.start_tangent is not None:
-            t = Vector(self.start_tangent).replace(z=elevation)
+            t = Vec3(self.start_tangent).replace(z=elevation)
             self.start_tangent = ocs.transform_direction(t).vec2
         if self.end_tangent is not None:
-            t = Vector(self.end_tangent).replace(z=elevation)
+            t = Vec3(self.end_tangent).replace(z=elevation)
             self.end_tangent = ocs.transform_direction(t).vec2
 
 

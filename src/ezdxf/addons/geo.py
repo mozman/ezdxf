@@ -15,7 +15,7 @@ from typing import (
 import numbers
 import copy
 import math
-from ezdxf.math import Vector, has_clockwise_orientation
+from ezdxf.math import Vec3, has_clockwise_orientation
 from ezdxf.render import Path, nesting
 from ezdxf.entities import DXFGraphic, LWPolyline, Hatch, Point
 from ezdxf.lldxf import const
@@ -103,13 +103,13 @@ def gfilter(entities: Iterable[DXFGraphic]) -> Iterable[DXFGraphic]:
             yield e
 
 
-TFunc = Callable[[Vector], Vector]
+TFunc = Callable[[Vec3], Vec3]
 
 
 class GeoProxy:
     """ Stores the ``__geo_interface__`` mapping in a parsed and compiled form.
 
-    Stores coordinates as :class:`Vector` objects and represents "Polygon"
+    Stores coordinates as :class:`Vec3` objects and represents "Polygon"
     always as tuple (exterior, holes) even without holes.
 
     The GeoJSON specification recommends 6 decimal places for latitude and
@@ -131,7 +131,7 @@ class GeoProxy:
     def parse(cls, geo_mapping: Dict) -> 'GeoProxy':
         """ Parse and compile a ``__geo_interface__`` mapping as :class:`dict`
         or a Python object with a ``__geo_interface__`` property, does some
-        basic syntax checks, converts all coordinates into :class:`Vector`
+        basic syntax checks, converts all coordinates into :class:`Vec3`
         objects, represents "Polygon" always as tuple (exterior, holes) even
         without holes.
 
@@ -244,8 +244,8 @@ class GeoProxy:
 
         Args:
             func: custom transformation function, which takes one
-                :class:`Vector` object as argument and returns the result as
-                a :class:`Vector` object.
+                :class:`Vec3` object as argument and returns the result as
+                a :class:`Vec3` object.
 
         """
         if func is None:
@@ -266,8 +266,8 @@ class GeoProxy:
 
         Args:
             func: custom transformation function, which takes one
-                :class:`Vector` object as argument and returns the result as
-                a :class:`Vector` object.
+                :class:`Vec3` object as argument and returns the result as
+                a :class:`Vec3` object.
 
         """
         if func is None:
@@ -319,13 +319,13 @@ class GeoProxy:
         coordinates.
 
         Args:
-            func: transformation function as Callable[[Vector], Vector]
+            func: transformation function as Callable[[Vec3], Vec3]
 
         """
 
         def process(entity: Dict):
             def transform(coords):
-                if isinstance(coords, Vector):
+                if isinstance(coords, Vec3):
                     return func(coords)
                 else:
                     return [transform(c) for c in coords]
@@ -432,7 +432,7 @@ class GeoProxy:
 
 def parse(geo_mapping: Dict) -> Dict:
     """ Parse ``__geo_interface__`` convert all coordinates into
-    :class:`Vector` objects, Polygon['coordinates'] is always a
+    :class:`Vec3` objects, Polygon['coordinates'] is always a
     tuple (exterior, holes), holes maybe an empty list.
 
     """
@@ -473,13 +473,13 @@ def parse(geo_mapping: Dict) -> Dict:
             raise ValueError(
                 f'Missing key "{COORDINATES}" in {type_}.')
         if type_ == POINT:
-            coordinates = Vector(coordinates)
+            coordinates = Vec3(coordinates)
         elif type_ in (LINE_STRING, MULTI_POINT):
-            coordinates = Vector.list(coordinates)
+            coordinates = Vec3.list(coordinates)
         elif type_ == POLYGON:
             coordinates = _parse_polygon(coordinates)
         elif type_ == MULTI_LINE_STRING:
-            coordinates = [Vector.list(v) for v in coordinates]
+            coordinates = [Vec3.list(v) for v in coordinates]
         elif type_ == MULTI_POLYGON:
             coordinates = [_parse_polygon(v) for v in coordinates]
         geo_mapping[COORDINATES] = coordinates
@@ -511,7 +511,7 @@ def _parse_polygon(coordinates: Sequence) -> Sequence:
     else:
         exterior = coordinates[0]
         holes = coordinates[1:]
-    return Vector.list(exterior), [Vector.list(h) for h in holes]
+    return Vec3.list(exterior), [Vec3.list(h) for h in holes]
 
 
 def _rebuild(geo_mapping: Dict, places: int = 6) -> Dict:
@@ -520,7 +520,7 @@ def _rebuild(geo_mapping: Dict, places: int = 6) -> Dict:
 
     """
 
-    def pnt(v: Vector) -> Tuple[float, float]:
+    def pnt(v: Vec3) -> Tuple[float, float]:
         return round(v.x, places), round(v.y, places)
 
     def _polygon(exterior, holes):
@@ -564,7 +564,7 @@ def mapping(entity: DXFGraphic,
             distance: float = MAX_FLATTENING_DISTANCE,
             force_line_string: bool = False) -> Dict:
     """ Create the compiled ``__geo_interface__`` mapping as :class:`dict`
-    for the given DXF `entity`, all coordinates are :class:`Vector` objects and
+    for the given DXF `entity`, all coordinates are :class:`Vec3` objects and
     represents "Polygon" always as tuple (exterior, holes) even without holes.
 
 
@@ -611,7 +611,7 @@ def mapping(entity: DXFGraphic,
         raise TypeError(dxftype)
 
 
-def _line_string_or_polygon_mapping(points: List[Vector],
+def _line_string_or_polygon_mapping(points: List[Vec3],
                                     force_line_string: bool):
     len_ = len(points)
     if len_ < 2:
@@ -627,11 +627,11 @@ def _line_string_or_polygon_mapping(points: List[Vector],
 
 def _hatch_as_polygon(hatch: Hatch, distance: float,
                       force_line_string: bool) -> Dict:
-    def boundary_to_vertices(boundary) -> List[Vector]:
+    def boundary_to_vertices(boundary) -> List[Vec3]:
         path = Path.from_hatch_boundary_path(boundary, ocs, elevation)
         return path_to_vertices(path)
 
-    def path_to_vertices(path) -> List[Vector]:
+    def path_to_vertices(path) -> List[Vec3]:
         path.close()
         return list(path.flattening(distance))
 
@@ -717,7 +717,7 @@ def collection(entities: Iterable[DXFGraphic],
         return join_multi_single_type_mappings(m)
 
 
-def line_string_mapping(points: List[Vector]) -> Dict:
+def line_string_mapping(points: List[Vec3]) -> Dict:
     """ Returns a "LineString" mapping.
 
     .. code::
@@ -737,14 +737,14 @@ def line_string_mapping(points: List[Vector]) -> Dict:
     }
 
 
-def is_linear_ring(points: List[Vector]):
+def is_linear_ring(points: List[Vec3]):
     return points[0].isclose(points[-1])
 
 
 # GeoJSON : A linear ring MUST follow the right-hand rule with respect
 # to the area it bounds, i.e., exterior rings are counterclockwise, and
 # holes are clockwise.
-def linear_ring(points: List[Vector], ccw=True) -> List[Vector]:
+def linear_ring(points: List[Vec3], ccw=True) -> List[Vec3]:
     """ Return `points` as linear ring (last vertex == first vertex),
     argument `ccw` defines the winding orientation, ``True`` for counter-clock
     wise and ``False`` for clock wise.
@@ -765,7 +765,7 @@ def linear_ring(points: List[Vector], ccw=True) -> List[Vector]:
     return points
 
 
-def polygon_mapping(points: List[Vector], holes: List[List[Vector]]) -> Dict:
+def polygon_mapping(points: List[Vec3], holes: List[List[Vec3]]) -> Dict:
     """ Returns a "Polygon" mapping.
 
     .. code::
@@ -847,13 +847,13 @@ CONST_PI_2 = math.pi / 2.0
 CONST_PI_4 = math.pi / 4.0
 
 
-def wgs84_4326_to_3395(location: Vector) -> Vector:
+def wgs84_4326_to_3395(location: Vec3) -> Vec3:
     """ Transform WGS84 `EPSG:4326 <https://epsg.io/4326>`_ location given as
     latitude and longitude in decimal degrees as used by GPS into World Mercator
     cartesian 2D coordinates in meters `EPSG:3395 <https://epsg.io/3395>`_.
 
     Args:
-        location: :class:`Vector` object, x-attribute represents the longitude
+        location: :class:`Vec3` object, x-attribute represents the longitude
             value (East-West) in decimal degrees and the y-attribute
             represents the latitude value (North-South) in decimal degrees.
     """
@@ -870,17 +870,17 @@ def wgs84_4326_to_3395(location: Vector) -> Vector:
     c = math.pow((1.0 - e_sin_lat) / (1.0 + e_sin_lat), e / 2.0)  # 7-7 p.44
     y = a * math.log(math.tan(CONST_PI_4 + latitude / 2.0) * c)  # 7-7 p.44
     x = a * longitude
-    return Vector(x, y)
+    return Vec3(x, y)
 
 
-def wgs84_3395_to_4326(location: Vector, tol: float = 1e-6) -> Vector:
+def wgs84_3395_to_4326(location: Vec3, tol: float = 1e-6) -> Vec3:
     """ Transform WGS84 World Mercator `EPSG:3395 <https://epsg.io/3395>`_
     location given as cartesian 2D coordinates x, y in meters into WGS84 decimal
     degrees as longitude and latitude `EPSG:4326 <https://epsg.io/4326>`_ as
     used by GPS.
 
     Args:
-        location: :class:`Vector` object, z-axis is ignored
+        location: :class:`Vec3` object, z-axis is ignored
         tol: accuracy for latitude calculation
 
     """
@@ -906,7 +906,7 @@ def wgs84_3395_to_4326(location: Vector, tol: float = 1e-6) -> Vector:
         latitude_ = latitude
 
     longitude = x / a  # 7-12 p.45
-    return Vector(math.degrees(longitude), math.degrees(latitude))
+    return Vec3(math.degrees(longitude), math.degrees(latitude))
 
 
 def dms2dd(d: float, m: float = 0, s: float = 0) -> float:

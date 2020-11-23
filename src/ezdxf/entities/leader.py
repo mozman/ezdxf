@@ -9,7 +9,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
-from ezdxf.math import Vector, X_AXIS, Z_AXIS, NULLVEC
+from ezdxf.math import Vec3, X_AXIS, Z_AXIS, NULLVEC
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.explode import explode_entity
 from ezdxf.audit import AuditError
@@ -145,7 +145,7 @@ class Leader(DXFGraphic, OverrideMixin):
 
     def __init__(self):
         super().__init__()
-        self.vertices: List[Vector] = []
+        self.vertices: List[Vec3] = []
 
     def _copy_data(self, entity: 'Leader') -> None:
         """ Copy vertices. """
@@ -201,10 +201,10 @@ class Leader(DXFGraphic, OverrideMixin):
 
     def set_vertices(self, vertices: Iterable['Vertex']):
         """ Set vertices of the leader, vertices is an iterable of
-        ``(x, y [,z])`` tuples or :class:`~ezdxf.math.Vector`.
+        ``(x, y [,z])`` tuples or :class:`~ezdxf.math.Vec3`.
 
         """
-        self.vertices = [Vector(v) for v in vertices]
+        self.vertices = [Vec3(v) for v in vertices]
 
     def transform(self, m: 'Matrix44') -> 'Leader':
         """ Transform LEADER entity by transformation matrix `m` inplace.

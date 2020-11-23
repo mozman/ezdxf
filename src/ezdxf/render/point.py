@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, List
 import math
 from ezdxf.entities import factory
-from ezdxf.math import Vector, UCS, NULLVEC
+from ezdxf.math import Vec3, UCS, NULLVEC
 
 if TYPE_CHECKING:
     from ezdxf.entities import Point, DXFGraphic
@@ -30,12 +30,12 @@ def virtual_entities(point: 'Point', pdsize: float = 1,
 
     """
 
-    def add_line_symmetrical(offset: Vector):
+    def add_line_symmetrical(offset: Vec3):
         dxfattribs['start'] = ucs.to_wcs(-offset)
         dxfattribs['end'] = ucs.to_wcs(offset)
         entities.append(factory.new('LINE', dxfattribs))
 
-    def add_line(s: Vector, e: Vector):
+    def add_line(s: Vec3, e: Vec3):
         dxfattribs['start'] = ucs.to_wcs(s)
         dxfattribs['end'] = ucs.to_wcs(e)
         entities.append(factory.new('LINE', dxfattribs))
@@ -62,22 +62,22 @@ def virtual_entities(point: 'Point', pdsize: float = 1,
         add_line_symmetrical(NULLVEC)
     # style == 1: no point symbol
     elif style == 2:  # + cross
-        add_line_symmetrical(Vector(pdsize, 0))
-        add_line_symmetrical(Vector(0, pdsize))
+        add_line_symmetrical(Vec3(pdsize, 0))
+        add_line_symmetrical(Vec3(0, pdsize))
     elif style == 3:  # x cross
-        add_line_symmetrical(Vector(pdsize, pdsize))
-        add_line_symmetrical(Vector(pdsize, -pdsize))
+        add_line_symmetrical(Vec3(pdsize, pdsize))
+        add_line_symmetrical(Vec3(pdsize, -pdsize))
     elif style == 4:  # ' tick
-        add_line(NULLVEC, Vector(0, radius))
+        add_line(NULLVEC, Vec3(0, radius))
     if has_square:
         x1 = -radius
         x2 = radius
         y1 = -radius
         y2 = radius
-        add_line(Vector(x1, y1), Vector(x2, y1))
-        add_line(Vector(x2, y1), Vector(x2, y2))
-        add_line(Vector(x2, y2), Vector(x1, y2))
-        add_line(Vector(x1, y2), Vector(x1, y1))
+        add_line(Vec3(x1, y1), Vec3(x2, y1))
+        add_line(Vec3(x2, y1), Vec3(x2, y2))
+        add_line(Vec3(x2, y2), Vec3(x1, y2))
+        add_line(Vec3(x1, y2), Vec3(x1, y1))
     if has_circle:
         dxfattribs = dict(gfx)
         if point.dxf.hasattr('extrusion'):

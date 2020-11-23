@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import Union, Sequence
 from .vector import (
-    Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, Vector, distance, lerp,
+    Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp,
 )
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d,
