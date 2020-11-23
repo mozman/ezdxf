@@ -1,11 +1,12 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# created 2019-02-14
 import pytest
 import ezdxf
 
 from ezdxf.entities.dxfgfx import DXFGraphic, DXFValueError
 from ezdxf.math import Matrix44
+from ezdxf.lldxf.tags import Tags, DXFTag
+from ezdxf.entities.dxfns import recover_graphic_attributes
 
 
 @pytest.fixture
@@ -20,7 +21,8 @@ def test_init_from_tags(entity):
 def test_true_color(entity):
     entity.dxf.true_color = 0x0F0F0F
     assert 0x0F0F0F == entity.dxf.true_color
-    assert (0x0F, 0x0F, 0x0F) == entity.rgb  # shortcut for modern graphic entities
+    assert (0x0F, 0x0F,
+            0x0F) == entity.rgb  # shortcut for modern graphic entities
     entity.rgb = (255, 255, 255)  # shortcut for modern graphic entities
     assert 0xFFFFFF == entity.dxf.true_color
 
@@ -148,6 +150,38 @@ def test_unlink_destroyed_entity_from_layout(entity):
     entity.destroy()
     with pytest.raises(TypeError):
         entity.unlink_from_layout()
+
+
+def test_recover_acdb_entity_tags():
+    entity = DXFGraphic()
+    tags = Tags([DXFTag(62, 1), DXFTag(8, 'Layer'), DXFTag(6, 'Linetype')])
+
+    recover_graphic_attributes(tags, entity.dxf)
+    assert entity.dxf.color == 1
+    assert entity.dxf.layer == 'Layer'
+    assert entity.dxf.linetype == 'Linetype'
+
+
+def test_recover_acdb_entity_tags_does_not_replace_existing_attribs():
+    entity = DXFGraphic()
+    entity.dxf.color = 7
+    entity.dxf.layer = 'HasLayer'
+    entity.dxf.linetype = 'HasLinetype'
+    tags = Tags([DXFTag(62, 1), DXFTag(8, 'Layer'), DXFTag(6, 'Linetype')])
+
+    recover_graphic_attributes(tags, entity.dxf)
+    assert entity.dxf.color == 7
+    assert entity.dxf.layer == 'HasLayer'
+    assert entity.dxf.linetype == 'HasLinetype'
+
+
+def test_recover_acdb_entity_tags_ignores_unknown_tags():
+    entity = DXFGraphic()
+    tags = Tags([DXFTag(62, 1), DXFTag(8, 'Layer'), DXFTag(99, 'Unknown')])
+
+    unprocessed_tags = recover_graphic_attributes(tags, entity.dxf)
+    assert len(unprocessed_tags) == 1
+    assert unprocessed_tags[0] == (99, 'Unknown')
 
 
 LINE = """0

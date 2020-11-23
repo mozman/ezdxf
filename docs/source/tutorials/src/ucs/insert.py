@@ -7,7 +7,7 @@ from pathlib import Path
 OUT_DIR = Path('~/Desktop/Outbox').expanduser()
 
 from ezdxf.lldxf.const import MIRROR_X
-from ezdxf.math import UCS, Vector, Matrix44, Y_AXIS, X_AXIS, Z_AXIS
+from ezdxf.math import UCS, Vec3, Matrix44, Y_AXIS, X_AXIS, Z_AXIS
 
 RED = 1
 GREEN = 3

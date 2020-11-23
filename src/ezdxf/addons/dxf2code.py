@@ -175,7 +175,7 @@ def _fmt_mapping(mapping: Mapping, indent: int = 0) -> Iterable[str]:
         if isinstance(v, str):
             v = json.dumps(v)  # for correct escaping of quotes
         else:
-            v = str(v)  # format uses repr() for Vectors
+            v = str(v)  # format uses repr() for Vec3s
         yield fmt.format(k, v)
 
 
@@ -218,7 +218,7 @@ def _fmt_dxf_tags(tags: Iterable["DXFTag"], indent: int = 0):
         if isinstance(value, str):
             value = json.dumps(value)  # for correct escaping of quotes
         else:
-            value = str(value)  # format uses repr() for Vectors
+            value = str(value)  # format uses repr() for Vec3s
         yield fmt.format(code, value)
 
 

@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
-# Created: 2019-03-11
 import math
 import re
 from typing import TYPE_CHECKING, List, Sequence, Iterable
@@ -12,11 +11,12 @@ from ezdxf.lldxf.attributes import (
     DXFAttributes, DefSubclass, DXFAttr, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import (
-    SUBCLASS_MARKER, DXFStructureError, DXF2010, DXFTypeError,
+    SUBCLASS_MARKER, DXFStructureError, DXF2010, DXFTypeError, DXFValueError,
+    InvalidGeoDataException,
 )
 from ezdxf.lldxf.packedtags import VertexArray
 from ezdxf.lldxf.tags import Tags, DXFTag
-from ezdxf.math.vector import NULLVEC, Z_AXIS, Y_AXIS
+from ezdxf.math import NULLVEC, Z_AXIS, Y_AXIS, Vertex, Vec3, Vec2
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
@@ -27,7 +27,7 @@ from ..math import Matrix44
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace
 
-__all__ = ['GeoData', 'MeshVertices', 'InvalidGeoDataException']
+__all__ = ['GeoData', 'MeshVertices']
 
 acdb_geo_data = DefSubclass('AcDbGeoData', {
     # 1 = R2009, but this release has no DXF version,
@@ -131,9 +131,84 @@ acdb_geo_data = DefSubclass('AcDbGeoData', {
 
 })
 
+EPSG_3395 = """<?xml version="1.0" encoding="UTF-16" standalone="no" ?>
+<Dictionary version="1.0" xmlns="http://www.osgeo.org/mapguide/coordinatesystem">
 
-class InvalidGeoDataException(Exception):
-    pass
+<ProjectedCoordinateSystem id="WORLD-MERCATOR">
+<Name>WORLD-MERCATOR</Name>
+<AdditionalInformation>
+<ParameterItem type="CsMap">
+<Key>CSQuadrantSimplified</Key>
+<IntegerValue>1</IntegerValue>
+</ParameterItem>
+</AdditionalInformation>
+<DomainOfValidity>
+<Extent>
+<GeographicElement>
+<GeographicBoundingBox>
+<WestBoundLongitude>-180.75</WestBoundLongitude>
+<EastBoundLongitude>180.75</EastBoundLongitude>
+<SouthBoundLatitude>-80.75</SouthBoundLatitude>
+<NorthBoundLatitude>84.75</NorthBoundLatitude>
+</GeographicBoundingBox>
+</GeographicElement>
+</Extent>
+</DomainOfValidity>
+<DatumId>WGS84</DatumId>
+<Axis uom="Meter">
+<CoordinateSystemAxis>
+<AxisOrder>1</AxisOrder>
+<AxisName>Easting</AxisName>
+<AxisAbbreviation>E</AxisAbbreviation>
+<AxisDirection>East</AxisDirection>
+</CoordinateSystemAxis>
+<CoordinateSystemAxis>
+<AxisOrder>2</AxisOrder>
+<AxisName>Northing</AxisName>
+<AxisAbbreviation>N</AxisAbbreviation>
+<AxisDirection>North</AxisDirection>
+</CoordinateSystemAxis>
+</Axis>
+<Conversion>
+<Projection>
+<OperationMethodId>Mercator (variant B)</OperationMethodId>
+<ParameterValue><OperationParameterId>Longitude of natural origin</OperationParameterId><Value uom="degree">0</Value></ParameterValue>
+<ParameterValue><OperationParameterId>Standard Parallel</OperationParameterId><Value uom="degree">0</Value></ParameterValue>
+<ParameterValue><OperationParameterId>Scaling factor for coord differences</OperationParameterId><Value uom="unity">1</Value></ParameterValue>
+<ParameterValue><OperationParameterId>False easting</OperationParameterId><Value uom="Meter">0</Value></ParameterValue>
+<ParameterValue><OperationParameterId>False northing</OperationParameterId><Value uom="Meter">0</Value></ParameterValue>
+</Projection>
+</Conversion>
+</ProjectedCoordinateSystem>
+<Alias id="3395" type="CoordinateSystem">
+<ObjectId>WORLD-MERCATOR</ObjectId>
+<Namespace>EPSG Code</Namespace>
+</Alias>
+
+<GeodeticDatum id="WGS84">
+<Name>WGS84</Name>
+<PrimeMeridianId>Greenwich</PrimeMeridianId>
+<EllipsoidId>WGS84</EllipsoidId>
+</GeodeticDatum>
+<Alias id="6326" type="Datum">
+<ObjectId>WGS84</ObjectId>
+<Namespace>EPSG Code</Namespace>
+</Alias>
+
+<Ellipsoid id="WGS84">
+<Name>WGS84</Name>
+<SemiMajorAxis uom="meter">6.37814e+06</SemiMajorAxis>
+<SecondDefiningParameter>
+<SemiMinorAxis uom="meter">6.35675e+06</SemiMinorAxis>
+</SecondDefiningParameter>
+</Ellipsoid>
+<Alias id="7030" type="Ellipsoid">
+<ObjectId>WGS84</ObjectId>
+<Namespace>EPSG Code</Namespace>
+</Alias>
+
+</Dictionary>
+"""
 
 
 class MeshVertices(VertexArray):
@@ -265,51 +340,68 @@ class GeoData(DXFObject):
         tagwriter.write_tag2(301, chunks[0])
 
     def decoded_units(self) -> Tuple[Optional[str], Optional[str]]:
-        return units.decode(self.dxf.horizontal_units), units.decode(self.dxf.vertical_units)
+        return units.decode(self.dxf.horizontal_units), \
+               units.decode(self.dxf.vertical_units)
 
     def get_crs(self) -> Tuple[int, bool]:
-        """
+        """ Returns the EPSG index and axis-ordering, axis-ordering is ``True``
+        if fist axis is labeled "E" or "W" and ``False`` if first axis is
+        labeled "N" or "S".
+
+        If axis-ordering is ``False`` the CRS is not compatible with the
+        ``__geo_interface__`` or GeoJSON (see chapter 3.1.1).
+
+        Raises:
+            InvalidGeoDataException: for invalid or unknown XML data
 
         The EPSG number is stored in a tag like:
 
-        <Alias id="27700" type="CoordinateSystem">
-          <ObjectId>OSGB1936.NationalGrid</ObjectId>
-          <Namespace>EPSG Code</Namespace>
-        </Alias>
+        .. code::
+
+            <Alias id="27700" type="CoordinateSystem">
+              <ObjectId>OSGB1936.NationalGrid</ObjectId>
+              <Namespace>EPSG Code</Namespace>
+            </Alias>
 
         The axis-ordering is stored in a tag like:
 
-        <Axis uom="METER">
-          <CoordinateSystemAxis>
-            <AxisOrder>1</AxisOrder>
-            <AxisName>Easting</AxisName>
-            <AxisAbbreviation>E</AxisAbbreviation>
-            <AxisDirection>east</AxisDirection>
-          </CoordinateSystemAxis>
-          <CoordinateSystemAxis>
-            <AxisOrder>2</AxisOrder>
-            <AxisName>Northing</AxisName>
-            <AxisAbbreviation>N</AxisAbbreviation>
-            <AxisDirection>north</AxisDirection>
-          </CoordinateSystemAxis>
-        </Axis>
+        .. code::
+
+            <Axis uom="METER">
+              <CoordinateSystemAxis>
+                <AxisOrder>1</AxisOrder>
+                <AxisName>Easting</AxisName>
+                <AxisAbbreviation>E</AxisAbbreviation>
+                <AxisDirection>east</AxisDirection>
+              </CoordinateSystemAxis>
+              <CoordinateSystemAxis>
+                <AxisOrder>2</AxisOrder>
+                <AxisName>Northing</AxisName>
+                <AxisAbbreviation>N</AxisAbbreviation>
+                <AxisDirection>north</AxisDirection>
+              </CoordinateSystemAxis>
+            </Axis>
 
         """
         definition = self.coordinate_system_definition
         try:
-            # remove namespaces so that tags can be searched without prefixing their namespace
+            # Remove namespaces so that tags can be searched without prefixing
+            # their namespace:
             definition = _remove_xml_namespaces(definition)
             root = ElementTree.fromstring(definition)
         except ElementTree.ParseError:
-            raise InvalidGeoDataException('failed to parse coordinate_system_definition as xml')
+            raise InvalidGeoDataException(
+                'failed to parse coordinate_system_definition as xml')
 
         crs = None
         for alias in root.findall('Alias'):
-            if alias.get('type') == 'CoordinateSystem' and alias.find('Namespace').text == 'EPSG Code':
+            if alias.get('type') == 'CoordinateSystem' and \
+                    alias.find('Namespace').text == 'EPSG Code':
                 try:
                     crs = int(alias.get('id'))
                 except ValueError:
-                    raise InvalidGeoDataException(f'invalid epsg number: {alias.get("id")}')
+                    raise InvalidGeoDataException(
+                        f'invalid epsg number: {alias.get("id")}')
                 break
 
         xy_ordering = None
@@ -321,7 +413,8 @@ class GeoData(DXFObject):
                 elif first_axis in ('N', 'S'):
                     xy_ordering = False
                 else:
-                    raise InvalidGeoDataException(f'unknown first axis: {first_axis}')
+                    raise InvalidGeoDataException(
+                        f'unknown first axis: {first_axis}')
                 break
 
         if crs is None:
@@ -331,7 +424,20 @@ class GeoData(DXFObject):
         else:
             return crs, xy_ordering
 
-    def get_crs_transformation(self, *, no_checks: bool = False) -> Tuple[Matrix44, int]:
+    def get_crs_transformation(
+            self, *, no_checks: bool = False) -> Tuple[Matrix44, int]:
+        """ Returns the transformation matrix and the EPSG index to transform
+        WCS coordinates into CRS coordinates. Because of the lack of proper
+        documentation this method works only for tested configurations, set
+        argument `no_checks` to ``True`` to use the method for untested geodata
+        configurations, but the results may be incorrect.
+
+        Supports only "Local Grid" transformation!
+
+        Raises:
+            InvalidGeoDataException: for untested geodata configurations
+
+        """
         epsg, xy_ordering = self.get_crs()
 
         if not no_checks:
@@ -357,15 +463,76 @@ class GeoData(DXFObject):
         target = self.dxf.reference_point  # in the CRS of the geodata
         north = self.dxf.north_direction
 
-        # -pi/2 because north is at pi/2 so if the given north is at pi/2, no rotation is necessary
+        # -pi/2 because north is at pi/2 so if the given north is at pi/2, no
+        # rotation is necessary:
         theta = -(math.atan2(north.y, north.x) - math.pi / 2)
-
-        transformation = (Matrix44.translate(-source.x, -source.y, 0) @
-                          Matrix44.scale(self.dxf.horizontal_unit_scale, self.dxf.vertical_unit_scale, 1) @
-                          Matrix44.z_rotate(theta) @
-                          Matrix44.translate(target.x, target.y, 0))
-
+        transformation = (
+                Matrix44.translate(-source.x, -source.y, 0) @
+                Matrix44.scale(self.dxf.horizontal_unit_scale,
+                               self.dxf.vertical_unit_scale, 1) @
+                Matrix44.z_rotate(theta) @
+                Matrix44.translate(target.x, target.y, 0))
         return transformation, epsg
+
+    def setup_local_grid(self, *,
+                         design_point: Vertex,
+                         reference_point: Vertex,
+                         north_direction: Vertex = (0, 1),
+                         crs: str = EPSG_3395,
+                         ) -> None:
+        """ Setup local grid coordinate system. This method is designed to setup
+        CRS similar to `EPSG:3395 World Mercator`, the basic features of the
+        CRS should fulfill this assumptions:
+
+            - base unit of reference coordinates is 1 meter
+            - right-handed coordinate system: +Y=north/+X=east/+Z=up
+
+        The CRS string is not validated nor interpreted!
+
+        .. hint::
+
+            The reference point must be a 2D cartesian map coordinate and not
+            a globe (lon/lat) coordinate like stored in GeoJSON or GPS data.
+
+        Args:
+            design_point: WCS coordinates of the CRS reference point
+            reference_point: CRS reference point in 2D cartesian coordinates
+            north_direction: north direction a 2D vertex, default is (0, 1)
+            crs: Coordinate Reference System definition XML string, default is
+                the definition string for `EPSG:3395 World Mercator`
+
+        """
+        doc = self.doc
+        if doc is None:
+            raise DXFValueError('Valid DXF document required.')
+        wcs_units = doc.units
+        if units == 0:
+            raise DXFValueError('DXF document requires units to be set, '
+                                'current state is "unitless".')
+        meter_factor = units.METER_FACTOR[wcs_units]
+        if meter_factor is None:
+            raise DXFValueError(f'Unsupported document units: {wcs_units}')
+        unit_factor = 1.0 / meter_factor
+        # Default settings:
+        self.dxf.up_direction = Z_AXIS
+        self.dxf.observation_coverage_tag = ''
+        self.dxf.observation_from_tag = ''
+        self.dxf.observation_to_tag = ''
+        self.dxf.scale_estimation_method = GeoData.NONE
+        self.dxf.coordinate_type = GeoData.LOCAL_GRID
+        self.dxf.sea_level_correction = 0
+        self.dxf.horizontal_units = wcs_units
+        # Factor from WCS -> CRS (m) e.g. 0.01 for horizontal_units==5 (cm),
+        # 1cm = 0.01m
+        self.dxf.horizontal_unit_scale = unit_factor
+        self.dxf.vertical_units = wcs_units
+        self.dxf.vertical_unit_scale = unit_factor
+
+        # User settings:
+        self.dxf.design_point = Vec3(design_point)
+        self.dxf.reference_point = Vec3(reference_point)
+        self.dxf.north_direction = Vec2(north_direction)
+        self.coordinate_system_definition = str(crs)
 
 
 def _remove_xml_namespaces(xml_string: str) -> str:

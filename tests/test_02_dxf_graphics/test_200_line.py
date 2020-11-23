@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import pytest
 import math
 
@@ -83,9 +82,9 @@ def test_default_new():
     assert entity.dxf.layer == '0'
     assert entity.dxf.color == 7
     assert entity.dxf.start == (1, 2, 3)
-    assert entity.dxf.start.x == 1, 'is not Vector compatible'
-    assert entity.dxf.start.y == 2, 'is not Vector compatible'
-    assert entity.dxf.start.z == 3, 'is not Vector compatible'
+    assert entity.dxf.start.x == 1, 'is not Vec3 compatible'
+    assert entity.dxf.start.y == 2, 'is not Vec3 compatible'
+    assert entity.dxf.start.z == 3, 'is not Vec3 compatible'
     assert entity.dxf.end == (4, 5, 6)
     assert entity.dxf.extrusion == (0.0, 0.0, 1.0)
     assert entity.dxf.hasattr('extrusion') is False, 'just the default value'
@@ -161,3 +160,41 @@ def test_scaling():
     assert line.dxf.end == (2, 0, 0)
     assert line.dxf.extrusion == (0, 1, 0)
     assert line.dxf.thickness == 4
+
+
+ERR_LINE = """0
+LINE
+5
+0
+330
+0
+100
+AcDbEntity
+100
+AcDbLine
+8
+0
+62
+1
+6
+Linetype
+10
+0.0
+20
+0.0
+30
+0.0
+11
+1.0
+21
+1.0
+31
+1.0
+"""
+
+
+def test_recover_acdb_entity_tags():
+    line = Line.from_text(ERR_LINE)
+    assert line.dxf.layer == '0'
+    assert line.dxf.color == 1
+    assert line.dxf.linetype == 'Linetype'

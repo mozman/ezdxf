@@ -3,7 +3,7 @@
 import pathlib
 import math
 import ezdxf
-from ezdxf.math import UCS, Vector
+from ezdxf.math import UCS, Vec3
 
 OUTDIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 NARROW = 'OpenSansCondensed-Light'
@@ -143,7 +143,7 @@ def scene2(filename):
                 cz = z * delta
                 ucs = UCS(origin=(cx, cy, cz)).rotate_local_z(math.radians(45)).rotate_local_x(
                     math.radians(30))
-                add_excentric_text(msp, ucs, location=Vector(1, 2, 3), text=f'Hallo\n(x={cx}, y={cy}, z={cz})')
+                add_excentric_text(msp, ucs, location=Vec3(1, 2, 3), text=f'Hallo\n(x={cx}, y={cy}, z={cz})')
 
     doc.set_modelspace_vport(5 * delta)
     doc.saveas(filename)

@@ -106,27 +106,19 @@ Factory function         :meth:`Drawing.layers.new`
         This is the recommend method to get/set RGB values, when ever possible do not use the DXF low level attribute
         :attr:`dxf.true_color`.
 
-        .. versionadded:: 0.10
-
     .. attribute:: color
 
         Get/set layer color, preferred method for getting the layer color, because :attr:`dxf.color` is negative
         for layer status `off`.
 
-        .. versionadded:: 0.10
-
     .. attribute:: description
 
         Get/set layer description as string
-
-        .. versionadded:: 0.10
 
     .. attribute:: transparency
 
         Get/set layer transparency as float value in the range from ``0`` to ``1``.
         ``0`` for no transparency (opaque) and ``1`` for 100% transparency.
-
-        .. versionadded:: 0.10
 
     .. automethod:: is_frozen
 

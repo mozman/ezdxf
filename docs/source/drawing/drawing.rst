@@ -48,8 +48,6 @@ Drawing Object
 
         Returns required output encoding for saving to filesystem or encoding to binary data.
 
-        .. versionadded:: 0.11
-
     .. attribute:: filename
 
         :class:`Drawing` filename, if loaded by :func:`ezdxf.readfile` else ``None``.
@@ -57,6 +55,7 @@ Drawing Object
     .. attribute:: rootdict
 
         Reference to the root dictionary of the OBJECTS section.
+
 
     .. attribute:: header
 
@@ -154,6 +153,8 @@ Drawing Object
     .. attribute:: mleader_styles
 
         :class:`~ezdxf.entities.MLeaderStyleCollection` of all :class:`~ezdxf.entities.MLeaderStyle` objects.
+
+    .. autoattribute:: units
 
     .. automethod:: save
 

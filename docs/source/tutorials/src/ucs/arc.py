@@ -2,7 +2,7 @@
 # License: MIT License
 import math
 import ezdxf
-from ezdxf.math import UCS, Vector
+from ezdxf.math import UCS, Vec3
 from pathlib import Path
 
 OUT_DIR = Path('~/Desktop/Outbox').expanduser()
@@ -26,13 +26,13 @@ msp.add_arc(
 
 msp.add_line(
     start=CENTER,
-    end=Vector.from_deg_angle(START_ANGLE),
+    end=Vec3.from_deg_angle(START_ANGLE),
     dxfattribs={'color': 6},
 ).transform(ucs.matrix)
 
 msp.add_line(
     start=CENTER,
-    end=Vector.from_deg_angle(END_ANGLE),
+    end=Vec3.from_deg_angle(END_ANGLE),
     dxfattribs={'color': 6},
 ).transform(ucs.matrix)
 

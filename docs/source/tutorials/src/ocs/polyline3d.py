@@ -11,7 +11,7 @@ doc = ezdxf.new('R2010')
 msp = doc.modelspace()
 
 # Using an UCS simplifies 3D operations, but UCS definition can happen later
-# calculating corner points in local (UCS) coordinates without Vector class
+# calculating corner points in local (UCS) coordinates without Vec3 class
 angle = math.radians(360 / 5)
 corners_ucs = [(math.cos(angle * n), math.sin(angle * n), 0) for n in range(5)]
 

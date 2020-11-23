@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from math import isclose, radians, pi
-from ezdxf.math import UCS, Vector, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
+from ezdxf.math import UCS, Vec3, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 
 
 def test_ucs_init():
@@ -46,7 +46,7 @@ def test_translation():
 
 def test_rotation():
     # normalization is not necessary
-    ux = Vector(1, 2, 0)
+    ux = Vec3(1, 2, 0)
     # only cartesian coord systems work
     uy = ux.rotate_deg(90)
     ucs = UCS(ux=ux, uy=uy)
@@ -58,7 +58,7 @@ def test_rotation():
 
 def test_matrix44_rotation():
     # normalization is not necessary
-    ux = Vector(1, 2, 0)
+    ux = Vec3(1, 2, 0)
     # only cartesian coord systems work
     uy = ux.rotate_deg(90)
     ucs = UCS(ux=ux, uy=uy)
@@ -73,7 +73,7 @@ def test_matrix44_rotation():
 
 
 def test_transformation():
-    axis = Vector.random()
+    axis = Vec3.random()
     angle = 1.5
     ucs = UCS(origin=(3, 4, 5))
     m = Matrix44.axis_rotate(axis, angle)
@@ -95,9 +95,9 @@ def test_none_cartesian():
 
 
 def test_arbitrary_ucs():
-    origin = Vector(3, 3, 3)
-    ux = Vector(1, 2, 0)
-    def_point_in_xy_plane = Vector(3, 10, 4)
+    origin = Vec3(3, 3, 3)
+    ux = Vec3(1, 2, 0)
+    def_point_in_xy_plane = Vec3(3, 10, 4)
     uz = ux.cross(def_point_in_xy_plane - origin)
     ucs = UCS(origin=origin, ux=ux, uz=uz)
     m = Matrix44.ucs(ucs.ux, ucs.uy, ucs.uz, ucs.origin)
@@ -118,7 +118,7 @@ def test_ucs_direction_to_ocs_direction():
     ucs = UCS.from_x_axis_and_point_in_xy(origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5))
     assert ucs.is_cartesian is True
     expected = (-3.350073025395333, 2.9626020192591795, 6)
-    assert ucs.ucs_direction_to_ocs_direction(Vector(2, 4, 6)).isclose(expected)
+    assert ucs.ucs_direction_to_ocs_direction(Vec3(2, 4, 6)).isclose(expected)
 
 
 def test_to_ocs():

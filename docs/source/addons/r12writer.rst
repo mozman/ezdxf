@@ -46,9 +46,6 @@ If using FIXED-TABLES, following predefined text styles are available:
 - OpenSans
 - OpenSansCondensed-Light
 
-.. versionadded:: 0.12
-    Write Binary DXF files.
-
 Tutorial
 --------
 

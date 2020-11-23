@@ -148,6 +148,13 @@ def test_base64_encoding_r2000(dwg_r2000):
     assert doc.acad_release == 'R2000'
 
 
+def test_set_drawing_units(dwg_r12):
+    dwg_r12.units = 6
+    assert dwg_r12.header['$INSUNITS'] == 6
+    dwg_r12.units = 5
+    assert dwg_r12.header['$INSUNITS'] == 5
+
+
 MINIMALISTIC_DXF12 = """  0
 SECTION
   2

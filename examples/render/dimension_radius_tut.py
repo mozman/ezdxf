@@ -4,7 +4,7 @@
 # License: MIT License
 import pathlib
 import ezdxf
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 
 OUTDIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 if not OUTDIR.exists():
@@ -28,7 +28,7 @@ def set_main_view(doc, center=(0, 0), height=10, icon=3):
 
 
 def add_dim(msp, x, y, override, dimstyle='EZ_RADIUS'):
-    center = Vector(x, y)
+    center = Vec3(x, y)
     msp.add_circle(center, radius=RADIUS)
     dim = msp.add_radius_dim(
         center=center,
@@ -40,9 +40,9 @@ def add_dim(msp, x, y, override, dimstyle='EZ_RADIUS'):
 
 
 def add_dim_user(msp, x, y, distance, override):
-    center = Vector(x, y)
+    center = Vec3(x, y)
     msp.add_circle(center, radius=RADIUS)
-    location = center + Vector.from_deg_angle(45, distance)
+    location = center + Vec3.from_deg_angle(45, distance)
     add_mark(msp, location)
     dim = msp.add_radius_dim(
         center=center,
@@ -55,8 +55,8 @@ def add_dim_user(msp, x, y, distance, override):
 
 def add_mark(msp, location, size=.15, color=5):
     attribs = {'color': color}
-    offset_1 = Vector(size / 2, 0)
-    offset_2 = Vector(0, size / 2)
+    offset_1 = Vec3(size / 2, 0)
+    offset_2 = Vec3(0, size / 2)
     msp.add_line(start=location - offset_1, end=location + offset_1, dxfattribs=attribs)
     msp.add_line(start=location - offset_2, end=location + offset_2, dxfattribs=attribs)
     msp.add_circle(location, radius=size * .35, dxfattribs=attribs)

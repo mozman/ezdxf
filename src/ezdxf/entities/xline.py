@@ -1,13 +1,12 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
 from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -39,10 +38,7 @@ class XLine(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_xline, 2)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=self.XLINE_SUBCLASS)
+            processor.load_and_recover_dxfattribs(dxf, acdb_xline, 2)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -69,7 +65,7 @@ class XLine(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        self.dxf.start = Vector(dx, dy, dz) + self.dxf.start
+        self.dxf.start = Vec3(dx, dy, dz) + self.dxf.start
         return self
 
 

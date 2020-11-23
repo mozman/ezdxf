@@ -1,10 +1,10 @@
-# (c) 2009, Manfred Moitzi
+# Copyright (c) 2009-2020, Manfred Moitzi
 # License: MIT License
 import math
 from math import isclose
-from ezdxf.math import is_close_points
-from ezdxf.math.line import ConstructionRay
-from ezdxf.math.circle import ConstructionCircle, Vec2
+from ezdxf.math import (
+    is_close_points, ConstructionRay, ConstructionCircle, Vec2,
+)
 
 HALF_PI = math.pi / 2.
 
@@ -164,13 +164,15 @@ def test_intersect_circle_touch():
     assert check_touch((20., 26.5), (20., 25.)) is True
     assert check_touch((13.5, 20.), (15., 20.)) is True
     assert check_touch((20., 13.5), (20., 15.)) is True
-    assert check_touch((14.9339, 15.9276), (16.1030, 16.8674), abs_tol=1e-4) is True
+    assert check_touch((14.9339, 15.9276), (16.1030, 16.8674),
+                       abs_tol=1e-4) is True
 
     assert check_touch((23.5, 20.), (25., 20.)) is True
     assert check_touch((20., 23.5), (20., 25.)) is True
     assert check_touch((16.5, 20.), (15., 20.)) is True
     assert check_touch((20., 16.5), (20., 15.)) is True
-    assert check_touch((17.2721, 17.8071), (16.1030, 16.8673), abs_tol=1e-4) is True
+    assert check_touch((17.2721, 17.8071), (16.1030, 16.8673),
+                       abs_tol=1e-4) is True
 
 
 def test_intersect_circle_intersect():
@@ -182,21 +184,34 @@ def test_intersect_circle_intersect():
         assert len(points) == 2
         a, b = points
 
-        result1 = is_close_points(a, p1, abs_tol=abs_tol) and is_close_points(b, p2, abs_tol=abs_tol)
-        result2 = is_close_points(a, p2, abs_tol=abs_tol) and is_close_points(b, p1, abs_tol=abs_tol)
+        result1 = is_close_points(a, p1, abs_tol=abs_tol) and is_close_points(b,
+                                                                              p2,
+                                                                              abs_tol=abs_tol)
+        result2 = is_close_points(a, p2, abs_tol=abs_tol) and is_close_points(b,
+                                                                              p1,
+                                                                              abs_tol=abs_tol)
         return result1 or result2
 
     circle1 = ConstructionCircle((40, 20), 5)
-    assert check_intersection((46., 20.), (44.8958, 21.0153), (44.8958, 18.9847)) is True
-    assert check_intersection((44., 20.), (44.8438, 21.2402), (44.8438, 18.7598)) is True
-    assert check_intersection((40., 26.), (38.9847, 24.8958), (41.0153, 24.8958)) is True
-    assert check_intersection((40., 24.), (38.7598, 24.8438), (41.2402, 24.8438)) is True
-    assert check_intersection((34., 20.), (35.1042, 18.9847), (35.1042, 21.0153)) is True
+    assert check_intersection((46., 20.), (44.8958, 21.0153),
+                              (44.8958, 18.9847)) is True
+    assert check_intersection((44., 20.), (44.8438, 21.2402),
+                              (44.8438, 18.7598)) is True
+    assert check_intersection((40., 26.), (38.9847, 24.8958),
+                              (41.0153, 24.8958)) is True
+    assert check_intersection((40., 24.), (38.7598, 24.8438),
+                              (41.2402, 24.8438)) is True
+    assert check_intersection((34., 20.), (35.1042, 18.9847),
+                              (35.1042, 21.0153)) is True
     # assert check_intersection( (36.,20.),  (35.1563, 18.7598),  (35.1563, 21.2402)))
-    assert check_intersection((40., 14.), (38.9847, 15.1042), (41.0153, 15.1042)) is True
-    assert check_intersection((40., 14.), (38.9847, 15.1042), (41.0153, 15.1042)) is True
-    assert check_intersection((36.8824, 17.4939), (35.4478, 17.9319), (37.0018, 15.9987)) is True
-    assert check_intersection((35.3236, 16.2408), (35.5481, 17.7239), (36.8203, 16.1413)) is True
+    assert check_intersection((40., 14.), (38.9847, 15.1042),
+                              (41.0153, 15.1042)) is True
+    assert check_intersection((40., 14.), (38.9847, 15.1042),
+                              (41.0153, 15.1042)) is True
+    assert check_intersection((36.8824, 17.4939), (35.4478, 17.9319),
+                              (37.0018, 15.9987)) is True
+    assert check_intersection((35.3236, 16.2408), (35.5481, 17.7239),
+                              (36.8203, 16.1413)) is True
 
 
 def test_create_3P():

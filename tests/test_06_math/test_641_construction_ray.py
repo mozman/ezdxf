@@ -1,10 +1,8 @@
-# Purpose: test ConstructionRay
-# Created: 28.02.2010
+# Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 import pytest
 import math
-from ezdxf.math.line import ConstructionRay, ParallelRaysError
-from ezdxf.math import Vector
+from ezdxf.math import ConstructionRay, ParallelRaysError, Vec3
 
 HALF_PI = math.pi / 2.
 
@@ -30,7 +28,7 @@ class TestConstructionRay:
         ray2 = ConstructionRay((17, -7), (-10, 3))
 
         point = ray1.intersect(ray2)
-        assert point.isclose(Vector(5.7434, -2.8309), abs_tol=1e-4)
+        assert point.isclose(Vec3(5.7434, -2.8309), abs_tol=1e-4)
         assert ray1.is_parallel(ray2) is False
 
     def test_ray2d_parallel(self):
@@ -47,7 +45,7 @@ class TestConstructionRay:
         ray2 = ConstructionRay((-10, 3), (17, -7))
         point = ray1.intersect(ray2)
         assert point.x == 10
-        assert point.isclose(Vector(10., -4.4074), abs_tol=1e-4)
+        assert point.isclose(Vec3(10., -4.4074), abs_tol=1e-4)
         with pytest.raises(ArithmeticError):
             _ = ray1.yof(1)
 
@@ -56,7 +54,7 @@ class TestConstructionRay:
         ray2 = ConstructionRay((-10, 20), (10, 0))
         point = ray1.intersect(ray2)
         assert point.y == 10
-        assert point.isclose(Vector(0.0, 10.0), abs_tol=1e-4)
+        assert point.isclose(Vec3(0.0, 10.0), abs_tol=1e-4)
 
     def test_ray2d_intersect_with_vertical_and_horizontal(self):
         ray1 = ConstructionRay((-10, 10), (10, 10))
@@ -64,7 +62,7 @@ class TestConstructionRay:
         point = ray1.intersect(ray2)
         assert point.y == 10
         assert point.x == 5
-        assert point.isclose(Vector(5.0, 10.0), abs_tol=1e-4)
+        assert point.isclose(Vec3(5.0, 10.0), abs_tol=1e-4)
 
     def test_ray2d_parallel_vertical(self):
         ray1 = ConstructionRay((10, 1), (10, -7))
@@ -91,19 +89,19 @@ class TestConstructionRay:
         ray = ConstructionRay((10, 1), (10, -7))  # vertical line
         ortho = ray.orthogonal((3, 3))
         point = ray.intersect(ortho)
-        assert point.isclose(Vector(10, 3))
+        assert point.isclose(Vec3(10, 3))
 
     def test_ray2d_normal(self):
         ray = ConstructionRay((-10, 3), (17, -7))
         ortho = ray.orthogonal((3, 3))
         point = ray.intersect(ortho)
-        assert point.isclose(Vector(1.4318, -1.234), abs_tol=1e-4)
+        assert point.isclose(Vec3(1.4318, -1.234), abs_tol=1e-4)
 
     def test_ray2d_normal_horizontal(self):
         ray = ConstructionRay((10, 10), (20, 10))  # horizontal line
         ortho = ray.orthogonal((3, 3))
         point = ray.intersect(ortho)
-        assert point.isclose(Vector(3, 10))
+        assert point.isclose(Vec3(3, 10))
 
     def test_ray2d_angle(self):
         ray = ConstructionRay((10, 10), angle=HALF_PI)

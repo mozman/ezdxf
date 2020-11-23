@@ -76,8 +76,44 @@ def read(stream: BinaryIO,
         UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
-    from ezdxf.document import Drawing
     recover_tool = Recover.run(stream, errors=errors)
+    return _load_and_audit_document(recover_tool)
+
+
+def explore(filename: str,
+            errors: str = 'ignore') -> Tuple['Drawing', 'Auditor']:
+    """ Read a DXF document from file system similar to :func:`readfile`,
+    but this function will use a special tag loader, which synchronise the tag
+    stream if invalid tags occur. This function is intended to load corrupted
+    DXF files and should only be used to explore such files, data loss is very
+    likely.
+
+    Args:
+        filename: file-system name of the DXF document to load
+        errors: specify decoding error handler
+
+            - "surrogateescape" to preserve possible binary data (default)
+            - "ignore" to use the replacement char U+FFFD "\ufffd" for invalid data
+            - "strict" to raise an :class:`UnicodeDecodeError` exception for invalid data
+
+    Raises:
+        DXFStructureError: for invalid or corrupted DXF structures
+        UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
+
+    .. versionadded: 0.15
+
+    """
+    with open(filename, mode='rb') as fp:
+        recover_tool = Recover.run(fp, errors=errors,
+                                   loader=synced_bytes_loader)
+        doc, auditor = _load_and_audit_document(recover_tool)
+    doc.filename = filename
+    return doc, auditor
+
+
+def _load_and_audit_document(recover_tool) -> Tuple['Drawing', 'Auditor']:
+    from ezdxf.document import Drawing
+
     doc = Drawing()
     doc._load_section_dict(recover_tool.section_dict)
 
@@ -337,7 +373,7 @@ def safe_tag_loader(stream: BinaryIO,
 
     # Apply repair filter:
     tags = repair.tag_reorder_layer(tags)
-    tags = repair.filter_invalid_yz_point_codes(tags)
+    tags = repair.filter_invalid_point_codes(tags)
     return byte_tag_compiler(tags, encoding, messages=messages, errors=errors)
 
 

@@ -1,11 +1,10 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
 from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, cast, List, Union
 import array
 import copy
 from contextlib import contextmanager
-from ezdxf.math import Vector, Matrix44, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -15,7 +14,8 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.packedtags import VertexArray
-from ezdxf.explode import virtual_lwpolyline_entities, explode_entity
+from ezdxf.render.polyline import virtual_lwpolyline_entities
+from ezdxf.explode import explode_entity
 from ezdxf.query import EntityQuery
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -93,8 +93,10 @@ class LWPolyline(DXFGraphic):
                 dxf, acdb_lwpolyline)
             tags = self.load_vertices(tags)
             if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_lwpolyline.name)
+                tags = processor.recover_graphic_attributes(tags, dxf)
+                if len(tags):
+                    processor.log_unprocessed_tags(
+                        tags, subclass=acdb_lwpolyline.name)
         return dxf
 
     def load_vertices(self, tags: 'Tags') -> Tags:
@@ -118,17 +120,27 @@ class LWPolyline(DXFGraphic):
 
     @property
     def closed(self) -> bool:
-        """ ``True`` if polyline is closed. A closed polyline has a connection
-        from the last vertex to the first vertex. (read/write)
+        """ Get/set closed state of polyline.
+        A closed polyline has a connection from the last vertex to the first
+        vertex.
         """
-        return self.get_flag_state(LWPOLYLINE_CLOSED, name='flags')
+        return self.get_flag_state(LWPOLYLINE_CLOSED)
 
     @closed.setter
     def closed(self, status: bool) -> None:
-        self.set_flag_state(LWPOLYLINE_CLOSED, status, name='flags')
+        self.set_flag_state(LWPOLYLINE_CLOSED, status)
+
+    @property
+    def is_closed(self) -> bool:
+        """ Returns ``True`` if LWPOLYLINE is closed.
+        Compatibility interface to :class:`Polyline`
+        """
+        return self.get_flag_state(LWPOLYLINE_CLOSED)
 
     def close(self, state: bool = True) -> None:
-        """ Compatibility interface to :class:`Polyline`. """
+        """ Get/set closed state of LWPOLYLINE.
+        Compatibility interface to :class:`Polyline`
+        """
         self.closed = state
 
     @property
@@ -200,7 +212,7 @@ class LWPolyline(DXFGraphic):
             yield point[0], point[1]
 
     def vertices_in_wcs(self) -> Iterable['Vertex']:
-        """ Returns iterable of all polyline points as Vector(x, y, z) in :ref:`WCS`.
+        """ Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`WCS`.
         """
         ocs = self.ocs()
         elevation = self.get_dxf_attrib('elevation', default=0.)
@@ -208,11 +220,11 @@ class LWPolyline(DXFGraphic):
             yield ocs.to_wcs((x, y, elevation))
 
     def vertices_in_ocs(self) -> Iterable['Vertex']:
-        """ Returns iterable of all polyline points as Vector(x, y, z) in :ref:`OCS`.
+        """ Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`OCS`.
         """
         elevation = self.get_dxf_attrib('elevation', default=0.)
         for x, y in self.vertices():
-            yield Vector(x, y, elevation)
+            yield Vec3(x, y, elevation)
 
     def append(self, point: Sequence[float],
                format: str = DEFAULT_FORMAT) -> None:
@@ -348,8 +360,7 @@ class LWPolyline(DXFGraphic):
         return virtual_lwpolyline_entities(self)
 
     def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
-        """
-        Explode parts of LWPOLYLINE as LINE or ARC entities into target layout,
+        """ Explode parts of LWPOLYLINE as LINE or ARC entities into target layout,
         if target layout is ``None``, the target layout is the layout of the
         LWPOLYLINE.
 
@@ -357,7 +368,7 @@ class LWPolyline(DXFGraphic):
 
         Args:
             target_layout: target layout for DXF parts, ``None`` for same layout
-            as source entity.
+                as source entity.
 
         """
         return explode_entity(self, target_layout)

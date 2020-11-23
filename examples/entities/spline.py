@@ -5,7 +5,7 @@
 from typing import cast
 import ezdxf
 from ezdxf.math.bspline import global_bspline_interpolation
-from ezdxf.math import BSpline, Vector
+from ezdxf.math import BSpline, Vec3
 from ezdxf.entities import Spline
 
 new = ezdxf.new
@@ -119,7 +119,7 @@ def spline_insert_knot():
         msp.add_polyline2d(control_points, dxfattribs={'color': color, 'linetype': 'DASHED'})
         msp.add_open_spline(control_points, degree=3, knots=knots, dxfattribs={'color': color})
 
-    control_points = Vector.list([(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50), (80, 70)])
+    control_points = Vec3.list([(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50), (80, 70)])
     add_spline(control_points, color=3, knots=None)
 
     bspline = BSpline(control_points, order=4)

@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
 from typing import TYPE_CHECKING, Optional
 import copy
 from ezdxf.lldxf import validator
@@ -12,7 +11,7 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010
 from ezdxf.lldxf import const
 from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import acdb_entity
+from .dxfgfx import acdb_entity, elevation_to_z_axis
 from .text import Text, acdb_text
 from .factory import register_entity
 
@@ -213,19 +212,18 @@ class AttDef(BaseAttrib):
     # Don't add acdb_attdef_xrecord here:
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_text, acdb_attdef)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super(Text, self).load_dxf_attribs(processor)
-        # do not call Text loader
+        # Do not call Text loader.
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_text.name)
-
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_attdef)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_attdef.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_text)
+            processor.load_and_recover_dxfattribs(dxf, acdb_attdef)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, ('insert', 'align_point'))
+
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -253,19 +251,17 @@ class Attrib(BaseAttrib):
     # Don't add acdb_attdef_xrecord here:
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_text, acdb_attrib)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super(Text, self).load_dxf_attribs(processor)
-        # Do not call Text loader!
+        # Do not call Text loader.
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_text.name)
-
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_attrib)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_attrib.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_text)
+            processor.load_and_recover_dxfattribs(dxf, acdb_attrib)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, ('insert', 'align_point'))
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

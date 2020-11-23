@@ -1,13 +1,12 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# created 2019-03-06
 import pytest
 import math
 
 import ezdxf
 from ezdxf.entities.spline import Spline
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Vector, Matrix44, required_knot_values
+from ezdxf.math import Vec3, Matrix44, required_knot_values
 
 SPLINE = """0
 SPLINE
@@ -123,16 +122,61 @@ def weights():
     return [1, 2, 3, 4]
 
 
-def test_start_tangent(spline):
+@pytest.mark.parametrize('name', ['start', 'end'])
+def test_set_tangent(spline, name):
     spline = spline
-    spline.dxf.start_tangent = (1, 2, 3)
-    assert (1, 2, 3) == spline.dxf.start_tangent
+    name += '_tangent'
+    spline.dxf.set(name, (1, 2, 3))
+    assert (1, 2, 3) == spline.dxf.get(name)
 
 
-def test_end_tangent(spline):
-    spline = spline
-    spline.dxf.end_tangent = (4, 5, 6)
-    assert (4, 5, 6) == spline.dxf.end_tangent
+@pytest.mark.parametrize('name', ['start', 'end'])
+def test_users_cant_set_invalid_tangents(spline, name):
+    with pytest.raises(ValueError):
+        spline.dxf.set(name + '_tangent', (0, 0, 0))
+
+
+SPLINE_INVALID_TANGENT = """0
+SPLINE
+5
+0
+330
+0
+100
+AcDbEntity
+8
+0
+100
+AcDbSpline
+70
+0
+71
+3
+72
+0
+73
+0
+74
+0
+12
+0
+22
+0
+32
+0
+13
+0
+23
+0
+33
+0
+"""
+
+
+def test_ignore_invalid_tangent_values_at_loading_stage():
+    spline = Spline.from_text(SPLINE_INVALID_TANGENT)
+    assert spline.dxf.hasattr('start_tangent') is False
+    assert spline.dxf.hasattr('end_tangent') is False
 
 
 def test_knot_values(spline):
@@ -167,7 +211,8 @@ def test_set_open_uniform(spline, points):
     assert spline.dxf.degree == 3
     assert list(spline.control_points) == points
     assert spline.dxf.n_control_points == len(points)
-    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.dxf.n_knots == len(
+        points) + spline.dxf.degree + 1  # n + p + 2
     assert spline.closed is False
 
 
@@ -176,7 +221,8 @@ def test_set_uniform(spline, points):
     assert spline.dxf.degree == 3
     assert list(spline.control_points) == points
     assert spline.dxf.n_control_points == len(points)
-    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.dxf.n_knots == len(
+        points) + spline.dxf.degree + 1  # n + p + 2
     assert spline.closed is False
 
 
@@ -186,7 +232,8 @@ def test_set_closed(spline, points):
     spline.set_closed(points, degree=degree)
     assert spline.dxf.degree == degree
     assert spline.dxf.n_control_points == len(points) + degree
-    assert spline.dxf.n_knots == len(spline.control_points) + degree + 1  # n + p + 2
+    assert spline.dxf.n_knots == len(
+        spline.control_points) + degree + 1  # n + p + 2
     assert spline.closed is True
 
 
@@ -197,7 +244,8 @@ def test_set_open_rational(spline, points, weights):
     assert list(spline.weights) == weights
     assert spline.dxf.n_control_points == len(points)
     assert len(spline.weights) == len(points)
-    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.dxf.n_knots == len(
+        points) + spline.dxf.degree + 1  # n + p + 2
     assert spline.closed is False
 
 
@@ -208,7 +256,8 @@ def test_set_uniform_rational(spline, points, weights):
     assert list(spline.weights) == weights
     assert spline.dxf.n_control_points == len(points)
     assert len(spline.weights) == len(points)
-    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.dxf.n_knots == len(
+        points) + spline.dxf.degree + 1  # n + p + 2
     assert spline.closed is False
 
 
@@ -219,7 +268,8 @@ def test_set_closed_rational(spline, points, weights):
     assert spline.dxf.degree == 3
     assert spline.dxf.n_control_points == len(points) + degree
     assert len(spline.weights) == len(points) + degree
-    assert spline.dxf.n_knots == len(spline.control_points) + degree + 1  # n + p + 2
+    assert spline.dxf.n_knots == len(
+        spline.control_points) + degree + 1  # n + p + 2
     assert spline.closed is True
 
 
@@ -234,7 +284,8 @@ def test_open_spline(msp, points):
     assert spline.dxf.degree == 3
     assert list(spline.control_points) == points
     assert spline.dxf.n_control_points == len(points)
-    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.dxf.n_knots == len(
+        points) + spline.dxf.degree + 1  # n + p + 2
     assert spline.closed is False
 
 
@@ -255,7 +306,8 @@ def test_open_rational_spline(msp, points, weights):
     assert list(spline.weights) == weights
     assert spline.dxf.n_control_points == len(points)
     assert len(spline.weights) == len(points)
-    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.dxf.n_knots == len(
+        points) + spline.dxf.degree + 1  # n + p + 2
     assert spline.closed is False
 
 
@@ -274,9 +326,9 @@ def test_closed_rational_spline(msp, points, weights):
 def test_spline_transform_interface():
     spline = Spline()
     spline.set_uniform([(1, 0, 0), (3, 3, 0), (6, 0, 1)])
-    spline.dxf.start_tangent = Vector(1, 0, 0)
-    spline.dxf.end_tangent = Vector(2, 0, 0)
-    spline.dxf.extrusion = Vector(3, 0, 0)
+    spline.dxf.start_tangent = Vec3(1, 0, 0)
+    spline.dxf.end_tangent = Vec3(2, 0, 0)
+    spline.dxf.extrusion = Vec3(3, 0, 0)
     spline.transform(Matrix44.translate(1, 2, 3))
     assert spline.control_points[0] == (2, 2, 3)
     # direction vectors are not transformed by translation
@@ -299,7 +351,8 @@ def test_from_circle():
     assert len(spline.control_points) > 2
     assert len(spline.weights) > 2
     assert len(spline.fit_points) == 0
-    assert len(spline.knots) == required_knot_values(len(spline.control_points), spline.dxf.degree + 1)
+    assert len(spline.knots) == required_knot_values(len(spline.control_points),
+                                                     spline.dxf.degree + 1)
 
 
 def test_from_arc():
@@ -316,7 +369,8 @@ def test_from_arc():
     assert len(spline.control_points) > 2
     assert len(spline.weights) > 2
     assert len(spline.fit_points) == 0
-    assert len(spline.knots) == required_knot_values(len(spline.control_points), spline.dxf.degree + 1)
+    assert len(spline.knots) == required_knot_values(len(spline.control_points),
+                                                     spline.dxf.degree + 1)
 
 
 def test_from_ellipse():
@@ -334,7 +388,8 @@ def test_from_ellipse():
     assert len(spline.control_points) > 2
     assert len(spline.weights) > 2
     assert len(spline.fit_points) == 0
-    assert len(spline.knots) == required_knot_values(len(spline.control_points), spline.dxf.degree + 1)
+    assert len(spline.knots) == required_knot_values(len(spline.control_points),
+                                                     spline.dxf.degree + 1)
 
 
 def test_from_line_with_type_error():

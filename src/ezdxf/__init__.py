@@ -13,8 +13,9 @@ EZDXF_TEST_FILES = os.getenv('EZDXF_TEST_FILES', '')
 
 # name space imports - do not remove
 from ezdxf.options import options
-from ezdxf.tools import transparency2float, float2transparency
-from ezdxf.tools.rgb import int2rgb, rgb2int
+from ezdxf.colors import (
+    int2rgb, rgb2int, transparency2float, float2transparency
+)
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file, is_dxf_stream
 from ezdxf.filemanagement import readzip, new, read, readfile, decode_base64
@@ -27,7 +28,8 @@ from ezdxf.render.arrows import ARROWS
 from ezdxf.lldxf.const import (
     DXFError, DXFStructureError, DXFVersionError, DXFTableEntryError,
     DXFAppDataError, DXFXDataError, DXFAttributeError, DXFValueError,
-    DXFKeyError, DXFIndexError, DXFTypeError, DXFBlockInUseError, InsertUnits,
+    DXFKeyError, DXFIndexError, DXFTypeError, DXFBlockInUseError,
+    InvalidGeoDataException, InsertUnits,
     ACI, DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018,
 )
 # name space imports - do not remove

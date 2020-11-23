@@ -1,9 +1,10 @@
-# (c) 2018-2020, Manfred Moitzi
+# Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 
+import pytest
 import ezdxf
 import math
-from ezdxf.math import ConstructionArc, Vector, UCS, Vec2
+from ezdxf.math import ConstructionArc, Vec3, UCS, Vec2
 from ezdxf.math import arc_segment_count
 from math import isclose
 
@@ -62,7 +63,7 @@ def test_arc_from_2p_radius():
 
     arc = ConstructionArc.from_2p_radius(start_point=p2, end_point=p1,
                                          radius=radius)
-    assert arc.center == Vector(2, 3)
+    assert arc.center == Vec3(2, 3)
     assert isclose(arc.radius, radius)
     assert isclose(arc.start_angle, 180)
     assert isclose(arc.end_angle, -90)
@@ -88,16 +89,16 @@ def test_arc_from_3p():
 
 
 def test_spatial_arc_from_3p():
-    start_point_wcs = Vector(0, 1, 0)
-    end_point_wcs = Vector(1, 0, 0)
-    def_point_wcs = Vector(0, 0, 1)
+    start_point_wcs = Vec3(0, 1, 0)
+    end_point_wcs = Vec3(1, 0, 0)
+    def_point_wcs = Vec3(0, 0, 1)
 
     ucs = UCS.from_x_axis_and_point_in_xy(origin=def_point_wcs,
                                           axis=end_point_wcs - def_point_wcs,
                                           point=start_point_wcs)
     start_point_ucs = ucs.from_wcs(start_point_wcs)
     end_point_ucs = ucs.from_wcs(end_point_wcs)
-    def_point_ucs = Vector(0, 0)
+    def_point_ucs = Vec3(0, 0)
 
     arc = ConstructionArc.from_3p(start_point_ucs, end_point_ucs, def_point_ucs)
     dwg = ezdxf.new('R12')
@@ -184,3 +185,18 @@ def test_arc_segment_count():
     l2 = math.sin(alpha / 2) * radius
     sagitta = radius - math.sqrt(radius ** 2 - l2 ** 2)
     assert max_sagitta / 2 < sagitta < max_sagitta
+
+
+@pytest.mark.parametrize('r, s, e, sagitta, count', [
+    (1, 0, 180, 0.35, 3),
+    (1, 0, 180, 0.10, 5),
+    (0, 0, 360, 0.10, 0),  # radius 0 works but yields nothing
+    (-1, 0, 180, 0.35, 3),  # negative radius same as positive radius
+    (1, 270, 90, 0.10, 5),  # start angle > end angle
+    (1, 90, -90, 0.10, 5),
+    (1, 0, 0, 0.10, 0),  # angle span 0 works but yields nothing
+    (1, -45, -45, 0.10, 0),
+])
+def test_flattening(r, s, e, sagitta, count):
+    arc = ConstructionArc((0, 0), r, s, e)
+    assert len(list(arc.flattening(sagitta))) == count

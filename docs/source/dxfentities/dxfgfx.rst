@@ -74,7 +74,7 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
 
     .. automethod:: rotate_z(angle: float) -> DXFGraphic
 
-    .. automethod:: rotate_axis(axis: Vector, angle: float) -> DXFGraphic
+    .. automethod:: rotate_axis(axis: Vec3, angle: float) -> DXFGraphic
 
 .. _Common graphical DXF attributes:
 

@@ -2,7 +2,7 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
-from ezdxf.math import Vector, Vec2
+from ezdxf.math import Vec3, Vec2
 from ezdxf.math import UCS
 from ezdxf.tools import normalize_text_angle
 from ezdxf.render.arrows import ARROWS, connection_point
@@ -346,7 +346,7 @@ class RadiusDimension(BaseDimensionRenderer):
         attribs = {
             'color': self.text_color,
         }
-        self.add_text(dim_text, pos=Vector(pos), rotation=rotation, dxfattribs=attribs)
+        self.add_text(dim_text, pos=Vec3(pos), rotation=rotation, dxfattribs=attribs)
 
     def transform_ucs_to_wcs(self) -> None:
         """

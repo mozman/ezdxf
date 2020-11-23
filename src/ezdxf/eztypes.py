@@ -13,15 +13,15 @@ from typing import *
 if TYPE_CHECKING:
     # Low level stuff
     from ezdxf.math import (
-        Vector, Vec2, Vertex, VecXY, Matrix44, BoundingBox, BoundingBox2d ,UCS,
-        OCS
+        Vec3, Vec2, Vertex, VecXY, Matrix44, BoundingBox, BoundingBox2d ,UCS,
+        OCS, Vector
     )
     from ezdxf.tools.handle import HandleGenerator
     from ezdxf.lldxf.types import DXFTag, DXFBinaryTag, DXFVertex
     from ezdxf.lldxf.attributes import XType, DXFAttr
     from ezdxf.lldxf.tags import Tags
     from ezdxf.lldxf.extendedtags import ExtendedTags
-    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter as TagWriter
     from ezdxf.tools.complex_ltype import ComplexLineTypePart
     from ezdxf.query import EntityQuery
     from ezdxf.entities.xdict import ExtensionDict
@@ -120,13 +120,13 @@ if TYPE_CHECKING:
     from ezdxf.entities.light import Light
     from ezdxf.entities.leader import Leader
     from ezdxf.render.dim_base import BaseDimensionRenderer
-
+    from ezdxf.entities.mline import MLineVertex, MLine, MLineStyle
     # other
     from ezdxf.audit import Auditor
     from ezdxf.lldxf.validator import DXFInfo
 
     # Type compositions
-    TagValue = Union[str, bytes, int, float, Sequence[float], Vector]
+    TagValue = Union[str, bytes, int, float, Sequence[float], Vec3]
     RGB = Tuple[int, int, int]
     IterableTags = Iterable[Tuple[int, TagValue]]
     SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]

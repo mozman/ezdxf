@@ -26,3 +26,4 @@ Tutorials
    linear_dimension
    radius_dimension
    diameter_dimension
+   geo

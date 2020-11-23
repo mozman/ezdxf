@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.math import UCS, Vector
+from ezdxf.math import UCS, Vec3
 from pathlib import Path
 
 OUT_DIR = Path('~/Desktop/Outbox').expanduser()
@@ -15,7 +15,7 @@ doc.styles.new('TXT', dxfattribs={'font': 'romans.shx'})
 ucs = UCS(origin=(0, 2, 2), ux=(1, 0, 0), uz=(0, 1, 1))
 # calculation of text direction as angle in OCS:
 # convert text rotation in degree into a vector in UCS
-text_direction = Vector.from_deg_angle(-45)
+text_direction = Vec3.from_deg_angle(-45)
 # transform vector into OCS and get angle of vector in xy-plane
 rotation = ucs.to_ocs(text_direction).angle_deg
 

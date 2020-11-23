@@ -1,4 +1,3 @@
-# Created: 30.04.2014
 # Copyright (c) 2014-2020, Manfred Moitzi
 # License: MIT License
 """
@@ -20,7 +19,7 @@ from array import array
 from itertools import chain
 from binascii import unhexlify
 import reprlib
-from ezdxf.math.vector import Vector
+from ezdxf.math.vector import Vec3
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
@@ -214,17 +213,17 @@ class DXFVertex(DXFTag):
     def value(self) -> Tuple:
         return tuple(self._value)
 
-    def dxftags(self) -> Iterable[Tuple]:
+    def dxftags(self) -> Iterable[DXFTag]:
         """ Returns all vertex components as single :class:`DXFTag` objects. """
         c = self.code
         return (
-            (code, value) for code, value in
+            DXFTag(code, value) for code, value in
             zip((c, c + 10, c + 20), self.value)
         )
 
     def dxfstr(self) -> str:
         """ Returns the DXF string for all vertex components. """
-        return ''.join(TAG_STRING_FORMAT % tag for tag in self.dxftags())
+        return ''.join(tag.dxfstr() for tag in self.dxftags())
 
 
 class DXFBinaryTag(DXFTag):
@@ -335,7 +334,7 @@ def get_xcode_for(code) -> int:
 def cast_value(code: int, value):
     if value is not None:
         if code in POINT_CODES:
-            return Vector(value)
+            return Vec3(value)
         return TYPE_TABLE.get(code, str)(value)
     else:
         return None

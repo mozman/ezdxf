@@ -76,6 +76,12 @@ def test_transform_interface():
     assert new.control_points[0] == curve.control_points[0] + (1, 2, 3)
 
 
+def test_flattening():
+    curve = Bezier([(0, 0), (1, 1), (2, -1), (3, 0)])
+    assert len(list(curve.flattening(1.0, segments=4))) == 5
+    assert len(list(curve.flattening(0.1, segments=4))) == 7
+
+
 POINTS2D = [
     (0.000, 0.000),
     (0.928, 0.280),

@@ -1,25 +1,26 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
+import math
 
 from ezdxf.lldxf import validator
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import (
+    Vec3, Matrix44, NULLVEC, Z_AXIS, arc_segment_count, linspace,
+)
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
+from .dxfgfx import (
+    DXFGraphic, acdb_entity, add_entity, replace_entity,
+    elevation_to_z_axis,
+)
 from .factory import register_entity
-from ezdxf.audit import AuditError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, Ellipse, Spline, Auditor,
-        BaseLayout,
-    )
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Ellipse, Spline
 
 __all__ = ['Circle']
 
@@ -27,6 +28,12 @@ acdb_circle = DefSubclass('AcDbCircle', {
     'center': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
     # AutCAD/BricsCAD: Radius is <= 0 is valid
     'radius': DXFAttr(40, default=1),
+
+    # Elevation is a legacy feature from R11 and prior, do not use this
+    # attribute, store the entity elevation in the z-axis of the vertices.
+    # ezdxf does not export the elevation attribute!
+    'elevation': DXFAttr(38, default=0, optional=True),
+
     'thickness': DXFAttr(39, default=0, optional=True),
     'extrusion': DXFAttr(
         210, xtype=XType.point3d, default=Z_AXIS,
@@ -42,42 +49,53 @@ class Circle(DXFGraphic):
     DXFTYPE = 'CIRCLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_circle)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_circle)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_circle.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_circle)
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, ('center', ))
+
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_circle.name)
-        # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['center', 'radius', 'thickness',
-                                                'extrusion'])
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'center', 'radius', 'thickness', 'extrusion'
+        ])
 
-    def vertices(self, angles: Iterable[float]) -> Iterable[Vector]:
-        """
-        Yields vertices of the circle for iterable `angles` in WCS. This method
-        takes into account a local OCS.
+    def vertices(self, angles: Iterable[float]) -> Iterable[Vec3]:
+        """ Yields vertices of the circle for iterable `angles` in WCS.
 
         Args:
             angles: iterable of angles in OCS as degrees, angle goes counter
                 clockwise around the extrusion vector, ocs x-axis = 0 deg.
 
-        .. versionadded:: 0.11
-
         """
         ocs = self.ocs()
         for angle in angles:
-            v = Vector.from_deg_angle(angle, self.dxf.radius) + self.dxf.center
+            v = Vec3.from_deg_angle(angle, self.dxf.radius) + self.dxf.center
             yield ocs.to_wcs(v)
+
+    def flattening(self, sagitta: float) -> Iterable[Vec3]:
+        """ Approximate the circle by vertices in WCS, argument `segment` is the
+        max. distance from the center of an arc segment to the center of its
+        chord. Returns a closed polygon: start vertex == end vertex!
+
+        Yields always :class:`~ezdxf.math.Vec3` objects.
+
+        .. versionadded:: 0.15
+
+        """
+        radius = abs(self.dxf.radius)
+        if radius > 0.0:
+            count = arc_segment_count(radius, math.tau, sagitta)
+            yield from self.vertices(linspace(0.0, 360.0, count + 1))
 
     def transform(self, m: Matrix44) -> 'Circle':
         """ Transform CIRCLE entity by transformation matrix `m` inplace.
@@ -118,7 +136,7 @@ class Circle(DXFGraphic):
         """
         ocs = self.ocs()
         self.dxf.center = ocs.from_wcs(
-            Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
+            Vec3(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
         return self
 
     def to_ellipse(self, replace=True) -> 'Ellipse':

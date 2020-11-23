@@ -6,7 +6,7 @@ from typing import Iterable, cast, Union, List
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import (
-    RenderContext, VIEWPORT_COLOR, Properties, set_color_alpha, Filling
+    RenderContext, VIEWPORT_COLOR, Properties, set_color_alpha, Filling,
 )
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.utils import get_tri_or_quad_points
@@ -16,13 +16,16 @@ from ezdxf.entities import (
 )
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
-from ezdxf.math import Vector, Z_AXIS
+from ezdxf.math import Vec3, Z_AXIS
 from ezdxf.render import MeshBuilder, TraceBuilder, Path
 from ezdxf import reorder
+from ezdxf.render import nesting
+from ezdxf.proxygraphic import ProxyGraphic
 
 __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
 INFINITE_LINE_LENGTH = 25
+DEFAULT_PDSIZE = 1
 
 COMPOSITE_ENTITY_TYPES = {
     # Unsupported types, represented as DXFTagStorage(), will sorted out in
@@ -30,9 +33,13 @@ COMPOSITE_ENTITY_TYPES = {
     'INSERT',
     # This types have a virtual_entities() method, which returns the content of
     # the associated anonymous block
-    'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'LEADER',
+    'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'LEADER', 'MLINE',
     'ACAD_TABLE',
 }
+
+IGNORE_PROXY_GRAPHICS = 0
+USE_PROXY_GRAPHICS = 1
+PREFER_PROXY_GRAPHICS = 2
 
 
 class Frontend:
@@ -45,13 +52,25 @@ class Frontend:
 
     """
 
-    def __init__(self, ctx: RenderContext, out: Backend):
+    def __init__(self, ctx: RenderContext, out: Backend,
+                 proxy_graphics: int = USE_PROXY_GRAPHICS):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
         self.ctx = ctx
 
         # DrawingBackend is the interface to the render engine
         self.out = out
+
+        # To get proxy graphics support proxy graphics have to be loaded:
+        # Set the global option ezdxf.options.load_proxy_graphics to True.
+        # How to handle proxy graphics:
+        # 0 = ignore proxy graphics
+        # 1 = use proxy graphics if no rendering support by ezdxf exist
+        # 2 = prefer proxy graphics over ezdxf rendering
+        self.proxy_graphics = proxy_graphics
+
+        # Transfer render context info to backend:
+        ctx.update_backend_configuration(out)
 
         # Parents entities of current entity/sub-entity
         self.parent_stack: List[DXFGraphic] = []
@@ -66,6 +85,9 @@ class Frontend:
         # Could be used for all curves CIRCLE, ARC, ELLIPSE and SPLINE
         # self.approximation_max_sagitta = 0.01  # for drawing unit = 1m, max
         # sagitta = 1cm
+
+        # set to None to disable nested polygon detection:
+        self.nested_polygon_detection = nesting.fast_bbox_detection
 
     def log_message(self, message: str):
         print(message)
@@ -124,10 +146,12 @@ class Frontend:
         """
         dxftype = entity.dxftype()
         self.out.enter_entity(entity, properties)
-        if dxftype in {'LINE', 'XLINE', 'RAY'}:
+        if entity.proxy_graphic and self.proxy_graphics == PREFER_PROXY_GRAPHICS:
+            self.draw_proxy_graphic(entity)
+        elif dxftype in {'LINE', 'XLINE', 'RAY'}:
             self.draw_line_entity(entity, properties)
         elif dxftype in {'TEXT', 'MTEXT', 'ATTRIB'}:
-            if is_spatial(Vector(entity.dxf.extrusion)):
+            if is_spatial(Vec3(entity.dxf.extrusion)):
                 self.draw_text_entity_3d(entity, properties)
             else:
                 self.draw_text_entity_2d(entity, properties)
@@ -151,6 +175,8 @@ class Frontend:
             self.draw_wipeout_entity(entity, properties)
         elif dxftype == 'VIEWPORT':
             self.draw_viewport_entity(entity)
+        elif entity.proxy_graphic and self.proxy_graphics == USE_PROXY_GRAPHICS:
+            self.draw_proxy_graphic(entity)
         else:
             self.skip_entity(entity, 'Unsupported entity')
         self.out.exit_entity(entity)
@@ -207,7 +233,34 @@ class Frontend:
 
     def draw_point_entity(self, entity: DXFGraphic,
                           properties: Properties) -> None:
-        self.out.draw_point(entity.dxf.location, properties)
+        point = cast('Point', entity)
+        pdmode = self.out.pdmode
+
+        # Defpoints are regular POINT entities located at the "defpoints" layer:
+        if properties.layer.lower() == 'defpoints':
+            if not self.out.show_defpoints:
+                return
+            else:  # Render defpoints as dimensionless points:
+                pdmode = 0
+
+        pdsize = self.out.pdsize
+        if pdsize <= 0:  # relative points size is not supported
+            pdsize = DEFAULT_PDSIZE
+
+        if pdmode == 0:
+            self.out.draw_point(entity.dxf.location, properties)
+        else:
+            for entity in point.virtual_entities(pdsize, pdmode):
+                if entity.dxftype() == 'LINE':
+                    start = Vec3(entity.dxf.start)
+                    end = entity.dxf.end
+                    if start.isclose(end):
+                        self.out.draw_point(start, properties)
+                    else:
+                        self.out.draw_line(start, end, properties)
+                    pass
+                else:  # CIRCLE
+                    self.draw_elliptic_arc_entity(entity, properties)
 
     def draw_solid_entity(self, entity: DXFGraphic,
                           properties: Properties) -> None:
@@ -229,20 +282,38 @@ class Frontend:
 
     def draw_hatch_entity(self, entity: DXFGraphic,
                           properties: Properties) -> None:
+        def to_path(p):
+            path = Path.from_hatch_boundary_path(p, ocs, elevation)
+            path.close()
+            return path
+
+        if not self.out.show_hatch:
+            return
+
         hatch = cast(Hatch, entity)
         ocs = hatch.ocs()
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z),
         # default (0, 0, 0)
         elevation = entity.dxf.elevation.z
-        for p in hatch.paths:
-            if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
-                # todo: implement support for inner paths
-                if p.PATH_TYPE == 'EdgePath':
-                    path = Path.from_hatch_edge_path(p, ocs, elevation)
+
+        external_paths = []
+        holes = []
+        paths = hatch.paths.rendering_paths(hatch.dxf.hatch_style)
+        if self.nested_polygon_detection:
+            polygons = self.nested_polygon_detection(map(to_path, paths))
+            external_paths, holes = nesting.winding_deconstruction(polygons)
+        else:
+            for p in paths:
+                if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
+                    external_paths.append(to_path(p))
                 else:
-                    path = Path.from_hatch_polyline_path(p, ocs, elevation)
-                path.close()
-                self.out.draw_path(path, properties)
+                    holes.append(to_path(p))
+
+        if external_paths:
+            self.out.draw_filled_paths(external_paths, holes, properties)
+        elif holes:
+            # First path is the exterior path, everything else is a hole
+            self.out.draw_filled_paths([holes[0]], holes[1:], properties)
 
     def draw_wipeout_entity(self, entity: DXFGraphic, properties: Properties):
         wipeout = cast(Wipeout, entity)
@@ -254,13 +325,13 @@ class Frontend:
     def draw_viewport_entity(self, entity: DXFGraphic) -> None:
         assert entity.dxftype() == 'VIEWPORT'
         dxf = entity.dxf
-        view_vector: Vector = dxf.view_direction_vector
+        view_vector: Vec3 = dxf.view_direction_vector
         mag = view_vector.magnitude
         if math.isclose(mag, 0.0):
             self.log_message('Warning: viewport with null view vector')
             return
         view_vector /= mag
-        if not math.isclose(view_vector.dot(Vector(0, 0, 1)), 1.0):
+        if not math.isclose(view_vector.dot(Vec3(0, 0, 1)), 1.0):
             self.log_message(
                 f'Cannot render viewport with non-perpendicular view direction:'
                 f' {dxf.view_direction_vector}'
@@ -279,7 +350,7 @@ class Frontend:
         props.color = VIEWPORT_COLOR
         # Set default SOLID filling for VIEWPORT
         props.filling = Filling()
-        self.out.draw_filled_polygon([Vector(x, y, 0) for x, y in points],
+        self.out.draw_filled_polygon([Vec3(x, y, 0) for x, y in points],
                                      props)
 
     def draw_mesh_entity(self, entity: DXFGraphic,
@@ -316,7 +387,7 @@ class Frontend:
                 if is_lwpolyline:  # stored as float
                     elevation = entity.dxf.elevation
                 else:  # stored as vector (0, 0, elevation)
-                    elevation = Vector(entity.dxf.elevation).z
+                    elevation = Vec3(entity.dxf.elevation).z
 
             trace = TraceBuilder.from_polyline(
                 entity, segments=self.circle_approximation_count // 2
@@ -324,10 +395,10 @@ class Frontend:
             for polygon in trace.polygons():  # polygon is a sequence of Vec2()
                 if transform:
                     points = ocs.points_to_wcs(
-                        Vector(v.x, v.y, elevation) for v in polygon
+                        Vec3(v.x, v.y, elevation) for v in polygon
                     )
                 else:
-                    points = Vector.generate(polygon)
+                    points = Vec3.generate(polygon)
                 # Set default SOLID filling for LWPOLYLINE
                 properties.filling = Filling()
                 self.out.draw_filled_polygon(points, properties)
@@ -363,14 +434,17 @@ class Frontend:
                 draw_insert(entity)
             self.ctx.pop_state()
 
-        # DIMENSION, ARC_DIMENSION, LARGE_RADIAL_DIMENSION, LEADER
-        # todo: ACAD_TABLE, MLINE, MLEADER
         elif hasattr(entity, 'virtual_entities'):
             # draw_entities() includes the visibility check:
             self.draw_entities(set_opaque(entity.virtual_entities()))
         else:
             raise TypeError(dxftype)
 
+    def draw_proxy_graphic(self, entity: DXFGraphic) -> None:
+        if entity.proxy_graphic:
+            gfx = ProxyGraphic(entity.proxy_graphic, entity.doc)
+            self.draw_entities(gfx.virtual_entities())
 
-def is_spatial(v: Vector) -> bool:
+
+def is_spatial(v: Vec3) -> bool:
     return not v.isclose(Z_AXIS) and not v.isclose(NEG_Z_AXIS)

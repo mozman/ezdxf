@@ -9,8 +9,9 @@ from ezdxf.lldxf.validator import (
     fix_one_line_text, is_not_zero, is_not_negative, is_one_of,
     is_in_float_range, fit_into_float_range, fix_integer_bool,
     fit_into_integer_range, is_valid_bitmask, fix_bitmask,
-    is_greater_or_equal_zero,
+    is_greater_or_equal_zero
 )
+from ezdxf.entities.layer import is_valid_layer_color_index, fix_layer_color
 
 
 def test_invalid_layer_name():
@@ -199,6 +200,18 @@ def test_fix_bitmask():
     assert fixer(3) == 3
     assert fixer(4) == 0
     assert fixer(5) == 1
+
+
+@pytest.mark.parametrize('aci', [255, -7, -1, 1, 7, 255])
+def test_is_valid_layer_color(aci):
+    assert is_valid_layer_color_index(aci) is True
+    assert fix_layer_color(aci) == aci
+
+
+@pytest.mark.parametrize('aci', [256, 0, 256])
+def test_is_not_valid_layer_color(aci):
+    assert is_valid_layer_color_index(aci) is False
+    assert fix_layer_color(aci) == 7
 
 
 if __name__ == '__main__':

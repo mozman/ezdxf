@@ -22,13 +22,13 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
         tagger: low level tagger
 
     """
+
     def value(v) -> str:
         if type(v) is bytes:
             return v.decode('ascii', errors='ignore')
         else:
             return v
 
-    logger.info('Reordering coordinate tags for LINE entity.')
     collector: Optional[List] = None
     for tag in tagger:
         if tag.code == 0:
@@ -54,37 +54,70 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 # invalid point codes if not part of a point started with 1010, 1011, 1012, 1013
 INVALID_Y_CODES = {code + 10 for code in POINT_CODES}
 INVALID_Z_CODES = {code + 20 for code in POINT_CODES}
+# A single group code 38 is an elevation tag (e.g. LWPOLYLINE)
+# Is (18, 28, 38?) is a valid point code?
+INVALID_Z_CODES.remove(38)
 INVALID_CODES = INVALID_Y_CODES | INVALID_Z_CODES
 X_CODES = POINT_CODES
 
 
-def filter_invalid_yz_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
-    """ Filter point group codes if out of order e.g. 10, 20, 30, 20!
+def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
+    """ Filter invalid and misplaced point group codes.
 
-    Input Raw tag filter
+    - removes x-axis without following y-axis
+    - removes y- and z-axis without leading x-axis
 
     Args:
         tagger: low level tagger
 
     """
-    logger.info('Filter "out of order" vertex codes.')
-    expected_code = 0
-    point = 0
 
+    def entity() -> str:
+        if handle_tag:
+            handle = handle_tag[1].decode(errors='ignore')
+            return f"in entity #{handle}"
+        else:
+            return ""
+
+    expected_code = -1
+    z_code = 0
+    point = []
+    handle_tag = None
     for tag in tagger:
         code = tag[0]
-        if point and code == expected_code:
+        if code == 5:  # ignore DIMSTYLE entity
+            handle_tag = tag
+        if point and code != expected_code:
+            # at least x, y axis is required else ignore point
+            if len(point) > 1:
+                yield from point
+            else:
+                logger.info(
+                    f'remove misplaced x-axis tag: {str(point[0])}' + entity())
+            point.clear()
+
+        if code in X_CODES:
+            expected_code = code + 10
+            z_code = code + 20
+            point.append(tag)
+        elif code == expected_code:
+            point.append(tag)
             expected_code += 10
-            if expected_code - point > 20:
-                point = 0
+            if expected_code > z_code:
+                expected_code = -1
         else:
-            point = 0
-            if code in INVALID_CODES:
-                continue
-            if code in X_CODES:
-                point = code
-                expected_code = point + 10
-        yield tag
+            # ignore point group codes without leading x-axis
+            if code not in INVALID_CODES:
+                yield tag
+            else:
+                axis = 'y-axis' if code in INVALID_Y_CODES else 'z-axis'
+                logger.info(
+                    f'remove misplaced {axis} tag: {str(tag)}' + entity())
+
+    if len(point) == 1:
+        logger.info(f'remove misplaced x-axis tag: {str(point[0])}' + entity())
+    elif len(point) > 1:
+        yield from point
 
 
 def fix_coordinate_order(tags: 'Tags', codes: Sequence[int] = (10, 11)):

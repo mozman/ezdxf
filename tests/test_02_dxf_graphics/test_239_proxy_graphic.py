@@ -69,31 +69,30 @@ class TestProxyGraphic:
         assert text.dxf.layer == '0'  # no DXF document available
         assert text.dxf.color == 256  # by layer
         assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
-        assert text.rgb == (0, 0, 192)  # ???
+        assert text.dxf.true_color is None
 
-        polyline = entities[1]  # POLYGON
-        assert polyline.dxftype() == 'POLYLINE'
-        assert len(polyline.vertices) == 3
-        assert text.dxf.layer == '0'  # no DXF document available
-        assert text.dxf.color == 256  # by layer
-        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
-        assert polyline.is_closed is True
+        hatch = entities[1]  # POLYGON
+        assert hatch.dxftype() == 'HATCH'
+        assert len(hatch.paths[0].vertices) == 3
+        assert hatch.dxf.layer == '0'  # no DXF document available
+        assert hatch.dxf.color == 256  # by layer
+        assert hatch.dxf.linetype == 'BYLAYER'  # no DXF document available
 
         polyline = entities[2]
         assert polyline.is_closed is False
         assert polyline.dxftype() == 'POLYLINE'
         assert len(polyline.vertices) == 2
-        assert text.dxf.layer == '0'  # no DXF document available
-        assert text.dxf.color == 256  # by layer
-        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
+        assert polyline.dxf.layer == '0'  # no DXF document available
+        assert polyline.dxf.color == 256  # by layer
+        assert polyline.dxf.linetype == 'BYLAYER'  # no DXF document available
 
         polyline = entities[3]
         assert polyline.is_closed is False
         assert polyline.dxftype() == 'POLYLINE'
         assert len(polyline.vertices) == 2
-        assert text.dxf.layer == '0'  # no DXF document available
-        assert text.dxf.color == 256  # by layer
-        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
+        assert polyline.dxf.layer == '0'  # no DXF document available
+        assert polyline.dxf.color == 256  # by layer
+        assert polyline.dxf.linetype == 'BYLAYER'  # no DXF document available
 
     def test_image_entities(self):
         # UNICODE_TEXT2; size: 204

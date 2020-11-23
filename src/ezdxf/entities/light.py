@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
-# Created: 2019-03-11
 from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007
@@ -97,7 +96,7 @@ class Light(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_light)
+            processor.load_and_recover_dxfattribs(dxf, acdb_light)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

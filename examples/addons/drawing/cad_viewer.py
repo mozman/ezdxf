@@ -7,15 +7,16 @@ import math
 import os
 import signal
 import sys
+import time
 from functools import partial
-from typing import Iterable, Tuple, List
+from typing import Iterable, Tuple, List, Dict
 
 from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
 from ezdxf import recover
 from ezdxf.addons import odafc
-from ezdxf.addons.drawing import Frontend, RenderContext
+from ezdxf.addons.drawing import Frontend, RenderContext, fonts
 from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFParentStack
@@ -24,9 +25,22 @@ from ezdxf.audit import Auditor
 from ezdxf.entities import DXFGraphic
 from ezdxf.lldxf.const import DXFStructureError
 
+# Load and draw proxy graphic:
+ezdxf.options.load_proxy_graphics = True
+
+# Setup fonts - this is not done automatically, because this may take a long
+# time and is not important for every user.
+# Load default font definitions, included in ezdxf:
+fonts.load()
+
+# Add font definitions available at the running system, requires matplotlib:
+fonts.add_system_fonts()
+
 
 class CADGraphicsView(qw.QGraphicsView):
-    def __init__(self, *, view_buffer: float = 0.2, zoom_per_scroll_notch: float = 0.2, loading_overlay: bool = True):
+    def __init__(self, *, view_buffer: float = 0.2,
+                 zoom_per_scroll_notch: float = 0.2,
+                 loading_overlay: bool = True):
         super().__init__()
         self._zoom = 1
         self._default_zoom = 1
@@ -140,12 +154,14 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
 
 
 class CadViewer(qw.QMainWindow):
-    def __init__(self):
+    def __init__(self, params: Dict):
         super().__init__()
         self.doc = None
+        self._render_params = params
         self._render_context = None
         self._visible_layers = None
         self._current_layout = None
+        self._reset_backend()
 
         self.view = CADGraphicsViewWithOverlay()
         self.view.setScene(qw.QGraphicsScene())
@@ -191,9 +207,16 @@ class CadViewer(qw.QMainWindow):
         self.resize(1600, 900)
         self.show()
 
+    def _reset_backend(self):
+        # clear caches
+        self._backend = PyQtBackend(use_text_cache=True,
+                                    params=self._render_params)
+
     def _select_doc(self):
-        path, _ = qw.QFileDialog.getOpenFileName(self, caption='Select CAD Document',
-                                                 filter='DXF Documents(*.dxf);;DWG Documents(*.dwg)')
+        path, _ = qw.QFileDialog.getOpenFileName(
+            self, caption='Select CAD Document',
+            filter='CAD Documents (*.dxf *.DXF *.dwg *.DWG)'
+        )
         if path:
             try:
                 if os.path.splitext(path)[1].lower() == '.dwg':
@@ -210,7 +233,8 @@ class CadViewer(qw.QMainWindow):
             except IOError as e:
                 qw.QMessageBox.critical(self, 'Loading Error', str(e))
             except DXFStructureError as e:
-                qw.QMessageBox.critical(self, 'DXF Structure Error', f'Invalid DXF file "{path}": {str(e)}')
+                qw.QMessageBox.critical(self, 'DXF Structure Error',
+                                        f'Invalid DXF file "{path}": {str(e)}')
 
     def set_document(self, document: Drawing, auditor: Auditor):
         error_count = len(auditor.errors)
@@ -224,6 +248,7 @@ class CadViewer(qw.QMainWindow):
                 return
         self.doc = document
         self._render_context = RenderContext(document)
+        self._reset_backend()  # clear caches
         self._visible_layers = None
         self._current_layout = None
         self._populate_layouts()
@@ -258,15 +283,20 @@ class CadViewer(qw.QMainWindow):
         self._current_layout = layout_name
         self.view.begin_loading()
         new_scene = qw.QGraphicsScene()
-        renderer = PyQtBackend(new_scene)
+        self._backend.set_scene(new_scene)
         layout = self.doc.layout(layout_name)
         self._update_render_context(layout)
         try:
-            Frontend(self._render_context, renderer).draw_layout(layout)
+            start = time.perf_counter()
+            Frontend(self._render_context, self._backend).draw_layout(layout)
+            duration = time.perf_counter() - start
+            print(f'took {duration:.4f} seconds')
         except DXFStructureError as e:
-            qw.QMessageBox.critical(self, 'DXF Structure Error', f'Abort rendering of layout "{layout_name}": {str(e)}')
+            qw.QMessageBox.critical(
+                self, 'DXF Structure Error',
+                f'Abort rendering of layout "{layout_name}": {str(e)}')
         finally:
-            renderer.finalize()
+            self._backend.finalize()
         self.view.end_loading(new_scene)
         self.view.buffer_scene_rect()
         if reset_view:
@@ -345,12 +375,15 @@ def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--cad_file')
     parser.add_argument('--layout', default='Model')
+    parser.add_argument('--ltype', default='internal',
+                        choices=['internal', 'ezdxf'])
     args = parser.parse_args()
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
     app = qw.QApplication(sys.argv)
-
-    v = CadViewer()
+    v = CadViewer(params={
+        'linetype_renderer': args.ltype
+    })
     if args.cad_file is not None:
         try:
             doc, auditor = recover.readfile(args.cad_file)

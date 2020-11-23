@@ -1,9 +1,8 @@
-# Created: 16.03.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2019, Manfred Moitzi
+# Copyright (C) 2011-2020, Manfred Moitzi
 # License: MIT License
 import pytest
 
-from ezdxf.entities.ltype import Linetype
+from ezdxf.entities.ltype import Linetype, compile_line_pattern
 
 
 @pytest.fixture
@@ -47,3 +46,15 @@ def test_complex_linetype_name():
     assert complex_ltype.dxf.description == 'Gasleitung ----GAS----GAS----GAS----GAS----GAS----GAS--'
     assert len(complex_ltype.pattern_tags) == 16
 
+
+def test_compile_pattern():
+    assert compile_line_pattern(0, [0.0]) == tuple()
+    assert compile_line_pattern(2.0, [1.25, -0.25, 0.25, -0.25]) == (
+        1.25, 0.25, 0.25, 0.25)
+    assert compile_line_pattern(3.5, [2.5, -0.25, 0.5, -0.25]) == (
+        2.5, 0.25, 0.5, 0.25)
+    assert compile_line_pattern(1.4, [1.0, -0.2, 0.0, -0.2]) == (
+        1.0, 0.2, 0.0, 0.2)
+    assert compile_line_pattern(0.2, [0.0, -0.2]) == (0.0, 0.2)
+    assert compile_line_pattern(2.6, [2.0, -0.2, 0.0, -0.2, 0.0, -0.2]) == (
+        2.0, 0.2, 0.0, 0.2, 0.0, 0.2)

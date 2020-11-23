@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-03-12
 from typing import TYPE_CHECKING, List, Iterable
 import copy
 import logging
@@ -10,7 +9,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
-from ezdxf.math import Vector, X_AXIS, Z_AXIS, NULLVEC
+from ezdxf.math import Vec3, X_AXIS, Z_AXIS, NULLVEC
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.explode import explode_entity
 from ezdxf.audit import AuditError
@@ -146,7 +145,7 @@ class Leader(DXFGraphic, OverrideMixin):
 
     def __init__(self):
         super().__init__()
-        self.vertices: List[Vector] = []
+        self.vertices: List[Vec3] = []
 
     def _copy_data(self, entity: 'Leader') -> None:
         """ Copy vertices. """
@@ -159,9 +158,11 @@ class Leader(DXFGraphic, OverrideMixin):
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_leader)
             tags = Tags(self.load_vertices(tags))
             if len(tags):
-                # 76: Number of vertices in leader (ignored for OPEN)
-                processor.log_unprocessed_tags(
-                    tags.filter((76,)), subclass=acdb_leader.name)
+                tags = processor.recover_graphic_attributes(tags, dxf)
+                if len(tags):
+                    # 76: Number of vertices in leader (ignored for OPEN)
+                    processor.log_unprocessed_tags(
+                        tags.filter((76,)), subclass=acdb_leader.name)
         return dxf
 
     def load_vertices(self, tags: Tags) -> Iterable[DXFTag]:
@@ -200,10 +201,10 @@ class Leader(DXFGraphic, OverrideMixin):
 
     def set_vertices(self, vertices: Iterable['Vertex']):
         """ Set vertices of the leader, vertices is an iterable of
-        ``(x, y [,z])`` tuples or :class:`~ezdxf.math.Vector`.
+        ``(x, y [,z])`` tuples or :class:`~ezdxf.math.Vec3`.
 
         """
-        self.vertices = [Vector(v) for v in vertices]
+        self.vertices = [Vec3(v) for v in vertices]
 
     def transform(self, m: 'Matrix44') -> 'Leader':
         """ Transform LEADER entity by transformation matrix `m` inplace.
@@ -229,8 +230,8 @@ class Leader(DXFGraphic, OverrideMixin):
         .. versionadded:: 0.14
 
         """
-        from ezdxf.render.leader import virtual_leader_entities
-        return virtual_leader_entities(self)
+        from ezdxf.render.leader import virtual_entities
+        return virtual_entities(self)
 
     def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
         """

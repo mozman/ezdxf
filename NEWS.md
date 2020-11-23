@@ -2,6 +2,101 @@
 News
 ====
 
+Version 0.15b0 - dev
+--------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v0-15.html
+- NEW: linetype support for matplotlib- and pyqt drawing backend
+- NEW: HATCH island support for matplotlib- and pyqt drawing backend
+- NEW: basic HATCH pattern support for matplotlib- and pyqt drawing backend
+- NEW: Font support for matplotlib- and pyqt drawing backend
+- NEW: POINT mode support for matplotlib- and pyqt drawing backend, relative 
+  point size is not supported
+- NEW: Proxy graphic support for the drawing add-on
+- NEW: recover misplaced tags of the `AcDbEntity` subclass (color, layer, 
+  linetype, ...), supported by all loading modes
+- NEW: `ezdxf.addons.geo` module, support for the 
+  [`__geo_interface__`](https://gist.github.com/sgillies/2217756),
+  see [docs](https://ezdxf.mozman.at/docs/addons/geo.html) and 
+  [tutorial](https://ezdxf.mozman.at/docs/tutorials/geo.html)
+- NEW: `GeoData.setup_local_grid()` setup geo data for CRS similar to EPSG:3395 
+  World Mercator
+- NEW: MLINE support but without line break and fill break (gaps) features
+- NEW: `Bezier.flattening()` adaptive recursive flattening (approximation)
+- NEW: `Bezier4P.flattening()` adaptive recursive flattening (approximation)
+- NEW: `Path.flattening()` adaptive recursive flattening (approximation)
+- NEW: `Circle.flattening()` approximation determined by a max. sagitta value
+- NEW: `Arc.flattening()` approximation determined by a max. sagitta value
+- NEW: `ConstructionArc.flattening()` approximation determined by a max. sagitta value
+- NEW: `ezdxf.math.distance_point_line_3d()`
+- NEW: `ConstructionEllipse.flattening()` adaptive recursive flattening (approximation)
+- NEW: `Ellipse.flattening()` adaptive recursive flattening (approximation)
+- NEW: `BSpline.flattening()` adaptive recursive flattening (approximation)
+- NEW: `Spline.flattening()` adaptive recursive flattening (approximation)
+- NEW: `matplotlib.qsave()`, `ltype` argument to switch between matplotlib dpi 
+  based linetype rendering and AutoCAD like drawing units based linetype 
+  rendering
+- NEW: `Solid.vertices()` returns OCS vertices in correct order (also `Trace`)
+- NEW: `Solid.wcs_vertices()` returns WCS vertices in correct order (also `Trace`)
+- NEW: `Face3D.wcs_vertices()` compatibility interface to SOLID and TRACE
+- NEW: `Hatch.paths.external_paths()` returns iterable of external boundary paths
+- NEW: `Hatch.paths.outermost_paths()` returns iterable of outer most boundary paths
+- NEW: `Hatch.paths.default_paths()` returns iterable of default boundary paths
+- NEW: `Hatch.paths.rendering_paths()` returns iterable of paths to process for rendering
+- NEW: `Drawing.units` property to get/set document/modelspace units
+- NEW: `ezdxf.new()` argument `units` to setup document and modelspace units and
+  $MEASUREMENT setting and the linetype setup is based on this $MEASUREMENT 
+  setting.
+- NEW: `pattern.load(measurement, factor)` load scaled hatch pattern
+- NEW: `Path.from_hatch_boundary_path()`
+- NEW: `odafc.export_dwg()` new replace option to delete existing DWG files
+- NEW `Style` table entry supports extended font data
+- NEW: `Point.virtual_entities()`, yield POINT entities as DXF primitives
+- NEW: `ezdxf.render.point`, support module for `Point.virtual_entities()`
+- CHANGE: `Hatch.set_pattern_fill()` uses HEADER variable $MEASUREMENT to 
+  determine the default scaling of predefined hatch pattern. 
+- CHANGE: fix invalid linetype setup - new linetype scaling like common CAD 
+  applications
+- CHANGE: `ezdxf.colors` module will consolidate all color/transparency related 
+  features
+- CHANGE: renamed `ezdxf.math.Vector` to `Vec3`, but `Vector` remains as synonym
+- DEPRECATED: `ezdxf.tools.rgb` module replaced by `ezdxf.colors`
+- REMOVED: deprecated `DXFEntity.transform_to_wcs()` interface, 
+  use `DXFEntity.transform(ucs.matrix)`
+- REMOVED: deprecated `Hatch.edit_boundary()` context manager, 
+  use `Hatch.paths` attribute
+- REMOVED: deprecated `Hatch.get_gradient()` method,
+  use `Hatch.gradient` attribute
+- REMOVED: deprecated `Hatch.edit_gradient()` context manager,
+  use `Hatch.gradient` attribute
+- REMOVED: deprecated `Hatch.edit_pattern()` context manager,
+  use `Hatch.pattern` attribute
+- REMOVED: deprecated `Hatch.get_seed_points()` method,
+  use `Hatch.seeds` attribute
+- REMOVED: unnecessary argument `non_uniform_scaling` from `Insert.explode()`
+- REMOVED: unnecessary argument `non_uniform_scaling` from 
+  `Insert.virtual_entities()`
+- REMOVED: deprecated `Spline.edit_data()` context manager,
+  use `fit_points`, `control_points`, `knots`  and `weights` attributes
+- BUGFIX: `ezdxf.math.has_clockwise_orientation()` returns `True` for 
+  counter-clock wise and vice versa
+- BUGFIX: default color for HATCH is 256 (by layer)
+  
+Version 0.14.2 - 2020-10-18
+---------------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v0-14.html
+- BUGFIX: fix invalid attribute reference `self.drawing`
+
+Version 0.14.1 - 2020-09-19
+---------------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v0-14.html
+- BUGFIX: MLEADER and MLEADERSTYLE min DXF version changed to R2000
+- BUGFIX: AutoCAD ignores not existing default objects in ACDBDICTIONARYWDFLT
+  and so ezdxf have to. `Auditor()` creates a place holder object as default 
+  value.
+
 Version 0.14 - 2020-09-12
 -------------------------
 

@@ -1,10 +1,9 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import pytest
 import math
 
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 from ezdxf.entities.ellipse import Ellipse, MIN_RATIO, MAX_RATIO
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
@@ -122,12 +121,12 @@ def test_get_start_and_end_vertex():
         ellipse.dxf.end_param,
     ]))
     # test values from BricsCAD
-    assert start.isclose(Vector(3.1, -0.8, 3), abs_tol=1e-6)
-    assert end.isclose(Vector(-3, -1, 3), abs_tol=1e-6)
+    assert start.isclose(Vec3(3.1, -0.8, 3), abs_tol=1e-6)
+    assert end.isclose(Vec3(-3, -1, 3), abs_tol=1e-6)
 
     # for convenience, but Ellipse.vertices is much more efficient:
-    assert ellipse.start_point.isclose(Vector(3.1, -0.8, 3), abs_tol=1e-6)
-    assert ellipse.end_point.isclose(Vector(-3, -1, 3), abs_tol=1e-6)
+    assert ellipse.start_point.isclose(Vec3(3.1, -0.8, 3), abs_tol=1e-6)
+    assert ellipse.end_point.isclose(Vec3(-3, -1, 3), abs_tol=1e-6)
 
 
 def test_write_dxf():

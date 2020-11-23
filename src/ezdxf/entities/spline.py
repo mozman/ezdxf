@@ -1,19 +1,16 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-03-06
 from typing import TYPE_CHECKING, Iterable, Sequence, cast
 import array
 import copy
-import warnings
 from itertools import chain
-from contextlib import contextmanager
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
 from ezdxf.lldxf.packedtags import VertexArray
-from ezdxf.math import Vector, Matrix44, ConstructionEllipse, Z_AXIS, NULLVEC
+from ezdxf.math import Vec3, Matrix44, ConstructionEllipse, Z_AXIS, NULLVEC
 from ezdxf.math.bspline import (
     uniform_knot_vector, open_uniform_knot_vector, BSpline,
 )
@@ -112,12 +109,11 @@ class Spline(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.find_subclass(acdb_spline.name)
-            # load spline data (fit points, control points, weights, knots) and remove their tags from subclass
+            # load spline data (fit points, control points, weights, knots) and
+            # remove their tags from subclass:
             self.load_spline_data(tags)
-            # load remaining data into name space
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_spline)
-            if len(tags):
-                processor.log_unprocessed_tags(tags, subclass=acdb_spline.name)
+            self.remove_invalid_data(tags)
+            processor.load_and_recover_dxfattribs(dxf, acdb_spline)
         return dxf
 
     def load_spline_data(self, spline_tags: 'Tags') -> None:
@@ -127,6 +123,19 @@ class Spline(DXFGraphic):
         self.knots = (value for code, value in spline_tags if code == 40)
         self.weights = (value for code, value in spline_tags if code == 41)
         spline_tags.remove_tags(codes=REMOVE_CODES)
+
+    @staticmethod
+    def remove_invalid_data(spline_tags: 'Tags') -> None:
+        # The loading function use the regular validator/fixer
+        # infrastructure and I don't want to ignore (0, 0, 0) as tangent values
+        # silently, so I remove invalid start- and end tangent values at the
+        # DXF loadings stage:
+        codes = [
+            code for code, value in spline_tags
+            if code in (12, 13) and NULLVEC.isclose(value)
+        ]
+        if codes:
+            spline_tags.remove_tags(codes=codes)
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
@@ -198,7 +207,7 @@ class Spline(DXFGraphic):
     @control_points.setter
     def control_points(self, points: Iterable['Vertex']) -> None:
         self._control_points = VertexArray(
-            chain.from_iterable(Vector.generate(points)))
+            chain.from_iterable(Vec3.generate(points)))
 
     # DXF callback attribute Spline.dxf.n_control_points
     def control_point_count(self) -> int:
@@ -215,7 +224,7 @@ class Spline(DXFGraphic):
     @fit_points.setter
     def fit_points(self, points: Iterable['Vertex']) -> None:
         self._fit_points = VertexArray(
-            chain.from_iterable(Vector.generate(points)))
+            chain.from_iterable(Vec3.generate(points)))
 
     # DXF callback attribute Spline.dxf.n_fit_points
     def fit_point_count(self) -> int:
@@ -260,6 +269,23 @@ class Spline(DXFGraphic):
         self.weights = s.weights()
         self.set_flag_state(Spline.RATIONAL, state=bool(len(self.weights)))
         return self  # floating interface
+
+    def flattening(self, distance: float,
+                   segments: int = 4) -> Iterable[Vec3]:
+        """ Adaptive recursive flattening. The argument `segments` is the
+        minimum count of approximation segments between two knots, if the
+        distance from the center of the approximation segment to the curve is
+        bigger than `distance` the segment will be subdivided.
+
+        Args:
+            distance: maximum distance from the projected curve point onto the
+                segment chord.
+            segments: minimum segment count between two knots
+
+        .. versionadded:: 0.15
+
+        """
+        return self.construction_tool().flattening(distance, segments)
 
     @classmethod
     def from_arc(cls, entity: 'DXFGraphic') -> 'Spline':
@@ -383,26 +409,6 @@ class Spline(DXFGraphic):
             raise DXFValueError(
                 'Control point count must be equal to weights count.')
         self.weights = weights
-
-    @contextmanager
-    def edit_data(self) -> 'SplineData':
-        """ Context manager for all spline data, returns :class:`SplineData`.
-        """
-        warnings.warn('Spline.edit_data() is deprecated (removed in v0.15).',
-                      DeprecationWarning)
-        data = SplineData(self)
-        yield data
-        if data.fit_points is not self.fit_points:
-            self.fit_points = data.fit_points
-
-        if data.control_points is not self.control_points:
-            self.control_points = data.control_points
-
-        if data.knots is not self.knots:
-            self.knots = data.knots
-
-        if data.weights is not self.weights:
-            self.weights = data.weights
 
     def transform(self, m: 'Matrix44') -> 'Spline':
         """ Transform SPLINE entity by transformation matrix `m` inplace.

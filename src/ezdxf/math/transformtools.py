@@ -1,12 +1,8 @@
-# Created: 02.05.2020
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple
 import math
-from .matrix44 import Matrix44
-from .construct2d import sign
-from .vector import Vector, X_AXIS, Y_AXIS, Vec2
-from .ucs import OCS
+from ezdxf.math import Vec3, X_AXIS, Y_AXIS, Vec2, Matrix44, sign, OCS
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Vertex
@@ -36,7 +32,7 @@ def transform_thickness_and_extrusion_without_ocs(entity: 'DXFGraphic', m: Matri
         entity.dxf.extrusion = extrusion.normalize()
 
 
-def transform_extrusion(extrusion: 'Vertex', m: Matrix44) -> Tuple[Vector, bool]:
+def transform_extrusion(extrusion: 'Vertex', m: Matrix44) -> Tuple[Vec3, bool]:
     """
     Transforms the old `extrusion` vector into a new extrusion vector. Returns the new extrusion vector and a
     boolean value: ``True`` if the new OCS established by the new extrusion vector has a uniform scaled xy-plane,
@@ -63,7 +59,7 @@ def transform_extrusion(extrusion: 'Vertex', m: Matrix44) -> Tuple[Vector, bool]
 
 
 class OCSTransform:
-    def __init__(self, extrusion: Vector = None, m: Matrix44 = None):
+    def __init__(self, extrusion: Vec3 = None, m: Matrix44 = None):
         self.m = m
         if extrusion is None:
             self.old_ocs = None
@@ -75,11 +71,11 @@ class OCSTransform:
             self.new_ocs = OCS(new_extrusion)
 
     @property
-    def old_extrusion(self) -> Vector:
+    def old_extrusion(self) -> Vec3:
         return self.old_ocs.uz
 
     @property
-    def new_extrusion(self) -> Vector:
+    def new_extrusion(self) -> Vec3:
         return self.new_ocs.uz
 
     @classmethod
@@ -98,23 +94,23 @@ class OCSTransform:
 
     transform_scale_factor = transform_length
 
-    def transform_vertex(self, vertex: 'Vertex') -> Vector:
+    def transform_vertex(self, vertex: 'Vertex') -> Vec3:
         """ Returns vertex transformed from old OCS into new OCS. """
         return self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(vertex)))
 
     def transform_2d_vertex(self, vertex: 'Vertex', elevation: float) -> Vec2:
         """ Returns 2D vertex transformed from old OCS into new OCS. """
-        v = Vector(vertex).replace(z=elevation)
+        v = Vec3(vertex).replace(z=elevation)
         return self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(v))).vec2
 
-    def transform_direction(self, direction: 'Vertex') -> Vector:
+    def transform_direction(self, direction: 'Vertex') -> Vec3:
         """ Returns direction transformed from old OCS into new OCS. """
         return self.new_ocs.from_wcs(self.m.transform_direction(self.old_ocs.to_wcs(direction)))
 
     def transform_angle(self, angle: float) -> float:
         """ Returns angle (in radians) from old OCS transformed into new OCS.
         """
-        return self.transform_direction(Vector.from_angle(angle)).angle % math.tau
+        return self.transform_direction(Vec3.from_angle(angle)).angle % math.tau
 
     def transform_deg_angle(self, angle: float) -> float:
         """ Returns angle (in degrees) from old OCS transformed into new OCS.

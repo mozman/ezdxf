@@ -1,12 +1,11 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import random
 
 import pytest
 import math
 
-from ezdxf.math import Vector, angle_to_param, linspace, ConstructionEllipse
+from ezdxf.math import Vec3, angle_to_param, linspace, ConstructionEllipse
 
 
 def test_default_init():
@@ -47,12 +46,12 @@ def test_get_start_and_end_vertex():
         ellipse.end_param,
     ]))
     # test values from BricsCAD
-    assert start.isclose(Vector(3.1, -0.8, 3), abs_tol=1e-6)
-    assert end.isclose(Vector(-3, -1, 3), abs_tol=1e-6)
+    assert start.isclose(Vec3(3.1, -0.8, 3), abs_tol=1e-6)
+    assert end.isclose(Vec3(-3, -1, 3), abs_tol=1e-6)
 
     # for convenience, but vertices() is much more efficient:
-    assert ellipse.start_point.isclose(Vector(3.1, -0.8, 3), abs_tol=1e-6)
-    assert ellipse.end_point.isclose(Vector(-3, -1, 3), abs_tol=1e-6)
+    assert ellipse.start_point.isclose(Vec3(3.1, -0.8, 3), abs_tol=1e-6)
+    assert ellipse.end_point.isclose(Vec3(-3, -1, 3), abs_tol=1e-6)
 
 
 def test_from_arc():
@@ -207,9 +206,9 @@ def test_tangents():
 
 
 def test_params_from_vertices_random():
-    center = Vector.random(5)
-    major_axis = Vector.random(5)
-    extrusion = Vector.random()
+    center = Vec3.random(5)
+    major_axis = Vec3.random(5)
+    extrusion = Vec3.random()
     ratio = 0.75
     e = ConstructionEllipse(center, major_axis, extrusion, ratio)
 
@@ -234,3 +233,27 @@ def test_params_from_vertices_random():
 def test_to_ocs():
     e = ConstructionEllipse().to_ocs()
     assert e.center == (0, 0)
+
+
+@pytest.mark.parametrize('s, e, distance, count', [
+    # known tests from ARC
+    (0, 180, 0.35, 3),
+    (0, 180, 0.10, 5),
+    (270, 90, 0.10, 5),  # start angle > end angle
+    (90, -90, 0.10, 5),
+    (0, 0, 0.10, 0),  # angle span 0 works but yields nothing
+    (-45, -45, 0.10, 0),
+])
+def test_flattening(s, e, distance, count):
+    ellipse = ConstructionEllipse(
+        start_param=math.radians(s),
+        end_param=math.radians(e),
+    )
+    assert len(list(ellipse.flattening(distance, segments=2))) == count
+
+
+def test_flattening_ellipse():
+    # Visually checked in BricsCAD:
+    e = ConstructionEllipse(major_axis=(3, 0), ratio=0.25)
+    assert len(list(e.flattening(0.1))) == 13
+    assert len(list(e.flattening(0.01))) == 37

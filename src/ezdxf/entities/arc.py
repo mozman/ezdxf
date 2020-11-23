@@ -1,8 +1,7 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
 from typing import TYPE_CHECKING, Iterable
-from ezdxf.math import Vector, Matrix44, linspace, ConstructionArc
+from ezdxf.math import Vec3, Matrix44, linspace, ConstructionArc, Vertex
 from ezdxf.math.transformtools import OCSTransform
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -13,7 +12,7 @@ from .circle import acdb_circle, Circle
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Vector, UCS
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Vec3
 
 __all__ = ['Arc']
 
@@ -29,47 +28,39 @@ class Arc(Circle):
     DXFTYPE = 'ARC'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_circle, acdb_arc)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_arc)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_arc.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_arc)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         # AcDbCircle export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_arc.name)
-        # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['start_angle', 'end_angle'])
 
     @property
-    def start_point(self) -> 'Vector':
+    def start_point(self) -> 'Vec3':
         """  Returns the start point of the arc in WCS, takes OCS into account.
-
-        .. versionadded:: 0.11
-
         """
         v = list(self.vertices([self.dxf.start_angle]))
         return v[0]
 
     @property
-    def end_point(self) -> 'Vector':
+    def end_point(self) -> 'Vec3':
         """ Returns the end point of the arc in WCS, takes OCS into account.
-
-        .. versionadded:: 0.11
-
         """
         v = list(self.vertices([self.dxf.end_angle]))
         return v[0]
 
     def angles(self, num: int) -> Iterable[float]:
-        """ Returns `num` angles from start- to end angle in degrees in counter clockwise order.
+        """ Returns `num` angles from start- to end angle in degrees in counter
+        clockwise order.
 
         All angles are normalized in the range from [0, 360).
 
@@ -82,6 +73,19 @@ class Arc(Circle):
             stop += 360
         for angle in linspace(start, stop, num=num, endpoint=True):
             yield angle % 360
+
+    def flattening(self, sagitta: float) -> Iterable[Vertex]:
+        """ Approximate the arc by vertices in WCS, argument `segment` is the
+        max. distance from the center of an arc segment to the center of its
+        chord. Yields :class:`~ezdxf.math.Vec2` objects for 2D arcs and
+        :class:`~ezdxf.math.Vec3` objects for 3D arcs.
+
+        .. versionadded:: 0.15
+
+        """
+        arc = self.construction_tool()
+        to_wcs = self.ocs().points_to_wcs
+        yield from to_wcs(arc.flattening(sagitta))
 
     def transform(self, m: Matrix44) -> 'Arc':
         """ Transform ARC entity by transformation matrix `m` inplace.
@@ -99,8 +103,8 @@ class Arc(Circle):
 
     def construction_tool(self) -> ConstructionArc:
         """
-        Returns 2D construction tool :class:`ezdxf.math.ConstructionArc`, ignoring the
-        extrusion vector.
+        Returns 2D construction tool :class:`ezdxf.math.ConstructionArc`,
+        ignoring the extrusion vector.
 
         .. versionadded:: 0.14
 
@@ -122,7 +126,7 @@ class Arc(Circle):
 
         """
         dxf = self.dxf
-        dxf.center = Vector(arc.center)
+        dxf.center = Vec3(arc.center)
         dxf.radius = arc.radius
         dxf.start_angle = arc.start_angle
         dxf.end_angle = arc.end_angle

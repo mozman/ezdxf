@@ -1,10 +1,10 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import pytest
 import math
-from ezdxf.math import Vector, Matrix44
 
+import ezdxf
+from ezdxf.math import Vec3, Matrix44
 from ezdxf.entities.dimension import Dimension, linear_measurement
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
@@ -154,9 +154,9 @@ def test_default_new():
     assert entity.dxf.color == 7
     assert entity.dxf.linetype == 'BYLAYER'
     assert entity.dxf.defpoint == (1, 2, 3)
-    assert entity.dxf.defpoint.x == 1, 'is not Vector compatible'
-    assert entity.dxf.defpoint.y == 2, 'is not Vector compatible'
-    assert entity.dxf.defpoint.z == 3, 'is not Vector compatible'
+    assert entity.dxf.defpoint.x == 1, 'is not Vec3 compatible'
+    assert entity.dxf.defpoint.y == 2, 'is not Vec3 compatible'
+    assert entity.dxf.defpoint.z == 3, 'is not Vec3 compatible'
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
@@ -179,6 +179,12 @@ def test_write_dxf(txt, ver):
     collector2 = TagCollector(dxfversion=ver, optional=False)
     dimension.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
+
+
+def test_missing_block_geometry_name():
+    doc = ezdxf.new()
+    dim = Dimension.new(doc=doc)
+    assert dim.get_geometry_block() is None
 
 
 def test_format_text():
@@ -205,13 +211,13 @@ def test_format_text():
 
 
 def test_linear_measurement_without_ocs():
-    measurement = linear_measurement(Vector(0, 0, 0), Vector(1, 0, 0))
+    measurement = linear_measurement(Vec3(0, 0, 0), Vec3(1, 0, 0))
     assert measurement == 1
 
-    measurement = linear_measurement(Vector(0, 0, 0), Vector(1, 0, 0), angle=math.radians(45))
+    measurement = linear_measurement(Vec3(0, 0, 0), Vec3(1, 0, 0), angle=math.radians(45))
     assert math.isclose(measurement, 1. / math.sqrt(2.))
 
-    measurement = linear_measurement(Vector(0, 0, 0), Vector(1, 0, 0), angle=math.radians(90))
+    measurement = linear_measurement(Vec3(0, 0, 0), Vec3(1, 0, 0), angle=math.radians(90))
     assert math.isclose(measurement, 0, abs_tol=1e-12)
 
 

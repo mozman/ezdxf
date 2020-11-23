@@ -1,13 +1,13 @@
 # Copyright (c) 2010-2019, Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.math.vector import Vector
+from ezdxf.math.vector import Vec3
 from ezdxf.render import Bezier
 
 
 def draw_control_point(point, tangent1, tangent2=(0, 0)):
-    tp1 = Vector(point) + Vector(tangent1)
-    tp2 = Vector(point) + Vector(tangent2)
+    tp1 = Vec3(point) + Vec3(tangent1)
+    tp2 = Vec3(point) + Vec3(tangent2)
     attribs = {
         'color': 1
     }

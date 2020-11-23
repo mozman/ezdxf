@@ -6,7 +6,7 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
-from ezdxf.math import Vector, NULLVEC, X_AXIS, Y_AXIS
+from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
@@ -190,10 +190,8 @@ class PlotSettings(DXFObject):
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        processor.load_dxfattribs_into_namespace(dxf, acdb_plot_settings)
+        if processor:
+            processor.load_dxfattribs_into_namespace(dxf, acdb_plot_settings)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -232,22 +230,22 @@ acdb_layout = DefSubclass('AcDbLayout', {
 
     # Minimum limits:
     'limmin': DXFAttr(10, xtype=XType.point2d,
-                      default=Vector(-3.175, -3.175)),
+                      default=Vec3(-3.175, -3.175)),
 
     # Maximum limits:
     'limmax': DXFAttr(11, xtype=XType.point2d,
-                      default=Vector(293.857, 206.735)),
+                      default=Vec3(293.857, 206.735)),
 
     # Insertion base point for this layout:
     'insert_base': DXFAttr(12, xtype=XType.point3d, default=NULLVEC),
 
     # Minimum extents for this layout:
     'extmin': DXFAttr(14, xtype=XType.point3d,
-                      default=Vector(29.068, 20.356, 0)),
+                      default=Vec3(29.068, 20.356, 0)),
 
     # Maximum extents for this layout:
     'extmax': DXFAttr(15, xtype=XType.point3d,
-                      default=Vector(261.614, 183.204, 0)),
+                      default=Vec3(261.614, 183.204, 0)),
 
     'elevation': DXFAttr(146, default=0.0),
     'ucs_origin': DXFAttr(13, xtype=XType.point3d, default=NULLVEC),
@@ -300,10 +298,8 @@ class DXFLayout(PlotSettings):
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        processor.load_dxfattribs_into_namespace(dxf, acdb_layout)
+        if processor:
+            processor.load_dxfattribs_into_namespace(dxf, acdb_layout)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

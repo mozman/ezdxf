@@ -37,17 +37,18 @@ class ObjectCollection:
     def __getitem__(self, item):
         return self.get(item)
 
-    def get(self, name: str) -> 'DXFObject':
+    def get(self, name: str, default=DXFKeyError) -> 'DXFObject':
         """ Get object by name.
 
         Args:
             name: object name as string
+            default: default value
 
         Raises:
             DXFKeyError: if name does not exist
 
         """
-        return cast('DXFObject', self.object_dict.get(name))
+        return cast('DXFObject', self.object_dict.get(name, default))
 
     def new(self, name: str) -> 'DXFObject':
         """  Create a new object of type `self.object_type` and store its handle

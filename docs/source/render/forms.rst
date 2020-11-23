@@ -35,24 +35,24 @@ Forms
 2D Forms
 --------
 
-    Basic 2D shapes as iterable of :class:`~ezdxf.math.Vector`.
+    Basic 2D shapes as iterable of :class:`~ezdxf.math.Vec3`.
 
 
-.. autofunction:: circle(count: int, radius: float = 1, elevation: float = 0, close: bool = False) -> Iterable[Vector]
+.. autofunction:: circle(count: int, radius: float = 1, elevation: float = 0, close: bool = False) -> Iterable[Vec3]
 
-.. autofunction:: square(size: float = 1.) -> Tuple[Vector, Vector, Vector, Vector]
+.. autofunction:: square(size: float = 1.) -> Tuple[Vec3, Vec3, Vec3, Vec3]
 
-.. autofunction:: box(sx: float = 1., sy: float = 1.) -> Tuple[Vector, Vector, Vector, Vector]
+.. autofunction:: box(sx: float = 1., sy: float = 1.) -> Tuple[Vec3, Vec3, Vec3, Vec3]
 
-.. autofunction:: ellipse(count: int, rx: float = 1, ry: float = 1, start_param: float = 0, end_param: float = 2 * pi, elevation: float = 0) -> Iterable[Vector]
+.. autofunction:: ellipse(count: int, rx: float = 1, ry: float = 1, start_param: float = 0, end_param: float = 2 * pi, elevation: float = 0) -> Iterable[Vec3]
 
-.. autofunction:: euler_spiral(count: int, length: float = 1, curvature: float = 1, elevation: float = 0) -> Iterable[Vector]
+.. autofunction:: euler_spiral(count: int, length: float = 1, curvature: float = 1, elevation: float = 0) -> Iterable[Vec3]
 
-.. autofunction:: ngon(count: int, length: float = None, radius: float = None, rotation: float = 0., elevation: float = 0., close: bool = False) -> Iterable[Vector]
+.. autofunction:: ngon(count: int, length: float = None, radius: float = None, rotation: float = 0., elevation: float = 0., close: bool = False) -> Iterable[Vec3]
 
-.. autofunction:: star(count: int, r1: float, r2: float, rotation: float = 0., elevation: float = 0., close: bool = False) -> Iterable[Vector]
+.. autofunction:: star(count: int, r1: float, r2: float, rotation: float = 0., elevation: float = 0., close: bool = False) -> Iterable[Vec3]
 
-.. autofunction:: gear(count: int, top_width: float, bottom_width: float, height: float, outside_radius: float, elevation: float = 0, close: bool = False) -> Iterable[Vector]
+.. autofunction:: gear(count: int, top_width: float, bottom_width: float, height: float, outside_radius: float, elevation: float = 0, close: bool = False) -> Iterable[Vec3]
 
 
 3D Forms

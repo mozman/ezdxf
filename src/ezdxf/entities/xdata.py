@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-13
 from typing import TYPE_CHECKING, List, Iterable, Tuple
 from collections import OrderedDict
 from ezdxf.lldxf.types import dxftag
@@ -24,7 +23,6 @@ __all__ = ['XData', 'EmbeddedObjects']
 
 class XData:
     def __init__(self, xdata: List[Tags] = None):
-        # no back links, no self.clone() required, use deepcopy
         self.data = OrderedDict()
         for data in (xdata or []):
             self._add(data)

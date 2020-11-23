@@ -1,5 +1,4 @@
-# Purpose: test ConstructionBox
-# Created: 29.01.2019
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 import math
 from ezdxf.math import ConstructionBox, ConstructionLine

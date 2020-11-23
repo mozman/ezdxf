@@ -7,7 +7,7 @@ from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.lldxf.const import DXF2007, DXF2010
 from ezdxf.render.forms import box
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vec3, Matrix44
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def hatch_pattern():
 
 def test_default_settings(hatch):
     assert hatch.dxf.layer == '0'
-    assert hatch.dxf.color == 1
+    assert hatch.dxf.color == 256  # by layer
     assert hatch.dxf.linetype == 'BYLAYER'
     assert hatch.dxf.ltscale == 1.0
     assert hatch.dxf.invisible == 0
@@ -173,8 +173,8 @@ def test_ellipse_edges_to_spline_edges(hatch):
 
     edge = path.edges[2]
     assert edge.EDGE_TYPE == 'SplineEdge'
-    assert Vector(10, 10).isclose(edge.control_points[0])
-    assert Vector(0, 10).isclose(edge.control_points[-1])
+    assert Vec3(10, 10).isclose(edge.control_points[0])
+    assert Vec3(0, 10).isclose(edge.control_points[-1])
 
 
 def test_edge_path_count(edge_hatch):
@@ -292,8 +292,8 @@ def test_edge_path_transform_interface(hatch, m44):
     spline.end_tangent = (2, 20)
 
     chk = list(m44.transform_vertices([
-        Vector(0, 0), Vector(10, 0), Vector(10, 5), Vector(5, 10),
-        Vector(1, 1), Vector(2, 2), Vector(3, 3), Vector(4, 4),
+        Vec3(0, 0), Vec3(10, 0), Vec3(10, 5), Vec3(5, 10),
+        Vec3(1, 1), Vec3(2, 2), Vec3(3, 3), Vec3(4, 4),
     ]))
 
     hatch.transform(m44)
@@ -469,10 +469,10 @@ def test_pattern_rotation(hatch, pattern):
     line1, line2 = hatch.pattern.lines
     assert line1.angle == 90
     assert line1.base_point == (0, 0)
-    assert line1.offset == (-0.7071, 0.7071)
+    assert line1.offset == (-0.7071067811865475, 0.7071067811865476)
     assert line2.angle == 90
-    assert line2.base_point == (-0.3536, 0.3536)
-    assert line2.offset == (-0.7071, 0.7071)
+    assert line2.base_point == (-0.35355339059327373, 0.3535533905932738)
+    assert line2.offset == (-0.7071067811865475, 0.7071067811865476)
 
 
 def test_pattern_rotation_add_angle(hatch, pattern):

@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-22
 from typing import TYPE_CHECKING, List, Iterable
 from ezdxf.lldxf import validator
 from ezdxf.lldxf import const
@@ -13,7 +12,7 @@ from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, DXFStructureError, DXFInternalEzdxfError,
     DXFValueError, DXFTableEntryError,
 )
-from ezdxf.math import Vector, NULLVEC, X_AXIS, Y_AXIS
+from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS
 from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -25,7 +24,10 @@ if TYPE_CHECKING:
 __all__ = ['Viewport']
 
 acdb_viewport = DefSubclass('AcDbViewport', {
-    # Center point (in WCS)
+    # DXF reference: Center point (in WCS)
+    # Correction to the DXF reference:
+    # This point represents the center of the viewport in paper space units
+    # (DCS), but is stored as 3D point inclusive z-axis!
     'center': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
 
     # Width in paper space units:
@@ -44,11 +46,14 @@ acdb_viewport = DefSubclass('AcDbViewport', {
     'status': DXFAttr(68, default=0),
     'id': DXFAttr(69, default=2),
 
-    # View center point (in DCS):
+    # DXF reference: View center point (in DCS):
+    # Correction to the DXF reference:
+    # This point represents the center point in model space (WCS) stored as
+    # 2D point!
     'view_center_point': DXFAttr(12, xtype=XType.point2d, default=NULLVEC),
     'snap_base_point': DXFAttr(13, xtype=XType.point2d, default=NULLVEC),
-    'snap_spacing': DXFAttr(14, xtype=XType.point2d, default=Vector(10, 10)),
-    'grid_spacing': DXFAttr(15, xtype=XType.point2d, default=Vector(10, 10)),
+    'snap_spacing': DXFAttr(14, xtype=XType.point2d, default=Vec3(10, 10)),
+    'grid_spacing': DXFAttr(15, xtype=XType.point2d, default=Vec3(10, 10)),
     # View direction vector (WCS):
     'view_direction_vector': DXFAttr(16, xtype=XType.point3d, default=NULLVEC),
     # View target point (in WCS):
@@ -215,11 +220,12 @@ class Viewport(DXFGraphic):
     """ DXF VIEWPORT entity """
     DXFTYPE = 'VIEWPORT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_viewport)
-    viewport_id = 2  # notes to id:
-
+    viewport_id = 2
+    # Notes to vieport_id:
     # The id of the first viewport has to be 1, which is the definition of
     # paper space. For the following viewports it seems only important, that
     # the id is greater than 1.
+
     def get_next_viewport_id(self) -> int:
         current_id = Viewport.viewport_id
         Viewport.viewport_id += 1

@@ -17,7 +17,7 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. attribute:: vertices
 
-        List of vertices as :class:`~ezdxf.math.Vector` or ``(x, y, z)`` tuple
+        List of vertices as :class:`~ezdxf.math.Vec3` or ``(x, y, z)`` tuple
 
     .. attribute:: edges
 
@@ -32,9 +32,9 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: copy()
 
-    .. automethod:: faces_as_vertices() -> Iterable[List[Vector]]
+    .. automethod:: faces_as_vertices() -> Iterable[List[Vec3]]
 
-    .. automethod:: edges_as_vertices() -> Iterable[Tuple[Vector, Vector]]
+    .. automethod:: edges_as_vertices() -> Iterable[Tuple[Vec3, Vec3]]
 
     .. automethod:: add_vertices
 

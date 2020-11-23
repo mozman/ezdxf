@@ -21,6 +21,8 @@ Functions
 
 .. autofunction:: linspace
 
+.. autofunction:: area
+
 .. _bulge_related_functions:
 
 Bulge Related Functions
@@ -61,7 +63,7 @@ Bulge Related Functions
 
 .. autofunction:: intersection_line_line_2d(line1: Sequence[Vec2], line2: Sequence[Vec2], virtual=True, abs_tol=1e-10) -> Optional[Vec2]
 
-.. autofunction:: rytz_axis_construction(d1: Vector, d2: Vector) -> Tuple[Vector, Vector, float]
+.. autofunction:: rytz_axis_construction(d1: Vec3, d2: Vec3) -> Tuple[Vec3, Vec3, float]
 
 .. autofunction:: offset_vertices_2d
 
@@ -84,19 +86,21 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 3D Functions
 ============
 
-.. autofunction:: normal_vector_3p(a: Vector, b: Vector, c: Vector) -> Vector
+.. autofunction:: normal_vector_3p(a: Vec3, b: Vec3, c: Vec3) -> Vec3
 
-.. autofunction:: is_planar_face(face: Sequence[Vector], abs_tol=1e-9) -> bool
+.. autofunction:: is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool
 
-.. autofunction:: subdivide_face(face: Sequence[Union[Vector, Vec2]], quads=True) -> Iterable[List[Vector]]
+.. autofunction:: subdivide_face(face: Sequence[Union[Vec3, Vec2]], quads=True) -> Iterable[List[Vec3]]
 
-.. autofunction:: subdivide_ngons(faces: Iterable[Sequence[Union[Vector, Vec2]]]) -> Iterable[List[Vector]]
+.. autofunction:: subdivide_ngons(faces: Iterable[Sequence[Union[Vec3, Vec2]]]) -> Iterable[List[Vec3]]
 
-.. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vector, Vector], ray2: Tuple[Vector, Vector], abs_tol=1e-10) -> Sequence[Vector]
+.. autofunction:: distance_point_line_3d(point: Vec3, start: Vec3, end: Vec3) -> float
 
-.. autofunction:: estimate_tangents(points: List[Vector], method: str = '5-points', normalize = True) -> List[Vector]
+.. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3], ray2: Tuple[Vec3, Vec3], abs_tol=1e-10) -> Sequence[Vec3]
 
-.. autofunction:: estimate_end_tangent_magnitude(points: List[Vector], method: str = 'chord') -> List[Vector]
+.. autofunction:: estimate_tangents(points: List[Vec3], method: str = '5-points', normalize = True) -> List[Vec3]
+
+.. autofunction:: estimate_end_tangent_magnitude(points: List[Vec3], method: str = 'chord') -> List[Vec3]
 
 .. autofunction:: fit_points_to_cad_cv
 
@@ -104,11 +108,11 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: local_cubic_bspline_interpolation(fit_points: Iterable[Vertex], method: str = '5-points', tangents :Iterable[Vertex] = None) -> BSpline
 
-.. autofunction:: rational_spline_from_arc(center: Vector = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> BSpline
+.. autofunction:: rational_spline_from_arc(center: Vec3 = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> BSpline
 
 .. autofunction:: rational_spline_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> BSpline
 
-.. autofunction:: cubic_bezier_from_arc(center: Vector = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> Iterable[Bezier4P]
+.. autofunction:: cubic_bezier_from_arc(center: Vec3 = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> Iterable[Bezier4P]
 
 .. autofunction:: cubic_bezier_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> Iterable[Bezier4P]
 
@@ -280,10 +284,10 @@ Matrix44
 Construction Tools
 ==================
 
-Vector
-------
+Vec3
+----
 
-.. autoclass:: Vector
+.. autoclass:: Vec3
 
     .. autoattribute:: x
 
@@ -321,11 +325,11 @@ Vector
 
     .. automethod:: __hash__
 
-    .. automethod:: copy() -> Vector
+    .. automethod:: copy() -> Vec3
 
-    .. automethod:: __copy__() -> Vector
+    .. automethod:: __copy__() -> Vec3
 
-    .. automethod:: __deepcopy__(memodict: dict) -> Vector
+    .. automethod:: __deepcopy__(memodict: dict) -> Vec3
 
     .. automethod:: __getitem__
 
@@ -333,33 +337,33 @@ Vector
 
     .. automethod:: __abs__
 
-    .. automethod:: replace(x: float = None, y: float = None, z: float = None) -> Vector
+    .. automethod:: replace(x: float = None, y: float = None, z: float = None) -> Vec3
 
-    .. automethod:: generate(items: Iterable[Vertex]) -> Iterable[Vector]
+    .. automethod:: generate(items: Iterable[Vertex]) -> Iterable[Vec3]
 
-    .. automethod:: list(items: Iterable[Vertex]) -> List[Vector]
+    .. automethod:: list(items: Iterable[Vertex]) -> List[Vec3]
 
-    .. automethod:: tuple(items: Iterable[Vertex]) -> Sequence[Vector]
+    .. automethod:: tuple(items: Iterable[Vertex]) -> Sequence[Vec3]
 
-    .. automethod:: from_angle(angle: float, length: float = 1.) -> Vector
+    .. automethod:: from_angle(angle: float, length: float = 1.) -> Vec3
 
-    .. automethod:: from_deg_angle(angle: float, length: float = 1.) -> Vector
+    .. automethod:: from_deg_angle(angle: float, length: float = 1.) -> Vec3
 
-    .. automethod:: orthogonal(ccw: bool = True) -> Vector
+    .. automethod:: orthogonal(ccw: bool = True) -> Vec3
 
-    .. automethod:: lerp(other: Any, factor=.5) -> Vector
+    .. automethod:: lerp(other: Any, factor=.5) -> Vec3
 
-    .. automethod:: is_parallel(other: Vector, abs_tolr=1e-12) -> bool
+    .. automethod:: is_parallel(other: Vec3, abs_tolr=1e-12) -> bool
 
-    .. automethod:: project(other: Any) -> Vector
+    .. automethod:: project(other: Any) -> Vec3
 
-    .. automethod:: normalize(length: float = 1.) -> Vector
+    .. automethod:: normalize(length: float = 1.) -> Vec3
 
-    .. automethod:: reversed() -> Vector
+    .. automethod:: reversed() -> Vec3
 
     .. automethod:: isclose
 
-    .. automethod:: __neg__() -> Vector
+    .. automethod:: __neg__() -> Vec3
 
     .. automethod:: __bool__
 
@@ -367,55 +371,55 @@ Vector
 
     .. automethod:: __lt__
 
-    .. automethod:: __add__(other: Any) -> Vector
+    .. automethod:: __add__(other: Any) -> Vec3
 
-    .. automethod:: __radd__(other: Any) -> Vector
+    .. automethod:: __radd__(other: Any) -> Vec3
 
-    .. automethod:: __sub__(other: Any) -> Vector
+    .. automethod:: __sub__(other: Any) -> Vec3
 
-    .. automethod:: __rsub__(other: Any) -> Vector
+    .. automethod:: __rsub__(other: Any) -> Vec3
 
-    .. automethod:: __mul__(other: float) -> Vector
+    .. automethod:: __mul__(other: float) -> Vec3
 
-    .. automethod:: __rmul__(other: float) -> Vector
+    .. automethod:: __rmul__(other: float) -> Vec3
 
-    .. automethod:: __truediv__(other: float) -> Vector
+    .. automethod:: __truediv__(other: float) -> Vec3
 
-    .. automethod:: __div__(other: float) -> Vector
+    .. automethod:: __div__(other: float) -> Vec3
 
-    .. automethod:: __rtruediv__(other: float) -> Vector
+    .. automethod:: __rtruediv__(other: float) -> Vec3
 
-    .. automethod:: __rdiv__(other: float) -> Vector
+    .. automethod:: __rdiv__(other: float) -> Vec3
 
     .. automethod:: dot
 
-    .. automethod:: cross(other: Any) -> Vector
+    .. automethod:: cross(other: Any) -> Vec3
 
     .. automethod:: distance
 
-    .. automethod:: angle_about(base: Vector, target: Vector) -> float
+    .. automethod:: angle_about(base: Vec3, target: Vec3) -> float
 
     .. automethod:: angle_between
 
-    .. automethod:: rotate(angle: float) -> Vector
+    .. automethod:: rotate(angle: float) -> Vec3
 
-    .. automethod:: rotate_deg(angle: float) -> Vector
+    .. automethod:: rotate_deg(angle: float) -> Vec3
 
 .. attribute:: X_AXIS
 
-    :code:`Vector(1, 0, 0)`
+    :code:`Vec3(1, 0, 0)`
 
 .. attribute:: Y_AXIS
 
-    :code:`Vector(0, 1, 0)`
+    :code:`Vec3(0, 1, 0)`
 
 .. attribute:: Z_AXIS
 
-    :code:`Vector(0, 0, 1)`
+    :code:`Vec3(0, 0, 1)`
 
 .. attribute:: NULLVEC
 
-    :code:`Vector(0, 0, 0)`
+    :code:`Vec3(0, 0, 0)`
 
 Vec2
 ----
@@ -425,7 +429,7 @@ Vec2
 Plane
 -----
 
-.. autoclass:: Plane(normal: Vector, distance: float)
+.. autoclass:: Plane(normal: Vec3, distance: float)
 
     .. autoattribute:: normal
 
@@ -433,17 +437,17 @@ Plane
 
     .. autoattribute:: vector
 
-    .. automethod:: from_3p(a: Vector, b: Vector, c: Vector) -> Plane
+    .. automethod:: from_3p(a: Vec3, b: Vec3, c: Vec3) -> Plane
 
     .. automethod:: from_vector(vector) -> Plane
 
     .. automethod:: copy() -> Plane
 
-    .. automethod:: signed_distance_to(v: Vector) -> float
+    .. automethod:: signed_distance_to(v: Vec3) -> float
 
-    .. automethod:: distance_to(v: Vector) -> float
+    .. automethod:: distance_to(v: Vec3) -> float
 
-    .. automethod:: is_coplanar_vertex(v: Vector, abs_tol=1e-9) -> bool
+    .. automethod:: is_coplanar_vertex(v: Vec3, abs_tol=1e-9) -> bool
 
     .. automethod:: is_coplanar_plane(p: Plane, abs_tol=1e-9) -> bool
 
@@ -637,20 +641,20 @@ ConstructionEllipse
 
     .. attribute:: center
 
-        center point as :class:`Vector`
+        center point as :class:`Vec3`
 
     .. attribute:: major_axis
 
-        major axis as :class:`Vector`
+        major axis as :class:`Vec3`
 
     .. attribute:: minor_axis
 
-        minor axis as :class:`Vector`, automatically calculated from
+        minor axis as :class:`Vec3`, automatically calculated from
         :attr:`major_axis` and :attr:`extrusion`.
 
     .. attribute:: extrusion
 
-        extrusion vector (normal of ellipse plane) as :class:`Vector`
+        extrusion vector (normal of ellipse plane) as :class:`Vec3`
 
     .. attribute:: ratio
 
@@ -673,6 +677,8 @@ ConstructionEllipse
     .. automethod:: params
 
     .. automethod:: vertices
+
+    .. automethod:: flattening
 
     .. automethod:: params_from_vertices
 
@@ -779,7 +785,7 @@ BSpline
 
     .. attribute:: control_points
 
-        Control points as list of :class:`~ezdxf.math.Vector`
+        Control points as list of :class:`~ezdxf.math.Vec3`
 
     .. autoattribute:: count
 
@@ -805,15 +811,17 @@ BSpline
 
     .. automethod:: transform(m: Matrix44) -> BSpline
 
-    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
+    .. automethod:: approximate(segments: int = 20) -> Iterable[Vec3]
 
-    .. automethod:: point(t: float) -> Vector
+    .. automethod:: flattening(distance: float, segments: int = 4) -> Iterable[Vec3]
 
-    .. automethod:: points(t: float) -> List[Vector]
+    .. automethod:: point(t: float) -> Vec3
 
-    .. automethod:: derivative(t: float, n: int=2) -> List[Vector]
+    .. automethod:: points(t: float) -> List[Vec3]
 
-    .. automethod:: derivatives(t: Iterable[float], n: int=2) -> Iterable[List[Vector]]
+    .. automethod:: derivative(t: float, n: int=2) -> List[Vec3]
+
+    .. automethod:: derivatives(t: Iterable[float], n: int=2) -> Iterable[List[Vec3]]
 
     .. automethod:: insert_knot
 
@@ -827,7 +835,7 @@ BSpline
 
     .. automethod:: ellipse_approximation(ellipse: ConstructionEllipse, num:int=16) -> BSpline
 
-    .. automethod:: bezier_decomposition() -> Iterable[List[Vector]]
+    .. automethod:: bezier_decomposition() -> Iterable[List[Vec3]]
 
     .. automethod:: cubic_bezier_approximation(level: int = 3, segments: int = None) -> Iterable[Bezier4P]
 
@@ -855,15 +863,17 @@ Bezier
 
     .. automethod:: transform(m: Matrix44) -> Bezier
 
-    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
+    .. automethod:: approximate(segments: int = 20) -> Iterable[Vec3]
 
-    .. automethod:: point(t: float) -> Vector
+    .. automethod:: flattening(distance: float, segments: int=4) -> Iterable[Vec3]
 
-    .. automethod:: points(t: Iterable[float]) -> Iterable[Vector]
+    .. automethod:: point(t: float) -> Vec3
 
-    .. automethod:: derivative(t: float) -> Tuple[Vector, Vector, Vector]
+    .. automethod:: points(t: Iterable[float]) -> Iterable[Vec3]
 
-    .. automethod:: derivatives(t: Iterable[float]) -> Iterable[Tuple[Vector, Vector, Vector]]
+    .. automethod:: derivative(t: float) -> Tuple[Vec3, Vec3, Vec3]
+
+    .. automethod:: derivatives(t: Iterable[float]) -> Iterable[Tuple[Vec3, Vec3, Vec3]]
 
 
 Bezier4P
@@ -877,13 +887,15 @@ Bezier4P
 
     .. automethod:: transform(m: Matrix44) -> Bezier4P
 
-    .. automethod:: approximate(segments: int) -> Iterable[Union[Vector, Vec2]]
+    .. automethod:: approximate(segments: int) -> Iterable[Union[Vec3, Vec2]]
+
+    .. automethod:: flattening(distance: float, segments: int=4) -> Iterable[Union[Vec3, Vec2]]
 
     .. automethod:: approximated_length
 
-    .. automethod:: point(t: float) -> Union[Vector, Vec2]
+    .. automethod:: point(t: float) -> Union[Vec3, Vec2]
 
-    .. automethod:: tangent(t: float) -> Union[Vector, Vec2]
+    .. automethod:: tangent(t: float) -> Union[Vec3, Vec2]
 
 
 
@@ -908,15 +920,15 @@ EulerSpiral
 
     .. automethod:: radius
 
-    .. automethod:: tangent(t: float) -> Vector
+    .. automethod:: tangent(t: float) -> Vec3
 
     .. automethod:: distance
 
-    .. automethod:: point(t: float) -> Vector
+    .. automethod:: point(t: float) -> Vec3
 
-    .. automethod:: circle_center(t: float) -> Vector
+    .. automethod:: circle_center(t: float) -> Vec3
 
-    .. automethod:: approximate(length: float, segments: int) -> Iterable[Vector]
+    .. automethod:: approximate(length: float, segments: int) -> Iterable[Vec3]
 
     .. automethod:: bspline(length: float, segments: int = 10, degree: int = 3, method: str = 'uniform') -> BSpline
 

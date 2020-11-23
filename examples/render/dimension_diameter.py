@@ -5,7 +5,7 @@
 import pathlib
 import math
 import ezdxf
-from ezdxf.math import Vector, UCS
+from ezdxf.math import Vec3, UCS
 import logging
 
 # ========================================
@@ -54,7 +54,7 @@ def diameter_default_outside(dxfversion='R2000', delta=10):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
-        angle = Vector(x, y).angle_deg
+        angle = Vec3(x, y).angle_deg
         msp.add_circle((x, y), radius=3)
 
         # Default DimStyle EZ_RADIUS: 1 drawing unit == 1m; scale 1: 100; length_factor=100 -> measurement in cm
@@ -105,7 +105,7 @@ def diameter_default_inside(dxfversion='R2000', delta=10, dimtmove=0):
 
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
-        angle = Vector(x, y).angle_deg
+        angle = Vec3(x, y).angle_deg
         add_dim(x, y, dimtad=1)  # above
         add_dim(x + 3 * delta, y, dimtad=0)  # center
         add_dim(x + 6 * delta, y, dimtad=4)  # below
@@ -127,7 +127,7 @@ def diameter_default_outside_horizontal(dxfversion='R2000', delta=10):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
-        angle = Vector(x, y).angle_deg
+        angle = Vec3(x, y).angle_deg
         add_dim(x, y, dimtad=1)  # above
         add_dim(x + 3 * delta, y, dimtad=0)  # center
         add_dim(x + 6 * delta, y, dimtad=4)  # below
@@ -143,7 +143,7 @@ def diameter_default_inside_horizontal(dxfversion='R2000', delta=10, dimtmove=0)
 
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
-        angle = Vector(x, y).angle_deg
+        angle = Vec3(x, y).angle_deg
         msp.add_circle((x, y), radius=3)
 
         dim = msp.add_diameter_dim(center=(x, y), radius=3, angle=angle, dimstyle='EZ_RADIUS_INSIDE',
@@ -157,9 +157,9 @@ def diameter_default_inside_horizontal(dxfversion='R2000', delta=10, dimtmove=0)
 
 def diameter_user_defined_outside(dxfversion='R2000', delta=15):
     def add_dim(x, y, radius, dimtad):
-        center = Vector(x, y)
+        center = Vec3(x, y)
         msp.add_circle((x, y), radius=3)
-        dim_location = center + Vector.from_deg_angle(angle, radius)
+        dim_location = center + Vec3.from_deg_angle(angle, radius)
         dim = msp.add_diameter_dim(center=(x, y), radius=3, location=dim_location, dimstyle='EZ_RADIUS',
                                    override={
                                        'dimtad': dimtad,
@@ -169,7 +169,7 @@ def diameter_user_defined_outside(dxfversion='R2000', delta=15):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
-        angle = Vector(x, y).angle_deg
+        angle = Vec3(x, y).angle_deg
         add_dim(x, y, 5, dimtad=1)  # above
         add_dim(x + 3 * delta, y, 5, dimtad=0)  # center
         add_dim(x + 6 * delta, y, 5, dimtad=4)  # below
@@ -180,9 +180,9 @@ def diameter_user_defined_outside(dxfversion='R2000', delta=15):
 
 def diameter_user_defined_outside_horizontal(dxfversion='R2000', delta=15):
     def add_dim(x, y, radius, dimtad):
-        center = Vector(x, y)
+        center = Vec3(x, y)
         msp.add_circle((x, y), radius=3)
-        dim_location = center + Vector.from_deg_angle(angle, radius)
+        dim_location = center + Vec3.from_deg_angle(angle, radius)
         dim = msp.add_diameter_dim(center=(x, y), radius=3, location=dim_location, dimstyle='EZ_RADIUS',
                                    override={
                                        'dimtad': dimtad,
@@ -193,7 +193,7 @@ def diameter_user_defined_outside_horizontal(dxfversion='R2000', delta=15):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
-        angle = Vector(x, y).angle_deg
+        angle = Vec3(x, y).angle_deg
         add_dim(x, y, 5, dimtad=1)  # above
         add_dim(x + 3 * delta, y, 5, dimtad=0)  # center
         add_dim(x + 6 * delta, y, 5, dimtad=4)  # below
@@ -204,9 +204,9 @@ def diameter_user_defined_outside_horizontal(dxfversion='R2000', delta=15):
 
 def diameter_user_defined_inside(dxfversion='R2000', delta=10, dimtmove=0):
     def add_dim(x, y, radius, dimtad):
-        center = Vector(x, y)
+        center = Vec3(x, y)
         msp.add_circle((x, y), radius=3)
-        dim_location = center + Vector.from_deg_angle(angle, radius)
+        dim_location = center + Vec3.from_deg_angle(angle, radius)
         dim = msp.add_diameter_dim(center=(x, y), radius=3, location=dim_location, dimstyle='EZ_RADIUS',
                                    override={
                                        'dimtad': dimtad,
@@ -219,7 +219,7 @@ def diameter_user_defined_inside(dxfversion='R2000', delta=10, dimtmove=0):
 
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
-        angle = Vector(x, y).angle_deg
+        angle = Vec3(x, y).angle_deg
         add_dim(x, y, 1, dimtad=1)  # above
         add_dim(x + 3 * delta, y, 1, dimtad=0)  # center
         add_dim(x + 6 * delta, y, 1, dimtad=4)  # below
@@ -230,9 +230,9 @@ def diameter_user_defined_inside(dxfversion='R2000', delta=10, dimtmove=0):
 
 def diameter_user_defined_inside_horizontal(dxfversion='R2000', delta=10):
     def add_dim(x, y, radius, dimtad):
-        center = Vector(x, y)
+        center = Vec3(x, y)
         msp.add_circle((x, y), radius=3)
-        dim_location = center + Vector.from_deg_angle(angle, radius)
+        dim_location = center + Vec3.from_deg_angle(angle, radius)
         dim = msp.add_diameter_dim(center=(x, y), radius=3, location=dim_location, dimstyle='EZ_RADIUS',
                                    override={
                                        'dimtad': dimtad,
@@ -243,7 +243,7 @@ def diameter_user_defined_inside_horizontal(dxfversion='R2000', delta=10):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
-        angle = Vector(x, y).angle_deg
+        angle = Vec3(x, y).angle_deg
         add_dim(x, y, 1, dimtad=1)  # above
         add_dim(x + 3 * delta, y, 1, dimtad=0)  # center
         add_dim(x + 6 * delta, y, 1, dimtad=4)  # below
@@ -258,7 +258,7 @@ def diameter_3d(dxfversion='R2000', delta=10):
 
     for x, y in multiple_locations(delta=delta):
         ucs = UCS(origin=(x, y, 0)).rotate_local_x(math.radians(45))
-        angle = Vector(x, y).angle_deg
+        angle = Vec3(x, y).angle_deg
         msp.add_circle((0, 0), radius=3).transform(ucs.matrix)
         dim = msp.add_diameter_dim(center=(0, 0), radius=3, angle=angle, dimstyle='EZ_RADIUS')
         dim.render(discard=BRICSCAD, ucs=ucs)

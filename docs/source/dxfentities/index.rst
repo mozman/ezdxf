@@ -27,6 +27,7 @@ DXF Entities
     leader
     line
     lwpolyline
+    mline
     mesh
     mtext
     point

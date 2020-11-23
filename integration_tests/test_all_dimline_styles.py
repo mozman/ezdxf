@@ -6,7 +6,7 @@ import os
 import random
 import ezdxf
 from ezdxf.lldxf.const import versions_supported_by_new
-from ezdxf.math.vector import Vector
+from ezdxf.math import Vec3
 
 
 @pytest.fixture(params=versions_supported_by_new)
@@ -43,7 +43,7 @@ def test_linear_dimline_all_arrow_style(drawing, tmpdir):
 
 def random_point(start, end):
     dist = end - start
-    return Vector(start + random.random() * dist, start + random.random() * dist)
+    return Vec3(start + random.random() * dist, start + random.random() * dist)
 
 
 def test_random_multi_point_linear_dimension(tmpdir):

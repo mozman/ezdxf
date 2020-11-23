@@ -12,7 +12,7 @@ from ezdxf.lldxf.const import (
     DXFValueError, DXFTableEntryError, DXFTypeError,
 )
 from ezdxf.lldxf.types import get_xcode_for
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform
 from ezdxf.tools import take2
 from ezdxf.render.arrows import ARROWS
@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     )
 
 logger = logging.getLogger('ezdxf')
+ADSK_CONSTRAINTS = "*ADSK_CONSTRAINTS"
 
 __all__ = [
     'Dimension', 'ArcDimension', 'RadialDimensionLarge',
@@ -40,7 +41,8 @@ acdb_dimension = DefSubclass('AcDbDimension', {
     'version': DXFAttr(280, default=0, dxfversion=DXF2010),
 
     # Name of the block that contains the entities that make up the dimension
-    # picture:
+    # picture
+    # Important: DIMENSION constraints do no have this group code 2:
     'geometry': DXFAttr(2, validator=validator.is_valid_block_name),
 
     # Dimension style name:
@@ -61,6 +63,7 @@ acdb_dimension = DefSubclass('AcDbDimension', {
     'insert': DXFAttr(12, xtype=XType.point3d, default=NULLVEC, optional=True),
 
     # Dimension type:
+    # Important: Dimensional constraints do not have group code 70
     # Values 0–6 are integer values that represent the dimension type.
     # Values 32, 64, and 128 are bit values, which are added to the integer
     # values (value 32 is always set in R13 and later releases)
@@ -448,22 +451,14 @@ class Dimension(DXFGraphic, OverrideMixin):
     # Do not destroy associated anonymous block, if DIMENSION is used in a
     # block, the anonymous block may be used by several block references.
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_dimension.name)
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_dimension_dummy, index=3)
+            processor.load_and_recover_dxfattribs(dxf, acdb_dimension)
+            processor.load_and_recover_dxfattribs(dxf, acdb_dimension_dummy, 3)
             # Ignore possible 5. subclass AcDbRotatedDimension, which has no
             # content.
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_dimension_dummy.name)
-
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -525,6 +520,22 @@ class Dimension(DXFGraphic, OverrideMixin):
         # undocumented ARC_DIMENSION = 8
         return self.dxf.dimtype & 15
 
+    # Special DIMENSION - Dimensional constraints
+    # No information in the DXF reference:
+    # layer name is "*ADSK_CONSTRAINTS"
+    # missing group code 2 - geometry block name
+    # missing group code 70 - dimension type
+    # has reactor to ACDBASSOCDEPENDENCY object
+    # Autodesk example: architectural_example-imperial.dxf
+    @property
+    def is_dimensional_constraint(self) -> bool:
+        """ Returns ``True`` if the DIMENSION entity is a dimensional
+        constrains object.
+        """
+        dxf = self.dxf
+        return not dxf.hasattr('dimtype') and \
+               dxf.layer == ADSK_CONSTRAINTS
+
     def get_geometry_block(self) -> Optional['BlockLayout']:
         """ Returns :class:`~ezdxf.layouts.BlockLayout` of associated anonymous
         dimension block, which contains the entities that make up the dimension
@@ -532,10 +543,10 @@ class Dimension(DXFGraphic, OverrideMixin):
         does not exist
 
         """
-        block_name = self.get_dxf_attrib('geometry', None)
+        block_name = self.get_dxf_attrib('geometry', '*')
         return self.doc.blocks.get(block_name)
 
-    def get_measurement(self) -> Union[float, Vector]:
+    def get_measurement(self) -> Union[float, Vec3]:
         """ Returns the actual dimension measurement in :ref:`WCS` units, no
         scaling applied for linear dimensions. Returns angle in degrees for
         angular dimension from 2 lines and angular dimension from 3 points.
@@ -543,7 +554,7 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         """
 
-        def angle_between(v1: Vector, v2: Vector) -> float:
+        def angle_between(v1: Vec3, v2: Vec3) -> float:
             angle = v2.angle_deg - v1.angle_deg
             return angle + 360 if angle < 0 else angle
 
@@ -555,27 +566,27 @@ class Dimension(DXFGraphic, OverrideMixin):
                 self.ocs(),
             )
         elif self.dimtype in (3, 4):  # diameter, radius
-            p1 = Vector(self.dxf.defpoint)
-            p2 = Vector(self.dxf.defpoint4)
+            p1 = Vec3(self.dxf.defpoint)
+            p2 = Vec3(self.dxf.defpoint4)
             return (p2 - p1).magnitude
         elif self.dimtype == 2:  # angular from 2 lines
-            p1 = Vector(self.dxf.defpoint2)  # 1. point of 1. extension line
-            p2 = Vector(self.dxf.defpoint3)  # 2. point of 1. extension line
-            p3 = Vector(self.dxf.defpoint4)  # 1. point of 2. extension line
-            p4 = Vector(self.dxf.defpoint)  # 2. point of 2. extension line
+            p1 = Vec3(self.dxf.defpoint2)  # 1. point of 1. extension line
+            p2 = Vec3(self.dxf.defpoint3)  # 2. point of 1. extension line
+            p3 = Vec3(self.dxf.defpoint4)  # 1. point of 2. extension line
+            p4 = Vec3(self.dxf.defpoint)  # 2. point of 2. extension line
             dir1 = p2 - p1  # direction of 1. extension line
             dir2 = p4 - p3  # direction of 2. extension line
             return angle_between(dir1, dir2)
         elif self.dimtype == 5:  # angular from 2 lines
-            p1 = Vector(self.dxf.defpoint4)  # center
-            p2 = Vector(self.dxf.defpoint2)  # 1. extension line
-            p3 = Vector(self.dxf.defpoint3)  # 2. extension line
+            p1 = Vec3(self.dxf.defpoint4)  # center
+            p2 = Vec3(self.dxf.defpoint2)  # 1. extension line
+            p3 = Vec3(self.dxf.defpoint3)  # 2. extension line
             dir1 = p2 - p1  # direction of 1. extension line
             dir2 = p3 - p1  # direction of 2. extension line
             return angle_between(dir1, dir2)
         elif self.dimtype == 6:  # ordinate
-            origin = Vector(self.dxf.defpoint)
-            feature_location = Vector(self.dxf.defpoint2)
+            origin = Vec3(self.dxf.defpoint)
+            feature_location = Vec3(self.dxf.defpoint2)
             return feature_location - origin
         else:
             # todo: add ARC_DIMENSION dimtype=8 support
@@ -674,20 +685,13 @@ class ArcDimension(Dimension):
                                acdb_arc_dimension)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
-        # skip Dimension loader
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        # Skip Dimension loader:
         dxf = super(Dimension, self).load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags,
-                                               subclass=acdb_dimension.name)
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_arc_dimension, index=3)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_arc_dimension.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_dimension)
+            processor.load_and_recover_dxfattribs(dxf, acdb_arc_dimension, 3)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -745,20 +749,14 @@ class RadialDimensionLarge(Dimension):
                                acdb_radial_dimension_large)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2004
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         # Skip Dimension loader:
         dxf = super(Dimension, self).load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_dimension.name)
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_radial_dimension_large, index=3)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_arc_dimension.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_dimension)
+            processor.load_and_recover_dxfattribs(
+                dxf, acdb_radial_dimension_large, 3)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -884,7 +882,7 @@ acdb_dim_assoc = DefSubclass('AcDbDimAssoc', {
 })
 
 
-def linear_measurement(p1: Vector, p2: Vector, angle: float = 0,
+def linear_measurement(p1: Vec3, p2: Vec3, angle: float = 0,
                        ocs: 'OCS' = None) -> float:
     """ Returns distance from `p1` to `p2` projected onto ray defined by
     `angle`, `angle` in radians in the xy-plane.
@@ -894,11 +892,11 @@ def linear_measurement(p1: Vector, p2: Vector, angle: float = 0,
         p1 = ocs.to_wcs(p1)
         p2 = ocs.to_wcs(p2)
         # angle in OCS xy-plane
-        ocs_direction = Vector.from_angle(angle)
+        ocs_direction = Vec3.from_angle(angle)
         measurement_direction = ocs.to_wcs(ocs_direction)
     else:
         # angle in WCS xy-plane
-        measurement_direction = Vector.from_angle(angle)
+        measurement_direction = Vec3.from_angle(angle)
 
     t1 = measurement_direction.project(p1)
     t2 = measurement_direction.project(p2)

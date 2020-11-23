@@ -1,9 +1,8 @@
-# Created: 2019-01-04
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 from typing import Union, Iterable, List, TYPE_CHECKING
 import math
-from .vector import Vec2
+from ezdxf.math import Vec2
 from .construct2d import convex_hull_2d
 from .offset2d import offset_vertices_2d
 from .bbox import BoundingBox2d
@@ -22,12 +21,18 @@ class Shape2d:
     """
 
     def __init__(self, vertices: Iterable['Vertex'] = None):
-        self.vertices = [] if vertices is None else Vec2.list(vertices)  # type: List[Vec2]
+        self.vertices: List[Vec2] = [] if vertices is None else Vec2.list(
+            vertices)
 
     @property
     def bounding_box(self) -> BoundingBox2d:
         """ :class:`BoundingBox2d` """
         return BoundingBox2d(self.vertices)
+
+    def copy(self) -> 'Shape2d':
+        return self.__class__(self.vertices)
+
+    __copy__ = copy
 
     def translate(self, vector: 'Vertex') -> None:
         """ Translate shape about `vector`. """
@@ -57,17 +62,18 @@ class Shape2d:
 
     def offset(self, offset: float, closed: bool = False) -> 'Shape2d':
         """
-        Returns a new offset shape, for more information see also :func:`ezdxf.math.offset_vertices_2d` function.
-
-        .. versionadded:: 0.11
+        Returns a new offset shape, for more information see also
+        :func:`ezdxf.math.offset_vertices_2d` function.
 
         Args:
-            offset: line offset perpendicular to direction of shape segments defined by vertices order,
-                    offset > ``0`` is 'left' of line segment, offset < ``0`` is 'right' of line segment
+            offset: line offset perpendicular to direction of shape segments
+                defined by vertices order, offset > ``0`` is 'left' of line
+                segment, offset < ``0`` is 'right' of line segment
             closed: ``True`` to handle as closed shape
 
         """
-        return self.__class__(offset_vertices_2d(self.vertices, offset=offset, closed=closed))
+        return self.__class__(
+            offset_vertices_2d(self.vertices, offset=offset, closed=closed))
 
     def convex_hull(self) -> 'Shape2d':
         """ Returns convex hull as new shape. """

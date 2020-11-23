@@ -6,9 +6,9 @@ import os
 import pytest
 
 import ezdxf
-from ezdxf.entities.geodata import GeoData, InvalidGeoDataException
+from ezdxf.entities.geodata import GeoData, EPSG_3395
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vec3, Matrix44
 
 GEODATA = """0
 GEODATA
@@ -363,8 +363,9 @@ def georeferenced_test_file_path() -> str:
 
 
 def test_interpreting_geodata(georeferenced_test_file_path):
-    # it is unclear how to create a georeferenced file from scratch. Copying every GeoData attribute and document
-    # header value across was not enough for AutoCAD to correctly interpret the coordinates
+    # It is unclear how to create a georeferenced file from scratch. Copying
+    #     # every GeoData attribute and document header value across was not enough
+    #     # for AutoCAD to correctly interpret the coordinates.
     doc = ezdxf.readfile(georeferenced_test_file_path)
     geodata = doc.modelspace().get_geodata()
 
@@ -372,14 +373,14 @@ def test_interpreting_geodata(georeferenced_test_file_path):
 
     coordinate_system_definition = geodata.coordinate_system_definition
     geodata.coordinate_system_definition = ''
-    with pytest.raises(InvalidGeoDataException):
+    with pytest.raises(ezdxf.InvalidGeoDataException):
         geodata.get_crs()
     geodata.coordinate_system_definition = coordinate_system_definition
 
     assert geodata.get_crs() == (27700, True)
 
-    # the outline of the Houses of Parliament in London, WCS coordinates are meaningless, but the cad file is
-    # georeferenced as epsg:27700
+    # the outline of the Houses of Parliament in London, WCS coordinates are
+    # meaningless, but the cad file is georeferenced as epsg:27700
     expected_geo_points = [
         (530207.5677217417, 179366.7895852687), (530304.7243275082, 179354.44795162012),
         (530337.0722795193, 179620.5081263125), (530285.502052045, 179626.77810356658),
@@ -405,4 +406,25 @@ def test_interpreting_geodata(georeferenced_test_file_path):
     georeferenced_entity = entity.transform(transformation)
     transformed_points = georeferenced_entity.get_points(format='xy')
     assert len(transformed_points) == len(expected_geo_points)
-    assert all(Vector(x1).isclose(Vector(x2)) for x1, x2 in zip(transformed_points, expected_geo_points))
+    assert all(Vec3(x1).isclose(Vec3(x2)) for x1, x2 in zip(transformed_points, expected_geo_points))
+
+
+def test_setup_local_grid_epsg_3395():
+    doc = ezdxf.new('R2010', units=5)  # cm
+    msp = doc.modelspace()
+    geodata = msp.new_geodata()
+    geodata.setup_local_grid(
+        design_point=(0, 0, 0),
+        reference_point=(1718030, 5921664, 0)  # Graz
+    )
+    assert geodata.coordinate_system_definition is EPSG_3395
+    assert geodata.dxf.design_point == (0, 0, 0)
+    assert geodata.dxf.reference_point == (1718030, 5921664, 0)
+    assert geodata.dxf.coordinate_type == geodata.LOCAL_GRID
+    assert geodata.dxf.horizontal_units == 5
+    assert geodata.dxf.horizontal_unit_scale == 0.01
+    assert geodata.dxf.vertical_units == 5
+    assert geodata.dxf.vertical_unit_scale == 0.01
+    assert geodata.dxf.north_direction == (0, 1)
+    assert geodata.dxf.up_direction == (0, 0, 1)
+    assert geodata.dxf.scale_estimation_method == geodata.NONE

@@ -3,7 +3,7 @@
 # License: MIT License
 import ezdxf
 from ezdxf.render import Spline
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vec3, Matrix44
 
 
 next_frame = Matrix44.translate(0, 5, 0)
@@ -19,7 +19,7 @@ def draw(points):
         msp.add_circle(radius=0.1, center=point, dxfattribs={'color': 1})
 
 
-spline_points = Vector.list([(1., 1.), (2.5, 3.), (4.5, 2.), (6.5, 4.)])
+spline_points = Vec3.list([(1., 1.), (2.5, 3.), (4.5, 2.), (6.5, 4.)])
 
 # fit points
 draw(spline_points)

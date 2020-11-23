@@ -6,12 +6,11 @@ import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext, Properties
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.text import FontMeasurements
-from ezdxf.addons.drawing.type_hints import Radians
 from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
 from ezdxf.render import Path
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vec3, Matrix44
 
 
 class BasicBackend(Backend):
@@ -23,14 +22,14 @@ class BasicBackend(Backend):
         super().__init__()
         self.collector = []
 
-    def draw_point(self, pos: Vector, properties: Properties) -> None:
+    def draw_point(self, pos: Vec3, properties: Properties) -> None:
         self.collector.append(('point', pos, properties))
 
-    def draw_line(self, start: Vector, end: Vector,
+    def draw_line(self, start: Vec3, end: Vec3,
                   properties: Properties) -> None:
         self.collector.append(('line', start, end, properties))
 
-    def draw_filled_polygon(self, points: List[Vector],
+    def draw_filled_polygon(self, points: List[Vec3],
                             properties: Properties) -> None:
         self.collector.append(('filled_polygon', points, properties))
 
@@ -40,8 +39,8 @@ class BasicBackend(Backend):
 
     def get_font_measurements(self, cap_height: float,
                               font=None) -> FontMeasurements:
-        return FontMeasurements(baseline=0.0, cap_top=1.0, x_top=0.5,
-                                bottom=-0.2)
+        return FontMeasurements(baseline=0.0, cap_height=1.0, x_height=0.5,
+                                descender_height=0.2)
 
     def set_background(self, color: str) -> None:
         self.collector.append(('bgcolor', color))
@@ -305,7 +304,7 @@ def test_hatch(msp, path_backend):
     path_backend.draw_entities(msp)
     result = path_backend.out.collector
     assert len(result) == 1
-    assert result[0][0] == 'path'
+    assert result[0][0] == 'filled_polygon'  # default implementation
 
 
 def test_basic_spline(msp, basic):

@@ -1,4 +1,3 @@
-# Created: 17.02.2019
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional, Tuple
@@ -7,12 +6,12 @@ from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
 )
+from ezdxf import colors as clr
 from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2004, INVALID_NAME_CHARACTERS,
     DXFValueError, LINEWEIGHT_BYBLOCK, LINEWEIGHT_BYLAYER, LINEWEIGHT_DEFAULT,
 )
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
-from ezdxf.tools import rgb2int, int2rgb, transparency2float, float2transparency
 from .factory import register_entity
 
 logger = logging.getLogger('ezdxf')
@@ -24,7 +23,7 @@ __all__ = ['Layer', 'acdb_symbol_table_record']
 
 
 def is_valid_layer_color_index(aci: int) -> bool:
-    return -256 < aci < 256 and aci != 0
+    return (-256 < aci < 256) and aci != 0
 
 
 def fix_layer_color(aci: int) -> int:
@@ -127,9 +126,19 @@ class Layer(DXFEntity):
 
     def set_required_attributes(self):
         if not self.dxf.hasattr('material'):
-            self.dxf.material_handle = self.doc.materials['Global'].dxf.handle
+            global_ = self.doc.materials['Global']
+            if isinstance(global_, DXFEntity):
+                handle = global_.dxf.handle
+            else:
+                handle = global_
+            self.dxf.material_handle = handle
         if not self.dxf.hasattr('plotstyle_handle'):
-            self.dxf.plotstyle_handle = self.doc.plotstyles['Normal'].dxf.handle
+            normal = self.doc.plotstyles['Normal']
+            if isinstance(normal, DXFEntity):
+                handle = normal.dxf.handle
+            else:
+                handle = normal
+            self.dxf.plotstyle_handle = handle
 
     def is_frozen(self) -> bool:
         """ Returns ``True`` if layer is frozen. """
@@ -194,14 +203,14 @@ class Layer(DXFEntity):
         dxf.true_color is not set.
         """
         if self.dxf.hasattr('true_color'):
-            return int2rgb(self.dxf.get('true_color'))
+            return clr.int2rgb(self.dxf.get('true_color'))
         else:
             return None
 
     @rgb.setter
     def rgb(self, rgb: Tuple[int, int, int]) -> None:
         """ Set RGB true color as (r, g, b)-tuple e.g. (12, 34, 56). """
-        self.dxf.set('true_color', rgb2int(rgb))
+        self.dxf.set('true_color', clr.rgb2int(rgb))
 
     @property
     def color(self) -> int:
@@ -245,7 +254,7 @@ class Layer(DXFEntity):
         except DXFValueError:
             return 0
         else:
-            return transparency2float(xdata[0].value)
+            return clr.transparency2float(xdata[0].value)
 
     @transparency.setter
     def transparency(self, value: float) -> None:
@@ -255,7 +264,7 @@ class Layer(DXFEntity):
         if 0 <= value <= 1:
             self.discard_xdata(AcCmTransparency)
             self.set_xdata(AcCmTransparency,
-                           [(1071, float2transparency(value))])
+                           [(1071, clr.float2transparency(value))])
         else:
             raise ValueError('Value out of range (0 .. 1).')
 

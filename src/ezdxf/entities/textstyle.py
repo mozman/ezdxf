@@ -1,9 +1,8 @@
-# Created: 17.02.2019
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 import logging
-from ezdxf.lldxf import validator
+from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
 )
@@ -32,7 +31,7 @@ acdb_style = DefSubclass('AcDbTextStyleTableRecord', {
         validator=validator.is_greater_or_equal_zero,
         fixer=RETURN_DEFAULT,
     ),
-    # Width factor:
+    # Width factor:  a.k.a. "Stretch"
     'width': DXFAttr(
         41, default=1,
         validator=validator.is_greater_zero,
@@ -57,11 +56,24 @@ acdb_style = DefSubclass('AcDbTextStyleTableRecord', {
 })
 
 
+# XDATA: This is not a reliable source for font data!
+# 1001 <ctrl> ACAD
+# 1000 <str> Arial  ; font-family sometimes an empty string!
+# 1071 <int> 34  ; flags
+# ----
+# "Arial" "normal" flags = 34               = 0b00:00000000:00000000:00100010
+# "Arial" "italic" flags = 16777250         = 0b01:00000000:00000000:00100010
+# "Arial" "bold" flags = 33554466           = 0b10:00000000:00000000:00100010
+# "Arial" "bold+italic" flags = 50331682    = 0b11:00000000:00000000:00100010
+
+
 @register_entity
 class Textstyle(DXFEntity):
     """ DXF STYLE entity """
     DXFTYPE = 'STYLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_style)
+    BOLD = 0b01000000000000000000000000
+    ITALIC = 0b10000000000000000000000000
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -82,3 +94,54 @@ class Textstyle(DXFEntity):
             'name', 'flags', 'height', 'width', 'oblique', 'generation_flags',
             'last_height', 'font', 'bigfont'
         ])
+
+    @property
+    def has_extended_font_data(self) -> bool:
+        """ Returns ``True`` if extended font data is present. """
+        return self.has_xdata('ACAD')
+
+    def get_extended_font_data(self) -> Tuple[str, bool, bool]:
+        """ Returns extended font data as tuple (font-family, italic-flag,
+        bold-flag).
+
+        The extended font data is optional and not reliable! Returns
+        ("", ``False``, ``False``) if extended font data is not present.
+
+        """
+        family = ""
+        italic = False
+        bold = False
+        try:
+            xdata = self.get_xdata('ACAD')
+        except const.DXFValueError:
+            pass
+        else:
+            if len(xdata) > 1:
+                group_code, value = xdata[0]
+                if group_code == 1000:
+                    family = value
+                group_code, value = xdata[1]
+                if group_code == 1071:
+                    italic = bool(self.ITALIC & value)
+                    bold = bool(self.BOLD & value)
+        return family, italic, bold
+
+    def set_extended_font_data(self, family: str = "", *,
+                               italic=False,
+                               bold=False) -> None:
+        """ Set extended font data, the font-family name `family` is not
+        validated by `ezdxf`. Overwrites existing data.
+        """
+        if self.has_xdata('ACAD'):
+            self.discard_xdata('ACAD')
+
+        flags = 34  # unknown default flags
+        if italic:
+            flags += self.ITALIC
+        if bold:
+            flags += self.BOLD
+        self.set_xdata('ACAD', [(1000, family), (1071, flags)])
+
+    def discard_extended_font_data(self):
+        """ Discard extended font data. """
+        self.discard_xdata('ACAD')

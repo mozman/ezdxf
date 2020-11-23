@@ -1,7 +1,7 @@
 # Copyright (c) 2017-2020, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict, Optional,
+    TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict, Optional, Callable
 )
 import sys
 from enum import IntEnum
@@ -41,6 +41,8 @@ class AuditError(IntEnum):
     ORPHANED_PAPER_SPACE_BLOCK_RECORD_ENTITY = 109
     INVALID_TABLE_HANDLE = 110
     DECODING_ERROR = 111
+    CREATED_MISSING_OBJECT = 112
+    RESET_MLINE_STYLE = 113
 
     # DXF entity property errors:
     INVALID_ENTITY_HANDLE = 201
@@ -48,6 +50,7 @@ class AuditError(IntEnum):
     INVALID_LAYER_NAME = 203
     INVALID_COLOR_INDEX = 204
     INVALID_LINEWEIGHT = 205
+    INVALID_MLINESTYLE_HANDLE = 206
 
     # DXF entity geometry or content errors:
     INVALID_EXTRUSION_VECTOR = 210
@@ -55,6 +58,8 @@ class AuditError(IntEnum):
     INVALID_VERTEX_COUNT = 212
     INVALID_DICTIONARY_ENTRY = 213
     INVALID_CHARACTER = 214
+    INVALID_MLINE_VERTEX = 215
+    INVALID_MLINESTYLE_ELEMENT_COUNT = 216
 
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
@@ -77,6 +82,7 @@ class Auditor:
         self.fixes: List[ErrorEntry] = []
         self._trashcan: Optional['EntityDB.Trashcan'] = \
             doc.entitydb.new_trashcan() if doc else None
+        self._post_audit_jobs = []
 
     def reset(self) -> None:
         self.errors = []
@@ -199,6 +205,9 @@ class Auditor:
     def has_trashcan(self) -> bool:
         return self._trashcan is not None
 
+    def add_post_audit_job(self, job: Callable):
+        self._post_audit_jobs.append(job)
+
     def check_root_dict(self) -> None:
         root_dict = self.doc.rootdict
         for name in REQUIRED_ROOT_DICT_ENTRIES:
@@ -245,11 +254,21 @@ class Auditor:
         # Auditor.trash(entity)
         db = self.doc.entitydb
         db.locked = True
+        # To create new entities while auditing, add a post audit job by calling
+        # Auditor.app_post_audit_job() with a callable object or
+        # function as argument.
+        self._post_audit_jobs = []
         for entity in db.values():
             if entity.is_alive:
                 entity.audit(self)
         db.locked = False
         self.empty_trashcan()
+        self.exec_post_audit_jobs()
+
+    def exec_post_audit_jobs(self):
+        for call in self._post_audit_jobs:
+            call()
+        self._post_audit_jobs = []
 
     def check_entity_linetype(self, entity: 'DXFEntity') -> None:
         """ Check for usage of undefined line types. AutoCAD does not load

@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-03-09
 from typing import TYPE_CHECKING, Union, Tuple, Iterable, List, cast, Optional
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (

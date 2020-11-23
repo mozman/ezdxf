@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
-# Created: 2019-03-11
 from typing import TYPE_CHECKING, List
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFStructureError
 from ezdxf.lldxf.attributes import DXFAttributes, DefSubclass, DXFAttr

@@ -38,7 +38,7 @@ class DXFNamespace:
     valid Python names can be used as attrib name.
 
     The namespace can only contain immutable objects: string, int, float, bool,
-    Vector. Because of the immutability, copy and deepcopy are the same.
+    Vec3. Because of the immutability, copy and deepcopy are the same.
 
     (internal class)
     """
@@ -117,6 +117,15 @@ class DXFNamespace:
 
         """
 
+        def entity() -> str:
+            # DXFNamespace is maybe not assigned to the entity yet:
+            handle = self.get('handle')
+            _entity = self._entity
+            if _entity:
+                return _entity.dxftype() + f'(#{handle})'
+            else:
+                return f'#{handle}'
+
         def check(value):
             value = cast_value(attrib_def.code, value)
             if not attrib_def.is_valid_value(value):
@@ -124,12 +133,12 @@ class DXFNamespace:
                     value = attrib_def.fixer(value)
                     logger.debug(
                         f'Fixed invalid attribute "{key}" in entity'
-                        f' {str(self._entity)} to "{str(value)}".'
+                        f' {entity()} to "{str(value)}".'
                     )
                 else:
                     raise const.DXFValueError(
                         f'Invalid value {str(value)} for attribute "{key}" in '
-                        f'entity {str(self._entity)}.'
+                        f'entity {entity()}.'
                     )
             return value
 
@@ -334,11 +343,14 @@ class SubclassProcessor:
         return self.subclasses[0]
 
     def log_unprocessed_tags(self, unprocessed_tags: Iterable,
-                             subclass='<?>') -> None:
+                             subclass='<?>', handle=None) -> None:
         if options.log_unprocessed_tags:
             for tag in unprocessed_tags:
+                entity = ""
+                if handle:
+                    entity = f" in entity #{handle}"
                 logger.info(
-                    f"ignored {repr(tag)} in {str(self)}, {subclass}")
+                    f"ignored {repr(tag)} in subclass {subclass}" + entity)
 
     def find_subclass(self, name: str) -> Optional[Tags]:
         for subclass in self.subclasses:
@@ -453,3 +465,48 @@ class SubclassProcessor:
         if acdb_entity_tags[0] == (100, 'AcDbEntity'):
             acdb_entity_tags.extend(tag for tag in self.subclasses[0] if
                                     tag.code not in BASE_CLASS_CODES)
+
+    @staticmethod
+    def recover_graphic_attributes(tags: Tags, dxf: DXFNamespace) -> Tags:
+        return recover_graphic_attributes(tags, dxf)
+
+    def load_and_recover_dxfattribs(self, dxf, subclass, index=None):
+        tags = self.load_dxfattribs_into_namespace(dxf, subclass, index)
+        if len(tags) and not self.r12:
+            tags = recover_graphic_attributes(tags, dxf)
+            if len(tags):
+                handle = dxf.get('handle')
+                self.log_unprocessed_tags(tags, subclass=subclass.name,
+                                          handle=handle)
+
+
+GRAPHIC_ATTRIBUTES_TO_RECOVER = {
+    8: 'layer',
+    6: 'linetype',
+    62: 'color',
+    67: 'paperspace',
+    370: 'lineweight',
+    48: 'ltscale',
+    60: 'invisible',
+    420: 'true_color',
+    430: 'color_name',
+    440: 'transparency',
+    284: 'shadow_mode',
+    347: 'material_handle',
+    348: 'visualstyle_handle',
+    380: 'plotstyle_enum',
+    390: 'plotstyle_handle'
+}
+
+
+def recover_graphic_attributes(tags: Tags, dxf: DXFNamespace) -> Tags:
+    unprocessed_tags = Tags()
+    for tag in tags:
+        attrib_name = GRAPHIC_ATTRIBUTES_TO_RECOVER.get(tag.code)
+        # Don't know if the unprocessed tag is really a misplaced tag,
+        # so check if the attribute already exist!
+        if attrib_name and not dxf.hasattr(attrib_name):
+            dxf.set(attrib_name, tag.value)
+        else:
+            unprocessed_tags.append(tag)
+    return unprocessed_tags

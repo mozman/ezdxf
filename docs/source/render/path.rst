@@ -54,17 +54,19 @@ cubic Bézier-curves, other B-splines will be approximated.
 
     .. automethod:: from_circle
 
-    .. automethod:: from_hatch_polyline_path
+    .. automethod:: from_hatch_boundary_path(boundary: Union[PolylinePath, EdgePath], ocs: OCS = None, elevation: float = 0) -> Path
 
-    .. automethod:: from_hatch_edge_path
+    .. automethod:: from_hatch_polyline_path(polyline: PolylinePath, ocs: OCS = None, elevation: float = 0) -> Path
+
+    .. automethod:: from_hatch_edge_path(edge: EdgePath, ocs: OCS = None, elevation: float = 0) -> Path
 
     .. automethod:: control_vertices
 
     .. automethod:: has_clockwise_orientation
 
-    .. automethod:: line_to(location: Vector)
+    .. automethod:: line_to(location: Vec3)
 
-    .. automethod:: curve_to(location: Vector, ctrl1: Vector, ctrl2: Vector)
+    .. automethod:: curve_to(location: Vec3, ctrl1: Vec3, ctrl2: Vec3)
 
     .. automethod:: close
 
@@ -84,7 +86,9 @@ cubic Bézier-curves, other B-splines will be approximated.
 
     .. automethod:: transform(m: Matrix44) -> Path
 
-    .. automethod:: approximate(segments: int) -> Iterable[Vector]
+    .. automethod:: approximate(segments: int=20) -> Iterable[Vec3]
+
+    .. automethod:: flattening(distance: float, segments: int=16) -> Iterable[Vec3]
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qtforpython/PySide2/QtGui/QPainterPath.html

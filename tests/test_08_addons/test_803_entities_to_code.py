@@ -13,8 +13,8 @@ msp = doc.modelspace()
 
 
 def test_fmt_mapping():
-    from ezdxf.math import Vector
-    d = {'a': 1, 'b': 'str', 'c': Vector(), 'd': 'xxx "yyy" \'zzz\''}
+    from ezdxf.math import Vec3
+    d = {'a': 1, 'b': 'str', 'c': Vec3(), 'd': 'xxx "yyy" \'zzz\''}
     r = list(_fmt_mapping(d))
     assert r[0] == "'a': 1,"
     assert r[1] == "'b': \"str\","
@@ -39,8 +39,8 @@ def test_fmt_float_list():
 
 
 def test_fmt_vector_list():
-    from ezdxf.math import Vector
-    l = [Vector(), (1., 2., 3.)]
+    from ezdxf.math import Vec3
+    l = [Vec3(), (1., 2., 3.)]
     r = list(_fmt_list(l))
     assert r[0] == '(0.0, 0.0, 0.0),'
     assert r[1] == '(1.0, 2.0, 3.0),'

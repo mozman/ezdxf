@@ -1,7 +1,8 @@
-# Created: 17.02.2019
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union, Iterable, cast
+from typing import (
+    TYPE_CHECKING, Union, Iterable, cast, Tuple, Sequence, Optional
+)
 from copy import deepcopy
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
@@ -16,7 +17,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
 
-__all__ = ['Linetype']
+__all__ = ['Linetype', 'compile_line_pattern', 'CONTINUOUS_PATTERN']
 
 acdb_linetype = DefSubclass('AcDbLinetypeTableRecord', {
     'name': DXFAttr(2, validator=is_valid_table_name),
@@ -25,6 +26,8 @@ acdb_linetype = DefSubclass('AcDbLinetypeTableRecord', {
     # 'length': DXFAttr(40),
     # 'items': DXFAttr(73),
 })
+
+CONTINUOUS_PATTERN = tuple()
 
 
 class LinetypePattern:
@@ -51,6 +54,77 @@ class LinetypePattern:
 
     def is_complex_type(self):
         return self.tags.has_tag(340)
+
+    def compile(self) -> Tuple[float, ...]:
+        """ Returns the simplified dash-gap-dash... line pattern,
+        a dash-length of 0 represents a point.
+        """
+        # complex line types with text and shapes are not supported
+        if self.is_complex_type():
+            return CONTINUOUS_PATTERN
+
+        pattern_length = 0.0
+        elements = []
+        for tag in self.tags:
+            if tag.code == 40:
+                pattern_length = tag.value
+            elif tag.code == 49:
+                elements.append(tag.value)
+
+        if len(elements) < 2:
+            return CONTINUOUS_PATTERN
+        return compile_line_pattern(pattern_length, elements)
+
+
+def _merge_dashes(elements: Sequence[float]) -> Iterable[float]:
+    """ Merge multiple consecutive lines, gaps or points into a single element.
+    """
+
+    def sign(v):
+        if v < 0:
+            return -1
+        elif v > 0:
+            return +1
+        return 0
+
+    buffer = elements[0]
+    prev_sign = sign(buffer)
+    for e in elements[1:]:
+        if sign(e) == prev_sign:
+            buffer += e
+        else:
+            yield buffer
+            buffer = e
+            prev_sign = sign(e)
+    yield buffer
+
+
+def compile_line_pattern(
+        total_length: Optional[float],
+        elements: Sequence[float]) -> Tuple[float, ...]:
+    """ Returns the simplified dash-gap-dash... line pattern,
+    a dash-length of 0 represents a point.
+    """
+    elements = list(_merge_dashes(elements))
+    if total_length is None:
+        pass
+    elif len(elements) < 2 or total_length <= 0.0:
+        return CONTINUOUS_PATTERN
+
+    sum_elements = sum(abs(e) for e in elements)
+    if total_length and total_length > sum_elements:  # append a gap
+        elements.append(sum_elements - total_length)
+
+    if elements[0] < 0:  # start with a gap
+        e = elements.pop(0)
+        if elements[-1] < 0:  # extend last gap
+            elements[-1] += e
+        else:  # add last gap
+            elements.append(e)
+    # returns dash-gap-point
+    # possible: dash-point or point-dash - ignore this yet
+    # never: dash-dash or gap-gap or point-point
+    return tuple(abs(e) for e in elements)
 
 
 @register_entity
@@ -101,7 +175,7 @@ class Linetype(DXFEntity):
     def preprocess_export(self, tagwriter: 'TagWriter'):
         if len(self.pattern_tags) == 0:
             return False
-        # do not export complex linetypes for DXF12
+        # Do not export complex linetypes for DXF12
         if tagwriter.dxfversion == DXF12:
             return not self.pattern_tags.is_complex_type()
         return True

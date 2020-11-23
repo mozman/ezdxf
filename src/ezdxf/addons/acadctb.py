@@ -591,12 +591,7 @@ def new_ctb() -> ColorDependentPlotStyles:
 
 
 def new_stb() -> NamedPlotStyles:
-    """
-    Create a new STB file.
-
-    .. versionadded:: 0.10
-
-    """
+    """ Create a new STB file. """
     return NamedPlotStyles()
 
 

@@ -1,4 +1,3 @@
-# Created: 17.02.2019
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
@@ -9,7 +8,7 @@ from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2010
-from ezdxf.math import Vector, NULLVEC
+from ezdxf.math import Vec3, NULLVEC
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
@@ -28,7 +27,7 @@ acdb_view = DefSubclass('AcDbViewTableRecord', {
     'width': DXFAttr(41, default=1),
     'center': DXFAttr(10, xtype=XType.point2d, default=NULLVEC),
     'direction': DXFAttr(
-        11, xtype=XType.point3d, default=Vector(1, 1, 1),
+        11, xtype=XType.point3d, default=Vec3(1, 1, 1),
         validator=validator.is_not_null_vector,
     ),
     'target': DXFAttr(12, xtype=XType.point3d, default=NULLVEC),

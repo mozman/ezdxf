@@ -1,12 +1,10 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-16
 from typing import (
     TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional,
     Callable, Dict,
 )
 import math
-import warnings
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -15,7 +13,7 @@ from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError, DXFStructureError,
 )
 from ezdxf.math import (
-    Vector, X_AXIS, Y_AXIS, Z_AXIS, Matrix44, OCS, UCS, NULLVEC,
+    Vec3, X_AXIS, Y_AXIS, Z_AXIS, Matrix44, OCS, UCS, NULLVEC,
 )
 from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
 from ezdxf.explode import (
@@ -25,7 +23,7 @@ from ezdxf.entities import factory
 from ezdxf.query import EntityQuery
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, elevation_to_z_axis
 from .subentity import LinkedEntities
 from .attrib import Attrib
 
@@ -42,6 +40,12 @@ acdb_block_reference = DefSubclass('AcDbBlockReference', {
     'attribs_follow': DXFAttr(66, default=0, optional=True),
     'name': DXFAttr(2, validator=validator.is_valid_block_name),
     'insert': DXFAttr(10, xtype=XType.any_point),
+
+    # Elevation is a legacy feature from R11 and prior, do not use this
+    # attribute, store the entity elevation in the z-axis of the vertices.
+    # ezdxf does not export the elevation attribute!
+    'elevation': DXFAttr(38, default=0, optional=True),
+
     'xscale': DXFAttr(
         41, default=1, optional=True,
         validator=validator.is_not_zero,
@@ -113,11 +117,10 @@ class Insert(LinkedEntities):
         if processor:
             # Always use the 2nd subclass, could be AcDbBlockReference or
             # AcDbMInsertBlock:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_block_reference, 2)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_block_reference.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_block_reference, 2)
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, ('insert', ))
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -144,11 +147,7 @@ class Insert(LinkedEntities):
 
     @property
     def has_scaling(self) -> bool:
-        """ Returns ``True`` if any axis scaling is applied.
-
-        .. versionadded:: 0.12
-
-        """
+        """ Returns ``True`` if any axis scaling is applied. """
         if self.dxf.hasattr('xscale') and self.dxf.xscale != 1:
             return True
         if self.dxf.hasattr('yscale') and self.dxf.yscale != 1:
@@ -426,7 +425,7 @@ class Insert(LinkedEntities):
         """
         ocs = self.ocs()
         self.dxf.insert = ocs.from_wcs(
-            Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.insert))
+            Vec3(dx, dy, dz) + ocs.to_wcs(self.dxf.insert))
         for attrib in self.attribs:
             attrib.translate(dx, dy, dz)
         return self
@@ -445,15 +444,15 @@ class Insert(LinkedEntities):
 
         ocs = self.ocs()
         extrusion = ocs.uz
-        ux = Vector(ocs.to_wcs(X_AXIS))
-        uy = Vector(ocs.to_wcs(Y_AXIS))
+        ux = Vec3(ocs.to_wcs(X_AXIS))
+        uy = Vec3(ocs.to_wcs(Y_AXIS))
         m = Matrix44.ucs(ux=ux * sx, uy=uy * sy, uz=extrusion * sz)
 
         angle = math.radians(dxf.rotation)
         if angle != 0.0:
             m = Matrix44.chain(m, Matrix44.axis_rotate(extrusion, angle))
 
-        insert = ocs.to_wcs(dxf.get('insert', Vector()))
+        insert = ocs.to_wcs(dxf.get('insert', Vec3()))
 
         block_layout = self.block()
         if block_layout is not None:
@@ -482,12 +481,10 @@ class Insert(LinkedEntities):
         self.dxf.discard('rotation')
         self.dxf.discard('extrusion')
 
-    def explode(self, target_layout: 'BaseLayout' = None,
-                non_uniform_scaling=None) -> 'EntityQuery':
-        """
-        Explode block reference entities into target layout, if target layout is
-        ``None``, the target layout is the layout of the block reference.
-        This method destroys the source block reference entity.
+    def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
+        """ Explode block reference entities into target layout, if target
+        layout is ``None``, the target layout is the layout of the block
+        reference. This method destroys the source block reference entity.
 
         Transforms the block entities into the required :ref:`WCS` location by
         applying the block reference attributes `insert`, `extrusion`,
@@ -506,10 +503,7 @@ class Insert(LinkedEntities):
 
         Args:
             target_layout: target layout for exploded entities, ``None`` for
-            same layout as source entity.
-
-        .. versionchanged:: 0.13
-            deprecated `non_uniform_scaling` argument
+                same layout as source entity.
 
         """
         if target_layout is None:
@@ -518,16 +512,9 @@ class Insert(LinkedEntities):
                 raise DXFStructureError(
                     'INSERT without layout assigment, specify target layout.'
                 )
-        if non_uniform_scaling is not None:
-            warnings.warn(
-                'Insert.explode() argument `non_uniform_scaling` is deprecated'
-                ' (removed in v0.15).',
-                DeprecationWarning
-            )
         return explode_block_reference(self, target_layout=target_layout)
 
     def virtual_entities(self,
-                         non_uniform_scaling=None,
                          skipped_entity_callback: Optional[
                              Callable[[DXFGraphic, str], None]] = None
                          ) -> Iterable[DXFGraphic]:
@@ -565,16 +552,7 @@ class Insert(LinkedEntities):
             skipped_entity_callback: called whenever the transformation of an
                 entity is not supported and so was skipped
 
-        .. versionchanged:: 0.13
-            deprecated `non_uniform_scaling` argument
-
         """
-        if non_uniform_scaling is not None:
-            warnings.warn(
-                'Insert.virtual_entities() argument `non_uniform_scaling` is'
-                ' deprecated (removed in v0.15).',
-                DeprecationWarning
-            )
         return virtual_block_reference_entities(
             self, skipped_entity_callback=skipped_entity_callback)
 
@@ -616,7 +594,7 @@ class Insert(LinkedEntities):
         for row in range(self.dxf.row_count):
             for col in range(self.dxf.column_count):
                 # All transformations in OCS:
-                offset = Vector(col * col_spacing, row * row_spacing)
+                offset = Vec3(col * col_spacing, row * row_spacing)
                 # If any spacing is 0, yield only unique locations:
                 if offset not in done:
                     done.add(offset)

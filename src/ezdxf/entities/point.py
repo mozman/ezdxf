@@ -1,22 +1,22 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import (
     transform_thickness_and_extrusion_without_ocs
 )
+from ezdxf.render import point
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, DXFEntity
 
 __all__ = ['Point']
 
@@ -68,19 +68,14 @@ class Point(DXFGraphic):
         """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_point)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_point.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_point)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. (internal API) """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_point.name)
-        # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, [
             'location', 'thickness', 'extrusion', 'angle'
         ])
@@ -103,5 +98,25 @@ class Point(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        self.dxf.location = Vector(dx, dy, dz) + self.dxf.location
+        self.dxf.location = Vec3(dx, dy, dz) + self.dxf.location
         return self
+
+    def virtual_entities(self, pdsize: float = 1,
+                         pdmode: int = 0) -> List['DXFGraphic']:
+        """ Yields point graphic as DXF primitives LINE and CIRCLE entities.
+        The dimensionless point is rendered as zero-length line!
+
+        Check for this condition::
+
+            e.dxftype() == 'LINE' and e.dxf.start.isclose(e.dxf.end)
+
+        if the rendering engine can't handle zero-length lines.
+
+        Args:
+            pdsize: point size in drawing units
+            pdmode: point styling mode
+
+        .. versionadded:: 0.15
+
+        """
+        return point.virtual_entities(self, pdsize, pdmode)

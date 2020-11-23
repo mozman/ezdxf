@@ -1,31 +1,29 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import pytest
-import ezdxf
 
 from ezdxf.entities.polyline import vertex_attribs, DXFVertex
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 from ezdxf.layouts import VirtualLayout
 
 def test_vertext_attribs_xy():
     result = vertex_attribs((1, 2), format='xy')
-    assert result == {'location': Vector(1, 2)}
+    assert result == {'location': Vec3(1, 2)}
 
 
 def test_vertext_attribs_xyb():
     result = vertex_attribs((1, 2, .5), format='xyb')
-    assert result == {'location': Vector(1, 2), 'bulge': 0.5}
+    assert result == {'location': Vec3(1, 2), 'bulge': 0.5}
 
 
 def test_vertext_attribs_xyseb():
     result = vertex_attribs((1, 2, 3, 4, .5), format='xyseb')
-    assert result == {'location': Vector(1, 2), 'bulge': 0.5, 'start_width': 3, 'end_width': 4}
+    assert result == {'location': Vec3(1, 2), 'bulge': 0.5, 'start_width': 3, 'end_width': 4}
 
 
 def test_vertext_attribs_vseb():
     result = vertex_attribs(((1, 2), 3, 4, .5), format='vseb')
-    assert result == {'location': Vector(1, 2), 'bulge': 0.5, 'start_width': 3, 'end_width': 4}
+    assert result == {'location': Vec3(1, 2), 'bulge': 0.5, 'start_width': 3, 'end_width': 4}
 
 
 def test_append_formatted_vertices():

@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable, List, cast
 import math
-from ezdxf.math import Vector, Vec2, ConstructionRay
+from ezdxf.math import Vec3, Vec2, ConstructionRay
 from ezdxf.math import UCS
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
@@ -66,7 +66,7 @@ class LinearDimension(BaseDimensionRenderer):
             self.dim_line_vec = (self.dim_line_end - self.dim_line_start).normalize()  # type: Vec2
 
         # set dimension defpoint to expected location - 3D vertex required!
-        self.dimension.dxf.defpoint = Vector(self.dim_line_start)
+        self.dimension.dxf.defpoint = Vec3(self.dim_line_start)
 
         self.measurement = (self.dim_line_end - self.dim_line_start).magnitude  # type: float
         self.text = self.text_override(self.measurement * self.dim_measurement_factor)  # type: str
@@ -390,7 +390,7 @@ class LinearDimension(BaseDimensionRenderer):
         attribs = {
             'color': self.text_color,
         }
-        self.add_text(dim_text, pos=Vector(pos), rotation=rotation, dxfattribs=attribs)
+        self.add_text(dim_text, pos=Vec3(pos), rotation=rotation, dxfattribs=attribs)
 
     def add_dimension_line(self, start: 'Vertex', end: 'Vertex') -> None:
         """
@@ -565,9 +565,9 @@ def multi_point_linear_dimension(
             _override['suppress_arrow1'] = _suppress_arrow1
 
         style = layout.add_linear_dim(
-            Vector(base),
-            Vector(p1),
-            Vector(p2),
+            Vec3(base),
+            Vec3(p1),
+            Vec3(p2),
             angle=angle,
             dimstyle=dimstyle,
             override=_override,

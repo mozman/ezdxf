@@ -20,7 +20,7 @@ center point, (-5.53851623, 8.87677359, 5.87096886)
 Extrusion direction relative to UCS: X=0.70819791  Y=0.07548520  Z=0.70196702
 
 """
-from ezdxf.math import OCS, Matrix44, Vector
+from ezdxf.math import OCS, Matrix44, Vec3
 
 EXTRUSION = (0.7081979129501316, 0.0754851955385861, 0.7019670229772758)
 
@@ -85,7 +85,7 @@ def test_matrix44_to_ocs():
     ocs = OCS(EXTRUSION)
     matrix = Matrix44.ucs(ocs.ux, ocs.uy, ocs.uz)
     assert is_close_points(
-        matrix.ocs_from_wcs(Vector(-9.56460754, 8.44764172, 9.97894327)),
+        matrix.ocs_from_wcs(Vec3(-9.56460754, 8.44764172, 9.97894327)),
         (9.41378764657076, 13.15481838975576, 0.8689258932616031),
         places=6,
     )
@@ -95,7 +95,7 @@ def test_matrix44_to_wcs():
     ocs = OCS(EXTRUSION)
     matrix = Matrix44.ucs(ocs.ux, ocs.uy, ocs.uz)
     assert is_close_points(
-        matrix.ocs_to_wcs(Vector(9.41378764657076, 13.15481838975576, 0.8689258932616031)),
+        matrix.ocs_to_wcs(Vec3(9.41378764657076, 13.15481838975576, 0.8689258932616031)),
         (-9.56460754, 8.44764172, 9.97894327),
         places=6,
     )

@@ -1,6 +1,5 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-13
 from typing import TYPE_CHECKING, List, Iterable, Set, Sequence
 from collections import OrderedDict
 from ezdxf.lldxf.types import dxftag, uniform_appid
@@ -19,7 +18,6 @@ ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute {} does not exist'
 
 class AppData:
     def __init__(self):
-        # no back links, no self.clone() required, use deepcopy
         self.data = OrderedDict()
 
     def __contains__(self, appid: str) -> bool:
@@ -61,13 +59,13 @@ class AppData:
 class Reactors:
     """ Handle storage for related reactors.
 
-    Reactors are other objects related to the object that contains this Reactor() instance.
+    Reactors are other objects related to the object that contains this
+    Reactor() instance.
 
     """
 
     def __init__(self, handles: Iterable[str] = None):
-        # no back links, no self.clone() required
-        self.reactors = None  # type: Set[str]  # stores handle strings
+        self.reactors: Set[str] = None  # stores handles as strings
         self.set(handles)
 
     def __len__(self) -> int:
@@ -81,10 +79,9 @@ class Reactors:
 
     @classmethod
     def from_tags(cls, tags: Tags = None) -> 'Reactors':
-        """
-        Create Reactors() instance from tags.
+        """ Create Reactors() instance from tags.
 
-        Expected DXF structure: [(102, '{ACAD_REACTORS'), (330, handle), ...,(102, '}')]
+        Expected DXF structure: [(102, '{ACAD_REACTORS'), (330, handle), ..., (102, '}')]
 
         Args:
             tags: list of DXFTags()

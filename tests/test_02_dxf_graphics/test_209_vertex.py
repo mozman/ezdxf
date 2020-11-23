@@ -1,6 +1,5 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import pytest
 
 from ezdxf.entities.polyline import DXFVertex
@@ -75,9 +74,9 @@ def test_default_new():
     assert entity.dxf.color == 7
     assert entity.dxf.linetype == 'BYLAYER'
     assert entity.dxf.location == (1, 2, 3)
-    assert entity.dxf.location.x == 1, 'is not Vector compatible'
-    assert entity.dxf.location.y == 2, 'is not Vector compatible'
-    assert entity.dxf.location.z == 3, 'is not Vector compatible'
+    assert entity.dxf.location.x == 1, 'is not Vec3 compatible'
+    assert entity.dxf.location.y == 2, 'is not Vec3 compatible'
+    assert entity.dxf.location.z == 3, 'is not Vec3 compatible'
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1

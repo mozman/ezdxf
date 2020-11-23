@@ -1,5 +1,4 @@
-# Created: 15.12.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
 from ezdxf.math import Vec2
@@ -22,8 +21,6 @@ def offset_vertices_2d(vertices: Iterable['Vertex'], offset: float, closed: bool
 
         Adjacent collinear segments in `opposite` directions, same as a turn by 180 degree (U-turn), leads to
         unexpected results.
-
-    .. versionadded:: 0.11
 
     Args:
         vertices: source shape defined by vertices

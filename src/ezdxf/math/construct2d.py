@@ -6,7 +6,7 @@ from typing import (
 
 from functools import partial
 import math
-from .vector import Vector, Vec2
+from ezdxf.math import Vec3, Vec2
 from decimal import Decimal
 
 if TYPE_CHECKING:
@@ -24,8 +24,8 @@ def is_close_points(p1: 'Vertex', p2: 'Vertex', abs_tol=TOLERANCE) -> bool:
     Returns ``True`` if `p1` is very close to `p2`.
 
     Args:
-        p1: first vertex as :class:`Vector` compatible object
-        p2: second vertex as :class:`Vector` compatible object
+        p1: first vertex as :class:`Vec3` compatible object
+        p2: second vertex as :class:`Vec3` compatible object
         abs_tol: absolute tolerance
 
     Raises:
@@ -48,8 +48,6 @@ def linspace(start: float, stop: float, num: int,
 
     Returns `num` evenly spaced samples, calculated over the interval
     [start, stop]. The endpoint of the interval can optionally be excluded.
-
-    .. versionadded:: 0.12.3
 
     """
     if num < 0:
@@ -101,21 +99,21 @@ def reflect_angle_y_deg(a: float) -> float:
     return (360. - (a % 360.)) % 360.
 
 
-def closest_point(base: 'Vertex', points: Iterable['Vertex']) -> 'Vector':
+def closest_point(base: 'Vertex', points: Iterable['Vertex']) -> 'Vec3':
     """
     Returns closest point to `base`.
 
     Args:
-        base: base point as :class:`Vector` compatible object
-        points: iterable of points as :class:`Vector` compatible object
+        base: base point as :class:`Vec3` compatible object
+        points: iterable of points as :class:`Vec3` compatible object
 
 
     """
-    base = Vector(base)
+    base = Vec3(base)
     min_dist = None
     found = None
     for point in points:
-        p = Vector(point)
+        p = Vec3(point)
         dist = (base - p).magnitude
         if (min_dist is None) or (dist < min_dist):
             min_dist = dist
@@ -127,7 +125,7 @@ def convex_hull_2d(points: Iterable['Vertex']) -> List['Vertex']:
     """ Returns 2D convex hull for `points`.
 
     Args:
-        points: iterable of points as :class:`Vector` compatible objects,
+        points: iterable of points as :class:`Vec3` compatible objects,
             z-axis is ignored
 
     """
@@ -175,7 +173,7 @@ def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
         ValueError: less than 3 vertices
 
     """
-    vertices = Vector.list(vertices)
+    vertices = Vec3.list(vertices)
     if len(vertices) < 3:
         raise ValueError('At least 3 vertices required.')
 
@@ -186,7 +184,7 @@ def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
     return sum(
         (p2.x - p1.x) * (p2.y + p1.y)
         for p1, p2 in zip(vertices, vertices[1:])
-    ) < 0
+    ) > 0
 
 
 def enclosing_angles(angle, start_angle, end_angle, ccw=True,
@@ -368,14 +366,8 @@ def is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2,
 
 
 def distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float:
-    """ Returns distance from `point` to line defined by `start-` and
-    `end` point.
-
-    Args:
-        point: 2D point to test as :class:`Vec2` or tuple of float
-        start: line definition point as :class:`Vec2` or tuple of float
-        end: line definition point as :class:`Vec2` or tuple of float
-
+    """ Returns the normal distance from `point` to 2D line defined by `start-`
+    and `end` point.
     """
     # wikipedia: https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line.
     if start.isclose(end):
@@ -383,7 +375,7 @@ def distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float:
     return math.fabs((start - point).det(end - point)) / (end - start).magnitude
 
 
-def is_point_in_polygon_2d(point: Union[Vec2, Vector], polygon: Iterable[Vec2],
+def is_point_in_polygon_2d(point: Union[Vec2, Vec3], polygon: Iterable[Vec2],
                            abs_tol=TOLERANCE) -> int:
     """ Test if `point` is inside `polygon`.
 
@@ -395,8 +387,6 @@ def is_point_in_polygon_2d(point: Union[Vec2, Vector], polygon: Iterable[Vec2],
     Returns:
         ``+1`` for inside, ``0`` for on boundary line, ``-1`` for outside
 
-    .. versionadded:: 0.11
-
     """
     # Source: http://www.faqs.org/faqs/graphics/algorithms-faq/
     # Subject 2.03: How do I find if a point lies within a polygon?
@@ -407,7 +397,7 @@ def is_point_in_polygon_2d(point: Union[Vec2, Vector], polygon: Iterable[Vec2],
         raise ValueError('At least 3 polygon points required.')
     x = point.x
     y = point.y
-    # ignore z-axis of Vector()
+    # ignore z-axis of Vec3()
     inside = False
     for i in range(len(polygon) - 1):
         x1, y1 = polygon[i]
@@ -430,10 +420,27 @@ def is_point_in_polygon_2d(point: Union[Vec2, Vector], polygon: Iterable[Vec2],
         return -1
 
 
-def circle_radius_3p(a: Vector, b: Vector, c: Vector) -> float:
+def circle_radius_3p(a: Vec3, b: Vec3, c: Vec3) -> float:
     ba = b - a
     ca = c - a
     cb = c - b
     upper = ba.magnitude * ca.magnitude * cb.magnitude
     lower = ba.cross(ca).magnitude * 2.0
     return upper / lower
+
+
+def area(vertices: Iterable['Vertex']) -> float:
+    """ Returns the area of a polygon, returns the projected area in the
+    xy-plane for 3D vertices.
+    """
+    vertices = Vec3.list(vertices)
+    if len(vertices) < 3:
+        raise ValueError('At least 3 vertices required.')
+
+    # Close polygon:
+    if not vertices[0].isclose(vertices[-1]):
+        vertices.append(vertices[0])
+
+    return abs(sum(
+        (p1.x * p2.y - p1.y * p2.x) for p1, p2 in zip(vertices, vertices[1:])
+    ) / 2)

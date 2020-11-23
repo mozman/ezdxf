@@ -1,16 +1,15 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-21
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
-from ezdxf.math import Matrix44, Z_AXIS, NULLVEC
+from ezdxf.math import Matrix44, Z_AXIS, NULLVEC, Vec3
 from ezdxf.math.transformtools import OCSTransform
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, elevation_to_z_axis
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -32,6 +31,12 @@ acdb_trace = DefSubclass('AcDbTrace', {
     # If only three corners are entered to define the SOLID, then the fourth
     # corner coordinate is the same as the third.
     'vtx3': DXFAttr(13, xtype=XType.point3d, default=NULLVEC),
+
+    # Elevation is a legacy feature from R11 and prior, do not use this
+    # attribute, store the entity elevation in the z-axis of the vertices.
+    # ezdxf does not export the elevation attribute!
+    'elevation': DXFAttr(38, default=0, optional=True),
+
     # Thickness could be negative:
     'thickness': DXFAttr(39, default=0, optional=True),
     'extrusion': DXFAttr(
@@ -61,9 +66,10 @@ class Solid(_Base):
         """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_trace)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, acdb_trace.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_trace)
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, VERTEXNAMES)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -74,7 +80,8 @@ class Solid(_Base):
         if not self.dxf.hasattr('vtx3'):
             self.dxf.vtx3 = self.dxf.vtx2
         self.dxf.export_dxf_attribs(tagwriter, [
-            'vtx0', 'vtx1', 'vtx2', 'vtx3', 'thickness', 'extrusion',
+            'vtx0', 'vtx1', 'vtx2', 'vtx3', 'thickness',
+            'extrusion',
         ])
 
     def transform(self, m: Matrix44) -> 'Solid':
@@ -94,6 +101,39 @@ class Solid(_Base):
                 (0, 0, dxf.thickness), reflection=dxf.thickness)
         dxf.extrusion = ocs.new_extrusion
         return self
+
+    def wcs_vertices(self, close: bool = False) -> List[Vec3]:
+        """ Returns WCS vertices in correct order,
+        if argument `close` is ``True``, last vertex == first vertex.
+        Does **not** return duplicated last vertex if represents a triangle.
+
+        .. versionadded:: 0.15
+
+        """
+        ocs = self.ocs()
+        return list(ocs.points_to_wcs(self.vertices(close)))
+
+    def vertices(self, close: bool = False) -> List[Vec3]:
+        """ Returns OCS vertices in correct order,
+        if argument `close` is ``True``, last vertex == first vertex.
+        Does **not** return duplicated last vertex if represents a triangle.
+
+        .. versionadded:: 0.15
+
+        """
+        dxf = self.dxf
+        vertices = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
+        if dxf.vtx3 != dxf.vtx2:  # when the face is a triangle, vtx2 == vtx3
+            vertices.append(dxf.vtx3)
+
+        # adjust weird vertex order of SOLID and TRACE:
+        # 0, 1, 2, 3 -> 0, 1, 3, 2
+        if len(vertices) > 3:
+            vertices[2], vertices[3] = vertices[3], vertices[2]
+
+        if close and not vertices[0].isclose(vertices[-1]):
+            vertices.append(vertices[0])
+        return vertices
 
 
 @register_entity
@@ -136,7 +176,7 @@ class Face3d(_Base):
         """ Returns True if edge `num` is an invisible edge. """
         return bool(self.dxf.invisible & (1 << num))
 
-    def set_edge_visibilty(self, num, status=False):
+    def set_edge_visibility(self, num, status=False):
         """ Set visibility of edge `num`, status `True` for visible, status
         `False` for invisible.
         """
@@ -149,9 +189,7 @@ class Face3d(_Base):
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_face)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, acdb_face.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_face)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -175,3 +213,23 @@ class Face3d(_Base):
         dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3 = m.transform_vertices(
             (dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3))
         return self
+
+    def wcs_vertices(self, close: bool = False) -> List[Vec3]:
+        """ Returns WCS vertices, if argument `close` is
+        ``True``, last vertex == first vertex.
+        Does **not** return duplicated last vertex if represents a triangle.
+
+        Compatibility interface to SOLID and TRACE, 3DFACE vertices are
+        already WCS vertices.
+
+        .. versionadded:: 0.15
+
+        """
+        dxf = self.dxf
+        vertices = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
+        if dxf.vtx3 != dxf.vtx2:  # when the face is a triangle, vtx2 == vtx3
+            vertices.append(dxf.vtx3)
+
+        if close and not vertices[0].isclose(vertices[-1]):
+            vertices.append(vertices[0])
+        return vertices

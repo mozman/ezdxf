@@ -79,4 +79,13 @@ Factory function         :meth:`Drawing.styles.new`
 
         Big font name, blank if none (str)
 
+    .. autoproperty:: has_extended_font_data
+
+    .. automethod:: get_extended_font_data
+
+    .. automethod:: set_extended_font_data
+
+    .. automethod:: discard_extended_font_data
+
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-EF68AF7C-13EF-45A1-8175-ED6CE66C8FC9

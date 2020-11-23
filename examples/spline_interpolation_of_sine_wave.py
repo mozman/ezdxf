@@ -2,15 +2,15 @@ from typing import Iterable
 from pathlib import Path
 import math
 import ezdxf
-from ezdxf.math import Vector, estimate_tangents, linspace, estimate_end_tangent_magnitude
+from ezdxf.math import Vec3, estimate_tangents, linspace, estimate_end_tangent_magnitude
 from ezdxf.math import local_cubic_bspline_interpolation, global_bspline_interpolation
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 
 
-def sine_wave(count: int, scale: float = 1.0) -> Iterable[Vector]:
+def sine_wave(count: int, scale: float = 1.0) -> Iterable[Vec3]:
     for t in linspace(0, math.tau, count):
-        yield Vector(t * scale, math.sin(t) * scale)
+        yield Vec3(t * scale, math.sin(t) * scale)
 
 
 doc = ezdxf.new()

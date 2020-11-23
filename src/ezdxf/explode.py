@@ -2,11 +2,10 @@
 # License: MIT License
 import logging
 import math
-from typing import TYPE_CHECKING, Iterable, Union, Callable, Optional, cast
+from typing import TYPE_CHECKING, Iterable, Callable, Optional, cast
 
 from ezdxf.entities import factory
-from ezdxf.lldxf.const import DXFStructureError, DXFTypeError, VERTEXNAMES
-from ezdxf.math import Vector, bulge_to_arc, OCS
+from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
 from ezdxf.math.transformtools import (
     NonUniformScalingError, InsertTransformationError,
 )
@@ -15,10 +14,7 @@ from ezdxf.query import EntityQuery
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        Insert, BaseLayout, DXFGraphic, LWPolyline, Polyline, Attrib, Line, Arc,
-        Face3d, Text,
-    )
+    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Attrib, Text
 
 
 def default_logging_callback(entity, reason):
@@ -116,7 +112,7 @@ def attrib_to_text(attrib: 'Attrib') -> 'Text':
 def virtual_block_reference_entities(
         block_ref: 'Insert', skipped_entity_callback: Optional[
             Callable[['DXFGraphic', str], None]] = None) -> Iterable[
-            'DXFGraphic']:
+    'DXFGraphic']:
     """ Yields 'virtual' parts of block reference `block_ref`. This method is meant
     to examine the the block reference entities without the need to explode the
     block reference. The `skipped_entity_callback()` will be called for all
@@ -198,6 +194,9 @@ def virtual_block_reference_entities(
     yield from transform(disassemble(block_layout))
 
 
+EXCLUDE_FROM_EXPLODE = {'POINT'}
+
+
 def explode_entity(
         entity: 'DXFGraphic',
         target_layout: 'BaseLayout' = None) -> 'EntityQuery':
@@ -217,7 +216,8 @@ def explode_entity(
     """
     dxftype = entity.dxftype()
 
-    if not hasattr(entity, 'virtual_entities'):
+    if not hasattr(entity, 'virtual_entities') or \
+            dxftype in EXCLUDE_FROM_EXPLODE:
         raise DXFTypeError(f'Can not explode entity {dxftype}.')
 
     if entity.doc is None:
@@ -247,211 +247,3 @@ def explode_entity(
     else:
         entitydb.delete_entity(entity)
     return EntityQuery(entities)
-
-
-def virtual_lwpolyline_entities(
-        lwpolyline: 'LWPolyline') -> Iterable[Union['Line', 'Arc']]:
-    """ Yields 'virtual' entities of LWPOLYLINE as LINE or ARC objects.
-
-    This entities are located at the original positions, but are not stored in
-    the entity database, have no handle and are not assigned to any layout.
-
-    (internal API)
-
-    """
-    assert lwpolyline.dxftype() == 'LWPOLYLINE'
-
-    points = lwpolyline.get_points('xyb')
-    if len(points) < 2:
-        return
-
-    if lwpolyline.closed:
-        points.append(points[0])
-
-    yield from _virtual_polyline_entities(
-        points=points,
-        elevation=lwpolyline.dxf.elevation,
-        extrusion=lwpolyline.dxf.get('extrusion', None),
-        dxfattribs=lwpolyline.graphic_properties(),
-        doc=lwpolyline.doc,
-    )
-
-
-def virtual_polyline_entities(
-        polyline: 'Polyline') -> Iterable[Union['Line', 'Arc', 'Face3d']]:
-    """ Yields 'virtual' entities of POLYLINE as LINE, ARC or 3DFACE objects.
-
-    This entities are located at the original positions, but are not stored in
-    the entity database, have no handle and are not assigned to any layout.
-
-    (internal API)
-
-    """
-    assert polyline.dxftype() == 'POLYLINE'
-    if polyline.is_2d_polyline:
-        return virtual_polyline2d_entities(polyline)
-    elif polyline.is_3d_polyline:
-        return virtual_polyline3d_entities(polyline)
-    elif polyline.is_polygon_mesh:
-        return virtual_polymesh_entities(polyline)
-    elif polyline.is_poly_face_mesh:
-        return virtual_polyface_entities(polyline)
-    return []
-
-
-def virtual_polyline2d_entities(
-        polyline: 'Polyline') -> Iterable[Union['Line', 'Arc']]:
-    """ Yields 'virtual' entities of 2D POLYLINE as LINE or ARC objects.
-
-    This entities are located at the original positions, but are not stored in
-    the entity database, have no handle and are not assigned to any layout.
-
-    (internal API)
-
-    """
-    assert polyline.dxftype() == 'POLYLINE'
-    assert polyline.is_2d_polyline
-    if len(polyline.vertices) < 2:
-        return
-
-    points = [(v.dxf.location.x, v.dxf.location.y, v.dxf.bulge) for v in
-              polyline.vertices]
-    if polyline.is_closed:
-        points.append(points[0])
-
-    yield from _virtual_polyline_entities(
-        points=points,
-        elevation=Vector(polyline.dxf.get('elevation', (0, 0, 0))).z,
-        extrusion=polyline.dxf.get('extrusion', None),
-        dxfattribs=polyline.graphic_properties(),
-        doc=polyline.doc,
-    )
-
-
-def _virtual_polyline_entities(
-        points, elevation: float, extrusion: Vector,
-        dxfattribs: dict, doc) -> Iterable[Union['Line', 'Arc']]:
-    ocs = OCS(extrusion) if extrusion else OCS()
-    prev_point = None
-    prev_bulge = None
-
-    for x, y, bulge in points:
-        point = Vector(x, y, elevation)
-        if prev_point is None:
-            prev_point = point
-            prev_bulge = bulge
-            continue
-
-        attribs = dict(dxfattribs)
-        if prev_bulge != 0:
-            center, start_angle, end_angle, radius = bulge_to_arc(
-                prev_point, point, prev_bulge)
-            if radius > 0:
-                attribs['center'] = Vector(center.x, center.y, elevation)
-                attribs['radius'] = radius
-                attribs['start_angle'] = math.degrees(start_angle)
-                attribs['end_angle'] = math.degrees(end_angle)
-                if extrusion:
-                    attribs['extrusion'] = extrusion
-                yield factory.new(dxftype='ARC', dxfattribs=attribs, doc=doc)
-        else:
-            attribs['start'] = ocs.to_wcs(prev_point)
-            attribs['end'] = ocs.to_wcs(point)
-            yield factory.new(dxftype='LINE', dxfattribs=attribs, doc=doc)
-        prev_point = point
-        prev_bulge = bulge
-
-
-def virtual_polyline3d_entities(polyline: 'Polyline') -> Iterable['Line']:
-    """ Yields 'virtual' entities of 3D POLYLINE as LINE objects.
-
-    This entities are located at the original positions, but are not stored in
-    the entity database, have no handle and are not assigned to any layout.
-
-    (internal API)
-
-    """
-    assert polyline.dxftype() == 'POLYLINE'
-    assert polyline.is_3d_polyline
-    if len(polyline.vertices) < 2:
-        return
-    doc = polyline.doc
-    vertices = polyline.vertices
-    dxfattribs = polyline.graphic_properties()
-    start = -1 if polyline.is_closed else 0
-    for index in range(start, len(vertices) - 1):
-        dxfattribs['start'] = vertices[index].dxf.location
-        dxfattribs['end'] = vertices[index + 1].dxf.location
-        yield factory.new(dxftype='LINE', dxfattribs=dxfattribs, doc=doc)
-
-
-def virtual_polymesh_entities(polyline: 'Polyline') -> Iterable['Face3d']:
-    """ Yields 'virtual' entities of POLYMESH as 3DFACE objects.
-
-    This entities are located at the original positions, but are not stored in
-    the entity database, have no handle and are not assigned to any layout.
-
-    (internal API)
-
-    """
-    polymesh = cast('Polymesh', polyline)
-    assert polymesh.dxftype() == 'POLYLINE'
-    assert polymesh.is_polygon_mesh
-
-    doc = polymesh.doc
-    mesh = polymesh.get_mesh_vertex_cache()
-    dxfattribs = polymesh.graphic_properties()
-    m_count = polymesh.dxf.m_count
-    n_count = polymesh.dxf.n_count
-    m_range = m_count - int(not polymesh.is_m_closed)
-    n_range = n_count - int(not polymesh.is_n_closed)
-
-    for m in range(m_range):
-        for n in range(n_range):
-            next_m = (m + 1) % m_count
-            next_n = (n + 1) % n_count
-
-            dxfattribs['vtx0'] = mesh[m, n]
-            dxfattribs['vtx1'] = mesh[next_m, n]
-            dxfattribs['vtx2'] = mesh[next_m, next_n]
-            dxfattribs['vtx3'] = mesh[m, next_n]
-            yield factory.new(dxftype='3DFACE', dxfattribs=dxfattribs, doc=doc)
-
-
-def virtual_polyface_entities(polyline: 'Polyline') -> Iterable['Face3d']:
-    """ Yields 'virtual' entities of POLYFACE as 3DFACE objects.
-
-    This entities are located at the original positions, but are not stored in
-    the entity database, have no handle and are not assigned to any layout.
-
-    (internal API)
-
-    """
-    assert polyline.dxftype() == 'POLYLINE'
-    assert polyline.is_poly_face_mesh
-
-    doc = polyline.doc
-    vertices = polyline.vertices
-    base_attribs = polyline.graphic_properties()
-
-    face_records = (v for v in vertices if v.is_face_record)
-    for face in face_records:
-        face3d_attribs = dict(base_attribs)
-        face3d_attribs.update(face.graphic_properties())
-        invisible = 0
-        pos = 1
-
-        indices = ((face.dxf.get(name), name) for name in VERTEXNAMES if
-                   face.dxf.hasattr(name))
-        for index, name in indices:
-            # vertex indices are 1-based, negative indices indicate invisible edges
-            if index < 0:
-                index = abs(index)
-                invisible += pos
-            # python list `vertices` is 0-based
-            face3d_attribs[name] = vertices[index - 1].dxf.location
-            # vertex index bit encoded: 1=0b0001, 2=0b0010, 3=0b0100, 4=0b1000
-            pos <<= 1
-
-        face3d_attribs['invisible'] = invisible
-        yield factory.new(dxftype='3DFACE', dxfattribs=face3d_attribs, doc=doc)

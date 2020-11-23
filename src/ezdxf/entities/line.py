@@ -1,13 +1,12 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
 from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import (
     transform_thickness_and_extrusion_without_ocs,
 )
@@ -46,9 +45,7 @@ class Line(DXFGraphic):
         """
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_line)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_line.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_line)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -79,7 +76,7 @@ class Line(DXFGraphic):
         .. versionadded:: 0.13
 
         """
-        vec = Vector(dx, dy, dz)
+        vec = Vec3(dx, dy, dz)
         self.dxf.start = vec + self.dxf.start
         self.dxf.end = vec + self.dxf.end
         return self

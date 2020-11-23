@@ -3,7 +3,7 @@
 import pytest
 import math
 from ezdxf.render.path import Path, Command
-from ezdxf.math import Vector, Matrix44, Bezier4P
+from ezdxf.math import Vec3, Matrix44, Bezier4P
 from ezdxf.entities.hatch import PolylinePath, EdgePath
 
 
@@ -22,7 +22,7 @@ def test_init_start():
 def test_line_to():
     path = Path()
     path.line_to((1, 2, 3))
-    assert path[0] == (Vector(1, 2, 3), )
+    assert path[0] == (Vec3(1, 2, 3), )
     assert path.end == (1, 2, 3)
 
 
@@ -343,7 +343,7 @@ def test_transform(p1):
 
 def test_control_vertices(p1):
     vertices = list(p1.control_vertices())
-    assert vertices == Vector.list([(0, 0), (2, 0), (2, 1), (4, 1), (4, 0)])
+    assert vertices == Vec3.list([(0, 0), (2, 0), (2, 1), (4, 1), (4, 0)])
     path = Path()
     assert len(list(path.control_vertices())) == 0
     path = Path.from_vertices([(0, 0), (1, 0)])
@@ -354,12 +354,12 @@ def test_has_clockwise_orientation():
     # basic has_clockwise_orientation() function is tested in:
     # test_617_clockwise_orientation
     path = Path.from_vertices([(0, 0), (1, 0), (1, 1), (0, 1)])
-    assert path.has_clockwise_orientation() is True
+    assert path.has_clockwise_orientation() is False
 
     path = Path()
     path.line_to((2, 0))
     path.curve_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
-    assert path.has_clockwise_orientation() is False
+    assert path.has_clockwise_orientation() is True
 
 
 def test_reversing_empty_path():

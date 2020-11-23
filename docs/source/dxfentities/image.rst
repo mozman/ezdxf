@@ -108,7 +108,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: set_boundary_path
 
-    .. automethod:: boundary_path_wcs() -> List[Vector]
+    .. automethod:: boundary_path_wcs() -> List[Vec3]
 
     .. automethod:: transform(m: Matrix44) -> Image
 

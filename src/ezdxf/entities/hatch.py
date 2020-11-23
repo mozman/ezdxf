@@ -1,14 +1,11 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-03-08
 from typing import (
     TYPE_CHECKING, List, Tuple, Union, Sequence, Iterable,
     Optional,
 )
-from contextlib import contextmanager
 import math
 import copy
-import warnings
 from ezdxf.lldxf import const
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -19,10 +16,10 @@ from ezdxf.lldxf.const import (
     SUBCLASS_MARKER, DXF2000, DXF2004, DXF2010,
     DXFStructureError,
 )
-from ezdxf.tools.rgb import rgb2int, int2rgb
+from ezdxf import colors as clr
 from ezdxf.tools import pattern
 from ezdxf.math import (
-    Vector, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline,
+    Vec3, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline,
     open_uniform_knot_vector, ConstructionEllipse, NULLVEC, Z_AXIS,
 )
 from ezdxf.math.bspline import global_bspline_interpolation
@@ -68,7 +65,7 @@ acdb_hatch = DefSubclass('AcDbHatch', {
     ),
 
     # MPolygon: pattern fill color as the ACI
-    'mp_pattern_fill_color': DXFAttr(63, default=1, optional=True),
+    'mp_pattern_fill_color': DXFAttr(63, default=const.BYLAYER, optional=True),
 
     # HATCH: associativity flag
     # 0 = non-associative
@@ -216,7 +213,6 @@ class Hatch(DXFGraphic):
     """ DXF HATCH entity """
     DXFTYPE = 'HATCH'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_hatch)
-    DEFAULT_ATTRIBS = {'color': 1, 'layer': '0'}
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def __init__(self):
@@ -268,9 +264,12 @@ class Hatch(DXFGraphic):
             tags = self.load_seeds(tags)
 
             # Load HATCH DXF attributes from remaining tags:
-            tags = processor.load_tags_into_namespace(dxf, tags, acdb_hatch)
+            processor.load_tags_into_namespace(dxf, tags, acdb_hatch)
             if len(tags):
-                processor.log_unprocessed_tags(tags, subclass=acdb_hatch.name)
+                tags = processor.recover_graphic_attributes(tags, dxf)
+                if len(tags):
+                    processor.log_unprocessed_tags(
+                        tags, subclass=acdb_hatch.name)
         return dxf
 
     def load_paths(self, tags: Tags) -> Tags:
@@ -383,7 +382,7 @@ class Hatch(DXFGraphic):
     @property
     def bgcolor(self) -> Optional['RGB']:
         """
-        Property background color as ``(r, g, b)`` tuple, rgb values in the
+        Property background color as (r, g, b)-tuple, rgb values in the
         range [0, 255] (read/write/del)
 
         usage::
@@ -398,11 +397,11 @@ class Hatch(DXFGraphic):
         except const.DXFValueError:
             return None
         color = xdata_bgcolor.get_first_value(1071, 0)
-        return int2rgb(color)
+        return clr.int2rgb(color)
 
     @bgcolor.setter
     def bgcolor(self, rgb: 'RGB') -> None:
-        color_value = rgb2int(
+        color_value = clr.rgb2int(
             rgb) | -0b111110000000000000000000000000  # it's magic
 
         self.discard_xdata('HATCHBACKGROUNDCOLOR')
@@ -412,28 +411,15 @@ class Hatch(DXFGraphic):
     def bgcolor(self) -> None:
         self.discard_xdata('HATCHBACKGROUNDCOLOR')
 
-    # just for compatibility
-    @contextmanager
-    def edit_boundary(self) -> 'BoundaryPaths':
-        """ Context manager to edit hatch boundary data, yields a
-        :class:`BoundaryPaths` object.
-
-        """
-        warnings.warn(
-            'Hatch.edit_boundaries() is deprecated (removed in v0.15).',
-            DeprecationWarning
-        )
-        yield self.paths
-
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: 'RGB' = None):
         """ Set :class:`Hatch` to solid fill mode and removes all gradient and
         pattern fill related data.
 
         Args:
-            color: :ref:`ACI`, (``0`` = BYBLOCK; ``256`` = BYLAYER)
-            style: hatch style (``0`` = normal; ``1`` = outer; ``2`` = ignore)
-            rgb: true color value as ``(r, g, b)`` tuple - has higher priority
-                than `color``. True color support requires DXF R2000.
+            color: :ref:`ACI`, (0 = BYBLOCK; 256 = BYLAYER)
+            style: hatch style (0 = normal; 1 = outer; 2 = ignore)
+            rgb: true color value as (r, g, b)-tuple - has higher priority
+                than `color`. True color support requires DXF R2000.
 
         """
         self.gradient = None
@@ -448,14 +434,6 @@ class Hatch(DXFGraphic):
         self.dxf.pattern_type = const.HATCH_TYPE_PREDEFINED
         if rgb is not None:
             self.rgb: 'RGB' = rgb
-
-    def get_gradient(self):
-        """ Returns gradient data as :class:`GradientData` object. """
-        warnings.warn(
-            'Hatch.get_gradient() is deprecated (removed in v0.15).',
-            DeprecationWarning
-        )
-        return self.gradient
 
     def set_gradient(self,
                      color1: 'RGB' = (0, 0, 0),
@@ -482,16 +460,16 @@ class Hatch(DXFGraphic):
             - ``'INVCURVED'``
 
         Args:
-            color1: ``(r, g, b)`` tuple for first color, rgb values as int in
+            color1: (r, g, b)-tuple for first color, rgb values as int in
                 the range [0, 255]
-            color2: ``(r, g, b)`` tuple for second color, rgb values as int in
+            color2: (r, g, b)-tuple for second color, rgb values as int in
                 the range [0, 255]
             rotation: rotation angle in degrees
             centered: determines whether the gradient is centered or not
-            one_color: ``1`` for gradient from `color1` to tinted `color1``
+            one_color: 1 for gradient from `color1` to tinted `color1`
             tint: determines the tinted target `color1` for a one color
-                gradient. (valid range ``0.0`` to ``1.0``)
-            name: name of gradient type, default ``'LINEAR'``
+                gradient. (valid range 0.0 to 1.0)
+            name: name of gradient type, default "LINEAR"
 
         """
         if self.doc is not None and self.drawing.dxfversion < DXF2004:
@@ -514,27 +492,16 @@ class Hatch(DXFGraphic):
         gradient.name = name
         self.gradient = gradient
 
-    @contextmanager
-    def edit_gradient(self) -> 'Gradient':
-        """ Context manager to edit hatch gradient data, yields a
-        :class:`GradientData` object.
-
-        """
-        warnings.warn(
-            'Hatch.edit_gradient() is deprecated (removed in v0.15).',
-            DeprecationWarning
-        )
-        if not self.gradient:
-            raise const.DXFValueError('HATCH has no gradient data.')
-        yield self.gradient
-
     def set_pattern_fill(self, name: str, color: int = 7, angle: float = 0.,
                          scale: float = 1., double: int = 0,
                          style: int = 1, pattern_type: int = 1,
                          definition=None) -> None:
         """ Set :class:`Hatch` to pattern fill mode. Removes all gradient
         related data. The pattern definition should be designed for scaling
-        factor 1.
+        factor 1. Predefined hatch pattern like "ANSI33" are scaled according
+        to the HEADER variable $MEASUREMENT for ISO measurement (m, cm, ... ),
+        or imperial units (in, ft, ...), this replicates the behavior of
+        BricsCAD.
 
         Args:
             name: pattern name as string
@@ -542,9 +509,9 @@ class Hatch(DXFGraphic):
             angle: angle of pattern fill in degrees
             scale: pattern scaling as float
             double: double size flag
-            style: hatch style (``0`` = normal; ``1`` = outer; ``2`` = ignore)
-            pattern_type: pattern type (``0`` = user-defined;
-                ``1`` = predefined; ``2`` = custom)
+            style: hatch style (0 = normal; 1 = outer; 2 = ignore)
+            pattern_type: pattern type (0 = user-defined;
+                1 = predefined; 2 = custom)
             definition: list of definition lines and a definition line is a
                 4-tuple [angle, base_point, offset, dash_length_items],
                 see :meth:`set_pattern_definition`
@@ -561,7 +528,10 @@ class Hatch(DXFGraphic):
         self.dxf.pattern_type = pattern_type
 
         if definition is None:
-            predefined_pattern = pattern.load()
+            measurement = 1
+            if self.doc:
+                measurement = self.doc.header.get('$MEASUREMENT', measurement)
+            predefined_pattern = pattern.ISO_PATTERN if measurement else pattern.IMPERIAL_PATTERN
             definition = predefined_pattern.get(
                 name, predefined_pattern['ANSI31'])
         self.set_pattern_definition(
@@ -570,27 +540,12 @@ class Hatch(DXFGraphic):
             angle=self.dxf.pattern_angle,
         )
 
-    @contextmanager
-    def edit_pattern(self) -> 'Pattern':
-        """ Context manager to edit hatch pattern data, yields a
-        :class:`PatternData` object.
-
-        """
-        warnings.warn(
-            'Hatch.edit_pattern() is deprecated (removed in v0.15).',
-            DeprecationWarning
-        )
-        if not self.pattern:
-            raise const.DXFValueError('Solid fill HATCH has no pattern data.')
-        yield self.pattern
-
     def set_pattern_definition(self, lines: Sequence, factor: float = 1,
                                angle: float = 0) -> None:
-        """
-        Setup hatch patten definition by a list of definition lines and  a
+        """ Setup hatch patten definition by a list of definition lines and  a
         definition line is a 4-tuple [angle, base_point, offset, dash_length_items],
-        the pattern definition should be designed for scaling factor``1`` and
-        angle ``0``.
+        the pattern definition should be designed for scaling factor 1 and
+        angle 0.
 
             - angle: line angle in degrees
             - base-point: 2-tuple (x, y)
@@ -635,10 +590,9 @@ class Hatch(DXFGraphic):
         dxf.pattern_scale = scale
 
     def set_pattern_angle(self, angle: float) -> None:
-        """
-        Set rotation of pattern definition to `angle` in degrees.
+        """ Set rotation of pattern definition to `angle` in degrees.
 
-        Starts always from the original base rotation ``0``,
+        Starts always from the original base rotation 0,
         :code:`set_pattern_angle(0)` reset the pattern rotation to the original
         appearance as defined by the pattern designer, but only if the the
         pattern attribute :attr:`dxf.pattern_angle` represents the actual
@@ -657,21 +611,8 @@ class Hatch(DXFGraphic):
         self.pattern.scale(angle=angle - dxf.pattern_angle)
         dxf.pattern_angle = angle % 360.0
 
-    def get_seed_points(self) -> List:
-        """ Returns seed points as list of ``(x, y)`` points.
-        I don't know why there can be more than one seed point.
-        All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value).
-
-        """
-        warnings.warn(
-            'Hatch.get_seed_points() is deprecated (removed in v0.15).',
-            DeprecationWarning
-        )
-        return self.seeds
-
     def set_seed_points(self, points: Iterable[Tuple[float, float]]) -> None:
-        """
-        Set seed points, `points` is an iterable of ``(x, y)`` tuples.
+        """ Set seed points, `points` is an iterable of (x, y)-tuples.
         I don't know why there can be more than one seed point.
         All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value)
 
@@ -694,9 +635,9 @@ class Hatch(DXFGraphic):
         dxf = self.dxf
         ocs = OCSTransform(dxf.extrusion, m)
 
-        elevation = Vector(dxf.elevation).z
+        elevation = Vec3(dxf.elevation).z
         self.paths.transform(ocs, elevation=elevation)
-        dxf.elevation = ocs.transform_vertex(Vector(0, 0, elevation)).replace(
+        dxf.elevation = ocs.transform_vertex(Vec3(0, 0, elevation)).replace(
             x=0, y=0)
         dxf.extrusion = ocs.new_extrusion
         # todo scale pattern
@@ -749,16 +690,66 @@ class BoundaryPaths:
         """ Remove all boundary paths. """
         self.paths = []
 
+    def external_paths(self) -> Iterable[TPath]:
+        """ Iterable of external paths, could be empty. """
+        for b in self.paths:
+            if b.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
+                yield b
+
+    def outermost_paths(self) -> Iterable[TPath]:
+        """ Iterable of outermost paths, could be empty. """
+        for b in self.paths:
+            if b.path_type_flags & const.BOUNDARY_PATH_OUTERMOST:
+                yield b
+
+    def default_paths(self) -> Iterable[TPath]:
+        """ Iterable of default paths, could be empty. """
+        not_default = const.BOUNDARY_PATH_OUTERMOST + const.BOUNDARY_PATH_EXTERNAL
+        for b in self.paths:
+            if bool(b.path_type_flags & not_default) is False:
+                yield b
+
+    def rendering_paths(self, hatch_style: int = const.HATCH_STYLE_NESTED
+                        ) -> Iterable[TPath]:
+        """ Iterable of paths to process for rendering, filters unused
+        boundary paths according to the given hatch style:
+
+        - NESTED: use all boundary paths
+        - OUTERMOST: use EXTERNAL and OUTERMOST boundary paths
+        - IGNORE: ignore all paths except EXTERNAL boundary paths
+
+        Yields paths in order of EXTERNAL, OUTERMOST and DEFAULT.
+
+        """
+
+        def path_type_enum(flags) -> int:
+            if flags & const.BOUNDARY_PATH_EXTERNAL:
+                return 0
+            elif flags & const.BOUNDARY_PATH_OUTERMOST:
+                return 1
+            return 2
+
+        paths = sorted(
+            (path_type_enum(p.path_type_flags), i, p)
+            for i, p in enumerate(self.paths)
+        )
+        ignore = 1  # EXTERNAL only
+        if hatch_style == const.HATCH_STYLE_NESTED:
+            ignore = 3
+        elif hatch_style == const.HATCH_STYLE_OUTERMOST:
+            ignore = 2
+        return (p for path_type, _, p in paths if path_type < ignore)
+
     def add_polyline_path(self, path_vertices: Sequence[Tuple[float, ...]],
                           is_closed: bool = True,
                           flags: int = 1) -> 'PolylinePath':
         """ Create and add a new :class:`PolylinePath` object.
 
         Args:
-            path_vertices: list of polyline vertices as ``(x, y)`` or
-                ``(x, y, bulge)`` tuples.
-            is_closed: ``1`` for a closed polyline else ``0``
-            flags: external(``1``) or outermost(``16``) or default (``0``)
+            path_vertices: list of polyline vertices as (x, y) or
+                (x, y, bulge)-tuples.
+            is_closed: 1 for a closed polyline else 0
+            flags: external(1) or outermost(16) or default (0)
 
         """
         new_path = PolylinePath()
@@ -771,7 +762,7 @@ class BoundaryPaths:
         """ Create and add a new :class:`EdgePath` object.
 
         Args:
-            flags: external(``1``) or outermost(``16``) or default (``0``)
+            flags: external(1) or outermost(16) or default (0)
 
         """
         new_path = EdgePath()
@@ -810,7 +801,7 @@ class BoundaryPaths:
             prev_point = None
             prev_bulge = None
             for x, y, bulge in points:
-                point = Vector(x, y)
+                point = Vec3(x, y)
                 if prev_point is None:
                     prev_point = point
                     prev_bulge = bulge
@@ -1100,7 +1091,7 @@ class PolylinePath:
     def set_vertices(self, vertices: Sequence[Sequence[float]],
                      is_closed: bool = True) -> None:
         """ Set new `vertices` as new polyline path, a vertex has to be a
-        ``(x, y)`` or a ``(x, y, bulge)`` tuple.
+        (x, y) or a (x, y, bulge)-tuple.
 
         """
         new_vertices = []
@@ -1155,7 +1146,7 @@ class PolylinePath:
                 if bulge and has_non_uniform_scaling:
                     raise NonUniformScalingError(
                         'Polyline path with arcs does not support non-uniform scaling')
-                v = ocs.transform_vertex(Vector(x, y, elevation))
+                v = ocs.transform_vertex(Vec3(x, y, elevation))
                 yield v.x, v.y, bulge
 
         if self.vertices:
@@ -1202,8 +1193,8 @@ class EdgePath:
         """ Add a :class:`LineEdge` from `start` to `end`.
 
         Args:
-            start: start point of line, ``(x, y)`` tuple
-            end: end point of line, ``(x, y)`` tuple
+            start: start point of line, (x, y)-tuple
+            end: end point of line, (x, y)-tuple
 
         """
         line = LineEdge()
@@ -1220,7 +1211,7 @@ class EdgePath:
         """ Add an :class:`ArcEdge`.
 
         Args:
-            center: center point of arc, ``(x, y)`` tuple
+            center: center point of arc, (x, y)-tuple
             radius: radius of circle
             start_angle: start angle of arc in degrees
             end_angle: end angle of arc in degrees
@@ -1246,8 +1237,8 @@ class EdgePath:
         """ Add an :class:`EllipseEdge`.
 
         Args:
-            center: center point of ellipse, ``(x, y)`` tuple
-            major_axis: vector of major axis as ``(x, y)`` tuple
+            center: center point of ellipse, (x, y)-tuple
+            major_axis: vector of major axis as (x, y)-tuple
             ratio: ratio of minor axis to major axis as float
             start_angle: start angle of arc in degrees
             end_angle: end angle of arc in degrees
@@ -1280,16 +1271,16 @@ class EdgePath:
 
         Args:
             fit_points: points through which the spline must go, at least 3 fit
-                points are required. list of ``(x, y)`` tuples
+                points are required. list of (x, y)-tuples
             control_points: affects the shape of the spline, mandatory and
-                AutoCAD crashes on invalid data. list of ``(x, y)`` tuples
+                AutoCAD crashes on invalid data. list of (x, y)-tuples
             knot_values: (knot vector) mandatory and AutoCAD crashes on invalid
                 data. list of floats; `ezdxf` provides two tool functions to
                 calculate valid knot values: :func:`ezdxf.math.uniform_knot_vector`,
                 :func:`ezdxf.math.open_uniform_knot_vector` (default if ``None``)
             weights: weight of control point, not mandatory, list of floats.
             degree: degree of spline (int)
-            periodic: ``1`` for periodic spline, ``0`` for none periodic spline
+            periodic: 1 for periodic spline, 0 for none periodic spline
             start_tangent: start_tangent as 2d vector, optional
             end_tangent: end_tangent as 2d vector, optional
 
@@ -1350,7 +1341,7 @@ class EdgePath:
 
 def _transform_2d_ocs_vertices(ucs, vertices, elevation, extrusion) -> List[
     Tuple[float, float]]:
-    ocs_vertices = (Vector(x, y, elevation) for x, y in vertices)
+    ocs_vertices = (Vec3(x, y, elevation) for x, y in vertices)
     return [(v.x, v.y) for v in
             ucs.ocs_points_to_ocs(ocs_vertices, extrusion=extrusion)]
 
@@ -1539,9 +1530,9 @@ class EllipseEdge:
     def construction_tool(self):
         """ Returns ConstructionEllipse() for the OCS representation. """
         return ConstructionEllipse(
-            center=Vector(self.center),
-            major_axis=Vector(self.major_axis),
-            extrusion=Vector(0, 0, 1),
+            center=Vec3(self.center),
+            major_axis=Vec3(self.major_axis),
+            extrusion=Vec3(0, 0, 1),
             ratio=self.ratio,
             # ConstructionEllipse() is always in ccw orientation
             start_param=self.start_param if self.ccw else self.end_param,
@@ -1692,10 +1683,10 @@ class SplineEdge:
         self.fit_points = list(
             ocs.transform_2d_vertex(v, elevation) for v in self.fit_points)
         if self.start_tangent is not None:
-            t = Vector(self.start_tangent).replace(z=elevation)
+            t = Vec3(self.start_tangent).replace(z=elevation)
             self.start_tangent = ocs.transform_direction(t).vec2
         if self.end_tangent is not None:
-            t = Vector(self.end_tangent).replace(z=elevation)
+            t = Vec3(self.end_tangent).replace(z=elevation)
             self.end_tangent = ocs.transform_direction(t).vec2
 
 
@@ -1855,10 +1846,10 @@ class Gradient:
                     gdata.aci2 = value
             elif code == 421:
                 if first_color_value:
-                    gdata.color1 = int2rgb(value)
+                    gdata.color1 = clr.int2rgb(value)
                     first_color_value = False
                 else:
-                    gdata.color2 = int2rgb(value)
+                    gdata.color2 = clr.int2rgb(value)
         return gdata
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
@@ -1877,9 +1868,9 @@ class Gradient:
         if self.aci1 is not None:
             write_tag(63, self.aci1)
         # code == 63 "color as ACI" can be left off
-        write_tag(421, rgb2int(self.color1))  # first color
+        write_tag(421, clr.rgb2int(self.color1))  # first color
         write_tag(463, 1)  # second value, see DXF standard
         if self.aci2 is not None:
             write_tag(63, self.aci2)  # code 63 "color as ACI" could be left off
-        write_tag(421, rgb2int(self.color2))  # second color
+        write_tag(421, clr.rgb2int(self.color2))  # second color
         write_tag(470, self.name)

@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-21
 from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -10,7 +9,7 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.math import NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, elevation_to_z_axis
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -19,6 +18,11 @@ if TYPE_CHECKING:
 __all__ = ['Shape']
 
 acdb_shape = DefSubclass('AcDbShape', {
+    # Elevation is a legacy feature from R11 and prior, do not use this
+    # attribute, store the entity elevation in the z-axis of the vertices.
+    # ezdxf does not export the elevation attribute!
+    'elevation': DXFAttr(38, default=0, optional=True),
+
     # Thickness could be negative:
     'thickness': DXFAttr(39, default=0, optional=True),
 
@@ -61,9 +65,10 @@ class Shape(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_shape)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_shape.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_shape)
+            if processor.r12:
+                # Transform elevation attribute from R11 to z-axis values:
+                elevation_to_z_axis(dxf, ('insert', ))
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

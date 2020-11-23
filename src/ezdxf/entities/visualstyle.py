@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT-License
-# Created: 2019-03-12
 from typing import TYPE_CHECKING
 import copy
 from ezdxf.lldxf import validator
@@ -162,7 +161,6 @@ class VisualStyle(DXFObject):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_visualstyle.name)
         self.dxf.export_dxf_attribs(tagwriter, [

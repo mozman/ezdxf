@@ -1,5 +1,4 @@
-# Created: 16.03.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -37,3 +36,47 @@ def test_oblique(style):
 
 def test_bigfont(style):
     assert '' == style.dxf.bigfont
+
+
+def test_not_existing_extended_font_data(style):
+    assert style.has_extended_font_data is False
+    assert style.get_extended_font_data() == ("", False, False)
+
+
+@pytest.fixture
+def xstyle():
+    style = Textstyle.new('FFFF', dxfattribs={
+        'name': 'OpenSans-BoldItalic',
+        'font': 'OpenSans-BoldItalic.ttf',
+    })
+    style.set_xdata('ACAD', [(1000, "Open Sans"), [1071, 50331682]])
+    return style
+
+
+def test_extended_font_data(xstyle):
+    assert xstyle.has_extended_font_data is True
+    assert xstyle.get_extended_font_data() == ("Open Sans", True, True)
+
+
+def test_discard_extended_font_data(xstyle):
+    xstyle.discard_extended_font_data()
+    assert xstyle.has_extended_font_data is False
+
+
+def test_set_extended_font_data(style):
+    style.set_extended_font_data("Arial", italic=True, bold=True)
+    assert style.get_extended_font_data() == ("Arial", True, True)
+
+
+def test_dxf_details_for_extended_font_data(style):
+    style.set_extended_font_data("Arial", italic=True, bold=True)
+    xdata = style.get_xdata('ACAD')
+    assert len(xdata) == 2
+
+    group_code, family = xdata[0]
+    assert group_code == 1000
+    assert family == "Arial"
+
+    group_code, flags = xdata[1]
+    assert group_code == 1071
+    assert flags == 50331682

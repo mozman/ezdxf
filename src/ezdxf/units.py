@@ -16,6 +16,48 @@ MSP_METRIC_UNITS_FACTORS = {
     'mi': 0.00062137119,
 }
 
+IN = 1
+FT = 2
+MI = 3
+MM = 4
+CM = 5
+M = 6
+KM = 7
+YD = 10
+DM = 14
+
+IMPERIAL_UNITS = {1, 2, 3, 8, 9, 10, 21, 22, 23, 24}
+
+# Conversion factor from meters to unit
+# 1 meter is ... [unit]
+METER_FACTOR = [
+    None,  # 0 = Unitless - not supported
+    39.37007874,  # 1 = Inches
+    3.280839895,  # 2 = Feet
+    0.00062137119,  # 3 = Miles
+    1000.0,  # 4 = Millimeters
+    100.0,  # 5 = Centimeters
+    1.0,  # 6 = Meters
+    0.001,  # 7 = Kilometers
+    None,  # 8 = Microinches = 1e-6 in
+    None,  # 9 = Mils = 0.001 in
+    1.093613298,  # 10 = Yards
+    10000000000.0,  # 11 = Angstroms = 1e-10m
+    1000000000.0,  # 12 = Nanometers = 1e-9m
+    1000000.0,  # 13 = Microns = 1e-6m
+    10.0,  # 14 = Decimeters = 0.1m
+    0.1,  # 15 = Decameters = 10m
+    0.01,  # 16 = Hectometers = 100m
+    0.000000001,  # 17 = Gigameters = 1e+9 m
+    1.0 / 149597870700,  # 18 = Astronomical units = 149597870700m
+    1.0 / 9.46e15,  # 19 = Light years = 9.46e15 m
+    1.0 / 3.09e16,  # 20 = Parsecs =  3.09e16 m
+    None,  # 21 = US Survey Feet
+    None,  # 22 = US Survey Inch
+    None,  # 23 = US Survey Yard
+    None,  # 24 = US Survey Mile
+]
+
 
 class DrawingUnits:
     def __init__(self, base: float = 1., unit: str = 'm'):
@@ -56,7 +98,10 @@ class PaperSpaceUnits:
 # 1070: Autodesk Design Center version number
 # 1070: Insert units: like 'units'
 # 1002: "}"
-# The model space units are also stored as enum in the header var $INSUNITS
+
+# The units of the modelspace block record is always 0, the real modelspace
+# units and therefore the document units are stored as enum in the header var
+# $INSUNITS
 
 # units stored as enum in BlockRecord.dxf.units
 # 0 = Unitless
@@ -94,3 +139,22 @@ _unit_spec = [
 
 def decode(enum: int) -> Optional[str]:
     return _unit_spec[int(enum)]
+
+
+def conversion_factor(source_units: int, target_units: int) -> float:
+    """ Returns the conversion factor to represent `source_units` in
+    `target_units`.
+
+    E.g. millimeter in centimeter :code:`conversion_factor(MM, CM)` returns 0.1,
+    because 1 mm = 0.1 cm
+
+    """
+    try:
+        source_factor = METER_FACTOR[source_units]
+        target_factor = METER_FACTOR[target_units]
+        if source_factor is None or target_factor is None:
+            raise TypeError('Unsupported conversion.')
+        return target_factor / source_factor
+
+    except IndexError:
+        raise ValueError('Invalid unit enum.')

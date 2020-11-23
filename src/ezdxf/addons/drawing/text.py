@@ -2,7 +2,6 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import enum
-import math
 import re
 from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
@@ -10,8 +9,9 @@ from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 import ezdxf.lldxf.const as DXFConstants
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_utils import draw_rect
+from ezdxf.addons.drawing import fonts
 from ezdxf.entities import MText, Text, Attrib
-from ezdxf.math import Matrix44, Vector
+from ezdxf.math import Matrix44, Vec3
 
 """
 Search google for 'typography' or 'font anatomy' for explanations of terms like 'baseline' and 'x-height'
@@ -57,33 +57,39 @@ assert len(DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT) == len(DXFConstants.MTEXT_ALIGN_FLA
 
 
 class FontMeasurements:
-    def __init__(self, baseline: float, cap_top: float, x_top: float, bottom: float):
+    def __init__(self, baseline: float, cap_height: float, x_height: float, descender_height: float):
         self.baseline = baseline
-        self.cap_top = cap_top
-        self.x_top = x_top
-        self.bottom = bottom
+        self.cap_height = cap_height
+        self.x_height = x_height
+        self.descender_height = descender_height
+
+    def __eq__(self, other):
+        return (isinstance(other, FontMeasurements) and
+                self.baseline == other.baseline and
+                self.cap_height == other.cap_height and
+                self.x_height == other.x_height and
+                self.descender_height == other.descender_height)
 
     def scale_from_baseline(self, desired_cap_height: float) -> "FontMeasurements":
         scale = desired_cap_height / self.cap_height
-        assert math.isclose(self.baseline, 0.0)
         return FontMeasurements(
             baseline=self.baseline,
-            cap_top=desired_cap_height,
-            x_top=self.x_height * scale,
-            bottom=self.bottom * scale,
+            cap_height=desired_cap_height,
+            x_height=self.x_height * scale,
+            descender_height=self.descender_height * scale,
         )
 
     @property
-    def cap_height(self) -> float:
-        return abs(self.cap_top - self.baseline)
+    def cap_top(self) -> float:
+        return self.baseline + self.cap_height
 
     @property
-    def x_height(self) -> float:
-        return abs(self.x_top - self.baseline)
+    def x_top(self) -> float:
+        return self.baseline + self.x_height
 
     @property
-    def descender_height(self) -> float:
-        return abs(self.baseline - self.bottom)
+    def bottom(self) -> float:
+        return self.baseline - self.descender_height
 
 
 def _get_rotation(text: AnyText) -> Matrix44:
@@ -204,7 +210,6 @@ def _get_extra_transform(text: AnyText) -> Matrix44:
 
 def _apply_alignment(alignment: Alignment,
                      line_widths: List[float],
-                     cap_height: float,
                      line_spacing: float,
                      box_width: Optional[float],
                      font_measurements: FontMeasurements) -> Tuple[Tuple[float, float], List[float], List[float]]:
@@ -212,7 +217,9 @@ def _apply_alignment(alignment: Alignment,
         return (0, 0), [], []
 
     halign, valign = alignment
-    line_ys = [-(cap_height + i * line_spacing) for i in range(len(line_widths))]
+    line_ys = [-font_measurements.baseline -
+               (font_measurements.cap_height + i * line_spacing)
+               for i in range(len(line_widths))]
 
     if box_width is None:
         box_width = max(line_widths)
@@ -246,7 +253,7 @@ def _apply_alignment(alignment: Alignment,
     return (anchor_x, anchor_y), line_xs, line_ys
 
 
-def _get_wcs_insert(text: AnyText) -> Vector:
+def _get_wcs_insert(text: AnyText) -> Vec3:
     if isinstance(text, Text):
         return text.ocs().to_wcs(text.dxf.insert)
     else:
@@ -255,7 +262,7 @@ def _get_wcs_insert(text: AnyText) -> Vector:
 
 def simplified_text_chunks(text: AnyText, out: Backend,
                            *,
-                           font: str = None,
+                           font: fonts.Font = None,
                            debug_draw_rect: bool = False) -> Iterable[Tuple[str, Matrix44, float]]:
     """
     Splits a complex text entity into simple chunks of text which can all be rendered the same way:
@@ -271,7 +278,7 @@ def simplified_text_chunks(text: AnyText, out: Backend,
     line_widths = [out.get_text_line_width(line, cap_height, font=font) for line in lines]
     font_measurements = out.get_font_measurements(cap_height, font=font)
     anchor, line_xs, line_ys = \
-        _apply_alignment(alignment, line_widths, cap_height, line_spacing, box_width, font_measurements)
+        _apply_alignment(alignment, line_widths, line_spacing, box_width, font_measurements)
     rotation = _get_rotation(text)
     extra_transform = _get_extra_transform(text)
     insert = _get_wcs_insert(text)
@@ -287,7 +294,7 @@ def simplified_text_chunks(text: AnyText, out: Backend,
         yield line, transform, cap_height
 
         if debug_draw_rect:
-            width = out.get_text_line_width(line, cap_height)
-            ps = list(transform.transform_vertices([Vector(0, 0, 0), Vector(width, 0, 0), Vector(width, cap_height, 0),
-                                                    Vector(0, cap_height, 0), Vector(0, 0, 0)]))
+            width = out.get_text_line_width(line, cap_height, font)
+            ps = list(transform.transform_vertices([Vec3(0, 0, 0), Vec3(width, 0, 0), Vec3(width, cap_height, 0),
+                                                    Vec3(0, cap_height, 0), Vec3(0, 0, 0)]))
             draw_rect(ps, '#ff0000', out)

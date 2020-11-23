@@ -48,15 +48,15 @@ class BinaryDXFWriter:
 @contextmanager
 def r12writer(stream: Union[TextIO, BinaryIO, str], fixed_tables: bool = False,
               fmt: str = 'asc') -> 'R12FastStreamWriter':
-    """
-    Context manager for writing DXF entities to a stream/file. `stream` can be any file like object
-    with a :func:`write` method or just a string for writing DXF entities to the file system.
-    If `fixed_tables` is ``True``, a standard TABLES section is written in front of the ENTITIES
+    """ Context manager for writing DXF entities to a stream/file. `stream` can
+    be any file like object with a :func:`write` method or just a string for
+    writing DXF entities to the file system. If `fixed_tables` is ``True``, a
+    standard TABLES section is written in front of the ENTITIES
     section and some predefined text styles and line types can be used.
 
-    .. versionadded:: 0.12
-        Set argument `fmt` to ``'asc'`` to write ASCII DXF file (default) or ``'bin'`` to write Binary DXF files.
-        ASCII DXF require a :class:`TextIO` stream and Binary DXF require a :class:`BinaryIO` stream.
+    Set argument `fmt` to "asc" to write ASCII DXF file (default) or "bin" to
+    write Binary DXF files. ASCII DXF require a :class:`TextIO` stream and
+    Binary DXF require a :class:`BinaryIO` stream.
 
     """
     _stream = None

@@ -1,35 +1,32 @@
-# Created: 10.03.2011
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 """
 Tags
 ----
 
-A list of :class:`~ezdxf.lldxf.types.DXFTag`, inherits from Python standard list. Unlike the statement in the DXF
-Reference "Do not write programs that rely on the order given here", tag order is sometimes essential and some group
-codes may appear multiples times in one entity. At the worst case (:class:`~ezdxf.entities.matrial.Material`:
-normal map shares group codes with diffuse map) using same group codes with different meanings.
+A list of :class:`~ezdxf.lldxf.types.DXFTag`, inherits from Python standard list.
+Unlike the statement in the DXF Reference "Do not write programs that rely on
+the order given here", tag order is sometimes essential and some group codes
+may appear multiples times in one entity. At the worst case
+(:class:`~ezdxf.entities.matrial.Material`: normal map shares group codes with
+diffuse map) using same group codes with different meanings.
 
 """
-from typing import Iterable, List, TextIO, TYPE_CHECKING, Tuple
+from typing import Iterable, List, TYPE_CHECKING, Tuple
 
-from .const import acad_release, DXFStructureError, DXFValueError, HEADER_VAR_MARKER, STRUCTURE_MARKER
-from .types import NONE_TAG, DXFTag, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
-from .tagger import internal_tag_compiler, ascii_tags_loader
-
-from ezdxf.tools.codepage import toencoding
+from .const import DXFStructureError, DXFValueError, STRUCTURE_MARKER
+from .types import DXFTag, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
+from .tagger import internal_tag_compiler
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
 
 COMMENT_CODE = 999
 
-class Tags(list):
-    """
-    Subclass of ``list``.
 
-    Collection of :class:`~ezdxf.lldxf.types.DXFTag` as flat list. Low level tag container, only required for advanced
-    stuff.
+class Tags(list):
+    """ Collection of :class:`~ezdxf.lldxf.types.DXFTag` as flat list.
+    Low level tag container, only required for advanced stuff.
 
     """
 
@@ -85,8 +82,8 @@ class Tags(list):
         return self[0].value
 
     def has_tag(self, code: int) -> bool:
-        """
-        Returns ``True`` if a :class:`~ezdxf.lldxf.types.DXFTag` with given group `code` is present.
+        """ Returns ``True`` if a :class:`~ezdxf.lldxf.types.DXFTag` with given
+        group `code` is present.
 
         Args:
             code: group code as int
@@ -95,9 +92,9 @@ class Tags(list):
         return any(tag.code == code for tag in self)
 
     def get_first_value(self, code: int, default=DXFValueError) -> 'TagValue':
-        """
-        Returns value of first :class:`~ezdxf.lldxf.types.DXFTag` with given group code or default if `default` !=
-        :class:`DXFValueError`, else raises :class:`DXFValueError`.
+        """ Returns value of first :class:`~ezdxf.lldxf.types.DXFTag` with given
+        group code or default if `default` != :class:`DXFValueError`, else
+        raises :class:`DXFValueError`.
 
         Args:
             code: group code as int
@@ -113,9 +110,9 @@ class Tags(list):
             return default
 
     def get_first_tag(self, code: int, default=DXFValueError) -> DXFTag:
-        """
-        Returns first :class:`~ezdxf.lldxf.types.DXFTag` with given group code or `default`, if `default` !=
-        :class:`DXFValueError`, else raises :class:`DXFValueError`.
+        """ Returns first :class:`~ezdxf.lldxf.types.DXFTag` with given group
+        code or `default`, if `default` != :class:`DXFValueError`, else raises
+        :class:`DXFValueError`.
 
         Args:
             code: group code as int
@@ -131,8 +128,8 @@ class Tags(list):
             return default
 
     def find_all(self, code: int) -> List[DXFTag]:
-        """
-        Returns a list of :class:`~ezdxf.lldxf.types.DXFTag` with given group code.
+        """ Returns a list of :class:`~ezdxf.lldxf.types.DXFTag` with given
+        group code.
 
         Args:
             code: group code as int
@@ -141,8 +138,8 @@ class Tags(list):
         return [tag for tag in self if tag.code == code]
 
     def tag_index(self, code: int, start: int = 0, end: int = None) -> int:
-        """
-        Return index of first :class:`~ezdxf.lldxf.types.DXFTag` with given group code.
+        """ Return index of first :class:`~ezdxf.lldxf.types.DXFTag` with given
+        group code.
 
         Args:
             code: group code as int
@@ -160,8 +157,8 @@ class Tags(list):
         raise DXFValueError(code)
 
     def update(self, tag: DXFTag) -> None:
-        """
-        Update first existing tag with same group code as `tag`, raises :class:`DXFValueError` if tag not exist.
+        """ Update first existing tag with same group code as `tag`, raises
+        :class:`DXFValueError` if tag not exist.
 
         """
         index = self.tag_index(tag.code)
@@ -205,8 +202,8 @@ class Tags(list):
         self[:] = remaining
 
     def remove_tags_except(self, codes: Iterable[int]) -> None:
-        """
-        Remove all tags inplace except those with group codes specified in `codes`.
+        """ Remove all tags inplace except those with group codes specified in
+        `codes`.
 
         Args:
             codes: iterable of group codes
@@ -224,10 +221,12 @@ class Tags(list):
         """
         return (tag for tag in self if tag.code not in set(codes))
 
-    def collect_consecutive_tags(self, codes: Iterable[int], start: int = 0, end: int = None) -> 'Tags':
+    def collect_consecutive_tags(self, codes: Iterable[int], start: int = 0,
+                                 end: int = None) -> 'Tags':
         """
-        Collect all consecutive tags with group code in `codes`, `start` and `end` delimits the search range. A tag
-        code not in codes ends the process.
+        Collect all consecutive tags with group code in `codes`, `start` and
+        `end` delimits the search range. A tag code not in codes ends the
+        process.
 
         Args:
             codes: iterable of group codes
@@ -261,8 +260,8 @@ class Tags(list):
 
     @classmethod
     def strip(cls, tags: 'Tags', codes: Iterable[int]) -> 'Tags':
-        """
-        Constructor from `tags`, strips all tags with group codes in `codes` from tags.
+        """ Constructor from `tags`, strips all tags with group codes in `codes`
+        from tags.
 
         Args:
             tags: iterable of :class:`~ezdxf.lldxf.types.DXFTag`
@@ -276,22 +275,24 @@ def text2tags(text: str) -> Tags:
     return Tags.from_text(text)
 
 
-def group_tags(tags: Iterable[DXFTag], splitcode: int = STRUCTURE_MARKER) -> Iterable[Tags]:
-    """
-    Group of tags starts with a SplitTag and ends before the next SplitTag.
-    A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode == 0.
+def group_tags(tags: Iterable[DXFTag],
+               splitcode: int = STRUCTURE_MARKER) -> Iterable[Tags]:
+    """ Group of tags starts with a SplitTag and ends before the next SplitTag.
+    A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for
+    splitcode == 0.
 
     Args:
         tags: iterable of :class:`DXFTag`
-        splitcode int: group code of split tag
+        splitcode: group code of split tag
 
     """
 
-    def append(tag):  # first do nothing, skip tags in front of the first split tag
+    # first do nothing, skip tags in front of the first split tag
+    def append(tag):
         pass
 
     group = None
-    for tag in tags:  # has to work with iterators/generators
+    for tag in tags:
         if tag.code == splitcode:
             if group is not None:
                 yield group
@@ -303,7 +304,8 @@ def group_tags(tags: Iterable[DXFTag], splitcode: int = STRUCTURE_MARKER) -> Ite
         yield group
 
 
-def text_to_multi_tags(text: str, code: int = 303, size: int = 255, line_ending: str = '^J') -> List[DXFTag]:
+def text_to_multi_tags(text: str, code: int = 303, size: int = 255,
+                       line_ending: str = '^J') -> List[DXFTag]:
     text = ''.join(text).replace('\n', line_ending)
 
     def chop():
@@ -350,7 +352,8 @@ class NotFoundException(Exception):
     pass
 
 
-def get_start_and_end_of_named_list_in_xdata(name: str, tags: List[Tuple]) -> Tuple[int, int]:
+def get_start_and_end_of_named_list_in_xdata(
+        name: str, tags: List[Tuple]) -> Tuple[int, int]:
     start = None
     end = None
     level = 0
@@ -374,5 +377,6 @@ def get_start_and_end_of_named_list_in_xdata(name: str, tags: List[Tuple]) -> Tu
     if start is None:
         raise NotFoundException
     if end is None:
-        raise DXFStructureError('Invalid XDATA structure: missing  (1002, "}").')
+        raise DXFStructureError(
+            'Invalid XDATA structure: missing  (1002, "}").')
     return start, end + 1

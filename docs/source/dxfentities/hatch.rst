@@ -4,10 +4,30 @@ Hatch
 .. module:: ezdxf.entities
     :noindex:
 
-The HATCH entity (`DXF Reference`_) fills an enclosed area defined by one or more boundary paths with a
-hatch pattern, solid fill, or gradient fill.
+The HATCH entity (`DXF Reference`_) fills an enclosed area defined by one or
+more boundary paths with a hatch pattern, solid fill, or gradient fill.
 
-All points in :ref:`OCS` as (x, y) tuples (:attr:`Hatch.dxf.elevation` is the z-axis value).
+All points in :ref:`OCS` as (x, y) tuples (:attr:`Hatch.dxf.elevation` is the
+z-axis value).
+
+There are two different hatch pattern default scaling, depending on the HEADER
+variable $MEASUREMENT, one for ISO measurement (m, cm, mm, ...) and one for
+imperial measurement (in, ft, yd, ...).
+
+Starting with `ezdxf` v0.15 the default scaling for predefined hatch pattern
+will be chosen according this measurement setting in the HEADER section, this
+replicates the behavior of BricsCAD and other CAD applications. `ezdxf` uses
+the ISO pattern definitions as a base line and scales this pattern down by
+factor 1/25.6 for imperial measurement usage.
+The pattern scaling is independent from the drawing units of the document
+defined by the HEADER variable $INSUNITS.
+
+Prior to `ezdxf` v0.15 the default scaling was always the ISO
+measurement scaling, no matter which value $MEASUREMENT had.
+
+.. seealso::
+
+    :ref:`tut_hatch` and :ref:`DXF Units`
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -16,10 +36,6 @@ Factory function         :meth:`ezdxf.layouts.BaseLayout.add_hatch`
 Inherited DXF attributes :ref:`Common graphical DXF attributes`
 Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
-
-.. seealso::
-
-    :ref:`tut_hatch`
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-C6C71CED-CE0F-4184-82A5-07AD6241F15B
 
@@ -92,7 +108,7 @@ Path manager: :class:`BoundaryPaths`
 
     .. attribute:: dxf.pattern_double
 
-        ``1`` = double pattern size else ``0``. (int)
+        1 = double pattern size else 0. (int)
 
     .. attribute:: dxf.n_seed_points
 
@@ -146,6 +162,40 @@ Path manager: :class:`BoundaryPaths`
 
     .. automethod:: remove_association
 
+Boundary Paths
+--------------
+
+The hatch entity is build by different functional path types, this are
+filter flags for the :attr:`Hatch.dxf.hatch_style`:
+
+- EXTERNAL: defines the outer boundary of the hatch
+- OUTERMOST: defines the first tier of inner hatch boundaries
+- DEFAULT: default boundary path
+
+As you will learn in the next sections, these are more the recommended
+usage type for the flags, but the fill algorithm doesn't care much about that,
+for instance an OUTERMOST path doesn't have to be inside the EXTERNAL path.
+
+Island Detection
+----------------
+
+In general the island detection algorithm works always from outside to inside
+and alternates filled and unfilled areas. The area between then 1st and the 2nd
+boundary is filled, the area between the 2nd and the 3rd boundary is unfilled
+and so on. The different hatch styles defined by the :attr:`Hatch.dxf.hatch_style`
+attribute are created by filtering some boundary path types.
+
+Hatch Style
+-----------
+
+- HATCH_STYLE_IGNORE: Ignores all paths except the paths marked as EXTERNAL, if
+  there are more than one path marked as EXTERNAL, they are filled in NESTED
+  style. Creates no hatch if no path is marked as EXTERNAL.
+- HATCH_STYLE_OUTERMOST: Ignores all paths marked as DEFAULT, remaining EXTERNAL
+  and OUTERMOST paths are filled in NESTED style. Creates no hatch if no path is
+  marked as EXTERNAL or OUTERMOST.
+- HATCH_STYLE_NESTED: Use all existing paths.
+
 Hatch Boundary Helper Classes
 -----------------------------
 
@@ -156,6 +206,14 @@ Hatch Boundary Helper Classes
     .. attribute:: paths
 
         List of all boundary paths. Contains :class:`PolylinePath` and :class:`EdgePath` objects. (read/write)
+
+    .. automethod:: external_paths() -> Iterable[Union[PolylinePath, EdgePath]]
+
+    .. automethod:: outermost_paths() -> Iterable[Union[PolylinePath, EdgePath]]
+
+    .. automethod:: default_paths() -> Iterable[Union[PolylinePath, EdgePath]]
+
+    .. automethod:: rendering_paths(hatch_style: int) -> Iterable[Union[PolylinePath, EdgePath]]
 
     .. automethod:: add_polyline_path(path_vertices, is_closed=1, flags=1) -> PolylinePath
 
@@ -206,7 +264,7 @@ Hatch Boundary Helper Classes
 
     .. attribute:: vertices
 
-        List of path vertices as ``(x, y, bulge)`` tuples. (read/write)
+        List of path vertices as (x, y, bulge)-tuples. (read/write)
 
     .. attribute:: source_boundary_objects
 
@@ -261,11 +319,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: start
 
-        Start point as ``(x, y)`` tuple. (read/write)
+        Start point as (x, y)-tuple. (read/write)
 
     .. attribute:: end
 
-        End point as ``(x, y)`` tuple. (read/write)
+        End point as (x, y)-tuple. (read/write)
 
 
 .. class:: ArcEdge
@@ -274,7 +332,7 @@ Hatch Boundary Helper Classes
 
     .. attribute:: center
 
-        Center point of arc as ``(x, y)`` tuple. (read/write)
+        Center point of arc as (x, y)-tuple. (read/write)
 
     .. attribute:: radius
 
@@ -299,7 +357,7 @@ Hatch Boundary Helper Classes
 
     .. attribute:: major_axis_vector
 
-        Ellipse major axis vector as ``(x, y)`` tuple. (read/write)
+        Ellipse major axis vector as (x, y)-tuple. (read/write)
 
     .. attribute:: minor_axis_length
 
@@ -332,11 +390,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: rational
 
-        ``1`` for rational spline else ``0``. (read/write)
+        1 for rational spline else 0. (read/write)
 
     .. attribute:: periodic
 
-        ``1`` for periodic spline else ``0``. (read/write)
+        1 for periodic spline else 0. (read/write)
 
     .. attribute:: knot_values
 
@@ -344,11 +402,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: control_points
 
-        List of control points as ``(x, y)`` tuples. (read/write)
+        List of control points as (x, y)-tuples. (read/write)
 
     .. attribute:: fit_points
 
-        List of fit points as ``(x, y)`` tuples. (read/write)
+        List of fit points as (x, y)-tuples. (read/write)
 
     .. attribute:: weights
 
@@ -356,11 +414,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: start_tangent
 
-        Spline start tangent (vector) as ``(x, y)`` tuple. (read/write)
+        Spline start tangent (vector) as (x, y)-tuple. (read/write)
 
     .. attribute:: end_tangent
 
-        Spline end tangent (vector)  as ``(x, y)`` tuple. (read/write)
+        Spline end tangent (vector)  as (x, y)-tuple. (read/write)
 
 
 Hatch Pattern Definition Helper Classes
@@ -390,15 +448,15 @@ Hatch Pattern Definition Helper Classes
 
     .. attribute:: base_point
 
-        Base point as ``(x, y)`` tuple. (read/write)
+        Base point as (x, y)-tuple. (read/write)
 
     .. attribute:: offset
 
-        Offset as ``(x, y)`` tuple. (read/write)
+        Offset as (x, y)-tuple. (read/write)
 
     .. attribute:: dash_length_items
 
-        List of dash length items (item > ``0`` is line, < ``0`` is gap, ``0.0`` = dot). (read/write)
+        List of dash length items (item > 0 is line, < 0 is gap, 0.0 = dot). (read/write)
 
 Hatch Gradient Fill Helper Classes
 ----------------------------------
@@ -407,15 +465,15 @@ Hatch Gradient Fill Helper Classes
 
     .. attribute:: color1
 
-        First rgb color as ``(r, g, b)`` tuple, rgb values in range 0 to 255. (read/write)
+        First rgb color as (r, g, b)-tuple, rgb values in range 0 to 255. (read/write)
 
     .. attribute:: color2
 
-        Second rgb color as ``(r, g, b)`` tuple, rgb values in range 0 to 255. (read/write)
+        Second rgb color as (r, g, b)-tuple, rgb values in range 0 to 255. (read/write)
 
     .. attribute:: one_color
 
-        If :attr:`one_color` is ``1`` - the hatch is filled with a smooth transition between
+        If :attr:`one_color` is 1 - the hatch is filled with a smooth transition between
         :attr:`color1` and a specified :attr:`tint` of :attr:`color1`. (read/write)
 
     .. attribute:: rotation

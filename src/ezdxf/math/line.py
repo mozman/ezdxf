@@ -1,11 +1,11 @@
-# Created: 13.03.2010
 # Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
+from ezdxf.math import Vec2
 from .construct2d import is_point_left_of_line, intersection_line_line_2d, TOLERANCE
 from .bbox import BoundingBox2d
-from .vector import Vec2
+
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex

@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-03-12
 from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -54,10 +53,7 @@ class Tolerance(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_tolerance)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_tolerance.name)
+            processor.load_and_recover_dxfattribs(dxf, acdb_tolerance)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

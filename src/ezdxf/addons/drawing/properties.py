@@ -3,85 +3,73 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Iterable, Sequence, Set,
-    cast,
+    TYPE_CHECKING, Dict, Optional, Tuple, Union, List, Set, cast,
 )
 import re
 from ezdxf.entities import Attrib
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.type_hints import Color, RGB
+from ezdxf.addons.drawing import fonts
 from ezdxf.addons import acadctb
 from ezdxf.sections.table import table_key as layer_key
-from ezdxf.tools.rgb import luminance, DXF_DEFAULT_COLORS, int2rgb
-from ezdxf.math import Vec2
-from ezdxf.tools.pattern import scale_pattern
+from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
+from ezdxf.tools.pattern import scale_pattern, HatchPatternType
+from ezdxf.entities.ltype import CONTINUOUS_PATTERN
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        DXFGraphic, Layout, Table, Layer, Linetype, Drawing, Textstyle, Vertex,
+        DXFGraphic, Layout, Table, Layer, Linetype, Drawing, Textstyle,
     )
-    from ezdxf.entities.ltype import LinetypePattern
 
 __all__ = [
     'Properties', 'LayerProperties', 'RenderContext', 'layer_key', 'rgb_to_hex',
     'hex_to_rgb', 'MODEL_SPACE_BG_COLOR', 'PAPER_SPACE_BG_COLOR',
-    'compile_line_pattern', 'VIEWPORT_COLOR', 'CONTINUOUS_PATTERN',
-    'set_color_alpha',
+    'VIEWPORT_COLOR', 'set_color_alpha',
 ]
 
 table_key = layer_key
 MODEL_SPACE_BG_COLOR = '#212830'
 PAPER_SPACE_BG_COLOR = '#ffffff'
 VIEWPORT_COLOR = '#aaaaaa'  # arbitrary choice
-CONTINUOUS_PATTERN = tuple()
 SHX_FONTS = {
     # See examples in: CADKitSamples/Shapefont.dxf
     # Shape file structure is not documented, therefore replace this fonts by
     # true type fonts.
     # `None` is for: use the default font.
-    'AMGDT': None,  # Tolerance symbols
-    'AMGDT.SHX': None,
-    'COMPLEX': None,
-    'COMPLEX.SHX': None,
-    'ISOCP': None,
-    'ISOCP.SHX': None,
-    'ITALIC': None,
-    'ITALIC.SHX': None,
-    'GOTHICG': None,
-    'GOTHICG.SHX': None,
-    'GREEKC': None,
-    'GREEKC.SHX': None,
-    'ROMANS': None,
-    'ROMANS.SHX': None,
-    'SCRIPTS': None,
-    'SCRIPTS.SHX': None,
-    'SCRIPTC': None,
-    'SCRIPTC.SHX': None,
-    'SIMPLEX': None,
-    'SIMPLEX.SHX': None,
-    'SYMATH': None,
-    'SYMATH.SHX': None,
-    'TXT': None,  # Default AutoCAD font
-    'TXT.SHX': None,
+    'AMGDT': "amgdt___.ttf",  # Tolerance symbols
+    'AMGDT.SHX': "amgdt___.ttf",
+    'COMPLEX': "complex_.ttf",
+    'COMPLEX.SHX': "complex_.ttf",
+    'ISOCP': "isocp.ttf",
+    'ISOCP.SHX': "isocp.ttf",
+    'ITALIC': "italicc_.ttf",
+    'ITALIC.SHX': "italicc_.ttf",
+    'GOTHICG': "gothicg_.ttf",
+    'GOTHICG.SHX': "gothicg_.ttf",
+    'GREEKC': "greekc.ttf",
+    'GREEKC.SHX': "greekc.ttf",
+    'ROMANS': "romans__.ttf",
+    'ROMANS.SHX': "romans__.ttf",
+    'SCRIPTS': "scripts_.ttf",
+    'SCRIPTS.SHX': "scripts_.ttf",
+    'SCRIPTC': "scriptc_.ttf",
+    'SCRIPTC.SHX': "scriptc_.ttf",
+    'SIMPLEX': "simplex_.ttf",
+    'SIMPLEX.SHX': "simplex_.ttf",
+    'SYMATH': "symath__.ttf",
+    'SYMATH.SHX': "symath__.ttf",
+    'SYMAP': "symap___.ttf",
+    'SYMAP.SHX': "symap___.ttf",
+    'SYMETEO': "symeteo_.ttf",
+    'SYMETEO.SHX': "symeteo_.ttf",
+    'TXT': "monotxt_.ttf",  # Default AutoCAD font
+    'TXT.SHX': "monotxt_.ttf",
 }
 
 
 def is_dark_color(color: Color, dark: float = 0.2) -> bool:
     luma = luminance(hex_to_rgb(color))
     return luma <= dark
-
-
-class HatchPatternLine:
-    # Similar ot hatch.PatternLine, but line pattern are stored as
-    # simplified linetype pattern.
-    def __init__(self, angle=0.0, base_point: 'Vertex' = (0, 0),
-                 offset: 'Vertex' = (0, 0), pattern: Iterable[float] = None):
-        self.angle: float = float(angle)  # in degrees
-        self.base_point = Vec2(base_point)
-        self.offset = Vec2(offset)
-        # Same data format as linetype pattern:
-        self.pattern: Tuple[float, ...] = tuple(pattern) \
-            if pattern else CONTINUOUS_PATTERN
 
 
 class Filling:
@@ -100,7 +88,8 @@ class Filling:
         self.gradient_color2: Optional[Color] = None
         self.gradient_centered: float = 0.0  # todo: what's the meaning?
         self.pattern_scale: float = 1.0
-        self.pattern: Sequence[HatchPatternLine] = []
+        # Regular HATCH pattern definition:
+        self.pattern: HatchPatternType = []
 
 
 class Properties:
@@ -155,11 +144,15 @@ class Properties:
         # To get the "real" layer of an entity, you have to use `entity.dxf.layer`
         self.layer: str = '0'
 
-        # Font name for text entities, `None` is for the default font
-        self.font: Optional[str] = None
+        # Font definition object for text entities:
+        # `None` is for the default font
+        self.font: Optional[fonts.Font] = None
 
         # Filling properties: Solid, Pattern, Gradient
         self.filling: Optional[Filling] = None
+
+        # default is unit less
+        self.units = 0
 
     def __str__(self):
         return f'({self.color}, {self.linetype_name}, {self.lineweight}, ' \
@@ -289,24 +282,44 @@ class RenderContext:
         # change in the future.
         self.layers: Dict[str, LayerProperties] = dict()
         # Text-style -> font mapping
-        self.fonts: Dict[str, str] = dict()
+        self.fonts: Dict[str, fonts.Font] = dict()
         self.units = 0  # store modelspace units as enum, see ezdxf/units.py
         self.linetype_scale: float = 1.0  # overall modelspace linetype scaling
+        self.measurement: int = 0
+        self.pdsize = 0
+        self.pdmode = 0
         if doc:
-            self._setup_layers(doc)
-            self._setup_text_styles(doc)
             self.linetype_scale = doc.header.get('$LTSCALE', 1.0)
             self.units = doc.header.get('$INSUNITS', 0)
+            self.measurement = doc.header.get('$MEASUREMENT', 0)
+            self.pdsize = doc.header.get('$PDSIZE', 1.0)
+            self.pdmode = doc.header.get('$PDMODE', 0)
+            self._setup_layers(doc)
+            self._setup_text_styles(doc)
             if self.units == 0:
                 # set default units based on measurement system:
                 # imperial (0) / metric (1)
-                if doc.header.get('$MEASUREMENT', 1) == 1:
+                if self.measurement == 1:
                     self.units = 6  # 1 m
                 else:
                     self.units = 1  # 1 in
         self.current_layout.units = self.units
-        self._hatch_pattern_cache: Dict[
-            str, Sequence[HatchPatternLine]] = dict()
+        self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
+
+    def update_backend_configuration(self, backend):
+        """ Configuration parameters are stored in the backend and may be
+        changed by the backend at runtime. Some parameters are stored globally
+        in the header section of the DXF document. This method must be called
+        if a new DXF document was loaded.
+
+        """
+        # This DXF document parameters are not accessible by the backend
+        # in a direct way:
+        if backend.pdsize is None:
+            backend.pdsize = self.pdsize
+        if backend.pdmode is None:
+            backend.pdmode = self.pdmode
+        backend.measurement = self.measurement
 
     def _setup_layers(self, doc: 'Drawing'):
         for layer in doc.layers:  # type: Layer
@@ -344,11 +357,21 @@ class RenderContext:
     def add_text_style(self, text_style: 'Textstyle'):
         """ Setup text style properties. """
         name = table_key(text_style.dxf.name)
-        font = text_style.dxf.font
+        ttf = text_style.dxf.font
 
         # Map SHX fonts to True Type Fonts:
-        if font.upper() in SHX_FONTS:
-            font = SHX_FONTS[font.upper()]
+        font_upper = ttf.upper()
+        if font_upper in SHX_FONTS:
+            ttf = SHX_FONTS[font_upper]
+        # Only ttf-fonts are supported
+        elif not font_upper.endswith('.TTF'):
+            ttf = None  # use default font
+
+        if ttf:
+            font = fonts.get(ttf)
+        else:  # default font
+            font = fonts.Font(
+                'arial.ttf', 'Arial', 'normal', 'normal', 'normal')
         self.fonts[name] = font
 
     def _true_layer_color(self, layer: 'Layer') -> Color:
@@ -425,22 +448,26 @@ class RenderContext:
         p = Properties()
         p.layer = self.resolve_layer(entity)
         resolved_layer = layer_key(p.layer)
-
+        p.units = self.resolve_units()
         p.color = self.resolve_color(entity, resolved_layer=resolved_layer)
         p.linetype_name, p.linetype_pattern = \
             self.resolve_linetype(entity, resolved_layer=resolved_layer)
         p.lineweight = self.resolve_lineweight(entity,
                                                resolved_layer=resolved_layer)
-        dxf = entity.dxf
-        p.linetype_scale = dxf.ltscale
+        p.linetype_scale = self.resolve_linetype_scale(entity)
         p.is_visible = self.resolve_visible(entity,
                                             resolved_layer=resolved_layer)
-
-        if dxf.hasattr('style'):
+        if entity.dxf.hasattr('style'):
             p.font = self.resolve_font(entity)
         if entity.dxftype() == 'HATCH':
             p.filling = self.resolve_filling(entity)
         return p
+
+    def resolve_units(self) -> int:
+        return self.current_layout.units
+
+    def resolve_linetype_scale(self, entity: 'DXFGraphic') -> float:
+        return entity.dxf.ltscale * self.linetype_scale
 
     def resolve_visible(self, entity: 'DXFGraphic', *,
                         resolved_layer: Optional[str] = None) -> bool:
@@ -601,11 +628,12 @@ class RenderContext:
         # todo: is this value stored anywhere (e.g. HEADER section)?
         return 0.25
 
-    def resolve_font(self, entity: 'DXFGraphic') -> Optional[str]:
+    def resolve_font(self, entity: 'DXFGraphic') -> Optional[fonts.Font]:
         """ Resolve the text style of `entity` to a font name.
         Returns ``None`` for the default font.
         """
         if entity.dxf.hasattr('style'):
+            # todo: extended font data
             return self.fonts.get(table_key(entity.dxf.style))
         else:
             return None
@@ -652,24 +680,14 @@ class RenderContext:
             # back-ends do not handle pattern that way, they need a base-pattern
             # and separated scaling and rotation attributes and these
             # base-pattern could be cached by their name.
-            base_pattern = scale_pattern(
+            #
+            # There is no advantage of simplifying the hatch line pattern and
+            # this format is required by the PatternAnalyser():
+            filling.pattern = scale_pattern(
                 pattern.as_list(),
                 1.0 / filling.pattern_scale,
                 -filling.angle
             )
-            simplified_pattern = []
-            for angle, base_point, offset, dash_length_items in base_pattern:
-                if len(dash_length_items) > 1:
-                    line_pattern = compile_line_pattern(
-                        None,
-                        dash_length_items
-                    )
-                else:
-                    line_pattern = CONTINUOUS_PATTERN
-                simplified_pattern.append(
-                    HatchPatternLine(angle, base_point, offset, line_pattern)
-                )
-            filling.pattern = simplified_pattern
             self._hatch_pattern_cache[filling.name] = filling.pattern
 
         if entity.dxftype() != 'HATCH':
@@ -743,78 +761,5 @@ def _load_line_pattern(linetypes: 'Table') -> Dict[str, Tuple]:
     pattern = dict()
     for linetype in linetypes:  # type: Linetype
         name = linetype.dxf.name.upper()
-        pattern[name] = _compile_line_pattern_from_tags(linetype.pattern_tags)
+        pattern[name] = linetype.pattern_tags.compile()
     return pattern
-
-
-def _merge_dashes(elements: Sequence[float]) -> Iterable[float]:
-    """ Merge multiple consecutive lines, gaps or points into a single element.
-    """
-
-    def sign(v):
-        if v < 0:
-            return -1
-        elif v > 0:
-            return +1
-        return 0
-
-    buffer = elements[0]
-    prev_sign = sign(buffer)
-    for e in elements[1:]:
-        if sign(e) == prev_sign:
-            buffer += e
-        else:
-            yield buffer
-            buffer = e
-            prev_sign = sign(e)
-    yield buffer
-
-
-def _compile_line_pattern_from_tags(
-        pattern: 'LinetypePattern') -> Tuple[float, ...]:
-    """ Returns the simplified dash-gap-dash... line pattern,
-    a dash-length of 0 represents a point.
-    """
-    # complex line types with text and shapes are not supported
-    if pattern.is_complex_type():
-        return CONTINUOUS_PATTERN
-
-    pattern_length = 0.0
-    elements = []
-    for tag in pattern.tags:
-        if tag.code == 40:
-            pattern_length = tag.value
-        elif tag.code == 49:
-            elements.append(tag.value)
-
-    if len(elements) < 2:
-        return CONTINUOUS_PATTERN
-    return compile_line_pattern(pattern_length, elements)
-
-
-def compile_line_pattern(
-        total_length: Optional[float],
-        elements: Sequence[float]) -> Tuple[float, ...]:
-    """ Returns the simplified dash-gap-dash... line pattern,
-    a dash-length of 0 represents a point.
-    """
-    elements = list(_merge_dashes(elements))
-    if total_length is None:
-        pass
-    elif len(elements) < 2 or total_length <= 0.0:
-        return CONTINUOUS_PATTERN
-
-    sum_elements = sum(abs(e) for e in elements)
-    if total_length and total_length > sum_elements:  # append a gap
-        elements.append(sum_elements - total_length)
-
-    if elements[0] < 0:  # start with a gap
-        e = elements.pop(0)
-        if elements[-1] < 0:  # extend last gap
-            elements[-1] += e
-        else:  # add last gap
-            elements.append(e)
-    # returns dash-gap-point
-    # possible: dash-point or point-dash - ignore this yet
-    # never: dash-dash or gap-gap or point-point
-    return tuple(abs(e) for e in elements)

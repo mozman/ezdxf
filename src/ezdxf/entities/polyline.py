@@ -1,6 +1,5 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-16
 from typing import (
     TYPE_CHECKING, Iterable, Union, List, cast, Tuple, Sequence, Dict,
 )
@@ -11,9 +10,10 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.lldxf import const
-from ezdxf.math import Vector, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
-from ezdxf.explode import virtual_polyline_entities, explode_entity
+from ezdxf.render.polyline import virtual_polyline_entities
+from ezdxf.explode import explode_entity
 from ezdxf.query import EntityQuery
 from ezdxf.entities import factory
 from ezdxf.audit import AuditError
@@ -136,10 +136,12 @@ class Polyline(LinkedEntities):
             )
             name = processor.subclasses[2][0].value
             if len(tags):
-                # do not log group code 66: attribs follow, not required
-                processor.log_unprocessed_tags(
-                    unprocessed_tags=tags.filter((66,)), subclass=name
-                )
+                tags = processor.recover_graphic_attributes(tags, dxf)
+                if len(tags):
+                    # do not log group code 66: attribs follow, not required
+                    processor.log_unprocessed_tags(
+                        unprocessed_tags=tags.filter((66,)), subclass=name
+                    )
         return dxf
 
     def export_dxf(self, tagwriter: 'TagWriter'):
@@ -161,8 +163,6 @@ class Polyline(LinkedEntities):
             'm_count', 'n_count', 'm_smooth_density', 'n_smooth_density',
             'smooth_type', 'thickness', 'extrusion',
         ])
-        # The following VERTEX entities and the SEQEND entity is exported by
-        # EntitySpace().
 
     def on_layer_change(self, layer: str):
         """ Event handler for layer change. Changes also the layer of all vertices.
@@ -307,7 +307,7 @@ class Polyline(LinkedEntities):
         """
         return self.vertices[pos]
 
-    def points(self) -> Iterable[Vector]:
+    def points(self) -> Iterable[Vec3]:
         """ Returns iterable of all polyline vertices as ``(x, y, z)`` tuples,
         not as :class:`Vertex` objects.
         """
@@ -404,7 +404,7 @@ class Polyline(LinkedEntities):
         if self.dxf.hasattr('linetype'):
             dxfattribs['linetype'] = self.dxf.linetype
         for point in points:
-            dxfattribs['location'] = Vector(point)
+            dxfattribs['location'] = Vec3(point)
             yield self._new_compound_entity('VERTEX', dxfattribs)
 
     def cast(self) -> Union['Polyline', 'Polymesh', 'Polyface']:
@@ -480,20 +480,16 @@ class Polyline(LinkedEntities):
             target_layout: target layout for DXF primitives, ``None`` for same
             layout as source entity.
 
-        .. versionadded:: 0.12
-
         """
         return explode_entity(self, target_layout)
 
     def virtual_entities(self) -> Iterable[Union['Line', 'Arc', 'Face3d']]:
-        """
-        Yields 'virtual' parts of POLYLINE as LINE, ARC or 3DFACE primitives.
+        """  Yields 'virtual' parts of POLYLINE as LINE, ARC or 3DFACE
+        primitives.
 
         This entities are located at the original positions, but are not stored
         in the entity database, have no handle and are not assigned to any
         layout.
-
-        .. versionadded:: 0.12
 
         """
         return virtual_polyline_entities(self)
@@ -608,7 +604,7 @@ class Polyface(Polyline):
         def new_face_record() -> 'DXFVertex':
             dxfattribs['flags'] = const.VTX_3D_POLYFACE_MESH_VERTEX
             # location of face record vertex is always (0, 0, 0)
-            dxfattribs['location'] = Vector()
+            dxfattribs['location'] = Vec3()
             return self._new_compound_entity('VERTEX', dxfattribs)
 
         dxfattribs = dxfattribs or {}
@@ -978,11 +974,7 @@ class DXFVertex(DXFGraphic):
         # VERTEX can have 3 subclasses if representing a `face record` or
         # 4 subclasses if representing a vertex location, just the last
         # subclass contains data:
-        tags = processor.load_dxfattribs_into_namespace(
-            dxf, acdb_vertex, index=-1
-        )
-        if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_polyline.name)
+        processor.load_and_recover_dxfattribs(dxf, acdb_vertex, index=-1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -1064,7 +1056,7 @@ class DXFVertex(DXFGraphic):
 
         """
         dxf = self.dxf
-        v = Vector(dxf.location)
+        v = Vec3(dxf.location)
         x, y, z = v.xyz
         b = dxf.bulge
         s = dxf.start_width
@@ -1096,12 +1088,12 @@ def vertex_attribs(data: Sequence[float], format='xyseb') -> dict:
     """
     attribs = dict()
     format = [code for code in format.lower() if code in FORMAT_CODES]
-    location = Vector()
+    location = Vec3()
     for code, value in zip(format, data):
         if code not in FORMAT_CODES:
             continue
         if code == 'v':
-            location = Vector(value)
+            location = Vec3(value)
         elif code == 'b':
             attribs['bulge'] = value
         elif code == 's':

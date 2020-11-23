@@ -11,15 +11,25 @@ import ezdxf
 from ezdxf import recover
 from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
+from ezdxf.addons.drawing import fonts
+
+# Setup fonts - this is not done automatically, because this may take a long
+# time and is not important for every user.
+# Load default font definitions, included in ezdxf:
+fonts.load()
+# Add font definitions available at the running system, requires matplotlib:
+fonts.add_system_fonts()
 
 
 def _main():
-    parser = argparse.ArgumentParser(description='draw the given CAD file and save it to a file or view it')
+    parser = argparse.ArgumentParser(
+        description='draw the given CAD file and save it to a file or view it')
     parser.add_argument('cad_file', nargs='?')
     parser.add_argument('--supported_formats', action='store_true')
     parser.add_argument('--layout', default='Model')
     parser.add_argument('--out', required=False)
     parser.add_argument('--dpi', type=int, default=300)
+    parser.add_argument('--ltype', default='internal')
     args = parser.parse_args()
 
     if args.supported_formats:
@@ -55,13 +65,14 @@ def _main():
     try:
         layout = doc.layouts.get(args.layout)
     except KeyError:
-        print(f'Could not find layout "{args.layout}". Valid layouts: {[l.name for l in doc.layouts]}')
+        print(f'Could not find layout "{args.layout}". '
+              f'Valid layouts: {[l.name for l in doc.layouts]}')
         sys.exit(4)
 
     fig: plt.Figure = plt.figure()
     ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
     ctx = RenderContext(doc)
-    out = MatplotlibBackend(ax)
+    out = MatplotlibBackend(ax, params={'linetype_renderer': args.ltype})
     Frontend(ctx, out).draw_layout(layout, finalize=True)
     if args.out is not None:
         print(f'saving to "{args.out}"')

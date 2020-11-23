@@ -1,23 +1,18 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-13
-#
-# DXFGraphic - graphical DXF entities stored in LAYOUTS and BLOCKS
 from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Dict
-import warnings
 from ezdxf.entities import factory
 from ezdxf import options
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
 )
+from ezdxf import colors as clr
 from ezdxf.lldxf.const import (
     DXF12, DXF2000, DXF2004, DXF2007, DXF2013, DXFValueError, DXFKeyError,
     DXFTableEntryError, SUBCLASS_MARKER, DXFInvalidLineType, DXFStructureError,
 )
-from ezdxf.math import OCS, UCS, Matrix44
-from ezdxf.tools.rgb import int2rgb, rgb2int
-from ezdxf.tools import float2transparency, transparency2float
+from ezdxf.math import OCS, Matrix44
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 
@@ -28,12 +23,12 @@ if TYPE_CHECKING:
 
 __all__ = [
     'DXFGraphic', 'acdb_entity', 'SeqEnd', 'add_entity',
-    'replace_entity'
+    'replace_entity', 'elevation_to_z_axis',
 ]
 
 GRAPHIC_PROPERTIES = {
     'layer', 'linetype', 'color', 'lineweight', 'ltscale', 'true_color',
-    'color_name',
+    'color_name', 'transparency',
 }
 
 acdb_entity = DefSubclass('AcDbEntity', {
@@ -109,6 +104,34 @@ acdb_entity = DefSubclass('AcDbEntity', {
 })
 
 
+def elevation_to_z_axis(dxf: 'DXFNamespace', names: Iterable[str]):
+    # The elevation group code (38) is only used for DXF R11 and prior and
+    # ignored for DXF R2000 and later.
+    # DXF R12 and later store the entity elevation in the z-axis of the
+    # vertices, but AutoCAD supports elevation for R12 if no z-axis is present.
+    # DXF types with legacy elevation support:
+    # SOLID, TRACE, TEXT, CIRCLE, ARC, TEXT, ATTRIB, ATTDEF, INSERT, SHAPE
+
+    # The elevation is only used for DXF R12 if no z-axis is stored in the DXF
+    # file. This is a problem because ezdxf loads the vertices always as 3D
+    # vertex including a z-axis even if no z-axis is present in DXF file.
+    if dxf.hasattr('elevation'):
+        elevation = dxf.elevation
+        # ezdxf does not export the elevation attribute for any DXF version
+        dxf.discard('elevation')
+        if elevation == 0:
+            return
+
+        for name in names:
+            v = dxf.get(name)
+            # Only use elevation value if z-axis is 0, this will not work for
+            # situations where an elevation and a z-axis=0 is present, but let's
+            # assume if the elevation group code is used the z-axis is not
+            # present if z-axis is 0.
+            if v is not None and v.z == 0:
+                dxf.set(name, v.replace(z=elevation))
+
+
 class DXFGraphic(DXFEntity):
     """ Common base class for all graphic entities, a subclass of
     :class:`~ezdxf.entities.dxfentity.DXFEntity`. These entities resides in
@@ -149,7 +172,9 @@ class DXFGraphic(DXFEntity):
         tags = processor.load_dxfattribs_into_namespace(dxf, acdb_entity,
                                                         index=1)
         if len(tags) and not r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_entity.name)
+            processor.log_unprocessed_tags(
+                tags, subclass=acdb_entity.name, handle=dxf.get('handle')
+            )
         return dxf
 
     def post_new_hook(self):
@@ -168,14 +193,14 @@ class DXFGraphic(DXFEntity):
         not set.
         """
         if self.dxf.hasattr('true_color'):
-            return int2rgb(self.dxf.get('true_color'))
+            return clr.int2rgb(self.dxf.get('true_color'))
         else:
             return None
 
     @rgb.setter
     def rgb(self, rgb: Tuple[int, int, int]) -> None:
         """ Set RGB true color as (r, g , b) tuple e.g. (12, 34, 56). """
-        self.dxf.set('true_color', rgb2int(rgb))
+        self.dxf.set('true_color', clr.rgb2int(rgb))
 
     @property
     def transparency(self) -> float:
@@ -183,7 +208,7 @@ class DXFGraphic(DXFEntity):
         is 100% transparent (invisible).
         """
         if self.dxf.hasattr('transparency'):
-            return transparency2float(self.dxf.get('transparency'))
+            return clr.transparency2float(self.dxf.get('transparency'))
         else:
             return 0.
 
@@ -192,7 +217,7 @@ class DXFGraphic(DXFEntity):
         """ Set transparency as float value between 0 and 1, 0 is opaque and 1
         is 100% transparent (invisible).
         """
-        self.dxf.set('transparency', float2transparency(transparency))
+        self.dxf.set('transparency', clr.float2transparency(transparency))
 
     def graphic_properties(self) -> Dict:
         """ Returns the important common properties layer, color, linetype,
@@ -386,14 +411,6 @@ class DXFGraphic(DXFEntity):
         if dxf.hasattr('extrusion'):
             auditor.check_extrusion_vector(self)
 
-    def transform_to_wcs(self, ucs: 'UCS') -> 'DXFGraphic':
-        warnings.warn(
-            'DXFGraphic.transform_to_wcs(ucs) is deprecated, '
-            'use transform(ucs.matrix). (removed in v0.15)',
-            DeprecationWarning
-        )
-        return self.transform(ucs.matrix)
-
     def transform(self, m: 'Matrix44') -> 'DXFGraphic':
         """ Inplace transformation interface, returns `self`
         (floating interface).
@@ -441,7 +458,7 @@ class DXFGraphic(DXFEntity):
         (floating interface).
 
         Args:
-            axis: rotation axis as tuple or :class:`Vector`
+            axis: rotation axis as tuple or :class:`Vec3`
             angle: rotation angle in radians
 
         .. versionadded:: 0.13
@@ -486,20 +503,12 @@ class DXFGraphic(DXFEntity):
         return self.transform(Matrix44.z_rotate(angle))
 
     def has_hyperlink(self) -> bool:
-        """ Returns ``True`` if entity has an attached hyperlink.
-
-        .. versionadded:: 0.12
-
-        """
+        """ Returns ``True`` if entity has an attached hyperlink. """
         return bool(self.xdata) and ('PE_URL' in self.xdata)
 
     def set_hyperlink(self, link: str, description: str = None,
                       location: str = None):
-        """ Set hyperlink of an entity.
-
-        .. versionadded:: 0.12
-
-        """
+        """ Set hyperlink of an entity. """
         xdata = [(1001, 'PE_URL'), (1000, str(link))]
         if description:
             xdata.append((1002, '{'))
@@ -515,11 +524,7 @@ class DXFGraphic(DXFEntity):
         return self
 
     def get_hyperlink(self) -> Tuple[str, str, str]:
-        """ Returns hyperlink, description and location.
-
-        .. versionadded:: 0.12
-
-        """
+        """ Returns hyperlink, description and location. """
         link = ""
         description = ""
         location = ""
@@ -535,7 +540,7 @@ class DXFGraphic(DXFEntity):
         return link, description, location
 
     def remove_dependencies(self, other: 'Drawing' = None) -> None:
-        """ Remove all dependencies from actual document.
+        """ Remove all dependencies from current document.
 
         (internal API)
         """
@@ -610,5 +615,3 @@ def replace_entity(source: 'DXFGraphic', target: 'DXFGraphic',
         layout.add_entity(target)
     else:
         source.destroy()
-
-

@@ -3,12 +3,12 @@
 # License: MIT License
 from typing import List
 
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 
 
-def get_tri_or_quad_points(solid, adjust_order=True) -> List[Vector]:
+def get_tri_or_quad_points(solid, adjust_order=True) -> List[Vec3]:
     d = solid.dxf
-    vertices: List[Vector] = [d.vtx0, d.vtx1, d.vtx2]
+    vertices: List[Vec3] = [d.vtx0, d.vtx1, d.vtx2]
     if d.vtx3 != d.vtx2:  # when the face is a triangle, vtx2 == vtx3
         vertices.append(d.vtx3)
 
