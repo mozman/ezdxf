@@ -111,20 +111,20 @@ GeoProxy Class
 
     .. automethod:: crs_to_wcs
 
-    .. automethod:: globe_to_map(func: Callable[[Vector], Vector] = None)->None
+    .. automethod:: globe_to_map(func: Callable[[Vec3], Vec3] = None)->None
 
-    .. automethod:: map_to_globe(func: Callable[[Vector], Vector] = None)->None
+    .. automethod:: map_to_globe(func: Callable[[Vec3], Vec3] = None)->None
 
-    .. automethod:: apply(func: Callable[[Vector], Vector])->None
+    .. automethod:: apply(func: Callable[[Vec3], Vec3])->None
 
     .. automethod:: filter(func: Callable[[GeoProxy], bool])->None
 
 Helper Functions
 ----------------
 
-.. autofunction:: wgs84_4326_to_3395(location: Vector) -> Vector
+.. autofunction:: wgs84_4326_to_3395(location: Vec3) -> Vec3
 
-.. autofunction:: wgs84_3395_to_4326(location: Vector, tol=1e-6) -> Vector
+.. autofunction:: wgs84_3395_to_4326(location: Vec3, tol=1e-6) -> Vec3
 
 .. autofunction:: dms2dd
 

@@ -12,7 +12,7 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.lldxf.tags import Tags
 from ezdxf.entities.mline import MLineVertex, MLine, MLineStyle
-from ezdxf.math import Matrix44, Vector
+from ezdxf.math import Matrix44, Vec3
 
 
 # noinspection PyUnresolvedReferences
@@ -163,7 +163,7 @@ class TestMLineVertex:
     def test_load_tags(self):
         tags = Tags.from_text(VTX_1)
         vtx = MLineVertex.load(tags)
-        assert isinstance(vtx.location, Vector)
+        assert isinstance(vtx.location, Vec3)
         assert vtx.location == (0, 0, 0)
         assert vtx.line_direction == (1, 0, 0)
         assert vtx.miter_direction == (0, 1, 0)

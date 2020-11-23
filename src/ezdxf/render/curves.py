@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, Iterable, List, Tuple, Optional
 import random
 import math
-from ezdxf.math import Vector, Vec2, Matrix44, perlin
+from ezdxf.math import Vec3, Vec2, Matrix44, perlin
 from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math.bspline import BSpline, BSplineU, BSplineClosed
 from ezdxf.math.bezier4p import Bezier4P
@@ -54,9 +54,9 @@ def random_2d_path(steps: int = 100, max_step_size: float = 1.0, max_heading: fl
 
 
 def random_3d_path(steps: int = 100, max_step_size: float = 1.0, max_heading: float = math.pi / 2.0,
-                   max_pitch: float = math.pi / 8.0, retarget: int = 20) -> Iterable[Vector]:
+                   max_pitch: float = math.pi / 8.0, retarget: int = 20) -> Iterable[Vec3]:
     """
-    Returns a random 3D path as iterable of :class:`~ezdxf.math.Vector` objects.
+    Returns a random 3D path as iterable of :class:`~ezdxf.math.Vec3` objects.
 
     Args:
         steps: count of vertices to generate
@@ -69,9 +69,9 @@ def random_3d_path(steps: int = 100, max_step_size: float = 1.0, max_heading: fl
     max_ = max_step_size * steps
 
     def next_global_target():
-        return Vector((rnd(max_), rnd(max_), rnd(max_)))
+        return Vec3((rnd(max_), rnd(max_), rnd(max_)))
 
-    walker = Vector()
+    walker = Vec3()
     target = next_global_target()
     for i in range(steps):
         if i % retarget == 0:
@@ -79,7 +79,7 @@ def random_3d_path(steps: int = 100, max_step_size: float = 1.0, max_heading: fl
         angle = (target - walker).angle
         length = max_step_size * random.random()
         heading_angle = angle + rnd_perlin(max_heading, walker)
-        next_step = Vector.from_angle(heading_angle, length)
+        next_step = Vec3.from_angle(heading_angle, length)
         pitch_angle = rnd_perlin(max_pitch, walker)
         walker += Matrix44.x_rotate(pitch_angle).transform(next_step)
         yield walker
@@ -98,13 +98,13 @@ class Bezier:
     class Segment:
         def __init__(self, start: 'Vertex', end: 'Vertex', start_tangent: 'Vertex', end_tangent: 'Vertex',
                      segments: int):
-            self.start = Vector(start)
-            self.end = Vector(end)
-            self.start_tangent = Vector(start_tangent)  # as vector, from start point
-            self.end_tangent = Vector(end_tangent)  # as vector, from end point
+            self.start = Vec3(start)
+            self.end = Vec3(end)
+            self.start_tangent = Vec3(start_tangent)  # as vector, from start point
+            self.end_tangent = Vec3(end_tangent)  # as vector, from end point
             self.segments = segments
 
-        def approximate(self) -> Iterable[Vector]:
+        def approximate(self) -> Iterable[Vec3]:
             control_points = [
                 self.start,
                 self.start + self.start_tangent,
@@ -116,14 +116,14 @@ class Bezier:
 
     def __init__(self):
         # fit point, first control vector, second control vector, segment count
-        self.points = []  # type: List[Tuple[Vector, Optional[Vector], Optional[Vector], Optional[int]]]
+        self.points = []  # type: List[Tuple[Vec3, Optional[Vec3], Optional[Vec3], Optional[int]]]
 
     def start(self, point: 'Vertex', tangent: 'Vertex') -> None:
         """
         Set start point and start tangent.
 
         Args:
-            point: start point as :class:`~ezdxf.math.Vector` or ``(x, y, z)`` tuple
+            point: start point as :class:`~ezdxf.math.Vec3` or ``(x, y, z)`` tuple
             tangent: start tangent as vector, example: ``(5, 0, 0)`` means a
                      horizontal tangent with a length of 5 drawing units
         """
@@ -134,18 +134,18 @@ class Bezier:
         Append a control point with two control tangents.
 
         Args:
-            point: control point as :class:`~ezdxf.math.Vector` or ``(x, y, z)`` tuple
+            point: control point as :class:`~ezdxf.math.Vec3` or ``(x, y, z)`` tuple
             tangent1: first control tangent as vector "left" of control point
             tangent2: second control tangent as vector "right" of control point, if omitted `tangent2` = `-tangent1`
             segments: count of line segments for polyline approximation, count of line segments from previous
                       control point to appended control point.
 
         """
-        tangent1 = Vector(tangent1)
+        tangent1 = Vec3(tangent1)
         if tangent2 is None:
             tangent2 = -tangent1
         else:
-            tangent2 = Vector(tangent2)
+            tangent2 = Vec3(tangent2)
         self.points.append((point, tangent1, tangent2, int(segments)))
 
     def _build_bezier_segments(self) -> Iterable[Segment]:

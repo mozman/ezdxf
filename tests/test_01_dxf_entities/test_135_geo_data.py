@@ -8,7 +8,7 @@ import pytest
 import ezdxf
 from ezdxf.entities.geodata import GeoData, EPSG_3395
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vec3, Matrix44
 
 GEODATA = """0
 GEODATA
@@ -406,7 +406,7 @@ def test_interpreting_geodata(georeferenced_test_file_path):
     georeferenced_entity = entity.transform(transformation)
     transformed_points = georeferenced_entity.get_points(format='xy')
     assert len(transformed_points) == len(expected_geo_points)
-    assert all(Vector(x1).isclose(Vector(x2)) for x1, x2 in zip(transformed_points, expected_geo_points))
+    assert all(Vec3(x1).isclose(Vec3(x2)) for x1, x2 in zip(transformed_points, expected_geo_points))
 
 
 def test_setup_local_grid_epsg_3395():

@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 from copy import deepcopy
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 from ezdxf.entities.dxfentity import base_class, DXFAttributes, DXFNamespace, SubclassProcessor
 from ezdxf.entities.dxfgfx import acdb_entity
 from ezdxf.entities.line import acdb_line
@@ -88,7 +88,7 @@ def test_value_types(entity, processor):
     with pytest.raises(ValueError):
         attribs.color = 'xxx'
 
-    attribs.start = (1, 2, 3)  # type: Vector
+    attribs.start = (1, 2, 3)  # type: Vec3
     assert attribs.start == (1, 2, 3)
     assert attribs.start.x == 1
     assert attribs.start.y == 2

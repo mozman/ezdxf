@@ -13,7 +13,7 @@ from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError, DXFStructureError,
 )
 from ezdxf.math import (
-    Vector, X_AXIS, Y_AXIS, Z_AXIS, Matrix44, OCS, UCS, NULLVEC,
+    Vec3, X_AXIS, Y_AXIS, Z_AXIS, Matrix44, OCS, UCS, NULLVEC,
 )
 from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
 from ezdxf.explode import (
@@ -425,7 +425,7 @@ class Insert(LinkedEntities):
         """
         ocs = self.ocs()
         self.dxf.insert = ocs.from_wcs(
-            Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.insert))
+            Vec3(dx, dy, dz) + ocs.to_wcs(self.dxf.insert))
         for attrib in self.attribs:
             attrib.translate(dx, dy, dz)
         return self
@@ -444,15 +444,15 @@ class Insert(LinkedEntities):
 
         ocs = self.ocs()
         extrusion = ocs.uz
-        ux = Vector(ocs.to_wcs(X_AXIS))
-        uy = Vector(ocs.to_wcs(Y_AXIS))
+        ux = Vec3(ocs.to_wcs(X_AXIS))
+        uy = Vec3(ocs.to_wcs(Y_AXIS))
         m = Matrix44.ucs(ux=ux * sx, uy=uy * sy, uz=extrusion * sz)
 
         angle = math.radians(dxf.rotation)
         if angle != 0.0:
             m = Matrix44.chain(m, Matrix44.axis_rotate(extrusion, angle))
 
-        insert = ocs.to_wcs(dxf.get('insert', Vector()))
+        insert = ocs.to_wcs(dxf.get('insert', Vec3()))
 
         block_layout = self.block()
         if block_layout is not None:
@@ -594,7 +594,7 @@ class Insert(LinkedEntities):
         for row in range(self.dxf.row_count):
             for col in range(self.dxf.column_count):
                 # All transformations in OCS:
-                offset = Vector(col * col_spacing, row * row_spacing)
+                offset = Vec3(col * col_spacing, row * row_spacing)
                 # If any spacing is 0, yield only unique locations:
                 if offset not in done:
                     done.add(offset)

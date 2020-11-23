@@ -6,7 +6,7 @@ from ezdxf.render.forms import spline_interpolation, spline_interpolated_profile
 from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
 from ezdxf.render.forms import rotation_form, ngon_to_triangles
 from ezdxf.render.forms import translate, rotate, scale
-from ezdxf.math import Vector, is_close_points
+from ezdxf.math import Vec3, is_close_points
 
 
 def test_circle_open():
@@ -39,25 +39,25 @@ def test_close_circle():
 def test_square():
     sq = square(2)
     assert len(sq) == 4
-    assert sq == (Vector(0, 0), Vector(2, 0), Vector(2, 2), Vector(0, 2))
+    assert sq == (Vec3(0, 0), Vec3(2, 0), Vec3(2, 2), Vec3(0, 2))
 
 
 def test_box():
     b = box(3, 2)
     assert len(b) == 4
-    assert b == (Vector(0, 0), Vector(3, 0), Vector(3, 2), Vector(0, 2))
+    assert b == (Vec3(0, 0), Vec3(3, 0), Vec3(3, 2), Vec3(0, 2))
 
 
 def test_open_arrow():
     a = open_arrow(3, 60)
     assert len(a) == 3
-    assert a == (Vector(-3, 1.5), Vector(0, 0), Vector(-3, -1.5))
+    assert a == (Vec3(-3, 1.5), Vec3(0, 0), Vec3(-3, -1.5))
 
 
 def test_closed_arrow():
     a = arrow2(3, 60, 45)
     assert len(a) == 4
-    assert a == (Vector(-3, 1.5), Vector(0, 0), Vector(-3, -1.5), Vector(-1.5, 0))
+    assert a == (Vec3(-3, 1.5), Vec3(0, 0), Vec3(-3, -1.5), Vec3(-1.5, 0))
 
 
 def test_cube():
@@ -98,8 +98,8 @@ def test_cylinder():
     mesh = cylinder(count=12, radius=3, top_radius=2, top_center=(1, 0, 3), caps=False)
     assert len(mesh.faces) == 12
     assert len(mesh.vertices) == 24
-    assert Vector(3, 0, 3) in mesh.vertices
-    assert Vector(-1, 0, 3) in mesh.vertices
+    assert Vec3(3, 0, 3) in mesh.vertices
+    assert Vec3(-1, 0, 3) in mesh.vertices
 
 
 def test_spline_interpolation():

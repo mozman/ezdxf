@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.math import UCS, Vector
+from ezdxf.math import UCS, Vec3
 from pathlib import Path
 
 OUT_DIR = Path('~/Desktop/Outbox').expanduser()
@@ -22,12 +22,12 @@ msp.add_arc(
 center = ucs.to_wcs((0, 0))
 msp.add_line(
     start=center,
-    end=ucs.to_wcs(Vector.from_deg_angle(45)),
+    end=ucs.to_wcs(Vec3.from_deg_angle(45)),
     dxfattribs={'color': 1},
 )
 msp.add_line(
     start=center,
-    end=ucs.to_wcs(Vector.from_deg_angle(270)),
+    end=ucs.to_wcs(Vec3.from_deg_angle(270)),
     dxfattribs={'color': 1},
 )
 

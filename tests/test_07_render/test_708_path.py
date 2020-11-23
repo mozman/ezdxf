@@ -3,7 +3,7 @@
 import pytest
 import math
 from ezdxf.render.path import Path, Command
-from ezdxf.math import Vector, Matrix44, Bezier4P
+from ezdxf.math import Vec3, Matrix44, Bezier4P
 from ezdxf.entities.hatch import PolylinePath, EdgePath
 
 
@@ -22,7 +22,7 @@ def test_init_start():
 def test_line_to():
     path = Path()
     path.line_to((1, 2, 3))
-    assert path[0] == (Vector(1, 2, 3), )
+    assert path[0] == (Vec3(1, 2, 3), )
     assert path.end == (1, 2, 3)
 
 
@@ -343,7 +343,7 @@ def test_transform(p1):
 
 def test_control_vertices(p1):
     vertices = list(p1.control_vertices())
-    assert vertices == Vector.list([(0, 0), (2, 0), (2, 1), (4, 1), (4, 0)])
+    assert vertices == Vec3.list([(0, 0), (2, 0), (2, 1), (4, 1), (4, 0)])
     path = Path()
     assert len(list(path.control_vertices())) == 0
     path = Path.from_vertices([(0, 0), (1, 0)])

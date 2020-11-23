@@ -8,9 +8,8 @@ from itertools import repeat
 from ezdxf.lldxf import const
 from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream, BitStream
 from ezdxf import colors
-from ezdxf.math import Vector, Matrix44, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, Z_AXIS, ConstructionCircle, ConstructionArc
 from ezdxf.entities import factory
-from ezdxf.math import ConstructionCircle, ConstructionArc
 import logging
 
 if TYPE_CHECKING:
@@ -226,7 +225,7 @@ class ProxyGraphic:
     def circle(self, data: bytes):
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
-        attribs['center'] = Vector(bs.read_vertex())
+        attribs['center'] = Vec3(bs.read_vertex())
         attribs['radius'] = bs.read_float()
         attribs['extrusion'] = bs.read_vertex()
         return self._factory('CIRCLE', dxfattribs=attribs)
@@ -234,9 +233,9 @@ class ProxyGraphic:
     def circle_3p(self, data: bytes):
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
-        p1 = Vector(bs.read_vertex())
-        p2 = Vector(bs.read_vertex())
-        p3 = Vector(bs.read_vertex())
+        p1 = Vec3(bs.read_vertex())
+        p2 = Vec3(bs.read_vertex())
+        p3 = Vec3(bs.read_vertex())
         circle = ConstructionCircle.from_3p(p1, p2, p3)
         attribs['center'] = circle.center
         attribs['radius'] = circle.radius
@@ -245,12 +244,12 @@ class ProxyGraphic:
     def circular_arc(self, data: bytes):
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
-        attribs['center'] = Vector(bs.read_vertex())
+        attribs['center'] = Vec3(bs.read_vertex())
         attribs['radius'] = bs.read_float()
-        normal = Vector(bs.read_vertex())
+        normal = Vec3(bs.read_vertex())
         if normal != (0, 0, 1):
             logger.debug('ProxyGraphic: unsupported 3D ARC.')
-        start_vec = Vector(bs.read_vertex())
+        start_vec = Vec3(bs.read_vertex())
         sweep_angle = bs.read_float()
         arc_type = bs.read_struct('L')[0]
         # just do 2D for now
@@ -263,9 +262,9 @@ class ProxyGraphic:
     def circular_arc_3p(self, data: bytes):
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
-        p1 = Vector(bs.read_vertex())
-        p2 = Vector(bs.read_vertex())
-        p3 = Vector(bs.read_vertex())
+        p1 = Vec3(bs.read_vertex())
+        p2 = Vec3(bs.read_vertex())
+        p3 = Vec3(bs.read_vertex())
         arc_type = bs.read_struct('L')[0]
         arc = ConstructionArc.from_3p(p1, p3, p2)
         attribs['center'] = arc.center
@@ -328,7 +327,7 @@ class ProxyGraphic:
         if flag & 2:
             attribs['thickness'] = bs.read_bit_double()
         if flag & 1:
-            attribs['extrusion'] = Vector(bs.read_bit_double(3))
+            attribs['extrusion'] = Vec3(bs.read_bit_double(3))
 
         num_points = bs.read_bit_long()
         if flag & 16:
@@ -381,7 +380,7 @@ class ProxyGraphic:
         polymesh = cast('Polymesh',
                         self._factory('POLYLINE', dxfattribs=attribs))
         polymesh.append_vertices(
-            Vector(bs.read_vertex()) for _ in range(rows * columns))
+            Vec3(bs.read_vertex()) for _ in range(rows * columns))
         return polymesh
 
     def shell(self, data: bytes):
@@ -392,7 +391,7 @@ class ProxyGraphic:
         polyface = cast('Polyface',
                         self._factory('POLYLINE', dxfattribs=attribs))
         vertex_count = bs.read_long()
-        vertices = [Vector(bs.read_vertex()) for _ in range(vertex_count)]
+        vertices = [Vec3(bs.read_vertex()) for _ in range(vertex_count)]
         face_count = bs.read_long()
         faces = []
         for i in range(face_count):
@@ -413,9 +412,9 @@ class ProxyGraphic:
 
     def _text(self, data: bytes, unicode: bool = False):
         bs = ByteStream(data)
-        start_point = Vector(bs.read_vertex())
-        normal = Vector(bs.read_vertex())
-        text_direction = Vector(bs.read_vertex())
+        start_point = Vec3(bs.read_vertex())
+        normal = Vec3(bs.read_vertex())
+        text_direction = Vec3(bs.read_vertex())
         height, width_factor, oblique_angle = bs.read_struct('<3d')
         if unicode:
             text = bs.read_padded_unicode_string()
@@ -433,9 +432,9 @@ class ProxyGraphic:
 
     def text2(self, data: bytes):
         bs = ByteStream(data)
-        start_point = Vector(bs.read_vertex())
-        normal = Vector(bs.read_vertex())
-        text_direction = Vector(bs.read_vertex())
+        start_point = Vec3(bs.read_vertex())
+        normal = Vec3(bs.read_vertex())
+        text_direction = Vec3(bs.read_vertex())
         text = bs.read_padded_string()
         ignore_length_of_string, raw = bs.read_struct('<2l')
         height, width_factor, oblique_angle, tracking_percentage = bs.read_struct(
@@ -458,9 +457,9 @@ class ProxyGraphic:
 
     def unicode_text2(self, data: bytes):
         bs = ByteStream(data)
-        start_point = Vector(bs.read_vertex())
-        normal = Vector(bs.read_vertex())
-        text_direction = Vector(bs.read_vertex())
+        start_point = Vec3(bs.read_vertex())
+        normal = Vec3(bs.read_vertex())
+        text_direction = Vec3(bs.read_vertex())
         text = bs.read_padded_unicode_string()
         ignore_length_of_string, ignore_raw = bs.read_struct('<2l')
         height, width_factor, oblique_angle, tracking_percentage = bs.read_struct(
@@ -494,8 +493,8 @@ class ProxyGraphic:
             'Untested proxy graphic entity: RAY/XLINE - Need examples!')
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
-        start_point = Vector(bs.read_vertex())
-        other_point = Vector(bs.read_vertex())
+        start_point = Vec3(bs.read_vertex())
+        other_point = Vec3(bs.read_vertex())
         attribs['start'] = start_point
         attribs['unit_vector'] = (other_point - start_point).normalize()
         return self._factory(type_, dxfattribs=attribs)
@@ -519,7 +518,7 @@ class ProxyGraphic:
             count += 1
         vertices = []
         while count > 0:
-            vertices.append(Vector(bs.read_struct('<3d')))
+            vertices.append(Vec3(bs.read_struct('<3d')))
             count -= 1
         if load_normal:
             normal = vertices.pop()

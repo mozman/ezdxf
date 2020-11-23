@@ -5,7 +5,7 @@ import math
 
 from ezdxf.lldxf import validator
 from ezdxf.math import (
-    Vector, Matrix44, NULLVEC, Z_AXIS, arc_segment_count, linspace,
+    Vec3, Matrix44, NULLVEC, Z_AXIS, arc_segment_count, linspace,
 )
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf.attributes import (
@@ -69,7 +69,7 @@ class Circle(DXFGraphic):
             'center', 'radius', 'thickness', 'extrusion'
         ])
 
-    def vertices(self, angles: Iterable[float]) -> Iterable[Vector]:
+    def vertices(self, angles: Iterable[float]) -> Iterable[Vec3]:
         """ Yields vertices of the circle for iterable `angles` in WCS.
 
         Args:
@@ -79,15 +79,15 @@ class Circle(DXFGraphic):
         """
         ocs = self.ocs()
         for angle in angles:
-            v = Vector.from_deg_angle(angle, self.dxf.radius) + self.dxf.center
+            v = Vec3.from_deg_angle(angle, self.dxf.radius) + self.dxf.center
             yield ocs.to_wcs(v)
 
-    def flattening(self, sagitta: float) -> Iterable[Vector]:
+    def flattening(self, sagitta: float) -> Iterable[Vec3]:
         """ Approximate the circle by vertices in WCS, argument `segment` is the
         max. distance from the center of an arc segment to the center of its
         chord. Returns a closed polygon: start vertex == end vertex!
 
-        Yields always :class:`~ezdxf.math.Vector` objects.
+        Yields always :class:`~ezdxf.math.Vec3` objects.
 
         .. versionadded:: 0.15
 
@@ -136,7 +136,7 @@ class Circle(DXFGraphic):
         """
         ocs = self.ocs()
         self.dxf.center = ocs.from_wcs(
-            Vector(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
+            Vec3(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
         return self
 
     def to_ellipse(self, replace=True) -> 'Ellipse':

@@ -8,7 +8,7 @@ import ezdxf
 from ezdxf.entities.text import Text, plain_text
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Vector, Matrix44
+from ezdxf.math import Vec3, Matrix44
 from ezdxf.audit import Auditor
 
 TEST_CLASS = Text
@@ -128,9 +128,9 @@ def test_default_new():
     assert entity.dxf.color == 7
     assert entity.dxf.linetype == 'BYLAYER'
     assert entity.dxf.insert == (1, 2, 3)
-    assert entity.dxf.insert.x == 1, 'is not Vector compatible'
-    assert entity.dxf.insert.y == 2, 'is not Vector compatible'
-    assert entity.dxf.insert.z == 3, 'is not Vector compatible'
+    assert entity.dxf.insert.x == 1, 'is not Vec3 compatible'
+    assert entity.dxf.insert.y == 2, 'is not Vec3 compatible'
+    assert entity.dxf.insert.z == 3, 'is not Vec3 compatible'
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
@@ -241,7 +241,7 @@ def text2():
 
 @pytest.mark.parametrize('rx, ry', [(1, 1), (-1, 1), (-1, -1), (1, -1)])
 def test_text_scale_and_reflexion(rx, ry, text2):
-    insert = Vector(0, 0, 0)
+    insert = Vec3(0, 0, 0)
     m = Matrix44.chain(
         Matrix44.scale(2 * rx, 3 * ry, 1),
         Matrix44.z_rotate(math.radians(45)),

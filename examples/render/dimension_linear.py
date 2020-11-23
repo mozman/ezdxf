@@ -9,7 +9,7 @@ import pathlib
 import random
 import ezdxf
 from ezdxf.tools.standards import setup_dimstyle
-from ezdxf.math import Vector, UCS
+from ezdxf.math import Vec3, UCS
 import logging
 
 if TYPE_CHECKING:
@@ -179,7 +179,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
         insert += (.2, 0)
         attribs = dict(TEXT_ATTRIBS)
         line_space = .4
-        delta = Vector(0, line_space, 0)
+        delta = Vec3(0, line_space, 0)
         for line in lines:
             text = msp.add_text(line, dxfattribs=attribs).set_pos(insert)
             if ucs:
@@ -229,7 +229,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
         dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs, discard=BRICSCAD)
 
-        add_text([f'halign={halign}', f'valign={valign}', f'oblique={oblique}'], insert=Vector(x, y))
+        add_text([f'halign={halign}', f'valign={valign}', f'oblique={oblique}'], insert=Vec3(x, y))
 
         # narrow
         dim = msp.add_linear_dim(base=base, p1=(x + 7, y), p2=(x + 7.3, y), dimstyle=dimstyle,
@@ -274,18 +274,18 @@ def example_for_all_text_placings(doc, filename, ucs=None):
         base = (x, y + 2)
         dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle,
                                  override=override)  # type: DimStyleOverride
-        location = Vector(x + 3, y + 3, 0)
+        location = Vec3(x + 3, y + 3, 0)
         dim.set_location(location, leader=leader)
         dim.render(ucs=ucs, discard=BRICSCAD)
-        add_text([f'usr absolute={location}', f'leader={leader}'], insert=Vector(x, y))
+        add_text([f'usr absolute={location}', f'leader={leader}'], insert=Vec3(x, y))
 
         x += 4
         dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle,
                                  override=override)  # type: DimStyleOverride
-        relative = Vector(-1, +1)  # relative to dimline center
+        relative = Vec3(-1, +1)  # relative to dimline center
         dim.set_location(relative, leader=leader, relative=True)
         dim.render(ucs=ucs, discard=BRICSCAD)
-        add_text([f'usr relative={relative}', f'leader={leader}'], insert=Vector(x, y))
+        add_text([f'usr relative={relative}', f'leader={leader}'], insert=Vec3(x, y))
 
         x += 4
         dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle,
@@ -294,7 +294,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
         dv = 1.5
         dim.shift_text(dh, dv)
         dim.render(ucs=ucs, discard=BRICSCAD)
-        add_text([f'shift text=({dh}, {dv})', ], insert=Vector(x, y))
+        add_text([f'shift text=({dh}, {dv})', ], insert=Vec3(x, y))
 
         override['dimtix'] = 1  # force text inside
         x += 4
@@ -304,7 +304,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
         dv = 1
         dim.shift_text(dh, dv)
         dim.render(ucs=ucs, discard=BRICSCAD)
-        add_text([f'shift text=({dh}, {dv})', ], insert=Vector(x, y))
+        add_text([f'shift text=({dh}, {dv})', ], insert=Vec3(x, y))
 
     dimstyles = ['TICK', 'ARCHTICK', 'CLOSEDBLANK']
     xoffset = 17
@@ -363,7 +363,7 @@ def example_multi_point_linear_dimension():
 
 def random_point(start, end):
     dist = end - start
-    return Vector(start + random.random() * dist, start + random.random() * dist)
+    return Vec3(start + random.random() * dist, start + random.random() * dist)
 
 
 def example_random_multi_point_linear_dimension(count=10, length=20, discard=BRICSCAD):

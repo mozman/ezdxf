@@ -1,12 +1,11 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import pytest
 
 from ezdxf.entities.circle import Circle
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Vector, Matrix44, OCS, NonUniformScalingError
+from ezdxf.math import Vec3, Matrix44, OCS, NonUniformScalingError
 
 TEST_CLASS = Circle
 TEST_TYPE = 'CIRCLE'
@@ -93,9 +92,9 @@ def test_default_new():
     assert entity.dxf.linetype == 'BYLAYER'
 
     assert entity.dxf.center == (1, 2, 3)
-    assert entity.dxf.center.x == 1, 'is not Vector compatible'
-    assert entity.dxf.center.y == 2, 'is not Vector compatible'
-    assert entity.dxf.center.z == 3, 'is not Vector compatible'
+    assert entity.dxf.center.x == 1, 'is not Vec3 compatible'
+    assert entity.dxf.center.y == 2, 'is not Vec3 compatible'
+    assert entity.dxf.center.z == 3, 'is not Vec3 compatible'
     assert entity.dxf.radius == 2.5
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
@@ -119,7 +118,7 @@ def test_get_point_2d_circle():
         'radius': radius,
     })
     vertices = list(circle.vertices([90]))
-    assert vertices[0].isclose(Vector(1, 2 + radius, z))
+    assert vertices[0].isclose(Vec3(1, 2 + radius, z))
 
 
 def test_get_point_with_ocs():
@@ -129,8 +128,8 @@ def test_get_point_with_ocs():
         'extrusion': (0, 0, -1),
     })
     vertices = list(circle.vertices([90, 180]))
-    assert vertices[0].isclose(Vector(-1, 4.5, -3), abs_tol=1e-6)
-    assert vertices[1].isclose(Vector(1.5, 2, -3), abs_tol=1e-6)
+    assert vertices[0].isclose(Vec3(-1, 4.5, -3), abs_tol=1e-6)
+    assert vertices[1].isclose(Vec3(1.5, 2, -3), abs_tol=1e-6)
 
 
 @pytest.mark.parametrize("txt,ver",
@@ -162,9 +161,9 @@ def test_circle_default_ocs():
 
 def test_circle_fast_translation():
     circle = Circle.new(
-        dxfattribs={'center': (2, 3, 4), 'extrusion': Vector.random()})
+        dxfattribs={'center': (2, 3, 4), 'extrusion': Vec3.random()})
     ocs = circle.ocs()
-    offset = Vector(1, 2, 3)
+    offset = Vec3(1, 2, 3)
     center = ocs.to_wcs(circle.dxf.center) + offset
     circle.translate(*offset)
     assert ocs.to_wcs(circle.dxf.center).isclose(center, abs_tol=1e-9)
@@ -192,7 +191,7 @@ def test_circle_user_ocs():
         dxfattribs={'center': center, 'extrusion': extrusion, 'thickness': 2})
     ocs = OCS(extrusion)
     v = ocs.to_wcs(center)  # (-2, 4, 3)
-    v = Vector(v.x * 2, v.y * 4, v.z * 2)
+    v = Vec3(v.x * 2, v.y * 4, v.z * 2)
     v += (1, 1, 1)
     # and back to OCS, extrusion is unchanged
     result = ocs.from_wcs(v)

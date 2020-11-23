@@ -4,7 +4,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Sequence, Tuple
 import math
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
@@ -52,20 +52,20 @@ class SierpinskyPyramid:
         x, y, z = location
         if self.sides == 4:
             return [
-                Vector(x - len2, y - len2, z),
-                Vector(x + len2, y - len2, z),
-                Vector(x + len2, y + len2, z),
-                Vector(x - len2, y + len2, z),
-                Vector(x, y, z + length * HEIGHT4)
+                Vec3(x - len2, y - len2, z),
+                Vec3(x + len2, y - len2, z),
+                Vec3(x + len2, y + len2, z),
+                Vec3(x - len2, y + len2, z),
+                Vec3(x, y, z + length * HEIGHT4)
             ]
         elif self.sides == 3:
             dy1 = length * DY1_FACTOR
             dy2 = length * DY2_FACTOR
             return [
-                Vector(x - len2, y - dy1, z),
-                Vector(x + len2, y - dy1, z),
-                Vector(x, y + dy2, z),
-                Vector(x, y, z + length * HEIGHT3)
+                Vec3(x - len2, y - dy1, z),
+                Vec3(x + len2, y - dy1, z),
+                Vec3(x, y + dy2, z),
+                Vec3(x, y, z + length * HEIGHT3)
             ]
         else:
             raise ValueError("sides has to be 3 or 4.")
@@ -136,7 +136,7 @@ class SierpinskyPyramid:
 def sierpinsky_pyramid(location: (0., 0., 0.),
                        length: float = 1.,
                        level: int = 1,
-                       sides: int = 4) -> List[Tuple[Vector, float]]:
+                       sides: int = 4) -> List[Tuple[Vec3, float]]:
     """ Build a Sierpinski pyramid.
 
     Args:
@@ -148,7 +148,7 @@ def sierpinsky_pyramid(location: (0., 0., 0.),
     Returns: list of pyramid vertices
 
     """
-    location = Vector(location)
+    location = Vec3(location)
     level = int(level)
     if level < 1:
         raise ValueError("level has to be 1 or bigger.")
@@ -161,9 +161,9 @@ def sierpinsky_pyramid(location: (0., 0., 0.),
     return pyramids
 
 
-def _sierpinsky_pyramid(location: Vector,
+def _sierpinsky_pyramid(location: Vec3,
                         length: float = 1.,
-                        sides: int = 4) -> List[Tuple[Vector, float]]:
+                        sides: int = 4) -> List[Tuple[Vec3, float]]:
     if sides == 3:
         return sierpinsky_pyramid_3(location, length)
     elif sides == 4:
@@ -172,7 +172,7 @@ def _sierpinsky_pyramid(location: Vector,
         raise ValueError("sides has to be 3 or 4.")
 
 
-def sierpinsky_pyramid_4(location: Vector, length: float = 1.) -> List[Tuple[Vector, float]]:
+def sierpinsky_pyramid_4(location: Vec3, length: float = 1.) -> List[Tuple[Vec3, float]]:
     """ Build a 4-sided Sierpinski pyramid. Pyramid height = length of the base square!
 
     Args:
@@ -186,15 +186,15 @@ def sierpinsky_pyramid_4(location: Vector, length: float = 1.) -> List[Tuple[Vec
     len4 = length / 4
     x, y, z = location
     return [
-        (Vector(x - len4, y - len4, z), len2),
-        (Vector(x + len4, y - len4, z), len2),
-        (Vector(x - len4, y + len4, z), len2),
-        (Vector(x + len4, y + len4, z), len2),
-        (Vector(x, y, z + len2 * HEIGHT4), len2)
+        (Vec3(x - len4, y - len4, z), len2),
+        (Vec3(x + len4, y - len4, z), len2),
+        (Vec3(x - len4, y + len4, z), len2),
+        (Vec3(x + len4, y + len4, z), len2),
+        (Vec3(x, y, z + len2 * HEIGHT4), len2)
     ]
 
 
-def sierpinsky_pyramid_3(location: Vector, length: float = 1.) -> List[Tuple[Vector, float]]:
+def sierpinsky_pyramid_3(location: Vec3, length: float = 1.) -> List[Tuple[Vec3, float]]:
     """ Build a 3-sided Sierpinski pyramid (tetraeder).
 
     Args:
@@ -210,8 +210,8 @@ def sierpinsky_pyramid_3(location: Vector, length: float = 1.) -> List[Tuple[Vec
     len4 = length / 4
     x, y, z = location
     return [
-        (Vector(x - len4, y - dy1, z), len2),
-        (Vector(x + len4, y - dy1, z), len2),
-        (Vector(x, y + dy2, z), len2),
-        (Vector(x, y, z + len2 * HEIGHT3), len2)
+        (Vec3(x - len4, y - dy1, z), len2),
+        (Vec3(x + len4, y - dy1, z), len2),
+        (Vec3(x, y + dy2, z), len2),
+        (Vec3(x, y, z + len2 * HEIGHT3), len2)
     ]

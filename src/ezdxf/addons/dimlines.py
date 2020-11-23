@@ -25,8 +25,7 @@ from typing import Any, Dict, TYPE_CHECKING, Iterable, List, Tuple
 from math import radians, degrees, pi
 from abc import abstractmethod
 
-from ezdxf.math.vector import Vector, distance, lerp
-from ezdxf.math.line import ConstructionRay
+from ezdxf.math import Vec3, distance, lerp, ConstructionRay
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, GenericLayoutType, Vertex
@@ -260,7 +259,7 @@ class LinearDimension(_DimensionBase):
         self.angle = angle
         self.measure_points = list(measure_points)
         self.text_override = [""] * self.section_count
-        self.dimlinepos = Vector(pos)
+        self.dimlinepos = Vec3(pos)
         self.layout = None
 
     def set_text(self, section: int, text: str) -> None:
@@ -273,10 +272,10 @@ class LinearDimension(_DimensionBase):
         """
         Calc setup values and determines the point order of the dimension line points.
         """
-        self.measure_points = [Vector(point) for point in self.measure_points]  # type: List[Vector]
+        self.measure_points = [Vec3(point) for point in self.measure_points]  # type: List[Vec3]
         dimlineray = ConstructionRay(self.dimlinepos, angle=radians(self.angle))  # Type: ConstructionRay
         self.dimline_points = [self._get_point_on_dimline(point, dimlineray) for point in
-                               self.measure_points]  # type: List[Vector]
+                               self.measure_points]  # type: List[Vec3]
         self.point_order = self._indices_of_sorted_points(self.dimline_points)  # type: List[int]
         self._build_vectors()
 
@@ -286,13 +285,13 @@ class LinearDimension(_DimensionBase):
         """
         return self.dimline_points[self.point_order[index]]
 
-    def _get_section_points(self, section: int) -> Tuple[Vector, Vector]:
+    def _get_section_points(self, section: int) -> Tuple[Vec3, Vec3]:
         """
         Get start and end point on the dimension line of dimension section.
         """
         return self._get_dimline_point(section), self._get_dimline_point(section + 1)
 
-    def _get_dimline_bounds(self) -> Tuple[Vector, Vector]:
+    def _get_dimline_bounds(self) -> Tuple[Vec3, Vec3]:
         """
         Get the first and the last point of dimension line.
         """
@@ -327,11 +326,11 @@ class LinearDimension(_DimensionBase):
     def _build_vectors(self) -> None:
         """ build unit vectors, parallel and normal to dimension line """
         point1, point2 = self._get_dimline_bounds()
-        self.parallel_vector = (Vector(point2) - Vector(point1)).normalize()
+        self.parallel_vector = (Vec3(point2) - Vec3(point1)).normalize()
         self.normal_vector = self.parallel_vector.orthogonal()
 
     @staticmethod
-    def _get_point_on_dimline(point: 'Vertex', dimray: ConstructionRay) -> Vector:
+    def _get_point_on_dimline(point: 'Vertex', dimray: ConstructionRay) -> Vec3:
         """ get the measure target point projection on the dimension line """
         return dimray.intersect(dimray.orthogonal(point))
 
@@ -399,7 +398,7 @@ class LinearDimension(_DimensionBase):
         dimvalue = distance(point1, point2) * self.prop('scale')
         return self.format_dimtext(dimvalue)
 
-    def _get_text_insert_point(self, section: int) -> Vector:
+    def _get_text_insert_point(self, section: int) -> Vec3:
         """ get the dimension value text insert point """
         point1, point2 = self._get_section_points(section)
         dist = self.prop('height') / 2. + self.prop('textabove')
@@ -458,17 +457,17 @@ class AngularDimension(_DimensionBase):
 
         """
         super().__init__(dimstyle, layer, roundval)
-        self.dimlinepos = Vector(pos)
-        self.center = Vector(center)
-        self.start = Vector(start)
-        self.end = Vector(end)
+        self.dimlinepos = Vec3(pos)
+        self.center = Vec3(center)
+        self.start = Vec3(start)
+        self.end = Vec3(end)
 
     def _setup(self) -> None:
         """ setup calculation values """
         self.pos_radius = distance(self.center, self.dimlinepos)  # type: float
         self.radius = distance(self.center, self.start)  # type: float
-        self.start_vector = (self.start - self.center).normalize()  # type: Vector
-        self.end_vector = (self.end - self.center).normalize()  # type: Vector
+        self.start_vector = (self.start - self.center).normalize()  # type: Vec3
+        self.end_vector = (self.end - self.center).normalize()  # type: Vec3
         self.start_angle = self.start_vector.angle  # type: float
         self.end_angle = self.end_vector.angle  # type: float
 
@@ -507,10 +506,10 @@ class AngularDimension(_DimensionBase):
                 }
             )
 
-    def _get_extline_start(self, vector: Vector) -> Vector:
+    def _get_extline_start(self, vector: Vec3) -> Vec3:
         return self.center + (vector * self.prop('dimextlinegap'))
 
-    def _get_extline_end(self, vector: Vector) -> Vector:
+    def _get_extline_end(self, vector: Vec3) -> Vec3:
         return self.center + (vector * self.pos_radius)
 
     def _draw_dimension_text(self, layout: 'GenericLayoutType') -> None:
@@ -526,7 +525,7 @@ class AngularDimension(_DimensionBase):
             dxfattribs=attribs,
         ).set_pos(self._get_text_insert_point(), align='MIDDLE_CENTER')
 
-    def _get_text_insert_point(self) -> Vector:
+    def _get_text_insert_point(self) -> Vec3:
         midvector = ((self.start_vector + self.end_vector) / 2.).normalize()
         length = self.pos_radius + self.prop('textabove') + self.prop('height') / 2.
         return self.center + (midvector * length)
@@ -584,10 +583,10 @@ class ArcDimension(AngularDimension):
         if self.arc3points:
             self.center = center_of_3points_arc(self.center, self.start, self.end)
 
-    def _get_extline_start(self, vector: Vector) -> Vector:
+    def _get_extline_start(self, vector: Vec3) -> Vec3:
         return self.center + (vector * (self.radius + self.prop('dimextlinegap')))
 
-    def _get_extline_end(self, vector: Vector) -> Vector:
+    def _get_extline_end(self, vector: Vec3) -> Vec3:
         return self.center + (vector * self.pos_radius)
 
     def _get_dimtext(self) -> str:
@@ -614,12 +613,12 @@ class RadialDimension(_DimensionBase):
 
         """
         super().__init__(dimstyle, layer, roundval)
-        self.center = Vector(center)
-        self.target = Vector(target)
+        self.center = Vec3(center)
+        self.target = Vec3(target)
         self.length = float(length)
 
     def _setup(self) -> None:
-        self.target_vector = (self.target - self.center).normalize()  # type: Vector
+        self.target_vector = (self.target - self.center).normalize()  # type: Vec3
         self.radius = distance(self.center, self.target)  # type: float
 
     def render(self, layout: 'GenericLayoutType') -> None:
@@ -651,7 +650,7 @@ class RadialDimension(_DimensionBase):
             }
         ).set_pos(self._get_insert_point(), align='MIDDLE_RIGHT')
 
-    def _get_insert_point(self) -> Vector:
+    def _get_insert_point(self) -> Vec3:
         return self.target - (self.target_vector * (self.length + self.prop('textabove')))
 
     def _get_dimtext(self) -> str:
@@ -670,7 +669,7 @@ class RadialDimension(_DimensionBase):
         )
 
 
-def center_of_3points_arc(point1: 'Vertex', point2: 'Vertex', point3: 'Vertex') -> Vector:
+def center_of_3points_arc(point1: 'Vertex', point2: 'Vertex', point3: 'Vertex') -> Vec3:
     """
     Calc center point of 3 point arc. ConstructionCircle is defined by 3 points on the circle: point1, point2 and point3.
     """

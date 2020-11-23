@@ -5,7 +5,7 @@ from pathlib import Path
 import math
 import random
 import ezdxf
-from ezdxf.math import linspace, Vector, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
+from ezdxf.math import linspace, Vec3, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
 from ezdxf.entities import Circle, Arc, Ellipse, Insert, Text, MText, Hatch
 
 DIR = Path('~/Desktop/Outbox').expanduser()
@@ -88,7 +88,7 @@ def arc(radius=1, start=30, end=150, count=8):
 
 
 def ellipse(major_axis=(1, 0), ratio: float = 0.5, start: float = 0, end: float = math.tau, count: int = 8):
-    major_axis = Vector(major_axis).replace(z=0)
+    major_axis = Vec3(major_axis).replace(z=0)
     ellipse_ = Ellipse.new(dxfattribs={
         'center': (0, 0, 0),
         'major_axis': major_axis,
@@ -115,7 +115,7 @@ def insert():
 
 def main_ellipse(layout):
     entity, vertices, axis_vertices = ellipse(start=math.pi / 2, end=-math.pi / 2)
-    axis = Vector.random()
+    axis = Vec3.random()
     angle = random_angle()
     entity, vertices, axis_vertices = synced_rotation(entity, vertices, axis_vertices, axis=axis, angle=angle)
     entity, vertices, axis_vertices = synced_translation(
@@ -151,7 +151,7 @@ def main_multi_ellipse(layout):
 def main_insert(layout):
     entity, vertices = insert()
     entity, vertices = synced_translation(entity, vertices, dx=1, dy=0, dz=0)
-    axis = Vector.random()
+    axis = Vec3.random()
     angle = random_angle()
 
     for sx, sy, sz in NON_UNIFORM_SCALING:
@@ -212,7 +212,7 @@ def main_text(layout):
     def text(num):
         height = 1.0
         width = 1.0
-        p1 = Vector(0, 0, 0)
+        p1 = Vec3(0, 0, 0)
 
         t = Text.new(dxfattribs={
             'text': content.format(num),  # should easily show reflexion errors
@@ -262,7 +262,7 @@ def main_mtext(layout):
     def mtext(num):
         height = 1.0
         width = 1.0
-        p1 = Vector(0, 0, 0)
+        p1 = Vec3(0, 0, 0)
 
         t = MText.new(dxfattribs={
             'char_height': height,

@@ -19,7 +19,7 @@ from array import array
 from itertools import chain
 from binascii import unhexlify
 import reprlib
-from ezdxf.math.vector import Vector
+from ezdxf.math.vector import Vec3
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
@@ -334,7 +334,7 @@ def get_xcode_for(code) -> int:
 def cast_value(code: int, value):
     if value is not None:
         if code in POINT_CODES:
-            return Vector(value)
+            return Vec3(value)
         return TYPE_TABLE.get(code, str)(value)
     else:
         return None

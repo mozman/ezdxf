@@ -3,7 +3,7 @@
 from typing import cast
 import pytest
 import copy
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 from ezdxf.entities import factory, Hatch, LWPolyline
 from ezdxf.addons import geo
 from ezdxf.render.forms import square, translate
@@ -81,7 +81,7 @@ FEATURE_COLLECTION = {
 ])
 def test_polygon_mapping_vertex_count_error(points):
     with pytest.raises(ValueError):
-        geo.polygon_mapping(Vector.list(points), [])
+        geo.polygon_mapping(Vec3.list(points), [])
 
 
 def test_map_dxf_point():
@@ -157,7 +157,7 @@ def test_map_circle():
 ])
 def test_parse_types(entity):
     # Parser does basic structure validation and converts all coordinates into
-    # Vector objects.
+    # Vec3 objects.
     assert geo.parse(entity) == entity
 
 
@@ -227,7 +227,7 @@ def test_point_to_dxf_entity():
 def test_line_string_to_dxf_entity():
     res = cast(LWPolyline, list(geo.dxf_entities(LINE_STRING))[0])
     assert res.dxftype() == 'LWPOLYLINE'
-    assert list(res.vertices()) == Vector.list(EXTERIOR)
+    assert list(res.vertices()) == Vec3.list(EXTERIOR)
 
 
 def test_polygon_without_holes_to_dxf_entity():
@@ -236,7 +236,7 @@ def test_polygon_without_holes_to_dxf_entity():
     assert len(res.paths) == 1
     p = res.paths[0]
     assert p.PATH_TYPE == 'PolylinePath'
-    assert p.vertices == Vector.list(EXTERIOR)
+    assert p.vertices == Vec3.list(EXTERIOR)
 
 
 def test_polygon_with_holes_to_dxf_entity():
@@ -244,10 +244,10 @@ def test_polygon_with_holes_to_dxf_entity():
     assert len(res.paths) == 3
     p = res.paths[1]
     assert p.PATH_TYPE == 'PolylinePath'
-    assert p.vertices == Vector.list(HOLE1)
+    assert p.vertices == Vec3.list(HOLE1)
     p = res.paths[2]
     assert p.PATH_TYPE == 'PolylinePath'
-    assert p.vertices == Vector.list(HOLE2)
+    assert p.vertices == Vec3.list(HOLE2)
 
 
 def test_geometry_collection_to_dxf_entities():
@@ -274,7 +274,7 @@ def test_feature_collection_to_dxf_entities():
     [(0, 0), (0, 0)],
 ])
 def test_common_WGS84_projection(deg, coords):
-    projected = geo.wgs84_4326_to_3395(Vector(deg))
+    projected = geo.wgs84_4326_to_3395(Vec3(deg))
     assert projected.round(2).isclose(coords)
     # inverse projection
     assert geo.wgs84_3395_to_4326(projected).isclose(deg)

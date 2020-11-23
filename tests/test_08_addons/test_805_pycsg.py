@@ -1,5 +1,5 @@
 # License: MIT License
-from ezdxf.addons.pycsg import CSG, Vector, BSPNode, Polygon
+from ezdxf.addons.pycsg import CSG, Vec3, BSPNode, Polygon
 from ezdxf.render.forms import cube, sphere, cone_2p, cylinder_2p
 
 
@@ -48,9 +48,9 @@ def test_bolt():
 
 
 def test_example_simple():
-    v0 = Vector(0., 0., 0.)
-    v1 = Vector(1., 0., 0.)
-    v2 = Vector(1., 1., 0.)
+    v0 = Vec3(0., 0., 0.)
+    v1 = Vec3(1., 0., 0.)
+    v2 = Vec3(1., 1., 0.)
     p0 = Polygon([v0, v1, v2])
     polygons = [p0]
     node = BSPNode(polygons)
@@ -63,10 +63,10 @@ def test_example_infiniteRecursion():
     # put at the back of the list with respect to
     # its own cutting plane -- it should be classified
     # as co-planar
-    v0 = Vector(0.12, -0.24, 1.50)
-    v1 = Vector(0.01, 0.00, 1.75)
-    v2 = Vector(-0.03, 0.05, 1.79)
-    v3 = Vector(-0.13, -0.08, 1.5)
+    v0 = Vec3(0.12, -0.24, 1.50)
+    v1 = Vec3(0.01, 0.00, 1.75)
+    v2 = Vec3(-0.03, 0.05, 1.79)
+    v3 = Vec3(-0.13, -0.08, 1.5)
     p0 = Polygon([v0, v1, v2, v3])
     polygons = [p0]
     node = BSPNode(polygons)

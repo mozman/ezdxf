@@ -119,7 +119,7 @@ Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. automethod:: apply_construction_tool(s: BSpline) -> Spline
 
-    .. automethod:: flattening(distance: float, segments: int = 4) -> Iterable[Vector]
+    .. automethod:: flattening(distance: float, segments: int = 4) -> Iterable[Vec3]
 
     .. automethod:: set_open_uniform
 

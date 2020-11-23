@@ -7,7 +7,7 @@ import ezdxf
 import math
 
 from ezdxf.entities import Ellipse, Point, Arc
-from ezdxf.math import Vector
+from ezdxf.math import Vec3
 
 
 @pytest.fixture(scope='module')
@@ -125,8 +125,8 @@ def test_03_explode_polyline_bulge(doc, msp):
     assert e.dxf.ratio == 0.5
     assert math.isclose(e.dxf.start_param, -2.498091544796509 % math.tau)
     assert math.isclose(e.dxf.end_param, -0.6435011087932843 % math.tau)
-    assert e.start_point.isclose(Vector(3, 0, 0))
-    assert e.end_point.isclose(Vector(6, 0, 0), abs_tol=1e-5)
+    assert e.start_point.isclose(Vec3(3, 0, 0))
+    assert e.end_point.isclose(Vec3(6, 0, 0), abs_tol=1e-5)
 
     e = entities[2]
     assert e.dxftype() == 'LINE'
@@ -183,7 +183,7 @@ def test_06_skipped_entities_callback(doc, msp):
     assert len(skipped_entities) == 0
 
 
-def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool) -> Union[Ellipse, Arc]:
+def _get_transformed_curve(scale_factors: Vec3, rotation: float, is_arc: bool) -> Union[Ellipse, Arc]:
     doc = ezdxf.new()
     blk = doc.blocks.new('block')
     if is_arc:
@@ -191,8 +191,8 @@ def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool)
     else:
         blk.add_ellipse((0, 0), major_axis=(1, 0), ratio=1, start_param=0, end_param=math.pi / 2)
 
-    assert blk[0].start_point.isclose(Vector(1, 0, 0))
-    assert blk[0].end_point.isclose(Vector(0, 1, 0))
+    assert blk[0].start_point.isclose(Vec3(1, 0, 0))
+    assert blk[0].end_point.isclose(Vec3(0, 1, 0))
 
     blk.add_point((1, 0))
     blk.add_point((0, 1))
@@ -215,7 +215,7 @@ def _get_transformed_curve(scale_factors: Vector, rotation: float, is_arc: bool)
     return ellipse
 
 
-def _check_curve(ellipse: Ellipse, expected_start: Vector, expected_end: Vector, expected_extrusion: Vector):
+def _check_curve(ellipse: Ellipse, expected_start: Vec3, expected_end: Vec3, expected_extrusion: Vec3):
     assert ellipse.start_point.isclose(expected_start)
     assert ellipse.end_point.isclose(expected_end)
     assert ellipse.dxf.extrusion.is_parallel(expected_extrusion)
@@ -223,120 +223,120 @@ def _check_curve(ellipse: Ellipse, expected_start: Vector, expected_end: Vector,
 
 @pytest.mark.parametrize('zscale,is_arc', [(1, False), (0.5, False), (1, True), (0.5, True), (-1, False), (-1, True)])
 def test_07_rotated_and_reflected_curves(zscale, is_arc):
-    scale = Vector(1, 1, zscale)
+    scale = Vec3(1, 1, zscale)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(0, 1, 0), Vec3(-1, 0, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(-1, 0, 0), Vec3(0, -1, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(0, -1, 0), Vec3(1, 0, 0), Vec3(0, 0, zscale))
 
-    scale = Vector(1, -1, zscale)
+    scale = Vec3(1, -1, zscale)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(1, 0, 0), Vec3(0, -1, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(0, 1, 0), Vec3(1, 0, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(-1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(0, -1, 0), Vec3(-1, 0, 0), Vec3(0, 0, zscale))
 
-    scale = Vector(-1, 1, zscale)
+    scale = Vec3(-1, 1, zscale)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(-1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(0, -1, 0), Vec3(-1, 0, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(1, 0, 0), Vec3(0, -1, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(0, 1, 0), Vec3(1, 0, 0), Vec3(0, 0, zscale))
 
-    scale = Vector(-1, -1, zscale)
+    scale = Vec3(-1, -1, zscale)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -1, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(-1, 0, 0), Vec3(0, -1, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(1, 0, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(0, -1, 0), Vec3(1, 0, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, 1, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, zscale))
 
     ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(-1, 0, 0), Vector(0, 0, zscale))
+    _check_curve(ellipse, Vec3(0, 1, 0), Vec3(-1, 0, 0), Vec3(0, 0, zscale))
 
 
 @pytest.mark.parametrize('stretch,is_arc', [(0.5, False), (0.5, True)])
 def test_08_rotated_and_reflected_and_stretched_curves(stretch, is_arc):
-    scale = Vector(1, stretch, 1)
+    scale = Vec3(1, stretch, 1)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(1, 0, 0), Vec3(0, stretch, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(0, 1, 0), Vec3(-stretch, 0, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(-1, 0, 0), Vec3(0, -stretch, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(0, -1, 0), Vec3(stretch, 0, 0), Vec3(0, 0, 1))
 
-    scale = Vector(1, -stretch, 1)
+    scale = Vec3(1, -stretch, 1)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(1, 0, 0), Vec3(0, -stretch, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(0, 1, 0), Vec3(stretch, 0, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(-1, 0, 0), Vec3(0, stretch, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(0, -1, 0), Vec3(-stretch, 0, 0), Vec3(0, 0, 1))
 
-    scale = Vector(-1, stretch, 1)
+    scale = Vec3(-1, stretch, 1)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(-1, 0, 0), Vec3(0, stretch, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(0, -1, 0), Vec3(-stretch, 0, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(1, 0, 0), Vec3(0, -stretch, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(0, 1, 0), Vec3(stretch, 0, 0), Vec3(0, 0, 1))
 
-    scale = Vector(-1, -stretch, 1)
+    scale = Vec3(-1, -stretch, 1)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
-    _check_curve(ellipse, Vector(-1, 0, 0), Vector(0, -stretch, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(-1, 0, 0), Vec3(0, -stretch, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, -1, 0), Vector(stretch, 0, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(0, -1, 0), Vec3(stretch, 0, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, math.pi, is_arc)
-    _check_curve(ellipse, Vector(1, 0, 0), Vector(0, stretch, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(1, 0, 0), Vec3(0, stretch, 0), Vec3(0, 0, 1))
 
     ellipse = _get_transformed_curve(scale, 3 * math.pi / 2, is_arc)
-    _check_curve(ellipse, Vector(0, 1, 0), Vector(-stretch, 0, 0), Vector(0, 0, 1))
+    _check_curve(ellipse, Vec3(0, 1, 0), Vec3(-stretch, 0, 0), Vec3(0, 0, 1))
 
 
 def test_explode_xref(doc, msp):
