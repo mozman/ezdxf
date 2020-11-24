@@ -8,6 +8,7 @@ PYTHON37 = py -3.7
 
 cython:
 	$(PYTHON38) $(BUILD_OPTIONS)
+	$(PYTHON39) $(BUILD_OPTIONS)
 
 
 packages:
