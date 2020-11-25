@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 import pytest
 import math
@@ -157,38 +157,26 @@ def test_negative(vcls):
     assert -v == (-2, -3)
 
 
-def test_add_scalar(vcls):
-    v = vcls((2, 3))
-    if len(v) == 2:
-        assert v + 3 == (5, 6)
-    else:
-        assert v + 3 == (5, 6, 3)
+def test_add_scalar_type_erorr(vcls):
+    with pytest.raises(TypeError):
+        vcls(1, 1) + 1
 
 
-def test_iadd_scalar():
-    v = Vec2((2, 3))
-    v1 = v
-    v += 3
-    assert v == (5, 6)
-    assert v1 == (5, 6)
-    assert v is v1
+def test_iadd_scalar_type_error(vcls):
+    v = vcls(2, 3)
+    with pytest.raises(TypeError):
+        v += 1
 
 
-def test_sub_scalar(vcls):
-    v = vcls((2, 3))
-    if len(v) == 2:
-        assert v - 3 == (-1, 0)
-    else:
-        assert v - 3 == (-1, 0, -3)
+def test_sub_scalar_type_error(vcls):
+    with pytest.raises(TypeError):
+        vcls(1, 1) - 1
 
 
-def test_isub_scalar():
-    v = Vec2((2, 3))
-    v1 = v
-    v -= 3
-    assert v == (-1, 0)
-    assert v1 == (-1, 0)
-    assert v1 is v
+def test_isub_scalar_type_erorr(vcls):
+    v = vcls(2, 3)
+    with pytest.raises(TypeError):
+        v -= 1
 
 
 def test_add_vector(vcls):
@@ -206,12 +194,9 @@ def test_iadd_vector():
     assert v1 is v
 
 
-def test_radd_vector():
-    v = Vec2((2, 3))
-    if len(v) == 2:
-        assert 7 + v == (9, 10)
-    else:
-        assert 7 + v == (9, 10, 7)
+def test_radd_scalar_type_error(vcls):
+    with pytest.raises(TypeError):
+        1 + vcls(1, 1)
 
 
 def test_sub_vector(vcls):
@@ -229,12 +214,9 @@ def test_isub_vector():
     assert v1 is v
 
 
-def test_rsub_scalar_vector():
-    v = Vec2((2, 3))
-    if len(v) == 2:
-        assert 7 - v == (5, 4)
-    else:
-        assert 7 - v == (5, 4, 7)
+def test_rsub_scalar_type_error(vcls):
+    with pytest.raises(TypeError):
+        1 - vcls(1, 1)
 
 
 def test_mul_scalar(vcls):
@@ -264,7 +246,7 @@ def test_div_scalar(vcls):
 
 def test_idiv_scalar():
     # Vec3 supports this operation but is immutable
-    v = Vec2((2, 3))
+    v = Vec2(2, 3)
     v1 = v
     v /= 2
     assert v == (1, 1.5)
@@ -274,13 +256,12 @@ def test_idiv_scalar():
 
 def test_rdiv_scalar():
     # Vec3 => div by 0
-    v = Vec2((2, 3))
-    assert 2 / v == (1, 0.66666666667)
+    assert 2 / Vec2(2, 3) == (1, 0.66666666667)
 
 
 def test_dot_product(vcls):
-    v1 = vcls((2, 7))
-    v2 = vcls((3, 9))
+    v1 = vcls(2, 7)
+    v2 = vcls(3, 9)
     assert math.isclose(v1.dot(v2), 69)
 
 
@@ -336,3 +317,9 @@ def test_project(vcls):
 def test_det():
     assert Vec2((1, 0)).det(Vec2((0, 1))) == 1
     assert Vec2((0, 1)).det(Vec2((1, 0))) == -1
+
+
+def test_sum(vcls):
+    assert vcls.sum([]).is_null is True
+    assert vcls.sum([vcls(1, 1)]) == (1, 1)
+    assert vcls.sum([vcls(1, 1), vcls(2, 2)]) == (3, 3)

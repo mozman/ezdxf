@@ -552,9 +552,9 @@ def cylinder_2p(count: int = 16, radius: float = 1, base_center=(0, 0, 0), top_c
 def ngon_to_triangles(face: Iterable['Vertex']) -> Iterable[Sequence[Vec3]]:
     face = [Vec3(v) for v in face]
     if face[0].isclose(face[-1]):  # closed shape
-        center = sum(face[:-1]) / (len(face) - 1)
+        center = Vec3.sum(face[:-1]) / (len(face) - 1)
     else:
-        center = sum(face) / len(face)
+        center = Vec3.sum(face) / len(face)
         face.append(face[0])
 
     for v1, v2 in zip(face[:-1], face[1:]):

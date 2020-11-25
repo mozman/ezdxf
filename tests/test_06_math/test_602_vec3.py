@@ -1,3 +1,6 @@
+# Copyright (c) 2020, Manfred Moitzi
+# License: MIT License
+import pytest
 import math
 # Import from 'ezdxf.math.vector' to test Python implementation
 from ezdxf.math.vector import Vec3
@@ -42,7 +45,8 @@ def test_init_three_params():
 def test_from_angle():
     angle = math.radians(50)
     length = 3.
-    assert Vec3.from_angle(angle, length) == (math.cos(angle) * length, math.sin(angle) * length, 0)
+    assert Vec3.from_angle(angle, length) == (
+        math.cos(angle) * length, math.sin(angle) * length, 0)
 
 
 def test_vector_as_tuple():
@@ -178,26 +182,36 @@ def test_negative():
     assert -v == (-2, -3, -4)
 
 
-def test_add_scalar():
+def test_add_scalar_type_error():
+    with pytest.raises(TypeError):
+        Vec3(2, 3, 4) + 3
+
+
+def test_radd_scalar_type_error():
+    with pytest.raises(TypeError):
+        3 + Vec3(2, 3, 4)
+
+
+def test_iadd_scalar_type_error():
     v = Vec3(2, 3, 4)
-    assert v + 3 == (5, 6, 7)
+    with pytest.raises(TypeError):
+        v += 3
 
 
-def test_iadd_scalar():
+def test_sub_scalar_type_error():
+    with pytest.raises(TypeError):
+        Vec3(2, 3, 4) - 3
+
+
+def test_rsub_scalar_vector_type_error():
+    with pytest.raises(TypeError):
+        7 - Vec3(2, 3, 4)
+
+
+def test_isub_scalar_type_error():
     v = Vec3(2, 3, 4)
-    v += 3
-    assert v == (5, 6, 7)
-
-
-def test_sub_scalar():
-    v = Vec3(2, 3, 4)
-    assert v - 3 == (-1, 0, 1)
-
-
-def test_isub_scalar():
-    v = Vec3(2, 3, 4)
-    v -= 3
-    assert v == (-1, 0, 1)
+    with pytest.raises(TypeError):
+        v -= 3
 
 
 def test_add_vector():
@@ -230,11 +244,6 @@ def test_isub_vector():
 def test_rsub_vector():
     v = Vec3(2, 3, 4)
     assert (7, 7, 7) - v == (5, 4, 3)
-
-
-def test_rsub_scalar_vector():
-    v = Vec3(2, 3, 4)
-    assert 7 - v == (5, 4, 3)
 
 
 def test_mul_scalar():
@@ -354,3 +363,9 @@ def test_project():
 
     v = Vec3(10, 10, 0)
     assert v.project((10, 0, 0)) == (5, 5, 0)
+
+
+def test_vec3_sum():
+    assert Vec3.sum([]).is_null is True
+    assert Vec3.sum([Vec3(1, 1, 1)]) == (1, 1, 1)
+    assert Vec3.sum([Vec3(1, 1, 1), (2, 2, 2)]) == (3, 3, 3)

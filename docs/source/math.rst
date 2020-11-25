@@ -351,11 +351,11 @@ Vec3
 
     .. automethod:: orthogonal(ccw: bool = True) -> Vec3
 
-    .. automethod:: lerp(other: Any, factor=.5) -> Vec3
+    .. automethod:: lerp(other: Vertex, factor=.5) -> Vec3
 
     .. automethod:: is_parallel(other: Vec3, abs_tolr=1e-12) -> bool
 
-    .. automethod:: project(other: Any) -> Vec3
+    .. automethod:: project(other: Vertex) -> Vec3
 
     .. automethod:: normalize(length: float = 1.) -> Vec3
 
@@ -371,13 +371,13 @@ Vec3
 
     .. automethod:: __lt__
 
-    .. automethod:: __add__(other: Any) -> Vec3
+    .. automethod:: __add__(other: Vertex) -> Vec3
 
-    .. automethod:: __radd__(other: Any) -> Vec3
+    .. automethod:: __radd__(other: Vertex) -> Vec3
 
-    .. automethod:: __sub__(other: Any) -> Vec3
+    .. automethod:: __sub__(other: Vertex) -> Vec3
 
-    .. automethod:: __rsub__(other: Any) -> Vec3
+    .. automethod:: __rsub__(other: Vertex) -> Vec3
 
     .. automethod:: __mul__(other: float) -> Vec3
 
@@ -393,7 +393,7 @@ Vec3
 
     .. automethod:: dot
 
-    .. automethod:: cross(other: Any) -> Vec3
+    .. automethod:: cross(other: Vertex) -> Vec3
 
     .. automethod:: distance
 
@@ -404,6 +404,8 @@ Vec3
     .. automethod:: rotate(angle: float) -> Vec3
 
     .. automethod:: rotate_deg(angle: float) -> Vec3
+
+    .. automethod:: sum(items: Iterable[Vertex]) -> Vec3
 
 .. attribute:: X_AXIS
 
@@ -424,7 +426,7 @@ Vec3
 Vec2
 ----
 
-.. autoclass:: Vec2(v)
+.. autoclass:: Vec2
 
 Plane
 -----

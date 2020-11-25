@@ -49,7 +49,7 @@ def subdivide_face(face: Sequence[Union[Vec3, Vec2]], quads=True) -> Iterable[
     if len(face) < 3:
         raise ValueError('3 or more vertices required.')
     len_face = len(face)
-    mid_pos = sum(face) / len_face
+    mid_pos = Vec3.sum(face) / len_face
     subdiv_location = [face[i].lerp(face[(i + 1) % len_face]) for i in
                        range(len_face)]
 
@@ -75,7 +75,7 @@ def subdivide_ngons(faces: Iterable[Sequence[Union[Vec3, Vec2]]]) -> Iterable[
         if len(face) < 5:
             yield face
         else:
-            mid_pos = sum(face) / len(face)
+            mid_pos = Vec3.sum(face) / len(face)
             for index, vertex in enumerate(face):
                 yield face[index - 1], vertex, mid_pos
 
@@ -99,9 +99,8 @@ def _determinant(v1, v2, v3) -> float:
 
 
 def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
-                            ray2: Tuple[Vec3, Vec3], abs_tol=1e-10) -> \
-Sequence[
-    Vec3]:
+                            ray2: Tuple[Vec3, Vec3],
+                            abs_tol=1e-10) -> Sequence[Vec3]:
     """
     Calculate intersection of two rays, returns a 0-tuple for parallel rays, a 1-tuple for intersecting rays and a
     2-tuple for not intersecting and not parallel rays with points of closest approach on each ray.
