@@ -25,3 +25,18 @@ There are no advantages of `dxfwrite` over `ezdxf`, `dxfwrite` has the smaller m
 :mod:`r12writer` add-on does the same job as `dxfwrite` without any in memory structures by writing direct to a stream
 or file and there is also no advantage of `dxfgrabber` over `ezdxf` for normal DXF files the smaller memory footprint
 of `dxfgrabber` is not noticeable and for really big files the :mod:`iterdxf` add-on does a better job.
+
+.. _faq002:
+
+Imported ezdxf package has no content. (readfile, new)
+------------------------------------------------------
+
+1. AttributeError: partially initialized module 'ezdxf' has no attribute 'readfile' (most likely due to a circular import)
+
+   Did you name your file/script "ezdxf.py"? This causes problems with
+   circular imports. Renaming your file/script should solve this issue.
+
+2. AttributeError: module 'ezdxf' has no attribute 'readfile'
+
+   This could be a hidden permission error, for more information about this issue
+   read Petr Zemeks article: https://blog.petrzemek.net/2020/11/17/when-you-import-a-python-package-and-it-is-empty/
