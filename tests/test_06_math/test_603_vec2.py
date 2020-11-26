@@ -74,13 +74,12 @@ def test_vec2_as_tuple(vec2):
     v = vec2(1, 2)
     assert v[0] == 1
     assert v[1] == 2
-    assert v[-2] == 1
-    assert v[-1] == 2
 
     with pytest.raises(IndexError):
         _ = v[2]
+    # negative indices not supported
     with pytest.raises(IndexError):
-        _ = v[-3]
+        _ = v[-1]
 
 
 def test_iter(vcls):

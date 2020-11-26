@@ -115,9 +115,9 @@ cdef class Vec2:
         return self  # immutable
 
     def __getitem__(self, int index) -> float:
-        if index == 0 or index == -2:
+        if index == 0:
             return self.x
-        elif index == 1 or index == -1:
+        elif index == 1:
             return self.y
         else:
             raise IndexError(f'invalid index {index}')

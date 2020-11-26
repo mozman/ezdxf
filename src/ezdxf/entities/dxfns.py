@@ -303,7 +303,11 @@ class DXFNamespace:
                     return
                     # Just export x, y for 2D points, if value is a 3D point
                 if attrib.xtype == XType.point2d and len(value) > 2:
-                    value = value[:2]
+                    try:  # Vec3
+                        value = (value.x, value.y)
+                    except AttributeError:
+                        value = value[:2]
+
                 if isinstance(value, str):
                     assert '\n' not in value, "line break '\\n' not allowed"
                     assert '\r' not in value, "line break '\\r' not allowed"

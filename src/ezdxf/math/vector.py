@@ -224,7 +224,16 @@ class Vec3:
             - v[2] is v.z
 
         """
-        return self.xyz[index]
+        if isinstance(index, slice):
+            raise TypeError('slicing not supported')
+        if index == 0:
+            return self._x
+        elif index == 1:
+            return self._y
+        elif index == 2:
+            return self._z
+        else:
+            raise IndexError(f'invalid index {index}')
 
     def __iter__(self) -> Iterable[float]:
         """ Returns iterable of x-, y- and z-axis. """
@@ -630,7 +639,14 @@ class Vec2:
             return v
 
     def __getitem__(self, index: int) -> float:
-        return (self.x, self.y)[index]
+        if isinstance(index, slice):
+            raise TypeError('slicing not supported')
+        if index == 0:
+            return self.x
+        elif index == 1:
+            return self.y
+        else:
+            raise IndexError(f'invalid index {index}')
 
     def __iter__(self) -> Iterable[float]:
         yield self.x

@@ -38,8 +38,12 @@ def test_init_two_params():
 
 
 def test_init_three_params():
+    # as params
     v = Vec3(1, 2, 3)
     assert v == (1, 2, 3)
+    # as single tuple
+    v = Vec3((6, 7, 8))
+    assert v == (6, 7, 8)
 
 
 def test_from_angle():
@@ -49,24 +53,35 @@ def test_from_angle():
         math.cos(angle) * length, math.sin(angle) * length, 0)
 
 
-def test_vector_as_tuple():
+def test_usage_as_tuple():
     v = Vec3(1, 2, 3)
-    assert v[0] == 1
-    assert v[1] == 2
-    assert v[2] == 3
     assert tuple(v) == (1, 2, 3)
-
-    assert isinstance(v[:2], tuple)
-    assert v[:2] == (1, 2)
-    assert v[1:] == (2, 3)
     assert isinstance(v.xyz, tuple)
     assert v.xyz == (1, 2, 3)
 
 
-def test_vec2():
+def test_get_item_positive_index():
     v = Vec3(1, 2, 3)
-    assert len(v) == 3
-    v2 = v.vec2
+    assert v[0] == 1
+    assert v[1] == 2
+    assert v[2] == 3
+    with pytest.raises(IndexError):
+        _ = v[3]
+
+
+@pytest.mark.parametrize('index', [-1, -2, -3])
+def test_get_item_negative_index(index):
+    with pytest.raises(IndexError):
+        _ = Vec3()[index]  # negative indices not supported
+
+
+def test_get_item_does_not_support_slicing():
+    with pytest.raises(TypeError):
+        _ = Vec3()[:2]  # slicing is not supported
+
+
+def test_vec2():
+    v2 = Vec3(1, 2, 3).vec2
     assert len(v2) == 2
     assert v2 == (1, 2)
 
