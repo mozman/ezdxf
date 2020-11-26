@@ -410,14 +410,6 @@ class Vec3:
 
     __div__ = __truediv__
 
-    def __rtruediv__(self, other: float) -> 'Vec3':
-        """ Scalar RDiv operator: `other` / `self`. """
-        scalar = float(other)
-        return self.__class__(scalar / self._x, scalar / self._y,
-                              scalar / self._z)
-
-    __rdiv__ = __rtruediv__
-
     @staticmethod
     def sum(items: Iterable['Vec3']) -> 'Vec3':
         """ Add all vectors in `items`. """
@@ -806,11 +798,6 @@ class Vec2:
         return self
 
     __idiv__ = __itruediv__
-
-    def __rtruediv__(self, other: float) -> 'Vec2':
-        return self.__class__(other / self.x, other / self.y)
-
-    __rdiv__ = __rtruediv__
 
     def dot(self, other: 'VecXY') -> float:
         return self.x * other.x + self.y * other.y

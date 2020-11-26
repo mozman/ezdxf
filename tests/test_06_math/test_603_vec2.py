@@ -247,11 +247,6 @@ def test_div_scalar(vcls):
     assert v / 2 == (1, 1.5)
 
 
-def test_rdiv_scalar():
-    # Vec3 => div by 0
-    assert 2 / Vec2(2, 3) == (1, 0.66666666667)
-
-
 def test_dot_product(vcls):
     v1 = vcls(2, 7)
     v2 = vcls(3, 9)

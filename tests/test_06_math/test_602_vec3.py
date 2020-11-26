@@ -288,11 +288,6 @@ def test_idiv_scalar():
     assert v == (1, 1.5, 2)
 
 
-def test_rdiv_scalar():
-    v = Vec3(2, 3, 4)
-    assert 2 / v == (1, 0.66666666667, 0.5)
-
-
 def test_dot_product():
     v1 = Vec3(2, 7, 1)
     v2 = Vec3(3, 9, 8)
