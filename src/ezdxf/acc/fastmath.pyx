@@ -3,7 +3,6 @@
 # License: MIT License
 from typing import Iterable, List, Sequence, TYPE_CHECKING
 from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos
-import cython
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import VecXY, Vertex
@@ -18,7 +17,6 @@ cdef bint isclose_abs_tol(double a, double b, double tol):
 
 cdef double RAD2DEG = 180.0 / M_PI
 cdef double DEG2RAD = M_PI / 180.0
-
 
 cdef class Vec2:
     """ Immutable 2D vector.
@@ -217,7 +215,6 @@ cdef class Vec2:
     def __truediv__(self, double factor) -> 'Vec2':
         return v2_mul(self, 1.0 / factor)
 
-
     def dot(self, other: 'VecXY') -> float:
         cdef Vec2 o = Vec2(other)
         return v2_dot(self, o)
@@ -253,7 +250,6 @@ cdef class Vec2:
             res.x += tmp.x
             res.y += tmp.y
         return res
-
 
 cdef Vec2 v2_add(Vec2 a, Vec2 b):
     res = Vec2()
