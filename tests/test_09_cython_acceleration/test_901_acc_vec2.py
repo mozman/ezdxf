@@ -79,5 +79,10 @@ def test_bool():
     assert bool(Vec2()) is False
 
 
+def test_cvec2_does_not_support_slicing():
+    with pytest.raises(TypeError):
+        _ = Vec2(2, 1)[:]
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

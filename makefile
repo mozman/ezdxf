@@ -12,13 +12,13 @@ PYPY3 = pypy3
 .PHONY: build
 
 build:
-	$(PYTHON39) $(BUILD_OPTIONS)
+	$(PYTHON38) $(BUILD_OPTIONS)
 
 test0: build
-	$(PYTHON39) -m pytest tests
+	$(PYTHON38) -m pytest tests
 
 test1: test0
-	$(PYTHON39) -m pytest integration_tests
+	$(PYTHON38) -m pytest integration_tests
 
 all:
 	$(PYTHON37) $(BUILD_OPTIONS)

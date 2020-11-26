@@ -9,6 +9,7 @@ all_vec_classes = [Vec2, Vec3]
 vec2_only = [Vec2]
 try:
     from ezdxf.acc.fastmath import Vec2 as CVec2
+
     all_vec_classes.append(CVec2)
     vec2_only.append(CVec2)
 except ImportError:
@@ -65,23 +66,21 @@ def test_round(vec2):
 def test_from_angle(vcls):
     angle = math.radians(50)
     length = 3.
-    assert vcls.from_angle(angle, length) == vcls((math.cos(angle) * length, math.sin(angle) * length))
+    assert vcls.from_angle(angle, length) == vcls(
+        (math.cos(angle) * length, math.sin(angle) * length))
 
 
-def test_vector_as_tuple(vcls):
-    v = vcls(1, 2)
+def test_vec2_as_tuple(vec2):
+    v = vec2(1, 2)
     assert v[0] == 1
     assert v[1] == 2
+    assert v[-2] == 1
+    assert v[-1] == 2
 
-    # to distinguish 2d for 3d vectors use len()
-    if len(v) == 3:
-        assert tuple(v) == (1, 2, 0)
-        assert v[:] == (1, 2, 0)
-    else:
-        assert tuple(v) == (1, 2)
-        assert v[:] == (1, 2)
-
-    assert isinstance(v[:2], tuple)
+    with pytest.raises(IndexError):
+        _ = v[2]
+    with pytest.raises(IndexError):
+        _ = v[-3]
 
 
 def test_iter(vcls):

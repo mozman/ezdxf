@@ -112,18 +112,15 @@ cdef class Vec2:
         return self  # immutable
 
     def __deepcopy__(self, memodict: dict) -> 'Vec2':
-        try:
-            return memodict[id(self)]
-        except KeyError:
-            memodict[id(self)] = self
-            return self
+        return self  # immutable
 
-    def __getitem__(self, index: int) -> float:
-        return (self.x, self.y)[index]
-
-    def __iter__(self) -> Iterable[float]:
-        yield self.x
-        yield self.y
+    def __getitem__(self, int index) -> float:
+        if index == 0 or index == -2:
+            return self.x
+        elif index == 1 or index == -1:
+            return self.y
+        else:
+            raise IndexError(f'invalid index {index}')
 
     def __abs__(self) -> float:
         return hypot(self.x, self.y)
