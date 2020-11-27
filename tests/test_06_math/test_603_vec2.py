@@ -170,6 +170,20 @@ def test_negative(vcls):
     assert -v == (-2, -3)
 
 
+def test_add_vector(vcls):
+    assert vcls(2, 3) + vcls(7, 7) == (9, 10)
+
+
+def test_add_vec3(vec2):
+    assert vec2(2, 3) + Vec3(7, 7) == (9, 10)
+
+
+def test_iadd_vector(vec2):
+    v = Vec2(2, 3)
+    v += Vec2(7, 7)
+    assert v == (9, 10)
+
+
 def test_add_scalar_type_erorr(vcls):
     with pytest.raises(TypeError):
         vcls(1, 1) + 1
@@ -179,6 +193,30 @@ def test_iadd_scalar_type_error(vcls):
     v = vcls(2, 3)
     with pytest.raises(TypeError):
         v += 1
+
+
+def test_radd_scalar_type_error(vcls):
+    with pytest.raises(TypeError):
+        1 + vcls(1, 1)
+
+
+def test_radd_tuple_type_error(vec2):
+    with pytest.raises(TypeError):
+        (1, 1) + vec2(1, 1)
+
+
+def test_sub_vector(vcls):
+    assert vcls(2, 3) - vcls(7, 7) == (-5, -4)
+
+
+def test_isub_vector(vec2):
+    v = Vec2(2, 3)
+    v -= Vec2(7, 7)
+    assert v == (-5, -4)
+
+
+def test_sub_vec3(vec2):
+    assert vec2(2, 3) - Vec3(7, 7) == (-5, -4)
 
 
 def test_sub_scalar_type_error(vcls):
@@ -192,39 +230,9 @@ def test_isub_scalar_type_erorr(vcls):
         v -= 1
 
 
-def test_add_vector(vcls):
-    v = vcls((2, 3))
-    assert v + vcls((7, 7)) == (9, 10)
-
-
-def test_iadd_vector():
-    # Vec3 supports this operation but is immutable
-    v = Vec2((2, 3))
-    v1 = v
-    v += Vec2((7, 7))
-    assert v == (9, 10)
-    assert v1 == (9, 10)
-    assert v1 is v
-
-
-def test_radd_scalar_type_error(vcls):
+def test_rsub_tuple(vec2):
     with pytest.raises(TypeError):
-        1 + vcls(1, 1)
-
-
-def test_sub_vector(vcls):
-    v = vcls((2, 3))
-    assert v - vcls((7, 7)) == (-5, -4)
-
-
-def test_isub_vector():
-    # Vec3 supports this operation but is immutable
-    v = Vec2((2, 3))
-    v1 = v
-    v -= Vec2((7, 7))
-    assert v == (-5, -4)
-    assert v1 == (-5, -4)
-    assert v1 is v
+        (2, 3) - vec2(7, 7)
 
 
 def test_rsub_scalar_type_error(vcls):
@@ -233,18 +241,45 @@ def test_rsub_scalar_type_error(vcls):
 
 
 def test_mul_scalar(vcls):
-    v = vcls((2, 3))
+    v = vcls(2, 3)
     assert v * 2 == (4, 6)
 
 
-def test_rmul_scalar(vcls):
+def test_imul_scalar(vcls):
     v = vcls(2, 3)
-    assert 2 * v == (4, 6)
+    v *= 2
+    assert v == (4, 6)
+
+
+def test_rmul_scalar(vcls):
+    assert 2 * vcls(2, 3) == (4, 6)
+
+
+def test_mul_tuple_type_error(vcls):
+    with pytest.raises(TypeError):
+        vcls(2, 3) * (2, 2)
+
+
+def test_rmul_tuple_type_error(vcls):
+    with pytest.raises(TypeError):
+        (2, 2) * vcls(2, 3)
+
+
+def test_imul_tuple_type_error(vcls):
+    v = vcls(2, 3)
+    with pytest.raises(TypeError):
+        v *= (2, 2)
 
 
 def test_div_scalar(vcls):
     v = vcls(2, 3)
     assert v / 2 == (1, 1.5)
+
+
+def test_idiv_scalar(vcls):
+    v = vcls(2, 3)
+    v /= 2
+    assert v == (1, 1.5)
 
 
 def test_dot_product(vcls):
@@ -268,6 +303,16 @@ def test_angle_between(vcls):
     # reverse order, same result
     angle = v2.angle_between(v1)
     assert math.isclose(angle, math.pi / 4)
+
+
+@pytest.mark.parametrize('v1, v2', [
+    [(1, 0), (0, 0)],
+    [(0, 0), (1, 0)],
+    [(0, 0), (0, 0)],
+])
+def test_angle_between_null_vector(vcls, v1, v2):
+    with pytest.raises(ZeroDivisionError):
+        vcls(v1).angle_between(vcls(v2))
 
 
 def test_angle_between_outside_domain():

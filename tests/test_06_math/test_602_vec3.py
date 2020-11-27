@@ -5,45 +5,53 @@ import math
 # Import from 'ezdxf.math.vector' to test Python implementation
 from ezdxf.math.vector import Vec3
 
-
-def test_init_no_params():
-    v = Vec3()
-    assert v == (0, 0, 0)
-    assert v == Vec3()
+vec3_classes = [Vec3]
 
 
-def test_init_one_param():
-    v = Vec3((2, 3))
-    assert v == (2, 3)  # z is 0.
-
-    v = Vec3((2, 3, 4))
-    assert v == (2, 3, 4)
+@pytest.fixture(params=vec3_classes)
+def vec3(request):
+    return request.param
 
 
-def test_init_two_params():
-    v = Vec3(1, 2)
-    assert v == (1, 2)  # z is 0.
-
-    v = Vec3(5, 6, 7) - Vec3(1, 1, 1)
-    assert v == (4, 5, 6)
-
-    v = Vec3.from_deg_angle(0)
-    assert v == (1, 0)
-
-    length, angle = 7, 45
-    v = Vec3.from_deg_angle(angle, length)
-    x = math.cos(math.radians(angle)) * length
-    y = math.sin(math.radians(angle)) * length
-    assert v == (x, y)
+def test_default_constructor(vec3):
+    assert vec3() == (0, 0, 0)
 
 
-def test_init_three_params():
-    # as params
-    v = Vec3(1, 2, 3)
-    assert v == (1, 2, 3)
-    # as single tuple
-    v = Vec3((6, 7, 8))
-    assert v == (6, 7, 8)
+def test_init_one_param(vec3):
+    assert vec3((2, 3)) == (2, 3, 0)
+    assert vec3((2, 3, 4)) == (2, 3, 4)
+
+
+def test_invalid_one_param_init(vec3):
+    with pytest.raises(TypeError):
+        vec3(0)
+    with pytest.raises(TypeError):
+        vec3((0, ))
+
+
+def test_invalid_param_count(vec3):
+    with pytest.raises(TypeError):
+        vec3(1, 2, 3, 4)
+    with pytest.raises(TypeError):
+        vec3((1, 2, 3, 4))
+
+
+def test_init_two_params(vec3):
+    assert vec3(1, 2) == (1, 2, 0)
+
+
+def test_init_three_params(vec3):
+    assert Vec3(1, 2, 3) == (1, 2, 3)
+
+
+def test_immutable_attributes(vec3):
+    v = vec3()
+    with pytest.raises(AttributeError):
+        v.x = 1.0
+    with pytest.raises(AttributeError):
+        v.y = 1.0
+    with pytest.raises(AttributeError):
+        v.z = 1.0
 
 
 def test_from_angle():
@@ -51,6 +59,12 @@ def test_from_angle():
     length = 3.
     assert Vec3.from_angle(angle, length) == (
         math.cos(angle) * length, math.sin(angle) * length, 0)
+
+    length, angle = 7, 45
+    v = Vec3.from_deg_angle(angle, length)
+    x = math.cos(math.radians(angle)) * length
+    y = math.sin(math.radians(angle)) * length
+    assert v == (x, y)
 
 
 def test_usage_as_tuple():
@@ -101,15 +115,12 @@ def test_deep_copy():
 
     v = Vec3(1, 2, 3)
     l1 = [v, v, v]
+
     l2 = copy.copy(l1)
-    assert l2[0] is l2[1]
-    assert l2[1] is l2[2]
-    assert l2[0] is v
+    assert l2[0] is l1[0], 'Vec3 is immutable'
 
     l3 = copy.deepcopy(l1)
-    assert l3[0] is l3[1]
-    assert l3[1] is l3[2]
-    assert l3[0] is not v
+    assert l3[0] is l1[0], 'Vec3 is immutable'
 
 
 def test_get_angle():
@@ -161,87 +172,95 @@ def test_bool():
     assert not Vec3(1e-8, 0, 0).is_null
 
 
-def test_magnitude():
-    v = Vec3(3, 4, 5)
+def test_magnitude(vec3):
+    v = vec3(3, 4, 5)
     assert math.isclose(abs(v), 7.0710678118654755)
     assert math.isclose(v.magnitude, 7.0710678118654755)
+    assert vec3().magnitude == 0
 
 
-def test_magnitude_square():
-    v = Vec3(3, 4, 5)
+def test_magnitude_square(vec3):
+    v = vec3(3, 4, 5)
     assert math.isclose(v.magnitude_square, 50)
+    assert vec3().magnitude_square == 0
 
 
-def test_normalize():
-    v = Vec3(2, 0, 0)
+def test_normalize(vec3):
+    v = vec3(2, 0, 0)
     assert v.normalize() == (1, 0, 0)
 
 
-def test_normalize_to_length():
-    v = Vec3(2, 0, 0)
+def test_normalize_to_length(vec3):
+    v = vec3(2, 0, 0)
     assert v.normalize(4) == (4, 0, 0)
 
 
-def test_orthogonal_ccw():
-    v = Vec3(3, 4)
+def test_normalize_error(vec3):
+    with pytest.raises(ZeroDivisionError):
+        vec3().normalize()
+
+
+def test_orthogonal_ccw(vec3):
+    v = vec3(3, 4)
     assert v.orthogonal() == (-4, 3)
 
 
-def test_orthogonal_cw():
-    v = Vec3(3, 4)
+def test_orthogonal_cw(vec3):
+    v = vec3(3, 4)
     assert v.orthogonal(False) == (4, -3)
 
 
-def test_negative():
-    v = Vec3(2, 3, 4)
+def test_negative(vec3):
+    v = vec3(2, 3, 4)
     assert -v == (-2, -3, -4)
+    assert (-vec3()).is_null is True
 
 
-def test_add_scalar_type_error():
+def test_add_scalar_type_error(vec3):
     with pytest.raises(TypeError):
-        Vec3(2, 3, 4) + 3
+        vec3(2, 3, 4) + 3
 
 
-def test_radd_scalar_type_error():
+def test_radd_scalar_type_error(vec3):
     with pytest.raises(TypeError):
-        3 + Vec3(2, 3, 4)
+        3 + vec3(2, 3, 4)
 
 
-def test_iadd_scalar_type_error():
-    v = Vec3(2, 3, 4)
+def test_iadd_scalar_type_error(vec3):
+    v = vec3(2, 3, 4)
     with pytest.raises(TypeError):
         v += 3
 
 
-def test_sub_scalar_type_error():
+def test_sub_scalar_type_error(vec3):
     with pytest.raises(TypeError):
-        Vec3(2, 3, 4) - 3
+        vec3(2, 3, 4) - 3
 
 
-def test_rsub_scalar_vector_type_error():
+def test_rsub_scalar_vector_type_error(vec3):
     with pytest.raises(TypeError):
-        7 - Vec3(2, 3, 4)
+        7 - vec3(2, 3, 4)
 
 
-def test_isub_scalar_type_error():
-    v = Vec3(2, 3, 4)
+def test_isub_scalar_type_error(vec3):
+    v = vec3(2, 3, 4)
     with pytest.raises(TypeError):
         v -= 3
 
 
-def test_add_vector():
-    v = Vec3(2, 3, 4)
+def test_add_vector(vec3):
+    v = vec3(2, 3, 4)
     assert v + (7, 7, 7) == (9, 10, 11)
 
 
-def test_iadd_vector():
-    v = Vec3(2, 3, 4)
+def test_iadd_vector(vec3):
+    v = vec3(2, 3, 4)
     v += (7, 7, 7)
     assert v == (9, 10, 11)
 
 
-def test_radd_vector():
-    v = Vec3(2, 3, 4)
+def test_radd_vector(vec3):
+    v = vec3(2, 3, 4)
     assert (7, 7, 7) + v == (9, 10, 11)
 
 
@@ -288,22 +307,22 @@ def test_idiv_scalar():
     assert v == (1, 1.5, 2)
 
 
-def test_dot_product():
-    v1 = Vec3(2, 7, 1)
-    v2 = Vec3(3, 9, 8)
+def test_dot_product(vec3):
+    v1 = vec3(2, 7, 1)
+    v2 = vec3(3, 9, 8)
     assert math.isclose(v1.dot(v2), 77)
 
 
-def test_angle_deg():
-    assert math.isclose(Vec3(0, 1).angle_deg, 90)
-    assert math.isclose(Vec3(0, -1).angle_deg, -90)
-    assert math.isclose(Vec3(1, 1).angle_deg, 45)
-    assert math.isclose(Vec3(-1, 1).angle_deg, 135)
+def test_angle_deg(vec3):
+    assert math.isclose(vec3(0, 1).angle_deg, 90)
+    assert math.isclose(vec3(0, -1).angle_deg, -90)
+    assert math.isclose(vec3(1, 1).angle_deg, 45)
+    assert math.isclose(vec3(-1, 1).angle_deg, 135)
 
 
-def test_angle_between():
-    v1 = Vec3(0, 1)
-    v2 = Vec3(1, 1)
+def test_angle_between(vec3):
+    v1 = vec3(0, 1)
+    v2 = vec3(1, 1)
     angle = v1.angle_between(v2)
     assert math.isclose(angle, math.pi / 4)
     # reverse order, same result
@@ -311,6 +330,16 @@ def test_angle_between():
     assert math.isclose(angle, math.pi / 4)
     angle = v1.angle_between(Vec3(0, -1))
     assert math.isclose(angle, math.pi)
+
+
+@pytest.mark.parametrize('v1, v2', [
+    [(1, 0), (0, 0)],
+    [(0, 0), (1, 0)],
+    [(0, 0), (0, 0)],
+])
+def test_angle_between_null_vector(vec3, v1, v2):
+    with pytest.raises(ZeroDivisionError):
+        vec3(v1).angle_between(vec3(v2))
 
 
 def test_angle_about():
@@ -375,7 +404,7 @@ def test_project():
     assert v.project((10, 0, 0)) == (5, 5, 0)
 
 
-def test_vec3_sum():
-    assert Vec3.sum([]).is_null is True
-    assert Vec3.sum([Vec3(1, 1, 1)]) == (1, 1, 1)
-    assert Vec3.sum([Vec3(1, 1, 1), (2, 2, 2)]) == (3, 3, 3)
+def test_vec3_sum(vec3):
+    assert vec3.sum([]).is_null is True
+    assert vec3.sum([Vec3(1, 1, 1)]) == (1, 1, 1)
+    assert vec3.sum([Vec3(1, 1, 1), (2, 2, 2)]) == (3, 3, 3)

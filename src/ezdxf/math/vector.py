@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
-from typing import Tuple, List, Iterable, Any, Union, Sequence, TYPE_CHECKING
+from typing import Tuple, List, Any, Iterable, Sequence, TYPE_CHECKING
 from functools import partial
 import math
 import random
@@ -162,11 +162,14 @@ class Vec3:
             if isinstance(data, Vec3):
                 return data._x, data._y, data._z
             else:
-                x, y, *z = data
-                if len(z):
-                    z = z[0]
+                length = len(data)
+                if length == 2:
+                    x, y = data
+                    z = 0.0
+                elif length == 3:
+                    x, y, z = data
                 else:
-                    z = 0.
+                    raise TypeError
                 return float(x), float(y), float(z)
         elif length == 2:
             x, y = args
@@ -202,18 +205,13 @@ class Vec3:
 
     def copy(self) -> 'Vec3':
         """ Returns a copy of vector as :class:`Vec3` object. """
-        return self.__class__(self._x, self._y, self._z)
+        return self  # immutable!
 
     __copy__ = copy
 
     def __deepcopy__(self, memodict: dict) -> 'Vec3':
         """ :func:`copy.deepcopy` support. """
-        try:
-            return memodict[id(self)]
-        except KeyError:
-            v = self.copy()
-            memodict[id(self)] = v
-            return v
+        return self  # immutable!
 
     def __getitem__(self, index: int) -> float:
         """
@@ -270,8 +268,7 @@ class Vec3:
         """ Returns ``True`` if `self` and `other` are parallel to vectors. """
         v1 = self.normalize()
         v2 = other.normalize()
-        return v1.isclose(v2, abs_tol=abs_tol) or v1.isclose(-v2,
-                                                             abs_tol=abs_tol)
+        return v1.isclose(v2, abs_tol) or v1.isclose(-v2, abs_tol)
 
     @property
     def spatial_angle(self) -> float:
@@ -306,7 +303,7 @@ class Vec3:
                                                                   -self._x,
                                                                   self._z)
 
-    def lerp(self, other: Any, factor=.5) -> 'Vec3':
+    def lerp(self, other: 'Vertex', factor=.5) -> 'Vec3':
         """
         Returns linear interpolation between `self` and `other`.
         
@@ -329,7 +326,7 @@ class Vec3:
 
     def reversed(self) -> 'Vec3':
         """ Returns negated vector (-`self`). """
-        return self.__mul__(-1.)
+        return self.__class__(-self._x, -self._y, -self._z)
 
     __neg__ = reversed
 
@@ -337,14 +334,14 @@ class Vec3:
         """ Returns ``True`` if vector is not ``(0, 0, 0)``. """
         return not self.is_null
 
-    def isclose(self, other: Any, abs_tol: float = 1e-12) -> bool:
+    def isclose(self, other: 'Vertex', abs_tol: float = 1e-12) -> bool:
         """ Returns ``True`` if `self` is close to `other`. Uses :func:`math.isclose` to compare all axis. """
         x, y, z = self.decompose(other)
         return math.isclose(self._x, x, abs_tol=abs_tol) and \
                math.isclose(self._y, y, abs_tol=abs_tol) and \
                math.isclose(self._z, z, abs_tol=abs_tol)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: 'Vertex') -> bool:
         """
         Equal operator.
 
@@ -355,7 +352,7 @@ class Vec3:
         return isclose(self._x, x) and isclose(self._y, y) and isclose(self._z,
                                                                        z)
 
-    def __lt__(self, other: Any) -> bool:
+    def __lt__(self, other: 'Vertex') -> bool:
         """
         Lower than operator.
 
@@ -408,10 +405,8 @@ class Vec3:
         return self.__class__(self._x / scalar, self._y / scalar,
                               self._z / scalar)
 
-    __div__ = __truediv__
-
     @staticmethod
-    def sum(items: Iterable['Vec3']) -> 'Vec3':
+    def sum(items: Iterable['Vertex']) -> 'Vec3':
         """ Add all vectors in `items`. """
         s = NULLVEC
         for v in items:
@@ -446,21 +441,19 @@ class Vec3:
         return v.__sub__(self).magnitude
 
     def angle_between(self, other: 'Vertex') -> float:
-        """
-        Returns angle between `self` and `other` in radians. +angle is counter clockwise orientation.
+        """ Returns angle between `self` and `other` in radians. +angle is
+        counter clockwise orientation.
 
         Args:
             other: :class:`Vec3` compatible object
 
         """
-        v2 = self.__class__(other)
-        cos_theta = self.dot(v2) / (self.magnitude * v2.magnitude)
-        abs_cos_theta = math.fabs(cos_theta)
-        if abs_cos_theta > 1.0:
-            if abs_cos_theta - 1.0 < 1e-5:
-                cos_theta = math.modf(cos_theta)[1]
-            else:
-                raise ValueError(f'domain error: {cos_theta}')
+        cos_theta = self.normalize().dot(self.__class__(other).normalize())
+        # avoid domain errors caused by floating point imprecision:
+        if cos_theta < -1.0:
+            cos_theta = -1.0
+        elif cos_theta > 1.0:
+            cos_theta = 1.0
         return math.acos(cos_theta)
 
     def angle_about(self, base: 'Vertex', target: 'Vertex') -> float:
@@ -745,9 +738,6 @@ class Vec2:
         except AttributeError:
             raise TypeError('invalid argument')
 
-    def __radd__(self, other: 'VecXY') -> 'Vec2':
-        return self.__add__(other)
-
     def __iadd__(self, other: 'VecXY') -> 'Vec2':
         try:
             self.x += other.x
@@ -780,7 +770,7 @@ class Vec2:
         return self.__class__(self.x * other, self.y * other)
 
     def __rmul__(self, other: float) -> 'Vec2':
-        return self.__mul__(other)
+        return self.__class__(self.x * other, self.y * other)
 
     def __imul__(self, other: float) -> 'Vec2':
         self.x *= other
@@ -790,14 +780,10 @@ class Vec2:
     def __truediv__(self, other: float) -> 'Vec2':
         return self.__class__(self.x / other, self.y / other)
 
-    __div__ = __truediv__
-
     def __itruediv__(self, other: float) -> 'Vec2':
         self.x /= other
         self.y /= other
         return self
-
-    __idiv__ = __itruediv__
 
     def dot(self, other: 'VecXY') -> float:
         return self.x * other.x + self.y * other.y
@@ -809,11 +795,17 @@ class Vec2:
         return math.hypot(self.x - other.x, self.y - other.y)
 
     def angle_between(self, other: 'VecXY') -> float:
-        """
-        Calculate angle between `self` and `other` in radians. +angle is counter clockwise orientation.
+        """ Calculate angle between `self` and `other` in radians. +angle is
+        counter clockwise orientation.
 
         """
-        return math.acos(self.normalize().dot(other.normalize()))
+        cos_theta = self.normalize().dot(other.normalize())
+        # avoid domain errors caused by floating point imprecision:
+        if cos_theta < -1.0:
+            cos_theta = -1.0
+        elif cos_theta > 1.0:
+            cos_theta = 1.0
+        return math.acos(cos_theta)
 
     def rotate(self, angle: float) -> 'Vec2':
         """

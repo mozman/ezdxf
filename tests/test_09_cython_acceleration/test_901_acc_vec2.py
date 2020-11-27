@@ -16,6 +16,14 @@ def test_default_constructor():
     assert v.y == 0
 
 
+def test_is_immutable():
+    v = Vec2()
+    with pytest.raises(AttributeError):
+        v.x = 1
+    with pytest.raises(AttributeError):
+        v.y = 1
+
+
 def test_init_x_y():
     v = Vec2(1, 2)
     assert v.x == 1
@@ -79,7 +87,7 @@ def test_bool():
     assert bool(Vec2()) is False
 
 
-def test_cvec2_does_not_support_slicing():
+def test_does_not_support_slicing():
     with pytest.raises(TypeError):
         _ = Vec2(2, 1)[:]
 
