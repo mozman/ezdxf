@@ -20,6 +20,20 @@ cdef double RAD2DEG = 180.0 / M_PI
 cdef double DEG2RAD = M_PI / 180.0
 cdef double M_TAU = M_PI * 2.0
 
+cdef double normalize_rad_angle(double a):
+    # Emulate the Python behavior of (a % math.tau)
+    cdef double res = fmod(a, M_TAU)
+    if res < 0.0:
+        res += M_TAU
+    return res
+
+cdef double normalize_deg_angle(double a):
+    # Emulate the Python behavior of (a % 360)
+    cdef double res = fmod(a, 360.0)
+    if res < 0.0:
+        res += 360.0
+    return res
+
 cdef class Vec2:
     """ Immutable 2D vector.
 
@@ -374,7 +388,7 @@ cdef class Vec3:
             args = arg0
             count = len(args)
 
-        if count > 3:
+        if count > 3 or count < 2:
             raise TypeError('invalid argument count')
 
         # slow init by sequence
@@ -543,7 +557,8 @@ cdef class Vec3:
     def reversed(self) -> 'Vec3':
         return v3_reverse(self)
 
-    __neg__ = reversed
+    def __neg__(self) -> 'Vec3':
+        return v3_reverse(self)
 
     def __bool__(self) -> bool:
         return not self.is_null
@@ -581,7 +596,7 @@ cdef class Vec3:
     __iadd__ = __add__  # immutable
 
     # Special Cython (<3.0) feature: __rsub__ == __sub__(other, self)
-    def __sub__(self, Vec3 other) -> 'Vec3':
+    def __sub__(self, other) -> 'Vec3':
         if not isinstance(self, Vec3):
             # other is the real self
             return v3_sub(Vec3(self), <Vec3> other)
@@ -646,7 +661,7 @@ cdef class Vec3:
         return v3_angle_about(self, b, t)
 
     def rotate(self, double angle) -> 'Vec3':
-        cdef double angle_ = atan2(self.y, self.x)
+        cdef double angle_ = atan2(self.y, self.x) + angle
         cdef double magnitude_ = hypot(self.x, self.y)
         cdef Vec3 res = Vec3.from_angle(angle_, magnitude_)
         res.z = self.z
@@ -730,7 +745,7 @@ cdef double v3_angle_about(Vec3 a, Vec3 base, Vec3 target):
     cdef Vec3 y_axis = v3_normalize(v3_cross(a, x_axis))
     cdef double target_projected_x = v3_dot(x_axis, target)
     cdef double target_projected_y = v3_dot(y_axis, target)
-    return fmod(atan2(target_projected_y, target_projected_x), M_TAU)
+    return normalize_rad_angle(atan2(target_projected_y, target_projected_x))
 
 cdef Vec3 v3_normalize(Vec3 a, double length = 1.0):
     cdef double factor = length / v3_magnitude(a)
