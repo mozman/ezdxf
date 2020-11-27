@@ -187,13 +187,20 @@ cdef class Vec2:
         cdef Vec2 o = Vec2(other)
         return v2_add(self, o)
 
+    # Special Cython (<3.0) feature: __radd__ == __add__(other, self)
+
+    __radd__ = __add__  # Cython >= 3.0
+
     __iadd__ = __add__  # immutable
 
     def __sub__(self, other: 'VecXY') -> 'Vec2':
         cdef Vec2 o = Vec2(other)
         return v2_sub(self, o)
 
+    # Special Cython (<3.0) feature: __rsub__ == __sub__(other, self)
+
     def __rsub__(self, other: 'VecXY') -> 'Vec2':
+        # for Cython >= 3.0
         cdef Vec2 o = Vec2(other)
         return v2_sub(o, self)
 
@@ -207,10 +214,18 @@ cdef class Vec2:
         else:
             return NotImplemented
 
+    # Special Cython <(3.0) feature: __rmul__ == __mul__(factor, self)
+
+    def __rmul__(self, double factor) -> 'Vec2':
+        # for Cython >= 3.0
+        return v2_mul(self, factor)
+
     __imul__ = __mul__  # immutable
 
     def __truediv__(self, double factor) -> 'Vec2':
         return v2_mul(self, 1.0 / factor)
+
+    # __rtruediv__ not supported -> TypeError
 
     def dot(self, other: 'VecXY') -> float:
         cdef Vec2 o = Vec2(other)
