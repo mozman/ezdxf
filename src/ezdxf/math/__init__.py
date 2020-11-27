@@ -1,9 +1,17 @@
 # Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 from typing import Union, Sequence
-from .vector import (
-    Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
-)
+from ezdxf.acc import USE_C_EXT
+
+if USE_C_EXT:
+    from ezdxf.acc.fastmath import (
+        Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
+    )
+else:
+    from .vector import (
+        Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
+    )
+
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d,
     distance_point_line_2d, is_point_on_line_2d, is_point_in_polygon_2d,

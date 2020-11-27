@@ -8,10 +8,10 @@ import random
 if TYPE_CHECKING:
     from ezdxf.eztypes import VecXY, Vertex
 
-cdef double abs_tol = 1e-12
+cdef double _abs_tol = 1e-12
 
 cdef bint isclose(double a, double b):
-    return fabs(a - b) < abs_tol
+    return fabs(a - b) < _abs_tol
 
 cdef bint isclose_abs_tol(double a, double b, double tol):
     return fabs(a - b) < tol
@@ -344,7 +344,7 @@ cdef Vec2 v2_project(Vec2 a, Vec2 b):
     cdef Vec2 uv = v2_normalize(a)
     return v2_mul(uv, v2_dot(uv, b))
 
-cdef bint v2_isclose(Vec2 a, Vec2 b, double tol=abs_tol):
+cdef bint v2_isclose(Vec2 a, Vec2 b, double tol=_abs_tol):
     return isclose_abs_tol(a.x, b.x, tol) and isclose_abs_tol(a.y, b.y, tol)
 
 cdef class Vec3:
@@ -515,9 +515,10 @@ cdef class Vec3:
     def is_null(self) -> bool:
         return bool(v3_isclose(self, <Vec3> NULLVEC))
 
-    def is_parallel(self, Vec3 other, double abs_tol = 1e-12) -> bool:
+    def is_parallel(self, other: 'Vertex', double abs_tol = 1e-12) -> bool:
+        cdef Vec3 o = Vec3(other)
         cdef Vec3 v1 = v3_normalize(self)
-        cdef Vec3 v2 = v3_normalize(other)
+        cdef Vec3 v2 = v3_normalize(o)
         cdef Vec3 neg_v2 = v3_reverse(v2)
         return v3_isclose(v1, v2, abs_tol) or \
                v3_isclose(v1, neg_v2, abs_tol)
@@ -674,6 +675,7 @@ X_AXIS = Vec3(1, 0, 0)
 Y_AXIS = Vec3(0, 1, 0)
 Z_AXIS = Vec3(0, 0, 1)
 NULLVEC = Vec3(0, 0, 0)
+Vector = Vec3
 
 cdef Vec3 v3_add(Vec3 a, Vec3 b):
     res = Vec3()
@@ -777,7 +779,17 @@ cdef Vec3 v3_project(Vec3 a, Vec3 b):
     cdef Vec3 uv = v3_normalize(a)
     return v3_mul(uv, v3_dot(uv, b))
 
-cdef bint v3_isclose(Vec3 a, Vec3 b, double tol=abs_tol):
+cdef bint v3_isclose(Vec3 a, Vec3 b, double tol=_abs_tol):
     return isclose_abs_tol(a.x, b.x, tol) and \
            isclose_abs_tol(a.y, b.y, tol) and \
            isclose_abs_tol(a.z, b.z, tol)
+
+def distance(p1: 'Vertex', p2: 'Vertex') -> float:
+    cdef Vec3 a = Vec3(p1)
+    cdef Vec3 b = Vec3(p2)
+    return v3_dist(a, b)
+
+def lerp(p1: 'Vertex', p2: 'Vertex', double factor = 0.5) -> 'Vec3':
+    cdef Vec3 a = Vec3(p1)
+    cdef Vec3 b = Vec3(p2)
+    return v3_lerp(a, b, factor)

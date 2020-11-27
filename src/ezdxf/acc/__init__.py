@@ -16,6 +16,11 @@ import os
 # extension, but if you import Vec3 from ezdxf.math.vectors, you always get
 # the Python implementation.
 
-DISABLE_C_EXT: bool = os.environ.get('EZDXF_DISABLE_C_EXT', '0').lower() in {
-    '1', 'true'
-}
+_disable = os.environ.get('EZDXF_DISABLE_C_EXT', '0').lower()
+USE_C_EXT = not (_disable in {'1', 'true'})
+
+if USE_C_EXT:
+    try:
+        from ezdxf.acc import fastmath
+    except ImportError:
+        USE_C_EXT = False
