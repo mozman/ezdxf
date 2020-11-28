@@ -8,7 +8,7 @@ if USE_C_EXT is False:
     sys.exit(1)
 
 from ezdxf.math.vector import Vec3
-from ezdxf.acc.fastmath import Vec3 as CVec3
+from ezdxf.acc.vector import Vec3 as CVec3
 
 
 def profile_adding_vectors(count, VType):

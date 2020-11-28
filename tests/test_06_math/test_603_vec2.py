@@ -8,7 +8,7 @@ from ezdxf.math.vector import Vec2, Vec3
 all_vec_classes = [Vec2, Vec3]
 vec2_only = [Vec2]
 try:
-    from ezdxf.acc.fastmath import Vec2 as CVec2
+    from ezdxf.acc.vector import Vec2 as CVec2
 
     all_vec_classes.append(CVec2)
     vec2_only.append(CVec2)

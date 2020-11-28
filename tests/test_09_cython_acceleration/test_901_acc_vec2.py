@@ -6,8 +6,8 @@
 
 import pytest
 
-fastmath = pytest.importorskip('ezdxf.acc.fastmath')
-Vec2 = fastmath.Vec2
+cyvec = pytest.importorskip('ezdxf.acc.vector')
+Vec2 = cyvec.Vec2
 
 
 def test_default_constructor():
@@ -49,7 +49,7 @@ def test_init_3_tuple():
 
 
 def test_init_vec3():
-    v = Vec2(fastmath.Vec3(1, 2, 3))
+    v = Vec2(cyvec.Vec3(1, 2, 3))
     assert v.x == 1
     assert v.y == 2
 

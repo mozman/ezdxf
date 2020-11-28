@@ -8,7 +8,7 @@ from ezdxf.math.vector import Vec3
 vec3_classes = [Vec3]
 
 try:
-    from ezdxf.acc.fastmath import Vec3 as CVec3
+    from ezdxf.acc.vector import Vec3 as CVec3
     vec3_classes.append(CVec3)
 except ImportError:
     pass

@@ -385,12 +385,6 @@ Vec3
 
     .. automethod:: __truediv__(other: float) -> Vec3
 
-    .. automethod:: __div__(other: float) -> Vec3
-
-    .. automethod:: __rtruediv__(other: float) -> Vec3
-
-    .. automethod:: __rdiv__(other: float) -> Vec3
-
     .. automethod:: dot
 
     .. automethod:: cross(other: Vertex) -> Vec3

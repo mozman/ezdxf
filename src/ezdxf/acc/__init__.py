@@ -21,6 +21,6 @@ USE_C_EXT = not (_disable in {'1', 'true'})
 
 if USE_C_EXT:
     try:
-        from ezdxf.acc import fastmath
+        from ezdxf.acc import vector
     except ImportError:
         USE_C_EXT = False

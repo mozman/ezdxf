@@ -4,7 +4,7 @@ from typing import Union, Sequence
 from ezdxf.acc import USE_C_EXT
 
 if USE_C_EXT:
-    from ezdxf.acc.fastmath import (
+    from ezdxf.acc.vector import (
         Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
     )
 else:

@@ -12,7 +12,7 @@ try:
     from Cython.Distutils import build_ext
 
     ext_modules = [
-        Extension("ezdxf.acc.fastmath", ["src/ezdxf/acc/fastmath.pyx"], optional=True),
+        Extension("ezdxf.acc.vector", ["src/ezdxf/acc/vector.pyx"], optional=True),
     ]
     commands = {'build_ext': build_ext}
 except ImportError:
