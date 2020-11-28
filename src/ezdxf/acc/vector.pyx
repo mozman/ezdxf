@@ -5,16 +5,16 @@ from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple
 from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod
 import random
 
+DEF ABS_TOL = 1e-12
+
 if TYPE_CHECKING:
     from ezdxf.eztypes import VecXY, Vertex
 
-cdef double _abs_tol = 1e-12
-
 cdef bint isclose(double a, double b):
-    return fabs(a - b) < _abs_tol
+    return fabs(a - b) < ABS_TOL
 
-cdef bint isclose_abs_tol(double a, double b, double tol):
-    return fabs(a - b) < tol
+cdef bint isclose_abs_tol(double a, double b, double abs_tol):
+    return fabs(a - b) < abs_tol
 
 cdef double RAD2DEG = 180.0 / M_PI
 cdef double DEG2RAD = M_PI / 180.0
@@ -48,7 +48,6 @@ cdef class Vec2:
     - Vec2(x, y, z), ignore z-axis
 
     """
-    cdef readonly double x, y
 
     def __cinit__(self, *args):
         cdef Py_ssize_t count = len(<tuple> args)
@@ -102,7 +101,7 @@ cdef class Vec2:
         return (Vec2(item) for item in items)
 
     @staticmethod
-    def from_angle(double angle, double length = 1.) -> 'Vec2':
+    def from_angle(double angle, double length = 1.0) -> 'Vec2':
         return v2_from_angle(angle, length)
 
     @staticmethod
@@ -148,7 +147,7 @@ cdef class Vec2:
     @property
     def is_null(self) -> bool:
         cdef Vec2 zero = Vec2()
-        return bool(v2_isclose(self, zero))
+        return bool(v2_isclose(self, zero, ABS_TOL))
 
     @property
     def angle(self) -> float:
@@ -183,7 +182,7 @@ cdef class Vec2:
     def __bool__(self) -> bool:
         return self.x != 0 or self.y != 0
 
-    def isclose(self, other: 'VecXY', double abs_tol = 1e-12) -> bool:
+    def isclose(self, other: 'VecXY', double abs_tol = ABS_TOL) -> bool:
         cdef Vec2 o = Vec2(other)
         return isclose_abs_tol(self.x, o.x, abs_tol) and \
                isclose_abs_tol(self.y, o.y, abs_tol)
@@ -191,7 +190,7 @@ cdef class Vec2:
     def __eq__(self, other) -> bool:
         if not isinstance(other, Vec2):
             other = Vec2(other)
-        return bool(v2_isclose(self, other))
+        return bool(v2_isclose(self, other, ABS_TOL))
 
     def __lt__(self, other) -> bool:
         cdef Vec2 o = Vec2(other)
@@ -255,7 +254,7 @@ cdef class Vec2:
         cdef Vec2 o = Vec2(other)
         return v2_angle_between(self, o)
 
-    cpdef rotate(self, double angle: float):
+    def rotate(self, double angle: float):
         cdef double self_angle = atan2(self.y, self.x)
         cdef double magnitude = hypot(self.x, self.y)
         return v2_from_angle(self_angle + angle, magnitude)
@@ -302,14 +301,14 @@ cdef double v2_det(Vec2 a, Vec2 b):
 cdef double v2_dist(Vec2 a, Vec2 b):
     return hypot(a.x - b.x, a.y - b.y)
 
-cdef Vec2 v2_from_angle(double angle, double length = 1.0):
+cdef Vec2 v2_from_angle(double angle, double length):
     cdef Vec2 res = Vec2()
     res.x = cos(angle) * length
     res.y = sin(angle) * length
     return res
 
 cdef double v2_angle_between(Vec2 a, Vec2 b) except -1000:
-    cdef double cos_theta = v2_dot(v2_normalize(a), v2_normalize(b))
+    cdef double cos_theta = v2_dot(v2_normalize(a, 1.0), v2_normalize(b, 1.0))
     # avoid domain errors caused by floating point imprecision:
     if cos_theta < -1.0:
         cos_theta = -1.0
@@ -317,14 +316,14 @@ cdef double v2_angle_between(Vec2 a, Vec2 b) except -1000:
         cos_theta = 1.0
     return acos(cos_theta)
 
-cdef Vec2 v2_normalize(Vec2 a, double length = 1.0):
+cdef Vec2 v2_normalize(Vec2 a, double length):
     cdef double factor = length / hypot(a.x, a.y)
     cdef Vec2 res = Vec2()
     res.x = a.x * factor
     res.y = a.y * factor
     return res
 
-cdef Vec2 v2_lerp(Vec2 a, Vec2 b, double factor = 0.5):
+cdef Vec2 v2_lerp(Vec2 a, Vec2 b, double factor):
     cdef Vec2 res = Vec2()
     res.x = a.x + (b.x - a.x) * factor
     res.y = a.y + (b.y - a.y) * factor
@@ -341,11 +340,12 @@ cdef Vec2 v2_ortho(Vec2 a, bint ccw):
     return res
 
 cdef Vec2 v2_project(Vec2 a, Vec2 b):
-    cdef Vec2 uv = v2_normalize(a)
+    cdef Vec2 uv = v2_normalize(a, 1.0)
     return v2_mul(uv, v2_dot(uv, b))
 
-cdef bint v2_isclose(Vec2 a, Vec2 b, double tol=_abs_tol):
-    return isclose_abs_tol(a.x, b.x, tol) and isclose_abs_tol(a.y, b.y, tol)
+cdef bint v2_isclose(Vec2 a, Vec2 b, double abs_tol):
+    return isclose_abs_tol(a.x, b.x, abs_tol) and \
+           isclose_abs_tol(a.y, b.y, abs_tol)
 
 cdef class Vec3:
     """ Immutable 3D vector.
@@ -361,7 +361,6 @@ cdef class Vec3:
     - Vec3(x, y, z)
 
     """
-    cdef readonly double x, y, z
 
     def __cinit__(self, *args):
         cdef Py_ssize_t count = len(<tuple> args)
@@ -513,19 +512,19 @@ cdef class Vec3:
 
     @property
     def is_null(self) -> bool:
-        return bool(v3_isclose(self, <Vec3> NULLVEC))
+        return bool(v3_isclose(self, <Vec3> NULLVEC, ABS_TOL))
 
-    def is_parallel(self, other: 'Vertex', double abs_tol = 1e-12) -> bool:
+    def is_parallel(self, other: 'Vertex', double abs_tol = ABS_TOL) -> bool:
         cdef Vec3 o = Vec3(other)
-        cdef Vec3 v1 = v3_normalize(self)
-        cdef Vec3 v2 = v3_normalize(o)
+        cdef Vec3 v1 = v3_normalize(self, 1.0)
+        cdef Vec3 v2 = v3_normalize(o, 1.0)
         cdef Vec3 neg_v2 = v3_reverse(v2)
         return v3_isclose(v1, v2, abs_tol) or \
                v3_isclose(v1, neg_v2, abs_tol)
 
     @property
     def spatial_angle(self) -> float:
-        return acos(v3_dot(<Vec3> X_AXIS, v3_normalize(self)))
+        return acos(v3_dot(<Vec3> X_AXIS, v3_normalize(self, 1.0)))
 
     @property
     def spatial_angle_deg(self) -> float:
@@ -564,7 +563,7 @@ cdef class Vec3:
     def __bool__(self) -> bool:
         return not self.is_null
 
-    def isclose(self, other: 'Vertex', double abs_tol = 1e-12) -> bool:
+    def isclose(self, other: 'Vertex', double abs_tol = ABS_TOL) -> bool:
         if not isinstance(other, Vec3):
             other = Vec3(other)
         return v3_isclose(self, <Vec3> other, abs_tol)
@@ -572,7 +571,7 @@ cdef class Vec3:
     def __eq__(self, other: 'Vertex') -> bool:
         if not isinstance(other, Vec3):
             other = Vec3(other)
-        return bool(v3_isclose(self, <Vec3> other))
+        return bool(v3_isclose(self, <Vec3> other, ABS_TOL))
 
     def __lt__(self, other: 'Vertex') -> bool:
         if not isinstance(other, Vec3):
@@ -727,14 +726,14 @@ cdef double v3_dist(Vec3 a, Vec3 b):
     cdef double dz = a.z - b.z
     return sqrt(dx * dx + dy * dy + dz * dz)
 
-cdef Vec3 v3_from_angle(double angle, double length = 1.0):
+cdef Vec3 v3_from_angle(double angle, double length):
     cdef Vec3 res = Vec3()
     res.x = cos(angle) * length
     res.y = sin(angle) * length
     return res
 
 cdef double v3_angle_between(Vec3 a, Vec3 b) except -1000:
-    cdef double cos_theta = v3_dot(v3_normalize(a), v3_normalize(b))
+    cdef double cos_theta = v3_dot(v3_normalize(a, 1.0), v3_normalize(b, 1.0))
     # avoid domain errors caused by floating point imprecision:
     if cos_theta < -1.0:
         cos_theta = -1.0
@@ -743,13 +742,13 @@ cdef double v3_angle_between(Vec3 a, Vec3 b) except -1000:
     return acos(cos_theta)
 
 cdef double v3_angle_about(Vec3 a, Vec3 base, Vec3 target):
-    cdef Vec3 x_axis = v3_normalize(v3_sub(base, v3_project(a, base)))
-    cdef Vec3 y_axis = v3_normalize(v3_cross(a, x_axis))
+    cdef Vec3 x_axis = v3_normalize(v3_sub(base, v3_project(a, base)), 1.0)
+    cdef Vec3 y_axis = v3_normalize(v3_cross(a, x_axis), 1.0)
     cdef double target_projected_x = v3_dot(x_axis, target)
     cdef double target_projected_y = v3_dot(y_axis, target)
     return normalize_rad_angle(atan2(target_projected_y, target_projected_x))
 
-cdef Vec3 v3_normalize(Vec3 a, double length = 1.0):
+cdef Vec3 v3_normalize(Vec3 a, double length):
     cdef double factor = length / v3_magnitude(a)
     cdef Vec3 res = Vec3()
     res.x = a.x * factor
@@ -757,7 +756,7 @@ cdef Vec3 v3_normalize(Vec3 a, double length = 1.0):
     res.z = a.z * factor
     return res
 
-cdef Vec3 v3_lerp(Vec3 a, Vec3 b, double factor = 0.5):
+cdef Vec3 v3_lerp(Vec3 a, Vec3 b, double factor):
     cdef Vec3 res = Vec3()
     res.x = a.x + (b.x - a.x) * factor
     res.y = a.y + (b.y - a.y) * factor
@@ -776,13 +775,13 @@ cdef Vec3 v3_ortho(Vec3 a, bint ccw):
     return res
 
 cdef Vec3 v3_project(Vec3 a, Vec3 b):
-    cdef Vec3 uv = v3_normalize(a)
+    cdef Vec3 uv = v3_normalize(a, 1.0)
     return v3_mul(uv, v3_dot(uv, b))
 
-cdef bint v3_isclose(Vec3 a, Vec3 b, double tol=_abs_tol):
-    return isclose_abs_tol(a.x, b.x, tol) and \
-           isclose_abs_tol(a.y, b.y, tol) and \
-           isclose_abs_tol(a.z, b.z, tol)
+cdef bint v3_isclose(Vec3 a, Vec3 b, double abs_tol):
+    return isclose_abs_tol(a.x, b.x, abs_tol) and \
+           isclose_abs_tol(a.y, b.y, abs_tol) and \
+           isclose_abs_tol(a.z, b.z, abs_tol)
 
 def distance(p1: 'Vertex', p2: 'Vertex') -> float:
     cdef Vec3 a = Vec3(p1)
