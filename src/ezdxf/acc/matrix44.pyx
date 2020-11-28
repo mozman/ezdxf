@@ -22,7 +22,7 @@ cdef double[16] IDENTITY = [
     0.0, 0.0, 0.0, 1.0
 ]
 
-cdef void set_floats(double[] matrix, values: Iterable):
+cdef void set_floats(double *matrix, values: Iterable):
     cdef int i = 0
     for v in values:
         matrix[i] = v
@@ -63,7 +63,7 @@ cdef class Matrix44:
                ", ".join(format_row(row) for row in self.rows())
 
     def get_2d_transformation(self) -> Tuple[float, ...]:
-        cdef double[16] *m = &self.m
+        cdef double *m = self.m
         return m[0], m[1], 0.0, m[4], m[5], 0.0, m[12], m[13], 1.0
 
     def get_row(self, int row) -> Tuple[float, ...]:
