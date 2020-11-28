@@ -21,7 +21,7 @@ def open_log(name: str):
     if not p.exists():
         with open(p, mode='wt') as fp:
             fp.write(
-                '"timestamp"; "python_version"; "ezdxf_version"; "pytime"; "cytime";\n')
+                '"timestamp"; "python_version"; "ezdxf_version"; "pytime"; "cytime"\n')
     log_file = open(p, mode='at')
     return log_file
 
@@ -30,7 +30,7 @@ def log(name: str, pytime: float, cytime: float):
     log_file = open_log(name)
     timestamp = datetime.now().isoformat()
     log_file.write(
-        f'{timestamp}; "{sys.version}"; "{__version__}"; {pytime}; {cytime};\n')
+        f'{timestamp}; "{sys.version}"; "{__version__}"; {pytime}; {cytime}\n')
     log_file.close()
 
 
