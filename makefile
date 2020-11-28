@@ -7,7 +7,9 @@ ACC = src/ezdxf/acc
 PYTHON39 = py -3.9
 PYTHON38 = py -3.8
 PYTHON37 = py -3.7
-PYPY3 = pypy3
+
+# Don't use the Cython extensions with pypy3 - it is much slower than the
+# JIT compiled pure Python code.
 
 .PHONY: build
 
