@@ -265,8 +265,6 @@ Matrix44
 
     .. automethod:: __imul__(other: Matrix44) -> Matrix44
 
-    .. automethod:: fast_mul(other: Matrix44) -> Matrix44
-
     .. automethod:: transform
 
     .. automethod:: transform_direction

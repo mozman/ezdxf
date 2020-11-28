@@ -454,39 +454,6 @@ class Matrix44:
         ]
         return self
 
-    def fast_mul(self, other: 'Matrix44') -> 'Matrix44':
-        """
-        Multiplies this matrix with other matrix.
-
-        Assumes that both matrices have a right column of (0, 0, 0, 1). This is True for matrices composed of
-        rotations,  translations and scales. fast_mul is approximately 25% quicker than the ``*=`` operator.
-
-        """
-        m1 = self.matrix
-        m2 = other.matrix
-        self.matrix = [
-            m1[0] * m2[0] + m1[1] * m2[4] + m1[2] * m2[8],
-            m1[0] * m2[1] + m1[1] * m2[5] + m1[2] * m2[9],
-            m1[0] * m2[2] + m1[1] * m2[6] + m1[2] * m2[10],
-            0.0,
-
-            m1[4] * m2[0] + m1[5] * m2[4] + m1[6] * m2[8],
-            m1[4] * m2[1] + m1[5] * m2[5] + m1[6] * m2[9],
-            m1[4] * m2[2] + m1[5] * m2[6] + m1[6] * m2[10],
-            0.0,
-
-            m1[8] * m2[0] + m1[9] * m2[4] + m1[10] * m2[8],
-            m1[8] * m2[1] + m1[9] * m2[5] + m1[10] * m2[9],
-            m1[8] * m2[2] + m1[9] * m2[6] + m1[10] * m2[10],
-            0.0,
-
-            m1[12] * m2[0] + m1[13] * m2[4] + m1[14] * m2[8] + m2[12],
-            m1[12] * m2[1] + m1[13] * m2[5] + m1[14] * m2[9] + m2[13],
-            m1[12] * m2[2] + m1[13] * m2[6] + m1[14] * m2[10] + m2[14],
-            1.0
-        ]
-        return self
-
     def rows(self) -> Iterable[Tuple[float, ...]]:
         """ Iterate over rows as 4-tuples. """
         return (self.get_row(index) for index in (0, 1, 2, 3))
