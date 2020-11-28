@@ -7,7 +7,7 @@ from pathlib import Path
 from ezdxf.acc import USE_C_EXT
 
 if USE_C_EXT is False:
-    print('C-extensions disabled or not available.')
+    print('C-extension disabled or not available.')
     sys.exit(1)
 
 from ezdxf.math.vector import Vec3, Vec2
@@ -21,7 +21,8 @@ def open_log(name: str):
     if not p.exists():
         with open(p, mode='wt') as fp:
             fp.write(
-                '"timestamp"; "python_version"; "ezdxf_version"; "pytime"; "cytime"\n')
+                '"timestamp"; "pytime"; "cytime"; '
+                '"python_version"; "ezdxf_version"\n')
     log_file = open(p, mode='at')
     return log_file
 
@@ -30,15 +31,22 @@ def log(name: str, pytime: float, cytime: float):
     log_file = open_log(name)
     timestamp = datetime.now().isoformat()
     log_file.write(
-        f'{timestamp}; "{sys.version}"; "{__version__}"; {pytime}; {cytime}\n')
+        f'{timestamp}; {pytime}; {cytime}; "{sys.version}"; "{__version__}"\n')
     log_file.close()
 
 
-def adding_vec2(VType, count):
+def add_vec2(VType, count):
     v = VType(0, 0)
     inc = VType(1, 2)
     for _ in range(count):
         v = v + inc
+
+
+def subtract_vec2(VType, count):
+    v = VType(0, 0)
+    dec = VType(1, 2)
+    for _ in range(count):
+        v = v - dec
 
 
 def multiply_vec2(VType, count):
@@ -53,11 +61,18 @@ def normalize_vec2(VType, count):
         v.normalize(3.0)
 
 
-def adding_vec3(VType, count):
+def add_vec3(VType, count):
     v = VType()
-    inc = VType((1, 2, 3))
+    inc = VType(1, 2, 3)
     for _ in range(count):
         v = v + inc
+
+
+def subtract_vec3(VType, count):
+    v = VType()
+    dec = VType(1, 2, 3)
+    for _ in range(count):
+        v = v - dec
 
 
 def multiply_vec3(VType, count):
@@ -72,7 +87,7 @@ def normalize_vec3(VType, count):
         v.normalize(3.0)
 
 
-def profile1(func, *args):
+def profile1(func, *args) -> float:
     t0 = time.perf_counter()
     func(*args)
     t1 = time.perf_counter()
@@ -85,16 +100,18 @@ def profile(text, func, pytype, cytype, *args):
     ratio = pytime / cytime
     print(f'Python - {text} {pytime:.3f}s')
     print(f'Cython - {text} {cytime:.3f}s')
-    print(f'Ratio {ratio:.3f}x')
+    print(f'Ratio {ratio:.1f}x')
     log(func.__name__, pytime, cytime)
 
 
 RUNS = 1_000_000
 
 print(f'Profiling Vec2/Vec3 Python and Cython implementation:')
-profile(f'adding {RUNS} Vec2: ', adding_vec2, Vec2, CVec2, RUNS)
+profile(f'add {RUNS} Vec2: ', add_vec2, Vec2, CVec2, RUNS)
+profile(f'subtract {RUNS} Vec2: ', subtract_vec2, Vec2, CVec2, RUNS)
 profile(f'multiply {RUNS} Vec2: ', multiply_vec2, Vec2, CVec2, RUNS)
 profile(f'normalize {RUNS} Vec2: ', normalize_vec2, Vec2, CVec2, RUNS)
-profile(f'adding {RUNS} Vec3: ', adding_vec3, Vec3, CVec3, RUNS)
+profile(f'add {RUNS} Vec3: ', add_vec3, Vec3, CVec3, RUNS)
+profile(f'subtract {RUNS} Vec3: ', subtract_vec3, Vec3, CVec3, RUNS)
 profile(f'multiply {RUNS} Vec3: ', multiply_vec3, Vec3, CVec3, RUNS)
 profile(f'normalize {RUNS} Vec3: ', normalize_vec3, Vec3, CVec3, RUNS)
