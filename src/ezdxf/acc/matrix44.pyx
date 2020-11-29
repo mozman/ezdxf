@@ -22,10 +22,11 @@ cdef double[16] IDENTITY = [
     0.0, 0.0, 0.0, 1.0
 ]
 
-cdef void set_floats(double *matrix, values: Iterable):
+cdef void set_floats(double *m, object values: Iterable[float]) except *:
     cdef int i = 0
     for v in values:
-        matrix[i] = v
+        if i < 16:
+            m[i] = v
         i += 1
     if i != 16:
         raise ValueError("invalid argument count")
@@ -33,33 +34,35 @@ cdef void set_floats(double *matrix, values: Iterable):
 cdef class Matrix44:
     def __cinit__(self, *args):
         cdef int nargs = len(args)
-        if nargs == 0:
-            self.m = IDENTITY
-        elif nargs == 1:
+        if nargs == 0:  # default constructor Matrix44(): fastest setup
+            self.m = IDENTITY  # memcopy!
+        elif nargs == 1:  # 16 numbers: slow setup
             set_floats(self.m, args[0])
-        elif nargs == 4:
+        elif nargs == 4:  # 4 rows of 4 numbers: slowest setup
             set_floats(self.m, chain(*args))
         else:
             raise ValueError("invalid argument count: 4 row vectors or "
                              "iterable of 16 numbers")
 
-    def __setitem__(self, tuple index: Tuple[int, int], double value: float):
-        cdef int row = index[0]
-        cdef int col = index[1]
-        cdef i = row * 4 + col
-        if 0 <= i < 16:
-            self.m[i] = value
-        else:
-            raise (IndexError(f'index out of range: {index}'))
-
     def __getitem__(self, tuple index: Tuple[int, int]) -> float:
         cdef int row = index[0]
         cdef int col = index[1]
-        cdef i = row * 4 + col
-        if 0 <= i < 16:
+        cdef int i = row * 4 + col
+
+        if 0 <= i < 16 and 0 <= col < 4:
             return self.m[i]
         else:
-            raise (IndexError(f'index out of range: {index}'))
+            raise IndexError(f'index out of range: {index}')
+
+    def __setitem__(self, tuple index: Tuple[int, int], double value: float):
+        cdef int row = index[0]
+        cdef int col = index[1]
+        cdef int i = row * 4 + col
+
+        if 0 <= i < 16 and 0 <= col < 4:
+            self.m[i] = value
+        else:
+            raise IndexError(f'index out of range: {index}')
 
     def __repr__(self) -> str:
         def format_row(row):

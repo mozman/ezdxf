@@ -18,9 +18,53 @@ def test_default_constructor():
     assert m[3, 3] == 1.0
 
 
-def test_get_itme_index_error():
+def test_16_numbers_constructor():
+    m = Matrix44(range(16))
+    assert m[3, 3] == 15
+
+
+def test_numbers_constructor_invalid_number_count_error():
+    with pytest.raises(ValueError):
+        Matrix44(range(15))
+    with pytest.raises(ValueError):
+        Matrix44(range(17))
+
+
+def test_4_rows_constructor():
+    m = Matrix44(
+        (0, 0, 0, 0),
+        (1, 1, 1, 1),
+        (2, 2, 2, 2),
+        (3, 3, 3, 3)
+    )
+    assert m[0, 0] == 0
+    assert m[3, 3] == 3
+
+
+def test_rows_constructor_invalid_number_count():
+    with pytest.raises(ValueError):
+        Matrix44(
+            (0, 0, 0, 0),
+            (1, 1, 1, 1),
+            (2, 2, 2, 2),
+            (3, 3, 3)
+        )
+    with pytest.raises(ValueError):
+        Matrix44(
+            (0, 0, 0, 0),
+            (1, 1, 1, 1),
+            (2, 2, 2, 2),
+            (3, 3, 3, 3, 3)
+        )
+
+
+def test_get_item_index_error():
     with pytest.raises(IndexError):
         _ = Matrix44()[(-1, -1)]
+    with pytest.raises(IndexError):
+        _ = Matrix44()[(0, 4)]
+    with pytest.raises(IndexError):
+        _ = Matrix44()[(1, -1)]
     with pytest.raises(IndexError):
         _ = Matrix44()[4, 4]
 
