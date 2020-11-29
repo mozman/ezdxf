@@ -12,17 +12,17 @@ Matrix44 = matrix44.Matrix44
 
 def test_default_constructor():
     m = Matrix44()
-    assert m[0] == 1.0
-    assert m[5] == 1.0
-    assert m[10] == 1.0
-    assert m[15] == 1.0
+    assert m[0, 0] == 1.0
+    assert m[1, 1] == 1.0
+    assert m[2, 2] == 1.0
+    assert m[3, 3] == 1.0
 
 
 def test_get_itme_index_error():
     with pytest.raises(IndexError):
-        _ = Matrix44()[-1]
+        _ = Matrix44()[(-1, -1)]
     with pytest.raises(IndexError):
-        _ = Matrix44()[16]
+        _ = Matrix44()[4, 4]
 
 
 def test_get_item_does_not_support_slicing():
@@ -32,15 +32,15 @@ def test_get_item_does_not_support_slicing():
 
 def test_set_item():
     m = Matrix44()
-    m[0] = 17
-    assert m[0] == 17
+    m[0, 0] = 17
+    assert m[0, 0] == 17
 
 
-def test_set_itme_index_error():
+def test_set_item_index_error():
     with pytest.raises(IndexError):
-        Matrix44()[-1] = 0
+        Matrix44()[-1, -1] = 0
     with pytest.raises(IndexError):
-        Matrix44()[16] = 0
+        Matrix44()[4, 4] = 0
 
 
 def test_set_item_does_not_support_slicing():

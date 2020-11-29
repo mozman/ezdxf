@@ -43,15 +43,21 @@ cdef class Matrix44:
             raise ValueError("invalid argument count: 4 row vectors or "
                              "iterable of 16 numbers")
 
-    def __getitem__(self, int index)-> float:
-        if 0 <= index < 16:
-            return self.m[index]
+    def __setitem__(self, tuple index: Tuple[int, int], double value: float):
+        cdef int row = index[0]
+        cdef int col = index[1]
+        cdef i = row * 4 + col
+        if 0 <= i < 16:
+            self.m[i] = value
         else:
             raise (IndexError(f'index out of range: {index}'))
 
-    def __setitem__(self, int index, double value)-> float:
-        if 0 <= index < 16:
-            self.m[index] = value
+    def __getitem__(self, tuple index: Tuple[int, int]) -> float:
+        cdef int row = index[0]
+        cdef int col = index[1]
+        cdef i = row * 4 + col
+        if 0 <= i < 16:
+            return self.m[i]
         else:
             raise (IndexError(f'index out of range: {index}'))
 
