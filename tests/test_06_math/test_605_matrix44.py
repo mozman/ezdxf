@@ -250,6 +250,21 @@ class TestMatrix44:
         r = t.transform((10., 20., 30.))
         assert r == (20., 10., 30.)
 
+    def test_multiply(self, m44):
+        m1 = m44(range(16))
+        m2 = m44(range(16))
+        res = m1 * m2
+        expected = m44(
+            (56.0, 62.0, 68.0, 74.0),
+            (152.0, 174.0, 196.0, 218.0),
+            (248.0, 286.0, 324.0, 362.0),
+            (344.0, 398.0, 452.0, 506.0)
+        )
+        assert equal_matrix(res, expected)
+        # __matmul__()
+        res = m1 @ m2
+        assert equal_matrix(res, expected)
+
     def test_transpose(self, m44):
         matrix = m44((0, 1, 2, 3),
                      (4, 5, 6, 7),

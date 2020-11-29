@@ -368,7 +368,11 @@ cdef class Matrix44:
         cdef Matrix44 res_matrix = self.copy()
         return res_matrix.__imul__(other)
 
-    __matmul__ = __mul__
+    # __matmul__ = __mul__ does not work!
+
+    def __matmul__(self, Matrix44 other) -> 'Matrix44':
+        cdef Matrix44 res_matrix = self.copy()
+        return res_matrix.__imul__(other)
 
     def transpose(self) -> None:
         swap(&self.m[1], &self.m[4])

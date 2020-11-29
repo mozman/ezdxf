@@ -429,7 +429,13 @@ class Matrix44:
         res_matrix.__imul__(other)
         return res_matrix
 
-    __matmul__ = __mul__
+    # __matmul__ = __mul__ does not work!
+
+    def __matmul__(self, other: 'Matrix44') -> 'Matrix44':
+        """ Returns a new matrix as result of the matrix multiplication with another matrix. """
+        res_matrix = self.copy()
+        res_matrix.__imul__(other)
+        return res_matrix
 
     def __imul__(self, other: 'Matrix44') -> 'Matrix44':
         """ Inplace multiplication with another matrix. """

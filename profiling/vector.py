@@ -35,53 +35,53 @@ def log(name: str, pytime: float, cytime: float):
     log_file.close()
 
 
-def add_vec2(VType, count):
+def vec2_add(VType, count):
     v = VType(0, 0)
     inc = VType(1, 2)
     for _ in range(count):
         v = v + inc
 
 
-def subtract_vec2(VType, count):
+def vec2_subtract(VType, count):
     v = VType(0, 0)
     dec = VType(1, 2)
     for _ in range(count):
         v = v - dec
 
 
-def multiply_vec2(VType, count):
+def vec2_multiply(VType, count):
     v = VType(1, 2)
     for _ in range(count):
         v = v * 123.0
 
 
-def normalize_vec2(VType, count):
+def vec2_normalize(VType, count):
     v = VType(10, 20)
     for _ in range(count):
         v.normalize(3.0)
 
 
-def add_vec3(VType, count):
+def vec3_add(VType, count):
     v = VType()
     inc = VType(1, 2, 3)
     for _ in range(count):
         v = v + inc
 
 
-def subtract_vec3(VType, count):
+def vec3_subtract(VType, count):
     v = VType()
     dec = VType(1, 2, 3)
     for _ in range(count):
         v = v - dec
 
 
-def multiply_vec3(VType, count):
+def vec3_multiply(VType, count):
     v = VType(1, 2, 3)
     for _ in range(count):
         v = v * 123.0
 
 
-def normalize_vec3(VType, count):
+def vec3_normalize(VType, count):
     v = VType(10, 20, 30)
     for _ in range(count):
         v.normalize(3.0)
@@ -107,11 +107,11 @@ def profile(text, func, pytype, cytype, *args):
 RUNS = 1_000_000
 
 print(f'Profiling Vec2/Vec3 Python and Cython implementation:')
-profile(f'add {RUNS} Vec2: ', add_vec2, Vec2, CVec2, RUNS)
-profile(f'subtract {RUNS} Vec2: ', subtract_vec2, Vec2, CVec2, RUNS)
-profile(f'multiply {RUNS} Vec2: ', multiply_vec2, Vec2, CVec2, RUNS)
-profile(f'normalize {RUNS} Vec2: ', normalize_vec2, Vec2, CVec2, RUNS)
-profile(f'add {RUNS} Vec3: ', add_vec3, Vec3, CVec3, RUNS)
-profile(f'subtract {RUNS} Vec3: ', subtract_vec3, Vec3, CVec3, RUNS)
-profile(f'multiply {RUNS} Vec3: ', multiply_vec3, Vec3, CVec3, RUNS)
-profile(f'normalize {RUNS} Vec3: ', normalize_vec3, Vec3, CVec3, RUNS)
+profile(f'add {RUNS} Vec2: ', vec2_add, Vec2, CVec2, RUNS)
+profile(f'subtract {RUNS} Vec2: ', vec2_subtract, Vec2, CVec2, RUNS)
+profile(f'multiply {RUNS} Vec2: ', vec2_multiply, Vec2, CVec2, RUNS)
+profile(f'normalize {RUNS} Vec2: ', vec2_normalize, Vec2, CVec2, RUNS)
+profile(f'add {RUNS} Vec3: ', vec3_add, Vec3, CVec3, RUNS)
+profile(f'subtract {RUNS} Vec3: ', vec3_subtract, Vec3, CVec3, RUNS)
+profile(f'multiply {RUNS} Vec3: ', vec3_multiply, Vec3, CVec3, RUNS)
+profile(f'normalize {RUNS} Vec3: ', vec3_normalize, Vec3, CVec3, RUNS)
