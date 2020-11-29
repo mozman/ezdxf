@@ -23,13 +23,6 @@ def test_16_numbers_constructor():
     assert m[3, 3] == 15
 
 
-def test_numbers_constructor_invalid_number_count_error():
-    with pytest.raises(ValueError):
-        Matrix44(range(15))
-    with pytest.raises(ValueError):
-        Matrix44(range(17))
-
-
 def test_4_rows_constructor():
     m = Matrix44(
         (0, 0, 0, 0),
@@ -41,55 +34,10 @@ def test_4_rows_constructor():
     assert m[3, 3] == 3
 
 
-def test_rows_constructor_invalid_number_count():
-    with pytest.raises(ValueError):
-        Matrix44(
-            (0, 0, 0, 0),
-            (1, 1, 1, 1),
-            (2, 2, 2, 2),
-            (3, 3, 3)
-        )
-    with pytest.raises(ValueError):
-        Matrix44(
-            (0, 0, 0, 0),
-            (1, 1, 1, 1),
-            (2, 2, 2, 2),
-            (3, 3, 3, 3, 3)
-        )
-
-
-def test_get_item_index_error():
-    with pytest.raises(IndexError):
-        _ = Matrix44()[(-1, -1)]
-    with pytest.raises(IndexError):
-        _ = Matrix44()[(0, 4)]
-    with pytest.raises(IndexError):
-        _ = Matrix44()[(1, -1)]
-    with pytest.raises(IndexError):
-        _ = Matrix44()[4, 4]
-
-
-def test_get_item_does_not_support_slicing():
-    with pytest.raises(TypeError):
-        _ = Matrix44()[:]
-
-
 def test_set_item():
     m = Matrix44()
     m[0, 0] = 17
     assert m[0, 0] == 17
-
-
-def test_set_item_index_error():
-    with pytest.raises(IndexError):
-        Matrix44()[-1, -1] = 0
-    with pytest.raises(IndexError):
-        Matrix44()[4, 4] = 0
-
-
-def test_set_item_does_not_support_slicing():
-    with pytest.raises(TypeError):
-        Matrix44()[:] = (1, 2)
 
 
 def test_set_row_4_values():
@@ -104,20 +52,6 @@ def test_set_row_1_value():
     assert m.get_row(1) == (2, 1, 0, 0)
 
 
-def test_get_row_index_error():
-    with pytest.raises(IndexError):
-        Matrix44().get_row(-1)
-    with pytest.raises(IndexError):
-        Matrix44().get_row(4)
-
-
-def test_set_row_index_error():
-    with pytest.raises(IndexError):
-        Matrix44().set_row(-1, (0,))
-    with pytest.raises(IndexError):
-        Matrix44().set_row(4, (0,))
-
-
 def test_set_col_4_values():
     m = Matrix44()
     m.set_col(0, (2, 3, 4, 5))
@@ -128,20 +62,6 @@ def test_set_col_1_value():
     m = Matrix44()
     m.set_col(1, (2,))
     assert m.get_col(1) == (2, 1, 0, 0)
-
-
-def test_get_col_index_error():
-    with pytest.raises(IndexError):
-        Matrix44().get_col(-1)
-    with pytest.raises(IndexError):
-        Matrix44().get_col(4)
-
-
-def test_set_col_index_error():
-    with pytest.raises(IndexError):
-        Matrix44().set_col(-1, (0,))
-    with pytest.raises(IndexError):
-        Matrix44().set_col(4, (0,))
 
 
 def test_copy():

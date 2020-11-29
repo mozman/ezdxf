@@ -25,7 +25,7 @@ cdef double[16] IDENTITY = [
 cdef void set_floats(double *m, object values: Iterable[float]) except *:
     cdef int i = 0
     for v in values:
-        if i < 16:
+        if i < 16:  # Do not write beyond array bounds
             m[i] = v
         i += 1
     if i != 16:
@@ -63,6 +63,11 @@ cdef class Matrix44:
             self.m[i] = value
         else:
             raise IndexError(f'index out of range: {index}')
+
+    def __iter__(self):
+        cdef int i
+        for i in range(16):
+            yield self.m[i]
 
     def __repr__(self) -> str:
         def format_row(row):

@@ -213,8 +213,6 @@ Matrix44
 
     .. automethod:: __repr__
 
-    .. automethod:: set
-
     .. automethod:: get_row
 
     .. automethod:: set_row

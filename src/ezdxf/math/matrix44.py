@@ -55,18 +55,6 @@ class Matrix44:
         Matrix44(row1, row2, row3, row4) four rows, each row with four values.
 
         """
-        self.matrix: List[float] = None
-        self.set(*args)
-
-    def set(self, *args) -> None:
-        """
-        Set matrix values.
-
-            - ``set()`` creates the identity matrix.
-            - ``set(values)`` values is an iterable with the 16 components of the matrix.
-            - ``set(row1, row2, row3, row4)`` four rows, each row with four values.
-
-        """
         nargs = len(args)
         if nargs == 0:
             self.matrix = floats(Matrix44._identity)
@@ -107,8 +95,11 @@ class Matrix44:
             row: row index [0 .. 3]
 
         """
-        index = row * 4
-        return tuple(self.matrix[index:index + 4])
+        if 0 <= row < 4:
+            index = row * 4
+            return tuple(self.matrix[index:index + 4])
+        else:
+            raise IndexError(f'invalid row index: {row}')
 
     def set_row(self, row: int, values: Sequence[float]) -> None:
         """
@@ -119,8 +110,11 @@ class Matrix44:
             values: iterable of four row values
 
         """
-        index = row * 4
-        self.matrix[index:index + len(values)] = floats(values)
+        if 0 <= row < 4:
+            index = row * 4
+            self.matrix[index:index + len(values)] = floats(values)
+        else:
+            raise IndexError(f'invalid row index: {row}')
 
     def get_col(self, col: int) -> Tuple[float, ...]:
         """
@@ -129,8 +123,11 @@ class Matrix44:
         Args:
             col: column index [0 .. 3]
         """
-        m = self.matrix
-        return m[col], m[col + 4], m[col + 8], m[col + 12]
+        if 0 <= col < 4:
+            m = self.matrix
+            return m[col], m[col + 4], m[col + 8], m[col + 12]
+        else:
+            raise IndexError(f'invalid row index: {col}')
 
     def set_col(self, col: int, values: Sequence[float]):
         """
@@ -141,12 +138,15 @@ class Matrix44:
             values: iterable of four column values
 
         """
-        m = self.matrix
-        a, b, c, d = values
-        m[col] = float(a)
-        m[col + 4] = float(b)
-        m[col + 8] = float(c)
-        m[col + 12] = float(d)
+        if 0 <= col < 4:
+            m = self.matrix
+            a, b, c, d = values
+            m[col] = float(a)
+            m[col + 4] = float(b)
+            m[col + 8] = float(c)
+            m[col + 12] = float(d)
+        else:
+            raise IndexError(f'invalid row index: {col}')
 
     def copy(self) -> 'Matrix44':
         """ Returns a copy of same type. """
@@ -406,12 +406,18 @@ class Matrix44:
     def __setitem__(self, index: Tuple[int, int], value: float):
         """ Set (row, column) element. """
         row, col = index
-        self.matrix[row * 4 + col] = float(value)
+        if 0 <= row < 4 and 0 <= col < 4:
+            self.matrix[row * 4 + col] = float(value)
+        else:
+            raise IndexError(f'index out of range: {index}')
 
     def __getitem__(self, index: Tuple[int, int]):
         """ Get (row, column) element. """
         row, col = index
-        return self.matrix[row * 4 + col]
+        if 0 <= row < 4 and 0 <= col < 4:
+            return self.matrix[row * 4 + col]
+        else:
+            raise IndexError(f'index out of range: {index}')
 
     def __iter__(self) -> Iterable[float]:
         """ Iterates over all matrix values. """
@@ -585,51 +591,51 @@ class Matrix44:
         m30, m31, m32, m33 = self.matrix
         self.matrix = [
             (
-                        m12 * m23 * m31 - m13 * m22 * m31 + m13 * m21 * m32 - m11 * m23 * m32 - m12 * m21 * m33 +
-                        m11 * m22 * m33) * f,
+                    m12 * m23 * m31 - m13 * m22 * m31 + m13 * m21 * m32 - m11 * m23 * m32 - m12 * m21 * m33 +
+                    m11 * m22 * m33) * f,
             (
-                        m03 * m22 * m31 - m02 * m23 * m31 - m03 * m21 * m32 + m01 * m23 * m32 + m02 * m21 * m33 -
-                        m01 * m22 * m33) * f,
+                    m03 * m22 * m31 - m02 * m23 * m31 - m03 * m21 * m32 + m01 * m23 * m32 + m02 * m21 * m33 -
+                    m01 * m22 * m33) * f,
             (
-                        m02 * m13 * m31 - m03 * m12 * m31 + m03 * m11 * m32 - m01 * m13 * m32 - m02 * m11 * m33 +
-                        m01 * m12 * m33) * f,
+                    m02 * m13 * m31 - m03 * m12 * m31 + m03 * m11 * m32 - m01 * m13 * m32 - m02 * m11 * m33 +
+                    m01 * m12 * m33) * f,
             (
-                        m03 * m12 * m21 - m02 * m13 * m21 - m03 * m11 * m22 + m01 * m13 * m22 + m02 * m11 * m23 -
-                        m01 * m12 * m23) * f,
+                    m03 * m12 * m21 - m02 * m13 * m21 - m03 * m11 * m22 + m01 * m13 * m22 + m02 * m11 * m23 -
+                    m01 * m12 * m23) * f,
             (
-                        m13 * m22 * m30 - m12 * m23 * m30 - m13 * m20 * m32 + m10 * m23 * m32 + m12 * m20 * m33 -
-                        m10 * m22 * m33) * f,
+                    m13 * m22 * m30 - m12 * m23 * m30 - m13 * m20 * m32 + m10 * m23 * m32 + m12 * m20 * m33 -
+                    m10 * m22 * m33) * f,
             (
-                        m02 * m23 * m30 - m03 * m22 * m30 + m03 * m20 * m32 - m00 * m23 * m32 - m02 * m20 * m33 +
-                        m00 * m22 * m33) * f,
+                    m02 * m23 * m30 - m03 * m22 * m30 + m03 * m20 * m32 - m00 * m23 * m32 - m02 * m20 * m33 +
+                    m00 * m22 * m33) * f,
             (
-                        m03 * m12 * m30 - m02 * m13 * m30 - m03 * m10 * m32 + m00 * m13 * m32 + m02 * m10 * m33 -
-                        m00 * m12 * m33) * f,
+                    m03 * m12 * m30 - m02 * m13 * m30 - m03 * m10 * m32 + m00 * m13 * m32 + m02 * m10 * m33 -
+                    m00 * m12 * m33) * f,
             (
-                        m02 * m13 * m20 - m03 * m12 * m20 + m03 * m10 * m22 - m00 * m13 * m22 - m02 * m10 * m23 +
-                        m00 * m12 * m23) * f,
+                    m02 * m13 * m20 - m03 * m12 * m20 + m03 * m10 * m22 - m00 * m13 * m22 - m02 * m10 * m23 +
+                    m00 * m12 * m23) * f,
             (
-                        m11 * m23 * m30 - m13 * m21 * m30 + m13 * m20 * m31 - m10 * m23 * m31 - m11 * m20 * m33 +
-                        m10 * m21 * m33) * f,
+                    m11 * m23 * m30 - m13 * m21 * m30 + m13 * m20 * m31 - m10 * m23 * m31 - m11 * m20 * m33 +
+                    m10 * m21 * m33) * f,
             (
-                        m03 * m21 * m30 - m01 * m23 * m30 - m03 * m20 * m31 + m00 * m23 * m31 + m01 * m20 * m33 -
-                        m00 * m21 * m33) * f,
+                    m03 * m21 * m30 - m01 * m23 * m30 - m03 * m20 * m31 + m00 * m23 * m31 + m01 * m20 * m33 -
+                    m00 * m21 * m33) * f,
             (
-                        m01 * m13 * m30 - m03 * m11 * m30 + m03 * m10 * m31 - m00 * m13 * m31 - m01 * m10 * m33 +
-                        m00 * m11 * m33) * f,
+                    m01 * m13 * m30 - m03 * m11 * m30 + m03 * m10 * m31 - m00 * m13 * m31 - m01 * m10 * m33 +
+                    m00 * m11 * m33) * f,
             (
-                        m03 * m11 * m20 - m01 * m13 * m20 - m03 * m10 * m21 + m00 * m13 * m21 + m01 * m10 * m23 -
-                        m00 * m11 * m23) * f,
+                    m03 * m11 * m20 - m01 * m13 * m20 - m03 * m10 * m21 + m00 * m13 * m21 + m01 * m10 * m23 -
+                    m00 * m11 * m23) * f,
             (
-                        m12 * m21 * m30 - m11 * m22 * m30 - m12 * m20 * m31 + m10 * m22 * m31 + m11 * m20 * m32 -
-                        m10 * m21 * m32) * f,
+                    m12 * m21 * m30 - m11 * m22 * m30 - m12 * m20 * m31 + m10 * m22 * m31 + m11 * m20 * m32 -
+                    m10 * m21 * m32) * f,
             (
-                        m01 * m22 * m30 - m02 * m21 * m30 + m02 * m20 * m31 - m00 * m22 * m31 - m01 * m20 * m32 +
-                        m00 * m21 * m32) * f,
+                    m01 * m22 * m30 - m02 * m21 * m30 + m02 * m20 * m31 - m00 * m22 * m31 - m01 * m20 * m32 +
+                    m00 * m21 * m32) * f,
             (
-                        m02 * m11 * m30 - m01 * m12 * m30 - m02 * m10 * m31 + m00 * m12 * m31 + m01 * m10 * m32 -
-                        m00 * m11 * m32) * f,
+                    m02 * m11 * m30 - m01 * m12 * m30 - m02 * m10 * m31 + m00 * m12 * m31 + m01 * m10 * m32 -
+                    m00 * m11 * m32) * f,
             (
-                        m01 * m12 * m20 - m02 * m11 * m20 + m02 * m10 * m21 - m00 * m12 * m21 - m01 * m10 * m22 +
-                        m00 * m11 * m22) * f,
+                    m01 * m12 * m20 - m02 * m11 * m20 + m02 * m10 * m21 - m00 * m12 * m21 - m01 * m10 * m22 +
+                    m00 * m11 * m22) * f,
         ]
