@@ -8,7 +8,7 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
 from .objectcollection import ObjectCollection
-from ezdxf.math.matrix44 import Matrix44
+from ezdxf.math import Matrix44
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace

@@ -2,9 +2,8 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Dict, Tuple
 import math
-from ezdxf.math import Vec3, NULLVEC, X_AXIS, Z_AXIS
+from ezdxf.math import Vec3, NULLVEC, X_AXIS, Z_AXIS, Matrix44
 from .construct3d import distance_point_line_3d
-from .matrix44 import Matrix44
 from .ucs import OCS
 from .construct2d import enclosing_angles, linspace
 

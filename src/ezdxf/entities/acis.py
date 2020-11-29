@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFTypeError, DXF2013, DXFStructureError
 from ezdxf.lldxf.tags import Tags, DXFTag
-from ezdxf.math.matrix44 import Matrix44
+from ezdxf.math import Matrix44
 from ezdxf.tools import crypt
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -258,7 +258,7 @@ def load_matrix(subclass: 'Tags', code: int) -> Matrix44:
 
 
 def export_matrix(tagwriter: 'TagWriter', code: int, matrix: Matrix44) -> None:
-    for value in matrix.matrix:
+    for value in list(matrix):
         tagwriter.write_tag2(code, value)
 
 
