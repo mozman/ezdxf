@@ -517,6 +517,8 @@ cdef class Matrix44:
         else:
             return res
 
+    ocs_to_wcs = transform_direction
+
     def transform_vertices(self, vectors: Iterable['Vertex']) -> Iterable[Vec3]:
         cdef double *m = self.m
         cdef Vec3 res

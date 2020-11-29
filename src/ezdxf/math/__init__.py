@@ -7,10 +7,12 @@ if USE_C_EXT:
     from ezdxf.acc.vector import (
         Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
     )
+    from ezdxf.acc.matrix44 import Matrix44
 else:
     from .vector import (
         Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
     )
+    from .matrix44 import Matrix44
 
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d,
@@ -23,7 +25,6 @@ from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState,
     intersection_ray_ray_3d, normal_vector_3p, distance_point_line_3d,
 )
-from .matrix44 import Matrix44
 from .linalg import (
     Matrix, LUDecomposition, gauss_jordan_inverse, gauss_jordan_solver,
     gauss_vector_solver, gauss_matrix_solver, freeze_matrix,

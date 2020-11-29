@@ -660,7 +660,7 @@ class BlockData:
     def matrix44(self, m: Matrix44) -> None:
         m = m.copy()
         m.transpose()
-        self._matrix = m.matrix
+        self._matrix = list(m)
 
     def parse(self, code: int, value) -> bool:
         attrib = BlockData.ATTRIBS.get(code)
