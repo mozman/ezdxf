@@ -6,7 +6,7 @@ import math
 from ezdxf.math import tridiagonal_matrix_solver
 from ezdxf.math.ellipse import ConstructionEllipse
 
-from .vector cimport v3_dist, Vec3, isclose
+from .vector cimport Vec3, isclose, v3_lerp, v3_dist
 from .matrix44 cimport Matrix44
 
 if TYPE_CHECKING:
@@ -54,7 +54,7 @@ cdef class Bezier4P:
     def control_points(self) -> Tuple[Vec3]:
         return self.p0, self.p1, self.p2, self.p3
 
-    def point(self, double t: float) -> Vec3:
+    def point(self, double t) -> Vec3:
         cdef double params[4]
         if 0.0 <= t <= 1.0:
             bernstein3(t, params)
@@ -62,7 +62,7 @@ cdef class Bezier4P:
         else:
             raise ValueError("t not in range [0 to 1]")
 
-    def tangent(self, double t: float) -> Vec3:
+    def tangent(self, double t) -> Vec3:
         cdef double params[4]
         if 0.0 <= t <= 1.0:
             bernstein3_d1(t, params)
@@ -70,7 +70,7 @@ cdef class Bezier4P:
         else:
             raise ValueError("t not in range [0 to 1]")
 
-    cdef object _get_curve_point(self, double t, double *params):
+    cdef Vec3 _get_curve_point(self, double t, double *params):
         cdef Vec3 p0 = self.p0
         cdef Vec3 p1 = self.p1
         cdef Vec3 p2 = self.p2
@@ -101,15 +101,16 @@ cdef class Bezier4P:
         def subdiv(Vec3 start_point, Vec3 end_point, double start_t,
                    double end_t):
             cdef double mid_t = (start_t + end_t) * 0.5
-            cdef Vec3 mid_point = <Vec3> self.point(mid_t)
-            cdef Vec3 chk_point = <Vec3> start_point.lerp(end_point)
-            # center point point is faster than projecting mid point onto
-            # vector start -> end:
-            if chk_point.distance(mid_point) < distance:
+            bernstein3(mid_t, params)
+            cdef Vec3 mid_point = self._get_curve_point(mid_t, params)
+            cdef double d = v3_dist(v3_lerp(start_point, end_point, 0.5), mid_point)
+            if d < distance:
                 yield end_point
             else:
                 yield from subdiv(start_point, mid_point, start_t, mid_t)
                 yield from subdiv(mid_point, end_point, mid_t, end_t)
+
+        cdef double params[4]
         cdef double dt = 1.0 / segments
         cdef double t0 = 0.0, t1
         cdef Vec3 start_point = self.p0
@@ -122,7 +123,8 @@ cdef class Bezier4P:
                 end_point = self.p3
                 t1 = 1.0
             else:
-                end_point = <Vec3> self.point(t1)
+                bernstein3(t1, params)
+                end_point = self._get_curve_point(t1, params)
             yield from subdiv(start_point, end_point, t0, t1)
             t0 = t1
             start_point = end_point
