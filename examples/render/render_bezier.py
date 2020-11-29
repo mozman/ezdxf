@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2019, Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.math.vector import Vec3
+from ezdxf.math import Vec3
 from ezdxf.render import Bezier
 
 
