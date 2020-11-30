@@ -9,6 +9,7 @@ import pytest
 bezier = pytest.importorskip('ezdxf.acc.bezier4p')
 Bezier4P = bezier.Bezier4P
 from ezdxf.acc.vector import Vec3
+from ezdxf.acc.matrix44 import Matrix44
 
 POINTS = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
@@ -48,6 +49,12 @@ def test_approximated_length(curve):
 def test_reverse(curve):
     r = curve.reverse()
     assert r.control_points == Vec3.tuple(reversed(POINTS))
+
+
+def test_transform(curve):
+    m = Matrix44.translate(1, 1, 0)
+    r = curve.transform(m)
+    assert r.control_points[0] == (1, 1, 0)
 
 
 if __name__ == '__main__':

@@ -109,8 +109,13 @@ cdef class Bezier4P:
         return Bezier4P((self.p3, self.p2, self.p1, self.p0))
 
     def transform(self, Matrix44 m) -> 'Bezier4P':
-        defpoints = tuple(m.transform_vertices(self.control_points))
-        return Bezier4P(defpoints)
+        transform = m.transform
+        return Bezier4P((
+            transform(self.p0),
+            transform(self.p1),
+            transform(self.p2),
+            transform(self.p3),
+        ))
 
 cdef void bernstein3(double t, double *weights):
     cdef double t2 = t * t
