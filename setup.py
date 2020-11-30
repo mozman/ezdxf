@@ -14,6 +14,7 @@ try:
     ext_modules = [
         Extension("ezdxf.acc.vector", ["src/ezdxf/acc/vector.pyx"], optional=True),
         Extension("ezdxf.acc.matrix44", ["src/ezdxf/acc/matrix44.pyx"], optional=True),
+        Extension("ezdxf.acc.bezier4p", ["src/ezdxf/acc/bezier4p.pyx"], optional=True),
     ]
     commands = {'build_ext': build_ext}
 except ImportError:

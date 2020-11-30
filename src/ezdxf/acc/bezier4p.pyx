@@ -18,23 +18,7 @@ __all__ = [
     'tangents_cubic_bezier_interpolation',
 ]
 
-
-cdef void bernstein3(double t, double *params):
-    cdef double t2 = t * t
-    cdef double _1_minus_t = 1.0 - t
-    cdef double _1_minus_t_square = _1_minus_t * _1_minus_t
-    params[0] = _1_minus_t_square * _1_minus_t
-    params[1] = 3.0 * _1_minus_t_square * t
-    params[2] = 3.0 * _1_minus_t * t2
-    params[3] = t2 * t
-
-cdef void bernstein3_d1(double t, double *params):
-    cdef double t2 = t * t
-    params[0] = -3.0 * (1.0 - t) * (1.0 - t)
-    params[1] = 3.0 * (1.0 - 4.0 * t + 3.0 * t2)
-    params[2] = 3.0 * t * (2.0 - 3.0 * t)
-    params[3] = 3.0 * t2
-
+# noinspection PyUnresolvedReferences
 cdef class Bezier4P:
     cdef Vec3 p0
     cdef Vec3 p1
@@ -51,83 +35,62 @@ cdef class Bezier4P:
             raise ValueError("Four control points required.")
 
     @property
-    def control_points(self) -> Tuple[Vec3]:
+    def control_points(self) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
         return self.p0, self.p1, self.p2, self.p3
 
     def point(self, double t) -> Vec3:
-        cdef double params[4]
+        cdef double weights[4]
         if 0.0 <= t <= 1.0:
-            bernstein3(t, params)
-            return self._get_curve_point(t, params)
+            bernstein3(t, weights)
+            return bezier_point(self, weights)
         else:
             raise ValueError("t not in range [0 to 1]")
 
     def tangent(self, double t) -> Vec3:
-        cdef double params[4]
+        cdef double weights[4]
         if 0.0 <= t <= 1.0:
-            bernstein3_d1(t, params)
-            return self._get_curve_point(t, params)
+            bernstein3_d1(t, weights)
+            return bezier_point(self, weights)
         else:
             raise ValueError("t not in range [0 to 1]")
 
-    cdef Vec3 _get_curve_point(self, double t, double *params):
-        cdef Vec3 p0 = self.p0
-        cdef Vec3 p1 = self.p1
-        cdef Vec3 p2 = self.p2
-        cdef Vec3 p3 = self.p3
-        cdef Vec3 res = Vec3()
-        cdef double a = params[0], b = params[1], c = params[2], d = params[3]
-        res.x = p0.x * a + p1.x * b + p2.x * c + p3.x * d
-        res.y = p0.y * a + p1.x * b + p2.x * c + p3.x * d
-        res.z = p0.z * a + p1.x * b + p2.x * c + p3.x * d
-        return res
-
-    def approximate(self, int segments) -> Iterable[Vec3]:
-        cdef double params[4]
+    def approximate(self, int segments) -> List[Vec3]:
+        cdef double weights[4]
         cdef double delta_t, t
         cdef int segment
+        cdef list points = [self.p0]
 
         if segments < 1:
             raise ValueError(segments)
         delta_t = 1.0 / segments
-        yield self.p0
+
         for segment in range(1, segments):
             t = delta_t * segment
-            bernstein3(t, params)
-            yield self._get_curve_point(t, params)
-        yield self.p3
+            bernstein3(t, weights)
+            points.append(bezier_point(self, weights))
+        points.append(self.p3)
+        return points
 
-    def flattening(self, double distance, int segments = 4) -> Iterable[Vec3]:
-        def subdiv(Vec3 start_point, Vec3 end_point, double start_t,
-                   double end_t):
-            cdef double mid_t = (start_t + end_t) * 0.5
-            bernstein3(mid_t, params)
-            cdef Vec3 mid_point = self._get_curve_point(mid_t, params)
-            cdef double d = v3_dist(v3_lerp(start_point, end_point, 0.5), mid_point)
-            if d < distance:
-                yield end_point
-            else:
-                yield from subdiv(start_point, mid_point, start_t, mid_t)
-                yield from subdiv(mid_point, end_point, mid_t, end_t)
-
-        cdef double params[4]
+    def flattening(self, double distance, int segments = 4) -> List[Vec3]:
+        cdef double weights[4]
         cdef double dt = 1.0 / segments
         cdef double t0 = 0.0, t1
         cdef Vec3 start_point = self.p0
         cdef Vec3 end_point
+        cdef SubDiv s = SubDiv(self, distance, start_point)
 
-        yield start_point
         while t0 < 1.0:
             t1 = t0 + dt
             if isclose(t1, 1.0):
                 end_point = self.p3
                 t1 = 1.0
             else:
-                bernstein3(t1, params)
-                end_point = self._get_curve_point(t1, params)
-            yield from subdiv(start_point, end_point, t0, t1)
+                bernstein3(t1, weights)
+                end_point = bezier_point(self, weights)
+            s.subdiv(start_point, end_point, t0, t1)
             t0 = t1
             start_point = end_point
+        return s.points
 
     def approximated_length(self, segments: int = 128) -> float:
         cdef double length = 0.0
@@ -149,24 +112,64 @@ cdef class Bezier4P:
         defpoints = tuple(m.transform_vertices(self.control_points))
         return Bezier4P(defpoints)
 
+cdef void bernstein3(double t, double *weights):
+    cdef double t2 = t * t
+    cdef double _1_minus_t = 1.0 - t
+    cdef double _1_minus_t_square = _1_minus_t * _1_minus_t
+    weights[0] = _1_minus_t_square * _1_minus_t
+    weights[1] = 3.0 * _1_minus_t_square * t
+    weights[2] = 3.0 * _1_minus_t * t2
+    weights[3] = t2 * t
+
+cdef void bernstein3_d1(double t, double *weights):
+    cdef double t2 = t * t
+    weights[0] = -3.0 * (1.0 - t) * (1.0 - t)
+    weights[1] = 3.0 * (1.0 - 4.0 * t + 3.0 * t2)
+    weights[2] = 3.0 * t * (2.0 - 3.0 * t)
+    weights[3] = 3.0 * t2
+
+cdef Vec3 bezier_point(Bezier4P curve, double *weights):
+    cdef Vec3 p0 = curve.p0
+    cdef Vec3 p1 = curve.p1
+    cdef Vec3 p2 = curve.p2
+    cdef Vec3 p3 = curve.p3
+    cdef Vec3 res = Vec3()
+    cdef double a = weights[0], b = weights[1], c = weights[2], d = weights[3]
+    res.x = p0.x * a + p1.x * b + p2.x * c + p3.x * d
+    res.y = p0.y * a + p1.y * b + p2.y * c + p3.y * d
+    res.z = p0.z * a + p1.z * b + p2.z * c + p3.z * d
+    return res
+
+cdef class SubDiv:
+    cdef Bezier4P curve
+    cdef double distance
+    cdef list points
+
+    def __cinit__(self, Bezier4P curve, double distance, Vec3 point):
+        self.curve = curve
+        self.distance = distance
+        self.points = [point]
+
+    cdef subdiv(self, Vec3 start_point, Vec3 end_point, double start_t,
+                double end_t):
+        cdef double weights[4]
+        cdef double mid_t = (start_t + end_t) * 0.5
+
+        bernstein3(mid_t, weights)
+        cdef Vec3 mid_point = bezier_point(self.curve, weights)
+        cdef double d = v3_dist(
+            v3_lerp(start_point, end_point, 0.5), mid_point)
+        if d < self.distance:
+            self.points.append(end_point)
+        else:
+            self.subdiv(start_point, mid_point, start_t, mid_t)
+            self.subdiv(mid_point, end_point, mid_t, end_t)
+
 def cubic_bezier_from_arc(
-        center: Vec3 = (0, 0), radius: float = 1, start_angle: float = 0,
+        center=(0, 0), radius: float = 1, start_angle: float = 0,
         end_angle: float = 360,
         segments: int = 1) -> Iterable[Bezier4P]:
-    """ Returns an approximation for a circular 2D arc by multiple cubic
-    Bézier-curves.
 
-    Args:
-        center: circle center as :class:`Vec3` compatible object
-        radius: circle radius
-        start_angle: start angle in degrees
-        end_angle: end angle in degrees
-        segments: count of Bèzier-curve segments, at least one segment for each
-            quarter (90 deg), 1 for as few as possible.
-
-    .. versionadded:: 0.13
-
-    """
     center = Vec3(center)
     radius = float(radius)
     start_angle = math.radians(start_angle) % math.tau
