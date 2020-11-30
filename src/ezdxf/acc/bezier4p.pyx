@@ -3,9 +3,12 @@
 # License: MIT License
 from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
-from .vector cimport Vec3, isclose, v3_lerp, v3_dist, v3_from_angle
+from .vector cimport (
+    Vec3, isclose, v3_lerp, v3_dist, v3_from_angle, normalize_rad_angle,
+    normalize_deg_angle
+)
 from .matrix44 cimport Matrix44
-from libc.math cimport fabs, ceil, M_PI, tan
+from libc.math cimport ceil, M_PI, tan, fabs
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -13,6 +16,7 @@ if TYPE_CHECKING:
 __all__ = ['Bezier4P']
 
 cdef double M_TAU = M_PI * 2.0
+cdef double DEG2RAD = M_PI / 180.0
 
 # noinspection PyUnresolvedReferences
 cdef class Bezier4P:
@@ -203,3 +207,33 @@ def cubic_bezier_arc_parameters(
         cp2.x = end_point.x + end_point.y * tangent_length
         cp2.y = end_point.y - end_point.x * tangent_length
         yield start_point, cp1, cp2, end_point
+
+def cubic_bezier_from_arc(
+        center = (0, 0), double radius = 1.0, double start_angle = 0.0,
+        double end_angle = 360.0, int segments = 1) -> Iterable[Bezier4P]:
+    cdef double cx = center[0]
+    cdef double cy = center[1]
+    cdef Vec3 cp
+    cdef list res
+    cdef int i
+
+    start_angle = normalize_deg_angle(start_angle) * DEG2RAD
+    end_angle = normalize_deg_angle(end_angle) * DEG2RAD
+
+    # normalized angles > 0
+    if end_angle < 1e-12:
+        end_angle = M_TAU
+    if start_angle > end_angle:
+        end_angle += M_TAU
+    if fabs(end_angle - start_angle) < 1e-12:
+        return
+
+    for control_points in cubic_bezier_arc_parameters(
+            start_angle, end_angle, segments):
+        res = list()
+        for i in range(4):
+            cp = <Vec3> control_points[i]
+            cp.x = cp.x * radius + cx
+            cp.y = cp.y * radius + cy
+            res.append(cp)
+        yield Bezier4P(res)
