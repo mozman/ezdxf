@@ -2,8 +2,8 @@
 # License: MIT License
 import pytest
 from math import radians, sin, cos, pi, isclose
-# Import from 'ezdxf.math.matrix44' to test Python implementation
-from ezdxf.math.matrix44 import Matrix44
+# Import from 'ezdxf.math._matrix44' to test Python implementation
+from ezdxf.math._matrix44 import Matrix44
 
 m44_classes = [Matrix44]
 

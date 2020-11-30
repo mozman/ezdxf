@@ -10,8 +10,8 @@ if USE_C_EXT is False:
     print('C-extension disabled or not available.')
     sys.exit(1)
 
-from ezdxf.math.bezier4p import Bezier4P
-from ezdxf.acc.bezier4p import Bezier4P as CBezier4P
+from ezdxf.math._bezier4p import Bezier4P  # Python implementation
+from ezdxf.acc.bezier4p import Bezier4P as CBezier4P  # Cython implementation
 from ezdxf.version import __version__
 
 POINTS = [(0, 0), (1, 0), (1, 1), (0, 1)]

@@ -1,18 +1,11 @@
 # Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 from typing import Union, Sequence
-from ezdxf.acc import USE_C_EXT
 
-if USE_C_EXT:
-    from ezdxf.acc.vector import (
+from ._types import (
         Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
+        Matrix44, Bezier4P
     )
-    from ezdxf.acc.matrix44 import Matrix44
-else:
-    from .vector import (
-        Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
-    )
-    from .matrix44 import Matrix44
 
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d,
@@ -40,7 +33,7 @@ from .bspline import (
 )
 from .bezier import Bezier
 from .bezier4p import (
-    Bezier4P, cubic_bezier_from_arc, cubic_bezier_from_ellipse,
+    cubic_bezier_from_arc, cubic_bezier_from_ellipse,
     cubic_bezier_interpolation,
 )
 from .surfaces import BezierSurface

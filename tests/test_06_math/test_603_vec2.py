@@ -2,8 +2,8 @@
 # License: MIT License
 import pytest
 import math
-# Import from 'ezdxf.math.vector' to test Python implementation
-from ezdxf.math.vector import Vec2, Vec3
+# Import from 'ezdxf.math._vector' to test Python implementation
+from ezdxf.math._vector import Vec2, Vec3
 
 all_vec_classes = [Vec2, Vec3]
 vec2_only = [Vec2]

@@ -11,8 +11,8 @@ if USE_C_EXT is False:
     print('C-extension disabled or not available.')
     sys.exit(1)
 
-from ezdxf.math.matrix44 import Matrix44
-from ezdxf.acc.matrix44 import Matrix44 as CMatrix44
+from ezdxf.math._matrix44 import Matrix44  # Python implementation
+from ezdxf.acc.matrix44 import Matrix44 as CMatrix44  # Cython implementation
 from ezdxf.version import __version__
 
 

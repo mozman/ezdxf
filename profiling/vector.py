@@ -10,8 +10,8 @@ if USE_C_EXT is False:
     print('C-extension disabled or not available.')
     sys.exit(1)
 
-from ezdxf.math.vector import Vec3, Vec2
-from ezdxf.acc.vector import Vec3 as CVec3, Vec2 as CVec2
+from ezdxf.math._vector import Vec3, Vec2  # Python implementation
+from ezdxf.acc.vector import Vec3 as CVec3, Vec2 as CVec2  # Cython Implementation
 from ezdxf.version import __version__
 
 
