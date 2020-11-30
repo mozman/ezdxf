@@ -188,18 +188,12 @@ def cubic_bezier_arc_parameters(
 
     cdef double segment_angle = delta_angle / arc_count
     cdef double tangent_length = TANGENT_FACTOR * tan(segment_angle / 4.0)
-
     cdef double angle = start_angle
-    cdef bint start_flag = 1
     cdef Vec3 start_point, end_point, cp1, cp2
+    end_point = v3_from_angle(angle, 1.0)
 
     for _ in range(arc_count):
-        if start_flag:
-            start_flag = 0
-            start_point = v3_from_angle(angle, 1.0)
-        else:
-            start_point = end_point
-
+        start_point = end_point
         angle += segment_angle
         end_point = v3_from_angle(angle, 1.0)
         cp1 = Vec3()

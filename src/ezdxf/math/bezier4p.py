@@ -131,10 +131,9 @@ def cubic_bezier_arc_parameters(
     tangent_length = TANGENT_FACTOR * math.tan(segment_angle / 4.0)
 
     angle = start_angle
-    end_point = None
+    end_point = Vec3.from_angle(angle)
     for _ in range(arc_count):
-        start_point = Vec3.from_angle(
-            angle) if end_point is None else end_point
+        start_point = end_point
         angle += segment_angle
         end_point = Vec3.from_angle(angle)
         control_point_1 = start_point + (
