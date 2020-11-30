@@ -1,15 +1,18 @@
 # cython: language_level=3
 # Copyright (c) 2020 Manfred Moitzi
 # License: MIT License
-from typing import List, Tuple, TYPE_CHECKING, Sequence
-
-from .vector cimport Vec3, isclose, v3_lerp, v3_dist
+from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
+import cython
+from .vector cimport Vec3, isclose, v3_lerp, v3_dist, v3_from_angle
 from .matrix44 cimport Matrix44
+from libc.math cimport fabs, ceil, M_PI, tan
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 __all__ = ['Bezier4P']
+
+cdef double M_TAU = M_PI * 2.0
 
 # noinspection PyUnresolvedReferences
 cdef class Bezier4P:
@@ -162,3 +165,48 @@ cdef class SubDiv:
         else:
             self.subdiv(start_point, mid_point, start_t, mid_t)
             self.subdiv(mid_point, end_point, mid_t, end_t)
+
+cdef double DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
+cdef double OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
+cdef double TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
+
+
+@cython.cdivision(True)
+def cubic_bezier_arc_parameters(
+        double start_angle, double end_angle,
+        int segments = 1) -> Iterable[Tuple[Vec3, Vec3, Vec3, Vec3]]:
+    if segments < 1:
+        raise ValueError('Invalid argument segments (>= 1).')
+    cdef double delta_angle = end_angle - start_angle
+    cdef int arc_count
+    if delta_angle > 0:
+        arc_count = <int> ceil(delta_angle / M_PI * 2.0)
+        if segments > arc_count:
+            arc_count = segments
+    else:
+        raise ValueError('Delta angle from start- to end angle has to be > 0.')
+
+    cdef double segment_angle = delta_angle / arc_count
+    cdef double tangent_length = TANGENT_FACTOR * tan(segment_angle / 4.0)
+
+    cdef double angle = start_angle
+    cdef bint start_flag = 1
+    cdef Vec3 start_point, end_point, cp1, cp2
+    cdef Vec3 tmp = Vec3()
+
+    for _ in range(arc_count):
+        if start_flag:
+            start_flag = 0
+            start_point = v3_from_angle(angle, 1.0)
+        else:
+            start_point = end_point
+
+        angle += segment_angle
+        end_point = v3_from_angle(angle, 1.0)
+        cp1 = Vec3()
+        cp1.x = start_point.x - start_point.y * tangent_length
+        cp1.y = start_point.y + start_point.x * tangent_length
+        cp2 = Vec3()
+        cp2.x = end_point.x + end_point.y * tangent_length
+        cp2.y = end_point.y - end_point.x * tangent_length
+        yield start_point, cp1, cp2, end_point

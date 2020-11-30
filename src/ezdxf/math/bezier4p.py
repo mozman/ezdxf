@@ -1,6 +1,6 @@
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
-from typing import List, TYPE_CHECKING, Iterable, Sequence
+from typing import List, TYPE_CHECKING, Iterable, Tuple
 import math
 from ezdxf.math import Vec3, tridiagonal_matrix_solver, Bezier4P
 from ezdxf.math.ellipse import ConstructionEllipse
@@ -107,7 +107,7 @@ TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
 
 def cubic_bezier_arc_parameters(
         start_angle: float, end_angle: float,
-        segments: int = 1) -> Sequence[Vec3]:
+        segments: int = 1) -> Iterable[Tuple[Vec3, Vec3, Vec3, Vec3]]:
     """ Yields cubic Bézier-curve parameters for a circular 2D arc with center
     at (0, 0) and a radius of 1 in the form of [start point, 1. control point,
     2. control point, end point].
