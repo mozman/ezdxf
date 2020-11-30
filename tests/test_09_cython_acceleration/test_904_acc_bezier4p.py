@@ -54,7 +54,7 @@ def test_reverse(curve):
 def test_transform(curve):
     m = Matrix44.translate(1, 1, 0)
     r = curve.transform(m)
-    assert r.control_points[0] == (1, 1, 0)
+    assert r.control_points == Vec3.tuple([(1, 1), (2, 1), (2, 2), (1, 2)])
 
 
 if __name__ == '__main__':
