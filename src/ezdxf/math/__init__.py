@@ -2,11 +2,12 @@
 # License: MIT License
 from typing import Union, Sequence
 
+# Import base types as C-extensions if available else as pure Python
+# implementations:
 from ._types import (
         Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
         Matrix44, Bezier4P
     )
-
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d,
     distance_point_line_2d, is_point_on_line_2d, is_point_in_polygon_2d,

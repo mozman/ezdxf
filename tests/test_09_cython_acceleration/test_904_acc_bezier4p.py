@@ -2,7 +2,7 @@
 #  License: MIT License
 # Test only basic features of Cython implementation,
 # Full testing and compatibility check with Python implementation
-# is located in test suite 630.
+# is located in test suite 630a.
 
 import pytest
 
