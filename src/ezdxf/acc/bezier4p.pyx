@@ -192,7 +192,6 @@ def cubic_bezier_arc_parameters(
     cdef double angle = start_angle
     cdef bint start_flag = 1
     cdef Vec3 start_point, end_point, cp1, cp2
-    cdef Vec3 tmp = Vec3()
 
     for _ in range(arc_count):
         if start_flag:
