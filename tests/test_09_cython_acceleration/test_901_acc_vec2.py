@@ -5,6 +5,7 @@
 # is located in test suite 603.
 
 import pytest
+import math
 
 cyvec = pytest.importorskip('ezdxf.acc.vector')
 Vec2 = cyvec.Vec2
@@ -90,6 +91,21 @@ def test_bool():
 def test_does_not_support_slicing():
     with pytest.raises(TypeError):
         _ = Vec2(2, 1)[:]
+
+
+@pytest.mark.parametrize('angle', [
+    90, -90, 600, -600, 0.0, 360.0, -360.0, 720.0, -720.0
+])
+def test_normalize_deg_angle(angle):
+    assert cyvec._normalize_deg_angle(angle) == angle % 360.0
+
+
+@pytest.mark.parametrize('angle', [
+    3.0, -3.0, 10.0, -10.0, 0.0, math.tau, -math.tau,
+    2 * math.tau, -2 * math.tau
+])
+def test_normalize_rad_angle(angle):
+    assert cyvec._normalize_rad_angle(angle) == angle % math.tau
 
 
 if __name__ == '__main__':

@@ -30,12 +30,21 @@ cdef double normalize_rad_angle(double a):
         res += M_TAU
     return res
 
+def _normalize_rad_angle(double angle):
+    # just for testing
+    return normalize_rad_angle(angle)
+
+
 cdef double normalize_deg_angle(double a):
     # Emulate the Python behavior of (a % 360)
     cdef double res = fmod(a, 360.0)
     if res < 0.0:
         res += 360.0
     return res
+
+def _normalize_deg_angle(double angle):
+    # just for testing
+    return normalize_deg_angle(angle)
 
 cdef class Vec2:
     """ Immutable 2D vector.

@@ -262,7 +262,9 @@ class Vec3:
     @property
     def is_null(self) -> bool:
         """ ``True`` for ``Vec3(0, 0, 0)``. """
-        return self.__eq__((0, 0, 0))
+        return isclose(self._x, 0.) and \
+               isclose(self._y, 0.) and \
+               isclose(self._z, 0.)
 
     def is_parallel(self, other: 'Vec3', abs_tol: float = 1e-12) -> bool:
         """ Returns ``True`` if `self` and `other` are parallel to vectors. """
@@ -349,8 +351,9 @@ class Vec3:
             other: :class:`Vec3` compatible object
         """
         x, y, z = self.decompose(other)
-        return isclose(self._x, x) and isclose(self._y, y) and isclose(self._z,
-                                                                       z)
+        return isclose(self._x, x) and \
+               isclose(self._y, y) and \
+               isclose(self._z, z)
 
     def __lt__(self, other: 'Vertex') -> bool:
         """
@@ -722,7 +725,8 @@ class Vec2:
     def __eq__(self, other: 'Vertex') -> bool:
         # accepts also tuples, for more convenience at testing
         x, y, *_ = other
-        return isclose(self.x, x) and isclose(self.y, y)
+        return isclose(self.x, x) and \
+               isclose(self.y, y)
 
     def __lt__(self, other: 'Vertex') -> bool:
         # accepts also tuples, for more convenience at testing
