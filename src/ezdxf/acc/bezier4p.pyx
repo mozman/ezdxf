@@ -224,12 +224,11 @@ def cubic_bezier_from_arc(
     start_angle = normalize_deg_angle(start_angle) * DEG2RAD
     end_angle = normalize_deg_angle(end_angle) * DEG2RAD
 
-    # normalized angles > 0
-    if end_angle < 1e-12:
+    if isclose(end_angle, 0.0, ABS_TOL):
         end_angle = M_TAU
     if start_angle > end_angle:
         end_angle += M_TAU
-    if fabs(end_angle - start_angle) < 1e-12:
+    if isclose(end_angle, start_angle, ABS_TOL):
         return
 
     for control_points in cubic_bezier_arc_parameters(
@@ -247,14 +246,13 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
     cdef start_angle = normalize_rad_angle(ellipse.start_param)
     cdef end_angle = normalize_rad_angle(ellipse.end_param)
 
-    # normalized angles > 0
-    if end_angle < 1e-12:
+    if isclose(end_angle, 0.0, ABS_TOL):
         end_angle = M_TAU
 
     if start_angle > end_angle:
         end_angle += M_TAU
 
-    if fabs(end_angle - start_angle) < 1e-12:
+    if isclose(end_angle, start_angle, ABS_TOL):
         return
 
     cdef Vec3 cp = Vec3(ellipse.center)
