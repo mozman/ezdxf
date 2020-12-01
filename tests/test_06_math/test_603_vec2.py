@@ -118,6 +118,12 @@ def test_compare_vectors(vcls):
     assert v1 < v2
 
 
+def test_is_close(vcls):
+    v1 = vcls(421846.9857097387, -36908.41493252139)
+    v2 = vcls(421846.9857097387, -36908.41493252141)
+    assert v1.isclose(v2) is True
+
+
 def test_is_null(vcls):
     v = vcls(0, 0)
     assert v.is_null is True

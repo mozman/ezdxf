@@ -8,10 +8,16 @@ if USE_C_EXT:
         Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
     )
     from ezdxf.acc.matrix44 import Matrix44
-    from ezdxf.acc.bezier4p import Bezier4P
+    from ezdxf.acc.bezier4p import (
+        Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_from_arc,
+        cubic_bezier_from_ellipse
+    )
 else:
     from ._vector import (
         Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
     )
     from ._matrix44 import Matrix44
-    from ._bezier4p import Bezier4P
+    from ._bezier4p import (
+        Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_from_arc,
+        cubic_bezier_from_ellipse
+    )

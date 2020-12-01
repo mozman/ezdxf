@@ -6,15 +6,18 @@ from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod
 import random
 
 DEF ABS_TOL = 1e-12
+DEF REL_TOL = 1e-9
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import VecXY, Vertex
 
-cdef bint isclose(double a, double b):
-    return fabs(a - b) < ABS_TOL
+cdef bint isclose(double a, double b, double abs_tol):
+    # Has to match the Python implementation!
+    cdef double diff = fabs(b - a)
+    return diff <= fabs(REL_TOL * b) or \
+           diff <= fabs(REL_TOL * a) or \
+           diff <= abs_tol
 
-cdef bint isclose_abs_tol(double a, double b, double abs_tol):
-    return fabs(a - b) < abs_tol
 
 cdef double RAD2DEG = 180.0 / M_PI
 cdef double DEG2RAD = M_PI / 180.0
@@ -184,8 +187,8 @@ cdef class Vec2:
 
     def isclose(self, other: 'VecXY', double abs_tol = ABS_TOL) -> bool:
         cdef Vec2 o = Vec2(other)
-        return isclose_abs_tol(self.x, o.x, abs_tol) and \
-               isclose_abs_tol(self.y, o.y, abs_tol)
+        return isclose(self.x, o.x, abs_tol) and \
+               isclose(self.y, o.y, abs_tol)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Vec2):
@@ -344,8 +347,8 @@ cdef Vec2 v2_project(Vec2 a, Vec2 b):
     return v2_mul(uv, v2_dot(uv, b))
 
 cdef bint v2_isclose(Vec2 a, Vec2 b, double abs_tol):
-    return isclose_abs_tol(a.x, b.x, abs_tol) and \
-           isclose_abs_tol(a.y, b.y, abs_tol)
+    return isclose(a.x, b.x, abs_tol) and \
+           isclose(a.y, b.y, abs_tol)
 
 cdef class Vec3:
     """ Immutable 3D vector.
@@ -779,9 +782,9 @@ cdef Vec3 v3_project(Vec3 a, Vec3 b):
     return v3_mul(uv, v3_dot(uv, b))
 
 cdef bint v3_isclose(Vec3 a, Vec3 b, double abs_tol):
-    return isclose_abs_tol(a.x, b.x, abs_tol) and \
-           isclose_abs_tol(a.y, b.y, abs_tol) and \
-           isclose_abs_tol(a.z, b.z, abs_tol)
+    return isclose(a.x, b.x, abs_tol) and \
+           isclose(a.y, b.y, abs_tol) and \
+           isclose(a.z, b.z, abs_tol)
 
 def distance(p1: 'Vertex', p2: 'Vertex') -> float:
     cdef Vec3 a = Vec3(p1)

@@ -4,17 +4,22 @@
 from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
 from .vector cimport (
-    Vec3, isclose, v3_lerp, v3_dist, v3_from_angle, normalize_rad_angle,
-    normalize_deg_angle
+Vec3, isclose, v3_lerp, v3_dist, v3_from_angle, normalize_rad_angle,
+normalize_deg_angle,
 )
 from .matrix44 cimport Matrix44
 from libc.math cimport ceil, M_PI, tan, fabs
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
+    from ezdxf.math.ellipse import ConstructionEllipse
 
-__all__ = ['Bezier4P']
+__all__ = [
+    'Bezier4P', 'cubic_bezier_arc_parameters',
+    'cubic_bezier_from_arc', 'cubic_bezier_from_ellipse',
+]
 
+DEF ABS_TOL = 1e-12
 cdef double M_TAU = M_PI * 2.0
 cdef double DEG2RAD = M_PI / 180.0
 
@@ -81,7 +86,7 @@ cdef class Bezier4P:
 
         while t0 < 1.0:
             t1 = t0 + dt
-            if isclose(t1, 1.0):
+            if isclose(t1, 1.0, ABS_TOL):
                 end_point = self.p3
                 t1 = 1.0
             else:
@@ -174,7 +179,6 @@ cdef double DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
 cdef double OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
 cdef double TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
 
-
 @cython.cdivision(True)
 def cubic_bezier_arc_parameters(
         double start_angle, double end_angle,
@@ -235,5 +239,43 @@ def cubic_bezier_from_arc(
             cp = <Vec3> control_points[i]
             cp.x = cp.x * radius + cx
             cp.y = cp.y * radius + cy
+            res.append(cp)
+        yield Bezier4P(res)
+
+def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
+                              int segments = 1) -> Iterable[Bezier4P]:
+    cdef start_angle = normalize_rad_angle(ellipse.start_param)
+    cdef end_angle = normalize_rad_angle(ellipse.end_param)
+
+    # normalized angles > 0
+    if end_angle < 1e-12:
+        end_angle = M_TAU
+
+    if start_angle > end_angle:
+        end_angle += M_TAU
+
+    if fabs(end_angle - start_angle) < 1e-12:
+        return
+
+    cdef Vec3 cp = Vec3(ellipse.center)
+    cdef double cx = cp.x, cy = cp.y
+    cp = Vec3(ellipse.major_axis)
+    cdef double ax_x = cp.x, ax_y = cp.y
+    cp = Vec3(ellipse.minor_axis)
+    cdef double ay_x = cp.x, ay_y = cp.y
+    cdef double x, y
+    cdef list res
+    for control_points in cubic_bezier_arc_parameters(
+            start_angle, end_angle, segments):
+        res = list()
+        for i in range(4):
+            cp = <Vec3> control_points[i]
+            x = cp.x
+            y = cp.y
+            cp.x = cx + ax_x * x + ay_x * y
+            cp.y = cy + ax_y * x + ay_y * y
+            # noinspection PyTupleItemAssignment
+            # noinspection PyUnresolvedReferences
+            # Assigning values to tuples is possible in Cython!
             res.append(cp)
         yield Bezier4P(res)

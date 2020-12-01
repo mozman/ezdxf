@@ -3,8 +3,7 @@
 # License: MIT License
 
 # C-support functions:
-cdef bint isclose(double a, double b)
-cdef bint isclose_abs_tol(double a, double b, double tol)
+cdef bint isclose(double a, double b, double tol)
 cdef double normalize_rad_angle(double a)
 cdef double normalize_deg_angle(double a)
 

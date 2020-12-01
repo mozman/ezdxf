@@ -4,9 +4,10 @@ from typing import Union, Sequence
 
 # Import base types as C-extensions if available else as pure Python
 # implementations:
-from ._types import (
+from ._ctypes import (
         Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
-        Matrix44, Bezier4P
+        Matrix44, Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_from_arc,
+        cubic_bezier_from_ellipse,
     )
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d,
@@ -34,8 +35,7 @@ from .bspline import (
 )
 from .bezier import Bezier
 from .bezier4p import (
-    cubic_bezier_from_arc, cubic_bezier_from_ellipse,
-    cubic_bezier_interpolation,
+    cubic_bezier_interpolation, tangents_cubic_bezier_interpolation
 )
 from .surfaces import BezierSurface
 from .eulerspiral import EulerSpiral
