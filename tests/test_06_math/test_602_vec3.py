@@ -174,7 +174,7 @@ def test_bool(vec3):
     v2 = vec3(23.56678, 56678.56778, 2.56677) / 14.5667
     result = v2 - v1
     assert bool(result) is False
-    # actual precision is abs_tol=1e-9
+    # current rel_tol=1e-9
     assert not vec3(1e-8, 0, 0).is_null
 
 

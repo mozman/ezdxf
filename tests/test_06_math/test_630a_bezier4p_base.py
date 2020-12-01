@@ -151,7 +151,7 @@ def test_from_circular_arc(arc):
     assert cpoints[3].isclose((0, 1, 0))
 
 
-def test_rational_spline_from_simple_elliptic_arc(ellipse):
+def test_bezier_curves_from_simple_elliptic_arc(ellipse):
     ellipse_ = ConstructionEllipse(
         center=(1, 1),
         major_axis=(2, 0),
@@ -169,7 +169,7 @@ def test_rational_spline_from_simple_elliptic_arc(ellipse):
     assert p4.isclose((1, 2, 0))
 
 
-def test_rational_spline_from_complex_elliptic_arc(ellipse):
+def test_bezier_curves_from_complex_elliptic_arc(ellipse):
     ellipse_ = ConstructionEllipse(
         center=(49.64089977339618, 36.43095770602131, 0.0),
         major_axis=(16.69099826506408, 6.96203799241026, 0.0),
@@ -181,6 +181,45 @@ def test_rational_spline_from_complex_elliptic_arc(ellipse):
 
     assert curves[0].control_points[0].isclose(ellipse_.start_point)
     assert curves[1].control_points[-1].isclose(ellipse_.end_point)
+
+
+def test_arc_params_issue_708(arc_params):
+    cpts = list(arc_params(-2.498091544796509, -0.6435011087932844))
+    assert cpts[0] == (
+        Vec3(-0.8, -0.6, 0.0),
+        Vec3(-0.6111456180001683, -0.8518058426664423, 0.0),
+        Vec3(-0.3147573033330529, -1.0, 0.0),
+        Vec3(6.123233995736766e-17, -1.0, 0.0)
+    )
+    assert cpts[1] == (
+        Vec3(6.123233995736766e-17, -1.0, 0.0),
+        Vec3(0.314757303333053, -1.0, 0.0),
+        Vec3(0.6111456180001683, -0.8518058426664423, 0.0),
+        Vec3(0.8, -0.5999999999999999, 0.0)
+    )
+
+
+def test_bezier_curves_ellipse_issue_708(ellipse):
+    ellipse_ = ConstructionEllipse(
+        center=(1.5, 0.375, 0.0),
+        major_axis=(0.625, 0.0, 0.0),
+        ratio=1.0,
+        start_param=-2.498091544796509,
+        end_param=-0.6435011087932844,
+    )
+    curves = list(ellipse(ellipse_))
+    assert curves[0].control_points == (
+        Vec3(0.9999999999999999, 1.6653345369377348e-16, 0.0),
+        Vec3(1.1180339887498947, -0.15737865166652631, 0.0),
+        Vec3(1.3032766854168418, -0.2499999999999999, 0.0),
+        Vec3(1.4999999999999998, -0.25, 0.0)
+    )
+    assert curves[1].control_points == (
+        Vec3(1.4999999999999998, -0.25, 0.0),
+        Vec3(1.696723314583158, -0.25, 0.0),
+        Vec3(1.881966011250105, -0.15737865166652654, 0.0),
+        Vec3(2.0, -5.551115123125783e-17, 0.0)
+    )
 
 
 POINTS2D = [

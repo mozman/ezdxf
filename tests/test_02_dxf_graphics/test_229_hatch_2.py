@@ -462,7 +462,6 @@ def test_pattern_scale_x_times(hatch, pattern):
 
 
 def test_pattern_rotation(hatch, pattern):
-    PRECISION = 1e-10  # TODO: reduced precision for for Cython implementation?
     hatch.set_pattern_fill("MOZMAN", definition=pattern)
     assert hatch.dxf.pattern_angle == 0
     hatch.set_pattern_angle(45)
@@ -470,10 +469,10 @@ def test_pattern_rotation(hatch, pattern):
     line1, line2 = hatch.pattern.lines
     assert line1.angle == 90
     assert line1.base_point == (0, 0)
-    assert line1.offset.isclose(Vec3(-0.7071067811865475, 0.7071067811865476), PRECISION)
+    assert line1.offset.isclose(Vec3(-0.7071067811865475, 0.7071067811865476))
     assert line2.angle == 90
-    assert line2.base_point.isclose(Vec3(-0.35355339059327373, 0.3535533905932738), PRECISION)
-    assert line2.offset.isclose(Vec3(-0.7071067811865475, 0.7071067811865476), PRECISION)
+    assert line2.base_point.isclose(Vec3(-0.35355339059327373, 0.3535533905932738))
+    assert line2.offset.isclose(Vec3(-0.7071067811865475, 0.7071067811865476))
 
 
 def test_pattern_rotation_add_angle(hatch, pattern):

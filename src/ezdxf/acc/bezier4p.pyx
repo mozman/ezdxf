@@ -5,10 +5,10 @@ from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
 from .vector cimport (
 Vec3, isclose, v3_lerp, v3_dist, v3_from_angle, normalize_rad_angle,
-normalize_deg_angle,
+normalize_deg_angle, v3_add, v3_mul
 )
 from .matrix44 cimport Matrix44
-from libc.math cimport ceil, M_PI, tan, fabs
+from libc.math cimport ceil, M_PI, tan
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -255,25 +255,23 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
     if isclose(end_angle, start_angle, ABS_TOL):
         return
 
-    cdef Vec3 cp = Vec3(ellipse.center)
-    cdef double cx = cp.x, cy = cp.y
-    cp = Vec3(ellipse.major_axis)
-    cdef double ax_x = cp.x, ax_y = cp.y
-    cp = Vec3(ellipse.minor_axis)
-    cdef double ay_x = cp.x, ay_y = cp.y
-    cdef double x, y
+    cdef Vec3 center = Vec3(ellipse.center)
+    cdef Vec3 x_axis = Vec3(ellipse.major_axis)
+    cdef Vec3 y_axis = Vec3(ellipse.minor_axis)
+    cdef Vec3 cp
     cdef list res
     for control_points in cubic_bezier_arc_parameters(
             start_angle, end_angle, segments):
         res = list()
         for i in range(4):
             cp = <Vec3> control_points[i]
-            x = cp.x
-            y = cp.y
-            cp.x = cx + ax_x * x + ay_x * y
-            cp.y = cy + ax_y * x + ay_y * y
-            # noinspection PyTupleItemAssignment
-            # noinspection PyUnresolvedReferences
-            # Assigning values to tuples is possible in Cython!
-            res.append(cp)
+            # todo: optimize by CORRECT inlining vector math!
+            res.append(
+                v3_add(
+                    center, v3_add(
+                        v3_mul(x_axis, cp.x),
+                        v3_mul(y_axis, cp.y)
+                    )
+                )
+            )
         yield Bezier4P(res)

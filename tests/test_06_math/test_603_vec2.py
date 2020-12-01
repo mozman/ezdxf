@@ -141,7 +141,7 @@ def test_bool(vcls):
     v2 = vcls(23.56678, 56678.56778) / 14.5667
     result = v2 - v1
     assert bool(result) is False
-    # actual precision is abs_tol=1e-9
+    # current rel_tol=1e-9
     assert not vcls(1e-8, 0).is_null
 
 

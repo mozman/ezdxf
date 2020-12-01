@@ -277,8 +277,7 @@ def test_common_WGS84_projection(deg, coords):
     projected = geo.wgs84_4326_to_3395(Vec3(deg))
     assert projected.round(2).isclose(coords)
     # inverse projection
-    # TODO: reduced precision for Cython implementation?
-    assert geo.wgs84_3395_to_4326(projected).isclose(deg, 1e-8)
+    assert geo.wgs84_3395_to_4326(projected).isclose(deg)
 
 
 def validate(p: geo.GeoProxy):
