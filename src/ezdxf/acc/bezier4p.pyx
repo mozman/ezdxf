@@ -10,7 +10,6 @@ normalize_deg_angle, v3_add, v3_mul
 )
 from .matrix44 cimport Matrix44
 from libc.math cimport ceil, M_PI, tan
-from .cvec cimport CppVec3
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -256,12 +255,9 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
     if isclose(end_angle, start_angle, ABS_TOL):
         return
 
-    cdef Vec3 center = Vec3(ellipse.center)
-    cdef CppVec3 c_center = CppVec3(center.x, center.y, center.z)
-    cdef Vec3 x_axis = Vec3(ellipse.major_axis)
-    cdef CppVec3 c_x_axis = CppVec3(x_axis.x, x_axis.y, x_axis.z)
-    cdef Vec3 y_axis = Vec3(ellipse.minor_axis)
-    cdef CppVec3 c_y_axis = CppVec3(y_axis.x, y_axis.y, y_axis.z)
+    cdef CppVec3 center = Vec3(ellipse.center).to_cpp_vec3()
+    cdef CppVec3 x_axis = Vec3(ellipse.major_axis).to_cpp_vec3()
+    cdef CppVec3 y_axis = Vec3(ellipse.minor_axis).to_cpp_vec3()
     cdef Vec3 cp,
     cdef CppVec3 c_res
     cdef list res
@@ -270,7 +266,7 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
         res = list()
         for i in range(4):
             cp = <Vec3> control_points[i]
-            c_res = c_center + c_x_axis * cp.x + c_y_axis * cp.y
+            c_res = center + x_axis * cp.x + y_axis * cp.y
             cp = Vec3()
             cp.x = c_res.x
             cp.y = c_res.y

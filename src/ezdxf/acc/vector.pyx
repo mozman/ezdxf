@@ -286,6 +286,10 @@ cdef class Vec2:
             res.y += tmp.y
         return res
 
+    cdef CppVec3 to_cpp_vec3(self):
+        return CppVec3(self.x, self.y, 0.0)
+
+
 cdef Vec2 v2_add(Vec2 a, Vec2 b):
     res = Vec2()
     res.x = a.x + b.x
@@ -681,6 +685,10 @@ cdef class Vec3:
 
     def rotate_deg(self, double angle) -> 'Vec3':
         return self.rotate(angle * DEG2RAD)
+
+    cdef CppVec3 to_cpp_vec3(self):
+        return CppVec3(self.x, self.y, self.z)
+
 
 X_AXIS = Vec3(1, 0, 0)
 Y_AXIS = Vec3(0, 1, 0)

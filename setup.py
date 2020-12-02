@@ -14,10 +14,11 @@ try:
     ext_modules = [
         Extension("ezdxf.acc.vector", [
             "src/ezdxf/acc/vector.pyx",
-        ], optional=True),
+            "src/ezdxf/acc/cvec.cpp",
+        ], optional=True, language='c++'),
         Extension("ezdxf.acc.matrix44", [
             "src/ezdxf/acc/matrix44.pyx",
-        ], optional=True),
+        ], optional=True, language='c++'),
         Extension("ezdxf.acc.bezier4p", [
             "src/ezdxf/acc/bezier4p.pyx",
             "src/ezdxf/acc/cvec.cpp",

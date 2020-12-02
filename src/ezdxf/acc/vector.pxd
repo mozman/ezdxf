@@ -1,14 +1,23 @@
 # cython: language_level=3
+# distutils: language = c++
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 
 # C-support functions:
+
 cdef bint isclose(double a, double b, double tol)
 cdef double normalize_rad_angle(double a)
 cdef double normalize_deg_angle(double a)
 
+cdef extern from "cvec.hpp":
+    cdef cppclass CppVec3:
+        CppVec3()
+        CppVec3(double, double, double)
+
+
 cdef class Vec2:
     cdef readonly double x, y
+    cdef CppVec3 to_cpp_vec3(self)
     # All methods of Vec2 are pure Python methods and should not be used from
     # Cython code.
 
@@ -31,6 +40,7 @@ cdef bint v2_isclose(Vec2 a, Vec2 b, double tol)
 
 cdef class Vec3:
     cdef readonly double x, y, z
+    cdef CppVec3 to_cpp_vec3(self)
     # All methods of Vec3 are pure Python methods and should not be used from
     # Cython code.
 
