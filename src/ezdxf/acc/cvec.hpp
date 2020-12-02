@@ -26,14 +26,13 @@ class CppVec3 {
             return CppVec3(x * f, y * f, z * f);
         };
         double magnitude() {
-            return sqrt(x * x + y * y + z* z);
+            return sqrt(x * x + y * y + z * z);
         };
 
         CppVec3 normalize(double length) {
             double mag = magnitude();
             if (mag == 0.0) return *this;
-            double f = length / mag;
-            return (*this) * f;
+            return (*this) * (length / mag);
         };
 };
 #endif
