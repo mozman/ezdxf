@@ -1,4 +1,5 @@
 # cython: language_level=3
+# distutils: language = c++
 # Copyright (c) 2020 Manfred Moitzi
 # License: MIT License
 from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
@@ -9,6 +10,7 @@ normalize_deg_angle, v3_add, v3_mul
 )
 from .matrix44 cimport Matrix44
 from libc.math cimport ceil, M_PI, tan
+from .cvec cimport CVec3
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -255,21 +257,23 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
         return
 
     cdef Vec3 center = Vec3(ellipse.center)
+    cdef CVec3 c_center = CVec3(center.x, center.y, center.z)
     cdef Vec3 x_axis = Vec3(ellipse.major_axis)
+    cdef CVec3 c_x_axis = CVec3(x_axis.x, x_axis.y, x_axis.z)
     cdef Vec3 y_axis = Vec3(ellipse.minor_axis)
-    cdef Vec3 cp
+    cdef CVec3 c_y_axis = CVec3(y_axis.x, y_axis.y, y_axis.z)
+    cdef Vec3 cp,
+    cdef CVec3 c_res
     cdef list res
     for control_points in cubic_bezier_arc_parameters(
             start_angle, end_angle, segments):
         res = list()
         for i in range(4):
             cp = <Vec3> control_points[i]
-            res.append(
-                v3_add(
-                    center, v3_add(
-                        v3_mul(x_axis, cp.x),
-                        v3_mul(y_axis, cp.y)
-                    )
-                )
-            )
+            c_res = c_center + c_x_axis * cp.x + c_y_axis * cp.y
+            cp = Vec3()
+            cp.x = c_res.x
+            cp.y = c_res.y
+            cp.z = c_res.z
+            res.append(cp)
         yield Bezier4P(res)
