@@ -363,6 +363,13 @@ cdef bint v2_isclose(Vec2 a, Vec2 b, double abs_tol):
     return isclose(a.x, b.x, abs_tol) and \
            isclose(a.y, b.y, abs_tol)
 
+
+cdef Vec2 v2_from_cpp_vec3(CppVec3 c):
+    cdef Vec2 v = Vec2()
+    v.x = c.x
+    v.y = c.y
+    return v
+
 cdef class Vec3:
     """ Immutable 3D vector.
 
@@ -802,6 +809,13 @@ cdef bint v3_isclose(Vec3 a, Vec3 b, double abs_tol):
     return isclose(a.x, b.x, abs_tol) and \
            isclose(a.y, b.y, abs_tol) and \
            isclose(a.z, b.z, abs_tol)
+
+cdef Vec3 v3_from_cpp_vec3(CppVec3 c):
+    cdef Vec3 v = Vec3()
+    v.x = c.x
+    v.y = c.y
+    v.z = c.z
+    return v
 
 def distance(p1: 'Vertex', p2: 'Vertex') -> float:
     cdef Vec3 a = Vec3(p1)

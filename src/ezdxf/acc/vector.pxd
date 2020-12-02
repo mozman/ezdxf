@@ -11,6 +11,7 @@ cdef double normalize_deg_angle(double a)
 
 cdef extern from "cvec.hpp":
     cdef cppclass CppVec3:
+        double x, y, z
         CppVec3()
         CppVec3(double, double, double)
 
@@ -18,8 +19,6 @@ cdef extern from "cvec.hpp":
 cdef class Vec2:
     cdef readonly double x, y
     cdef CppVec3 to_cpp_vec3(self)
-    # All methods of Vec2 are pure Python methods and should not be used from
-    # Cython code.
 
 # Vec2 C-functions:
 cdef Vec2 v2_add(Vec2 a, Vec2 b)
@@ -35,15 +34,13 @@ cdef Vec2 v2_lerp(Vec2 a, Vec2 b, double factor)
 cdef Vec2 v2_ortho(Vec2 a, bint ccw)
 cdef Vec2 v2_project(Vec2 a, Vec2 b)
 cdef bint v2_isclose(Vec2 a, Vec2 b, double tol)
+cdef Vec2 v2_from_cpp_vec3(CppVec3)
 # magnitude = hypot(vec2.x, vec2.y)
 # angle = atan2(vec2.y, vec2.x)
 
 cdef class Vec3:
     cdef readonly double x, y, z
     cdef CppVec3 to_cpp_vec3(self)
-    # All methods of Vec3 are pure Python methods and should not be used from
-    # Cython code.
-
 
 # Vec3 C-functions:
 cdef Vec3 v3_add(Vec3 a, Vec3 b)
@@ -63,3 +60,4 @@ cdef Vec3 v3_lerp(Vec3 a, Vec3 b, double factor)
 cdef Vec3 v3_ortho(Vec3 a, bint ccw)
 cdef Vec3 v3_project(Vec3 a, Vec3 b)
 cdef bint v3_isclose(Vec3 a, Vec3 b, double tol)
+cdef Vec3 v3_from_cpp_vec3(CppVec3)
