@@ -10,7 +10,7 @@ normalize_deg_angle, v3_add, v3_mul
 )
 from .matrix44 cimport Matrix44
 from libc.math cimport ceil, M_PI, tan
-from .cvec cimport CVec3
+from .cvec cimport CppVec3
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -257,13 +257,13 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
         return
 
     cdef Vec3 center = Vec3(ellipse.center)
-    cdef CVec3 c_center = CVec3(center.x, center.y, center.z)
+    cdef CppVec3 c_center = CppVec3(center.x, center.y, center.z)
     cdef Vec3 x_axis = Vec3(ellipse.major_axis)
-    cdef CVec3 c_x_axis = CVec3(x_axis.x, x_axis.y, x_axis.z)
+    cdef CppVec3 c_x_axis = CppVec3(x_axis.x, x_axis.y, x_axis.z)
     cdef Vec3 y_axis = Vec3(ellipse.minor_axis)
-    cdef CVec3 c_y_axis = CVec3(y_axis.x, y_axis.y, y_axis.z)
+    cdef CppVec3 c_y_axis = CppVec3(y_axis.x, y_axis.y, y_axis.z)
     cdef Vec3 cp,
-    cdef CVec3 c_res
+    cdef CppVec3 c_res
     cdef list res
     for control_points in cubic_bezier_arc_parameters(
             start_angle, end_angle, segments):

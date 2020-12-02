@@ -8,12 +8,12 @@ cdef extern from "cvec.cpp":
     pass
 
 cdef extern from "cvec.hpp":
-    cdef cppclass CVec3:
-        CVec3()
-        CVec3(double, double, double)
+    cdef cppclass CppVec3:
+        CppVec3()
+        CppVec3(double, double, double)
         double x, y, z
-        CVec3 operator+(CVec3&)
-        CVec3 operator-(CVec3&)
-        CVec3 operator*(double)
+        CppVec3 operator+(CppVec3&)
+        CppVec3 operator-(CppVec3&)
+        CppVec3 operator*(double)
         double magnitude()
-        CVec3 normalize(double)
+        CppVec3 normalize(double)
