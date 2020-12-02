@@ -65,9 +65,7 @@ def test_transform(curve):
 
 
 @pytest.mark.parametrize('s, e', [
-    (0, math.pi),
-    (math.pi, math.tau),
-    (0, math.tau),
+    (0, math.pi), (math.pi, math.tau), (0, math.tau),
 ])
 def test_correctness_arc_parameters(s, e):
     expected = list(cubic_bezier_arc_parameters(s, e))
@@ -76,9 +74,7 @@ def test_correctness_arc_parameters(s, e):
 
 
 @pytest.mark.parametrize('s, e', [
-    (0, math.pi),
-    (math.pi, math.tau),
-    (0, math.tau),
+    (0, 180), (180, 360), (0, 360),
 ])
 def test_correctness_bezier_from_arc(s, e):
     expected = list(cubic_bezier_from_arc(
@@ -92,9 +88,7 @@ def test_correctness_bezier_from_arc(s, e):
 
 
 @pytest.mark.parametrize('s, e', [
-    (0, math.pi),
-    (math.pi, math.tau),
-    (0, math.tau),
+    (0, math.pi), (math.pi, math.tau), (0, math.tau),
 ])
 def test_correctness_bezier_from_ellipse(s, e):
     ellipse = ConstructionEllipse(

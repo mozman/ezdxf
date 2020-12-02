@@ -215,9 +215,7 @@ def cubic_bezier_arc_parameters(
 def cubic_bezier_from_arc(
         center = (0, 0), double radius = 1.0, double start_angle = 0.0,
         double end_angle = 360.0, int segments = 1) -> Iterable[Bezier4P]:
-    cdef double cx = center[0]
-    cdef double cy = center[1]
-    cdef Vec3 cp
+    cdef Vec3 center_ = Vec3(center)
     cdef list res
     cdef int i
 
@@ -235,10 +233,11 @@ def cubic_bezier_from_arc(
             start_angle, end_angle, segments):
         res = list()
         for i in range(4):
-            cp = <Vec3> control_points[i]
-            cp.x = cp.x * radius + cx
-            cp.y = cp.y * radius + cy
-            res.append(cp)
+            res.append(v3_add(
+                center_, v3_mul(
+                    <Vec3> control_points[i], radius
+                )
+            ))
         yield Bezier4P(res)
 
 def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
@@ -265,7 +264,6 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
         res = list()
         for i in range(4):
             cp = <Vec3> control_points[i]
-            # todo: optimize by CORRECT inlining vector math!
             res.append(
                 v3_add(
                     center, v3_add(

@@ -2,6 +2,7 @@
 # License: MIT License
 import sys
 import time
+import math
 from datetime import datetime
 from pathlib import Path
 from ezdxf.acc import USE_C_EXT
@@ -10,8 +11,20 @@ if USE_C_EXT is False:
     print('C-extension disabled or not available.')
     sys.exit(1)
 
-from ezdxf.math._bezier4p import Bezier4P  # Python implementation
-from ezdxf.acc.bezier4p import Bezier4P as CBezier4P  # Cython implementation
+# Python implementations:
+from ezdxf.math._bezier4p import (
+    Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_from_arc,
+    cubic_bezier_from_ellipse
+)
+
+# Cython implementations:
+from ezdxf.acc.bezier4p import (
+    Bezier4P as CBezier4P,
+    cubic_bezier_arc_parameters as cython_arc_parameters,
+    cubic_bezier_from_arc as cython_bezier_from_arc,
+    cubic_bezier_from_ellipse as cython_bezier_from_ellipse,
+)
+from ezdxf.math import ConstructionEllipse
 from ezdxf.version import __version__
 
 POINTS = [(0, 0), (1, 0), (1, 1), (0, 1)]
@@ -55,6 +68,25 @@ def bezier4p_flattening(Curve, count):
         list(c.flattening(0.01))
 
 
+def bezier4p_arc_parameters(func, count):
+    for _ in range(count):
+        list(func(0, math.tau))
+
+
+def bezier4p_from_arc(func, count):
+    for _ in range(count):
+        list(func(center=(1, 2), radius=1.0, start_angle=0, end_angle=360))
+
+
+def bezier4p_from_ellipse(func, count):
+    ellipse = ConstructionEllipse(
+        center=(1, 2), major_axis=(2, 0), ratio=0.5,
+        start_param=0, end_param=math.tau,
+    )
+    for _ in range(count):
+        list(func(ellipse))
+
+
 def profile1(func, *args) -> float:
     t0 = time.perf_counter()
     func(*args)
@@ -72,9 +104,34 @@ def profile(text, func, pytype, cytype, *args):
     log(func.__name__, pytime, cytime)
 
 
-RUNS = 1_000_000
-
 print(f'Profiling Bezier4P Python and Cython implementation:')
-profile(f'calc {RUNS} points of Bezier4P: ', bezier4p_points, Bezier4P, CBezier4P, RUNS)
-profile(f'100.000x approximate 32 points of Bezier4P: ', bezier4p_approximate, Bezier4P, CBezier4P, 100_000)
-profile(f'100.000x flattening (0.01) of Bezier4P: ', bezier4p_flattening, Bezier4P, CBezier4P, 100_000)
+profile(f'calc 300.000x points of Bezier4P: ',
+        bezier4p_points,
+        Bezier4P,
+        CBezier4P,
+        300_000)
+profile(f'10.000x approximate 32 points of Bezier4P: ',
+        bezier4p_approximate,
+        Bezier4P,
+        CBezier4P,
+        10_000)
+profile(f'10.000x flattening (0.01) of Bezier4P: ',
+        bezier4p_flattening,
+        Bezier4P,
+        CBezier4P,
+        10_000)
+profile(f'100.000x calc bezier arc parameters: ',
+        bezier4p_arc_parameters,
+        cubic_bezier_arc_parameters,
+        cython_arc_parameters,
+        100_000)
+profile(f'20.000x calc bezier curve from arc: ',
+        bezier4p_from_arc,
+        cubic_bezier_from_arc,
+        cython_bezier_from_arc,
+        20_000)
+profile(f'20.000x calc bezier curve from ellipse: ',
+        bezier4p_from_ellipse,
+        cubic_bezier_from_ellipse,
+        cython_bezier_from_ellipse,
+        20_000)
