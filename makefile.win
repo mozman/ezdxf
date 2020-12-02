@@ -1,6 +1,8 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-# Copy this template to "makefile"
+# Requires the installation of MSYS or MinGW and "/bin" folders added to PATH.
+# Copy this template to "makefile" and modify it to your needs.
+# The generic "makefile" is not tracked by git.
 
 BUILD_OPTIONS = setup.py build_ext -i
 ACC = src/ezdxf/acc
