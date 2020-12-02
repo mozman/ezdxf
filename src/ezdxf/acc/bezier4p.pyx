@@ -6,7 +6,7 @@ from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
 from .vector cimport (
 Vec3, isclose, v3_lerp, v3_dist, v3_from_angle, normalize_rad_angle,
-normalize_deg_angle, v3_add, v3_mul, v3_from_cpp_vec3,
+normalize_deg_angle, v3_from_cpp_vec3,
 )
 from .matrix44 cimport Matrix44
 from libc.math cimport ceil, M_PI, tan
@@ -216,7 +216,8 @@ def cubic_bezier_arc_parameters(
 def cubic_bezier_from_arc(
         center = (0, 0), double radius = 1.0, double start_angle = 0.0,
         double end_angle = 360.0, int segments = 1) -> Iterable[Bezier4P]:
-    cdef Vec3 center_ = Vec3(center)
+    cdef CppVec3 center_ = Vec3(center).to_cpp_vec3()
+    cdef CppVec3 tmp
     cdef list res
     cdef int i
 
@@ -234,11 +235,8 @@ def cubic_bezier_from_arc(
             start_angle, end_angle, segments):
         res = list()
         for i in range(4):
-            res.append(v3_add(
-                center_, v3_mul(
-                    <Vec3> control_points[i], radius
-                )
-            ))
+            tmp = (<Vec3> control_points[i]).to_cpp_vec3()
+            res.append(v3_from_cpp_vec3(center_ + tmp * radius))
         yield Bezier4P(res)
 
 def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
