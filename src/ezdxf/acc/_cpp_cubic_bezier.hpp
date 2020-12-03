@@ -10,6 +10,7 @@ class CppCubicBezier {
         CppVec3 p0, p1, p2, p3;
         CppCubicBezier();
         CppCubicBezier(CppVec3, CppVec3, CppVec3, CppVec3);
+        ~CppCubicBezier() = default;
         CppVec3 point(double);
         CppVec3 tangent(double);
 

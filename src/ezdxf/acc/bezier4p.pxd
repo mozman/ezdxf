@@ -8,7 +8,7 @@ cdef extern from "_cpp_vec3.hpp":
         double x, y, z
         CppVec3()
         CppVec3(double, double, double)
-        CppVec3 operator+(CppVec3&)
+        CppVec3 operator+(const CppVec3&)
         CppVec3 operator*(double)
 
 

@@ -12,23 +12,15 @@ class CppVec3 {
         double y;
         double z;
 
-        CppVec3() {};
+        CppVec3() = default;
         CppVec3(double x, double y, double z): x(x), y(y), z(z) {};
-        ~CppVec3() {};
+        ~CppVec3() = default;
 
-        CppVec3 operator+(CppVec3& v) {
+        CppVec3 operator+(const CppVec3& v) {
             return CppVec3(x + v.x, y + v.y, z + v.z);
         };
 
-        CppVec3 operator+(CppVec3&& v) {
-            return CppVec3(x + v.x, y + v.y, z + v.z);
-        };
-
-        CppVec3 operator-(CppVec3& v) {
-            return CppVec3(x - v.x, y - v.y, z - v.z);
-        };
-
-        CppVec3 operator-(CppVec3&& v) {
+        CppVec3 operator-(const CppVec3& v) {
             return CppVec3(x - v.x, y - v.y, z - v.z);
         };
 
