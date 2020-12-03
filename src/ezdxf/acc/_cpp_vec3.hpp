@@ -1,8 +1,8 @@
 // Copyright (c) 2020 Manfred Moitzi
 // License: MIT License
 // Fast vector library for usage in C only code.
-#ifndef __EZDXF_CVEC__
-#define __EZDXF_CVEC__
+#ifndef __EZDXF_CPP_VEC3_HPP__
+#define __EZDXF_CPP_VEC3_HPP__
 
 #include <math.h>
 
@@ -14,13 +14,21 @@ class CppVec3 {
 
         CppVec3() {};
         CppVec3(double x, double y, double z): x(x), y(y), z(z) {};
-        ~CppVec3() {}
+        ~CppVec3() {};
 
         CppVec3 operator+(CppVec3& v) {
             return CppVec3(x + v.x, y + v.y, z + v.z);
         };
 
+        CppVec3 operator+(CppVec3&& v) {
+            return CppVec3(x + v.x, y + v.y, z + v.z);
+        };
+
         CppVec3 operator-(CppVec3& v) {
+            return CppVec3(x - v.x, y - v.y, z - v.z);
+        };
+
+        CppVec3 operator-(CppVec3&& v) {
             return CppVec3(x - v.x, y - v.y, z - v.z);
         };
 
