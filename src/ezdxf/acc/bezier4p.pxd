@@ -3,7 +3,7 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 
-cdef extern from "cvec.hpp":
+cdef extern from "_cpp_vec3.hpp":
     cdef cppclass CppVec3:
         double x, y, z
         CppVec3()

@@ -1,3 +1,5 @@
+// Copyright (c) 2020 Manfred Moitzi
+// License: MIT License
 // Fast vector library for usage in C only code.
 #ifndef __EZDXF_CVEC__
 #define __EZDXF_CVEC__
