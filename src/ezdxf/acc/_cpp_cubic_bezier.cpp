@@ -42,8 +42,7 @@ CppVec3 CppCubicBezier::point(double t) {
     // 0 <= t <= 1
     double weights[4];
     bernstein_poly_d0(t, weights);
-    CppVec3 res = p0 * weights[0] + p1 * weights[1] + p2 * weights[2] + p3 * weights[3];
-    return res;
+    return p0 * weights[0] + p1 * weights[1] + p2 * weights[2] + p3 * weights[3];
 }
 
 CppVec3 CppCubicBezier::tangent(double t) {
@@ -51,6 +50,5 @@ CppVec3 CppCubicBezier::tangent(double t) {
     // 0 <= t <= 1
     double weights[4];
     bernstein_poly_d1(t, weights);
-    CppVec3 res = p0 * weights[0] + p1 * weights[1] + p2 * weights[2] + p3 * weights[3];
-    return res;
+    return p0 * weights[0] + p1 * weights[1] + p2 * weights[2] + p3 * weights[3];
 }
