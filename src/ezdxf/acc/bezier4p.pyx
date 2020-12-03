@@ -5,11 +5,11 @@
 from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
 from .vector cimport (
-Vec3, isclose, v3_lerp, v3_dist, v3_from_angle, normalize_rad_angle,
-normalize_deg_angle, v3_from_cpp_vec3,
+    Vec3, isclose, v3_dist, v3_from_angle, normalize_rad_angle,
+    normalize_deg_angle, v3_from_cpp_vec3,
 )
 from .matrix44 cimport Matrix44
-from libc.math cimport ceil, M_PI, tan
+from libc.math cimport ceil, tan
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -21,50 +21,57 @@ __all__ = [
 ]
 
 DEF ABS_TOL = 1e-12
-cdef double M_TAU = M_PI * 2.0
-cdef double DEG2RAD = M_PI / 180.0
+DEF M_PI = 3.141592653589793
+DEF M_TAU = M_PI * 2.0
+DEF DEG2RAD = M_PI / 180.0
 
 # noinspection PyUnresolvedReferences
 cdef class Bezier4P:
-    cdef Vec3 p0
-    cdef Vec3 p1
-    cdef Vec3 p2
-    cdef Vec3 p3
+    cdef CppCubicBezier curve
 
     def __cinit__(self, defpoints: Sequence['Vertex']):
         if len(defpoints) == 4:
-            self.p0 = Vec3(defpoints[0])
-            self.p1 = Vec3(defpoints[1])
-            self.p2 = Vec3(defpoints[2])
-            self.p3 = Vec3(defpoints[3])
+            self.curve = CppCubicBezier(
+            Vec3(defpoints[0]).to_cpp_vec3(),
+            Vec3(defpoints[1]).to_cpp_vec3(),
+            Vec3(defpoints[2]).to_cpp_vec3(),
+            Vec3(defpoints[3]).to_cpp_vec3(),
+            )
         else:
             raise ValueError("Four control points required.")
 
     @property
     def control_points(self) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
-        return self.p0, self.p1, self.p2, self.p3
+        return v3_from_cpp_vec3(self.curve.p0), \
+               v3_from_cpp_vec3(self.curve.p1), \
+               v3_from_cpp_vec3(self.curve.p2), \
+               v3_from_cpp_vec3(self.curve.p3)
+
+    @property
+    def start_point(self) -> Vec3:
+        return v3_from_cpp_vec3(self.curve.p0)
+
+    @property
+    def end_point(self) -> Vec3:
+        return v3_from_cpp_vec3(self.curve.p3)
+
 
     def point(self, double t) -> Vec3:
-        cdef double weights[4]
         if 0.0 <= t <= 1.0:
-            bernstein3(t, weights)
-            return bezier_point(self, weights)
+            return v3_from_cpp_vec3(self.curve.point(t))
         else:
             raise ValueError("t not in range [0 to 1]")
 
     def tangent(self, double t) -> Vec3:
-        cdef double weights[4]
         if 0.0 <= t <= 1.0:
-            bernstein3_d1(t, weights)
-            return bezier_point(self, weights)
+            return v3_from_cpp_vec3(self.curve.tangent(t))
         else:
             raise ValueError("t not in range [0 to 1]")
 
     def approximate(self, int segments) -> List[Vec3]:
-        cdef double weights[4]
         cdef double delta_t, t
         cdef int segment
-        cdef list points = [self.p0]
+        cdef list points = [self.start_point]
 
         if segments < 1:
             raise ValueError(segments)
@@ -72,27 +79,24 @@ cdef class Bezier4P:
 
         for segment in range(1, segments):
             t = delta_t * segment
-            bernstein3(t, weights)
-            points.append(bezier_point(self, weights))
-        points.append(self.p3)
+            points.append(v3_from_cpp_vec3(self.curve.point(t)))
+        points.append(self.end_point)
         return points
 
     def flattening(self, double distance, int segments = 4) -> List[Vec3]:
-        cdef double weights[4]
         cdef double dt = 1.0 / segments
         cdef double t0 = 0.0, t1
-        cdef Vec3 start_point = self.p0
+        cdef Vec3 start_point = <Vec3> self.start_point
         cdef Vec3 end_point
         cdef SubDiv s = SubDiv(self, distance, start_point)
 
         while t0 < 1.0:
             t1 = t0 + dt
             if isclose(t1, 1.0, ABS_TOL):
-                end_point = self.p3
+                end_point = <Vec3> self.end_point
                 t1 = 1.0
             else:
-                bernstein3(t1, weights)
-                end_point = bezier_point(self, weights)
+                end_point = v3_from_cpp_vec3(self.curve.point(t1))
             s.subdiv(start_point, end_point, t0, t1)
             t0 = t1
             start_point = end_point
@@ -112,73 +116,51 @@ cdef class Bezier4P:
         return length
 
     def reverse(self) -> 'Bezier4P':
-        return Bezier4P((self.p3, self.p2, self.p1, self.p0))
+        p0, p1, p2, p3 = self.control_points
+        return Bezier4P((p3, p2, p1, p0))
 
     def transform(self, Matrix44 m) -> 'Bezier4P':
+        p0, p1, p2, p3 = self.control_points
         transform = m.transform
         return Bezier4P((
-            transform(self.p0),
-            transform(self.p1),
-            transform(self.p2),
-            transform(self.p3),
+            transform(<Vec3> p0),
+            transform(<Vec3> p1),
+            transform(<Vec3> p2),
+            transform(<Vec3> p3),
         ))
 
-cdef void bernstein3(double t, double *weights):
-    cdef double t2 = t * t
-    cdef double _1_minus_t = 1.0 - t
-    cdef double _1_minus_t_square = _1_minus_t * _1_minus_t
-    weights[0] = _1_minus_t_square * _1_minus_t
-    weights[1] = 3.0 * _1_minus_t_square * t
-    weights[2] = 3.0 * _1_minus_t * t2
-    weights[3] = t2 * t
-
-cdef void bernstein3_d1(double t, double *weights):
-    cdef double t2 = t * t
-    weights[0] = -3.0 * (1.0 - t) * (1.0 - t)
-    weights[1] = 3.0 * (1.0 - 4.0 * t + 3.0 * t2)
-    weights[2] = 3.0 * t * (2.0 - 3.0 * t)
-    weights[3] = 3.0 * t2
-
-cdef Vec3 bezier_point(Bezier4P curve, double *weights):
-    cdef Vec3 p0 = curve.p0
-    cdef Vec3 p1 = curve.p1
-    cdef Vec3 p2 = curve.p2
-    cdef Vec3 p3 = curve.p3
-    cdef Vec3 res = Vec3()
-    cdef double a = weights[0], b = weights[1], c = weights[2], d = weights[3]
-    res.x = p0.x * a + p1.x * b + p2.x * c + p3.x * d
-    res.y = p0.y * a + p1.y * b + p2.y * c + p3.y * d
-    res.z = p0.z * a + p1.z * b + p2.z * c + p3.z * d
-    return res
-
 cdef class SubDiv:
-    cdef Bezier4P curve
+    cdef CppCubicBezier curve
     cdef double distance
     cdef list points
 
     def __cinit__(self, Bezier4P curve, double distance, Vec3 point):
-        self.curve = curve
+        self.curve = curve.curve
         self.distance = distance
         self.points = [point]
 
-    cdef subdiv(self, Vec3 start_point, Vec3 end_point, double start_t,
+    cdef subdiv(self, Vec3 start_point, Vec3 end_point,
+                double start_t,
                 double end_t):
-        cdef double weights[4]
+        cdef CppVec3 start = start_point.to_cpp_vec3()
+        cdef CppVec3 end = end_point.to_cpp_vec3()
+        self._subdiv(start, end, start_t, end_t)
+
+    cdef _subdiv(self, CppVec3 start_point, CppVec3 end_point,
+                double start_t,
+                double end_t):
         cdef double mid_t = (start_t + end_t) * 0.5
-
-        bernstein3(mid_t, weights)
-        cdef Vec3 mid_point = bezier_point(self.curve, weights)
-        cdef double d = v3_dist(
-            v3_lerp(start_point, end_point, 0.5), mid_point)
+        cdef CppVec3 mid_point = self.curve.point(mid_t)
+        cdef double d = mid_point.distance(start_point.lerp(end_point, 0.5))
         if d < self.distance:
-            self.points.append(end_point)
+            self.points.append(v3_from_cpp_vec3(end_point))
         else:
-            self.subdiv(start_point, mid_point, start_t, mid_t)
-            self.subdiv(mid_point, end_point, mid_t, end_t)
+            self._subdiv(start_point, mid_point, start_t, mid_t)
+            self._subdiv(mid_point, end_point, mid_t, end_t)
 
-cdef double DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
-cdef double OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
-cdef double TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
+DEF DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
+DEF OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
+DEF TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
 
 @cython.cdivision(True)
 def cubic_bezier_arc_parameters(

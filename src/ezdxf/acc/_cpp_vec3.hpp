@@ -36,5 +36,19 @@ class CppVec3 {
             if (mag == 0.0) return *this;
             return (*this) * (length / mag);
         };
+
+        double distance(const CppVec3 v) {
+            double dx = x - v.x;
+            double dy = y - v.y;
+            double dz = z - v.z;
+            return sqrt(dx * dx + dy * dy + dz * dz);
+        };
+
+        CppVec3 lerp(const CppVec3 v, double factor) {
+            const double rx = this->x + (v.x - this->x) * factor;
+            const double ry = this->y + (v.y - this->y) * factor;
+            const double rz = this->z + (v.z - this->z) * factor;
+            return CppVec3(rx, ry, rz);
+        };
 };
 #endif
