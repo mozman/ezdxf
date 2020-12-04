@@ -74,8 +74,10 @@ def ascii_tags_loader(stream: TextIO,
 
     """
     line = 1
-    readline = stream.readline
     yield_comments = not skip_comments
+    # localize attributes
+    readline = stream.readline
+    _DXFTag = DXFTag
     while True:
         try:
             code = readline()
@@ -92,7 +94,7 @@ def ascii_tags_loader(stream: TextIO,
                     f'Invalid group code "{code}" at line {line}.')
             else:
                 if code != 999 or yield_comments:
-                    yield DXFTag(code, value.rstrip('\n'))
+                    yield _DXFTag(code, value.rstrip('\n'))
                 line += 2
         else:
             return

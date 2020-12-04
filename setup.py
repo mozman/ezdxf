@@ -22,6 +22,9 @@ try:
             "src/ezdxf/acc/bezier4p.pyx",
             "src/ezdxf/acc/_cpp_cubic_bezier.cpp",
         ], optional=True, language='c++'),
+        Extension("ezdxf.acc.tagger", [
+            "src/ezdxf/acc/tagger.pyx",
+        ], optional=True, language='c++'),
     ]
     commands = {'build_ext': build_ext}
 except ImportError:
