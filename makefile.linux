@@ -1,6 +1,7 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-# Copy this template to "makefile" and modify it to your needs.
+# Copy this template to "makefile" and modify it to your needs,
+# or use "make -f makefile.linux <target>"
 # The generic "makefile" is not tracked by git.
 
 BUILD_OPTIONS = setup.py build_ext -i
