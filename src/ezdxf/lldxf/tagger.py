@@ -74,12 +74,14 @@ def ascii_tags_loader(stream: TextIO,
 
     """
     line = 1
+    readline = stream.readline
+    yield_comments = not skip_comments
     while True:
         try:
-            code = stream.readline()
+            code = readline()
             # if throws EOFError -> DXFStructureError, but should be handled in
             # higher layers
-            value = stream.readline()
+            value = readline()
         except EOFError:
             return
         if code and value:  # StringIO(): empty strings indicates EOF
@@ -89,7 +91,7 @@ def ascii_tags_loader(stream: TextIO,
                 raise DXFStructureError(
                     f'Invalid group code "{code}" at line {line}.')
             else:
-                if code != 999 or skip_comments is False:
+                if code != 999 or yield_comments:
                     yield DXFTag(code, value.rstrip('\n'))
                 line += 2
         else:
