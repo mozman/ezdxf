@@ -1,6 +1,6 @@
 include NEWS.md README.md LICENSE
 include requirements.txt
-recursive-include src/ezdxf/acc *.hpp *.cpp
+recursive-include src/ezdxf/acc *.hpp *.cpp *.h *.c *.pxd *.pyx
 recursive-include tests *.py
 recursive-include tests/data *
 recursive-include integration_tests *.py
