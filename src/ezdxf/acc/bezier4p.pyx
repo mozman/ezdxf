@@ -5,8 +5,8 @@
 from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
 from .vector cimport (
-    Vec3, isclose, v3_dist, v3_from_angle, normalize_rad_angle,
-    normalize_deg_angle, v3_from_cpp_vec3,
+Vec3, isclose, v3_dist, v3_from_angle, normalize_rad_angle,
+normalize_deg_angle, v3_from_cpp_vec3,
 )
 from .matrix44 cimport Matrix44
 from libc.math cimport ceil, tan
@@ -34,10 +34,10 @@ cdef class Bezier4P:
     def __cinit__(self, defpoints: Sequence['Vertex']):
         if len(defpoints) == 4:
             self.curve = CppCubicBezier(
-            Vec3(defpoints[0]).to_cpp_vec3(),
-            Vec3(defpoints[1]).to_cpp_vec3(),
-            Vec3(defpoints[2]).to_cpp_vec3(),
-            Vec3(defpoints[3]).to_cpp_vec3(),
+                Vec3(defpoints[0]).to_cpp_vec3(),
+                Vec3(defpoints[1]).to_cpp_vec3(),
+                Vec3(defpoints[2]).to_cpp_vec3(),
+                Vec3(defpoints[3]).to_cpp_vec3(),
             )
         else:
             raise ValueError("Four control points required.")
@@ -57,7 +57,6 @@ cdef class Bezier4P:
     def end_point(self) -> Vec3:
         return v3_from_cpp_vec3(self.curve.p3)
 
-
     def point(self, double t) -> Vec3:
         if 0.0 <= t <= 1.0:
             return v3_from_cpp_vec3(self.curve.point(t))
@@ -71,35 +70,38 @@ cdef class Bezier4P:
             raise ValueError("t not in range [0 to 1]")
 
     def approximate(self, int segments) -> List[Vec3]:
-        cdef double delta_t, t
+        # A C++ implementation using std::vector<CppVec3> as return type
+        # was significant slower than the current implementation.
+        cdef double delta_t
         cdef int segment
         cdef list points = [self.start_point]
 
         if segments < 1:
             raise ValueError(segments)
         delta_t = 1.0 / segments
-
         for segment in range(1, segments):
-            t = delta_t * segment
-            points.append(v3_from_cpp_vec3(self.curve.point(t)))
+            points.append(v3_from_cpp_vec3(
+                self.curve.point(delta_t * segment)
+            ))
         points.append(self.end_point)
         return points
 
     def flattening(self, double distance, int segments = 4) -> List[Vec3]:
         cdef double dt = 1.0 / segments
         cdef double t0 = 0.0, t1
-        cdef Vec3 start_point = <Vec3> self.start_point
-        cdef Vec3 end_point
-        cdef SubDiv s = SubDiv(self, distance, start_point)
+        cdef Vec3 spoint = <Vec3> self.start_point
+        cdef _SubDivide s = _SubDivide(self, distance, spoint)
+        cdef CppVec3 start_point = spoint.to_cpp_vec3()
+        cdef CppVec3 end_point
 
         while t0 < 1.0:
             t1 = t0 + dt
             if isclose(t1, 1.0, ABS_TOL):
-                end_point = <Vec3> self.end_point
+                end_point = (<Vec3> self.end_point).to_cpp_vec3()
                 t1 = 1.0
             else:
-                end_point = v3_from_cpp_vec3(self.curve.point(t1))
-            s.subdiv(start_point, end_point, t0, t1)
+                end_point = self.curve.point(t1)
+            s.sub_divide(start_point, end_point, t0, t1)
             t0 = t1
             start_point = end_point
         return s.points
@@ -131,7 +133,7 @@ cdef class Bezier4P:
             transform(<Vec3> p3),
         ))
 
-cdef class SubDiv:
+cdef class _SubDivide:
     cdef CppCubicBezier curve
     cdef double distance
     cdef list points
@@ -141,24 +143,18 @@ cdef class SubDiv:
         self.distance = distance
         self.points = [point]
 
-    cdef subdiv(self, Vec3 start_point, Vec3 end_point,
-                double start_t,
-                double end_t):
-        cdef CppVec3 start = start_point.to_cpp_vec3()
-        cdef CppVec3 end = end_point.to_cpp_vec3()
-        self._subdiv(start, end, start_t, end_t)
-
-    cdef _subdiv(self, CppVec3 start_point, CppVec3 end_point,
-                double start_t,
-                double end_t):
+    cdef sub_divide(self, CppVec3 start_point, CppVec3 end_point,
+                    double start_t,
+                    double end_t):
         cdef double mid_t = (start_t + end_t) * 0.5
         cdef CppVec3 mid_point = self.curve.point(mid_t)
         cdef double d = mid_point.distance(start_point.lerp(end_point, 0.5))
         if d < self.distance:
+            # Convert CppVec3 to Python type Vec3:
             self.points.append(v3_from_cpp_vec3(end_point))
         else:
-            self._subdiv(start_point, mid_point, start_t, mid_t)
-            self._subdiv(mid_point, end_point, mid_t, end_t)
+            self.sub_divide(start_point, mid_point, start_t, mid_t)
+            self.sub_divide(mid_point, end_point, mid_t, end_t)
 
 DEF DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
 DEF OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
