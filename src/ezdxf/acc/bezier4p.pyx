@@ -89,9 +89,8 @@ cdef class Bezier4P:
     def flattening(self, double distance, int segments = 4) -> List[Vec3]:
         cdef double dt = 1.0 / segments
         cdef double t0 = 0.0, t1
-        cdef Vec3 spoint = <Vec3> self.start_point
-        cdef _SubDivide s = _SubDivide(self, distance, spoint)
-        cdef CppVec3 start_point = spoint.to_cpp_vec3()
+        cdef _Flattening f = _Flattening(self, distance)
+        cdef CppVec3 start_point = (<Vec3> self.start_point).to_cpp_vec3()
         cdef CppVec3 end_point
 
         while t0 < 1.0:
@@ -101,10 +100,10 @@ cdef class Bezier4P:
                 t1 = 1.0
             else:
                 end_point = self.curve.point(t1)
-            s.sub_divide(start_point, end_point, t0, t1)
+            f.flatten(start_point, end_point, t0, t1)
             t0 = t1
             start_point = end_point
-        return s.points
+        return f.points
 
     def approximated_length(self, segments: int = 128) -> float:
         cdef double length = 0.0
@@ -133,19 +132,19 @@ cdef class Bezier4P:
             transform(<Vec3> p3),
         ))
 
-cdef class _SubDivide:
+cdef class _Flattening:
     cdef CppCubicBezier curve
     cdef double distance
     cdef list points
 
-    def __cinit__(self, Bezier4P curve, double distance, Vec3 point):
+    def __cinit__(self, Bezier4P curve, double distance):
         self.curve = curve.curve
         self.distance = distance
-        self.points = [point]
+        self.points = [curve.start_point]
 
-    cdef sub_divide(self, CppVec3 start_point, CppVec3 end_point,
-                    double start_t,
-                    double end_t):
+    cdef flatten(self, CppVec3 start_point, CppVec3 end_point,
+                 double start_t,
+                 double end_t):
         cdef double mid_t = (start_t + end_t) * 0.5
         cdef CppVec3 mid_point = self.curve.point(mid_t)
         cdef double d = mid_point.distance(start_point.lerp(end_point, 0.5))
@@ -153,8 +152,8 @@ cdef class _SubDivide:
             # Convert CppVec3 to Python type Vec3:
             self.points.append(v3_from_cpp_vec3(end_point))
         else:
-            self.sub_divide(start_point, mid_point, start_t, mid_t)
-            self.sub_divide(mid_point, end_point, mid_t, end_t)
+            self.flatten(start_point, mid_point, start_t, mid_t)
+            self.flatten(mid_point, end_point, mid_t, end_t)
 
 DEF DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
 DEF OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
