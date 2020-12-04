@@ -16,39 +16,33 @@ class CppVec3 {
         CppVec3(double x, double y, double z): x(x), y(y), z(z) {};
         ~CppVec3() = default;
 
-        CppVec3 operator+(const CppVec3& v) {
+        CppVec3 operator+(const CppVec3& v) const{
             return CppVec3(x + v.x, y + v.y, z + v.z);
         };
 
-        CppVec3 operator-(const CppVec3& v) {
+        CppVec3 operator-(const CppVec3& v) const{
             return CppVec3(x - v.x, y - v.y, z - v.z);
         };
 
-        CppVec3 operator*(double f) {
+        CppVec3 operator*(double f) const {
             return CppVec3(x * f, y * f, z * f);
         };
-        double magnitude() {
+        double magnitude() const {
             return sqrt(x * x + y * y + z * z);
         };
 
-        CppVec3 normalize(double length) {
+        CppVec3 normalize(double length) const {
             double mag = magnitude();
             if (mag == 0.0) return *this;
-            return (*this) * (length / mag);
+            return *this * (length / mag);
         };
 
-        double distance(const CppVec3 v) {
-            double dx = x - v.x;
-            double dy = y - v.y;
-            double dz = z - v.z;
-            return sqrt(dx * dx + dy * dy + dz * dz);
+        double distance(const CppVec3 v) const {
+            return (*this - v).magnitude();
         };
 
-        CppVec3 lerp(const CppVec3 v, double factor) {
-            const double rx = this->x + (v.x - this->x) * factor;
-            const double ry = this->y + (v.y - this->y) * factor;
-            const double rz = this->z + (v.z - this->z) * factor;
-            return CppVec3(rx, ry, rz);
+        CppVec3 lerp(const CppVec3 v, double factor) const {
+            return *this + (v - *this) * factor;
         };
 };
 #endif
