@@ -10,6 +10,8 @@ from .vector cimport (
 )
 from .matrix44 cimport Matrix44
 from libc.math cimport ceil, tan
+from ._cpp_vec3 cimport CppVec3
+from ._cpp_cubic_bezier cimport CppCubicBezier
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex

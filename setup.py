@@ -14,14 +14,12 @@ try:
     ext_modules = [
         Extension("ezdxf.acc.vector", [
             "src/ezdxf/acc/vector.pyx",
-            "src/ezdxf/acc/_cpp_vec3.cpp",
         ], optional=True, language='c++'),
         Extension("ezdxf.acc.matrix44", [
             "src/ezdxf/acc/matrix44.pyx",
         ], optional=True, language='c++'),
         Extension("ezdxf.acc.bezier4p", [
             "src/ezdxf/acc/bezier4p.pyx",
-            "src/ezdxf/acc/_cpp_vec3.cpp",
             "src/ezdxf/acc/_cpp_cubic_bezier.cpp",
         ], optional=True, language='c++'),
     ]

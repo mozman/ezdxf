@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Manfred Moitzi
 // License: MIT License
-// Fast vector library for usage in C only code.
+// Fast vector library for usage in C only code - header only!
 #ifndef __EZDXF_CPP_VEC3_HPP__
 #define __EZDXF_CPP_VEC3_HPP__
 

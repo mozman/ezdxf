@@ -9,12 +9,7 @@ cdef bint isclose(double a, double b, double tol)
 cdef double normalize_rad_angle(double a)
 cdef double normalize_deg_angle(double a)
 
-cdef extern from "_cpp_vec3.hpp":
-    cdef cppclass CppVec3:
-        double x, y, z
-        CppVec3()
-        CppVec3(double, double, double)
-
+from ._cpp_vec3 cimport CppVec3
 
 cdef class Vec2:
     cdef readonly double x, y
