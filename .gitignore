@@ -18,3 +18,10 @@ issues/**/*.html
 newctb.ctb
 tox.ini
 tox-all.ini
+/profiling/logs/
+/wheels/*.whl
+/docs/source/tutorials/**/*.dxf
+/docs/source/tutorials/src/geo/*.geojson
+/examples_dxf/points_pdmode_*.dxf
+/examples_dxf/linetypes_*.dxf
+/examples_dxf/hatch_*.dxf
