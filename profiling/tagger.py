@@ -75,14 +75,24 @@ def profile(text, func, pytype, cytype, *args):
     log(func.__name__, pytime, cytime)
 
 
+def profile_loading_data_only(name: str, run: str):
+    t0 = time.perf_counter()
+    with open(name, 'rb') as fp:
+        data = fp.read()
+        t1 = time.perf_counter()
+        print(f"{run} run detecting absolute minimal loading time for "
+              f"reading {len(data)} bytes without any processing: "
+              f"{t1 - t0:.6f}s")
+
+
 FILE = os.path.join(
     ezdxf.EZDXF_TEST_FILES, "CADKitSamples",
     "AEC Plan Elev Sample.dxf")
 
-print(f'filling file cache ...')
-tags_loader(ctagger.ascii_tags_loader, FILE)
+profile_loading_data_only(FILE, '1st')
+profile_loading_data_only(FILE, '2nd')
 
-print(f'Profiling loading functions as Python and Cython implementation:')
+print(f'\nProfiling loading functions as Python and Cython implementation:')
 profile(f'loading tags from "{FILE}": ', tags_loader,
         tagger.ascii_tags_loader, ctagger.ascii_tags_loader, FILE)
 profile(f'compile tags from "{FILE}": ', tags_compiler,
