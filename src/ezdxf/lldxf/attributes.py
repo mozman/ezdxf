@@ -25,10 +25,13 @@ class XType(Enum):
 
 
 def group_code_mapping(subclass: DefSubclass) -> Dict[int, str]:
-    return {
-        dxfattrib.code: name for name, dxfattrib in subclass.attribs.items()
-        if dxfattrib.xtype != XType.callback  # exclude callback attributes
-    }
+    mapping = dict()
+    for name, dxfattrib in subclass.attribs.items():
+        if dxfattrib.code in mapping:
+            raise ValueError(f'duplicated group code: {dxfattrib.code}')
+        if dxfattrib.xtype != XType.callback:
+            mapping[dxfattrib.code] = name
+    return mapping
 
 
 # Unique object as marker

@@ -217,6 +217,7 @@ class AttDef(BaseAttrib):
         dxf = super(Text, self).load_dxf_attribs(processor)
         # Do not call Text loader.
         if processor:
+            # Duplicate group code 280 - fast load not possible
             processor.load_and_recover_dxfattribs(dxf, acdb_text)
             processor.load_and_recover_dxfattribs(dxf, acdb_attdef)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
@@ -256,6 +257,7 @@ class Attrib(BaseAttrib):
         dxf = super(Text, self).load_dxf_attribs(processor)
         # Do not call Text loader.
         if processor:
+            # Duplicate group code 280 - fast load not possible
             processor.load_and_recover_dxfattribs(dxf, acdb_text)
             processor.load_and_recover_dxfattribs(dxf, acdb_attrib)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)

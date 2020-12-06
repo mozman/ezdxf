@@ -8,6 +8,7 @@ from ezdxf.entities.mtext import caret_decode
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, SPECIAL_CHARS_ENCODING, DXFValueError,
@@ -105,7 +106,7 @@ acdb_text = DefSubclass('AcDbText', {
         fixer=RETURN_DEFAULT
     ),
 })
-
+acdb_text_group_codes = group_code_mapping(acdb_text)
 acdb_text2 = DefSubclass('AcDbText', {
     # Vertical text justification type (optional)
     # 0 = Baseline
@@ -118,6 +119,7 @@ acdb_text2 = DefSubclass('AcDbText', {
         fixer=RETURN_DEFAULT,
     )
 })
+acdb_text2_group_codes = group_code_mapping(acdb_text2)
 
 
 # Formatting codes:
@@ -149,8 +151,8 @@ class Text(DXFGraphic):
         """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_text, 2)
-            processor.load_and_recover_dxfattribs(dxf, acdb_text2, 3)
+            processor.fast_load_dxfattribs(dxf, acdb_text_group_codes,2, recover=True)
+            processor.fast_load_dxfattribs(dxf, acdb_text2_group_codes, 3, recover=True)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
                 elevation_to_z_axis(dxf, ('insert', 'align_point'))
