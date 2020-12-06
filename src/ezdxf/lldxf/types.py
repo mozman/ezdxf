@@ -97,10 +97,6 @@ TYPE_TABLE = _build_type_table([
 ])
 
 
-def handle_code(dxftype: str) -> int:
-    return 105 if dxftype == 'DIMSTYLE' else 5
-
-
 class DXFTag:
     """ Immutable DXFTag class - immutable by design, not by implementation.
 

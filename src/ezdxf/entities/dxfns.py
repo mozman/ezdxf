@@ -5,7 +5,7 @@ import logging
 from ezdxf import options
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import XType, DXFAttributes, DefSubclass, DXFAttr
-from ezdxf.lldxf.types import handle_code, cast_value, dxftag
+from ezdxf.lldxf.types import cast_value, dxftag
 from ezdxf.lldxf.tags import Tags
 
 logger = logging.getLogger('ezdxf')
@@ -46,13 +46,23 @@ class DXFNamespace:
     def __init__(self, processor: 'SubclassProcessor' = None,
                  entity: 'DXFEntity' = None):
         if processor:
-            base_class_ = processor.base_class
-            code = handle_code(base_class_[0].value)
-            # CLASS entity has no handle and TABLE also has no handle if
-            # loaded from DXF R12 file
-            handle = base_class_.get_first_value(code, None)
-            # owner is None if loaded from DXF R12 file
-            owner = base_class_.get_first_value(330, None)
+            base_class = processor.base_class
+            handle_code = 105 if base_class[0].value == 'DIMSTYLE' else 5
+            # CLASS entities have no handle.
+            # TABLE entities have no handle if loaded from a DXF R12 file.
+            # Owner tag is None if loaded from a DXF R12 file
+            handle = None
+            owner = None
+            for tag in base_class:
+                group_code = tag.code
+                if group_code == handle_code:
+                    handle = tag.value
+                    if owner:
+                        break
+                elif group_code == 330:
+                    owner = tag.value
+                    if handle:
+                        break
             self.rewire(entity, handle, owner)
         else:
             self.reset_handles()
