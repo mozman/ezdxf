@@ -479,33 +479,32 @@ class SubclassProcessor:
     def load_tags_into_namespace(dxf: DXFNamespace, tags: Tags,
                                  subclass_definition: DefSubclass) -> Tags:
         """ Load all existing DXF attribute into DXFNamespace and return
-        unprocessed tags, without leading subclass marker (102, ...).
+        unprocessed tags, without leading subclass marker (100, AcDb...).
+        Handles also duplicate group codes.
 
         Args:
             dxf: target namespace
             tags: tags to process
-            subclass_definition: DXF attribute definitions (name=subclass_name,
-                                 attribs={key=attribute name, value=DXFAttr})
+            subclass_definition: DXF attribute definitions
 
         Returns:
-             Tags: unprocessed tags
+             unprocessed tags
 
         """
 
-        def replace_attrib(code) -> bool:
-            """ Returns ``True`` if an attribute was replaced by a doublet. """
-            for index, dxfattr in enumerate(doublets):
+        def replace_or_delete_attrib(code):
+            for dxfattr in doublets:
                 if dxfattr.code == code:
                     group_codes[code] = dxfattr
-                    del doublets[index]
-                    return True
-            return False
+                    doublets.remove(dxfattr)
+                    return
+            del group_codes[code]
 
         unprocessed_tags = Tags()
-        # Do not cache group codes, content of group code will be deleted while
-        # processing.
         group_codes = dict()
         doublets = []
+        # It is important to also store callback attributes, because the
+        # order of appearance of duplicate group codes is important:
         for dxfattr in subclass_definition.attribs.values():
             if dxfattr.code in group_codes:
                 doublets.append(dxfattr)
@@ -526,9 +525,7 @@ class SubclassProcessor:
                 if attrib.xtype != XType.callback:
                     unprotected_set_attrib(
                         attrib.name, cast_value(code, tag.value))
-                if len(doublets) and replace_attrib(code):
-                    continue
-                del group_codes[code]
+                replace_or_delete_attrib(code)
             else:
                 append_unprocessed_tag(tag)
         return unprocessed_tags
