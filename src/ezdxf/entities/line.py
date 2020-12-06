@@ -30,6 +30,10 @@ acdb_line = DefSubclass('AcDbLine', {
     ),
 })
 
+acdb_line_group_codes = {
+    dxfattrib.code: name for name, dxfattrib in acdb_line.attribs.items()
+}
+
 
 @register_entity
 class Line(DXFGraphic):
@@ -45,7 +49,11 @@ class Line(DXFGraphic):
         """
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_line)
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_line_group_codes, subclass=2, recover=True)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(
+                    tags, subclass=acdb_line.name, handle=dxf.get('handle'))
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

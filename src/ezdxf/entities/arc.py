@@ -21,6 +21,10 @@ acdb_arc = DefSubclass('AcDbArc', {
     'end_angle': DXFAttr(51, default=360),
 })
 
+acdb_arc_group_codes = {
+    dxfattrib.code: name for name, dxfattrib in acdb_arc.attribs.items()
+}
+
 
 @register_entity
 class Arc(Circle):
@@ -32,7 +36,11 @@ class Arc(Circle):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_arc)
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_arc_group_codes, subclass=3, recover=True)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(
+                    tags, subclass=acdb_arc.name, handle=dxf.get('handle'))
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

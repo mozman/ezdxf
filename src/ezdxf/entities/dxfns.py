@@ -543,9 +543,8 @@ class SubclassProcessor:
         if len(tags) and not self.r12:
             tags = recover_graphic_attributes(tags, dxf)
             if len(tags):
-                handle = dxf.get('handle')
-                self.log_unprocessed_tags(tags, subclass=subclass.name,
-                                          handle=handle)
+                self.log_unprocessed_tags(
+                    tags, subclass=subclass.name, handle=dxf.get('handle'))
 
 
 GRAPHIC_ATTRIBUTES_TO_RECOVER = {
