@@ -7,7 +7,6 @@ from .types import (
     POINT_CODES, TYPE_TABLE, BINARY_DATA,
 )
 from .const import DXFStructureError
-from . import encoding
 from ezdxf.tools.codepage import toencoding
 
 
@@ -53,6 +52,25 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
             yield DXFBinaryTag.from_string(code, value)
         else:  # single value tag: int, float or string
             yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
+
+
+# No performance advantage by processing binary data!
+#
+# Profiling result for just reading DXF data (profiling/raw_data_reading.py):
+# Loading the example file "torso_uniform.dxf" (50MB) by readline() from a
+# text stream with decoding takes ~0.65 seconds longer than loading the same
+# file as binary data.
+#
+# Text :1.30s vs Binary data: 0.65s)
+# This is twice the time, but without any processing, ascii_tags_loader() takes
+# ~5.3 seconds to process this file.
+#
+# And this performance advantage is more than lost by the necessary decoding
+# of the binary data afterwards, even much fewer strings have to be decoded,
+# because numeric data like group codes and vertices doesn't need to be
+# decoded.
+#
+# I assume the runtime overhead for calling Python functions is the reason.
 
 
 def ascii_tags_loader(stream: TextIO,
