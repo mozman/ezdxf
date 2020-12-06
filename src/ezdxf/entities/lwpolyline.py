@@ -9,6 +9,7 @@ from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED
 from ezdxf.lldxf.tags import Tags
@@ -65,6 +66,8 @@ acdb_lwpolyline = DefSubclass('AcDbPolyline', {
     # 40, 41, 42: start width, end width, bulge
 })
 
+acdb_lwpolyline_group_codes = group_code_mapping(acdb_lwpolyline)
+
 
 @register_entity
 class LWPolyline(DXFGraphic):
@@ -89,14 +92,10 @@ class LWPolyline(DXFGraphic):
         """
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_lwpolyline)
+            tags = processor.subclass_by_index(2)
             tags = self.load_vertices(tags)
-            if len(tags) and not processor.r12:
-                tags = processor.recover_graphic_attributes(tags, dxf)
-                if len(tags):
-                    processor.log_unprocessed_tags(
-                        tags, subclass=acdb_lwpolyline.name)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_lwpolyline_group_codes, subclass=tags, recover=True)
         return dxf
 
     def load_vertices(self, tags: 'Tags') -> Tags:

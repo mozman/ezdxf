@@ -2,7 +2,9 @@
 # License: MIT License
 from typing import TYPE_CHECKING
 import logging
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, group_code_mapping,
+)
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
@@ -21,9 +23,7 @@ acdb_appid = DefSubclass('AcDbRegAppTableRecord', {
     'flags': DXFAttr(70, default=0),
 })
 
-acdb_appid_group_codes = {
-    dxfattrib.code: name for name, dxfattrib in acdb_appid.attribs.items()
-}
+acdb_appid_group_codes = group_code_mapping(acdb_appid)
 
 
 @register_entity

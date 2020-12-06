@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
@@ -30,9 +31,7 @@ acdb_line = DefSubclass('AcDbLine', {
     ),
 })
 
-acdb_line_group_codes = {
-    dxfattrib.code: name for name, dxfattrib in acdb_line.attribs.items()
-}
+acdb_line_group_codes = group_code_mapping(acdb_line)
 
 
 @register_entity

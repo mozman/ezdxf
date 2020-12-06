@@ -425,11 +425,12 @@ class SubclassProcessor:
                              recover=False) -> Tags:
         """ Load DXF attribute direct into namespace without any checks.
 
-        Can't handle duplicate group codes and callback attributes!
+        Can't handle duplicate group codes!
 
         Args:
             dxf: target namespace
-            group_code_mapping: group code to DXF attribute name mapping
+            group_code_mapping: group code to DXF attribute name mapping,
+                exclude callback attributes!
             subclass: subclass by index. by name or as Tags()
             recover: recover graphic attributes
 

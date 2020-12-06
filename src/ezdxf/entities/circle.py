@@ -10,6 +10,7 @@ from ezdxf.math import (
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -42,9 +43,7 @@ acdb_circle = DefSubclass('AcDbCircle', {
     ),
 })
 
-acdb_circle_group_codes = {
-    dxfattrib.code: name for name, dxfattrib in acdb_circle.attribs.items()
-}
+acdb_circle_group_codes = group_code_mapping(acdb_circle)
 
 
 @register_entity

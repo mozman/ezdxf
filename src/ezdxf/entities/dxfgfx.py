@@ -5,7 +5,7 @@ from ezdxf.entities import factory
 from ezdxf import options
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
 )
 from ezdxf import colors as clr
 from ezdxf.lldxf.const import (
@@ -103,9 +103,7 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # line) (optional), compiled by TagCompiler() to a DXFBinaryTag() objects
 })
 
-acdb_entity_group_codes = {
-    dxfattrib.code: name for name, dxfattrib in acdb_entity.attribs.items()
-}
+acdb_entity_group_codes = group_code_mapping(acdb_entity)
 
 
 def elevation_to_z_axis(dxf: 'DXFNamespace', names: Iterable[str]):

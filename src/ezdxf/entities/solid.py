@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.math import Matrix44, Z_AXIS, NULLVEC, Vec3
@@ -46,9 +47,7 @@ acdb_trace = DefSubclass('AcDbTrace', {
     ),
 })
 
-acdb_trace_group_codes = {
-    dxfattrib.code: name for name, dxfattrib in acdb_trace.attribs.items()
-}
+acdb_trace_group_codes = group_code_mapping(acdb_trace)
 
 
 class _Base(DXFGraphic):
@@ -170,9 +169,7 @@ acdb_face = DefSubclass('AcDbFace', {
     'invisible': DXFAttr(70, default=0, optional=True),
 })
 
-acdb_face_group_codes = {
-    dxfattrib.code: name for name, dxfattrib in acdb_face.attribs.items()
-}
+acdb_face_group_codes = group_code_mapping(acdb_face)
 
 
 @register_entity

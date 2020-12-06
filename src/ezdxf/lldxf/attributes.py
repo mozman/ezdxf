@@ -24,6 +24,13 @@ class XType(Enum):
     callback = 4  # callback attribute
 
 
+def group_code_mapping(subclass: DefSubclass) -> Dict[int, str]:
+    return {
+        dxfattrib.code: name for name, dxfattrib in subclass.attribs.items()
+        if dxfattrib.xtype != XType.callback  # exclude callback attributes
+    }
+
+
 # Unique object as marker
 RETURN_DEFAULT = object()
 
