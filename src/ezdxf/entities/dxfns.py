@@ -420,18 +420,31 @@ class SubclassProcessor:
         return self.load_tags_into_namespace(dxf, tags[1:], subclass_definition)
 
     def fast_load_dxfattribs(self, dxf: DXFNamespace,
-                             group_code_mapping: Dict,
-                             subclass_index: int) -> Tags:
+                             group_code_mapping: Dict[int, str],
+                             subclass: Union[int, str],
+                             recover=False) -> Tags:
         """ Load DXF attribute direct into namespace without any checks.
 
         Can't handle duplicate group codes and callback attributes!
+
+        Args:
+            dxf: target namespace
+            group_code_mapping: group code to DXF attribute name mapping
+            subclass: subclass by index or by name
+            recover: recover graphic attributes
 
         """
         if self.r12:
             tags = self.subclasses[0]
         else:
-            tags = self.subclass_by_index(subclass_index)
+            if isinstance(subclass, int):
+                tags = self.subclass_by_index(subclass)
+            else:
+                tags = self.find_subclass(subclass)
+
         unprocessed_tags = Tags()
+        if tags is None:
+            return unprocessed_tags
 
         # localize attributes:
         get_attrib_name = group_code_mapping.get
@@ -445,6 +458,10 @@ class SubclassProcessor:
                 set_attrib(name, cast_value(tag.code, tag.value))
             else:
                 append_unprocessed_tag(tag)
+
+        if recover and len(unprocessed_tags) and not self.r12:
+            unprocessed_tags = recover_graphic_attributes(unprocessed_tags, dxf)
+
         return unprocessed_tags
 
     @staticmethod
