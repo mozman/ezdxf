@@ -46,6 +46,10 @@ acdb_trace = DefSubclass('AcDbTrace', {
     ),
 })
 
+acdb_trace_group_codes = {
+    dxfattrib.code: name for name, dxfattrib in acdb_trace.attribs.items()
+}
+
 
 class _Base(DXFGraphic):
     def __getitem__(self, num):
@@ -66,7 +70,8 @@ class Solid(_Base):
         """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_trace)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_trace_group_codes, subclass=2, recover=True)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
                 elevation_to_z_axis(dxf, VERTEXNAMES)
@@ -165,6 +170,10 @@ acdb_face = DefSubclass('AcDbFace', {
     'invisible': DXFAttr(70, default=0, optional=True),
 })
 
+acdb_face_group_codes = {
+    dxfattrib.code: name for name, dxfattrib in acdb_face.attribs.items()
+}
+
 
 @register_entity
 class Face3d(_Base):
@@ -189,7 +198,8 @@ class Face3d(_Base):
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_face)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_face_group_codes, subclass=2, recover=True)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

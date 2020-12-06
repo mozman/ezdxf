@@ -175,11 +175,7 @@ class DXFGraphic(DXFEntity):
         # Use fast load:
         # Subclass AcDbEntity do not contain duplicated group codes and
         # has no call backs attributes:
-        tags = processor.fast_load_dxfattribs(dxf, acdb_entity_group_codes, 1)
-        if len(tags) and not r12:
-            processor.log_unprocessed_tags(
-                tags, subclass=acdb_entity.name, handle=dxf.get('handle')
-            )
+        processor.fast_load_dxfattribs(dxf, acdb_entity_group_codes, 1)
         return dxf
 
     def post_new_hook(self):

@@ -421,7 +421,7 @@ class SubclassProcessor:
 
     def fast_load_dxfattribs(self, dxf: DXFNamespace,
                              group_code_mapping: Dict[int, str],
-                             subclass: Union[int, str],
+                             subclass: Union[int, str, Tags],
                              recover=False) -> Tags:
         """ Load DXF attribute direct into namespace without any checks.
 
@@ -430,7 +430,7 @@ class SubclassProcessor:
         Args:
             dxf: target namespace
             group_code_mapping: group code to DXF attribute name mapping
-            subclass: subclass by index or by name
+            subclass: subclass by index. by name or as Tags()
             recover: recover graphic attributes
 
         """
@@ -439,8 +439,10 @@ class SubclassProcessor:
         else:
             if isinstance(subclass, int):
                 tags = self.subclass_by_index(subclass)
-            else:
+            elif isinstance(subclass, str):
                 tags = self.find_subclass(subclass)
+            else:
+                tags = subclass
 
         unprocessed_tags = Tags()
         if tags is None:
@@ -459,9 +461,17 @@ class SubclassProcessor:
             else:
                 append_unprocessed_tag(tag)
 
-        if recover and len(unprocessed_tags) and not self.r12:
-            unprocessed_tags = recover_graphic_attributes(unprocessed_tags, dxf)
+        if self.r12:
+            return unprocessed_tags
 
+        # Only DXF R13+
+        if recover and len(unprocessed_tags):
+            unprocessed_tags = recover_graphic_attributes(unprocessed_tags, dxf)
+        if len(unprocessed_tags):
+            # First tag is the subclass specifier (100, "AcDb...")
+            name = tags[0].value
+            self.log_unprocessed_tags(
+                tags, subclass=name, handle=dxf.get('handle'))
         return unprocessed_tags
 
     @staticmethod
