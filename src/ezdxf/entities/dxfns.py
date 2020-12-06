@@ -512,21 +512,25 @@ class SubclassProcessor:
             else:
                 group_codes[dxfattr.code] = dxfattr
 
+        # localize attributes
+        unprotected_set_attrib = dxf.unprotected_set
+        append_unprocessed_tag = unprocessed_tags.append
+        get_attrib = group_codes.get
+
         # Iterate without leading subclass marker and for R12 without
         # leading (0, ...) structure tag.
         for tag in tags:
-            code, value = tag
-            attrib = group_codes.get(code)
+            code = tag.code
+            attrib = get_attrib(code)
             if attrib is not None:
-                if (attrib.xtype != XType.callback) or (
-                        attrib.setter is not None):
-                    dxf.set(attrib.name, value)
-
+                if attrib.xtype != XType.callback:
+                    unprotected_set_attrib(
+                        attrib.name, cast_value(code, tag.value))
                 if len(doublets) and replace_attrib(code):
                     continue
                 del group_codes[code]
             else:
-                unprocessed_tags.append(tag)
+                append_unprocessed_tag(tag)
         return unprocessed_tags
 
     def append_base_class_to_acdb_entity(self) -> None:
