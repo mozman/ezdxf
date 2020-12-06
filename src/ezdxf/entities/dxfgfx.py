@@ -103,6 +103,10 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # line) (optional), compiled by TagCompiler() to a DXFBinaryTag() objects
 })
 
+acdb_entity_group_codes = {
+    dxfattrib.code: name for name, dxfattrib in acdb_entity.attribs.items()
+}
+
 
 def elevation_to_z_axis(dxf: 'DXFNamespace', names: Iterable[str]):
     # The elevation group code (38) is only used for DXF R11 and prior and
@@ -168,9 +172,10 @@ class DXFGraphic(DXFEntity):
                 length_code=code,
             )
 
-        # Load common AcDbEntity attributes into dxf namespace
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_entity,
-                                                        index=1)
+        # Use fast load:
+        # Subclass AcDbEntity do not contain duplicated group codes and
+        # has no call backs attributes:
+        tags = processor.fast_load_dxfattribs(dxf, acdb_entity_group_codes, 1)
         if len(tags) and not r12:
             processor.log_unprocessed_tags(
                 tags, subclass=acdb_entity.name, handle=dxf.get('handle')

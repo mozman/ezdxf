@@ -9,6 +9,7 @@ from ezdxf.entities.line import acdb_line
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXFAttributeError
 from ezdxf.lldxf.tagwriter import TagCollector
+from ezdxf.lldxf.tags import Tags, DXFTag
 
 
 class DXFEntity:
@@ -180,28 +181,56 @@ def test_dxf_export_two_attribute(entity, processor):
     assert tagwriter.tags[1] == (330, 'ABBA')
 
 
-def test_load_doublettes():
+@pytest.fixture
+def subclass():
     from ezdxf.lldxf.attributes import DefSubclass, DXFAttr
-    from ezdxf.lldxf.tags import Tags, DXFTag
-    subclass = DefSubclass('AcDbTest', {
+    return DefSubclass('AcDbTest', {
         'test1': DXFAttr(1),
         'test2': DXFAttr(2),
-        'test3': DXFAttr(1),  # same group code for different attribute
+        'test3': DXFAttr(1),  # duplicate group code
     })
 
+
+@pytest.fixture
+def cls(subclass):
     class TestEntity(DXFEntity):
         DXFATTRIBS = DXFAttributes(subclass)
+    return TestEntity
 
+
+def test_load_group_code_duplicates(cls, subclass):
     data = Tags([
         DXFTag(1, '1'),
         DXFTag(2, '2'),
         DXFTag(1, '3'),
     ])
-    ns = DXFNamespace(entity=TestEntity())
+    ns = DXFNamespace(entity=cls())
     SubclassProcessor.load_tags_into_namespace(ns, data, subclass)
     assert ns.test1 == '1'
     assert ns.test2 == '2'
     assert ns.test3 == '3'
+
+
+def test_fast_load_cant_load_group_code_duplicates(cls):
+    data = Tags([
+        DXFTag(0, 'ENTITY'),  # First subclass tag should be ignored
+        DXFTag(1, '1'),
+        DXFTag(2, '2'),
+        DXFTag(1, '3'),  # duplicate group code
+        DXFTag(7, 'unprocessed tag'),
+    ])
+    ns = DXFNamespace(entity=cls())
+    mapping = {
+        1: 'test1',  # duplicate group code
+        2: 'test2',
+    }
+    proc = SubclassProcessor(ExtendedTags(tags=data))
+    unprocessed_tags = proc.fast_load_dxfattribs(ns, mapping, 0)
+    assert ns.test1 == '3'  # last tag
+    assert ns.test2 == '2'
+    assert ns.hasattr('test3') is False
+    assert len(unprocessed_tags) == 1
+    assert unprocessed_tags[0] == (7, 'unprocessed tag')
 
 
 TEST_1 = """0

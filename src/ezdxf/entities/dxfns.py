@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Any, Optional, Union, Iterable, List, TYPE_CHECKING
+from typing import Any, Optional, Union, Iterable, List, TYPE_CHECKING, Dict
 import logging
 from ezdxf import options
 from ezdxf.lldxf import const
@@ -215,6 +215,15 @@ class DXFNamespace:
         """
         self.__setattr__(key, value)
 
+    def unprotected_set(self, key: str, value: Any) -> None:
+        """ Set DXF attribute `key` to `value` without any validity checks.
+
+        Used for fast attribute setting without validity checks at loading time.
+
+        (internal API)
+        """
+        self.__dict__[key] = value
+
     def all_existing_dxf_attribs(self) -> dict:
         """ Returns all existing DXF attributes, except DXFEntity parent link.
         """
@@ -409,6 +418,34 @@ class SubclassProcessor:
             if tags is None:
                 return Tags()
         return self.load_tags_into_namespace(dxf, tags[1:], subclass_definition)
+
+    def fast_load_dxfattribs(self, dxf: DXFNamespace,
+                             group_code_mapping: Dict,
+                             subclass_index: int) -> Tags:
+        """ Load DXF attribute direct into namespace without any checks.
+
+        Can't handle duplicate group codes and callback attributes!
+
+        """
+        if self.r12:
+            tags = self.subclasses[0]
+        else:
+            tags = self.subclass_by_index(subclass_index)
+        unprocessed_tags = Tags()
+
+        # localize attributes:
+        get_attrib_name = group_code_mapping.get
+        append_unprocessed_tag = unprocessed_tags.append
+        set_attrib = dxf.unprotected_set
+
+        # Ignore first tag: (100, "AcDb...") or (0, "ENTITY") in case of DXF R12
+        for tag in tags[1:]:
+            name = get_attrib_name(tag.code)
+            if name:
+                set_attrib(name, cast_value(tag.code, tag.value))
+            else:
+                append_unprocessed_tag(tag)
+        return unprocessed_tags
 
     @staticmethod
     def load_tags_into_namespace(dxf: DXFNamespace, tags: Tags,
