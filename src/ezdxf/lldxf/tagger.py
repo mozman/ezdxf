@@ -78,24 +78,23 @@ def ascii_tags_loader(stream: TextIO,
     # localize attributes
     readline = stream.readline
     _DXFTag = DXFTag
+    # readline() returns an empty string at EOF, not exception will be raised!
     while True:
-        try:
-            code = readline()
-            # if throws EOFError -> DXFStructureError, but should be handled in
-            # higher layers
-            value = readline()
-        except EOFError:
-            return
-        if code and value:  # StringIO(): empty strings indicates EOF
+        code = readline()
+        if code:  # empty string indicates EOF
             try:
                 code = int(code)
             except ValueError:
                 raise DXFStructureError(
                     f'Invalid group code "{code}" at line {line}.')
-            else:
-                if code != 999 or yield_comments:
-                    yield _DXFTag(code, value.rstrip('\n'))
-                line += 2
+        else:
+            return
+
+        value = readline()
+        if value:  # empty string indicates EOF
+            if code != 999 or yield_comments:
+                yield _DXFTag(code, value.rstrip('\n'))
+            line += 2
         else:
             return
 
