@@ -108,9 +108,7 @@ class Dictionary(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_dictionary
-            )
+            tags = processor.load_dxfattribs(dxf, acdb_dictionary, log=False)
             self.load_dict(tags)
         return dxf
 
@@ -400,13 +398,11 @@ class DictionaryWithDefault(Dictionary):
         self._default = doc.entitydb.get(self.dxf.default)
         super().post_load_hook(doc)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        processor.load_dxfattribs_into_namespace(dxf, acdb_dict_with_default)
+        if processor:
+            processor.load_dxfattribs(dxf, acdb_dict_with_default)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -495,10 +491,8 @@ class DictionaryVar(DXFObject):
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        processor.load_dxfattribs_into_namespace(dxf, acdb_dict_var)
+        if processor:
+            processor.load_dxfattribs(dxf, acdb_dict_var)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
