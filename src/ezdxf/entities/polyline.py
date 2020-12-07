@@ -128,11 +128,11 @@ class Polyline(LinkedEntities):
             return dxf
         if processor.r12:
             processor.load_dxfattribs_into_namespace(
-                dxf, subclass_definition=acdb_polyline, index=0
+                dxf, acdb_polyline, index=0
             )
         else:
             tags = processor.load_dxfattribs_into_namespace(
-                dxf, subclass_definition=acdb_polyline, index=2
+                dxf, acdb_polyline, index=2
             )
             name = processor.subclasses[2][0].value
             if len(tags):

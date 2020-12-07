@@ -388,22 +388,18 @@ class SubclassProcessor:
             return None
 
     def load_dxfattribs_into_namespace(self, dxf: DXFNamespace,
-                                       subclass_definition: DefSubclass,
+                                       definitions: DefSubclass,
                                        index: int = None) -> Tags:
-        """ Load all existing DXF attribute into DXFNamespace and return
-        unprocessed tags, without leading subclass marker(102, ...).
+        """ Load DXF attribute into DXFNamespace and return unprocessed tags
+        without leading subclass marker(100, AcDb...).
+        Bypasses the DXF attribute validity checks.
 
         Args:
-            dxf: target namespace
-            subclass_definition: DXF attribute definitions (name=subclass_name,
-                                 attribs={key=attribute name, value=DXFAttr})
+            dxf: entity DXF namespace
+            definitions: DXF attribute definitions
             index: locate subclass by location
 
-        Returns:
-             Tags: unprocessed tags
-
         """
-
         # R12 has always unprocessed tags, because there are all tags in one
         # subclass and one subclass definition never covers all tags e.g.
         # handle is processed in DXFEntity, so it is an unprocessed tag in
@@ -412,27 +408,130 @@ class SubclassProcessor:
             tags = self.subclasses[0]
         else:
             if index is None:
-                tags = self.find_subclass(subclass_definition.name)
+                tags = self.find_subclass(definitions.name)
             else:
                 tags = self.subclass_by_index(index)
             if tags is None:
                 return Tags()
-        return self.load_tags_into_namespace(dxf, tags[1:], subclass_definition)
+        return self.load_tags_into_namespace(dxf, tags[1:], definitions)
+
+    def load_dxfattribs(self, dxf: DXFNamespace,
+                        definitions: DefSubclass,
+                        subclass: Optional[Union[int, Tags]] = None,
+                        *,
+                        recover=False,
+                        log=True) -> Tags:
+        """ Load DXF attributes into the DXF namespace and returns the
+        unprocessed tags without leading subclass marker(100, AcDb...).
+        This method can handle duplicate group codes!
+        Bypasses the DXF attribute validity checks.
+
+        Args:
+            dxf: entity DXF namespace
+            definitions: DXF attribute definitions
+            subclass: subclass by index or as Tags() or None for using the
+                subclass name from the subclass_definition
+            recover: recover graphic attributes
+            log: enable/disable logging of unprocessed tags
+
+        """
+        if self.r12:
+            tags = self.subclasses[0]
+        else:
+            if subclass is None:
+                tags = self.find_subclass(definitions.name)
+            elif isinstance(subclass, int):
+                tags = self.subclass_by_index(subclass)
+            elif isinstance(subclass, Tags):
+                tags = subclass
+            else:
+                raise ValueError('invalid subclass specifier')
+        if tags is None:
+            return Tags()
+
+        unprocessed_tags = self.load_tags_into_namespace(
+            dxf, tags[1:], definitions)
+
+        if self.r12:
+            return unprocessed_tags
+        # Only DXF R13+
+        if recover and len(unprocessed_tags):
+            unprocessed_tags = recover_graphic_attributes(unprocessed_tags, dxf)
+        if len(unprocessed_tags) and log:
+            self.log_unprocessed_tags(
+                tags, subclass=definitions.name, handle=dxf.get('handle'))
+        return unprocessed_tags
+
+    @staticmethod
+    def load_tags_into_namespace(dxf: DXFNamespace, tags: Tags,
+                                 definitions: DefSubclass) -> Tags:
+        """ Load all existing DXF attribute into DXFNamespace and return
+        unprocessed tags, without leading subclass marker (100, AcDb...).
+        Handles also duplicate group codes.
+
+        Args:
+            dxf: entity DXF namespace
+            tags: tags to process
+            definitions: DXF attribute definitions
+
+        """
+
+        def replace_or_delete_attrib(code):
+            for dxfattr in doublets:
+                if dxfattr.code == code:
+                    group_codes[code] = dxfattr
+                    doublets.remove(dxfattr)
+                    return
+            del group_codes[code]
+
+        unprocessed_tags = Tags()
+        group_codes = dict()
+        doublets = []
+        # It is important to also store callback attributes, because the
+        # order of appearance of duplicate group codes is important:
+        for dxfattr in definitions.attribs.values():
+            if dxfattr.code in group_codes:
+                doublets.append(dxfattr)
+            else:
+                group_codes[dxfattr.code] = dxfattr
+
+        # localize attributes
+        unprotected_set_attrib = dxf.unprotected_set
+        append_unprocessed_tag = unprocessed_tags.append
+        get_attrib = group_codes.get
+
+        # Iterate without leading subclass marker and for R12 without
+        # leading (0, ...) structure tag.
+        for tag in tags:
+            code = tag.code
+            attrib = get_attrib(code)
+            if attrib is not None:
+                if attrib.xtype != XType.callback:
+                    unprotected_set_attrib(
+                        attrib.name, cast_value(code, tag.value))
+                replace_or_delete_attrib(code)
+            else:
+                append_unprocessed_tag(tag)
+        return unprocessed_tags
 
     def fast_load_dxfattribs(self, dxf: DXFNamespace,
                              group_code_mapping: Dict[int, str],
                              subclass: Union[int, str, Tags],
-                             recover=False) -> Tags:
-        """ Load DXF attribute direct into namespace without any checks.
-
-        Can't handle duplicate group codes!
+                             *,
+                             recover=False,
+                             log=True) -> Tags:
+        """ Load DXF attributes into the DXF namespace and returns the
+        unprocessed tags without leading subclass marker(100, AcDb...).
+        This method is fast but can't handle duplicate group codes!
+        Bypasses the DXF attribute validity checks.
 
         Args:
-            dxf: target namespace
+            dxf: entity DXF namespace
             group_code_mapping: group code to DXF attribute name mapping,
                 exclude callback attributes!
             subclass: subclass by index. by name or as Tags()
             recover: recover graphic attributes
+            log: enable/disable logging of unprocessed tags
 
         """
         if self.r12:
@@ -468,66 +567,11 @@ class SubclassProcessor:
         # Only DXF R13+
         if recover and len(unprocessed_tags):
             unprocessed_tags = recover_graphic_attributes(unprocessed_tags, dxf)
-        if len(unprocessed_tags):
+        if len(unprocessed_tags) and log:
             # First tag is the subclass specifier (100, "AcDb...")
             name = tags[0].value
             self.log_unprocessed_tags(
                 tags, subclass=name, handle=dxf.get('handle'))
-        return unprocessed_tags
-
-    @staticmethod
-    def load_tags_into_namespace(dxf: DXFNamespace, tags: Tags,
-                                 subclass_definition: DefSubclass) -> Tags:
-        """ Load all existing DXF attribute into DXFNamespace and return
-        unprocessed tags, without leading subclass marker (100, AcDb...).
-        Handles also duplicate group codes.
-
-        Args:
-            dxf: target namespace
-            tags: tags to process
-            subclass_definition: DXF attribute definitions
-
-        Returns:
-             unprocessed tags
-
-        """
-
-        def replace_or_delete_attrib(code):
-            for dxfattr in doublets:
-                if dxfattr.code == code:
-                    group_codes[code] = dxfattr
-                    doublets.remove(dxfattr)
-                    return
-            del group_codes[code]
-
-        unprocessed_tags = Tags()
-        group_codes = dict()
-        doublets = []
-        # It is important to also store callback attributes, because the
-        # order of appearance of duplicate group codes is important:
-        for dxfattr in subclass_definition.attribs.values():
-            if dxfattr.code in group_codes:
-                doublets.append(dxfattr)
-            else:
-                group_codes[dxfattr.code] = dxfattr
-
-        # localize attributes
-        unprotected_set_attrib = dxf.unprotected_set
-        append_unprocessed_tag = unprocessed_tags.append
-        get_attrib = group_codes.get
-
-        # Iterate without leading subclass marker and for R12 without
-        # leading (0, ...) structure tag.
-        for tag in tags:
-            code = tag.code
-            attrib = get_attrib(code)
-            if attrib is not None:
-                if attrib.xtype != XType.callback:
-                    unprotected_set_attrib(
-                        attrib.name, cast_value(code, tag.value))
-                replace_or_delete_attrib(code)
-            else:
-                append_unprocessed_tag(tag)
         return unprocessed_tags
 
     def append_base_class_to_acdb_entity(self) -> None:
