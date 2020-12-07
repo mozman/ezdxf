@@ -101,7 +101,8 @@ class Body(DXFGraphic):
         """ Loading interface. (internal API)"""
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_modeler_geometry)
+            # TODO: fast loader?
+            processor.load_dxfattribs(dxf, acdb_modeler_geometry, log=False)
             if not self.has_binary_data:
                 self.load_acis_data(processor.subclasses[2])
         return dxf
@@ -237,7 +238,8 @@ class Solid3d(Body):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_3dsolid)
+            # TODO: fast loader?
+            processor.load_dxfattribs(dxf, acdb_3dsolid)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -279,7 +281,8 @@ class Surface(Body):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_surface)
+            # TODO: fast loader?
+            processor.load_dxfattribs(dxf, acdb_surface)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -342,7 +345,8 @@ class ExtrudedSurface(Surface):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_extruded_surface)
+            # TODO: fast loader?
+            processor.load_dxfattribs(dxf, acdb_extruded_surface, log=False)
             self.load_matrices(processor.subclasses[4])
         return dxf
 
@@ -411,7 +415,8 @@ class LoftedSurface(Surface):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_lofted_surface)
+            # TODO: fast loader?
+            processor.load_dxfattribs(dxf, acdb_lofted_surface, log=False)
             self.load_matrices(processor.subclasses[4])
         return dxf
 
@@ -465,7 +470,8 @@ class RevolvedSurface(Surface):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_revolved_surface)
+            # TODO: fast loader?
+            processor.load_dxfattribs(dxf, acdb_revolved_surface, log=False)
             self.load_matrices(processor.subclasses[4])
         return dxf
 
@@ -551,7 +557,8 @@ class SweptSurface(Surface):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_swept_surface)
+            # TODO: fast loader?
+            processor.load_dxfattribs(dxf, acdb_swept_surface, log=False)
             self.load_matrices(processor.subclasses[4])
         return dxf
 
