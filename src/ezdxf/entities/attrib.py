@@ -218,8 +218,8 @@ class AttDef(BaseAttrib):
         # Do not call Text loader.
         if processor:
             # Duplicate group code 280 - fast load not possible
-            processor.load_and_recover_dxfattribs(dxf, acdb_text)
-            processor.load_and_recover_dxfattribs(dxf, acdb_attdef)
+            processor.load_dxfattribs(dxf, acdb_text, recover=True)
+            processor.load_dxfattribs(dxf, acdb_attdef, recover=True)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
@@ -258,8 +258,8 @@ class Attrib(BaseAttrib):
         # Do not call Text loader.
         if processor:
             # Duplicate group code 280 - fast load not possible
-            processor.load_and_recover_dxfattribs(dxf, acdb_text)
-            processor.load_and_recover_dxfattribs(dxf, acdb_attrib)
+            processor.load_dxfattribs(dxf, acdb_text, recover=True)
+            processor.load_dxfattribs(dxf, acdb_attrib, recover=True)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
