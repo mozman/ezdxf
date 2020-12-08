@@ -26,8 +26,8 @@ class XType(Enum):
 def group_code_mapping(subclass: DefSubclass) -> Dict[int, str]:
     # Unique group codes are stored as group_code <int>: name <str>
     # Duplicate group codes are stored as group_code <int>: [name1, name2, ...] <list>
-    # The order of appearance is important, therefore even callback attribute
-    # have to be stored, but they should not be loaded into the DXF namespace.
+    # The order of appearance is important, therefore also callback attributes
+    # have to be included, but they should not be loaded into the DXF namespace.
     mapping = dict()
     for name, dxfattrib in subclass.attribs.items():
         if dxfattrib.xtype == XType.callback:

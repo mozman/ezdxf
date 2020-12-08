@@ -5,7 +5,7 @@ from ezdxf.entities import factory
 from ezdxf import options
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping,
 )
 from ezdxf import colors as clr
 from ezdxf.lldxf.const import (
@@ -102,7 +102,6 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # 310: Proxy entity graphics data (multiple lines; 256 characters max. per
     # line) (optional), compiled by TagCompiler() to a DXFBinaryTag() objects
 })
-
 acdb_entity_group_codes = group_code_mapping(acdb_entity)
 
 
@@ -144,8 +143,8 @@ class DXFGraphic(DXFEntity):
     DEFAULT_ATTRIBS = {'layer': '0'}
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """ Adds subclass processing for 'AcDbEntity', requires previous base
         class processing by parent class.
 
@@ -169,10 +168,6 @@ class DXFGraphic(DXFEntity):
                 processor.subclasses[0 if r12 else 1],
                 length_code=code,
             )
-
-        # Use fast load:
-        # Subclass AcDbEntity do not contain duplicated group codes and
-        # has no call backs attributes:
         processor.fast_load_dxfattribs(dxf, acdb_entity_group_codes, 1)
         return dxf
 

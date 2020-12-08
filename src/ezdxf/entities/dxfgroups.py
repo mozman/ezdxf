@@ -6,7 +6,7 @@ import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import DXFValueError, SUBCLASS_MARKER, DXFTypeError
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
 )
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
@@ -44,7 +44,7 @@ acdb_group = DefSubclass('AcDbGroup', {
 
     # 340: Hard-pointer handle to entity in group (one entry per object)
 })
-
+acdb_group_group_codes = group_code_mapping(acdb_group)
 GROUP_ITEM_CODE = 340
 
 
@@ -68,10 +68,10 @@ class DXFGroup(DXFObject):
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_group)
-        self.load_group(tags)
+        if processor:
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_group_group_codes, 1, log=False)
+            self.load_group(tags)
         return dxf
 
     def load_group(self, tags):
