@@ -6,7 +6,9 @@ import logging
 from collections import namedtuple
 
 from ezdxf.lldxf import const
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, group_code_mapping,
+)
 from ezdxf.lldxf.tags import Tags
 from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 from ezdxf import colors
@@ -178,7 +180,7 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
         295, default=0, dxfversion=const.DXF2013),
 
 })
-
+acdb_mleader_group_codes = group_code_mapping(acdb_mleader)
 CONTEXT_STR = 'CONTEXT_DATA{'
 LEADER_STR = 'LEADER{'
 LEADER_LINE_STR = 'LEADER_LINE{'
@@ -239,21 +241,19 @@ class MultiLeader(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
-        mleader_subclass = processor.subclasses[2]
-        context = self.extract_context_data(mleader_subclass)
+        tags = processor.subclass_by_index(2)
+        context = self.extract_context_data(tags)
         if context:
             try:
                 self.context = self.load_context(context)
             except const.DXFStructureError:
                 logger.info(
                     f'Context structure error in entity MULTILEADER(#{dxf.handle})')
-        self.arrow_heads = self.load_arrow_heads(mleader_subclass)
-        self.block_attribs = self.load_block_attribs(mleader_subclass)
+        self.arrow_heads = self.load_arrow_heads(tags)
+        self.block_attribs = self.load_block_attribs(tags)
 
-        tags = processor.load_tags_into_namespace(
-            dxf, mleader_subclass[1:], acdb_mleader)
-        if len(tags):
-            processor.log_unprocessed_tags(tags, subclass=acdb_mleader.name)
+        processor.fast_load_dxfattribs(
+            dxf, acdb_mleader_group_codes, subclass=tags, recover=True)
         return dxf
 
     @staticmethod

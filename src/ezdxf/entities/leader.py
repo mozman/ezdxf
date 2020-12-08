@@ -157,7 +157,7 @@ class Leader(DXFGraphic, OverrideMixin):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = Tags(self.load_vertices(processor.subclasses[2]))
+            tags = Tags(self.load_vertices(processor.subclass_by_index(2)))
             processor.fast_load_dxfattribs(
                 dxf, acdb_leader_group_codes, tags, recover=True)
         return dxf
