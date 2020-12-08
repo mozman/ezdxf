@@ -46,7 +46,6 @@ acdb_trace = DefSubclass('AcDbTrace', {
         fixer=RETURN_DEFAULT,
     ),
 })
-
 acdb_trace_group_codes = group_code_mapping(acdb_trace)
 
 
@@ -168,7 +167,6 @@ acdb_face = DefSubclass('AcDbFace', {
     # 8 = Fourth edge is invisible
     'invisible': DXFAttr(70, default=0, optional=True),
 })
-
 acdb_face_group_codes = group_code_mapping(acdb_face)
 
 

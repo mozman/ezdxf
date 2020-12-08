@@ -4,7 +4,9 @@ from typing import TYPE_CHECKING
 import copy
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
-from ezdxf.lldxf.attributes import DXFAttributes, DefSubclass, DXFAttr
+from ezdxf.lldxf.attributes import (
+    DXFAttributes, DefSubclass, DXFAttr, group_code_mapping,
+)
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -121,6 +123,7 @@ acdb_visualstyle = DefSubclass('AcDbVisualStyle', {
     # 176, 1: end of group marker
     # e.g. (291, 0) (70, 2) (62, 7) (420, 16777215) (176, 1) (90, 1) (176, 1)
 })
+acdb_visualstyle_group_codes = group_code_mapping(acdb_visualstyle)
 
 
 # undocumented Xdata in DXF R2018
@@ -143,8 +146,10 @@ class VisualStyle(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            self.acad_xdata = self.store_acad_xdata(processor.subclasses[1])
-            processor.load_dxfattribs_into_namespace(dxf, acdb_visualstyle)
+            tags = processor.subclass_by_index(1)
+            self.acad_xdata = self.store_acad_xdata(tags)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_visualstyle_group_codes, subclass=tags)
         return dxf
 
     @staticmethod

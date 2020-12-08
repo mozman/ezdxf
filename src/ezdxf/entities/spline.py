@@ -7,11 +7,12 @@ from itertools import chain
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
-from ezdxf.lldxf.packedtags import VertexArray
-from ezdxf.math import Vec3, Matrix44, ConstructionEllipse, Z_AXIS, NULLVEC
-from ezdxf.math.bspline import (
+from ezdxf.lldxf.packedtags import VertexArray, Tags
+from ezdxf.math import (
+    Vec3, Matrix44, ConstructionEllipse, Z_AXIS, NULLVEC,
     uniform_knot_vector, open_uniform_knot_vector, BSpline,
 )
 from .dxfentity import base_class, SubclassProcessor
@@ -19,9 +20,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, Vertex, Tags,
-    )
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Vertex
 
 __all__ = ['Spline']
 
@@ -65,6 +64,7 @@ acdb_spline = DefSubclass('AcDbSpline', {
     # 41: Weight (if not 1); with multiple group pairs, they are present if all
     #     are not 1
 })
+acdb_spline_group_codes = group_code_mapping(acdb_spline)
 
 
 class SplineData:
@@ -108,34 +108,40 @@ class Spline(DXFGraphic):
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.find_subclass(acdb_spline.name)
-            # load spline data (fit points, control points, weights, knots) and
-            # remove their tags from subclass:
-            self.load_spline_data(tags)
-            self.remove_invalid_data(tags)
-            processor.load_and_recover_dxfattribs(dxf, acdb_spline)
+            tags = Tags(self.load_spline_data(processor.subclass_by_index(2)))
+            processor.fast_load_dxfattribs(
+                dxf, acdb_spline_group_codes, subclass=tags, recover=True)
         return dxf
 
-    def load_spline_data(self, spline_tags: 'Tags') -> None:
-        self.control_points = (value for code, value in spline_tags if
-                               code == 10)
-        self.fit_points = (value for code, value in spline_tags if code == 11)
-        self.knots = (value for code, value in spline_tags if code == 40)
-        self.weights = (value for code, value in spline_tags if code == 41)
-        spline_tags.remove_tags(codes=REMOVE_CODES)
-
-    @staticmethod
-    def remove_invalid_data(spline_tags: 'Tags') -> None:
-        # The loading function use the regular validator/fixer
-        # infrastructure and I don't want to ignore (0, 0, 0) as tangent values
-        # silently, so I remove invalid start- and end tangent values at the
-        # DXF loadings stage:
-        codes = [
-            code for code, value in spline_tags
-            if code in (12, 13) and NULLVEC.isclose(value)
-        ]
-        if codes:
-            spline_tags.remove_tags(codes=codes)
+    def load_spline_data(self, tags) -> Iterable:
+        """ Load and set spline data (fit points, control points, weights,
+        knots) and remove invalid start- and end tangents.
+        Yields the remaining unprocessed tags.
+        """
+        control_points = []
+        fit_points = []
+        knots = []
+        weights = []
+        for tag in tags:
+            code, value = tag
+            if code == 10:
+                control_points.append(value)
+            elif code == 11:
+                fit_points.append(value)
+            elif code == 40:
+                knots.append(value)
+            elif code == 41:
+                weights.append(value)
+            elif code in (12, 13) and NULLVEC.isclose(value):
+                # Tangent values equal to (0, 0, 0) are invalid and ignored at
+                # the loading stage!
+                pass
+            else:
+                yield tag
+        self.control_points = control_points
+        self.fit_points = fit_points
+        self.knots = knots
+        self.weights = weights
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """

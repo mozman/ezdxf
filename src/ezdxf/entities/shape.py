@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.math import NULLVEC, Z_AXIS
@@ -53,6 +54,7 @@ acdb_shape = DefSubclass('AcDbShape', {
         fixer=RETURN_DEFAULT,
     ),
 })
+acdb_shape_group_codes = group_code_mapping(acdb_shape)
 
 
 @register_entity
@@ -65,7 +67,8 @@ class Shape(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_shape)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_shape_group_codes, subclass=2, recover=True)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
                 elevation_to_z_axis(dxf, ('insert', ))

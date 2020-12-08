@@ -23,7 +23,8 @@ class XType(Enum):
     callback = 4  # callback attribute
 
 
-def group_code_mapping(subclass: DefSubclass) -> Dict[int, str]:
+def group_code_mapping(subclass: DefSubclass, *,
+                       ignore: Iterable[int] = None) -> Dict[int, str]:
     # Unique group codes are stored as group_code <int>: name <str>
     # Duplicate group codes are stored as group_code <int>: [name1, name2, ...] <list>
     # The order of appearance is important, therefore also callback attributes
@@ -43,6 +44,12 @@ def group_code_mapping(subclass: DefSubclass) -> Dict[int, str]:
                 existing_data = [existing_data]
                 mapping[code] = existing_data
             existing_data.append(name)
+
+    if ignore:
+        # Mark these tags as "*IGNORE" to be ignored,
+        # but they are not real callbacks! See POLYLINE for example!
+        for code in ignore:
+            mapping[code] = '*IGNORE'
     return mapping
 
 

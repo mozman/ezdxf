@@ -151,8 +151,10 @@ class Text(DXFGraphic):
         """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(dxf, acdb_text_group_codes,2, recover=True)
-            processor.fast_load_dxfattribs(dxf, acdb_text2_group_codes, 3, recover=True)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_text_group_codes, 2, recover=True)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_text2_group_codes, 3, recover=True)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
                 elevation_to_z_axis(dxf, ('insert', 'align_point'))

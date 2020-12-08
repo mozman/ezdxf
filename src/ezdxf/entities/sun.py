@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007
 from ezdxf.lldxf.attributes import (
-    DXFAttributes, DefSubclass, DXFAttr, RETURN_DEFAULT,
+    DXFAttributes, DefSubclass, DXFAttr, RETURN_DEFAULT, group_code_mapping
 )
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -53,6 +53,7 @@ acdb_sun = DefSubclass('AcDbSun', {
     'shadow_map_size': DXFAttr(71, default=256),
     'shadow_softness': DXFAttr(280, default=1),
 })
+acdb_sun_group_codes = group_code_mapping(acdb_sun)
 
 
 @register_entity
@@ -66,7 +67,7 @@ class Sun(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_sun)
+            processor.fast_load_dxfattribs(dxf, acdb_sun_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -113,3 +114,4 @@ acdb_sunstudy = DefSubclass('AcDbSun', {
     'label_viewports': DXFAttr(294),
     'text_style_id': DXFAttr(343),
 })
+acdb_sunstudy_group_codes = group_code_mapping(acdb_sunstudy)

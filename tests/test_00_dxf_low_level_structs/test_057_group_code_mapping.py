@@ -3,7 +3,7 @@
 
 import pytest
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DefSubclass, group_code_mapping, XType
+    DXFAttr, DefSubclass, group_code_mapping, XType,
 )
 
 acdb_unique = DefSubclass('AcDbUniqueGroupCodes', {
@@ -13,7 +13,6 @@ acdb_unique = DefSubclass('AcDbUniqueGroupCodes', {
     'n4': DXFAttr(4),
     'n5': DXFAttr(5, xtype=XType.callback),
 })
-
 
 acdb_dublicates = DefSubclass('AcDbDuplicateGroupCodes', {
     'n1': DXFAttr(1),
@@ -29,6 +28,14 @@ def test_unique_group_codes():
     m = group_code_mapping(acdb_unique)
     assert len(m) == 5
     assert set(type(v) for v in m.values()) == {str}
+
+
+def test_ignored_group_codes():
+    # These group codes are ignored from logging as unprocessed tags, which
+    # would happen if they are just left out:
+    m = group_code_mapping(acdb_unique, ignore=(1, 2))
+    assert m[1] == '*IGNORE'
+    assert m[2] == '*IGNORE'
 
 
 def test_duplicate_group_codes():

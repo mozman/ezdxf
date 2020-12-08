@@ -528,7 +528,9 @@ class SubclassProcessor:
                         mark_attrib_as_processed(name_)
                         break
             if name:
-                if name[0] != '*':  # do not set callback attributes
+                # Ignore callback attributes and group codes explicit marked
+                # as "*IGNORE":
+                if name[0] != '*':
                     unprotected_set_attrib(
                         name, cast_value(tag.code, tag.value))
             else:
