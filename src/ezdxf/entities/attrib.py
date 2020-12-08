@@ -6,13 +6,14 @@ from ezdxf.lldxf import validator
 from ezdxf.math import NULLVEC
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010
 from ezdxf.lldxf import const
 from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import acdb_entity, elevation_to_z_axis
-from .text import Text, acdb_text
+from .text import Text, acdb_text, acdb_text_group_codes
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -70,7 +71,9 @@ attdef_fields['prompt'] = DXFAttr(
 )
 
 acdb_attdef = DefSubclass('AcDbAttributeDefinition', attdef_fields)
+acdb_attdef_group_codes = group_code_mapping(acdb_attdef)
 acdb_attrib = DefSubclass('AcDbAttribute', attrib_fields)
+acdb_attrib_group_codes = group_code_mapping(acdb_attrib)
 
 # For XRECORD the tag order is important and group codes appear multiple times,
 # therefore this attribute definition needs a special treatment!
@@ -217,9 +220,10 @@ class AttDef(BaseAttrib):
         dxf = super(Text, self).load_dxf_attribs(processor)
         # Do not call Text loader.
         if processor:
-            # Duplicate group code 280 - fast load not possible
-            processor.load_dxfattribs(dxf, acdb_text, recover=True)
-            processor.load_dxfattribs(dxf, acdb_attdef, recover=True)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_text_group_codes, 2, recover=True)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_attdef_group_codes, 3, recover=True)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
@@ -257,9 +261,10 @@ class Attrib(BaseAttrib):
         dxf = super(Text, self).load_dxf_attribs(processor)
         # Do not call Text loader.
         if processor:
-            # Duplicate group code 280 - fast load not possible
-            processor.load_dxfattribs(dxf, acdb_text, recover=True)
-            processor.load_dxfattribs(dxf, acdb_attrib, recover=True)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_text_group_codes, 2, recover=True)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_attrib_group_codes, 3, recover=True)
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:

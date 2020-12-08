@@ -16,8 +16,7 @@ VIRTUAL_TAG = -666
 
 
 class XType(Enum):
-    """ Extended Attribute Types
-    """
+    """ Extended Attribute Types """
     point2d = 1  # 2D points only
     point3d = 2  # 3D points only
     any_point = 3  # 2D or 3D points
@@ -25,12 +24,25 @@ class XType(Enum):
 
 
 def group_code_mapping(subclass: DefSubclass) -> Dict[int, str]:
+    # Unique group codes are stored as group_code <int>: name <str>
+    # Duplicate group codes are stored as group_code <int>: [name1, name2, ...] <list>
+    # The order of appearance is important, therefore even callback attribute
+    # have to be stored, but they should not be loaded into the DXF namespace.
     mapping = dict()
     for name, dxfattrib in subclass.attribs.items():
-        if dxfattrib.code in mapping:
-            raise ValueError(f'duplicated group code: {dxfattrib.code}')
-        if dxfattrib.xtype != XType.callback:
-            mapping[dxfattrib.code] = name
+        if dxfattrib.xtype == XType.callback:
+            # Mark callback attributes for special treatment as invalid
+            # Python name:
+            name = '*' + name
+        code = dxfattrib.code
+        existing_data = mapping.get(code)
+        if existing_data is None:
+            mapping[code] = name
+        else:
+            if isinstance(existing_data, str):
+                existing_data = [existing_data]
+                mapping[code] = existing_data
+            existing_data.append(name)
     return mapping
 
 

@@ -521,22 +521,22 @@ class SubclassProcessor:
                 append_unprocessed_tag(tag)
         return unprocessed_tags
 
-    def fast_load_dxfattribs(self, dxf: DXFNamespace,
-                             group_code_mapping: Dict[int, str],
-                             subclass: Union[int, str, Tags],
-                             *,
-                             recover=False,
-                             log=True) -> Tags:
+    def fast_load_dxfattribs(
+            self, dxf: DXFNamespace,
+            group_code_mapping: Dict[int, Union[str, List]],
+            subclass: Union[int, str, Tags],
+            *,
+            recover=False,
+            log=True) -> Tags:
         """ Load DXF attributes into the DXF namespace and returns the
         unprocessed tags without leading subclass marker(100, AcDb...).
-        This method is fast but can't handle duplicate group codes!
         Bypasses the DXF attribute validity checks.
 
         Args:
             dxf: entity DXF namespace
             group_code_mapping: group code to DXF attribute name mapping,
-                exclude callback attributes!
-            subclass: subclass by index. by name or as Tags()
+                callback attributes have to be marked with a leading "*"
+            subclass: subclass by index, by name or as Tags()
             recover: recover graphic attributes
             log: enable/disable logging of unprocessed tags
 
@@ -555,17 +555,33 @@ class SubclassProcessor:
         if tags is None or len(tags) == 0:
             return unprocessed_tags
 
+        processed_names = set()
         # Localize attributes:
         get_attrib_name = group_code_mapping.get
         append_unprocessed_tag = unprocessed_tags.append
         unprotected_set_attrib = dxf.unprotected_set
+        mark_attrib_as_processed = processed_names.add
 
         # Ignore (100, "AcDb...") or (0, "ENTITY") tag in case of DXF R12
         start = 1 if tags[0].code in (0, 100) else 0
         for tag in tags[start:]:
             name = get_attrib_name(tag.code)
+            if isinstance(name, list):  # process group code duplicates:
+                names = name
+                # If all existing attrib names are used, treat this tag
+                # like an unprocessed tag.
+                name = None
+                # The attribute names are processed in the order of their
+                # definition:
+                for name_ in names:
+                    if name_ not in processed_names:
+                        name = name_
+                        mark_attrib_as_processed(name_)
+                        break
             if name:
-                unprotected_set_attrib(name, cast_value(tag.code, tag.value))
+                if name[0] != '*':  # do not set callback attributes
+                    unprotected_set_attrib(
+                        name, cast_value(tag.code, tag.value))
             else:
                 append_unprocessed_tag(tag)
 
