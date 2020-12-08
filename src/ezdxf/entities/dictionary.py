@@ -9,7 +9,7 @@ from ezdxf.lldxf.const import (
     SUBCLASS_MARKER, DXFKeyError, DXFValueError,
 )
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
 )
 from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.audit import AuditError
@@ -50,7 +50,7 @@ acdb_dictionary = DefSubclass('AcDbDictionary', {
     # this is accepted by AutoCAD but not documented by the DXF reference!
     # ezdxf replaces group code 360 by 350.
 })
-
+acdb_dictionary_group_codes = group_code_mapping(acdb_dictionary)
 KEY_CODE = 3
 VALUE_CODE = 350
 # Some DICTIONARY use group code 360:
@@ -108,7 +108,8 @@ class Dictionary(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs(dxf, acdb_dictionary, log=False)
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_dictionary_group_codes, 1, log=False)
             self.load_dict(tags)
         return dxf
 
@@ -376,6 +377,7 @@ class Dictionary(DXFObject):
 acdb_dict_with_default = DefSubclass('AcDbDictionaryWithDefault', {
     'default': DXFAttr(340),
 })
+acdb_dict_with_default_group_codes = group_code_mapping(acdb_dict_with_default)
 
 
 @factory.register_entity
@@ -402,7 +404,8 @@ class DictionaryWithDefault(Dictionary):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs(dxf, acdb_dict_with_default)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_dict_with_default_group_codes, 2)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -452,6 +455,7 @@ acdb_dict_var = DefSubclass('DictionaryVariables', {
     # Object schema number (currently set to 0)
     'value': DXFAttr(1, default=''),
 })
+acdb_dict_var_group_codes = group_code_mapping(acdb_dict_var)
 
 
 @factory.register_entity
@@ -492,7 +496,7 @@ class DictionaryVar(DXFObject):
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs(dxf, acdb_dict_var)
+            processor.fast_load_dxfattribs(dxf, acdb_dict_var_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

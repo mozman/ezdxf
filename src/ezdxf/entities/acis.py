@@ -2,8 +2,13 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Union
 from contextlib import contextmanager
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFTypeError, DXF2013, DXFStructureError
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, group_code_mapping,
+)
+from ezdxf.lldxf.const import (
+    SUBCLASS_MARKER, DXF2000, DXFTypeError, DXF2013,
+    DXFStructureError,
+)
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.math import Matrix44
 from ezdxf.tools import crypt
@@ -24,6 +29,7 @@ acdb_modeler_geometry = DefSubclass('AcDbModelerGeometry', {
     'flags': DXFAttr(290, dxfversion=DXF2013),
     'uid': DXFAttr(2, dxfversion=DXF2013),
 })
+acdb_modeler_geometry_group_codes = group_code_mapping(acdb_modeler_geometry)
 
 
 # with R2013/AC1027 Modeler Geometry of ACIS data is stored in the ACDSDATA
@@ -78,7 +84,8 @@ class Body(DXFGraphic):
         data as binary data is not supported.
         """
         if self.has_binary_data:
-            raise DXFTypeError('Setting ACIS data not supported for DXF R2013 and later.')
+            raise DXFTypeError(
+                'Setting ACIS data not supported for DXF R2013 and later.')
         else:
             self._acis_data = list(lines)
 
@@ -102,7 +109,8 @@ class Body(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             # TODO: fast loader?
-            processor.load_dxfattribs(dxf, acdb_modeler_geometry, log=False)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_modeler_geometry_group_codes, 2, log=False)
             if not self.has_binary_data:
                 self.load_acis_data(processor.subclasses[2])
         return dxf
@@ -129,6 +137,7 @@ class Body(DXFGraphic):
 
     def export_acis_data(self, tagwriter: 'TagWriter') -> None:
         """ Export ACIS data as DXF tags. (internal API)"""
+
         def cleanup(lines):
             for line in lines:
                 yield line.rstrip().replace('\n', '')
@@ -225,6 +234,7 @@ class Region(Body):
 acdb_3dsolid = DefSubclass('AcDb3dSolid', {
     'history_handle': DXFAttr(350, default='0'),
 })
+acdb_3dsolid_group_codes = group_code_mapping(acdb_3dsolid)
 
 
 @register_entity
@@ -238,8 +248,7 @@ class Solid3d(Body):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            # TODO: fast loader?
-            processor.load_dxfattribs(dxf, acdb_3dsolid)
+            processor.fast_load_dxfattribs(dxf, acdb_3dsolid_group_codes, 3)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -268,6 +277,7 @@ acdb_surface = DefSubclass('AcDbSurface', {
     'u_count': DXFAttr(71),
     'v_count': DXFAttr(72),
 })
+acdb_surface_group_codes = group_code_mapping(acdb_surface)
 
 
 @register_entity
@@ -282,7 +292,7 @@ class Surface(Body):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             # TODO: fast loader?
-            processor.load_dxfattribs(dxf, acdb_surface)
+            processor.fast_load_dxfattribs(dxf, acdb_surface_group_codes, 3)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -324,11 +334,13 @@ acdb_extruded_surface = DefSubclass('AcDbExtrudedSurface', {
     'path_entity_transform_computed': DXFAttr(296, default=0),  # bool
     'reference_vector_for_controlling_twist': DXFAttr(11, xtype=XType.point3d),
 })
+acdb_extruded_surface_group_codes = group_code_mapping(acdb_extruded_surface)
 
 
 @register_entity
 class ExtrudedSurface(Surface):
-    """ DXF EXTRUDEDSURFACE entity - container entity for embedded ACIS data. """
+    """ DXF EXTRUDEDSURFACE entity - container entity for embedded ACIS data.
+    """
     DXFTYPE = 'EXTRUDEDSURFACE'
     DXFATTRIBS = DXFAttributes(
         base_class, acdb_entity, acdb_modeler_geometry, acdb_surface,
@@ -345,8 +357,8 @@ class ExtrudedSurface(Surface):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            # TODO: fast loader?
-            processor.load_dxfattribs(dxf, acdb_extruded_surface, log=False)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_extruded_surface_group_codes, 4, log=False)
             self.load_matrices(processor.subclasses[4])
         return dxf
 
@@ -369,8 +381,10 @@ class ExtrudedSurface(Surface):
             'draft_angle', 'draft_start_distance', 'draft_end_distance',
             'twist_angle', 'scale_factor', 'align_angle',
         ])
-        export_matrix(tagwriter, code=46, matrix=self.sweep_entity_transformation_matrix)
-        export_matrix(tagwriter, code=47, matrix=self.path_entity_transformation_matrix)
+        export_matrix(tagwriter, code=46,
+                      matrix=self.sweep_entity_transformation_matrix)
+        export_matrix(tagwriter, code=47,
+                      matrix=self.path_entity_transformation_matrix)
         self.dxf.export_dxf_attribs(tagwriter, [
             'solid', 'sweep_alignment_flags', 'unknown1', 'align_start', 'bank',
             'base_point_set', 'sweep_entity_transform_computed',
@@ -396,6 +410,7 @@ acdb_lofted_surface = DefSubclass('AcDbLoftedSurface', {
     'ruled_surface': DXFAttr(296, default=0),  # bool
     'virtual_guide': DXFAttr(297, default=0),  # bool
 })
+acdb_lofted_surface_group_codes = group_code_mapping(acdb_lofted_surface)
 
 
 @register_entity
@@ -415,8 +430,8 @@ class LoftedSurface(Surface):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            # TODO: fast loader?
-            processor.load_dxfattribs(dxf, acdb_lofted_surface, log=False)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_lofted_surface_group_codes, 4, log=False)
             self.load_matrices(processor.subclasses[4])
         return dxf
 
@@ -451,11 +466,13 @@ acdb_revolved_surface = DefSubclass('AcDbRevolvedSurface', {
     'solid': DXFAttr(290, default=0),  # bool
     'close_to_axis': DXFAttr(291, default=0),  # bool
 })
+acdb_revolved_surface_group_codes = group_code_mapping(acdb_revolved_surface)
 
 
 @register_entity
 class RevolvedSurface(Surface):
-    """ DXF REVOLVEDSURFACE entity - container entity for embedded ACIS data. """
+    """ DXF REVOLVEDSURFACE entity - container entity for embedded ACIS data.
+    """
     DXFTYPE = 'REVOLVEDSURFACE'
     DXFATTRIBS = DXFAttributes(
         base_class, acdb_entity, acdb_modeler_geometry, acdb_surface,
@@ -470,8 +487,8 @@ class RevolvedSurface(Surface):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            # TODO: fast loader?
-            processor.load_dxfattribs(dxf, acdb_revolved_surface, log=False)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_revolved_surface_group_codes, 4, log=False)
             self.load_matrices(processor.subclasses[4])
         return dxf
 
@@ -535,6 +552,7 @@ acdb_swept_surface = DefSubclass('AcDbSweptSurface', {
     'path_entity_transform_computed': DXFAttr(296, default=0),  # bool
     'reference_vector_for_controlling_twist': DXFAttr(11, xtype=XType.point3d),
 })
+acdb_swept_surface_group_codes = group_code_mapping(acdb_swept_surface)
 
 
 @register_entity
@@ -557,8 +575,8 @@ class SweptSurface(Surface):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            # TODO: fast loader?
-            processor.load_dxfattribs(dxf, acdb_swept_surface, log=False)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_swept_surface_group_codes, 4, log=False)
             self.load_matrices(processor.subclasses[4])
         return dxf
 

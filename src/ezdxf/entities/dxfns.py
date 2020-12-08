@@ -417,57 +417,6 @@ class SubclassProcessor:
             return Tags()
         return self.load_tags_into_namespace(dxf, tags, definitions)
 
-    def load_dxfattribs(self, dxf: DXFNamespace,
-                        definitions: DefSubclass,
-                        subclass: Optional[Union[int, Tags]] = None,
-                        *,
-                        recover=False,
-                        log=True) -> Tags:
-        """ Load DXF attributes from a subclass into the DXF namespace `dxf`
-        and returns the unprocessed tags.
-        This method can handle duplicate group codes!
-        Bypasses the DXF attribute validity checks.
-
-        Args:
-            dxf: entity DXF namespace
-            definitions: DXF attribute definitions
-            subclass: subclass by index or as Tags() or None for using the
-                subclass name from the subclass_definition
-            recover: recover graphic attributes
-            log: enable/disable logging of unprocessed tags
-
-        """
-        if self.r12:
-            tags = self.subclasses[0]
-        else:
-            if subclass is None:
-                tags = self.find_subclass(definitions.name)
-            elif isinstance(subclass, int):
-                tags = self.subclass_by_index(subclass)
-            elif isinstance(subclass, Tags):
-                tags = subclass
-            else:
-                raise ValueError('invalid subclass specifier')
-
-        if tags is None or len(tags) == 0:
-            return Tags()
-
-        unprocessed_tags = self.load_tags_into_namespace(dxf, tags, definitions)
-
-        if self.r12:
-            # R12 has always unprocessed tags, because there are all tags in one
-            # subclass and one subclass definition never covers all tags e.g.
-            # handle is processed in DXFEntity, so it is an unprocessed tag in
-            # AcDbEntity.
-            return unprocessed_tags
-        # Only DXF R13+
-        if recover and len(unprocessed_tags):
-            unprocessed_tags = recover_graphic_attributes(unprocessed_tags, dxf)
-        if len(unprocessed_tags) and log:
-            self.log_unprocessed_tags(
-                tags, subclass=definitions.name, handle=dxf.get('handle'))
-        return unprocessed_tags
-
     @staticmethod
     def load_tags_into_namespace(dxf: DXFNamespace, tags: Tags,
                                  definitions: DefSubclass) -> Tags:
