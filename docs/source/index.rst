@@ -17,6 +17,7 @@ Quick-Info
 - requires at least Python 3.6
 - OS independent
 - additional required packages: `pyparsing <https://pypi.python.org/pypi/pyparsing/>`_
+- optional Cython implementation of some low level math classes
 - MIT-License
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
 - additional read support for DXF versions R13/R14 (upgraded to R2000)

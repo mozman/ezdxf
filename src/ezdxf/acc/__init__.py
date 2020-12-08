@@ -1,6 +1,7 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
 import os
+import sys
 
 # Set environment variable EZDXF_DISABLE_C_EXT to '1' or 'True' to disable
 # the usage of C extensions implemented by Cython.
@@ -18,6 +19,12 @@ import os
 
 _disable = os.environ.get('EZDXF_DISABLE_C_EXT', '0').lower()
 USE_C_EXT = not (_disable in {'1', 'true'})
+
+# C-extensions are disabled for pypy because JIT complied Python code is much
+# faster!
+PYPY = hasattr(sys, 'pypy_version_info')
+if PYPY:
+    USE_C_EXT = False
 
 if USE_C_EXT:
     try:

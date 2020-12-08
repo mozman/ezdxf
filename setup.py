@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Created: 10.03.2011
 # Copyright (c) 2011-2020 Manfred Moitzi
 # License: MIT License
 import os
+import sys
 from setuptools import setup, find_packages
 from setuptools import Extension
 # setuptools docs: https://setuptools.readthedocs.io/en/latest/setuptools.html
@@ -25,6 +25,13 @@ try:
     ]
     commands = {'build_ext': build_ext}
 except ImportError:
+    ext_modules = []
+    commands = {}
+
+PYPY = hasattr(sys, 'pypy_version_info')
+if PYPY:
+    print("C-extensions are disabled for pypy because JIT complied Python code "
+          "is much faster!")
     ext_modules = []
     commands = {}
 

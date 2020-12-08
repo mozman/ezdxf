@@ -53,6 +53,9 @@ Version 0.15b1 - dev
 - NEW `Style` table entry supports extended font data
 - NEW: `Point.virtual_entities()`, yield POINT entities as DXF primitives
 - NEW: `ezdxf.render.point`, support module for `Point.virtual_entities()`
+- NEW: Optional Cython implementation of some low level math classes: 
+  Vec2, Vec3, Matrix44, Bezier4P  
+- CHANGE: Optimized infrastructure for loading DXF attributes 
 - CHANGE: `Hatch.set_pattern_fill()` uses HEADER variable $MEASUREMENT to 
   determine the default scaling of predefined hatch pattern. 
 - CHANGE: fix invalid linetype setup - new linetype scaling like common CAD 

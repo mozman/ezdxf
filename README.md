@@ -5,7 +5,7 @@ ezdxf
 Abstract
 --------
 
-A Python package to create and modify DXF drawings, independent from the DXF
+A Python package to create and modify DXF drawings, independent of the DXF
 version. You can open/save every DXF file without losing any content (except comments),
 Unknown tags in the DXF file will be ignored but preserved for saving. With this behavior
 it is possible to open also DXF drawings that contains data from 3rd party applications.
@@ -20,6 +20,7 @@ Quick-Info
 - tested with CPython & pypy3 on Windows 10 & ubuntu-latest by GitHub Actions
 - additional required packages: [pyparsing](https://pypi.org/project/pyparsing/) and for testing 
   [geomdl](https://github.com/orbingol/NURBS-Python) (aka NURBS-Python)
+- optional Cython implementation of some low level math classes
 - MIT-License
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
 - additional read support for DXF versions R13/R14 (upgraded to R2000)
