@@ -880,6 +880,7 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
 
     'unknown2': DXFAttr(298, optional=True),  # boolean flag ?
 })
+acdb_mleader_style_group_codes = group_code_mapping(acdb_mleader_style)
 
 
 @register_entity
@@ -892,11 +893,8 @@ class MLeaderStyle(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_mleader_style)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_mleader_style.name)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_mleader_style_group_codes, subclass=1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

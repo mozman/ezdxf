@@ -204,19 +204,6 @@ def cls(subclass):
     return TestEntity
 
 
-def test_load_group_code_duplicates(cls, subclass):
-    data = Tags([
-        DXFTag(1, '1'),
-        DXFTag(2, '2'),
-        DXFTag(1, '3'),
-    ])
-    ns = DXFNamespace(entity=cls())
-    SubclassProcessor.load_tags_into_namespace(ns, data, subclass)
-    assert ns.test1 == '1'
-    assert ns.test2 == '2'
-    assert ns.test3 == '3'
-
-
 def load_tags_fast(cls, subclass, data):
     ns = DXFNamespace(entity=cls())
     mapping = group_code_mapping(subclass)
