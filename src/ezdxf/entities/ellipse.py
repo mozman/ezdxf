@@ -8,6 +8,7 @@ from ezdxf.math import (
 )
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from .dxfentity import base_class, SubclassProcessor
@@ -67,7 +68,7 @@ acdb_ellipse = DefSubclass('AcDbEllipse', {
     # End of ellipse, this value is 2*pi for a full ellipse:
     'end_param': DXFAttr(42, default=math.tau),
 })
-
+acdb_ellipse_group_code = group_code_mapping(acdb_ellipse)
 HALF_PI = math.pi / 2.0
 
 
@@ -82,7 +83,8 @@ class Ellipse(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_ellipse)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_ellipse_group_code, 2, recover=True)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
