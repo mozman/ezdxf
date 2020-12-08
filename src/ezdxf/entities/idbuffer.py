@@ -2,7 +2,9 @@
 # License: MIT-License
 from typing import TYPE_CHECKING, List
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFStructureError
-from ezdxf.lldxf.attributes import DXFAttributes, DefSubclass, DXFAttr
+from ezdxf.lldxf.attributes import (
+    DXFAttributes, DefSubclass, DXFAttr, group_code_mapping,
+)
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
@@ -56,6 +58,7 @@ class IDBuffer(DXFObject):
 acdb_id_set = DefSubclass('AcDbIdSet', {
     'flags': DXFAttr(90, default=0),  # not documented by Autodesk
 })
+acdb_id_set_group_codes = group_code_mapping(acdb_id_set)
 acdb_field_list = DefSubclass('AcDbFieldList', {})
 
 
@@ -72,7 +75,8 @@ class FieldList(IDBuffer):
             if len(processor.subclasses) < 3:
                 raise DXFStructureError(
                     f'Missing required subclass in FIELDLIST(#{dxf.handle})')
-            processor.load_dxfattribs_into_namespace(dxf, acdb_id_set)
+            processor.fast_load_dxfattribs(dxf, acdb_id_set_group_codes, 1)
+            # Load field list:
             self.load_handles(processor.subclasses[2])
         return dxf
 
@@ -102,6 +106,7 @@ class LayerFilter(IDBuffer):
             if len(processor.subclasses) < 3:
                 raise DXFStructureError(
                     f'Missing required subclass in LAYER_FILTER(#{dxf.handle})')
+            # Load layer filter:
             self.load_handles(processor.subclasses[2])
         return dxf
 

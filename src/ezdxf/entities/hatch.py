@@ -10,6 +10,7 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.lldxf.const import (
@@ -196,7 +197,7 @@ acdb_hatch = DefSubclass('AcDbHatch', {
     #
     # 470 String (default = LINEAR)
 })
-
+acdb_hatch_group_code = group_code_mapping(acdb_hatch)
 GRADIENT_CODES = {
     450, 451, 452, 453, 460, 461, 462, 463, 470, 421, 63
 }
@@ -264,12 +265,8 @@ class Hatch(DXFGraphic):
             tags = self.load_seeds(tags)
 
             # Load HATCH DXF attributes from remaining tags:
-            processor.load_tags_into_namespace(dxf, tags, acdb_hatch)
-            if len(tags):
-                tags = processor.recover_graphic_attributes(tags, dxf)
-                if len(tags):
-                    processor.log_unprocessed_tags(
-                        tags, subclass=acdb_hatch.name)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_hatch_group_code, subclass=tags, recover=True)
         return dxf
 
     def load_paths(self, tags: Tags) -> Tags:

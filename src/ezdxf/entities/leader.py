@@ -6,6 +6,7 @@ import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
@@ -134,6 +135,7 @@ acdb_leader = DefSubclass('AcDbLeader', {
     # any dimension overrides have been applied to this entity. See Dimension
     # Style Overrides.
 })
+acdb_leader_group_codes = group_code_mapping(acdb_leader)
 
 
 @register_entity
@@ -155,20 +157,18 @@ class Leader(DXFGraphic, OverrideMixin):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_leader)
-            tags = Tags(self.load_vertices(tags))
-            if len(tags):
-                tags = processor.recover_graphic_attributes(tags, dxf)
-                if len(tags):
-                    # 76: Number of vertices in leader (ignored for OPEN)
-                    processor.log_unprocessed_tags(
-                        tags.filter((76,)), subclass=acdb_leader.name)
+            tags = Tags(self.load_vertices(processor.subclasses[2]))
+            processor.fast_load_dxfattribs(
+                dxf, acdb_leader_group_codes, tags, recover=True)
         return dxf
 
     def load_vertices(self, tags: Tags) -> Iterable[DXFTag]:
         for tag in tags:
             if tag.code == 10:
                 self.vertices.append(tag.value)
+            elif tag.code == 76:
+                # Number of vertices in leader (ignored for OPEN)
+                pass
             else:
                 yield tag
 

@@ -8,6 +8,7 @@ import math
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError, DXFStructureError,
@@ -80,7 +81,7 @@ acdb_block_reference = DefSubclass('AcDbBlockReference', {
         fixer=RETURN_DEFAULT,
     ),
 })
-
+acdb_block_reference_group_codes = group_code_mapping(acdb_block_reference)
 NON_ORTHO_MSG = 'INSERT entity can not represent a non-orthogonal target ' \
                 'coordinate system.'
 
@@ -117,10 +118,11 @@ class Insert(LinkedEntities):
         if processor:
             # Always use the 2nd subclass, could be AcDbBlockReference or
             # AcDbMInsertBlock:
-            processor.load_and_recover_dxfattribs(dxf, acdb_block_reference, 2)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_block_reference_group_codes, 2, recover=True)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
-                elevation_to_z_axis(dxf, ('insert', ))
+                elevation_to_z_axis(dxf, ('insert',))
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
