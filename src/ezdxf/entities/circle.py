@@ -10,6 +10,7 @@ from ezdxf.math import (
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -42,6 +43,8 @@ acdb_circle = DefSubclass('AcDbCircle', {
     ),
 })
 
+acdb_circle_group_codes = group_code_mapping(acdb_circle)
+
 
 @register_entity
 class Circle(DXFGraphic):
@@ -53,11 +56,11 @@ class Circle(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_circle)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_circle_group_codes, subclass=2, recover=True)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
-                elevation_to_z_axis(dxf, ('center', ))
-
+                elevation_to_z_axis(dxf, ('center',))
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

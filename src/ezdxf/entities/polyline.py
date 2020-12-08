@@ -7,6 +7,7 @@ from itertools import chain
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.lldxf import const
@@ -80,7 +81,7 @@ acdb_polyline = DefSubclass('AcDbPolylineDummy', {
         fixer=RETURN_DEFAULT,
     ),
 })
-
+acdb_polyline_group_codes = group_code_mapping(acdb_polyline, ignore=(66, ))
 
 # Notes to SEQEND:
 # todo: A loaded entity should have a valid SEQEND, a POLYLINE without vertices
@@ -124,24 +125,9 @@ class Polyline(LinkedEntities):
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-        if processor.r12:
-            processor.load_dxfattribs_into_namespace(
-                dxf, subclass_definition=acdb_polyline, index=0
-            )
-        else:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, subclass_definition=acdb_polyline, index=2
-            )
-            name = processor.subclasses[2][0].value
-            if len(tags):
-                tags = processor.recover_graphic_attributes(tags, dxf)
-                if len(tags):
-                    # do not log group code 66: attribs follow, not required
-                    processor.log_unprocessed_tags(
-                        unprocessed_tags=tags.filter((66,)), subclass=name
-                    )
+        if processor:
+            processor.fast_load_dxfattribs(
+                dxf, acdb_polyline_group_codes, subclass=2, recover=True)
         return dxf
 
     def export_dxf(self, tagwriter: 'TagWriter'):
@@ -940,6 +926,7 @@ acdb_vertex = DefSubclass('AcDbVertex', {  # last subclass index -1
     'vtx3': DXFAttr(74, optional=True),
     'vertex_identifier': DXFAttr(91, optional=True),
 })
+acdb_vertex_group_codes = group_code_mapping(acdb_vertex)
 
 
 @factory.register_entity
@@ -969,12 +956,12 @@ class DXFVertex(DXFGraphic):
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-        # VERTEX can have 3 subclasses if representing a `face record` or
-        # 4 subclasses if representing a vertex location, just the last
-        # subclass contains data:
-        processor.load_and_recover_dxfattribs(dxf, acdb_vertex, index=-1)
+        if processor:
+            # VERTEX can have 3 subclasses if representing a `face record` or
+            # 4 subclasses if representing a vertex location, just the last
+            # subclass contains data:
+            processor.fast_load_dxfattribs(
+                dxf, acdb_vertex_group_codes, subclass=-1, recover=True)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

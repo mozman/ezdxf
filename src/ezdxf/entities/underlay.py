@@ -1,12 +1,14 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union, Tuple, Iterable, List, cast, Optional
+from typing import TYPE_CHECKING, Union, Tuple, Iterable, List, Optional
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFTypeError
 from ezdxf.lldxf import const
+from ezdxf.lldxf.tags import Tags
 from ezdxf.math import NULLVEC, Z_AXIS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -14,7 +16,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Vertex, Drawing, Tags
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Vertex, Drawing
 
 __all__ = [
     'PdfUnderlay', 'DwfUnderlay', 'DgnUnderlay', 'PdfDefinition',
@@ -70,6 +72,7 @@ acdb_underlay = DefSubclass('AcDbUnderlayReference', {
         fixer=validator.fit_into_integer_range(0, 81),
     ),
 })
+acdb_underlay_group_codes = group_code_mapping(acdb_underlay)
 
 
 class Underlay(DXFGraphic):
@@ -90,18 +93,22 @@ class Underlay(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            self.load_boundary_path(processor.subclasses[2])
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_underlay)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_underlay.name)
+            tags = Tags(self.load_boundary_path(processor.subclass_by_index(2)))
+            processor.fast_load_dxfattribs(
+                dxf, acdb_underlay_group_codes, subclass=tags)
             if len(self.boundary_path) < 2:
                 self.dxf = dxf
                 self.reset_boundary_path()
         return dxf
 
-    def load_boundary_path(self, tags: 'Tags'):
-        self._boundary_path = [value for code, value in tags if code == 11]
+    def load_boundary_path(self, tags: 'Tags') -> Iterable:
+        path = []
+        for tag in tags:
+            if tag.code == 11:
+                path.append(tag.value)
+            else:
+                yield tag
+        self._boundary_path = path
 
     def post_load_hook(self, doc: 'Drawing') -> None:
         super().post_load_hook(doc)
@@ -231,6 +238,7 @@ acdb_underlay_def = DefSubclass('AcDbUnderlayDefinition', {
     'name': DXFAttr(2),
     # underlay name - pdf=page number to display; dgn=default; dwf=????
 })
+acdb_underlay_def_group_codes = group_code_mapping(acdb_underlay_def)
 
 
 # (PDF|DWF|DGN)DEFINITION - requires entry in objects table ACAD_(PDF|DWF|DGN)DEFINITIONS,
@@ -245,11 +253,8 @@ class UnderlayDefinition(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_underlay_def)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_underlay_def.name)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_underlay_def_group_codes, subclass=1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

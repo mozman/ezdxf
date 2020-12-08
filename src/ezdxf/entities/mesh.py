@@ -7,7 +7,7 @@ from itertools import chain
 from contextlib import contextmanager
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
 )
 from ezdxf.lldxf.const import (
     SUBCLASS_MARKER, DXF2000, DXFValueError, DXFStructureError,
@@ -63,6 +63,7 @@ acdb_mesh = DefSubclass('AcDbSubDMesh', {
     #     2 = Transparency
     #     3 = Material mapper
 })
+acdb_mesh_group_codes = group_code_mapping(acdb_mesh)
 
 
 class EdgeArray(TagArray):
@@ -197,11 +198,12 @@ class Mesh(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.find_subclass(acdb_mesh.name)
+            tags = processor.subclass_by_index(2)
             # Load mesh data and remove their tags from subclass
             self.load_mesh_data(tags, dxf.handle)
             # Load remaining data into name space
-            processor.load_and_recover_dxfattribs(dxf, acdb_mesh)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_mesh_group_codes, 2, recover=True)
         return dxf
 
     def load_mesh_data(self, mesh_tags: 'Tags', handle: str) -> None:

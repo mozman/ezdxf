@@ -16,6 +16,7 @@ examples/**/*.dxf
 issues/**/*.dxf
 issues/**/*.html
 newctb.ctb
+makefile
 tox.ini
 tox-all.ini
 /profiling/logs/

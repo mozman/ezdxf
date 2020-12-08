@@ -6,7 +6,7 @@ from ezdxf.entities import factory, DXFGraphic, SeqEnd, DXFEntity
 from ezdxf.lldxf import const
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity, TagWriter, EntityDB, Drawing
+    from ezdxf.eztypes import DXFEntity, EntityDB, Drawing
 
 __all__ = ['entity_linker', 'LinkedEntities']
 

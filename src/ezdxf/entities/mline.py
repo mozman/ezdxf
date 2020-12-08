@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional
 from collections import OrderedDict, namedtuple
 import math
 
@@ -8,8 +8,8 @@ from ezdxf.audit import AuditError
 from ezdxf.entities.factory import register_entity
 from ezdxf.lldxf import const, validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, XType,
-    RETURN_DEFAULT,
+    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Vertex, Vec3, UCS
@@ -106,7 +106,7 @@ acdb_mline = DefSubclass('AcDbMline', OrderedDict({
     # 42: Area fill parameters,
     #     repeats based on previous code 75
 }))
-
+acdb_mline_group_codes = group_code_mapping(acdb_mline)
 
 # For information about line- and fill parametrization see comments in class
 # MLineVertex().
@@ -313,7 +313,8 @@ class MLine(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_mline)
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_mline_group_codes, 2, log=False)
             self.load_vertices(tags)
         return dxf
 
@@ -718,7 +719,7 @@ acdb_mline_style = DefSubclass('AcDbMlineStyle', {
     # 6:  Element linetype (string, default = BYLAYER).
     #     Multiple entries can exist; one entry for each element
 })
-
+acdb_mline_style_group_codes = group_code_mapping(acdb_mline_style)
 MLineStyleElement = namedtuple('MLineStyleElement', 'offset color linetype')
 
 
@@ -806,11 +807,10 @@ class MLineStyle(DXFObject):
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_mline_style)
-        self.elements = MLineStyleElements(tags)
+        if processor:
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_mline_style_group_codes, 1, log=False)
+            self.elements = MLineStyleElements(tags)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

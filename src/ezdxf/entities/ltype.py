@@ -1,10 +1,12 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, Union, Iterable, cast, Tuple, Sequence, Optional
+    TYPE_CHECKING, Union, Iterable, cast, Tuple, Sequence, Optional,
 )
 from copy import deepcopy
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, group_code_mapping,
+)
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.tags import Tags
@@ -26,7 +28,7 @@ acdb_linetype = DefSubclass('AcDbLinetypeTableRecord', {
     # 'length': DXFAttr(40),
     # 'items': DXFAttr(73),
 })
-
+acdb_linetype_group_codes = group_code_mapping(acdb_linetype)
 CONTINUOUS_PATTERN = tuple()
 
 
@@ -160,7 +162,7 @@ class Linetype(DXFEntity):
         dxfattribs = dxfattribs or {}
         pattern = dxfattribs.pop('pattern', [0.0])
         length = dxfattribs.pop('length', 0)  # required for complex types
-        ltype: 'LineType' = super().new(handle, owner, dxfattribs, doc)
+        ltype = super().new(handle, owner, dxfattribs, doc)
         ltype._setup_pattern(pattern, length)
         return ltype
 
@@ -168,7 +170,8 @@ class Linetype(DXFEntity):
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_linetype)
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_linetype_group_codes, 2, log=False)
             self.pattern_tags = LinetypePattern(tags)
         return dxf
 

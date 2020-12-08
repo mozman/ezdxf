@@ -3,13 +3,13 @@
 from typing import TYPE_CHECKING
 import logging
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, VIRTUAL_TAG,
+    DXFAttr, DXFAttributes, DefSubclass, VIRTUAL_TAG, group_code_mapping
 )
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXF12, DXF2007, DXF2000
 from ezdxf.lldxf.validator import is_valid_table_name
 from ezdxf.render.arrows import ARROWS
-from . import SubclassProcessor, DXFEntity
+from .dxfentity import SubclassProcessor, DXFEntity, base_class
 from .layer import acdb_symbol_table_record
 from .factory import register_entity
 
@@ -19,11 +19,6 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace
 
 __all__ = ['DimStyle']
-
-base_class = DefSubclass(None, {
-    'handle': DXFAttr(105),
-    'owner': DXFAttr(330),
-})
 
 acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'name': DXFAttr(2, default='Standard', validator=is_valid_table_name),
@@ -168,6 +163,7 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
                       dxfversion=DXF2000),
 
 })
+acdb_dimstyle_group_codes = group_code_mapping(acdb_dimstyle)
 
 EXPORT_MAP_R2007 = [
     'name', 'flags', 'dimscale', 'dimasz', 'dimexo', 'dimdli', 'dimexe',
@@ -228,10 +224,7 @@ class DimStyle(DXFEntity):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimstyle)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_dimstyle.name)
+            processor.fast_load_dxfattribs(dxf, acdb_dimstyle_group_codes, 2)
         return dxf
 
     def post_load_hook(self, doc: 'Drawing') -> None:

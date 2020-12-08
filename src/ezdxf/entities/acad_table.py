@@ -3,7 +3,10 @@
 from typing import TYPE_CHECKING
 import copy
 from ezdxf.math import Vec3
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType,
+    group_code_mapping,
+)
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -16,9 +19,12 @@ if TYPE_CHECKING:
 __all__ = ['ACADTable']
 
 acdb_block_reference = DefSubclass('AcDbBlockReference', {
-    'geometry': DXFAttr(2),  # Block name; an anonymous block begins with a *T value
-    'insert': DXFAttr(10, xtype=XType.point3d, default=Vec3(0, 0, 0)),  # Insertion point
+    'geometry': DXFAttr(2),
+    # Block name; an anonymous block begins with a *T value
+    'insert': DXFAttr(10, xtype=XType.point3d, default=Vec3(0, 0, 0)),
+    # Insertion point
 })
+acdb_block_reference_group_codes = group_code_mapping(acdb_block_reference)
 
 acdb_table = DefSubclass('AcDbTable', {
     'version': DXFAttr(280),  # Table data version number: 0 = 2010
@@ -29,9 +35,12 @@ acdb_table = DefSubclass('AcDbTable', {
     'n_rows': DXFAttr(91),  # Number of rows
     'n_cols': DXFAttr(92),  # Number of columns
     'override_flag': DXFAttr(93),  # Flag for an override
-    'border_color_override_flag': DXFAttr(94),  # Flag for an override of border color
-    'border_lineweight_override_flag': DXFAttr(95),  # Flag for an override of border lineweight
-    'border_visibility_override_flag': DXFAttr(96),  # Flag for an override of border visibility
+    'border_color_override_flag': DXFAttr(94),
+    # Flag for an override of border color
+    'border_lineweight_override_flag': DXFAttr(95),
+    # Flag for an override of border lineweight
+    'border_visibility_override_flag': DXFAttr(96),
+    # Flag for an override of border visibility
     # 141: Row height; this value is repeated, 1 value per row
     # 142: Column height; this value is repeated, 1 value per column
     # for every cell:
@@ -126,13 +135,15 @@ acdb_table = DefSubclass('AcDbTable', {
     # The virtual edge points to the real edge; both edges have the same set of properties, including color, lineweight,
     # and visibility.
 })
+acdb_table_group_codes = group_code_mapping(acdb_table)
 
 
 # todo: implement ACAD_TABLE
 class ACADTable(DXFGraphic):
     """ DXF ACAD_TABLE entity """
     DXFTYPE = 'ACAD_TABLE'
-    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_block_reference, acdb_table)
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_block_reference,
+                               acdb_table)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2007
 
     def __init__(self):
@@ -143,11 +154,14 @@ class ACADTable(DXFGraphic):
         """ Copy data. """
         entity.data = copy.deepcopy(self.data)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(self,
+                         processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_block_reference)
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_table)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_block_reference_group_codes, subclass=2)
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_table_group_codes, subclass=3, log=False)
             self.load_table(tags)
         return dxf
 
@@ -168,14 +182,18 @@ class ACADTable(DXFGraphic):
 
 acdb_table_style = DefSubclass('AcDbTableStyle', {
     'version': DXFAttr(280),  # 0 = 2010
-    'name': DXFAttr(3),  # Table style description (string; 255 characters maximum)
+    'name': DXFAttr(3),
+    # Table style description (string; 255 characters maximum)
     'flow_direction': DXFAttr(7),  # FlowDirection (integer):
     # 0 = Down
     # 1 = Up
     'flags': DXFAttr(7),  # Flags (bit-coded)
-    'horizontal_cell_margin': DXFAttr(40),  # Horizontal cell margin (real; default = 0.06)
-    'vertical_cell_margin': DXFAttr(41),  # Vertical cell margin (real; default = 0.06)
-    'suppress_title': DXFAttr(280),  # Flag for whether the title is suppressed: 0/1 = not suppressed/suppressed
+    'horizontal_cell_margin': DXFAttr(40),
+    # Horizontal cell margin (real; default = 0.06)
+    'vertical_cell_margin': DXFAttr(41),
+    # Vertical cell margin (real; default = 0.06)
+    'suppress_title': DXFAttr(280),
+    # Flag for whether the title is suppressed: 0/1 = not suppressed/suppressed
     'suppress_column_header': DXFAttr(281),
     # Flag for whether the column heading is suppressed: 0/1 = not suppressed/suppressed
     # The following group codes are repeated for every cell in the table
@@ -208,4 +226,5 @@ class TableStyle(DXFObject):
 
 class TableStyleManager(ObjectCollection):
     def __init__(self, doc: 'Drawing'):
-        super().__init__(doc, dict_name='ACAD_TABLESTYLE', object_type='TABLESTYLE')
+        super().__init__(doc, dict_name='ACAD_TABLESTYLE',
+                         object_type='TABLESTYLE')

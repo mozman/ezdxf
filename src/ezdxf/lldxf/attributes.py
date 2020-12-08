@@ -16,12 +16,41 @@ VIRTUAL_TAG = -666
 
 
 class XType(Enum):
-    """ Extended Attribute Types
-    """
+    """ Extended Attribute Types """
     point2d = 1  # 2D points only
     point3d = 2  # 3D points only
     any_point = 3  # 2D or 3D points
     callback = 4  # callback attribute
+
+
+def group_code_mapping(subclass: DefSubclass, *,
+                       ignore: Iterable[int] = None) -> Dict[int, str]:
+    # Unique group codes are stored as group_code <int>: name <str>
+    # Duplicate group codes are stored as group_code <int>: [name1, name2, ...] <list>
+    # The order of appearance is important, therefore also callback attributes
+    # have to be included, but they should not be loaded into the DXF namespace.
+    mapping = dict()
+    for name, dxfattrib in subclass.attribs.items():
+        if dxfattrib.xtype == XType.callback:
+            # Mark callback attributes for special treatment as invalid
+            # Python name:
+            name = '*' + name
+        code = dxfattrib.code
+        existing_data = mapping.get(code)
+        if existing_data is None:
+            mapping[code] = name
+        else:
+            if isinstance(existing_data, str):
+                existing_data = [existing_data]
+                mapping[code] = existing_data
+            existing_data.append(name)
+
+    if ignore:
+        # Mark these tags as "*IGNORE" to be ignored,
+        # but they are not real callbacks! See POLYLINE for example!
+        for code in ignore:
+            mapping[code] = '*IGNORE'
+    return mapping
 
 
 # Unique object as marker

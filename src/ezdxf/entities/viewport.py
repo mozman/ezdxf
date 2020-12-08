@@ -5,12 +5,13 @@ from ezdxf.lldxf import validator
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import (
-    DXF12, SUBCLASS_MARKER, DXFStructureError, DXFInternalEzdxfError,
-    DXFValueError, DXFTableEntryError,
+    DXF12, SUBCLASS_MARKER, DXFStructureError, DXFValueError,
+    DXFTableEntryError,
 )
 from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS
 from ezdxf.tools import set_flag_state
@@ -208,6 +209,7 @@ acdb_viewport = DefSubclass('AcDbViewport', {
     'ref_vp_object_4': DXFAttr(91, dxfversion='AC1021'),
     # unknown meaning, don't ask mozman
 })
+acdb_viewport_group_codes = group_code_mapping(acdb_viewport)
 # Note:
 # The ZOOM XP factor is calculated with the following formula:
 # group_41 / group_45 (or pspace_height / mspace_height).
@@ -221,6 +223,7 @@ class Viewport(DXFGraphic):
     DXFTYPE = 'VIEWPORT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_viewport)
     viewport_id = 2
+
     # Notes to vieport_id:
     # The id of the first viewport has to be 1, which is the definition of
     # paper space. For the following viewports it seems only important, that
@@ -251,7 +254,8 @@ class Viewport(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_viewport)
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_viewport_group_codes, subclass=2, log=False)
             if processor.r12:
                 self.load_xdata_into_dxf_namespace()
             else:

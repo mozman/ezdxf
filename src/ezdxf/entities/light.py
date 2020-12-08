@@ -5,6 +5,7 @@ from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007
 from ezdxf.lldxf.attributes import (
     DXFAttributes, DefSubclass, DXFAttr, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import acdb_entity, DXFGraphic
@@ -83,6 +84,7 @@ acdb_light = DefSubclass('AcDbLight', {
     'shadow_map_size': DXFAttr(91),
     'shadow_map_softness': DXFAttr(280),
 })
+acdb_light_group_codes = group_code_mapping(acdb_light)
 
 
 @register_entity
@@ -96,7 +98,8 @@ class Light(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_light)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_light_group_codes, 2, recover=True)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

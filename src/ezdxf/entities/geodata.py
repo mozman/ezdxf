@@ -9,6 +9,7 @@ from xml.etree import ElementTree
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttributes, DefSubclass, DXFAttr, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.const import (
     SUBCLASS_MARKER, DXFStructureError, DXF2010, DXFTypeError, DXFValueError,
@@ -130,7 +131,7 @@ acdb_geo_data = DefSubclass('AcDbGeoData', {
     # face index 99 repeat, faces_count
 
 })
-
+acdb_geo_data_group_codes = group_code_mapping(acdb_geo_data)
 EPSG_3395 = """<?xml version="1.0" encoding="UTF-16" standalone="no" ?>
 <Dictionary version="1.0" xmlns="http://www.osgeo.org/mapguide/coordinatesystem">
 
@@ -248,7 +249,8 @@ class GeoData(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_geo_data)
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_geo_data_group_codes, 1, log=False)
             tags = self.load_coordinate_system_definition(tags)
             self.load_mesh_data(tags)
         return dxf

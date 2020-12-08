@@ -5,6 +5,7 @@ import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007
 from ezdxf.lldxf.validator import is_valid_vport_name
@@ -146,8 +147,8 @@ acdb_vport = DefSubclass('AcDbViewportTableRecord', {
     'ambient_color_name': DXFAttr(431, dxfversion=DXF2000, optional=True),
     # Hard-pointer handle to sun object:
     'sun_handle': DXFAttr(361, dxfversion=DXF2007, optional=True),
-
 })
+acdb_vport_group_codes = group_code_mapping(acdb_vport)
 
 
 @register_entity
@@ -160,9 +161,7 @@ class VPort(DXFEntity):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_vport)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_vport.name)
+            processor.fast_load_dxfattribs(dxf, acdb_vport_group_codes, subclass=2)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

@@ -213,8 +213,6 @@ Matrix44
 
     .. automethod:: __repr__
 
-    .. automethod:: set
-
     .. automethod:: get_row
 
     .. automethod:: set_row
@@ -264,8 +262,6 @@ Matrix44
     .. automethod:: __mul__(other: Matrix44) -> Matrix44
 
     .. automethod:: __imul__(other: Matrix44) -> Matrix44
-
-    .. automethod:: fast_mul(other: Matrix44) -> Matrix44
 
     .. automethod:: transform
 
@@ -384,12 +380,6 @@ Vec3
     .. automethod:: __rmul__(other: float) -> Vec3
 
     .. automethod:: __truediv__(other: float) -> Vec3
-
-    .. automethod:: __div__(other: float) -> Vec3
-
-    .. automethod:: __rtruediv__(other: float) -> Vec3
-
-    .. automethod:: __rdiv__(other: float) -> Vec3
 
     .. automethod:: dot
 

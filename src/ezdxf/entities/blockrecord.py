@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional
 import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
 )
 from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, DXF2007,
@@ -46,7 +46,7 @@ acdb_blockrec = DefSubclass('AcDbBlockTableRecord', {
                      ),
     # 310: Binary data for bitmap preview (optional) - removed (ignored) by ezdxf
 })
-
+acdb_blockrec_group_codes = group_code_mapping(acdb_blockrec)
 
 # optional XDATA for all DXF versions
 # 1000: "ACAD"
@@ -97,11 +97,7 @@ class BlockRecord(DXFEntity):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            # Do not use load_and_recover_dxfattribs(), not a DXFGraphic entity
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_blockrec)
-            if len(tags) and False:  # deliberately disabled
-                processor.log_unprocessed_tags(tags,
-                                               subclass=acdb_blockrec.name)
+            processor.fast_load_dxfattribs(dxf, acdb_blockrec_group_codes, 2)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

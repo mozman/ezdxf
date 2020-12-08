@@ -6,6 +6,7 @@ import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import (
     DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007, DXF2004,
@@ -165,6 +166,7 @@ acdb_dimension = DefSubclass('AcDbDimension', {
         fixer=RETURN_DEFAULT,
     ),
 })
+acdb_dimension_group_codes = group_code_mapping(acdb_dimension)
 
 acdb_dimension_dummy = DefSubclass('AcDbDimensionDummy', {
     # Definition point for linear and angular dimensions (in WCS)
@@ -195,6 +197,7 @@ acdb_dimension_dummy = DefSubclass('AcDbDimensionDummy', {
     # 'text_midpoint' (11,21,31) specifies the midpoint of the dimension text.
     'defpoint5': DXFAttr(16, xtype=XType.point3d, default=NULLVEC),
 })
+acdb_dimension_dummy_group_codes = group_code_mapping(acdb_dimension_dummy)
 
 
 # noinspection PyUnresolvedReferences
@@ -455,8 +458,10 @@ class Dimension(DXFGraphic, OverrideMixin):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_dimension)
-            processor.load_and_recover_dxfattribs(dxf, acdb_dimension_dummy, 3)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_dimension_group_codes, 2, recover=True)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_dimension_dummy_group_codes, 3, log=False)
             # Ignore possible 5. subclass AcDbRotatedDimension, which has no
             # content.
         return dxf
@@ -675,6 +680,7 @@ acdb_arc_dimension = DefSubclass('AcDbArcDimension', {
     'leader_point1': DXFAttr(16, xtype=XType.point3d, default=NULLVEC),
     'leader_point2': DXFAttr(17, xtype=XType.point3d, default=NULLVEC),
 })
+acdb_arc_dimension_group_codes = group_code_mapping(acdb_arc_dimension)
 
 
 @register_entity
@@ -690,8 +696,10 @@ class ArcDimension(Dimension):
         # Skip Dimension loader:
         dxf = super(Dimension, self).load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_dimension)
-            processor.load_and_recover_dxfattribs(dxf, acdb_arc_dimension, 3)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_dimension_group_codes, 2, recover=True)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_arc_dimension_group_codes, 3, recover=True)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -737,6 +745,8 @@ acdb_radial_dimension_large = DefSubclass('AcDbRadialDimensionLarge', {
     'jog_point': DXFAttr(15, xtype=XType.point3d, default=NULLVEC),
     'unknown2': DXFAttr(40),
 })
+acdb_radial_dimension_large_group_codes = group_code_mapping(
+    acdb_radial_dimension_large)
 
 
 # Undocumented DXF entity - OpenDesignAlliance DWG Specification:
@@ -754,9 +764,10 @@ class RadialDimensionLarge(Dimension):
         # Skip Dimension loader:
         dxf = super(Dimension, self).load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_dimension)
-            processor.load_and_recover_dxfattribs(
-                dxf, acdb_radial_dimension_large, 3)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_dimension_group_codes, 2, recover=True)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_radial_dimension_large_group_codes, 3, recover=True)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

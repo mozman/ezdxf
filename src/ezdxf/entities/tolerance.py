@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from ezdxf.math import NULLVEC, Z_AXIS, X_AXIS
@@ -40,6 +41,7 @@ acdb_tolerance = DefSubclass('AcDbFcf', {
     ),
 
 })
+acdb_tolerance_group_codes = group_code_mapping(acdb_tolerance)
 
 
 @register_entity
@@ -53,7 +55,8 @@ class Tolerance(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_tolerance)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_tolerance_group_codes, subclass=2, recover=True)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

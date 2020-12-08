@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.math import Matrix44, Z_AXIS, NULLVEC, Vec3
@@ -45,6 +46,7 @@ acdb_trace = DefSubclass('AcDbTrace', {
         fixer=RETURN_DEFAULT,
     ),
 })
+acdb_trace_group_codes = group_code_mapping(acdb_trace)
 
 
 class _Base(DXFGraphic):
@@ -66,7 +68,8 @@ class Solid(_Base):
         """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_trace)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_trace_group_codes, subclass=2, recover=True)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
                 elevation_to_z_axis(dxf, VERTEXNAMES)
@@ -164,6 +167,7 @@ acdb_face = DefSubclass('AcDbFace', {
     # 8 = Fourth edge is invisible
     'invisible': DXFAttr(70, default=0, optional=True),
 })
+acdb_face_group_codes = group_code_mapping(acdb_face)
 
 
 @register_entity
@@ -189,7 +193,8 @@ class Face3d(_Base):
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_face)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_face_group_codes, subclass=2, recover=True)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

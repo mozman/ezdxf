@@ -390,27 +390,26 @@ def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
 
     """
     line = 1
+    readline = stream.readline
     while True:
-        try:
-            code = stream.readline()
-            value = stream.readline()
-        except EOFError:
-            # EOFError indicates a DXFStructureError, but should be handled
-            # in top layers.
-            return
-
-        # ByteIO(): empty strings indicates EOF
-        if code and value:
+        code = readline()
+        # ByteIO(): empty strings indicates EOF - does not raise an exception
+        if code:
             try:
                 code = int(code)
             except ValueError:
-                code = code.decode(const.DEFAULT_ENCODING)
+                code = code.decode(errors='ignore')
                 raise const.DXFStructureError(
                     f'Invalid group code "{code}" at line {line}.')
-            else:
-                if code != 999:
-                    yield DXFTag(code, value.rstrip(b'\r\n'))
-                line += 2
+        else:
+            return
+
+        value = readline()
+        # ByteIO(): empty strings indicates EOF
+        if value:
+            if code != 999:
+                yield DXFTag(code, value.rstrip(b'\r\n'))
+            line += 2
         else:
             return
 
@@ -432,27 +431,27 @@ def synced_bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
     """
     code = 999
     upper_boundary = MAX_GROUP_CODE + 1
+    readline = stream.readline
     while True:
         seeking_valid_group_code = True
-        try:
-            while seeking_valid_group_code:
-                code = stream.readline()
-                if code:
-                    try:
-                        code = int(code)
-                    except ValueError:
-                        pass
-                    else:
-                        if 0 <= code < upper_boundary:
-                            seeking_valid_group_code = False
+        while seeking_valid_group_code:
+            code = readline()
+            if code:
+                try:
+                    code = int(code)
+                except ValueError:
+                    pass
                 else:
-                    return  # total empty result is EOF
-            value = stream.readline()
-        except EOFError:
-            return
-
-        if code != 999:
-            yield DXFTag(code, value.rstrip(b'\r\n'))
+                    if 0 <= code < upper_boundary:
+                        seeking_valid_group_code = False
+            else:
+                return  # empty string is EOF
+        value = readline()
+        if value:
+            if code != 999:
+                yield DXFTag(code, value.rstrip(b'\r\n'))
+        else:
+            return  # empty string is EOF
 
 
 DWGCODEPAGE = b'$DWGCODEPAGE'

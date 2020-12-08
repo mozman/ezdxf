@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 import logging
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.lldxf import validator
@@ -34,6 +35,7 @@ acdb_ucs = DefSubclass('AcDbUCSTableRecord', {
         fixer=RETURN_DEFAULT,
     ),
 })
+acdb_ucs_group_codes = group_code_mapping(acdb_ucs)
 
 
 @register_entity
@@ -46,9 +48,8 @@ class UCSTable(DXFEntity):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_ucs)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_ucs.name)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_ucs_group_codes, subclass=2)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

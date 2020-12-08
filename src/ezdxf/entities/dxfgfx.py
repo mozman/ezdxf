@@ -5,7 +5,7 @@ from ezdxf.entities import factory
 from ezdxf import options
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping,
 )
 from ezdxf import colors as clr
 from ezdxf.lldxf.const import (
@@ -102,6 +102,7 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # 310: Proxy entity graphics data (multiple lines; 256 characters max. per
     # line) (optional), compiled by TagCompiler() to a DXFBinaryTag() objects
 })
+acdb_entity_group_codes = group_code_mapping(acdb_entity)
 
 
 def elevation_to_z_axis(dxf: 'DXFNamespace', names: Iterable[str]):
@@ -142,8 +143,8 @@ class DXFGraphic(DXFEntity):
     DEFAULT_ATTRIBS = {'layer': '0'}
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """ Adds subclass processing for 'AcDbEntity', requires previous base
         class processing by parent class.
 
@@ -167,14 +168,7 @@ class DXFGraphic(DXFEntity):
                 processor.subclasses[0 if r12 else 1],
                 length_code=code,
             )
-
-        # Load common AcDbEntity attributes into dxf namespace
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_entity,
-                                                        index=1)
-        if len(tags) and not r12:
-            processor.log_unprocessed_tags(
-                tags, subclass=acdb_entity.name, handle=dxf.get('handle')
-            )
+        processor.fast_load_dxfattribs(dxf, acdb_entity_group_codes, 1)
         return dxf
 
     def post_new_hook(self):

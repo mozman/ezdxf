@@ -1,9 +1,14 @@
 # Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 from typing import Union, Sequence
-from .vector import (
-    Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
-)
+
+# Import base types as C-extensions if available else as pure Python
+# implementations:
+from ._ctypes import (
+        Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
+        Matrix44, Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_from_arc,
+        cubic_bezier_from_ellipse,
+    )
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d,
     distance_point_line_2d, is_point_on_line_2d, is_point_in_polygon_2d,
@@ -15,7 +20,6 @@ from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState,
     intersection_ray_ray_3d, normal_vector_3p, distance_point_line_3d,
 )
-from .matrix44 import Matrix44
 from .linalg import (
     Matrix, LUDecomposition, gauss_jordan_inverse, gauss_jordan_solver,
     gauss_vector_solver, gauss_matrix_solver, freeze_matrix,
@@ -31,8 +35,7 @@ from .bspline import (
 )
 from .bezier import Bezier
 from .bezier4p import (
-    Bezier4P, cubic_bezier_from_arc, cubic_bezier_from_ellipse,
-    cubic_bezier_interpolation,
+    cubic_bezier_interpolation, tangents_cubic_bezier_interpolation
 )
 from .surfaces import BezierSurface
 from .eulerspiral import EulerSpiral

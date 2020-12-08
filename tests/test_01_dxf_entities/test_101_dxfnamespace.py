@@ -3,12 +3,18 @@
 import pytest
 from copy import deepcopy
 from ezdxf.math import Vec3
-from ezdxf.entities.dxfentity import base_class, DXFAttributes, DXFNamespace, SubclassProcessor
+from ezdxf.entities.dxfentity import (
+    base_class, DXFAttributes, DXFNamespace, SubclassProcessor
+)
+from ezdxf.lldxf.attributes import (
+    group_code_mapping, DefSubclass, DXFAttr, XType
+)
 from ezdxf.entities.dxfgfx import acdb_entity
 from ezdxf.entities.line import acdb_line
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXFAttributeError
 from ezdxf.lldxf.tagwriter import TagCollector
+from ezdxf.lldxf.tags import Tags, DXFTag
 
 
 class DXFEntity:
@@ -180,28 +186,72 @@ def test_dxf_export_two_attribute(entity, processor):
     assert tagwriter.tags[1] == (330, 'ABBA')
 
 
-def test_load_doublettes():
-    from ezdxf.lldxf.attributes import DefSubclass, DXFAttr
-    from ezdxf.lldxf.tags import Tags, DXFTag
-    subclass = DefSubclass('AcDbTest', {
+@pytest.fixture
+def subclass():
+    return DefSubclass('AcDbTest', {
         'test1': DXFAttr(1),
         'test2': DXFAttr(2),
-        'test3': DXFAttr(1),  # same group code for different attribute
+        'test3': DXFAttr(1),  # duplicate group code
+        'callback': DXFAttr(3, xtype=XType.callback),
+        'none_callback': DXFAttr(3),  # duplicate group code
     })
 
+
+@pytest.fixture
+def cls(subclass):
     class TestEntity(DXFEntity):
         DXFATTRIBS = DXFAttributes(subclass)
+    return TestEntity
 
+
+def load_tags_fast(cls, subclass, data):
+    ns = DXFNamespace(entity=cls())
+    mapping = group_code_mapping(subclass)
+    proc = SubclassProcessor(ExtendedTags(tags=data))
+    unprocessed_tags = proc.fast_load_dxfattribs(ns, mapping, 0)
+    return ns, unprocessed_tags
+
+
+def test_if_fast_load_handles_duplicate_group_codes(cls, subclass):
     data = Tags([
-        DXFTag(1, '1'),
+        DXFTag(0, 'ENTITY'),  # First subclass tag should be ignored
+        DXFTag(1, '1'),  # duplicate group code
         DXFTag(2, '2'),
-        DXFTag(1, '3'),
+        DXFTag(1, '3'),  # duplicate group code
+        DXFTag(7, 'unprocessed tag'),
     ])
-    ns = DXFNamespace(entity=TestEntity())
-    SubclassProcessor.load_tags_into_namespace(ns, data, subclass)
+    ns, unprocessed_tags = load_tags_fast(cls, subclass, data)
     assert ns.test1 == '1'
     assert ns.test2 == '2'
     assert ns.test3 == '3'
+    assert len(unprocessed_tags) == 1
+    assert unprocessed_tags[0] == (7, 'unprocessed tag')
+
+
+def test_if_fast_load_handles_callback_group_codes(cls, subclass):
+    data = Tags([
+        DXFTag(0, 'ENTITY'),  # First subclass tag should be ignored
+        DXFTag(3, 'X'),  # callback value
+        DXFTag(3, 'Y'),  # none callback value
+    ])
+    ns, unprocessed_tags = load_tags_fast(cls, subclass, data)
+    assert ns.none_callback == 'Y'
+    assert ns.hasattr('callback') is False
+
+
+def test_if_fast_load_handles_unprocessed_duplicate_group_codes(cls, subclass):
+    data = Tags([
+        DXFTag(0, 'ENTITY'),  # First subclass tag should be ignored
+        DXFTag(1, '1'),  # duplicate group code
+        DXFTag(1, '3'),  # duplicate group code
+        DXFTag(1, '5'),  # duplicate group code, but without an attribute definition
+    ])
+    ns, unprocessed_tags = load_tags_fast(cls, subclass, data)
+    assert ns.test1 == '1'
+    assert ns.test3 == '3'
+    # only two group code 1 attributes are defined:
+    assert len(unprocessed_tags) == 1
+    assert unprocessed_tags[0] == (1, '5')
 
 
 TEST_1 = """0

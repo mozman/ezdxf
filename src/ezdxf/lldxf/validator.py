@@ -18,7 +18,7 @@ from .const import (
 from .tagger import ascii_tags_loader
 from .types import is_embedded_object_marker, DXFTag, NONE_TAG
 from ezdxf.tools.codepage import toencoding
-from ezdxf.math.vector import NULLVEC
+from ezdxf.math import NULLVEC
 
 logger = logging.getLogger('ezdxf')
 

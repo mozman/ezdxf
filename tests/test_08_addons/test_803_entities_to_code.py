@@ -286,9 +286,9 @@ def test_leader_to_code():
         'color': '7',
     })
     entity.set_vertices([
-        (1, 2, 0, 0, 0),
-        (4, 3, 0, 0, 0),
-        (7, 8, 0, 0, 0),
+        (1, 2, 0),
+        (4, 3, 0),
+        (7, 8, 0),
     ])
     new_entity = translate_to_code_and_execute(entity)
     assert new_entity.dxf.color == entity.dxf.color

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional, Tuple
 import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
 )
 from ezdxf import colors as clr
 from ezdxf.lldxf.const import (
@@ -83,7 +83,8 @@ acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
     'unknown1': DXFAttr(348, dxfversion=DXF2007, optional=True),
 
 })
-
+acdb_layer_table_record_group_codes = group_code_mapping(
+    acdb_layer_table_record)
 AcAecLayerStandard = "AcAecLayerStandard"
 AcCmTransparency = "AcCmTransparency"
 
@@ -103,14 +104,9 @@ class Layer(DXFEntity):
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        tags = processor.load_dxfattribs_into_namespace(
-            dxf, acdb_layer_table_record)
-        if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(
-                tags, subclass=acdb_layer_table_record.name)
+        if processor:
+            processor.fast_load_dxfattribs(
+                dxf, acdb_layer_table_record_group_codes, 2)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
