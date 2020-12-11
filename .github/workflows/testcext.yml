@@ -23,7 +23,6 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # This are just testing requirements:
         python -m pip install pytest pyparsing geomdl cython
     - name: Install with C-extensions
       run: |

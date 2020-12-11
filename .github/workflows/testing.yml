@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # exclude cython to test the pure Python verion
+        # Excluding Cython to test the pure Python version.
         python -m pip install pytest pyparsing geomdl
     - name: Install without C-extensions
       run: |
