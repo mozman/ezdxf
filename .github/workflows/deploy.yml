@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: build and upload manylinux wheels
-        uses:  Niraj-Kamdar/manylinux-wheel-builder@master
+        uses:  mozman/manylinux-wheel-builder@master
         with:
           python-versions: "3.*"
         # if true then github actions won't stop even if build for this job fails
@@ -59,7 +59,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: build wheel
         run: |
-          pip install wheel
+          pip install wheel cython
           python setup.py bdist_wheel
       - name: upload wheel
         run: |
