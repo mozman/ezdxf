@@ -1,0 +1,68 @@
+name: PyPI deployer
+on:
+  push:
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+jobs:
+  # Build and deploy manylinux wheel
+  Linux-build:
+    runs-on: ubuntu-latest
+    env:
+      TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+      TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: build and upload manylinux wheels
+        uses:  Niraj-Kamdar/manylinux-wheel-builder@master
+        with:
+          python-versions: "3.*"
+        # if true then github actions won't stop even if build for this job fails
+        continue-on-error: true
+
+  # deploy source distribution
+  Source-dist:
+    runs-on: windows-latest
+    env:
+      TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+      TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: create source distribution
+        run: python setup.py sdist
+      - name: upload source distribution
+        run: |
+          pip install twine
+          twine upload dist/*
+        continue-on-error: true
+
+  # Build and deploy wheels for macos and windows using setup-python action.
+  # This has nothing to do with manylinux-wheel-builder.
+  # I have just put them for the purpose of completion.
+  Matrix-build:
+    runs-on: ${{ matrix.os }}
+    env:
+      TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+      TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+        python-version: [3.6, 3.7, 3.8]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: build wheel
+        run: |
+          pip install wheel
+          python setup.py bdist_wheel
+      - name: upload wheel
+        run: |
+          pip install twine
+          twine upload dist/*
+        continue-on-error: true
