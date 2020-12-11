@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.6', '3.7', '3.8']
+        python-version: ['3.8']
 
     steps:
     - uses: actions/checkout@v2
@@ -32,4 +32,4 @@ jobs:
         python setup.py build_ext -i
     - name: Test with C-extensions
       run: |
-        pytest tests integration_tests
+        python -m pytest tests integration_tests
