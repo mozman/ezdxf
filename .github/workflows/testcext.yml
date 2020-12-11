@@ -29,7 +29,7 @@ jobs:
         python -m pip install pytest pyparsing geomdl cython
     - name: Build C-extensions
       run: |
-        python setup.py
+        python setup.py install
     - name: Test with C-extensions
       run: |
         python -m pytest tests integration_tests
