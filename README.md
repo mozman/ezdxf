@@ -125,11 +125,9 @@ http://github.com/mozman/ezdxf.git
 Feedback
 --------
 
-Questions and feedback at __Google Groups__:
+Questions and feedback at __GitHub Discussions__:
 
-https://groups.google.com/d/forum/python-ezdxf
-
-python-ezdxf@googlegroups.com
+https://github.com/mozman/ezdxf/discussions
 
 Questions at __Stack Overflow__:
 
@@ -142,9 +140,8 @@ http://github.com/mozman/ezdxf/issues
 Contact
 -------
 
-Please __always__ post questions at the [forum](https://groups.google.com/d/forum/python-ezdxf) 
-or [stack overflow](https://stackoverflow.com/) or open an 
-[issue](https://github.com/mozman/ezdxf/issues) at github to make answers 
+Please __always__ post questions at the [forum](https://github.com/mozman/ezdxf/discussions) 
+or [stack overflow](https://stackoverflow.com/) to make answers 
 available to other users as well. 
 
 ezdxf@mozman.at
