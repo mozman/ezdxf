@@ -59,11 +59,9 @@ DXF Audit & Repair
     - arrows exist; repair: set to '' = default open filled arrow
     - text style exist; repair: set to 'Standard'
 
-Cython Code (>1.0)
-------------------
+Cython Code
+-----------
 
 - optional for install, testing and development
-- profiling required!!!
-- optimized Vec2(), Vec3() and Matrix44() classes
 - optimized math & construction tools
-- optimized tag loader
+- tag loader: creates mostly Python structures, no speed gain by using Cython  
