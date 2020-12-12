@@ -1,6 +1,3 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
 name: Test without C-extensions
 
 on:
@@ -15,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, pypy3]
+        python-version: [3.6, 3.7, 3.8, 3.9, pypy3]
 
     steps:
     - uses: actions/checkout@v2
@@ -23,7 +20,14 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Tox
-      run: pip install tox
-    - name: Run Tox
-      run: tox -c tox-template.ini -e py  # Run tox using the version of Python in `PATH`
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Excluding Cython to test the pure Python version.
+        python -m pip install pytest pyparsing geomdl
+    - name: Install without C-extensions
+      run: |
+        python setup.py install
+    - name: Test without C-extensions
+      run: |
+        python -m pytest tests integration_tests
