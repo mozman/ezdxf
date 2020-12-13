@@ -5,6 +5,7 @@
 # is located in test suite 602.
 
 import pytest
+import array
 
 cyvec = pytest.importorskip('ezdxf.acc.vector')
 Vec3 = cyvec.Vec3
@@ -98,6 +99,38 @@ def test_lower_than():
 def test_does_not_support_slicing():
     with pytest.raises(TypeError):
         _ = Vec3(2, 1)[:]
+
+
+def test_empty_array():
+    a = Vec3.array([])
+    assert a.typecode == 'd'
+    assert len(a) == 0
+    assert len(Vec3.array([], close=True)) == 0
+
+
+def test_one_item_array():
+    a = Vec3.array([(7, 8, 9)])
+    assert len(a) == 3
+    assert a == array.array('d', (7, 8, 9))
+
+
+def test_closed_one_item_array():
+    a = Vec3.array([(7, 8, 9)], close=True)
+    assert len(a) == 3
+    assert a == array.array('d', (7, 8, 9))
+
+
+def test_two_items_array():
+    a = Vec3.array([(7, 8, 9), (1, 2, 3)])
+    assert len(a) == 6
+    assert a == array.array('d', (7, 8, 9, 1, 2, 3))
+
+
+def test_closed_two_items_array():
+    a = Vec3.array([(7, 8, 9), (1, 2, 3)], close=True)
+    assert len(a) == 9
+    assert a == array.array('d', (7, 8, 9, 1, 2, 3, 7, 8, 9))
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

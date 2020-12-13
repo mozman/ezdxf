@@ -4,6 +4,8 @@
 from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple
 from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod
 import random
+from cpython cimport array
+import array
 
 DEF ABS_TOL = 1e-12
 DEF REL_TOL = 1e-9
@@ -17,7 +19,6 @@ cdef bint isclose(double a, double b, double abs_tol):
     return diff <= fabs(REL_TOL * b) or \
            diff <= fabs(REL_TOL * a) or \
            diff <= abs_tol
-
 
 cdef double RAD2DEG = 180.0 / M_PI
 cdef double DEG2RAD = M_PI / 180.0
@@ -33,7 +34,6 @@ cdef double normalize_rad_angle(double a):
 def _normalize_rad_angle(double angle):
     # just for testing
     return normalize_rad_angle(angle)
-
 
 cdef double normalize_deg_angle(double a):
     # Emulate the Python behavior of (a % 360)
@@ -120,6 +120,30 @@ cdef class Vec2:
     def from_deg_angle(double angle, double length = 1.0) -> 'Vec2':
         return v2_from_angle(angle * DEG2RAD, length)
 
+    @staticmethod
+    def array(items: Iterable['Vertex'], close=False) -> array.array:
+        """ Return `items` as a contiguous array [x0, y0, x1, y1, ...].
+
+        Returns an array.array in row major or Fortran order.
+
+        """
+        cdef Vec2 start, end
+        cdef bint set_start = 1
+        cdef Py_ssize_t size = 0
+        a = array.array('d')
+
+        for item in items:
+            size += 1
+            end = Vec2(item)
+            if set_start:
+                start = end
+                set_start = 0
+            a.extend((end.x, end.y))
+
+        if size > 1 and close and not v2_isclose(start, end, ABS_TOL):
+            a.extend((start.x, start.y))
+        return a
+
     def __str__(self) -> str:
         return f'({self.x}, {self.y})'
 
@@ -148,6 +172,10 @@ cdef class Vec2:
             return self.y
         else:
             raise IndexError(f'invalid index {index}')
+
+    def __iter__(self) -> Iterable[float]:
+        yield self.x
+        yield self.y
 
     def __abs__(self) -> float:
         return hypot(self.x, self.y)
@@ -289,7 +317,6 @@ cdef class Vec2:
     cdef CppVec3 to_cpp_vec3(self):
         return CppVec3(self.x, self.y, 0.0)
 
-
 cdef Vec2 v2_add(Vec2 a, Vec2 b):
     res = Vec2()
     res.x = a.x + b.x
@@ -362,7 +389,6 @@ cdef Vec2 v2_project(Vec2 a, Vec2 b):
 cdef bint v2_isclose(Vec2 a, Vec2 b, double abs_tol):
     return isclose(a.x, b.x, abs_tol) and \
            isclose(a.y, b.y, abs_tol)
-
 
 cdef Vec2 v2_from_cpp_vec3(CppVec3 c):
     cdef Vec2 v = Vec2()
@@ -482,6 +508,30 @@ cdef class Vec3:
         res.y = uniform(-1, 1)
         res.z = uniform(-1, 1)
         return v3_normalize(res, length)
+
+    @staticmethod
+    def array(items: Iterable['Vertex'], close=False) -> array.array:
+        """ Return `items` as a contiguous array [x0, y0, z0, x1, y1, z1, ...].
+
+        Returns an array.array in row major or Fortran order.
+
+        """
+        cdef Vec3 start, end
+        cdef bint set_start = 1
+        cdef Py_ssize_t size = 0
+        a = array.array('d')
+
+        for item in items:
+            size += 1
+            end = Vec3(item)
+            if set_start:
+                start = end
+                set_start = 0
+            a.extend((end.x, end.y, end.z))
+
+        if size > 1 and close and not v3_isclose(start, end, ABS_TOL):
+            a.extend((start.x, start.y, start.z))
+        return a
 
     def __str__(self) -> str:
         return f'({self.x}, {self.y}, {self.z})'
@@ -695,7 +745,6 @@ cdef class Vec3:
 
     cdef CppVec3 to_cpp_vec3(self):
         return CppVec3(self.x, self.y, self.z)
-
 
 X_AXIS = Vec3(1, 0, 0)
 Y_AXIS = Vec3(0, 1, 0)
