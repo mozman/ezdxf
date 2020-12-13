@@ -109,36 +109,5 @@ def test_normalize_rad_angle(angle):
     assert cyvec._normalize_rad_angle(angle) == angle % math.tau
 
 
-def test_empty_array():
-    a = Vec2.array([])
-    assert a.typecode == 'd'
-    assert len(a) == 0
-    assert len(Vec2.array([], close=True)) == 0
-
-
-def test_one_item_array():
-    a = Vec2.array([(7, 8)])
-    assert len(a) == 2
-    assert a == array.array('d', (7, 8))
-
-
-def test_closed_one_item_array():
-    a = Vec2.array([(7, 8)], close=True)
-    assert len(a) == 2
-    assert a == array.array('d', (7, 8))
-
-
-def test_two_items_array():
-    a = Vec2.array([(7, 8), (1, 2)])
-    assert len(a) == 4
-    assert a == array.array('d', (7, 8, 1, 2))
-
-
-def test_closed_two_items_array():
-    a = Vec2.array([(7, 8), (1, 2)], close=True)
-    assert len(a) == 6
-    assert a == array.array('d', (7, 8, 1, 2, 7, 8))
-
-
 if __name__ == '__main__':
     pytest.main([__file__])
