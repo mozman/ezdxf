@@ -21,7 +21,7 @@ def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
         ValueError: less than 3 vertices
 
     """
-    cdef list _vertices = Vec2.list(vertices)
+    cdef list _vertices = [Vec2(v) for v in vertices]
     if len(_vertices) < 3:
         raise ValueError('At least 3 vertices required.')
 
