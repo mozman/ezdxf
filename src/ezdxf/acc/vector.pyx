@@ -5,8 +5,6 @@
 from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple
 from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod
 import random
-from cpython cimport array
-import array
 
 DEF ABS_TOL = 1e-12
 DEF REL_TOL = 1e-9
