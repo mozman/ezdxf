@@ -1,20 +1,19 @@
 # Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 from typing import Union, Sequence
-
 # Import base types as C-extensions if available else as pure Python
 # implementations:
 from ._ctypes import (
         Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
         Matrix44, Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_from_arc,
-        cubic_bezier_from_ellipse,
+        cubic_bezier_from_ellipse, has_clockwise_orientation,
     )
+
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d, intersection_line_line_2d,
     distance_point_line_2d, is_point_on_line_2d, is_point_in_polygon_2d,
     is_point_left_of_line, point_to_line_relation, linspace, enclosing_angles,
-    reflect_angle_x_deg, reflect_angle_y_deg, sign, has_clockwise_orientation,
-    area,
+    reflect_angle_x_deg, reflect_angle_y_deg, sign, area,
 )
 from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState,

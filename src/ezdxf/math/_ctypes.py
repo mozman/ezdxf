@@ -12,6 +12,7 @@ if USE_C_EXT:
         Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_from_arc,
         cubic_bezier_from_ellipse
     )
+    from ezdxf.acc.construct2d import has_clockwise_orientation
 else:
     from ._vector import (
         Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
@@ -21,3 +22,4 @@ else:
         Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_from_arc,
         cubic_bezier_from_ellipse
     )
+    from ._construct2d import has_clockwise_orientation

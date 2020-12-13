@@ -162,31 +162,6 @@ def convex_hull_2d(points: Iterable['Vertex']) -> List['Vertex']:
     return upper_hull
 
 
-def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
-    """ Returns True if 2D `vertices` have clockwise orientation. Ignores
-    z-axis of all vertices.
-
-    Args:
-        vertices: iterable of :class:`Vec2` compatible objects
-
-    Raises:
-        ValueError: less than 3 vertices
-
-    """
-    vertices = Vec3.list(vertices)
-    if len(vertices) < 3:
-        raise ValueError('At least 3 vertices required.')
-
-    # Close polygon:
-    if not vertices[0].isclose(vertices[-1]):
-        vertices.append(vertices[0])
-
-    return sum(
-        (p2.x - p1.x) * (p2.y + p1.y)
-        for p1, p2 in zip(vertices, vertices[1:])
-    ) > 0
-
-
 def enclosing_angles(angle, start_angle, end_angle, ccw=True,
                      abs_tol=TOLERANCE):
     isclose = partial(math.isclose, abs_tol=abs_tol)
