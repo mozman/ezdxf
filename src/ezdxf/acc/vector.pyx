@@ -121,30 +121,6 @@ cdef class Vec2:
     def from_deg_angle(double angle, double length = 1.0) -> 'Vec2':
         return v2_from_angle(angle * DEG2RAD, length)
 
-    @staticmethod
-    def array(items: Iterable['Vertex'], close=False) -> array.array:
-        """ Return `items` as a contiguous array [x0, y0, x1, y1, ...].
-
-        Returns an array.array in row major or Fortran order.
-
-        """
-        cdef Vec2 start, end
-        cdef bint set_start = 1
-        cdef Py_ssize_t size = 0
-        a = array.array('d')
-
-        for item in items:
-            size += 1
-            end = Vec2(item)
-            if set_start:
-                start = end
-                set_start = 0
-            a.extend((end.x, end.y))
-
-        if size > 1 and close and not v2_isclose(start, end, ABS_TOL):
-            a.extend((start.x, start.y))
-        return a
-
     def __str__(self) -> str:
         return f'({self.x}, {self.y})'
 
@@ -509,30 +485,6 @@ cdef class Vec3:
         res.y = uniform(-1, 1)
         res.z = uniform(-1, 1)
         return v3_normalize(res, length)
-
-    @staticmethod
-    def array(items: Iterable['Vertex'], close=False) -> array.array:
-        """ Return `items` as a contiguous array [x0, y0, z0, x1, y1, z1, ...].
-
-        Returns an array.array in row major or Fortran order.
-
-        """
-        cdef Vec3 start, end
-        cdef bint set_start = 1
-        cdef Py_ssize_t size = 0
-        a = array.array('d')
-
-        for item in items:
-            size += 1
-            end = Vec3(item)
-            if set_start:
-                start = end
-                set_start = 0
-            a.extend((end.x, end.y, end.z))
-
-        if size > 1 and close and not v3_isclose(start, end, ABS_TOL):
-            a.extend((start.x, start.y, start.z))
-        return a
 
     def __str__(self) -> str:
         return f'({self.x}, {self.y}, {self.z})'
