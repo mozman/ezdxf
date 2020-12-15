@@ -2,8 +2,8 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
-from ezdxf.math import Vec2
-from .construct2d import is_point_left_of_line, intersection_line_line_2d, TOLERANCE
+from ezdxf.math import Vec2, intersection_line_line_2d
+from .construct2d import is_point_left_of_line, TOLERANCE
 from .bbox import BoundingBox2d
 
 
