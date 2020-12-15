@@ -31,6 +31,7 @@ clean:
 	rm -f $(ACC)/matrix44.cpp
 	rm -f $(ACC)/bezier4p.cpp
 	rm -f $(ACC)/construct2d.cpp
+	rm -f $(ACC)/construct3d.cpp
 
 sdist: clean
 	$(PYTHON3) setup.py sdist --formats=zip

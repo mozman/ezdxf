@@ -7,7 +7,7 @@ from ._ctypes import (
         Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
         Matrix44, Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_from_arc,
         cubic_bezier_from_ellipse, has_clockwise_orientation,
-        intersection_line_line_2d,
+        intersection_line_line_2d, intersection_ray_ray_3d,
     )
 
 from .construct2d import (
@@ -18,7 +18,7 @@ from .construct2d import (
 )
 from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState,
-    intersection_ray_ray_3d, normal_vector_3p, distance_point_line_3d,
+    normal_vector_3p, distance_point_line_3d,
 )
 from .linalg import (
     Matrix, LUDecomposition, gauss_jordan_inverse, gauss_jordan_solver,

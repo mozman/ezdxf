@@ -25,6 +25,9 @@ try:
         Extension("ezdxf.acc.construct2d", [
             "src/ezdxf/acc/construct2d.pyx",
         ], optional=True, language='c++'),
+        Extension("ezdxf.acc.construct3d", [
+            "src/ezdxf/acc/construct3d.pyx",
+        ], optional=True, language='c++'),
     ]
     commands = {'build_ext': build_ext}
 except ImportError:
