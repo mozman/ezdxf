@@ -6,7 +6,6 @@ from ezdxf.math import Vec2, intersection_line_line_2d
 from .construct2d import is_point_left_of_line, TOLERANCE
 from .bbox import BoundingBox2d
 
-
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
@@ -91,7 +90,8 @@ class ConstructionRay:
         return self._is_horizontal
 
     def __repr__(self) -> str:
-        return 'ConstructionRay(p1=({0.location.x:.3f}, {0.location.y:.3f}), angle={0.angle:.5f})'.format(self)
+        return 'ConstructionRay(p1=({0.location.x:.3f}, {0.location.y:.3f}), ' \
+               'angle={0.angle:.5f})'.format(self)
 
     def is_parallel(self, other: 'ConstructionRay') -> bool:
         """ Returns ``True`` if rays are parallel. """
@@ -210,13 +210,14 @@ class ConstructionLine:
             dy: translation in y-axis
 
         """
-        v = Vec2((dx, dy))
+        v = Vec2(dx, dy)
         self.start += v
         self.end += v
 
     @property
     def sorted_points(self):
-        return (self.end, self.start) if self.start > self.end else (self.start, self.end)
+        return (self.end, self.start) if self.start > self.end else (
+            self.start, self.end)
 
     @property
     def ray(self):
@@ -246,7 +247,8 @@ class ConstructionLine:
         """ Returns ``True`` if `point` is inside of line bounding box. """
         return self.bounding_box.inside(point)
 
-    def intersect(self, other: 'ConstructionLine', abs_tol: float = TOLERANCE) -> Optional['Vec2']:
+    def intersect(self, other: 'ConstructionLine',
+                  abs_tol: float = TOLERANCE) -> Optional['Vec2']:
         """
         Returns the intersection point of to lines or ``None`` if they have no intersection point.
 
@@ -255,10 +257,12 @@ class ConstructionLine:
             abs_tol: tolerance for distance check
 
         """
-        return intersection_line_line_2d((self.start, self.end), (other.start, other.end), virtual=False,
-                                         abs_tol=abs_tol)
+        return intersection_line_line_2d(
+            (self.start, self.end), (other.start, other.end), virtual=False,
+            abs_tol=abs_tol)
 
-    def has_intersection(self, other: 'ConstructionLine', abs_tol: float = TOLERANCE) -> bool:
+    def has_intersection(self, other: 'ConstructionLine',
+                         abs_tol: float = TOLERANCE) -> bool:
         """ Returns ``True`` if has intersection with `other` line. """
         return self.intersect(other, abs_tol=abs_tol) is not None
 
@@ -269,4 +273,5 @@ class ConstructionLine:
         If `colinear` is ``True``, a colinear point is also left of the line.
 
         """
-        return is_point_left_of_line(point, self.start, self.end, colinear=colinear)
+        return is_point_left_of_line(point, self.start, self.end,
+                                     colinear=colinear)

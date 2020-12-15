@@ -1,8 +1,6 @@
 # Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
-from typing import (
-    TYPE_CHECKING, Iterable, List, Optional, Sequence, Union,
-)
+from typing import TYPE_CHECKING, Iterable, List, Union
 
 from functools import partial
 import math
