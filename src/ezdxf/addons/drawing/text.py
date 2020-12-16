@@ -208,6 +208,13 @@ def _get_extra_transform(text: AnyText) -> Matrix44:
 
         if scale_x != 1 or scale_y != 1:
             extra_transform = Matrix44.scale(scale_x, scale_y)
+
+    elif isinstance(text, MText):
+        # not sure about the rationale behind this but it does match AutoCAD behavior...
+        scale_y = sign(text.dxf.extrusion.z)
+        if scale_y != 1:
+            extra_transform = Matrix44.scale(1, scale_y)
+
     return extra_transform
 
 
