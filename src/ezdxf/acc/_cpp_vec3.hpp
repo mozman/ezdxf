@@ -63,7 +63,7 @@ class CppVec3 {
         };
 
         int isclose(const CppVec3& other, double abs_tol) const {
-            CppVec3 diff = (*this - other);
+            const CppVec3 diff = *this - other;
             return
                 fabs(diff.x) <= abs_tol &&
                 fabs(diff.y) <= abs_tol &&
