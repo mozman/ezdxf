@@ -6,8 +6,10 @@ cdef extern from "_cpp_vec3.hpp":
         CppVec3 operator+(const CppVec3&)
         CppVec3 operator-(const CppVec3&)
         CppVec3 operator*(double)
+        double magnitude_sqr()
         double magnitude()
         CppVec3 normalize(double)
-        double distance(const CppVec3 &)
+        double distance(const CppVec3&)
         CppVec3 lerp(const CppVec3&, double)
+        int isclose(const CppVec3&, double)
 
