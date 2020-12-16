@@ -31,16 +31,17 @@ def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
 
     """
     # source: http://www.realtimerendering.com/intersections.html#I304
-    cdef CppVec3 o1, p1, o2, p2, d1, d2, d1xd2, o2_o1
-    cdef double det1, det2, denominator
-    o1 = Vec3(ray1[0]).to_cpp_vec3()
-    p1 = Vec3(ray1[1]).to_cpp_vec3()
-    o2 = Vec3(ray2[0]).to_cpp_vec3()
-    p2 = Vec3(ray2[1]).to_cpp_vec3()
-    d1 = (p1 - o1).normalize(1.0)
-    d2 = (p2 - o2).normalize(1.0)
-    d1xd2 = d1.cross(d2)
-    denominator = d1xd2.magnitude_sqr()
+    cdef CppVec3 o2_o1
+    cdef double det1, det2
+    cdef CppVec3 o1 = Vec3(ray1[0]).to_cpp_vec3()
+    cdef CppVec3 p1 = Vec3(ray1[1]).to_cpp_vec3()
+    cdef CppVec3 o2 = Vec3(ray2[0]).to_cpp_vec3()
+    cdef CppVec3 p2 = Vec3(ray2[1]).to_cpp_vec3()
+
+    cdef CppVec3 d1 = (p1 - o1).normalize(1.0)
+    cdef CppVec3 d2 = (p2 - o2).normalize(1.0)
+    cdef CppVec3 d1xd2 = d1.cross(d2)
+    cdef double denominator = d1xd2.magnitude_sqr()
     if fabs(denominator) <= abs_tol:
         # ray1 is parallel to ray2
         return tuple()
