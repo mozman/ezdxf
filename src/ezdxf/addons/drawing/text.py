@@ -196,12 +196,12 @@ def _get_extra_transform(text: AnyText) -> Matrix44:
     if isinstance(text, Text):
         # ALIGNED: scaled to fit in the text box (aspect ratio preserved). Does not have to be handled specially.
         # FIT: scaled to fit in the text box (aspect ratio *not* preserved). Handled by dxf.width
-        scale_x = text.dxf.width  # 'width' is the width *scale factor*
+        scale_x = text.dxf.width  # 'width' is the width *scale factor* so 1.0 by default
         scale_y = 1
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_X:
-            scale_x = -1
+            scale_x *= -1
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_Y:
-            scale_y = -1
+            scale_y *= -1
 
         # magnitude of extrusion does not have any effect. An extrusion of (0, 0, 0) acts like (0, 0, 1)
         scale_x *= sign(text.dxf.extrusion.z)
