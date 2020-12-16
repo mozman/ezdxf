@@ -1,7 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 from typing import Sequence, Tuple
-import math
 # A pure Python implementation of a base type can't import from ._types or ezdxf.math!
 from ezdxf.math._vector import Vec3
 
@@ -38,7 +37,7 @@ def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
     d2 = (p2 - o2).normalize()
     d1xd2 = d1.cross(d2)
     denominator = d1xd2.magnitude_square
-    if math.isclose(denominator, 0., abs_tol=abs_tol):
+    if denominator <= abs_tol:
         # ray1 is parallel to ray2
         return tuple()
     else:
