@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 DEF ABS_TOL = 1e-12
-TOLERANCE = 1e-10
+DEF TOLERANCE = 1e-10
 
 def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
     """ Returns True if 2D `vertices` have clockwise orientation. Ignores
@@ -35,6 +35,7 @@ def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
     cdef double s = 0.0
     cdef Py_ssize_t index
 
+    # Using the same tolerance as the Python implementation:
     if not v2_isclose(p1, p2, ABS_TOL):
         _vertices.append(p1)
 
@@ -149,7 +150,7 @@ cdef double _determinant(CppVec3 v1, CppVec3 v2, CppVec3 v3):
 
 def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
                             ray2: Tuple[Vec3, Vec3],
-                            double abs_tol=ABS_TOL) -> Sequence[Vec3]:
+                            double abs_tol=TOLERANCE) -> Sequence[Vec3]:
     """
     Calculate intersection of two 3D rays, returns a 0-tuple for parallel rays,
     a 1-tuple for intersecting rays and a 2-tuple for not intersecting and not

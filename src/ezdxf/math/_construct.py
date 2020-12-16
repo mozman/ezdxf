@@ -133,7 +133,7 @@ def _determinant(v1, v2, v3) -> float:
 
 def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
                             ray2: Tuple[Vec3, Vec3],
-                            abs_tol=1e-12) -> Sequence[Vec3]:
+                            abs_tol=TOLERANCE) -> Sequence[Vec3]:
     """
     Calculate intersection of two 3D rays, returns a 0-tuple for parallel rays,
     a 1-tuple for intersecting rays and a 2-tuple for not intersecting and not
