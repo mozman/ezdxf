@@ -22,11 +22,8 @@ try:
             "src/ezdxf/acc/bezier4p.pyx",
             "src/ezdxf/acc/_cpp_cubic_bezier.cpp",
         ], optional=True, language='c++'),
-        Extension("ezdxf.acc.construct2d", [
-            "src/ezdxf/acc/construct2d.pyx",
-        ], optional=True, language='c++'),
-        Extension("ezdxf.acc.construct3d", [
-            "src/ezdxf/acc/construct3d.pyx",
+        Extension("ezdxf.acc.construct", [
+            "src/ezdxf/acc/construct.pyx",
         ], optional=True, language='c++'),
     ]
     commands = {'build_ext': build_ext}

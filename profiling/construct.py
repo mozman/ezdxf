@@ -12,13 +12,13 @@ if USE_C_EXT is False:
     print('C-extension disabled or not available.')
     sys.exit(1)
 
-from ezdxf.math._construct2d import \
+from ezdxf.math._construct import \
     has_clockwise_orientation as py_has_clockwise_orientation
 from ezdxf.acc.construct2d import \
     has_clockwise_orientation as cy_has_clockwise_orientation
-from ezdxf.math._construct2d import \
+from ezdxf.math._construct import \
     intersection_line_line_2d as py_intersection_line_line_2d
-from ezdxf.acc.construct2d import \
+from ezdxf.acc.construct import \
     intersection_line_line_2d as cy_intersection_line_line_2d
 from ezdxf.version import __version__
 from ezdxf.acc.vector import Vec2
