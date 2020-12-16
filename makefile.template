@@ -1,14 +1,18 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-# Requires the installation of MSYS or MinGW and "/bin" folders added to PATH.
+# For Windows is an installation of MSYS or MinGW required and their "/bin"
+# folders have to be added to the PATH environment variable.
 # Copy this template to "makefile" and modify it to your needs,
-# or use "make -f makefile.win <target>"
+# or use "make -f makefile.template <target>"
 # The generic "makefile" is not tracked by git.
 
 BUILD_OPTIONS = setup.py build_ext -i
 ACC = src/ezdxf/acc
 
-PYTHON3 = py
+# For Windows:
+# PYTHON3 = py
+# For Linux:
+PYTHON3 = python3
 
 .PHONY: build test0 test1 clean sdist bdist packages
 
