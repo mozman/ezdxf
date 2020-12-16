@@ -2,7 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, cast, Union, List
+from typing import Iterable, cast, Union, List, Dict, Callable
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import (
@@ -26,16 +26,6 @@ __all__ = ['Frontend']
 NEG_Z_AXIS = -Z_AXIS
 INFINITE_LINE_LENGTH = 25
 DEFAULT_PDSIZE = 1
-
-COMPOSITE_ENTITY_TYPES = {
-    # Unsupported types, represented as DXFTagStorage(), will sorted out in
-    # Frontend.draw_entities().
-    'INSERT',
-    # This types have a virtual_entities() method, which returns the content of
-    # the associated anonymous block
-    'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION', 'LEADER', 'MLINE',
-    'ACAD_TABLE',
-}
 
 IGNORE_PROXY_GRAPHICS = 0
 USE_PROXY_GRAPHICS = 1
@@ -88,6 +78,37 @@ class Frontend:
 
         # set to None to disable nested polygon detection:
         self.nested_polygon_detection = nesting.fast_bbox_detection
+
+        self._dispatch = self._build_dispatch_table()
+
+    def _build_dispatch_table(self) -> Dict[str, Callable[[DXFGraphic, Properties], None]]:
+        dispatch_table = {
+            'SPLINE': self.draw_spline_entity,
+            'POINT': self.draw_point_entity,
+            'HATCH': self.draw_hatch_entity,
+            'MESH': self.draw_mesh_entity,
+            'VIEWPORT': self.draw_viewport_entity,
+            'WIPEOUT': self.draw_wipeout_entity,
+        }
+        for dxftype in ('LINE', 'XLINE', 'RAY'):
+            dispatch_table[dxftype] = self.draw_line_entity
+        for dxftype in ('TEXT', 'MTEXT', 'ATTRIB'):
+            dispatch_table[dxftype] = self.draw_text_entity
+        for dxftype in ('CIRCLE', 'ARC', 'ELLIPSE'):
+            dispatch_table[dxftype] = self.draw_elliptic_arc_entity
+        for dxftype in ('3DFACE', 'SOLID', 'TRACE'):
+            dispatch_table[dxftype] = self.draw_solid_entity
+        for dxftype in ('POLYLINE', 'LWPOLYLINE'):
+            dispatch_table[dxftype] = self.draw_polyline_entity
+
+        # These types have a virtual_entities() method, which returns
+        # the content of the associated block or anonymous block
+        for dxftype in ['INSERT', 'DIMENSION', 'ARC_DIMENSION',
+                        'LARGE_RADIAL_DIMENSION', 'LEADER',
+                        'MLINE', 'ACAD_TABLE']:
+            dispatch_table[dxftype] = self.draw_composite_entity
+
+        return dispatch_table
 
     def log_message(self, message: str):
         print(message)
@@ -144,41 +165,18 @@ class Frontend:
             properties: resolved entity properties
 
         """
-        dxftype = entity.dxftype()
         self.out.enter_entity(entity, properties)
+
         if entity.proxy_graphic and self.proxy_graphics == PREFER_PROXY_GRAPHICS:
             self.draw_proxy_graphic(entity)
-        elif dxftype in {'LINE', 'XLINE', 'RAY'}:
-            self.draw_line_entity(entity, properties)
-        elif dxftype in {'TEXT', 'MTEXT', 'ATTRIB'}:
-            if is_spatial(Vec3(entity.dxf.extrusion)):
-                self.draw_text_entity_3d(entity, properties)
-            else:
-                self.draw_text_entity_2d(entity, properties)
-        elif dxftype in {'CIRCLE', 'ARC', 'ELLIPSE'}:
-            self.draw_elliptic_arc_entity(entity, properties)
-        elif dxftype == 'SPLINE':
-            self.draw_spline_entity(entity, properties)
-        elif dxftype == 'POINT':
-            self.draw_point_entity(entity, properties)
-        elif dxftype == 'HATCH':
-            self.draw_hatch_entity(entity, properties)
-        elif dxftype == 'MESH':
-            self.draw_mesh_entity(entity, properties)
-        elif dxftype in {'3DFACE', 'SOLID', 'TRACE'}:
-            self.draw_solid_entity(entity, properties)
-        elif dxftype in {'POLYLINE', 'LWPOLYLINE'}:
-            self.draw_polyline_entity(entity, properties)
-        elif dxftype in COMPOSITE_ENTITY_TYPES:
-            self.draw_composite_entity(entity, properties)
-        elif dxftype == 'WIPEOUT':
-            self.draw_wipeout_entity(entity, properties)
-        elif dxftype == 'VIEWPORT':
-            self.draw_viewport_entity(entity)
-        elif entity.proxy_graphic and self.proxy_graphics == USE_PROXY_GRAPHICS:
-            self.draw_proxy_graphic(entity)
         else:
-            self.skip_entity(entity, 'Unsupported entity')
+            draw_method = self._dispatch.get(entity.dxftype(), None)
+            if draw_method is not None:
+                draw_method(entity, properties)
+            elif entity.proxy_graphic and self.proxy_graphics == USE_PROXY_GRAPHICS:
+                self.draw_proxy_graphic(entity)
+            else:
+                self.skip_entity(entity, 'Unsupported entity')
         self.out.exit_entity(entity)
 
     def draw_line_entity(self, entity: DXFGraphic,
@@ -198,6 +196,13 @@ class Frontend:
         else:
             raise TypeError(dxftype)
 
+    def draw_text_entity(self, entity: DXFGraphic,
+                         properties: Properties) -> None:
+        if is_spatial_text(Vec3(entity.dxf.extrusion)):
+            self.draw_text_entity_3d(entity, properties)
+        else:
+            self.draw_text_entity_2d(entity, properties)
+
     def draw_text_entity_2d(self, entity: DXFGraphic,
                             properties: Properties) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
@@ -211,7 +216,7 @@ class Frontend:
 
     def draw_text_entity_3d(self, entity: DXFGraphic,
                             properties: Properties) -> None:
-        return  # not supported
+        self.skip_entity(entity, '3D text not supported')
 
     def draw_elliptic_arc_entity(self, entity: DXFGraphic,
                                  properties: Properties) -> None:
