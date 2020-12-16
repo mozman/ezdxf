@@ -96,9 +96,9 @@ class FontMeasurements:
 
 def _get_rotation(text: AnyText) -> Matrix44:
     if isinstance(text, Text):
-        return Matrix44.axis_rotate(Vec3(text.dxf.extrusion).normalize(), radians(text.dxf.rotation))
+        return Matrix44.axis_rotate(text.dxf.extrusion, radians(text.dxf.rotation))
     if isinstance(text, MText):
-        return Matrix44.axis_rotate(Vec3(text.dxf.extrusion).normalize(), radians(text.get_rotation()))
+        return Matrix44.axis_rotate(text.dxf.extrusion, radians(text.get_rotation()))
     elif isinstance(text, (Attrib, AttDef)):
         return Matrix44()
     else:
