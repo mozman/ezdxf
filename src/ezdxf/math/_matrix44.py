@@ -8,7 +8,7 @@ from typing import Sequence, Iterable, List, Tuple, TYPE_CHECKING
 import math
 from math import sin, cos, tan
 from itertools import chain
-# A pure Python implementation of a base type can't import from ._types or ezdxf.math!
+# The pure Python implementation can't import from ._ctypes or ezdxf.math!
 from ._vector import Vec3, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 
 if TYPE_CHECKING:

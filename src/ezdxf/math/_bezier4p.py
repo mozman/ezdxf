@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, Iterable, Union, Sequence, Tuple
 import math
 from functools import lru_cache
-# A pure Python implementation of a base type can't import from ._types or ezdxf.math!
+# The pure Python implementation can't import from ._ctypes or ezdxf.math!
 from ._vector import Vec3, Vec2
 from ._matrix44 import Matrix44
 
