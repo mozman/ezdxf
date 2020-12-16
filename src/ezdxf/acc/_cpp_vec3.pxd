@@ -9,6 +9,8 @@ cdef extern from "_cpp_vec3.hpp":
         double magnitude_sqr()
         double magnitude()
         CppVec3 normalize(double)
+        CppVec3 cross(const CppVec3&)
+        double dot(const CppVec3&)
         double distance(const CppVec3&)
         CppVec3 lerp(const CppVec3&, double)
         int isclose(const CppVec3&, double)

@@ -6,16 +6,6 @@
 
 #include <math.h>
 
-const double static rel_tol = 1e-9;
-
-int _isclose(const double a, const double b, const double abs_tol) {
-    // Has to match the Python implementation!
-    double diff = fabs(b - a);
-    return diff <= fabs(rel_tol * b) ||
-           diff <= fabs(rel_tol * a) ||
-           diff <= abs_tol;
-}
-
 class CppVec3 {
     public:
         double x;
@@ -52,6 +42,18 @@ class CppVec3 {
             return *this * (length / mag);
         };
 
+        CppVec3 cross(const CppVec3& other) const {
+            return CppVec3(
+                y * other.z - z * other.y,
+                z * other.x - x * other.z,
+                x * other.y - y * other.x
+            );
+        };
+
+        double dot(const CppVec3& other) const {
+            return x * other.x + y * other.y + z * other.z;
+        };
+
         double distance(const CppVec3& other) const {
             return (*this - other).magnitude();
         };
@@ -61,9 +63,11 @@ class CppVec3 {
         };
 
         int isclose(const CppVec3& other, double abs_tol) const {
-            return _isclose(x, other.x, abs_tol) &&
-            _isclose(y, other.y, abs_tol) &&
-            _isclose(z, other.z, abs_tol);
+            CppVec3 diff = (*this - other);
+            return
+                fabs(diff.x) <= abs_tol &&
+                fabs(diff.y) <= abs_tol &&
+                fabs(diff.z) <= abs_tol;
         };
 };
 #endif
