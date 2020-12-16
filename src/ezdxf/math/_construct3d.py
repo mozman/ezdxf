@@ -20,13 +20,13 @@ def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
                             ray2: Tuple[Vec3, Vec3],
                             abs_tol=1e-10) -> Sequence[Vec3]:
     """
-    Calculate intersection of two rays, returns a 0-tuple for parallel rays, a
-    1-tuple for intersecting rays and a 2-tuple for not intersecting and not
+    Calculate intersection of two 3D rays, returns a 0-tuple for parallel rays,
+    a 1-tuple for intersecting rays and a 2-tuple for not intersecting and not
     parallel rays with points of closest approach on each ray.
 
     Args:
-        ray1: first ray as tuple of two points on the ray as :class:`Vec3` objects
-        ray2: second ray as tuple of two points on the ray as :class:`Vec3` objects
+        ray1: first ray as tuple of two points as :class:`Vec3` objects
+        ray2: second ray as tuple of two points as :class:`Vec3` objects
         abs_tol: absolute tolerance for comparisons
 
     """

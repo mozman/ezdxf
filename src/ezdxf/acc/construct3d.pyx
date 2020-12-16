@@ -19,19 +19,21 @@ def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
                             ray2: Tuple[Vec3, Vec3],
                             double abs_tol=ABS_TOL) -> Sequence[Vec3]:
     """
-    Calculate intersection of two rays, returns a 0-tuple for parallel rays, a
-    1-tuple for intersecting rays and a 2-tuple for not intersecting and not
+    Calculate intersection of two 3D rays, returns a 0-tuple for parallel rays,
+    a 1-tuple for intersecting rays and a 2-tuple for not intersecting and not
     parallel rays with points of closest approach on each ray.
 
     Args:
-        ray1: first ray as tuple of two points on the ray as :class:`Vec3` objects
-        ray2: second ray as tuple of two points on the ray as :class:`Vec3` objects
+        ray1: first ray as tuple of two points as Vec3() objects
+        ray2: second ray as tuple of two points as Vec3() objects
         abs_tol: absolute tolerance for comparisons
 
     """
     # source: http://www.realtimerendering.com/intersections.html#I304
     cdef CppVec3 o2_o1
     cdef double det1, det2
+    # Vec3() objects as input are not guaranteed, a hard <Vec3> cast could
+    # crash the interpreter for an invalid input!
     cdef CppVec3 o1 = Vec3(ray1[0]).to_cpp_vec3()
     cdef CppVec3 p1 = Vec3(ray1[1]).to_cpp_vec3()
     cdef CppVec3 o2 = Vec3(ray2[0]).to_cpp_vec3()
