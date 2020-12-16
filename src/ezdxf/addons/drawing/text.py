@@ -6,11 +6,13 @@ import re
 from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 
+from ezdxf.entities.text import plain_text
+
 import ezdxf.lldxf.const as DXFConstants
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.addons.drawing import fonts
-from ezdxf.entities import MText, Text, Attrib
+from ezdxf.entities import MText, Text, Attrib, AttDef
 from ezdxf.math import Matrix44, Vec3, sign
 
 """
@@ -37,7 +39,7 @@ class VAlignment(enum.Enum):
 
 
 Alignment = Tuple[HAlignment, VAlignment]
-AnyText = Union[Text, MText, Attrib]
+AnyText = Union[Text, MText, Attrib, AttDef]
 
 # multiple of cap_height between the baseline of the previous line and the baseline of the next line
 DEFAULT_LINE_SPACING = 5 / 3
@@ -97,7 +99,7 @@ def _get_rotation(text: AnyText) -> Matrix44:
         return Matrix44.axis_rotate(Vec3(text.dxf.extrusion).normalize(), radians(text.dxf.rotation))
     if isinstance(text, MText):
         return Matrix44.axis_rotate(Vec3(text.dxf.extrusion).normalize(), radians(text.get_rotation()))
-    elif isinstance(text, Attrib):
+    elif isinstance(text, (Attrib, AttDef)):
         return Matrix44()
     else:
         raise TypeError(type(text))
@@ -109,14 +111,14 @@ def _get_alignment(text: AnyText) -> Alignment:
         return HAlignment.LEFT, VAlignment.BASELINE
     elif isinstance(text, MText):
         return DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT[text.dxf.attachment_point]
-    elif isinstance(text, Attrib):
+    elif isinstance(text, (Attrib, AttDef)):
         return HAlignment.LEFT, VAlignment.BASELINE
     else:
         raise TypeError(type(text))
 
 
 def _get_cap_height(text: AnyText) -> float:
-    if isinstance(text, (Text, Attrib)):
+    if isinstance(text, (Text, Attrib, AttDef)):
         return text.dxf.height
     elif isinstance(text, MText):
         return text.dxf.char_height
@@ -125,7 +127,7 @@ def _get_cap_height(text: AnyText) -> float:
 
 
 def _get_line_spacing(text: AnyText, cap_height: float) -> float:
-    if isinstance(text, (Attrib, Text)):
+    if isinstance(text, (Attrib, AttDef, Text)):
         return 0.0
     elif isinstance(text, MText):
         return cap_height * DEFAULT_LINE_SPACING * text.dxf.line_spacing_factor
@@ -172,17 +174,21 @@ def _split_multiline_text(text: str, box_width: Optional[float], get_text_width:
     return lines
 
 
-def _split_into_lines(text: AnyText, box_width: Optional[float], get_text_width: Callable[[str], float]) -> List[str]:
-    plain_text = text.plain_text()
-    if isinstance(text, (Text, Attrib)):
-        assert '\n' not in plain_text
-        return [plain_text]
+def _split_into_lines(entity: AnyText, box_width: Optional[float], get_text_width: Callable[[str], float]) -> List[str]:
+    if isinstance(entity, AttDef):
+        # ATTDEF outside of an Insert renders the tag rather than the value
+        text = plain_text(entity.dxf.tag)
     else:
-        return _split_multiline_text(plain_text, box_width, get_text_width)
+        text = entity.plain_text()
+    if isinstance(entity, (Text, Attrib, AttDef)):
+        assert '\n' not in text
+        return [text]
+    else:
+        return _split_multiline_text(text, box_width, get_text_width)
 
 
 def _get_text_width(text: AnyText) -> Optional[float]:
-    if isinstance(text, (Attrib, Text)):
+    if isinstance(text, (Attrib, AttDef, Text)):
         return None
     elif isinstance(text, MText):
         width = text.dxf.width

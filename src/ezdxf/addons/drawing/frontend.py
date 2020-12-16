@@ -12,7 +12,7 @@ from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.utils import get_tri_or_quad_points
 from ezdxf.entities import (
     DXFGraphic, Insert, MText, Polyline, LWPolyline, Spline, Hatch, Attrib,
-    Text, Polyface, Wipeout,
+    Text, Polyface, Wipeout, AttDef,
 )
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
@@ -92,7 +92,7 @@ class Frontend:
         }
         for dxftype in ('LINE', 'XLINE', 'RAY'):
             dispatch_table[dxftype] = self.draw_line_entity
-        for dxftype in ('TEXT', 'MTEXT', 'ATTRIB'):
+        for dxftype in ('TEXT', 'MTEXT', 'ATTRIB', 'ATTDEF'):
             dispatch_table[dxftype] = self.draw_text_entity
         for dxftype in ('CIRCLE', 'ARC', 'ELLIPSE'):
             dispatch_table[dxftype] = self.draw_elliptic_arc_entity
@@ -206,8 +206,8 @@ class Frontend:
     def draw_text_entity_2d(self, entity: DXFGraphic,
                             properties: Properties) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
-        if dxftype in ('TEXT', 'MTEXT', 'ATTRIB'):
-            entity = cast(Union[Text, MText, Attrib], entity)
+        if dxftype in ('TEXT', 'MTEXT', 'ATTRIB', 'ATTDEF'):
+            entity = cast(Union[Text, MText, Attrib, AttDef], entity)
             for line, transform, cap_height in simplified_text_chunks(
                     entity, self.out, font=properties.font):
                 self.out.draw_text(line, transform, properties, cap_height)
