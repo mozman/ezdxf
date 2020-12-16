@@ -249,7 +249,7 @@ cdef class Matrix44:
         cdef double cos_a = cos(angle)
         cdef double sin_a = sin(angle)
         cdef double one_m_cos = 1.0 - cos_a
-        cdef Vec3 _axis = Vec3(axis)
+        cdef Vec3 _axis = Vec3(axis).normalize()
         cdef double x = _axis.x
         cdef double y = _axis.y
         cdef double z = _axis.z

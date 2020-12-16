@@ -292,7 +292,7 @@ class Matrix44:
         c = cos(angle)
         s = sin(angle)
         omc = 1. - c
-        x, y, z = axis
+        x, y, z = Vec3(axis).normalize()
         return cls([
             x * x * omc + c, y * x * omc + z * s, x * z * omc - y * s, 0.,
             x * y * omc - z * s, y * y * omc + c, y * z * omc + x * s, 0.,

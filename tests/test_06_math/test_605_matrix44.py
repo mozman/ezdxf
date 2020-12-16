@@ -80,7 +80,7 @@ class TestMatrix44:
                 (0, 1, 2, 3),
                 (4, 5, 6, 7),
                 (8, 9, 10, 11),
-                (12, 13, 14, ),
+                (12, 13, 14,),
             )
 
     def test_invalid_number_constructor(self, m44):
@@ -279,3 +279,9 @@ class TestMatrix44:
     def test_inverse_error(self, m44):
         m = m44([1] * 16)
         pytest.raises(ZeroDivisionError, m.inverse)
+
+    def test_axis_rotate_for_axis_normalization(self, m44):
+        m1 = m44.axis_rotate((0, 0, 1), 1.23)
+        m2 = m44.axis_rotate((0, 0, 0.5), 1.23)
+        for a, b in zip(m1, m2):
+            assert isclose(a, b)
