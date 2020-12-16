@@ -451,5 +451,6 @@ class Frontend:
             self.draw_entities(gfx.virtual_entities())
 
 
-def is_spatial(v: Vec3) -> bool:
-    return not v.isclose(Z_AXIS) and not v.isclose(NEG_Z_AXIS)
+def is_spatial_text(extrusion: Vec3) -> bool:
+    # note: the magnitude of the extrusion vector has no effect on text scale
+    return not math.isclose(extrusion.x, 0) or not math.isclose(extrusion.y, 0)

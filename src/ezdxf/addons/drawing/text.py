@@ -11,7 +11,7 @@ from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.addons.drawing import fonts
 from ezdxf.entities import MText, Text, Attrib
-from ezdxf.math import Matrix44, Vec3
+from ezdxf.math import Matrix44, Vec3, sign
 
 """
 Search google for 'typography' or 'font anatomy' for explanations of terms like 'baseline' and 'x-height'
@@ -94,9 +94,9 @@ class FontMeasurements:
 
 def _get_rotation(text: AnyText) -> Matrix44:
     if isinstance(text, Text):
-        return Matrix44.axis_rotate(text.dxf.extrusion, radians(text.dxf.rotation))
+        return Matrix44.axis_rotate(Vec3(text.dxf.extrusion).normalize(), radians(text.dxf.rotation))
     if isinstance(text, MText):
-        return Matrix44.axis_rotate(text.dxf.extrusion, radians(text.get_rotation()))
+        return Matrix44.axis_rotate(Vec3(text.dxf.extrusion).normalize(), radians(text.get_rotation()))
     elif isinstance(text, Attrib):
         return Matrix44()
     else:
@@ -202,6 +202,9 @@ def _get_extra_transform(text: AnyText) -> Matrix44:
             scale_x = -1
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_Y:
             scale_y = -1
+
+        # magnitude of extrusion does not have any effect. An extrusion of (0, 0, 0) acts like (0, 0, 1)
+        scale_x *= sign(text.dxf.extrusion.z)
 
         if scale_x != 1 or scale_y != 1:
             extra_transform = Matrix44.scale(scale_x, scale_y)
