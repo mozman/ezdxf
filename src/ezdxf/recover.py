@@ -294,23 +294,10 @@ class Recover:
             DXFTag(2, 'HEADER'),
         ])
         self.rescue_orphaned_header_vars(header, orphans)
-        self.dxfversion = self._detect_dxf_version(header)
+        self.dxfversion = _detect_dxf_version(header)
         if self.dxfversion <= const.DXF12:
             _remove_unsupported_sections(section_dict)
         _build_section_dict(section_dict)
-
-    def _detect_dxf_version(self, header: List) -> str:
-        next_is_dxf_version = False
-        for tag in header:
-            if next_is_dxf_version:
-                dxfversion = tag[1]
-                if re.fullmatch(r"AC[0-9]{4}", dxfversion):
-                    return dxfversion
-                else:
-                    break
-            if tag == (9, '$ACADVER'):
-                next_is_dxf_version = True
-        return const.DXF12
 
     def rebuild_tables(self, tables: List[Tags]) -> List[Tags]:
         """ Rebuild TABLES section. """
@@ -381,6 +368,20 @@ class Recover:
             else:
                 # raises DXFStructureError() for invalid entities
                 yield Tags(entity_structure_validator(entity))
+
+
+def _detect_dxf_version(header: List) -> str:
+    next_is_dxf_version = False
+    for tag in header:
+        if next_is_dxf_version:
+            dxfversion = str(tag[1]).strip()
+            if re.fullmatch(r"AC[0-9]{4}", dxfversion):
+                return dxfversion
+            else:
+                break
+        if tag == (9, '$ACADVER'):
+            next_is_dxf_version = True
+    return const.DXF12
 
 
 def safe_tag_loader(stream: BinaryIO,
