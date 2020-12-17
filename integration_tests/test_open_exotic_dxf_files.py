@@ -121,20 +121,3 @@ def test_read_gerber_file():
     assert doc.filename == GERBER_FILE
     assert doc.dxfversion == 'AC1009'
 
-
-CC_DXFLIB_FILE = os.path.join(ezdxf.EZDXF_TEST_FILES, "Weird DXF",
-                              "cloud_compare_dxflib_3_17.dxf")
-
-
-@pytest.mark.skipif(not os.path.exists(CC_DXFLIB_FILE),
-                    reason=f'File "{CC_DXFLIB_FILE}" not found')
-def test_read_cc_dxflib_file():
-    from ezdxf.audit import AuditError
-    doc, auditor = recover.readfile(CC_DXFLIB_FILE)
-    codes = {fix.code for fix in auditor.fixes}
-    assert AuditError.REMOVED_UNSUPPORTED_SECTION in codes
-    assert AuditError.REMOVED_UNSUPPORTED_TABLE in codes
-    msp = doc.modelspace()
-    polyline = msp.query('POLYLINE').first
-    assert polyline is not None
-

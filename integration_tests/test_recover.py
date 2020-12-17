@@ -4,12 +4,14 @@ import os
 import pytest
 import random
 from ezdxf import recover
+from ezdxf.audit import AuditError
 from ezdxf.lldxf.tagger import tag_compiler, ascii_tags_loader
 
 BASEDIR = os.path.dirname(__file__)
 DATADIR = 'data'
 RECOVER1 = 'recover01.dxf'
 RECOVER2 = 'recover02.dxf'
+CC_DXFLIB = 'cc_dxflib.dxf'
 
 
 def fullpath(name):
@@ -130,3 +132,13 @@ def test_readfile_recover02_dxf():
     vport = doc.viewports.get('*Active')[0]
     assert vport.dxf.owner == vport_head.dxf.handle, \
         'Auditor() should update table-entry owner handle.'
+
+
+def test_read_cc_dxflib_file():
+    doc, auditor = recover.readfile(fullpath(CC_DXFLIB))
+    codes = {fix.code for fix in auditor.fixes}
+    assert AuditError.REMOVED_UNSUPPORTED_SECTION in codes
+    assert AuditError.REMOVED_UNSUPPORTED_TABLE in codes
+    msp = doc.modelspace()
+    polyline = msp.query('POLYLINE').first
+    assert polyline is not None

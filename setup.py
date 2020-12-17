@@ -107,7 +107,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: Implementation :: CPython",
-        "Programming Language :: Python :: Implementation :: Cython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
