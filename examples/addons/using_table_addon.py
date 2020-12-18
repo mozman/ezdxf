@@ -1,6 +1,6 @@
 # Purpose: examples for add-on table usage
 # Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (c) 2010-2019, Manfred Moitzi
+# Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.addons import Table
@@ -105,7 +105,8 @@ table.new_cell_style(
     bgcolor=123,
 )
 
-table.text_cell(6, 3, "line one\nline two\nand line three", span=(3, 3), style='57deg')
+table.text_cell(6, 3, "line one\nline two\nand line three", span=(3, 3),
+                style='57deg')
 
 # 2. table rendering
 # create anonymous block
@@ -114,7 +115,6 @@ block = doc.blocks.new_anonymous_block()
 table.render(block, insert=(0, 0))
 # add block reference into model space at 80, 20
 msp.add_blockref(block.name, insert=(80, 20))
-
 
 # a stacked text: Letters are stacked top-to-bottom, but not rotated
 table.new_cell_style(
@@ -127,10 +127,13 @@ table.new_cell_style(
 table.text_cell(6, 3, "STACKED FIELD", span=(7, 1), style='stacked')
 
 for pos in [3, 4, 5, 6]:
-    blockcell = table.block_cell(pos, 1, mat_symbol, attribs={'num': pos}, style='matsym')
+    blockcell = table.block_cell(pos, 1, mat_symbol, attribs={'num': pos},
+                                 style='matsym')
 
 # 3. table rendering
 # render table to a layout: can be the model space, a paper space or a block definition.
 table.render(msp, insert=(0, 0))
+doc.set_modelspace_vport(height=70, center=(50, 0))
 doc.saveas(name)
+
 print("drawing '%s' created.\n" % name)
