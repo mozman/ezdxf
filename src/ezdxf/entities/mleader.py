@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Union, Optional
+from typing import TYPE_CHECKING, List, Union, Optional, Tuple
 import copy
 import logging
 from collections import namedtuple
@@ -249,8 +249,9 @@ class MultiLeader(DXFGraphic):
             except const.DXFStructureError:
                 logger.info(
                     f'Context structure error in entity MULTILEADER(#{dxf.handle})')
-        self.arrow_heads = self.load_arrow_heads(tags)
-        self.block_attribs = self.load_block_attribs(tags)
+
+        self.arrow_heads = self.extract_arrow_heads(tags)
+        self.block_attribs = self.extract_block_attribs(tags)
 
         processor.fast_load_dxfattribs(
             dxf, acdb_mleader_group_codes, subclass=tags, recover=True)
@@ -282,7 +283,7 @@ class MultiLeader(DXFGraphic):
             return MultiLeaderContext.load(context)
 
     @staticmethod
-    def load_arrow_heads(data: Tags) -> List[ArrowHeadData]:
+    def extract_arrow_heads(data: Tags) -> List[ArrowHeadData]:
         def store_head():
             heads.append(ArrowHeadData(
                 collector.get(94, 0),  # arrow head index
@@ -296,15 +297,20 @@ class MultiLeader(DXFGraphic):
         except const.DXFValueError:
             return heads
 
+        end = start
         collector = dict()
         for code, value in data.collect_consecutive_tags({94, 345}, start):
+            end += 1
             collector[code] = value
             if code == 345:
                 store_head()
+
+        # Remove processed tags:
+        del data[start: end]
         return heads
 
     @staticmethod
-    def load_block_attribs(data: Tags) -> List[AttribData]:
+    def extract_block_attribs(data: Tags) -> List[AttribData]:
         def store_attrib():
             attribs.append(AttribData(
                 collector.get(330, '0'),  # ATTDEF handle
@@ -320,14 +326,19 @@ class MultiLeader(DXFGraphic):
         except const.DXFValueError:
             return attribs
 
+        end = start
         collector = dict()
         for code, value in data.collect_consecutive_tags(
                 {330, 177, 44, 302}, start):
+            end += 1
             if code == 330 and len(collector):
                 store_attrib()
             collector[code] = value
         if len(collector):
             store_attrib()
+
+        # Remove processed tags:
+        del data[start: end]
         return attribs
 
     def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
