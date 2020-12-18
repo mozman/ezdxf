@@ -1,6 +1,7 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional, Iterable, Tuple, List, Dict, cast
+import sys
 import struct
 import math
 from enum import IntEnum
@@ -8,14 +9,17 @@ from itertools import repeat
 from ezdxf.lldxf import const
 from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream, BitStream
 from ezdxf import colors
-from ezdxf.math import Vec3, Matrix44, Z_AXIS, ConstructionCircle, ConstructionArc
+from ezdxf.math import (
+    Vec3, Matrix44, Z_AXIS, ConstructionCircle,
+    ConstructionArc,
+)
 from ezdxf.entities import factory
 import logging
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-    Tags, TagWriter, Drawing, Polymesh, Polyface, Polyline, Hatch,
-)
+        Tags, TagWriter, Drawing, Polymesh, Polyface, Polyline, Hatch,
+    )
 
 logger = logging.getLogger('ezdxf')
 
@@ -539,3 +543,79 @@ class ProxyGraphic:
         if self.true_color is not None:
             attribs['true_color'] = self.true_color
         return attribs
+
+
+class ProxyGraphicDebugger(ProxyGraphic):
+    def __init__(self, data: bytes, doc: 'Drawing' = None, debug_stream=None):
+        super(ProxyGraphicDebugger, self).__init__(data, doc)
+        if debug_stream is None:
+            debug_stream = sys.stdout
+        self._debug_stream = debug_stream
+
+    def log_entities(self):
+        self.log_separator(char='=', newline=False)
+        self.log_message('Create virtual DXF entities:')
+        self.log_separator(newline=False)
+        for entity in self.virtual_entities():
+            self.log_message(f"\n  * {entity.dxftype()}")
+            self.log_message(f"  * {entity.graphic_properties()}\n")
+        self.log_separator(char='=')
+
+    def log_commands(self):
+        self.log_separator(char='=', newline=False)
+        self.log_message('Raw proxy commands:')
+        self.log_separator(newline=False)
+        for index, size, cmd in self.info():
+            self.log_message(f"Command: {cmd} Index: {index} Size: {size}")
+        self.log_separator(char='=')
+
+    def log_separator(self, char='-', newline=True):
+        self.log_message(char * 79)
+        if newline:
+            self.log_message('')
+
+    def log_message(self, msg: str):
+        print(msg, file=self._debug_stream)
+
+    def log_state(self):
+        self.log_message('> ' + self.get_state())
+
+    def get_state(self) -> str:
+        return f"ly: '{self.layer}', clr: {self.color}, lt: {self.linetype}, " \
+               f"lw: {self.lineweight}, ltscale: {self.ltscale}, " \
+               f"rgb: {self.true_color}, fill: {self.fill}"
+
+    def attribute_color(self, data: bytes):
+        self.log_message('Command: set COLOR')
+        super().attribute_color(data)
+        self.log_state()
+
+    def attribute_layer(self, data: bytes):
+        self.log_message('Command: set LAYER')
+        super().attribute_layer(data)
+        self.log_state()
+
+    def attribute_linetype(self, data: bytes):
+        self.log_message('Command: set LINETYPE')
+        super().attribute_linetype(data)
+        self.log_state()
+
+    def attribute_true_color(self, data: bytes):
+        self.log_message('Command: set TRUE-COLOR')
+        super().attribute_true_color(data)
+        self.log_state()
+
+    def attribute_lineweight(self, data: bytes):
+        self.log_message('Command: set LINEWEIGHT')
+        super().attribute_lineweight(data)
+        self.log_state()
+
+    def attribute_ltscale(self, data: bytes):
+        self.log_message('Command: set LTSCALE')
+        super().attribute_ltscale(data)
+        self.log_state()
+
+    def attribute_fill(self, data: bytes):
+        self.log_message('Command: set FILL')
+        super().attribute_fill(data)
+        self.log_state()
