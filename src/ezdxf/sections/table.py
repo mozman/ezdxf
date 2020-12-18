@@ -9,7 +9,7 @@ from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, EntityDB, Drawing, DXFEntity, Layer
+        TagWriter, EntityDB, Drawing, DXFEntity, Layer, LineType
     )
 
 TABLENAMES = {
@@ -246,6 +246,15 @@ class LayerTable(Table):
         if self.doc:
             layer.set_required_attributes()
         return layer
+
+
+class LineTypeTable(Table):
+    def new_entry(self, dxfattribs: dict) -> 'DXFEntity':
+        pattern = dxfattribs.pop('pattern', [0.0])
+        length = dxfattribs.pop('length', 0)  # required for complex types
+        ltype: 'LineType' = super().new_entry(dxfattribs)
+        ltype.setup_pattern(pattern, length)
+        return ltype
 
 
 class StyleTable(Table):

@@ -329,8 +329,8 @@ def test_ltype_entry():
     ltype = Linetype.new('FFFF', dxfattribs={
         'name': 'TEST',
         'description': 'TESTDESC',
-        'pattern': [0.2, 0.1, -0.1]
     })
+    ltype.setup_pattern([0.2, 0.1, -0.1])
     code = table_entries_to_code([ltype], drawing='doc')
     exec(str(code), globals())
     new_ltype = doc.linetypes.get('TEST')

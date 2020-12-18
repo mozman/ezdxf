@@ -145,27 +145,6 @@ class Linetype(DXFEntity):
         """ Copy pattern_tags. """
         entity.pattern_tags = deepcopy(self.pattern_tags)
 
-    @classmethod
-    def new(cls, handle: str = None, owner: str = None, dxfattribs: dict = None,
-            doc: 'Drawing' = None) -> 'DXFEntity':
-        """
-        Constructor for building new entities from scratch by ezdxf (trusted
-        environment).
-
-        Args:
-            handle: unique DXF entity handle or None
-            owner: owner handle iof entity has an owner else None or '0'
-            dxfattribs: DXF attributes to initialize
-            doc: DXF document
-
-        """
-        dxfattribs = dxfattribs or {}
-        pattern = dxfattribs.pop('pattern', [0.0])
-        length = dxfattribs.pop('length', 0)  # required for complex types
-        ltype = super().new(handle, owner, dxfattribs, doc)
-        ltype._setup_pattern(pattern, length)
-        return ltype
-
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
@@ -193,8 +172,10 @@ class Linetype(DXFEntity):
         if self.pattern_tags:
             self.pattern_tags.export_dxf(tagwriter)
 
-    def _setup_pattern(self, pattern: Union[Iterable[float], str],
-                       length: float) -> None:
+    def setup_pattern(self, pattern: Union[Iterable[float], str],
+                      length: float = 0) -> None:
+        # The new() function gets no doc reference, therefore complex linetype
+        # setup has to be done later. See also: LineTypeTable.new_entry()
         complex_line_type = True if isinstance(pattern, str) else False
         if complex_line_type:  # a .lin like line type definition string
             tags = self._setup_complex_pattern(pattern, length)

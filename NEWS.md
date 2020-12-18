@@ -84,7 +84,9 @@ Version 0.15b2 - dev
 - BUGFIX: `ezdxf.math.has_clockwise_orientation()` returns `True` for 
   counter-clock wise and vice versa
 - BUGFIX: default color for HATCH is 256 (by layer)
-  
+- BUGFIX: fixed broken complex linetype setup
+- BUGFIX: validate loaded handle seed
+
 Version 0.14.2 - 2020-10-18
 ---------------------------
 
