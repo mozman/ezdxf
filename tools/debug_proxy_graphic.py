@@ -9,10 +9,9 @@ OUTBOX = Path('~/Desktop/Outbox').expanduser()
 logging.basicConfig(filename=OUTBOX / "ezdxf-log.txt", level='DEBUG')
 logger = logging.getLogger('ezdxf')
 
-DXFTEST = Path(r'D:\Source\dxftest')
-MBWAY_EXAMPLE = DXFTEST / "mleader" / "mbway-mleader.dxf"
+EXAMPLE = Path(ezdxf.EZDXF_TEST_FILES) / "mleader" / "mbway-mleader.dxf"
 
-doc = ezdxf.readfile(MBWAY_EXAMPLE)
+doc = ezdxf.readfile(EXAMPLE)
 mleader = doc.entitydb['403']
 with open(OUTBOX / "proxy-debug.txt", mode="wt") as stream:
     proxy = ProxyGraphicDebugger(mleader.proxy_graphic, doc,
