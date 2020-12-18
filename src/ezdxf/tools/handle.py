@@ -1,12 +1,11 @@
-# Purpose: handle module
-# Created: 11.03.2011
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
+START_HANDLE = '1'
 
 
 class HandleGenerator:
-    def __init__(self, start_value: str = '1'):
-        self._handle = int(start_value, 16)
+    def __init__(self, start_value: str = START_HANDLE):
+        self._handle = max(1, int(start_value, 16))
 
     reset = __init__
 

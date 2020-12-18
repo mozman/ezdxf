@@ -51,6 +51,19 @@ if TYPE_CHECKING:
     )
 
 
+def _validate_handle_seed(seed: str) -> str:
+    from ezdxf.tools.handle import START_HANDLE
+    if seed is None:
+        seed = START_HANDLE
+    try:
+        v = int(seed, 16)
+        if v < 1:
+            seed = START_HANDLE
+    except ValueError:
+        seed = START_HANDLE
+    return seed
+
+
 class Drawing:
     def __init__(self, dxfversion=DXF2013):
         self.entitydb = EntityDB()
@@ -318,7 +331,7 @@ class Drawing:
 
         # Set handle seed:
         seed: str = self.header.get('$HANDSEED', str(self.entitydb.handles))
-        self.entitydb.handles.reset(seed)
+        self.entitydb.handles.reset(_validate_handle_seed(seed))
 
         # Store all necessary DXF entities in the entity database:
         loader.load_and_bind_dxf_content(sections, self)
