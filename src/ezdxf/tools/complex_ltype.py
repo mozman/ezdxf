@@ -97,6 +97,8 @@ class ComplexLineTypePart:
                     font = doc.styles.new(self.font)
             return font.dxf.handle
 
+        # Note: AutoCAD/BricsCAD do NOT report an error or even crash, if the
+        # text style handle is invalid!
         if doc is not None:
             handle = get_font_handle()
         else:

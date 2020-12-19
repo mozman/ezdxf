@@ -55,6 +55,7 @@ Version 0.15b2 - dev
 - NEW: `ezdxf.render.point`, support module for `Point.virtual_entities()`
 - NEW: Optional Cython implementation of some low level math classes: 
   Vec2, Vec3, Matrix44, Bezier4P  
+- NEW: support for complex linetypes for the Importer add-on
 - CHANGE: Optimized infrastructure for loading DXF attributes 
 - CHANGE: `Hatch.set_pattern_fill()` uses HEADER variable $MEASUREMENT to 
   determine the default scaling of predefined hatch pattern. 

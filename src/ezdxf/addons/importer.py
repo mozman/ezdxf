@@ -11,7 +11,7 @@ from ezdxf.render.arrows import ARROWS
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         Drawing, DXFEntity, BaseLayout, Layout, DXFGraphic, BlockLayout, Hatch,
-        Insert, Polyline, DimStyle, Dimension, Viewport,
+        Insert, Polyline, DimStyle, Dimension, Viewport, Linetype
     )
 
 logger = logging.getLogger('ezdxf')
@@ -55,8 +55,10 @@ class Importer:
         self.used_layers: Set[str] = set()
         self.used_linetypes: Set[str] = set()
         self.used_styles: Set[str] = set()
+        self.used_shape_files: Set[str] = set()  # style entry without a name!
         self.used_dimstyles: Set[str] = set()
         self.used_arrows: Set[str] = set()
+        self.handle_mapping: Dict[str, str] = dict()  # old_handle: new_handle
 
         # collects all imported INSERT entities, for later name resolving.
         self.imported_inserts: List[DXFEntity] = list()  # imported inserts
@@ -86,6 +88,17 @@ class Importer:
         self.used_arrows.add(dimstyle.get_dxf_attrib('dimblk1', ''))
         self.used_arrows.add(dimstyle.get_dxf_attrib('dimblk2', ''))
         self.used_arrows.add(dimstyle.get_dxf_attrib('dimldrblk', ''))
+
+    def _add_linetype_resources(self, linetype: 'Linetype') -> None:
+        if linetype.pattern_tags.is_complex_type():
+            style_handle = linetype.pattern_tags.get_style_handle()
+            style = self.source.entitydb.get(style_handle)
+            if style:
+                if style.dxf.name == '':
+                    # Shape file entries have no name!
+                    self.used_shape_files.add(style.dxf.font)
+                else:
+                    self.used_styles.add(style.dxf.name)
 
     def import_tables(self, table_names: Union[str, Iterable[str]] = "*",
                       replace=False) -> None:
@@ -126,7 +139,7 @@ class Importer:
 
         """
         if name not in IMPORT_TABLES:
-            raise TypeError('Table "{}" import not supported.'.format(name))
+            raise TypeError(f'Table "{name}" import not supported.')
         source_table = getattr(self.source.tables, name)
         target_table = getattr(self.target.tables, name)
 
@@ -161,9 +174,32 @@ class Importer:
                     table_entry.get_dxf_attrib('linetype', 'Continuous'))
             elif name == 'dimstyles':
                 self._add_dimstyle_resources(table_entry)
-            # duplicate table entry
+            elif name == 'linetypes':
+                self._add_linetype_resources(table_entry)
+
+            # Duplicate table entry:
             new_table_entry = self._duplicate_table_entry(table_entry)
             target_table.add_entry(new_table_entry)
+
+            # Register resource handles for mapping:
+            self.handle_mapping[table_entry.dxf.handle] = new_table_entry.dxf.handle
+
+    def import_shape_files(self, fonts: Set[str]) -> None:
+        """ Import shape file table entries from source drawing into target
+        drawing. Shape file entries are stored in the styles table but without
+        a name.
+
+        """
+        for font in fonts:
+            table_entry = self.source.styles.find_shx(font)
+            # copy is not necessary, just create a new entry:
+            new_table_entry = self.target.styles.get_shx(font)
+            if table_entry:
+                # Register resource handles for mapping:
+                self.handle_mapping[table_entry.dxf.handle] = new_table_entry.dxf.handle
+            else:
+                logger.warning(
+                    f'Required shape file entry "{font}" not found.')
 
     def _set_table_entry_dxf_attribs(self, entity: 'DXFEntity') -> None:
         entity.doc = self.target
@@ -465,7 +501,7 @@ class Importer:
         try:
             source_block = self.source.blocks[block_name]
         except DXFKeyError:
-            raise ValueError('Source block "{}" not found.'.format(block_name))
+            raise ValueError(f'Source block "{block_name}" not found.')
 
         target_blocks = self.target.blocks
         if (block_name in target_blocks) and (rename is False):
@@ -529,11 +565,28 @@ class Importer:
         if len(self.used_layers):
             self.import_table('layers', self.used_layers)
 
-        # linetypes and styles do not add additional required resources
+        # 3. complex linetypes adds additional required style resources
         if len(self.used_linetypes):
             self.import_table('linetypes', self.used_linetypes)
+
+        # 4. Text styles do not add additional required resources
         if len(self.used_styles):
             self.import_table('styles', self.used_styles)
+
+        # 5. Shape files are text style entries without a name
+        if len(self.used_shape_files):
+            self.import_shape_files(self.used_shape_files)
+
+        # 6. Update text style handles of imported complex linetypes:
+        self.update_complex_linetypes()
+
+    def update_complex_linetypes(self):
+        for linetype in self.target.linetypes:  # type: Linetype
+            if linetype.pattern_tags.is_complex_type():
+                old_handle = linetype.pattern_tags.get_style_handle()
+                new_handle = self.handle_mapping.get(old_handle)
+                if new_handle:
+                    linetype.pattern_tags.set_style_handle(new_handle)
 
     def finalize(self) -> None:
         """ Finalize import by importing required table entries and block

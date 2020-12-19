@@ -43,9 +43,8 @@ def test_complex_linetype_name():
     complex_ltype.setup_pattern('A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25', 3.0)
     assert complex_ltype.dxf.name == 'GASLEITUNG'
     assert complex_ltype.dxf.description == 'Gasleitung ----GAS----GAS----GAS----GAS----GAS----GAS--'
-    tags = complex_ltype.pattern_tags.tags
-    assert len(tags) == 16
-    assert tags.get_first_value(340) == '0', "Default handle without DXF document"
+    assert len(complex_ltype.pattern_tags) == 16
+    assert complex_ltype.pattern_tags.get_style_handle() == '0', "Default handle without DXF document"
 
 
 def test_compile_pattern():

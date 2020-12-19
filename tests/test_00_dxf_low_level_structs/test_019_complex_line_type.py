@@ -139,8 +139,7 @@ def test_new_table_entry_has_text_style_handle():
         'length': 1,
         'pattern': 'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
     })
-    pattern_tags = ltype.pattern_tags.tags
-    style_handle = pattern_tags.get_first_value(340)
+    style_handle = ltype.pattern_tags.get_style_handle()
     assert style_handle == doc.styles.get('Standard').dxf.handle
 
 

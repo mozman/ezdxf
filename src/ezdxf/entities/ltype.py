@@ -57,6 +57,12 @@ class LinetypePattern:
     def is_complex_type(self):
         return self.tags.has_tag(340)
 
+    def get_style_handle(self):
+        return self.tags.get_first_value(340, '0')
+
+    def set_style_handle(self, handle):
+        return self.tags.update(DXFTag(340, handle))
+
     def compile(self) -> Tuple[float, ...]:
         """ Returns the simplified dash-gap-dash... line pattern,
         a dash-length of 0 represents a point.
