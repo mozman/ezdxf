@@ -12,6 +12,10 @@ if NOT "%PAPER%" == "" (
 	set ALLSPHINXOPTS=-D latex_paper_size=%PAPER% %ALLSPHINXOPTS%
 )
 
+REM Disable C-extensions
+REM The Cython extension types replace the Python classes and do not have doc strings.
+set EZDXF_DISABLE_C_EXT=1
+
 if "%1" == "" goto help
 
 if "%1" == "help" (

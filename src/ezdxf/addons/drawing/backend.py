@@ -218,7 +218,7 @@ class Backend(ABC):
 
 def prepare_string_for_rendering(text: str, dxftype: str) -> str:
     assert '\n' not in text, 'not a single line of text'
-    if dxftype in {'TEXT', 'ATTRIB'}:
+    if dxftype in {'TEXT', 'ATTRIB', 'ATTDEF'}:
         text = replace_non_printable_characters(text, replacement='?')
         text = text.replace('\t', '?')
     elif dxftype == 'MTEXT':

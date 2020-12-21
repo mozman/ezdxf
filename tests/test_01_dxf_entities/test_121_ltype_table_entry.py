@@ -7,11 +7,12 @@ from ezdxf.entities.ltype import Linetype, compile_line_pattern
 
 @pytest.fixture
 def linetype():
-    return Linetype.new('FFFF', dxfattribs={
+    ltype = Linetype.new('FFFF', dxfattribs={
         'name': 'TEST',
         'description': 'TESTDESC',
-        'pattern': [0.2, 0.1, -0.1]
     })
+    ltype.setup_pattern([0.2, 0.1, -0.1])
+    return ltype
 
 
 def test_name(linetype):
@@ -38,13 +39,12 @@ def test_complex_linetype_name():
     complex_ltype = Linetype.new('FFFF', dxfattribs={
         'name': 'GASLEITUNG',
         'description': 'Gasleitung ----GAS----GAS----GAS----GAS----GAS----GAS--',
-        'length': 3.0,  # length is required for complex line types
-        'pattern': 'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
     })
-
+    complex_ltype.setup_pattern('A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25', 3.0)
     assert complex_ltype.dxf.name == 'GASLEITUNG'
     assert complex_ltype.dxf.description == 'Gasleitung ----GAS----GAS----GAS----GAS----GAS----GAS--'
     assert len(complex_ltype.pattern_tags) == 16
+    assert complex_ltype.pattern_tags.get_style_handle() == '0', "Default handle without DXF document"
 
 
 def test_compile_pattern():

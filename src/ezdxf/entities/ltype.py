@@ -1,10 +1,12 @@
 # Copyright (c) 2019-2020, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, Union, Iterable, cast, Tuple, Sequence, Optional
+    TYPE_CHECKING, Union, Iterable, cast, Tuple, Sequence, Optional,
 )
 from copy import deepcopy
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, group_code_mapping,
+)
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.tags import Tags
@@ -26,7 +28,7 @@ acdb_linetype = DefSubclass('AcDbLinetypeTableRecord', {
     # 'length': DXFAttr(40),
     # 'items': DXFAttr(73),
 })
-
+acdb_linetype_group_codes = group_code_mapping(acdb_linetype)
 CONTINUOUS_PATTERN = tuple()
 
 
@@ -54,6 +56,12 @@ class LinetypePattern:
 
     def is_complex_type(self):
         return self.tags.has_tag(340)
+
+    def get_style_handle(self):
+        return self.tags.get_first_value(340, '0')
+
+    def set_style_handle(self, handle):
+        return self.tags.update(DXFTag(340, handle))
 
     def compile(self) -> Tuple[float, ...]:
         """ Returns the simplified dash-gap-dash... line pattern,
@@ -143,32 +151,12 @@ class Linetype(DXFEntity):
         """ Copy pattern_tags. """
         entity.pattern_tags = deepcopy(self.pattern_tags)
 
-    @classmethod
-    def new(cls, handle: str = None, owner: str = None, dxfattribs: dict = None,
-            doc: 'Drawing' = None) -> 'DXFEntity':
-        """
-        Constructor for building new entities from scratch by ezdxf (trusted
-        environment).
-
-        Args:
-            handle: unique DXF entity handle or None
-            owner: owner handle iof entity has an owner else None or '0'
-            dxfattribs: DXF attributes to initialize
-            doc: DXF document
-
-        """
-        dxfattribs = dxfattribs or {}
-        pattern = dxfattribs.pop('pattern', [0.0])
-        length = dxfattribs.pop('length', 0)  # required for complex types
-        ltype: 'LineType' = super().new(handle, owner, dxfattribs, doc)
-        ltype._setup_pattern(pattern, length)
-        return ltype
-
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_linetype)
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_linetype_group_codes, 2, log=False)
             self.pattern_tags = LinetypePattern(tags)
         return dxf
 
@@ -190,8 +178,10 @@ class Linetype(DXFEntity):
         if self.pattern_tags:
             self.pattern_tags.export_dxf(tagwriter)
 
-    def _setup_pattern(self, pattern: Union[Iterable[float], str],
-                       length: float) -> None:
+    def setup_pattern(self, pattern: Union[Iterable[float], str],
+                      length: float = 0) -> None:
+        # The new() function gets no doc reference, therefore complex linetype
+        # setup has to be done later. See also: LineTypeTable.new_entry()
         complex_line_type = True if isinstance(pattern, str) else False
         if complex_line_type:  # a .lin like line type definition string
             tags = self._setup_complex_pattern(pattern, length)

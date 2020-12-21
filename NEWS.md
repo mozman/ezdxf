@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.15b0 - dev
+Version 0.15b2 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-15.html
@@ -53,6 +53,10 @@ Version 0.15b0 - dev
 - NEW `Style` table entry supports extended font data
 - NEW: `Point.virtual_entities()`, yield POINT entities as DXF primitives
 - NEW: `ezdxf.render.point`, support module for `Point.virtual_entities()`
+- NEW: Optional Cython implementation of some low level math classes: 
+  Vec2, Vec3, Matrix44, Bezier4P  
+- NEW: support for complex linetypes for the Importer add-on
+- CHANGE: Optimized infrastructure for loading DXF attributes 
 - CHANGE: `Hatch.set_pattern_fill()` uses HEADER variable $MEASUREMENT to 
   determine the default scaling of predefined hatch pattern. 
 - CHANGE: fix invalid linetype setup - new linetype scaling like common CAD 
@@ -81,7 +85,9 @@ Version 0.15b0 - dev
 - BUGFIX: `ezdxf.math.has_clockwise_orientation()` returns `True` for 
   counter-clock wise and vice versa
 - BUGFIX: default color for HATCH is 256 (by layer)
-  
+- BUGFIX: fixed broken complex linetype setup
+- BUGFIX: validate loaded handle seed
+
 Version 0.14.2 - 2020-10-18
 ---------------------------
 

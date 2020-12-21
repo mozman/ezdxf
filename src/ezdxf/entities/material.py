@@ -2,13 +2,15 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Optional
 from ezdxf.lldxf.const import SUBCLASS_MARKER
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, group_code_mapping
+)
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
 from .objectcollection import ObjectCollection
-from ezdxf.math.matrix44 import Matrix44
+from ezdxf.math import Matrix44
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace
@@ -167,6 +169,7 @@ acdb_material = DefSubclass('AcDbMaterial', {
     'illumination_model': DXFAttr(93),
     'channel_flags': DXFAttr(94, default=63),
 })
+acdb_material_group_codes = group_code_mapping(acdb_material)
 
 
 @register_entity
@@ -201,10 +204,12 @@ class Material(DXFObject):
         entity.refraction_mapper_matrix = copy(self.refraction_mapper_matrix)
         entity.normal_mapper_matrix = copy(self.normal_mapper_matrix)
 
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_material)
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_material_group_codes, 1, log=False)
             self.load_matrices(tags)
         return dxf
 

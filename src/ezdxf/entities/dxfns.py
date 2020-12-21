@@ -1,11 +1,11 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Any, Optional, Union, Iterable, List, TYPE_CHECKING
+from typing import Any, Optional, Union, Iterable, List, TYPE_CHECKING, Dict
 import logging
 from ezdxf import options
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import XType, DXFAttributes, DefSubclass, DXFAttr
-from ezdxf.lldxf.types import handle_code, cast_value, dxftag
+from ezdxf.lldxf.types import cast_value, dxftag
 from ezdxf.lldxf.tags import Tags
 
 logger = logging.getLogger('ezdxf')
@@ -46,13 +46,23 @@ class DXFNamespace:
     def __init__(self, processor: 'SubclassProcessor' = None,
                  entity: 'DXFEntity' = None):
         if processor:
-            base_class_ = processor.base_class
-            code = handle_code(base_class_[0].value)
-            # CLASS entity has no handle and TABLE also has no handle if
-            # loaded from DXF R12 file
-            handle = base_class_.get_first_value(code, None)
-            # owner is None if loaded from DXF R12 file
-            owner = base_class_.get_first_value(330, None)
+            base_class = processor.base_class
+            handle_code = 105 if base_class[0].value == 'DIMSTYLE' else 5
+            # CLASS entities have no handle.
+            # TABLE entities have no handle if loaded from a DXF R12 file.
+            # Owner tag is None if loaded from a DXF R12 file
+            handle = None
+            owner = None
+            for tag in base_class:
+                group_code = tag.code
+                if group_code == handle_code:
+                    handle = tag.value
+                    if owner:
+                        break
+                elif group_code == 330:
+                    owner = tag.value
+                    if handle:
+                        break
             self.rewire(entity, handle, owner)
         else:
             self.reset_handles()
@@ -205,6 +215,15 @@ class DXFNamespace:
         """
         self.__setattr__(key, value)
 
+    def unprotected_set(self, key: str, value: Any) -> None:
+        """ Set DXF attribute `key` to `value` without any validity checks.
+
+        Used for fast attribute setting without validity checks at loading time.
+
+        (internal API)
+        """
+        self.__dict__[key] = value
+
     def all_existing_dxf_attribs(self) -> dict:
         """ Returns all existing DXF attributes, except DXFEntity parent link.
         """
@@ -303,7 +322,11 @@ class DXFNamespace:
                     return
                     # Just export x, y for 2D points, if value is a 3D point
                 if attrib.xtype == XType.point2d and len(value) > 2:
-                    value = value[:2]
+                    try:  # Vec3
+                        value = (value.x, value.y)
+                    except AttributeError:
+                        value = value[:2]
+
                 if isinstance(value, str):
                     assert '\n' not in value, "line break '\\n' not allowed"
                     assert '\r' not in value, "line break '\\r' not allowed"
@@ -364,90 +387,87 @@ class SubclassProcessor:
         except IndexError:
             return None
 
-    def load_dxfattribs_into_namespace(self, dxf: DXFNamespace,
-                                       subclass_definition: DefSubclass,
-                                       index: int = None) -> Tags:
-        """ Load all existing DXF attribute into DXFNamespace and return
-        unprocessed tags, without leading subclass marker(102, ...).
+    def fast_load_dxfattribs(
+            self, dxf: DXFNamespace,
+            group_code_mapping: Dict[int, Union[str, List]],
+            subclass: Union[int, str, Tags],
+            *,
+            recover=False,
+            log=True) -> Tags:
+        """ Load DXF attributes into the DXF namespace and returns the
+        unprocessed tags without leading subclass marker(100, AcDb...).
+        Bypasses the DXF attribute validity checks.
 
         Args:
-            dxf: target namespace
-            subclass_definition: DXF attribute definitions (name=subclass_name,
-                                 attribs={key=attribute name, value=DXFAttr})
-            index: locate subclass by location
-
-        Returns:
-             Tags: unprocessed tags
+            dxf: entity DXF namespace
+            group_code_mapping: group code to DXF attribute name mapping,
+                callback attributes have to be marked with a leading "*"
+            subclass: subclass by index, by name or as Tags()
+            recover: recover graphic attributes
+            log: enable/disable logging of unprocessed tags
 
         """
-
-        # R12 has always unprocessed tags, because there are all tags in one
-        # subclass and one subclass definition never covers all tags e.g.
-        # handle is processed in DXFEntity, so it is an unprocessed tag in
-        # AcDbEntity.
         if self.r12:
             tags = self.subclasses[0]
         else:
-            if index is None:
-                tags = self.find_subclass(subclass_definition.name)
+            if isinstance(subclass, int):
+                tags = self.subclass_by_index(subclass)
+            elif isinstance(subclass, str):
+                tags = self.find_subclass(subclass)
             else:
-                tags = self.subclass_by_index(index)
-            if tags is None:
-                return Tags()
-        return self.load_tags_into_namespace(dxf, tags[1:], subclass_definition)
-
-    @staticmethod
-    def load_tags_into_namespace(dxf: DXFNamespace, tags: Tags,
-                                 subclass_definition: DefSubclass) -> Tags:
-        """ Load all existing DXF attribute into DXFNamespace and return
-        unprocessed tags, without leading subclass marker (102, ...).
-
-        Args:
-            dxf: target namespace
-            tags: tags to process
-            subclass_definition: DXF attribute definitions (name=subclass_name,
-                                 attribs={key=attribute name, value=DXFAttr})
-
-        Returns:
-             Tags: unprocessed tags
-
-        """
-
-        def replace_attrib(code) -> bool:
-            """ Returns ``True`` if an attribute was replaced by a doublet. """
-            for index, dxfattr in enumerate(doublets):
-                if dxfattr.code == code:
-                    group_codes[code] = dxfattr
-                    del doublets[index]
-                    return True
-            return False
+                tags = subclass
 
         unprocessed_tags = Tags()
-        # Do not cache group codes, content of group code will be deleted while
-        # processing.
-        group_codes = dict()
-        doublets = []
-        for dxfattr in subclass_definition.attribs.values():
-            if dxfattr.code in group_codes:
-                doublets.append(dxfattr)
-            else:
-                group_codes[dxfattr.code] = dxfattr
+        if tags is None or len(tags) == 0:
+            return unprocessed_tags
 
-        # Iterate without leading subclass marker and for R12 without
-        # leading (0, ...) structure tag.
-        for tag in tags:
-            code, value = tag
-            attrib = group_codes.get(code)
-            if attrib is not None:
-                if (attrib.xtype != XType.callback) or (
-                        attrib.setter is not None):
-                    dxf.set(attrib.name, value)
+        processed_names = set()
+        # Localize attributes:
+        get_attrib_name = group_code_mapping.get
+        append_unprocessed_tag = unprocessed_tags.append
+        unprotected_set_attrib = dxf.unprotected_set
+        mark_attrib_as_processed = processed_names.add
 
-                if len(doublets) and replace_attrib(code):
-                    continue
-                del group_codes[code]
+        # Ignore (100, "AcDb...") or (0, "ENTITY") tag in case of DXF R12
+        start = 1 if tags[0].code in (0, 100) else 0
+        for tag in tags[start:]:
+            name = get_attrib_name(tag.code)
+            if isinstance(name, list):  # process group code duplicates:
+                names = name
+                # If all existing attrib names are used, treat this tag
+                # like an unprocessed tag.
+                name = None
+                # The attribute names are processed in the order of their
+                # definition:
+                for name_ in names:
+                    if name_ not in processed_names:
+                        name = name_
+                        mark_attrib_as_processed(name_)
+                        break
+            if name:
+                # Ignore callback attributes and group codes explicit marked
+                # as "*IGNORE":
+                if name[0] != '*':
+                    unprotected_set_attrib(
+                        name, cast_value(tag.code, tag.value))
             else:
-                unprocessed_tags.append(tag)
+                append_unprocessed_tag(tag)
+
+        if self.r12:
+            # R12 has always unprocessed tags, because there are all tags in one
+            # subclass and one subclass definition never covers all tags e.g.
+            # handle is processed in DXFEntity, so it is an unprocessed tag in
+            # AcDbEntity.
+            return unprocessed_tags
+
+        # Only DXF R13+
+        if recover and len(unprocessed_tags):
+            unprocessed_tags = recover_graphic_attributes(unprocessed_tags, dxf)
+        if len(unprocessed_tags) and log:
+            # First tag is the subclass specifier (100, "AcDb...")
+            name = tags[0].value
+            self.log_unprocessed_tags(
+                tags, subclass=name, handle=dxf.get('handle'))
         return unprocessed_tags
 
     def append_base_class_to_acdb_entity(self) -> None:
@@ -465,19 +485,6 @@ class SubclassProcessor:
         if acdb_entity_tags[0] == (100, 'AcDbEntity'):
             acdb_entity_tags.extend(tag for tag in self.subclasses[0] if
                                     tag.code not in BASE_CLASS_CODES)
-
-    @staticmethod
-    def recover_graphic_attributes(tags: Tags, dxf: DXFNamespace) -> Tags:
-        return recover_graphic_attributes(tags, dxf)
-
-    def load_and_recover_dxfattribs(self, dxf, subclass, index=None):
-        tags = self.load_dxfattribs_into_namespace(dxf, subclass, index)
-        if len(tags) and not self.r12:
-            tags = recover_graphic_attributes(tags, dxf)
-            if len(tags):
-                handle = dxf.get('handle')
-                self.log_unprocessed_tags(tags, subclass=subclass.name,
-                                          handle=handle)
 
 
 GRAPHIC_ATTRIBUTES_TO_RECOVER = {

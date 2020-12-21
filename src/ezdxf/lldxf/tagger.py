@@ -7,7 +7,6 @@ from .types import (
     POINT_CODES, TYPE_TABLE, BINARY_DATA,
 )
 from .const import DXFStructureError
-from . import encoding
 from ezdxf.tools.codepage import toencoding
 
 
@@ -55,6 +54,25 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
             yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
 
 
+# No performance advantage by processing binary data!
+#
+# Profiling result for just reading DXF data (profiling/raw_data_reading.py):
+# Loading the example file "torso_uniform.dxf" (50MB) by readline() from a
+# text stream with decoding takes ~0.65 seconds longer than loading the same
+# file as binary data.
+#
+# Text :1.30s vs Binary data: 0.65s)
+# This is twice the time, but without any processing, ascii_tags_loader() takes
+# ~5.3 seconds to process this file.
+#
+# And this performance advantage is more than lost by the necessary decoding
+# of the binary data afterwards, even much fewer strings have to be decoded,
+# because numeric data like group codes and vertices doesn't need to be
+# decoded.
+#
+# I assume the runtime overhead for calling Python functions is the reason.
+
+
 def ascii_tags_loader(stream: TextIO,
                       skip_comments: bool = True) -> Iterable[DXFTag]:
     """ Yields :class:``DXFTag`` objects from a text `stream` (untrusted
@@ -74,24 +92,27 @@ def ascii_tags_loader(stream: TextIO,
 
     """
     line = 1
+    yield_comments = not skip_comments
+    # localize attributes
+    readline = stream.readline
+    _DXFTag = DXFTag
+    # readline() returns an empty string at EOF, not exception will be raised!
     while True:
-        try:
-            code = stream.readline()
-            # if throws EOFError -> DXFStructureError, but should be handled in
-            # higher layers
-            value = stream.readline()
-        except EOFError:
-            return
-        if code and value:  # StringIO(): empty strings indicates EOF
+        code = readline()
+        if code:  # empty string indicates EOF
             try:
                 code = int(code)
             except ValueError:
                 raise DXFStructureError(
                     f'Invalid group code "{code}" at line {line}.')
-            else:
-                if code != 999 or skip_comments is False:
-                    yield DXFTag(code, value.rstrip('\n'))
-                line += 2
+        else:
+            return
+
+        value = readline()
+        if value:  # empty string indicates EOF
+            if code != 999 or yield_comments:
+                yield _DXFTag(code, value.rstrip('\n'))
+            line += 2
         else:
             return
 

@@ -1,10 +1,11 @@
 # Purpose: example for complex line types
-# Created: 13.01.2018
-# Copyright (C) 2018 Manfred Moitzi
+# Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
+from pathlib import Path
 import ezdxf
 
-FILENAME = 'complex_linetype_example.dxf'
+OUTBOX = Path('~/Desktop/Outbox').expanduser()
+FILENAME = OUTBOX / 'complex_linetype_example.dxf'
 
 doc = ezdxf.new('R2018')  # DXF R13 or later is required
 

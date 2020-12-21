@@ -11,8 +11,8 @@ def test_ucs_init():
     assert ucs.uy == (0, 1, 0)
     assert ucs.uz == (0, 0, 1)
 
-    assert ucs.from_wcs((3, 4, 5)) == (3, 4, 5)
-    assert ucs.to_wcs((5, 4, 3)) == (5, 4, 3)
+    assert ucs.from_wcs(Vec3(3, 4, 5)) == (3, 4, 5)
+    assert ucs.to_wcs(Vec3(5, 4, 3)) == (5, 4, 3)
 
 
 def test_ucs_init_ux_uy():
@@ -40,8 +40,8 @@ def test_translation():
     assert ucs.ux == (1, 0, 0)
     assert ucs.uy == (0, 1, 0)
     assert ucs.uz == (0, 0, 1)
-    assert ucs.from_wcs((3, 4, 5)) == (0, 0, 0)
-    assert ucs.to_wcs((1, 1, 1)) == (4, 5, 6)
+    assert ucs.from_wcs(Vec3(3, 4, 5)) == (0, 0, 0)
+    assert ucs.to_wcs(Vec3(1, 1, 1)) == (4, 5, 6)
 
 
 def test_rotation():
@@ -143,9 +143,9 @@ def test_to_ocs_angle_deg():
 
 def test_constructor_functions():
     # does not check the math, because this would just duplicate the implementation code
-    origin = (3, 3, 3)
-    axis = (1, 0, -1)
-    def_point = (3, 10, 4)
+    origin = Vec3(3, 3, 3)
+    axis = Vec3(1, 0, -1)
+    def_point = Vec3(3, 10, 4)
     ucs = UCS.from_x_axis_and_point_in_xy(origin, axis=axis, point=def_point)
     assert ucs.is_cartesian
     assert isclose(ucs.from_wcs(def_point).z, 0)

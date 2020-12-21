@@ -13,11 +13,25 @@ def save_source_dwg(dwg, filename):
 
 def create_source_drawing(version):
     dwg = ezdxf.new(version)
+    # complex shape linetype
+    dwg.linetypes.new('BORDER', dxfattribs={
+        'description': 'Border square ----[]-----[]----[]-----[]----[]--',
+        'length': 1.45,
+        'pattern': 'A,.25,-.1,[132,ltypeshp.shx,x=-.1,s=.1],-.1,1',
+    })
+    # complex text linetype
+    dwg.linetypes.new('GAS', dxfattribs={
+        'description': 'Gas ----GAS----GAS----GAS----GAS----GAS----GAS--',
+        'length': 1,
+        'pattern': 'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
+    })
     dwg.layers.new('Test', dxfattribs={'color': 17})
     dwg.layers.new('TestConflict', dxfattribs={'color': 18})
     msp = dwg.modelspace()
     msp.add_line((0, 0), (10, 0))
     msp.add_circle((0, 0), radius=5)
+    msp.add_line((0, 1), (10, 1), dxfattribs={'linetype': 'BORDER'})
+    msp.add_line((0, 2), (10, 2), dxfattribs={'linetype': 'GAS'})
     msp.add_blockref("TestBlock", insert=(0, 0))
     msp.add_blockref("ConflictBlock", insert=(0, 0))
     build_block(dwg, "TestBlock")
@@ -135,6 +149,31 @@ def test_import_block_with_conflict_rename_resolve_block_ref_inside_block_def(im
     block_entities = list(block)
     block_ref_to_conflict_block = block_entities[2]
     assert block_ref_to_conflict_block.dxf.name == 'ConflictBlock0'
+
+
+@pytest.mark.parametrize('name, style_name, font', [
+    ('BORDER', '', 'ltypeshp.shx'),  # shape file entry has no name
+    ('GAS', 'Standard', 'txt'),  # text
+])
+def test_import_entities_using_complex_linetypes(importer, name, style_name, font):
+    lines = importer.source.query(f'LINE[linetype=="{name}"]')
+    assert len(lines) == 1, 'Required test LINE does not exist.'
+
+    importer.import_entities(lines)
+    importer.finalize()
+
+    assert name in importer.target.linetypes, f'Linetype {name } not imported.'
+    ltype = importer.target.linetypes.get(name)
+
+    if importer.source.dxfversion == 'AC1009':
+        return  # complex line types are not supported by DXF R12
+
+    style_handle = ltype.pattern_tags.get_style_handle()
+    assert style_handle != '0', 'Invalid shape file handle.'
+
+    style = importer.target.entitydb[style_handle]
+    assert style.dxf.name == style_name
+    assert style.dxf.font == font
 
 
 def test_import_polyline():

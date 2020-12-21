@@ -5,7 +5,7 @@ ezdxf
 Abstract
 --------
 
-A Python package to create and modify DXF drawings, independent from the DXF
+A Python package to create and modify DXF drawings, independent of the DXF
 version. You can open/save every DXF file without losing any content (except comments),
 Unknown tags in the DXF file will be ignored but preserved for saving. With this behavior
 it is possible to open also DXF drawings that contains data from 3rd party applications.
@@ -17,9 +17,10 @@ Quick-Info
 - the intended audience are developers
 - requires at least Python 3.6
 - OS independent
-- tested with CPython & pypy3 on Windows 10 & ubuntu-latest by GitHub Actions
-- additional required packages: [pyparsing](https://pypi.org/project/pyparsing/) and for testing 
-  [geomdl](https://github.com/orbingol/NURBS-Python) (aka NURBS-Python)
+- tested with CPython and pypy3
+- C-extensions for CPython as binary wheels available on PyPI for Windows, Linux and macOS
+- additional required packages: [pyparsing](https://pypi.org/project/pyparsing/) 
+- optional Cython implementation of some low level math classes
 - MIT-License
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
 - additional read support for DXF versions R13/R14 (upgraded to R2000)
@@ -69,7 +70,8 @@ msp.add_text(
 doc.saveas('test.dxf')
 ```
 
-Example for the *r12writer*, which writes a simple DXF R12 file without in-memory structures:
+Example for the *r12writer*, which writes a simple DXF R12 file without 
+in-memory structures:
 
 ```python
 from random import random
@@ -83,23 +85,52 @@ with r12writer("many_circles.dxf") as doc:
         doc.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
 ```
 
-The r12writer supports only the ENTITIES section of a DXF R12 drawing, no HEADER, TABLES or BLOCKS section is
-present, except FIXED-TABLES are written, than some additional predefined text styles and line types are available.
+The r12writer supports only the ENTITIES section of a DXF R12 drawing, no HEADER, 
+TABLES or BLOCKS section is present, except FIXED-TABLES are written, than some 
+additional predefined text styles and line types are available.
 
 Installation
 ------------
 
-Install with pip for Python 3.6 and later:
+Install with pip including the optional C-extensions from PyPI as binary wheels:
 
     pip install ezdxf
 
-Install latest development version with pip from GitHub:
+Install from source code. To build the optional C-extensions the Cython package, 
+and a working C++ compiler setup is required:
+
+    python setup.py install
+
+Install the latest development version with pip from GitHub:
 
     pip install git+https://github.com/mozman/ezdxf.git@master
 
-or from source:
 
-    python setup.py install
+Dependencies in Detail
+----------------------
+
+The `pyparsing` package is the only hard dependency and will be installed 
+automatically by `pip`!
+
+- INSTALL from PyPI including C-extensions: pyparsing (most common case)
+- INSTALL from PyPI for usage of the `drawing` add-on: pyparsing, matplotlib, pyqt5
+- INSTALL from source code without C-extensions: setuptools, pyparsing
+- INSTALL from source code including C-extensions: setuptools, pyparsing, 
+  Cython, and a working C++ compiler setup 
+- TESTING requires the additional packages: pytest, [geomdl](https://github.com/orbingol/NURBS-Python)
+- BUILD packages from source code without C-extensions: setuptools, wheel
+- BUILD packages from source code including C-extensions: setuptools, wheel, 
+  Cython, and a working C++ compiler setup
+
+Install all optional packages:
+
+    pip install setuptools wheel cython pytest geomdl matplotlib pyqt5
+
+Windows users who want to compile the C-extensions from source code need the 
+build tools from Microsoft: https://visualstudio.microsoft.com/de/downloads/ 
+
+Download and install the required Visual Studio Installer of the community 
+edition and choose the option: `Visual Studio Build Tools 20..`
 
 Website
 -------
@@ -111,12 +142,13 @@ Documentation
 
 Documentation of development version at https://ezdxf.mozman.at/docs
 
-Documentation of latest release at http://ezdxf.readthedocs.io/
+Documentation of the latest release at http://ezdxf.readthedocs.io/
 
 Contribution
 ------------
 
-The source code of *ezdxf* can be found at __GitHub__, target your pull requests to the `master` branch:
+The source code of *ezdxf* can be found at __GitHub__, target your pull requests 
+to the `master` branch:
 
 http://github.com/mozman/ezdxf.git
 
@@ -124,11 +156,9 @@ http://github.com/mozman/ezdxf.git
 Feedback
 --------
 
-Questions and feedback at __Google Groups__:
+Questions and feedback at __GitHub Discussions__:
 
-https://groups.google.com/d/forum/python-ezdxf
-
-python-ezdxf@googlegroups.com
+https://github.com/mozman/ezdxf/discussions
 
 Questions at __Stack Overflow__:
 
@@ -141,9 +171,8 @@ http://github.com/mozman/ezdxf/issues
 Contact
 -------
 
-Please __always__ post questions at the [forum](https://groups.google.com/d/forum/python-ezdxf) 
-or [stack overflow](https://stackoverflow.com/) or open an 
-[issue](https://github.com/mozman/ezdxf/issues) at github to make answers 
+Please __always__ post questions at the [forum](https://github.com/mozman/ezdxf/discussions) 
+or [stack overflow](https://stackoverflow.com/) to make answers 
 available to other users as well. 
 
 ezdxf@mozman.at

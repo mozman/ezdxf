@@ -65,6 +65,7 @@ class TestCorruptCivil3D:
     in XRECORDS and is not valid for TrueView 2020!
 
     """
+
     @pytest.fixture
     def filename(self):
         return FILE_CIVIL_3D
@@ -119,3 +120,4 @@ def test_read_gerber_file():
     doc = ezdxf.readfile(GERBER_FILE)
     assert doc.filename == GERBER_FILE
     assert doc.dxfversion == 'AC1009'
+

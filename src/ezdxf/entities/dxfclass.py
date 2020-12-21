@@ -1,8 +1,10 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple
 from .dxfentity import DXFEntity, SubclassProcessor, DXFNamespace
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, group_code_mapping,
+)
 from ezdxf.lldxf.const import DXF2004, DXF2000
 from .factory import register_entity
 
@@ -48,6 +50,7 @@ class_def = DefSubclass(None, {
     # appear only in the OBJECTS section
     'is_an_entity': DXFAttr(281, default=0),
 })
+class_def_group_codes = group_code_mapping(class_def)
 
 
 @register_entity
@@ -74,7 +77,8 @@ class DXFClass(DXFEntity):
             # do not process base class!!!
             self.dxf = DXFNamespace(entity=self)
             processor = SubclassProcessor(tags)
-            processor.load_dxfattribs_into_namespace(self.dxf, class_def)
+            processor.fast_load_dxfattribs(
+                self.dxf, class_def_group_codes, 0, log=False)
 
     def export_dxf(self, tagwriter: 'TagWriter'):
         """ Do complete export here, because CLASS is special. """

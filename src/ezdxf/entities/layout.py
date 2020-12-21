@@ -5,6 +5,7 @@ from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SUBCLASS_MARKER
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS
 from .dxfentity import base_class, SubclassProcessor
@@ -180,6 +181,7 @@ acdb_plot_settings = DefSubclass('AcDbPlotSettings', {
     'paper_image_origin_y': DXFAttr(149, default=0),
     'shade_plot_handle': DXFAttr(333, optional=True),
 })
+acdb_plot_settings_group_codes = group_code_mapping(acdb_plot_settings)
 
 
 @register_entity
@@ -191,7 +193,8 @@ class PlotSettings(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_plot_settings)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_plot_settings_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -288,6 +291,7 @@ acdb_layout = DefSubclass('AcDbLayout', {
     # 76 code is non-zero, then base UCS is taken to be WORLD
     'base_ucs_handle': DXFAttr(346),
 })
+acdb_layout_group_codes = group_code_mapping(acdb_layout)
 
 
 @register_entity
@@ -299,12 +303,13 @@ class DXFLayout(PlotSettings):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_dxfattribs_into_namespace(dxf, acdb_layout)
+            processor.fast_load_dxfattribs(dxf, acdb_layout_group_codes, 2)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         # Set correct Model Type flag
-        self.set_flag_state(1024, self.dxf.name.upper() == 'MODEL', 'plot_layout_flags')
+        self.set_flag_state(1024, self.dxf.name.upper() == 'MODEL',
+                            'plot_layout_flags')
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_layout.name)
         self.dxf.export_dxf_attribs(tagwriter, [

@@ -638,7 +638,8 @@ class BaseDimensionRenderer:
         """
 
         def add_line_to_block(start, end):
-            self.block.add_line(to_ocs(start).vec2, to_ocs(end).vec2,
+            self.block.add_line(to_ocs(Vec3(start)).vec2,
+                                to_ocs(Vec3(end)).vec2,
                                 dxfattribs=dxfattribs)
 
         def order(a: Vec2, b: Vec2) -> Tuple[Vec2, Vec2]:
@@ -697,7 +698,7 @@ class BaseDimensionRenderer:
             dxfattribs: additional or overridden DXF attributes
 
         """
-        insert = self.ucs.to_ocs(insert).vec2
+        insert = self.ucs.to_ocs(Vec3(insert)).vec2
         rotation = self.ucs.to_ocs_angle_deg(rotation)
 
         attribs = self.default_attributes()
@@ -769,7 +770,7 @@ class BaseDimensionRenderer:
             'layer': 'DEFPOINTS',
         }
         for point in points:
-            location = self.ucs.to_ocs(point).replace(z=0)
+            location = self.ucs.to_ocs(Vec3(point)).replace(z=0)
             self.block.add_point(location, dxfattribs=attribs)
 
     def add_leader(self, p1: Vec2, p2: Vec2, p3: Vec2, dxfattribs: dict = None):

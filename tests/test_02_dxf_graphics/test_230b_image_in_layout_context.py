@@ -67,7 +67,7 @@ def test_image_dxf_attribs(image):
     assert 'DEAD' == image.dxf.image_def_reactor_handle
     assert 1 == image.dxf.clipping_boundary_type
     assert 2 == image.dxf.count_boundary_points
-    x, y = image.dxf.image_size[:2]
+    x, y, *_ = image.dxf.image_size
     assert [(-.5, -.5), (x - .5, y - .5)] == image.boundary_path
 
 
@@ -80,7 +80,7 @@ def test_reset_boundary_path(image):
     assert 2 == image.dxf.count_boundary_points
     assert image.get_flag_state(image.USE_CLIPPING_BOUNDARY) is False
     assert image.dxf.clipping == 0
-    x, y = image.dxf.image_size[:2]
+    x, y, *_ = image.dxf.image_size
     assert [(-.5, -.5), (x - .5, y - .5)] == image.boundary_path
 
 

@@ -1,12 +1,14 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Union, Optional
+from typing import TYPE_CHECKING, List, Union, Optional, Tuple
 import copy
 import logging
 from collections import namedtuple
 
 from ezdxf.lldxf import const
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, XType, group_code_mapping,
+)
 from ezdxf.lldxf.tags import Tags
 from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 from ezdxf import colors
@@ -178,7 +180,7 @@ acdb_mleader = DefSubclass('AcDbMLeader', {
         295, default=0, dxfversion=const.DXF2013),
 
 })
-
+acdb_mleader_group_codes = group_code_mapping(acdb_mleader)
 CONTEXT_STR = 'CONTEXT_DATA{'
 LEADER_STR = 'LEADER{'
 LEADER_LINE_STR = 'LEADER_LINE{'
@@ -239,21 +241,20 @@ class MultiLeader(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
-        mleader_subclass = processor.subclasses[2]
-        context = self.extract_context_data(mleader_subclass)
+        tags = processor.subclass_by_index(2)
+        context = self.extract_context_data(tags)
         if context:
             try:
                 self.context = self.load_context(context)
             except const.DXFStructureError:
                 logger.info(
                     f'Context structure error in entity MULTILEADER(#{dxf.handle})')
-        self.arrow_heads = self.load_arrow_heads(mleader_subclass)
-        self.block_attribs = self.load_block_attribs(mleader_subclass)
 
-        tags = processor.load_tags_into_namespace(
-            dxf, mleader_subclass[1:], acdb_mleader)
-        if len(tags):
-            processor.log_unprocessed_tags(tags, subclass=acdb_mleader.name)
+        self.arrow_heads = self.extract_arrow_heads(tags)
+        self.block_attribs = self.extract_block_attribs(tags)
+
+        processor.fast_load_dxfattribs(
+            dxf, acdb_mleader_group_codes, subclass=tags, recover=True)
         return dxf
 
     @staticmethod
@@ -282,7 +283,7 @@ class MultiLeader(DXFGraphic):
             return MultiLeaderContext.load(context)
 
     @staticmethod
-    def load_arrow_heads(data: Tags) -> List[ArrowHeadData]:
+    def extract_arrow_heads(data: Tags) -> List[ArrowHeadData]:
         def store_head():
             heads.append(ArrowHeadData(
                 collector.get(94, 0),  # arrow head index
@@ -296,15 +297,20 @@ class MultiLeader(DXFGraphic):
         except const.DXFValueError:
             return heads
 
+        end = start
         collector = dict()
         for code, value in data.collect_consecutive_tags({94, 345}, start):
+            end += 1
             collector[code] = value
             if code == 345:
                 store_head()
+
+        # Remove processed tags:
+        del data[start: end]
         return heads
 
     @staticmethod
-    def load_block_attribs(data: Tags) -> List[AttribData]:
+    def extract_block_attribs(data: Tags) -> List[AttribData]:
         def store_attrib():
             attribs.append(AttribData(
                 collector.get(330, '0'),  # ATTDEF handle
@@ -320,14 +326,19 @@ class MultiLeader(DXFGraphic):
         except const.DXFValueError:
             return attribs
 
+        end = start
         collector = dict()
         for code, value in data.collect_consecutive_tags(
                 {330, 177, 44, 302}, start):
+            end += 1
             if code == 330 and len(collector):
                 store_attrib()
             collector[code] = value
         if len(collector):
             store_attrib()
+
+        # Remove processed tags:
+        del data[start: end]
         return attribs
 
     def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
@@ -660,7 +671,7 @@ class BlockData:
     def matrix44(self, m: Matrix44) -> None:
         m = m.copy()
         m.transpose()
-        self._matrix = m.matrix
+        self._matrix = list(m)
 
     def parse(self, code: int, value) -> bool:
         attrib = BlockData.ATTRIBS.get(code)
@@ -880,6 +891,7 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
 
     'unknown2': DXFAttr(298, optional=True),  # boolean flag ?
 })
+acdb_mleader_style_group_codes = group_code_mapping(acdb_mleader_style)
 
 
 @register_entity
@@ -892,11 +904,8 @@ class MLeaderStyle(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_mleader_style)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_mleader_style.name)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_mleader_style_group_codes, subclass=1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

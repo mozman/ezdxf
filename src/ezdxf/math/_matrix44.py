@@ -8,7 +8,8 @@ from typing import Sequence, Iterable, List, Tuple, TYPE_CHECKING
 import math
 from math import sin, cos, tan
 from itertools import chain
-from ezdxf.math import Vec3, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
+# The pure Python implementation can't import from ._ctypes or ezdxf.math!
+from ._vector import Vec3, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -55,18 +56,6 @@ class Matrix44:
         Matrix44(row1, row2, row3, row4) four rows, each row with four values.
 
         """
-        self.matrix: List[float] = None
-        self.set(*args)
-
-    def set(self, *args) -> None:
-        """
-        Set matrix values.
-
-            - ``set()`` creates the identity matrix.
-            - ``set(values)`` values is an iterable with the 16 components of the matrix.
-            - ``set(row1, row2, row3, row4)`` four rows, each row with four values.
-
-        """
         nargs = len(args)
         if nargs == 0:
             self.matrix = floats(Matrix44._identity)
@@ -75,7 +64,8 @@ class Matrix44:
         elif nargs == 4:
             self.matrix = floats(chain(*args))
         else:
-            raise ValueError("Invalid count of arguments (4 row vectors or one list with 16 values).")
+            raise ValueError(
+                "Invalid count of arguments (4 row vectors or one list with 16 values).")
         if len(self.matrix) != 16:
             raise ValueError("Invalid matrix count")
 
@@ -106,8 +96,11 @@ class Matrix44:
             row: row index [0 .. 3]
 
         """
-        index = row * 4
-        return tuple(self.matrix[index:index + 4])
+        if 0 <= row < 4:
+            index = row * 4
+            return tuple(self.matrix[index:index + 4])
+        else:
+            raise IndexError(f'invalid row index: {row}')
 
     def set_row(self, row: int, values: Sequence[float]) -> None:
         """
@@ -118,8 +111,11 @@ class Matrix44:
             values: iterable of four row values
 
         """
-        index = row * 4
-        self.matrix[index:index + len(values)] = floats(values)
+        if 0 <= row < 4:
+            index = row * 4
+            self.matrix[index:index + len(values)] = floats(values)
+        else:
+            raise IndexError(f'invalid row index: {row}')
 
     def get_col(self, col: int) -> Tuple[float, ...]:
         """
@@ -128,8 +124,11 @@ class Matrix44:
         Args:
             col: column index [0 .. 3]
         """
-        m = self.matrix
-        return m[col], m[col + 4], m[col + 8], m[col + 12]
+        if 0 <= col < 4:
+            m = self.matrix
+            return m[col], m[col + 4], m[col + 8], m[col + 12]
+        else:
+            raise IndexError(f'invalid row index: {col}')
 
     def set_col(self, col: int, values: Sequence[float]):
         """
@@ -140,12 +139,15 @@ class Matrix44:
             values: iterable of four column values
 
         """
-        m = self.matrix
-        a, b, c, d = values
-        m[col] = float(a)
-        m[col + 4] = float(b)
-        m[col + 8] = float(c)
-        m[col + 12] = float(d)
+        if 0 <= col < 4:
+            m = self.matrix
+            a, b, c, d = values
+            m[col] = float(a)
+            m[col + 4] = float(b)
+            m[col + 8] = float(c)
+            m[col + 12] = float(d)
+        else:
+            raise IndexError(f'invalid row index: {col}')
 
     def copy(self) -> 'Matrix44':
         """ Returns a copy of same type. """
@@ -290,7 +292,7 @@ class Matrix44:
         c = cos(angle)
         s = sin(angle)
         omc = 1. - c
-        x, y, z = axis
+        x, y, z = Vec3(axis).normalize()
         return cls([
             x * x * omc + c, y * x * omc + z * s, x * z * omc - y * s, 0.,
             x * y * omc - z * s, y * y * omc + c, y * z * omc + x * s, 0.,
@@ -299,7 +301,8 @@ class Matrix44:
         ])
 
     @classmethod
-    def xyz_rotate(cls, angle_x: float, angle_y: float, angle_z: float) -> 'Matrix44':
+    def xyz_rotate(cls, angle_x: float, angle_y: float,
+                   angle_z: float) -> 'Matrix44':
         """
         Returns a rotation matrix for rotation about each axis.
 
@@ -326,7 +329,8 @@ class Matrix44:
             0., 0., 0., 1.])
 
     @classmethod
-    def perspective_projection(cls, left: float, right: float, top: float, bottom: float, near: float,
+    def perspective_projection(cls, left: float, right: float, top: float,
+                               bottom: float, near: float,
                                far: float) -> 'Matrix44':
         """
         Returns a matrix for a 2D projection.
@@ -343,12 +347,14 @@ class Matrix44:
         return cls([
             (2. * near) / (right - left), 0., 0., 0.,
             0., (2. * near) / (top - bottom), 0., 0.,
-            (right + left) / (right - left), (top + bottom) / (top - bottom), -((far + near) / (far - near)), -1.,
+            (right + left) / (right - left), (top + bottom) / (top - bottom),
+            -((far + near) / (far - near)), -1.,
             0., 0., -((2. * far * near) / (far - near)), 0.
         ])
 
     @classmethod
-    def perspective_projection_fov(cls, fov: float, aspect: float, near: float, far: float) -> 'Matrix44':
+    def perspective_projection_fov(cls, fov: float, aspect: float, near: float,
+                                   far: float) -> 'Matrix44':
         """
         Returns a matrix for a 2D projection.
 
@@ -398,30 +404,35 @@ class Matrix44:
             or_x, or_y, or_z, 1,
         ))
 
-    def __hash__(self) -> int:
-        """ Returns hash value of matrix. """
-        return self.matrix.__hash__()
-
     def __setitem__(self, index: Tuple[int, int], value: float):
         """ Set (row, column) element. """
         row, col = index
-        self.matrix[row * 4 + col] = float(value)
+        if 0 <= row < 4 and 0 <= col < 4:
+            self.matrix[row * 4 + col] = float(value)
+        else:
+            raise IndexError(f'index out of range: {index}')
 
     def __getitem__(self, index: Tuple[int, int]):
         """ Get (row, column) element. """
         row, col = index
-        return self.matrix[row * 4 + col]
+        if 0 <= row < 4 and 0 <= col < 4:
+            return self.matrix[row * 4 + col]
+        else:
+            raise IndexError(f'index out of range: {index}')
 
     def __iter__(self) -> Iterable[float]:
         """ Iterates over all matrix values. """
         return iter(self.matrix)
 
-    def __matmul__(self, other: 'Matrix44') -> 'Matrix44':
+    def __mul__(self, other: 'Matrix44') -> 'Matrix44':
+        """ Returns a new matrix as result of the matrix multiplication with another matrix. """
         res_matrix = self.copy()
         res_matrix.__imul__(other)
         return res_matrix
 
-    def __mul__(self, other: 'Matrix44') -> 'Matrix44':
+    # __matmul__ = __mul__ does not work!
+
+    def __matmul__(self, other: 'Matrix44') -> 'Matrix44':
         """ Returns a new matrix as result of the matrix multiplication with another matrix. """
         res_matrix = self.copy()
         res_matrix.__imul__(other)
@@ -454,39 +465,6 @@ class Matrix44:
         ]
         return self
 
-    def fast_mul(self, other: 'Matrix44') -> 'Matrix44':
-        """
-        Multiplies this matrix with other matrix.
-
-        Assumes that both matrices have a right column of (0, 0, 0, 1). This is True for matrices composed of
-        rotations,  translations and scales. fast_mul is approximately 25% quicker than the ``*=`` operator.
-
-        """
-        m1 = self.matrix
-        m2 = other.matrix
-        self.matrix = [
-            m1[0] * m2[0] + m1[1] * m2[4] + m1[2] * m2[8],
-            m1[0] * m2[1] + m1[1] * m2[5] + m1[2] * m2[9],
-            m1[0] * m2[2] + m1[1] * m2[6] + m1[2] * m2[10],
-            0.0,
-
-            m1[4] * m2[0] + m1[5] * m2[4] + m1[6] * m2[8],
-            m1[4] * m2[1] + m1[5] * m2[5] + m1[6] * m2[9],
-            m1[4] * m2[2] + m1[5] * m2[6] + m1[6] * m2[10],
-            0.0,
-
-            m1[8] * m2[0] + m1[9] * m2[4] + m1[10] * m2[8],
-            m1[8] * m2[1] + m1[9] * m2[5] + m1[10] * m2[9],
-            m1[8] * m2[2] + m1[9] * m2[6] + m1[10] * m2[10],
-            0.0,
-
-            m1[12] * m2[0] + m1[13] * m2[4] + m1[14] * m2[8] + m2[12],
-            m1[12] * m2[1] + m1[13] * m2[5] + m1[14] * m2[9] + m2[13],
-            m1[12] * m2[2] + m1[13] * m2[6] + m1[14] * m2[10] + m2[14],
-            1.0
-        ]
-        return self
-
     def rows(self) -> Iterable[Tuple[float, ...]]:
         """ Iterate over rows as 4-tuples. """
         return (self.get_row(index) for index in (0, 1, 2, 3))
@@ -500,16 +478,16 @@ class Matrix44:
         m = self.matrix
         x, y, z = vector
         return Vec3(x * m[0] + y * m[4] + z * m[8] + m[12],
-                      x * m[1] + y * m[5] + z * m[9] + m[13],
-                      x * m[2] + y * m[6] + z * m[10] + m[14])
+                    x * m[1] + y * m[5] + z * m[9] + m[13],
+                    x * m[2] + y * m[6] + z * m[10] + m[14])
 
     def transform_direction(self, vector: 'Vertex', normalize=False) -> Vec3:
         """ Returns a transformed direction vector without translation. """
         m = self.matrix
         x, y, z = vector
         v = Vec3(x * m[0] + y * m[4] + z * m[8],
-                   x * m[1] + y * m[5] + z * m[9],
-                   x * m[2] + y * m[6] + z * m[10])
+                 x * m[1] + y * m[5] + z * m[9],
+                 x * m[2] + y * m[6] + z * m[10])
         return v.normalize() if normalize else v
 
     ocs_to_wcs = transform_direction
@@ -525,7 +503,8 @@ class Matrix44:
                 x * m2 + y * m6 + z * m10 + m14
             )
 
-    def transform_directions(self, vectors: Iterable['Vertex'], normalize=False) -> Iterable[Vec3]:
+    def transform_directions(self, vectors: Iterable['Vertex'],
+                             normalize=False) -> Iterable[Vec3]:
         """
         Returns an iterable of transformed direction vectors without translation.
 
@@ -618,36 +597,52 @@ class Matrix44:
         m20, m21, m22, m23, \
         m30, m31, m32, m33 = self.matrix
         self.matrix = [
-            (m12 * m23 * m31 - m13 * m22 * m31 + m13 * m21 * m32 - m11 * m23 * m32 - m12 * m21 * m33 +
-             m11 * m22 * m33) * f,
-            (m03 * m22 * m31 - m02 * m23 * m31 - m03 * m21 * m32 + m01 * m23 * m32 + m02 * m21 * m33 -
-             m01 * m22 * m33) * f,
-            (m02 * m13 * m31 - m03 * m12 * m31 + m03 * m11 * m32 - m01 * m13 * m32 - m02 * m11 * m33 +
-             m01 * m12 * m33) * f,
-            (m03 * m12 * m21 - m02 * m13 * m21 - m03 * m11 * m22 + m01 * m13 * m22 + m02 * m11 * m23 -
-             m01 * m12 * m23) * f,
-            (m13 * m22 * m30 - m12 * m23 * m30 - m13 * m20 * m32 + m10 * m23 * m32 + m12 * m20 * m33 -
-             m10 * m22 * m33) * f,
-            (m02 * m23 * m30 - m03 * m22 * m30 + m03 * m20 * m32 - m00 * m23 * m32 - m02 * m20 * m33 +
-             m00 * m22 * m33) * f,
-            (m03 * m12 * m30 - m02 * m13 * m30 - m03 * m10 * m32 + m00 * m13 * m32 + m02 * m10 * m33 -
-             m00 * m12 * m33) * f,
-            (m02 * m13 * m20 - m03 * m12 * m20 + m03 * m10 * m22 - m00 * m13 * m22 - m02 * m10 * m23 +
-             m00 * m12 * m23) * f,
-            (m11 * m23 * m30 - m13 * m21 * m30 + m13 * m20 * m31 - m10 * m23 * m31 - m11 * m20 * m33 +
-             m10 * m21 * m33) * f,
-            (m03 * m21 * m30 - m01 * m23 * m30 - m03 * m20 * m31 + m00 * m23 * m31 + m01 * m20 * m33 -
-             m00 * m21 * m33) * f,
-            (m01 * m13 * m30 - m03 * m11 * m30 + m03 * m10 * m31 - m00 * m13 * m31 - m01 * m10 * m33 +
-             m00 * m11 * m33) * f,
-            (m03 * m11 * m20 - m01 * m13 * m20 - m03 * m10 * m21 + m00 * m13 * m21 + m01 * m10 * m23 -
-             m00 * m11 * m23) * f,
-            (m12 * m21 * m30 - m11 * m22 * m30 - m12 * m20 * m31 + m10 * m22 * m31 + m11 * m20 * m32 -
-             m10 * m21 * m32) * f,
-            (m01 * m22 * m30 - m02 * m21 * m30 + m02 * m20 * m31 - m00 * m22 * m31 - m01 * m20 * m32 +
-             m00 * m21 * m32) * f,
-            (m02 * m11 * m30 - m01 * m12 * m30 - m02 * m10 * m31 + m00 * m12 * m31 + m01 * m10 * m32 -
-             m00 * m11 * m32) * f,
-            (m01 * m12 * m20 - m02 * m11 * m20 + m02 * m10 * m21 - m00 * m12 * m21 - m01 * m10 * m22 +
-             m00 * m11 * m22) * f,
+            (
+                    m12 * m23 * m31 - m13 * m22 * m31 + m13 * m21 * m32 - m11 * m23 * m32 - m12 * m21 * m33 +
+                    m11 * m22 * m33) * f,
+            (
+                    m03 * m22 * m31 - m02 * m23 * m31 - m03 * m21 * m32 + m01 * m23 * m32 + m02 * m21 * m33 -
+                    m01 * m22 * m33) * f,
+            (
+                    m02 * m13 * m31 - m03 * m12 * m31 + m03 * m11 * m32 - m01 * m13 * m32 - m02 * m11 * m33 +
+                    m01 * m12 * m33) * f,
+            (
+                    m03 * m12 * m21 - m02 * m13 * m21 - m03 * m11 * m22 + m01 * m13 * m22 + m02 * m11 * m23 -
+                    m01 * m12 * m23) * f,
+            (
+                    m13 * m22 * m30 - m12 * m23 * m30 - m13 * m20 * m32 + m10 * m23 * m32 + m12 * m20 * m33 -
+                    m10 * m22 * m33) * f,
+            (
+                    m02 * m23 * m30 - m03 * m22 * m30 + m03 * m20 * m32 - m00 * m23 * m32 - m02 * m20 * m33 +
+                    m00 * m22 * m33) * f,
+            (
+                    m03 * m12 * m30 - m02 * m13 * m30 - m03 * m10 * m32 + m00 * m13 * m32 + m02 * m10 * m33 -
+                    m00 * m12 * m33) * f,
+            (
+                    m02 * m13 * m20 - m03 * m12 * m20 + m03 * m10 * m22 - m00 * m13 * m22 - m02 * m10 * m23 +
+                    m00 * m12 * m23) * f,
+            (
+                    m11 * m23 * m30 - m13 * m21 * m30 + m13 * m20 * m31 - m10 * m23 * m31 - m11 * m20 * m33 +
+                    m10 * m21 * m33) * f,
+            (
+                    m03 * m21 * m30 - m01 * m23 * m30 - m03 * m20 * m31 + m00 * m23 * m31 + m01 * m20 * m33 -
+                    m00 * m21 * m33) * f,
+            (
+                    m01 * m13 * m30 - m03 * m11 * m30 + m03 * m10 * m31 - m00 * m13 * m31 - m01 * m10 * m33 +
+                    m00 * m11 * m33) * f,
+            (
+                    m03 * m11 * m20 - m01 * m13 * m20 - m03 * m10 * m21 + m00 * m13 * m21 + m01 * m10 * m23 -
+                    m00 * m11 * m23) * f,
+            (
+                    m12 * m21 * m30 - m11 * m22 * m30 - m12 * m20 * m31 + m10 * m22 * m31 + m11 * m20 * m32 -
+                    m10 * m21 * m32) * f,
+            (
+                    m01 * m22 * m30 - m02 * m21 * m30 + m02 * m20 * m31 - m00 * m22 * m31 - m01 * m20 * m32 +
+                    m00 * m21 * m32) * f,
+            (
+                    m02 * m11 * m30 - m01 * m12 * m30 - m02 * m10 * m31 + m00 * m12 * m31 + m01 * m10 * m32 -
+                    m00 * m11 * m32) * f,
+            (
+                    m01 * m12 * m20 - m02 * m11 * m20 + m02 * m10 * m21 - m00 * m12 * m21 - m01 * m10 * m22 +
+                    m00 * m11 * m22) * f,
         ]

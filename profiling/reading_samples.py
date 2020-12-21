@@ -4,9 +4,9 @@ import ezdxf
 import os
 from collections import Counter
 import time
-from pympler import tracker
+from ezdxf import EZDXF_TEST_FILES
 
-CADKIT = r"D:\Source\dxftest\CADKitSamples"
+CADKIT = "CADKitSamples"
 CADKIT_FILES = [
     "A_000217.dxf",  # 0
     "AEC Plan Elev Sample.dxf",  # 1
@@ -37,8 +37,8 @@ CADKIT_FILES = [
 ]
 
 STD_FILES = [
-    r"D:\Source\dxftest\ACAD_R12.dxf",
-    r"D:\Source\dxftest\FW25-R12.dxf",
+    CADKIT_FILES[1],
+    CADKIT_FILES[23],
 ]
 
 
@@ -49,19 +49,13 @@ def count_entities(msp):
     return counter
 
 
-PYMPLER = False
-
-for _name in STD_FILES:
-    filename = os.path.join(CADKIT, _name)
+for _name in CADKIT_FILES:
+    filename = os.path.join(EZDXF_TEST_FILES, CADKIT, _name)
     print(f'reading file: {filename}')
-    if PYMPLER:
-        tr_new = tracker.SummaryTracker()
     start_reading = time.perf_counter()
     doc = ezdxf.readfile(filename)
     msp = doc.modelspace()
     new_entities = count_entities(msp)
     new_count = len(msp)
     new_timing = time.perf_counter() - start_reading
-    if PYMPLER:
-        tr_new.print_diff()
-    print(f'loaded {new_count} entities in {new_timing:.1f} sec')
+    print(f'loaded {new_count} entities in {new_timing:.3f} sec')

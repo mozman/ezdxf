@@ -7,6 +7,7 @@ import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2010
 from ezdxf.math import Vec3, Vec2, BoundingBox2d
@@ -28,7 +29,8 @@ __all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables', 'Wipeout']
 class ImageBase(DXFGraphic):
     """ DXF IMAGE entity """
     DXFTYPE = 'IMAGEBASE'
-    _CLS_ATTRIBS = DefSubclass('Dummy', {})
+    _CLS_GROUP_CODES = dict()
+    _SUBCLASS_NAME = 'dummy'
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     SHOW_IMAGE = 1
@@ -53,7 +55,8 @@ class ImageBase(DXFGraphic):
         if processor:
             path_tags = processor.subclasses[2].pop_tags(codes=(14,))
             self.load_boundary_path(path_tags)
-            processor.load_and_recover_dxfattribs(dxf, self._CLS_ATTRIBS)
+            processor.fast_load_dxfattribs(
+                dxf, self._CLS_GROUP_CODES, 2, recover=True)
             if len(self.boundary_path) < 2:  # something is wrong
                 self.dxf = dxf
                 self.reset_boundary_path()
@@ -67,7 +70,7 @@ class ImageBase(DXFGraphic):
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
         super().export_entity(tagwriter)
-        tagwriter.write_tag2(SUBCLASS_MARKER, self._CLS_ATTRIBS.name)
+        tagwriter.write_tag2(SUBCLASS_MARKER, self._SUBCLASS_NAME)
         self.dxf.count_boundary_points = len(self.boundary_path)
         self.dxf.export_dxf_attribs(tagwriter, [
             'class_version', 'insert', 'u_pixel', 'v_pixel', 'image_size',
@@ -250,6 +253,7 @@ acdb_image = DefSubclass('AcDbRasterImage', {
     ),
     # boundary path coordinates are pixel coordinates NOT drawing units
 })
+acdb_image_group_codes = group_code_mapping(acdb_image)
 
 
 @register_entity
@@ -257,7 +261,8 @@ class Image(ImageBase):
     """ DXF IMAGE entity """
     DXFTYPE = 'IMAGE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_image)
-    _CLS_ATTRIBS = acdb_image
+    _CLS_GROUP_CODES = acdb_image_group_codes
+    _SUBCLASS_NAME = acdb_image.name
     DEFAULT_ATTRIBS = {'layer': '0', 'flags': 3}
 
     def __init__(self):
@@ -374,6 +379,7 @@ class Image(ImageBase):
 
 # DXF reference error: Subclass marker (AcDbRasterImage)
 acdb_wipeout = DefSubclass('AcDbWipeout', dict(acdb_image.attribs))
+acdb_wipeout_group_codes = group_code_mapping(acdb_wipeout)
 
 
 @register_entity
@@ -393,7 +399,8 @@ class Wipeout(ImageBase):
         'image_def_reactor_handle': '0',  # has no ImageDefReactor()
         'clip_mode': 0
     }
-    _CLS_ATTRIBS = acdb_wipeout
+    _CLS_GROUP_CODES = acdb_wipeout_group_codes
+    _SUBCLASS_NAME = acdb_wipeout.name
 
     def set_masking_area(self, vertices: Iterable['Vertex']) -> None:
         """ Set a new masking area, the area is placed in the layout xy-plane.
@@ -457,6 +464,7 @@ acdb_image_def = DefSubclass('AcDbRasterImageDef', {
     ),
 
 })
+acdb_image_def_group_codes = group_code_mapping(acdb_image_def)
 
 
 @register_entity
@@ -470,10 +478,7 @@ class ImageDef(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_image_def)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_image_def.name)
+            processor.fast_load_dxfattribs(dxf, acdb_image_def_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -492,6 +497,7 @@ acdb_image_def_reactor = DefSubclass('AcDbRasterImageDefReactor', {
     # Handle to image:
     'image_handle': DXFAttr(330),
 })
+acdb_image_def_reactor_group_codes = group_code_mapping(acdb_image_def_reactor)
 
 
 @register_entity
@@ -505,11 +511,8 @@ class ImageDefReactor(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_image_def_reactor)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_image_def_reactor.name)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_image_def_reactor_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -556,6 +559,7 @@ acdb_raster_variables = DefSubclass('AcDbRasterVariables', {
     ),
 
 })
+acdb_raster_variables_group_codes = group_code_mapping(acdb_raster_variables)
 
 
 @register_entity
@@ -569,11 +573,8 @@ class RasterVariables(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_raster_variables)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_raster_variables.name)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_raster_variables_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -594,8 +595,8 @@ acdb_wipeout_variables = DefSubclass('AcDbWipeoutVariables', {
         validator=validator.is_integer_bool,
         fixer=RETURN_DEFAULT,
     ),
-
 })
+acdb_wipeout_variables_group_codes = group_code_mapping(acdb_wipeout_variables)
 
 
 @register_entity
@@ -609,11 +610,8 @@ class WipeoutVariables(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_wipeout_variables)
-            if len(tags):
-                processor.log_unprocessed_tags(
-                    tags, subclass=acdb_wipeout_variables.name)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_wipeout_variables_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

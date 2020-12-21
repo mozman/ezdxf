@@ -286,9 +286,9 @@ def test_leader_to_code():
         'color': '7',
     })
     entity.set_vertices([
-        (1, 2, 0, 0, 0),
-        (4, 3, 0, 0, 0),
-        (7, 8, 0, 0, 0),
+        (1, 2, 0),
+        (4, 3, 0),
+        (7, 8, 0),
     ])
     new_entity = translate_to_code_and_execute(entity)
     assert new_entity.dxf.color == entity.dxf.color
@@ -329,8 +329,8 @@ def test_ltype_entry():
     ltype = Linetype.new('FFFF', dxfattribs={
         'name': 'TEST',
         'description': 'TESTDESC',
-        'pattern': [0.2, 0.1, -0.1]
     })
+    ltype.setup_pattern([0.2, 0.1, -0.1])
     code = table_entries_to_code([ltype], drawing='doc')
     exec(str(code), globals())
     new_ltype = doc.linetypes.get('TEST')

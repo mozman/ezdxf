@@ -1,10 +1,42 @@
 #!/usr/bin/env python3
-# Created: 10.03.2011
 # Copyright (c) 2011-2020 Manfred Moitzi
 # License: MIT License
 import os
+import sys
 from setuptools import setup, find_packages
+from setuptools import Extension
 # setuptools docs: https://setuptools.readthedocs.io/en/latest/setuptools.html
+
+# Cython accelerated modules are optional:
+try:
+    from Cython.Distutils import build_ext
+
+    ext_modules = [
+        Extension("ezdxf.acc.vector", [
+            "src/ezdxf/acc/vector.pyx",
+        ], optional=True, language='c++'),
+        Extension("ezdxf.acc.matrix44", [
+            "src/ezdxf/acc/matrix44.pyx",
+        ], optional=True, language='c++'),
+        Extension("ezdxf.acc.bezier4p", [
+            "src/ezdxf/acc/bezier4p.pyx",
+            "src/ezdxf/acc/_cpp_cubic_bezier.cpp",
+        ], optional=True, language='c++'),
+        Extension("ezdxf.acc.construct", [
+            "src/ezdxf/acc/construct.pyx",
+        ], optional=True, language='c++'),
+    ]
+    commands = {'build_ext': build_ext}
+except ImportError:
+    ext_modules = []
+    commands = {}
+
+PYPY = hasattr(sys, 'pypy_version_info')
+if PYPY:
+    print("C-extensions are disabled for pypy because JIT complied Python code "
+          "is much faster!")
+    ext_modules = []
+    commands = {}
 
 
 def get_version():
@@ -55,6 +87,8 @@ setup(
         ]
     },
     provides=['ezdxf'],
+    cmdclass=commands,
+    ext_modules=ext_modules,
     install_requires=['pyparsing>=2.0.1'],
     setup_requires=['wheel'],
     tests_require=['pytest', 'geomdl'],
@@ -71,6 +105,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Intended Audience :: Developers",

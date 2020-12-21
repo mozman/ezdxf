@@ -14,6 +14,7 @@ from typing import Iterable, Tuple, List, Dict
 from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
+from ezdxf.acc import USE_C_EXT
 from ezdxf import recover
 from ezdxf.addons import odafc
 from ezdxf.addons.drawing import Frontend, RenderContext, fonts
@@ -404,4 +405,6 @@ def _main():
 
 
 if __name__ == '__main__':
+    import os
+    print(f'C-Extension: {USE_C_EXT}')
     _main()

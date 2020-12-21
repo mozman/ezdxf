@@ -332,14 +332,13 @@ class TextRenderer:
         self._use_cache = use_cache
 
         # Each font has its own text path cache
-        # key is hash(QFont)
+        # key is QFont.key()
         self._text_path_cache: Dict[
-            int, Dict[str, qg.QPainterPath]] = defaultdict(dict)
+            str, Dict[str, qg.QPainterPath]] = defaultdict(dict)
 
         # Each font has its own font measurements cache
-        # key is hash(QFont)
-        self._font_measurement_cache: Dict[
-            int, FontMeasurements] = {}
+        # key is QFont.key()
+        self._font_measurement_cache: Dict[str, FontMeasurements] = {}
 
     @property
     def default_font(self) -> qg.QFont:
@@ -354,7 +353,7 @@ class TextRenderer:
 
     def get_font_measurements(self, font: qg.QFont) -> FontMeasurements:
         # None is the default font.
-        key = hash(font)  # good hash?
+        key = font.key() if font is not None else None
         measurements = self._font_measurement_cache.get(key)
         if measurements is None:
             upper_x = self.get_text_rect('X', font)
@@ -372,7 +371,8 @@ class TextRenderer:
 
     def get_text_path(self, text: str, font: qg.QFont) -> qg.QPainterPath:
         # None is the default font
-        cache = self._text_path_cache[hash(font)]  # defaultdict(dict)
+        key = font.key() if font is not None else None
+        cache = self._text_path_cache[key]  # defaultdict(dict)
         path = cache.get(text, None)
         if path is None:
             if font is None:

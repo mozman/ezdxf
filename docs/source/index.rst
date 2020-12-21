@@ -17,6 +17,7 @@ Quick-Info
 - requires at least Python 3.6
 - OS independent
 - additional required packages: `pyparsing <https://pypi.python.org/pypi/pyparsing/>`_
+- optional Cython implementation of some low level math classes
 - MIT-License
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
 - additional read support for DXF versions R13/R14 (upgraded to R2000)
@@ -51,14 +52,19 @@ Documentation of development version at https://ezdxf.mozman.at/docs
 
 Documentation of latest release at http://ezdxf.readthedocs.io/
 
+Source Code & Feedback
+----------------------
+
 Source Code: http://github.com/mozman/ezdxf.git
 
-Issue Tracker at GitHub: http://github.com/mozman/ezdxf/issues
+Issue Tracker: http://github.com/mozman/ezdxf/issues
 
-Questions and Feedback at Google Groups
----------------------------------------
+Forum: https://github.com/mozman/ezdxf/discussions
 
-Please post questions at the `forum <https://groups.google.com/d/forum/python-ezdxf>`_ or
+Questions and Answers
+---------------------
+
+Please post questions at the `forum <https://github.com/mozman/ezdxf/discussions>`_ or
 `stack overflow <https://stackoverflow.com/>`_ to make answers available to other users as well.
 
 

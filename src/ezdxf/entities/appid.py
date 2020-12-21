@@ -2,7 +2,9 @@
 # License: MIT License
 from typing import TYPE_CHECKING
 import logging
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, group_code_mapping,
+)
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
@@ -21,6 +23,8 @@ acdb_appid = DefSubclass('AcDbRegAppTableRecord', {
     'flags': DXFAttr(70, default=0),
 })
 
+acdb_appid_group_codes = group_code_mapping(acdb_appid)
+
 
 @register_entity
 class AppID(DXFEntity):
@@ -31,12 +35,9 @@ class AppID(DXFEntity):
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_appid)
-        if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_appid.name)
+        if processor:
+            processor.fast_load_dxfattribs(
+                dxf, acdb_appid_group_codes, subclass=2)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

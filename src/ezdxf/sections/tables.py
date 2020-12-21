@@ -1,14 +1,14 @@
-# Purpose: tables section
-# Created: 12.03.2011
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List
 import logging
 from ezdxf.lldxf.const import DXFStructureError, DXF12
-from .table import Table, ViewportTable, StyleTable, LayerTable
+from .table import Table, ViewportTable, StyleTable, LayerTable, LineTypeTable
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFEntity, DXFTagStorage, DimStyle
+    from ezdxf.eztypes import (
+        TagWriter, Drawing, DXFEntity, DXFTagStorage, DimStyle
+    )
 
 logger = logging.getLogger('ezdxf')
 
@@ -26,7 +26,7 @@ TABLENAMES = {
 
 TABLESMAP = {
     'LAYER': LayerTable,
-    'LTYPE': Table,
+    'LTYPE': LineTypeTable,
     'STYLE': StyleTable,
     'DIMSTYLE': Table,
     'VPORT': ViewportTable,

@@ -19,7 +19,7 @@ from array import array
 from itertools import chain
 from binascii import unhexlify
 import reprlib
-from ezdxf.math.vector import Vec3
+from ezdxf.math import Vec3
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
@@ -95,10 +95,6 @@ TYPE_TABLE = _build_type_table([
     (int, INT32),
     (int, INT64),
 ])
-
-
-def handle_code(dxftype: str) -> int:
-    return 105 if dxftype == 'DIMSTYLE' else 5
 
 
 class DXFTag:

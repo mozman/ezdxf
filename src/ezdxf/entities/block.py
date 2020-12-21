@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import (
     SUBCLASS_MARKER, DXF12, MODEL_SPACE_R12, PAPER_SPACE_R12, MODEL_SPACE_R2000,
@@ -28,6 +29,7 @@ acdb_entity = DefSubclass('AcDbEntity', {
     ),
 
 })
+acdb_entity_group_codes = group_code_mapping(acdb_entity)
 
 acdb_block_begin = DefSubclass('AcDbBlockBegin', {
     'name': DXFAttr(2, validator=validator.is_valid_block_name),
@@ -52,6 +54,7 @@ acdb_block_begin = DefSubclass('AcDbBlockBegin', {
     'base_point': DXFAttr(10, xtype=XType.any_point, default=NULLVEC),
     'xref_path': DXFAttr(1, default=''),
 })
+acdb_block_begin_group_codes = group_code_mapping(acdb_block_begin)
 
 MODEL_SPACE_R2000_LOWER = MODEL_SPACE_R2000.lower()
 MODEL_SPACE_R12_LOWER = MODEL_SPACE_R12.lower()
@@ -95,10 +98,8 @@ class Block(DXFEntity):
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
-        # Do not use load_and_recover_dxfattribs(), has only limited
-        # DXFGraphic support.
-        processor.load_dxfattribs_into_namespace(dxf, acdb_entity)
-        processor.load_dxfattribs_into_namespace(dxf, acdb_block_begin)
+        processor.fast_load_dxfattribs(dxf, acdb_entity_group_codes, 1)
+        processor.fast_load_dxfattribs(dxf, acdb_block_begin_group_codes, 2)
         if processor.r12:
             name = dxf.name.lower()
             if name == MODEL_SPACE_R12_LOWER:
@@ -173,11 +174,8 @@ class EndBlk(DXFEntity):
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        processor.load_dxfattribs_into_namespace(dxf, acdb_entity)
-        processor.load_dxfattribs_into_namespace(dxf, acdb_block_end)
+        if processor:
+            processor.fast_load_dxfattribs(dxf, acdb_entity_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

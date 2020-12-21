@@ -6,6 +6,7 @@ import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2010
 from ezdxf.math import Vec3, NULLVEC
@@ -100,6 +101,7 @@ acdb_view = DefSubclass('AcDbViewTableRecord', {
     'visual_style_handle': DXFAttr(348, optional=True, dxfversion=DXF2007),
     'sun_handle': DXFAttr(361, optional=True, dxfversion=DXF2010),
 })
+acdb_view_group_codes = group_code_mapping(acdb_view)
 
 
 @register_entity
@@ -112,9 +114,8 @@ class View(DXFEntity):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_view)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_view.name)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_view_group_codes, subclass=2)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

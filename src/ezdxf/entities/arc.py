@@ -4,7 +4,9 @@ from typing import TYPE_CHECKING, Iterable
 from ezdxf.math import Vec3, Matrix44, linspace, ConstructionArc, Vertex
 from ezdxf.math.transformtools import OCSTransform
 
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import (
+    DXFAttr, DXFAttributes, DefSubclass, group_code_mapping
+)
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import acdb_entity
@@ -21,6 +23,8 @@ acdb_arc = DefSubclass('AcDbArc', {
     'end_angle': DXFAttr(51, default=360),
 })
 
+acdb_arc_group_codes = group_code_mapping(acdb_arc)
+
 
 @register_entity
 class Arc(Circle):
@@ -32,7 +36,8 @@ class Arc(Circle):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_arc)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_arc_group_codes, subclass=3, recover=True)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

@@ -84,21 +84,25 @@ class ComplexLineTypePart:
         self.font = font
         self.tags = Tags()
 
-    def complex_ltype_tags(self, drawing: 'Drawing') -> Sequence[DXFTag]:
+    def complex_ltype_tags(self, doc: 'Drawing') -> Sequence[DXFTag]:
         def get_font_handle() -> str:
             if self.type == 'SHAPE':
-                font = drawing.styles.get_shx(self.font)  # creates new shx or returns existing entry
+                # Create new shx or returns existing entry:
+                font = doc.styles.get_shx(self.font)
             else:
                 try:
-                    font = drawing.styles.get(self.font)  # case insensitive search for text style
+                    # Case insensitive search for text style:
+                    font = doc.styles.get(self.font)
                 except DXFTableEntryError:
-                    font = drawing.styles.new(self.font)
+                    font = doc.styles.new(self.font)
             return font.dxf.handle
 
-        if drawing is not None:
+        # Note: AutoCAD/BricsCAD do NOT report an error or even crash, if the
+        # text style handle is invalid!
+        if doc is not None:
             handle = get_font_handle()
         else:
-            handle = 0
+            handle = '0'
         tags = []
 
         # ODA complex linetype specification (20.4.58):

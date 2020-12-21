@@ -1,9 +1,10 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
 from typing import (
-    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple,
+    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple, Dict
 )
 import itertools
+import re
 from collections import defaultdict
 
 from ezdxf.lldxf import const
@@ -144,6 +145,9 @@ class Recover:
         self.errors = []
         self.fixes = []
 
+        # Detected DXF version
+        self.dxfversion = const.DXF12
+
     @classmethod
     def run(cls, stream: BinaryIO, loader: Callable = None,
             errors: str = 'surrogateescape') -> 'Recover':
@@ -253,10 +257,19 @@ class Recover:
             else:
                 section_dict[name] = tags
 
-        def _build_section_dict(d: dict) -> None:
+        def _build_section_dict(d: Dict) -> None:
             for name, section in d.items():
                 if name in const.MANAGED_SECTIONS:
                     self.section_dict[name] = list(group_tags(section, 0))
+
+        def _remove_unsupported_sections(d: Dict):
+            for name in ('CLASSES', 'OBJECTS', 'ACDSDATA'):
+                if name in d:
+                    del d[name]
+                    self.fixes.append((
+                        AuditError.REMOVED_UNSUPPORTED_SECTION,
+                        f'Removed unsupported {name} section for DXF R12.'
+                    ))
 
         # Last section could be orphaned tags:
         orphans = sections.pop()
@@ -281,6 +294,9 @@ class Recover:
             DXFTag(2, 'HEADER'),
         ])
         self.rescue_orphaned_header_vars(header, orphans)
+        self.dxfversion = _detect_dxf_version(header)
+        if self.dxfversion <= const.DXF12:
+            _remove_unsupported_sections(section_dict)
         _build_section_dict(section_dict)
 
     def rebuild_tables(self, tables: List[Tags]) -> List[Tags]:
@@ -315,7 +331,18 @@ class Recover:
             elif name in valid_tables:
                 content[name].append(entry)
         tables = [Tags([DXFTag(0, 'SECTION'), DXFTag(2, 'TABLES')])]
-        for name in const.TABLE_NAMES_ACAD_ORDER:
+
+        names = list(const.TABLE_NAMES_ACAD_ORDER)
+        if self.dxfversion <= const.DXF12:
+            # Ignore BLOCK_RECORD table
+            names.remove('BLOCK_RECORD')
+            if 'BLOCK_RECORD' in content:
+                self.fixes.append((
+                    AuditError.REMOVED_UNSUPPORTED_TABLE,
+                    f'Removed unsupported BLOCK_RECORD table for DXF R12.'
+                ))
+
+        for name in names:
             append_table(name)
         return tables
 
@@ -341,6 +368,20 @@ class Recover:
             else:
                 # raises DXFStructureError() for invalid entities
                 yield Tags(entity_structure_validator(entity))
+
+
+def _detect_dxf_version(header: List) -> str:
+    next_is_dxf_version = False
+    for tag in header:
+        if next_is_dxf_version:
+            dxfversion = str(tag[1]).strip()
+            if re.fullmatch(r"AC[0-9]{4}", dxfversion):
+                return dxfversion
+            else:
+                break
+        if tag == (9, '$ACADVER'):
+            next_is_dxf_version = True
+    return const.DXF12
 
 
 def safe_tag_loader(stream: BinaryIO,
@@ -390,27 +431,26 @@ def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
 
     """
     line = 1
+    readline = stream.readline
     while True:
-        try:
-            code = stream.readline()
-            value = stream.readline()
-        except EOFError:
-            # EOFError indicates a DXFStructureError, but should be handled
-            # in top layers.
-            return
-
-        # ByteIO(): empty strings indicates EOF
-        if code and value:
+        code = readline()
+        # ByteIO(): empty strings indicates EOF - does not raise an exception
+        if code:
             try:
                 code = int(code)
             except ValueError:
-                code = code.decode(const.DEFAULT_ENCODING)
+                code = code.decode(errors='ignore')
                 raise const.DXFStructureError(
                     f'Invalid group code "{code}" at line {line}.')
-            else:
-                if code != 999:
-                    yield DXFTag(code, value.rstrip(b'\r\n'))
-                line += 2
+        else:
+            return
+
+        value = readline()
+        # ByteIO(): empty strings indicates EOF
+        if value:
+            if code != 999:
+                yield DXFTag(code, value.rstrip(b'\r\n'))
+            line += 2
         else:
             return
 
@@ -432,27 +472,27 @@ def synced_bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
     """
     code = 999
     upper_boundary = MAX_GROUP_CODE + 1
+    readline = stream.readline
     while True:
         seeking_valid_group_code = True
-        try:
-            while seeking_valid_group_code:
-                code = stream.readline()
-                if code:
-                    try:
-                        code = int(code)
-                    except ValueError:
-                        pass
-                    else:
-                        if 0 <= code < upper_boundary:
-                            seeking_valid_group_code = False
+        while seeking_valid_group_code:
+            code = readline()
+            if code:
+                try:
+                    code = int(code)
+                except ValueError:
+                    pass
                 else:
-                    return  # total empty result is EOF
-            value = stream.readline()
-        except EOFError:
-            return
-
-        if code != 999:
-            yield DXFTag(code, value.rstrip(b'\r\n'))
+                    if 0 <= code < upper_boundary:
+                        seeking_valid_group_code = False
+            else:
+                return  # empty string is EOF
+        value = readline()
+        if value:
+            if code != 999:
+                yield DXFTag(code, value.rstrip(b'\r\n'))
+        else:
+            return  # empty string is EOF
 
 
 DWGCODEPAGE = b'$DWGCODEPAGE'

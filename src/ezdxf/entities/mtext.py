@@ -2,11 +2,12 @@
 # License: MIT License
 import math
 import re
-from typing import TYPE_CHECKING, Union, Tuple, List
+from typing import TYPE_CHECKING, Union, Tuple, List, Iterable
 
 from ezdxf.lldxf import const, validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, SPECIAL_CHARS_ENCODING
 from ezdxf.lldxf.tags import Tags
@@ -19,7 +20,7 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex, Auditor
+        TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex, Auditor, DXFTag
     )
 
 __all__ = [
@@ -157,7 +158,7 @@ acdb_mtext = DefSubclass('AcDbMText', {
     'bg_fill_transparency': DXFAttr(441, dxfversion='AC1021'),
 
 })
-
+acdb_mtext_group_codes = group_code_mapping(acdb_mtext)
 
 # ----------------------------------------------------------------------
 # NO MULTI-COLUMN SUPPORT
@@ -215,8 +216,9 @@ class MText(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            self.load_mtext(processor.subclasses[2])
-            processor.load_and_recover_dxfattribs(dxf, acdb_mtext)
+            tags = Tags(self.load_mtext(processor.subclass_by_index(2)))
+            processor.fast_load_dxfattribs(
+                dxf, acdb_mtext_group_codes, subclass=tags, recover=True)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -235,17 +237,18 @@ class MText(DXFGraphic):
             'bg_fill_color_name', 'bg_fill_transparency',
         ])
 
-    def load_mtext(self, tags: Tags) -> None:
+    def load_mtext(self, tags: Tags) -> Iterable['DXFTag']:
         tail = ""
         parts = []
         for tag in tags:
             if tag.code == 1:
                 tail = tag.value
-            if tag.code == 3:
+            elif tag.code == 3:
                 parts.append(tag.value)
+            else:
+                yield tag
         parts.append(tail)
         self.text = _dxf_escape_line_endings(caret_decode("".join(parts)))
-        tags.remove_tags((1, 3))
 
     def export_mtext(self, tagwriter: 'TagWriter') -> None:
         txt = _dxf_escape_line_endings(self.text)

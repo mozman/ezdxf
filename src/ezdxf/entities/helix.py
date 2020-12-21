@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    group_code_mapping
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER
 from ezdxf.math import NULLVEC, X_AXIS, Z_AXIS
@@ -54,6 +55,7 @@ acdb_helix = DefSubclass('AcDbHelix', {
         fixer=RETURN_DEFAULT,
     ),
 })
+acdb_helix_group_codes = group_code_mapping(acdb_helix)
 
 
 @register_entity
@@ -66,7 +68,8 @@ class Helix(Spline):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.load_and_recover_dxfattribs(dxf, acdb_helix)
+            processor.fast_load_dxfattribs(
+                dxf, acdb_helix_group_codes, 3, recover=True)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

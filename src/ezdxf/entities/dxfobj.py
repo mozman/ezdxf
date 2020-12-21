@@ -8,7 +8,7 @@ from ezdxf.lldxf.const import DXF2000, DXFStructureError, SUBCLASS_MARKER
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import dxftag, DXFTag, DXFBinaryTag
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT,
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
 )
 from ezdxf.tools import take2
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
@@ -168,6 +168,7 @@ acdb_sort_ents_table = DefSubclass('AcDbSortentsTable', {
     # 331: Soft-pointer ID/handle to an entity (zero or more entries may exist)
     #   5: Sort handle (zero or more entries may exist)
 })
+acdb_sort_ents_table_group_codes = group_code_mapping(acdb_sort_ents_table)
 
 
 @register_entity
@@ -210,8 +211,8 @@ class SortEntsTable(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(
-                dxf, acdb_sort_ents_table)
+            tags = processor.fast_load_dxfattribs(
+                dxf, acdb_sort_ents_table_group_codes, 1, log=False)
             self.load_table(tags)
         return dxf
 
