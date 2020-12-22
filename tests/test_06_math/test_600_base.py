@@ -175,16 +175,16 @@ def test_area():
     (270, 360, 90),  # end angle ccw 360 is 360 deg (special)
     (-90, 360, 90),  # end angle ccw 360 is 360 deg (special)
     (0, -360, 0),  # end angle clockwise (cw) 360 deg is 0
-    (90, -360, 270),  # end angle clockwise (cw) 360 deg is 0
-    (-90, -360, 90),  # end angle clockwise (cw) 360 deg is 0
+    (90, -360, 270),  # end angle cw 360 deg is 0
+    (-90, -360, 90),  # end angle cw 360 deg is 0
     (360, 0, 0),  # start angle 360 is 0
     (360, 90, 90),  # start angle 360 is 0
     (360, -90, 270),  # start angle 360 is 0
     (-360, 0, 0),  # start angle -360 is 0
     (-360, 90, 90),  # start angle -360 is 0
     (-360, -90, 270),  # start angle -360 is 0
-    (30, -30, 300),  # crossing ccw 0 deg
-    (-30, 30, 60),  # crossing cw 0 deg
+    (30, -30, 300),  # crossing 0 deg
+    (-30, 30, 60),  # crossing 0 deg
     (180, -180, 0),  # 180 is equal to -180
     (-180, 180, 0),  # 180 is equal to -180
     (90, -90, 180),
