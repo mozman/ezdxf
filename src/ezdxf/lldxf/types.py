@@ -68,7 +68,7 @@ INT32 = set(chain(
     [1071]
 ))
 
-INT64 = set(range(160, 169))
+INT64 = set(range(160, 170))
 
 DOUBLE = set(chain(
     range(10, 60),
