@@ -7,7 +7,6 @@ from ezdxf.math import xround
 from ezdxf.math.construct2d import *
 
 
-
 def test_left_of_line():
     assert is_point_left_of_line(Vec2(-1, 0), Vec2(0, 0), Vec2(0.1, 1)) is True
     assert is_point_left_of_line(Vec2(1, 0), Vec2(0, 0), Vec2(0, -1)) is True
@@ -22,18 +21,28 @@ def test_point_to_line_relation_left():
 
 def test_left_of_line_or_on_the_line():
     # vertical line
-    assert is_point_left_of_line(Vec2(1, 0), Vec2(0, 0), Vec2(0, 1), colinear=True) is False
-    assert is_point_left_of_line(Vec2(0, 0.5), Vec2(0, 0), Vec2(0, 1), colinear=True) is True
-    assert is_point_left_of_line(Vec2(-1, 0.5), Vec2(0, 0), Vec2(0, 1), colinear=True) is True
+    assert is_point_left_of_line(Vec2(1, 0), Vec2(0, 0), Vec2(0, 1),
+                                 colinear=True) is False
+    assert is_point_left_of_line(Vec2(0, 0.5), Vec2(0, 0), Vec2(0, 1),
+                                 colinear=True) is True
+    assert is_point_left_of_line(Vec2(-1, 0.5), Vec2(0, 0), Vec2(0, 1),
+                                 colinear=True) is True
     # horizontal line
-    assert is_point_left_of_line(Vec2(0, 1), Vec2(0, 0), Vec2(1, 0), colinear=True) is True
-    assert is_point_left_of_line(Vec2(0, 0), Vec2(0, 0), Vec2(1, 0), colinear=True) is True
-    assert is_point_left_of_line(Vec2(0, -1), Vec2(0, 0), Vec2(1, 0), colinear=True) is False
+    assert is_point_left_of_line(Vec2(0, 1), Vec2(0, 0), Vec2(1, 0),
+                                 colinear=True) is True
+    assert is_point_left_of_line(Vec2(0, 0), Vec2(0, 0), Vec2(1, 0),
+                                 colinear=True) is True
+    assert is_point_left_of_line(Vec2(0, -1), Vec2(0, 0), Vec2(1, 0),
+                                 colinear=True) is False
     # 45 deg line
-    assert is_point_left_of_line(Vec2(0, 0), Vec2(0, 0), Vec2(1, 1), colinear=True) is True
-    assert is_point_left_of_line(Vec2(0.5, 0.5), Vec2(0, 0), Vec2(1, 1), colinear=True) is True
-    assert is_point_left_of_line(Vec2(1, 1), Vec2(0, 0), Vec2(1, 1), colinear=True) is True
-    assert is_point_left_of_line(Vec2(.5, .49), Vec2(0, 0), Vec2(1, 1), colinear=True) is False
+    assert is_point_left_of_line(Vec2(0, 0), Vec2(0, 0), Vec2(1, 1),
+                                 colinear=True) is True
+    assert is_point_left_of_line(Vec2(0.5, 0.5), Vec2(0, 0), Vec2(1, 1),
+                                 colinear=True) is True
+    assert is_point_left_of_line(Vec2(1, 1), Vec2(0, 0), Vec2(1, 1),
+                                 colinear=True) is True
+    assert is_point_left_of_line(Vec2(.5, .49), Vec2(0, 0), Vec2(1, 1),
+                                 colinear=True) is False
 
 
 def test_point_ot_line_relation_on_line():
@@ -83,23 +92,35 @@ def test_xround():
 
 
 def test_enclosing_angles():
-    assert enclosing_angles(radians(45), start_angle=radians(45), end_angle=radians(45), ccw=True) is True
-    assert enclosing_angles(radians(45), start_angle=radians(45), end_angle=radians(45), ccw=False) is True
+    assert enclosing_angles(radians(45), start_angle=radians(45),
+                            end_angle=radians(45), ccw=True) is True
+    assert enclosing_angles(radians(45), start_angle=radians(45),
+                            end_angle=radians(45), ccw=False) is True
 
-    assert enclosing_angles(radians(90), start_angle=radians(45), end_angle=radians(135), ccw=True) is True
-    assert enclosing_angles(radians(90), start_angle=radians(45), end_angle=radians(135), ccw=False) is False
+    assert enclosing_angles(radians(90), start_angle=radians(45),
+                            end_angle=radians(135), ccw=True) is True
+    assert enclosing_angles(radians(90), start_angle=radians(45),
+                            end_angle=radians(135), ccw=False) is False
 
-    assert enclosing_angles(radians(0), start_angle=radians(45), end_angle=radians(135), ccw=True) is False
-    assert enclosing_angles(radians(0), start_angle=radians(45), end_angle=radians(135), ccw=False) is True
+    assert enclosing_angles(radians(0), start_angle=radians(45),
+                            end_angle=radians(135), ccw=True) is False
+    assert enclosing_angles(radians(0), start_angle=radians(45),
+                            end_angle=radians(135), ccw=False) is True
 
-    assert enclosing_angles(radians(45), start_angle=radians(50), end_angle=radians(40), ccw=True) is False
-    assert enclosing_angles(radians(45), start_angle=radians(50), end_angle=radians(40), ccw=False) is True
+    assert enclosing_angles(radians(45), start_angle=radians(50),
+                            end_angle=radians(40), ccw=True) is False
+    assert enclosing_angles(radians(45), start_angle=radians(50),
+                            end_angle=radians(40), ccw=False) is True
 
-    assert enclosing_angles(radians(90), start_angle=radians(135), end_angle=radians(45), ccw=True) is False
-    assert enclosing_angles(radians(90), start_angle=radians(135), end_angle=radians(45), ccw=False) is True
+    assert enclosing_angles(radians(90), start_angle=radians(135),
+                            end_angle=radians(45), ccw=True) is False
+    assert enclosing_angles(radians(90), start_angle=radians(135),
+                            end_angle=radians(45), ccw=False) is True
 
-    assert enclosing_angles(radians(270), start_angle=radians(135), end_angle=radians(45), ccw=True) is True
-    assert enclosing_angles(radians(270), start_angle=radians(135), end_angle=radians(45), ccw=False) is False
+    assert enclosing_angles(radians(270), start_angle=radians(135),
+                            end_angle=radians(45), ccw=True) is True
+    assert enclosing_angles(radians(270), start_angle=radians(135),
+                            end_angle=radians(45), ccw=False) is False
 
 
 def test_no_points():
@@ -115,7 +136,9 @@ def test_two_points():
 
 
 def test_more_points():
-    assert closest_point((0, 0), [(0, 0, 1), (1, 1, 1), (2, 2, 2), (0, 0, -.5)]) == (0, 0, -.5)
+    assert closest_point((0, 0),
+                         [(0, 0, 1), (1, 1, 1), (2, 2, 2), (0, 0, -.5)]) == (
+               0, 0, -.5)
 
 
 def test_linspace():
@@ -142,3 +165,32 @@ def test_reflect_angle_y_deg():
 
 def test_area():
     assert area([(4, 6), (4, -4), (8, -4), (8, -8), (-4, -8), (-4, 6)]) == 128
+
+
+@pytest.mark.parametrize('start, end, expected', [
+    (0, 0, 0),  # start == end is always 0 by definition
+    (360, 360, 0),  # start == end is always 0 by definition
+    (-30, -30, 0),  # start == end is always 0 by definition
+    (0, 360, 360),  # end angle counter clockwise (ccw) 360 is 360 deg (special)
+    (270, 360, 90),  # end angle ccw 360 is 360 deg (special)
+    (-90, 360, 90),  # end angle ccw 360 is 360 deg (special)
+    (0, -360, 0),  # end angle clockwise (cw) 360 deg is 0
+    (90, -360, 270),  # end angle clockwise (cw) 360 deg is 0
+    (-90, -360, 90),  # end angle clockwise (cw) 360 deg is 0
+    (360, 0, 0),  # start angle 360 is 0
+    (360, 90, 90),  # start angle 360 is 0
+    (360, -90, 270),  # start angle 360 is 0
+    (-360, 0, 0),  # start angle -360 is 0
+    (-360, 90, 90),  # start angle -360 is 0
+    (-360, -90, 270),  # start angle -360 is 0
+    (30, -30, 300),  # crossing ccw 0 deg
+    (-30, 30, 60),  # crossing cw 0 deg
+    (180, -180, 0),  # 180 is equal to -180
+    (-180, 180, 0),  # 180 is equal to -180
+    (90, -90, 180),
+    (-90, 90, 180),
+    (360, 400, 40),
+    (400, 360, 320),
+])
+def test_arc_angle_span_deg(start, end, expected):
+    assert arc_angle_span_deg(start, end) == pytest.approx(expected)

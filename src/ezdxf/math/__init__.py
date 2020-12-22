@@ -14,7 +14,7 @@ from .construct2d import (
     is_close_points, closest_point, convex_hull_2d,
     distance_point_line_2d, is_point_on_line_2d, is_point_in_polygon_2d,
     is_point_left_of_line, point_to_line_relation, linspace, enclosing_angles,
-    reflect_angle_x_deg, reflect_angle_y_deg, sign, area,
+    reflect_angle_x_deg, reflect_angle_y_deg, sign, area, arc_angle_span_deg
 )
 from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState,

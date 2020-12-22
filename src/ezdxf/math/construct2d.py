@@ -332,3 +332,20 @@ def area(vertices: Iterable['Vertex']) -> float:
     return abs(sum(
         (p1.x * p2.y - p1.y * p2.x) for p1, p2 in zip(vertices, vertices[1:])
     ) / 2)
+
+
+def arc_angle_span_deg(start: float, end: float) -> float:
+    """ Returns the counter clockwise angle from `start` to `end` in degrees.
+    """
+    # start == end is 0 by definition:
+    if math.isclose(start, end):
+        return 0.0
+
+    # Special treatment for end angle == 360 deg:
+    if not math.isclose(end, 360.0):
+        end %= 360.0
+
+    start %= 360.0
+    if end < start:
+        end += 360.0
+    return end - start
