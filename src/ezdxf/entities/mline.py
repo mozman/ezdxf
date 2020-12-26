@@ -9,7 +9,7 @@ from ezdxf.entities.factory import register_entity
 from ezdxf.lldxf import const, validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
-    group_code_mapping
+    group_code_mapping,
 )
 from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Vertex, Vec3, UCS
@@ -107,6 +107,7 @@ acdb_mline = DefSubclass('AcDbMline', OrderedDict({
     #     repeats based on previous code 75
 }))
 acdb_mline_group_codes = group_code_mapping(acdb_mline)
+
 
 # For information about line- and fill parametrization see comments in class
 # MLineVertex().
@@ -808,9 +809,19 @@ class MLineStyle(DXFObject):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.fast_load_dxfattribs(
-                dxf, acdb_mline_style_group_codes, 1, log=False)
-            self.elements = MLineStyleElements(tags)
+            tags = processor.subclass_by_index(1)
+            try:
+                # Find index of the count tag:
+                index71 = tags.tag_index(71)
+            except const.DXFValueError:
+                # The count tag does not exist: DXF structure error?
+                pass
+            else:
+                self.elements = MLineStyleElements(tags[index71 + 1:])
+                # Remove processed tags:
+                del tags[index71:]
+            processor.fast_load_dxfattribs(
+                dxf, acdb_mline_style_group_codes, tags)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
