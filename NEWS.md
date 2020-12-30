@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.15b2 - dev
---------------------
+Version 0.15 - 2020-12-27
+-------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-15.html
 - NEW: linetype support for matplotlib- and pyqt drawing backend

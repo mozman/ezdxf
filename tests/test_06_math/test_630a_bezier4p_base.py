@@ -8,13 +8,14 @@ from ezdxf.math._bezier4p import Bezier4P
 from ezdxf.math._bezier4p import cubic_bezier_arc_parameters
 from ezdxf.math._bezier4p import cubic_bezier_from_arc
 from ezdxf.math._bezier4p import cubic_bezier_from_ellipse
+from ezdxf.acc import USE_C_EXT
 
 curve_classes = [Bezier4P]
 arc_params_funcs = [cubic_bezier_arc_parameters]
 arc_funcs = [cubic_bezier_from_arc]
 ellipse_funcs = [cubic_bezier_from_ellipse]
 
-try:
+if USE_C_EXT:
     from ezdxf.acc.bezier4p import Bezier4P as CBezier4P
     from ezdxf.acc.bezier4p import \
         cubic_bezier_arc_parameters as cython_arc_parameters
@@ -26,8 +27,6 @@ try:
     arc_params_funcs.append(cython_arc_parameters)
     arc_funcs.append(cython_arc_func)
     ellipse_funcs.append(cython_ellipse_func)
-except ImportError:
-    pass
 
 DEFPOINTS2D = [(0., 0.), (3., 0.), (7., 10.), (10., 10.)]
 DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.),

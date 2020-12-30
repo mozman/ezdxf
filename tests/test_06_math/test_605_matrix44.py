@@ -4,15 +4,14 @@ import pytest
 from math import radians, sin, cos, pi, isclose
 # Import from 'ezdxf.math._matrix44' to test Python implementation
 from ezdxf.math._matrix44 import Matrix44
+from ezdxf.acc import USE_C_EXT
 
 m44_classes = [Matrix44]
 
-try:
+if USE_C_EXT:
     from ezdxf.acc.matrix44 import Matrix44 as CMatrix44
 
     m44_classes.append(CMatrix44)
-except ImportError:
-    pass
 
 
 @pytest.fixture(params=m44_classes)
