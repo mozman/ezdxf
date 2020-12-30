@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.15 - 2020-12-27
+Version 0.15 - 2020-12-30
 -------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-15.html
