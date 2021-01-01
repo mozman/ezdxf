@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Iterable, Sequence, cast
 import array
 import copy
 from itertools import chain
+from ezdxf.audit import AuditError
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -14,13 +15,14 @@ from ezdxf.lldxf.packedtags import VertexArray, Tags
 from ezdxf.math import (
     Vec3, Matrix44, ConstructionEllipse, Z_AXIS, NULLVEC,
     uniform_knot_vector, open_uniform_knot_vector, BSpline,
+    required_knot_values, required_fit_points, required_control_points,
 )
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Vertex
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Vertex, Auditor
 
 __all__ = ['Spline']
 
@@ -32,7 +34,7 @@ acdb_spline = DefSubclass('AcDbSpline', {
     # 8 = Planar
     # 16 = Linear (planar bit is also set)
     'flags': DXFAttr(70, default=0),
-    'degree': DXFAttr(71, default=3),
+    'degree': DXFAttr(71, default=3, validator=validator.is_positive),
     'n_knots': DXFAttr(
         72, xtype=XType.callback, getter='knot_count'),
     'n_control_points': DXFAttr(
@@ -387,7 +389,7 @@ class Spline(DXFGraphic):
     def set_uniform_rational(self, control_points: Sequence['Vertex'],
                              weights: Sequence[float],
                              degree: int = 3) -> None:
-        """ Rational B-spline with uniform knot vector, deos NOT start and end
+        """ Rational B-spline with uniform knot vector, does NOT start and end
         at your first and last control points, and has additional control
         possibilities by weighting each control point.
 
@@ -431,3 +433,117 @@ class Spline(DXFGraphic):
                 dxf.set(name, m.transform_direction(dxf.get(name)))
 
         return self
+
+    def audit(self, auditor: 'Auditor') -> None:
+        """ Audit the SPLINE entity.
+
+        .. versionadded:: 0.15.1
+
+        """
+        super().audit(auditor)
+        degree = self.dxf.degree
+        name = str(self)
+
+        if degree < 1:
+            auditor.fixed_error(
+                code=AuditError.INVALID_SPLINE_DEFINITION,
+                message=f"Removed {name} with invalid degree: {degree} < 1."
+            )
+            auditor.trash(self)
+            return
+
+        n_control_points = len(self.control_points)
+        n_fit_points = len(self.fit_points)
+
+        if n_control_points == 0 and n_fit_points == 0:
+            auditor.fixed_error(
+                code=AuditError.INVALID_SPLINE_DEFINITION,
+                message=f"Removed {name} without any points (no geometry)."
+            )
+            auditor.trash(self)
+            return
+
+        if n_control_points > 0:
+            self._audit_control_points(auditor)
+        # Ignore fit points if defined by control points
+        elif n_fit_points > 0:
+            self._audit_fit_points(auditor)
+
+    def _audit_control_points(self, auditor: 'Auditor'):
+        name = str(self)
+        order = self.dxf.degree + 1
+        n_control_points = len(self.control_points)
+
+        # Splines with to few control points can't be processed:
+        n_control_points_required = required_control_points(order)
+        if n_control_points < n_control_points_required:
+            auditor.fixed_error(
+                code=AuditError.INVALID_SPLINE_CONTROL_POINT_COUNT,
+                message=f"Removed {name} with invalid control point count: "
+                        f"{n_control_points} < {n_control_points_required}"
+            )
+            auditor.trash(self)
+            return
+
+        n_weights = len(self.weights)
+        n_knots = len(self.knots)
+        n_knots_required = required_knot_values(
+            n_control_points, order)
+
+        if n_knots < n_knots_required:
+            # Can not fix entity: because the knot values are basic
+            # values which define the geometry of SPLINE.
+            auditor.fixed_error(
+                code=AuditError.INVALID_SPLINE_KNOT_VALUE_COUNT,
+                message=f"Removed {name} with invalid knot value count: "
+                        f"{n_knots} < {n_knots_required}"
+            )
+            auditor.trash(self)
+            return
+
+        if n_weights and n_weights != n_control_points:
+            # Can not fix entity: because the weights are basic
+            # values which define the geometry of SPLINE.
+            auditor.fixed_error(
+                code=AuditError.INVALID_SPLINE_WEIGHT_COUNT,
+                message=f"Removed {name} with invalid weight count: "
+                        f"{n_weights} != {n_control_points}"
+            )
+            auditor.trash(self)
+            return
+
+    def _audit_fit_points(self, auditor: 'Auditor'):
+        name = str(self)
+        order = self.dxf.degree + 1
+        # Assuming end tangents will be estimated if not present,
+        # like by ezdxf:
+        n_fit_points_required = required_fit_points(order, tangents=True)
+
+        # Splines with to few fit points can't be processed:
+        n_fit_points = len(self.fit_points)
+        if n_fit_points < n_fit_points_required:
+            auditor.fixed_error(
+                code=AuditError.INVALID_SPLINE_FIT_POINT_COUNT,
+                message=f"Removed {name} with invalid fit point count: "
+                        f"{n_fit_points} < {n_fit_points_required}"
+            )
+            auditor.trash(self)
+            return
+
+        # Knot values have no meaning for splines defined by fit points:
+        if len(self.knots):
+            auditor.fixed_error(
+                code=AuditError.INVALID_SPLINE_KNOT_VALUE_COUNT,
+                message=f"Removed unused knot values for {name} "
+                        f"defined by fit points."
+            )
+            self.knots = []
+
+        # Weights have no meaning for splines defined by fit points:
+        if len(self.weights):
+            auditor.fixed_error(
+                code=AuditError.INVALID_SPLINE_WEIGHT_COUNT,
+                message=f"Removed unused weights for {name} "
+                        f"defined by fit points."
+            )
+            self.weights = []

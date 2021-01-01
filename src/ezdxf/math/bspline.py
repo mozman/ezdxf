@@ -70,6 +70,7 @@ __all__ = [
 
     # Low level knot function:
     'required_knot_values', 'uniform_knot_vector', 'open_uniform_knot_vector',
+    'required_fit_points', 'required_control_points',
 ]
 
 
@@ -187,8 +188,8 @@ def global_bspline_interpolation(
                 fit_points, tangents, degree, t_vector)
         else:
             raise ValueError(
-                'Invalid count of tangents, two tangents as start- and end tangent constrains'
-                ' or one tangent for each fit point.'
+                'Invalid count of tangents, two tangents as start- and end '
+                'tangent constrains or one tangent for each fit point.'
             )
     else:
         control_points, knots = unconstrained_global_bspline_interpolation(
@@ -240,8 +241,8 @@ def local_cubic_bspline_interpolation(
 
 
 def required_knot_values(count: int, order: int) -> int:
-    """
-    Returns the count of required knot values for a B-spline of `order` and `count` control points.
+    """ Returns the count of required knot values for a B-spline of `order` and
+    `count` control points.
 
     Args:
         count: count of control points, in text-books referred as "n + 1"
@@ -264,6 +265,36 @@ def required_knot_values(count: int, order: int) -> int:
     return n + p + 2
 
 
+def required_fit_points(order: int, tangents=True) -> int:
+    """ Returns the count of required fit points to calculate the spline
+    control points.
+
+    Args:
+        order: spline order (degree + 1)
+        tangents: start- and end tangent are given or estimated
+
+    """
+    if tangents:
+        # If tangents are given or estimated two points for start- and end
+        # tangent will be added automatically for the global bspline
+        # interpolation. see function fit_points_to_cad_cv()
+        order -= 2
+    # required condition: order > count, see global_bspline_interpolation()
+    return max(order, 2)
+
+
+def required_control_points(order: int) -> int:
+    """ Returns the required count of control points for a valid B-spline.
+
+    Args:
+        order: spline order (degree + 1)
+
+    Required condition: 2 <= order <= count, therefore:  count >= order
+
+    """
+    return max(order, 2)
+
+
 def normalize_knots(knots: List[float]) -> List[float]:
     """ Normalize knot vector into range [0, 1]. """
     min_val = min(knots)
@@ -272,8 +303,8 @@ def normalize_knots(knots: List[float]) -> List[float]:
 
 
 def uniform_knot_vector(count: int, order: int, normalize=False) -> List[float]:
-    """
-    Returns an uniform knot vector for a B-spline of `order` and `count` control points.
+    """ Returns an uniform knot vector for a B-spline of `order` and `count`
+    control points.
 
     `order` = degree + 1
 
@@ -290,10 +321,10 @@ def uniform_knot_vector(count: int, order: int, normalize=False) -> List[float]:
     return [knot_value / max_value for knot_value in range(count + order)]
 
 
-def open_uniform_knot_vector(count: int, order: int, normalize=False) -> List[
-    float]:
-    """
-    Returns an open (clamped) uniform knot vector for a B-spline of `order` and `count` control points.
+def open_uniform_knot_vector(count: int, order: int, normalize=False
+                             ) -> List[float]:
+    """ Returns an open (clamped) uniform knot vector for a B-spline of `order`
+    and `count` control points.
 
     `order` = degree + 1
 
@@ -317,11 +348,10 @@ def open_uniform_knot_vector(count: int, order: int, normalize=False) -> List[
     return knots
 
 
-def knots_from_parametrization(n: int, p: int, t: Iterable[float],
-                               method='average', constrained=False) -> List[
-    float]:
-    """
-    Returns a 'clamped' knot vector for B-splines.
+def knots_from_parametrization(
+        n: int, p: int, t: Iterable[float], method='average',
+        constrained=False) -> List[float]:
+    """    Returns a 'clamped' knot vector for B-splines.
     All knot values normalized in the range [0 .. 1].
 
     Args:
@@ -356,10 +386,10 @@ def knots_from_parametrization(n: int, p: int, t: Iterable[float],
         raise ValueError(f'Unknown knot generation method: {method}')
 
 
-def averaged_knots_unconstrained(n: int, p: int, t: Sequence[float]) -> List[
-    float]:
-    """
-    Returns an averaged knot vector from parametrization vector `t` for an unconstrained B-spline.
+def averaged_knots_unconstrained(n: int, p: int, t: Sequence[float]
+                                 ) -> List[float]:
+    """ Returns an averaged knot vector from parametrization vector `t` for an
+    unconstrained B-spline.
 
     Args:
         n: count of control points - 1
@@ -378,10 +408,10 @@ def averaged_knots_unconstrained(n: int, p: int, t: Sequence[float]) -> List[
     return knots
 
 
-def averaged_knots_constrained(n: int, p: int, t: Sequence[float]) -> List[
-    float]:
-    """
-    Returns an averaged knot vector from parametrization vector `t` for a constrained B-spline.
+def averaged_knots_constrained(n: int, p: int, t: Sequence[float]
+                               ) -> List[float]:
+    """ Returns an averaged knot vector from parametrization vector `t` for a
+    constrained B-spline.
 
     Args:
         n: count of control points - 1
@@ -398,10 +428,10 @@ def averaged_knots_constrained(n: int, p: int, t: Sequence[float]) -> List[
     return knots
 
 
-def natural_knots_unconstrained(n: int, p: int, t: Sequence[float]) -> List[
-    float]:
-    """
-    Returns a 'natural' knot vector from parametrization vector `t` for an unconstrained B-spline.
+def natural_knots_unconstrained(n: int, p: int, t: Sequence[float]
+                                ) -> List[float]:
+    """ Returns a 'natural' knot vector from parametrization vector `t` for an
+    unconstrained B-spline.
 
     Args:
         n: count of control points - 1
@@ -418,10 +448,10 @@ def natural_knots_unconstrained(n: int, p: int, t: Sequence[float]) -> List[
     return knots
 
 
-def natural_knots_constrained(n: int, p: int, t: Sequence[float]) -> List[
-    float]:
-    """
-    Returns a 'natural' knot vector from parametrization vector `t` for a constrained B-spline.
+def natural_knots_constrained(n: int, p: int, t: Sequence[float]
+                              ) -> List[float]:
+    """ Returns a 'natural' knot vector from parametrization vector `t` for a
+    constrained B-spline.
 
     Args:
         n: count of control points - 1
@@ -439,9 +469,8 @@ def natural_knots_constrained(n: int, p: int, t: Sequence[float]) -> List[
 
 
 def double_knots(n: int, p: int, t: Sequence[float]) -> List[float]:
-    """
-    Returns a knot vector from parametrization vector `t` for B-spline constrained
-    by first derivatives at all fit points.
+    """ Returns a knot vector from parametrization vector `t` for B-spline
+    constrained by first derivatives at all fit points.
 
     Args:
         n: count of fit points - 1
@@ -584,9 +613,8 @@ def global_bspline_interpolation_first_derivatives(
         derivatives: List[Vec3],
         degree: int,
         t_vector: Sequence[float]) -> Tuple[List[Vec3], List[float]]:
-    """
-    Interpolate the control points for a B-spline by global interpolation from fit points and
-    1st derivatives as constraints.
+    """ Interpolate the control points for a B-spline by global interpolation
+    from fit points and 1st derivatives as constraints.
 
     Source: Piegl & Tiller: "The NURBS Book" - chapter 9.2.4
 
@@ -595,7 +623,8 @@ def global_bspline_interpolation_first_derivatives(
         derivatives: 1st derivatives as constrains, not unit vectors!
             Scaling by chord length is a reasonable choice (Piegl & Tiller).
         degree: degree of spline >= 2
-        t_vector: parametrization vector, first value has to be 0.0 and last value has to be 1.0
+        t_vector: parametrization vector, first value has to be 0.0 and last
+            value has to be 1.0
 
     Returns:
         2-tuple of control points as list of Vec3 objects and the knot vector as list of floats
@@ -643,10 +672,9 @@ def global_bspline_interpolation_first_derivatives(
 def local_cubic_bspline_interpolation_from_tangents(
         fit_points: List[Vec3],
         tangents: List[Vec3]) -> Tuple[List[Vec3], List[float]]:
-    """
-    Interpolate the control points for a cubic B-spline by local interpolation from fit points and
-    tangents as unit vectors for each fit point. if an estimation of tangents is required use the
-    :func:`estimate_tangents` function.
+    """ Interpolate the control points for a cubic B-spline by local
+    interpolation from fit points and tangents as unit vectors for each fit
+    point. Use the :func:`estimate_tangents` function to estimate end tangents.
 
     Source: Piegl & Tiller: "The NURBS Book" - chapter 9.3.4
 
@@ -889,8 +917,8 @@ class Basis:
 
 
 class BSpline:
-    """
-    Representation of a `B-spline`_ curve, using an uniform open `knot`_ vector ("clamped").
+    """ Representation of a `B-spline`_ curve, using an uniform open `knot`_
+    vector ("clamped").
 
     Args:
         control_points: iterable of control points as :class:`Vec3` compatible objects

@@ -32,6 +32,7 @@ from .bspline import (
     rational_spline_from_arc, rational_spline_from_ellipse,
     uniform_knot_vector, open_uniform_knot_vector, required_knot_values,
     BSpline, BSplineU, BSplineClosed, local_cubic_bspline_interpolation,
+    required_fit_points, required_control_points,
 )
 from .bezier import Bezier
 from .bezier4p import (
