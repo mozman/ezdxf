@@ -378,12 +378,16 @@ def _main():
     parser.add_argument('--layout', default='Model')
     parser.add_argument('--ltype', default='internal',
                         choices=['internal', 'ezdxf'])
+
+    # disable lineweight at all by default:
+    parser.add_argument('--lineweight_scaling', type=float, default=0)
     args = parser.parse_args()
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
     app = qw.QApplication(sys.argv)
     v = CadViewer(params={
-        'linetype_renderer': args.ltype
+        'linetype_renderer': args.ltype,
+        'lineweight_scaling': args.lineweight_scaling,
     })
     if args.cad_file is not None:
         try:
