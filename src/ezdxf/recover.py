@@ -427,14 +427,10 @@ def _search_int(s: str) -> int:
     an exception. e.g. "42xyz" is a valid integer 42
 
     """
-    # Not in use yet!
-    try:
-        return int(s)
-    except ValueError:
-        res = re.search(INT_PATTERN, s)
-        if res:
-            s = res.group()
-        return int(s)
+    res = re.search(INT_PATTERN, s)
+    if res:
+        s = res.group()
+    return int(s)
 
 
 FLOAT_PATTERN = re.compile(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
@@ -446,14 +442,10 @@ def _search_float(s: str) -> float:
     an exception. e.g. "47.11xyz" is a valid double 47.11
 
     """
-    # Not in use yet!
-    try:
-        return float(s)
-    except ValueError:
-        res = re.search(FLOAT_PATTERN, s)
-        if res:
-            s = res.group()
-        return float(s)
+    res = re.search(FLOAT_PATTERN, s)
+    if res:
+        s = res.group()
+    return float(s)
 
 
 def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
