@@ -632,9 +632,24 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                 try:
                     # is it a z-coordinate like (30, 0.0) for base x-code=10
                     if z.code == code + 20:
-                        point = (float(x.value), float(y.value), float(z.value))
+                        try:
+                            point = (
+                                float(x.value), float(y.value), float(z.value)
+                            )
+                        except ValueError:  # search for any float values
+                            point = (
+                                _search_float(x.value),
+                                _search_float(y.value),
+                                _search_float(z.value)
+                            )
                     else:
-                        point = (float(x.value), float(y.value))
+                        try:
+                            point = (float(x.value), float(y.value))
+                        except ValueError:  # seach for any float values
+                            point = (
+                                _search_float(x.value),
+                                _search_float(y.value),
+                            )
                         undo_tag = z
                 except ValueError:
                     raise const.DXFStructureError(
@@ -678,10 +693,15 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                         # fast path for int and float
                         yield DXFTag(code, type_(value))
                     except ValueError:
-                        # slow path - ProE stores int values as floats :((
+                        # slow path - e.g. ProE stores int values as floats :((
                         if type_ is int:
                             try:
-                                yield DXFTag(code, int(float(x.value)))
+                                yield DXFTag(code, _search_int(x.value))
+                            except ValueError:
+                                raise const.DXFStructureError(error_msg(x))
+                        elif type_ is float:
+                            try:
+                                yield DXFTag(code, _search_float(x.value))
                             except ValueError:
                                 raise const.DXFStructureError(error_msg(x))
                         else:

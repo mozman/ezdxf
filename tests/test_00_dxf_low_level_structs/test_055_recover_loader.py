@@ -4,7 +4,7 @@ import pytest
 from io import BytesIO
 from ezdxf.recover import (
     bytes_loader, detect_encoding, synced_bytes_loader, _detect_dxf_version,
-    _search_int, _search_float,
+    _search_int, _search_float, byte_tag_compiler
 )
 from ezdxf.lldxf import const
 
@@ -79,6 +79,35 @@ class TestBytesLoader:
         assert tags[1] == (2, b'HEADER')
         assert tags[2] == (9, b'$ACADVER')
         assert tags[3] == (1, b'AC1027')
+
+
+MALFORMED_VALUE_TAGS = b"""  70 # int value
+  42xyz
+40 # float value
+  47.11xyz
+10 # 3D vertex
+ 1.0x
+20
+ 1.0y
+30
+ 1.0z
+11 # 2D vertex
+ 2.0x
+21
+ 2.0y
+ 0
+DUMMY
+"""
+
+
+class TestByteTagCompiler:
+    def test_malformed_value_tags(self):
+        loader = bytes_loader(BytesIO(MALFORMED_VALUE_TAGS))
+        tags = list(byte_tag_compiler(loader))
+        assert tags[0] == (70, 42)
+        assert tags[1] == (40, 47.11)
+        assert tags[2] == (10, (1, 1, 1))
+        assert tags[3] == (11, (2, 2))
 
 
 OUT_OF_SYNC_TAGS = """
