@@ -384,36 +384,6 @@ def _detect_dxf_version(header: List) -> str:
     return const.DXF12
 
 
-def _safe_str_to_int(s: str) -> int:
-    """ Emulate the behavior of the C function stoll(), which just stop
-    converting strings to integers at the first invalid char without raising
-    an exception. e.g. "42xyz" is a valid integer 42
-
-    """
-    try:
-        return int(s)
-    except ValueError:
-        pos = 0
-        while s[pos] in '\t\r\n ':  # skip whitespace
-            pos += 1
-        start = pos
-        if s[pos] in '-+':  # skip sign in front of int
-            pos += 1
-        length = len(s)
-        while pos < length and s[pos] in "0123456789":
-            pos += 1
-        return int(s[start:pos])
-
-
-def _safe_str_to_float(s: str) -> float:
-    """ Emulate the behavior of the C function stod(), which just stop
-    converting strings to doubles at the first invalid char without raising
-    an exception. e.g. "47.11xyz" is a valid double 47.11
-
-    """
-    return float(s)
-
-
 def safe_tag_loader(stream: BinaryIO,
                     loader: Callable = None,
                     messages: List = None,
@@ -446,6 +416,44 @@ def safe_tag_loader(stream: BinaryIO,
     tags = repair.tag_reorder_layer(tags)
     tags = repair.filter_invalid_point_codes(tags)
     return byte_tag_compiler(tags, encoding, messages=messages, errors=errors)
+
+
+INT_PATTERN = re.compile(r"[+-]?\d+")
+
+
+def _safe_str_to_int(s: str) -> int:
+    """ Emulate the behavior of the C function stoll(), which just stop
+    converting strings to integers at the first invalid char without raising
+    an exception. e.g. "42xyz" is a valid integer 42
+
+    """
+    # Not in use yet!
+    try:
+        return int(s)
+    except ValueError:
+        res = re.search(INT_PATTERN, s)
+        if res:
+            s = res.group()
+        return int(s)
+
+
+FLOAT_PATTERN = re.compile(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
+
+
+def _safe_str_to_float(s: str) -> float:
+    """ Emulate the behavior of the C function stod(), which just stop
+    converting strings to doubles at the first invalid char without raising
+    an exception. e.g. "47.11xyz" is a valid double 47.11
+
+    """
+    # Not in use yet!
+    try:
+        return float(s)
+    except ValueError:
+        res = re.search(FLOAT_PATTERN, s)
+        if res:
+            s = res.group()
+        return float(s)
 
 
 def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:

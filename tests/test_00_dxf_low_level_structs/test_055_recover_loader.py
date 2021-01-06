@@ -150,4 +150,41 @@ class TestSafeIntConverter:
 
 
 class TestSafeFloatConverter:
-    pass
+    @pytest.mark.parametrize("s", ['0', '0.0', '+0.', '-0.'])
+    def test_valid_zero(self, s):
+        assert _safe_str_to_float(s) == 0.0
+
+    @pytest.mark.parametrize("s", [
+        '1', '+1', '1.', '1.0', '1e0', '1.e0', '1.0e0', '1E0', '1e+0', '1e-0'
+    ])
+    def test_valid_positive_floats(self, s):
+        assert _safe_str_to_float(s) == 1.0
+
+    @pytest.mark.parametrize("s", [
+        '-1', '-1.', '-1.0', '-1e0', '-1.e0', '-1.0e0',
+    ])
+    def test_valid_negative_floats(self, s):
+        assert _safe_str_to_float(s) == -1.0
+
+    def test_negative_exponent(self):
+        assert _safe_str_to_float('1e-1') == 0.1
+        assert _safe_str_to_float('-1e-1') == -0.1
+
+    @pytest.mark.parametrize("s", [' 1.0', '\t1.0', '\r1.0', ' \r1.0'])
+    def test_ignore_whitespace_in_front_of_float(self, s):
+        assert _safe_str_to_float(s) == 1.0
+
+    @pytest.mark.parametrize("s", [
+        '1.0 ', '1.\t', '1.\r', '1. \r', '1e0 \t'
+    ])
+    def test_ignore_whitespace_behind_float(self, s):
+        assert _safe_str_to_float(s) == 1.0
+
+    @pytest.mark.parametrize("s", [
+        '1,', '1a', '1-', '1+', '1$', '1 1', '+1 x fd fgg', '\t\r+1_ ',
+        '1.,', '1.a', '1.-', '1.+', '1.$', '1. 1', '+1. x fd fgg', '\t\r+1._ ',
+        '1e0,', '1e0a', '1e0-', '1e0+', '1e0$', '1e0 1', '+1e0 x fd fgg',
+        '\t\r+1e0_ ', '  1e+0xx', '  1e-0xx', '  1E+0xx', '  1E-0xx'
+    ])
+    def test_ignore_invalid_chars_behind_float(self, s):
+        assert _safe_str_to_float(s) == 1.0
