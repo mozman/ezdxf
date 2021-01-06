@@ -2,8 +2,10 @@
 # License: MIT License
 import pytest
 from io import BytesIO
-from ezdxf.recover import bytes_loader, detect_encoding, synced_bytes_loader
-from ezdxf.recover import _detect_dxf_version
+from ezdxf.recover import (
+    bytes_loader, detect_encoding, synced_bytes_loader, _detect_dxf_version,
+    _safe_str_to_int, _safe_str_to_float,
+)
 from ezdxf.lldxf import const
 
 HEADER = """  0
@@ -121,3 +123,31 @@ class TestDetectDXFVersion:
     ])
     def test_strip_whitespace_from_version_string(self, ver):
         assert _detect_dxf_version([(9, '$ACADVER'), (3, ver)]) == 'AC1015'
+
+
+class TestSafeIntConverter:
+    @pytest.mark.parametrize("s", ['0', '00', '+0', '-0'])
+    def test_valid_zero_int(self, s):
+        assert _safe_str_to_int(s) == 0
+
+    @pytest.mark.parametrize("s", ['+1', '1', '01'])
+    def test_valid_int(self, s):
+        assert _safe_str_to_int(s) == 1
+
+    @pytest.mark.parametrize("s", [' 1', '\t1', '\r1', ' \r1'])
+    def test_ignore_whitespace_in_front_of_int(self, s):
+        assert _safe_str_to_int(s) == 1
+
+    @pytest.mark.parametrize("s", ['1 ', '1\t', '1\r', '1 \r'])
+    def test_ignore_whitespace_behind_int(self, s):
+        assert _safe_str_to_int(s) == 1
+
+    @pytest.mark.parametrize("s", [
+        '1.', '1,', '1a', '1-', '1+', '1$', '1 1', '+1 x fd fgg', '\t\r+1_ ',
+    ])
+    def test_ignore_invalid_chars_behind_int(self, s):
+        assert _safe_str_to_int(s) == 1
+
+
+class TestSafeFloatConverter:
+    pass
