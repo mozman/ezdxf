@@ -4,7 +4,7 @@ import pytest
 from io import BytesIO
 from ezdxf.recover import (
     bytes_loader, detect_encoding, synced_bytes_loader, _detect_dxf_version,
-    _safe_str_to_int, _safe_str_to_float,
+    _search_int, _search_float,
 )
 from ezdxf.lldxf import const
 
@@ -125,60 +125,60 @@ class TestDetectDXFVersion:
         assert _detect_dxf_version([(9, '$ACADVER'), (3, ver)]) == 'AC1015'
 
 
-class TestSafeIntConverter:
+class TestSearchIntConverter:
     @pytest.mark.parametrize("s", ['0', '00', '+0', '-0'])
     def test_valid_zero_int(self, s):
-        assert _safe_str_to_int(s) == 0
+        assert _search_int(s) == 0
 
     @pytest.mark.parametrize("s", ['+1', '1', '01'])
     def test_valid_int(self, s):
-        assert _safe_str_to_int(s) == 1
+        assert _search_int(s) == 1
 
     @pytest.mark.parametrize("s", [' 1', '\t1', '\r1', ' \r1'])
     def test_ignore_whitespace_in_front_of_int(self, s):
-        assert _safe_str_to_int(s) == 1
+        assert _search_int(s) == 1
 
     @pytest.mark.parametrize("s", ['1 ', '1\t', '1\r', '1 \r'])
     def test_ignore_whitespace_behind_int(self, s):
-        assert _safe_str_to_int(s) == 1
+        assert _search_int(s) == 1
 
     @pytest.mark.parametrize("s", [
         '1.', '1,', '1a', '1-', '1+', '1$', '1 1', '+1 x fd fgg', '\t\r+1_ ',
     ])
     def test_ignore_invalid_chars_behind_int(self, s):
-        assert _safe_str_to_int(s) == 1
+        assert _search_int(s) == 1
 
 
-class TestSafeFloatConverter:
+class TestSearchFloatConverter:
     @pytest.mark.parametrize("s", ['0', '0.0', '+0.', '-0.'])
     def test_valid_zero(self, s):
-        assert _safe_str_to_float(s) == 0.0
+        assert _search_float(s) == 0.0
 
     @pytest.mark.parametrize("s", [
         '1', '+1', '1.', '1.0', '1e0', '1.e0', '1.0e0', '1E0', '1e+0', '1e-0'
     ])
     def test_valid_positive_floats(self, s):
-        assert _safe_str_to_float(s) == 1.0
+        assert _search_float(s) == 1.0
 
     @pytest.mark.parametrize("s", [
         '-1', '-1.', '-1.0', '-1e0', '-1.e0', '-1.0e0',
     ])
     def test_valid_negative_floats(self, s):
-        assert _safe_str_to_float(s) == -1.0
+        assert _search_float(s) == -1.0
 
     def test_negative_exponent(self):
-        assert _safe_str_to_float('1e-1') == 0.1
-        assert _safe_str_to_float('-1e-1') == -0.1
+        assert _search_float('1e-1') == 0.1
+        assert _search_float('-1e-1') == -0.1
 
     @pytest.mark.parametrize("s", [' 1.0', '\t1.0', '\r1.0', ' \r1.0'])
     def test_ignore_whitespace_in_front_of_float(self, s):
-        assert _safe_str_to_float(s) == 1.0
+        assert _search_float(s) == 1.0
 
     @pytest.mark.parametrize("s", [
         '1.0 ', '1.\t', '1.\r', '1. \r', '1e0 \t'
     ])
     def test_ignore_whitespace_behind_float(self, s):
-        assert _safe_str_to_float(s) == 1.0
+        assert _search_float(s) == 1.0
 
     @pytest.mark.parametrize("s", [
         '1,', '1a', '1-', '1+', '1$', '1 1', '+1 x fd fgg', '\t\r+1_ ',
@@ -187,4 +187,4 @@ class TestSafeFloatConverter:
         '\t\r+1e0_ ', '  1e+0xx', '  1e-0xx', '  1E+0xx', '  1E-0xx'
     ])
     def test_ignore_invalid_chars_behind_float(self, s):
-        assert _safe_str_to_float(s) == 1.0
+        assert _search_float(s) == 1.0

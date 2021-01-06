@@ -421,7 +421,7 @@ def safe_tag_loader(stream: BinaryIO,
 INT_PATTERN = re.compile(r"[+-]?\d+")
 
 
-def _safe_str_to_int(s: str) -> int:
+def _search_int(s: str) -> int:
     """ Emulate the behavior of the C function stoll(), which just stop
     converting strings to integers at the first invalid char without raising
     an exception. e.g. "42xyz" is a valid integer 42
@@ -440,7 +440,7 @@ def _safe_str_to_int(s: str) -> int:
 FLOAT_PATTERN = re.compile(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
 
 
-def _safe_str_to_float(s: str) -> float:
+def _search_float(s: str) -> float:
     """ Emulate the behavior of the C function stod(), which just stop
     converting strings to doubles at the first invalid char without raising
     an exception. e.g. "47.11xyz" is a valid double 47.11
