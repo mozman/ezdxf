@@ -1,7 +1,7 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
 from typing import (
-    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple, Dict,
+    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple, Dict, Union,
 )
 import itertools
 import re
@@ -418,31 +418,34 @@ def safe_tag_loader(stream: BinaryIO,
     return byte_tag_compiler(tags, encoding, messages=messages, errors=errors)
 
 
-INT_PATTERN = re.compile(r"[+-]?\d+")
+INT_PATTERN_S = re.compile(r"[+-]?\d+")
+INT_PATTERN_B = re.compile(rb"[+-]?\d+")
 
 
-def _search_int(s: str) -> int:
+def _search_int(s: Union[str, bytes]) -> int:
     """ Emulate the behavior of the C function stoll(), which just stop
     converting strings to integers at the first invalid char without raising
     an exception. e.g. "42xyz" is a valid integer 42
 
     """
-    res = re.search(INT_PATTERN, s)
+    res = re.search(INT_PATTERN_S if isinstance(s, str) else INT_PATTERN_B, s)
     if res:
         s = res.group()
     return int(s)
 
 
-FLOAT_PATTERN = re.compile(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
+FLOAT_PATTERN_S = re.compile(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
+FLOAT_PATTERN_B = re.compile(rb"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
 
 
-def _search_float(s: str) -> float:
+def _search_float(s: Union[str, bytes]) -> float:
     """ Emulate the behavior of the C function stod(), which just stop
     converting strings to doubles at the first invalid char without raising
     an exception. e.g. "47.11xyz" is a valid double 47.11
 
     """
-    res = re.search(FLOAT_PATTERN, s)
+    res = re.search(
+        FLOAT_PATTERN_S if isinstance(s, str) else FLOAT_PATTERN_B, s)
     if res:
         s = res.group()
     return float(s)

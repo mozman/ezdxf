@@ -148,6 +148,12 @@ class TestSearchIntConverter:
     def test_ignore_invalid_chars_behind_int(self, s):
         assert _search_int(s) == 1
 
+    @pytest.mark.parametrize("b", [
+        b'1.', b'1,', b'1a', b'1-', b'\t\r+1_ ',
+    ])
+    def test_if_works_with_bytes(self, b):
+        assert _search_int(b) == 1
+
 
 class TestSearchFloatConverter:
     @pytest.mark.parametrize("s", ['0', '0.0', '+0.', '-0.'])
@@ -188,3 +194,9 @@ class TestSearchFloatConverter:
     ])
     def test_ignore_invalid_chars_behind_float(self, s):
         assert _search_float(s) == 1.0
+
+    @pytest.mark.parametrize("b", [
+        b'1,', b'1a', b'1-', b'1+', b'1$', b'1 1', b'+1 x fd fgg', b'\t\r+1_ ',
+    ])
+    def test_if_works_bytes(self, b):
+        assert _search_float(b) == 1.0
