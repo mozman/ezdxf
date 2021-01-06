@@ -472,9 +472,12 @@ def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
             try:
                 code = int(code)
             except ValueError:
-                code = code.decode(errors='ignore')
-                raise const.DXFStructureError(
-                    f'Invalid group code "{code}" at line {line}.')
+                try:  # harder to find an int
+                    code = _search_int(code)
+                except ValueError:
+                    code = code.decode(errors='ignore')
+                    raise const.DXFStructureError(
+                        f'Invalid group code "{code}" at line {line}.')
         else:
             return
 
@@ -511,8 +514,8 @@ def synced_bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
         while seeking_valid_group_code:
             code = readline()
             if code:
-                try:
-                    code = int(code)
+                try:  # hard to find an int
+                    code = _search_int(code)
                 except ValueError:
                     pass
                 else:

@@ -6,6 +6,7 @@ Version 0.15.1b0 - dev
 ----------------------
 
 - NEW: `Spline.audit()` audit support for the SPLINE entity
+- NEW: The `recover` module tolerates malformed group codes.
 
 Version 0.15 - 2020-12-30
 -------------------------

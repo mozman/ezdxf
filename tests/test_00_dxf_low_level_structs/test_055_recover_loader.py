@@ -30,6 +30,16 @@ TEST
 ÄÖÜ
 """
 
+MALFORMED_GROUP_CODES = b"""  0x
+SECTION
+  +2x
+HEADER
+  \t9\t
+$ACADVER
+  1.0
+AC1027
+"""
+
 
 class TestBytesLoader:
     @pytest.fixture(params=[bytes_loader, synced_bytes_loader])
@@ -59,11 +69,16 @@ class TestBytesLoader:
             "Linux and MacOS X line endings LF must be supported."
 
     def test_line_endings_only_CR(self):
-        with pytest.raises(const.DXFStructureError):
-            list(bytes_loader(BytesIO(b"0\r1\r0\r2\r")))
-
         assert list(synced_bytes_loader(BytesIO(b"0\r1\r0\r2\r"))) == [], \
             "MacOS prior to MacOS X line endings CR are not supported."
+
+    def test_malformed_group_codes(self, loader):
+        data = BytesIO(MALFORMED_GROUP_CODES)
+        tags = list(loader(data))
+        assert tags[0] == (0, b'SECTION')
+        assert tags[1] == (2, b'HEADER')
+        assert tags[2] == (9, b'$ACADVER')
+        assert tags[3] == (1, b'AC1027')
 
 
 OUT_OF_SYNC_TAGS = """
