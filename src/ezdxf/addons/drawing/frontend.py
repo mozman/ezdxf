@@ -320,14 +320,16 @@ class Frontend:
             # First path is the exterior path, everything else is a hole
             self.out.draw_filled_paths([holes[0]], holes[1:], properties)
 
-    def draw_wipeout_entity(self, entity: DXFGraphic, properties: Properties):
+    def draw_wipeout_entity(self, entity: DXFGraphic,
+                            properties: Properties) -> None:
         wipeout = cast(Wipeout, entity)
         properties.filling = Filling()
         properties.color = self.ctx.current_layout.background_color
         path = wipeout.boundary_path_wcs()
         self.out.draw_filled_polygon(path, properties)
 
-    def draw_viewport_entity(self, entity: DXFGraphic) -> None:
+    def draw_viewport_entity(self, entity: DXFGraphic,
+                             properties: Properties) -> None:
         assert entity.dxftype() == 'VIEWPORT'
         dxf = entity.dxf
         view_vector: Vec3 = dxf.view_direction_vector
@@ -369,7 +371,8 @@ class Frontend:
             self.out.draw_path(
                 Path.from_vertices(face, close=True), properties=properties)
 
-    def draw_polyline_entity(self, entity: DXFGraphic, properties: Properties):
+    def draw_polyline_entity(self, entity: DXFGraphic,
+                             properties: Properties) -> None:
         dxftype = entity.dxftype()
         if dxftype == 'POLYLINE':
             e = cast(Polyface, entity)
