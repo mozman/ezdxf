@@ -255,7 +255,7 @@ class ProxyGraphic:
             logger.debug('ProxyGraphic: unsupported 3D ARC.')
         start_vec = Vec3(bs.read_vertex())
         sweep_angle = bs.read_float()
-        arc_type = bs.read_struct('L')[0]
+        # arc_type = bs.read_long()  # unused yet
         # just do 2D for now
         start_angle = start_vec.angle_deg
         end_angle = start_angle + math.degrees(sweep_angle)
@@ -269,7 +269,7 @@ class ProxyGraphic:
         p1 = Vec3(bs.read_vertex())
         p2 = Vec3(bs.read_vertex())
         p3 = Vec3(bs.read_vertex())
-        arc_type = bs.read_struct('L')[0]
+        # arc_type = bs.read_long()  # unused yet
         arc = ConstructionArc.from_3p(p1, p3, p2)
         attribs['center'] = arc.center
         attribs['radius'] = arc.radius
