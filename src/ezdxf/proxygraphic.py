@@ -376,7 +376,7 @@ class ProxyGraphic:
     def mesh(self, data: bytes):
         logger.warning('Untested proxy graphic entity: MESH - Need examples!')
         bs = ByteStream(data)
-        rows, columns = bs.read_struct('2L')
+        rows, columns = bs.read_struct('<2L')
         attribs = self._build_dxf_attribs()
         attribs['m_count'] = rows
         attribs['n_count'] = columns
@@ -517,7 +517,7 @@ class ProxyGraphic:
     def _load_vertices(self, data: bytes, load_normal=False):
         normal = Z_AXIS
         bs = ByteStream(data)
-        count = bs.read_struct('<L')[0]
+        count = bs.read_long()
         if load_normal:
             count += 1
         vertices = []
