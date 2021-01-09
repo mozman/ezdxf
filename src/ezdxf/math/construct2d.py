@@ -351,14 +351,14 @@ def arc_angle_span_deg(start: float, end: float) -> float:
 
     # Normalized start- and end angles are equal, but input values are
     # different, returns 360 by definition:
-    if math.isclose(start % 360.0, end % 360.0):
+    start %= 360.0
+    if math.isclose(start, end % 360.0):
         return 360.0
 
     # Special treatment for end angle == 360 deg:
     if not math.isclose(end, 360.0):
         end %= 360.0
 
-    start %= 360.0
     if end < start:
         end += 360.0
     return end - start
