@@ -79,6 +79,8 @@ def extends(vertices: Iterable['Vertex']) -> Tuple[Vec3, Vec3]:
                 minz = z
             elif z > maxz:
                 maxz = z
+    if minx is None:
+        raise ValueError("No vertices give.")
     return Vec3(minx, miny, minz), Vec3(maxx, maxy, maxz)
 
 
@@ -152,4 +154,6 @@ def extends2d(vertices: Iterable['Vertex']) -> Tuple[Vec2, Vec2]:
                 miny = y
             elif y > maxy:
                 maxy = y
-    return Vec2((minx, miny)), Vec2((maxx, maxy))
+    if minx is None:
+        raise ValueError("No vertices give.")
+    return Vec2(minx, miny), Vec2(maxx, maxy)

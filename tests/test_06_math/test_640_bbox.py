@@ -1,5 +1,6 @@
-# Copyright (c) 2019-2020, Manfred Moitzi
+# Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
+import pytest
 from ezdxf.math import BoundingBox, BoundingBox2d
 
 
@@ -23,6 +24,10 @@ class TestBoundingBox:
         bbox.extend([(0, 0, 0), (10, 10, 10)])
         assert bbox.size == (10, 10, 10)
         assert bbox.has_data is True
+
+    def test_init_with_with_empty_list(self):
+        with pytest.raises(ValueError):
+            BoundingBox([])
 
     def test_inside(self):
         bbox = BoundingBox([(0, 0, 0), (10, 10, 10)])
@@ -70,6 +75,10 @@ class TestBoundingBox2d:
         bbox = BoundingBox2d([(7, -2), (-1, 8)])
         assert bbox.extmin == (-1, -2)
         assert bbox.extmax == (7, 8)
+
+    def test_init_with_with_empty_list(self):
+        with pytest.raises(ValueError):
+            BoundingBox2d([])
 
     def test_init_none(self):
         bbox = BoundingBox2d()
