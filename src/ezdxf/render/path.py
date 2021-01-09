@@ -508,6 +508,8 @@ class Path(abc.Sequence):
             reset: set start point to start of ellipse if path is empty
 
         """
+        if abs(ellipse.param_span) < 1e-9:
+            return
         if len(self) == 0 and reset:
             self.start = ellipse.start_point
         self.add_curves(cubic_bezier_from_ellipse(ellipse, segments))

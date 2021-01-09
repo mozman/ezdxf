@@ -5,7 +5,7 @@ import pytest
 import ezdxf
 import math
 from ezdxf.math import ConstructionArc, Vec3, UCS, Vec2
-from ezdxf.math import arc_segment_count
+from ezdxf.math import arc_segment_count, arc_angle_span_deg
 from math import isclose
 
 
@@ -200,3 +200,50 @@ def test_arc_segment_count():
 def test_flattening(r, s, e, sagitta, count):
     arc = ConstructionArc((0, 0), r, s, e)
     assert len(list(arc.flattening(sagitta))) == count
+
+class TestAngleSpanDeg:
+    @pytest.mark.parametrize('start, end', [
+        (0, 0),
+        (90, 90), (-90, -90),
+        (180, 180), (-180, -180),
+        (270, 270), (-270, -270),
+        (360, 360), (-360, -360),
+        (720, 720), (-720, -720),
+    ])
+    def test_no_arc(self, start, end):
+        assert arc_angle_span_deg(start, end) == 0
+
+    @pytest.mark.parametrize('start, end', [
+        # full circles:
+        # Normalized start- and end angles are equal, but input values are
+        # different:
+        (0, 360), (360, 0),
+        (-360, 0), (0, -360),
+        (90, 450),
+        (180, 540),
+        (180, -180), (-180, 180),
+        (90, -270), (-90, 270),
+
+    ])
+    def test_full_circle(self, start, end):
+        assert arc_angle_span_deg(start, end) == 360.0
+
+    @pytest.mark.parametrize('start, end, expected', [
+        (0, 90, 90), (0, -90, 270),
+        (0, 180, 180), (0, -180, 180),
+        (180, 360, 180), (-180, -360, 180),
+        (-90, 360, 90), (90, -360, 270),
+        (-90, -360, 90), (90, 360, 270),
+        (360, 90, 90),  # start angle 360 is 0
+        (360, -90, 270),  # start angle 360 is 0
+        (-360, 90, 90),  # start angle -360 is 0
+        (-360, -90, 270),  # start angle -360 is 0
+        (30, -30, 300),  # crossing 0 deg
+        (-30, 30, 60),  # crossing 0 deg
+        (90, -90, 180),
+        (-90, 90, 180),
+        (360, 400, 40),
+        (400, 360, 320),
+    ])
+    def test_arc(self, start, end, expected):
+        assert arc_angle_span_deg(start, end) == pytest.approx(expected)
