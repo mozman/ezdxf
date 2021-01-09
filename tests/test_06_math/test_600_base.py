@@ -167,30 +167,49 @@ def test_area():
     assert area([(4, 6), (4, -4), (8, -4), (8, -8), (-4, -8), (-4, 6)]) == 128
 
 
-@pytest.mark.parametrize('start, end, expected', [
-    (0, 0, 0),  # start == end is always 0 by definition
-    (360, 360, 0),  # start == end is always 0 by definition
-    (-30, -30, 0),  # start == end is always 0 by definition
-    (0, 360, 360),  # end angle counter clockwise (ccw) 360 is 360 deg (special)
-    (270, 360, 90),  # end angle ccw 360 is 360 deg (special)
-    (-90, 360, 90),  # end angle ccw 360 is 360 deg (special)
-    (0, -360, 0),  # end angle clockwise (cw) 360 deg is 0
-    (90, -360, 270),  # end angle cw 360 deg is 0
-    (-90, -360, 90),  # end angle cw 360 deg is 0
-    (360, 0, 0),  # start angle 360 is 0
-    (360, 90, 90),  # start angle 360 is 0
-    (360, -90, 270),  # start angle 360 is 0
-    (-360, 0, 0),  # start angle -360 is 0
-    (-360, 90, 90),  # start angle -360 is 0
-    (-360, -90, 270),  # start angle -360 is 0
-    (30, -30, 300),  # crossing 0 deg
-    (-30, 30, 60),  # crossing 0 deg
-    (180, -180, 0),  # 180 is equal to -180
-    (-180, 180, 0),  # 180 is equal to -180
-    (90, -90, 180),
-    (-90, 90, 180),
-    (360, 400, 40),
-    (400, 360, 320),
-])
-def test_arc_angle_span_deg(start, end, expected):
-    assert arc_angle_span_deg(start, end) == pytest.approx(expected)
+class TestAngleSpanDeg:
+    @pytest.mark.parametrize('start, end', [
+        (0, 0),
+        (90, 90), (-90, -90),
+        (180, 180), (-180, -180),
+        (270, 270), (-270, -270),
+        (360, 360), (-360, -360),
+        (720, 720), (-720, -720),
+    ])
+    def test_no_arc(self, start, end):
+        assert arc_angle_span_deg(start, end) == 0
+
+    @pytest.mark.parametrize('start, end', [
+        # full circles:
+        # Normalized start- and end angles are equal, but input values are
+        # different:
+        (0, 360), (360, 0),
+        (-360, 0), (0, -360),
+        (90, 450),
+        (180, 540),
+        (180, -180), (-180, 180),
+        (90, -270), (-90, 270),
+
+    ])
+    def test_full_circle(self, start, end):
+        assert arc_angle_span_deg(start, end) == pytest.approx(360.0)
+
+    @pytest.mark.parametrize('start, end, expected', [
+        (0, 90, 90), (0, -90, 270),
+        (0, 180, 180), (0, -180, 180),
+        (180, 360, 180), (-180, -360, 180),
+        (-90, 360, 90), (90, -360, 270),
+        (-90, -360, 90), (90, 360, 270),
+        (360, 90, 90),  # start angle 360 is 0
+        (360, -90, 270),  # start angle 360 is 0
+        (-360, 90, 90),  # start angle -360 is 0
+        (-360, -90, 270),  # start angle -360 is 0
+        (30, -30, 300),  # crossing 0 deg
+        (-30, 30, 60),  # crossing 0 deg
+        (90, -90, 180),
+        (-90, 90, 180),
+        (360, 400, 40),
+        (400, 360, 320),
+    ])
+    def test_arc(self, start, end, expected):
+        assert arc_angle_span_deg(start, end) == pytest.approx(expected)
