@@ -9,6 +9,8 @@ Version 0.15.1b0 - dev
 - NEW: The `recover` module tolerates malformed group codes and value tags.
 - BUGFIX: proxy graphic decoding error on big-endian systems
 - BUGFIX: invalid vertex subscript access in `dxf2code` add-on 
+- BUGFIX: `cubic_bezier_from_ellipse()` recognizes full ellipses  
+- BUGFIX: `cubic_bezier_from_arc()` recognizes full circles  
 
 Version 0.15 - 2020-12-30
 -------------------------

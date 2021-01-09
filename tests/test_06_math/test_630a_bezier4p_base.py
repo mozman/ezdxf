@@ -150,6 +150,11 @@ def test_from_circular_arc(arc):
     assert cpoints[3].isclose((0, 1, 0))
 
 
+def test_from_circular_full_arc(arc):
+    curves = list(arc(start_angle=180, end_angle=-180))
+    assert len(curves) == 4
+
+
 def test_bezier_curves_from_simple_elliptic_arc(ellipse):
     ellipse_ = ConstructionEllipse(
         center=(1, 1),

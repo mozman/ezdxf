@@ -12,6 +12,7 @@ from .matrix44 cimport Matrix44
 from libc.math cimport ceil, tan
 from ._cpp_vec3 cimport CppVec3
 from ._cpp_cubic_bezier cimport CppCubicBezier
+from .construct import arc_angle_span_deg
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -199,16 +200,15 @@ def cubic_bezier_from_arc(
     cdef CppVec3 tmp
     cdef list res
     cdef int i
-
-    start_angle = normalize_deg_angle(start_angle) * DEG2RAD
-    end_angle = normalize_deg_angle(end_angle) * DEG2RAD
-
-    if isclose(end_angle, 0.0, ABS_TOL):
-        end_angle = M_TAU
-    if start_angle > end_angle:
-        end_angle += M_TAU
-    if isclose(end_angle, start_angle, ABS_TOL):
+    cdef double angle_span = arc_angle_span_deg(start_angle, end_angle)
+    if abs(angle_span) < 1e-9:
         return
+
+    cdef double s = start_angle
+    start_angle = (s * DEG2RAD) % M_TAU
+    end_angle = (s + angle_span) * DEG2RAD
+    while start_angle > end_angle:
+        end_angle += M_TAU
 
     for control_points in cubic_bezier_arc_parameters(
             start_angle, end_angle, segments):

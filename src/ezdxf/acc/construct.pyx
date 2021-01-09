@@ -4,7 +4,7 @@
 # License: MIT License
 from typing import Iterable, TYPE_CHECKING, Sequence, Optional, Tuple
 from libc.math cimport fabs
-from .vector cimport Vec2, v2_isclose, Vec3, v3_from_cpp_vec3
+from .vector cimport Vec2, v2_isclose, Vec3, v3_from_cpp_vec3, isclose
 from ._cpp_vec3 cimport CppVec3
 
 import cython
@@ -194,3 +194,18 @@ def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
             # ray1 and ray2 do not have an intersection point,
             # p1 and p2 are the points of closest approach on each ray
             return v3_from_cpp_vec3(p1), v3_from_cpp_vec3(p2)
+
+def arc_angle_span_deg(double start, double end) -> float:
+    if isclose(start, end, ABS_TOL):
+        return 0.0
+
+    start %= 360.0
+    if isclose(start, end % 360.0, ABS_TOL):
+        return 360.0
+
+    if not isclose(end, 360.0, ABS_TOL):
+        end %= 360.0
+
+    if end < start:
+        end += 360.0
+    return end - start

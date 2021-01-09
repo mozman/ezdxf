@@ -7,14 +7,14 @@ from ._ctypes import (
     Vec3, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, distance, lerp, Vector,
     Matrix44, Bezier4P, cubic_bezier_arc_parameters, cubic_bezier_from_arc,
     cubic_bezier_from_ellipse, has_clockwise_orientation,
-    intersection_line_line_2d, intersection_ray_ray_3d,
+    intersection_line_line_2d, intersection_ray_ray_3d, arc_angle_span_deg
 )
 
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d,
     distance_point_line_2d, is_point_on_line_2d, is_point_in_polygon_2d,
     is_point_left_of_line, point_to_line_relation, linspace, enclosing_angles,
-    reflect_angle_x_deg, reflect_angle_y_deg, sign, area,
+    reflect_angle_x_deg, reflect_angle_y_deg, sign, area
 )
 from .construct3d import (
     is_planar_face, subdivide_face, subdivide_ngons, Plane, LocationState,
@@ -45,8 +45,7 @@ from .bulge import (
     bulge_to_arc, bulge_3_points, bulge_center, bulge_radius, arc_to_bulge,
 )
 from .arc import (
-    ConstructionArc, arc_segment_count, arc_chord_length,
-    arc_angle_span_deg,
+    ConstructionArc, arc_segment_count, arc_chord_length
 )
 from .line import ConstructionRay, ConstructionLine, ParallelRaysError
 from .circle import ConstructionCircle

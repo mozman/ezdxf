@@ -379,33 +379,3 @@ def arc_segment_count(radius: float, angle: float, sagitta: float) -> int:
     chord_length = arc_chord_length(radius, sagitta)
     alpha = math.asin(chord_length / 2.0 / radius) * 2.0
     return math.ceil(angle / alpha)
-
-
-def arc_angle_span_deg(start: float, end: float) -> float:
-    """ Returns the counter clockwise angle from `start` to `end` in degrees.
-
-    Return then angle span in the range of [0, 360], 360 is a full circle.
-    Full circle handling is a special case, because normalization of angles
-    which describe a full circle would return 0 if treated as regular angles.
-    e.g. (0, 360) -> 360, (0, -360) -> 360, (180, -180) -> 360.
-    Input angles with the same value always return 0 by definition: (0, 0) -> 0,
-    (-180, -180) -> 0, (360, 360) -> 0.
-
-    """
-    # Input values are equal, returns 0 by definition:
-    if math.isclose(start, end):
-        return 0.0
-
-    # Normalized start- and end angles are equal, but input values are
-    # different, returns 360 by definition:
-    start %= 360.0
-    if math.isclose(start, end % 360.0):
-        return 360.0
-
-    # Special treatment for end angle == 360 deg:
-    if not math.isclose(end, 360.0):
-        end %= 360.0
-
-    if end < start:
-        end += 360.0
-    return end - start

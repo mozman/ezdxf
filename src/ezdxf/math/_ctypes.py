@@ -14,7 +14,7 @@ if USE_C_EXT:
     )
     from ezdxf.acc.construct import (
         has_clockwise_orientation, intersection_line_line_2d,
-        intersection_ray_ray_3d
+        intersection_ray_ray_3d, arc_angle_span_deg
     )
 else:
     from ._vector import (
@@ -27,5 +27,5 @@ else:
     )
     from ._construct import (
         has_clockwise_orientation, intersection_line_line_2d,
-        intersection_ray_ray_3d
+        intersection_ray_ray_3d, arc_angle_span_deg
     )

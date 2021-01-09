@@ -201,6 +201,7 @@ def test_flattening(r, s, e, sagitta, count):
     arc = ConstructionArc((0, 0), r, s, e)
     assert len(list(arc.flattening(sagitta))) == count
 
+
 class TestAngleSpanDeg:
     @pytest.mark.parametrize('start, end', [
         (0, 0),

@@ -6,6 +6,7 @@ from functools import lru_cache
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
 from ._vector import Vec3, Vec2
 from ._matrix44 import Matrix44
+from ._construct import arc_angle_span_deg
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -230,16 +231,15 @@ def cubic_bezier_from_arc(
     """
     center = Vec3(center)
     radius = float(radius)
-    start_angle = math.radians(start_angle) % math.tau
-    end_angle = math.radians(end_angle) % math.tau
-    if math.isclose(end_angle, 0.0):
-        end_angle = math.tau
-
-    if start_angle > end_angle:
-        end_angle += math.tau
-
-    if math.isclose(end_angle - start_angle, 0.0):
+    angle_span = arc_angle_span_deg(start_angle, end_angle)
+    if abs(angle_span) < 1e-9:
         return
+
+    s = start_angle
+    start_angle = math.radians(s) % math.tau
+    end_angle = math.radians(s + angle_span)
+    while start_angle > end_angle:
+        end_angle += math.tau
 
     for control_points in cubic_bezier_arc_parameters(
             start_angle, end_angle, segments):
