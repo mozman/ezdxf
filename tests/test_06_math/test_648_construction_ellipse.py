@@ -163,15 +163,20 @@ def test_angle_to_param():
             end_param=param,
             extrusion=(0, 0, random.choice((1, -1))),
         )
-        calculated_angle = ellipse.extrusion.angle_about(ellipse.major_axis, ellipse.end_point)
-        calculated_angle_without_direction = ellipse.major_axis.angle_between(ellipse.end_point)
+        calculated_angle = ellipse.extrusion.angle_about(ellipse.major_axis,
+                                                         ellipse.end_point)
+        calculated_angle_without_direction = ellipse.major_axis.angle_between(
+            ellipse.end_point)
         assert math.isclose(calculated_angle, angle, abs_tol=1e-9)
-        assert (math.isclose(calculated_angle, calculated_angle_without_direction) or
-                math.isclose(math.tau - calculated_angle, calculated_angle_without_direction))
+        assert (math.isclose(calculated_angle,
+                             calculated_angle_without_direction) or
+                math.isclose(math.tau - calculated_angle,
+                             calculated_angle_without_direction))
 
 
 def test_vertices():
-    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5, start_param=0, end_param=math.pi * 1.5)
+    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5,
+                            start_param=0, end_param=math.pi * 1.5)
     params = list(e.params(7))
     result = [
         (5.0, 3.0, 0.0),
@@ -190,7 +195,8 @@ def test_vertices():
 
 
 def test_tangents():
-    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5, start_param=0, end_param=math.pi * 1.5)
+    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5,
+                            start_param=0, end_param=math.pi * 1.5)
     params = list(e.params(7))
     result = [
         (0.0, 1.0, 0.0),
@@ -226,8 +232,10 @@ def test_params_from_vertices_random():
     # floating point inaccuracy produces unpredictable results:
     p1, p2 = e.params_from_vertices((v1, v2))
 
-    assert math.isclose(p1, 0, abs_tol=1e-9) or math.isclose(p1, math.tau, abs_tol=1e-9)
-    assert math.isclose(p2, 0, abs_tol=1e-9) or math.isclose(p2, math.tau, abs_tol=1e-9)
+    assert math.isclose(p1, 0, abs_tol=1e-9) or math.isclose(p1, math.tau,
+                                                             abs_tol=1e-9)
+    assert math.isclose(p2, 0, abs_tol=1e-9) or math.isclose(p2, math.tau,
+                                                             abs_tol=1e-9)
 
 
 def test_to_ocs():
@@ -257,3 +265,35 @@ def test_flattening_ellipse():
     e = ConstructionEllipse(major_axis=(3, 0), ratio=0.25)
     assert len(list(e.flattening(0.1))) == 13
     assert len(list(e.flattening(0.01))) == 37
+
+
+PI2 = math.pi / 2.0
+
+
+class TestParamSpan:
+    @pytest.mark.parametrize('start, end', [
+        (0, 0), (math.pi, math.pi), (math.tau, math.tau),
+        (0, 0), (-math.pi, -math.pi), (-math.tau, -math.tau),
+    ])
+    def test_no_ellipse(self, start, end):
+        e = ConstructionEllipse(start_param=start, end_param=end)
+        assert e.param_span == 0.0
+
+    @pytest.mark.parametrize('start, end', [
+        (0, math.tau), (math.tau, 0), (math.pi, -math.pi),
+        (0, -math.tau), (-math.tau, 0), (-math.pi, math.pi),
+    ])
+    def test_full_ellipse(self, start, end):
+        e = ConstructionEllipse(start_param=start, end_param=end)
+        assert e.param_span == pytest.approx(math.tau)
+
+    @pytest.mark.parametrize('start, end, expected', [
+        (0, PI2, PI2), (PI2, 0, math.pi * 1.5), (PI2, math.pi, PI2),
+        (PI2, -PI2, math.pi), (math.pi, 0, math.pi), (0, math.pi, math.pi),
+        (0, -PI2, math.pi * 1.5), (-PI2, 0, PI2),
+        (-PI2, -math.pi, math.pi * 1.5),
+        (-PI2, PI2, math.pi), (-math.pi, 0, math.pi), (0, -math.pi, math.pi),
+    ])
+    def test_elliptic_arc(self, start, end, expected):
+        e = ConstructionEllipse(start_param=start, end_param=end)
+        assert e.param_span == pytest.approx(expected)

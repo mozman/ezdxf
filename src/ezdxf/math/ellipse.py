@@ -207,11 +207,24 @@ class ConstructionEllipse:
 
     @property
     def param_span(self) -> float:
-        """ Returns params span of ellipse from start- to end param. """
-        end = self.end_param
-        if end < self.start_param:
-            end += math.tau
-        return end - self.start_param
+        """ Returns params span of ellipse from start- to end param.
+
+        Returns 0 for start param == end param by definition.
+        Return 2*pi if normalized params are equal but start param is != end
+        param by definition.
+
+        """
+        s = self.start_param
+        e = self.end_param
+        if math.isclose(s, e):
+            return 0.0  # by definition
+        # start param != end param but normalized params are equal:
+        if math.isclose(s % math.tau, e % math.tau):
+            return math.tau  # full ellipse by definition
+
+        while e < s:
+            e += math.tau
+        return e - s
 
     def params(self, num: int) -> Iterable[float]:
         """ Returns `num` params from start- to end param in counter clockwise order.
