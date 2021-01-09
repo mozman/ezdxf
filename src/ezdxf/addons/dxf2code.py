@@ -688,11 +688,11 @@ class _SourceCodeGenerator:
                 for edge in path.edges:
                     if edge.EDGE_TYPE == "LineEdge":
                         add_line(
-                            f"ep.add_line({edge.start[:2]}, {str(edge.end[:2])})"
+                            f"ep.add_line({edge.start}, {str(edge.end)})"
                         )
                     elif edge.EDGE_TYPE == "ArcEdge":
                         add_line("ep.add_arc(")
-                        add_line(arg.format("center", str(edge.center[:2])))
+                        add_line(arg.format("center", str(edge.center)))
                         add_line(arg.format("radius", edge.radius))
                         add_line(arg.format("start_angle", edge.start_angle))
                         add_line(arg.format("end_angle", edge.end_angle))
@@ -700,9 +700,9 @@ class _SourceCodeGenerator:
                         add_line(")")
                     elif edge.EDGE_TYPE == "EllipseEdge":
                         add_line("ep.add_ellipse(")
-                        add_line(arg.format("center", str(edge.center[:2])))
+                        add_line(arg.format("center", str(edge.center)))
                         add_line(
-                            arg.format("major_axis", str(edge.major_axis[:2]))
+                            arg.format("major_axis", str(edge.major_axis))
                         )
                         add_line(arg.format("ratio", edge.ratio))
                         add_line(arg.format("start_angle", edge.start_angle))
@@ -715,14 +715,14 @@ class _SourceCodeGenerator:
                             add_line(
                                 arg.format(
                                     "fit_points",
-                                    str([fp[:2] for fp in edge.fit_points]),
+                                    str([fp for fp in edge.fit_points]),
                                 )
                             )
                         if edge.control_points:
                             add_line(
                                 arg.format(
                                     "control_points",
-                                    str([cp[:2] for cp in edge.control_points]),
+                                    str([cp for cp in edge.control_points]),
                                 )
                             )
                         if edge.knot_values:
