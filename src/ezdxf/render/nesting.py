@@ -148,7 +148,7 @@ def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
     boxed_paths = [
         # Fast bounding box construction:
         BoxStruct(BoundingBox2d(path.control_vertices()), path)
-        for path in paths
+        for path in paths if len(path)
     ]
     boxed_paths.sort(key=area)
     return as_nested_paths(polygon_structure(boxed_paths))
