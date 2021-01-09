@@ -23,6 +23,8 @@ Functions
 
 .. autofunction:: area
 
+.. autofunction:: arc_angle_span_deg
+
 .. _bulge_related_functions:
 
 Bulge Related Functions

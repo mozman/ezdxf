@@ -171,9 +171,9 @@ def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
 
 
 def arc_angle_span_deg(start: float, end: float) -> float:
-    """ Returns the counter clockwise angle from `start` to `end` in degrees.
+    """ Returns the counter clockwise angle span from `start` to `end` in degrees.
 
-    Return then angle span in the range of [0, 360], 360 is a full circle.
+    Returns the angle span in the range of [0, 360], 360 is a full circle.
     Full circle handling is a special case, because normalization of angles
     which describe a full circle would return 0 if treated as regular angles.
     e.g. (0, 360) -> 360, (0, -360) -> 360, (180, -180) -> 360.
