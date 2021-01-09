@@ -8,6 +8,7 @@ Version 0.15.1b0 - dev
 - NEW: `Spline.audit()` audit support for the SPLINE entity
 - NEW: The `recover` module tolerates malformed group codes and value tags.
 - BUGFIX: proxy graphic decoding error on big-endian systems
+- BUGFIX: invalid vertex subscript access in `dxf2code` add-on 
 
 Version 0.15 - 2020-12-30
 -------------------------

@@ -593,7 +593,7 @@ class _SourceCodeGenerator:
         )
         if len(entity.boundary_path):
             self.add_list_source_code(
-                (v[:2] for v in entity.boundary_path),  # just x, y axis
+                (v for v in entity.boundary_path),  # just x, y axis
                 prolog="e.set_boundary_path([",
                 epilog="])",
             )
@@ -608,7 +608,7 @@ class _SourceCodeGenerator:
         )
         if len(entity.boundary_path):
             self.add_list_source_code(
-                (v[:2] for v in entity.boundary_path),  # just x, y axis
+                (v for v in entity.boundary_path),  # just x, y axis
                 prolog="e.set_boundary_path([",
                 epilog="])",
             )
