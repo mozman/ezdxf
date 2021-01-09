@@ -265,16 +265,13 @@ def cubic_bezier_from_ellipse(
     .. versionadded:: 0.13
 
     """
-    start_angle = ellipse.start_param % math.tau
-    end_angle = ellipse.end_param % math.tau
-    if math.isclose(end_angle, 0.0):
-        end_angle = math.tau
-
-    if start_angle > end_angle:
-        end_angle += math.tau
-
-    if math.isclose(end_angle, start_angle, abs_tol=1e-12):
+    param_span = ellipse.param_span
+    if abs(param_span) < 1e-9:
         return
+    start_angle = ellipse.start_param % math.tau
+    end_angle = start_angle + param_span
+    while start_angle > end_angle:
+        end_angle += math.tau
 
     def transform(points: Iterable[Vec3]) -> Iterable[Vec3]:
         center = Vec3(ellipse.center)

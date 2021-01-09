@@ -388,6 +388,7 @@ def _main():
     v = CadViewer(params={
         'linetype_renderer': args.ltype,
         'lineweight_scaling': args.lineweight_scaling,
+        # 'hatch_pattern': 2,  # draw pattern as solid fill
     })
     if args.cad_file is not None:
         try:

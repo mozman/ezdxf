@@ -220,17 +220,15 @@ def cubic_bezier_from_arc(
 
 def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
                               int segments = 1) -> Iterable[Bezier4P]:
-    cdef start_angle = normalize_rad_angle(ellipse.start_param)
-    cdef end_angle = normalize_rad_angle(ellipse.end_param)
-
-    if isclose(end_angle, 0.0, ABS_TOL):
-        end_angle = M_TAU
-
-    if start_angle > end_angle:
-        end_angle += M_TAU
-
-    if isclose(end_angle, start_angle, ABS_TOL):
+    cdef double param_span = ellipse.param_span
+    if abs(param_span) < 1e-9:
         return
+
+    cdef double start_angle = normalize_rad_angle(ellipse.start_param)
+    cdef double end_angle = start_angle + param_span
+
+    while start_angle > end_angle:
+        end_angle += M_TAU
 
     cdef CppVec3 center = Vec3(ellipse.center).to_cpp_vec3()
     cdef CppVec3 x_axis = Vec3(ellipse.major_axis).to_cpp_vec3()

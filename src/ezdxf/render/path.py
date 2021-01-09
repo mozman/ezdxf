@@ -512,7 +512,9 @@ class Path(abc.Sequence):
             return
         if len(self) == 0 and reset:
             self.start = ellipse.start_point
-        self.add_curves(cubic_bezier_from_ellipse(ellipse, segments))
+        self.add_curves(
+            cubic_bezier_from_ellipse(ellipse, segments)
+        )
 
     def add_spline(self, spline: BSpline, level=4, reset=True) -> None:
         """ Add a B-spline as multiple cubic Bèzier-curves.
