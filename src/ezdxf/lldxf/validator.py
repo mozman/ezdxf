@@ -268,6 +268,18 @@ def is_dxf_stream(stream: TextIO) -> bool:
     return False
 
 
+# Names used in symbol table records and in dictionaries must follow these rules:
+#
+# - Names can be any length in ObjectARX, but symbol names entered by users in
+#   AutoCAD are limited to 255 characters.
+# - AutoCAD preserves the case of names but does not use the case in
+#   comparisons. For example, AutoCAD considers "Floor" to be the same symbol
+#   as "FLOOR."
+# - Names can be composed of all characters allowed by Windows or Mac OS for
+#   filenames, except comma (,), backquote (‘), semi-colon (;), and equal
+#   sign (=).
+# http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-83ABF20A-57D4-4AB3-8A49-D91E0F70DBFF
+
 def is_valid_table_name(name: str) -> bool:
     return not bool(INVALID_LAYER_NAME_CHARACTERS.intersection(set(name)))
 

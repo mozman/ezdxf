@@ -9,8 +9,8 @@ from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, EntityDB, Drawing, DXFEntity, Layer, LineType
-    )
+    TagWriter, EntityDB, Drawing, DXFEntity, Layer, LineType,
+)
 
 TABLENAMES = {
     'LAYER': 'LAYERS',
@@ -34,7 +34,7 @@ def tablename(dxfname: str) -> str:
 
 def table_key(name: str) -> str:
     """ Unified table entry key. """
-
+    # see also comments for ezdxf.lldxf.validator.is_valid_table_name()
     if not isinstance(name, str):
         raise TypeError('Name has to be a string.')
     return name.lower()  # table key is lower case
@@ -174,7 +174,8 @@ class Table:
         Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
-        entry = factory.create_db_entry(self._head.dxf.name, dxfattribs, self.doc)
+        entry = factory.create_db_entry(self._head.dxf.name, dxfattribs,
+                                        self.doc)
         self._append(entry)
         return entry
 
