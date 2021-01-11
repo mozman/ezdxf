@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Iterator, Optional, List
 from collections import OrderedDict
@@ -9,8 +9,8 @@ from ezdxf.entities import factory
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-    TagWriter, EntityDB, Drawing, DXFEntity, Layer, LineType,
-)
+        TagWriter, EntityDB, Drawing, DXFEntity, Layer, LineType,
+    )
 
 TABLENAMES = {
     'LAYER': 'LAYERS',
