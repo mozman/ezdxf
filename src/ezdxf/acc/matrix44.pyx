@@ -45,6 +45,9 @@ cdef class Matrix44:
             raise ValueError("invalid argument count: 4 row vectors or "
                              "iterable of 16 numbers")
 
+    def __reduce__(self):
+        return Matrix44, (tuple(self),)
+
     def __getitem__(self, tuple index: Tuple[int, int]) -> float:
         cdef int row = index[0]
         cdef int col = index[1]

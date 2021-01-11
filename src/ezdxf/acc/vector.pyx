@@ -50,7 +50,6 @@ cdef class Vec2:
 
     Init:
 
-    - Vec2()
     - Vec2(vec2)
     - Vec2(vec3)
     - Vec2((x, y))
@@ -90,6 +89,9 @@ cdef class Vec2:
         # slow init by sequence
         self.x = args[0]
         self.y = args[1]
+
+    def __reduce__(self):
+        return Vec2, (self.x, self.y)
 
     @property
     def vec3(self) -> 'Vec3':
@@ -421,6 +423,9 @@ cdef class Vec3:
             self.z = args[2]
         else:
             self.z = 0.0
+
+    def __reduce__(self):
+        return Vec3, self.xyz
 
     @property
     def xy(self) -> 'Vec3':
