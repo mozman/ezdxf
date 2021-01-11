@@ -286,6 +286,18 @@ class TestMatrix44:
         for a, b in zip(m1, m2):
             assert isclose(a, b)
 
+    def test_assign_after_initialised(self, m44):
+        matrix = m44()
+        matrix[0, 0] = 12
+        matrix2 = m44()
+        assert matrix2[0, 0] == 1
+
+        values = list(range(16))
+        matrix = m44(values)
+        matrix[0, 0] = 12
+        assert values[0] == 0
+        assert matrix[0, 0] == 12
+
     def test_picklable(self, m44):
         matrix = m44((0.1, 1, 2, 3),
                      (4, 5, 6, 7),
@@ -293,4 +305,7 @@ class TestMatrix44:
                      (12, 13, 14, 15))
         pickled_matrix = pickle.loads(pickle.dumps(matrix))
         assert equal_matrix(matrix, pickled_matrix)
+        assert type(matrix) is type(pickled_matrix)
+        matrix[0, 0] = 12
+        assert not equal_matrix(matrix, pickled_matrix)
 

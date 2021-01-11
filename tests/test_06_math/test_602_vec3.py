@@ -446,3 +446,4 @@ def test_picklable(vec3):
     for v in [vec3(), vec3((1, 2.5, 3)), vec3(1, 2.5, 3)]:
         pickled_v = pickle.loads(pickle.dumps(v))
         assert v == pickled_v
+        assert type(v) is type(pickled_v)
