@@ -1,14 +1,16 @@
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
 from functools import partial
 from ezdxf.lldxf.hdrvars import SingleValue, Point2D, Point3D, HeaderVarDef
-from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018
-      
+from ezdxf.lldxf.const import (
+    DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018,
+)
+
 HEADER_VAR_MAP = {
     '$ACADVER': HeaderVarDef(
         name='$ACADVER',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=0,
@@ -26,7 +28,7 @@ HEADER_VAR_MAP = {
     '$DWGCODEPAGE': HeaderVarDef(
         name='$DWGCODEPAGE',
         code=3,
-        factory=partial(SingleValue, code=3), 
+        factory=partial(SingleValue, code=3),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=200,
@@ -34,7 +36,7 @@ HEADER_VAR_MAP = {
     '$LASTSAVEDBY': HeaderVarDef(
         name='$LASTSAVEDBY',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=300,
@@ -42,7 +44,7 @@ HEADER_VAR_MAP = {
     '$REQUIREDVERSIONS': HeaderVarDef(
         name='$REQUIREDVERSIONS',
         code=160,
-        factory=partial(SingleValue, code=160), 
+        factory=partial(SingleValue, code=160),
         mindxf=DXF2013,
         maxdxf=DXF2018,
         priority=400,
@@ -50,7 +52,7 @@ HEADER_VAR_MAP = {
     '$INSBASE': HeaderVarDef(
         name='$INSBASE',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=500,
@@ -58,7 +60,7 @@ HEADER_VAR_MAP = {
     '$EXTMIN': HeaderVarDef(
         name='$EXTMIN',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=600,
@@ -66,7 +68,7 @@ HEADER_VAR_MAP = {
     '$EXTMAX': HeaderVarDef(
         name='$EXTMAX',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=700,
@@ -74,7 +76,7 @@ HEADER_VAR_MAP = {
     '$LIMMIN': HeaderVarDef(
         name='$LIMMIN',
         code=10,
-        factory=Point2D, 
+        factory=Point2D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=800,
@@ -82,7 +84,7 @@ HEADER_VAR_MAP = {
     '$LIMMAX': HeaderVarDef(
         name='$LIMMAX',
         code=10,
-        factory=Point2D, 
+        factory=Point2D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=900,
@@ -90,7 +92,7 @@ HEADER_VAR_MAP = {
     '$ORTHOMODE': HeaderVarDef(
         name='$ORTHOMODE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=1000,
@@ -98,7 +100,7 @@ HEADER_VAR_MAP = {
     '$REGENMODE': HeaderVarDef(
         name='$REGENMODE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=1100,
@@ -106,7 +108,7 @@ HEADER_VAR_MAP = {
     '$FILLMODE': HeaderVarDef(
         name='$FILLMODE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=1200,
@@ -114,15 +116,15 @@ HEADER_VAR_MAP = {
     '$DRAGMODE': HeaderVarDef(
         name='$DRAGMODE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF12,
-        priority=1200,
+        priority=1250,
         default=2),
     '$QTEXTMODE': HeaderVarDef(
         name='$QTEXTMODE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=1300,
@@ -130,7 +132,7 @@ HEADER_VAR_MAP = {
     '$MIRRTEXT': HeaderVarDef(
         name='$MIRRTEXT',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=1400,
@@ -138,7 +140,7 @@ HEADER_VAR_MAP = {
     '$OSMODE': HeaderVarDef(
         name='$OSMODE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF12,
         priority=1400,
@@ -146,7 +148,7 @@ HEADER_VAR_MAP = {
     '$LTSCALE': HeaderVarDef(
         name='$LTSCALE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=1500,
@@ -154,7 +156,7 @@ HEADER_VAR_MAP = {
     '$ATTMODE': HeaderVarDef(
         name='$ATTMODE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=1600,
@@ -162,7 +164,7 @@ HEADER_VAR_MAP = {
     '$TEXTSIZE': HeaderVarDef(
         name='$TEXTSIZE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=1700,
@@ -170,7 +172,7 @@ HEADER_VAR_MAP = {
     '$TRACEWID': HeaderVarDef(
         name='$TRACEWID',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=1800,
@@ -178,7 +180,7 @@ HEADER_VAR_MAP = {
     '$TEXTSTYLE': HeaderVarDef(
         name='$TEXTSTYLE',
         code=7,
-        factory=partial(SingleValue, code=7), 
+        factory=partial(SingleValue, code=7),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=1900,
@@ -186,7 +188,7 @@ HEADER_VAR_MAP = {
     '$CLAYER': HeaderVarDef(
         name='$CLAYER',
         code=8,
-        factory=partial(SingleValue, code=8), 
+        factory=partial(SingleValue, code=8),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=2000,
@@ -194,7 +196,7 @@ HEADER_VAR_MAP = {
     '$CELTYPE': HeaderVarDef(
         name='$CELTYPE',
         code=6,
-        factory=partial(SingleValue, code=6), 
+        factory=partial(SingleValue, code=6),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=2100,
@@ -202,7 +204,7 @@ HEADER_VAR_MAP = {
     '$CECOLOR': HeaderVarDef(
         name='$CECOLOR',
         code=62,
-        factory=partial(SingleValue, code=62), 
+        factory=partial(SingleValue, code=62),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=2200,
@@ -210,7 +212,7 @@ HEADER_VAR_MAP = {
     '$CELTSCALE': HeaderVarDef(
         name='$CELTSCALE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=2300,
@@ -218,7 +220,7 @@ HEADER_VAR_MAP = {
     '$DISPSILH': HeaderVarDef(
         name='$DISPSILH',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=2400,
@@ -226,7 +228,7 @@ HEADER_VAR_MAP = {
     '$DIMSCALE': HeaderVarDef(
         name='$DIMSCALE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=2500,
@@ -234,7 +236,7 @@ HEADER_VAR_MAP = {
     '$DIMASZ': HeaderVarDef(
         name='$DIMASZ',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=2600,
@@ -242,7 +244,7 @@ HEADER_VAR_MAP = {
     '$DIMEXO': HeaderVarDef(
         name='$DIMEXO',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=2700,
@@ -250,7 +252,7 @@ HEADER_VAR_MAP = {
     '$DIMDLI': HeaderVarDef(
         name='$DIMDLI',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=2800,
@@ -258,7 +260,7 @@ HEADER_VAR_MAP = {
     '$DIMRND': HeaderVarDef(
         name='$DIMRND',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=2900,
@@ -266,7 +268,7 @@ HEADER_VAR_MAP = {
     '$DIMDLE': HeaderVarDef(
         name='$DIMDLE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=3000,
@@ -274,7 +276,7 @@ HEADER_VAR_MAP = {
     '$DIMEXE': HeaderVarDef(
         name='$DIMEXE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=3100,
@@ -282,7 +284,7 @@ HEADER_VAR_MAP = {
     '$DIMTP': HeaderVarDef(
         name='$DIMTP',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=3200,
@@ -290,7 +292,7 @@ HEADER_VAR_MAP = {
     '$DIMTM': HeaderVarDef(
         name='$DIMTM',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=3300,
@@ -298,7 +300,7 @@ HEADER_VAR_MAP = {
     '$DIMTXT': HeaderVarDef(
         name='$DIMTXT',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=3400,
@@ -306,7 +308,7 @@ HEADER_VAR_MAP = {
     '$DIMCEN': HeaderVarDef(
         name='$DIMCEN',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=3500,
@@ -314,7 +316,7 @@ HEADER_VAR_MAP = {
     '$DIMTSZ': HeaderVarDef(
         name='$DIMTSZ',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=3600,
@@ -322,7 +324,7 @@ HEADER_VAR_MAP = {
     '$DIMTOL': HeaderVarDef(
         name='$DIMTOL',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=3700,
@@ -330,7 +332,7 @@ HEADER_VAR_MAP = {
     '$DIMLIM': HeaderVarDef(
         name='$DIMLIM',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=3800,
@@ -338,7 +340,7 @@ HEADER_VAR_MAP = {
     '$DIMTIH': HeaderVarDef(
         name='$DIMTIH',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=3900,
@@ -346,7 +348,7 @@ HEADER_VAR_MAP = {
     '$DIMTOH': HeaderVarDef(
         name='$DIMTOH',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=4000,
@@ -354,7 +356,7 @@ HEADER_VAR_MAP = {
     '$DIMSE1': HeaderVarDef(
         name='$DIMSE1',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=4100,
@@ -362,7 +364,7 @@ HEADER_VAR_MAP = {
     '$DIMSE2': HeaderVarDef(
         name='$DIMSE2',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=4200,
@@ -370,7 +372,7 @@ HEADER_VAR_MAP = {
     '$DIMTAD': HeaderVarDef(
         name='$DIMTAD',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=4300,
@@ -378,7 +380,7 @@ HEADER_VAR_MAP = {
     '$DIMZIN': HeaderVarDef(
         name='$DIMZIN',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=4400,
@@ -386,7 +388,7 @@ HEADER_VAR_MAP = {
     '$DIMBLK': HeaderVarDef(
         name='$DIMBLK',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=4500,
@@ -394,7 +396,7 @@ HEADER_VAR_MAP = {
     '$DIMASO': HeaderVarDef(
         name='$DIMASO',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=4600,
@@ -402,7 +404,7 @@ HEADER_VAR_MAP = {
     '$DIMSHO': HeaderVarDef(
         name='$DIMSHO',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=4700,
@@ -410,7 +412,7 @@ HEADER_VAR_MAP = {
     '$DIMPOST': HeaderVarDef(
         name='$DIMPOST',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=4800,
@@ -418,7 +420,7 @@ HEADER_VAR_MAP = {
     '$DIMAPOST': HeaderVarDef(
         name='$DIMAPOST',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=4900,
@@ -426,7 +428,7 @@ HEADER_VAR_MAP = {
     '$DIMALT': HeaderVarDef(
         name='$DIMALT',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=5000,
@@ -434,7 +436,7 @@ HEADER_VAR_MAP = {
     '$DIMALTD': HeaderVarDef(
         name='$DIMALTD',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=5100,
@@ -442,7 +444,7 @@ HEADER_VAR_MAP = {
     '$DIMALTF': HeaderVarDef(
         name='$DIMALTF',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=5200,
@@ -450,7 +452,7 @@ HEADER_VAR_MAP = {
     '$DIMLFAC': HeaderVarDef(
         name='$DIMLFAC',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=5300,
@@ -458,7 +460,7 @@ HEADER_VAR_MAP = {
     '$DIMTOFL': HeaderVarDef(
         name='$DIMTOFL',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=5400,
@@ -466,7 +468,7 @@ HEADER_VAR_MAP = {
     '$DIMTVP': HeaderVarDef(
         name='$DIMTVP',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=5500,
@@ -474,7 +476,7 @@ HEADER_VAR_MAP = {
     '$DIMTIX': HeaderVarDef(
         name='$DIMTIX',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=5600,
@@ -482,7 +484,7 @@ HEADER_VAR_MAP = {
     '$DIMSOXD': HeaderVarDef(
         name='$DIMSOXD',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=5700,
@@ -490,7 +492,7 @@ HEADER_VAR_MAP = {
     '$DIMSAH': HeaderVarDef(
         name='$DIMSAH',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=5800,
@@ -498,7 +500,7 @@ HEADER_VAR_MAP = {
     '$DIMBLK1': HeaderVarDef(
         name='$DIMBLK1',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=5900,
@@ -506,7 +508,7 @@ HEADER_VAR_MAP = {
     '$DIMBLK2': HeaderVarDef(
         name='$DIMBLK2',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=6000,
@@ -514,7 +516,7 @@ HEADER_VAR_MAP = {
     '$DIMSTYLE': HeaderVarDef(
         name='$DIMSTYLE',
         code=2,
-        factory=partial(SingleValue, code=2), 
+        factory=partial(SingleValue, code=2),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=6100,
@@ -522,7 +524,7 @@ HEADER_VAR_MAP = {
     '$DIMCLRD': HeaderVarDef(
         name='$DIMCLRD',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=6200,
@@ -530,7 +532,7 @@ HEADER_VAR_MAP = {
     '$DIMCLRE': HeaderVarDef(
         name='$DIMCLRE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=6300,
@@ -538,7 +540,7 @@ HEADER_VAR_MAP = {
     '$DIMCLRT': HeaderVarDef(
         name='$DIMCLRT',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=6400,
@@ -546,7 +548,7 @@ HEADER_VAR_MAP = {
     '$DIMTFAC': HeaderVarDef(
         name='$DIMTFAC',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=6500,
@@ -554,7 +556,7 @@ HEADER_VAR_MAP = {
     '$DIMGAP': HeaderVarDef(
         name='$DIMGAP',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=6600,
@@ -562,7 +564,7 @@ HEADER_VAR_MAP = {
     '$DIMJUST': HeaderVarDef(
         name='$DIMJUST',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=6700,
@@ -570,7 +572,7 @@ HEADER_VAR_MAP = {
     '$DIMSD1': HeaderVarDef(
         name='$DIMSD1',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=6800,
@@ -578,7 +580,7 @@ HEADER_VAR_MAP = {
     '$DIMSD2': HeaderVarDef(
         name='$DIMSD2',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=6900,
@@ -586,7 +588,7 @@ HEADER_VAR_MAP = {
     '$DIMTOLJ': HeaderVarDef(
         name='$DIMTOLJ',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=7000,
@@ -594,7 +596,7 @@ HEADER_VAR_MAP = {
     '$DIMTZIN': HeaderVarDef(
         name='$DIMTZIN',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=7100,
@@ -602,7 +604,7 @@ HEADER_VAR_MAP = {
     '$DIMALTZ': HeaderVarDef(
         name='$DIMALTZ',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=7200,
@@ -610,7 +612,7 @@ HEADER_VAR_MAP = {
     '$DIMALTTZ': HeaderVarDef(
         name='$DIMALTTZ',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=7300,
@@ -618,7 +620,7 @@ HEADER_VAR_MAP = {
     '$DIMUPT': HeaderVarDef(
         name='$DIMUPT',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=7400,
@@ -626,7 +628,7 @@ HEADER_VAR_MAP = {
     '$DIMDEC': HeaderVarDef(
         name='$DIMDEC',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=7500,
@@ -634,7 +636,7 @@ HEADER_VAR_MAP = {
     '$DIMTDEC': HeaderVarDef(
         name='$DIMTDEC',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=7600,
@@ -642,7 +644,7 @@ HEADER_VAR_MAP = {
     '$DIMALTU': HeaderVarDef(
         name='$DIMALTU',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=7700,
@@ -650,7 +652,7 @@ HEADER_VAR_MAP = {
     '$DIMALTTD': HeaderVarDef(
         name='$DIMALTTD',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=7800,
@@ -658,7 +660,7 @@ HEADER_VAR_MAP = {
     '$DIMTXSTY': HeaderVarDef(
         name='$DIMTXSTY',
         code=7,
-        factory=partial(SingleValue, code=7), 
+        factory=partial(SingleValue, code=7),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=7900,
@@ -666,7 +668,7 @@ HEADER_VAR_MAP = {
     '$DIMAUNIT': HeaderVarDef(
         name='$DIMAUNIT',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=8000,
@@ -674,7 +676,7 @@ HEADER_VAR_MAP = {
     '$DIMADEC': HeaderVarDef(
         name='$DIMADEC',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=8100,
@@ -682,7 +684,7 @@ HEADER_VAR_MAP = {
     '$DIMALTRND': HeaderVarDef(
         name='$DIMALTRND',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=8200,
@@ -690,7 +692,7 @@ HEADER_VAR_MAP = {
     '$DIMAZIN': HeaderVarDef(
         name='$DIMAZIN',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=8300,
@@ -698,7 +700,7 @@ HEADER_VAR_MAP = {
     '$DIMDSEP': HeaderVarDef(
         name='$DIMDSEP',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=8400,
@@ -706,7 +708,7 @@ HEADER_VAR_MAP = {
     '$DIMATFIT': HeaderVarDef(
         name='$DIMATFIT',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=8500,
@@ -714,7 +716,7 @@ HEADER_VAR_MAP = {
     '$DIMFRAC': HeaderVarDef(
         name='$DIMFRAC',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=8600,
@@ -722,7 +724,7 @@ HEADER_VAR_MAP = {
     '$DIMLDRBLK': HeaderVarDef(
         name='$DIMLDRBLK',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=8700,
@@ -730,7 +732,7 @@ HEADER_VAR_MAP = {
     '$DIMLUNIT': HeaderVarDef(
         name='$DIMLUNIT',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=8800,
@@ -738,7 +740,7 @@ HEADER_VAR_MAP = {
     '$COORDS': HeaderVarDef(
         name='$COORDS',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF12,
         priority=8800,
@@ -746,7 +748,7 @@ HEADER_VAR_MAP = {
     '$DIMLWD': HeaderVarDef(
         name='$DIMLWD',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=8900,
@@ -754,7 +756,7 @@ HEADER_VAR_MAP = {
     '$DIMLWE': HeaderVarDef(
         name='$DIMLWE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=9000,
@@ -762,7 +764,7 @@ HEADER_VAR_MAP = {
     '$DIMTMOVE': HeaderVarDef(
         name='$DIMTMOVE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=9100,
@@ -770,7 +772,7 @@ HEADER_VAR_MAP = {
     '$DIMFXL': HeaderVarDef(
         name='$DIMFXL',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=9200,
@@ -778,7 +780,7 @@ HEADER_VAR_MAP = {
     '$ATTDIA': HeaderVarDef(
         name='$ATTDIA',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF12,
         priority=9200,
@@ -786,7 +788,7 @@ HEADER_VAR_MAP = {
     '$DIMFXLON': HeaderVarDef(
         name='$DIMFXLON',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=9300,
@@ -794,7 +796,7 @@ HEADER_VAR_MAP = {
     '$ATTREQ': HeaderVarDef(
         name='$ATTREQ',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF12,
         priority=9300,
@@ -802,7 +804,7 @@ HEADER_VAR_MAP = {
     '$DIMJOGANG': HeaderVarDef(
         name='$DIMJOGANG',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=9400,
@@ -810,7 +812,7 @@ HEADER_VAR_MAP = {
     '$DIMTFILL': HeaderVarDef(
         name='$DIMTFILL',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=9500,
@@ -818,7 +820,7 @@ HEADER_VAR_MAP = {
     '$DIMTFILLCLR': HeaderVarDef(
         name='$DIMTFILLCLR',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=9600,
@@ -826,7 +828,7 @@ HEADER_VAR_MAP = {
     '$DIMARCSYM': HeaderVarDef(
         name='$DIMARCSYM',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=9700,
@@ -834,7 +836,7 @@ HEADER_VAR_MAP = {
     '$DIMLTYPE': HeaderVarDef(
         name='$DIMLTYPE',
         code=6,
-        factory=partial(SingleValue, code=6), 
+        factory=partial(SingleValue, code=6),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=9800,
@@ -842,7 +844,7 @@ HEADER_VAR_MAP = {
     '$DIMLTEX1': HeaderVarDef(
         name='$DIMLTEX1',
         code=6,
-        factory=partial(SingleValue, code=6), 
+        factory=partial(SingleValue, code=6),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=9900,
@@ -850,7 +852,7 @@ HEADER_VAR_MAP = {
     '$DIMLTEX2': HeaderVarDef(
         name='$DIMLTEX2',
         code=6,
-        factory=partial(SingleValue, code=6), 
+        factory=partial(SingleValue, code=6),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=10000,
@@ -858,7 +860,7 @@ HEADER_VAR_MAP = {
     '$DIMTXTDIRECTION': HeaderVarDef(
         name='$DIMTXTDIRECTION',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2010,
         maxdxf=DXF2018,
         priority=10100,
@@ -866,7 +868,7 @@ HEADER_VAR_MAP = {
     '$LUNITS': HeaderVarDef(
         name='$LUNITS',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=10200,
@@ -874,7 +876,7 @@ HEADER_VAR_MAP = {
     '$LUPREC': HeaderVarDef(
         name='$LUPREC',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=10300,
@@ -882,7 +884,7 @@ HEADER_VAR_MAP = {
     '$SKETCHINC': HeaderVarDef(
         name='$SKETCHINC',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=10400,
@@ -890,7 +892,7 @@ HEADER_VAR_MAP = {
     '$FILLETRAD': HeaderVarDef(
         name='$FILLETRAD',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=10500,
@@ -898,7 +900,7 @@ HEADER_VAR_MAP = {
     '$AUNITS': HeaderVarDef(
         name='$AUNITS',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=10600,
@@ -906,7 +908,7 @@ HEADER_VAR_MAP = {
     '$AUPREC': HeaderVarDef(
         name='$AUPREC',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=10700,
@@ -914,7 +916,7 @@ HEADER_VAR_MAP = {
     '$MENU': HeaderVarDef(
         name='$MENU',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=10800,
@@ -922,7 +924,7 @@ HEADER_VAR_MAP = {
     '$ELEVATION': HeaderVarDef(
         name='$ELEVATION',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=10900,
@@ -930,7 +932,7 @@ HEADER_VAR_MAP = {
     '$PELEVATION': HeaderVarDef(
         name='$PELEVATION',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=11000,
@@ -938,7 +940,7 @@ HEADER_VAR_MAP = {
     '$THICKNESS': HeaderVarDef(
         name='$THICKNESS',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=11100,
@@ -946,7 +948,7 @@ HEADER_VAR_MAP = {
     '$LIMCHECK': HeaderVarDef(
         name='$LIMCHECK',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=11200,
@@ -954,7 +956,7 @@ HEADER_VAR_MAP = {
     '$CHAMFERA': HeaderVarDef(
         name='$CHAMFERA',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=11300,
@@ -962,7 +964,7 @@ HEADER_VAR_MAP = {
     '$CHAMFERB': HeaderVarDef(
         name='$CHAMFERB',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=11400,
@@ -970,7 +972,7 @@ HEADER_VAR_MAP = {
     '$CHAMFERC': HeaderVarDef(
         name='$CHAMFERC',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=11500,
@@ -978,7 +980,7 @@ HEADER_VAR_MAP = {
     '$CHAMFERD': HeaderVarDef(
         name='$CHAMFERD',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=11600,
@@ -986,7 +988,7 @@ HEADER_VAR_MAP = {
     '$SKPOLY': HeaderVarDef(
         name='$SKPOLY',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=11700,
@@ -994,7 +996,7 @@ HEADER_VAR_MAP = {
     '$TDCREATE': HeaderVarDef(
         name='$TDCREATE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=11800,
@@ -1002,7 +1004,7 @@ HEADER_VAR_MAP = {
     '$TDUCREATE': HeaderVarDef(
         name='$TDUCREATE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=11900,
@@ -1010,7 +1012,7 @@ HEADER_VAR_MAP = {
     '$TDUPDATE': HeaderVarDef(
         name='$TDUPDATE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=12000,
@@ -1018,7 +1020,7 @@ HEADER_VAR_MAP = {
     '$TDUUPDATE': HeaderVarDef(
         name='$TDUUPDATE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=12100,
@@ -1026,7 +1028,7 @@ HEADER_VAR_MAP = {
     '$TDINDWG': HeaderVarDef(
         name='$TDINDWG',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=12200,
@@ -1034,7 +1036,7 @@ HEADER_VAR_MAP = {
     '$TDUSRTIMER': HeaderVarDef(
         name='$TDUSRTIMER',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=12300,
@@ -1042,7 +1044,7 @@ HEADER_VAR_MAP = {
     '$USRTIMER': HeaderVarDef(
         name='$USRTIMER',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=12400,
@@ -1050,7 +1052,7 @@ HEADER_VAR_MAP = {
     '$ANGBASE': HeaderVarDef(
         name='$ANGBASE',
         code=50,
-        factory=partial(SingleValue, code=50), 
+        factory=partial(SingleValue, code=50),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=12500,
@@ -1058,7 +1060,7 @@ HEADER_VAR_MAP = {
     '$ANGDIR': HeaderVarDef(
         name='$ANGDIR',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=12600,
@@ -1066,7 +1068,7 @@ HEADER_VAR_MAP = {
     '$PDMODE': HeaderVarDef(
         name='$PDMODE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=12700,
@@ -1074,7 +1076,7 @@ HEADER_VAR_MAP = {
     '$PDSIZE': HeaderVarDef(
         name='$PDSIZE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=12800,
@@ -1082,7 +1084,7 @@ HEADER_VAR_MAP = {
     '$PLINEWID': HeaderVarDef(
         name='$PLINEWID',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=12900,
@@ -1090,7 +1092,7 @@ HEADER_VAR_MAP = {
     '$SPLFRAME': HeaderVarDef(
         name='$SPLFRAME',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=13000,
@@ -1098,7 +1100,7 @@ HEADER_VAR_MAP = {
     '$SPLINETYPE': HeaderVarDef(
         name='$SPLINETYPE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=13100,
@@ -1106,7 +1108,7 @@ HEADER_VAR_MAP = {
     '$SPLINESEGS': HeaderVarDef(
         name='$SPLINESEGS',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=13200,
@@ -1130,7 +1132,7 @@ HEADER_VAR_MAP = {
     '$SURFTAB1': HeaderVarDef(
         name='$SURFTAB1',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=13400,
@@ -1138,7 +1140,7 @@ HEADER_VAR_MAP = {
     '$SURFTAB2': HeaderVarDef(
         name='$SURFTAB2',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=13500,
@@ -1146,7 +1148,7 @@ HEADER_VAR_MAP = {
     '$SURFTYPE': HeaderVarDef(
         name='$SURFTYPE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=13600,
@@ -1154,7 +1156,7 @@ HEADER_VAR_MAP = {
     '$SURFU': HeaderVarDef(
         name='$SURFU',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=13700,
@@ -1162,7 +1164,7 @@ HEADER_VAR_MAP = {
     '$SURFV': HeaderVarDef(
         name='$SURFV',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=13800,
@@ -1170,7 +1172,7 @@ HEADER_VAR_MAP = {
     '$UCSBASE': HeaderVarDef(
         name='$UCSBASE',
         code=2,
-        factory=partial(SingleValue, code=2), 
+        factory=partial(SingleValue, code=2),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=13900,
@@ -1178,7 +1180,7 @@ HEADER_VAR_MAP = {
     '$UCSNAME': HeaderVarDef(
         name='$UCSNAME',
         code=2,
-        factory=partial(SingleValue, code=2), 
+        factory=partial(SingleValue, code=2),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=14000,
@@ -1186,7 +1188,7 @@ HEADER_VAR_MAP = {
     '$UCSORG': HeaderVarDef(
         name='$UCSORG',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=14100,
@@ -1194,7 +1196,7 @@ HEADER_VAR_MAP = {
     '$UCSXDIR': HeaderVarDef(
         name='$UCSXDIR',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=14200,
@@ -1202,7 +1204,7 @@ HEADER_VAR_MAP = {
     '$UCSYDIR': HeaderVarDef(
         name='$UCSYDIR',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=14300,
@@ -1210,7 +1212,7 @@ HEADER_VAR_MAP = {
     '$UCSORTHOREF': HeaderVarDef(
         name='$UCSORTHOREF',
         code=2,
-        factory=partial(SingleValue, code=2), 
+        factory=partial(SingleValue, code=2),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=14400,
@@ -1218,7 +1220,7 @@ HEADER_VAR_MAP = {
     '$UCSORTHOVIEW': HeaderVarDef(
         name='$UCSORTHOVIEW',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=14500,
@@ -1226,7 +1228,7 @@ HEADER_VAR_MAP = {
     '$UCSORGTOP': HeaderVarDef(
         name='$UCSORGTOP',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=14600,
@@ -1234,7 +1236,7 @@ HEADER_VAR_MAP = {
     '$UCSORGBOTTOM': HeaderVarDef(
         name='$UCSORGBOTTOM',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=14700,
@@ -1242,7 +1244,7 @@ HEADER_VAR_MAP = {
     '$UCSORGLEFT': HeaderVarDef(
         name='$UCSORGLEFT',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=14800,
@@ -1250,7 +1252,7 @@ HEADER_VAR_MAP = {
     '$UCSORGRIGHT': HeaderVarDef(
         name='$UCSORGRIGHT',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=14900,
@@ -1258,7 +1260,7 @@ HEADER_VAR_MAP = {
     '$UCSORGFRONT': HeaderVarDef(
         name='$UCSORGFRONT',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=15000,
@@ -1266,7 +1268,7 @@ HEADER_VAR_MAP = {
     '$UCSORGBACK': HeaderVarDef(
         name='$UCSORGBACK',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=15100,
@@ -1274,7 +1276,7 @@ HEADER_VAR_MAP = {
     '$PUCSBASE': HeaderVarDef(
         name='$PUCSBASE',
         code=2,
-        factory=partial(SingleValue, code=2), 
+        factory=partial(SingleValue, code=2),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=15200,
@@ -1282,7 +1284,7 @@ HEADER_VAR_MAP = {
     '$PUCSNAME': HeaderVarDef(
         name='$PUCSNAME',
         code=2,
-        factory=partial(SingleValue, code=2), 
+        factory=partial(SingleValue, code=2),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=15300,
@@ -1290,7 +1292,7 @@ HEADER_VAR_MAP = {
     '$PUCSORG': HeaderVarDef(
         name='$PUCSORG',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=15400,
@@ -1298,7 +1300,7 @@ HEADER_VAR_MAP = {
     '$PUCSXDIR': HeaderVarDef(
         name='$PUCSXDIR',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=15500,
@@ -1306,7 +1308,7 @@ HEADER_VAR_MAP = {
     '$PUCSYDIR': HeaderVarDef(
         name='$PUCSYDIR',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=15600,
@@ -1314,7 +1316,7 @@ HEADER_VAR_MAP = {
     '$PUCSORTHOREF': HeaderVarDef(
         name='$PUCSORTHOREF',
         code=2,
-        factory=partial(SingleValue, code=2), 
+        factory=partial(SingleValue, code=2),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=15700,
@@ -1322,7 +1324,7 @@ HEADER_VAR_MAP = {
     '$PUCSORTHOVIEW': HeaderVarDef(
         name='$PUCSORTHOVIEW',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=15800,
@@ -1330,7 +1332,7 @@ HEADER_VAR_MAP = {
     '$PUCSORGTOP': HeaderVarDef(
         name='$PUCSORGTOP',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=15900,
@@ -1338,7 +1340,7 @@ HEADER_VAR_MAP = {
     '$PUCSORGBOTTOM': HeaderVarDef(
         name='$PUCSORGBOTTOM',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=16000,
@@ -1346,7 +1348,7 @@ HEADER_VAR_MAP = {
     '$PUCSORGLEFT': HeaderVarDef(
         name='$PUCSORGLEFT',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=16100,
@@ -1354,7 +1356,7 @@ HEADER_VAR_MAP = {
     '$PUCSORGRIGHT': HeaderVarDef(
         name='$PUCSORGRIGHT',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=16200,
@@ -1362,7 +1364,7 @@ HEADER_VAR_MAP = {
     '$PUCSORGFRONT': HeaderVarDef(
         name='$PUCSORGFRONT',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=16300,
@@ -1370,7 +1372,7 @@ HEADER_VAR_MAP = {
     '$PUCSORGBACK': HeaderVarDef(
         name='$PUCSORGBACK',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=16400,
@@ -1378,7 +1380,7 @@ HEADER_VAR_MAP = {
     '$USERI1': HeaderVarDef(
         name='$USERI1',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=16500,
@@ -1386,7 +1388,7 @@ HEADER_VAR_MAP = {
     '$USERI2': HeaderVarDef(
         name='$USERI2',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=16600,
@@ -1394,7 +1396,7 @@ HEADER_VAR_MAP = {
     '$USERI3': HeaderVarDef(
         name='$USERI3',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=16700,
@@ -1402,7 +1404,7 @@ HEADER_VAR_MAP = {
     '$USERI4': HeaderVarDef(
         name='$USERI4',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=16800,
@@ -1410,7 +1412,7 @@ HEADER_VAR_MAP = {
     '$USERI5': HeaderVarDef(
         name='$USERI5',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=16900,
@@ -1418,7 +1420,7 @@ HEADER_VAR_MAP = {
     '$USERR1': HeaderVarDef(
         name='$USERR1',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=17000,
@@ -1426,7 +1428,7 @@ HEADER_VAR_MAP = {
     '$USERR2': HeaderVarDef(
         name='$USERR2',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=17100,
@@ -1434,7 +1436,7 @@ HEADER_VAR_MAP = {
     '$USERR3': HeaderVarDef(
         name='$USERR3',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=17200,
@@ -1442,7 +1444,7 @@ HEADER_VAR_MAP = {
     '$USERR4': HeaderVarDef(
         name='$USERR4',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=17300,
@@ -1450,7 +1452,7 @@ HEADER_VAR_MAP = {
     '$USERR5': HeaderVarDef(
         name='$USERR5',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=17400,
@@ -1458,7 +1460,7 @@ HEADER_VAR_MAP = {
     '$WORLDVIEW': HeaderVarDef(
         name='$WORLDVIEW',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=17500,
@@ -1466,7 +1468,7 @@ HEADER_VAR_MAP = {
     '$SHADEDGE': HeaderVarDef(
         name='$SHADEDGE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=17600,
@@ -1474,7 +1476,7 @@ HEADER_VAR_MAP = {
     '$SHADEDIF': HeaderVarDef(
         name='$SHADEDIF',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=17700,
@@ -1482,7 +1484,7 @@ HEADER_VAR_MAP = {
     '$TILEMODE': HeaderVarDef(
         name='$TILEMODE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=17800,
@@ -1490,7 +1492,7 @@ HEADER_VAR_MAP = {
     '$MAXACTVP': HeaderVarDef(
         name='$MAXACTVP',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=17900,
@@ -1498,7 +1500,7 @@ HEADER_VAR_MAP = {
     '$PINSBASE': HeaderVarDef(
         name='$PINSBASE',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=18000,
@@ -1506,7 +1508,7 @@ HEADER_VAR_MAP = {
     '$PLIMCHECK': HeaderVarDef(
         name='$PLIMCHECK',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=18100,
@@ -1514,7 +1516,7 @@ HEADER_VAR_MAP = {
     '$PEXTMIN': HeaderVarDef(
         name='$PEXTMIN',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=18200,
@@ -1522,7 +1524,7 @@ HEADER_VAR_MAP = {
     '$PEXTMAX': HeaderVarDef(
         name='$PEXTMAX',
         code=10,
-        factory=Point3D, 
+        factory=Point3D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=18300,
@@ -1530,7 +1532,7 @@ HEADER_VAR_MAP = {
     '$PLIMMIN': HeaderVarDef(
         name='$PLIMMIN',
         code=10,
-        factory=Point2D, 
+        factory=Point2D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=18400,
@@ -1538,7 +1540,7 @@ HEADER_VAR_MAP = {
     '$PLIMMAX': HeaderVarDef(
         name='$PLIMMAX',
         code=10,
-        factory=Point2D, 
+        factory=Point2D,
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=18500,
@@ -1546,7 +1548,7 @@ HEADER_VAR_MAP = {
     '$UNITMODE': HeaderVarDef(
         name='$UNITMODE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=18600,
@@ -1554,7 +1556,7 @@ HEADER_VAR_MAP = {
     '$VISRETAIN': HeaderVarDef(
         name='$VISRETAIN',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=18700,
@@ -1562,7 +1564,7 @@ HEADER_VAR_MAP = {
     '$PLINEGEN': HeaderVarDef(
         name='$PLINEGEN',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=18800,
@@ -1570,7 +1572,7 @@ HEADER_VAR_MAP = {
     '$PSLTSCALE': HeaderVarDef(
         name='$PSLTSCALE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=18900,
@@ -1578,7 +1580,7 @@ HEADER_VAR_MAP = {
     '$TREEDEPTH': HeaderVarDef(
         name='$TREEDEPTH',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=19000,
@@ -1586,7 +1588,7 @@ HEADER_VAR_MAP = {
     '$CMLSTYLE': HeaderVarDef(
         name='$CMLSTYLE',
         code=2,
-        factory=partial(SingleValue, code=2), 
+        factory=partial(SingleValue, code=2),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=19100,
@@ -1594,7 +1596,7 @@ HEADER_VAR_MAP = {
     '$CMLJUST': HeaderVarDef(
         name='$CMLJUST',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=19200,
@@ -1602,7 +1604,7 @@ HEADER_VAR_MAP = {
     '$CMLSCALE': HeaderVarDef(
         name='$CMLSCALE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=19300,
@@ -1610,7 +1612,7 @@ HEADER_VAR_MAP = {
     '$PROXYGRAPHICS': HeaderVarDef(
         name='$PROXYGRAPHICS',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=19400,
@@ -1618,7 +1620,7 @@ HEADER_VAR_MAP = {
     '$MEASUREMENT': HeaderVarDef(
         name='$MEASUREMENT',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=19500,
@@ -1626,7 +1628,7 @@ HEADER_VAR_MAP = {
     '$CELWEIGHT': HeaderVarDef(
         name='$CELWEIGHT',
         code=370,
-        factory=partial(SingleValue, code=370), 
+        factory=partial(SingleValue, code=370),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=19600,
@@ -1634,7 +1636,7 @@ HEADER_VAR_MAP = {
     '$ENDCAPS': HeaderVarDef(
         name='$ENDCAPS',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=19700,
@@ -1642,7 +1644,7 @@ HEADER_VAR_MAP = {
     '$JOINSTYLE': HeaderVarDef(
         name='$JOINSTYLE',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=19800,
@@ -1650,7 +1652,7 @@ HEADER_VAR_MAP = {
     '$LWDISPLAY': HeaderVarDef(
         name='$LWDISPLAY',
         code=290,
-        factory=partial(SingleValue, code=290), 
+        factory=partial(SingleValue, code=290),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=19900,
@@ -1658,7 +1660,7 @@ HEADER_VAR_MAP = {
     '$INSUNITS': HeaderVarDef(
         name='$INSUNITS',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=20000,
@@ -1666,7 +1668,7 @@ HEADER_VAR_MAP = {
     '$HYPERLINKBASE': HeaderVarDef(
         name='$HYPERLINKBASE',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=20100,
@@ -1674,7 +1676,7 @@ HEADER_VAR_MAP = {
     '$STYLESHEET': HeaderVarDef(
         name='$STYLESHEET',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=20200,
@@ -1682,7 +1684,7 @@ HEADER_VAR_MAP = {
     '$XEDIT': HeaderVarDef(
         name='$XEDIT',
         code=290,
-        factory=partial(SingleValue, code=290), 
+        factory=partial(SingleValue, code=290),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=20300,
@@ -1690,7 +1692,7 @@ HEADER_VAR_MAP = {
     '$CEPSNTYPE': HeaderVarDef(
         name='$CEPSNTYPE',
         code=380,
-        factory=partial(SingleValue, code=380), 
+        factory=partial(SingleValue, code=380),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=20400,
@@ -1698,7 +1700,7 @@ HEADER_VAR_MAP = {
     '$PSTYLEMODE': HeaderVarDef(
         name='$PSTYLEMODE',
         code=290,
-        factory=partial(SingleValue, code=290), 
+        factory=partial(SingleValue, code=290),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=20500,
@@ -1706,7 +1708,7 @@ HEADER_VAR_MAP = {
     '$FINGERPRINTGUID': HeaderVarDef(
         name='$FINGERPRINTGUID',
         code=2,
-        factory=partial(SingleValue, code=2), 
+        factory=partial(SingleValue, code=2),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=20600,
@@ -1714,7 +1716,7 @@ HEADER_VAR_MAP = {
     '$VERSIONGUID': HeaderVarDef(
         name='$VERSIONGUID',
         code=2,
-        factory=partial(SingleValue, code=2), 
+        factory=partial(SingleValue, code=2),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=20700,
@@ -1722,7 +1724,7 @@ HEADER_VAR_MAP = {
     '$EXTNAMES': HeaderVarDef(
         name='$EXTNAMES',
         code=290,
-        factory=partial(SingleValue, code=290), 
+        factory=partial(SingleValue, code=290),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=20800,
@@ -1730,7 +1732,7 @@ HEADER_VAR_MAP = {
     '$PSVPSCALE': HeaderVarDef(
         name='$PSVPSCALE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=20900,
@@ -1738,7 +1740,7 @@ HEADER_VAR_MAP = {
     '$OLESTARTUP': HeaderVarDef(
         name='$OLESTARTUP',
         code=290,
-        factory=partial(SingleValue, code=290), 
+        factory=partial(SingleValue, code=290),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=21000,
@@ -1746,7 +1748,7 @@ HEADER_VAR_MAP = {
     '$SORTENTS': HeaderVarDef(
         name='$SORTENTS',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21100,
@@ -1754,7 +1756,7 @@ HEADER_VAR_MAP = {
     '$INDEXCTL': HeaderVarDef(
         name='$INDEXCTL',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21200,
@@ -1762,7 +1764,7 @@ HEADER_VAR_MAP = {
     '$HIDETEXT': HeaderVarDef(
         name='$HIDETEXT',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21300,
@@ -1770,7 +1772,7 @@ HEADER_VAR_MAP = {
     '$XCLIPFRAME': HeaderVarDef(
         name='$XCLIPFRAME',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21400,
@@ -1778,7 +1780,7 @@ HEADER_VAR_MAP = {
     '$HALOGAP': HeaderVarDef(
         name='$HALOGAP',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21500,
@@ -1786,7 +1788,7 @@ HEADER_VAR_MAP = {
     '$OBSCOLOR': HeaderVarDef(
         name='$OBSCOLOR',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21600,
@@ -1794,7 +1796,7 @@ HEADER_VAR_MAP = {
     '$OBSLTYPE': HeaderVarDef(
         name='$OBSLTYPE',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21700,
@@ -1802,7 +1804,7 @@ HEADER_VAR_MAP = {
     '$INTERSECTIONDISPLAY': HeaderVarDef(
         name='$INTERSECTIONDISPLAY',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21800,
@@ -1810,7 +1812,7 @@ HEADER_VAR_MAP = {
     '$INTERSECTIONCOLOR': HeaderVarDef(
         name='$INTERSECTIONCOLOR',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21900,
@@ -1818,7 +1820,7 @@ HEADER_VAR_MAP = {
     '$DIMASSOC': HeaderVarDef(
         name='$DIMASSOC',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=22000,
@@ -1826,7 +1828,7 @@ HEADER_VAR_MAP = {
     '$PROJECTNAME': HeaderVarDef(
         name='$PROJECTNAME',
         code=1,
-        factory=partial(SingleValue, code=1), 
+        factory=partial(SingleValue, code=1),
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=22100,
@@ -1834,7 +1836,7 @@ HEADER_VAR_MAP = {
     '$CAMERADISPLAY': HeaderVarDef(
         name='$CAMERADISPLAY',
         code=290,
-        factory=partial(SingleValue, code=290), 
+        factory=partial(SingleValue, code=290),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=22200,
@@ -1842,7 +1844,7 @@ HEADER_VAR_MAP = {
     '$LENSLENGTH': HeaderVarDef(
         name='$LENSLENGTH',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=22300,
@@ -1850,7 +1852,7 @@ HEADER_VAR_MAP = {
     '$CAMERAHEIGHT': HeaderVarDef(
         name='$CAMERAHEIGHT',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=22400,
@@ -1858,7 +1860,7 @@ HEADER_VAR_MAP = {
     '$STEPSPERSEC': HeaderVarDef(
         name='$STEPSPERSEC',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=22500,
@@ -1866,7 +1868,7 @@ HEADER_VAR_MAP = {
     '$STEPSIZE': HeaderVarDef(
         name='$STEPSIZE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=22600,
@@ -1874,7 +1876,7 @@ HEADER_VAR_MAP = {
     '$3DDWFPREC': HeaderVarDef(
         name='$3DDWFPREC',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=22700,
@@ -1882,7 +1884,7 @@ HEADER_VAR_MAP = {
     '$PSOLWIDTH': HeaderVarDef(
         name='$PSOLWIDTH',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=22800,
@@ -1890,7 +1892,7 @@ HEADER_VAR_MAP = {
     '$PSOLHEIGHT': HeaderVarDef(
         name='$PSOLHEIGHT',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=22900,
@@ -1898,7 +1900,7 @@ HEADER_VAR_MAP = {
     '$LOFTANG1': HeaderVarDef(
         name='$LOFTANG1',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=23000,
@@ -1906,7 +1908,7 @@ HEADER_VAR_MAP = {
     '$LOFTANG2': HeaderVarDef(
         name='$LOFTANG2',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=23100,
@@ -1914,7 +1916,7 @@ HEADER_VAR_MAP = {
     '$LOFTMAG1': HeaderVarDef(
         name='$LOFTMAG1',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=23200,
@@ -1922,7 +1924,7 @@ HEADER_VAR_MAP = {
     '$LOFTMAG2': HeaderVarDef(
         name='$LOFTMAG2',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=23300,
@@ -1930,7 +1932,7 @@ HEADER_VAR_MAP = {
     '$LOFTPARAM': HeaderVarDef(
         name='$LOFTPARAM',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=23400,
@@ -1938,7 +1940,7 @@ HEADER_VAR_MAP = {
     '$LOFTNORMALS': HeaderVarDef(
         name='$LOFTNORMALS',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=23500,
@@ -1946,7 +1948,7 @@ HEADER_VAR_MAP = {
     '$LATITUDE': HeaderVarDef(
         name='$LATITUDE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=23600,
@@ -1954,7 +1956,7 @@ HEADER_VAR_MAP = {
     '$LONGITUDE': HeaderVarDef(
         name='$LONGITUDE',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=23700,
@@ -1962,7 +1964,7 @@ HEADER_VAR_MAP = {
     '$NORTHDIRECTION': HeaderVarDef(
         name='$NORTHDIRECTION',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=23800,
@@ -1970,7 +1972,7 @@ HEADER_VAR_MAP = {
     '$TIMEZONE': HeaderVarDef(
         name='$TIMEZONE',
         code=70,
-        factory=partial(SingleValue, code=70), 
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=23900,
@@ -1978,7 +1980,7 @@ HEADER_VAR_MAP = {
     '$LIGHTGLYPHDISPLAY': HeaderVarDef(
         name='$LIGHTGLYPHDISPLAY',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=24000,
@@ -1986,7 +1988,7 @@ HEADER_VAR_MAP = {
     '$TILEMODELIGHTSYNCH': HeaderVarDef(
         name='$TILEMODELIGHTSYNCH',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=24100,
@@ -1994,7 +1996,7 @@ HEADER_VAR_MAP = {
     '$CMATERIAL': HeaderVarDef(
         name='$CMATERIAL',
         code=347,
-        factory=partial(SingleValue, code=347), 
+        factory=partial(SingleValue, code=347),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=24200,
@@ -2002,7 +2004,7 @@ HEADER_VAR_MAP = {
     '$SOLIDHIST': HeaderVarDef(
         name='$SOLIDHIST',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=24300,
@@ -2010,7 +2012,7 @@ HEADER_VAR_MAP = {
     '$SHOWHIST': HeaderVarDef(
         name='$SHOWHIST',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=24400,
@@ -2018,7 +2020,7 @@ HEADER_VAR_MAP = {
     '$DWFFRAME': HeaderVarDef(
         name='$DWFFRAME',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=24500,
@@ -2026,7 +2028,7 @@ HEADER_VAR_MAP = {
     '$DGNFRAME': HeaderVarDef(
         name='$DGNFRAME',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=24600,
@@ -2034,7 +2036,7 @@ HEADER_VAR_MAP = {
     '$REALWORLDSCALE': HeaderVarDef(
         name='$REALWORLDSCALE',
         code=290,
-        factory=partial(SingleValue, code=290), 
+        factory=partial(SingleValue, code=290),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=24700,
@@ -2042,13 +2044,14 @@ HEADER_VAR_MAP = {
     '$INTERFERECOLOR': HeaderVarDef(
         name='$INTERFERECOLOR',
         code=62,
-        factory=partial(SingleValue, code=62), 
+        factory=partial(SingleValue, code=62),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=24800,
         default=256),
     '$INTERFEREOBJVS': HeaderVarDef(
-        # Handle to a VisualStyle, if pointing to an invalid or non-existing VS, copy to clipboard in AutoCAD can fail.
+        # Handle to a VisualStyle, if pointing to an invalid or non-existing VS,
+        # copy to clipboard in AutoCAD can fail.
         name='$INTERFEREOBJVS',
         code=345,
         factory=partial(SingleValue, code=345),
@@ -2057,7 +2060,8 @@ HEADER_VAR_MAP = {
         priority=24810,
         default=None),  # will not be written, if not set
     '$INTERFEREVPVS': HeaderVarDef(
-        # Handle to a VisualStyle, if pointing to an invalid or non-existing VS, copy to clipboard in AutoCAD can fail.
+        # Handle to a VisualStyle, if pointing to an invalid or non-existing VS,
+        # copy to clipboard in AutoCAD can fail.
         name='$INTERFEREVPVS',
         code=346,
         factory=partial(SingleValue, code=346),
@@ -2068,7 +2072,7 @@ HEADER_VAR_MAP = {
     '$CSHADOW': HeaderVarDef(
         name='$CSHADOW',
         code=280,
-        factory=partial(SingleValue, code=280), 
+        factory=partial(SingleValue, code=280),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=24900,
@@ -2076,7 +2080,7 @@ HEADER_VAR_MAP = {
     '$SHADOWPLANELOCATION': HeaderVarDef(
         name='$SHADOWPLANELOCATION',
         code=40,
-        factory=partial(SingleValue, code=40), 
+        factory=partial(SingleValue, code=40),
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=25000,
