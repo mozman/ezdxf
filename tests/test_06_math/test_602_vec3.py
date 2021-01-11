@@ -2,6 +2,7 @@
 # License: MIT License
 import pytest
 import math
+import pickle
 # Import from 'ezdxf.math._vector' to test Python implementation
 from ezdxf.math._vector import Vec3
 from ezdxf.acc import USE_C_EXT
@@ -439,3 +440,9 @@ def test_vec3_sum(vec3):
     assert vec3.sum([]).is_null is True
     assert vec3.sum([vec3(1, 1, 1)]) == (1, 1, 1)
     assert vec3.sum([vec3(1, 1, 1), (2, 2, 2)]) == (3, 3, 3)
+
+
+def test_picklable(vec3):
+    for v in [vec3(), vec3((1, 2.5, 3)), vec3(1, 2.5, 3)]:
+        pickled_v = pickle.loads(pickle.dumps(v))
+        assert v == pickled_v

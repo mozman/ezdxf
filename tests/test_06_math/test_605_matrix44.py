@@ -1,6 +1,7 @@
 # Copyright (c) 2010-2020, Manfred Moitzi
 # License: MIT License
 import pytest
+import pickle
 from math import radians, sin, cos, pi, isclose
 # Import from 'ezdxf.math._matrix44' to test Python implementation
 from ezdxf.math._matrix44 import Matrix44
@@ -284,3 +285,12 @@ class TestMatrix44:
         m2 = m44.axis_rotate((0, 0, 0.5), 1.23)
         for a, b in zip(m1, m2):
             assert isclose(a, b)
+
+    def test_picklable(self, m44):
+        matrix = m44((0.1, 1, 2, 3),
+                     (4, 5, 6, 7),
+                     (8, 9, 10, 11),
+                     (12, 13, 14, 15))
+        pickled_matrix = pickle.loads(pickle.dumps(matrix))
+        assert equal_matrix(matrix, pickled_matrix)
+
