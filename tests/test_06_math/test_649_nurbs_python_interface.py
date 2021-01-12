@@ -1,11 +1,11 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 import pytest
-from geomdl.fitting import interpolate_curve
 from ezdxf.math import BSpline, global_bspline_interpolation, rational_spline_from_arc, Vec3
 
 
 def test_from_nurbs_python_curve_to_ezdxf_bspline():
+    from geomdl.fitting import interpolate_curve
     curve = interpolate_curve([(0, 0), (0, 10), (10, 10), (10, 0)], degree=3)
     bspline = BSpline.from_nurbs_python_curve(curve)
     assert bspline.degree == 3
