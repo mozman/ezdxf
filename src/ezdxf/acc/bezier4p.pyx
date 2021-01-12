@@ -58,6 +58,9 @@ cdef class Bezier4P:
     def end_point(self) -> Vec3:
         return v3_from_cpp_vec3(self.curve.p3)
 
+    def __reduce__(self):
+        return Bezier4P, (self.control_points,)
+
     def point(self, double t) -> Vec3:
         if 0.0 <= t <= 1.0:
             return v3_from_cpp_vec3(self.curve.point(t))

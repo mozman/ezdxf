@@ -11,6 +11,7 @@ Version 0.15.1b0 - dev
 - BUGFIX: invalid vertex subscript access in `dxf2code` add-on 
 - BUGFIX: `cubic_bezier_from_ellipse()` recognizes full ellipses  
 - BUGFIX: `cubic_bezier_from_arc()` recognizes full circles  
+- BUGFIX: pickle support for C-extensions Vec2, Vec3, Matrix44 and Bezier4P  
 
 Version 0.15 - 2020-12-30
 -------------------------

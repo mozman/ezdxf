@@ -1,6 +1,7 @@
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
 import pytest
+import pickle
 import math
 from ezdxf.math import Vec3, Vec2, Matrix44, ConstructionEllipse
 # Import from 'ezdxf.math._bezier4p' to test Python implementation
@@ -105,6 +106,13 @@ def test_flattening(bezier):
     curve = bezier([(0, 0), (1, 1), (2, -1), (3, 0)])
     assert len(list(curve.flattening(1.0, segments=4))) == 5
     assert len(list(curve.flattening(0.1, segments=4))) == 7
+
+
+def test_pickle_support(bezier):
+    curve = bezier(DEFPOINTS3D)
+    pickled_curve = pickle.loads(pickle.dumps(curve))
+    for index in range(4):
+        assert pickled_curve.control_points[index] == DEFPOINTS3D[index]
 
 
 def test_cubic_bezier_arc_parameters_computation(arc_params):
