@@ -2,17 +2,21 @@
 News
 ====
 
-Version 0.15.1b0 - dev
+Version 0.15.1b1 - dev
 ----------------------
 
 - NEW: `Spline.audit()` audit support for the SPLINE entity
 - NEW: The `recover` module tolerates malformed group codes and value tags.
+- Changed the `Matrix44.matrix` attribute in the Python implementation to a 
+  "private" attribute `Matrix44._matrix`, because this attribute is not 
+  available in the Cython implementation   
 - BUGFIX: proxy graphic decoding error on big-endian systems
 - BUGFIX: invalid vertex subscript access in `dxf2code` add-on 
 - BUGFIX: `cubic_bezier_from_ellipse()` recognizes full ellipses  
 - BUGFIX: `cubic_bezier_from_arc()` recognizes full circles  
 - BUGFIX: pickle support for C-extensions `Vec2`, `Vec3`, `Matrix44` and 
-  `Bezier4P`  
+  `Bezier4P`
+- BUGFIX: attribute error when exporting matrices in the MATERIAL entity
 
 Version 0.15 - 2020-12-30
 -------------------------

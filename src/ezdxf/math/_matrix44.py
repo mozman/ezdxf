@@ -45,7 +45,7 @@ class Matrix44:
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     )
-    __slots__ = ('matrix',)
+    __slots__ = ('_matrix',)
 
     def __init__(self, *args):
         """
@@ -58,15 +58,15 @@ class Matrix44:
         """
         nargs = len(args)
         if nargs == 0:
-            self.matrix = floats(Matrix44._identity)
+            self._matrix = floats(Matrix44._identity)
         elif nargs == 1:
-            self.matrix = floats(args[0])
+            self._matrix = floats(args[0])
         elif nargs == 4:
-            self.matrix = floats(chain(*args))
+            self._matrix = floats(chain(*args))
         else:
             raise ValueError(
                 "Invalid count of arguments (4 row vectors or one list with 16 values).")
-        if len(self.matrix) != 16:
+        if len(self._matrix) != 16:
             raise ValueError("Invalid matrix count")
 
     def __repr__(self) -> str:
@@ -86,7 +86,7 @@ class Matrix44:
         A more correct transformation could be implemented like so:
         https://stackoverflow.com/questions/10629737/convert-3d-4x4-rotation-matrix-into-2d
         """
-        m = self.matrix
+        m = self._matrix
         return m[0], m[1], 0.0, m[4], m[5], 0.0, m[12], m[13], 1.0
 
     def get_row(self, row: int) -> Tuple[float, ...]:
@@ -98,7 +98,7 @@ class Matrix44:
         """
         if 0 <= row < 4:
             index = row * 4
-            return tuple(self.matrix[index:index + 4])
+            return tuple(self._matrix[index:index + 4])
         else:
             raise IndexError(f'invalid row index: {row}')
 
@@ -113,7 +113,7 @@ class Matrix44:
         """
         if 0 <= row < 4:
             index = row * 4
-            self.matrix[index:index + len(values)] = floats(values)
+            self._matrix[index:index + len(values)] = floats(values)
         else:
             raise IndexError(f'invalid row index: {row}')
 
@@ -125,7 +125,7 @@ class Matrix44:
             col: column index [0 .. 3]
         """
         if 0 <= col < 4:
-            m = self.matrix
+            m = self._matrix
             return m[col], m[col + 4], m[col + 8], m[col + 12]
         else:
             raise IndexError(f'invalid row index: {col}')
@@ -140,7 +140,7 @@ class Matrix44:
 
         """
         if 0 <= col < 4:
-            m = self.matrix
+            m = self._matrix
             a, b, c, d = values
             m[col] = float(a)
             m[col + 4] = float(b)
@@ -151,31 +151,31 @@ class Matrix44:
 
     def copy(self) -> 'Matrix44':
         """ Returns a copy of same type. """
-        return self.__class__(self.matrix)
+        return self.__class__(self._matrix)
 
     __copy__ = copy
 
     @property
     def origin(self) -> Vec3:
-        m = self.matrix
+        m = self._matrix
         return Vec3(m[12], m[13], m[14])
 
     @origin.setter
     def origin(self, v: 'Vertex') -> None:
-        m = self.matrix
+        m = self._matrix
         m[12], m[13], m[14] = Vec3(v)
 
     @property
     def ux(self) -> Vec3:
-        return Vec3(self.matrix[0:3])
+        return Vec3(self._matrix[0:3])
 
     @property
     def uy(self) -> Vec3:
-        return Vec3(self.matrix[4:7])
+        return Vec3(self._matrix[4:7])
 
     @property
     def uz(self) -> Vec3:
-        return Vec3(self.matrix[8:11])
+        return Vec3(self._matrix[8:11])
 
     @property
     def is_cartesian(self) -> bool:
@@ -408,7 +408,7 @@ class Matrix44:
         """ Set (row, column) element. """
         row, col = index
         if 0 <= row < 4 and 0 <= col < 4:
-            self.matrix[row * 4 + col] = float(value)
+            self._matrix[row * 4 + col] = float(value)
         else:
             raise IndexError(f'index out of range: {index}')
 
@@ -416,13 +416,13 @@ class Matrix44:
         """ Get (row, column) element. """
         row, col = index
         if 0 <= row < 4 and 0 <= col < 4:
-            return self.matrix[row * 4 + col]
+            return self._matrix[row * 4 + col]
         else:
             raise IndexError(f'index out of range: {index}')
 
     def __iter__(self) -> Iterable[float]:
         """ Iterates over all matrix values. """
-        return iter(self.matrix)
+        return iter(self._matrix)
 
     def __mul__(self, other: 'Matrix44') -> 'Matrix44':
         """ Returns a new matrix as result of the matrix multiplication with another matrix. """
@@ -440,9 +440,9 @@ class Matrix44:
 
     def __imul__(self, other: 'Matrix44') -> 'Matrix44':
         """ Inplace multiplication with another matrix. """
-        m1 = self.matrix
-        m2 = other.matrix
-        self.matrix = [
+        m1 = self._matrix
+        m2 = other._matrix
+        self._matrix = [
             m1[0] * m2[0] + m1[1] * m2[4] + m1[2] * m2[8] + m1[3] * m2[12],
             m1[0] * m2[1] + m1[1] * m2[5] + m1[2] * m2[9] + m1[3] * m2[13],
             m1[0] * m2[2] + m1[1] * m2[6] + m1[2] * m2[10] + m1[3] * m2[14],
@@ -475,7 +475,7 @@ class Matrix44:
 
     def transform(self, vector: 'Vertex') -> Vec3:
         """ Returns a transformed vertex. """
-        m = self.matrix
+        m = self._matrix
         x, y, z = vector
         return Vec3(x * m[0] + y * m[4] + z * m[8] + m[12],
                     x * m[1] + y * m[5] + z * m[9] + m[13],
@@ -483,7 +483,7 @@ class Matrix44:
 
     def transform_direction(self, vector: 'Vertex', normalize=False) -> Vec3:
         """ Returns a transformed direction vector without translation. """
-        m = self.matrix
+        m = self._matrix
         x, y, z = vector
         v = Vec3(x * m[0] + y * m[4] + z * m[8],
                  x * m[1] + y * m[5] + z * m[9],
@@ -494,7 +494,7 @@ class Matrix44:
 
     def transform_vertices(self, vectors: Iterable['Vertex']) -> Iterable[Vec3]:
         """ Returns an iterable of transformed vertices. """
-        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 = self.matrix
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 = self._matrix
         for vector in vectors:
             x, y, z = vector
             yield Vec3(
@@ -509,7 +509,7 @@ class Matrix44:
         Returns an iterable of transformed direction vectors without translation.
 
         """
-        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self.matrix
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self._matrix
         for vector in vectors:
             x, y, z = vector
             v = Vec3(
@@ -539,7 +539,7 @@ class Matrix44:
         (internal API)
 
         """
-        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self.matrix
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self._matrix
         x, y, z = wcs
         return Vec3(
             x * m0 + y * m1 + z * m2,
@@ -554,9 +554,9 @@ class Matrix44:
         m00, m01, m02, m03, \
         m10, m11, m12, m13, \
         m20, m21, m22, m23, \
-        m30, m31, m32, m33 = self.matrix
+        m30, m31, m32, m33 = self._matrix
 
-        self.matrix = [
+        self._matrix = [
             m00, m10, m20, m30,
             m01, m11, m21, m31,
             m02, m12, m22, m32,
@@ -568,7 +568,7 @@ class Matrix44:
         m00, m01, m02, m03, \
         m10, m11, m12, m13, \
         m20, m21, m22, m23, \
-        m30, m31, m32, m33 = self.matrix
+        m30, m31, m32, m33 = self._matrix
         return m00 * m11 * m22 * m33 - m00 * m11 * m23 * m32 + \
                m00 * m12 * m23 * m31 - m00 * m12 * m21 * m33 + \
                m00 * m13 * m21 * m32 - m00 * m13 * m22 * m31 - \
@@ -595,8 +595,8 @@ class Matrix44:
         m00, m01, m02, m03, \
         m10, m11, m12, m13, \
         m20, m21, m22, m23, \
-        m30, m31, m32, m33 = self.matrix
-        self.matrix = [
+        m30, m31, m32, m33 = self._matrix
+        self._matrix = [
             (
                     m12 * m23 * m31 - m13 * m22 * m31 + m13 * m21 * m32 - m11 * m23 * m32 - m12 * m21 * m33 +
                     m11 * m22 * m33) * f,

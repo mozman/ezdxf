@@ -38,7 +38,7 @@ def fetch_matrix(tags: 'Tags', code: int) -> Tuple[Tags, Optional[Matrix44]]:
 
 def export_matrix(tagwriter: 'TagWriter', code: int, matrix: Matrix44) -> None:
     if matrix is not None:
-        for value in matrix.matrix:
+        for value in matrix:
             tagwriter.write_tag2(code, value)
 
 

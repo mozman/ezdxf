@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019 Manfred Moitzi
+# Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -19,4 +19,15 @@ def test_material_manager(doc):
     global_material = materials.get('Global')
     assert global_material.dxf.name == 'Global'
     assert global_material.dxf.channel_flags == 63
+
+
+def test_export_matrix():
+    from ezdxf.math import Matrix44
+    from ezdxf.lldxf.tagwriter import TagCollector
+    from ezdxf.entities.material import export_matrix
+    m = Matrix44()
+    tc = TagCollector()
+    export_matrix(tc, 43, m)
+    assert len(tc.tags) == 16
+    assert tc.tags[0] == (43, 1.0)
 
