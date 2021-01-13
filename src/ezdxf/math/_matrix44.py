@@ -2,7 +2,7 @@
 # Home-page: http://code.google.com/p/gameobjects/
 # Author: Will McGugan
 # Download-URL: http://code.google.com/p/gameobjects/downloads/list
-# Copyright (c) 2010-2020 Manfred Moitzi
+# Copyright (c) 2010-2021 Manfred Moitzi
 # License: MIT License
 from typing import Sequence, Iterable, List, Tuple, TYPE_CHECKING
 import math
@@ -17,7 +17,8 @@ if TYPE_CHECKING:
 __all__ = ['Matrix44']
 
 
-# removed array.array because array is optimized for space not speed, and space optimization is not needed
+# removed array.array because array is optimized for space not speed, and space
+# optimization is not needed
 
 def floats(items: Iterable) -> List[float]:
     return [float(v) for v in items]
@@ -25,18 +26,22 @@ def floats(items: Iterable) -> List[float]:
 
 class Matrix44:
     """
-    This is a pure Python implementation for 4x4 transformation matrices, to avoid dependency to big numerical packages
-    like :mod:`numpy`, before binary wheels, installation of these packages wasn't always easy on Windows.
+    This is a pure Python implementation for 4x4 transformation matrices, to
+    avoid dependency to big numerical packages like :mod:`numpy`, before binary
+    wheels, installation of these packages wasn't always easy on Windows.
 
-    The utility functions for constructing transformations and transforming vectors and points assumes that vectors
-    are stored as row vectors, meaning when multiplied, transformations are applied left to right
-    (e.g. vAB transforms v by A then by B).
+    The utility functions for constructing transformations and transforming
+    vectors and points assumes that vectors are stored as row vectors, meaning
+    when multiplied, transformations are applied left to right (e.g. vAB
+    transforms v by A then by B).
 
     Matrix44 initialization:
 
         - ``Matrix44()`` returns the identity matrix.
-        - ``Matrix44(values)`` values is an iterable with the 16 components of the matrix.
-        - ``Matrix44(row1, row2, row3, row4)`` four rows, each row with four values.
+        - ``Matrix44(values)`` values is an iterable with the 16 components of
+          the matrix.
+        - ``Matrix44(row1, row2, row3, row4)`` four rows, each row with four
+          values.
 
     """
     _identity = (
@@ -64,8 +69,8 @@ class Matrix44:
         elif nargs == 4:
             self._matrix = floats(chain(*args))
         else:
-            raise ValueError(
-                "Invalid count of arguments (4 row vectors or one list with 16 values).")
+            raise ValueError("Invalid count of arguments (4 row vectors or one "
+                             "list with 16 values).")
         if len(self._matrix) != 16:
             raise ValueError("Invalid matrix count")
 
@@ -81,7 +86,8 @@ class Matrix44:
                ", ".join(format_row(row) for row in self.rows())
 
     def get_2d_transformation(self) -> Tuple[float, ...]:
-        """ Returns a the 2D transformation as a row-major matrix in a linear array (tuple).
+        """ Returns a the 2D transformation as a row-major matrix in a linear
+        array (tuple).
 
         A more correct transformation could be implemented like so:
         https://stackoverflow.com/questions/10629737/convert-3d-4x4-rotation-matrix-into-2d
@@ -179,14 +185,17 @@ class Matrix44:
 
     @property
     def is_cartesian(self) -> bool:
-        """ Returns ``True`` if target coordinate system is a right handed orthogonal coordinate system. """
+        """ Returns ``True`` if target coordinate system is a right handed
+        orthogonal coordinate system.
+        """
         return self.uy.cross(self.uz).normalize().isclose(self.ux.normalize())
 
     @property
     def is_orthogonal(self) -> bool:
         """ Returns ``True`` if target coordinate system has orthogonal axis.
 
-        Does not check for left- or right handed orientation, any orientation of the axis valid.
+        Does not check for left- or right handed orientation, any orientation
+        of the axis valid.
 
         """
         ux = self.ux.normalize()
@@ -198,8 +207,8 @@ class Matrix44:
 
     @classmethod
     def scale(cls, sx: float, sy: float = None, sz: float = None) -> 'Matrix44':
-        """
-        Returns a scaling transformation matrix. If `sy` is ``None``, `sy` = `sx`, and if `sz` is ``None`` `sz` = `sx`.
+        """ Returns a scaling transformation matrix. If `sy` is ``None``,
+        `sy` = `sx`, and if `sz` is ``None`` `sz` = `sx`.
 
         """
         if sy is None:
@@ -217,7 +226,8 @@ class Matrix44:
 
     @classmethod
     def translate(cls, dx: float, dy: float, dz: float) -> 'Matrix44':
-        """ Returns a translation matrix for translation vector (dx, dy, dz). """
+        """ Returns a translation matrix for translation vector (dx, dy, dz).
+        """
         return cls([
             1., 0., 0., 0.,
             0., 1., 0., 0.,
@@ -227,8 +237,7 @@ class Matrix44:
 
     @classmethod
     def x_rotate(cls, angle: float) -> 'Matrix44':
-        """
-        Returns a rotation matrix about the x-axis.
+        """ Returns a rotation matrix about the x-axis.
 
         Args:
             angle: rotation angle in radians
@@ -245,8 +254,7 @@ class Matrix44:
 
     @classmethod
     def y_rotate(cls, angle: float) -> 'Matrix44':
-        """
-        Returns a rotation matrix about the y-axis.
+        """ Returns a rotation matrix about the y-axis.
 
         Args:
             angle: rotation angle in radians
@@ -263,8 +271,7 @@ class Matrix44:
 
     @classmethod
     def z_rotate(cls, angle: float) -> 'Matrix44':
-        """
-        Returns a rotation matrix about the z-axis.
+        """ Returns a rotation matrix about the z-axis.
 
         Args:
             angle: rotation angle in radians
@@ -281,8 +288,7 @@ class Matrix44:
 
     @classmethod
     def axis_rotate(cls, axis: 'Vertex', angle: float) -> 'Matrix44':
-        """
-        Returns a rotation matrix about an arbitrary `axis`.
+        """ Returns a rotation matrix about an arbitrary `axis`.
 
         Args:
             axis: rotation axis as ``(x, y, z)`` tuple or :class:`Vec3` object
@@ -332,8 +338,7 @@ class Matrix44:
     def perspective_projection(cls, left: float, right: float, top: float,
                                bottom: float, near: float,
                                far: float) -> 'Matrix44':
-        """
-        Returns a matrix for a 2D projection.
+        """ Returns a matrix for a 2D projection.
 
         Args:
             left: Coordinate of left of screen
@@ -355,8 +360,7 @@ class Matrix44:
     @classmethod
     def perspective_projection_fov(cls, fov: float, aspect: float, near: float,
                                    far: float) -> 'Matrix44':
-        """
-        Returns a matrix for a 2D projection.
+        """ Returns a matrix for a 2D projection.
 
         Args:
             fov: The field of view (in radians)
@@ -382,8 +386,7 @@ class Matrix44:
 
     @staticmethod
     def ucs(ux=X_AXIS, uy=Y_AXIS, uz=Z_AXIS, origin=NULLVEC) -> 'Matrix44':
-        """
-        Returns a matrix for coordinate transformation from WCS to UCS.
+        """ Returns a matrix for coordinate transformation from WCS to UCS.
         For transformation from UCS to WCS, transpose the returned matrix.
 
         Args:
@@ -425,7 +428,9 @@ class Matrix44:
         return iter(self._matrix)
 
     def __mul__(self, other: 'Matrix44') -> 'Matrix44':
-        """ Returns a new matrix as result of the matrix multiplication with another matrix. """
+        """ Returns a new matrix as result of the matrix multiplication with
+        another matrix.
+        """
         res_matrix = self.copy()
         res_matrix.__imul__(other)
         return res_matrix
@@ -433,7 +438,9 @@ class Matrix44:
     # __matmul__ = __mul__ does not work!
 
     def __matmul__(self, other: 'Matrix44') -> 'Matrix44':
-        """ Returns a new matrix as result of the matrix multiplication with another matrix. """
+        """ Returns a new matrix as result of the matrix multiplication with
+        another matrix.
+        """
         res_matrix = self.copy()
         res_matrix.__imul__(other)
         return res_matrix
@@ -505,8 +512,8 @@ class Matrix44:
 
     def transform_directions(self, vectors: Iterable['Vertex'],
                              normalize=False) -> Iterable[Vec3]:
-        """
-        Returns an iterable of transformed direction vectors without translation.
+        """ Returns an iterable of transformed direction vectors without
+        translation.
 
         """
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self._matrix
@@ -520,8 +527,7 @@ class Matrix44:
             yield v.normalize() if normalize else v
 
     def ucs_vertex_from_wcs(self, wcs: Vec3) -> Vec3:
-        """
-        Returns an UCS vector from WCS vertex.
+        """ Returns an UCS vector from WCS vertex.
 
         Works only if matrix is used as cartesian UCS without scaling.
 
@@ -531,8 +537,7 @@ class Matrix44:
         return self.ucs_direction_from_wcs(wcs - self.origin)
 
     def ucs_direction_from_wcs(self, wcs: Vec3) -> Vec3:
-        """
-        Returns UCS direction vector from WCS direction.
+        """ Returns UCS direction vector from WCS direction.
 
         Works only if matrix is used as cartesian UCS without scaling.
 
@@ -583,8 +588,7 @@ class Matrix44:
                m03 * m12 * m20 * m31 + m03 * m12 * m21 * m30
 
     def inverse(self) -> None:
-        """
-        Calculates the inverse of the matrix.
+        """ Calculates the inverse of the matrix.
 
         Raises:
              ZeroDivisionError: if matrix has no inverse.
@@ -598,51 +602,51 @@ class Matrix44:
         m30, m31, m32, m33 = self._matrix
         self._matrix = [
             (
-                    m12 * m23 * m31 - m13 * m22 * m31 + m13 * m21 * m32 - m11 * m23 * m32 - m12 * m21 * m33 +
-                    m11 * m22 * m33) * f,
+                    m12 * m23 * m31 - m13 * m22 * m31 + m13 * m21 * m32 -
+                    m11 * m23 * m32 - m12 * m21 * m33 + m11 * m22 * m33) * f,
             (
-                    m03 * m22 * m31 - m02 * m23 * m31 - m03 * m21 * m32 + m01 * m23 * m32 + m02 * m21 * m33 -
-                    m01 * m22 * m33) * f,
+                    m03 * m22 * m31 - m02 * m23 * m31 - m03 * m21 * m32 +
+                    m01 * m23 * m32 + m02 * m21 * m33 - m01 * m22 * m33) * f,
             (
-                    m02 * m13 * m31 - m03 * m12 * m31 + m03 * m11 * m32 - m01 * m13 * m32 - m02 * m11 * m33 +
-                    m01 * m12 * m33) * f,
+                    m02 * m13 * m31 - m03 * m12 * m31 + m03 * m11 * m32 -
+                    m01 * m13 * m32 - m02 * m11 * m33 + m01 * m12 * m33) * f,
             (
-                    m03 * m12 * m21 - m02 * m13 * m21 - m03 * m11 * m22 + m01 * m13 * m22 + m02 * m11 * m23 -
-                    m01 * m12 * m23) * f,
+                    m03 * m12 * m21 - m02 * m13 * m21 - m03 * m11 * m22 +
+                    m01 * m13 * m22 + m02 * m11 * m23 - m01 * m12 * m23) * f,
             (
-                    m13 * m22 * m30 - m12 * m23 * m30 - m13 * m20 * m32 + m10 * m23 * m32 + m12 * m20 * m33 -
-                    m10 * m22 * m33) * f,
+                    m13 * m22 * m30 - m12 * m23 * m30 - m13 * m20 * m32 +
+                    m10 * m23 * m32 + m12 * m20 * m33 - m10 * m22 * m33) * f,
             (
-                    m02 * m23 * m30 - m03 * m22 * m30 + m03 * m20 * m32 - m00 * m23 * m32 - m02 * m20 * m33 +
-                    m00 * m22 * m33) * f,
+                    m02 * m23 * m30 - m03 * m22 * m30 + m03 * m20 * m32 -
+                    m00 * m23 * m32 - m02 * m20 * m33 + m00 * m22 * m33) * f,
             (
-                    m03 * m12 * m30 - m02 * m13 * m30 - m03 * m10 * m32 + m00 * m13 * m32 + m02 * m10 * m33 -
-                    m00 * m12 * m33) * f,
+                    m03 * m12 * m30 - m02 * m13 * m30 - m03 * m10 * m32 +
+                    m00 * m13 * m32 + m02 * m10 * m33 - m00 * m12 * m33) * f,
             (
-                    m02 * m13 * m20 - m03 * m12 * m20 + m03 * m10 * m22 - m00 * m13 * m22 - m02 * m10 * m23 +
-                    m00 * m12 * m23) * f,
+                    m02 * m13 * m20 - m03 * m12 * m20 + m03 * m10 * m22 -
+                    m00 * m13 * m22 - m02 * m10 * m23 + m00 * m12 * m23) * f,
             (
-                    m11 * m23 * m30 - m13 * m21 * m30 + m13 * m20 * m31 - m10 * m23 * m31 - m11 * m20 * m33 +
-                    m10 * m21 * m33) * f,
+                    m11 * m23 * m30 - m13 * m21 * m30 + m13 * m20 * m31 -
+                    m10 * m23 * m31 - m11 * m20 * m33 + m10 * m21 * m33) * f,
             (
-                    m03 * m21 * m30 - m01 * m23 * m30 - m03 * m20 * m31 + m00 * m23 * m31 + m01 * m20 * m33 -
-                    m00 * m21 * m33) * f,
+                    m03 * m21 * m30 - m01 * m23 * m30 - m03 * m20 * m31 +
+                    m00 * m23 * m31 + m01 * m20 * m33 - m00 * m21 * m33) * f,
             (
-                    m01 * m13 * m30 - m03 * m11 * m30 + m03 * m10 * m31 - m00 * m13 * m31 - m01 * m10 * m33 +
-                    m00 * m11 * m33) * f,
+                    m01 * m13 * m30 - m03 * m11 * m30 + m03 * m10 * m31 -
+                    m00 * m13 * m31 - m01 * m10 * m33 + m00 * m11 * m33) * f,
             (
-                    m03 * m11 * m20 - m01 * m13 * m20 - m03 * m10 * m21 + m00 * m13 * m21 + m01 * m10 * m23 -
-                    m00 * m11 * m23) * f,
+                    m03 * m11 * m20 - m01 * m13 * m20 - m03 * m10 * m21 +
+                    m00 * m13 * m21 + m01 * m10 * m23 - m00 * m11 * m23) * f,
             (
-                    m12 * m21 * m30 - m11 * m22 * m30 - m12 * m20 * m31 + m10 * m22 * m31 + m11 * m20 * m32 -
-                    m10 * m21 * m32) * f,
+                    m12 * m21 * m30 - m11 * m22 * m30 - m12 * m20 * m31 +
+                    m10 * m22 * m31 + m11 * m20 * m32 - m10 * m21 * m32) * f,
             (
-                    m01 * m22 * m30 - m02 * m21 * m30 + m02 * m20 * m31 - m00 * m22 * m31 - m01 * m20 * m32 +
-                    m00 * m21 * m32) * f,
+                    m01 * m22 * m30 - m02 * m21 * m30 + m02 * m20 * m31 -
+                    m00 * m22 * m31 - m01 * m20 * m32 + m00 * m21 * m32) * f,
             (
-                    m02 * m11 * m30 - m01 * m12 * m30 - m02 * m10 * m31 + m00 * m12 * m31 + m01 * m10 * m32 -
-                    m00 * m11 * m32) * f,
+                    m02 * m11 * m30 - m01 * m12 * m30 - m02 * m10 * m31 +
+                    m00 * m12 * m31 + m01 * m10 * m32 - m00 * m11 * m32) * f,
             (
-                    m01 * m12 * m20 - m02 * m11 * m20 + m02 * m10 * m21 - m00 * m12 * m21 - m01 * m10 * m22 +
-                    m00 * m11 * m22) * f,
+                    m01 * m12 * m20 - m02 * m11 * m20 + m02 * m10 * m21 -
+                    m00 * m12 * m21 - m01 * m10 * m22 + m00 * m11 * m22) * f,
         ]
