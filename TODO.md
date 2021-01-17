@@ -5,10 +5,14 @@ Add-ons
 -------
 
 - drawing
-    - MLEADER support (v0.16)
+    - MLEADER full rendering support (v0.16), requires `MLeader.virtual_entities()`
     - add support for ATTRIB with embedded MTEXT (v0.16)
+    - non-graphical backend for "estimating" bounding boxes (v0.16)
     - ACAD_TABLE
+    
 
+- Tool for estimating bounding boxes, based on the non-graphical 
+  backend of the drawing add-on
 - Simple SVG exporter, planned after the matplotlib backend supports all the 
   planned features. 
 - DWG loader, boring and tedious but really planned for the future         
@@ -17,6 +21,8 @@ Render Tools
 ------------
 
 - `MLeader.virtual_entities()` (v0.16)
+- `BaseLayout.virtual_entities()` (v0.16)
+- `BaseLayout.explode()` ??? Explode all entities in a layout. 
 - `ACADTable.virtual_entities()` ??? -> requires basic ACAD_TABLE support
 
 DXF Entities
@@ -40,7 +46,6 @@ DXF Entities
 - FIELD, boring and tedious due to lack of documentation!
 - ACAD_TABLE, boring and tedious due to lack of documentation!
 
-- Optimize DXF loading (>1.0): SubclassProcessor.load_tags_into_namespace()
 - Optimize DXF export (>1.0): write tags direct in export_entity() 
   without any indirections, but this requires some additional tag writing 
   function in the Tagwriter() class, these additional functions should only use 
@@ -62,6 +67,5 @@ DXF Audit & Repair
 Cython Code
 -----------
 
-- optional for install, testing and development
 - optimized math & construction tools
 - tag loader: creates mostly Python structures, no speed gain by using Cython  
