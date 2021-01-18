@@ -1,67 +1,133 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional, Tuple, cast, TYPE_CHECKING
+import abc
 from ezdxf.entities import DXFEntity
 from ezdxf.math import Vec3
 from ezdxf.render import Path, MeshBuilder, MeshVertexMerger, TraceBuilder
 
-TPrimitives = Tuple[Optional[Path], Optional[MeshBuilder]]
+if TYPE_CHECKING:
+    from ezdxf.eztypes import LWPolyline
 
 
-def _default(e: DXFEntity) -> TPrimitives:
-    return None, None
+class AbstractPrimitive:
+    """ It is not efficient to create the Path() or MeshBuilder() primitive by
+    default. For some entities the it's just not needed (LINE, POINT) and for
+    others the builtin flattening() method is more efficient or accurate than
+    using a Path() proxy object. (ARC, CIRCLE, ELLIPSE, SPLINE).
+
+    """
+    flattening_distance: float = 0.1
+
+    def __init__(self, entity: DXFEntity):
+        self.entity: DXFEntity = entity
+        # Path representation for linear entities:
+        self._path: Optional[Path] = None
+        # MeshBuilder representation for mesh based entities:
+        # PolygonMesh, PolyFaceMesh, Mesh
+        self._mesh: Optional[MeshBuilder] = None
+
+    @property
+    def path(self) -> Optional[Path]:
+        """ :class:`~ezdxf.render.path.Path` representation or ``None`` """
+        return None
+
+    @property
+    def mesh(self) -> Optional[MeshBuilder]:
+        """ :class:`~ezdxf.render.mesh.MeshBuilder` representation or ``None``
+        """
+        return None
+
+    @abc.abstractmethod
+    def vertices(self) -> Iterable[Vec3]:
+        """ Yields all vertices of the path/mesh representation as
+        :class:`~ezdxf.math.Vec3` objects.
+
+        """
+        pass
 
 
-def _line(e: DXFEntity) -> TPrimitives:
-    path = Path(e.dxf.start)
-    path.line_to(e.dxf.end)
-    return path, None
+class GenericPrimitive(AbstractPrimitive):
+    """ Base class for all DXF entities which store the path/mesh primitive at
+    instantiation.
+
+    """
+
+    def __init__(self, entity: DXFEntity):
+        super().__init__(entity)
+        self._convert_entity()
+
+    def _convert_entity(self):
+        """ This method creates the path/mesh primitive. """
+        pass
+
+    @property
+    def path(self) -> Optional[Path]:
+        return self._path
+
+    @property
+    def mesh(self) -> Optional[MeshBuilder]:
+        return self._mesh
+
+    def vertices(self) -> Iterable[Vec3]:
+        if self.path:
+            yield from self._path.flattening(self.flattening_distance)
+        elif self.mesh:
+            yield from self._mesh.vertices
 
 
-def _point(e: DXFEntity) -> TPrimitives:
-    path = Path(e.dxf.location)
-    return path, None
+class PointPrimitive(AbstractPrimitive):
+    @property
+    def path(self) -> Optional[Path]:
+        """ Create path representation on demand. """
+        if self._path is None:
+            self._path = Path(self.entity.dxf.location)
+        return self._path
+
+    def vertices(self) -> Iterable[Vec3]:
+        yield self.entity.dxf.location
 
 
-_CONVERTER = {
-    "LINE": _line,
-    "POINT": _point,
+class LinePrimitive(AbstractPrimitive):
+    @property
+    def path(self) -> Optional[Path]:
+        """ Create path representation on demand. """
+        if self._path is None:
+            e = self.entity
+            self._path = Path(e.dxf.start)
+            self._path.line_to(e.dxf.end)
+        return self._path
+
+    def vertices(self) -> Iterable[Vec3]:
+        e = self.entity
+        yield e.dxf.start
+        yield e.dxf.end
+
+
+class LwPolylinePrimitive(GenericPrimitive):
+    def _convert_entity(self):
+        e: 'LWPolyline' = cast('LWPolyline', self.entity)
+        if e.has_width:  # use a mesh representation:
+            tb = TraceBuilder.from_polyline(e)
+            mb = MeshVertexMerger()  # merges coincident vertices
+            for face in tb.faces():
+                mb.add_face(face)
+            self._mesh = MeshBuilder.from_builder(mb)
+        else:  # use a path representation to support bulges!
+            self._path = Path.from_lwpolyline(e)
+
+
+_PRIMITIVE_CLASSES = {
+    "LINE": LinePrimitive,
+    "POINT": PointPrimitive,
+    "LWPOLYLINE": LwPolylinePrimitive,
 }
 
 
-class Primitive:
-    def __init__(self, entity: DXFEntity, flattening_distance: float = 0.1):
-        self.flattening_distance = flattening_distance
-        self.entity: Optional[DXFEntity] = entity
-        # Path representation for linear entities:
-        self.path: Optional[Path] = None
-        # MeshBuilder representation for mesh based entities:
-        # PolygonMesh, PolyFaceMesh, Mesh
-        self.mesh: Optional[MeshBuilder] = None
-        self._convert_entity(entity)
-
-    def _convert_entity(self, entity: DXFEntity):
-        converter = _CONVERTER.get(entity.dxftype(), _default)
-        self.path, self.mesh = converter(entity)
-
-    @property
-    def is_path(self):
-        return self.path is not None
-
-    @property
-    def is_mesh(self):
-        return self.mesh is not None
-
-    def vertices(self) -> Iterable[Vec3]:
-        if self.is_path:
-            if self.path:
-                yield from self.path.flattening(self.flattening_distance)
-            else:
-                yield self.path.start
-        elif self.is_mesh:
-            yield from self.mesh.vertices
-        else:
-            return []
+def make_primitive(e: DXFEntity) -> AbstractPrimitive:
+    """ Factory to create path/mesh primitives. """
+    cls = _PRIMITIVE_CLASSES.get(e.dxftype(), GenericPrimitive)
+    return cls(e)
 
 
 def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
@@ -74,12 +140,12 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
     return []
 
 
-def to_primitives(entities: Iterable[DXFEntity]) -> Iterable[Primitive]:
+def to_primitives(entities: Iterable[DXFEntity]) -> Iterable[AbstractPrimitive]:
     """ Disassemble DXF entities into path/mesh primitive objects. """
-    return (Primitive(e) for e in entities)
+    return (GenericPrimitive(e) for e in entities)
 
 
-def to_vertices(primitives: Iterable[Primitive]) -> Iterable[Vec3]:
+def to_vertices(primitives: Iterable[AbstractPrimitive]) -> Iterable[Vec3]:
     """ Disassemble path/mesh primitive objects into vertices. """
     for p in primitives:
         yield from p.vertices()
