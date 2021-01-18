@@ -9,7 +9,6 @@ Add-ons
     - add support for ATTRIB with embedded MTEXT (v0.16)
     - non-graphical backend for "estimating" bounding boxes (v0.16)
     - ACAD_TABLE
-    
 
 - Tool for estimating bounding boxes, based on the non-graphical 
   backend of the drawing add-on
@@ -21,8 +20,6 @@ Render Tools
 ------------
 
 - `MLeader.virtual_entities()` (v0.16)
-- `BaseLayout.virtual_entities()` (v0.16)
-- `BaseLayout.explode()` ??? Explode all entities in a layout. 
 - `ACADTable.virtual_entities()` ??? -> requires basic ACAD_TABLE support
 
 DXF Entities
@@ -45,7 +42,11 @@ DXF Entities
     - arc dim
 - FIELD, boring and tedious due to lack of documentation!
 - ACAD_TABLE, boring and tedious due to lack of documentation!
-
+- disassemble module (v0.16) - recursively disassemble DXF entities:
+  - DXF entity collection (model space, entity query) -> flat DXF entity stream 
+  - DXF entity stream -> path/mesh stream
+  - path/mesh stream -> vertices stream
+  
 - Optimize DXF export (>1.0): write tags direct in export_entity() 
   without any indirections, but this requires some additional tag writing 
   function in the Tagwriter() class, these additional functions should only use 
