@@ -8,6 +8,10 @@ Disassemble
 This module provide tools for the recursive decomposition of DXF entities into
 simpler objects.
 
-.. autofunction:: to_entities
+.. autofunction:: recursive_decompose
+
+.. autofunction:: to_primitives
+
+.. autofunction:: to_vertices
 
 
