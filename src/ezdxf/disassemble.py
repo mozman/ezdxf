@@ -11,8 +11,8 @@ if TYPE_CHECKING:
 
 
 class AbstractPrimitive:
-    """ It is not efficient to create the Path() or MeshBuilder() primitive by
-    default. For some entities the it's just not needed (LINE, POINT) and for
+    """ It is not efficient to create the Path() or MeshBuilder() representation
+    by default. For some entities the it's just not needed (LINE, POINT) and for
     others the builtin flattening() method is more efficient or accurate than
     using a Path() proxy object. (ARC, CIRCLE, ELLIPSE, SPLINE).
 
@@ -48,8 +48,8 @@ class AbstractPrimitive:
 
 
 class GenericPrimitive(AbstractPrimitive):
-    """ Base class for all DXF entities which store the path/mesh primitive at
-    instantiation.
+    """ Base class for all DXF entities which store the path/mesh representation
+    at instantiation.
 
     """
 
@@ -58,7 +58,7 @@ class GenericPrimitive(AbstractPrimitive):
         self._convert_entity()
 
     def _convert_entity(self):
-        """ This method creates the path/mesh primitive. """
+        """ This method creates the path/mesh representation. """
         pass
 
     @property
@@ -142,7 +142,7 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
 
 def to_primitives(entities: Iterable[DXFEntity]) -> Iterable[AbstractPrimitive]:
     """ Disassemble DXF entities into path/mesh primitive objects. """
-    return (GenericPrimitive(e) for e in entities)
+    return (make_primitive(e) for e in entities)
 
 
 def to_vertices(primitives: Iterable[AbstractPrimitive]) -> Iterable[Vec3]:
