@@ -115,7 +115,10 @@ class MatplotlibBackend(Backend):
         fill, hatch = self._get_filling(properties)
         if fill is False and hatch is None:
             return
-
+        if hatch:
+            linewidth = self._line_renderer.lineweight(properties)
+        else:
+            linewidth = 0
         vertices = []
         codes = []
         for path in paths:
@@ -131,6 +134,7 @@ class MatplotlibBackend(Backend):
         patch = PathPatch(
             Path(vertices, codes),
             color=properties.color,
+            linewidth=linewidth,
             fill=fill,
             hatch=hatch,
             zorder=self._get_z()
@@ -139,8 +143,12 @@ class MatplotlibBackend(Backend):
 
     def draw_filled_polygon(self, points: Iterable[Vec3],
                             properties: Properties):
-        self.ax.fill(*zip(*((p.x, p.y) for p in points)),
-                     color=properties.color, zorder=self._get_z())
+        self.ax.fill(
+            *zip(*((p.x, p.y) for p in points)),
+            color=properties.color,
+            linewidth=0,
+            zorder=self._get_z()
+        )
 
     def draw_text(self, text: str, transform: Matrix44, properties: Properties,
                   cap_height: float):

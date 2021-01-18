@@ -5,7 +5,8 @@ News
 Version 0.15.2a0 - dev
 ----------------------
 
-- BUGFIX: ...
+- BUGFIX: matplotlib backend uses linewidth=0 for solid filled polygons and 
+  the scaled linewidth for polygons with pattern filling 
 
 Version 0.15.1 - 2021-01-15
 ---------------------------
