@@ -1,7 +1,7 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
 import ezdxf
-from ezdxf.render import Path
+from ezdxf.render import make_path
 
 
 doc = ezdxf.new()
@@ -21,7 +21,7 @@ ellipse = msp.add_ellipse(
     },
 )
 
-p = Path.from_ellipse(ellipse)
+p = make_path(ellipse)
 msp.add_lwpolyline(p.approximate(), dxfattribs={
     'layer': 'PathRendering',
     'color': 1,
