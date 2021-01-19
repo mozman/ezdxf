@@ -16,7 +16,7 @@ import numbers
 import copy
 import math
 from ezdxf.math import Vec3, has_clockwise_orientation
-from ezdxf.render import Path, nesting
+from ezdxf.render import Path, nesting, make_path
 from ezdxf.entities import DXFGraphic, LWPolyline, Hatch, Point
 from ezdxf.lldxf import const
 from ezdxf.entities import factory
@@ -589,14 +589,14 @@ def mapping(entity: DXFGraphic,
         entity = cast('Polyline', entity)
         if entity.is_3d_polyline or entity.is_2d_polyline:
             # May contain arcs as bulge values:
-            path = Path.from_polyline(entity)
+            path = make_path(entity)
             points = list(path.flattening(distance))
             return _line_string_or_polygon_mapping(points, force_line_string)
         else:
             raise TypeError('Polymesh and Polyface not supported.')
     elif dxftype == 'LWPOLYLINE':
         # May contain arcs as bulge values:
-        path = Path.from_lwpolyline(cast('LWPolyline', entity))
+        path = make_path(entity)
         points = list(path.flattening(distance))
         return _line_string_or_polygon_mapping(points, force_line_string)
     elif dxftype in {'CIRCLE', 'ARC', 'ELLIPSE', 'SPLINE'}:

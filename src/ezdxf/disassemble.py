@@ -4,7 +4,9 @@ from typing import Iterable, Optional, Tuple, cast, TYPE_CHECKING
 import abc
 from ezdxf.entities import DXFEntity
 from ezdxf.math import Vec3
-from ezdxf.render import Path, MeshBuilder, MeshVertexMerger, TraceBuilder
+from ezdxf.render import (
+    Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path
+)
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -127,7 +129,7 @@ class LwPolylinePrimitive(GenericPrimitive):
                 mb.add_face(face)
             self._mesh = MeshBuilder.from_builder(mb)
         else:  # use a path representation to support bulges!
-            self._path = Path.from_lwpolyline(e)
+            self._path = make_path(e)
 
 
 class PointPrimitive(AbstractPrimitive):

@@ -17,7 +17,7 @@ from ezdxf.entities import (
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
 from ezdxf.math import Vec3, Z_AXIS
-from ezdxf.render import MeshBuilder, TraceBuilder, Path
+from ezdxf.render import MeshBuilder, TraceBuilder, Path, make_path
 from ezdxf import reorder
 from ezdxf.render import nesting
 from ezdxf.proxygraphic import ProxyGraphic
@@ -403,8 +403,7 @@ class Frontend:
                 self.out.draw_filled_polygon(points, properties)
             return
 
-        path = Path.from_lwpolyline(entity) \
-            if is_lwpolyline else Path.from_polyline(entity)
+        path = make_path(entity)
         self.out.draw_path(path, properties)
 
     def draw_composite_entity(self, entity: DXFGraphic,
