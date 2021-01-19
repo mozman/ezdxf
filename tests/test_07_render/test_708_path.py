@@ -135,7 +135,7 @@ def test_from_arc():
         'start_angle': 0,
         'end_angle': 180,
     })
-    path = Path.from_arc(arc)
+    path = make_path(arc)
     assert path.start == (2, 0)
     assert path.end == (0, 0)
 
@@ -161,6 +161,16 @@ def test_from_circle_with_zero_radius():
     })
     path = make_path(circle)
     assert len(path) == 0
+
+
+def test_line_to_path():
+    from ezdxf.entities import Line
+    start = Vec3(1, 2, 3)
+    end = Vec3(4, 5, 6)
+    line = Line.new(dxfattribs={'start': start, 'end': end})
+    path = make_path(line)
+    assert path.start == start
+    assert path.end == end
 
 
 def test_lwpolyline_lines():
@@ -218,7 +228,7 @@ def test_lwpolyline_s_shape():
     assert any(cmd.type == Command.CURVE_TO for cmd in path)
 
 
-def test_polyine_lines():
+def test_polyline_lines():
     from ezdxf.entities import Polyline
     pline = Polyline()
     pline.append_formatted_vertices([(1, 1), (2, 1), (2, 2)], format='xy')
