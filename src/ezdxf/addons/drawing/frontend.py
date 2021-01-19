@@ -19,7 +19,7 @@ from ezdxf.layouts import Layout
 from ezdxf.math import Vec3, Z_AXIS
 from ezdxf.render import MeshBuilder, TraceBuilder, Path, make_path
 from ezdxf import reorder
-from ezdxf.render import nesting
+from ezdxf.render import nesting, make_path
 from ezdxf.proxygraphic import ProxyGraphic
 
 __all__ = ['Frontend']
@@ -221,7 +221,7 @@ class Frontend:
     def draw_curve_entity(self, entity: DXFGraphic,
                           properties: Properties) -> None:
         try:
-            path = entity.to_path()
+            path = make_path(entity)
         except AttributeError:  # API usage error
             raise TypeError(
                 f"Unsupported DXF type {entity.dxftype()}")

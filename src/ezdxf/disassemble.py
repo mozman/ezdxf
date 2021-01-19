@@ -92,7 +92,7 @@ class CurvePrimitive(AbstractPrimitive):
     def path(self) -> Optional[Path]:
         """ Create path representation on demand. """
         if self._path is None:
-            self._path = self.entity.to_path()
+            self._path = make_path(self.entity)
         return self._path
 
     def vertices(self) -> Iterable[Vec3]:

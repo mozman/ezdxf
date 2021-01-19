@@ -73,8 +73,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: to_spline(replace=True) -> Spline
 
-    .. automethod:: to_path() -> Path
-
     .. automethod:: from_arc(entity: DXFGraphic) -> Ellipse
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-107CB04F-AD4D-4D2F-8EC9-AC90888063AB

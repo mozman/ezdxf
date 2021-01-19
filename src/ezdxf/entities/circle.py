@@ -100,17 +100,6 @@ class Circle(DXFGraphic):
             count = arc_segment_count(radius, math.tau, sagitta)
             yield from self.vertices(linspace(0.0, 360.0, count + 1))
 
-    def to_path(self) -> 'Path':
-        """ Returns the circle as :class:`~ezdxf.render.path.Path`
-        representation.
-
-        .. versionadded:: 0.16
-
-        """
-        # dependency problem:
-        from ezdxf.render.path import Path
-        return Path.from_circle(self)
-
     def transform(self, m: Matrix44) -> 'Circle':
         """ Transform CIRCLE entity by transformation matrix `m` inplace.
 

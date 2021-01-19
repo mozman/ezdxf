@@ -52,8 +52,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: to_spline(replace=True) -> Spline
 
-    .. automethod:: to_path() -> Path
-
     .. automethod:: construction_tool() -> ConstructionArc
 
     .. automethod:: apply_construction_tool(arc: ConstructionArc) -> Arc

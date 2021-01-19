@@ -191,8 +191,3 @@ def test_circle_flattening(r, s, e, sagitta, count):
     })
     assert len(list(arc.flattening(sagitta))) == count
 
-
-def test_arc_to_path():
-    arc = Arc.new(dxfattribs={'radius': 5})
-    path = arc.to_path()
-    assert len(list(path.flattening(0.01))) > 32
