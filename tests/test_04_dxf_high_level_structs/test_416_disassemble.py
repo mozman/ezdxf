@@ -58,5 +58,31 @@ def test_circle_to_primitive():
     assert len(list(p.vertices())) > 32
 
 
+def test_arc_to_primitive():
+    e = factory.new('ARC', dxfattribs={'radius': 5})
+    p = disassemble.make_primitive(e)
+    assert p.path is not None
+    assert p.mesh is None
+    assert len(list(p.vertices())) > 32
+
+
+def test_ellipse_to_primitive():
+    e = factory.new('ELLIPSE', dxfattribs={'major_axis': (5, 0)})
+    p = disassemble.make_primitive(e)
+    assert p.path is not None
+    assert p.mesh is None
+    assert len(list(p.vertices())) > 32
+
+
+def test_spline_to_primitive():
+    e = factory.new('SPLINE')
+    e.control_points = [(0, 0), (3, 2), (6, -2), (9, 4)]
+    p = disassemble.make_primitive(e)
+    assert p.path is not None
+    assert p.mesh is None
+    assert len(list(p.vertices())) > 32
+    assert len(list(p.path.flattening(0.01))) > 16
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

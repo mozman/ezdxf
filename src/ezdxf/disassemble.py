@@ -85,6 +85,22 @@ class GenericPrimitive(AbstractPrimitive):
             yield from self._mesh.vertices
 
 
+class ArcPrimitive(AbstractPrimitive):
+    @property
+    def path(self) -> Optional[Path]:
+        """ Create path representation on demand. """
+        if self._path is None:
+            e = cast('Arc', self.entity)
+            self._path = Path.from_arc(e)
+        return self._path
+
+    def vertices(self) -> Iterable[Vec3]:
+        e = cast('Arc', self.entity)
+        # Not faster but more precise, because cubic bezier curves do not
+        # perfectly represent circles:
+        yield from e.flattening(self.max_flattening_distance)
+
+
 class CirclePrimitive(AbstractPrimitive):
     @property
     def path(self) -> Optional[Path]:
@@ -98,6 +114,22 @@ class CirclePrimitive(AbstractPrimitive):
         e = cast('Circle', self.entity)
         # Not faster but more precise, because cubic bezier curves do not
         # perfectly represent circles:
+        yield from e.flattening(self.max_flattening_distance)
+
+
+class EllipsePrimitive(AbstractPrimitive):
+    @property
+    def path(self) -> Optional[Path]:
+        """ Create path representation on demand. """
+        if self._path is None:
+            e = cast('Ellipse', self.entity)
+            self._path = Path.from_ellipse(e)
+        return self._path
+
+    def vertices(self) -> Iterable[Vec3]:
+        e = cast('Ellipse', self.entity)
+        # Not faster but more precise, because cubic bezier curves do not
+        # perfectly represent ellipses:
         yield from e.flattening(self.max_flattening_distance)
 
 
@@ -142,11 +174,30 @@ class PointPrimitive(AbstractPrimitive):
         yield self.entity.dxf.location
 
 
+class SplinePrimitive(AbstractPrimitive):
+    @property
+    def path(self) -> Optional[Path]:
+        """ Create path representation on demand. """
+        if self._path is None:
+            e = cast('Spline', self.entity)
+            self._path = Path.from_spline(e)
+        return self._path
+
+    def vertices(self) -> Iterable[Vec3]:
+        e = cast('Spline', self.entity)
+        # Not faster but more precise, because cubic bezier curves do not
+        # perfectly represent splines with degree != 3:
+        yield from e.flattening(self.max_flattening_distance, segments=32)
+
+
 _PRIMITIVE_CLASSES = {
+    "ARC": ArcPrimitive,
     "CIRCLE": CirclePrimitive,
+    "ELLIPSE": EllipsePrimitive,
     "LINE": LinePrimitive,
     "LWPOLYLINE": LwPolylinePrimitive,
     "POINT": PointPrimitive,
+    "SPLINE": SplinePrimitive,
 }
 
 
