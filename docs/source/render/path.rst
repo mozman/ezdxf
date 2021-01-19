@@ -3,9 +3,9 @@
 Path
 ====
 
-This module implements a geometrical :class:`Path` supported by several render backends,
-with the goal to create such paths from LWPOLYLINE, POLYLINE and HATCH boundary paths
-and send them to the render backend, see :mod:`ezdxf.addons.drawing`.
+This module implements a geometrical :class:`Path` supported by several render
+backends, with the goal to create such paths from LWPOLYLINE, POLYLINE and HATCH
+boundary paths and send them to the render backend, see :mod:`ezdxf.addons.drawing`.
 
 Minimum common interface:
 
@@ -30,9 +30,14 @@ Minimum common interface:
     - "L" - absolute line to
     - "C" - absolute cubic Bèzier-curve
 
-ARC and ELLIPSE entities are approximated by multiple cubic Bézier-curves, which are close enough
-for display rendering. Non-rational SPLINES of 3rd degree can be represented exact as multiple
-cubic Bézier-curves, other B-splines will be approximated.
+ARC and ELLIPSE entities are approximated by multiple cubic Bézier-curves, which
+are close enough for display rendering. Non-rational SPLINES of 3rd degree can
+be represented exact as multiple cubic Bézier-curves, other B-splines will be
+approximated.
+
+.. autofunction:: has_path_support
+
+.. autofunction:: make_path
 
 .. class:: Path
 

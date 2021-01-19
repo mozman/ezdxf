@@ -2,7 +2,7 @@
 #  License: MIT License
 import pytest
 from ezdxf.layouts import VirtualLayout
-from ezdxf.render import Path
+from ezdxf.render import make_path
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def ellipse():
 
 
 def test_end_points(ellipse):
-    p = Path.from_ellipse(ellipse)
+    p = make_path(ellipse)
 
     assert ellipse.start_point.isclose(p.start)
     assert ellipse.end_point.isclose(p.end)

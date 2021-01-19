@@ -6,7 +6,17 @@ Version 0.15.2a0 - dev
 ----------------------
 
 - BUGFIX: matplotlib backend uses linewidth=0 for solid filled polygons and 
-  the scaled linewidth for polygons with pattern filling 
+  the scaled linewidth for polygons with pattern filling
+- NEW: `ezdxf.render.make_path()` factory function to convert linear DXF 
+  entities into a `Path()` object.
+- NEW: `ezdxf.render.has_path_support()` to check if conversion into a `Path()` 
+  object is possible 
+- DEPRECATED: `Path.from_lwpolyline()`, replaced by factory `make_path()`
+- DEPRECATED: `Path.from_polyline()`, replaced by factory `make_path()`
+- DEPRECATED: `Path.from_spline()`, replaced by factory `make_path()`
+- DEPRECATED: `Path.from_ellipse()`, replaced by factory `make_path()`
+- DEPRECATED: `Path.from_arc()`, replaced by factory `make_path()`
+- DEPRECATED: `Path.from_circle()`, replaced by factory `make_path()`
 
 Version 0.15.1 - 2021-01-15
 ---------------------------

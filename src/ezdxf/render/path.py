@@ -4,6 +4,7 @@
 from typing import TYPE_CHECKING, List, Iterable, Sequence, NamedTuple, Union
 from collections import abc
 from enum import Enum
+import warnings
 import math
 from ezdxf.math import (
     Vec3, NULLVEC, Z_AXIS, OCS, Bezier4P, Matrix44, bulge_to_arc,
@@ -14,7 +15,7 @@ from ezdxf.math import (
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         LWPolyline, Polyline, Vertex, Spline, Ellipse,
-        Arc, Circle,
+        Arc, Circle, DXFEntity,
     )
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
@@ -124,46 +125,29 @@ class Path(abc.Sequence):
     def from_lwpolyline(cls, lwpolyline: 'LWPolyline') -> 'Path':
         """ Returns a :class:`Path` from a :class:`~ezdxf.entities.LWPolyline`
         entity, all vertices transformed to WCS.
+
+        .. deprecated:: 0.15.2
+            replaced by factory function :func:`make_path()`
+
         """
-        assert lwpolyline.dxftype() == 'LWPOLYLINE'
-        path = cls()
-        path._setup_polyline_2d(
-            lwpolyline.get_points('xyb'),
-            close=lwpolyline.closed,
-            ocs=lwpolyline.ocs(),
-            elevation=lwpolyline.dxf.elevation,
-        )
-        return path
+        warnings.warn(
+            'use factory function make_path(lwpolyline),'
+            'will be removed in v0.17.', DeprecationWarning)
+        return make_path(lwpolyline)
 
     @classmethod
     def from_polyline(cls, polyline: 'Polyline') -> 'Path':
         """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Polyline`
         entity, all vertices transformed to WCS.
+
+        .. deprecated:: 0.15.2
+            replaced by factory function :func:`make_path()`
+
         """
-        assert polyline.dxftype() == 'POLYLINE'
-        path = cls()
-
-        if len(polyline.vertices) == 0:
-            return path
-
-        if polyline.is_3d_polyline:
-            return cls.from_vertices(polyline.points(), polyline.is_closed)
-
-        points = [vertex.format('xyb') for vertex in polyline.vertices]
-        ocs = polyline.ocs()
-        if polyline.dxf.hasattr('elevation'):
-            elevation = Vec3(polyline.dxf.elevation).z
-        else:
-            # Elevation attribute is mandatory, but you never know,
-            # take elevation from first vertex.
-            elevation = Vec3(polyline.vertices[0].dxf.location).z
-        path._setup_polyline_2d(
-            points,
-            close=polyline.is_closed,
-            ocs=ocs,
-            elevation=elevation,
-        )
-        return path
+        warnings.warn(
+            'use factory function make_path(polyline),'
+            'will be removed in v0.17.', DeprecationWarning)
+        return make_path(polyline)
 
     def _setup_polyline_2d(self, points: Iterable[Sequence[float]], close: bool,
                            ocs: OCS, elevation: float) -> None:
@@ -214,48 +198,55 @@ class Path(abc.Sequence):
 
     @classmethod
     def from_spline(cls, spline: 'Spline', level: int = 4) -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Spline`. """
-        path = cls()
-        path.add_spline(spline.construction_tool(), level=level, reset=True)
-        return path
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Spline`.
+
+        .. deprecated:: 0.15.2
+            replaced by factory function :func:`make_path()`
+
+        """
+        warnings.warn(
+            'use factory function make_path(polyline),'
+            'will be removed in v0.17.', DeprecationWarning)
+        return make_path(spline, level=level)
 
     @classmethod
     def from_ellipse(cls, ellipse: 'Ellipse', segments: int = 1) -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Ellipse`. """
-        path = cls()
-        path.add_ellipse(ellipse.construction_tool(), segments=segments,
-                         reset=True)
-        return path
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Ellipse`.
+
+        .. deprecated:: 0.15.2
+            replaced by factory function :func:`make_path()`
+
+        """
+        warnings.warn(
+            'use factory function make_path(ellipse),'
+            'will be removed in v0.17.', DeprecationWarning)
+        return make_path(ellipse, segments=segments)
 
     @classmethod
     def from_arc(cls, arc: 'Arc', segments: int = 1) -> 'Path':
-        """ Returns a :class:`Path` from an :class:`~ezdxf.entities.Arc`. """
-        path = cls()
-        radius = abs(arc.dxf.radius)
-        if not math.isclose(radius, 0):
-            ellipse = ConstructionEllipse.from_arc(
-                center=arc.dxf.center,
-                radius=radius,
-                extrusion=arc.dxf.extrusion,
-                start_angle=arc.dxf.start_angle,
-                end_angle=arc.dxf.end_angle,
-            )
-            path.add_ellipse(ellipse, segments=segments, reset=True)
-        return path
+        """ Returns a :class:`Path` from an :class:`~ezdxf.entities.Arc`.
+
+        .. deprecated:: 0.15.2
+            replaced by factory function :func:`make_path()`
+
+        """
+        warnings.warn(
+            'use factory function make_path(arc),'
+            'will be removed in v0.17.', DeprecationWarning)
+        return make_path(arc, segments=segments)
 
     @classmethod
     def from_circle(cls, circle: 'Circle', segments: int = 1) -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Circle`. """
-        path = cls()
-        radius = abs(circle.dxf.radius)
-        if not math.isclose(radius, 0):
-            ellipse = ConstructionEllipse.from_arc(
-                center=circle.dxf.center,
-                radius=radius,
-                extrusion=circle.dxf.extrusion,
-            )
-            path.add_ellipse(ellipse, segments=segments, reset=True)
-        return path
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Circle`.
+
+        .. deprecated:: 0.15.2
+            replaced by factory function :func:`make_path()`
+
+        """
+        warnings.warn(
+            'use factory function make_path(circle),'
+            'will be removed in v0.17.', DeprecationWarning)
+        return make_path(circle, segments=segments)
 
     @classmethod
     def from_hatch_boundary_path(cls, boundary: 'TPath', ocs: OCS = None,
@@ -286,8 +277,8 @@ class Path(abc.Sequence):
     @classmethod
     def from_hatch_edge_path(cls, edges: 'EdgePath', ocs: OCS = None,
                              elevation: float = 0) -> 'Path':
-        """
-        Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch` edge path.
+        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch` edge
+        path.
         """
 
         def add_line_edge(edge):
@@ -626,3 +617,149 @@ def _reverse_bezier_curves(curves: List[Bezier4P]) -> List[Bezier4P]:
     curves = list(c.reverse() for c in curves)
     curves.reverse()
     return curves
+
+
+def _from_lwpolyline(lwpolyline: 'LWPolyline', **kwargs) -> 'Path':
+    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.LWPolyline`
+    entity, all vertices transformed to WCS.
+    """
+    path = Path()
+    path._setup_polyline_2d(  # linters: shut-up, it's a "friend" function
+        lwpolyline.get_points('xyb'),
+        close=lwpolyline.closed,
+        ocs=lwpolyline.ocs(),
+        elevation=lwpolyline.dxf.elevation,
+    )
+    return path
+
+
+def _from_polyline(polyline: 'Polyline', **kwargs) -> 'Path':
+    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Polyline`
+    entity, all vertices transformed to WCS.
+    """
+    path = Path()
+
+    if len(polyline.vertices) == 0:
+        return path
+
+    if polyline.is_3d_polyline:
+        return Path.from_vertices(polyline.points(), polyline.is_closed)
+
+    points = [vertex.format('xyb') for vertex in polyline.vertices]
+    ocs = polyline.ocs()
+    if polyline.dxf.hasattr('elevation'):
+        elevation = Vec3(polyline.dxf.elevation).z
+    else:
+        # Elevation attribute is mandatory, but you never know,
+        # take elevation from first vertex.
+        elevation = Vec3(polyline.vertices[0].dxf.location).z
+    path._setup_polyline_2d(
+        points,
+        close=polyline.is_closed,
+        ocs=ocs,
+        elevation=elevation,
+    )
+    return path
+
+
+def _from_spline(spline: 'Spline', **kwargs) -> 'Path':
+    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Spline`. """
+    level = kwargs.get('level', 4)
+    path = Path()
+    path.add_spline(spline.construction_tool(), level=level, reset=True)
+    return path
+
+
+def _from_ellipse(ellipse: 'Ellipse', **kwargs) -> 'Path':
+    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Ellipse`. """
+    segments = kwargs.get('segments', 1)
+    path = Path()
+    path.add_ellipse(ellipse.construction_tool(),
+                     segments=segments,
+                     reset=True)
+    return path
+
+
+def _from_line(line: 'Line', **kwargs) -> 'Path':
+    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Line`. """
+    path = Path(line.dxf.start)
+    path.line_to(line.dxf.end)
+    return path
+
+
+def _from_arc(arc: 'Arc', **kwargs) -> 'Path':
+    """ Returns a :class:`Path` from an :class:`~ezdxf.entities.Arc`.
+    """
+    segments = kwargs.get('segments', 1)
+    path = Path()
+    radius = abs(arc.dxf.radius)
+    if not math.isclose(radius, 0):
+        ellipse = ConstructionEllipse.from_arc(
+            center=arc.dxf.center,
+            radius=radius,
+            extrusion=arc.dxf.extrusion,
+            start_angle=arc.dxf.start_angle,
+            end_angle=arc.dxf.end_angle,
+        )
+        path.add_ellipse(ellipse, segments=segments, reset=True)
+    return path
+
+
+def _from_circle(circle: 'Circle', **kwargs) -> 'Path':
+    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Circle`.
+    """
+    segments = kwargs.get('segments', 1)
+    path = Path()
+    radius = abs(circle.dxf.radius)
+    if not math.isclose(radius, 0):
+        ellipse = ConstructionEllipse.from_arc(
+            center=circle.dxf.center,
+            radius=radius,
+            extrusion=circle.dxf.extrusion,
+        )
+        path.add_ellipse(ellipse, segments=segments, reset=True)
+    return path
+
+
+_FACTORIES = {
+    "ARC": _from_arc,
+    "CIRCLE": _from_circle,
+    "ELLIPSE": _from_ellipse,
+    "LINE": _from_line,
+    "LWPOLYLINE": _from_lwpolyline,
+    "POLYLINE": _from_polyline,
+    "SPLINE": _from_spline,
+}
+
+
+def has_path_support(e: 'DXFEntity') -> bool:
+    """ Returns ``True`` if DXF entity `e` is convertible into a :class:`Path`
+    object.
+    """
+    dxftype = e.dxftype()
+    if dxftype == "POLYLINE":
+        # PolygonMesh and PolyFaceMesh is not supported by Path()
+        return e.is_2d_polyline() or e.is_3d_polyline()
+    else:
+        return dxftype in _FACTORIES
+
+
+def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
+    """ Factory function to create :class:`Path` objects from linear DXF
+    Entities:
+
+    - LINE
+    - CIRCLE
+    - ARC
+    - ELLIPSE
+    - SPLINE
+    - LWPOLYLINE
+    - 2D and 3D POLYLINE
+
+    """
+    dxftype = e.dxftype()
+    try:
+        converter = _FACTORIES[dxftype]
+        return converter(e, segments=segments, level=level)
+    except KeyError:
+        raise TypeError(f'Unsupported DXF type {dxftype}')
