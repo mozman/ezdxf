@@ -80,8 +80,8 @@ def test_spline_to_primitive():
     p = disassemble.make_primitive(e)
     assert p.path is not None
     assert p.mesh is None
-    assert len(list(p.vertices())) > 32
-    assert len(list(p.path.flattening(0.01))) > 16
+    assert len(list(p.vertices())) > 20
+    assert len(list(p.path.flattening(0.01))) > 20
 
 
 if __name__ == '__main__':

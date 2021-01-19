@@ -85,7 +85,7 @@ class GenericPrimitive(AbstractPrimitive):
             yield from self._mesh.vertices
 
 
-class EllipticArcPrimitive(AbstractPrimitive):
+class CurvePrimitive(AbstractPrimitive):
     @property
     def path(self) -> Optional[Path]:
         """ Create path representation on demand. """
@@ -94,10 +94,11 @@ class EllipticArcPrimitive(AbstractPrimitive):
         return self._path
 
     def vertices(self) -> Iterable[Vec3]:
-        e = cast('Ellipse', self.entity)
         # Not faster but more precise, because cubic bezier curves do not
-        # perfectly represent elliptic arcs (CIRCLE, ARC, ELLIPSE):
-        yield from e.flattening(self.max_flattening_distance)
+        # perfectly represent elliptic arcs (CIRCLE, ARC, ELLIPSE).
+        # SPLINE: cubic bezier curves do not perfectly represent splines with
+        # degree != 3.
+        yield from self.entity.flattening(self.max_flattening_distance)
 
 
 class LinePrimitive(AbstractPrimitive):
@@ -141,29 +142,14 @@ class PointPrimitive(AbstractPrimitive):
         yield self.entity.dxf.location
 
 
-class SplinePrimitive(AbstractPrimitive):
-    @property
-    def path(self) -> Optional[Path]:
-        """ Create path representation on demand. """
-        if self._path is None:
-            self._path = self.entity.to_path()
-        return self._path
-
-    def vertices(self) -> Iterable[Vec3]:
-        e = cast('Spline', self.entity)
-        # Not faster but more precise, because cubic bezier curves do not
-        # perfectly represent splines with degree != 3:
-        yield from e.flattening(self.max_flattening_distance, segments=32)
-
-
 _PRIMITIVE_CLASSES = {
-    "ARC": EllipticArcPrimitive,
-    "CIRCLE": EllipticArcPrimitive,
-    "ELLIPSE": EllipticArcPrimitive,
+    "ARC": CurvePrimitive,
+    "CIRCLE": CurvePrimitive,
+    "ELLIPSE": CurvePrimitive,
     "LINE": LinePrimitive,
     "LWPOLYLINE": LwPolylinePrimitive,
     "POINT": PointPrimitive,
-    "SPLINE": SplinePrimitive,
+    "SPLINE": CurvePrimitive,
 }
 
 
