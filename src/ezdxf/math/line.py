@@ -242,7 +242,12 @@ class ConstructionLine:
     def is_vertical(self) -> bool:
         """ ``True`` if line is vertical. """
         return math.isclose(self.start.x, self.end.x)
-
+    
+    @property
+    def is_horizontal(self) -> bool:
+        """ ``True`` if line is horizontal. """
+        return math.isclose(self.start.y, self.end.y)
+    
     def inside_bounding_box(self, point: 'Vertex') -> bool:
         """ Returns ``True`` if `point` is inside of line bounding box. """
         return self.bounding_box.inside(point)
