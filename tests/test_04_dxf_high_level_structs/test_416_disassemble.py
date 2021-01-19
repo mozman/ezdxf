@@ -50,5 +50,13 @@ def test_lwpolyline_to_primitive():
     assert list(p.vertices()) == [p1, p2, p3]
 
 
+def test_circle_to_primitive():
+    e = factory.new('CIRCLE', dxfattribs={'radius': 5})
+    p = disassemble.make_primitive(e)
+    assert p.path is not None
+    assert p.mesh is None
+    assert len(list(p.vertices())) > 32
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

@@ -24,11 +24,21 @@ objects.
 
 .. autofunction:: to_vertices(primitives: Iterable[AbstractPrimitive]) -> Iterable[Vec3]
 
-.. autofunction:: make_primitive(entity: DXFEntity) -> AbstractPrimitive
+.. autofunction:: make_primitive(entity: DXFEntity, max_flattening_distance=None) -> AbstractPrimitive
 
 .. class:: AbstractPrimitive
 
     Interface class for path/mesh primitives.
+
+    .. attribute:: entity
+
+    Reference to the source DXF entity of this primitive.
+
+    .. attribute:: max_flattening_distance
+
+    The `max_flattening_distance` attribute defines the max distance in drawing
+    units between the approximation line and the original curve.
+    Set the value by direct attribute access. (float) default = 0.01
 
     .. autoattribute:: path
 

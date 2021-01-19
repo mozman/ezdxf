@@ -7,7 +7,9 @@ from ezdxf.math import Vec3
 from ezdxf.render import Path, MeshBuilder, MeshVertexMerger, TraceBuilder
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import LWPolyline
+    from ezdxf.eztypes import (
+        LWPolyline, Circle, Arc, Ellipse, Spline,
+    )
 
 
 class AbstractPrimitive:
@@ -16,16 +18,23 @@ class AbstractPrimitive:
     others the builtin flattening() method is more efficient or accurate than
     using a Path() proxy object. (ARC, CIRCLE, ELLIPSE, SPLINE).
 
-    """
-    flattening_distance: float = 0.1
+    The `max_flattening_distance` defines the max distance between the
+    approximation line and the original curve. Use argument
+    `max_flattening_distance` to override the default value, or set the value
+    by direct attribute access.
 
-    def __init__(self, entity: DXFEntity):
+    """
+    max_flattening_distance: float = 0.01
+
+    def __init__(self, entity: DXFEntity, max_flattening_distance=None):
         self.entity: DXFEntity = entity
         # Path representation for linear entities:
         self._path: Optional[Path] = None
         # MeshBuilder representation for mesh based entities:
         # PolygonMesh, PolyFaceMesh, Mesh
         self._mesh: Optional[MeshBuilder] = None
+        if max_flattening_distance:
+            self.max_flattening_distance = max_flattening_distance
 
     @property
     def path(self) -> Optional[Path]:
@@ -71,21 +80,25 @@ class GenericPrimitive(AbstractPrimitive):
 
     def vertices(self) -> Iterable[Vec3]:
         if self.path:
-            yield from self._path.flattening(self.flattening_distance)
+            yield from self._path.flattening(self.max_flattening_distance)
         elif self.mesh:
             yield from self._mesh.vertices
 
 
-class PointPrimitive(AbstractPrimitive):
+class CirclePrimitive(AbstractPrimitive):
     @property
     def path(self) -> Optional[Path]:
         """ Create path representation on demand. """
         if self._path is None:
-            self._path = Path(self.entity.dxf.location)
+            e = cast('Circle', self.entity)
+            self._path = Path.from_circle(e)
         return self._path
 
     def vertices(self) -> Iterable[Vec3]:
-        yield self.entity.dxf.location
+        e = cast('Circle', self.entity)
+        # Not faster but more precise, because cubic bezier curves do not
+        # perfectly represent circles:
+        yield from e.flattening(self.max_flattening_distance)
 
 
 class LinePrimitive(AbstractPrimitive):
@@ -117,17 +130,38 @@ class LwPolylinePrimitive(GenericPrimitive):
             self._path = Path.from_lwpolyline(e)
 
 
+class PointPrimitive(AbstractPrimitive):
+    @property
+    def path(self) -> Optional[Path]:
+        """ Create path representation on demand. """
+        if self._path is None:
+            self._path = Path(self.entity.dxf.location)
+        return self._path
+
+    def vertices(self) -> Iterable[Vec3]:
+        yield self.entity.dxf.location
+
+
 _PRIMITIVE_CLASSES = {
+    "CIRCLE": CirclePrimitive,
     "LINE": LinePrimitive,
-    "POINT": PointPrimitive,
     "LWPOLYLINE": LwPolylinePrimitive,
+    "POINT": PointPrimitive,
 }
 
 
-def make_primitive(e: DXFEntity) -> AbstractPrimitive:
-    """ Factory to create path/mesh primitives. """
+def make_primitive(e: DXFEntity,
+                   max_flattening_distance=None) -> AbstractPrimitive:
+    """ Factory to create path/mesh primitives. The `max_flattening_distance`
+    defines the max distance between the approximation line and the original
+    curve. Use `max_flattening_distance` to override the default value.
+
+    """
     cls = _PRIMITIVE_CLASSES.get(e.dxftype(), GenericPrimitive)
-    return cls(e)
+    primitive = cls(e)
+    if max_flattening_distance:
+        primitive.max_flattening_distance = max_flattening_distance
+    return primitive
 
 
 def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
@@ -140,9 +174,10 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
     return []
 
 
-def to_primitives(entities: Iterable[DXFEntity]) -> Iterable[AbstractPrimitive]:
+def to_primitives(entities: Iterable[DXFEntity],
+                  max_flattening_distance=None) -> Iterable[AbstractPrimitive]:
     """ Disassemble DXF entities into path/mesh primitive objects. """
-    return (make_primitive(e) for e in entities)
+    return (make_primitive(e, max_flattening_distance) for e in entities)
 
 
 def to_vertices(primitives: Iterable[AbstractPrimitive]) -> Iterable[Vec3]:
