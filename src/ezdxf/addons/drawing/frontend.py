@@ -81,9 +81,9 @@ class Frontend:
 
         self._dispatch = self._build_dispatch_table()
 
-    def _build_dispatch_table(self) -> Dict[str, Callable[[DXFGraphic, Properties], None]]:
+    def _build_dispatch_table(self) -> Dict[
+        str, Callable[[DXFGraphic, Properties], None]]:
         dispatch_table = {
-            'SPLINE': self.draw_spline_entity,
             'POINT': self.draw_point_entity,
             'HATCH': self.draw_hatch_entity,
             'MESH': self.draw_mesh_entity,
@@ -94,8 +94,8 @@ class Frontend:
             dispatch_table[dxftype] = self.draw_line_entity
         for dxftype in ('TEXT', 'MTEXT', 'ATTRIB', 'ATTDEF'):
             dispatch_table[dxftype] = self.draw_text_entity
-        for dxftype in ('CIRCLE', 'ARC', 'ELLIPSE'):
-            dispatch_table[dxftype] = self.draw_elliptic_arc_entity
+        for dxftype in ('CIRCLE', 'ARC', 'ELLIPSE', 'SPLINE'):
+            dispatch_table[dxftype] = self.draw_curve_entity
         for dxftype in ('3DFACE', 'SOLID', 'TRACE'):
             dispatch_table[dxftype] = self.draw_solid_entity
         for dxftype in ('POLYLINE', 'LWPOLYLINE'):
@@ -218,22 +218,13 @@ class Frontend:
                             properties: Properties) -> None:
         self.skip_entity(entity, '3D text not supported')
 
-    def draw_elliptic_arc_entity(self, entity: DXFGraphic,
-                                 properties: Properties) -> None:
-        dxftype = entity.dxftype()
-        if dxftype == 'CIRCLE':
-            path = Path.from_circle(cast('Circle', entity))
-        elif dxftype == 'ARC':
-            path = Path.from_arc(cast('Arc', entity))
-        elif dxftype == 'ELLIPSE':
-            path = Path.from_ellipse(cast('Ellipse', entity))
-        else:  # API usage error
-            raise TypeError(dxftype)
-        self.out.draw_path(path, properties)
-
-    def draw_spline_entity(self, entity: DXFGraphic,
-                           properties: Properties) -> None:
-        path = Path.from_spline(cast(Spline, entity))
+    def draw_curve_entity(self, entity: DXFGraphic,
+                          properties: Properties) -> None:
+        try:
+            path = entity.to_path()
+        except AttributeError:  # API usage error
+            raise TypeError(
+                f"Unsupported DXF type {entity.dxftype()}")
         self.out.draw_path(path, properties)
 
     def draw_point_entity(self, entity: DXFGraphic,
