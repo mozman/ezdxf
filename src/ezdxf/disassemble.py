@@ -85,51 +85,18 @@ class GenericPrimitive(AbstractPrimitive):
             yield from self._mesh.vertices
 
 
-class ArcPrimitive(AbstractPrimitive):
+class EllipticArcPrimitive(AbstractPrimitive):
     @property
     def path(self) -> Optional[Path]:
         """ Create path representation on demand. """
         if self._path is None:
-            e = cast('Arc', self.entity)
-            self._path = Path.from_arc(e)
-        return self._path
-
-    def vertices(self) -> Iterable[Vec3]:
-        e = cast('Arc', self.entity)
-        # Not faster but more precise, because cubic bezier curves do not
-        # perfectly represent circles:
-        yield from e.flattening(self.max_flattening_distance)
-
-
-class CirclePrimitive(AbstractPrimitive):
-    @property
-    def path(self) -> Optional[Path]:
-        """ Create path representation on demand. """
-        if self._path is None:
-            e = cast('Circle', self.entity)
-            self._path = Path.from_circle(e)
-        return self._path
-
-    def vertices(self) -> Iterable[Vec3]:
-        e = cast('Circle', self.entity)
-        # Not faster but more precise, because cubic bezier curves do not
-        # perfectly represent circles:
-        yield from e.flattening(self.max_flattening_distance)
-
-
-class EllipsePrimitive(AbstractPrimitive):
-    @property
-    def path(self) -> Optional[Path]:
-        """ Create path representation on demand. """
-        if self._path is None:
-            e = cast('Ellipse', self.entity)
-            self._path = Path.from_ellipse(e)
+            self._path = self.entity.to_path()
         return self._path
 
     def vertices(self) -> Iterable[Vec3]:
         e = cast('Ellipse', self.entity)
         # Not faster but more precise, because cubic bezier curves do not
-        # perfectly represent ellipses:
+        # perfectly represent elliptic arcs (CIRCLE, ARC, ELLIPSE):
         yield from e.flattening(self.max_flattening_distance)
 
 
@@ -179,8 +146,7 @@ class SplinePrimitive(AbstractPrimitive):
     def path(self) -> Optional[Path]:
         """ Create path representation on demand. """
         if self._path is None:
-            e = cast('Spline', self.entity)
-            self._path = Path.from_spline(e)
+            self._path = self.entity.to_path()
         return self._path
 
     def vertices(self) -> Iterable[Vec3]:
@@ -191,9 +157,9 @@ class SplinePrimitive(AbstractPrimitive):
 
 
 _PRIMITIVE_CLASSES = {
-    "ARC": ArcPrimitive,
-    "CIRCLE": CirclePrimitive,
-    "ELLIPSE": EllipsePrimitive,
+    "ARC": EllipticArcPrimitive,
+    "CIRCLE": EllipticArcPrimitive,
+    "ELLIPSE": EllipticArcPrimitive,
     "LINE": LinePrimitive,
     "LWPOLYLINE": LwPolylinePrimitive,
     "POINT": PointPrimitive,

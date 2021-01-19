@@ -211,3 +211,10 @@ def test_circle_user_ocs():
 def test_circle_flattening(radius, sagitta, count):
     circle = Circle.new(dxfattribs={'radius': radius})
     assert len(list(circle.flattening(sagitta))) == count
+
+
+def test_circle_to_path():
+    circle = Circle.new(dxfattribs={'radius': 5})
+    path = circle.to_path()
+    assert len(list(path.flattening(0.01))) > 32
+

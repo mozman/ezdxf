@@ -398,6 +398,13 @@ def test_from_line_with_type_error():
         Spline.from_arc(Line.new())
 
 
+def test_spline_to_path():
+    spline = Spline()
+    spline.control_points = [(0, 0), (3, 2), (6, -2), (9, 4)]
+    path = spline.to_path()
+    assert len(list(path.flattening(0.01))) > 16
+
+
 SPLINE2 = """  0
 SPLINE
   5

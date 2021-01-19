@@ -177,6 +177,17 @@ class Ellipse(DXFGraphic):
         """
         return self.construction_tool().flattening(distance, segments)
 
+    def to_path(self) -> 'Path':
+        """ Returns the ellipse as :class:`~ezdxf.render.path.Path`
+        representation.
+
+        .. versionadded:: 0.16
+
+        """
+        # dependency problem:
+        from ezdxf.render.path import Path
+        return Path.from_ellipse(self)
+
     def swap_axis(self):
         """ Swap axis and adjust start- and end parameter. """
         e = self.construction_tool()

@@ -146,5 +146,11 @@ def test_from_arc():
     assert ellipse.dxf.start_param == 0
     assert math.isclose(ellipse.dxf.end_param, math.tau)
 
+
+def test_ellipse_to_path():
+    ellipse = Ellipse.new(dxfattribs={'major_axis': (5, 0)})
+    path = ellipse.to_path()
+    assert len(list(path.flattening(0.01))) > 32
+
 # tests for swap_axis() are done in test_648_construction_ellipse.py
 # tests for params() are done in test_648_construction_ellipse.py

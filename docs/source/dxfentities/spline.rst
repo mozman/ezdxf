@@ -121,6 +121,8 @@ Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. automethod:: flattening(distance: float, segments: int = 4) -> Iterable[Vec3]
 
+    .. automethod:: to_path(level: int = 4) -> Path
+
     .. automethod:: set_open_uniform
 
     .. automethod:: set_uniform

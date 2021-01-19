@@ -92,6 +92,17 @@ class Arc(Circle):
         to_wcs = self.ocs().points_to_wcs
         yield from to_wcs(arc.flattening(sagitta))
 
+    def to_path(self) -> 'Path':
+        """ Returns the arc as :class:`~ezdxf.render.path.Path`
+        representation.
+
+        .. versionadded:: 0.16
+
+        """
+        # dependency problem:
+        from ezdxf.render.path import Path
+        return Path.from_arc(self)
+
     def transform(self, m: Matrix44) -> 'Arc':
         """ Transform ARC entity by transformation matrix `m` inplace.
 

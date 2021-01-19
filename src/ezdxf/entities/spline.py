@@ -295,6 +295,17 @@ class Spline(DXFGraphic):
         """
         return self.construction_tool().flattening(distance, segments)
 
+    def to_path(self, level: int = 4) -> 'Path':
+        """ Returns the spline as :class:`~ezdxf.render.path.Path`
+        representation.
+
+        .. versionadded:: 0.16
+
+        """
+        # dependency problem:
+        from ezdxf.render.path import Path
+        return Path.from_spline(self, level)
+
     @classmethod
     def from_arc(cls, entity: 'DXFGraphic') -> 'Spline':
         """ Create a new SPLINE entity from CIRCLE, ARC or ELLIPSE entity.
