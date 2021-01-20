@@ -744,6 +744,7 @@ _FACTORIES = {
     "LWPOLYLINE": _from_lwpolyline,
     "POLYLINE": _from_polyline,
     "SPLINE": _from_spline,
+    "HELIX": _from_spline,
     "SOLID": _from_quadrilateral,
     "TRACE": _from_quadrilateral,
     "3DFACE": _from_quadrilateral,
@@ -770,7 +771,7 @@ def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
     - CIRCLE
     - ARC
     - ELLIPSE
-    - SPLINE
+    - SPLINE and HELIX
     - LWPOLYLINE
     - 2D and 3D POLYLINE
     - SOLID, TRACE, 3DFACE
