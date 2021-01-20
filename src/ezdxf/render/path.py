@@ -647,8 +647,9 @@ def _from_polyline(polyline: 'Polyline', **kwargs) -> 'Path':
     entity, all vertices transformed to WCS.
     """
     path = Path()
-
-    if len(polyline.vertices) == 0:
+    if len(polyline.vertices) == 0 or \
+            polyline.is_polygon_mesh or \
+            polyline.is_poly_face_mesh:
         return path
 
     if polyline.is_3d_polyline:
@@ -787,6 +788,6 @@ def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
     dxftype = e.dxftype()
     try:
         converter = _FACTORIES[dxftype]
-        return converter(e, segments=segments, level=level)
     except KeyError:
         raise TypeError(f'Unsupported DXF type {dxftype}')
+    return converter(e, segments=segments, level=level)
