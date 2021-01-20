@@ -40,12 +40,23 @@ class AbstractPrimitive:
 
     @property
     def path(self) -> Optional[Path]:
-        """ :class:`~ezdxf.render.path.Path` representation or ``None`` """
+        """ :class:`~ezdxf.render.path.Path` representation or ``None``,
+        idiom to check if is a path representation (could be empty)::
+
+            if primitive.path is not None:
+                process(primitive.path)
+
+        """
         return None
 
     @property
     def mesh(self) -> Optional[MeshBuilder]:
-        """ :class:`~ezdxf.render.mesh.MeshBuilder` representation or ``None``
+        """ :class:`~ezdxf.render.mesh.MeshBuilder` representation or ``None``,
+        idiom to check if is a mesh representation (could be empty)::
+
+            if primitive.mesh is not None:
+                process(primitive.mesh)
+
         """
         return None
 

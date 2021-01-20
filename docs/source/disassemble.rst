@@ -40,9 +40,9 @@ objects.
     units between the approximation line and the original curve.
     Set the value by direct attribute access. (float) default = 0.01
 
-    .. autoattribute:: path
+    .. autoproperty:: path
 
-    .. autoattribute:: mesh
+    .. autoproperty:: mesh
 
     .. automethod:: vertices() -> Iterable[Vec3]
 

@@ -17,9 +17,8 @@ from ezdxf.entities import (
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
 from ezdxf.math import Vec3, Z_AXIS
-from ezdxf.render import MeshBuilder, TraceBuilder, Path, make_path
+from ezdxf.render import MeshBuilder, TraceBuilder, Path, make_path, nesting
 from ezdxf import reorder
-from ezdxf.render import nesting, make_path
 from ezdxf.proxygraphic import ProxyGraphic
 
 __all__ = ['Frontend']
