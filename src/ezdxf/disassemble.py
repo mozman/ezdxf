@@ -164,6 +164,7 @@ _PRIMITIVE_CLASSES = {
     "ARC": CurvePrimitive,
     "CIRCLE": CurvePrimitive,
     "ELLIPSE": CurvePrimitive,
+    "HELIX": CurvePrimitive,
     "LINE": LinePrimitive,
     "LWPOLYLINE": LwPolylinePrimitive,
     "POINT": PointPrimitive,
