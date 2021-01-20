@@ -15,7 +15,7 @@ from ezdxf.math import (
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         LWPolyline, Polyline, Vertex, Spline, Ellipse,
-        Arc, Circle, DXFEntity,
+        Arc, Circle, DXFEntity, Line
     )
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
@@ -149,48 +149,6 @@ class Path(abc.Sequence):
             'will be removed in v0.17.', DeprecationWarning)
         return make_path(polyline)
 
-    def _setup_polyline_2d(self, points: Iterable[Sequence[float]], close: bool,
-                           ocs: OCS, elevation: float) -> None:
-        def bulge_to(p1: Vec3, p2: Vec3, bulge: float):
-            if p1.isclose(p2):
-                return
-            center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
-            ellipse = ConstructionEllipse.from_arc(
-                center, radius, Z_AXIS,
-                math.degrees(start_angle),
-                math.degrees(end_angle),
-            )
-            curves = list(cubic_bezier_from_ellipse(ellipse))
-            if curves[0].control_points[0].isclose(p2):
-                curves = _reverse_bezier_curves(curves)
-            self.add_curves(curves)
-
-        prev_point = None
-        prev_bulge = 0
-        for x, y, bulge in points:
-            point = Vec3(x, y)
-            if prev_point is None:
-                self._start = point
-                prev_point = point
-                prev_bulge = bulge
-                continue
-
-            if prev_bulge:
-                bulge_to(prev_point, point, prev_bulge)
-            else:
-                self.line_to(point)
-            prev_point = point
-            prev_bulge = bulge
-
-        if close and not self.start.isclose(self.end):
-            if prev_bulge:
-                bulge_to(self.end, self.start, prev_bulge)
-            else:
-                self.line_to(self.start)
-
-        if ocs.transform or elevation:
-            self._to_wcs(ocs, elevation)
-
     def _to_wcs(self, ocs: OCS, elevation: float):
         self._start = ocs.to_wcs(self._start.replace(z=elevation))
         for i, cmd in enumerate(self._commands):
@@ -266,7 +224,7 @@ class Path(abc.Sequence):
         polyline path.
         """
         path = cls()
-        path._setup_polyline_2d(
+        path.add_2d_polyline(
             polyline.vertices,  # List[(x, y, bulge)]
             close=polyline.is_closed,
             ocs=ocs or OCS(),
@@ -477,6 +435,49 @@ class Path(abc.Sequence):
                 self.line_to(start)
             self.curve_to(end, ctrl1, ctrl2)
 
+    def add_2d_polyline(self, points: Iterable[Sequence[float]], close: bool,
+                        ocs: OCS, elevation: float) -> None:
+        """ Internal API to add 2D polylines which may include bulges. """
+        def bulge_to(p1: Vec3, p2: Vec3, bulge: float):
+            if p1.isclose(p2):
+                return
+            center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
+            ellipse = ConstructionEllipse.from_arc(
+                center, radius, Z_AXIS,
+                math.degrees(start_angle),
+                math.degrees(end_angle),
+            )
+            curves = list(cubic_bezier_from_ellipse(ellipse))
+            if curves[0].control_points[0].isclose(p2):
+                curves = _reverse_bezier_curves(curves)
+            self.add_curves(curves)
+
+        prev_point = None
+        prev_bulge = 0
+        for x, y, bulge in points:
+            point = Vec3(x, y)
+            if prev_point is None:
+                self._start = point
+                prev_point = point
+                prev_bulge = bulge
+                continue
+
+            if prev_bulge:
+                bulge_to(prev_point, point, prev_bulge)
+            else:
+                self.line_to(point)
+            prev_point = point
+            prev_bulge = bulge
+
+        if close and not self.start.isclose(self.end):
+            if prev_bulge:
+                bulge_to(self.end, self.start, prev_bulge)
+            else:
+                self.line_to(self.start)
+
+        if ocs.transform or elevation:
+            self._to_wcs(ocs, elevation)
+
     def add_ellipse(self, ellipse: ConstructionEllipse, segments=1,
                     reset=True) -> None:
         """ Add an elliptical arc as multiple cubic Bèzier-curves, use
@@ -540,6 +541,10 @@ class Path(abc.Sequence):
     def approximate(self, segments: int = 20) -> Iterable[Vec3]:
         """ Approximate path by vertices, `segments` is the count of
         approximation segments for each cubic bezier curve.
+
+        Does not yield any vertices for empty paths, where only a start point
+        is present!
+
         """
 
         def approx_curve(s, c1, c2, e) -> Iterable[Vec3]:
@@ -554,6 +559,9 @@ class Path(abc.Sequence):
         minimum count of approximation segments for each curve, if the distance
         from the center of the approximation segment to the curve is bigger than
         `distance` the segment will be subdivided.
+
+        Does not yield any vertices for empty paths, where only a start point
+        is present!
 
         Args:
             distance: maximum distance from the center of the cubic (C3)
@@ -624,7 +632,7 @@ def _from_lwpolyline(lwpolyline: 'LWPolyline', **kwargs) -> 'Path':
     entity, all vertices transformed to WCS.
     """
     path = Path()
-    path._setup_polyline_2d(  # linters: shut-up, it's a "friend" function
+    path.add_2d_polyline(
         lwpolyline.get_points('xyb'),
         close=lwpolyline.closed,
         ocs=lwpolyline.ocs(),
@@ -653,7 +661,7 @@ def _from_polyline(polyline: 'Polyline', **kwargs) -> 'Path':
         # Elevation attribute is mandatory, but you never know,
         # take elevation from first vertex.
         elevation = Vec3(polyline.vertices[0].dxf.location).z
-    path._setup_polyline_2d(
+    path.add_2d_polyline(
         points,
         close=polyline.is_closed,
         ocs=ocs,

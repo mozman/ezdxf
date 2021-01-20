@@ -35,6 +35,11 @@ are close enough for display rendering. Non-rational SPLINES of 3rd degree can
 be represented exact as multiple cubic Bézier-curves, other B-splines will be
 approximated.
 
+.. hint::
+
+    A :class:`Path` can not represent a point. A :class:`Path` with only a
+    start point yields no vertices!
+
 .. autofunction:: has_path_support
 
 .. autofunction:: make_path
@@ -46,24 +51,6 @@ approximated.
     .. autoattribute:: end
 
     .. autoattribute:: is_closed
-
-    .. automethod:: from_lwpolyline
-
-    .. automethod:: from_polyline
-
-    .. automethod:: from_spline
-
-    .. automethod:: from_ellipse
-
-    .. automethod:: from_arc
-
-    .. automethod:: from_circle
-
-    .. automethod:: from_hatch_boundary_path(boundary: Union[PolylinePath, EdgePath], ocs: OCS = None, elevation: float = 0) -> Path
-
-    .. automethod:: from_hatch_polyline_path(polyline: PolylinePath, ocs: OCS = None, elevation: float = 0) -> Path
-
-    .. automethod:: from_hatch_edge_path(edge: EdgePath, ocs: OCS = None, elevation: float = 0) -> Path
 
     .. automethod:: control_vertices
 
@@ -89,11 +76,31 @@ approximated.
 
     .. automethod:: add_spline(spline: BSpline, level=4)
 
+    .. automethod:: add_2d_polyline(points, close: bool, ocs: OCS, elevation: float)
+
     .. automethod:: transform(m: Matrix44) -> Path
 
     .. automethod:: approximate(segments: int=20) -> Iterable[Vec3]
 
     .. automethod:: flattening(distance: float, segments: int=16) -> Iterable[Vec3]
+
+    .. automethod:: from_hatch_boundary_path(boundary: Union[PolylinePath, EdgePath], ocs: OCS = None, elevation: float = 0) -> Path
+
+    .. automethod:: from_hatch_polyline_path(polyline: PolylinePath, ocs: OCS = None, elevation: float = 0) -> Path
+
+    .. automethod:: from_hatch_edge_path(edge: EdgePath, ocs: OCS = None, elevation: float = 0) -> Path
+
+    .. automethod:: from_lwpolyline
+
+    .. automethod:: from_polyline
+
+    .. automethod:: from_spline
+
+    .. automethod:: from_ellipse
+
+    .. automethod:: from_arc
+
+    .. automethod:: from_circle
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qtforpython/PySide2/QtGui/QPainterPath.html
