@@ -527,6 +527,8 @@ ConstructionLine
 
     .. autoattribute:: is_vertical
 
+    .. autoattribute:: is_horizontal
+
     .. automethod:: __str__
 
     .. automethod:: translate
