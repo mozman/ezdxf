@@ -119,9 +119,7 @@ class LinePrimitive(AbstractPrimitive):
     def path(self) -> Optional[Path]:
         """ Create path representation on demand. """
         if self._path is None:
-            e = self.entity
-            self._path = Path(e.dxf.start)
-            self._path.line_to(e.dxf.end)
+            self._path = make_path(self.entity)
         return self._path
 
     def vertices(self) -> Iterable[Vec3]:
