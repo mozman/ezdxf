@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, Optional, Tuple, cast, TYPE_CHECKING
+from typing import Iterable, Optional, cast, TYPE_CHECKING
 import abc
 from ezdxf.entities import DXFEntity
 from ezdxf.math import Vec3
@@ -10,7 +10,7 @@ from ezdxf.render import (
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        LWPolyline, Circle, Arc, Ellipse, Spline,
+        LWPolyline,
     )
 
 
@@ -146,7 +146,12 @@ class LwPolylinePrimitive(GenericPrimitive):
 class PointPrimitive(AbstractPrimitive):
     @property
     def path(self) -> Optional[Path]:
-        """ Create path representation on demand. """
+        """ Create path representation on demand.
+
+        :class:`Path` can not represent a point, a :class:`Path` with only a
+        start point yields not vertices!
+
+        """
         if self._path is None:
             self._path = Path(self.entity.dxf.location)
         return self._path
@@ -172,6 +177,10 @@ def make_primitive(e: DXFEntity,
     defines the max distance between the approximation line and the original
     curve. Use `max_flattening_distance` to override the default value.
 
+    Returns an empty primitive for unsupported entities, where the :attr:`path`
+    and the :attr:`mesh` attribute is ``None`` and the :meth:`vertices` method
+    yields an empty list of vertices.
+
     """
     cls = _PRIMITIVE_CLASSES.get(e.dxftype(), GenericPrimitive)
     primitive = cls(e)
@@ -192,7 +201,9 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
 
 def to_primitives(entities: Iterable[DXFEntity],
                   max_flattening_distance=None) -> Iterable[AbstractPrimitive]:
-    """ Disassemble DXF entities into path/mesh primitive objects. """
+    """ Disassemble DXF entities into path/mesh primitive objects. Yields
+    unsupported entities as empty primitives, see :func:`make_primitive`.
+    """
     return (make_primitive(e, max_flattening_distance) for e in entities)
 
 

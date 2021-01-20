@@ -20,6 +20,14 @@ def test_convert_unsupported_entity_to_primitive():
     assert list(p.vertices()) == []
 
 
+def test_multiple_unsupported_entities_to_vertices():
+    w = factory.new('WIPEOUT')
+    primitives = list(disassemble.to_primitives([w, w, w]))
+    assert len(primitives) == 3, "3 empty primitives expected"
+    vertices = list(disassemble.to_vertices(primitives))
+    assert len(vertices) == 0, "no vertices expected"
+
+
 def test_point_to_primitive():
     e = factory.new('POINT', dxfattribs={'location': (1, 2, 3)})
     p = disassemble.make_primitive(e)
