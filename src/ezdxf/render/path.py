@@ -15,7 +15,7 @@ from ezdxf.math import (
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         LWPolyline, Polyline, Vertex, Spline, Ellipse,
-        Arc, Circle, DXFEntity, Line
+        Arc, Circle, DXFEntity, Line, Solid,
     )
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
@@ -438,6 +438,7 @@ class Path(abc.Sequence):
     def add_2d_polyline(self, points: Iterable[Sequence[float]], close: bool,
                         ocs: OCS, elevation: float) -> None:
         """ Internal API to add 2D polylines which may include bulges. """
+
         def bulge_to(p1: Vec3, p2: Vec3, bulge: float):
             if p1.isclose(p2):
                 return
@@ -729,6 +730,12 @@ def _from_circle(circle: 'Circle', **kwargs) -> 'Path':
     return path
 
 
+def _from_quadrilateral(solid: 'Solid', **kwargs) -> 'Path':
+    """ Returns a :class:`Path` from a Solid(), Trace() or Face3d(). """
+    vertices = solid.wcs_vertices()
+    return Path.from_vertices(vertices, close=True)
+
+
 _FACTORIES = {
     "ARC": _from_arc,
     "CIRCLE": _from_circle,
@@ -737,6 +744,9 @@ _FACTORIES = {
     "LWPOLYLINE": _from_lwpolyline,
     "POLYLINE": _from_polyline,
     "SPLINE": _from_spline,
+    "SOLID": _from_quadrilateral,
+    "TRACE": _from_quadrilateral,
+    "3DFACE": _from_quadrilateral,
 }
 
 
@@ -754,7 +764,7 @@ def has_path_support(e: 'DXFEntity') -> bool:
 
 def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
     """ Factory function to create :class:`Path` objects from linear DXF
-    Entities:
+    entities:
 
     - LINE
     - CIRCLE
@@ -763,6 +773,14 @@ def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
     - SPLINE
     - LWPOLYLINE
     - 2D and 3D POLYLINE
+    - SOLID, TRACE, 3DFACE
+
+    Args:
+        e: DXF entity
+        segments: minimal count of cubic Bézier-curves for elliptical arcs:
+            CIRCLE, ARC, ELLIPSE, see :meth:`Path.add_ellipse`
+        level: subdivide level for SPLINE approximation,
+            see :meth:`Path.add_spline`
 
     """
     dxftype = e.dxftype()

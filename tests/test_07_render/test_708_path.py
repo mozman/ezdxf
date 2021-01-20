@@ -5,6 +5,7 @@ import math
 from ezdxf.render.path import Path, Command, make_path
 from ezdxf.math import Vec3, Matrix44, Bezier4P
 from ezdxf.entities.hatch import PolylinePath, EdgePath
+from ezdxf.entities import factory
 
 
 def test_init():
@@ -22,7 +23,7 @@ def test_init_start():
 def test_line_to():
     path = Path()
     path.line_to((1, 2, 3))
-    assert path[0] == (Vec3(1, 2, 3), )
+    assert path[0] == (Vec3(1, 2, 3),)
     assert path.end == (1, 2, 3)
 
 
@@ -83,8 +84,7 @@ def test_add_spline():
 
 
 def test_from_spline():
-    from ezdxf.entities import Spline
-    spline = Spline.new()
+    spline = factory.new('SPLINE')
     spline.fit_points = [(2, 0), (4, 1), (6, -1), (8, 0)]
     path = make_path(spline)
     assert path.start == (2, 0)
@@ -116,20 +116,20 @@ def test_add_ellipse():
 
 
 def test_from_ellipse():
-    from ezdxf.entities import Ellipse
-    from ezdxf.math import ConstructionEllipse
-    e = ConstructionEllipse(center=(3, 0), major_axis=(1, 0), ratio=0.5,
-                            start_param=0, end_param=math.pi)
-    ellipse = Ellipse.new()
-    ellipse.apply_construction_tool(e)
+    ellipse = factory.new('ELLIPSE', dxfattribs={
+        'center': (3, 0),
+        'major_axis': (1, 0),
+        'ratio': 0.5,
+        'start_param': 0,
+        'end_param': math.pi
+    })
     path = make_path(ellipse)
     assert path.start == (4, 0)
     assert path.end == (2, 0)
 
 
 def test_from_arc():
-    from ezdxf.entities import Arc
-    arc = Arc.new(dxfattribs={
+    arc = factory.new('ARC', dxfattribs={
         'center': (1, 0, 0),
         'radius': 1,
         'start_angle': 0,
@@ -142,8 +142,7 @@ def test_from_arc():
 
 @pytest.mark.parametrize('radius', [1, -1])
 def test_from_circle(radius):
-    from ezdxf.entities import Circle
-    circle = Circle.new(dxfattribs={
+    circle = factory.new('CIRCLE', dxfattribs={
         'center': (1, 0, 0),
         'radius': radius,
     })
@@ -154,8 +153,7 @@ def test_from_circle(radius):
 
 
 def test_from_circle_with_zero_radius():
-    from ezdxf.entities import Circle
-    circle = Circle.new(dxfattribs={
+    circle = factory.new('CIRCLE', dxfattribs={
         'center': (1, 0, 0),
         'radius': 0,
     })
@@ -163,14 +161,38 @@ def test_from_circle_with_zero_radius():
     assert len(path) == 0
 
 
-def test_line_to_path():
-    from ezdxf.entities import Line
+def test_from_line():
     start = Vec3(1, 2, 3)
     end = Vec3(4, 5, 6)
-    line = Line.new(dxfattribs={'start': start, 'end': end})
+    line = factory.new('LINE', dxfattribs={'start': start, 'end': end})
     path = make_path(line)
     assert path.start == start
     assert path.end == end
+
+
+@pytest.mark.parametrize('dxftype', ['SOLID', 'TRACE', '3DFACE'])
+def test_from_quadrilateral_with_4_points(dxftype):
+    entity = factory.new(dxftype)
+    entity.dxf.vtx0 = (0, 0, 0)
+    entity.dxf.vtx1 = (1, 0, 0)
+    entity.dxf.vtx2 = (1, 1, 0)
+    entity.dxf.vtx3 = (0, 1, 0)
+    path = make_path(entity)
+    assert path.start == (0, 0, 0)
+    assert path.is_closed is True
+    assert len(list(path.approximate())) == 5
+
+
+@pytest.mark.parametrize('dxftype', ['SOLID', 'TRACE', '3DFACE'])
+def test_from_quadrilateral_with_3_points(dxftype):
+    entity = factory.new(dxftype)
+    entity.dxf.vtx0 = (0, 0, 0)
+    entity.dxf.vtx1 = (1, 0, 0)
+    entity.dxf.vtx2 = (1, 1, 0)
+    entity.dxf.vtx3 = (1, 1, 0)  # last two points are equal
+    path = make_path(entity)
+    assert path.is_closed is True
+    assert len(list(path.approximate())) == 4
 
 
 def test_lwpolyline_lines():

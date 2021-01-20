@@ -33,7 +33,8 @@ Minimum common interface:
 ARC and ELLIPSE entities are approximated by multiple cubic Bézier-curves, which
 are close enough for display rendering. Non-rational SPLINES of 3rd degree can
 be represented exact as multiple cubic Bézier-curves, other B-splines will be
-approximated.
+approximated. XLINE and RAY are unsupported linear entities because of their
+infinite nature.
 
 .. hint::
 

@@ -15,8 +15,8 @@ objects.
     Do not expect advanced vectorization capabilities: Text entities like TEXT,
     ATTRIB, ATTDEF and MTEXT get only a rough bounding box representation.
     VIEWPORT and IMAGE are represented by their clipping path. Unsupported
-    entities: all ACIS based entities, WIPEOUT, XREF, UNDERLAY, ACAD_TABLE.
-    Unsupported entities will be ignored.
+    entities: all ACIS based entities, WIPEOUT, XREF, UNDERLAY, ACAD_TABLE, RAY,
+    XLINE. Unsupported entities will be ignored.
 
 .. autofunction:: recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]
 
