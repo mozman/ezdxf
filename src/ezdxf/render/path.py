@@ -629,9 +629,7 @@ def _reverse_bezier_curves(curves: List[Bezier4P]) -> List[Bezier4P]:
 
 
 def _from_lwpolyline(lwpolyline: 'LWPolyline', **kwargs) -> 'Path':
-    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.LWPolyline`
-    entity, all vertices transformed to WCS.
-    """
+    """ Returns a Path from a LWPolyline. """
     path = Path()
     path.add_2d_polyline(
         lwpolyline.get_points('xyb'),
@@ -643,9 +641,7 @@ def _from_lwpolyline(lwpolyline: 'LWPolyline', **kwargs) -> 'Path':
 
 
 def _from_polyline(polyline: 'Polyline', **kwargs) -> 'Path':
-    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Polyline`
-    entity, all vertices transformed to WCS.
-    """
+    """ Returns a Path from a 2D/3D Polyline. """
     path = Path()
     if len(polyline.vertices) == 0 or \
             polyline.is_polygon_mesh or \
@@ -673,7 +669,7 @@ def _from_polyline(polyline: 'Polyline', **kwargs) -> 'Path':
 
 
 def _from_spline(spline: 'Spline', **kwargs) -> 'Path':
-    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Spline`. """
+    """ Returns a Path from a Spline. """
     level = kwargs.get('level', 4)
     path = Path()
     path.add_spline(spline.construction_tool(), level=level, reset=True)
@@ -681,7 +677,7 @@ def _from_spline(spline: 'Spline', **kwargs) -> 'Path':
 
 
 def _from_ellipse(ellipse: 'Ellipse', **kwargs) -> 'Path':
-    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Ellipse`. """
+    """ Returns a Path from an Ellipse. """
     segments = kwargs.get('segments', 1)
     path = Path()
     path.add_ellipse(ellipse.construction_tool(),
@@ -691,15 +687,14 @@ def _from_ellipse(ellipse: 'Ellipse', **kwargs) -> 'Path':
 
 
 def _from_line(line: 'Line', **kwargs) -> 'Path':
-    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Line`. """
+    """ Returns a Path from a Line. """
     path = Path(line.dxf.start)
     path.line_to(line.dxf.end)
     return path
 
 
 def _from_arc(arc: 'Arc', **kwargs) -> 'Path':
-    """ Returns a :class:`Path` from an :class:`~ezdxf.entities.Arc`.
-    """
+    """ Returns a Path from an Arc. """
     segments = kwargs.get('segments', 1)
     path = Path()
     radius = abs(arc.dxf.radius)
@@ -716,8 +711,7 @@ def _from_arc(arc: 'Arc', **kwargs) -> 'Path':
 
 
 def _from_circle(circle: 'Circle', **kwargs) -> 'Path':
-    """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Circle`.
-    """
+    """ Returns a Path from a Circle. """
     segments = kwargs.get('segments', 1)
     path = Path()
     radius = abs(circle.dxf.radius)
@@ -732,7 +726,7 @@ def _from_circle(circle: 'Circle', **kwargs) -> 'Path':
 
 
 def _from_quadrilateral(solid: 'Solid', **kwargs) -> 'Path':
-    """ Returns a :class:`Path` from a Solid(), Trace() or Face3d(). """
+    """ Returns a from a Solid, Trace or Face3d. """
     vertices = solid.wcs_vertices()
     return Path.from_vertices(vertices, close=True)
 
