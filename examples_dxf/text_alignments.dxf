@@ -449,7 +449,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2459236.6295949076
+2459236.637013889
   9
 $TDUCREATE
  40
@@ -457,7 +457,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2459236.6295949076
+2459236.637013889
   9
 $TDUUPDATE
  40
@@ -509,7 +509,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-61
+69
   9
 $SURFTAB1
  70
@@ -889,11 +889,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-E03D379D-5BF1-11EB-83D4-1803733EFA49
+5E76431B-5BF3-11EB-B0C8-1803733EFA49
   9
 $VERSIONGUID
   2
-E03E9727-5BF1-11EB-BCFA-1803733EFA49
+5E772D68-5BF3-11EB-AE44-1803733EFA49
   9
 $EXTNAMES
 290
@@ -1167,9 +1167,9 @@ ISM
   0
 CLASS
   1
-LAYOUT
+ACDBPLACEHOLDER
   2
-AcDbLayout
+AcDbPlaceHolder
   3
 ObjectDBX Classes
  90
@@ -1183,9 +1183,9 @@ ObjectDBX Classes
   0
 CLASS
   1
-ACDBPLACEHOLDER
+LAYOUT
   2
-AcDbPlaceHolder
+AcDbLayout
   3
 ObjectDBX Classes
  90
@@ -1217,7 +1217,7 @@ AcDbSymbolTable
   0
 VPORT
   5
-5F
+67
 330
 8
 100
@@ -1541,7 +1541,7 @@ ACAD
   0
 APPID
   5
-60
+68
 330
 3
 100
@@ -1943,9 +1943,9 @@ AcDbEntity
 100
 AcDbText
  10
-1.0
+0.0
  20
--0.5
+-1.5
  30
 0.0
  40
@@ -1975,9 +1975,9 @@ AcDbEntity
 100
 AcDbText
  10
-1.0
- 20
 0.0
+ 20
+-1.0
  30
 0.0
  40
@@ -2007,9 +2007,9 @@ AcDbEntity
 100
 AcDbText
  10
-6.0
+5.0
  20
-0.0
+-1.0
  30
 0.0
  40
@@ -2041,9 +2041,9 @@ AcDbEntity
 100
 AcDbText
  10
-11.0
+10.0
  20
-0.0
+-1.0
  30
 0.0
  40
@@ -2099,9 +2099,9 @@ AcDbEntity
 100
 AcDbText
  10
-1.0
+0.0
  20
-1.0
+0.0
  30
 0.0
  40
@@ -2133,9 +2133,9 @@ AcDbEntity
 100
 AcDbText
  10
-6.0
+5.0
  20
-1.0
+0.0
  30
 0.0
  40
@@ -2169,9 +2169,9 @@ AcDbEntity
 100
 AcDbText
  10
-11.0
+10.0
  20
-1.0
+0.0
  30
 0.0
  40
@@ -2229,9 +2229,9 @@ AcDbEntity
 100
 AcDbText
  10
-1.0
+0.0
  20
-6.0
+5.0
  30
 0.0
  40
@@ -2263,9 +2263,9 @@ AcDbEntity
 100
 AcDbText
  10
-6.0
+5.0
  20
-6.0
+5.0
  30
 0.0
  40
@@ -2299,9 +2299,9 @@ AcDbEntity
 100
 AcDbText
  10
-11.0
+10.0
  20
-6.0
+5.0
  30
 0.0
  40
@@ -2359,9 +2359,9 @@ AcDbEntity
 100
 AcDbText
  10
-1.0
+0.0
  20
-11.0
+10.0
  30
 0.0
  40
@@ -2393,9 +2393,9 @@ AcDbEntity
 100
 AcDbText
  10
-6.0
+5.0
  20
-11.0
+10.0
  30
 0.0
  40
@@ -2429,9 +2429,9 @@ AcDbEntity
 100
 AcDbText
  10
-11.0
+10.0
  20
-11.0
+10.0
  30
 0.0
  40
@@ -2451,581 +2451,9 @@ AcDbText
  73
 3
   0
-CIRCLE
-  5
-41
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-1.0
- 20
--0.5
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-42
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-0.0
- 20
--1.5
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-43
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-1.0
- 20
-0.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-44
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-0.0
- 20
--1.0
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-45
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-6.0
- 20
-0.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-46
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-5.0
- 20
--1.0
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-47
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-11.0
- 20
-0.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-48
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-10.0
- 20
--1.0
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-49
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-1.0
- 20
-1.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-4A
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-0.0
- 20
-0.0
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-4B
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-6.0
- 20
-1.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-4C
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-5.0
- 20
-0.0
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-4D
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-11.0
- 20
-1.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-4E
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-10.0
- 20
-0.0
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-4F
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-1.0
- 20
-6.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-50
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-0.0
- 20
-5.0
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-51
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-6.0
- 20
-6.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-52
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-5.0
- 20
-5.0
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-53
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-11.0
- 20
-6.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-54
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-10.0
- 20
-5.0
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-55
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-1.0
- 20
-11.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-56
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-0.0
- 20
-10.0
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-57
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-6.0
- 20
-11.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-58
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-5.0
- 20
-10.0
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
-59
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-11.0
- 20
-11.0
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-5A
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-10.0
- 20
-10.0
- 30
-0.0
- 40
-0.075
-  0
 TEXT
   5
-5B
+41
 330
 17
 100
@@ -3057,7 +2485,7 @@ AcDbText
   0
 LINE
   5
-5C
+42
 330
 17
 100
@@ -3081,7 +2509,7 @@ AcDbLine
   0
 TEXT
   5
-5D
+43
 330
 17
 100
@@ -3113,7 +2541,7 @@ AcDbText
   0
 LINE
   5
-5E
+44
 330
 17
 100
@@ -3134,6 +2562,766 @@ AcDbLine
 5.0
  31
 0.0
+  0
+TEXT
+  5
+45
+330
+17
+100
+AcDbEntity
+  8
+0
+100
+AcDbText
+ 10
+15.0
+ 20
+15.0
+ 30
+0.0
+ 40
+2.5
+  1
+MIDDLE
+ 72
+4
+ 11
+35.0
+ 21
+10.0
+ 31
+0.0
+100
+AcDbText
+  0
+LINE
+  5
+46
+330
+17
+100
+AcDbEntity
+  8
+0
+100
+AcDbLine
+ 10
+15.0
+ 20
+15.0
+ 30
+0.0
+ 11
+35.0
+ 21
+10.0
+ 31
+0.0
+  0
+CIRCLE
+  5
+47
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+0.0
+ 20
+-1.5
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+48
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+0.0
+ 20
+-1.5
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+49
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+0.0
+ 20
+-1.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+4A
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+0.0
+ 20
+-1.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+4B
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+5.0
+ 20
+-1.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+4C
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+5.0
+ 20
+-1.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+4D
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+10.0
+ 20
+-1.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+4E
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+10.0
+ 20
+-1.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+4F
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+50
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+51
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+5.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+52
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+5.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+53
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+10.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+54
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+10.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+55
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+0.0
+ 20
+5.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+56
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+0.0
+ 20
+5.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+57
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+5.0
+ 20
+5.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+58
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+5.0
+ 20
+5.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+59
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+10.0
+ 20
+5.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+5A
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+10.0
+ 20
+5.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+5B
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+0.0
+ 20
+10.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+5C
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+0.0
+ 20
+10.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+5D
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+5.0
+ 20
+10.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+5E
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+5.0
+ 20
+10.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+5F
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+10.0
+ 20
+10.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+60
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+10.0
+ 20
+10.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+61
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+15.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+62
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+35.0
+ 20
+5.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+63
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+15.0
+ 20
+10.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+64
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+35.0
+ 20
+5.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+65
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+15.0
+ 20
+15.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+66
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+35.0
+ 20
+10.0
+ 30
+0.0
+ 40
+0.075
   0
 ENDSEC
   0
