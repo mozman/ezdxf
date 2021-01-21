@@ -43,11 +43,29 @@ def create_doc(filename):
         msp.add_text('TOP_CENTER', dxfattribs=attribs).set_pos((x + dx, y), align='TOP_CENTER')
         msp.add_text('TOP_RIGHT', dxfattribs=attribs).set_pos((x + width, y), align='TOP_RIGHT')
 
+    def show_insert_points(msp):
+        for text in msp.query('TEXT'):
+            msp.add_circle(text.dxf.insert, radius=.1, dxfattribs={
+                'color': 1,
+                'layer': "INSERT_POINTS",
+            })
+            msp.add_circle(text.dxf.align_point, radius=.075, dxfattribs={
+                'color': 2,
+                'layer': "INSERT_POINTS",
+            })
+
+    def shift_insert_point(msp):
+        for text in msp.query('TEXT'):
+            text.dxf.insert += (1, 1)
+
     doc = ezdxf.new(dxfversion='R2004')
     msp = doc.modelspace()
+    add_grid((0, 0), width=10, height=10)
+    # shift_insert_point(msp)
+    show_insert_points(msp)
+
     add_justify_text("ALIGNED-TEXT", (15, 0), (35, 5), 'ALIGNED')
     add_justify_text("FITTED-TEXT", (15, 10), (35, 5), 'FIT')
-    add_grid((0, 0), width=10, height=10)
 
     doc.set_modelspace_vport(height=30, center=(15, 0))
     doc.saveas(filename)
