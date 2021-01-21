@@ -44,6 +44,25 @@ AnyText = Union[Text, MText, Attrib, AttDef]
 # multiple of cap_height between the baseline of the previous line and the baseline of the next line
 DEFAULT_LINE_SPACING = 5 / 3
 
+DXF_TEXT_ALIGNMENT_TO_ALIGNMENT: Dict[str, Alignment] = {
+    'LEFT': (HAlignment.LEFT, VAlignment.BASELINE),
+    'CENTER': (HAlignment.CENTER, VAlignment.BASELINE),
+    'RIGHT': (HAlignment.RIGHT, VAlignment.BASELINE),
+    'ALIGNED': (HAlignment.RIGHT, VAlignment.BASELINE),
+    'MIDDLE': (HAlignment.CENTER, VAlignment.LOWER_CASE_CENTER),
+    'FIT': (HAlignment.RIGHT, VAlignment.BASELINE),
+    'BOTTOM_LEFT': (HAlignment.LEFT, VAlignment.BOTTOM),
+    'BOTTOM_CENTER': (HAlignment.CENTER, VAlignment.BOTTOM),
+    'BOTTOM_RIGHT': (HAlignment.RIGHT, VAlignment.BOTTOM),
+    'MIDDLE_LEFT': (HAlignment.LEFT, VAlignment.LOWER_CASE_CENTER),
+    'MIDDLE_CENTER': (HAlignment.CENTER, VAlignment.LOWER_CASE_CENTER),
+    'MIDDLE_RIGHT': (HAlignment.RIGHT, VAlignment.LOWER_CASE_CENTER),
+    'TOP_LEFT': (HAlignment.LEFT, VAlignment.TOP),
+    'TOP_CENTER': (HAlignment.CENTER, VAlignment.TOP),
+    'TOP_RIGHT': (HAlignment.RIGHT, VAlignment.TOP),
+}
+assert DXF_TEXT_ALIGNMENT_TO_ALIGNMENT.keys() == DXFConstants.TEXT_ALIGN_FLAGS.keys()
+
 DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT: Dict[int, Alignment] = {
     DXFConstants.MTEXT_TOP_LEFT: (HAlignment.LEFT, VAlignment.TOP),
     DXFConstants.MTEXT_TOP_CENTER: (HAlignment.CENTER, VAlignment.TOP),
@@ -107,8 +126,7 @@ def _get_rotation(text: AnyText) -> Matrix44:
 
 def _get_alignment(text: AnyText) -> Alignment:
     if isinstance(text, Text):
-        # for the purposes of rendering, the anchor is always the bottom left, text.get_align() should be ignored
-        return HAlignment.LEFT, VAlignment.BASELINE
+        return DXF_TEXT_ALIGNMENT_TO_ALIGNMENT[text.get_align()]
     elif isinstance(text, MText):
         return DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT[text.dxf.attachment_point]
     elif isinstance(text, (Attrib, AttDef)):
@@ -271,7 +289,10 @@ def _apply_alignment(alignment: Alignment,
 
 def _get_wcs_insert(text: AnyText) -> Vec3:
     if isinstance(text, Text):
-        return text.ocs().to_wcs(text.dxf.insert)
+        align_point = text.dxf.align_point
+        if align_point is None:
+            align_point = text.dxf.insert
+        return text.ocs().to_wcs(Vec3(align_point))
     else:
         return text.dxf.insert
 
