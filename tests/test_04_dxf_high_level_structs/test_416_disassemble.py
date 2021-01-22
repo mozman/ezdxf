@@ -92,5 +92,35 @@ def test_spline_to_primitive():
     assert len(list(p.path.flattening(0.01))) > 20
 
 
+def test_mesh_entity_to_primitve():
+    from ezdxf.layouts import VirtualLayout
+    from ezdxf.render.forms import cube
+    vl = VirtualLayout()
+    mesh_entity = cube().render(vl)
+    assert mesh_entity.dxftype() == "MESH"
+
+    p = disassemble.make_primitive(mesh_entity)
+    assert p.path is None
+    mesh_builder = p.mesh
+    assert mesh_builder is not None
+
+    assert len(mesh_builder.vertices) == 8
+    assert len(mesh_builder.faces) == 6
+    assert len(list(p.vertices())) == 8
+
+
+@pytest.mark.parametrize('dxftype', ['SOLID', 'TRACE', '3DFACE'])
+def test_from_quadrilateral_with_4_points(dxftype):
+    entity = factory.new(dxftype)
+    entity.dxf.vtx0 = (0, 0, 0)
+    entity.dxf.vtx1 = (1, 0, 0)
+    entity.dxf.vtx2 = (1, 1, 0)
+    entity.dxf.vtx3 = (0, 1, 0)
+    p = disassemble.make_primitive(entity)
+    assert p.path is not None
+    assert p.mesh is None
+    assert len(list(p.vertices())) == 5, "Expected closed path"
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

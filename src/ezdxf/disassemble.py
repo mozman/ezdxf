@@ -5,7 +5,7 @@ import abc
 from ezdxf.entities import DXFEntity
 from ezdxf.math import Vec3
 from ezdxf.render import (
-    Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path
+    Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path,
 )
 
 if TYPE_CHECKING:
@@ -158,15 +158,29 @@ class PointPrimitive(AbstractPrimitive):
         yield self.entity.dxf.location
 
 
+class MeshPrimitive(GenericPrimitive):
+    def _convert_entity(self):
+        self._mesh = MeshBuilder.from_mesh(self.entity)
+
+
+class QuadrilateralPrimitive(GenericPrimitive):
+    def _convert_entity(self):
+        self._path = make_path(self.entity)
+
+
 _PRIMITIVE_CLASSES = {
+    "3DFACE": QuadrilateralPrimitive,
     "ARC": CurvePrimitive,
     "CIRCLE": CurvePrimitive,
     "ELLIPSE": CurvePrimitive,
     "HELIX": CurvePrimitive,
     "LINE": LinePrimitive,
     "LWPOLYLINE": LwPolylinePrimitive,
+    "MESH": MeshPrimitive,
     "POINT": PointPrimitive,
     "SPLINE": CurvePrimitive,
+    "SOLID": QuadrilateralPrimitive,
+    "TRACE": QuadrilateralPrimitive,
 }
 
 
