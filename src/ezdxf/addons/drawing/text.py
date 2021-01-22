@@ -1,5 +1,5 @@
 # Created: 06.2020
-# Copyright (c) 2020, Matthew Broadway
+# Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import enum
 import re
@@ -16,7 +16,8 @@ from ezdxf.entities import MText, Text, Attrib, AttDef
 from ezdxf.math import Matrix44, Vec3, sign
 
 """
-Search google for 'typography' or 'font anatomy' for explanations of terms like 'baseline' and 'x-height'
+Search google for 'typography' or 'font anatomy' for explanations of terms like 
+'baseline' and 'x-height'
 
 A Visual Guide to the Anatomy of Typography: https://visme.co/blog/type-anatomy/
 Anatomy of a Character: https://www.fonts.com/content/learning/fontology/level-1/type-anatomy/anatomy
@@ -41,16 +42,17 @@ class VAlignment(enum.Enum):
 Alignment = Tuple[HAlignment, VAlignment]
 AnyText = Union[Text, MText, Attrib, AttDef]
 
-# multiple of cap_height between the baseline of the previous line and the baseline of the next line
+# multiple of cap_height between the baseline of the previous line and the
+# baseline of the next line
 DEFAULT_LINE_SPACING = 5 / 3
 
 DXF_TEXT_ALIGNMENT_TO_ALIGNMENT: Dict[str, Alignment] = {
     'LEFT': (HAlignment.LEFT, VAlignment.BASELINE),
     'CENTER': (HAlignment.CENTER, VAlignment.BASELINE),
     'RIGHT': (HAlignment.RIGHT, VAlignment.BASELINE),
-    'ALIGNED': (HAlignment.RIGHT, VAlignment.BASELINE),
+    'ALIGNED': (HAlignment.CENTER, VAlignment.BOTTOM),
     'MIDDLE': (HAlignment.CENTER, VAlignment.LOWER_CASE_CENTER),
-    'FIT': (HAlignment.RIGHT, VAlignment.BASELINE),
+    'FIT': (HAlignment.CENTER, VAlignment.BOTTOM),
     'BOTTOM_LEFT': (HAlignment.LEFT, VAlignment.BOTTOM),
     'BOTTOM_CENTER': (HAlignment.CENTER, VAlignment.BOTTOM),
     'BOTTOM_RIGHT': (HAlignment.RIGHT, VAlignment.BOTTOM),
@@ -64,21 +66,32 @@ DXF_TEXT_ALIGNMENT_TO_ALIGNMENT: Dict[str, Alignment] = {
 assert DXF_TEXT_ALIGNMENT_TO_ALIGNMENT.keys() == DXFConstants.TEXT_ALIGN_FLAGS.keys()
 
 DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT: Dict[int, Alignment] = {
-    DXFConstants.MTEXT_TOP_LEFT: (HAlignment.LEFT, VAlignment.TOP),
-    DXFConstants.MTEXT_TOP_CENTER: (HAlignment.CENTER, VAlignment.TOP),
-    DXFConstants.MTEXT_TOP_RIGHT: (HAlignment.RIGHT, VAlignment.TOP),
-    DXFConstants.MTEXT_MIDDLE_LEFT: (HAlignment.LEFT, VAlignment.LOWER_CASE_CENTER),
-    DXFConstants.MTEXT_MIDDLE_CENTER: (HAlignment.CENTER, VAlignment.LOWER_CASE_CENTER),
-    DXFConstants.MTEXT_MIDDLE_RIGHT: (HAlignment.RIGHT, VAlignment.LOWER_CASE_CENTER),
-    DXFConstants.MTEXT_BOTTOM_LEFT: (HAlignment.LEFT, VAlignment.BOTTOM),
-    DXFConstants.MTEXT_BOTTOM_CENTER: (HAlignment.CENTER, VAlignment.BOTTOM),
-    DXFConstants.MTEXT_BOTTOM_RIGHT: (HAlignment.RIGHT, VAlignment.BOTTOM)
+    DXFConstants.MTEXT_TOP_LEFT:
+        (HAlignment.LEFT, VAlignment.TOP),
+    DXFConstants.MTEXT_TOP_CENTER:
+        (HAlignment.CENTER, VAlignment.TOP),
+    DXFConstants.MTEXT_TOP_RIGHT:
+        (HAlignment.RIGHT, VAlignment.TOP),
+    DXFConstants.MTEXT_MIDDLE_LEFT:
+        (HAlignment.LEFT, VAlignment.LOWER_CASE_CENTER),
+    DXFConstants.MTEXT_MIDDLE_CENTER:
+        (HAlignment.CENTER, VAlignment.LOWER_CASE_CENTER),
+    DXFConstants.MTEXT_MIDDLE_RIGHT:
+        (HAlignment.RIGHT, VAlignment.LOWER_CASE_CENTER),
+    DXFConstants.MTEXT_BOTTOM_LEFT:
+        (HAlignment.LEFT, VAlignment.BOTTOM),
+    DXFConstants.MTEXT_BOTTOM_CENTER:
+        (HAlignment.CENTER, VAlignment.BOTTOM),
+    DXFConstants.MTEXT_BOTTOM_RIGHT:
+        (HAlignment.RIGHT, VAlignment.BOTTOM)
 }
-assert len(DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT) == len(DXFConstants.MTEXT_ALIGN_FLAGS)
+assert len(DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT) == len(
+    DXFConstants.MTEXT_ALIGN_FLAGS)
 
 
 class FontMeasurements:
-    def __init__(self, baseline: float, cap_height: float, x_height: float, descender_height: float):
+    def __init__(self, baseline: float, cap_height: float, x_height: float,
+                 descender_height: float):
         self.baseline = baseline
         self.cap_height = cap_height
         self.x_height = x_height
@@ -91,7 +104,8 @@ class FontMeasurements:
                 self.x_height == other.x_height and
                 self.descender_height == other.descender_height)
 
-    def scale_from_baseline(self, desired_cap_height: float) -> "FontMeasurements":
+    def scale_from_baseline(self,
+                            desired_cap_height: float) -> "FontMeasurements":
         scale = desired_cap_height / self.cap_height
         return FontMeasurements(
             baseline=self.baseline,
@@ -113,24 +127,33 @@ class FontMeasurements:
         return self.baseline - self.descender_height
 
 
+def _calc_aligned_rotation(text: Text) -> float:
+    p1: Vec3 = text.dxf.insert
+    p2: Vec3 = text.dxf.align_point
+    if not p1.isclose(p2):
+        return (p2 - p1).angle
+    else:
+        return radians(text.dxf.rotation)
+
+
 def _get_rotation(text: AnyText) -> Matrix44:
-    if isinstance(text, Text):
-        return Matrix44.axis_rotate(text.dxf.extrusion, radians(text.dxf.rotation))
-    if isinstance(text, MText):
+    if isinstance(text, Text):  # Attrib and AttDef are sub-classes of Text
+        if text.get_align() in ("FIT", "ALIGNED"):
+            rotation = _calc_aligned_rotation(text)
+        else:
+            rotation = radians(text.dxf.rotation)
+        return Matrix44.axis_rotate(text.dxf.extrusion, rotation)
+    elif isinstance(text, MText):
         return Matrix44.axis_rotate(Vec3(0, 0, 1), radians(text.get_rotation()))
-    elif isinstance(text, (Attrib, AttDef)):
-        return Matrix44()
     else:
         raise TypeError(type(text))
 
 
 def _get_alignment(text: AnyText) -> Alignment:
-    if isinstance(text, Text):
+    if isinstance(text, Text):  # Attrib and AttDef are sub-classes of Text
         return DXF_TEXT_ALIGNMENT_TO_ALIGNMENT[text.get_align()]
     elif isinstance(text, MText):
         return DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT[text.dxf.attachment_point]
-    elif isinstance(text, (Attrib, AttDef)):
-        return HAlignment.LEFT, VAlignment.BASELINE
     else:
         raise TypeError(type(text))
 
@@ -153,9 +176,10 @@ def _get_line_spacing(text: AnyText, cap_height: float) -> float:
         raise TypeError(type(text))
 
 
-def _split_multiline_text(text: str, box_width: Optional[float], get_text_width: Callable[[str], float]) -> List[str]:
-    """
-    This isn't the most straightforward word wrapping algorithm, but it aims to match the behavior of AutoCAD
+def _split_multiline_text(text: str, box_width: Optional[float],
+                          get_text_width: Callable[[str], float]) -> List[str]:
+    """ This isn't the most straightforward word wrapping algorithm, but it
+    aims to match the behavior of AutoCAD
     """
     if not text or text.isspace():
         return []
@@ -177,7 +201,8 @@ def _split_multiline_text(text: str, box_width: Optional[float], get_text_width:
             if current_line or on_first_line:
                 current_line += t
         else:
-            if box_width is not None and get_text_width(current_line + t) > box_width:
+            if box_width is not None and get_text_width(
+                    current_line + t) > box_width:
                 if not current_line:
                     current_line += t
                 else:
@@ -192,7 +217,8 @@ def _split_multiline_text(text: str, box_width: Optional[float], get_text_width:
     return lines
 
 
-def _split_into_lines(entity: AnyText, box_width: Optional[float], get_text_width: Callable[[str], float]) -> List[str]:
+def _split_into_lines(entity: AnyText, box_width: Optional[float],
+                      get_text_width: Callable[[str], float]) -> List[str]:
     if isinstance(entity, AttDef):
         # ATTDEF outside of an Insert renders the tag rather than the value
         text = plain_text(entity.dxf.tag)
@@ -218,23 +244,28 @@ def _get_text_width(text: AnyText) -> Optional[float]:
 def _get_extra_transform(text: AnyText) -> Matrix44:
     extra_transform = Matrix44()
     if isinstance(text, Text):
-        # ALIGNED: scaled to fit in the text box (aspect ratio preserved). Does not have to be handled specially.
-        # FIT: scaled to fit in the text box (aspect ratio *not* preserved). Handled by dxf.width
-        scale_x = text.dxf.width  # 'width' is the width *scale factor* so 1.0 by default
+        # ALIGNED: scaled to fit in the text box (aspect ratio preserved):
+        # Does not have to be handled specially.
+        # FIT: scaled to fit in the text box (aspect ratio *not* preserved):
+        # Handled by dxf.width
+        # 'width' is the width *scale factor* so 1.0 by default:
+        scale_x = text.dxf.width
         scale_y = 1
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_X:
             scale_x *= -1
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_Y:
             scale_y *= -1
 
-        # magnitude of extrusion does not have any effect. An extrusion of (0, 0, 0) acts like (0, 0, 1)
+        # Magnitude of extrusion does not have any effect.
+        # An extrusion of (0, 0, 0) acts like (0, 0, 1)
         scale_x *= sign(text.dxf.extrusion.z)
 
         if scale_x != 1 or scale_y != 1:
             extra_transform = Matrix44.scale(scale_x, scale_y)
 
     elif isinstance(text, MText):
-        # not sure about the rationale behind this but it does match AutoCAD behavior...
+        # Not sure about the rationale behind this but it does match AutoCAD
+        # behavior...
         scale_y = sign(text.dxf.extrusion.z)
         if scale_y != 1:
             extra_transform = Matrix44.scale(1, scale_y)
@@ -246,7 +277,8 @@ def _apply_alignment(alignment: Alignment,
                      line_widths: List[float],
                      line_spacing: float,
                      box_width: Optional[float],
-                     font_measurements: FontMeasurements) -> Tuple[Tuple[float, float], List[float], List[float]]:
+                     font_measurements: FontMeasurements) -> Tuple[
+    Tuple[float, float], List[float], List[float]]:
     if not line_widths:
         return (0, 0), [], []
 
@@ -288,11 +320,20 @@ def _apply_alignment(alignment: Alignment,
 
 
 def _get_wcs_insert(text: AnyText) -> Vec3:
-    if isinstance(text, Text):
-        align_point = text.dxf.align_point
-        if align_point is None:
-            align_point = text.dxf.insert
-        return text.ocs().to_wcs(Vec3(align_point))
+    if isinstance(text, Text):  # Attrib and AttDef are sub-classes of Text
+        insert: Vec3 = text.dxf.insert
+        align_point: Vec3 = text.dxf.align_point
+        alignment: str = text.get_align()
+        if alignment == "LEFT":
+            # LEFT/BASELINE is always located at the insert point.
+            pass
+        elif alignment in ("FIT", "ALIGNED"):
+            # Interpolate insertion location between insert and align point:
+            insert = insert.lerp(align_point, factor=0.5)
+        else:
+            # Everything else is located at the align point:
+            insert = align_point
+        return text.ocs().to_wcs(insert)
     else:
         return text.dxf.insert
 
@@ -300,7 +341,8 @@ def _get_wcs_insert(text: AnyText) -> Vec3:
 def simplified_text_chunks(text: AnyText, out: Backend,
                            *,
                            font: fonts.Font = None,
-                           debug_draw_rect: bool = False) -> Iterable[Tuple[str, Matrix44, float]]:
+                           debug_draw_rect: bool = False) -> Iterable[
+    Tuple[str, Matrix44, float]]:
     """
     Splits a complex text entity into simple chunks of text which can all be rendered the same way:
     render the string (which will not contain any newlines) with the given cap_height with (left, baseline) at (0, 0)
@@ -310,12 +352,16 @@ def simplified_text_chunks(text: AnyText, out: Backend,
     box_width = _get_text_width(text)
 
     cap_height = _get_cap_height(text)
-    lines = _split_into_lines(text, box_width, lambda s: out.get_text_line_width(s, cap_height, font=font))
+    lines = _split_into_lines(text, box_width,
+                              lambda s: out.get_text_line_width(s, cap_height,
+                                                                font=font))
     line_spacing = _get_line_spacing(text, cap_height)
-    line_widths = [out.get_text_line_width(line, cap_height, font=font) for line in lines]
+    line_widths = [out.get_text_line_width(line, cap_height, font=font) for line
+                   in lines]
     font_measurements = out.get_font_measurements(cap_height, font=font)
     anchor, line_xs, line_ys = \
-        _apply_alignment(alignment, line_widths, line_spacing, box_width, font_measurements)
+        _apply_alignment(alignment, line_widths, line_spacing, box_width,
+                         font_measurements)
     rotation = _get_rotation(text)
     extra_transform = _get_extra_transform(text)
     insert = _get_wcs_insert(text)
@@ -332,6 +378,7 @@ def simplified_text_chunks(text: AnyText, out: Backend,
 
         if debug_draw_rect:
             width = out.get_text_line_width(line, cap_height, font)
-            ps = list(transform.transform_vertices([Vec3(0, 0, 0), Vec3(width, 0, 0), Vec3(width, cap_height, 0),
-                                                    Vec3(0, cap_height, 0), Vec3(0, 0, 0)]))
+            ps = list(transform.transform_vertices(
+                [Vec3(0, 0, 0), Vec3(width, 0, 0), Vec3(width, cap_height, 0),
+                 Vec3(0, cap_height, 0), Vec3(0, 0, 0)]))
             draw_rect(ps, '#ff0000', out)
