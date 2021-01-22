@@ -10,7 +10,7 @@ from ezdxf.render import (
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        LWPolyline,
+        LWPolyline, Polyline, Polyface, Polymesh
     )
 
 
@@ -168,6 +168,16 @@ class QuadrilateralPrimitive(GenericPrimitive):
         self._path = make_path(self.entity)
 
 
+class PolylinePrimitive(GenericPrimitive):
+    def _convert_entity(self):
+        e: 'Polyline' = cast('Polyline', self.entity)
+        if e.is_2d_polyline or e.is_3d_polyline:
+            self._path = make_path(e)
+        else:
+            m = MeshVertexMerger.from_polyface(e)
+            self._mesh = MeshBuilder.from_builder(m)
+
+
 _PRIMITIVE_CLASSES = {
     "3DFACE": QuadrilateralPrimitive,
     "ARC": CurvePrimitive,
@@ -178,6 +188,7 @@ _PRIMITIVE_CLASSES = {
     "LWPOLYLINE": LwPolylinePrimitive,
     "MESH": MeshPrimitive,
     "POINT": PointPrimitive,
+    "POLYLINE": PolylinePrimitive,
     "SPLINE": CurvePrimitive,
     "SOLID": QuadrilateralPrimitive,
     "TRACE": QuadrilateralPrimitive,

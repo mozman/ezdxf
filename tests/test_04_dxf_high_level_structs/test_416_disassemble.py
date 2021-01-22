@@ -49,7 +49,7 @@ def test_line_to_primitive():
 def test_lwpolyline_to_primitive():
     p1 = Vec3(1, 1)
     p2 = Vec3(2, 2)
-    p3 = Vec3(2, 2)
+    p3 = Vec3(3, 3)
     e = factory.new('LWPOLYLINE')
     e.append_points([p1, p2, p3], format="xy")
     p = disassemble.make_primitive(e)
@@ -92,7 +92,7 @@ def test_spline_to_primitive():
     assert len(list(p.path.flattening(0.01))) > 20
 
 
-def test_mesh_entity_to_primitve():
+def test_mesh_entity_to_primitive():
     from ezdxf.layouts import VirtualLayout
     from ezdxf.render.forms import cube
     vl = VirtualLayout()
@@ -110,6 +110,19 @@ def test_mesh_entity_to_primitve():
 
 
 @pytest.mark.parametrize('dxftype', ['SOLID', 'TRACE', '3DFACE'])
+def test_from_quadrilateral_with_3_points(dxftype):
+    entity = factory.new(dxftype)
+    entity.dxf.vtx0 = (0, 0, 0)
+    entity.dxf.vtx1 = (1, 0, 0)
+    entity.dxf.vtx2 = (1, 1, 0)
+    entity.dxf.vtx3 = (1, 1, 0)  # last point is repeated
+    p = disassemble.make_primitive(entity)
+    assert p.path is not None
+    assert p.mesh is None
+    assert len(list(p.vertices())) == 4, "Expected closed path"
+
+
+@pytest.mark.parametrize('dxftype', ['SOLID', 'TRACE', '3DFACE'])
 def test_from_quadrilateral_with_4_points(dxftype):
     entity = factory.new(dxftype)
     entity.dxf.vtx0 = (0, 0, 0)
@@ -120,6 +133,57 @@ def test_from_quadrilateral_with_4_points(dxftype):
     assert p.path is not None
     assert p.mesh is None
     assert len(list(p.vertices())) == 5, "Expected closed path"
+
+
+def test_poly_face_mesh_to_primitive():
+    from ezdxf.layouts import VirtualLayout
+    from ezdxf.render.forms import cube
+    vl = VirtualLayout()
+    poly_face_mesh = cube().render_polyface(vl)
+    assert poly_face_mesh.dxftype() == "POLYLINE"
+
+    p = disassemble.make_primitive(poly_face_mesh)
+    assert p.path is None
+    mesh_builder = p.mesh
+    assert mesh_builder is not None
+
+    assert len(mesh_builder.vertices) == 8
+    assert len(mesh_builder.faces) == 6
+    assert len(list(p.vertices())) == 8
+
+
+def test_poly_mesh_to_primitive():
+    from ezdxf.layouts import VirtualLayout
+    vl = VirtualLayout()
+    poly_mesh = vl.add_polymesh(size=(4, 4))
+    for x in range(4):
+        for y in range(4):
+            poly_mesh.set_mesh_vertex((x, y), (x, y, 1.0))
+
+    p = disassemble.make_primitive(poly_mesh)
+    assert p.path is None
+    mesh_builder = p.mesh
+    assert mesh_builder is not None
+
+    assert len(mesh_builder.vertices) == 16
+    assert len(mesh_builder.faces) == 9
+    assert len(list(p.vertices())) == 16
+
+
+def test_2d_3d_polyline_to_primitive():
+    from ezdxf.layouts import VirtualLayout
+    vl = VirtualLayout()
+
+    p1 = Vec3(1, 1)
+    p2 = Vec3(2, 2)
+    p3 = Vec3(3, 3)
+    e2d = vl.add_polyline2d([p1, p2, p3])
+    e3d = vl.add_polyline3d([p1, p2, p3])
+    for e in [e2d, e3d]:
+        p = disassemble.make_primitive(e)
+        assert p.path is not None
+        assert p.mesh is None
+        assert list(p.vertices()) == [p1, p2, p3]
 
 
 if __name__ == '__main__':
