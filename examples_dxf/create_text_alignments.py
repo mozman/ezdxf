@@ -63,8 +63,8 @@ def create_doc(filename):
     add_grid((0, 0), width=10, height=10)
     # shift_insert_point(msp)
 
-    add_justify_text("ALIGNED-TEXT", (15, 0), (35, 5), 'ALIGNED')
-    add_justify_text("FITTED-TEXT", (15, 10), (35, 5), 'FIT')
+    add_justify_text("ALIGNED-TEXT-ALIGNED-TEXT-ALIGNED-TEXT-ALIGNED-TEXT", (15, 0), (35, 5), 'ALIGNED')
+    add_justify_text("FITTED-TEXT-FITTED-TEXT-FITTED-TEXT-FITTED-TEXT", (15, 10), (35, 5), 'FIT')
     add_justify_text("MIDDLE", (15, 15), (35, 10), 'MIDDLE')
     show_insert_points(msp)
 
