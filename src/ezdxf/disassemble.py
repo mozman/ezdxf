@@ -2,15 +2,17 @@
 #  License: MIT License
 from typing import Iterable, Optional, cast, TYPE_CHECKING
 import abc
+import math
 from ezdxf.entities import DXFEntity
-from ezdxf.math import Vec3
+from ezdxf.lldxf import const
+from ezdxf.math import Vec3, Matrix44
 from ezdxf.render import (
-    Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path,
+    Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path, forms,
 )
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        LWPolyline, Polyline, Polyface, Polymesh
+        LWPolyline, Polyline,
     )
 
 
@@ -178,9 +180,118 @@ class PolylinePrimitive(GenericPrimitive):
             self._mesh = MeshBuilder.from_builder(m)
 
 
+DESCENDERS_FACTOR = 0.333  # from TXT SHX font - just guessing
+
+
+class TextLinePrimitive(GenericPrimitive):
+    def _convert_entity(self):
+        """ Creates a rough bounding box for a single line text.
+
+        Calculation is based on a mono-spaced font and therefore the bounding
+        box is just an educated guess.
+
+        """
+
+        def get_text_rotation():
+            if alignment in ('FIT', 'ALIGNED') and not p1.isclose(p2):
+                return (p2 - p1).angle
+            else:
+                return math.degrees(text.dxf.rotation)
+
+        def get_insert():
+            if alignment == 'LEFT':
+                return p1
+            elif alignment in ('FIT', 'ALIGNED'):
+                return p1.lerp(p2, factor=0.5)
+            else:
+                return p2
+
+        def text_stretch_factor():
+            sx = 1.0
+            sy = 1.0
+            if alignment in ('FIT', 'ALIGNED'):
+                defined_length = (p2 - p1).magnitude
+                if text_width > 1e-9:
+                    sx = defined_length / text_width
+                    if alignment == "ALIGNED":
+                        sy = sx
+            return sx, sy
+
+        def shift_x() -> float:
+            if halign == const.CENTER:
+                return -total_width / 2.0
+            elif halign == const.RIGHT:
+                return -total_width
+            return 0.0  # LEFT
+
+        def shift_y():
+            if valign == const.BASELINE:
+                return -total_descenders_height
+            elif valign == const.MIDDLE:
+                return -total_cap_height / 2.0 - total_descenders_height
+            elif valign == const.TOP:
+                return -total_height
+            return 0.0  # BOTTOM
+
+        text = cast('Text', self.entity)
+        char_count = len(text.dxf.text)
+        if char_count == 0:
+            # empty path - does not render any vertices!
+            self._path = Path()
+            return
+
+        p1 = text.dxf.insert
+        p2 = text.dxf.align_point
+        halign = text.dxf.halign
+        valign = text.dxf.valign
+        alignment = text.get_align()
+        if alignment == 'MIDDLE':  # valign is stored as BASELINE
+            valign = const.MIDDLE
+        if alignment in ('MIDDLE', 'FIT', 'ALIGNED'):
+            halign = const.CENTER
+
+        # Text height of an uppercase letter without descenders:
+        text_height = text.dxf.height
+
+        width_factor = text.dxf.width
+        text_width = char_count * text_height * width_factor
+        sx, sy = text_stretch_factor()
+        total_width = text_width * sx
+
+        # https://www.fonts.com/content/learning/fontology/level-1/type-anatomy/anatomy
+        total_cap_height = text_height * sy
+        total_descenders_height = total_cap_height * DESCENDERS_FACTOR
+        total_height = total_cap_height + total_descenders_height
+
+        bbox_vertices = forms.box(total_width, total_height)
+        insert = get_insert()
+        m = Matrix44.chain(
+            Matrix44.translate(  # to rotation center
+                shift_x(),
+                shift_y(),
+                0,  # ignore z-axis = OCS elevation
+            ),
+            Matrix44.z_rotate(get_text_rotation()),
+            Matrix44.translate(
+                insert.x,
+                insert.y,
+                0,  # ignore z-axis = OCS elevation
+            ),
+        )
+        # TODO: text generation flags?
+        ocs = text.ocs()
+        bbox = Path.from_vertices(
+            ocs.points_to_wcs(m.transform_vertices(bbox_vertices)),
+            close=True,
+        )
+        self._path = bbox
+
+
 _PRIMITIVE_CLASSES = {
     "3DFACE": QuadrilateralPrimitive,
     "ARC": CurvePrimitive,
+    "ATTRIB": TextLinePrimitive,
+    "ATTDEF": TextLinePrimitive,
     "CIRCLE": CurvePrimitive,
     "ELLIPSE": CurvePrimitive,
     "HELIX": CurvePrimitive,
@@ -191,6 +302,7 @@ _PRIMITIVE_CLASSES = {
     "POLYLINE": PolylinePrimitive,
     "SPLINE": CurvePrimitive,
     "SOLID": QuadrilateralPrimitive,
+    "TEXT": TextLinePrimitive,
     "TRACE": QuadrilateralPrimitive,
 }
 

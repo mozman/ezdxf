@@ -322,7 +322,7 @@ def gear(count: int, top_width: float, bottom_width: float, height: float, outsi
         yield first
 
 
-def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 1)) -> Iterable[Vec3]:
+def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 0)) -> Iterable[Vec3]:
     """
     Translate `vertices` along `vec`, faster than a Matrix44 transformation.
 

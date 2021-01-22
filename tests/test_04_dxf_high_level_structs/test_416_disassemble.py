@@ -186,5 +186,16 @@ def test_2d_3d_polyline_to_primitive():
         assert list(p.vertices()) == [p1, p2, p3]
 
 
+def test_text_to_primitive():
+    # Testing just the control flow, correct bounding boxes are visually tested.
+    # see: ezdxf/examples/entities/text.py
+    text = factory.new('TEXT')
+    text.dxf.text = "0123456789"
+    p = disassemble.make_primitive(text)
+    assert p.path is not None
+    assert p.mesh is None
+    assert len(list(p.vertices())) == 5, "Expected closed box"
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
