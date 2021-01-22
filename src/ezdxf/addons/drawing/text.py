@@ -232,7 +232,7 @@ def _split_into_lines(entity: AnyText, box_width: Optional[float],
 
 
 def _get_text_width(text: AnyText) -> Optional[float]:
-    if isinstance(text, (Attrib, AttDef, Text)):
+    if isinstance(text, Text):  # Attrib and AttDef are sub-classes of Text
         return None
     elif isinstance(text, MText):
         width = text.dxf.width
@@ -241,16 +241,23 @@ def _get_text_width(text: AnyText) -> Optional[float]:
         raise TypeError(type(text))
 
 
-def _get_extra_transform(text: AnyText) -> Matrix44:
+def _get_extra_transform(text: AnyText, line_width: float) -> Matrix44:
     extra_transform = Matrix44()
-    if isinstance(text, Text):
-        # ALIGNED: scaled to fit in the text box (aspect ratio preserved):
-        # Does not have to be handled specially.
-        # FIT: scaled to fit in the text box (aspect ratio *not* preserved):
-        # Handled by dxf.width
+    if isinstance(text, Text):  # Attrib and AttDef are sub-classes of Text
         # 'width' is the width *scale factor* so 1.0 by default:
         scale_x = text.dxf.width
         scale_y = 1
+
+        # Calculate text stretching for FIT and ALIGNED:
+        alignment = text.get_align()
+        line_width = abs(line_width)
+        if alignment in ("FIT", "ALIGNED") and line_width > 1e-9:
+            defined_length = (text.dxf.align_point - text.dxf.insert).magnitude
+            stretch_factor = defined_length / line_width
+            scale_x = stretch_factor
+            if alignment == "ALIGNED":
+                scale_y = stretch_factor
+
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_X:
             scale_x *= -1
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_Y:
@@ -363,7 +370,14 @@ def simplified_text_chunks(text: AnyText, out: Backend,
         _apply_alignment(alignment, line_widths, line_spacing, box_width,
                          font_measurements)
     rotation = _get_rotation(text)
-    extra_transform = _get_extra_transform(text)
+
+    # first_line_width is used for TEXT, ATTRIB and ATTDEF stretching
+    if line_widths:
+        first_line_width = line_widths[0]
+    else:  # no text lines -> no output, value is not important
+        first_line_width = 1.0
+
+    extra_transform = _get_extra_transform(text, first_line_width)
     insert = _get_wcs_insert(text)
 
     whole_text_transform = (
