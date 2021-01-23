@@ -110,10 +110,10 @@ class MonospaceFont(AbstractFont):
             x_height=cap_height * x_height_factor,
             descender_height=cap_height * descender_factor,
         ))
-        self.width_factor: float = abs(width_factor)
+        self._width_factor: float = abs(width_factor)
 
     def text_width(self, text: str) -> float:
-        return len(text) * self.measurements.cap_height * self.width_factor
+        return len(text) * self.measurements.cap_height * self._width_factor
 
 
 class TextLine:

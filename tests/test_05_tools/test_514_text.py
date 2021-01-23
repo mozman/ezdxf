@@ -68,20 +68,17 @@ class TestTextLine:
     def text_line(self, font):
         return TextLine("text", font)
 
-    def test_text_width_and_height(self, font):
-        text_line = TextLine("text", font)
+    def test_text_width_and_height(self, text_line):
         assert text_line.width == 10
         assert text_line.height == 2.5 * 1.333  # 1 + descender factor
 
-    def test_shrink_to_fit(self, font):
-        text_line = TextLine("text", font)
+    def test_shrink_to_fit(self, text_line):
         text_line.stretch("FIT", Vec3(0, 0), Vec3(5, 0))  # 50% shrink
         assert text_line.width == 5.0, "should shrink width"
         # cap height * 1.333 = 3.3325
         assert text_line.height == 3.3325, "should not shrink height"
 
-    def test_stretch_to_aligned(self, font):
-        text_line = TextLine("text", font)
+    def test_stretch_to_aligned(self, text_line):
         text_line.stretch("ALIGNED", Vec3(0, 0), Vec3(15, 0))  # 50% stretch
         assert text_line.width == 15.0, "should stretch width"
         # cap height * 1.333 * 1.5 = 4.99875
