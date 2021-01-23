@@ -1,5 +1,9 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+from typing import Tuple
+from ezdxf.math import Vec3
+import abc
+
 
 class FontMeasurements:
     def __init__(self, baseline: float, cap_height: float, x_height: float,
@@ -51,3 +55,62 @@ class FontMeasurements:
     @property
     def total_height(self) -> float:
         return self.cap_height + self.descender_height
+
+
+class AbstractFont:
+    def __init__(self, measurements: FontMeasurements):
+        self.measurements = measurements
+
+    @abc.abstractmethod
+    def text_width(self, text: str) -> float:
+        pass
+
+
+DESCENDER_FACTOR = 0.333  # from TXT SHX font - just guessing
+X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
+
+
+class MonospaceFont(AbstractFont):
+    def __init__(self, height: float, width_factor: float = 1.0,
+                 baseline: float = 0):
+        super().__init__(FontMeasurements(
+            baseline=baseline,
+            cap_height=height,
+            x_height=height * X_HEIGHT_FACTOR,
+            descender_height=height * DESCENDER_FACTOR,
+        ))
+        self.width_factor = width_factor
+
+    def text_width(self, text: str) -> float:
+        return len(text) * self.measurements.cap_height * self.width_factor
+
+
+class TextLine:
+    def __init__(self, text: str, font: 'AbstractFont'):
+        self._font = font
+        self._text_width = font.text_width(text)
+        self._stretch_x = 1.0
+        self._stretch_y = 1.0
+
+    def stretch(self, alignment: str, p1: Vec3, p2: Vec3) -> None:
+        sx = 1.0
+        sy = 1.0
+        if alignment in ('FIT', 'ALIGNED'):
+            defined_length = (p2 - p1).magnitude
+            if self._text_width > 1e-9:
+                sx = defined_length / self._text_width
+                if alignment == 'ALIGNED':
+                    sy = sx
+        self._stretch_x = sx
+        self._stretch_y = sy
+
+    @property
+    def width(self) -> float:
+        return self._text_width * self._stretch_x
+
+    @property
+    def height(self) -> float:
+        return self._font.measurements.total_height * self._stretch_y
+
+    def font_measurements(self) -> FontMeasurements:
+        return self._font.measurements.scale(self._stretch_y)

@@ -10,7 +10,7 @@ from ezdxf.render import (
     Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path,
 )
 
-from ezdxf.tools.text import FontMeasurements
+from ezdxf.tools.text import FontMeasurements, MonospaceFont, TextLine
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -211,18 +211,8 @@ class TextLinePrimitive(GenericPrimitive):
             else:
                 return p2
 
-        def text_stretch_factor():
-            sx = 1.0
-            sy = 1.0
-            if alignment in ('FIT', 'ALIGNED'):
-                defined_length = (p2 - p1).magnitude
-                if text_width > 1e-9:
-                    sx = defined_length / text_width
-                    if alignment == "ALIGNED":
-                        sy = sx
-            return sx, sy
-
         def shift_x() -> float:
+            total_width = text_line.width
             if halign == const.CENTER:
                 return -total_width / 2.0
             elif halign == const.RIGHT:
@@ -230,6 +220,7 @@ class TextLinePrimitive(GenericPrimitive):
             return 0.0  # LEFT
 
         def shift_y():
+            fm = text_line.font_measurements()
             if valign == const.BASELINE:
                 return -fm.descender_height
             elif valign == const.MIDDLE:
@@ -268,8 +259,8 @@ class TextLinePrimitive(GenericPrimitive):
             return ocs.points_to_wcs(m.transform_vertices(vertices))
 
         text = cast('Text', self.entity)
-        char_count = len(text.dxf.text)
-        if char_count == 0:
+        content = text.dxf.text
+        if len(content) == 0:
             # empty path - does not render any vertices!
             self._path = Path()
             return
@@ -284,24 +275,12 @@ class TextLinePrimitive(GenericPrimitive):
         if alignment in ('MIDDLE', 'FIT', 'ALIGNED'):
             halign = const.CENTER
 
-        # Text height of an uppercase letter without descenders:
-        text_height = text.dxf.height
-        width_factor = text.dxf.width
-        text_width = char_count * text_height * width_factor
-        sx, sy = text_stretch_factor()
-        total_width = text_width * sx
-
-        # https://www.fonts.com/content/learning/fontology/level-1/type-anatomy/anatomy
-        fm = FontMeasurements(
-            baseline=0,
-            cap_height=text_height,
-            x_height=text_height * X_HEIGHT_FACTOR,
-            descender_height=text_height * DESCENDER_FACTOR,
-        ).scale(sy)
+        font = MonospaceFont(text.dxf.height, text.dxf.width)
+        text_line = TextLine(content, font)
+        text_line.stretch(alignment, p1, p2)
 
         self._path = Path.from_vertices(
-            transform_bbox(
-                bbox_vertices(total_width, fm.total_height)),
+            transform_bbox(bbox_vertices(text_line.width, text_line.height)),
             close=True,
         )
 
