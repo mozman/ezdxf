@@ -305,6 +305,10 @@ TEXT_ALIGNMENT_BY_FLAGS = dict(
 LEFT = 0
 CENTER = 1
 RIGHT = 2
+ALIGNED = 3
+# useless MIDDLE = 4, same bevavior as (CENTER, MIDDLE)
+FIT = 5
+
 BASELINE = 0
 BOTTOM = 1
 MIDDLE = 2

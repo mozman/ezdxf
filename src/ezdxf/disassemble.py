@@ -5,12 +5,12 @@ import abc
 import math
 from ezdxf.entities import DXFEntity
 from ezdxf.lldxf import const
-from ezdxf.math import Vec3, Matrix44
+from ezdxf.math import Vec3
 from ezdxf.render import (
     Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path,
 )
 
-from ezdxf.tools.text import FontMeasurements, MonospaceFont, TextLine
+from ezdxf.tools.text import MonospaceFont, TextLine, unified_alignment
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -188,75 +188,28 @@ X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
 
 class TextLinePrimitive(GenericPrimitive):
     def _convert_entity(self):
-        """ Creates a rough bounding box for a single line text.
+        """ Calculates the rough border path for a single line text.
 
-        Calculation is based on a mono-spaced font and therefore the bounding
-        box is just an educated guess.
+        Calculation is based on a mono-spaced font and therefore the border
+        path is just an educated guess.
 
         Vertical text generation and oblique angle is ignored.
 
         """
 
-        def get_text_rotation():
+        def get_text_rotation() -> float:
             if alignment in ('FIT', 'ALIGNED') and not p1.isclose(p2):
                 return (p2 - p1).angle
             else:
                 return math.degrees(text.dxf.rotation)
 
-        def get_insert():
+        def get_insert() -> Vec3:
             if alignment == 'LEFT':
                 return p1
             elif alignment in ('FIT', 'ALIGNED'):
                 return p1.lerp(p2, factor=0.5)
             else:
                 return p2
-
-        def shift_x() -> float:
-            total_width = text_line.width
-            if halign == const.CENTER:
-                return -total_width / 2.0
-            elif halign == const.RIGHT:
-                return -total_width
-            return 0.0  # LEFT
-
-        def shift_y():
-            fm = text_line.font_measurements()
-            if valign == const.BASELINE:
-                return -fm.descender_height
-            elif valign == const.MIDDLE:
-                return -fm.cap_height / 2.0 - fm.descender_height
-            elif valign == const.TOP:
-                return -fm.total_height
-            return 0.0  # BOTTOM
-
-        def bbox_vertices(width, height):
-            return [
-                Vec3(0, 0),
-                Vec3(width, 0),
-                Vec3(width, height),
-                Vec3(0, height),
-                Vec3(0, 0)
-            ]
-
-        def transformation(insert, translate_x, translate_y):
-            return Matrix44.chain(
-                Matrix44.translate(  # to rotation center
-                    translate_x,
-                    translate_y,
-                    0,  # ignore z-axis = OCS elevation
-                ),
-                Matrix44.z_rotate(get_text_rotation()),
-                Matrix44.translate(
-                    insert.x,
-                    insert.y,
-                    0,  # ignore z-axis = OCS elevation
-                ),
-            )
-
-        def transform_bbox(vertices):
-            ocs = text.ocs()
-            m = transformation(get_insert(), shift_x(), shift_y())
-            return ocs.points_to_wcs(m.transform_vertices(vertices))
 
         text = cast('Text', self.entity)
         content = text.dxf.text
@@ -265,22 +218,20 @@ class TextLinePrimitive(GenericPrimitive):
             self._path = Path()
             return
 
-        p1 = text.dxf.insert
-        p2 = text.dxf.align_point
-        halign = text.dxf.halign
-        valign = text.dxf.valign
-        alignment = text.get_align()
-        if alignment == 'MIDDLE':  # valign is stored as BASELINE
-            valign = const.MIDDLE
-        if alignment in ('MIDDLE', 'FIT', 'ALIGNED'):
-            halign = const.CENTER
-
+        p1: Vec3 = text.dxf.insert
+        p2: Vec3 = text.dxf.align_point
         font = MonospaceFont(text.dxf.height, text.dxf.width)
         text_line = TextLine(content, font)
-        text_line.stretch(alignment, p1, p2)
+        alignment: str = text.get_align()
+        if text.dxf.halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
+            text_line.stretch(alignment, p1, p2)
+        halign, valign = unified_alignment(text)
+        corner_vertices = text_line.corner_vertices(
+            get_insert(), halign, valign, get_text_rotation())
 
+        ocs = text.ocs()
         self._path = Path.from_vertices(
-            transform_bbox(bbox_vertices(text_line.width, text_line.height)),
+            ocs.points_to_wcs(corner_vertices),
             close=True,
         )
 

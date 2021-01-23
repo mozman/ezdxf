@@ -1,8 +1,33 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Tuple
+from typing import List, Iterable, Tuple, TYPE_CHECKING, Union
 from ezdxf.math import Vec3
 import abc
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Text, MText
+
+DESCENDER_FACTOR = 0.333  # from TXT SHX font - just guessing
+X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
+LEFT = 0
+CENTER = 1
+RIGHT = 2
+BASELINE = 0
+BOTTOM = 1
+MIDDLE = 2
+TOP = 3
+
+MTEXT_ALIGN_FLAGS = {
+    1: (LEFT, TOP),
+    2: (CENTER, TOP),
+    3: (RIGHT, TOP),
+    4: (LEFT, MIDDLE),
+    5: (CENTER, MIDDLE),
+    6: (RIGHT, MIDDLE),
+    7: (LEFT, BOTTOM),
+    8: (CENTER, BOTTOM),
+    9: (RIGHT, BOTTOM),
+}
 
 
 class FontMeasurements:
@@ -66,10 +91,6 @@ class AbstractFont:
         pass
 
 
-DESCENDER_FACTOR = 0.333  # from TXT SHX font - just guessing
-X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
-
-
 class MonospaceFont(AbstractFont):
     def __init__(self, height: float, width_factor: float = 1.0,
                  baseline: float = 0):
@@ -114,3 +135,96 @@ class TextLine:
 
     def font_measurements(self) -> FontMeasurements:
         return self._font.measurements.scale(self._stretch_y)
+
+    def baseline_vertices(self, insert: Vec3, halign: int, valign: int,
+                          rotation: float) -> List[Vec3]:
+        descender_height = self.font_measurements().descender_height
+        vertices = [
+            Vec3(0, descender_height),
+            Vec3(self.width, descender_height),
+        ]
+        return _transform(vertices, insert, self._shift_vector(halign, valign),
+                          rotation)
+
+    def corner_vertices(self, insert: Vec3, halign: int, valign: int,
+                        rotation: float) -> List[Vec3]:
+        """ Returns the corner vertices of the text line in the order
+        bottom left, bottom right, top right, top left.
+
+        Args:
+            insert: insertion point
+            halign: horizontal alignment left=0, center=1, right=2
+            valign: vertical alignment baseline=0, bottom=1, middle=2, top=3
+            rotation: text rotation in radians
+
+        """
+        vertices = [
+            Vec3(0, 0),
+            Vec3(self.width, 0),
+            Vec3(self.width, self.height),
+            Vec3(0, self.height),
+        ]
+        return _transform(vertices, insert, self._shift_vector(halign, valign),
+                          rotation)
+
+    def _shift_vector(self, halign: int, valign: int) -> Vec3:
+        return Vec3(
+            _shift_x(self.width, halign),
+            _shift_y(self.font_measurements(), valign)
+        )
+
+
+def _transform(vertices: Iterable[Vec3],
+               insert: Vec3,
+               shift: Vec3,
+               rotation: float) -> List[Vec3]:
+    return [insert + (v + shift).rotate(rotation) for v in vertices]
+
+
+def _shift_x(total_width: float, halign: int) -> float:
+    if halign == CENTER:
+        return -total_width / 2.0
+    elif halign == RIGHT:
+        return -total_width
+    return 0.0  # LEFT
+
+
+def _shift_y(fm: FontMeasurements, valign: int) -> float:
+    if valign == BASELINE:
+        return -fm.descender_height
+    elif valign == MIDDLE:
+        return -fm.cap_height / 2.0 - fm.descender_height
+    elif valign == TOP:
+        return -fm.total_height
+    return 0.0  # BOTTOM
+
+
+def unified_alignment(entity: Union['Text', 'MText']) -> Tuple[int, int]:
+    """ Return unified horizontal and vertical alignment.
+
+    horizontal alignment: left=0, center=1, right=2
+
+    vertical alignment: baseline=0, bottom=1, middle=2, top=3
+
+    Returns:
+        tuple(halign, valign)
+
+    """
+    dxftype = entity.dxftype()
+    if dxftype == 'TEXT':
+        halign = entity.dxf.halign
+        valign = entity.dxf.valign
+        if halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
+            # For the alignments ALIGNED and FIT the text stretching has to be
+            # handles separately.
+            halign = CENTER
+            valign = BASELINE
+        # Special alignment MIDDLE is handles as (CENTER, MIDDLE)
+        if halign == 4:
+            valign = MIDDLE
+        return halign, valign
+    elif dxftype == 'MTEXT':
+        return MTEXT_ALIGN_FLAGS.get(entity.dxf.attachment_point, (LEFT, TOP))
+    else:
+        raise TypeError(f"invalid DXF {dxftype}")
+
