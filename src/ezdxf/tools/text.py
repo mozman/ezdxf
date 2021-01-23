@@ -47,7 +47,7 @@ class FontMeasurements:
 
     def scale(self, factor: float = 1.0) -> 'FontMeasurements':
         return FontMeasurements(
-            self.baseline,
+            self.baseline * factor,
             self.cap_height * factor,
             self.x_height * factor,
             self.descender_height * factor
@@ -63,7 +63,13 @@ class FontMeasurements:
 
     def scale_from_baseline(
             self, desired_cap_height: float) -> 'FontMeasurements':
-        return self.scale(desired_cap_height / self.cap_height)
+        factor = desired_cap_height / self.cap_height
+        return FontMeasurements(
+            self.baseline,
+            self.cap_height * factor,
+            self.x_height * factor,
+            self.descender_height * factor
+        )
 
     @property
     def cap_top(self) -> float:
@@ -190,13 +196,14 @@ def _shift_x(total_width: float, halign: int) -> float:
 
 
 def _shift_y(fm: FontMeasurements, valign: int) -> float:
+    baseline = fm.baseline
     if valign == BASELINE:
-        return -fm.descender_height
+        return baseline - fm.descender_height
     elif valign == MIDDLE:
-        return -fm.cap_height / 2.0 - fm.descender_height
+        return baseline - fm.cap_height / 2.0 - fm.descender_height
     elif valign == TOP:
-        return -fm.total_height
-    return 0.0  # BOTTOM
+        return baseline - fm.total_height
+    return baseline  # BOTTOM
 
 
 def unified_alignment(entity: Union['Text', 'MText']) -> Tuple[int, int]:

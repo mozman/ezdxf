@@ -21,8 +21,8 @@ def test_total_heigth(default):
 
 def test_scale(default):
     fm = default.scale(2)
-    assert fm.baseline == 1.3
-    assert fm.total_height == 2.5
+    assert fm.baseline == 2.6, "expected scaled baseline"
+    assert fm.total_height == 2.5, "expected scaled total height"
 
 
 def test_shift(default):
@@ -33,7 +33,7 @@ def test_shift(default):
 
 def test_scale_from_baseline(default):
     fm = default.scale_from_baseline(desired_cap_height=2.0)
-    assert fm.baseline == 1.3
+    assert fm.baseline == 1.3, "expected unchanged baseline value"
     assert fm.cap_height == 2.0
     assert fm.x_height == 1.0
     assert fm.descender_height == 0.50
