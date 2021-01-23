@@ -4,13 +4,13 @@ from typing import Iterable, Optional, cast, TYPE_CHECKING
 import abc
 import math
 from ezdxf.entities import DXFEntity
-from ezdxf.lldxf import const
 from ezdxf.math import Vec3
 from ezdxf.render import (
     Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path,
 )
-
-from ezdxf.tools.text import MonospaceFont, TextLine, unified_alignment
+from ezdxf.tools.text import (
+    MonospaceFont, TextLine, unified_alignment, plain_text
+)
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -212,7 +212,13 @@ class TextLinePrimitive(GenericPrimitive):
                 return p2
 
         text = cast('Text', self.entity)
-        content = text.dxf.text
+        if text.dxftype() == 'ATTRIB':
+            # ATTDEF outside of a BLOCK renders the tag rather than the value
+            content = text.dxf.tag
+        else:
+            content = text.dxf.text
+
+        content = plain_text(content)
         if len(content) == 0:
             # empty path - does not render any vertices!
             self._path = Path()

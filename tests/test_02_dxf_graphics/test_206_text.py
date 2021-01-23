@@ -5,11 +5,10 @@ import pytest
 import math
 
 import ezdxf
-from ezdxf.entities.text import Text, plain_text
+from ezdxf.entities.text import Text
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vec3, Matrix44
-from ezdxf.audit import Auditor
 
 TEST_CLASS = Text
 TEST_TYPE = 'TEXT'
@@ -260,18 +259,3 @@ def test_text_non_uniform_scaling(text2):
     text2.rotate_z(math.radians(30))
     text2.scale(1, 2, 1)
     assert math.isclose(text2.dxf.oblique, 33.004491598883064)
-
-
-def test_plain_text():
-    assert plain_text('%%d') == '°'
-    # underline
-    assert plain_text('%%u') == ''
-    assert plain_text('%%utext%%u') == 'text'
-    # single %
-    assert plain_text('%u%d%') == '%u%d%'
-    t = Text.new(dxfattribs={'text': '45%%d'})
-    assert t.plain_text() == '45°'
-
-    assert plain_text('abc^a') == 'abc!'
-    assert plain_text('abc^Jdef') == 'abcdef'
-    assert plain_text('abc^@def') == 'abc\0def'

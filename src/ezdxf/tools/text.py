@@ -1,8 +1,12 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+#  All tools in this module have to be independent from DXF entities!
 from typing import List, Iterable, Tuple, TYPE_CHECKING, Union
-from ezdxf.math import Vec3
 import abc
+import re
+from ezdxf.lldxf import validator
+from ezdxf.lldxf.const import SPECIAL_CHARS_ENCODING
+from ezdxf.math import Vec3
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Text, MText
@@ -248,3 +252,181 @@ def unified_alignment(entity: Union['Text', 'MText']) -> Tuple[int, int]:
         return MTEXT_ALIGN_FLAGS.get(entity.dxf.attachment_point, (LEFT, TOP))
     else:
         raise TypeError(f"invalid DXF {dxftype}")
+
+
+def plain_text(text: str) -> str:
+    chars = []
+    raw_chars = list(reversed(validator.fix_one_line_text(caret_decode(text))))
+    while len(raw_chars):
+        char = raw_chars.pop()
+        if char == '%':  # special characters
+            if len(raw_chars) and raw_chars[-1] == '%':
+                raw_chars.pop()  # discard next '%'
+                if len(raw_chars):
+                    special_char = raw_chars.pop()
+                    # replace or discard formatting code
+                    chars.append(SPECIAL_CHARS_ENCODING.get(special_char, ''))
+            else:  # char is just a single '%'
+                chars.append(char)
+        else:  # char is what it is, a character
+            chars.append(char)
+
+    return "".join(chars)
+
+
+ONE_CHAR_COMMANDS = "PLlOoKkX"
+
+
+##################################################
+# MTEXT inline codes
+# \L	Start underline
+# \l	Stop underline
+# \O	Start overstrike
+# \o	Stop overstrike
+# \K	Start strike-through
+# \k	Stop strike-through
+# \P	New paragraph (new line)
+# \pxi	Control codes for bullets, numbered paragraphs and columns
+# \X	Paragraph wrap on the dimension line (only in dimensions)
+# \Q	Slanting (oblique) text by angle - e.g. \Q30;
+# \H	Text height - e.g. \H3x;
+# \W	Text width - e.g. \W0.8x;
+# \F	Font selection
+#
+#     e.g. \Fgdt;o - GDT-tolerance
+#     e.g. \Fkroeger|b0|i0|c238|p10 - font Kroeger, non-bold, non-italic,
+#     codepage 238, pitch 10
+#
+# \S	Stacking, fractions
+#
+#     e.g. \SA^B:
+#     A
+#     B
+#     e.g. \SX/Y:
+#     X
+#     -
+#     Y
+#     e.g. \S1#4:
+#     1/4
+#
+# \A	Alignment
+#
+#     \A0; = bottom
+#     \A1; = center
+#     \A2; = top
+#
+# \C	Color change
+#
+#     \C1; = red
+#     \C2; = yellow
+#     \C3; = green
+#     \C4; = cyan
+#     \C5; = blue
+#     \C6; = magenta
+#     \C7; = white
+#
+# \T	Tracking, char.spacing - e.g. \T2;
+# \~	Non-wrapping space, hard space
+# {}	Braces - define the text area influenced by the code
+# \	Escape character - e.g. \\ = "\", \{ = "{"
+#
+# Codes and braces can be nested up to 8 levels deep
+
+def plain_mtext(text: str, split=False) -> Union[List[str], str]:
+    chars = []
+    # split text into chars, in reversed order for efficient pop()
+    raw_chars = list(reversed(text))
+    while len(raw_chars):
+        char = raw_chars.pop()
+        if char == '\\':  # is a formatting command
+            try:
+                char = raw_chars.pop()
+            except IndexError:
+                break  # premature end of text - just ignore
+
+            if char in '\\{}':
+                chars.append(char)
+            elif char in ONE_CHAR_COMMANDS:
+                if char == 'P':  # new line
+                    chars.append('\n')
+                    # discard other commands
+            else:  # more character commands are terminated by ';'
+                stacking = char == 'S'  # stacking command surrounds user data
+                first_char = char
+                search_chars = raw_chars.copy()
+                try:
+                    while char != ';':  # end of format marker
+                        char = search_chars.pop()
+                        if stacking and char != ';':
+                            # append user data of stacking command
+                            chars.append(char)
+                    raw_chars = search_chars
+                except IndexError:
+                    # premature end of text - just ignore
+                    chars.append('\\')
+                    chars.append(first_char)
+        elif char in '{}':  # grouping
+            pass  # discard group markers
+        elif char == '%':  # special characters
+            if len(raw_chars) and raw_chars[-1] == '%':
+                raw_chars.pop()  # discard next '%'
+                if len(raw_chars):
+                    special_char = raw_chars.pop()
+                    # replace or discard formatting code
+                    chars.append(SPECIAL_CHARS_ENCODING.get(special_char, ""))
+            else:  # char is just a single '%'
+                chars.append(char)
+        else:  # char is what it is, a character
+            chars.append(char)
+
+    result = "".join(chars)
+    return result.split('\n') if split else result
+
+
+def caret_decode(text: str) -> str:
+    """ DXF stores some special characters using caret notation. This function
+    decodes this notation to normalise the representation of special characters
+    in the string.
+
+    see: <https://en.wikipedia.org/wiki/Caret_notation>
+
+    """
+
+    def replace_match(match: "re.Match") -> str:
+        c = ord(match.group(1))
+        return chr((c - 64) % 126)
+
+    return re.sub(r'\^(.)', replace_match, text)
+
+
+def split_mtext_string(s: str, size: int = 250) -> List[str]:
+    chunks = []
+    pos = 0
+    while True:
+        chunk = s[pos:pos + size]
+        if len(chunk):
+            if len(chunk) < size:
+                chunks.append(chunk)
+                return chunks
+            pos += size
+            # do not split chunks at '^'
+            if chunk[-1] == '^':
+                chunk = chunk[:-1]
+                pos -= 1
+            chunks.append(chunk)
+        else:
+            return chunks
+
+
+def escape_dxf_line_endings(text: str) -> str:
+    # replacing '\r\n' and '\n' by '\P' is required when exporting, else an
+    # invalid DXF file would be created.
+    return text.replace('\r', '').replace('\n', '\\P')
+
+
+def replace_non_printable_characters(text: str, replacement: str = '▯') -> str:
+    return ''.join(replacement if is_non_printable_char(c) else c for c in text)
+
+
+def is_non_printable_char(char: str) -> bool:
+    return 0 <= ord(char) < 32 and char != '\t'

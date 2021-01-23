@@ -6,7 +6,7 @@ from typing import Optional, Tuple, TYPE_CHECKING, Iterable, List, Dict
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
-from ezdxf.entities.mtext import replace_non_printable_characters
+from ezdxf.tools.text import replace_non_printable_characters
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.render.path import Path
 

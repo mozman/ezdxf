@@ -1,32 +1,31 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 import math
-import re
 from typing import TYPE_CHECKING, Union, Tuple, List, Iterable
 
 from ezdxf.lldxf import const, validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
-    group_code_mapping
+    group_code_mapping,
 )
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, SPECIAL_CHARS_ENCODING
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from ezdxf.lldxf.tags import Tags
 from ezdxf.math import Vec3, Matrix44, OCS, NULLVEC, Z_AXIS, X_AXIS
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.colors import rgb2int
+from ezdxf.tools.text import (
+    caret_decode, split_mtext_string, escape_dxf_line_endings, plain_mtext,
+)
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex, Auditor, DXFTag
-    )
+    TagWriter, DXFNamespace, DXFEntity, Vertex, Auditor, DXFTag,
+)
 
-__all__ = [
-    'MText', 'plain_mtext', 'caret_decode', 'split_mtext_string',
-    'replace_non_printable_characters'
-]
+__all__ = ['MText']
 
 BG_FILL_MASK = 1 + 2 + 16
 
@@ -160,6 +159,7 @@ acdb_mtext = DefSubclass('AcDbMText', {
 })
 acdb_mtext_group_codes = group_code_mapping(acdb_mtext)
 
+
 # ----------------------------------------------------------------------
 # NO MULTI-COLUMN SUPPORT
 # ----------------------------------------------------------------------
@@ -248,10 +248,10 @@ class MText(DXFGraphic):
             else:
                 yield tag
         parts.append(tail)
-        self.text = _dxf_escape_line_endings(caret_decode("".join(parts)))
+        self.text = escape_dxf_line_endings(caret_decode("".join(parts)))
 
     def export_mtext(self, tagwriter: 'TagWriter') -> None:
-        txt = _dxf_escape_line_endings(self.text)
+        txt = escape_dxf_line_endings(self.text)
         str_chunks = split_mtext_string(txt, size=250)
         if len(str_chunks) == 0:
             str_chunks.append("")
@@ -440,162 +440,3 @@ class MText(DXFGraphic):
         """ Validity check. """
         super().audit(auditor)
         auditor.check_text_style(self)
-
-
-def plain_mtext(text: str, split=False) -> Union[List[str], str]:
-    chars = []
-    # split text into chars, in reversed order for efficient pop()
-    raw_chars = list(reversed(text))
-    while len(raw_chars):
-        char = raw_chars.pop()
-        if char == '\\':  # is a formatting command
-            try:
-                char = raw_chars.pop()
-            except IndexError:
-                break  # premature end of text - just ignore
-
-            if char in '\\{}':
-                chars.append(char)
-            elif char in ONE_CHAR_COMMANDS:
-                if char == 'P':  # new line
-                    chars.append('\n')
-                    # discard other commands
-            else:  # more character commands are terminated by ';'
-                stacking = char == 'S'  # stacking command surrounds user data
-                first_char = char
-                search_chars = raw_chars.copy()
-                try:
-                    while char != ';':  # end of format marker
-                        char = search_chars.pop()
-                        if stacking and char != ';':
-                            # append user data of stacking command
-                            chars.append(char)
-                    raw_chars = search_chars
-                except IndexError:
-                    # premature end of text - just ignore
-                    chars.append('\\')
-                    chars.append(first_char)
-        elif char in '{}':  # grouping
-            pass  # discard group markers
-        elif char == '%':  # special characters
-            if len(raw_chars) and raw_chars[-1] == '%':
-                raw_chars.pop()  # discard next '%'
-                if len(raw_chars):
-                    special_char = raw_chars.pop()
-                    # replace or discard formatting code
-                    chars.append(SPECIAL_CHARS_ENCODING.get(special_char, ""))
-            else:  # char is just a single '%'
-                chars.append(char)
-        else:  # char is what it is, a character
-            chars.append(char)
-
-    result = "".join(chars)
-    return result.split('\n') if split else result
-
-
-ONE_CHAR_COMMANDS = "PLlOoKkX"
-
-
-##################################################
-# MTEXT inline codes
-# \L	Start underline
-# \l	Stop underline
-# \O	Start overstrike
-# \o	Stop overstrike
-# \K	Start strike-through
-# \k	Stop strike-through
-# \P	New paragraph (new line)
-# \pxi	Control codes for bullets, numbered paragraphs and columns
-# \X	Paragraph wrap on the dimension line (only in dimensions)
-# \Q	Slanting (oblique) text by angle - e.g. \Q30;
-# \H	Text height - e.g. \H3x;
-# \W	Text width - e.g. \W0.8x;
-# \F	Font selection
-#
-#     e.g. \Fgdt;o - GDT-tolerance
-#     e.g. \Fkroeger|b0|i0|c238|p10 - font Kroeger, non-bold, non-italic,
-#     codepage 238, pitch 10
-#
-# \S	Stacking, fractions
-#
-#     e.g. \SA^B:
-#     A
-#     B
-#     e.g. \SX/Y:
-#     X
-#     -
-#     Y
-#     e.g. \S1#4:
-#     1/4
-#
-# \A	Alignment
-#
-#     \A0; = bottom
-#     \A1; = center
-#     \A2; = top
-#
-# \C	Color change
-#
-#     \C1; = red
-#     \C2; = yellow
-#     \C3; = green
-#     \C4; = cyan
-#     \C5; = blue
-#     \C6; = magenta
-#     \C7; = white
-#
-# \T	Tracking, char.spacing - e.g. \T2;
-# \~	Non-wrapping space, hard space
-# {}	Braces - define the text area influenced by the code
-# \	Escape character - e.g. \\ = "\", \{ = "{"
-#
-# Codes and braces can be nested up to 8 levels deep
-
-
-def split_mtext_string(s: str, size: int = 250) -> List[str]:
-    chunks = []
-    pos = 0
-    while True:
-        chunk = s[pos:pos + size]
-        if len(chunk):
-            if len(chunk) < size:
-                chunks.append(chunk)
-                return chunks
-            pos += size
-            # do not split chunks at '^'
-            if chunk[-1] == '^':
-                chunk = chunk[:-1]
-                pos -= 1
-            chunks.append(chunk)
-        else:
-            return chunks
-
-
-def _dxf_escape_line_endings(text: str) -> str:
-    # replacing '\r\n' and '\n' by '\P' is required when exporting, else an
-    # invalid DXF file would be created.
-    return text.replace('\r', '').replace('\n', '\\P')
-
-
-def caret_decode(text: str) -> str:
-    """ DXF stores some special characters using caret notation. This function
-    decodes this notation to normalise the representation of special characters
-    in the string.
-
-    see: <https://en.wikipedia.org/wiki/Caret_notation>
-
-    """
-
-    def replace_match(match: "re.Match") -> str:
-        c = ord(match.group(1))
-        return chr((c - 64) % 126)
-
-    return re.sub(r'\^(.)', replace_match, text)
-
-
-def _is_non_printable(char: str) -> bool:
-    return 0 <= ord(char) < 32 and char != '\t'
-
-
-def replace_non_printable_characters(text: str, replacement: str = '▯') -> str:
-    return ''.join(replacement if _is_non_printable(c) else c for c in text)

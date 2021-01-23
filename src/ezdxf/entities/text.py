@@ -4,18 +4,18 @@ import math
 from typing import TYPE_CHECKING, Tuple, Union
 
 from ezdxf.lldxf import validator
-from ezdxf.entities.mtext import caret_decode
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
     group_code_mapping,
 )
 from ezdxf.lldxf.const import (
-    DXF12, SUBCLASS_MARKER, SPECIAL_CHARS_ENCODING, DXFValueError,
+    DXF12, SUBCLASS_MARKER, DXFValueError,
 )
 from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform
 from ezdxf.audit import Auditor
+from ezdxf.tools.text import plain_text
 
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, elevation_to_z_axis
@@ -24,7 +24,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Vertex, DXFNamespace, Drawing
 
-__all__ = ['Text', 'acdb_text', 'plain_text']
+__all__ = ['Text', 'acdb_text']
 
 acdb_text = DefSubclass('AcDbText', {
     # First alignment point (in OCS):
@@ -351,23 +351,3 @@ class Text(DXFGraphic):
         """ Validity check. """
         super().audit(auditor)
         auditor.check_text_style(self)
-
-
-def plain_text(text: str) -> str:
-    chars = []
-    raw_chars = list(reversed(validator.fix_one_line_text(caret_decode(text))))
-    while len(raw_chars):
-        char = raw_chars.pop()
-        if char == '%':  # special characters
-            if len(raw_chars) and raw_chars[-1] == '%':
-                raw_chars.pop()  # discard next '%'
-                if len(raw_chars):
-                    special_char = raw_chars.pop()
-                    # replace or discard formatting code
-                    chars.append(SPECIAL_CHARS_ENCODING.get(special_char, ''))
-            else:  # char is just a single '%'
-                chars.append(char)
-        else:  # char is what it is, a character
-            chars.append(char)
-
-    return "".join(chars)

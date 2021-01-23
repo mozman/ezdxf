@@ -17,13 +17,13 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.lldxf.packedtags import VertexArray
 from ezdxf.lldxf.tags import Tags, DXFTag
-from ezdxf.math import NULLVEC, Z_AXIS, Y_AXIS, Vertex, Vec3, Vec2
+from ezdxf.math import NULLVEC, Z_AXIS, Y_AXIS, Vertex, Vec3, Vec2, Matrix44
+from ezdxf.tools.text import split_mtext_string
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
-from .mtext import split_mtext_string
 from .. import units
-from ..math import Matrix44
+
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace

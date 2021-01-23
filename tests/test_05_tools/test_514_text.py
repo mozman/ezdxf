@@ -2,7 +2,13 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.tools.text import FontMeasurements, MonospaceFont, TextLine
+
+from ezdxf.entities import Text
+from ezdxf.tools.text import (
+    FontMeasurements, MonospaceFont, TextLine, plain_text, caret_decode,
+    escape_dxf_line_endings, replace_non_printable_characters, plain_mtext,
+    split_mtext_string,
+)
 from ezdxf.math import Vec3
 from ezdxf.lldxf import const
 
@@ -120,6 +126,108 @@ class TestTextLine:
         assert text_line.corner_vertices(Vec3(0, 0), valign=const.MIDDLE) == [
             Vec3(0, bottom), Vec3(10, bottom), Vec3(10, top), Vec3(0, top)
         ]
+
+
+def test_plain_text():
+    assert plain_text('%%d') == '°'
+    # underline
+    assert plain_text('%%u') == ''
+    assert plain_text('%%utext%%u') == 'text'
+    # single %
+    assert plain_text('%u%d%') == '%u%d%'
+    t = Text.new(dxfattribs={'text': '45%%d'})
+    assert t.plain_text() == '45°'
+
+    assert plain_text('abc^a') == 'abc!'
+    assert plain_text('abc^Jdef') == 'abcdef'
+    assert plain_text('abc^@def') == 'abc\0def'
+
+
+def test_caret_decode():
+    assert caret_decode('') == ''
+    assert caret_decode('^') == '^'  # no match
+    assert caret_decode('^ ') == '^'
+    assert caret_decode('abc') == 'abc'
+    assert caret_decode('ab\\Pc') == 'ab\\Pc'
+    assert caret_decode('1^J\\P2') == '1\n\\P2'
+    assert caret_decode('1^J2') == '1\n2'
+    assert caret_decode('1^M2') == '1\r2'
+    assert caret_decode('1^M^J2') == '1\r\n2'
+    assert caret_decode('1^J^M2') == '1\n\r2'
+    assert caret_decode('abc^ def') == 'abc^def'
+    assert caret_decode('abc^Idef') == 'abc\tdef'
+    assert caret_decode('abc^adef') == 'abc!def'
+    assert caret_decode('abc^ddef') == 'abc$def'
+    assert caret_decode('abc^zdef') == 'abc:def'
+    assert caret_decode('abc^@def') == 'abc\0def'
+    assert caret_decode('abc^^def') == 'abc\x1edef'
+
+
+def test_dxf_escape_line_endings():
+    assert escape_dxf_line_endings('\\P test') == '\\P test'
+    assert escape_dxf_line_endings('abc\ndef') == 'abc\\Pdef'
+    assert escape_dxf_line_endings('abc\rdef') == 'abcdef', \
+        r"a single '\r' should be ignored"
+    assert escape_dxf_line_endings('abc\r\ndef') == 'abc\\Pdef', \
+        r"'\r\n' represents a single newline"
+
+
+def test_replace_non_printable():
+    assert replace_non_printable_characters('abc') == 'abc'
+    assert replace_non_printable_characters('abc def') == 'abc def'
+    assert replace_non_printable_characters('abc \tdef') == 'abc \tdef'
+    assert replace_non_printable_characters('abc\0def') == 'abc▯def'
+    assert replace_non_printable_characters(
+        'abc\0def', replacement=' ') == 'abc def'
+
+
+def test_plain_text_removes_formatting():
+    raw_text = r"\A1;Das ist eine MText\PZeile mit {\LFormat}ierung\Pänder " \
+               r"die Farbe\P\pi-7.5,l7.5,t7.5;1.^INummerierung\P2.^INummeri" \
+               r"erung\P\pi0,l0,tz;\P{\H0.7x;\S1/2500;}  ein Bruch"
+    expected = "Das ist eine MText\nZeile mit Formatierung\nänder die Farbe\n" \
+               "1.^INummerierung\n2.^INummerierung\n\n1/2500  ein Bruch"
+    assert plain_mtext(raw_text) == expected
+    assert plain_mtext('\\:') == '\\:', \
+        "invalid escape code is printed verbatim"
+
+
+def test_plain_text_convert_special_chars():
+    assert plain_mtext("%%d") == "°"
+    assert plain_mtext("%%u") == ""
+    assert plain_mtext("%%U") == ""
+
+
+class TestSplitMText:
+    MTEXT_SHORT_STR = "0123456789"
+
+    def test_do_not_split_at_caret(self):
+        # do not split at '^'
+        chunks = split_mtext_string('a' * 19 + '^Ixxx^', 20)
+        assert len(chunks) == 2
+        assert chunks[0] == 'a' * 19
+        assert chunks[1] == '^Ixxx^'
+
+    def test_split_empty_string(self):
+        chunks = split_mtext_string('', 20)
+        assert len(chunks) == 0
+
+    def test_split_short_string(self):
+        chunks = split_mtext_string(self.MTEXT_SHORT_STR, 20)
+        assert len(chunks) == 1
+        assert self.MTEXT_SHORT_STR == chunks[0]
+
+    def test_split_long_string(self):
+        chunks = split_mtext_string(self.MTEXT_SHORT_STR * 3, 20)
+        assert len(chunks) == 2
+        assert self.MTEXT_SHORT_STR * 2 == chunks[0]
+        assert self.MTEXT_SHORT_STR == chunks[1]
+
+    def test_split_longer_string(self):
+        chunks = split_mtext_string(self.MTEXT_SHORT_STR * 4, 20)
+        assert len(chunks) == 2
+        assert chunks[0] == self.MTEXT_SHORT_STR * 2
+        assert chunks[1] == self.MTEXT_SHORT_STR * 2
 
 
 if __name__ == '__main__':

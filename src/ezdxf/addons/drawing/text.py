@@ -6,15 +6,13 @@ import re
 from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 
-from ezdxf.entities.text import plain_text
-
 import ezdxf.lldxf.const as DXFConstants
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.addons.drawing import fonts
 from ezdxf.entities import MText, Text, Attrib, AttDef
 from ezdxf.math import Matrix44, Vec3, sign
-from ezdxf.tools.text import FontMeasurements
+from ezdxf.tools.text import FontMeasurements, plain_text
 
 """
 Search google for 'typography' or 'font anatomy' for explanations of terms like 'baseline' and 'x-height'
