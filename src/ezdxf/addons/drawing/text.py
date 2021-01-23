@@ -14,6 +14,7 @@ from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.addons.drawing import fonts
 from ezdxf.entities import MText, Text, Attrib, AttDef
 from ezdxf.math import Matrix44, Vec3, sign
+from ezdxf.tools.text import FontMeasurements
 
 """
 Search google for 'typography' or 'font anatomy' for explanations of terms like 'baseline' and 'x-height'
@@ -56,42 +57,6 @@ DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT: Dict[int, Alignment] = {
     DXFConstants.MTEXT_BOTTOM_RIGHT: (HAlignment.RIGHT, VAlignment.BOTTOM)
 }
 assert len(DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT) == len(DXFConstants.MTEXT_ALIGN_FLAGS)
-
-
-class FontMeasurements:
-    def __init__(self, baseline: float, cap_height: float, x_height: float, descender_height: float):
-        self.baseline = baseline
-        self.cap_height = cap_height
-        self.x_height = x_height
-        self.descender_height = descender_height
-
-    def __eq__(self, other):
-        return (isinstance(other, FontMeasurements) and
-                self.baseline == other.baseline and
-                self.cap_height == other.cap_height and
-                self.x_height == other.x_height and
-                self.descender_height == other.descender_height)
-
-    def scale_from_baseline(self, desired_cap_height: float) -> "FontMeasurements":
-        scale = desired_cap_height / self.cap_height
-        return FontMeasurements(
-            baseline=self.baseline,
-            cap_height=desired_cap_height,
-            x_height=self.x_height * scale,
-            descender_height=self.descender_height * scale,
-        )
-
-    @property
-    def cap_top(self) -> float:
-        return self.baseline + self.cap_height
-
-    @property
-    def x_top(self) -> float:
-        return self.baseline + self.x_height
-
-    @property
-    def bottom(self) -> float:
-        return self.baseline - self.descender_height
 
 
 def _get_rotation(text: AnyText) -> Matrix44:

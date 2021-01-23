@@ -7,8 +7,10 @@ from ezdxf.entities import DXFEntity
 from ezdxf.lldxf import const
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.render import (
-    Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path, forms,
+    Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path,
 )
+
+from ezdxf.tools.text import FontMeasurements
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -180,7 +182,8 @@ class PolylinePrimitive(GenericPrimitive):
             self._mesh = MeshBuilder.from_builder(m)
 
 
-DESCENDERS_FACTOR = 0.333  # from TXT SHX font - just guessing
+DESCENDER_FACTOR = 0.333  # from TXT SHX font - just guessing
+X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
 
 
 class TextLinePrimitive(GenericPrimitive):
@@ -189,6 +192,8 @@ class TextLinePrimitive(GenericPrimitive):
 
         Calculation is based on a mono-spaced font and therefore the bounding
         box is just an educated guess.
+
+        Vertical text generation and oblique angle is ignored.
 
         """
 
@@ -226,12 +231,41 @@ class TextLinePrimitive(GenericPrimitive):
 
         def shift_y():
             if valign == const.BASELINE:
-                return -total_descenders_height
+                return -fm.descender_height
             elif valign == const.MIDDLE:
-                return -total_cap_height / 2.0 - total_descenders_height
+                return -fm.cap_height / 2.0 - fm.descender_height
             elif valign == const.TOP:
-                return -total_height
+                return -fm.total_height
             return 0.0  # BOTTOM
+
+        def bbox_vertices(width, height):
+            return [
+                Vec3(0, 0),
+                Vec3(width, 0),
+                Vec3(width, height),
+                Vec3(0, height),
+                Vec3(0, 0)
+            ]
+
+        def transformation(insert, translate_x, translate_y):
+            return Matrix44.chain(
+                Matrix44.translate(  # to rotation center
+                    translate_x,
+                    translate_y,
+                    0,  # ignore z-axis = OCS elevation
+                ),
+                Matrix44.z_rotate(get_text_rotation()),
+                Matrix44.translate(
+                    insert.x,
+                    insert.y,
+                    0,  # ignore z-axis = OCS elevation
+                ),
+            )
+
+        def transform_bbox(vertices):
+            ocs = text.ocs()
+            m = transformation(get_insert(), shift_x(), shift_y())
+            return ocs.points_to_wcs(m.transform_vertices(vertices))
 
         text = cast('Text', self.entity)
         char_count = len(text.dxf.text)
@@ -252,39 +286,24 @@ class TextLinePrimitive(GenericPrimitive):
 
         # Text height of an uppercase letter without descenders:
         text_height = text.dxf.height
-
         width_factor = text.dxf.width
         text_width = char_count * text_height * width_factor
         sx, sy = text_stretch_factor()
         total_width = text_width * sx
 
         # https://www.fonts.com/content/learning/fontology/level-1/type-anatomy/anatomy
-        total_cap_height = text_height * sy
-        total_descenders_height = total_cap_height * DESCENDERS_FACTOR
-        total_height = total_cap_height + total_descenders_height
+        fm = FontMeasurements(
+            baseline=0,
+            cap_height=text_height,
+            x_height=text_height * X_HEIGHT_FACTOR,
+            descender_height=text_height * DESCENDER_FACTOR,
+        ).scale(sy)
 
-        bbox_vertices = forms.box(total_width, total_height)
-        insert = get_insert()
-        m = Matrix44.chain(
-            Matrix44.translate(  # to rotation center
-                shift_x(),
-                shift_y(),
-                0,  # ignore z-axis = OCS elevation
-            ),
-            Matrix44.z_rotate(get_text_rotation()),
-            Matrix44.translate(
-                insert.x,
-                insert.y,
-                0,  # ignore z-axis = OCS elevation
-            ),
-        )
-        # TODO: text generation flags?
-        ocs = text.ocs()
-        bbox = Path.from_vertices(
-            ocs.points_to_wcs(m.transform_vertices(bbox_vertices)),
+        self._path = Path.from_vertices(
+            transform_bbox(
+                bbox_vertices(total_width, fm.total_height)),
             close=True,
         )
-        self._path = bbox
 
 
 _PRIMITIVE_CLASSES = {
