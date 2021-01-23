@@ -98,13 +98,17 @@ class AbstractFont:
 
 
 class MonospaceFont(AbstractFont):
-    def __init__(self, height: float, width_factor: float = 1.0,
-                 baseline: float = 0):
+    def __init__(self,
+                 cap_height: float,
+                 width_factor: float = 1.0,
+                 baseline: float = 0,
+                 descender_factor: float = DESCENDER_FACTOR,
+                 x_height_factor: float = X_HEIGHT_FACTOR):
         super().__init__(FontMeasurements(
             baseline=baseline,
-            cap_height=height,
-            x_height=height * X_HEIGHT_FACTOR,
-            descender_height=height * DESCENDER_FACTOR,
+            cap_height=cap_height,
+            x_height=cap_height * x_height_factor,
+            descender_height=cap_height * descender_factor,
         ))
         self.width_factor: float = abs(width_factor)
 
@@ -142,18 +146,27 @@ class TextLine:
     def font_measurements(self) -> FontMeasurements:
         return self._font.measurements.scale(self._stretch_y)
 
-    def baseline_vertices(self, insert: Vec3, halign: int, valign: int,
-                          rotation: float) -> List[Vec3]:
-        descender_height = self.font_measurements().descender_height
-        vertices = [
-            Vec3(0, descender_height),
-            Vec3(self.width, descender_height),
-        ]
-        return _transform(vertices, insert, self._shift_vector(halign, valign),
-                          rotation)
+    def baseline_vertices(self, insert: Vec3, halign: int = 0, valign: int = 0,
+                          angle: float = 0) -> List[Vec3]:
+        """ Returns the left and the right baseline vertex of the text line.
 
-    def corner_vertices(self, insert: Vec3, halign: int, valign: int,
-                        rotation: float) -> List[Vec3]:
+        Args:
+            insert: insertion point
+            halign: horizontal alignment left=0, center=1, right=2
+            valign: vertical alignment baseline=0, bottom=1, middle=2, top=3
+            angle: text rotation in radians
+
+        """
+        fm = self.font_measurements()
+        vertices = [
+            Vec3(0, fm.baseline),
+            Vec3(self.width, fm.baseline),
+        ]
+        shift = self._shift_vector(halign, valign, fm)
+        return _transform(vertices, insert, shift, angle)
+
+    def corner_vertices(self, insert: Vec3, halign: int = 0, valign: int = 0,
+                        angle: float = 0) -> List[Vec3]:
         """ Returns the corner vertices of the text line in the order
         bottom left, bottom right, top right, top left.
 
@@ -161,22 +174,24 @@ class TextLine:
             insert: insertion point
             halign: horizontal alignment left=0, center=1, right=2
             valign: vertical alignment baseline=0, bottom=1, middle=2, top=3
-            rotation: text rotation in radians
+            angle: text rotation in radians
 
         """
+        fm = self.font_measurements()
         vertices = [
-            Vec3(0, 0),
-            Vec3(self.width, 0),
-            Vec3(self.width, self.height),
-            Vec3(0, self.height),
+            Vec3(0, fm.bottom),
+            Vec3(self.width, fm.bottom),
+            Vec3(self.width, fm.cap_top),
+            Vec3(0, fm.cap_top),
         ]
-        return _transform(vertices, insert, self._shift_vector(halign, valign),
-                          rotation)
+        shift = self._shift_vector(halign, valign, fm)
+        return _transform(vertices, insert, shift, angle)
 
-    def _shift_vector(self, halign: int, valign: int) -> Vec3:
+    def _shift_vector(self, halign: int, valign: int,
+                      fm: FontMeasurements) -> Vec3:
         return Vec3(
             _shift_x(self.width, halign),
-            _shift_y(self.font_measurements(), valign)
+            _shift_y(fm, valign)
         )
 
 
@@ -196,14 +211,13 @@ def _shift_x(total_width: float, halign: int) -> float:
 
 
 def _shift_y(fm: FontMeasurements, valign: int) -> float:
-    baseline = fm.baseline
     if valign == BASELINE:
-        return baseline - fm.descender_height
+        return fm.baseline
     elif valign == MIDDLE:
-        return baseline - fm.cap_height / 2.0 - fm.descender_height
+        return -fm.cap_top + fm.cap_height / 2
     elif valign == TOP:
-        return baseline - fm.total_height
-    return baseline  # BOTTOM
+        return -fm.cap_top
+    return -fm.bottom
 
 
 def unified_alignment(entity: Union['Text', 'MText']) -> Tuple[int, int]:
