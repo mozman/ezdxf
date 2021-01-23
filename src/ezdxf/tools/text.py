@@ -70,7 +70,7 @@ class FontMeasurements:
         factor = desired_cap_height / self.cap_height
         return FontMeasurements(
             self.baseline,
-            self.cap_height * factor,
+            desired_cap_height,
             self.x_height * factor,
             self.descender_height * factor
         )
