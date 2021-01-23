@@ -184,13 +184,13 @@ class MatplotlibBackend(Backend):
         return font_properties
 
     def get_font_measurements(self, cap_height: float,
-                              font: str = None) -> FontMeasurements:
+                              font: fonts.Font = None) -> FontMeasurements:
         return self._text_renderer.get_font_measurements(
             self.get_font_properties(font)).scale_from_baseline(
             desired_cap_height=cap_height)
 
     def get_text_line_width(self, text: str, cap_height: float,
-                            font: str = None) -> float:
+                            font: fonts.Font = None) -> float:
         if not text.strip():
             return 0
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
