@@ -100,7 +100,7 @@ class MonospaceFont(AbstractFont):
             x_height=height * X_HEIGHT_FACTOR,
             descender_height=height * DESCENDER_FACTOR,
         ))
-        self.width_factor = width_factor
+        self.width_factor: float = abs(width_factor)
 
     def text_width(self, text: str) -> float:
         return len(text) * self.measurements.cap_height * self.width_factor
@@ -109,15 +109,15 @@ class MonospaceFont(AbstractFont):
 class TextLine:
     def __init__(self, text: str, font: 'AbstractFont'):
         self._font = font
-        self._text_width = font.text_width(text)
-        self._stretch_x = 1.0
-        self._stretch_y = 1.0
+        self._text_width: float = font.text_width(text)
+        self._stretch_x: float = 1.0
+        self._stretch_y: float = 1.0
 
     def stretch(self, alignment: str, p1: Vec3, p2: Vec3) -> None:
-        sx = 1.0
-        sy = 1.0
+        sx: float = 1.0
+        sy: float = 1.0
         if alignment in ('FIT', 'ALIGNED'):
-            defined_length = (p2 - p1).magnitude
+            defined_length: float = (p2 - p1).magnitude
             if self._text_width > 1e-9:
                 sx = defined_length / self._text_width
                 if alignment == 'ALIGNED':
@@ -227,4 +227,3 @@ def unified_alignment(entity: Union['Text', 'MText']) -> Tuple[int, int]:
         return MTEXT_ALIGN_FLAGS.get(entity.dxf.attachment_point, (LEFT, TOP))
     else:
         raise TypeError(f"invalid DXF {dxftype}")
-
