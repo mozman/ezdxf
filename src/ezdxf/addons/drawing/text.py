@@ -217,7 +217,8 @@ def _get_extra_transform(text: AnyText, line_width: float) -> Matrix44:
             stretch_factor = defined_length / line_width
             scale_x = stretch_factor
             if alignment == "ALIGNED":
-                scale_y = stretch_factor
+                # TODO: 0.75 is an arbitrary factor
+                scale_y = stretch_factor * 0.75
 
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_X:
             scale_x *= -1
@@ -245,8 +246,8 @@ def _apply_alignment(alignment: Alignment,
                      line_widths: List[float],
                      line_spacing: float,
                      box_width: Optional[float],
-                     font_measurements: FontMeasurements) -> Tuple[
-    Tuple[float, float], List[float], List[float]]:
+                     font_measurements: FontMeasurements
+                     ) -> Tuple[Tuple[float, float], List[float], List[float]]:
     if not line_widths:
         return (0, 0), [], []
 
@@ -309,12 +310,13 @@ def _get_wcs_insert(text: AnyText) -> Vec3:
 def simplified_text_chunks(text: AnyText, out: Backend,
                            *,
                            font: fonts.Font = None,
-                           debug_draw_rect: bool = False) -> Iterable[
-    Tuple[str, Matrix44, float]]:
-    """
-    Splits a complex text entity into simple chunks of text which can all be rendered the same way:
-    render the string (which will not contain any newlines) with the given cap_height with (left, baseline) at (0, 0)
-    then transform it with the given matrix to move it into place.
+                           debug_draw_rect: bool = False
+                           ) -> Iterable[Tuple[str, Matrix44, float]]:
+    """ Splits a complex text entity into simple chunks of text which can all be
+    rendered the same way:
+    render the string (which will not contain any newlines) with the given
+    cap_height with (left, baseline) at (0, 0) then transform it with the given
+    matrix to move it into place.
     """
     alignment = _get_alignment(text)
     box_width = _get_text_width(text)
