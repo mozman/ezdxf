@@ -16,7 +16,7 @@ class AbstractBoundingBox:
     def __init__(self, vertices: Iterable['Vertex'] = None):
         if vertices is not None:
             try:
-                self.extmin, self.extmax = self.extender(vertices)
+                self.extmin, self.extmax = self.extends_detector(vertices)
             except ValueError:
                 # No or invalid data creates an empty BoundingBox
                 pass
@@ -29,7 +29,7 @@ class AbstractBoundingBox:
         if self.has_data:
             return f"{name}({self.__str__()})"
         else:
-            return f"{name}(None)"
+            return f"{name}()"
 
     def __iter__(self):
         if self.has_data:
@@ -37,7 +37,7 @@ class AbstractBoundingBox:
             yield self.extmax
 
     @abc.abstractmethod
-    def extender(self, vertices: Iterable['Vertex']):
+    def extends_detector(self, vertices: Iterable['Vertex']):
         pass
 
     @abc.abstractmethod
@@ -76,7 +76,7 @@ class AbstractBoundingBox:
             return
         if self.has_data:
             v.extend([self.extmin, self.extmax])
-        self.extmin, self.extmax = self.extender(v)
+        self.extmin, self.extmax = self.extends_detector(v)
 
     def union(self, other: 'AbstractBoundingBox'):
         """ Returns a new bounding box as union of this and `other` bounding
@@ -98,8 +98,8 @@ class BoundingBox(AbstractBoundingBox):
 
     """
 
-    def extender(self, vertices: Iterable['Vertex']):
-        return extends(vertices)
+    def extends_detector(self, vertices: Iterable['Vertex']):
+        return extends3d(vertices)
 
     def inside(self, vertex: 'Vertex') -> bool:
         """ Returns ``True`` if `vertex` is inside bounding box. """
@@ -119,7 +119,7 @@ class BoundingBox2d(AbstractBoundingBox):
 
     """
 
-    def extender(self, vertices: Iterable['Vertex']):
+    def extends_detector(self, vertices: Iterable['Vertex']):
         return extends2d(vertices)
 
     def inside(self, vertex: 'Vertex') -> bool:
@@ -130,7 +130,7 @@ class BoundingBox2d(AbstractBoundingBox):
         return (min_.x <= v.x <= max_.x) and (min_.y <= v.y <= max_.y)
 
 
-def extends(vertices: Iterable['Vertex']) -> Tuple[Vec3, Vec3]:
+def extends3d(vertices: Iterable['Vertex']) -> Tuple[Vec3, Vec3]:
     minx, miny, minz = None, None, None
     maxx, maxy, maxz = None, None, None
     for v in vertices:
