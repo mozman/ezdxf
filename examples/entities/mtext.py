@@ -1,5 +1,4 @@
-# Created: 11.08.2013
-# Copyright (c) 2013-2019 Manfred Moitzi
+# Copyright (c) 2013-2021 Manfred Moitzi
 # License: MIT License
 import ezdxf
 

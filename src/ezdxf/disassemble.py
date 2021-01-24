@@ -1,20 +1,21 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, Optional, cast, TYPE_CHECKING
+from typing import Iterable, Optional, cast, TYPE_CHECKING, List
 import abc
 import math
 from ezdxf.entities import DXFEntity
-from ezdxf.math import Vec3
+from ezdxf.lldxf import const
+from ezdxf.math import Vec3, UCS, Z_AXIS, X_AXIS
 from ezdxf.render import (
     Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path,
 )
 from ezdxf.tools.text import (
-    MonospaceFont, TextLine, unified_alignment, plain_text
+    MonospaceFont, TextLine, unified_alignment, plain_text,
 )
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        LWPolyline, Polyline,
+        LWPolyline, Polyline, MText,
     )
 
 
@@ -242,9 +243,108 @@ class TextLinePrimitive(GenericPrimitive):
         )
 
 
+class MTextPrimitive(GenericPrimitive):
+    def _convert_entity(self):
+        """ Calculates the rough border path for a MTEXT entity.
+
+        Calculation is based on a mono-spaced font and therefore the border
+        path is just an educated guess.
+
+        Most special features of MTEXT is not supported.
+
+        """
+
+        def get_content() -> List[str]:
+            return mtext.plain_text(split=True)
+
+        def get_max_str() -> str:
+            return max(content, key=lambda s: len(s))
+
+        def get_rect_width() -> float:
+            width = mtext.dxf.get('width', 0)
+            if width:
+                return width
+            s = get_max_str()
+            if len(s) == 0:
+                s = " "
+            return font.text_width(s)
+
+        def get_rect_height() -> float:
+            line_height = font.measurements.total_height
+            spacing = mtext.dxf.line_spacing_factor
+            return len(content) * line_height * spacing
+
+        def get_ucs() -> UCS:
+            """ Create local coordinate system:
+            origin = insertion point
+            z-axis = extrusion vector
+            x-axis = text_direction or text rotation, text rotation requires
+                extrusion vector == (0, 0, 1) or treatment like an OCS?
+
+            """
+            origin = mtext.dxf.insert
+            z_axis = mtext.dxf.extrusion  # default is Z_AXIS
+            x_axis = X_AXIS
+            if mtext.dxf.hasattr('text_direction'):
+                x_axis = mtext.dxf.text_direction
+            elif mtext.dxf.hasattr('rotation'):
+                # TODO: what if extrusion vector is not (0, 0, 1)
+                x_axis = Vec3.from_deg_angle(mtext.dxf.rotation)
+                z_axis = Z_AXIS
+            return UCS(origin=origin, ux=x_axis, uz=z_axis)
+
+        def get_shift_factors():
+            halign, valign = unified_alignment(mtext)
+            shift_x = 0
+            shift_y = 0
+            if halign == const.CENTER:
+                shift_x = -0.5
+            elif halign == const.RIGHT:
+                shift_x = -1.0
+            if valign == const.MIDDLE:
+                shift_y = 0.5
+            elif valign == const.BOTTOM:
+                shift_y = 1.0
+            return shift_x, shift_y
+
+        def get_corner_vertices() -> Iterable[Vec3]:
+            """ Create corner vertices in the local working plan, where
+            the insertion point is the origin.
+            """
+            rect_width = mtext.dxf.get('rect_width', get_rect_width())
+            rect_height = mtext.dxf.get('rect_height', get_rect_height())
+            # TOP LEFT alignment:
+            vertices = [
+                Vec3(0, 0),
+                Vec3(rect_width, 0),
+                Vec3(rect_width, -rect_height),
+                Vec3(0, -rect_height)
+            ]
+            sx, sy = get_shift_factors()
+            shift = Vec3(sx * rect_width, sy * rect_height)
+            return (v + shift for v in vertices)
+
+        mtext: "MText" = cast("MText", self.entity)
+        content: List[str] = get_content()
+        if len(content) == 0:
+            # empty path - does not render any vertices!
+            self._path = Path()
+            return
+        font = MonospaceFont(mtext.dxf.char_height)
+        ucs = get_ucs()
+        corner_vertices = get_corner_vertices()
+        self._path = Path.from_vertices(
+            ucs.points_to_wcs(corner_vertices),
+            close=True,
+        )
+
+
+# SHAPE is not supported, could not create any SHAPE entities in BricsCAD
 _PRIMITIVE_CLASSES = {
     "3DFACE": QuadrilateralPrimitive,
     "ARC": CurvePrimitive,
+    # TODO: ATTRIB and ATTDEF could contain embedded MTEXT,
+    #  but this is not supported yet!
     "ATTRIB": TextLinePrimitive,
     "ATTDEF": TextLinePrimitive,
     "CIRCLE": CurvePrimitive,
@@ -253,6 +353,7 @@ _PRIMITIVE_CLASSES = {
     "LINE": LinePrimitive,
     "LWPOLYLINE": LwPolylinePrimitive,
     "MESH": MeshPrimitive,
+    "MTEXT": MTextPrimitive,
     "POINT": PointPrimitive,
     "POLYLINE": PolylinePrimitive,
     "SPLINE": CurvePrimitive,

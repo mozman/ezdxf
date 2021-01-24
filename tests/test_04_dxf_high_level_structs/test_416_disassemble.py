@@ -197,5 +197,15 @@ def test_text_to_primitive():
     assert len(list(p.vertices())) == 5, "Expected closed box"
 
 
+def test_mtext_to_primitive():
+    # Testing just the control flow, correct bounding boxes are visually tested.
+    # see: ezdxf/examples/entities/mtext.py
+    mtext = factory.new('MTEXT')
+    mtext.text = "0123456789"
+    p = disassemble.make_primitive(mtext)
+    assert p.path is not None
+    assert p.mesh is None
+    assert len(list(p.vertices())) == 5, "Expected closed box"
+
 if __name__ == '__main__':
     pytest.main([__file__])
