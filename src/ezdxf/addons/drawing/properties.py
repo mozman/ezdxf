@@ -62,8 +62,8 @@ SHX_FONTS = {
     'SYMAP.SHX': "symap___.ttf",
     'SYMETEO': "symeteo_.ttf",
     'SYMETEO.SHX': "symeteo_.ttf",
-    'TXT': "monotxt_.ttf",  # Default AutoCAD font
-    'TXT.SHX': "monotxt_.ttf",
+    'TXT': "txt_____.ttf",  # Default AutoCAD font
+    'TXT.SHX': "txt_____.ttf",
 }
 
 

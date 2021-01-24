@@ -68,19 +68,21 @@ def create_doc(filename):
                      (15, 10), (35, 5), 'FIT')
     add_grid((0, 0), width=10, height=10)
 
+    doc.layers.new('INSERT_POINTS')
     draw_insert_points(msp)
-    draw_bounding_boxes(msp)
+    doc.layers.new('BOUNDARIES')
+    draw_text_boundaries(msp)
 
     doc.set_modelspace_vport(height=30, center=(15, 0))
     doc.saveas(filename)
 
 
-def draw_bounding_boxes(msp):
+def draw_text_boundaries(msp):
     for text in msp.query('TEXT'):
         bbox = disassemble.make_primitive(text)
         msp.add_polyline3d(bbox.vertices(), dxfattribs={
             'color': 6,
-            'layer': "BBOX",
+            'layer': "BOUNDARIES",
         })
 
 
