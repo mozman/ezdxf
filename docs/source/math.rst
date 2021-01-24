@@ -469,6 +469,12 @@ BoundingBox
 
     .. automethod:: inside
 
+    .. automethod:: any_inside
+
+    .. automethod:: all_inside
+
+    .. automethod:: intersect(other: BoundingBox) -> bool
+
     .. automethod:: extend
 
     .. automethod:: union(other: BoundingBox) -> BoundingBox
@@ -496,6 +502,12 @@ BoundingBox2d
     .. autoproperty:: center
 
     .. automethod:: inside
+
+    .. automethod:: any_inside
+
+    .. automethod:: all_inside
+
+    .. automethod:: intersect(other: BoundingBox2d) -> bool
 
     .. automethod:: extend
 

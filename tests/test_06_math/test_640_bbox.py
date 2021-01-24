@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
 from ezdxf.math import BoundingBox, BoundingBox2d
-
+from itertools import permutations
 
 class TestBoundingBox:
     def test_init(self):
@@ -42,6 +42,45 @@ class TestBoundingBox:
         assert bbox.inside((11, 10, 10)) is False
         assert bbox.inside((10, 11, 10)) is False
         assert bbox.inside((10, 10, 11)) is False
+
+    def test_all_inside(self):
+        bbox1 = BoundingBox([(0, 0, 0), (10, 10, 10)])
+        bbox2 = BoundingBox([(1, 1, 1), (9, 9, 9)])
+        empty = BoundingBox()
+        assert bbox1.all_inside(bbox2) is True
+        assert bbox2.all_inside(bbox1) is False
+        assert bbox1.all_inside(empty) is False
+        assert empty.all_inside(bbox1) is False
+
+    def test_any_inside(self):
+        bbox1 = BoundingBox([(0, 0, 0), (7, 7, 7)])
+        bbox2 = BoundingBox([(1, 1, 1), (9, 9, 9)])
+        empty = BoundingBox()
+        assert bbox1.any_inside(bbox2) is True
+        assert bbox2.any_inside(bbox1) is True
+        assert bbox1.any_inside(empty) is False
+        assert empty.any_inside(bbox1) is False
+
+    def test_do_intersect(self):
+        bbox1 = BoundingBox([(0, 0, 0), (10, 10, 10)])
+        bbox2 = BoundingBox([(1, 1, 1), (9, 9, 9)])
+        bbox3 = BoundingBox([(-1, -1, -1), (1, 1, 1)])
+        for a, b in permutations([bbox1, bbox2, bbox3], 2):
+            assert a.intersect(b) is True
+
+    def test_do_not_intersect(self):
+        bbox1 = BoundingBox([(0, 0, 0), (3, 3, 3)])
+        bbox2 = BoundingBox([(4, 4, 4), (9, 9, 9)])
+        bbox3 = BoundingBox([(-2, -2, -2), (-1, -1, -1)])
+        for a, b in permutations([bbox1, bbox2, bbox3], 2):
+            assert a.intersect(b) is False
+
+    def test_do_not_intersect_empty(self):
+        bbox = BoundingBox([(0, 0, 0), (3, 3, 3)])
+        empty = BoundingBox()
+        assert bbox.intersect(empty) is False
+        assert empty.intersect(bbox) is False
+        assert empty.intersect(empty) is False
 
     def test_extend(self):
         bbox = BoundingBox([(0, 0, 0), (10, 10, 10)])

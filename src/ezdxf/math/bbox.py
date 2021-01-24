@@ -44,6 +44,38 @@ class AbstractBoundingBox:
     def inside(self, vertex: 'Vertex') -> bool:
         pass
 
+    def any_inside(self, vertices: Iterable['Vertex']) -> bool:
+        """ Returns ``True`` if any vertex is inside this bounding box.
+
+        Vertices at the box border are inside!
+        """
+        if self.has_data:
+            return any(self.inside(v) for v in vertices)
+        return False
+
+    def all_inside(self, vertices: Iterable['Vertex']) -> bool:
+        """ Returns ``True`` if all vertices are inside this bounding box.
+
+        Vertices at the box border are inside!
+        """
+        if self.has_data:
+            # all() returns True for an empty set of vertices
+            has_any = False
+            for v in vertices:
+                has_any = True
+                if not self.inside(v):
+                    return False
+            return has_any
+        return False
+
+    def intersect(self, other: 'AbstractBoundingBox') -> bool:
+        """ Returns `True` if this bounding box intersects with `other`.
+
+        Touching boxes do intersect!
+
+        """
+        return self.any_inside(other) or other.any_inside(self)
+
     @property
     def has_data(self) -> bool:
         """ Returns ``True`` if bonding box is not empty """
@@ -102,7 +134,10 @@ class BoundingBox(AbstractBoundingBox):
         return extends3d(vertices)
 
     def inside(self, vertex: 'Vertex') -> bool:
-        """ Returns ``True`` if `vertex` is inside bounding box. """
+        """ Returns ``True`` if `vertex` is inside this bounding box.
+
+        Vertices at the box border are inside!
+        """
         x, y, z = Vec3(vertex).xyz
         xmin, ymin, zmin = self.extmin.xyz
         xmax, ymax, zmax = self.extmax.xyz
@@ -123,7 +158,10 @@ class BoundingBox2d(AbstractBoundingBox):
         return extends2d(vertices)
 
     def inside(self, vertex: 'Vertex') -> bool:
-        """ Returns ``True`` if `vertex` is inside bounding box. """
+        """ Returns ``True`` if `vertex` is inside this bounding box.
+
+        Vertices at the box border are inside!
+        """
         v = Vec2(vertex)
         min_ = self.extmin
         max_ = self.extmax
