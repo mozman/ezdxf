@@ -1,13 +1,96 @@
-# Copyright (c) 2019-2020, Manfred Moitzi
+# Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Tuple
+import abc
+
 from ezdxf.math import Vec3, Vec2
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 
-class BoundingBox:
+class AbstractBoundingBox:
+    extmax = None
+    extmin = None
+
+    def __init__(self, vertices: Iterable['Vertex'] = None):
+        if vertices is not None:
+            try:
+                self.extmin, self.extmax = self.extender(vertices)
+            except ValueError:
+                # No or invalid data creates an empty BoundingBox
+                pass
+
+    def __str__(self) -> str:
+        return f"[{self.extmin}, {self.extmax}]"
+
+    def __repr__(self) -> str:
+        name = self.__name__
+        if self.has_data:
+            return f"{name}({self.__str__()})"
+        else:
+            return f"{name}(None)"
+
+    def __iter__(self):
+        if self.has_data:
+            yield self.extmin
+            yield self.extmax
+
+    @abc.abstractmethod
+    def extender(self, vertices: Iterable['Vertex']):
+        pass
+
+    @abc.abstractmethod
+    def inside(self, vertex: 'Vertex') -> bool:
+        pass
+
+    @property
+    def has_data(self) -> bool:
+        """ Returns ``True`` if bonding box is not empty """
+        return self.extmin is not None
+
+    @property
+    def is_empty(self) -> bool:
+        """ Returns ``True`` if bonding box is empty """
+        return self.extmin is None
+
+    @property
+    def size(self):
+        """ Returns size of bounding box. """
+        return self.extmax - self.extmin
+
+    @property
+    def center(self):
+        """ Returns center of bounding box. """
+        return self.extmin.lerp(self.extmax)
+
+    def extend(self, vertices: Iterable['Vertex']) -> None:
+        """ Extend bounds by `vertices`.
+
+        Args:
+            vertices: iterable of Vertex objects
+
+        """
+        v = list(vertices)
+        if not v:
+            return
+        if self.has_data:
+            v.extend([self.extmin, self.extmax])
+        self.extmin, self.extmax = self.extender(v)
+
+    def union(self, other: 'AbstractBoundingBox'):
+        """ Returns a new bounding box as union of this and `other` bounding
+        box.
+        """
+        vertices = []
+        if self.has_data:
+            vertices.extend(self)
+        if other.has_data:
+            vertices.extend(other)
+        return self.__class__(vertices)
+
+
+class BoundingBox(AbstractBoundingBox):
     """ 3D bounding box.
 
     Args:
@@ -15,46 +98,36 @@ class BoundingBox:
 
     """
 
-    def __init__(self, vertices: Iterable['Vertex'] = None):
-        if vertices is None:
-            self.extmax = None
-            self.extmin = None
-        else:
-            self.extmin, self.extmax = extends(vertices)
-
-    @property
-    def has_data(self) -> bool:
-        """ Returns ``True`` if data is available """
-        return self.extmin is not None
+    def extender(self, vertices: Iterable['Vertex']):
+        return extends(vertices)
 
     def inside(self, vertex: 'Vertex') -> bool:
         """ Returns ``True`` if `vertex` is inside bounding box. """
         x, y, z = Vec3(vertex).xyz
         xmin, ymin, zmin = self.extmin.xyz
         xmax, ymax, zmax = self.extmax.xyz
-        return (xmin <= x <= xmax) and (ymin <= y <= ymax) and (zmin <= z <= zmax)
+        return (xmin <= x <= xmax) and \
+               (ymin <= y <= ymax) and \
+               (zmin <= z <= zmax)
 
-    def extend(self, vertices: Iterable['Vertex']) -> None:
-        """ Extend bounds by `vertices`.
 
-        Args:
-            vertices: iterable of ``(x, y, z)`` tuples or :class:`Vec3` objects
+class BoundingBox2d(AbstractBoundingBox):
+    """ Optimized 2D bounding box.
 
-        """
-        v = list(vertices)
-        if self.has_data:
-            v.extend([self.extmin, self.extmax])
-        self.extmin, self.extmax = extends(v)
+    Args:
+        vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vec3` objects
 
-    @property
-    def size(self) -> Vec3:
-        """ Returns size of bounding box. """
-        return self.extmax - self.extmin
+    """
 
-    @property
-    def center(self) -> Vec3:
-        """ Returns center of bounding box. """
-        return self.extmin.lerp(self.extmax)
+    def extender(self, vertices: Iterable['Vertex']):
+        return extends2d(vertices)
+
+    def inside(self, vertex: 'Vertex') -> bool:
+        """ Returns ``True`` if `vertex` is inside bounding box. """
+        v = Vec2(vertex)
+        min_ = self.extmin
+        max_ = self.extmax
+        return (min_.x <= v.x <= max_.x) and (min_.y <= v.y <= max_.y)
 
 
 def extends(vertices: Iterable['Vertex']) -> Tuple[Vec3, Vec3]:
@@ -82,56 +155,6 @@ def extends(vertices: Iterable['Vertex']) -> Tuple[Vec3, Vec3]:
     if minx is None:
         raise ValueError("No vertices give.")
     return Vec3(minx, miny, minz), Vec3(maxx, maxy, maxz)
-
-
-class BoundingBox2d:
-    """ Optimized 2D bounding box.
-
-    Args:
-        vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vec3` objects
-
-    """
-
-    def __init__(self, vertices: Iterable['Vertex'] = None):
-        if vertices is None:
-            self.extmax = None
-            self.extmin = None
-        else:
-            self.extmin, self.extmax = extends2d(vertices)
-
-    @property
-    def has_data(self) -> bool:
-        """ Returns ``True`` if data is available """
-        return self.extmin is not None
-
-    def inside(self, vertex: 'Vertex') -> bool:
-        """ Returns ``True`` if `vertex` is inside bounding box. """
-        v = Vec2(vertex)
-        min_ = self.extmin
-        max_ = self.extmax
-        return (min_.x <= v.x <= max_.x) and (min_.y <= v.y <= max_.y)
-
-    def extend(self, vertices: Iterable['Vertex']) -> None:
-        """ Extend bounds by `vertices`.
-
-        Args:
-            vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vec3` objects
-
-        """
-        v = list(vertices)
-        if self.has_data:
-            v.extend([self.extmin, self.extmax])
-        self.extmin, self.extmax = extends2d(v)
-
-    @property
-    def size(self) -> Vec2:
-        """ Returns size of bounding box. """
-        return self.extmax - self.extmin
-
-    @property
-    def center(self) -> Vec2:
-        """ Returns center of bounding box. """
-        return self.extmin.lerp(self.extmax)
 
 
 def extends2d(vertices: Iterable['Vertex']) -> Tuple[Vec2, Vec2]:

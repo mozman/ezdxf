@@ -450,7 +450,6 @@ BoundingBox
 -----------
 
 .. autoclass:: BoundingBox
-    :members:
 
     .. attribute:: extmin
 
@@ -459,13 +458,26 @@ BoundingBox
     .. attribute:: extmax
 
         "upper right" corner of bounding box
+
+    .. autoproperty:: is_empty
+
+    .. autoproperty:: has_data
+
+    .. autoproperty:: size
+
+    .. autoproperty:: center
+
+    .. automethod:: inside
+
+    .. automethod:: extend
+
+    .. automethod:: union(other: BoundingBox) -> BoundingBox
 
 
 BoundingBox2d
 -------------
 
 .. autoclass:: BoundingBox2d
-    :members:
 
     .. attribute:: extmin
 
@@ -474,6 +486,20 @@ BoundingBox2d
     .. attribute:: extmax
 
         "upper right" corner of bounding box
+
+    .. autoproperty:: is_empty
+
+    .. autoproperty:: has_data
+
+    .. autoproperty:: size
+
+    .. autoproperty:: center
+
+    .. automethod:: inside
+
+    .. automethod:: extend
+
+    .. automethod:: union(other: BoundingBox2d) -> BoundingBox2d
 
 ConstructionRay
 ---------------
