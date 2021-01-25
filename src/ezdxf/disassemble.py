@@ -15,8 +15,12 @@ from ezdxf.tools.text import (
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        LWPolyline, Polyline, MText,
+        LWPolyline, Polyline, MText, Hatch,
     )
+
+__all__ = [
+    "make_primitive", "recursive_decompose", "to_primitives", "to_vertices"
+]
 
 
 class AbstractPrimitive:
@@ -42,6 +46,16 @@ class AbstractPrimitive:
         self._mesh: Optional[MeshBuilder] = None
         if max_flattening_distance:
             self.max_flattening_distance = max_flattening_distance
+
+    @property
+    def is_empty(self) -> bool:
+        """ Returns `True` if represents an empty primitive which do not
+        yield any vertices.
+
+        """
+        if self._mesh:
+            return len(self._mesh.vertices) == 0
+        return self._path is None
 
     @property
     def path(self) -> Optional[Path]:
@@ -339,6 +353,16 @@ class MTextPrimitive(GenericPrimitive):
         )
 
 
+class PathPrimitive(AbstractPrimitive):
+    def __init__(self, path: Path, entity: DXFEntity,
+                 max_flattening_distance=None):
+        super().__init__(entity, max_flattening_distance)
+        self._path = path
+
+    def vertices(self) -> Iterable[Vec3]:
+        yield from self._path.flattening(self.max_flattening_distance)
+
+
 # SHAPE is not supported, could not create any SHAPE entities in BricsCAD
 _PRIMITIVE_CLASSES = {
     "3DFACE": QuadrilateralPrimitive,
@@ -349,6 +373,7 @@ _PRIMITIVE_CLASSES = {
     "ATTDEF": TextLinePrimitive,
     "CIRCLE": CurvePrimitive,
     "ELLIPSE": CurvePrimitive,
+    # HATCH: Special handling required, see to_primitives() function
     "HELIX": CurvePrimitive,
     "LINE": LinePrimitive,
     "LWPOLYLINE": LwPolylinePrimitive,
@@ -369,9 +394,12 @@ def make_primitive(e: DXFEntity,
     defines the max distance between the approximation line and the original
     curve. Use `max_flattening_distance` to override the default value.
 
-    Returns an empty primitive for unsupported entities, where the :attr:`path`
-    and the :attr:`mesh` attribute is ``None`` and the :meth:`vertices` method
-    yields an empty list of vertices.
+    Returns an empty primitive for unsupported entities, can be checked by
+    property :attr:`is_empty`. The :attr:`path` and the :attr:`mesh` attribute
+    is ``None`` and the :meth:`vertices` method yields no vertices.
+
+    Returns an empty primitive for the :class:`~ezdxf.entities.Hatch` entity,
+    see docs of the :mod:`~ezdxf.disassemble` module.
 
     """
     cls = _PRIMITIVE_CLASSES.get(e.dxftype(), GenericPrimitive)
@@ -396,10 +424,31 @@ def to_primitives(entities: Iterable[DXFEntity],
     """ Disassemble DXF entities into path/mesh primitive objects. Yields
     unsupported entities as empty primitives, see :func:`make_primitive`.
     """
-    return (make_primitive(e, max_flattening_distance) for e in entities)
+    for e in entities:
+        # Special handling for HATCH required, because a HATCH entity can not be
+        # reduced into a single path or mesh.
+        if e.dxftype() == 'HATCH':
+            # noinspection PyTypeChecker
+            yield from _hatch_primitives(e, max_flattening_distance)
+        else:
+            yield make_primitive(e, max_flattening_distance)
 
 
 def to_vertices(primitives: Iterable[AbstractPrimitive]) -> Iterable[Vec3]:
     """ Disassemble path/mesh primitive objects into vertices. """
     for p in primitives:
         yield from p.vertices()
+
+
+def _hatch_primitives(
+        hatch: 'Hatch',
+        max_flattening_distance=None) -> Iterable[AbstractPrimitive]:
+    """ Yield all HATCH boundary paths as separated Path() objects. """
+    ocs = hatch.ocs()
+    elevation = hatch.dxf.elevation.z
+    for boundary in hatch.paths:
+        yield PathPrimitive(
+            Path.from_hatch_boundary_path(boundary, ocs, elevation),
+            hatch,
+            max_flattening_distance
+        )

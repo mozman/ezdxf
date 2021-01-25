@@ -10,6 +10,15 @@ a flat stream of DXF entities and converting DXF entities into generic
 :class:`~ezdxf.render.path.Path` and :class:`~ezdxf.render.mesh.MeshBuilder`
 objects.
 
+The :class:`~ezdxf.entities.Hatch` entity is special because this entity can
+not be reduced into as single path or mesh object. The :func:`make_primitive`
+function returns an empty primitive, instead use the :func:`to_primitives`
+function to convert a :class:`~ezdxf.entities.Hatch` entity in multiple
+(boundary) path objects::
+
+    paths = list(to_primitives([hatch_entity]))
+
+
 .. warning::
 
     Do not expect advanced vectorization capabilities: Text entities like TEXT,
@@ -43,6 +52,8 @@ objects.
     .. autoproperty:: path
 
     .. autoproperty:: mesh
+
+    .. autoproperty:: is_empty
 
     .. automethod:: vertices() -> Iterable[Vec3]
 

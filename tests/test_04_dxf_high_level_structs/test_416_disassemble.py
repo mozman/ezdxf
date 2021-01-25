@@ -17,6 +17,7 @@ def test_convert_unsupported_entity_to_primitive():
     p = disassemble.make_primitive(factory.new('WIPEOUT'))
     assert p.path is None
     assert p.mesh is None
+    assert p.is_empty is True
     assert list(p.vertices()) == []
 
 
@@ -33,6 +34,7 @@ def test_point_to_primitive():
     p = disassemble.make_primitive(e)
     assert p.path is not None
     assert p.mesh is None
+    assert p.is_empty is False
     assert list(p.vertices()) == [(1, 2, 3)]
 
 
@@ -103,6 +105,7 @@ def test_mesh_entity_to_primitive():
     assert p.path is None
     mesh_builder = p.mesh
     assert mesh_builder is not None
+    assert p.is_empty is False
 
     assert len(mesh_builder.vertices) == 8
     assert len(mesh_builder.faces) == 6
@@ -206,6 +209,28 @@ def test_mtext_to_primitive():
     assert p.path is not None
     assert p.mesh is None
     assert len(list(p.vertices())) == 5, "Expected closed box"
+
+
+def test_make_primitive_for_hatch_is_empty():
+    hatch = factory.new('HATCH')
+    # make_primitive() returns an empty primitive, because a HATCH entity can
+    # not be reduced into a single path or mesh.
+    prim = disassemble.make_primitive(hatch)
+    assert prim.is_empty
+
+
+def test_hatch_returns_multiple_primitives():
+    hatch = factory.new('HATCH')
+    paths = hatch.paths
+
+    # Conversion of boundary paths is tested in 708.
+    paths.add_polyline_path([(0, 0), (1, 0), (1, 1)])
+    paths.add_polyline_path([(0, 2), (1, 2), (1, 3), (0, 3)])
+    res = list(disassemble.to_primitives([hatch]))
+    assert len(res) == 2
+    assert len(list(res[0].vertices())) == 4, "Expected closed triangle"
+    assert len(list(res[1].vertices())) == 5, "Expected closed box"
+
 
 if __name__ == '__main__':
     pytest.main([__file__])
