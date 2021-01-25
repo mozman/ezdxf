@@ -15,7 +15,7 @@ from ezdxf.tools.text import (
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        LWPolyline, Polyline, MText, Hatch, Image
+        LWPolyline, Polyline, MText, Hatch, Image,
     )
 
 __all__ = [
@@ -377,6 +377,14 @@ class ImagePrimitive(GenericPrimitive):
         self._path = Path.from_vertices(e.boundary_path_wcs(), close=True)
 
 
+class ViewportPrimitive(GenericPrimitive):
+    def _convert_entity(self):
+        vp = self.entity
+        if vp.dxf.status == 0:  # Viewport is off
+            return  # empty primitive
+        self._path = Path.from_vertices(vp.boundray_path(), close=True)
+
+
 # SHAPE is not supported, could not create any SHAPE entities in BricsCAD
 _PRIMITIVE_CLASSES = {
     "3DFACE": QuadrilateralPrimitive,
@@ -400,6 +408,7 @@ _PRIMITIVE_CLASSES = {
     "SOLID": QuadrilateralPrimitive,
     "TEXT": TextLinePrimitive,
     "TRACE": QuadrilateralPrimitive,
+    "VIEWPORT": ViewportPrimitive,
 }
 
 

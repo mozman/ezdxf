@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List, Iterable
 from ezdxf.lldxf import validator
@@ -424,4 +424,18 @@ class Viewport(DXFGraphic):
         self.frozen_layers = [
             (name if key(name) != old_key else new_name)
             for name in self.frozen_layers
+        ]
+
+    def boundary_path(self) -> List[Vec3]:
+        center = self.dxf.center
+        cx = center.x
+        cy = center.y
+        width2 = self.dxf.width / 2
+        height2 = self.dxf.height / 2
+        # TODO: boundary path support for the Viewport entity
+        return [
+            Vec3(cx - width2, cy - height2),
+            Vec3(cx + width2, cy - height2),
+            Vec3(cx + width2, cy + height2),
+            Vec3(cx - width2, cy + height2),
         ]
