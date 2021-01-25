@@ -15,7 +15,7 @@ from ezdxf.tools.text import (
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        LWPolyline, Polyline, MText, Hatch,
+        LWPolyline, Polyline, MText, Hatch, Image
     )
 
 __all__ = [
@@ -371,6 +371,12 @@ class PathPrimitive(AbstractPrimitive):
         yield from self._path.flattening(self.max_flattening_distance)
 
 
+class ImagePrimitive(GenericPrimitive):
+    def _convert_entity(self):
+        e: 'Image' = cast('Image', self.entity)
+        self._path = Path.from_vertices(e.boundary_path_wcs(), close=True)
+
+
 # SHAPE is not supported, could not create any SHAPE entities in BricsCAD
 _PRIMITIVE_CLASSES = {
     "3DFACE": QuadrilateralPrimitive,
@@ -383,6 +389,7 @@ _PRIMITIVE_CLASSES = {
     "ELLIPSE": CurvePrimitive,
     # HATCH: Special handling required, see to_primitives() function
     "HELIX": CurvePrimitive,
+    "IMAGE": ImagePrimitive,
     "LINE": LinePrimitive,
     "LWPOLYLINE": LwPolylinePrimitive,
     "MESH": MeshPrimitive,

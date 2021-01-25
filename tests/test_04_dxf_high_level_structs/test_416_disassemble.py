@@ -122,7 +122,7 @@ def test_from_quadrilateral_with_3_points(dxftype):
     p = disassemble.make_primitive(entity)
     assert p.path is not None
     assert p.mesh is None
-    assert len(list(p.vertices())) == 4, "Expected closed path"
+    assert len(list(p.vertices())) == 4, "expected closed path"
 
 
 @pytest.mark.parametrize('dxftype', ['SOLID', 'TRACE', '3DFACE'])
@@ -135,7 +135,7 @@ def test_from_quadrilateral_with_4_points(dxftype):
     p = disassemble.make_primitive(entity)
     assert p.path is not None
     assert p.mesh is None
-    assert len(list(p.vertices())) == 5, "Expected closed path"
+    assert len(list(p.vertices())) == 5, "expected closed path"
 
 
 def test_poly_face_mesh_to_primitive():
@@ -197,7 +197,7 @@ def test_text_to_primitive():
     p = disassemble.make_primitive(text)
     assert p.path is not None
     assert p.mesh is None
-    assert len(list(p.vertices())) == 5, "Expected closed box"
+    assert len(list(p.vertices())) == 5, "expected closed box"
 
 
 def test_mtext_to_primitive():
@@ -208,7 +208,7 @@ def test_mtext_to_primitive():
     p = disassemble.make_primitive(mtext)
     assert p.path is not None
     assert p.mesh is None
-    assert len(list(p.vertices())) == 5, "Expected closed box"
+    assert len(list(p.vertices())) == 5, "expected closed box"
 
 
 def test_make_primitive_for_hatch_is_empty():
@@ -228,8 +228,24 @@ def test_hatch_returns_multiple_primitives():
     paths.add_polyline_path([(0, 2), (1, 2), (1, 3), (0, 3)])
     res = list(disassemble.to_primitives([hatch]))
     assert len(res) == 2
-    assert len(list(res[0].vertices())) == 4, "Expected closed triangle"
-    assert len(list(res[1].vertices())) == 5, "Expected closed box"
+    assert len(list(res[0].vertices())) == 4, "expected closed triangle"
+    assert len(list(res[1].vertices())) == 5, "expected closed box"
+
+
+def test_image_primitive():
+    image = factory.new('IMAGE')
+    image.dxf.insert = (0, 0)
+    image.dxf.u_pixel = Vec3(1, 0)
+    image.dxf.v_pixel = Vec3(0, -1)
+    image.size = (200, 100)
+    image.boundary_path = [(0, 0), (200, 100)]
+    prim = disassemble.make_primitive(image)
+    vertices = list(prim.vertices())
+    assert len(vertices) == 5, "expected closed box"
+    assert vertices[0] == (0.5, -0.5, 0)
+    assert vertices[1] == (200.5, -0.5, 0)
+    assert vertices[2] == (200.5, 99.5, 0)
+    assert vertices[3] == (0.5, 99.5, 0)
 
 
 if __name__ == '__main__':

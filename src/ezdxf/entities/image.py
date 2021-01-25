@@ -40,6 +40,11 @@ class ImageBase(DXFGraphic):
 
     def __init__(self):
         super().__init__()
+        # Boundary/Clipping path coordinates:
+        # 0/0 is in the Left/Top corner of the image!
+        # x-coordinates increases in u_pixel vector direction
+        # y-coordinates increases against the v_pixel vector!
+        # see also WCS coordinate calculation
         self._boundary_path: List[Vec2] = []
 
     def _copy_data(self, entity: 'ImageBase') -> None:
@@ -153,14 +158,16 @@ class ImageBase(DXFGraphic):
         u = Vec3(self.dxf.u_pixel)
         v = Vec3(self.dxf.v_pixel)
         origin = Vec3(self.dxf.insert)
-        origin += (u * 0.5 + v * 0.5)
+        origin += (u * 0.5 - v * 0.5)
+        height = self.dxf.image_size.y
         boundary_path = self.boundary_path
         if len(boundary_path) == 2:  # rectangle
             p0, p1 = boundary_path
-            boundary_path = [p0, Vec2(p0.y, p1.x), p1, Vec2(p0.x, p1.y)]
-
+            boundary_path = [p0, Vec2(p1.x, p0.y), p1, Vec2(p0.x, p1.y)]
+        # Boundary/Clipping path origin 0/0 is in the Left/Top corner
+        # of the image!
         vertices = [
-            origin + u * p.x - v * p.y for p in boundary_path
+            origin + (u * p.x) + (v * (height - p.y)) for p in boundary_path
         ]
         if not vertices[0].isclose(vertices[-1]):
             vertices.append(vertices[0])
