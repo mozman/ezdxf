@@ -1,7 +1,9 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 #  All tools in this module have to be independent from DXF entities!
-from typing import List, Iterable, Tuple, TYPE_CHECKING, Union
+from typing import (
+    List, Iterable, Tuple, TYPE_CHECKING, Union, Optional, Callable,
+)
 import abc
 import re
 from ezdxf.lldxf import validator
@@ -430,3 +432,53 @@ def replace_non_printable_characters(text: str, replacement: str = '▯') -> str
 
 def is_non_printable_char(char: str) -> bool:
     return 0 <= ord(char) < 32 and char != '\t'
+
+
+def text_wrap(text: str, box_width: Optional[float],
+             get_text_width: Callable[[str], float]) -> List[str]:
+    """ Wrap text at "\n" and given `box_width`. This tool was developed for
+    usage with the MTEXT entity. This isn't the most straightforward word
+    wrapping algorithm, but it aims to match the behavior of AutoCAD.
+
+    Args:
+        text: text to wrap, included "\n" are handled as manual line breaks
+        box_width: wrapping length, `None` to just wrap at "\n"
+        get_text_width: callable which returns the width of the given string
+
+    """
+    # Copyright (c) 2020-2021, Matthew Broadway
+    # License: MIT License
+    if not text or text.isspace():
+        return []
+    manual_lines = re.split(r'(\n)', text)  # includes \n as it's own token
+    tokens = [t for line in manual_lines for t in re.split(r'(\s+)', line) if t]
+    lines = []
+    current_line = ''
+    line_just_wrapped = False
+
+    for t in tokens:
+        on_first_line = not lines
+        if t == '\n' and line_just_wrapped:
+            continue
+        line_just_wrapped = False
+        if t == '\n':
+            lines.append(current_line.rstrip())
+            current_line = ''
+        elif t.isspace():
+            if current_line or on_first_line:
+                current_line += t
+        else:
+            if box_width is not None and get_text_width(
+                    current_line + t) > box_width:
+                if not current_line:
+                    current_line += t
+                else:
+                    lines.append(current_line.rstrip())
+                    current_line = t
+                    line_just_wrapped = True
+            else:
+                current_line += t
+
+    if current_line and not current_line.isspace():
+        lines.append(current_line.rstrip())
+    return lines

@@ -7,7 +7,7 @@ from ezdxf.entities import Text
 from ezdxf.tools.text import (
     FontMeasurements, MonospaceFont, TextLine, plain_text, caret_decode,
     escape_dxf_line_endings, replace_non_printable_characters, plain_mtext,
-    split_mtext_string,
+    split_mtext_string, text_wrap,
 )
 from ezdxf.math import Vec3
 from ezdxf.lldxf import const
@@ -228,6 +228,36 @@ class TestSplitMText:
         assert len(chunks) == 2
         assert chunks[0] == self.MTEXT_SHORT_STR * 2
         assert chunks[1] == self.MTEXT_SHORT_STR * 2
+
+
+def test_text_wrapping():
+    def get_text_width(s: str) -> float:
+        return len(s)
+
+    assert text_wrap('', 0, get_text_width) == []
+    assert text_wrap('   \n    ', 1, get_text_width) == []
+
+    assert text_wrap('abc', 0, get_text_width) == ['abc']
+    assert text_wrap(' abc', 6, get_text_width) == [' abc']
+    assert text_wrap('abc ', 1, get_text_width) == ['abc']
+    assert text_wrap(' abc ', 6, get_text_width) == [' abc']
+
+    assert text_wrap('abc\ndef', 1, get_text_width) == ['abc', 'def']
+    assert text_wrap('   abc\ndef', 1, get_text_width) == ['', 'abc', 'def']
+    assert text_wrap('   abc\ndef', 6, get_text_width) == ['   abc', 'def']
+    assert text_wrap('abc    \n    def', 1, get_text_width) == ['abc', 'def']
+
+    assert text_wrap(' a ', 1, get_text_width) == ['', 'a']
+    assert text_wrap('\na ', 2, get_text_width) == ['', 'a']
+    assert text_wrap(' \na ', 1, get_text_width) == ['', 'a']
+    assert text_wrap(' \n \n ', 1, get_text_width) == []
+    assert text_wrap(' \n \n a', 1, get_text_width) == ['', '', 'a']
+
+    assert text_wrap('  abc', 6, get_text_width) == ['  abc']
+    assert text_wrap('  abc def', 6, get_text_width) == ['  abc', 'def']
+    assert text_wrap('  abc def  ', 6, get_text_width) == ['  abc', 'def']
+    assert text_wrap('  abc def', 1, get_text_width) == ['', 'abc', 'def']
+    assert text_wrap('  abc def', 6, get_text_width) == ['  abc', 'def']
 
 
 if __name__ == '__main__':

@@ -2,7 +2,6 @@
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import enum
-import re
 from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 
@@ -12,7 +11,7 @@ from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.addons.drawing import fonts
 from ezdxf.entities import MText, Text, Attrib, AttDef
 from ezdxf.math import Matrix44, Vec3, sign
-from ezdxf.tools.text import FontMeasurements, plain_text
+from ezdxf.tools.text import FontMeasurements, plain_text, text_wrap
 
 """
 Search google for 'typography' or 'font anatomy' for explanations of terms like 
@@ -137,47 +136,6 @@ def _get_line_spacing(text: AnyText, cap_height: float) -> float:
         raise TypeError(type(text))
 
 
-def _split_multiline_text(text: str, box_width: Optional[float],
-                          get_text_width: Callable[[str], float]) -> List[str]:
-    """ This isn't the most straightforward word wrapping algorithm, but it
-    aims to match the behavior of AutoCAD
-    """
-    if not text or text.isspace():
-        return []
-    manual_lines = re.split(r'(\n)', text)  # includes \n as it's own token
-    tokens = [t for line in manual_lines for t in re.split(r'(\s+)', line) if t]
-    lines = []
-    current_line = ''
-    line_just_wrapped = False
-
-    for t in tokens:
-        on_first_line = not lines
-        if t == '\n' and line_just_wrapped:
-            continue
-        line_just_wrapped = False
-        if t == '\n':
-            lines.append(current_line.rstrip())
-            current_line = ''
-        elif t.isspace():
-            if current_line or on_first_line:
-                current_line += t
-        else:
-            if box_width is not None and get_text_width(
-                    current_line + t) > box_width:
-                if not current_line:
-                    current_line += t
-                else:
-                    lines.append(current_line.rstrip())
-                    current_line = t
-                    line_just_wrapped = True
-            else:
-                current_line += t
-
-    if current_line and not current_line.isspace():
-        lines.append(current_line.rstrip())
-    return lines
-
-
 def _split_into_lines(entity: AnyText, box_width: Optional[float],
                       get_text_width: Callable[[str], float]) -> List[str]:
     if isinstance(entity, AttDef):
@@ -189,7 +147,7 @@ def _split_into_lines(entity: AnyText, box_width: Optional[float],
         assert '\n' not in text
         return [text]
     else:
-        return _split_multiline_text(text, box_width, get_text_width)
+        return text_wrap(text, box_width, get_text_width)
 
 
 def _get_text_width(text: AnyText) -> Optional[float]:
