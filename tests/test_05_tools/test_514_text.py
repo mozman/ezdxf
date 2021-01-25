@@ -238,12 +238,17 @@ def test_text_wrapping():
     assert text_wrap('   \n    ', 1, get_text_width) == []
 
     assert text_wrap('abc', 0, get_text_width) == ['abc']
-    assert text_wrap(' abc', 6, get_text_width) == [' abc']
-    assert text_wrap('abc ', 1, get_text_width) == ['abc']
-    assert text_wrap(' abc ', 6, get_text_width) == [' abc']
+    assert text_wrap(' abc', 6, get_text_width) == [
+        ' abc'], "preserve leading spaces"
+    assert text_wrap('abc ', 1, get_text_width) == [
+        'abc'], "do not wrap too long words"
+    assert text_wrap(' abc ', 6, get_text_width) == [
+        ' abc'], "remove trailing spaces"
 
-    assert text_wrap('abc\ndef', 1, get_text_width) == ['abc', 'def']
-    assert text_wrap('   abc\ndef', 1, get_text_width) == ['', 'abc', 'def']
+    assert text_wrap('abc\ndef', 1, get_text_width) == [
+        'abc', 'def'], "do not wrap too long words"
+    assert text_wrap('   abc\ndef', 1, get_text_width) == [
+        '', 'abc', 'def'], "leading spaces can cause wrapping"
     assert text_wrap('   abc\ndef', 6, get_text_width) == ['   abc', 'def']
     assert text_wrap('abc    \n    def', 1, get_text_width) == ['abc', 'def']
 

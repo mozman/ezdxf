@@ -435,7 +435,7 @@ def is_non_printable_char(char: str) -> bool:
 
 
 def text_wrap(text: str, box_width: Optional[float],
-             get_text_width: Callable[[str], float]) -> List[str]:
+              get_text_width: Callable[[str], float]) -> List[str]:
     """ Wrap text at "\n" and given `box_width`. This tool was developed for
     usage with the MTEXT entity. This isn't the most straightforward word
     wrapping algorithm, but it aims to match the behavior of AutoCAD.
