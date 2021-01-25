@@ -10,7 +10,7 @@ from ezdxf.render import (
     Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path,
 )
 from ezdxf.tools.text import (
-    MonospaceFont, TextLine, unified_alignment, plain_text,
+    MonospaceFont, TextLine, unified_alignment, plain_text, text_wrap,
 )
 
 if TYPE_CHECKING:
@@ -269,15 +269,15 @@ class MTextPrimitive(GenericPrimitive):
         """
 
         def get_content() -> List[str]:
-            return mtext.plain_text(split=True)
+            text = mtext.plain_text(split=False)
+            return text_wrap(text, box_width, font.text_width)
 
         def get_max_str() -> str:
             return max(content, key=lambda s: len(s))
 
         def get_rect_width() -> float:
-            width = mtext.dxf.get('width', 0)
-            if width:
-                return width
+            if box_width:
+                return box_width
             s = get_max_str()
             if len(s) == 0:
                 s = " "
@@ -285,8 +285,13 @@ class MTextPrimitive(GenericPrimitive):
 
         def get_rect_height() -> float:
             line_height = font.measurements.total_height
-            spacing = mtext.dxf.line_spacing_factor
-            return len(content) * line_height * spacing
+            # TODO: 1.25 is an arbitrary factor
+            spacing = mtext.dxf.line_spacing_factor * 1.25
+            line_count = len(content)
+            if line_count > 1:
+                return (line_count - 1) * line_height * spacing + line_height
+            else:
+                return line_count * line_height
 
         def get_ucs() -> UCS:
             """ Create local coordinate system:
@@ -339,12 +344,14 @@ class MTextPrimitive(GenericPrimitive):
             return (v + shift for v in vertices)
 
         mtext: "MText" = cast("MText", self.entity)
+        box_width = mtext.dxf.get('width', 0)
+        font = MonospaceFont(mtext.dxf.char_height)
+
         content: List[str] = get_content()
         if len(content) == 0:
             # empty path - does not render any vertices!
             self._path = Path()
             return
-        font = MonospaceFont(mtext.dxf.char_height)
         ucs = get_ucs()
         corner_vertices = get_corner_vertices()
         self._path = Path.from_vertices(
