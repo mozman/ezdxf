@@ -36,6 +36,9 @@ MTEXT_ALIGN_FLAGS = {
 }
 
 
+# A Visual Guide to the Anatomy of Typography: https://visme.co/blog/type-anatomy/
+# Anatomy of a Character: https://www.fonts.com/content/learning/fontology/level-1/type-anatomy/anatomy
+
 class FontMeasurements:
     def __init__(self, baseline: float, cap_height: float, x_height: float,
                  descender_height: float):

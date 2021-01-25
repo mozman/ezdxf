@@ -285,13 +285,14 @@ class MTextPrimitive(GenericPrimitive):
 
         def get_rect_height() -> float:
             line_height = font.measurements.total_height
-            # TODO: 1.25 is an arbitrary factor
-            spacing = mtext.dxf.line_spacing_factor * 1.25
+            cap_height = font.measurements.cap_height
+            # Line spacing factor: Percentage of default (3-on-5) line
+            # spacing to be applied.
+            # TODO: What is 3-on-5 line spacing?
+            #  factor 3/5 = 0.6?
+            spacing = cap_height * 0.3 * mtext.dxf.line_spacing_factor
             line_count = len(content)
-            if line_count > 1:
-                return (line_count - 1) * line_height * spacing + line_height
-            else:
-                return line_count * line_height
+            return line_height * line_count + spacing * (line_count - 1)
 
         def get_ucs() -> UCS:
             """ Create local coordinate system:
