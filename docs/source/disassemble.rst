@@ -13,7 +13,7 @@ objects.
 The :class:`~ezdxf.entities.Hatch` entity is special because this entity can
 not be reduced into as single path or mesh object. The :func:`make_primitive`
 function returns an empty primitive, instead use the :func:`to_primitives`
-function to convert a :class:`~ezdxf.entities.Hatch` entity in multiple
+function to convert a :class:`~ezdxf.entities.Hatch` entity into multiple
 (boundary) path objects::
 
     paths = list(to_primitives([hatch_entity]))
@@ -22,10 +22,10 @@ function to convert a :class:`~ezdxf.entities.Hatch` entity in multiple
 .. warning::
 
     Do not expect advanced vectorization capabilities: Text entities like TEXT,
-    ATTRIB, ATTDEF and MTEXT get only a rough bounding box representation.
-    VIEWPORT and IMAGE are represented by their clipping path. Unsupported
-    entities: all ACIS based entities, WIPEOUT, XREF, UNDERLAY, ACAD_TABLE, RAY,
-    XLINE. Unsupported entities will be ignored.
+    ATTRIB, ATTDEF and MTEXT get only a rough border box representation.
+    VIEWPORT, IMAGE and WIPEOUT are represented by their clipping path.
+    Unsupported entities: all ACIS based entities, XREF, UNDERLAY, ACAD_TABLE,
+    RAY, XLINE. Unsupported entities will be ignored.
 
 .. autofunction:: recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]
 

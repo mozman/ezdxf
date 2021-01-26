@@ -433,10 +433,24 @@ def make_primitive(e: DXFEntity,
 
 
 def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
-    """ Recursive decompose the given DXF entity collection into a flat DXF
-    entity stream. All block references (INSERT) and entities which provide a
-    :meth:`virtual_entities` method will be disassembled into DXF entities,
-    therefore the returned entity stream does not contain any INSERT entity.
+    """ Recursive decomposition of the given DXF entity collection into a flat
+    DXF entity stream. All block references (INSERT) and entities which provide
+    a :meth:`virtual_entities` method will be disassembled into simple DXF
+    sub-entities, therefore the returned entity stream does not contain any
+    INSERT entity.
+
+    Point entities will **not** be disassembled into DXF sub-entities,
+    as defined by the current point style $PDMODE.
+
+    Decomposed entity types including sub-entities:
+
+        - INSERT
+        - DIMENSION
+        - LEADER
+        - MLEADER
+        - MLINE
+
+    Decomposition of XREF, UNDERLAY and ACAD_TABLE entities is not supported.
 
     """
     def insert(i: 'Insert') -> Iterable[DXFEntity]:
