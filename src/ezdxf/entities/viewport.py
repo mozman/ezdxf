@@ -44,6 +44,9 @@ acdb_viewport = DefSubclass('AcDbViewport', {
     # <positive value> = On and active. The value indicates the order of
     # stacking for the viewports, where 1 is the active viewport, 2 is the next,
     # and so on:
+    # Special VIEWPORT id==1, this viewport defines the area of the layout which
+    # is shown by the CAD application. I am not 100% sure if the id is always 1,
+    # but such a VIEWPORT is always required for a valid DXF file.
     'status': DXFAttr(68, default=0),
     'id': DXFAttr(69, default=2),
 
