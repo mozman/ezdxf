@@ -241,7 +241,7 @@ def unified_alignment(entity: Union['Text', 'MText']) -> Tuple[int, int]:
 
     """
     dxftype = entity.dxftype()
-    if dxftype == 'TEXT':
+    if dxftype in ('TEXT', 'ATTRIB', 'ATTDEF'):
         halign = entity.dxf.halign
         valign = entity.dxf.valign
         if halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5

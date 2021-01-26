@@ -153,7 +153,7 @@ class LwPolylinePrimitive(GenericPrimitive):
             tb = TraceBuilder.from_polyline(e)
             mb = MeshVertexMerger()  # merges coincident vertices
             for face in tb.faces():
-                mb.add_face(face)
+                mb.add_face(Vec3.generate(face))
             self._mesh = MeshBuilder.from_builder(mb)
         else:  # use a path representation to support bulges!
             self._path = make_path(e)
@@ -463,15 +463,16 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
 
     for entity in entities:
         dxftype = entity.dxftype()
-        if dxftype == 'INSERT':
+        # ignore this virtual_entities() methods:
+        if dxftype in ('POINT', 'LWPOLYLINE', 'POLYLINE'):
+            yield entity
+        elif dxftype == 'INSERT':
             entity = cast('Insert', entity)
             if entity.mcount > 1:
                 for virtual_insert in entity.multi_insert():
                     yield from insert(virtual_insert)
             else:
                 yield from insert(entity)
-        elif dxftype == 'POINT':  # ignore point style by virtual_entities()
-            yield entity
         elif hasattr(entity, 'virtual_entities'):
             # could contain block references:
             yield from recursive_decompose(entity.virtual_entities())
