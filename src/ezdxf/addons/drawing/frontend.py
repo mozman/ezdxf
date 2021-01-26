@@ -322,9 +322,10 @@ class Frontend:
                              properties: Properties) -> None:
         assert entity.dxftype() == 'VIEWPORT'
         # Special VIEWPORT id == 1, this viewport defines the area of the layout
-        # which is shown by the CAD application. I am not 100% sure if the id
-        # is always 1, but such a VIEWPORT is always required for a valid DXF
-        # file. id == 0 means off. Do not understand id == -1 see Viewport
+        # which is currently shown in the layout tab by the CAD application.
+        # I am not 100% sure if the id is always 1, but such a VIEWPORT is always
+        # required for a valid DXF file.
+        # id == 0 means off. Do not understand id == -1 see Viewport
         # entity for explanation, BricsCad do not set -1 for off screen
         # viewports.
         if entity.dxf.id < 2:
