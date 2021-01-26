@@ -14,7 +14,7 @@ def test_do_nothing():
 
 
 def test_convert_unsupported_entity_to_primitive():
-    p = disassemble.make_primitive(factory.new('WIPEOUT'))
+    p = disassemble.make_primitive(factory.new('3DSOLID'))
     assert p.path is None
     assert p.mesh is None
     assert p.is_empty is True
@@ -22,7 +22,7 @@ def test_convert_unsupported_entity_to_primitive():
 
 
 def test_multiple_unsupported_entities_to_vertices():
-    w = factory.new('WIPEOUT')
+    w = factory.new('3DSOLID')
     primitives = list(disassemble.to_primitives([w, w, w]))
     assert len(primitives) == 3, "3 empty primitives expected"
     vertices = list(disassemble.to_vertices(primitives))

@@ -138,11 +138,7 @@ class ImageBase(DXFGraphic):
         self.dxf.count_boundary_points = 2
 
     def transform(self, m: 'Matrix44') -> 'ImageBase':
-        """ Transform IMAGE entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
-        """
+        """ Transform IMAGE entity by transformation matrix `m` inplace. """
         self.dxf.insert = m.transform(self.dxf.insert)
         self.dxf.u_pixel = m.transform_direction(self.dxf.u_pixel)
         self.dxf.v_pixel = m.transform_direction(self.dxf.v_pixel)
@@ -152,6 +148,15 @@ class ImageBase(DXFGraphic):
         """ Returns the boundary/clipping path in WCS coordinates.
 
         .. versionadded:: 0.14
+
+        Since version 0.16 it's recommended to create the clipping path
+        as :class:`~ezdxf.render.path.Path` object by the
+        :func:`~ezdxf.render.path.make_path` function::
+
+            form ezdxf.render import make_path
+
+            image = ...  # get image entity
+            clipping_path = make_path(image)
 
         """
 

@@ -100,7 +100,11 @@ acdb_viewport = DefSubclass('AcDbViewport', {
     # 2097152 (0x200000) = Enables grid follows workplane switching
     'flags': DXFAttr(90, default=0),
 
-    'clipping_boundary_handle': DXFAttr(340, default=0, optional=True),
+    # Clipping viewports: the following handle point to a graphical entity
+    # located in the paperspace. Known supported entities:
+    # LWPOLYLINE (2D POLYLINE), CIRCLE, ELLIPSE, closed SPLINE
+    # Extract bounding- or clipping path: ezdxf.render.make_path()
+    'clipping_boundary_handle': DXFAttr(340, default='0', optional=True),
 
     # Plot style sheet name assigned to this viewport
     'plot_style_name': DXFAttr(1, default=''),
@@ -432,10 +436,17 @@ class Viewport(DXFGraphic):
         cy = center.y
         width2 = self.dxf.width / 2
         height2 = self.dxf.height / 2
-        # TODO: boundary path support for the Viewport entity
+        # TODO: clipping path support for the Viewport entity
         return [
             Vec3(cx - width2, cy - height2),
             Vec3(cx + width2, cy - height2),
             Vec3(cx + width2, cy + height2),
             Vec3(cx - width2, cy + height2),
         ]
+
+    def has_clipping_path(self) -> bool:
+        _flag = self.dxf.flags & const.VSF_NON_RECTANGULAR_CLIPPING
+        if _flag:
+            handle = self.dxf.clipping_path_handle
+            return handle != '0'
+        return False

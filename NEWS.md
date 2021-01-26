@@ -5,18 +5,13 @@ News
 Version 0.15.2a0 - dev
 ----------------------
 
+- NEW: `BoundingBox()` intersection test, inside- and outside tests, union of 
+  two bounding boxes.
+- CHANGE: extraction of many text utility function into `ezdxf.tools.text`
+- BUGFIX: `FIT` and `ALIGNED` text rendering in the drawing add-on 
 - BUGFIX: matplotlib backend uses linewidth=0 for solid filled polygons and 
   the scaled linewidth for polygons with pattern filling
-- NEW: `ezdxf.render.make_path()` factory function to convert linear DXF 
-  entities into a `Path()` object.
-- NEW: `ezdxf.render.has_path_support()` to check if conversion into a `Path()` 
-  object is possible 
-- DEPRECATED: `Path.from_lwpolyline()`, replaced by factory `make_path()`
-- DEPRECATED: `Path.from_polyline()`, replaced by factory `make_path()`
-- DEPRECATED: `Path.from_spline()`, replaced by factory `make_path()`
-- DEPRECATED: `Path.from_ellipse()`, replaced by factory `make_path()`
-- DEPRECATED: `Path.from_arc()`, replaced by factory `make_path()`
-- DEPRECATED: `Path.from_circle()`, replaced by factory `make_path()`
+- BUGFIX: clipping path calculation for IMAGE and WIPEOUT
 
 Version 0.15.1 - 2021-01-15
 ---------------------------
@@ -25,7 +20,7 @@ Version 0.15.1 - 2021-01-15
 - NEW: The `recover` module tolerates malformed group codes and value tags.
 - Changed the `Matrix44.matrix` attribute in the Python implementation to a 
   "private" attribute `Matrix44._matrix`, because this attribute is not 
-  available in the Cython implementation   
+  available in the Cython implementation
 - BUGFIX: proxy graphic decoding error on big-endian systems
 - BUGFIX: invalid vertex subscript access in `dxf2code` add-on 
 - BUGFIX: `cubic_bezier_from_ellipse()` recognizes full ellipses  

@@ -14,12 +14,12 @@ from ezdxf.math import (
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        LWPolyline, Polyline, Vertex, Spline, Ellipse,
-        Arc, Circle, DXFEntity, Line, Solid,
+        LWPolyline, Polyline, Vertex, Spline, Ellipse, Arc, Circle, DXFEntity,
+        Line, Solid, Viewport, Image,
     )
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
-__all__ = ['Path', 'Command']
+__all__ = ['Path', 'Command', 'make_path', 'has_path_support']
 
 
 class Command(Enum):
@@ -731,6 +731,24 @@ def _from_quadrilateral(solid: 'Solid', **kwargs) -> 'Path':
     return Path.from_vertices(vertices, close=True)
 
 
+def _from_viewport(vp: 'Viewport', **kwargs) -> Path:
+    if vp.has_clipping_path():
+        handle = vp.dxf.clipping_boundary_handle
+        if handle != '0' and vp.doc:  # exist
+            db = vp.doc.entitydb
+            if db:  # exist
+                # Many DXF entities can define a clipping path:
+                clipping_entity = vp.doc.entitydb.get(handle, None)
+                if clipping_entity:  # exist
+                    return make_path(clipping_entity, **kwargs)
+    # Return bounding box:
+    return Path.from_vertices(vp.boundary_path(), close=True)
+
+
+def _from_image(image: 'Image', **kwargs) -> Path:
+    return Path.from_vertices(image.boundary_path_wcs(), close=True)
+
+
 _FACTORIES = {
     "ARC": _from_arc,
     "CIRCLE": _from_circle,
@@ -743,12 +761,18 @@ _FACTORIES = {
     "SOLID": _from_quadrilateral,
     "TRACE": _from_quadrilateral,
     "3DFACE": _from_quadrilateral,
+    "VIEWPORT": _from_viewport,
+    "IMAGE": _from_image,
+    "WIPEOUT": _from_image,
 }
 
 
 def has_path_support(e: 'DXFEntity') -> bool:
     """ Returns ``True`` if DXF entity `e` is convertible into a :class:`Path`
     object.
+
+    .. versionadded:: 0.16
+
     """
     dxftype = e.dxftype()
     if dxftype == "POLYLINE":
@@ -759,8 +783,7 @@ def has_path_support(e: 'DXFEntity') -> bool:
 
 
 def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
-    """ Factory function to create :class:`Path` objects from linear DXF
-    entities:
+    """ Factory function to create :class:`Path` objects from DXF entities:
 
     - LINE
     - CIRCLE
@@ -770,6 +793,8 @@ def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
     - LWPOLYLINE
     - 2D and 3D POLYLINE
     - SOLID, TRACE, 3DFACE
+    - IMAGE, WIPEOUT clipping path
+    - VIEWPORT clipping path
 
     Args:
         e: DXF entity
@@ -777,6 +802,8 @@ def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
             CIRCLE, ARC, ELLIPSE, see :meth:`Path.add_ellipse`
         level: subdivide level for SPLINE approximation,
             see :meth:`Path.add_spline`
+
+    .. versionadded:: 0.16
 
     """
     dxftype = e.dxftype()

@@ -373,8 +373,7 @@ class PathPrimitive(AbstractPrimitive):
 
 class ImagePrimitive(GenericPrimitive):
     def _convert_entity(self):
-        e: 'Image' = cast('Image', self.entity)
-        self._path = Path.from_vertices(e.boundary_path_wcs(), close=True)
+        self._path = make_path(self.entity)
 
 
 class ViewportPrimitive(GenericPrimitive):
@@ -382,7 +381,7 @@ class ViewportPrimitive(GenericPrimitive):
         vp = self.entity
         if vp.dxf.status == 0:  # Viewport is off
             return  # empty primitive
-        self._path = Path.from_vertices(vp.boundray_path(), close=True)
+        self._path = make_path(vp)
 
 
 # SHAPE is not supported, could not create any SHAPE entities in BricsCAD
@@ -409,6 +408,7 @@ _PRIMITIVE_CLASSES = {
     "TEXT": TextLinePrimitive,
     "TRACE": QuadrilateralPrimitive,
     "VIEWPORT": ViewportPrimitive,
+    "WIPEOUT": ImagePrimitive,
 }
 
 
