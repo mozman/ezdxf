@@ -2,11 +2,11 @@ Version 0.16 - dev
 ------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-16.html
-- NEW: `ezdxf.render.make_path()` factory function to crete `Path()` objects 
+- NEW: `ezdxf.render.make_path()` factory function to create `Path()` objects 
   from many DXF entities.
 - NEW: `ezdxf.render.has_path_support()` to check if an entity is supported by 
   `make_path()`
-- NEW: module `disassemble`, see [docs](https://ezdxf.mozman.at/docs/disasemble.html)
+- NEW: support module `disassemble`, see [docs](https://ezdxf.mozman.at/docs/disassemble.html)
 - NEW: get clipping path from VIEWPORT entities by `make_path()`
 - DEPRECATED: `Path.from_lwpolyline()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_polyline()`, replaced by factory `make_path()`
