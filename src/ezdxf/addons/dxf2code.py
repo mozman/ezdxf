@@ -298,6 +298,7 @@ class _SourceCodeGenerator:
         self.code.add_line(code)
 
     def add_source_code_lines(self, code: Iterable[str]) -> None:
+        assert not isinstance(code, str)
         self.code.add_lines(code)
 
     def add_list_source_code(self, values: Iterable, prolog: str = "[",
@@ -490,7 +491,7 @@ class _SourceCodeGenerator:
                         "ATTRIB", attrib.dxfattribs(), prefix="a = "
                     )
                 )
-                self.add_source_code_lines("e.attribs.append(a)")
+                self.add_source_code_line("e.attribs.append(a)")
 
     def _mtext(self, entity: "MText") -> None:
         self.add_source_code_lines(
