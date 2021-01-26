@@ -287,9 +287,12 @@ class MTextPrimitive(GenericPrimitive):
             cap_height = font.measurements.cap_height
             # Line spacing factor: Percentage of default (3-on-5) line
             # spacing to be applied.
-            # TODO: What is 3-on-5 line spacing?
-            #  factor 3/5 = 0.6?
-            spacing = cap_height * 0.3 * mtext.dxf.line_spacing_factor
+
+            # thx to mbway: multiple of cap_height between the baseline of the
+            # previous line and the baseline of the next line
+            # 3-on-5 line spacing = 5/3 = 1.67
+            line_spacing = cap_height * mtext.dxf.line_spacing_factor * 1.67
+            spacing = line_spacing - line_height
             line_count = len(content)
             return line_height * line_count + spacing * (line_count - 1)
 
@@ -453,6 +456,7 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
     Decomposition of XREF, UNDERLAY and ACAD_TABLE entities is not supported.
 
     """
+
     def insert(i: 'Insert') -> Iterable[DXFEntity]:
         yield from i.attribs
         yield from i.virtual_entities()
