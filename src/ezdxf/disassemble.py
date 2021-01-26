@@ -14,9 +14,7 @@ from ezdxf.tools.text import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        LWPolyline, Polyline, MText, Hatch, Image,
-    )
+    from ezdxf.eztypes import LWPolyline, Polyline, MText, Hatch
 
 __all__ = [
     "make_primitive", "recursive_decompose", "to_primitives", "to_vertices"

@@ -1,6 +1,5 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-# Created: 2020-07-10
 from typing import TYPE_CHECKING, List, Iterable, Sequence, NamedTuple, Union
 from collections import abc
 from enum import Enum
@@ -738,7 +737,7 @@ def _from_viewport(vp: 'Viewport', **kwargs) -> Path:
             db = vp.doc.entitydb
             if db:  # exist
                 # Many DXF entities can define a clipping path:
-                clipping_entity = vp.doc.entitydb.get(handle, None)
+                clipping_entity = vp.doc.entitydb.get(handle)
                 if clipping_entity:  # exist
                     return make_path(clipping_entity, **kwargs)
     # Return bounding box:

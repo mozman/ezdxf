@@ -447,6 +447,6 @@ class Viewport(DXFGraphic):
     def has_clipping_path(self) -> bool:
         _flag = self.dxf.flags & const.VSF_NON_RECTANGULAR_CLIPPING
         if _flag:
-            handle = self.dxf.clipping_path_handle
+            handle = self.dxf.clipping_boundary_handle
             return handle != '0'
         return False
