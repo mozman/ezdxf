@@ -9,7 +9,7 @@ msp = doc.modelspace()
 lwpolyline = msp.add_lwpolyline(
     [(0, 0, 0), (10, 0, .5), (10, 10, 0), (0, 10, 0)],
     format='xyb',
-    dxfattribs={'closed': True},
+    close=True,
 )
 
 hatch = msp.add_hatch(color=1)

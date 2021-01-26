@@ -129,7 +129,7 @@ def test_polyline3d_virtual_entities():
 
 def test_polyline3d_closed():
     msp = VirtualLayout()
-    polyline3d = msp.add_polyline3d([(0, 0, 0), (1, 0, 0), (2, 2, 2)], dxfattribs={'closed': True})
+    polyline3d = msp.add_polyline3d([(0, 0, 0), (1, 0, 0), (2, 2, 2)], close=True)
     assert polyline3d.is_closed is True
     result = list(polyline3d.virtual_entities())
     assert len(result) == 3

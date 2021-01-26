@@ -7,7 +7,7 @@ SIZE = 5
 doc = ezdxf.new()
 
 msp = doc.modelspace()
-msp.add_polyline2d([(0, 0), (SIZE, 0), (SIZE, SIZE), (0, SIZE)], dxfattribs={'closed': True})
+msp.add_polyline2d([(0, 0), (SIZE, 0), (SIZE, SIZE), (0, SIZE)], close=True)
 msp.add_circle((SIZE / 2, SIZE / 2), radius=SIZE / 2)
 
 doc.saveas('transformation_example_before.dxf')

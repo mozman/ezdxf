@@ -62,7 +62,7 @@ def create_gear(filename, teeth=20, outside_radius=10, top_width=2, bottom_width
     msp.add_lwpolyline(
         vertices,
         format='vb',
-        dxfattribs={'closed': True}
+        close=True,
     )
     doc.saveas(filename)
 

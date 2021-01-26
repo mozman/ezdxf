@@ -1,9 +1,9 @@
-# Copyright (c) 2013-2020, Manfred Moitzi
+# Copyright (c) 2013-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast
 import math
 import logging
-
+import warnings
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
 from ezdxf.math import Vec3, global_bspline_interpolation
@@ -334,22 +334,29 @@ class CreatorInterface:
         return self.new_entity('ATTDEF', dxfattribs)
 
     def add_polyline2d(self, points: Iterable['Vertex'],
-                       dxfattribs: Dict = None,
-                       format: str = None, ) -> 'Polyline':
+                       format: str = None,
+                       *,
+                       close: bool = False,
+                       dxfattribs: Dict = None) -> 'Polyline':
         """
         Add a 2D :class:`~ezdxf.entities.Polyline` entity.
 
         Args:
             points: iterable of 2D points in :ref:`WCS`
-            dxfattribs: additional DXF attributes
+            close: `True` for a closed polyline
             format: user defined point format like :meth:`add_lwpolyline`,
                 default is ``None``
+            dxfattribs: additional DXF attributes
 
         """
         dxfattribs = dict(dxfattribs or {})
-        closed = dxfattribs.pop('closed', False)
+        if 'closed' in dxfattribs:
+            warnings.warn('dxfattribs key "closed" is deprecated, '
+                          'use keyword argument "close"', DeprecationWarning)
+
+        close = dxfattribs.pop('closed', close)
         polyline: 'Polyline' = self.new_entity('POLYLINE', dxfattribs)
-        polyline.close(closed)
+        polyline.close(close)
         if format is not None:
             polyline.append_formatted_vertices(points, format=format)
         else:
@@ -359,19 +366,21 @@ class CreatorInterface:
         return polyline
 
     def add_polyline3d(self, points: Iterable['Vertex'],
+                       *,
+                       close: bool = False,
                        dxfattribs: Dict = None) -> 'Polyline':
-        """
-        Add a 3D :class:`~ezdxf.entities.Polyline` entity.
+        """ Add a 3D :class:`~ezdxf.entities.Polyline` entity.
 
         Args:
             points: iterable of 3D points in :ref:`WCS`
+            close: `True` for a closed polyline
             dxfattribs: additional DXF attributes
 
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['flags'] = dxfattribs.get('flags',
                                              0) | const.POLYLINE_3D_POLYLINE
-        return self.add_polyline2d(points, dxfattribs)
+        return self.add_polyline2d(points, close=close, dxfattribs=dxfattribs)
 
     def add_polymesh(self, size: Tuple[int, int] = (3, 3),
                      dxfattribs: Dict = None) -> 'Polymesh':
@@ -465,7 +474,10 @@ class CreatorInterface:
 
     # new entities in DXF AC1015 (R2000)
 
-    def add_lwpolyline(self, points: Iterable['Vertex'], format: str = 'xyseb',
+    def add_lwpolyline(self, points: Iterable['Vertex'],
+                       format: str = 'xyseb',
+                       *,
+                       close: bool = False,
                        dxfattribs: Dict = None) -> 'LWPolyline':
         """
         Add a 2D polyline as :class:`~ezdxf.entities.LWPolyline` entity.
@@ -490,16 +502,20 @@ class CreatorInterface:
         Args:
             points: iterable of (x, y, [start_width, [end_width, [bulge]]]) tuples
             format: user defined point format, default is ``"xyseb"``
+            close: `True` for a closed polyline
             dxfattribs: additional DXF attributes
 
         """
         if self.dxfversion < DXF2000:
             raise DXFVersionError('LWPOLYLINE requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
-        closed = dxfattribs.pop('closed', False)
+        if 'closed' in dxfattribs:
+            warnings.warn('dxfattribs key "closed" is deprecated, '
+                          'use keyword argument "close"', DeprecationWarning)
+        close = dxfattribs.pop('closed', close)
         lwpolyline: 'LWPolyline' = self.new_entity('LWPOLYLINE', dxfattribs)
         lwpolyline.set_points(points, format=format)
-        lwpolyline.closed = closed
+        lwpolyline.closed = close
         return lwpolyline
 
     def add_mtext(self, text: str, dxfattribs: Dict = None) -> 'MText':
@@ -1773,11 +1789,14 @@ class CreatorInterface:
         return leader
 
     def add_mline(self, vertices: Iterable['Vertex'] = None,
+                  *,
+                  close: bool = False,
                   dxfattribs: Dict = None) -> 'MLine':
         """ Add a :class:`~ezdxf.entities.MLine` entity
 
         Args:
             vertices: MLINE vertices (in :ref:`WCS`)
+            close: `True` to add a closed MLINE
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.MLine` entity
 
@@ -1786,10 +1805,9 @@ class CreatorInterface:
             raise DXFVersionError('MLine requires DXF R2000')
         dxfattribs = dxfattribs or {}
         style_name = dxfattribs.pop('style_name', 'Standard')
-        closed = dxfattribs.pop('closed', False)
         mline = cast('MLine', self.new_entity('MLINE', dxfattribs))
         # close() method regenerates geometry!
-        mline.set_flag_state(mline.CLOSED, closed)
+        mline.set_flag_state(mline.CLOSED, close)
         mline.set_style(style_name)
         if vertices:
             mline.extend(vertices)

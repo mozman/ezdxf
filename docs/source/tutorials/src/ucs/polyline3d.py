@@ -23,8 +23,8 @@ corners_ucs = list(transformation_ucs.points_to_wcs(corners_ucs))
 location_ucs = UCS(origin=(0, 2, 2)).rotate_local_x(math.radians(-45))
 msp.add_polyline3d(
     points=corners_ucs,
+    close=True,
     dxfattribs={
-        'closed': True,
         'color': 1,
     }
 ).transform(location_ucs.matrix)

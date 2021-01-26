@@ -29,7 +29,8 @@ def modelspace():
     doc = ezdxf.new()
     modelspace = doc.modelspace()
     modelspace.add_line((0, 0), (10, 0), {'layer': 'lay_lines', 'color': 7})
-    modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_lines', 'color': 6})
+    modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)],
+                              dxfattribs={'layer': 'lay_lines', 'color': 6})
     modelspace.add_text("TEST", dxfattribs={'layer': 'lay_text', 'color': 6})
     modelspace.add_circle((0, 0), 1, dxfattribs={'layer': 'π'})
     # just 4 entities: LINE, TEXT, POLYLINE, CIRCLE
@@ -125,19 +126,22 @@ def test_bool_select(modelspace):
 
 
 def test_bool_select_2(modelspace):
-    result = EntityQuery(modelspace, '*[layer=="lay_lines" & color==7 | color==6]')
+    result = EntityQuery(modelspace,
+                         '*[layer=="lay_lines" & color==7 | color==6]')
     # 1xLINE(layer=="lay_lines" & color==7) 1xPOLYLINE(color==6) 1xTEXT(color==6)
     assert len(result) == 3
 
 
 def test_bool_select_3(modelspace):
-    result = EntityQuery(modelspace, '*[layer=="lay_lines" & (color==7 | color==6)]')
+    result = EntityQuery(modelspace,
+                         '*[layer=="lay_lines" & (color==7 | color==6)]')
     # 1xLINE(layer=="lay_lines" & color==7) 1xPOLYLINE(layer=="lay_lines" & color==6)
     assert len(result) == 2
 
 
 def test_bool_select_4(modelspace):
-    result = EntityQuery(modelspace, '*[(layer=="lay_lines" | layer=="lay_text") & !color==7]')
+    result = EntityQuery(modelspace,
+                         '*[(layer=="lay_lines" | layer=="lay_text") & !color==7]')
     # 1xPOLYLINE(layer=="lay_lines" & color==6) 1xTEXT(layer=="lay_text" & color==6)
     assert len(result) == 2
 

@@ -15,7 +15,8 @@ def add_predefined_hatch_pattern(msp, cols, size, gap, scale):
         boundary = list(translate(square(size), (x, HEIGHT - y)))
         msp.add_lwpolyline(
             boundary,
-            dxfattribs={'closed': True, 'layer': 'LINE'}
+            close=True,
+            dxfattribs={'layer': 'LINE'}
         )
         hatch = msp.add_hatch(dxfattribs={'layer': 'HATCH'})
         hatch.set_pattern_fill(name=name, scale=scale)

@@ -12,7 +12,8 @@ def modelspace():
     doc = ezdxf.new()
     msp = doc.modelspace()
     msp.add_line((0, 0), (10, 0), {'layer': 'lay_lines', 'color': 7})
-    msp.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_lines', 'color': 6})
+    msp.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)],
+                       dxfattribs={'layer': 'lay_lines', 'color': 6})
     msp.add_text("TEST", dxfattribs={'layer': 'lay_text', 'color': 6})
     msp.add_text("TEST2", dxfattribs={'layer': 'lay_text2', 'color': 6})
     # just 3 entities: LINE, TEXT, POLYLINE - VERTEX & SEQEND now linked to the POLYLINE entity, and do not appear

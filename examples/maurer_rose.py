@@ -27,8 +27,8 @@ def maurer_rose(n: int, d: int, radius: float) -> Iterable[Tuple[float, float]]:
 def main(filename: str, n: int, d: int) -> None:
     doc = ezdxf.new()
     msp = doc.modelspace()
-    msp.add_lwpolyline(maurer_rose(n, 1, 250), dxfattribs={'closed': True, 'color': 1})  # petal outline
-    msp.add_lwpolyline(maurer_rose(n, d, 250), dxfattribs={'closed': True, 'color': 5})  # net
+    msp.add_lwpolyline(maurer_rose(n, 1, 250), close=True, dxfattribs={'color': 1})  # petal outline
+    msp.add_lwpolyline(maurer_rose(n, d, 250), close=True, dxfattribs={'color': 5})  # net
     doc.saveas(filename)
 
 

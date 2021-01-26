@@ -32,9 +32,7 @@ def add_point(x, angle: float, color: int):
 for pdmode in MODES:
     doc = new_doc(pdmode, PDSIZE)
     msp = doc.modelspace()
-    msp.add_lwpolyline([(0, 0), (10, 0), (10, 4), (0, 4)], dxfattribs={
-        'closed': True,
-    })
+    msp.add_lwpolyline([(0, 0), (10, 0), (10, 4), (0, 4)], close=True)
     add_point(1, 0, 1)
     add_point(3, 30, 2)
     add_point(5, 45, 3)

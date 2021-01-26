@@ -153,18 +153,19 @@ class Origin2(Circle):
 
 class DotSmall(Circle):
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
-        dxfattribs['closed'] = True
         center = self.shape[0]
         d = Vec2((self.radius / 2, 0))
         p1 = center - d
         p2 = center + d
         if layout.dxfversion > 'AC1009':
             dxfattribs['const_width'] = self.radius
-            layout.add_lwpolyline([(p1, 1), (p2, 1)], format='vb', dxfattribs=dxfattribs)
+            layout.add_lwpolyline([(p1, 1), (p2, 1)], format='vb', close=True,
+                                  dxfattribs=dxfattribs)
         else:
             dxfattribs['default_start_width'] = self.radius
             dxfattribs['default_end_width'] = self.radius
-            polyline = layout.add_polyline2d(points=[p1, p2], dxfattribs=dxfattribs)
+            polyline = layout.add_polyline2d(points=[p1, p2], close=True,
+                                             dxfattribs=dxfattribs)
             polyline[0].dxf.bulge = 1
             polyline[1].dxf.bulge = 1
 

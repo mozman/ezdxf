@@ -13,22 +13,19 @@ if not OUTBOX.exists():
 def add_top_zero_bottom_mlines(msp, vertices, closed: bool = False,
                                style: str = 'Standard'):
     shape = Shape2d(vertices)
-    msp.add_mline(shape.vertices, dxfattribs={
+    msp.add_mline(shape.vertices, close=closed, dxfattribs={
         'style_name': style,
         'justification': const.MLINE_BOTTOM,
-        'closed': closed,
     })
     shape.translate((0, 20, 0))
-    msp.add_mline(shape.vertices, dxfattribs={
+    msp.add_mline(shape.vertices, close=closed, dxfattribs={
         'style_name': style,
         'justification': const.MLINE_ZERO,
-        'closed': closed,
     })
     shape.translate((0, 20, 0))
-    msp.add_mline(shape.vertices, dxfattribs={
+    msp.add_mline(shape.vertices, close=closed, dxfattribs={
         'style_name': style,
         'justification': const.MLINE_TOP,
-        'closed': closed,
     })
 
 

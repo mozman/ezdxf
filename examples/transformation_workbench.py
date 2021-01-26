@@ -312,7 +312,7 @@ def hatch_polyline(msp, edge_path=True):
     hatch.paths.add_polyline_path(vertices, is_closed=1)
     if edge_path:
         hatch.paths.arc_edges_to_ellipse_edges()
-    lwpoly = msp.add_lwpolyline(vertices, format='xyb', dxfattribs={'color': 1, 'closed': 1})
+    lwpoly = msp.add_lwpolyline(vertices, format='xyb', close=True, dxfattribs={'color': 1})
     return hatch, lwpoly
 
 

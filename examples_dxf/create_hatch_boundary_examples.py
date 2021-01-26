@@ -21,8 +21,8 @@ def add_hatch(msp, external: List[Shape2d] = None,
         path.translate(offset)
         hatch.paths.add_polyline_path(
             path.vertices, flags=flags)
-        msp.add_lwpolyline(path.vertices, dxfattribs={
-            'color': color, 'layer': layer, 'closed': True})
+        msp.add_lwpolyline(path.vertices, close=True, dxfattribs={
+            'color': color, 'layer': layer})
 
     hatch = msp.add_hatch(2, dxfattribs={'layer': 'HATCH'})
     hatch.dxf.hatch_style = hatch_style

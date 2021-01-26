@@ -14,9 +14,8 @@ def get_mat_symbol(doc):
               (-p2, -p1), (p2, -p1), (p1, -p2)]
 
     # should run with DXF R12, so not symbol.add_lwpolyline()
-    symbol.add_polyline2d(points, dxfattribs={
+    symbol.add_polyline2d(points, close=True, dxfattribs={
         'color': 2,
-        'closed': True,
     })
 
     symbol.add_attdef(tag='num', text='0', dxfattribs={

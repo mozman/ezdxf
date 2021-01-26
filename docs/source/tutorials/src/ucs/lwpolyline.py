@@ -1,6 +1,7 @@
 # Copyright (c) 2020 Manfred Moitzi
 # License: MIT License
 from pathlib import Path
+
 OUT_DIR = Path('~/Desktop/Outbox').expanduser()
 
 import math
@@ -18,8 +19,8 @@ msp.add_lwpolyline(
     # calculating corner points in UCS coordinates
     points=(Vec3.from_deg_angle((360 / 5) * n) for n in range(5)),
     format='xy',  # ignore z-axis
+    close=True,
     dxfattribs={
-        'closed': True,
         'color': 1,
     }
 ).transform(ucs.matrix)

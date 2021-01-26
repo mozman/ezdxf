@@ -11,7 +11,7 @@ doc = ezdxf.new('R2010')
 msp = doc.modelspace()
 
 block = doc.blocks.new(name='TEST')
-block.add_lwpolyline([(0, 0), (1, 0), (1, 1), (0, 1)], dxfattribs={'closed': True, 'color': 3})
+block.add_lwpolyline([(0, 0), (1, 0), (1, 1), (0, 1)], close=True, dxfattribs={'color': 3})
 block.add_circle((0.5, 0.5), 0.5, dxfattribs={'color': 1})
 block.add_text('TEST', dxfattribs={'height': 0.1, 'color': 5, 'rotation': 45}).set_pos((0.5, 0.5),
                                                                                        align='MIDDLE_CENTER')

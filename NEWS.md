@@ -8,6 +8,10 @@ Version 0.15.2a0 - dev
 - NEW: `BoundingBox()` intersection test, inside- and outside tests, union of 
   two bounding boxes.
 - CHANGE: extraction of many text utility function into `ezdxf.tools.text`
+- CHANGE: `add_polyline2d()`, `add_polyline3d()`, `add_lwpolyline()` and 
+  `add_mline()` got argument `close` to create a closed polygon and 
+  dxfattrib `closed` is deprecated, `close` and `dxfattribs` for these factories 
+  are keyword only arguments. 
 - BUGFIX: `FIT` and `ALIGNED` text rendering in the drawing add-on 
 - BUGFIX: matplotlib backend uses linewidth=0 for solid filled polygons and 
   the scaled linewidth for polygons with pattern filling
