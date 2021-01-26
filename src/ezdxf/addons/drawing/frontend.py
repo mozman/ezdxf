@@ -321,14 +321,12 @@ class Frontend:
     def draw_viewport_entity(self, entity: DXFGraphic,
                              properties: Properties) -> None:
         assert entity.dxftype() == 'VIEWPORT'
-        # Special VIEWPORT id == 1, this viewport defines the area of the layout
-        # which is currently shown in the layout tab by the CAD application.
-        # I am not 100% sure if the id is always 1, but such a VIEWPORT is always
-        # required for a valid DXF file.
-        # id == 0 means off. Do not understand id == -1 see Viewport
-        # entity for explanation, BricsCad do not set -1 for off screen
-        # viewports.
-        if entity.dxf.id < 2:
+        # Special VIEWPORT id == 1, this viewport defines the "active viewport"
+        # which is the area currently shown in the layout tab by the CAD
+        # application.
+        # BricsCAD set id to -1 if the viewport is off and 'status' (group
+        # code 68) is not present.
+        if entity.dxf.id < 2 or entity.dxf.status < 1:
             return
         dxf = entity.dxf
         view_vector: Vec3 = dxf.view_direction_vector

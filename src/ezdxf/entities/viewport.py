@@ -42,13 +42,17 @@ acdb_viewport = DefSubclass('AcDbViewport', {
     #      active because the $MAXACTVP count is currently being exceeded.
     #  0 = Off
     # <positive value> = On and active. The value indicates the order of
-    # stacking for the viewports, where 1 is the active viewport, 2 is the next,
-    # and so on:
+    # stacking for the viewports, where 1 is the "active viewport", 2 is the
+    # next, and so on:
+    'status': DXFAttr(68, default=0),
+
     # Special VIEWPORT id == 1, this viewport defines the area of the layout
     # which is currently shown in the layout tab by the CAD application.
-    # I am not 100% sure if the id is always 1, but such a VIEWPORT is always
-    # required for a valid DXF file.
-    'status': DXFAttr(68, default=0),
+    # I guess this is meant by "active viewport" and therefore it is most likely
+    # that this id is always 1.
+    # This "active viewport" is mandatory for a valid DXF file.
+    # BricsCAD set id to -1 if the viewport is off and 'status' (group code 68)
+    # is not present.
     'id': DXFAttr(69, default=2),
 
     # DXF reference: View center point (in DCS):
