@@ -7,6 +7,7 @@ Version 0.16 - dev
 - NEW: `ezdxf.render.has_path_support()` to check if an entity is supported by 
   `make_path()`
 - NEW: support module `disassemble`, see [docs](https://ezdxf.mozman.at/docs/disassemble.html)
+- NEW: support module `bbox`, see [docs](https://ezdxf.mozman.at/docs/bbox.html)
 - NEW: get clipping path from VIEWPORT entities by `make_path()`
 - DEPRECATED: `Path.from_lwpolyline()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_polyline()`, replaced by factory `make_path()`
