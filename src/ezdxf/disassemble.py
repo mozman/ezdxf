@@ -54,7 +54,7 @@ class AbstractPrimitive:
         """
         if self._mesh:
             return len(self._mesh.vertices) == 0
-        return self._path is None
+        return self.path is None  # on demand calculations!
 
     @property
     def path(self) -> Optional[Path]:
