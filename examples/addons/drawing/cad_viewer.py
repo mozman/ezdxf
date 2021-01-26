@@ -4,25 +4,23 @@
 # License: MIT License
 import argparse
 import math
-import os
 import signal
 import sys
 import time
-from functools import partial
 from typing import Iterable, Tuple, List, Dict
 
 from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
-from ezdxf.acc import USE_C_EXT
 from ezdxf import recover
+from ezdxf.acc import USE_C_EXT
 from ezdxf.addons import odafc
 from ezdxf.addons.drawing import Frontend, RenderContext, fonts
 from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFParentStack
-from ezdxf.document import Drawing
 from ezdxf.audit import Auditor
+from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.lldxf.const import DXFStructureError
 
@@ -276,7 +274,7 @@ class CadViewer(qw.QMainWindow):
         self.select_layout_menu.clear()
         for layout_name in self.doc.layout_names_in_taborder():
             action = qw.QAction(layout_name, self)
-            action.triggered.connect(partial(self.draw_layout, layout_name))
+            action.triggered.connect(lambda: self.draw_layout(layout_name, reset_view=True))
             self.select_layout_menu.addAction(action)
 
     def draw_layout(self, layout_name: str, reset_view: bool = True):
