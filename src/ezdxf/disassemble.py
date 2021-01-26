@@ -9,12 +9,13 @@ from ezdxf.math import Vec3, UCS, Z_AXIS, X_AXIS
 from ezdxf.render import (
     Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path,
 )
+from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.tools.text import (
     MonospaceFont, TextLine, unified_alignment, plain_text, text_wrap,
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import LWPolyline, Polyline, MText, Hatch
+    from ezdxf.eztypes import LWPolyline, Polyline, MText, Hatch, Insert
 
 __all__ = [
     "make_primitive", "recursive_decompose", "to_primitives", "to_vertices"
@@ -433,12 +434,36 @@ def make_primitive(e: DXFEntity,
 
 def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
     """ Recursive decompose the given DXF entity collection into a flat DXF
-    entity stream. All block references (INSERT) will be disassembled into DXF
-    entities, therefore the resulting entity stream does not contain any INSERT
-    entity.
+    entity stream. All block references (INSERT) and entities which provide a
+    :meth:`virtual_entities` method will be disassembled into DXF entities,
+    therefore the returned entity stream does not contain any INSERT entity.
 
     """
-    return []
+    def insert(i: 'Insert') -> Iterable[DXFEntity]:
+        yield from i.attribs
+        yield from i.virtual_entities()
+
+    for entity in entities:
+        dxftype = entity.dxftype()
+        if dxftype == 'INSERT':
+            entity = cast('Insert', entity)
+            if entity.mcount > 1:
+                for virtual_insert in entity.multi_insert():
+                    yield from insert(virtual_insert)
+            else:
+                yield from insert(entity)
+        elif dxftype == 'POINT':  # ignore point style by virtual_entities()
+            yield entity
+        elif hasattr(entity, 'virtual_entities'):
+            # could contain block references:
+            yield from recursive_decompose(entity.virtual_entities())
+        # As long as MLeader.virtual_entities() is not implemented,
+        # use existing proxy graphic:
+        elif dxftype in ('MLEADER', 'MULTILEADER') and entity.proxy_graphic:
+            yield from ProxyGraphic(
+                entity.proxy_graphic, entity.doc).virtual_entities()
+        else:
+            yield entity
 
 
 def to_primitives(entities: Iterable[DXFEntity],
