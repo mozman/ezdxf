@@ -70,10 +70,9 @@ def test_cache_usage_for_flat_multi_boxes(msp_solids, func):
         list(func(msp_solids, cache))
 
     # This works because flat processing has not to yield bounding boxes for
-    # sub entities, cached bounding box is good.
-    # bbox.extends uses bbox.multi_flat, therefore same behavior
+    # sub entities, caching top level bounding boxes works well.
     assert cache.misses == 2 + 2  # first 2xINSERT, 2xSOLID in INSERT
-    assert cache.hits == 2 * 9  # following 9 rounds
+    assert cache.hits == 9 * 2  # 9 x 2xINSERT
 
 
 def test_cache_usage_for_recursive_multi_boxes(msp_solids):
@@ -81,7 +80,7 @@ def test_cache_usage_for_recursive_multi_boxes(msp_solids):
     for _ in range(10):
         list(bbox.multi_recursive(msp_solids, cache))
 
-    # This does not work because recursive processing has to yield the
+    # This does not work well, because recursive processing has to yield the
     # bounding boxes for all sub entities, the INSERT itself (which has a
     # handle) is not cached.
     assert cache.misses == 20  # virtual entities do not have handles
