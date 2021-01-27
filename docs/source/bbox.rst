@@ -6,7 +6,7 @@ Bounding Box
 .. module:: ezdxf.bbox
 
 The :mod:`ezdxf.bbox` module provide tools to calculate bounding boxes for
-many DXF entities, but not all. The bounding box calcualtion is based on the
+many DXF entities, but not all. The bounding box calculation is based on the
 :mod:`ezdxf.disassemble` module and therefore has the same limitation.
 
 The base type for bounding boxes is the :class:`~ezdxf.math.BoundingBox` class
@@ -43,4 +43,10 @@ Example usage with caching:
 
 .. class:: Cache
 
-    Caching object
+    Caching object, provides following measurements as attributes:
+
+    .. py:attribute:: hits
+
+    .. py:attribute:: misses
+
+    .. automethod:: invalidate

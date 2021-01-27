@@ -14,6 +14,11 @@ class Cache:
         self.hits: int = 0
         self.misses: int = 0
 
+    def __str__(self):
+        return f"Cache(n={len(self._boxes)}, " \
+               f"hits={self.hits}, " \
+               f"misses={self.misses})"
+
     def get(self, entity: 'DXFEntity') -> Optional[BoundingBox]:
         assert entity is not None
         handle = entity.dxf.handle
@@ -40,12 +45,29 @@ class Cache:
             return
         self._boxes[handle] = box
 
+    def invalidate(self, entities: Iterable['DXFEntity']) -> None:
+        """ Invalidate cache entries of given DXF `entities`.
 
-def multi_recursive(
-        entities: Iterable['DXFEntity'],
-        cache: Cache = None) -> Iterable[BoundingBox]:
-    """ Yields all bounding boxes for the given `entities` and all bounding
-    boxes for their sub entities.
+        If entities are changed by the user, it is possible to invalidate
+        individual entities. Use with care - discarding the whole cache is
+        the safer workflow.
+
+        Ignores entities which are not stored in cache.
+
+        """
+        for entity in entities:
+            try:
+                del self._boxes[entity.dxf.handle]
+            except KeyError:
+                pass
+
+
+def multi_recursive(entities: Iterable['DXFEntity'],
+                    cache: Cache = None) -> Iterable[BoundingBox]:
+    """ Yields all bounding boxes for the given `entities` **or** all bounding
+    boxes for their sub entities. If an entity (INSERT) has sub entities, only
+    the bounding boxes of these sub entities will be yielded, **not** the
+    bounding box of entity (INSERT) itself. Bad caching behavior!
 
     """
     flat_entities = disassemble.recursive_decompose(entities)
@@ -71,11 +93,11 @@ def multi_recursive(
 def extends(entities: Iterable['DXFEntity'],
             cache: Cache = None) -> BoundingBox:
     """ Returns a single bounding box for the given `entities` and their sub
-    entities.
+    entities. Good caching behavior!
 
     """
     _extends = BoundingBox()
-    for box in multi_recursive(entities, cache):
+    for box in multi_flat(entities, cache):
         _extends.extend(box)
     return _extends
 
@@ -84,10 +106,25 @@ def multi_flat(entities: Iterable['DXFEntity'],
                cache: Cache = None) -> Iterable[BoundingBox]:
     """ Yields all bounding boxes for the given `entities` at the top level,
     the sub entity extends are included, but they do not yield their own
-    bounding boxes.
+    bounding boxes. Good caching behavior!
 
     """
+
+    def extends_(entities_: Iterable['DXFEntity']) -> BoundingBox:
+        _extends = BoundingBox()
+        for _box in multi_recursive(entities_, cache):
+            _extends.extend(_box)
+        return _extends
+
     for entity in entities:
-        box = extends([entity], cache)
+        box = None
+        if cache:
+            box = cache.get(entity)
+
+        if box is None:
+            box = extends_([entity])
+            if cache:
+                cache.store(entity, box)
+
         if box.has_data:
             yield box
