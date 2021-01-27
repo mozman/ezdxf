@@ -191,3 +191,19 @@ def test_circle_flattening(r, s, e, sagitta, count):
     })
     assert len(list(arc.flattening(sagitta))) == count
 
+
+def test_360_deg_arc_transformation():
+    from ezdxf.render import make_path
+    arc = Arc.new(dxfattribs={
+        'radius': 1, 'start_angle': 0, 'end_angle': 360,
+    })
+    count1 = len(list(make_path(arc).flattening(0.01)))
+    arc.transform(Matrix44.translate(1, 0, 0))
+    count2 = len(list(make_path(arc).flattening(0.01)))
+    assert count1 == count2
+
+    arc.transform(Matrix44.z_rotate(math.pi/2))
+    p = make_path(arc)
+    count3 = len(list(p.flattening(0.01)))
+    assert count1 == count3
+

@@ -1,7 +1,10 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
-from ezdxf.math import Vec3, Matrix44, linspace, ConstructionArc, Vertex
+import math
+from ezdxf.math import (
+    Vec3, Matrix44, linspace, ConstructionArc, Vertex, arc_angle_span_deg
+)
 from ezdxf.math.transformtools import OCSTransform
 
 from ezdxf.lldxf.attributes import (
@@ -102,8 +105,11 @@ class Arc(Circle):
         """
         ocs = OCSTransform(self.dxf.extrusion, m)
         super().transform(m)
-        self.dxf.start_angle = ocs.transform_deg_angle(self.dxf.start_angle)
-        self.dxf.end_angle = ocs.transform_deg_angle(self.dxf.end_angle)
+        s = self.dxf.start_angle
+        span = arc_angle_span_deg(s, self.dxf.end_angle)
+        s = ocs.transform_deg_angle(s)
+        self.dxf.start_angle = s
+        self.dxf.end_angle = s + span  # preserve angle span
         return self
 
     def construction_tool(self) -> ConstructionArc:
