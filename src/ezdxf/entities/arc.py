@@ -100,24 +100,19 @@ class Arc(Circle):
 
         Raises ``NonUniformScalingError()`` for non uniform scaling.
 
-        .. versionadded:: 0.13
-
         """
         ocs = OCSTransform(self.dxf.extrusion, m)
         super().transform(m)
         s = self.dxf.start_angle
-        span = arc_angle_span_deg(s, self.dxf.end_angle)
-        s = ocs.transform_deg_angle(s)
-        self.dxf.start_angle = s
-        self.dxf.end_angle = s + span  # preserve angle span
+        e = self.dxf.end_angle
+        if not math.isclose(arc_angle_span_deg(s, e), 360.0):
+            self.dxf.start_angle = ocs.transform_deg_angle(s)
+            self.dxf.end_angle = ocs.transform_deg_angle(e)
         return self
 
     def construction_tool(self) -> ConstructionArc:
-        """
-        Returns 2D construction tool :class:`ezdxf.math.ConstructionArc`,
+        """ Returns 2D construction tool :class:`ezdxf.math.ConstructionArc`,
         ignoring the extrusion vector.
-
-        .. versionadded:: 0.14
 
         """
         dxf = self.dxf
@@ -129,11 +124,8 @@ class Arc(Circle):
         )
 
     def apply_construction_tool(self, arc: ConstructionArc) -> 'Arc':
-        """
-        Set ARC data from construction tool :class:`ezdxf.math.ConstructionArc`,
+        """ Set ARC data from construction tool :class:`ezdxf.math.ConstructionArc`,
         will not change the extrusion vector.
-
-        .. versionadded:: 0.14
 
         """
         dxf = self.dxf
