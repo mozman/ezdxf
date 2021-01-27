@@ -125,8 +125,7 @@ class MatplotlibFont(AbstractFont):
             return 0
         path = self._text_renderer.get_text_path(
             text, self._font_properties)
-        max_x = max(x for x, y in path.vertices)
-        return max_x * self._width_factor
+        return max(x for x, y in path.vertices) * self._width_factor
 
 
 class MonospaceFont(AbstractFont):

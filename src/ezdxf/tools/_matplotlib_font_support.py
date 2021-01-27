@@ -1,6 +1,7 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 from functools import lru_cache
+from ezdxf import options
 from ezdxf.addons.drawing.matplotlib import TextRenderer
 from matplotlib.font_manager import FontProperties
 from ezdxf.addons.drawing import fonts
@@ -12,8 +13,9 @@ text_renderer = TextRenderer(FontProperties(), use_cache=False)
 # Load default font definitions, included in ezdxf:
 fonts.load()
 
-# Add font definitions available at the running system, requires matplotlib:
-fonts.add_system_fonts()
+# Add font definitions available at the running system:
+if options.load_system_fonts:
+    fonts.add_system_fonts()
 
 
 def get_font(font_name: str) -> fonts.Font:

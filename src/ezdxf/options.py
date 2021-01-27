@@ -14,6 +14,9 @@ class Options:
         # ezdxf.addons.drawing add-on
         self.use_matplotlib_font_support = False
 
+        # Load also system fonts if matplotlib font support is activated:
+        self.load_system_fonts = False
+
         # debugging
         self.log_unprocessed_tags = True
 
