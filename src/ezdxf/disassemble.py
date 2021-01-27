@@ -11,7 +11,7 @@ from ezdxf.render import (
 )
 from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.tools.text import (
-    MonospaceFont, TextLine, unified_alignment, plain_text, text_wrap,
+    TextLine, unified_alignment, plain_text, text_wrap, get_font
 )
 
 if TYPE_CHECKING:
@@ -200,6 +200,16 @@ DESCENDER_FACTOR = 0.333  # from TXT SHX font - just guessing
 X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
 
 
+def get_font_name(entity: 'DXFEntity'):
+    font_name = "txt"
+    if entity.doc:
+        style_name = entity.dxf.style
+        style = entity.doc.styles.get(style_name)
+        if style:
+            font_name = style.dxf.font
+    return font_name
+
+
 class TextLinePrimitive(GenericPrimitive):
     def _convert_entity(self):
         """ Calculates the rough border path for a single line text.
@@ -240,7 +250,7 @@ class TextLinePrimitive(GenericPrimitive):
 
         p1: Vec3 = text.dxf.insert
         p2: Vec3 = text.dxf.align_point
-        font = MonospaceFont(text.dxf.height, text.dxf.width)
+        font = get_font(get_font_name(text), text.dxf.height, text.dxf.width)
         text_line = TextLine(content, font)
         alignment: str = text.get_align()
         if text.dxf.halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
@@ -348,7 +358,7 @@ class MTextPrimitive(GenericPrimitive):
 
         mtext: "MText" = cast("MText", self.entity)
         box_width = mtext.dxf.get('width', 0)
-        font = MonospaceFont(mtext.dxf.char_height)
+        font = get_font(get_font_name(mtext), mtext.dxf.char_height, 1.0)
 
         content: List[str] = get_content()
         if len(content) == 0:

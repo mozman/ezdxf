@@ -6,6 +6,7 @@ from typing import (
 )
 import abc
 import re
+from ezdxf import options
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SPECIAL_CHARS_ENCODING
 from ezdxf.math import Vec3
@@ -123,6 +124,13 @@ class MonospaceFont(AbstractFont):
 
     def text_width(self, text: str) -> float:
         return len(text) * self.measurements.cap_height * self._width_factor
+
+
+def get_font(name: str, cap_height: float, width_factor: float) -> AbstractFont:
+    if options.use_matplotlib_font_support:
+        return MonospaceFont(cap_height, width_factor)
+    else:
+        return MonospaceFont(cap_height, width_factor)
 
 
 class TextLine:

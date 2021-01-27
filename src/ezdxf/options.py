@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 
 
@@ -7,6 +7,12 @@ class Options:
         self.filter_invalid_xdata_group_codes = False
         self.default_text_style = 'OpenSans'
         self.default_dimension_text_style = 'OpenSansCondensed-Light'
+
+        # Active the matplotlib font support to calculate font metrics:
+        # This requires a working matplotlib installation else an ImportError
+        # exception will be raised. This feature also depends on the
+        # ezdxf.addons.drawing add-on
+        self.use_matplotlib_font_support = False
 
         # debugging
         self.log_unprocessed_tags = True
