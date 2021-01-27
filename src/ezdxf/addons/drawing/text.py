@@ -35,6 +35,7 @@ class VAlignment(enum.Enum):
     LOWER_CASE_CENTER = 1  # the midpoint between the baseline and the x-height
     BASELINE = 2  # the line which text rests on, characters with descenders (like 'p') are partially below this line
     BOTTOM = 3  # the lowest point on a character with a descender (like 'p')
+    UPPER_CASE_CENTER = 4  # the midpoint between the baseline and the cap-height
 
 
 Alignment = Tuple[HAlignment, VAlignment]
@@ -54,9 +55,9 @@ DXF_TEXT_ALIGNMENT_TO_ALIGNMENT: Dict[str, Alignment] = {
     'BOTTOM_LEFT': (HAlignment.LEFT, VAlignment.BOTTOM),
     'BOTTOM_CENTER': (HAlignment.CENTER, VAlignment.BOTTOM),
     'BOTTOM_RIGHT': (HAlignment.RIGHT, VAlignment.BOTTOM),
-    'MIDDLE_LEFT': (HAlignment.LEFT, VAlignment.LOWER_CASE_CENTER),
-    'MIDDLE_CENTER': (HAlignment.CENTER, VAlignment.LOWER_CASE_CENTER),
-    'MIDDLE_RIGHT': (HAlignment.RIGHT, VAlignment.LOWER_CASE_CENTER),
+    'MIDDLE_LEFT': (HAlignment.LEFT, VAlignment.UPPER_CASE_CENTER),
+    'MIDDLE_CENTER': (HAlignment.CENTER, VAlignment.UPPER_CASE_CENTER),
+    'MIDDLE_RIGHT': (HAlignment.RIGHT, VAlignment.UPPER_CASE_CENTER),
     'TOP_LEFT': (HAlignment.LEFT, VAlignment.TOP),
     'TOP_CENTER': (HAlignment.CENTER, VAlignment.TOP),
     'TOP_RIGHT': (HAlignment.RIGHT, VAlignment.TOP),
@@ -236,6 +237,9 @@ def _apply_alignment(alignment: Alignment,
     elif valign == VAlignment.LOWER_CASE_CENTER:
         first_line_lower_case_top = line_ys[0] + font_measurements.x_height
         anchor_y = (first_line_lower_case_top + last_baseline) / 2
+    elif valign == VAlignment.UPPER_CASE_CENTER:
+        first_line_upper_case_top = line_ys[0] + font_measurements.cap_height
+        anchor_y = (first_line_upper_case_top + last_baseline) / 2
     elif valign == VAlignment.BASELINE:
         anchor_y = last_baseline
     elif valign == VAlignment.BOTTOM:
