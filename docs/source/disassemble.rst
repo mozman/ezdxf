@@ -31,25 +31,28 @@ Text boundary calculations are based on monospaced (fixed-pitch, fixed-width,
 non-proportional) font metrics, which do not provide a good accuracy for text
 height calculation and much less accuracy for text width calculation.
 
-It is possible to improve this results by using support from the Python
-package `matplotlib`, but this has to be activated explicit::
+It is possible to improve this results by using font support from the
+`matplotlib` package, but this an **optional** feature and has to be activated
+explicit::
 
     from  ezdxf import options
 
     options.use_matplotlib_font_support = True
 
-This requires a working matplotlib installation else an ``ImportError``
-exception will be raised. This feature also depends on the
-:mod:`ezdxf.addons.drawing` add-on, which is installed by default.
+This is a global option (current running Interpreter) and it is active until
+deactivated::
+
+    options.use_matplotlib_font_support = False
+
+.. warning::
+
+    This feature requires a working matplotlib installation else an ``ImportError``
+    exception will be raised sooner or later. This feature also depends on the
+    :mod:`~ezdxf.addons.drawing` add-on, which is installed by default.
 
 Install matplotlib from command line::
 
     pip3 install matplotlib
-
-It is possible to deactivate the matplotlib support at runtime::
-
-     options.use_matplotlib_font_support = False
-
 
 .. autofunction:: recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]
 
