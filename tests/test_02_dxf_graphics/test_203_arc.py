@@ -3,7 +3,7 @@
 import pytest
 import math
 
-from ezdxf.math import Vec3, Matrix44
+from ezdxf.math import Vec3, Matrix44, arc_angle_span_deg
 from ezdxf.entities.arc import Arc
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
@@ -210,21 +210,14 @@ def test_360_deg_arc_transformation():
     assert count1 == count3
 
 
-def test_arc_x_reflexion():
+@pytest.mark.parametrize('angle', [30, 180, 360])
+@pytest.mark.parametrize(
+    'reflexion', [(-1, 1, 1), (1, -1, 1), (1, 1, -1)], ids=['x', 'y', 'z'])
+def test_30_deg_arc_reflexion(reflexion, angle):
     arc = Arc.new(dxfattribs={
-        'radius': 1, 'start_angle': 0, 'end_angle': 30,
+        'radius': 1, 'start_angle': 0, 'end_angle': angle,
     })
-    arc.transform(Matrix44.scale(-1, 1, 1))
-    assert arc.dxf.extrusion.isclose((0, 0, -1))
-    assert arc.dxf.start_angle == pytest.approx(0)
-    assert arc.dxf.end_angle == pytest.approx(30)
-
-
-def test_arc_y_reflexion():
-    arc = Arc.new(dxfattribs={
-        'radius': 1, 'start_angle': 0, 'end_angle': 30,
-    })
-    arc.transform(Matrix44.scale(1, -1, 1))
-    assert arc.dxf.extrusion.isclose((0, 0, -1))
-    assert arc.dxf.start_angle == pytest.approx(180)
-    assert arc.dxf.end_angle == pytest.approx(-150)
+    x, y, z = reflexion
+    arc.transform(Matrix44.scale(x, y, z))
+    assert arc_angle_span_deg(arc.dxf.start_angle,
+                              arc.dxf.end_angle) == pytest.approx(angle)
