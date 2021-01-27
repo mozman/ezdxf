@@ -31,40 +31,6 @@ table_key = layer_key
 MODEL_SPACE_BG_COLOR = '#212830'
 PAPER_SPACE_BG_COLOR = '#ffffff'
 VIEWPORT_COLOR = '#aaaaaa'  # arbitrary choice
-SHX_FONTS = {
-    # See examples in: CADKitSamples/Shapefont.dxf
-    # Shape file structure is not documented, therefore replace this fonts by
-    # true type fonts.
-    # `None` is for: use the default font.
-    'AMGDT': "amgdt___.ttf",  # Tolerance symbols
-    'AMGDT.SHX': "amgdt___.ttf",
-    'COMPLEX': "complex_.ttf",
-    'COMPLEX.SHX': "complex_.ttf",
-    'ISOCP': "isocp.ttf",
-    'ISOCP.SHX': "isocp.ttf",
-    'ITALIC': "italicc_.ttf",
-    'ITALIC.SHX': "italicc_.ttf",
-    'GOTHICG': "gothicg_.ttf",
-    'GOTHICG.SHX': "gothicg_.ttf",
-    'GREEKC': "greekc.ttf",
-    'GREEKC.SHX': "greekc.ttf",
-    'ROMANS': "romans__.ttf",
-    'ROMANS.SHX': "romans__.ttf",
-    'SCRIPTS': "scripts_.ttf",
-    'SCRIPTS.SHX': "scripts_.ttf",
-    'SCRIPTC': "scriptc_.ttf",
-    'SCRIPTC.SHX': "scriptc_.ttf",
-    'SIMPLEX': "simplex_.ttf",
-    'SIMPLEX.SHX': "simplex_.ttf",
-    'SYMATH': "symath__.ttf",
-    'SYMATH.SHX': "symath__.ttf",
-    'SYMAP': "symap___.ttf",
-    'SYMAP.SHX': "symap___.ttf",
-    'SYMETEO': "symeteo_.ttf",
-    'SYMETEO.SHX': "symeteo_.ttf",
-    'TXT': "txt_____.ttf",  # Default AutoCAD font
-    'TXT.SHX': "txt_____.ttf",
-}
 
 
 def is_dark_color(color: Color, dark: float = 0.2) -> bool:
@@ -361,8 +327,8 @@ class RenderContext:
 
         # Map SHX fonts to True Type Fonts:
         font_upper = ttf.upper()
-        if font_upper in SHX_FONTS:
-            ttf = SHX_FONTS[font_upper]
+        if font_upper in fonts.SHX_FONTS:
+            ttf = fonts.SHX_FONTS[font_upper]
         # Only ttf-fonts are supported
         elif not font_upper.endswith('.TTF'):
             ttf = None  # use default font

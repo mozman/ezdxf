@@ -53,7 +53,9 @@ until deactivated::
 
     This feature requires a working matplotlib installation else an ``ImportError``
     exception will be raised sooner or later. This feature also depends on the
-    :mod:`~ezdxf.addons.drawing` add-on, which is installed by default.
+    :mod:`~ezdxf.addons.drawing` add-on, which is installed by default. Using
+    the matplotlib font support adds **runtime overhead** at the first
+    usage of any of the text related primitives.
 
 Install matplotlib from command line::
 

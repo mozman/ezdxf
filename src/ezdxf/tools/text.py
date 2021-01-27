@@ -107,6 +107,28 @@ class AbstractFont:
         pass
 
 
+class MatplotlibFont(AbstractFont):
+    def __init__(self, font_name: str, cap_height: float, width_factor: float):
+        from . import _matplotlib_font_support as mpl
+        self._text_renderer = mpl.text_renderer
+        font = mpl.get_font(font_name)
+        self._font_properties = mpl.get_font_properties(font)
+        # unscaled font measurement:
+        font_measurements = self._text_renderer.get_font_measurements(
+            self._font_properties)
+        super().__init__(font_measurements.scale_from_baseline(cap_height))
+        scale = cap_height / font_measurements.cap_height
+        self._width_factor = width_factor * scale
+
+    def text_width(self, text: str) -> float:
+        if not text.strip():
+            return 0
+        path = self._text_renderer.get_text_path(
+            text, self._font_properties)
+        max_x = max(x for x, y in path.vertices)
+        return max_x * self._width_factor
+
+
 class MonospaceFont(AbstractFont):
     def __init__(self,
                  cap_height: float,
@@ -126,9 +148,10 @@ class MonospaceFont(AbstractFont):
         return len(text) * self.measurements.cap_height * self._width_factor
 
 
-def get_font(name: str, cap_height: float, width_factor: float) -> AbstractFont:
+def get_font(font_name: str, cap_height: float,
+             width_factor: float) -> AbstractFont:
     if options.use_matplotlib_font_support:
-        return MonospaceFont(cap_height, width_factor)
+        return MatplotlibFont(font_name, cap_height, width_factor)
     else:
         return MonospaceFont(cap_height, width_factor)
 

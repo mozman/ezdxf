@@ -2,7 +2,7 @@
 # License: MIT License
 from pathlib import Path
 import ezdxf
-from ezdxf import disassemble
+from ezdxf import disassemble, options
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 
@@ -71,13 +71,14 @@ def create_doc(filename):
     doc.layers.new('INSERT_POINTS')
     draw_insert_points(msp)
     doc.layers.new('BOUNDARIES')
-    draw_text_boundaries(msp)
+    draw_text_boundaries(msp, True)
 
     doc.set_modelspace_vport(height=30, center=(15, 0))
     doc.saveas(filename)
 
 
-def draw_text_boundaries(msp):
+def draw_text_boundaries(msp, matplotlib=False):
+    options.use_matplotlib_font_support = matplotlib
     for text in msp.query('TEXT'):
         bbox = disassemble.make_primitive(text)
         msp.add_polyline3d(bbox.vertices(), dxfattribs={
