@@ -110,9 +110,9 @@ class OCSTransform:
     def transform_angle(self, angle: float) -> float:
         """ Returns angle (in radians) from old OCS transformed into new OCS.
         """
-        return self.transform_direction(Vec3.from_angle(angle)).angle % math.tau
+        return self.transform_direction(Vec3.from_angle(angle)).angle
 
     def transform_deg_angle(self, angle: float) -> float:
         """ Returns angle (in degrees) from old OCS transformed into new OCS.
         """
-        return math.degrees(self.transform_angle(math.radians(angle))) % 360.0
+        return math.degrees(self.transform_angle(math.radians(angle)))
