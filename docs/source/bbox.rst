@@ -9,14 +9,20 @@ The :mod:`ezdxf.bbox` module provide tools to calculate bounding boxes for
 many DXF entities, but not all. The bounding box calculation is based on the
 :mod:`ezdxf.disassemble` module and therefore has the same limitation.
 
+.. warning::
+
+    If accurate boundary boxes for text entities are important for you,
+    read this first: :ref:`Text Boundary Calculation`.
+    TL;DR: Boundary boxes for text entities are **not accurate!**
+
 The base type for bounding boxes is the :class:`~ezdxf.math.BoundingBox` class
 from the module :mod:`ezdxf.math`.
 
 The `entities` iterable as input can be the whole modelspace, an entity
 query or any iterable container of DXF entities.
 
-The optional caching object :class:`Cache` has to be instantiated by the user,
-this is only useful if the same entities will be processed multiple times.
+The **optional** caching object :class:`Cache` has to be instantiated by the
+user, this is only useful if the same entities will be processed multiple times.
 This cache works only for entities which have a handle, virtual entities
 ( e.g block reference content) are created on the fly and do not have a handle
 nor a fixed id, therefore caching is not possible.

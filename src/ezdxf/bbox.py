@@ -46,7 +46,7 @@ class Cache:
         self._boxes[handle] = box
 
     def invalidate(self, entities: Iterable['DXFEntity']) -> None:
-        """ Invalidate cache entries of given DXF `entities`.
+        """ Invalidate cache entries for the given DXF `entities`.
 
         If entities are changed by the user, it is possible to invalidate
         individual entities. Use with care - discarding the whole cache is

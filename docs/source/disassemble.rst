@@ -27,20 +27,25 @@ function to convert a :class:`~ezdxf.entities.Hatch` entity into multiple
     Unsupported entities: all ACIS based entities, XREF, UNDERLAY, ACAD_TABLE,
     RAY, XLINE. Unsupported entities will be ignored.
 
+.. _Text Boundary Calculation:
+
+Text Boundary Calculation
+-------------------------
+
 Text boundary calculations are based on monospaced (fixed-pitch, fixed-width,
 non-proportional) font metrics, which do not provide a good accuracy for text
 height calculation and much less accuracy for text width calculation.
 
 It is possible to improve this results by using font support from the
-`matplotlib` package, but this an **optional** feature and has to be activated
-explicit::
+`matplotlib` package, but this is an **optional** feature and has to be
+activated explicit::
 
     from  ezdxf import options
 
     options.use_matplotlib_font_support = True
 
-This is a global option (current running Interpreter) and it is active until
-deactivated::
+This is a global option for the current running Interpreter and it is active
+until deactivated::
 
     options.use_matplotlib_font_support = False
 
@@ -53,6 +58,12 @@ deactivated::
 Install matplotlib from command line::
 
     pip3 install matplotlib
+
+The `matplotlib` font support will improve the results for TEXT, ATTRIB and
+ATTDEF. The MTEXT entity has many advanced features which would require a full
+"Rich Text Format" rendering and that is far beyond the goals and capabilities
+of this library, therefore the boundary box for MTEXT will **never** be as
+accurate as in a dedicated CAD application.
 
 .. autofunction:: recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]
 
