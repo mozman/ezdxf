@@ -8,7 +8,6 @@ from ezdxf.entities.arc import Arc
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
-
 TEST_CLASS = Arc
 TEST_TYPE = 'ARC'
 
@@ -131,7 +130,8 @@ def test_load_from_text(entity):
     assert entity.dxf.end_angle == 360
 
 
-@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize("txt,ver",
+                         [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     arc = TEST_CLASS.from_text(txt)
@@ -161,7 +161,9 @@ def test_angles():
 
 
 def test_arc_default_ocs():
-    arc = Arc.new(dxfattribs={'center': (2, 3, 4), 'thickness': 2, 'start_angle': 30, 'end_angle': 60})
+    arc = Arc.new(
+        dxfattribs={'center': (2, 3, 4), 'thickness': 2, 'start_angle': 30,
+                    'end_angle': 60})
     # 1. rotation - 2. scaling - 3. translation
     m = Matrix44.chain(Matrix44.scale(2, 2, 3), Matrix44.translate(1, 1, 1))
     # default extrusion is (0, 0, 1), therefore scale(2, 2, ..) is a uniform scaling in the xy-play of the OCS
@@ -202,8 +204,27 @@ def test_360_deg_arc_transformation():
     count2 = len(list(make_path(arc).flattening(0.01)))
     assert count1 == count2
 
-    arc.transform(Matrix44.z_rotate(math.pi/2))
+    arc.transform(Matrix44.z_rotate(math.pi / 2))
     p = make_path(arc)
     count3 = len(list(p.flattening(0.01)))
     assert count1 == count3
 
+
+def test_arc_x_reflexion():
+    arc = Arc.new(dxfattribs={
+        'radius': 1, 'start_angle': 0, 'end_angle': 30,
+    })
+    arc.transform(Matrix44.scale(-1, 1, 1))
+    assert arc.dxf.extrusion.isclose((0, 0, -1))
+    assert arc.dxf.start_angle == pytest.approx(0)
+    assert arc.dxf.end_angle == pytest.approx(30)
+
+
+def test_arc_y_reflexion():
+    arc = Arc.new(dxfattribs={
+        'radius': 1, 'start_angle': 0, 'end_angle': 30,
+    })
+    arc.transform(Matrix44.scale(1, -1, 1))
+    assert arc.dxf.extrusion.isclose((0, 0, -1))
+    assert arc.dxf.start_angle == pytest.approx(180)
+    assert arc.dxf.end_angle == pytest.approx(-150)
