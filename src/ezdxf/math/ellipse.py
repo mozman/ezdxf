@@ -220,7 +220,7 @@ class ConstructionEllipse:
                 start_param -= pi2
                 end_param -= pi2
 
-        # TODO: normalize start- and end params
+        # TODO: remove normalize start- and end params?
         #  2021-01-28 this is possibly the source of errors!
         start_param = start_param % math.tau
         end_param = end_param % math.tau

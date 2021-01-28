@@ -10,7 +10,7 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
-    group_code_mapping
+    group_code_mapping,
 )
 from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.lldxf.const import (
@@ -22,6 +22,7 @@ from ezdxf.tools import pattern
 from ezdxf.math import (
     Vec3, Vec2, Matrix44, angle_to_param, param_to_angle, BSpline,
     open_uniform_knot_vector, ConstructionEllipse, NULLVEC, Z_AXIS,
+    arc_angle_span_deg,
 )
 from ezdxf.math.bspline import global_bspline_interpolation
 from ezdxf.math.bulge import bulge_to_arc
@@ -1439,8 +1440,15 @@ class ArcEdge:
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         self.center = ocs.transform_2d_vertex(self.center, elevation)
-        self.start_angle = ocs.transform_deg_angle(self.start_angle)
-        self.end_angle = ocs.transform_deg_angle(self.end_angle)
+        if not math.isclose(arc_angle_span_deg(
+                self.start_angle, self.end_angle), 360.0):
+            self.start_angle = ocs.transform_deg_angle(self.start_angle)
+            self.end_angle = ocs.transform_deg_angle(self.end_angle)
+        else:
+            # Transform only start point to preserve the connection point to
+            # adjacent edges and add +/-360 degree for the end angle:
+            self.start_angle = ocs.transform_deg_angle(self.start_angle)
+            self.end_angle = self.start_angle + (360 if self.ccw else -360)
 
 
 class EllipseEdge:

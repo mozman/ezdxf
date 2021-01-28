@@ -7,7 +7,7 @@ from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.lldxf.const import DXF2007, DXF2010
 from ezdxf.render.forms import box
-from ezdxf.math import Vec3, Matrix44
+from ezdxf.math import Vec3, Matrix44, arc_angle_span_deg
 
 
 @pytest.fixture
@@ -132,7 +132,8 @@ def test_polyline_path_transform_interface(hatch, m44):
 
 
 def test_arc_to_ellipse_edges(hatch):
-    hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True)
+    hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)],
+                                  is_closed=True)
 
     hatch.paths.polyline_to_edge_path()
     path = hatch.paths[0]
@@ -162,7 +163,8 @@ def test_arc_to_ellipse_edges(hatch):
 
 
 def test_ellipse_edges_to_spline_edges(hatch):
-    hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True)
+    hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)],
+                                  is_closed=True)
     hatch.paths.all_to_spline_edges(num=32)
     path = hatch.paths[0]
 
@@ -245,7 +247,8 @@ def test_add_edge_path(edge_hatch):
     assert 'EdgePath' == path.PATH_TYPE, "created wrong path type"
     path.add_line((0, 0), (10, 0))
     path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, ccw=True)
-    path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180)
+    path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0,
+                     end_angle=180)
     path.add_line((10, 0), (0, 0))
     # exit with statement and create DXF tags
 
@@ -282,8 +285,10 @@ def test_edge_path_transform_interface(hatch, m44):
     path = hatch.paths.add_edge_path()
     path.add_line((0, 0), (10, 0))
     path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, ccw=1)
-    path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180)
-    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1)
+    path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0,
+                     end_angle=180)
+    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3,
+                             periodic=1)
     # the following values do not represent a mathematically valid spline
     spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
     spline.knot_values = [1, 2, 3, 4, 5, 6]
@@ -313,6 +318,29 @@ def test_edge_path_transform_interface(hatch, m44):
     assert m44.transform_direction((2, 20, 0)).isclose(spline.end_tangent)
 
 
+@pytest.fixture(params=['arc', 'ellipse'])
+def closed_edge(request):
+    _hatch = Hatch.new()
+    _path = _hatch.paths.add_edge_path()
+    if request.param == 'arc':
+        _path.add_arc((0, 0), radius=1, start_angle=0, end_angle=360, ccw=1)
+    elif request.param == 'ellipse':
+        _path.add_ellipse((0, 0), major_axis=(5, 0), ratio=0.2, start_angle=0,
+                          end_angle=360)
+    return _hatch
+
+
+def test_closes_edge_transformation(closed_edge):
+    edge = closed_edge.paths[0].edges[0]
+    assert arc_angle_span_deg(edge.start_angle,
+                              edge.end_angle) == pytest.approx(360)
+
+    closed_edge.transform(Matrix44.z_rotate(math.radians(30)))
+    edge2 = closed_edge.paths[0].edges[0]
+    assert arc_angle_span_deg(edge2.start_angle,
+                              edge2.end_angle) == pytest.approx(360)
+
+
 def test_spline_edge_hatch_get_params(spline_edge_hatch):
     path = spline_edge_hatch.paths[0]
     spline = None
@@ -329,7 +357,8 @@ def test_spline_edge_hatch_get_params(spline_edge_hatch):
     assert 10 == len(spline.knot_values)
     assert 11.86874452602773 == spline.knot_values[-1]
     assert 6 == len(spline.control_points)
-    assert (0, 10) == spline.control_points[0], "Unexpected start control point."
+    assert (0, 10) == spline.control_points[
+        0], "Unexpected start control point."
     assert (0, 0) == spline.control_points[-1], "Unexpected end control point."
     assert 0 == len(spline.weights)
     assert 4 == len(spline.fit_points)
@@ -340,7 +369,8 @@ def test_spline_edge_hatch_get_params(spline_edge_hatch):
 def test_create_spline_edge(spline_edge_hatch):
     # create the spline
     path = spline_edge_hatch.paths[0]
-    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1)
+    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3,
+                             periodic=1)
     # the following values do not represent a mathematically valid spline
     spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
     spline.knot_values = [1, 2, 3, 4, 5, 6]
@@ -367,7 +397,8 @@ def test_create_spline_edge(spline_edge_hatch):
 
 def test_no_fit_points_export(spline_edge_hatch):
     path = spline_edge_hatch.paths[0]
-    spline = path.add_spline(control_points=[(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1)
+    spline = path.add_spline(control_points=[(1, 1), (2, 2), (3, 3), (4, 4)],
+                             degree=3, periodic=1)
     spline.knot_values = [1, 2, 3, 4, 5, 6]
     assert [(1, 1), (2, 2), (3, 3), (4, 4)] == spline.control_points
     assert len(spline.fit_points) == 0
@@ -471,7 +502,8 @@ def test_pattern_rotation(hatch, pattern):
     assert line1.base_point == (0, 0)
     assert line1.offset.isclose(Vec3(-0.7071067811865475, 0.7071067811865476))
     assert line2.angle == 90
-    assert line2.base_point.isclose(Vec3(-0.35355339059327373, 0.3535533905932738))
+    assert line2.base_point.isclose(
+        Vec3(-0.35355339059327373, 0.3535533905932738))
     assert line2.offset.isclose(Vec3(-0.7071067811865475, 0.7071067811865476))
 
 
