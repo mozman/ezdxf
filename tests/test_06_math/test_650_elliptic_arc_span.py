@@ -66,5 +66,36 @@ class TestEllipseParamSpan(TestArcParamSpan):
         ))
 
 
+PI2 = math.pi / 2.0
+
+
+class TestParamSpan:
+    # Preserved old param span test.
+    # This tests work without radians-degrees-radians conversion
+    @pytest.mark.parametrize('start, end', [
+        (0, 0), (math.pi, math.pi), (math.tau, math.tau),
+        (0, 0), (-math.pi, -math.pi), (-math.tau, -math.tau),
+    ])
+    def test_no_ellipse(self, start, end):
+        assert ellipse_param_span(start, end) == 0.0
+
+    @pytest.mark.parametrize('start, end', [
+        (0, math.tau), (math.tau, 0), (math.pi, -math.pi),
+        (0, -math.tau), (-math.tau, 0), (-math.pi, math.pi),
+    ])
+    def test_full_ellipse(self, start, end):
+        assert ellipse_param_span(start, end) == pytest.approx(math.tau)
+
+    @pytest.mark.parametrize('start, end, expected', [
+        (0, PI2, PI2), (PI2, 0, math.pi * 1.5), (PI2, math.pi, PI2),
+        (PI2, -PI2, math.pi), (math.pi, 0, math.pi), (0, math.pi, math.pi),
+        (0, -PI2, math.pi * 1.5), (-PI2, 0, PI2),
+        (-PI2, -math.pi, math.pi * 1.5),
+        (-PI2, PI2, math.pi), (-math.pi, 0, math.pi), (0, -math.pi, math.pi),
+    ])
+    def test_elliptic_arc(self, start, end, expected):
+        assert ellipse_param_span(start, end) == pytest.approx(expected)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

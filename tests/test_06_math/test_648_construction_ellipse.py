@@ -268,34 +268,3 @@ def test_flattening_ellipse():
     assert len(list(e.flattening(0.1))) == 13
     assert len(list(e.flattening(0.01))) == 37
 
-
-PI2 = math.pi / 2.0
-
-
-class TestParamSpan:
-    @pytest.mark.parametrize('start, end', [
-        (0, 0), (math.pi, math.pi), (math.tau, math.tau),
-        (0, 0), (-math.pi, -math.pi), (-math.tau, -math.tau),
-    ])
-    def test_no_ellipse(self, start, end):
-        e = ConstructionEllipse(start_param=start, end_param=end)
-        assert e.param_span == 0.0
-
-    @pytest.mark.parametrize('start, end', [
-        (0, math.tau), (math.tau, 0), (math.pi, -math.pi),
-        (0, -math.tau), (-math.tau, 0), (-math.pi, math.pi),
-    ])
-    def test_full_ellipse(self, start, end):
-        e = ConstructionEllipse(start_param=start, end_param=end)
-        assert e.param_span == pytest.approx(math.tau)
-
-    @pytest.mark.parametrize('start, end, expected', [
-        (0, PI2, PI2), (PI2, 0, math.pi * 1.5), (PI2, math.pi, PI2),
-        (PI2, -PI2, math.pi), (math.pi, 0, math.pi), (0, math.pi, math.pi),
-        (0, -PI2, math.pi * 1.5), (-PI2, 0, PI2),
-        (-PI2, -math.pi, math.pi * 1.5),
-        (-PI2, PI2, math.pi), (-math.pi, 0, math.pi), (0, -math.pi, math.pi),
-    ])
-    def test_elliptic_arc(self, start, end, expected):
-        e = ConstructionEllipse(start_param=start, end_param=end)
-        assert e.param_span == pytest.approx(expected)
