@@ -20,6 +20,7 @@ Version 0.15.2a0 - dev
   the scaled linewidth for polygons with pattern filling
 - BUGFIX: clipping path calculation for IMAGE and WIPEOUT
 - BUGFIX: transformation of a closed (360deg) arc preserves a closed arc
+- BUGFIX: bulge values near 0 but != 0 caused an exception in `Path.add_2d_polyline()`
 
 Version 0.15.1 - 2021-01-15
 ---------------------------
