@@ -71,7 +71,7 @@ PI2 = math.pi / 2.0
 
 class TestParamSpan:
     # Preserved old param span test.
-    # This tests work without radians-degrees-radians conversion
+    # This tests work without degrees-radians-degrees conversion
     @pytest.mark.parametrize('start, end', [
         (0, 0), (math.pi, math.pi), (math.tau, math.tau),
         (0, 0), (-math.pi, -math.pi), (-math.tau, -math.tau),

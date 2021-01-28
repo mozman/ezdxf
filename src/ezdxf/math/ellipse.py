@@ -161,6 +161,7 @@ class ConstructionEllipse:
             x_axis = new_major_axis.normalize()
             y_axis = new_minor_axis.normalize()
             # TODO: use ellipse_param_span()?
+            #  2021-01-28 this is possibly the source of errors!
             old_param_span = (end_param - start_param) % math.tau
 
             def param(vec: 'Vec3') -> float:
@@ -184,6 +185,7 @@ class ConstructionEllipse:
                 # Equal param span check works well, except for a span of exact
                 # pi (180 deg).
                 # TODO: use ellipse_param_span()?
+                #  2021-01-28 this is possibly the source of errors!
                 new_param_span = (end_param - start_param) % math.tau
                 if not math.isclose(old_param_span, new_param_span,
                                     abs_tol=1e-9):
@@ -219,7 +221,7 @@ class ConstructionEllipse:
                 end_param -= pi2
 
         # TODO: normalize start- and end params
-        #  2021-01-28 this is possibly an error!
+        #  2021-01-28 this is possibly the source of errors!
         start_param = start_param % math.tau
         end_param = end_param % math.tau
         if math.isclose(start_param, end_param):
