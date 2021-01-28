@@ -319,7 +319,7 @@ def test_edge_path_transform_interface(hatch, m44):
 
 
 @pytest.fixture(params=['arc', 'ellipse'])
-def closed_edge(request):
+def closed_edge_hatch(request):
     _hatch = Hatch.new()
     _path = _hatch.paths.add_edge_path()
     if request.param == 'arc':
@@ -330,13 +330,13 @@ def closed_edge(request):
     return _hatch
 
 
-def test_closes_edge_transformation(closed_edge):
-    edge = closed_edge.paths[0].edges[0]
+def test_full_circle_ellipse_edge_transformation(closed_edge_hatch):
+    edge = closed_edge_hatch.paths[0].edges[0]
     assert arc_angle_span_deg(edge.start_angle,
                               edge.end_angle) == pytest.approx(360)
 
-    closed_edge.transform(Matrix44.z_rotate(math.radians(30)))
-    edge2 = closed_edge.paths[0].edges[0]
+    closed_edge_hatch.transform(Matrix44.z_rotate(math.radians(30)))
+    edge2 = closed_edge_hatch.paths[0].edges[0]
     assert arc_angle_span_deg(edge2.start_angle,
                               edge2.end_angle) == pytest.approx(360)
 
