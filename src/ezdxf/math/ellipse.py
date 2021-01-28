@@ -132,7 +132,7 @@ class ConstructionEllipse:
     def transform(self, m: Matrix44) -> None:
         """ Transform ellipse in place by transformation matrix `m`. """
         new_center = m.transform(self.center)
-        # 2021.01.28 removed % math.tau
+        # 2021-01-28 removed % math.tau
         old_start_param = start_param = self.start_param
         old_end_param = end_param = self.end_param
         old_minor_axis = minor_axis(self.major_axis, self.extrusion, self.ratio)
@@ -160,6 +160,7 @@ class ConstructionEllipse:
             # open ellipse, adjusting start- and end parameter
             x_axis = new_major_axis.normalize()
             y_axis = new_minor_axis.normalize()
+            # TODO: use ellipse_param_span()?
             old_param_span = (end_param - start_param) % math.tau
 
             def param(vec: 'Vec3') -> float:
@@ -180,7 +181,9 @@ class ConstructionEllipse:
 
             # Test if drawing the correct side of the curve
             if not math.isclose(old_param_span, math.pi, abs_tol=1e-9):
-                # equal param span check works well, except for a span of exact pi (180 deg)
+                # Equal param span check works well, except for a span of exact
+                # pi (180 deg).
+                # TODO: use ellipse_param_span()?
                 new_param_span = (end_param - start_param) % math.tau
                 if not math.isclose(old_param_span, new_param_span,
                                     abs_tol=1e-9):
@@ -215,7 +218,8 @@ class ConstructionEllipse:
                 start_param -= pi2
                 end_param -= pi2
 
-        # normalize start- and end params
+        # TODO: normalize start- and end params
+        #  2021-01-28 this is possibly an error!
         start_param = start_param % math.tau
         end_param = end_param % math.tau
         if math.isclose(start_param, end_param):
