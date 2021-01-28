@@ -458,7 +458,8 @@ class Path(abc.Sequence):
         prev_bulge = 0
         for x, y, bulge in points:
             # Bulge values near 0 but != 0 cause crashes! #329
-            bulge = round(bulge, ndigits=9)
+            if abs(bulge) < 1e-6:
+                bulge = 0
             point = Vec3(x, y)
             if prev_point is None:
                 self._start = point
