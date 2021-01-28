@@ -448,13 +448,17 @@ class Path(abc.Sequence):
                 math.degrees(end_angle),
             )
             curves = list(cubic_bezier_from_ellipse(ellipse))
-            if curves[0].control_points[0].isclose(p2):
+            curve0 = curves[0]
+            cp0 = curve0.control_points[0]
+            if cp0.isclose(p2):
                 curves = _reverse_bezier_curves(curves)
             self.add_curves(curves)
 
         prev_point = None
         prev_bulge = 0
         for x, y, bulge in points:
+            # Bulge values near 0 but != 0 cause crashes! #329
+            bulge = round(bulge, ndigits=9)
             point = Vec3(x, y)
             if prev_point is None:
                 self._start = point
