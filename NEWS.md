@@ -9,11 +9,12 @@ Version 0.15.2a0 - dev
   two bounding boxes.
 - NEW: `ezdxf.math.ellipse_param_span()`, works the same way as 
   `arc_angle_span_deg()` for special cases
-- CHANGE: extraction of many text utility function into `ezdxf.tools.text`
+- CHANGE: extraction of many text utility functions into `ezdxf.tools.text`
 - CHANGE: `add_polyline2d()`, `add_polyline3d()`, `add_lwpolyline()` and 
   `add_mline()` got argument `close` to create a closed polygon and 
   dxfattrib `closed` is deprecated, `close` and `dxfattribs` for these factories 
   are keyword only arguments.
+- CHANGE: improved text alignment rendering in the drawing add-on
 - BUGFIX: `FIT` and `ALIGNED` text rendering in the drawing add-on 
 - BUGFIX: matplotlib backend uses linewidth=0 for solid filled polygons and 
   the scaled linewidth for polygons with pattern filling
