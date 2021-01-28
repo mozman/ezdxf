@@ -31,8 +31,10 @@ class ConstructionEllipse:
 
     """
 
-    def __init__(self, center: 'Vertex' = NULLVEC, major_axis: 'Vertex' = X_AXIS, extrusion: 'Vertex' = Z_AXIS,
-                 ratio: float = 1, start_param: float = 0, end_param: float = math.tau, ccw: bool = True):
+    def __init__(self, center: 'Vertex' = NULLVEC,
+                 major_axis: 'Vertex' = X_AXIS, extrusion: 'Vertex' = Z_AXIS,
+                 ratio: float = 1, start_param: float = 0,
+                 end_param: float = math.tau, ccw: bool = True):
         self.center = Vec3(center)
         self.major_axis = Vec3(major_axis)
         if self.major_axis.isclose(NULLVEC):
@@ -45,11 +47,14 @@ class ConstructionEllipse:
         self.end_param = float(end_param)
         if not ccw:
             self.start_param, self.end_param = self.end_param, self.start_param
-        self.minor_axis = minor_axis(self.major_axis, self.extrusion, self.ratio)
+        self.minor_axis = minor_axis(self.major_axis, self.extrusion,
+                                     self.ratio)
 
     @classmethod
-    def from_arc(cls, center: 'Vertex' = NULLVEC, radius: float = 1, extrusion: 'Vertex' = Z_AXIS,
-                 start_angle: float = 0, end_angle: float = 360, ccw: bool = True) -> 'ConstructionEllipse':
+    def from_arc(cls, center: 'Vertex' = NULLVEC, radius: float = 1,
+                 extrusion: 'Vertex' = Z_AXIS,
+                 start_angle: float = 0, end_angle: float = 360,
+                 ccw: bool = True) -> 'ConstructionEllipse':
         """ Returns :class:`ConstructionEllipse` from arc or circle.
 
         Arc and Circle parameters defined in OCS.
@@ -73,21 +78,25 @@ class ConstructionEllipse:
         # No further adjustment of start- and end angle required.
         start_param = math.radians(start_angle)
         end_param = math.radians(end_angle)
-        return cls(center, major_axis, extrusion, ratio, start_param, end_param, bool(ccw))
+        return cls(center, major_axis, extrusion, ratio, start_param, end_param,
+                   bool(ccw))
 
     def __copy__(self):
-        return self.__class__(self.center, self.major_axis, self.extrusion, self.ratio,
+        return self.__class__(self.center, self.major_axis, self.extrusion,
+                              self.ratio,
                               self.start_param, self.end_param)
 
     @property
     def start_point(self) -> Vec3:
         """ Returns start point of ellipse as Vec3. """
-        return vertex(self.start_param, self.major_axis, self.minor_axis, self.center, self.ratio)
+        return vertex(self.start_param, self.major_axis, self.minor_axis,
+                      self.center, self.ratio)
 
     @property
     def end_point(self) -> Vec3:
         """ Returns end point of ellipse as Vec3. """
-        return vertex(self.end_param, self.major_axis, self.minor_axis, self.center, self.ratio)
+        return vertex(self.end_param, self.major_axis, self.minor_axis,
+                      self.center, self.ratio)
 
     def dxfattribs(self) -> Dict:
         """ Returns required DXF attributes to build an ELLIPSE entity.
@@ -110,24 +119,30 @@ class ConstructionEllipse:
         }
 
     def main_axis_points(self) -> Iterable[Vec3]:
-        """ Yields main axis points of ellipse in the range from start- to end param. """
+        """ Yields main axis points of ellipse in the range from start- to end
+        param.
+        """
         start = self.start_param
         end = self.end_param
         for param in QUARTER_PARAMS:
             if enclosing_angles(param, start, end):
-                yield vertex(param, self.major_axis, self.minor_axis, self.center, self.ratio)
+                yield vertex(param, self.major_axis, self.minor_axis,
+                             self.center, self.ratio)
 
     def transform(self, m: Matrix44) -> None:
         """ Transform ellipse in place by transformation matrix `m`. """
         new_center = m.transform(self.center)
-        old_start_param = start_param = self.start_param % math.tau
-        old_end_param = end_param = self.end_param % math.tau
+        # 2021.01.28 removed % math.tau
+        old_start_param = start_param = self.start_param
+        old_end_param = end_param = self.end_param
         old_minor_axis = minor_axis(self.major_axis, self.extrusion, self.ratio)
-        new_major_axis, new_minor_axis = m.transform_directions((self.major_axis, old_minor_axis))
+        new_major_axis, new_minor_axis = m.transform_directions(
+            (self.major_axis, old_minor_axis))
         # Original ellipse parameters stay untouched until end of transformation
         dot_product = new_major_axis.normalize().dot(new_minor_axis.normalize())
         if abs(dot_product) > 1e-6:
-            new_major_axis, new_minor_axis, new_ratio = rytz_axis_construction(new_major_axis, new_minor_axis)
+            new_major_axis, new_minor_axis, new_ratio = rytz_axis_construction(
+                new_major_axis, new_minor_axis)
             new_extrusion = new_major_axis.cross(new_minor_axis).normalize()
             adjust_params = True
         else:
@@ -136,10 +151,12 @@ class ConstructionEllipse:
             # New normal vector:
             new_extrusion = new_major_axis.cross(new_minor_axis).normalize()
             # Calculate exact minor axis:
-            new_minor_axis = minor_axis(new_major_axis, new_extrusion, new_ratio)
+            new_minor_axis = minor_axis(new_major_axis, new_extrusion,
+                                        new_ratio)
             adjust_params = False
 
-        if adjust_params and not math.isclose(start_param, end_param, abs_tol=1e-9):
+        if adjust_params and not math.isclose(start_param, end_param,
+                                              abs_tol=1e-9):
             # open ellipse, adjusting start- and end parameter
             x_axis = new_major_axis.normalize()
             y_axis = new_minor_axis.normalize()
@@ -151,8 +168,12 @@ class ConstructionEllipse:
                 return math.atan2(dy, dx) % math.tau
 
             # transformed start- and end point of old ellipse
-            start_point = m.transform(vertex(start_param, self.major_axis, old_minor_axis, self.center, self.ratio))
-            end_point = m.transform(vertex(end_param, self.major_axis, old_minor_axis, self.center, self.ratio))
+            start_point = m.transform(
+                vertex(start_param, self.major_axis, old_minor_axis,
+                       self.center, self.ratio))
+            end_point = m.transform(
+                vertex(end_param, self.major_axis, old_minor_axis, self.center,
+                       self.ratio))
 
             start_param = param(start_point - new_center)
             end_param = param(end_point - new_center)
@@ -161,7 +182,8 @@ class ConstructionEllipse:
             if not math.isclose(old_param_span, math.pi, abs_tol=1e-9):
                 # equal param span check works well, except for a span of exact pi (180 deg)
                 new_param_span = (end_param - start_param) % math.tau
-                if not math.isclose(old_param_span, new_param_span, abs_tol=1e-9):
+                if not math.isclose(old_param_span, new_param_span,
+                                    abs_tol=1e-9):
                     start_param, end_param = end_param, start_param
             else:  # param span is exact pi (180 deg)
                 # expensive but it seem to work:
@@ -183,10 +205,13 @@ class ConstructionEllipse:
                     start_param, end_param = end_param, start_param
 
         if new_ratio > 1:
-            new_major_axis = minor_axis(new_major_axis, new_extrusion, new_ratio)
+            new_major_axis = minor_axis(new_major_axis, new_extrusion,
+                                        new_ratio)
             new_ratio = 1.0 / new_ratio
-            new_minor_axis = minor_axis(new_major_axis, new_extrusion, new_ratio)
-            if not (math.isclose(start_param, 0) and math.isclose(end_param, math.tau)):
+            new_minor_axis = minor_axis(new_major_axis, new_extrusion,
+                                        new_ratio)
+            if not (math.isclose(start_param, 0) and math.isclose(end_param,
+                                                                  math.tau)):
                 start_param -= pi2
                 end_param -= pi2
 
@@ -207,29 +232,17 @@ class ConstructionEllipse:
 
     @property
     def param_span(self) -> float:
-        """ Returns params span of ellipse from start- to end param.
-
-        Returns 0 for start param == end param by definition.
-        Return 2*pi if normalized params are equal but start param is != end
-        param by definition.
+        """ Returns the counter clockwise params span from start- to end param,
+        see also :func:`ezdxf.math.ellipse_param_span` for more information.
 
         """
-        s = self.start_param
-        e = self.end_param
-        if math.isclose(s, e):
-            return 0.0  # by definition
-        # start param != end param but normalized params are equal:
-        if math.isclose(s % math.tau, e % math.tau):
-            return math.tau  # full ellipse by definition
-
-        while e < s:
-            e += math.tau
-        return e - s
+        return ellipse_param_span(self.start_param, self.end_param)
 
     def params(self, num: int) -> Iterable[float]:
-        """ Returns `num` params from start- to end param in counter clockwise order.
+        """ Returns `num` params from start- to end param in counter clockwise
+        order.
 
-        All params are normalized in the range from [0, 2pi).
+        All params are normalized in the range from [0, 2π).
 
         """
         yield from get_params(self.start_param, self.end_param, num)
@@ -239,8 +252,9 @@ class ConstructionEllipse:
         Yields vertices on ellipse for iterable `params` in WCS.
 
         Args:
-            params: param values in the range from ``0`` to ``2*pi`` in radians, param goes counter clockwise around the
-                    extrusion vector, major_axis = local x-axis = 0 rad.
+            params: param values in the range from [0, 2π) in radians,
+                param goes counter clockwise around the extrusion vector,
+                major_axis = local x-axis = 0 rad.
 
         """
         center = self.center
@@ -313,18 +327,21 @@ class ConstructionEllipse:
             param = next_end_param
             start_point = end_point
 
-    def params_from_vertices(self, vertices: Iterable['Vertex']) -> Iterable[float]:
+    def params_from_vertices(self, vertices: Iterable['Vertex']) -> Iterable[
+        float]:
         """
         Yields ellipse params for all given `vertices`.
 
-        The vertex don't has to be exact on the ellipse curve or in the range from start- to end param or even
-        in the ellipse plane. Param is calculated from the intersection point of the ray projected on the ellipse
-        plane from the center of the ellipse through the vertex.
+        The vertex don't has to be exact on the ellipse curve or in the range
+        from start- to end param or even in the ellipse plane. Param is
+        calculated from the intersection point of the ray projected on the
+        ellipse plane from the center of the ellipse through the vertex.
 
         .. warning::
 
-            An input for start- and end vertex at param 0 and 2*pi return unpredictable results because of
-            floating point inaccuracy, sometimes 0 and sometimes 2*pi.
+            An input for start- and end vertex at param 0 and 2π return
+            unpredictable results because of floating point inaccuracy,
+            sometimes 0 and sometimes 2π.
 
         """
         x_axis = self.major_axis.normalize()
@@ -337,11 +354,13 @@ class ConstructionEllipse:
 
     def tangents(self, params: Iterable[float]) -> Iterable[Vec3]:
         """
-        Yields tangents on ellipse for iterable `params` in WCS as direction vectors.
+        Yields tangents on ellipse for iterable `params` in WCS as direction
+        vectors.
 
         Args:
-            params: param values in the range from ``0`` to ``2*pi`` in radians, param goes counter clockwise around the
-                    extrusion vector, major_axis = local x-axis = 0 rad.
+            params: param values in the range from [0, 2π] in radians, param
+                goes counter clockwise around the extrusion vector,
+                major_axis = local x-axis = 0 rad.
 
         """
         ratio = self.ratio
@@ -358,7 +377,8 @@ class ConstructionEllipse:
         self.major_axis = self.minor_axis
         ratio = 1.0 / self.ratio
         self.ratio = max(ratio, 1e-6)
-        self.minor_axis = minor_axis(self.major_axis, self.extrusion, self.ratio)
+        self.minor_axis = minor_axis(self.major_axis, self.extrusion,
+                                     self.ratio)
 
         start_param = self.start_param
         end_param = self.end_param
@@ -367,13 +387,16 @@ class ConstructionEllipse:
         self.start_param = (start_param - HALF_PI) % math.tau
         self.end_param = (end_param - HALF_PI) % math.tau
 
-    def add_to_layout(self, layout: 'BaseLayout', dxfattribs: dict = None) -> 'Ellipse':
+    def add_to_layout(self, layout: 'BaseLayout',
+                      dxfattribs: dict = None) -> 'Ellipse':
         """
         Add ellipse as DXF :class:`~ezdxf.entities.Ellipse` entity to a layout.
 
         Args:
-            layout: destination layout as :class:`~ezdxf.layouts.BaseLayout` object
-            dxfattribs: additional DXF attributes for DXF :class:`~ezdxf.entities.Ellipse` entity
+            layout: destination layout as :class:`~ezdxf.layouts.BaseLayout`
+                object
+            dxfattribs: additional DXF attributes for DXF
+                :class:`~ezdxf.entities.Ellipse` entity
 
         """
         from ezdxf.entities import Ellipse
@@ -384,8 +407,7 @@ class ConstructionEllipse:
         return e
 
     def to_ocs(self) -> 'ConstructionEllipse':
-        """
-        Returns ellipse parameters as OCS representation.
+        """ Returns ellipse parameters as OCS representation.
 
         OCS elevation is stored in :attr:`center.z`.
 
@@ -410,7 +432,8 @@ def minor_axis(major_axis: Vec3, extrusion: Vec3, ratio: float) -> Vec3:
     return extrusion.cross(major_axis).normalize(major_axis.magnitude * ratio)
 
 
-def vertex(param: float, major_axis: Vec3, minor_axis: Vec3, center: Vec3, ratio: float) -> Vec3:
+def vertex(param: float, major_axis: Vec3, minor_axis: Vec3, center: Vec3,
+           ratio: float) -> Vec3:
     x_axis = major_axis.normalize()
     y_axis = minor_axis.normalize()
     radius_x = major_axis.magnitude
@@ -423,7 +446,7 @@ def vertex(param: float, major_axis: Vec3, minor_axis: Vec3, center: Vec3, ratio
 def get_params(start: float, end: float, num: int) -> Iterable[float]:
     """ Returns `num` params from start- to end param in counter clockwise order.
 
-    All params are normalized in the range from [0, 2pi).
+    All params are normalized in the range from [0, 2π).
 
     """
     if num < 2:
@@ -439,11 +462,13 @@ def angle_to_param(ratio: float, angle: float) -> float:
     """ Returns ellipse parameter for argument `angle`.
 
     Args:
-        ratio: minor axis to major axis ratio as stored in the ELLIPSE entity (always <= 1).
-        angle: angle between major axis and line from center to point on the ellipse
+        ratio: minor axis to major axis ratio as stored in the ELLIPSE entity
+            (always <= 1).
+        angle: angle between major axis and line from center to point on the
+            ellipse
 
     Returns:
-        the ellipse parameter in the range [0, 2pi)
+        the ellipse parameter in the range [0, 2π)
     """
     return math.atan2(math.sin(angle) / ratio, math.cos(angle)) % math.tau
 
@@ -452,24 +477,27 @@ def param_to_angle(ratio: float, param: float) -> float:
     """ Returns circle angle from ellipse parameter for argument `angle`.
 
     Args:
-        ratio: minor axis to major axis ratio as stored in the ELLIPSE entity (always <= 1).
-        param: ellipse parameter between major axis and point on the ellipse curve
+        ratio: minor axis to major axis ratio as stored in the ELLIPSE entity
+            (always <= 1).
+        param: ellipse parameter between major axis and point on the ellipse
+            curve
 
     Returns:
-        the circle angle in the range [0, 2pi)
+        the circle angle in the range [0, 2π)
     """
     return math.atan2(math.sin(param) * ratio, math.cos(param))
 
 
 def rytz_axis_construction(d1: Vec3, d2: Vec3) -> Tuple[Vec3, Vec3, float]:
-    """
-    The Rytz’s axis construction is a basic method of descriptive Geometry to find the axes, the semi-major
-    axis and semi-minor axis, starting from two conjugated half-diameters.
+    """ The Rytz’s axis construction is a basic method of descriptive Geometry
+    to find the axes, the semi-major axis and semi-minor axis, starting from two
+    conjugated half-diameters.
 
     Source: `Wikipedia <https://en.m.wikipedia.org/wiki/Rytz%27s_construction>`_
 
-    Given conjugated diameter `d1` is the vector from center C to point P and the given conjugated diameter `d2` is
-    the vector from center C to point Q. Center of ellipse is always ``(0, 0, 0)``. This algorithm works for
+    Given conjugated diameter `d1` is the vector from center C to point P and
+    the given conjugated diameter `d2` is the vector from center C to point Q.
+    Center of ellipse is always ``(0, 0, 0)``. This algorithm works for
     2D/3D vectors.
 
     Args:
@@ -482,7 +510,8 @@ def rytz_axis_construction(d1: Vec3, d2: Vec3) -> Tuple[Vec3, Vec3, float]:
     """
     Q = Vec3(d1)  # vector CQ
     # calculate vector CP', location P'
-    if math.isclose(d1.z, 0, abs_tol=1e-9) and math.isclose(d2.z, 0, abs_tol=1e-9):
+    if math.isclose(d1.z, 0, abs_tol=1e-9) and math.isclose(d2.z, 0,
+                                                            abs_tol=1e-9):
         # Vec3.orthogonal() works only for vectors in the xy-plane!
         P1 = Vec3(d2).orthogonal(ccw=False)
     else:
@@ -498,9 +527,40 @@ def rytz_axis_construction(d1: Vec3, d2: Vec3) -> Tuple[Vec3, Vec3, float]:
         raise ArithmeticError('Conjugated axis required, invalid source data.')
     major_axis_length = (A - Q).magnitude
     minor_axis_length = (B - Q).magnitude
-    if math.isclose(major_axis_length, 0.) or math.isclose(minor_axis_length, 0.):
+    if math.isclose(major_axis_length, 0.) or math.isclose(minor_axis_length,
+                                                           0.):
         raise ArithmeticError('Conjugated axis required, invalid source data.')
     ratio = minor_axis_length / major_axis_length
     major_axis = B.normalize(major_axis_length)
     minor_axis = A.normalize(minor_axis_length)
     return major_axis, minor_axis, ratio
+
+
+def ellipse_param_span(start_param: float, end_param: float) -> float:
+    """ Returns the counter clockwise params span of an elliptic arc from start-
+    to end param.
+
+    Returns the param span in the range [0, 2π], 2π is a full ellipse.
+    Full ellipse handling is a special case, because normalization of params
+    which describe a full ellipse would return 0 if treated as regular params.
+    e.g. (0, 2π) → 2π, (0, -2π) → 2π, (π, -π) → 2π.
+    Input params with the same value always return 0 by definition:
+    (0, 0) → 0, (-π, -π) → 0, (2π, 2π) → 0.
+
+    """
+    s = float(start_param)
+    e = float(end_param)
+    if math.isclose(s, e):
+        return 0.0  # by definition
+    # start param != end param but normalized params are equal:
+    s %= math.tau
+    if math.isclose(s, e % math.tau):
+        return math.tau  # full ellipse by definition
+
+    # Special treatment for end param == 2pi:
+    if not math.isclose(e, math.tau):
+        e %= math.tau
+
+    while e < s:
+        e += math.tau
+    return e - s

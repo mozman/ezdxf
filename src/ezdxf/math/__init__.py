@@ -51,6 +51,7 @@ from .line import ConstructionRay, ConstructionLine, ParallelRaysError
 from .circle import ConstructionCircle
 from .ellipse import (
     ConstructionEllipse, angle_to_param, param_to_angle, rytz_axis_construction,
+    ellipse_param_span
 )
 from .box import ConstructionBox
 from .shape import Shape2d

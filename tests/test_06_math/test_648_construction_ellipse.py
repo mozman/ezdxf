@@ -5,7 +5,9 @@ import random
 import pytest
 import math
 
-from ezdxf.math import Vec3, angle_to_param, linspace, ConstructionEllipse
+from ezdxf.math import (
+    Vec3, angle_to_param, linspace, ConstructionEllipse, ellipse_param_span
+)
 
 
 def test_default_init():

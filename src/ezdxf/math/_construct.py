@@ -176,9 +176,9 @@ def arc_angle_span_deg(start: float, end: float) -> float:
     Returns the angle span in the range of [0, 360], 360 is a full circle.
     Full circle handling is a special case, because normalization of angles
     which describe a full circle would return 0 if treated as regular angles.
-    e.g. (0, 360) -> 360, (0, -360) -> 360, (180, -180) -> 360.
-    Input angles with the same value always return 0 by definition: (0, 0) -> 0,
-    (-180, -180) -> 0, (360, 360) -> 0.
+    e.g. (0, 360) → 360, (0, -360) → 360, (180, -180) → 360.
+    Input angles with the same value always return 0 by definition: (0, 0) → 0,
+    (-180, -180) → 0, (360, 360) → 0.
 
     """
     # Input values are equal, returns 0 by definition:

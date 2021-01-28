@@ -25,6 +25,8 @@ Functions
 
 .. autofunction:: arc_angle_span_deg
 
+.. autofunction:: ellipse_param_span
+
 .. _bulge_related_functions:
 
 Bulge Related Functions
@@ -705,6 +707,8 @@ ConstructionEllipse
     .. autoattribute:: start_point
 
     .. autoattribute:: end_point
+
+    .. autoproperty:: param_span
 
     .. automethod:: to_ocs() -> ConstructionEllipse
 
