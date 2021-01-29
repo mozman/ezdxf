@@ -16,10 +16,11 @@ still not a CAD application.
 """
 from typing import (
     TYPE_CHECKING, List, Dict, Any, Iterable, Optional, Type, TypeVar, Set,
-    Callable
+    Callable,
 )
 import copy
 import logging
+import uuid
 from ezdxf import options
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
@@ -84,6 +85,19 @@ class DXFEntity:
         self.xdata: Optional[XData] = None
         self.embedded_objects: Optional[EmbeddedObjects] = None
         self.proxy_graphic: Optional[bytes] = None
+        # self._uuid  # uuid generated if required by property DXFEntity.uuid
+
+    @property
+    def uuid(self) -> uuid.UUID:
+        """ Returns an UUID on demand, which allows to distinguish even
+        virtual entities without a handle.
+
+        """
+        uuid_ = getattr(self, '_uuid', None)
+        if uuid_ is None:
+            uuid_ = uuid.uuid4()
+            self._uuid = uuid_
+        return uuid_
 
     @classmethod
     def new(cls: Type[T], handle: str = None, owner: str = None,

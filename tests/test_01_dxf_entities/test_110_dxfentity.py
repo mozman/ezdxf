@@ -105,6 +105,13 @@ def test_dont_write_handles_for_R12(entity):
     assert '5\nFFFF\n' not in result
 
 
+def test_uuid():
+    e1 = DXFEntity()
+    e2 = DXFEntity()
+    assert e1.dxf.handle == e2.dxf.handle, "can't distinguish by handle"
+    assert e1.uuid != e2.uuid, "can distinguish by uuid"
+
+
 LINE_DATA = """  0
 LINE
   5

@@ -41,11 +41,13 @@ Common base class for all DXF entities and objects.
 
         Get the associated :class:`~ezdxf.document.Drawing` instance.
 
-    .. autoattribute:: is_alive
+    .. autoproperty:: is_alive
 
-    .. autoattribute:: is_virtual
+    .. autoproperty:: is_virtual
 
-    .. autoattribute:: is_bound
+    .. autoproperty:: is_bound
+
+    .. autoproperty:: uuid
 
     .. automethod:: dxftype
 
