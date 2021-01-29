@@ -82,6 +82,8 @@ from collections import namedtuple
 import logging
 from pathlib import Path
 import json
+from ezdxf import options
+
 
 FONT_DATA_FILE = 'fonts.json'
 logger = logging.getLogger('ezdxf')
@@ -201,9 +203,15 @@ def get(ttf_path: str) -> Font:
         return font
 
 
-def load(path=None):
-    path = Path(path) if path else Path(__file__).parent / FONT_DATA_FILE
+def _get_path(path) -> Path:
+    if path is None and options.path_to_fonts_json:
+        path = Path(options.path_to_fonts_json).expanduser()
+    path = Path(path) if path else Path(__file__).parent
+    return path / FONT_DATA_FILE
 
+
+def load(path=None):
+    path = _get_path(path)
     if not path.exists():
         return
     with open(path, 'rt') as fp:
@@ -215,6 +223,6 @@ def load(path=None):
 
 
 def save(path=None):
-    path = Path(path) if path else Path(__file__).parent / FONT_DATA_FILE
+    path = _get_path(path)
     with open(path, 'wt') as fp:
         json.dump(list(fonts.values()), fp, indent=2)

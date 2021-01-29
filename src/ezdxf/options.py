@@ -14,8 +14,17 @@ class Options:
         # ezdxf.addons.drawing add-on
         self.use_matplotlib_font_support = False
 
-        # Load also system fonts if matplotlib font support is activated:
+        # Load also system fonts if matplotlib font support is activated.
+        # This may take a while and does not improve the calculations if the
+        # used fonts are included in the fonts.json file - use only if this
+        # makes a real difference on your system.
+        # The fonts.json file is extendable see next option: path_to_fonts_json
         self.load_system_fonts = False
+
+        # Set path to an external stored fonts.json file: e.g. "~/ezdxf" do
+        # not include "fonts.json", see docs for ezdxf.options for an example
+        # how to create your own external "fonts.json":
+        self.path_to_fonts_json = False
 
         # debugging
         self.log_unprocessed_tags = True
