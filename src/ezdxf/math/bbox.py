@@ -25,7 +25,7 @@ class AbstractBoundingBox:
         return f"[{self.extmin}, {self.extmax}]"
 
     def __repr__(self) -> str:
-        name = self.__name__
+        name = self.__class__.__name__
         if self.has_data:
             return f"{name}({self.__str__()})"
         else:
