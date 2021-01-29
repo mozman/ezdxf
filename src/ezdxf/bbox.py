@@ -21,11 +21,11 @@ class Cache:
 
     def get(self, entity: 'DXFEntity') -> Optional[BoundingBox]:
         assert entity is not None
-        handle = entity.dxf.handle
-        if handle is None or handle == '0':
+        key = self._get_key(entity)
+        if key is None:
             self.misses += 1
             return None
-        box = self._boxes.get(handle)
+        box = self._boxes.get(key)
         if box is None:
             self.misses += 1
         else:
@@ -34,16 +34,10 @@ class Cache:
 
     def store(self, entity: 'DXFEntity', box: BoundingBox) -> None:
         assert entity is not None
-        handle = entity.dxf.handle
-        if handle is None or handle == '0':
+        key = self._get_key(entity)
+        if key is None:
             return
-        if entity.dxftype() == 'HATCH':
-            # Special treatment for multiple primitives for the same
-            # HATCH entity - all have the same handle:
-            # Do not store boundary path they are not distinguishable,
-            # which boundary path should be returned for the handle?
-            return
-        self._boxes[handle] = box
+        self._boxes[key] = box
 
     def invalidate(self, entities: Iterable['DXFEntity']) -> None:
         """ Invalidate cache entries for the given DXF `entities`.
@@ -57,9 +51,23 @@ class Cache:
         """
         for entity in entities:
             try:
-                del self._boxes[entity.dxf.handle]
+                del self._boxes[self._get_key(entity)]
             except KeyError:
                 pass
+
+    def _get_key(self, entity: 'DXFEntity') -> Optional[str]:
+        if entity.dxftype() == 'HATCH':
+            # Special treatment for multiple primitives for the same
+            # HATCH entity - all have the same handle:
+            # Do not store boundary path they are not distinguishable,
+            # which boundary path should be returned for the handle?
+            return None
+
+        key = entity.dxf.handle
+        if key is None or key == '0':
+            return None
+        else:
+            return key
 
 
 def multi_recursive(entities: Iterable['DXFEntity'],
