@@ -123,6 +123,10 @@ acdb_attdef_xrecord = DefSubclass('AcDbXrecord', [
 # I don't have seen this combination of entities in real world examples and is
 # ignored by ezdxf for now.
 
+# Attrib and Attdef can have embedded MTEXT entities located in the
+# <Embedded Object> subclass, see issue #258
+
+# QUESTION: How are the attached MTEXT and the embedded MTEXT related?
 
 class BaseAttrib(Text):
     XRECORD_DEF = acdb_attdef_xrecord
@@ -130,6 +134,8 @@ class BaseAttrib(Text):
     def __init__(self):
         """ Default constructor """
         super().__init__()
+        # TODO: implement embedded MTEXT support
+        #  remove DXFEntity.embedded_objects if done
         self.xrecord: Optional['Tags'] = None
         self.attached_mtext: Optional['DXFEntity'] = None
 

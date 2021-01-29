@@ -83,14 +83,21 @@ class DXFEntity:
         self.reactors: Optional[Reactors] = None
         self.extension_dict: Optional[ExtensionDict] = None
         self.xdata: Optional[XData] = None
+        # TODO: remove embedded_objects - no need to waste memory for every entity,
+        #  this is a seldom used feature (ATTRIB, ATTDEF), and this entities have to
+        #  manage the embedded objects by itself at loading stage and DXF export.
+        #  Removing is possible if ATTRIB and ATTDEF have explicit
+        #  support for embedded MTEXT objects
         self.embedded_objects: Optional[EmbeddedObjects] = None
         self.proxy_graphic: Optional[bytes] = None
-        # self._uuid  # uuid generated if required by property DXFEntity.uuid
+        # self._uuid  # uuid generated at first request
 
     @property
     def uuid(self) -> uuid.UUID:
-        """ Returns an UUID on demand, which allows to distinguish even
+        """ Returns an UUID, which allows to distinguish even
         virtual entities without a handle.
+
+        This UUID will be created at the first request.
 
         """
         uuid_ = getattr(self, '_uuid', None)
@@ -205,7 +212,7 @@ class DXFEntity:
                 self.setup_app_data(tags.appdata)
             if len(tags.xdata):
                 self.xdata = XData(tags.xdata)
-            if tags.embedded_objects:
+            if tags.embedded_objects:  # TODO: remove
                 self.embedded_objects = EmbeddedObjects(
                     tags.embedded_objects)
             processor = SubclassProcessor(tags, dxfversion=dxfversion)
@@ -257,7 +264,7 @@ class DXFEntity:
         entity.reactors = other.reactors
         entity.appdata = other.appdata
         entity.xdata = other.xdata
-        entity.embedded_objects = other.embedded_objects
+        entity.embedded_objects = other.embedded_objects  # todo: remove
         entity.proxy_graphic = other.proxy_graphic
         entity.dxf.rewire(entity)
         return entity
@@ -298,7 +305,7 @@ class DXFEntity:
         entity.xdata = copy.deepcopy(self.xdata)
 
         # if embedded objects contains handles, they are treated as shared resources
-        entity.embedded_objects = copy.deepcopy(self.embedded_objects)
+        entity.embedded_objects = copy.deepcopy(self.embedded_objects)  # todo: remove
         self._copy_data(entity)
         return entity
 
@@ -443,9 +450,6 @@ class DXFEntity:
         """ Returns a ``dict`` with all existing DXF attributes and their
         values and exclude all DXF attributes listed in set `drop`.
 
-        .. versionchanged:: 0.12
-            added `drop` argument
-
         """
         all_attribs = self.dxf.all_existing_dxf_attribs()
         if drop:
@@ -488,7 +492,7 @@ class DXFEntity:
             self.extension_dict = None
             self.appdata = None
             self.xdata = None
-            self.embedded_objects = None
+            self.embedded_objects = None  # todo: remove
 
     def destroy(self) -> None:
         """ Delete all data and references. Does not delete entity from
@@ -509,7 +513,7 @@ class DXFEntity:
         del self.appdata
         del self.reactors
         del self.xdata
-        del self.embedded_objects
+        del self.embedded_objects  # todo: remove
         del self.doc
         del self.dxf  # check mark for is_alive
 
@@ -594,8 +598,8 @@ class DXFEntity:
 
     def export_embedded_objects(self, tagwriter: 'TagWriter') -> None:
         """ Export embedded objects by `tagwriter`. (internal API)"""
-        if self.embedded_objects:
-            self.embedded_objects.export_dxf(tagwriter)
+        if self.embedded_objects:  # todo: remove
+            self.embedded_objects.export_dxf(tagwriter)  # todo: remove
 
     def audit(self, auditor: 'Auditor') -> None:
         """ Validity check. (internal API) """
