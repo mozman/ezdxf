@@ -23,9 +23,6 @@ query or any iterable container of DXF entities.
 
 The **optional** caching object :class:`Cache` has to be instantiated by the
 user, this is only useful if the same entities will be processed multiple times.
-This cache works only for entities which have a handle, virtual entities
-( e.g block reference content) are created on the fly and do not have a handle
-nor a fixed id, therefore caching is not possible.
 
 Example usage with caching:
 
@@ -40,6 +37,8 @@ Example usage with caching:
     # bounding box of all LINE entities
     second_bbox = bbox.extend(msp.query("LINE"), cache)
 
+Calculation Function
+--------------------
 
 .. autofunction:: extends(entities: Iterable[DXFEntity], cache: Cache=None) -> BoundingBox
 
@@ -47,9 +46,59 @@ Example usage with caching:
 
 .. autofunction:: multi_recursive(entities: Iterable[DXFEntity] cache: Cache=None) -> Iterable[BoundingBox]
 
-.. class:: Cache
+Caching Strategies
+------------------
 
-    Caching object, provides following measurements as attributes:
+Because `ezdxf` is not a CAD application, `ezdxf` does not manage data
+structures which are optimized for a usage by a CAD kernel. This means
+that the content of complex entities like block references or leaders has
+to be created on demand by DXF primitives on the fly. These temporarily
+created entities are called virtual entities and have no handle and are not
+stored in the entities database.
+
+All this is required to calculate the bounding box of complex entities,
+and it is therefore a very time consuming task. By using a :class:`Cache` object
+it is possible to speedup this calculations, but this is not a magically feature
+which requires an understanding of what is happening under the hood to achieve
+any performance gains.
+
+For a single bounding box calculation, without any reuse of entities it makes
+no sense of using a :class:`Cache` object, e.g. calculation of the modelspace
+extends:
+
+.. code-block:: python
+
+    from pathlib import Path
+    import ezdxf
+    from ezdxf import bbox
+
+    CadKitSamples = Path(ezdxf.EZDXF_TEST_FILES) / 'CADKitSamples'
+
+    doc = ezdxf.readfile(CadKitSamples / 'A_000217.dxf')
+    cache = bbox.Cache()
+    ext = bbox.extends(doc.modelspace(), cache)
+
+    print(cache)
+
+1226 cached objects and not a single cache hit::
+
+    Cache(n=1226, hits=0, misses=3273)
+
+The result for using UUIDs to cache virtual entities is not better::
+
+    Cache(n=2206, hits=0, misses=3273)
+
+Same count of hits and misses, but now the cache also references
+~1000 virtual entities, which block your memory until the cache is deleted,
+luckily this is small DXF file (~838 kB).
+
+Bounding box calculations for multiple entity queries, which have overlapping
+entity results, using a :class:`Cache` object may speedup calculation...
+
+Cache Class
+-----------
+
+.. autoclass:: Cache
 
     .. py:attribute:: hits
 

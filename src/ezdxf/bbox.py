@@ -9,6 +9,12 @@ if TYPE_CHECKING:
 
 
 class Cache:
+    """ Caching object for :class:`ezdxf.math.BoundingBox` objects.
+
+    Args:
+        uuid: use UUIDs for virtual entities
+
+    """
     def __init__(self, uuid=False):
         self._boxes: Dict[str, BoundingBox] = dict()
         self._use_uuid = bool(uuid)
@@ -76,7 +82,7 @@ def multi_recursive(entities: Iterable['DXFEntity'],
     """ Yields all bounding boxes for the given `entities` **or** all bounding
     boxes for their sub entities. If an entity (INSERT) has sub entities, only
     the bounding boxes of these sub entities will be yielded, **not** the
-    bounding box of entity (INSERT) itself. Bad caching behavior!
+    bounding box of entity (INSERT) itself.
 
     """
     flat_entities = disassemble.recursive_decompose(entities)
@@ -102,7 +108,7 @@ def multi_recursive(entities: Iterable['DXFEntity'],
 def extends(entities: Iterable['DXFEntity'],
             cache: Cache = None) -> BoundingBox:
     """ Returns a single bounding box for the given `entities` and their sub
-    entities. Good caching behavior!
+    entities.
 
     """
     _extends = BoundingBox()
@@ -115,7 +121,7 @@ def multi_flat(entities: Iterable['DXFEntity'],
                cache: Cache = None) -> Iterable[BoundingBox]:
     """ Yields all bounding boxes for the given `entities` at the top level,
     the sub entity extends are included, but they do not yield their own
-    bounding boxes. Good caching behavior!
+    bounding boxes.
 
     """
 
