@@ -308,7 +308,7 @@ def _get_path_patch_data(path):
         if cmd.type == Command.LINE_TO:
             codes.append(Path.LINETO)
             vertices.append(cmd.end)
-        elif cmd.type == Command.CURVE_TO:
+        elif cmd.type == Command.CURVE4_TO:
             codes.extend(CURVE4x3)
             vertices.extend((cmd.ctrl1, cmd.ctrl2, cmd.end))
         else:

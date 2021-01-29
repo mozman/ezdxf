@@ -23,7 +23,8 @@ __all__ = ['Path', 'Command', 'make_path', 'has_path_support']
 
 class Command(Enum):
     LINE_TO = 1  # (LINE_TO, end vertex)
-    CURVE_TO = 2  # (CURVE_TO, end vertex, ctrl1, ctrl2)
+    CURVE4_TO = 2  # (CURVE4_TO, end vertex, ctrl1, ctrl2) cubic bezier
+    CURVE3_TO = 3  # (CURVE3_TO, end vertex, ctrl1) quadratic bezier
 
 
 class LineTo(NamedTuple):
@@ -37,24 +38,39 @@ class LineTo(NamedTuple):
         return LineTo(end=ocs.to_wcs(self.end.replace(z=elevation)))
 
 
-class CurveTo(NamedTuple):
+class Curve4To(NamedTuple):
     end: Vec3
     ctrl1: Vec3
     ctrl2: Vec3
 
     @property
     def type(self):
-        return Command.CURVE_TO
+        return Command.CURVE4_TO
 
     def to_wcs(self, ocs: OCS, elevation: float):
-        return CurveTo(
+        return Curve4To(
             end=ocs.to_wcs(self.end.replace(z=elevation)),
             ctrl1=ocs.to_wcs(self.ctrl1.replace(z=elevation)),
             ctrl2=ocs.to_wcs(self.ctrl2.replace(z=elevation)),
         )
 
 
-PathElement = Union[LineTo, CurveTo]
+class Curve3To(NamedTuple):
+    end: Vec3
+    ctrl1: Vec3
+
+    @property
+    def type(self):
+        return Command.CURVE3_TO
+
+    def to_wcs(self, ocs: OCS, elevation: float):
+        return Curve3To(
+            end=ocs.to_wcs(self.end.replace(z=elevation)),
+            ctrl1=ocs.to_wcs(self.ctrl1.replace(z=elevation)),
+        )
+
+
+PathElement = Union[LineTo, Curve4To, Curve3To]
 
 
 class Path(abc.Sequence):
@@ -345,7 +361,7 @@ class Path(abc.Sequence):
             for cmd in self._commands:
                 if cmd.type == Command.LINE_TO:
                     yield cmd.end
-                elif cmd.type == Command.CURVE_TO:
+                elif cmd.type == Command.CURVE4_TO:
                     yield cmd.ctrl1
                     yield cmd.ctrl2
                     yield cmd.end
@@ -366,7 +382,7 @@ class Path(abc.Sequence):
         """ Add a cubic Bèzier-curve from actual path end point to `location`,
         `ctrl1` and `ctrl2` are the control points for the cubic Bèzier-curve.
         """
-        self._commands.append(CurveTo(
+        self._commands.append(Curve4To(
             end=Vec3(location), ctrl1=Vec3(ctrl1), ctrl2=Vec3(ctrl2))
         )
 
@@ -394,7 +410,7 @@ class Path(abc.Sequence):
 
             if cmd.type == Command.LINE_TO:
                 path.line_to(prev_end)
-            elif cmd.type == Command.CURVE_TO:
+            elif cmd.type == Command.CURVE4_TO:
                 path.curve_to(prev_end, cmd.ctrl2, cmd.ctrl1)
         return path
 
@@ -593,7 +609,7 @@ class Path(abc.Sequence):
             end_location = cmd.end
             if cmd.type == Command.LINE_TO:
                 yield end_location
-            elif cmd.type == Command.CURVE_TO:
+            elif cmd.type == Command.CURVE4_TO:
                 pts = iter(
                     approx_curve(start, cmd.ctrl1, cmd.ctrl2, end_location)
                 )
@@ -615,7 +631,7 @@ class Path(abc.Sequence):
 
             if cmd.type == Command.LINE_TO:
                 new_path.line_to(m.transform(cmd.end))
-            elif cmd.type == Command.CURVE_TO:
+            elif cmd.type == Command.CURVE4_TO:
                 loc, ctrl1, ctrl2 = m.transform_vertices(
                     (cmd.end, cmd.ctrl1, cmd.ctrl2)
                 )

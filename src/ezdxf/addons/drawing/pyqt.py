@@ -281,7 +281,7 @@ def _extend_qt_path(qt_path: qg.QPainterPath, path: Path) -> None:
         if cmd.type == Command.LINE_TO:
             end = cmd.end
             qt_path.lineTo(end.x, end.y)
-        elif cmd.type == Command.CURVE_TO:
+        elif cmd.type == Command.CURVE4_TO:
             end = cmd.end
             ctrl1 = cmd.ctrl1
             ctrl2 = cmd.ctrl2

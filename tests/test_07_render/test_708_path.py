@@ -227,7 +227,7 @@ def test_lwpolyline_with_bulges():
     path = make_path(pline)
     assert path.start == (0, 0)
     assert path.end == (0, 0)  # closed
-    assert any(cmd.type == Command.CURVE_TO for cmd in path)
+    assert any(cmd.type == Command.CURVE4_TO for cmd in path)
 
 
 S_SHAPE = [
@@ -247,7 +247,7 @@ def test_lwpolyline_s_shape():
     path = make_path(pline)
     assert path.start == (0, 0)
     assert path.end == (5, 2)  # closed
-    assert any(cmd.type == Command.CURVE_TO for cmd in path)
+    assert any(cmd.type == Command.CURVE4_TO for cmd in path)
 
 
 def test_polyline_lines():
@@ -273,7 +273,7 @@ def test_polyine_with_bulges():
     path = make_path(pline)
     assert path.start == (0, 0)
     assert path.end == (0, 0)  # closed
-    assert any(cmd.type == Command.CURVE_TO for cmd in path)
+    assert any(cmd.type == Command.CURVE4_TO for cmd in path)
 
 
 def test_3d_polyine():
@@ -332,7 +332,7 @@ def test_path_from_hatch_polyline_path_with_bulge():
     assert path.start == (0, 0)
     assert path.end == (3, 0)
 
-    assert path[1].type == Command.CURVE_TO
+    assert path[1].type == Command.CURVE4_TO
     assert path[1].end == (1.5, -0.25)
 
 

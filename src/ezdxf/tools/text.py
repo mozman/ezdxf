@@ -133,8 +133,7 @@ class MatplotlibFont(AbstractFont):
     def text_width(self, text: str) -> float:
         if not text.strip():
             return 0
-        path = self._text_renderer.get_text_path(
-            text, self._font_properties)
+        path = self.text_path(text)
         return max(x for x, y in path.vertices) * self._width_factor
 
     def text_path(self, text: str):
