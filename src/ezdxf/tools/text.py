@@ -19,10 +19,12 @@ X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
 LEFT = 0
 CENTER = 1
 RIGHT = 2
+
 BASELINE = 0
 BOTTOM = 1
 MIDDLE = 2
 TOP = 3
+X_MIDDLE = 4  # special case for overall alignment "MIDDLE"
 
 MTEXT_ALIGN_FLAGS = {
     1: (LEFT, TOP),
@@ -254,6 +256,8 @@ def _shift_y(fm: FontMeasurements, valign: int) -> float:
         return fm.baseline
     elif valign == MIDDLE:
         return -fm.cap_top + fm.cap_height / 2
+    elif valign == X_MIDDLE:
+        return -fm.cap_top + fm.total_height / 2
     elif valign == TOP:
         return -fm.cap_top
     return -fm.bottom
@@ -274,14 +278,14 @@ def unified_alignment(entity: Union['Text', 'MText']) -> Tuple[int, int]:
     if dxftype in ('TEXT', 'ATTRIB', 'ATTDEF'):
         halign = entity.dxf.halign
         valign = entity.dxf.valign
-        if halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
+        if halign in (3, 5):  # ALIGNED=3, FIT=5
             # For the alignments ALIGNED and FIT the text stretching has to be
             # handles separately.
             halign = CENTER
             valign = BASELINE
-        # Special alignment MIDDLE is handles as (CENTER, MIDDLE)
-        if halign == 4:
-            valign = MIDDLE
+        elif halign == 4:  # MIDDLE is different to MIDDLE/CENTER
+            halign = CENTER
+            valign = X_MIDDLE
         return halign, valign
     elif dxftype == 'MTEXT':
         return MTEXT_ALIGN_FLAGS.get(entity.dxf.attachment_point, (LEFT, TOP))
