@@ -50,6 +50,13 @@ class FontMeasurements:
         self.x_height = x_height
         self.descender_height = descender_height
 
+    def print_info(self):
+        print(f"baseline: {self.baseline:.4f}")
+        print(f"cap_height: {self.cap_height:.4f}")
+        print(f"x_height: {self.x_height:.4f}")
+        print(f"descender_height: {self.descender_height:.4f}")
+        print(f"total_height: {self.total_height:.4f}")
+
     def __eq__(self, other):
         return (isinstance(other, FontMeasurements) and
                 self.baseline == other.baseline and
@@ -110,7 +117,8 @@ class AbstractFont:
 
 
 class MatplotlibFont(AbstractFont):
-    def __init__(self, font_name: str, cap_height: float, width_factor: float):
+    def __init__(self, font_name: str, cap_height: float = 1.0,
+                 width_factor: float = 1.0):
         from . import _matplotlib_font_support as mpl
         self._text_renderer = mpl.text_renderer
         font = mpl.get_font(font_name)
