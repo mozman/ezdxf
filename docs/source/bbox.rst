@@ -72,9 +72,9 @@ extends:
     import ezdxf
     from ezdxf import bbox
 
-    CadKitSamples = Path(ezdxf.EZDXF_TEST_FILES) / 'CADKitSamples'
+    CADKitSamples = Path(ezdxf.EZDXF_TEST_FILES) / 'CADKitSamples'
 
-    doc = ezdxf.readfile(CadKitSamples / 'A_000217.dxf')
+    doc = ezdxf.readfile(CADKitSamples / 'A_000217.dxf')
     cache = bbox.Cache()
     ext = bbox.extends(doc.modelspace(), cache)
 
@@ -90,10 +90,12 @@ The result for using UUIDs to cache virtual entities is not better::
 
 Same count of hits and misses, but now the cache also references
 ~1000 virtual entities, which block your memory until the cache is deleted,
-luckily this is small DXF file (~838 kB).
+luckily this is a small DXF file (~838 kB).
 
 Bounding box calculations for multiple entity queries, which have overlapping
-entity results, using a :class:`Cache` object may speedup calculation...
+entity results, using a :class:`Cache` object may speedup calculation.
+
+TODO
 
 Cache Class
 -----------
