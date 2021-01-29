@@ -4,7 +4,7 @@
 import pytest
 import ezdxf
 from ezdxf.layouts import VirtualLayout
-from ezdxf import bbox
+from ezdxf import bbox, disassemble
 from ezdxf.render.forms import square, translate
 
 
@@ -58,6 +58,14 @@ def test_cache_usage_without_handles(points1):
     assert cache.hits == 0
 
 
+def test_cache_usage_with_uuids(points1):
+    # Entities in VirtualLayouts have no handles:
+    cache = bbox.Cache(uuid=True)
+    for _ in range(10):
+        bbox.extends(points1, cache)
+    assert cache.hits == 18
+
+
 @pytest.fixture(scope='module')
 def msp_solids():
     return solid_blockrefs()
@@ -75,16 +83,59 @@ def test_cache_usage_for_flat_multi_boxes(msp_solids, func):
     assert cache.hits == 9 * 2  # 9 x 2xINSERT
 
 
-def test_cache_usage_for_recursive_multi_boxes(msp_solids):
-    cache = bbox.Cache()
+def test_cache_usage_for_recreation_on_the_fly(msp_solids):
+    cache = bbox.Cache(uuid=True)
     for _ in range(10):
         list(bbox.multi_recursive(msp_solids, cache))
 
     # This does not work well, because recursive processing has to yield the
-    # bounding boxes for all sub entities, the INSERT itself (which has a
-    # handle) is not cached.
-    assert cache.misses == 20  # virtual entities do not have handles
+    # bounding boxes for all sub entities. These sub entities are created on the
+    # fly for every call and do not have a handle and always gets a new UUID,
+    # which is the meaning of an UUID.
+    # The INSERT entity, which has a handle, gets no own bounding box and is
+    # therefore not cached.
+    assert cache.misses == 20
+    assert cache.hits == 0
+
+
+@pytest.mark.parametrize('func', [
+    bbox.multi_flat, bbox.extends, bbox.multi_recursive
+])
+def test_cache_usage_for_reused_virtual_entities(msp_solids, func):
+    cache = bbox.Cache()
+    # Create flat entity structure by yourself, so that virtual entities are
+    # only created once:
+    entities = list(disassemble.recursive_decompose(msp_solids))
+    for _ in range(10):
+        list(func(entities, cache))
+
+    # This does not work well by "handle only" usage, because 'entities' contains
+    # virtual entities which have no handle and therefore are not cached:
+    # multi_flat and extends, have a second access stage and triggers 2x20 cache
+    # misses but this is just a cache access issue, this does not trigger 40
+    # bounding box calculations!
+    # multi_recursive is the lowest level and has only 20 cache misses.
+    assert cache.misses in (20, 40)  # virtual entities do not have handles
     assert cache.hits == 0  # parent INSERT bbox is not calculated and cached
+
+
+@pytest.mark.parametrize('func', [
+    bbox.multi_flat, bbox.extends, bbox.multi_recursive
+])
+def test_cache_usage_with_uuids_for_reused_virtual_entities(msp_solids, func):
+    cache = bbox.Cache(uuid=True)
+    # Create flat entity structure by yourself, so that virtual entities are
+    # only created once:
+    entities = list(disassemble.recursive_decompose(msp_solids))
+    for _ in range(10):
+        list(func(entities, cache))
+
+    # This works, because virtual entities are cached by UUID
+    # multi_flat and extends, have a second access stage: 2x2 misses, but
+    # triggers only 2 bounding box calculations.
+    # multi_recursive is the lowest level and has only 2 cache misses.
+    assert cache.misses in (2, 4)
+    assert cache.hits == 18
 
 
 if __name__ == '__main__':

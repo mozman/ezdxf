@@ -9,8 +9,9 @@ if TYPE_CHECKING:
 
 
 class Cache:
-    def __init__(self):
+    def __init__(self, uuid=False):
         self._boxes: Dict[str, BoundingBox] = dict()
+        self._use_uuid = bool(uuid)
         self.hits: int = 0
         self.misses: int = 0
 
@@ -65,7 +66,7 @@ class Cache:
 
         key = entity.dxf.handle
         if key is None or key == '0':
-            return None
+            return str(entity.uuid) if self._use_uuid else None
         else:
             return key
 
