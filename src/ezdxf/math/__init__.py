@@ -10,6 +10,8 @@ from ._ctypes import (
     intersection_line_line_2d, intersection_ray_ray_3d, arc_angle_span_deg
 )
 
+from ._bezier3p import Bezier3P
+
 from .construct2d import (
     is_close_points, closest_point, convex_hull_2d,
     distance_point_line_2d, is_point_on_line_2d, is_point_in_polygon_2d,
