@@ -57,6 +57,13 @@ until deactivated::
     the matplotlib font support adds **runtime overhead** at the first
     usage of any of the text related primitives.
 
+.. seealso::
+
+    Global option to add system fonts to available matplotlib fonts
+    :attr:`ezdxf.options.load_system_fonts`  and global option
+    :attr:`ezdxf.options.path_to_fonts_json` to cache font properties of the
+    current system in an external ``"fonts.json"``.
+
 Install matplotlib from command line::
 
     pip3 install matplotlib

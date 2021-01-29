@@ -20,7 +20,7 @@ Global options stored in :mod:`ezdxf.options`
     exception will be raised sooner or later.
     Default is ``False``
 
-.. attribute:: load_system_font
+.. attribute:: load_system_fonts
 
     Load also system fonts if matplotlib font support is activated.
     This may take a while and does not improve the calculations, if the
@@ -31,7 +31,7 @@ Global options stored in :mod:`ezdxf.options`
     The ``fonts.json`` file is extendable see next option:
     :attr:`path_to_fonts_json`
 
-.. attribute:: self.path_to_fonts_json
+.. attribute:: path_to_fonts_json
 
     Set path to an external stored ``fonts.json`` file: e.g. ``"~/.ezdxf"`` do
     not include ``fonts.json``.
