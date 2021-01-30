@@ -22,6 +22,10 @@ try:
             "src/ezdxf/acc/bezier4p.pyx",
             "src/ezdxf/acc/_cpp_cubic_bezier.cpp",
         ], optional=True, language='c++'),
+        Extension("ezdxf.acc.bezier3p", [
+            "src/ezdxf/acc/bezier3p.pyx",
+            "src/ezdxf/acc/_cpp_quad_bezier.cpp",
+        ], optional=True, language='c++'),
         Extension("ezdxf.acc.construct", [
             "src/ezdxf/acc/construct.pyx",
         ], optional=True, language='c++'),

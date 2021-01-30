@@ -5,8 +5,8 @@
 from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
 from .vector cimport (
-Vec3, isclose, v3_dist, v3_from_angle, normalize_rad_angle,
-normalize_deg_angle, v3_from_cpp_vec3,
+    Vec3, isclose, v3_dist, v3_from_angle, normalize_rad_angle,
+    v3_from_cpp_vec3,
 )
 from .matrix44 cimport Matrix44
 from libc.math cimport ceil, tan
