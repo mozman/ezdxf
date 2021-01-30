@@ -5,6 +5,7 @@ from collections import abc
 from enum import Enum
 import warnings
 import math
+import itertools
 from ezdxf.math import (
     Vec3, NULLVEC, Z_AXIS, OCS, Bezier3P, Bezier4P, Matrix44, bulge_to_arc,
     cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
@@ -24,6 +25,7 @@ AnyBezier = Union[Bezier4P, Bezier3P]
 
 
 class Command(Enum):
+    START_PATH = -1  # external command, not use in Path()
     LINE_TO = 1  # (LINE_TO, end vertex)
     CURVE3_TO = 2  # (CURVE3_TO, end vertex, ctrl) quadratic bezier
     CURVE4_TO = 3  # (CURVE4_TO, end vertex, ctrl1, ctrl2) cubic bezier
@@ -888,3 +890,54 @@ def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
     except KeyError:
         raise TypeError(f'Unsupported DXF type {dxftype}')
     return converter(e, segments=segments, level=level)
+
+
+def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
+    """ Transform multiple :class:`Path` objects at once. Returns a list of
+    the transformed :class:`Path` objects.
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        m: transformation matrix of type :class:`~ezdxf.math.Matrix44`
+
+    """
+
+    def decompose(path: Path):
+        vertices.append(path.start)
+        commands.append(Command.START_PATH)
+        for cmd in path:
+            commands.extend(itertools.repeat(cmd.type, len(cmd)))
+            vertices.extend(cmd)
+
+    def rebuild(vertices):
+        path = None
+        collect = []
+        for vertex, cmd in zip(vertices, commands):
+            if cmd == Command.START_PATH:
+                if path is not None:
+                    transformed_paths.append(path)
+                path = Path(vertex)
+            elif cmd == Command.LINE_TO:
+                path.line_to(vertex)
+            elif cmd == Command.CURVE3_TO:
+                collect.append(vertex)
+                if len(collect) == 2:
+                    path.curve3_to(collect[0], collect[1])
+                    collect.clear()
+            elif cmd == Command.CURVE4_TO:
+                collect.append(vertex)
+                if len(collect) == 3:
+                    path.curve4_to(collect[0], collect[1], collect[2])
+                    collect.clear()
+        if path is not None:
+            transformed_paths.append(path)
+
+    vertices = []
+    commands = []
+    transformed_paths = []
+
+    for path in paths:
+        decompose(path)
+    if len(commands):
+        rebuild(m.transform_vertices(vertices))
+    return transformed_paths

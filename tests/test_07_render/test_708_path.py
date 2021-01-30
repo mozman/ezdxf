@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 import math
-from ezdxf.render.path import Path, Command, make_path
+from ezdxf.render.path import Path, Command, make_path, transform_paths
 from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P
 from ezdxf.entities.hatch import PolylinePath, EdgePath
 from ezdxf.entities import factory
@@ -534,6 +534,107 @@ def edge_path():
 def test_from_edge_path(edge_path):
     path = Path.from_hatch_edge_path(edge_path)
     assert len(path) == 19
+
+
+class TestTransformPaths():
+    def test_empty_paths(self):
+        result = transform_paths([], Matrix44())
+        assert len(result) == 0
+
+    def test_start_point_only_paths(self):
+        result = transform_paths([Path((1, 2, 3))], Matrix44())
+        assert len(result) == 1
+        assert len(result[0]) == 0
+        assert result[0].start == (1, 2, 3)
+
+    def test_transformation_is_executed(self):
+        # Real transformation is just tested once, because Matrix44
+        # transformation is tested in 605:
+        result = transform_paths([Path((1, 2, 3))], Matrix44.translate(1, 1, 1))
+        assert result[0].start == (2, 3, 4)
+
+    def test_one_path_line_to(self):
+        path = Path()
+        path.line_to((1, 0))
+        result = transform_paths([path], Matrix44())
+        path0 = result[0]
+        assert path0[0].type == Command.LINE_TO
+        assert path0.start == (0, 0)
+        assert path0.end == (1, 0)
+
+    def test_one_path_curve3_to(self):
+        path = Path()
+        path.curve3_to((2, 0), (1, 1))
+        result = transform_paths([path], Matrix44())
+        path0 = result[0]
+        assert path0[0].type == Command.CURVE3_TO
+        assert len(path0[0]) == 2
+        assert path0.start == (0, 0)
+        assert path0.end == (2, 0)
+
+    def test_one_path_curve4_to(self):
+        path = Path()
+        path.curve4_to((2, 0), (0, 1), (2, 1))
+        result = transform_paths([path], Matrix44())
+        path0 = result[0]
+        assert path0[0].type == Command.CURVE4_TO
+        assert len(path0[0]) == 3
+        assert path0.start == (0, 0)
+        assert path0.end == (2, 0)
+
+    def test_one_path_multiple_command(self):
+        path = Path()
+        path.line_to((1, 0))
+        path.curve3_to((2, 0), (2.5, 1))
+        path.curve4_to((3, 0), (2, 1), (3, 1))
+        result = transform_paths([path], Matrix44())
+
+        path0 = result[0]
+        assert path0[0].type == Command.LINE_TO
+        assert path0[1].type == Command.CURVE3_TO
+        assert path0[2].type == Command.CURVE4_TO
+        assert path0.start == (0, 0)
+        assert path0.end == (3, 0)
+
+    def test_two_paths_one_command(self):
+        path_a = Path()
+        path_a.line_to((1, 0))
+        path_b = Path((2, 0))
+        path_b.line_to((3, 0))
+        result = transform_paths([path_a, path_b], Matrix44())
+
+        path0 = result[0]
+        assert path0[0].type == Command.LINE_TO
+        assert path0.start == (0, 0)
+        assert path0.end == (1, 0)
+
+        path1 = result[1]
+        assert path1[0].type == Command.LINE_TO
+        assert path1.start == (2, 0)
+        assert path1.end == (3, 0)
+
+    def test_two_paths_multiple_commands(self):
+        path_a = Path()
+        path_a.line_to((1, 0))
+        path_a.curve3_to((2, 0), (2.5, 1))
+        path_a.curve4_to((3, 0), (2, 1), (3, 1))
+
+        path_b = path_a.transform(Matrix44.translate(4, 0, 0))
+        result = transform_paths([path_a, path_b], Matrix44())
+
+        path0 = result[0]
+        assert path0[0].type == Command.LINE_TO
+        assert path0[1].type == Command.CURVE3_TO
+        assert path0[2].type == Command.CURVE4_TO
+        assert path0.start == (0, 0)
+        assert path0.end == (3, 0)
+
+        path1 = result[1]
+        assert path1[0].type == Command.LINE_TO
+        assert path1[1].type == Command.CURVE3_TO
+        assert path1[2].type == Command.CURVE4_TO
+        assert path1.start == (4, 0)
+        assert path1.end == (7, 0)
 
 
 if __name__ == '__main__':

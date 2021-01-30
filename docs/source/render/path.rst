@@ -49,6 +49,8 @@ infinite nature.
 
 .. autofunction:: make_path
 
+.. autofunction:: transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]
+
 .. class:: Path
 
     .. autoattribute:: start
