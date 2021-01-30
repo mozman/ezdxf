@@ -13,21 +13,25 @@ Minimum common interface:
     - matplotlib.path.Path() codes:
     - MOVETO
     - LINETO
+    - CURVE3 - quadratic Bèzier-curve
     - CURVE4 - cubic Bèzier-curve
 
 - PyQt: `QPainterPath`_
     - moveTo()
     - lineTo()
+    - quadTo() - quadratic Bèzier-curve
     - cubicTo() - cubic Bèzier-curve
 
 - PyCairo: `Context`_
     - move_to()
     - line_to()
+    - no support for quadratic Bèzier-curve
     - curve_to() - cubic Bèzier-curve
 
 - SVG: `SVG-Path`_
     - "M" - absolute move to
     - "L" - absolute line to
+    - "Q" - absolute quadratic Bèzier-curve
     - "C" - absolute cubic Bèzier-curve
 
 ARC and ELLIPSE entities are approximated by multiple cubic Bézier-curves, which
@@ -59,7 +63,9 @@ infinite nature.
 
     .. automethod:: line_to(location: Vec3)
 
-    .. automethod:: curve_to(location: Vec3, ctrl1: Vec3, ctrl2: Vec3)
+    .. automethod:: curve3_to(location: Vec3, ctrl: Vec3)
+
+    .. automethod:: curve4_to(location: Vec3, ctrl1: Vec3, ctrl2: Vec3)
 
     .. automethod:: close
 
@@ -71,7 +77,9 @@ infinite nature.
 
     .. automethod:: counter_clockwise() -> Path
 
-    .. automethod:: add_curves(curves: Iterable[Bezier4P])
+    .. automethod:: add_curves3(curves: Iterable[Bezier3P])
+
+    .. automethod:: add_curves4(curves: Iterable[Bezier4P])
 
     .. automethod:: add_ellipse(ellipse: ConstructionEllipse, segments=1)
 
@@ -104,6 +112,6 @@ infinite nature.
     .. automethod:: from_circle
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
-.. _QPainterPath: https://doc.qt.io/qtforpython/PySide2/QtGui/QPainterPath.html
+.. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
 .. _SVG-Path: https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
 .. _Context: https://pycairo.readthedocs.io/en/latest/reference/context.html

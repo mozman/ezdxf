@@ -10,6 +10,7 @@ Version 0.16 - dev
 - NEW: support module `bbox`, see [docs](https://ezdxf.mozman.at/docs/bbox.html)
 - NEW: get clipping path from VIEWPORT entities by `make_path()`
 - NEW: `ezdxf.math.Bezier3P`, optimized quadratic Bézier curve construction tool 
+- NEW: quadratic Bézier curve support for the `Path()` class 
 - DEPRECATED: `Path.from_lwpolyline()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_polyline()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_spline()`, replaced by factory `make_path()`

@@ -6,7 +6,7 @@ from enum import Enum
 import warnings
 import math
 from ezdxf.math import (
-    Vec3, NULLVEC, Z_AXIS, OCS, Bezier4P, Matrix44, bulge_to_arc,
+    Vec3, NULLVEC, Z_AXIS, OCS, Bezier3P, Bezier4P, Matrix44, bulge_to_arc,
     cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
     has_clockwise_orientation, global_bspline_interpolation,
 )
@@ -20,11 +20,13 @@ if TYPE_CHECKING:
 
 __all__ = ['Path', 'Command', 'make_path', 'has_path_support']
 
+AnyBezier = Union[Bezier4P, Bezier3P]
+
 
 class Command(Enum):
     LINE_TO = 1  # (LINE_TO, end vertex)
-    CURVE4_TO = 2  # (CURVE4_TO, end vertex, ctrl1, ctrl2) cubic bezier
-    CURVE3_TO = 3  # (CURVE3_TO, end vertex, ctrl1) quadratic bezier
+    CURVE3_TO = 2  # (CURVE3_TO, end vertex, ctrl) quadratic bezier
+    CURVE4_TO = 3  # (CURVE4_TO, end vertex, ctrl1, ctrl2) cubic bezier
 
 
 class LineTo(NamedTuple):
@@ -36,6 +38,21 @@ class LineTo(NamedTuple):
 
     def to_wcs(self, ocs: OCS, elevation: float):
         return LineTo(end=ocs.to_wcs(self.end.replace(z=elevation)))
+
+
+class Curve3To(NamedTuple):
+    end: Vec3
+    ctrl: Vec3
+
+    @property
+    def type(self):
+        return Command.CURVE3_TO
+
+    def to_wcs(self, ocs: OCS, elevation: float):
+        return Curve3To(
+            end=ocs.to_wcs(self.end.replace(z=elevation)),
+            ctrl=ocs.to_wcs(self.ctrl.replace(z=elevation)),
+        )
 
 
 class Curve4To(NamedTuple):
@@ -55,22 +72,7 @@ class Curve4To(NamedTuple):
         )
 
 
-class Curve3To(NamedTuple):
-    end: Vec3
-    ctrl1: Vec3
-
-    @property
-    def type(self):
-        return Command.CURVE3_TO
-
-    def to_wcs(self, ocs: OCS, elevation: float):
-        return Curve3To(
-            end=ocs.to_wcs(self.end.replace(z=elevation)),
-            ctrl1=ocs.to_wcs(self.ctrl1.replace(z=elevation)),
-        )
-
-
-PathElement = Union[LineTo, Curve4To, Curve3To]
+PathElement = Union[LineTo, Curve3To, Curve4To]
 
 
 class Path(abc.Sequence):
@@ -361,6 +363,9 @@ class Path(abc.Sequence):
             for cmd in self._commands:
                 if cmd.type == Command.LINE_TO:
                     yield cmd.end
+                elif cmd.type == Command.CURVE3_TO:
+                    yield cmd.ctrl
+                    yield cmd.end
                 elif cmd.type == Command.CURVE4_TO:
                     yield cmd.ctrl1
                     yield cmd.ctrl2
@@ -377,14 +382,22 @@ class Path(abc.Sequence):
         """
         self._commands.append(LineTo(end=Vec3(location)))
 
-    def curve_to(self, location: 'Vertex', ctrl1: 'Vertex',
-                 ctrl2: 'Vertex') -> None:
+    def curve3_to(self, location: 'Vertex', ctrl: 'Vertex') -> None:
+        """ Add a quadratic Bèzier-curve from actual path end point to
+        `location`, `ctrl` is the control point for the quadratic Bèzier-curve.
+        """
+        self._commands.append(Curve3To(end=Vec3(location), ctrl=Vec3(ctrl)))
+
+    def curve4_to(self, location: 'Vertex', ctrl1: 'Vertex',
+                  ctrl2: 'Vertex') -> None:
         """ Add a cubic Bèzier-curve from actual path end point to `location`,
         `ctrl1` and `ctrl2` are the control points for the cubic Bèzier-curve.
         """
         self._commands.append(Curve4To(
             end=Vec3(location), ctrl1=Vec3(ctrl1), ctrl2=Vec3(ctrl2))
         )
+
+    curve_to = curve4_to  # TODO: 2021-01-30, remove compatibility alias
 
     def close(self) -> None:
         """ Close path by adding a line segment from the end point to the start
@@ -410,8 +423,10 @@ class Path(abc.Sequence):
 
             if cmd.type == Command.LINE_TO:
                 path.line_to(prev_end)
+            elif cmd.type == Command.CURVE3_TO:
+                path.curve3_to(prev_end, cmd.ctrl)
             elif cmd.type == Command.CURVE4_TO:
-                path.curve_to(prev_end, cmd.ctrl2, cmd.ctrl1)
+                path.curve4_to(prev_end, cmd.ctrl2, cmd.ctrl1)
         return path
 
     def clockwise(self) -> 'Path':
@@ -428,7 +443,7 @@ class Path(abc.Sequence):
         else:
             return self.clone()
 
-    def add_curves(self, curves: Iterable[Bezier4P]) -> None:
+    def add_curves4(self, curves: Iterable[Bezier4P]) -> None:
         """ Add multiple cubic Bèzier-curves to the path.
 
         Auto-detect if the path end point is connected to the start- or
@@ -448,7 +463,31 @@ class Path(abc.Sequence):
             start, ctrl1, ctrl2, end = curve.control_points
             if not start.isclose(self.end, abs_tol=1e-9):
                 self.line_to(start)
-            self.curve_to(end, ctrl1, ctrl2)
+            self.curve4_to(end, ctrl1, ctrl2)
+
+    add_curves = add_curves4  # TODO: 2021-01-30, remove compatibility alias
+
+    def add_curves3(self, curves: Iterable[Bezier3P]) -> None:
+        """ Add multiple quadratic Bèzier-curves to the path.
+
+        Auto-detect if the path end point is connected to the start- or
+        end point of the curves, if none of them is close to the path end point
+        a line from the path end point to the curves start point will be added.
+
+        """
+        curves = list(curves)
+        if not len(curves):
+            return
+        end = curves[-1].control_points[-1]
+        if self.end.isclose(end):
+            # connect to new curves end point
+            curves = _reverse_bezier_curves(curves)
+
+        for curve in curves:
+            start, ctrl, end = curve.control_points
+            if not start.isclose(self.end, abs_tol=1e-9):
+                self.line_to(start)
+            self.curve3_to(end, ctrl)
 
     def add_2d_polyline(self, points: Iterable[Sequence[float]], close: bool,
                         ocs: OCS, elevation: float) -> None:
@@ -468,7 +507,7 @@ class Path(abc.Sequence):
             cp0 = curve0.control_points[0]
             if cp0.isclose(p2):
                 curves = _reverse_bezier_curves(curves)
-            self.add_curves(curves)
+            self.add_curves4(curves)
 
         prev_point = None
         prev_bulge = 0
@@ -507,7 +546,7 @@ class Path(abc.Sequence):
 
         Auto-detect connection point, if none is close a line from the path
         end point to the ellipse start point will be added
-        (see :meth:`add_curves`).
+        (see :meth:`add_curves4`).
 
         By default the start of an **empty** path is set to the start point of
         the ellipse, setting argument `reset` to ``False`` prevents this
@@ -525,7 +564,7 @@ class Path(abc.Sequence):
             return
         if len(self) == 0 and reset:
             self.start = ellipse.start_point
-        self.add_curves(
+        self.add_curves4(
             cubic_bezier_from_ellipse(ellipse, segments)
         )
 
@@ -538,7 +577,7 @@ class Path(abc.Sequence):
 
         Auto-detect connection point, if none is close a line from the path
         end point to the spline start point will be added
-        (see :meth:`add_curves`).
+        (see :meth:`add_curves4`).
 
         By default the start of an **empty** path is set to the start point of
         the spline, setting argument `reset` to ``False`` prevents this
@@ -557,7 +596,7 @@ class Path(abc.Sequence):
                       spline.bezier_decomposition()]
         else:
             curves = spline.cubic_bezier_approximation(level=level)
-        self.add_curves(curves)
+        self.add_curves4(curves)
 
     def approximate(self, segments: int = 20) -> Iterable[Vec3]:
         """ Approximate path by vertices, `segments` is the count of
@@ -568,10 +607,13 @@ class Path(abc.Sequence):
 
         """
 
-        def approx_curve(s, c1, c2, e) -> Iterable[Vec3]:
+        def approx_curve3(s, c, e) -> Iterable[Vec3]:
+            return Bezier3P((s, c, e)).approximate(segments)
+
+        def approx_curve4(s, c1, c2, e) -> Iterable[Vec3]:
             return Bezier4P((s, c1, c2, e)).approximate(segments)
 
-        yield from self._approximate(approx_curve)
+        yield from self._approximate(approx_curve3, approx_curve4)
 
     def flattening(self, distance: float,
                    segments: int = 16) -> Iterable[Vec3]:
@@ -593,12 +635,15 @@ class Path(abc.Sequence):
 
         """
 
-        def approx_curve(s, c1, c2, e) -> Iterable[Vec3]:
+        def approx_curve3(s, c, e) -> Iterable[Vec3]:
+            return Bezier3P((s, c, e)).flattening(distance, segments)
+
+        def approx_curve4(s, c1, c2, e) -> Iterable[Vec3]:
             return Bezier4P((s, c1, c2, e)).flattening(distance, segments)
 
-        yield from self._approximate(approx_curve)
+        yield from self._approximate(approx_curve3, approx_curve4)
 
-    def _approximate(self, approx_curve) -> Iterable[Vec3]:
+    def _approximate(self, approx_curve3, approx_curve4) -> Iterable[Vec3]:
         if not self._commands:
             return
 
@@ -609,9 +654,15 @@ class Path(abc.Sequence):
             end_location = cmd.end
             if cmd.type == Command.LINE_TO:
                 yield end_location
+            elif cmd.type == Command.CURVE3_TO:
+                pts = iter(
+                    approx_curve3(start, cmd.ctrl, end_location)
+                )
+                next(pts)  # skip first vertex
+                yield from pts
             elif cmd.type == Command.CURVE4_TO:
                 pts = iter(
-                    approx_curve(start, cmd.ctrl1, cmd.ctrl2, end_location)
+                    approx_curve4(start, cmd.ctrl1, cmd.ctrl2, end_location)
                 )
                 next(pts)  # skip first vertex
                 yield from pts
@@ -631,18 +682,23 @@ class Path(abc.Sequence):
 
             if cmd.type == Command.LINE_TO:
                 new_path.line_to(m.transform(cmd.end))
+            elif cmd.type == Command.CURVE3_TO:
+                loc, ctrl = m.transform_vertices(
+                    (cmd.end, cmd.ctrl)
+                )
+                new_path.curve3_to(loc, ctrl)
             elif cmd.type == Command.CURVE4_TO:
                 loc, ctrl1, ctrl2 = m.transform_vertices(
                     (cmd.end, cmd.ctrl1, cmd.ctrl2)
                 )
-                new_path.curve_to(loc, ctrl1, ctrl2)
+                new_path.curve4_to(loc, ctrl1, ctrl2)
             else:
                 raise ValueError(f'Invalid command: {cmd.type}')
 
         return new_path
 
 
-def _reverse_bezier_curves(curves: List[Bezier4P]) -> List[Bezier4P]:
+def _reverse_bezier_curves(curves: List[AnyBezier]) -> List[AnyBezier]:
     curves = list(c.reverse() for c in curves)
     curves.reverse()
     return curves

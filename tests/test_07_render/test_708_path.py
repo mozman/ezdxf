@@ -3,7 +3,7 @@
 import pytest
 import math
 from ezdxf.render.path import Path, Command, make_path
-from ezdxf.math import Vec3, Matrix44, Bezier4P
+from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P
 from ezdxf.entities.hatch import PolylinePath, EdgePath
 from ezdxf.entities import factory
 
@@ -27,35 +27,68 @@ def test_line_to():
     assert path.end == (1, 2, 3)
 
 
-def test_curve_to():
+def test_curve3_to():
     path = Path()
-    path.curve_to((1, 2, 3), (0, 1, 0), (0, 2, 0))
+    path.curve3_to((10, 0), (5, 5))
+    assert path[0] == ((10, 0), (5, 5))
+    assert path.end == (10, 0)
+
+
+def test_curve4_to():
+    path = Path()
+    path.curve4_to((1, 2, 3), (0, 1, 0), (0, 2, 0))
     assert path[0] == ((1, 2, 3), (0, 1, 0), (0, 2, 0))
     assert path.end == (1, 2, 3)
 
 
-def test_add_curves():
+def test_add_curves3():
     path = Path()
-    c1 = Bezier4P(((0, 0, 0), (0, 1, 0), (2, 1, 0), (2, 0, 0)))
-    c2 = Bezier4P(((2, 0, 0), (2, -1, 0), (0, -1, 0), (0, 0, 0)))
-    path.add_curves([c1, c2])
+    c1 = Bezier3P(((0, 0), (1, 1), (2, 0)))
+    c2 = Bezier3P(((2, 0), (1, -1), (0, 0)))
+    path.add_curves3([c1, c2])
     assert len(path) == 2
-    assert path.end == (0, 0, 0)
+    assert path.end == (0, 0)
 
 
-def test_add_curves_with_gap():
+def test_add_curves4():
+    path = Path()
+    c1 = Bezier4P(((0, 0), (0, 1), (2, 1), (2, 0)))
+    c2 = Bezier4P(((2, 0), (2, -1), (0, -1), (0, 0)))
+    path.add_curves4([c1, c2])
+    assert len(path) == 2
+    assert path.end == (0, 0)
+
+
+def test_add_curves3_with_gap():
+    path = Path()
+    c1 = Bezier3P(((0, 0), (1, 1), (2, 0)))
+    c2 = Bezier3P(((2, -1), (3, -2), (0, -1)))
+    path.add_curves3([c1, c2])
+    assert len(path) == 3  # added a line segment between curves
+    assert path.end == (0, -1)
+
+
+def test_add_curves4_with_gap():
     path = Path()
     c1 = Bezier4P(((0, 0, 0), (0, 1, 0), (2, 1, 0), (2, 0, 0)))
     c2 = Bezier4P(((2, -1, 0), (2, -2, 0), (0, -2, 0), (0, -1, 0)))
-    path.add_curves([c1, c2])
+    path.add_curves4([c1, c2])
     assert len(path) == 3  # added a line segment between curves
     assert path.end == (0, -1, 0)
 
 
-def test_add_curves_reverse():
+def test_add_curves3_reverse():
+    path = Path(start=(0, 0))
+    c1 = Bezier3P(((2, 0), (1, 1), (0, 0)))
+    path.add_curves3([c1])
+    assert len(path) == 1
+    assert path.end == (2, 0, 0)
+
+
+def test_add_curves4_reverse():
     path = Path(start=(0, 0, 0))
     c1 = Bezier4P(((2, 0, 0), (2, 1, 0), (0, 1, 0), (0, 0, 0)))
-    path.add_curves([c1])
+    path.add_curves4([c1])
     assert len(path) == 1
     assert path.end == (2, 0, 0)
 
@@ -276,7 +309,7 @@ def test_polyine_with_bulges():
     assert any(cmd.type == Command.CURVE4_TO for cmd in path)
 
 
-def test_3d_polyine():
+def test_3d_polyline():
     from ezdxf.entities import Polyline
     pline = Polyline.new(dxfattribs={'flags': Polyline.POLYLINE_3D})
     pline.append_vertices([(1, 1, 1), (2, 1, 3), (2, 2, 2)])
@@ -298,11 +331,12 @@ def test_approximate_lines():
 
 def test_approximate_curves():
     path = Path()
-    path.curve_to((2, 0), (0, 1), (2, 1))
-    vertices = list(path.approximate(10))
-    assert len(vertices) == 11
+    path.curve3_to((2, 0), (1, 1))
+    path.curve4_to((3, 0), (2, 1), (3, 1))
+    vertices = list(path.approximate(20))
+    assert len(vertices) == 41
     assert vertices[0] == (0, 0)
-    assert vertices[-1] == (2, 0)
+    assert vertices[-1] == (3, 0)
 
 
 def test_path_from_hatch_polyline_path_without_bulge():
@@ -340,7 +374,8 @@ def test_path_from_hatch_polyline_path_with_bulge():
 def p1():
     path = Path()
     path.line_to((2, 0))
-    path.curve_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
+    path.curve4_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
+    path.curve3_to((6, 0), (5, -1))  # end, ctrl
     return path
 
 
@@ -356,11 +391,10 @@ def test_path_cloning(p1):
 
 
 def test_approximate_line_curves(p1):
-    vertices = list(p1.approximate(10))
-    assert len(vertices) == 12
+    vertices = list(p1.approximate(20))
+    assert len(vertices) == 42
     assert vertices[0] == (0, 0)
-    assert vertices[1] == (2, 0)
-    assert vertices[-1] == (4, 0)
+    assert vertices[-1] == (6, 0)
 
 
 def test_transform(p1):
@@ -370,12 +404,18 @@ def test_transform(p1):
     assert p2[1].end == (5, 1)  # cubic to location
     assert p2[1].ctrl1 == (3, 2)  # cubic ctrl1
     assert p2[1].ctrl2 == (5, 2)  # cubic ctrl2
-    assert p2.end == (5, 1)
+    assert p2[2].end == (7, 1)  # quadratic to location
+    assert p2[2].ctrl == (6, 0)  # quadratic ctrl
+    assert p2.end == (7, 1)
 
 
 def test_control_vertices(p1):
     vertices = list(p1.control_vertices())
-    assert vertices == Vec3.list([(0, 0), (2, 0), (2, 1), (4, 1), (4, 0)])
+    assert vertices == Vec3.list([
+        (0, 0),
+        (2, 0), (2, 1), (4, 1), (4, 0),
+        (5, -1), (6, 0)
+    ])
     path = Path()
     assert len(list(path.control_vertices())) == 0
     path = Path.from_vertices([(0, 0), (1, 0)])
@@ -390,7 +430,7 @@ def test_has_clockwise_orientation():
 
     path = Path()
     path.line_to((2, 0))
-    path.curve_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
+    path.curve4_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
     assert path.has_clockwise_orientation() is True
 
 
@@ -406,9 +446,16 @@ def test_reversing_one_line():
     assert p2 == [(1, 0), (0, 0)]
 
 
-def test_reversing_one_curve():
+def test_reversing_one_curve3():
     p = Path()
-    p.curve_to((3, 0), (1, 1), (2, 1))
+    p.curve3_to((3, 0), (1.5, 1))
+    p2 = list(p.reversed().control_vertices())
+    assert p2 == [(3, 0), (1.5, 1), (0, 0)]
+
+
+def test_reversing_one_curve4():
+    p = Path()
+    p.curve4_to((3, 0), (1, 1), (2, 1))
     p2 = list(p.reversed().control_vertices())
     assert p2 == [(3, 0), (2, 1), (1, 1), (0, 0)]
 
