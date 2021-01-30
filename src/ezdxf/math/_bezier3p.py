@@ -1,16 +1,13 @@
 # Copyright (c) 2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Union, Sequence, Tuple
+from typing import TYPE_CHECKING, Iterable, Union, Sequence
 import math
-from functools import lru_cache
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
 from ._vector import Vec3, Vec2
 from ._matrix44 import Matrix44
-from ._construct import arc_angle_span_deg
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
-    from ezdxf.math.ellipse import ConstructionEllipse
 
 __all__ = ['Bezier3P']
 
@@ -20,35 +17,9 @@ def check_if_in_valid_range(t: float):
         raise ValueError("t not in range [0 to 1]")
 
 
-# Optimization:
-# cubic P(t) = (1-t)^3*P0 + 3*(1-t)^2*t*P1 + 3*(1-t)*t^2*P2 + t^3*P3
-# cubic P(t) = a*P0 + b*P1 + c*P2 + d*P3
-# a, b, c, d = bernstein3(t) ... cached
-@lru_cache(maxsize=300)
-def bernstein2(t: float) -> Sequence[float]:
-    """ Bernstein polynom of 2nd degree. """
-    _1_minus_t = 1.0 - t
-    a = _1_minus_t * _1_minus_t
-    b = 2.0 * t * _1_minus_t
-    c = t * t
-    return a, b, c
-
-
-@lru_cache(maxsize=300)
-def bernstein2_d1(t: float) -> Sequence[float]:
-    """ First derivative of Bernstein polynom of 2nd degree. """
-    a = -2.0 * (1.0 - t)
-    b = 2 - 4 * t
-    c = 2 * t
-    return a, b, c
-
-
 class Bezier3P:
     """ Implements an optimized quadratic `Bézier curve`_ for exact 3 control
     points.
-
-    A `Bézier curve`_ is a parametric curve, parameter `t` goes from 0 to 1,
-    where 0 is the first control point and 1 is the fourth control point.
 
     Special behavior:
 
@@ -114,6 +85,18 @@ class Bezier3P:
             yield self._get_curve_point(delta_t * segment)
         yield self._control_points[2]
 
+    def approximated_length(self, segments: int = 128) -> float:
+        """ Returns estimated length of Bèzier-curve as approximation by line
+        `segments`.
+        """
+        length = 0.
+        prev_point = None
+        for point in self.approximate(segments):
+            if prev_point is not None:
+                length += prev_point.distance(point)
+            prev_point = point
+        return length
+
     def flattening(self, distance: float,
                    segments: int = 4) -> Iterable[Union[Vec3, Vec2]]:
         """ Adaptive recursive flattening. The argument `segments` is the
@@ -164,7 +147,6 @@ class Bezier3P:
         b = 2.0 * t * _1_minus_t
         c = t * t
         return p0 * a + p1 * b + p2 * c
-        # return p1 + (p0 - p1) * (t2 - 2.0 * t + 1.0) + (p2 - p1) * t2
 
     def _get_curve_tangent(self, t: float) -> Union[Vec3, Vec2]:
         p0, p1, p2 = self._control_points
@@ -172,7 +154,6 @@ class Bezier3P:
         b = 2.0 - 4.0 * t
         c = 2.0 * t
         return p0 * a + p1 * b + p2 * c
-        # return (p1 - p0) * (2.0 * (1.0 - t)) + (p2 - p1) * (2.0 * t)
 
     def reverse(self) -> 'Bezier3P':
         """ Returns a new Bèzier-curve with reversed control point order. """

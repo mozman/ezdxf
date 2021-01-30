@@ -935,6 +935,27 @@ Bezier4P
 
     .. automethod:: tangent(t: float) -> Union[Vec3, Vec2]
 
+Bezier3P
+--------
+
+.. autoclass:: Bezier3P
+
+    .. autoattribute:: control_points
+
+    .. automethod:: reverse() -> Bezier3P
+
+    .. automethod:: transform(m: Matrix44) -> Bezier3P
+
+    .. automethod:: approximate(segments: int) -> Iterable[Union[Vec3, Vec2]]
+
+    .. automethod:: flattening(distance: float, segments: int=4) -> Iterable[Union[Vec3, Vec2]]
+
+    .. automethod:: approximated_length
+
+    .. automethod:: point(t: float) -> Union[Vec3, Vec2]
+
+    .. automethod:: tangent(t: float) -> Union[Vec3, Vec2]
+
 
 
 BezierSurface
