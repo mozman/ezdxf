@@ -241,7 +241,6 @@ def get_font_measurements(ttf_path: str, map_shx=True) -> 'FontMeasurements':
         ttf_path = resolve_shx_font_name(ttf_path)
     m = font_measurement_cache.get(db_key(ttf_path))
     if m is None:
-        print(f'font measurement cache miss: {ttf_path}')
         m = FontMeasurements(
             baseline=0,
             cap_height=1,
