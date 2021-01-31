@@ -337,13 +337,6 @@ class FontMeasurements(NamedTuple):
     x_height: float
     descender_height: float
 
-    def __eq__(self, other):
-        return (isinstance(other, FontMeasurements) and
-                self.baseline == other.baseline and
-                self.cap_height == other.cap_height and
-                self.x_height == other.x_height and
-                self.descender_height == other.descender_height)
-
     def scale(self, factor: float = 1.0) -> 'FontMeasurements':
         return FontMeasurements(
             self.baseline * factor,
