@@ -236,6 +236,18 @@ def get_font_face(ttf_path: str, map_shx=True) -> FontFace:
         return font
 
 
+def get_font_measurements(ttf_path: str) -> 'FontMeasurements':
+    m = font_measurement_cache.get(ttf_path)
+    if m is None:
+        m = FontMeasurements(
+            baseline=0,
+            cap_height=1,
+            x_height=X_HEIGHT_FACTOR,
+            descender_height=DESCENDER_FACTOR
+        )
+    return m
+
+
 def get_cache_file_path(path, name: str = FONT_FACE_CACHE_FILE) -> Path:
     if path is None and options.font_cache_directory:
         path = Path(options.font_cache_directory).expanduser()
@@ -244,8 +256,10 @@ def get_cache_file_path(path, name: str = FONT_FACE_CACHE_FILE) -> Path:
     return path / name
 
 
-def load(path=None):
+def load(path=None, reload=False):
     global font_face_cache, font_measurement_cache
+    if len(font_face_cache) and reload is False:
+        return
     p = get_cache_file_path(path, FONT_FACE_CACHE_FILE)
     if p.exists():
         font_face_cache = _load_font_faces(p)
@@ -357,15 +371,14 @@ class AbstractFont:
 class MatplotlibFont(AbstractFont):
     def __init__(self, ttf_path: str, cap_height: float = 1.0,
                  width_factor: float = 1.0):
-        from . import _matplotlib_font_support as mpl
-        self._text_renderer = mpl.text_renderer
-        font_face = get_font_face(ttf_path)
-        self._font_properties = mpl.get_font_properties(font_face)
+        from . import _matplotlib_font_support
+        self._support_lib = _matplotlib_font_support
         # unscaled font measurement:
-        font_measurements = self._text_renderer.get_font_measurements(
-            self._font_properties)
+        font_measurements = get_font_measurements(ttf_path)
         super().__init__(font_measurements.scale_from_baseline(cap_height))
+        font_face = get_font_face(ttf_path)
         scale = cap_height / font_measurements.cap_height
+        self._font_properties = self._support_lib.get_font_properties(font_face)
         self._width_factor = width_factor * scale
 
     def text_width(self, text: str) -> float:
@@ -375,7 +388,7 @@ class MatplotlibFont(AbstractFont):
         return max(x for x, y in path.vertices) * self._width_factor
 
     def text_path(self, text: str):
-        return self._text_renderer.get_text_path(
+        return self._support_lib.get_text_path(
             text, self._font_properties)
 
 

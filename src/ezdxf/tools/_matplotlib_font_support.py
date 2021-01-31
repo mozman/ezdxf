@@ -7,13 +7,13 @@ from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontManager
 from . import fonts
 
-# load font face- and font measurement cache included in ezdxf:
-fonts.load()
-
 
 def load_system_fonts() -> Dict[str, fonts.FontFace]:
-    # This is not done automatically, because this may take a long
-    # time and is not important for every user.
+    """ Load system fonts by the FontManager of matplotlib.
+
+    This may take a long time!
+
+    """
     font_faces = dict()
     for entry in FontManager().ttflist:
         ttf = fonts.db_key(entry.fname)
@@ -29,6 +29,7 @@ def load_system_fonts() -> Dict[str, fonts.FontFace]:
 
 @lru_cache(maxsize=256)
 def get_font_properties(font_face: fonts.FontFace) -> FontProperties:
+    """ Returns a matplotlib :class:`FontProperties` object. """
     font_properties = FontProperties()
     if font_face:
         try:
@@ -44,9 +45,15 @@ def get_font_properties(font_face: fonts.FontFace) -> FontProperties:
 
 
 def get_font_measurements(
-        font_properties: FontProperties) -> Optional[fonts.FontMeasurements]:
-    if font_properties is None:
-        raise TypeError('invalid font_properties')
+        font_face: fonts.FontFace) -> Optional[fonts.FontMeasurements]:
+    """ Returns :class:`FontMeasurement` object, calculated by matplotlib.
+
+    Returns ``None`` if the font can't be processed.
+
+    """
+    if font_face is None:
+        raise TypeError('invalid font_face')
+    font_properties = get_font_properties(font_face)
     try:
         upper_x = get_text_path('X', font_properties).vertices[:, 1].tolist()
         lower_x = get_text_path('x', font_properties).vertices[:, 1].tolist()
@@ -65,6 +72,7 @@ def get_font_measurements(
 
 
 def get_text_path(text: str, font: FontProperties) -> TextPath:
+    """ Returns a matplotlib :class:`TextPath` object. """
     return TextPath((0, 0), text.replace('$', '\\$'), size=1, prop=font,
                     usetex=False)
 
@@ -72,23 +80,20 @@ def get_text_path(text: str, font: FontProperties) -> TextPath:
 def build_font_measurement_cache(
         font_faces: Dict[str, fonts.FontFace],
         measurements: Dict[str, fonts.FontMeasurements],
-    ) -> Dict[str, fonts.FontMeasurements]:
-    """ Build font measurement cache for all known TTF fonts.
-
-    This measurements are stored in a global cache file. Building this cache is
-    only necessary if new fonts are added. e.g. add_system_fonts()
-
-    """
+) -> Dict[str, fonts.FontMeasurements]:
+    """ Build font measurement cache for all known TTF fonts. """
     for ttf_path, font_face in font_faces.items():
         if ttf_path not in measurements:
-            font_properties = get_font_properties(font_face)
-            measurement = get_font_measurements(font_properties)
+            measurement = get_font_measurements(font_face)
             if measurement is not None:
                 measurements[ttf_path] = measurement
     return measurements
 
 
 def remove_fonts_without_measurement(font_faces: Dict, measurements: Dict):
+    """ Remove fonts without a measurement from `font_faces` which can not be
+    processed and should be replaced by a default font.
+    """
     names = list(font_faces.keys())
     for name in names:
         if name not in measurements:
