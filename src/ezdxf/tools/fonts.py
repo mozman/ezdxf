@@ -384,12 +384,8 @@ class MatplotlibFont(AbstractFont):
     def text_width(self, text: str) -> float:
         if not text.strip():
             return 0
-        path = self.text_path(text)
-        return max(x for x, y in path.vertices) * self._width_factor
-
-    def text_path(self, text: str):
-        return self._support_lib.get_text_path(
-            text, self._font_properties)
+        path = self._support_lib.get_text_path(text, self._font_properties)
+        return max(path.vertices[:, 0].tolist()) * self._width_factor
 
 
 class MonospaceFont(AbstractFont):

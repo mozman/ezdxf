@@ -71,9 +71,9 @@ def get_font_measurements(
     return measurements
 
 
-def get_text_path(text: str, font: FontProperties) -> TextPath:
+def get_text_path(text: str, font: FontProperties, size=1) -> TextPath:
     """ Returns a matplotlib :class:`TextPath` object. """
-    return TextPath((0, 0), text.replace('$', '\\$'), size=1, prop=font,
+    return TextPath((0, 0), text.replace('$', '\\$'), size=size, prop=font,
                     usetex=False)
 
 
