@@ -37,8 +37,8 @@ Example usage with caching:
     # bounding box of all LINE entities
     second_bbox = bbox.extend(msp.query("LINE"), cache)
 
-Calculation Function
---------------------
+Functions
+---------
 
 .. autofunction:: extends(entities: Iterable[DXFEntity], cache: Cache=None) -> BoundingBox
 
@@ -147,7 +147,7 @@ Using UUID for stable virtual entities leads to more hits::
 But caching virtual entities needs also more memory.
 
 In conclusion: Using a cache is only useful, if you often process
-**nearly the same data**; only the can a performance gain be expected.
+**nearly the same data**; only then can a performance gain be expected.
 
 Cache Class
 -----------
