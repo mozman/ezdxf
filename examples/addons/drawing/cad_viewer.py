@@ -35,7 +35,9 @@ ezdxf.options.load_proxy_graphics = True
 fonts.load()
 
 # Add font definitions available at the running system, requires matplotlib:
-fonts.add_system_fonts()
+# Do this only once for a new ezdxf setup, or if new fonts were added to your
+# system or ezdxf was reinstalled and you do not use external font cache files:
+# fonts.build_system_font_cache()
 
 
 class CADGraphicsView(qw.QGraphicsView):

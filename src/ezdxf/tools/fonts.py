@@ -77,21 +77,23 @@ The :func:`add_system_fonts` function adds all available fonts for the current
 system to the font database.
 
 """
+from typing import Dict, Optional, NamedTuple
 import abc
-from typing import Dict, Optional
 from collections import namedtuple
 import logging
 from pathlib import Path
 import json
 from ezdxf import options
 
-FONT_DATA_FILE = 'fonts.json'
+FONT_FACE_CACHE_FILE = 'font_face_cache.json'
+FONT_MEASUREMENT_CACHE_FILE = 'font_measurement_cache.json'
 logger = logging.getLogger('ezdxf')
 
 FontFace = namedtuple('FontFace', "ttf family style stretch weight")
 
 # Key is TTF font file name without path in lowercase like "arial.ttf":
-fonts: Dict[str, FontFace] = dict()
+font_face_cache: Dict[str, FontFace] = dict()
+font_measurement_cache: Dict[str, 'FontMeasurements'] = dict()
 
 WEIGHT_TO_VALUE = {
     "thin": 100,
@@ -168,26 +170,50 @@ def db_key(name: str) -> str:
     return Path(name).name.lower()
 
 
-def add_system_fonts() -> None:
+def build_system_font_cache(rebuild=True) -> None:
+    """ Build system font cache. Set rebuild to ``False`` to just add new
+    fonts. Requires the ``matplotlib`` package!
+
+    A rebuild has only to be done after a new ezdxf installation, or new fonts
+    were added to your system (which you want to use), or an update of ezdxf if
+    you don't use your own external font cache directory.
+
+    See also: :attr:`ezdxf.options.font_cache_directory`
+
+    """
     try:
-        from matplotlib.font_manager import FontManager
+        from ._matplotlib_font_support import (
+            load_system_fonts,
+            build_font_measurement_cache,
+            remove_fonts_without_measurement,
+        )
     except ImportError:
         logger.debug('This function requires the optional matplotlib package.')
         return
-    for entry in FontManager().ttflist:
-        ttf = db_key(entry.fname)
-        fonts[ttf] = FontFace(
-            ttf,
-            entry.name,
-            entry.style,
-            entry.stretch,
-            entry.weight,
-        )
+
+    global font_face_cache, font_measurement_cache
+
+    cache = load_system_fonts()
+    if rebuild:
+        font_face_cache = cache
+    else:
+        font_face_cache.update(cache)
+
+    if rebuild:
+        font_measurement_cache = dict()
+    # else update existing measurement cache:
+    font_measurement_cache = build_font_measurement_cache(
+        font_face_cache, font_measurement_cache)
+    # Fonts without a measurement can not be processed and should be replaced
+    # by a default font:
+    remove_fonts_without_measurement(font_face_cache, font_measurement_cache)
+    # save caches on default location defined by option.font_cache_directory:
+    save()
 
 
 def find_font_face(ttf_path: Optional[str]) -> Optional[FontFace]:
     if ttf_path:
-        return fonts.get(db_key(ttf_path))
+        return font_face_cache.get(db_key(ttf_path))
     else:
         return None
 
@@ -210,48 +236,64 @@ def get_font_face(ttf_path: str, map_shx=True) -> FontFace:
         return font
 
 
-def _get_path(path) -> Path:
-    if path is None and options.path_to_fonts_json:
-        path = Path(options.path_to_fonts_json).expanduser()
+def get_cache_file_path(path, name: str = FONT_FACE_CACHE_FILE) -> Path:
+    if path is None and options.font_cache_directory:
+        path = Path(options.font_cache_directory).expanduser()
+        path.mkdir(exist_ok=True)
     path = Path(path) if path else Path(__file__).parent
-    return path / FONT_DATA_FILE
+    return path / name
 
 
 def load(path=None):
-    path = _get_path(path)
-    if not path.exists():
-        return
+    global font_face_cache, font_measurement_cache
+    p = get_cache_file_path(path, FONT_FACE_CACHE_FILE)
+    if p.exists():
+        font_face_cache = _load_font_faces(p)
+    p = get_cache_file_path(path, FONT_MEASUREMENT_CACHE_FILE)
+    if p.exists():
+        font_measurement_cache = _load_measurement_cache(p)
+
+
+def _load_font_faces(path) -> Dict:
     with open(path, 'rt') as fp:
         data = json.load(fp)
+    cache = dict()
     if data:
-        for font in data:
-            key = font[0]
-            fonts[key] = FontFace(*font)
+        for entry in data:
+            key = entry[0]
+            cache[key] = FontFace(*entry)
+    return cache
+
+
+def _load_measurement_cache(path) -> Dict:
+    with open(path, 'rt') as fp:
+        data = json.load(fp)
+    cache = dict()
+    if data:
+        for entry in data:
+            key = entry[0]
+            cache[key] = FontMeasurements(*entry[1])
+    return cache
 
 
 def save(path=None):
-    path = _get_path(path)
-    with open(path, 'wt') as fp:
-        json.dump(list(fonts.values()), fp, indent=2)
+    p = get_cache_file_path(path, FONT_FACE_CACHE_FILE)
+    with open(p, 'wt') as fp:
+        json.dump(list(font_face_cache.values()), fp, indent=2)
+
+    p = get_cache_file_path(path, FONT_MEASUREMENT_CACHE_FILE)
+    with open(p, 'wt') as fp:
+        json.dump(list(font_measurement_cache.items()), fp, indent=2)
 
 
 # A Visual Guide to the Anatomy of Typography: https://visme.co/blog/type-anatomy/
 # Anatomy of a Character: https://www.fonts.com/content/learning/fontology/level-1/type-anatomy/anatomy
 
-class FontMeasurements:
-    def __init__(self, baseline: float, cap_height: float, x_height: float,
-                 descender_height: float):
-        self.baseline = baseline
-        self.cap_height = cap_height
-        self.x_height = x_height
-        self.descender_height = descender_height
-
-    def print_info(self):
-        print(f"baseline: {self.baseline:.4f}")
-        print(f"cap_height: {self.cap_height:.4f}")
-        print(f"x_height: {self.x_height:.4f}")
-        print(f"descender_height: {self.descender_height:.4f}")
-        print(f"total_height: {self.total_height:.4f}")
+class FontMeasurements(NamedTuple):
+    baseline: float
+    cap_height: float
+    x_height: float
+    descender_height: float
 
     def __eq__(self, other):
         return (isinstance(other, FontMeasurements) and
@@ -313,11 +355,11 @@ class AbstractFont:
 
 
 class MatplotlibFont(AbstractFont):
-    def __init__(self, font_name: str, cap_height: float = 1.0,
+    def __init__(self, ttf_path: str, cap_height: float = 1.0,
                  width_factor: float = 1.0):
         from . import _matplotlib_font_support as mpl
         self._text_renderer = mpl.text_renderer
-        font_face = get_font_face(font_name)
+        font_face = get_font_face(ttf_path)
         self._font_properties = mpl.get_font_properties(font_face)
         # unscaled font measurement:
         font_measurements = self._text_renderer.get_font_measurements(
@@ -356,9 +398,9 @@ class MonospaceFont(AbstractFont):
         return len(text) * self.measurements.cap_height * self._width_factor
 
 
-def make_font(font_name: str, cap_height: float,
+def make_font(ttf_path: str, cap_height: float,
               width_factor: float) -> AbstractFont:
     if options.use_matplotlib_font_support:
-        return MatplotlibFont(font_name, cap_height, width_factor)
+        return MatplotlibFont(ttf_path, cap_height, width_factor)
     else:
         return MonospaceFont(cap_height, width_factor)
