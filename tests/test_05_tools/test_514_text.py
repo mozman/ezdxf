@@ -5,10 +5,11 @@ import pytest
 
 from ezdxf.entities import Text
 from ezdxf.tools.text import (
-    FontMeasurements, MonospaceFont, TextLine, plain_text, caret_decode,
+    TextLine, plain_text, caret_decode,
     escape_dxf_line_endings, replace_non_printable_characters, plain_mtext,
     split_mtext_string, text_wrap,
 )
+from ezdxf.tools.fonts import FontMeasurements, MonospaceFont
 from ezdxf.math import Vec3
 from ezdxf.lldxf import const
 

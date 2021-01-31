@@ -77,6 +77,7 @@ The :func:`add_system_fonts` function adds all available fonts for the current
 system to the font database.
 
 """
+import abc
 from typing import Dict, Optional
 from collections import namedtuple
 import logging
@@ -84,14 +85,13 @@ from pathlib import Path
 import json
 from ezdxf import options
 
-
 FONT_DATA_FILE = 'fonts.json'
 logger = logging.getLogger('ezdxf')
 
-Font = namedtuple('Font', "ttf family style stretch weight")
+FontFace = namedtuple('FontFace', "ttf family style stretch weight")
 
 # Key is TTF font file name without path in lowercase like "arial.ttf":
-fonts: Dict[str, Font] = dict()
+fonts: Dict[str, FontFace] = dict()
 
 WEIGHT_TO_VALUE = {
     "thin": 100,
@@ -147,6 +147,9 @@ SHX_FONTS = {
     'TXT.SHX': "txt_____.ttf",
 }
 
+DESCENDER_FACTOR = 0.333  # from TXT SHX font - just guessing
+X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
+
 
 def resolve_shx_font_name(font_name: str) -> str:
     """ Setup text style properties. """
@@ -173,7 +176,7 @@ def add_system_fonts() -> None:
         return
     for entry in FontManager().ttflist:
         ttf = db_key(entry.fname)
-        fonts[ttf] = Font(
+        fonts[ttf] = FontFace(
             ttf,
             entry.name,
             entry.style,
@@ -182,19 +185,23 @@ def add_system_fonts() -> None:
         )
 
 
-def find(ttf_path: Optional[str]) -> Optional[Font]:
+def find_font_face(ttf_path: Optional[str]) -> Optional[FontFace]:
     if ttf_path:
         return fonts.get(db_key(ttf_path))
     else:
         return None
 
 
-def get(ttf_path: str) -> Font:
-    font = find(ttf_path)
+def get_font_face(ttf_path: str, map_shx=True) -> FontFace:
+    if not isinstance(ttf_path, str):
+        raise TypeError('ttf_path has invalid type')
+    if map_shx:
+        ttf_path = resolve_shx_font_name(ttf_path)
+    font = find_font_face(ttf_path)
     if font is None:
         # Create a pseudo entry:
         name = db_key(ttf_path)
-        return Font(
+        return FontFace(
             name,
             Path(ttf_path).stem,
             "normal", "normal", "normal",
@@ -219,10 +226,139 @@ def load(path=None):
     if data:
         for font in data:
             key = font[0]
-            fonts[key] = Font(*font)
+            fonts[key] = FontFace(*font)
 
 
 def save(path=None):
     path = _get_path(path)
     with open(path, 'wt') as fp:
         json.dump(list(fonts.values()), fp, indent=2)
+
+
+# A Visual Guide to the Anatomy of Typography: https://visme.co/blog/type-anatomy/
+# Anatomy of a Character: https://www.fonts.com/content/learning/fontology/level-1/type-anatomy/anatomy
+
+class FontMeasurements:
+    def __init__(self, baseline: float, cap_height: float, x_height: float,
+                 descender_height: float):
+        self.baseline = baseline
+        self.cap_height = cap_height
+        self.x_height = x_height
+        self.descender_height = descender_height
+
+    def print_info(self):
+        print(f"baseline: {self.baseline:.4f}")
+        print(f"cap_height: {self.cap_height:.4f}")
+        print(f"x_height: {self.x_height:.4f}")
+        print(f"descender_height: {self.descender_height:.4f}")
+        print(f"total_height: {self.total_height:.4f}")
+
+    def __eq__(self, other):
+        return (isinstance(other, FontMeasurements) and
+                self.baseline == other.baseline and
+                self.cap_height == other.cap_height and
+                self.x_height == other.x_height and
+                self.descender_height == other.descender_height)
+
+    def scale(self, factor: float = 1.0) -> 'FontMeasurements':
+        return FontMeasurements(
+            self.baseline * factor,
+            self.cap_height * factor,
+            self.x_height * factor,
+            self.descender_height * factor
+        )
+
+    def shift(self, distance: float = 0.0) -> 'FontMeasurements':
+        return FontMeasurements(
+            self.baseline + distance,
+            self.cap_height,
+            self.x_height,
+            self.descender_height
+        )
+
+    def scale_from_baseline(
+            self, desired_cap_height: float) -> 'FontMeasurements':
+        factor = desired_cap_height / self.cap_height
+        return FontMeasurements(
+            self.baseline,
+            desired_cap_height,
+            self.x_height * factor,
+            self.descender_height * factor
+        )
+
+    @property
+    def cap_top(self) -> float:
+        return self.baseline + self.cap_height
+
+    @property
+    def x_top(self) -> float:
+        return self.baseline + self.x_height
+
+    @property
+    def bottom(self) -> float:
+        return self.baseline - self.descender_height
+
+    @property
+    def total_height(self) -> float:
+        return self.cap_height + self.descender_height
+
+
+class AbstractFont:
+    def __init__(self, measurements: FontMeasurements):
+        self.measurements = measurements
+
+    @abc.abstractmethod
+    def text_width(self, text: str) -> float:
+        pass
+
+
+class MatplotlibFont(AbstractFont):
+    def __init__(self, font_name: str, cap_height: float = 1.0,
+                 width_factor: float = 1.0):
+        from . import _matplotlib_font_support as mpl
+        self._text_renderer = mpl.text_renderer
+        font_face = get_font_face(font_name)
+        self._font_properties = mpl.get_font_properties(font_face)
+        # unscaled font measurement:
+        font_measurements = self._text_renderer.get_font_measurements(
+            self._font_properties)
+        super().__init__(font_measurements.scale_from_baseline(cap_height))
+        scale = cap_height / font_measurements.cap_height
+        self._width_factor = width_factor * scale
+
+    def text_width(self, text: str) -> float:
+        if not text.strip():
+            return 0
+        path = self.text_path(text)
+        return max(x for x, y in path.vertices) * self._width_factor
+
+    def text_path(self, text: str):
+        return self._text_renderer.get_text_path(
+            text, self._font_properties)
+
+
+class MonospaceFont(AbstractFont):
+    def __init__(self,
+                 cap_height: float,
+                 width_factor: float = 1.0,
+                 baseline: float = 0,
+                 descender_factor: float = DESCENDER_FACTOR,
+                 x_height_factor: float = X_HEIGHT_FACTOR):
+        super().__init__(FontMeasurements(
+            baseline=baseline,
+            cap_height=cap_height,
+            x_height=cap_height * x_height_factor,
+            descender_height=cap_height * descender_factor,
+        ))
+        self._width_factor: float = abs(width_factor)
+
+    def text_width(self, text: str) -> float:
+        return len(text) * self.measurements.cap_height * self._width_factor
+
+
+def make_font(font_name: str, cap_height: float,
+              width_factor: float) -> AbstractFont:
+    if options.use_matplotlib_font_support:
+        return MatplotlibFont(font_name, cap_height, width_factor)
+    else:
+        return MonospaceFont(cap_height, width_factor)

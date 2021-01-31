@@ -18,21 +18,16 @@ if options.load_system_fonts:
     fonts.add_system_fonts()
 
 
-def get_font(font_name: str) -> fonts.Font:
-    font_name = fonts.resolve_shx_font_name(font_name)
-    return fonts.get(font_name)
-
-
 @lru_cache(maxsize=256)
-def get_font_properties(font: fonts.Font) -> FontProperties:
+def get_font_properties(font_face: fonts.FontFace) -> FontProperties:
     font_properties = text_renderer.default_font
-    if font:
+    if font_face:
         try:
             font_properties = FontProperties(
-                family=font.family,
-                style=font.style,
-                stretch=font.stretch,
-                weight=font.weight,
+                family=font_face.family,
+                style=font_face.style,
+                stretch=font_face.stretch,
+                weight=font_face.weight,
             )
         except ValueError:
             pass
