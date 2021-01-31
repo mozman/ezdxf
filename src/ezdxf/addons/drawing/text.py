@@ -8,7 +8,7 @@ from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 import ezdxf.lldxf.const as DXFConstants
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_utils import draw_rect
-from ezdxf.addons.drawing import fonts
+from ezdxf.tools import fonts
 from ezdxf.entities import MText, Text, Attrib, AttDef
 from ezdxf.math import Matrix44, Vec3, sign
 from ezdxf.tools.text import FontMeasurements, plain_text, text_wrap

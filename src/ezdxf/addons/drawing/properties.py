@@ -9,7 +9,7 @@ import re
 from ezdxf.entities import Attrib
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.type_hints import Color, RGB
-from ezdxf.addons.drawing import fonts
+from ezdxf.tools import fonts
 from ezdxf.addons import acadctb
 from ezdxf.sections.table import table_key as layer_key
 from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb

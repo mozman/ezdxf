@@ -4,7 +4,7 @@ from functools import lru_cache
 from ezdxf import options
 from ezdxf.addons.drawing.matplotlib import TextRenderer
 from matplotlib.font_manager import FontProperties
-from ezdxf.addons.drawing import fonts
+from . import fonts
 
 text_renderer = TextRenderer(FontProperties(), use_cache=False)
 

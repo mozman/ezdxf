@@ -12,7 +12,7 @@ from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.line_renderer import AbstractLineRenderer
-from ezdxf.addons.drawing import fonts
+from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.render import Path, Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer

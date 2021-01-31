@@ -12,7 +12,7 @@ from ezdxf.render.path import Path
 
 if TYPE_CHECKING:
     from ezdxf.addons.drawing.text import FontMeasurements
-    from ezdxf.addons.drawing.fonts import Font
+    from ezdxf.tools.fonts import Font
 
 # Some params are also used by the Frontend() which has access to the backend
 # attributes:

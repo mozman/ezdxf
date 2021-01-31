@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib.font_manager import FontProperties
 from matplotlib.lines import Line2D
-from matplotlib.patches import Circle, PathPatch
+from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
 import numpy as np
@@ -19,7 +19,7 @@ from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.text import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
-from ezdxf.addons.drawing import fonts
+from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.render import Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer

@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.addons.drawing import fonts
+from ezdxf.tools import fonts
 
 # Load default font definitions, included in ezdxf:
 fonts.load()
