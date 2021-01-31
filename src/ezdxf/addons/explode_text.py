@@ -2,11 +2,10 @@
 #  License: MIT License
 from typing import Union, List
 
-from ezdxf.addons.drawing import fonts
 from ezdxf.entities import Text, Attrib
 from ezdxf.lldxf import const
 from ezdxf.render import Path
-from ezdxf.tools import text
+from ezdxf.tools import text, fonts
 
 from matplotlib.path import Path as MPath
 
@@ -24,7 +23,7 @@ def make_paths_from_entities(entity: AnyText) -> List[Path]:
 
 
 def make_paths_from_str(s: str,
-                        font: fonts.Font,
+                        font: fonts.FontFace,
                         halign: int = const.LEFT,
                         valign: int = const.BASELINE) -> List[Path]:
     """ Convert string `s` into a list of :class:`~ezdxf.render.Path` objects.
@@ -39,7 +38,7 @@ def make_paths_from_str(s: str,
 
     Args:
          s: text to convert
-         font: font definition
+         font: font face definition
          halign: horizontal alignment: LEFT=0, Center=1, RIGHT=2
          valign: vertical alignment: BASELINE=0, BOTTOM=1, MIDDLE=2, TOP=3
 
