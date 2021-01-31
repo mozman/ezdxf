@@ -93,9 +93,61 @@ Same count of hits and misses, but now the cache also references
 luckily this is a small DXF file (~838 kB).
 
 Bounding box calculations for multiple entity queries, which have overlapping
-entity results, using a :class:`Cache` object may speedup calculation.
+entity results, using a :class:`Cache` object may speedup the calculation:
 
-TODO
+.. code-block:: python
+
+    doc = ezdxf.readfile(CADKitSamples / 'A_000217.dxf.dxf')
+    msp = doc.modelspace()
+    cache = bbox.Cache(uuid=False)
+
+    ext = bbox.extends(msp, cache)
+    print(cache)
+
+    # process modelspace again
+    ext = bbox.extends(msp, cache)
+    print(cache)
+
+Processing the same data again leads some hits::
+
+    1st run: Cache(n=1226, hits=0, misses=3273)
+    2nd run: Cache(n=1226, hits=1224, misses=3309)
+
+Using :code:`uuid=True` leads not to more hits, but more cache entries::
+
+    1st run: Cache(n=2206, hits=0, misses=3273)
+    2nd run: Cache(n=2206, hits=1224, misses=3309)
+
+Creating stable virtual entities by disassembling the entities at
+first leads to more hits:
+
+.. code-block:: Python
+
+    from ezdxf import disassemble
+
+    entities = list(disassemble.recursive_decompose(msp))
+    cache = bbox.Cache(uuid=False)
+
+    bbox.extends(entities, cache)
+    print(cache)
+
+    bbox.extends(entities, cache)
+    print(cache)
+
+First without UUID for stable virtual entities::
+
+    1st run: Cache(n=1037, hits=0, misses=4074)
+    2nd run: Cache(n=1037, hits=1037, misses=6078)
+
+Using UUID for stable virtual entities leads to more hits::
+
+    1st run: Cache(n=2019, hits=0, misses=4074)
+    2nd run: Cache(n=2019, hits=2018, misses=4116)
+
+But caching virtual entities needs also more memory.
+
+In conclusion: Using a cache is only useful, if you often process
+**nearly the same data**; only the can a performance gain be expected.
 
 Cache Class
 -----------

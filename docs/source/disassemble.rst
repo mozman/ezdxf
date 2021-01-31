@@ -59,10 +59,8 @@ until deactivated::
 
 .. seealso::
 
-    Global option to add system fonts to available matplotlib fonts
-    :attr:`ezdxf.options.load_system_fonts`  and global option
-    :attr:`ezdxf.options.path_to_fonts_json` to cache font properties of the
-    current system in an external ``"fonts.json"``.
+    Global option to set the font caching directory:
+    :attr:`ezdxf.options.font_cache_directory`
 
 Install matplotlib from command line::
 

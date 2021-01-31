@@ -24,8 +24,9 @@ Global options stored in :mod:`ezdxf.options`
 
     Set path to an external font cache directory: e.g. ``"~/.ezdxf"``
 
-    Example how to create an external font cache in ``"~/.ezdxf"``, this
-    has to be done only once or if you want to update this file:
+    This example shows, how to create an external font cache in
+    ``"~/.ezdxf"``. This has to be done only once or to add
+    new installed fonts to the cache and this also requires matplotlib:
 
     .. code-block:: Python
 
@@ -41,7 +42,6 @@ Global options stored in :mod:`ezdxf.options`
 
         from ezdxf import options, fonts
 
-        option.use_matplotlib_font_support = True
         option.font_cache_directory = "~/.ezdxf"
         fonts.load()
 
