@@ -1,39 +1,100 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
+from typing import Optional, Dict
 from functools import lru_cache
-from ezdxf import options
-from ezdxf.addons.drawing.matplotlib import TextRenderer
 from matplotlib.font_manager import FontProperties
-from ezdxf.addons.drawing import fonts
-
-text_renderer = TextRenderer(FontProperties(), use_cache=False)
-
-# Setup fonts - this is not done automatically, because this may take a long
-# time and is not important for every user.
-# Load default font definitions, included in ezdxf:
-fonts.load()
-
-# Add font definitions available at the running system:
-if options.load_system_fonts:
-    fonts.add_system_fonts()
+from matplotlib.textpath import TextPath
+from matplotlib.font_manager import FontManager
+from . import fonts
 
 
-def get_font(font_name: str) -> fonts.Font:
-    font_name = fonts.resolve_shx_font_name(font_name)
-    return fonts.get(font_name)
+def load_system_fonts() -> Dict[str, fonts.FontFace]:
+    """ Load system fonts by the FontManager of matplotlib.
+
+    This may take a long time!
+
+    """
+    font_faces = dict()
+    for entry in FontManager().ttflist:
+        ttf = fonts.db_key(entry.fname)
+        font_faces[ttf] = fonts.FontFace(
+            ttf,
+            entry.name,
+            entry.style,
+            entry.stretch,
+            entry.weight,
+        )
+    return font_faces
 
 
 @lru_cache(maxsize=256)
-def get_font_properties(font: fonts.Font) -> FontProperties:
-    font_properties = text_renderer.default_font
-    if font:
+def get_font_properties(font_face: fonts.FontFace) -> FontProperties:
+    """ Returns a matplotlib :class:`FontProperties` object. """
+    font_properties = FontProperties()
+    if font_face:
         try:
             font_properties = FontProperties(
-                family=font.family,
-                style=font.style,
-                stretch=font.stretch,
-                weight=font.weight,
+                family=font_face.family,
+                style=font_face.style,
+                stretch=font_face.stretch,
+                weight=font_face.weight,
             )
         except ValueError:
             pass
     return font_properties
+
+
+def get_font_measurements(
+        font_face: fonts.FontFace) -> Optional[fonts.FontMeasurements]:
+    """ Returns :class:`FontMeasurement` object, calculated by matplotlib.
+
+    Returns ``None`` if the font can't be processed.
+
+    """
+    if font_face is None:
+        raise TypeError('invalid font_face')
+    font_properties = get_font_properties(font_face)
+    try:
+        upper_x = get_text_path('X', font_properties).vertices[:, 1].tolist()
+        lower_x = get_text_path('x', font_properties).vertices[:, 1].tolist()
+        lower_p = get_text_path('p', font_properties).vertices[:, 1].tolist()
+    except RuntimeError:
+        print(f'Runtime error processing font: {font_properties.get_name()}')
+        return None
+    baseline = min(lower_x)
+    measurements = fonts.FontMeasurements(
+        baseline=baseline,
+        cap_height=max(upper_x) - baseline,
+        x_height=max(lower_x) - baseline,
+        descender_height=baseline - min(lower_p)
+    )
+    return measurements
+
+
+def get_text_path(text: str, font: FontProperties, size=1) -> TextPath:
+    """ Returns a matplotlib :class:`TextPath` object. """
+    return TextPath((0, 0), text.replace('$', '\\$'), size=size, prop=font,
+                    usetex=False)
+
+
+def build_font_measurement_cache(
+        font_faces: Dict[str, fonts.FontFace],
+        measurements: Dict[str, fonts.FontMeasurements],
+) -> Dict[str, fonts.FontMeasurements]:
+    """ Build font measurement cache for all known TTF fonts. """
+    for ttf_path, font_face in font_faces.items():
+        if ttf_path not in measurements:
+            measurement = get_font_measurements(font_face)
+            if measurement is not None:
+                measurements[ttf_path] = measurement
+    return measurements
+
+
+def remove_fonts_without_measurement(font_faces: Dict, measurements: Dict):
+    """ Remove fonts without a measurement from `font_faces` which can not be
+    processed and should be replaced by a default font.
+    """
+    names = list(font_faces.keys())
+    for name in names:
+        if name not in measurements:
+            del font_faces[name]

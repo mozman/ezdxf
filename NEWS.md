@@ -17,6 +17,8 @@ Version 0.15.2b0 - dev
   dxfattrib `closed` is deprecated, `close` and `dxfattribs` for these factories 
   are keyword only arguments.
 - CHANGE: improved text alignment rendering in the drawing add-on
+- CHANGE: `moved ezdxf.addons.drawing.fonts.py` into `ezdxf.tools` and added a 
+  font measurement cache.  
 - BUGFIX: `FIT` and `ALIGNED` text rendering in the drawing add-on 
 - BUGFIX: matplotlib backend uses linewidth=0 for solid filled polygons and 
   the scaled linewidth for polygons with pattern filling

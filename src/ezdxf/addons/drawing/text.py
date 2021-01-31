@@ -8,10 +8,11 @@ from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 import ezdxf.lldxf.const as DXFConstants
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_utils import draw_rect
-from ezdxf.addons.drawing import fonts
+from ezdxf.tools import fonts
 from ezdxf.entities import MText, Text, Attrib, AttDef
 from ezdxf.math import Matrix44, Vec3, sign
-from ezdxf.tools.text import FontMeasurements, plain_text, text_wrap
+from ezdxf.tools.text import plain_text, text_wrap
+from ezdxf.tools.fonts import FontMeasurements
 
 """
 Search google for 'typography' or 'font anatomy' for explanations of terms like 
@@ -271,7 +272,7 @@ def _get_wcs_insert(text: AnyText) -> Vec3:
 
 def simplified_text_chunks(text: AnyText, out: Backend,
                            *,
-                           font: fonts.Font = None,
+                           font: fonts.FontFace = None,
                            debug_draw_rect: bool = False
                            ) -> Iterable[Tuple[str, Matrix44, float]]:
     """ Splits a complex text entity into simple chunks of text which can all be

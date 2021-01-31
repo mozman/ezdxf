@@ -15,7 +15,8 @@ import ezdxf
 from ezdxf import recover
 from ezdxf.acc import USE_C_EXT
 from ezdxf.addons import odafc
-from ezdxf.addons.drawing import Frontend, RenderContext, fonts
+from ezdxf.addons.drawing import Frontend, RenderContext
+
 from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import _get_x_scale, PyQtBackend, CorrespondingDXFEntity, \
     CorrespondingDXFParentStack
@@ -23,6 +24,7 @@ from ezdxf.audit import Auditor
 from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.lldxf.const import DXFStructureError
+from ezdxf.tools import fonts
 
 # Load and draw proxy graphic:
 ezdxf.options.load_proxy_graphics = True
@@ -33,7 +35,9 @@ ezdxf.options.load_proxy_graphics = True
 fonts.load()
 
 # Add font definitions available at the running system, requires matplotlib:
-fonts.add_system_fonts()
+# Do this only once for a new ezdxf setup, or if new fonts were added to your
+# system or ezdxf was reinstalled and you do not use external font cache files:
+# fonts.build_system_font_cache()
 
 
 class CADGraphicsView(qw.QGraphicsView):

@@ -10,16 +10,16 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib.font_manager import FontProperties
 from matplotlib.lines import Line2D
-from matplotlib.patches import Circle, PathPatch
+from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
 import numpy as np
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
-from ezdxf.addons.drawing.text import FontMeasurements
+from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
-from ezdxf.addons.drawing import fonts
+from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.render import Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
@@ -167,7 +167,7 @@ class MatplotlibBackend(Backend):
                       zorder=self._get_z()))
 
     @lru_cache(maxsize=256)  # fonts.Font is a named tuple
-    def get_font_properties(self, font: fonts.Font) -> FontProperties:
+    def get_font_properties(self, font: fonts.FontFace) -> FontProperties:
         font_properties = self._text_renderer.default_font
         if font:
             # Font-definitions are created by the matplotlib FontManger(),
@@ -184,13 +184,13 @@ class MatplotlibBackend(Backend):
         return font_properties
 
     def get_font_measurements(self, cap_height: float,
-                              font: fonts.Font = None) -> FontMeasurements:
+                              font: fonts.FontFace = None) -> FontMeasurements:
         return self._text_renderer.get_font_measurements(
             self.get_font_properties(font)).scale_from_baseline(
             desired_cap_height=cap_height)
 
     def get_text_line_width(self, text: str, cap_height: float,
-                            font: fonts.Font = None) -> float:
+                            font: fonts.FontFace = None) -> float:
         if not text.strip():
             return 0
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'

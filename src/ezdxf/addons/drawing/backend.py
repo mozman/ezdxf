@@ -11,8 +11,7 @@ from ezdxf.math import Vec3, Matrix44
 from ezdxf.render.path import Path
 
 if TYPE_CHECKING:
-    from ezdxf.addons.drawing.text import FontMeasurements
-    from ezdxf.addons.drawing.fonts import Font
+    from ezdxf.tools.fonts import FontFace, FontMeasurements
 
 # Some params are also used by the Frontend() which has access to the backend
 # attributes:
@@ -193,13 +192,13 @@ class Backend(ABC):
 
     @abstractmethod
     def get_font_measurements(self, cap_height: float,
-                              font: 'Font' = None) -> 'FontMeasurements':
+                              font: 'FontFace' = None) -> 'FontMeasurements':
         """ Note: backends might want to cache the results of these calls """
         raise NotImplementedError
 
     @abstractmethod
     def get_text_line_width(self, text: str, cap_height: float,
-                            font: 'Font' = None) -> float:
+                            font: 'FontFace' = None) -> float:
         """ Get the width of a single line of text. """
         # https://stackoverflow.com/questions/32555015/how-to-get-the-visual-length-of-a-text-string-in-python
         # https://stackoverflow.com/questions/4190667/how-to-get-width-of-a-truetype-font-character-in-1200ths-of-an-inch-with-python

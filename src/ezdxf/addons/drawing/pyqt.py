@@ -8,11 +8,11 @@ from functools import lru_cache
 from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
-from ezdxf.addons.drawing.text import FontMeasurements
+from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.line_renderer import AbstractLineRenderer
-from ezdxf.addons.drawing import fonts
+from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.render import Path, Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
@@ -232,7 +232,7 @@ class PyQtBackend(Backend):
         self._set_item_data(item)
 
     @lru_cache(maxsize=256)  # fonts.Font is a named tuple
-    def get_qfont(self, font: fonts.Font) -> qg.QFont:
+    def get_qfont(self, font: fonts.FontFace) -> qg.QFont:
         qfont = self._text_renderer.default_font
         if font:
             family = font.family
@@ -242,13 +242,13 @@ class PyQtBackend(Backend):
         return qfont
 
     def get_font_measurements(self, cap_height: float,
-                              font: fonts.Font = None) -> FontMeasurements:
+                              font: fonts.FontFace = None) -> FontMeasurements:
         qfont = self.get_qfont(font)
         return self._text_renderer.get_font_measurements(
             qfont).scale_from_baseline(desired_cap_height=cap_height)
 
     def get_text_line_width(self, text: str, cap_height: float,
-                            font: fonts.Font = None) -> float:
+                            font: fonts.FontFace = None) -> float:
         if not text.strip():
             return 0
 

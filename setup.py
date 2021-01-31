@@ -83,7 +83,8 @@ setup(
         'pp/*.html',
         'pp/*.js',
         'pp/*.css',
-        'addons/drawing/fonts.json',
+        'tools/font_face_cache.json',
+        'tools/font_measurement_cache.json',
     ]},
     entry_points={
         'console_scripts': [

@@ -1,8 +1,9 @@
 from pathlib import Path
 import ezdxf
 from ezdxf import disassemble, options
-
+from ezdxf.tools import fonts
 options.use_matplotlib_font_support = True
+fonts.load()
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 

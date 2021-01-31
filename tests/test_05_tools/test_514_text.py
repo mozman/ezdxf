@@ -5,64 +5,13 @@ import pytest
 
 from ezdxf.entities import Text
 from ezdxf.tools.text import (
-    FontMeasurements, MonospaceFont, TextLine, plain_text, caret_decode,
+    TextLine, plain_text, caret_decode,
     escape_dxf_line_endings, replace_non_printable_characters, plain_mtext,
     split_mtext_string, text_wrap,
 )
+from ezdxf.tools.fonts import MonospaceFont
 from ezdxf.math import Vec3
 from ezdxf.lldxf import const
-
-
-@pytest.fixture
-def default():
-    return FontMeasurements(
-        baseline=1.3,
-        cap_height=1.0,
-        x_height=0.5,
-        descender_height=0.25
-    )
-
-
-def test_total_heigth(default):
-    assert default.total_height == 1.25
-
-
-def test_scale(default):
-    fm = default.scale(2)
-    assert fm.baseline == 2.6, "expected scaled baseline"
-    assert fm.total_height == 2.5, "expected scaled total height"
-
-
-def test_shift(default):
-    fm = default.shift(1.0)
-    assert fm.baseline == 2.3
-    assert fm.total_height == 1.25
-
-
-def test_scale_from_baseline(default):
-    fm = default.scale_from_baseline(desired_cap_height=2.0)
-    assert fm.baseline == 1.3, "expected unchanged baseline value"
-    assert fm.cap_height == 2.0
-    assert fm.x_height == 1.0
-    assert fm.descender_height == 0.50
-    assert fm.total_height == 2.5
-
-
-def test_cap_top(default):
-    assert default.cap_top == 2.3
-
-
-def test_x_top(default):
-    assert default.x_top == 1.8
-
-
-def test_bottom(default):
-    assert default.bottom == 1.05
-
-
-def test_monospace_font():
-    font = MonospaceFont(2.5, 0.75)
-    assert font.text_width("1234") == 7.5
 
 
 class TestTextLine:

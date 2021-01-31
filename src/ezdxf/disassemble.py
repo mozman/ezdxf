@@ -11,8 +11,9 @@ from ezdxf.render import (
 )
 from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.tools.text import (
-    TextLine, unified_alignment, plain_text, text_wrap, get_font
+    TextLine, unified_alignment, plain_text, text_wrap
 )
+from ezdxf.tools import fonts
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import LWPolyline, Polyline, MText, Hatch, Insert
@@ -250,7 +251,7 @@ class TextLinePrimitive(GenericPrimitive):
 
         p1: Vec3 = text.dxf.insert
         p2: Vec3 = text.dxf.align_point
-        font = get_font(get_font_name(text), text.dxf.height, text.dxf.width)
+        font = fonts.make_font(get_font_name(text), text.dxf.height, text.dxf.width)
         text_line = TextLine(content, font)
         alignment: str = text.get_align()
         if text.dxf.halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
@@ -358,7 +359,7 @@ class MTextPrimitive(GenericPrimitive):
 
         mtext: "MText" = cast("MText", self.entity)
         box_width = mtext.dxf.get('width', 0)
-        font = get_font(get_font_name(mtext), mtext.dxf.char_height, 1.0)
+        font = fonts.make_font(get_font_name(mtext), mtext.dxf.char_height, 1.0)
 
         content: List[str] = get_content()
         if len(content) == 0:
