@@ -16,7 +16,7 @@ def load_system_fonts() -> Dict[str, fonts.FontFace]:
     """
     font_faces = dict()
     for entry in FontManager().ttflist:
-        ttf = fonts.db_key(entry.fname)
+        ttf = fonts.cache_key(entry.fname)
         font_faces[ttf] = fonts.FontFace(
             ttf,
             entry.name,
