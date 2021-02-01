@@ -69,7 +69,7 @@ def read(fname, until=""):
         return "File '%s' not found.\n" % fname
 
 
-DRAW = ["matplotlib", "pytq5"]
+DRAW = ["matplotlib", "PyQt5"]
 TEST = ["pytest", "geomdl"]
 DEV = ["setuptools", "wheel", "Cython"]
 
