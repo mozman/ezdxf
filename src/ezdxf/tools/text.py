@@ -193,7 +193,7 @@ def plain_text(text: str) -> str:
     return "".join(chars)
 
 
-ONE_CHAR_COMMANDS = "PLlOoKkX"
+ONE_CHAR_COMMANDS = "PNLlOoKkX"
 
 
 ##################################################
@@ -205,6 +205,7 @@ ONE_CHAR_COMMANDS = "PLlOoKkX"
 # \K	Start strike-through
 # \k	Stop strike-through
 # \P	New paragraph (new line)
+# \N	New column
 # \pxi	Control codes for bullets, numbered paragraphs and columns
 # \X	Paragraph wrap on the dimension line (only in dimensions)
 # \Q	Slanting (oblique) text by angle - e.g. \Q30;
@@ -268,7 +269,10 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
             elif char in ONE_CHAR_COMMANDS:
                 if char == 'P':  # new line
                     chars.append('\n')
-                    # discard other commands
+                elif char == 'N':  # new column
+                    chars.append(' ')  # until columns are supported, better to at least remove the escape character
+                else:
+                    pass  # discard other commands
             else:  # more character commands are terminated by ';'
                 stacking = char == 'S'  # stacking command surrounds user data
                 first_char = char
