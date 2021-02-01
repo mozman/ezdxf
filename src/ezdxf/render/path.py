@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, List, Iterable, Sequence, NamedTuple, Union
 from collections import abc
-from enum import Enum
+import enum
 import warnings
 import math
 import itertools
@@ -19,12 +19,15 @@ if TYPE_CHECKING:
     )
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
-__all__ = ['Path', 'Command', 'make_path', 'has_path_support']
+__all__ = [
+    'Path', 'Command', 'make_path', 'has_path_support', 'from_matplotlib_path'
+]
 
 AnyBezier = Union[Bezier4P, Bezier3P]
 
 
-class Command(Enum):
+@enum.unique
+class Command(enum.Enum):
     START_PATH = -1  # external command, not use in Path()
     LINE_TO = 1  # (LINE_TO, end vertex)
     CURVE3_TO = 2  # (CURVE3_TO, end vertex, ctrl) quadratic bezier
@@ -620,7 +623,7 @@ class Path(abc.Sequence):
     def flattening(self, distance: float,
                    segments: int = 16) -> Iterable[Vec3]:
         """ Approximate path by vertices and use adaptive recursive flattening
-        to approximate cubic Bèzier curves. The argument `segments` is the
+        to approximate Bèzier curves. The argument `segments` is the
         minimum count of approximation segments for each curve, if the distance
         from the center of the approximation segment to the curve is bigger than
         `distance` the segment will be subdivided.
@@ -629,10 +632,9 @@ class Path(abc.Sequence):
         is present!
 
         Args:
-            distance: maximum distance from the center of the cubic (C3)
-                curve to the center of the linear (C1) curve between two
-                approximation points to determine if a segment should be
-                subdivided.
+            distance: maximum distance from the center of the curve to the
+                center of the line segment between two approximation points to
+                determine if a segment should be subdivided.
             segments: minimum segment count
 
         """
@@ -704,6 +706,54 @@ def _reverse_bezier_curves(curves: List[AnyBezier]) -> List[AnyBezier]:
     curves = list(c.reverse() for c in curves)
     curves.reverse()
     return curves
+
+
+@enum.unique
+class MplCmd(enum.Enum):
+    CLOSEPOLY = 79
+    CURVE3 = 3
+    CURVE4 = 4
+    LINETO = 2
+    MOVETO = 1
+    STOP = 0
+
+
+def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
+    """ Yields multiple :class:`Path` objects from a matplotlib `Path`_
+    (`TextPath`_)  object. (requires matplotlib)
+
+    .. versionadded:: 0.16
+
+    .. _TextPath: https://matplotlib.org/3.1.1/api/textpath_api.html
+    .. _Path: https://matplotlib.org/3.1.1/api/path_api.html#matplotlib.path.Path
+
+    """
+    path = None
+    for vertices, cmd in mpath.iter_segments(curves=curves):
+        cmd = MplCmd(cmd)
+        if cmd == MplCmd.MOVETO:  # each "moveto" creates new path
+            if path is not None:
+                yield path
+            path = Path(vertices)
+        elif cmd == MplCmd.LINETO:
+            # vertices = [x0, y0]
+            path.line_to(vertices)
+        elif cmd == MplCmd.CURVE3:
+            # vertices = [x0, y0, x1, y1]
+            path.curve3_to(vertices[2:], vertices[0:2])
+        elif cmd == MplCmd.CURVE4:
+            # vertices = [x0, y0, x1, y1, x2, y2]
+            path.curve4_to(vertices[4:], vertices[0:2], vertices[2:4])
+        elif cmd == MplCmd.CLOSEPOLY:
+            # vertices = [0, 0]
+            path.line_to(path.start)
+            yield path
+            path = None
+        elif cmd == MplCmd.STOP:  # not used
+            break
+
+    if path is not None:
+        yield path
 
 
 def _from_lwpolyline(lwpolyline: 'LWPolyline', **kwargs) -> 'Path':

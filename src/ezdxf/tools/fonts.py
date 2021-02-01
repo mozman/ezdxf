@@ -154,7 +154,7 @@ X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
 
 
 def resolve_shx_font_name(font_name: str) -> str:
-    """ Setup text style properties. """
+    """ Map SHX font names to TTF file names. e.g. 'TXT' -> 'txt_____.ttf' """
     # Map SHX fonts to True Type Fonts:
     font_upper = font_name.upper()
     if font_upper in SHX_FONTS:
@@ -163,10 +163,14 @@ def resolve_shx_font_name(font_name: str) -> str:
 
 
 def weight_name_to_value(name: str) -> int:
+    """ Map weight names to values. e.g. 'normal' -> 400 """
     return WEIGHT_TO_VALUE.get(name.lower(), 400)
 
 
-def db_key(name: str) -> str:
+def cache_key(name: str) -> str:
+    """ Returns the normalize TTF file name in lower case without preceding
+    folders. e.g. `C:\\Windows\\Fonts\\Arial.TTF` -> 'arial.ttf'
+    """
     return Path(name).name.lower()
 
 
@@ -212,13 +216,23 @@ def build_system_font_cache(rebuild=True) -> None:
 
 
 def find_font_face(ttf_path: Optional[str]) -> Optional[FontFace]:
+    """ Get cached font face definition by TTF file name e.g. 'Arial.ttf'.
+
+    Return ``None`` if font not found.
+
+    """
     if ttf_path:
-        return font_face_cache.get(db_key(ttf_path))
+        return font_face_cache.get(cache_key(ttf_path))
     else:
         return None
 
 
 def get_font_face(ttf_path: str, map_shx=True) -> FontFace:
+    """ Get cached font face definition by TTF file name e.g. 'Arial.ttf'.
+
+    Returns a pseudo font face definition if font not found.
+
+    """
     if not isinstance(ttf_path, str):
         raise TypeError('ttf_path has invalid type')
     if map_shx:
@@ -226,7 +240,7 @@ def get_font_face(ttf_path: str, map_shx=True) -> FontFace:
     font = find_font_face(ttf_path)
     if font is None:
         # Create a pseudo entry:
-        name = db_key(ttf_path)
+        name = cache_key(ttf_path)
         return FontFace(
             name,
             Path(ttf_path).stem,
@@ -237,9 +251,10 @@ def get_font_face(ttf_path: str, map_shx=True) -> FontFace:
 
 
 def get_font_measurements(ttf_path: str, map_shx=True) -> 'FontMeasurements':
+    """ Get cached font measurements by TTF file name e.g. 'Arial.ttf'. """
     if map_shx:
         ttf_path = resolve_shx_font_name(ttf_path)
-    m = font_measurement_cache.get(db_key(ttf_path))
+    m = font_measurement_cache.get(cache_key(ttf_path))
     if m is None:
         m = FontMeasurements(
             baseline=0,
@@ -251,6 +266,7 @@ def get_font_measurements(ttf_path: str, map_shx=True) -> 'FontMeasurements':
 
 
 def get_cache_file_path(path, name: str = FONT_FACE_CACHE_FILE) -> Path:
+    """ Build path to cache files. """
     if path is None and options.font_cache_directory:
         path = Path(options.font_cache_directory).expanduser()
         path.mkdir(exist_ok=True)
@@ -259,9 +275,13 @@ def get_cache_file_path(path, name: str = FONT_FACE_CACHE_FILE) -> Path:
 
 
 def load(path=None, reload=False):
+    """ Load all caches from given `path` or from default location, defined by
+    options.font_cache_directory or from the ezdxf.tools folder.
+    """
     global font_face_cache, font_measurement_cache
+
     if len(font_face_cache) and reload is False:
-        return
+        return  # skip if called multiple times:
     p = get_cache_file_path(path, FONT_FACE_CACHE_FILE)
     if p.exists():
         font_face_cache = _load_font_faces(p)
@@ -271,6 +291,7 @@ def load(path=None, reload=False):
 
 
 def _load_font_faces(path) -> Dict:
+    """ Load font face cache. """
     with open(path, 'rt') as fp:
         data = json.load(fp)
     cache = dict()
@@ -282,6 +303,7 @@ def _load_font_faces(path) -> Dict:
 
 
 def _load_measurement_cache(path) -> Dict:
+    """ Load font measurement cache. """
     with open(path, 'rt') as fp:
         data = json.load(fp)
     cache = dict()
@@ -293,6 +315,10 @@ def _load_measurement_cache(path) -> Dict:
 
 
 def save(path=None):
+    """ Save all caches to given `path` or to default location, defined by
+    options.font_cache_directory or into the ezdxf.tools folder.
+
+    """
     p = get_cache_file_path(path, FONT_FACE_CACHE_FILE)
     with open(p, 'wt') as fp:
         json.dump(list(font_face_cache.values()), fp, indent=2)
@@ -310,13 +336,6 @@ class FontMeasurements(NamedTuple):
     cap_height: float
     x_height: float
     descender_height: float
-
-    def __eq__(self, other):
-        return (isinstance(other, FontMeasurements) and
-                self.baseline == other.baseline and
-                self.cap_height == other.cap_height and
-                self.x_height == other.x_height and
-                self.descender_height == other.descender_height)
 
     def scale(self, factor: float = 1.0) -> 'FontMeasurements':
         return FontMeasurements(

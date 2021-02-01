@@ -16,7 +16,7 @@ def load_system_fonts() -> Dict[str, fonts.FontFace]:
     """
     font_faces = dict()
     for entry in FontManager().ttflist:
-        ttf = fonts.db_key(entry.fname)
+        ttf = fonts.cache_key(entry.fname)
         font_faces[ttf] = fonts.FontFace(
             ttf,
             entry.name,
@@ -55,6 +55,7 @@ def get_font_measurements(
         raise TypeError('invalid font_face')
     font_properties = get_font_properties(font_face)
     try:
+        # TODO: xmin, ymin, xmax, ymax = TextPath.get_extends()?
         upper_x = get_text_path('X', font_properties).vertices[:, 1].tolist()
         lower_x = get_text_path('x', font_properties).vertices[:, 1].tolist()
         lower_p = get_text_path('p', font_properties).vertices[:, 1].tolist()

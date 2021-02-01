@@ -38,17 +38,17 @@ def test_get_font_face_for_shx_fonts():
 
 
 def test_get_font_measurement():
-    assert fonts.get_font_measurements('Arial.ttf') == fonts.FontMeasurements(
+    assert fonts.get_font_measurements('Arial.ttf') == (
         0.0, 0.71578125, 0.51859375, 0.19875)
 
 
 def test_get_font_measurement_for_shx_fonts():
-    assert fonts.get_font_measurements('TXT.shx') == fonts.FontMeasurements(
+    assert fonts.get_font_measurements('TXT.shx') == (
         -0.0053125, 0.7293750000000001, 0.49171875, 0.23390625)
 
 
 def test_get_undefined_font_measurement():
-    assert fonts.get_font_measurements('mozman.ttf') == fonts.FontMeasurements(
+    assert fonts.get_font_measurements('mozman.ttf') == (
         0.0, 1, fonts.X_HEIGHT_FACTOR, fonts.DESCENDER_FACTOR)
 
 
