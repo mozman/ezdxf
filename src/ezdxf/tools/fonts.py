@@ -89,7 +89,14 @@ FONT_FACE_CACHE_FILE = 'font_face_cache.json'
 FONT_MEASUREMENT_CACHE_FILE = 'font_measurement_cache.json'
 logger = logging.getLogger('ezdxf')
 
-FontFace = namedtuple('FontFace', "ttf family style stretch weight")
+
+class FontFace(NamedTuple):
+    ttf: str = ''
+    family: str = 'sans-serif'
+    style: str = 'normal'
+    stretch: str = 'normal'
+    weight: str = 'normal'
+
 
 # Key is TTF font file name without path in lowercase like "arial.ttf":
 font_face_cache: Dict[str, FontFace] = dict()
