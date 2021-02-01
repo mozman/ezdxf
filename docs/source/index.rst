@@ -75,6 +75,7 @@ Contents
    :maxdepth: 2
 
    introduction
+   setup
    usage_for_beginners
    concepts/index
    tutorials/index

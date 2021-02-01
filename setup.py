@@ -5,6 +5,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 from setuptools import Extension
+
 # setuptools docs: https://setuptools.readthedocs.io/en/latest/setuptools.html
 
 # Cython accelerated modules are optional:
@@ -60,12 +61,17 @@ def read(fname, until=""):
                 last_index = index
                 break
         return "".join(lines[:last_index])
+
     try:
         with open(os.path.join(os.path.dirname(__file__), fname)) as f:
             return read_until(f.readlines()) if until else f.read()
     except IOError:
         return "File '%s' not found.\n" % fname
 
+
+DRAW = ["matplotlib", "pytq5"]
+TEST = ["pytest", "geomdl"]
+DEV = ["setuptools", "wheel", "Cython"]
 
 setup(
     name='ezdxf',
@@ -97,8 +103,14 @@ setup(
     install_requires=['pyparsing>=2.0.1'],
     setup_requires=['wheel'],
     tests_require=['pytest', 'geomdl'],
+    extras_require={
+        "draw": DRAW,
+        "test": TEST,
+        "dev": DEV + TEST,
+        "all": DRAW + DEV + TEST,
+    },
     keywords=['DXF', 'CAD'],
-    long_description=read('README.md')+read('NEWS.md', until='Version 0.8.9'),
+    long_description=read('README.md') + read('NEWS.md', until='Version 0.8.9'),
     long_description_content_type="text/markdown",
     platforms="OS Independent",
     license="MIT License",

@@ -92,45 +92,18 @@ additional predefined text styles and line types are available.
 Installation
 ------------
 
-Install with pip including the optional C-extensions from PyPI as binary wheels:
+Basic installation by pip including the optional C-extensions from PyPI as 
+binary wheels:
 
     pip install ezdxf
 
-Install from source code. To build the optional C-extensions the Cython package, 
-and a working C++ compiler setup is required:
+Full installation with all dependencies (matplotlib, PyQt5) to use the 
+drawing add-on:
 
-    python setup.py install
+    pip install ezdxf[draw]
 
-Install the latest development version with pip from GitHub:
-
-    pip install git+https://github.com/mozman/ezdxf.git@master
-
-
-Dependencies in Detail
-----------------------
-
-The `pyparsing` package is the only hard dependency and will be installed 
-automatically by `pip`!
-
-- INSTALL from PyPI including C-extensions: pyparsing (most common case)
-- INSTALL from PyPI for usage of the `drawing` add-on: pyparsing, matplotlib, pyqt5
-- INSTALL from source code without C-extensions: setuptools, pyparsing
-- INSTALL from source code including C-extensions: setuptools, pyparsing, 
-  Cython, and a working C++ compiler setup 
-- TESTING requires the additional packages: pytest, [geomdl](https://github.com/orbingol/NURBS-Python)
-- BUILD packages from source code without C-extensions: setuptools, wheel
-- BUILD packages from source code including C-extensions: setuptools, wheel, 
-  Cython, and a working C++ compiler setup
-
-Install all optional packages:
-
-    pip install setuptools wheel cython pytest geomdl matplotlib pyqt5
-
-Windows users who want to compile the C-extensions from source code need the 
-build tools from Microsoft: https://visualstudio.microsoft.com/de/downloads/ 
-
-Download and install the required Visual Studio Installer of the community 
-edition and choose the option: `Visual Studio Build Tools 20..`
+For more information about the setup & dependencies visit the 
+[documentation](https://ezdxf.mozman.at/docs/setup.html).
 
 Website
 -------
