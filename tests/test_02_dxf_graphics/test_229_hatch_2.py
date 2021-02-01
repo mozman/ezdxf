@@ -330,7 +330,7 @@ def closed_edge_hatch(request):
     return _hatch
 
 
-def test_full_circle_ellipse_edge_transformation(closed_edge_hatch):
+def test_full_circle_ellipse_edge_rotation(closed_edge_hatch):
     edge = closed_edge_hatch.paths[0].edges[0]
     assert arc_angle_span_deg(edge.start_angle,
                               edge.end_angle) == pytest.approx(360)
@@ -339,6 +339,14 @@ def test_full_circle_ellipse_edge_transformation(closed_edge_hatch):
     edge2 = closed_edge_hatch.paths[0].edges[0]
     assert arc_angle_span_deg(edge2.start_angle,
                               edge2.end_angle) == pytest.approx(360)
+
+
+def test_full_circle_edge_scaling():
+    _hatch = Hatch.new()
+    _path = _hatch.paths.add_edge_path()
+    _arc = _path.add_arc((0, 0), radius=1, start_angle=0, end_angle=360, ccw=1)
+    _hatch.transform(Matrix44.scale(0.5, 0.5, 0.5))
+    assert _arc.radius == pytest.approx(0.5)
 
 
 def test_spline_edge_hatch_get_params(spline_edge_hatch):

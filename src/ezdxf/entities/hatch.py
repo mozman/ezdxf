@@ -1440,6 +1440,8 @@ class ArcEdge:
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         self.center = ocs.transform_2d_vertex(self.center, elevation)
+        radius_vec = (self.radius, 0)
+        self.radius = ocs.transform_length(radius_vec)
         if not math.isclose(arc_angle_span_deg(
                 self.start_angle, self.end_angle), 360.0):
             self.start_angle = ocs.transform_deg_angle(self.start_angle)
