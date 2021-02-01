@@ -38,11 +38,27 @@ To use all features of the drawing add-on, add the [draw] tag::
 ======== ===================================================
 Tag      Additional Installed Packages
 ======== ===================================================
-[draw]   matplotlib, pyqt
+[draw]   matplotlib, PyQt5
 [test]   geomdl, pytest
 [dev]    setuptools, wheel, Cython + [test]
 [all]    [draw] + [test] + [dev]
 ======== ===================================================
+
+Disable C-Extensions
+--------------------
+
+It is possible to disable the C-Extensions by setting the
+environment variable ``EZDXF_DISABLE_C_EXT`` to ``1`` or ``true``::
+
+    set EZDXF_DISABLE_C_EXT=1
+
+or on Linux::
+
+    export EZDXF_DISABLE_C_EXT=1
+
+This is has to be done **before** anything from ezdxf is imported! If you are
+working in an interactive environment, you have to restart the interpreter.
+
 
 Installation from GitHub
 ------------------------
