@@ -106,9 +106,9 @@ def make_paths_from_entity(entity: AnyText) -> List[Path]:
 
 def make_hatches_from_entity(entity: AnyText) -> List[Hatch]:
     """ Convert text content from DXF entities TEXT, ATTRIB and ATTDEF into a
-    list of :class:`~ezdxf.entities.Hatch` entities. The hatches are located at
-    the location of the source entity, but don't expect a 100% match compared
-    to CAD applications.
+    list of virtual :class:`~ezdxf.entities.Hatch` entities.
+    The hatches are located at the location of the source entity, but don't
+    expect a 100% match compared to CAD applications.
 
     """
     return []
