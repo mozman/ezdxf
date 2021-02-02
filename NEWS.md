@@ -5,6 +5,8 @@ News
 Version 0.15.2b0 - dev
 ----------------------
 
+- Active Python 3.6 support removed, no tests and not deployment of binary 
+  wheels for Python 3.6
 - NEW: `BoundingBox()` intersection test, inside- and outside tests, union of 
   two bounding boxes.
 - NEW: `ezdxf.math.ellipse_param_span()`, works the same way as 
