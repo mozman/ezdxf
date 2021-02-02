@@ -14,7 +14,7 @@ automatically by ``pip3``!
 Ezdxf provides since v0.15 some C-extensions, which will be deployed
 automatically at each release to PyPI as binary wheels for Windows,
 ManyLinux 2010 and macOS. The supported Python versions start with the latest
-stable version of pypy3, which is currently Python 3.6 (2021) and ends with
+stable version of pypy3, which is currently Python 3.7 (2021) and ends with
 the latest stable release of CPython.
 
 The C-extensions are disabled for pypy3, because the JIT compiled code of pypy
