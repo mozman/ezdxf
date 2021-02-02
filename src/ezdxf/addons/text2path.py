@@ -13,8 +13,6 @@ from ezdxf.tools import text, fonts
 AnyText = Union[Text, Attrib]
 
 
-# Each char consists of one or more paths!
-
 def make_paths_from_str(s: str,
                         font: fonts.FontFace,
                         halign: int = const.LEFT,
@@ -22,9 +20,10 @@ def make_paths_from_str(s: str,
                         m: Matrix44 = None) -> List[Path]:
     """ Convert a single line string `s` into a list of
     :class:`~ezdxf.render.path.Path` objects. All paths are returned in a single
-    list. The path objects are created for the text height
-    of one drawing unit as cap height (height of uppercase letter "X") and the
-    insertion point is (0, 0). The paths  are aligned to this insertion point.
+    list. The path objects are created for the text height of one drawing unit
+    as cap height (height of uppercase letter "X") and the insertion point is
+    (0, 0).
+    The paths  are aligned to this insertion point.
     BASELINE means the bottom of the letter "X".
 
     Args:
