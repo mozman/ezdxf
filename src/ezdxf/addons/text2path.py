@@ -1,6 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Union, List, Dict, Iterable, Tuple
+import math
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties, findfont
 
@@ -8,7 +9,7 @@ from ezdxf.entities import Text, Attrib, Hatch
 from ezdxf.lldxf import const
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.render import path, nesting, Path
-from ezdxf.tools import text, fonts
+from ezdxf.tools import fonts
 
 AnyText = Union[Text, Attrib]
 
@@ -174,18 +175,62 @@ def make_hatches_from_str(s: str,
 
 
 def make_paths_from_entity(entity: AnyText) -> List[Path]:
-    """ Convert text content from DXF entities TEXT, ATTRIB and ATTDEF into a
+    """ Convert text content from DXF entities TEXT and ATTRIB into a
     list of :class:`~ezdxf.render.Path` objects. All paths are returned in a
     single list.
     The paths are located at the location of the source entity, but don't expect
     a 100% match compared to CAD applications.
 
     """
-    return []
+
+    def get_font_name():
+        font_name = 'arial.ttf'
+        style_name = entity.dxf.style
+        if entity.doc:
+            try:
+                style = entity.doc.styles.get(style_name)
+                font_name = style.dxf.font
+            except ValueError:
+                pass
+        return font_name
+
+    def get_transformation():
+        if valign == const.BASELINE and halign == const.LEFT:
+            location = entity.dxf.insert  # ocs
+        else:
+            location = entity.dxf.align_point  # ocs
+        angle = entity.dxf.rotation
+        scale = entity.dxf.height / fm.cap_height
+        m = Matrix44.chain(
+            Matrix44.scale(scale * entity.dxf.width, scale, 1),
+            Matrix44.z_rotate(math.radians(angle)),
+            Matrix44.translate(location.x, location.y, location.z),
+        )
+        ocs = entity.ocs()
+        if ocs.transform:
+            m *= ocs.matrix
+        return m
+
+    if not entity.dxftype() in ('TEXT', 'ATTRIB'):
+        raise TypeError(f'unsupported entity type: {entity.dxftype()}')
+    fonts.load()
+    text = entity.plain_text()
+    halign = entity.dxf.halign
+    special = 0
+    valign = entity.dxf.valign
+    font_path = get_font_name()
+    ff = fonts.get_font_face(font_path)
+    fm = fonts.get_font_measurements(font_path)
+    if halign >= const.ALIGNED:
+        special = halign  # ALIGNED, MIDDLE, FIT
+        halign = const.CENTER
+    paths = make_paths_from_str(text, ff, halign, valign)
+    m = get_transformation()
+    return path.transform_paths(paths, m)
 
 
 def make_hatches_from_entity(entity: AnyText) -> List[Hatch]:
-    """ Convert text content from DXF entities TEXT, ATTRIB and ATTDEF into a
+    """ Convert text content from DXF entities TEXT and ATTRIB into a
     list of virtual :class:`~ezdxf.entities.Hatch` entities.
     The hatches are located at the location of the source entity, but don't
     expect a 100% match compared to CAD applications.

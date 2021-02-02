@@ -237,7 +237,7 @@ class TextLinePrimitive(GenericPrimitive):
                 return p2
 
         text = cast('Text', self.entity)
-        if text.dxftype() == 'ATTRIB':
+        if text.dxftype() == 'ATTDEF':
             # ATTDEF outside of a BLOCK renders the tag rather than the value
             content = text.dxf.tag
         else:

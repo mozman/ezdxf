@@ -306,7 +306,7 @@ LEFT = 0
 CENTER = 1
 RIGHT = 2
 ALIGNED = 3
-# useless MIDDLE = 4, same bevavior as (CENTER, MIDDLE)
+# MIDDLE = 4
 FIT = 5
 
 BASELINE = 0
