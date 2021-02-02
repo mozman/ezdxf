@@ -1,18 +1,19 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Union, List, Dict, Iterable, Tuple
+from matplotlib.textpath import TextPath
+from matplotlib.font_manager import FontProperties, findfont
 
 from ezdxf.entities import Text, Attrib, Hatch
 from ezdxf.lldxf import const
-from ezdxf.math import Matrix44
-from ezdxf.render import Path, nesting
+from ezdxf.math import Matrix44, BoundingBox
+from ezdxf.render import path, nesting, Path
 from ezdxf.tools import text, fonts
 
 AnyText = Union[Text, Attrib]
 
 
 # Each char consists of one or more paths!
-
 
 def make_paths_from_str(s: str,
                         font: fonts.FontFace,
@@ -34,7 +35,35 @@ def make_paths_from_str(s: str,
          m: transformation :class:`~ezdxf.math.Matrix44`
 
     """
-    return []
+
+    fonts.load()  # not expensive if already loaded
+    fp = get_font_properties(font)
+    ttf_path = findfont(fp)
+    # The ttf file path is the cache key for font measurements:
+    fm = fonts.get_font_measurements(ttf_path)
+    text_path = TextPath((0, 0), s, size=1, prop=fp, usetex=False)
+    paths = list(path.from_matplotlib_path(text_path))
+    bbox = path.bbox(paths, precise=False)
+    matrix = alignment_matrix(fm, bbox, halign, valign)
+    if m is not None:
+        matrix *= m
+    return list(path.transform_paths(paths, matrix))
+
+
+def alignment_matrix(fm: fonts.FontMeasurements, bbox: BoundingBox,
+                     halign: int, valign: int) -> Matrix44:
+    return Matrix44()
+
+
+def get_font_properties(font: fonts.FontFace) -> FontProperties:
+    """ Return matplotlib FontProperties for a FontFace description.
+    """
+    return FontProperties(
+        family=font.family,
+        style=font.style,
+        stretch=font.stretch,
+        weight=font.weight,
+    )
 
 
 def group_contour_and_holes(

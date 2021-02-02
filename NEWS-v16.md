@@ -12,7 +12,8 @@ Version 0.16 - dev
 - NEW: get clipping path from VIEWPORT entities by `make_path()`
 - NEW: `ezdxf.math.Bezier3P`, optimized quadratic Bézier curve construction tool 
 - NEW: quadratic Bézier curve support for the `Path()` class 
-- NEW: `transform_paths()` to transform multiple `Path()` objects at once 
+- NEW: `path.transform_paths()` to transform multiple `Path()` objects at once 
+- NEW: `path.bbox()`, calculate bounding box for multiple `Path()` objects  
 - NEW: `path.from_matplotlib_path()` yields multiple `Path()` objects from a 
   matplotlib Path (TextPath) object.  
 - DEPRECATED: `Path.from_lwpolyline()`, replaced by factory `make_path()`
