@@ -8,6 +8,11 @@ from matplotlib.font_manager import FontManager
 from . import fonts
 
 
+def rebuild_system_fonts():
+    import matplotlib.font_manager as fm
+    fm._rebuild()
+
+
 def load_system_fonts() -> Dict[str, fonts.FontFace]:
     """ Load system fonts by the FontManager of matplotlib.
 

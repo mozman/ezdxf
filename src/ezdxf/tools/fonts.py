@@ -198,13 +198,15 @@ def build_system_font_cache(rebuild=True) -> None:
             load_system_fonts,
             build_font_measurement_cache,
             remove_fonts_without_measurement,
+            rebuild_system_fonts,
         )
     except ImportError:
         logger.debug('This function requires the optional matplotlib package.')
         return
 
     global font_face_cache, font_measurement_cache
-
+    if rebuild:
+        rebuild_system_fonts()
     cache = load_system_fonts()
     if rebuild:
         font_face_cache = cache
