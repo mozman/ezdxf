@@ -16,6 +16,7 @@ Add-ons
     iterdxf
     r12writer
     odafc
+    text2path
     pycsg
     acadctb
     forms

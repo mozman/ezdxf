@@ -108,6 +108,7 @@ def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
     bounding boxes as fast detection objects.
 
     """
+
     # Implements fast bounding box construction and fast inside check.
     def area(item: BoxStruct) -> float:
         width, height = item.bbox.size
@@ -163,6 +164,7 @@ def winding_deconstruction(polygons: List[Polygon]
     The paths are not converted to this orientation.
 
     """
+
     def deconstruct(polygons_, level):
         for polygon in polygons_:
             if isinstance(polygon, Path):
@@ -170,9 +172,18 @@ def winding_deconstruction(polygons: List[Polygon]
                 # level 1 = ccw, 2 = cw, 3 = ccw, 4 = cw, ...
                 (ccw_paths if (level % 2) else cw_paths).append(polygon)
             else:
-                deconstruct(polygon, level+1)
+                deconstruct(polygon, level + 1)
 
     cw_paths = []
     ccw_paths = []
     deconstruct(polygons, 0)
     return ccw_paths, cw_paths
+
+
+def flatten_polygons(polygons: Polygon) -> Iterable[Path]:
+    """ Yield a flat representation of the given nested polygons. """
+    for polygon in polygons:
+        if isinstance(polygon, Path):
+            yield polygon
+        else:
+            yield from flatten_polygons(polygon)

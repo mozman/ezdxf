@@ -51,6 +51,8 @@ infinite nature.
 
 .. autofunction:: transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]
 
+.. autofunction:: bbox(paths: Iterable[Path]) -> BoundingBox
+
 .. autofunction:: from_matplotlib_path(mpath, curves=True) -> Iterable[Path]
 
 .. class:: Path

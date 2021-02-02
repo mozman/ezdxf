@@ -9,7 +9,7 @@ import itertools
 from ezdxf.math import (
     Vec3, NULLVEC, Z_AXIS, OCS, Bezier3P, Bezier4P, Matrix44, bulge_to_arc,
     cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
-    has_clockwise_orientation, global_bspline_interpolation,
+    has_clockwise_orientation, global_bspline_interpolation, BoundingBox,
 )
 
 if TYPE_CHECKING:
@@ -991,3 +991,25 @@ def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
     if len(commands):
         rebuild(m.transform_vertices(vertices))
     return transformed_paths
+
+
+def bbox(paths: Iterable[Path], precise=True,
+         distance: float = 0.01,
+         segments: int = 16) -> BoundingBox:
+    """ Returns the :class:`~ezdxf.math.BoundingBox` for given paths.
+
+    Args:
+        paths: iterable of :class:`~ezdxf.render.path.Path` objects
+        precise: ``True`` for bounding box of the flattened path and ``False``
+            for bounding box of the control vertices.
+        distance: flattening distance, default is 0.01
+        segments: minimal segment count for flattening
+
+    """
+    box = BoundingBox()
+    for p in paths:
+        if precise:
+            box.extend(p.flattening(distance, segments=segments))
+        else:
+            box.extend(p.control_vertices())
+    return box
