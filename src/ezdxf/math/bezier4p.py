@@ -1,12 +1,12 @@
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
 from typing import List, TYPE_CHECKING, Iterable, Sequence
-from ezdxf.math import Vec3, Bezier4P
+from ezdxf.math import Vec3, Bezier4P, Bezier3P
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
-__all__ = ['cubic_bezier_interpolation', 'tangents_cubic_bezier_interpolation']
+__all__ = ['cubic_bezier_interpolation', 'tangents_cubic_bezier_interpolation', 'quadratic_to_cubic_bezier']
 
 
 def cubic_bezier_interpolation(
@@ -69,3 +69,10 @@ def tangents_cubic_bezier_interpolation(
     if normalize:
         tangents = [t.normalize() for t in tangents]
     return tangents
+
+
+def quadratic_to_cubic_bezier(curve: Bezier3P) -> Bezier4P:
+    start, control, end = curve.control_points
+    control_1 = start + 2 * (control - start) / 3
+    control_2 = end + 2 * (control - end) / 3
+    return Bezier4P((start, control_1, control_2, end))
