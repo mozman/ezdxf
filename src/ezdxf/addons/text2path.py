@@ -6,7 +6,7 @@ from matplotlib.font_manager import FontProperties, findfont
 
 from ezdxf.entities import Text, Attrib, Hatch
 from ezdxf.lldxf import const
-from ezdxf.math import Matrix44, BoundingBox, Vec3
+from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.render import path, nesting, Path
 from ezdxf.tools import text, fonts
 
@@ -35,19 +35,34 @@ def make_paths_from_str(s: str,
          m: transformation :class:`~ezdxf.math.Matrix44`
 
     """
-
-    fonts.load()  # not expensive if already loaded
-    fp = get_font_properties(font)
-    ttf_path = findfont(fp)
-    # The ttf file path is the cache key for font measurements:
-    fm = fonts.get_font_measurements(ttf_path)
-    text_path = TextPath((0, 0), s, size=1, prop=fp, usetex=False)
-    paths = list(path.from_matplotlib_path(text_path))
+    font_properties, font_measurements = _get_font_data(font)
+    paths = _str_to_paths(s, font_properties)
     bbox = path.bbox(paths, precise=False)
-    matrix = get_alignment_transformation(fm, bbox, halign, valign)
+    matrix = get_alignment_transformation(
+        font_measurements, bbox, halign, valign)
     if m is not None:
         matrix *= m
     return list(path.transform_paths(paths, matrix))
+
+
+def _get_font_data(
+        font: fonts.FontFace) -> Tuple[FontProperties, fonts.FontMeasurements]:
+    fp = FontProperties(
+        family=font.family,
+        style=font.style,
+        stretch=font.stretch,
+        weight=font.weight,
+    )
+    ttf_path = findfont(fp)
+    fonts.load()  # not expensive if already loaded
+    # The ttf file path is the cache key for font measurements:
+    fm = fonts.get_font_measurements(ttf_path)
+    return fp, fm
+
+
+def _str_to_paths(s: str, fp: FontProperties) -> List[Path]:
+    text_path = TextPath((0, 0), s, size=1, prop=fp, usetex=False)
+    return list(path.from_matplotlib_path(text_path))
 
 
 def get_alignment_transformation(fm: fonts.FontMeasurements, bbox: BoundingBox,
@@ -73,17 +88,6 @@ def get_alignment_transformation(fm: fonts.FontMeasurements, bbox: BoundingBox,
     else:
         raise ValueError(f'invalid valign argument: {valign}')
     return Matrix44.translate(shift_x, shift_y, 0)
-
-
-def get_font_properties(font: fonts.FontFace) -> FontProperties:
-    """ Return matplotlib FontProperties for a FontFace description.
-    """
-    return FontProperties(
-        family=font.family,
-        style=font.style,
-        stretch=font.stretch,
-        weight=font.weight,
-    )
 
 
 def group_contour_and_holes(
@@ -120,6 +124,7 @@ def make_hatches_from_str(s: str,
                           font: fonts.FontFace,
                           halign: int = const.LEFT,
                           valign: int = const.BASELINE,
+                          segments: int = 4,
                           dxfattribs: Dict = None,
                           m: Matrix44 = None) -> List[Hatch]:
     """ Convert a single line string `s` into a list of virtual
@@ -134,14 +139,39 @@ def make_hatches_from_str(s: str,
          font: font face definition
          halign: horizontal alignment: LEFT=0, CENTER=1, RIGHT=2
          valign: vertical alignment: BASELINE=0, BOTTOM=1, MIDDLE=2, TOP=3
+         segments: minimal segments per Bézier curve
          dxfattribs: additional DXF attributes
          m: transformation :class:`~ezdxf.math.Matrix44`
 
     """
-    dxfattribs = dxfattribs or dict()
-    color = dxfattribs.get('color', 7)
+    font_properties, font_measurements = _get_font_data(font)
+    paths = _str_to_paths(s, font_properties)
 
-    return []
+    # HATCH is an OCS entity, transforming just the polyline paths
+    # is not correct! The Hatch has to be created in the xy-plane!
+    hatches = []
+    dxfattribs = dxfattribs or dict()
+    dxfattribs.setdefault('solid_fill', 1)
+    dxfattribs.setdefault('pattern_name', 'SOLID')
+    dxfattribs.setdefault('color', 7)
+
+    for contour, holes in group_contour_and_holes(paths):
+        hatch = Hatch.new(dxfattribs=dxfattribs)
+        hatch.paths.add_polyline_path(
+            contour.flattening(1, segments=segments), flags=1)  # 1=external
+        for hole in holes:
+            hatch.paths.add_polyline_path(
+                hole.flattening(1, segments=segments), flags=0)  # 0=normal
+        hatches.append(hatch)
+
+    bbox = path.bbox(paths, precise=False)
+    matrix = get_alignment_transformation(
+        font_measurements, bbox, halign, valign)
+    if m is not None:
+        matrix *= m
+
+    # Transform HATCH entities as a unit:
+    return [hatch.transform(matrix) for hatch in hatches]
 
 
 def make_paths_from_entity(entity: AnyText) -> List[Path]:
