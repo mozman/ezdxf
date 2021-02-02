@@ -38,7 +38,7 @@ from .bspline import (
 )
 from .bezier import Bezier
 from .bezier4p import (
-    cubic_bezier_interpolation, tangents_cubic_bezier_interpolation,
+    cubic_bezier_interpolation, tangents_cubic_bezier_interpolation, quadratic_to_cubic_bezier
 )
 from .surfaces import BezierSurface
 from .eulerspiral import EulerSpiral

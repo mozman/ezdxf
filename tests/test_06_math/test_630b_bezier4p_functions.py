@@ -1,6 +1,8 @@
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
-from ezdxf.math import cubic_bezier_interpolation
+import random
+
+from ezdxf.math import cubic_bezier_interpolation, Vec3, Bezier3P, quadratic_to_cubic_bezier
 
 
 def test_vertex_interpolation():
@@ -27,3 +29,18 @@ def test_vertex_interpolation():
     assert p[3].isclose((0, 8))
 
 
+def test_quadratic_to_cubic_bezier():
+    r = random.Random(0)
+
+    def random_vec() -> Vec3:
+        return Vec3(r.uniform(-10, 10), r.uniform(-10, 10), r.uniform(-10, 10))
+
+    for i in range(1000):
+        quadratic = Bezier3P((random_vec(), random_vec(), random_vec()))
+        quadratic_approx = list(quadratic.approximate(10))
+        cubic = quadratic_to_cubic_bezier(quadratic)
+        cubic_approx = list(cubic.approximate(10))
+
+        assert len(quadratic_approx) == len(cubic_approx)
+        for p1, p2 in zip(quadratic_approx, cubic_approx):
+            assert p1.isclose(p2)
