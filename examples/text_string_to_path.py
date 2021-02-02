@@ -5,13 +5,15 @@
 
 from pathlib import Path
 import ezdxf
+from ezdxf.tools import fonts
 from ezdxf.render.path import from_matplotlib_path
+from ezdxf.addons import text2path
 
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties
-from ezdxf.addons.text2path import group_contour_and_holes
 
 DIR = Path('~/Desktop/Outbox').expanduser()
+fonts.load()
 
 mpath = TextPath((0, 0), "matplotlib 0123", size=1,
                  prop=FontProperties(family="Source Code Pro"), usetex=False)
@@ -21,7 +23,8 @@ msp = doc.modelspace()
 
 doc.layers.new('OUTLINE')
 attr = {'layer': 'OUTLINE', 'color': 1}
-for path in from_matplotlib_path(mpath):
+ff = fonts.FontFace(family="Source Code Pro")
+for path in text2path.make_paths_from_str("matplotlib 0123", ff, halign=1):
     # The font geometry consist of many small quadratic bezier curves.
     # The distance argument for the flattening method has no big impact, but
     # the segments argument is very important, which defines the minimum count
@@ -33,7 +36,8 @@ for path in from_matplotlib_path(mpath):
 # The following code will be a function in the new text2path add-on.
 doc.layers.new('FILLING')
 attr['layer'] = 'FILLING'
-for contour, holes in group_contour_and_holes(from_matplotlib_path(mpath)):
+for contour, holes in text2path.group_contour_and_holes(
+        from_matplotlib_path(mpath)):
     hatch = msp.add_hatch(color=2, dxfattribs=attr)
     hatch.paths.add_polyline_path(contour.flattening(1, segments=4),
                                   flags=1)  # 1=external

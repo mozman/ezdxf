@@ -6,7 +6,7 @@ from matplotlib.font_manager import FontProperties, findfont
 
 from ezdxf.entities import Text, Attrib, Hatch
 from ezdxf.lldxf import const
-from ezdxf.math import Matrix44, BoundingBox
+from ezdxf.math import Matrix44, BoundingBox, Vec3
 from ezdxf.render import path, nesting, Path
 from ezdxf.tools import text, fonts
 
@@ -44,15 +44,35 @@ def make_paths_from_str(s: str,
     text_path = TextPath((0, 0), s, size=1, prop=fp, usetex=False)
     paths = list(path.from_matplotlib_path(text_path))
     bbox = path.bbox(paths, precise=False)
-    matrix = alignment_matrix(fm, bbox, halign, valign)
+    matrix = get_alignment_transformation(fm, bbox, halign, valign)
     if m is not None:
         matrix *= m
     return list(path.transform_paths(paths, matrix))
 
 
-def alignment_matrix(fm: fonts.FontMeasurements, bbox: BoundingBox,
-                     halign: int, valign: int) -> Matrix44:
-    return Matrix44()
+def get_alignment_transformation(fm: fonts.FontMeasurements, bbox: BoundingBox,
+                                 halign: int, valign: int) -> Matrix44:
+    if halign == const.LEFT:
+        shift_x = 0
+    elif halign == const.RIGHT:
+        shift_x = -bbox.extmax.x
+    elif halign == const.CENTER:
+        shift_x = -bbox.center.x
+    else:
+        raise ValueError(f'invalid halign argument: {halign}')
+    cap_height = max(fm.cap_height, bbox.extmax.y)
+    descender_height = max(fm.descender_height, abs(bbox.extmin.y))
+    if valign == const.BASELINE:
+        shift_y = 0
+    elif valign == const.TOP:
+        shift_y = -cap_height
+    elif valign == const.MIDDLE:
+        shift_y = -cap_height / 2
+    elif valign == const.BOTTOM:
+        shift_y = descender_height
+    else:
+        raise ValueError(f'invalid valign argument: {valign}')
+    return Matrix44.translate(shift_x, shift_y, 0)
 
 
 def get_font_properties(font: fonts.FontFace) -> FontProperties:
