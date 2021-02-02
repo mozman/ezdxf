@@ -139,7 +139,7 @@ def make_hatches_from_str(s: str,
          font: font face definition
          halign: horizontal alignment: LEFT=0, CENTER=1, RIGHT=2
          valign: vertical alignment: BASELINE=0, BOTTOM=1, MIDDLE=2, TOP=3
-         segments: minimal segments per Bézier curve
+         segments: minimal segment count per Bézier curve
          dxfattribs: additional DXF attributes
          m: transformation :class:`~ezdxf.math.Matrix44`
 

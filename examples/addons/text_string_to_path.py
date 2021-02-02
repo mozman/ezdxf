@@ -18,10 +18,9 @@ doc.layers.new('FILLING')
 msp = doc.modelspace()
 
 attr = {'layer': 'OUTLINE', 'color': 1}
-ff = fonts.FontFace(family="Baby Kruffy")
-s = "matplotlib 0123"
+ff = fonts.FontFace(family="Source Code Pro")
+s = "Source Code Pro 0123456789"
 halign = const.LEFT
-valign = const.BOTTOM
 valign = const.BOTTOM
 segments = 8
 
@@ -37,7 +36,6 @@ for path in text2path.make_paths_from_str(
     # else an OCS transformation would be required or use add_polyline3d().
     msp.add_lwpolyline(path.flattening(1, segments=segments), dxfattribs=attr)
 
-# The following code will be a function in the new text2path add-on.
 attr['layer'] = 'FILLING'
 attr['color'] = 2
 for hatch in text2path.make_hatches_from_str(
@@ -45,5 +43,5 @@ for hatch in text2path.make_hatches_from_str(
         dxfattribs=attr, segments=segments):
     msp.add_entity(hatch)
 
-doc.set_modelspace_vport(4, (3.5, 0))
-doc.saveas(DIR / 'matplotlib.dxf')
+doc.set_modelspace_vport(10, (7, 0))
+doc.saveas(DIR / 'text2path.dxf')

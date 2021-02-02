@@ -17,7 +17,7 @@ the optional `matplotlib`_ package.
 
 .. autofunction:: make_paths_from_str(s: str, font: FontFace, halign: int = 0, valign: int = 0, m: Matrix44 = None) -> List[Path]
 
-.. autofunction:: make_hatches_from_str(s: str, font: FontFace, halign: int = 0, valign: int = 0, dxfattribs: Dict = None m: Matrix44 = None) -> List[Hatch]
+.. autofunction:: make_hatches_from_str(s: str, font: FontFace, halign: int = 0, valign: int = 0, segments: int = 4, dxfattribs: Dict = None m: Matrix44 = None) -> List[Hatch]
 
 .. autofunction:: make_paths_from_entity(entity)-> List[Path]
 
