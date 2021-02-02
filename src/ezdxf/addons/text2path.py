@@ -113,7 +113,7 @@ def group_contour_and_holes(
         contour = polygon[0]
         if len(polygon) > 1:  # are holes present?
             # holes can be recursive polygons, so flatten holes:
-            holes = list(nesting.flatten_polygons(polygon[1]))
+            holes = list(nesting.flatten_polygons(polygon[1:]))
         else:
             holes = []
         yield contour, holes

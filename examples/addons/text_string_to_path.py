@@ -19,7 +19,7 @@ msp = doc.modelspace()
 
 attr = {'layer': 'OUTLINE', 'color': 1}
 ff = fonts.FontFace(family="Source Code Pro")
-s = "Source Code Pro 0123456789"
+s = "Source Code Pro 0123456789 %@ 中国文字"
 halign = const.LEFT
 valign = const.BOTTOM
 segments = 8
