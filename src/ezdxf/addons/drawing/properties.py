@@ -325,10 +325,8 @@ class RenderContext:
         name = table_key(text_style.dxf.name)
         ttf = text_style.dxf.font
         font_face = fonts.get_font_face(ttf, map_shx=True)
-        # Only ttf-fonts are supported
-        if not font_face.ttf.upper().endswith('.TTF'):
-            font_face = fonts.FontFace(
-                'arial.ttf', 'Arial', 'normal', 'normal', 'normal')
+        # 2021-02-02: Removed TTF check!
+        # AutoCAD supports only TTF-fonts, but we can do better!
         self.fonts[name] = font_face
 
     def _true_layer_color(self, layer: 'Layer') -> Color:
