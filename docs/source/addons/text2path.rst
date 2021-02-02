@@ -23,6 +23,6 @@ the optional `matplotlib`_ package.
 
 .. autofunction:: make_hatches_from_entity(entity) -> List[Hatch]
 
-.. autofunction:: group_char_paths(Iterable[Path]) -> List[Polygon]
+.. autofunction:: group_contour_and_holes(Iterable[Path]) -> Iterable[Tuple[Path, List[Path]]]
 
 .. _matplotlib: https://matplotlib.org

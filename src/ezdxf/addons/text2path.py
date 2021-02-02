@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Union, List, Dict, Iterable
+from typing import Union, List, Dict, Iterable, Tuple
 
 from ezdxf.entities import Text, Attrib, Hatch
 from ezdxf.lldxf import const
@@ -37,32 +37,34 @@ def make_paths_from_str(s: str,
     return []
 
 
-def group_char_paths(paths: Iterable[Path]) -> List[nesting.Polygon]:
-    """ Group paths created from text strings or entities by their base
-    characters. e.g. "abc" returns a list of 3 polygon structures, each polygon
-    has an outer contour and maybe holes as :class:`~ezdxf.render.path.Path`
-    objects::
+def group_contour_and_holes(
+        paths: Iterable[Path]) -> Iterable[Tuple[Path, List[Path]]]:
+    """ Group paths created from text strings or entities by their contour
+    paths. e.g. "abc" yields 3 [contour, holes] structures::
 
-        ff = fonts.FontFace(family="Arial)
+        ff = fonts.FontFace(family="Arial")
         paths = make_paths_from_str("abc", ff)
 
-        for polygon in group_char_paths(paths)
-            contour = polygon[0]
-            # check if holes are present:
-            if len(polygon) > 1:
-                # multiple nested holes are possible:
-                for hole in polygon[1]:
-                    # hole is a Path() object
-                    pass
+        for contour, holes in group_contour_and_holes(paths)
+            for hole in holes:
+                # hole is a Path() object
+                pass
 
     This is the basic tool to create HATCH entities from paths.
 
+    Warning: This function does not detect separated characters, e.g. "!"
+    creates 2 contour paths.
+
     """
-    # The fast_bbox_detection() function was not designed for this task,
-    # but works very well for characters,
-    # The center of the hole bounding boxes are always inside the
-    # bounding box of the outer contour and outer contours do not overlap.
-    return nesting.fast_bbox_detection(paths)
+    polygons = nesting.fast_bbox_detection(paths)
+    for polygon in polygons:
+        contour = polygon[0]
+        if len(polygon) > 1:  # are holes present?
+            # holes can be recursive polygons, so flatten holes:
+            holes = list(nesting.flatten_polygons(polygon[1]))
+        else:
+            holes = []
+        yield contour, holes
 
 
 def make_hatches_from_str(s: str,

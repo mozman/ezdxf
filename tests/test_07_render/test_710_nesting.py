@@ -82,5 +82,43 @@ def test_winding_deconstruction(polygons, exp_ccw, exp_cw):
     assert cw == exp_cw
 
 
+@pytest.mark.parametrize('polygons,n', [
+    pytest.param(
+        [[EXT1_PATH]], 1,
+        id='1 polygon'),
+    pytest.param(
+        [[EXT1_PATH], [EXT1_PATH]], 2,
+        id='2 polygons'),
+    pytest.param(
+        [[EXT1_PATH, [CH1_PATH]]], 2,
+        id='1 polygon 1 nested sub-polygon'),
+    pytest.param(
+        [[EXT1_PATH, [CH1_PATH, [CH1_PATH]]]], 3,
+        id='1 polygon 2 nested sub-polygons'
+    ),
+    pytest.param(
+        [[EXT1_PATH, [CH1_PATH], [CH1_PATH]]], 3,
+        id='1 polygon 2 separated sub-polygons'
+    ),
+    pytest.param(
+        [[EXT1_PATH, [CH1_PATH, [CH2_PATH]], [CH1_PATH, [CH2_PATH]]]], 5,
+        id='1 polygon 2 separated nested sub-polygons'
+    ),
+])
+def test_flatten_polygons(polygons, n):
+    nlists = 0
+    npaths = 0
+    for path in list(nesting.flatten_polygons(polygons)):
+        if isinstance(path, Path):
+            npaths += 1
+        elif isinstance(path, list):
+            nlists += 1
+        else:
+            raise TypeError('?')
+
+    assert nlists == 0
+    assert npaths == n
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
