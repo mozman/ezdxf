@@ -79,7 +79,6 @@ system to the font database.
 """
 from typing import Dict, Optional, NamedTuple
 import abc
-from collections import namedtuple
 import logging
 from pathlib import Path
 import json
@@ -91,6 +90,8 @@ logger = logging.getLogger('ezdxf')
 
 
 class FontFace(NamedTuple):
+    # This would be the matplotlib FontProperties class, if matplotlib would
+    # be a hard dependency!
     ttf: str = ''
     family: str = 'sans-serif'
     style: str = 'normal'
@@ -259,6 +260,7 @@ def get_font_face(ttf_path: str, map_shx=True) -> FontFace:
 
 def get_font_measurements(ttf_path: str, map_shx=True) -> 'FontMeasurements':
     """ Get cached font measurements by TTF file name e.g. 'Arial.ttf'. """
+    # TODO: is using freetype-py the better solution?
     if map_shx:
         ttf_path = resolve_shx_font_name(ttf_path)
     m = font_measurement_cache.get(cache_key(ttf_path))

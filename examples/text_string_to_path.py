@@ -1,5 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+#
+# Requires: matplotlib
 
 from pathlib import Path
 import ezdxf
