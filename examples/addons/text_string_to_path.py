@@ -5,7 +5,6 @@
 
 from pathlib import Path
 import ezdxf
-from ezdxf.lldxf import const
 from ezdxf.tools import fonts
 from ezdxf.addons import text2path
 
@@ -20,12 +19,11 @@ msp = doc.modelspace()
 attr = {'layer': 'OUTLINE', 'color': 1}
 ff = fonts.FontFace(family="Noto Sans SC")
 s = "Noto Sans SC 0123456789 %@ 中国文字"
-halign = const.LEFT
-valign = const.BOTTOM
+align = "LEFT"
 segments = 8
 
 for path in text2path.make_paths_from_str(
-        s, ff, halign=halign, valign=valign):
+        s, ff, align=align):
     # The font geometry consist of many small quadratic bezier curves.
     # The distance argument for the flattening method has no big impact, but
     # the segments argument is very important, which defines the minimum count
@@ -39,8 +37,7 @@ for path in text2path.make_paths_from_str(
 attr['layer'] = 'FILLING'
 attr['color'] = 2
 for hatch in text2path.make_hatches_from_str(
-        s, ff, halign=halign, valign=valign,
-        dxfattribs=attr, segments=segments):
+        s, ff, align=align, dxfattribs=attr, segments=segments):
     msp.add_entity(hatch)
 
 doc.set_modelspace_vport(10, (7, 0))

@@ -5,19 +5,20 @@ import math
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties, findfont
 
-from ezdxf.entities import Text, Attrib, Hatch
+from ezdxf.entities import Text, Attrib, Hatch, DXFGraphic
 from ezdxf.lldxf import const
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.render import path, nesting, Path
 from ezdxf.tools import fonts
+from ezdxf.query import EntityQuery
 
 AnyText = Union[Text, Attrib]
 
 
 def make_paths_from_str(s: str,
                         font: fonts.FontFace,
-                        halign: int = const.LEFT,
-                        valign: int = const.BASELINE,
+                        align: str = 'LEFT',
+                        length: float = 0,
                         m: Matrix44 = None) -> List[Path]:
     """ Convert a single line string `s` into a list of
     :class:`~ezdxf.render.path.Path` objects. All paths are returned in a single
@@ -30,14 +31,15 @@ def make_paths_from_str(s: str,
     Args:
          s: text to convert
          font: font face definition
-         halign: horizontal alignment: LEFT=0, CENTER=1, RIGHT=2
-         valign: vertical alignment: BASELINE=0, BOTTOM=1, MIDDLE=2, TOP=3
+         align: alignment as string, default is "LEFT"
+         length: target length for the "ALIGNED" and "FIT" alignments
          m: transformation :class:`~ezdxf.math.Matrix44`
 
     """
     font_properties, font_measurements = _get_font_data(font)
     paths = _str_to_paths(s, font_properties)
     bbox = path.bbox(paths, precise=False)
+    halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
     matrix = get_alignment_transformation(
         font_measurements, bbox, halign, valign)
     if m is not None:
@@ -122,8 +124,8 @@ def group_contour_and_holes(
 
 def make_hatches_from_str(s: str,
                           font: fonts.FontFace,
-                          halign: int = const.LEFT,
-                          valign: int = const.BASELINE,
+                          align: str = 'LEFT',
+                          length: float = 0,
                           segments: int = 4,
                           dxfattribs: Dict = None,
                           m: Matrix44 = None) -> List[Hatch]:
@@ -137,8 +139,8 @@ def make_hatches_from_str(s: str,
     Args:
          s: text to convert
          font: font face definition
-         halign: horizontal alignment: LEFT=0, CENTER=1, RIGHT=2
-         valign: vertical alignment: BASELINE=0, BOTTOM=1, MIDDLE=2, TOP=3
+         align: alignment as string, default is "LEFT"
+         length: target length for the "ALIGNED" and "FIT" alignments
          segments: minimal segment count per Bézier curve
          dxfattribs: additional DXF attributes
          m: transformation :class:`~ezdxf.math.Matrix44`
@@ -146,7 +148,7 @@ def make_hatches_from_str(s: str,
     """
     font_properties, font_measurements = _get_font_data(font)
     paths = _str_to_paths(s, font_properties)
-
+    halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
     # HATCH is an OCS entity, transforming just the polyline paths
     # is not correct! The Hatch has to be created in the xy-plane!
     hatches = []
@@ -237,3 +239,34 @@ def make_hatches_from_entity(entity: AnyText) -> List[Hatch]:
 
     """
     return []
+
+
+def explode(entity: AnyText, kind: int = 1, target=None) -> EntityQuery:
+    """ Explode the text content of DXF entities TEXT and ATTRIB into
+    LWPOLYLINE entities as outlines as HATCH entities as fillings.
+    The target layout is given by the `target` argument or the same layout as
+    the source entity reside, if `target`is ``None``.
+
+    The `kind` argument defines the DXF types to create:
+
+    === ===============================================
+    1   :class:`~ezdxf.entities.Hatch` as filling
+    2   :class:`~ezdxf.entities.LWPolyline` as outline
+    3   :class:`~ezdxf.entities.Hatch` and :class:`~ezdxf.entities.LWPolyline`
+    === ===============================================
+
+    Returns the created DXF entities as an :class:`~ezdxf.query.EntityQuery`
+    object.
+
+    The source entity will be destroyed and don't expect a 100% match compared
+    to CAD applications.
+
+    Args:
+        entity: TEXT or ATTRIB entity to explode
+        kind: kind of entities to create, 1=HATCH, 2=LWPOLYLINE, 3=BOTH
+        target: target layout for new created DXF entities, ``None`` for the
+            same layout as the source entity.
+
+    """
+    entities = []
+    return EntityQuery(entities)

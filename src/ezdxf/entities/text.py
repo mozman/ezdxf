@@ -258,7 +258,7 @@ class Text(DXFGraphic):
 
         """
         align = align.upper()
-        halign, valign = const.TEXT_ALIGN_FLAGS[align]
+        halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
         self.set_dxf_attrib('halign', halign)
         self.set_dxf_attrib('valign', valign)
         return self
