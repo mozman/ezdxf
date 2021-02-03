@@ -4,8 +4,8 @@ Setup & Dependencies
 
 The primary goal is to keep the dependencies for the `core` package as small
 as possible. The add-ons are not part of the core package and can therefore
-use as much packages as needed. The only requirement for this packages is an
-easy way to install them on Windows, Linux and macOS, preferred as
+use as many packages as needed. The only requirement for these packages is an
+easy way to install them on Windows, Linux and macOS, preferably as
 ``pip3 install ...``.
 
 The ``pyparsing`` package is the only hard dependency and will be installed
