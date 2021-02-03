@@ -59,7 +59,7 @@ Supported DXF Versions
 
 .. include:: dxfversion.inc
 
-`ezdxf` reads also older DXF versions but saves it as DXF R12.
+`ezdxf` also reads older DXF versions but saves it as DXF R12.
 
 Embedded DXF Information of 3rd Party Applications
 --------------------------------------------------
