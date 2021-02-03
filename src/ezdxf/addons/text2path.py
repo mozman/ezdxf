@@ -7,7 +7,7 @@ from matplotlib.font_manager import FontProperties, findfont
 
 from ezdxf.entities import Text, Attrib, Hatch, DXFGraphic
 from ezdxf.lldxf import const
-from ezdxf.math import Matrix44, BoundingBox
+from ezdxf.math import Matrix44, BoundingBox, Vec3
 from ezdxf.render import path, nesting, Path
 from ezdxf.tools import fonts
 from ezdxf.query import EntityQuery
@@ -17,31 +17,42 @@ AnyText = Union[Text, Attrib]
 
 def make_paths_from_str(s: str,
                         font: fonts.FontFace,
+                        size: float = 1.0,
                         align: str = 'LEFT',
                         length: float = 0,
                         m: Matrix44 = None) -> List[Path]:
     """ Convert a single line string `s` into a list of
     :class:`~ezdxf.render.path.Path` objects. All paths are returned in a single
-    list. The path objects are created for the text height of one drawing unit
-    as cap height (height of uppercase letter "X") and the insertion point is
-    (0, 0).
-    The paths  are aligned to this insertion point.
+    list. The text `size` is the height of the uppercase letter "X" (cap height).
+    The paths are aligned about the insertion point at (0, 0).
     BASELINE means the bottom of the letter "X".
 
     Args:
          s: text to convert
          font: font face definition
+         size: text size (cap height) in drawing units
          align: alignment as string, default is "LEFT"
          length: target length for the "ALIGNED" and "FIT" alignments
          m: transformation :class:`~ezdxf.math.Matrix44`
 
     """
     font_properties, font_measurements = _get_font_data(font)
-    paths = _str_to_paths(s, font_properties)
+    scaled_size = size / font_measurements.cap_height
+    scaled_fm = font_measurements.scale_from_baseline(scaled_size)
+    paths = _str_to_paths(s, font_properties, scaled_size)
     bbox = path.bbox(paths, precise=False)
     halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
-    matrix = get_alignment_transformation(
-        font_measurements, bbox, halign, valign)
+    matrix = get_alignment_transformation(scaled_fm, bbox, halign, valign)
+
+    stretch_x = 1.0
+    stretch_y = 1.0
+    if align == 'ALIGNED':
+        stretch_x = length / bbox.size.x
+        stretch_y = stretch_x
+    elif align == 'FIT':
+        stretch_x = length / bbox.size.x
+    if stretch_x != 1.0:
+        matrix *= Matrix44.scale(stretch_x, stretch_y, 1.0)
     if m is not None:
         matrix *= m
     return list(path.transform_paths(paths, matrix))
@@ -62,8 +73,8 @@ def _get_font_data(
     return fp, fm
 
 
-def _str_to_paths(s: str, fp: FontProperties) -> List[Path]:
-    text_path = TextPath((0, 0), s, size=1, prop=fp, usetex=False)
+def _str_to_paths(s: str, fp: FontProperties, size: float = 1.0) -> List[Path]:
+    text_path = TextPath((0, 0), s, size=size, prop=fp, usetex=False)
     return list(path.from_matplotlib_path(text_path))
 
 
@@ -73,7 +84,7 @@ def get_alignment_transformation(fm: fonts.FontMeasurements, bbox: BoundingBox,
         shift_x = 0
     elif halign == const.RIGHT:
         shift_x = -bbox.extmax.x
-    elif halign == const.CENTER:
+    elif halign == const.CENTER or halign > 2:  # ALIGNED, MIDDLE, FIT
         shift_x = -bbox.center.x
     else:
         raise ValueError(f'invalid halign argument: {halign}')
@@ -89,6 +100,8 @@ def get_alignment_transformation(fm: fonts.FontMeasurements, bbox: BoundingBox,
         shift_y = descender_height
     else:
         raise ValueError(f'invalid valign argument: {valign}')
+    if halign == 4:  # MIDDLE
+        shift_y = max(fm.total_height, bbox.size.y) / -2.0
     return Matrix44.translate(shift_x, shift_y, 0)
 
 
@@ -124,6 +137,7 @@ def group_contour_and_holes(
 
 def make_hatches_from_str(s: str,
                           font: fonts.FontFace,
+                          size: float = 1.0,
                           align: str = 'LEFT',
                           length: float = 0,
                           segments: int = 4,
@@ -131,14 +145,15 @@ def make_hatches_from_str(s: str,
                           m: Matrix44 = None) -> List[Hatch]:
     """ Convert a single line string `s` into a list of virtual
     :class:`~ezdxf.entities.Hatch` entities.
-    The path objects are created for the text height of one drawing unit as cap
-    height (height of uppercase letter "X") and the insertion point is (0, 0).
+    The text `size` is the height of the uppercase letter "X" (cap height).
+    The paths are aligned about the insertion point at (0, 0).
     The HATCH entities are aligned to this insertion point. BASELINE means the
     bottom of the letter "X".
 
     Args:
          s: text to convert
          font: font face definition
+         size: text size (cap height) in drawing units
          align: alignment as string, default is "LEFT"
          length: target length for the "ALIGNED" and "FIT" alignments
          segments: minimal segment count per Bézier curve
@@ -147,8 +162,11 @@ def make_hatches_from_str(s: str,
 
     """
     font_properties, font_measurements = _get_font_data(font)
-    paths = _str_to_paths(s, font_properties)
-    halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
+    # scale cap_height for 1 drawing unit!
+    scaled_size = size / font_measurements.cap_height
+    scaled_fm = font_measurements.scale_from_baseline(scaled_size)
+    paths = _str_to_paths(s, font_properties, scaled_size)
+
     # HATCH is an OCS entity, transforming just the polyline paths
     # is not correct! The Hatch has to be created in the xy-plane!
     hatches = []
@@ -166,9 +184,9 @@ def make_hatches_from_str(s: str,
                 hole.flattening(1, segments=segments), flags=0)  # 0=normal
         hatches.append(hatch)
 
+    halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
     bbox = path.bbox(paths, precise=False)
-    matrix = get_alignment_transformation(
-        font_measurements, bbox, halign, valign)
+    matrix = get_alignment_transformation(scaled_fm, bbox, halign, valign)
     if m is not None:
         matrix *= m
 
@@ -197,15 +215,23 @@ def make_paths_from_entity(entity: AnyText) -> List[Path]:
         return font_name
 
     def get_transformation():
-        if valign == const.BASELINE and halign == const.LEFT:
-            location = entity.dxf.insert  # ocs
+        """ Apply rotation, width factor, translation to the insertion point
+        and if necessary transformation from OCS to WCS.
+        """
+        # TODO: text generation flags - mirror-x and mirror-y
+        angle = math.radians(entity.dxf.rotation)
+        width_factor = entity.dxf.width
+        if align == 'LEFT':
+            location = p1
+        elif align in ('ALIGNED', 'FIT'):
+            width_factor = 1.0  # text goes from p1 to p2, no stretching applied
+            location = p1.lerp(p2, factor=0.5)
+            angle = (p2 - p1).angle  # override stored angle
         else:
-            location = entity.dxf.align_point  # ocs
-        angle = entity.dxf.rotation
-        scale = entity.dxf.height / fm.cap_height
+            location = p2
         m = Matrix44.chain(
-            Matrix44.scale(scale * entity.dxf.width, scale, 1),
-            Matrix44.z_rotate(math.radians(angle)),
+            Matrix44.scale(width_factor, 1, 1),
+            Matrix44.z_rotate(angle),
             Matrix44.translate(location.x, location.y, location.z),
         )
         ocs = entity.ocs()
@@ -217,16 +243,23 @@ def make_paths_from_entity(entity: AnyText) -> List[Path]:
         raise TypeError(f'unsupported entity type: {entity.dxftype()}')
     fonts.load()
     text = entity.plain_text()
-    halign = entity.dxf.halign
-    special = 0
-    valign = entity.dxf.valign
-    font_path = get_font_name()
-    ff = fonts.get_font_face(font_path)
-    fm = fonts.get_font_measurements(font_path)
-    if halign >= const.ALIGNED:
-        special = halign  # ALIGNED, MIDDLE, FIT
-        halign = const.CENTER
-    paths = make_paths_from_str(text, ff, halign, valign)
+    align = entity.get_align()
+    p1 = Vec3(entity.dxf.insert)
+    if entity.dxf.hasattr('align_point'):
+        p2 = Vec3(entity.dxf.align_point)
+    else:
+        p2 = p1
+
+    length = 0
+    if align in ('FIT', 'ALIGNED'):
+        # text is stretch between p1 and p2
+        length = p1.distance(p2)
+    paths = make_paths_from_str(
+        text, fonts.get_font_face(get_font_name()),
+        size=entity.dxf.height,  # cap height in drawing units
+        align=align,
+        length=length,
+    )
     m = get_transformation()
     return path.transform_paths(paths, m)
 

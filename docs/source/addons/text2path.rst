@@ -45,9 +45,9 @@ TODO require docs for ezdxf.tools.fonts
 String Functions
 ----------------
 
-.. autofunction:: make_paths_from_str(s: str, font: FontFace, align: str = "LEFT", length: float = 0, m: Matrix44 = None) -> List[Path]
+.. autofunction:: make_paths_from_str(s: str, font: FontFace, size: float = 1.0, align: str = "LEFT", length: float = 0, m: Matrix44 = None) -> List[Path]
 
-.. autofunction:: make_hatches_from_str(s: str, font: FontFace, align: str = "LEFT", length: float = 0, segments: int = 4, dxfattribs: Dict = None m: Matrix44 = None) -> List[Hatch]
+.. autofunction:: make_hatches_from_str(s: str, font: FontFace, size: float = 1.0,align: str = "LEFT", length: float = 0, segments: int = 4, dxfattribs: Dict = None m: Matrix44 = None) -> List[Hatch]
 
 Entity Functions
 ----------------
