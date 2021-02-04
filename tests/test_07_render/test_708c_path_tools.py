@@ -70,7 +70,7 @@ class TestBoundingBox:
         assert result.extmax.y == pytest.approx(0.5)  # parabola
 
 
-class TestFitPathsIntoBox:
+class TestFitPathsIntoBoxUniformScaling:
     @pytest.fixture(scope='class')
     def spath(self):
         p = path.Path()
@@ -122,6 +122,40 @@ class TestFitPathsIntoBox:
     def test_invalid_target_size(self, spath):
         with pytest.raises(ValueError):
             path.fit_paths_into_box([spath], (0, 0, 0))
+
+
+class TestFitPathsIntoBoxNonUniformScaling:
+    @pytest.fixture(scope='class')
+    def spath(self):
+        p = path.Path()
+        p.line_to((1, 2, 3))
+        return p
+
+    def test_non_uniform_stretch_paths(self, spath):
+        result = path.fit_paths_into_box([spath], (8, 7, 6), uniform=False)
+        box = path.bbox(result)
+        assert box.size == (8, 7, 6)
+
+    def test_non_uniform_shrink_paths(self, spath):
+        result = path.fit_paths_into_box([spath], (1.5, 1.5, 1.5),
+                                         uniform=False)
+        box = path.bbox(result)
+        assert box.size == (1.5, 1.5, 1.5)
+
+    def test_project_into_xy(self, spath):
+        result = path.fit_paths_into_box([spath], (6, 6, 0), uniform=False)
+        box = path.bbox(result)
+        assert box.size == (6, 6, 0), "z-axis should be ignored"
+
+    def test_project_into_xz(self, spath):
+        result = path.fit_paths_into_box([spath], (6, 0, 6), uniform=False)
+        box = path.bbox(result)
+        assert box.size == (6, 0, 6), "y-axis should be ignored"
+
+    def test_project_into_yz(self, spath):
+        result = path.fit_paths_into_box([spath], (0, 6, 6), uniform=False)
+        box = path.bbox(result)
+        assert box.size == (0, 6, 6), "x-axis should be ignored"
 
 
 if __name__ == '__main__':

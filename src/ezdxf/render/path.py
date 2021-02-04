@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, List, Iterable, Sequence, NamedTuple, Union, Tuple
+    TYPE_CHECKING, List, Iterable, Sequence, NamedTuple, Union, Tuple,
 )
 from collections import abc
 import enum
@@ -1020,9 +1020,10 @@ def bbox(paths: Iterable[Path], precise=True,
 
 def fit_paths_into_box(paths: Iterable[Path],
                        size: Tuple[float, float, float],
+                       uniform: bool = True,
                        source_box: BoundingBox = None) -> List[Path]:
-    """ Scale the given `paths` to fit into a box of the given `size` by a
-    uniform scaling, so that all path vertices are inside this borders.
+    """ Scale the given `paths` to fit into a box of the given `size`,
+    so that all path vertices are inside this borders.
     If `source_box` is ``None`` the default source bounding box is calculated
     from the control points of the `paths`.
 
@@ -1033,11 +1034,11 @@ def fit_paths_into_box(paths: Iterable[Path],
     Args:
         paths: iterable of :class:`~ezdxf.render.path.Path` objects
         size: target box size as tuple of x-, y- ond z-size values
+        uniform: ``True`` for uniform scaling
         source_box: pass precalculated source bounding box, or ``None`` to
             calculate the default source bounding box from the control vertices
 
     """
-    TOL = 1e-6
     paths = list(paths)
     if len(paths) == 0:
         return paths
@@ -1051,22 +1052,44 @@ def fit_paths_into_box(paths: Iterable[Path],
     if target_size == (0, 0, 0) or min(target_size) < 0:
         raise ValueError('invalid target size')
 
+    if uniform:
+        sx, sy, sz = _get_uniform_scaling(current_box.size, target_size)
+    else:
+        sx, sy, sz = _get_non_uniform_scaling(current_box.size, target_size)
+    m = Matrix44.scale(sx, sy, sz)
+    return transform_paths(paths, m)
+
+
+def _get_uniform_scaling(current_size: Vec3, target_size: Vec3):
+    TOL = 1e-6
     scale_x = math.inf
-    if current_box.size.x > TOL and target_size.x > TOL:
-        scale_x = target_size.x / current_box.size.x
+    if current_size.x > TOL and target_size.x > TOL:
+        scale_x = target_size.x / current_size.x
     scale_y = math.inf
-    if current_box.size.y > TOL and target_size.y > TOL:
-        scale_y = target_size.y / current_box.size.y
+    if current_size.y > TOL and target_size.y > TOL:
+        scale_y = target_size.y / current_size.y
     scale_z = math.inf
-    if current_box.size.z > TOL and target_size.z > TOL:
-        scale_z = target_size.z / current_box.size.z
+    if current_size.z > TOL and target_size.z > TOL:
+        scale_z = target_size.z / current_size.z
 
     uniform_scale = min(scale_x, scale_y, scale_z)
     if uniform_scale is math.inf:
         raise ArithmeticError('internal error')
-
     scale_x = uniform_scale if target_size.x > TOL else 0
     scale_y = uniform_scale if target_size.y > TOL else 0
     scale_z = uniform_scale if target_size.z > TOL else 0
-    m = Matrix44.scale(scale_x, scale_y, scale_z)
-    return transform_paths(paths, m)
+    return scale_x, scale_y, scale_z
+
+
+def _get_non_uniform_scaling(current_size: Vec3, target_size: Vec3):
+    TOL = 1e-6
+    scale_x = 1.0
+    if current_size.x > TOL:
+        scale_x = target_size.x / current_size.x
+    scale_y = 1.0
+    if current_size.y > TOL:
+        scale_y = target_size.y / current_size.y
+    scale_z = 1.0
+    if current_size.z > TOL:
+        scale_z = target_size.z / current_size.z
+    return scale_x, scale_y, scale_z
