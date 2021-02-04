@@ -412,7 +412,7 @@ class RenderContext:
         p.linetype_scale = self.resolve_linetype_scale(entity)
         p.is_visible = self.resolve_visible(entity,
                                             resolved_layer=resolved_layer)
-        if entity.dxf.hasattr('style'):
+        if entity.is_supported_dxf_attrib('style'):
             p.font = self.resolve_font(entity)
         if entity.dxftype() == 'HATCH':
             p.filling = self.resolve_filling(entity)
@@ -587,11 +587,9 @@ class RenderContext:
         """ Resolve the text style of `entity` to a font name.
         Returns ``None`` for the default font.
         """
-        if entity.dxf.hasattr('style'):
-            # todo: extended font data
-            return self.fonts.get(table_key(entity.dxf.style))
-        else:
-            return None
+        # todo: extended font data
+        style = entity.dxf.get('style', 'Standard')
+        return self.fonts.get(table_key(style))
 
     def resolve_filling(self, entity: 'DXFGraphic') -> Optional[Filling]:
         """ Resolve filling properties (SOLID, GRADIENT, PATTERN) of `entity`.
