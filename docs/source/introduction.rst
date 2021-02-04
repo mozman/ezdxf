@@ -44,7 +44,7 @@ CPython version and the latest stable release of pypy3 during development.
 `ezdxf` is written in pure Python with optional Cython implementations of some
 low level math classes and requires only `pyparser` as additional library beside
 the Python Standard Library.
-`pytest` is required to run the unit- and integration tests. Data to run the
+`pytest` is required to run the unit and integration tests. Data to run the
 stress and audit test can not be provided, because I don't have the rights for
 publishing this DXF files.
 
@@ -59,7 +59,7 @@ Supported DXF Versions
 
 .. include:: dxfversion.inc
 
-`ezdxf` reads also older DXF versions but saves it as DXF R12.
+`ezdxf` also reads older DXF versions but saves it as DXF R12.
 
 Embedded DXF Information of 3rd Party Applications
 --------------------------------------------------
