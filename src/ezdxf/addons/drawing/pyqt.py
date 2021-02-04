@@ -239,6 +239,8 @@ class PyQtBackend(Backend):
             italic = "italic" in font.style.lower()
             weight = _map_weight(font.weight)
             qfont = qg.QFont(family, weight=weight, italic=italic)
+            # TODO: setting the stretch value makes results worse!
+            # qfont.setStretch(_map_stretch(font.stretch))
         return qfont
 
     def get_font_measurements(self, cap_height: float,
@@ -307,6 +309,24 @@ def _map_weight(weight: Union[str, int]) -> int:
         weight = fonts.weight_name_to_value(weight)
     value = int((weight / 10) + 10)  # normal: 400 -> 50
     return min(max(0, value), 99)
+
+
+# https://doc.qt.io/qt-5/qfont.html#Stretch-enum
+StretchMapping = {
+    "ultracondensed": 50,
+    "extracondensed": 62,
+    "condensed": 75,
+    "semicondensed": 87,
+    "unstretched": 100,
+    "semiexpanded": 112,
+    "expanded": 125,
+    "extraexpanded": 150,
+    "ultraexpanded": 200,
+}
+
+
+def _map_stretch(stretch: str) -> int:
+    return StretchMapping.get(stretch.lower(), 100)
 
 
 def _get_x_scale(t: qg.QTransform) -> float:
