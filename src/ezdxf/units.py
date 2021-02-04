@@ -1,7 +1,8 @@
-# Created: 2019-01-05
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import Optional
+
+# Documentation: https://ezdxf.mozman.at/docs/concepts/units.html#insunits
 
 MSP_METRIC_UNITS_FACTORS = {
     'km': .001,
