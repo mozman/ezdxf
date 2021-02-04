@@ -177,8 +177,7 @@ def _get_extra_transform(text: AnyText, line_width: float) -> Matrix44:
             stretch_factor = defined_length / line_width
             scale_x = stretch_factor
             if alignment == "ALIGNED":
-                # TODO: 0.75 is an arbitrary factor
-                scale_y = stretch_factor * 0.75
+                scale_y = stretch_factor
 
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_X:
             scale_x *= -1
