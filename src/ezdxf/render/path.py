@@ -1013,3 +1013,45 @@ def bbox(paths: Iterable[Path], precise=True,
         else:
             box.extend(p.control_vertices())
     return box
+
+
+def fit_paths_into_box(paths: Iterable[Path],
+                       lower_left: 'Vertex',
+                       upper_right: 'Vertex',
+                       source_box: BoundingBox = None) -> List[Path]:
+    """ Fit given `paths` into the box defined by `lower_left` and
+    `upper_right`. If `source_box` is ``None`` the default source bounding box
+    is calculated from the control points of the `paths`.
+
+    `Note:` if the target bounding box has a z-extent of 0, the `paths` are
+    projected into the xy-plane, same is true for the x-extent, projects into
+    the yz-plane and the y-extent, projects into and xz-plane.
+
+    Args:
+        paths: iterable of :class:`~ezdxf.render.path.Path` objects
+        lower_left: lower left corner of the target bounding box
+        upper_right: upper right corner of the target bounding box
+        source_box: pass precalculated source bounding box, or ``None`` to
+            calculate the default source bounding box from the control vertices
+
+    """
+    paths = list(paths)
+    if len(paths) == 0:
+        return paths
+    if source_box is None:
+        current_box = bbox(paths, precise=False)
+    else:
+        current_box = source_box
+    target_box = BoundingBox([lower_left, upper_right])
+    scale_x = 1.0
+    if current_box.size.x > 1e-6:
+        scale_x = target_box.size.x / current_box.size.x
+    scale_y = 1.0
+    if current_box.size.y > 1e-6:
+        scale_y = target_box.size.y / current_box.size.y
+
+    scale_z = 1.0
+    if current_box.size.z > 1e-6:
+        scale_z = target_box.size.z / current_box.size.z
+    m = Matrix44.scale(scale_x, scale_y, scale_z)
+    return transform_paths(paths, m)
