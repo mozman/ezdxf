@@ -14,7 +14,7 @@ Version 0.16 - dev
 - NEW: quadratic Bézier curve support for the `Path()` class 
 - NEW: `path.transform_paths()` to transform multiple `Path()` objects at once 
 - NEW: `path.bbox()`, calculate bounding box for multiple `Path()` objects  
-- NEW: `path.fit_paths_into_box()`, fit paths into a target bounding box  
+- NEW: `path.fit_paths_into_box()`, scale paths to fit into a given box size  
 - NEW: `path.from_matplotlib_path()` yields multiple `Path()` objects from a 
   matplotlib Path (TextPath) object.  
 - DEPRECATED: `Path.from_lwpolyline()`, replaced by factory `make_path()`

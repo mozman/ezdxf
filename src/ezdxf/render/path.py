@@ -1,6 +1,8 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable, Sequence, NamedTuple, Union
+from typing import (
+    TYPE_CHECKING, List, Iterable, Sequence, NamedTuple, Union, Tuple
+)
 from collections import abc
 import enum
 import warnings
@@ -20,7 +22,8 @@ if TYPE_CHECKING:
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
 __all__ = [
-    'Path', 'Command', 'make_path', 'has_path_support', 'from_matplotlib_path'
+    'Path', 'Command', 'make_path', 'has_path_support', 'from_matplotlib_path',
+    'bbox', 'fit_paths_into_box', 'transform_paths'
 ]
 
 AnyBezier = Union[Bezier4P, Bezier3P]
@@ -1016,25 +1019,25 @@ def bbox(paths: Iterable[Path], precise=True,
 
 
 def fit_paths_into_box(paths: Iterable[Path],
-                       lower_left: 'Vertex',
-                       upper_right: 'Vertex',
+                       size: Tuple[float, float, float],
                        source_box: BoundingBox = None) -> List[Path]:
-    """ Fit given `paths` into the box defined by `lower_left` and
-    `upper_right`. If `source_box` is ``None`` the default source bounding box
-    is calculated from the control points of the `paths`.
+    """ Scale the given `paths` to fit into a box of the given `size` by a
+    uniform scaling, so that all path vertices are inside this borders.
+    If `source_box` is ``None`` the default source bounding box is calculated
+    from the control points of the `paths`.
 
-    `Note:` if the target bounding box has a z-extent of 0, the `paths` are
-    projected into the xy-plane, same is true for the x-extent, projects into
-    the yz-plane and the y-extent, projects into and xz-plane.
+    `Note:` if the target size has a z-size of 0, the `paths` are
+    projected into the xy-plane, same is true for the x-size, projects into
+    the yz-plane and the y-size, projects into and xz-plane.
 
     Args:
         paths: iterable of :class:`~ezdxf.render.path.Path` objects
-        lower_left: lower left corner of the target bounding box
-        upper_right: upper right corner of the target bounding box
+        size: target box size as tuple of x-, y- ond z-size values
         source_box: pass precalculated source bounding box, or ``None`` to
             calculate the default source bounding box from the control vertices
 
     """
+    TOL = 1e-6
     paths = list(paths)
     if len(paths) == 0:
         return paths
@@ -1042,16 +1045,28 @@ def fit_paths_into_box(paths: Iterable[Path],
         current_box = bbox(paths, precise=False)
     else:
         current_box = source_box
-    target_box = BoundingBox([lower_left, upper_right])
-    scale_x = 1.0
-    if current_box.size.x > 1e-6:
-        scale_x = target_box.size.x / current_box.size.x
-    scale_y = 1.0
-    if current_box.size.y > 1e-6:
-        scale_y = target_box.size.y / current_box.size.y
+    if not current_box.has_data or current_box.size == (0, 0, 0):
+        return paths
+    target_size = Vec3(size)
+    if target_size == (0, 0, 0) or min(target_size) < 0:
+        raise ValueError('invalid target size')
 
-    scale_z = 1.0
-    if current_box.size.z > 1e-6:
-        scale_z = target_box.size.z / current_box.size.z
+    scale_x = math.inf
+    if current_box.size.x > TOL and target_size.x > TOL:
+        scale_x = target_size.x / current_box.size.x
+    scale_y = math.inf
+    if current_box.size.y > TOL and target_size.y > TOL:
+        scale_y = target_size.y / current_box.size.y
+    scale_z = math.inf
+    if current_box.size.z > TOL and target_size.z > TOL:
+        scale_z = target_size.z / current_box.size.z
+
+    uniform_scale = min(scale_x, scale_y, scale_z)
+    if uniform_scale is math.inf:
+        raise ArithmeticError('internal error')
+
+    scale_x = uniform_scale if target_size.x > TOL else 0
+    scale_y = uniform_scale if target_size.y > TOL else 0
+    scale_z = uniform_scale if target_size.z > TOL else 0
     m = Matrix44.scale(scale_x, scale_y, scale_z)
     return transform_paths(paths, m)

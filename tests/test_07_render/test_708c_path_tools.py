@@ -55,7 +55,7 @@ class TestBoundingBox:
         p2.line_to((-3, -2, -1))
         assert path.bbox([p1, p2]).size == (4, 4, 4)
 
-    @pytest.fixture
+    @pytest.fixture(scope='class')
     def quadratic(self):
         p = path.Path()
         p.curve3_to((2, 0), (1, 1))
@@ -71,7 +71,57 @@ class TestBoundingBox:
 
 
 class TestFitPathsIntoBox:
-    pass
+    @pytest.fixture(scope='class')
+    def spath(self):
+        p = path.Path()
+        p.line_to((1, 2, 3))
+        return p
+
+    def test_empty_paths(self):
+        assert path.fit_paths_into_box([], (0, 0, 0)) == []
+
+    def test_uniform_stretch_paths_limited_by_z(self, spath):
+        result = path.fit_paths_into_box([spath], (6, 6, 6))
+        box = path.bbox(result)
+        assert box.size == (2, 4, 6)
+
+    def test_uniform_stretch_paths_limited_by_y(self, spath):
+        result = path.fit_paths_into_box([spath], (6, 3, 6))
+        box = path.bbox(result)
+        # stretch factor: 1.5
+        assert box.size == (1.5, 3, 4.5)
+
+    def test_uniform_stretch_paths_limited_by_x(self, spath):
+        result = path.fit_paths_into_box([spath], (1.2, 6, 6))
+        box = path.bbox(result)
+        # stretch factor: 1.2
+        assert box.size == (1.2, 2.4, 3.6)
+
+    def test_uniform_shrink_paths(self, spath):
+        result = path.fit_paths_into_box([spath], (1.5, 1.5, 1.5))
+        box = path.bbox(result)
+        assert box.size == (0.5, 1, 1.5)
+
+    def test_project_into_xy(self, spath):
+        result = path.fit_paths_into_box([spath], (6, 6, 0))
+        box = path.bbox(result)
+        # Note: z-axis is also ignored by extent detection:
+        # scaling factor = 3x
+        assert box.size == (3, 6, 0), "z-axis should be ignored"
+
+    def test_project_into_xz(self, spath):
+        result = path.fit_paths_into_box([spath], (6, 0, 6))
+        box = path.bbox(result)
+        assert box.size == (2, 0, 6), "y-axis should be ignored"
+
+    def test_project_into_yz(self, spath):
+        result = path.fit_paths_into_box([spath], (0, 6, 6))
+        box = path.bbox(result)
+        assert box.size == (0, 4, 6), "x-axis should be ignored"
+
+    def test_invalid_target_size(self, spath):
+        with pytest.raises(ValueError):
+            path.fit_paths_into_box([spath], (0, 0, 0))
 
 
 if __name__ == '__main__':

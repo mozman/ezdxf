@@ -53,7 +53,7 @@ infinite nature.
 
 .. autofunction:: bbox(paths: Iterable[Path]) -> BoundingBox
 
-.. autofunction:: fit_paths_into_box(paths: Iterable[Path], lower_left: Vertex, upper_right: Vertex, source_box: BoundingBox = None) -> List[Path]
+.. autofunction:: fit_paths_into_box(paths: Iterable[Path], size: Tuple[float, float, float], source_box: BoundingBox = None) -> List[Path]
 
 .. autofunction:: from_matplotlib_path(mpath, curves=True) -> Iterable[Path]
 
