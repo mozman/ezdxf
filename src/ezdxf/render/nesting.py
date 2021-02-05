@@ -187,3 +187,9 @@ def flatten_polygons(polygons: Polygon) -> Iterable[Path]:
             yield polygon
         else:
             yield from flatten_polygons(polygon)
+
+
+def group_paths(paths: Iterable[Path]) -> List[List[Path]]:
+    """ Group separated paths and their inner holes as flat lists. """
+    polygons = fast_bbox_detection(paths)
+    return [list(flatten_polygons(polygon)) for polygon in polygons]

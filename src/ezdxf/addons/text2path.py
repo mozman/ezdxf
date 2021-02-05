@@ -5,9 +5,9 @@ import math
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties, findfont
 
-from ezdxf.entities import Text, Attrib, Hatch, DXFGraphic
+from ezdxf.entities import Text, Attrib, Hatch
 from ezdxf.lldxf import const
-from ezdxf.math import Matrix44, BoundingBox, Vec3
+from ezdxf.math import Matrix44, BoundingBox, Vec3, Vec2
 from ezdxf.render import path, nesting, Path
 from ezdxf.tools import fonts
 from ezdxf.query import EntityQuery
@@ -177,11 +177,12 @@ def make_hatches_from_str(s: str,
 
     for contour, holes in group_contour_and_holes(paths):
         hatch = Hatch.new(dxfattribs=dxfattribs)
+        # Vec2 removes the z-axis, which would be interpreted as bulge value!
         hatch.paths.add_polyline_path(
-            contour.flattening(1, segments=segments), flags=1)  # 1=external
+            Vec2.generate(contour.flattening(1, segments=segments)), flags=1)
         for hole in holes:
             hatch.paths.add_polyline_path(
-                hole.flattening(1, segments=segments), flags=0)  # 0=normal
+                Vec2.generate(hole.flattening(1, segments=segments)), flags=0)
         hatches.append(hatch)
 
     halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]

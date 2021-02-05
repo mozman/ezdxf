@@ -297,7 +297,7 @@ class TestToEntityConverter:
         assert p0.dxf.elevation == 1
 
     def test_to_lwpolylines_with_ocs(self, path1):
-        m = Matrix44.x_rotate(math.pi/4)
+        m = Matrix44.x_rotate(math.pi / 4)
         path = path1.transform(m)
         extrusion = m.transform((0, 0, 1))
         polylines = list(to_lwpolylines(path, extrusion=extrusion))
@@ -325,7 +325,7 @@ class TestToEntityConverter:
         assert p0.dxf.elevation == (0, 0, 1)
 
     def test_to_polylines2d_with_ocs(self, path1):
-        m = Matrix44.x_rotate(math.pi/4)
+        m = Matrix44.x_rotate(math.pi / 4)
         path = path1.transform(m)
         extrusion = m.transform((0, 0, 1))
         polylines = list(to_polylines2d(path, extrusion=extrusion))
@@ -334,6 +334,34 @@ class TestToEntityConverter:
         assert p0.dxf.extrusion.isclose(extrusion)
         assert p0[0].dxf.location == (0, 0, 1)
         assert p0[-1].dxf.location == (4, 0, 1)
+
+    def test_empty_to_hatches(self):
+        assert list(to_hatches([])) == []
+
+    def test_to_hatches(self, path):
+        hatches = list(to_hatches(path))
+        assert len(hatches) == 1
+        h0 = hatches[0]
+        assert h0.dxftype() == 'HATCH'
+        assert len(h0.paths) == 1
+
+    def test_to_hatches_with_wcs_elevation(self, path1):
+        hatches = list(to_hatches(path1))
+        ho = hatches[0]
+        assert ho.dxf.elevation == (0, 0, 1)
+
+    def test_to_hatches_with_ocs(self, path1):
+        m = Matrix44.x_rotate(math.pi / 4)
+        path = path1.transform(m)
+        extrusion = m.transform((0, 0, 1))
+        hatches = list(to_hatches(path, extrusion=extrusion))
+        h0 = hatches[0]
+        assert h0.dxf.elevation == (0, 0, 1)
+        assert h0.dxf.extrusion.isclose(extrusion)
+        polypath0 = h0.paths[0]
+        assert polypath0.vertices[0] == (0, 0, 0)  # x, y, bulge
+        assert polypath0.vertices[-1] == (0, 0, 0), "should be closed automatically"
+
 
 # Issue #224 regression test
 @pytest.fixture

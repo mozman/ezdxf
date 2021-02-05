@@ -10,13 +10,13 @@ import warnings
 import math
 import itertools
 from ezdxf.math import (
-    Vec3, NULLVEC, Z_AXIS, OCS, Bezier3P, Bezier4P, Matrix44, bulge_to_arc,
-    cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
+    Vec2, Vec3, NULLVEC, Z_AXIS, OCS, Bezier3P, Bezier4P, Matrix44,
+    bulge_to_arc, cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
     has_clockwise_orientation, global_bspline_interpolation, BoundingBox,
 )
 from ezdxf.lldxf import const
 from ezdxf.query import EntityQuery
-from ezdxf.entities import Polyline, LWPolyline, Polyline, Hatch, Line
+from ezdxf.entities import LWPolyline, Polyline, Hatch, Line
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -1395,9 +1395,42 @@ def to_hatches(
     .. versionadded:: 0.16
 
     """
+    from .nesting import group_paths
     if isinstance(paths, Path):
         paths = [paths]
-    return []
+    else:
+        paths = list(paths)
+    if len(paths) == 0:
+        return []
+
+    extrusion = Vec3(extrusion)
+    reference_point = paths[0].start
+    dxfattribs = dxfattribs or dict()
+    if not extrusion.isclose(Z_AXIS):
+        ocs, elevation = _get_ocs(extrusion, reference_point)
+        paths = transform_paths_to_ocs(paths, ocs)
+        dxfattribs['elevation'] = Vec3(0, 0, elevation)
+        dxfattribs['extrusion'] = extrusion
+    elif reference_point.z != 0:
+        dxfattribs['elevation'] = Vec3(0, 0, reference_point.z)
+    dxfattribs.setdefault('solid_fill', 1)
+    dxfattribs.setdefault('pattern_name', 'SOLID')
+    dxfattribs.setdefault('color', 7)
+
+    for group in group_paths(paths):
+        if len(group) == 0:
+            continue
+        hatch = Hatch.new(dxfattribs=dxfattribs)
+        external = group[0]
+        external.close()
+        hatch.paths.add_polyline_path(
+            # Vec2 removes the z-axis, which would be interpreted as bulge value!
+            Vec2.generate(external.flattening(distance, segments)), flags=1)
+        for hole in group[1:]:
+            hole.close()
+            hatch.paths.add_polyline_path(
+                Vec2.generate(hole.flattening(distance, segments)), flags=0)
+        yield hatch
 
 
 def to_polylines3d(
