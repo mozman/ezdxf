@@ -34,7 +34,7 @@ MIN_SEGMENTS = 4
 
 
 @enum.unique
-class Command(enum.Enum):
+class Command(enum.IntEnum):
     START_PATH = -1  # external command, not use in Path()
     LINE_TO = 1  # (LINE_TO, end vertex)
     CURVE3_TO = 2  # (CURVE3_TO, end vertex, ctrl) quadratic bezier
@@ -716,7 +716,7 @@ def _reverse_bezier_curves(curves: List[AnyBezier]) -> List[AnyBezier]:
 
 
 @enum.unique
-class MplCmd(enum.Enum):
+class MplCmd(enum.IntEnum):
     CLOSEPOLY = 79
     CURVE3 = 3
     CURVE4 = 4
@@ -1470,7 +1470,35 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
 
     """
     from matplotlib.path import Path as MatplotlibPath
-    pass
+    if not extrusion.isclose(Z_AXIS):
+        paths = transform_paths_to_ocs(paths, OCS(extrusion))
+    else:
+        paths = list(paths)
+    if len(paths) == 0:
+        raise ValueError('one or more paths required')
+
+    def add_command(code: MplCmd, point: Vec3):
+        codes.append(code)
+        vertices.append((point.x, point.y))
+
+    vertices = []
+    codes = []
+    for path in paths:
+        add_command(MplCmd.MOVETO, path.start)
+        for cmd in path:
+            if cmd.type == Command.LINE_TO:
+                add_command(MplCmd.LINETO, cmd.end)
+            elif cmd.type == Command.CURVE3_TO:
+                add_command(MplCmd.CURVE3, cmd.ctrl)
+                add_command(MplCmd.CURVE3, cmd.end)
+            elif cmd.type == Command.CURVE4_TO:
+                add_command(MplCmd.CURVE4, cmd.ctrl1)
+                add_command(MplCmd.CURVE4, cmd.ctrl2)
+                add_command(MplCmd.CURVE4, cmd.end)
+
+    # STOP command is currently not required
+    assert len(vertices) == len(codes)
+    return MatplotlibPath(vertices, codes)
 
 
 def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):

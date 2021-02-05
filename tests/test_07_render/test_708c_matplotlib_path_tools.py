@@ -8,6 +8,7 @@ pytest.importorskip('matplotlib')  # requires matplotlib!
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties
 from ezdxf.render import path
+from ezdxf.math import Vec2
 
 
 class TestFromMatplotlibPath:
@@ -156,6 +157,54 @@ class TestFitPathsIntoBoxNonUniformScaling:
         result = path.fit_paths_into_box([spath], (0, 6, 6), uniform=False)
         box = path.bbox(result)
         assert box.size == (0, 6, 6), "x-axis should be ignored"
+
+
+MC = path.MplCmd
+
+
+class TestToMatplotlibPath:
+    def test_no_paths(self):
+        with pytest.raises(ValueError):
+            path.to_matplotlib_path([])
+
+    def test_line_to(self):
+        p = path.Path()
+        p.line_to((4, 5, 6))
+        p.line_to((7, 8, 6))
+        mpath = path.to_matplotlib_path([p])
+        assert tuple(mpath.codes) == (MC.MOVETO, MC.LINETO, MC.LINETO)
+        assert Vec2.list(mpath.vertices) == [(0, 0), (4, 5), (7, 8)]
+
+    def test_curve3_to(self):
+        p = path.Path()
+        p.curve3_to((4, 0, 2), (2, 1, 7))
+        mpath = path.to_matplotlib_path([p])
+        assert tuple(mpath.codes) == (MC.MOVETO, MC.CURVE3, MC.CURVE3)
+        assert Vec2.list(mpath.vertices) == [(0, 0), (2, 1), (4, 0)]
+
+    def test_curve4_to(self):
+        p = path.Path()
+        p.curve4_to((4, 0, 2), (1, 1, 7), (3, 1, 5))
+        mpath = path.to_matplotlib_path([p])
+        assert tuple(mpath.codes) == (
+            MC.MOVETO, MC.CURVE4, MC.CURVE4, MC.CURVE4
+        )
+        assert Vec2.list(mpath.vertices) == [(0, 0), (1, 1), (3, 1), (4, 0)]
+
+    def test_two_paths(self):
+        p1 = path.Path()
+        p1.line_to((4, 5, 6))
+        p2 = path.Path()
+        p2.line_to((7, 8, 6))
+        mpath = path.to_matplotlib_path([p1, p2])
+        assert tuple(mpath.codes) == (
+            MC.MOVETO, MC.LINETO,
+            MC.MOVETO, MC.LINETO,
+        )
+        assert Vec2.list(mpath.vertices) == [
+            (0, 0), (4, 5),
+            (0, 0), (7, 8),
+        ]
 
 
 if __name__ == '__main__':
