@@ -22,7 +22,7 @@ Minimum common interface:
 - PyQt: `QPainterPath`_
     - moveTo()
     - lineTo()
-    - quadTo() - quadratic Bèzier-curve
+    - quadTo() - quadratic Bèzier-curve (converted to a cubic Bèzier-curve)
     - cubicTo() - cubic Bèzier-curve
 
 - PyCairo: `Context`_

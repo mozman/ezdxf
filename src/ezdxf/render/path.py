@@ -715,66 +715,6 @@ def _reverse_bezier_curves(curves: List[AnyBezier]) -> List[AnyBezier]:
     return curves
 
 
-@enum.unique
-class MplCmd(enum.IntEnum):
-    CLOSEPOLY = 79
-    CURVE3 = 3
-    CURVE4 = 4
-    LINETO = 2
-    MOVETO = 1
-    STOP = 0
-
-
-def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
-    """ Yields multiple :class:`Path` objects from a matplotlib `Path`_
-    (`TextPath`_)  object. (requires matplotlib)
-
-    .. versionadded:: 0.16
-
-    .. _TextPath: https://matplotlib.org/3.1.1/api/textpath_api.html
-    .. _Path: https://matplotlib.org/3.1.1/api/path_api.html#matplotlib.path.Path
-
-    """
-    path = None
-    for vertices, cmd in mpath.iter_segments(curves=curves):
-        cmd = MplCmd(cmd)
-        if cmd == MplCmd.MOVETO:  # each "moveto" creates new path
-            if path is not None:
-                yield path
-            path = Path(vertices)
-        elif cmd == MplCmd.LINETO:
-            # vertices = [x0, y0]
-            path.line_to(vertices)
-        elif cmd == MplCmd.CURVE3:
-            # vertices = [x0, y0, x1, y1]
-            path.curve3_to(vertices[2:], vertices[0:2])
-        elif cmd == MplCmd.CURVE4:
-            # vertices = [x0, y0, x1, y1, x2, y2]
-            path.curve4_to(vertices[4:], vertices[0:2], vertices[2:4])
-        elif cmd == MplCmd.CLOSEPOLY:
-            # vertices = [0, 0]
-            path.line_to(path.start)
-            yield path
-            path = None
-        elif cmd == MplCmd.STOP:  # not used
-            break
-
-    if path is not None:
-        yield path
-
-
-def from_qpainter_path(qpath, curves=True) -> Iterable[Path]:
-    """ Yields multiple :class:`Path` objects from a `QPainterPath`_.
-    (requires PyQt5)
-
-    .. versionadded:: 0.16
-
-    .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
-
-    """
-    pass
-
-
 def _from_lwpolyline(lwpolyline: 'LWPolyline', **kwargs) -> 'Path':
     """ Returns a Path from a LWPolyline. """
     path = Path()
@@ -1452,6 +1392,56 @@ def to_lines(
     pass
 
 
+# Interface to matplotlib.path.Path
+
+@enum.unique
+class MplCmd(enum.IntEnum):
+    CLOSEPOLY = 79
+    CURVE3 = 3
+    CURVE4 = 4
+    LINETO = 2
+    MOVETO = 1
+    STOP = 0
+
+
+def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
+    """ Yields multiple :class:`Path` objects from a matplotlib `Path`_
+    (`TextPath`_)  object. (requires matplotlib)
+
+    .. versionadded:: 0.16
+
+    .. _TextPath: https://matplotlib.org/3.1.1/api/textpath_api.html
+    .. _Path: https://matplotlib.org/3.1.1/api/path_api.html#matplotlib.path.Path
+
+    """
+    path = None
+    for vertices, cmd in mpath.iter_segments(curves=curves):
+        cmd = MplCmd(cmd)
+        if cmd == MplCmd.MOVETO:  # each "moveto" creates new path
+            if path is not None:
+                yield path
+            path = Path(vertices)
+        elif cmd == MplCmd.LINETO:
+            # vertices = [x0, y0]
+            path.line_to(vertices)
+        elif cmd == MplCmd.CURVE3:
+            # vertices = [x0, y0, x1, y1]
+            path.curve3_to(vertices[2:], vertices[0:2])
+        elif cmd == MplCmd.CURVE4:
+            # vertices = [x0, y0, x1, y1, x2, y2]
+            path.curve4_to(vertices[4:], vertices[0:2], vertices[2:4])
+        elif cmd == MplCmd.CLOSEPOLY:
+            # vertices = [0, 0]
+            path.line_to(path.start)
+            yield path
+            path = None
+        elif cmd == MplCmd.STOP:  # not used
+            break
+
+    if path is not None:
+        yield path
+
+
 def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
     """ Convert given `paths` into a single :class:`matplotlib.path.Path` object.
     The `extrusion` vector is applied to all paths, all vertices are projected
@@ -1501,6 +1491,21 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
     return MatplotlibPath(vertices, codes)
 
 
+# Interface to PyQt5.QtGui.QPainterPath
+
+
+def from_qpainter_path(qpath, curves=True) -> Iterable[Path]:
+    """ Yields multiple :class:`Path` objects from a `QPainterPath`_.
+    (requires PyQt5)
+
+    .. versionadded:: 0.16
+
+    .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
+
+    """
+    pass
+
+
 def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
     """ Convert given `paths` into a :class:`PyQt5.QtGui.QPainterPath` object.
     The `extrusion` vector is applied to all paths, all vertices are projected
@@ -1520,4 +1525,25 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
 
     """
     from PyQt5.QtGui import QPainterPath
-    pass
+    from PyQt5.QtCore import QPointF
+    if not extrusion.isclose(Z_AXIS):
+        paths = transform_paths_to_ocs(paths, OCS(extrusion))
+    else:
+        paths = list(paths)
+    if len(paths) == 0:
+        raise ValueError('one or more paths required')
+
+    def qpnt(v: Vec3):
+        return QPointF(v.x, v.y)
+
+    qpath = QPainterPath()
+    for path in paths:
+        qpath.moveTo(qpnt(path.start))
+        for cmd in path:
+            if cmd.type == Command.LINE_TO:
+                qpath.lineTo(qpnt(cmd.end))
+            elif cmd.type == Command.CURVE3_TO:
+                qpath.quadTo(qpnt(cmd.ctrl), qpnt(cmd.end))
+            elif cmd.type == Command.CURVE4_TO:
+                qpath.cubicTo(qpnt(cmd.ctrl1), qpnt(cmd.ctrl2), qpnt(cmd.end))
+    return qpath
