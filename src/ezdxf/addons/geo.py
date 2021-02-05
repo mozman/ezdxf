@@ -524,9 +524,8 @@ def _rebuild(geo_mapping: Dict, places: int = 6) -> Dict:
         return round(v.x, places), round(v.y, places)
 
     def _polygon(exterior, holes):
-        coordinates = [pnt(v) for v in exterior]
+        coordinates = [[pnt(v) for v in exterior]]
         if holes:
-            coordinates = [coordinates]
             coordinates.extend([pnt(v) for v in hole] for hole in holes)
         return coordinates
 
