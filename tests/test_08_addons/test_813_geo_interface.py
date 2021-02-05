@@ -22,7 +22,7 @@ LINE_STRING = {
 }
 POLYGON_0 = {
     'type': 'Polygon',
-    'coordinates': EXTERIOR
+    'coordinates': [EXTERIOR]
 }
 POLYGON_1 = {
     'type': 'Polygon',
@@ -43,7 +43,7 @@ MULTI_LINE_STRING = {
 MULTI_POLYGON = {
     'type': 'MultiPolygon',
     'coordinates': [
-        EXTERIOR,
+        [EXTERIOR],
         [EXTERIOR, HOLE1],
         [EXTERIOR, HOLE1, HOLE2],
     ]

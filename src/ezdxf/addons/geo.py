@@ -524,11 +524,9 @@ def _rebuild(geo_mapping: Dict, places: int = 6) -> Dict:
         return round(v.x, places), round(v.y, places)
 
     def _polygon(exterior, holes):
-        coordinates = [pnt(v) for v in exterior]
-        if holes:
-            coordinates = [coordinates]
-            coordinates.extend([pnt(v) for v in hole] for hole in holes)
-        return coordinates
+        # For type "Polygon", the "coordinates" member MUST be an array of
+        # linear ring coordinate arrays.
+        return [[pnt(v) for v in ring] for ring in [exterior] + holes]
 
     geo_interface = dict(geo_mapping)
     type_ = geo_interface[TYPE]
