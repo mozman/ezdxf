@@ -1494,7 +1494,7 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
 # Interface to PyQt5.QtGui.QPainterPath
 
 
-def from_qpainter_path(qpath, curves=True) -> Iterable[Path]:
+def from_qpainter_path(qpath) -> Iterable[Path]:
     """ Yields multiple :class:`Path` objects from a `QPainterPath`_.
     (requires PyQt5)
 
@@ -1503,7 +1503,34 @@ def from_qpainter_path(qpath, curves=True) -> Iterable[Path]:
     .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
 
     """
-    pass
+    # QPainterPath stores only cubic Bèzier curves
+    path = None
+    vertices = list()
+    for index in range(qpath.elementCount()):
+        element = qpath.elementAt(index)
+        cmd = element.type
+        v = Vec3(element.x, element.y)
+
+        if cmd == 0:  # MoveTo, each "moveto" creates new path
+            if path is not None:
+                yield path
+            assert len(vertices) == 0
+            path = Path(v)
+        elif cmd == 1:  # LineTo
+            assert len(vertices) == 0
+            path.line_to(v)
+        elif cmd == 2:  # CurveTo
+            assert len(vertices) == 0
+            vertices.append(v)
+        elif cmd == 3:  # CurveToDataElement
+            if len(vertices) == 2:
+                path.curve4_to(v, vertices[0], vertices[1])
+                vertices.clear()
+            else:
+                vertices.append(v)
+
+    if path is not None:
+        yield path
 
 
 def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):

@@ -2,8 +2,7 @@
 #  License: MIT License
 
 import pytest
-
-pytest.importorskip('matplotlib')  # requires matplotlib!
+pytest.importorskip('matplotlib')
 
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties

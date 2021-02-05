@@ -2,15 +2,12 @@
 #  License: MIT License
 
 import pytest
-
 pytest.importorskip('PyQt5')
 
+from PyQt5.QtGui import QPainterPath
+from PyQt5.QtCore import QPointF
 from ezdxf.render import path
 from ezdxf.math import quadratic_to_cubic_bezier, Bezier3P
-
-
-class TextFromQPainterPath:
-    pass
 
 
 class TestToQPainterPath:
@@ -87,6 +84,50 @@ class TestToQPainterPath:
         assert qpath.elementAt(1).isLineTo() is True
         assert qpath.elementAt(2).isMoveTo() is True
         assert qpath.elementAt(3).isLineTo() is True
+
+
+class TestFromQPainterPath:
+    def test_line_to(self):
+        qpath = QPainterPath(QPointF(1, 2))
+        qpath.lineTo(4, 5)
+
+        paths = list(path.from_qpainter_path(qpath))
+        p0 = paths[0]
+        assert p0.start == (1, 2)
+        assert p0[0].type == path.Command.LINE_TO
+        assert p0[0].end == (4, 5)
+
+    # Qt converts quadratic Bezier curves into cubic Bezier curves
+    # no need to test quadTo()
+    def test_cubic_to(self):
+        qpath = QPainterPath(QPointF(0, 0))
+        qpath.cubicTo(QPointF(1, 1), QPointF(3, 1), QPointF(4, 0), )
+
+        paths = list(path.from_qpainter_path(qpath))
+        p0 = paths[0]
+        assert p0.start == (0, 0)
+        assert p0[0].type == path.Command.CURVE4_TO
+        assert p0[0].ctrl1 == (1, 1)
+        assert p0[0].ctrl2 == (3, 1)
+        assert p0[0].end == (4, 0)
+
+    def test_two_lines(self):
+        qpath = QPainterPath(QPointF(1, 2))
+        qpath.lineTo(4, 5)
+        qpath.moveTo(3, 4)
+        qpath.lineTo(7, 9)
+        paths = list(path.from_qpainter_path(qpath))
+        assert len(paths) == 2
+
+        p0 = paths[0]
+        assert p0[0].type == path.Command.LINE_TO
+        assert p0.start == (1, 2)
+        assert p0[0].end == (4, 5)
+
+        p1 = paths[1]
+        assert p1[0].type == path.Command.LINE_TO
+        assert p1.start == (3, 4)
+        assert p1[0].end == (7, 9)
 
 
 if __name__ == '__main__':

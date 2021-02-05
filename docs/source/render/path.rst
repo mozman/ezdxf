@@ -62,7 +62,7 @@ Functions to create :class:`Path` objects from DXF entities.
 
 .. autofunction:: from_matplotlib_path(mpath, curves=True) -> Iterable[Path]
 
-.. autofunction:: from_qpainter_path(qpath, curves=True) -> Iterable[Path]
+.. autofunction:: from_qpainter_path(qpath) -> Iterable[Path]
 
 Render Functions
 ----------------
