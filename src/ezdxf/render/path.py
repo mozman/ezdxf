@@ -14,12 +14,14 @@ from ezdxf.math import (
     cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
     has_clockwise_orientation, global_bspline_interpolation, BoundingBox,
 )
+from ezdxf.lldxf import const
 from ezdxf.query import EntityQuery
+from ezdxf.entities import Polyline, LWPolyline, Polyline, Hatch, Line
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        LWPolyline, Polyline, Vertex, Spline, Ellipse, Arc, Circle, DXFEntity,
-        Line, Solid, Viewport, Image, Layout, Hatch, EntityQuery,
+        Vertex, Spline, Ellipse, Arc, Circle, DXFEntity,
+        Solid, Viewport, Image, Layout, EntityQuery,
     )
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
@@ -1285,7 +1287,9 @@ def to_lwpolylines(
     .. versionadded:: 0.16
 
     """
-    pass
+    if isinstance(paths, Path):
+        paths = [paths]
+    return []
 
 
 def to_polylines2d(
@@ -1314,7 +1318,9 @@ def to_polylines2d(
     .. versionadded:: 0.16
 
     """
-    pass
+    if isinstance(paths, Path):
+        paths = [paths]
+    return []
 
 
 def to_hatches(
@@ -1343,7 +1349,9 @@ def to_hatches(
     .. versionadded:: 0.16
 
     """
-    pass
+    if isinstance(paths, Path):
+        paths = [paths]
+    return []
 
 
 def to_polylines3d(
@@ -1366,7 +1374,15 @@ def to_polylines3d(
     .. versionadded:: 0.16
 
     """
-    pass
+    if isinstance(paths, Path):
+        paths = [paths]
+
+    dxfattribs = dxfattribs or {}
+    dxfattribs['flags'] = const.POLYLINE_3D_POLYLINE
+    for path in paths:
+        p = Polyline.new('POLYLINE', dxfattribs=dxfattribs)
+        p.append_vertices(path.flattening(distance, segments))
+        yield p
 
 
 def to_lines(
@@ -1389,7 +1405,20 @@ def to_lines(
     .. versionadded:: 0.16
 
     """
-    pass
+    if isinstance(paths, Path):
+        paths = [paths]
+    dxfattribs = dxfattribs or {}
+    prev_vertex = None
+    for path in paths:
+        for vertex in path.flattening(distance, segments):
+            if prev_vertex is None:
+                prev_vertex = vertex
+                continue
+            dxfattribs['start'] = prev_vertex
+            dxfattribs['end'] = vertex
+            yield Line.new(dxfattribs=dxfattribs)
+            prev_vertex = vertex
+        prev_vertex = None
 
 
 # Interface to matplotlib.path.Path
