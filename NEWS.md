@@ -11,8 +11,8 @@ Version 0.15.2b0 - dev
   two bounding boxes.
 - NEW: `ezdxf.math.ellipse_param_span()`, works the same way as 
   `arc_angle_span_deg()` for special cases
-- NEW: `DXFEntity.uuid` property, returns an UUID on demand, which allows to 
-  distinguish even virtual entities without a handle 
+- NEW: `DXFEntity.uuid` property, returns an UUID on demand, which allows 
+  distinguishing even virtual entities without a handle 
 - CHANGE: extraction of many text utility functions into `ezdxf.tools.text`
 - CHANGE: `add_polyline2d()`, `add_polyline3d()`, `add_lwpolyline()` and 
   `add_mline()` got argument `close` to create a closed polygon and 

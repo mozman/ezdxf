@@ -9,9 +9,10 @@ from ezdxf.render import path
 DIR = Path('~/Desktop/Outbox').expanduser()
 
 doc = ezdxf.new()
-msp = doc.modelspace()
-doc.layers.new('FORMS', dxfattribs={'color': 2})
+doc.layers.new('FORMS', dxfattribs={'color': 1})
 doc.layers.new('HATCHES')
+
+msp = doc.modelspace()
 attribs = {
     'layer': 'FORMS'
 }
@@ -36,7 +37,7 @@ primitives = disassemble.to_primitives(msp)
 paths = [p.path for p in primitives if p.path]
 
 # Render this paths as HATCH entities
-path.render_hatches(msp, paths, dxfattribs={'layer': 'HATCHES', 'color': 1})
+path.render_hatches(msp, paths, dxfattribs={'layer': 'HATCHES', 'color': 2})
 
 doc.set_modelspace_vport(15, (4, 4))
 doc.saveas(DIR / 'hatches_from_entities.dxf')
