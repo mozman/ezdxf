@@ -27,7 +27,9 @@ if TYPE_CHECKING:
 
 __all__ = [
     'Path', 'Command', 'make_path', 'has_path_support', 'from_matplotlib_path',
-    'bbox', 'fit_paths_into_box', 'transform_paths', 'transform_paths_to_ocs'
+    'bbox', 'fit_paths_into_box', 'transform_paths', 'transform_paths_to_ocs',
+    'to_lines', 'to_polylines3d', 'to_lwpolylines', 'to_polylines2d',
+    'to_hatches',
 ]
 
 AnyBezier = Union[Bezier4P, Bezier3P]
@@ -1289,7 +1291,32 @@ def to_lwpolylines(
     """
     if isinstance(paths, Path):
         paths = [paths]
-    return []
+    else:
+        paths = list(paths)
+    if len(paths) == 0:
+        return []
+
+    extrusion = Vec3(extrusion)
+    reference_point = paths[0].start
+    dxfattribs = dxfattribs or dict()
+    if not extrusion.isclose(Z_AXIS):
+        ocs, elevation = _get_ocs(extrusion, reference_point)
+        paths = transform_paths_to_ocs(paths, ocs)
+        dxfattribs['elevation'] = elevation
+        dxfattribs['extrusion'] = extrusion
+    elif reference_point.z != 0:
+        dxfattribs['elevation'] = reference_point.z
+
+    for path in paths:
+        p = LWPolyline.new(dxfattribs=dxfattribs)
+        p.append_points(path.flattening(distance, segments), format='xy')
+        yield p
+
+
+def _get_ocs(extrusion: Vec3, referenc_point: Vec3) -> Tuple[OCS, float]:
+    ocs = OCS(extrusion)
+    elevation = ocs.from_wcs(referenc_point).z
+    return ocs, elevation
 
 
 def to_polylines2d(
@@ -1320,7 +1347,26 @@ def to_polylines2d(
     """
     if isinstance(paths, Path):
         paths = [paths]
-    return []
+    else:
+        paths = list(paths)
+    if len(paths) == 0:
+        return []
+
+    extrusion = Vec3(extrusion)
+    reference_point = paths[0].start
+    dxfattribs = dxfattribs or dict()
+    if not extrusion.isclose(Z_AXIS):
+        ocs, elevation = _get_ocs(extrusion, reference_point)
+        paths = transform_paths_to_ocs(paths, ocs)
+        dxfattribs['elevation'] = Vec3(0, 0, elevation)
+        dxfattribs['extrusion'] = extrusion
+    elif reference_point.z != 0:
+        dxfattribs['elevation'] = Vec3(0, 0, reference_point.z)
+
+    for path in paths:
+        p = Polyline.new(dxfattribs=dxfattribs)
+        p.append_vertices(path.flattening(distance, segments))
+        yield p
 
 
 def to_hatches(

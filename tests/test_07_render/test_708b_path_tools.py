@@ -1,11 +1,13 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
 import pytest
+import math
 from ezdxf.layouts import VirtualLayout
 from ezdxf.math import Matrix44, OCS
 from ezdxf.render.path import (
     Path, bbox, fit_paths_into_box, transform_paths, transform_paths_to_ocs,
-    Command, to_polylines3d, to_lines,
+    Command, to_polylines3d, to_lines, to_lwpolylines, to_polylines2d,
+    to_hatches,
 )
 from ezdxf.render import make_path
 
@@ -248,7 +250,16 @@ class TestToEntityConverter:
         p.curve4_to((0, 0, 0), (3, 1, 1), (1, 1, 1))
         return p
 
-    def test_path_to_polylines3d(self, path):
+    @pytest.fixture
+    def path1(self):
+        p = Path((0, 0, 1))
+        p.curve4_to((4, 0, 1), (1, 1, 1), (3, 1, 1))
+        return p
+
+    def test_empty_to_polylines3d(self):
+        assert list(to_polylines3d([])) == []
+
+    def test_to_polylines3d(self, path):
         polylines = list(to_polylines3d(path))
         assert len(polylines) == 1
         p0 = polylines[0]
@@ -258,7 +269,10 @@ class TestToEntityConverter:
         assert p0.vertices[0].dxf.location == (0, 0, 0)
         assert p0.vertices[-1].dxf.location == (0, 0, 0)
 
-    def test_path_to_lines(self, path):
+    def test_empty_to_lines(self):
+        assert list(to_lines([])) == []
+
+    def test_to_lines(self, path):
         lines = list(to_lines(path))
         assert len(lines) == 17
         l0 = lines[0]
@@ -266,6 +280,60 @@ class TestToEntityConverter:
         assert l0.dxf.start == (0, 0, 0)
         assert l0.dxf.end == (4, 0, 0)
 
+    def test_empty_to_lwpolyline(self):
+        assert list(to_lwpolylines([])) == []
+
+    def test_to_lwpolylines(self, path):
+        polylines = list(to_lwpolylines(path))
+        assert len(polylines) == 1
+        p0 = polylines[0]
+        assert p0.dxftype() == 'LWPOLYLINE'
+        assert p0[0] == (0, 0, 0, 0, 0)  # x, y, swidth, ewidth, bulge
+        assert p0[-1] == (0, 0, 0, 0, 0)
+
+    def test_to_lwpolylines_with_wcs_elevation(self, path1):
+        polylines = list(to_lwpolylines(path1))
+        p0 = polylines[0]
+        assert p0.dxf.elevation == 1
+
+    def test_to_lwpolylines_with_ocs(self, path1):
+        m = Matrix44.x_rotate(math.pi/4)
+        path = path1.transform(m)
+        extrusion = m.transform((0, 0, 1))
+        polylines = list(to_lwpolylines(path, extrusion=extrusion))
+        p0 = polylines[0]
+        assert p0.dxf.elevation == pytest.approx(1)
+        assert p0.dxf.extrusion.isclose(extrusion)
+        assert p0[0] == (0, 0, 0, 0, 0)
+        assert p0[-1] == (4, 0, 0, 0, 0)
+
+    def test_empty_to_polylines2d(self):
+        assert list(to_polylines2d([])) == []
+
+    def test_to_polylines2d(self, path):
+        polylines = list(to_polylines2d(path))
+        assert len(polylines) == 1
+        p0 = polylines[0]
+        assert p0.dxftype() == 'POLYLINE'
+        assert p0.is_2d_polyline is True
+        assert p0[0].dxf.location == (0, 0, 0)
+        assert p0[-1].dxf.location == (0, 0, 0)
+
+    def test_to_polylines2d_with_wcs_elevation(self, path1):
+        polylines = list(to_polylines2d(path1))
+        p0 = polylines[0]
+        assert p0.dxf.elevation == (0, 0, 1)
+
+    def test_to_polylines2d_with_ocs(self, path1):
+        m = Matrix44.x_rotate(math.pi/4)
+        path = path1.transform(m)
+        extrusion = m.transform((0, 0, 1))
+        polylines = list(to_polylines2d(path, extrusion=extrusion))
+        p0 = polylines[0]
+        assert p0.dxf.elevation == (0, 0, 1)
+        assert p0.dxf.extrusion.isclose(extrusion)
+        assert p0[0].dxf.location == (0, 0, 1)
+        assert p0[-1].dxf.location == (4, 0, 1)
 
 # Issue #224 regression test
 @pytest.fixture
