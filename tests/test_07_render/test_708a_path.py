@@ -3,7 +3,8 @@
 import pytest
 import math
 from ezdxf.render.path import (
-    Path, Command, make_path, transform_paths, transform_paths_to_ocs,
+    Path, Command, make_path, transform_paths, transform_paths_to_ocs, bbox,
+    fit_paths_into_box,
 )
 from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P, OCS
 from ezdxf.entities.hatch import PolylinePath, EdgePath
@@ -646,6 +647,125 @@ class TestTransformPaths():
         p0 = result[0]
         assert ocs.from_wcs((0, 1, 1)) == p0.start
         assert ocs.from_wcs((0, 1, 3)) == p0[0].end
+
+class TestBoundingBox:
+    def test_empty_paths(self):
+        result = bbox([])
+        assert result.has_data is False
+
+    def test_one_path(self):
+        p = Path()
+        p.line_to((1, 2, 3))
+        assert bbox([p]).size == (1, 2, 3)
+
+    def test_two_path(self):
+        p1 = Path()
+        p1.line_to((1, 2, 3))
+        p2 = Path()
+        p2.line_to((-3, -2, -1))
+        assert bbox([p1, p2]).size == (4, 4, 4)
+
+    @pytest.fixture(scope='class')
+    def quadratic(self):
+        p = Path()
+        p.curve3_to((2, 0), (1, 1))
+        return p
+
+    def test_not_precise_box(self, quadratic):
+        result = bbox([quadratic], precise=False)
+        assert result.extmax.y == pytest.approx(1)  # control point
+
+    def test_precise_box(self, quadratic):
+        result = bbox([quadratic], precise=True)
+        assert result.extmax.y == pytest.approx(0.5)  # parabola
+
+
+class TestFitPathsIntoBoxUniformScaling:
+    @pytest.fixture(scope='class')
+    def spath(self):
+        p = Path()
+        p.line_to((1, 2, 3))
+        return p
+
+    def test_empty_paths(self):
+        assert fit_paths_into_box([], (0, 0, 0)) == []
+
+    def test_uniform_stretch_paths_limited_by_z(self, spath):
+        result = fit_paths_into_box([spath], (6, 6, 6))
+        box = bbox(result)
+        assert box.size == (2, 4, 6)
+
+    def test_uniform_stretch_paths_limited_by_y(self, spath):
+        result = fit_paths_into_box([spath], (6, 3, 6))
+        box = bbox(result)
+        # stretch factor: 1.5
+        assert box.size == (1.5, 3, 4.5)
+
+    def test_uniform_stretch_paths_limited_by_x(self, spath):
+        result = fit_paths_into_box([spath], (1.2, 6, 6))
+        box = bbox(result)
+        # stretch factor: 1.2
+        assert box.size == (1.2, 2.4, 3.6)
+
+    def test_uniform_shrink_paths(self, spath):
+        result = fit_paths_into_box([spath], (1.5, 1.5, 1.5))
+        box = bbox(result)
+        assert box.size == (0.5, 1, 1.5)
+
+    def test_project_into_xy(self, spath):
+        result = fit_paths_into_box([spath], (6, 6, 0))
+        box = bbox(result)
+        # Note: z-axis is also ignored by extent detection:
+        # scaling factor = 3x
+        assert box.size == (3, 6, 0), "z-axis should be ignored"
+
+    def test_project_into_xz(self, spath):
+        result = fit_paths_into_box([spath], (6, 0, 6))
+        box = bbox(result)
+        assert box.size == (2, 0, 6), "y-axis should be ignored"
+
+    def test_project_into_yz(self, spath):
+        result = fit_paths_into_box([spath], (0, 6, 6))
+        box = bbox(result)
+        assert box.size == (0, 4, 6), "x-axis should be ignored"
+
+    def test_invalid_target_size(self, spath):
+        with pytest.raises(ValueError):
+            fit_paths_into_box([spath], (0, 0, 0))
+
+
+class TestFitPathsIntoBoxNonUniformScaling:
+    @pytest.fixture(scope='class')
+    def spath(self):
+        p = Path()
+        p.line_to((1, 2, 3))
+        return p
+
+    def test_non_uniform_stretch_paths(self, spath):
+        result = fit_paths_into_box([spath], (8, 7, 6), uniform=False)
+        box = bbox(result)
+        assert box.size == (8, 7, 6)
+
+    def test_non_uniform_shrink_paths(self, spath):
+        result = fit_paths_into_box([spath], (1.5, 1.5, 1.5),
+                                    uniform=False)
+        box = bbox(result)
+        assert box.size == (1.5, 1.5, 1.5)
+
+    def test_project_into_xy(self, spath):
+        result = fit_paths_into_box([spath], (6, 6, 0), uniform=False)
+        box = bbox(result)
+        assert box.size == (6, 6, 0), "z-axis should be ignored"
+
+    def test_project_into_xz(self, spath):
+        result = fit_paths_into_box([spath], (6, 0, 6), uniform=False)
+        box = bbox(result)
+        assert box.size == (6, 0, 6), "y-axis should be ignored"
+
+    def test_project_into_yz(self, spath):
+        result = fit_paths_into_box([spath], (0, 6, 6), uniform=False)
+        box = bbox(result)
+        assert box.size == (0, 6, 6), "x-axis should be ignored"
 
 
 if __name__ == '__main__':
