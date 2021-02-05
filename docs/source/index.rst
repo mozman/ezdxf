@@ -14,7 +14,7 @@ Quick-Info
 
 - *ezdxf* is a Python package to create new DXF files and read/modify/write existing DXF files
 - the intended audience are developers
-- requires at least Python 3.6
+- requires at least Python 3.7
 - OS independent
 - additional required packages: `pyparsing <https://pypi.python.org/pypi/pyparsing/>`_
 - optional Cython implementation of some low level math classes
