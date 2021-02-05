@@ -1446,15 +1446,15 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
     """ Convert given `paths` into a single :class:`matplotlib.path.Path` object.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector, the default extrusion vector
-    is the WCS z-axis. The matplotlib Path is a 2D object, therefore the
-    z-elevation is ignored.  (requires matplotlib)
+    is the WCS z-axis. The matplotlib :class:`Path` is a 2D object with
+    :ref:`OCS` coordinates and the z-elevation is lost. (requires matplotlib)
 
     Args:
         paths: iterable of :class:`Path` objects
         extrusion: extrusion vector for all paths
 
     Returns:
-        matplotlib `Path`_
+        matplotlib `Path`_ in OCS!
 
     .. versionadded:: 0.16
 
@@ -1537,16 +1537,15 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
     """ Convert given `paths` into a :class:`PyQt5.QtGui.QPainterPath` object.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector, the default extrusion vector
-    is the WCS z-axis. The QPainterPath is a 2D object, therefore the
-    z-elevation is ignored.
-    (requires PyQt5)
+    is the WCS z-axis. The :class:`QPainterPath` is a 2D object with :ref:`OCS`
+    coordinates and the z-elevation is lost. (requires PyQt5)
 
     Args:
         paths: iterable of :class:`Path` objects
         extrusion: extrusion vector for all paths
 
     Returns:
-        `QPainterPath`_
+        `QPainterPath`_ in OCS!
 
     .. versionadded:: 0.16
 
