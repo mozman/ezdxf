@@ -7,6 +7,9 @@ This module implements a geometrical :class:`Path` supported by several render
 backends, with the goal to create such paths from LWPOLYLINE, POLYLINE and HATCH
 boundary paths and send them to the render backend, see :mod:`ezdxf.addons.drawing`.
 
+The revers conversion from :class:`Path` to DXF entities (LWPOLYLINE, POLYLINE,
+LINE) is supported.
+
 Minimum common interface:
 
 - matplotlib: `PathPatch`_
@@ -40,22 +43,76 @@ be represented exact as multiple cubic Bézier-curves, other B-splines will be
 approximated. XLINE and RAY are unsupported linear entities because of their
 infinite nature.
 
+This :class:`Path` class is a full featured 3D object, although the backends
+only support 2D paths.
+
 .. hint::
 
     A :class:`Path` can not represent a point. A :class:`Path` with only a
     start point yields no vertices!
 
+Factory Functions
+-----------------
+
+Functions to create :class:`Path` objects from DXF entities.
+
 .. autofunction:: has_path_support
 
 .. autofunction:: make_path
 
+.. autofunction:: from_matplotlib_path(mpath, curves=True) -> Iterable[Path]
+
+.. autofunction:: from_qpainter_path(qpath, curves=True) -> Iterable[Path]
+
+Render Functions
+----------------
+
+Functions to create DXF entities from paths and add them to the modelspace, a
+paperspace layout or a block definition.
+
+.. autofunction:: render_lwpolylines(layout: Layout, paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> EntityQuery
+
+.. autofunction:: render_polylines2d(layout: Layout, paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> EntityQuery
+
+.. autofunction:: render_hatches(layout: Layout, paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> EntityQuery
+
+.. autofunction:: render_polylines3d(layout: Layout, paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, dxfattribs: Dict = None) -> EntityQuery
+
+.. autofunction:: render_lines(layout: Layout, paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, dxfattribs: Dict = None) -> EntityQuery
+
+Converter Functions
+-------------------
+
+Functions to create DXF entities from paths.
+
+.. autofunction:: to_lwpolylines(paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> Iterable[LWPolyline]
+
+.. autofunction:: to_polylines2d(paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> Iterable[Polyline]
+
+.. autofunction:: to_hatches(paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> Iterable[Hatch]
+
+.. autofunction:: to_polylines3d(paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, dxfattribs: Dict = None) -> Iterable[Polyline]
+
+.. autofunction:: to_lines(paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, dxfattribs: Dict = None) -> Iterable[Line]
+
+.. autofunction:: to_matplotlib_path(paths: Iterable[Path], extrusion = (0, 0, 1)) -> matplotlib.path.Path
+
+.. autofunction:: to_qpainter_path(paths: Iterable[Path], extrusion = (0, 0, 1)) -> PyQt5.QtGui.QPainterPath
+
+Utility Functions
+-----------------
+
 .. autofunction:: transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]
+
+.. autofunction:: transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> List[Path]
 
 .. autofunction:: bbox(paths: Iterable[Path]) -> BoundingBox
 
 .. autofunction:: fit_paths_into_box(paths: Iterable[Path], size: Tuple[float, float, float], uniform = True, source_box: BoundingBox = None) -> List[Path]
 
-.. autofunction:: from_matplotlib_path(mpath, curves=True) -> Iterable[Path]
+
+The Path Class
+--------------
 
 .. class:: Path
 

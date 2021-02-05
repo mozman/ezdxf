@@ -2,6 +2,7 @@
 # License: MIT License
 from typing import (
     TYPE_CHECKING, List, Iterable, Sequence, NamedTuple, Union, Tuple,
+    Optional, Dict,
 )
 from collections import abc
 import enum
@@ -13,20 +14,23 @@ from ezdxf.math import (
     cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
     has_clockwise_orientation, global_bspline_interpolation, BoundingBox,
 )
+from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         LWPolyline, Polyline, Vertex, Spline, Ellipse, Arc, Circle, DXFEntity,
-        Line, Solid, Viewport, Image,
+        Line, Solid, Viewport, Image, Layout, Hatch, EntityQuery,
     )
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
 __all__ = [
     'Path', 'Command', 'make_path', 'has_path_support', 'from_matplotlib_path',
-    'bbox', 'fit_paths_into_box', 'transform_paths'
+    'bbox', 'fit_paths_into_box', 'transform_paths', 'transform_paths_to_ocs'
 ]
 
 AnyBezier = Union[Bezier4P, Bezier3P]
+MAX_DISTANCE = 0.01
+MIN_SEGMENTS = 4
 
 
 @enum.unique
@@ -608,7 +612,7 @@ class Path(abc.Sequence):
 
     def approximate(self, segments: int = 20) -> Iterable[Vec3]:
         """ Approximate path by vertices, `segments` is the count of
-        approximation segments for each cubic bezier curve.
+        approximation segments for each Bézier curve.
 
         Does not yield any vertices for empty paths, where only a start point
         is present!
@@ -638,7 +642,7 @@ class Path(abc.Sequence):
             distance: maximum distance from the center of the curve to the
                 center of the line segment between two approximation points to
                 determine if a segment should be subdivided.
-            segments: minimum segment count
+            segments: minimum segment count per Bézier curve
 
         """
 
@@ -757,6 +761,18 @@ def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
 
     if path is not None:
         yield path
+
+
+def from_qpainter_path(qpath, curves=True) -> Iterable[Path]:
+    """ Yields multiple :class:`Path` objects from a `QPainterPath`_.
+    (requires PyQt5)
+
+    .. versionadded:: 0.16
+
+    .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
+
+    """
+    pass
 
 
 def _from_lwpolyline(lwpolyline: 'LWPolyline', **kwargs) -> 'Path':
@@ -996,6 +1012,20 @@ def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
     return transformed_paths
 
 
+def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> List[Path]:
+    """ Transform multiple :class:`Path` objects at once from WCS to OCS.
+    Returns a list of the transformed :class:`Path` objects.
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        ocs: OCS transformation of type :class:`~ezdxf.math.OCS`
+
+    """
+    t = ocs.matrix.copy()
+    t.transpose()
+    return transform_paths(paths, t)
+
+
 def bbox(paths: Iterable[Path], precise=True,
          distance: float = 0.01,
          segments: int = 16) -> BoundingBox:
@@ -1093,3 +1123,373 @@ def _get_non_uniform_scaling(current_size: Vec3, target_size: Vec3):
     if current_size.z > TOL:
         scale_z = target_size.z / current_size.z
     return scale_x, scale_y, scale_z
+
+
+# Path to entity converter and render utilities:
+
+
+def render_lwpolylines(
+        layout: 'Layout',
+        paths: Iterable[Path],
+        *,
+        distance: float = MAX_DISTANCE,
+        segments: int = MIN_SEGMENTS,
+        extrusion: 'Vertex' = Z_AXIS,
+        dxfattribs: Optional[Dict] = None) -> EntityQuery:
+    """ Render given `paths` into `layout` as
+    :class:`~ezdxf.entities.LWPolyline` entities.
+    The `extrusion` vector is applied to all paths, all vertices are projected
+    onto the plane normal to this extrusion vector, the default extrusion vector
+    is the WCS z-axis. The plane elevation is defined by the distance of the
+    start point of the first path to the WCS origin.
+
+    Args:
+        layout: the modelspace, a paperspace layout or a block definition
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve
+        extrusion: extrusion vector for all paths
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        created entities in an :class:`~ezdxf.query.EntityQuery` object
+
+    .. versionadded:: 0.16
+
+    """
+    lwpolylines = list(to_lwpolylines(
+        paths,
+        distance=distance,
+        segments=segments,
+        extrusion=extrusion,
+        dxfattribs=dxfattribs,
+    ))
+    for lwpolyline in lwpolylines:
+        layout.add_entity(lwpolyline)
+    return EntityQuery(lwpolylines)
+
+
+def render_polylines2d(
+        layout: 'Layout',
+        paths: Iterable[Path],
+        *,
+        distance: float = 0.01,
+        segments: int = 4,
+        extrusion: 'Vertex' = Z_AXIS,
+        dxfattribs: Optional[Dict] = None) -> EntityQuery:
+    """ Render given `paths` into `layout` as 2D
+    :class:`~ezdxf.entities.Polyline` entities.
+    The `extrusion` vector is applied to all paths, all vertices are projected
+    onto the plane normal to this extrusion vector, the default extrusion vector
+    is the WCS z-axis. The plane elevation is defined by the distance of the
+    start point of the first path to the WCS origin.
+
+    Args:
+        layout: the modelspace, a paperspace layout or a block definition
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve
+        extrusion: extrusion vector for all paths
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        created entities in an :class:`~ezdxf.query.EntityQuery` object
+
+    .. versionadded:: 0.16
+
+    """
+    polylines2d = list(to_polylines2d(
+        paths,
+        distance=distance,
+        segments=segments,
+        extrusion=extrusion,
+        dxfattribs=dxfattribs,
+    ))
+    for polyline2d in polylines2d:
+        layout.add_entity(polyline2d)
+    return EntityQuery(polylines2d)
+
+
+def render_hatches(
+        layout: 'Layout',
+        paths: Iterable[Path],
+        *,
+        distance: float = MAX_DISTANCE,
+        segments: int = MIN_SEGMENTS,
+        extrusion: 'Vertex' = Z_AXIS,
+        dxfattribs: Optional[Dict] = None) -> EntityQuery:
+    """ Render given `paths` into `layout` as
+    :class:`~ezdxf.entities.Hatch` entities.
+    The `extrusion` vector is applied to all paths, all vertices are projected
+    onto the plane normal to this extrusion vector, the default extrusion vector
+    is the WCS z-axis. The plane elevation is defined by the distance of the
+    start point of the first path to the WCS origin.
+
+    Args:
+        layout: the modelspace, a paperspace layout or a block definition
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve
+        extrusion: extrusion vector for all paths
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        created entities in an :class:`~ezdxf.query.EntityQuery` object
+
+    .. versionadded:: 0.16
+
+    """
+    hatches = list(to_hatches(
+        paths,
+        distance=distance,
+        segments=segments,
+        extrusion=extrusion,
+        dxfattribs=dxfattribs,
+    ))
+    for hatch in hatches:
+        layout.add_entity(hatch)
+    return EntityQuery(hatches)
+
+
+def render_polylines3d(
+        layout: 'Layout',
+        paths: Iterable[Path],
+        *,
+        distance: float = MAX_DISTANCE,
+        segments: int = MIN_SEGMENTS,
+        dxfattribs: Optional[Dict] = None) -> EntityQuery:
+    """ Render given `paths` into `layout` as 3D
+    :class:`~ezdxf.entities.Polyline` entities.
+
+    Args:
+        layout: the modelspace, a paperspace layout or a block definition
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        created entities in an :class:`~ezdxf.query.EntityQuery` object
+
+    .. versionadded:: 0.16
+
+    """
+
+    polylines3d = list(to_polylines3d(
+        paths,
+        distance=distance,
+        segments=segments,
+        dxfattribs=dxfattribs,
+    ))
+    for polyline3d in polylines3d:
+        layout.add_entity(polyline3d)
+    return EntityQuery(polylines3d)
+
+
+def render_lines(
+        layout: 'Layout',
+        paths: Iterable[Path],
+        *,
+        distance: float = MAX_DISTANCE,
+        segments: int = MIN_SEGMENTS,
+        dxfattribs: Optional[Dict] = None) -> EntityQuery:
+    """ Render given `paths` into `layout` as
+    :class:`~ezdxf.entities.Line` entities.
+
+    Args:
+        layout: the modelspace, a paperspace layout or a block definition
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        created entities in an :class:`~ezdxf.query.EntityQuery` object
+
+    .. versionadded:: 0.16
+
+    """
+    lines = list(to_lines(
+        paths,
+        distance=distance,
+        segments=segments,
+        dxfattribs=dxfattribs,
+    ))
+    for line in lines:
+        layout.add_entity(line)
+    return EntityQuery(lines)
+
+
+def to_lwpolylines(
+        paths: Iterable[Path], *,
+        distance: float = MAX_DISTANCE,
+        segments: int = MIN_SEGMENTS,
+        extrusion: 'Vertex' = Z_AXIS,
+        dxfattribs: Optional[Dict] = None) -> Iterable['LWPolyline']:
+    """ Convert given `paths` into :class:`~ezdxf.entities.LWPolyline` entities.
+    The `extrusion` vector is applied to all paths, all vertices are projected
+    onto the plane normal to this extrusion vector, the default extrusion vector
+    is the WCS z-axis. The plane elevation is defined by the distance of the
+    start point of the first path to the WCS origin.
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve
+        extrusion: extrusion vector for all paths
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        iterable of :class:`~ezdxf.entities.LWPolyline` objects
+
+    .. versionadded:: 0.16
+
+    """
+    pass
+
+
+def to_polylines2d(
+        paths: Iterable[Path],
+        *,
+        distance: float = MAX_DISTANCE,
+        segments: int = MIN_SEGMENTS,
+        extrusion: 'Vertex' = Z_AXIS,
+        dxfattribs: Optional[Dict] = None) -> Iterable['Polyline']:
+    """ Convert given `paths` into 2D :class:`~ezdxf.entities.Polyline` entities.
+    The `extrusion` vector is applied to all paths, all vertices are projected
+    onto the plane normal to this extrusion vector, the default extrusion vector
+    is the WCS z-axis. The plane elevation is defined by the distance of the
+    start point of the first path to the WCS origin.
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve
+        extrusion: extrusion vector for all paths
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        iterable of 2D :class:`~ezdxf.entities.Polyline` objects
+
+    .. versionadded:: 0.16
+
+    """
+    pass
+
+
+def to_hatches(
+        paths: Iterable[Path],
+        *,
+        distance: float = MAX_DISTANCE,
+        segments: int = MIN_SEGMENTS,
+        extrusion: 'Vertex' = Z_AXIS,
+        dxfattribs: Optional[Dict] = None) -> Iterable['Hatch']:
+    """ Convert given `paths` into :class:`~ezdxf.entities.Hatch` entities.
+    The `extrusion` vector is applied to all paths, all vertices are projected
+    onto the plane normal to this extrusion vector, the default extrusion vector
+    is the WCS z-axis. The plane elevation is defined by the distance of the
+    start point of the first path to the WCS origin.
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve
+        extrusion: extrusion vector to all paths
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        iterable of :class:`~ezdxf.entities.Hatch` objects
+
+    .. versionadded:: 0.16
+
+    """
+    pass
+
+
+def to_polylines3d(
+        paths: Iterable[Path],
+        *,
+        distance: float = MAX_DISTANCE,
+        segments: int = MIN_SEGMENTS,
+        dxfattribs: Optional[Dict] = None) -> Iterable['Polyline']:
+    """ Convert given `paths` into 3D :class:`~ezdxf.entities.Polyline` entities.
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        iterable of 3D :class:`~ezdxf.entities.Polyline` objects
+
+    .. versionadded:: 0.16
+
+    """
+    pass
+
+
+def to_lines(
+        paths: Iterable[Path],
+        *,
+        distance: float = MAX_DISTANCE,
+        segments: int = MIN_SEGMENTS,
+        dxfattribs: Optional[Dict] = None) -> Iterable['Line']:
+    """ Convert given `paths` into :class:`~ezdxf.entities.Line` entities.
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        iterable of :class:`~ezdxf.entities.Line` objects
+
+    .. versionadded:: 0.16
+
+    """
+    pass
+
+
+def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
+    """ Convert given `paths` into a single :class:`matplotlib.path.Path` object.
+    The `extrusion` vector is applied to all paths, all vertices are projected
+    onto the plane normal to this extrusion vector, the default extrusion vector
+    is the WCS z-axis. The matplotlib Path is a 2D object, therefore the
+    z-elevation is ignored.  (requires matplotlib)
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        extrusion: extrusion vector for all paths
+
+    Returns:
+        matplotlib `Path`_
+
+    .. versionadded:: 0.16
+
+    """
+    from matplotlib.path import Path as MatplotlibPath
+    pass
+
+
+def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
+    """ Convert given `paths` into a :class:`PyQt5.QtGui.QPainterPath` object.
+    The `extrusion` vector is applied to all paths, all vertices are projected
+    onto the plane normal to this extrusion vector, the default extrusion vector
+    is the WCS z-axis. The QPainterPath is a 2D object, therefore the
+    z-elevation is ignored.
+    (requires PyQt5)
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        extrusion: extrusion vector for all paths
+
+    Returns:
+        `QPainterPath`_
+
+    .. versionadded:: 0.16
+
+    """
+    from PyQt5.QtGui import QPainterPath
+    pass

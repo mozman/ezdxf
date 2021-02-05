@@ -13,10 +13,26 @@ Version 0.16 - dev
 - NEW: `ezdxf.math.Bezier3P`, optimized quadratic Bézier curve construction tool 
 - NEW: quadratic Bézier curve support for the `Path()` class 
 - NEW: `path.transform_paths()` to transform multiple `Path()` objects at once 
+- NEW: `path.transform_paths_to_ocs()` to transform multiple `Path()` objects 
+  at once form WCS to OCS  
 - NEW: `path.bbox()`, calculate bounding box for multiple `Path()` objects  
 - NEW: `path.fit_paths_into_box()`, scale paths to fit into a given box size  
-- NEW: `path.from_matplotlib_path()` yields multiple `Path()` objects from a 
-  matplotlib Path (TextPath) object.  
+- NEW: `path.from_matplotlib_path()` yields multiple `Path()` objects from a
+  matplotlib Path (TextPath).
+- NEW: `path.from_qpainter_path()` yields multiple `Path()` objects from a 
+  PyQt5 QPainterPath.
+- NEW: `path.render_lwpolylines()`, render paths as LWPOLYLINE entities
+- NEW: `path.render_polylines2d()`, render paths as 2D POLYLINE entities
+- NEW: `path.render_hatches()`, render paths as HATCH entities
+- NEW: `path.render_polylines3d()`, render paths as 3D POLYLINE entities
+- NEW: `path.render_lines()`, render paths as LINE entities
+- NEW: `path.to_lwpolylines()`, convert paths to LWPOLYLINE entities
+- NEW: `path.to_polylines2d()`, convert paths to 2D POLYLINE entities
+- NEW: `path.to_hatches()`, convert paths to HATCH entities
+- NEW: `path.to_polylines3d()`, convert paths to 3D POLYLINE entities
+- NEW: `path.to_lines()`, convert paths to LINE entities
+- NEW: `path.to_matplotlib_path()`, convert paths to a matplotlib Path
+- NEW: `path.to_qpainter_path()`, convert paths to a PyQt5 QPainterPath 
 - DEPRECATED: `Path.from_lwpolyline()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_polyline()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_spline()`, replaced by factory `make_path()`

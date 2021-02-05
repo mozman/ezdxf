@@ -2,8 +2,10 @@
 # License: MIT License
 import pytest
 import math
-from ezdxf.render.path import Path, Command, make_path, transform_paths
-from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P
+from ezdxf.render.path import (
+    Path, Command, make_path, transform_paths, transform_paths_to_ocs,
+)
+from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P, OCS
 from ezdxf.entities.hatch import PolylinePath, EdgePath
 from ezdxf.entities import factory
 
@@ -635,6 +637,15 @@ class TestTransformPaths():
         assert path1[2].type == Command.CURVE4_TO
         assert path1.start == (4, 0)
         assert path1.end == (7, 0)
+
+    def test_to_ocs(self):
+        p = Path((0, 1, 1))
+        p.line_to((0, 1, 3))
+        ocs = OCS((1, 0, 0))  # x-Axis
+        result = list(transform_paths_to_ocs([p], ocs))
+        p0 = result[0]
+        assert ocs.from_wcs((0, 1, 1)) == p0.start
+        assert ocs.from_wcs((0, 1, 3)) == p0[0].end
 
 
 if __name__ == '__main__':
