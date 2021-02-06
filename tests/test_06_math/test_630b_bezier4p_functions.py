@@ -2,7 +2,9 @@
 # License: MIT License
 import random
 
-from ezdxf.math import cubic_bezier_interpolation, Vec3, Bezier3P, quadratic_to_cubic_bezier
+from ezdxf.math import (
+    cubic_bezier_interpolation, Vec3, Bezier3P, quadratic_to_cubic_bezier,
+)
 
 
 def test_vertex_interpolation():

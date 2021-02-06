@@ -122,6 +122,9 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: cubic_bezier_interpolation(points: Iterable[Vertex]) -> List[Bezier4P]
 
+.. autofunction:: quadratic_to_cubic_bezier(bezier: Bezier3P) -> Bezier4P
+
+.. autofunction:: bezier_to_bspline(Iterable[Union[Bezier3P, Bezier4P]], segments int = 4) -> BSpline
 
 Transformation Classes
 ======================

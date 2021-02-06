@@ -38,7 +38,7 @@ from .bspline import (
 )
 from .bezier import Bezier
 from .bezier4p import (
-    cubic_bezier_interpolation, tangents_cubic_bezier_interpolation, quadratic_to_cubic_bezier
+    cubic_bezier_interpolation, tangents_cubic_bezier_interpolation
 )
 from .surfaces import BezierSurface
 from .eulerspiral import EulerSpiral
@@ -60,6 +60,7 @@ from .shape import Shape2d
 from .bbox import BoundingBox2d, BoundingBox
 from .offset2d import offset_vertices_2d
 from .transformtools import NonUniformScalingError, InsertTransformationError
+from .curve_converter import quadratic_to_cubic_bezier, bezier_to_bspline
 
 Vertex = Union[Sequence[float], Vec3, Vec2]
 VecXY = Union[Vec2, Vec3]  # Vector with x and y attributes
