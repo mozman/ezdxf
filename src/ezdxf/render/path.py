@@ -37,6 +37,7 @@ __all__ = [
 AnyBezier = Union[Bezier4P, Bezier3P]
 MAX_DISTANCE = 0.01
 MIN_SEGMENTS = 4
+C1_TOL = 1e-4
 
 
 @enum.unique
@@ -90,6 +91,7 @@ class Curve4To(NamedTuple):
         )
 
 
+AnyCurve = (Command.CURVE3_TO, Command.CURVE4_TO)
 PathElement = Union[LineTo, Curve3To, Curve4To]
 
 
@@ -142,6 +144,16 @@ class Path(abc.Sequence):
     def is_closed(self) -> bool:
         """ Returns ``True`` if the start point is close to the end point. """
         return self._start.isclose(self.end)
+
+    @property
+    def has_lines(self) -> bool:
+        """ Returns ``True`` if the path has any line segments. """
+        return any(cmd.type == Command.LINE_TO for cmd in self._commands)
+
+    @property
+    def has_curves(self) -> bool:
+        """ Returns ``True`` if the path has any curve segments. """
+        return any(cmd.type in AnyCurve for cmd in self._commands)
 
     @classmethod
     def from_vertices(cls, vertices: Iterable['Vertex'], close=False) -> 'Path':
@@ -1271,6 +1283,7 @@ def render_splines_and_polylines(
         paths: Iterable[Path],
         *,
         segments: int = 3,
+        c1_tol: float = C1_TOL,
         dxfattribs: Optional[Dict] = None) -> EntityQuery:
     """ Render given `paths` into `layout` as :class:`~ezdxf.entities.Spline`
     and 3D :class:`ezdxf.entities.Polyline` entities.
@@ -1279,6 +1292,7 @@ def render_splines_and_polylines(
         layout: the modelspace, a paperspace layout or a block definition
         paths: iterable of :class:`Path` objects
         segments: minimum count of B-spline sub-segments per Bèzier curve
+        c1_tol: tolerance for C1 continuity check
         dxfattribs: additional DXF attribs
 
     Returns:
@@ -1290,6 +1304,7 @@ def render_splines_and_polylines(
     entities = list(to_splines_and_polylines(
         paths,
         segments=segments,
+        c1_tol=c1_tol,
         dxfattribs=dxfattribs,
     ))
     for entity in entities:
@@ -1533,14 +1548,36 @@ def to_lines(
         prev_vertex = None
 
 
-def to_bsplines_and_vertices(path: Path, segments: int = 3) -> Iterable[
-    Union[BSpline, List[Vec3]]]:
+def has_c1_continuity(b1: AnyBezier, b2: AnyBezier, tol: float) -> bool:
+    """ Return ``True`` if the given bezier curves have C1 continuity and can be
+    converted into a single B-spline.
+
+    """
+    b1_points = list(b1.control_points)
+    te = (b1_points[-1] - b1_points[-2]).normalize()
+    b2_points = list(b2.control_points)
+    ts = (b2_points[1] - b2_points[0]).normalize()
+    # 0 = normal; 1 = same direction; -1 = opposite direction
+    return math.isclose(te.dot(ts), 1.0, abs_tol=tol)
+
+
+PathParts = Union[BSpline, List[Vec3]]
+
+
+def to_bsplines_and_vertices(path: Path,
+                             segments: int = 3,
+                             c1_tol: float = C1_TOL) -> Iterable[PathParts]:
     """ Convert a :class:`Path` object into multiple cubic B-splines and
-    polylines as lists of vertices.
+    polylines as lists of vertices. Breaks adjacent Bèzier without C1
+    continuity into separated B-splines. Continuity check is done by the dot
+    product of the normalized end tangent of the previous curve and normalized
+    start tangent of the adjacent curve:
+    :code:`math.isclose(te.dot(ts), 1.0, abs_tol=c1_tol)`.
 
     Args:
         path: :class:`Path` objects
         segments: minimum count of B-spline sub-segments per Bèzier curve
+        c1_tol: tolerance for C1 continuity check
 
     Returns:
         :class:`~ezdxf.math.BSpline` and lists of :class:`~ezdxf.math.Vec3`
@@ -1550,11 +1587,25 @@ def to_bsplines_and_vertices(path: Path, segments: int = 3) -> Iterable[
     """
     from ezdxf.math import bezier_to_bspline
 
-    def to_vertices(lines):
-        points = [lines[0][0]]
-        for line in lines:
+    def to_vertices():
+        points = [polyline[0][0]]
+        for line in polyline:
             points.append(line[1])
         return points
+
+    def to_bspline():
+        b1 = bezier[0]
+        _c1_continuity_curves = [b1]
+        for b2 in bezier[1:]:
+            if has_c1_continuity(b1, b2, c1_tol):
+                _c1_continuity_curves.append(b2)
+            else:
+                yield bezier_to_bspline(_c1_continuity_curves, segments)
+                _c1_continuity_curves = [b2]
+            b1 = b2
+
+        if _c1_continuity_curves:
+            yield bezier_to_bspline(_c1_continuity_curves, segments)
 
     prev = path.start
     curves = []
@@ -1575,25 +1626,26 @@ def to_bsplines_and_vertices(path: Path, segments: int = 3) -> Iterable[
     for curve in curves:
         if isinstance(curve, tuple):
             if bezier:
-                yield bezier_to_bspline(bezier, segments)
+                yield from to_bspline()
                 bezier.clear()
             polyline.append(curve)
         else:
             if polyline:
-                yield to_vertices(polyline)
+                yield to_vertices()
                 polyline.clear()
             bezier.append(curve)
 
     if bezier:
-        yield bezier_to_bspline(bezier, segments)
+        yield from to_bspline()
     if polyline:
-        yield to_vertices(polyline)
+        yield to_vertices()
 
 
 def to_splines_and_polylines(
         paths: Iterable[Path],
         *,
         segments: int = 3,
+        c1_tol: float = C1_TOL,
         dxfattribs: Optional[Dict] = None) -> Iterable[Union[Spline, Polyline]]:
     """ Convert given `paths` into :class:`~ezdxf.entities.Spline` and 3D
     :class:`ezdxf.entities.Polyline` entities.
@@ -1601,6 +1653,7 @@ def to_splines_and_polylines(
     Args:
         paths: iterable of :class:`Path` objects
         segments: minimum count of B-spline sub-segments per Bèzier curve
+        c1_tol: tolerance for C1 continuity check
         dxfattribs: additional DXF attribs
 
     Returns:
@@ -1614,7 +1667,7 @@ def to_splines_and_polylines(
     dxfattribs = dxfattribs or {}
 
     for path in paths:
-        for data in to_bsplines_and_vertices(path, segments):
+        for data in to_bsplines_and_vertices(path, segments, c1_tol):
             if isinstance(data, BSpline):
                 spline = Spline.new(dxfattribs=dxfattribs)
                 spline.apply_construction_tool(data)
