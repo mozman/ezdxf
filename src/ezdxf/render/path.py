@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import (
     TYPE_CHECKING, List, Iterable, Sequence, NamedTuple, Union, Tuple,
-    Optional, Dict,
+    Optional, Dict, Callable,
 )
 from collections import abc
 import enum
@@ -1198,6 +1198,7 @@ def render_hatches(
     .. versionadded:: 0.16
 
     """
+    # to_hatches_with_spline_edges() has problems with islands!
     hatches = list(to_hatches(
         paths,
         distance=distance,
@@ -1426,6 +1427,7 @@ def to_hatches(
         extrusion: 'Vertex' = Z_AXIS,
         dxfattribs: Optional[Dict] = None) -> Iterable[Hatch]:
     """ Convert given `paths` into :class:`~ezdxf.entities.Hatch` entities.
+    Uses only LWPOLYLINE boundary paths.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector, the default extrusion vector
     is the WCS z-axis. The plane elevation is defined by the distance of the
@@ -1444,6 +1446,73 @@ def to_hatches(
     .. versionadded:: 0.16
 
     """
+
+    def add_boundary(hatch: Hatch, path: Path, flags: int):
+        hatch.paths.add_polyline_path(
+            # Vec2 removes the z-axis, which would be interpreted as bulge value!
+            Vec2.generate(path.flattening(distance, segments)), flags=flags)
+
+    yield from _hatch_converter(paths, add_boundary, extrusion, dxfattribs)
+
+
+def to_hatches_with_spline_edges(
+        paths: Iterable[Path],
+        *,
+        distance: float = MAX_DISTANCE,
+        segments: int = 3,
+        c1_tol: float = C1_TOL,
+        extrusion: 'Vertex' = Z_AXIS,
+        dxfattribs: Optional[Dict] = None) -> Iterable[Hatch]:
+    """ Convert given `paths` into :class:`~ezdxf.entities.Hatch` entities.
+    Uses LWPOLYLINE paths for boundaries without curves and edge paths
+    of LINE and SPLINE edges as boundary paths for boundaries with curves.
+    The `extrusion` vector is applied to all paths, all vertices are projected
+    onto the plane normal to this extrusion vector, the default extrusion vector
+    is the WCS z-axis. The plane elevation is defined by the distance of the
+    start point of the first path to the WCS origin.
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve
+        c1_tol: tolerance for C1 continuity check
+        extrusion: extrusion vector to all paths
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        iterable of :class:`~ezdxf.entities.Hatch` objects
+
+    .. versionadded:: 0.16
+
+    """
+    def add_boundary(hatch: Hatch, path: Path, flags: int):
+        if path.has_curves:  # Edge path with LINE and SPLINE edges
+            edge_path = hatch.paths.add_edge_path(flags)
+            for edge in to_bsplines_and_vertices(
+                    path, segments=segments, c1_tol=c1_tol):
+                if isinstance(edge, BSpline):
+                    edge_path.add_spline(
+                        control_points=edge.control_points,
+                        degree=edge.degree,
+                        knot_values=edge.knots(),
+                    )
+                else:  # add LINE edges
+                    prev = edge[0]
+                    for p in edge[1:]:
+                        edge_path.add_line(prev, p)
+                        prev = p
+        else:  # Polyline boundary path
+            hatch.paths.add_polyline_path(
+                Vec2.generate(path.flattening(distance, segments)), flags=flags)
+
+    yield from _hatch_converter(paths, add_boundary, extrusion, dxfattribs)
+
+
+def _hatch_converter(
+        paths: Iterable[Path],
+        add_boundary: Callable[[Hatch, Path, int], None],
+        extrusion: 'Vertex' = Z_AXIS,
+        dxfattribs: Optional[Dict] = None) -> Iterable[Hatch]:
     from .nesting import group_paths
     if isinstance(paths, Path):
         paths = [paths]
@@ -1464,7 +1533,7 @@ def to_hatches(
         dxfattribs['elevation'] = Vec3(0, 0, reference_point.z)
     dxfattribs.setdefault('solid_fill', 1)
     dxfattribs.setdefault('pattern_name', 'SOLID')
-    dxfattribs.setdefault('color', 7)
+    dxfattribs.setdefault('color', const.BYLAYER)
 
     for group in group_paths(paths):
         if len(group) == 0:
@@ -1472,13 +1541,10 @@ def to_hatches(
         hatch = Hatch.new(dxfattribs=dxfattribs)
         external = group[0]
         external.close()
-        hatch.paths.add_polyline_path(
-            # Vec2 removes the z-axis, which would be interpreted as bulge value!
-            Vec2.generate(external.flattening(distance, segments)), flags=1)
+        add_boundary(hatch, external, 1)
         for hole in group[1:]:
             hole.close()
-            hatch.paths.add_polyline_path(
-                Vec2.generate(hole.flattening(distance, segments)), flags=0)
+            add_boundary(hatch, hole, 0)
         yield hatch
 
 

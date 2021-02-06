@@ -1196,8 +1196,8 @@ class EdgePath:
 
         """
         line = LineEdge()
-        line.start = start
-        line.end = end
+        line.start = Vec2(start)
+        line.end = Vec2(end)
         self.edges.append(line)
         return line
 
@@ -1348,8 +1348,8 @@ class LineEdge:
     EDGE_TYPE = "LineEdge"
 
     def __init__(self):
-        self.start = Vec2((0, 0))
-        self.end = Vec2((0, 0))
+        self.start = Vec2(0, 0)  # OCS!
+        self.end = Vec2(0, 0)  # OCS!
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'LineEdge':
@@ -1382,7 +1382,7 @@ class ArcEdge:
     EDGE_TYPE = "ArcEdge"
 
     def __init__(self):
-        self.center = Vec2((0., 0.))
+        self.center = Vec2(0., 0.)
         self.radius: float = 1.
         self.start_angle: float = 0.
         self.end_angle: float = 360.
