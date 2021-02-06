@@ -126,6 +126,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: bezier_to_bspline(Iterable[Union[Bezier3P, Bezier4P]], segments int = 4) -> BSpline
 
+.. autofunction:: bezier_curves_have_c1_continuity(b1: AnyBezier, b2 AnyBezier, c1_tol: float = 1e-4) -> bool
+
 Transformation Classes
 ======================
 

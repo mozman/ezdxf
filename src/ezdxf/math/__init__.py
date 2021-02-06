@@ -60,7 +60,10 @@ from .shape import Shape2d
 from .bbox import BoundingBox2d, BoundingBox
 from .offset2d import offset_vertices_2d
 from .transformtools import NonUniformScalingError, InsertTransformationError
-from .curve_converter import quadratic_to_cubic_bezier, bezier_to_bspline
+from .curve_converter import (
+    quadratic_to_cubic_bezier, bezier_to_bspline,
+    bezier_curves_have_c1_continuity
+)
 
 Vertex = Union[Sequence[float], Vec3, Vec2]
 VecXY = Union[Vec2, Vec3]  # Vector with x and y attributes

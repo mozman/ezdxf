@@ -13,6 +13,7 @@ from ezdxf.math import (
     Vec2, Vec3, NULLVEC, Z_AXIS, OCS, Bezier3P, Bezier4P, Matrix44,
     bulge_to_arc, cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
     has_clockwise_orientation, global_bspline_interpolation, BoundingBox,
+    bezier_curves_have_c1_continuity,
 )
 from ezdxf.lldxf import const
 from ezdxf.query import EntityQuery
@@ -1548,19 +1549,6 @@ def to_lines(
         prev_vertex = None
 
 
-def has_c1_continuity(b1: AnyBezier, b2: AnyBezier, tol: float) -> bool:
-    """ Return ``True`` if the given bezier curves have C1 continuity and can be
-    converted into a single B-spline.
-
-    """
-    b1_points = list(b1.control_points)
-    te = (b1_points[-1] - b1_points[-2]).normalize()
-    b2_points = list(b2.control_points)
-    ts = (b2_points[1] - b2_points[0]).normalize()
-    # 0 = normal; 1 = same direction; -1 = opposite direction
-    return math.isclose(te.dot(ts), 1.0, abs_tol=tol)
-
-
 PathParts = Union[BSpline, List[Vec3]]
 
 
@@ -1569,10 +1557,7 @@ def to_bsplines_and_vertices(path: Path,
                              c1_tol: float = C1_TOL) -> Iterable[PathParts]:
     """ Convert a :class:`Path` object into multiple cubic B-splines and
     polylines as lists of vertices. Breaks adjacent Bèzier without C1
-    continuity into separated B-splines. Continuity check is done by the dot
-    product of the normalized end tangent of the previous curve and normalized
-    start tangent of the adjacent curve:
-    :code:`math.isclose(te.dot(ts), 1.0, abs_tol=c1_tol)`.
+    continuity into separated B-splines.
 
     Args:
         path: :class:`Path` objects
@@ -1597,7 +1582,7 @@ def to_bsplines_and_vertices(path: Path,
         b1 = bezier[0]
         _c1_continuity_curves = [b1]
         for b2 in bezier[1:]:
-            if has_c1_continuity(b1, b2, c1_tol):
+            if bezier_curves_have_c1_continuity(b1, b2, c1_tol):
                 _c1_continuity_curves.append(b2)
             else:
                 yield bezier_to_bspline(_c1_continuity_curves, segments)

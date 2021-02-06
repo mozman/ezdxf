@@ -1,11 +1,14 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Iterable, Union
-
+import math
 from ezdxf.math import BSpline, fit_points_to_cad_cv
 from ezdxf.math import Bezier4P, Bezier3P
 
-__all__ = ["bezier_to_bspline", "quadratic_to_cubic_bezier"]
+__all__ = [
+    "bezier_to_bspline", "quadratic_to_cubic_bezier",
+    "bezier_curves_have_c1_continuity"
+]
 
 AnyBezier = Union[Bezier3P, Bezier4P]
 
@@ -50,3 +53,17 @@ def bezier_to_bspline(curves: Iterable[AnyBezier],
             raise ValueError('gap between curves')
     return fit_points_to_cad_cv(
         fit_points, tangents=[start_tangent, end_tangent])
+
+
+def bezier_curves_have_c1_continuity(b1: AnyBezier, b2: AnyBezier,
+                                     tol: float = 1e-4) -> bool:
+    """ Return ``True`` if the given adjacent bezier curves have C1 continuity.
+    """
+    b1_pnts = list(b1.control_points)
+    b2_pnts = list(b2.control_points)
+    if not b1_pnts[-1].isclose(b2_pnts[0]):
+        return False
+    te = (b1_pnts[-1] - b1_pnts[-2]).normalize()
+    ts = (b2_pnts[1] - b2_pnts[0]).normalize()
+    # 0 = normal; 1 = same direction; -1 = opposite direction
+    return math.isclose(te.dot(ts), 1.0, abs_tol=tol)
