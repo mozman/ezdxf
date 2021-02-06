@@ -24,7 +24,7 @@ def quadratic_to_cubic_bezier(curve: Bezier3P) -> Bezier4P:
 
 
 def bezier_to_bspline(curves: Iterable[AnyBezier],
-                      segments: int = 4) -> BSpline:
+                      segments: int = 3) -> BSpline:
     """ Convert multiple Bèzier curves into a cubic B-splines
     (:class:`ezdxf.math.BSpline`).
     The curves must be lined up seamlessly, i.e. the starting point of the

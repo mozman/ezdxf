@@ -16,11 +16,11 @@ from ezdxf.math import (
 )
 from ezdxf.lldxf import const
 from ezdxf.query import EntityQuery
-from ezdxf.entities import LWPolyline, Polyline, Hatch, Line
+from ezdxf.entities import LWPolyline, Polyline, Hatch, Line, Spline
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Vertex, Spline, Ellipse, Arc, Circle, DXFEntity,
+        Vertex, Ellipse, Arc, Circle, DXFEntity,
         Solid, Viewport, Image, Layout, EntityQuery,
     )
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
@@ -29,7 +29,9 @@ __all__ = [
     'Path', 'Command', 'make_path', 'has_path_support', 'from_matplotlib_path',
     'bbox', 'fit_paths_into_box', 'transform_paths', 'transform_paths_to_ocs',
     'to_lines', 'to_polylines3d', 'to_lwpolylines', 'to_polylines2d',
-    'to_hatches',
+    'to_hatches', 'to_bsplines_and_vertices', 'to_splines_and_polylines',
+    'render_lwpolylines', 'render_polylines2d', 'render_polylines3d',
+    'render_lines', 'render_hatches', 'render_splines_and_polylines'
 ]
 
 AnyBezier = Union[Bezier4P, Bezier3P]
@@ -1264,12 +1266,43 @@ def render_lines(
     return EntityQuery(lines)
 
 
+def render_splines_and_polylines(
+        layout: 'Layout',
+        paths: Iterable[Path],
+        *,
+        segments: int = 3,
+        dxfattribs: Optional[Dict] = None) -> EntityQuery:
+    """ Render given `paths` into `layout` as :class:`~ezdxf.entities.Spline`
+    and 3D :class:`ezdxf.entities.Polyline` entities.
+
+    Args:
+        layout: the modelspace, a paperspace layout or a block definition
+        paths: iterable of :class:`Path` objects
+        segments: minimum count of B-spline sub-segments per Bèzier curve
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        created entities in an :class:`~ezdxf.query.EntityQuery` object
+
+    .. versionadded:: 0.16
+
+    """
+    entities = list(to_splines_and_polylines(
+        paths,
+        segments=segments,
+        dxfattribs=dxfattribs,
+    ))
+    for entity in entities:
+        layout.add_entity(entity)
+    return EntityQuery(entities)
+
+
 def to_lwpolylines(
         paths: Iterable[Path], *,
         distance: float = MAX_DISTANCE,
         segments: int = MIN_SEGMENTS,
         extrusion: 'Vertex' = Z_AXIS,
-        dxfattribs: Optional[Dict] = None) -> Iterable['LWPolyline']:
+        dxfattribs: Optional[Dict] = None) -> Iterable[LWPolyline]:
     """ Convert given `paths` into :class:`~ezdxf.entities.LWPolyline` entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector, the default extrusion vector
@@ -1325,7 +1358,7 @@ def to_polylines2d(
         distance: float = MAX_DISTANCE,
         segments: int = MIN_SEGMENTS,
         extrusion: 'Vertex' = Z_AXIS,
-        dxfattribs: Optional[Dict] = None) -> Iterable['Polyline']:
+        dxfattribs: Optional[Dict] = None) -> Iterable[Polyline]:
     """ Convert given `paths` into 2D :class:`~ezdxf.entities.Polyline` entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector, the default extrusion vector
@@ -1375,7 +1408,7 @@ def to_hatches(
         distance: float = MAX_DISTANCE,
         segments: int = MIN_SEGMENTS,
         extrusion: 'Vertex' = Z_AXIS,
-        dxfattribs: Optional[Dict] = None) -> Iterable['Hatch']:
+        dxfattribs: Optional[Dict] = None) -> Iterable[Hatch]:
     """ Convert given `paths` into :class:`~ezdxf.entities.Hatch` entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector, the default extrusion vector
@@ -1438,7 +1471,7 @@ def to_polylines3d(
         *,
         distance: float = MAX_DISTANCE,
         segments: int = MIN_SEGMENTS,
-        dxfattribs: Optional[Dict] = None) -> Iterable['Polyline']:
+        dxfattribs: Optional[Dict] = None) -> Iterable[Polyline]:
     """ Convert given `paths` into 3D :class:`~ezdxf.entities.Polyline` entities.
 
     Args:
@@ -1459,7 +1492,7 @@ def to_polylines3d(
     dxfattribs = dxfattribs or {}
     dxfattribs['flags'] = const.POLYLINE_3D_POLYLINE
     for path in paths:
-        p = Polyline.new('POLYLINE', dxfattribs=dxfattribs)
+        p = Polyline.new(dxfattribs=dxfattribs)
         p.append_vertices(path.flattening(distance, segments))
         yield p
 
@@ -1469,7 +1502,7 @@ def to_lines(
         *,
         distance: float = MAX_DISTANCE,
         segments: int = MIN_SEGMENTS,
-        dxfattribs: Optional[Dict] = None) -> Iterable['Line']:
+        dxfattribs: Optional[Dict] = None) -> Iterable[Line]:
     """ Convert given `paths` into :class:`~ezdxf.entities.Line` entities.
 
     Args:
@@ -1498,6 +1531,100 @@ def to_lines(
             yield Line.new(dxfattribs=dxfattribs)
             prev_vertex = vertex
         prev_vertex = None
+
+
+def to_bsplines_and_vertices(path: Path, segments: int = 3) -> Iterable[
+    Union[BSpline, List[Vec3]]]:
+    """ Convert a :class:`Path` object into multiple cubic B-splines and
+    polylines as lists of vertices.
+
+    Args:
+        path: :class:`Path` objects
+        segments: minimum count of B-spline sub-segments per Bèzier curve
+
+    Returns:
+        :class:`~ezdxf.math.BSpline` and lists of :class:`~ezdxf.math.Vec3`
+
+    .. versionadded:: 0.16
+
+    """
+    from ezdxf.math import bezier_to_bspline
+
+    def to_vertices(lines):
+        points = [lines[0][0]]
+        for line in lines:
+            points.append(line[1])
+        return points
+
+    prev = path.start
+    curves = []
+    for cmd in path:
+        if cmd.type == Command.CURVE3_TO:
+            curve = Bezier3P([prev, cmd.ctrl, cmd.end])
+        elif cmd.type == Command.CURVE4_TO:
+            curve = Bezier4P([prev, cmd.ctrl1, cmd.ctrl2, cmd.end])
+        elif cmd.type == Command.LINE_TO:
+            curve = (prev, cmd.end)
+        else:
+            raise ValueError
+        curves.append(curve)
+        prev = cmd.end
+
+    bezier = []
+    polyline = []
+    for curve in curves:
+        if isinstance(curve, tuple):
+            if bezier:
+                yield bezier_to_bspline(bezier, segments)
+                bezier.clear()
+            polyline.append(curve)
+        else:
+            if polyline:
+                yield to_vertices(polyline)
+                polyline.clear()
+            bezier.append(curve)
+
+    if bezier:
+        yield bezier_to_bspline(bezier, segments)
+    if polyline:
+        yield to_vertices(polyline)
+
+
+def to_splines_and_polylines(
+        paths: Iterable[Path],
+        *,
+        segments: int = 3,
+        dxfattribs: Optional[Dict] = None) -> Iterable[Union[Spline, Polyline]]:
+    """ Convert given `paths` into :class:`~ezdxf.entities.Spline` and 3D
+    :class:`ezdxf.entities.Polyline` entities.
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        segments: minimum count of B-spline sub-segments per Bèzier curve
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        iterable of :class:`~ezdxf.entities.Line` objects
+
+    .. versionadded:: 0.16
+
+    """
+    if isinstance(paths, Path):
+        paths = [paths]
+    dxfattribs = dxfattribs or {}
+
+    for path in paths:
+        for data in to_bsplines_and_vertices(path, segments):
+            if isinstance(data, BSpline):
+                spline = Spline.new(dxfattribs=dxfattribs)
+                spline.apply_construction_tool(data)
+                yield spline
+            else:
+                attribs = dict(dxfattribs)
+                attribs['flags'] = const.POLYLINE_3D_POLYLINE
+                polyline = Polyline.new(dxfattribs=dxfattribs)
+                polyline.append_vertices(data)
+                yield polyline
 
 
 # Interface to matplotlib.path.Path

@@ -26,11 +26,14 @@ Version 0.16 - dev
 - NEW: `path.render_hatches()`, render paths as HATCH entities
 - NEW: `path.render_polylines3d()`, render paths as 3D POLYLINE entities
 - NEW: `path.render_lines()`, render paths as LINE entities
+- NEW: `path.render_splines_and_polylines()`, render paths as SPLINE and 3D POLYLINE entities
 - NEW: `path.to_lwpolylines()`, convert paths to LWPOLYLINE entities
 - NEW: `path.to_polylines2d()`, convert paths to 2D POLYLINE entities
 - NEW: `path.to_hatches()`, convert paths to HATCH entities
 - NEW: `path.to_polylines3d()`, convert paths to 3D POLYLINE entities
 - NEW: `path.to_lines()`, convert paths to LINE entities
+- NEW: `path.to_splines_and_polylines()`, convert paths to SPLINE and 3D POLYLINE entities
+- NEW: `path.to_bspline_and_vertices()`, convert paths to B-splines and lists of vertices
 - NEW: `path.to_matplotlib_path()`, convert paths to a matplotlib Path
 - NEW: `path.to_qpainter_path()`, convert paths to a PyQt5 QPainterPath 
 - NEW: `ezdxf.math.quadratic_to_cubic_bezier()`, Bezier3P to Bezier4P converter   
