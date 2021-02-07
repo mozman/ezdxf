@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.15.2b0 - dev
-----------------------
+Version 0.15.2 - 2021-02-07
+---------------------------
 
 - Active Python 3.6 support removed, no tests and no deployment of binary 
   wheels for Python 3.6
