@@ -3,7 +3,7 @@
 from typing import Iterable, Union
 import math
 from ezdxf.math import BSpline, fit_points_to_cad_cv
-from ezdxf.math import Bezier4P, Bezier3P
+from ezdxf.math import Bezier4P, Bezier3P, required_knot_values
 
 __all__ = [
     "bezier_to_bspline", "quadratic_to_cubic_bezier",
@@ -26,33 +26,40 @@ def quadratic_to_cubic_bezier(curve: Bezier3P) -> Bezier4P:
     return Bezier4P((start, control_1, control_2, end))
 
 
-def bezier_to_bspline(curves: Iterable[AnyBezier],
-                      segments: int = 3) -> BSpline:
+def bezier_to_bspline(curves: Iterable[AnyBezier]) -> BSpline:
     """ Convert multiple Bèzier curves into a cubic B-splines
     (:class:`ezdxf.math.BSpline`).
     The curves must be lined up seamlessly, i.e. the starting point of the
     following curve must be the same as the end point of the previous curve.
+    G1 continuity or better at the connection points of the Bézier curves is
+    required to get best results.
 
     .. versionadded: 0.16
 
     """
-    curves = list(curves)
-    if len(curves) == 0:
-        raise ValueError('one or more Bézier curves required')
-    first = curves[0].control_points
-    start_tangent = first[1] - first[0]
-    last = curves[-1].control_points
-    end_tangent = last[-1] - last[-2]
-    fit_points = [first[0]]
-    for curve in curves:
-        points = curve.control_points
-        if points[0].isclose(fit_points[-1]):
-            approx = list(curve.approximate(segments))
-            fit_points.extend(approx[1:])
+
+    # Source: https://math.stackexchange.com/questions/2960974/convert-continuous-bezier-curve-to-b-spline
+    def get_points(bezier: AnyBezier):
+        points = bezier.control_points
+        if len(points) < 4:
+            return quadratic_to_cubic_bezier(bezier).control_points
         else:
-            raise ValueError('gap between curves')
-    return fit_points_to_cad_cv(
-        fit_points, tangents=[start_tangent, end_tangent])
+            return points
+
+    bezier_curve_points = [get_points(c) for c in curves]
+    if len(bezier_curve_points) == 0:
+        raise ValueError('one or more Bézier curves required')
+    # Control points of the B-spline are the same as of the Bézier curves.
+    # Remove duplicate control points at start and end of the curves.
+    control_points = list(bezier_curve_points[0])
+    for c in bezier_curve_points[1:]:
+        control_points.extend(c[1:])
+    knots = [0, 0, 0, 0]  # multiplicity of the 1st and last control point is 4
+    n = len(bezier_curve_points)
+    for k in range(1, n):
+        knots.extend((k, k, k))  # multiplicity of the inner control points is 3
+    knots.extend((n, n, n, n))
+    return BSpline(control_points, order=4, knots=knots)
 
 
 def have_bezier_curves_g1_continuity(b1: AnyBezier, b2: AnyBezier,

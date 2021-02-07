@@ -1198,7 +1198,7 @@ def render_hatches(
 
     """
     # to_hatches_with_spline_edges() has problems with islands!
-    hatches = list(to_hatches(
+    hatches = list(to_hatches_with_spline_edges(
         paths,
         distance=distance,
         segments=segments,
@@ -1650,12 +1650,12 @@ def to_bsplines_and_vertices(path: Path,
             if have_bezier_curves_g1_continuity(b1, b2, g1_tol):
                 _g1_continuity_curves.append(b2)
             else:
-                yield bezier_to_bspline(_g1_continuity_curves, segments)
+                yield bezier_to_bspline(_g1_continuity_curves)
                 _g1_continuity_curves = [b2]
             b1 = b2
 
         if _g1_continuity_curves:
-            yield bezier_to_bspline(_g1_continuity_curves, segments)
+            yield bezier_to_bspline(_g1_continuity_curves)
 
     prev = path.start
     curves = []
