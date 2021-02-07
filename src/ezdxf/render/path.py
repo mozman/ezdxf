@@ -1283,7 +1283,6 @@ def render_splines_and_polylines(
         layout: 'Layout',
         paths: Iterable[Path],
         *,
-        segments: int = 3,
         g1_tol: float = G1_TOL,
         dxfattribs: Optional[Dict] = None) -> EntityQuery:
     """ Render given `paths` into `layout` as :class:`~ezdxf.entities.Spline`
@@ -1292,7 +1291,6 @@ def render_splines_and_polylines(
     Args:
         layout: the modelspace, a paperspace layout or a block definition
         paths: iterable of :class:`Path` objects
-        segments: minimum count of B-spline sub-segments per Bèzier curve
         g1_tol: tolerance for G1 continuity check
         dxfattribs: additional DXF attribs
 
@@ -1304,7 +1302,6 @@ def render_splines_and_polylines(
     """
     entities = list(to_splines_and_polylines(
         paths,
-        segments=segments,
         g1_tol=g1_tol,
         dxfattribs=dxfattribs,
     ))
@@ -1488,7 +1485,7 @@ def to_hatches_with_spline_edges(
         if path.has_curves:  # Edge path with LINE and SPLINE edges
             edge_path = hatch.paths.add_edge_path(flags)
             for edge in to_bsplines_and_vertices(
-                    path, segments=segments, g1_tol=g1_tol):
+                    path, g1_tol=g1_tol):
                 if isinstance(edge, BSpline):
                     edge_path.add_spline(
                         control_points=edge.control_points,
@@ -1618,15 +1615,13 @@ PathParts = Union[BSpline, List[Vec3]]
 
 
 def to_bsplines_and_vertices(path: Path,
-                             segments: int = 3,
                              g1_tol: float = G1_TOL) -> Iterable[PathParts]:
     """ Convert a :class:`Path` object into multiple cubic B-splines and
-    polylines as lists of vertices. Breaks adjacent Bèzier without C1
+    polylines as lists of vertices. Breaks adjacent Bèzier without G1
     continuity into separated B-splines.
 
     Args:
         path: :class:`Path` objects
-        segments: minimum count of B-spline sub-segments per Bèzier curve
         g1_tol: tolerance for G1 continuity check
 
     Returns:
@@ -1694,7 +1689,6 @@ def to_bsplines_and_vertices(path: Path,
 def to_splines_and_polylines(
         paths: Iterable[Path],
         *,
-        segments: int = 3,
         g1_tol: float = G1_TOL,
         dxfattribs: Optional[Dict] = None) -> Iterable[Union[Spline, Polyline]]:
     """ Convert given `paths` into :class:`~ezdxf.entities.Spline` and 3D
@@ -1702,7 +1696,6 @@ def to_splines_and_polylines(
 
     Args:
         paths: iterable of :class:`Path` objects
-        segments: minimum count of B-spline sub-segments per Bèzier curve
         g1_tol: tolerance for G1 continuity check
         dxfattribs: additional DXF attribs
 
@@ -1717,7 +1710,7 @@ def to_splines_and_polylines(
     dxfattribs = dxfattribs or {}
 
     for path in paths:
-        for data in to_bsplines_and_vertices(path, segments, g1_tol):
+        for data in to_bsplines_and_vertices(path, g1_tol):
             if isinstance(data, BSpline):
                 spline = Spline.new(dxfattribs=dxfattribs)
                 spline.apply_construction_tool(data)

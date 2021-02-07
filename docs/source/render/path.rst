@@ -80,7 +80,7 @@ paperspace layout or a block definition.
 
 .. autofunction:: render_lines(layout: Layout, paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, dxfattribs: Dict = None) -> EntityQuery
 
-.. autofunction:: render_splines_and_polylines(layout: Layout, paths: Iterable[Path], *, segments: int = 3, c1_tol: float = 1e-4, dxfattribs: Dict = None) -> EntityQuery
+.. autofunction:: render_splines_and_polylines(layout: Layout, paths: Iterable[Path], *, g1_tol: float = 1e-4, dxfattribs: Dict = None) -> EntityQuery
 
 Entity Maker
 ------------
@@ -97,14 +97,14 @@ Functions to create DXF entities from paths.
 
 .. autofunction:: to_lines(paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, dxfattribs: Dict = None) -> Iterable[Line]
 
-.. autofunction:: to_splines_and_polylines(paths: Iterable[Path], *, segments: int = 3, c1_tol: float= 1e-4, dxfattribs: Dict = None) -> Iterable[Union[Spline, Polyline]]
+.. autofunction:: to_splines_and_polylines(paths: Iterable[Path], *, g1_tol: float= 1e-4, dxfattribs: Dict = None) -> Iterable[Union[Spline, Polyline]]
 
 Tool Maker
 ----------
 
 Functions to create construction tools.
 
-.. autofunction:: to_bsplines_and_vertices(path: Path, segments: int = 3, c1_tol: float = 1e-4) -> Iterable[Union[BSpline, List[Vec3]]]
+.. autofunction:: to_bsplines_and_vertices(path: Path, g1_tol: float = 1e-4) -> Iterable[Union[BSpline, List[Vec3]]]
 
 .. autofunction:: to_matplotlib_path(paths: Iterable[Path], extrusion = (0, 0, 1)) -> matplotlib.path.Path
 
