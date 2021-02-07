@@ -338,23 +338,23 @@ class TestToEntityConverter:
     def test_empty_to_hatches(self):
         assert list(to_hatches([])) == []
 
-    def test_to_hatches(self, path):
-        hatches = list(to_hatches(path))
+    def test_to_poly_path_hatches(self, path):
+        hatches = list(to_hatches(path, edge_path=False))
         assert len(hatches) == 1
         h0 = hatches[0]
         assert h0.dxftype() == 'HATCH'
         assert len(h0.paths) == 1
 
-    def test_to_hatches_with_wcs_elevation(self, path1):
-        hatches = list(to_hatches(path1))
+    def test_to_poly_path_hatches_with_wcs_elevation(self, path1):
+        hatches = list(to_hatches(path1, edge_path=False))
         ho = hatches[0]
         assert ho.dxf.elevation == (0, 0, 1)
 
-    def test_to_hatches_with_ocs(self, path1):
+    def test_to_poly_path_hatches_with_ocs(self, path1):
         m = Matrix44.x_rotate(math.pi / 4)
         path = path1.transform(m)
         extrusion = m.transform((0, 0, 1))
-        hatches = list(to_hatches(path, extrusion=extrusion))
+        hatches = list(to_hatches(path, edge_path=False, extrusion=extrusion))
         h0 = hatches[0]
         assert h0.dxf.elevation == (0, 0, 1)
         assert h0.dxf.extrusion.isclose(extrusion)

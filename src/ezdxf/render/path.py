@@ -13,7 +13,7 @@ from ezdxf.math import (
     Vec2, Vec3, NULLVEC, Z_AXIS, OCS, Bezier3P, Bezier4P, Matrix44,
     bulge_to_arc, cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
     has_clockwise_orientation, global_bspline_interpolation, BoundingBox,
-    have_bezier_curves_g1_continuity, AnyBezier
+    have_bezier_curves_g1_continuity, AnyBezier,
 )
 from ezdxf.lldxf import const
 from ezdxf.query import EntityQuery
@@ -1172,8 +1172,10 @@ def render_hatches(
         layout: 'Layout',
         paths: Iterable[Path],
         *,
+        edge_path: bool = True,
         distance: float = MAX_DISTANCE,
         segments: int = MIN_SEGMENTS,
+        g1_tol: float = G1_TOL,
         extrusion: 'Vertex' = Z_AXIS,
         dxfattribs: Optional[Dict] = None) -> EntityQuery:
     """ Render given `paths` into `layout` as
@@ -1186,8 +1188,11 @@ def render_hatches(
     Args:
         layout: the modelspace, a paperspace layout or a block definition
         paths: iterable of :class:`Path` objects
+        edge_path: ``True`` for edge paths build of LINE and SPLINE edges,
+            ``False`` for only LWPOLYLINE paths as boundary paths
         distance:  maximum distance, see :meth:`Path.flattening`
-        segments: minimum segment count per Bézier curve
+        segments: minimum segment count per Bézier curve to flatten LWPOLYLINE paths
+        g1_tol: tolerance for G1 continuity check to separate SPLINE edges
         extrusion: extrusion vector for all paths
         dxfattribs: additional DXF attribs
 
@@ -1197,11 +1202,12 @@ def render_hatches(
     .. versionadded:: 0.16
 
     """
-    # to_hatches_with_spline_edges() has problems with islands!
-    hatches = list(to_hatches_with_spline_edges(
+    hatches = list(to_hatches(
         paths,
+        edge_path=edge_path,
         distance=distance,
         segments=segments,
+        g1_tol=g1_tol,
         extrusion=extrusion,
         dxfattribs=dxfattribs,
     ))
@@ -1418,50 +1424,15 @@ def to_polylines2d(
 def to_hatches(
         paths: Iterable[Path],
         *,
+        edge_path: bool = True,
         distance: float = MAX_DISTANCE,
         segments: int = MIN_SEGMENTS,
-        extrusion: 'Vertex' = Z_AXIS,
-        dxfattribs: Optional[Dict] = None) -> Iterable[Hatch]:
-    """ Convert given `paths` into :class:`~ezdxf.entities.Hatch` entities.
-    Uses only LWPOLYLINE boundary paths.
-    The `extrusion` vector is applied to all paths, all vertices are projected
-    onto the plane normal to this extrusion vector, the default extrusion vector
-    is the WCS z-axis. The plane elevation is defined by the distance of the
-    start point of the first path to the WCS origin.
-
-    Args:
-        paths: iterable of :class:`Path` objects
-        distance:  maximum distance, see :meth:`Path.flattening`
-        segments: minimum segment count per Bézier curve
-        extrusion: extrusion vector to all paths
-        dxfattribs: additional DXF attribs
-
-    Returns:
-        iterable of :class:`~ezdxf.entities.Hatch` objects
-
-    .. versionadded:: 0.16
-
-    """
-
-    def add_boundary(hatch: Hatch, path: Path, flags: int):
-        hatch.paths.add_polyline_path(
-            # Vec2 removes the z-axis, which would be interpreted as bulge value!
-            Vec2.generate(path.flattening(distance, segments)), flags=flags)
-
-    yield from _hatch_converter(paths, add_boundary, extrusion, dxfattribs)
-
-
-def to_hatches_with_spline_edges(
-        paths: Iterable[Path],
-        *,
-        distance: float = MAX_DISTANCE,
-        segments: int = 3,
         g1_tol: float = G1_TOL,
         extrusion: 'Vertex' = Z_AXIS,
         dxfattribs: Optional[Dict] = None) -> Iterable[Hatch]:
     """ Convert given `paths` into :class:`~ezdxf.entities.Hatch` entities.
-    Uses LWPOLYLINE paths for boundaries without curves and edge paths
-    of LINE and SPLINE edges as boundary paths for boundaries with curves.
+    Uses LWPOLYLINE paths for boundaries without curves and edge paths build
+    of LINE and SPLINE edges as boundary paths for boundaries including curves.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector, the default extrusion vector
     is the WCS z-axis. The plane elevation is defined by the distance of the
@@ -1469,9 +1440,11 @@ def to_hatches_with_spline_edges(
 
     Args:
         paths: iterable of :class:`Path` objects
+        edge_path: ``True`` for edge paths build of LINE and SPLINE edges,
+            ``False`` for only LWPOLYLINE paths as boundary paths
         distance:  maximum distance, see :meth:`Path.flattening`
-        segments: minimum segment count per Bézier curve
-        g1_tol: tolerance for G1 continuity check
+        segments: minimum segment count per Bézier curve to flatten LWPOLYLINE paths
+        g1_tol: tolerance for G1 continuity check to separate SPLINE edges
         extrusion: extrusion vector to all paths
         dxfattribs: additional DXF attribs
 
@@ -1481,7 +1454,8 @@ def to_hatches_with_spline_edges(
     .. versionadded:: 0.16
 
     """
-    def add_boundary(hatch: Hatch, path: Path, flags: int):
+
+    def build_edge_path(hatch: Hatch, path: Path, flags: int):
         if path.has_curves:  # Edge path with LINE and SPLINE edges
             edge_path = hatch.paths.add_edge_path(flags)
             for edge in to_bsplines_and_vertices(
@@ -1501,7 +1475,17 @@ def to_hatches_with_spline_edges(
             hatch.paths.add_polyline_path(
                 Vec2.generate(path.flattening(distance, segments)), flags=flags)
 
-    yield from _hatch_converter(paths, add_boundary, extrusion, dxfattribs)
+    def build_poly_path(hatch: Hatch, path: Path, flags: int):
+        hatch.paths.add_polyline_path(
+            # Vec2 removes the z-axis, which would be interpreted as bulge value!
+            Vec2.generate(path.flattening(distance, segments)), flags=flags)
+
+    if edge_path:
+        boundary_factory = build_edge_path
+    else:
+        boundary_factory = build_poly_path
+
+    yield from _hatch_converter(paths, boundary_factory, extrusion, dxfattribs)
 
 
 def _hatch_converter(
@@ -1763,7 +1747,8 @@ def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
             path.curve4_to(vertices[4:], vertices[0:2], vertices[2:4])
         elif cmd == MplCmd.CLOSEPOLY:
             # vertices = [0, 0]
-            path.line_to(path.start)
+            if not path.is_closed:
+                path.line_to(path.start)
             yield path
             path = None
         elif cmd == MplCmd.STOP:  # not used

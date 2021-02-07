@@ -20,9 +20,10 @@ class TestFromMatplotlibPath:
         mpath = self.to_mpath('obc')
         paths = list(path.from_matplotlib_path(mpath))
 
-        # Last command is a LINE_TO created by CLOSEPOLY:
-        assert paths[0][-1].type == \
-               path.Command.LINE_TO, "expected LINE_TO as last command"
+        # Last command is a LINE_TO created by CLOSEPOLY only if the path
+        # isn't closed:
+        assert paths[0][-1].type != \
+               path.Command.LINE_TO, "did not expected LINE_TO as last command"
 
         commands = paths[0][:-1]
         assert all((cmd.type == path.Command.CURVE3_TO
