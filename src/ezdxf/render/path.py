@@ -13,7 +13,7 @@ from ezdxf.math import (
     Vec2, Vec3, NULLVEC, Z_AXIS, OCS, Bezier3P, Bezier4P, Matrix44,
     bulge_to_arc, cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
     has_clockwise_orientation, global_bspline_interpolation, BoundingBox,
-    bezier_curves_have_c1_continuity,
+    have_bezier_curves_g1_continuity, AnyBezier
 )
 from ezdxf.lldxf import const
 from ezdxf.query import EntityQuery
@@ -35,10 +35,9 @@ __all__ = [
     'render_lines', 'render_hatches', 'render_splines_and_polylines'
 ]
 
-AnyBezier = Union[Bezier4P, Bezier3P]
 MAX_DISTANCE = 0.01
 MIN_SEGMENTS = 4
-C1_TOL = 1e-4
+G1_TOL = 1e-4
 
 
 @enum.unique
@@ -1285,7 +1284,7 @@ def render_splines_and_polylines(
         paths: Iterable[Path],
         *,
         segments: int = 3,
-        c1_tol: float = C1_TOL,
+        g1_tol: float = G1_TOL,
         dxfattribs: Optional[Dict] = None) -> EntityQuery:
     """ Render given `paths` into `layout` as :class:`~ezdxf.entities.Spline`
     and 3D :class:`ezdxf.entities.Polyline` entities.
@@ -1294,7 +1293,7 @@ def render_splines_and_polylines(
         layout: the modelspace, a paperspace layout or a block definition
         paths: iterable of :class:`Path` objects
         segments: minimum count of B-spline sub-segments per Bèzier curve
-        c1_tol: tolerance for C1 continuity check
+        g1_tol: tolerance for G1 continuity check
         dxfattribs: additional DXF attribs
 
     Returns:
@@ -1306,7 +1305,7 @@ def render_splines_and_polylines(
     entities = list(to_splines_and_polylines(
         paths,
         segments=segments,
-        c1_tol=c1_tol,
+        g1_tol=g1_tol,
         dxfattribs=dxfattribs,
     ))
     for entity in entities:
@@ -1460,7 +1459,7 @@ def to_hatches_with_spline_edges(
         *,
         distance: float = MAX_DISTANCE,
         segments: int = 3,
-        c1_tol: float = C1_TOL,
+        g1_tol: float = G1_TOL,
         extrusion: 'Vertex' = Z_AXIS,
         dxfattribs: Optional[Dict] = None) -> Iterable[Hatch]:
     """ Convert given `paths` into :class:`~ezdxf.entities.Hatch` entities.
@@ -1475,7 +1474,7 @@ def to_hatches_with_spline_edges(
         paths: iterable of :class:`Path` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
-        c1_tol: tolerance for C1 continuity check
+        g1_tol: tolerance for G1 continuity check
         extrusion: extrusion vector to all paths
         dxfattribs: additional DXF attribs
 
@@ -1489,7 +1488,7 @@ def to_hatches_with_spline_edges(
         if path.has_curves:  # Edge path with LINE and SPLINE edges
             edge_path = hatch.paths.add_edge_path(flags)
             for edge in to_bsplines_and_vertices(
-                    path, segments=segments, c1_tol=c1_tol):
+                    path, segments=segments, g1_tol=g1_tol):
                 if isinstance(edge, BSpline):
                     edge_path.add_spline(
                         control_points=edge.control_points,
@@ -1620,7 +1619,7 @@ PathParts = Union[BSpline, List[Vec3]]
 
 def to_bsplines_and_vertices(path: Path,
                              segments: int = 3,
-                             c1_tol: float = C1_TOL) -> Iterable[PathParts]:
+                             g1_tol: float = G1_TOL) -> Iterable[PathParts]:
     """ Convert a :class:`Path` object into multiple cubic B-splines and
     polylines as lists of vertices. Breaks adjacent Bèzier without C1
     continuity into separated B-splines.
@@ -1628,7 +1627,7 @@ def to_bsplines_and_vertices(path: Path,
     Args:
         path: :class:`Path` objects
         segments: minimum count of B-spline sub-segments per Bèzier curve
-        c1_tol: tolerance for C1 continuity check
+        g1_tol: tolerance for G1 continuity check
 
     Returns:
         :class:`~ezdxf.math.BSpline` and lists of :class:`~ezdxf.math.Vec3`
@@ -1646,17 +1645,17 @@ def to_bsplines_and_vertices(path: Path,
 
     def to_bspline():
         b1 = bezier[0]
-        _c1_continuity_curves = [b1]
+        _g1_continuity_curves = [b1]
         for b2 in bezier[1:]:
-            if bezier_curves_have_c1_continuity(b1, b2, c1_tol):
-                _c1_continuity_curves.append(b2)
+            if have_bezier_curves_g1_continuity(b1, b2, g1_tol):
+                _g1_continuity_curves.append(b2)
             else:
-                yield bezier_to_bspline(_c1_continuity_curves, segments)
-                _c1_continuity_curves = [b2]
+                yield bezier_to_bspline(_g1_continuity_curves, segments)
+                _g1_continuity_curves = [b2]
             b1 = b2
 
-        if _c1_continuity_curves:
-            yield bezier_to_bspline(_c1_continuity_curves, segments)
+        if _g1_continuity_curves:
+            yield bezier_to_bspline(_g1_continuity_curves, segments)
 
     prev = path.start
     curves = []
@@ -1696,7 +1695,7 @@ def to_splines_and_polylines(
         paths: Iterable[Path],
         *,
         segments: int = 3,
-        c1_tol: float = C1_TOL,
+        g1_tol: float = G1_TOL,
         dxfattribs: Optional[Dict] = None) -> Iterable[Union[Spline, Polyline]]:
     """ Convert given `paths` into :class:`~ezdxf.entities.Spline` and 3D
     :class:`ezdxf.entities.Polyline` entities.
@@ -1704,7 +1703,7 @@ def to_splines_and_polylines(
     Args:
         paths: iterable of :class:`Path` objects
         segments: minimum count of B-spline sub-segments per Bèzier curve
-        c1_tol: tolerance for C1 continuity check
+        g1_tol: tolerance for G1 continuity check
         dxfattribs: additional DXF attribs
 
     Returns:
@@ -1718,7 +1717,7 @@ def to_splines_and_polylines(
     dxfattribs = dxfattribs or {}
 
     for path in paths:
-        for data in to_bsplines_and_vertices(path, segments, c1_tol):
+        for data in to_bsplines_and_vertices(path, segments, g1_tol):
             if isinstance(data, BSpline):
                 spline = Spline.new(dxfattribs=dxfattribs)
                 spline.apply_construction_tool(data)

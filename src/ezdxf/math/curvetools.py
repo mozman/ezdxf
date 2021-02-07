@@ -7,7 +7,7 @@ from ezdxf.math import Bezier4P, Bezier3P
 
 __all__ = [
     "bezier_to_bspline", "quadratic_to_cubic_bezier",
-    "bezier_curves_have_c1_continuity"
+    "have_bezier_curves_g1_continuity", "AnyBezier"
 ]
 
 AnyBezier = Union[Bezier3P, Bezier4P]
@@ -55,9 +55,9 @@ def bezier_to_bspline(curves: Iterable[AnyBezier],
         fit_points, tangents=[start_tangent, end_tangent])
 
 
-def bezier_curves_have_c1_continuity(b1: AnyBezier, b2: AnyBezier,
-                                     tol: float = 1e-4) -> bool:
-    """ Return ``True`` if the given adjacent bezier curves have C1 continuity.
+def have_bezier_curves_g1_continuity(b1: AnyBezier, b2: AnyBezier,
+                                     g1_tol: float = 1e-4) -> bool:
+    """ Return ``True`` if the given adjacent bezier curves have G1 continuity.
     """
     b1_pnts = list(b1.control_points)
     b2_pnts = list(b2.control_points)
@@ -66,4 +66,4 @@ def bezier_curves_have_c1_continuity(b1: AnyBezier, b2: AnyBezier,
     te = (b1_pnts[-1] - b1_pnts[-2]).normalize()
     ts = (b2_pnts[1] - b2_pnts[0]).normalize()
     # 0 = normal; 1 = same direction; -1 = opposite direction
-    return math.isclose(te.dot(ts), 1.0, abs_tol=tol)
+    return math.isclose(te.dot(ts), 1.0, abs_tol=g1_tol)
