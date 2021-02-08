@@ -7,7 +7,7 @@ from ezdxf.math import Matrix44, OCS
 from ezdxf.render.path import (
     Path, bbox, fit_paths_into_box, transform_paths, transform_paths_to_ocs,
     Command, to_polylines3d, to_lines, to_lwpolylines, to_polylines2d,
-    to_hatches,
+    to_hatches, to_bsplines_and_vertices, to_splines_and_polylines,
 )
 from ezdxf.render import make_path
 
@@ -242,6 +242,62 @@ class TestFitPathsIntoBoxNonUniformScaling:
         assert box.size == (0, 6, 6), "x-axis should be ignored"
 
 
+class TestPathToBsplineAndVertices:
+    def test_empty_path(self):
+        result = list(to_bsplines_and_vertices(Path()))
+        assert result == []
+
+    def test_only_vertices(self):
+        p = Path.from_vertices([(1, 0), (2, 0), (3, 1)])
+        result = list(to_bsplines_and_vertices(p))
+        assert len(result) == 1, "expected one list of vertices"
+        assert len(result[0]) == 3, "expected 3 vertices"
+
+    def test_one_quadratic_bezier(self):
+        p = Path()
+        p.curve3_to((4, 0), (2, 2))
+        result = list(to_bsplines_and_vertices(p))
+        assert len(result) == 1, "expected one B-spline"
+        cpnts = result[0].control_points
+        # A quadratic bezier should be converted to cubic bezier curve, which
+        # has a precise cubic B-spline representation.
+        assert len(cpnts) == 4, "expected 4 control vertices"
+        assert cpnts[0] == (0, 0)
+        assert cpnts[3] == (4, 0)
+
+    def test_one_cubic_bezier(self):
+        p = Path()
+        p.curve4_to((4, 0), (1, 2), (3, 2))
+        result = list(to_bsplines_and_vertices(p))
+        assert len(result) == 1, "expected one B-spline"
+        # cubic bezier curve maps 1:1 to cubic B-spline curve
+        # see tests: 630b for the bezier_to_bspline() function
+
+    def test_adjacent_cubic_beziers_with_G1_continuity(self):
+        p = Path()
+        p.curve4_to((4, 0), (1, 2), (3, 2))
+        p.curve4_to((8, 0), (5, -2), (7, -2))
+        result = list(to_bsplines_and_vertices(p))
+        assert len(result) == 1, "expected one B-spline"
+        # cubic bezier curve maps 1:1 to cubic B-spline curve
+        # see tests: 630b for the bezier_to_bspline() function
+
+    def test_adjacent_cubic_beziers_without_G1_continuity(self):
+        p = Path()
+        p.curve4_to((4, 0), (1, 2), (3, 2))
+        p.curve4_to((8, 0), (5, 2), (7, 2))
+        result = list(to_bsplines_and_vertices(p))
+        assert len(result) == 2, "expected two B-splines"
+
+    def test_multiple_segments(self):
+        p = Path()
+        p.curve4_to((4, 0), (1, 2), (3, 2))
+        p.line_to((6, 0))
+        p.curve3_to((8, 0), (7, 1))
+        result = list(to_bsplines_and_vertices(p))
+        assert len(result) == 3, "expected three segments"
+
+
 class TestToEntityConverter:
     @pytest.fixture
     def path(self):
@@ -360,7 +416,8 @@ class TestToEntityConverter:
         assert h0.dxf.extrusion.isclose(extrusion)
         polypath0 = h0.paths[0]
         assert polypath0.vertices[0] == (0, 0, 0)  # x, y, bulge
-        assert polypath0.vertices[-1] == (0, 0, 0), "should be closed automatically"
+        assert polypath0.vertices[-1] == (
+            0, 0, 0), "should be closed automatically"
 
 
 # Issue #224 regression test
