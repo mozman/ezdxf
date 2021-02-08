@@ -3,7 +3,7 @@
 import pytest
 import math
 from ezdxf.layouts import VirtualLayout
-from ezdxf.math import Matrix44, OCS
+from ezdxf.math import Matrix44, OCS, Vec3
 from ezdxf.render.path import (
     Path, bbox, fit_paths_into_box, transform_paths, transform_paths_to_ocs,
     Command, to_polylines3d, to_lines, to_lwpolylines, to_polylines2d,
@@ -418,6 +418,38 @@ class TestToEntityConverter:
         assert polypath0.vertices[0] == (0, 0, 0)  # x, y, bulge
         assert polypath0.vertices[-1] == (
             0, 0, 0), "should be closed automatically"
+
+    def test_to_edge_path_hatches(self, path):
+        hatches = list(to_hatches(path, edge_path=True))
+        assert len(hatches) == 1
+        h0 = hatches[0]
+        assert h0.dxftype() == 'HATCH'
+        assert len(h0.paths) == 1
+        edge_path = h0.paths[0]
+        assert edge_path.PATH_TYPE == 'EdgePath'
+        line, spline = edge_path.edges
+        assert line.EDGE_TYPE == 'LineEdge'
+        assert line.start == (0, 0)
+        assert line.end == (4, 0)
+        assert spline.EDGE_TYPE == 'SplineEdge'
+        assert spline.control_points[0] == (4, 0)
+        assert spline.control_points[1] == (3, 1)  # 2D OCS entity
+        assert spline.control_points[2] == (1, 1)  # 2D OCS entity
+        assert spline.control_points[3] == (0, 0)
+
+    def test_to_splines_and_polylines(self, path):
+        entities = list(to_splines_and_polylines([path]))
+        assert len(entities) == 2
+        polyline = entities[0]
+        spline = entities[1]
+        assert polyline.dxftype() == 'POLYLINE'
+        assert spline.dxftype() == 'SPLINE'
+        assert polyline.vertices[0].dxf.location == (0, 0)
+        assert polyline.vertices[1].dxf.location == (4, 0)
+        assert spline.control_points[0] == Vec3(4, 0, 0)
+        assert spline.control_points[1] == Vec3(3, 1, 1)  # 3D entity
+        assert spline.control_points[2] == Vec3(1, 1, 1)  # 3D entity
+        assert spline.control_points[3] == Vec3(0, 0, 0)
 
 
 # Issue #224 regression test
