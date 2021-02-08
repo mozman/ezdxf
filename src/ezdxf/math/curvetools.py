@@ -65,6 +65,9 @@ def bezier_to_bspline(curves: Iterable[AnyBezier]) -> BSpline:
 def have_bezier_curves_g1_continuity(b1: AnyBezier, b2: AnyBezier,
                                      g1_tol: float = 1e-4) -> bool:
     """ Return ``True`` if the given adjacent bezier curves have G1 continuity.
+
+    .. versionadded: 0.16
+
     """
     b1_pnts = list(b1.control_points)
     b2_pnts = list(b2.control_points)

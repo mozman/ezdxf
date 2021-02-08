@@ -1,9 +1,11 @@
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
+import pytest
 import random
 
 from ezdxf.math import (
     cubic_bezier_interpolation, Vec3, Bezier3P, quadratic_to_cubic_bezier,
+    Bezier4P, have_bezier_curves_g1_continuity, bezier_to_bspline,
 )
 
 
@@ -46,3 +48,44 @@ def test_quadratic_to_cubic_bezier():
         assert len(quadratic_approx) == len(cubic_approx)
         for p1, p2 in zip(quadratic_approx, cubic_approx):
             assert p1.isclose(p2)
+
+
+# G1 continuity: normalized end-tangent == normalized start-tangent of next curve
+B1 = Bezier4P([(0, 0), (1, 1), (2, 1), (3, 0)])
+
+# B1/B2 has G1 continuity:
+B2 = Bezier4P([(3, 0), (4, -1), (5, -1), (6, 0)])
+
+# B1/B3 has no G1 continuity:
+B3 = Bezier4P([(3, 0), (4, 1), (5, 1), (6, 0)])
+
+# B1/B4 G1 continuity off tolerance:
+B4 = Bezier4P([(3, 0), (4, -1.03), (5, -1.0), (6, 0)])
+
+# B1/B5 has a gap between B1 end and B5 start:
+B5 = Bezier4P([(4, 0), (5, -1), (6, -1), (7, 0)])
+
+
+def test_g1_continuity_for_bezier_curves():
+    assert have_bezier_curves_g1_continuity(B1, B2) is True
+    assert have_bezier_curves_g1_continuity(B1, B3) is False
+    assert have_bezier_curves_g1_continuity(B1, B4, g1_tol=1e-4) is False, \
+        "should be outside of tolerance "
+    assert have_bezier_curves_g1_continuity(B1, B5) is False, \
+        "end- and start point should match"
+
+
+@pytest.mark.parametrize("b1,b2", [
+    (B1, B2),  # G1 continuity, the common case
+    (B1, B3),  # without G1 continuity is also a regular B-spline
+    (B1, B5),  # regular B-spline, but first control point of B5 is lost
+])
+def test_bezier_curves_to_bspline(b1, b2):
+    bspline = bezier_to_bspline([b1, b2])
+    expected = list(b1.control_points) + list(b2.control_points)[1:]
+    assert bspline.control_points == expected
+
+
+def test_bezier_curves_to_bspline_error():
+    with pytest.raises(ValueError):
+        bezier_to_bspline([])  # one or more curves expected
