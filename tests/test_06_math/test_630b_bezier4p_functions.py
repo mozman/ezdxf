@@ -79,11 +79,32 @@ def test_g1_continuity_for_bezier_curves():
     (B1, B2),  # G1 continuity, the common case
     (B1, B3),  # without G1 continuity is also a regular B-spline
     (B1, B5),  # regular B-spline, but first control point of B5 is lost
-])
+], ids=["G1", "without G1", "gap"])
 def test_bezier_curves_to_bspline(b1, b2):
     bspline = bezier_to_bspline([b1, b2])
+    # Remove duplicate control point between two adjacent curves:
     expected = list(b1.control_points) + list(b2.control_points)[1:]
+    assert bspline.degree == 3, "should be a cubic B-spline"
     assert bspline.control_points == expected
+
+
+def test_quality_of_bezier_to_bspline_conversion_1():
+    # This test shows the close relationship between cubic Bézier- and
+    # cubic B-spline curves.
+    points0 = B1.approximate(10)
+    points1 = bezier_to_bspline([B1]).approximate(10)
+    for p0, p1 in zip(points0, points1):
+        assert p0.isclose(p1) is True, "conversion should be perfect"
+
+
+def test_quality_of_bezier_to_bspline_conversion_2():
+    # This test shows the close relationship between cubic Bézier- and
+    # cubic B-spline curves.
+    # Remove duplicate point between the two curves:
+    points0 = list(B1.approximate(10)) + list(B2.approximate(10))[1:]
+    points1 = bezier_to_bspline([B1, B2]).approximate(20)
+    for p0, p1 in zip(points0, points1):
+        assert p0.isclose(p1) is True, "conversion should be perfect"
 
 
 def test_bezier_curves_to_bspline_error():
