@@ -16,7 +16,7 @@ import numbers
 import copy
 import math
 from ezdxf.math import Vec3, has_clockwise_orientation
-from ezdxf.path import Path, nesting, make_path, from_hatch_boundary_path
+from ezdxf.path import make_path, from_hatch_boundary_path, fast_bbox_detection
 from ezdxf.entities import DXFGraphic, LWPolyline, Hatch, Point
 from ezdxf.lldxf import const
 from ezdxf.entities import factory
@@ -681,7 +681,7 @@ def _hatch_as_polygon(hatch: Hatch, distance: float,
 def _boundaries_to_polygons(boundaries, ocs, elevation):
     paths = (from_hatch_boundary_path(boundary, ocs, elevation)
              for boundary in boundaries)
-    for polygon in nesting.fast_bbox_detection(paths):
+    for polygon in fast_bbox_detection(paths):
         exterior = polygon[0]
         # only take exterior path of level 1 holes, nested holes are ignored
         yield exterior, [hole[0] for hole in polygon[1:]]

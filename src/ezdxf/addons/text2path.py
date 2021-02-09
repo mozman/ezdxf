@@ -9,7 +9,7 @@ from ezdxf.entities import Text, Attrib, Hatch
 from ezdxf.lldxf import const
 from ezdxf.math import Matrix44, BoundingBox, Vec3, Vec2
 from ezdxf import path
-from ezdxf.path import nesting, Path
+from ezdxf.path import Path, fast_bbox_detection, flatten_polygons
 from ezdxf.tools import fonts
 from ezdxf.query import EntityQuery
 
@@ -125,12 +125,12 @@ def group_contour_and_holes(
     creates 2 contour paths.
 
     """
-    polygons = nesting.fast_bbox_detection(paths)
+    polygons = fast_bbox_detection(paths)
     for polygon in polygons:
         contour = polygon[0]
         if len(polygon) > 1:  # are holes present?
             # holes can be recursive polygons, so flatten holes:
-            holes = list(nesting.flatten_polygons(polygon[1:]))
+            holes = list(flatten_polygons(polygon[1:]))
         else:
             holes = []
         yield contour, holes

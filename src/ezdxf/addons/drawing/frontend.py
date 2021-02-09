@@ -17,7 +17,10 @@ from ezdxf.entities import (
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
 from ezdxf.math import Vec3, Z_AXIS
-from ezdxf.path import Path, make_path, nesting, from_hatch_boundary_path
+from ezdxf.path import (
+    Path, make_path, from_hatch_boundary_path, fast_bbox_detection,
+    winding_deconstruction
+)
 from ezdxf.render import MeshBuilder, TraceBuilder
 from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic
@@ -77,7 +80,7 @@ class Frontend:
         # sagitta = 1cm
 
         # set to None to disable nested polygon detection:
-        self.nested_polygon_detection = nesting.fast_bbox_detection
+        self.nested_polygon_detection = fast_bbox_detection
 
         self._dispatch = self._build_dispatch_table()
 
@@ -297,7 +300,7 @@ class Frontend:
         paths = hatch.paths.rendering_paths(hatch.dxf.hatch_style)
         if self.nested_polygon_detection:
             polygons = self.nested_polygon_detection(map(to_path, paths))
-            external_paths, holes = nesting.winding_deconstruction(polygons)
+            external_paths, holes = winding_deconstruction(polygons)
         else:
             for p in paths:
                 if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
