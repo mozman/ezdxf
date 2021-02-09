@@ -20,14 +20,14 @@ from .nesting import group_paths
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         Vertex, Ellipse, Arc, Circle, DXFEntity,
-        Solid, Viewport, Image,
+        Solid, Viewport, Image
     )
 
 __all__ = [
     'make_path', 'has_path_support',
     'to_lines', 'to_polylines3d', 'to_lwpolylines', 'to_polylines2d',
     'to_hatches', 'to_bsplines_and_vertices', 'to_splines_and_polylines',
-    'from_matplotlib_path', 'from_qpainter_path',
+    'from_hatch', 'from_matplotlib_path', 'from_qpainter_path',
     'to_matplotlib_path', 'to_qpainter_path'
 ]
 
@@ -177,7 +177,9 @@ _FACTORIES = {
 
 def has_path_support(e: 'DXFEntity') -> bool:
     """ Returns ``True`` if DXF entity `e` is convertible into a :class:`Path`
-    object.
+    object by the :func:`make_path` function.
+    Returns ``False`` for the HATCH entity, because it needs a special
+    treatment, see :func:`from_hatch`.
 
     .. versionadded:: 0.16
 
@@ -225,6 +227,18 @@ def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
     except KeyError:
         raise TypeError(f'Unsupported DXF type {dxftype}')
     return converter(e, segments=segments, level=level)
+
+
+def from_hatch(hatch: Hatch) -> Iterable[Path]:
+    """ Yield all HATCH boundary paths as separated :class:`Path` objects.
+
+    .. versionadded:: 0.16
+
+    """
+    ocs = hatch.ocs()
+    elevation = hatch.dxf.elevation.z
+    for boundary in hatch.paths:
+        yield Path.from_hatch_boundary_path(boundary, ocs, elevation),
 
 
 def to_lwpolylines(

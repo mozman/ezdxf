@@ -13,6 +13,12 @@ Version 0.16 - dev
 - NEW: `ezdxf.math.Bezier3P`, optimized quadratic Bézier curve construction tool 
 - NEW: quadratic Bézier curve support for the `Path()` class 
 - NEW: `path.transform_paths()` to transform multiple `Path()` objects at once 
+- NEW: `path.make_path()`, convert a DXF entity into a single `Path` object
+- NEW: `path.from_hatch()`, convert a HATCH entity into multiple `Path` objects 
+- NEW: `path.from_matplotlib_path()`, convert a Matplotlib `Path` into multiple 
+  ezdxf `Path` objects (requires `matplotlib`)
+- NEW: `path.from_qpainter_path()`, convert a PyQt `QPainterPath` into multiple 
+  ezdxf `Path` objects (requires `PyQt5`)
 - NEW: `path.transform_paths_to_ocs()` to transform multiple `Path()` objects 
   at once form WCS to OCS  
 - NEW: `path.bbox()`, calculate bounding box for multiple `Path()` objects  
