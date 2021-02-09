@@ -188,12 +188,6 @@ The Path Class
 
     .. automethod:: flattening(distance: float, segments: int=16) -> Iterable[Vec3]
 
-    .. automethod:: from_hatch_boundary_path(boundary: Union[PolylinePath, EdgePath], ocs: OCS = None, elevation: float = 0) -> Path
-
-    .. automethod:: from_hatch_polyline_path(polyline: PolylinePath, ocs: OCS = None, elevation: float = 0) -> Path
-
-    .. automethod:: from_hatch_edge_path(edge: EdgePath, ocs: OCS = None, elevation: float = 0) -> Path
-
     .. automethod:: from_lwpolyline
 
     .. automethod:: from_polyline

@@ -9,13 +9,12 @@ import math
 from ezdxf.math import (
     Vec3, NULLVEC, Z_AXIS, OCS, Bezier3P, Bezier4P, Matrix44,
     bulge_to_arc, cubic_bezier_from_ellipse, ConstructionEllipse, BSpline,
-    has_clockwise_orientation, global_bspline_interpolation, AnyBezier,
+    has_clockwise_orientation, AnyBezier,
 )
 from ezdxf.entities import LWPolyline, Polyline, Spline
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, Ellipse, Arc, Circle
-    from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
 __all__ = ['Path', 'Command']
 MAX_DISTANCE = 0.01
@@ -241,139 +240,6 @@ class Path(abc.Sequence):
             'will be removed in v0.17.', DeprecationWarning)
         from .converter import make_path
         return make_path(circle, segments=segments)
-
-    @classmethod
-    def from_hatch_boundary_path(cls, boundary: 'TPath', ocs: OCS = None,
-                                 elevation: float = 0) -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch`
-        polyline- or edge path.
-        """
-        if boundary.PATH_TYPE == 'EdgePath':
-            return cls.from_hatch_edge_path(boundary, ocs, elevation)
-        else:
-            return cls.from_hatch_polyline_path(boundary, ocs, elevation)
-
-    @classmethod
-    def from_hatch_polyline_path(cls, polyline: 'PolylinePath', ocs: OCS = None,
-                                 elevation: float = 0) -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch`
-        polyline path.
-        """
-        path = cls()
-        path.add_2d_polyline(
-            polyline.vertices,  # List[(x, y, bulge)]
-            close=polyline.is_closed,
-            ocs=ocs or OCS(),
-            elevation=elevation,
-        )
-        return path
-
-    @classmethod
-    def from_hatch_edge_path(cls, edges: 'EdgePath', ocs: OCS = None,
-                             elevation: float = 0) -> 'Path':
-        """ Returns a :class:`Path` from a :class:`~ezdxf.entities.Hatch` edge
-        path.
-        """
-
-        def add_line_edge(edge):
-            start = wcs(edge.start)
-            end = wcs(edge.end)
-            if len(path):
-                if path.end.isclose(start):
-                    # path-end -> line-end
-                    path.line_to(end)
-                elif path.end.isclose(end):
-                    # path-end (==line-end) -> line-start
-                    path.line_to(start)
-                else:
-                    # path-end -> edge-start -> edge-end
-                    path.line_to(start)
-                    path.line_to(end)
-            else:  # start path
-                path.start = start
-                path.line_to(end)
-
-        def add_arc_edge(edge):
-            x, y, *_ = edge.center
-            # from_arc() requires OCS data:
-            ellipse = ConstructionEllipse.from_arc(
-                center=(x, y, elevation),
-                radius=edge.radius,
-                extrusion=extrusion,
-                start_angle=edge.start_angle,
-                end_angle=edge.end_angle,
-            )
-            path.add_ellipse(ellipse, reset=not bool(path))
-
-        def add_ellipse_edge(edge):
-            ocs_ellipse = edge.construction_tool()
-            # ConstructionEllipse has WCS representation:
-            ellipse = ConstructionEllipse(
-                center=wcs(ocs_ellipse.center.replace(z=elevation)),
-                major_axis=wcs(ocs_ellipse.major_axis),
-                ratio=ocs_ellipse.ratio,
-                extrusion=extrusion,
-                start_param=ocs_ellipse.start_param,
-                end_param=ocs_ellipse.end_param,
-            )
-            path.add_ellipse(ellipse, reset=not bool(path))
-
-        def add_spline_edge(edge):
-            control_points = [wcs(p) for p in edge.control_points]
-            if len(control_points) == 0:
-                fit_points = [wcs(p) for p in edge.fit_points]
-                if len(fit_points):
-                    bspline = from_fit_points(edge, fit_points)
-                else:
-                    # No control points and no fit points:
-                    # DXF structure error
-                    return
-            else:
-                bspline = from_control_points(edge, control_points)
-            path.add_spline(bspline, reset=not bool(path))
-
-        def from_fit_points(edge, fit_points):
-            tangents = None
-            if edge.start_tangent and edge.end_tangent:
-                tangents = (
-                    wcs(edge.start_tangent),
-                    wcs(edge.end_tangent)
-                )
-            return global_bspline_interpolation(
-                fit_points,
-                degree=edge.degree,
-                tangents=tangents,
-            )
-
-        def from_control_points(edge, control_points):
-            return BSpline(
-                control_points=control_points,
-                order=edge.degree + 1,
-                knots=edge.knot_values,
-                weights=edge.weights if edge.weights else None
-            )
-
-        def wcs(vertex):
-            if ocs and ocs.transform:
-                return ocs.to_wcs((vertex.x, vertex.y, elevation))
-            else:
-                return Vec3(vertex)
-
-        extrusion = ocs.uz if ocs else Z_AXIS
-        path = Path()
-        for edge in edges:
-            if edge.EDGE_TYPE == "LineEdge":
-                add_line_edge(edge)
-            elif edge.EDGE_TYPE == "ArcEdge":
-                if not math.isclose(edge.radius, 0):
-                    add_arc_edge(edge)
-            elif edge.EDGE_TYPE == "EllipseEdge":
-                if not NULLVEC.isclose(edge.major_axis):
-                    add_ellipse_edge(edge)
-            elif edge.EDGE_TYPE == "SplineEdge":
-                add_spline_edge(edge)
-
-        return path
 
     def control_vertices(self):
         """ Yields all path control vertices in consecutive order. """

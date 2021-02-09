@@ -242,8 +242,14 @@ def test_hatch_returns_multiple_primitives():
     paths.add_polyline_path([(0, 2), (1, 2), (1, 3), (0, 3)])
     res = list(disassemble.to_primitives([hatch]))
     assert len(res) == 2
-    assert len(list(res[0].vertices())) == 4, "expected closed triangle"
-    assert len(list(res[1].vertices())) == 5, "expected closed box"
+    p0 = res[0]
+    p1 = res[1]
+    assert p0.path is not None
+    assert p1.path is not None
+    v0 = list(p0.vertices())
+    v1 = list(p1.vertices())
+    assert len(v0) == 4, "expected closed triangle"
+    assert len(v1) == 5, "expected closed box"
 
 
 def test_image_primitive():

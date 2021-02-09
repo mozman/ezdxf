@@ -17,7 +17,7 @@ from ezdxf.entities import (
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
 from ezdxf.math import Vec3, Z_AXIS
-from ezdxf.path import Path, make_path, nesting
+from ezdxf.path import Path, make_path, nesting, from_hatch_boundary_path
 from ezdxf.render import MeshBuilder, TraceBuilder
 from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic
@@ -279,7 +279,7 @@ class Frontend:
     def draw_hatch_entity(self, entity: DXFGraphic,
                           properties: Properties) -> None:
         def to_path(p):
-            path = Path.from_hatch_boundary_path(p, ocs, elevation)
+            path = from_hatch_boundary_path(p, ocs, elevation)
             path.close()
             return path
 

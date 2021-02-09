@@ -2,7 +2,8 @@
 # License: MIT License
 import pytest
 import math
-from ezdxf.path import Path, Command, make_path
+
+from ezdxf.path import Path, Command, make_path, converter
 from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P
 from ezdxf.entities.hatch import PolylinePath, EdgePath
 from ezdxf.entities import factory
@@ -344,13 +345,13 @@ def test_path_from_hatch_polyline_path_without_bulge():
     polyline_path.set_vertices(
         [(0, 0), (0, 1), (1, 1), (1, 0)], is_closed=False
     )
-    path = Path.from_hatch_polyline_path(polyline_path)
+    path = converter.from_hatch_polyline_path(polyline_path)
     assert len(path) == 3
     assert path.start == (0, 0)
     assert path.end == (1, 0)
 
     polyline_path.is_closed = True
-    path = Path.from_hatch_polyline_path(polyline_path)
+    path = converter.from_hatch_polyline_path(polyline_path)
     assert len(path) == 4
     assert path.start == (0, 0)
     assert path.end == (0, 0)
@@ -361,7 +362,7 @@ def test_path_from_hatch_polyline_path_with_bulge():
     polyline_path.set_vertices(
         [(0, 0), (1, 0, 0.5), (2, 0), (3, 0)], is_closed=False
     )
-    path = Path.from_hatch_polyline_path(polyline_path)
+    path = converter.from_hatch_polyline_path(polyline_path)
     assert len(path) == 4
     assert path.start == (0, 0)
     assert path.end == (3, 0)
@@ -532,7 +533,7 @@ def edge_path():
 
 
 def test_from_edge_path(edge_path):
-    path = Path.from_hatch_edge_path(edge_path)
+    path = converter.from_hatch_edge_path(edge_path)
     assert len(path) == 19
 
 

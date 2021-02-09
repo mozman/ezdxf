@@ -6,7 +6,8 @@ import math
 from ezdxf.entities import DXFEntity
 from ezdxf.lldxf import const
 from ezdxf.math import Vec3, UCS, Z_AXIS, X_AXIS
-from ezdxf.path import Path, make_path
+from ezdxf import path
+from ezdxf.path import Path, make_path, from_hatch
 from ezdxf.render import MeshBuilder, MeshVertexMerger, TraceBuilder
 
 from ezdxf.proxygraphic import ProxyGraphic
@@ -380,6 +381,10 @@ class PathPrimitive(AbstractPrimitive):
         super().__init__(entity, max_flattening_distance)
         self._path = path
 
+    @property
+    def path(self) -> Optional[Path]:
+        return self._path
+
     def vertices(self) -> Iterable[Vec3]:
         yield from self._path.flattening(self.max_flattening_distance)
 
@@ -521,11 +526,9 @@ def _hatch_primitives(
         hatch: 'Hatch',
         max_flattening_distance=None) -> Iterable[AbstractPrimitive]:
     """ Yield all HATCH boundary paths as separated Path() objects. """
-    ocs = hatch.ocs()
-    elevation = hatch.dxf.elevation.z
-    for boundary in hatch.paths:
+    for p in from_hatch(hatch):
         yield PathPrimitive(
-            Path.from_hatch_boundary_path(boundary, ocs, elevation),
+            p,
             hatch,
             max_flattening_distance
         )
