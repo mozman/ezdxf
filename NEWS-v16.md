@@ -52,4 +52,7 @@ Version 0.16 - dev
 - DEPRECATED: `Path.from_ellipse()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_arc()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_circle()`, replaced by factory `make_path()`
+- REMOVED: `Path.from_from_hatch_boundary_path()`, replaced by factory `from_hatch()`
+- REMOVED: `Path.from_from_hatch_polyline_path()`
+- REMOVED: `Path.from_from_hatch_edge_path()`
 
