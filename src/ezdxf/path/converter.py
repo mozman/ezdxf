@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
 __all__ = [
-    'make_path', 'has_path_support',
+    'make_path', 'has_make_path_support',
     'to_lines', 'to_polylines3d', 'to_lwpolylines', 'to_polylines2d',
     'to_hatches', 'to_bsplines_and_vertices', 'to_splines_and_polylines',
     'from_hatch', 'from_hatch_boundary_path',
@@ -176,7 +176,7 @@ _FACTORIES = {
 }
 
 
-def has_path_support(e: 'DXFEntity') -> bool:
+def has_make_path_support(e: 'DXFEntity') -> bool:
     """ Returns ``True`` if DXF entity `e` is convertible into a :class:`Path`
     object by the :func:`make_path` function.
     Returns ``False`` for the HATCH entity, because it needs a special

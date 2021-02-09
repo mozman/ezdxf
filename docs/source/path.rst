@@ -68,7 +68,7 @@ Factory Functions
 
 Functions to create :class:`Path` objects from DXF entities.
 
-.. autofunction:: has_path_support(e: DXFEntity) -> bool
+.. autofunction:: has_make_path_support(e: DXFEntity) -> bool
 
 .. autofunction:: make_path(e: DXFEntity) -> Path
 
