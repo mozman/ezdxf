@@ -59,7 +59,7 @@ class AbstractPrimitive:
 
     @property
     def path(self) -> Optional[Path]:
-        """ :class:`~ezdxf.render.path.Path` representation or ``None``,
+        """ :class:`~ezdxf.path.Path` representation or ``None``,
         idiom to check if is a path representation (could be empty)::
 
             if primitive.path is not None:

@@ -95,7 +95,7 @@ def bbox(paths: Iterable[Path], precise=True,
     """ Returns the :class:`~ezdxf.math.BoundingBox` for given paths.
 
     Args:
-        paths: iterable of :class:`~ezdxf.render.path.Path` objects
+        paths: iterable of :class:`~ezdxf.path.Path` objects
         precise: ``True`` for bounding box of the flattened path and ``False``
             for bounding box of the control vertices.
         distance: flattening distance, default is 0.01
@@ -125,7 +125,7 @@ def fit_paths_into_box(paths: Iterable[Path],
     the yz-plane and the y-size, projects into and xz-plane.
 
     Args:
-        paths: iterable of :class:`~ezdxf.render.path.Path` objects
+        paths: iterable of :class:`~ezdxf.path.Path` objects
         size: target box size as tuple of x-, y- ond z-size values
         uniform: ``True`` for uniform scaling
         source_box: pass precalculated source bounding box, or ``None`` to

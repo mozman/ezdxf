@@ -1,4 +1,4 @@
-.. module:: ezdxf.render.path
+.. module:: ezdxf.path
 
 Path
 ====
@@ -6,9 +6,6 @@ Path
 This module implements a geometrical :class:`Path` supported by several render
 backends, with the goal to create such paths from LWPOLYLINE, POLYLINE and HATCH
 boundary paths and send them to the render backend, see :mod:`ezdxf.addons.drawing`.
-
-The revers conversion from :class:`Path` to DXF entities (LWPOLYLINE, POLYLINE,
-LINE) is supported.
 
 Minimum common interface:
 
@@ -51,14 +48,29 @@ only support 2D paths.
     A :class:`Path` can not represent a point. A :class:`Path` with only a
     start point yields no vertices!
 
+.. versionchanged:: 0.16
+    Refactored the module :mod:`ezdxf.render.path` into the subpackage
+    :mod:`ezdxf.path`.
+
+The usability of the :class:`Path` class expanded by the introduction
+of the the revers conversion from :class:`Path` to DXF entities (LWPOLYLINE,
+POLYLINE, LINE) and many other tools in `ezdxf` v0.16.
+To emphasize this new usability, the :class:`Path` class has got its own
+subpackage :mod:`ezdxf.path`.
+
+.. warning::
+
+    Always import from the top level :mod:`ezdxf.path`, never from the
+    sub-modules
+
 Factory Functions
 -----------------
 
 Functions to create :class:`Path` objects from DXF entities.
 
-.. autofunction:: has_path_support
+.. autofunction:: has_path_support(e: DXFEntity) -> bool
 
-.. autofunction:: make_path
+.. autofunction:: make_path(e: DXFEntity) -> Path
 
 .. autofunction:: from_matplotlib_path(mpath, curves=True) -> Iterable[Path]
 

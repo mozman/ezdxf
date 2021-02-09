@@ -79,9 +79,9 @@ Contents
    usage_for_beginners
    concepts/index
    tutorials/index
-   reference
    howto/index
    faq
+   reference
    render/index
    addons/index
    dxfinternals/index

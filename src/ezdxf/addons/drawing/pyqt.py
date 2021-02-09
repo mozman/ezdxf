@@ -14,7 +14,7 @@ from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.line_renderer import AbstractLineRenderer
 from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
-from ezdxf.render import Path, Command
+from ezdxf.path import Path, Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
 from ezdxf.tools.pattern import PatternAnalyser
 

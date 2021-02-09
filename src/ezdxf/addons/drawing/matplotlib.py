@@ -21,7 +21,7 @@ from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
-from ezdxf.render import Command
+from ezdxf.path import Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
 from .matplotlib_hatch import HATCH_NAME_MAPPING
 from .line_renderer import AbstractLineRenderer

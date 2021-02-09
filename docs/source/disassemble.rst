@@ -7,7 +7,7 @@ Disassemble
 
 This module provide tools for the recursive decomposition of DXF entities into
 a flat stream of DXF entities and converting DXF entities into generic
-:class:`~ezdxf.render.path.Path` and :class:`~ezdxf.render.mesh.MeshBuilder`
+:class:`~ezdxf.path.Path` and :class:`~ezdxf.render.mesh.MeshBuilder`
 objects.
 
 The :class:`~ezdxf.entities.Hatch` entity is special because this entity can

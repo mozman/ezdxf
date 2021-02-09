@@ -21,5 +21,4 @@ The :mod:`ezdxf.render` subpackage provides helpful utilities to create complex 
     forms
     mesh
     trace
-    path
     point

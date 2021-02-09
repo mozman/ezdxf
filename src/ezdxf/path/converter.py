@@ -191,7 +191,8 @@ def has_path_support(e: 'DXFEntity') -> bool:
 
 
 def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
-    """ Factory function to create :class:`Path` objects from DXF entities:
+    """ Factory function to create a single :class:`Path` object from a DXF
+    entity:
 
     - LINE
     - CIRCLE
@@ -203,6 +204,10 @@ def make_path(e: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
     - SOLID, TRACE, 3DFACE
     - IMAGE, WIPEOUT clipping path
     - VIEWPORT clipping path
+
+    The HATCH entity consist of multiple boundary paths and is not convertible
+    into a single :class:`Path` object and therefore not supported by this
+    function.
 
     Args:
         e: DXF entity

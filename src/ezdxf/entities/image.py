@@ -150,10 +150,10 @@ class ImageBase(DXFGraphic):
         .. versionadded:: 0.14
 
         Since version 0.16 it's recommended to create the clipping path
-        as :class:`~ezdxf.render.path.Path` object by the
-        :func:`~ezdxf.render.path.make_path` function::
+        as :class:`~ezdxf.path.Path` object by the
+        :func:`~ezdxf.path.make_path` function::
 
-            form ezdxf.render import make_path
+            form ezdxf.path import make_path
 
             image = ...  # get image entity
             clipping_path = make_path(image)

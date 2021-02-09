@@ -23,7 +23,7 @@ def make_paths_from_str(s: str,
                         length: float = 0,
                         m: Matrix44 = None) -> List[Path]:
     """ Convert a single line string `s` into a list of
-    :class:`~ezdxf.render.path.Path` objects. All paths are returned in a single
+    :class:`~ezdxf.path.Path` objects. All paths are returned in a single
     list. The text `size` is the height of the uppercase letter "X" (cap height).
     The paths are aligned about the insertion point at (0, 0).
     BASELINE means the bottom of the letter "X".
@@ -198,7 +198,7 @@ def make_hatches_from_str(s: str,
 
 def make_paths_from_entity(entity: AnyText) -> List[Path]:
     """ Convert text content from DXF entities TEXT and ATTRIB into a
-    list of :class:`~ezdxf.render.Path` objects. All paths are returned in a
+    list of :class:`~ezdxf.path.Path` objects. All paths are returned in a
     single list.
     The paths are located at the location of the source entity, but don't expect
     a 100% match compared to CAD applications.
