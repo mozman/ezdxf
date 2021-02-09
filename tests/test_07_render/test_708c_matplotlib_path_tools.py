@@ -6,7 +6,7 @@ pytest.importorskip('matplotlib')
 
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties
-from ezdxf.render import path
+from ezdxf import path
 from ezdxf.math import Vec2
 
 
@@ -39,7 +39,7 @@ class TestFromMatplotlibPath:
         assert len(paths) == 5  # 2xa 2xb 1xc
 
 
-MC = path.MplCmd
+from ezdxf.path.converter import MplCmd as MC
 
 
 class TestToMatplotlibPath:

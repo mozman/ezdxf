@@ -7,6 +7,7 @@ from ezdxf.math import Vec3, Matrix44, arc_angle_span_deg
 from ezdxf.entities.arc import Arc
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.path import make_path
 
 TEST_CLASS = Arc
 TEST_TYPE = 'ARC'
@@ -195,7 +196,6 @@ def test_circle_flattening(r, s, e, sagitta, count):
 
 
 def test_360_deg_arc_transformation():
-    from ezdxf.render import make_path
     arc = Arc.new(dxfattribs={
         'radius': 1, 'start_angle': 0, 'end_angle': 360,
     })

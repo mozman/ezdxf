@@ -38,9 +38,11 @@ Version 0.16 - dev
 - NEW: `path.to_qpainter_path()`, convert paths to a PyQt5 QPainterPath 
 - NEW: `ezdxf.math.quadratic_to_cubic_bezier()`, Bezier3P to Bezier4P converter   
 - NEW: `ezdxf.math.bezier_to_bspline()`, Bezier to BSpline converter   
+- DEPRECATED: `ezdxf.render.path` module, replaced by `ezdxf.path` package
 - DEPRECATED: `Path.from_lwpolyline()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_polyline()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_spline()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_ellipse()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_arc()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_circle()`, replaced by factory `make_path()`
+

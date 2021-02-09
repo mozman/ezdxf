@@ -3,7 +3,7 @@
 
 import pytest
 from ezdxf.render.forms import square, translate
-from ezdxf.render import Path, nesting
+from ezdxf.path import Path, nesting
 
 EXTERIOR = list(translate(square(10), (-5, -5)))
 EXT1_PATH = Path.from_vertices(EXTERIOR)

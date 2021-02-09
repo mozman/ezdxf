@@ -12,8 +12,8 @@ noto_sans_sc_not_found = 'Noto' not in findfont(
 
 from ezdxf.tools.fonts import FontFace
 from ezdxf.addons import text2path
-from ezdxf.render import Path
-from ezdxf.render import path
+from ezdxf.path import Path
+from ezdxf import path
 
 
 def _to_paths(s, f='Arial'):

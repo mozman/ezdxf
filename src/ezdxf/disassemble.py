@@ -6,9 +6,9 @@ import math
 from ezdxf.entities import DXFEntity
 from ezdxf.lldxf import const
 from ezdxf.math import Vec3, UCS, Z_AXIS, X_AXIS
-from ezdxf.render import (
-    Path, MeshBuilder, MeshVertexMerger, TraceBuilder, make_path,
-)
+from ezdxf.path import Path, make_path
+from ezdxf.render import MeshBuilder, MeshVertexMerger, TraceBuilder
+
 from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.tools.text import (
     TextLine, unified_alignment, plain_text, text_wrap

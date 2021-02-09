@@ -16,7 +16,7 @@ import numbers
 import copy
 import math
 from ezdxf.math import Vec3, has_clockwise_orientation
-from ezdxf.render import Path, nesting, make_path
+from ezdxf.path import Path, nesting, make_path
 from ezdxf.entities import DXFGraphic, LWPolyline, Hatch, Point
 from ezdxf.lldxf import const
 from ezdxf.entities import factory

@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 import math
-from ezdxf.render.path import Path, Command, make_path
+from ezdxf.path import Path, Command, make_path
 from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P
 from ezdxf.entities.hatch import PolylinePath, EdgePath
 from ezdxf.entities import factory

@@ -9,7 +9,7 @@ from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
-from ezdxf.render import Path
+from ezdxf.path import Path
 from ezdxf.math import Vec3, Matrix44
 
 

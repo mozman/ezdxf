@@ -8,7 +8,8 @@ from matplotlib.font_manager import FontProperties, findfont
 from ezdxf.entities import Text, Attrib, Hatch
 from ezdxf.lldxf import const
 from ezdxf.math import Matrix44, BoundingBox, Vec3, Vec2
-from ezdxf.render import path, nesting, Path
+from ezdxf import path
+from ezdxf.path import nesting, Path
 from ezdxf.tools import fonts
 from ezdxf.query import EntityQuery
 

@@ -1,4 +1,4 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2020-2021, Manfred Moitzi
 #  License: MIT License
 """
 This module provides "nested Polygon" detection for multiple paths.
@@ -95,6 +95,11 @@ from typing import TypeVar, Tuple, Optional, List, Iterable
 from collections import namedtuple
 from .path import Path
 from ezdxf.math import BoundingBox2d
+
+__all__ = [
+    "fast_bbox_detection", "winding_deconstruction", "group_paths",
+    "flatten_polygons"
+]
 
 Exterior = Path
 Polygon = TypeVar('Polygon')

@@ -8,7 +8,7 @@ from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.tools.text import replace_non_printable_characters
 from ezdxf.math import Vec3, Matrix44
-from ezdxf.render.path import Path
+from ezdxf.path import Path
 
 if TYPE_CHECKING:
     from ezdxf.tools.fonts import FontFace, FontMeasurements

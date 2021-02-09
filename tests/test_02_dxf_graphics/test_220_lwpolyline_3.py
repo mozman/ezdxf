@@ -4,7 +4,7 @@
 import pytest
 
 from ezdxf.entities import factory
-from ezdxf.render import make_path
+from ezdxf.path import make_path
 
 
 @pytest.fixture
