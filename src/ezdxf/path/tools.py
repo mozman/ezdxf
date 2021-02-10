@@ -509,7 +509,10 @@ def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
 
 def add_2d_polyline(path, points: Iterable[Sequence[float]], close: bool,
                     ocs: OCS, elevation: float) -> None:
-    """ Internal API to add 2D polylines which may include bulges. """
+    """ Internal API to add 2D polylines which may include bulges to an
+    **empty** path.
+
+    """
 
     def bulge_to(p1: Vec3, p2: Vec3, bulge: float):
         if p1.isclose(p2):
@@ -527,6 +530,9 @@ def add_2d_polyline(path, points: Iterable[Sequence[float]], close: bool,
             curves = reverse_bezier_curves(curves)
         add_bezier4p(path, curves)
 
+    if len(path):
+        raise ValueError('Requires an empty path.')
+
     prev_point = None
     prev_bulge = 0
     for x, y, bulge in points:
@@ -535,7 +541,7 @@ def add_2d_polyline(path, points: Iterable[Sequence[float]], close: bool,
             bulge = 0
         point = Vec3(x, y)
         if prev_point is None:
-            path._start = point  # todo: remove private attribute access
+            path.start = point
             prev_point = point
             prev_bulge = bulge
             continue
@@ -554,7 +560,7 @@ def add_2d_polyline(path, points: Iterable[Sequence[float]], close: bool,
             path.line_to(path.start)
 
     if ocs.transform or elevation:
-        path._to_wcs(ocs, elevation)  # todo: remove private method access
+        path.to_wcs(ocs, elevation)
 
 
 def add_spline(path, spline: BSpline, level=4, reset=True) -> None:

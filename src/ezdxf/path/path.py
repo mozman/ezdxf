@@ -251,6 +251,12 @@ class Path(abc.Sequence):
 
         return new_path
 
+    def to_wcs(self, ocs: OCS, elevation: float):
+        """ Transform path from given `ocs` to WCS coordinates inplace. """
+        self._start = ocs.to_wcs(self._start.replace(z=elevation))
+        for i, cmd in enumerate(self._commands):
+            self._commands[i] = cmd.to_wcs(ocs, elevation)
+
     def add_curves(self, curves: Iterable[Bezier4P]) -> None:
         """ Add multiple cubic Bèzier-curves to the path.
 
@@ -344,11 +350,6 @@ class Path(abc.Sequence):
             'will be removed in v0.17.', DeprecationWarning)
         from .converter import make_path
         return make_path(polyline)
-
-    def _to_wcs(self, ocs: OCS, elevation: float):
-        self._start = ocs.to_wcs(self._start.replace(z=elevation))
-        for i, cmd in enumerate(self._commands):
-            self._commands[i] = cmd.to_wcs(ocs, elevation)
 
     @classmethod
     def from_spline(cls, spline: 'Spline', level: int = 4) -> 'Path':
