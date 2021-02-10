@@ -6,13 +6,12 @@ import math
 from ezdxf.entities import DXFEntity
 from ezdxf.lldxf import const
 from ezdxf.math import Vec3, UCS, Z_AXIS, X_AXIS
-from ezdxf import path
 from ezdxf.path import Path, make_path, from_hatch
 from ezdxf.render import MeshBuilder, MeshVertexMerger, TraceBuilder
 
 from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.tools.text import (
-    TextLine, unified_alignment, plain_text, text_wrap
+    TextLine, unified_alignment, plain_text, text_wrap,
 )
 from ezdxf.tools import fonts
 
@@ -20,7 +19,8 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import LWPolyline, Polyline, MText, Hatch, Insert
 
 __all__ = [
-    "make_primitive", "recursive_decompose", "to_primitives", "to_vertices"
+    "make_primitive", "recursive_decompose", "to_primitives", "to_vertices",
+    "to_control_vertices", "to_paths", "to_meshes"
 ]
 
 
@@ -252,7 +252,8 @@ class TextLinePrimitive(GenericPrimitive):
 
         p1: Vec3 = text.dxf.insert
         p2: Vec3 = text.dxf.align_point
-        font = fonts.make_font(get_font_name(text), text.dxf.height, text.dxf.width)
+        font = fonts.make_font(get_font_name(text), text.dxf.height,
+                               text.dxf.width)
         text_line = TextLine(content, font)
         alignment: str = text.get_align()
         if text.dxf.halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
@@ -430,22 +431,26 @@ _PRIMITIVE_CLASSES = {
 }
 
 
-def make_primitive(e: DXFEntity,
+def make_primitive(entity: DXFEntity,
                    max_flattening_distance=None) -> AbstractPrimitive:
     """ Factory to create path/mesh primitives. The `max_flattening_distance`
     defines the max distance between the approximation line and the original
     curve. Use `max_flattening_distance` to override the default value.
 
-    Returns an empty primitive for unsupported entities, can be checked by
-    property :attr:`is_empty`. The :attr:`path` and the :attr:`mesh` attribute
-    is ``None`` and the :meth:`vertices` method yields no vertices.
+    Returns an **empty primitive** for unsupported entities. The `empty` state
+    of a primitive can be checked by the property :attr:`is_empty`.
+    The :attr:`path` and the :attr:`mesh` attributes of an empty primitive
+    are ``None`` and the :meth:`vertices` method  yields no vertices.
 
     Returns an empty primitive for the :class:`~ezdxf.entities.Hatch` entity,
-    see docs of the :mod:`~ezdxf.disassemble` module.
+    see docs of the :mod:`~ezdxf.disassemble` module. Use the this to create
+    multiple primitives from the HATCH boundary paths::
+
+        primitives = list(to_primitives([hatch_entity]))
 
     """
-    cls = _PRIMITIVE_CLASSES.get(e.dxftype(), GenericPrimitive)
-    primitive = cls(e)
+    cls = _PRIMITIVE_CLASSES.get(entity.dxftype(), GenericPrimitive)
+    primitive = cls(entity)
     if max_flattening_distance:
         primitive.max_flattening_distance = max_flattening_distance
     return primitive
@@ -461,7 +466,8 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
     Point entities will **not** be disassembled into DXF sub-entities,
     as defined by the current point style $PDMODE.
 
-    Decomposed entity types including sub-entities:
+    These entity types include sub-entities and will be decomposed into
+    simple DXF entities:
 
         - INSERT
         - DIMENSION
@@ -502,9 +508,15 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
 
 
 def to_primitives(entities: Iterable[DXFEntity],
-                  max_flattening_distance=None) -> Iterable[AbstractPrimitive]:
-    """ Disassemble DXF entities into path/mesh primitive objects. Yields
+                  max_flattening_distance: float = None
+                  ) -> Iterable[AbstractPrimitive]:
+    """ Yields all DXF entities as path or mesh primitives. Yields
     unsupported entities as empty primitives, see :func:`make_primitive`.
+
+    Args:
+        entities: iterable of DXF entities
+        max_flattening_distance: override the default value
+
     """
     for e in entities:
         # Special handling for HATCH required, because a HATCH entity can not be
@@ -514,12 +526,6 @@ def to_primitives(entities: Iterable[DXFEntity],
             yield from _hatch_primitives(e, max_flattening_distance)
         else:
             yield make_primitive(e, max_flattening_distance)
-
-
-def to_vertices(primitives: Iterable[AbstractPrimitive]) -> Iterable[Vec3]:
-    """ Disassemble path/mesh primitive objects into vertices. """
-    for p in primitives:
-        yield from p.vertices()
 
 
 def _hatch_primitives(
@@ -532,3 +538,46 @@ def _hatch_primitives(
             hatch,
             max_flattening_distance
         )
+
+
+def to_vertices(primitives: Iterable[AbstractPrimitive]) -> Iterable[Vec3]:
+    """ Yields all vertices from the given `primitives`. Paths will be flattened
+    to create the associated vertices. See also :func:`to_control_vertices` to
+    collect only the control vertices from the paths without flattening.
+
+    """
+    for p in primitives:
+        yield from p.vertices()
+
+
+def to_paths(primitives: Iterable[AbstractPrimitive]) -> Iterable[Path]:
+    """ Yields all :class:`~ezdxf.path.Path` objects from the given
+    `primitives`. Ignores primitives without a defined path.
+
+    """
+    for prim in primitives:
+        if prim.path is not None:  # lazy evaluation!
+            yield prim.path
+
+
+def to_meshes(primitives: Iterable[AbstractPrimitive]) -> Iterable[MeshBuilder]:
+    """ Yields all :class:`~ezdxf.render.MeshBuilder` objects from the given
+    `primitives`. Ignores primitives without a defined mesh.
+
+    """
+    for prim in primitives:
+        if prim.mesh is not None:
+            yield prim.mesh
+
+
+def to_control_vertices(primitives: Iterable[AbstractPrimitive]) -> Iterable[
+    Vec3]:
+    """ Yields all path control vertices and all mesh vertices from the given
+    `primitives`. Like :func:`to_vertices`, but without flattening.
+
+    """
+    for prim in primitives:
+        if prim.path is not None:
+            yield from prim.path.control_vertices()
+        else:
+            yield from prim.vertices()

@@ -7,7 +7,7 @@ text2path
 
 Tools to convert text strings and text based DXF entities into outer- and inner
 linear paths as :class:`~ezdxf.path.Path` objects. These tools depend on
-the optional `matplotlib`_ package.
+the optional `Matplotlib`_ package.
 
 Text Alignments
 ---------------
@@ -63,4 +63,4 @@ Utility Functions
 
 .. autofunction:: group_contour_and_holes(Iterable[Path]) -> Iterable[Tuple[Path, List[Path]]]
 
-.. _matplotlib: https://matplotlib.org
+.. _Matplotlib: https://matplotlib.org

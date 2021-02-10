@@ -88,7 +88,7 @@ Backend Options `params`
 
 Additional options for a backend can be passed by the `params` argument of the
 backend constructor :meth:`__init__()`. Not every option will be supported by
-all backends and currently most options are only supported by the matplotlib
+all backends and currently most options are only supported by the Matplotlib
 backend.
 
 
@@ -104,7 +104,7 @@ pdmode
     see :class:`~ezdxf.entities.Point` class documentation
 
 linetype_renderer
-    - "internal" uses the matplotlib linetype renderer which is oriented on the
+    - "internal" uses the Matplotlib linetype renderer which is oriented on the
       output medium and dpi setting, This method is simpler and faster but may
       not replicate the results of CAD applications.
     - "ezdxf" replicate AutoCAD linetype rendering oriented on drawing units and
@@ -139,7 +139,7 @@ show_hatch
 
 hatch_pattern
     - 0 to disable hatch pattern
-    - 1 to use predefined matplotlib pattern by pattern-name matching, or a
+    - 1 to use predefined Matplotlib pattern by pattern-name matching, or a
       simplified pattern in the PyQt backend. The PyQt support for hatch pattern
       is not good, it is often better to turn hatch pattern support off and
       disable HATCHES by setting **show_hatch** to 0 or use a solid filling.

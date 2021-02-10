@@ -765,7 +765,7 @@ def to_splines_and_polylines(
                 yield polyline
 
 
-# Interface to matplotlib.path.Path
+# Interface to Matplotlib.path.Path
 
 @enum.unique
 class MplCmd(enum.IntEnum):
@@ -778,8 +778,8 @@ class MplCmd(enum.IntEnum):
 
 
 def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
-    """ Yields multiple :class:`Path` objects from a matplotlib `Path`_
-    (`TextPath`_)  object. (requires matplotlib)
+    """ Yields multiple :class:`Path` objects from a Matplotlib `Path`_
+    (`TextPath`_)  object. (requires Matplotlib)
 
     .. versionadded:: 0.16
 
@@ -820,8 +820,8 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
     """ Convert given `paths` into a single :class:`matplotlib.path.Path` object.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector, the default extrusion vector
-    is the WCS z-axis. The matplotlib :class:`Path` is a 2D object with
-    :ref:`OCS` coordinates and the z-elevation is lost. (requires matplotlib)
+    is the WCS z-axis. The Matplotlib :class:`Path` is a 2D object with
+    :ref:`OCS` coordinates and the z-elevation is lost. (requires Matplotlib)
 
     Args:
         paths: iterable of :class:`Path` objects

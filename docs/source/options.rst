@@ -15,8 +15,8 @@ Global options stored in :mod:`ezdxf.options`
 
 .. attribute:: use_matplotlib_font_support
 
-    Active the matplotlib font support to calculate font metrics:
-    This requires a working matplotlib installation else an ``ImportError``
+    Active the Matplotlib font support to calculate font metrics:
+    This requires a working Matplotlib installation else an ``ImportError``
     exception will be raised sooner or later.
     Default is ``False``
 
@@ -26,7 +26,7 @@ Global options stored in :mod:`ezdxf.options`
 
     This example shows, how to create an external font cache in
     ``"~/.ezdxf"``. This has to be done only once or to add
-    new installed fonts to the cache and this also requires matplotlib:
+    new installed fonts to the cache and this also requires Matplotlib:
 
     .. code-block:: Python
 

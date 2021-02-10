@@ -38,7 +38,7 @@ To use all features of the drawing add-on, add the [draw] tag::
 ======== ===================================================
 Tag      Additional Installed Packages
 ======== ===================================================
-[draw]   matplotlib, PyQt5
+[draw]   Matplotlib, PyQt5
 [test]   geomdl, pytest
 [dev]    setuptools, wheel, Cython + [test]
 [all]    [draw] + [test] + [dev]
@@ -105,7 +105,7 @@ Install the test dependencies and run the tests::
 
 Install optional dependencies to use all features, like the drawing add-on::
 
-    pip3 install matplotlib pyqt
+    pip3 install matplotlib PyQt5
 
 Build Documentation
 -------------------

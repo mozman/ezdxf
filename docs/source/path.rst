@@ -3,7 +3,7 @@
 Path
 ====
 
-This module implements a geometrical :class:`Path` supported by several render
+This module implements a geometric :class:`Path`, supported by several render
 backends, with the goal to create such paths from LWPOLYLINE, POLYLINE and HATCH
 boundary paths and send them to the render backend, see :mod:`ezdxf.addons.drawing`.
 
