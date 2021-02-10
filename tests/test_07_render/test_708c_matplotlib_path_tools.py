@@ -2,6 +2,7 @@
 #  License: MIT License
 
 import pytest
+
 pytest.importorskip('matplotlib')
 
 from matplotlib.textpath import TextPath

@@ -13,7 +13,8 @@ from ezdxf.math import (
 )
 from ezdxf.lldxf import const
 from ezdxf.entities import LWPolyline, Polyline, Hatch, Line, Spline
-from .path import Path, Command
+from .path import Path
+from .commands import Command
 from .tools import transform_paths_to_ocs
 from .nesting import group_paths
 

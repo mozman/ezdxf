@@ -6,10 +6,10 @@ from ezdxf.layouts import VirtualLayout
 from ezdxf.math import Matrix44, OCS, Vec3
 from ezdxf.path import (
     Path, bbox, fit_paths_into_box, transform_paths, transform_paths_to_ocs,
-    Command, to_polylines3d, to_lines, to_lwpolylines, to_polylines2d,
+    to_polylines3d, to_lines, to_lwpolylines, to_polylines2d,
     to_hatches, to_bsplines_and_vertices, to_splines_and_polylines,
 )
-from ezdxf.path import make_path
+from ezdxf.path import make_path, Command
 
 
 class TestTransformPaths():

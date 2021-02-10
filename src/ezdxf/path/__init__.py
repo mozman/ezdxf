@@ -6,6 +6,7 @@
 #
 # from ezdxf.path import Path, make_path,
 #
+from .commands import *
 from .path import *
 from .converter import *
 from .tools import *

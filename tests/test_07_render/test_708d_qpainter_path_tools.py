@@ -2,6 +2,7 @@
 #  License: MIT License
 
 import pytest
+
 pytest.importorskip('PyQt5')
 
 from PyQt5.QtGui import QPainterPath

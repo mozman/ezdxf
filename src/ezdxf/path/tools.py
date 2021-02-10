@@ -4,11 +4,13 @@ from typing import TYPE_CHECKING, List, Iterable, Tuple, Optional, Dict
 
 import math
 import itertools
-from ezdxf.math import  Vec3, Z_AXIS, OCS,Matrix44, BoundingBox
+from ezdxf.math import Vec3, Z_AXIS, OCS, Matrix44, BoundingBox
 
 from ezdxf.query import EntityQuery
 
-from .path import Path, Command
+from .path import Path
+from .commands import Command
+from . import converter
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, Layout, EntityQuery
@@ -220,7 +222,7 @@ def render_lwpolylines(
     .. versionadded:: 0.16
 
     """
-    lwpolylines = list(to_lwpolylines(
+    lwpolylines = list(converter.to_lwpolylines(
         paths,
         distance=distance,
         segments=segments,
@@ -261,7 +263,7 @@ def render_polylines2d(
     .. versionadded:: 0.16
 
     """
-    polylines2d = list(to_polylines2d(
+    polylines2d = list(converter.to_polylines2d(
         paths,
         distance=distance,
         segments=segments,
@@ -307,7 +309,7 @@ def render_hatches(
     .. versionadded:: 0.16
 
     """
-    hatches = list(to_hatches(
+    hatches = list(converter.to_hatches(
         paths,
         edge_path=edge_path,
         distance=distance,
@@ -345,7 +347,7 @@ def render_polylines3d(
 
     """
 
-    polylines3d = list(to_polylines3d(
+    polylines3d = list(converter.to_polylines3d(
         paths,
         distance=distance,
         segments=segments,
@@ -379,7 +381,7 @@ def render_lines(
     .. versionadded:: 0.16
 
     """
-    lines = list(to_lines(
+    lines = list(converter.to_lines(
         paths,
         distance=distance,
         segments=segments,
@@ -411,7 +413,7 @@ def render_splines_and_polylines(
     .. versionadded:: 0.16
 
     """
-    entities = list(to_splines_and_polylines(
+    entities = list(converter.to_splines_and_polylines(
         paths,
         g1_tol=g1_tol,
         dxfattribs=dxfattribs,
