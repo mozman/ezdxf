@@ -319,7 +319,7 @@ def test_basic_spline(msp, basic):
 def test_mesh(msp, basic):
     # draw mesh as wire frame
     c = cube()
-    c.render(msp)
+    c.render_mesh(msp)
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 24

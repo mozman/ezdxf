@@ -109,10 +109,10 @@ class SierpinskyPyramid:
         """
         if merge:
             mesh = self.mesh()
-            mesh.render(layout, dxfattribs=dxfattribs, matrix=matrix, ucs=ucs)
+            mesh.render_mesh(layout, dxfattribs=dxfattribs, matrix=matrix, ucs=ucs)
         else:
             for pyramid in self.pyramids():
-                pyramid.render(layout, dxfattribs, matrix=matrix, ucs=ucs)
+                pyramid.render_mesh(layout, dxfattribs, matrix=matrix, ucs=ucs)
 
     def pyramids(self) -> Iterable[MeshTransformer]:
         """ Yields all pyramids of the sierpinsky pyramid as individual :class:`MeshTransformer` objects.

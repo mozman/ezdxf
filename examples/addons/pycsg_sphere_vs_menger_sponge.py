@@ -24,8 +24,8 @@ t0 = perf_counter()
 subtract = (CSG(sponge1, meshid=1) - CSG(sphere1, meshid=2))
 t1 = perf_counter()
 # get mesh result by id
-subtract.mesh(1).render(msp, dxfattribs={'layer': 'sponge'})
-subtract.mesh(2).render(msp, dxfattribs={'layer': 'sphere'})
+subtract.mesh(1).render_mesh(msp, dxfattribs={'layer': 'sponge'})
+subtract.mesh(2).render_mesh(msp, dxfattribs={'layer': 'sphere'})
 
 print(f'runtime: {t1-t0:.3f}s')
 doc.saveas(DIR / 'csg_sphere_vs_menger_sponge.dxf')

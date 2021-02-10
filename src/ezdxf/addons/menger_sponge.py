@@ -134,10 +134,10 @@ class MengerSponge:
         """
         if merge:
             mesh = self.mesh()
-            mesh.render(layout, dxfattribs=dxfattribs, matrix=matrix, ucs=ucs)
+            mesh.render_mesh(layout, dxfattribs=dxfattribs, matrix=matrix, ucs=ucs)
         else:
             for cube in self.cubes():
-                cube.render(layout, dxfattribs, matrix=matrix, ucs=ucs)
+                cube.render_mesh(layout, dxfattribs, matrix=matrix, ucs=ucs)
 
     def cubes(self) -> Iterable[MeshTransformer]:
         """ Yields all cubes of the menger sponge as individual :class:`MeshTransformer` objects.

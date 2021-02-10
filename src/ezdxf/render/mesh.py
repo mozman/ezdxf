@@ -140,10 +140,9 @@ class MeshBuilder:
         return not all(
             is_planar_face(face) for face in self.faces_as_vertices())
 
-    def render(self, layout: 'BaseLayout', dxfattribs: dict = None,
-               matrix: 'Matrix44' = None, ucs: 'UCS' = None):
-        """
-        Render mesh as :class:`~ezdxf.entities.Mesh` entity into `layout`.
+    def render_mesh(self, layout: 'GenericLayoutType', dxfattribs: dict = None,
+                    matrix: 'Matrix44' = None, ucs: 'UCS' = None):
+        """ Render mesh as :class:`~ezdxf.entities.Mesh` entity into `layout`.
 
         Args:
             layout: :class:`~ezdxf.layouts.BaseLayout` object
@@ -165,7 +164,9 @@ class MeshBuilder:
             data.faces = self.faces
         return mesh
 
-    def render_normals(self, layout: 'BaseLayout', length: float = 1,
+    render = render_mesh  # TODO: 2021-02-10 - compatibility alias
+
+    def render_normals(self, layout: 'GenericLayoutType', length: float = 1,
                        relative=True, dxfattribs: dict = None):
         """ Render face normals as :class:`~ezdxf.entities.Line` entities into
         `layout`, useful to check orientation of mesh faces.
@@ -244,7 +245,8 @@ class MeshBuilder:
         return mesh
 
     def render_polyface(self, layout: 'GenericLayoutType',
-                        dxfattribs: dict = None, matrix: 'Matrix44' = None,
+                        dxfattribs: dict = None,
+                        matrix: 'Matrix44' = None,
                         ucs: 'UCS' = None):
         """ Render mesh as :class:`~ezdxf.entities.Polyface` entity into
         `layout`.
@@ -265,7 +267,8 @@ class MeshBuilder:
         polyface.append_faces(subdivide_ngons(t.faces_as_vertices()))
         return polyface
 
-    def render_3dfaces(self, layout: 'BaseLayout', dxfattribs: dict = None,
+    def render_3dfaces(self, layout: 'GenericLayoutType',
+                       dxfattribs: dict = None,
                        matrix: 'Matrix44' = None,
                        ucs: 'UCS' = None):
         """ Render mesh as :class:`~ezdxf.entities.Face3d` entities into

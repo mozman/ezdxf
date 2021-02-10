@@ -11,7 +11,7 @@ DIR = Path('~/desktop/Outbox').expanduser()
 
 def write_mesh(filename, mesh):
     doc = ezdxf.new('R2000')
-    mesh.render(doc.modelspace())
+    mesh.render_mesh(doc.modelspace())
     try:
         doc.saveas(filename)
     except IOError as e:

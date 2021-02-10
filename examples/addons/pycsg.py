@@ -17,7 +17,7 @@ msp = doc.modelspace()
 # build solid union
 union = CSG(cube1) + CSG(cylinder1)
 # convert to mesh and render mesh to modelspace
-union.mesh().render(msp, dxfattribs={'color': 1})
+union.mesh().render_mesh(msp, dxfattribs={'color': 1})
 
 # build solid difference
 difference = CSG(cube1) - CSG(cylinder1)

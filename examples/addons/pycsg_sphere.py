@@ -21,11 +21,11 @@ cube1 = cube().translate(-.5, -.5, -.5)
 sphere1 = sphere(count=32, stacks=16, radius=.5, quads=True)
 
 union = (CSG(cube1) + CSG(sphere1)).mesh()
-union.render(msp, dxfattribs={'layer': 'csg', 'color': 1})
+union.render_mesh(msp, dxfattribs={'layer': 'csg', 'color': 1})
 union.render_normals(msp, length=NLENGTH, relative=False, dxfattribs={'layer': 'normals'})
 
 subtract = (CSG(cube1) - CSG(sphere1)).mesh().translate(2.5)
-subtract.render(msp, dxfattribs={'layer': 'csg', 'color': 3})
+subtract.render_mesh(msp, dxfattribs={'layer': 'csg', 'color': 3})
 subtract.render_normals(msp, length=NLENGTH, relative=False, dxfattribs={'layer': 'normals'})
 
 intersection = (CSG(cube1) * CSG(sphere1)).mesh().translate(4)

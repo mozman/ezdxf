@@ -70,7 +70,7 @@ def save_as(name):
     msp2 = doc2.modelspace()
     for polyface in polyfaces:
         b = MeshVertexMerger.from_polyface(polyface)
-        b.render(msp1, dxfattribs={
+        b.render_mesh(msp1, dxfattribs={
             'layer': polyface.dxf.layer,
             'color': polyface.dxf.color,
         })

@@ -104,7 +104,7 @@ def test_mesh_entity_to_primitive():
     from ezdxf.layouts import VirtualLayout
     from ezdxf.render.forms import cube
     vl = VirtualLayout()
-    mesh_entity = cube().render(vl)
+    mesh_entity = cube().render_mesh(vl)
     assert mesh_entity.dxftype() == "MESH"
 
     p = disassemble.make_primitive(mesh_entity)
