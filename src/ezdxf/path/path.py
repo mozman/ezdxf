@@ -274,7 +274,7 @@ class Path(abc.Sequence):
         else:
             return self.clone()
 
-    def add_curves4(self, curves: Iterable[Bezier4P]) -> None:
+    def add_bezier4p(self, curves: Iterable[Bezier4P]) -> None:
         """ Add multiple cubic Bèzier-curves to the path.
 
         Auto-detect if the path end point is connected to the start- or
@@ -296,9 +296,9 @@ class Path(abc.Sequence):
                 self.line_to(start)
             self.curve4_to(end, ctrl1, ctrl2)
 
-    add_curves = add_curves4  # TODO: 2021-01-30, remove compatibility alias
+    add_curves = add_bezier4p  # TODO: 2021-01-30, remove compatibility alias
 
-    def add_curves3(self, curves: Iterable[Bezier3P]) -> None:
+    def add_bezier3p(self, curves: Iterable[Bezier3P]) -> None:
         """ Add multiple quadratic Bèzier-curves to the path.
 
         Auto-detect if the path end point is connected to the start- or
@@ -338,7 +338,7 @@ class Path(abc.Sequence):
             cp0 = curve0.control_points[0]
             if cp0.isclose(p2):
                 curves = _reverse_bezier_curves(curves)
-            self.add_curves4(curves)
+            self.add_bezier4p(curves)
 
         prev_point = None
         prev_bulge = 0
@@ -377,7 +377,7 @@ class Path(abc.Sequence):
 
         Auto-detect connection point, if none is close a line from the path
         end point to the ellipse start point will be added
-        (see :meth:`add_curves4`).
+        (see :meth:`add_bezier4p`).
 
         By default the start of an **empty** path is set to the start point of
         the ellipse, setting argument `reset` to ``False`` prevents this
@@ -395,7 +395,7 @@ class Path(abc.Sequence):
             return
         if len(self) == 0 and reset:
             self.start = ellipse.start_point
-        self.add_curves4(
+        self.add_bezier4p(
             cubic_bezier_from_ellipse(ellipse, segments)
         )
 
@@ -408,7 +408,7 @@ class Path(abc.Sequence):
 
         Auto-detect connection point, if none is close a line from the path
         end point to the spline start point will be added
-        (see :meth:`add_curves4`).
+        (see :meth:`add_bezier4p`).
 
         By default the start of an **empty** path is set to the start point of
         the spline, setting argument `reset` to ``False`` prevents this
@@ -427,7 +427,7 @@ class Path(abc.Sequence):
                       spline.bezier_decomposition()]
         else:
             curves = spline.cubic_bezier_approximation(level=level)
-        self.add_curves4(curves)
+        self.add_bezier4p(curves)
 
     def approximate(self, segments: int = 20) -> Iterable[Vec3]:
         """ Approximate path by vertices, `segments` is the count of

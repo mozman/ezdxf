@@ -172,9 +172,9 @@ The Path Class
 
     .. automethod:: counter_clockwise() -> Path
 
-    .. automethod:: add_curves3(curves: Iterable[Bezier3P])
+    .. automethod:: add_bezier3p(curves: Iterable[Bezier3P])
 
-    .. automethod:: add_curves4(curves: Iterable[Bezier4P])
+    .. automethod:: add_bezier4p(curves: Iterable[Bezier4P])
 
     .. automethod:: add_ellipse(ellipse: ConstructionEllipse, segments=1)
 
