@@ -17,7 +17,7 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter, Drawing, EntityDB, DXFEntity, DXFTagStorage, Table,
-        BlockRecord
+        BlockRecord,
     )
 
 
@@ -157,7 +157,7 @@ class BlocksSection:
                 endblk = factory.create_db_entry(
                     'ENDBLK',
                     dxfattribs={},
-                    doc = self.doc,
+                    doc=self.doc,
                 )
                 block_record.set_block(block, endblk)
                 self.add(block_record)
@@ -318,9 +318,8 @@ class BlocksSection:
                 )
         self.__delitem__(name)
 
-    def delete_all_blocks(self, safe: bool = True) -> None:
-        """
-        Delete all blocks without references except modelspace- or
+    def delete_all_blocks(self) -> None:
+        """ Delete all blocks without references except modelspace- or
         paperspace layout blocks, special arrow- and anonymous blocks
         (DIMENSION, ACAD_TABLE).
 
@@ -335,13 +334,7 @@ class BlocksSection:
             removed unsafe mode
 
         """
-        if safe is False:
-            warnings.warn(
-                'Unsafe deleting of blocks will be removed in v0.16',
-                DeprecationWarning
-            )
-
-        acitve_references = set(
+        active_references = set(
             table_key(entity.dxf.name) for entity in
             self.doc.query('INSERT')
         )
@@ -349,7 +342,7 @@ class BlocksSection:
         def is_safe(name: str) -> bool:
             if is_special_block(name):
                 return False
-            return name not in acitve_references
+            return name not in active_references
 
         trash = set()
         for block in self:
@@ -361,48 +354,9 @@ class BlocksSection:
             self.__delitem__(name)
 
     def purge(self):
-        """ Delete all unused blocks like :meth:`delete_all_blocks`, but also
-        removes unused anonymous blocks.
-
-        .. warning::
-
-            There could exist undiscovered references to blocks which are
-            not documented in the DXF reference, hidden in extended data
-            sections or application defined data, which could produce invalid
-            DXF documents if such referenced blocks will be deleted.
-
+        """ Purge functionality removed! - it was just too dangerous!
+        The method name suggests a functionality and quality similar
+        to that of a CAD application, which can not be delivered!
         """
-        self.delete_all_blocks()
-        # Check for unused anonymous blocks
-        trash = set()
-        active_references = set()
-        active_anonymous_blocks = set()
-
-        for entity in self.doc.entitydb.values():
-            dxftype = entity.dxftype()
-            if dxftype == 'INSERT':
-                active_references.add(entity.dxf.name)
-            elif entity.dxftype() in {
-                'DIMENSION', 'ARC_DIMENSION', 'LARGE_RADIAL_DIMENSION',
-                'ACAD_TABLE',
-            }:
-                active_anonymous_blocks.add(entity.dxf.geometry)
-
-        for block in self:
-            name = block.name
-            if is_anonymous_block(name):
-                code = name[1]
-                if name in active_anonymous_blocks:
-                    continue
-                elif code in 'UEXA':
-                    # require an explicit INSERT to be in use
-                    # todo: not sure for E, X and A
-                    if name not in active_references:
-                        trash.add(name)
-                else:
-                    # No explicit INSERT required but also not an active
-                    # anonymous block:
-                    trash.add(name)
-
-        for name in trash:
-            self.__delitem__(name)
+        warnings.warn('Blocks.purge() deactivated, unsafe operation!',
+                      DeprecationWarning)

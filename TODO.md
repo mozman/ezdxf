@@ -28,9 +28,6 @@ DXF Entities
 - Remove generic "Embedded Object" support in DXFEntity because this is always 
   a special case which should be handled by DXF load/export procedure and it is 
   used only by ATTRIB/ATTDEF yet (v0.17).
-- Blocks.purge(): remove purge() - it is just too dangerous! The method name 
-  suggests a functionality and quality similar to that of a CAD application, 
-  which can not be delivered! (v0.16)
 
 - DIMENSION rendering, boring and tedious due to lack of documentation!
     - angular dim

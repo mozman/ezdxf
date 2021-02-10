@@ -160,45 +160,6 @@ def test_do_not_delete_layouts_and_special_arrow_blocks(doc):
                            '_OPEN30'}
 
 
-def test_do_not_purge_layout_and_special_arrow_blocks(doc):
-    doc.blocks.purge()
-    assert len(doc.blocks) == 4
-    block_names = set(block.name for block in doc.blocks)
-    assert block_names == {'*Model_Space', '*Paper_Space', '_ARCHTICK',
-                           '_OPEN30'}
-
-
-@pytest.mark.parametrize('name', ['*D1', '*T1', '*U1', '*X1', '*E1', '*A1'])
-def test_do_purge_unused_special_blocks(name, doc):
-    doc.blocks.new(name)
-    doc.blocks.purge()
-    assert name not in doc.blocks
-
-
-@pytest.mark.parametrize('name', ['*U1', '*X1', '*E1', '*A1'])
-def test_do_not_purge_referenced_special_blocks(name, doc):
-    doc.blocks.new(name)
-    msp = doc.modelspace()
-    msp.add_blockref(name, (0, 0))
-    doc.blocks.purge()
-    assert name in doc.blocks
-
-
-def test_do_not_purge_used_dimension(doc):
-    # DIMENSION (and ACAD_TABLE) block are not referenced by explicit INSERT
-    # entity.
-    dimension = factory.create_db_entry(
-        'DIMENSION',
-        dxfattribs={'geometry': '*D01'},
-        doc=doc,
-    )
-    msp = doc.modelspace()
-    msp.add_entity(dimension)
-    doc.blocks.new('*D01')
-    doc.blocks.purge()
-    assert '*D01' in doc.blocks
-
-
 def test_rename_block(blocks):
     block = blocks.new('RENAME_ME')
     assert block.dxf.name in blocks

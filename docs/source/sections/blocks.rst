@@ -31,5 +31,4 @@ The BLOCKS section is the home all block definitions (:class:`~ezdxf.layouts.Blo
 
     .. automethod:: delete_all_blocks()
 
-    .. automethod:: purge
 

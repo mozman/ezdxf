@@ -61,4 +61,5 @@ Version 0.16 - dev
 - REMOVED: `Path.from_from_hatch_boundary_path()`, replaced by factory `from_hatch()`
 - REMOVED: `Path.from_from_hatch_polyline_path()`
 - REMOVED: `Path.from_from_hatch_edge_path()`
+- REMOVED: `Block.purge()`, unsafe operation
 
