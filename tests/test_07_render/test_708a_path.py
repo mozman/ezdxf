@@ -3,7 +3,7 @@
 import pytest
 import math
 
-from ezdxf.path import Path, make_path, converter, Command
+from ezdxf.path import Path, make_path, converter, Command, tools
 from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P
 from ezdxf.entities.hatch import PolylinePath, EdgePath
 from ezdxf.entities import factory
@@ -55,7 +55,7 @@ def test_add_curves4():
     path = Path()
     c1 = Bezier4P(((0, 0), (0, 1), (2, 1), (2, 0)))
     c2 = Bezier4P(((2, 0), (2, -1), (0, -1), (0, 0)))
-    path.add_bezier4p([c1, c2])
+    tools.add_bezier4p(path, [c1, c2])
     assert len(path) == 2
     assert path.end == (0, 0)
 
@@ -73,7 +73,7 @@ def test_add_curves4_with_gap():
     path = Path()
     c1 = Bezier4P(((0, 0, 0), (0, 1, 0), (2, 1, 0), (2, 0, 0)))
     c2 = Bezier4P(((2, -1, 0), (2, -2, 0), (0, -2, 0), (0, -1, 0)))
-    path.add_bezier4p([c1, c2])
+    tools.add_bezier4p(path, [c1, c2])
     assert len(path) == 3  # added a line segment between curves
     assert path.end == (0, -1, 0)
 
@@ -89,7 +89,7 @@ def test_add_curves3_reverse():
 def test_add_curves4_reverse():
     path = Path(start=(0, 0, 0))
     c1 = Bezier4P(((2, 0, 0), (2, 1, 0), (0, 1, 0), (0, 0, 0)))
-    path.add_bezier4p([c1])
+    tools.add_bezier4p(path, [c1])
     assert len(path) == 1
     assert path.end == (2, 0, 0)
 

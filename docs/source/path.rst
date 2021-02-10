@@ -74,6 +74,8 @@ Functions to create :class:`Path` objects from DXF entities.
 
 .. autofunction:: from_hatch(hatch: Hatch) -> Iterable[Path]
 
+.. autofunction:: from_vertices(vertices: Iterable[Vertex], close=False) -> Path
+
 .. autofunction:: from_matplotlib_path(mpath, curves=True) -> Iterable[Path]
 
 .. autofunction:: from_qpainter_path(qpath) -> Iterable[Path]
@@ -136,6 +138,15 @@ Utility Functions
 
 .. autofunction:: fit_paths_into_box(paths: Iterable[Path], size: Tuple[float, float, float], uniform = True, source_box: BoundingBox = None) -> List[Path]
 
+.. autofunction:: add_bezier3p(path: Path, curves: Iterable[Bezier3P])
+
+.. autofunction:: add_bezier4p(path: Path, curves: Iterable[Bezier4P])
+
+.. autofunction:: add_ellipse(path: Path,ellipse: ConstructionEllipse, segments=1)
+
+.. autofunction:: add_spline(path: Path, spline: BSpline, level=4)
+
+.. autofunction:: add_2d_polyline(path: Path, points, close: bool, ocs: OCS, elevation: float)
 
 The Path Class
 --------------
@@ -172,21 +183,17 @@ The Path Class
 
     .. automethod:: counter_clockwise() -> Path
 
-    .. automethod:: add_bezier3p(curves: Iterable[Bezier3P])
-
-    .. automethod:: add_bezier4p(curves: Iterable[Bezier4P])
-
-    .. automethod:: add_ellipse(ellipse: ConstructionEllipse, segments=1)
-
-    .. automethod:: add_spline(spline: BSpline, level=4)
-
-    .. automethod:: add_2d_polyline(points, close: bool, ocs: OCS, elevation: float)
-
     .. automethod:: transform(m: Matrix44) -> Path
 
     .. automethod:: approximate(segments: int=20) -> Iterable[Vec3]
 
     .. automethod:: flattening(distance: float, segments: int=16) -> Iterable[Vec3]
+
+    .. automethod:: add_curves(curves: Iterable[Bezier4P])
+
+    .. automethod:: add_ellipse(ellipse: ConstructionEllipse, segments=1)
+
+    .. automethod:: add_spline(spline: BSpline, level=4)
 
     .. automethod:: from_lwpolyline
 

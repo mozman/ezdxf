@@ -1,10 +1,16 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable, Tuple, Optional, Dict
+from typing import (
+    TYPE_CHECKING, List, Iterable, Tuple, Optional, Dict, Sequence
+)
 
 import math
 import itertools
-from ezdxf.math import Vec3, Z_AXIS, OCS, Matrix44, BoundingBox
+from ezdxf.math import (
+    Vec3, Z_AXIS, OCS, Matrix44, BoundingBox, ConstructionEllipse,
+    cubic_bezier_from_ellipse, Bezier4P, Bezier3P, BSpline,
+    reverse_bezier_curves, bulge_to_arc
+)
 
 from ezdxf.query import EntityQuery
 
@@ -18,7 +24,9 @@ if TYPE_CHECKING:
 __all__ = [
     'bbox', 'fit_paths_into_box', 'transform_paths', 'transform_paths_to_ocs',
     'render_lwpolylines', 'render_polylines2d', 'render_polylines3d',
-    'render_lines', 'render_hatches', 'render_splines_and_polylines'
+    'render_lines', 'render_hatches', 'render_splines_and_polylines',
+    'add_bezier4p', 'add_bezier3p', 'add_ellipse', 'add_2d_polyline',
+    'add_spline'
 ]
 
 MAX_DISTANCE = 0.01
@@ -421,3 +429,161 @@ def render_splines_and_polylines(
     for entity in entities:
         layout.add_entity(entity)
     return EntityQuery(entities)
+
+
+def add_ellipse(path: Path, ellipse: ConstructionEllipse, segments=1,
+                reset=True) -> None:
+    """ Add an elliptical arc as multiple cubic Bèzier-curves to `path`, use
+    :meth:`~ezdxf.math.ConstructionEllipse.from_arc` constructor of class
+    :class:`~ezdxf.math.ConstructionEllipse` to add circular arcs.
+
+    Auto-detect connection point, if none is close a line from the path
+    end point to the ellipse start point will be added
+    (see :meth:`add_bezier4p`).
+
+    By default the start of an **empty** path is set to the start point of
+    the ellipse, setting argument `reset` to ``False`` prevents this
+    behavior.
+
+    Args:
+        path: :class:`~ezdxf.path.Path` object
+        ellipse: ellipse parameters as :class:`~ezdxf.math.ConstructionEllipse`
+            object
+        segments: count of Bèzier-curve segments, at least one segment for
+            each quarter (pi/2), ``1`` for as few as possible.
+        reset: set start point to start of ellipse if path is empty
+
+    """
+    if abs(ellipse.param_span) < 1e-9:
+        return
+    if len(path) == 0 and reset:
+        path.start = ellipse.start_point
+    add_bezier4p(path, cubic_bezier_from_ellipse(ellipse, segments))
+
+
+def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
+    """ Add multiple cubic Bèzier-curves to the given `path`.
+
+    Auto-detect if the path end point is connected to the start- or
+    end point of the curves, if none of them is close to the path end point
+    a line from the path end point to the curves start point will be added.
+
+    """
+    curves = list(curves)
+    if not len(curves):
+        return
+    end = curves[-1].control_points[-1]
+    if path.end.isclose(end):
+        # connect to new curves end point
+        curves = reverse_bezier_curves(curves)
+
+    for curve in curves:
+        start, ctrl1, ctrl2, end = curve.control_points
+        if not start.isclose(path.end, abs_tol=1e-9):
+            path.line_to(start)
+        path.curve4_to(end, ctrl1, ctrl2)
+
+
+def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
+    """ Add multiple quadratic Bèzier-curves to the given `path`.
+
+    Auto-detect if the path end point is connected to the start- or
+    end point of the curves, if none of them is close to the path end point
+    a line from the path end point to the curves start point will be added.
+
+    """
+    curves = list(curves)
+    if not len(curves):
+        return
+    end = curves[-1].control_points[-1]
+    if path.end.isclose(end):
+        # connect to new curves end point
+        curves = reverse_bezier_curves(curves)
+
+    for curve in curves:
+        start, ctrl, end = curve.control_points
+        if not start.isclose(path.end, abs_tol=1e-9):
+            path.line_to(start)
+        path.curve3_to(end, ctrl)
+
+
+def add_2d_polyline(path, points: Iterable[Sequence[float]], close: bool,
+                    ocs: OCS, elevation: float) -> None:
+    """ Internal API to add 2D polylines which may include bulges. """
+
+    def bulge_to(p1: Vec3, p2: Vec3, bulge: float):
+        if p1.isclose(p2):
+            return
+        center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
+        ellipse = ConstructionEllipse.from_arc(
+            center, radius, Z_AXIS,
+            math.degrees(start_angle),
+            math.degrees(end_angle),
+        )
+        curves = list(cubic_bezier_from_ellipse(ellipse))
+        curve0 = curves[0]
+        cp0 = curve0.control_points[0]
+        if cp0.isclose(p2):
+            curves = reverse_bezier_curves(curves)
+        add_bezier4p(path, curves)
+
+    prev_point = None
+    prev_bulge = 0
+    for x, y, bulge in points:
+        # Bulge values near 0 but != 0 cause crashes! #329
+        if abs(bulge) < 1e-6:
+            bulge = 0
+        point = Vec3(x, y)
+        if prev_point is None:
+            path._start = point  # todo: remove private attribute access
+            prev_point = point
+            prev_bulge = bulge
+            continue
+
+        if prev_bulge:
+            bulge_to(prev_point, point, prev_bulge)
+        else:
+            path.line_to(point)
+        prev_point = point
+        prev_bulge = bulge
+
+    if close and not path.start.isclose(path.end):
+        if prev_bulge:
+            bulge_to(path.end, path.start, prev_bulge)
+        else:
+            path.line_to(path.start)
+
+    if ocs.transform or elevation:
+        path._to_wcs(ocs, elevation)  # todo: remove private method access
+
+
+def add_spline(path, spline: BSpline, level=4, reset=True) -> None:
+    """ Add a B-spline as multiple cubic Bèzier-curves.
+
+    Non-rational B-splines of 3rd degree gets a perfect conversion to
+    cubic bezier curves with a minimal count of curve segments, all other
+    B-spline require much more curve segments for approximation.
+
+    Auto-detect connection point, if none is close a line from the path
+    end point to the spline start point will be added
+    (see :meth:`add_bezier4p`).
+
+    By default the start of an **empty** path is set to the start point of
+    the spline, setting argument `reset` to ``False`` prevents this
+    behavior.
+
+    Args:
+        path: :class:`~ezdxf.path.Path` object
+        spline: B-spline parameters as :class:`~ezdxf.math.BSpline` object
+        level: subdivision level of approximation segments
+        reset: set start point to start of spline if path is empty
+
+    """
+    if len(path) == 0 and reset:
+        path.start = spline.point(0)
+    if spline.degree == 3 and not spline.is_rational and spline.is_clamped:
+        curves = [Bezier4P(points) for points in
+                  spline.bezier_decomposition()]
+    else:
+        curves = spline.cubic_bezier_approximation(level=level)
+    add_bezier4p(path, curves)

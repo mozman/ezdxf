@@ -53,6 +53,11 @@ Version 0.16 - dev
 - DEPRECATED: `Path.from_ellipse()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_arc()`, replaced by factory `make_path()`
 - DEPRECATED: `Path.from_circle()`, replaced by factory `make_path()`
+- DEPRECATED: `Path.add_curve()`, replaced by function `add_bezier4p()`
+- DEPRECATED: `Path.add_ellipse()`, replaced by function `add_ellipse()`
+- DEPRECATED: `Path.add_spline()`, replaced by function `add_spline()`
+- DEPRECATED: `Path.add_2d_poyline()`, replaced by function `add_2d_polyline()`
+- DEPRECATED: `Path.from_vertiues()`, replaced by factory `from_vertices()`
 - REMOVED: `Path.from_from_hatch_boundary_path()`, replaced by factory `from_hatch()`
 - REMOVED: `Path.from_from_hatch_polyline_path()`
 - REMOVED: `Path.from_from_hatch_edge_path()`

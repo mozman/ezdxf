@@ -15,20 +15,20 @@ from ezdxf.lldxf import const
 from ezdxf.entities import LWPolyline, Polyline, Hatch, Line, Spline
 from .path import Path
 from .commands import Command
-from .tools import transform_paths_to_ocs
+from . import tools
 from .nesting import group_paths
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-    Vertex, Ellipse, Arc, Circle, DXFEntity, Solid, Viewport, Image,
-)
+        Vertex, Ellipse, Arc, Circle, DXFEntity, Solid, Viewport, Image,
+    )
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
 __all__ = [
     'make_path', 'has_make_path_support',
     'to_lines', 'to_polylines3d', 'to_lwpolylines', 'to_polylines2d',
     'to_hatches', 'to_bsplines_and_vertices', 'to_splines_and_polylines',
-    'from_hatch', 'from_hatch_boundary_path',
+    'from_hatch', 'from_hatch_boundary_path', 'from_vertices',
     'from_matplotlib_path', 'from_qpainter_path',
     'to_matplotlib_path', 'to_qpainter_path'
 ]
@@ -41,7 +41,8 @@ G1_TOL = 1e-4
 def _from_lwpolyline(lwpolyline: 'LWPolyline', **kwargs) -> 'Path':
     """ Returns a Path from a LWPolyline. """
     path = Path()
-    path.add_2d_polyline(
+    tools.add_2d_polyline(
+        path,
         lwpolyline.get_points('xyb'),
         close=lwpolyline.closed,
         ocs=lwpolyline.ocs(),
@@ -69,7 +70,8 @@ def _from_polyline(polyline: 'Polyline', **kwargs) -> 'Path':
         # Elevation attribute is mandatory, but you never know,
         # take elevation from first vertex.
         elevation = Vec3(polyline.vertices[0].dxf.location).z
-    path.add_2d_polyline(
+    tools.add_2d_polyline(
+        path,
         points,
         close=polyline.is_closed,
         ocs=ocs,
@@ -82,7 +84,7 @@ def _from_spline(spline: 'Spline', **kwargs) -> 'Path':
     """ Returns a Path from a Spline. """
     level = kwargs.get('level', 4)
     path = Path()
-    path.add_spline(spline.construction_tool(), level=level, reset=True)
+    tools.add_spline(path, spline.construction_tool(), level=level, reset=True)
     return path
 
 
@@ -90,9 +92,10 @@ def _from_ellipse(ellipse: 'Ellipse', **kwargs) -> 'Path':
     """ Returns a Path from an Ellipse. """
     segments = kwargs.get('segments', 1)
     path = Path()
-    path.add_ellipse(ellipse.construction_tool(),
-                     segments=segments,
-                     reset=True)
+    tools.add_ellipse(path,
+                      ellipse.construction_tool(),
+                      segments=segments,
+                      reset=True)
     return path
 
 
@@ -116,7 +119,7 @@ def _from_arc(arc: 'Arc', **kwargs) -> 'Path':
             start_angle=arc.dxf.start_angle,
             end_angle=arc.dxf.end_angle,
         )
-        path.add_ellipse(ellipse, segments=segments, reset=True)
+        tools.add_ellipse(path, ellipse, segments=segments, reset=True)
     return path
 
 
@@ -131,7 +134,7 @@ def _from_circle(circle: 'Circle', **kwargs) -> 'Path':
             radius=radius,
             extrusion=circle.dxf.extrusion,
         )
-        path.add_ellipse(ellipse, segments=segments, reset=True)
+        tools.add_ellipse(path, ellipse, segments=segments, reset=True)
     return path
 
 
@@ -260,7 +263,8 @@ def from_hatch_polyline_path(polyline: 'PolylinePath', ocs: OCS = None,
     polyline path.
     """
     path = Path()
-    path.add_2d_polyline(
+    tools.add_2d_polyline(
+        path,
         polyline.vertices,  # List[(x, y, bulge)]
         close=polyline.is_closed,
         ocs=ocs or OCS(),
@@ -376,6 +380,19 @@ def from_hatch_edge_path(edges: 'EdgePath', ocs: OCS = None,
     return path
 
 
+def from_vertices(vertices: Iterable['Vertex'], close=False) -> Path:
+    """ Returns a :class:`Path` from given `vertices`.  """
+    vertices = Vec3.list(vertices)
+    if len(vertices) < 2:
+        return Path()
+    path = Path(start=vertices[0])
+    for vertex in vertices[1:]:
+        path.line_to(vertex)
+    if close:
+        path.close()
+    return path
+
+
 def to_lwpolylines(
         paths: Iterable[Path], *,
         distance: float = MAX_DISTANCE,
@@ -413,7 +430,7 @@ def to_lwpolylines(
     dxfattribs = dxfattribs or dict()
     if not extrusion.isclose(Z_AXIS):
         ocs, elevation = _get_ocs(extrusion, reference_point)
-        paths = transform_paths_to_ocs(paths, ocs)
+        paths = tools.transform_paths_to_ocs(paths, ocs)
         dxfattribs['elevation'] = elevation
         dxfattribs['extrusion'] = extrusion
     elif reference_point.z != 0:
@@ -469,7 +486,7 @@ def to_polylines2d(
     dxfattribs = dxfattribs or dict()
     if not extrusion.isclose(Z_AXIS):
         ocs, elevation = _get_ocs(extrusion, reference_point)
-        paths = transform_paths_to_ocs(paths, ocs)
+        paths = tools.transform_paths_to_ocs(paths, ocs)
         dxfattribs['elevation'] = Vec3(0, 0, elevation)
         dxfattribs['extrusion'] = extrusion
     elif reference_point.z != 0:
@@ -565,7 +582,7 @@ def _hatch_converter(
     dxfattribs = dxfattribs or dict()
     if not extrusion.isclose(Z_AXIS):
         ocs, elevation = _get_ocs(extrusion, reference_point)
-        paths = transform_paths_to_ocs(paths, ocs)
+        paths = tools.transform_paths_to_ocs(paths, ocs)
         dxfattribs['elevation'] = Vec3(0, 0, elevation)
         dxfattribs['extrusion'] = extrusion
     elif reference_point.z != 0:
@@ -836,7 +853,7 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
     """
     from matplotlib.path import Path as MatplotlibPath
     if not extrusion.isclose(Z_AXIS):
-        paths = transform_paths_to_ocs(paths, OCS(extrusion))
+        paths = tools.transform_paths_to_ocs(paths, OCS(extrusion))
     else:
         paths = list(paths)
     if len(paths) == 0:
@@ -928,7 +945,7 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
     from PyQt5.QtGui import QPainterPath
     from PyQt5.QtCore import QPointF
     if not extrusion.isclose(Z_AXIS):
-        paths = transform_paths_to_ocs(paths, OCS(extrusion))
+        paths = tools.transform_paths_to_ocs(paths, OCS(extrusion))
     else:
         paths = list(paths)
     if len(paths) == 0:

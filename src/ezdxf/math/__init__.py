@@ -62,7 +62,7 @@ from .offset2d import offset_vertices_2d
 from .transformtools import NonUniformScalingError, InsertTransformationError
 from .curvetools import (
     quadratic_to_cubic_bezier, bezier_to_bspline,
-    have_bezier_curves_g1_continuity, AnyBezier
+    have_bezier_curves_g1_continuity, AnyBezier, reverse_bezier_curves
 )
 
 Vertex = Union[Sequence[float], Vec3, Vec2]

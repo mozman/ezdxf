@@ -1,13 +1,13 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, Union
+from typing import Iterable, Union, List
 import math
-from ezdxf.math import BSpline, fit_points_to_cad_cv
-from ezdxf.math import Bezier4P, Bezier3P, required_knot_values
+from ezdxf.math import BSpline
+from ezdxf.math import Bezier4P, Bezier3P
 
 __all__ = [
     "bezier_to_bspline", "quadratic_to_cubic_bezier",
-    "have_bezier_curves_g1_continuity", "AnyBezier"
+    "have_bezier_curves_g1_continuity", "AnyBezier", "reverse_bezier_curves"
 ]
 
 AnyBezier = Union[Bezier3P, Bezier4P]
@@ -77,3 +77,9 @@ def have_bezier_curves_g1_continuity(b1: AnyBezier, b2: AnyBezier,
     ts = (b2_pnts[1] - b2_pnts[0]).normalize()
     # 0 = normal; 1 = same direction; -1 = opposite direction
     return math.isclose(te.dot(ts), 1.0, abs_tol=g1_tol)
+
+
+def reverse_bezier_curves(curves: List[AnyBezier]) -> List[AnyBezier]:
+    curves = list(c.reverse() for c in curves)
+    curves.reverse()
+    return curves
