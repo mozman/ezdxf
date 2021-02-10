@@ -107,10 +107,7 @@ def multi_recursive(entities: Iterable['DXFEntity'],
 
 def extends(entities: Iterable['DXFEntity'],
             cache: Cache = None) -> BoundingBox:
-    """ Returns a single bounding box for the given `entities` and their sub
-    entities.
-
-    """
+    """ Returns a single bounding box for all given `entities`. """
     _extends = BoundingBox()
     for box in multi_flat(entities, cache):
         _extends.extend(box)
@@ -119,11 +116,7 @@ def extends(entities: Iterable['DXFEntity'],
 
 def multi_flat(entities: Iterable['DXFEntity'],
                cache: Cache = None) -> Iterable[BoundingBox]:
-    """ Yields all bounding boxes for the given `entities` at the top level,
-    the sub entity extends are included, but they do not yield their own
-    bounding boxes.
-
-    """
+    """ Yields a bounding box for each of the given `entities`. """
 
     def extends_(entities_: Iterable['DXFEntity']) -> BoundingBox:
         _extends = BoundingBox()

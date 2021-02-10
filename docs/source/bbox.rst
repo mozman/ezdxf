@@ -6,7 +6,7 @@ Bounding Box
 .. module:: ezdxf.bbox
 
 The :mod:`ezdxf.bbox` module provide tools to calculate bounding boxes for
-many DXF entities, but not all. The bounding box calculation is based on the
+many DXF entities, but not for all. The bounding box calculation is based on the
 :mod:`ezdxf.disassemble` module and therefore has the same limitation.
 
 .. warning::
