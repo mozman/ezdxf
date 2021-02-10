@@ -19,7 +19,7 @@ from ezdxf.layouts import Layout
 from ezdxf.math import Vec3, Z_AXIS
 from ezdxf.path import (
     Path, make_path, from_hatch_boundary_path, fast_bbox_detection,
-    winding_deconstruction
+    winding_deconstruction, from_vertices,
 )
 from ezdxf.render import MeshBuilder, TraceBuilder
 from ezdxf import reorder
@@ -272,8 +272,7 @@ class Frontend:
             ocs = entity.ocs()
             points = list(ocs.points_to_wcs(points))
         if dxftype == '3DFACE':
-            self.out.draw_path(Path.from_vertices(points, close=True),
-                               properties)
+            self.out.draw_path(from_vertices(points, close=True), properties)
         else:
             # Set default SOLID filling for SOLID and TRACE
             properties.filling = Filling()
@@ -370,7 +369,7 @@ class Frontend:
                                  properties: Properties) -> None:
         for face in builder.faces_as_vertices():
             self.out.draw_path(
-                Path.from_vertices(face, close=True), properties=properties)
+                from_vertices(face, close=True), properties=properties)
 
     def draw_polyline_entity(self, entity: DXFGraphic,
                              properties: Properties) -> None:

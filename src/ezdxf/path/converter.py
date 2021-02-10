@@ -60,7 +60,7 @@ def _from_polyline(polyline: 'Polyline', **kwargs) -> 'Path':
         return path
 
     if polyline.is_3d_polyline:
-        return Path.from_vertices(polyline.points(), polyline.is_closed)
+        return from_vertices(polyline.points(), polyline.is_closed)
 
     points = [vertex.format('xyb') for vertex in polyline.vertices]
     ocs = polyline.ocs()
@@ -141,7 +141,7 @@ def _from_circle(circle: 'Circle', **kwargs) -> 'Path':
 def _from_quadrilateral(solid: 'Solid', **kwargs) -> 'Path':
     """ Returns a from a Solid, Trace or Face3d. """
     vertices = solid.wcs_vertices()
-    return Path.from_vertices(vertices, close=True)
+    return from_vertices(vertices, close=True)
 
 
 def _from_viewport(vp: 'Viewport', **kwargs) -> Path:
@@ -155,11 +155,11 @@ def _from_viewport(vp: 'Viewport', **kwargs) -> Path:
                 if clipping_entity:  # exist
                     return make_path(clipping_entity, **kwargs)
     # Return bounding box:
-    return Path.from_vertices(vp.boundary_path(), close=True)
+    return from_vertices(vp.boundary_path(), close=True)
 
 
 def _from_image(image: 'Image', **kwargs) -> Path:
-    return Path.from_vertices(image.boundary_path_wcs(), close=True)
+    return from_vertices(image.boundary_path_wcs(), close=True)
 
 
 _FACTORIES = {
@@ -307,7 +307,7 @@ def from_hatch_edge_path(edges: 'EdgePath', ocs: OCS = None,
             start_angle=edge.start_angle,
             end_angle=edge.end_angle,
         )
-        path.add_ellipse(ellipse, reset=not bool(path))
+        tools.add_ellipse(path, ellipse, reset=not bool(path))
 
     def add_ellipse_edge(edge):
         ocs_ellipse = edge.construction_tool()
@@ -320,7 +320,7 @@ def from_hatch_edge_path(edges: 'EdgePath', ocs: OCS = None,
             start_param=ocs_ellipse.start_param,
             end_param=ocs_ellipse.end_param,
         )
-        path.add_ellipse(ellipse, reset=not bool(path))
+        tools.add_ellipse(path, ellipse, reset=not bool(path))
 
     def add_spline_edge(edge):
         control_points = [wcs(p) for p in edge.control_points]
@@ -334,7 +334,7 @@ def from_hatch_edge_path(edges: 'EdgePath', ocs: OCS = None,
                 return
         else:
             bspline = from_control_points(edge, control_points)
-        path.add_spline(bspline, reset=not bool(path))
+        tools.add_spline(path, bspline, reset=not bool(path))
 
     def from_fit_points(edge, fit_points):
         tangents = None

@@ -3,23 +3,23 @@
 
 import pytest
 from ezdxf.render.forms import square, translate
-from ezdxf.path import Path, nesting
+from ezdxf.path import Path, nesting, from_vertices
 
 EXTERIOR = list(translate(square(10), (-5, -5)))
-EXT1_PATH = Path.from_vertices(EXTERIOR)
-EXT2_PATH = Path.from_vertices(translate(EXTERIOR, (11, 0)))
+EXT1_PATH = from_vertices(EXTERIOR)
+EXT2_PATH = from_vertices(translate(EXTERIOR, (11, 0)))
 
 CENTER_HOLE1 = list(translate(square(8), (-4, -4)))
-CH1_PATH = Path.from_vertices(CENTER_HOLE1)
+CH1_PATH = from_vertices(CENTER_HOLE1)
 
 CENTER_HOLE2 = list(translate(square(6), (-3, -3)))
-CH2_PATH = Path.from_vertices(CENTER_HOLE2)
+CH2_PATH = from_vertices(CENTER_HOLE2)
 
 LEFT_HOLE = list(translate(square(2.1), (-3, -1)))
-LH_PATH = Path.from_vertices(LEFT_HOLE)
+LH_PATH = from_vertices(LEFT_HOLE)
 
 RIGHT_HOLE = list(translate(square(2.0), (3, -1)))
-RH_PATH = Path.from_vertices(RIGHT_HOLE)
+RH_PATH = from_vertices(RIGHT_HOLE)
 
 DETECTION_DATA = [
     pytest.param(

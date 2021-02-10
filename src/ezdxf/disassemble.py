@@ -6,7 +6,7 @@ import math
 from ezdxf.entities import DXFEntity
 from ezdxf.lldxf import const
 from ezdxf.math import Vec3, UCS, Z_AXIS, X_AXIS
-from ezdxf.path import Path, make_path, from_hatch
+from ezdxf.path import Path, make_path, from_hatch, from_vertices
 from ezdxf.render import MeshBuilder, MeshVertexMerger, TraceBuilder
 
 from ezdxf.proxygraphic import ProxyGraphic
@@ -263,7 +263,7 @@ class TextLinePrimitive(GenericPrimitive):
             get_insert(), halign, valign, get_text_rotation())
 
         ocs = text.ocs()
-        self._path = Path.from_vertices(
+        self._path = from_vertices(
             ocs.points_to_wcs(corner_vertices),
             close=True,
         )
@@ -370,7 +370,7 @@ class MTextPrimitive(GenericPrimitive):
             return
         ucs = get_ucs()
         corner_vertices = get_corner_vertices()
-        self._path = Path.from_vertices(
+        self._path = from_vertices(
             ucs.points_to_wcs(corner_vertices),
             close=True,
         )

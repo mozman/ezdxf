@@ -46,7 +46,7 @@ def test_add_curves3():
     path = Path()
     c1 = Bezier3P(((0, 0), (1, 1), (2, 0)))
     c2 = Bezier3P(((2, 0), (1, -1), (0, 0)))
-    path.add_bezier3p([c1, c2])
+    tools.add_bezier3p(path, [c1, c2])
     assert len(path) == 2
     assert path.end == (0, 0)
 
@@ -64,7 +64,7 @@ def test_add_curves3_with_gap():
     path = Path()
     c1 = Bezier3P(((0, 0), (1, 1), (2, 0)))
     c2 = Bezier3P(((2, -1), (3, -2), (0, -1)))
-    path.add_bezier3p([c1, c2])
+    tools.add_bezier3p(path, [c1, c2])
     assert len(path) == 3  # added a line segment between curves
     assert path.end == (0, -1)
 
@@ -81,7 +81,7 @@ def test_add_curves4_with_gap():
 def test_add_curves3_reverse():
     path = Path(start=(0, 0))
     c1 = Bezier3P(((2, 0), (1, 1), (0, 0)))
-    path.add_bezier3p([c1])
+    tools.add_bezier3p(path, [c1])
     assert len(path) == 1
     assert path.end == (2, 0, 0)
 
@@ -98,7 +98,7 @@ def test_add_spline():
     from ezdxf.math import BSpline
     spline = BSpline.from_fit_points([(2, 0), (4, 1), (6, -1), (8, 0)])
     path = Path()
-    path.add_spline(spline)
+    tools.add_spline(path, spline)
     assert path.start == (2, 0)
     assert path.end == (8, 0)
 
@@ -106,13 +106,13 @@ def test_add_spline():
     path = Path(start=(8, 0))
     # add reversed spline, by default the start of
     # an empty path is set to the spline start
-    path.add_spline(spline, reset=False)
+    tools.add_spline(path, spline, reset=False)
     assert path.start == (8, 0)
     assert path.end == (2, 0)
 
     path = Path()
     # add a line segment from (0, 0) to start of spline
-    path.add_spline(spline, reset=False)
+    tools.add_spline(path, spline, reset=False)
     assert path.start == (0, 0)
     assert path.end == (8, 0)
 
@@ -130,7 +130,7 @@ def test_add_ellipse():
     ellipse = ConstructionEllipse(center=(3, 0), major_axis=(1, 0), ratio=0.5,
                                   start_param=0, end_param=math.pi)
     path = Path()
-    path.add_ellipse(ellipse)
+    tools.add_ellipse(path, ellipse)
     assert path.start == (4, 0)
     assert path.end == (2, 0)
 
@@ -138,13 +138,13 @@ def test_add_ellipse():
     path = Path(start=(2, 0))
     # add reversed ellipse, by default the start of
     # an empty path is set to the ellipse start
-    path.add_ellipse(ellipse, reset=False)
+    tools.add_ellipse(path, ellipse, reset=False)
     assert path.start == (2, 0)
     assert path.end == (4, 0)
 
     path = Path()
     # add a line segment from (0, 0) to start of ellipse
-    path.add_ellipse(ellipse, reset=False)
+    tools.add_ellipse(path, ellipse, reset=False)
     assert path.start == (0, 0)
     assert path.end == (2, 0)
 
@@ -419,14 +419,14 @@ def test_control_vertices(p1):
     ])
     path = Path()
     assert len(list(path.control_vertices())) == 0
-    path = Path.from_vertices([(0, 0), (1, 0)])
+    path = converter.from_vertices([(0, 0), (1, 0)])
     assert len(list(path.control_vertices())) == 2
 
 
 def test_has_clockwise_orientation():
     # basic has_clockwise_orientation() function is tested in:
     # test_617_clockwise_orientation
-    path = Path.from_vertices([(0, 0), (1, 0), (1, 1), (0, 1)])
+    path = converter.from_vertices([(0, 0), (1, 0), (1, 1), (0, 1)])
     assert path.has_clockwise_orientation() is False
 
     path = Path()

@@ -310,7 +310,7 @@ class Path(abc.Sequence):
 
         """
         warnings.warn(
-            'use factory function make_path(lwpolyline),'
+            'use factory function from_vertices(),'
             'will be removed in v0.17.', DeprecationWarning)
         from .converter import from_vertices
         return from_vertices(vertices, close)

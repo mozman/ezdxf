@@ -8,6 +8,7 @@ from ezdxf.path import (
     Path, bbox, fit_paths_into_box, transform_paths, transform_paths_to_ocs,
     to_polylines3d, to_lines, to_lwpolylines, to_polylines2d,
     to_hatches, to_bsplines_and_vertices, to_splines_and_polylines,
+    from_vertices
 )
 from ezdxf.path import make_path, Command
 
@@ -248,7 +249,7 @@ class TestPathToBsplineAndVertices:
         assert result == []
 
     def test_only_vertices(self):
-        p = Path.from_vertices([(1, 0), (2, 0), (3, 1)])
+        p = from_vertices([(1, 0), (2, 0), (3, 1)])
         result = list(to_bsplines_and_vertices(p))
         assert len(result) == 1, "expected one list of vertices"
         assert len(result[0]) == 3, "expected 3 vertices"

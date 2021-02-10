@@ -1,6 +1,6 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Optional, List, Set
+from typing import List, Set
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext, Properties
@@ -9,7 +9,7 @@ from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
-from ezdxf.path import Path
+from ezdxf.path import Path, from_vertices
 from ezdxf.math import Vec3, Matrix44
 
 
@@ -95,7 +95,7 @@ def test_basic_frontend_init(basic):
 
 def test_backend_default_draw_path():
     backend = BasicBackend()
-    path = Path.from_vertices([(0, 0), (1, 0), (2, 0)])
+    path = from_vertices([(0, 0), (1, 0), (2, 0)])
     backend.draw_path(path, Properties())
     result = backend.collector
     assert len(result) == 2
