@@ -66,11 +66,11 @@ subpackage :mod:`ezdxf.path`.
 Factory Functions
 -----------------
 
-Functions to create :class:`Path` objects from DXF entities.
+Functions to create :class:`Path` objects from other objects.
 
 .. autofunction:: has_make_path_support(e: DXFEntity) -> bool
 
-.. autofunction:: make_path(e: DXFEntity) -> Path
+.. autofunction:: make_path(entity: DXFEntity) -> Path
 
 .. autofunction:: from_hatch(hatch: Hatch) -> Iterable[Path]
 
@@ -146,8 +146,6 @@ Utility Functions
 
 .. autofunction:: add_spline(path: Path, spline: BSpline, level=4)
 
-.. autofunction:: add_2d_polyline(path: Path, points, close: bool, ocs: OCS, elevation: float)
-
 The Path Class
 --------------
 
@@ -188,24 +186,6 @@ The Path Class
     .. automethod:: approximate(segments: int=20) -> Iterable[Vec3]
 
     .. automethod:: flattening(distance: float, segments: int=16) -> Iterable[Vec3]
-
-    .. automethod:: add_curves(curves: Iterable[Bezier4P])
-
-    .. automethod:: add_ellipse(ellipse: ConstructionEllipse, segments=1)
-
-    .. automethod:: add_spline(spline: BSpline, level=4)
-
-    .. automethod:: from_lwpolyline
-
-    .. automethod:: from_polyline
-
-    .. automethod:: from_spline
-
-    .. automethod:: from_ellipse
-
-    .. automethod:: from_arc
-
-    .. automethod:: from_circle
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html

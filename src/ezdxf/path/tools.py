@@ -433,13 +433,13 @@ def render_splines_and_polylines(
 
 def add_ellipse(path: Path, ellipse: ConstructionEllipse, segments=1,
                 reset=True) -> None:
-    """ Add an elliptical arc as multiple cubic Bèzier-curves to `path`, use
-    :meth:`~ezdxf.math.ConstructionEllipse.from_arc` constructor of class
-    :class:`~ezdxf.math.ConstructionEllipse` to add circular arcs.
+    """ Add an elliptical arc as multiple cubic Bèzier-curves to the given
+    `path`, use :meth:`~ezdxf.math.ConstructionEllipse.from_arc` constructor
+    of class :class:`~ezdxf.math.ConstructionEllipse` to add circular arcs.
 
     Auto-detect connection point, if none is close a line from the path
     end point to the ellipse start point will be added
-    (see :meth:`add_bezier4p`).
+    (see :func:`add_bezier4p`).
 
     By default the start of an **empty** path is set to the start point of
     the ellipse, setting argument `reset` to ``False`` prevents this
