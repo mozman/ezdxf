@@ -268,5 +268,22 @@ def test_image_primitive():
     assert vertices[3] == (0.5, 99.5, 0)
 
 
+@pytest.fixture(scope='module')
+def circle_primitive():
+    circle = factory.new('CIRCLE', dxfattribs={'radius': 3})
+    return disassemble.make_primitive(circle)
+
+
+def test_to_vertices(circle_primitive):
+    vertices = list(disassemble.to_vertices([circle_primitive]))
+    assert len(vertices) == 40
+
+
+def test_to_control_vertices(circle_primitive):
+    vertices = list(disassemble.to_control_vertices([circle_primitive]))
+    # control points from 4 cubic bezier curves:
+    assert len(vertices) == 13  # closed: first == last
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
