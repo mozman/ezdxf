@@ -295,7 +295,9 @@ class _CosmeticPolygon(qw.QGraphicsPolygonItem):
 def _set_cosmetic_brush(item: qw.QGraphicsItem, painter: qg.QPainter) -> None:
     """ like a cosmetic pen, this sets the brush pattern to appear the same independent of the view """
     brush = item.brush()
-    brush.setTransform(painter.transform().inverted()[0])
+    # scale by -1 in y because the view is always mirrored in y and undoing the view transformation entirely would make
+    # the hatch mirrored w.r.t the view
+    brush.setTransform(painter.transform().inverted()[0].scale(1, -1))
     item.setBrush(brush)
 
 
