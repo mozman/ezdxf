@@ -11,8 +11,9 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 
-def clip_polygon(clip: Iterable['Vertex'],
-                 subject: Iterable['Vertex']) -> List['Vec2']:
+def clip_polygon_2d(clip: Iterable['Vertex'],
+                    subject: Iterable['Vertex'],
+                    ccw_check: bool = True) -> List['Vec2']:
     """ Clip the `subject` polygon by the **convex** clipping polygon `clip`.
 
     Implements the `Sutherland–Hodgman`_ algorithm for clipping polygons.
@@ -20,6 +21,9 @@ def clip_polygon(clip: Iterable['Vertex'],
     Args:
         clip: the convex clipping polygon as iterable of vertices
         subject: the polygon to clip as a iterable of vertices
+        ccw_check: check if the clipping polygon is in counter clockwise
+            orientation if ``True``, set to ``False`` if the ccw check is done
+            by the caller
 
     Returns:
         the clipped subject as list of :class:`~ezdxf.math.Vec2`
@@ -46,7 +50,7 @@ def clip_polygon(clip: Iterable['Vertex'],
             (edge_start, edge_end), (clip_start, clip_end))
 
     clipping_polygon = polygon(clip)
-    if has_clockwise_orientation(clipping_polygon):
+    if ccw_check and has_clockwise_orientation(clipping_polygon):
         clipping_polygon.reverse()
     if len(clipping_polygon) > 2:
         clip_start = clipping_polygon[-1]

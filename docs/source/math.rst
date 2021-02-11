@@ -69,7 +69,7 @@ Bulge Related Functions
 
 .. autofunction:: rytz_axis_construction(d1: Vec3, d2: Vec3) -> Tuple[Vec3, Vec3, float]
 
-.. autofunction:: clip_polygon
+.. autofunction:: clip_polygon_2d
 
 .. autofunction:: offset_vertices_2d
 
