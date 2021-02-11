@@ -200,11 +200,10 @@ class PyQtBackend(Backend):
             _extend_qt_path(qt_path, path.counter_clockwise())
         for path in holes:
             _extend_qt_path(qt_path, path.clockwise())
-        item = self._scene.addPath(
-            qt_path,
-            self._get_pen(properties),
-            self._get_brush(properties),
-        )
+        item = _CosmeticPath(qt_path)
+        item.setPen(self._get_pen(properties))
+        item.setBrush(self._get_brush(properties))
+        self._scene.addItem(item)
         self._set_item_data(item)
 
     def draw_filled_polygon(self, points: Iterable[Vec3],
@@ -213,7 +212,10 @@ class PyQtBackend(Backend):
         polygon = qg.QPolygonF()
         for p in points:
             polygon.append(qc.QPointF(p.x, p.y))
-        item = self._scene.addPolygon(polygon, self._no_line, brush)
+        item = _CosmeticPolygon(polygon)
+        item.setPen(self._no_line)
+        item.setBrush(brush)
+        self._scene.addItem(item)
         self._set_item_data(item)
 
     def draw_text(self, text: str, transform: Matrix44, properties: Properties,
@@ -274,6 +276,29 @@ class PyQtBackend(Backend):
                 self._get_pen(properties),
                 self._no_fill
             )
+
+
+class _CosmeticPath(qw.QGraphicsPathItem):
+    def paint(self, painter: qg.QPainter, option: qw.QStyleOptionGraphicsItem,
+              widget: Optional[qw.QWidget] = None) -> None:
+        _set_cosmetic_brush(self, painter)
+        super().paint(painter, option, widget)
+
+
+class _CosmeticPolygon(qw.QGraphicsPolygonItem):
+    def paint(self, painter: qg.QPainter, option: qw.QStyleOptionGraphicsItem,
+              widget: Optional[qw.QWidget] = None) -> None:
+        _set_cosmetic_brush(self, painter)
+        super().paint(painter, option, widget)
+
+
+def _set_cosmetic_brush(item: qw.QGraphicsItem, painter: qg.QPainter) -> None:
+    """ like a cosmetic pen, this sets the brush pattern to appear the same independent of the view """
+    brush = item.brush()
+    # scale by -1 in y because the view is always mirrored in y and undoing the view transformation entirely would make
+    # the hatch mirrored w.r.t the view
+    brush.setTransform(painter.transform().inverted()[0].scale(1, -1))
+    item.setBrush(brush)
 
 
 def _extend_qt_path(qt_path: qg.QPainterPath, path: Path) -> None:
