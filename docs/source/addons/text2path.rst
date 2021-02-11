@@ -47,7 +47,7 @@ String Functions
 
 .. autofunction:: make_paths_from_str(s: str, font: FontFace, size: float = 1.0, align: str = "LEFT", length: float = 0, m: Matrix44 = None) -> List[Path]
 
-.. autofunction:: make_hatches_from_str(s: str, font: FontFace, size: float = 1.0,align: str = "LEFT", length: float = 0, segments: int = 4, dxfattribs: Dict = None m: Matrix44 = None) -> List[Hatch]
+.. autofunction:: make_hatches_from_str(s: str, font: FontFace, size: float = 1.0,align: str = "LEFT", length: float = 0, dxfattribs: Dict = None m: Matrix44 = None) -> List[Hatch]
 
 Entity Functions
 ----------------
@@ -57,10 +57,5 @@ Entity Functions
 .. autofunction:: make_hatches_from_entity(entity) -> List[Hatch]
 
 .. autofunction:: explode(entity, kind = 1, target = None) -> EntityQuery
-
-Utility Functions
------------------
-
-.. autofunction:: group_contour_and_holes(Iterable[Path]) -> Iterable[Tuple[Path, List[Path]]]
 
 .. _Matplotlib: https://matplotlib.org

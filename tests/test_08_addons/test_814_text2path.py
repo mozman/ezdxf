@@ -40,25 +40,27 @@ def test_chinese_char_paths_from_str(s, c):
     assert len(_to_paths(s, f=NOTO_SANS_SC)) == c
 
 
+def contour_and_holes(group):
+    return group[0], group[1:]
+
+
 @pytest.mark.parametrize('s,h', [
     ['1', 0], ['2', 0], ['.', 0], ['0', 1], ['a', 1], ['8', 2],
 ])
 def test_group_one_contour_with_holes(s, h):
     paths = _to_paths(s)
-    result = list(text2path.group_contour_and_holes(paths))
-    assert len(result) == 1
-    contour, holes = result[0]
+    result = list(path.group_paths(paths))
+    contour, holes = contour_and_holes(result[0])
     assert isinstance(contour, Path)
-    assert isinstance(holes, list)
     assert len(holes) == h
 
 
 @pytest.mark.parametrize('s', [':', '!', ';', '='])
 def test_group_two_contours_without_holes(s):
     paths = _to_paths(s)
-    result = list(text2path.group_contour_and_holes(paths))
+    result = list(path.group_paths(paths))
     assert len(result) == 2
-    contour, holes = result[0]
+    contour, holes = contour_and_holes(result[0])
     assert isinstance(contour, Path)
     assert len(holes) == 0
 
@@ -66,9 +68,9 @@ def test_group_two_contours_without_holes(s):
 @pytest.mark.parametrize('s', ['Ü', 'ö', 'ä', ])
 def test_group_three_contours_and_ignore_holes(s):
     paths = _to_paths(s)
-    result = list(text2path.group_contour_and_holes(paths))
+    result = list(path.group_paths(paths))
     assert len(result) == 3
-    contour, holes = result[0]
+    contour, holes = contour_and_holes(result[0])
     assert isinstance(contour, Path)
 
 
@@ -76,9 +78,9 @@ def test_group_percent_sign():
     # Special case %: lower o is inside of the slash bounding box, but HATCH
     # creation works as expected!
     paths = _to_paths('%')
-    result = list(text2path.group_contour_and_holes(paths))
+    result = list(path.group_paths(paths))
     assert len(result) == 2
-    contour, holes = result[0]
+    contour, holes = contour_and_holes(result[0])
     assert isinstance(contour, Path)
     assert len(holes) == 2
 
@@ -90,17 +92,18 @@ def test_group_percent_sign():
 ])
 def test_group_chinese_chars_and_ignore_holes(s, c):
     paths = _to_paths(s, f=NOTO_SANS_SC)
-    result = list(text2path.group_contour_and_holes(paths))
+    result = list(path.group_paths(paths))
     assert len(result) == c
-    contour, holes = result[0]
+    contour, holes = contour_and_holes(result[0])
     assert isinstance(contour, Path)
 
 
-class TestStringToPathMetrics:
-    @pytest.fixture(scope='class')
-    def ff(self):
-        return FontFace(family="Arial")
+@pytest.fixture(scope='module')
+def ff():
+    return FontFace(family="Arial")
 
+
+class TestMakePathFromString:
     # Surprise - even 0 and negative values work without any exceptions!
     @pytest.mark.parametrize('size', [0, 0.05, 1, 2, 100, -1, -2, -100])
     def test_text_path_height_for_exact_drawing_units(self, size, ff):
@@ -146,6 +149,50 @@ class TestStringToPathMetrics:
         assert bbox.size.x == pytest.approx(length), "expect exact length"
         assert bbox.size.y == pytest.approx(size * scale), \
             "text height should be scaled"
+
+    def test_paths_from_empty_string(self, ff):
+        paths = text2path.make_paths_from_str("", font=ff)
+        assert len(paths) == 0
+
+
+class TestMakeHatchesFromString:
+    def test_hatches_from_empty_string(self, ff):
+        hatches = text2path.make_hatches_from_str("", font=ff)
+        assert len(hatches) == 0
+
+    def test_make_exterior_only_hatches(self, ff):
+        hatches = text2path.make_hatches_from_str("XXX", font=ff)
+        assert len(hatches) == 3
+        assert len(hatches[0].paths) == 1
+
+    def test_make_hatches_with_holes(self, ff):
+        hatches = text2path.make_hatches_from_str("AAA", font=ff)
+        assert len(hatches) == 3
+        assert len(hatches[0].paths) == 2, "expected external and one hole"
+
+    def test_total_length_for_fit_alignment(self, ff):
+        length = 3
+        hatches = text2path.make_hatches_from_str(
+            "XXX", font=ff, align="FIT", length=length)
+        paths = []
+        for hatch in hatches:
+            paths.extend(path.from_hatch(hatch))
+        bbox = path.bbox(paths)
+        assert bbox.size.x == pytest.approx(length), "expect exact length"
+        assert bbox.size.y == pytest.approx(1.0), \
+            "text height should be unscaled"
+
+
+class TestMakePathsFromEntity:
+    pass
+
+
+class TestMakeHatchesFromEntity:
+    pass
+
+
+class TestExplode:
+    pass
 
 
 if __name__ == '__main__':

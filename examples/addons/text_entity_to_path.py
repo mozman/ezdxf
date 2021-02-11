@@ -2,6 +2,7 @@ from pathlib import Path
 import ezdxf
 from ezdxf.addons import text2path
 from ezdxf.math import Vec3
+from ezdxf import path
 
 
 def add_rect(p1, p2, height):
@@ -25,9 +26,8 @@ text = msp.add_text("OpenSansCondensed-Light ALIGNED", dxfattribs={
 })
 text.set_pos(p1, p2, "ALIGNED")
 attr = {'layer': 'OUTLINE', 'color': 2}
-segments = 4
-for path in text2path.make_paths_from_entity(text):
-    msp.add_lwpolyline(path.flattening(1, segments=segments), dxfattribs=attr)
+path.render_splines_and_polylines(
+    msp, text2path.make_paths_from_entity(text), dxfattribs=attr)
 add_rect(p1, p2, height)
 
 p1 = Vec3(0, 2)
@@ -40,8 +40,8 @@ text = msp.add_text("OpenSansCondensed-Light FIT", dxfattribs={
     'color': 1,
 })
 text.set_pos(p1, p2, "FIT")
-for path in text2path.make_paths_from_entity(text):
-    msp.add_lwpolyline(path.flattening(1, segments=segments), dxfattribs=attr)
+path.render_splines_and_polylines(
+    msp, text2path.make_paths_from_entity(text), dxfattribs=attr)
 add_rect(p1, p2, height)
 
 

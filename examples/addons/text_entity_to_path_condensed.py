@@ -2,6 +2,7 @@ from pathlib import Path
 import ezdxf
 from ezdxf.addons import text2path
 from ezdxf.math import Vec3
+from ezdxf import path
 
 
 def add_rect(p1, p2, height):
@@ -26,9 +27,8 @@ text = msp.add_text("Arial Narrow", dxfattribs={
 })
 text.set_pos(p1, p2, "LEFT")
 attr = {'layer': 'OUTLINE', 'color': 2}
-segments = 4
-for path in text2path.make_paths_from_entity(text):
-    msp.add_lwpolyline(path.flattening(1, segments=segments), dxfattribs=attr)
+path.render_splines_and_polylines(
+    msp, text2path.make_paths_from_entity(text), dxfattribs=attr)
 
 p1 = Vec3(0, 2)
 p2 = Vec3(12, 2)
@@ -40,8 +40,8 @@ text = msp.add_text("OpenSansCondensed-Light", dxfattribs={
     'color': 1,
 })
 text.set_pos(p1, p2, "LEFT")
-for path in text2path.make_paths_from_entity(text):
-    msp.add_lwpolyline(path.flattening(1, segments=segments), dxfattribs=attr)
+path.render_splines_and_polylines(
+    msp, text2path.make_paths_from_entity(text), dxfattribs=attr)
 
 
 doc.set_modelspace_vport(10, (6, 2))

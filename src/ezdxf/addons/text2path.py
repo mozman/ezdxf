@@ -1,15 +1,15 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Union, List, Dict, Iterable, Tuple
+from typing import Union, List, Dict, Tuple
 import math
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties, findfont
 
 from ezdxf.entities import Text, Attrib, Hatch
 from ezdxf.lldxf import const
-from ezdxf.math import Matrix44, BoundingBox, Vec3, Vec2
+from ezdxf.math import Matrix44, BoundingBox, Vec3
 from ezdxf import path
-from ezdxf.path import Path, fast_bbox_detection, flatten_polygons
+from ezdxf.path import Path
 from ezdxf.tools import fonts
 from ezdxf.query import EntityQuery
 
@@ -37,6 +37,8 @@ def make_paths_from_str(s: str,
          m: transformation :class:`~ezdxf.math.Matrix44`
 
     """
+    if len(s) == 0:
+        return []
     font_properties, font_measurements = _get_font_data(font)
     scaled_size = size / font_measurements.cap_height
     scaled_fm = font_measurements.scale_from_baseline(scaled_size)
@@ -106,42 +108,11 @@ def get_alignment_transformation(fm: fonts.FontMeasurements, bbox: BoundingBox,
     return Matrix44.translate(shift_x, shift_y, 0)
 
 
-def group_contour_and_holes(
-        paths: Iterable[Path]) -> Iterable[Tuple[Path, List[Path]]]:
-    """ Group paths created from text strings or entities by their contour
-    paths. e.g. "abc" yields 3 [contour, holes] structures::
-
-        ff = fonts.FontFace(family="Arial")
-        paths = make_paths_from_str("abc", ff)
-
-        for contour, holes in group_contour_and_holes(paths)
-            for hole in holes:
-                # hole is a Path() object
-                pass
-
-    This is the basic tool to create HATCH entities from paths.
-
-    Warning: This function does not detect separated characters, e.g. "!"
-    creates 2 contour paths.
-
-    """
-    polygons = fast_bbox_detection(paths)
-    for polygon in polygons:
-        contour = polygon[0]
-        if len(polygon) > 1:  # are holes present?
-            # holes can be recursive polygons, so flatten holes:
-            holes = list(flatten_polygons(polygon[1:]))
-        else:
-            holes = []
-        yield contour, holes
-
-
 def make_hatches_from_str(s: str,
                           font: fonts.FontFace,
                           size: float = 1.0,
                           align: str = 'LEFT',
                           length: float = 0,
-                          segments: int = 4,
                           dxfattribs: Dict = None,
                           m: Matrix44 = None) -> List[Hatch]:
     """ Convert a single line string `s` into a list of virtual
@@ -157,43 +128,24 @@ def make_hatches_from_str(s: str,
          size: text size (cap height) in drawing units
          align: alignment as string, default is "LEFT"
          length: target length for the "ALIGNED" and "FIT" alignments
-         segments: minimal segment count per Bézier curve
          dxfattribs: additional DXF attributes
          m: transformation :class:`~ezdxf.math.Matrix44`
 
     """
-    font_properties, font_measurements = _get_font_data(font)
-    # scale cap_height for 1 drawing unit!
-    scaled_size = size / font_measurements.cap_height
-    scaled_fm = font_measurements.scale_from_baseline(scaled_size)
-    paths = _str_to_paths(s, font_properties, scaled_size)
-
     # HATCH is an OCS entity, transforming just the polyline paths
     # is not correct! The Hatch has to be created in the xy-plane!
-    hatches = []
+    paths = make_paths_from_str(s, font, size, align, length)
     dxfattribs = dxfattribs or dict()
     dxfattribs.setdefault('solid_fill', 1)
     dxfattribs.setdefault('pattern_name', 'SOLID')
-    dxfattribs.setdefault('color', 7)
-
-    for contour, holes in group_contour_and_holes(paths):
-        hatch = Hatch.new(dxfattribs=dxfattribs)
-        # Vec2 removes the z-axis, which would be interpreted as bulge value!
-        hatch.paths.add_polyline_path(
-            Vec2.generate(contour.flattening(1, segments=segments)), flags=1)
-        for hole in holes:
-            hatch.paths.add_polyline_path(
-                Vec2.generate(hole.flattening(1, segments=segments)), flags=0)
-        hatches.append(hatch)
-
-    halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
-    bbox = path.bbox(paths, precise=False)
-    matrix = get_alignment_transformation(scaled_fm, bbox, halign, valign)
+    dxfattribs.setdefault('color', const.BYLAYER)
+    hatches = path.to_hatches(
+        paths, edge_path=True, dxfattribs=dxfattribs)
     if m is not None:
-        matrix *= m
-
-    # Transform HATCH entities as a unit:
-    return [hatch.transform(matrix) for hatch in hatches]
+        # Transform HATCH entities as a unit:
+        return [hatch.transform(m) for hatch in hatches]
+    else:
+        return list(hatches)
 
 
 def make_paths_from_entity(entity: AnyText) -> List[Path]:
