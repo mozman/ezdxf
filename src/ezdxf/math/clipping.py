@@ -1,10 +1,10 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Tuple
+from typing import TYPE_CHECKING, Iterable, List
 
 from ezdxf.math import (
-    Vec2, intersection_line_line_2d,
-    has_clockwise_orientation, point_to_line_relation,
+    Vec2, intersection_line_line_2d, has_clockwise_orientation,
+    point_to_line_relation,
 )
 
 if TYPE_CHECKING:
