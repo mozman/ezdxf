@@ -64,6 +64,7 @@ from .curvetools import (
     quadratic_to_cubic_bezier, bezier_to_bspline,
     have_bezier_curves_g1_continuity, AnyBezier, reverse_bezier_curves
 )
+from .clipping import clip_polygon
 
 Vertex = Union[Sequence[float], Vec3, Vec2]
 VecXY = Union[Vec2, Vec3]  # Vector with x and y attributes

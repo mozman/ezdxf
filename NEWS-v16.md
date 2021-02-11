@@ -44,6 +44,7 @@ Version 0.16 - dev
 - NEW: `path.to_qpainter_path()`, convert paths to a PyQt5 QPainterPath 
 - NEW: `ezdxf.math.quadratic_to_cubic_bezier()`, Bezier3P to Bezier4P converter   
 - NEW: `ezdxf.math.bezier_to_bspline()`, Bezier to BSpline converter
+- NEW: `ezdxf.math.clip_polygon()`, clip polygon by a convex clipping polygon 
 - CHANGED: `ezdxf.render.nesting` content moved into the `ezdxf.path` package
 - CHANGED: renamed `MeshBuilder.render()` to `MeshBuilder.render_mesh()`
 - DEPRECATED: `ezdxf.render.path` module, replaced by `ezdxf.path` package
