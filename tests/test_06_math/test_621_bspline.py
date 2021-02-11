@@ -13,7 +13,7 @@ DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.),
              (50., 0., 30.)]
 
 
-def random_point_comparision_to_nurbs_python(spline: BSpline, count: int = 10):
+def random_point_comparison_to_nurbs_python(spline: BSpline, count: int = 10):
     curve = spline.to_nurbs_python_curve()
     for _ in range(count):
         t = random.random()
@@ -22,8 +22,8 @@ def random_point_comparision_to_nurbs_python(spline: BSpline, count: int = 10):
         assert p1.isclose(p2)
 
 
-def random_derivatives_comparision_to_nurbs_python(spline: BSpline,
-                                                   count: int = 10):
+def random_derivatives_comparison_to_nurbs_python(spline: BSpline,
+                                                  count: int = 10):
     curve = spline.to_nurbs_python_curve()
     for _ in range(count):
         t = random.random()
@@ -72,7 +72,7 @@ def iter_points(values, n):
 
 def test_bspine_points_random():
     spline = BSpline(DEFPOINTS, order=3)
-    random_point_comparision_to_nurbs_python(spline)
+    random_point_comparison_to_nurbs_python(spline)
 
 
 def test_is_clamped(weired_spline1):
@@ -83,7 +83,7 @@ def test_is_clamped(weired_spline1):
 
 def test_bspine_derivatives_random():
     spline = BSpline(DEFPOINTS, order=3)
-    random_derivatives_comparision_to_nurbs_python(spline)
+    random_derivatives_comparison_to_nurbs_python(spline)
 
 
 def test_normalize_knots():
@@ -244,7 +244,7 @@ def test_weired_closed_spline(weired_spline1):
     last = weired_spline1.point(weired_spline1.max_t)
     assert first.isclose(last, 1e-9) is False, \
         'The loaded SPLINE is not a correct closed B-spline.'
-    random_point_comparision_to_nurbs_python(weired_spline1)
+    random_point_comparison_to_nurbs_python(weired_spline1)
 
 
 def test_bezier_decomposition_issue(weired_spline1):
