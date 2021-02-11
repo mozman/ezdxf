@@ -225,7 +225,7 @@ def point_to_line_relation(point: Vec2, start: Vec2, end: Vec2,
     """
     rel = (end.x - start.x) * (point.y - start.y) - (end.y - start.y) * (
             point.x - start.x)
-    if math.isclose(rel, 0, abs_tol=abs_tol):
+    if abs(rel) <= abs_tol:
         return 0
     elif rel < 0:
         return +1
