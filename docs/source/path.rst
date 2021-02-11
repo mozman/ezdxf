@@ -4,8 +4,9 @@ Path
 ====
 
 This module implements a geometric :class:`Path`, supported by several render
-backends, with the goal to create such paths from LWPOLYLINE, POLYLINE and HATCH
-boundary paths and send them to the render backend, see :mod:`ezdxf.addons.drawing`.
+backends, with the goal to create such paths from DXF entities like LWPOLYLINE,
+POLYLINE or HATCH and send them to the render backend,
+see :mod:`ezdxf.addons.drawing`.
 
 Minimum common interface:
 
@@ -37,7 +38,7 @@ Minimum common interface:
 ARC and ELLIPSE entities are approximated by multiple cubic Bézier-curves, which
 are close enough for display rendering. Non-rational SPLINES of 3rd degree can
 be represented exact as multiple cubic Bézier-curves, other B-splines will be
-approximated. XLINE and RAY are unsupported linear entities because of their
+approximated. The XLINE and the RAY entities are not supported, because of their
 infinite nature.
 
 This :class:`Path` class is a full featured 3D object, although the backends
@@ -68,7 +69,7 @@ Factory Functions
 
 Functions to create :class:`Path` objects from other objects.
 
-.. autofunction:: has_make_path_support(e: DXFEntity) -> bool
+.. autofunction:: has_make_path_support(entity: DXFEntity) -> bool
 
 .. autofunction:: make_path(entity: DXFEntity) -> Path
 

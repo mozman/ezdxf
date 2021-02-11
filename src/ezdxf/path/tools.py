@@ -35,8 +35,8 @@ G1_TOL = 1e-4
 
 
 def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
-    """ Transform multiple :class:`Path` objects at once. Returns a list of
-    the transformed :class:`Path` objects.
+    """ Transform multiple :class:`Path` objects at once by transformation
+    matrix `m`. Returns a list of the transformed :class:`Path` objects.
 
     Args:
         paths: iterable of :class:`Path` objects
@@ -102,7 +102,7 @@ def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> List[Path]:
 def bbox(paths: Iterable[Path], precise=True,
          distance: float = 0.01,
          segments: int = 16) -> BoundingBox:
-    """ Returns the :class:`~ezdxf.math.BoundingBox` for given paths.
+    """ Returns the :class:`~ezdxf.math.BoundingBox` for the given paths.
 
     Args:
         paths: iterable of :class:`~ezdxf.path.Path` objects
@@ -209,12 +209,12 @@ def render_lwpolylines(
         segments: int = MIN_SEGMENTS,
         extrusion: 'Vertex' = Z_AXIS,
         dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render given `paths` into `layout` as
+    """ Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.LWPolyline` entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
-    onto the plane normal to this extrusion vector, the default extrusion vector
-    is the WCS z-axis. The plane elevation is defined by the distance of the
-    start point of the first path to the WCS origin.
+    onto the plane normal to this extrusion vector. The default extrusion vector
+    is the WCS z-axis. The plane elevation is the distance from the WCS origin
+    to the start point of the first path.
 
     Args:
         layout: the modelspace, a paperspace layout or a block definition
@@ -250,12 +250,12 @@ def render_polylines2d(
         segments: int = 4,
         extrusion: 'Vertex' = Z_AXIS,
         dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render given `paths` into `layout` as 2D
+    """ Render the given `paths` into `layout` as 2D
     :class:`~ezdxf.entities.Polyline` entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
-    onto the plane normal to this extrusion vector, the default extrusion vector
-    is the WCS z-axis. The plane elevation is defined by the distance of the
-    start point of the first path to the WCS origin.
+    onto the plane normal to this extrusion vector.The default extrusion vector
+    is the WCS z-axis. The plane elevation is the distance from the WCS origin
+    to the start point of the first path.
 
     Args:
         layout: the modelspace, a paperspace layout or a block definition
@@ -293,12 +293,12 @@ def render_hatches(
         g1_tol: float = G1_TOL,
         extrusion: 'Vertex' = Z_AXIS,
         dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render given `paths` into `layout` as
+    """ Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.Hatch` entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
-    onto the plane normal to this extrusion vector, the default extrusion vector
-    is the WCS z-axis. The plane elevation is defined by the distance of the
-    start point of the first path to the WCS origin.
+    onto the plane normal to this extrusion vector. The default extrusion vector
+    is the WCS z-axis. The plane elevation is the distance from the WCS origin
+    to the start point of the first path.
 
     Args:
         layout: the modelspace, a paperspace layout or a block definition
@@ -338,7 +338,7 @@ def render_polylines3d(
         distance: float = MAX_DISTANCE,
         segments: int = MIN_SEGMENTS,
         dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render given `paths` into `layout` as 3D
+    """ Render the given `paths` into `layout` as 3D
     :class:`~ezdxf.entities.Polyline` entities.
 
     Args:
@@ -373,7 +373,7 @@ def render_lines(
         distance: float = MAX_DISTANCE,
         segments: int = MIN_SEGMENTS,
         dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render given `paths` into `layout` as
+    """ Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.Line` entities.
 
     Args:
@@ -406,8 +406,8 @@ def render_splines_and_polylines(
         *,
         g1_tol: float = G1_TOL,
         dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render given `paths` into `layout` as :class:`~ezdxf.entities.Spline`
-    and 3D :class:`ezdxf.entities.Polyline` entities.
+    """ Render the given `paths` into `layout` as :class:`~ezdxf.entities.Spline`
+    and 3D :class:`~ezdxf.entities.Polyline` entities.
 
     Args:
         layout: the modelspace, a paperspace layout or a block definition
@@ -437,8 +437,9 @@ def add_ellipse(path: Path, ellipse: ConstructionEllipse, segments=1,
     `path`, use :meth:`~ezdxf.math.ConstructionEllipse.from_arc` constructor
     of class :class:`~ezdxf.math.ConstructionEllipse` to add circular arcs.
 
-    Auto-detect connection point, if none is close a line from the path
-    end point to the ellipse start point will be added
+    Auto-detect the connection point to the given `path`, if neither the start-
+    nor the end point of the ellipse is close to the path end point, a line from
+    the path end point to the ellipse start point will be added automatically
     (see :func:`add_bezier4p`).
 
     By default the start of an **empty** path is set to the start point of
@@ -464,9 +465,10 @@ def add_ellipse(path: Path, ellipse: ConstructionEllipse, segments=1,
 def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
     """ Add multiple cubic Bèzier-curves to the given `path`.
 
-    Auto-detect if the path end point is connected to the start- or
-    end point of the curves, if none of them is close to the path end point
-    a line from the path end point to the curves start point will be added.
+    Auto-detect the connection point to the given `path`, if neither the start-
+    nor the end point of the curves is close to the path end point, a line from
+    the path end point to the start point of the first curve will be added
+    automatically.
 
     """
     curves = list(curves)
@@ -487,9 +489,10 @@ def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
 def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
     """ Add multiple quadratic Bèzier-curves to the given `path`.
 
-    Auto-detect if the path end point is connected to the start- or
-    end point of the curves, if none of them is close to the path end point
-    a line from the path end point to the curves start point will be added.
+    Auto-detect the connection point to the given `path`, if neither the start-
+    nor the end point of the curves is close to the path end point, a line from
+    the path end point to the start point of the first curve will be added
+    automatically.
 
     """
     curves = list(curves)
@@ -570,9 +573,10 @@ def add_spline(path, spline: BSpline, level=4, reset=True) -> None:
     cubic bezier curves with a minimal count of curve segments, all other
     B-spline require much more curve segments for approximation.
 
-    Auto-detect connection point, if none is close a line from the path
-    end point to the spline start point will be added
-    (see :meth:`add_bezier4p`).
+    Auto-detect the connection point to the given `path`, if neither the start-
+    nor the end point of the B-spline is close to the path end point, a line
+    from the path end point to the start point of the B-spline will be added
+    automatically. (see :meth:`add_bezier4p`).
 
     By default the start of an **empty** path is set to the start point of
     the spline, setting argument `reset` to ``False`` prevents this
