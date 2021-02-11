@@ -18,7 +18,7 @@ Create a Layer Definition
 
 The advantage of assigning a linetype and a color to a layer is that entities on this layer can inherit this properties
 by using ``'BYLAYER'`` as linetype string and ``256`` as color, both values are default values for new entities
-so you can left off this assignments:
+so you can leave off these assignments:
 
 .. code-block:: python
 
