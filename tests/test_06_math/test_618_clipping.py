@@ -4,6 +4,7 @@
 import pytest
 from ezdxf.math import Vec2
 from ezdxf.math.clipping import clip_polygon_2d
+from ezdxf.render.forms import circle
 
 
 @pytest.fixture
@@ -53,6 +54,38 @@ def test_clockwise_oriented_clipping_rect(rect, inside):
 def test_subject_is_outside_rect(rect, outside):
     result = clip_polygon_2d(rect, outside)
     assert len(result) == 0
+
+
+def test_circle_outside_rect(rect):
+    c = circle(16, 3)
+    result = clip_polygon_2d(rect, c, ccw_check=False)
+    assert len(result) == 4
+    for v in rect:
+        assert v in result
+
+
+def test_circle_inside_rect(rect):
+    c = Vec2.list(circle(16, 0.7))
+    result = clip_polygon_2d(rect, c, ccw_check=False)
+    assert len(result) == 16
+    for v in c:
+        assert v in result
+
+
+def test_rect_outside_circle(rect):
+    c = circle(16, 0.7)
+    result = clip_polygon_2d(c, rect, ccw_check=False)
+    assert len(result) == 16
+    for v in c:
+        assert v in result
+
+
+def test_rect_inside_circle(rect):
+    c = circle(16, 3)
+    result = clip_polygon_2d(c, rect, ccw_check=False)
+    assert len(result) == 4
+    for v in rect:
+        assert v in result
 
 
 if __name__ == '__main__':
