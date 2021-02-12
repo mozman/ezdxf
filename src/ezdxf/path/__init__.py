@@ -11,3 +11,4 @@ from .path import *
 from .converter import *
 from .tools import *
 from .nesting import *
+from .shapes import *

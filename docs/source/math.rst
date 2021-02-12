@@ -92,6 +92,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 3D Functions
 ============
 
+.. autofunction:: basic_transformation(move: Vertex = (0, 0, 0), scale: Vertex = (1, 1, 1), z_rotation: float = 0) -> Matrix44
+
 .. autofunction:: normal_vector_3p(a: Vec3, b: Vec3, c: Vec3) -> Vec3
 
 .. autofunction:: is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool

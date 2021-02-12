@@ -45,6 +45,8 @@ Version 0.16 - dev
 - NEW: `ezdxf.math.quadratic_to_cubic_bezier()`, Bezier3P to Bezier4P converter   
 - NEW: `ezdxf.math.bezier_to_bspline()`, Bezier to BSpline converter
 - NEW: `ezdxf.math.clip_polygon_2d()`, clip polygon by a convex clipping polygon 
+- NEW: `ezdxf.math.basic_transformation()`, returns a combined transformation 
+  matrix for translation, scaling and rotation about the z-axis 
 - CHANGED: `ezdxf.render.nesting` content moved into the `ezdxf.path` package
 - CHANGED: renamed `MeshBuilder.render()` to `MeshBuilder.render_mesh()`
 - DEPRECATED: `ezdxf.render.path` module, replaced by `ezdxf.path` package

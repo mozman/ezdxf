@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 __all__ = [
     "is_planar_face", "subdivide_face", "subdivide_ngons", "Plane",
     "LocationState", "normal_vector_3p", "distance_point_line_3d",
-    "base_transformation"
+    "basic_transformation"
 ]
 
 
@@ -109,7 +109,7 @@ def distance_point_line_3d(point: Vec3, start: Vec3, end: Vec3) -> float:
     return math.sqrt(v1.magnitude_square - v2.magnitude_square)
 
 
-def base_transformation(
+def basic_transformation(
         move: 'Vertex' = (0, 0, 0),
         scale: 'Vertex' = (1, 1, 1),
         z_rotation: float = 0) -> Matrix44:
