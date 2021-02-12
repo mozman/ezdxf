@@ -4,6 +4,7 @@ import math
 from ezdxf.math import (
     cubic_bezier_arc_parameters, Matrix44, Vertex, basic_transformation,
 )
+from ezdxf.render import forms
 from .path import Path
 from . import converter
 
@@ -155,8 +156,7 @@ def ngon(count: int, length: float = None, radius: float = 1.0,
         transform: transformation Matrix applied to the ngon
 
     """
-    from ezdxf.render.forms import ngon
-    vertices = ngon(count, length=length, radius=radius)
+    vertices = forms.ngon(count, length=length, radius=radius)
     if transform is not None:
         vertices = transform.transform_vertices(vertices)
     return converter.from_vertices(vertices, close=True)
@@ -179,8 +179,7 @@ def star(count: int, r1: float, r2: float, transform: Matrix44 = None) -> Path:
         transform: transformation Matrix applied to the star
 
     """
-    from ezdxf.render.forms import star
-    vertices = star(count, r1=r1, r2=r2)
+    vertices = forms.star(count, r1=r1, r2=r2)
     if transform is not None:
         vertices = transform.transform_vertices(vertices)
     return converter.from_vertices(vertices, close=True)
@@ -206,8 +205,8 @@ def gear(count: int, top_width: float, bottom_width: float, height: float,
         transform: transformation Matrix applied to the gear shape
 
     """
-    from ezdxf.render.forms import gear
-    vertices = gear(count, top_width, bottom_width, height, outside_radius)
+    vertices = forms.gear(count, top_width, bottom_width, height,
+                          outside_radius)
     if transform is not None:
         vertices = transform.transform_vertices(vertices)
     return converter.from_vertices(vertices, close=True)
