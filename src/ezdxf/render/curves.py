@@ -203,7 +203,7 @@ class Spline:
 
     .. seealso::
 
-        The newer :class:`~ezdxf.math.BSpline` class, which provides the
+        The newer :class:`~ezdxf.math.BSpline` class provides the
         advanced vertex interpolation method :meth:`~ezdxf.math.BSpline.flattening`.
 
     """
