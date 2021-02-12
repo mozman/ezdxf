@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020 Manfred Moitzi
+# Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple, Sequence
 from math import pi, sin, cos, radians, tan, isclose, asin, fabs
@@ -12,11 +12,21 @@ from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
+__all__ = [
+    "circle", "ellipse", "euler_spiral", "square", "box", "open_arrow",
+    "arrow2", "ngon", "star", "gear", "translate", "rotate", "scale",
+    "close_polygon", "cube", "extrude", "cylinder", "cylinder_2p",
+    "from_profiles_linear", "from_profiles_spline", "spline_interpolation",
+    "spline_interpolated_profiles", "cone", "cone_2p", "rotation_form",
+    "sphere",
+]
 
-def circle(count: int, radius: float = 1, elevation: float = 0, close: bool = False) -> Iterable[Vec3]:
-    """
-    Create polygon vertices for a `circle <https://en.wikipedia.org/wiki/Circle>`_ with `radius` and `count` corners,
-    `elevation` is the z-axis for all vertices.
+
+def circle(count: int, radius: float = 1, elevation: float = 0,
+           close: bool = False) -> Iterable[Vec3]:
+    """ Create polygon vertices for a `circle <https://en.wikipedia.org/wiki/Circle>`_
+    with the given `radius` and approximated by `count` vertices, `elevation`
+    is the z-axis for all vertices.
 
     Args:
         count: count of polygon vertices
@@ -25,7 +35,8 @@ def circle(count: int, radius: float = 1, elevation: float = 0, close: bool = Fa
         close: yields first vertex also as last vertex if ``True``.
 
     Returns:
-        vertices in counter clockwise orientation as :class:`~ezdxf.math.Vec3` objects
+        vertices in counter clockwise orientation as :class:`~ezdxf.math.Vec3`
+        objects
 
     """
     radius = float(radius)
@@ -41,23 +52,25 @@ def circle(count: int, radius: float = 1, elevation: float = 0, close: bool = Fa
         yield Vec3(radius, 0, elevation)
 
 
-def ellipse(count: int, rx: float = 1, ry: float = 1, start_param: float = 0, end_param: float = 2 * pi,
-            elevation: float = 0) -> Iterable[Vec3]:
-    """
-    Create polygon vertices for an `ellipse <https://en.wikipedia.org/wiki/Ellipse>`_ with `rx` as x-axis radius
-    and `ry` for y-axis radius with `count` vertices, `elevation` is the z-axis for all
-    vertices. The ellipse goes from `start_param` to `end_param` in counter clockwise orientation.
+def ellipse(count: int, rx: float = 1, ry: float = 1, start_param: float = 0,
+            end_param: float = 2 * pi, elevation: float = 0) -> Iterable[Vec3]:
+    """ Create polygon vertices for an `ellipse <https://en.wikipedia.org/wiki/Ellipse>`_
+    with given `rx` as x-axis radius and `ry` as y-axis radius approximated by
+    `count` vertices, `elevation` is the z-axis for all vertices.
+    The ellipse goes from `start_param` to `end_param` in counter clockwise
+    orientation.
 
     Args:
         count: count of polygon vertices
         rx: ellipse x-axis radius
         ry: ellipse y-axis radius
-        start_param: start of ellipse in range ``0`` .. ``2*pi``
-        end_param: end of ellipse in range ``0`` .. ``2*pi``
+        start_param: start of ellipse in range [0, 2π]
+        end_param: end of ellipse in range [0, 2π]
         elevation: z-axis for all vertices
 
     Returns:
-        vertices in counter clockwise orientation as :class:`~ezdxf.math.Vec3` objects
+        vertices in counter clockwise orientation as :class:`~ezdxf.math.Vec3`
+        objects
 
     """
     rx = float(rx)
@@ -71,11 +84,11 @@ def ellipse(count: int, rx: float = 1, ry: float = 1, start_param: float = 0, en
         yield Vec3(cos(alpha) * rx, sin(alpha) * ry, elevation)
 
 
-def euler_spiral(count: int, length: float = 1, curvature: float = 1, elevation: float = 0) -> Iterable[Vec3]:
-    """
-    Create polygon vertices for an `euler spiral <https://en.wikipedia.org/wiki/Euler_spiral>`_ of a given `length` and
-    radius of curvature. This is a parametric curve, which always starts
-    at the origin ``(0, 0)``.
+def euler_spiral(count: int, length: float = 1, curvature: float = 1,
+                 elevation: float = 0) -> Iterable[Vec3]:
+    """ Create polygon vertices for an `euler spiral <https://en.wikipedia.org/wiki/Euler_spiral>`_
+    of a given `length` and radius of curvature. This is a parametric curve,
+    which always starts at the origin (0, 0).
 
     Args:
         count: count of polygon vertices
@@ -93,26 +106,26 @@ def euler_spiral(count: int, length: float = 1, curvature: float = 1, elevation:
 
 
 def square(size: float = 1.) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
-    """
-    Returns 4 vertices for a square with a side length of `size`, lower left corner is ``(0, 0)``, upper right corner is
-    (`size`, `size`).
+    """ Returns 4 vertices for a square with a side length of the given `size`,
+    lower left corner is ``(0, 0)``, upper right corner is (`size`, `size`).
 
     """
     return Vec3(0, 0), Vec3(size, 0), Vec3(size, size), Vec3(0, size)
 
 
 def box(sx: float = 1., sy: float = 1.) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
-    """
-    Returns 4 vertices for a box `sx` by `sy`, lower left corner is ``(0, 0)``, upper right corner is (`sx`, `sy`).
+    """ Returns 4 vertices for a box with a width of `sx` by and a height of
+    `sy`, lower left corner is ``(0, 0)``, upper right corner is (`sx`, `sy`).
 
     """
     return Vec3(0, 0), Vec3(sx, 0), Vec3(sx, sy), Vec3(0, sy)
 
 
 def open_arrow(size: float = 1., angle: float = 30.) -> Tuple[Vec3, Vec3, Vec3]:
-    """
-    Returns 3 vertices for an open arrow `<` of a length of `size` and an enclosing `angle` in degrees.
-    Vertex order: upward end vertex, tip (0, 0) , downward end vertex (anti clockwise order)
+    """ Returns 3 vertices for an open arrow `<` with a length of the given
+    `size`, argument `angle` defines the enclosing angle in degrees.
+    Vertex order: upward end vertex, tip (0, 0) , downward end vertex (counter
+    clockwise order)
 
     Args:
         size: length of arrow
@@ -123,28 +136,30 @@ def open_arrow(size: float = 1., angle: float = 30.) -> Tuple[Vec3, Vec3, Vec3]:
     return Vec3(-size, h), Vec3(0, 0), Vec3(-size, -h)
 
 
-def arrow2(size: float = 1., angle: float = 30., beta: float = 45.) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
-    """
-    Returns 4 vertices for an arrow of a length of `size`, an enclosing `angle` in degrees and a slanted back side with
-    an angle `beta`.
+def arrow2(size: float = 1., angle: float = 30., beta: float = 45.) -> Tuple[
+    Vec3, Vec3, Vec3, Vec3]:
+    """ Returns 4 vertices for an arrow with a length of the given `size`, and
+    an enclosing `angle` in degrees and a slanted back side defined by angle
+    `beta`::
 
-                ****
-            ****  *
-        ****     *
-    **** angle   X********************
-        ****     * +beta
-            ****  *
-                ****
+                    ****
+                ****  *
+            ****     *
+        **** angle   X********************
+            ****     * +beta
+                ****  *
+                    ****
 
-                ****
-            ****    *
-        ****         *
-    **** angle        X***************
-        ****         * -beta
-            ****    *
-                ****
+                    ****
+                ****    *
+            ****         *
+        **** angle        X***************
+            ****         * -beta
+                ****    *
+                    ****
 
-    Vertex order: upward end vertex, tip (0, 0), downward end vertex, bottom vertex `X` (anti clockwise order).
+    Vertex order: upward end vertex, tip (0, 0), downward end vertex, bottom
+    vertex `X` (anti clockwise order).
 
     Bottom vertex `X` is also the connection point to a continuation line.
 
@@ -156,18 +171,19 @@ def arrow2(size: float = 1., angle: float = 30., beta: float = 45.) -> Tuple[Vec
     """
     h = sin(radians(angle / 2.)) * size
     back_step = tan(radians(beta)) * h
-    return Vec3(-size, h), Vec3(0, 0), Vec3(-size, -h), Vec3(-size + back_step, 0)
+    return Vec3(-size, h), Vec3(0, 0), Vec3(-size, -h), \
+           Vec3(-size + back_step, 0)
 
 
-def ngon(count: int, length: float = None, radius: float = None, rotation: float = 0.,
+def ngon(count: int, length: float = None, radius: float = None,
+         rotation: float = 0.,
          elevation: float = 0., close: bool = False) -> Iterable[Vec3]:
-    """
-    Returns the corner vertices of a `regular polygon <https://en.wikipedia.org/wiki/Regular_polygon>`_.
-    The polygon size is determined by the edge `length` or the circum `radius` argument.
-    If both are given `length` has higher priority.
+    """ Returns the corner vertices of a `regular polygon <https://en.wikipedia.org/wiki/Regular_polygon>`_.
+    The polygon size is determined by the edge `length` or the circum `radius`
+    argument. If both are given `length` has the higher priority.
 
     Args:
-        count: count of polygon corners >= ``3``
+        count: count of polygon corners >= 3
         length: length of polygon side
         radius: circum radius
         rotation: rotation angle in radians
@@ -204,16 +220,16 @@ def ngon(count: int, length: float = None, radius: float = None, rotation: float
         yield first
 
 
-def star(count: int, r1: float, r2: float, rotation: float = 0., elevation: float = 0.,
-         close: bool = False) -> Iterable[Vec3]:
-    """
-    Returns corner vertices for `star shapes <https://en.wikipedia.org/wiki/Star_polygon>`_.
+def star(count: int, r1: float, r2: float, rotation: float = 0.,
+         elevation: float = 0., close: bool = False) -> Iterable[Vec3]:
+    """ Returns the corner vertices for a `star shape <https://en.wikipedia.org/wiki/Star_polygon>`_.
 
-    Argument `count` defines the count of star spikes, `r1` defines the radius of the "outer" vertices and `r2`
-    defines the radius of the "inner" vertices, but this does not mean that `r1` has to be greater than `r2`.
+    The shape has `count` spikes, `r1` defines the radius of the "outer"
+    vertices and `r2` defines the radius of the "inner" vertices,
+    but this does not mean that `r1` has to be greater than `r2`.
 
     Args:
-        count: spike count >= ``3``
+        count: spike count >= 3
         r1: radius 1
         r2: radius 2
         rotation: rotation angle in radians
@@ -231,8 +247,10 @@ def star(count: int, r1: float, r2: float, rotation: float = 0., elevation: floa
     if r2 <= 0.:
         raise ValueError('Argument `r2` has to be greater than 0.')
 
-    corners1 = ngon(count, radius=r1, rotation=rotation, elevation=elevation, close=False)
-    corners2 = ngon(count, radius=r2, rotation=pi / count + rotation, elevation=elevation, close=False)
+    corners1 = ngon(count, radius=r1, rotation=rotation, elevation=elevation,
+                    close=False)
+    corners2 = ngon(count, radius=r2, rotation=pi / count + rotation,
+                    elevation=elevation, close=False)
     first = None
     for s1, s2 in zip(corners1, corners2):
         if first is None:
@@ -251,17 +269,18 @@ class _Gear(IntEnum):
     BOTTOM_END = 3
 
 
-def gear(count: int, top_width: float, bottom_width: float, height: float, outside_radius: float, elevation: float = 0,
+def gear(count: int, top_width: float, bottom_width: float, height: float,
+         outside_radius: float, elevation: float = 0,
          close: bool = False) -> Iterable[Vec3]:
-    """
-    Returns `gear <https://en.wikipedia.org/wiki/Gear>`_ (cogwheel) corner vertices.
+    """ Returns the corner vertices of a `gear shape <https://en.wikipedia.org/wiki/Gear>`_
+    (cogwheel).
 
     .. warning::
 
         This function does not create correct gears for mechanical engineering!
 
     Args:
-        count: teeth count >= ``3``
+        count: teeth count >= 3
         top_width: teeth width at outside radius
         bottom_width: teeth width at base radius
         height: teeth height; base radius = outside radius - height
@@ -270,7 +289,8 @@ def gear(count: int, top_width: float, bottom_width: float, height: float, outsi
         close: yields first vertex also as last vertex if True.
 
     Returns:
-        vertices in counter clockwise orientation as :class:`~ezdxf.math.Vec3` objects
+        vertices in counter clockwise orientation as :class:`~ezdxf.math.Vec3`
+        objects
 
     """
     if count < 3:
@@ -288,8 +308,10 @@ def gear(count: int, top_width: float, bottom_width: float, height: float, outsi
 
     base_radius = outside_radius - height
     alpha_top = asin(top_width / 2. / outside_radius)  # angle at tooth top
-    alpha_bottom = asin(bottom_width / 2. / base_radius)  # angle at tooth bottom
-    alpha_difference = (alpha_bottom - alpha_top) / 2.  # alpha difference at start and end of tooth
+    alpha_bottom = asin(
+        bottom_width / 2. / base_radius)  # angle at tooth bottom
+    alpha_difference = (
+                               alpha_bottom - alpha_top) / 2.  # alpha difference at start and end of tooth
     beta = (2. * pi - count * alpha_bottom) / count
     angle = -alpha_top / 2.  # center of first tooth is in x-axis direction
     state = _Gear.TOP_START
@@ -322,9 +344,9 @@ def gear(count: int, top_width: float, bottom_width: float, height: float, outsi
         yield first
 
 
-def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 0)) -> Iterable[Vec3]:
-    """
-    Translate `vertices` along `vec`, faster than a Matrix44 transformation.
+def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 0)) -> \
+        Iterable[Vec3]:
+    """ Translate `vertices` along `vec`, faster than a Matrix44 transformation.
 
     Args:
         vertices: iterable of vertices
@@ -338,9 +360,10 @@ def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 0)) -> Iterab
         yield vec + p
 
 
-def rotate(vertices: Iterable['Vertex'], angle: 0., deg: bool = True) -> Iterable[Vec3]:
-    """
-    Rotate `vertices` about to z-axis at to origin (0, 0), faster than a Matrix44 transformation.
+def rotate(vertices: Iterable['Vertex'], angle: 0., deg: bool = True) -> \
+        Iterable[Vec3]:
+    """ Rotate `vertices` about to z-axis at to origin (0, 0), faster than a
+    Matrix44 transformation.
 
     Args:
         vertices: iterable of vertices
@@ -357,8 +380,8 @@ def rotate(vertices: Iterable['Vertex'], angle: 0., deg: bool = True) -> Iterabl
 
 
 def scale(vertices: Iterable['Vertex'], scaling=(1., 1., 1.)) -> Iterable[Vec3]:
-    """
-    Scale `vertices` around the origin (0, 0), faster than a Matrix44 transformation.
+    """ Scale `vertices` around the origin (0, 0), faster than a Matrix44
+    transformation.
 
     Args:
         vertices: iterable of vertices
@@ -374,9 +397,7 @@ def scale(vertices: Iterable['Vertex'], scaling=(1., 1., 1.)) -> Iterable[Vec3]:
 
 
 def close_polygon(vertices: Iterable['Vertex']) -> List['Vertex']:
-    """
-    Returns list of vertices, where vertices[0] == vertices[-1].
-
+    """ Returns list of vertices, where vertices[0] == vertices[-1].
     """
     vertices = list(vertices)
     if not is_close_points(vertices[0], vertices[-1]):
@@ -420,11 +441,12 @@ cube_faces = [
 
 
 def cube(center: bool = True) -> MeshTransformer:
-    """
-    Create a `cube <https://en.wikipedia.org/wiki/Cube>`_ as :class:`~ezdxf.render.MeshTransformer` object.
+    """ Create a `cube <https://en.wikipedia.org/wiki/Cube>`_ as
+    :class:`~ezdxf.render.MeshTransformer` object.
 
     Args:
-        center: 'mass' center of cube, ``(0, 0, 0)`` if ``True``, else first corner at ``(0, 0, 0)``
+        center: 'mass' center of cube, ``(0, 0, 0)`` if ``True``, else first
+            corner at ``(0, 0, 0)``
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
@@ -435,14 +457,15 @@ def cube(center: bool = True) -> MeshTransformer:
     return mesh
 
 
-def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close=True) -> MeshTransformer:
-    """
-    Extrude a `profile` polygon along a `path` polyline, vertices of profile should be in
-    counter clockwise order.
+def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'],
+            close=True) -> MeshTransformer:
+    """ Extrude a `profile` polygon along a `path` polyline, vertices of profile
+    should be in counter clockwise order.
 
     Args:
-        profile: sweeping profile as list of ``(x, y, z)`` tuples in counter clock wise order
-        path:  extrusion path as list of ``(x, y, z)`` tuples
+        profile: sweeping profile as list of (x, y, z) tuples in counter
+            clockwise order
+        path:  extrusion path as list of (x, y, z) tuples
         close: close profile polygon if ``True``
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
@@ -453,7 +476,8 @@ def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close=True) -
         prev_bottom = bottom_profile[0]
         prev_top = top_profile[0]
         for bottom, top in zip(bottom_profile[1:], top_profile[1:]):
-            face = (prev_bottom, bottom, top, prev_top)  # counter clock wise: normals outwards
+            face = (prev_bottom, bottom, top,
+                    prev_top)  # counter clock wise: normals outwards
             mesh.faces.append(face)
             prev_bottom = bottom
             prev_top = top
@@ -476,11 +500,12 @@ def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close=True) -
     return MeshTransformer.from_builder(mesh)
 
 
-def cylinder(count: int = 16, radius: float = 1., top_radius: float = None, top_center: 'Vertex' = (0, 0, 1),
+def cylinder(count: int = 16, radius: float = 1., top_radius: float = None,
+             top_center: 'Vertex' = (0, 0, 1),
              caps=True, ngons=True) -> MeshTransformer:
-    """
-    Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as :class:`~ezdxf.render.MeshTransformer` object,
-    the base center is fixed in the origin (0, 0, 0).
+    """ Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as
+    :class:`~ezdxf.render.MeshTransformer` object, the base center is fixed in
+    the origin (0, 0, 0).
 
     Args:
         count: profiles edge count
@@ -500,14 +525,18 @@ def cylinder(count: int = 16, radius: float = 1., top_radius: float = None, top_
         return cone(count=count, radius=radius, apex=top_center)
 
     base_profile = list(circle(count, radius, close=True))
-    top_profile = list(translate(circle(count, top_radius, close=True), top_center))
-    return from_profiles_linear([base_profile, top_profile], caps=caps, ngons=ngons)
+    top_profile = list(
+        translate(circle(count, top_radius, close=True), top_center))
+    return from_profiles_linear([base_profile, top_profile], caps=caps,
+                                ngons=ngons)
 
 
-def cylinder_2p(count: int = 16, radius: float = 1, base_center=(0, 0, 0), top_center=(0, 0, 1), ) -> MeshTransformer:
-    """
-    Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as :class:`~ezdxf.render.MeshTransformer` object from
-    two points, `base_center` is the center of the base circle and, `top_center` the center of the top circle.
+def cylinder_2p(count: int = 16, radius: float = 1, base_center=(0, 0, 0),
+                top_center=(0, 0, 1), ) -> MeshTransformer:
+    """ Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as
+    :class:`~ezdxf.render.MeshTransformer` object from two points,
+    `base_center` is the center of the base circle and, `top_center` the center
+    of the top circle.
 
     Args:
         count: profiles edge count
@@ -544,7 +573,8 @@ def cylinder_2p(count: int = 16, radius: float = 1, base_center=(0, 0, 0), top_c
         i1 = (i + 1) % slices
         t1 = i1 * dt
         mesh.add_face([start, vertex(0, t0), vertex(0, t1)])
-        mesh.add_face([vertex(0, t1), vertex(0, t0), vertex(1, t0), vertex(1, t1)])
+        mesh.add_face(
+            [vertex(0, t1), vertex(0, t0), vertex(1, t0), vertex(1, t1)])
         mesh.add_face([end, vertex(1, t1), vertex(1, t0)])
     return MeshTransformer.from_builder(mesh)
 
@@ -563,8 +593,7 @@ def ngon_to_triangles(face: Iterable['Vertex']) -> Iterable[Sequence[Vec3]]:
 
 def from_profiles_linear(profiles: Iterable[Iterable['Vertex']], close=True,
                          caps=False, ngons=True) -> MeshTransformer:
-    """
-    Create MESH entity by linear connected `profiles`.
+    """ Create MESH entity by linear connected `profiles`.
 
     Args:
         profiles: list of profiles
@@ -602,34 +631,38 @@ def from_profiles_linear(profiles: Iterable[Iterable['Vertex']], close=True,
     return MeshTransformer.from_builder(mesh)
 
 
-def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: str = 'chord',
+def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3,
+                         method: str = 'chord',
                          subdivide: int = 4) -> List[Vec3]:
-    """
-    B-spline interpolation, vertices are fit points for the spline definition.
+    """ B-spline interpolation, vertices are fit points for the spline
+    definition.
 
     Only method 'uniform', yields vertices at fit points.
 
     Args:
         vertices: fit points
         degree: degree of B-spline
-        method: "uniform", "chord"/"distance", "centripetal"/"sqrt_chord" or "arc" calculation method for parameter t
+        method: "uniform", "chord"/"distance", "centripetal"/"sqrt_chord" or
+            "arc" calculation method for parameter t
         subdivide: count of sub vertices + 1, e.g. 4 creates 3 sub-vertices
 
     Returns: list of vertices
 
     """
     vertices = list(vertices)
-    spline = global_bspline_interpolation(vertices, degree=degree, method=method)
+    spline = global_bspline_interpolation(vertices, degree=degree,
+                                          method=method)
     return list(spline.approximate(segments=(len(vertices) - 1) * subdivide))
 
 
-def spline_interpolated_profiles(profiles: Iterable[Iterable['Vertex']], subdivide: int = 4) -> Iterable[List[Vec3]]:
-    """
-    Profile interpolation by cubic B-spline interpolation.
+def spline_interpolated_profiles(profiles: Iterable[Iterable['Vertex']],
+                                 subdivide: int = 4) -> Iterable[List[Vec3]]:
+    """ Profile interpolation by cubic B-spline interpolation.
 
     Args:
         profiles: list of profiles
-        subdivide: count of interpolated profiles + 1, e.g. 4 creates 3 sub-profiles between two main profiles (4 face loops)
+        subdivide: count of interpolated profiles + 1, e.g. 4 creates 3
+            sub-profiles between two main profiles (4 face loops)
 
     Returns: yields profiles as list of vertices
 
@@ -649,12 +682,13 @@ def spline_interpolated_profiles(profiles: Iterable[Iterable['Vertex']], subdivi
         yield [edge[profile_index] for edge in edges]
 
 
-def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int = 4, close=True,
+def from_profiles_spline(profiles: Iterable[Iterable['Vertex']],
+                         subdivide: int = 4, close=True,
                          caps=False, ngons=True) -> MeshTransformer:
-    """
-    Create MESH entity by spline interpolation between given `profiles`. Requires at least 4 profiles.
-    A subdivide value of 4, means, create 4 face loops between two profiles, without interpolation two
-    profiles create one face loop.
+    """ Create MESH entity by spline interpolation between given `profiles`.
+    Requires at least 4 profiles. A subdivide value of 4, means, create 4 face
+    loops between two profiles, without interpolation two profiles create one
+    face loop.
 
     Args:
         profiles: list of profiles
@@ -674,10 +708,11 @@ def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int 
     return from_profiles_linear(profiles, close=close, caps=caps, ngons=ngons)
 
 
-def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps=True, ngons=True) -> MeshTransformer:
-    """
-    Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as :class:`~ezdxf.render.MeshTransformer` object, the base
-    center is fixed in the origin (0, 0, 0).
+def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1),
+         caps=True, ngons=True) -> MeshTransformer:
+    """ Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as
+    :class:`~ezdxf.render.MeshTransformer` object, the base center is fixed in
+    the origin (0, 0, 0).
 
     Args:
         count: edge count of basis_vector
@@ -694,7 +729,8 @@ def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps=
     for p1, p2 in zip(base_circle, base_circle[1:]):
         mesh.add_face([p1, p2, apex])
     if caps:
-        base_circle = reversed(base_circle)  # for correct outside pointing normals
+        base_circle = reversed(
+            base_circle)  # for correct outside pointing normals
         if ngons:
             mesh.add_face(base_circle)
         else:
@@ -704,10 +740,11 @@ def cone(count: int = 16, radius: float = 1.0, apex: 'Vertex' = (0, 0, 1), caps=
     return MeshTransformer.from_builder(mesh)
 
 
-def cone_2p(count: int = 16, radius: float = 1.0, base_center=(0, 0, 0), apex=(0, 0, 1)) -> MeshTransformer:
-    """
-    Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as :class:`~ezdxf.render.MeshTransformer` object from
-    two points, `base_center` is the center of the base circle and `apex` as the tip of the cone.
+def cone_2p(count: int = 16, radius: float = 1.0, base_center=(0, 0, 0),
+            apex=(0, 0, 1)) -> MeshTransformer:
+    """ Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as
+    :class:`~ezdxf.render.MeshTransformer` object from two points, `base_center`
+    is the center of the base circle and `apex` as the tip of the cone.
 
     Args:
         count: edge count of basis_vector
@@ -754,10 +791,10 @@ def cone_2p(count: int = 16, radius: float = 1.0, base_center=(0, 0, 0), apex=(0
     return MeshTransformer.from_builder(mesh)
 
 
-def rotation_form(count: int, profile: Iterable['Vertex'], angle: float = 2 * pi,
+def rotation_form(count: int, profile: Iterable['Vertex'],
+                  angle: float = 2 * pi,
                   axis: 'Vertex' = (1, 0, 0)) -> MeshTransformer:
-    """
-    Create MESH entity by rotating a `profile` around an `axis`.
+    """ Create MESH entity by rotating a `profile` around an `axis`.
 
     Args:
         count: count of rotated profiles
@@ -781,14 +818,11 @@ def rotation_form(count: int, profile: Iterable['Vertex'], angle: float = 2 * pi
     return mesh
 
 
-def doughnut(mcount: int, ncount: int, outer_radius: float = 1., ring_radius: float = .25) -> MeshTransformer:
-    pass
-
-
-def sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads=True) -> MeshTransformer:
-    """
-    Create a `sphere <https://en.wikipedia.org/wiki/Sphere>`_ as :class:`~ezdxf.render.MeshTransformer` object,
-    center is fixed at origin (0, 0, 0).
+def sphere(count: int = 16, stacks: int = 8, radius: float = 1,
+           quads=True) -> MeshTransformer:
+    """ Create a `sphere <https://en.wikipedia.org/wiki/Sphere>`_ as
+    :class:`~ezdxf.render.MeshTransformer` object, center is fixed at origin
+    (0, 0, 0).
 
     Args:
         count: longitudinal slices
