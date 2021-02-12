@@ -147,6 +147,27 @@ Utility Functions
 
 .. autofunction:: add_spline(path: Path, spline: BSpline, level=4)
 
+Basic Shapes
+------------
+
+.. autofunction:: unit_circle(start_angle: float = 0, end_angle: float = 2π, segments: int = 1, transform: Matrix44 = None) -> Path
+
+.. autofunction:: wedge(start_angle: float, end_angle: float, segments: int = 1, transform: Matrix44 = None) -> Path
+
+.. autofunction:: elliptic_transformation(center: Vertex = (0, 0, 0), radius: float = 1, ratio: float = 1, rotation: float = 0) -> Matrix44
+
+.. autofunction:: rect(width: float = 1, height: float = 1, transform: Matrix44 = None) -> Path
+
+.. autofunction:: ngon(count: int, length: float = None, radius: float = 1.0, transform: Matrix44 = None) -> Path
+
+.. autofunction:: star(count: int, r1: float, r2: float, transform: Matrix44 = None) -> Path
+
+.. autofunction:: gear(count: int, top_width: float, bottom_width: float, height: float, outside_radius: float, transform: Matrix44 = None) -> Path
+
+The :mod:`~ezdxf.addons.text2path` add-on provides additional functions to
+create paths from text strings and DXF text entities.
+
+
 The Path Class
 --------------
 
