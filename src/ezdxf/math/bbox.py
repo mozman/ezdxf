@@ -8,6 +8,8 @@ from ezdxf.math import Vec3, Vec2
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
+__all__ = ["BoundingBox2d", "BoundingBox"]
+
 
 class AbstractBoundingBox:
     extmax = None

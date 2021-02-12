@@ -6,6 +6,8 @@ from ezdxf.math import Vec3
 from .bezier4p import tangents_cubic_bezier_interpolation, cubic_bezier_interpolation
 from .construct2d import circle_radius_3p
 
+__all__ = ["estimate_tangents", "estimate_end_tangent_magnitude"]
+
 
 def create_t_vector(fit_points: List[Vec3], method: str) -> Iterable[float]:
     if method == 'uniform':

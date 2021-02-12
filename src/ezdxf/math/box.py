@@ -10,6 +10,8 @@ from .construct2d import point_to_line_relation
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
+__all__ = ["ConstructionBox"]
+
 
 class ConstructionBox:
     """

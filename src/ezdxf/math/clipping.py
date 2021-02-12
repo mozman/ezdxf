@@ -10,6 +10,8 @@ from ezdxf.math import (
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
+__all__ = ["clip_polygon_2d"]
+
 
 def clip_polygon_2d(clip: Iterable['Vertex'],
                     subject: Iterable['Vertex'],

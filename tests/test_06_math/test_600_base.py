@@ -3,7 +3,7 @@
 # License: MIT License
 import pytest
 from math import isclose, radians
-from ezdxf.math import xround
+from ezdxf.math import xround, Vec2
 from ezdxf.math.construct2d import *
 
 

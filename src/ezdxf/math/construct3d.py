@@ -1,9 +1,18 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-from typing import Sequence, List, Iterable, Union, Tuple
+from typing import Sequence, List, Iterable, Union, TYPE_CHECKING
 from enum import IntEnum
 import math
-from ezdxf.math import Vec3, Vec2
+from ezdxf.math import Vec3, Vec2, Matrix44
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
+
+__all__ = [
+    "is_planar_face", "subdivide_face", "subdivide_ngons", "Plane",
+    "LocationState", "normal_vector_3p", "distance_point_line_3d",
+    "base_transformation"
+]
 
 
 class LocationState(IntEnum):
@@ -98,6 +107,29 @@ def distance_point_line_3d(point: Vec3, start: Vec3, end: Vec3) -> float:
     v2 = (end - start).project(v1)
     # Pythagoras:
     return math.sqrt(v1.magnitude_square - v2.magnitude_square)
+
+
+def base_transformation(
+        move: 'Vertex' = (0, 0, 0),
+        scale: 'Vertex' = (1, 1, 1),
+        z_rotation: float = 0) -> Matrix44:
+    """ Returns a combined transformation matrix for translation, scaling and
+    rotation about the z-axis.
+
+    Args:
+        move: translation vector
+        scale: x-, y- and z-axis scaling as float triplet, e.g. (2, 2, 1)
+        z_rotation: rotation angle about the z-axis in radians
+
+    """
+    sx, sy, sz = Vec3(scale)
+    m = Matrix44.scale(sx, sy, sz)
+    if z_rotation:
+        m *= Matrix44.z_rotate(z_rotation)
+    translate = Vec3(move)
+    if not translate.is_null:
+        m *= Matrix44.translate(translate.x, translate.y, translate.z)
+    return m
 
 
 class Plane:

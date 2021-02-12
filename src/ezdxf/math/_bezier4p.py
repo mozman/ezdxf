@@ -308,7 +308,7 @@ def cubic_bezier_arc_parameters(
         start_angle: start angle in radians
         end_angle: end angle in radians (end_angle > start_angle!)
         segments: count of Bèzier-curve segments, at least one segment for each
-            quarter (pi/2)
+            quarter (π/2)
 
     """
     if segments < 1:

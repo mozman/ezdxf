@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 HALF_PI = math.pi / 2.
 
+__all__ = ["ConstructionCircle"]
+
 
 class ConstructionCircle:
     """ Circle construction tool.

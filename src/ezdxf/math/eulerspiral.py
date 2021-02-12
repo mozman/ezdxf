@@ -4,6 +4,8 @@ from typing import Dict, Iterable
 from ezdxf.math import Vec3
 from ezdxf.math.bspline import global_bspline_interpolation, BSpline
 
+__all__ = ["EulerSpiral"]
+
 
 class EulerSpiral:
     """

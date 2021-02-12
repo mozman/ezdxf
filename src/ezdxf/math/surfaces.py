@@ -7,6 +7,8 @@ from ezdxf.math import Vec3, NULLVEC
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
+__all__ = ["BezierSurface"]
+
 
 class BezierSurface:
     """ :class:`BezierSurface` defines a mesh of `m` x `n` control points.

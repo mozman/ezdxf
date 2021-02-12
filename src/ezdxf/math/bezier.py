@@ -9,6 +9,8 @@ from .construct2d import linspace
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
+__all__ = ['Bezier']
+
 """
 
 Bezier curves

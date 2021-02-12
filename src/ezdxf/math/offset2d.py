@@ -7,6 +7,8 @@ from ezdxf.math.line import ConstructionRay, ParallelRaysError
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
+__all__ = ["offset_vertices_2d"]
+
 
 def offset_vertices_2d(vertices: Iterable['Vertex'], offset: float, closed: bool = False) -> Iterable['Vec2']:
     """

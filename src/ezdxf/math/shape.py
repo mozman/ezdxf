@@ -10,6 +10,8 @@ from .bbox import BoundingBox2d
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
+__all__ = ["Shape2d"]
+
 
 class Shape2d:
     """

@@ -7,6 +7,8 @@ from ezdxf.math import Vec3, X_AXIS, Y_AXIS, Vec2, Matrix44, sign, OCS
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Vertex
 
+__all__ = ["NonUniformScalingError", "InsertTransformationError"]
+
 
 class TransformError(Exception):
     pass
