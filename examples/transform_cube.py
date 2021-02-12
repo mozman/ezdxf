@@ -1,6 +1,7 @@
 from pathlib import Path
 import math
 import ezdxf
+from ezdxf import zoom
 from ezdxf.math import UCS
 
 DIR = Path('~/Desktop/Outbox').expanduser()
@@ -47,5 +48,5 @@ ucs = ucs.rotate(axis=(0, 0, 1), angle=math.radians(45))
 # Last step transform block reference from UCS to WCS
 blockref.transform(ucs.matrix)
 
-doc.set_modelspace_vport(3)
+zoom.extends(msp)
 doc.saveas(DIR / 'cube.dxf')

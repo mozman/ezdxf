@@ -3,6 +3,7 @@
 import pathlib
 import math
 import ezdxf
+from ezdxf import zoom
 from ezdxf.math import UCS, Vec3
 
 OUTDIR = pathlib.Path('~/Desktop/Outbox').expanduser()
@@ -112,7 +113,7 @@ def scene1(filename):
             ucs = ucs.rotate_local_z(angle)
         ucs = UCS().rotate_local_x(ix * angle)
 
-    doc.set_modelspace_vport(Y_COUNT * (DY + 2), center=(X_COUNT * DX / 2, Y_COUNT * DY / 2))
+    zoom.extends(msp)
     doc.saveas(filename)
 
 
@@ -145,7 +146,7 @@ def scene2(filename):
                     math.radians(30))
                 add_excentric_text(msp, ucs, location=Vec3(1, 2, 3), text=f'Hallo\n(x={cx}, y={cy}, z={cz})')
 
-    doc.set_modelspace_vport(5 * delta)
+    zoom.extends(msp)
     doc.saveas(filename)
 
 

@@ -5,6 +5,7 @@ from pathlib import Path
 import math
 import random
 import ezdxf
+from ezdxf import zoom
 from ezdxf.math import linspace, Vec3, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
 from ezdxf.entities import Circle, Arc, Ellipse, Insert, Text, MText, Hatch
 
@@ -432,5 +433,5 @@ if __name__ == '__main__':
     # main_uniform_hatch_polyline(msp)
     main_ellipse_hatch(msp, spline=True)
     # main_non_uniform_hatch_polyline(msp, spline=True)
-    doc.set_modelspace_vport(5)
+    zoom.extends(msp)
     doc.saveas(DIR / 'transform.dxf')

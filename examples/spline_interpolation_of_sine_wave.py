@@ -2,6 +2,7 @@ from typing import Iterable
 from pathlib import Path
 import math
 import ezdxf
+from ezdxf import zoom
 from ezdxf.math import Vec3, estimate_tangents, linspace, estimate_end_tangent_magnitude
 from ezdxf.math import local_cubic_bspline_interpolation, global_bspline_interpolation
 
@@ -46,5 +47,5 @@ m1, m2 = estimate_end_tangent_magnitude(data, method='chord')
 s = global_bspline_interpolation(data, tangents=(tangents[0].normalize(m1), tangents[-1].normalize(m2)))
 msp.add_spline(dxfattribs={'color': 4, 'layer': f'Global interpolation ({METHOD})'}).apply_construction_tool(s)
 
-doc.set_modelspace_vport(5, center=(4, 1))
+zoom.extends(msp, factor=1.1)
 doc.saveas(DIR / f'sine-wave-{METHOD}.dxf')

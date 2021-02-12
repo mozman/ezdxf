@@ -74,6 +74,7 @@ Miscellaneous
     :maxdepth: 1
 
     options
+    zoom
     comments
     tools
     reorder

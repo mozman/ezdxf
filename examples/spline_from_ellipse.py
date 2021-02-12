@@ -4,6 +4,7 @@
 from pathlib import Path
 import math
 import ezdxf
+from ezdxf import zoom
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 
@@ -19,9 +20,9 @@ ellipse = msp.add_ellipse(
     dxfattribs={'layer': 'ellipse'},
 )
 
-spline = ellipse.to_spline(replace=False, layout=msp)
+spline = ellipse.to_spline(replace=False)
 spline.dxf.layer = 'B-spline'
 spline.dxf.color = 1
-doc.set_modelspace_vport(2)
 
+zoom.extends(msp)
 doc.saveas(DIR / 'spline_from_ellipse.dxf')
