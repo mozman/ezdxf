@@ -2,8 +2,7 @@
 #  License: MIT License
 from typing import Iterable, Union, List
 import math
-from ezdxf.math import BSpline
-from ezdxf.math import Bezier4P, Bezier3P
+from ezdxf.math import BSpline, Bezier4P, Bezier3P
 
 __all__ = [
     "bezier_to_bspline", "quadratic_to_cubic_bezier",
