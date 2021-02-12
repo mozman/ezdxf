@@ -13,7 +13,7 @@ from .linalg import *
 from .parametrize import *
 from .bspline import *
 from .bezier import *
-from .bezier4p import *
+from .bezier_interpolation import *
 from .surfaces import *
 from .eulerspiral import *
 from .ucs import *

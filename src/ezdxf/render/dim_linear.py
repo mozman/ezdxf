@@ -3,8 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable, List, cast
 import math
-from ezdxf.math import Vec3, Vec2, ConstructionRay
-from ezdxf.math import UCS
+from ezdxf.math import Vec3, Vec2, ConstructionRay, UCS
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 

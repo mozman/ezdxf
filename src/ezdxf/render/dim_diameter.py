@@ -2,8 +2,7 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
-from ezdxf.math import Vec2
-from ezdxf.math import UCS
+from ezdxf.math import Vec2, UCS
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
 from .dim_radius import RadiusDimension, add_center_mark

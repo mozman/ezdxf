@@ -3,10 +3,10 @@
 from typing import TYPE_CHECKING, Iterable, List, Tuple, Sequence
 from math import pi, sin, cos, radians, tan, isclose, asin, fabs
 from enum import IntEnum
-from ezdxf.math import Vec3, Matrix44
-from ezdxf.math.construct2d import is_close_points
-from ezdxf.math.bspline import global_bspline_interpolation
-from ezdxf.math.eulerspiral import EulerSpiral
+from ezdxf.math import (
+    Vec3, Matrix44, is_close_points, global_bspline_interpolation,
+    EulerSpiral,
+)
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:

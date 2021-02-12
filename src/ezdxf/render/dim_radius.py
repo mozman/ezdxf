@@ -2,8 +2,7 @@
 # Copyright (c) 2018-2020, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
-from ezdxf.math import Vec3, Vec2
-from ezdxf.math import UCS
+from ezdxf.math import Vec3, Vec2, UCS
 from ezdxf.tools import normalize_text_angle
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.entities.dimstyleoverride import DimStyleOverride

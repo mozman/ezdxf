@@ -6,6 +6,8 @@ from ezdxf.math import Vec3, Bezier4P
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
+# These are low-level interpolation tools for B-splines, which can not be
+# integrated into other curve related modules!
 __all__ = ['cubic_bezier_interpolation', 'tangents_cubic_bezier_interpolation']
 
 
@@ -17,8 +19,6 @@ def cubic_bezier_interpolation(
 
     Args:
         points: data points
-
-    .. versionadded:: 0.13
 
     """
     from ezdxf.math import tridiagonal_matrix_solver

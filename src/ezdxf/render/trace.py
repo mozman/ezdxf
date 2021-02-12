@@ -4,7 +4,10 @@ from typing import List, TYPE_CHECKING, Iterable, Tuple, Dict, Union, cast, Sequ
 from abc import abstractmethod
 from collections import namedtuple
 import math
-from ezdxf.math import Vec2, BSpline, linspace, ConstructionRay, ParallelRaysError, bulge_to_arc, ConstructionArc
+from ezdxf.math import (
+    Vec2, BSpline, linspace, ConstructionRay, ParallelRaysError, bulge_to_arc,
+    ConstructionArc
+)
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, Drawing, DXFGraphic

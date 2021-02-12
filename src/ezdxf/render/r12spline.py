@@ -4,14 +4,14 @@
 DXF R12 Splines
 ===============
 
-DXF R12 supports 2d B-splines, but Autodesk do not document the usage in the DXF Reference.
-The base entity for splines in DXF R12 is the POLYLINE entity.
+DXF R12 supports 2d B-splines, but Autodesk do not document the usage in the
+DXF Reference. The base entity for splines in DXF R12 is the POLYLINE entity.
 
 Transformed Into 3D Space
 -------------------------
 
-The spline itself is always in a plane, but as any 2D entity, the spline can be transformed into the 3D object
-by elevation, extrusion and thickness/width.
+The spline itself is always in a plane, but as any 2D entity, the spline can be
+transformed into the 3D object by elevation, extrusion and thickness/width.
 
 Open Quadratic Spline with Fit Vertices
 -------------------------------------
@@ -100,7 +100,7 @@ Vertex 70=0, Vertex 70=1, Vertex 70=0, Vertex 70=1
 """
 from typing import TYPE_CHECKING, Iterable, List
 from ezdxf.lldxf import const
-from ezdxf.math.bspline import BSpline, BSplineClosed
+from ezdxf.math import BSpline, BSplineClosed
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout, Polyline
@@ -108,31 +108,50 @@ if TYPE_CHECKING:
 
 
 class R12Spline:
+    """ DXF R12 supports 2D B-splines, but Autodesk do not document the usage
+    in the DXF Reference. The base entity for splines in DXF R12 is the POLYLINE
+    entity. The spline itself is always in a plane, but as any 2D entity, the
+    spline can be transformed into the 3D object by elevation and extrusion
+    (:ref:`OCS`, :ref:`UCS`).
+
+    This way it was possible to store the spline parameters in the DXF R12 file,
+    to allow CAD applications to modify the spline parameters and rerender the
+    B-spline afterward again as polyline approximation. Therefore the result is
+    not better than an approximation by the :class:`Spline` class, it is also
+    just a POLYLINE entity, but maybe someone need exact this tool in the
+    future.
+
+    """
     def __init__(self, control_points: Iterable['Vertex'], degree: int = 2, closed: bool = True):
         """
         Args:
-            control_points: B-spline control frame vertices as ``(x, y)`` tuples or :class:`~ezdxf.math.Vec3` objects
-            degree: degree of B-spline, ``2`` or ``3`` are valid values
+            control_points: B-spline control frame vertices
+            degree: degree of B-spline, only 2 and 3 is supported
             closed: ``True`` for closed curve
+
         """
         self.control_points = list(control_points)
         self.degree = degree
         self.closed = closed
 
     def approximate(self, segments: int = 40, ucs: 'UCS' = None) -> List['Vertex']:
-        """
-        Approximate B-spline by a polyline with `segments` line segments. If `ucs` is not ``None``, ucs defines an
-        :class:`~ezdxf.math.UCS`, to transformed the curve into :ref:`OCS`. The control points are placed xy-plane of
-        the UCS, don't use z-axis coordinates, if so make sure all control points are in a plane parallel to the OCS
-        base plane (UCS xy-plane), else the result is unpredictable and depends on the CAD application used to open the
-        DXF file, it maybe crash.
+        """ Approximate the B-spline by a polyline with `segments` line segments.
+        If `ucs` is not ``None``, ucs defines an :class:`~ezdxf.math.UCS`, to
+        transformed the curve into :ref:`OCS`. The control points are placed
+        xy-plane of the UCS, don't use z-axis coordinates, if so make sure all
+        control points are in a plane parallel to the OCS base plane
+        (UCS xy-plane), else the result is unpredictable and depends on the CAD
+        application used to open the DXF file - it may crash.
 
         Args:
-            segments: count of line segments for approximation, vertex count is `segments` + 1
-            ucs: :class:`~ezdxf.math.UCS` definition, control points in ucs coordinates.
+            segments: count of line segments for approximation, vertex count is
+                `segments` + 1
+            ucs: :class:`~ezdxf.math.UCS` definition, control points in ucs
+                coordinates
 
         Returns:
-            list of vertices in :class:`~ezdxf.math.OCS` as :class:`~ezdxf.math.Vec3` objects
+            list of vertices in :class:`~ezdxf.math.OCS` as
+            :class:`~ezdxf.math.Vec3` objects
 
         """
         if self.closed:
@@ -146,15 +165,16 @@ class R12Spline:
 
     def render(self, layout: 'BaseLayout', segments: int = 40, ucs: 'UCS' = None,
                dxfattribs: dict = None) -> 'Polyline':
-        """
-        Renders the B-spline into `layout` as 2D :class:`~ezdxf.entities.Polyline` entity.
-        Use an :class:`~ezdxf.math.UCS` to place the 2D spline in 3D space,
-        see :meth:`approximate` for more information.
+        """ Renders the B-spline into `layout` as 2D :class:`~ezdxf.entities.Polyline`
+        entity. Use an :class:`~ezdxf.math.UCS` to place the 2D spline in the
+        3D space, see :meth:`approximate` for more information.
 
         Args:
             layout: :class:`~ezdxf.layouts.BaseLayout` object
-            segments: count of line segments for approximation, vertex count is `segments` + 1
-            ucs: :class:`~ezdxf.math.UCS` definition, control points in ucs coordinates.
+            segments: count of line segments for approximation, vertex count is
+                `segments` + 1
+            ucs: :class:`~ezdxf.math.UCS` definition, control points in ucs
+                coordinates.
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
         """

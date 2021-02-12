@@ -2,8 +2,7 @@
 # License: MIT License
 from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING, Union, Dict
 from ezdxf.lldxf.const import DXFValueError
-from ezdxf.math import Matrix44, Vec3, NULLVEC
-from ezdxf.math.construct3d import (
+from ezdxf.math import (Matrix44, Vec3, NULLVEC,
     is_planar_face, subdivide_face, normal_vector_3p, subdivide_ngons,
 )
 
@@ -53,11 +52,11 @@ class MeshBuilder:
         """ Add a face as vertices list to the mesh. A face requires at least 3
         vertices, each vertex is a ``(x, y, z)`` tuple or
         :class:`~ezdxf.math.Vec3` object. The new vertex indices are stored as
-        face in the :attr:`faces`
-        list.
+        face in the :attr:`faces` list.
 
         Args:
-            vertices: list of at least 3 vertices ``[(x1, y1, z1), (x2, y2, z2), (x3, y3, y3), ...]``
+            vertices: list of at least 3 vertices ``[(x1, y1, z1), (x2, y2, z2),
+                (x3, y3, y3), ...]``
 
         """
         self.faces.append(self.add_vertices(vertices))
@@ -482,16 +481,16 @@ class MeshVertexMerger(MeshBuilder):
         return round(vertex[0], p), round(vertex[1], p), round(vertex[2], p)
 
     def add_vertices(self, vertices: Iterable['Vertex']) -> Sequence[int]:
-        """ Add new `vertices` only, if no vertex with identical ``(x, y, z)``
+        """ Add new `vertices` only, if no vertex with identical (x, y, z)
         coordinates already exist, else the index of the existing vertex is
         returned as index of the added vertices.
 
         Args:
-            vertices: list of vertices, vertex as ``(x, y, z)`` tuple or
+            vertices: list of vertices, vertex as (x, y, z) tuple or
                 :class:`~ezdxf.math.Vec3` objects
 
         Returns:
-            tuple: indices of the `vertices` added to the :attr:`~MeshBuilder.vertices` list
+            indices of the added `vertices`
 
         """
         indices = []

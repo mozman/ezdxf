@@ -39,8 +39,10 @@ from ezdxf import PYPY
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
-    from ezdxf.math import ConstructionArc, ConstructionEllipse, Matrix44
-    from .bezier4p import Bezier4P
+    from ezdxf.math import (
+        ConstructionArc, ConstructionEllipse, Matrix44, Bezier4P,
+    )
+
 
 # Acceleration of banded diagonal matrix solver kicks in at:
 # N=15 for CPython on Windows and Linux
@@ -1322,7 +1324,7 @@ class BSpline:
             points = list(self.points(self.approximation_params(level)))
         else:
             points = list(self.approximate(segments))
-        from .bezier4p import cubic_bezier_interpolation
+        from .bezier_interpolation import cubic_bezier_interpolation
         return cubic_bezier_interpolation(points)
 
     def approximation_params(self, level: int = 3) -> List[float]:
