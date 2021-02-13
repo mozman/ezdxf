@@ -249,8 +249,7 @@ class Layout(BaseLayout):
         dxf.extmin = extmin
         dxf.extmax = extmax
 
-    def reset_limits(self, limmin=(+1e20, +1e20),
-                     limmax=(-1e20, -1e20)) -> None:
+    def reset_limits(self, limmin=None, limmax=None) -> None:
         """ Reset `limits`_ to given values or the AutoCAD default values.
 
         "Sets an invisible rectangular boundary in the drawing area that can
@@ -258,11 +257,16 @@ class Layout(BaseLayout):
         (Quote Autodesk Knowledge Network)
 
         Args:
-             extmin: minimum extents or (+1e20, +1e20) as default value
-             extmax: maximum extents or (-1e20, -1e20) as default value
+             extmin: minimum extents or (0, 0) as default
+             extmax: maximum extents or (paper width, paper height) as default value
 
         """
         dxf = self.dxf_layout.dxf
+        if limmin is None:
+            limmin = (0, 0)
+        if limmax is None:
+            limmax = (dxf.paper_width, dxf.paper_height)
+
         dxf.limmin = limmin
         dxf.limmax = limmax
 

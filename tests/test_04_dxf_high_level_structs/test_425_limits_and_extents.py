@@ -49,7 +49,7 @@ def test_default_layout1_extents(doc):
 
 
 def test_default_layout1_limits(doc):
-    layout1 = doc.modelspace()
+    layout1 = doc.layout('Layout1')
     limmin = layout1.dxf.limmin
     limmax = layout1.dxf.limmax
     assert limmin == (0, 0)
@@ -70,6 +70,42 @@ def test_default_active_layout1_viewport(doc):
     layout1 = doc.layout("Layout1")
     viewports = layout1.query("VIEWPORT[id==1]")
     assert len(viewports) == 0, "no default viewport expected"
+
+
+def test_reset_modelspace_extents(doc):
+    extmin = (-100, -100, -100)
+    extmax = (100, 100, 100)
+    msp = doc.modelspace()
+    msp.reset_extents(extmin, extmax)
+    assert msp.dxf.extmin == extmin
+    assert msp.dxf.extmax == extmax
+    doc.update_extents()  # is automatically called by Drawing.write()
+    assert doc.header["$EXTMIN"] == extmin
+    assert doc.header["$EXTMAX"] == extmax
+
+    # reset to default values:
+    msp.reset_extents()
+    assert msp.dxf.extmin == (1e20, 1e20, 1e20)
+    assert msp.dxf.extmax == (-1e20, -1e20, -1e20)
+
+
+def test_reset_modelspace_limits(doc):
+    limmin = (-10, -10)
+    limmax = (300, 50)
+    msp = doc.modelspace()
+    msp.reset_limits(limmin, limmax)
+    assert msp.dxf.limmin == limmin
+    assert msp.dxf.limmax == limmax
+    doc.update_limits()  # is automatically called by Drawing.write()
+    assert doc.header["$LIMMIN"] == limmin
+    assert doc.header["$LIMMAX"] == limmax
+
+    # reset to default values:
+    msp.reset_limits()
+    width = msp.dxf.paper_width
+    height = msp.dxf.paper_height
+    assert msp.dxf.limmin == (0, 0)
+    assert msp.dxf.limmax == (width, height)
 
 
 if __name__ == '__main__':

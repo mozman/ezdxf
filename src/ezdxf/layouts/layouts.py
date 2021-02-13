@@ -123,6 +123,9 @@ class Layouts:
         block_name = self.unique_paperspace_name()
         layout = Paperspace.new(name, block_name, self.doc,
                                 dxfattribs=dxfattribs)
+        # Default extents are ok!
+        # Reset limits to (0, 0) and (paper width, paper height)
+        layout.reset_limits()
         self._add_layout(name, layout)
         return layout
 

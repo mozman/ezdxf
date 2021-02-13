@@ -506,6 +506,8 @@ class Drawing:
 
         self._create_appids()
         self._update_header_vars()
+        self.update_extents()
+        self.update_limits()
         self._update_metadata()
 
         if fmt.startswith('asc'):
@@ -548,6 +550,22 @@ class Drawing:
             section.export_dxf(tagwriter)
 
         tagwriter.write_tag2(0, 'EOF')
+
+    def update_extents(self):
+        msp = self.modelspace()
+        self.header['$EXTMIN'] = msp.dxf.extmin
+        self.header['$EXTMAX'] = msp.dxf.extmax
+        active_layout = self.active_layout()
+        self.header['$PEXTMIN'] = active_layout.dxf.extmin
+        self.header['$PEXTMAX'] = active_layout.dxf.extmax
+
+    def update_limits(self):
+        msp = self.modelspace()
+        self.header['$LIMMIN'] = msp.dxf.limmin
+        self.header['$LIMMAX'] = msp.dxf.limmax
+        active_layout = self.active_layout()
+        self.header['$PLIMMIN'] = active_layout.dxf.limmin
+        self.header['$PLIMMAX'] = active_layout.dxf.limmax
 
     def _update_header_vars(self):
         from ezdxf.lldxf.const import acad_maint_ver
