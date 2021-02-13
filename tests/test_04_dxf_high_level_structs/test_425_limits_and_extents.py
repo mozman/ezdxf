@@ -56,5 +56,21 @@ def test_default_layout1_limits(doc):
     assert limmax == (420, 297)
 
 
+def test_default_active_msp_vport_config(doc):
+    # A viewport configuration is always a list of one or more VPORT entities:
+    vport_config = doc.viewports.get('*ACTIVE')
+    assert len(vport_config) == 1
+    vport = vport_config[0]
+
+    assert vport.dxf.center == (344.2, 148.5)
+    assert vport.dxf.height == 297
+
+
+def test_default_active_layout1_viewport(doc):
+    layout1 = doc.layout("Layout1")
+    viewports = layout1.query("VIEWPORT[id==1]")
+    assert len(viewports) == 0, "no default viewport expected"
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
