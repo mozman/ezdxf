@@ -7,7 +7,7 @@ from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
     group_code_mapping,
 )
-from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS
+from ezdxf.math import Vec3, Vec2, NULLVEC, X_AXIS, Y_AXIS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
@@ -21,14 +21,14 @@ acdb_plot_settings = DefSubclass('AcDbPlotSettings', {
     # acdb_plot_settings is also part of LAYOUT and LAYOUT has a 'name' attribute
     'page_setup_name': DXFAttr(1, default=''),
     'plot_configuration_file': DXFAttr(2, default='Adobe PDF'),
-    'paper_size': DXFAttr(4, default='A4'),
+    'paper_size': DXFAttr(4, default='A3'),
     'plot_view_name': DXFAttr(6, default=''),
-    'left_margin': DXFAttr(40, default=3.175),  # in mm
-    'bottom_margin': DXFAttr(41, default=3.175),  # in mm
-    'right_margin': DXFAttr(42, default=3.175),  # in mm
-    'top_margin': DXFAttr(43, default=3.175),  # in mm
-    'paper_width': DXFAttr(44, default=209.91),  # in mm
-    'paper_height': DXFAttr(45, default=297.03),  # in mm
+    'left_margin': DXFAttr(40, default=7.5),  # in mm
+    'bottom_margin': DXFAttr(41, default=20),  # in mm
+    'right_margin': DXFAttr(42, default=7.5),  # in mm
+    'top_margin': DXFAttr(43, default=20),  # in mm
+    'paper_width': DXFAttr(44, default=420),  # in mm
+    'paper_height': DXFAttr(45, default=297),  # in mm
     'plot_origin_x_offset': DXFAttr(46, default=0.0),  # in mm
     'plot_origin_y_offset': DXFAttr(47, default=0.0),  # in mm
     'plot_window_x1': DXFAttr(48, default=0.0),
@@ -233,22 +233,22 @@ acdb_layout = DefSubclass('AcDbLayout', {
 
     # Minimum limits:
     'limmin': DXFAttr(10, xtype=XType.point2d,
-                      default=Vec3(-3.175, -3.175)),
+                      default=Vec2(0, 0)),
 
     # Maximum limits:
     'limmax': DXFAttr(11, xtype=XType.point2d,
-                      default=Vec3(293.857, 206.735)),
+                      default=Vec2(420, 297)),
 
     # Insertion base point for this layout:
     'insert_base': DXFAttr(12, xtype=XType.point3d, default=NULLVEC),
 
     # Minimum extents for this layout:
     'extmin': DXFAttr(14, xtype=XType.point3d,
-                      default=Vec3(29.068, 20.356, 0)),
+                      default=Vec3(1e20, 1e20, 1e20)),
 
     # Maximum extents for this layout:
     'extmax': DXFAttr(15, xtype=XType.point3d,
-                      default=Vec3(261.614, 183.204, 0)),
+                      default=Vec3(-1e20, -1e20, -1e20)),
 
     'elevation': DXFAttr(146, default=0.0),
     'ucs_origin': DXFAttr(13, xtype=XType.point3d, default=NULLVEC),
