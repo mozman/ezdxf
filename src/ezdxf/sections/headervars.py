@@ -64,7 +64,7 @@ HEADER_VAR_MAP = {
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=600,
-        default=(-100, -100, -100)),
+        default=(1e20, 1e20, 1e20)),
     '$EXTMAX': HeaderVarDef(
         name='$EXTMAX',
         code=10,
@@ -72,7 +72,7 @@ HEADER_VAR_MAP = {
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=700,
-        default=(100, 100, 100)),
+        default=(-1e20, -1e20, -1e20)),
     '$LIMMIN': HeaderVarDef(
         name='$LIMMIN',
         code=10,
