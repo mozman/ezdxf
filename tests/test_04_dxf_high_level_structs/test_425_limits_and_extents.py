@@ -55,6 +55,10 @@ def test_default_layout1_limits(doc):
     assert limmin == (0, 0)
     assert limmax == (420, 297)
 
+    layout1.reset_paper_limits()
+    assert limmin == (0, 0)
+    assert limmax == (420, 297)
+
 
 def test_reset_modelspace_extents(doc):
     extmin = (-100, -100, -100)
@@ -104,16 +108,14 @@ def test_default_active_msp_vport_config(doc):
 
 def test_default_active_layout1_viewport(doc):
     layout1 = doc.layout("Layout1")
-    viewports = layout1.query("VIEWPORT[id==1]")
-    assert len(viewports) == 0, "no default viewport expected"
+    assert len(layout1.viewports()) == 0, "no default viewport expected"
 
 
-def test_create_layout1_active_viewport(doc):
+def test_reset_layout1_active_viewport(doc):
     doc = ezdxf.new()
     layout1 = cast('Paperspace', doc.layout("Layout1"))
-    layout1.add_new_main_viewport()
-    viewport = layout1.query("VIEWPORT[id==1]").first
-    assert viewport is not None
+    layout1.reset_main_viewport()
+    viewport = layout1.viewports()[0]
     assert viewport.dxf.center == (202.5, 128.5)
     paper_width = layout1.dxf.paper_width
     paper_height = layout1.dxf.paper_height

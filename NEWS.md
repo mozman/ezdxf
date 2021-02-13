@@ -21,6 +21,8 @@ Version 0.16b0 - dev
   or the AutCAD default values  
 - NEW: `Layout.reset_limits()`, reset layout limits to the given values, 
   or the AutCAD default values  
+- NEW: `Paperspace.reset_main_viewport()`, reset the main viewport of a paper 
+  space layout to custom- or default values  
 - NEW: quadratic Bézier curve support for the `Path()` class
 - NEW: `ezdxf.math.Bezier3P`, optimized quadratic Bézier curve construction tool 
 - NEW: `ezdxf.math.quadratic_to_cubic_bezier()`, Bezier3P to Bezier4P converter   

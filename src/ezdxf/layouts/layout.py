@@ -256,6 +256,10 @@ class Layout(BaseLayout):
         limit the grid display and limit clicking or entering point locations."
         (Quote Autodesk Knowledge Network)
 
+        The :class:`Paperspace` class has an additional method
+        :meth:`~Paperspace.reset_paper_limits` to deduce the default limits from
+        the paper size settings.
+
         Args:
              extmin: minimum extents or (0, 0) as default
              extmax: maximum extents or (paper width, paper height) as default value
@@ -456,9 +460,9 @@ class Paperspace(Layout):
         self.dxf_layout.dxf.name = name
 
     def viewports(self) -> List['DXFGraphic']:
-        """ Get all VIEWPORT entities defined in the paperspace layout.
+        """ Get all VIEWPORT entities defined in this paperspace layout.
         Returns a list of :class:`~ezdxf.entities.Viewport` objects, sorted by
-        id, the first entity is always the paperspace view with an id of 1.
+        id, the first entity is always the main viewport with an id of 1.
 
         """
         vports = [entity for entity in self if entity.dxftype() == 'VIEWPORT']
@@ -494,14 +498,44 @@ class Paperspace(Layout):
         return viewport
 
     def reset_viewports(self) -> None:
-        """ Delete all existing viewports, and add a new main viewport. """
+        """ Delete all existing viewports, and create a new main viewport. """
         # remove existing viewports
         for viewport in self.viewports():
             self.delete_entity(viewport)
         self.add_new_main_viewport()
 
-    def add_new_main_viewport(self) -> None:
-        """ Add a new main viewport. (internal API) """
+    def reset_main_viewport(self, center: 'Vertex' = None,
+                            size: 'Vertex' = None):
+        """ Reset the main viewport of this paper space layout to the given
+        values, or reset them to the default values, deduced from the paper
+        settings. Creates a new main viewport if none exist.
+
+        Ezdxf does not create a main viewport by default, because CAD
+        applications don't require one.
+
+        Args:
+            center: center of the viewport in paper space units
+            size: viewport size as (width, height) tuple in paper space units
+
+        """
+        viewports = self.viewports()
+        if len(viewports) == 0 or viewports[0].dxf.id != 1:
+            viewport = self.add_new_main_viewport()
+        else:
+            viewport = viewports[0]
+        default_center, default_size = self.default_viewport_config()
+        if center is None:
+            center = default_center
+        if size is None:
+            size = default_size
+
+        viewport.dxf.center = center
+        width, height = size
+        viewport.dxf.width = width
+        viewport.dxf.height = height
+
+    def default_viewport_config(self) -> Tuple[Tuple[float, float],
+                                               Tuple[float, float]]:
         dxf = self.dxf_layout.dxf
         if dxf.plot_paper_units == 0:  # inches
             unit_factor = 25.4
@@ -534,17 +568,23 @@ class Paperspace(Layout):
         # center of printing area
         center = (
             printable_width / 2 - x_offset, printable_height / 2 - y_offset)
+        return center, (vp_width, vp_height)
 
+    def add_new_main_viewport(self) -> 'Viewport':
+        """ Add a new main viewport. """
+        center, size = self.default_viewport_config()
+        vp_height = size[1]
         # create 'main' viewport
         main_viewport = self.add_viewport(
             center=center,  # no influence to 'main' viewport?
-            size=(vp_width, vp_height),  # I don't get it, just use paper size!
+            size=size,  # I don't get it, just use paper size!
             view_center_point=center,  # same as center
             view_height=vp_height,  # view height in paper space units
         )
         main_viewport.dxf.id = 1  # set as main viewport
         main_viewport.dxf.flags = 557088  # AutoCAD default value
-        dxf.viewport_handle = main_viewport.dxf.handle
+        self.dxf_layout.dxf.viewport_handle = main_viewport.dxf.handle
+        return main_viewport
 
     def page_setup(self, size: Tuple[float, float] = (297, 210),
                    margins: Tuple[float, float, float, float] = (

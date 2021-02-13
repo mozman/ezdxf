@@ -196,10 +196,6 @@ Layout
 
     .. automethod:: reset_limits
 
-    .. automethod:: detect_extents
-
-    .. automethod:: detect_limits
-
     .. automethod:: set_plot_type
 
     .. automethod:: set_plot_style
@@ -276,6 +272,8 @@ Paperspace
     .. automethod:: add_viewport
 
     .. automethod:: reset_viewports
+
+    .. automethod:: reset_main_viewport
 
     .. automethod:: reset_paper_limits
 
