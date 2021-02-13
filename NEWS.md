@@ -16,11 +16,15 @@ Version 0.16b0 - dev
   module, see [docs](https://ezdxf.mozman.at/docs/path.html)
 - NEW: support module `disassemble`, see [docs](https://ezdxf.mozman.at/docs/disassemble.html)
   1. deconstruct complex nested DXF entities into a flat sequence
-  2. create a "primitive" representation of DXF entities    
+  2. create a "primitive" representation of DXF entities
+- NEW: `Layout.reset_extents()`, reset layout extents to the given values, 
+  or the AutCAD default values  
+- NEW: `Layout.reset_limits()`, reset layout limits to the given values, 
+  or the AutCAD default values  
 - NEW: quadratic Bézier curve support for the `Path()` class
 - NEW: `ezdxf.math.Bezier3P`, optimized quadratic Bézier curve construction tool 
 - NEW: `ezdxf.math.quadratic_to_cubic_bezier()`, Bezier3P to Bezier4P converter   
-- NEW: `ezdxf.math.bezier_to_bspline()`, Bézier curves to B-sline converter
+- NEW: `ezdxf.math.bezier_to_bspline()`, Bézier curves to B-spline converter
 - NEW: `ezdxf.math.clip_polygon_2d()`, clip polygon by a convex clipping polygon 
 - NEW: `ezdxf.math.basic_transformation()`, returns a combined transformation
   matrix for translation, scaling and rotation about the z-axis 

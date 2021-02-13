@@ -192,7 +192,13 @@ Layout
 
     .. automethod:: __contains__
 
-    .. automethod:: reset_extends
+    .. automethod:: reset_extents
+
+    .. automethod:: reset_limits
+
+    .. automethod:: detect_extents
+
+    .. automethod:: detect_limits
 
     .. automethod:: set_plot_type
 
@@ -311,3 +317,8 @@ BlockLayout
 
     .. automethod:: get_attdef_text
 
+
+.. _limits: https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2020/ENU/AutoCAD-Core/files/GUID-6CF82FC7-E1BC-4A8C-A23D-4396E3D99632-htm.html
+
+
+.. _extents: https://knowledge.autodesk.com/de/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2020/DEU/AutoCAD-Core/files/GUID-B3926CFA-DE74-4661-A9A5-2738A1FD937B-htm.html

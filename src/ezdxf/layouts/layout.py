@@ -233,11 +233,38 @@ class Layout(BaseLayout):
             return empty
         return iter(sortents_table)
 
-    def reset_extends(self) -> None:
-        """ Reset extends. """
+    def reset_extents(self, extmin=(+1e20, +1e20, +1e20),
+                      extmax=(-1e20, -1e20, -1e20)) -> None:
+        """ Reset `extents`_ to given values or the AutoCAD default values.
+
+        "Drawing extents are the bounds of the area occupied by objects."
+        (Quote Autodesk Knowledge Network)
+
+        Args:
+             extmin: minimum extents or (+1e20, +1e20, +1e20) as default value
+             extmax: maximum extents or (-1e20, -1e20, -1e20) as default value
+
+        """
         dxf = self.dxf_layout.dxf
-        dxf.extmin = (+1e20, +1e20, +1e20)  # AutoCAD default
-        dxf.extmax = (-1e20, -1e20, -1e20)  # AutoCAD default
+        dxf.extmin = extmin
+        dxf.extmax = extmax
+
+    def reset_limits(self, limmin=(+1e20, +1e20),
+                     limmax=(-1e20, -1e20)) -> None:
+        """ Reset `limits`_ to given values or the AutoCAD default values.
+
+        "Sets an invisible rectangular boundary in the drawing area that can
+        limit the grid display and limit clicking or entering point locations."
+        (Quote Autodesk Knowledge Network)
+
+        Args:
+             extmin: minimum extents or (+1e20, +1e20) as default value
+             extmax: maximum extents or (-1e20, -1e20) as default value
+
+        """
+        dxf = self.dxf_layout.dxf
+        dxf.limmin = limmin
+        dxf.limmax = limmax
 
     def set_plot_type(self, value: int = 5) -> None:
         """
@@ -606,7 +633,7 @@ class Paperspace(Layout):
 
         # Setup Layout
         self.reset_paper_limits()
-        self.reset_extends()
+        self.reset_extents()
         self.reset_viewports()
 
     def reset_paper_limits(self) -> None:
