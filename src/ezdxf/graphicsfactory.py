@@ -1402,8 +1402,6 @@ class CreatorInterface:
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
-        (not implemented yet!)
-
         """
         type_ = {'dimtype': const.DIM_DIAMETER | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension',
