@@ -236,7 +236,7 @@ class Viewport(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_viewport)
     viewport_id = 2
 
-    # Notes to vieport_id:
+    # Notes to viewport_id:
     # The id of the first viewport has to be 1, which is the definition of
     # paper space. For the following viewports it seems only important, that
     # the id is greater than 1.

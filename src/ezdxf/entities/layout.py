@@ -64,7 +64,7 @@ acdb_plot_settings = DefSubclass('AcDbPlotSettings', {
     # 1 = Plot in millimeters
     # 2 = Plot in pixels
     'plot_paper_units': DXFAttr(
-        72, default=0,
+        72, default=1,
         validator=validator.is_in_integer_range(0, 3),
         fixer=RETURN_DEFAULT
     ),

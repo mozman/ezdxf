@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-
+from typing import cast
 import pytest
 import ezdxf
 
@@ -56,22 +56,6 @@ def test_default_layout1_limits(doc):
     assert limmax == (420, 297)
 
 
-def test_default_active_msp_vport_config(doc):
-    # A viewport configuration is always a list of one or more VPORT entities:
-    vport_config = doc.viewports.get('*ACTIVE')
-    assert len(vport_config) == 1
-    vport = vport_config[0]
-
-    assert vport.dxf.center == (344.2, 148.5)
-    assert vport.dxf.height == 297
-
-
-def test_default_active_layout1_viewport(doc):
-    layout1 = doc.layout("Layout1")
-    viewports = layout1.query("VIEWPORT[id==1]")
-    assert len(viewports) == 0, "no default viewport expected"
-
-
 def test_reset_modelspace_extents(doc):
     extmin = (-100, -100, -100)
     extmax = (100, 100, 100)
@@ -106,6 +90,35 @@ def test_reset_modelspace_limits(doc):
     height = msp.dxf.paper_height
     assert msp.dxf.limmin == (0, 0)
     assert msp.dxf.limmax == (width, height)
+
+
+def test_default_active_msp_vport_config(doc):
+    # A viewport configuration is always a list of one or more VPORT entities:
+    vport_config = doc.viewports.get('*ACTIVE')
+    assert len(vport_config) == 1
+    vport = vport_config[0]
+
+    assert vport.dxf.center == (344.2, 148.5)
+    assert vport.dxf.height == 297
+
+
+def test_default_active_layout1_viewport(doc):
+    layout1 = doc.layout("Layout1")
+    viewports = layout1.query("VIEWPORT[id==1]")
+    assert len(viewports) == 0, "no default viewport expected"
+
+
+def test_create_layout1_active_viewport(doc):
+    doc = ezdxf.new()
+    layout1 = cast('Paperspace', doc.layout("Layout1"))
+    layout1.add_new_main_viewport()
+    viewport = layout1.query("VIEWPORT[id==1]").first
+    assert viewport is not None
+    assert viewport.dxf.center == (202.5, 128.5)
+    paper_width = layout1.dxf.paper_width
+    paper_height = layout1.dxf.paper_height
+    assert viewport.dxf.width == paper_width * 1.1  # AutoCAD default factor
+    assert viewport.dxf.height == paper_height * 1.1  # AutoCAD default factor
 
 
 if __name__ == '__main__':
