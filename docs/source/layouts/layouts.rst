@@ -269,6 +269,8 @@ Paperspace
 
     .. automethod:: viewports
 
+    .. automethod:: main_viewport
+
     .. automethod:: add_viewport
 
     .. automethod:: reset_viewports

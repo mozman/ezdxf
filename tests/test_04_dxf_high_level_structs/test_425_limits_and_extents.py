@@ -114,8 +114,7 @@ def test_default_active_layout1_viewport(doc):
 def test_reset_layout1_active_viewport(doc):
     doc = ezdxf.new()
     layout1 = cast('Paperspace', doc.layout("Layout1"))
-    layout1.reset_main_viewport()
-    viewport = layout1.viewports()[0]
+    viewport = layout1.reset_main_viewport()
     assert viewport.dxf.center == (202.5, 128.5)
     paper_width = layout1.dxf.paper_width
     paper_height = layout1.dxf.paper_height

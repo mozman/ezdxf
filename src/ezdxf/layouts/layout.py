@@ -459,7 +459,7 @@ class Paperspace(Layout):
         """
         self.dxf_layout.dxf.name = name
 
-    def viewports(self) -> List['DXFGraphic']:
+    def viewports(self) -> List['Viewport']:
         """ Get all VIEWPORT entities defined in this paperspace layout.
         Returns a list of :class:`~ezdxf.entities.Viewport` objects, sorted by
         id, the first entity is always the main viewport with an id of 1.
@@ -468,6 +468,17 @@ class Paperspace(Layout):
         vports = [entity for entity in self if entity.dxftype() == 'VIEWPORT']
         vports.sort(key=lambda e: e.dxf.id)
         return vports
+
+    def main_viewport(self) -> Optional['Viewport']:
+        """ Returns the main viewport of this paper space layout, or ``None``
+        if no main viewport exist.
+
+        """
+        viewports = self.viewports()
+        if len(viewports):
+            return viewports[0]
+        else:
+            return None
 
     def renumber_viewports(self) -> None:
         """ Reassign viewport ids. (internal API) """
@@ -505,7 +516,7 @@ class Paperspace(Layout):
         self.add_new_main_viewport()
 
     def reset_main_viewport(self, center: 'Vertex' = None,
-                            size: 'Vertex' = None):
+                            size: 'Vertex' = None) -> 'Viewport':
         """ Reset the main viewport of this paper space layout to the given
         values, or reset them to the default values, deduced from the paper
         settings. Creates a new main viewport if none exist.
@@ -533,6 +544,7 @@ class Paperspace(Layout):
         width, height = size
         viewport.dxf.width = width
         viewport.dxf.height = height
+        return viewport
 
     def default_viewport_config(self) -> Tuple[Tuple[float, float],
                                                Tuple[float, float]]:

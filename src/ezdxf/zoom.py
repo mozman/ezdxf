@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable
+from typing import Iterable, cast
 
 from ezdxf.math import Vertex, Vec2, BoundingBox2d
 from ezdxf.layouts import Layout
@@ -10,19 +10,23 @@ from ezdxf import bbox
 __all__ = ["center", "entities", "extends", "window"]
 
 
-def center(layout: Layout, point: Vertex, height: float):
+def center(layout: Layout, point: Vertex, size: 'Vertex'):
     """ Resets the active viewport center of `layout` to the given `point`,
-    argument `height` defines the viewport height.
+    argument `size` defines the width and height of the viewport.
     Replaces the current viewport configuration by a single window
     configuration.
 
     """
     doc = layout.doc
     if doc:
-        if layout.name == 'Model':
+        if layout.is_modelspace:
+            height = guess_height(Vec2(size))
             doc.set_modelspace_vport(height, Vec2(point))
+        elif layout.is_any_paperspace:
+            psp = cast('Paperspace', layout)
+            psp.reset_main_viewport(Vec2(point), Vec2(size))
         else:
-            raise NotImplementedError("Only model space support yet.")
+            raise TypeError('unsupported layout type')
 
 
 def guess_height(size):
@@ -33,10 +37,13 @@ def guess_height(size):
 
 
 def zoom_to_entities(layout: Layout, entities: Iterable[DXFEntity], factor):
+    if layout.is_any_paperspace:  # filter main viewport
+        main_viewport = layout.main_viewport()
+        if main_viewport is not None:
+            entities = (e for e in entities if e is not main_viewport)
     extents = bbox.extends(entities)
     if extents.has_data:
-        height = guess_height(extents.size)
-        center(layout, extents.center, height * factor)
+        center(layout, extents.center, extents.size * factor)
 
 
 def objects(layout: Layout, entities: Iterable[DXFEntity], factor: float = 1):
@@ -70,4 +77,4 @@ def window(layout: Layout, p1: Vertex, p2: Vertex):
 
     """
     extents = BoundingBox2d([p1, p2])
-    center(layout, extents.center, extents.size.y)
+    center(layout, extents.center, extents.size)
