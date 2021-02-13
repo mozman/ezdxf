@@ -27,6 +27,21 @@ top toolbars and the bottom status bar).
     All zoom functions replace the current viewport configuration by a single
     window configuration.
 
+Example to reset the main CAD viewport of the model space to the extents of its
+entities:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf import zoom
+
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    ... # add your DXF entities
+
+    zoom.extents(msp)
+    doc.saveas("your.dxf")
+
 .. autofunction:: center(layout: Layout, point: Vertex, height: float)
 
 .. autofunction:: objects(layout: Layout, entities: Iterable[DXFEntity], factor: float=1)

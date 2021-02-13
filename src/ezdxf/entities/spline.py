@@ -240,10 +240,7 @@ class Spline(DXFGraphic):
         return len(self.fit_points)
 
     def construction_tool(self) -> BSpline:
-        """ Returns construction tool :class:`ezdxf.math.BSpline`.
-
-        .. versionadded:: 0.13
-
+        """ Returns the construction tool :class:`ezdxf.math.BSpline`.
         """
         if self.control_point_count():
             weights = self.weights if len(self.weights) else None
@@ -259,10 +256,8 @@ class Spline(DXFGraphic):
                 'Construction tool requires control- or fit points.')
 
     def apply_construction_tool(self, s) -> 'Spline':
-        """ Set SPLINE data from construction tool :class:`ezdxf.math.BSpline`
-        or from a :class:`geomdl.BSpline.Curve` object.
-
-        .. versionadded:: 0.13
+        """ Apply SPLINE data from a :class:`~ezdxf.math.BSpline` construction
+        tool or from a :class:`geomdl.BSpline.Curve` object.
 
         """
         try:
@@ -297,12 +292,10 @@ class Spline(DXFGraphic):
 
     @classmethod
     def from_arc(cls, entity: 'DXFGraphic') -> 'Spline':
-        """ Create a new SPLINE entity from CIRCLE, ARC or ELLIPSE entity.
+        """ Create a new SPLINE entity from a CIRCLE, ARC or ELLIPSE entity.
 
         The new SPLINE entity has no owner, no handle, is not stored in
         the entity database nor assigned to any layout!
-
-        .. versionadded:: 0.13
 
         """
         dxftype = entity.dxftype()
@@ -419,10 +412,7 @@ class Spline(DXFGraphic):
         self.weights = weights
 
     def transform(self, m: 'Matrix44') -> 'Spline':
-        """ Transform SPLINE entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the SPLINE entity by transformation matrix `m` inplace.
         """
         self._control_points.transform(m)
         self._fit_points.transform(m)

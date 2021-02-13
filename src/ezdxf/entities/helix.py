@@ -84,11 +84,7 @@ class Helix(Spline):
         ])
 
     def transform(self, m: 'Matrix44') -> 'Helix':
-        """ Transform HELIX entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
-        """
+        """ Transform the HELIX entity by transformation matrix `m` inplace. """
         super().transform(m)
         self.dxf.axis_base_point = m.transform(self.dxf.axis_base_point)
         self.dxf.axis_vector = m.transform_direction(self.dxf.axis_vector)

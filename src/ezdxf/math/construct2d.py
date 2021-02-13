@@ -78,41 +78,33 @@ def sign(f: float) -> float:
 
 
 def reflect_angle_x_deg(a: float) -> float:
-    """
-    Returns reflected angle of `a` in x-direction in degrees.
+    """ Returns reflected angle of `a` in x-direction in degrees.
     Angles are counter clockwise orientated and +x-axis is at 0 degrees.
 
     Args:
         a: angle to reflect in degrees
-
-    .. versionadded:: 0.13
 
     """
     return (180. - (a % 360.)) % 360.
 
 
 def reflect_angle_y_deg(a: float) -> float:
-    """
-    Returns reflected angle of `a` in y-direction in degrees.
+    """ Returns reflected angle of `a` in y-direction in degrees.
     Angles are counter clockwise orientated and +y-axis is at 90 degrees.
 
     Args:
         a: angle to reflect in degrees
-
-    .. versionadded:: 0.13
 
     """
     return (360. - (a % 360.)) % 360.
 
 
 def closest_point(base: 'Vertex', points: Iterable['Vertex']) -> 'Vec3':
-    """
-    Returns closest point to `base`.
+    """ Returns closest point to `base`.
 
     Args:
         base: base point as :class:`Vec3` compatible object
         points: iterable of points as :class:`Vec3` compatible object
-
 
     """
     base = Vec3(base)

@@ -371,8 +371,6 @@ class Insert(LinkedEntities):
         represent a non orthogonal target coordinate system, for this case an
         :class:`InsertTransformationError` will be raised.
 
-        .. versionadded:: 0.13
-
         """
 
         dxf = self.dxf
@@ -422,8 +420,6 @@ class Insert(LinkedEntities):
         """ Optimized INSERT translation about `dx` in x-axis, `dy` in y-axis
         and `dz` in z-axis.
 
-        .. versionadded:: 0.13
-
         """
         ocs = self.ocs()
         self.dxf.insert = ocs.from_wcs(
@@ -433,10 +429,8 @@ class Insert(LinkedEntities):
         return self
 
     def matrix44(self) -> Matrix44:
-        """ Returns a transformation :class:`Matrix44` object to transform block
-        entities into WCS.
-
-        .. versionadded:: 0.13
+        """ Returns a transformation matrix of type :class:`Matrix44` to
+        transform the block entities into :ref:`WCS`.
 
         """
         dxf = self.dxf

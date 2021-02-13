@@ -84,10 +84,7 @@ class Point(DXFGraphic):
         ])
 
     def transform(self, m: Matrix44) -> 'Point':
-        """ Transform POINT entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the POINT entity by transformation matrix `m` inplace.
         """
         self.dxf.location = m.transform(self.dxf.location)
         transform_thickness_and_extrusion_without_ocs(self, m)
@@ -97,9 +94,6 @@ class Point(DXFGraphic):
     def translate(self, dx: float, dy: float, dz: float) -> 'Point':
         """ Optimized POINT translation about `dx` in x-axis, `dy` in y-axis and
         `dz` in z-axis.
-
-        .. versionadded:: 0.13
-
         """
         self.dxf.location = Vec3(dx, dy, dz) + self.dxf.location
         return self

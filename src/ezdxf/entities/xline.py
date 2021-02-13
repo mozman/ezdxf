@@ -51,10 +51,7 @@ class XLine(DXFGraphic):
         self.dxf.export_dxf_attribs(tagwriter, ['start', 'unit_vector'])
 
     def transform(self, m: Matrix44) -> 'XLine':
-        """ Transform XLINE/RAY entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the XLINE/RAY entity by transformation matrix `m` inplace.
         """
         self.dxf.start = m.transform(self.dxf.start)
         self.dxf.unit_vector = m.transform_direction(
@@ -63,9 +60,7 @@ class XLine(DXFGraphic):
 
     def translate(self, dx: float, dy: float, dz: float) -> 'XLine':
         """ Optimized XLINE/RAY translation about `dx` in x-axis, `dy` in
-        y-axis and `dz` in z-axis, returns `self` (floating interface).
-
-        .. versionadded:: 0.13
+        y-axis and `dz` in z-axis.
 
         """
         self.dxf.start = Vec3(dx, dy, dz) + self.dxf.start

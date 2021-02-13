@@ -109,8 +109,6 @@ As mentioned above evaluation of block references wrapped into anonymous blocks 
 Exploding Block References
 --------------------------
 
-.. versionadded:: 0.12
-
 This is an advanced and still experimental feature and because `ezdxf` is still not a CAD application, the
 results may no be perfect. **Non uniform scaling** lead to incorrect results for text entities
 (TEXT, MTEXT, ATTRIB) and some other entities like HATCH with arc or ellipse path segments.
@@ -126,8 +124,6 @@ reference is located.
 
 Examine Entities of Block References
 ------------------------------------
-
-.. versionadded:: 0.12
 
 If you just want to examine the entities of a block reference use the :meth:`~ezdxf.entities.Insert.virtual_entities`
 method.

@@ -55,8 +55,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         Returns the minor axis of the ellipse as :class:`Vec3` in WCS.
 
-        .. versionadded:: 0.12
-
     .. automethod:: construction_tool() -> ConstructionEllipse
 
     .. automethod:: apply_construction_tool(e: ConstructionEllipse) -> Ellipse

@@ -114,9 +114,6 @@ class Ellipse(DXFGraphic):
 
     def construction_tool(self) -> ConstructionEllipse:
         """ Returns construction tool :class:`ezdxf.math.ConstructionEllipse`.
-
-        .. versionadded:: 0.13
-
         """
         dxf = self.dxf
         return ConstructionEllipse(
@@ -131,8 +128,6 @@ class Ellipse(DXFGraphic):
     def apply_construction_tool(self, e: ConstructionEllipse) -> 'Ellipse':
         """ Set ELLIPSE data from construction tool
         :class:`ezdxf.math.ConstructionEllipse`.
-
-        .. versionadded:: 0.13
 
         """
         self.update_dxf_attribs(e.dxfattribs())
@@ -190,8 +185,6 @@ class Ellipse(DXFGraphic):
         The new SPLINE entity has no owner, no handle, is not stored in
         the entity database nor assigned to any layout!
 
-        .. versionadded:: 0.13
-
         """
         assert entity.dxftype() in {'ARC', 'CIRCLE'}
         attribs = entity.dxfattribs(drop={'owner', 'handle', 'thickness'})
@@ -207,10 +200,7 @@ class Ellipse(DXFGraphic):
         return Ellipse.new(dxfattribs=attribs, doc=entity.doc)
 
     def transform(self, m: Matrix44) -> 'Ellipse':
-        """ Transform ELLIPSE entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the ELLIPSE entity by transformation matrix `m` inplace.
         """
         e = self.construction_tool()
         e.transform(m)
@@ -220,8 +210,6 @@ class Ellipse(DXFGraphic):
     def translate(self, dx: float, dy: float, dz: float) -> 'Ellipse':
         """ Optimized ELLIPSE translation about `dx` in x-axis, `dy` in y-axis
         and `dz` in z-axis, returns `self` (floating interface).
-
-        .. versionadded:: 0.13
 
         """
         self.dxf.center = Vec3(dx, dy, dz) + self.dxf.center
@@ -234,10 +222,7 @@ class Ellipse(DXFGraphic):
         same layout as the source entity.
 
         Args:
-            layout: modelspace- , paperspace- or block layout
             replace: replace (delete) source entity by SPLINE entity if ``True``
-
-        .. versionadded:: 0.13
 
         """
         from ezdxf.entities import Spline

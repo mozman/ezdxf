@@ -217,8 +217,6 @@ class DXFGraphic(DXFEntity):
         """ Returns the important common properties layer, color, linetype,
         lineweight, ltscale, true_color and color_name as `dxfattribs` dict.
 
-        .. versionadded:: 0.12
-
         """
         attribs = dict()
         for key in GRAPHIC_PROPERTIES:
@@ -227,8 +225,7 @@ class DXFGraphic(DXFEntity):
         return attribs
 
     def ocs(self) -> Optional[OCS]:
-        """
-        Returns object coordinate system (:ref:`ocs`) for 2D entities like
+        """ Returns object coordinate system (:ref:`ocs`) for 2D entities like
         :class:`Text` or :class:`Circle`, returns ``None`` for entities without
         OCS support.
 
@@ -314,8 +311,6 @@ class DXFGraphic(DXFEntity):
         It is more efficient to call the
         :meth:`~ezdxf.layouts.BaseLayout.unlink_entity` method of the associated
         layout, especially if you have to unlink more than one entity.
-
-        .. versionadded:: 0.13
 
         """
         if not self.is_alive:
@@ -412,8 +407,6 @@ class DXFGraphic(DXFEntity):
         Args:
              m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
 
-        .. versionadded:: 0.13
-
         """
         raise NotImplementedError()
 
@@ -424,8 +417,6 @@ class DXFGraphic(DXFEntity):
         Basic implementation uses the :meth:`transform` interface, subclasses
         may have faster implementations.
 
-        .. versionadded:: 0.13
-
         """
         return self.transform(Matrix44.translate(dx, dy, dz))
 
@@ -433,16 +424,12 @@ class DXFGraphic(DXFEntity):
         """ Scale entity inplace about `dx` in x-axis, `dy` in y-axis and `dz`
         in z-axis, returns `self` (floating interface).
 
-        .. versionadded:: 0.13
-
         """
         return self.transform(Matrix44.scale(sx, sy, sz))
 
     def scale_uniform(self, s: float) -> 'DXFGraphic':
         """ Scale entity inplace uniform about `s` in x-axis, y-axis and z-axis,
         returns `self` (floating interface).
-
-        .. versionadded:: 0.13
 
         """
         return self.transform(Matrix44.scale(s))
@@ -455,8 +442,6 @@ class DXFGraphic(DXFEntity):
             axis: rotation axis as tuple or :class:`Vec3`
             angle: rotation angle in radians
 
-        .. versionadded:: 0.13
-
         """
         return self.transform(Matrix44.axis_rotate(axis, angle))
 
@@ -466,8 +451,6 @@ class DXFGraphic(DXFEntity):
 
         Args:
             angle: rotation angle in radians
-
-        .. versionadded:: 0.13
 
         """
         return self.transform(Matrix44.x_rotate(angle))
@@ -479,8 +462,6 @@ class DXFGraphic(DXFEntity):
         Args:
             angle: rotation angle in radians
 
-        .. versionadded:: 0.13
-
         """
         return self.transform(Matrix44.y_rotate(angle))
 
@@ -490,8 +471,6 @@ class DXFGraphic(DXFEntity):
 
         Args:
             angle: rotation angle in radians
-
-        .. versionadded:: 0.13
 
         """
         return self.transform(Matrix44.z_rotate(angle))

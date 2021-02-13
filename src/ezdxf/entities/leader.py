@@ -201,17 +201,13 @@ class Leader(DXFGraphic, OverrideMixin):
 
     def set_vertices(self, vertices: Iterable['Vertex']):
         """ Set vertices of the leader, vertices is an iterable of
-        ``(x, y [,z])`` tuples or :class:`~ezdxf.math.Vec3`.
+        (x, y [,z]) tuples or :class:`~ezdxf.math.Vec3`.
 
         """
         self.vertices = [Vec3(v) for v in vertices]
 
     def transform(self, m: 'Matrix44') -> 'Leader':
-        """ Transform LEADER entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
-        """
+        """ Transform LEADER entity by transformation matrix `m` inplace. """
         self.vertices = list(m.transform_vertices(self.vertices))
         self.dxf.normal_vector, _ = transform_extrusion(self.dxf.normal_vector,
                                                         m)  # ???

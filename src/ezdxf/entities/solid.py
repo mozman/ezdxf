@@ -88,10 +88,7 @@ class Solid(_Base):
         ])
 
     def transform(self, m: Matrix44) -> 'Solid':
-        """ Transform SOLID/TRACE  entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the SOLID/TRACE entity by transformation matrix `m` inplace.
         """
         # SOLID/TRACE is 2d entity, placed by an OCS in 3d space
         dxf = self.dxf
@@ -208,10 +205,7 @@ class Face3d(_Base):
         ])
 
     def transform(self, m: Matrix44) -> 'Face3d':
-        """ Transform 3DFACE  entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the 3DFACE  entity by transformation matrix `m` inplace.
         """
         dxf = self.dxf
         # 3DFACE is a real 3d entity
@@ -224,10 +218,8 @@ class Face3d(_Base):
         ``True``, last vertex == first vertex.
         Does **not** return duplicated last vertex if represents a triangle.
 
-        Compatibility interface to SOLID and TRACE, 3DFACE vertices are
+        Compatibility interface to SOLID and TRACE. The 3DFACE entity returns
         already WCS vertices.
-
-        .. versionadded:: 0.15
 
         """
         dxf = self.dxf

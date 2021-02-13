@@ -52,18 +52,6 @@ Sphinx theme provided by `Read the Docs <https://readthedocs.org>`_ : ::
 
         This is the attribute :attr:`flag`.
 
-        .. versionadded:: 0.9
-
-            New feature `flag`
-
-        .. versionchanged:: 0.10
-
-            The new meaning of `flag` is ...
-
-        .. deprecated:: 0.11
-
-            `flag` is obsolete
-
     .. method:: set_axis(axis)
 
         axis as (x, y, z) tuple

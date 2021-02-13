@@ -390,11 +390,7 @@ class MText(DXFGraphic):
         self.append(r'\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
 
     def transform(self, m: Matrix44) -> 'MText':
-        """ Transform MTEXT entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
-        """
+        """ Transform the MTEXT entity by transformation matrix `m` inplace. """
         dxf = self.dxf
         old_extrusion = Vec3(dxf.extrusion)
         new_extrusion, _ = transform_extrusion(old_extrusion, m)

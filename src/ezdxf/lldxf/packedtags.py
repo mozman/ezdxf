@@ -206,11 +206,7 @@ class VertexArray:
         self.extend(points)
 
     def transform(self, m: Matrix44) -> None:
-        """ Transform vertices by transformation matrix `m`.
-
-        .. versionadded:: 0.13
-
-        """
+        """ Transform vertices by transformation matrix `m`. """
         values = array('d')
         for vertex in m.transform_vertices(self):
             values.extend(vertex)

@@ -68,10 +68,7 @@ class Tolerance(DXFGraphic):
         ])
 
     def transform(self, m: 'Matrix44') -> 'Tolerance':
-        """ Transform TOLERANCE entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the TOLERANCE entity by transformation matrix `m` inplace.
         """
         self.dxf.insert = m.transform(self.dxf.insert)
         self.dxf.x_axis_vector = m.transform_direction(self.dxf.x_axis_vector)

@@ -240,11 +240,7 @@ class Hatch(DXFGraphic):
         self.remove_association()
 
     def remove_association(self):
-        """ Remove associated path elements.
-
-        .. versionadded:: 0.13
-
-        """
+        """ Remove associated path elements. """
         if self.dxf.associative:
             self.dxf.associative = 0
             for path in self.paths:
@@ -578,8 +574,6 @@ class Hatch(DXFGraphic):
         Args:
             scale: pattern scaling factor
 
-        .. versionadded:: 0.13
-
         """
         if not self.has_pattern_fill:
             return
@@ -599,8 +593,6 @@ class Hatch(DXFGraphic):
 
         Args:
             angle: rotation angle in degrees
-
-        .. versionadded:: 0.13
 
         """
         if not self.has_pattern_fill:
@@ -625,9 +617,7 @@ class Hatch(DXFGraphic):
         self.dxf.n_seed_points = len(self.seeds)
 
     def transform(self, m: 'Matrix44') -> 'Hatch':
-        """ Transform HATCH entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
+        """ Transform the HATCH entity by transformation matrix `m` inplace.
 
         """
         dxf = self.dxf
@@ -1748,8 +1738,6 @@ class Pattern:
         Args:
             factor: scaling factor
             angle: rotation angle in degrees
-
-        .. versionadded:: 0.13
 
         """
         scaled_pattern = pattern.scale_pattern(self.as_list(), factor=factor,

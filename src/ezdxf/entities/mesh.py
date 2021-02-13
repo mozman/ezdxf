@@ -349,11 +349,7 @@ class Mesh(DXFGraphic):
         self.set_data(data)
 
     def transform(self, m: 'Matrix44') -> 'Mesh':
-        """ Transform MESH entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
-        """
+        """ Transform the MESH entity by transformation matrix `m` inplace. """
         self._vertices.transform(m)
         return self
 

@@ -115,10 +115,7 @@ class Light(DXFGraphic):
         ])
 
     def transform(self, m: 'Matrix44') -> 'Light':
-        """ Transform LIGHT entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the LIGHT entity by transformation matrix `m` inplace.
         """
         self.dxf.location = m.transform(self.dxf.location)
         self.dxf.target = m.transform(self.dxf.target)

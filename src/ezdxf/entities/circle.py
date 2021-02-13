@@ -101,11 +101,9 @@ class Circle(DXFGraphic):
             yield from self.vertices(linspace(0.0, 360.0, count + 1))
 
     def transform(self, m: Matrix44) -> 'Circle':
-        """ Transform CIRCLE entity by transformation matrix `m` inplace.
+        """ Transform the CIRCLE entity by transformation matrix `m` inplace.
 
         Raises ``NonUniformScalingError()`` for non uniform scaling.
-
-        .. versionadded:: 0.13
 
         """
         ocs = OCSTransform(self.dxf.extrusion, m)
@@ -134,8 +132,6 @@ class Circle(DXFGraphic):
         """ Optimized CIRCLE/ARC translation about `dx` in x-axis, `dy` in
         y-axis and `dz` in z-axis, returns `self` (floating interface).
 
-        .. versionadded:: 0.13
-
         """
         ocs = self.ocs()
         self.dxf.center = ocs.from_wcs(
@@ -150,8 +146,6 @@ class Circle(DXFGraphic):
 
         Args:
             replace: replace (delete) source entity by ELLIPSE entity if ``True``
-
-        .. versionadded:: 0.13
 
         """
         from ezdxf.entities import Ellipse
@@ -171,8 +165,6 @@ class Circle(DXFGraphic):
 
         Args:
             replace: replace (delete) source entity by SPLINE entity if ``True``
-
-        .. versionadded:: 0.13
 
         """
         from ezdxf.entities import Spline

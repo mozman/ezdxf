@@ -607,11 +607,9 @@ class Dimension(DXFGraphic, OverrideMixin):
         self.override().render()
 
     def transform(self, m: 'Matrix44') -> 'Dimension':
-        """ Transform DIMENSION entity by transformation matrix `m` inplace.
+        """ Transform the DIMENSION entity by transformation matrix `m` inplace.
 
         Raises ``NonUniformScalingError()`` for non uniform scaling.
-
-        .. versionadded:: 0.13
 
         """
 
@@ -713,11 +711,9 @@ class ArcDimension(Dimension):
         ])
 
     def transform(self, m: 'Matrix44') -> 'Dimension':
-        """ Transform ARC_DIMENSION entity by transformation matrix `m` inplace.
+        """ Transform the ARC_DIMENSION entity by transformation matrix `m` inplace.
 
         Raises ``NonUniformScalingError()`` for non uniform scaling.
-
-        .. versionadded:: 0.13
 
         """
 
@@ -779,12 +775,10 @@ class RadialDimensionLarge(Dimension):
         ])
 
     def transform(self, m: 'Matrix44') -> 'Dimension':
-        """ Transform LARGE_RADIAL_DIMENSION entity by transformation matrix
+        """ Transform the LARGE_RADIAL_DIMENSION entity by transformation matrix
         `m` inplace.
 
         Raises ``NonUniformScalingError()`` for non uniform scaling.
-
-        .. versionadded:: 0.13
 
         """
 

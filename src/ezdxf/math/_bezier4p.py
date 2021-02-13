@@ -226,8 +226,6 @@ def cubic_bezier_from_arc(
         segments: count of Bèzier-curve segments, at least one segment for each
             quarter (90 deg), 1 for as few as possible.
 
-    .. versionadded:: 0.13
-
     """
     center = Vec3(center)
     radius = float(radius)
@@ -260,9 +258,7 @@ def cubic_bezier_from_ellipse(
         ellipse: ellipse parameters as :class:`~ezdxf.math.ConstructionEllipse`
             object
         segments: count of Bèzier-curve segments, at least one segment for each
-            quarter (pi/2), 1 for as few as possible.
-
-    .. versionadded:: 0.13
+            quarter (π/2), 1 for as few as possible.
 
     """
     param_span = ellipse.param_span

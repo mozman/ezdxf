@@ -403,10 +403,7 @@ class Polyline(LinkedEntities):
             return self
 
     def transform(self, m: Matrix44) -> 'Polyline':
-        """ Transform POLYLINE entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the POLYLINE entity by transformation matrix `m` inplace.
         """
 
         def _ocs_locations(elevation):
@@ -1013,10 +1010,7 @@ class DXFVertex(DXFGraphic):
         return (self.dxf.flags & self.FACE_FLAGS) == self.POLYFACE_MESH_VERTEX
 
     def transform(self, m: 'Matrix44') -> 'DXFVertex':
-        """ Transform VERTEX entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the VERTEX entity by transformation matrix `m` inplace.
         """
         if self.is_face_record:
             return self

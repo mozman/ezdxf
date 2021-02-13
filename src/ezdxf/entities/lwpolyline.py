@@ -320,10 +320,7 @@ class LWPolyline(DXFGraphic):
         self.lwpoints.clear()
 
     def transform(self, m: 'Matrix44') -> 'LWPolyline':
-        """ Transform LWPOLYLINE entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the LWPOLYLINE entity by transformation matrix `m` inplace.
         """
         dxf = self.dxf
         ocs = OCSTransform(self.dxf.extrusion, m)

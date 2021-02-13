@@ -273,10 +273,7 @@ class Text(DXFGraphic):
         return const.TEXT_ALIGNMENT_BY_FLAGS.get((halign, valign), 'LEFT')
 
     def transform(self, m: Matrix44) -> 'Text':
-        """ Transform TEXT entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the TEXT entity by transformation matrix `m` inplace.
         """
         dxf = self.dxf
         if not dxf.hasattr('align_point'):
@@ -310,9 +307,7 @@ class Text(DXFGraphic):
 
     def translate(self, dx: float, dy: float, dz: float) -> 'Text':
         """ Optimized TEXT/ATTRIB/ATTDEF translation about `dx` in x-axis, `dy`
-        in y-axis and `dz` in z-axis, returns `self` (floating interface).
-
-        .. versionadded:: 0.13
+        in y-axis and `dz` in z-axis, returns `self`.
 
         """
         ocs = self.ocs()
@@ -325,10 +320,9 @@ class Text(DXFGraphic):
         return self
 
     def remove_dependencies(self, other: 'Drawing' = None) -> None:
-        """
-        Remove all dependencies from actual document.
-        (internal API)
+        """ Remove all dependencies from actual document.
 
+        (internal API)
         """
         if not self.is_alive:
             return
@@ -339,12 +333,7 @@ class Text(DXFGraphic):
             self.dxf.style = 'Standard'
 
     def plain_text(self) -> str:
-        """
-        Returns text content without formatting codes.
-
-        .. versionadded:: 0.13
-
-        """
+        """ Returns text content without formatting codes. """
         return plain_text(self.dxf.text)
 
     def audit(self, auditor: Auditor):

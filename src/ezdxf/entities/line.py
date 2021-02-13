@@ -62,10 +62,7 @@ class Line(DXFGraphic):
         ])
 
     def transform(self, m: Matrix44) -> 'Line':
-        """ Transform LINE entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the LINE entity by transformation matrix `m` inplace.
         """
         start, end = m.transform_vertices([self.dxf.start, self.dxf.end])
         self.dxf.start = start
@@ -76,8 +73,6 @@ class Line(DXFGraphic):
     def translate(self, dx: float, dy: float, dz: float) -> 'Line':
         """ Optimized LINE translation about `dx` in x-axis, `dy` in y-axis and
         `dz` in z-axis.
-
-        .. versionadded:: 0.13
 
         """
         vec = Vec3(dx, dy, dz)

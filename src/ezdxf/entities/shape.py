@@ -85,10 +85,7 @@ class Shape(DXFGraphic):
         ])
 
     def transform(self, m: 'Matrix44') -> 'Shape':
-        """ Transform SHAPE entity by transformation matrix `m` inplace.
-
-        .. versionadded:: 0.13
-
+        """ Transform the SHAPE entity by transformation matrix `m` inplace.
         """
         dxf = self.dxf
         dxf.insert = m.transform(dxf.insert)  # DXF Reference: WCS?

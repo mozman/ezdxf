@@ -32,6 +32,13 @@ def guess_height(size):
     return max(width / 2.0, height)
 
 
+def zoom_to_entities(layout: Layout, entities: Iterable[DXFEntity], factor):
+    extents = bbox.extends(entities)
+    if extents.has_data:
+        height = guess_height(extents.size)
+        center(layout, extents.center, height * factor)
+
+
 def objects(layout: Layout, entities: Iterable[DXFEntity], factor: float = 1):
     """ Resets the active viewport limits of `layout` to the extends of the
     given `entities`. Only entities in the given `layout` are taken into
@@ -41,10 +48,8 @@ def objects(layout: Layout, entities: Iterable[DXFEntity], factor: float = 1):
 
     """
     owner = layout.layout_key
-    extents = bbox.extends(e for e in entities if e.dxf.owner == owner)
-    if extents.has_data:
-        height = guess_height(extents.size)
-        center(layout, extents.center, height * factor)
+    content = (e for e in entities if e.dxf.owner == owner)
+    zoom_to_entities(layout, content, factor)
 
 
 def extends(layout: Layout, factor: float = 1):
@@ -54,10 +59,7 @@ def extends(layout: Layout, factor: float = 1):
     configuration.
 
     """
-    extents = bbox.extends(layout)
-    if extents.has_data:
-        height = guess_height(extents.size)
-        center(layout, extents.center, height * factor)
+    zoom_to_entities(layout, layout, factor)
 
 
 def window(layout: Layout, p1: Vertex, p2: Vertex):
