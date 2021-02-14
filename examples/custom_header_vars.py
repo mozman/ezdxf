@@ -1,7 +1,9 @@
-# Created: 13.04.2014
-# Copyright (c) 2014-2019, Manfred Moitzi
+# Copyright (c) 2014-2021, Manfred Moitzi
 # License: MIT License
+import pathlib
 import ezdxf
+
+DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 
 
 def custom_header_vars():
@@ -12,7 +14,7 @@ def custom_header_vars():
     msp.add_polyline2d(points)
     doc.header.custom_vars.append("Name", "Manfred Moitzi")
     doc.header.custom_vars.append("Adresse", "8020 Graz")
-    doc.saveas("custom_header_vars.dxf")
+    doc.saveas(DIR / "custom_header_vars.dxf")
 
 
 custom_header_vars()

@@ -1,21 +1,23 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-import os
+import pathlib
 import ezdxf
+from ezdxf import zoom
 from ezdxf.lldxf.const import versions_supported_by_new
 
-EXPORT_DIR = r'C:\Users\manfred\Desktop\outbox'
+DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 
 
 def create_doc(dxfversion):
     doc = ezdxf.new(dxfversion, setup=True)
-    modelspace = doc.modelspace()
-    modelspace.add_circle(center=(0, 0), radius=1.5, dxfattribs={
+    msp = doc.modelspace()
+    msp.add_circle(center=(0, 0), radius=1.5, dxfattribs={
         'layer': 'test',
         'linetype': 'DASHED',
     })
 
-    filename = os.path.join(EXPORT_DIR, f'{doc.acad_release}.dxf')
+    zoom.extents(msp, factor=1.1)
+    filename = DIR / f'{doc.acad_release}.dxf'
     doc.saveas(filename)
     print("drawing '%s' created.\n" % filename)
 

@@ -1,13 +1,12 @@
 # Purpose: using true color and transparency
-# Created: 05.09.2018
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf import zoom
 from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHTS
 
-DIR = Path('~/Desktop/Outbox').expanduser()
+DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 
 doc = ezdxf.new()
 msp = doc.modelspace()

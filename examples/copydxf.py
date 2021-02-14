@@ -1,6 +1,5 @@
 # Purpose: test copy dxf file
-# Created: 12.03.2011
-# Copyright (c) , Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 import sys
 import time

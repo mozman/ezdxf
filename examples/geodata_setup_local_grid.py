@@ -1,9 +1,9 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2020-2021, Manfred Moitzi
 #  License: MIT License
 import pathlib
 import ezdxf
 
-OUTBOX = pathlib.Path('~/Desktop/Outbox').expanduser()
+DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 
 doc = ezdxf.new('R2010', units=6)
 msp = doc.modelspace()
@@ -14,5 +14,5 @@ gdat.setup_local_grid(
 )
 msp.add_line((0, 0), (100, 0))
 doc.set_modelspace_vport(50, center=(50, 0))
-doc.saveas(OUTBOX / 'geodata_local_grid.dxf')
+doc.saveas(DIR / 'geodata_local_grid.dxf')
 

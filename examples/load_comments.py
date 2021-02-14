@@ -1,5 +1,6 @@
+# Copyright (c) 2021, Manfred Moitzi
+# License: MIT License
 import sys
-
 from ezdxf import comments
 
 if __name__ == '__main__':

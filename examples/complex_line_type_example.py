@@ -1,11 +1,12 @@
 # Purpose: example for complex line types
-# Copyright (c) 2018-2020 Manfred Moitzi
+# Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
+from ezdxf import zoom
 
-OUTBOX = Path('~/Desktop/Outbox').expanduser()
-FILENAME = OUTBOX / 'complex_linetype_example.dxf'
+DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
+FILENAME = DIR / 'complex_linetype_example.dxf'
 
 doc = ezdxf.new('R2018')  # DXF R13 or later is required
 
@@ -22,7 +23,8 @@ doc.linetypes.new('GRENZE2', dxfattribs={
     'length': 1.45,  # required for complex line types
     # line type definition in acadlt.lin:
     # A,.25,-.1,[BOX,ltypeshp.shx,x=-.1,s=.1],-.1,1
-    # replacing BOX by shape index 132 (got index from an AutoCAD file), ezdxf can't get shape index from ltypeshp.shx
+    # replacing BOX by shape index 132 (got index from an AutoCAD file), ezdxf
+    # can't get shape index from ltypeshp.shx
     'pattern': 'A,.25,-.1,[132,ltypeshp.shx,x=-.1,s=.1],-.1,1',
 })
 
@@ -31,4 +33,5 @@ msp = doc.modelspace()
 msp.add_line((0, 0), (100, 0), dxfattribs={'linetype': 'GASLEITUNG2'})
 msp.add_line((0, 50), (100, 50), dxfattribs={'linetype': 'GRENZE2'})
 
+zoom.extents(msp, 1.1)
 doc.saveas(FILENAME)
