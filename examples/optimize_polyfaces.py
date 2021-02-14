@@ -1,15 +1,14 @@
 # Purpose: open example files with big polyface models
-# Created: 23.04.2014
-# Copyright (c) 2014-2020, Manfred Moitzi
+# Copyright (c) 2014-2021, Manfred Moitzi
 # License: MIT License
 import time
-from pathlib import Path
+import pathlib
 
 import ezdxf
 from ezdxf.render import MeshVertexMerger
 
-SRCDIR = Path(r'D:\Source\dxftest\CADKitSamples')
-OUTDIR = Path('~/Desktop/Outbox').expanduser()
+SRCDIR = pathlib.Path(ezdxf.EZDXF_TEST_FILES) / "CADKitSamples"
+OUTDIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 
 
 def optimize_polyfaces(polyfaces):

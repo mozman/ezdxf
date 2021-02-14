@@ -1,9 +1,10 @@
 # Purpose: setup initial viewport for a DXF drawing
-# Copyright (c) 2016-2018 Manfred Moitzi
+# Copyright (c) 2016-2021 Manfred Moitzi
 # License: MIT License
+import pathlib
 import ezdxf
 
-# FILENAME = r'C:\Users\manfred\Desktop\Now\page_setup_R2000.dxf'
+DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 FILENAME = 'page_setup_R2000.dxf'
 
 
@@ -61,11 +62,12 @@ def layout_page_setup(doc):
         layout = doc.layouts.new(name)
 
     layout.page_setup(size=(11, 8.5), margins=(.5, .5, .5, .5), units='inch')
-    (x1, y1), (x2, y2) = layout.get_paper_limits()
-    center_x = (x1 + x2) / 2
-    center_y = (y1 + y2) / 2
-    layout.add_line((x1, center_y), (x2, center_y))  # horizontal center line
-    layout.add_line((center_x, y1), (center_x, y2))  # vertical center line
+    lower_left, upper_right = layout.get_paper_limits()
+    x1, y1 = lower_left
+    x2, y2 = upper_right
+    center = lower_left.lerp(upper_right)
+    layout.add_line((x1, center.y), (x2, center.y))  # horizontal center line
+    layout.add_line((center.x, y1), (center.x, y2))  # vertical center line
     layout.add_circle((0, 0), radius=.1)  # plot origin
 
     layout2 = doc.layouts.new('ezdxf scale 1-1')
@@ -76,16 +78,18 @@ def layout_page_setup(doc):
         view_center_point=(60, 40),  # model space point to show in center of viewport in WCS
         view_height=20,  # how much model space area to show in viewport in drawing units
     )
+    lower_left, upper_right = layout2.get_paper_limits()
+    x1, y1 = lower_left
+    x2, y2 = upper_right
+    center = lower_left.lerp(upper_right)
 
-    (x1, y1), (x2, y2) = layout2.get_paper_limits()
-    center_x = (x1 + x2) / 2
-    center_y = (y1 + y2) / 2
-    layout2.add_line((x1, center_y), (x2, center_y))  # horizontal center line
-    layout2.add_line((center_x, y1), (center_x, y2))  # vertical center line
+    layout2.add_line((x1, center.y), (x2, center.y))  # horizontal center line
+    layout2.add_line((center.x, y1), (center.x, y2))  # vertical center line
     layout2.add_circle((0, 0), radius=5)  # plot origin
 
     layout3 = doc.layouts.new('ezdxf scale 1-50')
-    layout3.page_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm', scale=(1, 50))
+    layout3.page_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm',
+                       scale=(1, 50))
     layout3.add_viewport(
         center=(5000, 5000),  # center of viewport in paper_space units, scale = 1:50
         size=(5000, 2500),  # viewport size in paper_space units, scale = 1:50
@@ -95,12 +99,15 @@ def layout_page_setup(doc):
     layout3.add_circle((0, 0), radius=250)  # plot origin
 
     layout4 = doc.layouts.new('ezdxf scale 1-1 with offset')
-    layout4.page_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm', scale=(1, 1), offset=(50, 50))
-    (x1, y1), (x2, y2) = layout4.get_paper_limits()
-    center_x = (x1 + x2) / 2
-    center_y = (y1 + y2) / 2
-    layout4.add_line((x1, center_y), (x2, center_y))  # horizontal center line
-    layout4.add_line((center_x, y1), (center_x, y2))  # vertical center line
+    layout4.page_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm',
+                       scale=(1, 1), offset=(50, 50))
+    lower_left, upper_right = layout4.get_paper_limits()
+    x1, y1 = lower_left
+    x2, y2 = upper_right
+    center = lower_left.lerp(upper_right)
+
+    layout4.add_line((x1, center.y), (x2, center.y))  # horizontal center line
+    layout4.add_line((center.x, y1), (center.x, y2))  # vertical center line
     layout4.add_circle((0, 0), radius=5)  # plot origin
 
 
@@ -109,5 +116,5 @@ if __name__ == '__main__':
     draw_raster(doc)
     setup_active_viewport(doc)
     layout_page_setup(doc)
-    doc.saveas(FILENAME)
+    doc.saveas(DIR / FILENAME)
     print(f'DXF file "{FILENAME}" created.')

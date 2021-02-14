@@ -1,9 +1,10 @@
 # Purpose: setup initial viewport for a DXF drawing
-# Copyright (c) 2016-2018 Manfred Moitzi
+# Copyright (c) 2016-2021 Manfred Moitzi
 # License: MIT License
+import pathlib
 import ezdxf
 
-# FILENAME = r'C:\Users\manfred\Desktop\Now\page_setup_R12.dxf'
+DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 FILENAME = 'page_setup_R12.dxf'
 
 
@@ -57,11 +58,12 @@ def layout_page_setup(doc):
     # DXF R12 supports just one paper space layout
     layout = doc.layout()
     layout.page_setup(size=(11, 8.5), margins=(1, 2, 1, 2), units='inch')
-    (x1, y1), (x2, y2) = layout.get_paper_limits()
-    center_x = (x1 + x2) / 2
-    center_y = (y1 + y2) / 2
-    layout.add_line((x1, center_y), (x2, center_y))  # horizontal center line
-    layout.add_line((center_x, y1), (center_x, y2))  # vertical center line
+    lower_left, upper_right = layout.get_paper_limits()
+    x1, y1 = lower_left
+    x2, y2 = upper_right
+    center = lower_left.lerp(upper_right)
+    layout.add_line((x1, center.y), (x2, center.y))  # horizontal center line
+    layout.add_line((center.x, y1), (center.x, y2))  # vertical center line
     layout.add_circle((0, 0), radius=.1)  # plot origin
 
 
@@ -70,5 +72,5 @@ if __name__ == '__main__':
     draw_raster(doc)
     setup_active_viewport(doc)
     layout_page_setup(doc)
-    doc.saveas(FILENAME)
+    doc.saveas(DIR / FILENAME)
     print(f'DXF file "{FILENAME}" created.')

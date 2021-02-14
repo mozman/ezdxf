@@ -4,6 +4,7 @@
 from typing import (
     TYPE_CHECKING, Iterable, Any, Union, List, Tuple, cast, Optional, Dict,
 )
+from ezdxf.math import Vec2
 from ezdxf.entitydb import EntitySpace
 from ezdxf.lldxf import const
 from .base import BaseLayout
@@ -717,18 +718,17 @@ class Paperspace(Layout):
         dxf.limmin = (-shift_x, -shift_y)  # paper space units
         dxf.limmax = (paper_width - shift_x, paper_height - shift_y)
 
-    def get_paper_limits(self) -> Tuple[
-        Tuple[float, float], Tuple[float, float]]:
+    def get_paper_limits(self) -> Tuple[Vec2, Vec2]:
         """  Returns paper limits in plot paper units, relative to the plot origin.
 
         plot origin = lower left corner of printable area + plot origin offset
 
         Returns:
-            tuple ((x1, y1), (x2, y2)), lower left corner is (x1, y1), upper
-            right corner is (x2, y2).
+            tuple (Vec2(x1, y1), Vec2(x2, y2)), lower left corner is (x1, y1),
+            upper right corner is (x2, y2).
 
         """
-        return self.dxf.limmin[0:2], self.dxf.limmax[0:2]
+        return Vec2(self.dxf.limmin), Vec2(self.dxf.limmax)
 
     def page_setup_r12(self, size: Tuple[int, int] = (297, 210),
                        margins: Tuple[int, int, int, int] = (0, 0, 0, 0),
@@ -813,8 +813,8 @@ class Paperspace(Layout):
         with main_viewport.edit_data() as vpdata:
             vpdata.view_mode = 1000  # AutoDesk default
 
-    def get_paper_limits_r12(self) -> Tuple[float, float]:
+    def get_paper_limits_r12(self) -> Tuple[Vec2, Vec2]:
         """  Returns paper limits in plot paper units. """
         limmin = self.doc.header.get('$PLIMMIN', (0, 0))
         limmax = self.doc.header.get('$PLIMMAX', (0, 0))
-        return limmin, limmax
+        return Vec2(limmin), Vec2(limmax)

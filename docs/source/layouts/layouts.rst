@@ -279,7 +279,7 @@ Paperspace
 
     .. automethod:: reset_paper_limits
 
-    .. automethod:: get_paper_limits
+    .. automethod:: get_paper_limits() -> Tuple[Vec2, Vec2]
 
 
 BlockLayout
