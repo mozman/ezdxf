@@ -47,5 +47,5 @@ m1, m2 = estimate_end_tangent_magnitude(data, method='chord')
 s = global_bspline_interpolation(data, tangents=(tangents[0].normalize(m1), tangents[-1].normalize(m2)))
 msp.add_spline(dxfattribs={'color': 4, 'layer': f'Global interpolation ({METHOD})'}).apply_construction_tool(s)
 
-zoom.extends(msp, factor=1.1)
+zoom.extents(msp, factor=1.1)
 doc.saveas(DIR / f'sine-wave-{METHOD}.dxf')

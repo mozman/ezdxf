@@ -610,7 +610,7 @@ class Paperspace(Layout):
         """ Setup plot settings and paper size and reset viewports.
         All parameters in given `units` (mm or inch).
 
-        Reset paper limits, extends and viewports.
+        Reset paper limits, extents and viewports.
 
         Args:
             size: paper size as (width, height) tuple

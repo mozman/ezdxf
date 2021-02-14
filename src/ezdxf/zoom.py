@@ -7,7 +7,7 @@ from ezdxf.layouts import Layout
 from ezdxf.entities import DXFEntity
 from ezdxf import bbox
 
-__all__ = ["center", "entities", "extends", "window"]
+__all__ = ["center", "entities", "extents", "window"]
 
 
 def center(layout: Layout, point: Vertex, size: 'Vertex'):
@@ -41,13 +41,13 @@ def zoom_to_entities(layout: Layout, entities: Iterable[DXFEntity], factor):
         main_viewport = layout.main_viewport()
         if main_viewport is not None:
             entities = (e for e in entities if e is not main_viewport)
-    extents = bbox.extends(entities)
+    extents = bbox.extents(entities)
     if extents.has_data:
         center(layout, extents.center, extents.size * factor)
 
 
 def objects(layout: Layout, entities: Iterable[DXFEntity], factor: float = 1):
-    """ Resets the active viewport limits of `layout` to the extends of the
+    """ Resets the active viewport limits of `layout` to the extents of the
     given `entities`. Only entities in the given `layout` are taken into
     account. The argument `factor` scales the viewport limits.
     Replaces the current viewport configuration by a single window
@@ -59,7 +59,7 @@ def objects(layout: Layout, entities: Iterable[DXFEntity], factor: float = 1):
     zoom_to_entities(layout, content, factor)
 
 
-def extends(layout: Layout, factor: float = 1):
+def extents(layout: Layout, factor: float = 1):
     """ Resets the active viewport limits of `layout` to the extents of all
     entities in this `layout`. The argument `factor` scales the viewport limits.
     Replaces the current viewport configuration by a single window

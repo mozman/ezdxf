@@ -33,14 +33,14 @@ Example usage with caching:
     msp = doc.modelspace()
     cache = bbox.Cache()
     # get overall bounding box
-    first_bbox = bbox.extends(msp, cache)
+    first_bbox = bbox.extents(msp, cache)
     # bounding box of all LINE entities
     second_bbox = bbox.extend(msp.query("LINE"), cache)
 
 Functions
 ---------
 
-.. autofunction:: extends(entities: Iterable[DXFEntity], cache: Cache=None) -> BoundingBox
+.. autofunction:: extents(entities: Iterable[DXFEntity], cache: Cache=None) -> BoundingBox
 
 .. autofunction:: multi_flat(entities: Iterable[DXFEntity] cache: Cache=None) -> Iterable[BoundingBox]
 
@@ -64,7 +64,7 @@ any performance gains.
 
 For a single bounding box calculation, without any reuse of entities it makes
 no sense of using a :class:`Cache` object, e.g. calculation of the modelspace
-extends:
+extents:
 
 .. code-block:: python
 
@@ -76,7 +76,7 @@ extends:
 
     doc = ezdxf.readfile(CADKitSamples / 'A_000217.dxf')
     cache = bbox.Cache()
-    ext = bbox.extends(doc.modelspace(), cache)
+    ext = bbox.extents(doc.modelspace(), cache)
 
     print(cache)
 
@@ -101,11 +101,11 @@ entity results, using a :class:`Cache` object may speedup the calculation:
     msp = doc.modelspace()
     cache = bbox.Cache(uuid=False)
 
-    ext = bbox.extends(msp, cache)
+    ext = bbox.extents(msp, cache)
     print(cache)
 
     # process modelspace again
-    ext = bbox.extends(msp, cache)
+    ext = bbox.extents(msp, cache)
     print(cache)
 
 Processing the same data again leads some hits::
@@ -128,10 +128,10 @@ first leads to more hits:
     entities = list(disassemble.recursive_decompose(msp))
     cache = bbox.Cache(uuid=False)
 
-    bbox.extends(entities, cache)
+    bbox.extents(entities, cache)
     print(cache)
 
-    bbox.extends(entities, cache)
+    bbox.extents(entities, cache)
     print(cache)
 
 First without UUID for stable virtual entities::

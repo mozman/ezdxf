@@ -113,7 +113,7 @@ def scene1(filename):
             ucs = ucs.rotate_local_z(angle)
         ucs = UCS().rotate_local_x(ix * angle)
 
-    zoom.extends(msp)
+    zoom.extents(msp)
     doc.saveas(filename)
 
 
@@ -146,7 +146,7 @@ def scene2(filename):
                     math.radians(30))
                 add_excentric_text(msp, ucs, location=Vec3(1, 2, 3), text=f'Hallo\n(x={cx}, y={cy}, z={cz})')
 
-    zoom.extends(msp)
+    zoom.extents(msp)
     doc.saveas(filename)
 
 

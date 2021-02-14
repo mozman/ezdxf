@@ -433,5 +433,5 @@ if __name__ == '__main__':
     # main_uniform_hatch_polyline(msp)
     main_ellipse_hatch(msp, spline=True)
     # main_non_uniform_hatch_polyline(msp, spline=True)
-    zoom.extends(msp)
+    zoom.extents(msp)
     doc.saveas(DIR / 'transform.dxf')

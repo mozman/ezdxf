@@ -22,5 +22,5 @@ spline = arc.to_spline(replace=False)
 spline.dxf.layer = 'B-spline'
 spline.dxf.color = 1
 
-zoom.extends(msp)
+zoom.extents(msp)
 doc.saveas(DIR / 'spline_from_arc.dxf')

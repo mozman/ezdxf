@@ -18,3 +18,4 @@ the :ref:`Howto` section.
     coordinates
     ocs
     units
+    extents_limits

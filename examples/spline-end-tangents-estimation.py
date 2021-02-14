@@ -34,7 +34,7 @@ msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_c
 # Second spline defined only by fit points as reference, does not match the BricsCAD interpolation.
 spline = msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
 
-zoom.extends(msp)
+zoom.extents(msp)
 doc.saveas(DIR / 'fit-points-only.dxf')
 
 # 2. Store fit points, start- and end tangent values in DXF file:
@@ -54,7 +54,7 @@ spline = msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-splin
 spline.dxf.start_tangent = Vec3.from_deg_angle(100)
 spline.dxf.end_tangent = Vec3.from_deg_angle(-100)
 
-zoom.extends(msp)
+zoom.extents(msp)
 doc.saveas(DIR / 'fit-points-and-tangents.dxf')
 
 # 3. Need control vertices to render the B-spline but start- and
@@ -74,7 +74,7 @@ msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_c
 # tangents angle: (101.0035408517495, -101.0035408517495) degree
 msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
 
-zoom.extends(msp)
+zoom.extents(msp)
 doc.saveas(DIR / 'tangents-estimated.dxf')
 
 # Theory Check:
@@ -92,7 +92,7 @@ msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_c
 # Now result matches the BricsCAD interpolation - but only in this case
 msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
 
-zoom.extends(msp)
+zoom.extents(msp)
 doc.saveas(DIR / 'theory-check.dxf')
 
 # 1. If tangents are given (stored in DXF) the magnitude of the input tangents for the

@@ -46,6 +46,6 @@ entities:
 
 .. autofunction:: objects(layout: Layout, entities: Iterable[DXFEntity], factor: float=1)
 
-.. autofunction:: extends(layout: Layout, factor: float=1)
+.. autofunction:: extents(layout: Layout, factor: float=1)
 
 .. autofunction:: window(layout: Layout, p1: Vertex, p2: Vertex)

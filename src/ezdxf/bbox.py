@@ -105,7 +105,7 @@ def multi_recursive(entities: Iterable['DXFEntity'],
             yield box
 
 
-def extends(entities: Iterable['DXFEntity'],
+def extents(entities: Iterable['DXFEntity'],
             cache: Cache = None) -> BoundingBox:
     """ Returns a single bounding box for all given `entities`. """
     _extends = BoundingBox()

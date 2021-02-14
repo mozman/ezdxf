@@ -17,7 +17,7 @@ def points1():
 
 
 def test_extend(points1):
-    box = bbox.extends(points1)
+    box = bbox.extents(points1)
     assert box.extmin == (-1, -2, -3)
     assert box.extmax == (4, 5, 6)
 
@@ -54,7 +54,7 @@ def test_cache_usage_without_handles(points1):
     # Entities in VirtualLayouts have no handles:
     cache = bbox.Cache()
     for _ in range(10):
-        bbox.extends(points1, cache)
+        bbox.extents(points1, cache)
     assert cache.hits == 0
 
 
@@ -62,7 +62,7 @@ def test_cache_usage_with_uuids(points1):
     # Entities in VirtualLayouts have no handles:
     cache = bbox.Cache(uuid=True)
     for _ in range(10):
-        bbox.extends(points1, cache)
+        bbox.extents(points1, cache)
     assert cache.hits == 18
 
 
@@ -71,7 +71,7 @@ def msp_solids():
     return solid_blockrefs()
 
 
-@pytest.mark.parametrize('func', [bbox.multi_flat, bbox.extends])
+@pytest.mark.parametrize('func', [bbox.multi_flat, bbox.extents])
 def test_cache_usage_for_flat_multi_boxes(msp_solids, func):
     cache = bbox.Cache()
     for _ in range(10):
@@ -99,7 +99,7 @@ def test_cache_usage_for_recreation_on_the_fly(msp_solids):
 
 
 @pytest.mark.parametrize('func', [
-    bbox.multi_flat, bbox.extends, bbox.multi_recursive
+    bbox.multi_flat, bbox.extents, bbox.multi_recursive
 ])
 def test_cache_usage_for_reused_virtual_entities(msp_solids, func):
     cache = bbox.Cache()
@@ -111,7 +111,7 @@ def test_cache_usage_for_reused_virtual_entities(msp_solids, func):
 
     # This does not work well by "handle only" usage, because 'entities' contains
     # virtual entities which have no handle and therefore are not cached:
-    # multi_flat and extends, have a second access stage and triggers 2x20 cache
+    # multi_flat and extents, have a second access stage and triggers 2x20 cache
     # misses but this is just a cache access issue, this does not trigger 40
     # bounding box calculations!
     # multi_recursive is the lowest level and has only 20 cache misses.
@@ -120,7 +120,7 @@ def test_cache_usage_for_reused_virtual_entities(msp_solids, func):
 
 
 @pytest.mark.parametrize('func', [
-    bbox.multi_flat, bbox.extends, bbox.multi_recursive
+    bbox.multi_flat, bbox.extents, bbox.multi_recursive
 ])
 def test_cache_usage_with_uuids_for_reused_virtual_entities(msp_solids, func):
     cache = bbox.Cache(uuid=True)
@@ -131,7 +131,7 @@ def test_cache_usage_with_uuids_for_reused_virtual_entities(msp_solids, func):
         list(func(entities, cache))
 
     # This works, because virtual entities are cached by UUID
-    # multi_flat and extends, have a second access stage: 2x2 misses, but
+    # multi_flat and extents, have a second access stage: 2x2 misses, but
     # triggers only 2 bounding box calculations.
     # multi_recursive is the lowest level and has only 2 cache misses.
     assert cache.misses in (2, 4)

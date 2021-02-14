@@ -24,14 +24,14 @@ class TestModelSpace:
         assert vp.dxf.height == 10
 
     def test_zoom_extents(self, msp):
-        zoom.extends(msp)
+        zoom.extents(msp)
         vp = msp.doc.viewports.get('*Active')[0]
         assert vp.dxf.center == (0, 0)
         # 2:1 = 200 / 2 = 100 == height
         assert vp.dxf.height == 100
 
     def test_zoom_extents_factor_2(self, msp):
-        zoom.extends(msp, factor=2)
+        zoom.extents(msp, factor=2)
         vp = msp.doc.viewports.get('*Active')[0]
         assert vp.dxf.center == (0, 0)
         # 2:1 = 200 / 2 = 100 * 2 == height
@@ -78,7 +78,7 @@ class TestPaperSpace:
     def test_bbox_of_main_viewport(self, psp):
         psp.reset_main_viewport()
         vp = psp.main_viewport()
-        box = bbox.extends([vp])
+        box = bbox.extents([vp])
         assert box.has_data is True
         assert box.center == vp.dxf.center
         assert box.size.x == pytest.approx(vp.dxf.width)
@@ -92,14 +92,14 @@ class TestPaperSpace:
         assert vp.dxf.height == 15
 
     def test_zoom_extents(self, psp):
-        zoom.extends(psp)
+        zoom.extents(psp)
         vp = psp.main_viewport()
         assert vp.dxf.center == (205, 155)
         assert vp.dxf.width == 400
         assert vp.dxf.height == 300
 
     def test_zoom_extents_factor_2(self, psp):
-        zoom.extends(psp, factor=2)
+        zoom.extents(psp, factor=2)
         vp = psp.main_viewport()
         assert vp.dxf.center == (205, 155)
         assert vp.dxf.width == 800
