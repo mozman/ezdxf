@@ -161,8 +161,6 @@ limitations.
 
 The returned `extents` is a :class:`ezdxf.math.BoundingBox` object.
 
-To set the initial view (zoom level) for the modelspace, see the next topic.
-
 Set Initial View/Zoom for the Modelspace
 ----------------------------------------
 
@@ -204,6 +202,7 @@ The :mod:`~ezdxf.zoom` module also works for paperspace layouts.
 
     The :mod:`ezdxf.zoom` module uses the :mod:`ezdxf.bbox` module to
     calculate the bounding boxes for DXF entities. Read the documentation for
-    the :mod:`~ezdxf.bbox` module to understand its limitations.
+    the :mod:`~ezdxf.bbox` module to understand its limitations and the
+    calculation for large documents can take a while!
 
 .. _header variables: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A
