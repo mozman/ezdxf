@@ -15,6 +15,17 @@ many DXF entities, but not for all. The bounding box calculation is based on the
     read this first: :ref:`Text Boundary Calculation`.
     TL;DR: Boundary boxes for text entities are **not accurate!**
 
+Unsupported DXF entities:
+
+    - All ACIS based types like BODY, 3DSOLID or REGION
+    - External references (XREF) and UNDERLAY object
+    - RAY and XRAY, extend into infinite
+    - ACAD_TABLE, no basic support - only preserved by `ezdxf`
+
+
+Unsupported entities are silently ignored, filtering of these DXF types is not
+necessary.
+
 The base type for bounding boxes is the :class:`~ezdxf.math.BoundingBox` class
 from the module :mod:`ezdxf.math`.
 
