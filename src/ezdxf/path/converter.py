@@ -60,7 +60,6 @@ def make_path(entity, segments: int = 1, level: int = 4) -> Path:
 
 @make_path.register(LWPolyline)
 def _from_lwpolyline(lwpolyline: LWPolyline, **kwargs) -> 'Path':
-    """ Returns a Path from a LWPolyline. """
     path = Path()
     tools.add_2d_polyline(
         path,
@@ -74,7 +73,6 @@ def _from_lwpolyline(lwpolyline: LWPolyline, **kwargs) -> 'Path':
 
 @make_path.register(Polyline)
 def _from_polyline(polyline: Polyline, **kwargs) -> 'Path':
-    """ Returns a Path from a 2D/3D Polyline. """
     if polyline.is_polygon_mesh or polyline.is_poly_face_mesh:
         raise TypeError('Unsupported DXF type PolyMesh or PolyFaceMesh')
 
@@ -106,7 +104,6 @@ def _from_polyline(polyline: Polyline, **kwargs) -> 'Path':
 @make_path.register(Helix)
 @make_path.register(Spline)
 def _from_spline(spline: Spline, **kwargs) -> 'Path':
-    """ Returns a Path from a Spline. """
     level = kwargs.get('level', 4)
     path = Path()
     tools.add_spline(path, spline.construction_tool(), level=level, reset=True)
@@ -115,7 +112,6 @@ def _from_spline(spline: Spline, **kwargs) -> 'Path':
 
 @make_path.register(Ellipse)
 def _from_ellipse(ellipse: Ellipse, **kwargs) -> 'Path':
-    """ Returns a Path from an Ellipse. """
     segments = kwargs.get('segments', 1)
     path = Path()
     tools.add_ellipse(path,
@@ -127,7 +123,6 @@ def _from_ellipse(ellipse: Ellipse, **kwargs) -> 'Path':
 
 @make_path.register(Line)
 def _from_line(line: Line, **kwargs) -> 'Path':
-    """ Returns a Path from a Line. """
     path = Path(line.dxf.start)
     path.line_to(line.dxf.end)
     return path
@@ -135,7 +130,6 @@ def _from_line(line: Line, **kwargs) -> 'Path':
 
 @make_path.register(Arc)
 def _from_arc(arc: Arc, **kwargs) -> 'Path':
-    """ Returns a Path from an Arc. """
     segments = kwargs.get('segments', 1)
     path = Path()
     radius = abs(arc.dxf.radius)
@@ -153,7 +147,6 @@ def _from_arc(arc: Arc, **kwargs) -> 'Path':
 
 @make_path.register(Circle)
 def _from_circle(circle: Circle, **kwargs) -> 'Path':
-    """ Returns a Path from a Circle. """
     segments = kwargs.get('segments', 1)
     path = Path()
     radius = abs(circle.dxf.radius)
@@ -171,7 +164,6 @@ def _from_circle(circle: Circle, **kwargs) -> 'Path':
 @make_path.register(Trace)
 @make_path.register(Solid)
 def _from_quadrilateral(solid: 'Solid', **kwargs) -> 'Path':
-    """ Returns a from a Solid, Trace or Face3d. """
     vertices = solid.wcs_vertices()
     return from_vertices(vertices, close=True)
 
