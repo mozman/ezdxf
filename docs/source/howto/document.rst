@@ -161,6 +161,8 @@ limitations.
 
 The returned `extents` is a :class:`ezdxf.math.BoundingBox` object.
 
+.. _set msp initial view:
+
 Set Initial View/Zoom for the Modelspace
 ----------------------------------------
 
@@ -188,8 +190,7 @@ Setting the initial view to the extents of all entities in the modelspace:
     msp = doc.modelspace()
     zoom.extents(msp)
 
-Setting the initial view to a the extents of just some entities in the
-modelspace:
+Setting the initial view to the extents of just some entities:
 
 .. code-block:: Python
 
@@ -200,9 +201,9 @@ The :mod:`~ezdxf.zoom` module also works for paperspace layouts.
 
 .. Important::
 
-    The :mod:`ezdxf.zoom` module uses the :mod:`ezdxf.bbox` module to
+    The :mod:`~ezdxf.zoom` module uses the :mod:`~ezdxf.bbox` module to
     calculate the bounding boxes for DXF entities. Read the documentation for
     the :mod:`~ezdxf.bbox` module to understand its limitations and the
-    calculation for large documents can take a while!
+    bounding box calculation for large documents can take a while!
 
 .. _header variables: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A
