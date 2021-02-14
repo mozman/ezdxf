@@ -8,7 +8,7 @@ Disassemble
 This module provide tools for the recursive decomposition of DXF entities into
 a flat stream of DXF entities and converting DXF entities into geometric
 primitives of :class:`~ezdxf.path.Path` and :class:`~ezdxf.render.mesh.MeshBuilder`
-objects encapsulated into intermediate :class:`AbstractPrimitive` classes.
+objects encapsulated into intermediate :class:`Primitive` classes.
 
 The :class:`~ezdxf.entities.Hatch` entity is special because this entity can
 not be reduced into as single geometric primitive. The :func:`make_primitive`
@@ -82,22 +82,22 @@ Entity Deconstruction
 ---------------------
 
 These functions disassemble DXF entities into simple geometric objects
-like meshes, paths or vertices. The :class:`AbstractPrimitive` is a simplified
+like meshes, paths or vertices. The :class:`Primitive` is a simplified
 intermediate class to use a common interface on various DXF entities.
 
-.. autofunction:: make_primitive(entity: DXFEntity, max_flattening_distance=None) -> AbstractPrimitive
+.. autofunction:: make_primitive(entity: DXFEntity, max_flattening_distance=None) -> Primitive
 
-.. autofunction:: to_primitives(entities: Iterable[DXFEntity], max_flattening_distance: float = None) -> Iterable[AbstractPrimitive]
+.. autofunction:: to_primitives(entities: Iterable[DXFEntity], max_flattening_distance: float = None) -> Iterable[Primitive]
 
-.. autofunction:: to_meshes(primitives: Iterable[AbstractPrimitive]) -> Iterable[MeshBuilder]
+.. autofunction:: to_meshes(primitives: Iterable[Primitive]) -> Iterable[MeshBuilder]
 
-.. autofunction:: to_paths(primitives: Iterable[AbstractPrimitive]) -> Iterable[Path]
+.. autofunction:: to_paths(primitives: Iterable[Primitive]) -> Iterable[Path]
 
-.. autofunction:: to_vertices(primitives: Iterable[AbstractPrimitive]) -> Iterable[Vec3]
+.. autofunction:: to_vertices(primitives: Iterable[Primitive]) -> Iterable[Vec3]
 
-.. autofunction:: to_control_vertices(primitives: Iterable[AbstractPrimitive]) -> Iterable[Vec3]
+.. autofunction:: to_control_vertices(primitives: Iterable[Primitive]) -> Iterable[Vec3]
 
-.. class:: AbstractPrimitive
+.. class:: Primitive
 
     Interface class for path/mesh primitives.
 
