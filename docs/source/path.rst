@@ -69,9 +69,36 @@ Factory Functions
 
 Functions to create :class:`Path` objects from other objects.
 
-.. autofunction:: has_make_path_support(entity: DXFEntity) -> bool
+.. function:: make_path(entity: DXFEntity) -> Path
 
-.. autofunction:: make_path(entity: DXFEntity) -> Path
+    Factory function to create a single :class:`Path` object from a DXF
+    entity. Supported DXF types:
+
+    - LINE
+    - CIRCLE
+    - ARC
+    - ELLIPSE
+    - SPLINE and HELIX
+    - LWPOLYLINE
+    - 2D and 3D POLYLINE
+    - SOLID, TRACE, 3DFACE
+    - IMAGE, WIPEOUT clipping path
+    - VIEWPORT clipping path
+
+    The HATCH entity consist of multiple boundary paths and is not convertible
+    into a single :class:`Path` object and therefore not supported by this
+    function.
+
+    :param entity: DXF entity
+    :param segments: minimal count of cubic Bézier-curves for elliptical arcs
+        like CIRCLE, ARC, ELLIPSE, see :meth:`Path.add_ellipse`
+    :param level: subdivide level for SPLINE approximation,
+        see :meth:`Path.add_spline`
+
+    :raises TypeError: for unsupported DXF types
+
+    .. versionadded:: 0.16
+
 
 .. autofunction:: from_hatch(hatch: Hatch) -> Iterable[Path]
 

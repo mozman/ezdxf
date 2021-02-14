@@ -3,10 +3,12 @@
 import pytest
 import math
 
-from ezdxf.path import Path, make_path, converter, Command, tools
+from ezdxf.path import (
+    Path, make_path, converter, Command, tools
+)
 from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P
 from ezdxf.entities.hatch import PolylinePath, EdgePath
-from ezdxf.entities import factory
+from ezdxf.entities import factory, DXFEntity, Polymesh
 
 
 def test_init():
@@ -147,6 +149,15 @@ def test_add_ellipse():
     tools.add_ellipse(path, ellipse, reset=False)
     assert path.start == (0, 0)
     assert path.end == (2, 0)
+
+
+def test_raises_type_error_for_unsupported_objects():
+    with pytest.raises(TypeError):
+        make_path(DXFEntity())
+    with pytest.raises(TypeError):
+        make_path(Polymesh.new(dxfattribs={'flags': Polymesh.POLYMESH}))
+    with pytest.raises(TypeError):
+        make_path(Polymesh.new(dxfattribs={'flags': Polymesh.POLYFACE}))
 
 
 def test_from_ellipse():

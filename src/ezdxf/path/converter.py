@@ -3,33 +3,32 @@
 from typing import (
     TYPE_CHECKING, List, Iterable, Union, Tuple, Optional, Dict, Callable,
 )
-
+from functools import singledispatch
 import enum
 import math
 from ezdxf.math import (
     Vec2, Vec3, Z_AXIS, NULLVEC, OCS, Bezier3P, Bezier4P,
     ConstructionEllipse, BSpline, have_bezier_curves_g1_continuity,
-    global_bspline_interpolation,
+    global_bspline_interpolation, Vertex,
 )
 from ezdxf.lldxf import const
-from ezdxf.entities import LWPolyline, Polyline, Hatch, Line, Spline
+from ezdxf.entities import (
+    LWPolyline, Polyline, Hatch, Line, Spline, Ellipse, Arc, Circle, Solid,
+    Trace, Face3d, Viewport, Image, Helix, Wipeout,
+)
 from .path import Path
 from .commands import Command
 from . import tools
 from .nesting import group_paths
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        Vertex, Ellipse, Arc, Circle, DXFEntity, Solid, Viewport, Image,
-    )
     from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
 
 __all__ = [
-    'make_path', 'has_make_path_support',
-    'to_lines', 'to_polylines3d', 'to_lwpolylines', 'to_polylines2d',
-    'to_hatches', 'to_bsplines_and_vertices', 'to_splines_and_polylines',
-    'from_hatch', 'from_hatch_boundary_path', 'from_vertices',
-    'from_matplotlib_path', 'from_qpainter_path',
+    'make_path', 'to_lines', 'to_polylines3d', 'to_lwpolylines',
+    'to_polylines2d', 'to_hatches', 'to_bsplines_and_vertices',
+    'to_splines_and_polylines', 'from_hatch', 'from_hatch_boundary_path',
+    'from_vertices', 'from_matplotlib_path', 'from_qpainter_path',
     'to_matplotlib_path', 'to_qpainter_path'
 ]
 
@@ -38,7 +37,29 @@ MIN_SEGMENTS = 4
 G1_TOL = 1e-4
 
 
-def _from_lwpolyline(lwpolyline: 'LWPolyline', **kwargs) -> 'Path':
+@singledispatch
+def make_path(entity, segments: int = 1, level: int = 4) -> Path:
+    """ Factory function to create a single :class:`Path` object from a DXF
+    entity.
+
+    Args:
+        entity: DXF entity
+        segments: minimal count of cubic Bézier-curves for elliptical arcs
+        level: subdivide level for SPLINE approximation
+
+    Raises:
+        TypeError: for unsupported DXF types
+
+    """
+    # Complete documentation is path.rst, because Sphinx auto-function
+    # renders for each overloaded function a signature, which is ugly
+    # and wrong signatures for multiple overloaded function
+    # e.g. 3 equal signatures for type Solid.
+    raise TypeError(f'unsupported DXF type: {entity.dxftype()}')
+
+
+@make_path.register(LWPolyline)
+def _from_lwpolyline(lwpolyline: LWPolyline, **kwargs) -> 'Path':
     """ Returns a Path from a LWPolyline. """
     path = Path()
     tools.add_2d_polyline(
@@ -51,12 +72,14 @@ def _from_lwpolyline(lwpolyline: 'LWPolyline', **kwargs) -> 'Path':
     return path
 
 
-def _from_polyline(polyline: 'Polyline', **kwargs) -> 'Path':
+@make_path.register(Polyline)
+def _from_polyline(polyline: Polyline, **kwargs) -> 'Path':
     """ Returns a Path from a 2D/3D Polyline. """
+    if polyline.is_polygon_mesh or polyline.is_poly_face_mesh:
+        raise TypeError('Unsupported DXF type PolyMesh or PolyFaceMesh')
+
     path = Path()
-    if len(polyline.vertices) == 0 or \
-            polyline.is_polygon_mesh or \
-            polyline.is_poly_face_mesh:
+    if len(polyline.vertices) == 0:
         return path
 
     if polyline.is_3d_polyline:
@@ -80,7 +103,9 @@ def _from_polyline(polyline: 'Polyline', **kwargs) -> 'Path':
     return path
 
 
-def _from_spline(spline: 'Spline', **kwargs) -> 'Path':
+@make_path.register(Helix)
+@make_path.register(Spline)
+def _from_spline(spline: Spline, **kwargs) -> 'Path':
     """ Returns a Path from a Spline. """
     level = kwargs.get('level', 4)
     path = Path()
@@ -88,7 +113,8 @@ def _from_spline(spline: 'Spline', **kwargs) -> 'Path':
     return path
 
 
-def _from_ellipse(ellipse: 'Ellipse', **kwargs) -> 'Path':
+@make_path.register(Ellipse)
+def _from_ellipse(ellipse: Ellipse, **kwargs) -> 'Path':
     """ Returns a Path from an Ellipse. """
     segments = kwargs.get('segments', 1)
     path = Path()
@@ -99,14 +125,16 @@ def _from_ellipse(ellipse: 'Ellipse', **kwargs) -> 'Path':
     return path
 
 
-def _from_line(line: 'Line', **kwargs) -> 'Path':
+@make_path.register(Line)
+def _from_line(line: Line, **kwargs) -> 'Path':
     """ Returns a Path from a Line. """
     path = Path(line.dxf.start)
     path.line_to(line.dxf.end)
     return path
 
 
-def _from_arc(arc: 'Arc', **kwargs) -> 'Path':
+@make_path.register(Arc)
+def _from_arc(arc: Arc, **kwargs) -> 'Path':
     """ Returns a Path from an Arc. """
     segments = kwargs.get('segments', 1)
     path = Path()
@@ -123,7 +151,8 @@ def _from_arc(arc: 'Arc', **kwargs) -> 'Path':
     return path
 
 
-def _from_circle(circle: 'Circle', **kwargs) -> 'Path':
+@make_path.register(Circle)
+def _from_circle(circle: Circle, **kwargs) -> 'Path':
     """ Returns a Path from a Circle. """
     segments = kwargs.get('segments', 1)
     path = Path()
@@ -138,12 +167,16 @@ def _from_circle(circle: 'Circle', **kwargs) -> 'Path':
     return path
 
 
+@make_path.register(Face3d)
+@make_path.register(Trace)
+@make_path.register(Solid)
 def _from_quadrilateral(solid: 'Solid', **kwargs) -> 'Path':
     """ Returns a from a Solid, Trace or Face3d. """
     vertices = solid.wcs_vertices()
     return from_vertices(vertices, close=True)
 
 
+@make_path.register(Viewport)
 def _from_viewport(vp: 'Viewport', **kwargs) -> Path:
     if vp.has_clipping_path():
         handle = vp.dxf.clipping_boundary_handle
@@ -158,80 +191,10 @@ def _from_viewport(vp: 'Viewport', **kwargs) -> Path:
     return from_vertices(vp.boundary_path(), close=True)
 
 
+@make_path.register(Wipeout)
+@make_path.register(Image)
 def _from_image(image: 'Image', **kwargs) -> Path:
     return from_vertices(image.boundary_path_wcs(), close=True)
-
-
-_FACTORIES = {
-    "ARC": _from_arc,
-    "CIRCLE": _from_circle,
-    "ELLIPSE": _from_ellipse,
-    "LINE": _from_line,
-    "LWPOLYLINE": _from_lwpolyline,
-    "POLYLINE": _from_polyline,
-    "SPLINE": _from_spline,
-    "HELIX": _from_spline,
-    "SOLID": _from_quadrilateral,
-    "TRACE": _from_quadrilateral,
-    "3DFACE": _from_quadrilateral,
-    "VIEWPORT": _from_viewport,
-    "IMAGE": _from_image,
-    "WIPEOUT": _from_image,
-}
-
-
-def has_make_path_support(entity: 'DXFEntity') -> bool:
-    """ Returns ``True`` if the DXF `entity` is convertible into a :class:`Path`
-    object by the :func:`make_path` function.
-    Returns ``False`` for the HATCH entity, because it needs a special
-    treatment, see :func:`from_hatch`.
-
-    .. versionadded:: 0.16
-
-    """
-    dxftype = entity.dxftype()
-    if dxftype == "POLYLINE":
-        # PolygonMesh and PolyFaceMesh is not supported by Path()
-        return entity.is_2d_polyline() or entity.is_3d_polyline()
-    else:
-        return dxftype in _FACTORIES
-
-
-def make_path(entity: 'DXFEntity', segments: int = 1, level: int = 4) -> Path:
-    """ Factory function to create a single :class:`Path` object from a DXF
-    entity. Supported DXF types:
-
-    - LINE
-    - CIRCLE
-    - ARC
-    - ELLIPSE
-    - SPLINE and HELIX
-    - LWPOLYLINE
-    - 2D and 3D POLYLINE
-    - SOLID, TRACE, 3DFACE
-    - IMAGE, WIPEOUT clipping path
-    - VIEWPORT clipping path
-
-    The HATCH entity consist of multiple boundary paths and is not convertible
-    into a single :class:`Path` object and therefore not supported by this
-    function.
-
-    Args:
-        entity: DXF entity
-        segments: minimal count of cubic Bézier-curves for elliptical arcs:
-            CIRCLE, ARC, ELLIPSE, see :meth:`Path.add_ellipse`
-        level: subdivide level for SPLINE approximation,
-            see :meth:`Path.add_spline`
-
-    .. versionadded:: 0.16
-
-    """
-    dxftype = entity.dxftype()
-    try:
-        converter = _FACTORIES[dxftype]
-    except KeyError:
-        raise TypeError(f'Unsupported DXF type {dxftype}')
-    return converter(entity, segments=segments, level=level)
 
 
 def from_hatch(hatch: Hatch) -> Iterable[Path]:
