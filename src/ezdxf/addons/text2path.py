@@ -2,6 +2,7 @@
 #  License: MIT License
 from typing import Union, List, Dict, Tuple
 import math
+import enum
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties, findfont
 
@@ -40,12 +41,16 @@ def make_paths_from_str(s: str,
     if len(s) == 0:
         return []
     font_properties, font_measurements = _get_font_data(font)
-    scaled_size = size / font_measurements.cap_height
-    scaled_fm = font_measurements.scale_from_baseline(scaled_size)
-    paths = _str_to_paths(s, font_properties, scaled_size)
+    # scale font rendering units to drawing units:
+    render_size = size / font_measurements.cap_height
+    paths = _str_to_paths(s, font_properties, render_size)
     bbox = path.bbox(paths, precise=False)
     halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
-    matrix = get_alignment_transformation(scaled_fm, bbox, halign, valign)
+
+    # Text is rendered in drawing units,
+    # therefore do alignment in drawing units:
+    draw_units_fm = font_measurements.scale_from_baseline(size)
+    matrix = get_alignment_transformation(draw_units_fm, bbox, halign, valign)
 
     stretch_x = 1.0
     stretch_y = 1.0
@@ -91,8 +96,8 @@ def get_alignment_transformation(fm: fonts.FontMeasurements, bbox: BoundingBox,
         shift_x = -bbox.center.x
     else:
         raise ValueError(f'invalid halign argument: {halign}')
-    cap_height = max(fm.cap_height, bbox.extmax.y)
-    descender_height = max(fm.descender_height, abs(bbox.extmin.y))
+    cap_height = fm.cap_height
+    descender_height = fm.descender_height
     if valign == const.BASELINE:
         shift_y = 0
     elif valign == const.TOP:
@@ -189,7 +194,7 @@ def make_paths_from_entity(entity: AnyText) -> List[Path]:
             Matrix44.translate(location.x, location.y, location.z),
         )
         ocs = entity.ocs()
-        if ocs.transform:
+        if ocs.transform:  # to WCS
             m *= ocs.matrix
         return m
 
@@ -221,39 +226,78 @@ def make_paths_from_entity(entity: AnyText) -> List[Path]:
 def make_hatches_from_entity(entity: AnyText) -> List[Hatch]:
     """ Convert text content from DXF entities TEXT and ATTRIB into a
     list of virtual :class:`~ezdxf.entities.Hatch` entities.
-    The hatches are located at the location of the source entity, but don't
-    expect a 100% match compared to CAD applications.
+    The hatches are placed at the same location as the source entity and have
+    the same DXF attributes as the source entity.
+    Don't expect a 100% match compared to CAD applications.
 
     """
-    return []
+    extrusion = entity.dxf.extrusion
+    attribs = entity.graphic_properties()
+    paths = make_paths_from_entity(entity)
+    return list(path.to_hatches(
+        paths,
+        edge_path=True,
+        extrusion=extrusion,
+        dxfattribs=attribs,
+    ))
+
+
+@enum.unique
+class ExplodeType(enum.IntEnum):
+    HATCHES = 1
+    SPLINES = 2
+    LWPOLYLINES = 4
 
 
 def explode(entity: AnyText, kind: int = 1, target=None) -> EntityQuery:
     """ Explode the text content of DXF entities TEXT and ATTRIB into
-    LWPOLYLINE entities as outlines as HATCH entities as fillings.
-    The target layout is given by the `target` argument or the same layout as
-    the source entity reside, if `target`is ``None``.
+    SPLINE and 3D POLYLINE entities or approximated LWPOLYLINE entities
+    as outlines as HATCH entities as fillings.
+    The target layout is given by the `target` argument, if `target` is ``None``
+    the target layout is the source layout of the text entity.
 
-    The `kind` argument defines the DXF types to create:
+    The `kind` argument defines the DXF types to create as bit flags, e.g. 1+2
+    to get HATCHES as filling and SPLINES and POLYLINES as outline:
 
-    === ===============================================
-    1   :class:`~ezdxf.entities.Hatch` as filling
-    2   :class:`~ezdxf.entities.LWPolyline` as outline
-    3   :class:`~ezdxf.entities.Hatch` and :class:`~ezdxf.entities.LWPolyline`
-    === ===============================================
+    === ==============================
+    1   :class:`~ezdxf.entities.Hatch` entities as filling
+    2   :class:`~ezdxf.entities.Spline` and 3D :class:`~ezdxf.entities.Polyline`
+        entities as outline
+    4   :class:`~ezdxf.entities.LWPolyline` entities as outline
+    === ==============================
 
     Returns the created DXF entities as an :class:`~ezdxf.query.EntityQuery`
-    object.
+    object. The source entity will be destroyed.
 
-    The source entity will be destroyed and don't expect a 100% match compared
-    to CAD applications.
+    Don't expect a 100% match compared to CAD applications.
 
     Args:
         entity: TEXT or ATTRIB entity to explode
-        kind: kind of entities to create, 1=HATCH, 2=LWPOLYLINE, 3=BOTH
+        kind: kind of entities to create, 1=HATCHES, 2=SPLINES, 4=LWPOLYLINES
+            as bit flags
         target: target layout for new created DXF entities, ``None`` for the
             same layout as the source entity.
 
     """
+    extrusion = entity.dxf.extrusion
+    attribs = entity.graphic_properties()
     entities = []
+
+    if kind & ExplodeType.HATCHES:
+        entities.extend(make_hatches_from_entity(entity))
+    elif kind & (ExplodeType.SPLINES + ExplodeType.LWPOLYLINES):
+        paths = make_paths_from_entity(entity)
+        if kind & ExplodeType.SPLINES:
+            entities.extend(path.to_splines_and_polylines(
+                paths, dxfattribs=attribs))
+        elif kind & ExplodeType.LWPOLYLINES:
+            entities.extend(path.to_lwpolylines(
+                paths, extrusion=extrusion, dxfattribs=attribs))
+
+    target = target or entity.get_layout()
+    entity.destroy()
+
+    if target is not None:
+        for e in entities:
+            target.add_entity(e)
     return EntityQuery(entities)
