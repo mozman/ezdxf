@@ -14,6 +14,7 @@ from ezdxf.tools.fonts import FontFace
 from ezdxf.addons import text2path
 from ezdxf.path import Path
 from ezdxf import path
+from ezdxf.entities import Text, Attrib
 
 
 def _to_paths(s, f='Arial'):
@@ -183,8 +184,69 @@ class TestMakeHatchesFromString:
             "text height should be unscaled"
 
 
+def make_text(text, location, alignment, height=1.0):
+    text = Text.new(dxfattribs={
+        'text': text,
+        'height': height,
+    })
+    text.set_pos(location, align=alignment)
+    return text
+
+
+def get_bbox(text):
+    paths = text2path.make_paths_from_entity(text)
+    return path.bbox(paths)
+
+
 class TestMakePathsFromEntity:
-    pass
+    def test_text_returns_paths(self):
+        text = make_text("TEXT", (0, 0), 'LEFT')
+        paths = text2path.make_paths_from_entity(text)
+        assert len(paths) == 4
+        assert isinstance(paths[0], Path)
+
+    def test_text_height(self):
+        text = make_text("TEXT", (0, 0), 'LEFT', height=1.5)
+        bbox = get_bbox(text)
+        assert bbox.size.y == pytest.approx(1.5)
+
+    def test_path_location_left(self):
+        text = make_text("TEXT", (7, 7), 'LEFT')
+        bbox = get_bbox(text)
+        # font rendering is tricky, base offsets depend on the rendering engine
+        # and on extended font metrics, ...
+        assert bbox.extmin.x == pytest.approx(7, abs=0.1)
+
+    def test_path_location_center(self):
+        text = make_text("TEXT", (7, 7), 'CENTER')
+        bbox = get_bbox(text)
+        assert bbox.center.x == pytest.approx(7)
+
+    def test_path_location_right(self):
+        text = make_text("TEXT", (7, 7), 'RIGHT')
+        bbox = get_bbox(text)
+        assert bbox.extmax.x == pytest.approx(7)
+
+    def test_path_location_baseline(self):
+        text = make_text("TEXT", (7, 7), 'CENTER')
+        bbox = get_bbox(text)
+        assert bbox.extmin.y == pytest.approx(7)
+
+    def test_path_location_bottom(self):
+        text = make_text("j", (7, 7), 'BOTTOM_CENTER')
+        bbox = get_bbox(text)
+        # bottom border of descender should be 7, but ...
+        assert bbox.extmin.y == pytest.approx(7, abs=0.1)
+
+    def test_path_location_middle(self):
+        text = make_text("X", (7, 7), 'MIDDLE_CENTER')
+        bbox = get_bbox(text)
+        assert bbox.center.y == pytest.approx(7)
+
+    def test_path_location_top(self):
+        text = make_text("X", (7, 7), 'TOP_CENTER')
+        bbox = get_bbox(text)
+        assert bbox.extmax.y == pytest.approx(7)
 
 
 class TestMakeHatchesFromEntity:
