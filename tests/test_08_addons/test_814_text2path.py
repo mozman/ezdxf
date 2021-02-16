@@ -13,8 +13,8 @@ noto_sans_sc_not_found = 'Noto' not in findfont(
 from ezdxf.tools.fonts import FontFace
 from ezdxf.addons import text2path
 from ezdxf.path import Path
-from ezdxf import path
-from ezdxf.entities import Text, Attrib
+from ezdxf import path, bbox
+from ezdxf.entities import Text, Hatch
 
 
 def _to_paths(s, f='Arial'):
@@ -193,64 +193,80 @@ def make_text(text, location, alignment, height=1.0):
     return text
 
 
-def get_bbox(text):
+def get_path_bbox(text):
     paths = text2path.make_paths_from_entity(text)
     return path.bbox(paths)
 
 
-class TestMakePathsFromEntity:
-    def test_text_returns_paths(self):
-        text = make_text("TEXT", (0, 0), 'LEFT')
-        paths = text2path.make_paths_from_entity(text)
-        assert len(paths) == 4
-        assert isinstance(paths[0], Path)
+def get_hatches_bbox(text):
+    hatches = text2path.make_hatches_from_entity(text)
+    return bbox.extents(hatches)
 
-    def test_text_height(self):
+
+@pytest.fixture(params=[get_path_bbox, get_hatches_bbox])
+def get_bbox(request):
+    return request.param
+
+
+class TestMakePathsFromEntity:
+    """ Test Paths (and Hatches) from TEXT entities.
+
+    make_hatches_from_entity() is basically make_paths_from_entity(), but
+    returns Hatch entities instead of Path objects.
+
+    """
+    @pytest.mark.parametrize("builder, type_", [
+        (text2path.make_paths_from_entity, Path),
+        (text2path.make_hatches_from_entity, Hatch),
+    ])
+    def test_text_returns_correct_types(self, builder, type_):
+        text = make_text("TEXT", (0, 0), 'LEFT')
+        objects = builder(text)
+        assert len(objects) == 4
+        assert isinstance(objects[0], type_)
+
+    def test_text_height(self, get_bbox):
         text = make_text("TEXT", (0, 0), 'LEFT', height=1.5)
         bbox = get_bbox(text)
         assert bbox.size.y == pytest.approx(1.5)
 
-    def test_path_location_left(self):
+    def test_alignment_left(self, get_bbox):
         text = make_text("TEXT", (7, 7), 'LEFT')
         bbox = get_bbox(text)
         # font rendering is tricky, base offsets depend on the rendering engine
         # and on extended font metrics, ...
         assert bbox.extmin.x == pytest.approx(7, abs=0.1)
 
-    def test_path_location_center(self):
+    def test_alignment_center(self, get_bbox):
         text = make_text("TEXT", (7, 7), 'CENTER')
         bbox = get_bbox(text)
         assert bbox.center.x == pytest.approx(7)
 
-    def test_path_location_right(self):
+    def test_alignment_right(self, get_bbox):
         text = make_text("TEXT", (7, 7), 'RIGHT')
         bbox = get_bbox(text)
         assert bbox.extmax.x == pytest.approx(7)
 
-    def test_path_location_baseline(self):
+    def test_alignment_baseline(self, get_bbox):
         text = make_text("TEXT", (7, 7), 'CENTER')
         bbox = get_bbox(text)
         assert bbox.extmin.y == pytest.approx(7)
 
-    def test_path_location_bottom(self):
+    def test_alignment_bottom(self, get_bbox):
         text = make_text("j", (7, 7), 'BOTTOM_CENTER')
         bbox = get_bbox(text)
         # bottom border of descender should be 7, but ...
         assert bbox.extmin.y == pytest.approx(7, abs=0.1)
 
-    def test_path_location_middle(self):
+    def test_alignment_middle(self, get_bbox):
         text = make_text("X", (7, 7), 'MIDDLE_CENTER')
         bbox = get_bbox(text)
         assert bbox.center.y == pytest.approx(7)
 
-    def test_path_location_top(self):
+    def test_alignment_top(self, get_bbox):
         text = make_text("X", (7, 7), 'TOP_CENTER')
         bbox = get_bbox(text)
         assert bbox.extmax.y == pytest.approx(7)
-
-
-class TestMakeHatchesFromEntity:
-    pass
 
 
 class TestExplode:
