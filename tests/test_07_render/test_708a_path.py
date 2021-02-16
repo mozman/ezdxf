@@ -430,6 +430,7 @@ def test_control_vertices(p1):
     ])
     path = Path()
     assert len(list(path.control_vertices())) == 0
+    assert list(path.control_vertices()) == list(path.approximate(2))
     path = converter.from_vertices([(0, 0), (1, 0)])
     assert len(list(path.control_vertices())) == 2
 

@@ -17,6 +17,11 @@ is done by the :mod:`ezdxf.bbox` module. Read the associated documentation to
 understand the limitations of the :mod:`ezdxf.bbox` module.
 Tl;dr The extents detection is **slow** and **not accurate**.
 
+Because the ZOOM operations in CAD applications are not that precise, then
+zoom functions of this module uses the fast bounding box calculation mode
+of the :mod:`bbox` module, which means the argument `flatten` is always
+``False`` for :func:`~ezdxf.bbox.extents` function calls.
+
 The region displayed by CAD applications also depends on the aspect ratio of
 the application window, which is not available to `ezdxf`, therefore the
 viewport size is just an educated guess of an aspect ratio of 2:1 (16:9 minus

@@ -2,7 +2,7 @@
 #  License: MIT License
 from typing import TYPE_CHECKING, Iterable, Dict, Optional
 from ezdxf import disassemble
-from ezdxf.math import BoundingBox
+from ezdxf.math import BoundingBox, Vec3
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity
@@ -15,6 +15,7 @@ class Cache:
         uuid: use UUIDs for virtual entities
 
     """
+
     def __init__(self, uuid=False):
         self._boxes: Dict[str, BoundingBox] = dict()
         self._use_uuid = bool(uuid)
@@ -77,14 +78,24 @@ class Cache:
             return key
 
 
-def multi_recursive(entities: Iterable['DXFEntity'],
+def multi_recursive(entities: Iterable['DXFEntity'], *,
+                    flatten: bool = True,
                     cache: Cache = None) -> Iterable[BoundingBox]:
     """ Yields all bounding boxes for the given `entities` **or** all bounding
     boxes for their sub entities. If an entity (INSERT) has sub entities, only
     the bounding boxes of these sub entities will be yielded, **not** the
     bounding box of entity (INSERT) itself.
 
+    Calculate bounding boxes from flattened curves, if argument `flatten` is
+    ``True``, else from control points.
+
     """
+
+    def vertices(p: disassemble.Primitive) -> Iterable[Vec3]:
+        if not flatten:
+            return disassemble.to_control_vertices([p])
+        return primitive.vertices()
+
     flat_entities = disassemble.recursive_decompose(entities)
     primitives = disassemble.to_primitives(flat_entities)
     for primitive in primitives:
@@ -95,32 +106,44 @@ def multi_recursive(entities: Iterable['DXFEntity'],
         if cache is not None:
             box = cache.get(entity)
             if box is None:
-                box = BoundingBox(primitive.vertices())
+                box = BoundingBox(vertices(primitive))
                 if box.has_data:
                     cache.store(entity, box)
         else:
-            box = BoundingBox(primitive.vertices())
+            box = BoundingBox(vertices(primitive))
 
         if box.has_data:
             yield box
 
 
-def extents(entities: Iterable['DXFEntity'],
+def extents(entities: Iterable['DXFEntity'], *,
+            flatten: bool = True,
             cache: Cache = None) -> BoundingBox:
-    """ Returns a single bounding box for all given `entities`. """
+    """ Returns a single bounding box for all given `entities`.
+
+    Calculate bounding boxes from flattened curves, if argument `flatten` is
+    ``True``, else from control points.
+
+    """
     _extends = BoundingBox()
-    for box in multi_flat(entities, cache):
+    for box in multi_flat(entities, flatten=flatten, cache=cache):
         _extends.extend(box)
     return _extends
 
 
-def multi_flat(entities: Iterable['DXFEntity'],
+def multi_flat(entities: Iterable['DXFEntity'], *,
+               flatten: bool = True,
                cache: Cache = None) -> Iterable[BoundingBox]:
-    """ Yields a bounding box for each of the given `entities`. """
+    """ Yields a bounding box for each of the given `entities`.
+
+    Calculate bounding boxes from flattened curves, if argument `flatten` is
+    ``True``, else from control points.
+
+    """
 
     def extends_(entities_: Iterable['DXFEntity']) -> BoundingBox:
         _extends = BoundingBox()
-        for _box in multi_recursive(entities_, cache):
+        for _box in multi_recursive(entities_, flatten=flatten, cache=cache):
             _extends.extend(_box)
         return _extends
 

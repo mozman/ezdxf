@@ -54,7 +54,7 @@ def test_cache_usage_without_handles(points1):
     # Entities in VirtualLayouts have no handles:
     cache = bbox.Cache()
     for _ in range(10):
-        bbox.extents(points1, cache)
+        bbox.extents(points1, cache=cache)
     assert cache.hits == 0
 
 
@@ -62,7 +62,7 @@ def test_cache_usage_with_uuids(points1):
     # Entities in VirtualLayouts have no handles:
     cache = bbox.Cache(uuid=True)
     for _ in range(10):
-        bbox.extents(points1, cache)
+        bbox.extents(points1, cache=cache)
     assert cache.hits == 18
 
 
@@ -75,7 +75,7 @@ def msp_solids():
 def test_cache_usage_for_flat_multi_boxes(msp_solids, func):
     cache = bbox.Cache()
     for _ in range(10):
-        list(func(msp_solids, cache))
+        list(func(msp_solids, cache=cache))
 
     # This works because flat processing has not to yield bounding boxes for
     # sub entities, caching top level bounding boxes works well.
@@ -86,7 +86,7 @@ def test_cache_usage_for_flat_multi_boxes(msp_solids, func):
 def test_cache_usage_for_recreation_on_the_fly(msp_solids):
     cache = bbox.Cache(uuid=True)
     for _ in range(10):
-        list(bbox.multi_recursive(msp_solids, cache))
+        list(bbox.multi_recursive(msp_solids, cache=cache))
 
     # This does not work well, because recursive processing has to yield the
     # bounding boxes for all sub entities. These sub entities are created on the
@@ -107,7 +107,7 @@ def test_cache_usage_for_reused_virtual_entities(msp_solids, func):
     # only created once:
     entities = list(disassemble.recursive_decompose(msp_solids))
     for _ in range(10):
-        list(func(entities, cache))
+        list(func(entities, cache=cache))
 
     # This does not work well by "handle only" usage, because 'entities' contains
     # virtual entities which have no handle and therefore are not cached:
@@ -128,7 +128,7 @@ def test_cache_usage_with_uuids_for_reused_virtual_entities(msp_solids, func):
     # only created once:
     entities = list(disassemble.recursive_decompose(msp_solids))
     for _ in range(10):
-        list(func(entities, cache))
+        list(func(entities, cache=cache))
 
     # This works, because virtual entities are cached by UUID
     # multi_flat and extents, have a second access stage: 2x2 misses, but

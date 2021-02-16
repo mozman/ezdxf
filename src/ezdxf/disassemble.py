@@ -585,7 +585,8 @@ def to_control_vertices(primitives: Iterable[Primitive]) -> Iterable[
 
     """
     for prim in primitives:
-        if prim.path is not None:
+        # POINT has only a start point and yields from vertices()!
+        if prim.path:
             yield from prim.path.control_vertices()
         else:
             yield from prim.vertices()

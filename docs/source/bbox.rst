@@ -32,6 +32,10 @@ from the module :mod:`ezdxf.math`.
 The `entities` iterable as input can be the whole modelspace, an entity
 query or any iterable container of DXF entities.
 
+The Calculation of bounding boxes of curves is done by flattening the curve by
+default, set argument `flatten` to ``False`` to speedup the bounding box
+calculation by accepting less precision for curved objects.
+
 The **optional** caching object :class:`Cache` has to be instantiated by the
 user, this is only useful if the same entities will be processed multiple times.
 
@@ -44,18 +48,18 @@ Example usage with caching:
     msp = doc.modelspace()
     cache = bbox.Cache()
     # get overall bounding box
-    first_bbox = bbox.extents(msp, cache)
+    first_bbox = bbox.extents(msp, cache=cache)
     # bounding box of all LINE entities
-    second_bbox = bbox.extend(msp.query("LINE"), cache)
+    second_bbox = bbox.extend(msp.query("LINE"), cache=cache)
 
 Functions
 ---------
 
-.. autofunction:: extents(entities: Iterable[DXFEntity], cache: Cache=None) -> BoundingBox
+.. autofunction:: extents(entities: Iterable[DXFEntity], *, flatten=True, cache: Cache=None) -> BoundingBox
 
-.. autofunction:: multi_flat(entities: Iterable[DXFEntity] cache: Cache=None) -> Iterable[BoundingBox]
+.. autofunction:: multi_flat(entities: Iterable[DXFEntity], *, flatten=True, cache: Cache=None) -> Iterable[BoundingBox]
 
-.. autofunction:: multi_recursive(entities: Iterable[DXFEntity] cache: Cache=None) -> Iterable[BoundingBox]
+.. autofunction:: multi_recursive(entities: Iterable[DXFEntity], *, flatten=True, cache: Cache=None) -> Iterable[BoundingBox]
 
 Caching Strategies
 ------------------

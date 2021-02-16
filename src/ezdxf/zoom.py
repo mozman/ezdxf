@@ -41,7 +41,7 @@ def zoom_to_entities(layout: Layout, entities: Iterable[DXFEntity], factor):
         main_viewport = layout.main_viewport()
         if main_viewport is not None:
             entities = (e for e in entities if e is not main_viewport)
-    extents = bbox.extents(entities)
+    extents = bbox.extents(entities, flatten=False)
     if extents.has_data:
         center(layout, extents.center, extents.size * factor)
 
