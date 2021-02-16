@@ -195,7 +195,7 @@ def make_text(text, location, alignment, height=1.0):
 
 def get_path_bbox(text):
     paths = text2path.make_paths_from_entity(text)
-    return path.bbox(paths)
+    return path.bbox(paths, precise=False)
 
 
 def get_hatches_bbox(text):
@@ -213,6 +213,10 @@ class TestMakePathsFromEntity:
 
     make_hatches_from_entity() is basically make_paths_from_entity(), but
     returns Hatch entities instead of Path objects.
+
+    Important: Don't use text with top or bottom curves for testing ("S", "O").
+    The Path bounding box calculation uses the "fast" method by checking only
+    the curve control points, which are outside the curve borders.
 
     """
     @pytest.mark.parametrize("builder, type_", [
