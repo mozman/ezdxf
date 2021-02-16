@@ -99,22 +99,22 @@ def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> List[Path]:
     return transform_paths(paths, t)
 
 
-def bbox(paths: Iterable[Path], precise=True,
+def bbox(paths: Iterable[Path], flatten=True,
          distance: float = 0.01,
          segments: int = 16) -> BoundingBox:
     """ Returns the :class:`~ezdxf.math.BoundingBox` for the given paths.
 
     Args:
         paths: iterable of :class:`~ezdxf.path.Path` objects
-        precise: ``True`` for bounding box of the flattened path and ``False``
-            for bounding box of the control vertices.
+        flatten: ``True`` for bounding box from the flattened path and ``False``
+            for bounding box from the control vertices.
         distance: flattening distance, default is 0.01
         segments: minimal segment count for flattening
 
     """
     box = BoundingBox()
     for p in paths:
-        if precise:
+        if flatten:
             box.extend(p.flattening(distance, segments=segments))
         else:
             box.extend(p.control_vertices())
@@ -146,7 +146,7 @@ def fit_paths_into_box(paths: Iterable[Path],
     if len(paths) == 0:
         return paths
     if source_box is None:
-        current_box = bbox(paths, precise=False)
+        current_box = bbox(paths, flatten=False)
     else:
         current_box = source_box
     if not current_box.has_data or current_box.size == (0, 0, 0):

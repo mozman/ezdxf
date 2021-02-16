@@ -147,11 +147,11 @@ class TestBoundingBox:
         return p
 
     def test_not_precise_box(self, quadratic):
-        result = bbox([quadratic], precise=False)
+        result = bbox([quadratic], flatten=False)
         assert result.extmax.y == pytest.approx(1)  # control point
 
     def test_precise_box(self, quadratic):
-        result = bbox([quadratic], precise=True)
+        result = bbox([quadratic], flatten=True)
         assert result.extmax.y == pytest.approx(0.5)  # parabola
 
 

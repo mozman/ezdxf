@@ -195,7 +195,7 @@ def make_text(text, location, alignment, height=1.0):
 
 def get_path_bbox(text):
     paths = text2path.make_paths_from_entity(text)
-    return path.bbox(paths, precise=False)
+    return path.bbox(paths, flatten=False)
 
 
 def get_hatches_bbox(text):
