@@ -22,6 +22,8 @@ G1_TOL = 1e-4
 
 
 class Path(abc.Sequence):
+    __slots__ = ('_start', '_commands')
+
     def __init__(self, start: 'Vertex' = NULLVEC):
         self._start = Vec3(start)
         self._commands: List[PathElement] = []
@@ -121,7 +123,7 @@ class Path(abc.Sequence):
         vertices.
         """
         if len(self) == 0:
-            return Path()
+            return Path(self.start)
 
         path = Path(start=self.end)
         for index in range(len(self) - 1, -1, -1):
