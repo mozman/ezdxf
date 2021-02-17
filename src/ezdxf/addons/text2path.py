@@ -256,13 +256,14 @@ def make_hatches_from_entity(entity: AnyText) -> List[Hatch]:
 
 
 @enum.unique
-class ExplodeType(enum.IntEnum):
+class Kind(enum.IntEnum):
     HATCHES = 1
     SPLINES = 2
     LWPOLYLINES = 4
 
 
-def explode(entity: AnyText, kind: int = 1, target=None) -> EntityQuery:
+def explode(entity: AnyText, kind: int = Kind.HATCHES,
+            target=None) -> EntityQuery:
     """ Explode the text content of DXF entities TEXT and ATTRIB into
     SPLINE and 3D POLYLINE entities or approximated LWPOLYLINE entities
     as outlines as HATCH entities as fillings.
@@ -297,14 +298,14 @@ def explode(entity: AnyText, kind: int = 1, target=None) -> EntityQuery:
     attribs = entity.graphic_properties()
     entities = []
 
-    if kind & ExplodeType.HATCHES:
+    if kind & Kind.HATCHES:
         entities.extend(make_hatches_from_entity(entity))
-    if kind & (ExplodeType.SPLINES + ExplodeType.LWPOLYLINES):
+    if kind & (Kind.SPLINES + Kind.LWPOLYLINES):
         paths = make_paths_from_entity(entity)
-        if kind & ExplodeType.SPLINES:
+        if kind & Kind.SPLINES:
             entities.extend(path.to_splines_and_polylines(
                 paths, dxfattribs=attribs))
-        if kind & ExplodeType.LWPOLYLINES:
+        if kind & Kind.LWPOLYLINES:
             entities.extend(path.to_lwpolylines(
                 paths, extrusion=extrusion, dxfattribs=attribs))
 

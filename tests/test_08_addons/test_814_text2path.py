@@ -319,6 +319,9 @@ class TestMakePathsFromEntity:
         assert bbox_hor.size.y == bbox_vert.size.x
 
 
+Kind = text2path.Kind
+
+
 class TestExplode:
     @pytest.fixture
     def text(self):
@@ -331,32 +334,33 @@ class TestExplode:
 
     def test_explode_entity_into_layout(self, text):
         layout = VirtualLayout()
-        entities = text2path.explode(text, kind=4, target=layout)
+        entities = text2path.explode(text, kind=Kind.LWPOLYLINES, target=layout)
         assert len(entities) == len(layout), \
             "expected all entities added to the target layout"
 
     def test_explode_entity_into_the_void(self, text):
         assert text.get_layout() is None, "source entity should not have a layout"
-        entities = text2path.explode(text, kind=4, target=None)
+        entities = text2path.explode(text, kind=Kind.LWPOLYLINES, target=None)
         assert len(entities) == 4, "explode should work without a target layout"
 
     def test_explode_entity_as_hatches(self, text):
-        entities = text2path.explode(text, kind=1)
+        entities = text2path.explode(text, kind=Kind.HATCHES)
         types = {e.dxftype() for e in entities}
         assert types == {'HATCH'}
 
     def test_explode_entity_as_splines_and_polylines(self, text):
-        entities = text2path.explode(text, kind=2)
+        entities = text2path.explode(text, kind=Kind.SPLINES)
         types = {e.dxftype() for e in entities}
         assert types == {'SPLINE', 'POLYLINE'}
 
     def test_explode_entity_as_lwpolylines(self, text):
-        entities = text2path.explode(text, kind=4)
+        entities = text2path.explode(text, kind=Kind.LWPOLYLINES)
         types = {e.dxftype() for e in entities}
         assert types == {'LWPOLYLINE'}
 
     def test_explode_entity_to_all_types_at_once(self, text):
-        entities = text2path.explode(text, kind=1 + 2 + 4)
+        entities = text2path.explode(
+            text, kind=Kind.HATCHES + Kind.SPLINES + Kind.LWPOLYLINES)
         types = {e.dxftype() for e in entities}
         assert types == {'LWPOLYLINE', 'SPLINE', 'POLYLINE', 'HATCH'}
 
