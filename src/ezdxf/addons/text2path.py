@@ -16,7 +16,7 @@ from ezdxf.query import EntityQuery
 
 __all__ = [
     "make_paths_from_str", "make_hatches_from_str", "make_paths_from_entity",
-    "make_hatches_from_entity", "explode",
+    "make_hatches_from_entity", "virtual_entities", "explode", "Kind"
 ]
 
 AnyText = Union[Text, Attrib]
@@ -170,8 +170,7 @@ def make_paths_from_entity(entity: AnyText) -> List[Path]:
     """ Convert text content from DXF entities TEXT and ATTRIB into a
     list of :class:`~ezdxf.path.Path` objects. All paths are returned in a
     single list.
-    The paths are located at the location of the source entity, but don't expect
-    a 100% match compared to CAD applications.
+    The paths are located at the location of the source entity.
 
     """
 
@@ -240,7 +239,6 @@ def make_hatches_from_entity(entity: AnyText) -> List[Hatch]:
     list of virtual :class:`~ezdxf.entities.Hatch` entities.
     The hatches are placed at the same location as the source entity and have
     the same DXF attributes as the source entity.
-    Don't expect a 100% match compared to CAD applications.
 
     """
     check_entity_type(entity)
@@ -257,40 +255,36 @@ def make_hatches_from_entity(entity: AnyText) -> List[Hatch]:
 
 @enum.unique
 class Kind(enum.IntEnum):
+    """ The :class:`Kind` enum defines the DXF types to create as bit flags,
+    e.g. 1+2 to get HATCHES as filling and SPLINES and POLYLINES as outline:
+
+    === =========== ==============================
+    Int Enum        Description
+    === =========== ==============================
+    1   HATCHES     :class:`~ezdxf.entities.Hatch` entities as filling
+    2   SPLINES     :class:`~ezdxf.entities.Spline` and 3D :class:`~ezdxf.entities.Polyline`
+                    entities as outline
+    4   LWPOLYLINES :class:`~ezdxf.entities.LWPolyline` entities as approximated
+                    (flattened) outline
+    === =========== ==============================
+
+    """
     HATCHES = 1
     SPLINES = 2
     LWPOLYLINES = 4
 
 
-def explode(entity: AnyText, kind: int = Kind.HATCHES,
-            target=None) -> EntityQuery:
-    """ Explode the text content of DXF entities TEXT and ATTRIB into
+def virtual_entities(entity: AnyText, kind: int = Kind.HATCHES) -> EntityQuery:
+    """ Convert the text content of DXF entities TEXT and ATTRIB into virtual
     SPLINE and 3D POLYLINE entities or approximated LWPOLYLINE entities
-    as outlines as HATCH entities as fillings.
-    The target layout is given by the `target` argument, if `target` is ``None``
-    the target layout is the source layout of the text entity.
+    as outlines, or as HATCH entities as fillings.
 
-    The `kind` argument defines the DXF types to create as bit flags, e.g. 1+2
-    to get HATCHES as filling and SPLINES and POLYLINES as outline:
-
-    === ==============================
-    1   :class:`~ezdxf.entities.Hatch` entities as filling
-    2   :class:`~ezdxf.entities.Spline` and 3D :class:`~ezdxf.entities.Polyline`
-        entities as outline
-    4   :class:`~ezdxf.entities.LWPolyline` entities as outline
-    === ==============================
-
-    Returns the created DXF entities as an :class:`~ezdxf.query.EntityQuery`
-    object. The source entity will be destroyed.
-
-    Don't expect a 100% match compared to CAD applications.
+    Returns the virtual DXF entities as an :class:`~ezdxf.query.EntityQuery`
+    object.
 
     Args:
-        entity: TEXT or ATTRIB entity to explode
-        kind: kind of entities to create, 1=HATCHES, 2=SPLINES, 4=LWPOLYLINES
-            as bit flags
-        target: target layout for new created DXF entities, ``None`` for the
-            same layout as the source entity.
+        entity: TEXT or ATTRIB entity
+        kind: kind of entities to create as bit flags, see enum :class:`Kind`
 
     """
     check_entity_type(entity)
@@ -308,6 +302,29 @@ def explode(entity: AnyText, kind: int = Kind.HATCHES,
         if kind & Kind.LWPOLYLINES:
             entities.extend(path.to_lwpolylines(
                 paths, extrusion=extrusion, dxfattribs=attribs))
+
+    return EntityQuery(entities)
+
+
+def explode(entity: AnyText, kind: int = Kind.HATCHES,
+            target=None) -> EntityQuery:
+    """ Explode the text `entity` into virtual entities,
+    see :func:`virtual_entities`. The source entity will be destroyed.
+
+    The target layout is given by the `target` argument, if `target` is ``None``,
+    the target layout is the source layout of the text entity.
+
+    Returns the created DXF entities as an :class:`~ezdxf.query.EntityQuery`
+    object.
+
+    Args:
+        entity: TEXT or ATTRIB entity to explode
+        kind: kind of entities to create as bit flags, see enum :class:`Kind`
+        target: target layout for new created DXF entities, ``None`` for the
+            same layout as the source entity.
+
+    """
+    entities = virtual_entities(entity, kind)
 
     # Explicit check for None is required, because empty layouts are also False
     if target is None:

@@ -10,6 +10,8 @@ linear paths as :class:`~ezdxf.path.Path` objects. These tools depend on
 the optional `Matplotlib`_ package. At the moment only the TEXT and the ATTRIB
 entity can be converted into paths and hatches.
 
+Don't expect a 100% match compared to CAD applications.
+
 Text Alignments
 ---------------
 
@@ -53,10 +55,12 @@ String Functions
 Entity Functions
 ----------------
 
+.. autoclass:: Kind
+
+.. autofunction:: virtual_entities(entity, kind = Kind.HATCHES) -> EntityQuery
+
+.. autofunction:: explode(entity, kind = Kind.HATCHES, target = None) -> EntityQuery
+
 .. autofunction:: make_paths_from_entity(entity)-> List[Path]
-
-.. autofunction:: make_hatches_from_entity(entity) -> List[Hatch]
-
-.. autofunction:: explode(entity, kind = 1, target = None) -> EntityQuery
 
 .. _Matplotlib: https://matplotlib.org
