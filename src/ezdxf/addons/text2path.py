@@ -14,7 +14,13 @@ from ezdxf.path import Path
 from ezdxf.tools import fonts
 from ezdxf.query import EntityQuery
 
+__all__ = [
+    "make_paths_from_str", "make_hatches_from_str", "make_paths_from_entity",
+    "make_hatches_from_entity", "explode",
+]
+
 AnyText = Union[Text, Attrib]
+VALID_TYPES = ('TEXT', 'ATTRIB')
 
 
 def make_paths_from_str(s: str,
@@ -153,6 +159,13 @@ def make_hatches_from_str(s: str,
         return list(hatches)
 
 
+def check_entity_type(entity):
+    if entity is None:
+        raise TypeError('entity is None')
+    elif not entity.dxftype() in VALID_TYPES:
+        raise TypeError(f'unsupported entity type: {entity.dxftype()}')
+
+
 def make_paths_from_entity(entity: AnyText) -> List[Path]:
     """ Convert text content from DXF entities TEXT and ATTRIB into a
     list of :class:`~ezdxf.path.Path` objects. All paths are returned in a
@@ -198,8 +211,7 @@ def make_paths_from_entity(entity: AnyText) -> List[Path]:
             m *= ocs.matrix
         return m
 
-    if not entity.dxftype() in ('TEXT', 'ATTRIB'):
-        raise TypeError(f'unsupported entity type: {entity.dxftype()}')
+    check_entity_type(entity)
     fonts.load()
     text = entity.plain_text()
     align = entity.get_align()
@@ -231,6 +243,7 @@ def make_hatches_from_entity(entity: AnyText) -> List[Hatch]:
     Don't expect a 100% match compared to CAD applications.
 
     """
+    check_entity_type(entity)
     extrusion = entity.dxf.extrusion
     attribs = entity.graphic_properties()
     paths = make_paths_from_entity(entity)
@@ -279,22 +292,25 @@ def explode(entity: AnyText, kind: int = 1, target=None) -> EntityQuery:
             same layout as the source entity.
 
     """
+    check_entity_type(entity)
     extrusion = entity.dxf.extrusion
     attribs = entity.graphic_properties()
     entities = []
 
     if kind & ExplodeType.HATCHES:
         entities.extend(make_hatches_from_entity(entity))
-    elif kind & (ExplodeType.SPLINES + ExplodeType.LWPOLYLINES):
+    if kind & (ExplodeType.SPLINES + ExplodeType.LWPOLYLINES):
         paths = make_paths_from_entity(entity)
         if kind & ExplodeType.SPLINES:
             entities.extend(path.to_splines_and_polylines(
                 paths, dxfattribs=attribs))
-        elif kind & ExplodeType.LWPOLYLINES:
+        if kind & ExplodeType.LWPOLYLINES:
             entities.extend(path.to_lwpolylines(
                 paths, extrusion=extrusion, dxfattribs=attribs))
 
-    target = target or entity.get_layout()
+    # Explicit check for None is required, because empty layouts are also False
+    if target is None:
+        target = entity.get_layout()
     entity.destroy()
 
     if target is not None:

@@ -15,6 +15,7 @@ from ezdxf.addons import text2path
 from ezdxf.path import Path
 from ezdxf import path, bbox
 from ezdxf.entities import Text, Hatch
+from ezdxf.layouts import VirtualLayout
 
 
 def _to_paths(s, f='Arial'):
@@ -184,6 +185,13 @@ class TestMakeHatchesFromString:
             "text height should be unscaled"
 
 
+def test_check_entity_type():
+    with pytest.raises(TypeError):
+        text2path.check_entity_type(None)
+    with pytest.raises(TypeError):
+        text2path.check_entity_type(Hatch())
+
+
 def make_text(text, location, alignment, height=1.0, rotation=0):
     text = Text.new(dxfattribs={
         'text': text,
@@ -312,7 +320,45 @@ class TestMakePathsFromEntity:
 
 
 class TestExplode:
-    pass
+    @pytest.fixture
+    def text(self):
+        return make_text("TEST", (0, 0), "LEFT")
+
+    def test_source_entity_is_destroyed(self, text):
+        assert text.is_alive is True
+        text2path.explode(text, kind=4)
+        assert text.is_alive is False, "source entity should always be destroyed"
+
+    def test_explode_entity_into_layout(self, text):
+        layout = VirtualLayout()
+        entities = text2path.explode(text, kind=4, target=layout)
+        assert len(entities) == len(layout), \
+            "expected all entities added to the target layout"
+
+    def test_explode_entity_into_the_void(self, text):
+        assert text.get_layout() is None, "source entity should not have a layout"
+        entities = text2path.explode(text, kind=4, target=None)
+        assert len(entities) == 4, "explode should work without a target layout"
+
+    def test_explode_entity_as_hatches(self, text):
+        entities = text2path.explode(text, kind=1)
+        types = {e.dxftype() for e in entities}
+        assert types == {'HATCH'}
+
+    def test_explode_entity_as_splines_and_polylines(self, text):
+        entities = text2path.explode(text, kind=2)
+        types = {e.dxftype() for e in entities}
+        assert types == {'SPLINE', 'POLYLINE'}
+
+    def test_explode_entity_as_lwpolylines(self, text):
+        entities = text2path.explode(text, kind=4)
+        types = {e.dxftype() for e in entities}
+        assert types == {'LWPOLYLINE'}
+
+    def test_explode_entity_to_all_types_at_once(self, text):
+        entities = text2path.explode(text, kind=1 + 2 + 4)
+        types = {e.dxftype() for e in entities}
+        assert types == {'LWPOLYLINE', 'SPLINE', 'POLYLINE', 'HATCH'}
 
 
 if __name__ == '__main__':
