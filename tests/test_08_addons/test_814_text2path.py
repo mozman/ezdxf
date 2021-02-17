@@ -184,10 +184,11 @@ class TestMakeHatchesFromString:
             "text height should be unscaled"
 
 
-def make_text(text, location, alignment, height=1.0):
+def make_text(text, location, alignment, height=1.0, rotation=0):
     text = Text.new(dxfattribs={
         'text': text,
         'height': height,
+        'rotation': rotation,
     })
     text.set_pos(location, align=alignment)
     return text
@@ -219,6 +220,7 @@ class TestMakePathsFromEntity:
     the curve control points, which are outside the curve borders.
 
     """
+
     @pytest.mark.parametrize("builder, type_", [
         (text2path.make_paths_from_entity, Path),
         (text2path.make_hatches_from_entity, Hatch),
@@ -271,6 +273,42 @@ class TestMakePathsFromEntity:
         text = make_text("X", (7, 7), 'TOP_CENTER')
         bbox = get_bbox(text)
         assert bbox.extmax.y == pytest.approx(7)
+
+    def test_alignment_fit(self, get_bbox):
+        length = 2
+        height = 1
+        text = make_text("TEXT", (0, 0), 'LEFT', height=height)
+        text.set_pos((1, 0), (1 + length, 0), 'FIT')
+        bbox = get_bbox(text)
+        assert bbox.size.x == length, "expected text length fits into given length"
+        assert bbox.size.y == height, "expected unscaled text height"
+        assert bbox.extmin == (1, 0)
+
+    def test_alignment_aligned(self, get_bbox):
+        length = 2
+        height = 1
+        text = make_text("TEXT", (0, 0), 'CENTER', height=height)
+        bbox = get_bbox(text)
+        ratio = bbox.size.x / bbox.size.y
+
+        text.set_pos((1, 0), (1 + length, 0), 'ALIGNED')
+        bbox = get_bbox(text)
+
+        assert bbox.size.x == length, "expected text length fits into given length"
+        assert bbox.size.y != height, "expected scaled text height"
+        assert bbox.extmin == (1, 0)
+        assert bbox.size.x / bbox.size.y == pytest.approx(ratio), \
+            "expected same width/height ratio"
+
+    def test_rotation_90(self, get_bbox):
+        # Horizontal reference measurements:
+        bbox_hor = get_bbox(make_text("TEXT", (7, 7), 'MIDDLE_CENTER'))
+
+        text_vert = make_text("TEXT", (7, 7), 'MIDDLE_CENTER', rotation=90)
+        bbox_vert = get_bbox(text_vert)
+        assert bbox_hor.center == bbox_vert.center
+        assert bbox_hor.size.x == bbox_vert.size.y
+        assert bbox_hor.size.y == bbox_vert.size.x
 
 
 class TestExplode:
