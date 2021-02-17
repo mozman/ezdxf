@@ -12,10 +12,11 @@ __all__ = ["BoundingBox2d", "BoundingBox"]
 
 
 class AbstractBoundingBox:
-    extmax = None
-    extmin = None
+    __slots__ = ('extmin', 'extmax')
 
     def __init__(self, vertices: Iterable['Vertex'] = None):
+        self.extmax = None
+        self.extmin = None
         if vertices is not None:
             try:
                 self.extmin, self.extmax = self.extends_detector(vertices)
