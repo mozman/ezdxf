@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Tuple
 import logging
 from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
@@ -151,3 +151,26 @@ class Textstyle(DXFEntity):
     def discard_extended_font_data(self):
         """ Discard extended font data. """
         self.discard_xdata('ACAD')
+
+    @property
+    def is_backward(self) -> bool:
+        """ Get/set text generation flag BACKWARDS, for mirrored text along the
+        x-axis.
+        """
+        return bool(self.dxf.generation_flags & const.BACKWARD)
+
+    @is_backward.setter
+    def is_backward(self, state) -> None:
+        self.set_flag_state(const.BACKWARD, state, 'generation_flags')
+
+    @property
+    def is_upside_down(self) -> bool:
+        """ Get/set text generation flag UPSIDE_DOWN, for mirrored text along
+        the y-axis.
+
+        """
+        return bool(self.dxf.generation_flags & const.UPSIDE_DOWN)
+
+    @is_upside_down.setter
+    def is_upside_down(self, state) -> None:
+        self.set_flag_state(const.UPSIDE_DOWN, state, 'generation_flags')

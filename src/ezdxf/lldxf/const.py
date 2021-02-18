@@ -314,7 +314,9 @@ BOTTOM = 1
 MIDDLE = 2
 TOP = 3
 MIRROR_X = 2
+BACKWARD = MIRROR_X
 MIRROR_Y = 4
+UPSIDE_DOWN = MIRROR_Y
 
 # Special char and encodings and formatting codes used in TEXT
 # %%d: "°"

@@ -340,3 +340,26 @@ class Text(DXFGraphic):
         """ Validity check. """
         super().audit(auditor)
         auditor.check_text_style(self)
+
+    @property
+    def is_backward(self) -> bool:
+        """ Get/set text generation flag BACKWARDS, for mirrored text along the
+        x-axis.
+        """
+        return bool(self.dxf.text_generation_flag & const.BACKWARD)
+
+    @is_backward.setter
+    def is_backward(self, state) -> None:
+        self.set_flag_state(const.BACKWARD, state, 'text_generation_flag')
+
+    @property
+    def is_upside_down(self) -> bool:
+        """ Get/set text generation flag UPSIDE_DOWN, for mirrored text along
+        the y-axis.
+
+        """
+        return bool(self.dxf.text_generation_flag & const.UPSIDE_DOWN)
+
+    @is_upside_down.setter
+    def is_upside_down(self, state) -> None:
+        self.set_flag_state(const.UPSIDE_DOWN, state, 'text_generation_flag')

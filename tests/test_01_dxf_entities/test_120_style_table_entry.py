@@ -38,6 +38,24 @@ def test_bigfont(style):
     assert '' == style.dxf.bigfont
 
 
+def test_is_backward(style):
+    assert style.is_backward is False
+
+
+def test_set_backward(style):
+    style.is_backward = True
+    assert style.is_backward is True
+
+
+def test_is_upside_down(style):
+    assert style.is_upside_down is False
+
+
+def test_set_is_upside_down(style):
+    style.is_upside_down = True
+    assert style.is_upside_down is True
+
+
 def test_not_existing_extended_font_data(style):
     assert style.has_extended_font_data is False
     assert style.get_extended_font_data() == ("", False, False)

@@ -96,6 +96,10 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
         4   text is upside down (mirrored in Y)
         === ===================================
 
+    .. autoproperty:: is_backward
+
+    .. autoproperty:: is_upside_down
+
     .. automethod:: set_pos
 
     .. automethod:: get_pos

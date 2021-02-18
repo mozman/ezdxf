@@ -259,3 +259,21 @@ def test_text_non_uniform_scaling(text2):
     text2.rotate_z(math.radians(30))
     text2.scale(1, 2, 1)
     assert math.isclose(text2.dxf.oblique, 33.004491598883064)
+
+
+def test_is_backward(text):
+    assert text.is_backward is False
+
+
+def test_set_backward(text):
+    text.is_backward = True
+    assert text.is_backward is True
+
+
+def test_is_upside_down(text):
+    assert text.is_upside_down is False
+
+
+def test_set_is_upside_down(text):
+    text.is_upside_down = True
+    assert text.is_upside_down is True

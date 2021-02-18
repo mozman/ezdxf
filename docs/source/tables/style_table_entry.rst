@@ -20,6 +20,10 @@ Factory function         :meth:`Drawing.styles.new`
 
 .. class:: Textstyle
 
+    .. autoproperty:: is_backward
+
+    .. autoproperty:: is_upside_down
+
     .. attribute:: dxf.handle
 
         DXF handle (feature for experts).
