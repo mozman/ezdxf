@@ -23,6 +23,13 @@ acdb_style = DefSubclass('AcDbTextStyleTableRecord', {
         2, default='Standard',
         validator=validator.is_valid_table_name,
     ),
+    # Flags: Standard flag values (bit-coded values):
+    # 1 = If set, this entry describes a shape
+    # 4 = Vertical text
+    # 16 = If set, table entry is externally dependent on an xref
+    # 32 = If both this bit and bit 16 are set, the externally dependent xref ...
+    # 64 = If set, the table entry was referenced by at least one entity in ...
+    # Vertical text works only for SHX fonts in AutoCAD and BricsCAD
     'flags': DXFAttr(70, default=0),
 
     # Fixed height, 0 if not fixed
