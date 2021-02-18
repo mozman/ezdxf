@@ -7,12 +7,12 @@ from typing import (
 import re
 
 from ezdxf.lldxf import validator
-from ezdxf.lldxf.const import SPECIAL_CHARS_ENCODING
+from ezdxf.lldxf.const import SPECIAL_CHARS_ENCODING, DXFAttributeError
 from ezdxf.math import Vec3
 from .fonts import FontMeasurements, AbstractFont
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Text, MText
+    from ezdxf.eztypes import Text, MText, DXFEntity
 
 LEFT = 0
 CENTER = 1
@@ -407,8 +407,13 @@ def text_wrap(text: str, box_width: Optional[float],
     return lines
 
 
-def is_text_vertical_stacked(text) -> bool:
-    """ Returns ``True`` if the associated text STYLE is vertical stacked. """
+def is_text_vertical_stacked(text: 'DXFEntity') -> bool:
+    """ Returns ``True`` if the associated text STYLE is vertical stacked.
+    """
+    if not text.is_supported_dxf_attrib('style'):
+        raise TypeError(
+            f'{text.dxftype()} does not support the style attribute.')
+
     if text.doc:
         style = text.doc.styles.get(text.dxf.style)
         if style:

@@ -4,7 +4,7 @@
 import pytest
 
 import ezdxf
-from ezdxf.entities import Text
+from ezdxf.entities import Text, DXFEntity
 from ezdxf.tools.text import (
     TextLine, plain_text, caret_decode,
     escape_dxf_line_endings, replace_non_printable_characters, plain_mtext,
@@ -248,6 +248,10 @@ class TestIsTextVerticalStacked:
         mtext = doc.modelspace().add_mtext('Test',
                                            dxfattribs={'style': 'Stacked'})
         assert is_text_vertical_stacked(mtext) is True
+
+    def test_raise_type_error_for_unsupported_types(self):
+        with pytest.raises(TypeError):
+            is_text_vertical_stacked(DXFEntity())
 
 
 if __name__ == '__main__':
