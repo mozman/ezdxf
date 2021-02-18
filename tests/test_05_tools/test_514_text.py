@@ -3,11 +3,12 @@
 
 import pytest
 
+import ezdxf
 from ezdxf.entities import Text
 from ezdxf.tools.text import (
     TextLine, plain_text, caret_decode,
     escape_dxf_line_endings, replace_non_printable_characters, plain_mtext,
-    split_mtext_string, text_wrap,
+    split_mtext_string, text_wrap, is_text_vertical_stacked,
 )
 from ezdxf.tools.fonts import MonospaceFont
 from ezdxf.math import Vec3
@@ -212,6 +213,41 @@ def test_text_wrapping():
     assert text_wrap('  abc def  ', 6, get_text_width) == ['  abc', 'def']
     assert text_wrap('  abc def', 1, get_text_width) == ['', 'abc', 'def']
     assert text_wrap('  abc def', 6, get_text_width) == ['  abc', 'def']
+
+
+class TestIsTextVerticalStacked:
+    """ The vertical stacked text flag is stored in the associated TextStyle
+    table entry and not in the text entity itself.
+
+    """
+
+    @pytest.fixture(scope='class')
+    def doc(self):
+        d = ezdxf.new()
+        style = d.styles.new('Stacked')
+        style.is_vertical_stacked = True
+        return d
+
+    def test_virtual_text_entity(self):
+        assert is_text_vertical_stacked(Text()) is False
+
+    def test_standard_text_entity(self, doc):
+        text = doc.modelspace().add_text('Test')
+        assert is_text_vertical_stacked(text) is False
+
+    def test_stacked_text_entity(self, doc):
+        text = doc.modelspace().add_text('Test',
+                                         dxfattribs={'style': 'Stacked'})
+        assert is_text_vertical_stacked(text) is True
+
+    def test_stacked_mtext_entity(self, doc):
+        """ MTEXT supports the 'style' attribute, but does not really support
+        the vertical stacked text feature.
+
+        """
+        mtext = doc.modelspace().add_mtext('Test',
+                                           dxfattribs={'style': 'Stacked'})
+        assert is_text_vertical_stacked(mtext) is True
 
 
 if __name__ == '__main__':

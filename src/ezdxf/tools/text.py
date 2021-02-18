@@ -270,7 +270,9 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
                 if char == 'P':  # new line
                     chars.append('\n')
                 elif char == 'N':  # new column
-                    chars.append(' ')  # until columns are supported, better to at least remove the escape character
+                    # until columns are supported, better to at least remove the
+                    # escape character
+                    chars.append(' ')
                 else:
                     pass  # discard other commands
             else:  # more character commands are terminated by ';'
@@ -403,3 +405,12 @@ def text_wrap(text: str, box_width: Optional[float],
     if current_line and not current_line.isspace():
         lines.append(current_line.rstrip())
     return lines
+
+
+def is_text_vertical_stacked(text) -> bool:
+    """ Returns ``True`` if the associated text STYLE is vertical stacked. """
+    if text.doc:
+        style = text.doc.styles.get(text.dxf.style)
+        if style:
+            return style.is_vertical_stacked
+    return False

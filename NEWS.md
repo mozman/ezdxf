@@ -24,8 +24,10 @@ Version 0.16b0 - dev
 - NEW: `Paperspace.reset_main_viewport()`, reset the main viewport of a paper 
   space layout to custom- or default values  
 - NEW: quadratic Bézier curve support for the `Path()` class
-- NEW: `ezdxf.entity.Text` properties `is_backward` and `is_upside_down` 
-- NEW: `ezdxf.entity.TextStyle` properties `is_backward` and `is_upside_down` 
+- NEW: `ezdxf.entity.Text` getter/setter properties `is_backward` and 
+  `is_upside_down`
+- NEW: `ezdxf.entity.TextStyle` getter/setter properties `is_backward`, 
+  `is_upside_down` and `is_vertical_stacked` 
 - NEW: `ezdxf.math.Bezier3P`, optimized quadratic Bézier curve construction tool 
 - NEW: `ezdxf.math.quadratic_to_cubic_bezier()`, Bezier3P to Bezier4P converter   
 - NEW: `ezdxf.math.bezier_to_bspline()`, Bézier curves to B-spline converter

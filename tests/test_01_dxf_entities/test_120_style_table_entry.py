@@ -56,6 +56,11 @@ def test_set_is_upside_down(style):
     assert style.is_upside_down is True
 
 
+def test_set_is_vertical_stacked(style):
+    style.is_vertical_stacked = True
+    assert style.is_vertical_stacked is True
+
+
 def test_not_existing_extended_font_data(style):
     assert style.has_extended_font_data is False
     assert style.get_extended_font_data() == ("", False, False)

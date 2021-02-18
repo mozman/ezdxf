@@ -318,6 +318,8 @@ BACKWARD = MIRROR_X
 MIRROR_Y = 4
 UPSIDE_DOWN = MIRROR_Y
 
+VERTICAL_STACKED = 4  # only stored in TextStyle.dxf.flags!
+
 # Special char and encodings and formatting codes used in TEXT
 # %%d: "°"
 # %%u in TEXT start underline formatting until next %%u or until end of line

@@ -24,6 +24,8 @@ Factory function         :meth:`Drawing.styles.new`
 
     .. autoproperty:: is_upside_down
 
+    .. autoproperty:: is_vertical_stacked
+
     .. attribute:: dxf.handle
 
         DXF handle (feature for experts).

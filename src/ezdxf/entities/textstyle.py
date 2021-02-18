@@ -157,7 +157,7 @@ class Textstyle(DXFEntity):
         """ Get/set text generation flag BACKWARDS, for mirrored text along the
         x-axis.
         """
-        return bool(self.dxf.generation_flags & const.BACKWARD)
+        return self.get_flag_state(const.BACKWARD, 'generation_flags')
 
     @is_backward.setter
     def is_backward(self, state) -> None:
@@ -169,8 +169,18 @@ class Textstyle(DXFEntity):
         the y-axis.
 
         """
-        return bool(self.dxf.generation_flags & const.UPSIDE_DOWN)
+        return self.get_flag_state(const.UPSIDE_DOWN, 'generation_flags')
 
     @is_upside_down.setter
     def is_upside_down(self, state) -> None:
         self.set_flag_state(const.UPSIDE_DOWN, state, 'generation_flags')
+
+    @property
+    def is_vertical_stacked(self) -> bool:
+        """ Get/set style flag VERTICAL_STACKED, for vertical stacked text.
+        """
+        return self.get_flag_state(const.VERTICAL_STACKED, 'flags')
+
+    @is_vertical_stacked.setter
+    def is_vertical_stacked(self, state) -> None:
+        self.set_flag_state(const.VERTICAL_STACKED, state, 'flags')
