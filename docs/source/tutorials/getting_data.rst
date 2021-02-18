@@ -56,6 +56,12 @@ better way.
 
 .. code-block:: Python
 
+    # helper function
+    def print_entity(e):
+        print("LINE on layer: %s\n" % e.dxf.layer)
+        print("start point: %s\n" % e.dxf.start)
+        print("end point: %s\n" % e.dxf.end)
+
     # iterate over all entities in modelspace
     msp = doc.modelspace()
     for e in msp:
@@ -66,10 +72,6 @@ better way.
     for e in msp.query('LINE'):
         print_entity(e)
 
-    def print_entity(e):
-        print("LINE on layer: %s\n" % e.dxf.layer)
-        print("start point: %s\n" % e.dxf.start)
-        print("end point: %s\n" % e.dxf.end)
 
 All layout objects supports the standard Python iterator protocol and the
 ``in`` operator.
