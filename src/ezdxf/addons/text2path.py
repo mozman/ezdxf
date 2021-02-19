@@ -115,7 +115,7 @@ def get_alignment_transformation(fm: fonts.FontMeasurements, bbox: BoundingBox,
     else:
         raise ValueError(f'invalid valign argument: {valign}')
     if halign == 4:  # MIDDLE
-        shift_y = max(fm.total_height, bbox.size.y) / -2.0
+        shift_y = -cap_height + fm.total_height / 2.0
     return Matrix44.translate(shift_x, shift_y, 0)
 
 
@@ -192,6 +192,8 @@ def make_paths_from_entity(entity: AnyText) -> List[Path]:
         # TODO: text generation flags - mirror-x and mirror-y
         angle = math.radians(entity.dxf.rotation)
         width_factor = entity.dxf.width
+        mirror_x = -1 if entity.is_backward else 1
+        mirror_y = -1 if entity.is_upside_down else 1
         if align == 'LEFT':
             location = p1
         elif align in ('ALIGNED', 'FIT'):
@@ -201,7 +203,7 @@ def make_paths_from_entity(entity: AnyText) -> List[Path]:
         else:
             location = p2
         m = Matrix44.chain(
-            Matrix44.scale(width_factor, 1, 1),
+            Matrix44.scale(width_factor * mirror_x, mirror_y, 1),
             Matrix44.z_rotate(angle),
             Matrix44.translate(location.x, location.y, location.z),
         )
