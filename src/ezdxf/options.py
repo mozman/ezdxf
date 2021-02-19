@@ -1,27 +1,39 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
+import os
 
 # The MATPLOTLIB global shows that Matplotlib is installed:
 try:
     import matplotlib
+
     MATPLOTLIB = True
 except ImportError:
     MATPLOTLIB = False
 
+TRUE_STATE = {'True', 'true', 'On', 'on', '1'}
+EZDXF_FONT_CACHE_DIRECTORY = os.getenv(
+    'EZDXF_FONT_CACHE_DIRECTORY', False)
+EZDXF_PRESERVE_PROXY_GRAPHICS = os.getenv(
+    'EZDXF_FONT_CACHE_DIR', 'False') in TRUE_STATE
+EZDXF_LOG_UNPROCESSED_TAGS = os.getenv(
+    'EZDXF_LOG_UNPROCESSED_TAGS', 'True') in TRUE_STATE
+EZDXF_FILTER_INVALID_XDATA_GROUP_CODES = os.getenv(
+    'EZDXF_FILTER_INVALID_XDATA_GROUP_CODES', 'False') in TRUE_STATE
+
 
 class Options:
     def __init__(self):
-        self.filter_invalid_xdata_group_codes = False
+        self.filter_invalid_xdata_group_codes = EZDXF_FILTER_INVALID_XDATA_GROUP_CODES
         self.default_text_style = 'OpenSans'
         self.default_dimension_text_style = 'OpenSansCondensed-Light'
 
         # Set path to an external font cache directory: e.g. "~/ezdxf", see
         # docs for ezdxf.options for an example how to create your own
         # external font cache:
-        self.font_cache_directory = False
+        self.font_cache_directory = EZDXF_FONT_CACHE_DIRECTORY
 
         # debugging
-        self.log_unprocessed_tags = True
+        self.log_unprocessed_tags = EZDXF_LOG_UNPROCESSED_TAGS
 
         # Proxy graphic handling:
         # Set 'load_proxy_graphics' to True for loading proxy graphics
@@ -56,3 +68,6 @@ class Options:
 
 # Global Options
 options = Options()
+
+if EZDXF_PRESERVE_PROXY_GRAPHICS:
+    options.preserve_proxy_graphics()

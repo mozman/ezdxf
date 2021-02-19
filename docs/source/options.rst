@@ -48,11 +48,11 @@ Global options stored in :mod:`ezdxf.options`
 
 .. attribute:: filter_invalid_xdata_group_codes
 
-    Check for invalid XDATA group codes, default value is ``False``
+    Filter invalid XDATA group codes, default value is ``False``.
 
 .. attribute:: log_unprocessed_tags
 
-    Log unprocessed DXF tags for debugging, default value is ``True``
+    Log unprocessed DXF tags for debugging, default value is ``True``.
 
 .. attribute:: write_fixed_meta_data_for_testing
 
@@ -74,13 +74,10 @@ Global options stored in :mod:`ezdxf.options`
 Environment Variables
 ---------------------
 
-Some feature can be controlled by environment variables. Example for
-disabling the optional C-extensions on Windows:
+Some feature can be controlled by environment variables. Command line example
+for disabling the optional C-extensions on Windows::
 
-.. code-block::
-
-    set EZDXF_DISABLE_C_EXT=1
-
+    C:\> set EZDXF_DISABLE_C_EXT=1
 
 .. important::
 
@@ -98,9 +95,23 @@ EZDXF_AUTO_LOAD_FONTS
     font measuring is not important to you. The font cache can always be loaded
     manually by calling :func:`ezdxf.fonts.load`
 
+EZDXF_FONT_CACHE_DIRECTORY
+    Set path to an external font cache directory, see
+    :attr:`font_cache_directory` for more information
+
 EZDXF_TEST_FILES
     Path to the `ezdxf` test files required by some tests, for instance the
     `CADKit`_ sample files should be located in the
     "EZDXF_TEST_FILES/CADKitSamples" folder.
+
+EZDXF_PRESERVE_PROXY_GRAPHICS
+    Enable proxy graphic load/store support if ``1`` or ``True``, default
+    value is ``False``.
+
+EZDXF_LOG_UNPROCESSED_TAGS
+    Log unprocessed DXF tags for debugging, default value is ``True``.
+
+EZDXF_FILTER_INVALID_XDATA_GROUP_CODES
+    Filter invalid XDATA group codes, default value is ``False``.
 
 .. _CADKit: https://cadkit.blogspot.com/p/sample-dxf-files.html?view=magazine
