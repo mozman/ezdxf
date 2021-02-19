@@ -233,16 +233,16 @@ class TextLinePrimitive(ConvertedPrimitive):
 
         """
 
-        def get_text_rotation() -> float:
-            if alignment in ('FIT', 'ALIGNED') and not p1.isclose(p2):
+        def text_rotation() -> float:
+            if fit_or_aligned and not p1.isclose(p2):
                 return (p2 - p1).angle
             else:
-                return math.degrees(text.dxf.rotation)
+                return math.radians(text.dxf.rotation)
 
-        def get_insert() -> Vec3:
+        def location() -> Vec3:
             if alignment == 'LEFT':
                 return p1
-            elif alignment in ('FIT', 'ALIGNED'):
+            elif fit_or_aligned:
                 return p1.lerp(p2, factor=0.5)
             else:
                 return p2
@@ -266,14 +266,17 @@ class TextLinePrimitive(ConvertedPrimitive):
                                text.dxf.width)
         text_line = TextLine(content, font)
         alignment: str = text.get_align()
+        fit_or_aligned = alignment == 'FIT' or alignment == 'ALIGNED'
         if text.dxf.halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
             text_line.stretch(alignment, p1, p2)
         halign, valign = unified_alignment(text)
         mirror_x = -1 if text.is_backward else 1
         mirror_y = -1 if text.is_upside_down else 1
-        scale = (mirror_x, mirror_y, 1)
         corner_vertices = text_line.corner_vertices(
-            get_insert(), halign, valign, get_text_rotation(), scale)
+            location(), halign, valign,
+            angle=text_rotation(),
+            scale=(mirror_x, mirror_y)
+        )
 
         ocs = text.ocs()
         self._path = from_vertices(
