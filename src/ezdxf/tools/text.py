@@ -7,7 +7,7 @@ from typing import (
 import re
 
 from ezdxf.lldxf import validator
-from ezdxf.lldxf.const import SPECIAL_CHARS_ENCODING, DXFAttributeError
+from ezdxf.lldxf.const import SPECIAL_CHARS_ENCODING
 from ezdxf.math import Vec3
 from .fonts import FontMeasurements, AbstractFont
 

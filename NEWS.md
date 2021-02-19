@@ -17,6 +17,11 @@ Version 0.16b0 - dev
 - NEW: support module `disassemble`, see [docs](https://ezdxf.mozman.at/docs/disassemble.html)
   1. deconstruct complex nested DXF entities into a flat sequence
   2. create a "primitive" representation of DXF entities
+- NEW: Using the optional `Matplotlib` package by **default** for better font 
+  metric calculation and font rendering if available.
+- NEW: Cached font metrics are loaded at startup, this can be disabled by the 
+  environment variable `EZDXF_AUTO_LOAD_FONTS=False`, if this slows down the 
+  interpreter startup too much.
 - NEW: `Layout.reset_extents()`, reset layout extents to the given values, 
   or the AutCAD default values  
 - NEW: `Layout.reset_limits()`, reset layout limits to the given values, 

@@ -201,7 +201,7 @@ def build_system_font_cache(rebuild=True) -> None:
             rebuild_system_fonts,
         )
     except ImportError:
-        logger.debug('This function requires the optional matplotlib package.')
+        logger.debug('This function requires the optional Matplotlib package.')
         return
 
     global font_face_cache, font_measurement_cache
@@ -441,7 +441,7 @@ class MonospaceFont(AbstractFont):
 
 def make_font(ttf_path: str, cap_height: float,
               width_factor: float) -> AbstractFont:
-    if options.use_matplotlib_font_support:
+    if options.use_matplotlib:
         return MatplotlibFont(ttf_path, cap_height, width_factor)
     else:
         return MonospaceFont(cap_height, width_factor)

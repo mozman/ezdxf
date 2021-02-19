@@ -3,11 +3,10 @@
 
 import pathlib
 import ezdxf
-from ezdxf import disassemble, options, zoom
+from ezdxf import disassemble, zoom
 from ezdxf.tools import fonts
 
 DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
-options.use_matplotlib_font_support = True
 fonts.load()
 
 doc = ezdxf.readfile(

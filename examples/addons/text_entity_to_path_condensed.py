@@ -1,8 +1,10 @@
+# Copyright (c) 2021, Manfred Moitzi
+# License: MIT License
 from pathlib import Path
 import ezdxf
 from ezdxf.addons import text2path
 from ezdxf.math import Vec3
-from ezdxf import path
+from ezdxf import zoom
 
 
 def add_rect(p1, p2, height):
@@ -27,8 +29,10 @@ text = msp.add_text("Arial Narrow", dxfattribs={
 })
 text.set_pos(p1, p2, "LEFT")
 attr = {'layer': 'OUTLINE', 'color': 2}
-path.render_splines_and_polylines(
-    msp, text2path.make_paths_from_entity(text), dxfattribs=attr)
+kind = text2path.Kind.SPLINES
+for e in text2path.virtual_entities(text, kind):
+    e.update_dxf_attribs(attr)
+    msp.add_entity(e)
 
 p1 = Vec3(0, 2)
 p2 = Vec3(12, 2)
@@ -40,9 +44,9 @@ text = msp.add_text("OpenSansCondensed-Light", dxfattribs={
     'color': 1,
 })
 text.set_pos(p1, p2, "LEFT")
-path.render_splines_and_polylines(
-    msp, text2path.make_paths_from_entity(text), dxfattribs=attr)
+for e in text2path.virtual_entities(text, kind):
+    e.update_dxf_attribs(attr)
+    msp.add_entity(e)
 
-
-doc.set_modelspace_vport(10, (6, 2))
+zoom.extents(msp, factor=1.1)
 doc.saveas(DIR / 'condensed_fonts.dxf')

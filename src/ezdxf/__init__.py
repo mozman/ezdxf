@@ -7,9 +7,15 @@ from .version import version, __version__
 VERSION = __version__
 __author__ = "mozman <me@mozman.at>"
 
+TRUE_STATE = {'True', 'true', 'On', 'on', '1'}
 PYPY = hasattr(sys, 'pypy_version_info')
 PYPY_ON_WINDOWS = sys.platform.startswith('win') and PYPY
 EZDXF_TEST_FILES = os.getenv('EZDXF_TEST_FILES', '')
+
+# Set EZDXF_AUTO_LOAD_FONTS to "False" to deactivate auto font loading,
+# if this this procedure slows down your startup time and font measuring is not
+# important to you. Fonts can always loaded manually: ezdxf.fonts.load()
+EZDXF_AUTO_LOAD_FONTS = os.getenv('EZDXF_AUTO_LOAD_FONTS', 'True') in TRUE_STATE
 
 # name space imports - do not remove
 from ezdxf.options import options
@@ -23,7 +29,7 @@ from ezdxf.tools.standards import (
     setup_linetypes, setup_styles,
     setup_dimstyles, setup_dimstyle,
 )
-from ezdxf.tools import pattern
+from ezdxf.tools import pattern, fonts
 from ezdxf.render.arrows import ARROWS
 from ezdxf.lldxf.const import (
     DXFError, DXFStructureError, DXFVersionError, DXFTableEntryError,
@@ -41,3 +47,7 @@ from ezdxf.lldxf.encoding import (
 
 # setup DXF unicode encoder -> '\U+nnnn'
 codecs.register_error('dxfreplace', dxf_backslash_replace)
+
+# Load font support automatically:
+if EZDXF_AUTO_LOAD_FONTS:
+    fonts.load()

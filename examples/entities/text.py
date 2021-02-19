@@ -78,13 +78,16 @@ def create_doc(filename):
 
 
 def draw_text_boundaries(msp, matplotlib=False):
-    options.use_matplotlib_font_support = matplotlib
+    # Change Matplotlib support temporarily:
+    options.use_matplotlib = matplotlib
     for text in msp.query('TEXT'):
         bbox = disassemble.make_primitive(text)
         msp.add_polyline3d(bbox.vertices(), dxfattribs={
             'color': 6,
             'layer': "BOUNDARIES",
         })
+    # Reactive Matplotlib support, if available:
+    options.use_matplotlib = True
 
 
 def draw_insert_points(msp):

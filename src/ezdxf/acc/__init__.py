@@ -18,7 +18,7 @@ import sys
 # the Python implementation.
 
 _disable = os.environ.get('EZDXF_DISABLE_C_EXT', '0').lower()
-USE_C_EXT = not (_disable in {'1', 'true'})
+USE_C_EXT = not (_disable in {'1', 'true', 'on'})
 
 # C-extensions are disabled for pypy because JIT complied Python code is much
 # faster!
