@@ -279,7 +279,8 @@ def get_font_measurements(ttf_path: str, map_shx=True) -> 'FontMeasurements':
 def get_cache_file_path(path, name: str = FONT_FACE_CACHE_FILE) -> Path:
     """ Build path to cache files. """
     if path is None and options.font_cache_directory:
-        path = Path(options.font_cache_directory).expanduser()
+        directory = options.font_cache_directory.strip('"')
+        path = Path(directory).expanduser()
         path.mkdir(exist_ok=True)
     path = Path(path) if path else Path(__file__).parent
     return path / name

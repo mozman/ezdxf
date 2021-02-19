@@ -67,13 +67,20 @@ Construction
     disassemble
     bbox
 
+Global Options
+--------------
+
+.. toctree::
+    :maxdepth: 1
+
+    options
+
 Miscellaneous
 -------------
 
 .. toctree::
     :maxdepth: 1
 
-    options
     zoom
     comments
     tools

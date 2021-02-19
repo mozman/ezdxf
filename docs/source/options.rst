@@ -1,10 +1,7 @@
-Global Options
+Options Module
 ==============
 
 .. module:: ezdxf.options
-
-Options Module
---------------
 
 Global options stored in :mod:`ezdxf.options`
 
@@ -25,6 +22,8 @@ Global options stored in :mod:`ezdxf.options`
 
     Set path to an external font cache directory: e.g. ``"~/.ezdxf"``
 
+    By default the bundled font cache will be loaded.
+
     This example shows, how to create an external font cache in
     ``"~/.ezdxf"``. This has to be done only once or to add
     new installed fonts to the cache and this also requires Matplotlib:
@@ -44,7 +43,12 @@ Global options stored in :mod:`ezdxf.options`
         from ezdxf import options, fonts
 
         option.font_cache_directory = "~/.ezdxf"
-        fonts.load()
+        # Default cache is loaded automatically, if auto load is not disabled:
+        fonts.load(reload=True)
+
+    Maybe it is better to set an environment variable before `ezdxf` is loaded::
+
+        C:\> set EZDXF_FONT_CACHE_DIRECTORY=~/.ezdxf
 
 .. attribute:: filter_invalid_xdata_group_codes
 
@@ -72,7 +76,7 @@ Global options stored in :mod:`ezdxf.options`
     Enable proxy graphic load/store support.
 
 Environment Variables
----------------------
+=====================
 
 Some feature can be controlled by environment variables. Command line example
 for disabling the optional C-extensions on Windows::
