@@ -50,22 +50,12 @@ def make_paths_from_str(s: str,
     render_size = size / font_measurements.cap_height
     paths = _str_to_paths(s, font_properties, render_size)
     bbox = path.bbox(paths, flatten=False)
-    halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
 
     # Text is rendered in drawing units,
     # therefore do alignment in drawing units:
     draw_units_fm = font_measurements.scale_from_baseline(size)
-    matrix = get_alignment_transformation(draw_units_fm, bbox, halign, valign)
-
-    stretch_x = 1.0
-    stretch_y = 1.0
-    if align == 'ALIGNED':
-        stretch_x = length / bbox.size.x
-        stretch_y = stretch_x
-    elif align == 'FIT':
-        stretch_x = length / bbox.size.x
-    if stretch_x != 1.0:
-        matrix *= Matrix44.scale(stretch_x, stretch_y, 1.0)
+    matrix = alignment_transformation(
+        draw_units_fm, bbox, align, length)
     if m is not None:
         matrix *= m
     return list(path.transform_paths(paths, matrix))
@@ -91,8 +81,35 @@ def _str_to_paths(s: str, fp: FontProperties, size: float = 1.0) -> List[Path]:
     return list(path.from_matplotlib_path(text_path))
 
 
-def get_alignment_transformation(fm: fonts.FontMeasurements, bbox: BoundingBox,
-                                 halign: int, valign: int) -> Matrix44:
+def alignment_transformation(
+        fm: fonts.FontMeasurements, bbox: BoundingBox, align: str,
+        length: float) -> Matrix44:
+    """ Returns the alignment transformation matrix to transform a basic
+    text path at location (0, 0) and alignment "LEFT" into the final text
+    path of the given alignment.
+    For the alignments FIT and ALIGNED defines the argument `length` the
+    total length of the final text path. The given bounding box defines the
+    rendering borders of the basic text path.
+
+    """
+    halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
+    matrix = basic_alignment_transformation(fm, bbox, halign, valign)
+
+    stretch_x = 1.0
+    stretch_y = 1.0
+    if align == 'ALIGNED':
+        stretch_x = length / bbox.size.x
+        stretch_y = stretch_x
+    elif align == 'FIT':
+        stretch_x = length / bbox.size.x
+    if stretch_x != 1.0:
+        matrix *= Matrix44.scale(stretch_x, stretch_y, 1.0)
+    return matrix
+
+
+def basic_alignment_transformation(
+        fm: fonts.FontMeasurements, bbox: BoundingBox, halign: int,
+        valign: int) -> Matrix44:
     if halign == const.LEFT:
         shift_x = 0
     elif halign == const.RIGHT:
