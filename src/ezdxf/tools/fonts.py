@@ -182,9 +182,10 @@ def cache_key(name: str) -> str:
     return Path(name).name.lower()
 
 
-def build_system_font_cache(rebuild=True) -> None:
-    """ Build system font cache. Set rebuild to ``False`` to just add new
-    fonts. Requires the ``matplotlib`` package!
+def build_system_font_cache(*, path=None, rebuild=True) -> None:
+    """ Build system font cache and save it to directory `path` if given.
+    Set `rebuild` to ``False`` to just add new fonts.
+    Requires the ``matplotlib`` package!
 
     A rebuild has only to be done after a new ezdxf installation, or new fonts
     were added to your system (which you want to use), or an update of ezdxf if
@@ -222,7 +223,7 @@ def build_system_font_cache(rebuild=True) -> None:
     # by a default font:
     remove_fonts_without_measurement(font_face_cache, font_measurement_cache)
     # save caches on default location defined by option.font_cache_directory:
-    save()
+    save(path)
 
 
 def find_font_face(ttf_path: Optional[str]) -> Optional[FontFace]:

@@ -25,16 +25,14 @@ Global options stored in :mod:`ezdxf.options`
     By default the bundled font cache will be loaded.
 
     This example shows, how to create an external font cache in
-    ``"~/.ezdxf"``. This has to be done only once or to add
-    new installed fonts to the cache and this also requires Matplotlib:
+    ``"~/.ezdxf"``. This has to be done only once after the `ezdxf` installation
+    or to add new installed fonts to the cache. This requires Matplotlib:
 
     .. code-block:: Python
 
         from ezdxf.tools import fonts
-        from ezdxf import options
 
-        options.font_cache_directory = "~/.ezdxf"
-        fonts.build_system_font_cache()
+        fonts.build_system_font_cache(path="~/.ezdxf")
 
     How to use this cached font data in your script:
 
