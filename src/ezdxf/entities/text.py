@@ -231,19 +231,19 @@ class Text(DXFGraphic):
         self.set_dxf_attrib('align_point', p2)
         return self
 
-    def get_pos(self) -> Tuple[str, 'Vertex', Union['Vertex', None]]:
+    def get_pos(self) -> Tuple[str, Vec3, Union[Vec3, None]]:
         """
         Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment method,
         `p1` is the alignment point, `p2` is only relevant if `align` is
         ``'ALIGNED'`` or ``'FIT'``, otherwise it is ``None``.
 
         """
-        p1 = self.dxf.insert
-        p2 = self.get_dxf_attrib('align_point', (0., 0., 0.))
+        p1 = Vec3(self.dxf.insert)
+        p2 = Vec3(self.get_dxf_attrib('align_point', NULLVEC))
         align = self.get_align()
         if align == 'LEFT':
             return align, p1, None
-        if align in ('FIT', 'ALIGN'):
+        if align in ('FIT', 'ALIGNED'):
             return align, p1, p2
         return align, p2, None
 
@@ -363,3 +363,57 @@ class Text(DXFGraphic):
     @is_upside_down.setter
     def is_upside_down(self, state) -> None:
         self.set_flag_state(const.UPSIDE_DOWN, state, 'text_generation_flag')
+
+    def wcs_transformation_matrix(self) -> Matrix44:
+        return text_transformation_matrix(self)
+
+    def font_name(self) -> str:
+        """ Returns the font name of the associated text style. """
+        font_name = 'arial.ttf'
+        style_name = self.dxf.style
+        if self.doc:
+            try:
+                style = self.doc.styles.get(style_name)
+                font_name = style.dxf.font
+            except ValueError:
+                pass
+        return font_name
+
+    def fit_length(self) -> float:
+        """ Returns the text length for alignments FIT and ALIGNED, defined by
+        the distance from the insertion point to the align point or 0 for all
+        other alignments.
+
+        """
+        length = 0
+        align, p1, p2 = self.get_pos()
+        if align in ('FIT', 'ALIGNED'):
+            # text is stretch between p1 and p2
+            length = p1.distance(p2)
+        return length
+
+
+def text_transformation_matrix(entity: Text) -> Matrix44:
+    """ Apply rotation, width factor, translation to the insertion point
+    and if necessary transformation from OCS to WCS.
+    """
+    angle = math.radians(entity.dxf.rotation)
+    width_factor = entity.dxf.width
+    align, p1, p2 = entity.get_pos()
+    mirror_x = -1 if entity.is_backward else 1
+    mirror_y = -1 if entity.is_upside_down else 1
+    location = p1
+    if align in ('ALIGNED', 'FIT'):
+        width_factor = 1.0  # text goes from p1 to p2, no stretching applied
+        location = p1.lerp(p2, factor=0.5)
+        angle = (p2 - p1).angle  # override stored angle
+
+    m = Matrix44.chain(
+        Matrix44.scale(width_factor * mirror_x, mirror_y, 1),
+        Matrix44.z_rotate(angle),
+        Matrix44.translate(location.x, location.y, location.z),
+    )
+    ocs = entity.ocs()
+    if ocs.transform:  # to WCS
+        m *= ocs.matrix
+    return m

@@ -1,14 +1,13 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Union, List, Dict, Tuple
-import math
 import enum
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties, findfont
 
 from ezdxf.entities import Text, Attrib, Hatch
 from ezdxf.lldxf import const
-from ezdxf.math import Matrix44, BoundingBox, Vec3
+from ezdxf.math import Matrix44, BoundingBox
 from ezdxf import path
 from ezdxf.path import Path
 from ezdxf.tools import fonts
@@ -174,65 +173,16 @@ def make_paths_from_entity(entity: AnyText) -> List[Path]:
 
     """
 
-    def get_font_name():
-        font_name = 'arial.ttf'
-        style_name = entity.dxf.style
-        if entity.doc:
-            try:
-                style = entity.doc.styles.get(style_name)
-                font_name = style.dxf.font
-            except ValueError:
-                pass
-        return font_name
-
-    def get_transformation():
-        """ Apply rotation, width factor, translation to the insertion point
-        and if necessary transformation from OCS to WCS.
-        """
-        # TODO: text generation flags - mirror-x and mirror-y
-        angle = math.radians(entity.dxf.rotation)
-        width_factor = entity.dxf.width
-        mirror_x = -1 if entity.is_backward else 1
-        mirror_y = -1 if entity.is_upside_down else 1
-        if align == 'LEFT':
-            location = p1
-        elif align in ('ALIGNED', 'FIT'):
-            width_factor = 1.0  # text goes from p1 to p2, no stretching applied
-            location = p1.lerp(p2, factor=0.5)
-            angle = (p2 - p1).angle  # override stored angle
-        else:
-            location = p2
-        m = Matrix44.chain(
-            Matrix44.scale(width_factor * mirror_x, mirror_y, 1),
-            Matrix44.z_rotate(angle),
-            Matrix44.translate(location.x, location.y, location.z),
-        )
-        ocs = entity.ocs()
-        if ocs.transform:  # to WCS
-            m *= ocs.matrix
-        return m
-
     check_entity_type(entity)
     fonts.load()
     text = entity.plain_text()
-    align = entity.get_align()
-    p1 = Vec3(entity.dxf.insert)
-    if entity.dxf.hasattr('align_point'):
-        p2 = Vec3(entity.dxf.align_point)
-    else:
-        p2 = p1
-
-    length = 0
-    if align in ('FIT', 'ALIGNED'):
-        # text is stretch between p1 and p2
-        length = p1.distance(p2)
     paths = make_paths_from_str(
-        text, fonts.get_font_face(get_font_name()),
+        text, fonts.get_font_face(entity.font_name()),
         size=entity.dxf.height,  # cap height in drawing units
-        align=align,
-        length=length,
+        align=entity.get_align(),
+        length=entity.fit_length(),
     )
-    m = get_transformation()
+    m = entity.wcs_transformation_matrix()
     return path.transform_paths(paths, m)
 
 

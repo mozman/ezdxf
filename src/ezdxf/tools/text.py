@@ -5,10 +5,10 @@ from typing import (
     List, Iterable, Tuple, TYPE_CHECKING, Union, Optional, Callable,
 )
 import re
-
-from ezdxf.lldxf import validator
+import math
+from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.const import SPECIAL_CHARS_ENCODING
-from ezdxf.math import Vec3
+from ezdxf.math import Vec3, BoundingBox, Matrix44
 from .fonts import FontMeasurements, AbstractFont
 
 if TYPE_CHECKING:
@@ -136,6 +136,50 @@ def _transform(vertices: Iterable[Vec3],
         ) for v in vertices
     )
     return [insert + v.rotate(rotation) for v in vertices]
+
+
+def text_transformation(fm: FontMeasurements, bbox: BoundingBox,
+                        align: str, length: float) -> Matrix44:
+    halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
+    matrix = alignment_transformation(fm, bbox, halign, valign)
+
+    stretch_x = 1.0
+    stretch_y = 1.0
+    if align == 'ALIGNED':
+        stretch_x = length / bbox.size.x
+        stretch_y = stretch_x
+    elif align == 'FIT':
+        stretch_x = length / bbox.size.x
+    if stretch_x != 1.0:
+        matrix *= Matrix44.scale(stretch_x, stretch_y, 1.0)
+    return matrix
+
+
+def alignment_transformation(fm: FontMeasurements, bbox: BoundingBox,
+                             halign: int, valign: int) -> Matrix44:
+    if halign == const.LEFT:
+        shift_x = 0
+    elif halign == const.RIGHT:
+        shift_x = -bbox.extmax.x
+    elif halign == const.CENTER or halign > 2:  # ALIGNED, MIDDLE, FIT
+        shift_x = -bbox.center.x
+    else:
+        raise ValueError(f'invalid halign argument: {halign}')
+    cap_height = fm.cap_height
+    descender_height = fm.descender_height
+    if valign == const.BASELINE:
+        shift_y = 0
+    elif valign == const.TOP:
+        shift_y = -cap_height
+    elif valign == const.MIDDLE:
+        shift_y = -cap_height / 2
+    elif valign == const.BOTTOM:
+        shift_y = descender_height
+    else:
+        raise ValueError(f'invalid valign argument: {valign}')
+    if halign == 4:  # MIDDLE
+        shift_y = -cap_height + fm.total_height / 2.0
+    return Matrix44.translate(shift_x, shift_y, 0)
 
 
 def _shift_x(total_width: float, halign: int) -> float:
