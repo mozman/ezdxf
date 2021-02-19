@@ -269,8 +269,11 @@ class TextLinePrimitive(ConvertedPrimitive):
         if text.dxf.halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
             text_line.stretch(alignment, p1, p2)
         halign, valign = unified_alignment(text)
+        mirror_x = -1 if text.is_backward else 1
+        mirror_y = -1 if text.is_upside_down else 1
+        scale = (mirror_x, mirror_y, 1)
         corner_vertices = text_line.corner_vertices(
-            get_insert(), halign, valign, get_text_rotation())
+            get_insert(), halign, valign, get_text_rotation(), scale)
 
         ocs = text.ocs()
         self._path = from_vertices(

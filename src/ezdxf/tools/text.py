@@ -68,7 +68,7 @@ class TextLine:
         return self._font.measurements.scale(self._stretch_y)
 
     def baseline_vertices(self, insert: Vec3, halign: int = 0, valign: int = 0,
-                          angle: float = 0) -> List[Vec3]:
+                          angle: float = 0, scale=(1, 1, 1)) -> List[Vec3]:
         """ Returns the left and the right baseline vertex of the text line.
 
         Args:
@@ -76,6 +76,7 @@ class TextLine:
             halign: horizontal alignment left=0, center=1, right=2
             valign: vertical alignment baseline=0, bottom=1, middle=2, top=3
             angle: text rotation in radians
+            scale: scale in x-, y and z-axis as 3-tuple of float
 
         """
         fm = self.font_measurements()
@@ -84,10 +85,10 @@ class TextLine:
             Vec3(self.width, fm.baseline),
         ]
         shift = self._shift_vector(halign, valign, fm)
-        return _transform(vertices, insert, shift, angle)
+        return _transform(vertices, insert, shift, angle, scale)
 
     def corner_vertices(self, insert: Vec3, halign: int = 0, valign: int = 0,
-                        angle: float = 0) -> List[Vec3]:
+                        angle: float = 0, scale=(1, 1, 1)) -> List[Vec3]:
         """ Returns the corner vertices of the text line in the order
         bottom left, bottom right, top right, top left.
 
@@ -96,6 +97,7 @@ class TextLine:
             halign: horizontal alignment left=0, center=1, right=2
             valign: vertical alignment baseline=0, bottom=1, middle=2, top=3
             angle: text rotation in radians
+            scale: scale in x-, y and z-axis as 3-tuple of float
 
         """
         fm = self.font_measurements()
@@ -106,7 +108,7 @@ class TextLine:
             Vec3(0, fm.cap_top),
         ]
         shift = self._shift_vector(halign, valign, fm)
-        return _transform(vertices, insert, shift, angle)
+        return _transform(vertices, insert, shift, angle, scale)
 
     def _shift_vector(self, halign: int, valign: int,
                       fm: FontMeasurements) -> Vec3:
@@ -119,8 +121,21 @@ class TextLine:
 def _transform(vertices: Iterable[Vec3],
                insert: Vec3,
                shift: Vec3,
-               rotation: float) -> List[Vec3]:
-    return [insert + (v + shift).rotate(rotation) for v in vertices]
+               rotation: float,
+               scale: Tuple[float, float, float],
+               ) -> List[Vec3]:
+    shift_x = shift.x
+    shift_y = shift.y
+    shift_z = shift.z
+    sx, sy, sz = scale
+    vertices = (
+        Vec3(
+            (v.x + shift_x) * sx,
+            (v.y + shift_y) * sy,
+            (v.z + shift_z) * sz,
+        ) for v in vertices
+    )
+    return [insert + v.rotate(rotation) for v in vertices]
 
 
 def _shift_x(total_width: float, halign: int) -> float:
