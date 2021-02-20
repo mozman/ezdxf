@@ -300,8 +300,8 @@ cdef class Matrix44:
         cdef Matrix44 mat = Matrix44()
         cdef double tx = tan(angle_x)
         cdef double ty = tan(angle_y)
-        mat.m[1] = tx
-        mat.m[4] = ty
+        mat.m[1] = ty
+        mat.m[4] = tx
         return mat
 
     @staticmethod

@@ -348,8 +348,8 @@ class Matrix44:
         tx = math.tan(angle_x)
         ty = math.tan(angle_y)
         return cls([
-            1., tx, 0., 0.,
-            ty, 1., 0., 0.,
+            1., ty, 0., 0.,
+            tx, 1., 0., 0.,
             0., 0., 1., 0.,
             0., 0., 0., 1.
         ])
