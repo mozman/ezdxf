@@ -166,15 +166,15 @@ class TextLine:
             slant_x = math.tan(oblique)
             vertices = (Vec2(v.x + v.y * slant_x, v.y) for v in vertices)
 
-        # 2. scale at the original location (more often):
-        scale_x, scale_y = scale
-        if scale_x != 1 or scale_y != 1:
-            vertices = (Vec2(v.x * scale_x, v.y * scale_y) for v in vertices)
-
-        # 3. apply alignment shifting (frequently):
+        # 2. apply alignment shifting (frequently):
         shift_vector = Vec2(shift)
         if shift_vector:
             vertices = (v + shift_vector for v in vertices)
+
+        # 3. scale (and mirror) at the aligned location (more often):
+        scale_x, scale_y = scale
+        if scale_x != 1 or scale_y != 1:
+            vertices = (Vec2(v.x * scale_x, v.y * scale_y) for v in vertices)
 
         # 4. apply rotation (rare):
         if rotation:

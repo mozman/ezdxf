@@ -272,10 +272,12 @@ class TextLinePrimitive(ConvertedPrimitive):
         halign, valign = unified_alignment(text)
         mirror_x = -1 if text.is_backward else 1
         mirror_y = -1 if text.is_upside_down else 1
+        oblique: float = math.radians(text.dxf.oblique)
         corner_vertices = text_line.corner_vertices(
             location(), halign, valign,
             angle=text_rotation(),
-            scale=(mirror_x, mirror_y)
+            scale=(mirror_x, mirror_y),
+            oblique=oblique,
         )
 
         ocs = text.ocs()
