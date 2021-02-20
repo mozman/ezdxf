@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-
+import math
 import ezdxf
 from ezdxf.entities import Text, DXFEntity
 from ezdxf.tools.text import (
@@ -76,6 +76,64 @@ class TestTextLine:
         assert text_line.corner_vertices(Vec3(0, 0), valign=const.MIDDLE) == [
             Vec3(0, bottom), Vec3(10, bottom), Vec3(10, top), Vec3(0, top)
         ]
+
+    @pytest.mark.parametrize('x,scale,expected', [
+        (0, 2, 0), (1, 2, 2), (2, 2, 4), (2, -1, -2), (2, -2, -4),
+    ])
+    def test_scale_x(self, text_line, x, scale, expected):
+        vertices = text_line.transform_2d(
+            vertices=[
+                Vec3(x, 0),  # at the base line
+                Vec3(x, 1),  # at height 1
+                Vec3(x, -1),  # at height -1
+            ],
+            insert=Vec3(),
+            shift=(0, 0),
+            rotation=0,
+            scale=(scale, 1),
+        )
+        assert vertices[0] == (expected, 0)
+        assert vertices[1] == (expected, 1)
+        assert vertices[2] == (expected, -1)
+
+    @pytest.mark.parametrize('y,scale,expected', [
+        (0, 2, 0), (1, 2, 2), (2, 2, 4), (2, -1, -2), (2, -2, -4),
+    ])
+    def test_scale_y(self, text_line, y, scale, expected):
+        vertices = text_line.transform_2d(
+            vertices=[
+                Vec3(0, y),  # at the center
+                Vec3(1, y),  # at width 1
+                Vec3(-1, y),  # at width -1
+            ],
+            insert=Vec3(),
+            shift=(0, 0),
+            rotation=0,
+            scale=(1, scale),
+        )
+        assert vertices[0] == (0, expected)
+        assert vertices[1] == (1, expected)
+        assert vertices[2] == (-1, expected)
+
+    def test_oblique(self, text_line):
+        oblique = math.pi / 4  # 45 deg
+        vertices = text_line.transform_2d(
+            vertices=[
+                Vec3(0, 0),  # at the base line
+                Vec3(0, 1),  # at height 1
+                Vec3(0, -1),  # at height -1
+                Vec3(10, 1),  # away from origin
+            ],
+            insert=Vec3(),
+            shift=(0, 0),
+            rotation=0,
+            scale=(1, 1),
+            oblique=oblique
+        )
+        assert vertices[0] == (0, 0)
+        assert vertices[1] == (1, 1)
+        assert vertices[2] == (-1, -1)
+        assert vertices[3] == (11, 1)
 
 
 def test_plain_text():

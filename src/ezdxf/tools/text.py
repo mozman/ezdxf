@@ -5,6 +5,7 @@ from typing import (
     List, Iterable, Tuple, TYPE_CHECKING, Union, Optional, Callable,
 )
 import re
+import math
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SPECIAL_CHARS_ENCODING
 from ezdxf.math import Vec3
@@ -66,8 +67,12 @@ class TextLine:
     def font_measurements(self) -> FontMeasurements:
         return self._font.measurements.scale(self._stretch_y)
 
-    def baseline_vertices(self, insert: Vec3, halign: int = 0, valign: int = 0,
-                          angle: float = 0, scale=(1, 1)) -> List[Vec3]:
+    def baseline_vertices(self,
+                          insert: Vec3,
+                          halign: int = 0,
+                          valign: int = 0,
+                          angle: float = 0,
+                          scale: Tuple[float, float] = (1, 1)) -> List[Vec3]:
         """ Returns the left and the right baseline vertex of the text line.
 
         Args:
@@ -84,10 +89,17 @@ class TextLine:
             Vec3(self.width, fm.baseline),
         ]
         shift = self._shift_vector(halign, valign, fm)
-        return _transform_2d(vertices, insert, shift, angle, scale)
+        # Oblique angle is deliberately not supported, the base line should be
+        # (near) the y-coordinate=0.
+        return TextLine.transform_2d(vertices, insert, shift, angle, scale)
 
-    def corner_vertices(self, insert: Vec3, halign: int = 0, valign: int = 0,
-                        angle: float = 0, scale=(1, 1)) -> List[Vec3]:
+    def corner_vertices(self,
+                        insert: Vec3,
+                        halign: int = 0,
+                        valign: int = 0,
+                        angle: float = 0,
+                        scale: Tuple[float, float] = (1, 1),
+                        oblique: float = 0) -> List[Vec3]:
         """ Returns the corner vertices of the text line in the order
         bottom left, bottom right, top right, top left.
 
@@ -97,6 +109,7 @@ class TextLine:
             valign: vertical alignment baseline=0, bottom=1, middle=2, top=3
             angle: text rotation in radians
             scale: scale in x- and y-axis as 2-tuple of float
+            oblique: shear angle (slanting) in x-direction in radians
 
         """
         fm = self.font_measurements()
@@ -107,28 +120,47 @@ class TextLine:
             Vec3(0, fm.cap_top),
         ]
         shift = self._shift_vector(halign, valign, fm)
-        return _transform_2d(vertices, insert, shift, angle, scale)
+        return TextLine.transform_2d(
+            vertices, insert, shift, angle, scale, oblique)
 
     def _shift_vector(self, halign: int, valign: int,
                       fm: FontMeasurements) -> Tuple[float, float]:
         return _shift_x(self.width, halign), _shift_y(fm, valign)
 
+    @staticmethod
+    def transform_2d(vertices: Iterable[Vec3],
+                     insert: Vec3,
+                     shift: Tuple[float, float],
+                     rotation: float,
+                     scale: Tuple[float, float],
+                     oblique: float = 0) -> List[Vec3]:
+        """ Transform any vertices from the text line located at the base
+        location at (0, 0) and alignment "LEFT".
 
-def _transform_2d(vertices: Iterable[Vec3],
-                  insert: Vec3,
-                  shift: Tuple[float, float],
-                  rotation: float,
-                  scale: Tuple[float, float]) -> List[Vec3]:
-    shift_x, shift_y = shift
-    scale_x, scale_y = scale
-    vertices = (
-        Vec3(
-            (v.x + shift_x) * scale_x,
-            (v.y + shift_y) * scale_y,
-            v.z,
-        ) for v in vertices
-    )
-    return [insert + v.rotate(rotation) for v in vertices]
+        Args:
+            vertices: iterable of vertices as Vec3 objects
+            insert: insertion point
+            shift: (shift-x, shift-y) as 2-tuple of float
+            rotation: text rotation in radians
+            scale: (scale-x, scale-y)  as 2-tuple of float
+            oblique: shear angle (slanting) in x-direction in radians
+
+        """
+
+        if oblique:
+            slant_x = math.tan(oblique)
+            vertices = (v.replace(x=v.x + v.y * slant_x) for v in vertices)
+
+        shift_x, shift_y = shift
+        scale_x, scale_y = scale
+        vertices = (
+            Vec3(
+                (v.x + shift_x) * scale_x,
+                (v.y + shift_y) * scale_y,
+                v.z,
+            ) for v in vertices
+        )
+        return [insert + v.rotate(rotation) for v in vertices]
 
 
 def _shift_x(total_width: float, halign: int) -> float:
