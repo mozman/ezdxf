@@ -252,6 +252,8 @@ Matrix44
 
     .. automethod:: xyz_rotate(angle_x: float, angle_y: float, angle_z: float) -> Matrix44
 
+    .. automethod:: shear_xy(angle_x: float, angle_y: float) -> Matrix44
+
     .. automethod:: perspective_projection(left: float, right: float, top: float, bottom: float, near: float, far: float) -> Matrix44
 
     .. automethod:: perspective_projection_fov(fov: float, aspect: float, near: float, far: float) -> Matrix44

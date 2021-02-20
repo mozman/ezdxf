@@ -1,6 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import Sequence, Iterable, Tuple, TYPE_CHECKING
 from itertools import chain
@@ -10,7 +10,7 @@ Vec3, v3_normalize, v3_isclose, v3_cross, v3_dot,
 )
 from .vector import X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 
-from libc.math cimport fabs, sin, cos
+from libc.math cimport fabs, sin, cos, tan
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -293,6 +293,15 @@ cdef class Matrix44:
         mat.m[8] = sy
         mat.m[9] = -sx * cy
         mat.m[10] = cx * cy
+        return mat
+
+    @staticmethod
+    def shear_xy(double angle_x = 0, double angle_y = 0) -> 'Matrix44':
+        cdef Matrix44 mat = Matrix44()
+        cdef double tx = tan(angle_x)
+        cdef double ty = tan(angle_y)
+        mat.m[1] = tx
+        mat.m[4] = ty
         return mat
 
     @staticmethod

@@ -309,3 +309,8 @@ class TestMatrix44:
         matrix[0, 0] = 12
         assert not equal_matrix(matrix, pickled_matrix)
 
+    def test_shear_xy(self, m44):
+        angle = pi / 4
+        matrix = m44.shear_xy(angle_x=angle, angle_y=-angle)
+        assert matrix[0, 1] == pytest.approx(1.0)
+        assert matrix[1, 0] == pytest.approx(-1.0)

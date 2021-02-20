@@ -25,9 +25,8 @@ def floats(items: Iterable) -> List[float]:
 
 
 class Matrix44:
-    """
-    This is a pure Python implementation for 4x4 transformation matrices, to
-    avoid dependency to big numerical packages like :mod:`numpy`, before binary
+    """ This is a pure Python implementation for 4x4 `transformation matrices`_ ,
+    to avoid dependency to big numerical packages like :mod:`numpy`, before binary
     wheels, installation of these packages wasn't always easy on Windows.
 
     The utility functions for constructing transformations and transforming
@@ -42,6 +41,8 @@ class Matrix44:
           the matrix.
         - ``Matrix44(row1, row2, row3, row4)`` four rows, each row with four
           values.
+
+    .. _transformation matrices: https://en.wikipedia.org/wiki/Transformation_matrix
 
     """
     _identity = (
@@ -333,6 +334,25 @@ class Matrix44:
             -cy * sz, -sxsy * sz + cx * cz, cxsy * sz + sx * cz, 0.,
             sy, -sx * cy, cx * cy, 0.,
             0., 0., 0., 1.])
+
+    @classmethod
+    def shear_xy(cls, angle_x: float = 0, angle_y: float = 0) -> 'Matrix44':
+        """ Returns a translation matrix for shear mapping (visually similar
+        to slanting) in the xy-plane.
+
+        Args:
+            angle_x: slanting angle in x direction in radians
+            angle_y: slanting angle in y direction in radians
+
+        """
+        tx = math.tan(angle_x)
+        ty = math.tan(angle_y)
+        return cls([
+            1., tx, 0., 0.,
+            ty, 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., 0., 0., 1.
+        ])
 
     @classmethod
     def perspective_projection(cls, left: float, right: float, top: float,
