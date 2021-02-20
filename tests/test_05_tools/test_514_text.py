@@ -15,14 +15,17 @@ from ezdxf.math import Vec3
 from ezdxf.lldxf import const
 
 
-class TestTextLine:
-    @pytest.fixture
-    def font(self):
-        return MonospaceFont(2.5, descender_factor=0.333)
+@pytest.fixture
+def font():
+    return MonospaceFont(2.5, descender_factor=0.333)
 
-    @pytest.fixture
-    def text_line(self, font):
-        return TextLine("text", font)
+
+@pytest.fixture
+def text_line(font):
+    return TextLine("text", font)
+
+
+class TestTextLine:
 
     def test_text_width_and_height(self, text_line):
         assert text_line.width == 10
@@ -77,6 +80,34 @@ class TestTextLine:
             Vec3(0, bottom), Vec3(10, bottom), Vec3(10, top), Vec3(0, top)
         ]
 
+
+class TestTextLineTransformation:
+    def test_empty_input(self, text_line):
+        assert text_line.transform_2d([]) == []
+
+    @pytest.mark.parametrize('location', [
+        (0, 0), (1, 0), (0, 1), (-1, 0), (0, -1)
+    ])
+    def test_translation(self, text_line, location):
+        v = [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)]
+        vertices = text_line.transform_2d(vertices=v, insert=location)
+        for index in range(len(v)):
+            assert vertices[index] == Vec3(location) + v[index]
+
+    @pytest.mark.parametrize('angle', [
+        0, math.pi / 2, math.pi / 4, -math.pi / 2, -math.pi / 4
+    ])
+    def test_rotate(self, text_line, angle):
+        vertices = text_line.transform_2d(
+            vertices=[
+                (1, 0),
+                (2, 0),
+            ],
+            rotation=angle,
+        )
+        assert vertices[0] == (math.cos(angle), math.sin(angle))
+        assert vertices[1] == (math.cos(angle) * 2, math.sin(angle) * 2)
+
     @pytest.mark.parametrize('x,scale,expected', [
         (0, 2, 0), (1, 2, 2), (2, 2, 4), (2, -1, -2), (2, -2, -4),
     ])
@@ -87,9 +118,6 @@ class TestTextLine:
                 Vec3(x, 1),  # at height 1
                 Vec3(x, -1),  # at height -1
             ],
-            insert=Vec3(),
-            shift=(0, 0),
-            rotation=0,
             scale=(scale, 1),
         )
         assert vertices[0] == (expected, 0)
@@ -106,9 +134,6 @@ class TestTextLine:
                 Vec3(1, y),  # at width 1
                 Vec3(-1, y),  # at width -1
             ],
-            insert=Vec3(),
-            shift=(0, 0),
-            rotation=0,
             scale=(1, scale),
         )
         assert vertices[0] == (0, expected)
@@ -124,10 +149,6 @@ class TestTextLine:
                 Vec3(0, -1),  # at height -1
                 Vec3(10, 1),  # away from origin
             ],
-            insert=Vec3(),
-            shift=(0, 0),
-            rotation=0,
-            scale=(1, 1),
             oblique=oblique
         )
         assert vertices[0] == (0, 0)

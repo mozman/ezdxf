@@ -129,10 +129,10 @@ class TextLine:
 
     @staticmethod
     def transform_2d(vertices: Iterable[Vertex],
-                     insert: Vertex,
-                     shift: Tuple[float, float],
-                     rotation: float,
-                     scale: Tuple[float, float],
+                     insert: Vertex = Vec3(0, 0, 0),
+                     shift: Tuple[float, float] = (0, 0),
+                     rotation: float = 0,
+                     scale: Tuple[float, float] = (1, 1),
                      oblique: float = 0) -> List[Vec3]:
         """ Transform any vertices from the text line located at the base
         location at (0, 0) and alignment "LEFT".
