@@ -8,7 +8,7 @@ import re
 import math
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SPECIAL_CHARS_ENCODING
-from ezdxf.math import Vec3
+from ezdxf.math import Vec3, Vec2, Vertex
 from .fonts import FontMeasurements, AbstractFont
 
 if TYPE_CHECKING:
@@ -68,7 +68,7 @@ class TextLine:
         return self._font.measurements.scale(self._stretch_y)
 
     def baseline_vertices(self,
-                          insert: Vec3,
+                          insert: Vertex,
                           halign: int = 0,
                           valign: int = 0,
                           angle: float = 0,
@@ -85,8 +85,8 @@ class TextLine:
         """
         fm = self.font_measurements()
         vertices = [
-            Vec3(0, fm.baseline),
-            Vec3(self.width, fm.baseline),
+            Vec2(0, fm.baseline),
+            Vec2(self.width, fm.baseline),
         ]
         shift = self._shift_vector(halign, valign, fm)
         # Oblique angle is deliberately not supported, the base line should be
@@ -94,7 +94,7 @@ class TextLine:
         return TextLine.transform_2d(vertices, insert, shift, angle, scale)
 
     def corner_vertices(self,
-                        insert: Vec3,
+                        insert: Vertex,
                         halign: int = 0,
                         valign: int = 0,
                         angle: float = 0,
@@ -114,10 +114,10 @@ class TextLine:
         """
         fm = self.font_measurements()
         vertices = [
-            Vec3(0, fm.bottom),
-            Vec3(self.width, fm.bottom),
-            Vec3(self.width, fm.cap_top),
-            Vec3(0, fm.cap_top),
+            Vec2(0, fm.bottom),
+            Vec2(self.width, fm.bottom),
+            Vec2(self.width, fm.cap_top),
+            Vec2(0, fm.cap_top),
         ]
         shift = self._shift_vector(halign, valign, fm)
         return TextLine.transform_2d(
@@ -128,8 +128,8 @@ class TextLine:
         return _shift_x(self.width, halign), _shift_y(fm, valign)
 
     @staticmethod
-    def transform_2d(vertices: Iterable[Vec3],
-                     insert: Vec3,
+    def transform_2d(vertices: Iterable[Vertex],
+                     insert: Vertex,
                      shift: Tuple[float, float],
                      rotation: float,
                      scale: Tuple[float, float],
@@ -138,7 +138,7 @@ class TextLine:
         location at (0, 0) and alignment "LEFT".
 
         Args:
-            vertices: iterable of vertices as Vec3 objects
+            vertices: iterable of vertices
             insert: insertion point
             shift: (shift-x, shift-y) as 2-tuple of float
             rotation: text rotation in radians
@@ -146,21 +146,43 @@ class TextLine:
             oblique: shear angle (slanting) in x-direction in radians
 
         """
+        # Building a transformation matrix vs. applying transformations in
+        # individual steps:
+        # Most text is horizontal, because people like to read horizontal text!
+        # Operating in 2D is faster than building a full 3D transformation
+        # matrix and a pure 2D transformation matrix is not implemented!
+        # This function doesn't transform many vertices at the same time,
+        # mostly only 4 vertices, therefore the matrix multiplication overhead
+        # does not pay off.
+        # The most expensive rotation transformation is the least frequently
+        # used transformation.
+        # IMPORTANT: this assumptions are not verified by profiling!
 
+        # Use 2D vectors:
+        vertices = Vec2.generate(vertices)
+
+        # 1. slanting at the original location (very rare):
         if oblique:
             slant_x = math.tan(oblique)
-            vertices = (v.replace(x=v.x + v.y * slant_x) for v in vertices)
+            vertices = (Vec2(v.x + v.y * slant_x, v.y) for v in vertices)
 
-        shift_x, shift_y = shift
+        # 2. scale at the original location (more often):
         scale_x, scale_y = scale
-        vertices = (
-            Vec3(
-                (v.x + shift_x) * scale_x,
-                (v.y + shift_y) * scale_y,
-                v.z,
-            ) for v in vertices
-        )
-        return [insert + v.rotate(rotation) for v in vertices]
+        if scale_x != 1 or scale_y != 1:
+            vertices = (Vec2(v.x * scale_x, v.y * scale_y) for v in vertices)
+
+        # 3. apply alignment shifting (frequently):
+        shift_vector = Vec2(shift)
+        if shift_vector:
+            vertices = (v + shift_vector for v in vertices)
+
+        # 4. apply rotation (rare):
+        if rotation:
+            vertices = (v.rotate(rotation) for v in vertices)
+
+        # 5. translate to target location in 3D! (every time)
+        insert = Vec3(insert)
+        return [insert + v for v in vertices]
 
 
 def _shift_x(total_width: float, halign: int) -> float:
