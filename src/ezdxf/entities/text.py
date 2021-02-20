@@ -402,17 +402,25 @@ def text_transformation_matrix(entity: Text) -> Matrix44:
     align, p1, p2 = entity.get_pos()
     mirror_x = -1 if entity.is_backward else 1
     mirror_y = -1 if entity.is_upside_down else 1
+    oblique = math.radians(entity.dxf.oblique)
     location = p1
     if align in ('ALIGNED', 'FIT'):
         width_factor = 1.0  # text goes from p1 to p2, no stretching applied
         location = p1.lerp(p2, factor=0.5)
         angle = (p2 - p1).angle  # override stored angle
 
-    m = Matrix44.chain(
-        Matrix44.scale(width_factor * mirror_x, mirror_y, 1),
-        Matrix44.z_rotate(angle),
-        Matrix44.translate(location.x, location.y, location.z),
-    )
+    m = Matrix44()
+    if oblique:
+        m *= Matrix44.shear_xy(angle_x=oblique)
+    sx = width_factor * mirror_x
+    sy = mirror_y
+    if sx != 1 or sy != 1:
+        m *= Matrix44.scale(sx, sy, 1)
+    if angle:
+        m *= Matrix44.z_rotate(angle)
+    if location:
+        m *= Matrix44.translate(location.x, location.y, location.z)
+
     ocs = entity.ocs()
     if ocs.transform:  # to WCS
         m *= ocs.matrix

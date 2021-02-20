@@ -8,8 +8,11 @@ from ezdxf.lldxf import const
 
 EXAMPLES = Path(__file__).parent.parent.parent / 'examples_dxf'
 OUTBOX = Path('~/Desktop/Outbox').expanduser()
+FILE1 = "text_mirror_true_type_font.dxf"
+FILE2 = "text_oblique_rotate.dxf"
 
-doc = ezdxf.readfile(EXAMPLES / "text_mirror_true_type_font.dxf")
+FILE = FILE2
+doc = ezdxf.readfile(EXAMPLES / FILE)
 doc.layers.new('OUTLINE', dxfattribs={'color': 1})
 doc.layers.new('BBOX', dxfattribs={'color': 5})
 msp = doc.modelspace()
@@ -34,4 +37,4 @@ for prim in disassemble.to_primitives(text_entities):
 
 # Zoom on bounding boxes (fast):
 zoom.objects(msp, boxes,factor=1.1)
-doc.saveas(OUTBOX / 'mirrored_text_with_bounding_boxes.dxf')
+doc.saveas(OUTBOX / FILE)
