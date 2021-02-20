@@ -76,7 +76,7 @@ class TextLine:
         """ Returns the left and the right baseline vertex of the text line.
 
         Args:
-            insert: insertion point
+            insert: insertion location
             halign: horizontal alignment left=0, center=1, right=2
             valign: vertical alignment baseline=0, bottom=1, middle=2, top=3
             angle: text rotation in radians
@@ -104,7 +104,7 @@ class TextLine:
         bottom left, bottom right, top right, top left.
 
         Args:
-            insert: insertion point
+            insert: insertion location
             halign: horizontal alignment left=0, center=1, right=2
             valign: vertical alignment baseline=0, bottom=1, middle=2, top=3
             angle: text rotation in radians
@@ -139,7 +139,7 @@ class TextLine:
 
         Args:
             vertices: iterable of vertices
-            insert: insertion point
+            insert: insertion location
             shift: (shift-x, shift-y) as 2-tuple of float
             rotation: text rotation in radians
             scale: (scale-x, scale-y)  as 2-tuple of float
@@ -180,7 +180,7 @@ class TextLine:
         if rotation:
             vertices = (v.rotate(rotation) for v in vertices)
 
-        # 5. translate to target location in 3D! (every time)
+        # 5. move to insert location in OCS/3D! (every time)
         insert = Vec3(insert)
         return [insert + v for v in vertices]
 
