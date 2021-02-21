@@ -93,7 +93,7 @@ def add_view_parser(subparsers):
     parser.add_argument(
         'file',
         metavar='FILE',
-        nargs=1,
+        nargs='?',
         help='DXF file to view',
     )
     parser.add_argument(

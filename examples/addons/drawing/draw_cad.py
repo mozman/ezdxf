@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Created: 06.2020
 # Copyright (c) 2020, Matthew Broadway
 # License: MIT License
 import argparse
@@ -13,6 +12,13 @@ from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 from ezdxf.tools import fonts
 
+# The "draw_cad.py" viewer can be executed by the new ezdxf command line
+# launcher:
+#
+# C:\> ezdxf draw FILE
+#
+# This file remains as an example for the usage of the Matplotlib backend.
+#
 # For the case automatic font loading is disabled:
 fonts.load()
 
