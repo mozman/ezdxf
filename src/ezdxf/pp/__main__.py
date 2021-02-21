@@ -11,7 +11,10 @@ from .dxfpp import dxfpp
 from .rawpp import rawpp
 from ezdxf import options
 from ezdxf.lldxf.const import DXFError, DXFStructureError
-from ezdxf.lldxf.tagger import ascii_tags_loader, tag_compiler, binary_tags_loader
+from ezdxf.lldxf.tagger import (
+    ascii_tags_loader, tag_compiler,
+    binary_tags_loader,
+)
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
 from ezdxf.filemanagement import dxf_file_info
@@ -39,7 +42,8 @@ def readfile(filename: str, legacy_mode: bool = False, compile_tags=True,
 
 def pretty_print(filename: Path, is_binary_dxf=False):
     try:
-        tagger = readfile(str(filename), legacy_mode=True, is_binary_dxf=is_binary_dxf)
+        tagger = readfile(str(filename), legacy_mode=True,
+                          is_binary_dxf=is_binary_dxf)
     except IOError:
         print(f"Unable to read DXF file '{filename}'.")
         sys.exit(1)
@@ -83,6 +87,38 @@ def raw_pretty_print(filename: Path, compile_tags=True, legacy_mode=False,
     return html_filename
 
 
+def run(args):
+    for filename in args.files:
+        if not Path(filename).exists():
+            print(f"File '{filename}' not found.")
+            continue
+
+        if is_binary_dxf_file(filename):
+            binary_dxf = True
+        else:
+            binary_dxf = False
+            if not is_dxf_file(filename):
+                print(f"File '{filename}' is not a DXF file.")
+                continue
+
+        if args.raw:
+            html_path = raw_pretty_print(
+                Path(filename),
+                compile_tags=not args.nocompile,
+                legacy_mode=args.legacy,
+                is_binary_dxf=binary_dxf
+            )
+        else:
+            html_path = pretty_print(
+                Path(filename),
+                is_binary_dxf=binary_dxf
+            )  # legacy mode is always used
+
+        print(f"dxfpp created '{html_path}'")
+        if args.open:
+            webbrowser.open(str(html_path))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -122,35 +158,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     options.compress_binary_data = True
-    for filename in args.files:
-        if not Path(filename).exists():
-            print(f"File '{filename}' not found.")
-            continue
-
-        if is_binary_dxf_file(filename):
-            binary_dxf = True
-        else:
-            binary_dxf = False
-            if not is_dxf_file(filename):
-                print(f"File '{filename}' is not a DXF file.")
-                continue
-
-        if args.raw:
-            html_path = raw_pretty_print(
-                Path(filename),
-                compile_tags=not args.nocompile,
-                legacy_mode=args.legacy,
-                is_binary_dxf=binary_dxf
-            )
-        else:
-            html_path = pretty_print(
-                Path(filename),
-                is_binary_dxf=binary_dxf
-            )  # legacy mode is always used
-
-        print(f"dxfpp created '{html_path}'")
-        if args.open:
-            webbrowser.open(str(html_path))
+    run(args)
 
 
 if __name__ == "__main__":

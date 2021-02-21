@@ -35,6 +35,23 @@ def processing_msg(text: str) -> None:
     print('-' * len(text))
 
 
+def run(args):
+    for pattern in args.files:
+        names = list(glob.glob(pattern))
+        if len(names) == 0:
+            print(f"File(s) '{pattern}' not found.")
+            continue
+        for filename in names:
+            if not os.path.exists(filename):
+                print(f"File '{filename}' not found.")
+                continue
+            if not is_dxf_file(filename):
+                print(f"File '{filename}' is not a DXF file.")
+                continue
+            processing_msg(filename)
+            audit(filename, safe=args.recover)
+
+
 def main() -> None:
     print()
     parser = argparse.ArgumentParser()
@@ -52,22 +69,7 @@ def main() -> None:
     )
 
     args = parser.parse_args(sys.argv[1:])
-
-    ezdxf.options.compress_binary_data = True
-    for pattern in args.files:
-        names = list(glob.glob(pattern))
-        if len(names) == 0:
-            print(f"File(s) '{pattern}' not found.")
-            continue
-        for filename in names:
-            if not os.path.exists(filename):
-                print(f"File '{filename}' not found.")
-                continue
-            if not is_dxf_file(filename):
-                print(f"File '{filename}' is not a DXF file.")
-                continue
-            processing_msg(filename)
-            audit(filename, safe=args.recover)
+    run(args)
 
 
 if __name__ == "__main__":

@@ -95,6 +95,7 @@ setup(
     entry_points={
         'console_scripts': [
             'dxfpp = ezdxf.pp.__main__:main',  # DXF Pretty Printer
+            'dxfpp = ezdxf.__main__:main',  # ezdxf launcher
         ]
     },
     provides=['ezdxf'],
