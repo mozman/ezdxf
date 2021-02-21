@@ -2,8 +2,7 @@
 # License: MIT License
 import pytest
 import ezdxf
-from ezdxf.audit import Auditor, AuditError
-from ezdxf.audit.auditor import BlockCycleDetector
+from ezdxf.audit import Auditor, AuditError, BlockCycleDetector
 from ezdxf.entities import factory
 
 

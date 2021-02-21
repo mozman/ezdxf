@@ -93,7 +93,7 @@ def main():
         from ezdxf.pp.__main__ import run
         run(args)
     elif args.command == "audit":
-        from ezdxf.audit.__main__ import run
+        from ezdxf.audit import run
         run(args)
     elif args.command == "draw":
         print('draw')

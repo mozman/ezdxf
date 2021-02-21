@@ -1,7 +1,7 @@
-# Copyright (c) 2017-2020, Manfred Moitzi
+# Copyright (c) 2017-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict, Optional, Callable
+    TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict, Optional, Callable,
 )
 import sys
 from enum import IntEnum
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
         DXFEntity, Drawing, DXFGraphic, BlocksSection, EntityDB,
     )
 
-__all__ = ['Auditor', 'AuditError', 'audit']
+__all__ = ['Auditor', 'AuditError', 'audit', 'run', 'BlockCycleDetector']
 
 
 class AuditError(IntEnum):
@@ -478,3 +478,47 @@ def audit(entity: 'DXFEntity', doc: 'Drawing') -> Auditor:
     auditor = Auditor(doc)
     entity.audit(auditor)
     return auditor
+
+
+def run(args):
+    """ Launcher sub-command: audit """
+    import os
+    import glob
+    from ezdxf import recover
+    from ezdxf.lldxf.validator import is_dxf_file
+
+    def processing_msg(text: str) -> None:
+        print(text)
+        print('-' * len(text))
+
+    def _audit(filename: str) -> None:
+        try:
+            doc, auditor = recover.readfile(filename)
+        except IOError:
+            print(f'Not a DXF file or a generic I/O error.')
+            sys.exit(1)
+        except const.DXFStructureError:
+            print(f'Invalid or corrupted DXF file.')
+            sys.exit(2)
+
+        if auditor.has_errors:
+            auditor.print_error_report()
+        if auditor.has_fixes:
+            auditor.print_fixed_errors()
+        if auditor.has_errors is False and auditor.has_fixes is False:
+            print('No errors found.')
+
+    for pattern in args.files:
+        names = list(glob.glob(pattern))
+        if len(names) == 0:
+            print(f"File(s) '{pattern}' not found.")
+            continue
+        for filename in names:
+            if not os.path.exists(filename):
+                print(f"File '{filename}' not found.")
+                continue
+            if not is_dxf_file(filename):
+                print(f"File '{filename}' is not a DXF file.")
+                continue
+            processing_msg(filename)
+            _audit(filename)

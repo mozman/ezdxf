@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
     TYPE_CHECKING, TextIO, BinaryIO, Iterable, Union, Tuple, Callable,
@@ -931,7 +931,7 @@ class Drawing:
         this is a long running task.
 
         """
-        from ezdxf.audit.auditor import Auditor
+        from ezdxf.audit import Auditor
         auditor = Auditor(self)
         auditor.run()
         return auditor
