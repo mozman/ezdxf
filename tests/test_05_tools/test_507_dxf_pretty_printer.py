@@ -1,9 +1,8 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-import pytest
 import ezdxf
 
-from ezdxf.pp.__main__ import readfile, dxfpp
+from ezdxf.pp.pprint import readfile, dxfpp
 from ezdxf.pp.rawpp import rawpp
 
 
