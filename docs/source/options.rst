@@ -73,6 +73,8 @@ Global options stored in :mod:`ezdxf.options`
 
     Enable proxy graphic load/store support.
 
+.. _environment_variables:
+
 Environment Variables
 =====================
 
@@ -90,6 +92,8 @@ EZDXF_DISABLE_C_EXT
     Set environment variable EZDXF_DISABLE_C_EXT to ``1`` or ``True`` to disable
     the usage of C extensions implemented by Cython. Disabling the C-extensions
     can only be done on interpreter startup, before the first import of `ezdxf`.
+
+
 
 EZDXF_AUTO_LOAD_FONTS
     Set EZDXF_AUTO_LOAD_FONTS to ``0`` or ``False`` to deactivate font cache

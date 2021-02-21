@@ -1,3 +1,12 @@
+.. _MLEADER Internals:
+
+MLEADER Internals
+=================
+
+.. seealso::
+
+    - DXF Reference: `MLEADER`_
+
 Example BricsCAD MultiLeaderContext:
 
 .. code-block::
@@ -130,3 +139,5 @@ Example BricsCAD MultiLeaderContext:
     44 <float> 0.0                <<< ATTDEF width
     302 <str> B                   <<< ATTDEF text (reused group code)
     ...  common group codes 294, 178, 179, ...
+
+.. _MLEADER: https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-72D20B8C-0F5E-4993-BEB7-0FCF94F32BE0

@@ -19,20 +19,28 @@ package.
     pkg-design
 
 
+Internal Modules
+----------------
+
+.. toctree::
+    :maxdepth: 2
+
+    fonts
+
 Internal Data Structures
 ------------------------
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   entitydb
-   dxftags
-   dxftag_collections
+    entitydb
+    dxftags
+    dxftag_collections
 
 Documentation Guide
 -------------------
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
-   doc_formatting_guide
+    doc_formatting_guide

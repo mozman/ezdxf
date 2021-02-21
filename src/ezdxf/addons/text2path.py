@@ -36,7 +36,7 @@ def make_paths_from_str(s: str,
 
     Args:
          s: text to convert
-         font: font face definition
+         font: font face definition as :class:`~ezdxf.tools.fonts.FontFace` object
          size: text size (cap height) in drawing units
          align: alignment as string, default is "LEFT"
          length: target length for the "ALIGNED" and "FIT" alignments
@@ -151,7 +151,7 @@ def make_hatches_from_str(s: str,
 
     Args:
          s: text to convert
-         font: font face definition
+         font: font face definition as :class:`~ezdxf.tools.fonts.FontFace` object
          size: text size (cap height) in drawing units
          align: alignment as string, default is "LEFT"
          length: target length for the "ALIGNED" and "FIT" alignments

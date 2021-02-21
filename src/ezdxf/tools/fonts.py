@@ -1,32 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-""" Manage font data
-
-The default DXF way to store fonts in the STYLE entity by using the ttf file
-name is not a good choice, most render backends select fonts by their
-properties, this list shows the matplotlib properties:
-
-- family: List of font names in decreasing order of priority.
-    The items may include a generic font family name, either
-    'serif', 'sans-serif', 'cursive', 'fantasy', or 'monospace'.
-- style: 'normal' ('regular'), 'italic' or 'oblique'
-- stretch: A numeric value in the range 0-1000 or one of
-    'ultra-condensed', 'extra-condensed', 'condensed',
-    'semi-condensed', 'normal', 'semi-expanded', 'expanded',
-    'extra-expanded' or 'ultra-expanded'
-- weight: A numeric value in the range 0-1000 or one of
-    'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-    'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-    'extra bold', 'black'.
-
-This way the backand can choose a similar font if the original font is not
-available.
-
-Select fonts in different backends:
-
-- matplotlib: FontProperties(family, style, stretch, weight)
-- pyqt: QFont(family: str, pointSize: int (ignore), weight: int, italic: bool)
-- SVG: font-family; font-style; font-stretch; font-weight;
+"""
+This module manages a backend agnostic font database.
 
 Weight Values: https://developer.mozilla.org/de/docs/Web/CSS/font-weight
 
@@ -66,15 +41,6 @@ expanded        125%
 extra-expanded  150%
 ultra-expanded  200%
 =============== ======
-
-
-This module manages as backend agnostic font database.
-The properties of many common fonts are stored in a data file "fonts.json",
-therefore for basic usage no additional dependency is required.
-Advanced features uses the optional matplotlib font manager tools.
-
-The :func:`add_system_fonts` function adds all available fonts for the current
-system to the font database.
 
 """
 from typing import Dict, Optional, NamedTuple
@@ -162,7 +128,7 @@ X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
 
 
 def resolve_shx_font_name(font_name: str) -> str:
-    """ Map SHX font names to TTF file names. e.g. 'TXT' -> 'txt_____.ttf' """
+    """ Map SHX font names to TTF file names. e.g. "TXT" -> "txt_____.ttf" """
     # Map SHX fonts to True Type Fonts:
     font_upper = font_name.upper()
     if font_upper in SHX_FONTS:
@@ -177,7 +143,7 @@ def weight_name_to_value(name: str) -> int:
 
 def cache_key(name: str) -> str:
     """ Returns the normalize TTF file name in lower case without preceding
-    folders. e.g. `C:\\Windows\\Fonts\\Arial.TTF` -> 'arial.ttf'
+    folders. e.g. "C:\\Windows\\Fonts\\Arial.TTF" -> "arial.ttf"
     """
     return Path(name).name.lower()
 
@@ -185,9 +151,9 @@ def cache_key(name: str) -> str:
 def build_system_font_cache(*, path=None, rebuild=True) -> None:
     """ Build system font cache and save it to directory `path` if given.
     Set `rebuild` to ``False`` to just add new fonts.
-    Requires the ``matplotlib`` package!
+    Requires the Matplotlib package!
 
-    A rebuild has only to be done after a new ezdxf installation, or new fonts
+    A rebuild has to be done only after a new ezdxf installation, or new fonts
     were added to your system (which you want to use), or an update of ezdxf if
     you don't use your own external font cache directory.
 
@@ -227,9 +193,8 @@ def build_system_font_cache(*, path=None, rebuild=True) -> None:
 
 
 def find_font_face(ttf_path: Optional[str]) -> Optional[FontFace]:
-    """ Get cached font face definition by TTF file name e.g. 'Arial.ttf'.
-
-    Return ``None`` if font not found.
+    """ Get cached font face definition by TTF file name e.g. "Arial.ttf",
+    returns ``None`` if not found.
 
     """
     if ttf_path:
@@ -239,9 +204,17 @@ def find_font_face(ttf_path: Optional[str]) -> Optional[FontFace]:
 
 
 def get_font_face(ttf_path: str, map_shx=True) -> FontFace:
-    """ Get cached font face definition by TTF file name e.g. 'Arial.ttf'.
+    """ Get cached font face definition by TTF file name e.g. "Arial.ttf".
 
-    Returns a pseudo font face definition if font not found.
+    This function translates a DXF font definition by
+    the raw TTF font file name into a :class:`FontFace` object. Fonts which are
+    not available on the current system gets a default font face.
+
+    Args:
+        ttf_path: raw font file name as stored in the
+            :class:`~ezdxf.entities.Textstyle` entity
+        map_shx: maps SHX font names to TTF replacement fonts,
+            e.g. "TXT" -> "txt_____.ttf"
 
     """
     if not isinstance(ttf_path, str):
@@ -262,7 +235,15 @@ def get_font_face(ttf_path: str, map_shx=True) -> FontFace:
 
 
 def get_font_measurements(ttf_path: str, map_shx=True) -> 'FontMeasurements':
-    """ Get cached font measurements by TTF file name e.g. 'Arial.ttf'. """
+    """ Get cached font measurements by TTF file name e.g. "Arial.ttf".
+
+    Args:
+        ttf_path: raw font file name as stored in the
+            :class:`~ezdxf.entities.Textstyle` entity
+        map_shx: maps SHX font names to TTF replacement fonts,
+            e.g. "TXT" -> "txt_____.ttf"
+
+    """
     # TODO: is using freetype-py the better solution?
     if map_shx:
         ttf_path = resolve_shx_font_name(ttf_path)
@@ -289,7 +270,12 @@ def get_cache_file_path(path, name: str = FONT_FACE_CACHE_FILE) -> Path:
 
 def load(path=None, reload=False):
     """ Load all caches from given `path` or from default location, defined by
-    options.font_cache_directory or from the ezdxf.tools folder.
+    :attr:`ezdxf.options.font_cache_directory` or the default cache from
+    the ``ezdxf.tools`` folder.
+
+    This function is called automatically at startup if not disabled by
+    environment variable ``EZDXF_AUTO_LOAD_FONTS``.
+
     """
     global font_face_cache, font_measurement_cache
 
@@ -403,6 +389,12 @@ class AbstractFont:
 
 
 class MatplotlibFont(AbstractFont):
+    """ This class provides proper font measurement support by using the optional
+    Matplotlib font support.
+
+    Use the :func:`make_font` factory function to create a font abstraction.
+
+    """
     def __init__(self, ttf_path: str, cap_height: float = 1.0,
                  width_factor: float = 1.0):
         from . import _matplotlib_font_support
@@ -416,6 +408,11 @@ class MatplotlibFont(AbstractFont):
         self._width_factor = width_factor * scale
 
     def text_width(self, text: str) -> float:
+        """ Returns the text with in drawing units for the given `text` string.
+        Text rendering and width calculation is done by the Matplotlib
+        :class:`TextPath` class.
+
+        """
         if not text.strip():
             return 0
         path = self._support_lib.get_text_path(text, self._font_properties)
@@ -423,6 +420,13 @@ class MatplotlibFont(AbstractFont):
 
 
 class MonospaceFont(AbstractFont):
+    """ Defines a monospaced font without knowing the real font properties.
+    Each letter has the same cap- and descender height and the same width.
+    This font abstraction is used if no Matplotlib font support is available.
+
+    Use the :func:`make_font` factory function to create a font abstraction.
+
+    """
     def __init__(self,
                  cap_height: float,
                  width_factor: float = 1.0,
@@ -438,11 +442,27 @@ class MonospaceFont(AbstractFont):
         self._width_factor: float = abs(width_factor)
 
     def text_width(self, text: str) -> float:
+        """  Returns the text width in drawing units for the given `text` based
+        on a simple monospaced font calculation.
+
+        """
         return len(text) * self.measurements.cap_height * self._width_factor
 
 
 def make_font(ttf_path: str, cap_height: float,
               width_factor: float) -> AbstractFont:
+    """ Factory function to create a font abstraction.
+
+    Creates a :class:`MatplotlibFont` if the Matplotlib font support is
+    available and enabled or else a :class:`MonospaceFont`.
+
+    Args:
+        ttf_path: raw font file name as stored in the
+            :class:`~ezdxf.entities.Textstyle` entity
+        cap_height: desired cap height in drawing units.
+        width_factor: horizontal text stretch factor
+
+    """
     if options.use_matplotlib:
         return MatplotlibFont(ttf_path, cap_height, width_factor)
     else:

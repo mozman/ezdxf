@@ -43,7 +43,15 @@ the text:
 Font Face Definition
 --------------------
 
-TODO require docs for ezdxf.tools.fonts
+A font face is defined by the Matplotlib compatible
+:class:`~ezdxf.tools.fonts.FontFace` object by ``font-family``, ``font-style``,
+``font-stretch`` and ``font-weight``.
+
+.. seealso::
+
+    - :ref:`font_anatomy`
+    - :ref:`font_properties`
+
 
 String Functions
 ----------------

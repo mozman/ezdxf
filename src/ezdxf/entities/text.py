@@ -184,8 +184,7 @@ class Text(DXFGraphic):
 
     def set_pos(self, p1: 'Vertex', p2: 'Vertex' = None,
                 align: str = None) -> 'Text':
-        """
-        Set text alignment, valid alignments are:
+        """  Set text alignment, valid alignments are:
 
         ============   =============== ================= =====
         Vertical       Left            Center            Right
@@ -196,23 +195,24 @@ class Text(DXFGraphic):
         Baseline       LEFT            CENTER            RIGHT
         ============   =============== ================= =====
 
-        Alignments ``'ALIGNED'`` and ``'FIT'`` are special, they require a
+        Alignments "ALIGNED" and "FIT" are special, they require a
         second alignment point, text is aligned on the virtual line between
-        these two points and has vertical alignment `Baseline`.
+        these two points and sit vertical at the base line.
 
-        - ``'ALIGNED'``: Text is stretched or compressed to fit exactly between
+        - "ALIGNED": Text is stretched or compressed to fit exactly between
           `p1` and `p2` and the text height is also adjusted to preserve
           height/width ratio.
-        - ``'FIT'``: Text is stretched or compressed to fit exactly between `p1`
+        - "FIT": Text is stretched or compressed to fit exactly between `p1`
           and `p2` but only the text width is adjusted, the text height is fixed
           by the :attr:`dxf.height` attribute.
-        - ``'MIDDLE'``: also a special adjustment, but the result is the same as
-          for ``'MIDDLE_CENTER'``.
+        - "MIDDLE": also a special adjustment, centered text like
+          "MIDDLE_CENTER", but vertical centred at the total height of the
+          text.
 
         Args:
             p1: first alignment point as (x, y[, z]) tuple
             p2: second alignment point as (x, y[, z]) tuple, required for
-                ``'ALIGNED'`` and ``'FIT'`` else ignored
+                "ALIGNED" and "FIT" else ignored
             align: new alignment, ``None`` for preserve existing alignment.
 
         """
@@ -232,10 +232,9 @@ class Text(DXFGraphic):
         return self
 
     def get_pos(self) -> Tuple[str, Vec3, Union[Vec3, None]]:
-        """
-        Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment method,
-        `p1` is the alignment point, `p2` is only relevant if `align` is
-        ``'ALIGNED'`` or ``'FIT'``, otherwise it is ``None``.
+        """ Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment
+        method, `p1` is the alignment point, `p2` is only relevant if `align`
+        is "ALIGNED" or "FIT", otherwise it is ``None``.
 
         """
         p1 = Vec3(self.dxf.insert)
@@ -248,9 +247,8 @@ class Text(DXFGraphic):
         return align, p2, None
 
     def set_align(self, align: str = 'LEFT') -> 'Text':
-        """
-        Just for experts: Sets the text alignment without setting the alignment
-        points, set adjustment points attr:`dxf.insert` and
+        """ Just for experts: Sets the text alignment without setting the
+        alignment points, set adjustment points attr:`dxf.insert` and
         :attr:`dxf.align_point` manually.
 
         Args:
@@ -368,7 +366,7 @@ class Text(DXFGraphic):
         return text_transformation_matrix(self)
 
     def font_name(self) -> str:
-        """ Returns the font name of the associated text style. """
+        """ Returns the font name of the associated :class:`Textstyle`. """
         font_name = 'arial.ttf'
         style_name = self.dxf.style
         if self.doc:
@@ -380,8 +378,8 @@ class Text(DXFGraphic):
         return font_name
 
     def fit_length(self) -> float:
-        """ Returns the text length for alignments FIT and ALIGNED, defined by
-        the distance from the insertion point to the align point or 0 for all
+        """ Returns the text length for alignments "FIT" and "ALIGNED", defined
+        by the distance from the insertion point to the align point or 0 for all
         other alignments.
 
         """
