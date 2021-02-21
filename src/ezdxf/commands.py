@@ -3,13 +3,14 @@
 import sys
 import os
 import glob
+import ezdxf
+from ezdxf import recover
 from ezdxf.lldxf import const
+from ezdxf.lldxf.validator import is_dxf_file
 
 
 def audit(args):
     """ Launcher sub-command: audit """
-    from ezdxf import recover
-    from ezdxf.lldxf.validator import is_dxf_file
 
     def processing_msg(text: str) -> None:
         print(text)
@@ -49,7 +50,57 @@ def audit(args):
 
 
 def draw(args):
-    print("draw")
+    import matplotlib.pyplot as plt
+    from ezdxf.addons.drawing import RenderContext, Frontend
+    from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
+    from ezdxf.tools import fonts
+
+    # For the case automatic font loading is disabled:
+    fonts.load()
+
+    if args.formats:
+        fig = plt.figure()
+        for extension, description in fig.canvas.get_supported_filetypes().items():
+            print(f'{extension}: {description}')
+        sys.exit()
+
+    if args.file:
+        filename = args.file
+    else:
+        print(f'argument FILE is required')
+        sys.exit()
+
+    try:
+        doc = ezdxf.readfile(filename)
+    except IOError:
+        print(f'Not a DXF file or a generic I/O error.')
+        sys.exit(2)
+    except ezdxf.DXFError:
+        try:
+            doc, auditor = recover.readfile(filename)
+        except ezdxf.DXFStructureError:
+            print(f'Invalid or corrupted DXF file: {filename}')
+            sys.exit(3)
+    else:
+        auditor = doc.audit()
+
+    if auditor.has_errors:
+        # But is most likely good enough for rendering.
+        print(f'Found {len(auditor.errors)} unrecoverable errors.')
+    if auditor.has_fixes:
+        print(f'Fixed {len(auditor.fixes)} errors.')
+
+    fig: plt.Figure = plt.figure()
+    ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
+    ctx = RenderContext(doc)
+    out = MatplotlibBackend(ax, params={'linetype_renderer': args.ltype})
+    Frontend(ctx, out).draw_layout(doc.modelspace(), finalize=True)
+    if args.out is not None:
+        print(f'saving to "{args.out}"')
+        fig.savefig(args.out, dpi=args.dpi)
+        plt.close(fig)
+    else:
+        plt.show()
 
 
 def view(args):

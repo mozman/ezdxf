@@ -59,20 +59,56 @@ def add_audit_parser(subparsers):
 def add_draw_parser(subparsers):
     parser = subparsers.add_parser("draw", help="Draw DXF files by Matplotlib")
     parser.add_argument(
-        'files',
+        'file',
         metavar='FILE',
-        nargs='+',
-        help='Draw DXF files by Matplotlib',
+        nargs='?',
+        help='DXF file to view or convert',
+    )
+    parser.add_argument(
+        '--formats',
+        action='store_true',
+        help="show all supported export formats"
+    )
+    parser.add_argument(
+        '-o', '--out',
+        required=False,
+        help="output filename for export"
+    )
+    parser.add_argument(
+        '--dpi',
+        type=int,
+        default=300,
+        help="target render resolution, default is 300",
+    )
+    parser.add_argument(
+        '-t', '--ltype',
+        default='internal',
+        choices=['internal', 'ezdxf'],
+        help="select the line type rendering engine, default is internal",
     )
 
 
 def add_view_parser(subparsers):
     parser = subparsers.add_parser("view", help="View DXF files by PyQt viewer")
     parser.add_argument(
-        'files',
+        'file',
         metavar='FILE',
-        nargs='+',
-        help='View DXF files by PyQt Viewer',
+        nargs=1,
+        help='DXF file to view',
+    )
+    parser.add_argument(
+        '-t', '--ltype',
+        default='internal',
+        choices=['internal', 'ezdxf'],
+        help="select the line type rendering engine, default is internal",
+    )
+    # disable lineweight at all by default:
+    parser.add_argument(
+        '-s', '--lwscale',
+        type=float,
+        default=0,
+        help="set custom line weight scaling, default is 0 to disable "
+             "line weights at all",
     )
 
 
@@ -94,9 +130,11 @@ def main():
         from .commands import audit
         audit(args)
     elif args.command == "draw":
-        print('draw')
+        from .commands import draw
+        draw(args)
     elif args.command == "view":
-        print('view')
+        from .commands import view
+        view(args)
 
 
 if __name__ == "__main__":
