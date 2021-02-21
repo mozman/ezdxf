@@ -122,18 +122,17 @@ def main():
     add_view_parser(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
-
     if args.command == "pp":
-        from ezdxf.pp.__main__ import run
+        from ezdxf.pp import run
         run(args)
     elif args.command == "audit":
-        from .commands import audit
+        from ezdxf.commands import audit
         audit(args)
     elif args.command == "draw":
-        from .commands import draw
+        from ezdxf.commands import draw
         draw(args)
     elif args.command == "view":
-        from .commands import view
+        from ezdxf.commands import view
         view(args)
 
 
