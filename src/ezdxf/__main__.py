@@ -3,10 +3,8 @@
 import sys
 import argparse
 
-Parser = argparse.ArgumentParser
 
-
-def add_common_arguments(parser: Parser):
+def add_common_arguments(parser):
     pass
 
 
@@ -93,8 +91,8 @@ def main():
         from ezdxf.pp.__main__ import run
         run(args)
     elif args.command == "audit":
-        from ezdxf.audit import run
-        run(args)
+        from .commands import audit
+        audit(args)
     elif args.command == "draw":
         print('draw')
     elif args.command == "view":
