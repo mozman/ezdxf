@@ -102,24 +102,27 @@ Create a more readable HTML file (DXF Pretty Printer):
 
 .. code-block::
 
-    # on Windows
-    py -3 -m ezdxf.pp your_dxf_file.dxf
+    # Call as executable script from the command line:
+    ezdxf pp FILE [FILE ...]
 
-    # on Linux/Mac
-    python3 -m ezdxf.pp your_dxf_file.dxf
+    # Call as module on Windows:
+    py -m ezdxf pp FILE [FILE ...]
 
-This produces a HTML file `your_dxf_file.html` with a nicer layout than a plain
-DXF file and DXF handles as links between DXF entities, this simplifies the
-navigation between the DXF entities.
+    # Call as module on Linux/Mac
+    python3 -m ezdxf pp FILE [FILE ...]
 
-.. versionchanged:: 0.8.3
+This creates a HTML file with a nicer layout than a plain text file, and
+handles are links between DXF entities, this simplifies the navigation
+between the DXF entities.
 
-    Since ezdxf `v0.8.3 <https://ezdxf.mozman.at/release-v0-8-3.html>`_, a script
-    called ``dxfpp`` will be added to your Python script path:
+.. versionchanged:: 0.16
+
+    The `dxfpp` command was replaced by a sub-command of the `ezdxf` launcher.
+
 
 .. code-block:: none
 
-    usage: dxfpp [-h] [-o] [-r] [-x] [-l] FILE [FILE ...]
+    usage: ezdxf pp [-h] [-o] [-r] [-x] [-l] FILE [FILE ...]
 
     positional arguments:
       FILE             DXF files pretty print

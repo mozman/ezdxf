@@ -10,7 +10,8 @@ def add_common_arguments(parser: Parser):
     pass
 
 
-def add_pp_arguments(parser: Parser):
+def add_pp_parser(subparser):
+    parser = subparser.add_parser("pp", help="DXF pretty printer")
     parser.add_argument(
         'files',
         metavar='FILE',
@@ -47,24 +48,44 @@ def add_pp_arguments(parser: Parser):
     )
 
 
-def add_audit_arguments(parser: Parser):
+def add_audit_parser(subparsers):
+    parser = subparsers.add_parser("audit", help="Audit DXF files")
     parser.add_argument(
         'files',
         metavar='FILE',
         nargs='+',
         help='audit DXF files',
     )
-    pass
+
+
+def add_draw_parser(subparsers):
+    parser = subparsers.add_parser("draw", help="Draw DXF files by Matplotlib")
+    parser.add_argument(
+        'files',
+        metavar='FILE',
+        nargs='+',
+        help='Draw DXF files by Matplotlib',
+    )
+
+
+def add_view_parser(subparsers):
+    parser = subparsers.add_parser("view", help="View DXF files by PyQt viewer")
+    parser.add_argument(
+        'files',
+        metavar='FILE',
+        nargs='+',
+        help='View DXF files by PyQt Viewer',
+    )
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser("ezdxf")
     add_common_arguments(parser)
-    subparser = parser.add_subparsers(dest="command")
-    pp_parser = subparser.add_parser("pp", help="DXF pretty printer")
-    add_pp_arguments(pp_parser)
-    audit_parser = subparser.add_parser("audit", help="Audit DXF files")
-    add_audit_arguments(audit_parser)
+    subparsers = parser.add_subparsers(dest="command")
+    add_pp_parser(subparsers)
+    add_audit_parser(subparsers)
+    add_draw_parser(subparsers)
+    add_view_parser(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
 

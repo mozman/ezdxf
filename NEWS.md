@@ -6,6 +6,11 @@ Version 0.16b0 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-16.html
+- NEW: `ezdxf` command line launcher, supported commands:
+  - `pp` the previous `dxfpp` command, the DXF pretty printer
+  - `audit` DXF files
+  - `draw` and convert DXF files by the Matplotlib backend 
+  - `view` DXF files by the PyQt viewer 
 - NEW: `text2path` add-on to create `Path` objects from text strings and text 
   entities, see [docs](https://ezdxf.mozman.at/docs/addons/text2path.html)
 - NEW: `bbox` module to detect the extents (bounding boxes) of DXF entities, 
@@ -56,6 +61,7 @@ Version 0.16b0 - dev
 - REMOVED: `Path.from_from_hatch_polyline_path()`
 - REMOVED: `Path.from_from_hatch_edge_path()`
 - REMOVED: `Block.purge()`, unsafe operation
+- REMOVED: `dxfpp` command, replaced by `ezdxf pp ...`
 
 Version 0.15.2 - 2021-02-07
 ---------------------------
