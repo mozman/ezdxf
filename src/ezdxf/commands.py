@@ -5,6 +5,7 @@ import os
 import glob
 import signal
 import logging
+from pathlib import Path
 
 import ezdxf
 from ezdxf import recover
@@ -20,6 +21,10 @@ logger = logging.getLogger('ezdxf')
 def audit(args):
     """ Launcher sub-command: audit """
 
+    def build_outname(name: str) -> str:
+        p = Path(name)
+        return p.parent / (p.stem + ".rec.dxf")
+
     def log_fixes(auditor):
         for error in auditor.fixes:
             logger.info('fixed:' + error.message)
@@ -28,12 +33,10 @@ def audit(args):
         for error in auditor.errors:
             logger.error(error.message)
 
-    def processing_msg(text: str) -> None:
-        print(text)
-        print('-' * len(text))
-
     def _audit(filename: str) -> None:
-        logger.info(f"auditing file: {filename}")
+        msg = f"auditing file: {filename}"
+        print(msg)
+        logger.info(msg)
         try:
             doc, auditor = recover.readfile(filename)
         except IOError:
@@ -60,19 +63,29 @@ def audit(args):
             print(f'Found {len(auditor.errors)} errors, '
                   f'applied {len(auditor.fixes)} fixes')
 
+        if args.save:
+            outname = build_outname(filename)
+            doc.saveas(outname)
+            print(f"Saved recovered file as: {outname}")
+
     for pattern in args.files:
         names = list(glob.glob(pattern))
         if len(names) == 0:
-            print(f"File(s) '{pattern}' not found.")
+            msg = f"File(s) '{pattern}' not found."
+            print(msg)
+            logger.error(msg)
             continue
         for filename in names:
             if not os.path.exists(filename):
-                print(f"File '{filename}' not found.")
+                msg = f"File '{filename}' not found."
+                print(msg)
+                logger.error(msg)
                 continue
             if not is_dxf_file(filename):
-                print(f"File '{filename}' is not a DXF file.")
+                msg = f"File '{filename}' is not a DXF file."
+                print(msg)
+                logger.error(msg)
                 continue
-            processing_msg(filename)
             _audit(filename)
 
 
@@ -80,17 +93,25 @@ def load_document(filename: str):
     try:
         doc, auditor = recover.readfile(filename)
     except IOError:
-        print(f'Not a DXF file or a generic I/O error: {filename}')
+        msg = f'Not a DXF file or a generic I/O error: {filename}'
+        print(msg)
+        logger.error(msg)
         sys.exit(2)
     except ezdxf.DXFStructureError:
-        print(f'Invalid or corrupted DXF file: {filename}')
+        msg = f'Invalid or corrupted DXF file: {filename}'
+        print(msg)
+        logger.error(msg)
         sys.exit(3)
 
     if auditor.has_errors:
         # But is most likely good enough for rendering.
-        print(f'Found {len(auditor.errors)} unrecoverable errors.')
+        msg = f'Found {len(auditor.errors)} unrecoverable errors.'
+        print(msg)
+        logger.error(msg)
     if auditor.has_fixes:
-        print(f'Fixed {len(auditor.fixes)} errors.')
+        msg = f'Fixed {len(auditor.fixes)} errors.'
+        print(msg)
+        logger.info(msg)
     return doc, auditor
 
 

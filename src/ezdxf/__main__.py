@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 from ezdxf import __version__
 from ezdxf.acc import USE_C_EXT
+from ezdxf import options
 
 YES_NO = {True: 'yes', False: 'no'}
 
@@ -192,6 +193,7 @@ def main():
     add_view_parser(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
+    options.log_unprocessed_tags = args.verbose
     if args.log:
         setup_log(args)
     if args.version:
