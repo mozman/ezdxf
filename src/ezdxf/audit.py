@@ -15,7 +15,7 @@ if TYPE_CHECKING:
         DXFEntity, Drawing, DXFGraphic, BlocksSection, EntityDB,
     )
 
-__all__ = ['Auditor', 'AuditError', 'audit', 'run', 'BlockCycleDetector']
+__all__ = ['Auditor', 'AuditError', 'audit', 'BlockCycleDetector']
 
 
 class AuditError(IntEnum):

@@ -3,38 +3,62 @@
 import sys
 import os
 import glob
+import signal
+import logging
+
 import ezdxf
 from ezdxf import recover
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file
+from ezdxf.tools import fonts
 
 # Load and draw proxy graphic:
 ezdxf.options.load_proxy_graphics = True
+logger = logging.getLogger('ezdxf')
 
 
 def audit(args):
     """ Launcher sub-command: audit """
+
+    def log_fixes(auditor):
+        for error in auditor.fixes:
+            logger.info('fixed:' + error.message)
+
+    def log_errors(auditor):
+        for error in auditor.errors:
+            logger.error(error.message)
 
     def processing_msg(text: str) -> None:
         print(text)
         print('-' * len(text))
 
     def _audit(filename: str) -> None:
+        logger.info(f"auditing file: {filename}")
         try:
             doc, auditor = recover.readfile(filename)
         except IOError:
-            print(f'Not a DXF file or a generic I/O error.')
+            msg = 'Not a DXF file or a generic I/O error.'
+            print(msg)
+            logger.error(msg)
             sys.exit(1)
         except const.DXFStructureError:
-            print(f'Invalid or corrupted DXF file.')
+            msg = 'Invalid or corrupted DXF file.'
+            print(msg)
+            logger.error(msg)
             sys.exit(2)
 
         if auditor.has_errors:
             auditor.print_error_report()
+            log_errors(auditor)
         if auditor.has_fixes:
             auditor.print_fixed_errors()
+            log_fixes(auditor)
+
         if auditor.has_errors is False and auditor.has_fixes is False:
             print('No errors found.')
+        else:
+            print(f'Found {len(auditor.errors)} errors, '
+                  f'applied {len(auditor.fixes)} fixes')
 
     for pattern in args.files:
         names = list(glob.glob(pattern))
@@ -71,11 +95,12 @@ def load_document(filename: str):
 
 
 def draw(args):
+    # Import on demand for a quicker startup:
     import matplotlib.pyplot as plt
     from ezdxf.addons.drawing import RenderContext, Frontend
     from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
-    from ezdxf.tools import fonts
 
+    ezdxf.options.load_proxy_graphics = True
     # For the case automatic font loading is disabled:
     fonts.load()
 
@@ -107,13 +132,14 @@ def draw(args):
 
 
 def view(args):
-    import signal
-    from ezdxf.tools import fonts
+    # Import on demand for a quicker startup:
     from PyQt5 import QtWidgets
     from ezdxf.addons.drawing.qtviewer import CadViewer
 
+    ezdxf.options.load_proxy_graphics = True
     # For the case automatic font loading is disabled:
     fonts.load()
+
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
     app = QtWidgets.QApplication(sys.argv)
     viewer = CadViewer(params={

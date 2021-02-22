@@ -2,14 +2,36 @@
 #  License: MIT License
 import sys
 import argparse
+from pathlib import Path
+from ezdxf import __version__
+from ezdxf.acc import USE_C_EXT
+
+YES_NO = {True: 'yes', False: 'no'}
 
 
 def add_common_arguments(parser):
-    pass
+    parser.add_argument(
+        '-V', '--version',
+        action='store_true',
+        help="show version and exit",
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help="give more output",
+    )
+    parser.add_argument(
+        '--log',
+        action='store',
+        help="path to a verbose appending log",
+    )
 
 
 def add_pp_parser(subparser):
-    parser = subparser.add_parser("pp", help="DXF pretty printer")
+    parser = subparser.add_parser(
+        "pp",
+        help="pretty print DXF files as HTML file"
+    )
     parser.add_argument(
         'files',
         metavar='FILE',
@@ -47,17 +69,28 @@ def add_pp_parser(subparser):
 
 
 def add_audit_parser(subparsers):
-    parser = subparsers.add_parser("audit", help="Audit DXF files")
+    parser = subparsers.add_parser(
+        "audit",
+        help="audit and repair DXF files"
+    )
     parser.add_argument(
         'files',
         metavar='FILE',
         nargs='+',
         help='audit DXF files',
     )
+    parser.add_argument(
+        '-s', '--save',
+        action='store_true',
+        help="save recovered files with extension \".rec.dxf\" "
+    )
 
 
 def add_draw_parser(subparsers):
-    parser = subparsers.add_parser("draw", help="Draw DXF files by Matplotlib")
+    parser = subparsers.add_parser(
+        "draw",
+        help="draw and convert DXF files by Matplotlib"
+    )
     parser.add_argument(
         'file',
         metavar='FILE',
@@ -67,7 +100,7 @@ def add_draw_parser(subparsers):
     parser.add_argument(
         '--formats',
         action='store_true',
-        help="show all supported export formats"
+        help="show all supported export formats and exit"
     )
     parser.add_argument(
         '-o', '--out',
@@ -81,7 +114,7 @@ def add_draw_parser(subparsers):
         help="target render resolution, default is 300",
     )
     parser.add_argument(
-        '-t', '--ltype',
+        '--ltype',
         default='internal',
         choices=['internal', 'ezdxf'],
         help="select the line type rendering engine, default is internal",
@@ -89,7 +122,10 @@ def add_draw_parser(subparsers):
 
 
 def add_view_parser(subparsers):
-    parser = subparsers.add_parser("view", help="View DXF files by PyQt viewer")
+    parser = subparsers.add_parser(
+        "view",
+        help="view DXF files by PyQt viewer"
+    )
     parser.add_argument(
         'file',
         metavar='FILE',
@@ -97,14 +133,14 @@ def add_view_parser(subparsers):
         help='DXF file to view',
     )
     parser.add_argument(
-        '-t', '--ltype',
+        '--ltype',
         default='internal',
         choices=['internal', 'ezdxf'],
         help="select the line type rendering engine, default is internal",
     )
     # disable lineweight at all by default:
     parser.add_argument(
-        '-s', '--lwscale',
+        '--lwscale',
         type=float,
         default=0,
         help="set custom line weight scaling, default is 0 to disable "
@@ -112,8 +148,42 @@ def add_view_parser(subparsers):
     )
 
 
+def _print_config(func):
+    from ezdxf import options
+    func(f"ezdxf v{__version__} @ {Path(__file__).parent}")
+    func(f"Python version: {sys.version}")
+    func(f"using C-extensions: {YES_NO[USE_C_EXT]}")
+    func(f"using Matplotlib: {YES_NO[options.use_matplotlib]}")
+
+
+def print_version():
+    _print_config(print)
+
+
+def setup_log(args):
+    import logging
+    from datetime import datetime
+    level = "DEBUG" if args.verbose else "INFO"
+    logging.basicConfig(filename=args.log, level=level)
+    print(f"Appending logs to file \"{args.log}\", logging level: {level}\n")
+    logger = logging.getLogger('ezdxf')
+    logger.info("***** Launch time: " + datetime.now().isoformat() + " *****")
+    if args.verbose:
+        _print_config(logger.info)
+
+
+DESCRIPTION = """
+This launcher is part of the ezdxf Python package (https://pypi.org/project/ezdxf/) 
+and provides some tools to work with DXF files.
+
+"""
+
+
 def main():
-    parser = argparse.ArgumentParser("ezdxf")
+    parser = argparse.ArgumentParser(
+        "ezdxf",
+        description=DESCRIPTION,
+    )
     add_common_arguments(parser)
     subparsers = parser.add_subparsers(dest="command")
     add_pp_parser(subparsers)
@@ -122,7 +192,11 @@ def main():
     add_view_parser(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
-    if args.command == "pp":
+    if args.log:
+        setup_log(args)
+    if args.version:
+        print_version()
+    elif args.command == "pp":
         from ezdxf.pp import run
         run(args)
     elif args.command == "audit":
@@ -134,6 +208,8 @@ def main():
     elif args.command == "view":
         from ezdxf.commands import view
         view(args)
+    else:
+        parser.print_help()
 
 
 if __name__ == "__main__":
