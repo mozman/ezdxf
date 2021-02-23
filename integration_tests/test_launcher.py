@@ -4,15 +4,12 @@ import pytest
 from pathlib import Path
 import subprocess
 
-LAUNCHER_INSTALLED = False
-try:
-    subprocess.run("ezdxf")
-    LAUNCHER_INSTALLED = True
-except IOError:
-    pass
-
-pytestmark = pytest.mark.skipif(
-    not LAUNCHER_INSTALLED, reason="ezdxf launcher not installed.")
+# Got errors at github actions for ubuntu-latest:
+# Error was using (works on Windows):
+#       subprocess.run("ezdxf -V")
+#
+# This works on Linux and Windows:
+#       subprocess.run(["ezdxf", "-V"])
 
 TEST_DATA = Path(__file__).parent / "data"
 CRLF = b'\r\n'
