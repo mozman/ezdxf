@@ -1,16 +1,25 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-
 import pytest
 from pathlib import Path
 import subprocess
+
+LAUNCHER_INSTALLED = False
+try:
+    subprocess.run("ezdxf")
+    LAUNCHER_INSTALLED = True
+except IOError:
+    pass
+
+pytestmark = pytest.mark.skipif(
+    not LAUNCHER_INSTALLED, reason="ezdxf launcher not installed.")
 
 TEST_DATA = Path(__file__).parent / "data"
 CRLF = b'\r\n'
 
 
 def test_version():
-    result = subprocess.run("ezdxf -V",
+    result = subprocess.run(["ezdxf", "-V"],
                             capture_output=True)
     assert result.returncode == 0
     assert result.stdout.startswith(b'ezdxf')
