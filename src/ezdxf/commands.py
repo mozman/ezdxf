@@ -43,12 +43,12 @@ def audit(args):
             msg = 'Not a DXF file or a generic I/O error.'
             print(msg)
             logger.error(msg)
-            sys.exit(1)
+            return  # keep on processing additional files
         except const.DXFStructureError:
             msg = 'Invalid or corrupted DXF file.'
             print(msg)
             logger.error(msg)
-            sys.exit(2)
+            return  # keep on processing additional files
 
         if auditor.has_errors:
             auditor.print_error_report()
