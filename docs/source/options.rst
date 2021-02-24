@@ -69,9 +69,9 @@ Global options stored in :mod:`ezdxf.options`
 
     Export proxy graphics if ``True``, default is ``False``.
 
-.. method:: preserve_proxy_graphics()
+.. method:: preserve_proxy_graphics(state=True)
 
-    Enable proxy graphic load/store support.
+    Enable/disable proxy graphic load/store support.
 
 .. _environment_variables:
 
@@ -93,8 +93,6 @@ EZDXF_DISABLE_C_EXT
     the usage of C extensions implemented by Cython. Disabling the C-extensions
     can only be done on interpreter startup, before the first import of `ezdxf`.
 
-
-
 EZDXF_AUTO_LOAD_FONTS
     Set EZDXF_AUTO_LOAD_FONTS to ``0`` or ``False`` to deactivate font cache
     loading at startup, if this slows down the interpreter startup too much and
@@ -112,7 +110,7 @@ EZDXF_TEST_FILES
 
 EZDXF_PRESERVE_PROXY_GRAPHICS
     Enable proxy graphic load/store support if ``1`` or ``True``, default
-    value is ``False``.
+    value is ``True``.
 
 EZDXF_LOG_UNPROCESSED_TAGS
     Log unprocessed DXF tags for debugging, default value is ``True``.

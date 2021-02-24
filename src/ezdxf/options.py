@@ -14,7 +14,7 @@ TRUE_STATE = {'True', 'true', 'On', 'on', '1'}
 EZDXF_FONT_CACHE_DIRECTORY = os.getenv(
     'EZDXF_FONT_CACHE_DIRECTORY', False)
 EZDXF_PRESERVE_PROXY_GRAPHICS = os.getenv(
-    'EZDXF_FONT_CACHE_DIR', 'False') in TRUE_STATE
+    'EZDXF_PRESERVE_PROXY_GRAPHICS', 'True') in TRUE_STATE
 EZDXF_LOG_UNPROCESSED_TAGS = os.getenv(
     'EZDXF_LOG_UNPROCESSED_TAGS', 'True') in TRUE_STATE
 EZDXF_FILTER_INVALID_XDATA_GROUP_CODES = os.getenv(
@@ -22,6 +22,16 @@ EZDXF_FILTER_INVALID_XDATA_GROUP_CODES = os.getenv(
 
 
 class Options:
+    CONFIG_VARS = [
+        "EZDXF_DISABLE_C_EXT",
+        "EZDXF_TEST_FILES",
+        "EZDXF_FONT_CACHE_DIRECTORY",
+        "EZDXF_AUTO_LOAD_FONTS",
+        "EZDXF_PRESERVE_PROXY_GRAPHICS",
+        "EZDXF_LOG_UNPROCESSED_TAGS",
+        "EZDXF_FILTER_INVALID_XDATA_GROUP_CODES",
+    ]
+
     def __init__(self):
         self.filter_invalid_xdata_group_codes = EZDXF_FILTER_INVALID_XDATA_GROUP_CODES
         self.default_text_style = 'OpenSans'
@@ -60,14 +70,16 @@ class Options:
         else:  # Matplotlib is not installed
             self._use_matplotlib = False
 
-    def preserve_proxy_graphics(self):
-        """ Enable proxy graphic load/store support. """
-        self.load_proxy_graphics = True
-        self.store_proxy_graphics = True
+    def preserve_proxy_graphics(self, state=True):
+        """ Enable/disable proxy graphic load/store support. """
+        self.load_proxy_graphics = state
+        self.store_proxy_graphics = state
 
 
 # Global Options
 options = Options()
 
 if EZDXF_PRESERVE_PROXY_GRAPHICS:
-    options.preserve_proxy_graphics()
+    options.preserve_proxy_graphics(True)
+else:
+    options.preserve_proxy_graphics(False)

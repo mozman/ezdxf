@@ -28,8 +28,8 @@ def add_common_arguments(parser):
     )
 
 
-def print_version():
-    print_config(print)
+def print_version(verbose=False):
+    print_config(print, verbose=verbose)
 
 
 def setup_log(args):
@@ -41,7 +41,7 @@ def setup_log(args):
     logger = logging.getLogger('ezdxf')
     logger.info("***** Launch time: " + datetime.now().isoformat() + " *****")
     if args.verbose:
-        print_config(logger.info)
+        print_config(logger.info, verbose=True)
 
 
 DESCRIPTION = """
@@ -65,7 +65,7 @@ def main():
     if args.log:
         setup_log(args)
     if args.version:
-        print_version()
+        print_version(args.verbose)
         help_ = False
 
     run = commands.get(args.command)
