@@ -20,7 +20,7 @@ EZDXF_AUTO_LOAD_FONTS = os.getenv('EZDXF_AUTO_LOAD_FONTS', 'True') in TRUE_STATE
 # name space imports - do not remove
 from ezdxf.options import options
 from ezdxf.colors import (
-    int2rgb, rgb2int, transparency2float, float2transparency
+    int2rgb, rgb2int, transparency2float, float2transparency,
 )
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file, is_dxf_stream
@@ -51,3 +51,13 @@ codecs.register_error('dxfreplace', dxf_backslash_replace)
 # Load font support automatically:
 if EZDXF_AUTO_LOAD_FONTS:
     fonts.load()
+
+
+def print_config(func=print):
+    from pathlib import Path
+    from ezdxf.acc import USE_C_EXT
+    YES_NO = {True: 'yes', False: 'no'}
+    func(f"ezdxf v{__version__} @ {Path(__file__).parent}")
+    func(f"Python version: {sys.version}")
+    func(f"using C-extensions: {YES_NO[USE_C_EXT]}")
+    func(f"using Matplotlib: {YES_NO[options.use_matplotlib]}")

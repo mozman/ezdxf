@@ -36,9 +36,8 @@ def test_readfile(filename):
 
 if __name__ == '__main__':
     import logging
-    from ezdxf import bbox
+    from ezdxf import bbox, print_config
     from ezdxf.math import Vec3
-    from ezdxf.__main__ import print_version
     import warnings
     # Suppress Matplotlib font replacement warnings
     warnings.filterwarnings("ignore")
@@ -66,7 +65,7 @@ if __name__ == '__main__':
     )
 
     args = parser.parse_args(sys.argv[1:])
-    print_version()
+    print_config()
     print('-' * 79)
     if args.cadkit:  # only CADKit samples
         files = glob.glob(os.path.join(EZDXF_TEST_FILES, "CADKitSamples/*.dxf"))

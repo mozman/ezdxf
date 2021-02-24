@@ -2,9 +2,7 @@
 #  License: MIT License
 import sys
 import argparse
-from pathlib import Path
-from ezdxf import __version__, options
-from ezdxf.acc import USE_C_EXT
+from ezdxf import options, print_config
 from ezdxf import commands
 from ezdxf.tools import fonts
 
@@ -30,16 +28,8 @@ def add_common_arguments(parser):
     )
 
 
-def _print_config(func):
-    from ezdxf import options
-    func(f"ezdxf v{__version__} @ {Path(__file__).parent}")
-    func(f"Python version: {sys.version}")
-    func(f"using C-extensions: {YES_NO[USE_C_EXT]}")
-    func(f"using Matplotlib: {YES_NO[options.use_matplotlib]}")
-
-
 def print_version():
-    _print_config(print)
+    print_config(print)
 
 
 def setup_log(args):
@@ -51,7 +41,7 @@ def setup_log(args):
     logger = logging.getLogger('ezdxf')
     logger.info("***** Launch time: " + datetime.now().isoformat() + " *****")
     if args.verbose:
-        _print_config(logger.info)
+        print_config(logger.info)
 
 
 DESCRIPTION = """
