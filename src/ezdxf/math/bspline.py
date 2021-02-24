@@ -1119,7 +1119,11 @@ class BSpline:
         def subdiv(s: Vec3, e: Vec3, start_t: float, end_t: float):
             mid_t = (start_t + end_t) * 0.5
             m = self.point(mid_t)
-            if distance_point_line_3d(m, s, e) < distance:
+            try:
+                _dist = distance_point_line_3d(m, s, e)
+            except ZeroDivisionError:  # s == e
+                _dist = 0
+            if _dist < distance:
                 yield e
             else:
                 yield from subdiv(s, m, start_t, mid_t)
