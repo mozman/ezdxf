@@ -5,7 +5,9 @@ import math
 import ezdxf
 from ezdxf import zoom
 from ezdxf.math import (
-    Vec3, estimate_tangents, estimate_end_tangent_magnitude, global_bspline_interpolation, linspace
+    Vec3, estimate_tangents, estimate_end_tangent_magnitude,
+    global_bspline_interpolation, linspace, cubic_bezier_interpolation,
+    bezier_to_bspline,
 )
 
 DIR = Path('~/Desktop/Outbox').expanduser()
@@ -30,9 +32,21 @@ def setup():
 doc, msp = setup()
 # First spline defined by control vertices interpolated from given fit points
 s = global_bspline_interpolation(points, degree=3)
-msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_construction_tool(s)
+msp.add_spline(
+    dxfattribs={
+        'color': 4,
+        'layer': 'Global Interpolation'
+    }
+).apply_construction_tool(s)
 # Second spline defined only by fit points as reference, does not match the BricsCAD interpolation.
-spline = msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
+spline = msp.add_spline(
+    points,
+    degree=3,
+    dxfattribs={
+        'layer': 'BricsCAD B-spline',
+        'color': 2
+    }
+)
 
 zoom.extents(msp)
 doc.saveas(DIR / 'fit-points-only.dxf')
@@ -46,11 +60,25 @@ m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
 start_tangent = Vec3.from_deg_angle(100) * m1
 end_tangent = Vec3.from_deg_angle(-100) * m2
 # Interpolate control vertices from fit points and end derivatives as constraints
-s = global_bspline_interpolation(points, degree=3, tangents=(start_tangent, end_tangent))
-msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_construction_tool(s)
+s = global_bspline_interpolation(points, degree=3,
+                                 tangents=(start_tangent, end_tangent))
+msp.add_spline(
+    dxfattribs={
+        'color': 4,
+        'layer': 'Global Interpolation'
+    }
+).apply_construction_tool(s)
 # Result matches the BricsCAD interpolation if fit points, start- and end
 # tangents are stored explicit in the DXF file.
-spline = msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
+spline = msp.add_spline(
+    points,
+    degree=3,
+
+    dxfattribs={
+        'layer': 'BricsCAD B-spline',
+        'color': 2
+    }
+)
 spline.dxf.start_tangent = Vec3.from_deg_angle(100)
 spline.dxf.end_tangent = Vec3.from_deg_angle(-100)
 
@@ -68,11 +96,24 @@ m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
 start_tangent = tangents[0].normalize(m1)
 end_tangent = tangents[-1].normalize(m2)
 # Interpolate control vertices from fit points and end derivatives as constraints
-s = global_bspline_interpolation(points, degree=3, tangents=(start_tangent, end_tangent))
-msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_construction_tool(s)
+s = global_bspline_interpolation(points, degree=3,
+                                 tangents=(start_tangent, end_tangent))
+msp.add_spline(
+    dxfattribs={
+        'color': 4,
+        'layer': 'Global Interpolation'
+    }
+).apply_construction_tool(s)
 # Result does not matches the BricsCAD interpolation
 # tangents angle: (101.0035408517495, -101.0035408517495) degree
-msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
+msp.add_spline(
+    points,
+    degree=3,
+    dxfattribs={
+        'layer': 'BricsCAD B-spline',
+        'color': 2
+    }
+)
 
 zoom.extents(msp)
 doc.saveas(DIR / 'tangents-estimated.dxf')
@@ -87,10 +128,14 @@ required_angle = 101.0035408517495  # angle of tangent vector in degrees
 required_magnitude = m1 * 1.3097943444804256  # magnitude of tangent vector
 start_tangent = Vec3.from_deg_angle(required_angle, required_magnitude)
 end_tangent = Vec3.from_deg_angle(-required_angle, required_magnitude)
-s = global_bspline_interpolation(points, degree=3, tangents=(start_tangent, end_tangent))
-msp.add_spline(dxfattribs={'color': 4, 'layer': 'Global Interpolation'}).apply_construction_tool(s)
+s = global_bspline_interpolation(points, degree=3,
+                                 tangents=(start_tangent, end_tangent))
+msp.add_spline(dxfattribs={
+    'color': 4,
+    'layer': 'Global Interpolation'}).apply_construction_tool(s)
 # Now result matches the BricsCAD interpolation - but only in this case
-msp.add_spline(points, degree=3, dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
+msp.add_spline(points, degree=3,
+               dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
 
 zoom.extents(msp)
 doc.saveas(DIR / 'theory-check.dxf')
@@ -100,3 +145,29 @@ doc.saveas(DIR / 'theory-check.dxf')
 # 2. Without given tangents the magnitude is different, in this case: m1*1.3097943444804256,
 #    but it is not a constant factor.
 # The required information is the estimated start- and end tangent in direction and magnitude
+
+# Cubic Bézier curve Interpolation:
+#
+# This works only for cubic B-splines (the most common used B-spline), and
+# BricsCAD/AutoCAD allow only a degree of 2 or 3 for SPLINE entities defined
+# only by fit points.
+#
+# Further research showed that quadratic B-splines defined by fit points are
+# loaded into BricsCAD / AutoCAD as cubic B-splines. Addition to the statement
+# above: BricsCAD and AutoCAD only use a degree of 3 for SPLINE entities defined
+# only by fit points.
+
+doc, msp = setup()
+msp.add_spline(points, degree=2,
+               dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
+bezier_curves = cubic_bezier_interpolation(points)
+s = bezier_to_bspline(bezier_curves)
+msp.add_spline(
+    dxfattribs={
+        'color': 4,
+        'layer': 'Cubic Bezier Curve Interpolation'
+    }
+).apply_construction_tool(s)
+
+zoom.extents(msp)
+doc.saveas(DIR / 'cubic-bezier-curves.dxf')
