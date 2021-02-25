@@ -109,6 +109,9 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
 
     """
     points = Vec3.list(fit_points)
+    if len(points) < 2:
+        raise ValueError("two ore more points required ")
+
     if tangents is None:
         from ezdxf.math import cubic_bezier_interpolation, bezier_to_bspline
         bezier_curves = cubic_bezier_interpolation(points)

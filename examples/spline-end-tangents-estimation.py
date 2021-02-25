@@ -12,6 +12,8 @@ from ezdxf.math import (
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 points = Vec3.list([(0, 0), (0, 10), (10, 10), (20, 10), (20, 0)])
+closed_points = list(points)
+closed_points.append(closed_points[0])
 
 
 def sine_wave(count: int, scale: float = 1.0):
@@ -183,7 +185,6 @@ msp.add_spline(
 zoom.extents(msp)
 doc.saveas(DIR / 'fit_points_to_cad_cv_with_tangents.dxf')
 
-
 # ------------------------------------------------------------------------------
 # SPLINE from fit points WITHOUT given end tangents.
 # ------------------------------------------------------------------------------
@@ -239,3 +240,62 @@ msp.add_spline(
 
 zoom.extents(msp)
 doc.saveas(DIR / 'fit_points_to_cad_cv_without_tangents.dxf')
+
+# ------------------------------------------------------------------------------
+# Closed SPLINE from fit points WITHOUT given end tangents.
+# ------------------------------------------------------------------------------
+# IMPORTANT: first points == last point is required
+
+doc, msp = setup()
+# Create closed SPLINE defined by fit points only:
+spline = msp.add_spline(
+    closed_points,
+    dxfattribs={
+        'layer': 'SPLINE from fit points by CAD applications',
+        'color': 2
+    }
+)
+# spline.closed = True  # ignored if first points != last point
+
+# Create SPLINE defined by control vertices from fit points:
+msp.add_spline(
+    dxfattribs={
+        'color': 4,
+        'layer': 'SPLINE from control vertices by ezdxf'
+    }
+).apply_construction_tool(fit_points_to_cad_cv(closed_points))
+
+zoom.extents(msp)
+doc.saveas(DIR / 'fit_points_to_cad_cv_closed.dxf')
+
+# ------------------------------------------------------------------------------
+# Closed SPLINE from fit points WITH given end tangents.
+# ------------------------------------------------------------------------------
+# IMPORTANT: first points == last point is required
+
+doc, msp = setup()
+# Create closed SPLINE defined by fit points only:
+spline = msp.add_spline(
+    closed_points,
+    dxfattribs={
+        'layer': 'SPLINE from fit points by CAD applications',
+        'color': 2
+    }
+)
+# spline.closed = True # ignored for splines from fit points
+# same tangent for start and ent point
+spline.dxf.start_tangent = start_tangent
+spline.dxf.end_tangent = end_tangent
+
+# Create SPLINE defined by control vertices from fit points:
+msp.add_spline(
+    dxfattribs={
+        'color': 4,
+        'layer': 'SPLINE from control vertices by ezdxf'
+    }
+).apply_construction_tool(fit_points_to_cad_cv(
+    closed_points, [start_tangent, end_tangent]))
+
+# This scenario works as expected!
+zoom.extents(msp)
+doc.saveas(DIR / 'fit_points_to_cad_cv_closed_with_tangents.dxf')
