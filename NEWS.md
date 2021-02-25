@@ -43,7 +43,10 @@ Version 0.16b0 - dev
 - NEW: `ezdxf.math.bezier_to_bspline()`, Bézier curves to B-spline converter
 - NEW: `ezdxf.math.clip_polygon_2d()`, clip polygon by a convex clipping polygon 
 - NEW: `ezdxf.math.basic_transformation()`, returns a combined transformation
-  matrix for translation, scaling and rotation about the z-axis 
+  matrix for translation, scaling and rotation about the z-axis
+- CHANGED: `fit_points_to_cad_cv()` creates a visual equal SPLINE from fit points 
+  like BricsCAD and AutoCAD, but defined by control vertices for all given 
+  scenarios. Removed unused arguments degree and method.   
 - CHANGED: `ezdxf.render.nesting` content moved into the `ezdxf.path` package
 - CHANGED: renamed `MeshBuilder.render()` to `MeshBuilder.render_mesh()`
 - DEPRECATED: `ezdxf.render.path` module, replaced by `ezdxf.path` package

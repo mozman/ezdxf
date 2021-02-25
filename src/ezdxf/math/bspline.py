@@ -23,7 +23,7 @@ import math
 import bisect
 from ezdxf.math import Vec3, NULLVEC
 from .parametrize import (
-    create_t_vector, estimate_tangents, estimate_end_tangent_magnitude,
+    create_t_vector, estimate_end_tangent_magnitude,
 )
 from .linalg import (
     LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix,
@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     from ezdxf.math import (
         ConstructionArc, ConstructionEllipse, Matrix44, Bezier4P,
     )
-
 
 # Acceleration of banded diagonal matrix solver kicks in at:
 # N=15 for CPython on Windows and Linux
@@ -73,8 +72,7 @@ __all__ = [
 ]
 
 
-def fit_points_to_cad_cv(fit_points: Iterable['Vertex'], degree: int = 3,
-                         method='chord',
+def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
                          tangents: Iterable['Vertex'] = None) -> 'BSpline':
     """ Returns the control vertices and knot vector configuration for DXF
     SPLINE entities defined only by fit points as close as possible to common
@@ -85,8 +83,8 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'], degree: int = 3,
 
     - Global curve interpolation with start- and end derivatives, e.g. 6 fit points
       creates 8 control vertices in BricsCAD
-    - Degree of B-spline is limited to 2 or 3, a stored degree of >3 is ignored,
-      this limit exist only for B-splines defined by fit points
+    - Degree of B-spline is always 3, the stored degree is ignored,
+      this is only valid for B-splines defined by fit points
     - Knot parametrization method is "chord"
     - Knot distribution is "natural"
 
@@ -96,36 +94,36 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'], degree: int = 3,
     vertices will match the BricsCAD calculation, except for floating point
     imprecision.
 
+    If the end tangents are not given, a cubic Bézier interpolation and a
+    conversion to a cubic B-spline will be applied.
+
     Args:
         fit_points: points the spline is passing through
-        degree: degree of spline, only 2 or 3 is supported by BricsCAD,
-            default is 3
-        method: knot parametrization method, default = "chord"
         tangents: start- and end tangent, default is autodetect
 
     Returns:
         :class:`BSpline`
 
+    .. versionchanged:: 0.16
+        removed unused arguments `degree` and `method`
+
     """
     points = Vec3.list(fit_points)
-    m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
     if tangents is None:
-        # 5-points is the closest estimation method I found so far
-        tangents = estimate_tangents(points, method='5-p')
-        start_tangent = tangents[0].normalize(m1)
-        end_tangent = tangents[-1].normalize(m2)
-    else:
-        tangents = Vec3.list(tangents)
-        start_tangent = Vec3(tangents[0]).normalize(m1)
-        end_tangent = Vec3(tangents[-1]).normalize(m2)
+        from ezdxf.math import cubic_bezier_interpolation, bezier_to_bspline
+        bezier_curves = cubic_bezier_interpolation(points)
+        return bezier_to_bspline(bezier_curves)
 
-    degree = int(degree)
-    if degree < 2:
-        degree = 2
-    elif degree > 3:
-        degree = 3
-    return global_bspline_interpolation(points, degree,
-                                        (start_tangent, end_tangent), method)
+    m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
+    tangents = Vec3.list(tangents)
+    start_tangent = Vec3(tangents[0]).normalize(m1)
+    end_tangent = Vec3(tangents[-1]).normalize(m2)
+    return global_bspline_interpolation(
+        points,
+        degree=3,
+        tangents=(start_tangent, end_tangent),
+        method='chord',
+    )
 
 
 def global_bspline_interpolation(
@@ -383,7 +381,7 @@ def knots_from_parametrization(
             if constrained \
             else averaged_knots_unconstrained(n, p, t)
     elif method == 'natural':
-        return natural_knots_constrained(n, p,t) \
+        return natural_knots_constrained(n, p, t) \
             if constrained \
             else natural_knots_unconstrained(n, p, t)
     else:
@@ -536,7 +534,8 @@ def unconstrained_global_bspline_interpolation(
         fit_points: Sequence['Vertex'],
         degree: int,
         t_vector: Sequence[float],
-        knot_generation_method: str = 'average') -> Tuple[List[Vec3], List[float]]:
+        knot_generation_method: str = 'average') -> Tuple[
+    List[Vec3], List[float]]:
     """ Interpolates the control points for a B-spline by global interpolation
     from fit points without any constraints.
 
@@ -571,7 +570,8 @@ def global_bspline_interpolation_end_tangents(
         end_tangent: Vec3,
         degree: int,
         t_vector: Sequence[float],
-        knot_generation_method: str = 'average') -> Tuple[List[Vec3], List[float]]:
+        knot_generation_method: str = 'average') -> Tuple[
+    List[Vec3], List[float]]:
     """ Interpolates the control points for a B-spline by global interpolation
     from fit points and 1st derivatives for start- and end point as constraints.
     These 'tangents' are 1st derivatives and not unit vectors, if an estimation

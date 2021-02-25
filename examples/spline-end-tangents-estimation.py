@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from pathlib import Path
 import math
@@ -7,7 +7,7 @@ from ezdxf import zoom
 from ezdxf.math import (
     Vec3, estimate_tangents, estimate_end_tangent_magnitude,
     global_bspline_interpolation, linspace, cubic_bezier_interpolation,
-    bezier_to_bspline,
+    bezier_to_bspline, fit_points_to_cad_cv,
 )
 
 DIR = Path('~/Desktop/Outbox').expanduser()
@@ -51,6 +51,10 @@ spline = msp.add_spline(
 zoom.extents(msp)
 doc.saveas(DIR / 'fit-points-only.dxf')
 
+# ------------------------------------------------------------------------------
+# SPLINE from fit points WITH given end tangents.
+# ------------------------------------------------------------------------------
+
 # 2. Store fit points, start- and end tangent values in DXF file:
 doc, msp = setup()
 # Tangent estimation method: "Total Chord Length",
@@ -73,7 +77,6 @@ msp.add_spline(
 spline = msp.add_spline(
     points,
     degree=3,
-
     dxfattribs={
         'layer': 'BricsCAD B-spline',
         'color': 2
@@ -146,6 +149,44 @@ doc.saveas(DIR / 'theory-check.dxf')
 #    but it is not a constant factor.
 # The required information is the estimated start- and end tangent in direction and magnitude
 
+# ----------------------------------------------------------------------------
+# Recommend way to create a SPLINE defined by control vertices from fit points
+# with given end tangents:
+# ----------------------------------------------------------------------------
+doc, msp = setup()
+
+# Given start- and end tangent:
+start_tangent = Vec3.from_deg_angle(100)
+end_tangent = Vec3.from_deg_angle(-100)
+
+# Create SPLINE defined by fit points only:
+spline = msp.add_spline(
+    points,
+    degree=2,  # degree is ignored by BricsCAD and AutoCAD, both use degree=3
+    dxfattribs={
+        'layer': 'SPLINE from fit points by CAD applications',
+        'color': 2
+    }
+)
+spline.dxf.start_tangent = start_tangent
+spline.dxf.end_tangent = end_tangent
+
+# Create SPLINE defined by control vertices from fit points:
+s = fit_points_to_cad_cv(points, tangents=[start_tangent, end_tangent])
+msp.add_spline(
+    dxfattribs={
+        'color': 4,
+        'layer': 'SPLINE from control vertices by ezdxf'
+    }
+).apply_construction_tool(s)
+
+zoom.extents(msp)
+doc.saveas(DIR / 'fit_points_to_cad_cv_with_tangents.dxf')
+
+
+# ------------------------------------------------------------------------------
+# SPLINE from fit points WITHOUT given end tangents.
+# ------------------------------------------------------------------------------
 # Cubic Bézier curve Interpolation:
 #
 # This works only for cubic B-splines (the most common used B-spline), and
@@ -171,3 +212,30 @@ msp.add_spline(
 
 zoom.extents(msp)
 doc.saveas(DIR / 'cubic-bezier-curves.dxf')
+
+# ----------------------------------------------------------------------------
+# Recommend way to create a SPLINE defined by control vertices from fit points
+# without given end tangents:
+# ----------------------------------------------------------------------------
+doc, msp = setup()
+
+# Create SPLINE defined by fit points only:
+msp.add_spline(
+    points,
+    degree=2,  # degree is ignored by BricsCAD and AutoCAD, both use degree=3
+    dxfattribs={
+        'layer': 'SPLINE from fit points by CAD applications',
+        'color': 2
+    }
+)
+
+# Create SPLINE defined by control vertices from fit points:
+msp.add_spline(
+    dxfattribs={
+        'color': 4,
+        'layer': 'SPLINE from control vertices by ezdxf'
+    }
+).apply_construction_tool(fit_points_to_cad_cv(points))
+
+zoom.extents(msp)
+doc.saveas(DIR / 'fit_points_to_cad_cv_without_tangents.dxf')

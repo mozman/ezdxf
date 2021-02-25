@@ -4,23 +4,30 @@ Spline
 .. module:: ezdxf.entities
     :noindex:
 
-SPLINE curve (`DXF Reference`_), all coordinates have to be 3D coordinates even the spline is only a 2D planar curve.
+SPLINE curve (`DXF Reference`_), all coordinates have to be 3D coordinates even
+the spline is only a 2D planar curve.
 
-The spline curve is defined by control points, knot values and weights. The control points establish the spline,
-the various types of knot vector determines the shape of the curve and the weights of rational splines define how
+The spline curve is defined by control points, knot values and weights. The
+control points establish the spline, the various types of knot vector determines
+the shape of the curve and the weights of rational splines define how
 strong a control point influences the shape.
 
-To create a :class:`Spline` curve you just need a bunch of fit points - knot values and weights are optional
-(tested with AutoCAD 2010). If you add additional data, be sure that you know what you do.
+To create a :class:`Spline` curve you just need a bunch of fit points - knot
+values and weights are optional (tested with AutoCAD 2010). If you add
+additional data, be sure that you know what you do.
+
+.. versionadded:: 0.16
+
+    The function :func:`ezdxf.math.fit_points_to_cad_cv` calculates control
+    vertices from given fit points. This control vertices define a cubic
+    B-spline which matches visually the SPLINE entities created by BricsCAD and
+    AutoCAD from fit points.
 
 .. seealso::
 
     - `Wikipedia`_ article about B_splines
     - Department of Computer Science and Technology at the `Cambridge`_ University
     - :ref:`tut_spline`
-
-Since *ezdxf* v0.8.9 :class:`Spline` stores fit- and control points, knots and weights as packed data
-(:class:`array.array`).
 
 
 ======================== ==========================================

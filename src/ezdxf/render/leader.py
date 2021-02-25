@@ -80,7 +80,6 @@ def virtual_entities(leader: 'Leader') -> Iterable['DXFGraphic']:
         end_tangent = (vertices[-1] - vertices[-2])
         bspline = fit_points_to_cad_cv(
             vertices,
-            degree=3,
             tangents=[start_tangent, end_tangent]
         )
         spline = cast('Spline', factory.new('SPLINE', doc=doc))
