@@ -95,17 +95,19 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
     vertices will match the BricsCAD calculation, except for floating point
     imprecision.
 
-    If the end tangents are not given, the start- and ent tangents will be
-    estimated. Argument `estimate` lets choose from different estimation
-    methods. "Bezier" uses a cubic Bèzier curve interpolation ane "5-p" uses a
-    5 point interpolation. The "Bezier" mode seems to be often the better
-    choice, but both are not the way BricsCAD or AutoCAD estimate the tangents.
+    If the end tangents are not given, the start- and ent tangent directions
+    will be estimated. The argument `estimate` lets choose from different
+    estimation methods:
+
+        - "3-points": 3 point interpolation
+        - "5-points": 5 point interpolation
+        - "bezier": tangents from an interpolated cubic bezier curve
+        - "diff": finite difference
 
     Args:
         fit_points: points the spline is passing through
         tangents: start- and end tangent, default is autodetect
-        estimate: tangent direction estimation mode - "5-p" for 5 point
-            interpolation or "bezier" for a Bèzier curve interpolation
+        estimate: tangent direction estimation method
 
     Returns:
         :class:`BSpline`
@@ -150,6 +152,8 @@ def fit_points_to_cubic_bezier(fit_points: Iterable['Vertex']) -> 'BSpline':
 
     Returns:
         :class:`BSpline`
+
+    .. versionadded:: 0.16
 
     """
     points = Vec3.list(fit_points)
