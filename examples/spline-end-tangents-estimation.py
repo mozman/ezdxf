@@ -246,10 +246,18 @@ msp.add_spline(
 msp.add_spline(
     dxfattribs={
         'color': 4,
-        'layer': 'Global Curve Interpolation'
+        'layer': 'Global Curve Interpolation (5-p)'
     }
-).apply_construction_tool(fit_points_to_cad_cv(points))
+).apply_construction_tool(fit_points_to_cad_cv(points, estimate='5-p'))
+msp.add_spline(
+    dxfattribs={
+        'color': 3,
+        'layer': 'Global Curve Interpolation (bez)'
+    }
+).apply_construction_tool(fit_points_to_cad_cv(points, estimate='bez'))
 
+# This is the ONLY scenario where the cubic Bézier interpolation
+# works better (perfect) than the Global Curve Interpolation!
 zoom.extents(msp)
 doc.saveas(DIR / 'fit_points_to_cubic_bezier_open.dxf')
 
@@ -338,13 +346,19 @@ msp.add_spline(
     }
 )
 
-
 msp.add_spline(
     dxfattribs={
         'color': 4,
-        'layer': 'Global Curve Interpolation'
+        'layer': 'Global Curve Interpolation (5-p)'
     }
-).apply_construction_tool(fit_points_to_cad_cv(walk))
+).apply_construction_tool(fit_points_to_cad_cv(walk, estimate='5-p'))
+
+msp.add_spline(
+    dxfattribs={
+        'color': 3,
+        'layer': 'Global Curve Interpolation (bez)'
+    }
+).apply_construction_tool(fit_points_to_cad_cv(walk, estimate='bez'))
 
 msp.add_spline(
     dxfattribs={
