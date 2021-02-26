@@ -74,7 +74,7 @@ __all__ = [
 
 def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
                          tangents: Iterable['Vertex'] = None,
-                         estimate: str = 'bez') -> 'BSpline':
+                         estimate: str = 'bezier') -> 'BSpline':
     """ Returns the control vertices and knot vector configuration for DXF
     SPLINE entities defined only by fit points as close as possible to common
     CAD applications like BricsCAD.
@@ -105,7 +105,7 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
         fit_points: points the spline is passing through
         tangents: start- and end tangent, default is autodetect
         estimate: tangent direction estimation mode - "5-p" for 5 point
-            interpolation or "Bezier" for a Bèzier curve interpolation
+            interpolation or "bezier" for a Bèzier curve interpolation
 
     Returns:
         :class:`BSpline`
@@ -117,20 +117,9 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
     points = Vec3.list(fit_points)
     if len(points) < 2:
         raise ValueError("two ore more points required ")
-    estimate = estimate.lower()[:3]
     m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
     if tangents is None:
-        if estimate == '5-p':
-            # 5-points tangent direction estimation
-            tangents = estimate_tangents(points, method='5-p')
-        elif estimate == 'bez':
-            # Tangent direction estimation by a Bèzier curve interpolation is
-            # the closest estimation method so far:
-            from ezdxf.math import tangents_cubic_bezier_interpolation
-            tangents = tangents_cubic_bezier_interpolation(
-                points, normalize=False)
-        else:
-            raise ValueError(f"invalid estimation mode: {estimate}")
+        tangents = estimate_tangents(points, method=estimate, normalize=False)
         start_tangent = tangents[0].normalize(m1)
         end_tangent = tangents[-1].normalize(m2)
     else:

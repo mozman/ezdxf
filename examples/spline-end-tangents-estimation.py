@@ -7,7 +7,7 @@ from ezdxf import zoom
 from ezdxf.math import (
     Vec3, estimate_tangents, estimate_end_tangent_magnitude,
     global_bspline_interpolation, linspace, cubic_bezier_interpolation,
-    bezier_to_bspline, fit_points_to_cad_cv, fit_points_to_cubic_bezier
+    bezier_to_bspline, fit_points_to_cad_cv, fit_points_to_cubic_bezier,
 )
 from ezdxf.render import random_2d_path
 
@@ -238,23 +238,18 @@ msp.add_spline(
 # Create SPLINE defined by control vertices from fit points:
 msp.add_spline(
     dxfattribs={
-        'color': 6,
+        'color': 3,
         'layer': 'Cubic Bezier Curve Interpolation'
     }
 ).apply_construction_tool(fit_points_to_cubic_bezier(points))
 
-msp.add_spline(
-    dxfattribs={
-        'color': 4,
-        'layer': 'Global Curve Interpolation (5-p)'
-    }
-).apply_construction_tool(fit_points_to_cad_cv(points, estimate='5-p'))
-msp.add_spline(
-    dxfattribs={
-        'color': 3,
-        'layer': 'Global Curve Interpolation (bez)'
-    }
-).apply_construction_tool(fit_points_to_cad_cv(points, estimate='bez'))
+for color, mode in [(1, 'dif'), (4, '3-p'), (5, '5-p'), (6, 'bez')]:
+    msp.add_spline(
+        dxfattribs={
+            'color': color,
+            'layer': f'Global Curve Interpolation ({mode})'
+        }
+    ).apply_construction_tool(fit_points_to_cad_cv(points, estimate=mode))
 
 # This is the ONLY scenario where the cubic Bézier interpolation
 # works better (perfect) than the Global Curve Interpolation!
@@ -346,26 +341,13 @@ msp.add_spline(
     }
 )
 
-msp.add_spline(
-    dxfattribs={
-        'color': 4,
-        'layer': 'Global Curve Interpolation (5-p)'
-    }
-).apply_construction_tool(fit_points_to_cad_cv(walk, estimate='5-p'))
-
-msp.add_spline(
-    dxfattribs={
-        'color': 3,
-        'layer': 'Global Curve Interpolation (bez)'
-    }
-).apply_construction_tool(fit_points_to_cad_cv(walk, estimate='bez'))
-
-msp.add_spline(
-    dxfattribs={
-        'color': 6,
-        'layer': 'Cubic Bezier Curve Interpolation'
-    }
-).apply_construction_tool(fit_points_to_cubic_bezier(walk))
+for color, mode in [(1, 'dif'), (4, '3-p'), (5, '5-p'), (6, 'bez')]:
+    msp.add_spline(
+        dxfattribs={
+            'color': color,
+            'layer': f'Global Curve Interpolation ({mode})'
+        }
+    ).apply_construction_tool(fit_points_to_cad_cv(walk, estimate=mode))
 
 zoom.extents(msp, 1.1)
 doc.saveas(DIR / 'random_walk.dxf')

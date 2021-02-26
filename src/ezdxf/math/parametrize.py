@@ -108,13 +108,14 @@ def estimate_tangents(points: List[Vec3], method: str = '5-points',
         tangents as list of :class:`Vec3` objects
 
     """
-    if method == 'bezier':
+    method = method.lower()
+    if method.startswith('bez'):
         return tangents_cubic_bezier_interpolation(points, normalize=normalize)
     elif method.startswith('3-p'):
         return tangents_3_point_interpolation(points, normalize=normalize)
     elif method.startswith('5-p'):
         return tangents_5_point_interpolation(points, normalize=normalize)
-    elif method.startswith('diff'):
+    elif method.startswith('dif'):
         return finite_difference_interpolation(points, normalize=normalize)
     else:
         raise ValueError(f'Unknown method: {method}')
