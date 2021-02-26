@@ -3,27 +3,44 @@
 #
 # Pure Python implementation of the B-spline basis function.
 
-from typing import List, Iterable, Sequence, Optional
+from typing import List, Iterable, Sequence
 import bisect
+from array import array
 from ezdxf.math import Vec3, NULLVEC, binomial_coefficient
 
 
 class Basis:
+    __slots__ = ['_knots', '_weights', 'order', 'count']
+
     def __init__(self, knots: Iterable[float], order: int, count: int,
                  weights: Sequence[float] = None):
-        self.knots: List[float] = list(knots)
+        self._knots = array('d', knots)
+        if weights is None:
+            weights = []
+        self._weights = array('d', weights)
         self.order: int = order
         self.count: int = count
-        self.weights: Optional[Sequence[float]] = weights
 
     @property
     def max_t(self) -> float:
-        return self.knots[-1]
+        return self._knots[-1]
+
+    @property
+    def knots(self) -> array:
+        return self._knots
+
+    @knots.setter
+    def knots(self, values) -> None:
+        self._knots = array('d', values)
+
+    @property
+    def weights(self) -> array:
+        return self._weights
 
     @property
     def is_rational(self) -> bool:
         """ Returns ``True`` if curve is a rational B-spline. (has weights) """
-        return bool(self.weights)
+        return bool(self._weights)
 
     def basis_vector(self, t: float) -> List[float]:
         """ Returns the expanded basis vector. """
@@ -38,10 +55,10 @@ class Basis:
         """ Determine the knot span index. """
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
-        knots = self.knots
+        knots = self._knots
         count = self.count
         p = self.order - 1
-        # if it is an standard clamped spline
+        # if it is a standard clamped spline
         if knots[p] == 0.0:  # use binary search
             # This is fast and works most of the time,
             # but Test 621 : test_weired_closed_spline()
@@ -57,7 +74,7 @@ class Basis:
     def basis_funcs(self, span: int, u: float) -> List[float]:
         # Source: The NURBS Book: Algorithm A2.2
         degree = self.order - 1
-        knots = self.knots
+        knots = self._knots
         N = [0.0] * (degree + 1)
         left = list(N)
         right = list(N)
@@ -77,7 +94,7 @@ class Basis:
             return N
 
     def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
-        weights = self.weights[span - self.order + 1: span + 1]
+        weights = self._weights[span - self.order + 1: span + 1]
         products = [nb * w for nb, w in zip(nbasis, weights)]
         s = sum(products)
         return [0.0] * self.order if s == 0.0 else [p / s for p in products]
@@ -88,7 +105,7 @@ class Basis:
         p = order - 1
         n = min(n, p)
 
-        knots = self.knots
+        knots = self._knots
         left = [1.0] * order
         right = [1.0] * order
         ndu = [[1.0] * order for _ in range(order)]
@@ -179,7 +196,7 @@ class Basis:
                 for j in range(p + 1):
                     index = span - p + j
                     bas_func_weight = basis_funcs_derivatives[k][j] * \
-                                      self.weights[index]
+                                      self._weights[index]
                     # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
                     v += control_points[index] * bas_func_weight
                     wder += bas_func_weight

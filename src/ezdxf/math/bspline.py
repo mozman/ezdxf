@@ -339,7 +339,7 @@ def required_control_points(order: int) -> int:
     return max(order, 2)
 
 
-def normalize_knots(knots: List[float]) -> List[float]:
+def normalize_knots(knots: Sequence[float]) -> List[float]:
     """ Normalize knot vector into range [0, 1]. """
     min_val = min(knots)
     max_val = max(knots) - min_val
@@ -923,7 +923,7 @@ class BSpline:
         **always** has order + count values (n + p + 2 in text book notation).
 
         """
-        return self.basis.knots
+        return list(self.basis.knots)
 
     knot_values = knots
 
