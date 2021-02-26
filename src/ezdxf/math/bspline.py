@@ -341,8 +341,8 @@ def required_control_points(order: int) -> int:
 
 def normalize_knots(knots: Sequence[float]) -> List[float]:
     """ Normalize knot vector into range [0, 1]. """
-    min_val = min(knots)
-    max_val = max(knots) - min_val
+    min_val = knots[0]
+    max_val = knots[-1] - min_val
     return [(v - min_val) / max_val for v in knots]
 
 
@@ -890,8 +890,8 @@ class BSpline:
 
     def normalize_knots(self):
         """ Normalize knot vector into range [0, 1]. """
-        if self.basis.knots:
-            self.basis.knots = normalize_knots(self.basis.knots)
+        knots = normalize_knots(self.basis.knots)
+        self.basis = Basis(knots, self.order, self.count, self.weights())
 
     @property
     def count(self) -> int:
@@ -1005,8 +1005,6 @@ class BSpline:
             t: parameter in range [0, max_t]
 
         """
-        if math.isclose(t, self.max_t):
-            t = self.max_t
         return self.basis.curve_point(t, self.control_points)
 
     def points(self, t: Iterable[float]) -> Iterable[Vec3]:
@@ -1016,8 +1014,7 @@ class BSpline:
             t: parameters in range [0, max_t]
 
         """
-        for u in t:
-            yield self.point(u)
+        return self.basis.curve_points(t, self.control_points)
 
     def derivative(self, t: float, n: int = 2) -> List[Vec3]:
         """ Return point and derivatives up to `n` <= degree for parameter `t`.
@@ -1064,7 +1061,7 @@ class BSpline:
         if self.basis.is_rational:
             raise TypeError('Rational B-splines not supported.')
 
-        knots = self.basis.knots
+        knots = self.basis.knots  # a copy
         cpoints = self.control_points
         p = self.degree
 
@@ -1081,7 +1078,7 @@ class BSpline:
 
         cpoints[k - p + 1:k] = [new_point(i) for i in range(k - p + 1, k + 1)]
         knots.insert(k + 1, t)  # knot[k] <= t < knot[k+1]
-        self.basis.count = len(cpoints)
+        self.basis = Basis(knots, self.order, len(cpoints))
 
     def knot_refinement(self, u: Iterable[float]) -> None:
         """ Insert multiple knots, without altering the curve

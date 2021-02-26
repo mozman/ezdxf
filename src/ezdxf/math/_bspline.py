@@ -4,13 +4,15 @@
 # Pure Python implementation of the B-spline basis function.
 
 from typing import List, Iterable, Sequence
+import math
 import bisect
 from array import array
 from ezdxf.math import Vec3, NULLVEC, binomial_coefficient
 
 
 class Basis:
-    __slots__ = ['_knots', '_weights', 'order', 'count']
+    """ Immutable Basis function class. """
+    __slots__ = ['_knots', '_weights', '_order', '_count']
 
     def __init__(self, knots: Iterable[float], order: int, count: int,
                  weights: Sequence[float] = None):
@@ -18,24 +20,27 @@ class Basis:
         if weights is None:
             weights = []
         self._weights = array('d', weights)
-        self.order: int = order
-        self.count: int = count
+        self._order: int = int(order)
+        self._count: int = int(count)
+
+        # validation checks:
+        len_weights = len(self._weights)
+        if len_weights != 0 and len_weights != self._count:
+            raise ValueError('invalid weight count')
+        if len(self._knots) != self._order + self._count:
+            raise ValueError('invalid knot count')
 
     @property
     def max_t(self) -> float:
         return self._knots[-1]
 
     @property
-    def knots(self) -> array:
-        return self._knots
-
-    @knots.setter
-    def knots(self, values) -> None:
-        self._knots = array('d', values)
+    def knots(self) -> List[float]:
+        return list(self._knots)  # do not return mutable array!
 
     @property
-    def weights(self) -> array:
-        return self._weights
+    def weights(self) -> List[float]:
+        return list(self._weights)  # do not return mutable array!
 
     @property
     def is_rational(self) -> bool:
@@ -45,9 +50,9 @@ class Basis:
     def basis_vector(self, t: float) -> List[float]:
         """ Returns the expanded basis vector. """
         span = self.find_span(t)
-        p = self.order - 1
+        p = self._order - 1
         front = span - p
-        back = self.count - span - 1
+        back = self._count - span - 1
         basis = self.basis_funcs(span, t)
         return ([0.0] * front) + basis + ([0.0] * back)
 
@@ -56,8 +61,8 @@ class Basis:
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
         knots = self._knots
-        count = self.count
-        p = self.order - 1
+        count = self._count
+        p = self._order - 1
         # if it is a standard clamped spline
         if knots[p] == 0.0:  # use binary search
             # This is fast and works most of the time,
@@ -73,7 +78,7 @@ class Basis:
 
     def basis_funcs(self, span: int, u: float) -> List[float]:
         # Source: The NURBS Book: Algorithm A2.2
-        degree = self.order - 1
+        degree = self._order - 1
         knots = self._knots
         N = [0.0] * (degree + 1)
         left = list(N)
@@ -94,14 +99,14 @@ class Basis:
             return N
 
     def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
-        weights = self._weights[span - self.order + 1: span + 1]
+        weights = self._weights[span - self._order + 1: span + 1]
         products = [nb * w for nb, w in zip(nbasis, weights)]
         s = sum(products)
-        return [0.0] * self.order if s == 0.0 else [p / s for p in products]
+        return [0.0] * self._order if s == 0.0 else [p / s for p in products]
 
     def basis_funcs_derivatives(self, span: int, u: float, n: int = 1):
         # Source: The NURBS Book: Algorithm A2.3
-        order = self.order
+        order = self._order
         p = order - 1
         n = min(n, p)
 
@@ -171,9 +176,18 @@ class Basis:
             r *= (p - k)
         return derivatives[:n + 1]
 
+    def curve_points(self, t: Iterable[float],
+                     control_points: Sequence[Vec3]) -> Iterable[Vec3]:
+        # Better for Cython implementation, check or conversion of
+        # control_points is done only once.
+        for u in t:
+            yield self.curve_point(u, control_points)
+
     def curve_point(self, u: float, control_points: Sequence[Vec3]) -> Vec3:
         # Source: The NURBS Book: Algorithm A3.1
-        p = self.order - 1
+        if math.isclose(u, self.max_t):
+            u = self.max_t
+        p = self._order - 1
         span = self.find_span(u)
         N = self.basis_funcs(span, u)
         return Vec3.sum(
@@ -182,7 +196,7 @@ class Basis:
     def curve_derivatives(self, u: float, control_points: Sequence[Vec3],
                           n: int = 1) -> List[Vec3]:
         # Source: The NURBS Book: Algorithm A3.2
-        p = self.order - 1
+        p = self._order - 1
         span = self.find_span(u)
         basis_funcs_derivatives = self.basis_funcs_derivatives(span, u, n)
         if self.is_rational:

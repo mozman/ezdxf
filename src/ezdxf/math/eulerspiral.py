@@ -55,12 +55,14 @@ class EulerSpiral:
         """
 
         def term(length_power, curvature_power, const):
-            return t ** length_power / (const * self.curvature_powers[curvature_power])
+            return t ** length_power / (
+                    const * self.curvature_powers[curvature_power])
 
         if t not in self._cache:
             y = term(3, 2, 6.) - term(7, 6, 336.) + term(11, 10, 42240.) - \
                 term(15, 14, 9676800.) + term(19, 18, 3530096640.)
-            x = t - term(5, 4, 40.) + term(9, 8, 3456.) - term(13, 12, 599040.) + \
+            x = t - term(5, 4, 40.) + term(9, 8, 3456.) - term(13, 12,
+                                                               599040.) + \
                 term(17, 16, 175472640.)
             self._cache[t] = Vec3(x, y)
         return self._cache[t]
@@ -90,7 +92,8 @@ class EulerSpiral:
         r = self.radius(t)
         return p + self.tangent(t).normalize(r).orthogonal()
 
-    def bspline(self, length: float, segments: int = 10, degree: int = 3, method: str = 'uniform') -> BSpline:
+    def bspline(self, length: float, segments: int = 10, degree: int = 3,
+                method: str = 'uniform') -> BSpline:
         """
         Approximate euler spiral as B-spline.
 
@@ -106,9 +109,12 @@ class EulerSpiral:
         """
         fit_points = list(self.approximate(length, segments=segments))
         spline = global_bspline_interpolation(fit_points, degree, method=method)
-        knots = [v * length for v in spline.knot_values()]  # scale knot values to length
-        spline.basis.knots = knots
-        return spline
+        return BSpline(
+            spline.control_points,
+            spline.order,
+            # Scale knot values to length:
+            [v * length for v in spline.knots()],
+        )
 
     # backward compatibility
     circle_midpoint = circle_center
