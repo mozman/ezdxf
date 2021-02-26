@@ -112,6 +112,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: fit_points_to_cad_cv
 
+.. autofunction:: fit_points_to_cubic_bezier
+
 .. autofunction:: global_bspline_interpolation
 
 .. autofunction:: local_cubic_bspline_interpolation(fit_points: Iterable[Vertex], method: str = '5-points', tangents :Iterable[Vertex] = None) -> BSpline

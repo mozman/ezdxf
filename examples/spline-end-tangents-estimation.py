@@ -7,8 +7,9 @@ from ezdxf import zoom
 from ezdxf.math import (
     Vec3, estimate_tangents, estimate_end_tangent_magnitude,
     global_bspline_interpolation, linspace, cubic_bezier_interpolation,
-    bezier_to_bspline, fit_points_to_cad_cv,
+    bezier_to_bspline, fit_points_to_cad_cv, fit_points_to_cubic_bezier
 )
+from ezdxf.render import random_2d_path
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 points = Vec3.list([(0, 0), (0, 10), (10, 10), (20, 10), (20, 0)])
@@ -37,10 +38,11 @@ s = global_bspline_interpolation(points, degree=3)
 msp.add_spline(
     dxfattribs={
         'color': 4,
-        'layer': 'Global Interpolation'
+        'layer': 'Global Curve Interpolation'
     }
 ).apply_construction_tool(s)
-# Second spline defined only by fit points as reference, does not match the BricsCAD interpolation.
+# Second spline defined only by fit points as reference, does not match the
+# BricsCAD interpolation.
 spline = msp.add_spline(
     points,
     degree=3,
@@ -51,7 +53,7 @@ spline = msp.add_spline(
 )
 
 zoom.extents(msp)
-doc.saveas(DIR / 'fit-points-only.dxf')
+doc.saveas(DIR / 'concept-0-fit-points-only.dxf')
 
 # ------------------------------------------------------------------------------
 # SPLINE from fit points WITH given end tangents.
@@ -74,6 +76,7 @@ msp.add_spline(
         'layer': 'Global Interpolation'
     }
 ).apply_construction_tool(s)
+
 # Result matches the BricsCAD interpolation if fit points, start- and end
 # tangents are stored explicit in the DXF file.
 spline = msp.add_spline(
@@ -88,7 +91,7 @@ spline.dxf.start_tangent = Vec3.from_deg_angle(100)
 spline.dxf.end_tangent = Vec3.from_deg_angle(-100)
 
 zoom.extents(msp)
-doc.saveas(DIR / 'fit-points-and-tangents.dxf')
+doc.saveas(DIR / 'concept-1-fit-points-and-tangents.dxf')
 
 # 3. Need control vertices to render the B-spline but start- and
 # end tangents are not stored in the DXF file like in scenario 1.
@@ -121,7 +124,7 @@ msp.add_spline(
 )
 
 zoom.extents(msp)
-doc.saveas(DIR / 'tangents-estimated.dxf')
+doc.saveas(DIR / 'concept-2-tangents-estimated.dxf')
 
 # Theory Check:
 doc, msp = setup()
@@ -143,7 +146,7 @@ msp.add_spline(points, degree=3,
                dxfattribs={'layer': 'BricsCAD B-spline', 'color': 2})
 
 zoom.extents(msp)
-doc.saveas(DIR / 'theory-check.dxf')
+doc.saveas(DIR / 'concept-3-theory-check.dxf')
 
 # 1. If tangents are given (stored in DXF) the magnitude of the input tangents for the
 #    interpolation function is "total chord length".
@@ -198,6 +201,8 @@ doc.saveas(DIR / 'fit_points_to_cad_cv_with_tangents.dxf')
 # loaded into BricsCAD / AutoCAD as cubic B-splines. Addition to the statement
 # above: BricsCAD and AutoCAD only use a degree of 3 for SPLINE entities defined
 # only by fit points.
+#
+# Sadly this works only for short simple splines.
 
 doc, msp = setup()
 msp.add_spline(points, degree=2,
@@ -206,17 +211,17 @@ bezier_curves = cubic_bezier_interpolation(points)
 s = bezier_to_bspline(bezier_curves)
 msp.add_spline(
     dxfattribs={
-        'color': 4,
+        'color': 6,
         'layer': 'Cubic Bezier Curve Interpolation'
     }
 ).apply_construction_tool(s)
 
 zoom.extents(msp)
-doc.saveas(DIR / 'cubic-bezier-curves.dxf')
+doc.saveas(DIR / 'concept-4-cubic-bezier-curves.dxf')
 
 # ----------------------------------------------------------------------------
-# Recommend way to create a SPLINE defined by control vertices from fit points
-# without given end tangents:
+# A better way to create a SPLINE defined by control vertices from fit points
+# without given end tangents for SHORT B-splines:
 # ----------------------------------------------------------------------------
 doc, msp = setup()
 
@@ -233,13 +238,20 @@ msp.add_spline(
 # Create SPLINE defined by control vertices from fit points:
 msp.add_spline(
     dxfattribs={
+        'color': 6,
+        'layer': 'Cubic Bezier Curve Interpolation'
+    }
+).apply_construction_tool(fit_points_to_cubic_bezier(points))
+
+msp.add_spline(
+    dxfattribs={
         'color': 4,
-        'layer': 'SPLINE from control vertices by ezdxf'
+        'layer': 'Global Curve Interpolation'
     }
 ).apply_construction_tool(fit_points_to_cad_cv(points))
 
 zoom.extents(msp)
-doc.saveas(DIR / 'fit_points_to_cad_cv_without_tangents.dxf')
+doc.saveas(DIR / 'fit_points_to_cubic_bezier_open.dxf')
 
 # ------------------------------------------------------------------------------
 # Closed SPLINE from fit points WITHOUT given end tangents.
@@ -260,13 +272,21 @@ spline = msp.add_spline(
 # Create SPLINE defined by control vertices from fit points:
 msp.add_spline(
     dxfattribs={
+        'color': 6,
+        'layer': 'Cubic Bezier Curve Interpolation'
+    }
+).apply_construction_tool(fit_points_to_cubic_bezier(closed_points))
+
+msp.add_spline(
+    dxfattribs={
         'color': 4,
-        'layer': 'SPLINE from control vertices by ezdxf'
+        'layer': 'Global Curve Interpolation'
     }
 ).apply_construction_tool(fit_points_to_cad_cv(closed_points))
 
+# Global curve interpolation works better than cubic Bézier interpolation!
 zoom.extents(msp)
-doc.saveas(DIR / 'fit_points_to_cad_cv_closed.dxf')
+doc.saveas(DIR / 'fit_points_to_cubic_bezier_closed.dxf')
 
 # ------------------------------------------------------------------------------
 # Closed SPLINE from fit points WITH given end tangents.
@@ -291,11 +311,47 @@ spline.dxf.end_tangent = end_tangent
 msp.add_spline(
     dxfattribs={
         'color': 4,
-        'layer': 'SPLINE from control vertices by ezdxf'
+        'layer': 'Global Curve Interpolation'
     }
 ).apply_construction_tool(fit_points_to_cad_cv(
     closed_points, [start_tangent, end_tangent]))
 
-# This scenario works as expected!
+# The cubic Bèzier curve interpolation does not yield usable results fot this
+# scenario.
+
 zoom.extents(msp)
 doc.saveas(DIR / 'fit_points_to_cad_cv_closed_with_tangents.dxf')
+
+# ------------------------------------------------------------------------------
+# Random walk open SPLINE from fit points
+# ------------------------------------------------------------------------------
+
+doc = ezdxf.new()
+msp = doc.modelspace()
+walk = list(random_2d_path(10))
+
+msp.add_spline(
+    walk,
+    dxfattribs={
+        'layer': 'SPLINE from fit points by CAD applications',
+        'color': 2
+    }
+)
+
+
+msp.add_spline(
+    dxfattribs={
+        'color': 4,
+        'layer': 'Global Curve Interpolation'
+    }
+).apply_construction_tool(fit_points_to_cad_cv(walk))
+
+msp.add_spline(
+    dxfattribs={
+        'color': 6,
+        'layer': 'Cubic Bezier Curve Interpolation'
+    }
+).apply_construction_tool(fit_points_to_cubic_bezier(walk))
+
+zoom.extents(msp, 1.1)
+doc.saveas(DIR / 'random_walk.dxf')

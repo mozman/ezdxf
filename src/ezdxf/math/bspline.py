@@ -23,7 +23,7 @@ import math
 import bisect
 from ezdxf.math import Vec3, NULLVEC
 from .parametrize import (
-    create_t_vector, estimate_end_tangent_magnitude,
+    create_t_vector, estimate_end_tangent_magnitude, estimate_tangents,
 )
 from .linalg import (
     LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix,
@@ -50,7 +50,7 @@ __all__ = [
     # High level functions:
     'fit_points_to_cad_cv', 'global_bspline_interpolation',
     'local_cubic_bspline_interpolation', 'rational_spline_from_arc',
-    'rational_spline_from_ellipse',
+    'rational_spline_from_ellipse', 'fit_points_to_cubic_bezier',
 
     # B-spline representation without derivatives support:
     'BSpline', 'BSplineU', 'BSplineClosed',
@@ -112,21 +112,49 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
     if len(points) < 2:
         raise ValueError("two ore more points required ")
 
-    if tangents is None:
-        from ezdxf.math import cubic_bezier_interpolation, bezier_to_bspline
-        bezier_curves = cubic_bezier_interpolation(points)
-        return bezier_to_bspline(bezier_curves)
-
     m1, m2 = estimate_end_tangent_magnitude(points, method='chord')
-    tangents = Vec3.list(tangents)
-    start_tangent = Vec3(tangents[0]).normalize(m1)
-    end_tangent = Vec3(tangents[-1]).normalize(m2)
+    if tangents is None:
+        # 5-points is the closest estimation method I found so far
+        tangents = estimate_tangents(points, method='5-p')
+        start_tangent = tangents[0].normalize(m1)
+        end_tangent = tangents[-1].normalize(m2)
+    else:
+        tangents = Vec3.list(tangents)
+        start_tangent = Vec3(tangents[0]).normalize(m1)
+        end_tangent = Vec3(tangents[-1]).normalize(m2)
+
     return global_bspline_interpolation(
         points,
         degree=3,
         tangents=(start_tangent, end_tangent),
         method='chord',
     )
+
+
+def fit_points_to_cubic_bezier(fit_points: Iterable['Vertex']) -> 'BSpline':
+    """ Returns the control vertices and knot vector configuration for DXF
+    SPLINE entities defined only by fit points **without** end tangents as close
+    as possible to common CAD applications like BricsCAD.
+
+    This function uses the cubic Bèzier interpolation to create multiple Bèzier
+    curves and combine them into a single B-spline, this works for short simple
+    splines better than the :func:`fit_points_to_cad_cv`, but is worse
+    for longer and more complex splines.
+
+    Args:
+        fit_points: points the spline is passing through
+
+    Returns:
+        :class:`BSpline`
+
+    """
+    points = Vec3.list(fit_points)
+    if len(points) < 2:
+        raise ValueError("two ore more points required ")
+
+    from ezdxf.math import cubic_bezier_interpolation, bezier_to_bspline
+    bezier_curves = cubic_bezier_interpolation(points)
+    return bezier_to_bspline(bezier_curves)
 
 
 def global_bspline_interpolation(
