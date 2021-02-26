@@ -116,6 +116,9 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
         removed unused arguments `degree` and `method`
 
     """
+    # See also Spline class in ezdxf/entities/spline.py:
+    # degree has no effect. A spline with degree=3 is always constructed when
+    # interpolating a series of fit points.
     points = Vec3.list(fit_points)
     if len(points) < 2:
         raise ValueError("two ore more points required ")

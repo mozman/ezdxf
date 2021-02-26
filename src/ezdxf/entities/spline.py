@@ -26,6 +26,23 @@ if TYPE_CHECKING:
 
 __all__ = ['Spline']
 
+# From the Autodesk ObjectARX reference:
+# Objects of the AcDbSpline class use an embedded gelib object to maintain the
+# actual spline information.
+#
+# Book recommendations:
+#
+#  - "Curves and Surfaces for CAGD" by Gerald Farin
+#  - "Mathematical Elements for Computer Graphics"
+#    by David Rogers and Alan Adams
+#  - "An Introduction To Splines For Use In Computer Graphics & Geometric Modeling"
+#    by Richard H. Bartels, John C. Beatty, and Brian A Barsky
+#
+# http://help.autodesk.com/view/OARX/2018/ENU/?guid=OREF-AcDbSpline__setFitData_AcGePoint3dArray__AcGeVector3d__AcGeVector3d__AcGe__KnotParameterization_int_double
+# Construction of a AcDbSpline entity from fit points:
+# degree has no effect. A spline with degree=3 is always constructed when
+# interpolating a series of fit points.
+
 acdb_spline = DefSubclass('AcDbSpline', {
     # Spline flags:
     # 1 = Closed spline
@@ -34,6 +51,9 @@ acdb_spline = DefSubclass('AcDbSpline', {
     # 8 = Planar
     # 16 = Linear (planar bit is also set)
     'flags': DXFAttr(70, default=0),
+
+    # degree: The degree can't be higher than 11 according to the Autodesk
+    # ObjectARX reference.
     'degree': DXFAttr(71, default=3, validator=validator.is_positive),
     'n_knots': DXFAttr(
         72, xtype=XType.callback, getter='knot_count'),

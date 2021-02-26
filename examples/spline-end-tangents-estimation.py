@@ -202,6 +202,11 @@ doc.saveas(DIR / 'fit_points_to_cad_cv_with_tangents.dxf')
 # above: BricsCAD and AutoCAD only use a degree of 3 for SPLINE entities defined
 # only by fit points.
 #
+# http://help.autodesk.com/view/OARX/2018/ENU/?guid=OREF-AcDbSpline__setFitData_AcGePoint3dArray__AcGeVector3d__AcGeVector3d__AcGe__KnotParameterization_int_double
+# Remark in the AutoCAD ObjectARX reference for AcDbSpline about construction
+# of a B-spline from fit points:
+# degree has no effect. A spline with degree=3 is always constructed when
+# interpolating a series of fit points.
 # Sadly this works only for short simple splines.
 
 doc, msp = setup()
