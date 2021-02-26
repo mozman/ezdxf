@@ -76,13 +76,13 @@ class Basis:
 
     def basis_funcs(self, span: int, u: float) -> List[float]:
         # Source: The NURBS Book: Algorithm A2.2
-        degree = self._order - 1
+        order = self._order
         knots = self._knots
-        N = [0.0] * (degree + 1)
+        N = [0.0] * order
         left = list(N)
         right = list(N)
         N[0] = 1.0
-        for j in range(1, degree + 1):
+        for j in range(1, order):
             left[j] = u - knots[span + 1 - j]
             right[j] = knots[span + j] - u
             saved = 0.0
