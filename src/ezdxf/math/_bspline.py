@@ -17,9 +17,7 @@ class Basis:
     def __init__(self, knots: Iterable[float], order: int, count: int,
                  weights: Sequence[float] = None):
         self._knots = array('d', knots)
-        if weights is None:
-            weights = []
-        self._weights = array('d', weights)
+        self._weights = array('d', weights or [])
         self._order: int = int(order)
         self._count: int = int(count)
 
@@ -204,13 +202,14 @@ class Basis:
             # (x*w, y*w, z*w, w)
             CKw = []
             wders = []
+            weights = self._weights
             for k in range(n + 1):
                 v = NULLVEC
                 wder = 0.0
                 for j in range(p + 1):
                     index = span - p + j
                     bas_func_weight = basis_funcs_derivatives[k][j] * \
-                                      self._weights[index]
+                                      weights[index]
                     # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
                     v += control_points[index] * bas_func_weight
                     wder += bas_func_weight
