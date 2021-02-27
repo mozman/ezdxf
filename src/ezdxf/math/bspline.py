@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2020 Manfred Moitzi
+# Copyright (c) 2012-2021, Manfred Moitzi
 # License: MIT License
 """
 B-Splines
@@ -786,7 +786,7 @@ class BSpline:
         weights: iterable of weight values
 
     """
-    __slots__ = ('_control_points', '_order', '_basis')
+    __slots__ = ('_control_points', '_basis')
 
     def __init__(self, control_points: Iterable['Vertex'],
                  order: int = 4,
@@ -795,7 +795,6 @@ class BSpline:
         self._control_points = Vec3.tuple(control_points)
         count = len(self._control_points)
         order = int(order)
-        self._order = order
         if order > count:
             raise DXFValueError(
                 f'Invalid need more control points for order {order}')
@@ -835,12 +834,12 @@ class BSpline:
     @property
     def order(self) -> int:
         """ Order (k) of B-spline = p + 1 """
-        return self._order
+        return self._basis.order
 
     @property
     def degree(self) -> int:
         """ Degree (p) of B-spline = order - 1 """
-        return self._order - 1
+        return self._basis.degree
 
     @property
     def evaluator(self) -> Evaluator:
@@ -854,7 +853,7 @@ class BSpline:
     @property
     def is_clamped(self):
         """ Returns ``True`` if curve is a clamped (open) B-spline. """
-        return not any(self._basis.knots[:self._order])
+        return not any(self._basis.knots[:self.order])
 
     @staticmethod
     def from_fit_points(points: Iterable['Vertex'], degree=3,
@@ -926,7 +925,7 @@ class BSpline:
 
         return self.__class__(
             control_points=reversed(self.control_points),
-            order=self._order,
+            order=self.order,
             knots=reverse_knots(),
             weights=list(reversed(self.weights())),
         )

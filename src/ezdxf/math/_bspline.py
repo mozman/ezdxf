@@ -12,7 +12,7 @@ from ezdxf.math import Vec3, NULLVEC, binomial_coefficient
 
 class Basis:
     """ Immutable Basis function class. """
-    __slots__ = ['_knots', '_weights', '_order', '_count']
+    __slots__ = ('_knots', '_weights', '_order', '_count')
 
     def __init__(self, knots: Iterable[float], order: int, count: int,
                  weights: Sequence[float] = None):
@@ -31,6 +31,10 @@ class Basis:
     @property
     def max_t(self) -> float:
         return self._knots[-1]
+
+    @property
+    def order(self) -> int:
+        return self._order
 
     @property
     def degree(self) -> int:
