@@ -1,13 +1,9 @@
 # Copyright (c) 2012-2020 Manfred Moitzi
 # License: MIT License
 import pytest
-from math import isclose
 import random
 from ezdxf.math import Vec3, BSpline
-from ezdxf.math.bspline import (
-    bspline_basis_vector, Basis,
-    open_uniform_knot_vector, normalize_knots, subdivide_params,
-)
+from ezdxf.math.bspline import normalize_knots, subdivide_params
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.),
              (50., 0., 30.)]
@@ -50,20 +46,6 @@ def test_if_nurbs_python_is_reliable():
     points = curve.evaluate_list(params)
     for expect, point in zip(expected, points):
         assert Vec3(expect).isclose(point)
-
-
-def test_bspline_basis_vector():
-    degree = 3
-    count = 10
-    knots = list(open_uniform_knot_vector(count, order=degree + 1))
-    max_t = max(knots)
-    basis_func = Basis(knots=knots, order=degree + 1, count=count)
-    for u in (0, 2., 2.5, 3.5, 4., max_t):
-        basis = bspline_basis_vector(u, count=count, degree=degree, knots=knots)
-        basis2 = basis_func.basis_vector(u)
-        assert len(basis) == len(basis2)
-        for v1, v2 in zip(basis, basis2):
-            assert isclose(v1, v2)
 
 
 def iter_points(values, n):
