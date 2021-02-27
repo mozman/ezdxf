@@ -85,7 +85,7 @@ def test_bezier_curves_to_bspline(b1, b2):
     # Remove duplicate control point between two adjacent curves:
     expected = list(b1.control_points) + list(b2.control_points)[1:]
     assert bspline.degree == 3, "should be a cubic B-spline"
-    assert bspline.control_points == expected
+    assert bspline.control_points == tuple(expected)
 
 
 def test_quality_of_bezier_to_bspline_conversion_1():

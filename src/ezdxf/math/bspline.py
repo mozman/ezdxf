@@ -241,7 +241,6 @@ def global_bspline_interpolation(
             fit_points, degree, t_vector,
             knot_generation_method)
     bspline = BSpline(control_points, order=order, knots=knots)
-    bspline.t_array = t_vector
     return bspline
 
 
@@ -787,34 +786,71 @@ class BSpline:
         weights: iterable of weight values
 
     """
+    __slots__ = ('_control_points', '_order', '_basis')
 
     def __init__(self, control_points: Iterable['Vertex'],
                  order: int = 4,
                  knots: Iterable[float] = None,
                  weights: Iterable[float] = None):
-        self.control_points: List[Vec3] = Vec3.list(control_points)
-        self.order: int = order
-        if order > self.count:
+        self._control_points = Vec3.tuple(control_points)
+        count = len(self._control_points)
+        order = int(order)
+        self._order = order
+        if order > count:
             raise DXFValueError(
                 f'Invalid need more control points for order {order}')
 
         if knots is None:
-            knots = open_uniform_knot_vector(self.count, self.order,
-                                             normalize=True)
+            knots = open_uniform_knot_vector(count, order, normalize=True)
         else:
             knots = list(knots)
-            required_knot_count = self.count + self.order
+            required_knot_count = count + order
             if len(knots) != required_knot_count:
                 raise ValueError(
                     f"{required_knot_count} knot values required, got {len(knots)}.")
             if knots[0] != 0.0:
                 knots = normalize_knots(knots)
-        self.basis = Basis(knots, self.order, self.count, weights=weights)
+        self._basis = Basis(knots, order, count, weights=weights)
 
     def __str__(self):
-        return f'BSpline degree={self.degree}, {len(self.control_points)} ' \
+        return f'BSpline degree={self.degree}, {self.count} ' \
                f'control points, {len(self.knots())} knot values, ' \
                f'{len(self.weights())} weights'
+
+    @property
+    def control_points(self) -> Sequence[Vec3]:
+        """ Control points as tuple of :class:`~ezdxf.math.Vec3` """
+        return self._control_points
+
+    @property
+    def count(self) -> int:
+        """ Count of control points, (n + 1 in text book notation). """
+        return len(self._control_points)
+
+    @property
+    def max_t(self) -> float:
+        """ Biggest `knot`_ value. """
+        return self._basis.max_t
+
+    @property
+    def order(self) -> int:
+        """ Order (k) of B-spline = p + 1 """
+        return self._order
+
+    @property
+    def degree(self) -> int:
+        """ Degree (p) of B-spline = order - 1 """
+        return self._order - 1
+
+    @property
+    def is_rational(self):
+        """ Returns ``True`` if curve is a rational B-spline. (has weights) """
+        return self._basis.is_rational
+
+    @property
+    def is_clamped(self):
+        """ Returns ``True`` if curve is a clamped (open) B-spline. """
+        return not any(self._basis.knots[:self._order])
 
     @staticmethod
     def from_fit_points(points: Iterable['Vertex'], degree=3,
@@ -875,7 +911,10 @@ class BSpline:
         )
 
     def reverse(self) -> 'BSpline':
-        """ Returns a new BSpline with reversed control point order. """
+        """ Returns a new :class:`BSpline` object with reversed control point
+        order.
+
+        """
 
         def reverse_knots():
             for k in reversed(normalize_knots(self.knots())):
@@ -883,59 +922,24 @@ class BSpline:
 
         return self.__class__(
             control_points=reversed(self.control_points),
-            order=self.order,
+            order=self._order,
             knots=reverse_knots(),
             weights=list(reversed(self.weights())),
         )
-
-    def normalize_knots(self):
-        """ Normalize knot vector into range [0, 1]. """
-        knots = normalize_knots(self.basis.knots)
-        self.basis = Basis(knots, self.order, self.count, self.weights())
-
-    @property
-    def count(self) -> int:
-        """ Count of control points, (n + 1 in text book notation). """
-        return len(self.control_points)
-
-    @property
-    def max_t(self) -> float:
-        """ Biggest `knot`_ value. """
-        return self.basis.max_t
-
-    @property
-    def degree(self) -> int:
-        """ Degree (p) of B-spline = order - 1 """
-        return self.order - 1
-
-    @property
-    def is_rational(self):
-        """ Returns ``True`` if curve is a rational B-spline. (has weights) """
-        return self.basis.is_rational
-
-    @property
-    def is_clamped(self):
-        """ Returns ``True`` if curve is a clamped (open) B-spline. """
-        return not any(self.basis.knots[:self.order])
 
     def knots(self) -> List[float]:
         """ Returns a list of `knot`_ values as floats, the knot vector
         **always** has order + count values (n + p + 2 in text book notation).
 
         """
-        return list(self.basis.knots)
-
-    knot_values = knots
+        return self._basis.knots  # a new list!
 
     def weights(self) -> List[float]:
         """ Returns a list of weights values as floats, one for each control
         point or an empty list.
 
         """
-        if self.basis.is_rational:
-            return list(self.basis.weights)
-        else:
-            return []
+        return self._basis.weights  # a new list!
 
     def step_size(self, segments: int) -> float:
         return self.max_t / float(segments)
@@ -1005,7 +1009,7 @@ class BSpline:
             t: parameter in range [0, max_t]
 
         """
-        return self.basis.curve_point(t, self.control_points)
+        return self._basis.curve_point(t, self._control_points)
 
     def points(self, t: Iterable[float]) -> Iterable[Vec3]:
         """ Yields points for parameter vector `t`.
@@ -1014,7 +1018,7 @@ class BSpline:
             t: parameters in range [0, max_t]
 
         """
-        return self.basis.curve_points(t, self.control_points)
+        return self._basis.curve_points(t, self._control_points)
 
     def derivative(self, t: float, n: int = 2) -> List[Vec3]:
         """ Return point and derivatives up to `n` <= degree for parameter `t`.
@@ -1031,7 +1035,7 @@ class BSpline:
         """
         if math.isclose(t, self.max_t):
             t = self.max_t
-        return self.basis.curve_derivatives(t, self.control_points, n)
+        return self._basis.curve_derivatives(t, self._control_points, n)
 
     def derivatives(self, t: Iterable[float], n: int = 2) -> Iterable[
         List[Vec3]]:
@@ -1051,18 +1055,19 @@ class BSpline:
         for u in t:
             yield self.derivative(u, n)
 
-    def insert_knot(self, t: float) -> None:
-        """ Insert additional knot, without altering the curve shape.
+    def insert_knot(self, t: float) -> 'BSpline':
+        """ Insert an additional knot, without altering the shape of the curve.
+        Returns a new :class:`BSpline` object.
 
         Args:
             t: position of new knot 0 < t < max_t
 
         """
-        if self.basis.is_rational:
+        if self._basis.is_rational:
             raise TypeError('Rational B-splines not supported.')
 
-        knots = self.basis.knots  # a copy
-        cpoints = self.control_points
+        knots = self._basis.knots  # a copy
+        cpoints = list(self._control_points)
         p = self.degree
 
         def new_point(index: int) -> Vec3:
@@ -1072,35 +1077,41 @@ class BSpline:
         if t <= 0. or t >= self.max_t:
             raise DXFValueError('Invalid position t')
 
-        k = self.basis.find_span(t)
+        k = self._basis.find_span(t)
         if k < p:
             raise DXFValueError('Invalid position t')
 
         cpoints[k - p + 1:k] = [new_point(i) for i in range(k - p + 1, k + 1)]
         knots.insert(k + 1, t)  # knot[k] <= t < knot[k+1]
-        self.basis = Basis(knots, self.order, len(cpoints))
+        return BSpline(cpoints, self.order, knots)
 
-    def knot_refinement(self, u: Iterable[float]) -> None:
-        """ Insert multiple knots, without altering the curve
+    def knot_refinement(self, u: Iterable[float]) -> 'BSpline':
+        """ Insert multiple knots, without altering the shape of the curve.
+        Returns a new :class:`BSpline` object.
 
         Args:
             u: vector of new knots t and for each t: 0 < t  < max_t
 
         """
+        spline = self
         for t in u:
-            self.insert_knot(t)
+            spline = spline.insert_knot(t)
+        return spline
 
     def transform(self, m: 'Matrix44') -> 'BSpline':
-        """ Transform B-spline by transformation matrix `m` inplace. """
-        self.control_points = list(m.transform_vertices(self.control_points))
-        return self
+        """ Returns a new :class:`BSpline` object transformed by a
+        :class:`Matrix44` transformation matrix.
+
+        """
+        cpoints = m.transform_vertices(self.control_points)
+        return BSpline(cpoints, self.order, self.knots(), self.weights())
 
     def to_nurbs_python_curve(self):
         """ Returns a :class:`geomdl.BSpline.Curve` object, if the
         `NURBS-Python <https://pypi.org/project/geomdl/>`_ package is installed.
 
         """
-        if self.basis.is_rational:
+        if self._basis.is_rational:
             from geomdl.NURBS import Curve
         else:
             from geomdl.BSpline import Curve
@@ -1125,21 +1136,21 @@ class BSpline:
 
         """
         # Source: "The NURBS Book": Algorithm A5.6
-        if self.basis.is_rational:
+        if self._basis.is_rational:
             raise TypeError('Rational B-splines not supported.')
         if not self.is_clamped:
             raise TypeError('Clamped B-Spline required.')
 
         n = self.count - 1
         p = self.degree
-        knots = self.basis.knots  # U
-        control_points = self.control_points  # Pw
+        knots = self._basis.knots  # U
+        control_points = self._control_points  # Pw
         alphas = [0.0] * len(knots)
 
         m = n + p + 1
         a = p
         b = p + 1
-        bezier_points = control_points[0: p + 1]  # Qw
+        bezier_points = list(control_points[0: p + 1])  # Qw
 
         while b < m:
             next_bezier_points = [NULLVEC] * (p + 1)
@@ -1216,7 +1227,7 @@ class BSpline:
         14 at the 2nd level and 28 at the 3rd level.
 
         """
-        params = list(create_t_vector(self.control_points, 'chord'))
+        params = list(create_t_vector(self._control_points, 'chord'))
         if self.max_t != 1.0:
             max_t = self.max_t
             params = [p * max_t for p in params]

@@ -109,15 +109,15 @@ def test_bspline_insert_knot():
          (80, 70)])
     t = bspline.max_t / 2
     assert len(bspline.control_points) == 8
-    bspline.insert_knot(t)
-    assert len(bspline.control_points) == 9
+    bspline2 = bspline.insert_knot(t)
+    assert len(bspline2.control_points) == 9
 
 
 def test_transform_interface():
     from ezdxf.math import Matrix44
     spline = BSpline(control_points=[(1, 0, 0), (3, 3, 0), (6, 0, 1)], order=3)
-    spline.transform(Matrix44.translate(1, 2, 3))
-    assert spline.control_points[0] == (2, 2, 3)
+    new_spline = spline.transform(Matrix44.translate(1, 2, 3))
+    assert new_spline.control_points[0] == (2, 2, 3)
 
 
 def test_bezier_decomposition():
