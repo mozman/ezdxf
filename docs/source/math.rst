@@ -850,8 +850,6 @@ BSpline
 
     .. automethod:: knots
 
-    .. automethod:: normalize_knots
-
     .. automethod:: weights
 
     .. automethod:: params

@@ -792,9 +792,9 @@ class BSpline:
                  order: int = 4,
                  knots: Iterable[float] = None,
                  weights: Iterable[float] = None):
-        order = int(order)
         self._control_points = Vec3.tuple(control_points)
         count = len(self._control_points)
+        order = int(order)
         self._order = order
         if order > count:
             raise DXFValueError(
@@ -813,7 +813,7 @@ class BSpline:
         self._basis = Basis(knots, order, count, weights=weights)
 
     def __str__(self):
-        return f'BSpline degree={self.degree}, {len(self._control_points)} ' \
+        return f'BSpline degree={self.degree}, {self.count} ' \
                f'control points, {len(self.knots())} knot values, ' \
                f'{len(self.weights())} weights'
 
@@ -911,7 +911,10 @@ class BSpline:
         )
 
     def reverse(self) -> 'BSpline':
-        """ Returns a new BSpline with reversed control point order. """
+        """ Returns a new :class:`BSpline` object with reversed control point
+        order.
+
+        """
 
         def reverse_knots():
             for k in reversed(normalize_knots(self.knots())):
@@ -924,27 +927,19 @@ class BSpline:
             weights=list(reversed(self.weights())),
         )
 
-    def normalize_knots(self):
-        """ Normalize knot vector into range [0, 1]. """
-        knots = normalize_knots(self._basis.knots)
-        self._basis = Basis(knots, self._order, self.count, self.weights())
-
     def knots(self) -> List[float]:
         """ Returns a list of `knot`_ values as floats, the knot vector
         **always** has order + count values (n + p + 2 in text book notation).
 
         """
-        return list(self._basis.knots)
+        return self._basis.knots  # a new list!
 
     def weights(self) -> List[float]:
         """ Returns a list of weights values as floats, one for each control
         point or an empty list.
 
         """
-        if self._basis.is_rational:
-            return list(self._basis.weights)
-        else:
-            return []
+        return self._basis.weights  # a new list!
 
     def step_size(self, segments: int) -> float:
         return self.max_t / float(segments)
@@ -1104,9 +1099,12 @@ class BSpline:
         return spline
 
     def transform(self, m: 'Matrix44') -> 'BSpline':
-        """ Transform B-spline by transformation matrix `m` inplace. """
-        self._control_points = tuple(m.transform_vertices(self._control_points))
-        return self
+        """ Returns a new :class:`BSpline` object transformed by a
+        :class:`Matrix44` transformation matrix.
+
+        """
+        cpoints = m.transform_vertices(self.control_points)
+        return BSpline(cpoints, self.order, self.knots(), self.weights())
 
     def to_nurbs_python_curve(self):
         """ Returns a :class:`geomdl.BSpline.Curve` object, if the
@@ -1119,7 +1117,7 @@ class BSpline:
             from geomdl.BSpline import Curve
         curve = Curve()
         curve.degree = self.degree
-        curve.ctrlpts = [v.xyz for v in self._control_points]
+        curve.ctrlpts = [v.xyz for v in self.control_points]
         curve.knotvector = self.knots()
         curve.weights = self.weights()
         return curve
