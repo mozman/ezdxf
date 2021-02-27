@@ -834,21 +834,19 @@ BSpline
 
 .. autoclass:: BSpline
 
-    .. attribute:: control_points
+    .. autoproperty:: control_points
 
-        Control points as list of :class:`~ezdxf.math.Vec3`
+    .. autoproperty:: count
 
-    .. autoattribute:: count
+    .. autoproperty:: order
 
-    .. autoattribute:: degree
+    .. autoproperty:: degree
 
-    .. attribute:: order
+    .. autoproperty:: max_t
 
-        Order of B-spline = degree +  1
+    .. autoproperty:: is_rational
 
-    .. autoattribute:: max_t
-
-    .. autoattribute:: is_rational
+    .. autoproperty:: is_clamped
 
     .. automethod:: knots
 
@@ -874,7 +872,9 @@ BSpline
 
     .. automethod:: derivatives(t: Iterable[float], n: int=2) -> Iterable[List[Vec3]]
 
-    .. automethod:: insert_knot
+    .. automethod:: insert_knot(t: float) -> BSpline
+
+    .. automethod:: knot_refinement(u: Iterable[flat]) -> BSpline
 
     .. automethod:: from_ellipse(ellipse: ConstructionEllipse) -> BSpline
 

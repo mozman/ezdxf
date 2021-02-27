@@ -109,8 +109,8 @@ def test_bspline_insert_knot():
          (80, 70)])
     t = bspline.max_t / 2
     assert len(bspline.control_points) == 8
-    bspline.insert_knot(t)
-    assert len(bspline.control_points) == 9
+    bspline2 = bspline.insert_knot(t)
+    assert len(bspline2.control_points) == 9
 
 
 def test_transform_interface():
