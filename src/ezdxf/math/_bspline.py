@@ -181,6 +181,8 @@ class Basis:
 
 class Evaluator:
     """ B-spline curve point and curve derivative evaluator. """
+    __slots__ = ['_basis', '_control_points']
+    
     def __init__(self, basis: Basis, control_points: Sequence[Vec3]):
         self._basis = basis
         self._control_points = control_points
