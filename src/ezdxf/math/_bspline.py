@@ -33,6 +33,10 @@ class Basis:
         return self._knots[-1]
 
     @property
+    def degree(self) -> int:
+        return self._order - 1
+
+    @property
     def knots(self) -> List[float]:
         return list(self._knots)  # do not return mutable array!
 
@@ -174,42 +178,53 @@ class Basis:
             r *= (p - k)
         return derivatives[:n + 1]
 
-    def curve_points(self, t: Iterable[float],
-                     control_points: Sequence[Vec3]) -> Iterable[Vec3]:
-        # Better for Cython implementation, check or conversion of
-        # control_points is done only once.
-        for u in t:
-            yield self.curve_point(u, control_points)
 
-    def curve_point(self, u: float, control_points: Sequence[Vec3]) -> Vec3:
+class Evaluator:
+    """ B-spline curve point and curve derivative evaluator. """
+    def __init__(self, basis: Basis, control_points: Sequence[Vec3]):
+        self._basis = basis
+        self._control_points = control_points
+
+    def point(self, u: float) -> Vec3:
         # Source: The NURBS Book: Algorithm A3.1
-        if math.isclose(u, self.max_t):
-            u = self.max_t
-        p = self._order - 1
-        span = self.find_span(u)
-        N = self.basis_funcs(span, u)
+        basis = self._basis
+        control_points = self._control_points
+        if math.isclose(u, basis.max_t):
+            u = basis.max_t
+
+        p = basis.degree
+        span = basis.find_span(u)
+        N = basis.basis_funcs(span, u)
         return Vec3.sum(
             N[i] * control_points[span - p + i] for i in range(p + 1))
 
-    def curve_derivatives(self, u: float, control_points: Sequence[Vec3],
-                          n: int = 1) -> List[Vec3]:
+    def points(self, t: Iterable[float]) -> Iterable[Vec3]:
+        for u in t:
+            yield self.point(u)
+
+    def derivative(self, u: float, n: int = 1) -> List[Vec3]:
+        """ Return point and derivatives up to n <= degree for parameter u. """
         # Source: The NURBS Book: Algorithm A3.2
-        p = self._order - 1
-        span = self.find_span(u)
-        basis_funcs_derivatives = self.basis_funcs_derivatives(span, u, n)
-        if self.is_rational:
+        basis = self._basis
+        control_points = self._control_points
+        if math.isclose(u, basis.max_t):
+            u = basis.max_t
+
+        p = basis.degree
+        span = basis.find_span(u)
+        basis_funcs_ders = basis.basis_funcs_derivatives(span, u, n)
+        if basis.is_rational:
             # Homogeneous point representation required:
             # (x*w, y*w, z*w, w)
             CKw = []
             wders = []
-            weights = self._weights
+            weights = basis.weights
             for k in range(n + 1):
                 v = NULLVEC
                 wder = 0.0
                 for j in range(p + 1):
                     index = span - p + j
-                    bas_func_weight = basis_funcs_derivatives[k][j] * \
-                                      weights[index]
+                    bas_func_weight = basis_funcs_ders[k][j] * weights[index]
                     # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
                     v += control_points[index] * bas_func_weight
                     wder += bas_func_weight
@@ -226,8 +241,13 @@ class Basis:
         else:
             CK = [
                 Vec3.sum(
-                    basis_funcs_derivatives[k][j] * control_points[span - p + j]
+                    basis_funcs_ders[k][j] * control_points[span - p + j]
                     for j in range(p + 1))
                 for k in range(n + 1)
             ]
         return CK
+
+    def derivatives(
+            self, t: Iterable[float], n: int = 1) -> Iterable[List[Vec3]]:
+        for u in t:
+            yield self.derivative(u, n)

@@ -32,7 +32,7 @@ from .construct2d import linspace
 from .construct3d import distance_point_line_3d
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf import PYPY
-from ._bspline import Basis
+from ._bspline import Basis, Evaluator
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -843,6 +843,10 @@ class BSpline:
         return self._order - 1
 
     @property
+    def evaluator(self) -> Evaluator:
+        return Evaluator(self._basis, self._control_points)
+
+    @property
     def is_rational(self):
         """ Returns ``True`` if curve is a rational B-spline. (has weights) """
         return self._basis.is_rational
@@ -949,7 +953,7 @@ class BSpline:
         count = segments + 1.
 
         """
-        yield from self.points(self.params(segments))
+        return self.evaluator.points(self.params(segments))
 
     def flattening(self, distance: float,
                    segments: int = 4) -> Iterable[Vec3]:
@@ -980,9 +984,10 @@ class BSpline:
                 yield from subdiv(s, m, start_t, mid_t)
                 yield from subdiv(m, e, mid_t, end_t)
 
-        knots = sorted(set(self.knots()))
+        evaluator = self.evaluator
+        knots = list(set(self.knots()))
         t = 0.0
-        start_point = self.point(t)
+        start_point = evaluator.point(t)
         yield start_point
         for t1 in knots[1:]:
             delta = (t1 - t) / segments
@@ -990,7 +995,7 @@ class BSpline:
                 next_t = t + delta
                 if math.isclose(next_t, t1):
                     next_t = t1
-                end_point = self.point(next_t)
+                end_point = evaluator.point(next_t)
                 yield from subdiv(start_point, end_point, t, next_t)
                 t = next_t
                 start_point = end_point
@@ -1009,7 +1014,7 @@ class BSpline:
             t: parameter in range [0, max_t]
 
         """
-        return self._basis.curve_point(t, self._control_points)
+        return self.evaluator.point(t)
 
     def points(self, t: Iterable[float]) -> Iterable[Vec3]:
         """ Yields points for parameter vector `t`.
@@ -1018,7 +1023,7 @@ class BSpline:
             t: parameters in range [0, max_t]
 
         """
-        return self._basis.curve_points(t, self._control_points)
+        return self.evaluator.points(t)
 
     def derivative(self, t: float, n: int = 2) -> List[Vec3]:
         """ Return point and derivatives up to `n` <= degree for parameter `t`.
@@ -1033,9 +1038,7 @@ class BSpline:
             n+1 values as :class:`Vec3` objects
 
         """
-        if math.isclose(t, self.max_t):
-            t = self.max_t
-        return self._basis.curve_derivatives(t, self._control_points, n)
+        return self.evaluator.derivative(t, n)
 
     def derivatives(self, t: Iterable[float], n: int = 2) -> Iterable[
         List[Vec3]]:
@@ -1052,8 +1055,7 @@ class BSpline:
             List of n+1 values as :class:`Vec3` objects
 
         """
-        for u in t:
-            yield self.derivative(u, n)
+        return self.evaluator.derivatives(t, n)
 
     def insert_knot(self, t: float) -> 'BSpline':
         """ Insert an additional knot, without altering the shape of the curve.
@@ -1264,9 +1266,6 @@ class BSplineU(BSpline):
         base = float(self.order - 1)
         for i in range(segments + 1):
             yield base + i * step
-
-    def t_array(self) -> List[float]:
-        raise NotImplemented
 
 
 class BSplineClosed(BSplineU):
