@@ -8,16 +8,36 @@ Add-ons
     - MLEADER full rendering support (v0.17), requires `MLeader.virtual_entities()`
     - add support for ATTRIB with embedded MTEXT (v0.17)
     - ACAD_TABLE
+    - global fonts cache usage
+  
+- Native SVG exporter, planned after the matplotlib backend supports all the 
+  planned features.
+- Native PDF exporter? Problem: The PDF 1.7 reference has ~1300 pages, but I 
+  assume I only need a fraction of that information for a simple exporter. 
+  I can use Matplotlib for text rendering as Bèzier curves if required.
+  
+  Existing Python packages for PDF rendering: 
+  - pycairo: binary wheels for Windows on PyPI - could handle SVG & PDF, but I 
+    don't know how much control I get from cairo. The advantage of a native 
+    exporter would be to get full control over all available features of the 
+    output format, by the disadvantage of doing ALL the work by myself.
+  - pypoppler: only source code distribution from 2013 on PyPI
+  - python-poppler-qt5: only source code distribution on PyPI
+  - Reportlab: more report or magazine page layout oriented
+  - PyQt: QPrinter & QPainter - https://wiki.qt.io/Handling_PDF
+  
+  In consideration, if then SVG exporter works well.
+    
+- DWG loader, planned for the future. Cython will be required for the low level 
+  stuff, no pure Python implementation.         
 
-- Simple SVG exporter, planned after the matplotlib backend supports all the 
-  planned features. 
-- DWG loader, boring and tedious but really planned for the future         
 
 Render Tools
 ------------
 
 - `MLeader.virtual_entities()` (v0.17)
 - `ACADTable.virtual_entities()` ??? -> requires basic ACAD_TABLE support
+- `EulerSpiral()` conversion to B-spline with end tangent constraints
 
 DXF Entities
 ------------
@@ -38,7 +58,7 @@ DXF Entities
 - ACAD_TABLE, boring and tedious due to lack of documentation!
   
 - Optimize DXF export (>1.0): write tags direct in export_entity() 
-  without any indirections, but this requires some additional tag writing 
+  without any indirections, this requires some additional tag writing 
   function in the Tagwriter() class, these additional functions should only use 
   methods from AbstractTagwriter():
   - write_tag2_skip_default(code, value, default)
@@ -54,9 +74,4 @@ DXF Audit & Repair
     - dimstyle exist; repair: set to 'Standard'
     - arrows exist; repair: set to '' = default open filled arrow
     - text style exist; repair: set to 'Standard'
-
-Cython Code
------------
-
-- optimized math & construction tools
-- tag loader: creates mostly Python structures, no speed gain by using Cython  
+  
