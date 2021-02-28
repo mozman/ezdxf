@@ -34,6 +34,7 @@ clean:
 	rm -f $(ACC)/matrix44.cpp
 	rm -f $(ACC)/bezier4p.cpp
 	rm -f $(ACC)/bezier3p.cpp
+	rm -f $(ACC)/bspline.cpp
 	rm -f $(ACC)/construct.cpp
 
 sdist: clean

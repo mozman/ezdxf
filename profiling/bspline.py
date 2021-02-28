@@ -5,10 +5,19 @@ import time
 from datetime import datetime
 from pathlib import Path
 from ezdxf.acc import USE_C_EXT
+from ezdxf.version import __version__
+
+# Python implementations:
+from ezdxf.math._bspline import Basis, Evaluator
 
 if USE_C_EXT is False:
-    print('C-extension disabled or not available.')
-    sys.exit(1)
+    print('C-extension disabled or not available. (pypy3?)')
+    print('Cython implementation == Python implementation.')
+    CBasis = Basis
+    CEvaluator = Evaluator
+else:
+    # Cython implementations:
+    from ezdxf.acc.bspline import Basis as CBasis, Evaluator as CEvaluator
 
 from ezdxf.render import random_3d_path
 from ezdxf.math import fit_points_to_cad_cv, linspace
@@ -17,13 +26,6 @@ SPLINE_COUNT = 20
 splines = [
     fit_points_to_cad_cv(random_3d_path(20)) for _ in range(SPLINE_COUNT)
 ]
-
-# Python implementations:
-from ezdxf.math._bspline import Basis, Evaluator
-
-# Cython implementations:
-# from ezdxf.acc.bspline import Basis as CBasis, Evaluator as CEvaluator
-from ezdxf.version import __version__
 
 POINTS = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
@@ -46,10 +48,10 @@ class PySpline:
         return self.evaluator.derivatives(t, n)
 
 
-# class CySpline(PySpline):
-#     def __init__(self, bspline):
-#         self.basis = CBasis(bspline.knots(), bspline.order, bspline.count)
-#         self.evaluator = CEvaluator(self.basis, bspline.control_points)
+class CySpline(PySpline):
+    def __init__(self, bspline):
+        self.basis = CBasis(bspline.knots(), bspline.order, bspline.count)
+        self.evaluator = CEvaluator(self.basis, bspline.control_points)
 
 
 def open_log(name: str):
@@ -67,8 +69,9 @@ def open_log(name: str):
 def log(name: str, pytime: float, cytime: float):
     log_file = open_log(name)
     timestamp = datetime.now().isoformat()
+    py_version =sys.version.replace('\n', ' ')
     log_file.write(
-        f'{timestamp}; {pytime}; {cytime}; "{sys.version}"; "{__version__}"\n')
+        f'{timestamp}; {pytime}; {cytime}; "{py_version}"; "{__version__}"\n')
     log_file.close()
 
 
@@ -118,29 +121,29 @@ def profile(text, func, pytype, cytype, *args):
 POINT_COUNT_1 = 10_000
 print(f'Profiling BSpline Python and Cython implementation:')
 profile(
-    f'calc {POINT_COUNT_1}x single point of for {SPLINE_COUNT} BSplines: ',
+    f'calc {POINT_COUNT_1}x single point for {SPLINE_COUNT} BSplines: ',
     bspline_points,
     PySpline,
-    PySpline,
+    CySpline,
     POINT_COUNT_1)
 
 profile(
-    f'calc {POINT_COUNT_1}x multi point of for {SPLINE_COUNT} BSplines: ',
+    f'calc {POINT_COUNT_1}x multi point for {SPLINE_COUNT} BSplines: ',
     bspline_multi_points,
     PySpline,
-    PySpline,
+    CySpline,
     POINT_COUNT_1)
 
 profile(
-    f'calc {POINT_COUNT_1}x single point & derivative of for {SPLINE_COUNT} BSplines: ',
+    f'calc {POINT_COUNT_1}x single point & derivative for {SPLINE_COUNT} BSplines: ',
     bspline_derivative,
     PySpline,
-    PySpline,
+    CySpline,
     POINT_COUNT_1)
 
 profile(
-    f'calc {POINT_COUNT_1}x multi point & derivative of for {SPLINE_COUNT} BSplines: ',
+    f'calc {POINT_COUNT_1}x multi point & derivative for {SPLINE_COUNT} BSplines: ',
     bspline_multi_derivative,
     PySpline,
-    PySpline,
+    CySpline,
     POINT_COUNT_1)

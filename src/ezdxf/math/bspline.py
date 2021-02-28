@@ -32,7 +32,7 @@ from .construct2d import linspace
 from .construct3d import distance_point_line_3d
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf import PYPY
-from ._bspline import Basis, Evaluator
+from ._ctypes import Basis, Evaluator
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex

@@ -27,6 +27,9 @@ try:
             "src/ezdxf/acc/bezier3p.pyx",
             "src/ezdxf/acc/_cpp_quad_bezier.cpp",
         ], optional=True, language='c++'),
+        Extension("ezdxf.acc.bspline", [
+            "src/ezdxf/acc/bspline.pyx",
+        ], optional=True, language='c++'),
         Extension("ezdxf.acc.construct", [
             "src/ezdxf/acc/construct.pyx",
         ], optional=True, language='c++'),

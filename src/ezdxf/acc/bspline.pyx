@@ -1,18 +1,45 @@
-#  Copyright (c) 2021, Manfred Moitzi
-#  License: MIT License
-#
-# Pure Python implementation of the B-spline basis function.
+# cython: language_level=3
+# distutils: language = c++
+# Copyright (c) 2021, Manfred Moitzi
+# License: MIT License
+# CPython implementation of the B-spline basis function.
 
 from typing import List, Iterable, Sequence
-import math
-import bisect
+from cpython cimport array
 from array import array
-
-# The pure Python implementation can't import from ._ctypes or ezdxf.math!
-from ._vector import Vec3, NULLVEC
-from .linalg import binomial_coefficient
+from .vector cimport Vec3, isclose, v3_add, v3_mul
 
 __all__ = ['Basis', 'Evaluator']
+
+# factorial from 0 to 18
+FACTORIAL = array(
+    'd', [
+        1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800,
+        479001600, 6227020800, 87178291200, 1307674368000, 20922789888000,
+        355687428096000, 6402373705728000]
+)
+cdef double[:] fact_mv = FACTORIAL
+cdef Vec3 NULLVEC = Vec3()
+DEF ABS_TOL = 1e-12
+
+cdef double binomial_coefficient(int k, int i):
+    cdef double k_fact = fact_mv[k]
+    cdef double i_fact = fact_mv[i]
+    cdef double k_i_fact
+    if i > k:
+        return 0.0
+    k_i_fact = fact_mv[k - i]
+    return k_fact / (k_i_fact * i_fact)
+
+cdef int bisect_right(a, double x, int lo, int hi):
+    cdef int mid
+    while lo < hi:
+        mid = (lo+hi)//2
+        if x < a[mid]:
+            hi = mid
+        else:
+            lo = mid + 1
+    return lo
 
 
 class Basis:
@@ -80,7 +107,7 @@ class Basis:
             # but Test 621 : test_weired_closed_spline()
             # goes into an infinity loop, because of
             # a weird knot configuration.
-            return bisect.bisect_right(knots, u, p, count) - 1
+            return bisect_right(knots, u, p, count) - 1
         else:  # use linear search
             for span in range(count):
                 if knots[span] > u:
@@ -198,16 +225,19 @@ class Evaluator:
 
     def point(self, u: float) -> Vec3:
         # Source: The NURBS Book: Algorithm A3.1
+        cdef Vec3 sum = NULLVEC
         basis = self._basis
         control_points = self._control_points
-        if math.isclose(u, basis.max_t):
+        if isclose(u, basis.max_t, ABS_TOL):
             u = basis.max_t
 
         p = basis.degree
         span = basis.find_span(u)
         N = basis.basis_funcs(span, u)
-        return Vec3.sum(
-            N[i] * control_points[span - p + i] for i in range(p + 1))
+        for i in range(p + 1):
+            f = v3_mul(control_points[span - p + i], N[i])
+            sum = v3_add(sum, f)
+        return sum
 
     def points(self, t: Iterable[float]) -> Iterable[Vec3]:
         for u in t:
@@ -218,7 +248,7 @@ class Evaluator:
         # Source: The NURBS Book: Algorithm A3.2
         basis = self._basis
         control_points = self._control_points
-        if math.isclose(u, basis.max_t):
+        if isclose(u, basis.max_t, ABS_TOL):
             u = basis.max_t
 
         p = basis.degree
