@@ -8,7 +8,10 @@ from .bezier_interpolation import (
 )
 from .construct2d import circle_radius_3p
 
-__all__ = ["estimate_tangents", "estimate_end_tangent_magnitude"]
+__all__ = [
+    "estimate_tangents", "estimate_end_tangent_magnitude",
+    "create_t_vector"
+]
 
 
 def create_t_vector(fit_points: List[Vec3], method: str) -> Iterable[float]:

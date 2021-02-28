@@ -20,19 +20,15 @@ from typing import (
     List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Union,
 )
 import math
-from ezdxf.math import Vec3, NULLVEC
-from .parametrize import (
-    create_t_vector, estimate_end_tangent_magnitude, estimate_tangents,
-)
-from .linalg import (
+from ezdxf.math import (
+    Vec3, NULLVEC, Basis, Evaluator, create_t_vector,
+    estimate_end_tangent_magnitude, estimate_tangents,
     LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix,
     detect_banded_matrix, quadratic_equation,
+    linspace, distance_point_line_3d,
 )
-from .construct2d import linspace
-from .construct3d import distance_point_line_3d
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf import PYPY
-from ._ctypes import Basis, Evaluator
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
