@@ -7,6 +7,7 @@
 
 from typing import List, Iterable, Sequence
 import cython
+from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from .vector cimport Vec3, isclose, v3_add, v3_mul, v3_sub
 
 __all__ = ['Basis', 'Evaluator']
@@ -34,7 +35,7 @@ cdef double binomial_coefficient(int k, int i):
     return k_fact / (k_i_fact * i_fact)
 
 @cython.boundscheck(False)
-cdef int bisect_right(a, double x, int lo, int hi):
+cdef int bisect_right(double*a, double x, int lo, int hi):
     cdef int mid
     while lo < hi:
         mid = (lo + hi) // 2
@@ -51,6 +52,7 @@ cdef class Basis:
     cdef readonly double max_t
     cdef list _knots
     cdef list _weights
+    cdef double*_knots_mem
 
     def __cinit__(self, knots: Iterable[float], int order, int count,
                   weights: Sequence[float] = None):
@@ -67,13 +69,22 @@ cdef class Basis:
         if len(self._knots) != self.order + self.count:
             raise ValueError('invalid knot count')
 
+        cdef size_t knot_count = self.count + self.order, i
+        self._knots_mem = <double *> PyMem_Malloc(knot_count * sizeof(double))
+
+        for i in range(knot_count):
+            self._knots_mem[i] = self._knots[i]
+
+    def __dealloc__(self):
+        PyMem_Free(self._knots_mem)
+
     @property
     def degree(self) -> int:
         return self.order - 1
 
     @property
     def knots(self) -> List[float]:
-        return list(self._knots)  # do not return mutable array!
+        return [x for x in self._knots_mem[:self.count + self.order]]
 
     @property
     def weights(self) -> List[float]:
@@ -105,7 +116,7 @@ cdef class Basis:
         """ Determine the knot span index. """
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
-        cdef list knots = self._knots
+        cdef double*knots = self._knots_mem
         cdef int count = self.count
         cdef int p = self.order - 1
         cdef int span
@@ -126,6 +137,7 @@ cdef class Basis:
     cpdef list basis_funcs(self, int span, double u):
         # Source: The NURBS Book: Algorithm A2.2
         cdef int order = self.order
+        # cdef double* knots = self._knots_mem  # does not work!!!!!!?
         cdef list knots = self._knots
         cdef list N = NULL_LIST * order
         cdef left = list.copy(N)
@@ -171,7 +183,7 @@ cdef class Basis:
         cdef int p = order - 1
         if n > p:
             n = p
-
+        # cdef double* knots = self._knots_mem  # does not work!!!!!!?
         cdef list knots = self._knots
         cdef list left = ONE_LIST * order
         cdef list right = list.copy(left)

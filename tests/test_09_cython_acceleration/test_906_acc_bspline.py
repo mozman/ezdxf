@@ -52,6 +52,26 @@ def cy_wbasis():
     return CyBasis(KNOTS, ORDER, COUNT, WEIGHTS)
 
 
+def test_find_span(py_basis, cy_basis, t_vector):
+    for u in t_vector:
+        assert py_basis.find_span(u) == cy_basis.find_span(u)
+
+
+def test_cython_knots(cy_basis):
+    for _ in range(10):
+        assert cy_basis.knots == KNOTS
+        assert cy_basis.max_t == KNOTS[-1]
+
+
+def test_basis_funcs(py_basis, cy_basis, t_vector):
+    for u in t_vector:
+        span1 = py_basis.find_span(u)
+        p = py_basis.basis_funcs(span1, u)
+        span2 = cy_basis.find_span(u)
+        c = cy_basis.basis_funcs(span2, u)
+        assert p == c
+
+
 def test_basis_vector(py_basis, cy_basis, t_vector):
     for u in t_vector:
         p = py_basis.basis_vector(u)
