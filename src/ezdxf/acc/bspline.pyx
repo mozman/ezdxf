@@ -1,12 +1,13 @@
 # cython: language_level=3
 # distutils: language = c++
+# cython: profile=True
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 # Cython implementation of the B-spline basis function.
 
 from typing import List, Iterable, Sequence
 import cython
-from .vector cimport Vec3, isclose, v3_add, v3_mul
+from .vector cimport Vec3, isclose, v3_add, v3_mul, v3_sub
 
 __all__ = ['Basis', 'Evaluator']
 
@@ -121,7 +122,6 @@ cdef class Basis:
                     return span - 1
             return count - 1
 
-
     @cython.boundscheck(False)
     cpdef list basis_funcs(self, int span, double u):
         # Source: The NURBS Book: Algorithm A2.2
@@ -174,8 +174,8 @@ cdef class Basis:
 
         cdef list knots = self._knots
         cdef list left = ONE_LIST * order
-        cdef list right = ONE_LIST * order
-        cdef list ndu = [ONE_LIST * order for _ in range(order)]
+        cdef list right = list.copy(left)
+        cdef list ndu = [list.copy(left) for _ in range(order)]
         cdef int j, r
         cdef double temp, saved, tmp_r, tmp_l
         for j in range(1, order):
@@ -275,6 +275,7 @@ cdef class Evaluator:
         return sum
 
     def points(self, t: Iterable[float]) -> Iterable[Vec3]:
+        cdef double u
         for u in t:
             yield self.point(u)
 
@@ -282,7 +283,7 @@ cdef class Evaluator:
         """ Return point and derivatives up to n <= degree for parameter u. """
         # Source: The NURBS Book: Algorithm A3.2
         cdef Vec3 s, v
-        cdef list CK, CKw, wders, weights
+        cdef list CK = [], CKw = [], wders = [], weights
         cdef Basis basis = self._basis
         cdef tuple control_points = self._control_points
 
@@ -297,8 +298,6 @@ cdef class Evaluator:
         if basis.is_rational:
             # Homogeneous point representation required:
             # (x*w, y*w, z*w, w)
-            CKw = []
-            wders = []
             weights = basis._weights
             for k in range(n + 1):
                 v = NULLVEC
@@ -307,25 +306,26 @@ cdef class Evaluator:
                     index = span - p + j
                     bas_func_weight = basis_funcs_ders[k][j] * weights[index]
                     # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
-                    v += control_points[index] * bas_func_weight
+                    v = v3_add(v, v3_mul(control_points[index],
+                                         bas_func_weight))
                     wder += bas_func_weight
                 CKw.append(v)
                 wders.append(wder)
 
             # Source: The NURBS Book: Algorithm A4.2
-            CK = []
             for k in range(n + 1):
                 v = CKw[k]
                 for i in range(1, k + 1):
-                    v -= binomial_coefficient(k, i) * wders[i] * CK[k - i]
+                    bas_func_weight = binomial_coefficient(k, i) * wders[i]
+                    v = v3_sub(v, v3_mul(CK[k - i],
+                                         bas_func_weight))
                 CK.append(v / wders[0])
         else:
-            CK = []
-            s = NULLVEC
             for k in range(n + 1):
                 s = NULLVEC
                 for j in range(p + 1):
-                    s = v3_add(s, basis_funcs_ders[k][j] * control_points[span - p + j])
+                    s = v3_add(s, v3_mul(control_points[span - p + j],
+                                         basis_funcs_ders[k][j]))
                 CK.append(s)
         return CK
 
