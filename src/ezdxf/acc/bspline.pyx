@@ -47,8 +47,9 @@ cdef int bisect_right(double[:] a, double x, int lo, int hi):
 
 cdef class Basis:
     """ Immutable Basis function class. """
-    cdef int _order
-    cdef int _count
+    cdef readonly int order
+    cdef readonly int count
+    cdef readonly double max_t
     cdef object _knots_array
     cdef object _weights_array
     cdef double [:] _knots
@@ -56,31 +57,24 @@ cdef class Basis:
 
     def __cinit__(self, knots: Iterable[float], int order, int count,
                   weights: Sequence[float] = None):
-        self._order = order
-        self._count = count
+        self.order = order
+        self.count = count
         self._knots_array = array.array('d', knots)
         self._weights_array = array.array('d', weights or [])
         self._knots = self._knots_array
         self._weights = self._weights_array
+        self.max_t = self._knots[-1]
 
         # validation checks:
         cdef int len_weights = len(self._weights)
-        if len_weights != 0 and len_weights != self._count:
+        if len_weights != 0 and len_weights != self.count:
             raise ValueError('invalid weight count')
-        if len(self._knots) != self._order + self._count:
+        if len(self._knots) != self.order + self.count:
             raise ValueError('invalid knot count')
 
     @property
-    def max_t(self) -> float:
-        return self._knots_array[-1]
-
-    @property
-    def order(self) -> int:
-        return self._order
-
-    @property
     def degree(self) -> int:
-        return self._order - 1
+        return self.order - 1
 
     @property
     def knots(self) -> List[float]:
@@ -99,9 +93,9 @@ cdef class Basis:
         """ Returns the expanded basis vector. """
 
         cdef int span = self._find_span(t)
-        cdef int p = self._order - 1
+        cdef int p = self.order - 1
         cdef int front = span - p
-        cdef int back = self._count - span - 1
+        cdef int back = self.count - span - 1
         cdef array.array basis = array.array('d', self.basis_funcs(span, t))
         cdef array.array result
         if front > 0:
@@ -118,8 +112,8 @@ cdef class Basis:
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
         cdef double[:] knots = self._knots
-        cdef int count = self._count
-        cdef int p = self._order - 1
+        cdef int count = self.count
+        cdef int p = self.order - 1
         cdef int span
         # if it is a standard clamped spline
         if knots[p] == 0.0:  # use binary search
@@ -140,7 +134,7 @@ cdef class Basis:
 
     def basis_funcs(self, span: int, u: float) -> List[float]:
         # Source: The NURBS Book: Algorithm A2.2
-        order = self._order
+        order = self.order
         knots = self._knots
         N = [0.0] * order
         left = list(N)
@@ -161,14 +155,14 @@ cdef class Basis:
             return N
 
     def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
-        weights = self._weights[span - self._order + 1: span + 1]
+        weights = self._weights[span - self.order + 1: span + 1]
         products = [nb * w for nb, w in zip(nbasis, weights)]
         s = sum(products)
-        return [0.0] * self._order if s == 0.0 else [p / s for p in products]
+        return [0.0] * self.order if s == 0.0 else [p / s for p in products]
 
     def basis_funcs_derivatives(self, span: int, u: float, n: int = 1):
         # Source: The NURBS Book: Algorithm A2.3
-        order = self._order
+        order = self.order
         p = order - 1
         n = min(n, p)
 
@@ -239,28 +233,33 @@ cdef class Basis:
         return derivatives[:n + 1]
 
 
-class Evaluator:
+cdef class Evaluator:
     """ B-spline curve point and curve derivative evaluator. """
-    __slots__ = ['_basis', '_control_points']
+    cdef Basis _basis
+    cdef tuple _control_points
 
-    def __init__(self, basis: Basis, control_points: Sequence[Vec3]):
+    def __cinit__(self, basis: Basis, control_points: Sequence[Vec3]):
         self._basis = basis
-        self._control_points = control_points
+        self._control_points = Vec3.tuple(control_points)
 
-    def point(self, u: float) -> Vec3:
+    def point(self, double u) -> Vec3:
         # Source: The NURBS Book: Algorithm A3.1
-        cdef Vec3 sum = NULLVEC
-        basis = self._basis
-        control_points = self._control_points
+        cdef Basis basis = self._basis
+        cdef tuple control_points = self._control_points
+        cdef int p = basis.order - 1
         if isclose(u, basis.max_t, ABS_TOL):
             u = basis.max_t
 
-        p = basis.degree
-        span = basis.find_span(u)
-        N = basis.basis_funcs(span, u)
+        cdef Vec3 sum = NULLVEC
+        cdef int span = basis._find_span(u)
+        cdef Vec3 cpoint
+        cdef list N = basis.basis_funcs(span, u)
+        cdef double func
+        cdef int i
         for i in range(p + 1):
-            f = v3_mul(control_points[span - p + i], N[i])
-            sum = v3_add(sum, f)
+            cpoint = <Vec3> control_points[span - p + i]
+            func = N[i]
+            sum = v3_add(sum, v3_mul(cpoint, func))
         return sum
 
     def points(self, t: Iterable[float]) -> Iterable[Vec3]:
