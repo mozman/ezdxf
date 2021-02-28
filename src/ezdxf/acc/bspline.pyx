@@ -142,16 +142,18 @@ cdef class Basis:
         cdef array.array right = array.copy(N)
         # Using memory views is slower!
         cdef int j, r
-        cdef double temp, saved
+        cdef double temp, saved, temp_r, temp_l
         N[0] = 1.0
         for j in range(1, order):
             left[j] = u - knots[span + 1 - j]
             right[j] = knots[span + j] - u
             saved = 0.0
             for r in range(j):
-                temp = N[r] / (right[r + 1] + left[j - r])
-                N[r] = saved + right[r + 1] * temp
-                saved = left[j - r] * temp
+                temp_r = right[r + 1]
+                temp_l = left[j - r]
+                temp = N[r] / (temp_r + temp_l)
+                N[r] = saved + temp_r * temp
+                saved = temp_l * temp
             N[j] = saved
         if self.is_rational:
             return self.span_weighting(N, span)
