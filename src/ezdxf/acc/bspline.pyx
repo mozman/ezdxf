@@ -51,18 +51,16 @@ cdef class Basis:
     cdef readonly int count
     cdef readonly double max_t
     cdef object _knots_array
-    cdef object _weights_array
+    cdef list _weights
     cdef double [:] _knots
-    cdef double [:] _weights
 
     def __cinit__(self, knots: Iterable[float], int order, int count,
                   weights: Sequence[float] = None):
         self.order = order
         self.count = count
         self._knots_array = array.array('d', knots)
-        self._weights_array = array.array('d', weights or [])
+        self._weights = weights or []
         self._knots = self._knots_array
-        self._weights = self._weights_array
         self.max_t = self._knots[-1]
 
         # validation checks:
@@ -82,12 +80,12 @@ cdef class Basis:
 
     @property
     def weights(self) -> List[float]:
-        return list(self._weights_array)  # do not return mutable array!
+        return list(self._weights)  # do not return mutable array!
 
     @property
     def is_rational(self) -> bool:
         """ Returns ``True`` if curve is a rational B-spline. (has weights) """
-        return bool(self._weights_array)
+        return bool(self._weights)
 
     def basis_vector(self, double t) -> Sequence[float]:
         """ Returns the expanded basis vector. """
@@ -161,13 +159,18 @@ cdef class Basis:
             return N
 
     def span_weighting(self, nbasis: List[float], int span) -> Sequence[float]:
-        weights = self._weights[span - self.order + 1: span + 1]
-        products = [nb * w for nb, w in zip(nbasis, weights)]
+        cdef list products = [
+            nb * w for nb, w in zip(
+                nbasis,
+                self._weights[span - self.order + 1: span + 1]
+            )
+        ]
         s = sum(products)
-        return array.array(
-            'd', [0.0] * self.order
-            if s == 0.0 else [p / s for p in products]
-        )
+        if s != 0:
+            return array.array('d', [p / s for p in products])
+        else:
+            return array.clone(double_template, len(nbasis), True)
+
 
     def basis_funcs_derivatives(self, span: int, u: float, n: int = 1):
         # Source: The NURBS Book: Algorithm A2.3

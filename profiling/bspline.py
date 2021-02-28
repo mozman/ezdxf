@@ -23,16 +23,15 @@ from ezdxf.render import random_3d_path
 from ezdxf.math import fit_points_to_cad_cv, linspace
 
 SPLINE_COUNT = 20
+POINT_COUNT = 20
 splines = [
-    fit_points_to_cad_cv(random_3d_path(20)) for _ in range(SPLINE_COUNT)
+    fit_points_to_cad_cv(random_3d_path(POINT_COUNT)) for _ in range(SPLINE_COUNT)
 ]
-
-POINTS = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
 
 class PySpline:
-    def __init__(self, bspline):
-        self.basis = Basis(bspline.knots(), bspline.order, bspline.count)
+    def __init__(self, bspline, weights=None):
+        self.basis = Basis(bspline.knots(), bspline.order, bspline.count, weights)
         self.evaluator = Evaluator(self.basis, bspline.control_points)
 
     def point(self, u):
@@ -49,8 +48,8 @@ class PySpline:
 
 
 class CySpline(PySpline):
-    def __init__(self, bspline):
-        self.basis = CBasis(bspline.knots(), bspline.order, bspline.count)
+    def __init__(self, bspline, weights=None):
+        self.basis = CBasis(bspline.knots(), bspline.order, bspline.count, weights)
         self.evaluator = CEvaluator(self.basis, bspline.control_points)
 
 
@@ -101,6 +100,14 @@ def bspline_multi_derivative(cls, count):
         list(spline.derivatives(linspace(0, spline.basis.max_t, count), 1))
 
 
+def bspline_points_rational(cls, count):
+    for curve in splines:
+        weights = [1.0] * curve.count
+        spline = cls(curve, weights)
+        for u in linspace(0, spline.basis.max_t, count):
+            spline.point(u)
+
+
 def profile1(func, *args) -> float:
     t0 = time.perf_counter()
     func(*args)
@@ -123,6 +130,13 @@ print(f'Profiling BSpline Python and Cython implementation:')
 profile(
     f'calc {POINT_COUNT_1}x single point for {SPLINE_COUNT} BSplines: ',
     bspline_points,
+    PySpline,
+    CySpline,
+    POINT_COUNT_1)
+
+profile(
+    f'calc {POINT_COUNT_1}x single point for {SPLINE_COUNT} rational BSplines: ',
+    bspline_points_rational,
     PySpline,
     CySpline,
     POINT_COUNT_1)
