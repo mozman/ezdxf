@@ -164,6 +164,7 @@ cdef class Basis:
         else:
             return NULL_LIST * len(nbasis)
 
+    @cython.boundscheck(False)
     cpdef list basis_funcs_derivatives(self, int span, double u, int n = 1):
         # Source: The NURBS Book: Algorithm A2.3
         cdef int order = self.order
@@ -176,18 +177,20 @@ cdef class Basis:
         cdef list right = ONE_LIST * order
         cdef list ndu = [ONE_LIST * order for _ in range(order)]
         cdef int j, r
-        cdef double temp, saved
+        cdef double temp, saved, tmp_r, tmp_l
         for j in range(1, order):
             left[j] = u - knots[span + 1 - j]
             right[j] = knots[span + j] - u
             saved = 0.0
             for r in range(j):
                 # lower triangle
-                ndu[j][r] = right[r + 1] + left[j - r]
+                tmp_r = right[r + 1]
+                tmp_l = left[j - r]
+                ndu[j][r] = tmp_r + tmp_l
                 temp = ndu[r][j - 1] / ndu[j][r]
                 # upper triangle
-                ndu[r][j] = saved + (right[r + 1] * temp)
-                saved = left[j - r] * temp
+                ndu[r][j] = saved + (tmp_r * temp)
+                saved = tmp_l * temp
             ndu[j][j] = saved
 
         # load the basis_vector functions
