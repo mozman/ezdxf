@@ -128,17 +128,21 @@ cdef class Basis:
                     return span - 1
             return count - 1
 
-    def find_span(self, u: float) -> int:
+    def find_span(self, double u) -> int:
         """ Determine the knot span index. """
         return self._find_span(u)
 
-    def basis_funcs(self, span: int, u: float) -> List[float]:
+    @cython.boundscheck(False)
+    def basis_funcs(self, int span, double u) -> Sequence[float]:
         # Source: The NURBS Book: Algorithm A2.2
-        order = self.order
-        knots = self._knots
-        N = [0.0] * order
-        left = list(N)
-        right = list(N)
+        cdef int order = self.order
+        cdef double[:] knots = self._knots
+        cdef array.array N = array.clone(double_template, order, True)
+        cdef array.array left = array.copy(N)
+        cdef array.array right = array.copy(N)
+        # Using memory views is slower!
+        cdef int j, r
+        cdef double temp, saved
         N[0] = 1.0
         for j in range(1, order):
             left[j] = u - knots[span + 1 - j]
@@ -154,11 +158,14 @@ cdef class Basis:
         else:
             return N
 
-    def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
+    def span_weighting(self, nbasis: List[float], int span) -> Sequence[float]:
         weights = self._weights[span - self.order + 1: span + 1]
         products = [nb * w for nb, w in zip(nbasis, weights)]
         s = sum(products)
-        return [0.0] * self.order if s == 0.0 else [p / s for p in products]
+        return array.array(
+            'd', [0.0] * self.order
+            if s == 0.0 else [p / s for p in products]
+        )
 
     def basis_funcs_derivatives(self, span: int, u: float, n: int = 1):
         # Source: The NURBS Book: Algorithm A2.3
@@ -253,7 +260,7 @@ cdef class Evaluator:
         cdef Vec3 sum = NULLVEC
         cdef int span = basis._find_span(u)
         cdef Vec3 cpoint
-        cdef list N = basis.basis_funcs(span, u)
+        cdef array.array N = basis.basis_funcs(span, u)
         cdef double func
         cdef int i
         for i in range(p + 1):
