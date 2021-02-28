@@ -34,7 +34,7 @@ cdef double binomial_coefficient(int k, int i):
     return k_fact / (k_i_fact * i_fact)
 
 @cython.boundscheck(False)
-cdef int bisect_right(double[:] a, double x, int lo, int hi):
+cdef int bisect_right(a, double x, int lo, int hi):
     cdef int mid
     while lo < hi:
         mid = (lo+hi)//2
@@ -50,17 +50,15 @@ cdef class Basis:
     cdef readonly int order
     cdef readonly int count
     cdef readonly double max_t
-    cdef object _knots_array
+    cdef list _knots
     cdef list _weights
-    cdef double [:] _knots
 
     def __cinit__(self, knots: Iterable[float], int order, int count,
                   weights: Sequence[float] = None):
         self.order = order
         self.count = count
-        self._knots_array = array.array('d', knots)
-        self._weights = weights or []
-        self._knots = self._knots_array
+        self._knots = list(knots)
+        self._weights = list(weights) if weights else []
         self.max_t = self._knots[-1]
 
         # validation checks:
@@ -76,7 +74,7 @@ cdef class Basis:
 
     @property
     def knots(self) -> List[float]:
-        return list(self._knots_array)  # do not return mutable array!
+        return list(self._knots)  # do not return mutable array!
 
     @property
     def weights(self) -> List[float]:
@@ -109,7 +107,7 @@ cdef class Basis:
         """ Determine the knot span index. """
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
-        cdef double[:] knots = self._knots
+        cdef list knots = self._knots
         cdef int count = self.count
         cdef int p = self.order - 1
         cdef int span
@@ -134,7 +132,7 @@ cdef class Basis:
     def basis_funcs(self, int span, double u) -> Sequence[float]:
         # Source: The NURBS Book: Algorithm A2.2
         cdef int order = self.order
-        cdef double[:] knots = self._knots
+        cdef list knots = self._knots
         cdef array.array N = array.clone(double_template, order, True)
         cdef array.array left = array.copy(N)
         cdef array.array right = array.copy(N)
