@@ -55,14 +55,14 @@ def cy_wbasis():
 def test_basis_vector(py_basis, cy_basis, t_vector):
     for u in t_vector:
         p = py_basis.basis_vector(u)
-        c = cy_basis.basis_vector(u)
+        c = list(cy_basis.basis_vector(u))
         assert p == c
 
 
 def test_weighted_basis_vector(py_wbasis, cy_wbasis, t_vector):
     for u in t_vector:
         p = py_wbasis.basis_vector(u)
-        c = cy_wbasis.basis_vector(u)
+        c = list(cy_wbasis.basis_vector(u))
         assert p == c
 
 

@@ -2,17 +2,19 @@
 # distutils: language = c++
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
-# CPython implementation of the B-spline basis function.
+# Cython implementation of the B-spline basis function.
 
 from typing import List, Iterable, Sequence
+import cython
 from cpython cimport array
-from array import array
+import array
 from .vector cimport Vec3, isclose, v3_add, v3_mul
 
 __all__ = ['Basis', 'Evaluator']
 
+double_template = array.array('d', [])
 # factorial from 0 to 18
-FACTORIAL = array(
+FACTORIAL = array.array(
     'd', [
         1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800,
         479001600, 6227020800, 87178291200, 1307674368000, 20922789888000,
@@ -31,7 +33,8 @@ cdef double binomial_coefficient(int k, int i):
     k_i_fact = fact_mv[k - i]
     return k_fact / (k_i_fact * i_fact)
 
-cdef int bisect_right(a, double x, int lo, int hi):
+@cython.boundscheck(False)
+cdef int bisect_right(double[:] a, double x, int lo, int hi):
     cdef int mid
     while lo < hi:
         mid = (lo+hi)//2
@@ -42,19 +45,26 @@ cdef int bisect_right(a, double x, int lo, int hi):
     return lo
 
 
-class Basis:
+cdef class Basis:
     """ Immutable Basis function class. """
-    __slots__ = ('_knots', '_weights', '_order', '_count')
+    cdef int _order
+    cdef int _count
+    cdef object _knots_array
+    cdef object _weights_array
+    cdef double [:] _knots
+    cdef double [:] _weights
 
-    def __init__(self, knots: Iterable[float], order: int, count: int,
-                 weights: Sequence[float] = None):
-        self._knots = array('d', knots)
-        self._weights = array('d', weights or [])
-        self._order: int = int(order)
-        self._count: int = int(count)
+    def __cinit__(self, knots: Iterable[float], int order, int count,
+                  weights: Sequence[float] = None):
+        self._order = order
+        self._count = count
+        self._knots_array = array.array('d', knots)
+        self._weights_array = array.array('d', weights or [])
+        self._knots = self._knots_array
+        self._weights = self._weights_array
 
         # validation checks:
-        len_weights = len(self._weights)
+        cdef int len_weights = len(self._weights)
         if len_weights != 0 and len_weights != self._count:
             raise ValueError('invalid weight count')
         if len(self._knots) != self._order + self._count:
@@ -62,7 +72,7 @@ class Basis:
 
     @property
     def max_t(self) -> float:
-        return self._knots[-1]
+        return self._knots_array[-1]
 
     @property
     def order(self) -> int:
@@ -74,33 +84,43 @@ class Basis:
 
     @property
     def knots(self) -> List[float]:
-        return list(self._knots)  # do not return mutable array!
+        return list(self._knots_array)  # do not return mutable array!
 
     @property
     def weights(self) -> List[float]:
-        return list(self._weights)  # do not return mutable array!
+        return list(self._weights_array)  # do not return mutable array!
 
     @property
     def is_rational(self) -> bool:
         """ Returns ``True`` if curve is a rational B-spline. (has weights) """
-        return bool(self._weights)
+        return bool(self._weights_array)
 
-    def basis_vector(self, t: float) -> List[float]:
+    def basis_vector(self, double t) -> Sequence[float]:
         """ Returns the expanded basis vector. """
-        span = self.find_span(t)
-        p = self._order - 1
-        front = span - p
-        back = self._count - span - 1
-        basis = self.basis_funcs(span, t)
-        return ([0.0] * front) + basis + ([0.0] * back)
 
-    def find_span(self, u: float) -> int:
+        cdef int span = self._find_span(t)
+        cdef int p = self._order - 1
+        cdef int front = span - p
+        cdef int back = self._count - span - 1
+        cdef array.array basis = array.array('d', self.basis_funcs(span, t))
+        cdef array.array result
+        if front > 0:
+            result = array.clone(double_template, front, zero=True)
+            result.extend(basis)
+        else:
+            result = basis
+        if back > 0:
+            result.extend(array.clone(double_template, back, zero=True))
+        return result
+
+    cdef int _find_span(self, double u):
         """ Determine the knot span index. """
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
-        knots = self._knots
-        count = self._count
-        p = self._order - 1
+        cdef double[:] knots = self._knots
+        cdef int count = self._count
+        cdef int p = self._order - 1
+        cdef int span
         # if it is a standard clamped spline
         if knots[p] == 0.0:  # use binary search
             # This is fast and works most of the time,
@@ -113,6 +133,10 @@ class Basis:
                 if knots[span] > u:
                     return span - 1
             return count - 1
+
+    def find_span(self, u: float) -> int:
+        """ Determine the knot span index. """
+        return self._find_span(u)
 
     def basis_funcs(self, span: int, u: float) -> List[float]:
         # Source: The NURBS Book: Algorithm A2.2
