@@ -18,6 +18,8 @@ FACTORIAL = [
 ]
 
 NULL_LIST = [0.0]
+ONE_LIST = [1.0]
+
 cdef Vec3 NULLVEC = Vec3()
 DEF ABS_TOL = 1e-12
 
@@ -162,17 +164,19 @@ cdef class Basis:
         else:
             return NULL_LIST * len(nbasis)
 
-    def basis_funcs_derivatives(self, span: int, u: float, n: int = 1):
+    cpdef list basis_funcs_derivatives(self, int span, double u, int n = 1):
         # Source: The NURBS Book: Algorithm A2.3
-        order = self.order
-        p = order - 1
-        n = min(n, p)
+        cdef int order = self.order
+        cdef int p = order - 1
+        if n > p:
+            n = p
 
-        knots = self._knots
-        left = [1.0] * order
-        right = [1.0] * order
-        ndu = [[1.0] * order for _ in range(order)]
-
+        cdef list knots = self._knots
+        cdef list left = ONE_LIST * order
+        cdef list right = ONE_LIST * order
+        cdef list ndu = [ONE_LIST * order for _ in range(order)]
+        cdef int j, r
+        cdef double temp, saved
         for j in range(1, order):
             left[j] = u - knots[span + 1 - j]
             right[j] = knots[span + j] - u
@@ -187,12 +191,14 @@ cdef class Basis:
             ndu[j][j] = saved
 
         # load the basis_vector functions
-        derivatives = [[0.0] * order for _ in range(order)]
+        cdef list derivatives = [NULL_LIST * order for _ in range(order)]
         for j in range(order):
             derivatives[0][j] = ndu[j][p]
 
         # loop over function index
-        a = [[1.0] * order, [1.0] * order]
+        cdef list a = [ONE_LIST * order, ONE_LIST * order]
+        cdef int s1, s2, k, rk, pk, j1, j2, t
+        cdef double d
         for r in range(order):
             s1 = 0
             s2 = 1
@@ -224,14 +230,16 @@ cdef class Basis:
                 derivatives[k][r] = d
 
                 # Switch rows
-                s1, s2 = s2, s1
+                t = s1
+                s1 = s2
+                s2 = t
 
         # Multiply through by the the correct factors
-        r = float(p)
+        cdef double rr = p
         for k in range(1, n + 1):
             for j in range(order):
-                derivatives[k][j] *= r
-            r *= (p - k)
+                derivatives[k][j] *= rr
+            rr *= (p - k)
         return derivatives[:n + 1]
 
 cdef class Evaluator:
