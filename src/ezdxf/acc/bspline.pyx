@@ -1,6 +1,5 @@
 # cython: language_level=3
 # distutils: language = c++
-# cython: profile=True
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 # Cython implementation of the B-spline basis function.
@@ -8,9 +7,7 @@
 from typing import List, Iterable, Sequence
 import cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
-from libcpp.vector cimport vector
-
-from .vector cimport Vec3, isclose, v3_add, v3_mul, v3_sub, v3_from_cpp_vec3
+from .vector cimport Vec3, isclose, v3_mul, v3_sub, v3_from_cpp_vec3
 from ._cpp_vec3 cimport CppVec3
 
 __all__ = ['Basis', 'Evaluator']
