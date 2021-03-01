@@ -60,8 +60,8 @@ cdef class Basis:
     cdef readonly int count
     cdef readonly int knot_count
     cdef readonly double max_t
-    cdef list _weights
-    cdef double*_knots
+    cdef list weights_  # public attribute for Cython Evaluator
+    cdef double*_knots  # really private
 
     def __cinit__(self, knots: Iterable[float], int order, int count,
                   weights: Sequence[float] = None):
@@ -72,9 +72,9 @@ cdef class Basis:
             raise ValueError('invalid count')
         self.count = count
         self.knot_count = self.order + self.count
-        self._weights = [float(x) for x in weights] if weights else []
+        self.weights_ = [float(x) for x in weights] if weights else []
 
-        cdef Py_ssize_t i = len(self._weights)
+        cdef Py_ssize_t i = len(self.weights_)
         if i != 0 and i != self.count:
             raise ValueError('invalid weight count')
 
@@ -100,12 +100,12 @@ cdef class Basis:
 
     @property
     def weights(self) -> List[float]:
-        return list(self._weights)  # do not return mutable array!
+        return list(self.weights_)  # do not return mutable array!
 
     @property
     def is_rational(self) -> bool:
         """ Returns ``True`` if curve is a rational B-spline. (has weights) """
-        return bool(self._weights)
+        return bool(self.weights_)
 
     cpdef list basis_vector(self, double t):
         """ Returns the expanded basis vector. """
@@ -186,7 +186,7 @@ cdef class Basis:
         cdef list products = [
             nb * w for nb, w in zip(
                 nbasis,
-                self._weights[span - self.order + 1: span + 1]
+                self.weights_[span - self.order + 1: span + 1]
             )
         ]
         s = sum(products)
@@ -334,7 +334,7 @@ cdef class Evaluator:
         if basis.is_rational:
             # Homogeneous point representation required:
             # (x*w, y*w, z*w, w)
-            weights = basis._weights
+            weights = basis.weights_
             for k in range(n + 1):
                 s = NULLVEC
                 wder = 0.0
