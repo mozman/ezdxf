@@ -317,11 +317,11 @@ cdef class Evaluator:
     cpdef list derivative(self, double u, int n = 1):
         """ Return point and derivatives up to n <= degree for parameter u. """
         # Source: The NURBS Book: Algorithm A3.2
-        cdef Vec3 sum_
+        cdef Vec3 vec3sum
+        cdef CppVec3 cppsum
         cdef list CK = [], CKw = [], wders = [], weights
         cdef Basis basis = self._basis
         cdef tuple control_points = self._control_points
-
         if isclose(u, basis.max_t, ABS_TOL):
             u = basis.max_t
 
@@ -329,39 +329,42 @@ cdef class Evaluator:
         cdef int span = basis.find_span(u)
         cdef list basis_funcs_ders = basis.basis_funcs_derivatives(span, u, n)
         cdef int k, j, i, index
-        cdef double wder, bas_func_weight
+        cdef double wder, bas_func_weight, bas_func
         if basis.is_rational:
             # Homogeneous point representation required:
             # (x*w, y*w, z*w, w)
             weights = basis.weights_
             for k in range(n + 1):
-                sum_ = NULLVEC
+                cppsum = CppVec3()
                 wder = 0.0
                 for j in range(p + 1):
                     index = span - p + j
                     bas_func_weight = basis_funcs_ders[k][j] * weights[index]
                     # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
-                    sum_ = v3_add(sum_, v3_mul(control_points[index],
-                                               bas_func_weight))
+                    cppsum = cppsum + (
+                            self.control_point(index) * bas_func_weight
+                    )
                     wder += bas_func_weight
-                CKw.append(sum_)
+                CKw.append(v3_from_cpp_vec3(cppsum))
                 wders.append(wder)
 
             # Source: The NURBS Book: Algorithm A4.2
             for k in range(n + 1):
-                sum_ = CKw[k]
+                vec3sum = CKw[k]
                 for i in range(1, k + 1):
                     bas_func_weight = binomial_coefficient(k, i) * wders[i]
-                    sum_ = v3_sub(sum_, v3_mul(CK[k - i],
-                                               bas_func_weight))
-                CK.append(sum_ / wders[0])
+                    vec3sum = v3_sub(vec3sum,
+                                     v3_mul(CK[k - i], bas_func_weight))
+                CK.append(vec3sum / wders[0])
         else:
             for k in range(n + 1):
-                sum_ = NULLVEC
+                cppsum = CppVec3()
                 for j in range(p + 1):
-                    sum_ = v3_add(sum_, v3_mul(control_points[span - p + j],
-                                               basis_funcs_ders[k][j]))
-                CK.append(sum_)
+                    bas_func = basis_funcs_ders[k][j]
+                    cppsum = cppsum + (
+                            self.control_point(span - p + j) * bas_func
+                    )
+                CK.append(v3_from_cpp_vec3(cppsum))
         return CK
 
     def derivatives(
