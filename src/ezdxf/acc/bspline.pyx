@@ -49,6 +49,11 @@ cdef int bisect_right(double*a, double x, int lo, int hi):
             lo = mid + 1
     return lo
 
+cdef reset_double_array(double *a, int count, double value=0.0):
+    cdef int i
+    for i in range(count):
+        a[i] = value
+
 cdef class Basis:
     """ Immutable Basis function class. """
     cdef readonly int order
@@ -144,12 +149,13 @@ cdef class Basis:
     cpdef list basis_funcs(self, int span, double u):
         # Source: The NURBS Book: Algorithm A2.2
         cdef int order = self.order
-        cdef double* knots = self._knots
-        cdef list N = NULL_LIST * order
-        cdef left = list.copy(N)
-        cdef right = list.copy(N)
+        cdef double*knots = self._knots
+        cdef double[MAX_ORDER] N, left, right
+        cdef list result
+        reset_double_array(N, order)
+        reset_double_array(left, order)
+        reset_double_array(right, order)
 
-        # Using memory views is slower!
         cdef int j, r, i1, i2
         cdef double temp, saved, temp_r, temp_l
         N[0] = 1.0
@@ -170,10 +176,11 @@ cdef class Basis:
                 N[r] = saved + temp_r * temp
                 saved = temp_l * temp
             N[j] = saved
+        result = [x for x in N[:order]]
         if self.is_rational:
-            return self.span_weighting(N, span)
+            return self.span_weighting(result, span)
         else:
-            return N
+            return result
 
     cpdef list span_weighting(self, nbasis: List[float], int span):
         cdef list products = [
@@ -195,10 +202,12 @@ cdef class Basis:
         cdef int p = order - 1
         if n > p:
             n = p
-        cdef double* knots = self._knots
-        cdef list left = ONE_LIST * order
-        cdef list right = list.copy(left)
-        cdef list ndu = [list.copy(left) for _ in range(order)]
+        cdef double*knots = self._knots
+        cdef double[MAX_ORDER] left, right
+        reset_double_array(left, order, 1.0)
+        reset_double_array(right, order, 1.0)
+
+        cdef list ndu = [ONE_LIST * order for _ in range(order)]
         cdef int j, r, i1, i2
         cdef double temp, saved, tmp_r, tmp_l
         for j in range(1, order):
@@ -292,17 +301,14 @@ cdef class Evaluator:
         if isclose(u, basis.max_t, ABS_TOL):
             u = basis.max_t
 
-        cdef Vec3 sum = NULLVEC
         cdef int span = basis.find_span(u)
-        cdef Vec3 cpoint
+        cdef Vec3 cpoint, sum_ = NULLVEC
         cdef list N = basis.basis_funcs(span, u)
-        cdef double func
         cdef int i
         for i in range(p + 1):
             cpoint = <Vec3> control_points[span - p + i]
-            func = N[i]
-            sum = v3_add(sum, v3_mul(cpoint, func))
-        return sum
+            sum_ = v3_add(sum_, v3_mul(cpoint, N[i]))
+        return sum_
 
     def points(self, t: Iterable[float]) -> Iterable[Vec3]:
         cdef double u
@@ -312,7 +318,7 @@ cdef class Evaluator:
     cpdef list derivative(self, double u, int n = 1):
         """ Return point and derivatives up to n <= degree for parameter u. """
         # Source: The NURBS Book: Algorithm A3.2
-        cdef Vec3 s, v
+        cdef Vec3 s
         cdef list CK = [], CKw = [], wders = [], weights
         cdef Basis basis = self._basis
         cdef tuple control_points = self._control_points
@@ -330,26 +336,26 @@ cdef class Evaluator:
             # (x*w, y*w, z*w, w)
             weights = basis._weights
             for k in range(n + 1):
-                v = NULLVEC
+                s = NULLVEC
                 wder = 0.0
                 for j in range(p + 1):
                     index = span - p + j
                     bas_func_weight = basis_funcs_ders[k][j] * weights[index]
                     # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
-                    v = v3_add(v, v3_mul(control_points[index],
+                    s = v3_add(s, v3_mul(control_points[index],
                                          bas_func_weight))
                     wder += bas_func_weight
-                CKw.append(v)
+                CKw.append(s)
                 wders.append(wder)
 
             # Source: The NURBS Book: Algorithm A4.2
             for k in range(n + 1):
-                v = CKw[k]
+                s = CKw[k]
                 for i in range(1, k + 1):
                     bas_func_weight = binomial_coefficient(k, i) * wders[i]
-                    v = v3_sub(v, v3_mul(CK[k - i],
+                    s = v3_sub(s, v3_mul(CK[k - i],
                                          bas_func_weight))
-                CK.append(v / wders[0])
+                CK.append(s / wders[0])
         else:
             for k in range(n + 1):
                 s = NULLVEC
