@@ -296,6 +296,10 @@ cdef class Evaluator:
         self._basis = basis
         self._control_points = Vec3.tuple(control_points)
 
+    cdef CppVec3 control_point(self, int index):
+        cdef Vec3 v3 = <Vec3> self._control_points[index]
+        return v3.to_cpp_vec3()
+
     cpdef Vec3 point(self, double u):
         # Source: The NURBS Book: Algorithm A3.1
         cdef Basis basis = self._basis
@@ -308,10 +312,8 @@ cdef class Evaluator:
         cdef list N = basis.basis_funcs(span, u)
         cdef int i
         cdef CppVec3 sum_ = CppVec3(), cpoint
-        cdef Vec3 v3
         for i in range(p + 1):
-            v3 = <Vec3> control_points[span - p + i]
-            cpoint = v3.to_cpp_vec3()
+            cpoint = self.control_point(span - p + i)
             sum_ = sum_ + (cpoint * <double> N[i])
         return v3_from_cpp_vec3(sum_)
 
