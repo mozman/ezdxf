@@ -148,7 +148,6 @@ cdef class Basis:
                     return span - 1
             return count - 1
 
-    @cython.boundscheck(True)
     cpdef list basis_funcs(self, int span, double u):
         # Source: The NURBS Book: Algorithm A2.2
         cdef int order = self.order
@@ -195,7 +194,6 @@ cdef class Basis:
         else:
             return NULL_LIST * len(nbasis)
 
-    @cython.boundscheck(False)
     cpdef list basis_funcs_derivatives(self, int span, double u, int n = 1):
         # Source: The NURBS Book: Algorithm A2.3
         cdef int order = self.order
