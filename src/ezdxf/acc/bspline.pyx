@@ -319,14 +319,13 @@ cdef class Evaluator:
         cdef CppVec3 cppsum
         cdef list CK = [], CKw = [], wders = [], weights
         cdef Basis basis = self._basis
-        cdef tuple control_points = self._control_points
         if isclose(u, basis.max_t, ABS_TOL):
             u = basis.max_t
 
         cdef int p = basis.degree
         cdef int span = basis.find_span(u)
         cdef list basis_funcs_ders = basis.basis_funcs_derivatives(span, u, n)
-        cdef int k, j, i, index
+        cdef int k, j, i
         cdef double wder, bas_func_weight, bas_func
         if basis.is_rational:
             # Homogeneous point representation required:
@@ -336,12 +335,10 @@ cdef class Evaluator:
                 cppsum = CppVec3()
                 wder = 0.0
                 for j in range(p + 1):
-                    index = span - p + j
-                    bas_func_weight = basis_funcs_ders[k][j] * weights[index]
+                    i = span - p + j
+                    bas_func_weight = basis_funcs_ders[k][j] * weights[i]
                     # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
-                    cppsum = cppsum + (
-                            self.control_point(index) * bas_func_weight
-                    )
+                    cppsum = cppsum + (self.control_point(i) * bas_func_weight)
                     wder += bas_func_weight
                 CKw.append(v3_from_cpp_vec3(cppsum))
                 wders.append(wder)
@@ -349,10 +346,10 @@ cdef class Evaluator:
             # Source: The NURBS Book: Algorithm A4.2
             for k in range(n + 1):
                 vec3sum = CKw[k]
-                for i in range(1, k + 1):
-                    bas_func_weight = binomial_coefficient(k, i) * wders[i]
+                for j in range(1, k + 1):
+                    bas_func_weight = binomial_coefficient(k, j) * wders[j]
                     vec3sum = v3_sub(vec3sum,
-                                     v3_mul(CK[k - i], bas_func_weight))
+                                     v3_mul(CK[k - j], bas_func_weight))
                 CK.append(vec3sum / wders[0])
         else:
             for k in range(n + 1):
