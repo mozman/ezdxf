@@ -50,33 +50,33 @@ cdef class Basis:
     cdef readonly int order
     cdef readonly int count
     cdef readonly double max_t
-    cdef list _knots
     cdef list _weights
-    cdef double*_knots_mem
+    cdef double*_knots
 
     def __cinit__(self, knots: Iterable[float], int order, int count,
                   weights: Sequence[float] = None):
         self.order = order
         self.count = count
-        self._knots = list(knots)
-        self._weights = list(weights) if weights else []
-        self.max_t = self._knots[-1]
+        self._weights = [float(x) for x in weights] if weights else []
 
         # validation checks:
         cdef int len_weights = len(self._weights)
         if len_weights != 0 and len_weights != self.count:
             raise ValueError('invalid weight count')
-        if len(self._knots) != self.order + self.count:
+
+        knots = [float(x) for x in knots]
+        if len(knots) != self.order + self.count:
             raise ValueError('invalid knot count')
 
         cdef size_t knot_count = self.count + self.order, i
-        self._knots_mem = <double *> PyMem_Malloc(knot_count * sizeof(double))
+        self._knots = <double *> PyMem_Malloc(knot_count * sizeof(double))
 
         for i in range(knot_count):
-            self._knots_mem[i] = self._knots[i]
+            self._knots[i] = knots[i]
+        self.max_t = self._knots[knot_count - 1]
 
     def __dealloc__(self):
-        PyMem_Free(self._knots_mem)
+        PyMem_Free(self._knots)
 
     @property
     def degree(self) -> int:
@@ -84,7 +84,7 @@ cdef class Basis:
 
     @property
     def knots(self) -> List[float]:
-        return [x for x in self._knots_mem[:self.count + self.order]]
+        return [x for x in self._knots[:self.count + self.order]]
 
     @property
     def weights(self) -> List[float]:
@@ -116,7 +116,7 @@ cdef class Basis:
         """ Determine the knot span index. """
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
-        cdef double*knots = self._knots_mem
+        cdef double*knots = self._knots
         cdef int count = self.count
         cdef int p = self.order - 1
         cdef int span
@@ -133,23 +133,28 @@ cdef class Basis:
                     return span - 1
             return count - 1
 
-    @cython.boundscheck(False)
+    @cython.boundscheck(True)
     cpdef list basis_funcs(self, int span, double u):
         # Source: The NURBS Book: Algorithm A2.2
         cdef int order = self.order
-        # cdef double* knots = self._knots_mem  # does not work!!!!!!?
-        cdef list knots = self._knots
+        cdef double* knots = self._knots
         cdef list N = NULL_LIST * order
         cdef left = list.copy(N)
         cdef right = list.copy(N)
 
         # Using memory views is slower!
-        cdef int j, r
+        cdef int j, r, i1, i2, max_index = self.count+self.order
         cdef double temp, saved, temp_r, temp_l
         N[0] = 1.0
         for j in range(1, order):
-            left[j] = u - knots[span + 1 - j]
-            right[j] = knots[span + j] - u
+            i1 = span + 1 - j
+            if i1 < 0:
+                i1 += max_index
+            i2 = span + j
+            if i2 <0:
+                i2 += max_index
+            left[j] = u - knots[i1]
+            right[j] = knots[i2] - u
             saved = 0.0
             for r in range(j):
                 temp_r = right[r + 1]
@@ -183,16 +188,22 @@ cdef class Basis:
         cdef int p = order - 1
         if n > p:
             n = p
-        # cdef double* knots = self._knots_mem  # does not work!!!!!!?
-        cdef list knots = self._knots
+        cdef double* knots = self._knots
         cdef list left = ONE_LIST * order
         cdef list right = list.copy(left)
         cdef list ndu = [list.copy(left) for _ in range(order)]
-        cdef int j, r
+        cdef int j, r, i1, i2, max_index = self.count+self.order
         cdef double temp, saved, tmp_r, tmp_l
         for j in range(1, order):
-            left[j] = u - knots[span + 1 - j]
-            right[j] = knots[span + j] - u
+            i1 = span + 1 - j
+            if i1 < 0:
+                i1 += max_index
+            i2 = span + j
+            if i2 <0:
+                i2 += max_index
+
+            left[j] = u - knots[i1]
+            right[j] = knots[i2] - u
             saved = 0.0
             for r in range(j):
                 # lower triangle
