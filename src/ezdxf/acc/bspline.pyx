@@ -8,7 +8,10 @@
 from typing import List, Iterable, Sequence
 import cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
-from .vector cimport Vec3, isclose, v3_add, v3_mul, v3_sub
+from libcpp.vector cimport vector
+
+from .vector cimport Vec3, isclose, v3_add, v3_mul, v3_sub, v3_from_cpp_vec3
+from ._cpp_vec3 cimport CppVec3
 
 __all__ = ['Basis', 'Evaluator']
 
@@ -302,13 +305,15 @@ cdef class Evaluator:
             u = basis.max_t
 
         cdef int span = basis.find_span(u)
-        cdef Vec3 cpoint, sum_ = NULLVEC
         cdef list N = basis.basis_funcs(span, u)
         cdef int i
+        cdef CppVec3 sum_ = CppVec3(), cpoint
+        cdef Vec3 v3
         for i in range(p + 1):
-            cpoint = <Vec3> control_points[span - p + i]
-            sum_ = v3_add(sum_, v3_mul(cpoint, N[i]))
-        return sum_
+            v3 = <Vec3> control_points[span - p + i]
+            cpoint = v3.to_cpp_vec3()
+            sum_ = sum_ + (cpoint * <double> N[i])
+        return v3_from_cpp_vec3(sum_)
 
     def points(self, t: Iterable[float]) -> Iterable[Vec3]:
         cdef double u
@@ -318,7 +323,7 @@ cdef class Evaluator:
     cpdef list derivative(self, double u, int n = 1):
         """ Return point and derivatives up to n <= degree for parameter u. """
         # Source: The NURBS Book: Algorithm A3.2
-        cdef Vec3 s
+        cdef Vec3 sum_
         cdef list CK = [], CKw = [], wders = [], weights
         cdef Basis basis = self._basis
         cdef tuple control_points = self._control_points
@@ -336,33 +341,33 @@ cdef class Evaluator:
             # (x*w, y*w, z*w, w)
             weights = basis.weights_
             for k in range(n + 1):
-                s = NULLVEC
+                sum_ = NULLVEC
                 wder = 0.0
                 for j in range(p + 1):
                     index = span - p + j
                     bas_func_weight = basis_funcs_ders[k][j] * weights[index]
                     # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
-                    s = v3_add(s, v3_mul(control_points[index],
-                                         bas_func_weight))
+                    sum_ = v3_add(sum_, v3_mul(control_points[index],
+                                               bas_func_weight))
                     wder += bas_func_weight
-                CKw.append(s)
+                CKw.append(sum_)
                 wders.append(wder)
 
             # Source: The NURBS Book: Algorithm A4.2
             for k in range(n + 1):
-                s = CKw[k]
+                sum_ = CKw[k]
                 for i in range(1, k + 1):
                     bas_func_weight = binomial_coefficient(k, i) * wders[i]
-                    s = v3_sub(s, v3_mul(CK[k - i],
-                                         bas_func_weight))
-                CK.append(s / wders[0])
+                    sum_ = v3_sub(sum_, v3_mul(CK[k - i],
+                                               bas_func_weight))
+                CK.append(sum_ / wders[0])
         else:
             for k in range(n + 1):
-                s = NULLVEC
+                sum_ = NULLVEC
                 for j in range(p + 1):
-                    s = v3_add(s, v3_mul(control_points[span - p + j],
-                                         basis_funcs_ders[k][j]))
-                CK.append(s)
+                    sum_ = v3_add(sum_, v3_mul(control_points[span - p + j],
+                                               basis_funcs_ders[k][j]))
+                CK.append(sum_)
         return CK
 
     def derivatives(
