@@ -159,18 +159,15 @@ cdef class Basis:
         reset_double_array(left, order)
         reset_double_array(right, order)
 
-        cdef int j, r, i1, i2
+        cdef int j, r, i1
         cdef double temp, saved, temp_r, temp_l
         N[0] = 1.0
         for j in range(1, order):
             i1 = span + 1 - j
             if i1 < 0:
                 i1 += self.knot_count
-            i2 = span + j
-            if i2 < 0:
-                i2 += self.knot_count
             left[j] = u - knots[i1]
-            right[j] = knots[i2] - u
+            right[j] = knots[span + j] - u
             saved = 0.0
             for r in range(j):
                 temp_r = right[r + 1]
@@ -211,18 +208,14 @@ cdef class Basis:
         reset_double_array(right, order, 1.0)
 
         cdef list ndu = [ONE_LIST * order for _ in range(order)]
-        cdef int j, r, i1, i2
+        cdef int j, r, i1
         cdef double temp, saved, tmp_r, tmp_l
         for j in range(1, order):
             i1 = span + 1 - j
             if i1 < 0:
                 i1 += self.knot_count
-            i2 = span + j
-            if i2 < 0:
-                i2 += self.knot_count
-
             left[j] = u - knots[i1]
-            right[j] = knots[i2] - u
+            right[j] = knots[span + j] - u
             saved = 0.0
             for r in range(j):
                 # lower triangle
@@ -303,7 +296,6 @@ cdef class Evaluator:
     cpdef Vec3 point(self, double u):
         # Source: The NURBS Book: Algorithm A3.1
         cdef Basis basis = self._basis
-        cdef tuple control_points = self._control_points
         cdef int p = basis.order - 1
         if isclose(u, basis.max_t, ABS_TOL):
             u = basis.max_t
