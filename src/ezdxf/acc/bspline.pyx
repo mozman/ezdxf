@@ -13,7 +13,7 @@ from .vector cimport Vec3, isclose, v3_add, v3_mul, v3_sub
 __all__ = ['Basis', 'Evaluator']
 
 # factorial from 0 to 18
-FACTORIAL = [
+cdef double[19] FACTORIAL = [
     1., 1., 2., 6., 24., 120., 720., 5040., 40320., 362880., 3628800.,
     39916800., 479001600., 6227020800., 87178291200., 1307674368000.,
     20922789888000., 355687428096000., 6402373705728000.
@@ -25,6 +25,10 @@ ONE_LIST = [1.0]
 cdef Vec3 NULLVEC = Vec3()
 DEF ABS_TOL = 1e-12
 
+# AutoCAD limits the degree to 11 or order = 12
+DEF MAX_ORDER = 12
+
+@cython.cdivision(True)
 cdef double binomial_coefficient(int k, int i):
     cdef double k_fact = FACTORIAL[k]
     cdef double i_fact = FACTORIAL[i]
@@ -49,31 +53,34 @@ cdef class Basis:
     """ Immutable Basis function class. """
     cdef readonly int order
     cdef readonly int count
+    cdef readonly int knot_count
     cdef readonly double max_t
     cdef list _weights
     cdef double*_knots
 
     def __cinit__(self, knots: Iterable[float], int order, int count,
                   weights: Sequence[float] = None):
+        if order < 2 or order >= MAX_ORDER:
+            raise ValueError('invalid order')
         self.order = order
+        if count < 2:
+            raise ValueError('invalid count')
         self.count = count
+        self.knot_count = self.order + self.count
         self._weights = [float(x) for x in weights] if weights else []
 
-        # validation checks:
-        cdef int len_weights = len(self._weights)
-        if len_weights != 0 and len_weights != self.count:
+        cdef Py_ssize_t i = len(self._weights)
+        if i != 0 and i != self.count:
             raise ValueError('invalid weight count')
 
         knots = [float(x) for x in knots]
-        if len(knots) != self.order + self.count:
+        if len(knots) != self.knot_count:
             raise ValueError('invalid knot count')
 
-        cdef size_t knot_count = self.count + self.order, i
-        self._knots = <double *> PyMem_Malloc(knot_count * sizeof(double))
-
-        for i in range(knot_count):
+        self._knots = <double *> PyMem_Malloc(self.knot_count * sizeof(double))
+        for i in range(self.knot_count):
             self._knots[i] = knots[i]
-        self.max_t = self._knots[knot_count - 1]
+        self.max_t = self._knots[self.knot_count - 1]
 
     def __dealloc__(self):
         PyMem_Free(self._knots)
@@ -84,7 +91,7 @@ cdef class Basis:
 
     @property
     def knots(self) -> List[float]:
-        return [x for x in self._knots[:self.count + self.order]]
+        return [x for x in self._knots[:self.knot_count]]
 
     @property
     def weights(self) -> List[float]:
@@ -143,16 +150,16 @@ cdef class Basis:
         cdef right = list.copy(N)
 
         # Using memory views is slower!
-        cdef int j, r, i1, i2, max_index = self.count+self.order
+        cdef int j, r, i1, i2
         cdef double temp, saved, temp_r, temp_l
         N[0] = 1.0
         for j in range(1, order):
             i1 = span + 1 - j
             if i1 < 0:
-                i1 += max_index
+                i1 += self.knot_count
             i2 = span + j
-            if i2 <0:
-                i2 += max_index
+            if i2 < 0:
+                i2 += self.knot_count
             left[j] = u - knots[i1]
             right[j] = knots[i2] - u
             saved = 0.0
@@ -192,15 +199,15 @@ cdef class Basis:
         cdef list left = ONE_LIST * order
         cdef list right = list.copy(left)
         cdef list ndu = [list.copy(left) for _ in range(order)]
-        cdef int j, r, i1, i2, max_index = self.count+self.order
+        cdef int j, r, i1, i2
         cdef double temp, saved, tmp_r, tmp_l
         for j in range(1, order):
             i1 = span + 1 - j
             if i1 < 0:
-                i1 += max_index
+                i1 += self.knot_count
             i2 = span + j
-            if i2 <0:
-                i2 += max_index
+            if i2 < 0:
+                i2 += self.knot_count
 
             left[j] = u - knots[i1]
             right[j] = knots[i2] - u
