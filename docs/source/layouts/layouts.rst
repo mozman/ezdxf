@@ -124,6 +124,8 @@ BaseLayout
 
     .. automethod:: add_spline
 
+    .. automethod:: add_cad_spline_control_frame
+
     .. automethod:: add_spline_control_frame
 
     .. automethod:: add_open_spline

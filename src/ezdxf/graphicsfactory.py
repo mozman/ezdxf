@@ -6,7 +6,7 @@ import logging
 import warnings
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
-from ezdxf.math import Vec3, global_bspline_interpolation
+from ezdxf.math import Vec3, global_bspline_interpolation, fit_points_to_cad_cv
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities import factory
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
@@ -557,8 +557,7 @@ class CreatorInterface:
 
     def add_xline(self, start: 'Vertex', unit_vector: 'Vertex',
                   dxfattribs: Dict = None) -> 'XLine':
-        """
-        Add an infinity :class:`~ezdxf.entities.XLine` (construction line).
+        """ Add an infinity :class:`~ezdxf.entities.XLine` (construction line).
         (requires DXF R2000)
 
         Args:
@@ -576,22 +575,30 @@ class CreatorInterface:
 
     def add_spline(self, fit_points: Iterable['Vertex'] = None, degree: int = 3,
                    dxfattribs: Dict = None) -> 'Spline':
-        """
-        Add a B-spline (:class:`~ezdxf.entities.Spline` entity) defined by fit
-        points - the control points and knot values are created by the CAD
-        application, therefore it is not predictable how the rendered spline
-        will look like, because for every set of fit points exists an infinite
-        set of B-splines. If `fit_points` is ``None``, an 'empty' spline will
-        be created, all data has to be set by the user. (requires DXF R2000)
+        """ Add a B-spline (:class:`~ezdxf.entities.Spline` entity) defined by
+        the given `fit_points` - the control points and knot values are created
+        by the CAD application, therefore it is not predictable how the rendered
+        spline will look like, because for every set of fit points exists an
+        infinite set of B-splines.
 
-        AutoCAD creates a spline through fit points by a proprietary algorithm.
-        `ezdxf` can not reproduce the control point calculation. See also:
-        :ref:`tut_spline`.
+        If `fit_points` is ``None``, an "empty" spline will be created, all data
+        has to be set by the user.
+
+        The SPLINE entity requires DXF R2000.
+
+        AutoCAD creates a spline through fit points by a global curve
+        interpolation and an unknown method to estimate the direction of the
+        start- and end tangent.
+
+        .. seealso::
+
+            - :ref:`tut_spline`
+            - :func:`ezdxf.math.fit_points_to_cad_cv`
 
         Args:
             fit_points: iterable of fit points as ``(x, y[, z])`` in :ref:`WCS`,
-                create 'empty' :class:`~ezdxf.entities.Spline` if ``None``
-            degree: degree of B-spline
+                creates an empty :class:`~ezdxf.entities.Spline` if ``None``
+            degree: degree of B-spline, max. degree supported by AutoCAD is 11
             dxfattribs: additional DXF attributes
 
         """
@@ -599,7 +606,7 @@ class CreatorInterface:
             raise DXFVersionError('SPLINE requires DXF R2000')
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['degree'] = int(degree)
-        spline = self.new_entity('SPLINE', dxfattribs)  # type: Spline
+        spline = self.new_entity('SPLINE', dxfattribs)
         if fit_points is not None:
             spline.fit_points = Vec3.generate(fit_points)
         return spline
@@ -607,23 +614,30 @@ class CreatorInterface:
     def add_spline_control_frame(self, fit_points: Iterable['Vertex'],
                                  degree: int = 3, method: str = 'chord',
                                  dxfattribs: Dict = None) -> 'Spline':
-        """
-        Add a :class:`~ezdxf.entities.Spline` entity passing through given fit
-        points by global B-spline interpolation, the new SPLINE entity is
-        defined by a control frame and not by the fit points.
+        """ Add a :class:`~ezdxf.entities.Spline` entity passing through the
+        given `fit_points`, the control points are calculated by a global curve
+        interpolation without start- and end tangent constrains.
+        The new SPLINE entity is defined by control points and not by the fit
+        points, therefore the SPLINE looks always the same, no matter which CAD
+        application renders the SPLINE.
 
         - "uniform": creates a uniform t vector, from 0 to 1 evenly spaced, see
           `uniform`_ method
         - "distance", "chord": creates a t vector with values proportional to
           the fit point distances, see `chord length`_ method
         - "centripetal", "sqrt_chord": creates a t vector with values
-          proportional to the fit point sqrt(distances), see `centripetal`_ method
+          proportional to the fit point sqrt(distances), see `centripetal`_
+          method
         - "arc": creates a t vector with values proportional to the arc length
           between fit points.
 
+        Use function :meth:`add_cad_spline_control_frame` to create
+        SPLINE entities from fit points similar to CAD application including
+        start- and end tangent constraints.
+
         Args:
             fit_points: iterable of fit points as (x, y[, z]) in :ref:`WCS`
-            degree: degree of B-spline
+            degree: degree of B-spline, max. degree supported by AutoCAD is 11
             method: calculation method for parameter vector t
             dxfattribs: additional DXF attributes
 
@@ -633,9 +647,35 @@ class CreatorInterface:
         return self.add_open_spline(
             control_points=bspline.control_points,
             degree=bspline.degree,
-            knots=bspline.knot_values(),
+            knots=bspline.knots(),
             dxfattribs=dxfattribs,
         )
+
+    def add_cad_spline_control_frame(self, fit_points: Iterable['Vertex'],
+                                     tangents: Iterable['Vertex'] = None,
+                                     estimate: str = '5-p',
+                                     dxfattribs: Dict = None) -> 'Spline':
+        """ Add a :class:`~ezdxf.entities.Spline` entity passing through the
+        given fit points.
+        This method tries to create the same curve as CAD applications do.
+        To understand the limitations and for more information see function
+        :func:`ezdxf.math.fit_points_to_cad_cv`.
+
+        Args:
+            fit_points: iterable of fit points as (x, y[, z]) in :ref:`WCS`
+            tangents: start- and end tangent, default is autodetect
+            estimate: tangent direction estimation method
+            dxfattribs: additional DXF attributes
+
+        """
+        s = fit_points_to_cad_cv(
+            fit_points,
+            tangents=tangents,
+            estimate=estimate
+        )
+        spline = self.add_spline(dxfattribs=dxfattribs)
+        spline.apply_construction_tool(s)
+        return spline
 
     def add_open_spline(self, control_points: Iterable['Vertex'],
                         degree: int = 3, knots: Iterable[float] = None,
@@ -648,7 +688,7 @@ class CreatorInterface:
 
         Args:
             control_points: iterable of 3D points in :ref:`WCS`
-            degree: degree of B-spline
+            degree: degree of B-spline, max. degree supported by AutoCAD is 11
             knots: knot values as iterable of floats
             dxfattribs: additional DXF attributes
 
@@ -671,7 +711,7 @@ class CreatorInterface:
 
         Args:
             control_points: iterable of 3D points in :ref:`WCS`
-            degree: degree of B-spline
+            degree: degree of B-spline, max. degree supported by AutoCAD is 11
             knots: knot values as iterable of floats
             dxfattribs: additional DXF attributes
 
@@ -700,7 +740,7 @@ class CreatorInterface:
         Args:
             control_points: iterable of 3D points in :ref:`WCS`
             weights: weight values as iterable of floats
-            degree: degree of B-spline
+            degree: degree of B-spline, max. degree supported by AutoCAD is 11
             knots: knot values as iterable of floats
             dxfattribs: additional DXF attributes
 

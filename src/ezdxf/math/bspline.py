@@ -70,7 +70,7 @@ __all__ = [
 
 def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
                          tangents: Iterable['Vertex'] = None,
-                         estimate: str = 'bezier') -> 'BSpline':
+                         estimate: str = '5-p') -> 'BSpline':
     """ Returns the control vertices and knot vector configuration for DXF
     SPLINE entities defined only by fit points as close as possible to common
     CAD applications like BricsCAD.
@@ -93,12 +93,21 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
 
     If the end tangents are not given, the start- and ent tangent directions
     will be estimated. The argument `estimate` lets choose from different
-    estimation methods:
+    estimation methods (first 3 letters are significant):
 
-        - "3-points": 3 point interpolation
-        - "5-points": 5 point interpolation
-        - "bezier": tangents from an interpolated cubic bezier curve
-        - "diff": finite difference
+    - "3-points": 3 point interpolation
+    - "5-points": 5 point interpolation
+    - "bezier": tangents from an interpolated cubic bezier curve
+    - "diff": finite difference
+
+    The estimation method "5-p" yields the closest match to the BricsCAD
+    rendering, but sometimes "bez" creates a better result.
+
+    If I figure out how BricsCAD estimates the end tangents directions, the
+    argument `estimate` gets an additional value for that case. The existing
+    estimation methods will perform the same way as now, except for bug fixes.
+    But the default value may change, therefore set argument `estimate` to
+    specific value to always get the same result in the future.
 
     Args:
         fit_points: points the spline is passing through
