@@ -289,16 +289,6 @@ def test_open_spline(msp, points):
     assert spline.closed is False
 
 
-def test_closed_spline(msp, points):
-    degree = 3
-    spline = msp.add_closed_spline(points, degree=degree)
-    assert spline.dxf.degree == degree
-    assert list(spline.control_points) == points + points[:degree]
-    assert spline.dxf.n_control_points == len(spline.control_points)
-    assert spline.dxf.n_knots == len(spline.control_points) + degree + 1
-    assert spline.closed is True
-
-
 def test_open_rational_spline(msp, points, weights):
     spline = msp.add_rational_spline(points, weights, degree=3)
     assert spline.dxf.degree == 3
@@ -309,18 +299,6 @@ def test_open_rational_spline(msp, points, weights):
     assert spline.dxf.n_knots == len(
         points) + spline.dxf.degree + 1  # n + p + 2
     assert spline.closed is False
-
-
-def test_closed_rational_spline(msp, points, weights):
-    degree = 3
-    spline = msp.add_closed_rational_spline(points, weights, degree=degree)
-    assert spline.dxf.degree == degree
-    assert list(spline.control_points) == points + points[:degree]
-    assert list(spline.weights) == weights + weights[:degree]
-    assert spline.dxf.n_control_points == len(points) + degree
-    assert len(spline.weights) == len(points) + degree
-    assert spline.dxf.n_knots == len(spline.control_points) + degree + 1
-    assert spline.closed is True
 
 
 def test_spline_transform_interface():

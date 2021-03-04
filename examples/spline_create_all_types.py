@@ -1,9 +1,11 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
+import os
+# os.environ["EZDXF_DISABLE_C_EXT"] = "1"
 from pathlib import Path
 import ezdxf
 from ezdxf import zoom
-from ezdxf.math import Vec3, fit_points_to_cad_cv
+from ezdxf.math import Vec3
 
 DIR = Path('~/Desktop/outbox').expanduser()
 
@@ -17,6 +19,8 @@ def new_doc():
     doc.layers.new("SPLINE", dxfattribs={'color': 1})
     doc.layers.new("EZDXF", dxfattribs={'color': 2})
     doc.layers.new("FLATTEN", dxfattribs={'color': 3})
+    doc.layers.new("FRAME", dxfattribs={'color': 5})
+    doc.layers.new("FIT", dxfattribs={'color': 1})
     msp = doc.modelspace()
     return doc, msp
 
@@ -24,6 +28,23 @@ def new_doc():
 def save(name):
     zoom.extents(msp)
     doc.saveas(DIR / name)
+
+
+def add_control_polyline(spline):
+    s = spline.construction_tool()
+    msp.add_lwpolyline(s.flattening(0.01), dxfattribs={'layer': 'FLATTEN'})
+
+
+def add_control_frame(spline):
+    cpoints = spline.control_points
+    msp.add_lwpolyline(cpoints, dxfattribs={'layer': 'FRAME'})
+    for point in cpoints:
+        msp.add_circle(point, radius=0.05, dxfattribs={'layer': 'FRAME'})
+
+
+def add_fit_points(points):
+    for point in points:
+        msp.add_circle(point, radius=0.05, dxfattribs={'layer': 'FIT'})
 
 
 # A B-spline is only defined by the control points and the knot values and the
@@ -64,11 +85,9 @@ msp.add_spline(fit_points=points, dxfattribs={'layer': 'SPLINE'})
 spline = msp.add_cad_spline_control_frame(
     points, estimate='5-p', dxfattribs={'layer': 'EZDXF'})
 
-# Control polygon:
-s = spline.construction_tool()
-# noinspection PyUnresolvedReferences
-msp.add_lwpolyline(s.flattening(0.01), dxfattribs={'layer': 'FLATTEN'})
-
+add_fit_points(points)
+add_control_frame(spline)
+add_control_polyline(spline)
 save(DIR / "open_spline_from_fit_points.dxf")
 
 # ------------------------------------------------------------------------------
@@ -103,11 +122,11 @@ msp.add_spline(fit_points=points, dxfattribs={
 # This is a reliable way to define the SPLINE entity by control points for any
 # CAD application without any ambiguity.
 # ------------------------------------------------------------------------------
-msp.add_cad_spline_control_frame(
-    points, tangents=[(0, 1), (-1, 0)],dxfattribs={'layer': 'EZDXF'})
-
+spline = msp.add_cad_spline_control_frame(
+    points, tangents=[(0, 1), (-1, 0)], dxfattribs={'layer': 'EZDXF'})
+add_fit_points(points)
+add_control_frame(spline)
 save(DIR / "open_spline_from_fit_points_with_end_tangents.dxf")
-
 
 # ------------------------------------------------------------------------------
 # Add SPLINE defined by control points from fit points.
@@ -115,15 +134,48 @@ save(DIR / "open_spline_from_fit_points_with_end_tangents.dxf")
 # Layout.add_spline_control_frame(), creates the control points from a simple
 # global curve interpolation of the given fit points without end tangent
 # constraints. This is similar to add_cad_spline_control_frame(), but does not
-# care about replicating the same curve as a CAD application would create.
+# care about replicating the same curve as AutoCAD would create.
 # And because this method uses control points to define the SPLINE, the SPLINE
 # looks always the same, no matter which CAD application renders the SPLINE.
 # ------------------------------------------------------------------------------
 doc, msp = new_doc()
 spline = msp.add_spline_control_frame(fit_points=points,
                                       dxfattribs={'layer': 'SPLINE'})
-s = spline.construction_tool()
-# Control polygon:
-msp.add_lwpolyline(s.flattening(0.01), dxfattribs={'layer': 'FLATTEN'})
+add_fit_points(points)
+add_control_frame(spline)
+add_control_polyline(spline)
 save(DIR / "open_spline_by_add_spline_control_frame.dxf")
 
+# ------------------------------------------------------------------------------
+# Define SPLINE only by control points
+#
+# This methods add SPLINE entities defined only by control points. These methods
+# provides access to the mathematical base form, but may not very useful for
+# practical construction work.
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# OPEN clamped SPLINE by control points
+#
+# This SPLINE starts at the first control point and ends at the last control
+# point, but does not pass through the control points between these points.
+# ------------------------------------------------------------------------------
+
+doc, msp = new_doc()
+spline = msp.add_open_spline(points, dxfattribs={'layer': 'SPLINE'})
+
+add_control_frame(spline)
+add_control_polyline(spline)
+save(DIR / "open_clamped_spline_by_control_points.dxf")
+
+# ------------------------------------------------------------------------------
+# OPEN unclamped SPLINE by control points  **BROKEN**
+# ------------------------------------------------------------------------------
+
+doc, msp = new_doc()
+spline = msp.add_spline(dxfattribs={'layer': 'SPLINE'})
+spline.set_uniform(points)
+
+add_control_frame(spline)
+add_control_polyline(spline)
+save(DIR / "open_unclamped_spline_by_control_points.dxf")

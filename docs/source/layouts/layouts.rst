@@ -130,11 +130,7 @@ BaseLayout
 
     .. automethod:: add_open_spline
 
-    .. automethod:: add_closed_spline
-
     .. automethod:: add_rational_spline
-
-    .. automethod:: add_closed_rational_spline
 
     .. automethod:: add_hatch
 

@@ -66,6 +66,8 @@ Version 0.16b0 - dev
 - REMOVED: `Path.from_from_hatch_edge_path()`
 - REMOVED: `Block.purge()`, unsafe operation
 - REMOVED: `dxfpp` command, replaced by `ezdxf pp ...`
+- REMOVED: `Layout.add_closed_spline()`, broken and nobody noticed it
+- REMOVED: `Layout.add_closed_rational_spline()`, broken and nobody noticed it
 
 Version 0.15.2 - 2021-02-07
 ---------------------------

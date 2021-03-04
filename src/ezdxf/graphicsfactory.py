@@ -699,29 +699,6 @@ class CreatorInterface:
             spline.knots = knots
         return spline
 
-    def add_closed_spline(self, control_points: Iterable['Vertex'],
-                          degree: int = 3, knots: Iterable[float] = None,
-                          dxfattribs: Dict = None) -> 'Spline':
-        """
-        Add a closed uniform :class:`~ezdxf.entities.Spline` defined by
-        `control_points`. (requires DXF R2000)
-
-        Closed uniform B-splines is a closed curve start and end at the first
-        control point.
-
-        Args:
-            control_points: iterable of 3D points in :ref:`WCS`
-            degree: degree of B-spline, max. degree supported by AutoCAD is 11
-            knots: knot values as iterable of floats
-            dxfattribs: additional DXF attributes
-
-        """
-        spline = self.add_spline(dxfattribs=dxfattribs)
-        spline.set_closed(list(control_points), degree)
-        if knots is not None:
-            spline.knots = knots
-        return spline
-
     def add_rational_spline(self, control_points: Iterable['Vertex'],
                             weights: Sequence[float], degree: int = 3,
                             knots: Iterable[float] = None,
@@ -747,34 +724,6 @@ class CreatorInterface:
         """
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_rational(list(control_points), weights, degree)
-        if knots is not None:
-            spline.knots = knots
-        return spline
-
-    def add_closed_rational_spline(self, control_points: Iterable['Vertex'],
-                                   weights: Sequence[float], degree: int = 3,
-                                   knots: Iterable[float] = None,
-                                   dxfattribs: Dict = None) -> 'Spline':
-        """
-        Add a closed rational uniform :class:`~ezdxf.entities.Spline` defined by
-        `control_points`. (requires DXF R2000)
-
-        `weights` has to be an iterable of floats, which defines the influence
-        of the associated control point to the shape of the B-spline, therefore
-        for each control point is one weight value required.
-
-        Closed rational uniform B-splines start and end at the first control point.
-
-        Args:
-            control_points: iterable of 3D points in :ref:`WCS`
-            weights: weight values as iterable of floats
-            degree: degree of B-spline
-            knots: knot values as iterable of floats
-            dxfattribs: additional DXF attributes
-
-        """
-        spline = self.add_spline(dxfattribs=dxfattribs)
-        spline.set_closed_rational(list(control_points), weights, degree)
         if knots is not None:
             spline.knots = knots
         return spline

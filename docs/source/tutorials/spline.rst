@@ -110,17 +110,6 @@ generated. A clamped B-spline starts at the first control point and ends at the 
 
 .. image:: gfx/spline4.png
 
-Closed Spline
-~~~~~~~~~~~~~
-
-A closed spline is continuous closed curve.
-
-.. code-block:: python
-
-    msp.add_closed_spline(control_points)
-
-.. image:: gfx/spline5.png
-
 Rational Spline
 ~~~~~~~~~~~~~~~
 
