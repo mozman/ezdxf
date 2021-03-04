@@ -27,7 +27,7 @@ def new_doc():
 
 
 def save(name):
-    zoom.extents(msp)
+    zoom.extents(msp, factor=1.1)
     doc.saveas(DIR / name)
 
 
@@ -148,6 +148,42 @@ add_control_polyline(spline)
 save(DIR / "open_spline_by_add_spline_control_frame.dxf")
 
 # ------------------------------------------------------------------------------
+# Add CLOSED SPLINE defined by control points from fit points.
+#
+# The add_cad_spline_control_frame() method can also add closed B-splines if the
+# first fit point is equal to the last fit point, but without defining the
+# appropriate start- and end tangents the curve has only C0 continuity,
+# which means the curve has no smooth transition at the connection point.
+# ------------------------------------------------------------------------------
+doc, msp = new_doc()
+spline = msp.add_cad_spline_control_frame(
+    closed_points, dxfattribs={'layer': 'EZDXF'})
+add_control_frame(spline)
+add_control_polyline(spline)
+add_fit_points(points)
+save(DIR / "closed_spline_from_fit_points.dxf")
+
+# ------------------------------------------------------------------------------
+# Add smooth (C1) CLOSED SPLINE defined by control points from fit points
+#
+# The add_cad_spline_control_frame() method can also add closed B-splines if the
+# first fit point is equal to the last fit point, by defining equal start-
+# and end tangents the curve has C1 continuity at the connection point,
+# which means the curve has a smooth transition at the connection point.
+#
+# REMARK: Set tangents as vectors in curve direction, which goes from start- to
+# end point. In this case the start tangent is equal to the end tangent!
+# ------------------------------------------------------------------------------
+doc, msp = new_doc()
+tangent = (0, 1)
+spline = msp.add_cad_spline_control_frame(
+    closed_points, tangents=[tangent, tangent], dxfattribs={'layer': 'EZDXF'})
+add_control_frame(spline)
+add_control_polyline(spline)
+add_fit_points(points)
+save(DIR / "closed_spline_from_fit_points_smooth.dxf")
+
+# ------------------------------------------------------------------------------
 # Define SPLINE only by control points
 #
 # This methods add SPLINE entities defined only by control points. These methods
@@ -170,7 +206,7 @@ add_control_polyline(spline)
 save(DIR / "open_clamped_spline_by_control_points.dxf")
 
 # ------------------------------------------------------------------------------
-# OPEN unclamped SPLINE by control points  **BROKEN**
+# **BROKEN** Open unclamped SPLINE by control points
 # ------------------------------------------------------------------------------
 
 doc, msp = new_doc()
@@ -180,7 +216,10 @@ spline.set_uniform(points)
 # The B-spline algorithms in "The NURBS Book" by Piegl & Tiller seems to be
 # optimized for clamped B-splines or both ezdxf & geomdl got unclamped
 # B-spline evaluation wrong!
-
+#
+# Fixing this issue has not a high priority, because unclamped curves are not
+# very useful for construction work.
+#
 # check against geomdl:
 nurbs = spline.construction_tool().to_nurbs_python_curve()
 points = Vec3.list(nurbs.evaluate_list(linspace(0, 1, 100)))
