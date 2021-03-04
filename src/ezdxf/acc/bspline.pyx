@@ -129,10 +129,13 @@ cdef class Basis:
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
         cdef double*knots = self._knots
-        cdef int count = self.count
+        cdef int count = self.count  # text book: n+1
         cdef int p = self.order - 1
         cdef int span
-        # if it is a standard clamped spline
+        if u >= knots[count]:  # special case
+            return count - 1
+
+        # common clamped spline:
         if knots[p] == 0.0:  # use binary search
             # This is fast and works most of the time,
             # but Test 621 : test_weired_closed_spline()
@@ -140,10 +143,10 @@ cdef class Basis:
             # a weird knot configuration.
             return bisect_right(knots, u, p, count) - 1
         else:  # use linear search
-            for span in range(count):
-                if knots[span] > u:
-                    return span - 1
-            return count - 1
+            span = 0
+            while knots[span] <= u and span < count:
+                span += 1
+            return span - 1
 
     cpdef list basis_funcs(self, int span, double u):
         # Source: The NURBS Book: Algorithm A2.2

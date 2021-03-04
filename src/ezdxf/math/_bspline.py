@@ -72,9 +72,11 @@ class Basis:
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
         knots = self._knots
-        count = self._count
+        count = self._count  # text book: n+1
+        if u >= knots[count]:  # special case
+            return count - 1  # n
         p = self._order - 1
-        # if it is a standard clamped spline
+        # common clamped spline:
         if knots[p] == 0.0:  # use binary search
             # This is fast and works most of the time,
             # but Test 621 : test_weired_closed_spline()
@@ -82,10 +84,10 @@ class Basis:
             # a weird knot configuration.
             return bisect.bisect_right(knots, u, p, count) - 1
         else:  # use linear search
-            for span in range(count):
-                if knots[span] > u:
-                    return span - 1
-            return count - 1
+            span = 0
+            while knots[span] <= u and span < count:
+                span += 1
+            return span - 1
 
     def basis_funcs(self, span: int, u: float) -> List[float]:
         # Source: The NURBS Book: Algorithm A2.2
