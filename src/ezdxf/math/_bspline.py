@@ -96,7 +96,7 @@ class Basis:
         right = list(N)
         N[0] = 1.0
         for j in range(1, order):
-            left[j] = u - knots[span + 1 - j]
+            left[j] = u - knots[max(0, span + 1 - j)]
             right[j] = knots[span + j] - u
             saved = 0.0
             for r in range(j):
@@ -128,7 +128,7 @@ class Basis:
         ndu = [[1.0] * order for _ in range(order)]
 
         for j in range(1, order):
-            left[j] = u - knots[span + 1 - j]
+            left[j] = u - knots[max(0, span + 1 - j)]
             right[j] = knots[span + j] - u
             saved = 0.0
             for r in range(j):

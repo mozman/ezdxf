@@ -161,7 +161,7 @@ cdef class Basis:
         for j in range(1, order):
             i1 = span + 1 - j
             if i1 < 0:
-                i1 += self.knot_count
+                i1 = 0
             left[j] = u - knots[i1]
             right[j] = knots[span + j] - u
             saved = 0.0
@@ -208,7 +208,7 @@ cdef class Basis:
         for j in range(1, order):
             i1 = span + 1 - j
             if i1 < 0:
-                i1 += self.knot_count
+                i1 = 0
             left[j] = u - knots[i1]
             right[j] = knots[span + j] - u
             saved = 0.0
