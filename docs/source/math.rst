@@ -888,16 +888,6 @@ BSpline
 
     .. automethod:: cubic_bezier_approximation(level: int = 3, segments: int = None) -> Iterable[Bezier4P]
 
-BSplineU
---------
-
-.. autoclass:: BSplineU
-
-BSplineClosed
--------------
-
-.. autoclass:: BSplineClosed
-
 
 Bezier
 ------
