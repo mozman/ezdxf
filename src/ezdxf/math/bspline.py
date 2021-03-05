@@ -791,7 +791,7 @@ class BSpline:
         weights: iterable of weight values
 
     """
-    __slots__ = ('_control_points', '_basis')
+    __slots__ = ('_control_points', '_basis', '_clamped')
 
     def __init__(self, control_points: Iterable['Vertex'],
                  order: int = 4,
@@ -815,6 +815,7 @@ class BSpline:
             if knots[0] != 0.0:
                 knots = normalize_knots(knots)
         self._basis = Basis(knots, order, count, weights=weights)
+        self._clamped = not any(knots[:order])
 
     def __str__(self):
         return f'BSpline degree={self.degree}, {self.count} ' \
@@ -858,7 +859,7 @@ class BSpline:
     @property
     def is_clamped(self):
         """ Returns ``True`` if curve is a clamped (open) B-spline. """
-        return not any(self._basis.knots[:self.order])
+        return self._clamped
 
     @staticmethod
     def from_fit_points(points: Iterable['Vertex'], degree=3,
