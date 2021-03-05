@@ -6,7 +6,6 @@
 from typing import List, Iterable, Sequence, Tuple
 import math
 import bisect
-from array import array
 
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
 from ._vector import Vec3, NULLVEC
@@ -21,8 +20,8 @@ class Basis:
 
     def __init__(self, knots: Iterable[float], order: int, count: int,
                  weights: Sequence[float] = None):
-        self._knots = array('d', knots)
-        self._weights = array('d', weights or [])
+        self._knots = tuple(knots)
+        self._weights = tuple(weights or [])
         self._order: int = int(order)
         self._count: int = int(count)
 
@@ -47,11 +46,11 @@ class Basis:
 
     @property
     def knots(self) -> Tuple[float, ...]:
-        return tuple(self._knots)
+        return self._knots
 
     @property
     def weights(self) -> Tuple[float, ...]:
-        return tuple(self._weights)
+        return self._weights
 
     @property
     def is_rational(self) -> bool:
