@@ -7,6 +7,7 @@ import ezdxf
 from ezdxf import zoom
 from ezdxf.math import Vec3, linspace, BSpline
 
+
 DIR = Path('~/Desktop/outbox').expanduser()
 
 points = Vec3.list([(1, 1), (4, 5), (7, 4), (10, 7), (12, 3), (7, 1)])
@@ -22,7 +23,6 @@ def new_doc():
     doc.layers.new("FLATTEN", dxfattribs={'color': 3})
     doc.layers.new("FRAME", dxfattribs={'color': 5})
     doc.layers.new("FIT", dxfattribs={'color': 1})
-    doc.layers.new("NURBS-PYTHON", dxfattribs={'color': 6})
     msp = doc.modelspace()
     return doc, msp
 
@@ -244,24 +244,12 @@ add_control_polyline(spline)
 save(DIR / "spline_from_ellipse.dxf")
 
 # ------------------------------------------------------------------------------
-# **BROKEN** Open unclamped SPLINE by control points
+# Open unclamped SPLINE by control points
 # ------------------------------------------------------------------------------
 
 doc, msp = new_doc()
 spline = msp.add_spline(dxfattribs={'layer': 'SPLINE'})
 spline.set_uniform(points)
-
-# The B-spline algorithms in "The NURBS Book" by Piegl & Tiller seems to be
-# optimized for clamped B-splines or both ezdxf & geomdl got unclamped
-# B-spline evaluation wrong!
-#
-# Fixing this issue has not a high priority, because unclamped curves are not
-# very useful for construction work.
-#
-# check against geomdl:
-nurbs = spline.construction_tool().to_nurbs_python_curve()
-points = Vec3.list(nurbs.evaluate_list(linspace(0, 1, 100)))
-msp.add_lwpolyline(points, dxfattribs={'layer': "NURBS-PYTHON"})
 
 add_control_frame(spline)
 add_control_polyline(spline)

@@ -949,15 +949,26 @@ class BSpline:
         """
         return self._basis.weights
 
-    def step_size(self, segments: int) -> float:
-        return self.max_t / float(segments)
-
     def approximate(self, segments: int = 20) -> Iterable[Vec3]:
         """ Approximates curve by vertices as :class:`Vec3` objects, vertices
         count = segments + 1.
 
         """
         return self.evaluator.points(self.params(segments))
+
+    def params(self, segments: int) -> Iterable[float]:
+        """ Yield evenly spaced parameters from 0 to max_t for given segment
+        count.
+
+        """
+        if self.is_clamped:
+            lower_bound = 0
+            upper_bound = self.max_t
+        else:
+            knots = self.knots()
+            lower_bound = knots[self.order - 1]
+            upper_bound = knots[self.count]
+        return linspace(lower_bound, upper_bound, segments + 1)
 
     def flattening(self, distance: float,
                    segments: int = 4) -> Iterable[Vec3]:
@@ -990,7 +1001,15 @@ class BSpline:
 
         evaluator = self.evaluator
         knots = list(set(self.knots()))
-        t = 0.0
+
+        if self.is_clamped:
+            lower_bound = 0.0
+        else:
+            lower_bound = knots[self.order - 1]
+            upper_bound = knots[self.count]
+            knots = [k for k in knots if k <= upper_bound]
+
+        t = lower_bound
         start_point = evaluator.point(t)
         yield start_point
         for t1 in knots[1:]:
@@ -1003,13 +1022,6 @@ class BSpline:
                 yield from subdiv(start_point, end_point, t, next_t)
                 t = next_t
                 start_point = end_point
-
-    def params(self, segments: int) -> Iterable[float]:
-        """ Yield evenly spaced parameters from 0 to max_t for given segment
-        count.
-
-        """
-        return linspace(0, self.max_t, segments + 1)
 
     def point(self, t: float) -> Vec3:
         """ Returns point  for parameter `t`.
@@ -1263,11 +1275,14 @@ class BSplineU(BSpline):
                          weights=weights)
 
     def step_size(self, segments: int) -> float:
-        return float(self.count - self.order + 1) / segments
+        knots = self.knots()
+        upper_bound = knots[self.count]
+        lower_bound = knots[self.order - 1]
+        return float(upper_bound - lower_bound) / segments
 
     def params(self, segments: int) -> Iterable[float]:
         step = self.step_size(segments)
-        base = float(self.order - 1)
+        base = self.knots()[self.order - 1]
         for i in range(segments + 1):
             yield base + i * step
 
@@ -1471,7 +1486,7 @@ def bspline_basis_vector(u: float, count: int, degree: int,
     assert len(knots) == (count + degree + 1)
     basis = [bspline_basis(u, index, degree, knots) for index in
              range(count)]  # type: List[float]
-    if math.isclose(u, knots[
-        -1]):  # pick up last point ??? why is this necessary ???
+    # pick up last point ??? why is this necessary ???
+    if math.isclose(u, knots[-1]):
         basis[-1] = 1.
     return basis
