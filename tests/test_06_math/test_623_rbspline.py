@@ -40,7 +40,7 @@ def test_rbsplineu():
         assert isclose(epz, rpz)
 
 
-def test_rational_splines_from_circular_arc():
+def test_rational_spline_from_circular_arc_has_expected_parameters():
     arc = ConstructionArc(end_angle=90)
     spline = rational_spline_from_arc(end_angle=arc.end_angle)
     assert spline.degree == 2
@@ -62,7 +62,16 @@ def test_rational_splines_from_circular_arc():
     assert spline.control_points == s2.control_points
 
 
-def test_rational_splines_points_with_nurbs_python():
+def test_rational_spline_from_circular_arc_has_same_end_points():
+    arc = ConstructionArc(
+        start_angle=30, end_angle=330)
+    spline = rational_spline_from_arc(
+        start_angle=arc.start_angle, end_angle=arc.end_angle)
+    assert arc.start_point.isclose(spline.control_points[0])
+    assert arc.end_point.isclose(spline.control_points[-1])
+
+
+def test_rational_spline_curve_points_by_nurbs_python():
     arc = ConstructionArc(end_angle=90)
     spline = rational_spline_from_arc(end_angle=arc.end_angle)
     curve = spline.to_nurbs_python_curve()
@@ -74,7 +83,7 @@ def test_rational_splines_points_with_nurbs_python():
         assert p.isclose(e)
 
 
-def test_rational_splines_derivatives_with_nurbs_python():
+def test_rational_spline_derivatives_by_nurbs_python():
     arc = ConstructionArc(end_angle=90)
     spline = rational_spline_from_arc(end_angle=arc.end_angle)
     curve = spline.to_nurbs_python_curve()
@@ -87,7 +96,7 @@ def test_rational_splines_derivatives_with_nurbs_python():
         assert d1.isclose(ed1)
 
 
-def test_rational_spline_from_elliptic_arc():
+def test_rational_spline_from_elliptic_arc_has_expected_parameters():
     ellipse = ConstructionEllipse(
         center=(1, 1),
         major_axis=(2, 0),
@@ -113,6 +122,21 @@ def test_rational_spline_from_elliptic_arc():
     # as BSpline constructor()
     s2 = BSpline.from_ellipse(ellipse)
     assert spline.control_points == s2.control_points
+
+
+def test_rational_spline_from_elliptic_arc_has_same_end_points():
+    ellipse = ConstructionEllipse(
+        center=(1, 1),
+        major_axis=(2, 0),
+        ratio=0.5,
+        start_param=math.radians(30),
+        end_param=math.radians(330),
+    )
+    start_point = ellipse.start_point
+    end_point = ellipse.end_point
+    spline = rational_spline_from_ellipse(ellipse)
+    assert start_point.isclose(spline.control_points[0])
+    assert end_point.isclose(spline.control_points[-1])
 
 
 def test_nurbs_arc_parameter_quarter_arc_1_segment():

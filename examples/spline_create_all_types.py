@@ -1,11 +1,11 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-import os
-os.environ["EZDXF_DISABLE_C_EXT"] = "1"
+# import os; os.environ["EZDXF_DISABLE_C_EXT"] = "1"
+import math
 from pathlib import Path
 import ezdxf
 from ezdxf import zoom
-from ezdxf.math import Vec3, linspace
+from ezdxf.math import Vec3, linspace, BSpline
 
 DIR = Path('~/Desktop/outbox').expanduser()
 
@@ -17,6 +17,7 @@ closed_points.append(closed_points[0])
 def new_doc():
     doc = ezdxf.new()
     doc.layers.new("SPLINE", dxfattribs={'color': 1})
+    doc.layers.new("ENTITY", dxfattribs={'color': 4})
     doc.layers.new("EZDXF", dxfattribs={'color': 2})
     doc.layers.new("FLATTEN", dxfattribs={'color': 3})
     doc.layers.new("FRAME", dxfattribs={'color': 5})
@@ -204,6 +205,43 @@ spline = msp.add_open_spline(points, dxfattribs={'layer': 'SPLINE'})
 add_control_frame(spline)
 add_control_polyline(spline)
 save(DIR / "open_clamped_spline_by_control_points.dxf")
+
+# ------------------------------------------------------------------------------
+# Create SPLINE from ARC
+#
+# The BSpline.from_arc() method creates a rational B-spline that is a perfect
+# circular arc.
+# ------------------------------------------------------------------------------
+doc, msp = new_doc()
+arc = msp.add_arc((0, 0), radius=3, start_angle=30, end_angle=330, dxfattribs={
+    'layer': "ENTITY"
+})
+s = BSpline.from_arc(arc.construction_tool())
+spline = msp.add_spline(dxfattribs={'layer': "SPLINE"})
+spline.apply_construction_tool(s)
+
+add_control_frame(spline)
+add_control_polyline(spline)
+save(DIR / "spline_from_arc.dxf")
+
+# ------------------------------------------------------------------------------
+# Create SPLINE from ELLIPSE
+#
+# The BSpline.from_ellipse() method creates a rational B-spline that is a
+# perfect elliptic arc.
+# ------------------------------------------------------------------------------
+doc, msp = new_doc()
+ellipse = msp.add_ellipse((0, 0), major_axis=(3, 0), ratio=0.7,
+                      start_param=math.radians(30),
+                      end_param=math.radians(330),
+                      dxfattribs={'layer': "ENTITY"})
+s = BSpline.from_ellipse(ellipse.construction_tool())
+spline = msp.add_spline(dxfattribs={'layer': "SPLINE"})
+spline.apply_construction_tool(s)
+
+add_control_frame(spline)
+add_control_polyline(spline)
+save(DIR / "spline_from_ellipse.dxf")
 
 # ------------------------------------------------------------------------------
 # **BROKEN** Open unclamped SPLINE by control points

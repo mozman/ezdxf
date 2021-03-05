@@ -50,6 +50,8 @@ Version 0.16b0 - dev
 - CHANGED: `ezdxf.render.nesting` content moved into the `ezdxf.path` package
 - CHANGED: renamed `MeshBuilder.render()` to `MeshBuilder.render_mesh()`
 - CHANGED: `ezdxf.math.BSpline` is immutable, all methods return a new `BSpline` object
+- BUGFIX: fixed `ezdxf.math.rational_spline_from_ellipse()` invalid parameter 
+  conversion   
 - DEPRECATED: `ezdxf.render.path` module, replaced by `ezdxf.path` package
 - DEPRECATED: `Path.from_lwpolyline()`, replaced by factory `path.make_path()`
 - DEPRECATED: `Path.from_polyline()`, replaced by factory `path.make_path()`

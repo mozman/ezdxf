@@ -25,7 +25,7 @@ from ezdxf.math import (
     estimate_end_tangent_magnitude, estimate_tangents,
     LUDecomposition, Matrix, BandedMatrixLU, compact_banded_matrix,
     detect_banded_matrix, quadratic_equation,
-    linspace, distance_point_line_3d,
+    linspace, distance_point_line_3d, arc_angle_span_deg,
 )
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf import PYPY
@@ -1306,12 +1306,13 @@ def rational_spline_from_arc(
     """
     center = Vec3(center)
     radius = float(radius)
-    start_angle = math.radians(start_angle) % math.tau
-    end_angle = math.radians(end_angle) % math.tau
-    if end_angle == 0:
-        end_angle = math.tau
-    control_points, weights, knots = nurbs_arc_parameters(start_angle,
-                                                          end_angle, segments)
+
+    start_rad = math.radians(start_angle % 360)
+    end_rad = start_rad + math.radians(
+        arc_angle_span_deg(start_angle, end_angle)
+    )
+    control_points, weights, knots = nurbs_arc_parameters(
+        start_rad, end_rad, segments)
     return BSpline(
         control_points=(center + (p * radius) for p in control_points),
         weights=weights,
@@ -1334,9 +1335,8 @@ def rational_spline_from_ellipse(ellipse: 'ConstructionEllipse',
             quarter (π/2), default is 1, for as few as needed.
 
     """
-    from ezdxf.math import param_to_angle
-    start_angle = param_to_angle(ellipse.ratio, ellipse.start_param) % math.tau
-    end_angle = param_to_angle(ellipse.ratio, ellipse.end_param) % math.tau
+    start_angle = ellipse.start_param % math.tau
+    end_angle = start_angle + ellipse.param_span
 
     def transform_control_points() -> Iterable[Vec3]:
         center = Vec3(ellipse.center)
