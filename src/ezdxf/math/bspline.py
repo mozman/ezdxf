@@ -45,11 +45,12 @@ USE_BANDED_MATRIX_SOLVER_PYPY_LIMIT = 60
 __all__ = [
     # High level functions:
     'fit_points_to_cad_cv', 'global_bspline_interpolation',
-    'local_cubic_bspline_interpolation', 'rational_spline_from_arc',
-    'rational_spline_from_ellipse', 'fit_points_to_cubic_bezier',
+    'local_cubic_bspline_interpolation', 'rational_bspline_from_arc',
+    'rational_bspline_from_ellipse', 'fit_points_to_cubic_bezier',
+    'open_uniform_bspline', 'closed_uniform_bspline',
 
-    # B-spline representation without derivatives support:
-    'BSpline', 'BSplineU', 'BSplineClosed',
+    # B-spline representation with derivatives support:
+    'BSpline',
 
     # Low level interpolation function:
     'unconstrained_global_bspline_interpolation',
@@ -71,9 +72,8 @@ __all__ = [
 def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
                          tangents: Iterable['Vertex'] = None,
                          estimate: str = '5-p') -> 'BSpline':
-    """ Returns the control vertices and knot vector configuration for DXF
-    SPLINE entities defined only by fit points as close as possible to common
-    CAD applications like BricsCAD.
+    """ Returns a cubic :class:`BSpline` from fit points as close as possible
+    to common CAD applications like BricsCAD.
 
     There exist infinite numerical correct solution for this setup, but some
     facts are known:
@@ -114,9 +114,6 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
         tangents: start- and end tangent, default is autodetect
         estimate: tangent direction estimation method
 
-    Returns:
-        :class:`BSpline`
-
     .. versionchanged:: 0.16
         removed unused arguments `degree` and `method`
 
@@ -146,9 +143,8 @@ def fit_points_to_cad_cv(fit_points: Iterable['Vertex'],
 
 
 def fit_points_to_cubic_bezier(fit_points: Iterable['Vertex']) -> 'BSpline':
-    """ Returns the control vertices and knot vector configuration for DXF
-    SPLINE entities defined only by fit points **without** end tangents as close
-    as possible to common CAD applications like BricsCAD.
+    """ Returns a cubic :class:`BSpline` from fit points **without** end
+    tangents.
 
     This function uses the cubic Bèzier interpolation to create multiple Bèzier
     curves and combine them into a single B-spline, this works for short simple
@@ -157,9 +153,6 @@ def fit_points_to_cubic_bezier(fit_points: Iterable['Vertex']) -> 'BSpline':
 
     Args:
         fit_points: points the spline is passing through
-
-    Returns:
-        :class:`BSpline`
 
     .. versionadded:: 0.16
 
@@ -780,8 +773,19 @@ def local_cubic_bspline_interpolation_from_tangents(
 
 
 class BSpline:
-    """ Representation of a `B-spline`_ curve, using an uniform open `knot`_
-    vector ("clamped").
+    """ Representation of a `B-spline`_ curve. The default configuration of
+    the knot vector is an uniform open `knot`_ vector ("clamped").
+
+    Factory functions:
+
+        - :func:`fit_points_to_cad_cv`
+        - :func:`fit_points_to_cubic_bezier`
+        - :func:`open_uniform_bspline`
+        - :func:`closed_uniform_bspline`
+        - :func:`rational_bspline_from_arc`
+        - :func:`rational_bspline_from_ellipse`
+        - :func:`global_bspline_interpolation`
+        - :func:`local_cubic_bspline_interpolation`
 
     Args:
         control_points: iterable of control points as :class:`Vec3` compatible
@@ -892,7 +896,7 @@ class BSpline:
         control points as possible.
 
         """
-        return rational_spline_from_ellipse(ellipse, segments=1)
+        return rational_bspline_from_ellipse(ellipse, segments=1)
 
     @staticmethod
     def from_arc(arc: 'ConstructionArc') -> 'BSpline':
@@ -900,8 +904,8 @@ class BSpline:
         points as possible.
 
         """
-        return rational_spline_from_arc(arc.center, arc.radius, arc.start_angle,
-                                        arc.end_angle, segments=1)
+        return rational_bspline_from_arc(arc.center, arc.radius, arc.start_angle,
+                                         arc.end_angle, segments=1)
 
     @staticmethod
     def from_nurbs_python_curve(curve) -> 'BSpline':
@@ -1255,50 +1259,47 @@ def subdivide_params(p: List[float]) -> Iterable[float]:
     yield p[-1]
 
 
-class BSplineU(BSpline):
-    """ Representation of an uniform (periodic) `B-spline`_ curve (`open curve`_).
+def open_uniform_bspline(control_points: Iterable['Vertex'], order: int = 4,
+                         weights: Iterable[float] = None) -> BSpline:
+    """ Creates an open uniform (periodic) `B-spline`_ curve (`open curve`_).
+
+    This is an unclamped curve, which means the curve passes none of the
+    control points.
+
+    Args:
+        control_points: iterable of control points as :class:`Vec3` compatible
+            objects
+        order: spline order (degree + 1)
+        weights: iterable of weight values
+
     """
-
-    def __init__(self, control_points: Iterable['Vertex'],
-                 order: int = 4,
-                 knots: Iterable[float] = None,  # just for consistent interface
-                 weights: Iterable[float] = None):
-        control_points = list(control_points)
-        knots = uniform_knot_vector(len(control_points), order, normalize=False)
-        super().__init__(control_points, order=order, knots=knots,
-                         weights=weights)
-
-    def step_size(self, segments: int) -> float:
-        knots = self.knots()
-        upper_bound = knots[self.count]
-        lower_bound = knots[self.order - 1]
-        return float(upper_bound - lower_bound) / segments
-
-    def params(self, segments: int) -> Iterable[float]:
-        step = self.step_size(segments)
-        base = self.knots()[self.order - 1]
-        for i in range(segments + 1):
-            yield base + i * step
+    control_points = Vec3.tuple(control_points)
+    knots = uniform_knot_vector(len(control_points), order, normalize=False)
+    return BSpline(control_points, order=order, knots=knots, weights=weights)
 
 
-class BSplineClosed(BSplineU):
-    """ Representation of a closed uniform `B-spline`_ curve (`closed curve`_).
+def closed_uniform_bspline(control_points: Iterable['Vertex'], order: int = 4,
+                           weights: Iterable[float] = None) -> BSpline:
+    """ Creates an closed uniform (periodic) `B-spline`_ curve (`open curve`_).
+
+    This B-spline does not pass any of the control points.
+
+    Args:
+        control_points: iterable of control points as :class:`Vec3` compatible
+            objects
+        order: spline order (degree + 1)
+        weights: iterable of weight values
+
     """
-
-    def __init__(self, control_points: Iterable['Vertex'],
-                 order: int = 4,
-                 knots: Iterable[float] = None,  # just for consistent interface
-                 weights: Iterable[float] = None):
-        # control points wrap around
-        points = list(control_points)
-        points.extend(points[:order - 1])
-        if weights is not None:
-            weights = list(weights)
-            weights.extend(weights[:order - 1])
-        super().__init__(points, order=order, knots=None, weights=weights)
+    control_points = Vec3.list(control_points)
+    control_points.extend(control_points[:order - 1])
+    if weights is not None:
+        weights = list(weights)
+        weights.extend(weights[:order - 1])
+    return open_uniform_bspline(control_points, order, weights)
 
 
-def rational_spline_from_arc(
+def rational_bspline_from_arc(
         center: Vec3 = (0, 0), radius: float = 1, start_angle: float = 0,
         end_angle: float = 360,
         segments: int = 1) -> BSpline:
@@ -1333,8 +1334,8 @@ def rational_spline_from_arc(
 PI_2 = math.pi / 2.0
 
 
-def rational_spline_from_ellipse(ellipse: 'ConstructionEllipse',
-                                 segments: int = 1) -> BSpline:
+def rational_bspline_from_ellipse(ellipse: 'ConstructionEllipse',
+                                  segments: int = 1) -> BSpline:
     """ Returns a rational B-splines for an elliptic arc.
 
     Args:
@@ -1436,7 +1437,7 @@ def bspline_basis(u: float, index: int, degree: int,
         float: basis_vector value N_i,p(u)
 
     """
-    cache = {}  # type: Dict[Tuple[int, int], float]
+    cache: Dict[Tuple[int, int], float] = {}
     u = float(u)
 
     def N(i: int, p: int) -> float:

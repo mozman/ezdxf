@@ -100,7 +100,7 @@ Vertex 70=0, Vertex 70=1, Vertex 70=0, Vertex 70=1
 """
 from typing import TYPE_CHECKING, Iterable, List
 from ezdxf.lldxf import const
-from ezdxf.math import BSpline, BSplineClosed
+from ezdxf.math import BSpline, closed_uniform_bspline
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout, Polyline
@@ -155,7 +155,8 @@ class R12Spline:
 
         """
         if self.closed:
-            spline = BSplineClosed(self.control_points, order=self.degree + 1)
+            spline = closed_uniform_bspline(
+                self.control_points, order=self.degree + 1)
         else:
             spline = BSpline(self.control_points, order=self.degree + 1)
         vertices = spline.approximate(segments)

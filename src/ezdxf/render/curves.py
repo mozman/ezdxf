@@ -5,7 +5,8 @@ import random
 import math
 from ezdxf.math import (
     Vec3, Vec2, Matrix44, perlin, Bezier4P, global_bspline_interpolation,
-    BSpline, BSplineU, BSplineClosed, EulerSpiral as _EulerSpiral
+    BSpline, open_uniform_bspline, closed_uniform_bspline,
+    EulerSpiral as _EulerSpiral
 )
 
 if TYPE_CHECKING:
@@ -286,7 +287,7 @@ class Spline:
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
         """
-        spline = BSplineU(self.points, order=degree + 1)
+        spline = open_uniform_bspline(self.points, order=degree + 1)
         layout.add_polyline3d(list(spline.approximate(self.segments)),
                               dxfattribs=dxfattribs)
 
@@ -301,7 +302,7 @@ class Spline:
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
         """
-        spline = BSplineClosed(self.points, order=degree + 1)
+        spline = closed_uniform_bspline(self.points, order=degree + 1)
         layout.add_polyline3d(list(spline.approximate(self.segments)),
                               dxfattribs=dxfattribs)
 
@@ -337,7 +338,8 @@ class Spline:
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
         """
-        spline = BSplineU(self.points, order=degree + 1, weights=weights)
+        spline = closed_uniform_bspline(
+            self.points, order=degree + 1, weights=weights)
         layout.add_polyline3d(list(spline.approximate(self.segments)),
                               dxfattribs=dxfattribs)
 
@@ -355,7 +357,8 @@ class Spline:
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
         """
-        spline = BSplineClosed(self.points, order=degree + 1, weights=weights)
+        spline = closed_uniform_bspline(
+            self.points, order=degree + 1, weights=weights)
         layout.add_polyline3d(list(spline.approximate(self.segments)),
                               dxfattribs=dxfattribs)
 

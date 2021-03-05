@@ -118,9 +118,13 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: local_cubic_bspline_interpolation(fit_points: Iterable[Vertex], method: str = '5-points', tangents :Iterable[Vertex] = None) -> BSpline
 
-.. autofunction:: rational_spline_from_arc(center: Vec3 = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> BSpline
+.. autofunction:: rational_bspline_from_arc(center: Vec3 = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> BSpline
 
-.. autofunction:: rational_spline_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> BSpline
+.. autofunction:: rational_bspline_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> BSpline
+
+.. autofunction:: open_uniform_bspline(control_points: Iterable[Vertex], order: int = 4, weights: Iterable[float] = None) -> BSpline
+
+.. autofunction:: closed_uniform_bspline(control_points: Iterable[Vertex], order: int = 4, weights: Iterable[float] = None) -> BSpline
 
 .. autofunction:: cubic_bezier_from_arc(center: Vec3 = (0, 0), radius:float=1, start_angle: float = 0, end_angle: float = 360, segments: int = 1) -> Iterable[Bezier4P]
 

@@ -4,8 +4,8 @@
 import math
 from math import isclose
 from ezdxf.math import (
-    rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse,
-    ConstructionArc, linspace, BSpline, BSplineU,
+    rational_bspline_from_arc, rational_bspline_from_ellipse, ConstructionEllipse,
+    ConstructionArc, linspace, BSpline, open_uniform_bspline,
 )
 from ezdxf.math.bspline import nurbs_arc_parameters, required_knot_values
 
@@ -28,7 +28,7 @@ def test_rbspline():
 
 
 def test_rbsplineu():
-    curve = BSplineU(DEFPOINTS, order=3, weights=DEFWEIGHTS)
+    curve = open_uniform_bspline(DEFPOINTS, order=3, weights=DEFWEIGHTS)
     expected = RBSPLINEU
     points = list(curve.approximate(40))
 
@@ -42,7 +42,7 @@ def test_rbsplineu():
 
 def test_rational_spline_from_circular_arc_has_expected_parameters():
     arc = ConstructionArc(end_angle=90)
-    spline = rational_spline_from_arc(end_angle=arc.end_angle)
+    spline = rational_bspline_from_arc(end_angle=arc.end_angle)
     assert spline.degree == 2
 
     cpoints = spline.control_points
@@ -65,7 +65,7 @@ def test_rational_spline_from_circular_arc_has_expected_parameters():
 def test_rational_spline_from_circular_arc_has_same_end_points():
     arc = ConstructionArc(
         start_angle=30, end_angle=330)
-    spline = rational_spline_from_arc(
+    spline = rational_bspline_from_arc(
         start_angle=arc.start_angle, end_angle=arc.end_angle)
     assert arc.start_point.isclose(spline.control_points[0])
     assert arc.end_point.isclose(spline.control_points[-1])
@@ -73,7 +73,7 @@ def test_rational_spline_from_circular_arc_has_same_end_points():
 
 def test_rational_spline_curve_points_by_nurbs_python():
     arc = ConstructionArc(end_angle=90)
-    spline = rational_spline_from_arc(end_angle=arc.end_angle)
+    spline = rational_bspline_from_arc(end_angle=arc.end_angle)
     curve = spline.to_nurbs_python_curve()
 
     t = list(linspace(0, 1, 10))
@@ -85,7 +85,7 @@ def test_rational_spline_curve_points_by_nurbs_python():
 
 def test_rational_spline_derivatives_by_nurbs_python():
     arc = ConstructionArc(end_angle=90)
-    spline = rational_spline_from_arc(end_angle=arc.end_angle)
+    spline = rational_bspline_from_arc(end_angle=arc.end_angle)
     curve = spline.to_nurbs_python_curve()
 
     t = list(linspace(0, 1, 10))
@@ -104,7 +104,7 @@ def test_rational_spline_from_elliptic_arc_has_expected_parameters():
         start_param=0,
         end_param=math.pi / 2,
     )
-    spline = rational_spline_from_ellipse(ellipse)
+    spline = rational_bspline_from_ellipse(ellipse)
     assert spline.degree == 2
 
     cpoints = spline.control_points
@@ -134,7 +134,7 @@ def test_rational_spline_from_elliptic_arc_has_same_end_points():
     )
     start_point = ellipse.start_point
     end_point = ellipse.end_point
-    spline = rational_spline_from_ellipse(ellipse)
+    spline = rational_bspline_from_ellipse(ellipse)
     assert start_point.isclose(spline.control_points[0])
     assert end_point.isclose(spline.control_points[-1])
 

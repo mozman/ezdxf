@@ -50,7 +50,11 @@ Version 0.16b0 - dev
 - CHANGED: `ezdxf.render.nesting` content moved into the `ezdxf.path` package
 - CHANGED: renamed `MeshBuilder.render()` to `MeshBuilder.render_mesh()`
 - CHANGED: `ezdxf.math.BSpline` is immutable, all methods return a new `BSpline` object
-- BUGFIX: fixed `ezdxf.math.rational_spline_from_ellipse()` invalid parameter 
+- CHANGED: replaced `BSplineU()` class by factory function `ezdxf.math.open_uniform_bspline()` 
+- CHANGED: replaced `BSplineClosed()` class by factory function `ezdxf.math.closed_uniform_bspline()` 
+- CHANGED: renamed `rational_spline_from_arc()` to `rational_bspline_from_arc()` 
+- CHANGED: renamed `rational_spline_from_ellipse()` to `rational_bspline_from_ellipse()` 
+- BUGFIX: fixed `ezdxf.math.rational_bspline_from_ellipse()` invalid parameter 
   conversion   
 - DEPRECATED: `ezdxf.render.path` module, replaced by `ezdxf.path` package
 - DEPRECATED: `Path.from_lwpolyline()`, replaced by factory `path.make_path()`
@@ -360,8 +364,8 @@ Version 0.13 - 2020-07-04
 - NEW: `ezdxf.math.global_bspline_interpolation()` supports start- and end tangent constraints
 - NEW: `ezdxf.math.estimate_tangents()` curve tangent estimator for given fit points
 - NEW: `ezdxf.math.estimate_end_tangent_magnitude()` curve end tangent magnitude estimator for given fit points
-- NEW: `ezdxf.math.rational_spline_from_arc()` returns a rational B-spline for a circular arc
-- NEW: `ezdxf.math.rational_spline_from_ellipse()` returns a rational B-spline for an elliptic arc
+- NEW: `ezdxf.math.rational_bspline_from_arc()` returns a rational B-spline for a circular arc
+- NEW: `ezdxf.math.rational_bspline_from_ellipse()` returns a rational B-spline for an elliptic arc
 - NEW: `ezdxf.math.local_cubic_bspline_interpolation()`
 - NEW: `ezdxf.math.cubic_bezier_from_arc()` returns an approximation for a circular 2D arc by multiple cubic Bezier curves
 - NEW: `ezdxf.math.cubic_bezier_from_ellipse()` returns an approximation for an elliptic arc by multiple cubic Bezier curves

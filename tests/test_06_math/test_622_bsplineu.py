@@ -2,14 +2,14 @@
 # License: MIT License
 import pytest
 from math import isclose
-from ezdxf.math import BSplineU
+from ezdxf.math import open_uniform_bspline
 
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 
 
 def test_bsplineu_points():
-    curve = BSplineU(DEFPOINTS, order=3)
+    curve = open_uniform_bspline(DEFPOINTS, order=3)
     points = list(curve.approximate(40))
 
     for rpoint, epoint in zip(points, iter_points(DBSPLINEU, 0)):
@@ -22,7 +22,7 @@ def test_bsplineu_points():
 
 @pytest.fixture
 def dbsplineu():
-    curve = BSplineU(DEFPOINTS, order=3)
+    curve = open_uniform_bspline(DEFPOINTS, order=3)
     return list(curve.derivatives(curve.params(40)))
 
 
