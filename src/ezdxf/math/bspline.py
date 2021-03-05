@@ -807,7 +807,7 @@ class BSpline:
         if knots is None:
             knots = open_uniform_knot_vector(count, order, normalize=True)
         else:
-            knots = list(knots)
+            knots = tuple(knots)
             required_knot_count = count + order
             if len(knots) != required_knot_count:
                 raise ValueError(
@@ -932,7 +932,7 @@ class BSpline:
             control_points=reversed(self.control_points),
             order=self.order,
             knots=reverse_knots(),
-            weights=list(reversed(self.weights())),
+            weights=reversed(self.weights()) if self.is_rational else None,
         )
 
     def knots(self) -> Tuple[float, ...]:
