@@ -958,17 +958,11 @@ class BSpline:
         return self.evaluator.points(self.params(segments))
 
     def params(self, segments: int) -> Iterable[float]:
-        """ Yield evenly spaced parameters from 0 to max_t for given segment
-        count.
-
-        """
-        if self.is_clamped:
-            lower_bound = 0
-            upper_bound = self.max_t
-        else:
-            knots = self.knots()
-            lower_bound = knots[self.order - 1]
-            upper_bound = knots[self.count]
+        """ Yield evenly spaced parameters for given segment count. """
+        # works for clamped and unclamped curves
+        knots = self.knots()
+        lower_bound = knots[self.order - 1]
+        upper_bound = knots[self.count]
         return linspace(lower_bound, upper_bound, segments + 1)
 
     def flattening(self, distance: float,
@@ -1001,15 +995,14 @@ class BSpline:
                 yield from subdiv(m, e, mid_t, end_t)
 
         evaluator = self.evaluator
-        knots = list(set(self.knots()))
-
+        knots = self.knots()
         if self.is_clamped:
             lower_bound = 0.0
         else:
             lower_bound = knots[self.order - 1]
-            upper_bound = knots[self.count]
-            knots = [k for k in knots if k <= upper_bound]
+            knots = knots[:self.count + 1]
 
+        knots = list(set(knots))  # set() must preserve order!
         t = lower_bound
         start_point = evaluator.point(t)
         yield start_point
