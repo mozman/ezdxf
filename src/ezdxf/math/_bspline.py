@@ -3,7 +3,7 @@
 #
 # Pure Python implementation of the B-spline basis function.
 
-from typing import List, Iterable, Sequence
+from typing import List, Iterable, Sequence, Tuple
 import math
 import bisect
 from array import array
@@ -46,12 +46,12 @@ class Basis:
         return self._order - 1
 
     @property
-    def knots(self) -> List[float]:
-        return list(self._knots)  # do not return mutable array!
+    def knots(self) -> Tuple[float, ...]:
+        return tuple(self._knots)
 
     @property
-    def weights(self) -> List[float]:
-        return list(self._weights)  # do not return mutable array!
+    def weights(self) -> Tuple[float, ...]:
+        return tuple(self._weights)
 
     @property
     def is_rational(self) -> bool:

@@ -4,7 +4,7 @@
 # License: MIT License
 # Cython implementation of the B-spline basis function.
 
-from typing import List, Iterable, Sequence
+from typing import List, Iterable, Sequence, Tuple
 import cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from .vector cimport Vec3, isclose, v3_mul, v3_sub, v3_from_cpp_vec3
@@ -56,12 +56,14 @@ cdef reset_double_array(double *a, int count, double value=0.0):
 
 cdef class Basis:
     """ Immutable Basis function class. """
+    # public:
     cdef readonly int order
     cdef readonly int count
-    cdef readonly int knot_count
     cdef readonly double max_t
-    cdef list weights_  # public attribute for Cython Evaluator
-    cdef double*_knots  # really private
+    cdef tuple weights_  # public attribute for Cython Evaluator
+    # private:
+    cdef double*_knots
+    cdef int knot_count
 
     def __cinit__(self, knots: Iterable[float], int order, int count,
                   weights: Sequence[float] = None):
@@ -72,7 +74,7 @@ cdef class Basis:
             raise ValueError('invalid count')
         self.count = count
         self.knot_count = self.order + self.count
-        self.weights_ = [float(x) for x in weights] if weights else []
+        self.weights_ = tuple(float(x) for x in weights) if weights else tuple()
 
         cdef Py_ssize_t i = len(self.weights_)
         if i != 0 and i != self.count:
@@ -95,12 +97,12 @@ cdef class Basis:
         return self.order - 1
 
     @property
-    def knots(self) -> List[float]:
-        return [x for x in self._knots[:self.knot_count]]
+    def knots(self) -> Tuple[float, ...]:
+        return tuple(x for x in self._knots[:self.knot_count])
 
     @property
-    def weights(self) -> List[float]:
-        return list(self.weights_)  # do not return mutable array!
+    def weights(self) -> Tuple[float, ...]:
+        return self.weights_
 
     @property
     def is_rational(self) -> bool:
@@ -317,7 +319,8 @@ cdef class Evaluator:
         # Source: The NURBS Book: Algorithm A3.2
         cdef Vec3 vec3sum
         cdef CppVec3 cppsum
-        cdef list CK = [], CKw = [], wders = [], weights
+        cdef list CK = [], CKw = [], wders = []
+        cdef tuple weights
         cdef Basis basis = self._basis
         if isclose(u, basis.max_t, ABS_TOL):
             u = basis.max_t

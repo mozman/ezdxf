@@ -935,19 +935,19 @@ class BSpline:
             weights=list(reversed(self.weights())),
         )
 
-    def knots(self) -> List[float]:
-        """ Returns a list of `knot`_ values as floats, the knot vector
+    def knots(self) -> Tuple[float, ...]:
+        """ Returns a tuple of `knot`_ values as floats, the knot vector
         **always** has order + count values (n + p + 2 in text book notation).
 
         """
-        return self._basis.knots  # a new list!
+        return self._basis.knots
 
-    def weights(self) -> List[float]:
-        """ Returns a list of weights values as floats, one for each control
-        point or an empty list.
+    def weights(self) -> Tuple[float, ...]:
+        """ Returns a tuple of weights values as floats, one for each control
+        point or an empty tuple.
 
         """
-        return self._basis.weights  # a new list!
+        return self._basis.weights
 
     def step_size(self, segments: int) -> float:
         return self.max_t / float(segments)
@@ -1072,7 +1072,7 @@ class BSpline:
         if self._basis.is_rational:
             raise TypeError('Rational B-splines not supported.')
 
-        knots = self._basis.knots  # a copy
+        knots = list(self._basis.knots)
         cpoints = list(self._control_points)
         p = self.degree
 

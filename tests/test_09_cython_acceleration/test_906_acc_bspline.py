@@ -11,7 +11,7 @@ from ezdxf.math import linspace, Vec3
 
 COUNT = 10
 ORDER = 4
-KNOTS = list(range(COUNT + ORDER))
+KNOTS = tuple(range(COUNT + ORDER))
 WEIGHTS = [1.0, 0.7, 0.6, 0.5, 0.5, 0.5, 0.5, 0.6, 0.7, 1.0]
 POINTS = [
     Vec3(0.181, 0.753, 0.15),

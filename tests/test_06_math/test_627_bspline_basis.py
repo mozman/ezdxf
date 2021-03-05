@@ -19,7 +19,7 @@ def basis_cls(request):
 
 
 def make_knots(count, degree):
-    return list(open_uniform_knot_vector(count, order=degree + 1))
+    return tuple(open_uniform_knot_vector(count, order=degree + 1))
 
 
 def make_basic_func(count, degree, cls):
@@ -36,7 +36,7 @@ def test_property_exists(basis_cls):
     assert basis_func.order == degree + 1
     assert basis_func.max_t == max(knots)
     assert basis_func.knots == knots
-    assert basis_func.weights == []
+    assert basis_func.weights == tuple()
     assert basis_func.is_rational is False
 
 

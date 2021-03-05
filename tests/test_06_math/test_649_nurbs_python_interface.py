@@ -46,7 +46,7 @@ def test_from_ezdxf_bspline_to_nurbs_python_curve_rational():
     assert spline.degree == 2
     assert len(spline.control_points) == 3
     assert len(spline.knots()) == 6  # count + order
-    assert spline.weights() == [1.0, 0.7071067811865476, 1.0]
+    assert spline.weights() == (1.0, 0.7071067811865476, 1.0)
 
 
 if __name__ == '__main__':
