@@ -28,9 +28,12 @@ class Rect(tl.ContentRenderer):
     def __init__(self, name: str):
         self.name = name
 
-    def render(self, left: float, bottom: float, right: float, top: float,
-               m=None):
+    def render(self, left: float, bottom: float, right: float,
+               top: float, m=None):
         return f"{self.name}({left:.1f}, {bottom:.1f}, {right:.1f}, {top:.1f})"
+
+    def line(self, x1: float, y1: float, x2: float, y2: float, m=None):
+        return f"LINE({x1:.1f}, {y1:.1f})TO({x2:.1f}, {y2:.1f})"
 
 
 @pytest.fixture

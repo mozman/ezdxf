@@ -268,7 +268,32 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # \k	Stop strike-through
 # \P	New paragraph (new line)
 # \N	New column
-# \pxi	Control codes for bullets, numbered paragraphs and columns
+# \pxi	Control codes for bullets, numbered paragraphs and columns, settings are
+#       valid for the current paragraph, new paragraph is encoded as "^P".
+#
+# \pxql - align text in paragraph: left
+# \pxqr - align text in paragraph: right
+# \pxqc - align text in paragraph: center
+# \pxqj - align text in paragraph: justified
+# \pxqd - align text in paragraph: distributed
+#
+# /pix,ly; paragraph indent
+#       first line relative to body:
+#         first line
+#       second line
+#       - /pi2,l0; = first line 2 body 0
+#
+#       first line
+#         second line
+#       - /pi-2,l2; = first line -2 body 2
+#
+#         first line
+#         second line
+#       - /pi0,l2; = first line 0 body 2
+#
+# \pi0,l0,xt1[,2,...] or \pi1,t[5,20,...]
+#       define tab stops as comma separated list, tabs are encoded as "^I"
+#
 # \X	Paragraph wrap on the dimension line (only in dimensions)
 # \Q	Slanting (oblique) text by angle - e.g. \Q30;
 # \H	Text height - e.g. \H3x;
@@ -291,7 +316,7 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 #     e.g. \S1#4:
 #     1/4
 #
-# \A	Alignment
+# \A	Alignment relative to current line
 #
 #     \A0; = bottom
 #     \A1; = center
@@ -306,13 +331,27 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 #     \C5; = blue
 #     \C6; = magenta
 #     \C7; = white
+#     RGB color = \c7528479  = 31,224,114 ???
+#     ezdxf.rgb2int((31,224,114)) = 2089074 (r,g,b)
+#     ezdxf.rgb2int((114,224,31)) = 7528479 (b,g,r)
 #
 # \T	Tracking, char.spacing - e.g. \T2;
 # \~	Non-wrapping space, hard space
 # {}	Braces - define the text area influenced by the code
+#       Multiple codes after the opening brace are valid until the closing
+#       brace.  e.g. {\H0.4x;\A1;small centered text}
 # \	Escape character - e.g. \\ = "\", \{ = "{"
 #
 # Codes and braces can be nested up to 8 levels deep
+#
+# Column types in BricsCAD:
+#   - dynamic (auto height) - all columns have the same height
+#   - dynamic (manual height) - each columns has an individual height
+#   - no columns
+#   - static (?)
+#
+# - All columns have the same width and gutter.
+# - Paragraphs do overflow into the next column if required.
 
 def plain_mtext(text: str, split=False) -> Union[List[str], str]:
     chars = []

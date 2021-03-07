@@ -7,8 +7,8 @@ from ezdxf.math import Matrix44
 
 class ContentRenderer(abc.ABC):
     @abc.abstractmethod
-    def render(self, left: float, bottom: float, right: float, top: float,
-               m: Matrix44 = None):
+    def render(self, left: float, bottom: float, right: float,
+               top: float, m: Matrix44 = None):
         """ Render content into the given borders (lower left and upper right
         corners).
 
@@ -20,6 +20,12 @@ class ContentRenderer(abc.ABC):
             m: transformation Matrix44
 
         """
+        pass
+
+    @abc.abstractmethod
+    def line(self, x1: float, y1: float, x2: float, y2: float,
+             m: Matrix44 = None):
+        """ Draw a line from (x1, y1) to (x2, y2). """
         pass
 
 
@@ -39,7 +45,7 @@ def resolve_margins(margins: Optional[Sequence[float]]) -> Tuple4f:
         return margins[0], margins[1], margins[2], margins[1]
     elif count == 2:  # CSS: top, right, bottom=top, left=right
         return margins[0], margins[1], margins[0], margins[1]
-    elif count == 1: # CSS: top, right=top, bottom=top, left=top
+    elif count == 1:  # CSS: top, right=top, bottom=top, left=top
         return margins[0], margins[0], margins[0], margins[0]
 
 
