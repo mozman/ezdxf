@@ -39,7 +39,7 @@ class Rect(tl.ContentRenderer):
 @pytest.fixture
 def layout1():
     return tl.Layout(width=10, height=None, margins=(1, 1),
-                     content=Rect('Layout1'))
+                     render=Rect('Layout1'))
 
 
 def test_create_empty_layout_top_left(layout1):

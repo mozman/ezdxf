@@ -78,10 +78,76 @@ def insert_location(align: int, width: float, height: float) -> Tuple2f:
 
 
 class Box(abc.ABC):
+
+    @property
+    @abc.abstractmethod
+    def total_width(self) -> float:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def total_height(self) -> float:
+        pass
+
+    @abc.abstractmethod
+    def render(self, x: float = 0, y: float = 0,
+               m: Matrix44 = None) -> Iterable:
+        pass
+
+
+class Cell(Box):  # ABC
+    def __init__(self, width: float,
+                 height: float,
+                 renderer: ContentRenderer):
+        self._width = width
+        self._height = height
+        self._renderer = renderer
+
+    @property
+    def total_width(self) -> float:
+        return self._width
+
+    @property
+    def total_height(self) -> float:
+        return self._height
+
+    def render(self, x: float = 0, y: float = 0,
+               m: Matrix44 = None) -> Iterable:
+        """ (x, y) is the top/left corner """
+        yield from self._renderer.render(
+            left=x, bottom=y - self.total_height,
+            right=x + self.total_width, top=y, m=m)
+
+
+class Glue(Cell):  # ABC
+    pass
+
+
+class Space(Glue):
+    pass
+
+
+class Tab(Glue):
+    pass
+
+
+class NonBreakingSpace(Glue):
+    pass
+
+
+class Text(Cell):
+    pass
+
+
+class Fraction(Cell):
+    pass
+
+
+class Container(Box):
     def __init__(self, width: float,
                  height: float = None,
                  margins: Sequence[float] = None,
-                 content: ContentRenderer = None):
+                 render: ContentRenderer = None):
         # content total_width is None for: defined by content
         self._content_width = width
 
@@ -92,7 +158,11 @@ class Box(abc.ABC):
         self._margins = resolve_margins(margins)
 
         # content renderer is optional:
-        self._content: Optional = content
+        self._render: Optional = render
+
+    @abc.abstractmethod
+    def __iter__(self):
+        pass
 
     @property
     def top_margin(self) -> float:
@@ -132,30 +202,117 @@ class Box(abc.ABC):
     def total_height(self) -> float:
         return self.content_height + self.top_margin + self.bottom_margin
 
-    @abc.abstractmethod
     def render(self, x: float = 0, y: float = 0,
                m: Matrix44 = None) -> Iterable:
+        """ Render container content.
+
+        (x, y) is the top/left corner
+
+        """
+        if self._render:
+            yield self.render_background(x, y, m)
+
+        x += self.left_margin
+        y -= self.top_margin
+        self.render_content(x, y, m)
+
+    @abc.abstractmethod
+    def render_content(self, x: float = 0, y: float = 0,
+                       m: Matrix44 = None) -> Iterable:
         pass
 
     def render_background(self, x: float, y: float, m: Matrix44):
+        """ (x, y) is the top/left corner """
         # Render content background inclusive margins!
-        if self._content:
-            return self._content.render(
+        if self._render:
+            return self._render.render(
                 left=x, bottom=y - self.total_height,
-                right=x + self.total_width, top=y, m=m)
+                top=y, right=x + self.total_width, m=m)
         return None
 
 
-class Column(Box):
+class VContainer(Container, abc.ABC):
+    def render_content(self, x: float = 0, y: float = 0,
+                       m: Matrix44 = None) -> Iterable:
+        """ Top to bottom content rendering.
+
+        (x, y) is the top/left corner
+
+        """
+        for entity in self:
+            yield from entity.render(x, y, m)
+            y -= entity.total_height
+
+
+class HContainer(Container, abc.ABC):
+    def render_content(self, x: float = 0, y: float = 0,
+                       m: Matrix44 = None) -> Iterable:
+        """ Left to right content rendering.
+
+        (x, y) is the top/left corner
+
+        """
+        for entity in self:
+            yield from entity.render(x, y, m)
+            x += entity.total_width
+
+
+class Line(HContainer):
+    def __init__(self, width: float,
+                 align: int = 0,
+                 margins: Sequence[float] = None,
+                 render: ContentRenderer = None):
+        super().__init__(width, None, margins, render)
+        self._align = align
+        self._cells: List[Cell] = []
+
+    def __iter__(self):
+        return iter(self._cells)
+
+
+class Paragraph(VContainer):
+    def __init__(self, width: float,
+                 align: int = 0,
+                 indent: Tuple[float, float, float] = None,
+                 tab_stops: Sequence[float] = None,
+                 margins: Sequence[float] = None,
+                 render: ContentRenderer = None):
+        super().__init__(width, None, margins, render)
+        self._align = int(align)
+        if not (0 <= self._align < 5):
+            raise ValueError("invalid paragraph alignment (0-4)")
+        first, left, right = indent
+        self._indent_first = first
+        self._indent_left = left
+        self._indent_right = right
+        self.tab_stops = list(tab_stops) if tab_stops else []
+        self._lines: List[Line] = []
+
+    def __iter__(self):
+        return iter(self._lines)
+
+    def split(self, height: float) -> Optional['Paragraph']:
+        """ Split paragraph if total height is bigger than `height`.
+
+        Returns the separated part of the paragraph.
+
+        """
+        pass
+
+
+class Column(VContainer):
     def __init__(self, width: float,
                  height: float = None,
                  gutter: float = 0,
                  margins: Sequence[float] = None,
-                 content: ContentRenderer = None):
-        super().__init__(width, height, margins, content)
+                 render: ContentRenderer = None):
+        super().__init__(width, height, margins, render)
         # spacing between columns
         self._gutter = gutter
-        self._paragraphs: List[Box] = []
+        self._paragraphs: List[Paragraph] = []
+
+    def __iter__(self):
+        return iter(self._paragraphs)
 
     @property
     def content_height(self) -> float:
@@ -171,31 +328,20 @@ class Column(Box):
     def gutter(self):
         return self._gutter
 
-    def render(self, x: float = 0, y: float = 0,
-               m: Matrix44 = None) -> Iterable:
-        if self._content:
-            yield self.render_background(x, y, m)
 
-        x += self.left_margin
-        y -= self.top_margin
-        for paragraph in self._paragraphs:
-            yield from paragraph.render(x, y, m)
-            y -= paragraph.total_height
-
-    def add_paragraph(self):
-        self._content_height = None
-
-
-class Layout(Box):
+class Layout(HContainer):
     def __init__(self, width: float,
                  height: float = None,
                  align: int = 1,
                  margins: Sequence[float] = None,
-                 content: ContentRenderer = None):
-        super().__init__(width, height, margins, content)
+                 render: ContentRenderer = None):
+        super().__init__(width, height, margins, render)
         self._reference_column_width = width
         self.align = align
         self._columns: List[Column] = []
+
+    def __iter__(self):
+        return iter(self._columns)
 
     @property
     def content_width(self):
@@ -247,17 +393,43 @@ class Layout(Box):
 
         # Render content (background) inclusive margins!
         # MText background filling!
-        if self._content:
+        if self._render:
             yield self.render_background(left, top, m)
 
         x = (x + left) + self.left_margin
         y = (y + top) - self.top_margin
-        for column in self._columns:
+        for column in self:
             yield column.render(x, y, m)
             x += column.total_width + column.gutter
 
-    def add_column(self, width: float = None, height: float = None,
-                   gutter: float = 0, margins=None, content=None):
+    def append_column(self, width: float = None, height: float = None,
+                      gutter: float = 0,
+                      margins: Sequence[float] = None,
+                      render: ContentRenderer = None) -> Column:
+        """ Append a new column to the layout. """
         if not width:
             width = self._reference_column_width
-        self._columns.append(Column(width, height, gutter, margins, content))
+        column = Column(width, height, gutter, margins, render)
+        self._columns.append(column)
+        return column
+
+    def append_paragraph(self,
+                         align: int = 0,
+                         indent=(0, 0, 0),
+                         tab_stops: Sequence[float] = None,
+                         margins: Sequence[float] = None,
+                         render: ContentRenderer = None) -> Paragraph:
+        """ Append a new paragraph to the next column with available space.
+
+        === =================
+            Alignment
+        === =================
+        0   default
+        1   left
+        2   right
+        3   center
+        4   justified
+        === =================
+
+        """
+        pass
