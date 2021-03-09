@@ -95,6 +95,60 @@ class Box(abc.ABC):
         pass
 
 
+class Glue(Box):  # ABC
+    EMPTY = tuple()
+
+    def __init__(self, width: float = 0, min_width: float = 0):
+        self._min_width: float = min_width
+        self._width: float = 0
+        self.resize(width)
+
+    def resize(self, width: float):
+        self._width = max(width, self._min_width)
+
+    @property
+    def total_width(self) -> float:
+        return self._width
+
+    @property
+    def total_height(self) -> float:
+        return 0
+
+    def render(self, x: float = 0, y: float = 0,
+               m: Matrix44 = None) -> Iterable:
+        return self.EMPTY  # render nothing
+
+    def forward(self, x: float, stops: Sequence[float] = EMPTY) -> float:
+        """ Forward cursor (x-coordinate).
+
+        Args:
+            x: current cursor coordinate
+            stops: designated tab stops
+
+        """
+        return x + self._width
+
+    def is_line_break_possible(self) -> bool:
+        return True
+
+
+class Space(Glue):
+    pass
+
+
+class NonBreakingSpace(Glue):
+    def is_line_break_possible(self) -> bool:
+        return False
+
+
+class Tab(Glue):
+    def forward(self, x: float, stops: Sequence[float] = Glue.EMPTY) -> float:
+        for stop in stops:
+            if stop > x:
+                return stop
+        return x + self.total_width
+
+
 class Cell(Box):  # ABC
     def __init__(self, width: float,
                  height: float,
@@ -117,22 +171,6 @@ class Cell(Box):  # ABC
         yield from self._renderer.render(
             left=x, bottom=y - self.total_height,
             right=x + self.total_width, top=y, m=m)
-
-
-class Glue(Cell):  # ABC
-    pass
-
-
-class Space(Glue):
-    pass
-
-
-class Tab(Glue):
-    pass
-
-
-class NonBreakingSpace(Glue):
-    pass
 
 
 class Text(Cell):
