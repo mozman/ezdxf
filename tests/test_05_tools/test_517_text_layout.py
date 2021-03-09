@@ -43,16 +43,24 @@ def layout1():
 
 
 def test_create_empty_layout_top_left(layout1):
-    layout1.align = 1
-    # has no height, only margins
+    # layout1 has no height, only margins
+
+    # 1. do layout placing
+    layout1.place(align=1)
+
+    # 2. render content
     result = list(layout1.render())
     assert len(result) == 1
     assert result[0] == "Layout1(0.0, -2.0, 12.0, 0.0)"
 
 
 def test_create_empty_layout_middle_center(layout1):
-    layout1.align = 5
-    # has no height, only margins
+    # layout1 has no height, only margins
+
+    # 1. do layout placing
+    layout1.place(align=5)
+
+    # 2. render content
     result = list(layout1.render())
     assert len(result) == 1
     assert result[0] == "Layout1(-6.0, -1.0, 6.0, 1.0)"

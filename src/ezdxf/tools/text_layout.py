@@ -89,9 +89,21 @@ class Box(abc.ABC):
     def total_height(self) -> float:
         pass
 
+
+class RenderBox(Box):
     @abc.abstractmethod
-    def render(self, x: float = 0, y: float = 0,
-               m: Matrix44 = None) -> Iterable:
+    def set_final_location(self, x: float, y: float):
+        """ (x, y) is the top/left corner """
+        pass
+
+    @abc.abstractmethod
+    def final_location(self) -> Tuple[float, float]:
+        """ Returns the final location as the top/left corner """
+        pass
+
+    @abc.abstractmethod
+    def render(self, m: Matrix44 = None) -> Iterable:
+        """ Render content at the final location. """
         pass
 
 
@@ -114,21 +126,7 @@ class Glue(Box):  # ABC
     def total_height(self) -> float:
         return 0
 
-    def render(self, x: float = 0, y: float = 0,
-               m: Matrix44 = None) -> Iterable:
-        return self.EMPTY  # render nothing
-
-    def forward(self, x: float, stops: Sequence[float] = EMPTY) -> float:
-        """ Forward cursor (x-coordinate).
-
-        Args:
-            x: current cursor coordinate
-            stops: designated tab stops
-
-        """
-        return x + self._width
-
-    def is_line_break_possible(self) -> bool:
+    def can_break(self) -> bool:
         return True
 
 
@@ -137,25 +135,30 @@ class Space(Glue):
 
 
 class NonBreakingSpace(Glue):
-    def is_line_break_possible(self) -> bool:
+    def can_break(self) -> bool:
         return False
 
 
 class Tab(Glue):
-    def forward(self, x: float, stops: Sequence[float] = Glue.EMPTY) -> float:
-        for stop in stops:
-            if stop > x:
-                return stop
-        return x + self.total_width
+    pass
 
 
-class Cell(Box):  # ABC
+class Cell(RenderBox):  # ABC
     def __init__(self, width: float,
                  height: float,
                  renderer: ContentRenderer):
+        self._final_x = None
+        self._final_y = None
         self._width = width
         self._height = height
         self._renderer = renderer
+
+    def set_final_location(self, x: float, y: float):
+        self._final_x = x
+        self._final_y = y
+
+    def final_location(self):
+        return self._final_x, self._final_y
 
     @property
     def total_width(self) -> float:
@@ -181,11 +184,14 @@ class Fraction(Cell):
     pass
 
 
-class Container(Box):
+class Container(RenderBox):
     def __init__(self, width: float,
                  height: float = None,
                  margins: Sequence[float] = None,
                  render: ContentRenderer = None):
+        self._final_x = None
+        self._final_y = None
+
         # content total_width is None for: defined by content
         self._content_width = width
 
@@ -198,8 +204,18 @@ class Container(Box):
         # content renderer is optional:
         self._render: Optional = render
 
+    def set_final_location(self, x: float, y: float):
+        self._final_x = x
+        self._final_y = y
+
+    def final_location(self):
+        return self._final_x, self._final_y
+
+    def is_placed(self) -> bool:
+        return self._final_x is not None and self._final_y is not None
+
     @abc.abstractmethod
-    def __iter__(self):
+    def __iter__(self) -> RenderBox:
         pass
 
     @property
@@ -240,28 +256,38 @@ class Container(Box):
     def total_height(self) -> float:
         return self.content_height + self.top_margin + self.bottom_margin
 
-    def render(self, x: float = 0, y: float = 0,
-               m: Matrix44 = None) -> Iterable:
+    def render(self, m: Matrix44 = None) -> Iterable:
         """ Render container content.
 
         (x, y) is the top/left corner
-
         """
+        if not self.is_placed():
+            raise ValueError('Layout has to be placed before rendering')
         if self._render:
-            yield self.render_background(x, y, m)
-
-        x += self.left_margin
-        y -= self.top_margin
-        self.render_content(x, y, m)
+            yield self.render_background(m)
+        self.place_content()
+        yield from self.render_content(m)
 
     @abc.abstractmethod
-    def render_content(self, x: float = 0, y: float = 0,
-                       m: Matrix44 = None) -> Iterable:
+    def place_content(self):
+        """ Place container content at the final location. """
         pass
 
-    def render_background(self, x: float, y: float, m: Matrix44):
-        """ (x, y) is the top/left corner """
+    def render_content(self, m: Matrix44 = None) -> Iterable:
+        """ Render content at the final location. """
+
+        for entity in self:
+            # (x, y) is the top/left corner
+            x, y = entity.final_location()
+            yield self._render.render(
+                left=x, bottom=y - self.total_height,
+                top=y, right=x + self.total_width, m=m)
+
+    def render_background(self, m: Matrix44):
+        """ Render background at the final location. """
         # Render content background inclusive margins!
+        # (x, y) is the top/left corner
+        x, y = self.final_location()
         if self._render:
             return self._render.render(
                 left=x, bottom=y - self.total_height,
@@ -270,28 +296,22 @@ class Container(Box):
 
 
 class VContainer(Container, abc.ABC):
-    def render_content(self, x: float = 0, y: float = 0,
-                       m: Matrix44 = None) -> Iterable:
-        """ Top to bottom content rendering.
-
-        (x, y) is the top/left corner
-
-        """
+    def place_content(self):
+        """ Place container content at the final location. """
+        # (x, y) is the top/left corner
+        x, y = self.final_location()
         for entity in self:
-            yield from entity.render(x, y, m)
+            entity.set_final_location(x, y)
             y -= entity.total_height
 
 
 class HContainer(Container, abc.ABC):
-    def render_content(self, x: float = 0, y: float = 0,
-                       m: Matrix44 = None) -> Iterable:
-        """ Left to right content rendering.
-
-        (x, y) is the top/left corner
-
-        """
+    def place_content(self):
+        """ Place container content at the final location. """
+        # (x, y) is the top/left corner
+        x, y = self.final_location()
         for entity in self:
-            yield from entity.render(x, y, m)
+            entity.set_final_location(x, y)
             x += entity.total_width
 
 
@@ -370,12 +390,10 @@ class Column(VContainer):
 class Layout(HContainer):
     def __init__(self, width: float,
                  height: float = None,
-                 align: int = 1,
                  margins: Sequence[float] = None,
                  render: ContentRenderer = None):
         super().__init__(width, height, margins, render)
         self._reference_column_width = width
-        self.align = align
         self._columns: List[Column] = []
 
     def __iter__(self):
@@ -406,10 +424,9 @@ class Layout(HContainer):
     def _calculate_content_height(self) -> float:
         return max(c.total_height for c in self._columns)
 
-    def render(self, x: float = 0, y: float = 0,
-               m: Matrix44 = None) -> Iterable:
-        """ Render content at the insertion point (x, y) with the
-        alignment defined by the argument `align`.
+    def place(self, x: float = 0, y: float = 0, align: int = 1):
+        """ Place layout at the final location, relative to the insertion
+        point (x, y) by the alignment defined by the argument `align`.
 
         === ================
         1   Top left
@@ -427,17 +444,17 @@ class Layout(HContainer):
 
         width = self.total_width
         height = self.total_height
-        left, top = insert_location(self.align, width, height)
+        left, top = insert_location(align, width, height)
+        self.set_final_location(x + left, y + top)
+        self.place_content()
 
-        # Render content (background) inclusive margins!
-        # MText background filling!
-        if self._render:
-            yield self.render_background(left, top, m)
-
-        x = (x + left) + self.left_margin
-        y = (y + top) - self.top_margin
+    def place_content(self):
+        """ Place content at the final location. """
+        x, y = self.final_location()
+        x = x + self.left_margin
+        y = y - self.top_margin
         for column in self:
-            yield column.render(x, y, m)
+            column.set_final_location(x, y)
             x += column.total_width + column.gutter
 
     def append_column(self, width: float = None, height: float = None,
