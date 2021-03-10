@@ -36,34 +36,94 @@ class Rect(tl.ContentRenderer):
         return f"LINE({x1:.1f}, {y1:.1f})TO({x2:.1f}, {y2:.1f})"
 
 
-@pytest.fixture
-def layout1():
-    return tl.Layout(width=10, height=None, margins=(1, 1),
-                     render=Rect('Layout1'))
+class TestTopLevelLayout:
+    @pytest.fixture
+    def layout1(self):
+        return tl.Layout(width=10, height=None, margins=(1, 1),
+                         render=Rect('Layout1'))
+
+    def test_create_empty_layout_top_left(self, layout1):
+        # layout1 has no height, only margins
+
+        # 1. do layout placing
+        layout1.place(align=1)
+
+        # 2. render content
+        result = list(layout1.render())
+        assert len(result) == 1
+        assert result[0] == "Layout1(0.0, -2.0, 12.0, 0.0)"
+
+    def test_create_empty_layout_middle_center(self, layout1):
+        # layout1 has no height, only margins
+
+        # 1. do layout placing
+        layout1.place(align=5)
+
+        # 2. render content
+        result = list(layout1.render())
+        assert len(result) == 1
+        assert result[0] == "Layout1(-6.0, -1.0, 6.0, 1.0)"
+
+    def test_add_one_column_by_reference_width(self, layout1):
+        height = 17
+        width = layout1.content_width  # reference column width
+        layout1.add_column(height=height, render=Rect('Col1'))
+
+        assert layout1.total_width == width + 2
+        assert layout1.total_height == height + 2
+
+        layout1.place(align=7)  # left/bottom
+        result = list(layout1.render())
+        assert len(result) == 2
+        assert result[0] == "Layout1(0.0, 0.0, 12.0, 19.0)"
+        assert result[1] == "Col1(1.0, 1.0, 11.0, 18.0)"
+
+    def test_add_two_equal_columns(self, layout1):
+        margins = (1,)
+        layout1.add_column(width=5, height=10, gutter=2,
+                           margins=margins, render=Rect('Col1'))
+        layout1.add_column(width=7, height=20, margins=margins,
+                           render=Rect('Col2'))
+        # width1 + margins + gutter + width2 + margins
+        assert layout1.content_width == (5 + 2 + 2 + 7 + 2)
+
+        # max(height) + margins
+        assert layout1.content_height == (20 + 2)
 
 
-def test_create_empty_layout_top_left(layout1):
-    # layout1 has no height, only margins
+class TestColumn:
+    @pytest.fixture
+    def c1(self):
+        return tl.Column(
+            width=5, height=7, margins=(1, 2, 3, 4), render=Rect('C1'))
 
-    # 1. do layout placing
-    layout1.place(align=1)
+    def test_size_calculation(self, c1):
+        # margins = top, right, bottom, left
+        c1.place(0, 0)
+        assert c1.content_width == 5
+        assert c1.content_height == 7
+        assert c1.total_width == 2 + 5 + 4
+        assert c1.total_height == 1 + 7 + 3
 
-    # 2. render content
-    result = list(layout1.render())
-    assert len(result) == 1
-    assert result[0] == "Layout1(0.0, -2.0, 12.0, 0.0)"
+    def test_render(self, c1):
+        c1.place(0, 0)
+        assert list(c1.render())[0] == "C1(0.0, -11.0, 11.0, 0.0)"
 
 
-def test_create_empty_layout_middle_center(layout1):
-    # layout1 has no height, only margins
+class TestFlowText:
+    @pytest.fixture
+    def left(self):
+        return tl.FlowText(width=10, align=1, render=Rect('LEFT'))
 
-    # 1. do layout placing
-    layout1.place(align=5)
+    def test_empty_paragraph_dimensions(self, left):
+        assert left.content_height == 0
+        assert left.content_width == 10
 
-    # 2. render content
-    result = list(layout1.render())
-    assert len(result) == 1
-    assert result[0] == "Layout1(-6.0, -1.0, 6.0, 1.0)"
+    def test_render_empty_paragraph(self, left):
+        left.place(0, 0)
+        result = list(left.render())
+        assert len(result) == 1
+        assert result[0] == "LEFT(0.0, 0.0, 10.0, 0.0)"
 
 
 if __name__ == '__main__':

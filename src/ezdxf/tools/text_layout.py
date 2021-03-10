@@ -92,7 +92,7 @@ class Box(abc.ABC):
 
 class RenderBox(Box):
     @abc.abstractmethod
-    def set_final_location(self, x: float, y: float):
+    def place(self, x: float, y: float):
         """ (x, y) is the top/left corner """
         pass
 
@@ -168,6 +168,10 @@ class Cell(RenderBox):  # ABC
     def total_height(self) -> float:
         return self._height
 
+    def place(self, x: float, y: float):
+        self._final_x = x
+        self._final_y = y
+
     def render(self, x: float = 0, y: float = 0,
                m: Matrix44 = None) -> Iterable:
         """ (x, y) is the top/left corner """
@@ -204,11 +208,14 @@ class Container(RenderBox):
         # content renderer is optional:
         self._render: Optional = render
 
-    def set_final_location(self, x: float, y: float):
+    def place(self, x: float, y: float):
         self._final_x = x
         self._final_y = y
+        self.place_content()
 
     def final_location(self):
+        if not self.is_placed():
+            raise ValueError('Container is not placed.')
         return self._final_x, self._final_y
 
     def is_placed(self) -> bool:
@@ -247,10 +254,14 @@ class Container(RenderBox):
 
     @property
     def content_height(self) -> float:
-        if self.content_height is None:
+        if self._content_height is None:
             return 0
         else:
             return self._content_height
+
+    @property
+    def has_flex_height(self):
+        return self._content_height is None
 
     @property
     def total_height(self) -> float:
@@ -263,6 +274,7 @@ class Container(RenderBox):
         """
         if not self.is_placed():
             raise ValueError('Layout has to be placed before rendering')
+
         if self._render:
             yield self.render_background(m)
         self.place_content()
@@ -275,13 +287,8 @@ class Container(RenderBox):
 
     def render_content(self, m: Matrix44 = None) -> Iterable:
         """ Render content at the final location. """
-
         for entity in self:
-            # (x, y) is the top/left corner
-            x, y = entity.final_location()
-            yield self._render.render(
-                left=x, bottom=y - self.total_height,
-                top=y, right=x + self.total_width, m=m)
+            yield from entity.render(m)
 
     def render_background(self, m: Matrix44):
         """ Render background at the final location. """
@@ -295,27 +302,7 @@ class Container(RenderBox):
         return None
 
 
-class VContainer(Container, abc.ABC):
-    def place_content(self):
-        """ Place container content at the final location. """
-        # (x, y) is the top/left corner
-        x, y = self.final_location()
-        for entity in self:
-            entity.set_final_location(x, y)
-            y -= entity.total_height
-
-
-class HContainer(Container, abc.ABC):
-    def place_content(self):
-        """ Place container content at the final location. """
-        # (x, y) is the top/left corner
-        x, y = self.final_location()
-        for entity in self:
-            entity.set_final_location(x, y)
-            x += entity.total_width
-
-
-class Line(HContainer):
+class Line(Container):
     def __init__(self, width: float,
                  align: int = 0,
                  margins: Sequence[float] = None,
@@ -328,10 +315,31 @@ class Line(HContainer):
         return iter(self._cells)
 
 
-class Paragraph(VContainer):
+class Paragraph(Container):  # ABC
+    @abc.abstractmethod
+    def freeze(self, height: float = None):
+        pass
+
+
+class FlowText(Paragraph):
+    """ Single paragraph of flow text.
+
+    Supported paragraph alignments:
+
+        === =================
+        0   default
+        1   left
+        2   right
+        3   center
+        4   justified
+        === =================
+
+    """
+
     def __init__(self, width: float,
                  align: int = 0,
-                 indent: Tuple[float, float, float] = None,
+                 indent: Tuple[float, float, float] = (0, 0, 0),
+                 line_spacing: float = 1,
                  tab_stops: Sequence[float] = None,
                  margins: Sequence[float] = None,
                  render: ContentRenderer = None):
@@ -343,22 +351,39 @@ class Paragraph(VContainer):
         self._indent_first = first
         self._indent_left = left
         self._indent_right = right
+        self._line_spacing = line_spacing
         self.tab_stops = list(tab_stops) if tab_stops else []
+
+        # contains the raw unplaced content:
+        self._cells: List[Box] = []
+
+        # contains the final placed content:
         self._lines: List[Line] = []
 
     def __iter__(self):
         return iter(self._lines)
 
-    def split(self, height: float) -> Optional['Paragraph']:
-        """ Split paragraph if total height is bigger than `height`.
+    def place_content(self):
+        x, y = self.final_location()
+        x += self.left_margin
+        y -= self.top_margin
+        for line in self._lines:
+            line.place(x, y)
+            y -= line.total_height
 
-        Returns the separated part of the paragraph.
-
-        """
+    def freeze(self, height: float = None):
+        # Create final content as Lines objects
         pass
 
+    def append_content(self, content: Iterable[Box]):
+        self._cells.extend(content)
 
-class Column(VContainer):
+
+class BulletList(Paragraph):
+    pass
+
+
+class Column(Container):
     def __init__(self, width: float,
                  height: float = None,
                  gutter: float = 0,
@@ -369,25 +394,66 @@ class Column(VContainer):
         self._gutter = gutter
         self._paragraphs: List[Paragraph] = []
 
+    def clone_empty(self) -> 'Column':
+        return self.__class__(
+            width=self.content_width,
+            height=self.content_height,
+            gutter=self.gutter,
+            margins=(self.top_margin, self.right_margin,
+                     self.bottom_margin, self.left_margin),
+            render=self._render
+        )
+
     def __iter__(self):
         return iter(self._paragraphs)
 
     @property
     def content_height(self) -> float:
-        if self._content_height is None:
-            return self._calculate_content_height()
+        """ Returns the current content height for flexible columns and the
+        max. content height otherwise.
+        """
+        max_height = self.max_content_height
+        if max_height is None:
+            return self.used_content_height()
         else:
-            return self._content_height
+            return max_height
 
-    def _calculate_content_height(self) -> float:
+    def used_content_height(self) -> float:
         return sum(p.total_height for p in self._paragraphs)
 
     @property
     def gutter(self):
         return self._gutter
 
+    @property
+    def max_content_height(self) -> Optional[float]:
+        return self._content_height
 
-class Layout(HContainer):
+    @property
+    def has_free_space(self) -> bool:
+        if self.max_content_height is None:  # flexible height column
+            return True
+        return self.used_content_height() < self.max_content_height
+
+    def place_content(self):
+        x, y = self.final_location()
+        x += self.left_margin
+        y -= self.top_margin
+        for p in self._paragraphs:
+            p.place(x, y)
+            y -= p.total_height
+
+    def append_paragraphs(
+            self, paragraphs: Iterable[Paragraph]) -> List[Paragraph]:
+        remainer = []
+        if self.has_flex_height:
+            self._paragraphs.extend(p.freeze() for p in paragraphs)
+        else:
+            pass
+        return remainer
+
+
+class Layout(Container):
     def __init__(self, width: float,
                  height: float = None,
                  margins: Sequence[float] = None,
@@ -408,7 +474,7 @@ class Layout(HContainer):
 
     def _calculate_content_width(self) -> float:
         width = sum(c.total_width + c.gutter for c in self._columns[:-1])
-        if len(self._columns) > 1:
+        if self._columns:
             width += self._columns[-1].total_width
         return width
 
@@ -445,8 +511,7 @@ class Layout(HContainer):
         width = self.total_width
         height = self.total_height
         left, top = insert_location(align, width, height)
-        self.set_final_location(x + left, y + top)
-        self.place_content()
+        super().place(x + left, y + top)
 
     def place_content(self):
         """ Place content at the final location. """
@@ -454,37 +519,42 @@ class Layout(HContainer):
         x = x + self.left_margin
         y = y - self.top_margin
         for column in self:
-            column.set_final_location(x, y)
+            column.place(x, y)
             x += column.total_width + column.gutter
 
-    def append_column(self, width: float = None, height: float = None,
-                      gutter: float = 0,
-                      margins: Sequence[float] = None,
-                      render: ContentRenderer = None) -> Column:
+    def add_column(self, width: float = None, height: float = None,
+                   gutter: float = 0,
+                   margins: Sequence[float] = None,
+                   render: ContentRenderer = None) -> Column:
         """ Append a new column to the layout. """
         if not width:
             width = self._reference_column_width
-        column = Column(width, height, gutter, margins, render)
+        column = Column(width, height, gutter=gutter, margins=margins,
+                        render=render)
         self._columns.append(column)
         return column
 
-    def append_paragraph(self,
-                         align: int = 0,
-                         indent=(0, 0, 0),
-                         tab_stops: Sequence[float] = None,
-                         margins: Sequence[float] = None,
-                         render: ContentRenderer = None) -> Paragraph:
-        """ Append a new paragraph to the next column with available space.
+    def append_paragraphs(self, paragraphs: Iterable[Paragraph]):
+        remainer = list(paragraphs)
+        # 1. fill existing columns:
+        for column in self._columns:
+            if column.has_free_space:
+                remainer = column.append_paragraphs(remainer)
+                if len(remainer) == 0:
+                    return
 
-        === =================
-            Alignment
-        === =================
-        0   default
-        1   left
-        2   right
-        3   center
-        4   justified
-        === =================
+        # 2. create additional columns
+        count = 0
+        while remainer:
+            column = self._new_column()
+            remainer = column.append_paragraphs(remainer)
+            count += 1
+            if count > 100:
+                raise ValueError("Internal error - not enough space!")
 
-        """
-        pass
+    def _new_column(self) -> Column:
+        if len(self._columns) == 0:
+            raise ValueError("no column exist")
+        empty = self._columns[-1].clone_empty()
+        self._columns.append(empty)
+        return empty
