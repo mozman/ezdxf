@@ -317,7 +317,7 @@ class Line(Container):
 
 class Paragraph(Container):  # ABC
     @abc.abstractmethod
-    def freeze(self, height: float = None):
+    def distribute_content(self, height: float = None):
         pass
 
 
@@ -354,10 +354,10 @@ class FlowText(Paragraph):
         self._line_spacing = line_spacing
         self.tab_stops = list(tab_stops) if tab_stops else []
 
-        # contains the raw unplaced content:
+        # contains the raw and not distributed content:
         self._cells: List[Box] = []
 
-        # contains the final placed content:
+        # contains the final distributed content:
         self._lines: List[Line] = []
 
     def __iter__(self):
@@ -371,8 +371,16 @@ class FlowText(Paragraph):
             line.place(x, y)
             y -= line.total_height
 
-    def freeze(self, height: float = None):
+    def distribute_content(self, height: float = None):
+        """ Distribute the raw content into lines.
+
+        Args:
+            height: available total height (margins + content), ``None`` for
+                unrestricted paragraph height
+
+        """
         # Create final content as Lines objects
+
         pass
 
     def append_content(self, content: Iterable[Box]):
