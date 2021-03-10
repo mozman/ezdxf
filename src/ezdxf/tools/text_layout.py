@@ -460,6 +460,7 @@ class Layout(Container):
                  render: ContentRenderer = None):
         super().__init__(width, height, margins, render)
         self._reference_column_width = width
+        self._current_column = 0
         self._columns: List[Column] = []
 
     def __iter__(self):
@@ -537,20 +538,21 @@ class Layout(Container):
     def append_paragraphs(self, paragraphs: Iterable[Paragraph]):
         remainer = list(paragraphs)
         # 1. fill existing columns:
-        for column in self._columns:
-            if column.has_free_space:
-                remainer = column.append_paragraphs(remainer)
-                if len(remainer) == 0:
-                    return
+        columns = self._columns
+        while self._current_column < len(columns):
+            column = columns[self._current_column]
+            remainer = column.append_paragraphs(remainer)
+            if len(remainer) == 0:
+                return
+            self._current_column += 1
 
         # 2. create additional columns
-        count = 0
         while remainer:
             column = self._new_column()
+            self._current_column = len(self._columns) - 1
             remainer = column.append_paragraphs(remainer)
-            count += 1
-            if count > 100:
-                raise ValueError("Internal error - not enough space!")
+            if self._current_column > 100:
+                raise ValueError("Internal error - not enough space!?")
 
     def _new_column(self) -> Column:
         if len(self._columns) == 0:
