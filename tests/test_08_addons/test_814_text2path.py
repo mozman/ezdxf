@@ -204,12 +204,12 @@ def make_text(text, location, alignment, height=1.0, rotation=0):
 
 def get_path_bbox(text):
     paths = text2path.make_paths_from_entity(text)
-    return path.bbox(paths, flatten=False)
+    return path.bbox(paths, flatten=0)
 
 
 def get_hatches_bbox(text):
     hatches = text2path.make_hatches_from_entity(text)
-    return bbox.extents(hatches, flatten=False)
+    return bbox.extents(hatches, flatten=0)
 
 
 @pytest.fixture(params=[get_path_bbox, get_hatches_bbox])

@@ -33,8 +33,9 @@ The `entities` iterable as input can be the whole modelspace, an entity
 query or any iterable container of DXF entities.
 
 The Calculation of bounding boxes of curves is done by flattening the curve by
-default, set argument `flatten` to ``False`` to speedup the bounding box
-calculation by accepting less precision for curved objects.
+a default flattening distance of 0.01. Set argument `flatten` to 0 to speedup
+the bounding box calculation by accepting less precision for curved objects by
+using only the control vertices.
 
 The **optional** caching object :class:`Cache` has to be instantiated by the
 user, this is only useful if the same entities will be processed multiple times.
@@ -55,11 +56,11 @@ Example usage with caching:
 Functions
 ---------
 
-.. autofunction:: extents(entities: Iterable[DXFEntity], *, flatten=True, cache: Cache=None) -> BoundingBox
+.. autofunction:: extents(entities: Iterable[DXFEntity], *, flatten=0.01, cache: Cache=None) -> BoundingBox
 
-.. autofunction:: multi_flat(entities: Iterable[DXFEntity], *, flatten=True, cache: Cache=None) -> Iterable[BoundingBox]
+.. autofunction:: multi_flat(entities: Iterable[DXFEntity], *, flatten=0.01, cache: Cache=None) -> Iterable[BoundingBox]
 
-.. autofunction:: multi_recursive(entities: Iterable[DXFEntity], *, flatten=True, cache: Cache=None) -> Iterable[BoundingBox]
+.. autofunction:: multi_recursive(entities: Iterable[DXFEntity], *, flatten=0.01, cache: Cache=None) -> Iterable[BoundingBox]
 
 Caching Strategies
 ------------------
