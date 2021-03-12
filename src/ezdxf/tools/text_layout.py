@@ -4,6 +4,106 @@ from typing import Sequence, Iterable, Optional, Tuple, List
 import abc
 from ezdxf.math import Matrix44
 
+"""
+
+Text Layout Engine
+==================
+
+The main goal of this text layout engine is to layout words as boxes in 
+columns, paragraphs, and (bullet) lists. 
+
+The starting point is a layout engine for MTEXT, which can be used for 
+different purposes like the drawing add-on or exploding MTEXT into DXF 
+primitives. But the engine is not bound to the MTEXT entity, the MTEXT 
+entity just defines the basic requirements.
+
+This engine works on given boxes as input and does not render the letter 
+shapes by itself, therefore individual kerning between letters is not 
+supported in anyway.
+
+Each input box can have an individual rendering object attached, derived from 
+the :class:`ContentRenderer` class, which requires two methods:
+
+1. method :meth:`render` to render the box content like the text or the 
+   container background
+
+2. method :meth:`line` to render simple straight lines like under- and over 
+   stroke lines or fraction dividers.
+
+Content organization
+--------------------
+
+The content is divided into containers (layout, column, paragraphs, ...) and
+simple boxes for the actual content as cells like words and glue cells like 
+spaces or tabs.
+
+Containers
+----------
+
+All containers support margins.
+
+1. Layout
+
+    Contains only columns. The size of the layout is determined by the 
+    columns inside of the layout. Each column can have a different width.
+    
+2. Column
+    
+    Contains only paragraphs. A Column has a fixed width, the height can be
+    fixed (MTEXT) or flexible.
+    
+3. Paragraph
+
+    A paragraph has a fixed width and the height is always flexible.
+    A paragraph can contain anything except the high level containers
+    Layout and Column.
+    
+    3.1 FlowText, supports left, right, center and justified alignments;
+        indentation for the left side, the right side and the first line; 
+        line spacing; no nested paragraphs or bullet lists;
+        The final content is distributed as lines separated by "leading" boxes 
+        as spacers.
+        
+    3.2 BulletList, the "bullet" can be any text cell, the flow text of each
+        list is an paragraph with left aligned text ...
+
+4. Line
+    
+    A line contains only simple boxes. A line has a fixed width and the height 
+    is defined by the tallest box (+margins) inside the line container. 
+    The content cells (words) are connected by glue cells.
+
+Simple Boxes
+------------
+
+Do not support margins.
+
+1. Glue cells
+
+    The height of glue cells is always 0.
+
+    1.1 Space, flexible width but has a minimum width, possible line break
+    1.2 Non breaking space, like a space but prevents line break between 
+        adjacent text cells
+    1.3 Soft hyphen, possible line break between adjacent text cells (ignored)
+    1.4 Tabulator (treated as space) 
+
+2. Content cells
+
+    2.1 Text cell - the height of a text cell is the cap height (height of 
+        letter "X"), ascenders and descenders are ignored. 
+        This is not a clipping box, the associated render object can still draw 
+        outside of the box borders, this box is only used to determine the final 
+        layout location.
+        
+    2.2 Fraction cell ... (MTEXT!)
+
+3. Leading
+
+    Line separator, the width is always 0.
+
+"""
+
 
 class ContentRenderer(abc.ABC):
     @abc.abstractmethod
@@ -131,6 +231,10 @@ class Glue(Box):  # ABC
 
 
 class Space(Glue):
+    pass
+
+
+class SoftHyphen(Glue):
     pass
 
 
