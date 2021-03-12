@@ -6,7 +6,7 @@ Tutorial for Blocks
 What are Blocks?
 ----------------
 
-Blocks are collections of DXF entities which can be placed multiply times as
+Blocks are collections of DXF entities which can be placed multiple times as
 block references in different layouts and other block definitions.
 The block reference (:class:`~ezdxf.entities.Insert`) can be rotated, scaled,
 placed in 3D by :ref:`OCS` and arranged in a grid like manner, each

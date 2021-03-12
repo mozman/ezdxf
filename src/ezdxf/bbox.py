@@ -7,6 +7,8 @@ from ezdxf.math import BoundingBox, Vec3
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity
 
+MAX_FLATTENING_DISTANCE = disassemble.Primitive.max_flattening_distance
+
 
 class Cache:
     """ Caching object for :class:`ezdxf.math.BoundingBox` objects.
@@ -79,22 +81,24 @@ class Cache:
 
 
 def multi_recursive(entities: Iterable['DXFEntity'], *,
-                    flatten: bool = True,
+                    flatten: float = MAX_FLATTENING_DISTANCE,
                     cache: Cache = None) -> Iterable[BoundingBox]:
     """ Yields all bounding boxes for the given `entities` **or** all bounding
     boxes for their sub entities. If an entity (INSERT) has sub entities, only
     the bounding boxes of these sub entities will be yielded, **not** the
     bounding box of entity (INSERT) itself.
 
-    Calculate bounding boxes from flattened curves, if argument `flatten` is
-    ``True``, else from control points.
+    Calculate bounding boxes from flattened curves, if argument `flatten`
+    is not 0 (max flattening distance), else from control points.
 
     """
 
     def vertices(p: disassemble.Primitive) -> Iterable[Vec3]:
-        if not flatten:
+        if flatten:
+            primitive.max_flattening_distance = abs(flatten)
+            return primitive.vertices()
+        else:
             return disassemble.to_control_vertices([p])
-        return primitive.vertices()
 
     flat_entities = disassemble.recursive_decompose(entities)
     primitives = disassemble.to_primitives(flat_entities)
@@ -117,12 +121,12 @@ def multi_recursive(entities: Iterable['DXFEntity'], *,
 
 
 def extents(entities: Iterable['DXFEntity'], *,
-            flatten: bool = True,
+            flatten: float = MAX_FLATTENING_DISTANCE,
             cache: Cache = None) -> BoundingBox:
     """ Returns a single bounding box for all given `entities`.
 
-    Calculate bounding boxes from flattened curves, if argument `flatten` is
-    ``True``, else from control points.
+    Calculate bounding boxes from flattened curves, if argument `flatten`
+    is not 0 (max flattening distance), else from control points.
 
     """
     _extends = BoundingBox()
@@ -132,12 +136,12 @@ def extents(entities: Iterable['DXFEntity'], *,
 
 
 def multi_flat(entities: Iterable['DXFEntity'], *,
-               flatten: bool = True,
+               flatten: float = MAX_FLATTENING_DISTANCE,
                cache: Cache = None) -> Iterable[BoundingBox]:
     """ Yields a bounding box for each of the given `entities`.
 
-    Calculate bounding boxes from flattened curves, if argument `flatten` is
-    ``True``, else from control points.
+    Calculate bounding boxes from flattened curves, if argument `flatten`
+    is not 0 (max flattening distance), else from control points.
 
     """
 
