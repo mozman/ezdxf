@@ -1,6 +1,8 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+from typing import Iterable
 import pytest
+from itertools import permutations
 import ezdxf.tools.text_layout as tl
 
 
@@ -124,6 +126,100 @@ class TestFlowText:
         result = list(left.render())
         assert len(result) == 1
         assert result[0] == "LEFT(0.0, 0.0, 10.0, 0.0)"
+
+
+def str2cells(s: str):
+    # t ... text cell
+    # f ... fraction cell
+    # space is space
+    # _ ... non breaking space
+    # ~ ... soft hyphen
+    # ^ ... tab
+    for c in s.lower():
+        if c == 't':
+            yield tl.Text(width=3, height=1, renderer=Rect('Text'))
+        elif c == 'f':
+            yield tl.Fraction(width=2, height=2, renderer=Rect('Fraction'))
+        elif c == ' ':
+            yield tl.Space(width=0.5, min_width=0.2)
+        elif c == '_':
+            yield tl.NonBreakingSpace(width=0.5, min_width=0.5)
+        elif c == '~':
+            yield tl.SoftHyphen()
+        elif c == '^':
+            yield tl.Tab()
+        else:
+            raise ValueError(f'unknown cell type "{c}"')
+
+
+def cells2str(cells: Iterable[tl.Cell]) -> str:
+    s = []
+    for cell in cells:
+        t = type(cell)
+        if t is tl.Text:
+            s.append('t')
+        elif t is tl.Fraction:
+            s.append('f')
+        elif t is tl.Space:
+            s.append(' ')
+        elif t is tl.NonBreakingSpace:
+            s.append('_')
+        elif t is tl.SoftHyphen:
+            s.append('~')
+        elif t is tl.Tab:
+            s.append('^')
+        else:
+            raise ValueError(f'unknown cell type {str(t)}')
+    return "".join(s)
+
+
+def test_cell_converter():
+    assert cells2str(str2cells('tf _~^')) == 'tf _~^'
+    with pytest.raises(ValueError):
+        list(str2cells('x'))
+    with pytest.raises(ValueError):
+        cells2str([0])
+
+
+class TestNormalizeCells:
+    @pytest.mark.parametrize('content', ['tt', 'tf', 'ft', 'ff'])
+    def test_no_glue_between_content_raises_value_error(self, content):
+        cells = str2cells(content)
+        with pytest.raises(ValueError):
+            list(tl.normalize_cells(cells))
+
+    @pytest.mark.parametrize('content', ['t~t', 't~~t', 't~~~t'])
+    def test_merge_multiple_soft_hyphens(self, content):
+        cells = tl.normalize_cells(str2cells(content))
+        assert cells2str(cells) == 't~t'
+
+    @pytest.mark.parametrize('content', ['t~ t', 't ~t'])
+    def test_remove_soft_hyphens_without_adjacent_content(self, content):
+        cells = tl.normalize_cells(str2cells(content))
+        assert cells2str(cells) == 't t'
+
+    @pytest.mark.parametrize('content', ['t__t', 't___t', 't_ t', 't _t'])
+    def test_preserve_multiple_non_breaking_spaces(self, content):
+        cells = tl.normalize_cells(str2cells(content))
+        assert cells2str(cells) == content
+
+    @pytest.mark.parametrize('content', ['t t', 't  t', 't   t'])
+    def test_preserve_multiple_spaces(self, content):
+        cells = tl.normalize_cells(str2cells(content))
+        assert cells2str(cells) == content
+
+    def test_remove_pending_glue(self):
+        for glue in permutations([' ', '_', '~', '^', ' ', '_']):
+            content = 't' + "".join(glue)
+            cells = list(tl.normalize_cells(str2cells(content)))
+            assert cells2str(cells) == 't'
+
+    def test_preserve_prepending_glue(self):
+        # Soft hyphens without adjacent content will be removed!
+        for glue in permutations([' ', '_', '^', ' ', '_']):
+            content = "".join(glue) + 't'
+            cells = list(tl.normalize_cells(str2cells(content)))
+            assert cells2str(cells) == content
 
 
 if __name__ == '__main__':

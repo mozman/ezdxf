@@ -1,7 +1,8 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Sequence, Iterable, Optional, Tuple, List
+from typing import Sequence, Iterable, Optional, Tuple, List, Union
 import abc
+import enum
 from ezdxf.math import Matrix44
 
 """
@@ -207,7 +208,11 @@ class RenderBox(Box):
         pass
 
 
-class Glue(Box):  # ABC
+class Cell(Box):
+    is_visible = False
+
+
+class Glue(Cell):  # ABC
     EMPTY = tuple()
 
     def __init__(self, width: float = 0, min_width: float = 0):
@@ -242,12 +247,17 @@ class NonBreakingSpace(Glue):
     def can_break(self) -> bool:
         return False
 
+    def to_space(self) -> Space:
+        return Space(self._width, self._min_width)
+
 
 class Tab(Glue):
     pass
 
 
-class Cell(RenderBox):  # ABC
+class ContentCell(Cell):  # ABC
+    is_visible = True
+
     def __init__(self, width: float,
                  height: float,
                  renderer: ContentRenderer):
@@ -284,12 +294,49 @@ class Cell(RenderBox):  # ABC
             right=x + self.total_width, top=y, m=m)
 
 
-class Text(Cell):
+class Text(ContentCell):
     pass
 
 
-class Fraction(Cell):
+class Fraction(ContentCell):
     pass
+
+
+_content = {Text, Fraction}
+_glue = {Space, NonBreakingSpace, SoftHyphen, Tab}
+
+
+def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
+    def peek():
+        try:
+            return type(cells[index + 1])
+        except IndexError:
+            return None
+
+    content = []
+    cells = list(cells)
+    prev = None
+    for index, cell in enumerate(cells):
+        current = type(cell)
+        if current in _content:
+            if prev in _content:
+                raise ValueError('no glue between content cells')
+        else:
+            if current is SoftHyphen:
+                if prev is SoftHyphen:
+                    # merge multiple soft hyphens
+                    continue
+                if prev not in _content or peek() not in _content:
+                    # remove soft hyphen without adjacent content
+                    continue
+        prev = current
+        content.append(cell)
+
+    # remove pending glue:
+    while content and (type(content[-1]) in _glue):
+        content.pop()
+
+    return content
 
 
 class Container(RenderBox):
