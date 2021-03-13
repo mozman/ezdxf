@@ -239,10 +239,6 @@ class Space(Glue):
     pass
 
 
-class SoftHyphen(Glue):
-    pass
-
-
 class NonBreakingSpace(Glue):
     def can_break(self) -> bool:
         return False
@@ -303,32 +299,18 @@ class Fraction(ContentCell):
 
 
 _content = {Text, Fraction}
-_glue = {Space, NonBreakingSpace, SoftHyphen, Tab}
+_glue = {Space, NonBreakingSpace, Tab}
 
 
 def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
-    def peek():
-        try:
-            return type(cells[index + 1])
-        except IndexError:
-            return None
-
     content = []
     cells = list(cells)
     prev = None
-    for index, cell in enumerate(cells):
+    for cell in cells:
         current = type(cell)
         if current in _content:
             if prev in _content:
                 raise ValueError('no glue between content cells')
-        else:
-            if current is SoftHyphen:
-                if prev is SoftHyphen:
-                    # merge multiple soft hyphens
-                    continue
-                if prev not in _content or peek() not in _content:
-                    # remove soft hyphen without adjacent content
-                    continue
         prev = current
         content.append(cell)
 

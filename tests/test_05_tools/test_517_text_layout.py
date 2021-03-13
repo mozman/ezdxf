@@ -132,8 +132,7 @@ def str2cells(s: str):
     # t ... text cell
     # f ... fraction cell
     # space is space
-    # _ ... non breaking space
-    # ~ ... soft hyphen
+    # ~ ... non breaking space (nbsp)
     # ^ ... tab
     for c in s.lower():
         if c == 't':
@@ -142,10 +141,8 @@ def str2cells(s: str):
             yield tl.Fraction(width=2, height=2, renderer=Rect('Fraction'))
         elif c == ' ':
             yield tl.Space(width=0.5, min_width=0.2)
-        elif c == '_':
-            yield tl.NonBreakingSpace(width=0.5, min_width=0.5)
         elif c == '~':
-            yield tl.SoftHyphen()
+            yield tl.NonBreakingSpace(width=0.5, min_width=0.5)
         elif c == '^':
             yield tl.Tab()
         else:
@@ -163,8 +160,6 @@ def cells2str(cells: Iterable[tl.Cell]) -> str:
         elif t is tl.Space:
             s.append(' ')
         elif t is tl.NonBreakingSpace:
-            s.append('_')
-        elif t is tl.SoftHyphen:
             s.append('~')
         elif t is tl.Tab:
             s.append('^')
@@ -174,7 +169,7 @@ def cells2str(cells: Iterable[tl.Cell]) -> str:
 
 
 def test_cell_converter():
-    assert cells2str(str2cells('tf _~^')) == 'tf _~^'
+    assert cells2str(str2cells('tf ~^')) == 'tf ~^'
     with pytest.raises(ValueError):
         list(str2cells('x'))
     with pytest.raises(ValueError):
@@ -188,17 +183,7 @@ class TestNormalizeCells:
         with pytest.raises(ValueError):
             list(tl.normalize_cells(cells))
 
-    @pytest.mark.parametrize('content', ['t~t', 't~~t', 't~~~t'])
-    def test_merge_multiple_soft_hyphens(self, content):
-        cells = tl.normalize_cells(str2cells(content))
-        assert cells2str(cells) == 't~t'
-
-    @pytest.mark.parametrize('content', ['t~ t', 't ~t'])
-    def test_remove_soft_hyphens_without_adjacent_content(self, content):
-        cells = tl.normalize_cells(str2cells(content))
-        assert cells2str(cells) == 't t'
-
-    @pytest.mark.parametrize('content', ['t__t', 't___t', 't_ t', 't _t'])
+    @pytest.mark.parametrize('content', ['t~~t', 't~~~t', 't~ t', 't ~t'])
     def test_preserve_multiple_non_breaking_spaces(self, content):
         cells = tl.normalize_cells(str2cells(content))
         assert cells2str(cells) == content
@@ -209,14 +194,13 @@ class TestNormalizeCells:
         assert cells2str(cells) == content
 
     def test_remove_pending_glue(self):
-        for glue in permutations([' ', '_', '~', '^', ' ', '_']):
+        for glue in permutations([' ', '~', '^', ' ']):
             content = 't' + "".join(glue)
             cells = list(tl.normalize_cells(str2cells(content)))
             assert cells2str(cells) == 't'
 
     def test_preserve_prepending_glue(self):
-        # Soft hyphens without adjacent content will be removed!
-        for glue in permutations([' ', '_', '^', ' ', '_']):
+        for glue in permutations([' ', '~', '^', ' ']):
             content = "".join(glue) + 't'
             cells = list(tl.normalize_cells(str2cells(content)))
             assert cells2str(cells) == content
