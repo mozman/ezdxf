@@ -127,8 +127,19 @@ class TestFlowText:
         assert len(result) == 1
         assert result[0] == "LEFT(0.0, 0.0, 10.0, 0.0)"
 
+    def test_distribute_invalid_content(self, left):
+        left.append_content(str2cells('ttt'))
+        with pytest.raises(ValueError):
+            left.distribute_content(height=None)
 
-def str2cells(s: str):
+    def test_distribute_left_adjustment(self, left):
+        left.append_content(str2cells('t t t t t t t t t'))
+        left.distribute_content(height=None)
+        lines = list(left)
+        assert len(lines) == 3
+
+
+def str2cells(s: str, content=3, space=0.5, min_space=0.2):
     # t ... text cell
     # f ... fraction cell
     # space is space
@@ -136,13 +147,14 @@ def str2cells(s: str):
     # ^ ... tab
     for c in s.lower():
         if c == 't':
-            yield tl.Text(width=3, height=1, renderer=Rect('Text'))
+            yield tl.Text(width=content, height=1, renderer=Rect('Text'))
         elif c == 'f':
-            yield tl.Fraction(width=2, height=2, renderer=Rect('Fraction'))
+            yield tl.Fraction(width=content, height=2,
+                              renderer=Rect('Fraction'))
         elif c == ' ':
-            yield tl.Space(width=0.5, min_width=0.2)
+            yield tl.Space(width=space, min_width=min_space)
         elif c == '~':
-            yield tl.NonBreakingSpace(width=0.5, min_width=0.5)
+            yield tl.NonBreakingSpace(width=space, min_width=min_space)
         elif c == '^':
             yield tl.Tab()
         else:
