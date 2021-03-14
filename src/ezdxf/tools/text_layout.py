@@ -1,8 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Sequence, Iterable, Optional, Tuple, List, Union
+from typing import Sequence, Iterable, Optional, Tuple, List
 import abc
-import enum
 from ezdxf.math import Matrix44
 
 """
@@ -334,10 +333,10 @@ class Container(Box):
         self._final_x = None
         self._final_y = None
 
-        # content total_width is None for: defined by content
+        # _content_width is None for: defined by content
         self._content_width = width
 
-        # content height is None for: defined by content
+        # _content_height is None for: defined by content
         self._content_height = height
 
         # margins are always defined
@@ -491,6 +490,10 @@ class Paragraph(Container):  # ABC
     def distribute_content(self, height: float = None):
         pass
 
+    @abc.abstractmethod
+    def set_total_width(self, width: float):
+        pass
+
 
 class FlowText(Paragraph):
     """ Single paragraph of flow text.
@@ -531,6 +534,11 @@ class FlowText(Paragraph):
 
     def __iter__(self):
         return iter(self._lines)
+
+    def set_total_width(self, width: float):
+        self._content_width = width - self.left_margin - self.right_margin
+        if self._content_width < 1e-6:
+            raise ValueError('invalid width, no usable space left')
 
     def place_content(self):
         x, y = self.final_location()
@@ -608,7 +616,8 @@ class FlowText(Paragraph):
             return None
 
     def _create_new_flow_text(self, cells: List[Cell]) -> 'FlowText':
-        indent = (self._indent_first, self._indent_left, self._indent_right)
+        # Does not contain the first line of the paragraph!
+        indent = (self._indent_left, self._indent_left, self._indent_right)
         flow_text = FlowText(
             self._content_width,
             self._align,
@@ -708,10 +717,18 @@ class Column(Container):
     def append_paragraphs(
             self, paragraphs: Iterable[Paragraph]) -> List[Paragraph]:
         remainer = []
-        if self.has_flex_height:
-            pass
-        else:
-            pass
+        for paragraph in paragraphs:
+            if remainer:
+                remainer.append(paragraph)
+                continue
+            paragraph.set_total_width(self.content_width)
+            if self.has_flex_height:
+                height = None
+            else:
+                height = self.max_content_height - self.used_content_height()
+            rest = paragraph.distribute_content(height)
+            if rest is not None:
+                remainer.append(rest)
         return remainer
 
 
