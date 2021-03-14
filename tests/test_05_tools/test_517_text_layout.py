@@ -195,10 +195,16 @@ class TestNormalizeCells:
         with pytest.raises(ValueError):
             list(tl.normalize_cells(cells))
 
-    @pytest.mark.parametrize('content', ['t~~t', 't~~~t', 't~ t', 't ~t'])
-    def test_preserve_multiple_non_breaking_spaces(self, content):
+    @pytest.mark.parametrize('content', ['t~t', 't~~t', 't~~~t'])
+    def test_preserve_multiple_nbsp(self, content):
         cells = tl.normalize_cells(str2cells(content))
         assert cells2str(cells) == content
+
+    @pytest.mark.parametrize(
+        'content', ['t~ t', 't ~t', 't~~ t', 't ~~t', '~t', '~~t'])
+    def test_replace_useless_nbsp_by_spaces(self, content):
+        cells = tl.normalize_cells(str2cells(content))
+        assert cells2str(cells) == content.replace('~', ' ')
 
     @pytest.mark.parametrize('content', ['t t', 't  t', 't   t'])
     def test_preserve_multiple_spaces(self, content):
@@ -212,7 +218,7 @@ class TestNormalizeCells:
             assert cells2str(cells) == 't'
 
     def test_preserve_prepending_glue(self):
-        for glue in permutations([' ', '~', '^', ' ']):
+        for glue in permutations([' ', '^', ' ']):
             content = "".join(glue) + 't'
             cells = list(tl.normalize_cells(str2cells(content)))
             assert cells2str(cells) == content

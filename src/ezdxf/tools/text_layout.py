@@ -248,7 +248,8 @@ class Space(Glue):
 
 
 class NonBreakingSpace(Glue):
-    pass
+    def to_space(self) -> Space:
+        return Space(self._width, self._min_width)
 
 
 class Tab(Glue):
@@ -304,17 +305,42 @@ class Fraction(ContentCell):
 
 _content = {Text, Fraction}
 _glue = {Space, NonBreakingSpace, Tab}
+_no_break = {Text, Fraction, NonBreakingSpace}
 
 
 def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
+    def replace_pending_nbsp_by_spaces():
+        index = len(content) - 1
+        while index >= 0:
+            cell = content[index]
+            if type(cell) is NonBreakingSpace:
+                content[index] = cell.to_space()
+                index -= 1
+            else:
+                return
+
+    def is_useless_nbsp():
+        try:
+            peek = type(cells[index + 1])
+        except IndexError:
+            return True
+        if prev not in _no_break or peek not in _no_break:
+            return True
+        return False
+
     content = []
     cells = list(cells)
     prev = None
-    for cell in cells:
+    for index, cell in enumerate(cells):
         current = type(cell)
         if current in _content:
             if prev in _content:
                 raise ValueError('no glue between content cells')
+        if current is NonBreakingSpace and is_useless_nbsp():
+            cell = cell.to_space()
+            current = type(cell)
+            replace_pending_nbsp_by_spaces()
+
         prev = current
         content.append(cell)
 
