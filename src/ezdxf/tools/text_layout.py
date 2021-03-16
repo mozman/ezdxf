@@ -241,14 +241,16 @@ class Glue(Cell):  # ABC
     def total_height(self) -> float:
         return 0
 
+    def to_space(self) -> 'Space':
+        return Space(self._width, self._min_width)
+
 
 class Space(Glue):
     pass
 
 
 class NonBreakingSpace(Glue):
-    def to_space(self) -> Space:
-        return Space(self._width, self._min_width)
+    pass
 
 
 class Tab(Glue):
@@ -335,10 +337,15 @@ def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
         if current in _content:
             if prev in _content:
                 raise ValueError('no glue between content cells')
-        if current is NonBreakingSpace and is_useless_nbsp():
+        elif current is NonBreakingSpace and is_useless_nbsp():
             cell = cell.to_space()
             current = type(cell)
             replace_pending_nbsp_by_spaces()
+        elif current is Tab:
+            # tabulator not supported yet! yet?
+            # replace tabulator by a single space
+            current = Space
+            cell = cell.to_space()
 
         prev = current
         content.append(cell)

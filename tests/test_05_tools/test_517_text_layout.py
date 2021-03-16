@@ -243,11 +243,16 @@ class TestNormalizeCells:
             cells = list(tl.normalize_cells(str2cells(content)))
             assert cells2str(cells) == 't'
 
-    def test_preserve_prepending_glue(self):
-        for glue in permutations([' ', '^', ' ']):
-            content = "".join(glue) + 't'
-            cells = list(tl.normalize_cells(str2cells(content)))
-            assert cells2str(cells) == content
+    @pytest.mark.parametrize('content', [' t', '  t', '   t'])
+    def test_preserve_prepending_space(self, content):
+        cells = list(tl.normalize_cells(str2cells(content)))
+        assert cells2str(cells) == content
+
+    @pytest.mark.parametrize('content', ['t^t', ' ^t', 't^ t'])
+    def test_replace_tabs_by_space(self, content):
+        # Tabulator not supported yet!
+        cells = list(tl.normalize_cells(str2cells(content)))
+        assert cells2str(cells) == content.replace('^', ' ')
 
 
 if __name__ == '__main__':
