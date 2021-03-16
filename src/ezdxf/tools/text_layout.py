@@ -226,10 +226,9 @@ class Cell(Box):  # ABC
 class Glue(Cell):  # ABC
     EMPTY = tuple()
 
-    def __init__(self, width: float = 0, min_width: float = 0):
-        self._min_width: float = min_width
-        self._width: float = 0
-        self.resize(width)
+    def __init__(self, width: float, min_width: float = None):
+        self._width: float = float(width)
+        self._min_width = float(min_width) if min_width else self._width
 
     def resize(self, width: float):
         self._width = max(width, self._min_width)

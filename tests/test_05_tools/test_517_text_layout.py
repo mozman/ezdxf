@@ -139,7 +139,7 @@ class TestFlowText:
         assert len(lines) == 3
 
 
-def str2cells(s: str, content=3, space=0.5, min_space=0.2):
+def str2cells(s: str, content=3, space=0.5):
     # t ... text cell
     # f ... fraction cell
     # space is space
@@ -152,11 +152,11 @@ def str2cells(s: str, content=3, space=0.5, min_space=0.2):
             yield tl.Fraction(width=content, height=2,
                               renderer=Rect('Fraction'))
         elif c == ' ':
-            yield tl.Space(width=space, min_width=min_space)
+            yield tl.Space(width=space)
         elif c == '~':
-            yield tl.NonBreakingSpace(width=space, min_width=min_space)
+            yield tl.NonBreakingSpace(width=space)
         elif c == '^':
-            yield tl.Tab()
+            yield tl.Tab(space)
         else:
             raise ValueError(f'unknown cell type "{c}"')
 
