@@ -167,8 +167,8 @@ class TestFlowText:
         flow.append_content(str2cells('t~t~t t~t t', content=5))
         flow.distribute_content(height=None)
         assert lines2str(flow) == [
-            't~t~t',  # width = 3x5+ 2x0.5 = 17
-            't~t',  # width = 2x5+ 1x0.5 = 10.5
+            't~t~t',  # width = 3x5 + 2x0.5 = 17
+            't~t',  # width = 2x5 + 0.5 = 10.5
             't'
         ]
 

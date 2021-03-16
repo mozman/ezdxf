@@ -342,10 +342,10 @@ def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
             current = type(cell)
             replace_pending_nbsp_by_spaces()
         elif current is Tab:
-            # tabulator not supported yet! yet?
+            # tabulator not supported yet!
             # replace tabulator by a single space
-            current = Space
             cell = cell.to_space()
+            current = type(cell)
 
         prev = current
         content.append(cell)
@@ -619,6 +619,9 @@ class FlowText(Paragraph):
 
         def group_width(group: Iterable[Cell]):
             return sum(c.total_width for c in group)
+
+        # Refactoring required:
+        # using indices into `cells` instead creating temp copies.
 
         cells = normalize_cells(self._cells)
         cells.reverse()
