@@ -132,11 +132,20 @@ class TestFlowText:
         with pytest.raises(ValueError):
             left.distribute_content(height=None)
 
-    def test_distribute_left_adjustment(self, left):
+    def test_distribute_common_case_without_nbsp(self, left):
         left.append_content(str2cells('t t t t t t t t t'))
         left.distribute_content(height=None)
         lines = list(left)
         assert len(lines) == 3
+
+    def test_distribute_with_nbsp(self, left):
+        left.append_content(str2cells('t t f~f t t t t t'))
+        left.distribute_content(height=None)
+        lines = list(left)
+        assert cells2str(lines[0]) == 't t'
+        assert cells2str(lines[1]) == 'f~f t'
+        assert cells2str(lines[2]) == 't t t'
+        assert cells2str(lines[3]) == 't'
 
 
 def str2cells(s: str, content=3, space=0.5):

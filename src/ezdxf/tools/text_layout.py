@@ -583,9 +583,26 @@ class FlowText(Paragraph):
 
         """
 
-        def remove_line_breaking_space():
+        def remove_line_breaking_space(cells: List[Cell]):
             if cells and type(cells[-1]) is Space:
                 cells.pop()
+
+        def next_group(cells):
+            group = []
+            next_t = type(cells[-1])
+            if next_t is NonBreakingSpace:
+                group.append(cells.pop())
+                group.extend(next_group(cells))
+            elif next_t in _content:
+                group.append(cells.pop())
+                if cells and isinstance(cells[-1], NonBreakingSpace):
+                    group.extend(next_group(cells))
+            else:
+                group.append(cells.pop())
+            return group
+
+        def group_width(group: Iterable[Cell]):
+            return sum(c.total_width for c in group)
 
         cells = normalize_cells(self._cells)
         cells.reverse()
@@ -595,17 +612,19 @@ class FlowText(Paragraph):
             available_space = self.line_width(first)
             line = []
             while cells and available_space:
-                next_cell = cells[-1]
-                width = next_cell.total_width
+                tmp = list(cells)
+                group = next_group(tmp)
+                width = group_width(group)
                 if width <= available_space:
-                    cells.pop()
-                    line.append(next_cell)
+                    cells = tmp
+                    line.extend(group)
                     available_space -= width
                 else:
                     available_space = 0
 
                 if abs(available_space) < 1e-6:
-                    remove_line_breaking_space()
+                    remove_line_breaking_space(line)
+                    remove_line_breaking_space(cells)
 
             if line:
                 line_cells = HCellGroup(line)
