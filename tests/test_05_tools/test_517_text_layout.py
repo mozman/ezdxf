@@ -114,34 +114,34 @@ class TestColumn:
 
 class TestFlowText:
     @pytest.fixture
-    def left(self):
+    def flow(self):
         return tl.FlowText(width=10, align=1, render=Rect('LEFT'))
 
-    def test_empty_paragraph_dimensions(self, left):
-        assert left.content_height == 0
-        assert left.content_width == 10
+    def test_empty_paragraph_dimensions(self, flow):
+        assert flow.content_height == 0
+        assert flow.content_width == 10
 
-    def test_render_empty_paragraph(self, left):
-        left.place(0, 0)
-        result = list(left.render())
+    def test_render_empty_paragraph(self, flow):
+        flow.place(0, 0)
+        result = list(flow.render())
         assert len(result) == 1
         assert result[0] == "LEFT(0.0, 0.0, 10.0, 0.0)"
 
-    def test_distribute_invalid_content(self, left):
-        left.append_content(str2cells('ttt'))
+    def test_distribute_invalid_content(self, flow):
+        flow.append_content(str2cells('ttt'))
         with pytest.raises(ValueError):
-            left.distribute_content(height=None)
+            flow.distribute_content(height=None)
 
-    def test_distribute_common_case_without_nbsp(self, left):
-        left.append_content(str2cells('t t t t t t t t t'))
-        left.distribute_content(height=None)
-        lines = list(left)
+    def test_distribute_common_case_without_nbsp(self, flow):
+        flow.append_content(str2cells('t t t t t t t t t'))
+        flow.distribute_content(height=None)
+        lines = list(flow)
         assert len(lines) == 3
 
-    def test_distribute_with_nbsp(self, left):
-        left.append_content(str2cells('t t f~f t t t t t'))
-        left.distribute_content(height=None)
-        lines = list(left)
+    def test_distribute_with_nbsp(self, flow):
+        flow.append_content(str2cells('t t f~f t t t t t'))
+        flow.distribute_content(height=None)
+        lines = list(flow)
         assert cells2str(lines[0]) == 't t'
         assert cells2str(lines[1]) == 'f~f t'
         assert cells2str(lines[2]) == 't t t'
