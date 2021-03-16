@@ -591,22 +591,23 @@ class FlowText(Paragraph):
         def next_group(cells):
             """ Returns the next group:
 
-                - single content text or fraction
-                - single space or tab
+                - single content Text or Fraction
+                - single Space or Tab
                 - content connected by nbsp
 
             """
             group = []
-            next_t = type(cells[-1])
-            if next_t is NonBreakingSpace:
-                group.append(cells.pop())
-                group.extend(next_group(cells))
-            elif next_t in _content:
-                group.append(cells.pop())
-                if cells and isinstance(cells[-1], NonBreakingSpace):
+            if cells:
+                next_t = type(cells[-1])
+                if next_t is NonBreakingSpace:
+                    group.append(cells.pop())
                     group.extend(next_group(cells))
-            else:
-                group.append(cells.pop())
+                elif next_t in _content:
+                    group.append(cells.pop())
+                    if cells and isinstance(cells[-1], NonBreakingSpace):
+                        group.extend(next_group(cells))
+                else:
+                    group.append(cells.pop())
             return group
 
         def group_width(group: Iterable[Cell]):
@@ -614,25 +615,30 @@ class FlowText(Paragraph):
 
         cells = normalize_cells(self._cells)
         cells.reverse()
+        undo = cells
         first = True
         paragraph_height = self.top_margin + self.bottom_margin
         while cells:
+            if height:  # is restricted
+                # shallow copy current cell state for undo, if not enough space
+                # for next line:
+                undo = list(cells)
             available_space = self.line_width(first)
             line = []
             while cells and available_space:
-                tmp = list(cells)
-                group = next_group(tmp)
+                tmp_cells = list(cells)
+                group = next_group(tmp_cells)
                 width = group_width(group)
                 if width <= available_space:
                     # add group to current line
-                    cells = tmp
+                    cells = tmp_cells
                     line.extend(group)
                     available_space -= width
-                else:  # not enough space for next group
-                    # is first group in current line
-                    if not len(line):
+                else:  # not enough space for current group
+                    # first group in current line?
+                    if not line:
                         # add group as a line, which extends beyond borders!
-                        cells = tmp
+                        cells = tmp_cells
                         line = group
                     available_space = 0
 
@@ -648,8 +654,7 @@ class FlowText(Paragraph):
                     line_height = line_cells.total_height
                     if paragraph_height + line_height > height:
                         # Not enough space for the new line:
-                        line.reverse()
-                        cells.extend(line)
+                        cells = undo
                         break
                     else:
                         self._lines.append(line_cells)
