@@ -133,36 +133,44 @@ class TestFlowText:
             flow.distribute_content(height=None)
 
     def test_distribute_common_case_without_nbsp(self, flow):
+        # column width is 10, content width is 3, space is 0.5
         flow.append_content(str2cells('t t t t t t t t t'))
         flow.distribute_content(height=None)
-        lines = list(flow)
-        assert cells2str(lines[0]) == 't t t'
-        assert cells2str(lines[1]) == 't t t'
-        assert cells2str(lines[2]) == 't t t'
+        assert lines2str(flow) == [
+            't t t',  # width = 3x3 + 2x0.5 = 10
+            't t t',  # remove line breaking spaces!
+            't t t'
+        ]
 
     def test_distribute_with_nbsp(self, flow):
+        # column width is 10, content width is 3, space is 0.5
         flow.append_content(str2cells('t t t~t t t'))
         flow.distribute_content(height=None)
-        lines = list(flow)
-        assert cells2str(lines[0]) == 't t'
-        assert cells2str(lines[1]) == 't~t t'
-        assert cells2str(lines[2]) == 't'
+        assert lines2str(flow) == [
+            't t',  # t~t does not fit and goes to next line
+            't~t t',  # width = 3x3 + 2x0.5 = 10
+            't'
+        ]
 
     def test_distribute_too_long_lines(self, flow):
+        # column width is 10
         flow.append_content(str2cells('t t t', content=12))
         flow.distribute_content(height=None)
-        lines = list(flow)
-        assert cells2str(lines[0]) == 't'
-        assert cells2str(lines[1]) == 't'
-        assert cells2str(lines[2]) == 't'
+        assert lines2str(flow) == [
+            't',
+            't',
+            't'
+        ]
 
     def test_distribute_too_long_lines_including_nbsp(self, flow):
+        # column width is 10
         flow.append_content(str2cells('t~t~t t~t t', content=5))
         flow.distribute_content(height=None)
-        lines = list(flow)
-        assert cells2str(lines[0]) == 't~t~t'
-        assert cells2str(lines[1]) == 't~t'
-        assert cells2str(lines[2]) == 't'
+        assert lines2str(flow) == [
+            't~t~t',  # width = 3x5+ 2x0.5 = 17
+            't~t',  # width = 2x5+ 1x0.5 = 10.5
+            't'
+        ]
 
 
 def str2cells(s: str, content=3, space=0.5):
@@ -204,6 +212,10 @@ def cells2str(cells: Iterable[tl.Cell]) -> str:
         else:
             raise ValueError(f'unknown cell type {str(t)}')
     return "".join(s)
+
+
+def lines2str(lines):
+    return [cells2str(line) for line in lines]
 
 
 def test_cell_converter():
