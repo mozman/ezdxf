@@ -136,16 +136,33 @@ class TestFlowText:
         flow.append_content(str2cells('t t t t t t t t t'))
         flow.distribute_content(height=None)
         lines = list(flow)
-        assert len(lines) == 3
+        assert cells2str(lines[0]) == 't t t'
+        assert cells2str(lines[1]) == 't t t'
+        assert cells2str(lines[2]) == 't t t'
 
     def test_distribute_with_nbsp(self, flow):
-        flow.append_content(str2cells('t t f~f t t t t t'))
+        flow.append_content(str2cells('t t t~t t t'))
         flow.distribute_content(height=None)
         lines = list(flow)
         assert cells2str(lines[0]) == 't t'
-        assert cells2str(lines[1]) == 'f~f t'
-        assert cells2str(lines[2]) == 't t t'
-        assert cells2str(lines[3]) == 't'
+        assert cells2str(lines[1]) == 't~t t'
+        assert cells2str(lines[2]) == 't'
+
+    def test_distribute_too_long_lines(self, flow):
+        flow.append_content(str2cells('t t t', content=12))
+        flow.distribute_content(height=None)
+        lines = list(flow)
+        assert cells2str(lines[0]) == 't'
+        assert cells2str(lines[1]) == 't'
+        assert cells2str(lines[2]) == 't'
+
+    def test_distribute_too_long_lines_including_nbsp(self, flow):
+        flow.append_content(str2cells('t~t~t t~t t', content=5))
+        flow.distribute_content(height=None)
+        lines = list(flow)
+        assert cells2str(lines[0]) == 't~t~t'
+        assert cells2str(lines[1]) == 't~t'
+        assert cells2str(lines[2]) == 't'
 
 
 def str2cells(s: str, content=3, space=0.5):

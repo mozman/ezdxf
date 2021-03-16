@@ -584,10 +584,18 @@ class FlowText(Paragraph):
         """
 
         def remove_line_breaking_space(cells: List[Cell]):
-            if cells and type(cells[-1]) is Space:
+            """ Remove last space """
+            if cells and isinstance(cells[-1], Space):
                 cells.pop()
 
         def next_group(cells):
+            """ Returns the next group:
+
+                - single content text or fraction
+                - single space or tab
+                - content connected by nbsp
+
+            """
             group = []
             next_t = type(cells[-1])
             if next_t is NonBreakingSpace:
@@ -616,10 +624,16 @@ class FlowText(Paragraph):
                 group = next_group(tmp)
                 width = group_width(group)
                 if width <= available_space:
+                    # add group to current line
                     cells = tmp
                     line.extend(group)
                     available_space -= width
-                else:
+                else:  # not enough space for next group
+                    # is first group in current line
+                    if not len(line):
+                        # add group as a line, which extends beyond borders!
+                        cells = tmp
+                        line = group
                     available_space = 0
 
                 if abs(available_space) < 1e-6:
