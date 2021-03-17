@@ -258,15 +258,32 @@ class Tab(Glue):
 
 
 class ContentCell(Cell):  # ABC
+    """ Represents visible content like text or fractions.
+
+    Supported vertical alignments:
+
+        === =================
+        0   bottom
+        1   center
+        2   top
+        === =================
+
+    """
     is_visible = True
 
     def __init__(self, width: float,
                  height: float,
-                 renderer: ContentRenderer):
+                 valign: int = 0,
+                 renderer: ContentRenderer = None):
         self._final_x = None
         self._final_y = None
-        self._width = width
-        self._height = height
+        self._width = float(width)
+        self._height = float(height)
+        valign = int(valign)
+        if 0 <= valign < 3:
+            self.valign = valign  # public attribute read/write
+        else:
+            raise ValueError('invalid valign')
         self._renderer = renderer
 
     def set_final_location(self, x: float, y: float):
@@ -285,23 +302,136 @@ class ContentCell(Cell):  # ABC
         return self._height
 
     def place(self, x: float, y: float):
+        """ (x, y) is the top/left corner """
         self._final_x = x
         self._final_y = y
 
-    def render(self, m: Matrix44 = None) -> Iterable:
-        """ (x, y) is the top/left corner """
-        x, y = self.final_location()
-        yield from self._renderer.render(
-            left=x, bottom=y - self.total_height,
-            right=x + self.total_width, top=y, m=m)
-
 
 class Text(ContentCell):
-    pass
+    """ Represents visible text content.
+
+    Supported strokes as bit values, can be combined:
+
+        === =================
+        0   None
+        1   underline
+        2   strike trough
+        4   overline
+        === =================
+
+    """
+
+    def __init__(self, width: float,
+                 height: float,
+                 valign: int = 0,
+                 stroke: int = 0,
+                 renderer: ContentRenderer = None):
+        super().__init__(width, height, valign, renderer)
+        stroke = int(stroke)
+        if 0 <= stroke < 8:
+            self.stroke = stroke  # public attribute read/write
+        else:
+            raise ValueError('invalid stroke')
+
+    def render(self, m: Matrix44 = None) -> Iterable:
+        left, top = self.final_location()
+        height = self.total_height
+        bottom = top - height
+        right = left + self.total_width
+        renderer = self._renderer
+
+        # render content
+        yield from renderer.render(
+            left=left, bottom=bottom,
+            right=right, top=top, m=m)
+
+        # render underline, strike through, overline
+        spacing = height / 5  # ???
+        if self.stroke & 1:  # render underline
+            y = bottom - spacing
+            yield renderer.line(left, y, right, y, m)
+        if self.stroke & 2:  # render strike through
+            y = (top + bottom) / 2
+            yield renderer.line(left, y, right, y, m)
+        if self.stroke & 4:  # render overline
+            y = top + spacing
+            yield renderer.line(left, y, right, y, m)
 
 
 class Fraction(ContentCell):
-    pass
+    """ Represents visible fractions.
+
+    Supported stacking A/B:
+
+        === =================
+        0   A over B, without horizontal line
+        1   A over B, horizontal line between
+        2   A slanted line B
+        === =================
+
+    """
+    NO_LINE = 0
+    HORIZONTAL_LINE = 1
+    SLANTED_LINE = 2
+
+    def __init__(self, width: float,
+                 height: float,
+                 valign: int = 0,
+                 renderer: ContentRenderer = None):
+        super().__init__(width, height, valign, renderer)
+        self._stacking = 0
+        self._top_content: Optional[ContentCell] = None
+        self._bottom_content: Optional[ContentCell] = None
+
+    def set_content(self, top: ContentCell, bottom: ContentCell,
+                    stacking: int = 0):
+        self._top_content = top
+        self._bottom_content = bottom
+        stacking = int(stacking)
+        if 0 <= stacking < 3:
+            self._stacking = stacking
+        else:
+            raise ValueError('invalid stacking')
+
+        # update content dimensions
+        if self._stacking == self.SLANTED_LINE:
+            self._height = top.total_height + bottom.total_height
+            self._width = top.total_width + bottom.total_width
+        else:
+            self._height = 1.2 * (top.total_height + bottom.total_height)
+            self._width = max(top.total_width, bottom.total_width)
+
+    def place(self, x: float, y: float):
+        """ (x, y) is the top/left corner """
+        self._final_x = x
+        self._final_y = y
+        width = self.total_width
+        height = self.total_height
+        top_content = self._top_content
+        bottom_content = self._bottom_content
+        if top_content is None or bottom_content is None:
+            raise ValueError('no content set')
+
+        if self._stacking == self.SLANTED_LINE:
+            top_content.place(x, y)  # left/top
+            x += width - bottom_content.total_width
+            y -= height + bottom_content.total_height
+            bottom_content.place(x, y)  # right/bottom
+        else:
+            center = x + width / 2
+            x = center - top_content.total_width / 2
+            top_content.place(x, y)  # center/top
+            x = center - bottom_content.total_width / 2
+            y -= height + bottom_content.total_height
+            bottom_content.place(x, y)  # center/bottom
+
+    def render(self, m: Matrix44 = None) -> Iterable:
+        yield from self._top_content.render(m)
+        yield from self._bottom_content.render(m)
+        if self._stacking == self.HORIZONTAL_LINE:
+            pass
+        elif self._stacking == self.SLANTED_LINE:
+            pass
 
 
 _content = {Text, Fraction}

@@ -262,8 +262,8 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # MTEXT inline codes
 # \L	Start underline
 # \l	Stop underline
-# \O	Start overstrike
-# \o	Stop overstrike
+# \O	Start overline
+# \o	Stop overline
 # \K	Start strike-through
 # \k	Stop strike-through
 # \P	New paragraph (new line)

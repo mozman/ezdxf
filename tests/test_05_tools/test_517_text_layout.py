@@ -232,8 +232,7 @@ def str2cells(s: str, content=3, space=0.5):
         if c == 't':
             yield tl.Text(width=content, height=1, renderer=Rect('Text'))
         elif c == 'f':
-            yield tl.Fraction(width=content, height=2,
-                              renderer=Rect('Fraction'))
+            yield tl.Fraction(width=content, height=2, renderer=Rect('Fraction'))
         elif c == ' ':
             yield tl.Space(width=space)
         elif c == '~':
