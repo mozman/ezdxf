@@ -540,6 +540,17 @@ class FlowText(Paragraph):
         4   justified
         === =================
 
+    Paragraph indentation is supported by three values given as argument
+    `indent`. The first value defines the left indentation of the first line,
+    the following two values define the common line indentation for the left
+    and right side. The indentation value is a positive value, measured from
+    the border towards the inside of the paragraph.
+    Negative values can be used, but are not tested nor officially supported.
+
+    Line spacing is 3-on-5 and is based on the cap height, e.g. for a
+    cap height of 1.0 the leading (distance from base line to base line)
+    is 1.667. The `line_spacing` argument is an additional stretching factor.
+
     """
 
     def __init__(self, width: float,
@@ -620,6 +631,11 @@ class FlowText(Paragraph):
         def group_width(group: Iterable[Cell]):
             return sum(c.total_width for c in group)
 
+        def append_line(cells_):
+            nonlocal first
+            first = False
+            self._lines.append(cells_)
+
         # Refactoring required:
         # using indices into `cells` instead creating temp copies.
 
@@ -629,7 +645,7 @@ class FlowText(Paragraph):
         first = True
         paragraph_height = self.top_margin + self.bottom_margin
         while cells:
-            if height:  # is restricted
+            if height is not None:  # is restricted
                 # shallow copy current cell state for undo, if not enough space
                 # for next line:
                 undo = list(cells)
@@ -658,24 +674,20 @@ class FlowText(Paragraph):
 
             if line:
                 line_cells = HCellGroup(line)
-                if height:  # is restricted
-                    # The line height is only defined if the content of the line
-                    # is known:
+                if height is None:  # unrestricted height
+                    append_line(line_cells)
+                else:  # height is restricted
+                    # The line height is only defined if the content
+                    # of the line is known:
                     line_height = line_cells.total_height
                     if paragraph_height + line_height > height:
                         # Not enough space for the new line:
                         cells = undo
                         break
                     else:
-                        self._lines.append(line_cells)
-                        paragraph_height += leading(line_height,
-                                                    self._line_spacing)
-                        if paragraph_height >= height:
-                            # Not enough space for another line!
-                            break
-                else:
-                    self._lines.append(line_cells)
-            first = False
+                        append_line(line_cells)
+                        paragraph_height += leading(
+                            line_height, self._line_spacing)
 
         # Delete raw content:
         self._cells = []
@@ -684,13 +696,15 @@ class FlowText(Paragraph):
         # and return it to the caller.
         if cells:
             cells.reverse()
-            return self._create_new_flow_text(cells)
+            return self._create_new_flow_text(cells, first)
         else:
             return None
 
-    def _create_new_flow_text(self, cells: List[Cell]) -> 'FlowText':
-        # Does not contain the first line of the paragraph!
-        indent = (self._indent_left, self._indent_left, self._indent_right)
+    def _create_new_flow_text(self, cells: List[Cell],
+                              first: bool) -> 'FlowText':
+        # First line of the paragraph included?
+        indent_first = self._indent_first if first else self._indent_left
+        indent = (indent_first, self._indent_left, self._indent_right)
         flow_text = FlowText(
             self._content_width,
             self._align,

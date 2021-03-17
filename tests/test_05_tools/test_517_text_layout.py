@@ -112,10 +112,13 @@ class TestColumn:
         assert list(c1.render())[0] == "C1(0.0, -11.0, 11.0, 0.0)"
 
 
-class TestFlowText:
+class TestFlowTextWithUnrestrictedHeight:
+    # Default values: column width is 10, content width is 3, space is 0.5
+
     @pytest.fixture
     def flow(self):
-        return tl.FlowText(width=10, align=1, render=Rect('LEFT'))
+        # Paragraph alignment is not important for content distribution.
+        return tl.FlowText(width=10, render=Rect('PAR'))
 
     def test_empty_paragraph_dimensions(self, flow):
         assert flow.content_height == 0
@@ -125,7 +128,7 @@ class TestFlowText:
         flow.place(0, 0)
         result = list(flow.render())
         assert len(result) == 1
-        assert result[0] == "LEFT(0.0, 0.0, 10.0, 0.0)"
+        assert result[0] == "PAR(0.0, 0.0, 10.0, 0.0)"
 
     def test_distribute_invalid_content(self, flow):
         flow.append_content(str2cells('ttt'))
@@ -170,6 +173,52 @@ class TestFlowText:
             't~t~t',  # width = 3x5 + 2x0.5 = 17
             't~t',  # width = 2x5 + 0.5 = 10.5
             't'
+        ]
+
+
+class TestFlowTextWithRestrictedHeight:
+    # Default values: column width is 10, content width is 3, space is 0.5
+    # cap height = 1, line spacing 3-on-5 by 100% = 1.667
+    THREE_LINE_SPACE = tl.leading(1, 1) * 2 + 1
+
+    @pytest.fixture
+    def flow(self):
+        # Paragraph alignment is not important for content distribution.
+        return tl.FlowText(width=10, render=Rect('PAR'))
+
+    def test_distribute_with_exact_height_match(self, flow):
+        flow.append_content(str2cells('t t t t t t t t t'))
+        flow.distribute_content(height=self.THREE_LINE_SPACE)
+        assert lines2str(flow) == [
+            't t t',  # width = 3x3 + 2x0.5 = 10
+            't t t',
+            't t t'
+        ]
+
+    def test_distribute_with_one_line_left_over(self, flow):
+        flow.append_content(str2cells('t t t t t t t t t'))
+        # Paragraph has only space for only 2 lines:
+        height = self.THREE_LINE_SPACE - 0.01  # reduce space by a small amount
+        leftover = flow.distribute_content(height=height)
+        assert lines2str(flow) == [
+            't t t',
+            't t t',
+        ]
+        leftover.distribute_content(height=1)
+        assert lines2str(leftover) == ['t t t']
+
+    def test_distribute_with_all_lines_left_over(self, flow):
+        flow.append_content(str2cells('t t t~t t t t t t'))
+        # Paragraph has no space at all:
+        leftover = flow.distribute_content(height=0)
+        assert lines2str(flow) == []
+
+        leftover.distribute_content(height=None)  # unrestricted height
+        assert lines2str(leftover) == [
+            't t',
+            't~t t',
+            't t t',
+            't',
         ]
 
 
