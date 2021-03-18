@@ -106,7 +106,13 @@ def distance_point_line_3d(point: Vec3, start: Vec3, end: Vec3) -> float:
     # point projected onto line start to end:
     v2 = (end - start).project(v1)
     # Pythagoras:
-    return math.sqrt(v1.magnitude_square - v2.magnitude_square)
+    diff = v1.magnitude_square - v2.magnitude_square
+    if diff <= 0.0:
+        # This should not happen (abs(v1) > abs(v2)), but floating point
+        # imprecision at very small values makes it possible!
+        return 0.0
+    else:
+        return math.sqrt(diff)
 
 
 def basic_transformation(

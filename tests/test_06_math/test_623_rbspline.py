@@ -4,7 +4,8 @@
 import math
 from math import isclose
 from ezdxf.math import (
-    rational_bspline_from_arc, rational_bspline_from_ellipse, ConstructionEllipse,
+    rational_bspline_from_arc, rational_bspline_from_ellipse,
+    ConstructionEllipse,
     ConstructionArc, linspace, BSpline, open_uniform_bspline,
 )
 from ezdxf.math.bspline import nurbs_arc_parameters, required_knot_values
@@ -264,3 +265,44 @@ RBSPLINEU = [
     [40.6499313989532, 9.304334569846029, 25.347832715076986],
     [40.90909090909091, 9.09090909090909, 25.454545454545453]
 ]
+
+
+def test_flattening_issue():
+    from ezdxf.layouts import VirtualLayout
+    layout = VirtualLayout()
+    # this configuration caused an math domain error in distance_point_line_3d()
+    # sqrt() of negative number, cause by floating point imprecision for very
+    # small numbers.
+    e = layout.add_spline(
+        degree=2,
+        dxfattribs={
+            'layer': "0",
+            'linetype': "Continuous",
+            'color': 84,
+            'lineweight': 0,
+            'extrusion': (0.0, 0.0, 1.0),
+            'flags': 12,
+            'knot_tolerance': 1e-09,
+            'control_point_tolerance': 1e-10,
+        },
+    )
+    e.control_points = [
+        (696603.8306266892, 5711646.357537143, -2.8298889e-09),
+        (696603.8352219285, 5711646.36068357, -2.8298889e-09),
+        (696603.8392015211, 5711646.363408451, -2.8298889e-09),
+    ]
+    e.knots = [
+        -6.110343499933633,
+        -6.110343499933633,
+        -6.110343499933633,
+        -4.326590114514485,
+        -4.326590114514485,
+        -4.326590114514485,
+    ]
+    e.weights = [
+        1.607007851100765,
+        1.731310340973351,
+        1.731310340973339,
+    ]
+    points = list(e.flattening(0.01))
+    assert len(points) > 4
