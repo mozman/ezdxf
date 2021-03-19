@@ -845,12 +845,8 @@ class DXFTagStorage(DXFEntity):
         return entity
 
     def load_proxy_graphic(self) -> Optional[bytes]:
-        if self.dxftype() == 'ACAD_PROXY_OBJECT':
-            name = 'AcDbProxyObject'
-        else:
-            name = 'AcDbEntity'
         try:
-            tags = self.xtags.get_subclass(name)
+            tags = self.xtags.get_subclass('AcDbEntity')
         except const.DXFKeyError:
             return
         binary_data = [tag.value for tag in tags.find_all(310)]
