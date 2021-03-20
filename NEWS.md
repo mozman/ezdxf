@@ -44,6 +44,7 @@ Version 0.16b1 - dev
 - NEW: `ezdxf.math.clip_polygon_2d()`, clip polygon by a convex clipping polygon 
 - NEW: `ezdxf.math.basic_transformation()`, returns a combined transformation
   matrix for translation, scaling and rotation about the z-axis
+- NEW: `ezdxf.math.best_fit_normal()`, returns the normal vector of flat spatial planes
 - NEW: `fit_points_to_cubic_bezier()` creates a visual equal SPLINE from fit 
   points without end tangents like BricsCAD, but only for short B-splines.
 - CHANGED: `fit_points_to_cad_cv()`, removed unused arguments `degree` and `method`   

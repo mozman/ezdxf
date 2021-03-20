@@ -8,10 +8,16 @@
 Tutorial for OCS/UCS Usage
 ==========================
 
-For OCS/UCS usage is a basic understanding of vectors required, for a brush up, watch the YouTube tutorials of
-`3Blue1Brown`_ about `Linear Algebra`_.
+For OCS/UCS usage is a basic understanding of vectors required, for a brush up,
+watch the YouTube tutorials of `3Blue1Brown`_ about `Linear Algebra`_.
 
 Second read the :ref:`Coordinate Systems` introduction please.
+
+.. seealso::
+
+    The free online book `3D Math Primer for Graphics and Game Development <https://gamemath.com/>`_
+    is a very good resource for learning vector math and other graphic related topics,
+    it is easy to read for beginners and especially targeted to programmers.
 
 
 For :ref:`WCS` there is not much to say as, it is what it is: the main world coordinate system, and a drawing unit can

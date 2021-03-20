@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 __all__ = [
     "is_planar_face", "subdivide_face", "subdivide_ngons", "Plane",
     "LocationState", "normal_vector_3p", "distance_point_line_3d",
-    "basic_transformation"
+    "basic_transformation", "best_fit_normal"
 ]
 
 
@@ -94,6 +94,35 @@ def normal_vector_3p(a: Vec3, b: Vec3, c: Vec3) -> Vec3:
     product for: :code:`a->b x a->c`.
     """
     return (b - a).cross(c - a).normalize()
+
+
+def best_fit_normal(vertices: Iterable['Vertex']) -> Vec3:
+    """ Returns the "best fit" normal for a plane defined by three or more
+    vertices. This function tolerates imperfect plane vertices. Safe function
+    to detect the extrusion vector of flat arbitrary polygons.
+
+    """
+    # Source: https://gamemath.com/book/geomprims.html#plane_best_fit (9.5.3)
+    vertices = Vec3.list(vertices)
+    if len(vertices) < 3:
+        raise ValueError("3 or more vertices required")
+    if not vertices[0].isclose(vertices[-1]):
+        vertices.append(vertices[0])  # close polygon
+    prev_x = None
+    prev_y = None
+    prev_z = None
+    nx = 0.0
+    ny = 0.0
+    nz = 0.0
+    for x, y, z in vertices:
+        if prev_x is not None:
+            nx += (prev_z + z) * (prev_y - y)
+            ny += (prev_x + x) * (prev_z - z)
+            nz += (prev_y + y) * (prev_x - x)
+        prev_x = x
+        prev_y = y
+        prev_z = z
+    return Vec3(nx, ny, nz).normalize()
 
 
 def distance_point_line_3d(point: Vec3, start: Vec3, end: Vec3) -> float:
