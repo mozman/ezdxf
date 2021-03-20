@@ -5,7 +5,7 @@ import pytest
 from ezdxf.math import (
     is_planar_face, Vec3, Vec2, subdivide_face, intersection_ray_ray_3d,
     normal_vector_3p, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, subdivide_ngons,
-    distance_point_line_3d, best_fit_normal, Matrix44, barycentric_coords,
+    distance_point_line_3d, best_fit_normal, Matrix44, BarycentricCoordinates,
 )
 
 from ezdxf.render.forms import square, circle
@@ -166,42 +166,37 @@ class TestBestFitNormal:
 
 class TestBarycentricCoords:
     @pytest.fixture
-    def abc(self):
-        return Vec3.list([(0, 0, 0), (5, 0, 0), (5, 4, 0)])
+    def bc(self):
+        return BarycentricCoordinates((0, 0, 0), (5, 0, 0), (5, 4, 0))
 
-    def test_basic_coords(self, abc):
-        a, b, c = abc
-        assert barycentric_coords(a, a, b, c) == (1, 0, 0)
-        assert barycentric_coords(b, a, b, c) == (0, 1, 0)
-        assert barycentric_coords(c, a, b, c) == (0, 0, 1)
+    def test_basic_coords(self, bc):
+        assert bc.from_cartesian(bc.a) == (1, 0, 0)
+        assert bc.from_cartesian(bc.b) == (0, 1, 0)
+        assert bc.from_cartesian(bc.c) == (0, 0, 1)
 
-    def test_center_of_mass_property(self, abc):
-        a, b, c = abc
-        p = (a + b + c) / 3
-        b = Vec3(barycentric_coords(p, a, b, c))
+    def test_center_of_mass_property(self, bc):
+        p = (bc.a + bc.b + bc.c) / 3
+        b = bc.from_cartesian(p)
         assert b.isclose((1 / 3., 1 / 3., 1 / 3.))
 
     @pytest.mark.parametrize('p', [
         (0, 4, 0), (0, -1, 0), (7, 0, 0)
     ])
-    def test_point_outside_triangle(self, abc, p):
-        a, b, c = abc
+    def test_point_outside_triangle(self, bc, p):
         p = Vec3(p)
-        b1, b2, b3 = Vec3(barycentric_coords(p, a, b, c))
-        assert any(b0 < 0 for b0 in (b1, b2, b3)) is True
-        assert sum((b1, b2, b3)) == pytest.approx(1.0)
-        assert p.isclose(b1 * a + b2 * b + b3 * c)
+        b = bc.from_cartesian(p)
+        assert any(b0 < 0 for b0 in b) is True
+        assert sum(b) == pytest.approx(1.0)
+        assert p.isclose(bc.to_cartesian(b))
 
     @pytest.mark.parametrize('p', [
         # tests the normal projection of p onto (a, b, c)
         (4, 1, 0), (4, 1, 1), (4, 1, -1)
     ])
-    def test_point_inside_triangle(self, abc, p):
-        a, b, c = abc
-        p = Vec3(p)
-        b1, b2, b3 = Vec3(barycentric_coords(p, a, b, c))
-        assert all(0 <= b0 <= 1 for b0 in (b1, b2, b3)) is True
-        assert sum((b1, b2, b3)) == pytest.approx(1.0)
+    def test_point_inside_triangle(self, bc, p):
+        b = bc.from_cartesian(p)
+        assert all(0 <= b0 <= 1 for b0 in b) is True
+        assert sum(b) == pytest.approx(1.0)
 
 
 if __name__ == '__main__':

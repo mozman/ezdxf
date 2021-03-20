@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 __all__ = [
     "is_planar_face", "subdivide_face", "subdivide_ngons", "Plane",
     "LocationState", "normal_vector_3p", "distance_point_line_3d",
-    "basic_transformation", "best_fit_normal", "barycentric_coords"
+    "basic_transformation", "best_fit_normal", "BarycentricCoordinates"
 ]
 
 
@@ -241,9 +241,8 @@ class Plane:
         return n_is_close(p._normal, abs_tol) or n_is_close(-p._normal, abs_tol)
 
 
-def barycentric_coords(
-        p: Vec3, a: Vec3, b: Vec3, c: Vec3) -> Tuple[float, float, float]:
-    """ Returns the barycentric coordinates of the given point `p`.
+class BarycentricCoordinates:
+    """ Barycentric coordinate calculation.
 
     The arguments `a`, `b` and `c` are the cartesian coordinates of an arbitrary
     triangle in 3D space. The barycentric coordinates (b1, b2, b3) define the
@@ -261,23 +260,37 @@ def barycentric_coords(
     - if one of the coordinates is negative, the point `p` is outside the
       triangle
     - the sum of b1, b2 and b3 is always 1
-    - the center of "mass" has the barycentric coordinates (1/3, 1/3, 1/3) = (a + b + c)/3
+    - the center of "mass" has the barycentric coordinates (1/3, 1/3, 1/3) =
+      (a + b + c)/3
 
     """
     # Source: https://gamemath.com/book/geomprims.html#triangle_barycentric_space
-    e1 = c - b
-    e2 = a - c
-    e3 = b - a
-    d1 = p - a
-    d2 = p - b
-    d3 = p - c
-    e1xe2 = e1.cross(e2)
-    n = e1xe2.normalize()
-    denom = e1xe2.dot(n)
-    if abs(denom) < 1e-9:
-        raise ValueError('invalid triangle')
-    b1 = e1.cross(d3).dot(n) / denom
-    b2 = e2.cross(d1).dot(n) / denom
-    b3 = e3.cross(d2).dot(n) / denom
-    return b1, b2, b3
 
+    def __init__(self, a: 'Vertex', b: 'Vertex', c: 'Vertex'):
+        self.a = Vec3(a)
+        self.b = Vec3(b)
+        self.c = Vec3(c)
+        self._e1 = self.c - self.b
+        self._e2 = self.a - self.c
+        self._e3 = self.b - self.a
+        e1xe2 = self._e1.cross(self._e2)
+        self._n = e1xe2.normalize()
+        self._denom = e1xe2.dot(self._n)
+        if abs(self._denom) < 1e-9:
+            raise ValueError('invalid triangle')
+
+    def from_cartesian(self, p: 'Vertex') -> Vec3:
+        p = Vec3(p)
+        n = self._n
+        denom = self._denom
+        d1 = p - self.a
+        d2 = p - self.b
+        d3 = p - self.c
+        b1 = self._e1.cross(d3).dot(n) / denom
+        b2 = self._e2.cross(d1).dot(n) / denom
+        b3 = self._e3.cross(d2).dot(n) / denom
+        return Vec3(b1, b2, b3)
+
+    def to_cartesian(self, b: 'Vertex') -> Vec3:
+        b1, b2, b3 = Vec3(b).xyz
+        return self.a * b1 + self.b * b2 + self.c * b3
