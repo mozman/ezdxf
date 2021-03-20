@@ -106,19 +106,18 @@ def best_fit_normal(vertices: Iterable['Vertex']) -> Vec3:
     vertices = Vec3.list(vertices)
     if len(vertices) < 3:
         raise ValueError("3 or more vertices required")
-    if not vertices[0].isclose(vertices[-1]):
-        vertices.append(vertices[0])  # close polygon
-    prev_x = None
-    prev_y = None
-    prev_z = None
+    first = vertices[0]
+    if not first.isclose(vertices[-1]):
+        vertices.append(first)  # close polygon
+    prev_x, prev_y, prev_z = first.xyz
     nx = 0.0
     ny = 0.0
     nz = 0.0
-    for x, y, z in vertices:
-        if prev_x is not None:
-            nx += (prev_z + z) * (prev_y - y)
-            ny += (prev_x + x) * (prev_z - z)
-            nz += (prev_y + y) * (prev_x - x)
+    for v in vertices[1:]:
+        x, y, z = v.xyz
+        nx += (prev_z + z) * (prev_y - y)
+        ny += (prev_x + x) * (prev_z - z)
+        nz += (prev_y + y) * (prev_x - x)
         prev_x = x
         prev_y = y
         prev_z = z
