@@ -1,6 +1,6 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import Sequence, List, Iterable, Union, TYPE_CHECKING
+from typing import Sequence, List, Iterable, Union, TYPE_CHECKING, Tuple
 from enum import IntEnum
 import math
 from ezdxf.math import Vec3, Vec2, Matrix44
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 __all__ = [
     "is_planar_face", "subdivide_face", "subdivide_ngons", "Plane",
     "LocationState", "normal_vector_3p", "distance_point_line_3d",
-    "basic_transformation", "best_fit_normal"
+    "basic_transformation", "best_fit_normal", "barycentric_coords"
 ]
 
 
@@ -239,3 +239,45 @@ class Plane:
         """ Returns ``True`` if plane `p` is coplanar, normal vectors in same or opposite direction. """
         n_is_close = self._normal.isclose
         return n_is_close(p._normal, abs_tol) or n_is_close(-p._normal, abs_tol)
+
+
+def barycentric_coords(
+        p: Vec3, a: Vec3, b: Vec3, c: Vec3) -> Tuple[float, float, float]:
+    """ Returns the barycentric coordinates of the given point `p`.
+
+    The arguments `a`, `b` and `c` are the cartesian coordinates of an arbitrary
+    triangle in 3D space. The barycentric coordinates (b1, b2, b3) define the
+    linear combination of `a`, `b` and `c` to represent the point `p`::
+
+        p = a * b1 + b * b2 + c * b3
+
+    This implementation returns the barycentric coordinates of the normal
+    projection of `p` onto the plane defined by (a, b, c).
+
+    These barycentric coordinates have some useful properties:
+
+    - if all barycentric coordinates (b1, b2, b3) are in the range [0, 1], then
+      the point `p` is inside the triangle (a, b, c)
+    - if one of the coordinates is negative, the point `p` is outside the
+      triangle
+    - the sum of b1, b2 and b3 is always 1
+    - the center of "mass" has the barycentric coordinates (1/3, 1/3, 1/3) = (a + b + c)/3
+
+    """
+    # Source: https://gamemath.com/book/geomprims.html#triangle_barycentric_space
+    e1 = c - b
+    e2 = a - c
+    e3 = b - a
+    d1 = p - a
+    d2 = p - b
+    d3 = p - c
+    e1xe2 = e1.cross(e2)
+    n = e1xe2.normalize()
+    denom = e1xe2.dot(n)
+    if abs(denom) < 1e-9:
+        raise ValueError('invalid triangle')
+    b1 = e1.cross(d3).dot(n) / denom
+    b2 = e2.cross(d1).dot(n) / denom
+    b3 = e3.cross(d2).dot(n) / denom
+    return b1, b2, b3
+
