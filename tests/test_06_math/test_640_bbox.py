@@ -64,7 +64,7 @@ class TestBoundingBox:
     def test_do_intersect(self):
         bbox1 = BoundingBox([(0, 0, 0), (10, 10, 10)])
         bbox2 = BoundingBox([(1, 1, 1), (9, 9, 9)])
-        bbox3 = BoundingBox([(-1, -1, -1), (1, 1, 1)])
+        bbox3 = BoundingBox([(-1, -1, -1), (1.001, 1.001, 1.001)])
         for a, b in permutations([bbox1, bbox2, bbox3], 2):
             assert a.intersect(b) is True
 
@@ -81,6 +81,18 @@ class TestBoundingBox:
         assert bbox.intersect(empty) is False
         assert empty.intersect(bbox) is False
         assert empty.intersect(empty) is False
+
+    def test_crossing_2d_boxes(self):
+        # bboxes do overlap, but do not contain corner points of the other bbox
+        bbox1 = BoundingBox2d([(0, 1), (3, 2)])
+        bbox2 = BoundingBox2d([(1, 0), (2, 3)])
+        assert bbox1.intersect(bbox2) is True
+
+    def test_crossing_3d_boxes(self):
+        # bboxes do overlap, but do not contain corner points of the other bbox
+        bbox1 = BoundingBox([(0, 1, 0), (3, 2, 1)])
+        bbox2 = BoundingBox([(1, 0, 0), (2, 3, 1)])
+        assert bbox1.intersect(bbox2) is True
 
     def test_extend(self):
         bbox = BoundingBox([(0, 0, 0), (10, 10, 10)])

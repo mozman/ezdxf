@@ -47,6 +47,10 @@ class AbstractBoundingBox:
     def inside(self, vertex: 'Vertex') -> bool:
         pass
 
+    @abc.abstractmethod
+    def intersect(self, other: 'AbstractBoundingBox') -> bool:
+        pass
+
     def any_inside(self, vertices: Iterable['Vertex']) -> bool:
         """ Returns ``True`` if any vertex is inside this bounding box.
 
@@ -70,14 +74,6 @@ class AbstractBoundingBox:
                     return False
             return has_any
         return False
-
-    def intersect(self, other: 'AbstractBoundingBox') -> bool:
-        """ Returns `True` if this bounding box intersects with `other`.
-
-        Touching boxes do intersect!
-
-        """
-        return self.any_inside(other) or other.any_inside(self)
 
     @property
     def has_data(self) -> bool:
@@ -148,6 +144,31 @@ class BoundingBox(AbstractBoundingBox):
                (ymin <= y <= ymax) and \
                (zmin <= z <= zmax)
 
+    def intersect(self, other: 'AbstractBoundingBox') -> bool:
+        """ Returns `True` if this bounding box intersects with `other`.
+
+        Touching bounding boxes do not intersect!
+
+        """
+        # Source: https://gamemath.com/book/geomtests.html#intersection_two_aabbs
+        # Check for a separating axis:
+        if not self.has_data or not other.has_data:
+            return False
+        # Check for a separating axis:
+        if self.extmin.x >= other.extmax.x:
+            return False
+        if self.extmax.x <= other.extmin.x:
+            return False
+        if self.extmin.y >= other.extmax.y:
+            return False
+        if self.extmax.y <= other.extmin.y:
+            return False
+        if self.extmin.z >= other.extmax.z:
+            return False
+        if self.extmax.z <= other.extmin.z:
+            return False
+        return True
+
 
 class BoundingBox2d(AbstractBoundingBox):
     """ Optimized 2D bounding box.
@@ -169,6 +190,26 @@ class BoundingBox2d(AbstractBoundingBox):
         min_ = self.extmin
         max_ = self.extmax
         return (min_.x <= v.x <= max_.x) and (min_.y <= v.y <= max_.y)
+
+    def intersect(self, other: 'AbstractBoundingBox') -> bool:
+        """ Returns `True` if this bounding box intersects with `other`.
+
+        Touching bounding boxes do not intersect!
+
+        """
+        # Source: https://gamemath.com/book/geomtests.html#intersection_two_aabbs
+        if not self.has_data or not other.has_data:
+            return False
+        # Check for a separating axis:
+        if self.extmin.x >= other.extmax.x:
+            return False
+        if self.extmax.x <= other.extmin.x:
+            return False
+        if self.extmin.y >= other.extmax.y:
+            return False
+        if self.extmax.y <= other.extmin.y:
+            return False
+        return True
 
 
 def extends3d(vertices: Iterable['Vertex']) -> Tuple[Vec3, Vec3]:

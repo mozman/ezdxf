@@ -1,6 +1,6 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import Sequence, List, Iterable, Union, TYPE_CHECKING
+from typing import Sequence, List, Iterable, Union, TYPE_CHECKING, Tuple
 from enum import IntEnum
 import math
 from ezdxf.math import Vec3, Vec2, Matrix44
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 __all__ = [
     "is_planar_face", "subdivide_face", "subdivide_ngons", "Plane",
     "LocationState", "normal_vector_3p", "distance_point_line_3d",
-    "basic_transformation"
+    "basic_transformation", "best_fit_normal", "BarycentricCoordinates"
 ]
 
 
@@ -96,6 +96,34 @@ def normal_vector_3p(a: Vec3, b: Vec3, c: Vec3) -> Vec3:
     return (b - a).cross(c - a).normalize()
 
 
+def best_fit_normal(vertices: Iterable['Vertex']) -> Vec3:
+    """ Returns the "best fit" normal for a plane defined by three or more
+    vertices. This function tolerates imperfect plane vertices. Safe function
+    to detect the extrusion vector of flat arbitrary polygons.
+
+    """
+    # Source: https://gamemath.com/book/geomprims.html#plane_best_fit (9.5.3)
+    vertices = Vec3.list(vertices)
+    if len(vertices) < 3:
+        raise ValueError("3 or more vertices required")
+    first = vertices[0]
+    if not first.isclose(vertices[-1]):
+        vertices.append(first)  # close polygon
+    prev_x, prev_y, prev_z = first.xyz
+    nx = 0.0
+    ny = 0.0
+    nz = 0.0
+    for v in vertices[1:]:
+        x, y, z = v.xyz
+        nx += (prev_z + z) * (prev_y - y)
+        ny += (prev_x + x) * (prev_z - z)
+        nz += (prev_y + y) * (prev_x - x)
+        prev_x = x
+        prev_y = y
+        prev_z = z
+    return Vec3(nx, ny, nz).normalize()
+
+
 def distance_point_line_3d(point: Vec3, start: Vec3, end: Vec3) -> float:
     """ Returns the normal distance from `point` to 3D line defined by `start-`
     and `end` point.
@@ -106,7 +134,13 @@ def distance_point_line_3d(point: Vec3, start: Vec3, end: Vec3) -> float:
     # point projected onto line start to end:
     v2 = (end - start).project(v1)
     # Pythagoras:
-    return math.sqrt(v1.magnitude_square - v2.magnitude_square)
+    diff = v1.magnitude_square - v2.magnitude_square
+    if diff <= 0.0:
+        # This should not happen (abs(v1) > abs(v2)), but floating point
+        # imprecision at very small values makes it possible!
+        return 0.0
+    else:
+        return math.sqrt(diff)
 
 
 def basic_transformation(
@@ -205,3 +239,58 @@ class Plane:
         """ Returns ``True`` if plane `p` is coplanar, normal vectors in same or opposite direction. """
         n_is_close = self._normal.isclose
         return n_is_close(p._normal, abs_tol) or n_is_close(-p._normal, abs_tol)
+
+
+class BarycentricCoordinates:
+    """ Barycentric coordinate calculation.
+
+    The arguments `a`, `b` and `c` are the cartesian coordinates of an arbitrary
+    triangle in 3D space. The barycentric coordinates (b1, b2, b3) define the
+    linear combination of `a`, `b` and `c` to represent the point `p`::
+
+        p = a * b1 + b * b2 + c * b3
+
+    This implementation returns the barycentric coordinates of the normal
+    projection of `p` onto the plane defined by (a, b, c).
+
+    These barycentric coordinates have some useful properties:
+
+    - if all barycentric coordinates (b1, b2, b3) are in the range [0, 1], then
+      the point `p` is inside the triangle (a, b, c)
+    - if one of the coordinates is negative, the point `p` is outside the
+      triangle
+    - the sum of b1, b2 and b3 is always 1
+    - the center of "mass" has the barycentric coordinates (1/3, 1/3, 1/3) =
+      (a + b + c)/3
+
+    """
+    # Source: https://gamemath.com/book/geomprims.html#triangle_barycentric_space
+
+    def __init__(self, a: 'Vertex', b: 'Vertex', c: 'Vertex'):
+        self.a = Vec3(a)
+        self.b = Vec3(b)
+        self.c = Vec3(c)
+        self._e1 = self.c - self.b
+        self._e2 = self.a - self.c
+        self._e3 = self.b - self.a
+        e1xe2 = self._e1.cross(self._e2)
+        self._n = e1xe2.normalize()
+        self._denom = e1xe2.dot(self._n)
+        if abs(self._denom) < 1e-9:
+            raise ValueError('invalid triangle')
+
+    def from_cartesian(self, p: 'Vertex') -> Vec3:
+        p = Vec3(p)
+        n = self._n
+        denom = self._denom
+        d1 = p - self.a
+        d2 = p - self.b
+        d3 = p - self.c
+        b1 = self._e1.cross(d3).dot(n) / denom
+        b2 = self._e2.cross(d1).dot(n) / denom
+        b3 = self._e3.cross(d2).dot(n) / denom
+        return Vec3(b1, b2, b3)
+
+    def to_cartesian(self, b: 'Vertex') -> Vec3:
+        b1, b2, b3 = Vec3(b).xyz
+        return self.a * b1 + self.b * b2 + self.c * b3

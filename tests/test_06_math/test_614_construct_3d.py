@@ -4,8 +4,8 @@ import pytest
 
 from ezdxf.math import (
     is_planar_face, Vec3, Vec2, subdivide_face, intersection_ray_ray_3d,
-    normal_vector_3p, X_AXIS, Y_AXIS, Z_AXIS, subdivide_ngons,
-    distance_point_line_3d,
+    normal_vector_3p, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, subdivide_ngons,
+    distance_point_line_3d, best_fit_normal, Matrix44, BarycentricCoordinates,
 )
 
 from ezdxf.render.forms import square, circle
@@ -110,17 +110,19 @@ def test_intersection_ray_ray_3d_random():
         assert result[0].isclose(intersection_point)
 
 
-def test_normal_vector_for_3_points():
-    # normal_vector_3p(a, b, c)
-    # a->b = v1
-    # a->c = v2
-    o = Vec3(0, 0, 0)
-    assert normal_vector_3p(o, X_AXIS, Y_AXIS) == Z_AXIS
-    assert normal_vector_3p(o, Y_AXIS, X_AXIS) == -Z_AXIS
-    assert normal_vector_3p(o, Z_AXIS, X_AXIS) == Y_AXIS
-    assert normal_vector_3p(o, X_AXIS, Z_AXIS) == -Y_AXIS
-    assert normal_vector_3p(o, Y_AXIS, Z_AXIS) == X_AXIS
-    assert normal_vector_3p(o, Z_AXIS, Y_AXIS) == -X_AXIS
+RH_ORTHO = [
+    (NULLVEC, X_AXIS, Y_AXIS, Z_AXIS),
+    (NULLVEC, Y_AXIS, X_AXIS, -Z_AXIS),
+    (NULLVEC, Z_AXIS, X_AXIS, Y_AXIS),
+    (NULLVEC, X_AXIS, Z_AXIS, -Y_AXIS),
+    (NULLVEC, Y_AXIS, Z_AXIS, X_AXIS),
+    (NULLVEC, Z_AXIS, Y_AXIS, -X_AXIS),
+]
+
+
+@pytest.mark.parametrize("a,b,c,r", RH_ORTHO)
+def test_normal_vector_for_3_points(a, b, c, r):
+    assert normal_vector_3p(a, b, c) == r
 
 
 @pytest.mark.parametrize('points, expected', [
@@ -133,6 +135,68 @@ def test_normal_vector_for_3_points():
 def test_distance_point_line_3d(points, expected):
     p, a, b = Vec3.generate(points)
     assert distance_point_line_3d(p, a, b) == pytest.approx(expected)
+
+
+class TestBestFitNormal:
+    @pytest.mark.parametrize("a,b,c,r", RH_ORTHO)
+    def test_if_returns_right_handed_normals(self, a, b, c, r):
+        assert best_fit_normal((a, b, c)) == r
+
+    @pytest.fixture(scope='class')
+    def vertices(self):
+        return Vec3.list([(0, 0), (3, 0), (3, 4), (4, 8), (1, 5), (0, 2)])
+
+    @pytest.fixture(scope='class')
+    def matrix(self):
+        return Matrix44.chain(
+            Matrix44.x_rotate(0.75),
+            Matrix44.translate(2, 3, 4),
+        )
+
+    def test_transformed_counter_clockwise_vertices_ccw(self, vertices, matrix):
+        v = matrix.transform_vertices(vertices)
+        normal = matrix.transform_direction(Z_AXIS)
+        assert best_fit_normal(v).isclose(normal)
+
+    def test_transformed_clockwise_vertices(self, vertices, matrix):
+        v = matrix.transform_vertices(reversed(vertices))
+        normal = matrix.transform_direction(-Z_AXIS)
+        assert best_fit_normal(v).isclose(normal)
+
+
+class TestBarycentricCoords:
+    @pytest.fixture
+    def bc(self):
+        return BarycentricCoordinates((0, 0, 0), (5, 0, 0), (5, 4, 0))
+
+    def test_basic_coords(self, bc):
+        assert bc.from_cartesian(bc.a) == (1, 0, 0)
+        assert bc.from_cartesian(bc.b) == (0, 1, 0)
+        assert bc.from_cartesian(bc.c) == (0, 0, 1)
+
+    def test_center_of_mass_property(self, bc):
+        p = (bc.a + bc.b + bc.c) / 3
+        b = bc.from_cartesian(p)
+        assert b.isclose((1 / 3., 1 / 3., 1 / 3.))
+
+    @pytest.mark.parametrize('p', [
+        (0, 4, 0), (0, -1, 0), (7, 0, 0)
+    ])
+    def test_point_outside_triangle(self, bc, p):
+        p = Vec3(p)
+        b = bc.from_cartesian(p)
+        assert any(b0 < 0 for b0 in b) is True
+        assert sum(b) == pytest.approx(1.0)
+        assert p.isclose(bc.to_cartesian(b))
+
+    @pytest.mark.parametrize('p', [
+        # tests the normal projection of p onto (a, b, c)
+        (4, 1, 0), (4, 1, 1), (4, 1, -1)
+    ])
+    def test_point_inside_triangle(self, bc, p):
+        b = bc.from_cartesian(p)
+        assert all(0 <= b0 <= 1 for b0 in b) is True
+        assert sum(b) == pytest.approx(1.0)
 
 
 if __name__ == '__main__':
