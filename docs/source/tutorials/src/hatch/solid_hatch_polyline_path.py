@@ -8,6 +8,6 @@ hatch = msp.add_hatch(color=2)  # by default a solid fill hatch with fill color=
 # every boundary path is always a 2D element
 # vertex format for the polyline path is: (x, y[, bulge])
 # there are no bulge values in this example
-hatch.paths.add_polyline_path([(0, 0), (10, 0), (10, 10), (0, 10)], is_closed=1)
+hatch.paths.add_polyline_path([(0, 0), (10, 0), (10, 10), (0, 10)], is_closed=True)
 
 doc.saveas("solid_hatch_polyline_path.dxf")
