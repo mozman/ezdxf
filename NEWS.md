@@ -71,7 +71,7 @@ Version 0.16 - 2021-03-27
 - REMOVED: `Path.from_from_hatch_boundary_path()`, replaced by factory `path.from_hatch()`
 - REMOVED: `Path.from_from_hatch_polyline_path()`
 - REMOVED: `Path.from_from_hatch_edge_path()`
-- REMOVED: `Block.purge()`, unsafe operation
+- REMOVED: `BlocksSection.purge()`, unsafe operation
 - REMOVED: `dxfpp` command, replaced by `ezdxf pp ...`
 - REMOVED: `Layout.add_closed_spline()`, broken and nobody noticed it
 - REMOVED: `Layout.add_closed_rational_spline()`, broken and nobody noticed it
