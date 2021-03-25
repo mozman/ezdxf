@@ -5,7 +5,7 @@
 
 from pathlib import Path
 import ezdxf
-from ezdxf import path
+from ezdxf import path, zoom
 from ezdxf.tools import fonts
 from ezdxf.addons import text2path
 
@@ -29,5 +29,5 @@ attr['color'] = 2
 for hatch in text2path.make_hatches_from_str(s, ff, align=align, dxfattribs=attr):
     msp.add_entity(hatch)
 
-doc.set_modelspace_vport(10, (7, 0))
+zoom.extents(msp)
 doc.saveas(DIR / 'text2path.dxf')
