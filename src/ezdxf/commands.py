@@ -348,6 +348,7 @@ class View(Command):
 
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QtWidgets.QApplication(sys.argv)
+        set_app_icon(app)
         viewer = CadViewer(params={
             'linetype_renderer': args.ltype,
             'lineweight_scaling': args.lwscale,
@@ -358,3 +359,21 @@ class View(Command):
             viewer.set_document(doc, auditor)
             viewer.draw_layout('Model')
         sys.exit(app.exec_())
+
+
+def set_app_icon(app):
+    from PyQt5 import QtGui, QtCore
+    app_icon = QtGui.QIcon()
+    p = resources_path()
+    app_icon.addFile(str(p / '16x16.png'), QtCore.QSize(16, 16))
+    app_icon.addFile(str(p / '24x24.png'), QtCore.QSize(24, 24))
+    app_icon.addFile(str(p / '32x32.png'), QtCore.QSize(32, 32))
+    app_icon.addFile(str(p / '48x48.png'), QtCore.QSize(48, 48))
+    app_icon.addFile(str(p / '64x64.png'), QtCore.QSize(64, 64))
+    app_icon.addFile(str(p / '256x256.png'), QtCore.QSize(256, 256))
+    app.setWindowIcon(app_icon)
+
+
+def resources_path():
+    from pathlib import Path
+    return Path(__file__).parent / "resources"

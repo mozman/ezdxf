@@ -94,6 +94,7 @@ setup(
         'pp/*.css',
         'tools/font_face_cache.json',
         'tools/font_measurement_cache.json',
+        'resources/*.png',
     ]},
     entry_points={
         'console_scripts': [

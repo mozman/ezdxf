@@ -54,8 +54,8 @@ only support 2D paths.
     :mod:`ezdxf.path`.
 
 The usability of the :class:`Path` class expanded by the introduction
-of the the revers conversion from :class:`Path` to DXF entities (LWPOLYLINE,
-POLYLINE, LINE) and many other tools in `ezdxf` v0.16.
+of the reverse conversion from :class:`Path` to DXF entities (LWPOLYLINE,
+POLYLINE, LINE), and many other tools in `ezdxf` v0.16.
 To emphasize this new usability, the :class:`Path` class has got its own
 subpackage :mod:`ezdxf.path`.
 

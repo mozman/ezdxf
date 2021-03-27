@@ -73,7 +73,7 @@ def print_config(func=print, verbose=False):
              f"{options.default_dimension_text_style}")
         func(f"load proxy graphic: {YES_NO[options.load_proxy_graphics]}")
         func(f"store proxy graphic: {YES_NO[options.store_proxy_graphics]}")
-        func(f"log unprocessed: {YES_NO[options.log_unprocessed_tags]}")
+        func(f"log unprocessed tags: {YES_NO[options.log_unprocessed_tags]}")
         func(f"filter invalid XDATA group codes: "
              f"{YES_NO[options.filter_invalid_xdata_group_codes]}")
         for v in options.CONFIG_VARS:

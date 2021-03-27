@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.16b2 - dev
---------------------
+Version 0.16 - 2021-03-27
+-------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-16.html
 - NEW: `ezdxf` command line launcher, supported commands:
@@ -39,7 +39,7 @@ Version 0.16b2 - dev
 - NEW: `ezdxf.entity.TextStyle` getter/setter properties `is_backward`, 
   `is_upside_down` and `is_vertical_stacked` 
 - NEW: `ezdxf.math.Bezier3P`, optimized quadratic Bézier curve construction tool 
-- NEW: `ezdxf.math.quadratic_to_cubic_bezier()`, Bezier3P to Bezier4P converter   
+- NEW: `ezdxf.math.quadratic_to_cubic_bezier()`, `Bezier3P` to `Bezier4P` converter   
 - NEW: `ezdxf.math.bezier_to_bspline()`, Bézier curves to B-spline converter
 - NEW: `ezdxf.math.clip_polygon_2d()`, clip polygon by a convex clipping polygon 
 - NEW: `ezdxf.math.basic_transformation()`, returns a combined transformation
@@ -71,7 +71,7 @@ Version 0.16b2 - dev
 - REMOVED: `Path.from_from_hatch_boundary_path()`, replaced by factory `path.from_hatch()`
 - REMOVED: `Path.from_from_hatch_polyline_path()`
 - REMOVED: `Path.from_from_hatch_edge_path()`
-- REMOVED: `Block.purge()`, unsafe operation
+- REMOVED: `BlocksSection.purge()`, unsafe operation
 - REMOVED: `dxfpp` command, replaced by `ezdxf pp ...`
 - REMOVED: `Layout.add_closed_spline()`, broken and nobody noticed it
 - REMOVED: `Layout.add_closed_rational_spline()`, broken and nobody noticed it

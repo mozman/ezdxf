@@ -5,10 +5,11 @@ Disassemble
 
 .. module:: ezdxf.disassemble
 
-This module provide tools for the recursive decomposition of DXF entities into
-a flat stream of DXF entities and converting DXF entities into geometric
-primitives of :class:`~ezdxf.path.Path` and :class:`~ezdxf.render.mesh.MeshBuilder`
-objects encapsulated into intermediate :class:`Primitive` classes.
+This module provide tools for the recursive decomposition of nested block
+reference structures into a flat stream of DXF entities and converting DXF
+entities into geometric primitives of :class:`~ezdxf.path.Path` and
+:class:`~ezdxf.render.mesh.MeshBuilder` objects encapsulated into
+intermediate :class:`Primitive` classes.
 
 The :class:`~ezdxf.entities.Hatch` entity is special because this entity can
 not be reduced into as single geometric primitive. The :func:`make_primitive`
