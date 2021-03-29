@@ -4,6 +4,7 @@
 from typing import Iterable, Optional, List, TYPE_CHECKING, Sequence
 from functools import partial
 import logging
+import warnings
 from .tags import DXFTag
 from .types import POINT_CODES
 
@@ -168,11 +169,12 @@ def fix_coordinate_order(tags: 'Tags', codes: Sequence[int] = (10, 11)):
     remaining_tags[insert_pos:insert_pos] = ordered_coords
     return remaining_tags
 
-
-COORDINATE_FIXING_TOOLBOX = {
-    'LINE': partial(fix_coordinate_order, codes=(10, 11)),
-    b'LINE': partial(fix_coordinate_order, codes=(10, 11)),
-}
+with warnings.catch_warnings():
+    warnings.filterwarnings('ignore', category=BytesWarning)
+    COORDINATE_FIXING_TOOLBOX = {
+        'LINE': partial(fix_coordinate_order, codes=(10, 11)),
+        b'LINE': partial(fix_coordinate_order, codes=(10, 11)),
+    }
 
 VALID_XDATA_CODES = set(range(1000, 1019)) | set(range(1040, 1072))
 
