@@ -56,6 +56,8 @@ acdb_style = DefSubclass('AcDbTextStyleTableRecord', {
     'last_height': DXFAttr(42, default=2.5),
 
     # Primary font file name:
+    # ATTENTION: The font file name can be an empty string and the font family
+    # may be stored in XDATA! See also posts at the (unrelated) issue #380.
     'font': DXFAttr(3, default='txt'),
 
     # Big font name, blank if none

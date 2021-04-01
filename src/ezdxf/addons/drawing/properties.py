@@ -223,13 +223,6 @@ class LayoutProperties:
                 else '#000000'
 
 
-def font_file_by_family(family: str, italic: bool, bold: bool) -> str:
-    font_face = fonts.find_font_face_by_family(family, italic, bold)
-    if font_face:
-        return font_face.ttf
-    return ""
-
-
 class RenderContext:
     def __init__(self, doc: Optional['Drawing'] = None, *, ctb: str = '',
                  export_mode: bool = False):
@@ -331,12 +324,16 @@ class RenderContext:
         """ Setup text style properties. """
         name = table_key(text_style.dxf.name)
         font_file = text_style.dxf.font
+        font_face = None
         if font_file == "":  # Font family stored in XDATA?
             family, italic, bold = text_style.get_extended_font_data()
-            font_file = font_file_by_family(family, italic, bold)
-        font_face = fonts.get_font_face(font_file, map_shx=True)
-        # 2021-02-02: Removed TTF check!
-        # AutoCAD supports only TTF-fonts, but we can do better!
+            if family:
+                font_face = fonts.find_font_face_by_family(family, italic, bold)
+        else:
+            font_face = fonts.get_font_face(font_file, map_shx=True)
+
+        if font_face is None:  # fall back to default font
+            font_face = fonts.FontFace()
         self.fonts[name] = font_face
 
     def _true_layer_color(self, layer: 'Layer') -> Color:
