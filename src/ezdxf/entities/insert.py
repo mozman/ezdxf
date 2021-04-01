@@ -36,6 +36,8 @@ if TYPE_CHECKING:
 
 __all__ = ['Insert']
 
+ABS_TOL = 1e-9
+
 # Multi-INSERT has subclass id AcDbMInsertBlock
 acdb_block_reference = DefSubclass('AcDbBlockReference', {
     'attribs_follow': DXFAttr(66, default=0, optional=True),
@@ -391,14 +393,14 @@ class Insert(LinkedEntities):
         ux = ux.normalize()
         uy = uy.normalize()
         uz = uz.normalize()
-        if not (math.isclose(ux.dot(uz), 0.0, abs_tol=1e-9) and
-                math.isclose(ux.dot(uy), 0.0, abs_tol=1e-9) and
-                math.isclose(uz.dot(uy), 0.0, abs_tol=1e-9)):
+        if not (abs(ux.dot(uz)) <= ABS_TOL and
+                abs(ux.dot(uy)) <= ABS_TOL and
+                abs(uz.dot(uy)) <= ABS_TOL):
             raise InsertTransformationError(NON_ORTHO_MSG)
 
         # expected y-axis for an orthogonal right handed coordinate system
         expected_uy = uz.cross(ux)
-        if expected_uy.isclose(-uy, abs_tol=1e-9):
+        if expected_uy.isclose(-uy, abs_tol=ABS_TOL):
             # transformed y-axis points into opposite direction of the expected
             # y-axis:
             y_scale = -y_scale
