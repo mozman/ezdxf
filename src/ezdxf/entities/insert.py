@@ -389,13 +389,12 @@ class Insert(LinkedEntities):
         x_scale = ux.magnitude
         y_scale = uy.magnitude
 
-        # check for orthogonal x-, y- and z-axis
         ux = ux.normalize()
         uy = uy.normalize()
         uz = uz.normalize()
-        if not (abs(ux.dot(uz)) <= ABS_TOL and
-                abs(ux.dot(uy)) <= ABS_TOL and
-                abs(uz.dot(uy)) <= ABS_TOL):
+        # check for orthogonal x-, y- and z-axis
+        if (abs(ux.dot(uz)) > ABS_TOL or abs(ux.dot(uy)) > ABS_TOL or
+                abs(uz.dot(uy)) > ABS_TOL):
             raise InsertTransformationError(NON_ORTHO_MSG)
 
         # expected y-axis for an orthogonal right handed coordinate system
@@ -447,8 +446,8 @@ class Insert(LinkedEntities):
         m = Matrix44.ucs(ux=ux * sx, uy=uy * sy, uz=extrusion * sz)
 
         angle = math.radians(dxf.rotation)
-        if angle != 0.0:
-            m = Matrix44.chain(m, Matrix44.axis_rotate(extrusion, angle))
+        if angle:
+            m *= Matrix44.axis_rotate(extrusion, angle)
 
         insert = ocs.to_wcs(dxf.get('insert', Vec3()))
 
