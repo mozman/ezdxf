@@ -496,11 +496,6 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
     Decomposition of XREF, UNDERLAY and ACAD_TABLE entities is not supported.
 
     """
-
-    def insert(i: 'Insert') -> Iterable[DXFEntity]:
-        yield from i.attribs
-        yield from i.virtual_entities()
-
     for entity in entities:
         dxftype = entity.dxftype()
         # ignore this virtual_entities() methods:
@@ -509,10 +504,10 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
         elif dxftype == 'INSERT':
             entity = cast('Insert', entity)
             if entity.mcount > 1:
-                for virtual_insert in entity.multi_insert():
-                    yield from insert(virtual_insert)
+                yield from recursive_decompose(entity.multi_insert())
             else:
-                yield from insert(entity)
+                yield from entity.attribs
+                yield from recursive_decompose(entity.virtual_entities())
         elif hasattr(entity, 'virtual_entities'):
             # could contain block references:
             yield from recursive_decompose(entity.virtual_entities())
