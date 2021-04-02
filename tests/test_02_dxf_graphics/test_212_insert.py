@@ -325,6 +325,8 @@ def test_insert_transform_interface():
     assert insert.dxf.insert == (1, 0, 0)
 
 
+@pytest.mark.xfail
+# The new implementation of the INSERT transformation avoids this error!
 def test_insert_transformation_error():
     insert = Insert.new(dxfattribs={
         'name': 'AXIS',
