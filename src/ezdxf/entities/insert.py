@@ -404,6 +404,11 @@ class Insert(LinkedEntities):
             # y-axis:
             y_scale = -y_scale
 
+        # The current reflection compensation does not work for multiple
+        # reflections in nested block references.
+        # I have no idea how to solve this issue (#380), or if the
+        # current implementation is even capable to solve this problem.
+
         ocs = OCSTransform.from_ocs(OCS(dxf.extrusion), OCS(uz), m)
         dxf.insert = ocs.transform_vertex(dxf.insert)
         dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
@@ -444,6 +449,7 @@ class Insert(LinkedEntities):
         ux = Vec3(ocs.to_wcs(X_AXIS))
         uy = Vec3(ocs.to_wcs(Y_AXIS))
         m = Matrix44.ucs(ux=ux * sx, uy=uy * sy, uz=extrusion * sz)
+        # same as Matrix44.ucs(ux, uy, extrusion) * Matrix44.scale(sx, sy, sz)
 
         angle = math.radians(dxf.rotation)
         if angle:
