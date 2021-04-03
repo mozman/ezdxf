@@ -7,10 +7,11 @@ from ezdxf.math import Vec3, Matrix44, X_AXIS, linspace
 from ezdxf import zoom
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BlockLayout, Drawing
+    from ezdxf.eztypes import BlockLayout, Drawing, BaseLayout
 
 BLK_CONTENT = "BLK_CONTENT"
 BLK_REF_LEVEL_0 = "BLK_REF_LEVEL_0"
+BLK_REF_LEVEL_1 = "BLK_REF_LEVEL_1"
 ATTRIBS = 'ATTRIBS'
 
 
@@ -18,11 +19,11 @@ def create_doc(filename, content_creator):
     doc = ezdxf.new(dxfversion='R2004')
     doc.layers.new(BLK_CONTENT)
     doc.layers.new(BLK_REF_LEVEL_0)
+    doc.layers.new(BLK_REF_LEVEL_1)
     doc.styles.new(ATTRIBS, dxfattribs={
         'font': 'OpenSansCondensed-Light.ttf'
     })
     content_creator(doc)
-    doc.set_modelspace_vport(height=30, center=(15, 0))
     zoom.extents(doc.modelspace())
     doc.saveas(filename)
 
@@ -71,23 +72,20 @@ def create_base_block(block: 'BlockLayout', arrow_length=4):
 def show_config(blk_ref):
     dxf = blk_ref.dxf
     blk_ref.add_auto_attribs({
-        'ROTATION': "Rotation: {0:.2f} deg".format(dxf.rotation),
-        'SCALE': "Scale: x={}  y={}  z={}".format(dxf.xscale, dxf.yscale, dxf.zscale),
-        'EXTRUSION': "Extrusion: {}". format(str(dxf.extrusion.round(3))),
+        'ROTATION': f"Rotation: {dxf.rotation:.2f} deg",
+        'SCALE': f"Scale: x={dxf.xscale}  y={dxf.yscale}  z={dxf.zscale}",
+        'EXTRUSION': f"Extrusion: {str(dxf.extrusion.round(3))}",
     })
 
 
-def nesting_depth_0(doc: 'Drawing'):
-    blk = doc.blocks.new("BASE")
-    create_base_block(blk)
-    msp = doc.modelspace()
+def create_l0_block_references(layout: 'BaseLayout'):
     y = 0
     grid_x = 4.5
     grid_y = 4.5
     for sx, sy, sz in [(1, 1, 1), (-1, 1, 1), (1, -1, 1), (1, 1, -1)]:
         for index, angle in enumerate(linspace(0, 270, 10)):
             x = index * grid_x
-            blk_ref = msp.add_blockref("BASE", (x, y), dxfattribs={
+            blk_ref = layout.add_blockref("BASE", (x, y), dxfattribs={
                 'layer': BLK_REF_LEVEL_0,
                 'rotation': angle,
                 'xscale': sx,
@@ -98,10 +96,24 @@ def nesting_depth_0(doc: 'Drawing'):
         y += grid_y
 
 
-def nesting_depth_1(doc: 'Drawing'):
+def create_l1_block_references(layout: 'BaseLayout'):
+    pass
+
+
+def nesting_depth_0(doc: 'Drawing'):
     blk = doc.blocks.new("BASE")
     create_base_block(blk)
     msp = doc.modelspace()
+    create_l0_block_references(msp)
+
+
+def nesting_depth_1(doc: 'Drawing'):
+    blk = doc.blocks.new("BASE")
+    create_base_block(blk)
+    blk0 = doc.blocks.new("LEVEL0")
+    create_l0_block_references(blk0)
+    msp = doc.modelspace()
+    create_l1_block_references(msp)
 
 
 if __name__ == '__main__':
