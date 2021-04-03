@@ -75,9 +75,9 @@ Version 0.16 - 2021-03-27
 - DEPRECATED: `Path.add_ellipse()`, replaced by function `path.add_ellipse()`
 - DEPRECATED: `Path.add_spline()`, replaced by function `path.add_spline()`
 - DEPRECATED: `Path.from_vertices()`, replaced by factory `path.from_vertices()`
-- REMOVED: `Path.from_from_hatch_boundary_path()`, replaced by factory `path.from_hatch()`
-- REMOVED: `Path.from_from_hatch_polyline_path()`
-- REMOVED: `Path.from_from_hatch_edge_path()`
+- REMOVED: `Path.from_hatch_boundary_path()`, replaced by factory `path.from_hatch()`
+- REMOVED: `Path.from_hatch_polyline_path()`
+- REMOVED: `Path.from_hatch_edge_path()`
 - REMOVED: `BlocksSection.purge()`, unsafe operation
 - REMOVED: `dxfpp` command, replaced by `ezdxf pp ...`
 - REMOVED: `Layout.add_closed_spline()`, broken and nobody noticed it
