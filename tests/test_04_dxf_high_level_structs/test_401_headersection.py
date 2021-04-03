@@ -1,12 +1,12 @@
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
-from ezdxf.lldxf.const import DXF12, DXF2000, DXF2018
+from ezdxf.lldxf.const import DXF12, DXF2000, DXF2018, DXF2013, DXF2007, DXF2010
 from ezdxf.lldxf.tags import Tags
 from ezdxf.sections.header import HeaderSection
 from ezdxf.lldxf.validator import header_validator
-
+from ezdxf.sections.headervars import version_specific_group_code
 
 INVALID_HEADER_STRUCTURE = """   9
 $ACADVER
@@ -170,17 +170,20 @@ def test_order_of_occurrence(header_custom):
 
 
 def test_get_custom_property(header_custom):
-    assert "Custom Value 1" == header_custom.custom_vars.get("Custom Property 1")
+    assert "Custom Value 1" == header_custom.custom_vars.get(
+        "Custom Property 1")
 
 
 def test_get_custom_property_2(header_custom):
-    assert "Custom Value 2" == header_custom.custom_vars.get("Custom Property 2")
+    assert "Custom Value 2" == header_custom.custom_vars.get(
+        "Custom Property 2")
 
 
 def test_add_custom_property(header_custom):
     header_custom.custom_vars.append("Custom Property 3", "Custom Value 3")
     assert 3 == len(header_custom.custom_vars)
-    assert "Custom Value 3" == header_custom.custom_vars.get("Custom Property 3")
+    assert "Custom Value 3" == header_custom.custom_vars.get(
+        "Custom Property 3")
 
 
 def test_remove_custom_property(header_custom):
@@ -201,6 +204,21 @@ def test_replace_custom_property(header_custom):
 def test_replace_not_existing_property(header_custom):
     with pytest.raises(ValueError):
         header_custom.custom_vars.replace("Does not Exist", "new value")
+
+
+@pytest.mark.parametrize('name,version,expected', [
+    ('$ACADMAINTVER', DXF2018, 90),
+    ('$ACADMAINTVER', DXF2013, 70),
+    ('$XCLIPFRAME', DXF2007, 290),
+    ('$XCLIPFRAME', DXF2010, 280),
+])
+def test_version_specific_header_vars(name, version, expected):
+    assert version_specific_group_code(name, version) == expected
+
+
+def test_version_specific_group_code_raises_key_error_for_unknown_names():
+    with pytest.raises(KeyError):
+        version_specific_group_code('$MOZMAN', DXF2000)
 
 
 INSBASE = """ 10

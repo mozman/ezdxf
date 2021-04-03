@@ -1771,12 +1771,12 @@ HEADER_VAR_MAP = {
         default=1),
     '$XCLIPFRAME': HeaderVarDef(
         name='$XCLIPFRAME',
-        code=280,
-        factory=partial(SingleValue, code=280),
+        code=280,  # 2004 & 2007 = 290
+        factory=partial(SingleValue, code=280),  # 2004 & 2007 = 290
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21400,
-        default=2),
+        default=0),
     '$HALOGAP': HeaderVarDef(
         name='$HALOGAP',
         code=280,
@@ -2086,3 +2086,14 @@ HEADER_VAR_MAP = {
         priority=25000,
         default=0.0),
 }
+
+
+def version_specific_group_code(name: str, dxfversion: str) -> int:
+    group_code = HEADER_VAR_MAP[name].code
+    # The HEADER_VAR_MAP contains the group codes for the latest DXF version.
+    # This section adjust changed group codes for older DXF versions:
+    if name == '$ACADMAINTVER':
+        group_code = 70 if dxfversion < DXF2018 else 90
+    elif name == '$XCLIPFRAME':
+        group_code = 290 if dxfversion < DXF2010 else 280
+    return group_code

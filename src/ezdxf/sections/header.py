@@ -1,6 +1,5 @@
 # Purpose: manage header section
-# Created: 12.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple, KeysView, Any, Iterator, Union, Sequence
 
@@ -8,9 +7,9 @@ from collections import OrderedDict
 
 from ezdxf.lldxf.types import strtag
 from ezdxf.lldxf.tags import group_tags, Tags, DXFTag
-from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError, DXF12, LATEST_DXF_VERSION, DXF2018
+from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError, DXF12, LATEST_DXF_VERSION
 from ezdxf.lldxf.validator import header_validator
-from ezdxf.sections.headervars import HEADER_VAR_MAP
+from ezdxf.sections.headervars import HEADER_VAR_MAP, version_specific_group_code
 import logging
 
 logger = logging.getLogger('ezdxf')
@@ -211,15 +210,10 @@ class HeaderSection:
                 logger.info('did not write header var {}, value is None.'.format(name))
                 return
             tagwriter.write_tag2(9, name)
-            vardef = HEADER_VAR_MAP[name]
-
-            # group code for header var $ACADMAINTVER changed from 70 to 90 in DXF version R2018.
-            if name == '$ACADMAINTVER':
-                vardef.code = 70 if dxfversion < DXF2018 else 90
-
+            group_code = version_specific_group_code(name, dxfversion)
             # fix invalid group codes
-            if vardef.code != value.code:
-                value = HeaderVar((vardef.code, value.value))
+            if group_code != value.code:
+                value = HeaderVar((group_code, value.value))
             tagwriter.write_str(str(value))
 
         dxfversion = tagwriter.dxfversion

@@ -7,6 +7,7 @@ Version 0.16.1b0 - dev
 
 - BUGFIX: `disassemble.recursive_decompose()` was not recursive 
 - BUGFIX: `Frontend` font resolver uses XDATA if no regular font file is defined 
+- BUGFIX: version specific group code for header variable `$XCLIPFRAME` 
 
 Version 0.16 - 2021-03-27
 -------------------------
