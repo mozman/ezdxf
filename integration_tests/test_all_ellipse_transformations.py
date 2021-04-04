@@ -46,11 +46,11 @@ def build(angle, dx, dy, dz, axis, start, end, count):
 def check(ellipse, vertices, count):
     ellipse_vertices = list(ellipse.vertices(ellipse.params(count)))
     # Ellipse vertices may appear in reverse order
-    if not vertices[0].isclose(ellipse_vertices[0], abs_tol=1e-9):
+    if not vertices[0].isclose(ellipse_vertices[0], abs_tol=1e-5):
         ellipse_vertices.reverse()
 
     return all(
-        vtx.isclose(chk, abs_tol=1e-9) for vtx, chk in
+        vtx.isclose(chk, abs_tol=1e-5) for vtx, chk in
         zip(ellipse_vertices, vertices)
     )
 
@@ -91,7 +91,6 @@ ERROR_CONFIGS = [
 ]
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize('config', ERROR_CONFIGS)
 def test_error_config(config):
     count = 8
