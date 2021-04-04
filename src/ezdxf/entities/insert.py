@@ -376,18 +376,15 @@ class Insert(LinkedEntities):
         """
 
         dxf = self.dxf
-        m1 = self.matrix44()
+        ocs = self.ocs()
 
-        # Transform scaled source axis into target coordinate system
-        ux, uy, uz = m.transform_directions((m1.ux, m1.uy, m1.uz))
+        # Transform source OCS axis into the target coordinate system:
+        ux, uy, uz = m.transform_directions((ocs.ux, ocs.uy, ocs.uz))
 
-        # Get new scaling factors, all are positive:
-        # z-axis is the real new z-axis, no reflection required
-        # x-axis is the real new x-axis, no reflection required
-        # y-axis - reflection is detected below
-        z_scale = uz.magnitude
-        x_scale = ux.magnitude
-        y_scale = uy.magnitude
+        # Calculate new axis scaling factors:
+        x_scale = ux.magnitude * dxf.xscale
+        y_scale = uy.magnitude * dxf.yscale
+        z_scale = uz.magnitude * dxf.zscale
 
         ux = ux.normalize()
         uy = uy.normalize()
@@ -397,17 +394,11 @@ class Insert(LinkedEntities):
                 abs(uz.dot(uy)) > ABS_TOL):
             raise InsertTransformationError(NON_ORTHO_MSG)
 
-        # expected y-axis for an orthogonal right handed coordinate system
+        # expected y-axis for an orthogonal right handed coordinate system:
         expected_uy = uz.cross(ux)
-        if expected_uy.isclose(-uy, abs_tol=ABS_TOL):
-            # transformed y-axis points into opposite direction of the expected
-            # y-axis:
+        if not expected_uy.isclose(uy, abs_tol=ABS_TOL):
+            # new y-axis points into opposite direction:
             y_scale = -y_scale
-
-        # The current reflection compensation does not work for multiple
-        # reflections in nested block references.
-        # I have no idea how to solve this issue (#380), or if the
-        # current implementation is even capable to solve this problem.
 
         ocs = OCSTransform.from_ocs(OCS(dxf.extrusion), OCS(uz), m)
         dxf.insert = ocs.transform_vertex(dxf.insert)
