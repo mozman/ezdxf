@@ -12,16 +12,24 @@ from ezdxf.entities import copy_attrib_as_text
 if TYPE_CHECKING:
     from ezdxf.eztypes import BlockLayout, Drawing, BaseLayout
 
-# Check if a viewer/ezdxf does correct block reference (INSERT) transformations.
-# If the viewer/ezdxf works correct only the exploded arrows are visible a
-# after loading. (The magenta colored content)
+# Check if a viewer and ezdxf does correct block reference (INSERT)
+# transformations. It is not possible to check the drawing add-on by this
+# example, because it uses the ezdxf transformation!
+#
+# If the viewer and ezdxf works correct only the exploded, magenta colored
+# arrows are visible after loading. If any red, green or blue colored arrowheads
+# are visible, the transformation of the block references applied by the viewer
+# is different to the transformation done by ezdxf.
+#
 # Turn of the "EXPLODE" layer to see the original block references.
-EXPLODE_CONTENT = True
-EXPLODE_ATTRIBS = True
 
-BLK_CONTENT = "ARROWS"
-EXPLODE = 'EXPLODE'
-ATTRIBS = 'CONFIG'
+EXPLODE_CONTENT = True
+EXPLODE_ATTRIBS = False  # explode ATTRIB entities as TEXT
+
+BLK_CONTENT = "ARROWS"  # original block references
+ATTRIBS = 'CONFIG'  # transformation parameters of the base block as ATTRIBs
+EXPLODE = 'EXPLODE'  # by ezdxf exploded block references
+
 LAYERS = [BLK_CONTENT, EXPLODE, ATTRIBS]
 
 
@@ -162,7 +170,7 @@ def create_l1_block_references(layout: 'BaseLayout', block_name: str):
         layer=ATTRIBS,
         grid=(220, 220),
         extrusions=((0, 0, 1), (1, 0, 0), (0, 1, 0), (0, 0, -1), (-1, 0, 0), (0, -1, 0)),
-        scales=((1, 1, 1), (-1, 1, 1), (1, -1, 1)),
+        scales=((1, 1, 1), (-1, 1, 1), (1, -1, 1), (1, 1, -1)),
         angles=(0, 90, 180),
     )
 
@@ -170,8 +178,7 @@ def create_l1_block_references(layout: 'BaseLayout', block_name: str):
 def nesting_level_0(doc: 'Drawing'):
     blk = doc.blocks.new("BASE")
     create_base_block(blk)
-    msp = doc.modelspace()
-    create_l0_block_references(msp, "BASE")
+    create_l0_block_references(doc.modelspace(), "BASE")
 
 
 def nesting_level_1(doc: 'Drawing'):
@@ -179,9 +186,7 @@ def nesting_level_1(doc: 'Drawing'):
     create_base_block(blk)
     blk0 = doc.blocks.new("LEVEL0")
     create_l0_block_references(blk0, "BASE")
-
-    msp = doc.modelspace()
-    create_l1_block_references(msp, "LEVEL0")
+    create_l1_block_references(doc.modelspace(), "LEVEL0")
 
 
 if __name__ == '__main__':
