@@ -3,7 +3,9 @@
 from typing import Dict, TYPE_CHECKING, cast
 import math
 import ezdxf
-from ezdxf.math import Vec3, Matrix44, X_AXIS, linspace, OCS
+from time import perf_counter
+
+from ezdxf.math import Vec3, Matrix44, X_AXIS, OCS
 from ezdxf import zoom, disassemble
 from ezdxf.entities import copy_attrib_as_text
 
@@ -15,15 +17,12 @@ if TYPE_CHECKING:
 # after loading. (The magenta colored content)
 # Turn of the "EXPLODE" layer to see the original block references.
 EXPLODE_CONTENT = True
+EXPLODE_ATTRIBS = True
 
-BLK_CONTENT = "BLK_CONTENT"
-BLK_REF_LEVEL_0 = "BLK_REF_LEVEL_0"
-BLK_REF_LEVEL_1 = "BLK_REF_LEVEL_1"
+BLK_CONTENT = "ARROWS"
 EXPLODE = 'EXPLODE'
-LAYERS = [
-    BLK_CONTENT, BLK_REF_LEVEL_0, BLK_REF_LEVEL_1, EXPLODE
-]
-ATTRIBS = 'ATTRIBS'
+ATTRIBS = 'CONFIG'
+LAYERS = [BLK_CONTENT, EXPLODE, ATTRIBS]
 
 
 def explode(layout: 'BaseLayout'):
@@ -31,6 +30,8 @@ def explode(layout: 'BaseLayout'):
         entities = list(disassemble.recursive_decompose(layout))
         for e in entities:
             if e.dxftype() in ('ATTRIB', 'ATTDEF'):
+                if not EXPLODE_ATTRIBS:
+                    continue
                 e = copy_attrib_as_text(cast('BaseAttrib', e))
             e = cast('DXFGraphic', e)
             e.dxf.layer = EXPLODE
@@ -39,6 +40,7 @@ def explode(layout: 'BaseLayout'):
 
 
 def create_doc(filename, content_creator):
+    print(f"start DXF document: {filename}")
     doc = ezdxf.new(dxfversion='R2004')
     for name in LAYERS:
         doc.layers.new(name)
@@ -46,9 +48,24 @@ def create_doc(filename, content_creator):
         'font': 'OpenSansCondensed-Light.ttf'
     })
     content_creator(doc)
-    explode(doc.modelspace())
-    zoom.extents(doc.modelspace())
+    msp = doc.modelspace()
+    print("exploding ...")
+    ts = perf_counter()
+    explode(msp)
+    print(f"... required {perf_counter()-ts:.2f}s")
+    print("zooming ...")
+    ts = perf_counter()
+    if EXPLODE_CONTENT:
+        # processing only LINE entities is much faster:
+        zoom.objects(msp, doc.modelspace().query('LINE'))
+    else:
+        zoom.extents(msp)
+    print(f"... required {perf_counter()-ts:.2f}s")
+    print("saving ...")
+    ts = perf_counter()
     doc.saveas(filename)
+    print(f"... required {perf_counter()-ts:.2f}s")
+    print(f"saved DXF document: {filename}\n")
 
 
 def create_base_block(block: 'BlockLayout', arrow_length=4):
@@ -131,9 +148,9 @@ def create_block_references(
 def create_l0_block_references(layout: 'BaseLayout', block_name: str):
     create_block_references(
         layout, block_name,
-        layer=BLK_REF_LEVEL_0,
+        layer=ATTRIBS,
         grid=(4.5, 4.5),
-        extrusions=((0, 0, 1), (0, 0, -1)),
+        extrusions=((0, 0, 1), (1, 0, 0), (0, 1, 0), (0, 0, -1), (-1, 0, 0), (0, -1, 0)),
         scales=((1, 1, 1), (-1, 1, 1), (1, -1, 1), (1, 1, -1)),
         angles=(0, 45, 90, 135, 180, 225, 270, 315),
     )
@@ -142,9 +159,9 @@ def create_l0_block_references(layout: 'BaseLayout', block_name: str):
 def create_l1_block_references(layout: 'BaseLayout', block_name: str):
     create_block_references(
         layout, block_name,
-        layer=BLK_REF_LEVEL_1,
-        grid=(100, 100),
-        extrusions=((0, 0, 1),),
+        layer=ATTRIBS,
+        grid=(220, 220),
+        extrusions=((0, 0, 1), (1, 0, 0), (0, 1, 0), (0, 0, -1), (-1, 0, 0), (0, -1, 0)),
         scales=((1, 1, 1), (-1, 1, 1), (1, -1, 1)),
         angles=(0, 90, 180),
     )
