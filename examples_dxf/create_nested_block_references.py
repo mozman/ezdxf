@@ -1,29 +1,52 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
-from typing import Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING, cast
 import math
 import ezdxf
-from ezdxf.math import Vec3, Matrix44, X_AXIS, linspace
-from ezdxf import zoom
+from ezdxf.math import Vec3, Matrix44, X_AXIS, linspace, OCS
+from ezdxf import zoom, disassemble
+from ezdxf.entities import copy_attrib_as_text
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import BlockLayout, Drawing, BaseLayout
 
+# Check if a viewer/ezdxf does correct block reference (INSERT) transformations.
+# If the viewer/ezdxf works correct only the exploded arrows are visible a
+# after loading. (The magenta colored content)
+# Turn of the "EXPLODE" layer to see the original block references.
+EXPLODE_CONTENT = True
+
 BLK_CONTENT = "BLK_CONTENT"
 BLK_REF_LEVEL_0 = "BLK_REF_LEVEL_0"
 BLK_REF_LEVEL_1 = "BLK_REF_LEVEL_1"
+EXPLODE = 'EXPLODE'
+LAYERS = [
+    BLK_CONTENT, BLK_REF_LEVEL_0, BLK_REF_LEVEL_1, EXPLODE
+]
 ATTRIBS = 'ATTRIBS'
+
+
+def explode(layout: 'BaseLayout'):
+    if EXPLODE_CONTENT:
+        entities = list(disassemble.recursive_decompose(layout))
+        for e in entities:
+            if e.dxftype() in ('ATTRIB', 'ATTDEF'):
+                e = copy_attrib_as_text(cast('BaseAttrib', e))
+            e = cast('DXFGraphic', e)
+            e.dxf.layer = EXPLODE
+            e.dxf.color = 6
+            layout.add_entity(e)
 
 
 def create_doc(filename, content_creator):
     doc = ezdxf.new(dxfversion='R2004')
-    doc.layers.new(BLK_CONTENT)
-    doc.layers.new(BLK_REF_LEVEL_0)
-    doc.layers.new(BLK_REF_LEVEL_1)
+    for name in LAYERS:
+        doc.layers.new(name)
     doc.styles.new(ATTRIBS, dxfattribs={
         'font': 'OpenSansCondensed-Light.ttf'
     })
     content_creator(doc)
+    explode(doc.modelspace())
     zoom.extents(doc.modelspace())
     doc.saveas(filename)
 
@@ -78,44 +101,72 @@ def show_config(blk_ref):
     })
 
 
-def create_l0_block_references(layout: 'BaseLayout'):
+def create_block_references(
+        layout: 'BaseLayout', block_name: str, layer: str = "LAYER",
+        grid=(10, 10),
+        extrusions=((0, 0, 1), (0, 0, -1)),
+        scales=((1, 1, 1), (-1, 1, 1), (1, -1, 1), (1, 1, -1)),
+        angles=(0, 45, 90, 135, 180, 225, 270, 315),
+):
     y = 0
-    grid_x = 4.5
-    grid_y = 4.5
-    for sx, sy, sz in [(1, 1, 1), (-1, 1, 1), (1, -1, 1), (1, 1, -1)]:
-        for index, angle in enumerate(linspace(0, 270, 10)):
-            x = index * grid_x
-            blk_ref = layout.add_blockref("BASE", (x, y), dxfattribs={
-                'layer': BLK_REF_LEVEL_0,
-                'rotation': angle,
-                'xscale': sx,
-                'yscale': sy,
-                'zscale': sz,
-            })
-            show_config(blk_ref)
-        y += grid_y
+    grid_x, grid_y = grid
+    for extrusion in extrusions:
+        ocs = OCS(extrusion)
+        for sx, sy, sz in scales:
+            for index, angle in enumerate(angles):
+                x = index * grid_x
+                insert = ocs.from_wcs((x, y))
+                blk_ref = layout.add_blockref(block_name, insert, dxfattribs={
+                    'layer': layer,
+                    'rotation': angle,
+                    'xscale': sx,
+                    'yscale': sy,
+                    'zscale': sz,
+                    'extrusion': extrusion,
+                })
+                show_config(blk_ref)
+            y += grid_y
 
 
-def create_l1_block_references(layout: 'BaseLayout'):
-    pass
+def create_l0_block_references(layout: 'BaseLayout', block_name: str):
+    create_block_references(
+        layout, block_name,
+        layer=BLK_REF_LEVEL_0,
+        grid=(4.5, 4.5),
+        extrusions=((0, 0, 1), (0, 0, -1)),
+        scales=((1, 1, 1), (-1, 1, 1), (1, -1, 1), (1, 1, -1)),
+        angles=(0, 45, 90, 135, 180, 225, 270, 315),
+    )
 
 
-def nesting_depth_0(doc: 'Drawing'):
+def create_l1_block_references(layout: 'BaseLayout', block_name: str):
+    create_block_references(
+        layout, block_name,
+        layer=BLK_REF_LEVEL_1,
+        grid=(100, 100),
+        extrusions=((0, 0, 1),),
+        scales=((1, 1, 1), (-1, 1, 1), (1, -1, 1)),
+        angles=(0, 90, 180),
+    )
+
+
+def nesting_level_0(doc: 'Drawing'):
     blk = doc.blocks.new("BASE")
     create_base_block(blk)
     msp = doc.modelspace()
-    create_l0_block_references(msp)
+    create_l0_block_references(msp, "BASE")
 
 
-def nesting_depth_1(doc: 'Drawing'):
+def nesting_level_1(doc: 'Drawing'):
     blk = doc.blocks.new("BASE")
     create_base_block(blk)
     blk0 = doc.blocks.new("LEVEL0")
-    create_l0_block_references(blk0)
+    create_l0_block_references(blk0, "BASE")
+
     msp = doc.modelspace()
-    create_l1_block_references(msp)
+    create_l1_block_references(msp, "LEVEL0")
 
 
 if __name__ == '__main__':
-    create_doc("insert_depth_0.dxf", nesting_depth_0)
-    # create_doc("insert_depth_1.dxf", nesting_depth_1)
+    create_doc("insert_nesting_level_0.dxf", nesting_level_0)
+    create_doc("insert_nesting_level_1.dxf", nesting_level_1)
