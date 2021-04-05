@@ -258,6 +258,16 @@ def get_font_measurements(ttf_path: str, map_shx=True) -> 'FontMeasurements':
     return m
 
 
+def find_font_face_by_family(family: str, italic=False, bold=False) -> Optional['FontFace']:
+    # TODO: find best match
+    #  additional attributes "italic" and "bold" are ignored yet
+    key = family.lower()
+    for f in font_face_cache.values():
+        if key == f.family.lower():
+            return f
+    return None
+
+
 def get_cache_file_path(path, name: str = FONT_FACE_CACHE_FILE) -> Path:
     """ Build path to cache files. """
     if path is None and options.font_cache_directory:
@@ -395,6 +405,7 @@ class MatplotlibFont(AbstractFont):
     Use the :func:`make_font` factory function to create a font abstraction.
 
     """
+
     def __init__(self, ttf_path: str, cap_height: float = 1.0,
                  width_factor: float = 1.0):
         from . import _matplotlib_font_support
@@ -427,6 +438,7 @@ class MonospaceFont(AbstractFont):
     Use the :func:`make_font` factory function to create a font abstraction.
 
     """
+
     def __init__(self,
                  cap_height: float,
                  width_factor: float = 1.0,

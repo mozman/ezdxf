@@ -165,11 +165,11 @@ def test_random_ellipse_transformations(sx, sy, sz, start, end):
     def check(ellipse, vertices):
         ellipse_vertices = list(ellipse.vertices(ellipse.params(vertex_count)))
         # Ellipse vertices may appear in reverse order
-        if not vertices[0].isclose(ellipse_vertices[0], abs_tol=1e-9):
+        if not vertices[0].isclose(ellipse_vertices[0], abs_tol=1e-5):
             ellipse_vertices.reverse()
 
         for vtx, chk in zip(ellipse_vertices, vertices):
-            assert vtx.isclose(chk, abs_tol=1e-9) is True, config
+            assert vtx.isclose(chk, abs_tol=1e-5) is True, config
 
     for _ in range(10):
         angle = random.uniform(0, math.tau)
@@ -269,8 +269,8 @@ def test_apply_transformation_multiple_times(sx, sy, sz, doc1: 'Drawing'):
         entity, vertices = synced_transformation(entity, vertices, m)
         points = list(vertices)
         for num, line in enumerate(entity.virtual_entities()):
-            assert points[0].isclose(line.dxf.start, abs_tol=1e-9)
-            assert points[num + 1].isclose(line.dxf.end, abs_tol=1e-9)
+            assert points[0].isclose(line.dxf.start, abs_tol=1e-6)
+            assert points[num + 1].isclose(line.dxf.end, abs_tol=1e-6)
 
 
 if __name__ == '__main__':

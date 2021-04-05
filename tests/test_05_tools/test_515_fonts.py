@@ -116,5 +116,10 @@ class TestFontMeasurements:
         assert font.text_width("1234") == 7.5
 
 
+def test_find_font_file_by_family():
+    assert fonts.find_font_face_by_family("simsun").ttf == "simsun.ttc"
+    assert fonts.find_font_face_by_family("mozman") is None
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

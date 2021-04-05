@@ -323,10 +323,17 @@ class RenderContext:
     def add_text_style(self, text_style: 'Textstyle'):
         """ Setup text style properties. """
         name = table_key(text_style.dxf.name)
-        ttf = text_style.dxf.font
-        font_face = fonts.get_font_face(ttf, map_shx=True)
-        # 2021-02-02: Removed TTF check!
-        # AutoCAD supports only TTF-fonts, but we can do better!
+        font_file = text_style.dxf.font
+        font_face = None
+        if font_file == "":  # Font family stored in XDATA?
+            family, italic, bold = text_style.get_extended_font_data()
+            if family:
+                font_face = fonts.find_font_face_by_family(family, italic, bold)
+        else:
+            font_face = fonts.get_font_face(font_file, map_shx=True)
+
+        if font_face is None:  # fall back to default font
+            font_face = fonts.FontFace()
         self.fonts[name] = font_face
 
     def _true_layer_color(self, layer: 'Layer') -> Color:

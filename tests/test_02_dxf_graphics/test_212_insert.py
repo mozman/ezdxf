@@ -325,17 +325,6 @@ def test_insert_transform_interface():
     assert insert.dxf.insert == (1, 0, 0)
 
 
-def test_insert_transformation_error():
-    insert = Insert.new(dxfattribs={
-        'name': 'AXIS',
-        'insert': (0, 0, 0),
-        'rotation': 45,
-    })
-    m = Matrix44.scale(0.5, 1, 1)
-    with pytest.raises(InsertTransformationError):
-        insert.transform(m)
-
-
 def test_insert_scaling():
     # Insert.transform() changes the extrusion vector
     # sign of scaling factors depend from new extrusion vector

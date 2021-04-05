@@ -1,12 +1,12 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 import copy
 from ezdxf.lldxf import validator
 from ezdxf.math import NULLVEC
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
-    group_code_mapping
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010
 from ezdxf.lldxf import const
@@ -19,7 +19,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Tags, DXFNamespace, DXFEntity
 
-__all__ = ['AttDef', 'Attrib']
+__all__ = ['AttDef', 'Attrib', 'copy_attrib_as_text']
 
 # DXF Reference for ATTRIB is a total mess and incorrect, the AcDbText subclass
 # for the ATTRIB entity is the same as for the TEXT entity, but the valign field
@@ -303,3 +303,19 @@ class Attrib(BaseAttrib):
             'version', 'tag', 'flags', 'field_length', 'valign',
             'lock_position',
         ])
+
+
+IGNORE_FROM_ATTRIB = {
+    'handle', 'owner', 'version', 'prompt', 'tag', 'flags', 'field_length',
+    'lock_position'
+}
+
+
+def copy_attrib_as_text(attrib: BaseAttrib):
+    """ Returns the content of the ATTRIB/ATTDEF entity as a new virtual TEXT
+    entity.
+
+    """
+    # TODO: MTEXT feature of DXF R2018+ is not supported yet!
+    dxfattribs = attrib.dxfattribs(drop=IGNORE_FROM_ATTRIB)
+    return Text.new(dxfattribs=dxfattribs, doc=attrib.doc)

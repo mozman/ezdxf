@@ -115,7 +115,7 @@ Documentation
 
 Documentation of development version at https://ezdxf.mozman.at/docs
 
-Documentation of the latest release at http://ezdxf.readthedocs.io/
+Documentation of the latest release at https://ezdxf.readthedocs.io/
 
 Contribution
 ------------
@@ -123,7 +123,7 @@ Contribution
 The source code of *ezdxf* can be found at __GitHub__, target your pull requests 
 to the `master` branch:
 
-http://github.com/mozman/ezdxf.git
+https://github.com/mozman/ezdxf.git
 
 
 Feedback

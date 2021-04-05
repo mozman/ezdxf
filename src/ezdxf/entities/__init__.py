@@ -52,7 +52,7 @@ from .subentity import LinkedEntities, entity_linker
 from .insert import Insert
 from .block import Block, EndBlk
 from .polyline import Polyline, Polyface, Polymesh, MeshVertexCache
-from .attrib import Attrib, AttDef
+from .attrib import Attrib, AttDef, copy_attrib_as_text
 from .dimension import Dimension, ArcDimension
 from .dimstyleoverride import DimStyleOverride
 from .viewport import Viewport

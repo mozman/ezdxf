@@ -30,8 +30,30 @@ def synced_scaling(entity, chk, sx=1, sy=1, sz=1):
     return entity, chk
 
 
-# Detected error conditions:
-# CONFIG sx=-3, sy=2, sz=-1; start=5.7596, end=0.5236; dx=2, dy=2, dz=2; axis=(0.9071626602531079, 0.30514034769743803, -0.28973311175906485)
+def build(angle, dx, dy, dz, axis, start, end, count):
+    ellipse = Ellipse.new(dxfattribs={
+        'start_param': start,
+        'end_param': end,
+    })
+    vertices = list(ellipse.vertices(ellipse.params(count)))
+    m = Matrix44.chain(
+        Matrix44.axis_rotate(axis=axis, angle=angle),
+        Matrix44.translate(dx=dx, dy=dy, dz=dz)
+    )
+    return synced_transformation(ellipse, vertices, m)
+
+
+def check(ellipse, vertices, count):
+    ellipse_vertices = list(ellipse.vertices(ellipse.params(count)))
+    # Ellipse vertices may appear in reverse order
+    if not vertices[0].isclose(ellipse_vertices[0], abs_tol=1e-5):
+        ellipse_vertices.reverse()
+
+    return all(
+        vtx.isclose(chk, abs_tol=1e-5) for vtx, chk in
+        zip(ellipse_vertices, vertices)
+    )
+
 
 @pytest.mark.parametrize('sx, sy, sz', UNIFORM_SCALING + NON_UNIFORM_SCALING)
 @pytest.mark.parametrize('start, end', [
@@ -45,27 +67,6 @@ def synced_scaling(entity, chk, sx=1, sy=1, sz=1):
 def test_random_ellipse_transformations(sx, sy, sz, start, end):
     vertex_count = 8
 
-    def build(angle, dx, dy, dz, axis):
-        ellipse = Ellipse.new(dxfattribs={
-            'start_param': start,
-            'end_param': end,
-        })
-        vertices = list(ellipse.vertices(ellipse.params(vertex_count)))
-        m = Matrix44.chain(
-            Matrix44.axis_rotate(axis=axis, angle=angle),
-            Matrix44.translate(dx=dx, dy=dy, dz=dz)
-        )
-        return synced_transformation(ellipse, vertices, m)
-
-    def check(ellipse, vertices):
-        ellipse_vertices = list(ellipse.vertices(ellipse.params(vertex_count)))
-        # Ellipse vertices may appear in reverse order
-        if not vertices[0].isclose(ellipse_vertices[0], abs_tol=1e-9):
-            ellipse_vertices.reverse()
-
-        for vtx, chk in zip(ellipse_vertices, vertices):
-            assert vtx.isclose(chk, abs_tol=1e-9) is True, config
-
     for angle in linspace(0, math.tau, 19):
         for dx, dy, dz in product([2, 0, -2], repeat=3):
             axis = Vec3.random()  # TODO: fixed rotation axis
@@ -73,9 +74,36 @@ def test_random_ellipse_transformations(sx, sy, sz, start, end):
             config = f"CONFIG sx={sx}, sy={sy}, sz={sz}; " \
                      f"start={start:.4f}, end={end:.4f}; angle={angle};" \
                      f"dx={dx}, dy={dy}, dz={dz}; axis={str(axis)}"
-            ellipse0, vertices0 = build(angle, dx, dy, dz, axis)
-            check(ellipse0, vertices0)
-            check(*synced_scaling(ellipse0, vertices0, sx, sy, sz))
+            ellipse0, vertices0 = build(angle, dx, dy, dz, axis, start, end,
+                                        vertex_count)
+            assert check(ellipse0, vertices0, vertex_count) is True, config
+            ellipse1, vertices1 = synced_scaling(ellipse0, vertices0, sx, sy,
+                                                 sz)
+            assert check(ellipse1, vertices1, vertex_count) is True, config
+
+
+# Detected error conditions:
+ERROR_CONFIGS = [
+
+    dict(scale=(-3, 2, -1), start=5.7596, end=0.5236, shift=(2, 2, 2),
+         axis=(0.9071626602531079, 0.30514034769743803, -0.28973311175906485),
+         angles=[4.886921], )  # Error occurs only for angle = 280 deg!
+]
+
+
+@pytest.mark.parametrize('config', ERROR_CONFIGS)
+def test_error_config(config):
+    count = 8
+    sx, sy, sz = config['scale']
+    dx, dy, dz = config['shift']
+    start = config['start']
+    end = config['end']
+    axis = config['axis']
+    for angle in config['angles']:
+        ellipse0, vertices0 = build(angle, dx, dy, dz, axis, start, end, count)
+        assert check(ellipse0, vertices0, count) is True
+        ellipse1, vertices1 = synced_scaling(ellipse0, vertices0, sx, sy, sz)
+        assert check(ellipse1, vertices1, count) is True
 
 
 if __name__ == '__main__':
