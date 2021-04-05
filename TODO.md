@@ -5,16 +5,17 @@ Add-ons
 -------
 
 - drawing
-    - MLEADER full rendering support (v0.17), requires `MLeader.virtual_entities()`
-    - add support for ATTRIB with embedded MTEXT (v0.17)
-    - ACAD_TABLE
-    - global fonts cache usage
+    - (v0.17) MLEADER full rendering support, requires `MLeader.virtual_entities()`
+    - (v0.17) add support for ATTRIB with embedded MTEXT
+    - (v0.17) global fonts cache usage
+    - (>v1.0) ACAD_TABLE
   
-- Native SVG exporter, planned after the matplotlib backend supports all the 
-  planned features.
-- Native PDF exporter? Problem: The PDF 1.7 reference has ~1300 pages, but I 
-  assume I only need a fraction of that information for a simple exporter. 
-  I can use Matplotlib for text rendering as Bèzier curves if required.
+- (>v1.0) Native SVG exporter, planned after the matplotlib backend supports 
+  all v1.0 features. 
+
+- (>v1.0) Native PDF exporter? Problem: The PDF 1.7 reference has ~1300 pages, 
+  but I assume I only need a fraction of that information for a simple exporter. 
+  I can use Matplotlib for text rendering as Bèzier curves if required.  
   
   Existing Python packages for PDF rendering: 
   - pycairo: binary wheels for Windows on PyPI - could handle SVG & PDF, but I 
@@ -28,36 +29,45 @@ Add-ons
   
   In consideration, if then SVG exporter works well.
     
-- DWG loader, planned for the future. Cython will be required for the low level 
-  stuff, no pure Python implementation.         
-
+- (>v1.0) DWG loader, planned for the future. Cython will be required for the 
+  low level stuff, no pure Python implementation.
 
 Render Tools
 ------------
 
-- `MLeader.virtual_entities()` (v0.17)
-- `ACADTable.virtual_entities()` ??? -> requires basic ACAD_TABLE support
-- `EulerSpiral()` conversion to B-spline with end tangent constraints
-
-DXF Entities
-------------
-
-- MLEADER: factory methods to create new MLEADER entities (v0.17)  
-- ATTRIB/ATTDEF support for embedded MTEXT entity (v0.17),
-  example: `dxftest/attrib_attdef_with_embedded_mtext.dxf`
-- Remove generic "Embedded Object" support in DXFEntity because this is always 
-  a special case which should be handled by DXF load/export procedure and it is 
-  used only by ATTRIB/ATTDEF yet (v0.17).
-
-- DIMENSION rendering, boring and tedious due to lack of documentation!
+- (v0.17) `MLeader.virtual_entities()` 
+- (v0.17) `EulerSpiral()` conversion to B-spline with end tangent constraints
+- (v0.17) Text layout engine for better MTEXT rendering support by the 
+  `drawing` add-on and conversion of MTEXT into multiple TEXT entities.
+- (<v1.0) DIMENSION rendering
     - angular dim
     - angular 3 point dim
     - ordinate dim
     - arc dim
-- FIELD, boring and tedious due to lack of documentation!
-- ACAD_TABLE, boring and tedious due to lack of documentation!
+- (>v1.0) `ACADTable.virtual_entities()`, requires basic ACAD_TABLE support
+
+DXF Entities
+------------
+
+- (v0.17) MLEADER: factory methods to create new MLEADER entities  
+- (v0.17) ATTRIB/ATTDEF support for embedded MTEXT entity,
+  example: dxftest/attrib_attdef_with_embedded_mtext.dxf
+- (v0.17) Remove generic "Embedded Object" support in DXFEntity because this is 
+  always a special case which should be handled by DXF load/export procedure, 
+  and it is used only by ATTRIB/ATTDEF yet.
+- (>v1.0) FIELD, used by ACAD_TABLE and MTEXT
+- (>v1.0) ACAD_TABLE
+
+DXF Document
+------------
+
+- (>v1.0) `doc.to_dxf_r12()`: convert the whole DXF document into DXF R12. 
+  This is a destructive process, which converts MTEXT to TEXT, 
+  MESH to PolyFaceMesh, LWPOLYLINE into POLYLINE, flatten SPLINE into 
+  POLYLINE ..., and removes all entities not supported by DXF R12 
+  like TABLE, ACIS entities, ...
   
-- Optimize DXF export (>1.0): write tags direct in export_entity() 
+- (>v1.0) Optimize DXF export: write tags direct in export_entity() 
   without any indirections, this requires some additional tag writing 
   function in the Tagwriter() class, these additional functions should only use 
   methods from AbstractTagwriter():
@@ -66,12 +76,16 @@ DXF Entities
     skip default value if given
   - a check function for tags containing user strings (line breaks!)
   
-      
 DXF Audit & Repair
 ------------------
 
-- check DIMENSION
-    - dimstyle exist; repair: set to 'Standard'
-    - arrows exist; repair: set to '' = default open filled arrow
-    - text style exist; repair: set to 'Standard'
-  
+- (v0.17) Standalone ATTRIBS are not allowed in model space (also paper space- 
+  and block layout?). Important for exploding INSERT entities with ATTRIBS, 
+  the current implementation already convert ATTRIB to TEXT. 
+  BricsCAD removes them and TrueView crashes, more testing is required. 
+- (v0.17) Remove invalid standalone ATTRIB/ATTDEF entities
+- (<v1.0) check DIMENSION
+  - overridden properties in XDATA have to be checked!
+  - dimstyle exist; repair: set to 'Standard'
+  - arrows exist; repair: set to '' = default open filled arrow
+  - text style exist; repair: set to 'Standard'
