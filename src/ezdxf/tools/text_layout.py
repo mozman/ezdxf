@@ -17,9 +17,10 @@ different purposes like the drawing add-on or exploding MTEXT into DXF
 primitives. But the engine is not bound to the MTEXT entity, the MTEXT 
 entity just defines the basic requirements.
 
-This engine works on given boxes as input and does not render the letter 
-shapes by itself, therefore individual kerning between letters is not 
-supported in anyway.
+This engine works on given (text) boxes as input and does not render the glyphs
+by itself nor does it have any knowledge about the glyphs, therefore individual 
+kerning between letters is not supported in anyway. As consequence the 
+"distributed" paragraph alignment of MTEXT can not be supported.
 
 Each input box can have an individual rendering object attached, derived from 
 the :class:`ContentRenderer` class, which requires two methods:
@@ -30,12 +31,36 @@ the :class:`ContentRenderer` class, which requires two methods:
 2. method :meth:`line` to render simple straight lines like under- and over 
    stroke lines or fraction dividers.
 
+Soft hyphens or auto word wrapping is not supported.
+
+Text direction is determined by the client by the given arrangement of the 
+input cells, but the vertical flow is always organized in lines from top to 
+bottom.
+
+The main work done by the layout engine is the placing of the given content 
+cells. The layout engine does not change the size of content cells and only 
+adjusts the width of glue cells e.g. "justified" paragraphs.
+
+Switching fonts or changing text size and -color has to be done by the client 
+at the process of dividing the input text into text- and glue cells and 
+assigning them appropriate rendering functions.
+
+The only text styling provided by the layout engine are strokes above, through 
+or below one or more words, which have to span across glue cells.
+
 Content organization
 --------------------
 
 The content is divided into containers (layout, column, paragraphs, ...) and
 simple boxes for the actual content as cells like words and glue cells like 
 spaces or tabs.
+
+The basic content object is a text cell, which represents a single word. 
+Fractions of the MTEXT entity are supported by fraction cells. Content cells
+have to be separated by mandatory glue cells. 
+Non breaking spaces have to be fed into the layout engine as special glue 
+element, because it is also a simple space, which should be adjustable in the 
+"justified" paragraph alignment. 
 
 Containers
 ----------
@@ -61,17 +86,10 @@ All containers support margins.
     3.1 FlowText, supports left, right, center and justified alignments;
         indentation for the left side, the right side and the first line; 
         line spacing; no nested paragraphs or bullet lists;
-        The final content is distributed as lines separated by "leading" boxes 
-        as spacers.
+        The final content is distributed as lines (HCellGroup).
         
     3.2 BulletList, the "bullet" can be any text cell, the flow text of each
         list is an paragraph with left aligned text ...
-
-4. Line
-    
-    A line contains only simple boxes. A line has a fixed width and the height 
-    is defined by the tallest box (+margins) inside the line container. 
-    The content cells (words) are connected by glue cells.
 
 Simple Boxes
 ------------
@@ -85,8 +103,7 @@ Do not support margins.
     1.1 Space, flexible width but has a minimum width, possible line break
     1.2 Non breaking space, like a space but prevents line break between 
         adjacent text cells
-    1.3 Soft hyphen, possible line break between adjacent text cells (ignored)
-    1.4 Tabulator (treated as space) 
+    1.3 Tabulator, the current implementation treats tabulators like spaces. 
 
 2. Content cells
 
@@ -98,9 +115,11 @@ Do not support margins.
         
     2.2 Fraction cell ... (MTEXT!)
 
-3. Leading
-
-    Line separator, the width is always 0.
+3. HCellGroup (H for horizontal, a.k.a. Line)
+    
+    A line contains only simple boxes and has a fixed width. 
+    The height is determined by the tallest box of the group. 
+    The content cells (words) are connected/separated by mandatory glue cells.
 
 """
 
