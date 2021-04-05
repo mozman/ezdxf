@@ -97,10 +97,10 @@ class TestColumn:
     @pytest.fixture
     def c1(self):
         return tl.Column(
+            # margins = top, right, bottom, left - same order as for CSS
             width=5, height=7, margins=(1, 2, 3, 4), render=Rect('C1'))
 
     def test_size_calculation(self, c1):
-        # margins = top, right, bottom, left
         c1.place(0, 0)
         assert c1.content_width == 5
         assert c1.content_height == 7
@@ -113,11 +113,17 @@ class TestColumn:
 
 
 class TestFlowTextWithUnrestrictedHeight:
-    # Default values: column width is 10, content width is 3, space is 0.5
+    # default values:
+    # column width = 10
+    # content width = 3
+    # space width = 0.5
 
     @pytest.fixture
     def flow(self):
-        # Paragraph alignment is not important for content distribution.
+        # Paragraph alignment is not important for content distribution,
+        # because the required space is independent from alignment (left,
+        # right, center or justified).
+        # This may change by implementing regular tabulator support.
         return tl.FlowText(width=10, render=Rect('PAR'))
 
     def test_empty_paragraph_dimensions(self, flow):
@@ -136,7 +142,9 @@ class TestFlowTextWithUnrestrictedHeight:
             flow.distribute_content(height=None)
 
     def test_distribute_common_case_without_nbsp(self, flow):
-        # column width is 10, content width is 3, space is 0.5
+        # column width = 10
+        # content width = 3
+        # space width = 0.5
         flow.append_content(str2cells('t t t t t t t t t'))
         flow.distribute_content(height=None)
         assert lines2str(flow) == [
@@ -146,7 +154,9 @@ class TestFlowTextWithUnrestrictedHeight:
         ]
 
     def test_distribute_with_nbsp(self, flow):
-        # column width is 10, content width is 3, space is 0.5
+        # column width = 10
+        # content width = 3
+        # space width = 0.5
         flow.append_content(str2cells('t t t~t t t'))
         flow.distribute_content(height=None)
         assert lines2str(flow) == [
@@ -156,7 +166,7 @@ class TestFlowTextWithUnrestrictedHeight:
         ]
 
     def test_distribute_too_long_lines(self, flow):
-        # column width is 10
+        # column width = 10
         flow.append_content(str2cells('t t t', content=12))
         flow.distribute_content(height=None)
         assert lines2str(flow) == [
@@ -166,7 +176,7 @@ class TestFlowTextWithUnrestrictedHeight:
         ]
 
     def test_distribute_too_long_lines_including_nbsp(self, flow):
-        # column width is 10
+        # column width = 10
         flow.append_content(str2cells('t~t~t t~t t', content=5))
         flow.distribute_content(height=None)
         assert lines2str(flow) == [
@@ -177,8 +187,12 @@ class TestFlowTextWithUnrestrictedHeight:
 
 
 class TestFlowTextWithRestrictedHeight:
-    # Default values: column width is 10, content width is 3, space is 0.5
-    # cap height = 1, line spacing 3-on-5 by 100% = 1.667
+    # default values:
+    # column width = 10
+    # content width = 3
+    # space width = 0.5
+    # cap height = 1,
+    # line spacing 3-on-5 by 100% = 1.667
     THREE_LINE_SPACE = tl.leading(1, 1) * 2 + 1
 
     @pytest.fixture
@@ -197,8 +211,9 @@ class TestFlowTextWithRestrictedHeight:
 
     def test_distribute_with_one_line_left_over(self, flow):
         flow.append_content(str2cells('t t t t t t t t t'))
-        # Paragraph has only space for only 2 lines:
-        height = self.THREE_LINE_SPACE - 0.01  # reduce space by a small amount
+        # Paragraph has only space for 2 lines by reducing the available space
+        # by a small amount:
+        height = self.THREE_LINE_SPACE - 0.01
         leftover = flow.distribute_content(height=height)
         assert lines2str(flow) == [
             't t t',
@@ -213,7 +228,8 @@ class TestFlowTextWithRestrictedHeight:
         leftover = flow.distribute_content(height=0)
         assert lines2str(flow) == []
 
-        leftover.distribute_content(height=None)  # unrestricted height
+        # None = unrestricted height
+        leftover.distribute_content(height=None)
         assert lines2str(leftover) == [
             't t',
             't~t t',
@@ -310,7 +326,7 @@ class TestNormalizeCells:
 
     @pytest.mark.parametrize('content', ['t^t', ' ^t', 't^ t'])
     def test_replace_tabs_by_space(self, content):
-        # Tabulator not supported yet!
+        # Text alignment by tabulator is not supported yet!
         cells = list(tl.normalize_cells(str2cells(content)))
         assert cells2str(cells) == content.replace('^', ' ')
 
