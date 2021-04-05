@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable
+from typing import Iterable, List
 import pytest
 from itertools import permutations
 import ezdxf.tools.text_layout as tl
@@ -27,22 +27,26 @@ def test_insert_location(align, expected):
 
 
 class Rect(tl.ContentRenderer):
-    def __init__(self, name: str):
+    def __init__(self, name: str, result: List = None):
+        if result is None:
+            result = []
+        self.result = result  # store test results
         self.name = name
 
     def render(self, left: float, bottom: float, right: float,
-               top: float, m=None):
-        return f"{self.name}({left:.1f}, {bottom:.1f}, {right:.1f}, {top:.1f})"
+               top: float, m=None) -> None:
+        self.result.append(
+            f"{self.name}({left:.1f}, {bottom:.1f}, {right:.1f}, {top:.1f})")
 
-    def line(self, x1: float, y1: float, x2: float, y2: float, m=None):
-        return f"LINE({x1:.1f}, {y1:.1f})TO({x2:.1f}, {y2:.1f})"
+    def line(self, x1: float, y1: float, x2: float, y2: float, m=None) -> None:
+        self.result.append(f"LINE({x1:.1f}, {y1:.1f})TO({x2:.1f}, {y2:.1f})")
 
 
 class TestTopLevelLayout:
     @pytest.fixture
     def layout1(self):
         return tl.Layout(width=10, height=None, margins=(1, 1),
-                         render=Rect('Layout1'))
+                         renderer=Rect('Layout1'))
 
     def test_create_empty_layout_top_left(self, layout1):
         # layout1 has no height, only margins
@@ -51,7 +55,8 @@ class TestTopLevelLayout:
         layout1.place(align=1)
 
         # 2. render content
-        result = list(layout1.render())
+        layout1.render()
+        result = layout1.renderer.result
         assert len(result) == 1
         assert result[0] == "Layout1(0.0, -2.0, 12.0, 0.0)"
 
@@ -62,30 +67,32 @@ class TestTopLevelLayout:
         layout1.place(align=5)
 
         # 2. render content
-        result = list(layout1.render())
+        layout1.render()
+        result = layout1.renderer.result
         assert len(result) == 1
         assert result[0] == "Layout1(-6.0, -1.0, 6.0, 1.0)"
 
     def test_add_one_column_by_reference_width(self, layout1):
         height = 17
         width = layout1.content_width  # reference column width
-        layout1.add_column(height=height, render=Rect('Col1'))
+        result = layout1.renderer.result  # use same result container
+        layout1.append_column(height=height, renderer=Rect('Col1', result))
 
         assert layout1.total_width == width + 2
         assert layout1.total_height == height + 2
 
         layout1.place(align=7)  # left/bottom
-        result = list(layout1.render())
+        layout1.render()
         assert len(result) == 2
         assert result[0] == "Layout1(0.0, 0.0, 12.0, 19.0)"
         assert result[1] == "Col1(1.0, 1.0, 11.0, 18.0)"
 
     def test_add_two_equal_columns(self, layout1):
         margins = (1,)
-        layout1.add_column(width=5, height=10, gutter=2,
-                           margins=margins, render=Rect('Col1'))
-        layout1.add_column(width=7, height=20, margins=margins,
-                           render=Rect('Col2'))
+        layout1.append_column(width=5, height=10, gutter=2,
+                              margins=margins, renderer=Rect('Col1'))
+        layout1.append_column(width=7, height=20, margins=margins,
+                              renderer=Rect('Col2'))
         # width1 + margins + gutter + width2 + margins
         assert layout1.content_width == (5 + 2 + 2 + 7 + 2)
 
@@ -98,7 +105,7 @@ class TestColumn:
     def c1(self):
         return tl.Column(
             # margins = top, right, bottom, left - same order as for CSS
-            width=5, height=7, margins=(1, 2, 3, 4), render=Rect('C1'))
+            width=5, height=7, margins=(1, 2, 3, 4), renderer=Rect('C1'))
 
     def test_size_calculation(self, c1):
         c1.place(0, 0)
@@ -109,7 +116,9 @@ class TestColumn:
 
     def test_render(self, c1):
         c1.place(0, 0)
-        assert list(c1.render())[0] == "C1(0.0, -11.0, 11.0, 0.0)"
+        c1.render()
+        result = c1.renderer.result
+        assert result[0] == "C1(0.0, -11.0, 11.0, 0.0)"
 
 
 class TestFlowTextWithUnrestrictedHeight:
@@ -124,7 +133,7 @@ class TestFlowTextWithUnrestrictedHeight:
         # because the required space is independent from alignment (left,
         # right, center or justified).
         # This may change by implementing regular tabulator support.
-        return tl.FlowText(width=10, render=Rect('PAR'))
+        return tl.FlowText(width=10, renderer=Rect('PAR'))
 
     def test_empty_paragraph_dimensions(self, flow):
         assert flow.content_height == 0
@@ -132,7 +141,9 @@ class TestFlowTextWithUnrestrictedHeight:
 
     def test_render_empty_paragraph(self, flow):
         flow.place(0, 0)
-        result = list(flow.render())
+        flow.render()
+        result = flow.renderer.result
+
         assert len(result) == 1
         assert result[0] == "PAR(0.0, 0.0, 10.0, 0.0)"
 
@@ -198,7 +209,7 @@ class TestFlowTextWithRestrictedHeight:
     @pytest.fixture
     def flow(self):
         # Paragraph alignment is not important for content distribution.
-        return tl.FlowText(width=10, render=Rect('PAR'))
+        return tl.FlowText(width=10, renderer=Rect('PAR'))
 
     def test_distribute_with_exact_height_match(self, flow):
         flow.append_content(str2cells('t t t t t t t t t'))
@@ -248,7 +259,8 @@ def str2cells(s: str, content=3, space=0.5):
         if c == 't':
             yield tl.Text(width=content, height=1, renderer=Rect('Text'))
         elif c == 'f':
-            yield tl.Fraction(width=content, height=2, renderer=Rect('Fraction'))
+            yield tl.Fraction(width=content, height=2,
+                              renderer=Rect('Fraction'))
         elif c == ' ':
             yield tl.Space(width=space)
         elif c == '~':
