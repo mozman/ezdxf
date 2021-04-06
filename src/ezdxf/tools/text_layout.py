@@ -244,12 +244,25 @@ class Cell(Box):  # ABC
 class Glue(Cell):  # ABC
     EMPTY = tuple()
 
-    def __init__(self, width: float, min_width: float = None):
+    def __init__(self, width: float, min_width: float = None,
+                 max_width: float = None):
         self._width: float = float(width)
         self._min_width = float(min_width) if min_width else self._width
+        self._max_width: Optional[float] = max_width
 
     def resize(self, width: float):
+        max_width = self._max_width
+        if max_width is not None:
+            width = min(max_width, width)
         self._width = max(width, self._min_width)
+
+    @property
+    def can_shrink(self):
+        return self._min_width < self._width
+
+    @property
+    def can_grow(self):
+        return self._max_width is None or self._width < self._max_width
 
     @property
     def total_width(self) -> float:
@@ -260,7 +273,7 @@ class Glue(Cell):  # ABC
         return 0
 
     def to_space(self) -> 'Space':
-        return Space(self._width, self._min_width)
+        return Space(self._width, self._min_width, self._max_width)
 
 
 class Space(Glue):

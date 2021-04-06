@@ -343,5 +343,52 @@ class TestNormalizeCells:
         assert cells2str(cells) == content.replace('^', ' ')
 
 
+class TestSpace:
+    def test_shrink_space(self):
+        space = tl.Space(1, min_width=0.1)
+        space.resize(0.5)
+        assert space.total_width == 0.5
+        space.resize(0)
+        assert space.total_width == 0.1
+
+    def test_default_min_width(self):
+        space = tl.Space(1)
+        space.resize(0.5)
+        assert space.total_width == 1.0
+
+    def test_expand_restricted_space(self):
+        space = tl.Space(1, max_width=2)
+        space.resize(1.5)
+        assert space.total_width == 1.5
+        space.resize(3)
+        assert space.total_width == 2
+
+    def test_expand_unrestricted_space(self):
+        space = tl.Space(1)
+        space.resize(1.5)
+        assert space.total_width == 1.5
+        space.resize(30)
+        assert space.total_width == 30
+
+    def test_total_height_is_zero(self):
+        assert tl.Space(1).total_height == 0
+
+    def test_non_breaking_space_to_space(self):
+        space = tl.NonBreakingSpace(1).to_space()
+        assert type(space) == tl.Space
+
+    def test_tab_to_space(self):
+        space = tl.Tab(1).to_space()
+        assert type(space) == tl.Space
+
+    def test_can_shrink(self):
+        assert tl.Space(1).can_shrink is False
+        assert tl.Space(1, min_width=0.5).can_shrink is True
+
+    def test_can_grow(self):
+        assert tl.Space(1).can_grow is True
+        assert tl.Space(1, max_width=1.0).can_grow is False
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
