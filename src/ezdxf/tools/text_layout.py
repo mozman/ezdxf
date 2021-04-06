@@ -733,6 +733,7 @@ class FlowText(Paragraph):
         x += self.left_margin
         y -= self.top_margin
         for line in self._lines:
+            # TODO: apply indentation and alignment
             line.place(x, y)
             y -= leading(line.total_height, self._line_spacing)
 
@@ -754,6 +755,9 @@ class FlowText(Paragraph):
                 unrestricted paragraph height
 
         """
+
+        # This method does not apply indentation or alignment,
+        # see place_content() method.
 
         def remove_line_breaking_space(cells: List[Cell]):
             """ Remove last space """
@@ -981,6 +985,16 @@ class Column(Container):
 
 
 class Layout(Container):
+    TOP_LEFT = 1
+    TOP_CENTER = 2
+    TOP_RIGHT = 3
+    MIDDLE_LEFT = 4
+    MIDDLE_CENTER = 5
+    MIDDLE_RIGHT = 6
+    BOTTOM_LEFT = 7
+    BOTTOM_CENTER = 8
+    BOTTOM_RIGHT = 9
+
     def __init__(self, width: float,
                  height: float = None,
                  margins: Sequence[float] = None,
@@ -1022,8 +1036,9 @@ class Layout(Container):
         return max(c.total_height for c in self._columns)
 
     def place(self, x: float = 0, y: float = 0, align: int = 1):
-        """ Place layout at the final location, relative to the insertion
-        point (x, y) by the alignment defined by the argument `align`.
+        """ Place layout and all sub-entities at the final location, relative
+        to the insertion point (x, y) by the alignment defined by the argument
+        `align`.
 
         === ================
         1   Top left
@@ -1036,6 +1051,13 @@ class Layout(Container):
         8   Bottom center
         9   Bottom right
         === ================
+
+        It is possible to add content after calling :meth:`place`, but
+        :meth:`place` has to be called again before calling :meth:`render`.
+
+        It is recommended to place the layout at origin (0, 0) and use a
+        transformation matrix to move the layout to the final location in
+        the target DXF layout.
 
         """
 

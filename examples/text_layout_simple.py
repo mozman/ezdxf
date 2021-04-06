@@ -3,8 +3,9 @@
 import pathlib
 import random
 import itertools
+import math
 import ezdxf
-from ezdxf import zoom
+from ezdxf import zoom, print_config
 from ezdxf.math import Matrix44
 from ezdxf.tools import fonts
 from ezdxf.tools import text_layout
@@ -25,10 +26,12 @@ STYLE = 'Style0'
 FONT = 'OpenSans-Regular.ttf'
 CAP_HEIGHT = 0.35
 
+print_config()
+
 doc = ezdxf.new()
 msp = doc.modelspace()
 style = doc.styles.new(STYLE, dxfattribs={'font': FONT})
-font = fonts.MatplotlibFont(FONT, CAP_HEIGHT)
+font = fonts.make_font(FONT, CAP_HEIGHT)
 
 
 class FrameRenderer(text_layout.ContentRenderer):
@@ -108,15 +111,35 @@ layout.append_column(height=12, gutter=1)
 # Creates new columns if required by cloning the last column.
 layout.append_paragraphs([paragraph])
 
+# Content and total size is always up to date, only the final location
+# has to be updated by calling Layout.place().
+print()
 print(f"Layout has {len(layout)} columns.")
-for n, column in enumerate(layout, start=1):
-    print(f"  {n}. column has {len(column)} paragraph(s)")
+print(f"Layout total width: {layout.total_width}")
+print(f"Layout total height: {layout.total_height}")
 
-# Place layout in model space, this also triggers the final size calculation:
-layout.place(10, 100)
+for n, column in enumerate(layout, start=1):
+    print()
+    print(f"  {n}. column has {len(column)} paragraph(s)")
+    print(f"  Column total width: {column.total_width}")
+    print(f"  Column total height: {column.total_height}")
+
+
+# It is recommended to place the layout at origin (0, 0) and use a
+# transformation matrix to move the layout to the final location in
+# the DXF target layout, the model space in this example.
+# Set final layout location in the xy-plane with alignment:
+layout.place(align=layout.MIDDLE_CENTER)
+
+# It is possible to add content after calling place(), but place has to be
+# called again before calling render().
 
 # Render/create entities:
-layout.render()
+dx = layout.total_width + 2
+for i in range(3):
+    m = Matrix44.z_rotate(math.pi/4)
+    m *= Matrix44.translate(dx * i, 100, 0)
+    layout.render(m)
 
 zoom.extents(msp, factor=1.1)
 doc.saveas(DIR / "simple_layout.dxf")
