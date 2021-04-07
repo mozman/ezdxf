@@ -121,6 +121,12 @@ class TestColumn:
         assert result[0] == "C1(0.0, -11.0, 11.0, 0.0)"
 
 
+def test_flow_text_available_line_content_space():
+    flow = tl.FlowText(width=12, indent=(0.7, 0.5, 0.9))
+    assert flow.line_width(first=True) == 12 - 0.7 - 0.9
+    assert flow.line_width(first=False) == 12 - 0.5 - 0.9
+
+
 class TestFlowTextWithUnrestrictedHeight:
     # default values:
     # column width = 10
@@ -247,6 +253,124 @@ class TestFlowTextWithRestrictedHeight:
             't t t',
             't',
         ]
+
+
+def set_flow_content(flow):
+    flow.append_content(str2cells('t t t t t t t t t'))
+    flow.distribute_content()
+
+
+class TestFlowTextLeftAlignment:
+    # default values:
+    # content width = 3
+    # space width = 0.5
+
+    def test_without_indentation(self):
+        flow = tl.FlowText(width=12, align=tl.FlowText.LEFT)
+        set_flow_content(flow)
+        flow.place(0, 0)
+        for line in flow:
+            assert line.total_width == 10
+            assert line.final_location()[0] == 0
+
+    def test_left_indentation(self):
+        flow = tl.FlowText(width=12, indent=(0.7, 0.5, 0),
+                           align=tl.FlowText.LEFT)
+        set_flow_content(flow)
+        flow.place(0, 0)
+        lines = list(flow)
+        # first line:
+        assert flow.line_width(True) == 12 - 0.7  # available content space
+        assert lines[0].final_location()[0] == 0.7
+        assert lines[0].total_width == 10
+        # remaining lines:
+        for line in lines[1:]:
+            assert flow.line_width(False) == 12 - 0.5  # available content space
+            assert line.total_width == 10
+            assert line.final_location()[0] == 0.5
+
+
+class TestFlowTextRightAlignment:
+    # default values:
+    # content width = 3
+    # space width = 0.5
+
+    def test_without_indentation(self):
+        flow = tl.FlowText(width=12, align=tl.FlowText.RIGHT)
+        set_flow_content(flow)
+        flow.place(0, 0)
+        for line in flow:
+            assert line.total_width == 10
+            assert line.final_location()[0] == 2
+
+    def test_right_indentation(self):
+        flow = tl.FlowText(width=12, indent=(0.5, 0.5, 0.5),
+                           align=tl.FlowText.RIGHT)
+        set_flow_content(flow)
+        flow.place(0, 0)
+        for line in flow:
+            assert line.total_width == 10
+            assert line.final_location()[0] == 1.5  # 12 - 0.5 - 10
+
+
+class TestFlowTextCenterAlignment:
+    # default values:
+    # content width = 3
+    # space width = 0.5
+
+    def test_without_indentation(self):
+        flow = tl.FlowText(width=12, align=tl.FlowText.CENTER)
+        set_flow_content(flow)
+        flow.place(0, 0)
+        for line in flow:
+            assert line.total_width == 10
+            assert line.final_location()[0] == 1
+
+    def test_left_indentation(self):
+        flow = tl.FlowText(width=12, indent=(0.5, 0.5, 0),
+                           align=tl.FlowText.CENTER)
+        set_flow_content(flow)
+        flow.place(0, 0)
+        for line in flow:
+            assert line.total_width == 10
+            assert line.final_location()[0] == 1.25  # 0.5 + (11.5 - 10) / 2
+
+    def test_right_indentation(self):
+        flow = tl.FlowText(width=12, indent=(0, 0, 0.5),
+                           align=tl.FlowText.CENTER)
+        set_flow_content(flow)
+        flow.place(0, 0)
+        for line in flow:
+            assert line.total_width == 10
+            assert line.final_location()[0] == 0.75  # (11.5 - 10) / 2
+
+
+class TestFlowTextJustifiedAlignment:
+    # default values:
+    # content width = 3
+    # space width = 0.5
+
+    def test_without_indentation(self):
+        flow = tl.FlowText(width=12, align=tl.FlowText.JUSTIFIED)
+        set_flow_content(flow)
+        flow.place(0, 0)
+        for line in flow:
+            assert line.total_width == 12  # expand across paragraph width
+            assert line.final_location()[0] == 0
+
+    def test_with_indentation(self):
+        flow = tl.FlowText(width=12, indent=(0.7, 0.5, 0.5),
+                           align=tl.FlowText.JUSTIFIED)
+        set_flow_content(flow)
+        flow.place(0, 0)
+        lines = list(flow)
+        # first line:
+        assert lines[0].total_width == 10.8  # 12 - (0.7 + 0.5)
+        assert lines[0].final_location()[0] == 0.7
+        # remaining lines:
+        for line in lines[1:]:
+            assert line.total_width == 11  # 12 - (0.5 + 0.5)
+            assert line.final_location()[0] == 0.5
 
 
 def str2cells(s: str, content=3, space=0.5):

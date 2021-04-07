@@ -3,6 +3,7 @@
 from typing import Sequence, Iterable, Optional, Tuple, List
 import abc
 import math
+import itertools
 from ezdxf.math import Matrix44
 
 """
@@ -123,6 +124,16 @@ Do not support margins.
     The content cells (words) are connected/separated by mandatory glue cells.
 
 """
+
+LOREM_IPSUM = """Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed 
+diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed 
+diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet 
+clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+"""
+
+
+def lorem_ipsum(count=100):
+    return itertools.islice(itertools.cycle(LOREM_IPSUM.split()), count)
 
 
 class ContentRenderer(abc.ABC):
@@ -652,6 +663,11 @@ class HCellGroup(Cell):
             cell.place(x, y)
             x += cell.total_width
 
+    def final_location(self) -> Tuple[float, float]:
+        if len(self._cells):
+            return self._cells[0].final_location()
+        return 0, 0
+
     @property
     def total_height(self) -> float:
         """ Returns the cap-height of the cell group. """
@@ -965,7 +981,7 @@ class FlowText(Paragraph):
 
     def line_width(self, first: bool) -> float:
         indent = self._indent_right
-        indent -= self._indent_first if first else self._indent_left
+        indent += self._indent_first if first else self._indent_left
         return self.content_width - indent
 
     def append_content(self, content: Iterable[Cell]):

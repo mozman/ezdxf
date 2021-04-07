@@ -2,7 +2,6 @@
 #  License: MIT License
 import pathlib
 import random
-import itertools
 import math
 import ezdxf
 from ezdxf import zoom, print_config
@@ -11,17 +10,6 @@ from ezdxf.tools import fonts
 from ezdxf.tools import text_layout
 
 DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
-LOREM_IPSUM = """Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed 
-diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed 
-diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet 
-clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-"""
-
-
-def lorem_ipsum(count=100):
-    return itertools.islice(itertools.cycle(LOREM_IPSUM.split()), count)
-
-
 STYLE = 'Style0'
 FONT = 'OpenSans-Regular.ttf'
 CAP_HEIGHT = 0.35
@@ -89,7 +77,7 @@ def measure_space(font):
 
 def build_content(count: int):
     space = measure_space(font)
-    for word in lorem_ipsum(count):
+    for word in text_layout.lorem_ipsum(count):
         yield Word(word)
         yield text_layout.Space(space)
 
