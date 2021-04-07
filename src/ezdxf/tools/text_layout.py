@@ -2,6 +2,7 @@
 #  License: MIT License
 from typing import Sequence, Iterable, Optional, Tuple, List
 import abc
+import math
 from ezdxf.math import Matrix44
 
 """
@@ -662,7 +663,7 @@ class HCellGroup(Cell):
 
     def append(self, cell: Cell):
         self._height = max(cell.total_height, self._height)
-        self._width = cell.total_width
+        self._width += cell.total_width
         self._cells.append(cell)
 
     def extend(self, cells: Iterable[Cell]):
@@ -673,6 +674,44 @@ class HCellGroup(Cell):
         for cell in self._cells:
             if cell.is_visible:
                 cell.render(m)
+
+    def grow(self, target_width: float) -> None:
+        self._apply_justified_alignment(target_width)
+        self.update_width()
+
+    def update_width(self):
+        self._width = sum(cell.total_width for cell in self._cells)
+
+    def _glue_cells(self):
+        return [cell for cell in self._cells if isinstance(cell, Glue)]
+
+    def _apply_justified_alignment(self, target_width: float) -> None:
+        # TODO: ignore "short" lines
+        success = False
+        spaces: List[Glue] = self._glue_cells()
+        if len(spaces) == 0:  # no spaces to grow
+            return
+
+        while not success:
+            success = True
+            # total line width could be bigger than width!
+            space_to_distribute = target_width - self.total_width
+            if space_to_distribute < 1e-6:
+                return
+
+            growable_spaces = [space for space in spaces if space.can_grow]
+            count = len(growable_spaces)
+            if count == 0:  # no spaces to grow
+                return
+
+            delta_space = space_to_distribute / count
+            for space in growable_spaces:
+                new_size = space.total_width + delta_space
+                space.resize(new_size)
+                if not math.isclose(new_size, space.total_width):
+                    # space can't grow that much
+                    success = False
+                    # but grow remaining spaces
 
 
 class Paragraph(Container):  # ABC
@@ -710,6 +749,12 @@ class FlowText(Paragraph):
     is 1.667. The `line_spacing` argument is an additional stretching factor.
 
     """
+    DEFAULT = 0
+    LEFT = 1
+    RIGHT = 2
+    CENTER = 3
+    JUSTIFIED = 4
+    _LEFT_AND_JUSTIFIED = (LEFT, JUSTIFIED)
 
     def __init__(self, width: float = None,  # defined by parent container
                  align: int = 0,
@@ -745,10 +790,38 @@ class FlowText(Paragraph):
         x, y = self.final_location()
         x += self.left_margin
         y -= self.top_margin
+        justified_alignment = self._align == self.JUSTIFIED
+        first = True
+        available_width = self.line_width(first)
         for line in self._lines:
-            # TODO: apply indentation and alignment
-            line.place(x, y)
+            if justified_alignment:
+                line.grow(available_width)
+            x_final = self._left_border(x, line, first, available_width)
+            line.place(x_final, y)
             y -= leading(line.total_height, self._line_spacing)
+            if first:
+                first = False
+                available_width = self.line_width(first)
+
+    def _left_border(self, x: float, line: HCellGroup, first: bool,
+                     available_width: float) -> float:
+        """ Apply indentation and paragraph alignment """
+        alignment = self._align
+        if alignment == self.DEFAULT:
+            alignment = self.LEFT
+
+        left_indent = self._indent_first if first else self._indent_left
+        left_border = x + left_indent
+        if alignment in FlowText._LEFT_AND_JUSTIFIED:
+            return left_border
+
+        right_border = left_border + available_width
+        if alignment == self.RIGHT:
+            return right_border - line.total_width
+        elif alignment == self.CENTER:
+            center = (right_border + left_border) / 2
+            return center - line.total_width / 2
+        return left_border
 
     def _calculate_content_height(self) -> float:
         """ Returns the actual content height determined by the distributed

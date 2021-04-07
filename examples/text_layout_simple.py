@@ -84,7 +84,7 @@ class Word(text_layout.Text):
 
 
 def measure_space(font):
-    return font.text_width('X X') - font.text_width('XX')
+    return font.text_width(' X') - font.text_width('X')
 
 
 def build_content(count: int):
@@ -95,7 +95,7 @@ def build_content(count: int):
 
 
 # Build the content:
-paragraph = text_layout.FlowText()
+paragraph = text_layout.FlowText(align=text_layout.FlowText.JUSTIFIED)
 paragraph.append_content(build_content(200))
 
 # Start the layout engine and set default column width:
@@ -136,7 +136,7 @@ layout.place(align=layout.MIDDLE_CENTER)
 
 # Render/create entities:
 dx = layout.total_width + 2
-for i in range(3):
+for i in [0, 1, 2]:
     m = Matrix44.z_rotate(math.pi/4)
     m *= Matrix44.translate(dx * i, 100, 0)
     layout.render(m)
