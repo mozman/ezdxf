@@ -667,6 +667,8 @@ class HCellGroup(Cell):
     is_visible = True  # the group content is visible
 
     def __init__(self, cells: Iterable[Cell] = None):
+        self._final_x: float = 0.0
+        self._final_y: float = 0.0
         self._width: float = 0.0
         self._height: float = 0.0
         self._cells: List[Cell] = []
@@ -677,26 +679,25 @@ class HCellGroup(Cell):
         return iter(self._cells)
 
     def place(self, x: float, y: float):
-        total_height = self.total_height
+        self._final_x = x
+        self._final_y = y
+        group_height = self.total_height
+        cx = x
         for cell in self._cells:
-            _y = y
+            cy = y
             if isinstance(cell, ContentCell) and \
                     cell.valign != CellAlignment.TOP:
-                cell_height = cell.total_height
+                dy = cell.total_height - group_height
                 if cell.valign == CellAlignment.CENTER:
-                    vshift = -total_height / 2 + cell_height / 2
-                else:
-                    vshift = -total_height + cell_height
-                _y += vshift
+                    dy /= 2.0
+                cy += dy
 
-            cell.place(x, _y)
-            x += cell.total_width
+            cell.place(cx, cy)
+            cx += cell.total_width
 
     def final_location(self) -> Tuple[float, float]:
         """ Returns the top/left corner of the cell. """
-        if len(self._cells):
-            return self._cells[0].final_location()
-        return 0, 0
+        return self._final_x, self._final_y
 
     @property
     def total_height(self) -> float:
