@@ -2,7 +2,6 @@
 #  License: MIT License
 import pathlib
 import random
-import math
 import ezdxf
 from ezdxf import zoom, print_config
 from ezdxf.math import Matrix44
@@ -82,52 +81,60 @@ def build_content(count: int):
         yield text_layout.Space(space)
 
 
-# Build the content:
-paragraph = text_layout.FlowText(align=text_layout.FlowText.JUSTIFIED)
-paragraph.append_content(build_content(200))
+def create_layout(align):
+    # Build the content:
+    paragraph = text_layout.FlowText(align=align)
+    paragraph.append_content(build_content(200))
 
-# Start the layout engine and set default column width:
-layout = text_layout.Layout(width=8, margins=(0.5,),
-                            renderer=FrameRenderer(2))
+    # Start the layout engine and set default column width:
+    layout = text_layout.Layout(width=8, margins=(0.5,),
+                                renderer=FrameRenderer(2))
 
-# Append the first column with default width and a content height of 12 drawing
-# units. At least the first column has to be created by the client.
-layout.append_column(height=12, gutter=1)
+    # Append the first column with default width and a content height of 12 drawing
+    # units. At least the first column has to be created by the client.
+    layout.append_column(height=12, gutter=1)
 
-# Append the content. The content will be distributed across the available
-# columns and automatically overflow into adjacent columns if necessary.
-# Creates new columns if required by cloning the last column.
-layout.append_paragraphs([paragraph])
+    # Append the content. The content will be distributed across the available
+    # columns and automatically overflow into adjacent columns if necessary.
+    # Creates new columns if required by cloning the last column.
+    layout.append_paragraphs([paragraph])
 
-# Content and total size is always up to date, only the final location
-# has to be updated by calling Layout.place().
-print()
-print(f"Layout has {len(layout)} columns.")
-print(f"Layout total width: {layout.total_width}")
-print(f"Layout total height: {layout.total_height}")
-
-for n, column in enumerate(layout, start=1):
+    # Content and total size is always up to date, only the final location
+    # has to be updated by calling Layout.place().
     print()
-    print(f"  {n}. column has {len(column)} paragraph(s)")
-    print(f"  Column total width: {column.total_width}")
-    print(f"  Column total height: {column.total_height}")
+    print(f"Layout has {len(layout)} columns.")
+    print(f"Layout total width: {layout.total_width}")
+    print(f"Layout total height: {layout.total_height}")
+
+    for n, column in enumerate(layout, start=1):
+        print()
+        print(f"  {n}. column has {len(column)} paragraph(s)")
+        print(f"  Column total width: {column.total_width}")
+        print(f"  Column total height: {column.total_height}")
+
+    # It is recommended to place the layout at origin (0, 0) and use a
+    # transformation matrix to move the layout to the final location in
+    # the DXF target layout, the model space in this example.
+    # Set final layout location in the xy-plane with alignment:
+    layout.place(align=text_layout.LayoutAlignment.MIDDLE_CENTER)
+
+    # It is possible to add content after calling place(), but place has to be
+    # called again before calling render().
+
+    return layout
 
 
-# It is recommended to place the layout at origin (0, 0) and use a
-# transformation matrix to move the layout to the final location in
-# the DXF target layout, the model space in this example.
-# Set final layout location in the xy-plane with alignment:
-layout.place(align=layout.MIDDLE_CENTER)
-
-# It is possible to add content after calling place(), but place has to be
-# called again before calling render().
-
-# Render/create entities:
-dx = layout.total_width + 2
-for i in [0, 1, 2]:
-    m = Matrix44.z_rotate(math.pi/4)
-    m *= Matrix44.translate(dx * i, 100, 0)
+FlowTextAlignment = text_layout.FlowTextAlignment
+x = 0
+for align in [FlowTextAlignment.LEFT,
+              FlowTextAlignment.RIGHT,
+              FlowTextAlignment.CENTER,
+              FlowTextAlignment.JUSTIFIED,
+              ]:
+    layout = create_layout(align)
+    m = Matrix44.translate(x, 100, 0)
     layout.render(m)
+    x += layout.total_width + 2
 
 zoom.extents(msp, factor=1.1)
 doc.saveas(DIR / "simple_layout.dxf")

@@ -4,6 +4,7 @@ from typing import Sequence, Iterable, Optional, Tuple, List
 import abc
 import math
 import itertools
+import enum
 from ezdxf.math import Matrix44
 
 """
@@ -180,30 +181,43 @@ def resolve_margins(margins: Optional[Sequence[float]]) -> Tuple4f:
         return margins[0], margins[0], margins[0], margins[0]
 
 
-def insert_location(align: int, width: float, height: float) -> Tuple2f:
+class LayoutAlignment(enum.IntEnum):
+    TOP_LEFT = 1
+    TOP_CENTER = 2
+    TOP_RIGHT = 3
+    MIDDLE_LEFT = 4
+    MIDDLE_CENTER = 5
+    MIDDLE_RIGHT = 6
+    BOTTOM_LEFT = 7
+    BOTTOM_CENTER = 8
+    BOTTOM_RIGHT = 9
+
+
+def insert_location(align: LayoutAlignment,
+                    width: float, height: float) -> Tuple2f:
     """ Returns the left top corner adjusted to the given alignment.
     """
     left = 0
     top = 0
     center = width / 2
     middle = height / 2
-    if align == 1:
+    if align == LayoutAlignment.TOP_LEFT:
         pass
-    elif align == 2:
+    elif align == LayoutAlignment.TOP_CENTER:
         left, top = (-center, 0)
-    elif align == 3:
+    elif align == LayoutAlignment.TOP_RIGHT:
         left, top = (-width, 0)
-    elif align == 4:
+    elif align == LayoutAlignment.MIDDLE_LEFT:
         left, top = (0, middle)
-    elif align == 5:
+    elif align == LayoutAlignment.MIDDLE_CENTER:
         left, top = (-center, middle)
-    elif align == 6:
+    elif align == LayoutAlignment.MIDDLE_RIGHT:
         left, top = (-width, middle)
-    elif align == 7:
+    elif align == LayoutAlignment.BOTTOM_LEFT:
         left, top = (0, height)
-    elif align == 8:
+    elif align == LayoutAlignment.BOTTOM_CENTER:
         left, top = (-center, height)
-    elif align == 9:
+    elif align == LayoutAlignment.BOTTOM_RIGHT:
         left, top = (-width, height)
     return left, top
 
@@ -300,15 +314,23 @@ class Tab(Glue):
     pass
 
 
+class CellAlignment(enum.IntEnum):
+    BOTTOM = 0
+    CENTER = 1
+    TOP = 2
+
+
 class ContentCell(Cell):  # ABC
     """ Represents visible content like text or fractions.
 
-    Supported vertical alignments:
+    Supported vertical alignments (IntEnum):
 
         === =================
-        0   bottom
-        1   center
-        2   top
+        int CellAlignment
+        === =================
+        0   BOTTOM
+        1   CENTER
+        2   TOP
         === =================
 
     """
@@ -316,17 +338,13 @@ class ContentCell(Cell):  # ABC
 
     def __init__(self, width: float,
                  height: float,
-                 valign: int = 0,
+                 valign: CellAlignment = CellAlignment.BOTTOM,
                  renderer: ContentRenderer = None):
         self._final_x = None
         self._final_y = None
         self._width = float(width)
         self._height = float(height)
-        valign = int(valign)
-        if 0 <= valign < 3:
-            self.valign = valign  # public attribute read/write
-        else:
-            raise ValueError('invalid valign')
+        self.valign = CellAlignment(valign)  # public attribute read/write
         self.renderer = renderer
 
     def set_final_location(self, x: float, y: float):
@@ -350,15 +368,23 @@ class ContentCell(Cell):  # ABC
         self._final_y = y
 
 
+class Stroke:
+    # no enum because bit values can be combined: UNDERLINE + OVERLINE
+    NO_STROKE = 0
+    UNDERLINE = 1
+    STRIKE_THROUGH = 2
+    OVERLINE = 4
+
+
 class Text(ContentCell):
     """ Represents visible text content.
 
     Supported strokes as bit values, can be combined:
 
         === =================
-        0   None
+        0   no stroke
         1   underline
-        2   strike trough
+        2   strike through
         4   overline
         === =================
 
@@ -366,7 +392,7 @@ class Text(ContentCell):
 
     def __init__(self, width: float,
                  height: float,
-                 valign: int = 0,
+                 valign: CellAlignment = CellAlignment.BOTTOM,
                  stroke: int = 0,
                  renderer: ContentRenderer = None):
         super().__init__(width, height, valign, renderer)
@@ -401,43 +427,44 @@ class Text(ContentCell):
             renderer.line(left, y, right, y, m)
 
 
+class Stacking(enum.IntEnum):
+    OVER = 0
+    LINE = 1
+    SLANTED = 2
+
+
 class Fraction(ContentCell):
     """ Represents visible fractions.
 
-    Supported stacking A/B:
+    Supported stacking A/B (IntEnum):
 
-        === =================
-        0   A over B, without horizontal line
-        1   A over B, horizontal line between
-        2   A slanted line B
-        === =================
+        === =========== =========
+        int Stacking    Description
+        === =========== =========
+        0   OVER        A over B, without horizontal line
+        1   LINE        A over B, horizontal line between
+        2   SLANTED     A slanted line B
+        === =========== =========
 
     """
-    NO_LINE = 0
-    HORIZONTAL_LINE = 1
-    SLANTED_LINE = 2
 
     def __init__(self, width: float,
                  height: float,
-                 valign: int = 0,
+                 valign: CellAlignment = CellAlignment.BOTTOM,
                  renderer: ContentRenderer = None):
         super().__init__(width, height, valign, renderer)
-        self._stacking = 0
+        self._stacking = Stacking.OVER
         self._top_content: Optional[ContentCell] = None
         self._bottom_content: Optional[ContentCell] = None
 
     def set_content(self, top: ContentCell, bottom: ContentCell,
-                    stacking: int = 0):
+                    stacking: Stacking = Stacking.OVER):
         self._top_content = top
         self._bottom_content = bottom
-        stacking = int(stacking)
-        if 0 <= stacking < 3:
-            self._stacking = stacking
-        else:
-            raise ValueError('invalid stacking')
+        self._stacking = stacking
 
         # update content dimensions
-        if self._stacking == self.SLANTED_LINE:
+        if self._stacking == Stacking.SLANTED:
             self._height = top.total_height + bottom.total_height
             self._width = top.total_width + bottom.total_width
         else:
@@ -455,7 +482,7 @@ class Fraction(ContentCell):
         if top_content is None or bottom_content is None:
             raise ValueError('no content set')
 
-        if self._stacking == self.SLANTED_LINE:
+        if self._stacking == Stacking.SLANTED:
             top_content.place(x, y)  # left/top
             x += width - bottom_content.total_width
             y -= height + bottom_content.total_height
@@ -471,9 +498,9 @@ class Fraction(ContentCell):
     def render(self, m: Matrix44 = None) -> None:
         self._top_content.render(m)
         self._bottom_content.render(m)
-        if self._stacking == self.HORIZONTAL_LINE:
+        if self._stacking == Stacking.LINE:
             pass
-        elif self._stacking == self.SLANTED_LINE:
+        elif self._stacking == Stacking.SLANTED:
             pass
 
 
@@ -659,8 +686,19 @@ class HCellGroup(Cell):
         return iter(self._cells)
 
     def place(self, x: float, y: float):
+        total_height = self.total_height
         for cell in self._cells:
-            cell.place(x, y)
+            _y = y
+            if isinstance(cell, ContentCell) and \
+                    cell.valign != CellAlignment.BOTTOM:
+                cell_height = cell.total_height
+                if cell.valign == CellAlignment.CENTER:
+                    vshift = total_height / 2 - cell_height / 2
+                else:
+                    vshift = total_height - cell_height
+                _y += vshift
+
+            cell.place(x, _y)
             x += cell.total_width
 
     def final_location(self) -> Tuple[float, float]:
@@ -740,17 +778,27 @@ class Paragraph(Container):  # ABC
         pass
 
 
+class FlowTextAlignment(enum.IntEnum):
+    DEFAULT = 0
+    LEFT = 1
+    RIGHT = 2
+    CENTER = 3
+    JUSTIFIED = 4
+
+
 class FlowText(Paragraph):
     """ Single paragraph of flow text.
 
-    Supported paragraph alignments:
+    Supported paragraph alignments (IntEnum):
 
         === =================
-        0   default
-        1   left
-        2   right
-        3   center
-        4   justified
+        int FlowTextAlignment
+        === =================
+        0   DEFAULT
+        1   LEFT
+        2   RIGHT
+        3   CENTER
+        4   JUSTIFIED
         === =================
 
     Paragraph indentation is supported by three values given as argument
@@ -765,23 +813,16 @@ class FlowText(Paragraph):
     is 1.667. The `line_spacing` argument is an additional stretching factor.
 
     """
-    DEFAULT = 0
-    LEFT = 1
-    RIGHT = 2
-    CENTER = 3
-    JUSTIFIED = 4
-    _LEFT_AND_JUSTIFIED = (LEFT, JUSTIFIED)
+    _LEFT_AND_JUSTIFIED = (FlowTextAlignment.LEFT, FlowTextAlignment.JUSTIFIED)
 
     def __init__(self, width: float = None,  # defined by parent container
-                 align: int = 0,
+                 align: FlowTextAlignment = FlowTextAlignment.DEFAULT,
                  indent: Tuple[float, float, float] = (0, 0, 0),
                  line_spacing: float = 1,
                  margins: Sequence[float] = None,
                  renderer: ContentRenderer = None):
         super().__init__(width, None, margins, renderer)
-        self._align = int(align)
-        if not (0 <= self._align < 5):
-            raise ValueError("invalid paragraph alignment (0-4)")
+        self._align = align
         first, left, right = indent
         self._indent_first = first
         self._indent_left = left
@@ -806,7 +847,7 @@ class FlowText(Paragraph):
         x, y = self.final_location()
         x += self.left_margin
         y -= self.top_margin
-        justified_alignment = self._align == self.JUSTIFIED
+        justified_alignment = self._align == FlowTextAlignment.JUSTIFIED
         first = True
         available_width = self.line_width(first)
         for line in self._lines:
@@ -823,8 +864,8 @@ class FlowText(Paragraph):
                      available_width: float) -> float:
         """ Apply indentation and paragraph alignment """
         alignment = self._align
-        if alignment == self.DEFAULT:
-            alignment = self.LEFT
+        if alignment == FlowTextAlignment.DEFAULT:
+            alignment = FlowTextAlignment.LEFT
 
         left_indent = self._indent_first if first else self._indent_left
         left_border = x + left_indent
@@ -832,9 +873,9 @@ class FlowText(Paragraph):
             return left_border
 
         right_border = left_border + available_width
-        if alignment == self.RIGHT:
+        if alignment == FlowTextAlignment.RIGHT:
             return right_border - line.total_width
-        elif alignment == self.CENTER:
+        elif alignment == FlowTextAlignment.CENTER:
             center = (right_border + left_border) / 2
             return center - line.total_width / 2
         return left_border
@@ -1087,16 +1128,6 @@ class Column(Container):
 
 
 class Layout(Container):
-    TOP_LEFT = 1
-    TOP_CENTER = 2
-    TOP_RIGHT = 3
-    MIDDLE_LEFT = 4
-    MIDDLE_CENTER = 5
-    MIDDLE_RIGHT = 6
-    BOTTOM_LEFT = 7
-    BOTTOM_CENTER = 8
-    BOTTOM_RIGHT = 9
-
     def __init__(self, width: float,
                  height: float = None,
                  margins: Sequence[float] = None,
@@ -1137,21 +1168,24 @@ class Layout(Container):
     def _calculate_content_height(self) -> float:
         return max(c.total_height for c in self._columns)
 
-    def place(self, x: float = 0, y: float = 0, align: int = 1):
+    def place(self, x: float = 0, y: float = 0,
+              align: LayoutAlignment = LayoutAlignment.TOP_LEFT):
         """ Place layout and all sub-entities at the final location, relative
         to the insertion point (x, y) by the alignment defined by the argument
-        `align`.
+        `align` (IntEnum).
 
         === ================
-        1   Top left
-        2   Top center
-        3   Top right
-        4   Middle left
-        5   Middle center
-        6   Middle right
-        7   Bottom left
-        8   Bottom center
-        9   Bottom right
+        int LayoutAlignment
+        === ================
+        1   TOP_LEFT
+        2   TOP_CENTER
+        3   TOP_RIGHT
+        4   MIDDLE_LEFT
+        5   MIDDLE_CENTER
+        6   MIDDLE_RIGHT
+        7   BOTTOM_LEFT
+        8   BOTTOM_CENTER
+        9   BOTTOM_RIGHT
         === ================
 
         It is possible to add content after calling :meth:`place`, but

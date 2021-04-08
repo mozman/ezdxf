@@ -18,9 +18,15 @@ def test_resolve_margins(margins, expected):
 
 
 @pytest.mark.parametrize('align,expected', [
-    [1, (0, 0)], [2, (-2, 0)], [3, (-4, 0)],
-    [4, (0, 3)], [5, (-2, 3)], [6, (-4, 3)],
-    [7, (0, 6)], [8, (-2, 6)], [9, (-4, 6)],
+    [tl.LayoutAlignment.TOP_LEFT, (0, 0)],
+    [tl.LayoutAlignment.TOP_CENTER, (-2, 0)],
+    [tl.LayoutAlignment.TOP_RIGHT, (-4, 0)],
+    [tl.LayoutAlignment.MIDDLE_LEFT, (0, 3)],
+    [tl.LayoutAlignment.MIDDLE_CENTER, (-2, 3)],
+    [tl.LayoutAlignment.MIDDLE_RIGHT, (-4, 3)],
+    [tl.LayoutAlignment.BOTTOM_LEFT, (0, 6)],
+    [tl.LayoutAlignment.BOTTOM_CENTER, (-2, 6)],
+    [tl.LayoutAlignment.BOTTOM_RIGHT, (-4, 6)],
 ])
 def test_insert_location(align, expected):
     assert tl.insert_location(align, width=4, height=6) == expected
@@ -52,7 +58,7 @@ class TestTopLevelLayout:
         # layout1 has no height, only margins
 
         # 1. do layout placing
-        layout1.place(align=1)
+        layout1.place(align=tl.LayoutAlignment.TOP_LEFT)
 
         # 2. render content
         layout1.render()
@@ -64,7 +70,7 @@ class TestTopLevelLayout:
         # layout1 has no height, only margins
 
         # 1. do layout placing
-        layout1.place(align=5)
+        layout1.place(align=tl.LayoutAlignment.MIDDLE_CENTER)
 
         # 2. render content
         layout1.render()
@@ -81,7 +87,7 @@ class TestTopLevelLayout:
         assert layout1.total_width == width + 2
         assert layout1.total_height == height + 2
 
-        layout1.place(align=7)  # left/bottom
+        layout1.place(align=tl.LayoutAlignment.BOTTOM_LEFT)
         layout1.render()
         assert len(result) == 2
         assert result[0] == "Layout1(0.0, 0.0, 12.0, 19.0)"
@@ -266,7 +272,7 @@ class TestFlowTextLeftAlignment:
     # space width = 0.5
 
     def test_without_indentation(self):
-        flow = tl.FlowText(width=12, align=tl.FlowText.LEFT)
+        flow = tl.FlowText(width=12, align=tl.FlowTextAlignment.LEFT)
         set_flow_content(flow)
         flow.place(0, 0)
         for line in flow:
@@ -275,7 +281,7 @@ class TestFlowTextLeftAlignment:
 
     def test_left_indentation(self):
         flow = tl.FlowText(width=12, indent=(0.7, 0.5, 0),
-                           align=tl.FlowText.LEFT)
+                           align=tl.FlowTextAlignment.LEFT)
         set_flow_content(flow)
         flow.place(0, 0)
         lines = list(flow)
@@ -296,7 +302,7 @@ class TestFlowTextRightAlignment:
     # space width = 0.5
 
     def test_without_indentation(self):
-        flow = tl.FlowText(width=12, align=tl.FlowText.RIGHT)
+        flow = tl.FlowText(width=12, align=tl.FlowTextAlignment.RIGHT)
         set_flow_content(flow)
         flow.place(0, 0)
         for line in flow:
@@ -305,7 +311,7 @@ class TestFlowTextRightAlignment:
 
     def test_right_indentation(self):
         flow = tl.FlowText(width=12, indent=(0.5, 0.5, 0.5),
-                           align=tl.FlowText.RIGHT)
+                           align=tl.FlowTextAlignment.RIGHT)
         set_flow_content(flow)
         flow.place(0, 0)
         for line in flow:
@@ -319,7 +325,7 @@ class TestFlowTextCenterAlignment:
     # space width = 0.5
 
     def test_without_indentation(self):
-        flow = tl.FlowText(width=12, align=tl.FlowText.CENTER)
+        flow = tl.FlowText(width=12, align=tl.FlowTextAlignment.CENTER)
         set_flow_content(flow)
         flow.place(0, 0)
         for line in flow:
@@ -328,7 +334,7 @@ class TestFlowTextCenterAlignment:
 
     def test_left_indentation(self):
         flow = tl.FlowText(width=12, indent=(0.5, 0.5, 0),
-                           align=tl.FlowText.CENTER)
+                           align=tl.FlowTextAlignment.CENTER)
         set_flow_content(flow)
         flow.place(0, 0)
         for line in flow:
@@ -337,7 +343,7 @@ class TestFlowTextCenterAlignment:
 
     def test_right_indentation(self):
         flow = tl.FlowText(width=12, indent=(0, 0, 0.5),
-                           align=tl.FlowText.CENTER)
+                           align=tl.FlowTextAlignment.CENTER)
         set_flow_content(flow)
         flow.place(0, 0)
         for line in flow:
@@ -351,7 +357,7 @@ class TestFlowTextJustifiedAlignment:
     # space width = 0.5
 
     def test_without_indentation(self):
-        flow = tl.FlowText(width=12, align=tl.FlowText.JUSTIFIED)
+        flow = tl.FlowText(width=12, align=tl.FlowTextAlignment.JUSTIFIED)
         set_flow_content(flow)
         flow.place(0, 0)
         for line in flow:
@@ -360,7 +366,7 @@ class TestFlowTextJustifiedAlignment:
 
     def test_with_indentation(self):
         flow = tl.FlowText(width=12, indent=(0.7, 0.5, 0.5),
-                           align=tl.FlowText.JUSTIFIED)
+                           align=tl.FlowTextAlignment.JUSTIFIED)
         set_flow_content(flow)
         flow.place(0, 0)
         lines = list(flow)
@@ -371,6 +377,60 @@ class TestFlowTextJustifiedAlignment:
         for line in lines[1:]:
             assert line.total_width == 11  # 12 - (0.5 + 0.5)
             assert line.final_location()[0] == 0.5
+
+
+class TestVerticalCellAlignment:
+    @staticmethod
+    def build_line(align):
+        big0 = tl.Text(width=3, height=3)
+        small = tl.Text(width=1, height=1, valign=align)
+        big1 = tl.Text(width=3, height=3)
+        line = tl.HCellGroup([big0, small, big1])
+        line.place(0, 0)
+        return line
+
+    def test_line_properties(self):
+        line = self.build_line(tl.CellAlignment.BOTTOM)
+        assert len(list(line)) == 3
+        assert line.total_width == 7
+        assert line.total_height == 3
+
+    def test_bottom_alignment(self):
+        line = self.build_line(tl.CellAlignment.BOTTOM)
+        big0, small, big1 = line
+        # final location is always the left/bottom corner of the cell:
+        assert big0.final_location() == (0, 0)
+        assert small.final_location() == (3, 0)
+        assert big1.final_location() == (4, 0)
+
+    def test_center_alignment(self):
+        line = self.build_line(tl.CellAlignment.CENTER)
+        big0, small, big1 = line
+        # final location is always the left/bottom corner of the cell:
+        assert big0.final_location() == (0, 0)
+        assert small.final_location() == (3, 1)
+        assert big1.final_location() == (4, 0)
+
+    def test_top_alignment(self):
+        line = self.build_line(tl.CellAlignment.TOP)
+        big0, small, big1 = line
+        # final location is always the left/bottom corner of the cell:
+        assert big0.final_location() == (0, 0)
+        assert small.final_location() == (3, 2)
+        assert big1.final_location() == (4, 0)
+
+    def test_mixed_alignment(self):
+        big0 = tl.Text(width=3, height=3)
+        bottom = tl.Text(width=1, height=1, valign=tl.CellAlignment.BOTTOM)
+        center = tl.Text(width=1, height=1, valign=tl.CellAlignment.CENTER)
+        top = tl.Text(width=1, height=1, valign=tl.CellAlignment.TOP)
+        big1 = tl.Text(width=3, height=3)
+        line = tl.HCellGroup([big0, top, center, bottom, big1])
+        line.place(0, 0)
+        # final location is always the left/bottom corner of the cell:
+        assert bottom.final_location() == (5, 0)
+        assert center.final_location() == (4, 1)
+        assert top.final_location() == (3, 2)
 
 
 def str2cells(s: str, content=3, space=0.5):
