@@ -681,18 +681,19 @@ class HCellGroup(Cell):
         for cell in self._cells:
             _y = y
             if isinstance(cell, ContentCell) and \
-                    cell.valign != CellAlignment.BOTTOM:
+                    cell.valign != CellAlignment.TOP:
                 cell_height = cell.total_height
                 if cell.valign == CellAlignment.CENTER:
-                    vshift = total_height / 2 - cell_height / 2
+                    vshift = -total_height / 2 + cell_height / 2
                 else:
-                    vshift = total_height - cell_height
+                    vshift = -total_height + cell_height
                 _y += vshift
 
             cell.place(x, _y)
             x += cell.total_width
 
     def final_location(self) -> Tuple[float, float]:
+        """ Returns the top/left corner of the cell. """
         if len(self._cells):
             return self._cells[0].final_location()
         return 0, 0

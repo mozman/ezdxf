@@ -383,7 +383,7 @@ class TestVerticalCellAlignment:
     @staticmethod
     def build_line(align):
         big0 = tl.Text(width=3, height=3)
-        small = tl.Text(width=1, height=1, valign=align)
+        small = tl.Text(width=1, height=1, valign=align, renderer=Rect('CELL'))
         big1 = tl.Text(width=3, height=3)
         line = tl.HCellGroup([big0, small, big1])
         line.place(0, 0)
@@ -398,26 +398,41 @@ class TestVerticalCellAlignment:
     def test_bottom_alignment(self):
         line = self.build_line(tl.CellAlignment.BOTTOM)
         big0, small, big1 = line
-        # final location is always the left/bottom corner of the cell:
+        # final location is always the top/left corner of the cell:
         assert big0.final_location() == (0, 0)
-        assert small.final_location() == (3, 0)
+        assert small.final_location() == (3, -2)
         assert big1.final_location() == (4, 0)
+
+        small.render()
+        result = small.renderer.result
+        # left, bottom, right, top
+        assert result[0] == "CELL(3.0, -3.0, 4.0, -2.0)"
 
     def test_center_alignment(self):
         line = self.build_line(tl.CellAlignment.CENTER)
         big0, small, big1 = line
-        # final location is always the left/bottom corner of the cell:
+        # final location is always the top/left corner of the cell:
         assert big0.final_location() == (0, 0)
-        assert small.final_location() == (3, 1)
+        assert small.final_location() == (3, -1)
         assert big1.final_location() == (4, 0)
+
+        small.render()
+        result = small.renderer.result
+        # left, bottom, right, top
+        assert result[0] == "CELL(3.0, -2.0, 4.0, -1.0)"
 
     def test_top_alignment(self):
         line = self.build_line(tl.CellAlignment.TOP)
         big0, small, big1 = line
-        # final location is always the left/bottom corner of the cell:
+        # final location is always the top/left corner of the cell:
         assert big0.final_location() == (0, 0)
-        assert small.final_location() == (3, 2)
+        assert small.final_location() == (3, 0)
         assert big1.final_location() == (4, 0)
+
+        small.render()
+        result = small.renderer.result
+        # left, bottom, right, top
+        assert result[0] == "CELL(3.0, -1.0, 4.0, 0.0)"
 
     def test_mixed_alignment(self):
         big0 = tl.Text(width=3, height=3)
@@ -427,10 +442,10 @@ class TestVerticalCellAlignment:
         big1 = tl.Text(width=3, height=3)
         line = tl.HCellGroup([big0, top, center, bottom, big1])
         line.place(0, 0)
-        # final location is always the left/bottom corner of the cell:
-        assert bottom.final_location() == (5, 0)
-        assert center.final_location() == (4, 1)
-        assert top.final_location() == (3, 2)
+        # final location is always the top/left corner of the cell:
+        assert bottom.final_location() == (5, -2)
+        assert center.final_location() == (4, -1)
+        assert top.final_location() == (3, 0)
 
 
 def str2cells(s: str, content=3, space=0.5):
