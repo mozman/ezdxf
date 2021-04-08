@@ -438,7 +438,6 @@ def str2cells(s: str, content=3, space=0.5):
     # f ... fraction cell
     # space is space
     # ~ ... non breaking space (nbsp)
-    # ^ ... tab
     for c in s.lower():
         if c == 't':
             yield tl.Text(width=content, height=1, renderer=Rect('Text'))
@@ -449,8 +448,6 @@ def str2cells(s: str, content=3, space=0.5):
             yield tl.Space(width=space)
         elif c == '~':
             yield tl.NonBreakingSpace(width=space)
-        elif c == '^':
-            yield tl.Tab(space)
         else:
             raise ValueError(f'unknown cell type "{c}"')
 
@@ -467,8 +464,6 @@ def cells2str(cells: Iterable[tl.Cell]) -> str:
             s.append(' ')
         elif t is tl.NonBreakingSpace:
             s.append('~')
-        elif t is tl.Tab:
-            s.append('^')
         else:
             raise ValueError(f'unknown cell type {str(t)}')
     return "".join(s)
@@ -479,7 +474,7 @@ def lines2str(lines):
 
 
 def test_cell_converter():
-    assert cells2str(str2cells('tf ~^')) == 'tf ~^'
+    assert cells2str(str2cells('tf ~')) == 'tf ~'
     with pytest.raises(ValueError):
         list(str2cells('x'))
     with pytest.raises(ValueError):
@@ -510,7 +505,7 @@ class TestNormalizeCells:
         assert cells2str(cells) == content
 
     def test_remove_pending_glue(self):
-        for glue in permutations([' ', '~', '^', ' ']):
+        for glue in permutations([' ', '~', ' ']):
             content = 't' + "".join(glue)
             cells = list(tl.normalize_cells(str2cells(content)))
             assert cells2str(cells) == 't'
@@ -519,12 +514,6 @@ class TestNormalizeCells:
     def test_preserve_prepending_space(self, content):
         cells = list(tl.normalize_cells(str2cells(content)))
         assert cells2str(cells) == content
-
-    @pytest.mark.parametrize('content', ['t^t', ' ^t', 't^ t'])
-    def test_replace_tabs_by_space(self, content):
-        # Text alignment by tabulator is not supported yet!
-        cells = list(tl.normalize_cells(str2cells(content)))
-        assert cells2str(cells) == content.replace('^', ' ')
 
 
 class TestSpace:
@@ -559,10 +548,6 @@ class TestSpace:
 
     def test_non_breaking_space_to_space(self):
         space = tl.NonBreakingSpace(1).to_space()
-        assert type(space) == tl.Space
-
-    def test_tab_to_space(self):
-        space = tl.Tab(1).to_space()
         assert type(space) == tl.Space
 
     def test_can_shrink(self):

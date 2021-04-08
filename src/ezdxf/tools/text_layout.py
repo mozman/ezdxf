@@ -310,10 +310,6 @@ class NonBreakingSpace(Glue):
     pass
 
 
-class Tab(Glue):
-    pass
-
-
 class CellAlignment(enum.IntEnum):
     BOTTOM = 0
     CENTER = 1
@@ -505,7 +501,7 @@ class Fraction(ContentCell):
 
 
 _content = {Text, Fraction}
-_glue = {Space, NonBreakingSpace, Tab}
+_glue = {Space, NonBreakingSpace}
 _no_break = {Text, Fraction, NonBreakingSpace}
 
 
@@ -541,11 +537,6 @@ def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
             cell = cell.to_space()
             current = type(cell)
             replace_pending_nbsp_by_spaces()
-        elif current is Tab:
-            # tabulator not supported yet!
-            # replace tabulator by a single space
-            cell = cell.to_space()
-            current = type(cell)
 
         prev = current
         content.append(cell)
