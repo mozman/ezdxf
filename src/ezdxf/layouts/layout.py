@@ -456,7 +456,12 @@ class Paperspace(Layout):
 
     def rename(self, name: str) -> None:
         """ Rename layout to `name`, changes the name displayed in tabs by
-        CAD applications, not the internal BLOCK name.
+        CAD applications, not the internal BLOCK name. (internal API)
+
+        Use method :meth:`~ezdxf.layouts.Layouts.rename` of the
+        :meth:`~ezdxf.layouts.Layouts` class to rename paper space
+        layouts.
+
         """
         self.dxf_layout.dxf.name = name
 
