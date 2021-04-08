@@ -263,8 +263,6 @@ Paperspace
 
     .. automethod:: page_setup(size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16, name='ezdxf', device='DWG to PDF.pc3')
 
-    .. automethod:: rename
-
     .. automethod:: viewports
 
     .. automethod:: main_viewport
