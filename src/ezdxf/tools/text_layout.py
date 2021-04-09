@@ -642,9 +642,14 @@ class HCellGroup(ContentCell):
         # HCellGroup can contain Text cells:
         render_text_strokes(self._cells, m)
 
-    def grow(self, target_width: float) -> None:
-        self._apply_justified_alignment(target_width)
-        self.update_width()
+    def grow(self, target_width: float, min_width: float = 0) -> None:
+        """ Expand glue cells to match target_width by `total_width`.
+        The total_width has to be bigger than`min_width` to start growing.
+
+        """
+        if self.total_width > min_width:
+            self._apply_justified_alignment(target_width)
+            self.update_width()
 
     def update_width(self):
         self._width = sum(cell.total_width for cell in self._cells)
@@ -653,7 +658,6 @@ class HCellGroup(ContentCell):
         return [cell for cell in self._cells if isinstance(cell, Glue)]
 
     def _apply_justified_alignment(self, target_width: float) -> None:
-        # TODO: ignore "short" lines
         success = False
         spaces: List[Glue] = self._glue_cells()
         if len(spaces) == 0:  # no spaces to grow
@@ -876,7 +880,7 @@ class FlowText(Paragraph):
         available_width = self.line_width(first)
         for line in self._lines:
             if justified_alignment:
-                line.grow(available_width)
+                line.grow(available_width, min_width=available_width/3)
             x_final = self._left_border(x, line, first, available_width)
             line.place(x_final, y)
             y -= leading(line.total_height, self._line_spacing)
