@@ -548,8 +548,8 @@ class Fraction(ContentCell):
             y1 = y2 = y - th / 2
         else:  # SLANTED
             delta = min(tw, th) / 2
-            cx = x + tw / 2
-            cy = y - th / 2
+            cx = x + self._top_content.total_width
+            cy = y - self._top_content.total_height
             x1 = cx - delta
             y1 = cy - delta
             x2 = cx + delta

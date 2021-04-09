@@ -59,7 +59,10 @@ class FrameRenderer(text_layout.ContentRenderer):
 
     def line(self, x1: float, y1: float, x2: float, y2: float,
              m: Matrix44 = None) -> None:
-        pass
+        line = msp.add_line((x1, y1), (x2, y2), dxfattribs={
+            'color': self.color})
+        if m:
+            line.transform(m)
 
 
 class TextRenderer(text_layout.ContentRenderer):
@@ -145,6 +148,40 @@ def stroked_content(count: int, size=1):
         yield text_layout.Space(font.space)
 
 
+Stacking = text_layout.Stacking
+
+
+class Fraction(text_layout.Fraction):
+    def __init__(self, t1: str, t2: str, stacking: Stacking, font: SizedFont):
+        top = Word(t1, font)
+        bottom = Word(t2, font)
+        super().__init__(
+            top=top,
+            bottom=bottom,
+            stacking=stacking,
+            renderer=FrameRenderer(color=7),  # uses only the line() interface
+        )
+
+
+def fraction_content():
+    words = list(uniform_content(120))
+    for word in words:
+        word.valign = text_layout.CellAlignment.BOTTOM
+
+    stacking_options = [Stacking.OVER, Stacking.LINE, Stacking.SLANTED]
+    font = SizedFont(0.25)  # fraction font
+    for _ in range(10):
+        stacking = random.choice(stacking_options)
+        top = str(random.randint(1, 1000))
+        bottom = str(random.randint(1, 1000))
+        pos = random.randint(0, len(words) - 1)
+        if isinstance(words[pos], text_layout.Space):
+            pos += 1
+        words.insert(pos, Fraction(top, bottom, stacking, font))
+        words.insert(pos + 1, text_layout.Space(font.space))
+    return words
+
+
 def create_layout(align, content):
     # Build the content:
     paragraph = text_layout.FlowText(align=align)
@@ -210,6 +247,7 @@ dy = COLUMN_HEIGHT + 3
 create(list(uniform_content(200)), 0)
 create(list(random_sized_content(200)), dy)
 create(list(stroked_content(200)), 2 * dy)
+create(fraction_content(), 3 * dy)
 
 zoom.extents(msp, factor=1.1)
 doc.saveas(str(DIR / "simple_layout.dxf"))
