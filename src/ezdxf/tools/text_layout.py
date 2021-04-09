@@ -700,18 +700,17 @@ class Container(Box):
                 top=y, right=x + self.total_width, m=m)
 
 
-class HCellGroup(Cell):
+class HCellGroup(ContentCell):
     """ Stores content in horizontal order and does not render itself.
     Recursive data structure, a HCellGroup can contain cell groups as well.
 
     """
-    is_visible = True  # the group content is visible
-
-    def __init__(self, cells: Iterable[Cell] = None):
-        self._final_x: float = 0.0
-        self._final_y: float = 0.0
-        self._width: float = 0.0
-        self._height: float = 0.0
+    # This is not a real container class, from outside it behaves like a
+    # single opaque cell with a fixed width and height determined by the
+    # extents of its content.
+    def __init__(self, cells: Iterable[Cell] = None,
+                 valign=CellAlignment.BOTTOM):
+        super().__init__(0, 0, valign=valign)
         self._cells: List[Cell] = []
         if cells:
             self.extend(cells)
@@ -720,8 +719,7 @@ class HCellGroup(Cell):
         return iter(self._cells)
 
     def place(self, x: float, y: float):
-        self._final_x = x
-        self._final_y = y
+        super().place(x, y)
         group_height = self.total_height
         cx = x
         for cell in self._cells:
@@ -735,19 +733,6 @@ class HCellGroup(Cell):
 
             cell.place(cx, cy)
             cx += cell.total_width
-
-    def final_location(self) -> Tuple[float, float]:
-        """ Returns the top/left corner of the cell. """
-        return self._final_x, self._final_y
-
-    @property
-    def total_height(self) -> float:
-        """ Returns the cap-height of the cell group. """
-        return self._height
-
-    @property
-    def total_width(self) -> float:
-        return self._width
 
     def append(self, cell: Cell):
         self._height = max(cell.total_height, self._height)
