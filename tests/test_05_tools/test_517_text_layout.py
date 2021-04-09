@@ -527,6 +527,43 @@ class TestTextContinueStroke:
         assert result[0] == "STROKE(UNDERLINE, 3.0)", "do not continue stroke"
 
 
+class TestFractionCell:
+    @staticmethod
+    def fraction(stacking, x, y):
+        result = []
+        a = tl.Text(1, 1, renderer=Rect("A", result))
+        b = tl.Text(1, 1, renderer=Rect("B", result))
+        fr = tl.Fraction(a, b, stacking, renderer=Rect("Fraction", result))
+        fr.place(x, y)
+        fr.render()
+        return result
+
+    def test_a_over_b(self):
+        # y = total height = (a.total_height + b.total_height) * HEIGHT_SCALE
+        result = self.fraction(tl.Stacking.OVER, x=0,
+                               y=2 * tl.Fraction.HEIGHT_SCALE)
+        assert len(result) == 2
+        assert result[0] == "A(0.0, 1.4, 1.0, 2.4)"  # L, B, R, T
+        assert result[1] == "B(0.0, 0.0, 1.0, 1.0)"  # L, B, R, T
+
+    def test_a_over_line_b(self):
+        # y = total height = (a.total_height + a.total_height) * HEIGHT_SCALE
+        result = self.fraction(tl.Stacking.LINE, x=0,
+                               y=2 * tl.Fraction.HEIGHT_SCALE)
+        assert len(result) == 3
+        assert result[0] == "A(0.0, 1.4, 1.0, 2.4)"  # L, B, R, T
+        assert result[1] == "B(0.0, 0.0, 1.0, 1.0)"  # L, B, R, T
+        assert result[2] == "LINE(0.0, 1.2)TO(1.0, 1.2)"
+
+    def test_a_slanted_b(self):
+        # y = total height = (a.total_height + a.total_height)
+        result = self.fraction(tl.Stacking.SLANTED, x=0, y=2)
+        assert len(result) == 3
+        assert result[0] == "A(0.0, 1.0, 1.0, 2.0)"  # L, B, R, T
+        assert result[1] == "B(1.0, 0.0, 2.0, 1.0)"  # L, B, R, T
+        assert result[2] == "LINE(0.0, 0.0)TO(2.0, 2.0)"
+
+
 def str2cells(s: str, content=3, space=0.5):
     # t ... text cell
     # f ... fraction cell
@@ -536,7 +573,9 @@ def str2cells(s: str, content=3, space=0.5):
         if c == 't':
             yield tl.Text(width=content, height=1, renderer=Rect('Text'))
         elif c == 'f':
-            yield tl.Fraction(width=content, height=2,
+            cell = tl.Text(content / 2, 1)
+            yield tl.Fraction(top=cell, bottom=cell,
+                              stacking=tl.Stacking.SLANTED,
                               renderer=Rect('Fraction'))
         elif c == ' ':
             yield tl.Space(width=space)

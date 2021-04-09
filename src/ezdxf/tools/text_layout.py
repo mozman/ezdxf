@@ -484,28 +484,28 @@ class Fraction(ContentCell):
         === =========== =========
 
     """
+    HEIGHT_SCALE = 1.2
 
-    def __init__(self, width: float,
-                 height: float,
+    def __init__(self, top: ContentCell,
+                 bottom: ContentCell,
+                 stacking: Stacking = Stacking.OVER,
                  valign: CellAlignment = CellAlignment.BOTTOM,
                  renderer: ContentRenderer = None):
-        super().__init__(width, height, valign, renderer)
-        self._stacking = Stacking.OVER
-        self._top_content: Optional[ContentCell] = None
-        self._bottom_content: Optional[ContentCell] = None
-
-    def set_content(self, top: ContentCell, bottom: ContentCell,
-                    stacking: Stacking = Stacking.OVER):
+        super().__init__(0, 0, valign, renderer)
+        self._stacking = stacking
         self._top_content = top
         self._bottom_content = bottom
-        self._stacking = stacking
+        self._update_size()
 
-        # update content dimensions
+    def _update_size(self):
+        top = self._top_content
+        bottom = self._bottom_content
         if self._stacking == Stacking.SLANTED:
             self._height = top.total_height + bottom.total_height
             self._width = top.total_width + bottom.total_width
         else:
-            self._height = 1.2 * (top.total_height + bottom.total_height)
+            self._height = self.HEIGHT_SCALE * (
+                    top.total_height + bottom.total_height)
             self._width = max(top.total_width, bottom.total_width)
 
     def place(self, x: float, y: float):
@@ -522,23 +522,39 @@ class Fraction(ContentCell):
         if self._stacking == Stacking.SLANTED:
             top_content.place(x, y)  # left/top
             x += width - bottom_content.total_width
-            y -= height + bottom_content.total_height
+            y -= (height - bottom_content.total_height)
             bottom_content.place(x, y)  # right/bottom
         else:
             center = x + width / 2
             x = center - top_content.total_width / 2
             top_content.place(x, y)  # center/top
             x = center - bottom_content.total_width / 2
-            y -= height + bottom_content.total_height
+            y -= (height - bottom_content.total_height)
             bottom_content.place(x, y)  # center/bottom
 
     def render(self, m: Matrix44 = None) -> None:
         self._top_content.render(m)
         self._bottom_content.render(m)
+        if self._stacking != Stacking.OVER:
+            self._render_line(m)
+
+    def _render_line(self, m: Matrix44) -> None:
+        x, y = self.final_location()
+        tw = self.total_width
+        th = self.total_height
         if self._stacking == Stacking.LINE:
-            pass
-        elif self._stacking == Stacking.SLANTED:
-            pass
+            x1 = x
+            x2 = x + tw
+            y1 = y2 = y - th / 2
+        else:  # SLANTED
+            delta = min(tw, th) / 2
+            cx = x + tw / 2
+            cy = y - th / 2
+            x1 = cx - delta
+            y1 = cy - delta
+            x2 = cx + delta
+            y2 = cy + delta
+        self.renderer.line(x1, y1, x2, y2, m)
 
 
 _content = {Text, Fraction}
