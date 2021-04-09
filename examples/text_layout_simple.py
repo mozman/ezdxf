@@ -1,5 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+from typing import Iterable
 import pathlib
 import random
 import ezdxf
@@ -11,6 +12,7 @@ from ezdxf.tools import text_layout
 DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 STYLE = 'Style0'
 FONT = 'OpenSans-Regular.ttf'
+COLUMN_HEIGHT = 12
 
 print_config()
 
@@ -64,6 +66,7 @@ class TextRenderer(text_layout.ContentRenderer):
     def __init__(self, text, attribs):
         self.text = text
         self.attribs = attribs
+        self.line_attribs = {'color': attribs['color']}
 
     def render(self, left: float, bottom: float, right: float,
                top: float, m: Matrix44 = None):
@@ -74,19 +77,22 @@ class TextRenderer(text_layout.ContentRenderer):
 
     def line(self, x1: float, y1: float, x2: float, y2: float,
              m: Matrix44 = None) -> None:
-        pass
+        line = msp.add_line((x1, y1), (x2, y2), dxfattribs=self.line_attribs)
+        if m:
+            line.transform(m)
 
 
 class Word(text_layout.Text):
-    def __init__(self, text: str, font: SizedFont):
+    def __init__(self, text: str, font: SizedFont, stroke: int = 0):
         attribs = {
-            'color': random.choice((1, 2, 3, 4, 6)),
+            'color': random.choice((1, 2, 3, 4, 6, 7, 7)),
             'height': font.height,
             'style': STYLE,
         }
         super().__init__(
             width=font.text_width(text),
             height=font.height,
+            stroke=stroke,
             renderer=TextRenderer(text, attribs),
         )
 
@@ -108,6 +114,37 @@ def random_sized_content(count: int):
         yield text_layout.Space(font.space)
 
 
+def stroke_groups(words: Iterable[str]):
+    group = []
+    count = 0
+    stroke = 0
+    for word in words:
+        if count == 0:
+            if group:
+                yield group, stroke
+            count = random.randint(1, 4)
+            group = [word]
+            stroke = random.choice([0, 0, 0, 0, 1, 1, 1, 2, 2, 4])
+        else:
+            count -= 1
+            group.append(word)
+
+    if group:
+        yield group, stroke
+
+
+def stroked_content(count: int, size=1):
+    font = fix_sized_fonts[size]
+    groups = stroke_groups(text_layout.lorem_ipsum(count))
+    for group, stroke in groups:
+        continue_stroke = stroke + 8 if stroke else 0
+        for word in group[:-1]:
+            yield Word(word, font=font, stroke=continue_stroke)
+            yield text_layout.Space(font.space)
+        yield Word(group[-1], font=font, stroke=stroke)
+        yield text_layout.Space(font.space)
+
+
 def create_layout(align, content):
     # Build the content:
     paragraph = text_layout.FlowText(align=align)
@@ -119,7 +156,7 @@ def create_layout(align, content):
 
     # Append the first column with default width and a content height of 12 drawing
     # units. At least the first column has to be created by the client.
-    layout.append_column(height=12, gutter=1)
+    layout.append_column(height=COLUMN_HEIGHT, gutter=1)
 
     # Append the content. The content will be distributed across the available
     # columns and automatically overflow into adjacent columns if necessary.
@@ -152,27 +189,27 @@ def create_layout(align, content):
 
 
 FlowTextAlignment = text_layout.FlowTextAlignment
-x = 0
-y = 0
-for align in [FlowTextAlignment.LEFT,
-              FlowTextAlignment.RIGHT,
-              FlowTextAlignment.CENTER,
-              FlowTextAlignment.JUSTIFIED]:
-    layout = create_layout(align, uniform_content(200, size=1))
-    m = Matrix44.translate(x, y, 0)
-    layout.render(m)
-    x += layout.total_width + 2
+ALIGNMENTS = [
+    FlowTextAlignment.LEFT,
+    FlowTextAlignment.RIGHT,
+    FlowTextAlignment.CENTER,
+    FlowTextAlignment.JUSTIFIED
+]
 
-y = layout.total_height + 2
-x = 0
-for align in [FlowTextAlignment.LEFT,
-              FlowTextAlignment.RIGHT,
-              FlowTextAlignment.CENTER,
-              FlowTextAlignment.JUSTIFIED]:
-    layout = create_layout(align, random_sized_content(200))
-    m = Matrix44.translate(x, y, 0)
-    layout.render(m)
-    x += layout.total_width + 2
+
+def create(content, y):
+    x = 0
+    for align in ALIGNMENTS:
+        layout = create_layout(align, content)
+        m = Matrix44.translate(x, y, 0)
+        layout.render(m)
+        x += layout.total_width + 2
+
+
+dy = COLUMN_HEIGHT + 3
+create(list(uniform_content(200)), 0)
+create(list(random_sized_content(200)), dy)
+create(list(stroked_content(200)), 2 * dy)
 
 zoom.extents(msp, factor=1.1)
-doc.saveas(DIR / "simple_layout.dxf")
+doc.saveas(str(DIR / "simple_layout.dxf"))
