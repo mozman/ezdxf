@@ -589,6 +589,98 @@ def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
     return content
 
 
+class HCellGroup(ContentCell):
+    """ Stores content in horizontal order and does not render itself.
+    Recursive data structure, a HCellGroup can contain cell groups as well.
+
+    This is not a real container class, from outside it behaves like a
+    single opaque cell with a fixed width and height determined by the
+    extents of its content.
+
+    """
+
+    def __init__(self, cells: Iterable[Cell] = None,
+                 valign=CellAlignment.BOTTOM):
+        super().__init__(0, 0, valign=valign)
+        self._cells: List[Cell] = []
+        if cells:
+            self.extend(cells)
+
+    def __iter__(self):
+        return iter(self._cells)
+
+    def place(self, x: float, y: float):
+        super().place(x, y)
+        group_height = self.total_height
+        cx = x
+        for cell in self._cells:
+            cy = y
+            if isinstance(cell, ContentCell) and \
+                    cell.valign != CellAlignment.TOP:
+                dy = cell.total_height - group_height
+                if cell.valign == CellAlignment.CENTER:
+                    dy /= 2.0
+                cy += dy
+
+            cell.place(cx, cy)
+            cx += cell.total_width
+
+    def append(self, cell: Cell):
+        self._height = max(cell.total_height, self._height)
+        self._width += cell.total_width
+        self._cells.append(cell)
+
+    def extend(self, cells: Iterable[Cell]):
+        for cell in cells:
+            self.append(cell)
+
+    def render(self, m: Matrix44 = None) -> None:
+        for cell in self._cells:
+            if cell.is_visible:
+                cell.render(m)
+
+        # HCellGroup can contain Text cells:
+        render_text_strokes(self._cells, m)
+
+    def grow(self, target_width: float) -> None:
+        self._apply_justified_alignment(target_width)
+        self.update_width()
+
+    def update_width(self):
+        self._width = sum(cell.total_width for cell in self._cells)
+
+    def _glue_cells(self):
+        return [cell for cell in self._cells if isinstance(cell, Glue)]
+
+    def _apply_justified_alignment(self, target_width: float) -> None:
+        # TODO: ignore "short" lines
+        success = False
+        spaces: List[Glue] = self._glue_cells()
+        if len(spaces) == 0:  # no spaces to grow
+            return
+
+        while not success:
+            success = True
+            # total line width could be bigger than width!
+            space_to_distribute = target_width - self.total_width
+            if space_to_distribute < 1e-6:
+                return
+
+            growable_spaces = [space for space in spaces if space.can_grow]
+            count = len(growable_spaces)
+            if count == 0:  # no spaces to grow
+                return
+
+            delta_space = space_to_distribute / count
+            for space in growable_spaces:
+                new_size = space.total_width + delta_space
+                space.resize(new_size)
+                if not math.isclose(new_size, space.total_width):
+                    # space can't grow that much
+                    success = False
+                    # but grow remaining spaces
+
+
 class Container(Box):
     def __init__(self, width: float,
                  height: float = None,
@@ -698,96 +790,6 @@ class Container(Box):
             self.renderer.render(
                 left=x, bottom=y - self.total_height,
                 top=y, right=x + self.total_width, m=m)
-
-
-class HCellGroup(ContentCell):
-    """ Stores content in horizontal order and does not render itself.
-    Recursive data structure, a HCellGroup can contain cell groups as well.
-
-    """
-    # This is not a real container class, from outside it behaves like a
-    # single opaque cell with a fixed width and height determined by the
-    # extents of its content.
-    def __init__(self, cells: Iterable[Cell] = None,
-                 valign=CellAlignment.BOTTOM):
-        super().__init__(0, 0, valign=valign)
-        self._cells: List[Cell] = []
-        if cells:
-            self.extend(cells)
-
-    def __iter__(self):
-        return iter(self._cells)
-
-    def place(self, x: float, y: float):
-        super().place(x, y)
-        group_height = self.total_height
-        cx = x
-        for cell in self._cells:
-            cy = y
-            if isinstance(cell, ContentCell) and \
-                    cell.valign != CellAlignment.TOP:
-                dy = cell.total_height - group_height
-                if cell.valign == CellAlignment.CENTER:
-                    dy /= 2.0
-                cy += dy
-
-            cell.place(cx, cy)
-            cx += cell.total_width
-
-    def append(self, cell: Cell):
-        self._height = max(cell.total_height, self._height)
-        self._width += cell.total_width
-        self._cells.append(cell)
-
-    def extend(self, cells: Iterable[Cell]):
-        for cell in cells:
-            self.append(cell)
-
-    def render(self, m: Matrix44 = None) -> None:
-        for cell in self._cells:
-            if cell.is_visible:
-                cell.render(m)
-
-        # HCellGroup can contain Text cells:
-        render_text_strokes(self._cells, m)
-
-    def grow(self, target_width: float) -> None:
-        self._apply_justified_alignment(target_width)
-        self.update_width()
-
-    def update_width(self):
-        self._width = sum(cell.total_width for cell in self._cells)
-
-    def _glue_cells(self):
-        return [cell for cell in self._cells if isinstance(cell, Glue)]
-
-    def _apply_justified_alignment(self, target_width: float) -> None:
-        # TODO: ignore "short" lines
-        success = False
-        spaces: List[Glue] = self._glue_cells()
-        if len(spaces) == 0:  # no spaces to grow
-            return
-
-        while not success:
-            success = True
-            # total line width could be bigger than width!
-            space_to_distribute = target_width - self.total_width
-            if space_to_distribute < 1e-6:
-                return
-
-            growable_spaces = [space for space in spaces if space.can_grow]
-            count = len(growable_spaces)
-            if count == 0:  # no spaces to grow
-                return
-
-            delta_space = space_to_distribute / count
-            for space in growable_spaces:
-                new_size = space.total_width + delta_space
-                space.resize(new_size)
-                if not math.isclose(new_size, space.total_width):
-                    # space can't grow that much
-                    success = False
-                    # but grow remaining spaces
 
 
 class Paragraph(Container):  # ABC
