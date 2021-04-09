@@ -360,9 +360,15 @@ class TestFlowTextJustifiedAlignment:
         flow = tl.FlowText(width=12, align=tl.FlowTextAlignment.JUSTIFIED)
         set_flow_content(flow)
         flow.place(0, 0)
-        for line in flow:
+        lines = list(flow)
+        for line in lines[:-1]:
             assert line.total_width == 12  # expand across paragraph width
             assert line.final_location()[0] == 0
+
+        # last line is not expanded
+        last_line = lines[-1]
+        assert last_line.total_width == 10
+        assert last_line.final_location()[0] == 0
 
     def test_with_indentation(self):
         flow = tl.FlowText(width=12, indent=(0.7, 0.5, 0.5),
@@ -373,10 +379,15 @@ class TestFlowTextJustifiedAlignment:
         # first line:
         assert lines[0].total_width == 10.8  # 12 - (0.7 + 0.5)
         assert lines[0].final_location()[0] == 0.7
+
         # remaining lines:
-        for line in lines[1:]:
+        for line in lines[1:-1]:
             assert line.total_width == 11  # 12 - (0.5 + 0.5)
             assert line.final_location()[0] == 0.5
+
+        # last line is not expanded:
+        assert lines[-1].total_width == 10
+        assert lines[-1].final_location()[0] == 0.5
 
 
 class TestVerticalCellAlignment:
@@ -468,7 +479,7 @@ class TestTextStrokeRendering:
         text.place(0, 0)
         tl.render_text_strokes([text])
 
-    @pytest.mark.parametrize("stroke,expected",[
+    @pytest.mark.parametrize("stroke,expected", [
         (tl.Stroke.UNDERLINE, "STROKE(UNDERLINE, 3.0)"),
         (tl.Stroke.OVERLINE, "STROKE(OVERLINE, 3.0)"),
         (tl.Stroke.STRIKE_THROUGH, "STROKE(STRIKE_THROUGH, 3.0)"),
@@ -503,7 +514,8 @@ class TestTextContinueStroke:
         nbsp = tl.NonBreakingSpace(width=0.5)
         tl.render_text_strokes([word, space, nbsp, space, word])
         assert len(result) == 2
-        assert result[0] == "STROKE(UNDERLINE, 4.5)", "3 spaces should be included"
+        assert result[
+                   0] == "STROKE(UNDERLINE, 4.5)", "3 spaces should be included"
         assert result[1] == "STROKE(UNDERLINE, 3.0)", "no following spaces"
 
     def test_do_not_continue_stroke_automatically(self):

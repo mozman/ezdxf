@@ -642,14 +642,10 @@ class HCellGroup(ContentCell):
         # HCellGroup can contain Text cells:
         render_text_strokes(self._cells, m)
 
-    def grow(self, target_width: float, min_width: float = 0) -> None:
-        """ Expand glue cells to match target_width by `total_width`.
-        The total_width has to be bigger than`min_width` to start growing.
-
-        """
-        if self.total_width > min_width:
-            self._apply_justified_alignment(target_width)
-            self.update_width()
+    def grow(self, target_width: float) -> None:
+        """ Expand glue cells to match target_width by `total_width`. """
+        self._apply_justified_alignment(target_width)
+        self.update_width()
 
     def update_width(self):
         self._width = sum(cell.total_width for cell in self._cells)
@@ -863,6 +859,10 @@ class FlowText(Paragraph):
         # contains the final distributed content:
         self._lines: List[HCellGroup] = []
 
+        # This flag is False if the original flow text was split into
+        # multiple paragraphs and this is not the last one.
+        self._has_last_line = True
+
     def __iter__(self):
         return iter(self._lines)
 
@@ -878,9 +878,12 @@ class FlowText(Paragraph):
         justified_alignment = self._align == FlowTextAlignment.JUSTIFIED
         first = True
         available_width = self.line_width(first)
-        for line in self._lines:
+        lines = self._lines
+        last_line = lines[-1] if lines else None
+        for line in lines:
             if justified_alignment:
-                line.grow(available_width, min_width=available_width/3)
+                if line is not last_line or not self._has_last_line:
+                    line.grow(available_width)
             x_final = self._left_border(x, line, first, available_width)
             line.place(x_final, y)
             y -= leading(line.total_height, self._line_spacing)
@@ -939,7 +942,7 @@ class FlowText(Paragraph):
             """ Returns the next group:
 
                 - single content Text or Fraction
-                - single Space or Tab
+                - single Space
                 - content connected by nbsp
 
             """
@@ -1028,6 +1031,7 @@ class FlowText(Paragraph):
         # and return it to the caller.
         if cells:
             cells.reverse()
+            self._has_last_line = False
             return self._create_new_flow_text(cells, first)
         else:
             return None

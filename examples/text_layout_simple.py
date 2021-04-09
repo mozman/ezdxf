@@ -11,14 +11,35 @@ from ezdxf.tools import text_layout
 DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 STYLE = 'Style0'
 FONT = 'OpenSans-Regular.ttf'
-CAP_HEIGHT = 0.35
 
 print_config()
 
 doc = ezdxf.new()
 msp = doc.modelspace()
 style = doc.styles.new(STYLE, dxfattribs={'font': FONT})
-font = fonts.make_font(FONT, CAP_HEIGHT)
+
+
+def measure_space(font):
+    return font.text_width(' X') - font.text_width('X')
+
+
+class SizedFont:
+    def __init__(self, height: float):
+        self.height = float(height)
+        self.font = fonts.make_font(FONT, self.height)
+        self.space = measure_space(self.font)
+
+    def text_width(self, text: str):
+        return self.font.text_width(text)
+
+
+fix_sized_fonts = [
+    SizedFont(0.18),
+    SizedFont(0.35),
+    SizedFont(0.50),
+    SizedFont(0.70),
+    SizedFont(1.00),
+]
 
 
 class FrameRenderer(text_layout.ContentRenderer):
@@ -57,34 +78,40 @@ class TextRenderer(text_layout.ContentRenderer):
 
 
 class Word(text_layout.Text):
-    def __init__(self, text: str):
+    def __init__(self, text: str, font: SizedFont):
         attribs = {
             'color': random.choice((1, 2, 3, 4, 6)),
-            'height': CAP_HEIGHT,
+            'height': font.height,
             'style': STYLE,
         }
         super().__init__(
             width=font.text_width(text),
-            height=CAP_HEIGHT,
+            height=font.height,
             renderer=TextRenderer(text, attribs),
         )
 
 
-def measure_space(font):
-    return font.text_width(' X') - font.text_width('X')
-
-
-def build_content(count: int):
-    space = measure_space(font)
+def uniform_content(count: int, size=1):
+    font = fix_sized_fonts[size]
     for word in text_layout.lorem_ipsum(count):
-        yield Word(word)
-        yield text_layout.Space(space)
+        yield Word(word, font)
+        yield text_layout.Space(font.space)
 
 
-def create_layout(align):
+def random_sized_content(count: int):
+    def size():
+        return random.choice([0, 1, 1, 1, 1, 1, 2, 3])
+
+    for word in text_layout.lorem_ipsum(count):
+        font = fix_sized_fonts[size()]
+        yield Word(word, font)
+        yield text_layout.Space(font.space)
+
+
+def create_layout(align, content):
     # Build the content:
     paragraph = text_layout.FlowText(align=align)
-    paragraph.append_content(build_content(200))
+    paragraph.append_content(content)
 
     # Start the layout engine and set default column width:
     layout = text_layout.Layout(width=8, margins=(0.5,),
@@ -116,7 +143,7 @@ def create_layout(align):
     # transformation matrix to move the layout to the final location in
     # the DXF target layout, the model space in this example.
     # Set final layout location in the xy-plane with alignment:
-    layout.place(align=text_layout.LayoutAlignment.MIDDLE_CENTER)
+    layout.place(align=text_layout.LayoutAlignment.BOTTOM_LEFT)
 
     # It is possible to add content after calling place(), but place has to be
     # called again before calling render().
@@ -126,13 +153,24 @@ def create_layout(align):
 
 FlowTextAlignment = text_layout.FlowTextAlignment
 x = 0
+y = 0
 for align in [FlowTextAlignment.LEFT,
               FlowTextAlignment.RIGHT,
               FlowTextAlignment.CENTER,
-              FlowTextAlignment.JUSTIFIED,
-              ]:
-    layout = create_layout(align)
-    m = Matrix44.translate(x, 100, 0)
+              FlowTextAlignment.JUSTIFIED]:
+    layout = create_layout(align, uniform_content(200, size=1))
+    m = Matrix44.translate(x, y, 0)
+    layout.render(m)
+    x += layout.total_width + 2
+
+y = layout.total_height + 2
+x = 0
+for align in [FlowTextAlignment.LEFT,
+              FlowTextAlignment.RIGHT,
+              FlowTextAlignment.CENTER,
+              FlowTextAlignment.JUSTIFIED]:
+    layout = create_layout(align, random_sized_content(200))
+    m = Matrix44.translate(x, y, 0)
     layout.render(m)
     x += layout.total_width + 2
 
