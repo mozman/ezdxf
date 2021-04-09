@@ -370,33 +370,36 @@ class Stroke:
     UNDERLINE = 1
     STRIKE_THROUGH = 2
     OVERLINE = 4
+    CONTINUE = 8  # continue stroke to following text cell
 
 
 class Text(ContentCell):
     """ Represents visible text content.
 
-    Supported strokes as bit values, can be combined:
+    Supported strokes as bit values (flags), can be combined:
 
         === =================
-        0   no stroke
-        1   underline
-        2   strike through
-        4   overline
+        int Stroke
         === =================
+        0   NO_STROKE
+        1   UNDERLINE
+        2   STRIKE THROUGH
+        4   OVERLINE
+        8   CONTINUE
+        === =================
+
+    The CONTINUE flag extends the stroke of the current text cell across the
+    glue cells to the following text cell.
 
     """
 
     def __init__(self, width: float,
                  height: float,
                  valign: CellAlignment = CellAlignment.BOTTOM,
-                 stroke: int = 0,
+                 stroke: int = Stroke.NO_STROKE,
                  renderer: ContentRenderer = None):
         super().__init__(width, height, valign, renderer)
-        stroke = int(stroke)
-        if 0 <= stroke < 8:
-            self.stroke = stroke  # public attribute read/write
-        else:
-            raise ValueError('invalid stroke')
+        self.stroke = int(stroke)  # public attribute read/write
 
     def render(self, m: Matrix44 = None) -> None:
         left, top = self.final_location()
@@ -410,17 +413,55 @@ class Text(ContentCell):
             left=left, bottom=bottom,
             right=right, top=top, m=m)
 
+    def render_stroke(self,
+                      extend_left: float = 0,
+                      extend_right: float = 0,
+                      m: Matrix44 = None) -> None:
+        left, top = self.final_location()
+        left -= extend_left
+        height = self.total_height
+        bottom = top - height
+        right = left + self.total_width + extend_right
+        renderer = self.renderer
+
         # render underline, strike through, overline
         spacing = height / 5  # ???
-        if self.stroke & 1:  # render underline
+        if self.stroke & Stroke.UNDERLINE:
             y = bottom - spacing
             renderer.line(left, y, right, y, m)
-        if self.stroke & 2:  # render strike through
+        if self.stroke & Stroke.STRIKE_THROUGH:
             y = (top + bottom) / 2
             renderer.line(left, y, right, y, m)
-        if self.stroke & 4:  # render overline
+        if self.stroke & Stroke.OVERLINE:
             y = top + spacing
             renderer.line(left, y, right, y, m)
+
+
+def render_text_strokes(cells: List[Cell], m: Matrix44 = None) -> None:
+    """ Render text cell strokes across glue cells. """
+
+    # Should be called for container with horizontal arranged text cells
+    # like HCellGroup to create underline, overline and strike trough
+    # features.
+    # Can not render strokes across line breaks!
+    def stroke_extension():
+        extend = 0
+        i = index + 1
+        count = len(cells)
+        while i < count:
+            cell = cells[i]
+            # extend stroke only across adjacent glue cells:
+            if isinstance(cell, Glue):
+                extend += cell.total_width
+            else:
+                break
+            i += 1
+        return extend
+
+    for index, cell in enumerate(cells):
+        if isinstance(cell, Text) and cell.stroke:
+            extend = stroke_extension() if cell.stroke & Stroke.CONTINUE else 0
+            cell.render_stroke(extend_right=extend, m=m)
 
 
 class Stacking(enum.IntEnum):
@@ -721,6 +762,9 @@ class HCellGroup(Cell):
         for cell in self._cells:
             if cell.is_visible:
                 cell.render(m)
+
+        # HCellGroup can contain Text cells:
+        render_text_strokes(self._cells, m)
 
     def grow(self, target_width: float) -> None:
         self._apply_justified_alignment(target_width)

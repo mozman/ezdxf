@@ -448,6 +448,73 @@ class TestVerticalCellAlignment:
         assert top.final_location() == (3, 0)
 
 
+class StrokeRender(Rect):
+    def line(self, x1: float, y1: float, x2: float, y2: float, m=None) -> None:
+        length = x2 - x1
+        if y1 < -1:
+            location = "UNDERLINE"
+        elif y1 > 0:
+            location = "OVERLINE"
+        else:
+            location = "STRIKE_THROUGH"
+        self.result.append(f"{self.name}({location}, {length:.1f})")
+
+
+class TestTextStrokeRendering:
+    @staticmethod
+    def render_text(stroke, result):
+        text = tl.Text(width=3, height=1, stroke=stroke,
+                       renderer=StrokeRender("STROKE", result))
+        text.place(0, 0)
+        tl.render_text_strokes([text])
+
+    @pytest.mark.parametrize("stroke,expected",[
+        (tl.Stroke.UNDERLINE, "STROKE(UNDERLINE, 3.0)"),
+        (tl.Stroke.OVERLINE, "STROKE(OVERLINE, 3.0)"),
+        (tl.Stroke.STRIKE_THROUGH, "STROKE(STRIKE_THROUGH, 3.0)"),
+    ])
+    def test_simple_stroke(self, stroke, expected):
+        result = []
+        self.render_text(stroke, result)
+        assert result[0] == expected
+
+
+class TestTextContinueStroke:
+    @staticmethod
+    def make_text(stroke, result):
+        text = tl.Text(width=3, height=1, stroke=stroke,
+                       renderer=StrokeRender("STROKE", result))
+        text.place(0, 0)
+        return text
+
+    def test_continue_stroke_across_one_space(self):
+        result = []
+        word = self.make_text(tl.Stroke.UNDERLINE + tl.Stroke.CONTINUE, result)
+        space = tl.Space(width=0.5)
+        tl.render_text_strokes([word, space, word])
+        assert len(result) == 2
+        assert result[0] == "STROKE(UNDERLINE, 3.5)", "space should be included"
+        assert result[1] == "STROKE(UNDERLINE, 3.0)", "no following space"
+
+    def test_continue_stroke_across_multiple_spaces(self):
+        result = []
+        word = self.make_text(tl.Stroke.UNDERLINE + tl.Stroke.CONTINUE, result)
+        space = tl.Space(width=0.5)
+        nbsp = tl.NonBreakingSpace(width=0.5)
+        tl.render_text_strokes([word, space, nbsp, space, word])
+        assert len(result) == 2
+        assert result[0] == "STROKE(UNDERLINE, 4.5)", "3 spaces should be included"
+        assert result[1] == "STROKE(UNDERLINE, 3.0)", "no following spaces"
+
+    def test_do_not_continue_stroke_automatically(self):
+        result = []
+        word = self.make_text(tl.Stroke.UNDERLINE, result)
+        space = tl.Space(width=0.5)
+        tl.render_text_strokes([word, space, word])
+        assert len(result) == 2
+        assert result[0] == "STROKE(UNDERLINE, 3.0)", "do not continue stroke"
+
+
 def str2cells(s: str, content=3, space=0.5):
     # t ... text cell
     # f ... fraction cell
