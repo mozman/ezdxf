@@ -105,6 +105,21 @@ class TestTopLevelLayout:
         # max(height) + margins
         assert layout1.content_height == (20 + 2)
 
+    def test_bounding_box_for_not_placed_layout(self, layout1):
+        # applies default alignment top/left, margins = (1, 1)
+        layout1.append_column(10, 10)
+        bbox = layout1.bbox()
+        assert bbox.extmin == (0, -12)  # left/bottom
+        assert bbox.extmax == (12, 0)  # right/top
+
+    def test_bounding_box_for_placed_layout(self, layout1):
+        # margins = (1, 1)
+        layout1.append_column(10, 10)
+        layout1.place(0, 0, tl.LayoutAlignment.MIDDLE_CENTER)
+        bbox = layout1.bbox()
+        assert bbox.extmin == (-6, -6)  # left/bottom
+        assert bbox.extmax == (6, 6)  # right/top
+
 
 class TestColumn:
     @pytest.fixture

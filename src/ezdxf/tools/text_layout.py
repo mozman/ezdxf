@@ -5,7 +5,7 @@ import abc
 import math
 import itertools
 import enum
-from ezdxf.math import Matrix44
+from ezdxf.math import Matrix44, BoundingBox2d
 
 """
 
@@ -248,6 +248,18 @@ class Box(abc.ABC):
     def render(self, m: Matrix44 = None) -> None:
         """ Render content at the final location. """
         pass
+
+    def bbox(self) -> BoundingBox2d:
+        """ Returns the 2D bounding box of the container. If the cell is
+        not placed the top/left corner = (0, 0).
+
+        """
+        try:
+            x, y = self.final_location()
+        except (ValueError, TypeError):
+            x, y = 0, 0
+        return BoundingBox2d([
+            (x, y), (x + self.total_width, y - self.total_height)])
 
 
 class Cell(Box):  # ABC
