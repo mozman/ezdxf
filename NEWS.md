@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.16.1b0 - dev
-----------------------
+Version 0.16.1 - 2021-04-10
+---------------------------
 
 - BUGFIX: `disassemble.recursive_decompose()` was not recursive 
 - BUGFIX: `Frontend` font resolver uses XDATA if no regular font file is defined 
