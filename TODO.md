@@ -38,7 +38,7 @@ Render Tools
 - (v0.17) `MLeader.virtual_entities()` 
 - (v0.17) `EulerSpiral()` conversion to B-spline with end tangent constraints
 - (v0.17) Text layout engine for better MTEXT rendering support by the 
-  `drawing` add-on and conversion of MTEXT into multiple TEXT entities.
+  `drawing` add-on and exploding MTEXT into DXF primitives (TEXT & LINE).
 - (<v1.0) DIMENSION rendering
     - angular dim
     - angular 3 point dim
@@ -51,10 +51,11 @@ DXF Entities
 
 - (v0.17) MLEADER: factory methods to create new MLEADER entities  
 - (v0.17) ATTRIB/ATTDEF support for embedded MTEXT entity,
-  example: dxftest/attrib_attdef_with_embedded_mtext.dxf
+  example: `dxftest/attrib_attdef_with_embedded_mtext.dxf`
 - (v0.17) Remove generic "Embedded Object" support in DXFEntity because this is 
   always a special case which should be handled by DXF load/export procedure, 
-  and it is used only by ATTRIB/ATTDEF yet.
+  and it is used only by ATTRIB/ATTDEF/MTEXT yet.
+- (v0.17) MTEXT: multi column support and exploding into DXF primitives
 - (>v1.0) FIELD, used by ACAD_TABLE and MTEXT
 - (>v1.0) ACAD_TABLE
 
