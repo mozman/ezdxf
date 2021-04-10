@@ -178,8 +178,69 @@ acdb_mtext_group_codes = group_code_mapping(acdb_mtext)
 #
 # code 50	Column heights; this code is followed by a column count
 # (Int16), and then the number of column heights
+#
 # ----------------------------------------------------------------------
-
+# Example:
+# 1001
+# ACAD
+# 1000
+# ACAD_MTEXT_COLUMN_INFO_BEGIN
+# 1070
+#     75
+# 1070
+#      2
+# 1070
+#     79
+# 1070
+#      0
+# 1070
+#     76
+# 1070
+#      3
+# 1070
+#     78
+# 1070
+#      0
+# 1070
+#     48
+# 1040
+# 37.9
+# 1070
+#     49
+# 1040
+# 9.96
+# 1070
+#     50
+# 1070
+#      3
+# 1040
+# 100.9
+# 1040
+# 100.9
+# 1040
+# 100.9
+# 1000
+# ACAD_MTEXT_COLUMN_INFO_END
+# 1000
+# ACAD_MTEXT_COLUMNS_BEGIN
+# 1070
+#     47
+# 1070
+#      3
+# 1005
+# 140     >>> handle to MTEXT entity
+# 1005
+# 141     >>> handle to MTEXT entity
+# 1000
+# ACAD_MTEXT_COLUMNS_END
+# 1000
+# ACAD_MTEXT_DEFINED_HEIGHT_BEGIN
+# 1070
+#     46
+# 1040
+# 100.9
+# 1000
+# ACAD_MTEXT_DEFINED_HEIGHT_END
 
 @register_entity
 class MText(DXFGraphic):

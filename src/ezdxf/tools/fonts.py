@@ -258,7 +258,8 @@ def get_font_measurements(ttf_path: str, map_shx=True) -> 'FontMeasurements':
     return m
 
 
-def find_font_face_by_family(family: str, italic=False, bold=False) -> Optional['FontFace']:
+def find_font_face_by_family(family: str, italic=False, bold=False) -> Optional[
+    'FontFace']:
     # TODO: find best match
     #  additional attributes "italic" and "bold" are ignored yet
     key = family.lower()
@@ -462,7 +463,7 @@ class MonospaceFont(AbstractFont):
 
 
 def make_font(ttf_path: str, cap_height: float,
-              width_factor: float) -> AbstractFont:
+              width_factor: float = 1.0) -> AbstractFont:
     """ Factory function to create a font abstraction.
 
     Creates a :class:`MatplotlibFont` if the Matplotlib font support is
