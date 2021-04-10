@@ -277,7 +277,7 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # \pxqj - align text in paragraph: justified
 # \pxqd - align text in paragraph: distributed
 #
-# /pix,ly; paragraph indent
+# \pix,ly; paragraph indent
 #       first line relative to body:
 #         first line
 #       second line

@@ -6,3 +6,4 @@ DXF Entities
 
     dimension_entity
     mleader
+    mtext

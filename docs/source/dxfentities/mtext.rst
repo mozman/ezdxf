@@ -19,7 +19,7 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
-.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-5E5DB93B-F8D3-4433-ADF7-E92E250D2BAB
+.. _DXF Reference: https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-5E5DB93B-F8D3-4433-ADF7-E92E250D2BAB
 
 .. class:: MText
 
