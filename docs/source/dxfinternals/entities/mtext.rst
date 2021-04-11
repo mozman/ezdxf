@@ -71,12 +71,62 @@ overall columns, see also following section "Column Support".
 Background Filling
 ------------------
 
-TODO
+The background fill support is available for DXF R2007+.
+The group code 90 defines the kind of background fill:
+
+=== ================================
+0   off
+1   color defined by group code 63, 421 or 431
+2   drawing window color
+3   background (canvas) color
+16  bit-flag text frame, see Open Design Alliance Specification 20.4.46
+=== ================================
+
+Group codes to define background fill attributes:
+
+=== ===============================
+45  scaling factor for the border around the text, the value should be in the
+    range of [1, 5], where 1 fits exact the MText entity
+63  set the background color by :term:`ACI`.
+421 set the background color as :term:`true color` value.
+431 set the background color by color name - no idea how this works
+441 set the transparency of the background fill, not supported by AutoCAD or BricsCAD.
+=== ===============================
+
+Group codes 45, 90 and 63 are required together if one of them is used.
+The group code 421 and 431 also requires the group code 63, even this value
+is ignored.
+
+.. code-block:: Text
+
+    ... <snip>
+    1 <str> eu feugiat nulla facilisis at vero eros et accumsan et iusto ...
+    73 <int> 1
+    44 <float> 1.0
+    90 <int> 1, b00000001   <<< use a color
+    63 <int> 1              <<< ACI color (red)
+    45 <float> 1.5          <<< bg scaling factor, relative to the char height
+    441 <int> 0             <<< ignored (optional)
+    ... <snip>
+
+.. image:: gfx/mtext_bg_color_red.png
+    :align: center
+    :width: 800px
+
+The background scaling does not alter the :attr:`width`, :attr:`column_width`
+or :attr:`total_width` attributes. The background acquires additional space
+around the MTEXT entity.
+
+Columns with background color:
+
+.. image:: gfx/mtext_cols_bg.png
+    :align: center
+    :width: 800px
 
 Column Support
 --------------
 
-CAD application build multiple columns by linking 2 or more MTEXT entities
+CAD applications build multiple columns by linking 2 or more MTEXT entities
 together. In this case each column is a self-sufficient entity in DXF version
 R13 until R2013. The additional columns specifications are stored in the XDATA
 if the MTEXT which represents the first column.
@@ -132,6 +182,10 @@ Example for a **static** column specification:
     - Height: 150.0, manual entered value and all columns have the same height
     - Width: 50.0
     - Gutter Width: 12.5
+
+.. image:: gfx/mtext_cols_static.png
+    :align: center
+    :width: 800px
 
 The column height is stored as the "defined column height" in XDATA (46) or the
 embedded object (41).
@@ -581,6 +635,10 @@ entities does contain XDATA for the defined column height.
 - Height: 164.802450331126, max. column height
 - Width: 50.0
 - Gutter Width: 12.5
+
+.. image:: gfx/mtext_cols_dynamic_manual.png
+    :align: center
+    :width: 800px
 
 .. code-block:: Text
 
