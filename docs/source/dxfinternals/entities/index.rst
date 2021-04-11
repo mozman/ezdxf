@@ -2,7 +2,7 @@ DXF Entities
 ============
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 3
 
     dimension_entity
     mleader
