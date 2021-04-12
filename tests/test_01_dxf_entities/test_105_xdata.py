@@ -1,17 +1,20 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-13
+
 import pytest
 import copy
-from ezdxf.lldxf.const import DXFValueError, DXFKeyError
+from ezdxf.lldxf.const import DXFValueError, DXFStructureError
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.tags import (
+    Tags, find_begin_and_end_of_encoded_xdata_tags, NotFoundException,
+)
 from ezdxf.entities.xdata import XData
 from ezdxf.lldxf.repair import filter_invalid_xdata_group_codes
 
 
 class TagWriter:
     """ Mockup """
+
     def __init__(self):
         self.tags = []
 
@@ -145,7 +148,7 @@ def test_set_xdata_list(xdata):
         (1002, '}'),
     ]
     data = xdata.get('ACAD')
-    assert len(data) == 10+3
+    assert len(data) == 10 + 3
 
 
 def test_discard_xdata_list(xdata):
@@ -170,7 +173,8 @@ def test_replace_xdata_list(xdata):
         (1000, 'String'),
         (1002, '}'),
     ]
-    xdata.set_xlist('ACAD', 'DSTYLE', [(1070, 2), (1000, 'mozman'), (1000, 'data')])
+    xdata.set_xlist('ACAD', 'DSTYLE',
+                    [(1070, 2), (1000, 'mozman'), (1000, 'data')])
     xdata_list = xdata.get_xlist('ACAD', 'DSTYLE')
     assert len(xdata_list) == 6
     assert xdata_list == [
@@ -332,6 +336,45 @@ AVE_ENTITY_MATERIAL
 1002
 }
 """
+
+COLUMNS_SPEC = """1001
+ACAD
+1000
+ACAD_MTEXT_COLUMN_INFO_BEGIN
+1000
+ACAD_MTEXT_COLUMN_INFO_END
+"""
+
+WITHOUT_END_TAG = """1000
+ACAD_MTEXT_COLUMN_INFO_BEGIN
+"""
+
+WITHOUT_BEGIN_TAG = """1000
+ACAD_MTEXT_COLUMN_INFO_END
+"""
+
+
+class TestEncodedXDATATags:
+    def test_find_begin_and_end_of_column_info(self):
+        start, end = find_begin_and_end_of_encoded_xdata_tags(
+            "ACAD_MTEXT_COLUMN_INFO", Tags.from_text(COLUMNS_SPEC))
+        assert start, end == (1, 3)
+
+    def test_raise_exception_if_not_found(self):
+        with pytest.raises(NotFoundException):
+            find_begin_and_end_of_encoded_xdata_tags(
+                "MOZMAN", Tags.from_text(COLUMNS_SPEC))
+
+    def test_raise_exception_without_end_tag(self):
+        with pytest.raises(DXFStructureError):
+            find_begin_and_end_of_encoded_xdata_tags(
+                "ACAD_MTEXT_COLUMN_INFO", Tags.from_text(WITHOUT_END_TAG))
+
+    def test_raise_exception_without_begin_tag(self):
+        with pytest.raises(DXFStructureError):
+            find_begin_and_end_of_encoded_xdata_tags(
+                "ACAD_MTEXT_COLUMN_INFO", Tags.from_text(WITHOUT_BEGIN_TAG))
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

@@ -380,3 +380,35 @@ def get_start_and_end_of_named_list_in_xdata(
         raise DXFStructureError(
             'Invalid XDATA structure: missing  (1002, "}").')
     return start, end + 1
+
+
+def find_begin_and_end_of_encoded_xdata_tags(
+        name: str, tags: List[Tuple]) -> Tuple[int, int]:
+    """ Find encoded XDATA tags, surrounded by group code 1000 tags
+    name_BEGIN and name_END (e.g. MTEXT column specification).
+    
+    Raises:
+        NotFoundError: tag group not found
+        DXFStructureError: missing begin- or end tag
+
+    """
+    begin_name = name + "_BEGIN"
+    end_name = name + "_END"
+    start = None
+    end = None
+    for index, (code, value) in enumerate(tags):
+        if code == 1000:
+            if value == begin_name:
+                start = index
+            elif value == end_name:
+                end = index + 1
+                break
+    if start is None:
+        if end is not None:  # end tag without begin tag!
+            raise DXFStructureError(
+                f'Invalid XDATA structure: missing begin tag (1000, {begin_name}).')
+        raise NotFoundException
+    if end is None:
+        raise DXFStructureError(
+            f'Invalid XDATA structure: missing end tag (1000, {end_name}).')
+    return start, end
