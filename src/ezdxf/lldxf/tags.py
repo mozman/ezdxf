@@ -386,7 +386,7 @@ def find_begin_and_end_of_encoded_xdata_tags(
         name: str, tags: List[Tuple]) -> Tuple[int, int]:
     """ Find encoded XDATA tags, surrounded by group code 1000 tags
     name_BEGIN and name_END (e.g. MTEXT column specification).
-    
+
     Raises:
         NotFoundError: tag group not found
         DXFStructureError: missing begin- or end tag
