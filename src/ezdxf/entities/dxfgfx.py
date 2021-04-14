@@ -245,12 +245,6 @@ class DXFGraphic(DXFEntity):
         else:
             self.dxf.discard('paperspace')
 
-    def linked_entities(self) -> Iterable['DXFEntity']:
-        """ Yield linked entities: VERTEX or ATTRIB, different handling than
-        attached entities. (internal API)
-        """
-        return []
-
     def link_entity(self, entity: 'DXFEntity') -> None:
         """ Store linked or attached entities. Same API for both types of
         appended data, because entities with linked entities (POLYLINE, INSERT)
