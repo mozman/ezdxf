@@ -1,14 +1,19 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
+import enum
 import math
-from typing import TYPE_CHECKING, Union, Tuple, List, Iterable
+import logging
+import abc
+from typing import (
+    TYPE_CHECKING, Union, Tuple, List, Iterable, Optional, Callable, cast,
+)
 
 from ezdxf.lldxf import const, validator
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
     group_code_mapping,
 )
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2018
 from ezdxf.lldxf.tags import Tags
 from ezdxf.math import Vec3, Matrix44, OCS, NULLVEC, Z_AXIS, X_AXIS
 from ezdxf.math.transformtools import transform_extrusion
@@ -22,10 +27,12 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, DXFEntity, Vertex, Auditor, DXFTag,
+        TagWriter, DXFNamespace, DXFEntity, Vertex, Auditor, DXFTag, Drawing,
     )
 
 __all__ = ['MText']
+
+logger = logging.getLogger('ezdxf')
 
 BG_FILL_MASK = 1 + 2 + 16
 
@@ -159,9 +166,75 @@ acdb_mtext = DefSubclass('AcDbMText', {
 })
 acdb_mtext_group_codes = group_code_mapping(acdb_mtext)
 
+
 # -----------------------------------------------------------------------
 # For more information go to docs/source/dxfinternals/entities/mtext.rst
 # -----------------------------------------------------------------------
+
+# MTEXT column support:
+# MTEXT columns have the same appearance and handling for all DXF versions
+# as a single MTEXT entity like in DXF R2018.
+
+# TODO: Drawing.load_mtext_columns()?
+#  Many structures are not available at the loading stage, a second run after
+#  the document is fully loaded is maybe the safer way.
+
+class ColumnType(enum.IntEnum):
+    NO_COLUMN = 0
+    STATIC_COLUMNS = 1
+    DYNAMIC_COLUMNS = 2
+
+
+class MTextColumns:
+    def __init__(self):
+        self.count: int = 0
+        self.column_type: ColumnType = ColumnType.NO_COLUMN
+        self.auto_height: bool = False
+        self.reversed_column_flow: bool = False
+        self.defined_height: float = 0.0
+        self.width: float = 0.0
+        self.gutter_width: float = 0.0
+        # Storage for handles of linked MTEXT entities at loading stage:
+        self.linked_handles: Optional[List[str]] = None
+        # Storage for linked MTEXT entities for DXF versions < R2018:
+        self.linked_columns: List['MText'] = []
+        # R2018+: heights of all columns
+        self.heights: List[float] = []
+
+    def copy(self) -> 'MTextColumns':
+        columns = MTextColumns()
+        columns.count = self.count
+        columns.column_type = self.column_type
+        columns.auto_height = self.auto_height
+        columns.reversed_column_flow = self.reversed_column_flow
+        columns.defined_height = self.defined_height
+        columns.width = self.width
+        columns.gutter_width = self.gutter_width
+        # DXF R2018+: linked_columns is an empty list!
+        columns.linked_columns = [mtext.copy() for mtext in self.linked_columns]
+        columns.heights = list(self.heights)
+        return columns
+
+    def link_columns(self, doc: 'Drawing'):
+        # DXF R2018+ has no linked MTEXT entities.
+        if doc.dxfversion < DXF2018 or not self.linked_handles:
+            return
+        db = doc.entitydb
+        assert db is not None, "entity database not initialized"
+        linked_columns = []
+        for handle in self.linked_handles:
+            mtext = cast('MText', db.get(handle))
+            if mtext:
+                linked_columns.append(mtext)
+            else:
+                logger.debug(f"Linked MTEXT column #{handle} does not exist.")
+        self.linked_handles = None
+        self.linked_columns = linked_columns
+
+    def transform(self, m: Matrix44):
+        for mtext in self.linked_columns:
+            mtext.transform(m)
+
 
 @register_entity
 class MText(DXFGraphic):
@@ -186,13 +259,18 @@ class MText(DXFGraphic):
     NBSP = r'\~'  # non breaking space
 
     def __init__(self):
-        """ Default constructor """
         super().__init__()
         self.text: str = ""
+        # Linked MText columns do not have a MTextColumns() object!
+        self.columns: Optional[MTextColumns] = None
 
-    def _copy_data(self, entity: 'DXFEntity') -> None:
-        """ Copy entity data: text """
+    def _copy_data(self, entity: 'MText') -> None:
         entity.text = self.text
+        if self.columns:
+            # TODO: Acquire handles for the linked columns if adding the main
+            #  column to the entity database.
+            # copies also the linked MTEXT column entities!
+            entity.columns = self.columns.copy()
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -202,6 +280,22 @@ class MText(DXFGraphic):
             processor.fast_load_dxfattribs(
                 dxf, acdb_mtext_group_codes, subclass=tags, recover=True)
         return dxf
+
+    def post_load_hook(self, doc: 'Drawing') -> Optional[Callable]:
+        def unlink_mtext_columns():
+            """ Unlinked MTEXT entities from layout entity space. """
+            layout = self.get_layout()
+            for mtext in self.columns.linked_columns:
+                layout.unlink_entity(mtext)
+
+        super().post_load_hook(doc)
+        if self.columns:
+            self.columns.link_columns(doc)
+            return unlink_mtext_columns
+        return None
+
+    # TODO: set owner tag of linked MTEXT entities to the owner tag of the
+    #  main MTEXT entity, export linked MTEXT entities!
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
@@ -402,13 +496,15 @@ class MText(DXFGraphic):
         dxf.insert = m.transform(dxf.insert)
         dxf.text_direction = new_text_direction
         dxf.extrusion = new_extrusion
+        if self.columns:
+            self.columns.transform(m)
         return self
 
     def plain_text(self, split=False) -> Union[List[str], str]:
         """ Returns text content without formatting codes.
 
         Args:
-            split: returns list of strings splitted at line breaks if ``True``
+            split: returns list of strings split at line breaks if ``True``
                 else returns a single string.
 
         """

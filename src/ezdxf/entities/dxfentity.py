@@ -240,7 +240,7 @@ class DXFEntity:
         Triggered in method: :meth:`Drawing._2nd_loading_stage`
 
         Examples for two stage loading:
-        Image, Underlay, DXFGroup, Dictionary, Dimstyle
+        Image, Underlay, DXFGroup, Dictionary, Dimstyle, MText
 
         """
         if self.extension_dict is not None:
