@@ -88,7 +88,7 @@ def test_g1_continuity_for_degenerated_bezier_curves():
 @pytest.mark.parametrize('curve', [D1, D2])
 def test_flatten_degenerated_bezier_curves(curve):
     # Degenerated Bezier curves behave like regular curves!
-    assert len(curve.flattening(0.1)) > 4
+    assert len(list(curve.flattening(0.1))) > 4
 
 
 @pytest.mark.parametrize("b1,b2", [
