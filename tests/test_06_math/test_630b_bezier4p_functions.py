@@ -75,6 +75,22 @@ def test_g1_continuity_for_bezier_curves():
         "end- and start point should match"
 
 
+D1 = Bezier4P([(0, 0), (1, 1), (3, 0), (3, 0)])
+D2 = Bezier4P([(3, 0), (3, 0), (5, -1), (6, 0)])
+
+
+def test_g1_continuity_for_degenerated_bezier_curves():
+    assert have_bezier_curves_g1_continuity(D1, B2) is False
+    assert have_bezier_curves_g1_continuity(B1, D2) is False
+    assert have_bezier_curves_g1_continuity(D1, D2) is False
+
+
+@pytest.mark.parametrize('curve', [D1, D2])
+def test_flatten_degenerated_bezier_curves(curve):
+    # Degenerated Bezier curves behave like regular curves!
+    assert len(curve.flattening(0.1)) > 4
+
+
 @pytest.mark.parametrize("b1,b2", [
     (B1, B2),  # G1 continuity, the common case
     (B1, B3),  # without G1 continuity is also a regular B-spline

@@ -5,7 +5,7 @@ News
 Version 0.16.2 - dev
 --------------------
 
-- BUGFIX: ...
+- BUGFIX: check for degenerated Bézier curves in `have_bezier_curves_g1_continuity()`
 
 Version 0.16.1 - 2021-04-10
 ---------------------------
