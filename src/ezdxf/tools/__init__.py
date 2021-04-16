@@ -2,7 +2,7 @@
 # Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
 from typing import Tuple, Any, Iterable
-from uuid import uuid1
+from uuid import uuid4
 import functools
 import html
 from .juliandate import juliandate, calendardate
@@ -56,8 +56,8 @@ def set_flag_state(flags: int, flag: int, state: bool = True) -> int:
 
 
 def guid() -> str:
-    """ Returns a general unique ID, based on :func:`uuid.uuid1`. """
-    return str(uuid1()).upper()
+    """ Returns a general unique ID, based on :func:`uuid.uuid4`. """
+    return str(uuid4()).upper()
 
 
 def take2(iterable: Iterable) -> Tuple[Any, Any]:
