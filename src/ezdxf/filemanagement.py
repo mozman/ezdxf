@@ -9,6 +9,7 @@ from ezdxf.document import Drawing
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFInfo
+    from pathlib import Path
 
 
 def new(dxfversion: str = DXF2013,
@@ -93,7 +94,7 @@ def read(stream: TextIO) -> 'Drawing':
     return Drawing.read(stream)
 
 
-def readfile(filename: str, encoding: str = None,
+def readfile(filename: Union[str, 'Path'], encoding: str = None,
              errors: str = 'surrogateescape') -> 'Drawing':
     """  Read the DXF document `filename` from the file-system.
 

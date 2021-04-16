@@ -49,6 +49,7 @@ if TYPE_CHECKING:
         DXFTag, Table, ViewportTable, VPort, Dictionary, Layout,
         DXFEntity, Layer, Auditor, GenericLayoutType,
     )
+    from pathlib import Path
 
 
 def _validate_handle_seed(seed: str) -> str:
@@ -421,7 +422,7 @@ class Drawing:
         if '*Paper_Space' not in self.block_records:
             self.block_records.new('*Paper_Space')
 
-    def saveas(self, filename: str, encoding: str = None,
+    def saveas(self, filename: Union[str, 'Path'], encoding: str = None,
                fmt: str = 'asc') -> None:
         """ Set :class:`Drawing` attribute :attr:`filename` to `filename` and
         write drawing to the file system. Override file encoding by argument
@@ -435,7 +436,7 @@ class Drawing:
             fmt: ``'asc'`` for ASCII DXF (default) or ``'bin'`` for Binary DXF
 
         """
-        self.filename = filename
+        self.filename = str(filename)
         self.save(encoding=encoding, fmt=fmt)
 
     def save(self, encoding: str = None, fmt: str = 'asc') -> None:
