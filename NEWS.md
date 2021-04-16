@@ -5,6 +5,8 @@ News
 Version 0.16.2 - dev
 --------------------
 
+- CHANGED: `ezdxf.path.add_bezier4p()`, add linear Bézier curve segments as LINE_TO commands
+- CHANGED: `ezdxf.path.add_bezier3p()`, add linear Bézier curve segments as LINE_TO commands
 - BUGFIX: check for degenerated Bézier curves in `have_bezier_curves_g1_continuity()`
 
 Version 0.16.1 - 2021-04-10
