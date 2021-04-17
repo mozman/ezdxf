@@ -56,8 +56,13 @@ def set_flag_state(flags: int, flag: int, state: bool = True) -> int:
 
 
 def guid() -> str:
-    """ Returns a general unique ID, based on :func:`uuid.uuid4`. """
-    return str(uuid4()).upper()
+    """ Returns a general unique ID, based on :func:`uuid.uuid4`.
+
+    Used to create header variables $VERSIONGUID and $FINGERPRINTGUID, should
+    match the AutoCAD Pattern "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}"
+
+    """
+    return "{" + str(uuid4()).upper() + "}"
 
 
 def take2(iterable: Iterable) -> Tuple[Any, Any]:

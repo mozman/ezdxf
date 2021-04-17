@@ -51,6 +51,7 @@ if TYPE_CHECKING:
     )
     from pathlib import Path
 
+FIXED_GUID = '{00000000-0000-0000-0000-000000000000}'
 
 def _validate_handle_seed(seed: str) -> str:
     from ezdxf.tools.handle import START_HANDLE
@@ -590,9 +591,8 @@ class Drawing:
             self.header['$TDUCREATE'] = fixed_date
             self.header['$TDUPDATE'] = fixed_date
             self.header['$TDUUPDATE'] = fixed_date
-            self.header['$VERSIONGUID'] = '00000000-0000-0000-0000-000000000000'
-            self.header[
-                '$FINGERPRINTGUID'] = '00000000-0000-0000-0000-000000000000'
+            self.header['$VERSIONGUID'] = FIXED_GUID
+            self.header['$FINGERPRINTGUID'] = FIXED_GUID
         else:
             now = datetime.now()
             self.header['$TDUPDATE'] = juliandate(now)
