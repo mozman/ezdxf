@@ -49,7 +49,9 @@ if TYPE_CHECKING:
         DXFTag, Table, ViewportTable, VPort, Dictionary, Layout,
         DXFEntity, Layer, Auditor, GenericLayoutType,
     )
+    from pathlib import Path
 
+FIXED_GUID = '{00000000-0000-0000-0000-000000000000}'
 
 def _validate_handle_seed(seed: str) -> str:
     from ezdxf.tools.handle import START_HANDLE
@@ -421,7 +423,7 @@ class Drawing:
         if '*Paper_Space' not in self.block_records:
             self.block_records.new('*Paper_Space')
 
-    def saveas(self, filename: str, encoding: str = None,
+    def saveas(self, filename: Union[str, 'Path'], encoding: str = None,
                fmt: str = 'asc') -> None:
         """ Set :class:`Drawing` attribute :attr:`filename` to `filename` and
         write drawing to the file system. Override file encoding by argument
@@ -435,7 +437,7 @@ class Drawing:
             fmt: ``'asc'`` for ASCII DXF (default) or ``'bin'`` for Binary DXF
 
         """
-        self.filename = filename
+        self.filename = str(filename)
         self.save(encoding=encoding, fmt=fmt)
 
     def save(self, encoding: str = None, fmt: str = 'asc') -> None:
@@ -589,9 +591,8 @@ class Drawing:
             self.header['$TDUCREATE'] = fixed_date
             self.header['$TDUPDATE'] = fixed_date
             self.header['$TDUUPDATE'] = fixed_date
-            self.header['$VERSIONGUID'] = '00000000-0000-0000-0000-000000000000'
-            self.header[
-                '$FINGERPRINTGUID'] = '00000000-0000-0000-0000-000000000000'
+            self.header['$VERSIONGUID'] = FIXED_GUID
+            self.header['$FINGERPRINTGUID'] = FIXED_GUID
         else:
             now = datetime.now()
             self.header['$TDUPDATE'] = juliandate(now)

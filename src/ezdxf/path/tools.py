@@ -469,6 +469,10 @@ def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
     the path end point to the start point of the first curve will be added
     automatically.
 
+    .. versionchanged:: 0.16.2
+
+        add linear Bézier curve segments as LINE_TO commands
+
     """
     curves = list(curves)
     if not len(curves):
@@ -482,7 +486,13 @@ def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
         start, ctrl1, ctrl2, end = curve.control_points
         if not start.isclose(path.end, abs_tol=1e-9):
             path.line_to(start)
-        path.curve4_to(end, ctrl1, ctrl2)
+
+        # add linear bezier segments as LINE_TO commands
+        if start.isclose(ctrl1, abs_tol=1e-9) and \
+                end.isclose(ctrl2, abs_tol=1e-9):
+            path.line_to(end)
+        else:
+            path.curve4_to(end, ctrl1, ctrl2)
 
 
 def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
@@ -492,6 +502,10 @@ def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
     nor the end point of the curves is close to the path end point, a line from
     the path end point to the start point of the first curve will be added
     automatically.
+
+    .. versionchanged:: 0.16.2
+
+        add linear Bézier curve segments as LINE_TO commands
 
     """
     curves = list(curves)
@@ -506,10 +520,15 @@ def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
         start, ctrl, end = curve.control_points
         if not start.isclose(path.end, abs_tol=1e-9):
             path.line_to(start)
-        path.curve3_to(end, ctrl)
+
+        # add linear bezier segments as LINE_TO commands
+        if start.isclose(ctrl, abs_tol=1e-9) or end.isclose(ctrl, abs_tol=1e-9):
+            path.line_to(end)
+        else:
+            path.curve3_to(end, ctrl)
 
 
-def add_2d_polyline(path, points: Iterable[Sequence[float]], close: bool,
+def add_2d_polyline(path: Path, points: Iterable[Sequence[float]], close: bool,
                     ocs: OCS, elevation: float) -> None:
     """ Internal API to add 2D polylines which may include bulges to an
     **empty** path.
@@ -565,7 +584,7 @@ def add_2d_polyline(path, points: Iterable[Sequence[float]], close: bool,
         path.to_wcs(ocs, elevation)
 
 
-def add_spline(path, spline: BSpline, level=4, reset=True) -> None:
+def add_spline(path: Path, spline: BSpline, level=4, reset=True) -> None:
     """ Add a B-spline as multiple cubic Bèzier-curves.
 
     Non-rational B-splines of 3rd degree gets a perfect conversion to

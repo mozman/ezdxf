@@ -68,12 +68,22 @@ def have_bezier_curves_g1_continuity(b1: AnyBezier, b2: AnyBezier,
     .. versionadded: 0.16
 
     """
-    b1_pnts = list(b1.control_points)
-    b2_pnts = list(b2.control_points)
+    b1_pnts = tuple(b1.control_points)
+    b2_pnts = tuple(b2.control_points)
+
     if not b1_pnts[-1].isclose(b2_pnts[0]):
-        return False
-    te = (b1_pnts[-1] - b1_pnts[-2]).normalize()
-    ts = (b2_pnts[1] - b2_pnts[0]).normalize()
+        return False  # start- and end point are not close enough
+
+    try:
+        te = (b1_pnts[-1] - b1_pnts[-2]).normalize()
+    except ZeroDivisionError:
+        return False  # tangent calculation not possible
+
+    try:
+        ts = (b2_pnts[1] - b2_pnts[0]).normalize()
+    except ZeroDivisionError:
+        return False  # tangent calculation not possible
+
     # 0 = normal; 1 = same direction; -1 = opposite direction
     return math.isclose(te.dot(ts), 1.0, abs_tol=g1_tol)
 
