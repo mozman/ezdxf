@@ -58,8 +58,9 @@ def set_flag_state(flags: int, flag: int, state: bool = True) -> int:
 def guid() -> str:
     """ Returns a general unique ID, based on :func:`uuid.uuid4`.
 
-    Used to create header variables $VERSIONGUID and $FINGERPRINTGUID, should
-    match the AutoCAD Pattern "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}"
+    This function creates a GUID for the header variables $VERSIONGUID and
+    $FINGERPRINTGUID, which matches the AutoCAD pattern
+    ``{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}``.
 
     """
     return "{" + str(uuid4()).upper() + "}"
