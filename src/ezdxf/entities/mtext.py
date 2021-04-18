@@ -490,11 +490,17 @@ class MText(DXFGraphic):
         def unlink_mtext_columns():
             """ Unlinked MTEXT entities from layout entity space. """
             layout = self.get_layout()
-            for mtext in self.columns.linked_columns:
-                layout.unlink_entity(mtext)
+            if layout is not None:
+                for mtext in self.columns.linked_columns:
+                    layout.unlink_entity(mtext)
+            else:
+                for mtext in self.columns.linked_columns:
+                    mtext.dxf.owner = None
 
         super().post_load_hook(doc)
         if self.columns:
+            # Link columns, one MTEXT entity for each column, to the main MTEXT
+            # entity (DXF version <R2018).
             self.columns.link_columns(doc)
             return unlink_mtext_columns
         return None
