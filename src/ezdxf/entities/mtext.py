@@ -13,7 +13,11 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2018
-from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.tags import (
+    Tags, find_begin_and_end_of_encoded_xdata_tags, NotFoundException,
+)
+
 from ezdxf.math import Vec3, Matrix44, OCS, NULLVEC, Z_AXIS, X_AXIS
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.colors import rgb2int
@@ -27,10 +31,10 @@ from .xdata import XData
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, DXFEntity, Vertex, Auditor, DXFTag, Drawing,
+        TagWriter, DXFNamespace, DXFEntity, Vertex, Auditor, Drawing,
     )
 
-__all__ = ['MText']
+__all__ = ['MText', 'MTextColumns', 'ColumnType']
 
 logger = logging.getLogger('ezdxf')
 
@@ -256,8 +260,7 @@ class MTextColumns:
 
 
 def load_columns_from_embedded_object(
-        dxf: 'DXFNamespace',
-        embedded_obj: Tags) -> Optional[MTextColumns]:
+        dxf: 'DXFNamespace', embedded_obj: Tags) -> MTextColumns:
     columns = MTextColumns()
     insert = dxf.get('insert')  # mandatory attribute, but what if ...
     text_direction = dxf.get('text_direction')  # optional attribute
@@ -308,18 +311,129 @@ def load_columns_from_embedded_object(
             g = columns.gutter_width
             wg = abs(columns.width + g)
             if wg > 1e-6:
-                columns.count = int(round(columns.total_width + g / wg))
+                columns.count = int(round((columns.total_width + g) / wg))
     return columns
+
+
+def load_mtext_column_info(tags: Tags) -> Optional[MTextColumns]:
+    try:  # has column info?
+        start, end = find_begin_and_end_of_encoded_xdata_tags(
+            "ACAD_MTEXT_COLUMN_INFO", tags)
+    except NotFoundException:
+        return None
+    columns = MTextColumns()
+    height_count = 0
+    group_code = None
+    for code, value in tags[start+1: end]:
+        if height_count:
+            if code == 1040:
+                columns.heights.append(value)
+                height_count -= 1
+                continue
+            else:  # error
+                logger.error("missing column heights in MTEXT entity")
+                height_count = 0
+
+        if group_code is None:
+            group_code = value
+            continue
+
+        if group_code == 75:
+            columns.column_type = ColumnType(value)
+        elif group_code == 79:
+            columns.auto_height = bool(value)
+        elif group_code == 76:
+            columns.count = int(value)
+        elif group_code == 78:
+            columns.reversed_column_flow = bool(value)
+        elif group_code == 48:
+            columns.width = value
+        elif group_code == 49:
+            columns.gutter_width = value
+        elif group_code == 50:
+            height_count = int(value)
+        group_code = None
+    return columns
+
+
+def load_mtext_linked_column_handles(tags: Tags) -> List[str]:
+    handles = []
+    try:
+        start, end = find_begin_and_end_of_encoded_xdata_tags(
+            "ACAD_MTEXT_COLUMNS", tags)
+    except NotFoundException:
+        return handles
+    for code, value in tags[start:end]:
+        if code == 1005:
+            handles.append(value)
+    return handles
+
+
+def load_mtext_defined_height(tags: Tags) -> float:
+    # The defined height stored in the linked MTEXT entities, is not required:
+    #
+    # If all columns have the same height (static & dynamic auto height), the
+    # "defined_height" is stored in the main MTEXT, but the linked MTEXT entities
+    # also have a "ACAD_MTEXT_DEFINED_HEIGHT" group in the ACAD section of XDATA.
+    #
+    # If the columns have different heights (dynamic manual height), these
+    # height values are only stored in the main MTEXT. The linked MTEXT
+    # entities do not have an ACAD section at all.
+
+    height = 0.0
+    try:
+        start, end = find_begin_and_end_of_encoded_xdata_tags(
+            "ACAD_MTEXT_DEFINED_HEIGHT", tags)
+    except NotFoundException:
+        return height
+
+    for code, value in tags[start:end]:
+        if code == 1040:
+            height = value
+    return height
 
 
 def load_columns_from_xdata(dxf: 'DXFNamespace',
                             xdata: XData) -> Optional[MTextColumns]:
-    remove_columns_from_xdata(xdata)
-    return None
+    # The ACAD section in XDATA of the main MTEXT entity stores all column
+    # related information:
+    acad = xdata.get('ACAD')
+    if acad is None:
+        return None
 
+    handle = dxf.get('handle')
+    try:
+        columns = load_mtext_column_info(acad)
+    except const.DXFStructureError:
+        logger.error(f"Invalid ACAD_MTEXT_COLUMN_INFO in MTEXT(#{handle})")
+        return None
 
-def remove_columns_from_xdata(xdata: XData) -> None:
-    pass
+    if columns is None:  # no columns defined
+        return None
+
+    try:
+        columns.linked_handles = load_mtext_linked_column_handles(acad)
+    except const.DXFStructureError:
+        logger.error(f"Invalid ACAD_MTEXT_COLUMNS in MTEXT(#{handle})")
+
+    count = columns.count
+    columns.total_width = count * columns.width
+    if count > 0:
+        columns.total_width += (count - 1) * columns.gutter_width
+
+    if columns.heights:  # dynamic columns, manual heights
+        # This is correct even if the last column is the tallest, which height
+        # is not known. The height of last column is always stored as 0.
+        columns.total_height = max(columns.heights)
+    else: # all columns have the same "defined" height
+        try:
+            columns.defined_height = load_mtext_defined_height(acad)
+        except const.DXFStructureError:
+            logger.error(
+                f"Invalid ACAD_MTEXT_DEFINED_HEIGHT in MTEXT(#{handle})")
+        columns.total_height = columns.defined_height
+
+    return columns
 
 
 @register_entity
