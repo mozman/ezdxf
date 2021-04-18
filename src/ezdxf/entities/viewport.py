@@ -458,3 +458,15 @@ class Viewport(DXFGraphic):
             handle = self.dxf.clipping_boundary_handle
             return handle != '0'
         return False
+    
+    def clip_viewport(self,path_entity):
+        '''Clips viewport for given path entity.
+           path_entity: LWPOLYLINE (2D POLYLINE), CIRCLE, ELLIPSE, closed SPLINE.
+        '''
+        if ((path_entity.dxftype()=='LWPOLYLINE' or path_entity.dxftype()=='SPLINE') and path_entity.closed)==False:
+           print('Error while clipping boundary.',path_entity.dxftype(),'is not closed.')
+           return
+        _doc=self.doc
+        self.set_flag_state(885312,state=True,name="flags")
+        path_entity.set_reactors([self.dxf.handle])
+        self.dxf.set('clipping_boundary_handle',path_entity.dxf.handle)
