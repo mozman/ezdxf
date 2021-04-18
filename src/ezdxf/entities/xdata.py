@@ -163,8 +163,8 @@ class XData:
         self.add(appid, data)
 
 
-class EmbeddedObjects:
-    """ Introduced with DXF R2018 - replaces XDATA in MTEXT entity. """
+class EmbeddedObjects:  # TODO: remove
+    """ Introduced in DXF R2018. """
 
     def __init__(self, embedded_objects: List[Tags]):
         self.embedded_objects = embedded_objects

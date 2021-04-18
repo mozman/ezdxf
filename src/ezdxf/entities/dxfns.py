@@ -1,10 +1,10 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import Any, Optional, Union, Iterable, List, TYPE_CHECKING, Dict
 import logging
 from ezdxf import options
 from ezdxf.lldxf import const
-from ezdxf.lldxf.attributes import XType, DXFAttributes, DefSubclass, DXFAttr
+from ezdxf.lldxf.attributes import XType, DXFAttributes, DXFAttr
 from ezdxf.lldxf.types import cast_value, dxftag
 from ezdxf.lldxf.tags import Tags
 
@@ -347,19 +347,21 @@ class SubclassProcessor:
         if len(tags.subclasses) == 0:
             raise ValueError('Invalid tags.')
         self.subclasses: List[Tags] = list(tags.subclasses)  # copy subclasses
-        self.dxfversion = dxfversion
+        self.embedded_objects: List[Tags] = tags.embedded_objects or []
+        self.dxfversion: Optional[str] = dxfversion
         # DXF R12 and prior have no subclass marker system, all tags of an
         # entity in one flat list.
         # Later DXF versions have at least 2 subclasses base_class and
         # AcDbEntity.
         # Exception: CLASS has also only one subclass and no subclass marker,
         # handled as DXF R12 entity
-        self.r12 = (dxfversion == const.DXF12) or (len(self.subclasses) == 1)
-        self.name = tags.dxftype()
+        self.r12: bool = (dxfversion == const.DXF12) or \
+                         (len(self.subclasses) == 1)
+        self.name: str = tags.dxftype()
         try:
-            self.handle = tags.get_handle()
+            self.handle: str = tags.get_handle()
         except const.DXFValueError:
-            self.handle = '<?>'
+            self.handle: str = '<?>'
 
     @property
     def base_class(self):

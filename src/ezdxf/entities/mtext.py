@@ -3,7 +3,6 @@
 import enum
 import math
 import logging
-import abc
 from typing import (
     TYPE_CHECKING, Union, Tuple, List, Iterable, Optional, Callable, cast,
 )
@@ -24,6 +23,7 @@ from ezdxf.tools.text import (
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
+from .xdata import XData
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -186,19 +186,36 @@ class ColumnType(enum.IntEnum):
 
 
 class MTextColumns:
+    """The column count is not stored explicit in the columns definition for
+    DXF versions R2018+.
+
+    If column_type is DYNAMIC_COLUMNS and auto_height is True the column
+    count is defined by the content. The exact calculation of the column count
+    requires an accurate rendering of the MTEXT content like AutoCAD does!
+
+    If the column count is not defined, ezdxf tries to calculate the column
+    count from total_width, width and gutter_width, if these attributes are set
+    properly.
+
+    """
+
     def __init__(self):
-        self.count: int = 0
         self.column_type: ColumnType = ColumnType.NO_COLUMN
+        # The embedded object in R2018 does not store the column count for
+        # column type "dynamic" and auto height is 1!
+        self.count: int = 0
         self.auto_height: bool = False
         self.reversed_column_flow: bool = False
         self.defined_height: float = 0.0
         self.width: float = 0.0
         self.gutter_width: float = 0.0
+        self.total_width: float = 0.0
+        self.total_height: float = 0.0
         # Storage for handles of linked MTEXT entities at loading stage:
         self.linked_handles: Optional[List[str]] = None
         # Storage for linked MTEXT entities for DXF versions < R2018:
         self.linked_columns: List['MText'] = []
-        # R2018+: heights of all columns
+        # R2018+: heights of all columns if auto_height is False
         self.heights: List[float] = []
 
     def copy(self) -> 'MTextColumns':
@@ -210,6 +227,8 @@ class MTextColumns:
         columns.defined_height = self.defined_height
         columns.width = self.width
         columns.gutter_width = self.gutter_width
+        columns.total_width = self.total_width
+        columns.total_height = self.total_height
         # DXF R2018+: linked_columns is an empty list!
         columns.linked_columns = [mtext.copy() for mtext in self.linked_columns]
         columns.heights = list(self.heights)
@@ -234,6 +253,73 @@ class MTextColumns:
     def transform(self, m: Matrix44):
         for mtext in self.linked_columns:
             mtext.transform(m)
+
+
+def load_columns_from_embedded_object(
+        dxf: 'DXFNamespace',
+        embedded_obj: Tags) -> Optional[MTextColumns]:
+    columns = MTextColumns()
+    insert = dxf.get('insert')  # mandatory attribute, but what if ...
+    text_direction = dxf.get('text_direction')  # optional attribute
+    reference_column_width = dxf.get('width')  # optional attribute
+    for code, value in embedded_obj:
+        # Update duplicated attributes if MTEXT attributes are not set:
+        if code == 10 and text_direction is None:
+            dxf.text_direction = Vec3(value)
+            # rotation is not needed anymore:
+            dxf.discard('rotation')
+        elif code == 11 and insert is None:
+            dxf.insert = Vec3(value)
+        elif code == 40 and reference_column_width is None:
+            dxf.width = value
+        elif code == 41:
+            # Column height if auto height is True.
+            columns.defined_height = value
+        elif code == 42:
+            columns.total_width = value
+        elif code == 43:
+            columns.total_height = value
+        elif code == 44:
+            # All columns have the same width.
+            columns.width = value
+        elif code == 45:
+            # All columns have the same gutter width = space between columns.
+            columns.gutter_width = value
+        elif code == 71:
+            columns.column_type = ColumnType(value)
+        elif code == 72:  # column height count
+            # The column height count can be 0 in some cases (dynamic & auto
+            # height) in DXF version R2018+.
+            columns.count = value
+        elif code == 73:
+            columns.auto_height = bool(value)
+        elif code == 74:
+            columns.reversed_column_flow = bool(value)
+        elif code == 46:  # column heights
+            # The last column height is 0; takes the rest?
+            columns.heights.append(value)
+
+    # The column count is not defined explicit:
+    if columns.count == 0:
+        if columns.heights:  # very unlikely
+            columns.count = len(columns.heights)
+        elif columns.total_width > 0:
+            # calculate column count from total_width
+            g = columns.gutter_width
+            wg = abs(columns.width + g)
+            if wg > 1e-6:
+                columns.count = int(round(columns.total_width + g / wg))
+    return columns
+
+
+def load_columns_from_xdata(dxf: 'DXFNamespace',
+                            xdata: XData) -> Optional[MTextColumns]:
+    remove_columns_from_xdata(xdata)
+    return None
+
+
+def remove_columns_from_xdata(xdata: XData) -> None:
+    pass
 
 
 @register_entity
@@ -279,6 +365,11 @@ class MText(DXFGraphic):
             tags = Tags(self.load_mtext(processor.subclass_by_index(2)))
             processor.fast_load_dxfattribs(
                 dxf, acdb_mtext_group_codes, subclass=tags, recover=True)
+            if processor.embedded_objects:
+                obj = processor.embedded_objects[0]
+                self.columns = load_columns_from_embedded_object(dxf, obj)
+            elif self.xdata:  # xdata is already set by parent class
+                self.columns = load_columns_from_xdata(dxf, self.xdata)
         return dxf
 
     def post_load_hook(self, doc: 'Drawing') -> Optional[Callable]:

@@ -51,6 +51,12 @@ rendered text content.
 The only way to calculate the MTEXT height is to replicate the rendering
 results of AutoCAD/BricsCAD by implementing a rendering engine for MTEXT.
 
+In column mode the MTEXT height is stored for every column for DXF version
+before R2018. In DXF R2018+ the column heights are only stored if
+:attr:`MTextColumns.auto_height` is ``False``. If :attr:`MTextColumns.auto_height`
+is ``True``. But DXF R2018+ stores the MTEXT total width and height
+in explicit attributes.
+
 Width Calculation
 -----------------
 
