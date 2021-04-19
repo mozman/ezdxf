@@ -304,5 +304,15 @@ def test_mtext_without_column_info():
     assert cols is None
 
 
+def make_mtext(txt: str):
+    mtext = MText()
+    xdata = get_xdata(txt)
+    mtext.columns = load_columns_from_xdata(mtext.dxf, xdata)
+
+
+def test_create_static_columns_xdata():
+    mtext = make_mtext(STATIC)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

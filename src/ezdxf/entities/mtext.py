@@ -238,6 +238,16 @@ class MTextColumns:
         columns.heights = list(self.heights)
         return columns
 
+    @property
+    def has_dynamic_auto_height(self) -> bool:
+        return self.column_type == ColumnType.DYNAMIC_COLUMNS and \
+               self.auto_height
+
+    @property
+    def has_dynamic_manual_height(self) -> bool:
+        return self.column_type == ColumnType.DYNAMIC_COLUMNS and \
+               not self.auto_height
+
     def link_columns(self, doc: 'Drawing'):
         # DXF R2018+ has no linked MTEXT entities.
         if doc.dxfversion < DXF2018 or not self.linked_handles:
@@ -257,6 +267,55 @@ class MTextColumns:
     def transform(self, m: Matrix44):
         for mtext in self.linked_columns:
             mtext.transform(m)
+
+    def acad_mtext_column_info_xdata(self) -> Tags:
+        tags = Tags([
+            DXFTag(1000, "ACAD_MTEXT_COLUMN_INFO_BEGIN"),
+            DXFTag(1070, 75), DXFTag(1070, int(self.column_type)),
+            DXFTag(1070, 79), DXFTag(1070, int(self.auto_height)),
+            DXFTag(1070, 76), DXFTag(1070, self.count),
+            DXFTag(1070, 78), DXFTag(1070, int(self.reversed_column_flow)),
+            DXFTag(1070, 48), DXFTag(1040, self.width),
+            DXFTag(1070, 49), DXFTag(1040, self.gutter_width),
+        ])
+        if self.has_dynamic_manual_height:
+            tags.extend([DXFTag(1070, 50), DXFTag(1070, len(self.heights))])
+            tags.extend(DXFTag(1040, height) for height in self.heights)
+        tags.append(DXFTag(1000, "ACAD_MTEXT_COLUMN_INFO_END"))
+        return tags
+
+    def acad_mtext_columns_xdata(self) -> Tags:
+        tags = Tags([
+            DXFTag(1000, "ACAD_MTEXT_COLUMNS_BEGIN"),
+            DXFTag(1070, 47), DXFTag(1070, self.count),  # incl. main MTEXT
+        ])
+        tags.extend(  # writes only (count - 1) handles!
+            DXFTag(1005, handle) for handle in self.mtext_handles())
+        tags.append(DXFTag(1000, "ACAD_MTEXT_COLUMNS_END"))
+        return tags
+
+    def mtext_handles(self) -> List[str]:
+        """ Returns a list of all linked MTEXT handles. """
+        if self.linked_handles:
+            return self.linked_handles
+        handles = []
+        for column in self.linked_columns:
+            if column.is_alive:
+                handle = column.dxf.handle
+                if handle is None:
+                    raise const.DXFStructureError(
+                        "Linked MTEXT column has no handle.")
+                handles.append(handle)
+            else:
+                raise const.DXFStructureError("Linked MTEXT column deleted!")
+        return handles
+
+    def acad_mtext_defined_height_xdata(self) -> Tags:
+        return Tags([
+            DXFTag(1000, "ACAD_MTEXT_DEFINED_HEIGHT_BEGIN"),
+            DXFTag(1070, 46), DXFTag(1040, self.defined_height),
+            DXFTag(1000, "ACAD_MTEXT_DEFINED_HEIGHT_END"),
+        ])
 
 
 def load_columns_from_embedded_object(
@@ -490,7 +549,7 @@ class MText(DXFGraphic):
         return dxf
 
     def post_load_hook(self, doc: 'Drawing') -> Optional[Callable]:
-        def unlink_mtext_columns():
+        def unlink_mtext_columns_from_layout():
             """ Unlinked MTEXT entities from layout entity space. """
             layout = self.get_layout()
             if layout is not None:
@@ -505,11 +564,14 @@ class MText(DXFGraphic):
             # Link columns, one MTEXT entity for each column, to the main MTEXT
             # entity (DXF version <R2018).
             self.columns.link_columns(doc)
-            return unlink_mtext_columns
+            return unlink_mtext_columns_from_layout
         return None
 
-    # TODO: set owner tag of linked MTEXT entities to the owner tag of the
-    #  main MTEXT entity, export linked MTEXT entities!
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        super().export_dxf(tagwriter)
+        # Linked MTEXT entities are not stored in the layout entity space!
+        if self.columns and tagwriter.dxfversion < const.DXF2018:
+            self.export_linked_entities(tagwriter)
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
@@ -565,8 +627,6 @@ class MText(DXFGraphic):
     def export_embedded_object(self, tagwriter: 'TagWriter'):
         dxf = self.dxf
         cols = self.columns
-        dynamic_auto_height = cols.column_type == ColumnType.DYNAMIC_COLUMNS and \
-                              cols.auto_height
 
         tagwriter.write_tag2(101, 'Embedded Object')
         tagwriter.write_tag2(70, 1)  # unknown meaning
@@ -578,7 +638,7 @@ class MText(DXFGraphic):
         tagwriter.write_tag2(43, cols.total_height)
         tagwriter.write_tag2(71, int(cols.column_type))
 
-        if dynamic_auto_height:
+        if cols.has_dynamic_auto_height:
             count = 0
         else:
             count = cols.count
@@ -591,8 +651,28 @@ class MText(DXFGraphic):
         for height in cols.heights:
             tagwriter.write_tag2(46, height)
 
+    def export_linked_entities(self, tagwriter: 'TagWriter'):
+        owner = self.dxf.owner
+        for mtext in self.columns.linked_columns:
+            if mtext.dxf.handle is None:
+                raise const.DXFStructureError(
+                    "Linked MTEXT column has no handle.")
+            # Linked MTEXT resides on the same layout as the main MTEXT:
+            mtext.dxf.owner = owner
+            mtext.export_entity(tagwriter)
+
     def set_column_xdata(self):
-        pass
+        if self.xdata is None:
+            self.xdata = XData()
+        cols = self.columns
+        acad = cols.acad_mtext_column_info_xdata()
+        acad.extend(cols.acad_mtext_columns_xdata())
+        if not cols.has_dynamic_manual_height:
+            acad.extend(cols.acad_mtext_defined_height_xdata())
+
+        xdata = self.xdata
+        xdata.discard('ACAD')  # replace existing column data
+        xdata.add('ACAD', acad)
 
     def get_rotation(self) -> float:
         """ Get text rotation in degrees, independent if it is defined by
