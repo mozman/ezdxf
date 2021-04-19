@@ -278,6 +278,8 @@ def load_columns_from_embedded_object(
         elif code == 41:
             # Column height if auto height is True.
             columns.defined_height = value
+            # Keep in sync with DXF attribute:
+            dxf.defined_height = value
         elif code == 42:
             columns.total_width = value
         elif code == 43:
@@ -324,7 +326,7 @@ def load_mtext_column_info(tags: Tags) -> Optional[MTextColumns]:
     columns = MTextColumns()
     height_count = 0
     group_code = None
-    for code, value in tags[start+1: end]:
+    for code, value in tags[start + 1: end]:
         if height_count:
             if code == 1040:
                 columns.heights.append(value)
@@ -425,7 +427,7 @@ def load_columns_from_xdata(dxf: 'DXFNamespace',
         # This is correct even if the last column is the tallest, which height
         # is not known. The height of last column is always stored as 0.
         columns.total_height = max(columns.heights)
-    else: # all columns have the same "defined" height
+    else:  # all columns have the same "defined" height
         try:
             columns.defined_height = load_mtext_defined_height(acad)
         except const.DXFStructureError:
@@ -484,6 +486,7 @@ class MText(DXFGraphic):
                 self.columns = load_columns_from_embedded_object(dxf, obj)
             elif self.xdata:  # xdata is already set by parent class
                 self.columns = load_columns_from_xdata(dxf, self.xdata)
+        self.embedded_objects = None  # todo: remove
         return dxf
 
     def post_load_hook(self, doc: 'Drawing') -> Optional[Callable]:
@@ -510,6 +513,9 @@ class MText(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
+        if self.columns:
+            pass  # update or check duplicated column attributes
+
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mtext.name)
         self.dxf.export_dxf_attribs(tagwriter, [
@@ -523,6 +529,16 @@ class MText(DXFGraphic):
             'box_fill_scale', 'bg_fill', 'bg_fill_color', 'bg_fill_true_color',
             'bg_fill_color_name', 'bg_fill_transparency',
         ])
+        if self.columns is None:
+            return
+
+        if self.columns.column_type == ColumnType.NO_COLUMN:
+            return
+
+        if tagwriter.dxfversion >= DXF2018:
+            self.export_embedded_object(tagwriter)
+        else:
+            self.set_column_xdata()
 
     def load_mtext(self, tags: Tags) -> Iterable['DXFTag']:
         tail = ""
@@ -545,6 +561,38 @@ class MText(DXFGraphic):
         while len(str_chunks) > 1:
             tagwriter.write_tag2(3, str_chunks.pop(0))
         tagwriter.write_tag2(1, str_chunks[0])
+
+    def export_embedded_object(self, tagwriter: 'TagWriter'):
+        dxf = self.dxf
+        cols = self.columns
+        dynamic_auto_height = cols.column_type == ColumnType.DYNAMIC_COLUMNS and \
+                              cols.auto_height
+
+        tagwriter.write_tag2(101, 'Embedded Object')
+        tagwriter.write_tag2(70, 1)  # unknown meaning
+        tagwriter.write_tag(DXFTag(10, dxf.text_direction))
+        tagwriter.write_tag(DXFTag(11, dxf.insert))
+        tagwriter.write_tag2(40, dxf.width)  # repeated reference column width
+        tagwriter.write_tag2(41, cols.defined_height)
+        tagwriter.write_tag2(42, cols.total_width)
+        tagwriter.write_tag2(43, cols.total_height)
+        tagwriter.write_tag2(71, int(cols.column_type))
+
+        if dynamic_auto_height:
+            count = 0
+        else:
+            count = cols.count
+        tagwriter.write_tag2(72, count)
+
+        tagwriter.write_tag2(44, cols.width)
+        tagwriter.write_tag2(45, cols.gutter_width)
+        tagwriter.write_tag2(73, int(cols.auto_height))
+        tagwriter.write_tag2(74, int(cols.reversed_column_flow))
+        for height in cols.heights:
+            tagwriter.write_tag2(46, height)
+
+    def set_column_xdata(self):
+        pass
 
     def get_rotation(self) -> float:
         """ Get text rotation in degrees, independent if it is defined by

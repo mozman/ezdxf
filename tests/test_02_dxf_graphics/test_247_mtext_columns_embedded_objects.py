@@ -3,9 +3,12 @@
 
 import pytest
 from ezdxf.entities.mtext import (
-    load_columns_from_embedded_object, MText, ColumnType
+    load_columns_from_embedded_object, MText, ColumnType,
 )
+from ezdxf.lldxf import const
+from ezdxf.lldxf.types import EMBEDDED_OBJ_STR, EMBEDDED_OBJ_MARKER
 from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.tagwriter import TagCollector
 
 DYNAMIC_MANUAL_HEIGHT = """101
 Embedded Object
@@ -51,7 +54,6 @@ Embedded Object
 0.0
 """
 
-
 DYNAMIC_AUTO_HEIGHT = """101
 Embedded Object
 70
@@ -90,7 +92,6 @@ Embedded Object
 0
 """
 
-
 STATIC = """101
 Embedded Object
 70
@@ -128,6 +129,7 @@ Embedded Object
 74
 0
 """
+
 
 # The dynamic auto height and static types are very similar, the difference is
 # important for CAD applications, but not for the DXF format itself.
@@ -180,7 +182,7 @@ def test_load_dynamic_cols_with_auto_height():
     assert cols.column_type == ColumnType.DYNAMIC_COLUMNS
     assert cols.auto_height is True
     assert cols.reversed_column_flow is False
-    assert cols.defined_height == 158.1,  "required if auto_height is True"
+    assert cols.defined_height == 158.1, "required if auto_height is True"
     assert cols.width == 50.0
     assert cols.gutter_width == 12.5
     assert cols.total_width == 175.0  # 3 * 50 + 2 * 12.5
@@ -204,6 +206,82 @@ def test_load_static_cols():
     assert cols.total_height == 150.0
     assert len(cols.linked_columns) == 0, "MTEXT is a single entity in R2018"
     assert len(cols.heights) == 0
+
+
+def make_mtext(txt: str):
+    mtext = MText()
+    embedded_obj = Tags.from_text(txt)
+    mtext.columns = load_columns_from_embedded_object(mtext.dxf, embedded_obj)
+    return mtext
+
+
+def test_export_static_columns_as_embedded_object():
+    mtext = make_mtext(STATIC)
+    collector = TagCollector(dxfversion=const.DXF2018)
+    mtext.export_embedded_object(collector)
+    tags = collector.tags
+    assert len(tags) == 14
+    assert tags[0] == (EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR)
+    assert tags[1] == (70, 1)
+    assert tags[2] == (10, (1, 0, 0))
+    assert tags[3] == (11, (69.8, 276.1, 0))
+    assert tags[4] == (40, 62.6)
+    assert tags[5] == (41, 150.0)
+    assert tags[6] == (42, 175.0)
+    assert tags[7] == (43, 150.0)
+    assert tags[8] == (71, 1)
+    assert tags[9] == (72, 3)
+    assert tags[10] == (44, 50.0)
+    assert tags[11] == (45, 12.5)
+    assert tags[12] == (73, 0)
+    assert tags[13] == (74, 0)
+
+
+def test_export_dynamic_columns_auto_height_as_embedded_object():
+    mtext = make_mtext(DYNAMIC_AUTO_HEIGHT)
+    collector = TagCollector(dxfversion=const.DXF2018)
+    mtext.export_embedded_object(collector)
+    tags = collector.tags
+    assert len(tags) == 14
+    assert tags[0] == (EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR)
+    assert tags[1] == (70, 1)
+    assert tags[2] == (10, (1, 0, 0))
+    assert tags[3] == (11, (69.8, 276.1, 0))
+    assert tags[4] == (40, 62.6)
+    assert tags[5] == (41, 158.1)
+    assert tags[6] == (42, 175.0)
+    assert tags[7] == (43, 158.1)
+    assert tags[8] == (71, 2)
+    assert tags[9] == (72, 0)
+    assert tags[10] == (44, 50.0)
+    assert tags[11] == (45, 12.5)
+    assert tags[12] == (73, 1)
+    assert tags[13] == (74, 0)
+
+
+def test_export_dynamic_columns_manual_height_as_embedded_object():
+    mtext = make_mtext(DYNAMIC_MANUAL_HEIGHT)
+    collector = TagCollector(dxfversion=const.DXF2018)
+    mtext.export_embedded_object(collector)
+    tags = collector.tags
+    assert len(tags) == 17
+    assert tags[0] == (EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR)
+    assert tags[1] == (70, 1)
+    assert tags[2] == (10, (1, 0, 0))
+    assert tags[3] == (11, (69.8, 276.1, 0))
+    assert tags[4] == (40, 62.6)
+    assert tags[5] == (41, 0.0)
+    assert tags[6] == (42, 175.0)
+    assert tags[7] == (43, 164.8)
+    assert tags[8] == (71, 2)
+    assert tags[9] == (72, 3)
+    assert tags[10] == (44, 50.0)
+    assert tags[11] == (45, 12.5)
+    assert tags[12] == (73, 0)
+    assert tags[13] == (74, 0)
+    assert tags[14] == (46, 164.8)
+    assert tags[15] == (46, 154.3)
+    assert tags[16] == (46, 0)
 
 
 if __name__ == '__main__':
