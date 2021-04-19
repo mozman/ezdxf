@@ -428,7 +428,10 @@ class MatplotlibFont(AbstractFont):
         if not text.strip():
             return 0
         path = self._support_lib.get_text_path(text, self._font_properties)
-        return max(path.vertices[:, 0].tolist()) * self._width_factor
+        try:
+            return max(path.vertices[:, 0].tolist()) * self._width_factor
+        except RuntimeError:
+            return 0
 
 
 class MonospaceFont(AbstractFont):
