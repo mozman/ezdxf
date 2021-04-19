@@ -430,7 +430,8 @@ class MatplotlibFont(AbstractFont):
         path = self._support_lib.get_text_path(text, self._font_properties)
         try:
             return max(path.vertices[:, 0].tolist()) * self._width_factor
-        except RuntimeError:
+        except RuntimeError as e:
+            logger.error(f"Matplotlib RuntimeError: {str(e)}")
             return 0
 
 
