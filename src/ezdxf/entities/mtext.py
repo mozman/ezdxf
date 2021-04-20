@@ -31,8 +31,8 @@ from .xdata import XData
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-    TagWriter, DXFNamespace, DXFEntity, Vertex, Auditor, Drawing, EntityDB,
-)
+        TagWriter, DXFNamespace, DXFEntity, Vertex, Auditor, Drawing, EntityDB,
+    )
 
 __all__ = ['MText', 'MTextColumns', 'ColumnType']
 
@@ -237,6 +237,14 @@ class MTextColumns:
         columns.linked_columns = [mtext.copy() for mtext in self.linked_columns]
         columns.heights = list(self.heights)
         return columns
+
+    def update_total_width(self):
+        count = self.count
+        if count > 0:
+            self.total_width = count * self.width + \
+                               (count - 1) * self.gutter_width
+        else:
+            self.total_width = 0.0
 
     @property
     def has_dynamic_auto_height(self) -> bool:
@@ -477,11 +485,7 @@ def load_columns_from_xdata(dxf: 'DXFNamespace',
     except const.DXFStructureError:
         logger.error(f"Invalid ACAD_MTEXT_COLUMNS in MTEXT(#{handle})")
 
-    count = columns.count
-    columns.total_width = count * columns.width
-    if count > 0:
-        columns.total_width += (count - 1) * columns.gutter_width
-
+    columns.update_total_width()
     if columns.heights:  # dynamic columns, manual heights
         # This is correct even if the last column is the tallest, which height
         # is not known. The height of last column is always stored as 0.
@@ -523,15 +527,19 @@ class MText(DXFGraphic):
         super().__init__()
         self.text: str = ""
         # Linked MText columns do not have a MTextColumns() object!
-        self.columns: Optional[MTextColumns] = None
+        self._columns: Optional[MTextColumns] = None
+
+    @property
+    def columns(self):
+        return self._columns
 
     def _copy_data(self, entity: 'MText') -> None:
         entity.text = self.text
-        if self.columns:
+        if self._columns:
             # TODO: Acquire handles for the linked columns if adding the main
             #  column to the entity database.
             # copies also the linked MTEXT column entities!
-            entity.columns = self.columns.copy()
+            entity._columns = self._columns.copy()
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -542,9 +550,9 @@ class MText(DXFGraphic):
                 dxf, acdb_mtext_group_codes, subclass=tags, recover=True)
             if processor.embedded_objects:
                 obj = processor.embedded_objects[0]
-                self.columns = load_columns_from_embedded_object(dxf, obj)
+                self._columns = load_columns_from_embedded_object(dxf, obj)
             elif self.xdata:  # xdata is already set by parent class
-                self.columns = load_columns_from_xdata(dxf, self.xdata)
+                self._columns = load_columns_from_xdata(dxf, self.xdata)
         self.embedded_objects = None  # todo: remove
         return dxf
 
@@ -553,29 +561,29 @@ class MText(DXFGraphic):
             """ Unlinked MTEXT entities from layout entity space. """
             layout = self.get_layout()
             if layout is not None:
-                for mtext in self.columns.linked_columns:
+                for mtext in self._columns.linked_columns:
                     layout.unlink_entity(mtext)
             else:
-                for mtext in self.columns.linked_columns:
+                for mtext in self._columns.linked_columns:
                     mtext.dxf.owner = None
 
         super().post_load_hook(doc)
-        if self.columns:
+        if self._columns:
             # Link columns, one MTEXT entity for each column, to the main MTEXT
             # entity (DXF version <R2018).
-            self.columns.link_columns(doc)
+            self._columns.link_columns(doc)
             return unlink_mtext_columns_from_layout
         return None
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         super().export_dxf(tagwriter)
         # Linked MTEXT entities are not stored in the layout entity space!
-        if self.columns and tagwriter.dxfversion < const.DXF2018:
+        if self._columns and tagwriter.dxfversion < const.DXF2018:
             self.export_linked_entities(tagwriter)
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        if self.columns:
+        if self._columns:
             pass  # update or check duplicated column attributes
 
         super().export_entity(tagwriter)
@@ -591,10 +599,10 @@ class MText(DXFGraphic):
             'box_fill_scale', 'bg_fill', 'bg_fill_color', 'bg_fill_true_color',
             'bg_fill_color_name', 'bg_fill_transparency',
         ])
-        if self.columns is None:
+        if self._columns is None:
             return
 
-        if self.columns.column_type == ColumnType.NO_COLUMN:
+        if self._columns.column_type == ColumnType.NO_COLUMN:
             return
 
         if tagwriter.dxfversion >= DXF2018:
@@ -627,7 +635,7 @@ class MText(DXFGraphic):
 
     def export_embedded_object(self, tagwriter: 'TagWriter'):
         dxf = self.dxf
-        cols = self.columns
+        cols = self._columns
 
         tagwriter.write_tag2(101, 'Embedded Object')
         tagwriter.write_tag2(70, 1)  # unknown meaning
@@ -654,7 +662,7 @@ class MText(DXFGraphic):
 
     def export_linked_entities(self, tagwriter: 'TagWriter'):
         owner = self.dxf.owner
-        for mtext in self.columns.linked_columns:
+        for mtext in self._columns.linked_columns:
             if mtext.dxf.handle is None:
                 raise const.DXFStructureError(
                     "Linked MTEXT column has no handle.")
@@ -665,7 +673,7 @@ class MText(DXFGraphic):
     def set_column_xdata(self):
         if self.xdata is None:
             self.xdata = XData()
-        cols = self.columns
+        cols = self._columns
         acad = cols.acad_mtext_column_info_xdata()
         acad.extend(cols.acad_mtext_columns_xdata())
         if not cols.has_dynamic_manual_height:
@@ -676,11 +684,12 @@ class MText(DXFGraphic):
         xdata.add('ACAD', acad)
 
     def set_linked_columns_xdata(self):
-        for column in self.columns.linked_columns:
+        cols = self._columns
+        for column in cols.linked_columns:
             column.discard_xdata('ACAD')
-        if not self.columns.has_dynamic_manual_height:
-            tags = self.columns.acad_mtext_defined_height_xdata()
-            for column in self.columns.linked_columns:
+        if not cols.has_dynamic_manual_height:
+            tags = cols.acad_mtext_defined_height_xdata()
+            for column in cols.linked_columns:
                 column.set_xdata('ACAD', tags)
 
     def get_rotation(self) -> float:
@@ -844,8 +853,8 @@ class MText(DXFGraphic):
         dxf.insert = m.transform(dxf.insert)
         dxf.text_direction = new_text_direction
         dxf.extrusion = new_extrusion
-        if self.columns:
-            self.columns.transform(m)
+        if self._columns:
+            self._columns.transform(m)
         return self
 
     def plain_text(self, split=False) -> Union[List[str], str]:
@@ -868,11 +877,11 @@ class MText(DXFGraphic):
         if not self.is_alive:
             return
 
-        if self.columns:
+        if self._columns:
             for column in self.columns.linked_columns:
                 column.destroy()
 
-        del self.columns
+        del self._columns
         super().destroy()
 
     # Linked MTEXT columns are not the same structure as
@@ -882,9 +891,9 @@ class MText(DXFGraphic):
         called from EntityDB. (internal API)
 
         """
-        if self.is_alive and self.columns:
+        if self.is_alive and self._columns:
             doc = self.doc
-            for column in self.columns.linked_columns:
+            for column in self._columns.linked_columns:
                 if column.is_alive and column.is_virtual:
                     column.doc = doc
                     db.add(column)
@@ -892,7 +901,38 @@ class MText(DXFGraphic):
     def process_sub_entities(self, func: Callable[['DXFEntity'], None]):
         """ Call `func` for linked columns. (internal API)
         """
-        if self.is_alive and self.columns:
-            for entity in self.columns.linked_columns:
+        if self.is_alive and self._columns:
+            for entity in self._columns.linked_columns:
                 if entity.is_alive:
                     func(entity)
+
+    def setup_columns(self, columns: MTextColumns,
+                      dxfversion=const.DXF2018) -> None:
+        if self._columns:
+            raise const.DXFStructureError('Column setup already exist.')
+        self._columns = columns
+        self.dxf.width = columns.width
+        self.dxf.defined_height = columns.defined_height
+        if columns.total_width < 1e-6:
+            columns.update_total_width()
+        if dxfversion < const.DXF2018:
+            self._create_linked_columns()
+
+    def _create_linked_columns(self) -> None:
+        """ Create linked MTEXT columns for DXF versions before R2018. """
+        # creates virtual MTEXT entities
+        dxf = self.dxf
+        attribs = self.dxfattribs(drop={'handle', 'owner'})
+        doc = self.doc
+        cols = self._columns
+
+        insert = dxf.get('insert', Vec3())
+        default_direction = Vec3.from_deg_angle(dxf.get('rotation', 0))
+        text_direction = Vec3(dxf.get('text_direction', default_direction))
+        offset = text_direction.normalize(cols.width + cols.gutter_width)
+        linked_columns = cols.linked_columns
+        for _ in range(cols.count):
+            insert += offset
+            column = MText.new(dxfattribs=attribs, doc=doc)
+            column.dxf.insert = insert
+            linked_columns.append(column)

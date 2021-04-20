@@ -211,7 +211,7 @@ def test_load_static_cols():
 def make_mtext(txt: str):
     mtext = MText()
     embedded_obj = Tags.from_text(txt)
-    mtext.columns = load_columns_from_embedded_object(mtext.dxf, embedded_obj)
+    mtext._columns = load_columns_from_embedded_object(mtext.dxf, embedded_obj)
     return mtext
 
 

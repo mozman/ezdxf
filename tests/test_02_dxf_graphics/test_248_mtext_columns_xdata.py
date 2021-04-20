@@ -307,7 +307,7 @@ def test_mtext_without_column_info():
 def make_mtext(txt: str) -> MText:
     mtext = MText()
     xdata = get_xdata(txt)
-    mtext.columns = load_columns_from_xdata(mtext.dxf, xdata)
+    mtext._columns = load_columns_from_xdata(mtext.dxf, xdata)
     return mtext
 
 
