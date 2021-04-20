@@ -28,6 +28,7 @@ Glossary
     DXF
         Drawing eXchange Format is a file format used by `AutoCAD`_ ® to interchange data
         with other :term:`CAD` applications. `DXF`_ is a trademark of `Autodesk`_ ®.
+        See also :ref:`what is dxf`
 
     STB
         Named plot style table (:class:`~ezdxf.acadctb.NamedPlotStyles`)

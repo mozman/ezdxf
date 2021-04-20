@@ -12,6 +12,7 @@ the :ref:`Howto` section.
 .. toctree::
     :maxdepth: 1
 
+    dxf
     aci
     layers
     linetypes
@@ -19,3 +20,4 @@ the :ref:`Howto` section.
     ocs
     units
     extents_limits
+    fonts
