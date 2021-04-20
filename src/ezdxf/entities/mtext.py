@@ -661,13 +661,14 @@ class MText(DXFGraphic):
             tagwriter.write_tag2(46, height)
 
     def export_linked_entities(self, tagwriter: 'TagWriter'):
-        owner = self.dxf.owner
+        common_attribs = self.dxfattribs(drop={
+            'handle', 'insert', 'rect_width', 'rect_height'})
         for mtext in self._columns.linked_columns:
             if mtext.dxf.handle is None:
                 raise const.DXFStructureError(
                     "Linked MTEXT column has no handle.")
-            # Linked MTEXT resides on the same layout as the main MTEXT:
-            mtext.dxf.owner = owner
+            # sync linked MTEXT DXF attributes:
+            mtext.update_dxf_attribs(common_attribs)
             mtext.export_entity(tagwriter)
 
     def set_column_xdata(self):
