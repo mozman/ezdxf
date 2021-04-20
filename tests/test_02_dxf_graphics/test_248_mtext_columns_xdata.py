@@ -304,14 +304,23 @@ def test_mtext_without_column_info():
     assert cols is None
 
 
-def make_mtext(txt: str):
+def make_mtext(txt: str) -> MText:
     mtext = MText()
     xdata = get_xdata(txt)
     mtext.columns = load_columns_from_xdata(mtext.dxf, xdata)
+    return mtext
 
 
-def test_create_static_columns_xdata():
-    mtext = make_mtext(STATIC)
+@pytest.mark.parametrize('txt', [
+    STATIC, DYNAMIC_AUTO_HEIGHT, DYNAMIC_MANUAL_HEIGHT
+], ids=['STATIC', 'DYNAMIC_AUTO', 'DYNAMIC_MANUAL'])
+def test_set_columns_xdata(txt):
+    """ Create column data as XDATA for DXF versions before R2018. """
+    mtext = make_mtext(txt)
+    mtext.set_column_xdata()
+    acad = mtext.xdata.get('ACAD')
+    expected_xdata = get_xdata(txt)
+    assert acad == expected_xdata.get('ACAD')
 
 
 if __name__ == '__main__':

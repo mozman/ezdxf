@@ -601,6 +601,7 @@ class MText(DXFGraphic):
             self.export_embedded_object(tagwriter)
         else:
             self.set_column_xdata()
+            self.set_linked_columns_xdata()
 
     def load_mtext(self, tags: Tags) -> Iterable['DXFTag']:
         tail = ""
@@ -673,6 +674,14 @@ class MText(DXFGraphic):
         xdata = self.xdata
         xdata.discard('ACAD')  # replace existing column data
         xdata.add('ACAD', acad)
+
+    def set_linked_columns_xdata(self):
+        for column in self.columns.linked_columns:
+            column.discard_xdata('ACAD')
+        if not self.columns.has_dynamic_manual_height:
+            tags = self.columns.acad_mtext_defined_height_xdata()
+            for column in self.columns.linked_columns:
+                column.set_xdata('ACAD', tags)
 
     def get_rotation(self) -> float:
         """ Get text rotation in degrees, independent if it is defined by
@@ -853,3 +862,15 @@ class MText(DXFGraphic):
         """ Validity check. """
         super().audit(auditor)
         auditor.check_text_style(self)
+        # TODO: audit column structure
+
+    def destroy(self) -> None:
+        if not self.is_alive:
+            return
+
+        if self.columns:
+            for column in self.columns.linked_columns:
+                column.destroy()
+
+        del self.columns
+        super().destroy()
