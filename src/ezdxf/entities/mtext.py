@@ -24,15 +24,15 @@ from ezdxf.colors import rgb2int
 from ezdxf.tools.text import (
     caret_decode, split_mtext_string, escape_dxf_line_endings, plain_mtext,
 )
+from . import factory
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
-from .factory import register_entity
 from .xdata import XData
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, DXFEntity, Vertex, Auditor, Drawing,
-    )
+    TagWriter, DXFNamespace, DXFEntity, Vertex, Auditor, Drawing, EntityDB,
+)
 
 __all__ = ['MText', 'MTextColumns', 'ColumnType']
 
@@ -497,7 +497,7 @@ def load_columns_from_xdata(dxf: 'DXFNamespace',
     return columns
 
 
-@register_entity
+@factory.register_entity
 class MText(DXFGraphic):
     """ DXF MTEXT entity """
     DXFTYPE = 'MTEXT'
@@ -874,3 +874,25 @@ class MText(DXFGraphic):
 
         del self.columns
         super().destroy()
+
+    # Linked MTEXT columns are not the same structure as
+    # POLYLINE & INSERT with sub-entities and SEQEND :(
+    def add_sub_entities_to_entitydb(self, db: 'EntityDB') -> None:
+        """ Add linked columns (MTEXT) entities to entity database `db`,
+        called from EntityDB. (internal API)
+
+        """
+        if self.is_alive and self.columns:
+            doc = self.doc
+            for column in self.columns.linked_columns:
+                if column.is_alive and column.is_virtual:
+                    column.doc = doc
+                    db.add(column)
+
+    def process_sub_entities(self, func: Callable[['DXFEntity'], None]):
+        """ Call `func` for linked columns. (internal API)
+        """
+        if self.is_alive and self.columns:
+            for entity in self.columns.linked_columns:
+                if entity.is_alive:
+                    func(entity)
