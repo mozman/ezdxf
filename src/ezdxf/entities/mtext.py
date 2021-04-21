@@ -543,7 +543,7 @@ class MText(DXFGraphic):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = Tags(self.load_mtext(processor.subclass_by_index(2)))
+            tags = Tags(self.load_mtext_content(processor.subclass_by_index(2)))
             processor.fast_load_dxfattribs(
                 dxf, acdb_mtext_group_codes, subclass=tags, recover=True)
             if processor.embedded_objects:
@@ -573,6 +573,26 @@ class MText(DXFGraphic):
             return unlink_mtext_columns_from_layout
         return None
 
+    def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
+        """ Pre requirement check and pre processing for export.
+
+        Returns False if MTEXT should not be exported at all.
+
+        (internal API)
+        """
+        columns = self._columns
+        if columns and tagwriter.dxfversion < const.DXF2018:
+            if columns.count != len(columns.linked_columns) + 1:
+                logger.debug(
+                    f"{str(self)}: column count does not match linked columns")
+                return False
+            if not all(column.is_alive for column in columns.linked_columns):
+                logger.debug(
+                    f"{str(self)}: contains destroyed linked columns")
+                return False
+            self.sync_common_attribs_of_linked_columns()
+        return True
+
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         super().export_dxf(tagwriter)
         # Linked MTEXT entities are not stored in the layout entity space!
@@ -581,26 +601,21 @@ class MText(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        if self._columns:
-            pass  # update or check duplicated column attributes
-
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mtext.name)
         self.dxf.export_dxf_attribs(tagwriter, [
             'insert', 'char_height', 'width', 'defined_height',
             'attachment_point', 'flow_direction',
         ])
-        self.export_mtext(tagwriter)
+        self.export_mtext_content(tagwriter)
         self.dxf.export_dxf_attribs(tagwriter, [
             'style', 'extrusion', 'text_direction', 'rect_width', 'rect_height',
             'rotation', 'line_spacing_style', 'line_spacing_factor',
             'box_fill_scale', 'bg_fill', 'bg_fill_color', 'bg_fill_true_color',
             'bg_fill_color_name', 'bg_fill_transparency',
         ])
-        if self._columns is None:
-            return
-
-        if self._columns.column_type == ColumnType.NONE:
+        columns = self._columns
+        if columns is None or columns.column_type == ColumnType.NONE:
             return
 
         if tagwriter.dxfversion >= DXF2018:
@@ -609,7 +624,7 @@ class MText(DXFGraphic):
             self.set_column_xdata()
             self.set_linked_columns_xdata()
 
-    def load_mtext(self, tags: Tags) -> Iterable['DXFTag']:
+    def load_mtext_content(self, tags: Tags) -> Iterable['DXFTag']:
         tail = ""
         parts = []
         for tag in tags:
@@ -622,7 +637,7 @@ class MText(DXFGraphic):
         parts.append(tail)
         self.text = escape_dxf_line_endings(caret_decode("".join(parts)))
 
-    def export_mtext(self, tagwriter: 'TagWriter') -> None:
+    def export_mtext_content(self, tagwriter: 'TagWriter') -> None:
         txt = escape_dxf_line_endings(self.text)
         str_chunks = split_mtext_string(txt, size=250)
         if len(str_chunks) == 0:
@@ -659,15 +674,18 @@ class MText(DXFGraphic):
             tagwriter.write_tag2(46, height)
 
     def export_linked_entities(self, tagwriter: 'TagWriter'):
-        common_attribs = self.dxfattribs(drop={
-            'handle', 'insert', 'rect_width', 'rect_height'})
         for mtext in self._columns.linked_columns:
             if mtext.dxf.handle is None:
                 raise const.DXFStructureError(
                     "Linked MTEXT column has no handle.")
-            # sync linked MTEXT DXF attributes:
+            # Export linked columns as separated DXF entities:
+            mtext.export_dxf(tagwriter)
+
+    def sync_common_attribs_of_linked_columns(self):
+        common_attribs = self.dxfattribs(drop={
+            'handle', 'insert', 'rect_width', 'rect_height'})
+        for mtext in self._columns.linked_columns:
             mtext.update_dxf_attribs(common_attribs)
-            mtext.export_entity(tagwriter)
 
     def set_column_xdata(self):
         if self.xdata is None:
@@ -942,3 +960,16 @@ class MText(DXFGraphic):
             column = MText.new(dxfattribs=attribs, doc=doc)
             column.dxf.insert = insert
             linked_columns.append(column)
+
+    def remove_dependencies(self, other: 'Drawing' = None) -> None:
+        if not self.is_alive:
+            return
+
+        super().remove_dependencies()
+        has_style = (bool(other) and (self.dxf.style in other.styles))
+        if not has_style:
+            self.dxf.style = 'Standard'
+
+        if self.columns:
+            for column in self.columns.linked_columns:
+                column.remove_dependencies(other)

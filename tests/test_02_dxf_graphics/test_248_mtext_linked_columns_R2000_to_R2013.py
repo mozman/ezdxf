@@ -8,7 +8,10 @@ from ezdxf.entities.mtext import (
     load_columns_from_xdata, MText, ColumnType, MTextColumns,
 )
 from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.tagwriter import TagCollector
+from ezdxf.lldxf import const
 from ezdxf.entities.xdata import XData
+from ezdxf.math import Vec3
 
 DYNAMIC_MANUAL_HEIGHT = """0
 MTEXT
@@ -435,6 +438,68 @@ def test_destroy_mtext_with_linked_columns_from_entitydb(doc):
     mtext.destroy()
     db.purge()
     assert len(db) == count - 3, "should delete all columns from entitydb"
+
+
+def test_copy_mtext_with_linked_columns():
+    mtext = new_mtext_with_linked_columns(3)
+    mtext2 = mtext.copy()
+    columns = mtext.columns
+    columns2 = mtext2.columns
+    assert columns is not columns2
+    assert len(columns2.linked_columns) == 2
+
+    for col1, col2 in zip(columns.linked_columns, columns2.linked_columns):
+        assert col1 is not col2
+
+
+def test_transform_mtext_with_linked_columns():
+    mtext = new_mtext_with_linked_columns(3)
+    offset = Vec3(1, 2, 3)
+    mtext2 = mtext.copy()
+    mtext2.translate(*offset.xyz)
+    assert mtext2.dxf.insert.isclose(mtext.dxf.insert + offset)
+    for col1, col2 in zip(mtext.columns.linked_columns,
+                          mtext2.columns.linked_columns):
+        assert col2.dxf.insert.isclose(col1.dxf.insert + offset)
+
+
+def test_sync_common_attribs_of_linked_columns():
+    mtext = new_mtext_with_linked_columns(3)
+    mtext.dxf.style = 'NewStyle'
+    # manual sync required - this is done automatically at DXF export:
+    mtext.sync_common_attribs_of_linked_columns()
+    for column in mtext.columns.linked_columns:
+        assert column.dxf.style == 'NewStyle'
+
+
+def test_remove_dependencies_from_mtext_and_linked_columns(doc):
+    mtext = new_mtext_with_linked_columns(3)
+    mtext.dxf.style = 'StyleNotExist'
+    mtext.sync_common_attribs_of_linked_columns()
+    mtext.remove_dependencies(doc)
+    assert mtext.dxf.style == 'Standard'
+    for column in mtext.columns.linked_columns:
+        assert column.dxf.handle is None
+        assert column.dxf.owner is None
+        assert column.dxf.style == 'Standard'
+
+
+class TestPreprocessDXFExport:
+    collector = TagCollector(dxfversion=const.DXF2000)
+
+    def test_successful_preprocessing(self):
+        mtext = new_mtext_with_linked_columns(3)
+        assert mtext.preprocess_export(self.collector) is True
+
+    def test_fail_for_invalid_column_count(self):
+        mtext = new_mtext_with_linked_columns(3)
+        mtext.columns.count = 4
+        assert mtext.preprocess_export(self.collector) is False
+
+    def test_fail_for_destroyed_columns(self):
+        mtext = new_mtext_with_linked_columns(3)
+        mtext.columns.linked_columns[0].destroy()
+        assert mtext.preprocess_export(self.collector) is False
 
 
 if __name__ == '__main__':
