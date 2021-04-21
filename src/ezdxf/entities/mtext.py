@@ -270,7 +270,13 @@ class MTextColumns:
         self.linked_handles = None
         self.linked_columns = linked_columns
 
-    def transform(self, m: Matrix44):
+    def transform(self, m: Matrix44, hscale: float = 1, vscale: float = 1):
+        self.width *= hscale
+        self.gutter_width *= hscale
+        self.total_width *= hscale
+        self.total_height *= vscale
+        self.defined_height *= vscale
+        self.heights = [h * vscale for h in self.heights]
         for mtext in self.linked_columns:
             mtext.transform(m)
 
@@ -857,8 +863,8 @@ class MText(DXFGraphic):
         old_text_direction = Vec3(dxf.text_direction)
         new_text_direction = m.transform_direction(old_text_direction)
 
-        old_char_height_vec = old_extrusion.cross(old_text_direction).normalize(
-            dxf.char_height)
+        old_vertical_direction = old_extrusion.cross(old_text_direction)
+        old_char_height_vec = old_vertical_direction.normalize(dxf.char_height)
         new_char_height_vec = m.transform_direction(old_char_height_vec)
         oblique = new_text_direction.angle_between(new_char_height_vec)
         dxf.char_height = new_char_height_vec.magnitude * math.sin(oblique)
@@ -871,7 +877,11 @@ class MText(DXFGraphic):
         dxf.text_direction = new_text_direction
         dxf.extrusion = new_extrusion
         if self._columns:
-            self._columns.transform(m)
+            hscale = m.transform_direction(
+                old_text_direction.normalize()).magnitude
+            vscale = m.transform_direction(
+                old_vertical_direction.normalize()).magnitude
+            self._columns.transform(m, hscale, vscale)
         return self
 
     def plain_text(self, split=False) -> Union[List[str], str]:

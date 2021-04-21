@@ -463,6 +463,19 @@ def test_transform_mtext_with_linked_columns():
         assert col2.dxf.insert.isclose(col1.dxf.insert + offset)
 
 
+def test_scale_mtext_with_linked_columns():
+    mtext = new_mtext_with_linked_columns(3)
+    mtext.scale(2, 3, 1)
+    assert mtext.dxf.width == 20
+    columns = mtext.columns
+    assert columns.width == 20
+    assert columns.gutter_width == 1
+    assert columns.total_width == 62
+    assert columns.defined_height == 150
+    for column in columns.linked_columns:
+        assert column.dxf.width == 20
+
+
 def test_sync_common_attribs_of_linked_columns():
     mtext = new_mtext_with_linked_columns(3)
     mtext.dxf.style = 'NewStyle'
