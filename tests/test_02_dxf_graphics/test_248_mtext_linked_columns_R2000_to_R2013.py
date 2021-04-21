@@ -502,5 +502,29 @@ class TestPreprocessDXFExport:
         assert mtext.preprocess_export(self.collector) is False
 
 
+class TestGetColumnContent:
+    def new_mtext(self):
+        mtext = new_mtext_with_linked_columns(3)
+        mtext.text = "Line1\\PLine2\\P"
+        mtext.columns.linked_columns[0].text = "Line3\\PLine4\\P"
+        mtext.columns.linked_columns[1].text = "Line5\\PLine6\\P"
+        return mtext
+
+    def test_get_raw_content_of_all_columns(self):
+        mtext = self.new_mtext()
+        content = mtext.all_columns_raw_content()
+        assert content == "Line1\\PLine2\\PLine3\\PLine4\\PLine5\\PLine6\\P"
+
+    def test_get_plain_text_of_all_columns_as_string(self):
+        mtext = self.new_mtext()
+        content = mtext.all_columns_plain_text(split=False)
+        assert content == "Line1\nLine2\nLine3\nLine4\nLine5\nLine6\n"
+
+    def test_get_plain_text_of_all_columns_as_list_of_strings(self):
+        mtext = self.new_mtext()
+        content = mtext.all_columns_plain_text(split=True)
+        assert content == "Line1 Line2 Line3 Line4 Line5 Line6".split()
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

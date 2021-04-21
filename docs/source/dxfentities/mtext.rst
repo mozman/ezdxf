@@ -168,6 +168,10 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: plain_text
 
+    .. automethod:: all_columns_plain_text
+
+    .. automethod:: all_columns_raw_content
+
     .. automethod:: transform(m: Matrix44) -> MText
 
 .. _mtext_inline_codes:

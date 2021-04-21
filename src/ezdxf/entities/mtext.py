@@ -875,14 +875,62 @@ class MText(DXFGraphic):
         return self
 
     def plain_text(self, split=False) -> Union[List[str], str]:
-        """ Returns text content without formatting codes.
+        """ Returns the text content without inline formatting codes.
 
         Args:
-            split: returns list of strings split at line breaks if ``True``
-                else returns a single string.
+            split: split content text at line breaks if ``True`` and
+                returns a list of strings without line endings
 
         """
         return plain_mtext(self.text, split=split)
+
+    def all_columns_plain_text(self, split=False) -> Union[List[str], str]:
+        """ Returns the text content of all columns without inline formatting
+        codes.
+
+        Args:
+            split: split content text at line breaks if ``True`` and
+                returns a list of strings without line endings
+
+        .. versionadded: 0.17
+
+        """
+
+        def merged_content():
+            content = [plain_mtext(self.text, split=False)]
+            if self._columns:
+                for c in self._columns.linked_columns:
+                    content.append(c.plain_text(split=False))
+            return "".join(content)
+
+        def split_content():
+            content = plain_mtext(self.text, split=True)
+            if self._columns:
+                if content and content[-1] == "":
+                    content.pop()
+                for c in self._columns.linked_columns:
+                    content.extend(c.plain_text(split=True))
+                    if content and content[-1] == "":
+                        content.pop()
+            return content
+
+        if split:
+            return split_content()
+        else:
+            return merged_content()
+
+    def all_columns_raw_content(self) -> str:
+        """ Returns the text content of all columns as a single string
+        including the inline formatting codes.
+
+        .. versionadded: 0.17
+
+        """
+        content = [self.text]
+        if self._columns:
+            for column in self._columns.linked_columns:
+                content.append(column.text)
+        return "".join(content)
 
     def audit(self, auditor: 'Auditor'):
         """ Validity check. """
