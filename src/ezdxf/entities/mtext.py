@@ -528,7 +528,7 @@ class MText(DXFGraphic):
         self._columns: Optional[MTextColumns] = None
 
     @property
-    def columns(self):
+    def columns(self) -> MTextColumns:
         return self._columns
 
     def _copy_data(self, entity: 'MText') -> None:
