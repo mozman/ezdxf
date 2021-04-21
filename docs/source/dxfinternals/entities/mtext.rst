@@ -178,6 +178,27 @@ Dynamic (manual height) same as the dynamic (auto height) type, but each column
 No column               A regular MTEXT with "defined column height" attribute?
 ======================= ========================================================
 
+=============== =============== =========== ===============
+Column Type     Defined Height  Auto Height Column Heights
+=============== =============== =========== ===============
+Static          stored          False       not stored
+Dynamic auto    stored          True        not stored
+Dynamic manual  not stored      False       stored (last=0)
+=============== =============== =========== ===============
+
+Column Count
+++++++++++++
+
+For DXF versions < R2018 the column count is always given by the count of linked
+MTEXT columns. In DXF R2018+ this property is not available, because there are
+no linked MTEXT entities anymore.
+
+R2018+: For the column types "static" and "dynamic manual" the correct column
+count is stored as group code 72. For the column type "dynamic auto" the stored
+*column count is 0*. It is possible to calculate the column count
+from the total width and the column width if the total width is correct like in
+AutoCAD and BricsCAD.
+
 Static Columns R2000
 ++++++++++++++++++++
 

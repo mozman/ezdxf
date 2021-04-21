@@ -184,16 +184,16 @@ acdb_mtext_group_codes = group_code_mapping(acdb_mtext)
 #  the document is fully loaded is maybe the safer way.
 
 class ColumnType(enum.IntEnum):
-    NO_COLUMN = 0
-    STATIC_COLUMNS = 1
-    DYNAMIC_COLUMNS = 2
+    NONE = 0
+    STATIC = 1
+    DYNAMIC = 2
 
 
 class MTextColumns:
     """The column count is not stored explicit in the columns definition for
     DXF versions R2018+.
 
-    If column_type is DYNAMIC_COLUMNS and auto_height is True the column
+    If column_type is DYNAMIC and auto_height is True the column
     count is defined by the content. The exact calculation of the column count
     requires an accurate rendering of the MTEXT content like AutoCAD does!
 
@@ -204,10 +204,10 @@ class MTextColumns:
     """
 
     def __init__(self):
-        self.column_type: ColumnType = ColumnType.NO_COLUMN
+        self.column_type: ColumnType = ColumnType.STATIC
         # The embedded object in R2018 does not store the column count for
-        # column type "dynamic" and auto height is 1!
-        self.count: int = 0
+        # column type DYNAMIC and auto_height is True!
+        self.count: int = 1
         self.auto_height: bool = False
         self.reversed_column_flow: bool = False
         self.defined_height: float = 0.0
@@ -248,13 +248,11 @@ class MTextColumns:
 
     @property
     def has_dynamic_auto_height(self) -> bool:
-        return self.column_type == ColumnType.DYNAMIC_COLUMNS and \
-               self.auto_height
+        return self.column_type == ColumnType.DYNAMIC and self.auto_height
 
     @property
     def has_dynamic_manual_height(self) -> bool:
-        return self.column_type == ColumnType.DYNAMIC_COLUMNS and \
-               not self.auto_height
+        return self.column_type == ColumnType.DYNAMIC and not self.auto_height
 
     def link_columns(self, doc: 'Drawing'):
         # DXF R2018+ has no linked MTEXT entities.
@@ -602,7 +600,7 @@ class MText(DXFGraphic):
         if self._columns is None:
             return
 
-        if self._columns.column_type == ColumnType.NO_COLUMN:
+        if self._columns.column_type == ColumnType.NONE:
             return
 
         if tagwriter.dxfversion >= DXF2018:
@@ -908,15 +906,22 @@ class MText(DXFGraphic):
                     func(entity)
 
     def setup_columns(self, columns: MTextColumns,
-                      dxfversion=const.DXF2018) -> None:
+                      linked: bool = False) -> None:
+        assert columns.column_type != ColumnType.NONE
+        assert columns.count > 0, "one or more columns required"
+        assert columns.width > 0, "column width has to be > 0"
+        assert columns.gutter_width >= 0, "gutter width has to be >= 0"
+
         if self._columns:
             raise const.DXFStructureError('Column setup already exist.')
         self._columns = columns
         self.dxf.width = columns.width
         self.dxf.defined_height = columns.defined_height
+        if columns.total_height < 1e-6:
+            columns.total_height = columns.defined_height
         if columns.total_width < 1e-6:
             columns.update_total_width()
-        if dxfversion < const.DXF2018:
+        if linked:
             self._create_linked_columns()
 
     def _create_linked_columns(self) -> None:
@@ -932,7 +937,7 @@ class MText(DXFGraphic):
         text_direction = Vec3(dxf.get('text_direction', default_direction))
         offset = text_direction.normalize(cols.width + cols.gutter_width)
         linked_columns = cols.linked_columns
-        for _ in range(cols.count):
+        for _ in range(cols.count - 1):
             insert += offset
             column = MText.new(dxfattribs=attribs, doc=doc)
             column.dxf.insert = insert

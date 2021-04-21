@@ -3,7 +3,7 @@
 
 import pytest
 from ezdxf.entities.mtext import (
-    load_columns_from_embedded_object, MText, ColumnType,
+    load_columns_from_embedded_object, MText, ColumnType, MTextColumns,
 )
 from ezdxf.lldxf import const
 from ezdxf.lldxf.types import EMBEDDED_OBJ_STR, EMBEDDED_OBJ_MARKER
@@ -157,7 +157,7 @@ def test_load_dynamic_cols_manual_height():
     embedded_obj = Tags.from_text(DYNAMIC_MANUAL_HEIGHT)
     cols = load_columns_from_embedded_object(MText().dxf, embedded_obj)
     assert cols.count == 3
-    assert cols.column_type == ColumnType.DYNAMIC_COLUMNS
+    assert cols.column_type == ColumnType.DYNAMIC
     assert cols.auto_height is False
     assert cols.reversed_column_flow is False
     assert cols.defined_height == 0.0, "not defined if auto_height is False"
@@ -179,7 +179,7 @@ def test_load_dynamic_cols_with_auto_height():
     cols = load_columns_from_embedded_object(MText().dxf, embedded_obj)
     # Count is a calculated value, group code 72 (column height count) is 0!
     assert cols.count == 3
-    assert cols.column_type == ColumnType.DYNAMIC_COLUMNS
+    assert cols.column_type == ColumnType.DYNAMIC
     assert cols.auto_height is True
     assert cols.reversed_column_flow is False
     assert cols.defined_height == 158.1, "required if auto_height is True"
@@ -196,7 +196,7 @@ def test_load_static_cols():
     embedded_obj = Tags.from_text(STATIC)
     cols = load_columns_from_embedded_object(MText().dxf, embedded_obj)
     assert cols.count == 3
-    assert cols.column_type == ColumnType.STATIC_COLUMNS
+    assert cols.column_type == ColumnType.STATIC
     assert cols.auto_height is False
     assert cols.reversed_column_flow is False
     assert cols.defined_height == 150.0, "required for static columns"
@@ -282,6 +282,32 @@ def test_export_dynamic_columns_manual_height_as_embedded_object():
     assert tags[14] == (46, 164.8)
     assert tags[15] == (46, 154.3)
     assert tags[16] == (46, 0)
+
+
+def new_mtext_with_columns(count=3):
+    columns = MTextColumns()
+    columns.count = count
+    columns.width = 10
+    columns.gutter_width = 0.5
+    columns.defined_height = 50
+    mtext = MText.new()
+    mtext.setup_columns(columns, linked=False)
+    return mtext
+
+
+def test_create_new_mtext_with_columns():
+    mtext = new_mtext_with_columns(3)
+    columns = mtext.columns
+    assert columns.column_type == ColumnType.STATIC
+    assert len(columns.linked_columns) == 0
+    assert len(columns.heights) == 0, "all columns have the same defined height"
+    assert mtext.dxf.width == columns.width
+    assert columns.total_height == columns.defined_height
+    assert columns.total_width == 31
+
+    # default location and text direction:
+    assert mtext.dxf.insert == (0, 0, 0)
+    assert mtext.dxf.text_direction == (1, 0, 0)
 
 
 if __name__ == '__main__':
