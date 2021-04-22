@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020 Manfred Moitzi
+# Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 # source: http://www.lee-mac.com/bulgeconversion.html
 # source: http://www.afralisp.net/archive/lisp/Bulges1.htm
@@ -14,9 +14,9 @@ __all__ = [
     "arc_to_bulge"
 ]
 
+
 def polar(p: Any, angle: float, distance: float) -> Vec2:
-    """
-    Returns the point at a specified `angle` and `distance` from point `p`.
+    """ Returns the point at a specified `angle` and `distance` from point `p`.
 
     Args:
         p: point as :class:`Vec2` compatible object
@@ -28,8 +28,7 @@ def polar(p: Any, angle: float, distance: float) -> Vec2:
 
 
 def angle(p1: Any, p2: Any) -> float:
-    """
-    Returns angle a line defined by two endpoints and x-axis in radians.
+    """ Returns angle a line defined by two endpoints and x-axis in radians.
 
     Args:
         p1: start point as :class:`Vec2` compatible object
@@ -64,8 +63,7 @@ def arc_to_bulge(center: 'Vertex', start_angle: float, end_angle: float,
 
 def bulge_3_points(start_point: 'Vertex', end_point: 'Vertex',
                    point: 'Vertex') -> float:
-    """
-    Returns bulge value defined by three points.
+    """ Returns bulge value defined by three points.
 
     Based on 3-Points to Bulge by `Lee Mac`_.
 
@@ -79,10 +77,14 @@ def bulge_3_points(start_point: 'Vertex', end_point: 'Vertex',
     return math.sin(a) / math.cos(a)
 
 
-def bulge_to_arc(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> \
-Tuple['Vec2', float, float, float]:
-    """
-    Returns arc parameters from bulge parameters.
+def bulge_to_arc(start_point: 'Vertex',
+                 end_point: 'Vertex',
+                 bulge: float) -> Tuple['Vec2', float, float, float]:
+    """ Returns arc parameters from bulge parameters.
+
+    The arcs defined by bulge values of :class:`~ezdxf.entities.LWPolyline`
+    and 2D :class:`~ezdxf.entities.Polyline` entities start at the vertex which
+    includes the bulge value and ends at the following vertex.
 
     Based on Bulge to Arc by `Lee Mac`_.
 
@@ -106,8 +108,7 @@ Tuple['Vec2', float, float, float]:
 
 def bulge_center(start_point: 'Vertex', end_point: 'Vertex',
                  bulge: float) -> 'Vec2':
-    """
-    Returns center of arc described by the given bulge parameters.
+    """ Returns center of arc described by the given bulge parameters.
 
     Based on  Bulge Center by `Lee Mac`_.
 
@@ -128,13 +129,12 @@ def bulge_center(start_point: 'Vertex', end_point: 'Vertex',
 def signed_bulge_radius(start_point: 'Vertex', end_point: 'Vertex',
                         bulge: float) -> float:
     return Vec2(start_point).distance(Vec2(end_point)) * (
-                1. + (bulge * bulge)) / 4. / bulge
+            1. + (bulge * bulge)) / 4. / bulge
 
 
 def bulge_radius(start_point: 'Vertex', end_point: 'Vertex',
                  bulge: float) -> float:
-    """
-    Returns radius of arc defined by the given bulge parameters.
+    """ Returns radius of arc defined by the given bulge parameters.
 
     Based on Bulge Radius by `Lee Mac`_
 

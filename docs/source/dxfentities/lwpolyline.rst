@@ -4,10 +4,12 @@ LWPolyline
 .. module:: ezdxf.entities
     :noindex:
 
-The LWPOLYLINE entity (`DXF Reference`_) is defined as a single graphic entity, which differs from the
-old-style :class:`Polyline` entity, which is defined as a group of sub-entities.
-:class:`LWPolyline` display faster (in AutoCAD) and consume less disk space, it is a planar element,
-therefore all points in :ref:`OCS` as ``(x, y)`` tuples (:attr:`LWPolyline.dxf.elevation` is the z-axis value).
+The LWPOLYLINE entity (`DXF Reference`_) is defined as a single graphic entity,
+which differs from the old-style :class:`Polyline` entity, which is defined as
+a group of sub-entities. :class:`LWPolyline` display faster (in AutoCAD) and
+consume less disk space, it is a planar element, therefore all points are
+located in the :ref:`OCS` as (x, y)-tuples (:attr:`LWPolyline.dxf.elevation`
+is the z-axis value).
 
 
 .. versionchanged:: 0.8.9
@@ -28,27 +30,31 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
 .. rubric:: Bulge value
 
-The bulge value is used to create arc shaped line segments for :class:`Polyline` and
-:class:`LWPolyline` entities. The bulge value defines the ratio of the arc sagitta (versine)
-to half line segment length, a bulge value of ``1`` defines a semicircle.
+The bulge value is used to create arc shaped line segments for :class:`Polyline`
+and :class:`LWPolyline` entities. The arc starts at the vertex which includes
+the bulge value and ends at the following vertex. The bulge value defines the
+ratio of the arc sagitta (versine) to half line segment length, a bulge value
+of 1 defines a semicircle.
 
 The sign of the bulge value defines the side of the bulge:
 
-    - positive value (> ``0``): bulge is right of line (counter clockwise)
-    - negative value (< ``0``): bulge is left of line (clockwise)
-    - ``0`` = no bulge
+    - positive value (> 0): bulge is right of line (counter clockwise)
+    - negative value (< 0): bulge is left of line (clockwise)
+    - 0 = no bulge
 
 .. image:: ../tutorials/gfx/bulge.png
 
 .. rubric:: Start- and end width
 
-The start width and end width values defines the width in drawing units for the following line segment.
-To use the default width value for a line segment set value to ``0``.
+The start width and end width values defines the width in drawing units for the
+following line segment. To use the default width value for a line segment set
+value to 0.
 
 .. rubric:: Width and bulge values at last point
 
-The width and bulge values of the last point has only a meaning if the polyline is closed, and they apply
-to the last line segment from the last to the first point.
+The width and bulge values of the last point has only a meaning if the polyline
+is closed, and they apply to the last line segment from the last to the first
+point.
 
 .. seealso::
 
