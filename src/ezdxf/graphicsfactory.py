@@ -8,9 +8,8 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
 from ezdxf.math import Vec3, global_bspline_interpolation, fit_points_to_cad_cv
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities import (
-    factory, make_static_columns, make_static_columns_r2018
-)
+from ezdxf.entities import factory
+from ezdxf.entities.mtext_columns import *
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
 
@@ -538,22 +537,140 @@ class CreatorInterface:
         mtext.text = str(text)
         return mtext
 
-    def add_mtext_static_columns(self, content: Iterable[str],
-                                 width: float,
-                                 gutter_width: float,
-                                 height: float,
-                                 dxfattribs: Dict = None) -> 'MText':
+    def add_mtext_static_columns(
+            self, content: Iterable[str],
+            width: float, gutter_width: float, height: float,
+            dxfattribs: Dict = None) -> 'MText':
+        """ Add a multiline text entity with static columns as
+        :class:`~ezdxf.entities.MText` entity. The content is spread
+        across the columns, the count of content strings determine the count
+        of columns.
+
+        This factory method adds automatically a column break ``\\N`` at the
+        end of each column text to force a new column.
+        The `height` attribute should be big enough to reserve enough space for
+        the tallest column. Too small values produce valid DXF files, but the
+        visual result will not be as expected. The `height` attribute also
+        defines the total height of the MTEXT entity.
+
+        (requires DXF R2000)
+
+        Args:
+            content: iterable of column content
+            width: column width
+            gutter_width: distance between columns
+            height: max. column height
+            dxfattribs: additional DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
         dxfversion = self.dxfversion
         if dxfversion < DXF2000:
             raise DXFVersionError('MTEXT requires DXF R2000')
         content = list(content)
         if dxfversion < const.DXF2018:
-            mtext = make_static_columns(
+            mtext = make_static_columns_r2000(
                 content, width, gutter_width, height, dxfattribs)
         else:
             mtext = make_static_columns_r2018(
                 content, width, gutter_width, height, dxfattribs)
-        self.doc.entitydb.add(mtext)
+        if self.doc:
+            self.doc.entitydb.add(mtext)
+        self.add_entity(mtext)
+        return mtext
+
+    def add_mtext_dynamic_auto_height_columns(
+            self, content: str,
+            width: float, gutter_width: float, height: float, count: int,
+            dxfattribs: Dict = None) -> 'MText':
+        """ DO NOT USE THIS INTERFACE IN PRODUCTION CODE!
+
+        Without a usable MTEXT rendering engine is this interface useless,
+        the main goal is to get the column count from the content, which
+        requires an exact MTEXT rendering like AutoCAD/BricsCAD.
+
+        (requires DXF R2000)
+
+        Args:
+            content: column content as a single string
+            width: column width
+            gutter_width: distance between columns
+            height: max. column height
+            count: expected column count
+            dxfattribs: additional DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
+        dxfversion = self.dxfversion
+        if dxfversion < DXF2000:
+            raise DXFVersionError('MTEXT requires DXF R2000')
+        if dxfversion < const.DXF2018:
+            mtext = make_dynamic_auto_height_columns_r2000(
+                content, width, gutter_width, height, count, dxfattribs)
+        else:
+            mtext = make_dynamic_auto_height_columns_r2018(
+                content, width, gutter_width, height, count, dxfattribs)
+        if self.doc:
+            self.doc.entitydb.add(mtext)
+        self.add_entity(mtext)
+        return mtext
+
+    def add_mtext_dynamic_manual_height_columns(
+            self, content: str,
+            width: float, gutter_width: float, heights: Sequence[float],
+            dxfattribs: Dict = None) -> 'MText':
+        """ Add a multiline text entity with dynamic columns as
+        :class:`~ezdxf.entities.MText` entity. The content is spread
+        across the columns automatically by the CAD application.
+        The `heights` sequence determine the height of the columns, except for
+        the last column, which always takes the remaining content. The height
+        value for the last column is required but can be 0, because the value
+        is ignored. The count of `heights` also determines the count of columns,
+        and :code:`max(heights)` defines the total height of the MTEXT entity,
+        which may be wrong if the last column requires more space.
+
+        (requires DXF R2000)
+
+        Args:
+            content: column content as a single string
+            width: column width
+            gutter_width: distance between columns
+            heights: column height for each column
+            dxfattribs: additional DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
+        # The current implementation work well for R2018.
+        #
+        # For the prior DXF versions the current implementation puts the whole
+        # content into the first (main) column.
+        # This works for AutoCAD and BricsCAD, both collect the content from
+        # the linked MTEXT columns and the main column and do their own MTEXT
+        # rendering - DO trust the DXF content!
+        # The drawing add-on will fail at this until a usable MTEXT renderer
+        # is implemented. For now the drawing add-on renders the main MTEXT and
+        # the linked MTEXT columns as standalone MTEXT entities, and all content
+        # is stored in the main MTEXT entity.
+        # For the same reason the R2018 MTEXT rendering is not correct.
+        # In DXF R2018 the MTEXT entity is a single entity without linked
+        # MTEXT columns and the content is a single string, which has to be
+        # parsed, rendered and distributed across the columns by the
+        # CAD application itself.
+
+        dxfversion = self.dxfversion
+        if dxfversion < DXF2000:
+            raise DXFVersionError('MTEXT requires DXF R2000')
+        if dxfversion < const.DXF2018:
+            mtext = make_dynamic_manual_height_columns_r2000(
+                content, width, gutter_width, heights, dxfattribs)
+        else:
+            mtext = make_dynamic_manual_height_columns_r2018(
+                content, width, gutter_width, heights, dxfattribs)
+        if self.doc:
+            self.doc.entitydb.add(mtext)
         self.add_entity(mtext)
         return mtext
 

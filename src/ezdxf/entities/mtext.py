@@ -268,16 +268,16 @@ class MTextColumns:
 
     @classmethod
     def new_dynamic_manual_height_columns(
-            cls, count: int, width: float, gutter_width: float,
+            cls, width: float, gutter_width: float,
             heights: Iterable[float]) -> 'MTextColumns':
         columns = cls()
         columns.column_type = ColumnType.DYNAMIC
         columns.auto_height = False
-        columns.count = int(count)
         columns.width = float(width)
         columns.gutter_width = float(gutter_width)
         columns.defined_height = 0.0
         columns.heights = list(heights)
+        columns.count = len(columns.heights)
         columns.update_total_width()
         columns.update_total_height()
         return columns
@@ -584,14 +584,16 @@ class MText(DXFGraphic):
         self._columns: Optional[MTextColumns] = None
 
     @property
-    def columns(self) -> MTextColumns:
+    def columns(self) -> Optional[MTextColumns]:
+        """ Library users can read the column configuration, but should not
+        change it in any way!!!
+
+        """
         return self._columns
 
     def _copy_data(self, entity: 'MText') -> None:
         entity.text = self.text
         if self._columns:
-            # TODO: Acquire handles for the linked columns if adding the main
-            #  column to the entity database.
             # copies also the linked MTEXT column entities!
             entity._columns = self._columns.copy()
 
