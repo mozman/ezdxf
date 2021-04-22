@@ -13,7 +13,7 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2018
-from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.types import DXFTag, dxftag
 from ezdxf.lldxf.tags import (
     Tags, find_begin_and_end_of_encoded_xdata_tags, NotFoundException,
 )
@@ -238,6 +238,50 @@ class MTextColumns:
         columns.heights = list(self.heights)
         return columns
 
+    @classmethod
+    def new_static_columns(cls, count: int, width: float, gutter_width: float,
+                           height: float) -> 'MTextColumns':
+        columns = cls()
+        columns.column_type = ColumnType.STATIC
+        columns.count = int(count)
+        columns.width = float(width)
+        columns.gutter_width = float(gutter_width)
+        columns.defined_height = float(height)
+        columns.update_total_width()
+        columns.update_total_height()
+        return columns
+
+    @classmethod
+    def new_dynamic_auto_height_columns(
+            cls, count: int, width: float, gutter_width: float,
+            height: float) -> 'MTextColumns':
+        columns = cls()
+        columns.column_type = ColumnType.DYNAMIC
+        columns.auto_height = True
+        columns.count = int(count)
+        columns.width = float(width)
+        columns.gutter_width = float(gutter_width)
+        columns.defined_height = float(height)
+        columns.update_total_width()
+        columns.update_total_height()
+        return columns
+
+    @classmethod
+    def new_dynamic_manual_height_columns(
+            cls, count: int, width: float, gutter_width: float,
+            heights: Iterable[float]) -> 'MTextColumns':
+        columns = cls()
+        columns.column_type = ColumnType.DYNAMIC
+        columns.auto_height = False
+        columns.count = int(count)
+        columns.width = float(width)
+        columns.gutter_width = float(gutter_width)
+        columns.defined_height = 0.0
+        columns.heights = list(heights)
+        columns.update_total_width()
+        columns.update_total_height()
+        return columns
+
     def update_total_width(self):
         count = self.count
         if count > 0:
@@ -245,6 +289,12 @@ class MTextColumns:
                                (count - 1) * self.gutter_width
         else:
             self.total_width = 0.0
+
+    def update_total_height(self):
+        if self.has_dynamic_manual_height:
+            self.total_height = max(self.heights)
+        else:
+            self.total_height = self.defined_height
 
     @property
     def has_dynamic_auto_height(self) -> bool:
@@ -658,8 +708,8 @@ class MText(DXFGraphic):
 
         tagwriter.write_tag2(101, 'Embedded Object')
         tagwriter.write_tag2(70, 1)  # unknown meaning
-        tagwriter.write_tag(DXFTag(10, dxf.text_direction))
-        tagwriter.write_tag(DXFTag(11, dxf.insert))
+        tagwriter.write_tag(dxftag(10, dxf.text_direction))
+        tagwriter.write_tag(dxftag(11, dxf.insert))
         tagwriter.write_tag2(40, dxf.width)  # repeated reference column width
         tagwriter.write_tag2(41, cols.defined_height)
         tagwriter.write_tag2(42, cols.total_width)
