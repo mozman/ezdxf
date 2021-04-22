@@ -62,6 +62,7 @@ from .lwpolyline import LWPolyline
 from .ellipse import Ellipse
 from .xline import XLine, Ray
 from .mtext import MText
+from .mtext_columns import *
 from .spline import Spline
 from .mesh import Mesh, MeshData
 from .hatch import (

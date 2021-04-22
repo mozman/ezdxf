@@ -8,7 +8,9 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
 from ezdxf.math import Vec3, global_bspline_interpolation, fit_points_to_cad_cv
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities import factory
+from ezdxf.entities import (
+    factory, make_static_columns, make_static_columns_r2018
+)
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
 
@@ -534,6 +536,25 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         mtext: 'MText' = self.new_entity('MTEXT', dxfattribs)
         mtext.text = str(text)
+        return mtext
+
+    def add_mtext_static_columns(self, content: Iterable[str],
+                                 width: float,
+                                 gutter_width: float,
+                                 height: float,
+                                 dxfattribs: Dict = None) -> 'MText':
+        dxfversion = self.dxfversion
+        if dxfversion < DXF2000:
+            raise DXFVersionError('MTEXT requires DXF R2000')
+        content = list(content)
+        if dxfversion < const.DXF2018:
+            mtext = make_static_columns(
+                content, width, gutter_width, height, dxfattribs)
+        else:
+            mtext = make_static_columns_r2018(
+                content, width, gutter_width, height, dxfattribs)
+        self.doc.entitydb.add(mtext)
+        self.add_entity(mtext)
         return mtext
 
     def add_ray(self, start: 'Vertex', unit_vector: 'Vertex',
