@@ -506,7 +506,7 @@ class TestPreprocessDXFExport:
 
     def test_fail_for_invalid_column_count(self):
         mtext = new_mtext_with_linked_columns(3)
-        mtext.columns.count = 4
+        mtext._columns.count = 4
         assert mtext.preprocess_export(self.collector) is False
 
     def test_fail_for_destroyed_columns(self):
@@ -519,8 +519,8 @@ class TestGetColumnContent:
     def new_mtext(self):
         mtext = new_mtext_with_linked_columns(3)
         mtext.text = "Line1\\PLine2\\P"
-        mtext.columns.linked_columns[0].text = "Line3\\PLine4\\P"
-        mtext.columns.linked_columns[1].text = "Line5\\PLine6\\P"
+        mtext._columns.linked_columns[0].text = "Line3\\PLine4\\P"
+        mtext._columns.linked_columns[1].text = "Line5\\PLine6\\P"
         return mtext
 
     def test_get_raw_content_of_all_columns(self):

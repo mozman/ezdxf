@@ -222,7 +222,12 @@ class MTextColumns:
         # R2018+: heights of all columns if auto_height is False
         self.heights: List[float] = []
 
-    def copy(self) -> 'MTextColumns':
+    def deep_copy(self) -> 'MTextColumns':
+        columns = self.shallow_copy()
+        columns.linked_columns = [mtext.copy() for mtext in self.linked_columns]
+        return columns
+
+    def shallow_copy(self) -> 'MTextColumns':
         columns = MTextColumns()
         columns.count = self.count
         columns.column_type = self.column_type
@@ -233,8 +238,7 @@ class MTextColumns:
         columns.gutter_width = self.gutter_width
         columns.total_width = self.total_width
         columns.total_height = self.total_height
-        # DXF R2018+: linked_columns is an empty list!
-        columns.linked_columns = [mtext.copy() for mtext in self.linked_columns]
+        columns.linked_columns = list(self.linked_columns)
         columns.heights = list(self.heights)
         return columns
 
@@ -585,17 +589,16 @@ class MText(DXFGraphic):
 
     @property
     def columns(self) -> Optional[MTextColumns]:
-        """ Library users can read the column configuration, but should not
-        change it in any way!!!
-
-        """
-        return self._columns
+        """ Returns a copy of the column configuration. """
+        # The column configuration is deliberately not editable.
+        # Can't prevent access to _columns, but you are on your own if do this!
+        return self._columns.shallow_copy() if self._columns else None
 
     def _copy_data(self, entity: 'MText') -> None:
         entity.text = self.text
         if self._columns:
             # copies also the linked MTEXT column entities!
-            entity._columns = self._columns.copy()
+            entity._columns = self._columns.deep_copy()
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -1005,7 +1008,7 @@ class MText(DXFGraphic):
             return
 
         if self._columns:
-            for column in self.columns.linked_columns:
+            for column in self._columns.linked_columns:
                 column.destroy()
 
         del self._columns
@@ -1080,6 +1083,6 @@ class MText(DXFGraphic):
         if not has_style:
             self.dxf.style = 'Standard'
 
-        if self.columns:
-            for column in self.columns.linked_columns:
+        if self._columns:
+            for column in self._columns.linked_columns:
                 column.remove_dependencies(other)

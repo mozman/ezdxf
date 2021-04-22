@@ -34,7 +34,7 @@ def make_static_columns_r2000(
     mtext.setup_columns(columns, linked=True)
     content = list(add_column_breaks(content))
     mtext.text = content[0]
-    for mt, c in zip(mtext.columns.linked_columns, content[1:]):
+    for mt, c in zip(columns.linked_columns, content[1:]):
         mt.text = c
     return mtext
 
