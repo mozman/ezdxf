@@ -1,9 +1,9 @@
-# Created: 25.03.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2019, Manfred Moitzi
+# Copyright (C) 2011-2021, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
 from ezdxf.entities.dxfgfx import DXFGraphic
+from ezdxf.entities.dxfentity import DXFTagStorage
 
 
 @pytest.fixture(scope='module')
@@ -40,6 +40,27 @@ def test_delete_polyline3d(msp):
 
     db.purge()
     assert len(db) == db_count
+
+
+def test_unlink_unsupported_entity(msp):
+    size = len(msp)
+    alien = DXFTagStorage.new()
+    msp.add_entity(alien)
+    assert alien.dxf.handle is not None
+    assert alien.dxf.owner is None
+    assert len(msp) == size + 1
+    msp.unlink_entity(alien)
+    assert len(msp) == size
+    assert alien.is_alive is True
+
+
+def test_delete_unsupported_entity(msp):
+    size = len(msp)
+    alien = DXFTagStorage.new()
+    msp.add_entity(alien)
+    msp.delete_entity(alien)
+    assert len(msp) == size
+    assert alien.is_alive is False
 
 
 def test_create_line(msp):

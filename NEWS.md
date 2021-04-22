@@ -10,6 +10,7 @@ Version 0.16.2 - dev
 - CHANGED: `$FINGERPRINTGUID` matches AutoCAD pattern `{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}`
 - CHANGED: `$VERSIONGUID` matches AutoCAD pattern `{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}`
 - BUGFIX: check for degenerated Bézier curves in `have_bezier_curves_g1_continuity()`
+- BUGFIX: delete and unlink support for DXFTagStorage (unsupported entities)
 
 Version 0.16.1 - 2021-04-10
 ---------------------------
