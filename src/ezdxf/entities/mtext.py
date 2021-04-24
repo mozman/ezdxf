@@ -310,7 +310,7 @@ class MTextColumns:
 
     def link_columns(self, doc: 'Drawing'):
         # DXF R2018+ has no linked MTEXT entities.
-        if doc.dxfversion < DXF2018 or not self.linked_handles:
+        if doc.dxfversion >= DXF2018 or not self.linked_handles:
             return
         db = doc.entitydb
         assert db is not None, "entity database not initialized"
