@@ -92,10 +92,11 @@ class Frontend:
             'MESH': self.draw_mesh_entity,
             'VIEWPORT': self.draw_viewport_entity,
             'WIPEOUT': self.draw_wipeout_entity,
+            'MTEXT': self.draw_mtext_entity,
         }
         for dxftype in ('LINE', 'XLINE', 'RAY'):
             dispatch_table[dxftype] = self.draw_line_entity
-        for dxftype in ('TEXT', 'MTEXT', 'ATTRIB', 'ATTDEF'):
+        for dxftype in ('TEXT', 'ATTRIB', 'ATTDEF'):
             dispatch_table[dxftype] = self.draw_text_entity
         for dxftype in ('CIRCLE', 'ARC', 'ELLIPSE', 'SPLINE'):
             dispatch_table[dxftype] = self.draw_curve_entity
@@ -209,22 +210,55 @@ class Frontend:
     def draw_text_entity_2d(self, entity: DXFGraphic,
                             properties: Properties) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
-        if dxftype in ('TEXT', 'MTEXT', 'ATTRIB', 'ATTDEF'):
-            entity = cast(Union[Text, MText, Attrib, AttDef], entity)
+        if dxftype in ('TEXT', 'ATTRIB', 'ATTDEF'):
+            entity = cast(Union[Text, Attrib, AttDef], entity)
             for line, transform, cap_height in simplified_text_chunks(
                     entity, self.out, font=properties.font):
                 self.out.draw_text(line, transform, properties, cap_height)
-            if dxftype == 'MTEXT' and entity.has_columns:
-                entity = cast('MText', entity)
-                for mtext in entity.columns.linked_columns:
-                    assert mtext.is_alive
-                    self.draw_text_entity_2d(mtext, properties)
         else:
             raise TypeError(dxftype)
 
     def draw_text_entity_3d(self, entity: DXFGraphic,
                             properties: Properties) -> None:
         self.skip_entity(entity, '3D text not supported')
+
+    def draw_mtext_entity(self, mtext: 'MText',
+                          properties: Properties) -> None:
+        if is_spatial_text(Vec3(mtext.dxf.extrusion)):
+            self.skip_entity(mtext, '3D MTEXT not supported')
+            return
+        if mtext.has_columns:
+            columns = mtext.columns
+            if len(columns.linked_columns):
+                has_linked_content = any(c.text for c in columns.linked_columns)
+                if has_linked_content:
+                    # Column content is spread across multiple MTEXT entities.
+                    # For now we trust the DXF creator that each MTEXT entity
+                    # has exact the required column content.
+                    # This is not granted and AutoCAD/BricsCAD do the column
+                    # content distribution always by themself!
+                    self.draw_mtext_column(mtext, properties)
+                    for column in mtext.columns.linked_columns:
+                        self.draw_mtext_column(column, properties)
+                    return
+            self.distribute_mtext_columns_content(mtext, properties)
+        else:
+            self.draw_mtext_column(mtext, properties)
+
+    def distribute_mtext_columns_content(self, mtext: MText,
+                                         properties: Properties):
+        """ Distribute the content of the MTEXT entity across multiple columns
+        """
+        # TODO: complex MTEXT renderer
+        self.draw_mtext_column(mtext, properties)
+
+    def draw_mtext_column(self, mtext: MText,
+                          properties: Properties) -> None:
+        """ Draw the content of a MTEXT entity as a single column. """
+        # TODO: complex MTEXT renderer
+        for line, transform, cap_height in simplified_text_chunks(
+                mtext, self.out, font=properties.font):
+            self.out.draw_text(line, transform, properties, cap_height)
 
     def draw_curve_entity(self, entity: DXFGraphic,
                           properties: Properties) -> None:

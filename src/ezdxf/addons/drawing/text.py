@@ -280,6 +280,10 @@ def simplified_text_chunks(text: AnyText, out: Backend,
     cap_height with (left, baseline) at (0, 0) then transform it with the given
     matrix to move it into place.
     """
+    # TODO: if MTEXT has its own renderer, this function can be simplified to
+    #  render just a single line for TEXT, ATTRIB, ATTDEF.
+    #  MTEXT rendering will slower, but rendering of single-line entities
+    #  will be faster.
     alignment = _get_alignment(text)
     box_width = _get_text_width(text)
 
