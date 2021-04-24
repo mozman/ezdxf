@@ -1,24 +1,26 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Iterable, cast
+from pathlib import Path
 import pytest
 import ezdxf
 from ezdxf import recover
 from ezdxf.entities import MText
 
-COLUMNS_R2007 = 'data/mtext_columns_R2007.dxf'
-COLUMNS_R2018 = 'data/mtext_columns_R2018.dxf'
+DATA = Path(__file__).parent / 'data'
+COLUMNS_R2007 = 'mtext_columns_R2007.dxf'
+COLUMNS_R2018 = 'mtext_columns_R2018.dxf'
 
 
 def load_mtext_entities(name: str) -> Iterable[MText]:
-    doc = ezdxf.readfile(name)
+    doc = ezdxf.readfile(DATA / name)
     msp = doc.modelspace()
     entities = msp.query('MTEXT')
     return entities
 
 
 def recover_mtext_entities(name: str) -> Iterable[MText]:
-    doc, auditor = recover.readfile(name)
+    doc, auditor = recover.readfile(DATA / name)
     msp = doc.modelspace()
     entities = msp.query('MTEXT')
     return entities

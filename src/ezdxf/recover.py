@@ -6,6 +6,7 @@ from typing import (
 import itertools
 import re
 from collections import defaultdict
+from pathlib import Path
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf import repair
@@ -32,7 +33,7 @@ EXCLUDE_STRUCTURE_CHECK = {
 }
 
 
-def readfile(filename: str,
+def readfile(filename: Union[str, Path],
              errors: str = 'surrogateescape') -> Tuple['Drawing', 'Auditor']:
     """ Read a DXF document from file system similar to :func:`ezdxf.readfile`,
     but this function will repair as much flaws as possible, runs the required
@@ -51,6 +52,7 @@ def readfile(filename: str,
         UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
+    filename = str(filename)
     with open(filename, mode='rb') as fp:
         doc, auditor = read(fp, errors=errors)
     doc.filename = filename
@@ -81,7 +83,7 @@ def read(stream: BinaryIO,
     return _load_and_audit_document(recover_tool)
 
 
-def explore(filename: str,
+def explore(filename: Union[str, Path],
             errors: str = 'ignore') -> Tuple['Drawing', 'Auditor']:
     """ Read a DXF document from file system similar to :func:`readfile`,
     but this function will use a special tag loader, which synchronise the tag
@@ -104,6 +106,7 @@ def explore(filename: str,
     .. versionadded: 0.15
 
     """
+    filename = str(filename)
     with open(filename, mode='rb') as fp:
         recover_tool = Recover.run(fp, errors=errors,
                                    loader=synced_bytes_loader)
