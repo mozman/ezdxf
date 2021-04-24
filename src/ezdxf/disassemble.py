@@ -364,8 +364,15 @@ class MTextPrimitive(ConvertedPrimitive):
             """ Create corner vertices in the local working plan, where
             the insertion point is the origin.
             """
-            rect_width = mtext.dxf.get('rect_width', get_rect_width())
-            rect_height = mtext.dxf.get('rect_height', get_rect_height())
+            if columns:
+                rect_width = columns.total_width
+                rect_height = columns.total_height
+                # TODO: this works only for reliable sources like AutoCAD,
+                #  BricsCAD and ezdxf! So far no known column support from
+                #  other DXF exporters.
+            else:
+                rect_width = mtext.dxf.get('rect_width', get_rect_width())
+                rect_height = mtext.dxf.get('rect_height', get_rect_height())
             # TOP LEFT alignment:
             vertices = [
                 Vec3(0, 0),
@@ -378,14 +385,16 @@ class MTextPrimitive(ConvertedPrimitive):
             return (v + shift for v in vertices)
 
         mtext: "MText" = cast("MText", self.entity)
-        box_width = mtext.dxf.get('width', 0)
-        font = fonts.make_font(get_font_name(mtext), mtext.dxf.char_height, 1.0)
-
-        content: List[str] = get_content()
-        if len(content) == 0:
-            # empty path - does not render any vertices!
-            self._path = Path()
-            return
+        columns = mtext.columns
+        if columns is None:
+            box_width = mtext.dxf.get('width', 0)
+            font = fonts.make_font(get_font_name(mtext), mtext.dxf.char_height,
+                                   1.0)
+            content: List[str] = get_content()
+            if len(content) == 0:
+                # empty path - does not render any vertices!
+                self._path = Path()
+                return
         ucs = get_ucs()
         corner_vertices = get_corner_vertices()
         self._path = from_vertices(

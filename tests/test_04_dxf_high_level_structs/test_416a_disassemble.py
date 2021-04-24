@@ -225,6 +225,22 @@ def test_mtext_to_primitive():
     assert len(list(p.vertices())) == 5, "expected closed box"
 
 
+def test_mtext_columns_to_primitive():
+    from ezdxf.entities.mtext import MTextColumns
+    mtext = factory.new('MTEXT')
+    mtext._columns = MTextColumns.new_static_columns(3, 10, 1, 15)
+    p = disassemble.make_primitive(mtext)
+    assert p.is_empty is False
+    assert p.path is not None
+    assert p.mesh is None
+    vertices = list(p.vertices())
+    assert len(vertices) == 5, "expected closed box"
+    assert vertices[0].isclose((0, 0))
+    assert vertices[1].isclose((32, 0))
+    assert vertices[2].isclose((32, -15))
+    assert vertices[3].isclose((0, -15))
+
+
 def test_make_primitive_for_hatch_is_empty():
     hatch = factory.new('HATCH')
     # make_primitive() returns an empty primitive, because a HATCH entity can
