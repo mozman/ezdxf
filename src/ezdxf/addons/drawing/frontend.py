@@ -214,6 +214,11 @@ class Frontend:
             for line, transform, cap_height in simplified_text_chunks(
                     entity, self.out, font=properties.font):
                 self.out.draw_text(line, transform, properties, cap_height)
+            if dxftype == 'MTEXT' and entity.has_columns:
+                entity = cast('MText', entity)
+                for mtext in entity.columns.linked_columns:
+                    assert mtext.is_alive
+                    self.draw_text_entity_2d(mtext, properties)
         else:
             raise TypeError(dxftype)
 

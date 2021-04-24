@@ -594,9 +594,13 @@ class MText(DXFGraphic):
         # Can't prevent access to _columns, but you are on your own if do this!
         return self._columns.shallow_copy() if self._columns else None
 
+    @property
+    def has_columns(self) -> bool:
+        return self._columns is not None
+
     def _copy_data(self, entity: 'MText') -> None:
         entity.text = self.text
-        if self._columns:
+        if self.has_columns:
             # copies also the linked MTEXT column entities!
             entity._columns = self._columns.deep_copy()
 
@@ -627,7 +631,7 @@ class MText(DXFGraphic):
                     mtext.dxf.owner = None
 
         super().post_load_hook(doc)
-        if self._columns:
+        if self.has_columns:
             # Link columns, one MTEXT entity for each column, to the main MTEXT
             # entity (DXF version <R2018).
             self._columns.link_columns(doc)
@@ -657,7 +661,7 @@ class MText(DXFGraphic):
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         super().export_dxf(tagwriter)
         # Linked MTEXT entities are not stored in the layout entity space!
-        if self._columns and tagwriter.dxfversion < const.DXF2018:
+        if self.has_columns and tagwriter.dxfversion < const.DXF2018:
             self.export_linked_entities(tagwriter)
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -931,7 +935,7 @@ class MText(DXFGraphic):
         dxf.insert = m.transform(dxf.insert)
         dxf.text_direction = new_text_direction
         dxf.extrusion = new_extrusion
-        if self._columns:
+        if self.has_columns:
             hscale = m.transform_direction(
                 old_text_direction.normalize()).magnitude
             vscale = m.transform_direction(
@@ -963,14 +967,14 @@ class MText(DXFGraphic):
 
         def merged_content():
             content = [plain_mtext(self.text, split=False)]
-            if self._columns:
+            if self.has_columns:
                 for c in self._columns.linked_columns:
                     content.append(c.plain_text(split=False))
             return "".join(content)
 
         def split_content():
             content = plain_mtext(self.text, split=True)
-            if self._columns:
+            if self.has_columns:
                 if content and content[-1] == "":
                     content.pop()
                 for c in self._columns.linked_columns:
@@ -992,14 +996,21 @@ class MText(DXFGraphic):
 
         """
         content = [self.text]
-        if self._columns:
+        if self.has_columns:
             for column in self._columns.linked_columns:
                 content.append(column.text)
         return "".join(content)
 
     def audit(self, auditor: 'Auditor'):
         """ Validity check. """
-        super().audit(auditor)
+        if not self.is_alive:
+            return
+        if self.dxf.owner is not None:
+            # Kills linked columns, because owner (None) does not exist!
+            super().audit(auditor)
+        else:  # linked columns: owner is None
+            # TODO: special audit for linked columns
+            pass
         auditor.check_text_style(self)
         # TODO: audit column structure
 
@@ -1007,7 +1018,7 @@ class MText(DXFGraphic):
         if not self.is_alive:
             return
 
-        if self._columns:
+        if self.has_columns:
             for column in self._columns.linked_columns:
                 column.destroy()
 
@@ -1043,7 +1054,7 @@ class MText(DXFGraphic):
         assert columns.width > 0, "column width has to be > 0"
         assert columns.gutter_width >= 0, "gutter width has to be >= 0"
 
-        if self._columns:
+        if self.has_columns:
             raise const.DXFStructureError('Column setup already exist.')
         self._columns = columns
         self.dxf.width = columns.width
@@ -1083,6 +1094,6 @@ class MText(DXFGraphic):
         if not has_style:
             self.dxf.style = 'Standard'
 
-        if self._columns:
+        if self.has_columns:
             for column in self._columns.linked_columns:
                 column.remove_dependencies(other)
