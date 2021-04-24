@@ -523,7 +523,7 @@ def is_text_vertical_stacked(text: 'DXFEntity') -> bool:
     return False
 
 
-class MTextFormatter:
+class MTextEditor:
     def __init__(self, text: str = ""):
         self.text = str(text)
 
@@ -543,16 +543,16 @@ class MTextFormatter:
     GROUP = GROUP_START + '%s' + GROUP_END
     NBSP = r'\~'  # non breaking space
 
-    def append(self, text: str) -> 'MTextFormatter':
+    def append(self, text: str) -> 'MTextEditor':
         self.text += text
         return self
 
-    def __iadd__(self, text: str) -> 'MTextFormatter':
+    def __iadd__(self, text: str) -> 'MTextEditor':
         self.text += text
         return self
 
     def change_font(self, name: str, bold: bool = False, italic: bool = False,
-                    codepage: str = '1252', pitch: int = 0) -> 'MTextFormatter':
+                    codepage: str = '1252', pitch: int = 0) -> 'MTextEditor':
         """ Append font change (e.g. ``'\\Fkroeger|b0|i0|c238|p10'`` ) to
         existing content (:attr:`text` attribute).
 
@@ -567,7 +567,7 @@ class MTextFormatter:
         s = rf"\F{name}|b{int(bold)}|i{int(italic)}|c{codepage}|p{pitch};"
         return self.append(s)
 
-    def change_color(self, color_name: str) -> 'MTextFormatter':
+    def change_color(self, color_name: str) -> 'MTextEditor':
         """ Append text color change to existing content, `color_name` as
         ``red``, ``yellow``, ``green``, ``cyan``, ``blue``, ``magenta`` or
         ``white``.
@@ -575,7 +575,7 @@ class MTextFormatter:
         """
         return self.append(r"\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
 
-    def stacked_text(self, upr: str, lwr: str, t: str = '^') -> 'MTextFormatter':
+    def stacked_text(self, upr: str, lwr: str, t: str = '^') -> 'MTextEditor':
         r""" Add stacked text `upr` over `lwr`, `t` defines the
         kind of stacking:
 

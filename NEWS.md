@@ -5,11 +5,11 @@ News
 Version 0.16.3 - dev
 --------------------
 
-- NEW: `ezdxf.tools.text.MTextFormatter` class, extracted from the `MText` class
-- CHANGE: move `MText` constants to `MTextFormatter` class
-- CHANGE: move `MText.set_font()` to `MTextFormatter.change_font()`
-- CHANGE: move `MText.set_color()` to `MTextFormatter.change_color()`
-- CHANGE: move `MText.append_stacked_text()` to `MTextFormatter.stacked_text()`
+- NEW: `ezdxf.tools.text.MTextEditor` class, extracted from the `MText` class
+- CHANGE: move `MText` constants to `MTextEditor` class
+- CHANGE: move `MText.set_font()` to `MTextEditor.change_font()`
+- CHANGE: move `MText.set_color()` to `MTextEditor.change_color()`
+- CHANGE: move `MText.append_stacked_text()` to `MTextEditor.stacked_text()`
 
 Version 0.16.2 - 2021-04-21
 ---------------------------
