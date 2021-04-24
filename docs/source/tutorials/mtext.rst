@@ -3,8 +3,9 @@
 Tutorial for MText
 ==================
 
-The :class:`~ezdxf.entities.MText` entity is a multi line entity with extended formatting possibilities
-and requires at least DXF version R2000, to use all features (e.g. background fill) DXF R2007 is required.
+The :class:`~ezdxf.entities.MText` entity is a multi line entity with extended
+formatting possibilities and requires at least DXF version R2000, to use all
+features (e.g. background fill) DXF R2007 is required.
 
 Prolog code:
 
@@ -78,20 +79,23 @@ MTEXT_BOTTOM_CENTER            8
 MTEXT_BOTTOM_RIGHT             9
 ============================== =======
 
-The MText entity has a method for setting :attr:`insert`, :attr:`attachment_point` and :attr:`rotation` attributes
+The MText entity has a method for setting :attr:`insert`,
+:attr:`attachment_point` and :attr:`rotation` attributes
 by one call: :meth:`~ezdxf.entities.MText.set_location`
 
 Character height
 ----------------
 
-The character height is defined by the DXF attribute :attr:`MText.dxf.char_height` in drawing units, which
+The character height is defined by the DXF attribute
+:attr:`MText.dxf.char_height` in drawing units, which
 has also consequences for the line spacing of the MText entity:
 
 .. code-block:: python
 
     mtext.dxf.char_height = 0.5
 
-The character height can be changed inline, see also :ref:`mtext_formatting` and :ref:`mtext_inline_codes`.
+The character height can be changed inline, see also :ref:`mtext_formatting`
+and :ref:`mtext_inline_codes`.
 
 Text rotation (direction)
 -------------------------
@@ -148,12 +152,6 @@ MText also supports stacked text:
 
 
 .. image:: gfx/mtext_stacked.png
-
-Available helper function for text formatting:
-
-    - :meth:`~ezdxf.entities.MText.set_color` - append text color change
-    - :meth:`~ezdxf.entities.MText.set_font` - append text font change
-    - :meth:`~ezdxf.entities.MText.add_stacked_text` - append stacked text
 
 Background color (filling)
 --------------------------

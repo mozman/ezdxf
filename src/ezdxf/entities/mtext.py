@@ -566,21 +566,6 @@ class MText(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mtext)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    UNDERLINE_START = r'\L'
-    UNDERLINE_STOP = r'\l'
-    UNDERLINE = UNDERLINE_START + '%s' + UNDERLINE_STOP
-    OVERSTRIKE_START = r'\O'
-    OVERSTRIKE_STOP = r'\o'
-    OVERSTRIKE = OVERSTRIKE_START + '%s' + OVERSTRIKE_STOP
-    STRIKE_START = r'\K'
-    STRIKE_STOP = r'\k'
-    STRIKE = STRIKE_START + '%s' + STRIKE_STOP
-    NEW_LINE = r'\P'
-    GROUP_START = '{'
-    GROUP_END = '}'
-    GROUP = GROUP_START + '%s' + GROUP_END
-    NBSP = r'\~'  # non breaking space
-
     def __init__(self):
         super().__init__()
         self.text: str = ""
@@ -852,57 +837,11 @@ class MText(DXFGraphic):
         return self  # fluent interface
 
     def __iadd__(self, text: str) -> 'MText':
-        """ Append `text` to existing content (:attr:`.text` attribute). """
+        """ Append `text` to existing content (:attr:`text` attribute). """
         self.text += text
         return self
 
     append = __iadd__
-
-    def set_font(self, name: str, bold: bool = False, italic: bool = False,
-                 codepage: int = 1252, pitch: int = 0) -> None:
-        """ Append font change (e.g. ``'\\Fkroeger|b0|i0|c238|p10'`` ) to
-        existing content (:attr:`.text` attribute).
-
-        Args:
-            name: font name
-            bold: flag
-            italic: flag
-            codepage: character codepage
-            pitch: font size
-
-        """
-        s = rf"\F{name}|b{int(bold)}|i{int(italic)}|c{codepage}|p{pitch};"
-        self.append(s)
-
-    def set_color(self, color_name: str) -> None:
-        """ Append text color change to existing content, `color_name` as
-        ``red``, ``yellow``, ``green``, ``cyan``, ``blue``, ``magenta`` or
-        ``white``.
-
-        """
-        self.append(r"\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
-
-    def add_stacked_text(self, upr: str, lwr: str, t: str = '^') -> None:
-        r"""
-        Add stacked text `upr` over `lwr`, `t` defines the kind of stacking:
-
-        .. code-block:: none
-
-            "^": vertical stacked without divider line, e.g. \SA^B:
-                 A
-                 B
-
-            "/": vertical stacked with divider line,  e.g. \SX/Y:
-                 X
-                 -
-                 Y
-
-            "#": diagonal stacked, with slanting divider line, e.g. \S1#4:
-                 1/4
-
-        """
-        # space ' ' in front of {lwr} is important
-        self.append(r'\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
 
     def transform(self, m: Matrix44) -> 'MText':
         """ Transform the MTEXT entity by transformation matrix `m` inplace. """

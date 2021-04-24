@@ -6,8 +6,7 @@ from typing import (
 )
 import re
 import math
-from ezdxf.lldxf import validator
-from ezdxf.lldxf.const import SPECIAL_CHARS_ENCODING
+from ezdxf.lldxf import validator, const
 from ezdxf.math import Vec3, Vec2, Vertex
 from .fonts import FontMeasurements, AbstractFont
 
@@ -246,7 +245,8 @@ def plain_text(text: str) -> str:
                 if len(raw_chars):
                     special_char = raw_chars.pop()
                     # replace or discard formatting code
-                    chars.append(SPECIAL_CHARS_ENCODING.get(special_char, ''))
+                    chars.append(
+                        const.SPECIAL_CHARS_ENCODING.get(special_char, ''))
             else:  # char is just a single '%'
                 chars.append(char)
         else:  # char is what it is, a character
@@ -399,7 +399,8 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
                 if len(raw_chars):
                     special_char = raw_chars.pop()
                     # replace or discard formatting code
-                    chars.append(SPECIAL_CHARS_ENCODING.get(special_char, ""))
+                    chars.append(
+                        const.SPECIAL_CHARS_ENCODING.get(special_char, ""))
             else:  # char is just a single '%'
                 chars.append(char)
         else:  # char is what it is, a character
@@ -520,3 +521,78 @@ def is_text_vertical_stacked(text: 'DXFEntity') -> bool:
         if style:
             return style.is_vertical_stacked
     return False
+
+
+class MTextFormatter:
+    def __init__(self, text: str = ""):
+        self.text = str(text)
+
+    UNDERLINE_START = r'\L'
+    UNDERLINE_STOP = r'\l'
+    UNDERLINE = UNDERLINE_START + '%s' + UNDERLINE_STOP
+    OVERSTRIKE_START = r'\O'
+    OVERSTRIKE_STOP = r'\o'
+    OVERSTRIKE = OVERSTRIKE_START + '%s' + OVERSTRIKE_STOP
+    STRIKE_START = r'\K'
+    STRIKE_STOP = r'\k'
+    STRIKE = STRIKE_START + '%s' + STRIKE_STOP
+    NEW_LINE = r'\P'
+    NEW_COLUMN = r'\N'
+    GROUP_START = '{'
+    GROUP_END = '}'
+    GROUP = GROUP_START + '%s' + GROUP_END
+    NBSP = r'\~'  # non breaking space
+
+    def append(self, text: str) -> 'MTextFormatter':
+        self.text += text
+        return self
+
+    def __iadd__(self, text: str) -> 'MTextFormatter':
+        self.text += text
+        return self
+
+    def change_font(self, name: str, bold: bool = False, italic: bool = False,
+                    codepage: str = '1252', pitch: int = 0) -> 'MTextFormatter':
+        """ Append font change (e.g. ``'\\Fkroeger|b0|i0|c238|p10'`` ) to
+        existing content (:attr:`text` attribute).
+
+        Args:
+            name: font name
+            bold: flag
+            italic: flag
+            codepage: character codepage
+            pitch: font size
+
+        """
+        s = rf"\F{name}|b{int(bold)}|i{int(italic)}|c{codepage}|p{pitch};"
+        return self.append(s)
+
+    def change_color(self, color_name: str) -> 'MTextFormatter':
+        """ Append text color change to existing content, `color_name` as
+        ``red``, ``yellow``, ``green``, ``cyan``, ``blue``, ``magenta`` or
+        ``white``.
+
+        """
+        return self.append(r"\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
+
+    def stacked_text(self, upr: str, lwr: str, t: str = '^') -> 'MTextFormatter':
+        r""" Add stacked text `upr` over `lwr`, `t` defines the
+        kind of stacking:
+
+        .. code-block:: none
+
+            "^": vertical stacked without divider line, e.g. \SA^B:
+                 A
+                 B
+
+            "/": vertical stacked with divider line,  e.g. \SX/Y:
+                 X
+                 -
+                 Y
+
+            "#": diagonal stacked, with slanting divider line, e.g. \S1#4:
+                 1/4
+
+        """
+        # space ' ' in front of {lwr} is important
+        return self.append(r'\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
