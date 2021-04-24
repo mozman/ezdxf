@@ -30,7 +30,7 @@ Create a solid hatch with an edge path (ellipse) as boundary path:
 Create hatches with multiple boundary paths (islands)
 -----------------------------------------------------
 
-The DXF atribute :attr:`hatch_style` defines the island detection style:
+The DXF attribute :attr:`hatch_style` defines the island detection style:
 
 === ========================================================
 0   nested - altering filled and unfilled areas
@@ -39,7 +39,7 @@ The DXF atribute :attr:`hatch_style` defines the island detection style:
 === ========================================================
 
 .. literalinclude:: src/hatch/solid_hatch_islands.py
-    :lines: 10-19
+    :lines: 10-21
 
 This is also the result for all 4 paths and :attr:`hatch_style` set to ``2`` (ignore).
 
@@ -47,7 +47,7 @@ This is also the result for all 4 paths and :attr:`hatch_style` set to ``2`` (ig
     :align: center
 
 .. literalinclude:: src/hatch/solid_hatch_islands.py
-    :lines: 23-24
+    :lines: 25-28
 
 This is also the result for all 4 paths and :attr:`hatch_style` set to ``1`` (outer).
 
@@ -55,13 +55,13 @@ This is also the result for all 4 paths and :attr:`hatch_style` set to ``1`` (ou
     :align: center
 
 .. literalinclude:: src/hatch/solid_hatch_islands.py
-    :lines: 28-29
+    :lines: 32-35
 
 .. image:: gfx/hatch-island-03.png
     :align: center
 
 .. literalinclude:: src/hatch/solid_hatch_islands.py
-    :lines: 33-34
+    :lines: 39-42
 
 .. image:: gfx/hatch-island-04.png
     :align: center

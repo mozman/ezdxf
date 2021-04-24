@@ -15,10 +15,10 @@ hatch.paths.add_polyline_path([
     (240, 0, 0),
 ],
     is_closed=1,
-    flags=1,
+    flags=ezdxf.const.BOUNDARY_PATH_EXTERNAL,
 )
 # 2. edge path
-edge_path = hatch.paths.add_edge_path(flags=16)
+edge_path = hatch.paths.add_edge_path(flags=ezdxf.const.BOUNDARY_PATH_OUTERMOST)
 edge_path.add_spline(
     control_points=[
         (126.658105895725, 177.0823706957212),

@@ -185,11 +185,11 @@ class BlockRecord(DXFEntity):
 
         """
         # assign layout
-        if hasattr(entity, 'set_owner'):
+        try:
             entity.set_owner(self.dxf.handle,
                              paperspace=int(self.is_any_paperspace))
-        else:
-            logger.debug('Unexpected entity {}'.format(entity))
+        except AttributeError:
+            logger.debug(f'Unexpected entity {str(entity)}')
         self.entity_space.add(entity)
 
     def unlink_entity(self, entity: 'DXFGraphic') -> None:
@@ -204,7 +204,10 @@ class BlockRecord(DXFEntity):
         """
         if entity.is_alive:
             self.entity_space.remove(entity)
-            entity.set_owner(None)
+            try:
+                entity.set_owner(None)
+            except AttributeError:
+                pass  # unsupported entities as DXFTagStorage
 
     def delete_entity(self, entity: 'DXFGraphic') -> None:
         """ Delete `entity` from BLOCK_RECORD entity space and drawing database.
