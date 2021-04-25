@@ -6,9 +6,11 @@ from typing import (
 )
 import re
 import math
+import enum
 from ezdxf.lldxf import validator, const
 from ezdxf.math import Vec3, Vec2, Vertex
-from .fonts import FontMeasurements, AbstractFont
+from .fonts import FontMeasurements, AbstractFont, FontFace
+from .rgb import rgb2int, RGB
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Text, MText, DXFEntity
@@ -297,12 +299,15 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # \X	Paragraph wrap on the dimension line (only in dimensions)
 # \Q	Slanting (oblique) text by angle - e.g. \Q30;
 # \H	Text height - e.g. \H3x;
-# \W	Text width - e.g. \W0.8x;
+# \W	Text width - e.g. \W0.8;
 # \F	Font selection
+# \f	Font selection
 #
 #     e.g. \Fgdt;o - GDT-tolerance
-#     e.g. \Fkroeger|b0|i0|c238|p10 - font Kroeger, non-bold, non-italic,
+#     e.g. \fkroeger|b0|i0|c238|p10 - font Kroeger, non-bold, non-italic,
 #     codepage 238, pitch 10
+#     codepage 0 = no change
+#     pitch 0 = no change
 #
 # \S	Stacking, fractions
 #
@@ -331,7 +336,10 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 #     \C5; = blue
 #     \C6; = magenta
 #     \C7; = white
-#     RGB color = \c7528479  = 31,224,114 ???
+#     RGB color = \c7528479;  = 31,224,114 ???
+#     \c255; = RED (255, 0, 0)
+#     \c65280; = GREEN (0, 255, 0)
+#     \c16711680; = BLUE (0, 0, 255)
 #     ezdxf.rgb2int((31,224,114)) = 2089074 (r,g,b)
 #     ezdxf.rgb2int((114,224,31)) = 7528479 (b,g,r)
 #
@@ -345,10 +353,11 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # Codes and braces can be nested up to 8 levels deep
 #
 # Column types in BricsCAD:
-#   - dynamic (auto height) - all columns have the same height
-#   - dynamic (manual height) - each columns has an individual height
+#   - dynamic auto height: all columns have the same height
+#   - dynamic manual height: each columns has an individual height
 #   - no columns
-#   - static (?)
+#   - static: all columns have the same height, like dynamic auto height,
+#     difference is only important for user interaction in CAD applications
 #
 # - All columns have the same width and gutter.
 # - Paragraphs do overflow into the next column if required.
@@ -527,20 +536,19 @@ class MTextEditor:
     def __init__(self, text: str = ""):
         self.text = str(text)
 
-    UNDERLINE_START = r'\L'
-    UNDERLINE_STOP = r'\l'
-    UNDERLINE = UNDERLINE_START + '%s' + UNDERLINE_STOP
-    OVERSTRIKE_START = r'\O'
-    OVERSTRIKE_STOP = r'\o'
-    OVERSTRIKE = OVERSTRIKE_START + '%s' + OVERSTRIKE_STOP
-    STRIKE_START = r'\K'
-    STRIKE_STOP = r'\k'
-    STRIKE = STRIKE_START + '%s' + STRIKE_STOP
     NEW_LINE = r'\P'
     NEW_COLUMN = r'\N'
+    UNDERLINE_START = r'\L'
+    UNDERLINE_STOP = r'\l'
+    OVERSTRIKE_START = r'\O'
+    OVERSTRIKE_STOP = r'\o'
+    STRIKE_START = r'\K'
+    STRIKE_STOP = r'\k'
     GROUP_START = '{'
     GROUP_END = '}'
-    GROUP = GROUP_START + '%s' + GROUP_END
+    ALIGN_BOTTOM = r'\A0;'
+    ALIGN_MIDDLE = r'\A1;'
+    ALIGN_TOP = r'\A2;'
     NBSP = r'\~'  # non breaking space
 
     def append(self, text: str) -> 'MTextEditor':
@@ -551,31 +559,64 @@ class MTextEditor:
         self.text += text
         return self
 
-    def change_font(self, name: str, bold: bool = False, italic: bool = False,
-                    codepage: str = '1252', pitch: int = 0) -> 'MTextEditor':
-        """ Append font change (e.g. ``'\\Fkroeger|b0|i0|c238|p10'`` ) to
+    def __str__(self) -> str:
+        return self.text
+
+    def clear(self):
+        self.text = ""
+
+    def font(self, name: str, bold: bool = False,
+             italic: bool = False) -> 'MTextEditor':
+        """ Append font change (e.g. ``'\\fArial|b0|i0|c0|p0'`` ) to
         existing content (:attr:`text` attribute).
 
         Args:
-            name: font name
+            name: font family name
             bold: flag
             italic: flag
-            codepage: character codepage
-            pitch: font size
 
         """
-        s = rf"\F{name}|b{int(bold)}|i{int(italic)}|c{codepage}|p{pitch};"
-        return self.append(s)
+        # c0 = current codepage
+        # The current implementation of ezdxf writes everything in one
+        # encoding, defined by $DWGCODEPAGE < DXF R2007 or utf8 for DXF R2007+
+        # Switching codepage makes no sense!
+        # p0 = current text size
+        # Text size should be changed by \H<factor>x;
+        # TODO: is c0|p0 even required?
+        return self.append(rf"\f{name}|b{int(bold)}|i{int(italic)}|c0|p0;")
 
-    def change_color(self, color_name: str) -> 'MTextEditor':
+    def height_factor(self, factor: float) -> 'MTextEditor':
+        return self.append(rf'\H{round(factor, 3)}x;')
+
+    def width_factor(self, factor: float) -> 'MTextEditor':
+        return self.append(rf'\W{round(factor, 3)};')
+
+    def oblique(self, angle: int) -> 'MTextEditor':
+        return self.append(rf'\Q{int(angle)};')
+
+    def color_name(self, color_name: str) -> 'MTextEditor':
         """ Append text color change to existing content, `color_name` as
         ``red``, ``yellow``, ``green``, ``cyan``, ``blue``, ``magenta`` or
         ``white``.
 
         """
-        return self.append(r"\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
+        return self.append(
+            r"\C%d;" % const.MTEXT_COLOR_INDEX[color_name.lower()])
 
-    def stacked_text(self, upr: str, lwr: str, t: str = '^') -> 'MTextEditor':
+    def aci(self, aci: int) -> 'MTextEditor':
+        """ Append text color change by ACI in range [0, 256].
+        """
+        if 0 <= aci <= 256:
+            return self.append(rf"\C{aci};")
+        else:
+            raise ValueError("aci not in range [0, 256]")
+
+    def rgb(self, rgb: RGB) -> 'MTextEditor':
+        """ Append text color change as RGB values. """
+        r, g, b = rgb
+        return self.append(rf"\c{rgb2int((b, g, r))};")
+
+    def stack(self, upr: str, lwr: str, t: str = '^') -> 'MTextEditor':
         r""" Add stacked text `upr` over `lwr`, `t` defines the
         kind of stacking:
 
@@ -595,4 +636,116 @@ class MTextEditor:
 
         """
         # space ' ' in front of {lwr} is important
-        return self.append(r'\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
+        return self.append(rf'\S{upr}{t} {lwr};')
+
+    def group(self, text: str) -> 'MTextEditor':
+        return self.append(f"{{{text}}}")
+
+    def underline(self, text: str) -> 'MTextEditor':
+        return self.append(rf"\L{text}\l")
+
+    def overline(self, text: str) -> 'MTextEditor':
+        return self.append(rf"\O{text}\o")
+
+    def strike_through(self, text: str) -> 'MTextEditor':
+        return self.append(rf"\K{text}\k")
+
+
+class MTextFlags(enum.IntEnum):  # multiple flags possible
+    UNDERLINE = 1
+    STRIKE = 2
+    OVERSTRIKE = 4
+
+
+class MTextAlign(enum.IntEnum):  # exclusive state
+    BOTTOM = 0
+    MIDDLE = 1
+    TOP = 2
+
+
+class MTextProperties:
+    """ Internal class to store the current MTEXT property processing state
+    e.g. for multiple grouping levels.
+
+    """
+    def __init__(self):
+        self._flags: int = 0
+        self._aci = 7  # used if rgb is None
+        self.rgb: Optional[RGB] = None  # overrules aci
+        self.align: MTextAlign = MTextAlign.BOTTOM
+        self.font_face: FontFace = FontFace()  # is immutable
+        self.cap_height: float = 1.0
+        self.width_factor: float = 1.0
+        self.oblique: float = 0.0
+
+    def __copy__(self) -> 'MTextProperties':
+        p = MTextProperties()
+        p._flags = self._flags
+        p._aci = self._aci
+        p.rgb = self.rgb
+        p.align = self.align
+        p.font_face = self.font_face  # is immutable
+        p.cap_height = self.cap_height
+        p.width_factor = self.width_factor
+        p.oblique = self.oblique
+        return p
+
+    copy = __copy__
+
+    def __hash__(self):
+        return hash(
+            (self._flags, self._aci, self.rgb, self.align, self.font_face,
+             self.cap_height, self.width_factor, self.oblique)
+        )
+
+    def __eq__(self, other: 'MTextProperties') -> bool:
+        return hash(self) == hash(other)
+
+    @property
+    def aci(self) -> int:
+        return self._aci
+
+    @aci.setter
+    def aci(self, aci: int):
+        if 0 <= aci <= 256:
+            self._aci = aci
+            self.rgb = None  # clear rgb
+        else:
+            raise ValueError('aci not in range[0,256]')
+
+    def set_flag_state(self, flag: int, state: bool = True) -> None:
+        """ Set/clear binary `flag` in `self.flags`.
+
+        Args:
+            flag: flag to set/clear
+            state: ``True`` for setting, ``False`` for clearing
+
+        """
+        if state:
+            self._flags |= flag
+        else:
+            self._flags &= ~flag
+
+    @property
+    def underline(self) -> bool:
+        return bool(self._flags & MTextFlags.UNDERLINE)
+
+    @underline.setter
+    def underline(self, value: bool) -> None:
+        self.set_flag_state(MTextFlags.UNDERLINE, value)
+
+    @property
+    def strike(self) -> bool:
+        return bool(self._flags & MTextFlags.STRIKE)
+
+    @strike.setter
+    def strike(self, value: bool) -> None:
+        self.set_flag_state(MTextFlags.STRIKE, value)
+
+    @property
+    def overstrike(self) -> bool:
+        return bool(self._flags & MTextFlags.OVERSTRIKE)
+
+    @overstrike.setter
+    def overstrike(self, value: bool) -> None:
+        self.set_flag_state(MTextFlags.OVERSTRIKE, value)

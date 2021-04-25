@@ -71,6 +71,12 @@ def test_save_and_load_caches(tmp_path):
     assert len(fonts.font_measurement_cache) > 0
 
 
+def test_same_font_faces_have_equal_hash_values():
+    f1 = fonts.FontFace("arial.ttf", "Arial")
+    f2 = fonts.FontFace("arial.ttf", "Arial")
+    assert hash(f1) == hash(f2)
+
+
 class TestFontMeasurements:
     @pytest.fixture
     def default(self):
