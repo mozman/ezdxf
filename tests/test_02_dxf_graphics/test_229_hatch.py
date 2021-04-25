@@ -6,7 +6,6 @@ import pytest
 from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
-
 HATCH = """0
 HATCH
 5
@@ -53,6 +52,7 @@ SOLID
 0.0
 """
 
+
 @pytest.fixture
 def entity():
     return Hatch.from_text(HATCH)
@@ -88,5 +88,3 @@ def test_write_dxf():
     result = TagCollector.dxftags(entity)
     expected = basic_tags_from_text(HATCH)
     assert result == expected
-
-

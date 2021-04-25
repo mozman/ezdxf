@@ -3,9 +3,10 @@
 import pytest
 import math
 
+import ezdxf
 from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector
-from ezdxf.lldxf.const import DXF2007, DXF2010
+from ezdxf.lldxf import const
 from ezdxf.render.forms import box
 from ezdxf.math import Vec3, Matrix44, arc_angle_span_deg
 
@@ -410,12 +411,12 @@ def test_no_fit_points_export(spline_edge_hatch):
     spline.knot_values = [1, 2, 3, 4, 5, 6]
     assert [(1, 1), (2, 2), (3, 3), (4, 4)] == spline.control_points
     assert len(spline.fit_points) == 0
-    writer = TagCollector(dxfversion=DXF2007)
+    writer = TagCollector(dxfversion=const.DXF2007)
     spline.export_dxf(writer)
     # do not write length tag 97 if no fit points exists for DXF2007 and prior
     assert any(tag.code == 97 for tag in writer.tags) is False
 
-    writer = TagCollector(dxfversion=DXF2010)
+    writer = TagCollector(dxfversion=const.DXF2010)
     spline.export_dxf(writer)
     # do write length tag 97 if no fit points exists for DXF2010+
     assert (97, 0) in writer.tags
@@ -594,6 +595,59 @@ def test_delete_bgcolor(hatch):
 def test_delete_not_existing_bgcolor(hatch):
     del hatch.bgcolor
     assert hatch.bgcolor is None
+
+
+@pytest.fixture(scope='module')
+def msp():
+    doc = ezdxf.new()
+    return doc.modelspace()
+
+
+VERTICES = [(0, 0), (1, 0), (1, 1), (0, 1)]
+
+
+def add_hatch(msp):
+    hatch = msp.add_hatch()
+    path = hatch.paths.add_polyline_path(VERTICES)
+    return hatch, path
+
+
+def test_associate_valid_entity(msp):
+    hatch, path = add_hatch(msp)
+    pline = msp.add_lwpolyline(VERTICES, close=True)
+    hatch.associate(path, [pline])
+    assert path.source_boundary_objects == [pline.dxf.handle]
+
+
+def test_if_hatch_is_alive_before_association(msp):
+    hatch, path = add_hatch(msp)
+    hatch.destroy()
+    with pytest.raises(const.DXFStructureError):
+        hatch.associate(path, [])
+
+
+def test_can_not_associate_entity_from_different_document(msp):
+    hatch, path = add_hatch(msp)
+    pline = msp.add_lwpolyline(VERTICES, close=True)
+    pline.doc = None
+    with pytest.raises(const.DXFStructureError):
+        hatch.associate(path, [pline])
+
+
+def test_can_not_associate_entity_with_different_owner(msp):
+    hatch, path = add_hatch(msp)
+    pline = msp.add_lwpolyline(VERTICES, close=True)
+    pline.dxf.owner = None
+    with pytest.raises(const.DXFStructureError):
+        hatch.associate(path, [pline])
+
+
+def test_can_not_associate_destroyed_entity(msp):
+    hatch, path = add_hatch(msp)
+    pline = msp.add_lwpolyline(VERTICES, close=True)
+    pline.destroy()
+    with pytest.raises(const.DXFStructureError):
+        hatch.associate(path, [pline])
 
 
 PATH_HATCH = """  0

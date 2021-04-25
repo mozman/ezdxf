@@ -642,11 +642,32 @@ class Hatch(DXFGraphic):
         invalid DXF files: USE WITH CARE!
 
         """
-        self.dxf.associative = 1
-        hatch_dxf_handle = self.dxf.handle
+        # I don't see this as a time critical operation, do as much checks as
+        # needed to avoid invalid DXF files.
+        if not self.is_alive:
+            raise const.DXFStructureError("HATCH entity is destroyed")
+
+        doc = self.doc
+        owner = self.dxf.owner
+        handle = self.dxf.handle
+        if doc is None or owner is None or handle is None:
+            raise const.DXFStructureError(
+                "virtual entity can not have associated entities")
+
         for entity in entities:
+            if not entity.is_alive or entity.is_virtual:
+                raise const.DXFStructureError(
+                    "associated entity is destroyed or a virtual entity")
+            if doc is not entity.doc:
+                raise const.DXFStructureError(
+                    "associated entity is from a different document")
+            if owner != entity.dxf.owner:
+                raise const.DXFStructureError(
+                    "associated entity is from a different layout")
+
             path.source_boundary_objects.append(entity.dxf.handle)
-            entity.append_reactor_handle(hatch_dxf_handle)
+            entity.append_reactor_handle(handle)
+        self.dxf.associative = 1 if len(path.source_boundary_objects) else 0
 
 
 class BoundaryPaths:
