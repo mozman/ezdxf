@@ -270,55 +270,61 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # \k	Stop strike-through
 # \P	New paragraph (new line)
 # \N	New column
-# \pxi	Control codes for bullets, numbered paragraphs and columns, settings are
-#       valid for the current paragraph, new paragraph is encoded as "^P".
+# \~    None breaking space
+# ^I    Tabulator
+# \	Escape character - e.g. \\ = "\", \{ = "{"
 #
-# \pxql - align text in paragraph: left
-# \pxqr - align text in paragraph: right
-# \pxqc - align text in paragraph: center
-# \pxqj - align text in paragraph: justified
-# \pxqd - align text in paragraph: distributed
+# \p    start paragraph properties until next ";"
+# \pi#,l#,r#; paragraph indent
+#   i   first line left
+#   l   paragraph left
+#   r   paragraph right
+#       First line (i) is relative to paragraph left (l)!
+#   i#  indent first line left
+#   l#  indent left
+#   r#  indent right
+#   q#  alignment: ql, qr, qc, qd, qj
+#   x   ???
+#   t#[,#...] define tabulator absolute stops 1,2,...
+#   #*  reset command to default value?
+# alignments:
+#   ql  align text in paragraph: left
+#   qr  align text in paragraph: right
+#   qc  align text in paragraph: center
+#   qj  align text in paragraph: justified
+#   qd  align text in paragraph: distributed
+# Examples:
+# \pi1,t[5,20,...]; define tab stops as comma separated list
 #
-# \pix,ly; paragraph indent
-#       first line relative to body:
-#         first line
-#       second line
-#       - /pi2,l0; = first line 2 body 0
-#
-#       first line
-#         second line
-#       - /pi-2,l2; = first line -2 body 2
-#
-#         first line
-#         second line
-#       - /pi0,l2; = first line 0 body 2
-#
-# \pi0,l0,xt1[,2,...] or \pi1,t[5,20,...]
-#       define tab stops as comma separated list, tabs are encoded as "^I"
+# \pi*,l*,r*,q*,t; reset!
+# \pi2,l0;  = first line  2 & paragraph left 0
+# \pi-2,l2; = first line -2 & paragraph left 2
+# \pi0,l2;  = first line  0 & paragraph left 2
 #
 # \X	Paragraph wrap on the dimension line (only in dimensions)
 # \Q	Slanting (oblique) text by angle - e.g. \Q30;
-# \H	Text height - e.g. \H3x;
-# \W	Text width - e.g. \W0.8;
+# \H	Text height relative - e.g. \H3x;
+# \H	Text height absolute - e.g. \H3;
+# \W	Text width factor - e.g. \W0.8;
 # \F	Font selection
 # \f	Font selection
 #
 #     e.g. \Fgdt;o - GDT-tolerance
-#     e.g. \fkroeger|b0|i0|c238|p10 - font Kroeger, non-bold, non-italic,
+#     e.g. \fArial|b0|i0|c238|p10; - font Arial, non-bold, non-italic,
 #     codepage 238, pitch 10
 #     codepage 0 = no change
 #     pitch 0 = no change
 #
 # \S	Stacking, fractions
 #
-#     e.g. \SA^B:
+#     e.g. \SA^B;
 #     A
 #     B
-#     e.g. \SX/Y:
+#     e.g. \SX/Y;
 #     X
 #     -
 #     Y
-#     e.g. \S1#4:
+#     e.g. \S1#4;
 #     1/4
 #
 # \A	Alignment relative to current line
@@ -344,11 +350,9 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 #     ezdxf.rgb2int((114,224,31)) = 7528479 (b,g,r)
 #
 # \T	Tracking, char.spacing - e.g. \T2;
-# \~	Non-wrapping space, hard space
 # {}	Braces - define the text area influenced by the code
 #       Multiple codes after the opening brace are valid until the closing
 #       brace.  e.g. {\H0.4x;\A1;small centered text}
-# \	Escape character - e.g. \\ = "\", \{ = "{"
 #
 # Codes and braces can be nested up to 8 levels deep
 #
