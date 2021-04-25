@@ -160,12 +160,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: append(text: str) -> MText
 
-    .. automethod:: set_font
-
-    .. automethod:: set_color
-
-    .. automethod:: add_stacked_text
-
     .. automethod:: plain_text
 
     .. automethod:: all_columns_plain_text

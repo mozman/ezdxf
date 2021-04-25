@@ -67,6 +67,17 @@ Construction
     disassemble
     bbox
 
+Tools
+-----
+
+.. toctree::
+    :maxdepth: 2
+
+    tools/functions
+    tools/text
+    tools/fonts
+
+
 Global Options
 --------------
 
@@ -74,6 +85,7 @@ Global Options
     :maxdepth: 1
 
     options
+
 
 Miscellaneous
 -------------
@@ -83,7 +95,6 @@ Miscellaneous
 
     zoom
     comments
-    tools
     reorder
 
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301
