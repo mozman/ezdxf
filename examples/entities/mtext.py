@@ -1,6 +1,9 @@
 # Copyright (c) 2013-2021 Manfred Moitzi
 # License: MIT License
+from pathlib import Path
 import ezdxf
+
+OUTBOX = Path('~/Desktop/Outbox').expanduser()
 
 doc = ezdxf.new('R2007', setup=True)
 msp = doc.modelspace()
@@ -17,10 +20,13 @@ mtext.set_bg_color((108, 204, 193))
 msp.add_mtext("Line 1\\PLine 2", attribs).set_location(insert=(0, 10))
 
 attribs['width'] = 15
-text = "normal \\Oover strike\\o normal\\Pnormal \\Kstrike trough\\k normal\\Pnormal \\Lunder line\\l normal"
+text = "normal \\Oover strike\\o normal\\Pnormal \\Kstrike trough\\k normal" \
+       "\\Pnormal \\Lunder line\\l normal"
 msp.add_mtext(text, attribs).set_location(insert=(0, 15))
+# see example "mtext_editor.py" how to use the MTextEditor to create the same
+# result without complicated escape sequences.
 
 
 filename = 'mtext.dxf'
-doc.saveas(filename)
-print("drawing '%s' created.\n" % filename)
+doc.saveas(OUTBOX / filename)
+print(f"saved {filename}")

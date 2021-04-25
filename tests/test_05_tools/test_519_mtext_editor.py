@@ -65,9 +65,14 @@ def test_change_font():
     assert str(m) == r"\fArial|b0|i0|c0|p0;"
 
 
-def test_change_height_factor():
-    assert str(MTextEditor().height_factor(2)) == r"\H2x;"
-    assert str(MTextEditor().height_factor(1.6666)) == r"\H1.667x;"
+def test_scale_height_factor():
+    assert str(MTextEditor().scale_height(2)) == r"\H2x;"
+    assert str(MTextEditor().scale_height(1.6666)) == r"\H1.667x;"
+
+
+def test_absolute_text_height():
+    assert str(MTextEditor().height(2)) == r"\H2;"
+    assert str(MTextEditor().height(1.6666)) == r"\H1.667;"
 
 
 def test_change_width_factor():

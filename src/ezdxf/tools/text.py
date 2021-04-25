@@ -537,6 +537,7 @@ class MTextEditor:
         self.text = str(text)
 
     NEW_LINE = r'\P'
+    NEW_PARAGRAPH = r'\P'
     NEW_COLUMN = r'\N'
     UNDERLINE_START = r'\L'
     UNDERLINE_STOP = r'\l'
@@ -585,10 +586,16 @@ class MTextEditor:
         # TODO: is c0|p0 even required?
         return self.append(rf"\f{name}|b{int(bold)}|i{int(italic)}|c0|p0;")
 
-    def height_factor(self, factor: float) -> 'MTextEditor':
+    def scale_height(self, factor: float) -> 'MTextEditor':
+        """ Set current text height by a factor. """
         return self.append(rf'\H{round(factor, 3)}x;')
 
+    def height(self, height: float) -> 'MTextEditor':
+        """ Set absolute current text height in drawing units. """
+        return self.append(rf'\H{round(height, 3)};')
+
     def width_factor(self, factor: float) -> 'MTextEditor':
+        """ Set current text width factor. """
         return self.append(rf'\W{round(factor, 3)};')
 
     def oblique(self, angle: int) -> 'MTextEditor':
