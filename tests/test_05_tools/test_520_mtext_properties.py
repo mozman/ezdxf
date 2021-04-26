@@ -87,6 +87,15 @@ class TestParagraphPropertiesToString:
         # extended argument "tab stops" requires a leading "x"
         assert p.tostring() == "\\pxt1,2,3;"
 
+    def test_different_kinds_of_tab_stops(self):
+        # tab stops without prefix or numbers are left adjusted
+        # tab stops, e.g 2 or '2'
+        # prefix 'c' defines a center adjusted tab stop e.g. 'c3.5'
+        # prefix 'r' defines a right adjusted tab stop e.g. 'r2.7'
+        p = ParagraphProperties(tab_stops=(1, 'c2', 'r3.7'))
+        # extended argument "tab stops" requires a leading "x"
+        assert p.tostring() == "\\pxt1,c2,r3.7;"
+
     def test_indention_and_multiple_tab_stops(self):
         p = ParagraphProperties(indent=1,
                                 tab_stops=(1, 2, 3))

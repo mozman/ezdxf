@@ -287,11 +287,15 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 #   qj  align text in paragraph: justified
 #   qd  align text in paragraph: distributed
 #   x   unknown meaning
-#   t#[,#...] define absolute tabulator stops 1,2,...
+#   t#[,c#,r#...] define absolute tabulator stops 1,c2,r3...
+#       without prefix is a left adjusted tab stop
+#       prefix 'c' for center adjusted tab stop
+#       prefix 'r' for right adjusted tab stop
 #   ?*  reset command to default value
 #
 # Examples:
 # \pi1,t[5,20,...]; define tab stops as comma separated list
+# \pxt4,c8,r12,16,c20,r24; left, centered and right adjusted tab stops
 # \pi*,l*,r*,q*,t; reset to default values
 # \pi2,l0;  = first line  2 & paragraph left 0
 # \pi-2,l2; = first line -2 & paragraph left 2
@@ -560,6 +564,10 @@ class ParagraphProperties(NamedTuple):
     left: float = 0
     right: float = 0
     align: ParagraphAlignment = ParagraphAlignment.DEFAULT
+    # tab stops without prefix or numbers are left adjusted
+    # tab stops, e.g 2 or '2'
+    # prefix 'c' defines a center adjusted tab stop e.g. 'c3.5'
+    # prefix 'r' defines a right adjusted tab stop e.g. 'r2.7'
     tab_stops: Tuple = tuple()
 
     def tostring(self) -> str:
