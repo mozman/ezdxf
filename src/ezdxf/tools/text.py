@@ -2,11 +2,12 @@
 #  License: MIT License
 #  All tools in this module have to be independent from DXF entities!
 from typing import (
-    List, Iterable, Tuple, TYPE_CHECKING, Union, Optional, Callable,
+    List, Iterable, Tuple, TYPE_CHECKING, Union, Optional, Callable, NamedTuple,
 )
 import re
 import math
 import enum
+
 from ezdxf.lldxf import validator, const
 from ezdxf.math import Vec3, Vec2, Vertex
 from .fonts import FontMeasurements, AbstractFont, FontFace
@@ -276,27 +277,22 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 #
 # \p    start paragraph properties until next ";"
 # \pi#,l#,r#; paragraph indent
-#   i   first line left
-#   l   paragraph left
-#   r   paragraph right
-#       First line (i) is relative to paragraph left (l)!
-#   i#  indent first line left
-#   l#  indent left
-#   r#  indent right
-#   q#  alignment: ql, qr, qc, qd, qj
-#   x   ???
-#   t#[,#...] define tabulator absolute stops 1,2,...
-#   #*  reset command to default value?
-# alignments:
+#   i#  indent first line left, relative to (l)!
+#   l#  indent paragraph left
+#   r#  indent paragraph right
+#   q?  alignments:
 #   ql  align text in paragraph: left
 #   qr  align text in paragraph: right
 #   qc  align text in paragraph: center
 #   qj  align text in paragraph: justified
 #   qd  align text in paragraph: distributed
+#   x   unknown meaning
+#   t#[,#...] define absolute tabulator stops 1,2,...
+#   ?*  reset command to default value
+#
 # Examples:
 # \pi1,t[5,20,...]; define tab stops as comma separated list
-#
-# \pi*,l*,r*,q*,t; reset!
+# \pi*,l*,r*,q*,t; reset to default values
 # \pi2,l0;  = first line  2 & paragraph left 0
 # \pi-2,l2; = first line -2 & paragraph left 2
 # \pi0,l2;  = first line  0 & paragraph left 2
@@ -536,6 +532,62 @@ def is_text_vertical_stacked(text: 'DXFEntity') -> bool:
     return False
 
 
+class ParagraphAlignment(enum.IntEnum):  # exclusive state
+    DEFAULT = 0
+    LEFT = 1
+    RIGHT = 2
+    CENTER = 3
+    JUSTIFIED = 4
+    DISTRIBUTED = 5
+
+
+_alignment_char = {
+    ParagraphAlignment.DEFAULT: '',
+    ParagraphAlignment.LEFT: 'l',
+    ParagraphAlignment.RIGHT: 'r',
+    ParagraphAlignment.CENTER: 'c',
+    ParagraphAlignment.JUSTIFIED: 'j',
+    ParagraphAlignment.DISTRIBUTED: 'd',
+}
+
+COMMA = ","
+DIGITS = "01234567890"
+
+
+class ParagraphProperties(NamedTuple):
+    # \pi*,l*,r*,q*,t;
+    indent: float = 0  # relative to left!
+    left: float = 0
+    right: float = 0
+    align: ParagraphAlignment = ParagraphAlignment.DEFAULT
+    tab_stops: Tuple = tuple()
+
+    def tostring(self) -> str:
+        args = []
+        # if any indention is applied at least "i0" is always required
+        if self.indent or self.left or self.right:
+            args.append(f"i{self.indent}")
+        if self.left:
+            args.append(f",l{self.left}")
+        if self.right:
+            args.append(f",r{self.right}")
+
+        # extended arguments are alignment and tab stops
+        xargs = ['x']  # first letter "x" is required
+        if self.align:
+            xargs.append(f"q{_alignment_char[self.align]}")
+        if self.tab_stops:
+            xargs.append(f"t{COMMA.join(map(str, self.tab_stops))}")
+        if len(xargs) > 1:  # has extended arguments
+            if args:  # has any arguments
+                args.append(COMMA)
+            args.extend(xargs)
+        if args:
+            return "\\p" + "".join(args) + ";"
+        else:
+            return ""
+
+
 class MTextEditor:
     def __init__(self, text: str = ""):
         self.text = str(text)
@@ -555,6 +607,7 @@ class MTextEditor:
     ALIGN_MIDDLE = r'\A1;'
     ALIGN_TOP = r'\A2;'
     NBSP = r'\~'  # non breaking space
+    TAB = '^I'
 
     def append(self, text: str) -> 'MTextEditor':
         self.text += text
@@ -661,6 +714,9 @@ class MTextEditor:
     def strike_through(self, text: str) -> 'MTextEditor':
         return self.append(rf"\K{text}\k")
 
+    def paragraph(self, props: ParagraphProperties) -> 'MTextEditor':
+        return self.append(props.tostring())
+
 
 class MTextFlags(enum.IntEnum):  # multiple flags possible
     UNDERLINE = 1
@@ -675,10 +731,9 @@ class MTextAlign(enum.IntEnum):  # exclusive state
 
 
 class MTextProperties:
-    """ Internal class to store the current MTEXT property processing state
-    e.g. for multiple grouping levels.
-
+    """ Internal class to store the MTEXT context state.
     """
+
     def __init__(self):
         self._flags: int = 0
         self._aci = 7  # used if rgb is None
@@ -688,6 +743,7 @@ class MTextProperties:
         self.cap_height: float = 1.0
         self.width_factor: float = 1.0
         self.oblique: float = 0.0
+        self.paragraph = ParagraphProperties()
 
     def __copy__(self) -> 'MTextProperties':
         p = MTextProperties()
@@ -699,6 +755,7 @@ class MTextProperties:
         p.cap_height = self.cap_height
         p.width_factor = self.width_factor
         p.oblique = self.oblique
+        p.paragraph = self.paragraph  # is immutable
         return p
 
     copy = __copy__
@@ -706,7 +763,7 @@ class MTextProperties:
     def __hash__(self):
         return hash(
             (self._flags, self._aci, self.rgb, self.align, self.font_face,
-             self.cap_height, self.width_factor, self.oblique)
+             self.cap_height, self.width_factor, self.oblique, self.paragraph)
         )
 
     def __eq__(self, other: 'MTextProperties') -> bool:
