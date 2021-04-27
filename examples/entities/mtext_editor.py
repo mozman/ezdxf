@@ -43,7 +43,8 @@ def using_colors(msp, location):
 def changing_text_height_absolute(msp, location):
     attribs = dict(ATTRIBS)
     attribs["width"] = 40.0  # need mor space to avoid text wrapping
-    editor = MTextEditor("changing text height absolute: default height is 0.7" + NP)
+    editor = MTextEditor(
+        "changing text height absolute: default height is 0.7" + NP)
     # this is the default text height in the beginning:
     # The text height can only be changed by a factor:
     editor.height(1.4)  # scale by 2 = 1.4
@@ -56,7 +57,8 @@ def changing_text_height_absolute(msp, location):
 def changing_text_height_relative(msp, location):
     attribs = dict(ATTRIBS)
     attribs["width"] = 40.0  # need mor space to avoid text wrapping
-    editor = MTextEditor("changing text height relative: default height is 0.7" + NP)
+    editor = MTextEditor(
+        "changing text height relative: default height is 0.7" + NP)
     # this is the default text height in the beginning:
     current_height = attribs["char_height"]
     # The text height can only be changed by a factor:
@@ -75,13 +77,51 @@ def changing_text_height_relative(msp, location):
     msp.add_mtext(str(editor), attribs).set_location(insert=location)
 
 
+def changing_fonts(msp, location):
+    attribs = dict(ATTRIBS)
+    attribs["width"] = 15.0
+    editor = MTextEditor("changing fonts:" + NP)
+    editor.append("Default: Hello World!" + NP)
+    editor.append("SimSun: ")
+    # The font name for changing MTEXT fonts inline is the font family name!
+    # The font family name is the name shown in font selection widgets in
+    # desktop applications: "Arial", "Times New Roman", "Comic Sans MS"
+    #
+    # change font in a group to revert back to the default font at the end:
+    simsun_editor = MTextEditor().font("SimSun").append("你好，世界" + NP)
+    # reverts the font back at the end of the group:
+    editor.group(str(simsun_editor))
+    # back to default font OpenSans:
+    editor.append("Times New Roman: ")
+    # change font outside of a group until next font change:
+    editor.font("Times New Roman").append("Привет мир!" + NP)
+    # If the font does not exist, a replacement font will be used:
+    editor.font("Does not exist").append("This is the replacement font!")
+    msp.add_mtext(str(editor), attribs).set_location(insert=location)
+
+
 def create(dxfversion):
+    """
+    Important:
+
+        MTEXT FORMATTING IS NOT PORTABLE ACROSS CAD APPLICATIONS!
+
+    Inline MTEXT codes are not supported by every CAD application and even
+    if inline codes are supported the final rendering may vary.
+    Inline codes are very well supported by AutoCAD (of course!) and BricsCAD,
+    but don't expect the same rendering in other CAD applications.
+
+    The drawing add-on of ezdxf may support some features in the future,
+    but very likely with a different rendering result than AutoCAD/BricsCAD.
+
+    """
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     recreate_mtext_py_example(msp, location=(0, 0))
     using_colors(msp, location=(0, 10))
     changing_text_height_absolute(msp, location=(0, 25))
     changing_text_height_relative(msp, location=(0, 40))
+    changing_fonts(msp, location=(20, 10))
     doc.set_modelspace_vport(height=60, center=(15, 15))
     return doc
 
