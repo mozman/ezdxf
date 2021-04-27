@@ -76,7 +76,6 @@ def changing_text_height_relative(msp, location):
 
 
 def create(dxfversion):
-    # replicating example "mtext.py":
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     recreate_mtext_py_example(msp, location=(0, 0))

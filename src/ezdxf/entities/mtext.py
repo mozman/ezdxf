@@ -56,7 +56,7 @@ acdb_mtext = DefSubclass('AcDbMText', {
     # Found in BricsCAD export:
     'defined_height': DXFAttr(46, dxfversion='AC1021'),
 
-    # Attachment point:
+    # Attachment point: enum const.MTextEntityAlignment
     # 1 = Top left
     # 2 = Top center
     # 3 = Top right
@@ -72,7 +72,7 @@ acdb_mtext = DefSubclass('AcDbMText', {
         fixer=RETURN_DEFAULT,
     ),
 
-    # Flow direction:
+    # Flow direction: enum MTextFlowDirection
     # 1 = Left to right
     # 3 = Top to bottom
     # 5 = By style (the flow direction is inherited from the associated
@@ -117,7 +117,7 @@ acdb_mtext = DefSubclass('AcDbMText', {
     # Text rotation in degrees -  Error in DXF reference, which claims radians
     'rotation': DXFAttr(50, default=0, optional=True),
 
-    # Line spacing style (optional):
+    # Line spacing style (optional): enum const.MTextLineSpacing
     # 1 = At least (taller characters will override)
     # 2 = Exact (taller characters will not override)
     'line_spacing_style': DXFAttr(
@@ -138,7 +138,7 @@ acdb_mtext = DefSubclass('AcDbMText', {
     # (45) + (90) + (63) all three required, if one of them is used
     'box_fill_scale': DXFAttr(45, dxfversion='AC1021'),
 
-    # background fill type flags:
+    # background fill type flags: enum const.MTextBackgroundColor
     # 0 = off
     # 1 = color -> (63) < (421) or (431)
     # 2 = drawing window color

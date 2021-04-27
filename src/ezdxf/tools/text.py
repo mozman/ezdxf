@@ -6,9 +6,12 @@ from typing import (
 )
 import re
 import math
-import enum
 
 from ezdxf.lldxf import validator, const
+from ezdxf.lldxf.const import (
+    MTextParagraphAlignment, MTextLineAlignment, MTextStroke,
+    LEFT, CENTER, RIGHT, BASELINE, BOTTOM, MIDDLE, TOP,
+)
 from ezdxf.math import Vec3, Vec2, Vertex
 from .fonts import FontMeasurements, AbstractFont, FontFace
 from .rgb import rgb2int, RGB
@@ -16,14 +19,6 @@ from .rgb import rgb2int, RGB
 if TYPE_CHECKING:
     from ezdxf.eztypes import Text, MText, DXFEntity
 
-LEFT = 0
-CENTER = 1
-RIGHT = 2
-
-BASELINE = 0
-BOTTOM = 1
-MIDDLE = 2
-TOP = 3
 X_MIDDLE = 4  # special case for overall alignment "MIDDLE"
 
 MTEXT_ALIGN_FLAGS = {
@@ -536,22 +531,13 @@ def is_text_vertical_stacked(text: 'DXFEntity') -> bool:
     return False
 
 
-class ParagraphAlignment(enum.IntEnum):  # exclusive state
-    DEFAULT = 0
-    LEFT = 1
-    RIGHT = 2
-    CENTER = 3
-    JUSTIFIED = 4
-    DISTRIBUTED = 5
-
-
 _alignment_char = {
-    ParagraphAlignment.DEFAULT: '',
-    ParagraphAlignment.LEFT: 'l',
-    ParagraphAlignment.RIGHT: 'r',
-    ParagraphAlignment.CENTER: 'c',
-    ParagraphAlignment.JUSTIFIED: 'j',
-    ParagraphAlignment.DISTRIBUTED: 'd',
+    MTextParagraphAlignment.DEFAULT: '',
+    MTextParagraphAlignment.LEFT: 'l',
+    MTextParagraphAlignment.RIGHT: 'r',
+    MTextParagraphAlignment.CENTER: 'c',
+    MTextParagraphAlignment.JUSTIFIED: 'j',
+    MTextParagraphAlignment.DISTRIBUTED: 'd',
 }
 
 COMMA = ","
@@ -563,7 +549,7 @@ class ParagraphProperties(NamedTuple):
     indent: float = 0  # relative to left!
     left: float = 0
     right: float = 0
-    align: ParagraphAlignment = ParagraphAlignment.DEFAULT
+    align: MTextParagraphAlignment = MTextParagraphAlignment.DEFAULT
     # tab stops without prefix or numbers are left adjusted
     # tab stops, e.g 2 or '2'
     # prefix 'c' defines a center adjusted tab stop e.g. 'c3.5'
@@ -726,27 +712,15 @@ class MTextEditor:
         return self.append(props.tostring())
 
 
-class MTextFlags(enum.IntEnum):  # multiple flags possible
-    UNDERLINE = 1
-    STRIKE = 2
-    OVERSTRIKE = 4
-
-
-class MTextAlign(enum.IntEnum):  # exclusive state
-    BOTTOM = 0
-    MIDDLE = 1
-    TOP = 2
-
-
 class MTextProperties:
     """ Internal class to store the MTEXT context state.
     """
 
     def __init__(self):
-        self._flags: int = 0
+        self._stroke: int = 0
         self._aci = 7  # used if rgb is None
         self.rgb: Optional[RGB] = None  # overrules aci
-        self.align: MTextAlign = MTextAlign.BOTTOM
+        self.align: MTextLineAlignment = MTextLineAlignment.BOTTOM
         self.font_face: FontFace = FontFace()  # is immutable
         self.cap_height: float = 1.0
         self.width_factor: float = 1.0
@@ -755,7 +729,7 @@ class MTextProperties:
 
     def __copy__(self) -> 'MTextProperties':
         p = MTextProperties()
-        p._flags = self._flags
+        p._stroke = self._stroke
         p._aci = self._aci
         p.rgb = self.rgb
         p.align = self.align
@@ -770,7 +744,7 @@ class MTextProperties:
 
     def __hash__(self):
         return hash(
-            (self._flags, self._aci, self.rgb, self.align, self.font_face,
+            (self._stroke, self._aci, self.rgb, self.align, self.font_face,
              self.cap_height, self.width_factor, self.oblique, self.paragraph)
         )
 
@@ -789,39 +763,40 @@ class MTextProperties:
         else:
             raise ValueError('aci not in range[0,256]')
 
-    def set_flag_state(self, flag: int, state: bool = True) -> None:
-        """ Set/clear binary `flag` in `self.flags`.
+    def _set_stroke_state(self, stroke: MTextStroke,
+                          state: bool = True) -> None:
+        """ Set/clear binary `stroke` flag in `self._stroke`.
 
         Args:
-            flag: flag to set/clear
+            stroke: set/clear stroke flag
             state: ``True`` for setting, ``False`` for clearing
 
         """
         if state:
-            self._flags |= flag
+            self._stroke |= stroke
         else:
-            self._flags &= ~flag
+            self._stroke &= ~stroke
 
     @property
     def underline(self) -> bool:
-        return bool(self._flags & MTextFlags.UNDERLINE)
+        return bool(self._stroke & MTextStroke.UNDERLINE)
 
     @underline.setter
     def underline(self, value: bool) -> None:
-        self.set_flag_state(MTextFlags.UNDERLINE, value)
+        self._set_stroke_state(MTextStroke.UNDERLINE, value)
 
     @property
-    def strike(self) -> bool:
-        return bool(self._flags & MTextFlags.STRIKE)
+    def strike_through(self) -> bool:
+        return bool(self._stroke & MTextStroke.STRIKE_THROUGH)
 
-    @strike.setter
-    def strike(self, value: bool) -> None:
-        self.set_flag_state(MTextFlags.STRIKE, value)
+    @strike_through.setter
+    def strike_through(self, value: bool) -> None:
+        self._set_stroke_state(MTextStroke.STRIKE_THROUGH, value)
 
     @property
-    def overstrike(self) -> bool:
-        return bool(self._flags & MTextFlags.OVERSTRIKE)
+    def overline(self) -> bool:
+        return bool(self._stroke & MTextStroke.OVERLINE)
 
-    @overstrike.setter
-    def overstrike(self, value: bool) -> None:
-        self.set_flag_state(MTextFlags.OVERSTRIKE, value)
+    @overline.setter
+    def overline(self, value: bool) -> None:
+        self._set_stroke_state(MTextStroke.OVERLINE, value)

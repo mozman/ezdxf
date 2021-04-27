@@ -2,8 +2,9 @@
 #  License: MIT License
 
 import pytest
+from ezdxf.lldxf.const import MTextParagraphAlignment
 from ezdxf.tools.text import (
-    MTextProperties, ParagraphProperties, ParagraphAlignment,
+    MTextProperties, ParagraphProperties
 )
 
 
@@ -16,16 +17,16 @@ def test_underline():
 
 def test_strike():
     p = MTextProperties()
-    assert p.strike is False
-    p.strike = True
-    assert p.strike is True
+    assert p.strike_through is False
+    p.strike_through = True
+    assert p.strike_through is True
 
 
 def test_overstrike():
     p = MTextProperties()
-    assert p.overstrike is False
-    p.overstrike = True
-    assert p.overstrike is True
+    assert p.overline is False
+    p.overline = True
+    assert p.overline is True
 
 
 def test_copy():
@@ -68,14 +69,14 @@ class TestParagraphPropertiesToString:
     def test_center_alignment_without_indentation(self):
         # extended argument "alignment" requires a leading "x"
         assert ParagraphProperties(
-            align=ParagraphAlignment.CENTER).tostring() == "\\pxqc;"
+            align=MTextParagraphAlignment.CENTER).tostring() == "\\pxqc;"
 
     def test_center_alignment_with_indentation(self):
         # always a "," after indentations
         # extended argument "alignment" requires a leading "x"
         assert ParagraphProperties(
             indent=2.5,
-            align=ParagraphAlignment.CENTER).tostring() == "\\pi2.5,xqc;"
+            align=MTextParagraphAlignment.CENTER).tostring() == "\\pi2.5,xqc;"
 
     def test_one_tab_stop(self):
         p = ParagraphProperties(tab_stops=(1, ))
@@ -104,7 +105,7 @@ class TestParagraphPropertiesToString:
         assert p.tostring() == "\\pi1,xt1,2,3;"
 
     def test_justified_alignment_and_multiple_tab_stops(self):
-        p = ParagraphProperties(align=ParagraphAlignment.JUSTIFIED,
+        p = ParagraphProperties(align=MTextParagraphAlignment.JUSTIFIED,
                                 tab_stops=(1, 2, 3))
         # extended argument "alignment" requires a leading "x"
         assert p.tostring() == "\\pxqjt1,2,3;"

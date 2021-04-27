@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 
 DXF9 = 'AC1004'
 DXF10 = 'AC1006'
@@ -349,12 +349,59 @@ MTEXT_ALIGN_FLAGS = {
     'BOTTOM_RIGHT': 9,
 }
 
+
+class MTextEntityAlignment(IntEnum):
+    TOP_LEFT = MTEXT_TOP_LEFT
+    TOP_CENTER = MTEXT_TOP_CENTER
+    TOP_RIGHT = MTEXT_TOP_RIGHT
+    MIDDLE_LEFT = MTEXT_MIDDLE_LEFT
+    MIDDLE_CENTER = MTEXT_MIDDLE_CENTER
+    MIDDLE_RIGHT = MTEXT_MIDDLE_RIGHT
+    BOTTOM_LEFT = MTEXT_BOTTOM_LEFT
+    BOTTOM_CENTER = MTEXT_BOTTOM_CENTER
+    BOTTOM_RIGHT = MTEXT_BOTTOM_RIGHT
+
+
+class MTextParagraphAlignment(IntEnum):
+    DEFAULT = 0
+    LEFT = 1
+    RIGHT = 2
+    CENTER = 3
+    JUSTIFIED = 4
+    DISTRIBUTED = 5
+
+
 MTEXT_LEFT_TO_RIGHT = 1
 MTEXT_TOP_TO_BOTTOM = 3
 MTEXT_BY_STYLE = 5
 
+
+class MTextFlowDirection(IntEnum):
+    LEFT_TO_RIGHT = MTEXT_LEFT_TO_RIGHT
+    TOP_TO_BOTTOM = MTEXT_TOP_TO_BOTTOM
+    BY_STYLE = MTEXT_BY_STYLE
+
+
+class MTextLineAlignment(IntEnum):  # exclusive state
+    BOTTOM = 0
+    MIDDLE = 1
+    TOP = 2
+
+
+class MTextStroke(IntFlag):  # multiple flags possible
+    UNDERLINE = 1
+    STRIKE_THROUGH = 2
+    OVERLINE = 4
+
+
 MTEXT_AT_LEAST = 1
 MTEXT_EXACT = 2
+
+
+class MTextLineSpacing(IntEnum):
+    AT_LEAST = MTEXT_AT_LEAST
+    EXACT = MTEXT_EXACT
+
 
 MTEXT_COLOR_INDEX = {
     'red': RED,
@@ -371,10 +418,18 @@ MTEXT_BG_COLOR = 1
 MTEXT_BG_WINDOW_COLOR = 2
 MTEXT_BG_CANVAS_COLOR = 3
 
+
+class MTextBackgroundColor(IntEnum):
+    OFF = MTEXT_BG_OFF
+    COLOR = MTEXT_BG_COLOR
+    WINDOW = MTEXT_BG_WINDOW_COLOR
+    CANVAS = MTEXT_BG_CANVAS_COLOR
+
+
 MTEXT_INLINE_ALIGN = {
-    'BOTTOM': 0,
-    'MIDDLE': 1,
-    'TOP': 2,
+    'BOTTOM': MTextLineAlignment.BOTTOM,
+    'MIDDLE': MTextLineAlignment.MIDDLE,
+    'TOP': MTextLineAlignment.TOP,
 }
 
 CLOSED_SPLINE = 1
