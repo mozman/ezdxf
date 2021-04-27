@@ -25,7 +25,7 @@ def test_stacked_text():
 
 def test_change_color_name():
     m = MTextEditor()
-    m.color_name('red')
+    m.color('red')
     assert str(m) == r"\C1;"
     m.clear()
     m.aci(0)
@@ -87,7 +87,7 @@ def test_change_oblique_angle():
 
 def test_fluent_interface():
     m = MTextEditor(
-        "some text").color_name("red").stack('1', '2').append("end.")
+        "some text").color("red").stack('1', '2').append("end.")
     assert str(m) == r"some text\C1;\S1^ 2;end."
 
 

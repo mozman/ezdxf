@@ -4,10 +4,10 @@ from pathlib import Path
 import ezdxf
 from ezdxf.tools.text import MTextEditor
 
-OUTBOX = Path('~/Desktop/Outbox').expanduser()
+OUTBOX = Path("~/Desktop/Outbox").expanduser()
 ATTRIBS = {
-    'char_height': 0.7,
-    'style': 'OpenSans',
+    "char_height": 0.7,
+    "style": "OpenSans",
 }
 
 # use constants defined in MTextEditor:
@@ -17,7 +17,7 @@ NP = MTextEditor.NEW_PARAGRAPH
 def recreate_mtext_py_example(msp, location):
     # replicate example "mtext.py":
     attribs = dict(ATTRIBS)
-    attribs['width'] = 15.0
+    attribs["width"] = 15.0
     editor = MTextEditor(f"recreate mtext.py result:{NP}normal ").overline(
         "over line").append(" normal" + NP + "normal ").strike_through(
         "strike through").append(" normal" + NP).underline(
@@ -27,22 +27,22 @@ def recreate_mtext_py_example(msp, location):
 
 def using_colors(msp, location):
     attribs = dict(ATTRIBS)
-    attribs['width'] = 10.0
+    attribs["width"] = 10.0
     editor = MTextEditor("using colors:" + NP)
     # Change colors by name: red, green, blue, yellow, cyan, magenta, white
-    editor.color_name('red').append('RED' + NP)
+    editor.color("red").append("RED" + NP)
     # The color stays the same until changed
-    editor.append('also RED' + NP)
+    editor.append("also RED" + NP)
     # Change color by ACI (AutoCAD Color Index)
-    editor.aci(3).append('GREEN' + NP)
+    editor.aci(3).append("GREEN" + NP)
     # Change color by RGB tuples
-    editor.rgb((0, 0, 255)).append('BLUE' + NP)
+    editor.rgb((0, 0, 255)).append("BLUE" + NP)
     msp.add_mtext(str(editor), attribs).set_location(insert=location)
 
 
 def changing_text_height_absolute(msp, location):
     attribs = dict(ATTRIBS)
-    attribs['width'] = 40.0  # need mor space to avoid text wrapping
+    attribs["width"] = 40.0  # need mor space to avoid text wrapping
     editor = MTextEditor("changing text height absolute: default height is 0.7" + NP)
     # this is the default text height in the beginning:
     # The text height can only be changed by a factor:
@@ -55,10 +55,10 @@ def changing_text_height_absolute(msp, location):
 
 def changing_text_height_relative(msp, location):
     attribs = dict(ATTRIBS)
-    attribs['width'] = 40.0  # need mor space to avoid text wrapping
+    attribs["width"] = 40.0  # need mor space to avoid text wrapping
     editor = MTextEditor("changing text height relative: default height is 0.7" + NP)
     # this is the default text height in the beginning:
-    current_height = attribs['char_height']
+    current_height = attribs["char_height"]
     # The text height can only be changed by a factor:
     editor.scale_height(2)  # scale by 2 = 1.4
     # keep track of the actual height:
@@ -86,7 +86,7 @@ def create(dxfversion):
     return doc
 
 
-for dxfversion in ['R2000', 'R2004', 'R2007', 'R2010', 'R2013', 'R2018']:
+for dxfversion in ["R2000", "R2004", "R2007", "R2010", "R2013", "R2018"]:
     doc = create(dxfversion)
     filename = f"mtext_editor_{dxfversion}.dxf"
     doc.saveas(OUTBOX / filename)

@@ -652,14 +652,13 @@ class MTextEditor:
     def oblique(self, angle: int) -> 'MTextEditor':
         return self.append(rf'\Q{int(angle)};')
 
-    def color_name(self, color_name: str) -> 'MTextEditor':
-        """ Append text color change to existing content, `color_name` as
-        ``red``, ``yellow``, ``green``, ``cyan``, ``blue``, ``magenta`` or
-        ``white``.
+    def color(self, name: str) -> 'MTextEditor':
+        """ Text color change by color name: "red", "yellow", "green", "cyan",
+        "blue", "magenta" or "white".
 
         """
         return self.append(
-            r"\C%d;" % const.MTEXT_COLOR_INDEX[color_name.lower()])
+            r"\C%d;" % const.MTEXT_COLOR_INDEX[name.lower()])
 
     def aci(self, aci: int) -> 'MTextEditor':
         """ Append text color change by ACI in range [0, 256].
