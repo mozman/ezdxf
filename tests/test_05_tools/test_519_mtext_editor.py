@@ -110,5 +110,14 @@ def test_strike_through_text():
     assert str(MTextEditor().strike_through("TEXT")) == r"\KTEXT\k"
 
 
+def test_bullet_lists():
+    result = MTextEditor().bullet_list(
+        indent=4,  # left indentation of the list items
+        bullets=["-", "+"],  # bullets - mark in front of the list item
+        content=["first", "second"]  # list items
+    )
+    assert str(result) == r"{\pi-3,l4,xt4;-^Ifirst\P+^Isecond\P}"
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

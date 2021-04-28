@@ -2,7 +2,10 @@
 # License: MIT License
 from pathlib import Path
 import ezdxf
-from ezdxf.tools.text import MTextEditor
+from ezdxf.tools.text import (
+    MTextEditor, ParagraphProperties, MTextParagraphAlignment,
+)
+from ezdxf.tools.text_layout import lorem_ipsum
 
 OUTBOX = Path("~/Desktop/Outbox").expanduser()
 ATTRIBS = {
@@ -100,6 +103,78 @@ def changing_fonts(msp, location):
     msp.add_mtext(str(editor), attribs).set_location(insert=location)
 
 
+def indent_first_line(msp, location):
+    attribs = dict(ATTRIBS)
+    attribs["char_height"] = 0.25
+    attribs["width"] = 7.5
+    editor = MTextEditor("Indent the first line:" + NP)
+    props = ParagraphProperties(
+        indent=1,  # indent first line
+        align=MTextParagraphAlignment.JUSTIFIED
+    )
+    editor.paragraph(props)
+    editor.append(" ".join(lorem_ipsum(100)))
+    msp.add_mtext(str(editor), attribs).set_location(insert=location)
+
+
+def indent_except_fist_line(msp, location):
+    attribs = dict(ATTRIBS)
+    attribs["char_height"] = 0.25
+    attribs["width"] = 7.5
+    editor = MTextEditor("Indent left paragraph side:" + NP)
+    indent = 0.7
+    props = ParagraphProperties(
+        # first line indentation is relative to "left", this reverses the
+        # left indentation:
+        indent=-indent,  # first line
+        # indent left paragraph side:
+        left=indent,
+        align=MTextParagraphAlignment.JUSTIFIED
+    )
+    editor.paragraph(props)
+    editor.append(" ".join(lorem_ipsum(100)))
+    msp.add_mtext(str(editor), attribs).set_location(insert=location)
+
+
+def bullet_list(msp, location):
+    attribs = dict(ATTRIBS)
+    attribs["char_height"] = 0.25
+    attribs["width"] = 7.5
+    # There are no special commands to build bullet list, the list is build of
+    # indentation and a tabulator stop. Each list item needs a marker as an
+    # arbitrary string.
+    bullet = "•"  # alt + numpad 7
+    editor = MTextEditor("Bullet List:" + NP)
+    editor.bullet_list(
+        indent=1,
+        bullets=[bullet] * 3,  # each list item needs a marker
+        content=[
+            "First item",
+            "Second item",
+            " ".join(lorem_ipsum(30)),
+        ])
+    msp.add_mtext(str(editor), attribs).set_location(insert=location)
+
+
+def numbered_list(msp, location):
+    attribs = dict(ATTRIBS)
+    attribs["char_height"] = 0.25
+    attribs["width"] = 7.5
+    # There are no special commands to build numbered list, the list is build of
+    # indentation and a tabulator stop. There is no automatic numbering,
+    # but therefore the absolute freedom for using any string as list marker:
+    editor = MTextEditor("Numbered List:" + NP)
+    editor.bullet_list(
+        indent=1,
+        bullets=["1.", "2.", "3."],
+        content=[
+            "First item",
+            "Second item",
+            " ".join(lorem_ipsum(30)),
+        ])
+    msp.add_mtext(str(editor), attribs).set_location(insert=location)
+
+
 def create(dxfversion):
     """
     Important:
@@ -121,7 +196,11 @@ def create(dxfversion):
     using_colors(msp, location=(0, 10))
     changing_text_height_absolute(msp, location=(0, 25))
     changing_text_height_relative(msp, location=(0, 40))
-    changing_fonts(msp, location=(20, 10))
+    changing_fonts(msp, location=(15, 14))
+    indent_first_line(msp, location=(15, 6))
+    indent_except_fist_line(msp, location=(24, 6))
+    bullet_list(msp, location=(33, 6))
+    numbered_list(msp, location=(33, 2))
     doc.set_modelspace_vport(height=60, center=(15, 15))
     return doc
 

@@ -544,6 +544,13 @@ COMMA = ","
 DIGITS = "01234567890"
 
 
+def rstrip0(s):
+    if isinstance(s, (int, float)):
+        return f"{s:g}"
+    else:
+        return s
+
+
 class ParagraphProperties(NamedTuple):
     # \pi*,l*,r*,q*,t;
     indent: float = 0  # relative to left!
@@ -560,18 +567,18 @@ class ParagraphProperties(NamedTuple):
         args = []
         # if any indention is applied at least "i0" is always required
         if self.indent or self.left or self.right:
-            args.append(f"i{self.indent}")
+            args.append(f"i{self.indent:g}")
         if self.left:
-            args.append(f",l{self.left}")
+            args.append(f",l{self.left:g}")
         if self.right:
-            args.append(f",r{self.right}")
+            args.append(f",r{self.right:g}")
 
         # extended arguments are alignment and tab stops
         xargs = ['x']  # first letter "x" is required
         if self.align:
             xargs.append(f"q{_alignment_char[self.align]}")
         if self.tab_stops:
-            xargs.append(f"t{COMMA.join(map(str, self.tab_stops))}")
+            xargs.append(f"t{COMMA.join(map(rstrip0, self.tab_stops))}")
         if len(xargs) > 1:  # has extended arguments
             if args:  # has any arguments
                 args.append(COMMA)
@@ -709,6 +716,28 @@ class MTextEditor:
 
     def paragraph(self, props: ParagraphProperties) -> 'MTextEditor':
         return self.append(props.tostring())
+
+    def bullet_list(self, indent: float, bullets: Iterable[str],
+                    content: Iterable[str]) -> 'MTextEditor':
+        """ Build bulleted lists by utilizing paragraph indentation and a
+        tabulator stop. Any string can be used as bullet.
+
+        Useful UTF bullets:
+
+        - "bull" U+2022 = • (Alt 7)
+        - "circle" U+25CB = ○ (Alt 9)
+
+        """
+        items = MTextEditor().paragraph(ParagraphProperties(
+            indent=-indent * .75,  # like BricsCAD
+            left=indent,
+            tab_stops=(indent,)
+        ))
+        items.append(
+            "".join(b + self.TAB + c + self.NEW_PARAGRAPH
+                    for b, c in zip(bullets, content))
+        )
+        return self.group(str(items))
 
 
 class MTextProperties:
