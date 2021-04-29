@@ -104,12 +104,13 @@ def changing_fonts(msp, location):
 
 
 def indent_first_line(msp, location):
+    # Indentation is a multiple of the default text height (MTEXT char_height)
     attribs = dict(ATTRIBS)
     attribs["char_height"] = 0.25
     attribs["width"] = 7.5
     editor = MTextEditor("Indent the first line:" + NP)
     props = ParagraphProperties(
-        indent=1,  # indent first line
+        indent=1,  # indent first line = 1x0.25 drawing units
         align=MTextParagraphAlignment.JUSTIFIED
     )
     editor.paragraph(props)
@@ -118,11 +119,12 @@ def indent_first_line(msp, location):
 
 
 def indent_except_fist_line(msp, location):
+    # Indentation is a multiple of the default text height (MTEXT char_height)
     attribs = dict(ATTRIBS)
     attribs["char_height"] = 0.25
     attribs["width"] = 7.5
     editor = MTextEditor("Indent left paragraph side:" + NP)
-    indent = 0.7
+    indent = 0.7  # 0.7 * 0.25 = 0.175 drawing units
     props = ParagraphProperties(
         # first line indentation is relative to "left", this reverses the
         # left indentation:
@@ -172,6 +174,8 @@ def numbered_list(msp, location):
             "Second item",
             " ".join(lorem_ipsum(30)),
         ])
+    # Indentation and tab stops are multiples of the default text height (MTEXT
+    # char_height)!
     msp.add_mtext(str(editor), attribs).set_location(insert=location)
 
 

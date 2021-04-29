@@ -552,6 +552,13 @@ def rstrip0(s):
 
 
 class ParagraphProperties(NamedTuple):
+    # Indentation and tab stops are multiples of the default text height (MTEXT
+    # char_height)!
+    # e.g. char_height = 0.25, indent = 4;
+    #      The real indentation is 4 x 0.25 = 1 drawing unit
+    #
+    # Default tab stops at the multiple of 4: 4, 8, 12, ...
+    #
     # \pi*,l*,r*,q*,t;
     indent: float = 0  # relative to left!
     left: float = 0
@@ -561,6 +568,7 @@ class ParagraphProperties(NamedTuple):
     # tab stops, e.g 2 or '2'
     # prefix 'c' defines a center adjusted tab stop e.g. 'c3.5'
     # prefix 'r' defines a right adjusted tab stop e.g. 'r2.7'
+    # The tab stop in drawing units = n x char_height
     tab_stops: Tuple = tuple()
 
     def tostring(self) -> str:
