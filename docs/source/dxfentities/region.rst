@@ -4,9 +4,14 @@ Region
 .. module:: ezdxf.entities
     :noindex:
 
-REGION (`DXF Reference`_) created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
+REGION (`DXF Reference`_) created by an ACIS based geometry kernel provided by
+the `Spatial Corp.`_
 
-`ezdxf` will never interpret ACIS source code, don't ask me for this feature.
+.. seealso::
+
+    `Ezdxf` will never create or interpret ACIS data, for more information see
+    the FAQ: :ref:`faq003`
+
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Body`

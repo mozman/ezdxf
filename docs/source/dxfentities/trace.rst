@@ -4,9 +4,29 @@ Trace
 .. module:: ezdxf.entities
     :noindex:
 
-TRACE entity (`DXF Reference`_) is solid filled triangle or quadrilateral. Access vertices by name
-(:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).
-I don't know the difference between SOLID and TRACE.
+TRACE entity (`DXF Reference`_) is solid filled triangle or quadrilateral.
+Access vertices by name (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by
+index (:code:`entity[0] = (1.7, 2.3)`). If only 3 vertices are provided the
+last (3rd) vertex will be repeated in the DXF file.
+
+
+The TRACE entity stores the vertices in an unusual way, the last two vertices
+are reversed. The coordinates [(0, 0), (1, 0), (1, 1), (0, 1)] do not create
+a square as you would expect:
+
+.. image:: gfx/solid0.png
+    :align: center
+
+Reverse the last two vertices to get the `expected` square:
+[(0, 0), (1, 0), (0, 1), (1, 1)]
+
+.. image:: gfx/solid1.png
+    :align: center
+
+.. note::
+
+    The :meth:`Trace.vertices` and :meth:`Trace.wcs_vertices` methods return the
+    vertices in the `expected` (reversed) order.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
