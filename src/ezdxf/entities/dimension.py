@@ -14,7 +14,7 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.lldxf.types import get_xcode_for
 from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
-from ezdxf.math.transformtools import OCSTransform
+from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools import take2
 from ezdxf.render.arrows import ARROWS
 from ezdxf.explode import explode_entity
@@ -630,7 +630,21 @@ class Dimension(DXFGraphic, OverrideMixin):
             transform_if_exist(vertex_name, m.transform)
 
         dxf.extrusion = ocs.new_extrusion
+        if self.is_virtual:
+            # transform virtual block content
+            pass
+        else:
+            self._transform_geometry_block_content(m)
         return self
+
+    def _transform_geometry_block_content(self, m: Matrix44) -> None:
+        block = self.get_geometry_block()
+        if block is not None:
+            for entity in block:
+                try:
+                    entity.transform(m)
+                except (NotImplementedError, NonUniformScalingError):
+                    pass  # ignore transformation errors
 
     def virtual_entities(self) -> Iterable['DXFGraphic']:
         """

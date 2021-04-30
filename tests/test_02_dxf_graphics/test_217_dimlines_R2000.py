@@ -1,8 +1,9 @@
-# Copyright (c) 2018-2020 Manfred Moitzi
+# Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
 from ezdxf.entities.dimension import Dimension
+from ezdxf.math import Matrix44
 
 
 @pytest.fixture(scope='module')
@@ -108,17 +109,21 @@ def test_ordinate_dimline(dxf2000):
     assert dimline.dxf.defpoint3 == (0, 0, 0)
 
 
-def test_add_horizontal_dimline(dxf2000):
-    msp = dxf2000.modelspace()
+def add_linear_dimension(doc):
+    msp = doc.modelspace()
     override = msp.add_linear_dim(
         base=(3, 2, 0),
         p1=(0, 0, 0),
         p2=(3, 0, 0),
 
     )
-    dimline = override.dimension
-    assert dimline.dxf.dimstyle == 'EZDXF'
     override.render()
+    return override.dimension
+
+
+def test_add_horizontal_dimline(dxf2000):
+    dimline = add_linear_dimension(dxf2000)
+    assert dimline.dxf.dimstyle == 'EZDXF'
     block_name = dimline.dxf.geometry
     assert block_name.startswith('*D')
 
@@ -130,15 +135,7 @@ def test_add_horizontal_dimline(dxf2000):
 
 
 def test_virtual_entities_and_explode(dxf2000):
-    msp = dxf2000.modelspace()
-    override = msp.add_linear_dim(
-        base=(3, 2, 0),
-        p1=(0, 0, 0),
-        p2=(3, 0, 0),
-
-    )
-    dimline = override.dimension
-    dimline.render()
+    dimline = add_linear_dimension(dxf2000)
 
     parts = list(dimline.virtual_entities())
     assert len(parts) == 9
@@ -150,6 +147,18 @@ def test_virtual_entities_and_explode(dxf2000):
     assert len(list(parts.query('POINT'))) == 3  # def points
     assert dimline.is_alive is False
     assert geometry in dxf2000.blocks, 'Do not destroy anonymous block, may be used by block references.'
+
+
+def test_transformation_of_associated_anonymous_geometry_block(dxf2000):
+    dimline = add_linear_dimension(dxf2000)
+    dx, dy = 1, 1
+    block = dimline.get_geometry_block()
+    original_points = [e.dxf.location for e in block if e.dxftype() == 'POINT']
+    dimline.translate(dx, dy, 0)
+    transformed_points = [e.dxf.location for e in block if
+                          e.dxftype() == 'POINT']
+    for o, t in zip(original_points, transformed_points):
+        assert t.isclose(o + (dx, dy))
 
 
 def test_dimstyle_override(dxf2000):
@@ -306,7 +315,8 @@ def test_dimstyle_override_arrows(dxf2000):
     assert dstyle['dimblk2'] == arrows.closed
     assert dstyle['dimldrblk'] == ''  # special handle for closed filled
 
-    dimstyle.set_arrows(blk=arrows.closed, blk1=arrows.dot_blank, blk2=arrows.box, ldrblk=arrows.dot_small)
+    dimstyle.set_arrows(blk=arrows.closed, blk1=arrows.dot_blank,
+                        blk2=arrows.box, ldrblk=arrows.dot_small)
     assert dimstyle['dimblk'] == arrows.closed
     assert dimstyle['dimblk1'] == arrows.dot_blank
     assert dimstyle['dimblk2'] == arrows.box
