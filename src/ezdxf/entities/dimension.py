@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 import math
 from typing import TYPE_CHECKING, Optional, Union, Iterable
@@ -20,7 +20,7 @@ from ezdxf.render.arrows import ARROWS
 from ezdxf.explode import explode_entity
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
-from .factory import register_entity
+from .factory import register_entity, bind
 from .dimstyleoverride import DimStyleOverride
 
 if TYPE_CHECKING:
@@ -42,7 +42,8 @@ acdb_dimension = DefSubclass('AcDbDimension', {
     'version': DXFAttr(280, default=0, dxfversion=DXF2010),
 
     # Name of the block that contains the entities that make up the dimension
-    # picture
+    # picture. Dimensions in block references share the same geometry block,
+    # therefore deleting the geometry block is very dangerous!
     # Important: DIMENSION constraints do not have this group code 2:
     'geometry': DXFAttr(2, validator=validator.is_valid_block_name),
 
@@ -452,7 +453,7 @@ class Dimension(DXFGraphic, OverrideMixin):
 
     # WARNING for destroy() method:
     # Do not destroy associated anonymous block, if DIMENSION is used in a
-    # block, the anonymous block may be used by several block references.
+    # block, the same geometry block maybe used by multiple block references.
     def __init__(self):
         super().__init__()
         # store the content of the geometry block for virtual entities
@@ -474,6 +475,24 @@ class Dimension(DXFGraphic, OverrideMixin):
             # geometry block to be independently transformable:
             virtual_content = list(self.virtual_entities())
         entity.virtual_block_content = virtual_content
+
+    def post_bind_hook(self):
+        """ Called after binding a virtual dimension entity to a document.
+
+        This method is not called at the loading stage, but virtual dimension
+        entities do not exist at the loading stage!
+
+        """
+        doc = self.doc
+        if self.virtual_block_content and doc is not None:
+            # create a new geometry block:
+            block = self.doc.blocks.new_anonymous_block(type_char='D')
+            # move virtual block content to the new geometry block:
+            for entity in self.virtual_block_content:
+                block.add_entity(entity)
+            self.dxf.geometry = block.name
+            # unlink virtual block content:
+            self.virtual_block_content = None
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -624,7 +643,11 @@ class Dimension(DXFGraphic, OverrideMixin):
 
     def render(self) -> None:
         """ Render graphical representation as anonymous block. """
-        # todo: delete existing anonymous block?
+        if self.is_virtual:
+            raise DXFTypeError('can onr render virtual entity')
+        # Do not delete existing anonymous block, it is maybe referenced
+        # by a dimension entity in another block reference! Dimensions in block
+        # references share the same geometry block!
         self.override().render()
 
     def transform(self, m: 'Matrix44') -> 'Dimension':

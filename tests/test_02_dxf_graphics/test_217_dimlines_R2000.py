@@ -200,7 +200,17 @@ def test_add_virtual_dimension_copy_to_layout(dxf2000):
     dimline = add_linear_dimension(dxf2000)
     vcopy = dimline.copy()
     msp = dxf2000.modelspace()
+    content = vcopy.virtual_block_content
     msp.add_entity(vcopy)
+    assert vcopy.is_virtual is False
+    assert vcopy.virtual_block_content is None
+    assert all(not e.is_virtual for e in content), \
+        "all entities should be non virtual"
+    db = dxf2000.entitydb
+    assert all(e.dxf.handle in db for e in content), \
+        "all entities should be stored in the entity database"
+    assert all(e.doc is dxf2000 for e in content), \
+        "all entities should be bound to the document"
 
 
 def test_dimstyle_override(dxf2000):

@@ -11,6 +11,7 @@ Version 0.16.3 - dev
 - CHANGE: move `MText.set_color()` to `MTextEditor.change_color()`
 - CHANGE: move `MText.append_stacked_text()` to `MTextEditor.stacked_text()`
 - BUGFIX: DXF export of GROUP checks for deleted entities
+- BUGFIX: improved virtual `DIMENSION` handling
 - BUGFIX: `DIMENSION` transformation also transform the content of the 
   associated anonymous geometry block content
 
