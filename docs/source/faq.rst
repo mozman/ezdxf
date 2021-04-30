@@ -40,3 +40,24 @@ Imported ezdxf package has no content. (readfile, new)
 
    This could be a hidden permission error, for more information about this issue
    read Petr Zemeks article: https://blog.petrzemek.net/2020/11/17/when-you-import-a-python-package-and-it-is-empty/
+
+.. _faq003:
+
+How to add/edit ACIS based entities like 3DSOLID, REGION or SURFACE
+-------------------------------------------------------------------
+
+The BODY, 3DSOLID, SURFACE, REGION and so on, are stored as ACIS data embedded
+in the DXF file. The ACIS data is stored as SAT (text) format in the entity
+itself for DXF R2000-R2010 and as SAB (binary) format in the
+ACDSDATA section for DXF R2013+. `Ezdxf` can read SAT and SAB data, but
+only write SAT data.
+
+The ACIS data is a proprietary format from `Spatial Inc.`_, and there exist no
+free available documentation or open source libraries to create or edit SAT or
+SAB data, and also `ezdxf` provides no functionality for creating or editing
+ACIS data.
+
+The ACIS support provided by `ezdxf` is only useful for users have to have
+access to the ACIS SDK from `Spatial Inc.`_.
+
+.. _Spatial Inc.: https://www.spatial.com/products/3d-acis-modeling

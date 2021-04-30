@@ -70,8 +70,9 @@ class Body(DXFGraphic):
 
     @property
     def acis_data(self) -> List[Union[str, bytes]]:
-        """ Get ACIS text data as list of strings for DXF R2000 to DXF R2010 and binary encoded ACIS data for DXF R2013
-        and later as list of bytes.
+        """ Get ACIS text data as list of strings for DXF R2000 to DXF R2010 and
+        binary encoded ACIS data for DXF R2013 and later as list of bytes.
+
         """
         if self.has_binary_data:
             return self.doc.acdsdata.get_acis_data(self.dxf.handle)
@@ -80,8 +81,10 @@ class Body(DXFGraphic):
 
     @acis_data.setter
     def acis_data(self, lines: Iterable[str]):
-        """ Set ACIS data as list of strings for DXF R2000 to DXF R2010. In case of DXF R2013 and later, setting ACIS
-        data as binary data is not supported.
+        """ Set ACIS data as list of strings for DXF R2000 to DXF R2010. In case
+        of DXF R2013 and later, setting ACIS data as binary data is not
+        supported.
+
         """
         if self.has_binary_data:
             raise DXFTypeError(
