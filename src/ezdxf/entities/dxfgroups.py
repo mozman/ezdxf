@@ -94,7 +94,10 @@ class DXFGroup(DXFObject):
             if isinstance(entity, str):
                 handle = entity
             else:
-                handle = entity.dxf.handle
+                if entity.is_alive:
+                    handle = entity.dxf.handle
+                else:
+                    continue  # skip deleted entities
             tagwriter.write_tag2(GROUP_ITEM_CODE, handle)
 
     def __iter__(self) -> Iterable[DXFEntity]:
