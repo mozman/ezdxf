@@ -3,7 +3,6 @@
 import pytest
 import ezdxf
 from ezdxf.entities.dimension import Dimension
-from ezdxf.math import Matrix44
 
 
 @pytest.fixture(scope='module')
@@ -130,7 +129,8 @@ def test_add_horizontal_dimline(dxf2000):
     block = dimline.get_geometry_block()
     assert len(list(block.query('MTEXT'))) == 1
     assert len(list(block.query('INSERT'))) == 2
-    assert len(list(block.query('LINE'))) == 3  # dimension line + 2 extension lines
+    assert len(
+        list(block.query('LINE'))) == 3  # dimension line + 2 extension lines
     assert len(list(block.query('POINT'))) == 3  # def points
 
 
@@ -143,7 +143,8 @@ def test_virtual_entities_and_explode(dxf2000):
     parts = dimline.explode()
     assert len(list(parts.query('MTEXT'))) == 1
     assert len(list(parts.query('INSERT'))) == 2
-    assert len(list(parts.query('LINE'))) == 3  # dimension line + 2 extension lines
+    assert len(
+        list(parts.query('LINE'))) == 3  # dimension line + 2 extension lines
     assert len(list(parts.query('POINT'))) == 3  # def points
     assert dimline.is_alive is False
     assert geometry in dxf2000.blocks, 'Do not destroy anonymous block, may be used by block references.'
@@ -159,6 +160,47 @@ def test_transformation_of_associated_anonymous_geometry_block(dxf2000):
                           e.dxftype() == 'POINT']
     for o, t in zip(original_points, transformed_points):
         assert t.isclose(o + (dx, dy))
+
+
+def test_copy_dimension_with_geometry_block(dxf2000):
+    dimline = add_linear_dimension(dxf2000)
+    vcopy = dimline.copy()
+    assert vcopy.virtual_block_content is not None
+    assert vcopy.dxf.hasattr('geometry') is False
+    block = dimline.get_geometry_block()
+    assert len(vcopy.virtual_block_content) == len(block)
+    for copy, original in zip(vcopy.virtual_block_content, block):
+        assert copy.is_virtual is True
+        assert original.is_virtual is False
+        assert copy.dxftype() == original.dxftype()
+
+
+def test_destroy_virtual_dimension_copy(dxf2000):
+    dimline = add_linear_dimension(dxf2000)
+    dimline.destroy()
+    assert hasattr(dimline, 'virtual_block_content') is False
+
+
+def test_transform_virtual_geometry_block(dxf2000):
+    original = add_linear_dimension(dxf2000)
+
+    original_points = [e.dxf.location for e in original.virtual_entities()
+                       if e.dxftype() == 'POINT']
+    vcopy = original.copy()
+    dx, dy = 1, 1
+    vcopy.translate(dx, dy, 0)
+    transformed_points = [e.dxf.location for e in vcopy.virtual_entities() if
+                          e.dxftype() == 'POINT']
+    assert len(transformed_points) == len(original_points)
+    for o, t in zip(original_points, transformed_points):
+        assert t.isclose(o + (dx, dy))
+
+
+def test_add_virtual_dimension_copy_to_layout(dxf2000):
+    dimline = add_linear_dimension(dxf2000)
+    vcopy = dimline.copy()
+    msp = dxf2000.modelspace()
+    msp.add_entity(vcopy)
 
 
 def test_dimstyle_override(dxf2000):

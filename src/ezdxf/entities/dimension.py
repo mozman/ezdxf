@@ -43,7 +43,7 @@ acdb_dimension = DefSubclass('AcDbDimension', {
 
     # Name of the block that contains the entities that make up the dimension
     # picture
-    # Important: DIMENSION constraints do no have this group code 2:
+    # Important: DIMENSION constraints do not have this group code 2:
     'geometry': DXFAttr(2, validator=validator.is_valid_block_name),
 
     # Dimension style name:
@@ -453,6 +453,27 @@ class Dimension(DXFGraphic, OverrideMixin):
     # WARNING for destroy() method:
     # Do not destroy associated anonymous block, if DIMENSION is used in a
     # block, the anonymous block may be used by several block references.
+    def __init__(self):
+        super().__init__()
+        # store the content of the geometry block for virtual entities
+        self.virtual_block_content = None
+
+    def copy(self) -> 'Dimension':
+        virtual_copy = super().copy()
+        # The new virtual copy can not reference the same geometry block as the
+        # original dimension entity:
+        virtual_copy.dxf.discard('geometry')
+        return virtual_copy
+
+    def _copy_data(self, entity: 'Dimension') -> None:
+        if self.virtual_block_content:
+            # another copy of a virtual entity:
+            virtual_content = [e.copy() for e in self.virtual_block_content]
+        else:
+            # entity is a new virtual copy of self and can not share the same
+            # geometry block to be independently transformable:
+            virtual_content = list(self.virtual_entities())
+        entity.virtual_block_content = virtual_content
 
     def load_dxf_attribs(
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -630,21 +651,22 @@ class Dimension(DXFGraphic, OverrideMixin):
             transform_if_exist(vertex_name, m.transform)
 
         dxf.extrusion = ocs.new_extrusion
-        if self.is_virtual:
-            # transform virtual block content
-            pass
-        else:
-            self._transform_geometry_block_content(m)
+        self._transform_block_content(m)
         return self
 
-    def _transform_geometry_block_content(self, m: Matrix44) -> None:
-        block = self.get_geometry_block()
-        if block is not None:
-            for entity in block:
-                try:
-                    entity.transform(m)
-                except (NotImplementedError, NonUniformScalingError):
-                    pass  # ignore transformation errors
+    def _block_content(self) -> Iterable['DXFGraphic']:
+        if self.virtual_block_content or self.is_virtual:
+            content = self.virtual_block_content
+        else:
+            content = self.get_geometry_block()
+        return content or []
+
+    def _transform_block_content(self, m: Matrix44) -> None:
+        for entity in self._block_content():
+            try:
+                entity.transform(m)
+            except (NotImplementedError, NonUniformScalingError):
+                pass  # ignore transformation errors
 
     def virtual_entities(self) -> Iterable['DXFGraphic']:
         """
@@ -656,13 +678,11 @@ class Dimension(DXFGraphic, OverrideMixin):
         layout.
 
         """
-        block = self.get_geometry_block()
-        if block is not None:
-            for entity in block:
-                try:
-                    yield entity.copy()
-                except DXFTypeError:
-                    pass
+        for entity in self._block_content():
+            try:
+                yield entity.copy()
+            except DXFTypeError:
+                pass
 
     def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
         """
@@ -679,6 +699,11 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         """
         return explode_entity(self, target_layout)
+
+    def destroy(self) -> None:
+        # Let virtual content just go out of scope:
+        del self.virtual_block_content
+        super().destroy()
 
 
 acdb_arc_dimension = DefSubclass('AcDbArcDimension', {
