@@ -3,7 +3,7 @@
 import math
 from typing import TYPE_CHECKING, Optional, Union, Iterable
 import logging
-from ezdxf.lldxf import validator
+from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
     group_code_mapping,
@@ -26,9 +26,9 @@ from .dimstyleoverride import DimStyleOverride
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-    TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS, BaseLayout,
-    EntityQuery, DXFEntity,
-)
+        TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS, BaseLayout,
+        EntityQuery, DXFEntity,
+    )
 
 logger = logging.getLogger('ezdxf')
 ADSK_CONSTRAINTS = "*ADSK_CONSTRAINTS"
@@ -590,7 +590,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         does not exist
 
         """
-        block_name = self.get_dxf_attrib('geometry', '*')
+        block_name = self.dxf.get('geometry', '*')
         return self.doc.blocks.get(block_name)
 
     def get_measurement(self) -> Union[float, Vec3]:
@@ -600,43 +600,10 @@ class Dimension(DXFGraphic, OverrideMixin):
         Returns vector from origin to feature location for ordinate dimensions.
 
         """
-
-        def angle_between(v1: Vec3, v2: Vec3) -> float:
-            angle = v2.angle_deg - v1.angle_deg
-            return angle + 360 if angle < 0 else angle
-
-        if self.dimtype in (0, 1):  # linear, aligned
-            return linear_measurement(
-                self.dxf.defpoint2,
-                self.dxf.defpoint3,
-                math.radians(self.dxf.get('angle', 0)),
-                self.ocs(),
-            )
-        elif self.dimtype in (3, 4):  # diameter, radius
-            p1 = Vec3(self.dxf.defpoint)
-            p2 = Vec3(self.dxf.defpoint4)
-            return (p2 - p1).magnitude
-        elif self.dimtype == 2:  # angular from 2 lines
-            p1 = Vec3(self.dxf.defpoint2)  # 1. point of 1. extension line
-            p2 = Vec3(self.dxf.defpoint3)  # 2. point of 1. extension line
-            p3 = Vec3(self.dxf.defpoint4)  # 1. point of 2. extension line
-            p4 = Vec3(self.dxf.defpoint)  # 2. point of 2. extension line
-            dir1 = p2 - p1  # direction of 1. extension line
-            dir2 = p4 - p3  # direction of 2. extension line
-            return angle_between(dir1, dir2)
-        elif self.dimtype == 5:  # angular from 2 lines
-            p1 = Vec3(self.dxf.defpoint4)  # center
-            p2 = Vec3(self.dxf.defpoint2)  # 1. extension line
-            p3 = Vec3(self.dxf.defpoint3)  # 2. extension line
-            dir1 = p2 - p1  # direction of 1. extension line
-            dir2 = p3 - p1  # direction of 2. extension line
-            return angle_between(dir1, dir2)
-        elif self.dimtype == 6:  # ordinate
-            origin = Vec3(self.dxf.defpoint)
-            feature_location = Vec3(self.dxf.defpoint2)
-            return feature_location - origin
+        tool = MEASUREMENT_TOOLS.get(self.dimtype)
+        if tool:
+            return tool(self)
         else:
-            # todo: add ARC_DIMENSION dimtype=8 support
             raise TypeError(f"Unknown DIMENSION type {self.dimtype}.")
 
     def override(self) -> 'DimStyleOverride':
@@ -646,7 +613,7 @@ class Dimension(DXFGraphic, OverrideMixin):
     def render(self) -> None:
         """ Render graphical representation as anonymous block. """
         if self.is_virtual:
-            raise DXFTypeError('can onr render virtual entity')
+            raise DXFTypeError('can not render virtual entity')
         # Do not delete existing anonymous block, it is maybe referenced
         # by a dimension entity in another block reference! Dimensions in block
         # references share the same geometry block!
@@ -951,6 +918,54 @@ acdb_dim_assoc = DefSubclass('AcDbDimAssoc', {
 })
 
 
+def measure_linear_distance(dim: Dimension) -> float:
+    dxf = dim.dxf
+    return linear_measurement(
+        dxf.defpoint2,
+        dxf.defpoint3,
+        math.radians(dxf.get('angle', 0)),
+        dim.ocs(),
+    )
+
+
+def measure_diameter_or_radius(dim: Dimension) -> float:
+    p1 = Vec3(dim.dxf.defpoint)
+    p2 = Vec3(dim.dxf.defpoint4)
+    return (p2 - p1).magnitude
+
+
+def measure_angle_between_two_lines(dim: Dimension) -> float:
+    dxf = dim.dxf
+    p1 = Vec3(dxf.defpoint2)  # 1. point of 1. extension line
+    p2 = Vec3(dxf.defpoint3)  # 2. point of 1. extension line
+    p3 = Vec3(dxf.defpoint4)  # 1. point of 2. extension line
+    p4 = Vec3(dxf.defpoint)  # 2. point of 2. extension line
+    dir1 = p2 - p1  # direction of 1. extension line
+    dir2 = p4 - p3  # direction of 2. extension line
+    return angle_between(dir1, dir2)
+
+
+def measure_angle_between_three_points(dim: Dimension) -> float:
+    dxf = dim.dxf
+    p1 = Vec3(dxf.defpoint4)  # center
+    p2 = Vec3(dxf.defpoint2)  # 1. extension line
+    p3 = Vec3(dxf.defpoint3)  # 2. extension line
+    dir1 = p2 - p1  # direction of 1. extension line
+    dir2 = p3 - p1  # direction of 2. extension line
+    return angle_between(dir1, dir2)
+
+
+def get_feature_location(dim: Dimension) -> Vec3:
+    origin = Vec3(dim.dxf.defpoint)
+    feature_location = Vec3(dim.dxf.defpoint2)
+    return feature_location - origin
+
+
+def angle_between(v1: Vec3, v2: Vec3) -> float:
+    angle = v2.angle_deg - v1.angle_deg
+    return angle + 360 if angle < 0 else angle
+
+
 def linear_measurement(p1: Vec3, p2: Vec3, angle: float = 0,
                        ocs: 'OCS' = None) -> float:
     """ Returns distance from `p1` to `p2` projected onto ray defined by
@@ -970,3 +985,15 @@ def linear_measurement(p1: Vec3, p2: Vec3, angle: float = 0,
     t1 = measurement_direction.project(p1)
     t2 = measurement_direction.project(p2)
     return (t2 - t1).magnitude
+
+
+# TODO: add ARC_DIMENSION dimtype=8 support
+MEASUREMENT_TOOLS = {
+    const.DIM_LINEAR: measure_linear_distance,
+    const.DIM_ALIGNED: measure_linear_distance,
+    const.DIM_ANGULAR: measure_angle_between_two_lines,
+    const.DIM_DIAMETER: measure_diameter_or_radius,
+    const.DIM_RADIUS: measure_diameter_or_radius,
+    const.DIM_ANGULAR_3P: measure_angle_between_three_points,
+    const.DIM_ORDINATE: get_feature_location,
+}
