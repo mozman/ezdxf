@@ -528,11 +528,11 @@ def load_columns_from_xdata(dxf: 'DXFNamespace',
     if acad is None:
         return None
 
-    handle = dxf.get('handle')
+    name = f"MTEXT(#{dxf.get('handle')})"
     try:
         columns = load_mtext_column_info(acad)
     except const.DXFStructureError:
-        logger.error(f"Invalid ACAD_MTEXT_COLUMN_INFO in MTEXT(#{handle})")
+        logger.error(f"Invalid ACAD_MTEXT_COLUMN_INFO in {name}")
         return None
 
     if columns is None:  # no columns defined
@@ -541,7 +541,7 @@ def load_columns_from_xdata(dxf: 'DXFNamespace',
     try:
         columns.linked_handles = load_mtext_linked_column_handles(acad)
     except const.DXFStructureError:
-        logger.error(f"Invalid ACAD_MTEXT_COLUMNS in MTEXT(#{handle})")
+        logger.error(f"Invalid ACAD_MTEXT_COLUMNS in {name}")
 
     columns.update_total_width()
     if columns.heights:  # dynamic columns, manual heights
@@ -552,8 +552,7 @@ def load_columns_from_xdata(dxf: 'DXFNamespace',
         try:
             columns.defined_height = load_mtext_defined_height(acad)
         except const.DXFStructureError:
-            logger.error(
-                f"Invalid ACAD_MTEXT_DEFINED_HEIGHT in MTEXT(#{handle})")
+            logger.error(f"Invalid ACAD_MTEXT_DEFINED_HEIGHT in {name}")
         columns.total_height = columns.defined_height
 
     return columns
