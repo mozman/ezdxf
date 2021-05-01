@@ -3,8 +3,7 @@
 from typing import TYPE_CHECKING, Iterable, cast, Union, List, Set
 from contextlib import contextmanager
 import logging
-from ezdxf.lldxf import validator
-from ezdxf.lldxf.const import DXFValueError, SUBCLASS_MARKER, DXFTypeError
+from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping,
 )
@@ -63,7 +62,7 @@ class DXFGroup(DXFObject):
         self._data: List[DXFEntity] = []
 
     def copy(self):
-        raise DXFTypeError('Copying of GROUP not supported.')
+        raise const.DXFTypeError('Copying of GROUP not supported.')
 
     def load_dxf_attribs(self,
                          processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -88,7 +87,7 @@ class DXFGroup(DXFObject):
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
         super().export_entity(tagwriter)
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_group.name)
+        tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_group.name)
         self.dxf.export_dxf_attribs(tagwriter, [
             'description', 'unnamed', 'selectable'])
         self.export_group(tagwriter)
@@ -134,11 +133,14 @@ class DXFGroup(DXFObject):
                 if entity and entity.is_alive:
                     yield entity
 
-        self.set_data(entities())
+        try:
+            self.set_data(entities())
+        except const.DXFStructureError as e:
+            logger.error(str(e))
         del self._handles  # all referenced entities are stored in _data
 
     @contextmanager
-    def edit_data(self) -> List['DXFEntity']:
+    def edit_data(self) -> List[DXFEntity]:
         """ Context manager which yields all the group entities as
         standard Python list::
 
@@ -153,7 +155,7 @@ class DXFGroup(DXFObject):
         yield data
         self.set_data(data)
 
-    def set_data(self, entities: Iterable['DXFEntity']) -> None:
+    def set_data(self, entities: Iterable[DXFEntity]) -> None:
         """  Set `entities` as new group content, entities should be an iterable
         :class:`DXFGraphic` or inherited (LINE, CIRCLE, ...).
         Raises :class:`DXFValueError` if not all entities be on the same layout
@@ -162,14 +164,14 @@ class DXFGroup(DXFObject):
         """
         entities = list(entities)
         if not all_entities_on_same_layout(entities):
-            raise DXFValueError(
-                "All entities have to be on the same layout (modelspace or any "
-                "paperspace layout but not a block)."
+            raise const.DXFStructureError(
+                "All entities have to be in the same layout and not in "
+                "a block layout."
             )
         self.clear()
         self._data = entities
 
-    def extend(self, entities: Iterable['DXFEntity']) -> None:
+    def extend(self, entities: Iterable[DXFEntity]) -> None:
         """ Add `entities` to :class:`DXFGroup`. """
         self._data.extend(entities)
 
@@ -214,17 +216,17 @@ class DXFGroup(DXFObject):
                 f'located in a block layout.')
         return valid
 
-    def _filter_invalid_entities(self, db: 'EntityDB') -> Iterable['DXFEntity']:
+    def _filter_invalid_entities(self, db: 'EntityDB') -> List[DXFEntity]:
         assert db is not None
-        return (e for e in self._data
-                if e.is_alive and self._has_valid_owner(e, db))
+        return [e for e in self._data
+                if e.is_alive and self._has_valid_owner(e, db)]
 
     def purge(self, db: 'EntityDB') -> None:
         """ Remove invalid group entities. """
-        self._data = list(self._filter_invalid_entities(db))
+        self._data = self._filter_invalid_entities(db)
 
 
-def all_entities_on_same_layout(entities: Iterable['DXFEntity']):
+def all_entities_on_same_layout(entities: Iterable[DXFEntity]):
     """ Check if all entities are on the same layout (model space or any paper
     layout but not block).
 
@@ -266,7 +268,7 @@ class GroupCollection(ObjectCollection):
 
         """
         if name in self:
-            raise DXFValueError(f"GROUP '{name}' already exists.")
+            raise const.DXFValueError(f"GROUP '{name}' already exists.")
 
         if name is None:
             name = self.next_name()
@@ -297,7 +299,7 @@ class GroupCollection(ObjectCollection):
         if name in self:
             super().delete(name)
         else:
-            raise DXFValueError("GROUP not in group table registered.")
+            raise const.DXFValueError("GROUP not in group table registered.")
 
     def audit(self, auditor: 'Auditor') -> None:
         """ Removes empty groups and invalid handles from all groups. """
