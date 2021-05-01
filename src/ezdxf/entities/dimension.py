@@ -18,16 +18,17 @@ from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.tools import take2
 from ezdxf.render.arrows import ARROWS
 from ezdxf.explode import explode_entity
+from ezdxf.entitydb import EntitySpace
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
-from .factory import register_entity, bind
+from .factory import register_entity
 from .dimstyleoverride import DimStyleOverride
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS, BaseLayout,
-        EntityQuery,
-    )
+    TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS, BaseLayout,
+    EntityQuery, DXFEntity,
+)
 
 logger = logging.getLogger('ezdxf')
 ADSK_CONSTRAINTS = "*ADSK_CONSTRAINTS"
@@ -457,9 +458,9 @@ class Dimension(DXFGraphic, OverrideMixin):
     def __init__(self):
         super().__init__()
         # store the content of the geometry block for virtual entities
-        self.virtual_block_content = None
+        self.virtual_block_content: Optional[EntitySpace] = None
 
-    def copy(self) -> 'Dimension':
+    def copy(self) -> 'DXFEntity':
         virtual_copy = super().copy()
         # The new virtual copy can not reference the same geometry block as the
         # original dimension entity:
@@ -469,11 +470,12 @@ class Dimension(DXFGraphic, OverrideMixin):
     def _copy_data(self, entity: 'Dimension') -> None:
         if self.virtual_block_content:
             # another copy of a virtual entity:
-            virtual_content = [e.copy() for e in self.virtual_block_content]
+            virtual_content = EntitySpace(
+                e.copy() for e in self.virtual_block_content)
         else:
             # entity is a new virtual copy of self and can not share the same
             # geometry block to be independently transformable:
-            virtual_content = list(self.virtual_entities())
+            virtual_content = EntitySpace(self.virtual_entities())
         entity.virtual_block_content = virtual_content
 
     def post_bind_hook(self):
