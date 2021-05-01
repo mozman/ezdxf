@@ -388,7 +388,7 @@ class MTextLineAlignment(IntEnum):  # exclusive state
     TOP = 2
 
 
-class MTextStroke(IntFlag):  # multiple flags possible
+class MTextStroke(IntFlag):  # Combination of flags is possible
     UNDERLINE = 1
     STRIKE_THROUGH = 2
     OVERLINE = 4

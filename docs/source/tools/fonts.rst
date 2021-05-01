@@ -22,6 +22,8 @@ Font Classes
 
 .. autofunction:: make_font
 
+.. autoclass:: AbstractFont
+
 .. autoclass:: MonospaceFont
 
     .. automethod:: text_width

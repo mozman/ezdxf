@@ -35,6 +35,15 @@ MTEXT_ALIGN_FLAGS = {
 
 
 class TextLine:
+    """ Helper class which represents a single line text entity
+    (e.g. :class:`~ezdxf.entities.Text`).
+
+    Args:
+        text: content string
+        font: ezdxf font definition like :class:`~ezdxf.tools.fonts.MonospaceFont`
+            or :class:`~ezdxf.tools.fonts.MatplotlibFont`
+
+    """
     def __init__(self, text: str, font: 'AbstractFont'):
         self._font = font
         self._text_width: float = font.text_width(text)
@@ -42,6 +51,11 @@ class TextLine:
         self._stretch_y: float = 1.0
 
     def stretch(self, alignment: str, p1: Vec3, p2: Vec3) -> None:
+        """ Set stretch factors for "FIT" and "ALIGNED" alignments to fit the
+        text between `p1` and `p2`, only the distance between these points is
+        important. Other given `alignment` values are ignore.
+
+        """
         sx: float = 1.0
         sy: float = 1.0
         if alignment in ('FIT', 'ALIGNED'):
@@ -55,13 +69,16 @@ class TextLine:
 
     @property
     def width(self) -> float:
+        """ Returns the final (stretched) text width. """
         return self._text_width * self._stretch_x
 
     @property
     def height(self) -> float:
+        """ Returns the final (stretched) text height. """
         return self._font.measurements.total_height * self._stretch_y
 
     def font_measurements(self) -> FontMeasurements:
+        """ Returns the scaled font measurements. """
         return self._font.measurements.scale(self._stretch_y)
 
     def baseline_vertices(self,
@@ -233,6 +250,9 @@ def unified_alignment(entity: Union['Text', 'MText']) -> Tuple[int, int]:
 
 
 def plain_text(text: str) -> str:
+    """ Returns the plain text for :class:`~ezdxf.entities.Text`,
+    :class:`~ezdxf.entities.Attrib` and :class:`~ezdxf.entities.Attdef` content.
+    """
     chars = []
     raw_chars = list(reversed(validator.fix_one_line_text(caret_decode(text))))
     while len(raw_chars):
@@ -362,6 +382,15 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # - Paragraphs do overflow into the next column if required.
 
 def plain_mtext(text: str, split=False) -> Union[List[str], str]:
+    """ Returns the plain MTEXT content as a single string or  a list of
+    strings if `split` is ``True``. Replaces ``\\P`` by ``\\n`` and removes
+    other controls chars and inline codes.
+
+    Args:
+        text: MTEXT content string
+        split: split content at line endings ``\\P``
+
+    """
     chars = []
     # split text into chars, in reversed order for efficient pop()
     raw_chars = list(reversed(text))
@@ -384,7 +413,7 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
                     chars.append(' ')
                 else:
                     pass  # discard other commands
-            else:  # more character commands are terminated by ';'
+            else:  # multiple character commands are terminated by ';'
                 stacking = char == 'S'  # stacking command surrounds user data
                 first_char = char
                 search_chars = raw_chars.copy()
@@ -423,7 +452,7 @@ def caret_decode(text: str) -> str:
     decodes this notation to normalise the representation of special characters
     in the string.
 
-    see: <https://en.wikipedia.org/wiki/Caret_notation>
+    see: https://en.wikipedia.org/wiki/Caret_notation
 
     """
 
@@ -435,6 +464,7 @@ def caret_decode(text: str) -> str:
 
 
 def split_mtext_string(s: str, size: int = 250) -> List[str]:
+    """ Split the MTEXT content string into chunks of max `size`. """
     chunks = []
     pos = 0
     while True:
@@ -469,13 +499,13 @@ def is_non_printable_char(char: str) -> bool:
 
 def text_wrap(text: str, box_width: Optional[float],
               get_text_width: Callable[[str], float]) -> List[str]:
-    """ Wrap text at "\n" and given `box_width`. This tool was developed for
+    """ Wrap text at ``\\n`` and given `box_width`. This tool was developed for
     usage with the MTEXT entity. This isn't the most straightforward word
     wrapping algorithm, but it aims to match the behavior of AutoCAD.
 
     Args:
-        text: text to wrap, included "\n" are handled as manual line breaks
-        box_width: wrapping length, `None` to just wrap at "\n"
+        text: text to wrap, included ``\\n`` are handled as manual line breaks
+        box_width: wrapping length, ``None`` to just wrap at ``\\n``
         get_text_width: callable which returns the width of the given string
 
     """
@@ -518,7 +548,8 @@ def text_wrap(text: str, box_width: Optional[float],
 
 
 def is_text_vertical_stacked(text: 'DXFEntity') -> bool:
-    """ Returns ``True`` if the associated text STYLE is vertical stacked.
+    """ Returns ``True`` if the associated text :class:`~ezdxf.entities.Textstyle`
+    is vertical stacked.
     """
     if not text.is_supported_dxf_attrib('style'):
         raise TypeError(
@@ -552,14 +583,27 @@ def rstrip0(s):
 
 
 class ParagraphProperties(NamedTuple):
-    # Indentation and tab stops are multiples of the default text height (MTEXT
-    # char_height)!
-    # e.g. char_height = 0.25, indent = 4;
-    #      The real indentation is 4 x 0.25 = 1 drawing unit
-    #
-    # Default tab stops at the multiple of 4: 4, 8, 12, ...
-    #
-    # \pi*,l*,r*,q*,t;
+    """ Stores all known MTEXT paragraph properties in a :class:`NamedTuple`.
+    Indentations and tab stops are multiples of the default text height
+    :attr:`MText.dxf.char_height`. E.g. :attr:`char_height` is 0.25 and
+    :attr:`indent` is 4, the real indentation is 4 x 0.25 = 1 drawing unit.
+    The default tabulator stops are 4, 8, 12, ... if no tabulator stops are
+    explicit defined.
+
+    Args:
+         indent: left indentation of the first line, relative to :attr:`left`,
+            which means an :attr:`indent` of 0 has always the same indentation
+            as :attr:`left`
+         left: left indentation of the paragraph except for the first line
+         right: left indentation of the paragraph
+         align: :class:`~ezdxf.lldxf.const.MTextParagraphAlignment` enum
+         tab_stops: tuple of tabulator stops, as ``int`` or as ``str``, ``int``
+            values are left aligned tab stops, strings with prefix ``c`` are
+            center aligned tab stops and strings with prefix ``r`` are right
+            aligned tab stops
+
+    """
+    # Reset: \pi*,l*,r*,q*,t;
     indent: float = 0  # relative to left!
     left: float = 0
     right: float = 0
@@ -572,6 +616,10 @@ class ParagraphProperties(NamedTuple):
     tab_stops: Tuple = tuple()
 
     def tostring(self) -> str:
+        """ Returns the MTEXT paragraph properties as MTEXT inline code
+        e.g. ``"\\pi-2,l2;"``.
+
+        """
         args = []
         # if any indention is applied at least "i0" is always required
         if self.indent or self.left or self.right:
