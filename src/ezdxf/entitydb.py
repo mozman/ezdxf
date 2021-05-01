@@ -1,13 +1,12 @@
-# Copyright (c) 2019-2020, Manfred Moitzi
+# Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
-from typing import Optional, Iterable, Tuple, TYPE_CHECKING, Dict, Set
+from typing import Optional, Iterable, Tuple, TYPE_CHECKING, Dict, Set, List
 from contextlib import contextmanager
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.audit import AuditError, Auditor
 from ezdxf.lldxf.const import DXFInternalEzdxfError
-from ezdxf.entities.subentity import LinkedEntities
 from ezdxf.entities import factory
 
 if TYPE_CHECKING:
@@ -166,7 +165,7 @@ class EntityDB:
             del self[entity.dxf.handle]
             entity.destroy()
 
-    def discard(self, entity: 'DXFEntity') -> None:
+    def discard(self, entity: DXFEntity) -> None:
         """ Discard `entity` from database without destroying the `entity`. """
         if entity.is_alive:
             if hasattr(entity, 'process_sub_entities'):
@@ -292,15 +291,15 @@ class EntitySpace:
 
     """
 
-    def __init__(self, entities=None):
-        entities = entities or []
-        self.entities = list(e for e in entities if e.is_alive)
+    def __init__(self, entities: Iterable[DXFEntity] = None):
+        self.entities: List[DXFEntity] = list(e for e in entities if e.is_alive) \
+            if entities else []
 
-    def __iter__(self) -> Iterable['DXFEntity']:
+    def __iter__(self) -> Iterable[DXFEntity]:
         """ Iterable of all entities, filters destroyed entities. """
         return (e for e in self.entities if e.is_alive)
 
-    def __getitem__(self, index) -> 'DXFEntity':
+    def __getitem__(self, index) -> DXFEntity:
         """ Get entity at index `item`
 
         :class:`EntitySpace` has a standard Python list like interface,
@@ -313,7 +312,7 @@ class EntitySpace:
         return self.entities[index]
 
     def __len__(self) -> int:
-        """ Count of entities inluding destroyed entities. """
+        """ Count of entities including destroyed entities. """
         return len(self.entities)
 
     def has_handle(self, handle: str) -> bool:
@@ -325,13 +324,13 @@ class EntitySpace:
         """ Remove all destroyed entities from entity space. """
         self.entities = list(self)
 
-    def add(self, entity: 'DXFEntity') -> None:
+    def add(self, entity: DXFEntity) -> None:
         """ Add `entity`. """
         assert isinstance(entity, DXFEntity), type(entity)
         assert entity.is_alive, 'Can not store destroyed entities'
         self.entities.append(entity)
 
-    def extend(self, entities: Iterable['DXFEntity']) -> None:
+    def extend(self, entities: Iterable[DXFEntity]) -> None:
         """ Add multiple `entities`."""
         for entity in entities:
             self.add(entity)
@@ -344,7 +343,7 @@ class EntitySpace:
         for entity in iter(self):
             entity.export_dxf(tagwriter)
 
-    def remove(self, entity: 'DXFEntity') -> None:
+    def remove(self, entity: DXFEntity) -> None:
         """ Remove `entity`. """
         self.entities.remove(entity)
 
