@@ -6,7 +6,7 @@ import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import DXFValueError, SUBCLASS_MARKER, DXFTypeError
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping,
 )
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
@@ -59,7 +59,7 @@ class DXFGroup(DXFObject):
 
     def __init__(self):
         super().__init__()
-        self._handles: Set[str] = set()
+        self._handles: Set[str] = set()  # only needed at the loading stage
         self._data: List[DXFEntity] = []
 
     def copy(self):
@@ -81,6 +81,10 @@ class DXFGroup(DXFObject):
                 # are not stored in the EntityDB:
                 self._handles.add(value)
 
+    def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
+        self.purge(self.doc.entitydb)
+        return True  # export even empty groups
+
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
         super().export_entity(tagwriter)
@@ -91,14 +95,7 @@ class DXFGroup(DXFObject):
 
     def export_group(self, tagwriter: 'TagWriter'):
         for entity in self._data:
-            if isinstance(entity, str):
-                handle = entity
-            else:
-                if entity.is_alive:
-                    handle = entity.dxf.handle
-                else:
-                    continue  # skip deleted entities
-            tagwriter.write_tag2(GROUP_ITEM_CODE, handle)
+            tagwriter.write_tag2(GROUP_ITEM_CODE, entity.dxf.handle)
 
     def __iter__(self) -> Iterable[DXFEntity]:
         """ Iterate over all DXF entities in :class:`DXFGroup` as instances of
@@ -129,17 +126,16 @@ class DXFGroup(DXFObject):
 
     def post_load_hook(self, doc: 'Drawing') -> None:
         super().post_load_hook(doc)
-        db = doc.entitydb
+        db_get = doc.entitydb.get
 
         def entities():
             for handle in self._handles:
-                entity = db.get(handle)
+                entity = db_get(handle)
                 if entity and entity.is_alive:
                     yield entity
 
-        if len(self._handles):
-            self.set_data(entities())
-            self._handles = set()
+        self.set_data(entities())
+        del self._handles  # all referenced entities are stored in _data
 
     @contextmanager
     def edit_data(self) -> List['DXFEntity']:
@@ -192,8 +188,7 @@ class DXFGroup(DXFObject):
 
         """
         # Remove destroyed or invalid entities:
-        db = auditor.entitydb
-        self._data = list(self._filter_invalid_entities(db))
+        self.purge(auditor.entitydb)
         if not all_entities_on_same_layout(self._data):
             auditor.fixed_error(
                 code=AuditError.GROUP_ENTITIES_IN_DIFFERENT_LAYOUTS,
@@ -221,11 +216,12 @@ class DXFGroup(DXFObject):
 
     def _filter_invalid_entities(self, db: 'EntityDB') -> Iterable['DXFEntity']:
         assert db is not None
-        for e in self._data:
-            if e is None:
-                continue
-            if e.is_alive and self._has_valid_owner(e, db):
-                yield e
+        return (e for e in self._data
+                if e.is_alive and self._has_valid_owner(e, db))
+
+    def purge(self, db: 'EntityDB') -> None:
+        """ Remove invalid group entities. """
+        self._data = list(self._filter_invalid_entities(db))
 
 
 def all_entities_on_same_layout(entities: Iterable['DXFEntity']):
