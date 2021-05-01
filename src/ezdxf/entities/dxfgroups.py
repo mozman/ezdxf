@@ -212,8 +212,8 @@ class DXFGroup(DXFObject):
         valid = owner.dxf.layout != '0'
         if not valid:
             logger.debug(
-                f'Removed {str(entity)} from {str(self)}, because entity is '
-                f'located in a block layout.')
+                f"{str(entity)} in {str(self)} is located in a block layout, "
+                f"which is not allowed")
         return valid
 
     def _filter_invalid_entities(self, db: 'EntityDB') -> List[DXFEntity]:
