@@ -19,14 +19,6 @@ package.
     pkg-design
 
 
-Internal Modules
-----------------
-
-.. toctree::
-    :maxdepth: 2
-
-    fonts
-
 Internal Data Structures
 ------------------------
 
