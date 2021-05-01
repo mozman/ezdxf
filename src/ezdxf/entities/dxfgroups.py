@@ -165,8 +165,8 @@ class DXFGroup(DXFObject):
         entities = list(entities)
         if not all_entities_on_same_layout(entities):
             raise const.DXFStructureError(
-                "All entities have to be in the same layout and not in "
-                "a block layout."
+                "All entities have to be in the same layout and are not allowed"
+                " to be in a block layout."
             )
         self.clear()
         self._data = entities
