@@ -4,12 +4,12 @@ LWPolyline
 .. module:: ezdxf.entities
     :noindex:
 
-The LWPOLYLINE entity (`DXF Reference`_) is defined as a single graphic entity,
-which differs from the old-style :class:`Polyline` entity, which is defined as
-a group of sub-entities. :class:`LWPolyline` display faster (in AutoCAD) and
-consume less disk space, it is a planar element, therefore all points are
-located in the :ref:`OCS` as (x, y)-tuples (:attr:`LWPolyline.dxf.elevation`
-is the z-axis value).
+The LWPOLYLINE entity (Lightweight POLYLINE, `DXF Reference`_) is defined as 
+a single graphic entity, which differs from the old-style :class:`Polyline` 
+entity, which is defined as a group of sub-entities. :class:`LWPolyline` 
+display faster (in AutoCAD) and consume less disk space, it is a planar 
+element, therefore all points are located in the :ref:`OCS` as (x, y)-tuples
+(:attr:`LWPolyline.dxf.elevation` is the z-axis value).
 
 
 .. versionchanged:: 0.8.9
