@@ -4,11 +4,11 @@ import pytest
 import math
 
 from ezdxf.path import (
-    Path, make_path, converter, Command, tools
+    Path, make_path, converter, Command, tools,
 )
 from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P
 from ezdxf.entities.hatch import PolylinePath, EdgePath
-from ezdxf.entities import factory, DXFEntity, Polymesh
+from ezdxf.entities import factory, DXFEntity, Polymesh, LWPolyline
 
 
 def test_init():
@@ -265,7 +265,6 @@ POINTS = [
 
 
 def test_make_path_from_lwpolyline_with_bulges():
-    from ezdxf.entities import LWPolyline
     pline = LWPolyline()
     pline.closed = True
     pline.append_points(POINTS, format='xyb')
@@ -276,7 +275,6 @@ def test_make_path_from_lwpolyline_with_bulges():
 
 
 def test_make_path_from_full_circle_lwpolyline():
-    from ezdxf.entities import LWPolyline
     pline = LWPolyline()
     pline.closed = True
     pline.append_points([(0, 0, 1), (1, 0, 1)], format='xyb')
@@ -287,6 +285,34 @@ def test_make_path_from_full_circle_lwpolyline():
     assert any(cmd.type == Command.CURVE4_TO for cmd in path)
     vertices = list(path.flattening(0.1))
     assert len(vertices) == 65
+
+
+def test_big_coords_issue_424():
+    # Vec3 can't distinguish these two vertices:
+    assert Vec3(39_482_129.9462793, 3_554_328.753243976, 1.0).isclose(
+        Vec3(39_482_129.95781776, 3_554_328.753243976, 1.0),
+        abs_tol=1e-3) is True
+
+    # same issue for math.isclose():
+    assert math.isclose(39_482_129.9462793, 39_482_129.95781776,
+                        abs_tol=1e-3) is True
+
+    # This would work, but relative tolerance is not used by Vec3()
+    assert math.isclose(39_482_129.9462793, 39_482_129.95781776,
+                        rel_tol=1e-10) is False
+
+
+def test_make_path_from_full_circle_lwpolyline_issue_424():
+    pline = LWPolyline()
+    pline.closed = True
+    points = [
+        (39_482_129.9462793, 3_554_328.753243976, 1.0),
+        (39_482_129.95781776, 3_554_328.753243976, 1.0),
+    ]
+    pline.append_points(points, format='xyb')
+    path = make_path(pline)
+    # Limit of floating point representation: see test_big_coords_issue_424()
+    assert len(path) == 0
 
 
 S_SHAPE = [
