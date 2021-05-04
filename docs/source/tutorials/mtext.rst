@@ -1,7 +1,7 @@
 .. _tut_mtext:
 
-Tutorial for MText
-==================
+Tutorial for MText and MTextEditor
+==================================
 
 The :class:`~ezdxf.entities.MText` entity is a multi line entity with extended
 formatting possibilities and requires at least DXF version R2000, to use all
@@ -139,6 +139,8 @@ MText supports inline formatting by special codes: :ref:`mtext_inline_codes`
 
 .. image:: gfx/mtext_rgb.png
 
+See also new section for the new support class `MTextEditor`_ in `ezdxf` v0.17.
+
 Stacked text
 ------------
 
@@ -152,6 +154,8 @@ MText also supports stacked text:
 
 
 .. image:: gfx/mtext_stacked.png
+
+See also new section for the new support class `MTextEditor`_ in `ezdxf` v0.17.
 
 Background color (filling)
 --------------------------
@@ -173,3 +177,109 @@ The parameter `scale` determines how much border there is around the text, the v
 and should be in the range of ``1`` - ``5``, where ``1`` fits exact the MText entity.
 
 .. image:: gfx/mtext_bg_color.png
+
+.. _mtext_editor_tut:
+
+MTextEditor
+-----------
+
+.. versionadded:: 0.17
+
+The :class:`~ezdxf.tools.text.MTextEditor` class provides a floating interface
+to build :class:`MText` content in an easy way.
+
+This example only shows the connection between :class:`MText` and the
+:class:`MTextEditor`, and shows no additional features to the first example of
+this tutorial:
+
+Init Editor
++++++++++++
+
+.. code-block:: python
+
+    import ezdxf
+    from ezdxf.tools.text import MTextEditor
+
+    doc = ezdxf.new('R2007', setup=True)
+    msp = doc.modelspace()
+
+    lorem_ipsum = """
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit, ... see prolog code
+    """
+
+    # create a new editor object with an initial text:
+    editor = MTextEditor(lorem_ipsum)
+
+    # get the MTEXT content string from the editor by the str() function:
+    mtext = msp.add_mtext(str(editor), dxfattribs={'style': 'OpenSans'})
+
+Tutorial Prolog:
+
+.. code-block:: python
+
+    # use constants defined in MTextEditor:
+    NP = MTextEditor.NEW_PARAGRAPH
+
+    ATTRIBS = {
+        "char_height": 0.7,
+        "style": "OpenSans",
+        "width": 10,
+    }
+    editor = MTextEditor("using colors:" + NP)
+
+Set Text Color
+++++++++++++++
+
+Change colors by name: red, green, blue, yellow, cyan, magenta, white
+
+.. code-block:: python
+
+    editor.color("red").append("RED" + NP)
+
+The color stays the same until the next change:
+
+.. code-block:: python
+
+    editor.append("also RED" + NP)
+
+Change color by :ref:`ACI`:
+
+.. code-block:: python
+
+    editor.aci(3).append("GREEN" + NP)
+
+Change color by RGB tuples:
+
+.. code-block:: python
+
+    editor.rgb((0, 0, 255)).append("BLUE" + NP)
+
+Add the :class:`MText` entity to the model space:
+
+.. code-block:: python
+
+    msp.add_mtext(str(editor), attribs)
+
+
+Changing Text Height
+++++++++++++++++++++
+
+Changing Font
++++++++++++++
+
+Set Paragraph Properties
+++++++++++++++++++++++++
+
+Bullet List
++++++++++++
+
+Numbered List
++++++++++++++
+
+
+.. seealso::
+
+    - :class:`~ezdxf.tools.text.MTextEditor` example code on `github`_.
+    - Documentation of :class:`~ezdxf.tools.text.MTextEditor`
+
+.. _github: https://github.com/mozman/ezdxf/blob/master/examples/entities/mtext_editor.py
