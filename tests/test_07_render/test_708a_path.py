@@ -264,7 +264,7 @@ POINTS = [
 ]
 
 
-def test_lwpolyline_with_bulges():
+def test_make_path_from_lwpolyline_with_bulges():
     from ezdxf.entities import LWPolyline
     pline = LWPolyline()
     pline.closed = True
@@ -273,6 +273,20 @@ def test_lwpolyline_with_bulges():
     assert path.start == (0, 0)
     assert path.end == (0, 0)  # closed
     assert any(cmd.type == Command.CURVE4_TO for cmd in path)
+
+
+def test_make_path_from_full_circle_lwpolyline():
+    from ezdxf.entities import LWPolyline
+    pline = LWPolyline()
+    pline.closed = True
+    pline.append_points([(0, 0, 1), (1, 0, 1)], format='xyb')
+    path = make_path(pline)
+    assert path.start == (0, 0)
+    assert path.end == (0, 0)
+    assert len(path) == 4
+    assert any(cmd.type == Command.CURVE4_TO for cmd in path)
+    vertices = list(path.flattening(0.1))
+    assert len(vertices) == 65
 
 
 S_SHAPE = [
@@ -310,7 +324,7 @@ def test_polyline_lines():
     assert path.end == (2, 2, 1)
 
 
-def test_polyine_with_bulges():
+def test_polyline_with_bulges():
     from ezdxf.entities import Polyline
     pline = Polyline()
     pline.close(True)
