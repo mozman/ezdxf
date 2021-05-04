@@ -4,7 +4,7 @@ LWPolyline
 .. module:: ezdxf.entities
     :noindex:
 
-The LWPOLYLINE entity (Light Weight POLYLINE, `DXF Reference`_) is defined as 
+The LWPOLYLINE entity (Lightweight POLYLINE, `DXF Reference`_) is defined as 
 a single graphic entity, which differs from the old-style :class:`Polyline` 
 entity, which is defined as a group of sub-entities. :class:`LWPolyline` 
 display faster (in AutoCAD) and consume less disk space, it is a planar 
