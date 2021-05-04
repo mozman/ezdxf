@@ -44,6 +44,7 @@ class TextLine:
             or :class:`~ezdxf.tools.fonts.MatplotlibFont`
 
     """
+
     def __init__(self, text: str, font: 'AbstractFont'):
         self._font = font
         self._text_width: float = font.text_width(text)
@@ -591,15 +592,15 @@ class ParagraphProperties(NamedTuple):
     explicit defined.
 
     Args:
-         indent: left indentation of the first line, relative to :attr:`left`,
+         indent (float): left indentation of the first line, relative to :attr:`left`,
             which means an :attr:`indent` of 0 has always the same indentation
             as :attr:`left`
-         left: left indentation of the paragraph except for the first line
-         right: left indentation of the paragraph
+         left (float): left indentation of the paragraph except for the first line
+         right (float): left indentation of the paragraph
          align: :class:`~ezdxf.lldxf.const.MTextParagraphAlignment` enum
          tab_stops: tuple of tabulator stops, as ``int`` or as ``str``, ``int``
-            values are left aligned tab stops, strings with prefix ``c`` are
-            center aligned tab stops and strings with prefix ``r`` are right
+            values are left aligned tab stops, strings with prefix ``"c"`` are
+            center aligned tab stops and strings with prefix ``"r"`` are right
             aligned tab stops
 
     """
@@ -646,6 +647,25 @@ class ParagraphProperties(NamedTuple):
 
 
 class MTextEditor:
+    """ The :class:`MtextEditor` is a helper class to build MTEXT content
+    strings with support for inline codes to change color, font or
+    paragraph properties. The result is always accessible by the :attr:`text`
+    attribute or the magic :func:`__str__` function as
+    :code:`str(MTextEditor("text"))`.
+
+    All text building methods return `self` to implement a floating interface::
+
+        e = MTextEditor("This example ").color("red").append("switches color to red.")
+        mtext = msp.add_mtext(str(e))
+
+    The initial text height, color, text style and so on is determined by the
+    DXF attributes of the :class:`~ezdxf.entities.MText` entity.
+
+    Args:
+        text: init value of the MTEXT content string.
+
+    """
+
     def __init__(self, text: str = ""):
         self.text = str(text)
 
@@ -667,23 +687,36 @@ class MTextEditor:
     TAB = '^I'
 
     def append(self, text: str) -> 'MTextEditor':
+        """ Append `text`. """
         self.text += text
         return self
 
     def __iadd__(self, text: str) -> 'MTextEditor':
+        """
+        Append `text`::
+
+            e = MTextEditor("First paragraph.\P")
+            e += "Second paragraph.\P")
+
+        """
         self.text += text
         return self
 
     def __str__(self) -> str:
+        """ Returns the MTEXT content attribute :attr:`text`. """
         return self.text
 
     def clear(self):
+        """ Reset the content to an empty string. """
         self.text = ""
 
     def font(self, name: str, bold: bool = False,
              italic: bool = False) -> 'MTextEditor':
-        """ Append font change (e.g. ``'\\fArial|b0|i0|c0|p0'`` ) to
-        existing content (:attr:`text` attribute).
+        """ Set the text font by the font family name. Changing the font height
+        should be done by the :meth:`height` or the :meth:`scale_height` method.
+        The font family name is the name shown in font selection widgets in
+        desktop applications: "Arial", "Times New Roman", "Comic Sans MS".
+        Switching the codepage is not supported.
 
         Args:
             name: font family name
@@ -701,22 +734,34 @@ class MTextEditor:
         return self.append(rf"\f{name}|b{int(bold)}|i{int(italic)}|c0|p0;")
 
     def scale_height(self, factor: float) -> 'MTextEditor':
-        """ Set current text height by a factor. """
+        """ Scale the text height by a `factor`. This scaling will accumulate,
+        which means starting at height 2.5 and scaling by 2 and again by 3 will
+        set the text height to 2.5 x 2 x 3 = 15. The current text height is not
+        stored in the :class:`MTextEditor`, you have to track the text height by
+        yourself! The initial text height is stored in the
+        :class:`~ezdxf.entities.MText` entity as DXF attribute
+        :class:`~ezdxf.entities.MText.dxf.char_height`.
+
+        """
         return self.append(rf'\H{round(factor, 3)}x;')
 
     def height(self, height: float) -> 'MTextEditor':
-        """ Set absolute current text height in drawing units. """
+        """ Set the absolute text height in drawing units. """
         return self.append(rf'\H{round(height, 3)};')
 
     def width_factor(self, factor: float) -> 'MTextEditor':
-        """ Set current text width factor. """
+        """ Set the absolute text width factor. """
         return self.append(rf'\W{round(factor, 3)};')
 
     def oblique(self, angle: int) -> 'MTextEditor':
+        """ Set the text oblique angle in degrees, vertical is 0, a value of 15
+        will lean the text 15 degree to the right.
+
+        """
         return self.append(rf'\Q{int(angle)};')
 
     def color(self, name: str) -> 'MTextEditor':
-        """ Text color change by color name: "red", "yellow", "green", "cyan",
+        """ Set the text color by color name: "red", "yellow", "green", "cyan",
         "blue", "magenta" or "white".
 
         """
@@ -724,7 +769,7 @@ class MTextEditor:
             r"\C%d;" % const.MTEXT_COLOR_INDEX[name.lower()])
 
     def aci(self, aci: int) -> 'MTextEditor':
-        """ Append text color change by ACI in range [0, 256].
+        """ Set the text color by :ref:`ACI` in range [0, 256].
         """
         if 0 <= aci <= 256:
             return self.append(rf"\C{aci};")
@@ -732,12 +777,12 @@ class MTextEditor:
             raise ValueError("aci not in range [0, 256]")
 
     def rgb(self, rgb: RGB) -> 'MTextEditor':
-        """ Append text color change as RGB values. """
+        """ Set the text color as RGB value. """
         r, g, b = rgb
         return self.append(rf"\c{rgb2int((b, g, r))};")
 
     def stack(self, upr: str, lwr: str, t: str = '^') -> 'MTextEditor':
-        r""" Add stacked text `upr` over `lwr`, `t` defines the
+        r""" Append stacked text `upr` over `lwr`, argument `t` defines the
         kind of stacking:
 
         .. code-block:: none
@@ -759,29 +804,56 @@ class MTextEditor:
         return self.append(rf'\S{upr}{t} {lwr};')
 
     def group(self, text: str) -> 'MTextEditor':
+        """ Group `text`, all properties changed inside a group are reverted at
+        the end of the group. AutoCAD supports grouping up to 8 levels.
+
+        """
         return self.append(f"{{{text}}}")
 
     def underline(self, text: str) -> 'MTextEditor':
+        """ Append `text` with a line below the text. """
         return self.append(rf"\L{text}\l")
 
     def overline(self, text: str) -> 'MTextEditor':
+        """ Append `text` with a line above the text. """
         return self.append(rf"\O{text}\o")
 
     def strike_through(self, text: str) -> 'MTextEditor':
+        """ Append `text` with a line through the text. """
         return self.append(rf"\K{text}\k")
 
     def paragraph(self, props: ParagraphProperties) -> 'MTextEditor':
+        """ Set paragraph properties by a :class:`ParagraphProperties` object.
+        """
         return self.append(props.tostring())
 
     def bullet_list(self, indent: float, bullets: Iterable[str],
                     content: Iterable[str]) -> 'MTextEditor':
         """ Build bulleted lists by utilizing paragraph indentation and a
-        tabulator stop. Any string can be used as bullet.
+        tabulator stop. Any string can be used as bullet. Indentation is
+        a multiple of the initial MTEXT char height (see also docs about
+        :class:`ParagraphProperties`), which means indentation in
+        drawing units is :attr:`MText.dxf.char_height` x `indent`.
 
         Useful UTF bullets:
 
-        - "bull" U+2022 = • (Alt 7)
-        - "circle" U+25CB = ○ (Alt 9)
+        - "bull" U+2022 = • (Alt Numpad 7)
+        - "circle" U+25CB = ○ (Alt Numpad 9)
+
+        For numbered lists just use numbers as bullets::
+
+            MTextEditor.bullet_list(
+                indent=2,
+                bullets=["1.", "2."],
+                content=["first", "second"],
+            )
+
+        Args:
+            indent: content indentation as multiple of the initial MTEXT char height
+            bullets: iterable of bullet strings, e.g. :code:`["-"] * 3`,
+                for 3 dashes as bullet strings
+            content: iterable of list item strings, one string per list item,
+                list items should not contain new line or new paragraph commands.
 
         """
         items = MTextEditor().paragraph(ParagraphProperties(

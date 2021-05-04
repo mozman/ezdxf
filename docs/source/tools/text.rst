@@ -5,12 +5,73 @@ Text Tools
 
 .. module:: ezdxf.tools.text
 
-MText Support Classes
----------------------
+MTextEditor
+-----------
 
-.. class:: MTextEditor
+.. autoclass:: MTextEditor
 
-.. autoclass:: ParagraphProperties
+    .. attribute:: text
+
+        The MTEXT content as a simple string.
+
+    .. automethod:: append
+
+    .. automethod:: __iadd__
+
+    .. automethod:: __str__
+
+    .. automethod:: clear
+
+    .. automethod:: font
+
+    .. automethod:: height
+
+    .. automethod:: scale_height
+
+    .. automethod:: width_factor
+
+    .. automethod:: oblique
+
+    .. automethod:: color
+
+    .. automethod:: aci
+
+    .. automethod:: rgb
+
+    .. automethod:: underline
+
+    .. automethod:: overline
+
+    .. automethod:: strike_through
+
+    .. automethod:: group
+
+    .. automethod:: stack
+
+    .. automethod:: paragraph
+
+    .. automethod:: bullet_list
+
+Constants stored in the :class:`MTextEditor` class:
+
+=================== ==========
+NEW_LINE            ``'\P'``
+NEW_PARAGRAPH       ``'\P'``
+NEW_COLUMN          ``'\N``
+UNDERLINE_START     ``'\L'``
+UNDERLINE_STOP      ``'\l'``
+OVERSTRIKE_START    ``'\O'``
+OVERSTRIKE_STOP     ``'\o'``
+STRIKE_START        ``'\K'``
+STRIKE_STOP         ``'\k'``
+ALIGN_BOTTOM        ``'\A0;'``
+ALIGN_MIDDLE        ``'\A1;'``
+ALIGN_TOP           ``'\A2;'``
+NBSP                ``'\~'``
+TAB                 ``'^I'``
+=================== ==========
+
+.. autoclass:: ParagraphProperties(indent=0, left=0, right=0, align=DEFAULT, tab_stops=[])
 
     .. automethod:: tostring
 
