@@ -177,6 +177,7 @@ The parameter `scale` determines how much border there is around the text, the v
 and should be in the range of ``1`` - ``5``, where ``1`` fits exact the MText entity.
 
 .. image:: gfx/mtext_bg_color.png
+    :align: center
 
 .. _mtext_editor_tut:
 
@@ -184,6 +185,19 @@ MTextEditor
 -----------
 
 .. versionadded:: 0.17
+
+.. warning::
+
+    The :class:`MTextEditor` assembles just the inline code, which has to be
+    parsed and rendered by the target CAD application, `ezdxf` has no influence
+    to that result.
+
+    Keep inline formatting as simple as possible, don't test the limits of its
+    capabilities, this will not work across different CAD applications and keep
+    the formatting in a logic manner like, do not change paragraph properties
+    in the middle of a paragraph.
+
+    **There is no official documentation for the inline codes!**
 
 The :class:`~ezdxf.tools.text.MTextEditor` class provides a floating interface
 to build :class:`MText` content in an easy way.
@@ -230,52 +244,253 @@ Tutorial Prolog:
 Set Text Color
 ++++++++++++++
 
-Change colors by name: red, green, blue, yellow, cyan, magenta, white
+There are three ways to change the color inline:
+
+    - by color name "red", "green", "blue", "yellow", "cyan", "magenta", "white"
+    - by :ref:`ACI`
+    - by RGB values
 
 .. code-block:: python
 
+    # RED: set color by name - red, green, blue, yellow, cyan, magenta, white
     editor.color("red").append("RED" + NP)
-
-The color stays the same until the next change:
-
-.. code-block:: python
-
+    # RED: the color stays the same until the next change
     editor.append("also RED" + NP)
 
-Change color by :ref:`ACI`:
-
-.. code-block:: python
-
+    # GREEN: change color by ACI (AutoCAD Color Index)
     editor.aci(3).append("GREEN" + NP)
 
-Change color by RGB tuples:
-
-.. code-block:: python
-
+    # BLUE: change color by RGB tuples
     editor.rgb((0, 0, 255)).append("BLUE" + NP)
 
-Add the :class:`MText` entity to the model space:
-
-.. code-block:: python
-
+    # add the MTEXT entity to the model space:
     msp.add_mtext(str(editor), attribs)
 
+.. image:: gfx/mtext_editor_colors.png
+    :align: center
 
 Changing Text Height
 ++++++++++++++++++++
 
+The :meth:`MtextEditor.height` method set the text height as absolute value in
+drawing units (text height = cap height):
+
+.. code-block:: Python
+
+    attribs = dict(ATTRIBS)
+    attribs["width"] = 40.0
+    editor = MTextEditor("changing text height absolute: default height is 0.7" + NP)
+    # doubling the default height = 1.4
+    editor.height(1.4)
+    editor.append("text height: 1.4" + NP)
+    editor.height(3.5).append("text height: 3.5" + NP)
+    editor.height(0.7).append("back to default height: 0.7" + NP)
+    msp.add_mtext(str(editor), attribs)
+
+
+.. image:: gfx/mtext_editor_text_height.png
+    :align: center
+
+The :meth:`MtextEditor.scale_height` method set the text height by a relative
+factor, the :class:`MtextEditor` object does not keep track of current text
+height, you have to do this by yourself. The initial text height is
+:attr:`MText.dxf.char_height`:
+
+.. code-block:: Python
+
+    attribs = dict(ATTRIBS)
+    attribs["width"] = 40.0
+    editor = MTextEditor("changing text height relative: default height is 0.7" + NP)
+    # this is the default text height in the beginning:
+    current_height = attribs["char_height"]
+    # The text height can only be changed by a factor:
+    editor.scale_height(2)  # scale by 2 = 1.4
+    # keep track of the actual height:
+    current_height *= 2
+    editor.append("text height: 1.4" + NP)
+    # to set an absolute height, calculate the required factor:
+    desired_height = 3.5
+    factor = desired_height / current_height
+    editor.scale_height(factor).append("text height: 3.5" + NP)
+    current_height = desired_height
+    # and back to 0.7
+    editor.scale_height(0.7 / current_height).append("back to default height: 0.7" + NP)
+    msp.add_mtext(str(editor), attribs).set_location(insert=location)
+
 Changing Font
 +++++++++++++
+
+The font name for changing :class:`MText` fonts inline is the font family name!
+The font family name is the name shown in font selection widgets in
+desktop applications: "Arial", "Times New Roman", "Comic Sans MS".
+The font has to be installed at the target system, else then CAD default
+font will be used, in AutoCAD/BricsCAD is this the font defined for the text
+style ``Standard``.
+
+.. important::
+
+    The DXF/DWG format is not optimal for preserving text layouts across
+    multiple systems, and it's getting really bad across different CAD
+    applications.
+
+.. code-block:: Python
+
+    attribs = dict(ATTRIBS)
+    attribs["width"] = 15.0
+    editor = MTextEditor("changing fonts:" + NP)
+    editor.append("Default: Hello World!" + NP)
+    editor.append("SimSun: ")
+    # change font in a group to revert back to the default font at the end:
+    simsun_editor = MTextEditor().font("SimSun").append("你好，世界" + NP)
+    # reverts the font back at the end of the group:
+    editor.group(str(simsun_editor))
+    # back to default font OpenSans:
+    editor.append("Times New Roman: ")
+    # change font outside of a group until next font change:
+    editor.font("Times New Roman").append("Привет мир!" + NP)
+    # If the font does not exist, a replacement font will be used:
+    editor.font("Does not exist").append("This is the replacement font!")
+    msp.add_mtext(str(editor), attribs)
+
+.. image:: gfx/mtext_editor_fonts.png
+    :align: center
 
 Set Paragraph Properties
 ++++++++++++++++++++++++
 
+The paragraph properties are set by the :meth:`~ezdxf.tools.text.MTextEditor.paragraph`
+method and a :class:`~ezdxf.tools.text.ParagraphProperties` object, which bundles
+all paragraph properties in a named tuple.
+
+Each paragraph can have its own properties for:
+
+    - indentation arguments:
+
+        - ``indent`` is the left indentation of the first line
+        - ``left``  is the left side indentation of the paragraph
+        - ``right`` is the right side indentation of the paragraph
+
+    - text adjustment: ``align``, by enum :class:`MTextParagraphAlignment`
+
+        - MTextParagraphAlignment.LEFT
+        - MTextParagraphAlignment.RIGHT
+        - MTextParagraphAlignment.CENTER
+        - MTextParagraphAlignment.JUSTIFIED
+        - MTextParagraphAlignment.DISTRIBUTED
+
+    - tabulator stops: ``tab_stops``, a tuple of tabulator stops
+
+
+Indentation and tabulator stops are multiples of the default :class:`MText`
+text height stored in :class:`MText.dxf.char_height`. Calculate the drawing
+units for indentation and tabulator stops, by multiplying the the indentation
+value by the :attr:`char_height` value.
+
+:class:`Mtext` paragraphs are separated by new paragraph (``"\P"``) characters.
+
+.. code-block:: Python
+
+    # import support classes:
+    from ezdxf.tools.text import ParagraphProperties, MTextParagraphAlignment
+
+    attribs = dict(ATTRIBS)
+    attribs["char_height"] = 0.25
+    attribs["width"] = 7.5
+    editor = MTextEditor("Indent the first line:" + NP)
+    props = ParagraphProperties(
+        indent=1,  # indent first line = 1x0.25 drawing units
+        align=MTextParagraphAlignment.JUSTIFIED
+    )
+    editor.paragraph(props)
+    editor.append(lorem_ipsum)
+    msp.add_mtext(str(editor), attribs)
+
+.. image:: gfx/mtext_editor_indent_first.png
+    :align: center
+
+The first line indentation "indent" is relative to the "left" indentation.
+
+.. code-block:: Python
+
+    # import support classes:
+    from ezdxf.tools.text import ParagraphProperties, MTextParagraphAlignment
+
+    attribs = dict(ATTRIBS)
+    attribs["char_height"] = 0.25
+    attribs["width"] = 7.5
+    editor = MTextEditor("Indent left paragraph side:" + NP)
+    indent = 0.7  # 0.7 * 0.25 = 0.175 drawing units
+    props = ParagraphProperties(
+        # first line indentation is relative to "left", this reverses the
+        # left indentation:
+        indent=-indent,  # first line
+        # indent left paragraph side:
+        left=indent,
+        align=MTextParagraphAlignment.JUSTIFIED
+    )
+    editor.paragraph(props)
+    editor.append(" ".join(lorem_ipsum(100)))
+    msp.add_mtext(str(editor), attribs).set_location(insert=location)
+
+.. image:: gfx/mtext_editor_indent_left.png
+    :align: center
+
 Bullet List
 +++++++++++
+
+There are no special commands to build bullet list, the list is build of
+indentation and a tabulator stop. Each list item needs a marker as an
+arbitrary string. For more information about paragraph indentation and
+tabulator stops see also chapter `Set Paragraph Properties`_.
+
+.. code-block:: Python
+
+    attribs = dict(ATTRIBS)
+    attribs["char_height"] = 0.25
+    attribs["width"] = 7.5
+    bullet = "•"  # alt + numpad 7
+    editor = MTextEditor("Bullet List:" + NP)
+    editor.bullet_list(
+        indent=1,
+        bullets=[bullet] * 3,  # each list item needs a marker
+        content=[
+            "First item",
+            "Second item",
+            " ".join(lorem_ipsum(30)),
+        ])
+    msp.add_mtext(str(editor), attribs)
+
+
+.. image:: gfx/mtext_editor_bullet_list.png
+    :align: center
 
 Numbered List
 +++++++++++++
 
+There are no special commands to build numbered list, the list is build of
+indentation and a tabulator stop. There is no automatic numbering,
+but therefore the absolute freedom for using any string as list marker.
+For more information about paragraph indentation and
+tabulator stops see also chapter `Set Paragraph Properties`_.
+
+.. code-block:: Python
+
+    attribs = dict(ATTRIBS)
+    attribs["char_height"] = 0.25
+    attribs["width"] = 7.5
+    editor = MTextEditor("Numbered List:" + NP)
+    editor.bullet_list(
+        indent=1,
+        bullets=["1.", "2.", "3."],
+        content=[
+            "First item",
+            "Second item",
+            " ".join(lorem_ipsum(30)),
+        ])
+    msp.add_mtext(str(editor), attribs)
+
+.. image:: gfx/mtext_editor_numbered_list.png
+    :align: center
 
 .. seealso::
 

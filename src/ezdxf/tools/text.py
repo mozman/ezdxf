@@ -661,6 +661,19 @@ class MTextEditor:
     The initial text height, color, text style and so on is determined by the
     DXF attributes of the :class:`~ezdxf.entities.MText` entity.
 
+    .. warning::
+
+        The :class:`MTextEditor` assembles just the inline code, which has to be
+        parsed and rendered by the target CAD application, `ezdxf` has no influence
+        to that result.
+
+        Keep inline formatting as simple as possible, don't test the limits of its
+        capabilities, this will not work across different CAD applications and keep
+        the formatting in a logic manner like, do not change paragraph properties
+        in the middle of a paragraph.
+
+        **There is no official documentation for the inline codes!**
+
     Args:
         text: init value of the MTEXT content string.
 

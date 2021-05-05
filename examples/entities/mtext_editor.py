@@ -48,9 +48,8 @@ def changing_text_height_absolute(msp, location):
     attribs["width"] = 40.0  # need mor space to avoid text wrapping
     editor = MTextEditor(
         "changing text height absolute: default height is 0.7" + NP)
-    # this is the default text height in the beginning:
-    # The text height can only be changed by a factor:
-    editor.height(1.4)  # scale by 2 = 1.4
+    # doubling the default height = 1.4
+    editor.height(1.4)
     editor.append("text height: 1.4" + NP)
     editor.height(3.5).append("text height: 3.5" + NP)
     editor.height(0.7).append("back to default height: 0.7" + NP)
