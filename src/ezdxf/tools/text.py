@@ -1,6 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 #  All tools in this module have to be independent from DXF entities!
+import enum
 from typing import (
     List, Iterable, Tuple, TYPE_CHECKING, Union, Optional, Callable, NamedTuple,
 )
@@ -645,6 +646,7 @@ class ParagraphProperties(NamedTuple):
         else:
             return ""
 
+
 # IMPORTANT for parsing MTEXT inline codes: "\\H0.1\\A1\\C1rot"
 # Inline commands with a single argument, don't need a trailing ";"!
 
@@ -884,8 +886,7 @@ class MTextEditor:
 
 
 class MTextContext:
-    """ Internal class to store the MTEXT context state.
-    """
+    """ Internal class to store the MTEXT context state. """
 
     def __init__(self):
         self._stroke: int = 0
@@ -971,3 +972,53 @@ class MTextContext:
     @overline.setter
     def overline(self, value: bool) -> None:
         self._set_stroke_state(MTextStroke.OVERLINE, value)
+
+
+class TokenType(enum.IntEnum):
+    NONE = 0
+    WORD = 1  # data = str
+    STACK = 2  # data = upr, lwr, type; upr&lwr:=(str|space)+
+    SPACE = 3  # data = None
+    NBSP = 4  # data = None
+    TABULATOR = 5  # data = None
+    NEW_PARAGRAPH = 6  # data = None
+    NEW_COLUMN = 7  # data = None
+    GROUP_START = 8  # data = None
+    GROUP_END = 9  # data = None
+
+
+class MTextParser:
+    """ Parses the MText content string and yields the content as tokens and
+    the current MText properties as MTextContext object. The context object is
+    treated internally as immutable object and should be treated by the client
+    the same way.
+
+    The parser is implemented as iterator yielding tuples (ctx, token, data):
+        - ctx: MTextContext, current settings as immutable object
+        - token: TokenType
+        - data: str|tuple|None
+
+    Args:
+        content: MText content string
+        ctx: initial MText context
+
+    """
+
+    def __init__(self, content: str, ctx: MTextContext = None):
+        if ctx is None:
+            ctx = MTextContext()
+        self.ctx = ctx
+        self.content = content
+
+    def __next__(self) -> Tuple:
+        type_, data = self.next_token()
+        if type_:
+            return self.ctx, type_, data
+        else:
+            raise StopIteration
+
+    def __iter__(self):
+        return self
+
+    def next_token(self):
+        return TokenType.NONE, None
