@@ -883,7 +883,7 @@ class MTextEditor:
         return self.group(str(items))
 
 
-class MTextProperties:
+class MTextContext:
     """ Internal class to store the MTEXT context state.
     """
 
@@ -898,8 +898,8 @@ class MTextProperties:
         self.oblique: float = 0.0
         self.paragraph = ParagraphProperties()
 
-    def __copy__(self) -> 'MTextProperties':
-        p = MTextProperties()
+    def __copy__(self) -> 'MTextContext':
+        p = MTextContext()
         p._stroke = self._stroke
         p._aci = self._aci
         p.rgb = self.rgb
@@ -919,7 +919,7 @@ class MTextProperties:
              self.cap_height, self.width_factor, self.oblique, self.paragraph)
         )
 
-    def __eq__(self, other: 'MTextProperties') -> bool:
+    def __eq__(self, other: 'MTextContext') -> bool:
         return hash(self) == hash(other)
 
     @property

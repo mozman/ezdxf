@@ -4,33 +4,33 @@
 import pytest
 from ezdxf.lldxf.const import MTextParagraphAlignment
 from ezdxf.tools.text import (
-    MTextProperties, ParagraphProperties
+    MTextContext, ParagraphProperties
 )
 
 
 def test_underline():
-    p = MTextProperties()
+    p = MTextContext()
     assert p.underline is False
     p.underline = True
     assert p.underline is True
 
 
 def test_strike():
-    p = MTextProperties()
+    p = MTextContext()
     assert p.strike_through is False
     p.strike_through = True
     assert p.strike_through is True
 
 
 def test_overstrike():
-    p = MTextProperties()
+    p = MTextContext()
     assert p.overline is False
     p.overline = True
     assert p.overline is True
 
 
 def test_copy():
-    p = MTextProperties()
+    p = MTextContext()
     p.underline = True
     p2 = p.copy()
     p2.underline = False
@@ -38,15 +38,15 @@ def test_copy():
 
 
 def test_equality():
-    p = MTextProperties()
+    p = MTextContext()
     p.underline = True
-    p2 = MTextProperties()
+    p2 = MTextContext()
     p2.underline = True
     assert p == p2
 
 
 def test_set_aci():
-    p = MTextProperties()
+    p = MTextContext()
     p.rgb = (0, 1, 2)
     p.aci = 7
     assert p.aci == 7
