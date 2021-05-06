@@ -622,7 +622,7 @@ class ParagraphProperties(NamedTuple):
 
         """
         args = []
-        # if any indention is applied at least "i0" is always required
+        # if any indentation is applied at least "i0" is always required
         if self.indent or self.left or self.right:
             args.append(f"i{self.indent:g}")
         if self.left:
@@ -644,6 +644,9 @@ class ParagraphProperties(NamedTuple):
             return "\\p" + "".join(args) + ";"
         else:
             return ""
+
+# IMPORTANT for parsing MTEXT inline codes: "\\H0.1\\A1\\C1rot"
+# Inline commands with a single argument, don't need a trailing ";"!
 
 
 class MTextEditor:

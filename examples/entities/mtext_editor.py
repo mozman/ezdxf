@@ -178,6 +178,31 @@ def numbered_list(msp, location):
     msp.add_mtext(str(editor), attribs).set_location(insert=location)
 
 
+def stacking(msp, location):
+    attribs = dict(ATTRIBS)
+    attribs["char_height"] = 0.25
+    attribs["width"] = 4
+    editor = MTextEditor("Stacked text:" + NP)
+
+    # place fraction with down scaled text height in a group:
+    stack = MTextEditor().scale_height(0.6).stack("1", "2", "^")
+    editor.append("over: ").group(str(stack)).append(NP)
+
+    stack = MTextEditor().scale_height(0.6).stack("1", "2", "/")
+    editor.append("fraction: ").group(str(stack)).append(NP)
+
+    stack = MTextEditor().scale_height(0.6).stack("1", "2", "#")
+    editor.append("slanted: ").group(str(stack)).append(NP)
+
+    # additional formatting in numerator and denominator is not supported
+    # by AutoCAD or BricsCAD.
+    # switching colors inside the fraction to red does not work:
+    numerator = MTextEditor().color("red").append("1")
+    stack = MTextEditor().scale_height(0.6).stack(str(numerator), "2", "#")
+    editor.append("color red: ").group(str(stack)).append(NP)
+    msp.add_mtext(str(editor), attribs).set_location(insert=location)
+
+
 def create(dxfversion):
     """
     Important:
@@ -204,6 +229,7 @@ def create(dxfversion):
     indent_except_fist_line(msp, location=(24, 6))
     bullet_list(msp, location=(33, 6))
     numbered_list(msp, location=(33, 2))
+    stacking(msp, location=(33, 14))
     doc.set_modelspace_vport(height=60, center=(15, 15))
     return doc
 

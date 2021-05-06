@@ -135,7 +135,7 @@ MText supports inline formatting by special codes: :ref:`mtext_inline_codes`
 
 .. code-block:: python
 
-    mtext.text = "{\\C1red text} - {\\C3green text} - {\\C5blue text}"
+    mtext.text = "{\\C1;red text} - {\\C3;green text} - {\\C5;blue text}"
 
 .. image:: gfx/mtext_rgb.png
 
@@ -148,9 +148,9 @@ MText also supports stacked text:
 
 .. code-block:: python
 
-    # the space ' ' in front of 'Lower' anr the ';' behind 'Lower' are necessary
+    # the space ' ' in front of 'Lower' and the ';' behind 'Lower' are necessary
     # combined with vertical center alignment
-    mtext.text = "\\A1\\SUpper^ Lower; - \\SUpper/ Lower;} - \\SUpper# Lower;"
+    mtext.text = "\\A1;\\SUpper^ Lower; - \\SUpper/ Lower;} - \\SUpper# Lower;"
 
 
 .. image:: gfx/mtext_stacked.png
@@ -490,6 +490,39 @@ tabulator stops see also chapter `Set Paragraph Properties`_.
     msp.add_mtext(str(editor), attribs)
 
 .. image:: gfx/mtext_editor_numbered_list.png
+    :align: center
+
+Stacked Text
+++++++++++++
+
+:class:`MText` supports stacked text (fractions) as a single inline code, which
+means it is not possible to change any property inside the fraction.
+This example shows a fraction with scaled down text height, placed in a group
+to revert the text height afterwards:
+
+.. code-block:: Python
+
+    editor = MTextEditor("Stacked text:" + NP)
+
+    stack = MTextEditor().scale_height(0.6).stack("1", "2", "^")
+    editor.append("over: ").group(str(stack)).append(NP)
+
+    stack = MTextEditor().scale_height(0.6).stack("1", "2", "/")
+    editor.append("fraction: ").group(str(stack)).append(NP)
+
+    stack = MTextEditor().scale_height(0.6).stack("1", "2", "#")
+    editor.append("slanted: ").group(str(stack)).append(NP)
+
+    # Additional formatting in numerator and denominator is not supported
+    # by AutoCAD or BricsCAD, switching the color inside the stacked text
+    # to red does not work:
+    numerator = MTextEditor().color("red").append("1")
+    stack = MTextEditor().scale_height(0.6).stack(str(numerator), "2", "#")
+    editor.append("color red: ").group(str(stack)).append(NP)
+
+    msp.add_mtext(str(editor), attribs)
+
+.. image:: gfx/mtext_editor_stacking.png
     :align: center
 
 .. seealso::
