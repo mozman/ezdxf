@@ -781,8 +781,7 @@ class MTextEditor:
         "blue", "magenta" or "white".
 
         """
-        return self.append(
-            r"\C%d;" % const.MTEXT_COLOR_INDEX[name.lower()])
+        return self.aci(const.MTEXT_COLOR_INDEX[name.lower()])
 
     def aci(self, aci: int) -> 'MTextEditor':
         """ Set the text color by :ref:`ACI` in range [0, 256].
