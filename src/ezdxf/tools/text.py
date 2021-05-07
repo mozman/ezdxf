@@ -987,6 +987,37 @@ class TokenType(enum.IntEnum):
     GROUP_END = 9  # data = None
 
 
+class TextScanner:
+    def __init__(self, text: str):
+        self._text = str(text)
+        self._index = 0
+
+    @property
+    def is_empty(self) -> bool:
+        return self._index >= len(self._text)
+
+    def get(self) -> str:
+        char = self.peek()
+        self._index += 1
+        return char
+
+    def consume(self, count: int = 1) -> None:
+        self._index += count
+
+    def peek(self, offset: int = 0) -> str:
+        try:
+            return self._text[self._index + offset]
+        except IndexError:
+            return ""
+
+    def undo(self) -> None:
+        if self._index > 0:
+            self._index -= 1
+
+
+END_OF_WORD_LETTERS = "\\ "
+
+
 class MTextParser:
     """ Parses the MText content string and yields the content as tokens and
     the current MText properties as MTextContext object. The context object is
@@ -1008,7 +1039,9 @@ class MTextParser:
         if ctx is None:
             ctx = MTextContext()
         self.ctx = ctx
-        self.content = content
+        self.scanner = TextScanner(content)
+        self._escape = False
+        self._word = ""
 
     def __next__(self) -> Tuple:
         type_, data = self.next_token()
@@ -1021,4 +1054,76 @@ class MTextParser:
         return self
 
     def next_token(self):
-        return TokenType.NONE, None
+        def word_or_token(token, consume: int = 1):
+            if word:
+                return TokenType.WORD, word
+            else:
+                scanner.consume(consume)
+                return token, None
+
+        word = ""
+        scanner = self.scanner
+        while not scanner.is_empty:
+            escape = False
+            letter = scanner.peek()
+            if letter == "\\" and scanner.peek(1) in "\\{}":
+                # escape next letter
+                escape = True
+                scanner.consume()  # leading backslash
+                letter = scanner.peek()
+
+            if letter == "\\" and not escape:
+                # A non escaped backslash is always the end of a word.
+                if word:
+                    # Do not consume backslash!
+                    return TokenType.WORD, word
+                scanner.consume()  # leading backslash
+                cmd = scanner.get()
+                if cmd == "~":
+                    return TokenType.NBSP, None
+                if cmd == "P":
+                    return TokenType.NEW_PARAGRAPH, None
+                if cmd == "N":
+                    return TokenType.NEW_COLUMN, None
+                if cmd == "S":
+                    return self.parse_stacking()
+                if cmd:
+                    self.parse_properties(cmd)
+                # else: A single backslash at the end is an error, but DXF
+                # content is often invalid and should be ignored silently, if no
+                # harm is done.
+                continue
+
+            if letter == "^":  # caret decode
+                following_letter = scanner.peek(1)
+                if following_letter == "I":
+                    return word_or_token(TokenType.TABULATOR, consume=2)
+                if following_letter == "J":  # LF
+                    return word_or_token(TokenType.NEW_PARAGRAPH, consume=2)
+                if following_letter == "M":  # ignore CR
+                    scanner.consume(2)
+                    continue
+
+            if letter == " ":
+                return word_or_token(TokenType.SPACE)
+            if letter == "{" and not escape:
+                return word_or_token(TokenType.GROUP_START)
+            if letter == "}" and not escape:
+                return word_or_token(TokenType.GROUP_END)
+
+            # any unparsed unicode letter can be used in a word
+            letter = scanner.get()
+            if ord(letter[0]) > 31:
+                word += letter
+
+        if word:
+            return TokenType.WORD, word
+        else:
+            return TokenType.NONE, None
+
+    def parse_properties(self, cmd: str) -> None:
+        scanner = self.scanner
+
+    def parse_stacking(self) -> Tuple:
+        scanner = self.scanner
+        return TokenType.STACK, ("NUMERATOR", "DENOMINATOR", "^")

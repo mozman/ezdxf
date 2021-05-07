@@ -36,6 +36,16 @@ class TestTextScanner:
         assert s.get() == "w"
         assert s.peek() == "o"
 
+    def test_consume_one_letter(self):
+        s = TextScanner("word")
+        s.consume()
+        assert s.peek() == "o"
+
+    def test_consume_two_letter(self):
+        s = TextScanner("word")
+        s.consume(2)
+        assert s.peek() == "r"
+
     def test_getting_all_letters_empties_scanner(self):
         s = TextScanner("w")
         s.get()
