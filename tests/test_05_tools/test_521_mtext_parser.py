@@ -190,6 +190,39 @@ class TestMTextContextParsing:
         assert ctx.strike_through is not final_ctx.strike_through
         assert ctx != final_ctx
 
+    def test_wrap_on_the_dimension_line_is_ignored_and_removed(self):
+        mp = MTextParser(r"1\X")
+        tokens = list(mp)
+        assert len(tokens) == 1
+        ctx, token, data = tokens[0]
+        assert ctx is mp.ctx, "should not alter the context"
+
+    def test_bottom_alignment_with_terminator(self):
+        tokens = list(MTextParser(r"\A0;word"))
+        assert len(tokens) == 1
+        ctx, token, data = tokens[0]
+        assert data == "word", "terminator should be removed"
+        assert ctx.align == 0
+
+    def test_middle_alignment_without_terminator(self):
+        tokens = list(MTextParser(r"\A10"))
+        assert len(tokens) == 1
+        ctx, token, data = tokens[0]
+        assert ctx.align == 1
+
+    def test_top_alignment_without_terminator(self):
+        tokens = list(MTextParser(r"\A2word"))
+        assert len(tokens) == 1
+        ctx, token, data = tokens[0]
+        assert ctx.align == 2
+
+    def test_alignment_default_value_for_invalid_argument(self):
+        tokens = list(MTextParser(r"\A3word"))
+        assert len(tokens) == 1
+        ctx, token, data = tokens[0]
+        assert ctx.align == 0
+        assert data == "word", "invalid argument should be removed"
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

@@ -334,14 +334,14 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 #
 # \S	Stacking, fractions
 #
-#     e.g. \SA^B;
+#     e.g. \SA^ B;
 #     A
 #     B
-#     e.g. \SX/Y;
+#     e.g. \SX/ Y;
 #     X
 #     -
 #     Y
-#     e.g. \S1#4;
+#     e.g. \S1# 4;
 #     1/4
 #
 # \A	Alignment relative to current line
@@ -359,12 +359,14 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 #     \C5; = blue
 #     \C6; = magenta
 #     \C7; = white
-#     RGB color = \c7528479;  = 31,224,114 ???
+
 #     \c255; = RED (255, 0, 0)
 #     \c65280; = GREEN (0, 255, 0)
 #     \c16711680; = BLUE (0, 0, 255)
-#     ezdxf.rgb2int((31,224,114)) = 2089074 (r,g,b)
-#     ezdxf.rgb2int((114,224,31)) = 7528479 (b,g,r)
+
+#     RGB color = \c7528479;  = 31,224,114
+#     ezdxf.rgb2int((31,224,114)) = 2089074 (r,g,b) wrong!
+#     ezdxf.rgb2int((114,224,31)) = 7528479 (b,g,r) reversed order is correct!
 #
 # \T	Tracking, char.spacing - e.g. \T2;
 # {}	Braces - define the text area influenced by the code
@@ -804,16 +806,16 @@ class MTextEditor:
 
         .. code-block:: none
 
-            "^": vertical stacked without divider line, e.g. \SA^B:
+            "^": vertical stacked without divider line, e.g. \SA^ B:
                  A
                  B
 
-            "/": vertical stacked with divider line,  e.g. \SX/Y:
+            "/": vertical stacked with divider line,  e.g. \SX/ Y:
                  X
                  -
                  Y
 
-            "#": diagonal stacked, with slanting divider line, e.g. \S1#4:
+            "#": diagonal stacked, with slanting divider line, e.g. \S1# 4:
                  1/4
 
         """
@@ -1094,6 +1096,7 @@ class MTextParser:
                 # harm is done.
                 continue
 
+            # todo: special encodings %%d = "°" ???
             if letter == "^":  # caret decode
                 following_letter = scanner.peek(1)
                 if following_letter == "I":
@@ -1121,6 +1124,10 @@ class MTextParser:
         else:
             return TokenType.NONE, None
 
+    def parse_stacking(self) -> Tuple:
+        scanner = self.scanner
+        return TokenType.STACK, ("NUMERATOR", "DENOMINATOR", "^")
+
     def parse_properties(self, cmd: str) -> None:
         # Treat the existing context as immutable, create a new one:
         new_ctx = self.ctx.copy()
@@ -1136,8 +1143,33 @@ class MTextParser:
             new_ctx.strike_through = True
         elif cmd == 'k':
             new_ctx.strike_through = False
+        elif cmd == 'X':
+            # Paragraph wrap on the dimension line (only in dimensions)
+            return  # removed, but ignored and does not alter the context
+        elif cmd == 'A':  # cell alignment A0=bottom, A1=middle, A2=top
+            if not self.parse_align(new_ctx):
+                return
+        else:  # unknown commands
+            return
         self.ctx = new_ctx
 
-    def parse_stacking(self) -> Tuple:
+    def parse_align(self, ctx: MTextContext) -> bool:
+        arg = self.parse_required_char(choices={"0", "1", "2"}, default="0")
+        ctx.align = MTextLineAlignment(int(arg))
+        return True
+
+    def parse_required_char(self, choices: set, default: str) -> str:
         scanner = self.scanner
-        return TokenType.STACK, ("NUMERATOR", "DENOMINATOR", "^")
+        if scanner.is_empty:
+            return default
+        char = scanner.get()  # always consume next char
+        if char in choices:
+            result = char
+        else:
+            result = default
+        self.consume_optional_terminator()
+        return result
+
+    def consume_optional_terminator(self):
+        if self.scanner.peek() == ";":
+            self.scanner.consume(1)
