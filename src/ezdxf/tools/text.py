@@ -322,7 +322,8 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # \Q	Slanting (oblique) text by angle - e.g. \Q30;
 # \H	Text height relative - e.g. \H3x;
 # \H	Text height absolute - e.g. \H3;
-# \W	Text width factor - e.g. \W0.8;
+# \W	Text width factor - e.g. \W0.8x;
+# \W	Text width absolute - e.g. \W0.8;
 # \F	Font selection
 # \f	Font selection
 #
@@ -368,7 +369,8 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 #     ezdxf.rgb2int((31,224,114)) = 2089074 (r,g,b) wrong!
 #     ezdxf.rgb2int((114,224,31)) = 7528479 (b,g,r) reversed order is correct!
 #
-# \T	Tracking, char.spacing - e.g. \T2;
+# \T	Tracking, char.spacing absolute - e.g. \T2;
+# \T	Tracking, char.spacing relative - e.g. \T2x;
 # {}	Braces - define the text area influenced by the code
 #       Multiple codes after the opening brace are valid until the closing
 #       brace.  e.g. {\H0.4x;\A1;small centered text}

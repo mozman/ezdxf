@@ -34,7 +34,64 @@ line has the group code 1, each line can have a maximum line length of 255 bytes
 but BricsCAD (and AutoCAD?) store only 249 bytes in single line and one byte is
 not always one char.
 
-The text formatting is done by inline codes, see :class:`~ezdxf.entities.MText` class.
+
+Inline Code Specials
+--------------------
+
+The text formatting is done by inline codes, see the
+:class:`~ezdxf.entities.MText` class.
+
+Information gathered by implementing the :class:`MTextEditor` and the
+:class:`MTextParser` classes:
+
+- caret encoded characters:
+    - "^I" tabulator
+    - "^J" (LF) is a valid line break like "\\P"
+    - "^M" (CR) is ignored
+    - other characters renders as empty square "▯"
+
+- special encoded characters:
+    - "%%c" and "%%C" renders "Ø"
+    - "%%d" and "%%D" renders "°"
+    - "%%p" and "%%P" renders "±"
+
+- Alignment command "\\A": argument "0", "1" or "2" is expected
+    - the terminator symbol ";" is optional
+    - the arguments "3", "4", "5", "6", "7", "8", "9" and "-" default to 0
+    - other characters terminate the command and will be printed: "\\AX", renders "X"
+
+- ACI color command "\\C": int argument is expected
+    - the terminator symbol ";" is optional
+    - a leading "-" or "+" terminates the command, "\\C+5" renders "\\C+5"
+    - arguments > 255, are ignored but consumed "\\C1000" renders nothing, not
+      even a "0"
+    - a trailing ";" after integers is always consumed, even for much to big
+      values, "\\C10000;" renders nothing
+
+- RGB color command "\\c": int argument is expected
+    - the terminator symbol ";" is optional
+    - a leading "-" or "+" terminates the command, "\\c+255" renders "\\c+255"
+    - arguments >= 16777216 are masked by: value & 0xFFFFFF
+    - a trailing ";" after integers is always consumed, even for much to big
+      values, "\\c9999999999;" renders nothing and switches the color to
+      yellow (11, 227, 255)
+
+- Height command "\\H" and "\\H...x": float argument is expected
+    - the terminator symbol ";" is optional
+    - a leading "-" is valid, but negative values are ignored
+    - a leading "+" is valid
+    - a leading "." is valid like "\\H.5x" for height factor 0.5
+    - exponential format is valid like "\\H1e2" for height factor 100 and
+      "\\H1e-2" for 0.01
+    - an invalid floating point value terminates the command,
+      "\\H1..5" renders "\\H1..5"
+
+- Other commands with floating point arguments like the height command:
+    - Width commands "\\W" and "\\W...x"
+    - Character tracking commands "\\T" and "\\T...x", negative values are used
+    - Slanting (oblique) command "\\Q"
+
+
 
 Height Calculation
 ------------------

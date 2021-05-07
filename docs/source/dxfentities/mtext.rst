@@ -187,9 +187,10 @@ Code    Description
 \\X	    Paragraph wrap on the dimension line (only in dimensions)
 \\Q	    Slanting (oblique) text by angle - e.g. \\Q30;
 \\H     Text height - e.g. relative \\H3x; absolut \\H3;
-\\W	    Text width - e.g. \\W0.8x;
+\\W	    Text width - e.g. relative \\W0.8x; absolut \\W0.8;
+\\T     Tracking, character spacing - e.g. relative \\T0.5x; absolut \\T2;
 \\F	    Font selection e.g. \\Fgdt;o - GDT-tolerance
-\\S	    Stacking, fractions e.g. \\SA^B or \\SX/Y or \\S1#4
+\\S	    Stacking, fractions e.g. \\SA^ B or \\SX/ Y or \\S1# 4
 \\A     Alignment
 
         - \\A0; = bottom
@@ -206,8 +207,7 @@ Code    Description
         - \\C6; = magenta
         - \\C7; = white
 
-\\T     Tracking, char.spacing - e.g. \\T2;
-\\~     Non-wrapping space, hard space
+\\~     Non breaking space
 {}	    Braces - define the text area influenced by the code, codes and braces
         can be nested up to 8 levels deep
 \\	    Escape character - e.g. \\{ = "{"
