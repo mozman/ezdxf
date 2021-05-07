@@ -976,19 +976,6 @@ class MTextContext:
         self._set_stroke_state(MTextStroke.OVERLINE, value)
 
 
-class TokenType(enum.IntEnum):
-    NONE = 0
-    WORD = 1  # data = str
-    STACK = 2  # data = upr, lwr, type; upr&lwr:=(str|space)+
-    SPACE = 3  # data = None
-    NBSP = 4  # data = None
-    TABULATOR = 5  # data = None
-    NEW_PARAGRAPH = 6  # data = None
-    NEW_COLUMN = 7  # data = None
-    GROUP_START = 8  # data = None
-    GROUP_END = 9  # data = None
-
-
 class TextScanner:
     def __init__(self, text: str):
         self._text = str(text)
@@ -1017,7 +1004,25 @@ class TextScanner:
             self._index -= 1
 
 
-END_OF_WORD_LETTERS = "\\ "
+class TokenType(enum.IntEnum):
+    NONE = 0
+    WORD = 1  # data = str
+    STACK = 2  # data = upr, lwr, type; upr&lwr:=(str|space)+
+    SPACE = 3  # data = None
+    NBSP = 4  # data = None
+    TABULATOR = 5  # data = None
+    NEW_PARAGRAPH = 6  # data = None
+    NEW_COLUMN = 7  # data = None
+    GROUP_START = 8  # data = None
+    GROUP_END = 9  # data = None
+    WRAP_AT_DIMLINE = 10  # data = None
+
+
+class MTextToken:
+    def __init__(self, t: TokenType, ctx: MTextContext, data=None):
+        self.type: TokenType = t
+        self.ctx: MTextContext = ctx
+        self.data = data
 
 
 class MTextParser:
@@ -1026,10 +1031,7 @@ class MTextParser:
     treated internally as immutable object and should be treated by the client
     the same way.
 
-    The parser is implemented as iterator yielding tuples (ctx, token, data):
-        - ctx: MTextContext, current settings as immutable object
-        - token: TokenType
-        - data: str|tuple|None
+    The parser works as iterator and yields MTextToken objects.
 
     Args:
         content: MText content string
@@ -1045,10 +1047,10 @@ class MTextParser:
         self._escape = False
         self._word = ""
 
-    def __next__(self) -> Tuple:
+    def __next__(self) -> MTextToken:
         type_, data = self.next_token()
         if type_:
-            return self.ctx, type_, data
+            return MTextToken(type_, self.ctx, data)
         else:
             raise StopIteration
 
@@ -1087,6 +1089,8 @@ class MTextParser:
                     return TokenType.NEW_PARAGRAPH, None
                 if cmd == "N":
                     return TokenType.NEW_COLUMN, None
+                if cmd == "X":
+                    return TokenType.WRAP_AT_DIMLINE, None
                 if cmd == "S":
                     return self.parse_stacking()
                 if cmd:
@@ -1143,9 +1147,6 @@ class MTextParser:
             new_ctx.strike_through = True
         elif cmd == 'k':
             new_ctx.strike_through = False
-        elif cmd == 'X':
-            # Paragraph wrap on the dimension line (only in dimensions)
-            return  # removed, but ignored and does not alter the context
         elif cmd == 'A':  # cell alignment A0=bottom, A1=middle, A2=top
             if not self.parse_align(new_ctx):
                 return

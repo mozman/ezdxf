@@ -60,11 +60,11 @@ class TestTextScanner:
 
 
 def token_types(tokens):
-    return tuple(token for ctx, token, data in tokens)
+    return tuple(token.type for token in tokens)
 
 
 def token_data(tokens):
-    return tuple(data for ctx, token, data in tokens)
+    return tuple(token.data for token in tokens)
 
 
 class TestMTextContentParsing:
@@ -144,84 +144,78 @@ class TestMTextContentParsing:
             TokenType.GROUP_END
         )
 
+    def test_wrap_at_dimline(self):
+        mp = MTextParser(r"1\X2")
+        tokens = list(mp)
+        assert token_types(tokens) == (
+            TokenType.WORD,
+            TokenType.WRAP_AT_DIMLINE,
+            TokenType.WORD,
+        )
+
+
 
 class TestMTextContextParsing:
     def test_switch_underline_on(self):
         tokens = list(MTextParser(r"\Lword"))
         assert len(tokens) == 1, "property changes should not yield tokens"
-        ctx, token, data = tokens[0]
-        assert ctx.underline is True
+        assert tokens[0].ctx.underline is True
 
     def test_consecutive_tokens_get_the_same_context_objects_if_unchanged(self):
         tokens = list(MTextParser(r"\Lword word"))
-        assert len(tokens) == 3
-        ctx0, token, data = tokens[0]
-        ctx1, token, data = tokens[1]
-        ctx2, token, data = tokens[2]
-        assert ctx0 is ctx1 and ctx0 == ctx1
-        assert ctx1 is ctx2 and ctx1 == ctx2
+        t0, t1, t2 = tokens
+        assert t0.ctx is t1.ctx and t0.ctx == t1.ctx
+        assert t1.ctx is t2.ctx and t1.ctx == t2.ctx
         # This is the reason why context objects are treated as immutable:
         # If the context doesn't change the tokens can share the same object.
 
     def test_switch_underline_on_off_creates_different_context_objects(self):
         tokens = list(MTextParser(r"\Lword\lword"))
-        assert len(tokens) == 2
-        ctx0, token, data = tokens[0]
-        ctx1, token, data = tokens[1]
-        assert ctx0.underline is not ctx1.underline
-        assert ctx0 != ctx1
+        t0, t1 = tokens
+        assert t0.ctx.underline is not t1.ctx.underline
+        assert t0.ctx != t1.ctx
 
     def test_switch_overline_on_off(self):
         mp = MTextParser(r"\Oword\o")
         tokens = list(mp)
         assert len(tokens) == 1
-        ctx, token, data = tokens[0]
+        t0 = tokens[0]
         # attribute context store the final context
         final_ctx = mp.ctx
-        assert ctx.overline is not final_ctx.overline
-        assert ctx != final_ctx
+        assert t0.ctx.overline is not final_ctx.overline
+        assert t0.ctx != final_ctx
 
     def test_switch_strike_through_on_off(self):
         mp = MTextParser(r"\Kword word\k")
         tokens = list(mp)
-        assert len(tokens) == 3
-        ctx, token, data = tokens[2]
+        t0, t1, t2 = tokens
         final_ctx = mp.ctx
-        assert ctx.strike_through is not final_ctx.strike_through
-        assert ctx != final_ctx
-
-    def test_wrap_on_the_dimension_line_is_ignored_and_removed(self):
-        mp = MTextParser(r"1\X")
-        tokens = list(mp)
-        assert len(tokens) == 1
-        ctx, token, data = tokens[0]
-        assert ctx is mp.ctx, "should not alter the context"
+        assert t2.ctx.strike_through is not final_ctx.strike_through
+        assert t2.ctx != final_ctx
 
     def test_bottom_alignment_with_terminator(self):
         tokens = list(MTextParser(r"\A0;word"))
         assert len(tokens) == 1
-        ctx, token, data = tokens[0]
-        assert data == "word", "terminator should be removed"
-        assert ctx.align == 0
+        t0 = tokens[0]
+        assert t0.data == "word", "terminator should be removed"
+        assert t0.ctx.align == 0
 
     def test_middle_alignment_without_terminator(self):
         tokens = list(MTextParser(r"\A10"))
         assert len(tokens) == 1
-        ctx, token, data = tokens[0]
-        assert ctx.align == 1
+        assert tokens[0].ctx.align == 1
 
     def test_top_alignment_without_terminator(self):
         tokens = list(MTextParser(r"\A2word"))
         assert len(tokens) == 1
-        ctx, token, data = tokens[0]
-        assert ctx.align == 2
+        assert tokens[0].ctx.align == 2
 
     def test_alignment_default_value_for_invalid_argument(self):
         tokens = list(MTextParser(r"\A3word"))
         assert len(tokens) == 1
-        ctx, token, data = tokens[0]
-        assert ctx.align == 0
-        assert data == "word", "invalid argument should be removed"
+        t0 = tokens[0]
+        assert t0.ctx.align == 0
+        assert t0.data == "word", "invalid argument should be removed"
 
 
 if __name__ == '__main__':
