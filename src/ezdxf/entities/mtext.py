@@ -684,7 +684,7 @@ class MText(DXFGraphic):
             else:
                 yield tag
         parts.append(tail)
-        self.text = escape_dxf_line_endings(caret_decode("".join(parts)))
+        self.text = escape_dxf_line_endings("".join(parts))
 
     def export_mtext_content(self, tagwriter: 'TagWriter') -> None:
         txt = escape_dxf_line_endings(self.text)
