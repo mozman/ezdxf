@@ -1122,7 +1122,21 @@ class MTextParser:
             return TokenType.NONE, None
 
     def parse_properties(self, cmd: str) -> None:
-        scanner = self.scanner
+        # Treat the existing context as immutable, create a new one:
+        new_ctx = self.ctx.copy()
+        if cmd == 'L':
+            new_ctx.underline = True
+        elif cmd == 'l':
+            new_ctx.underline = False
+        elif cmd == 'O':
+            new_ctx.overline = True
+        elif cmd == 'o':
+            new_ctx.overline = False
+        elif cmd == 'K':
+            new_ctx.strike_through = True
+        elif cmd == 'k':
+            new_ctx.strike_through = False
+        self.ctx = new_ctx
 
     def parse_stacking(self) -> Tuple:
         scanner = self.scanner
