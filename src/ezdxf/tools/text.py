@@ -783,6 +783,10 @@ class MTextEditor:
         """ Set the absolute text width factor. """
         return self.append(rf'\W{round(factor, 3)};')
 
+    def char_tracking_factor(self, factor: float) -> 'MTextEditor':
+        """ Set the absolute character tracking factor. """
+        return self.append(rf'\T{round(factor, 3)};')
+
     def oblique(self, angle: int) -> 'MTextEditor':
         """ Set the text oblique angle in degrees, vertical is 0, a value of 15
         will lean the text 15 degree to the right.
@@ -908,6 +912,7 @@ class MTextContext:
         self.font_face: FontFace = FontFace()  # is immutable
         self.cap_height: float = 1.0
         self.width_factor: float = 1.0
+        self.char_tracking_factor: float = 1.0
         self.oblique: float = 0.0
         self.paragraph = ParagraphProperties()
 
@@ -920,6 +925,7 @@ class MTextContext:
         p.font_face = self.font_face  # is immutable
         p.cap_height = self.cap_height
         p.width_factor = self.width_factor
+        p.char_tracking_factor = self.char_tracking_factor
         p.oblique = self.oblique
         p.paragraph = self.paragraph  # is immutable
         return p
@@ -929,7 +935,8 @@ class MTextContext:
     def __hash__(self):
         return hash(
             (self._stroke, self._aci, self.rgb, self.align, self.font_face,
-             self.cap_height, self.width_factor, self.oblique, self.paragraph)
+             self.cap_height, self.width_factor, self.char_tracking_factor,
+             self.oblique, self.paragraph)
         )
 
     def __eq__(self, other: 'MTextContext') -> bool:

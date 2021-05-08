@@ -80,6 +80,11 @@ def test_change_width_factor():
     assert str(MTextEditor().width_factor(1.6666)) == r"\W1.667;"
 
 
+def test_change_char_tracking_factor():
+    assert str(MTextEditor().char_tracking_factor(2)) == r"\T2;"
+    assert str(MTextEditor().char_tracking_factor(1.6666)) == r"\T1.667;"
+
+
 def test_change_oblique_angle():
     assert str(MTextEditor().oblique(0)) == r"\Q0;"  # vertical
     assert str(MTextEditor().oblique(15)) == r"\Q15;"

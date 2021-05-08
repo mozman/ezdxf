@@ -30,6 +30,8 @@ MTextEditor
 
     .. automethod:: width_factor
 
+    .. automethod:: char_tracking_factor
+
     .. automethod:: oblique
 
     .. automethod:: color
