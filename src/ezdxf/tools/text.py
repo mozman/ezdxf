@@ -987,17 +987,20 @@ class MTextContext:
 
 
 class TextScanner:
+    __slots__ = ("_text", "_text_len", "_index")
+
     def __init__(self, text: str):
         self._text = str(text)
+        self._text_len = len(self._text)
         self._index = 0
 
     @property
     def is_empty(self) -> bool:
-        return self._index >= len(self._text)
+        return self._index >= self._text_len
 
     @property
     def has_data(self) -> bool:
-        return self._index < len(self._text)
+        return self._index < self._text_len
 
     def get(self) -> str:
         char = self.peek()
