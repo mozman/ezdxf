@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.tools.text import MTextContext, MTextParser, TokenType, TextScanner
+from ezdxf.tools.text import MTextParser, TokenType, TextScanner
 
 
 class TestTextScanner:
@@ -48,6 +48,18 @@ class TestTextScanner:
         s = TextScanner("w")
         s.get()
         assert s.is_empty is True
+
+    def test_can_not_consume_zero_chars(self):
+        s = TextScanner("w")
+        pytest.raises(ValueError, s.consume, 0)
+
+    def test_can_not_consume_negative_chars(self):
+        s = TextScanner("w")
+        pytest.raises(ValueError, s.consume, -1)
+
+    def test_can_not_peek_in_reverse_direction(self):
+        s = TextScanner("w")
+        pytest.raises(ValueError, s.peek, -1)
 
 
 def token_types(tokens):

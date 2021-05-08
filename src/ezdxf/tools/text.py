@@ -998,13 +998,17 @@ class TextScanner:
 
     def get(self) -> str:
         char = self.peek()
-        self._index += 1
+        self.consume(1)
         return char
 
     def consume(self, count: int = 1) -> None:
+        if count < 1:
+            raise ValueError(count)
         self._index += count
 
     def peek(self, offset: int = 0) -> str:
+        if offset < 0:
+            raise ValueError(offset)
         try:
             return self._text[self._index + offset]
         except IndexError:
