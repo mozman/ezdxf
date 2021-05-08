@@ -322,7 +322,7 @@ VERTICAL_STACKED = 4  # only stored in TextStyle.dxf.flags!
 
 # Special char and encodings used in TEXT, ATTRIB and ATTDEF:
 # "%%d" -> "°"
-SPECIAL_CHARS_ENCODING = {
+SPECIAL_CHAR_ENCODING = {
     'c': '⌀',
     'd': '°',
     'p': '±',

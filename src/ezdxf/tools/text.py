@@ -265,7 +265,7 @@ def plain_text(text: str) -> str:
         if char == "%":  # special characters
             if scanner.peek(1) == "%":
                 code = scanner.peek(2).lower()
-                letter = const.SPECIAL_CHARS_ENCODING.get(code)
+                letter = const.SPECIAL_CHAR_ENCODING.get(code)
                 if letter:
                     scanner.consume(3)  # %%?
                     result += letter
@@ -447,7 +447,7 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
                 raw_chars.pop()  # discard next '%'
                 if len(raw_chars):
                     code = raw_chars.pop()
-                    letter = const.SPECIAL_CHARS_ENCODING.get(code.lower())
+                    letter = const.SPECIAL_CHAR_ENCODING.get(code.lower())
                     if letter:
                         chars.append(letter)
                     else:
@@ -1125,7 +1125,7 @@ class MTextParser:
                     continue
             if letter == "%" and scanner.peek(1) == "%":
                 code = scanner.peek(2).lower()
-                special_char = const.SPECIAL_CHARS_ENCODING.get(code)
+                special_char = const.SPECIAL_CHAR_ENCODING.get(code)
                 if special_char:
                     scanner.consume(2)  # %%
                     letter = special_char
